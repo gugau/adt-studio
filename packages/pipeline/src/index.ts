@@ -170,3 +170,7 @@ export {
   buildQuizAnswers,
   pad3,
 } from "./package-web.js"
+export {
+  runAccessibilityAssessment,
+  type RunAccessibilityAssessmentOptions,
+} from "./accessibility-assessment.js"

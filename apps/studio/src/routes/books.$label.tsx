@@ -3,15 +3,13 @@ import { createFileRoute, Outlet, useParams, useNavigate, Link, useMatchRoute } 
 import { Home, Terminal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DebugPanel } from "@/components/debug/DebugPanel"
+import { DebugPanelStateProvider, type DebugTabValue } from "@/components/debug/debug-panel-state"
 import { StageSidebar } from "@/components/pipeline/StageSidebar"
-import { useBook } from "@/hooks/use-books"
 import { useBookRunStatus, BookRunProvider } from "@/hooks/use-book-run"
 
-// Section navigation context — shared between sidebar and all views
 interface SectionNavContext {
   sectionIndex: number
   setSectionIndex: (index: number | ((prev: number) => number)) => void
-  /** Set to true before a page change to prevent the parent from resetting sectionIndex to 0 */
   skipNextResetRef: React.MutableRefObject<boolean>
 }
 const SectionNavCtx = createContext<SectionNavContext>({
@@ -40,19 +38,16 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
   const { step, pageId } = useParams({ strict: false }) as { step?: string; pageId?: string }
   const matchRoute = useMatchRoute()
   const navigate = useNavigate()
-  const { data: book } = useBook(label)
   const [debugOpen, setDebugOpen] = useState(false)
+  const [debugDefaultTab, setDebugDefaultTab] = useState<DebugTabValue>("stats")
   const isDebugRoute = !!matchRoute({ to: "/books/$label/debug", params: { label } })
 
   const activeStep = step ?? "book"
-
-  // Section index state — shared between sidebar and all views
   const [sectionIndex, setSectionIndex] = useState(0)
   const skipNextResetRef = useRef(false)
   const prevPageIdRef = useRef(pageId)
   const prevStepRef = useRef(activeStep)
 
-  // Reset section index when page or step changes (unless a child signalled to skip)
   useEffect(() => {
     if (prevPageIdRef.current !== pageId || prevStepRef.current !== activeStep) {
       if (!skipNextResetRef.current) {
@@ -65,6 +60,19 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
   }, [pageId, activeStep])
 
   const sectionNav = useMemo(() => ({ sectionIndex, setSectionIndex, skipNextResetRef }), [sectionIndex, setSectionIndex])
+
+  const openDebugPanel = useCallback((options?: { tab?: DebugTabValue }) => {
+    setDebugDefaultTab(options?.tab ?? "stats")
+    setDebugOpen(true)
+  }, [])
+
+  const debugPanelState = useMemo(
+    () => ({
+      openPanel: openDebugPanel,
+      panelOpen: debugOpen,
+    }),
+    [debugOpen, openDebugPanel],
+  )
 
   const onSelectPage = useCallback(
     (pid: string | null) => {
@@ -80,16 +88,20 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
         })
       }
     },
-    [navigate, label, activeStep]
+    [navigate, label, activeStep],
   )
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (isDebugRoute) return
     if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "d") {
       e.preventDefault()
-      setDebugOpen((prev) => !prev)
+      if (debugOpen) {
+        setDebugOpen(false)
+        return
+      }
+      openDebugPanel()
     }
-  }, [isDebugRoute])
+  }, [debugOpen, isDebugRoute, openDebugPanel])
 
   useEffect(() => {
     document.addEventListener("keydown", handleKeyDown)
@@ -98,68 +110,67 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
 
   if (isDebugRoute) {
     return (
-      <div className="flex flex-1 min-h-0 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col">
         <Outlet />
       </div>
     )
   }
 
   return (
-    <>
-      <div className="flex flex-1 min-h-0 flex-col">
-        <div className="flex flex-1 min-h-0">
-          {/* Left sidebar */}
-          <div className="w-[220px] shrink-0 relative">
-            <div className="absolute inset-y-0 left-0 w-full bg-background flex flex-col z-30 overflow-hidden">
-              {/* App header */}
-              <div className="shrink-0 h-10 flex items-center bg-gray-700 text-white border-r border-gray-700">
-                <Link
-                  to="/"
-                  className="flex-1 min-w-0 h-full px-4 flex items-center justify-start gap-2.5 hover:bg-gray-800 transition-colors"
-                  title="Back to books"
-                >
-                  <Home className="w-4 h-4 shrink-0" />
-                  <span className="text-sm font-semibold truncate">
-                    ADT Studio
-                  </span>
-                </Link>
-              </div>
+    <DebugPanelStateProvider value={debugPanelState}>
+      <>
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1">
+            <div className="relative w-[220px] shrink-0">
+              <div className="absolute inset-y-0 left-0 z-30 flex w-full flex-col overflow-hidden bg-background">
+                <div className="flex h-10 shrink-0 items-center border-r border-gray-700 bg-gray-700 text-white">
+                  <Link
+                    to="/"
+                    className="flex h-full min-w-0 flex-1 items-center justify-start gap-2.5 px-4 transition-colors hover:bg-gray-800"
+                    title="Back to books"
+                  >
+                    <Home className="h-4 w-4 shrink-0" />
+                    <span className="truncate text-sm font-semibold">
+                      ADT Studio
+                    </span>
+                  </Link>
+                </div>
 
-              {/* Steps / Pages */}
-              <div className="flex-1 min-h-0 flex flex-col border-r border-gray-300">
-                <StageSidebar bookLabel={label} activeStep={activeStep} selectedPageId={pageId} onSelectPage={onSelectPage} sectionIndex={sectionIndex} onSelectSection={setSectionIndex} />
+                <div className="flex min-h-0 flex-1 flex-col border-r border-gray-300">
+                  <StageSidebar bookLabel={label} activeStep={activeStep} selectedPageId={pageId} onSelectPage={onSelectPage} sectionIndex={sectionIndex} onSelectSection={setSectionIndex} />
+                </div>
               </div>
+            </div>
+
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+              <SectionNavCtx.Provider value={sectionNav}>
+                <Outlet />
+              </SectionNavCtx.Provider>
             </div>
           </div>
 
-          {/* Main content */}
-          <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-            <SectionNavCtx.Provider value={sectionNav}>
-              <Outlet />
-            </SectionNavCtx.Provider>
-          </div>
+          {debugOpen && !isDebugRoute && (
+            <DebugPanel
+              label={label}
+              isRunning={isRunning}
+              defaultTab={debugDefaultTab}
+              onClose={() => setDebugOpen(false)}
+            />
+          )}
         </div>
 
-        {debugOpen && !isDebugRoute && (
-          <DebugPanel
-            label={label}
-            isRunning={isRunning}
-            onClose={() => setDebugOpen(false)}
-          />
+        {!debugOpen && !isDebugRoute && (
+          <Button
+            variant="outline"
+            size="icon"
+            className="fixed bottom-4 right-4 z-50 h-8 w-8 rounded-full shadow-md opacity-60 hover:opacity-100"
+            onClick={() => openDebugPanel()}
+            title="Debug Panel (Cmd+Shift+D)"
+          >
+            <Terminal className="h-4 w-4" />
+          </Button>
         )}
-      </div>
-
-      {!debugOpen && !isDebugRoute && (
-        <Button
-          variant="outline"
-          size="icon"
-          className="fixed bottom-4 right-4 h-8 w-8 rounded-full shadow-md z-50 opacity-60 hover:opacity-100"
-          onClick={() => setDebugOpen(true)}
-          title="Debug Panel (Cmd+Shift+D)"
-        >
-          <Terminal className="h-4 w-4" />
-        </Button>
-      )}
-    </>
+      </>
+    </DebugPanelStateProvider>
   )
 }

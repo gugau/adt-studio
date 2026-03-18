@@ -4,7 +4,12 @@ import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
 import { parseBookLabel } from "@adt/types"
 import { createBookStorage } from "@adt/storage"
-import { packageAdtWeb, loadBookConfig, normalizeLocale } from "@adt/pipeline"
+import {
+  packageAdtWeb,
+  loadBookConfig,
+  normalizeLocale,
+  runAccessibilityAssessment,
+} from "@adt/pipeline"
 
 export function createPackageRoutes(
   booksDir: string,
@@ -81,6 +86,12 @@ export function createPackageRoutes(
         webAssetsDir,
         applyBodyBackground: config.apply_body_background,
       })
+
+      const accessibilityOutput = await runAccessibilityAssessment({
+        bookDir,
+        config: config.accessibility_assessment,
+      })
+      storage.putNodeData("accessibility-assessment", "book", accessibilityOutput)
 
       return c.json({ status: "completed", label: safeLabel })
     } catch (err) {

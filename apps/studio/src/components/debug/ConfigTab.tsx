@@ -51,6 +51,7 @@ export function ConfigTab({ label }: ConfigTabProps) {
     { key: "default_render_strategy", title: "Default Render Strategy" },
     { key: "render_strategies", title: "Render Strategies" },
     { key: "section_render_strategies", title: "Section Render Strategies" },
+    { key: "accessibility_assessment", title: "Accessibility Assessment" },
   ]
 
   const knownKeys = new Set(sections.map((s) => s.key))

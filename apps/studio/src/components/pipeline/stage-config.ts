@@ -7,6 +7,7 @@ import {
   BookOpen,
   Languages,
   Eye,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react"
 
@@ -18,6 +19,7 @@ export const STAGES = [
   { slug: "captions", label: "Captions", runningLabel: "Captioning Images", icon: Image, color: "bg-teal-600", hex: "#0d9488", textColor: "text-teal-600", bgLight: "bg-teal-50", borderColor: "border-teal-200", borderDark: "border-teal-600" },
   { slug: "glossary", label: "Glossary", runningLabel: "Generating Glossary", icon: BookOpen, color: "bg-lime-600", hex: "#65a30d", textColor: "text-lime-600", bgLight: "bg-lime-50", borderColor: "border-lime-200", borderDark: "border-lime-600" },
   { slug: "text-and-speech", label: "Text & Speech", runningLabel: "Generating Text & Speech", icon: Languages, color: "bg-pink-600", hex: "#db2777", textColor: "text-pink-600", bgLight: "bg-pink-50", borderColor: "border-pink-200", borderDark: "border-pink-600" },
+  { slug: "validation", label: "Validation", runningLabel: "Running Validation", icon: ShieldCheck, color: "bg-emerald-600", hex: "#059669", textColor: "text-emerald-600", bgLight: "bg-emerald-50", borderColor: "border-emerald-200", borderDark: "border-emerald-600" },
   { slug: "preview", label: "Preview", runningLabel: "Building Preview", icon: Eye, color: "bg-gray-600", hex: "#4b5563", textColor: "text-gray-600", bgLight: "bg-gray-50", borderColor: "border-gray-200", borderDark: "border-gray-600" },
 ] as const satisfies ReadonlyArray<{
   slug: string
@@ -33,17 +35,20 @@ export const STAGES = [
 }>
 
 export type StageSlug = (typeof STAGES)[number]["slug"]
-export type PipelineStageSlug = Exclude<StageSlug, "book">
+export type NonBookStageSlug = Exclude<StageSlug, "book">
+export type PipelineStageSlug = Exclude<StageSlug, "book" | "validation">
 export type StageDefinition = (typeof STAGES)[number]
+export type NonBookStageDefinition = Extract<StageDefinition, { slug: NonBookStageSlug }>
 export type PipelineStageDefinition = Extract<StageDefinition, { slug: PipelineStageSlug }>
 
-export const STAGE_DESCRIPTIONS: Record<PipelineStageSlug, string> = {
+export const STAGE_DESCRIPTIONS: Record<NonBookStageSlug, string> = {
   extract: "Extract text and images from each page of the PDF using AI-powered analysis.",
   storyboard: "Arrange extracted content into a structured storyboard with pages, sections, and layouts.",
   quizzes: "Generate comprehension quizzes and activities based on the book content.",
   captions: "Create descriptive captions for images to improve accessibility.",
   glossary: "Build a glossary of key terms and definitions found in the text.",
   "text-and-speech": "Translate the book content and generate audio narration.",
+  validation: "Run whole-book validation checks and configure accessibility assessment settings.",
   preview: "Package and preview the final ADT web application.",
 }
 
@@ -65,8 +70,16 @@ export function hasStagePages(slug: string): boolean {
   return isStageSlug(slug) && STAGES_WITH_PAGES.has(slug)
 }
 
-export function isPipelineStage(stage: StageDefinition): stage is PipelineStageDefinition {
+export function isBookOverviewStage(stage: StageDefinition): stage is NonBookStageDefinition {
   return stage.slug !== "book"
+}
+
+export function isPipelineStage(stage: StageDefinition): stage is PipelineStageDefinition {
+  return stage.slug !== "book" && stage.slug !== "validation"
+}
+
+export function getBookOverviewStages(): NonBookStageDefinition[] {
+  return STAGES.filter(isBookOverviewStage)
 }
 
 export function getPipelineStages(): PipelineStageDefinition[] {

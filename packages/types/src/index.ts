@@ -45,6 +45,7 @@ export {
   PageSectioningConfig,
   RenderType,
   RenderStrategyConfig,
+  AccessibilityAssessmentConfig,
   AppConfig,
   type TypeDef,
 } from "./config.js"
@@ -134,3 +135,27 @@ export {
 export {
   StyleguideGenerationOutput,
 } from "./styleguide-generation.js"
+
+export {
+  AccessibilityNodeResult,
+  AccessibilityFinding,
+  AccessibilityPageResult,
+  AccessibilityAssessmentSummary,
+  AccessibilityAssessmentOutput,
+} from "./accessibility.js"
+
+
+export {
+  ReviewerValidationStatus,
+  ReviewerValidationFieldType,
+  ReviewerValidationIdentificationField,
+  ReviewerValidationInstruction,
+  ReviewerValidationCriterion,
+  ReviewerValidationSection,
+  ReviewerValidationSession,
+  ReviewerPageValidationResult,
+  ReviewerPageValidationRecord,
+  ReviewerValidationIdentificationFields,
+  ReviewerValidationInstructions,
+  ReviewerPageValidationSections,
+} from "./reviewer-validation.js"

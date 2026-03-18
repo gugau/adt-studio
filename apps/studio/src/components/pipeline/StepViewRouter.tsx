@@ -9,6 +9,7 @@ import {
   GlossaryView,
   TranslationsView,
   PreviewView,
+  ValidationView,
 } from "./stages"
 import { cn } from "@/lib/utils"
 
@@ -47,6 +48,7 @@ const VIEW_MAP: Record<string, ViewEntry> = {
   captions: { component: CaptionsView },
   glossary: { component: GlossaryView },
   "text-and-speech": { component: TranslationsView },
+  validation: { component: ValidationView, fullHeight: true },
   preview: { component: PreviewView, fullHeight: true },
 }
 

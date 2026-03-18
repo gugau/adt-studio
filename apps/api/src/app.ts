@@ -22,6 +22,7 @@ import { createStageRunner } from "./services/stage-runner.js"
 import { createPresetRoutes } from "./routes/presets.js"
 import { createAdtPreviewRoutes } from "./routes/adt-preview.js"
 import { createSpeechConfigRoutes } from "./routes/speech-config.js"
+import { createReviewerValidationRoutes } from "./routes/reviewer-validation.js"
 
 // Resolve paths relative to monorepo root (2 levels up from apps/api/)
 const projectRoot = path.resolve(
@@ -95,6 +96,7 @@ app.route("/api", createStageRoutes(stageService, booksDir, promptsDir, configPa
 app.route("/api", createPresetRoutes(configPath))
 app.route("/api", createAdtPreviewRoutes(booksDir, webAssetsDir, configPath))
 app.route("/api", createSpeechConfigRoutes(configPath))
+app.route("/api", createReviewerValidationRoutes(booksDir))
 
 export default app
 export { booksDir }
