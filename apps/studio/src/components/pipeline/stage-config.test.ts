@@ -24,7 +24,7 @@ describe("stage-config", () => {
     ])
   })
 
-  it("returns book overview stages including validation before preview", () => {
+  it("returns book overview stages including validation before preview and export", () => {
     const overviewSlugs = getBookOverviewStages().map((stage) => stage.slug)
     expect(overviewSlugs).toEqual([
       "extract",
@@ -35,6 +35,7 @@ describe("stage-config", () => {
       "text-and-speech",
       "validation",
       "preview",
+      "export",
     ])
   })
 
