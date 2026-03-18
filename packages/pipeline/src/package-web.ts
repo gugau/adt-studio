@@ -416,8 +416,6 @@ export async function packageAdtWeb(
   // ------------------------------------------------------------------
   progress.emit({ type: "step-progress", step, message: "Generating offline & SCORM support..." })
 
-  generateLocalBundle(assetsDir)
-
   const activityIds = collectActivityIds(adtDir, pageList)
   generateScormAdapter(assetsDir, activityIds)
 
@@ -1207,10 +1205,15 @@ async function buildJsBundle(
   outputAssetsDir: string,
 ): Promise<void> {
   // In Tauri sidecar mode, esbuild cannot run inside the pkg binary.
-  // bundle.mjs pre-builds base.bundle.min.js into webAssetsDir before zipping.
-  const preBuilt = path.join(webAssetsDir, "base.bundle.min.js")
-  if (fs.existsSync(preBuilt)) {
-    fs.copyFileSync(preBuilt, path.join(outputAssetsDir, "base.bundle.min.js"))
+  // bundle.mjs pre-builds base.bundle.min.js + base.bundle.local.js into
+  // webAssetsDir before zipping.
+  const preBuiltEsm = path.join(webAssetsDir, "base.bundle.min.js")
+  const preBuiltIife = path.join(webAssetsDir, "base.bundle.local.js")
+  if (fs.existsSync(preBuiltEsm)) {
+    fs.copyFileSync(preBuiltEsm, path.join(outputAssetsDir, "base.bundle.min.js"))
+    if (fs.existsSync(preBuiltIife)) {
+      fs.copyFileSync(preBuiltIife, path.join(outputAssetsDir, "base.bundle.local.js"))
+    }
     return
   }
 
@@ -1226,6 +1229,16 @@ async function buildJsBundle(
     format: "esm",
     target: "es2020",
     outfile: path.join(outputAssetsDir, "base.bundle.min.js"),
+  })
+
+  // Build an IIFE version for file:// offline use (no ES module export)
+  await esbuild.build({
+    entryPoints: [entryPoint],
+    bundle: true,
+    minify: true,
+    format: "iife",
+    target: "es2020",
+    outfile: path.join(outputAssetsDir, "base.bundle.local.js"),
   })
 }
 
@@ -1343,24 +1356,6 @@ async function renderAgentsMd(
 // ---------------------------------------------------------------------------
 // SCORM + Offline support generators
 // ---------------------------------------------------------------------------
-
-/**
- * Create `base.bundle.local.js` by stripping the trailing ES module export
- * statement from `base.bundle.min.js`. The export causes a syntax error when
- * loaded without `type="module"`, which is required for `file://` support.
- */
-function generateLocalBundle(assetsDir: string): void {
-  const srcPath = path.join(assetsDir, "base.bundle.min.js")
-  if (!fs.existsSync(srcPath)) return
-
-  let content = fs.readFileSync(srcPath, "utf-8")
-  // esbuild minified output ends with `;export{...}` or `};export{...}`
-  const exportIdx = content.lastIndexOf(";export{")
-  if (exportIdx !== -1) {
-    content = content.slice(0, exportIdx + 1) // keep the `;`
-  }
-  fs.writeFileSync(path.join(assetsDir, "base.bundle.local.js"), content)
-}
 
 /**
  * Generate `assets/offline-preloader.js` — inlines all JSON/HTML files that
@@ -1636,8 +1631,8 @@ ${fileEntries}
 }
 
 /**
- * Scan all HTML files in the ADT directory for `data-activity-id` or
- * `data-area-id` attributes and return the unique set of activity IDs.
+ * Scan all HTML files in the ADT directory for `data-area-id` attributes
+ * and return the unique set of activity IDs.
  * Also includes quiz section IDs from the page list (entries starting with "qz").
  */
 function collectActivityIds(adtDir: string, pageList: PageEntry[]): string[] {
