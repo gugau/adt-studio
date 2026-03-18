@@ -9,7 +9,7 @@ import { openBookDb } from "@adt/storage"
 import { createBookStorage } from "@adt/storage"
 import { reRenderPage, aiEditSection } from "../services/page-edit-service.js"
 import { segmentPageImages, getSegmentedImageId, loadBookConfig, applyCrop, generateStyleguide, buildStyleguideGenerationConfig } from "@adt/pipeline"
-import { createLLMModel, createPromptEngine } from "@adt/llm"
+import { createLLMModel, createPromptEngine, renderLiquidTemplate } from "@adt/llm"
 
 interface PageSummary {
   pageId: string
@@ -57,6 +57,7 @@ function validateImageId(id: string): string {
 export function createPageRoutes(
   booksDir: string,
   promptsDir: string,
+  webAssetsDir: string,
   configPath?: string
 ): Hono {
   const app = new Hono()
@@ -458,6 +459,18 @@ export function createPageRoutes(
       })
     }
 
+    // Optional prompt for LLM guidance during re-render
+    let prompt: string | undefined
+    try {
+      const body = await c.req.json()
+      const parsed = z.object({ prompt: z.string().optional() }).safeParse(body)
+      if (parsed.success) {
+        prompt = parsed.data.prompt
+      }
+    } catch {
+      // No body or not JSON — that's fine, prompt is optional
+    }
+
     const storage = createBookStorage(safeLabel, booksDir)
     try {
       const pages = storage.getPages()
@@ -491,8 +504,10 @@ export function createPageRoutes(
       label: safeLabel,
       pageId,
       sectionIndex,
+      prompt,
       booksDir,
       promptsDir,
+      webAssetsDir,
       configPath,
       apiKey,
     })
@@ -529,6 +544,7 @@ export function createPageRoutes(
       currentHtml: typeof body.currentHtml === "string" ? body.currentHtml : undefined,
       booksDir,
       promptsDir,
+      webAssetsDir,
       configPath,
       apiKey,
     })
@@ -644,6 +660,253 @@ export function createPageRoutes(
     }
   })
 
+  // POST /books/:label/pages/:pageId/sections/:sectionIndex/merge — Merge two adjacent sections
+  app.post("/books/:label/pages/:pageId/sections/:sectionIndex/merge", async (c) => {
+    const MergeSectionParams = z.object({
+      label: z.string().min(1),
+      pageId: z.string().min(1),
+      sectionIndex: z.coerce.number().int().min(0),
+    })
+    const parsedParams = MergeSectionParams.safeParse(c.req.param())
+    if (!parsedParams.success) {
+      throw new HTTPException(400, {
+        message: `Invalid route params: ${parsedParams.error.issues.map((i) => i.message).join(", ")}`,
+      })
+    }
+    const { label, pageId, sectionIndex: idx } = parsedParams.data
+    const safeLabel = parseBookLabel(label)
+
+    const directionParam = c.req.query("direction") ?? "next"
+    if (directionParam !== "next" && directionParam !== "prev") {
+      throw new HTTPException(400, { message: `Invalid direction: ${directionParam}. Must be "next" or "prev"` })
+    }
+    const direction = directionParam as "next" | "prev"
+
+    const storage = createBookStorage(safeLabel, booksDir)
+    try {
+      const pages = storage.getPages()
+      if (!pages.find((p) => p.pageId === pageId)) {
+        throw new HTTPException(404, { message: `Page not found: ${pageId}` })
+      }
+
+      // Read latest sectioning
+      const sectioningRow = storage.getLatestNodeData("page-sectioning", pageId)
+      if (!sectioningRow) {
+        throw new HTTPException(400, { message: "Page has no sectioning data" })
+      }
+      const sectioningParsed = PageSectioningOutput.safeParse(sectioningRow.data)
+      if (!sectioningParsed.success) {
+        throw new HTTPException(400, { message: "Invalid page-sectioning data" })
+      }
+      const sectioning = sectioningParsed.data
+
+      if (idx >= sectioning.sections.length) {
+        throw new HTTPException(400, { message: `Section index ${idx} out of range (page has ${sectioning.sections.length} sections)` })
+      }
+
+      // Determine which two sections to merge
+      if (direction === "next" && idx >= sectioning.sections.length - 1) {
+        throw new HTTPException(400, { message: `Cannot merge "next": section ${idx} is the last section` })
+      }
+      if (direction === "prev" && idx === 0) {
+        throw new HTTPException(400, { message: `Cannot merge "prev": section ${idx} is the first section` })
+      }
+
+      const keepIdx = direction === "next" ? idx : idx - 1
+      const removeIdx = direction === "next" ? idx + 1 : idx
+
+      // Combine: append remove section's parts into keep section
+      const newSections = [...sectioning.sections]
+      newSections[keepIdx] = {
+        ...newSections[keepIdx],
+        parts: [...newSections[keepIdx].parts, ...newSections[removeIdx].parts],
+      }
+      newSections.splice(removeIdx, 1)
+
+      // Renumber all sectionIds
+      for (let i = 0; i < newSections.length; i++) {
+        newSections[i].sectionId = `${pageId}_sec${String(i + 1).padStart(3, "0")}`
+      }
+
+      const updatedSectioning = { ...sectioning, sections: newSections }
+
+      // Update rendering if present
+      let updatedRendering: z.infer<typeof WebRenderingOutput> | null = null
+      let renderingVersion: number | null = null
+      const renderingRow = storage.getLatestNodeData("web-rendering", pageId)
+      if (renderingRow) {
+        const renderingParsed = WebRenderingOutput.safeParse(renderingRow.data)
+        if (!renderingParsed.success) {
+          throw new HTTPException(400, { message: "Invalid web-rendering data" })
+        }
+        const rendering = renderingParsed.data
+
+        const shifted = [...rendering.sections]
+
+        // Find rendering entries for keepIdx and removeIdx
+        const keepEntry = shifted.find((s) => s.sectionIndex === keepIdx)
+        const removeEntry = shifted.find((s) => s.sectionIndex === removeIdx)
+
+        // Merge HTML if both entries exist
+        if (keepEntry && removeEntry) {
+          // Extract inner content from remove section's <section> tag and append into keep section's <section>
+          const innerContentMatch = removeEntry.html.match(/<section[^>]*>([\s\S]*)<\/section>/)
+          const innerContent = innerContentMatch ? innerContentMatch[1] : removeEntry.html
+          keepEntry.html = keepEntry.html.replace(/<\/section>\s*$/, `${innerContent}</section>`)
+        }
+
+        // Remove the removeIdx rendering entry
+        const removeEntryIndex = shifted.findIndex((s) => s.sectionIndex === removeIdx)
+        if (removeEntryIndex !== -1) {
+          shifted.splice(removeEntryIndex, 1)
+        }
+
+        // Shift sectionIndex for entries after removeIdx (subtract 1)
+        for (const s of shifted) {
+          if (s.sectionIndex > removeIdx) {
+            s.sectionIndex = s.sectionIndex - 1
+          }
+        }
+
+        // Update data-section-id in each rendering's HTML to match new sectionIds
+        for (const rs of shifted) {
+          if (rs.sectionIndex < 0 || rs.sectionIndex >= newSections.length) {
+            throw new HTTPException(400, { message: "Rendering contains invalid section indexes" })
+          }
+          const expectedId = newSections[rs.sectionIndex]?.sectionId
+          if (!expectedId) {
+            throw new HTTPException(400, { message: "Unable to map rendering section to sectionId" })
+          }
+          rs.html = rs.html.replace(
+            /data-section-id="[^"]*"/,
+            `data-section-id="${expectedId}"`
+          )
+        }
+        updatedRendering = { sections: shifted }
+      }
+
+      const sectioningVersion = storage.putNodeData("page-sectioning", pageId, updatedSectioning)
+      if (updatedRendering) {
+        renderingVersion = storage.putNodeData("web-rendering", pageId, updatedRendering)
+      }
+
+      return c.json({
+        mergedSectionIndex: keepIdx,
+        sectioningVersion,
+        renderingVersion,
+      })
+    } finally {
+      storage.close()
+    }
+  })
+
+  // DELETE /books/:label/pages/:pageId/sections/:sectionIndex — Delete a section
+  app.delete("/books/:label/pages/:pageId/sections/:sectionIndex", async (c) => {
+    const DeleteSectionParams = z.object({
+      label: z.string().min(1),
+      pageId: z.string().min(1),
+      sectionIndex: z.coerce.number().int().min(0),
+    })
+    const parsedParams = DeleteSectionParams.safeParse(c.req.param())
+    if (!parsedParams.success) {
+      throw new HTTPException(400, {
+        message: `Invalid route params: ${parsedParams.error.issues.map((i) => i.message).join(", ")}`,
+      })
+    }
+    const { label, pageId, sectionIndex: idx } = parsedParams.data
+    const safeLabel = parseBookLabel(label)
+
+    const storage = createBookStorage(safeLabel, booksDir)
+    try {
+      const pages = storage.getPages()
+      if (!pages.find((p) => p.pageId === pageId)) {
+        throw new HTTPException(404, { message: `Page not found: ${pageId}` })
+      }
+
+      // Read latest sectioning
+      const sectioningRow = storage.getLatestNodeData("page-sectioning", pageId)
+      if (!sectioningRow) {
+        throw new HTTPException(400, { message: "Page has no sectioning data" })
+      }
+      const sectioningParsed = PageSectioningOutput.safeParse(sectioningRow.data)
+      if (!sectioningParsed.success) {
+        throw new HTTPException(400, { message: "Invalid page-sectioning data" })
+      }
+      const sectioning = sectioningParsed.data
+
+      if (idx >= sectioning.sections.length) {
+        throw new HTTPException(400, { message: `Section index ${idx} out of range (page has ${sectioning.sections.length} sections)` })
+      }
+
+      // Remove section at idx
+      const newSections = [...sectioning.sections]
+      newSections.splice(idx, 1)
+
+      // Renumber all sectionIds
+      for (let i = 0; i < newSections.length; i++) {
+        newSections[i].sectionId = `${pageId}_sec${String(i + 1).padStart(3, "0")}`
+      }
+
+      const updatedSectioning = { ...sectioning, sections: newSections }
+
+      // Update rendering if present
+      let updatedRendering: z.infer<typeof WebRenderingOutput> | null = null
+      let renderingVersion: number | null = null
+      const renderingRow = storage.getLatestNodeData("web-rendering", pageId)
+      if (renderingRow) {
+        const renderingParsed = WebRenderingOutput.safeParse(renderingRow.data)
+        if (!renderingParsed.success) {
+          throw new HTTPException(400, { message: "Invalid web-rendering data" })
+        }
+        const rendering = renderingParsed.data
+
+        const shifted = [...rendering.sections]
+
+        // Remove the rendering entry for idx
+        const removeEntryIndex = shifted.findIndex((s) => s.sectionIndex === idx)
+        if (removeEntryIndex !== -1) {
+          shifted.splice(removeEntryIndex, 1)
+        }
+
+        // Shift sectionIndex for entries after idx (subtract 1)
+        for (const s of shifted) {
+          if (s.sectionIndex > idx) {
+            s.sectionIndex = s.sectionIndex - 1
+          }
+        }
+
+        // Update data-section-id in each rendering's HTML to match new sectionIds
+        for (const rs of shifted) {
+          if (rs.sectionIndex < 0 || rs.sectionIndex >= newSections.length) {
+            throw new HTTPException(400, { message: "Rendering contains invalid section indexes" })
+          }
+          const expectedId = newSections[rs.sectionIndex]?.sectionId
+          if (!expectedId) {
+            throw new HTTPException(400, { message: "Unable to map rendering section to sectionId" })
+          }
+          rs.html = rs.html.replace(
+            /data-section-id="[^"]*"/,
+            `data-section-id="${expectedId}"`
+          )
+        }
+        updatedRendering = { sections: shifted }
+      }
+
+      const sectioningVersion = storage.putNodeData("page-sectioning", pageId, updatedSectioning)
+      if (updatedRendering) {
+        renderingVersion = storage.putNodeData("web-rendering", pageId, updatedRendering)
+      }
+
+      return c.json({
+        sectioningVersion,
+        renderingVersion,
+        remainingSections: newSections.length,
+      })
+    } finally {
+      storage.close()
+    }
+  })
+
   // POST /books/:label/images/ai-generate — Generate image via gpt-image-1.5
   app.post("/books/:label/images/ai-generate", async (c) => {
     try {
@@ -679,28 +942,43 @@ export function createPageRoutes(
       const targetImageId =
         typeof body.targetImageId === "string" ? validateImageId(body.targetImageId) : referenceImageId
 
-      // Render the global image generation prompt template (book-level override takes priority).
-      // The template may contain {{ user_prompt }} where the per-image request is injected.
-      const bookPromptPath = path.join(bookDir, "prompts", "ai_image_generation.liquid")
-      const globalPromptPath = path.join(path.resolve(promptsDir), "ai_image_generation.liquid")
+      // Optional style and image type parameters
+      const style = typeof body.style === "string" ? body.style : undefined
+      const imageType = typeof body.imageType === "string" ? body.imageType : undefined
+      // Optional style reference image — sent alongside the reference image for edit mode
+      const styleImageId =
+        typeof body.styleImageId === "string" ? validateImageId(body.styleImageId) : undefined
+
+      // Choose the correct prompt template: edit vs generate
+      const isEditMode = !!referenceImageId
+      const promptName = isEditMode ? "ai_image_edit" : "ai_image_generation"
+      const bookPromptPath = path.join(bookDir, "prompts", `${promptName}.liquid`)
+      const globalPromptPath = path.join(path.resolve(promptsDir), `${promptName}.liquid`)
       let templateContent: string | null = null
       if (fs.existsSync(bookPromptPath)) {
         templateContent = fs.readFileSync(bookPromptPath, "utf-8")
       } else if (fs.existsSync(globalPromptPath)) {
         templateContent = fs.readFileSync(globalPromptPath, "utf-8")
       }
-      // Use a replacer function to avoid JS special replacement patterns ($&, $1, etc.)
-      // being interpreted if the user's prompt happens to contain them.
-      const finalPrompt = templateContent
-        ? templateContent.trim().replace(/\{\{\s*user_prompt\s*\}\}/g, () => prompt)
-        : prompt
+      // Render the template with Liquid to support conditionals ({% if style %}, etc.)
+      let finalPrompt: string
+      if (templateContent) {
+        finalPrompt = await renderLiquidTemplate(templateContent.trim(), {
+          user_prompt: prompt,
+          style: style ?? "",
+          image_type: imageType ?? "",
+        })
+      } else {
+        finalPrompt = prompt
+      }
 
       // Look up target image dimensions once — used for both aspect ratio size selection
       // and returning originalWidth/originalHeight to the frontend
       let originalWidth = 0
       let originalHeight = 0
       let referenceImagePath: string | undefined
-      if (targetImageId || referenceImageId) {
+      let styleImagePath: string | undefined
+      if (targetImageId || referenceImageId || styleImageId) {
         const db0 = openBookDb(dbPath)
         try {
           if (targetImageId) {
@@ -719,6 +997,13 @@ export function createPageRoutes(
               [referenceImageId]
             ) as { path: string } | undefined
             if (row) referenceImagePath = path.join(bookDir, row.path)
+          }
+          if (styleImageId) {
+            const row = db0.get(
+              "SELECT path FROM images WHERE image_id = ?",
+              [styleImageId]
+            ) as { path: string } | undefined
+            if (row) styleImagePath = path.join(bookDir, row.path)
           }
         } finally {
           db0.close()
@@ -748,6 +1033,11 @@ export function createPageRoutes(
         formData.append("prompt", finalPrompt)
         formData.append("size", size)
         formData.append("image[]", new Blob([imageBuffer], { type: "image/png" }), `${referenceImageId}.png`)
+        // Attach style reference image if provided — the model will use it as visual style guidance
+        if (styleImagePath && fs.existsSync(styleImagePath)) {
+          const styleBuffer = fs.readFileSync(styleImagePath)
+          formData.append("image[]", new Blob([styleBuffer], { type: "image/png" }), `${styleImageId}.png`)
+        }
 
         openaiRes = await fetch("https://api.openai.com/v1/images/edits", {
           method: "POST",
@@ -756,20 +1046,36 @@ export function createPageRoutes(
           signal: AbortSignal.timeout(180_000),
         })
       } else {
-        // Generate mode: text-to-image via /v1/images/generations
-        openaiRes = await fetch("https://api.openai.com/v1/images/generations", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: "gpt-image-1.5",
-            prompt: finalPrompt,
-            size,
-          }),
-          signal: AbortSignal.timeout(180_000),
-        })
+        // Generate mode: text-to-image
+        // If a style reference image is provided, use the edits endpoint so the model can see it
+        if (styleImagePath && fs.existsSync(styleImagePath)) {
+          const styleBuffer = fs.readFileSync(styleImagePath)
+          const formData = new FormData()
+          formData.append("model", "gpt-image-1.5")
+          formData.append("prompt", finalPrompt)
+          formData.append("size", size)
+          formData.append("image[]", new Blob([styleBuffer], { type: "image/png" }), `${styleImageId}.png`)
+          openaiRes = await fetch("https://api.openai.com/v1/images/edits", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${apiKey}` },
+            body: formData,
+            signal: AbortSignal.timeout(180_000),
+          })
+        } else {
+          openaiRes = await fetch("https://api.openai.com/v1/images/generations", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+              model: "gpt-image-1.5",
+              prompt: finalPrompt,
+              size,
+            }),
+            signal: AbortSignal.timeout(180_000),
+          })
+        }
       }
 
       const responseText = await openaiRes.text()
@@ -954,6 +1260,84 @@ export function createPageRoutes(
            height = excluded.height,
            source = excluded.source`,
         [newImageId, pageId, `images/${filename}`, hash, width, height, "crop"]
+      )
+
+      return c.json({ imageId: newImageId, width, height })
+    } finally {
+      db.close()
+    }
+  })
+
+  // POST /books/:label/images/upload — Upload a new standalone image (not a crop)
+  app.post("/books/:label/images/upload", async (c) => {
+    const { label } = c.req.param()
+    const safeLabel = parseBookLabel(label)
+    const resolvedDir = path.resolve(booksDir)
+    const bookDir = path.join(resolvedDir, safeLabel)
+    const dbPath = path.join(bookDir, `${safeLabel}.db`)
+
+    if (!fs.existsSync(dbPath)) {
+      throw new HTTPException(404, { message: `Book not found: ${safeLabel}` })
+    }
+
+    const formData = await c.req.formData()
+    const imageFile = formData.get("image")
+    const pageId = formData.get("pageId")
+
+    if (!imageFile || !(imageFile instanceof File)) {
+      throw new HTTPException(400, { message: "Missing image file" })
+    }
+    if (!pageId || typeof pageId !== "string") {
+      throw new HTTPException(400, { message: "Missing pageId" })
+    }
+    validateImageId(pageId)
+
+    const buffer = Buffer.from(await imageFile.arrayBuffer())
+    const hash = crypto.createHash("sha256").update(buffer).digest("hex").slice(0, 16)
+
+    const db = openBookDb(dbPath)
+    try {
+      // Generate new imageId: {pageId}_upload{N}
+      const existing = db.all(
+        "SELECT image_id FROM images WHERE image_id LIKE ? AND source = 'upload'",
+        [`${pageId}_upload%`]
+      ) as Array<{ image_id: string }>
+      let maxN = 0
+      for (const row of existing) {
+        const m = row.image_id.match(/_upload(\d+)$/)
+        if (m) maxN = Math.max(maxN, parseInt(m[1], 10))
+      }
+      const newImageId = `${pageId}_upload${maxN + 1}`
+
+      const isPng = imageFile.type === "image/png"
+      const ext = isPng ? "png" : "jpg"
+      const filename = `${newImageId}.${ext}`
+
+      const imagesDir = path.join(bookDir, "images")
+      fs.mkdirSync(imagesDir, { recursive: true })
+      fs.writeFileSync(path.join(imagesDir, filename), buffer)
+
+      // Get dimensions from image header
+      let width = 0
+      let height = 0
+      if (isPng && buffer.length > 24) {
+        width = buffer.readUInt32BE(16)
+        height = buffer.readUInt32BE(20)
+      } else if (!isPng) {
+        // JPEG: scan for SOF0/SOF2 marker (0xFF 0xC0 / 0xFF 0xC2)
+        for (let i = 0; i < buffer.length - 9; i++) {
+          if (buffer[i] === 0xff && (buffer[i + 1] === 0xc0 || buffer[i + 1] === 0xc2)) {
+            height = buffer.readUInt16BE(i + 5)
+            width = buffer.readUInt16BE(i + 7)
+            break
+          }
+        }
+      }
+
+      db.run(
+        `INSERT INTO images (image_id, page_id, path, hash, width, height, source)
+         VALUES (?, ?, ?, ?, ?, ?, 'upload')`,
+        [newImageId, pageId, `images/${filename}`, hash, width, height]
       )
 
       return c.json({ imageId: newImageId, width, height })

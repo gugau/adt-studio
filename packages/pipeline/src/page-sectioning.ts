@@ -208,7 +208,7 @@ export async function sectionPage(
       unassignedParts.push({
         type: "image",
         imageId: img.imageId,
-        isPruned: true,
+        isPruned: img.isPruned,
         ...(img.reason ? { reason: img.reason } : {}),
       })
     }
@@ -290,6 +290,6 @@ export function buildSectioningConfig(appConfig: AppConfig): SectioningConfig {
     modelId: appConfig.page_sectioning?.model ?? "openai:gpt-5.2",
     maxRetries:
       appConfig.page_sectioning?.max_retries ?? DEFAULT_LLM_MAX_RETRIES,
-    mode: appConfig.page_sectioning?.mode ?? "section",
+    mode: appConfig.page_sectioning?.mode ?? "dynamic",
   }
 }

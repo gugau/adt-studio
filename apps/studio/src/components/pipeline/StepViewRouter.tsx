@@ -10,6 +10,7 @@ import {
   TranslationsView,
   PreviewView,
   ValidationView,
+  ExportView,
 } from "./stages"
 import { cn } from "@/lib/utils"
 
@@ -50,6 +51,7 @@ const VIEW_MAP: Record<string, ViewEntry> = {
   "text-and-speech": { component: TranslationsView },
   validation: { component: ValidationView, fullHeight: true },
   preview: { component: PreviewView, fullHeight: true },
+  export: { component: ExportView },
 }
 
 export function StepViewRouter({ step, bookLabel, selectedPageId, onSelectPage }: { step: string; bookLabel: string; selectedPageId?: string; onSelectPage?: (pageId: string | null) => void }) {

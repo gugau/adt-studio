@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from "react"
 import { createPortal } from "react-dom"
-import { Check, Copy, Eye, EyeOff, LayoutGrid, Layers, Loader2, ChevronDown, Sparkles, ChevronRight, PanelRightOpen, PanelRightClose, Play, PenLine, Save, X } from "lucide-react"
+import { Check, Eye, EyeOff, LayoutGrid, Loader2, ChevronDown, Sparkles, ChevronRight, PanelRightOpen, PanelRightClose, Play, PenLine, Save, Merge, X, Code, GripHorizontal } from "lucide-react"
+import { SectionDataPanel } from "./SectionDataPanel"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { api, BASE_URL } from "@/api/client"
 import type { PageDetail, VersionEntry } from "@/api/client"
@@ -11,6 +12,7 @@ import { BookPreviewFrame, type BookPreviewFrameHandle } from "./BookPreviewFram
 import { SectionEditToolbar } from "./SectionEditToolbar"
 import { ImageCropDialog } from "./ImageCropDialog"
 import { AiImageDialog } from "./AiImageDialog"
+import { AddImageDialog } from "./AddImageDialog"
 import { SegmentPreviewDialog, type SegmentRegion } from "./SegmentPreviewDialog"
 import {
   Select,
@@ -20,6 +22,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
 
 // -- AI loading messages --
 
@@ -170,41 +180,6 @@ function VersionPicker({
   )
 }
 
-// -- ImageCard --
-
-function ImageCard({ imageId, bookLabel, isPruned, reason }: { imageId: string; bookLabel: string; isPruned?: boolean; reason?: string }) {
-  const [dimensions, setDimensions] = useState<{ w: number; h: number } | null>(null)
-
-  return (
-    <div
-      className={`relative rounded border overflow-hidden bg-card flex flex-col items-center min-h-[80px] transition-opacity duration-300 ${isPruned ? "opacity-40" : ""}`}
-      title={isPruned ? `Pruned: ${reason}` : undefined}
-    >
-      <img
-        src={`${BASE_URL}/books/${bookLabel}/images/${imageId}`}
-        alt={imageId}
-        className={`max-w-full h-auto block my-auto ${isPruned ? "grayscale" : ""}`}
-        onLoad={(e) => {
-          const img = e.target as HTMLImageElement
-          setDimensions({ w: img.naturalWidth, h: img.naturalHeight })
-        }}
-        onError={(e) => {
-          const target = e.target as HTMLImageElement
-          target.style.display = "none"
-        }}
-      />
-      <div className="px-2 py-1 flex items-center justify-between border-t bg-muted/30 w-full mt-auto">
-        <span className="text-[10px] text-muted-foreground truncate">{imageId}</span>
-        {dimensions && (
-          <span className="text-[10px] text-muted-foreground shrink-0 ml-1">
-            {dimensions.w}&times;{dimensions.h}
-          </span>
-        )}
-      </div>
-    </div>
-  )
-}
-
 // -- Types --
 
 type SectioningData = NonNullable<PageDetail["sectioning"]>
@@ -331,8 +306,14 @@ export function StoryboardSectionDetail({
   const [saving, setSaving] = useState(false)
   const [cloning, setCloning] = useState(false)
   const [rerendering, setRerendering] = useState(false)
+  const [merging, setMerging] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [confirmDeleteSection, setConfirmDeleteSection] = useState(false)
   const [pendingSectioning, setPendingSectioning] = useState<SectioningData | null>(null)
   const [pendingRendering, setPendingRendering] = useState<RenderingData | null>(null)
+  // Tracks whether pending sectioning changes require LLM re-render on save.
+  // Pure prune/delete can be resolved locally; unprune/type change/reorder need LLM.
+  const needsRerenderRef = useRef(false)
 
   // Inline editing state
   const [selectedElement, setSelectedElement] = useState<{
@@ -350,6 +331,20 @@ export function StoryboardSectionDetail({
 
   // Section data panel state
   const [panelOpen, setPanelOpen] = useState(false)
+  const [htmlPreview, setHtmlPreview] = useState(false)
+  const [htmlPanelHeight, setHtmlPanelHeight] = useState(() => Math.floor(window.innerHeight * 0.35))
+  const htmlPanelRef = useRef<HTMLDivElement>(null)
+  const htmlDragging = useRef(false)
+  const [htmlDraggingActive, setHtmlDraggingActive] = useState(false)
+  const htmlDragCleanup = useRef<(() => void) | null>(null)
+
+  // Clean up drag listeners on unmount
+  useEffect(() => {
+    return () => {
+      htmlDragging.current = false
+      htmlDragCleanup.current?.()
+    }
+  }, [])
 
   // Image crop state
   const [cropTarget, setCropTarget] = useState<string | null>(null)
@@ -374,6 +369,10 @@ export function StoryboardSectionDetail({
     imageHeight: number
     regions: SegmentRegion[]
   } | null>(null)
+
+  // Add image dialog state
+  const [addImageDialogOpen, setAddImageDialogOpen] = useState(false)
+  const [showPrunedImages, setShowPrunedImages] = useState(true)
 
   // Notify parent when AI image generation starts/stops
   useEffect(() => {
@@ -414,6 +413,7 @@ export function StoryboardSectionDetail({
   })
 
   const textTypes = configQuery.data?.merged?.text_types as Record<string, string> | undefined
+  const groupTypes = configQuery.data?.merged?.text_group_types as Record<string, string> | undefined
   const allSectionTypes = configQuery.data?.merged?.section_types as Record<string, string> | undefined
   const disabledSectionTypes = new Set(configQuery.data?.merged?.disabled_section_types as string[] ?? [])
   const sectionTypes = allSectionTypes
@@ -435,6 +435,7 @@ export function StoryboardSectionDetail({
     setSelectedElement(null)
     setCropTarget(null)
     setAiImageDialogTarget(null)
+    setAddImageDialogOpen(false)
     aiAbortRef.current?.abort()
     aiImageAbortRef.current?.abort()
     setAiImageGen(null)
@@ -446,6 +447,7 @@ export function StoryboardSectionDetail({
     setRerendering(false)
     setSaving(false)
     setActivityPreviewMode(false)
+    needsRerenderRef.current = false
   }, [pageId, sectionIndex])
 
   // Reset scroll position when page or section changes
@@ -472,43 +474,74 @@ export function StoryboardSectionDetail({
   const renderedSection = getRenderedSectionByIndex(renderingData, sectionIndex)
   const renderingDirty = pendingRendering != null
 
-  if (!section) {
-    return (
-      <div className="p-4 text-sm text-muted-foreground">
-        Section not found.
-      </div>
-    )
-  }
-
-  // Parts are inline in the section data
-  const parts = section.parts
+  // Parts are inline in the section data (empty if section missing — hooks still run)
+  const parts = section?.parts ?? []
 
   // Save / discard sectioning
   const saveSectioning = async () => {
     if (!pendingSectioning) return
     setSaving(true)
     setPanelOpen(false)
+    const shouldRerender = needsRerenderRef.current
     try {
       const minDelay = new Promise((r) => setTimeout(r, 400))
+
+      // Before saving, strip pruned elements from the rendered HTML so they
+      // disappear from the preview without needing an LLM re-render.
+      let renderingFromPrune: RenderingData | null = null
+      const sectionToSave = pendingSectioning.sections[sectionIndex]
+      if (sectionToSave) {
+        const prunedIds: string[] = []
+        for (const p of sectionToSave.parts ?? []) {
+          if (p.type === "image" && p.isPruned) {
+            prunedIds.push(p.imageId)
+          } else if (p.type === "text_group") {
+            const actualIds = resolveGroupDataIds(p.groupId)
+            if (p.isPruned) {
+              prunedIds.push(...actualIds)
+            } else {
+              p.texts.forEach((t, ti) => {
+                if (t.isPruned && actualIds[ti]) {
+                  prunedIds.push(actualIds[ti])
+                }
+              })
+            }
+          }
+        }
+        if (prunedIds.length > 0) {
+          renderingFromPrune = removeElementsFromRendering(prunedIds)
+        }
+      }
+
       await api.updateSectioning(bookLabel, pageId, pendingSectioning)
+
+      // Save rendering if dirty (from delete/prune removing HTML elements).
+      // Use renderingFromPrune if we just stripped pruned elements above,
+      // since React state won't have updated yet within this async call.
+      const renderingToSave = renderingFromPrune ?? pendingRendering
+      if (renderingToSave) {
+        await api.updateRendering(bookLabel, pageId, renderingToSave)
+      }
+
       setPendingSectioning(null)
+      setPendingRendering(null)
+      setAiReasoning(null)
+      needsRerenderRef.current = false
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
       await minDelay
 
-      // Automatically re-render with the updated sectioning
-      if (hasApiKey) {
+      // Only re-render when changes require LLM (e.g., unprune, type change, reorder)
+      // Skip for pure prune/delete — those are already handled by local HTML removal
+      if (shouldRerender && hasApiKey) {
         setRerendering(true)
         const capturedPageId = pageId
         api.reRenderPage(bookLabel, pageId, apiKey, sectionIndex)
           .then(() => {
-            // Discard if user navigated to a different page
             if (pageIdRef.current !== capturedPageId) return
             queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", capturedPageId] })
             queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages"] })
           })
-          .catch(() => {
-            // Re-render failed — overlay will be cleared by finally
-          })
+          .catch(() => {})
           .finally(() => {
             if (pageIdRef.current === capturedPageId) {
               setRerendering(false)
@@ -524,6 +557,7 @@ export function StoryboardSectionDetail({
 
   const discardSectioning = () => {
     setPendingSectioning(null)
+    needsRerenderRef.current = false
   }
 
   // Save rendering (including back-propagation to sectioning)
@@ -576,10 +610,274 @@ export function StoryboardSectionDetail({
     }
   }
 
+  // Merge current section with next or previous
+  const handleMergeSection = async (direction: "next" | "prev") => {
+    if (merging || dirty || renderingDirty || saving) return
+    setMerging(true)
+    try {
+      const result = await api.mergeSection(bookLabel, pageId, sectionIndex, direction)
+      await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
+      await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages"] })
+      onNavigateSection?.(result.mergedSectionIndex)
+
+      // Auto re-render the merged section so the LLM generates proper HTML for the combined content
+      if (hasApiKey) {
+        setRerendering(true)
+        const capturedPageId = pageId
+        api.reRenderPage(bookLabel, pageId, apiKey, result.mergedSectionIndex)
+          .then(() => {
+            if (pageIdRef.current !== capturedPageId) return
+            queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", capturedPageId] })
+            queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages"] })
+          })
+          .catch(() => {})
+          .finally(() => {
+            if (pageIdRef.current === capturedPageId) {
+              setRerendering(false)
+            }
+          })
+      }
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : "Merge failed")
+    } finally {
+      setMerging(false)
+    }
+  }
+
+  // Delete current section
+  const handleDeleteSection = () => {
+    if (deleting || dirty || renderingDirty || saving) return
+    setConfirmDeleteSection(true)
+  }
+
+  const confirmAndDeleteSection = async () => {
+    setConfirmDeleteSection(false)
+    setDeleting(true)
+    try {
+      const result = await api.deleteSection(bookLabel, pageId, sectionIndex)
+      await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
+      await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages"] })
+      onNavigateSection?.(Math.max(0, Math.min(sectionIndex, result.remainingSections - 1)))
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : "Delete failed")
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  // Manually trigger a re-render of the current section
+  const handleRerender = (prompt?: string) => {
+    if (rerendering || dirty || renderingDirty || saving || !hasApiKey) return
+    setRerendering(true)
+    setPanelOpen(false)
+    const capturedPageId = pageId
+    api.reRenderPage(bookLabel, pageId, apiKey, sectionIndex, prompt)
+      .then(() => {
+        if (pageIdRef.current !== capturedPageId) return
+        queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", capturedPageId] })
+        queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages"] })
+      })
+      .catch((err) => {
+        if (pageIdRef.current === capturedPageId) {
+          setAiError(err instanceof Error ? err.message : "Re-render failed")
+        }
+      })
+      .finally(() => {
+        if (pageIdRef.current === capturedPageId) {
+          setRerendering(false)
+        }
+      })
+  }
+
+  // Resolve the actual data-ids for a text group's elements from the current rendering HTML.
+  // Returns data-ids in document order, which stays in sync with the sectioning texts array
+  // even after local edits (delete/duplicate) that shift positional indices.
+  const resolveGroupDataIds = useCallback(
+    (groupId: string): string[] => {
+      const rBase = pendingRendering ?? page.rendering
+      if (!rBase) return []
+      const currentSection = getRenderedSectionByIndex(rBase, sectionIndex)
+      if (!currentSection?.html) return []
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(currentSection.html, "text/html")
+      const elements = doc.querySelectorAll(`[data-id^="${groupId}_tx"]`)
+      return Array.from(elements).map(el => el.getAttribute("data-id")!).filter(Boolean)
+    },
+    [pendingRendering, page.rendering, sectionIndex]
+  )
+
+  // Remove one or more data-id elements from the rendered HTML and update pendingRendering.
+  // Returns the updated rendering, or null if nothing changed.
+  const removeElementsFromRendering = useCallback(
+    (dataIds: string[]): RenderingData | null => {
+      const rBase = pendingRendering ?? page.rendering
+      if (!rBase) return null
+      const currentSection = getRenderedSectionByIndex(rBase, sectionIndex)
+      if (!currentSection?.html) return null
+
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(currentSection.html, "text/html")
+      let removed = false
+
+      for (const dataId of dataIds) {
+        const el = doc.querySelector(`[data-id="${dataId}"]`)
+        if (!el) continue
+
+        const blockParent = el.closest("div, p, figure, li, tr, section[data-section-id]")
+        // Guard: never remove the section wrapper or the outer content/container div
+        const isSectionWrapper = blockParent?.getAttribute("data-section-id") != null
+        const isOuterContainer =
+          blockParent?.id === "content" || blockParent?.classList.contains("container")
+        if (isSectionWrapper || isOuterContainer) {
+          el.remove()
+        } else if (blockParent && blockParent.querySelectorAll("[data-id]").length <= 1) {
+          blockParent.remove()
+        } else {
+          el.remove()
+        }
+        removed = true
+      }
+
+      if (!removed) return null
+
+      const newHtml = doc.body.innerHTML
+      const updated: RenderingData = {
+        ...rBase,
+        sections: rBase.sections.map((s) => {
+          if (s.sectionIndex !== sectionIndex) return s
+          return { ...s, html: newHtml }
+        }),
+      }
+      setPendingRendering(updated)
+      return updated
+    },
+    [pendingRendering, page.rendering, sectionIndex]
+  )
+
+  // Clone data-id elements in the rendered HTML and insert after the originals.
+  // `mappings` is an array of { sourceDataId, newDataId } pairs.
+  // For group duplication, pass all text entries of the source group mapped to new IDs.
+  const duplicateElementsInRendering = useCallback(
+    (mappings: Array<{ sourceDataId: string; newDataId: string }>) => {
+      const rBase = pendingRendering ?? page.rendering
+      if (!rBase) return
+      const currentSection = getRenderedSectionByIndex(rBase, sectionIndex)
+      if (!currentSection?.html) return
+
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(currentSection.html, "text/html")
+
+      // Resolve each source element's block-level target (the node we insert after)
+      function getBlockTarget(el: Element): Element {
+        const blockParent = el.closest("div, p, figure, li, tr")
+        return blockParent && !blockParent.getAttribute("data-section-id") ? blockParent : el
+      }
+
+      // Find the last source element to use as insertion anchor — all clones go after it
+      // so duplicated groups appear together rather than interleaved with originals.
+      let lastTarget: Element | null = null
+      const clones: Element[] = []
+
+      for (const { sourceDataId, newDataId } of mappings) {
+        const el = doc.querySelector(`[data-id="${sourceDataId}"]`)
+        if (!el) continue
+
+        const clone = el.cloneNode(true) as Element
+        clone.setAttribute("data-id", newDataId)
+
+        const target = getBlockTarget(el)
+        lastTarget = target
+
+        // Wrap clone in block parent copy if source was wrapped
+        if (target !== el) {
+          const bp = target.cloneNode(false) as Element
+          bp.appendChild(clone)
+          clones.push(bp)
+        } else {
+          clones.push(clone)
+        }
+      }
+
+      if (!lastTarget || clones.length === 0) return
+
+      // Insert all clones after the last source element's block target
+      const insertionRef = lastTarget.nextSibling
+      const parent = lastTarget.parentNode
+      for (const c of clones) {
+        parent?.insertBefore(c, insertionRef)
+      }
+
+      const newHtml = doc.body.innerHTML
+      const updated: RenderingData = {
+        ...rBase,
+        sections: rBase.sections.map((s) => {
+          if (s.sectionIndex !== sectionIndex) return s
+          return { ...s, html: newHtml }
+        }),
+      }
+      setPendingRendering(updated)
+    },
+    [pendingRendering, page.rendering, sectionIndex]
+  )
+
+  // Delete selected block from rendered HTML
+  const handleDeleteBlock = useCallback(
+    (dataId: string) => {
+      removeElementsFromRendering([dataId])
+
+      // Also delete matching part from sectioning (not just prune)
+      const sBase = pendingSectioning ?? page.sectioning
+      if (sBase) {
+        const loc = findTextByDataId(parts, dataId)
+        if (loc) {
+          const updatedSectioning: SectioningData = {
+            ...sBase,
+            sections: sBase.sections.map((s, si) => {
+              if (si !== sectionIndex) return s
+              return {
+                ...s,
+                parts: s.parts.map((p, pi) => {
+                  if (pi !== loc.partIndex || p.type !== "text_group") return p
+                  return {
+                    ...p,
+                    texts: p.texts.filter((_, ti) => ti !== loc.textIndex),
+                  }
+                }),
+              }
+            }),
+          }
+          setPendingSectioning(updatedSectioning)
+        } else {
+          // Image — filter out entirely
+          const imgIdx = parts.findIndex((p) => p.type === "image" && p.imageId === dataId)
+          if (imgIdx >= 0) {
+            const updatedSectioning: SectioningData = {
+              ...sBase,
+              sections: sBase.sections.map((s, si) => {
+                if (si !== sectionIndex) return s
+                return {
+                  ...s,
+                  parts: s.parts.filter((_, pi) => pi !== imgIdx),
+                }
+              }),
+            }
+            setPendingSectioning(updatedSectioning)
+          }
+        }
+      }
+
+      setSelectedElement(null)
+    },
+    [removeElementsFromRendering, pendingSectioning, page.sectioning, sectionIndex, parts]
+  )
+
   // Toggle isPruned on a part within the current section
   const togglePartPruned = (partIndex: number) => {
     const base = pendingSectioning ?? page.sectioning
     if (!base) return
+    // Unpruning requires re-render to add the element back to HTML
+    const currentPart = base.sections[sectionIndex]?.parts[partIndex]
+    if (currentPart?.isPruned) needsRerenderRef.current = true
     const updated: SectioningData = {
       ...base,
       sections: base.sections.map((s, si) => {
@@ -600,6 +898,8 @@ export function StoryboardSectionDetail({
   const toggleSectionPruned = () => {
     const base = pendingSectioning ?? page.sectioning
     if (!base) return
+    // Unpruning requires re-render
+    if (base.sections[sectionIndex]?.isPruned) needsRerenderRef.current = true
     const updated: SectioningData = {
       ...base,
       sections: base.sections.map((s, si) => {
@@ -612,6 +912,7 @@ export function StoryboardSectionDetail({
 
   // Change section type
   const changeSectionType = (newType: string) => {
+    needsRerenderRef.current = true
     const base = pendingSectioning ?? page.sectioning
     if (!base) return
     const updated: SectioningData = {
@@ -626,6 +927,7 @@ export function StoryboardSectionDetail({
 
   // Change text type for a specific text entry
   const changeTextType = (partIndex: number, textIndex: number, newType: string) => {
+    needsRerenderRef.current = true
     const base = pendingSectioning ?? page.sectioning
     if (!base) return
     const updated: SectioningData = {
@@ -643,6 +945,272 @@ export function StoryboardSectionDetail({
                 return { ...t, textType: newType }
               }),
             }
+          }),
+        }
+      }),
+    }
+    setPendingSectioning(updated)
+  }
+
+  // Change group type for a specific text group
+  const changeGroupType = (partIndex: number, newType: string) => {
+    needsRerenderRef.current = true
+    const base = pendingSectioning ?? page.sectioning
+    if (!base) return
+    const updated: SectioningData = {
+      ...base,
+      sections: base.sections.map((s, si) => {
+        if (si !== sectionIndex) return s
+        return {
+          ...s,
+          parts: s.parts.map((p, pi) => {
+            if (pi !== partIndex || p.type !== "text_group") return p
+            return { ...p, groupType: newType }
+          }),
+        }
+      }),
+    }
+    setPendingSectioning(updated)
+  }
+
+  // Toggle isPruned on a specific text entry
+  const toggleTextPruned = (partIndex: number, textIndex: number) => {
+    const base = pendingSectioning ?? page.sectioning
+    if (!base) return
+    // Unpruning requires re-render to add the element back
+    const part = base.sections[sectionIndex]?.parts[partIndex]
+    if (part?.type === "text_group" && part.texts[textIndex]?.isPruned) {
+      needsRerenderRef.current = true
+    }
+    const updated: SectioningData = {
+      ...base,
+      sections: base.sections.map((s, si) => {
+        if (si !== sectionIndex) return s
+        return {
+          ...s,
+          parts: s.parts.map((p, pi) => {
+            if (pi !== partIndex || p.type !== "text_group") return p
+            return {
+              ...p,
+              texts: p.texts.map((t, ti) => {
+                if (ti !== textIndex) return t
+                return { ...t, isPruned: !t.isPruned }
+              }),
+            }
+          }),
+        }
+      }),
+    }
+    setPendingSectioning(updated)
+  }
+
+  // Delete a specific text entry from a group (removes from sectioning + preview HTML)
+  const deleteTextEntry = (partIndex: number, textIndex: number) => {
+    const base = pendingSectioning ?? page.sectioning
+    if (!base) return
+    // Resolve the actual data-id from the HTML before removing from sectioning
+    const part = parts[partIndex]
+    if (part?.type === "text_group") {
+      const actualIds = resolveGroupDataIds(part.groupId)
+      const dataId = actualIds[textIndex]
+      if (dataId) removeElementsFromRendering([dataId])
+    }
+    const updated: SectioningData = {
+      ...base,
+      sections: base.sections.map((s, si) => {
+        if (si !== sectionIndex) return s
+        return {
+          ...s,
+          parts: s.parts.map((p, pi) => {
+            if (pi !== partIndex || p.type !== "text_group") return p
+            return {
+              ...p,
+              texts: p.texts.filter((_, ti) => ti !== textIndex),
+            }
+          }),
+        }
+      }),
+    }
+    setPendingSectioning(updated)
+  }
+
+  // Duplicate a specific text entry within a group
+  const duplicateTextEntry = (partIndex: number, textIndex: number) => {
+    const base = pendingSectioning ?? page.sectioning
+    if (!base) return
+    const part = parts[partIndex]
+    if (!part || part.type !== "text_group") return
+    const newTextId = `user_txt_${crypto.randomUUID().slice(0, 8)}`
+    const actualIds = resolveGroupDataIds(part.groupId)
+    const sourceDataId = actualIds[textIndex]
+    const newDataId = `${part.groupId}_tx_${crypto.randomUUID().slice(0, 8)}`
+    const updated: SectioningData = {
+      ...base,
+      sections: base.sections.map((s, si) => {
+        if (si !== sectionIndex) return s
+        return {
+          ...s,
+          parts: s.parts.map((p, pi) => {
+            if (pi !== partIndex || p.type !== "text_group") return p
+            const newTexts = [...p.texts]
+            const cloned = { ...p.texts[textIndex], textId: newTextId }
+            newTexts.splice(textIndex + 1, 0, cloned)
+            return { ...p, texts: newTexts }
+          }),
+        }
+      }),
+    }
+    setPendingSectioning(updated)
+    // Clone the element in the preview HTML
+    if (sourceDataId) {
+      duplicateElementsInRendering([{ sourceDataId, newDataId }])
+    }
+  }
+
+  // Add a new empty text group
+  const addGroup = () => {
+    needsRerenderRef.current = true
+    const base = pendingSectioning ?? page.sectioning
+    if (!base) return
+    const newGroup = {
+      type: "text_group" as const,
+      groupId: `user_grp_${crypto.randomUUID().slice(0, 8)}`,
+      groupType: "body",
+      texts: [] as { textId: string; textType: string; text: string; isPruned: boolean }[],
+
+      isPruned: false,
+    }
+    const updated: SectioningData = {
+      ...base,
+      sections: base.sections.map((s, si) => {
+        if (si !== sectionIndex) return s
+        return { ...s, parts: [...s.parts, newGroup] }
+      }),
+    }
+    setPendingSectioning(updated)
+  }
+
+  // Duplicate a text group
+  const duplicateGroup = (partIndex: number) => {
+    const base = pendingSectioning ?? page.sectioning
+    if (!base) return
+    const srcPart = parts[partIndex]
+    if (!srcPart || srcPart.type !== "text_group") return
+    const newGroupId = `user_grp_${crypto.randomUUID().slice(0, 8)}`
+    // Build mappings from actual HTML data-ids to new data-ids for the preview clone
+    const actualSourceIds = resolveGroupDataIds(srcPart.groupId)
+    const mappings = actualSourceIds.map((sourceDataId, ti) => ({
+      sourceDataId,
+      newDataId: `${newGroupId}_tx${String(ti + 1).padStart(3, "0")}`,
+    }))
+    const updated: SectioningData = {
+      ...base,
+      sections: base.sections.map((s, si) => {
+        if (si !== sectionIndex) return s
+        const cloned = structuredClone(srcPart)
+        const clone = {
+          ...cloned,
+          groupId: newGroupId,
+          texts: cloned.texts.map((t: { textId: string; textType: string; text: string; isPruned: boolean }) => ({
+            ...t,
+            textId: `user_txt_${crypto.randomUUID().slice(0, 8)}`,
+          })),
+        }
+        const newParts = [...s.parts]
+        newParts.splice(partIndex + 1, 0, clone)
+        return { ...s, parts: newParts }
+      }),
+    }
+    setPendingSectioning(updated)
+    // Clone the elements in the preview HTML
+    duplicateElementsInRendering(mappings)
+  }
+
+  // Delete a text group (removes from sectioning + preview HTML)
+  const deleteGroup = (partIndex: number) => {
+    const base = pendingSectioning ?? page.sectioning
+    if (!base) return
+    // Remove all text elements belonging to this group from the preview
+    const part = parts[partIndex]
+    if (part?.type === "text_group") {
+      const dataIds = resolveGroupDataIds(part.groupId)
+      if (dataIds.length > 0) removeElementsFromRendering(dataIds)
+    }
+    const updated: SectioningData = {
+      ...base,
+      sections: base.sections.map((s, si) => {
+        if (si !== sectionIndex) return s
+        return { ...s, parts: s.parts.filter((_, pi) => pi !== partIndex) }
+      }),
+    }
+    setPendingSectioning(updated)
+  }
+
+  // Reorder parts within the section
+  const reorderParts = (fromIndex: number, toIndex: number) => {
+    needsRerenderRef.current = true
+    const base = pendingSectioning ?? page.sectioning
+    if (!base) return
+    const updated: SectioningData = {
+      ...base,
+      sections: base.sections.map((s, si) => {
+        if (si !== sectionIndex) return s
+        const newParts = [...s.parts]
+        const [moved] = newParts.splice(fromIndex, 1)
+        newParts.splice(toIndex, 0, moved)
+        return { ...s, parts: newParts }
+      }),
+    }
+    setPendingSectioning(updated)
+  }
+
+  // Move a text entry between groups (or reorder within a group)
+  const moveText = (
+    fromPartIndex: number,
+    fromTextIndex: number,
+    toPartIndex: number,
+    toTextIndex: number
+  ) => {
+    needsRerenderRef.current = true
+    const base = pendingSectioning ?? page.sectioning
+    if (!base) return
+    const updated: SectioningData = {
+      ...base,
+      sections: base.sections.map((s, si) => {
+        if (si !== sectionIndex) return s
+        const fromGroup = s.parts[fromPartIndex]
+        const toGroup = s.parts[toPartIndex]
+        if (fromGroup?.type !== "text_group" || toGroup?.type !== "text_group") return s
+
+        if (fromPartIndex === toPartIndex) {
+          // Reorder within the same group
+          const texts = [...fromGroup.texts]
+          const [moved] = texts.splice(fromTextIndex, 1)
+          texts.splice(toTextIndex > fromTextIndex ? toTextIndex - 1 : toTextIndex, 0, moved)
+          return {
+            ...s,
+            parts: s.parts.map((p, pi) => {
+              if (pi !== fromPartIndex) return p
+              return { ...p, texts }
+            }),
+          }
+        }
+
+        // Move between different groups
+        const movedText = fromGroup.texts[fromTextIndex]
+        return {
+          ...s,
+          parts: s.parts.map((p, pi) => {
+            if (p.type !== "text_group") return p
+            if (pi === fromPartIndex) {
+              return { ...p, texts: p.texts.filter((_, ti) => ti !== fromTextIndex) }
+            }
+            if (pi === toPartIndex) {
+              const newTexts = [...p.texts]
+              newTexts.splice(toTextIndex, 0, movedText)
+              return { ...p, texts: newTexts }
+            }
+            return p
           }),
         }
       }),
@@ -1028,9 +1596,109 @@ export function StoryboardSectionDetail({
     [bookLabel, sectionIndex]
   )
 
+  // Add a new image to the current section (append to parts + inject into HTML)
+  const addImageToSection = useCallback(
+    (newImageId: string, dims?: { w: number; h: number }) => {
+      // Update sectioning
+      setPendingSectioning((prev) => {
+        const sBase = prev ?? pageDataRef.current.sectioning
+        if (!sBase) return prev
+        return {
+          ...sBase,
+          sections: sBase.sections.map((s, si) => {
+            if (si !== sectionIndex) return s
+            // Skip if image already exists in this section
+            if (s.parts.some((p) => p.type === "image" && p.imageId === newImageId)) return s
+            return {
+              ...s,
+              parts: [...s.parts, { type: "image" as const, imageId: newImageId, isPruned: false }],
+            }
+          }),
+        }
+      })
+
+      // Update rendering HTML — append img tag at end of section content
+      setPendingRendering((prev) => {
+        const rBase = prev ?? pageDataRef.current.rendering
+        if (!rBase) return prev
+        const imgTag = `<img data-id="${newImageId}" src="${BASE_URL}/books/${bookLabel}/images/${newImageId}"${dims ? ` width="${dims.w}" height="${dims.h}"` : ""} alt="${newImageId}" class="w-full" />`
+        return {
+          ...rBase,
+          sections: rBase.sections.map((s) => {
+            if (s.sectionIndex !== sectionIndex) return s
+            // Try to insert before closing </section>, otherwise append
+            const closingIdx = s.html.lastIndexOf("</section>")
+            const html = closingIdx >= 0
+              ? s.html.slice(0, closingIdx) + imgTag + s.html.slice(closingIdx)
+              : s.html + imgTag
+            return { ...s, html }
+          }),
+        }
+      })
+    },
+    [bookLabel, sectionIndex]
+  )
+
+  // Handlers for AddImageDialog
+  const handleAddExistingImage = useCallback(
+    (imageIds: string[]) => {
+      setAddImageDialogOpen(false)
+      for (const id of imageIds) {
+        addImageToSection(id)
+      }
+    },
+    [addImageToSection]
+  )
+
+  const handleAddImageUpload = useCallback(
+    async (file: File) => {
+      setAddImageDialogOpen(false)
+      try {
+        const result = await api.uploadNewImage(bookLabel, pageId, file)
+        addImageToSection(result.imageId, { w: result.width, h: result.height })
+      } catch (err) {
+        setAiError(err instanceof Error ? err.message : "Image upload failed")
+      }
+    },
+    [bookLabel, pageId, addImageToSection]
+  )
+
+  const handleAddImageGenerate = useCallback(
+    (prompt: string) => {
+      setAddImageDialogOpen(false)
+      setAiImageGen({ targetImageId: "__adding__", status: "generating" })
+
+      const controller = new AbortController()
+      aiImageAbortRef.current = controller
+
+      api
+        .aiGenerateImage(bookLabel, pageId, prompt, apiKey, pageId, undefined, controller.signal)
+        .then((result) => {
+          addImageToSection(result.imageId, { w: result.width, h: result.height })
+          setAiImageGen({ targetImageId: "__adding__", status: "done" })
+          setTimeout(() => setAiImageGen((prev) => prev?.status === "done" ? null : prev), 3000)
+        })
+        .catch((err) => {
+          if (err instanceof DOMException && err.name === "AbortError") {
+            setAiImageGen(null)
+          } else {
+            setAiImageGen({
+              targetImageId: "__adding__",
+              status: "error",
+              error: err instanceof Error ? err.message : "Image generation failed",
+            })
+          }
+        })
+        .finally(() => {
+          aiImageAbortRef.current = null
+        })
+    },
+    [bookLabel, pageId, apiKey, addImageToSection]
+  )
+
   // Submit from AI image dialog: close dialog, run generation in background
   const handleAiImageSubmit = useCallback(
-    (prompt: string, referenceImageId?: string) => {
+    (prompt: string, referenceImageId?: string, options?: { style?: string; imageType?: string; styleImageId?: string }) => {
       const targetId = aiImageDialogTarget
       if (!targetId) return
       setAiImageDialogTarget(null)
@@ -1040,7 +1708,7 @@ export function StoryboardSectionDetail({
       aiImageAbortRef.current = controller
 
       api
-        .aiGenerateImage(bookLabel, pageId, prompt, apiKey, targetId, referenceImageId, controller.signal)
+        .aiGenerateImage(bookLabel, pageId, prompt, apiKey, targetId, referenceImageId, controller.signal, options)
         .then((result) => {
           swapImage(targetId, result.imageId, { w: result.originalWidth, h: result.originalHeight })
           setAiImageGen({ targetImageId: targetId, status: "done" })
@@ -1104,6 +1772,8 @@ export function StoryboardSectionDetail({
       setPendingRendering(updated)
       setAiReasoning(result.reasoning)
       setAiInstruction("")
+      // Regenerate Tailwind CSS so new classes from the AI edit render immediately
+      previewFrameRef.current?.refreshCss(result.html)
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
         // User cancelled — not an error
@@ -1231,13 +1901,13 @@ export function StoryboardSectionDetail({
         type="button"
         onClick={toggleSectionPruned}
         className={`flex items-center justify-center w-7 h-7 rounded transition-colors cursor-pointer ${
-          section.isPruned
+          section?.isPruned
             ? "bg-amber-500/30 hover:bg-amber-500/40"
             : "bg-white/10 hover:bg-white/20"
         }`}
-        title={section.isPruned ? "Restore section to flow" : "Prune section from flow"}
+        title={section?.isPruned ? "Restore section to flow" : "Prune section from flow"}
       >
-        {section.isPruned ? (
+        {section?.isPruned ? (
           <EyeOff className="h-3.5 w-3.5 text-amber-200" />
         ) : (
           <Eye className="h-3.5 w-3.5" />
@@ -1278,6 +1948,19 @@ export function StoryboardSectionDetail({
       ) : (
         <div className="flex-1" />
       )}
+      {renderedSection?.html && (
+        <button
+          type="button"
+          onClick={() => setHtmlPreview((v) => !v)}
+          className={`flex items-center gap-1 px-2 py-1 rounded transition-colors cursor-pointer shrink-0 ${
+            htmlPreview ? "bg-white/30" : "bg-white/10 hover:bg-white/20"
+          }`}
+          title={htmlPreview ? "Back to preview" : "View HTML source"}
+        >
+          <Code className="h-3.5 w-3.5" />
+          <span className="text-[10px]">HTML</span>
+        </button>
+      )}
       <button
         type="button"
         onClick={() => setPanelOpen((v) => !v)}
@@ -1295,6 +1978,14 @@ export function StoryboardSectionDetail({
       {navigationArrows}
     </>
   )
+
+  if (!section) {
+    return (
+      <div className="p-4 text-sm text-muted-foreground">
+        Section not found.
+      </div>
+    )
+  }
 
   return (
     <>
@@ -1330,7 +2021,15 @@ export function StoryboardSectionDetail({
 
       {/* Preview — fills remaining space, scrolls independently */}
       <div className="flex-1 overflow-auto px-4 py-4 relative" ref={scrollContainerRef}>
-        {renderedSection?.html ? (
+        {!section ? (
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+            <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+              <LayoutGrid className="w-6 h-6 text-muted-foreground/40" />
+            </div>
+            <p className="text-sm font-medium">No sections on this page</p>
+            <p className="text-xs mt-1">All sections have been deleted</p>
+          </div>
+        ) : renderedSection?.html ? (
           <>
             {activityPreviewMode ? (
               <iframe
@@ -1340,16 +2039,17 @@ export function StoryboardSectionDetail({
               />
             ) : (
               <BookPreviewFrame
-                ref={previewFrameRef}
-                html={renderedSection.html}
-                className="w-full rounded border"
-                editable={!aiLoading && !rerendering}
-                prunedDataIds={prunedDataIds}
-                changedElements={changedElements}
-                onSelectElement={handleSelectElement}
-                onTextChanged={handleTextChanged}
-                applyBodyBackground={applyBodyBackground}
-              />
+                  ref={previewFrameRef}
+                  html={renderedSection.html}
+                  bookLabel={bookLabel}
+                  className="w-full rounded border"
+                  editable={!aiLoading && !rerendering}
+                  prunedDataIds={prunedDataIds}
+                  changedElements={changedElements}
+                  onSelectElement={handleSelectElement}
+                  onTextChanged={handleTextChanged}
+                  applyBodyBackground={applyBodyBackground}
+                />
             )}
           </>
         ) : (
@@ -1363,7 +2063,7 @@ export function StoryboardSectionDetail({
         )}
 
         {/* Pruned section overlay */}
-        {section.isPruned && !aiLoading && !rerendering && (
+        {section?.isPruned && !aiLoading && !rerendering && (
           <div className="absolute inset-0 z-30 bg-background/60 backdrop-blur-[1px] flex items-center justify-center">
             <div className="flex flex-col items-center gap-3 text-center max-w-xs">
               <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
@@ -1422,6 +2122,61 @@ export function StoryboardSectionDetail({
         )}
 
       </div>
+
+      {/* Slide-up HTML editor panel */}
+      {htmlPreview && renderedSection && (
+        <div
+          ref={htmlPanelRef}
+          className="border-t border-border bg-[#1e1e2e] flex flex-col shrink-0"
+          style={{ height: htmlPanelHeight }}
+        >
+          <div
+            className="flex items-center justify-center h-2 cursor-row-resize hover:bg-white/10 shrink-0"
+            onMouseDown={(e) => {
+              e.preventDefault()
+              htmlDragging.current = true
+              setHtmlDraggingActive(true)
+              const startY = e.clientY
+              const startH = htmlPanelRef.current?.offsetHeight ?? htmlPanelHeight
+              const onMove = (ev: MouseEvent) => {
+                if (!htmlDragging.current) return
+                const delta = startY - ev.clientY
+                const maxH = Math.floor(window.innerHeight * 0.8)
+                setHtmlPanelHeight(Math.min(maxH, Math.max(150, startH + delta)))
+              }
+              const onUp = () => {
+                htmlDragging.current = false
+                setHtmlDraggingActive(false)
+                document.removeEventListener("mousemove", onMove)
+                document.removeEventListener("mouseup", onUp)
+                htmlDragCleanup.current = null
+              }
+              document.addEventListener("mousemove", onMove)
+              document.addEventListener("mouseup", onUp)
+              htmlDragCleanup.current = onUp
+            }}
+          >
+            <GripHorizontal className="h-3 w-3 text-gray-500" />
+          </div>
+          <textarea
+            className="flex-1 min-h-0 w-full p-4 text-xs leading-relaxed text-gray-200 font-mono resize-none focus:outline-none bg-transparent"
+            spellCheck={false}
+            value={renderedSection.html ?? ""}
+            onChange={(e) => {
+              const base = pendingRendering ?? page.rendering
+              if (!base) return
+              const updated: RenderingData = {
+                ...base,
+                sections: base.sections.map((s) => {
+                  if (s.sectionIndex !== sectionIndex) return s
+                  return { ...s, html: e.target.value }
+                }),
+              }
+              setPendingRendering(updated)
+            }}
+          />
+        </div>
+      )}
 
       {/* Background image generation indicator — absolute to outer panel so it stays visible while scrolling */}
       {aiImageGen && (
@@ -1553,66 +2308,41 @@ export function StoryboardSectionDetail({
           onAiImage={selectedInfo.isImage && hasApiKey ? handleAiImage : undefined}
           onSegment={selectedInfo.isImage && hasApiKey ? handleSegment : undefined}
           segmenting={segmenting}
+          onDelete={handleDeleteBlock}
         />
       )}
 
       {/* Slide-out section data panel */}
-      <div
-        className={`absolute top-0 right-0 h-full w-[480px] bg-background border-l shadow-lg transition-transform duration-200 ease-in-out z-30 ${
-          panelOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        {/* Panel header */}
-        <div className="flex items-center gap-2 px-4 py-2 border-b text-xs text-muted-foreground">
-          <span className="font-medium uppercase tracking-wider">Content</span>
-          {sectionTypes ? (
-            <Select value={section.sectionType} onValueChange={changeSectionType}>
-              <SelectTrigger className="h-6 text-[10px] font-medium px-1.5 py-0 w-auto min-w-[80px] border-0 bg-muted/50">
-                <SelectValue>{section.sectionType}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(sectionTypes).map(([key, desc]) => (
-                  <SelectItem key={key} value={key} className="text-xs">
-                    {key}
-                    <span className="ml-1 text-muted-foreground text-[10px]">{desc}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <span className="font-medium">{section.sectionType}</span>
-          )}
-          {!section.isPruned && (
-            <>
-              <span
-                className="w-3.5 h-3.5 rounded border"
-                style={{ backgroundColor: section.backgroundColor }}
-                title={`Background: ${section.backgroundColor}`}
-              />
-              <span
-                className="w-3.5 h-3.5 rounded border"
-                style={{ backgroundColor: section.textColor }}
-                title={`Text color: ${section.textColor}`}
-              />
-            </>
-          )}
-          {section.isPruned && (
-            <span className="text-destructive text-[10px] font-medium">(pruned)</span>
-          )}
-          <div className="ml-auto flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={handleCloneSection}
-            disabled={cloning || dirty || renderingDirty || saving}
-            className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
-            title={dirty || renderingDirty ? "Save changes before cloning" : "Clone this section"}
-          >
-            {cloning ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Copy className="h-3.5 w-3.5" />
-            )}
-          </button>
+      {section && (
+      <SectionDataPanel
+        open={panelOpen}
+        onClose={() => setPanelOpen(false)}
+        section={section}
+        sectionIndex={sectionIndex}
+        sectionCount={sectioningData?.sections.length ?? 0}
+        bookLabel={bookLabel}
+        sectionTypes={sectionTypes}
+        textTypes={textTypes}
+        groupTypes={groupTypes}
+        onChangeSectionType={changeSectionType}
+        onToggleSectionPruned={toggleSectionPruned}
+        onTogglePartPruned={togglePartPruned}
+        onChangeGroupType={changeGroupType}
+        onChangeTextType={changeTextType}
+        onToggleTextPruned={toggleTextPruned}
+        onDeleteTextEntry={deleteTextEntry}
+        onDuplicateTextEntry={duplicateTextEntry}
+        onAddGroup={addGroup}
+        onDuplicateGroup={duplicateGroup}
+        onDeleteGroup={deleteGroup}
+        onReorderParts={reorderParts}
+        onMoveText={moveText}
+        onMergeSection={handleMergeSection}
+        onCloneSection={handleCloneSection}
+        onDeleteSection={handleDeleteSection}
+        onRerender={handleRerender}
+        onAddImage={() => setAddImageDialogOpen(true)}
+        versionPickerNode={
           <VersionPicker
             currentVersion={page.versions.sectioning}
             saving={saving}
@@ -1630,123 +2360,24 @@ export function StoryboardSectionDetail({
             onSave={saveSectioning}
             onDiscard={discardSectioning}
           />
-          <button
-            type="button"
-            onClick={() => setPanelOpen(false)}
-            className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-          </div>
-        </div>
+        }
+        merging={merging}
+        cloning={cloning}
+        deleting={deleting}
+        saving={saving}
+        rerendering={rerendering}
+        dirty={dirty}
+        renderingDirty={renderingDirty}
+        hasApiKey={hasApiKey}
+        showPrunedImages={showPrunedImages}
+        onToggleShowPrunedImages={() => setShowPrunedImages((v) => !v)}
+      />
+      )}
 
-        {/* Panel body — scrollable */}
-        <div className="overflow-auto h-[calc(100%-41px)] px-4 py-3 space-y-5">
-          {/* Text groups */}
-          {hasTextParts && (
-            <div>
-              <h3 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                <Layers className="h-3 w-3" />
-                Text Groups
-              </h3>
-              <div className="space-y-3">
-                {parts.map((p, partIndex) => {
-                  if (p.type !== "text_group") return null
-                  return (
-                    <div key={p.groupId} className={`rounded border overflow-hidden transition-opacity duration-300 ${p.isPruned ? "opacity-40" : ""}`}>
-                      <div className="px-3 py-1.5 bg-muted/50 border-b flex items-center gap-1.5">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{p.groupType}</span>
-                        <button
-                          type="button"
-                          onClick={() => togglePartPruned(partIndex)}
-                          className="ml-auto p-0.5 rounded hover:bg-accent transition-colors cursor-pointer"
-                          title={p.isPruned ? "Include in render" : "Exclude from render"}
-                        >
-                          {p.isPruned ? (
-                            <EyeOff className="h-3 w-3 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-3 w-3 text-muted-foreground" />
-                          )}
-                        </button>
-                      </div>
-                      <div className="divide-y">
-                        {p.texts.map((t, i) => (
-                          <div key={i} className={`px-3 py-1.5 flex items-start gap-2 text-sm transition-opacity duration-300 ${t.isPruned ? "opacity-40" : ""}`}>
-                            {textTypes ? (
-                              <Select
-                                value={t.textType}
-                                onValueChange={(val) => changeTextType(partIndex, i, val)}
-                              >
-                                <SelectTrigger className="shrink-0 h-5 text-[10px] font-medium px-1.5 py-0 w-auto min-w-[60px] border-0 bg-muted/50">
-                                  <SelectValue>{t.textType}</SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {Object.entries(textTypes).map(([key, desc]) => (
-                                    <SelectItem key={key} value={key} className="text-xs">
-                                      {key}
-                                      <span className="ml-1 text-muted-foreground text-[10px]">{desc}</span>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            ) : (
-                              <span className="shrink-0 text-xs font-medium text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5 text-center">
-                                {t.textType}
-                              </span>
-                            )}
-                            <span className="leading-relaxed flex-1 min-w-0 text-xs">
-                              {t.text}
-                            </span>
-                            {t.isPruned && (
-                              <EyeOff className="shrink-0 self-center h-3 w-3 text-muted-foreground" />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Images */}
-          {hasImageParts && (
-            <div>
-              <h3 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                Images
-              </h3>
-              <div className="grid grid-cols-2 gap-2">
-                {parts.map((p, partIndex) => {
-                  if (p.type !== "image") return null
-                  return (
-                    <div key={p.imageId} className="group relative">
-                      <ImageCard
-                        imageId={p.imageId}
-                        bookLabel={bookLabel}
-                        isPruned={p.isPruned}
-                        reason={p.reason}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => togglePartPruned(partIndex)}
-                        className="absolute top-1 right-1 p-1 rounded bg-background/80 hover:bg-accent transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
-                        title={p.isPruned ? "Include in render" : "Exclude from render"}
-                      >
-                        {p.isPruned ? (
-                          <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />
-                        ) : (
-                          <Eye className="h-3.5 w-3.5 text-muted-foreground" />
-                        )}
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Transparent overlay during drag to prevent iframe from stealing mouse events */}
+      {htmlDraggingActive && (
+        <div className="absolute inset-0 z-50 cursor-row-resize" />
+      )}
     </div>
 
     {/* Hidden file input for image replace */}
@@ -1772,6 +2403,7 @@ export function StoryboardSectionDetail({
       <AiImageDialog
         currentImageSrc={`${BASE_URL}/books/${bookLabel}/images/${aiImageDialogTarget}`}
         imageId={aiImageDialogTarget}
+        bookLabel={bookLabel}
         onSubmit={handleAiImageSubmit}
         onClose={() => setAiImageDialogTarget(null)}
       />
@@ -1788,6 +2420,45 @@ export function StoryboardSectionDetail({
         onClose={() => setSegmentPreview(null)}
       />
     )}
+
+    {/* Add image dialog */}
+    {addImageDialogOpen && (
+      <AddImageDialog
+        bookLabel={bookLabel}
+        onSelectExisting={handleAddExistingImage}
+        onUpload={handleAddImageUpload}
+        onGenerate={handleAddImageGenerate}
+        onClose={() => setAddImageDialogOpen(false)}
+      />
+    )}
+
+    {/* Delete section confirmation dialog */}
+    <Dialog open={confirmDeleteSection} onOpenChange={setConfirmDeleteSection}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Delete section</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete this section? This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <button
+            type="button"
+            onClick={() => setConfirmDeleteSection(false)}
+            className="px-3 py-1.5 text-sm rounded border hover:bg-accent transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={confirmAndDeleteSection}
+            className="px-3 py-1.5 text-sm rounded bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors cursor-pointer"
+          >
+            Delete
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </>
   )
 }

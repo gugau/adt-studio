@@ -53,8 +53,10 @@ import {
   applySegmentation,
   buildSegmentationConfig,
   getSegmentedImageId,
+  createScreenshotRenderer,
+  DEFAULT_VISUAL_REVIEW_MODEL_ID,
 } from "@adt/pipeline"
-import type { TranslationConfig, QuizPageInput, ProviderRouting, MeaningfulnessConfig, CroppingConfig, SegmentationConfig } from "@adt/pipeline"
+import type { TranslationConfig, QuizPageInput, ProviderRouting, MeaningfulnessConfig, CroppingConfig, SegmentationConfig, VisualRefinementDeps } from "@adt/pipeline"
 import { loadStyleguideContent } from "./styleguide.js"
 import { createTTSSynthesizer, createAzureTTSSynthesizer } from "@adt/llm"
 import type { TTSSynthesizer } from "@adt/llm"
@@ -504,12 +506,13 @@ async function runStoryboardStep(
   options: StageRunOptions,
   progress: StageRunProgress
 ): Promise<void> {
-  const { booksDir, apiKey, promptsDir, configPath, renderOnly } = options
+  const { booksDir, apiKey, promptsDir, webAssetsDir, configPath, renderOnly } = options
 
   const previousKey = process.env.OPENAI_API_KEY
   process.env.OPENAI_API_KEY = apiKey
 
   const storage = createBookStorage(label, booksDir)
+  let visualRefinement: VisualRefinementDeps | undefined
 
   try {
     const config = loadBookConfig(label, booksDir, configPath)
@@ -562,6 +565,25 @@ async function runStoryboardStep(
       })
       renderModels.set(modelId, model)
       return model
+    }
+
+    // Set up visual refinement if any render strategy enables it
+    if (webAssetsDir) {
+      const hasVisualRefinement = Object.values(config.render_strategies ?? {}).some(
+        (s) => s.config?.visual_refinement?.enabled
+      )
+      if (hasVisualRefinement) {
+        const screenshotRenderer = await createScreenshotRenderer()
+        visualRefinement = {
+          screenshotRenderer,
+          webAssetsDir,
+          llmModel: resolveRenderModel(DEFAULT_VISUAL_REVIEW_MODEL_ID),
+          storeScreenshot: (base64: string) => {
+            const hash = crypto.createHash("sha256").update(base64).digest("hex").slice(0, 16)
+            storage.putDebugImage(hash, Buffer.from(base64, "base64"))
+          },
+        }
+      }
     }
 
     // Get all pages
@@ -628,7 +650,8 @@ async function runStoryboardStep(
               },
               resolveRenderConfig,
               resolveRenderModel,
-              templateEngine
+              templateEngine,
+              visualRefinement,
             )
             storage.putNodeData("web-rendering", page.pageId, renderResult)
             completedRendering++
@@ -774,7 +797,8 @@ async function runStoryboardStep(
               },
               resolveRenderConfig,
               resolveRenderModel,
-              templateEngine
+              templateEngine,
+              visualRefinement,
             )
             storage.putNodeData("web-rendering", page.pageId, renderResult)
             completedRendering++
@@ -814,6 +838,9 @@ async function runStoryboardStep(
       console.log(`[stage-run] ${label}: storyboard complete`)
     }
   } finally {
+    if (visualRefinement) {
+      await visualRefinement.screenshotRenderer.close()
+    }
     storage.close()
     if (previousKey !== undefined) {
       process.env.OPENAI_API_KEY = previousKey
@@ -1035,7 +1062,12 @@ async function runCaptionsStep(
           }
 
           const rendering = renderingRow.data as WebRenderingOutput
-          const htmlSections = rendering.sections.map((s) => s.html)
+          // Filter out pruned sections before extracting image IDs
+          const sectioningRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+          const sectioning = sectioningRow?.data as PageSectioningOutput | undefined
+          const htmlSections = rendering.sections
+            .filter((s) => !sectioning?.sections[s.sectionIndex]?.isPruned)
+            .map((s) => s.html)
           const imageIds = extractImageIds(htmlSections)
 
           if (imageIds.length === 0) {

@@ -12,7 +12,7 @@ import {
   getBookConfig,
   updateBookConfig,
 } from "../services/book-service.js"
-import { exportBook } from "../services/export-service.js"
+import { exportBook, exportWebpub } from "../services/export-service.js"
 
 const MIME_TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -161,6 +161,77 @@ export function createBookRoutes(
         throw new HTTPException(404, { message })
       }
       throw new HTTPException(400, { message })
+    }
+  })
+
+  // GET /books/:label/export-webpub — Download book as WebPub
+  app.get("/books/:label/export-webpub", async (c) => {
+    const { label } = c.req.param()
+    try {
+      const result = await exportWebpub(label, booksDir, webAssetsDir ?? "", configPath)
+      c.header("Content-Type", "application/zip")
+      // Use RFC 5987 filename* for non-ASCII titles, with ASCII fallback
+      const encodedName = encodeURIComponent(result.filename)
+      c.header(
+        "Content-Disposition",
+        `attachment; filename="${result.safeFilename}"; filename*=UTF-8''${encodedName}`
+      )
+      return c.body(Buffer.from(result.webpubBuffer))
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      if (message.includes("Web assets directory not found")) {
+        throw new HTTPException(500, { message })
+      }
+      if (message.includes("Book not found")) {
+        throw new HTTPException(404, { message })
+      }
+      throw new HTTPException(400, { message })
+    }
+  })
+
+  // GET /books/:label/images — List all images in a book
+  app.get("/books/:label/images", (c) => {
+    const { label } = c.req.param()
+    let safeLabel: string
+    try {
+      safeLabel = parseBookLabel(label)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      throw new HTTPException(400, { message })
+    }
+    const resolvedDir = path.resolve(booksDir)
+    const bookDir = path.join(resolvedDir, safeLabel)
+    const dbPath = path.join(bookDir, `${safeLabel}.db`)
+
+    if (!fs.existsSync(dbPath)) {
+      throw new HTTPException(404, {
+        message: `Book not found: ${safeLabel}`,
+      })
+    }
+
+    const db = openBookDb(dbPath)
+    try {
+      const rows = db.all(
+        "SELECT image_id, page_id, width, height, source FROM images ORDER BY image_id"
+      ) as Array<{
+        image_id: string
+        page_id: string
+        width: number
+        height: number
+        source: string
+      }>
+
+      return c.json({
+        images: rows.map((r) => ({
+          imageId: r.image_id,
+          pageId: r.page_id,
+          width: r.width,
+          height: r.height,
+          source: r.source,
+        })),
+      })
+    } finally {
+      db.close()
     }
   })
 

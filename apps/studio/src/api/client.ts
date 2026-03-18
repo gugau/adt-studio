@@ -157,7 +157,7 @@ export interface PageDetail {
             type: "text_group"
             groupId: string
             groupType: string
-            texts: Array<{ textType: string; text: string; isPruned: boolean }>
+            texts: Array<{ textId: string; textType: string; text: string; isPruned: boolean }>
             isPruned: boolean
           }
         | {
@@ -458,12 +458,13 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-  reRenderPage: (label: string, pageId: string, apiKey: string, sectionIndex?: number) =>
+  reRenderPage: (label: string, pageId: string, apiKey: string, sectionIndex?: number, prompt?: string) =>
     request<{ version: number; rendering: { sections: SectionRendering[] } }>(
       `/books/${label}/pages/${pageId}/re-render${sectionIndex !== undefined ? `?sectionIndex=${sectionIndex}` : ""}`,
       {
         method: "POST",
         headers: { "X-OpenAI-Key": apiKey },
+        ...(prompt ? { body: JSON.stringify({ prompt }) } : {}),
         signal: AbortSignal.timeout(120_000),
       }
     ),
@@ -493,6 +494,39 @@ export const api = {
       { method: "POST" }
     ),
 
+  mergeSection: (label: string, pageId: string, sectionIndex: number, direction: "next" | "prev" = "next") =>
+    request<{ mergedSectionIndex: number; sectioningVersion: number; renderingVersion: number | null }>(
+      `/books/${label}/pages/${pageId}/sections/${sectionIndex}/merge?direction=${direction}`,
+      { method: "POST" }
+    ),
+
+  deleteSection: (label: string, pageId: string, sectionIndex: number) =>
+    request<{ sectioningVersion: number; renderingVersion: number | null; remainingSections: number }>(
+      `/books/${label}/pages/${pageId}/sections/${sectionIndex}`,
+      { method: "DELETE" }
+    ),
+
+  listBookImages: (label: string) =>
+    request<{
+      images: Array<{
+        imageId: string
+        pageId: string
+        width: number
+        height: number
+        source: string
+      }>
+    }>(`/books/${label}/images`),
+
+  uploadNewImage: (label: string, pageId: string, imageBlob: Blob) => {
+    const formData = new FormData()
+    formData.append("image", imageBlob, "upload.png")
+    formData.append("pageId", pageId)
+    return request<{ imageId: string; width: number; height: number }>(
+      `/books/${label}/images/upload`,
+      { method: "POST", body: formData }
+    )
+  },
+
   uploadCroppedImage: (label: string, pageId: string, sourceImageId: string, imageBlob: Blob) => {
     const formData = new FormData()
     formData.append("image", imageBlob, "crop.png")
@@ -504,13 +538,29 @@ export const api = {
     )
   },
 
-  aiGenerateImage: (label: string, pageId: string, prompt: string, apiKey: string, targetImageId: string, referenceImageId?: string, signal?: AbortSignal) =>
+  aiGenerateImage: (
+    label: string,
+    pageId: string,
+    prompt: string,
+    apiKey: string,
+    targetImageId: string,
+    referenceImageId?: string,
+    signal?: AbortSignal,
+    options?: { style?: string; imageType?: string; styleImageId?: string },
+  ) =>
     request<{ imageId: string; width: number; height: number; originalWidth: number; originalHeight: number }>(
       `/books/${label}/images/ai-generate?pageId=${pageId}`,
       {
         method: "POST",
         headers: { "X-OpenAI-Key": apiKey },
-        body: JSON.stringify({ prompt, targetImageId, referenceImageId }),
+        body: JSON.stringify({
+          prompt,
+          targetImageId,
+          referenceImageId,
+          ...(options?.style && { style: options.style }),
+          ...(options?.imageType && { imageType: options.imageType }),
+          ...(options?.styleImageId && { styleImageId: options.styleImageId }),
+        }),
         signal: signal ?? AbortSignal.timeout(180_000),
       }
     ),
@@ -740,6 +790,22 @@ export const api = {
     if (!res.ok) {
       const body = await res.json().catch(() => ({ error: res.statusText }))
       throw new Error(body.error ?? `Export failed: ${res.status}`)
+    }
+    const buf = await res.arrayBuffer()
+    return new Blob([buf], { type: "application/zip" })
+  },
+
+  exportWebpub: async (label: string): Promise<Blob> => {
+    const url = `${BASE_URL}/books/${label}/export-webpub`
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/zip" },
+      mode: "cors",
+      signal: AbortSignal.timeout(300_000),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ error: res.statusText }))
+      throw new Error(body.error ?? `WebPub export failed: ${res.status}`)
     }
     const buf = await res.arrayBuffer()
     return new Blob([buf], { type: "application/zip" })

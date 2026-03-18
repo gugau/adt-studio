@@ -44,6 +44,7 @@ export {
   SectioningMode,
   PageSectioningConfig,
   RenderType,
+  VisualRefinementStrategyConfig,
   RenderStrategyConfig,
   AccessibilityAssessmentConfig,
   AppConfig,
@@ -99,6 +100,7 @@ export {
   WebRenderingOutput,
   webRenderingLLMSchema,
   activityAnswersLLMSchema,
+  visualReviewLLMSchema,
 } from "./web-rendering.js"
 
 export {

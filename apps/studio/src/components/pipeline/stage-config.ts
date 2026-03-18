@@ -8,6 +8,7 @@ import {
   Languages,
   Eye,
   ShieldCheck,
+  FileDown,
   type LucideIcon,
 } from "lucide-react"
 
@@ -21,6 +22,7 @@ export const STAGES = [
   { slug: "text-and-speech", label: "Text & Speech", runningLabel: "Generating Text & Speech", icon: Languages, color: "bg-pink-600", hex: "#db2777", textColor: "text-pink-600", bgLight: "bg-pink-50", borderColor: "border-pink-200", borderDark: "border-pink-600" },
   { slug: "validation", label: "Validation", runningLabel: "Running Validation", icon: ShieldCheck, color: "bg-emerald-600", hex: "#059669", textColor: "text-emerald-600", bgLight: "bg-emerald-50", borderColor: "border-emerald-200", borderDark: "border-emerald-600" },
   { slug: "preview", label: "Preview", runningLabel: "Building Preview", icon: Eye, color: "bg-gray-600", hex: "#4b5563", textColor: "text-gray-600", bgLight: "bg-gray-50", borderColor: "border-gray-200", borderDark: "border-gray-600" },
+  { slug: "export", label: "Export", runningLabel: "Exporting", icon: FileDown, color: "bg-emerald-600", hex: "#059669", textColor: "text-emerald-600", bgLight: "bg-emerald-50", borderColor: "border-emerald-200", borderDark: "border-emerald-600" },
 ] as const satisfies ReadonlyArray<{
   slug: string
   label: string
@@ -36,7 +38,7 @@ export const STAGES = [
 
 export type StageSlug = (typeof STAGES)[number]["slug"]
 export type NonBookStageSlug = Exclude<StageSlug, "book">
-export type PipelineStageSlug = Exclude<StageSlug, "book" | "validation">
+export type PipelineStageSlug = Exclude<StageSlug, "book" | "validation" | "export">
 export type StageDefinition = (typeof STAGES)[number]
 export type NonBookStageDefinition = Extract<StageDefinition, { slug: NonBookStageSlug }>
 export type PipelineStageDefinition = Extract<StageDefinition, { slug: PipelineStageSlug }>
@@ -50,6 +52,7 @@ export const STAGE_DESCRIPTIONS: Record<NonBookStageSlug, string> = {
   "text-and-speech": "Translate the book content and generate audio narration.",
   validation: "Run whole-book validation checks and configure accessibility assessment settings.",
   preview: "Package and preview the final ADT web application.",
+  export: "Export packaged ADTs and related artifacts for delivery.",
 }
 
 /** Stages that have a per-page navigation panel. */
@@ -75,7 +78,7 @@ export function isBookOverviewStage(stage: StageDefinition): stage is NonBookSta
 }
 
 export function isPipelineStage(stage: StageDefinition): stage is PipelineStageDefinition {
-  return stage.slug !== "book" && stage.slug !== "validation"
+  return stage.slug !== "book" && stage.slug !== "validation" && stage.slug !== "export"
 }
 
 export function getBookOverviewStages(): NonBookStageDefinition[] {

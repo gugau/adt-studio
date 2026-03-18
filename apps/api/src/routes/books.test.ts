@@ -473,7 +473,7 @@ describe("POST /books/:label/stages/run", () => {
       },
     }
 
-    const app = createStageRoutes(stageService, tmpDir, "")
+    const app = createStageRoutes(stageService, tmpDir, "", "")
     const res = await app.request(`/books/${label}/stages/run`, {
       method: "POST",
       headers: {
@@ -832,6 +832,74 @@ describe("GET /books/:label/export", () => {
     addPagesAndRenderings("missing-assets-export", 1)
     const app = createBookRoutes(tmpDir, path.join(tmpDir, "no-web-assets"))
     const res = await app.request("/books/missing-assets-export/export")
+    expect(res.status).toBe(500)
+  })
+})
+
+describe("GET /books/:label/export-webpub", () => {
+  const webAssetsDir = path.resolve(process.cwd(), "assets", "adt")
+
+  function createBookWithTitle(label: string, title: string): void {
+    const bookDir = path.join(tmpDir, label)
+    fs.mkdirSync(bookDir, { recursive: true })
+    fs.mkdirSync(path.join(bookDir, "images"), { recursive: true })
+    const db = openBookDb(path.join(bookDir, `${label}.db`))
+    db.run(
+      "INSERT INTO node_data (node, item_id, version, data) VALUES (?, ?, ?, ?)",
+      [
+        "metadata",
+        "book",
+        1,
+        JSON.stringify({
+          title,
+          authors: ["Author"],
+          publisher: null,
+          language_code: "en",
+          cover_page_number: 1,
+          reasoning: "test",
+        }),
+      ]
+    )
+    db.close()
+  }
+
+  it("returns ZIP with RFC 5987 Content-Disposition for ASCII titles", async () => {
+    createBookWithTitle("webpub-ascii", "My Book")
+    addPagesAndRenderings("webpub-ascii", 1)
+    const app = createBookRoutes(tmpDir, webAssetsDir)
+    const res = await app.request("/books/webpub-ascii/export-webpub")
+    expect(res.status).toBe(200)
+    expect(res.headers.get("Content-Type")).toBe("application/zip")
+    const disposition = res.headers.get("Content-Disposition") ?? ""
+    expect(disposition).toContain('filename="webpub-ascii.webpub"')
+    expect(disposition).toContain("filename*=UTF-8''")
+  })
+
+  it("uses safe label filename for non-ASCII titles", async () => {
+    createBookWithTitle("sinhala-export", "\u0DC3\u0DD2\u0D82\u0DC4\u0DBD")
+    addPagesAndRenderings("sinhala-export", 1)
+    const app = createBookRoutes(tmpDir, webAssetsDir)
+    const res = await app.request("/books/sinhala-export/export-webpub")
+    expect(res.status).toBe(200)
+    const disposition = res.headers.get("Content-Disposition") ?? ""
+    // ASCII fallback uses the safe label
+    expect(disposition).toContain('filename="sinhala-export.webpub"')
+    // UTF-8 encoded filename contains the Sinhala title
+    expect(disposition).toContain("filename*=UTF-8''")
+    expect(disposition).toContain(encodeURIComponent("\u0DC3\u0DD2\u0D82\u0DC4\u0DBD"))
+  })
+
+  it("returns 404 for missing book", async () => {
+    const app = createBookRoutes(tmpDir, webAssetsDir)
+    const res = await app.request("/books/ghost/export-webpub")
+    expect(res.status).toBe(404)
+  })
+
+  it("returns 500 when web assets directory is missing", async () => {
+    createBookWithTitle("missing-assets-wp", "Missing")
+    addPagesAndRenderings("missing-assets-wp", 1)
+    const app = createBookRoutes(tmpDir, path.join(tmpDir, "no-web-assets"))
+    const res = await app.request("/books/missing-assets-wp/export-webpub")
     expect(res.status).toBe(500)
   })
 })

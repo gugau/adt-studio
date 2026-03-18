@@ -150,10 +150,12 @@ function buildPagesManifest(storage: Storage): Array<{ section_id: string; href:
           : null
         const sectioning = sectioningParsed?.success ? sectioningParsed.data : undefined
 
-        // One entry per rendered section (stable by sectionIndex)
+        // One entry per rendered section (stable by sectionIndex), skip pruned
         const sections = [...parsed.data.sections].sort((a, b) => a.sectionIndex - b.sectionIndex)
         for (const rs of sections) {
           const sectionMeta = sectioning?.sections?.[rs.sectionIndex]
+          // Skip sections that are pruned in the sectioning data
+          if (sectionMeta?.isPruned) continue
           const sectionId = sectionMeta?.sectionId ?? `${page.pageId}_sec${String(rs.sectionIndex + 1).padStart(3, "0")}`
           const entry: { section_id: string; href: string; page_number?: number } = {
             section_id: sectionId,
@@ -294,7 +296,7 @@ export function createAdtPreviewRoutes(
   })
 
   // /assets/* — Static files from webAssetsDir
-  app.get("/books/:label/adt-preview/assets/*", (c) => {
+  app.get("/books/:label/adt-preview/assets/*", async (c) => {
     resolveBook(c.req.param("label")) // validate label
     const assetPath = c.req.path.split("/adt-preview/assets/")[1]
     if (!assetPath) throw new HTTPException(400, { message: "Missing asset path" })
@@ -303,6 +305,24 @@ export function createAdtPreviewRoutes(
     const resolved = path.resolve(webAssetsDir, assetPath)
     if (!resolved.startsWith(path.resolve(webAssetsDir))) {
       throw new HTTPException(403, { message: "Forbidden" })
+    }
+
+    // Auto-build base.bundle.min.js on-the-fly if it doesn't exist (dev mode).
+    // The file is gitignored and normally pre-built by `pnpm --filter @adt/api bundle`.
+    if (!fs.existsSync(resolved) && assetPath === "base.bundle.min.js") {
+      const entryPoint = path.join(webAssetsDir, "base.js")
+      if (fs.existsSync(entryPoint)) {
+        const esbuild = await import("esbuild")
+        await esbuild.build({
+          entryPoints: [entryPoint],
+          bundle: true,
+          minify: true,
+          sourcemap: true,
+          format: "esm",
+          target: "es2020",
+          outfile: resolved,
+        })
+      }
     }
 
     if (!fs.existsSync(resolved) || fs.statSync(resolved).isDirectory()) {
@@ -335,11 +355,12 @@ export function createAdtPreviewRoutes(
   })
 
   // /content/tailwind_output.css — rebuilt on every request (no cache, dev tool)
-  app.get("/books/:label/adt-preview/content/tailwind_output.css", async (c) => {
-    const { safeLabel } = resolveBook(c.req.param("label"))
+  // GET: generates CSS from DB content only.
+  // POST: accepts { extraHtml } to include unsaved content (e.g., AI edits) in the scan.
 
+  /** Collect all rendered HTML from the DB + optional extra HTML for Tailwind scanning. */
+  async function generateTailwindCss(safeLabel: string, extraHtml?: string): Promise<string> {
     const storage = createBookStorage(safeLabel, booksDir)
-    let css: string
     try {
       const pages = storage.getPages()
       let allHtml = ""
@@ -365,11 +386,27 @@ export function createAdtPreviewRoutes(
         }
       }
 
-      css = await buildPreviewTailwindCss(allHtml, webAssetsDir)
+      // Include unsaved content (e.g., AI-edited section HTML) so new Tailwind classes
+      // are picked up before the edit is persisted to the DB.
+      if (extraHtml) allHtml += "\n" + extraHtml
+
+      return await buildPreviewTailwindCss(allHtml, webAssetsDir)
     } finally {
       storage.close()
     }
+  }
 
+  app.get("/books/:label/adt-preview/content/tailwind_output.css", async (c) => {
+    const { safeLabel } = resolveBook(c.req.param("label"))
+    const css = await generateTailwindCss(safeLabel)
+    c.header("Content-Type", "text/css")
+    return c.body(css)
+  })
+
+  app.post("/books/:label/adt-preview/content/tailwind_output.css", async (c) => {
+    const { safeLabel } = resolveBook(c.req.param("label"))
+    const body = await c.req.json<{ extraHtml?: string }>()
+    const css = await generateTailwindCss(safeLabel, body.extraHtml)
     c.header("Content-Type", "text/css")
     return c.body(css)
   })

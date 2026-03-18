@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS images (
   hash TEXT NOT NULL DEFAULT '',
   width INTEGER NOT NULL,
   height INTEGER NOT NULL,
-  source TEXT NOT NULL CHECK (source IN ('page', 'extract', 'crop', 'segment'))
+  source TEXT NOT NULL CHECK (source IN ('page', 'extract', 'crop', 'segment', 'upload'))
 );
 
 CREATE TABLE IF NOT EXISTS llm_log (
@@ -89,7 +89,10 @@ function initSchema(db: sqlite.Database): void {
   }>
   const existing = rows[0]?.version ?? 0
 
-  if (existing === SCHEMA_VERSION) return
+  if (existing === SCHEMA_VERSION) {
+    cleanupDeprecatedSchema(db)
+    return
+  }
 
   let version = existing
 
@@ -111,7 +114,14 @@ function initSchema(db: sqlite.Database): void {
     version = 8
   }
 
+  // Migrate v8 → v9: add 'upload' to images.source CHECK constraint
+  if (version === 8) {
+    migrateV8toV9(db)
+    version = 9
+  }
+
   if (version === SCHEMA_VERSION) {
+    cleanupDeprecatedSchema(db)
     upsertSchemaVersion(db, SCHEMA_VERSION)
     return
   }
@@ -246,6 +256,39 @@ function migrateV7toV8(db: sqlite.Database): void {
     db.exec("ROLLBACK")
     throw err
   }
+}
+
+/**
+ * Migrate v8 → v9: widen images.source CHECK to include 'upload'.
+ * SQLite doesn't support ALTER CHECK, so we recreate the table.
+ */
+function migrateV8toV9(db: sqlite.Database): void {
+  db.exec("BEGIN IMMEDIATE")
+  try {
+    db.exec(`
+      CREATE TABLE images_new (
+        image_id TEXT PRIMARY KEY,
+        page_id TEXT NOT NULL REFERENCES pages(page_id),
+        path TEXT NOT NULL,
+        hash TEXT NOT NULL DEFAULT '',
+        width INTEGER NOT NULL,
+        height INTEGER NOT NULL,
+        source TEXT NOT NULL CHECK (source IN ('page', 'extract', 'crop', 'segment', 'upload'))
+      );
+      INSERT INTO images_new SELECT * FROM images;
+      DROP TABLE images;
+      ALTER TABLE images_new RENAME TO images;
+    `)
+    db.exec("COMMIT")
+  } catch (err) {
+    db.exec("ROLLBACK")
+    throw err
+  }
+}
+
+/** Remove deprecated schema artifacts from older builds. */
+function cleanupDeprecatedSchema(db: sqlite.Database): void {
+  db.exec("DROP TABLE IF EXISTS debug_images")
 }
 
 function upsertSchemaVersion(db: sqlite.Database, version: number): void {

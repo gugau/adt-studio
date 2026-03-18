@@ -7,13 +7,27 @@ import { BASE_URL } from "@/api/client"
 // Use new URL().origin instead of string slicing — immune to path changes (Lesson #11).
 const IFRAME_BASE = BASE_URL.startsWith("http") ? new URL(BASE_URL).origin : ""
 
+/** Build the URL prefix for adt-preview asset routes for the given book. */
+function previewAssetsUrl(bookLabel: string): string {
+  return `${BASE_URL}/books/${bookLabel}/adt-preview`
+}
+
+/** Fixed viewport width the iframe renders at — matches a typical desktop preview.
+ *  The iframe is scaled down via CSS transform to fit the actual panel width. */
+const RENDER_WIDTH = 1280
+
 export interface BookPreviewFrameHandle {
   /** Get the iframe element's bounding rect in the viewport */
   getIframeRect: () => DOMRect | null
+  /** Regenerate Tailwind CSS including the given extra HTML, then inject into iframe.
+   *  Use after AI edits introduce new Tailwind classes not yet in the DB. */
+  refreshCss: (extraHtml: string) => Promise<void>
 }
 
 export interface BookPreviewFrameProps {
   html: string
+  /** Book label — used to load the correct Tailwind CSS and font assets from the API */
+  bookLabel: string
   className?: string
   /** Enable interactive mode — click/edit elements with data-id attributes */
   editable?: boolean
@@ -31,18 +45,18 @@ export interface BookPreviewFrameProps {
 
 /**
  * Renders section HTML in an iframe that matches the final book output structure.
- * Loads the iframe shell once (Tailwind CDN + fonts), then swaps body innerHTML
- * when the html prop changes — avoids full-page reloads and the reflow cascade they cause.
- * The section HTML itself contains the <div id="content"> container with styling.
+ * Uses the same CSS, fonts, and body layout as the preview so rendering is pixel-identical.
+ *
+ * The iframe always renders at a fixed desktop-width viewport (RENDER_WIDTH) then
+ * scales down via CSS transform to fit the available panel width. This ensures
+ * responsive breakpoints, overlay positions, and image sizing match the preview.
  *
  * When `editable` is true, injects interactive scripts that allow clicking and
  * editing data-id elements, communicating changes back via postMessage.
- *
- * Height measurement is deferred until after fonts settle to prevent the visible
- * "slow collapse" caused by intermediate reflows during font loading.
  */
 export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFrameProps>(function BookPreviewFrame({
   html,
+  bookLabel,
   className,
   editable = false,
   prunedDataIds,
@@ -52,26 +66,55 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   applyBodyBackground,
 }, ref) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+
+  const assetsPrefix = previewAssetsUrl(bookLabel)
 
   useImperativeHandle(ref, () => ({
     getIframeRect: () => iframeRef.current?.getBoundingClientRect() ?? null,
+    refreshCss: async (extraHtml: string) => {
+      const doc = iframeRef.current?.contentDocument
+      if (!doc?.head) return
+      const res = await fetch(`${assetsPrefix}/content/tailwind_output.css`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ extraHtml }),
+      })
+      if (!res.ok) return
+      const css = await res.text()
+      const styleId = "adt-dynamic-css"
+      let styleEl = doc.getElementById(styleId) as HTMLStyleElement | null
+      if (!styleEl) {
+        styleEl = doc.createElement("style")
+        styleEl.id = styleId
+        doc.head.appendChild(styleEl)
+      }
+      styleEl.textContent = css
+      // Re-measure height since new styles may change layout
+      requestAnimationFrame(() => {
+        const h = doc.body?.scrollHeight
+        if (h && h > 0) setContentHeight(h)
+      })
+    },
   }))
-  const [height, setHeight] = useState(300)
   const [iframeReady, setIframeReady] = useState(false)
+  const [scale, setScale] = useState(1)
+  const [contentHeight, setContentHeight] = useState(800)
   const readyRef = useRef(false)
   const latestHtmlRef = useRef("")
-  const settledRef = useRef(false)
   const measureTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const sanitizedHtml = useMemo(() => DOMPurify.sanitize(html), [html])
   latestHtmlRef.current = sanitizedHtml
 
-  // Interactive script injected into the iframe when editable=true
-  const interactiveScript = editable
-    ? `<script>
+  // Interactive script — always present in the iframe, gated by data-editable on <body>.
+  // This avoids srcdoc changes (and thus iframe reloads) when the editable prop toggles.
+  const interactiveScript = `<script>
 (function() {
   var selected = null;
   var editing = null;
+
+  function isEditable() { return document.body.dataset.editable === 'true'; }
 
   function getRect(el) {
     var r = el.getBoundingClientRect();
@@ -116,13 +159,13 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
     el.contentEditable = 'false';
     el.style.outline = '';
     el.style.outlineOffset = '';
-    var section = document.querySelector('section');
+    var wrapper = document.getElementById('content');
     var fullHtml;
-    if (section) {
-      fullHtml = section.outerHTML;
+    if (wrapper) {
+      var cls = (wrapper.getAttribute('class') || '').trim();
+      fullHtml = cls ? wrapper.outerHTML : wrapper.innerHTML;
     } else {
-      var content = document.getElementById('content');
-      fullHtml = content ? content.outerHTML : document.body.innerHTML;
+      fullHtml = document.body.innerHTML;
     }
     parent.postMessage({
       type: 'text-changed',
@@ -133,6 +176,7 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   }
 
   document.addEventListener('click', function(e) {
+    if (!isEditable()) return;
     var el = e.target.closest('[data-id]');
     if (!el) {
       if (editing) finishEditing();
@@ -142,11 +186,16 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
     }
     if (editing && editing !== el) finishEditing();
     selectElement(el);
-    // Single-click on text enters edit mode immediately; images just select
     if (el.tagName !== 'IMG') startEditing(el);
   });
 
   document.addEventListener('keydown', function(e) {
+    if (!isEditable()) {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        parent.dispatchEvent(new KeyboardEvent('keydown', { key: e.key }));
+      }
+      return;
+    }
     if (editing) {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -167,16 +216,15 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   });
 })();
 <\/script>`
-    : ""
 
-  // Interactive hover styles
-  const interactiveStyles = editable
-    ? `[data-id] { cursor: pointer; transition: outline 0.1s; }
-    [data-id]:hover { outline: 2px solid rgba(59,130,246,0.3); outline-offset: 2px; }
-    img[data-id] { position: relative; z-index: 1; }`
-    : ""
+  // Interactive hover styles — scoped to body[data-editable="true"] so they only
+  // apply when editing is enabled, without needing to change the srcdoc.
+  const interactiveStyles = `body[data-editable="true"] [data-id] { cursor: pointer; transition: outline 0.1s; }
+    body[data-editable="true"] [data-id]:hover { outline: 2px solid rgba(59,130,246,0.3); outline-offset: 2px; }
+    body[data-editable="true"] img[data-id] { position: relative; z-index: 1; }`
 
-  // Stable shell — loaded once, never changes
+  // Stable shell — loaded once, never changes.
+  // Mirrors the preview's renderPageHtml output: same CSS, fonts, body classes.
   const srcdoc = useMemo(
     () => `<!DOCTYPE html>
 <html>
@@ -184,14 +232,10 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   ${IFRAME_BASE ? `<base href="${IFRAME_BASE}">` : ""}
   <meta charset="utf-8" />
   <meta content="width=device-width, initial-scale=1" name="viewport" />
-  <script src="https://cdn.tailwindcss.com"><\/script>
+  <link href="${assetsPrefix}/content/tailwind_output.css" rel="stylesheet">
+  <link href="${assetsPrefix}/assets/fonts.css" rel="stylesheet">
+  <link href="${assetsPrefix}/assets/libs/fontawesome/css/all.min.css" rel="stylesheet">
   <style>
-    @import url("https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300..800;1,300..800&display=swap");
-    :root { --page-height: 100vh; }
-    body { margin: 0; }
-    body, p, h1, h2, h3, h4, h5, h6, span, div, button, input, textarea, select {
-      font-family: "Merriweather", serif;
-    }
     ${interactiveStyles}
   </style>
 </head>
@@ -199,7 +243,7 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
 ${interactiveScript}
 </body>
 </html>`,
-    [editable]
+    [assetsPrefix]
   )
 
   // Listen for postMessage from iframe
@@ -220,41 +264,33 @@ ${interactiveScript}
   }, [])
 
   useEffect(() => {
-    if (!editable) return
     window.addEventListener("message", handleMessage)
     return () => window.removeEventListener("message", handleMessage)
-  }, [editable, handleMessage])
+  }, [handleMessage])
 
   /** Measure the intrinsic content height of the iframe document. */
   function measureHeight() {
     const doc = iframeRef.current?.contentDocument
     if (!doc?.body) return
-    // Temporarily collapse the root element so scrollHeight reflects
-    // the intrinsic content height, not the iframe viewport height.
-    doc.documentElement.style.height = "0"
-    const h = doc.documentElement.scrollHeight
-    doc.documentElement.style.height = ""
-    if (h > 0) setHeight(h)
+    const h = doc.body.scrollHeight
+    if (h > 0) setContentHeight(h)
   }
 
-  /** Inject HTML into the iframe body, then measure height once fonts are settled. */
-  function injectAndMeasure(newHtml: string) {
+  /** Inject HTML into the iframe body (preserving the interactive script). */
+  function injectContent(newHtml: string) {
     const iframe = iframeRef.current
     const doc = iframe?.contentDocument
     if (!doc?.body) return
 
-    settledRef.current = false
-
     // Preserve the interactive script if present
     const scriptEl = doc.body.querySelector("script")
-    doc.body.innerHTML = newHtml
-    if (scriptEl && editable) {
+    // If HTML already has <div id="content">, inject directly to avoid a duplicate
+    // wrapper. Otherwise add the plain wrapper to match renderPageHtml's structure.
+    const hasOwnWrapper = /^\s*<div\b[^>]*\bid="content"/.test(newHtml)
+    doc.body.innerHTML = hasOwnWrapper ? newHtml : `<div id="content">${newHtml}</div>`
+    if (scriptEl) {
       doc.body.appendChild(scriptEl)
     }
-
-    // Inject parent viewport height as CSS variable so overlay HTML can
-    // constrain images to fit without using vh (which doesn't work in iframes).
-    doc.documentElement.style.setProperty("--page-height", `${window.innerHeight}px`)
 
     // Apply data-background-color from content to iframe body
     if (applyBodyBackground !== false) {
@@ -264,25 +300,18 @@ ${interactiveScript}
       doc.body.style.backgroundColor = ""
     }
 
-    // Measure multiple times to catch late reflows from Tailwind CDN, fonts, and images.
-    // Wait one frame so the browser queues font loads for the new content,
-    // then wait for fonts.ready so we measure the final layout.
+    // Force synchronous reflow so the browser repaints the scaled iframe
+    // immediately after innerHTML changes (fixes delayed style rendering).
+    void doc.body.offsetHeight
+
+    // Measure after fonts + images settle
     requestAnimationFrame(() => {
       measureHeight()
-
-      const settle = () => {
-        settledRef.current = true
-        measureHeight()
-      }
-
       if (doc.fonts?.ready) {
-        doc.fonts.ready.then(settle)
-      } else {
-        settle()
+        doc.fonts.ready.then(measureHeight)
       }
     })
 
-    // Re-measure when images finish loading (they affect content height)
     doc.querySelectorAll("img").forEach((img) => {
       if (!img.complete) {
         img.addEventListener("load", measureHeight, { once: true })
@@ -290,15 +319,22 @@ ${interactiveScript}
       }
     })
 
-    // Safety net for late reflows (e.g. Tailwind CDN processing injected classes)
     if (measureTimerRef.current) clearTimeout(measureTimerRef.current)
     measureTimerRef.current = setTimeout(measureHeight, 500)
   }
 
-  // When html prop changes, update the body directly (no iframe reload)
+  // When html prop changes, reset height and update the body directly (no iframe reload)
   useEffect(() => {
-    if (readyRef.current) injectAndMeasure(sanitizedHtml)
+    setContentHeight(800)
+    if (readyRef.current) injectContent(sanitizedHtml)
   }, [sanitizedHtml, applyBodyBackground])
+
+  // Toggle editability dynamically via data attribute (no iframe reload needed)
+  useEffect(() => {
+    const doc = iframeRef.current?.contentDocument
+    if (!doc?.body) return
+    doc.body.dataset.editable = editable ? "true" : "false"
+  }, [editable, iframeReady])
 
   // Inject/update pruned element styles into the iframe
   useEffect(() => {
@@ -367,6 +403,21 @@ ${selectors}:hover {
     }
   }, [changedElements, iframeReady])
 
+  // Compute scale factor when wrapper resizes
+  useEffect(() => {
+    const wrapper = wrapperRef.current
+    if (!wrapper) return
+
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      if (!entry) return
+      const availableWidth = entry.contentRect.width
+      setScale(Math.min(1, availableWidth / RENDER_WIDTH))
+    })
+    ro.observe(wrapper)
+    return () => ro.disconnect()
+  }, [])
+
   // One-time iframe setup
   useEffect(() => {
     const iframe = iframeRef.current
@@ -376,11 +427,10 @@ ${selectors}:hover {
       const doc = iframe.contentDocument
       if (!doc) return
 
-      // Wait for Tailwind CDN + initial font CSS to load
       const start = () => {
         readyRef.current = true
         setIframeReady(true)
-        injectAndMeasure(latestHtmlRef.current)
+        injectContent(latestHtmlRef.current)
       }
 
       if (doc.fonts?.ready) {
@@ -388,45 +438,33 @@ ${selectors}:hover {
       } else {
         start()
       }
-
-      // Forward arrow key events to parent so navigation still works
-      // (only in non-editable mode; editable mode handles keys in the injected script)
-      if (!editable) {
-        doc.addEventListener("keydown", (e: KeyboardEvent) => {
-          if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-            window.dispatchEvent(new KeyboardEvent("keydown", { key: e.key }))
-          }
-        })
-      }
     }
-
-    // Re-measure on window resize (e.g. browser resize changes iframe width)
-    const onResize = () => {
-      const doc = iframe.contentDocument
-      if (doc) {
-        doc.documentElement.style.setProperty("--page-height", `${window.innerHeight}px`)
-      }
-      if (settledRef.current) measureHeight()
-    }
-    window.addEventListener("resize", onResize)
 
     iframe.addEventListener("load", onLoad)
     return () => {
       iframe.removeEventListener("load", onLoad)
-      window.removeEventListener("resize", onResize)
       if (measureTimerRef.current) clearTimeout(measureTimerRef.current)
       readyRef.current = false
       setIframeReady(false)
     }
   }, [])
 
+  const scaledHeight = contentHeight * scale
+
   return (
-    <iframe
-      ref={iframeRef}
-      srcDoc={srcdoc}
-      className={className}
-      scrolling="no"
-      style={{ width: "100%", height, overflow: "hidden" }}
-    />
+    <div ref={wrapperRef} className={className} style={{ height: scaledHeight, overflow: "hidden" }}>
+      <iframe
+        ref={iframeRef}
+        srcDoc={srcdoc}
+        scrolling="no"
+        style={{
+          width: RENDER_WIDTH,
+          height: contentHeight,
+          border: "none",
+          transformOrigin: "top left",
+          transform: `scale(${scale})`,
+        }}
+      />
+    </div>
   )
 })
