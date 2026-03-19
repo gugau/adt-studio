@@ -17,6 +17,7 @@ export function BookView({ bookLabel }: ViewProps) {
   const { stageState, queueRun } = useBookRun()
   const { apiKey, hasApiKey, azureKey, azureRegion } = useApiKey()
   const { data: accessibilityAssessment } = useAccessibilityAssessment(bookLabel)
+  const validationCompleted = Boolean(accessibilityAssessment?.assessment)
 
   const handleRun = useCallback((stage: NonBookStageDefinition) => {
     if (!hasApiKey || !isPipelineStage(stage)) return
@@ -31,10 +32,9 @@ export function BookView({ bookLabel }: ViewProps) {
     <div className="flex max-w-xl flex-col items-start">
       {overviewSteps.map((step, index) => {
         const isLast = index === overviewSteps.length - 1
-        const validationCompleted = step.slug === "validation" && Boolean(accessibilityAssessment)
-        const state = validationCompleted ? "done" : stageState(step.slug)
+        const state = step.slug === "validation" && validationCompleted ? "done" : stageState(step.slug)
         const isRunning = step.slug !== "validation" && (state === "running" || state === "queued")
-        const stageCompleted = validationCompleted || state === "done"
+        const stageCompleted = state === "done"
         const showRunButton = isPipelineStage(step) && step.slug !== "preview"
 
         return (

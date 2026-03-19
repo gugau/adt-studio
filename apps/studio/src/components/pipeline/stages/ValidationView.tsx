@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Loader2, RotateCcw, ShieldCheck } from "lucide-react"
+import { AlertCircle, Loader2, RotateCcw, ShieldCheck } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate, useSearch } from "@tanstack/react-router"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { api } from "@/api/client"
+import { useBookRun } from "@/hooks/use-book-run"
 import { AccessibilityConfigTab, AccessibilityOverviewTab } from "@/components/validation/AccessibilityValidationTabs"
 import { ReviewerValidationSummaryTab } from "@/components/validation/ReviewerValidationSummaryTab"
 
@@ -22,6 +23,8 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const search = useSearch({ strict: false }) as { tab?: string }
+  const { stageState } = useBookRun()
+  const storyboardDone = stageState("storyboard") === "done"
   const ranRef = useRef(false)
   const [packaging, setPackaging] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -46,10 +49,25 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
   }
 
   useEffect(() => {
-    if (ranRef.current) return
+    if (!storyboardDone || ranRef.current) return
     ranRef.current = true
     void runPackage()
-  }, [bookLabel])
+  }, [bookLabel, storyboardDone])
+
+  if (!storyboardDone) {
+    return (
+      <div className="p-6 max-w-xl flex flex-col items-center gap-3 text-center">
+        <AlertCircle className="w-8 h-8 text-muted-foreground/50" />
+        <p className="text-sm text-muted-foreground">
+          A storyboard must be built before running validation.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Run the pipeline through
+          at least the <span className="font-medium text-foreground">Storyboard</span> stage first.
+        </p>
+      </div>
+    )
+  }
 
   if (packaging) {
     return (
@@ -83,7 +101,7 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
         </div>
 
         {error ? (
-          <div className="mt-3 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
             {error}
           </div>
         ) : null}

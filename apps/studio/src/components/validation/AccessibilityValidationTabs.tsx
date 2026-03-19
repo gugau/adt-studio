@@ -28,17 +28,25 @@ function SummaryCard({
 }: {
   label: string
   value: number | string
-  tone?: "default" | "warning" | "success"
+  tone?: "default" | "error" | "warning" | "caution" | "success" | "info" | "muted"
 }) {
-  const toneClass =
-    tone === "warning"
-      ? "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20"
-      : tone === "success"
-        ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/20"
-        : "bg-card"
+  const accentClass =
+    tone === "error"
+      ? "border-red-500"
+      : tone === "warning"
+        ? "border-orange-500"
+        : tone === "caution"
+          ? "border-yellow-500"
+          : tone === "success"
+            ? "border-emerald-500"
+            : tone === "info"
+              ? "border-blue-500"
+              : tone === "muted"
+                ? "border-gray-400"
+                : ""
 
   return (
-    <div className={`rounded-lg border p-4 ${toneClass}`}>
+    <div className={`rounded-lg border-2 bg-card p-4 ${accentClass}`}>
       <div className="mb-1 text-xs text-muted-foreground">{label}</div>
       <div className="text-2xl font-semibold tabular-nums">{value}</div>
     </div>
@@ -72,7 +80,7 @@ function LoadingState({ message }: { message: string }) {
 function ErrorState({ message }: { message: string }) {
   return (
     <div className="p-6">
-      <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
         {message}
       </div>
     </div>
@@ -120,7 +128,7 @@ function FrequentFindingCard({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={finding.reviewOnly ? "outline" : "destructive"} className="font-mono text-[11px]">
+            <Badge variant="outline" className={cn("font-mono text-[11px]", !finding.reviewOnly && "border-red-200 bg-red-50 text-red-700")}>
               {finding.id}
             </Badge>
             <Badge variant="secondary" className="text-[11px]">{coverageLabel}</Badge>
@@ -149,7 +157,7 @@ function FrequentFindingCard({
             className={cn(
               "h-2 rounded-full",
               finding.reviewOnly
-                ? "bg-amber-400"
+                ? "bg-orange-400"
                 : finding.pageCoverage >= 0.6
                   ? "bg-red-500"
                   : "bg-orange-400",
@@ -258,53 +266,46 @@ export function AccessibilityOverviewTab({ label }: AccessibilityTabProps) {
 
   return (
     <div className="space-y-6 p-6">
-      <SectionHeader
-        title="Accessibility summary"
-        description="Whole-book accessibility results for the latest packaged ADT output."
-        action={
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs"
-              onClick={() => downloadJson(assessment, `${label}-accessibility.json`)}
-            >
-              <Download className="h-3.5 w-3.5" />
-              JSON
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs"
-              onClick={() => setShowHistory((open) => !open)}
-            >
-              {showHistory ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-              {showHistory ? "Hide history" : "Show history"}
-            </Button>
-          </div>
-        }
-      />
-
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <SummaryCard label="Pages audited" value={assessment.summary.pageCount} />
-        <SummaryCard
-          label="Pages with findings"
-          value={pagesWithFindings}
-          tone={assessment.summary.violationCount > 0 || assessment.summary.incompleteCount > 0 ? "warning" : "success"}
-        />
-        <SummaryCard label="Total findings" value={overview.totalChecks} tone={overview.totalChecks > 0 ? "warning" : "success"} />
-        <SummaryCard label="Violations" value={assessment.summary.violationCount} tone={assessment.summary.violationCount > 0 ? "warning" : "success"} />
-        <SummaryCard label="Needs review" value={assessment.summary.incompleteCount} tone={assessment.summary.incompleteCount > 0 ? "warning" : "default"} />
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+        <span><span className="text-muted-foreground">Pages audited</span> <span className="font-semibold tabular-nums">{assessment.summary.pageCount}</span></span>
+        <span className="text-muted-foreground/40">&middot;</span>
+        <span><span className="text-muted-foreground">With findings</span> <span className="font-semibold tabular-nums">{pagesWithFindings}</span></span>
+        <span className="text-muted-foreground/40">&middot;</span>
+        <span><span className="text-muted-foreground">Total findings</span> <span className="font-semibold tabular-nums">{overview.totalChecks}</span></span>
+        <span className="text-muted-foreground/40">&middot;</span>
+        <span><span className="text-muted-foreground">Violations</span> <span className="font-semibold tabular-nums">{assessment.summary.violationCount}</span></span>
+        <span className="text-muted-foreground/40">&middot;</span>
+        <span><span className="text-muted-foreground">Needs review</span> <span className="font-semibold tabular-nums">{assessment.summary.incompleteCount}</span></span>
+        <div className="ml-auto flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => downloadJson(assessment, `${label}-accessibility.json`)}
+          >
+            <Download className="h-3.5 w-3.5" />
+            JSON
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setShowHistory((open) => !open)}
+          >
+            {showHistory ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+            {showHistory ? "Hide history" : "Show history"}
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-xl border bg-card p-4">
         <h4 className="text-sm font-medium">Severity distribution</h4>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          <SummaryCard label="Critical" value={overview.severity.critical} tone={overview.severity.critical > 0 ? "warning" : "success"} />
-          <SummaryCard label="Serious" value={overview.severity.serious} tone={overview.severity.serious > 0 ? "warning" : "success"} />
-          <SummaryCard label="Moderate" value={overview.severity.moderate} tone={overview.severity.moderate > 0 ? "warning" : "default"} />
-          <SummaryCard label="Minor" value={overview.severity.minor} tone={overview.severity.minor > 0 ? "default" : "success"} />
-          <SummaryCard label="Unknown" value={overview.severity.unknown} />
+          <SummaryCard label="Critical" value={overview.severity.critical} tone={overview.severity.critical > 0 ? "error" : "default"} />
+          <SummaryCard label="Serious" value={overview.severity.serious} tone={overview.severity.serious > 0 ? "warning" : "default"} />
+          <SummaryCard label="Moderate" value={overview.severity.moderate} tone={overview.severity.moderate > 0 ? "caution" : "default"} />
+          <SummaryCard label="Minor" value={overview.severity.minor} tone={overview.severity.minor > 0 ? "info" : "default"} />
+          <SummaryCard label="Unknown" value={overview.severity.unknown} tone={overview.severity.unknown > 0 ? "muted" : "default"} />
         </div>
       </div>
 
@@ -360,7 +361,7 @@ export function AccessibilityOverviewTab({ label }: AccessibilityTabProps) {
           {history.isLoading ? (
             <div className="p-4 text-sm text-muted-foreground">Loading history…</div>
           ) : history.error ? (
-            <div className="p-4 text-sm text-destructive">Failed to load history: {history.error.message}</div>
+            <div className="p-4 text-sm text-red-700">Failed to load history: {history.error.message}</div>
           ) : history.data?.versions.length ? (
             history.data.versions.map((entry) => (
               <VersionRow
@@ -510,7 +511,7 @@ export function AccessibilityConfigTab({ label }: AccessibilityTabProps) {
             </span>
           ) : null}
           {updateConfig.isError ? (
-            <span className="text-xs text-destructive">{updateConfig.error.message}</span>
+            <span className="text-xs text-red-700">{updateConfig.error.message}</span>
           ) : null}
         </div>
       </div>

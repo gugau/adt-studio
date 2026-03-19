@@ -32,7 +32,7 @@ function SummaryCard({
 }) {
   const toneClass =
     tone === "warning"
-      ? "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20"
+      ? "border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/20"
       : tone === "success"
         ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/20"
         : "bg-card"
@@ -72,7 +72,7 @@ function LoadingState({ message }: { message: string }) {
 function ErrorState({ message }: { message: string }) {
   return (
     <div className="p-6">
-      <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
         {message}
       </div>
     </div>
@@ -249,8 +249,8 @@ export function ReviewerValidationSummaryTab({
         ? "bg-emerald-500"
         : activeMetrics.flagged.length > 0
           ? flaggedRatio >= 0.2
-            ? "bg-amber-500"
-            : "bg-amber-400"
+            ? "bg-orange-500"
+            : "bg-orange-400"
           : "bg-emerald-300"
 
     return {
@@ -523,7 +523,7 @@ export function ReviewerValidationSummaryTab({
                       Items marked as needing changes for this reviewer session.
                     </p>
                   </div>
-                  <Badge variant={flaggedEntries.length > 0 ? "destructive" : "outline"}>
+                  <Badge variant="outline" className={cn(flaggedEntries.length > 0 && "border-red-200 bg-red-50 text-red-700")}>
                     {flaggedEntries.length} flagged
                   </Badge>
                 </div>
