@@ -59,6 +59,10 @@ const TRANSLATIONS_SETTINGS_TABS = [
   { key: "voices", label: "Voices" },
 ]
 
+const VALIDATION_SETTINGS_TABS = [
+  { key: "general", label: "Accessibility" },
+]
+
 const SETTINGS_TABS: Record<string, { key: string; label: string }[]> = {
   extract: EXTRACT_SETTINGS_TABS,
   storyboard: STORYBOARD_SETTINGS_TABS,
@@ -66,6 +70,7 @@ const SETTINGS_TABS: Record<string, { key: string; label: string }[]> = {
   glossary: GLOSSARY_SETTINGS_TABS,
   captions: CAPTIONS_SETTINGS_TABS,
   "text-and-speech": TRANSLATIONS_SETTINGS_TABS,
+  validation: VALIDATION_SETTINGS_TABS,
 }
 
 export function StageSidebar({

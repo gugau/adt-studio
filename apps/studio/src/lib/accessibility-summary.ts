@@ -22,6 +22,14 @@ export interface AccessibilityCategorySummary {
   pagesAffected: number
 }
 
+export interface AccessibilityFindingPageSummary {
+  sectionId: string
+  href: string
+  title: string | null
+  pageNumber: number | null
+  count: number
+}
+
 export interface FrequentAccessibilityFindingSummary {
   id: string
   help: string
@@ -33,6 +41,7 @@ export interface FrequentAccessibilityFindingSummary {
   pageCoverage: number
   categoryKey: AccessibilityCategoryKey
   categoryLabel: string
+  pages: AccessibilityFindingPageSummary[]
 }
 
 export interface AccessibilityOverview {
@@ -210,7 +219,7 @@ export function buildFrequentAccessibilityFindings(
     impact: AccessibilitySeverity
     reviewOnly: boolean
     count: number
-    pages: Set<string>
+    pages: Map<string, AccessibilityFindingPageSummary>
     categoryKey: AccessibilityCategoryKey
   }>()
 
@@ -225,11 +234,19 @@ export function buildFrequentAccessibilityFindings(
         impact: getSeverityKey(finding.impact),
         reviewOnly: false,
         count: 0,
-        pages: new Set<string>(),
+        pages: new Map<string, AccessibilityFindingPageSummary>(),
         categoryKey,
       }
       entry.count += 1
-      entry.pages.add(page.sectionId)
+      const pageEntry = entry.pages.get(page.sectionId) ?? {
+        sectionId: page.sectionId,
+        href: page.href,
+        title: page.title,
+        pageNumber: page.pageNumber,
+        count: 0,
+      }
+      pageEntry.count += 1
+      entry.pages.set(page.sectionId, pageEntry)
       findings.set(key, entry)
     }
 
@@ -243,11 +260,19 @@ export function buildFrequentAccessibilityFindings(
         impact: getSeverityKey(finding.impact),
         reviewOnly: true,
         count: 0,
-        pages: new Set<string>(),
+        pages: new Map<string, AccessibilityFindingPageSummary>(),
         categoryKey,
       }
       entry.count += 1
-      entry.pages.add(page.sectionId)
+      const pageEntry = entry.pages.get(page.sectionId) ?? {
+        sectionId: page.sectionId,
+        href: page.href,
+        title: page.title,
+        pageNumber: page.pageNumber,
+        count: 0,
+      }
+      pageEntry.count += 1
+      entry.pages.set(page.sectionId, pageEntry)
       findings.set(key, entry)
     }
   }
@@ -266,6 +291,18 @@ export function buildFrequentAccessibilityFindings(
       pageCoverage: finding.pages.size / pageCount,
       categoryKey: finding.categoryKey,
       categoryLabel: getCategoryLabel(finding.categoryKey),
+      pages: [...finding.pages.values()].sort((left, right) => {
+        if (left.pageNumber != null && right.pageNumber != null && left.pageNumber !== right.pageNumber) {
+          return left.pageNumber - right.pageNumber
+        }
+        if (left.pageNumber != null) {
+          return -1
+        }
+        if (right.pageNumber != null) {
+          return 1
+        }
+        return left.href.localeCompare(right.href)
+      }),
     }))
     .sort((left, right) => {
       if (left.pagesAffected !== right.pagesAffected) {

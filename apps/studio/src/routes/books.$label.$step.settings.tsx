@@ -7,6 +7,7 @@ import { QuizzesSettings } from "@/components/pipeline/stages/QuizzesSettings"
 import { GlossarySettings } from "@/components/pipeline/stages/GlossarySettings"
 import { CaptionsSettings } from "@/components/pipeline/stages/CaptionsSettings"
 import { TranslationsSettings } from "@/components/pipeline/stages/TranslationsSettings"
+import { ValidationSettings } from "@/components/pipeline/stages/ValidationSettings"
 import { cn } from "@/lib/utils"
 
 export const Route = createFileRoute("/books/$label/$step/settings")({
@@ -80,6 +81,8 @@ function StepSettingsPage() {
           <CaptionsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
         ) : step === "text-and-speech" ? (
           <TranslationsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
+        ) : step === "validation" ? (
+          <ValidationSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
         ) : (
           <div className="p-4 max-w-2xl">
             <p className="text-sm text-muted-foreground">

@@ -6,16 +6,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { api } from "@/api/client"
 import { useBookRun } from "@/hooks/use-book-run"
-import { AccessibilityConfigTab, AccessibilityOverviewTab } from "@/components/validation/AccessibilityValidationTabs"
+import { AccessibilityOverviewTab } from "@/components/validation/AccessibilityValidationTabs"
 import { ReviewerValidationSummaryTab } from "@/components/validation/ReviewerValidationSummaryTab"
 
 const VALIDATION_TABS = new Set([
   "accessibility-summary",
-  "accessibility-config",
   "reviewer-validation",
 ] as const)
 
 function normalizeValidationTab(value: string | undefined) {
+  if (value === "accessibility-config") {
+    return "accessibility-summary"
+  }
   return value && VALIDATION_TABS.has(value as never) ? value : "accessibility-summary"
 }
 
@@ -124,9 +126,6 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
             <TabsTrigger value="accessibility-summary" className="px-3 py-1.5 text-xs">
               Accessibility Summary
             </TabsTrigger>
-            <TabsTrigger value="accessibility-config" className="px-3 py-1.5 text-xs">
-              Accessibility Config
-            </TabsTrigger>
             <TabsTrigger value="reviewer-validation" className="px-3 py-1.5 text-xs">
               Reviewer Validation
             </TabsTrigger>
@@ -136,9 +135,6 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
         <div className="min-h-0 flex-1 overflow-auto">
           <TabsContent value="accessibility-summary" className="m-0 h-full">
             <AccessibilityOverviewTab label={bookLabel} />
-          </TabsContent>
-          <TabsContent value="accessibility-config" className="m-0 h-full">
-            <AccessibilityConfigTab label={bookLabel} />
           </TabsContent>
           <TabsContent value="reviewer-validation" className="m-0 h-full">
             <ReviewerValidationSummaryTab

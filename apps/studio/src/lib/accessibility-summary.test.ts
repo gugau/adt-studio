@@ -149,6 +149,9 @@ describe("buildFrequentAccessibilityFindings", () => {
     expect(findings.find((entry) => entry.id === "image-alt")).toMatchObject({
       pagesAffected: 1,
       pageCoverage: 1 / 3,
+      pages: [
+        expect.objectContaining({ href: "index.html", pageNumber: 1, count: 1 }),
+      ],
     })
     expect(findings.find((entry) => entry.id === "color-contrast")).toMatchObject({
       reviewOnly: true,
