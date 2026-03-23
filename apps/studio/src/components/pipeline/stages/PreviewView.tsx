@@ -7,6 +7,7 @@ import { api, getAdtUrl } from "@/api/client"
 import { useDebugPanelState } from "@/components/debug/debug-panel-state"
 import { useAccessibilityAssessment } from "@/hooks/use-debug"
 import { useBookRun } from "@/hooks/use-book-run"
+import { useBookTasks } from "@/hooks/use-book-tasks"
 import {
   findAccessibilityPage,
   normalizeAccessibilityHref,
@@ -38,11 +39,11 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
   const navigate = useNavigate()
   const search = useSearch({ strict: false }) as { previewHref?: string }
   const { stageState } = useBookRun()
+  const { isTaskRunning, tasks } = useBookTasks(bookLabel)
   const storyboardDone = stageState("storyboard") === "done"
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const ranRef = useRef(false)
   const { panelOpen } = useDebugPanelState()
-  const [packaging, setPackaging] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
   const [version, setVersion] = useState(0)
@@ -140,26 +141,38 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
     applyAccessibilityHighlights(iframe, matchedPage)
   }, [highlightMode, matchedPage, version])
 
+  const packaging = isTaskRunning("package-adt")
+
+  const prevPackagingRef = useRef(false)
+  useEffect(() => {
+    if (prevPackagingRef.current && !packaging) {
+      const packagingTask = tasks.find((task) => task.kind === "package-adt")
+      if (packagingTask?.status === "failed") {
+        setError(packagingTask.error ?? "Packaging failed")
+      } else {
+        void Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "step-status"] }),
+          queryClient.invalidateQueries({ queryKey: ["debug", "accessibility", bookLabel] }),
+          queryClient.invalidateQueries({ queryKey: ["debug", "versions", bookLabel, "accessibility-assessment", "book"] }),
+        ]).then(() => {
+          setVersion((value) => Math.max(value + 1, Date.now()))
+          setReady(true)
+        })
+      }
+    }
+    prevPackagingRef.current = packaging
+  }, [bookLabel, packaging, queryClient, tasks])
+
   const runPackage = useCallback(async () => {
-    setPackaging(true)
     setError(null)
     setReady(false)
     setCurrentPreviewPage({ sectionId: null, href: null, title: null, hasImages: false, hasActivity: false, signLanguageEnabled: false })
     try {
       await api.packageAdt(bookLabel)
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "step-status"] }),
-        queryClient.invalidateQueries({ queryKey: ["debug", "accessibility", bookLabel] }),
-        queryClient.invalidateQueries({ queryKey: ["debug", "versions", bookLabel, "accessibility-assessment", "book"] }),
-      ])
-      setVersion((value) => Math.max(value + 1, Date.now()))
-      setReady(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : "Packaging failed")
-    } finally {
-      setPackaging(false)
     }
-  }, [bookLabel, queryClient])
+  }, [bookLabel])
 
   // Only trigger packaging when storyboard is done
   useEffect(() => {

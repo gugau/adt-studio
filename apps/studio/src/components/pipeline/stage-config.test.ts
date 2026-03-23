@@ -19,6 +19,7 @@ describe("stage-config", () => {
       "quizzes",
       "captions",
       "glossary",
+      "toc",
       "text-and-speech",
       "preview",
     ])
@@ -32,6 +33,7 @@ describe("stage-config", () => {
       "quizzes",
       "captions",
       "glossary",
+      "toc",
       "text-and-speech",
       "validation",
       "preview",

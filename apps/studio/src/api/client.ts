@@ -204,6 +204,31 @@ export interface GlossaryOutput {
   version: number
 }
 
+// --- TOC types ---
+
+export interface TocEntry {
+  id: string
+  title: string
+  sectionId: string
+  href: string
+  chapterId: string
+  level: number
+}
+
+export interface TocGenerationOutput {
+  entries: TocEntry[]
+  pageCount: number
+  generatedAt: string
+  version: number
+}
+
+export interface TocSection {
+  sectionId: string
+  href: string
+  title: string
+  pageNumber: number
+}
+
 // --- Quiz types ---
 
 export interface QuizOption {
@@ -380,6 +405,21 @@ export interface LlmLogsParams {
   offset?: number
 }
 
+// --- Task types ---
+
+export interface TaskInfoResponse {
+  taskId: string
+  kind: string
+  status: "queued" | "running" | "completed" | "failed"
+  description: string
+  pageId?: string
+  url?: string
+  error?: string
+  result?: unknown
+  startedAt?: number
+  completedAt?: number
+}
+
 export const api = {
   getBooks: () => request<BookSummary[]>("/books"),
 
@@ -459,13 +499,13 @@ export const api = {
     }),
 
   reRenderPage: (label: string, pageId: string, apiKey: string, sectionIndex?: number, prompt?: string) =>
-    request<{ version: number; rendering: { sections: SectionRendering[] } }>(
+    request<{ taskId?: string; status?: string; version?: number; rendering?: { sections: SectionRendering[] } }>(
       `/books/${label}/pages/${pageId}/re-render${sectionIndex !== undefined ? `?sectionIndex=${sectionIndex}` : ""}`,
       {
         method: "POST",
         headers: { "X-OpenAI-Key": apiKey },
         ...(prompt ? { body: JSON.stringify({ prompt }) } : {}),
-        signal: AbortSignal.timeout(120_000),
+        signal: AbortSignal.timeout(30_000), // Just submitting a task now
       }
     ),
 
@@ -476,15 +516,14 @@ export const api = {
     instruction: string,
     apiKey: string,
     currentHtml?: string,
-    signal?: AbortSignal
   ) =>
-    request<{ html: string; reasoning: string }>(
+    request<{ taskId?: string; status?: string; html?: string; reasoning?: string }>(
       `/books/${label}/pages/${pageId}/sections/${sectionIndex}/ai-edit`,
       {
         method: "POST",
         headers: { "X-OpenAI-Key": apiKey },
         body: JSON.stringify({ instruction, currentHtml }),
-        signal: signal ?? AbortSignal.timeout(120_000),
+        signal: AbortSignal.timeout(30_000),
       }
     ),
 
@@ -546,9 +585,9 @@ export const api = {
     targetImageId: string,
     referenceImageId?: string,
     signal?: AbortSignal,
-    options?: { style?: string; imageType?: string; styleImageId?: string },
+    options?: { style?: string; imageType?: string; styleImageId?: string; sectionIndex?: number; mode?: "swap" | "add" },
   ) =>
-    request<{ imageId: string; width: number; height: number; originalWidth: number; originalHeight: number }>(
+    request<{ taskId: string; status: string }>(
       `/books/${label}/images/ai-generate?pageId=${pageId}`,
       {
         method: "POST",
@@ -560,8 +599,10 @@ export const api = {
           ...(options?.style && { style: options.style }),
           ...(options?.imageType && { imageType: options.imageType }),
           ...(options?.styleImageId && { styleImageId: options.styleImageId }),
+          ...(options?.sectionIndex !== undefined && { sectionIndex: options.sectionIndex }),
+          ...(options?.mode && { mode: options.mode }),
         }),
-        signal: signal ?? AbortSignal.timeout(180_000),
+        signal: signal ?? AbortSignal.timeout(30_000), // Just submitting — no need for 180s
       }
     ),
 
@@ -709,6 +750,18 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  getToc: (label: string) =>
+    request<TocGenerationOutput | null>(`/books/${label}/toc`),
+
+  updateToc: (label: string, data: unknown) =>
+    request<{ version: number }>(`/books/${label}/toc`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  getTocSections: (label: string) =>
+    request<TocSection[]>(`/books/${label}/toc/sections`),
+
   getTextCatalog: (label: string) =>
     request<TextCatalogResponse | null>(`/books/${label}/text-catalog`),
 
@@ -725,10 +778,13 @@ export const api = {
     request<TTSResponse>(`/books/${label}/tts`),
 
   packageAdt: (label: string) =>
-    request<{ status: string; label: string }>(
+    request<{ status: string; label: string; taskId?: string }>(
       `/books/${label}/package-adt`,
       { method: "POST" }
     ),
+
+  getTasks: (label: string) =>
+    request<{ tasks: TaskInfoResponse[] }>(`/books/${label}/tasks`),
 
   getPackageAdtStatus: (label: string) =>
     request<{ label: string; hasAdt: boolean }>(
@@ -806,6 +862,22 @@ export const api = {
     if (!res.ok) {
       const body = await res.json().catch(() => ({ error: res.statusText }))
       throw new Error(body.error ?? `WebPub export failed: ${res.status}`)
+    }
+    const buf = await res.arrayBuffer()
+    return new Blob([buf], { type: "application/zip" })
+  },
+
+  exportScorm: async (label: string): Promise<Blob> => {
+    const url = `${BASE_URL}/books/${label}/export-scorm`
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/zip" },
+      mode: "cors",
+      signal: AbortSignal.timeout(300_000),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ error: res.statusText }))
+      throw new Error(body.error ?? `SCORM export failed: ${res.status}`)
     }
     const buf = await res.arrayBuffer()
     return new Blob([buf], { type: "application/zip" })
