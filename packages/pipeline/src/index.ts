@@ -121,6 +121,12 @@ export {
   type GlossaryConfig,
   type GenerateGlossaryOptions,
 } from "./glossary.js"
+export {
+  generateToc,
+  buildTocGenerationConfig,
+  type TocGenerationConfig,
+  type GenerateTocOptions,
+} from "./toc-generation.js"
 export { validateSectionHtml } from "./validate-html.js"
 export {
   generateQuiz,
@@ -175,6 +181,7 @@ export {
 } from "./dag.js"
 export {
   packageAdtWeb,
+  packageWebpub,
   type PackageAdtWebOptions,
   renderPageHtml,
   NAV_HTML,

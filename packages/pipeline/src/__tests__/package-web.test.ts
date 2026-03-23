@@ -3,7 +3,7 @@ import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import type { Storage, PageData } from "@adt/storage"
-import { packageAdtWeb, renderPageHtml, rewriteImageUrls } from "../package-web.js"
+import { packageAdtWeb, packageWebpub, renderPageHtml, rewriteImageUrls } from "../package-web.js"
 
 function createMockStorage(
   pages: PageData[],
@@ -39,6 +39,37 @@ function createWebAssets(webAssetsDir: string): void {
   )
 }
 
+function createMinimalStorage(): Storage {
+  return createMockStorage(
+    [{ pageId: "pg001", pageNumber: 1, text: "Page one" }],
+    {
+      "web-rendering": {
+        pg001: {
+          sections: [
+            { sectionIndex: 0, sectionType: "content", reasoning: "ok", html: "<div>Hello</div>" },
+          ],
+        },
+      },
+      "page-sectioning": {
+        pg001: {
+          reasoning: "ok",
+          sections: [
+            {
+              sectionId: "pg001_sec001",
+              sectionType: "content",
+              parts: [],
+              backgroundColor: "#fff",
+              textColor: "#000",
+              pageNumber: 1,
+              isPruned: false,
+            },
+          ],
+        },
+      },
+    },
+  )
+}
+
 describe("renderPageHtml", () => {
   it("includes font preload links before stylesheet links", () => {
     const html = renderPageHtml({
@@ -62,6 +93,55 @@ describe("renderPageHtml", () => {
     const preloadPos = html.indexOf('rel="preload"')
     const stylesheetPos = html.indexOf('href="./assets/fonts.css"')
     expect(preloadPos).toBeLessThan(stylesheetPos)
+  })
+
+  it("uses offline/SCORM scripts instead of type=module in normal mode", () => {
+    const html = renderPageHtml({
+      content: "<p>Hello</p>",
+      language: "en",
+      sectionId: "pg001",
+      pageTitle: "Test",
+      pageIndex: 1,
+      hasMath: false,
+      bundleVersion: "1",
+    })
+
+    expect(html).toContain('src="./assets/offline-preloader.js"')
+    expect(html).toContain('src="./assets/scorm.js"')
+    expect(html).toContain('src="./assets/base.bundle.local.js"')
+    expect(html).not.toContain('type="module"')
+  })
+
+  it("keeps type=module script in embed mode", () => {
+    const html = renderPageHtml({
+      content: "<p>Hello</p>",
+      language: "en",
+      sectionId: "pg001",
+      pageTitle: "Test",
+      pageIndex: 1,
+      hasMath: false,
+      bundleVersion: "1",
+      embed: true,
+    })
+
+    expect(html).toContain('type="module"')
+    expect(html).toContain("base.bundle.min.js")
+    expect(html).not.toContain("offline-preloader.js")
+    expect(html).not.toContain("scorm.js")
+  })
+
+  it("includes crossorigin on font preloads", () => {
+    const html = renderPageHtml({
+      content: "<p>Hello</p>",
+      language: "en",
+      sectionId: "pg001",
+      pageTitle: "Test",
+      pageIndex: 1,
+      hasMath: false,
+      bundleVersion: "1",
+    })
+
+    expect(html).toContain('as="font" type="font/woff2" crossorigin>')
   })
 })
 
@@ -182,6 +262,29 @@ describe("packageAdtWeb", () => {
     expect(fs.existsSync(bundlePath)).toBe(true)
     expect(fs.readFileSync(bundlePath, "utf-8")).toContain("__ADT_BUNDLE_TEST__")
     expect(fs.existsSync(`${bundlePath}.map`)).toBe(true)
+
+    // Offline preloader generated
+    const preloaderPath = path.join(bookDir, "adt", "assets", "offline-preloader.js")
+    expect(fs.existsSync(preloaderPath)).toBe(true)
+    const preloader = fs.readFileSync(preloaderPath, "utf-8")
+    expect(preloader).toContain("window.fetch")
+    expect(preloader).toContain("INLINE")
+
+    // Local bundle generated (no export statement)
+    const localBundlePath = path.join(bookDir, "adt", "assets", "base.bundle.local.js")
+    expect(fs.existsSync(localBundlePath)).toBe(true)
+
+    // SCORM adapter generated
+    const scormPath = path.join(bookDir, "adt", "assets", "scorm.js")
+    expect(fs.existsSync(scormPath)).toBe(true)
+    expect(fs.readFileSync(scormPath, "utf-8")).toContain("LMSInitialize")
+
+    // SCORM manifest generated
+    const manifestPath = path.join(bookDir, "adt", "imsmanifest.xml")
+    expect(fs.existsSync(manifestPath)).toBe(true)
+    const manifest = fs.readFileSync(manifestPath, "utf-8")
+    expect(manifest).toContain("ADL SCORM")
+    expect(manifest).toContain("index.html")
   })
 
   it("inserts quiz pages even when the anchor page has no rendered sections", async () => {
@@ -268,6 +371,10 @@ describe("packageAdtWeb", () => {
       { section_id: "pg002_sec001", href: "pg002_sec001.html" },
     ])
     expect(fs.existsSync(path.join(bookDir, "adt", "index.html"))).toBe(true)
+
+    // SCORM adapter should include the quiz activity ID
+    const scorm = fs.readFileSync(path.join(bookDir, "adt", "assets", "scorm.js"), "utf-8")
+    expect(scorm).toContain('"qz001"')
   })
 
   it("sets activities true in config.json when a section has an activity type", async () => {
@@ -441,6 +548,109 @@ describe("packageAdtWeb", () => {
       { section_id: "pg001_sec002", href: "pg001_sec002.html", page_number: 1 },
     ])
   })
+
+  it("builds IIFE bundle via esbuild when only pre-built ESM exists", async () => {
+    const bookDir = path.join(tmpDir, "book")
+    const webAssetsDir = path.join(tmpDir, "assets-web")
+    fs.mkdirSync(bookDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+
+    // Simulate partial pre-build: only ESM pre-built, no IIFE
+    const preBuiltContent = '/* pre-built ESM marker */\nconsole.log("esm");'
+    fs.writeFileSync(path.join(webAssetsDir, "base.bundle.min.js"), preBuiltContent)
+
+    const storage = createMinimalStorage()
+    await packageAdtWeb(storage, {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Test",
+      webAssetsDir,
+    })
+
+    const assetsDir = path.join(bookDir, "adt", "assets")
+
+    // ESM was copied (matches pre-built content exactly)
+    const esmOutput = fs.readFileSync(path.join(assetsDir, "base.bundle.min.js"), "utf-8")
+    expect(esmOutput).toBe(preBuiltContent)
+
+    // IIFE was built by esbuild (exists, has content from base.js)
+    const iifePath = path.join(assetsDir, "base.bundle.local.js")
+    expect(fs.existsSync(iifePath)).toBe(true)
+    const iifeContent = fs.readFileSync(iifePath, "utf-8")
+    expect(iifeContent.length).toBeGreaterThan(0)
+    expect(iifeContent).toContain("__ADT_BUNDLE_TEST__")
+    expect(iifeContent).not.toContain("pre-built ESM marker")
+  })
+
+  it("builds ESM bundle via esbuild when only pre-built IIFE exists", async () => {
+    const bookDir = path.join(tmpDir, "book")
+    const webAssetsDir = path.join(tmpDir, "assets-web")
+    fs.mkdirSync(bookDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+
+    // Simulate partial pre-build: only IIFE pre-built, no ESM
+    const preBuiltContent = '/* pre-built IIFE marker */\nconsole.log("iife");'
+    fs.writeFileSync(path.join(webAssetsDir, "base.bundle.local.js"), preBuiltContent)
+
+    const storage = createMinimalStorage()
+    await packageAdtWeb(storage, {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Test",
+      webAssetsDir,
+    })
+
+    const assetsDir = path.join(bookDir, "adt", "assets")
+
+    // IIFE was copied (matches pre-built content exactly)
+    const iifeOutput = fs.readFileSync(path.join(assetsDir, "base.bundle.local.js"), "utf-8")
+    expect(iifeOutput).toBe(preBuiltContent)
+
+    // ESM was built by esbuild (exists, has content from base.js, has sourcemap)
+    const esmPath = path.join(assetsDir, "base.bundle.min.js")
+    expect(fs.existsSync(esmPath)).toBe(true)
+    const esmContent = fs.readFileSync(esmPath, "utf-8")
+    expect(esmContent.length).toBeGreaterThan(0)
+    expect(esmContent).toContain("__ADT_BUNDLE_TEST__")
+    expect(fs.existsSync(`${esmPath}.map`)).toBe(true)
+    expect(esmContent).not.toContain("pre-built IIFE marker")
+  })
+
+  it("copies both bundles without rebuilding when both pre-built files exist", async () => {
+    const bookDir = path.join(tmpDir, "book")
+    const webAssetsDir = path.join(tmpDir, "assets-web")
+    fs.mkdirSync(bookDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+
+    // Both pre-built
+    const esmContent = '/* pre-built ESM */\nconsole.log("esm");'
+    const iifeContent = '/* pre-built IIFE */\nconsole.log("iife");'
+    fs.writeFileSync(path.join(webAssetsDir, "base.bundle.min.js"), esmContent)
+    fs.writeFileSync(path.join(webAssetsDir, "base.bundle.local.js"), iifeContent)
+
+    const storage = createMinimalStorage()
+    await packageAdtWeb(storage, {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Test",
+      webAssetsDir,
+    })
+
+    const assetsDir = path.join(bookDir, "adt", "assets")
+
+    // Both files are exact copies of pre-built content
+    expect(fs.readFileSync(path.join(assetsDir, "base.bundle.min.js"), "utf-8")).toBe(esmContent)
+    expect(fs.readFileSync(path.join(assetsDir, "base.bundle.local.js"), "utf-8")).toBe(iifeContent)
+
+    // No sourcemap — esbuild was not invoked
+    expect(fs.existsSync(path.join(assetsDir, "base.bundle.min.js.map"))).toBe(false)
+  })
 })
 
 describe("rewriteImageUrls", () => {
@@ -497,5 +707,172 @@ describe("rewriteImageUrls", () => {
     const imageMap = new Map<string, string>()
     const { html: out } = rewriteImageUrls(html, "mybook", imageMap)
     expect(out).toContain('src="https://example.com/photo.jpg"')
+  })
+})
+
+describe("packageWebpub", () => {
+  let tmpDir: string
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "package-webpub-"))
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true })
+  })
+
+  async function buildAdtFirst(
+    bookDir: string,
+    webAssetsDir: string,
+    storage: Storage,
+    title = "Test Book",
+  ) {
+    await packageAdtWeb(storage, {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title,
+      webAssetsDir,
+    })
+  }
+
+  function setupBook() {
+    const bookDir = path.join(tmpDir, "book")
+    const webAssetsDir = path.join(tmpDir, "assets-web")
+    fs.mkdirSync(bookDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+
+    const pages: PageData[] = [
+      { pageId: "pg001", pageNumber: 1, text: "Page one" },
+    ]
+
+    const storage = createMockStorage(pages, {
+      "web-rendering": {
+        pg001: {
+          sections: [
+            {
+              sectionIndex: 0,
+              sectionType: "content",
+              reasoning: "ok",
+              html: "<div>First page</div>",
+            },
+          ],
+        },
+      },
+      "page-sectioning": {
+        pg001: {
+          reasoning: "ok",
+          sections: [
+            {
+              sectionId: "pg001_sec001",
+              sectionType: "content",
+              parts: [],
+              backgroundColor: "#fff",
+              textColor: "#000",
+              pageNumber: 1,
+              isPruned: false,
+            },
+          ],
+        },
+      },
+      metadata: {
+        book: {
+          title: "Test Book",
+          authors: ["Author"],
+          publisher: "Publisher",
+          language_code: "en",
+        },
+      },
+    })
+
+    return { bookDir, webAssetsDir, storage }
+  }
+
+  it("disables showNavigationControls and showTutorial in config", async () => {
+    const { bookDir, webAssetsDir, storage } = setupBook()
+    await buildAdtFirst(bookDir, webAssetsDir, storage)
+    packageWebpub(storage, {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Test Book",
+      webAssetsDir,
+    })
+
+    const config = JSON.parse(
+      fs.readFileSync(path.join(bookDir, "webpub", "assets", "config.json"), "utf-8"),
+    )
+    expect(config.features.showNavigationControls).toBe(false)
+    expect(config.features.showTutorial).toBe(false)
+  })
+
+  it("injects CSS overrides into HTML pages", async () => {
+    const { bookDir, webAssetsDir, storage } = setupBook()
+    await buildAdtFirst(bookDir, webAssetsDir, storage)
+    packageWebpub(storage, {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Test Book",
+      webAssetsDir,
+    })
+
+    const html = fs.readFileSync(path.join(bookDir, "webpub", "index.html"), "utf-8")
+    expect(html).toContain("columns: auto !important")
+    expect(html).toContain("flex-direction: column !important")
+    expect(html).toContain("max-width: 100% !important")
+  })
+
+  it("writes a valid webpub manifest with scrolled presentation", async () => {
+    const { bookDir, webAssetsDir, storage } = setupBook()
+    await buildAdtFirst(bookDir, webAssetsDir, storage)
+    packageWebpub(storage, {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "My Test Book",
+      webAssetsDir,
+    })
+
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(bookDir, "webpub", "manifest.json"), "utf-8"),
+    )
+    expect(manifest["@context"]).toBe("https://readium.org/webpub-manifest/context.jsonld")
+    expect(manifest.metadata.title).toBe("My Test Book")
+    expect(manifest.metadata.language).toBe("en")
+    expect(manifest.metadata.presentation.overflow).toBe("scrolled")
+    expect(manifest.metadata.presentation.spread).toBe("none")
+    expect(manifest.metadata.author).toBe("Author")
+    expect(manifest.metadata.publisher).toBe("Publisher")
+    expect(manifest.readingOrder).toHaveLength(1)
+    expect(manifest.readingOrder[0].type).toBe("text/html")
+    expect(manifest.readingOrder[0].href).toBe("index.html")
+    expect(manifest.links[0]).toEqual({
+      rel: "self",
+      href: "manifest.json",
+      type: "application/webpub+json",
+    })
+    expect(manifest.resources.length).toBeGreaterThan(0)
+  })
+
+  it("throws when ADT package has not been built", () => {
+    const bookDir = path.join(tmpDir, "book")
+    fs.mkdirSync(bookDir, { recursive: true })
+    const storage = createMockStorage([], {})
+
+    expect(() =>
+      packageWebpub(storage, {
+        bookDir,
+        label: "book",
+        language: "en",
+        outputLanguages: ["en"],
+        title: "Test",
+        webAssetsDir: tmpDir,
+      })
+    ).toThrow("ADT package not found")
   })
 })

@@ -3,7 +3,7 @@ import path from "node:path"
 import { zipSync } from "fflate"
 import { parseBookLabel } from "@adt/types"
 import { createBookStorage } from "@adt/storage"
-import { packageAdtWeb, loadBookConfig, normalizeLocale } from "@adt/pipeline"
+import { packageAdtWeb, packageWebpub, loadBookConfig, normalizeLocale } from "@adt/pipeline"
 
 export interface ExportResult {
   zipBuffer: Uint8Array
@@ -69,6 +69,151 @@ export async function exportBook(
   return {
     zipBuffer,
     filename: `${safeLabel}.zip`,
+  }
+}
+
+export interface WebpubExportResult {
+  webpubBuffer: Uint8Array
+  filename: string
+  safeFilename: string
+}
+
+export async function exportWebpub(
+  label: string,
+  booksDir: string,
+  webAssetsDir: string,
+  configPath?: string,
+): Promise<WebpubExportResult> {
+  const safeLabel = parseBookLabel(label)
+  const resolvedDir = path.resolve(booksDir)
+  const bookDir = path.join(resolvedDir, safeLabel)
+
+  if (!fs.existsSync(bookDir)) {
+    throw new Error(`Book not found: ${safeLabel}`)
+  }
+
+  let title = safeLabel
+  const storage = createBookStorage(safeLabel, resolvedDir)
+  try {
+    if (!webAssetsDir || !fs.existsSync(webAssetsDir)) {
+      throw new Error("Web assets directory not found")
+    }
+
+    // Rebuild ADT package first, then build webpub on top
+    const config = loadBookConfig(safeLabel, resolvedDir, configPath)
+    const metadataRow = storage.getLatestNodeData("metadata", "book")
+    const metadata = metadataRow?.data as {
+      title?: string | null
+      language_code?: string | null
+    } | null
+    const language = normalizeLocale(config.editing_language ?? metadata?.language_code ?? "en")
+    const outputLanguages = Array.from(
+      new Set(
+        (config.output_languages && config.output_languages.length > 0
+          ? config.output_languages
+          : [language]).map((code) => normalizeLocale(code))
+      )
+    )
+    title = metadata?.title ?? safeLabel
+
+    const opts = {
+      bookDir,
+      label: safeLabel,
+      language,
+      outputLanguages,
+      title,
+      webAssetsDir,
+      applyBodyBackground: config.apply_body_background,
+    }
+
+    await packageAdtWeb(storage, opts)
+    packageWebpub(storage, opts)
+  } finally {
+    storage.close()
+  }
+
+  // Zip the webpub directory
+  const webpubDir = path.join(bookDir, "webpub")
+  const zipFiles: Record<string, Uint8Array> = {}
+  collectFiles(webpubDir, "", zipFiles)
+  const webpubBuffer = zipSync(zipFiles)
+
+  return {
+    webpubBuffer,
+    filename: `${title}.webpub`,
+    safeFilename: `${safeLabel}.webpub`,
+  }
+}
+
+export interface ScormExportResult {
+  scormBuffer: Uint8Array
+  filename: string
+  safeFilename: string
+}
+
+export async function exportScorm(
+  label: string,
+  booksDir: string,
+  webAssetsDir: string,
+  configPath?: string,
+): Promise<ScormExportResult> {
+  const safeLabel = parseBookLabel(label)
+  const resolvedDir = path.resolve(booksDir)
+  const bookDir = path.join(resolvedDir, safeLabel)
+
+  if (!fs.existsSync(bookDir)) {
+    throw new Error(`Book not found: ${safeLabel}`)
+  }
+
+  let title = safeLabel
+  const storage = createBookStorage(safeLabel, resolvedDir)
+  try {
+    if (!webAssetsDir || !fs.existsSync(webAssetsDir)) {
+      throw new Error("Web assets directory not found")
+    }
+
+    const config = loadBookConfig(safeLabel, resolvedDir, configPath)
+    const metadataRow = storage.getLatestNodeData("metadata", "book")
+    const metadata = metadataRow?.data as {
+      title?: string | null
+      language_code?: string | null
+    } | null
+    const language = normalizeLocale(config.editing_language ?? metadata?.language_code ?? "en")
+    const outputLanguages = Array.from(
+      new Set(
+        (config.output_languages && config.output_languages.length > 0
+          ? config.output_languages
+          : [language]).map((code) => normalizeLocale(code))
+      )
+    )
+    title = metadata?.title ?? safeLabel
+
+    await packageAdtWeb(storage, {
+      bookDir,
+      label: safeLabel,
+      language,
+      outputLanguages,
+      title,
+      webAssetsDir,
+      applyBodyBackground: config.apply_body_background,
+    })
+  } finally {
+    storage.close()
+  }
+
+  // Zip only the adt/ directory — imsmanifest.xml must be at the ZIP root
+  const adtDir = path.join(bookDir, "adt")
+  if (!fs.existsSync(adtDir)) {
+    throw new Error("ADT directory not found — run the pipeline first")
+  }
+  const zipFiles: Record<string, Uint8Array> = {}
+  collectFiles(adtDir, "", zipFiles)
+  const scormBuffer = zipSync(zipFiles)
+
+  return {
+    scormBuffer,
+    filename: `${title}.zip`,
+    safeFilename: `${safeLabel}.zip`,
   }
 }
 

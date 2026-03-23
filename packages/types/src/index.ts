@@ -31,6 +31,13 @@ export {
 
 export { ProgressEvent } from "./progress.js"
 
+export {
+  TaskKind,
+  TaskStatus,
+  TaskEvent,
+  TaskInfo,
+} from "./task.js"
+
 export { BookLabel, parseBookLabel } from "./book.js"
 
 export {
@@ -136,3 +143,9 @@ export {
 export {
   StyleguideGenerationOutput,
 } from "./styleguide-generation.js"
+
+export {
+  TocEntry,
+  TocGenerationOutput,
+  tocLLMSchema,
+} from "./toc.js"

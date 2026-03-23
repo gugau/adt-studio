@@ -8,7 +8,9 @@ import type {
   GlossaryOutput,
   QuizGenerationOutput,
   BookSummaryOutput,
+  BookMetadata,
   TTSOutput,
+  TocGenerationOutput,
   Quiz,
 } from "@adt/types"
 import { WebRenderingOutput as WebRenderingOutputSchema } from "@adt/types"
@@ -102,12 +104,16 @@ export async function packageAdtWeb(
   const summaryRow = storage.getLatestNodeData("book-summary", "book")
   const bookSummary = (summaryRow?.data as BookSummaryOutput | undefined)?.summary
 
+  const tocRow = storage.getLatestNodeData("toc-generation", "book")
+  const llmToc = tocRow?.data as TocGenerationOutput | undefined
+
   // ------------------------------------------------------------------
   // Process pages
   // ------------------------------------------------------------------
   progress.emit({ type: "step-progress", step, message: "Processing pages..." })
 
   const pageList: PageEntry[] = []
+  const tocEntries: Array<{ section_id: string; href: string; title: string; chapter_id: string }> = []
   let hasMath = false
   let hasActivitySections = false
   const copiedImages = new Set<string>()
@@ -192,6 +198,19 @@ export async function packageAdtWeb(
             entry.page_number = sectionMeta.pageNumber
           }
           pageList.push(entry)
+
+          // Build TOC entry from first heading text in this section
+          if (sectionMeta) {
+            const headingText = findHeadingText(sectionMeta)
+            if (headingText) {
+              tocEntries.push({
+                section_id: sectionId,
+                href: filename,
+                title: headingText.text,
+                chapter_id: headingText.textId,
+              })
+            }
+          }
         }
       }
     }
@@ -230,10 +249,22 @@ export async function packageAdtWeb(
 
   writeJson(path.join(contentDir, "pages.json"), pageList)
 
-  // Table of contents — built from first section per page that has a heading
-  // For now, write an empty toc (the Python version uses plate.table_of_contents
-  // which we don't have; the runner handles empty toc gracefully)
-  writeJson(path.join(contentDir, "toc.json"), [])
+  // Table of contents — prefer LLM-generated TOC, fallback to heading-based
+  if (llmToc && llmToc.entries.length > 0) {
+    // Map LLM entries to the flat format expected by the runtime, resolving
+    // hrefs from the page list (the first page is always index.html)
+    const hrefMap = new Map(pageList.map((p) => [p.section_id, p.href]))
+    const tocJson = llmToc.entries.map((e) => ({
+      section_id: e.sectionId,
+      href: hrefMap.get(e.sectionId) ?? e.href,
+      title: e.title,
+      chapter_id: e.chapterId,
+      level: e.level,
+    }))
+    writeJson(path.join(contentDir, "toc.json"), tocJson)
+  } else {
+    writeJson(path.join(contentDir, "toc.json"), tocEntries)
+  }
 
   // ------------------------------------------------------------------
   // Cover image
@@ -410,6 +441,19 @@ export async function packageAdtWeb(
   progress.emit({ type: "step-progress", step, message: "Building Tailwind CSS..." })
   await buildTailwindCss(adtDir, webAssetsDir)
 
+  // ------------------------------------------------------------------
+  // SCORM + Offline support
+  // ------------------------------------------------------------------
+  progress.emit({ type: "step-progress", step, message: "Generating offline & SCORM support..." })
+
+  const activityIds = collectActivityIds(adtDir, pageList)
+  generateScormAdapter(assetsDir, activityIds)
+
+  // Offline preloader must run last — it reads the final state of all files
+  generateOfflinePreloader(adtDir, outputLanguages)
+
+  generateImsManifest(adtDir, title, label, pageList)
+
   // Render AGENTS.md from Liquid template with book-specific data
   const agentsMdTemplate = path.join(path.dirname(webAssetsDir), "AGENTS.md.liquid")
   if (fs.existsSync(agentsMdTemplate)) {
@@ -433,6 +477,214 @@ export async function packageAdtWeb(
 
   progress.emit({ type: "step-complete", step })
 }
+
+// ---------------------------------------------------------------------------
+// WebPub packaging
+// ---------------------------------------------------------------------------
+
+const WEBPUB_MIME_TYPES: Record<string, string> = {
+  ".html": "text/html",
+  ".css": "text/css",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".mp3": "audio/mpeg",
+  ".js": "application/javascript",
+  ".json": "application/json",
+}
+
+/**
+ * Package the book as a Readium WebPub directory at `{bookDir}/webpub/`.
+ *
+ * Assumes ADT web packaging has already been run (i.e. `{bookDir}/adt/` exists).
+ * Copies the ADT directory to `{bookDir}/webpub/`, adds a Readium WebPub
+ * manifest, and tweaks config for embedded reading. The caller is responsible
+ * for zipping the result into a `.webpub` file.
+ */
+export function packageWebpub(
+  storage: Storage,
+  options: PackageAdtWebOptions,
+): void {
+  const { bookDir, title } = options
+
+  const adtDir = path.join(bookDir, "adt")
+  if (!fs.existsSync(adtDir)) {
+    throw new Error("ADT package not found — run packageAdtWeb first")
+  }
+
+  const webpubDir = path.join(bookDir, "webpub")
+
+  // Copy adt/ -> webpub/
+  if (fs.existsSync(webpubDir)) fs.rmSync(webpubDir, { recursive: true })
+  copyDirRecursive(adtDir, webpubDir)
+
+  // Override config: disable navigation controls and tutorial for embedded reading
+  const configPath = path.join(webpubDir, "assets", "config.json")
+  if (fs.existsSync(configPath)) {
+    const config = JSON.parse(fs.readFileSync(configPath, "utf-8"))
+    config.features.showNavigationControls = false
+    config.features.showTutorial = false
+    writeJson(configPath, config)
+  }
+
+  // Inject CSS into HTML pages to prevent readers (e.g. Thorium) from applying
+  // column-based pagination which breaks the single-page ADT layout.
+  injectWebpubStyles(webpubDir)
+
+  // Load metadata for manifest
+  const metadataRow = storage.getLatestNodeData("metadata", "book")
+  const metadata = metadataRow?.data as BookMetadata | undefined
+
+  const manifestMetadata: Record<string, unknown> = {
+    "@type": "http://schema.org/Book",
+    title,
+    language: options.language,
+    modified: new Date().toISOString(),
+    // Tell readers to scroll each page rather than paginating into columns,
+    // and not to display two pages side-by-side (spread).
+    presentation: {
+      overflow: "scrolled",
+      spread: "none",
+    },
+  }
+  if (metadata?.authors?.length) {
+    manifestMetadata.author = metadata.authors.join(", ")
+  }
+  if (metadata?.publisher) {
+    manifestMetadata.publisher = metadata.publisher
+  }
+
+  // Links
+  const links: Array<Record<string, string>> = [
+    { rel: "self", href: "manifest.json", type: "application/webpub+json" },
+  ]
+  for (const [filename, mimeType] of [
+    ["cover.png", "image/png"],
+    ["cover.jpg", "image/jpeg"],
+    ["cover.jpeg", "image/jpeg"],
+  ] as const) {
+    if (fs.existsSync(path.join(webpubDir, filename))) {
+      links.push({ rel: "cover", href: filename, type: mimeType })
+      break
+    }
+  }
+
+  // Reading order from pages.json
+  const pagesPath = path.join(webpubDir, "content", "pages.json")
+  const pageList = JSON.parse(fs.readFileSync(pagesPath, "utf-8")) as PageEntry[]
+  const readingOrder = pageList.map((page) => ({
+    href: page.href,
+    type: "text/html",
+    title: page.page_number != null ? String(page.page_number) : page.section_id,
+  }))
+
+  // Enumerate all files as resources
+  const resources: Array<{ href: string; type: string }> = []
+  collectWebpubResources(webpubDir, webpubDir, resources)
+
+  // Write manifest
+  const manifest = {
+    "@context": "https://readium.org/webpub-manifest/context.jsonld",
+    metadata: manifestMetadata,
+    links,
+    readingOrder,
+    resources,
+  }
+  writeJson(path.join(webpubDir, "manifest.json"), manifest)
+}
+
+const WEBPUB_OVERRIDE_CSS = `<style>
+/* ── WebPub / EPUB reader overrides ──
+   EPUB readers like Thorium inject their own column-based pagination.
+   The ADT pages use Tailwind flex centering and responsive breakpoints
+   that don't work well in reflowable EPUB viewports. Override everything
+   to simple block flow with single-column layout. */
+
+/* Prevent reader column pagination */
+:root, html, body {
+  columns: auto !important;
+  column-width: auto !important;
+  column-count: auto !important;
+  column-gap: normal !important;
+  overflow: visible !important;
+}
+
+/* Body: block flow, no flex centering, no viewport-height minimum */
+body {
+  display: block !important;
+  min-height: auto !important;
+  height: auto !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+
+/* Content wrapper: block flow, visible (JS fade-in won't run in readers) */
+#content {
+  display: block !important;
+  min-height: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  opacity: 1 !important;
+}
+
+/* Force single-column layout for all section containers.
+   Side-by-side (lg:flex-row) layouts squeeze text in narrow
+   reader viewports. */
+section > div {
+  flex-direction: column !important;
+  max-width: 100% !important;
+}
+
+/* Remove max-width constraints on nested containers (max-w-6xl, max-w-xl, etc.) */
+.container,
+section [class*="max-w-"] {
+  max-width: 100% !important;
+}
+
+/* Responsive images */
+img {
+  max-width: 100% !important;
+  height: auto !important;
+}
+</style>`
+
+/**
+ * Walk all .html files in `dir` and inject a `<style>` block right before
+ * `</head>` that overrides reader-injected column pagination CSS.
+ */
+function injectWebpubStyles(dir: string): void {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name)
+    if (entry.isDirectory()) {
+      injectWebpubStyles(fullPath)
+    } else if (entry.isFile() && entry.name.endsWith(".html")) {
+      let html = fs.readFileSync(fullPath, "utf-8")
+      html = html.replace("</head>", `${WEBPUB_OVERRIDE_CSS}\n</head>`)
+      fs.writeFileSync(fullPath, html)
+    }
+  }
+}
+
+function collectWebpubResources(
+  baseDir: string,
+  dir: string,
+  out: Array<{ href: string; type: string }>,
+): void {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name)
+    if (entry.isDirectory()) {
+      collectWebpubResources(baseDir, fullPath, out)
+    } else if (entry.isFile()) {
+      const relPath = path.relative(baseDir, fullPath).replace(/\\/g, "/")
+      const ext = path.extname(entry.name).toLowerCase()
+      out.push({
+        href: relPath,
+        type: WEBPUB_MIME_TYPES[ext] ?? "application/octet-stream",
+      })
+    }
+  }
+}
+
 
 // ---------------------------------------------------------------------------
 // HTML generation
@@ -542,7 +794,11 @@ ${contentBlock}
 ${answersScript}
     <div class="relative z-50" id="interface-container"></div>
     <div class="relative z-50" id="nav-container"${opts.embed ? ' style="display:none"' : ""}></div>
-    <script src="./assets/base.bundle.min.js?v=${escapeAttr(opts.bundleVersion)}" type="module"></script>
+${opts.embed
+      ? `    <script src="./assets/base.bundle.min.js?v=${escapeAttr(opts.bundleVersion)}" type="module"></script>`
+      : `    <script src="./assets/offline-preloader.js"></script>
+    <script src="./assets/scorm.js"></script>
+    <script src="./assets/base.bundle.local.js"></script>`}
 </body>
 
 </html>
@@ -979,26 +1235,54 @@ async function buildJsBundle(
   outputAssetsDir: string,
 ): Promise<void> {
   // In Tauri sidecar mode, esbuild cannot run inside the pkg binary.
-  // bundle.mjs pre-builds base.bundle.min.js into webAssetsDir before zipping.
-  const preBuilt = path.join(webAssetsDir, "base.bundle.min.js")
-  if (fs.existsSync(preBuilt)) {
-    fs.copyFileSync(preBuilt, path.join(outputAssetsDir, "base.bundle.min.js"))
-    return
+  // bundle.mjs pre-builds base.bundle.min.js + base.bundle.local.js into
+  // webAssetsDir before zipping.  Copy whichever pre-built files exist,
+  // then fall through to esbuild for any that are missing (common in dev mode
+  // where bundle.mjs hasn't been run).
+  const preBuiltEsm = path.join(webAssetsDir, "base.bundle.min.js")
+  const preBuiltIife = path.join(webAssetsDir, "base.bundle.local.js")
+
+  const hasPreBuiltEsm = fs.existsSync(preBuiltEsm)
+  const hasPreBuiltIife = fs.existsSync(preBuiltIife)
+
+  if (hasPreBuiltEsm) {
+    fs.copyFileSync(preBuiltEsm, path.join(outputAssetsDir, "base.bundle.min.js"))
+  }
+  if (hasPreBuiltIife) {
+    fs.copyFileSync(preBuiltIife, path.join(outputAssetsDir, "base.bundle.local.js"))
   }
 
+  // Both pre-built — nothing left to do
+  if (hasPreBuiltEsm && hasPreBuiltIife) return
+
+  // Build any missing bundles with esbuild
   const esbuild = await import("esbuild")
   const entryPoint = path.join(webAssetsDir, "base.js")
   if (!fs.existsSync(entryPoint)) return // skip if no source
 
-  await esbuild.build({
-    entryPoints: [entryPoint],
-    bundle: true,
-    minify: true,
-    sourcemap: true,
-    format: "esm",
-    target: "es2020",
-    outfile: path.join(outputAssetsDir, "base.bundle.min.js"),
-  })
+  if (!hasPreBuiltEsm) {
+    await esbuild.build({
+      entryPoints: [entryPoint],
+      bundle: true,
+      minify: true,
+      sourcemap: true,
+      format: "esm",
+      target: "es2020",
+      outfile: path.join(outputAssetsDir, "base.bundle.min.js"),
+    })
+  }
+
+  if (!hasPreBuiltIife) {
+    // IIFE version for file:// offline use (no ES module export)
+    await esbuild.build({
+      entryPoints: [entryPoint],
+      bundle: true,
+      minify: true,
+      format: "iife",
+      target: "es2020",
+      outfile: path.join(outputAssetsDir, "base.bundle.local.js"),
+    })
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1113,8 +1397,341 @@ async function renderAgentsMd(
 }
 
 // ---------------------------------------------------------------------------
+// SCORM + Offline support generators
+// ---------------------------------------------------------------------------
+
+/**
+ * Generate `assets/offline-preloader.js` — inlines all JSON/HTML files that
+ * the ADT bundle fetches at startup and monkey-patches `window.fetch` to
+ * serve them from memory. This allows the ADT to work when opened via
+ * `file://` (double-click). On HTTP/HTTPS the patch falls through to real
+ * `fetch()`, so it's transparent.
+ */
+function generateOfflinePreloader(
+  adtDir: string,
+  outputLanguages: string[],
+): void {
+  const inline: Record<string, unknown> = {}
+
+  const readTextSafe = (rel: string): string | null => {
+    const p = path.join(adtDir, rel)
+    return fs.existsSync(p) ? fs.readFileSync(p, "utf-8") : null
+  }
+  const readJsonSafe = (rel: string): unknown | null => {
+    const text = readTextSafe(rel)
+    if (text === null) return null
+    try { return JSON.parse(text) } catch { return null }
+  }
+
+  // Shared files
+  const interfaceHtml = readTextSafe("assets/interface.html")
+  if (interfaceHtml !== null) inline["./assets/interface.html"] = interfaceHtml
+
+  for (const rel of [
+    "assets/config.json",
+    "content/pages.json",
+    "content/toc.json",
+  ]) {
+    const data = readJsonSafe(rel)
+    if (data !== null) inline[`./${rel}`] = data
+  }
+
+  const navHtml = readTextSafe("content/navigation/nav.html")
+  if (navHtml !== null) inline["./content/navigation/nav.html"] = navHtml
+
+  // Per-language files
+  for (const lang of outputLanguages) {
+    const itPath = `assets/interface_translations/${lang}/interface_translations.json`
+    const itData = readJsonSafe(itPath)
+    if (itData !== null) inline[`./${itPath}`] = itData
+
+    for (const file of ["texts.json", "audios.json", "videos.json", "glossary.json"]) {
+      const rel = `content/i18n/${lang}/${file}`
+      const data = readJsonSafe(rel)
+      if (data !== null) inline[`./${rel}`] = data
+    }
+  }
+
+  const js = `// offline-preloader.js — auto-generated, do not edit by hand
+(function () {
+  var INLINE = ${JSON.stringify(inline)};
+  var _realFetch = window.fetch.bind(window);
+  window.fetch = function (url, opts) {
+    var clean = String(url).split("?")[0];
+    if (Object.prototype.hasOwnProperty.call(INLINE, clean)) {
+      var data = INLINE[clean];
+      var isJson = clean.slice(-5) === ".json";
+      var body = isJson ? JSON.stringify(data) : data;
+      var ct = isJson ? "application/json" : "text/html; charset=utf-8";
+      return Promise.resolve(
+        new Response(body, { status: 200, headers: { "Content-Type": ct } })
+      );
+    }
+    return _realFetch(url, opts);
+  };
+  if (location.protocol === 'file:') {
+    new MutationObserver(function (mutations) {
+      mutations.forEach(function (m) {
+        m.addedNodes.forEach(function (node) {
+          if (node.nodeType === 1 && node.tagName === 'LINK' && node.rel === 'manifest') {
+            node.parentNode.removeChild(node);
+          }
+        });
+      });
+    }).observe(document.documentElement, { childList: true, subtree: true });
+  }
+})();
+`
+  fs.writeFileSync(path.join(adtDir, "assets", "offline-preloader.js"), js)
+}
+
+/**
+ * Generate `assets/scorm.js` — a SCORM 1.2 adapter that tracks learner
+ * progress across all activity types. Exits silently when no LMS is present.
+ *
+ * @param activityIds - All activity IDs in the ADT (quiz IDs + inline activity IDs).
+ *   When empty, the ADT is content-only and is marked `passed` on first visit.
+ */
+function generateScormAdapter(
+  assetsDir: string,
+  activityIds: string[],
+): void {
+  const js = `// scorm.js — SCORM 1.2 adapter, auto-generated, do not edit by hand
+(function () {
+  'use strict';
+
+  // --- Find the SCORM 1.2 API by traversing parent frames ---
+  function findAPI(win) {
+    var depth = 0;
+    while (depth < 7) {
+      if (win.API) return win.API;
+      if (!win.parent || win.parent === win) break;
+      win = win.parent;
+      depth++;
+    }
+    return null;
+  }
+
+  var API = findAPI(window);
+  if (!API) return; // Not in a SCORM LMS — exit silently
+
+  // --- Initialize the session ---
+  API.LMSInitialize('');
+
+  // --- Identify the current page ---
+  var metaTitleId = document.querySelector('meta[name="title-id"]');
+  var pageId = metaTitleId ? metaTitleId.getAttribute('content') : '';
+
+  // All activity IDs in this ADT (embedded at generation time)
+  var ALL_ACTIVITY_IDS = ${JSON.stringify(activityIds)};
+  var hasActivities = ALL_ACTIVITY_IDS.length > 0;
+
+  // --- Record where the learner is ---
+  API.LMSSetValue('cmi.core.lesson_location', pageId);
+
+  // --- Set lesson status ---
+  if (hasActivities) {
+    applyStatus();
+    watchForCompletions();
+  } else {
+    // Content-only ADT — mark as passed on first visit
+    var existingStatus = API.LMSGetValue('cmi.core.lesson_status') || '';
+    if (existingStatus !== 'passed') {
+      API.LMSSetValue('cmi.core.lesson_status', 'passed');
+      API.LMSSetValue('cmi.core.score.raw', '100');
+      API.LMSSetValue('cmi.core.score.min', '0');
+      API.LMSSetValue('cmi.core.score.max', '100');
+    }
+  }
+
+  API.LMSCommit('');
+
+  // --- Session close ---
+  window.addEventListener('beforeunload', function () {
+    if (hasActivities) applyStatus();
+    API.LMSCommit('');
+    API.LMSFinish('');
+  });
+
+  // -------------------------------------------------------
+  // Helpers
+  // -------------------------------------------------------
+
+  function getCompletedIds() {
+    var completed = [];
+    try {
+      completed = JSON.parse(localStorage.getItem('completedActivities') || '[]');
+    } catch (e) { /* ignore */ }
+
+    var ids = {};
+    for (var i = 0; i < completed.length; i++) {
+      if (typeof completed[i] === 'string') {
+        var dashIdx = completed[i].indexOf('-');
+        var actId = dashIdx > -1 ? completed[i].substring(0, dashIdx) : completed[i];
+        ids[actId] = true;
+      }
+    }
+    return ids;
+  }
+
+  function applyStatus() {
+    var completedIds = getCompletedIds();
+    var completedCount = 0;
+    for (var i = 0; i < ALL_ACTIVITY_IDS.length; i++) {
+      if (completedIds[ALL_ACTIVITY_IDS[i]]) completedCount++;
+    }
+
+    var score = Math.round((completedCount / ALL_ACTIVITY_IDS.length) * 100);
+    API.LMSSetValue('cmi.core.score.raw', String(score));
+    API.LMSSetValue('cmi.core.score.min', '0');
+    API.LMSSetValue('cmi.core.score.max', '100');
+
+    if (completedCount === ALL_ACTIVITY_IDS.length) {
+      API.LMSSetValue('cmi.core.lesson_status', 'passed');
+    } else {
+      var existingStatus = API.LMSGetValue('cmi.core.lesson_status') || '';
+      if (existingStatus !== 'passed') {
+        API.LMSSetValue('cmi.core.lesson_status', 'incomplete');
+      }
+    }
+  }
+
+  function watchForCompletions() {
+    var _origSetItem = localStorage.setItem.bind(localStorage);
+    localStorage.setItem = function (key, value) {
+      _origSetItem(key, value);
+      if (key === 'completedActivities') {
+        applyStatus();
+        API.LMSCommit('');
+      }
+    };
+
+    window.addEventListener('storage', function (e) {
+      if (e.key === 'completedActivities') {
+        applyStatus();
+        API.LMSCommit('');
+      }
+    });
+  }
+})();
+`
+  fs.writeFileSync(path.join(assetsDir, "scorm.js"), js)
+}
+
+/**
+ * Generate `imsmanifest.xml` at the ADT root for SCORM 1.2 LMS upload.
+ * Lists all HTML pages as file entries within a single SCO.
+ */
+function generateImsManifest(
+  adtDir: string,
+  title: string,
+  label: string,
+  pageList: PageEntry[],
+): void {
+  const identifier = `ADT_${label.toUpperCase().replace(/[^A-Z0-9]/g, "_")}`
+  const escapedTitle = escapeHtml(title)
+
+  const fileEntries = pageList
+    .filter((p) => p.href !== "index.html") // index.html already listed above
+    .map((p) => `      <file href="${escapeAttr(p.href)}"/>`)
+    .join("\n")
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<manifest identifier="${escapeAttr(identifier)}" version="1.0"
+  xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2"
+  xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd
+                       http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">
+
+  <metadata>
+    <schema>ADL SCORM</schema>
+    <schemaversion>1.2</schemaversion>
+  </metadata>
+
+  <organizations default="ADT_ORG">
+    <organization identifier="ADT_ORG">
+      <title>${escapedTitle}</title>
+      <item identifier="ITEM_1" identifierref="RESOURCE_1">
+        <title>${escapedTitle}</title>
+      </item>
+    </organization>
+  </organizations>
+
+  <resources>
+    <resource identifier="RESOURCE_1"
+              type="webcontent"
+              adlcp:scormtype="sco"
+              href="index.html">
+      <file href="index.html"/>
+${fileEntries}
+    </resource>
+  </resources>
+
+</manifest>
+`
+  fs.writeFileSync(path.join(adtDir, "imsmanifest.xml"), xml)
+}
+
+/**
+ * Scan all HTML files in the ADT directory for `data-area-id` attributes
+ * and return the unique set of activity IDs.
+ * Also includes quiz section IDs from the page list (entries starting with "qz").
+ */
+function collectActivityIds(adtDir: string, pageList: PageEntry[]): string[] {
+  const ids = new Set<string>()
+
+  // Quiz IDs from page list
+  for (const page of pageList) {
+    if (page.section_id.startsWith("qz")) {
+      ids.add(page.section_id)
+    }
+  }
+
+  // Scan HTML files for data-area-id (used by activity sections)
+  for (const entry of fs.readdirSync(adtDir)) {
+    if (!entry.endsWith(".html")) continue
+    const html = fs.readFileSync(path.join(adtDir, entry), "utf-8")
+    const matches = html.matchAll(/data-area-id="([^"]+)"/g)
+    for (const match of matches) {
+      ids.add(match[1])
+    }
+  }
+
+  return Array.from(ids).sort()
+}
+
+// ---------------------------------------------------------------------------
 // File utilities
 // ---------------------------------------------------------------------------
+
+/** Heading-level text types that should appear in the table of contents */
+const HEADING_TEXT_TYPES = new Set([
+  "section_heading",
+  "chapter_title",
+  "book_title",
+  "activity_title",
+])
+
+/**
+ * Find the first heading text entry in a section's parts.
+ * Returns the textId and text of the first heading-type text found, or null.
+ */
+function findHeadingText(
+  section: import("@adt/types").PageSection,
+): { textId: string; text: string } | null {
+  for (const part of section.parts) {
+    if (part.type !== "text_group" || part.isPruned) continue
+    // Check if this is a heading group type OR contains heading text types
+    for (const t of part.texts) {
+      if (t.isPruned) continue
+      if (HEADING_TEXT_TYPES.has(t.textType)) {
+        return { textId: t.textId, text: t.text }
+      }
+    }
+  }
+  return null
+}
 
 function writeJson(filePath: string, data: unknown): void {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2))
@@ -1188,7 +1805,7 @@ function escapeAttr(s: string): string {
 // Static HTML: Navigation component
 // ---------------------------------------------------------------------------
 
-export const NAV_HTML = `<nav aria-label="Content Index Menu" aria-labelledby="navPopupTitle" aria-hidden="true" inert class="fixed w-64 sm:w-80 bg-white shadow-lg p-5 border-r border-gray-300 transform -translate-x-full transition-transform duration-300 ease-in-out z-20 hidden rounded-lg top-2 left-0 bottom-2 h-[calc(100vh-5rem)] flex flex-col" id="navPopup" role="navigation">
+export const NAV_HTML = `<nav aria-label="Content Index Menu" aria-labelledby="navPopupTitle" aria-hidden="true" inert class="fixed w-64 sm:w-80 bg-white shadow-lg p-5 border-r border-gray-300 -translate-x-full z-20 hidden rounded-lg top-2 left-0 bottom-2 h-[calc(100vh-5rem)] flex flex-col" id="navPopup" role="navigation">
     <div class="nav__toggle flex flex-col gap-4 mb-4">
         <div class="flex justify-between items-center">
             <h3 class="text-xl font-semibold" data-id="toc-title" id="navPopupTitle">Contents</h3>

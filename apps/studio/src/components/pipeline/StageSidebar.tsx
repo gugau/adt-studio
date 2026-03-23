@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { createPortal } from "react-dom"
 import { Link, useMatchRoute, useSearch } from "@tanstack/react-router"
 import {
-  FileDown,
   Loader2,
   RotateCcw,
   Settings,
@@ -10,15 +9,16 @@ import {
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useBookRun } from "@/hooks/use-book-run"
+import { useBookTasks } from "@/hooks/use-book-tasks"
 import { StepProgressRing } from "./StepProgressRing"
 import { usePages, usePageImage } from "@/hooks/use-pages"
-import { useExportBook } from "@/hooks/use-books"
 import {
   STAGES,
   hasStagePages,
   toCamelLabel,
 } from "./stage-config"
 import { useSettingsDialog } from "@/routes/__root"
+import type { TaskInfoResponse } from "@/api/client"
 
 const EXTRACT_SETTINGS_TABS = [
   { key: "general", label: "General" },
@@ -49,6 +49,10 @@ const GLOSSARY_SETTINGS_TABS = [
   { key: "general", label: "Glossary Prompt" },
 ]
 
+const TOC_SETTINGS_TABS = [
+  { key: "general", label: "Generation Prompt" },
+]
+
 const CAPTIONS_SETTINGS_TABS = [
   { key: "general", label: "Caption Prompt" },
 ]
@@ -66,6 +70,7 @@ const SETTINGS_TABS: Record<string, { key: string; label: string }[]> = {
   storyboard: STORYBOARD_SETTINGS_TABS,
   quizzes: QUIZ_SETTINGS_TABS,
   glossary: GLOSSARY_SETTINGS_TABS,
+  toc: TOC_SETTINGS_TABS,
   captions: CAPTIONS_SETTINGS_TABS,
   "text-and-speech": TRANSLATIONS_SETTINGS_TABS,
 }
@@ -113,6 +118,8 @@ export function StageSidebar({
     flex1:     "flex-1",
   }
 
+  const storyboardDone = stageState("storyboard") === "done"
+
   const stageItems = STAGES.map((step, index) => {
     const isActive = step.slug === activeStep
     const Icon = step.icon
@@ -121,6 +128,15 @@ export function StageSidebar({
     const state = stageState(step.slug)
     const stageCompleted = state === "done"
     const ringState = state
+
+    // "book" is always filled; "preview" and "export" fill once storyboard is done;
+    // pipeline stages fill when their own stage is completed.
+    const iconFilled =
+      step.slug === "book"
+        ? true
+        : step.slug === "preview" || step.slug === "export"
+          ? storyboardDone
+          : stageCompleted
 
     return (
       <div key={step.slug} className="relative">
@@ -151,7 +167,7 @@ export function StageSidebar({
               <div
                 className={cn(
                   "flex items-center justify-center w-7 h-7 rounded-full transition-colors",
-                  step.slug === "book" || stageCompleted
+                  iconFilled
                     ? isActive
                       ? "bg-white/20 text-white"
                       : cn(step.color, "text-white")
@@ -261,6 +277,8 @@ export function StageSidebar({
             <div className="flex flex-col pt-1.5 pb-2 gap-0.5 flex-1 overflow-y-auto overflow-x-hidden">
               {stageItems}
             </div>
+            {/* Task indicator */}
+            <TaskIndicator bookLabel={bookLabel} />
             {/* Right edge — follows the expanding rail */}
             <div className="absolute inset-y-0 right-0 w-px border-r" />
           </div>
@@ -283,11 +301,82 @@ export function StageSidebar({
         )}
       </div>
 
-      {/* Export button — fixed at the bottom, outside the expanding rail */}
-      <div className="shrink-0 border-t py-2 px-1.5">
-        <ExportButton bookLabel={bookLabel} />
-      </div>
     </nav>
+  )
+}
+
+/* ---------- TaskIndicator ---------- */
+
+const TASK_KIND_LABELS: Record<string, string> = {
+  "package-adt": "Packaging",
+  "image-generate": "Image Gen",
+  "re-render": "Re-render",
+  "ai-edit": "AI Edit",
+}
+
+function TaskIndicator({ bookLabel }: { bookLabel: string }) {
+  const { runningTasks, runningCount } = useBookTasks(bookLabel)
+
+  if (runningCount === 0) return null
+
+  return (
+    <div className="border-t group/tasks">
+      {/* Task list — visible on hover */}
+      <div className="hidden group-hover/tasks:block px-2 pt-1.5 pb-0.5 flex-col gap-0.5">
+        {runningTasks.map((task) => (
+          <TaskRow key={task.taskId} task={task} />
+        ))}
+      </div>
+
+      {/* Indicator row */}
+      <div className="flex items-center gap-2.5 px-2.5 py-2 overflow-hidden">
+        <div className="relative shrink-0 flex items-center justify-center w-7 h-7">
+          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-violet-600 text-white">
+            <span className="text-xs font-bold leading-none">{runningCount}</span>
+          </div>
+          <StepProgressRing size={28} state="running" colorClass="bg-violet-600" />
+        </div>
+        <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+          {runningCount === 1 ? "Task" : "Tasks"} Running
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function TaskRow({ task }: { task: TaskInfoResponse }) {
+  const kindLabel = TASK_KIND_LABELS[task.kind] ?? task.kind
+  const [, tick] = useState(0)
+  useEffect(() => {
+    const id = window.setInterval(() => tick((n) => n + 1), 1000)
+    return () => window.clearInterval(id)
+  }, [])
+  const elapsed = task.startedAt ? Math.round((Date.now() - task.startedAt) / 1000) : 0
+  const elapsedStr = elapsed < 60 ? `${elapsed}s` : `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`
+
+  const content = (
+    <>
+      <Loader2 className="w-3 h-3 animate-spin text-violet-500 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-medium truncate">{kindLabel}</p>
+        <p className="text-[10px] text-muted-foreground truncate">{task.description}</p>
+      </div>
+      <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">{elapsedStr}</span>
+    </>
+  )
+
+  if (task.url) {
+    return (
+      <Link to={task.url} className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted/50 transition-colors">
+        {content}
+      </Link>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-2 px-1 py-1">
+      {content}
+    </div>
   )
 }
 
@@ -484,43 +573,3 @@ function PageRow({
   )
 }
 
-/* ---------- ExportButton ---------- */
-
-function ExportButton({ bookLabel }: { bookLabel: string }) {
-  const exportBook = useExportBook()
-
-  const errorMessage = exportBook.isError
-    ? exportBook.error.name === "TimeoutError"
-      ? "Export timed out — the book may be too large"
-      : exportBook.error.message
-    : null
-
-  return (
-    <div className="flex flex-col gap-1">
-      <Button
-        variant="outline"
-        size="sm"
-        className={cn(
-          "w-full h-7 text-xs",
-          exportBook.isError
-            ? "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
-            : "bg-violet-50 text-violet-600 border-violet-200 hover:bg-violet-100",
-        )}
-        onClick={() => exportBook.mutate(bookLabel)}
-        disabled={exportBook.isPending}
-      >
-        {exportBook.isPending ? (
-          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-        ) : (
-          <FileDown className="mr-1.5 h-3.5 w-3.5" />
-        )}
-        {exportBook.isError ? "Retry Export" : "Export"}
-      </Button>
-      {errorMessage && (
-        <p className="text-[10px] leading-tight text-red-500 px-0.5">
-          {errorMessage}
-        </p>
-      )}
-    </div>
-  )
-}
