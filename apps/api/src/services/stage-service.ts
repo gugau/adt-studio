@@ -50,6 +50,7 @@ export interface StageRunOptions {
   renderOnly?: boolean
   azureSpeechKey?: string
   azureSpeechRegion?: string
+  geminiApiKey?: string
   beforeRun?: () => void
 }
 

@@ -137,6 +137,8 @@ export {
   resolveVoice,
   resolveInstructions,
   resolveProviderForLanguage,
+  resolveSpeechModel,
+  resolveSpeechFormat,
   isSpeakableText,
   stripEmojis,
   loadVoicesConfig,
