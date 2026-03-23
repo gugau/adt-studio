@@ -175,21 +175,6 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
     return () => window.removeEventListener("adt:repackage", handler)
   }, [runPackage, storyboardDone])
 
-  if (!storyboardDone) {
-    return (
-      <div className="p-6 max-w-xl flex flex-col items-center gap-3 text-center">
-        <AlertCircle className="w-8 h-8 text-muted-foreground/50" />
-        <p className="text-sm text-muted-foreground">
-          A storyboard must be built before previewing.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Run the pipeline through
-          at least the <span className="font-medium text-foreground">Storyboard</span> stage first.
-        </p>
-      </div>
-    )
-  }
-
   const navigatePreviewToHref = useCallback((href: string) => {
     const iframe = iframeRef.current
     const iframeWindow = iframe?.contentWindow
@@ -226,6 +211,21 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
       replace: true,
     })
   }, [bookLabel, currentPreviewPage.href, navigate, navigatePreviewToHref, ready, search.previewHref])
+
+  if (!storyboardDone) {
+    return (
+      <div className="p-6 max-w-xl flex flex-col items-center gap-3 text-center">
+        <AlertCircle className="w-8 h-8 text-muted-foreground/50" />
+        <p className="text-sm text-muted-foreground">
+          A storyboard must be built before previewing.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Run the pipeline through
+          at least the <span className="font-medium text-foreground">Storyboard</span> stage first.
+        </p>
+      </div>
+    )
+  }
 
   if (packaging) {
     return (
