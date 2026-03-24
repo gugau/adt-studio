@@ -67,13 +67,14 @@ Implemented in:
 - `apps/studio/src/api/client.ts`
 - `apps/studio/src/hooks/use-debug.ts`
 - `apps/studio/src/components/pipeline/stages/ValidationView.tsx`
-- `apps/studio/src/components/debug/AccessibilityTab.tsx`
+- `apps/studio/src/components/validation/AccessibilityValidationTabs.tsx`
 
 The `Validation` stage currently includes top-level tabs for:
 
 - `Accessibility Summary`
-- `Accessibility Config`
 - `Reviewer Validation`
+
+Accessibility configuration now lives behind the Validation stage gear icon in the left sidebar and is rendered through the step settings route rather than as a peer Validation tab.
 
 The debug panel has been reduced back to its original non-accessibility tabs.
 
@@ -85,7 +86,7 @@ Implemented in:
 
 - `apps/studio/src/components/pipeline/stages/PreviewView.tsx`
 - `apps/studio/src/components/pipeline/stages/PreviewAccessibilityCard.tsx`
-- `apps/studio/src/components/debug/debug-panel-state.tsx`
+- `apps/studio/src/components/pipeline/stages/PreviewValidationCard.tsx`
 
 This includes:
 
@@ -106,8 +107,9 @@ Implemented in:
 
 - `packages/types/src/config.ts`
 - `packages/pipeline/src/accessibility-assessment.ts`
-- `apps/studio/src/components/debug/AccessibilityTab.tsx`
-- `apps/studio/src/components/debug/ConfigTab.tsx`
+- `apps/studio/src/components/pipeline/StageSidebar.tsx`
+- `apps/studio/src/components/pipeline/stages/ValidationSettings.tsx`
+- `apps/studio/src/routes/books.$label.$step.settings.tsx`
 
 Current supported options:
 
@@ -123,14 +125,15 @@ Accessibility Overview now distinguishes between broad themes and repeated rules
 Implemented in:
 
 - `apps/studio/src/lib/accessibility-summary.ts`
-- `apps/studio/src/components/debug/AccessibilityTab.tsx`
+- `apps/studio/src/components/validation/AccessibilityValidationTabs.tsx`
 
 This includes:
 
 - severity distribution,
+- clickable severity drill-down with affected-page links,
 - finding categories,
-- most frequently observed findings,
-- separation of recurring findings vs page-specific findings,
+- clickable category drill-down with affected-page links,
+- recurring book-wide findings,
 - page coverage indicators to help distinguish template-wide issues from one-off page issues.
 
 ---
@@ -227,6 +230,8 @@ Current derived `N/A` cases include:
 - `Glossary` when glossary output has not been generated,
 - `Audio and voice-over` when Text & Speech audio is unavailable,
 - `Translation` when no translation output exists for the reviewer session language.
+- `Interactivity` when the current page has no activity/exercise block.
+- `Sign language` when sign-language output is not enabled in the packaged page.
 
 Future follow-up PRs should preserve this pattern:
 
@@ -237,111 +242,251 @@ Future follow-up PRs should preserve this pattern:
 
 ---
 
-## Findings from the UNICEF AI Strategy book
+## Findings from recent book assessments
 
-I reviewed the latest stored accessibility assessment for:
+I reviewed the latest stored accessibility assessments for:
 
 - `books/unicef-ai-strategy---main-paper-and-annexures_final`
+- `books/time-to-act`
 
-The latest assessment shows:
+### Latest assessment snapshots
 
-- `74` pages audited,
-- `74` pages with violations,
-- `147` violations,
-- `148` incomplete/manual-review findings.
+#### UNICEF AI Strategy (`generatedAt: 2026-03-18T09:40:33.259Z`)
 
-The most frequently observed findings are:
+- `74` pages audited
+- `147` violations
+- `294` incomplete/manual-review findings
+
+Most frequent findings:
 
 - `aria-allowed-role` on `74/74` pages
 - `landmark-one-main` on `74/74` pages
 - `page-has-heading-one` on `74/74` pages
+- `color-contrast` on `73/74` pages
+- `color-contrast-enhanced` on `73/74` pages
 - `region` on `73/74` pages
 
-The affected nodes are shared/generated markup, not book-specific content:
+Representative selectors:
 
 - `#simple-main`
-- `.opacity-0`
+- `#content`
+- `html`
+- `h1`
+
+#### Time to Act (`generatedAt: 2026-03-23T10:05:03.008Z`)
+
+- `16` pages audited
+- `49` violations
+- `48` incomplete/manual-review findings
+
+Most frequent findings:
+
+- `aria-allowed-role` on `16/16` pages
+- `image-alt` on `16/16` pages
+- `landmark-one-main` on `16/16` pages
+- `page-has-heading-one` on `16/16` pages
+- `region` on `16/16` pages
+- `color-contrast-enhanced` on `16/16` pages
+
+Representative selectors:
+
+- `section`
+- `img`
+- `#content`
 - `html`
 
-This strongly suggests that many of the recurring findings are rooted in shared ADT Studio templates/wrappers rather than in this specific book’s authored content.
+### Cross-book observations
 
-### Relevant source locations
+Several findings recur across most or all pages in **multiple books**, which strongly suggests platform-level issues in shared ADT templates, wrappers, or styling rather than problems unique to a single source book.
 
-Shared template markup currently includes:
+The strongest repeated patterns are:
 
-- `templates/two_column_story.liquid`
+#### 1. Shared landmark/role structure issues
+
+The following findings recur across both books:
+
+- `aria-allowed-role`
+- `landmark-one-main`
+- `page-has-heading-one`
+- `region`
+
+These map cleanly to shared code:
+
+- `templates/two_column_render.liquid:1` wraps content in `<div id="content">`
+- `templates/two_column_render.liquid:2` uses `<section role="article">`
+- `templates/two_column_story.liquid:31` wraps content in `<div id="content">`
+- `templates/two_column_story.liquid:32` uses `<section role="article">`
+- `packages/pipeline/src/package-web.ts:897` wraps quiz/activity pages in `<div id="content" ... opacity-0>`
+- `packages/pipeline/src/package-web.ts:899` uses `<section id="simple-main" role="activity">`
+- `packages/pipeline/src/screenshot-html.ts:61` injects a fallback `<div id="content">` wrapper when absent
+
+This is important because the selectors reported by the assessment line up with those exact shared wrappers:
+
+- `#content` appears in `region`
+- `#simple-main` appears in `aria-allowed-role`
+- `html` appears in `landmark-one-main` and `page-has-heading-one`
+
+#### 2. Missing/invalid landmark semantics are likely real defects
+
+Likely interpretation:
+
+- `role="article"` on `section` is causing `aria-allowed-role` for standard content pages
+- `role="activity"` on `#simple-main` is causing `aria-allowed-role` for quiz/activity pages
+- the current wrappers do not provide a single reliable `<main>` landmark
+- meaningful content is often placed inside `#content` without a proper containing landmark
+
+Likely consequences:
+
+- `landmark-one-main`
+- `region`
+- part of the `page-has-heading-one` noise when the main page structure is not clearly represented
+
+#### 3. Images without `alt` appear to be a template/process issue, not just a book issue
+
+The `time-to-act` book shows `image-alt` on `16/16` pages. That is not just a content signal; shared templates are currently rendering `<img>` tags without `alt` attributes:
+
+- `templates/two_column_render.liquid:17`
+- `templates/two_column_render.liquid:25`
+- `templates/two_column_render.liquid:77`
+- `templates/two_column_render.liquid:85`
+- `templates/two_column_story.liquid:39`
+- `templates/two_column_story.liquid:51`
+
+So even if image captions/descriptions exist elsewhere in the pipeline, the generated page HTML is often omitting the most basic image alternative text hook.
+
+Two codebase follow-ups stand out here:
+
+- `packages/pipeline/src/validate-html.ts` currently validates image `data-id` structure but does not enforce `alt` presence, so template regressions can slip through.
+- several pipeline tests still encode the old shared markup shape (`<div id="content">`, `<section role="article">`) and often use hand-authored `<img ... alt="test" />`, which masks the fact that the real templates omit `alt`.
+
+This should be treated as a high-priority upstream remediation item.
+
+#### 4. Color-contrast findings are likely a mix of template and content/theme issues
+
+Color contrast is now appearing at large scale, especially in the UNICEF book:
+
+- `color-contrast` on `73/74` pages
+- `color-contrast-enhanced` on `73/74` pages
+
+The selectors include repeated low-level typography targets such as:
+
+- `h1`
+- `p`
+- `.text-sky-600`
+- `.text-sm`
+
+This suggests that some contrast failures are being driven by shared template/style decisions and styleguide color choices, not just by individual authored pages.
+
+These findings are likely worth splitting into a separate remediation stream from the landmark fixes because they may require:
+
+- auditing shared Tailwind classes in templates
+- reviewing default palette choices in styleguides/presets
+- deciding whether `color-contrast-enhanced` should remain enabled by default or be treated as a stricter opt-in mode
+
+#### 5. `page-has-heading-one` still needs careful interpretation
+
+This finding is still appearing on every page in both books, always on `html`.
+
+That suggests one or both of the following:
+
+- some templates/pages genuinely do not guarantee a reliable `<h1>`
+- the current jsdom-based audit path is not always seeing the final effective heading structure the way a browser-driven audit would
+
+So this finding should not be dismissed, but it should be treated as partly structural and possibly partly audit-fidelity-related.
+
+### Suggestions for upstream remediation
+
+#### Priority 1 — Fix shared role and landmark semantics
+
+Recommended changes:
+
+- remove `role="article"` from shared template `section` elements
+- remove `role="activity"` from the quiz/activity wrapper unless there is a standards-based ARIA equivalent that is actually valid here
+- add a single reliable `<main>` landmark to every packaged page
+- ensure `#content` is either itself the main landmark or lives inside the main landmark, not outside it
+
+Primary files:
+
 - `templates/two_column_render.liquid`
-
-These templates render markup such as:
-
-- `<section role="article" ...>`
-
-Shared package wrapper logic currently includes:
-
+- `templates/two_column_story.liquid`
 - `packages/pipeline/src/package-web.ts`
+- `packages/pipeline/src/screenshot-html.ts`
 
-This file currently wraps page content in markup such as:
+Expected impact:
 
-- `<div id="content" class="opacity-0"> ... </div>`
+- reduce `aria-allowed-role`
+- reduce `landmark-one-main`
+- reduce `region`
 
-The combination of these shared structures likely explains most of the recurring findings.
+#### Priority 2 — Guarantee image alt text in generated HTML
 
----
+Recommended changes:
 
-## Assessment of those recurring findings
+- update shared templates to emit `alt` on all rendered `<img>` tags
+- decide the source of truth for the `alt` value (caption text, image metadata, dedicated alt text field, or empty alt for decorative images)
+- add tests that fail when generated templates emit `<img>` without `alt`
 
-### 1. `aria-allowed-role`
+Primary files:
 
-This appears to be a real shared-template issue.
+- `templates/two_column_render.liquid`
+- `templates/two_column_story.liquid`
+- `packages/pipeline/src/__tests__/web-rendering.test.ts`
+- `packages/pipeline/src/__tests__/validate-html.test.ts`
 
-Likely cause:
+Expected impact:
 
-- use of `role="article"` on a `section` element in shared templates.
+- reduce `image-alt`
+- make image accessibility much less dependent on downstream manual remediation
 
-Likely remediation:
+#### Priority 3 — Review heading strategy across shared templates
 
-- remove the explicit ARIA role,
-- or replace the element with a more appropriate semantic element if `article` is the intended meaning.
+Recommended changes:
 
-### 2. `region`
+- ensure every page variant produces one reliable top-level heading
+- avoid relying on only conditional content types to emit `<h1>`
+- consider a fallback hidden heading when a page otherwise has no semantic heading
 
-This appears to be a real shared wrapper/landmark issue.
+Expected impact:
 
-Likely cause:
+- reduce `page-has-heading-one`
+- improve actual screen-reader navigation
 
-- the outer `.opacity-0` wrapper is not part of a valid landmark structure,
-- some page content is therefore seen as not contained by landmarks.
+#### Priority 4 — Audit shared style choices for contrast
 
-Likely remediation:
+Recommended changes:
 
-- make the outer page content wrapper itself a landmark,
-- or move the hide/show behavior to an element already inside a proper landmark.
+- review repeated typography/color combinations used by shared templates and styleguides
+- test common heading/body/link/button classes against the current assessment defaults
+- decide whether `color-contrast-enhanced` should stay enabled by default or become an explicitly stricter profile
 
-### 3. `landmark-one-main`
+Expected impact:
 
-This likely points to a real missing-main-landmark problem, though the current `incomplete` status suggests the audit environment may also be a factor.
+- reduce recurring contrast findings without blurring the line between product-level defects and content-level defects
 
-Likely remediation:
+#### Priority 5 — Update regression fixtures so they stop encoding problematic semantics
 
-- ensure every packaged page contains a single programmatic `<main>` landmark,
-- keep primary content within that `<main>`.
+Recommended changes:
 
-### 4. `page-has-heading-one`
+- update `packages/pipeline/src/__tests__/web-rendering.test.ts` fixtures so they no longer normalize around `<section role="article">` and the old wrapper assumptions
+- update `packages/pipeline/src/__tests__/validate-html.test.ts` fixtures so landmark and heading expectations match the intended packaged HTML structure
+- add explicit fixture coverage for missing `alt`, invalid roles, and absent `<main>` so these shared regressions fail loudly
 
-This one should be treated more cautiously.
+Expected impact:
 
-Some generated pages visibly contain `<h1>` content, so the fact this is `incomplete` across all pages suggests one of two things:
+- prevents the current problematic wrapper semantics from being reintroduced through tests
+- aligns package/rendering tests with the same accessibility guarantees we now surface in Validation
 
-- some pages still genuinely lack a reliable top-level heading,
-- and/or the current jsdom-based audit path is not fully representing the rendered page structure for this rule.
+### Suggested follow-up implementation approach
 
-Likely remediation:
+A pragmatic next branch/PR could be structured as:
 
-- ensure every page has a guaranteed primary heading,
-- add a fallback hidden heading where templates do not naturally emit one,
-- later evaluate whether browser-based auditing would reduce false/manual-review results here.
+1. fix landmark/role semantics first
+2. add `alt` attribute support for all shared image templates
+3. add regression tests for generated HTML semantics and image accessibility
+4. rerun the same two books and compare whether the recurring counts collapse
+5. only then revisit contrast and heading issues that remain
 
----
+This should make it easier to tell which problems were truly platform-wide and which are still book/content-specific.
 
 ## Proposed follow-up branch / PR: upstream accessibility remediation
 
@@ -432,8 +577,7 @@ Ship the accessibility assessment feature set:
 
 - package-stage audits,
 - versioned storage,
-- debug UI,
-- Preview accessibility UX,
+- Validation and Preview UX,
 - config support,
 - recurring-finding summaries.
 

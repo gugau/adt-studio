@@ -7,6 +7,8 @@ import {
   isSpeakableText,
   resolveVoice,
   resolveInstructions,
+  resolveSpeechModel,
+  resolveSpeechFormat,
   generateSpeechFile,
   loadVoicesConfig,
   loadSpeechInstructions,
@@ -132,6 +134,48 @@ describe("resolveVoice", () => {
     expect(resolveVoice("openai", "es-uy", voiceMaps, "shimmer")).toBe("nova")
     expect(resolveVoice("openai", "es-mx", voiceMaps, "shimmer")).toBe("coral")
   })
+
+  it("falls back to a Gemini-safe default voice when no mapping exists", () => {
+    expect(resolveVoice("gemini", "en", {})).toBe("Kore")
+  })
+
+  it("does not reuse the OpenAI alloy fallback for Gemini voices", () => {
+    expect(resolveVoice("gemini", "en", {}, "alloy")).toBe("Kore")
+  })
+})
+
+// ---------------------------------------------------------------------------
+// resolveSpeechModel / resolveSpeechFormat
+// ---------------------------------------------------------------------------
+
+describe("resolveSpeechModel", () => {
+  it("uses configured provider models when present", () => {
+    expect(
+      resolveSpeechModel("gemini", {
+        gemini: { model: "gemini-custom-tts" },
+      })
+    ).toBe("gemini-custom-tts")
+  })
+
+  it("falls back to provider defaults when provider model is not configured", () => {
+    expect(resolveSpeechModel("gemini", {})).toBe("gemini-2.5-pro-preview-tts")
+    expect(resolveSpeechModel("azure", {})).toBe("azure-tts")
+    expect(resolveSpeechModel("openai", {})).toBe("gpt-4o-mini-tts")
+  })
+
+  it("uses the shared default model for non-provider-specific fallbacks", () => {
+    expect(resolveSpeechModel("openai", {}, "gpt-4o-audio")).toBe("gpt-4o-audio")
+  })
+})
+
+describe("resolveSpeechFormat", () => {
+  it("forces Gemini output to wav", () => {
+    expect(resolveSpeechFormat("gemini", "mp3")).toBe("wav")
+  })
+
+  it("keeps the configured format for other providers", () => {
+    expect(resolveSpeechFormat("openai", "opus")).toBe("opus")
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -144,6 +188,7 @@ describe("resolveInstructions", () => {
     en: "Speak in English.",
     "en-tz": "Speak in Tanzanian English.",
     es: "Speak in Spanish.",
+    ur: "Speak in Urdu.",
   }
 
   it("resolves exact locale match", () => {
@@ -156,6 +201,11 @@ describe("resolveInstructions", () => {
     expect(resolveInstructions("en-us", instructions)).toBe(
       "Speak in English."
     )
+  })
+
+  it("resolves Urdu locale variants from the base language", () => {
+    expect(resolveInstructions("ur-pk", instructions)).toBe("Speak in Urdu.")
+    expect(resolveInstructions("ur_PK", instructions)).toBe("Speak in Urdu.")
   })
 
   it("falls back to default", () => {
@@ -360,6 +410,43 @@ describe("generateSpeechFile", () => {
 
     expect(result!.cached).toBe(true)
     expect(mockSynthesize).toHaveBeenCalledTimes(1) // Not called again
+  })
+
+  it("only acquires the optional rate limiter when a real synth call is needed", async () => {
+    const rateLimiter = {
+      acquire: vi.fn().mockResolvedValue(undefined),
+    }
+
+    await generateSpeechFile({
+      textId: "p001_t001",
+      text: "Hello world",
+      language: "en",
+      model: "gpt-4o-mini-tts",
+      voice: "alloy",
+      instructions: "Speak cheerfully.",
+      format: "mp3",
+      bookDir,
+      cacheDir,
+      ttsSynthesizer: mockSynthesizer,
+      rateLimiter,
+    })
+
+    await generateSpeechFile({
+      textId: "p001_t001",
+      text: "Hello world",
+      language: "en",
+      model: "gpt-4o-mini-tts",
+      voice: "alloy",
+      instructions: "Speak cheerfully.",
+      format: "mp3",
+      bookDir,
+      cacheDir,
+      ttsSynthesizer: mockSynthesizer,
+      rateLimiter,
+    })
+
+    expect(rateLimiter.acquire).toHaveBeenCalledTimes(1)
+    expect(mockSynthesize).toHaveBeenCalledTimes(1)
   })
 
   it("returns null for non-speakable text", async () => {

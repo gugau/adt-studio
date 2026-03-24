@@ -42,6 +42,8 @@ import {
   resolveVoice,
   resolveInstructions,
   resolveProviderForLanguage,
+  resolveSpeechModel,
+  resolveSpeechFormat,
   generateSpeechFile,
   generateBookSummary,
   buildBookSummaryConfig,
@@ -60,7 +62,7 @@ import {
 } from "@adt/pipeline"
 import type { TranslationConfig, QuizPageInput, ProviderRouting, MeaningfulnessConfig, CroppingConfig, SegmentationConfig, VisualRefinementDeps } from "@adt/pipeline"
 import { loadStyleguideContent } from "./styleguide.js"
-import { createTTSSynthesizer, createAzureTTSSynthesizer } from "@adt/llm"
+import { createTTSSynthesizer, createAzureTTSSynthesizer, createGeminiTTSSynthesizer } from "@adt/llm"
 import type { TTSSynthesizer } from "@adt/llm"
 import { STAGE_ORDER } from "@adt/types"
 import type {
@@ -86,6 +88,10 @@ import type {
 } from "./stage-service.js"
 
 const DEFAULT_METADATA_PAGES = 3
+const GEMINI_TTS_SAFE_REQUESTS_PER_MINUTE = 10
+const GEMINI_TTS_MAX_RATE_LIMIT_RETRIES = 2
+const GEMINI_TTS_DEFAULT_RETRY_DELAY_MS = 6_000
+const GEMINI_TTS_MAX_RETRY_DELAY_MS = 20_000
 
 class StepError extends Error {
   readonly step: StepName
@@ -99,6 +105,25 @@ class StepError extends Error {
 
 function toErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err)
+}
+
+function isGeminiTtsRateLimitMessage(message: string): boolean {
+  return /\(429\)|quota exceeded|rate limit|too many requests/i.test(message)
+}
+
+function parseGeminiRetryDelayMs(message: string): number | null {
+  const match = message.match(/retry in ([\d.]+)s/i)
+  if (!match) return null
+
+  const seconds = Number.parseFloat(match[1])
+  if (!Number.isFinite(seconds) || seconds < 0) return null
+
+  const baseMs = Math.ceil(seconds * 1000)
+  return Math.min(baseMs > 0 ? baseMs + 250 : 0, GEMINI_TTS_MAX_RETRY_DELAY_MS)
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 function wrapStepError(step: StepName, err: unknown): never {
@@ -1502,16 +1527,15 @@ async function runTextAndSpeechStep(
     const voiceMaps = loadVoicesConfig(configDir)
     const instructionsMap = loadSpeechInstructions(configDir)
 
-    const speechModel = config.speech?.model ?? "gpt-4o-mini-tts"
-    const speechFormat = config.speech?.format ?? "mp3"
+    const speechModel = config.speech?.model
     const defaultProvider = config.speech?.default_provider ?? "openai"
     const providerConfigs = config.speech?.providers ?? {}
     const routing: ProviderRouting = { providers: providerConfigs, defaultProvider }
 
     console.log(`[stage-run] ${label}: TTS configDir=${configDir} voiceMaps=${Object.keys(voiceMaps).join(",")||"(empty)"}`)
-    console.log(`[stage-run] ${label}: TTS config — defaultProvider=${defaultProvider} model=${speechModel} format=${speechFormat}`)
+    console.log(`[stage-run] ${label}: TTS config — defaultProvider=${defaultProvider} model=${speechModel ?? "(provider default)"} format=${config.speech?.format ?? "(provider default)"}`)
     console.log(`[stage-run] ${label}: TTS providers=${JSON.stringify(providerConfigs)}`)
-    console.log(`[stage-run] ${label}: TTS azureKey=${options.azureSpeechKey ? "set" : "NOT SET"} azureRegion=${options.azureSpeechRegion ?? "NOT SET"}`)
+    console.log(`[stage-run] ${label}: TTS azureKey=${options.azureSpeechKey ? "set" : "NOT SET"} azureRegion=${options.azureSpeechRegion ?? "NOT SET"} geminiKey=${options.geminiApiKey ? "set" : "NOT SET"}`)
 
     const synthesizers = new Map<string, TTSSynthesizer>()
     function getSynthesizer(providerName: string): TTSSynthesizer {
@@ -1526,6 +1550,16 @@ async function runTextAndSpeechStep(
           { sampleRate: config.speech?.sample_rate, bitRate: config.speech?.bit_rate }
         )
         synthesizers.set("azure", synth)
+        return synth
+      }
+      if (providerName === "gemini") {
+        if (!options.geminiApiKey && !process.env.GEMINI_API_KEY) {
+          throw new Error("Gemini API key is required for Gemini TTS provider. Set it in the API Keys dialog (gear icon).")
+        }
+        const synth = createGeminiTTSSynthesizer(
+          options.geminiApiKey ? { apiKey: options.geminiApiKey } : undefined
+        )
+        synthesizers.set("gemini", synth)
         return synth
       }
       const synth = createTTSSynthesizer()
@@ -1581,12 +1615,29 @@ async function runTextAndSpeechStep(
     console.log(`[stage-run] ${label}: generating TTS for ${totalItems} entries across ${outputLanguages.length} languages (${outputLanguages.join(", ")})`)
     console.log(`[stage-run] ${label}: TTS routing — for each language: ${outputLanguages.map((l) => `${l}→${resolveProviderForLanguage(l, routing)}`).join(", ")}`)
 
+    const hasGeminiTts = outputLanguages.some(
+      (lang) => resolveProviderForLanguage(lang, routing) === "gemini"
+    )
+    const geminiTtsRequestsPerMinute = Math.min(
+      config.rate_limit?.requests_per_minute ?? GEMINI_TTS_SAFE_REQUESTS_PER_MINUTE,
+      GEMINI_TTS_SAFE_REQUESTS_PER_MINUTE
+    )
+    const geminiTtsRateLimiter = hasGeminiTts
+      ? createRateLimiter(geminiTtsRequestsPerMinute)
+      : undefined
+    if (geminiTtsRateLimiter) {
+      console.log(
+        `[stage-run] ${label}: Gemini TTS limiter active at ${geminiTtsRequestsPerMinute} req/min`
+      )
+    }
+
     const ttsResultsByLang = new Map<string, SpeechFileEntry[]>()
     for (const lang of outputLanguages) {
       ttsResultsByLang.set(lang, [])
     }
 
     const failedItems: string[] = []
+    const geminiFailedItems: string[] = []
 
     await processWithConcurrency(
       ttsWorkItems,
@@ -1594,30 +1645,60 @@ async function runTextAndSpeechStep(
       async (item: TTSWorkItem) => {
         const startMs = Date.now()
         const provider = resolveProviderForLanguage(item.language, routing)
-        const providerModel = providerConfigs[provider]?.model ?? (provider === "azure" ? "azure-tts" : speechModel)
+        const providerModel = resolveSpeechModel(provider, providerConfigs, speechModel)
+        const outputFormat = resolveSpeechFormat(provider, config.speech?.format)
         const voice = resolveVoice(provider, item.language, voiceMaps, config.speech?.voice)
         const instructions = provider === "openai"
           ? resolveInstructions(item.language, instructionsMap)
           : ""
+        let attemptCount = 0
 
-        console.log(`[stage-run] ${label}: TTS ${item.textId} → provider=${provider} voice=${voice} model=${providerModel}`)
+        console.log(`[stage-run] ${label}: TTS ${item.textId} → provider=${provider} voice=${voice} model=${providerModel} format=${outputFormat}`)
 
         try {
           const ttsSynthesizer = getSynthesizer(provider)
+          let entry: SpeechFileEntry | null
 
-          const entry = await generateSpeechFile({
-            textId: item.textId,
-            text: item.text,
-            language: item.language,
-            model: providerModel,
-            voice,
-            instructions,
-            format: speechFormat,
-            bookDir,
-            cacheDir,
-            ttsSynthesizer,
-            provider,
-          })
+          while (true) {
+            attemptCount++
+            try {
+              entry = await generateSpeechFile({
+                textId: item.textId,
+                text: item.text,
+                language: item.language,
+                model: providerModel,
+                voice,
+                instructions,
+                format: outputFormat,
+                bookDir,
+                cacheDir,
+                ttsSynthesizer,
+                rateLimiter: provider === "gemini" ? geminiTtsRateLimiter : undefined,
+                provider,
+              })
+              break
+            } catch (err) {
+              const msg = toErrorMessage(err)
+              if (
+                provider === "gemini" &&
+                isGeminiTtsRateLimitMessage(msg) &&
+                attemptCount <= GEMINI_TTS_MAX_RATE_LIMIT_RETRIES
+              ) {
+                const retryDelayMs =
+                  parseGeminiRetryDelayMs(msg) ??
+                  Math.min(
+                    GEMINI_TTS_DEFAULT_RETRY_DELAY_MS * attemptCount,
+                    GEMINI_TTS_MAX_RETRY_DELAY_MS
+                  )
+                console.warn(
+                  `[stage-run] ${label}: Gemini TTS rate limited for ${item.textId} (${item.language}); retrying ${attemptCount + 1}/${GEMINI_TTS_MAX_RATE_LIMIT_RETRIES + 1} in ${retryDelayMs}ms`
+                )
+                await sleep(retryDelayMs)
+                continue
+              }
+              throw err
+            }
+          }
 
           const durationMs = Date.now() - startMs
           const cached = entry?.cached ?? false
@@ -1632,7 +1713,7 @@ async function runTextAndSpeechStep(
             cacheHit: cached,
             success: true,
             errorCount: 0,
-            attempt: 1,
+            attempt: attemptCount,
             durationMs,
             messages: [{
               role: "user",
@@ -1658,6 +1739,9 @@ async function runTextAndSpeechStep(
           const durationMs = Date.now() - startMs
           console.error(`[stage-run] ${label}: TTS failed for ${item.textId} (${item.language}): ${msg}`)
           failedItems.push(`${item.textId}: ${msg}`)
+          if (provider === "gemini") {
+            geminiFailedItems.push(`${item.textId}: ${msg}`)
+          }
 
           const logEntry: LlmLogEntry = {
             requestId: crypto.randomUUID(),
@@ -1669,7 +1753,7 @@ async function runTextAndSpeechStep(
             cacheHit: false,
             success: false,
             errorCount: 1,
-            attempt: 1,
+            attempt: Math.max(attemptCount, 1),
             durationMs,
             messages: [{
               role: "user",
@@ -1686,11 +1770,13 @@ async function runTextAndSpeechStep(
             cacheHit: false,
             durationMs,
           })
-          progress.emit({
-            type: "step-error",
-            step: "tts",
-            error: `${item.textId} failed: ${msg}`,
-          })
+          if (provider !== "gemini") {
+            progress.emit({
+              type: "step-error",
+              step: "tts",
+              error: `${item.textId} failed: ${msg}`,
+            })
+          }
         }
 
         completedItems++
@@ -1716,6 +1802,17 @@ async function runTextAndSpeechStep(
         generatedAt: new Date().toISOString(),
       }
       storage.putNodeData("tts", lang, output)
+    }
+
+    if (geminiFailedItems.length > 0) {
+      const summary = `${geminiFailedItems.length} Gemini TTS item(s) failed. Missing Gemini audio can be generated one by one from the Text & Speech view.`
+      progress.emit({
+        type: "step-error",
+        step: "tts",
+        error: summary,
+      })
+      console.log(`[stage-run] ${label}: text & speech completed with Gemini TTS gaps`)
+      return
     }
 
     progress.emit({ type: "step-complete", step: "tts" })
