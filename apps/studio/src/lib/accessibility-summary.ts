@@ -33,6 +33,7 @@ export interface AccessibilityFindingPageSummary {
 export interface FrequentAccessibilityFindingSummary {
   id: string
   help: string
+  helpUrl: string
   description: string
   impact: AccessibilitySeverity
   reviewOnly: boolean
@@ -215,6 +216,7 @@ export function buildFrequentAccessibilityFindings(
   const findings = new Map<string, {
     id: string
     help: string
+    helpUrl: string
     description: string
     impact: AccessibilitySeverity
     reviewOnly: boolean
@@ -230,6 +232,7 @@ export function buildFrequentAccessibilityFindings(
       const entry = findings.get(key) ?? {
         id: finding.id,
         help: finding.help,
+        helpUrl: finding.helpUrl,
         description: finding.description,
         impact: getSeverityKey(finding.impact),
         reviewOnly: false,
@@ -256,6 +259,7 @@ export function buildFrequentAccessibilityFindings(
       const entry = findings.get(key) ?? {
         id: finding.id,
         help: finding.help,
+        helpUrl: finding.helpUrl,
         description: finding.description,
         impact: getSeverityKey(finding.impact),
         reviewOnly: true,
@@ -283,6 +287,7 @@ export function buildFrequentAccessibilityFindings(
     .map((finding) => ({
       id: finding.id,
       help: finding.help,
+      helpUrl: finding.helpUrl,
       description: finding.description,
       impact: finding.impact,
       reviewOnly: finding.reviewOnly,

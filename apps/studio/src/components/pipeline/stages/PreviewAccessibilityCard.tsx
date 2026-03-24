@@ -1,25 +1,17 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import type { AccessibilityAssessmentOutput, AccessibilityPageResult } from "@adt/types"
 import {
   AlertTriangle,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
-  Eye,
-  EyeOff,
   FileWarning,
   Loader2,
 } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AccessibilityCurrentPagePanel } from "@/components/accessibility/AccessibilityCurrentPagePanel"
 import { cn } from "@/lib/utils"
-import {
-  buildAccessibilityOverview,
-  buildFrequentAccessibilityFindings,
-  type PageAccessibilitySummary,
-} from "@/lib/accessibility-summary"
+import type { PageAccessibilitySummary } from "@/lib/accessibility-summary"
 
 interface PreviewAccessibilityCardProps {
   label: string
@@ -30,18 +22,9 @@ interface PreviewAccessibilityCardProps {
   currentPageResult: AccessibilityPageResult | null
   panelOpen: boolean
   otherCardExpanded?: boolean
-  highlightMode: boolean
-  onHighlightModeChange: (enabled: boolean) => void
   onExpandedChange?: (expanded: boolean) => void
+  onFindingHover?: (targets: string[] | null) => void
 }
-
-const SEVERITY_STYLES = {
-  critical: "bg-red-600",
-  serious: "bg-orange-500",
-  moderate: "bg-yellow-400",
-  minor: "bg-blue-400",
-  unknown: "bg-slate-300",
-} as const
 
 export function PreviewAccessibilityCard({
   label,
@@ -52,9 +35,8 @@ export function PreviewAccessibilityCard({
   currentPageResult,
   panelOpen,
   otherCardExpanded = false,
-  highlightMode,
-  onHighlightModeChange,
   onExpandedChange,
+  onFindingHover,
 }: PreviewAccessibilityCardProps) {
   const storageKey = `adt-preview-a11y-card:${label}`
   const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -65,8 +47,6 @@ export function PreviewAccessibilityCard({
   })
   const [showCollapsedCard, setShowCollapsedCard] = useState(() => collapsed && !panelOpen)
   const [collapsedCardVisible, setCollapsedCardVisible] = useState(() => collapsed && !panelOpen)
-  const [tab, setTab] = useState<"page" | "total">(currentPageResult ? "page" : "total")
-
   useEffect(() => {
     if (typeof window === "undefined") {
       return
@@ -84,12 +64,6 @@ export function PreviewAccessibilityCard({
   useEffect(() => {
     onExpandedChange?.(!collapsed)
   }, [collapsed, onExpandedChange])
-
-  useEffect(() => {
-    if (!collapsed) {
-      setTab(currentPageResult ? "page" : "total")
-    }
-  }, [collapsed, currentPageResult])
 
   useEffect(() => {
     if (!collapsed || panelOpen || otherCardExpanded) {
@@ -116,25 +90,12 @@ export function PreviewAccessibilityCard({
     }
   }, [collapsed, otherCardExpanded, panelOpen])
 
-  const overview = useMemo(
-    () => (assessment ? buildAccessibilityOverview(assessment) : null),
-    [assessment],
-  )
-  const frequentFindings = useMemo(
-    () => (assessment ? buildFrequentAccessibilityFindings(assessment, { limit: 3 }) : []),
-    [assessment],
-  )
-
-  const overallIssueCount = overview?.totalChecks ?? 0
-  const pagesWithFindings = assessment
-    ? assessment.pages.filter((page) => page.violationCount > 0 || page.incompleteCount > 0 || Boolean(page.error)).length
-    : 0
-  const overallSummary = assessment
-    ? `${overallIssueCount} total findings`
-    : isLoading
-      ? "Checking accessibility"
-      : error
-        ? "Unavailable"
+  const overallSummary = isLoading
+    ? "Checking accessibility"
+    : error
+      ? "Unavailable"
+      : assessment
+        ? ""
         : "No assessment"
   const pageSummary = currentPage
     ? currentPage.hasError
@@ -176,7 +137,7 @@ export function PreviewAccessibilityCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-3 text-sm">
             <span className="font-medium">Accessibility</span>
-            <span className="shrink-0 text-[11px] text-muted-foreground">{overallSummary}</span>
+            {overallSummary ? <span className="shrink-0 text-[11px] text-muted-foreground">{overallSummary}</span> : null}
           </div>
           <div className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{pageSummary}</div>
         </div>
@@ -188,8 +149,8 @@ export function PreviewAccessibilityCard({
 
   return (
     <div className="absolute right-4 top-4 z-20 flex max-h-[calc(100%-2rem)] w-[440px] max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-3xl border bg-background/95 shadow-xl backdrop-blur-sm supports-[backdrop-filter]:bg-background/90">
-      <div className="flex items-start gap-3 border-b px-4 py-3.5">
-        <div className="mt-0.5 shrink-0">
+      <div className="flex items-center gap-3 border-b px-4 py-2">
+        <div className="shrink-0">
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           ) : error ? (
@@ -201,19 +162,14 @@ export function PreviewAccessibilityCard({
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold">Accessibility</h3>
-            {assessment ? <Badge variant="outline">axe-core</Badge> : null}
-          </div>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            {assessment
-              ? `Latest package scan from ${new Date(assessment.generatedAt).toLocaleString()}`
-              : isLoading
+          <h3 className="text-sm font-semibold">Accessibility Findings</h3>
+          {!assessment && (isLoading || error) ? (
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              {isLoading
                 ? "Refreshing results for this packaged preview."
-                : error
-                  ? "Accessibility results are temporarily unavailable."
-                  : "Package this preview to generate accessibility results."}
-          </p>
+                : "Accessibility results are temporarily unavailable."}
+            </p>
+          ) : null}
         </div>
         <Button
           variant="ghost"
@@ -226,191 +182,15 @@ export function PreviewAccessibilityCard({
         </Button>
       </div>
 
-      <Tabs value={tab} onValueChange={(value) => setTab(value as "page" | "total")} className="flex min-h-0 flex-1 flex-col">
-        <div className="border-b px-4 py-2.5">
-          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-muted/70 p-1">
-            <TabsTrigger value="page" className="px-3 py-2 text-xs">
-              This page findings
-            </TabsTrigger>
-            <TabsTrigger value="total" className="px-3 py-2 text-xs">
-              Total findings
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-auto px-4 pb-4 pt-3 text-sm">
-          <TabsContent value="page" className="m-0 space-y-3.5">
-            <AccessibilityCurrentPagePanel
-              page={currentPageResult}
-              summary={currentPage}
-              embedded
-              emptyMessage="Open a page in Preview to show its page-specific accessibility findings here."
-            />
-
-            <div className="rounded-2xl border bg-muted/20 px-3.5 py-3.5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-xs font-medium text-muted-foreground">Accessibility mode</div>
-                  <div className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                    Outline the current page’s flagged elements directly in Preview.
-                  </div>
-                </div>
-                <Button
-                  variant={highlightMode ? "default" : "outline"}
-                  size="sm"
-                  className="h-8 text-xs"
-                  onClick={() => onHighlightModeChange(!highlightMode)}
-                  disabled={!currentPageResult}
-                >
-                  {highlightMode ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                  {highlightMode ? "On" : "Off"}
-                </Button>
-              </div>
-              <div className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-                {currentPageResult
-                  ? highlightMode
-                    ? "Confirmed findings are outlined in red. Needs-review items are outlined in amber."
-                    : "Turn this on when you want to inspect the current page directly in Preview."
-                  : "Open a page in Preview to enable inline highlights."}
-              </div>
-            </div>
-
-          </TabsContent>
-
-          <TabsContent value="total" className="m-0 space-y-3.5">
-            {assessment && overview ? (
-              <>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <MetricTile label="Pages audited" value={assessment.summary.pageCount} />
-                  <MetricTile label="Pages with findings" value={pagesWithFindings} tone={pagesWithFindings > 0 ? "warning" : "success"} />
-                  <MetricTile label="Total findings" value={assessment.summary.violationCount + assessment.summary.incompleteCount} tone={assessment.summary.violationCount > 0 ? "caution" : "default"} />
-                  <MetricTile label="Needs review" value={assessment.summary.incompleteCount} tone={assessment.summary.incompleteCount > 0 ? "info" : "default"} />
-                </div>
-
-                <div className="rounded-2xl border bg-card/70 px-3.5 py-3.5">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Severity</span>
-                    <span>{assessment.summary.violationCount} confirmed findings</span>
-                  </div>
-                  <div className="mt-2 flex h-2 overflow-hidden rounded-full bg-muted">
-                    {Object.entries(overview.severity).map(([key, count]) => (
-                      count > 0 ? (
-                        <div
-                          key={key}
-                          className={SEVERITY_STYLES[key as keyof typeof SEVERITY_STYLES]}
-                          style={{ width: `${(count / Math.max(assessment.summary.violationCount, 1)) * 100}%` }}
-                        />
-                      ) : null
-                    ))}
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {Object.entries(overview.severity).map(([key, count]) => (
-                      count > 0 ? (
-                        <Badge key={key} variant="secondary" className="text-[11px] capitalize">
-                          {key} {count}
-                        </Badge>
-                      ) : null
-                    ))}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border bg-card/70 px-3.5 py-3.5">
-                  <div className="text-xs font-medium text-muted-foreground">Issue areas</div>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {overview.categories.slice(0, 6).map((category) => (
-                      <Badge key={category.key} variant="outline" className="max-w-full text-[11px]">
-                        <span className="truncate">{category.label}</span>
-                        <span className="ml-1 text-muted-foreground">{category.count}</span>
-                      </Badge>
-                    ))}
-                    {overview.categories.length === 0 ? (
-                      <Badge variant="outline" className="text-[11px]">No findings reported</Badge>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border bg-card/70 px-3.5 py-3.5">
-                  <div>
-                    <div className="text-xs font-medium text-muted-foreground">Recurring book-wide findings</div>
-                    <div className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                      Repeated patterns across the packaged ADT output.
-                    </div>
-                  </div>
-
-                  <div className="mt-3 space-y-2.5">
-                    {frequentFindings.map((finding) => (
-                      <div key={`${finding.reviewOnly ? "review" : "violation"}-${finding.id}`} className="rounded-xl border bg-background/70 px-3 py-2.5">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant={finding.reviewOnly ? "outline" : "destructive"} className="font-mono text-[11px]">
-                            {finding.id}
-                          </Badge>
-                          <Badge variant="secondary" className="text-[11px]">
-                            {formatCoverageLabel(finding.pagesAffected, assessment.summary.pageCount)}
-                          </Badge>
-                          <Badge variant="outline" className="text-[11px]">
-                            {finding.categoryLabel}
-                          </Badge>
-                        </div>
-                        <div className="mt-2 text-sm font-medium leading-snug">{finding.help}</div>
-                        <div className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                          {finding.count} observations across {finding.pagesAffected} {finding.pagesAffected === 1 ? "page" : "pages"}
-                        </div>
-                      </div>
-                    ))}
-                    {frequentFindings.length === 0 ? (
-                      <div className="rounded-lg border border-dashed px-3 py-3 text-xs text-muted-foreground">
-                        No repeated findings were reported.
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="rounded-2xl border bg-card/70 px-4 py-4 text-sm text-muted-foreground">
-                {error ? error.message : "No accessibility summary is available yet."}
-              </div>
-            )}
-          </TabsContent>
-        </div>
-      </Tabs>
+      <div className="min-h-0 flex-1 overflow-auto px-4 pb-4 pt-3 text-sm">
+        <AccessibilityCurrentPagePanel
+          page={currentPageResult}
+          summary={currentPage}
+          embedded
+          emptyMessage="Open a page in Preview to show its page-specific accessibility findings here."
+          onFindingHover={onFindingHover}
+        />
+      </div>
     </div>
   )
-}
-
-function MetricTile({
-  label,
-  value,
-  tone = "default",
-}: {
-  label: string
-  value: number
-  tone?: "default" | "warning" | "success" | "caution" | "info"
-}) {
-  const toneClass =
-    tone === "warning"
-      ? "border-orange-500 bg-orange-50/40 dark:bg-orange-950/10"
-      : tone === "caution"
-        ? "border-yellow-500 bg-yellow-50/40 dark:bg-yellow-950/10"
-        : tone === "info"
-          ? "border-blue-500 bg-blue-50/40 dark:bg-blue-950/10"
-          : tone === "success"
-            ? "border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/10"
-            : "bg-card"
-
-  return (
-    <div className={cn("rounded-lg border-2 p-4", toneClass)}>
-      <div className="mb-1 text-xs text-muted-foreground">{label}</div>
-      <div className="text-2xl font-semibold tabular-nums">{value}</div>
-    </div>
-  )
-}
-
-function formatCoverageLabel(pagesAffected: number, totalPages: number): string {
-  if (totalPages > 0 && pagesAffected === totalPages) {
-    return "All pages"
-  }
-  if (pagesAffected === 1) {
-    return "1 page"
-  }
-  return `${pagesAffected} pages`
 }

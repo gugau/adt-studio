@@ -1,9 +1,46 @@
-import { Fragment } from "react"
-import type { AccessibilityPageResult } from "@adt/types"
+import { Fragment, useMemo } from "react"
+import type { AccessibilityFinding, AccessibilityPageResult } from "@adt/types"
 import type { PageAccessibilitySummary } from "@/lib/accessibility-summary"
-import { AlertTriangle, CheckCircle2 } from "lucide-react"
+import { ExternalLink } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+
+const SEVERITY_ORDER = ["critical", "serious", "moderate", "minor", "unknown"] as const
+type Severity = typeof SEVERITY_ORDER[number]
+
+const SEVERITY_RANK: Record<string, number> = {
+  critical: 0,
+  serious: 1,
+  moderate: 2,
+  minor: 3,
+  unknown: 4,
+}
+
+const SEVERITY_BORDER: Record<Severity, string> = {
+  critical: "border-red-500",
+  serious: "border-orange-500",
+  moderate: "border-yellow-500",
+  minor: "border-blue-500",
+  unknown: "border-gray-400",
+}
+
+function computeSeverityCounts(page: AccessibilityPageResult): Record<Severity, number> {
+  const counts: Record<Severity, number> = { critical: 0, serious: 0, moderate: 0, minor: 0, unknown: 0 }
+  for (const f of [...page.violations, ...page.incomplete]) {
+    const key = (f.impact && f.impact in counts ? f.impact : "unknown") as Severity
+    counts[key]++
+  }
+  return counts
+}
+
+function sortFindings(findings: AccessibilityFinding[]): AccessibilityFinding[] {
+  return [...findings].sort((a, b) => {
+    const rankA = SEVERITY_RANK[a.impact ?? "unknown"] ?? 4
+    const rankB = SEVERITY_RANK[b.impact ?? "unknown"] ?? 4
+    if (rankA !== rankB) return rankA - rankB
+    return b.nodes.length - a.nodes.length
+  })
+}
 
 interface AccessibilityCurrentPagePanelProps {
   page: AccessibilityPageResult | null
@@ -11,39 +48,11 @@ interface AccessibilityCurrentPagePanelProps {
   emptyMessage?: string
   className?: string
   embedded?: boolean
+  onFindingHover?: (targets: string[] | null) => void
 }
 
 const URL_PATTERN = /https?:\/\/[^\s<>"']+/g
 
-function SummaryCard({
-  label,
-  value,
-  tone = "default",
-  compact = false,
-}: {
-  label: string
-  value: number | string
-  tone?: "default" | "warning" | "success" | "caution" | "info"
-  compact?: boolean
-}) {
-  const toneClass =
-    tone === "warning"
-      ? "border-orange-500 bg-orange-50/40 dark:bg-orange-950/10"
-      : tone === "caution"
-        ? "border-yellow-500 bg-yellow-50/40 dark:bg-yellow-950/10"
-        : tone === "info"
-          ? "border-blue-500 bg-blue-50/40 dark:bg-blue-950/10"
-          : tone === "success"
-            ? "border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/10"
-            : "bg-card"
-
-  return (
-    <div className={cn("rounded-lg border-2", compact ? "px-3 py-2.5" : "p-4", toneClass)}>
-      <div className="mb-1 text-xs text-muted-foreground">{label}</div>
-      <div className={cn("font-semibold tabular-nums", compact ? "text-lg" : "text-2xl")}>{value}</div>
-    </div>
-  )
-}
 
 function splitTrailingPunctuation(url: string) {
   const match = url.match(/[),.;:!?]+$/)
@@ -107,83 +116,82 @@ function LinkifiedText({
   )
 }
 
-function FindingsList({ page, embedded = false }: { page: AccessibilityPageResult; embedded?: boolean }) {
+function FindingsList({ page, embedded = false, onFindingHover }: { page: AccessibilityPageResult; embedded?: boolean; onFindingHover?: (targets: string[] | null) => void }) {
+  const allFindings = useMemo(
+    () => sortFindings([...page.violations, ...page.incomplete]),
+    [page.violations, page.incomplete],
+  )
+
   return (
     <div className={cn("space-y-3", embedded ? "" : "border-t px-4 py-4")}>
       {page.error ? (
         <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
           {page.error}
         </div>
+      ) : allFindings.length === 0 ? (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50/80 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-400">
+          No accessibility findings were reported for this page.
+        </div>
       ) : (
-        <>
-          {page.violations.length === 0 && page.incomplete.length === 0 ? (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50/80 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-400">
-              No accessibility findings were reported for this page.
-            </div>
-          ) : null}
-
-          {page.violations.length > 0 ? (
-            <div className="space-y-3">
-              <h4 className="text-xs font-medium text-muted-foreground">Violations</h4>
-              {page.violations.map((violation) => (
-                <div key={`v-${page.sectionId}-${violation.id}`} className="space-y-2 rounded-xl border bg-card/80 px-3 py-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="destructive" className="font-mono text-[11px]">
-                      {violation.id}
-                    </Badge>
-                    {violation.impact ? (
-                      <Badge variant="outline" className="text-[11px] capitalize">
-                        {violation.impact}
-                      </Badge>
-                    ) : null}
-                  </div>
-                  <div className="text-sm font-medium leading-snug">{violation.help}</div>
-                  <LinkifiedText text={violation.description} className="text-xs leading-relaxed text-muted-foreground" />
-                  <LinkifiedText text={violation.helpUrl} className="break-all text-[11px] text-muted-foreground" />
-                  {violation.nodes.length > 0 ? (
-                    <div className="space-y-1.5">
-                      <div className="text-xs font-medium text-muted-foreground">Nodes</div>
-                      {violation.nodes.map((node, index) => (
-                        <div key={`${violation.id}-${index}`} className="rounded-lg bg-muted/40 px-2.5 py-2 text-xs font-mono">
-                          <div>{node.target.join(", ") || "(no target)"}</div>
-                          {node.failureSummary ? (
-                            <LinkifiedText
-                              text={node.failureSummary}
-                              className="mt-1 font-sans leading-relaxed text-muted-foreground whitespace-pre-wrap"
-                              preserveWhitespace
-                            />
-                          ) : null}
-                        </div>
-                      ))}
+        <div className="space-y-3">
+          {allFindings.map((finding, index) => (
+            <div
+              key={`${finding.id}-${index}`}
+              className="space-y-2 rounded-xl border bg-card/80 px-3 py-3 transition-colors hover:border-blue-400/60"
+              onMouseEnter={() => {
+                if (onFindingHover) {
+                  const targets = finding.nodes.flatMap((n) => n.target)
+                  onFindingHover(targets.length > 0 ? targets : null)
+                }
+              }}
+              onMouseLeave={() => onFindingHover?.(null)}
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge
+                  className={cn(
+                    "text-[11px] capitalize border-0",
+                    finding.impact === "critical" ? "bg-red-500 text-white"
+                      : finding.impact === "serious" ? "bg-orange-500 text-white"
+                      : finding.impact === "moderate" ? "bg-yellow-400 text-yellow-950"
+                      : finding.impact === "minor" ? "bg-blue-400 text-white"
+                      : "bg-gray-400 text-white",
+                  )}
+                >
+                  {finding.impact ?? "unknown"}
+                </Badge>
+              </div>
+              <div className="flex items-start justify-between gap-2">
+                <div className="text-sm font-medium leading-snug">{finding.help}</div>
+                {finding.helpUrl ? (
+                  <a href={finding.helpUrl} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                    <code className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground hover:text-foreground">
+                      {finding.id}
+                      <ExternalLink className="h-2.5 w-2.5" />
+                    </code>
+                  </a>
+                ) : null}
+              </div>
+              <LinkifiedText text={finding.description} className="text-xs leading-relaxed text-muted-foreground" />
+              {finding.nodes.length > 0 ? (
+                <div className="space-y-1.5">
+                  <div className="text-xs font-medium text-muted-foreground">Nodes</div>
+                  {finding.nodes.map((node, nodeIndex) => (
+                    <div key={`${finding.id}-${nodeIndex}`} className="rounded-lg bg-muted/40 px-2.5 py-2 text-xs font-mono">
+                      <div>{node.target.join(", ") || "(no target)"}</div>
+                      {node.failureSummary ? (
+                        <LinkifiedText
+                          text={node.failureSummary}
+                          className="mt-1 font-sans leading-relaxed text-muted-foreground whitespace-pre-wrap"
+                          preserveWhitespace
+                        />
+                      ) : null}
                     </div>
-                  ) : null}
+                  ))}
                 </div>
-              ))}
+              ) : null}
             </div>
-          ) : null}
-
-          {page.incomplete.length > 0 ? (
-            <div className="space-y-3">
-              <h4 className="text-xs font-medium text-muted-foreground">Needs review</h4>
-              {page.incomplete.map((item) => (
-                <div key={`i-${page.sectionId}-${item.id}`} className="space-y-2 rounded-xl border bg-card/80 px-3 py-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline" className="font-mono text-[11px]">
-                      {item.id}
-                    </Badge>
-                    {item.impact ? (
-                      <Badge variant="outline" className="text-[11px] capitalize">
-                        {item.impact}
-                      </Badge>
-                    ) : null}
-                  </div>
-                  <div className="text-sm font-medium leading-snug">{item.help}</div>
-                  <LinkifiedText text={item.description} className="text-xs leading-relaxed text-muted-foreground" />
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </>
+          ))}
+        </div>
       )}
     </div>
   )
@@ -195,6 +203,7 @@ export function AccessibilityCurrentPagePanel({
   emptyMessage = "Open a page in Preview to show its page-specific accessibility findings here.",
   className = "",
   embedded = false,
+  onFindingHover,
 }: AccessibilityCurrentPagePanelProps) {
   if (!page || !summary) {
     return (
@@ -206,63 +215,21 @@ export function AccessibilityCurrentPagePanel({
     )
   }
 
-  const hasFindings = summary.totalCount > 0 || summary.hasError
+  const severityCounts = computeSeverityCounts(page)
 
   if (embedded) {
     return (
       <div className={cn("space-y-3", className)}>
-        <div className="rounded-2xl border bg-card/80 px-3.5 py-3.5">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                {hasFindings ? (
-                  <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
-                ) : (
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-                )}
-                <h4 className="truncate text-sm font-semibold">{summary.title ?? summary.sectionId}</h4>
+        <div className="rounded-2xl border bg-card/70 px-3.5 py-3.5 space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {SEVERITY_ORDER.filter((s) => severityCounts[s] > 0).map((s) => (
+              <div key={s} className={cn("rounded-lg border-2 px-3 py-2 min-w-[4.5rem]", SEVERITY_BORDER[s])}>
+                <div className="text-[11px] text-muted-foreground capitalize">{s}</div>
+                <div className="text-lg font-semibold tabular-nums">{severityCounts[s]}</div>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">{summary.href}</p>
-            </div>
-            <Badge variant="secondary" className="shrink-0">Current Preview Page</Badge>
-          </div>
-
-          <div className="mt-3 grid gap-2 sm:grid-cols-3">
-            <SummaryCard
-              label="Total findings"
-              value={summary.totalCount}
-              tone={summary.totalCount > 0 || summary.hasError ? "warning" : "success"}
-              compact
-            />
-            <SummaryCard
-              label="Violations"
-              value={summary.issueCount}
-              tone={summary.issueCount > 0 ? "caution" : "success"}
-              compact
-            />
-            <SummaryCard
-              label="Needs review"
-              value={summary.reviewCount}
-              tone={summary.reviewCount > 0 ? "info" : "default"}
-              compact
-            />
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {summary.categories.map((category) => (
-              <Badge key={category.key} variant="outline" className="text-[11px]">
-                {category.label}
-                <span className="ml-1 text-muted-foreground">{category.count}</span>
-              </Badge>
             ))}
-            {summary.categories.length === 0 ? (
-              <Badge variant="secondary" className="text-[11px]">No finding categories</Badge>
-            ) : null}
           </div>
-        </div>
-
-        <div className="rounded-2xl border bg-card/70 px-3.5 py-3.5">
-          <FindingsList page={page} embedded />
+          <FindingsList page={page} embedded onFindingHover={onFindingHover} />
         </div>
       </div>
     )
@@ -271,53 +238,16 @@ export function AccessibilityCurrentPagePanel({
   return (
     <div className={cn("overflow-hidden rounded-xl border bg-card", className)}>
       <div className="space-y-4 px-4 py-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              {hasFindings ? (
-                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
-              ) : (
-                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-              )}
-              <h4 className="truncate text-sm font-medium">{summary.title ?? summary.sectionId}</h4>
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">{summary.href}</p>
-          </div>
-          <Badge variant="secondary">Current Preview Page</Badge>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-3">
-          <SummaryCard
-            label="Total findings"
-            value={summary.totalCount}
-            tone={summary.totalCount > 0 || summary.hasError ? "warning" : "success"}
-          />
-          <SummaryCard
-            label="Violations"
-            value={summary.issueCount}
-            tone={summary.issueCount > 0 ? "caution" : "success"}
-          />
-          <SummaryCard
-            label="Needs review"
-            value={summary.reviewCount}
-            tone={summary.reviewCount > 0 ? "info" : "default"}
-          />
-        </div>
-
         <div className="flex flex-wrap gap-2">
-          {summary.categories.map((category) => (
-            <Badge key={category.key} variant="outline" className="text-[11px]">
-              {category.label}
-              <span className="ml-1 text-muted-foreground">{category.count}</span>
-            </Badge>
+          {SEVERITY_ORDER.filter((s) => severityCounts[s] > 0).map((s) => (
+            <div key={s} className={cn("rounded-lg border-2 px-3 py-2 min-w-[5rem]", SEVERITY_BORDER[s])}>
+              <div className="text-xs text-muted-foreground capitalize">{s}</div>
+              <div className="text-xl font-semibold tabular-nums">{severityCounts[s]}</div>
+            </div>
           ))}
-          {summary.categories.length === 0 ? (
-            <Badge variant="secondary" className="text-[11px]">No finding categories</Badge>
-          ) : null}
         </div>
+        <FindingsList page={page} embedded onFindingHover={onFindingHover} />
       </div>
-
-      <FindingsList page={page} />
     </div>
   )
 }

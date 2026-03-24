@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import type { AccessibilityCategoryKey, AccessibilitySeverity } from "@/lib/accessibility-summary"
+import { ExternalLink } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -217,7 +218,14 @@ function FrequentFindingCard({
       </div>
       <div className="mt-2 flex items-center justify-between gap-2">
         <span className="font-medium">{finding.help}</span>
-        <Badge variant="outline" className="shrink-0 font-mono text-[11px]">{finding.id}</Badge>
+        {finding.helpUrl ? (
+          <a href={finding.helpUrl} target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground">
+            <code>{finding.id}</code>
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        ) : (
+          <code className="shrink-0 text-[11px] text-muted-foreground">{finding.id}</code>
+        )}
       </div>
       <div className="mt-1 text-xs text-muted-foreground">{finding.description}</div>
 
