@@ -15,6 +15,7 @@ import { languageUsesSpeechProvider } from "@/lib/speech-routing"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { resolveTranslationLanguageState } from "./translations-view-state"
+import { msg } from "@lingui/core/macro"
 import { useLingui } from "@lingui/react/macro"
 
 const IMAGE_ID_RE = /_im\d{3}/
@@ -147,7 +148,7 @@ function VersionPicker({
 }
 
 export function TranslationsView({ bookLabel, selectedPageId, onSelectPage }: { bookLabel: string; selectedPageId?: string; onSelectPage?: (pageId: string | null) => void }) {
-  const { t } = useLingui()
+  const { t, i18n } = useLingui()
   const { setExtra } = useStepHeader()
   const { data: activeConfigData } = useActiveConfig(bookLabel)
   const { data: book, isLoading: isBookLoading } = useBook(bookLabel)
@@ -299,7 +300,7 @@ export function TranslationsView({ bookLabel, selectedPageId, onSelectPage }: { 
   const generateAudioMutation = useMutation({
     mutationFn: async (variables: { textId: string; language: string }) => {
       if (!geminiKey) {
-        throw new Error("Gemini API key is required to generate audio.")
+        throw new Error(i18n._(msg`Gemini API key is required to generate audio.`))
       }
       return api.generateGeminiTTSForItem(
         bookLabel,
@@ -363,7 +364,7 @@ export function TranslationsView({ bookLabel, selectedPageId, onSelectPage }: { 
         )}
         {currentLanguageUsesGemini && missingAudioCount > 0 && (
           <span className="text-[10px] bg-amber-100 text-amber-900 rounded-full px-2 py-0.5">
-            {missingAudioCount} missing
+            {t`${missingAudioCount} missing`}
           </span>
         )}
         {selectedLang && translationVersion != null && !isSourceLang && (
@@ -384,7 +385,7 @@ export function TranslationsView({ bookLabel, selectedPageId, onSelectPage }: { 
       </div>
     )
     return () => setExtra(null)
-  }, [catalog, displayEntries.length, outputLanguages.length, selectedLang, translationVersion, saving, dirty, bookLabel, isSourceLang, totalAudioFiles, selectedPageId, currentLanguageUsesGemini, generatedAudioCount, missingAudioCount])
+  }, [catalog, t, displayEntries.length, outputLanguages.length, selectedLang, translationVersion, saving, dirty, bookLabel, isSourceLang, totalAudioFiles, selectedPageId, currentLanguageUsesGemini, generatedAudioCount, missingAudioCount])
 
   if (!showRunCard && isLoading) {
     return (
@@ -637,6 +638,8 @@ function AudioAction({
   isGenerating: boolean
   errorMessage?: string
 }) {
+  const { t } = useLingui()
+
   if (audio && audioLang) {
     return (
       <PlayButton
@@ -661,8 +664,8 @@ function AudioAction({
         onClick={() => onGenerate(textId)}
         title={
           hasGeminiKey
-            ? "Generate missing Gemini audio"
-            : "Set a Gemini API key to generate audio"
+            ? t`Generate missing Gemini audio`
+            : t`Set a Gemini API key to generate audio`
         }
       >
         {isGenerating ? (
@@ -670,7 +673,7 @@ function AudioAction({
         ) : (
           <WandSparkles className="mr-1 h-3 w-3" />
         )}
-        Generate
+        {t`Generate`}
       </Button>
       {errorMessage && (
         <p className="max-w-44 text-[10px] leading-tight text-red-500 text-right">

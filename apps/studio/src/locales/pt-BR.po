@@ -98,6 +98,9 @@ msgstr "Há {0}min"
 msgid "{0}s ago"
 msgstr "Há {0}s"
 
+msgid "{missingAudioCount} missing"
+msgstr "{missingAudioCount} faltando"
+
 #~ msgid "{stepLabel} Settings"
 #~ msgstr "Configurações de {0}"
 
@@ -812,6 +815,9 @@ msgstr "Pré-visualização em tamanho real da página de origem do quiz selecio
 msgid "Gemini"
 msgstr "Gemini"
 
+msgid "Gemini API key is required to generate audio."
+msgstr "É necessária uma chave de API do Gemini para gerar áudio."
+
 msgid "Gemini TTS outputs WAV audio in this integration; other providers continue using the configured format."
 msgstr "O Gemini TTS gera áudio WAV nesta integração; outros provedores continuam usando o formato configurado."
 
@@ -832,6 +838,9 @@ msgstr "Gera questionários e atividades de compreensão com base no conteúdo d
 
 msgid "Generate from pages"
 msgstr "Gerar a partir das páginas"
+
+msgid "Generate missing Gemini audio"
+msgstr "Gerar áudio faltante do Gemini"
 
 msgid "Generate new"
 msgstr "Gerar nova"
@@ -1712,6 +1721,9 @@ msgstr "Separador"
 
 msgid "Set"
 msgstr "Definir"
+
+msgid "Set a Gemini API key to generate audio"
+msgstr "Defina uma chave de API do Gemini para gerar áudio"
 
 msgid "Settings"
 msgstr "Configurações"

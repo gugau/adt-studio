@@ -98,6 +98,9 @@ msgstr "{0}m ago"
 msgid "{0}s ago"
 msgstr "{0}s ago"
 
+msgid "{missingAudioCount} missing"
+msgstr "{missingAudioCount} missing"
+
 #~ msgid "{stepLabel} Settings"
 #~ msgstr "{stepLabel} Settings"
 
@@ -812,6 +815,9 @@ msgstr "Full-size source page preview for the selected quiz."
 msgid "Gemini"
 msgstr "Gemini"
 
+msgid "Gemini API key is required to generate audio."
+msgstr "Gemini API key is required to generate audio."
+
 msgid "Gemini TTS outputs WAV audio in this integration; other providers continue using the configured format."
 msgstr "Gemini TTS outputs WAV audio in this integration; other providers continue using the configured format."
 
@@ -832,6 +838,9 @@ msgstr "Generate comprehension quizzes and activities based on the book content.
 
 msgid "Generate from pages"
 msgstr "Generate from pages"
+
+msgid "Generate missing Gemini audio"
+msgstr "Generate missing Gemini audio"
 
 msgid "Generate new"
 msgstr "Generate new"
@@ -1712,6 +1721,9 @@ msgstr "Separator"
 
 msgid "Set"
 msgstr "Set"
+
+msgid "Set a Gemini API key to generate audio"
+msgstr "Set a Gemini API key to generate audio"
 
 msgid "Settings"
 msgstr "Settings"
