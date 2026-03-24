@@ -15,13 +15,9 @@ interface VoiceMappingsEditorProps {
   headerTarget?: HTMLDivElement | null
 }
 
-const PROVIDERS = [
-  { key: "openai", label: "OpenAI Voice", placeholder: "e.g. alloy" },
-  { key: "azure", label: "Azure Voice", placeholder: "e.g. en-US-JennyNeural" },
-  { key: "gemini", label: "Gemini Voice", placeholder: "e.g. Kore" },
-] as const
+const PROVIDER_ORDER = ["openai", "azure", "gemini"] as const
 
-type VoiceProviderKey = (typeof PROVIDERS)[number]["key"]
+type VoiceProviderKey = (typeof PROVIDER_ORDER)[number]
 
 interface VoiceRow {
   lang: string
@@ -115,14 +111,14 @@ export function VoiceMappingsEditor({ bookLabel, headerTarget }: VoiceMappingsEd
 
       if (dirtyMappings) {
         const nextMappings: Record<string, Record<string, string>> = {}
-        for (const provider of PROVIDERS) {
+        for (const key of PROVIDER_ORDER) {
           const values: Record<string, string> = {}
           for (const row of rows) {
-            const value = row[provider.key].trim()
+            const value = row[key].trim()
             if (value) values[row.lang] = value
           }
           if (Object.keys(values).length > 0) {
-            nextMappings[provider.key] = values
+            nextMappings[key] = values
           }
         }
         saves.push(api.updateVoiceMappings(nextMappings))
@@ -188,7 +184,7 @@ export function VoiceMappingsEditor({ bookLabel, headerTarget }: VoiceMappingsEd
             setDefaultVoice(e.target.value)
             setDirtyDefaultVoice(true)
           }}
-          placeholder="e.g. alloy"
+          placeholder={t`e.g. alloy`}
           className="w-72 h-8 text-xs"
         />
         <p className="text-xs text-muted-foreground">
@@ -221,7 +217,7 @@ export function VoiceMappingsEditor({ bookLabel, headerTarget }: VoiceMappingsEd
           <Input
             value={newLangKey}
             onChange={(e) => setNewLangKey(e.target.value)}
-            placeholder="e.g. fr, es-mx"
+            placeholder={t`e.g. fr, es-mx`}
             className="w-40 h-7 text-xs"
             onKeyDown={(e) => e.key === "Enter" && addLanguage()}
             autoFocus
@@ -246,11 +242,11 @@ export function VoiceMappingsEditor({ bookLabel, headerTarget }: VoiceMappingsEd
           <thead>
             <tr className="bg-muted/50 border-b">
               <th className="text-left font-medium px-3 py-2 w-28">{t`Language`}</th>
-              {PROVIDERS.map((provider) => (
-                <th key={provider.key} className="text-left font-medium px-3 py-2">
-                  {provider.key === "openai"
+              {PROVIDER_ORDER.map((key) => (
+                <th key={key} className="text-left font-medium px-3 py-2">
+                  {key === "openai"
                     ? t`OpenAI Voice`
-                    : provider.key === "azure"
+                    : key === "azure"
                       ? t`Azure Voice`
                       : t`Gemini Voice`}
                 </th>
@@ -264,13 +260,19 @@ export function VoiceMappingsEditor({ bookLabel, headerTarget }: VoiceMappingsEd
                 <td className="px-3 py-1.5 font-medium text-muted-foreground">
                   {row.lang}
                 </td>
-                {PROVIDERS.map((provider) => (
-                  <td key={provider.key} className="px-3 py-1.5">
+                {PROVIDER_ORDER.map((key) => (
+                  <td key={key} className="px-3 py-1.5">
                     <Input
-                      value={row[provider.key]}
-                      onChange={(e) => updateRow(i, provider.key, e.target.value)}
+                      value={row[key]}
+                      onChange={(e) => updateRow(i, key, e.target.value)}
                       className="h-7 text-xs"
-                      placeholder={provider.placeholder}
+                      placeholder={
+                        key === "openai"
+                          ? t`e.g. alloy`
+                          : key === "azure"
+                            ? t`e.g. en-US-JennyNeural`
+                            : t`e.g. Kore`
+                      }
                     />
                   </td>
                 ))}
@@ -290,7 +292,7 @@ export function VoiceMappingsEditor({ bookLabel, headerTarget }: VoiceMappingsEd
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={1 + PROVIDERS.length + 1} className="px-3 py-4 text-center text-muted-foreground italic">
+                <td colSpan={1 + PROVIDER_ORDER.length + 1} className="px-3 py-4 text-center text-muted-foreground italic">
                   {t`No voice mappings configured.`}
                 </td>
               </tr>

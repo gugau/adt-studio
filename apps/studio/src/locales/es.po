@@ -636,11 +636,17 @@ msgstr "Duración"
 msgid "Dynamic"
 msgstr "Dinámico"
 
+msgid "e.g. alloy"
+msgstr "p. ej. alloy"
+
 msgid "e.g. azure-tts"
 msgstr "p. ej. azure-tts"
 
 msgid "e.g. eastus, westeurope"
 msgstr "p. ej. eastus, westeurope"
+
+msgid "e.g. en-US-JennyNeural"
+msgstr "p. ej. en-US-JennyNeural"
 
 msgid "e.g. en, fr"
 msgstr "p. ej. en, fr"
@@ -651,11 +657,17 @@ msgstr "p. ej. en, hi, ta"
 msgid "e.g. es, ta, si, sw"
 msgstr "p. ej. es, ta, si, sw"
 
+msgid "e.g. fr, es-mx"
+msgstr "p. ej. fr, es-mx"
+
 msgid "e.g. gemini-2.5-pro-preview-tts"
 msgstr "p. ej. gemini-2.5-pro-preview-tts"
 
 msgid "e.g. gpt-4o-mini-tts"
 msgstr "p. ej. gpt-4o-mini-tts"
+
+msgid "e.g. Kore"
+msgstr "p. ej. Kore"
 
 msgid "e.g., A cheerful leopard family in a green forest, children's book style..."
 msgstr "ej., Una familia de leopardos alegres en un bosque verde, estilo libro infantil..."
