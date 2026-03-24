@@ -81,6 +81,11 @@ msgstr "{0} terms"
 msgid "{0} texts"
 msgstr "{0} texts"
 
+#. placeholder {0}: String(generatedAudioCount)
+#. placeholder {1}: String(displayEntries.length)
+msgid "{0}/{1} audio"
+msgstr "{0}/{1} audio"
+
 #. placeholder {0}: String(selectedPageIds.size)
 msgid "{0}/5 pages selected"
 msgstr "{0}/5 pages selected"
@@ -105,6 +110,12 @@ msgstr "0 = deterministic, 2 = max creativity"
 
 msgid "1 image selected"
 msgstr "1 image selected"
+
+msgid "24000"
+msgstr "24000"
+
+msgid "64k"
+msgstr "64k"
 
 msgid "A fill-in-the-blank activity."
 msgstr "A fill-in-the-blank activity."
@@ -321,6 +332,9 @@ msgstr "Auto"
 msgid "Avg Duration"
 msgstr "Avg Duration"
 
+msgid "Azure"
+msgstr "Azure"
+
 msgid "Azure Speech"
 msgstr "Azure Speech"
 
@@ -478,6 +492,9 @@ msgstr "Close section data"
 msgid "Comma-separated language codes routed to Azure."
 msgstr "Comma-separated language codes routed to Azure."
 
+msgid "Comma-separated language codes routed to Gemini."
+msgstr "Comma-separated language codes routed to Gemini."
+
 msgid "Comma-separated language codes routed to OpenAI."
 msgstr "Comma-separated language codes routed to OpenAI."
 
@@ -616,8 +633,26 @@ msgstr "Duration"
 msgid "Dynamic"
 msgstr "Dynamic"
 
+msgid "e.g. azure-tts"
+msgstr "e.g. azure-tts"
+
 msgid "e.g. eastus, westeurope"
 msgstr "e.g. eastus, westeurope"
+
+msgid "e.g. en, fr"
+msgstr "e.g. en, fr"
+
+msgid "e.g. en, hi, ta"
+msgstr "e.g. en, hi, ta"
+
+msgid "e.g. es, ta, si, sw"
+msgstr "e.g. es, ta, si, sw"
+
+msgid "e.g. gemini-2.5-pro-preview-tts"
+msgstr "e.g. gemini-2.5-pro-preview-tts"
+
+msgid "e.g. gpt-4o-mini-tts"
+msgstr "e.g. gpt-4o-mini-tts"
 
 msgid "e.g., A cheerful leopard family in a green forest, children's book style..."
 msgstr "e.g., A cheerful leopard family in a green forest, children's book style..."
@@ -773,6 +808,15 @@ msgstr "Front Cover"
 
 msgid "Full-size source page preview for the selected quiz."
 msgstr "Full-size source page preview for the selected quiz."
+
+msgid "Gemini"
+msgstr "Gemini"
+
+msgid "Gemini TTS outputs WAV audio in this integration; other providers continue using the configured format."
+msgstr "Gemini TTS outputs WAV audio in this integration; other providers continue using the configured format."
+
+msgid "Gemini Voice"
+msgstr "Gemini Voice"
 
 msgid "General"
 msgstr "General"
@@ -1137,6 +1181,9 @@ msgstr "Misses"
 
 msgid "Model"
 msgstr "Model"
+
+msgid "mp3"
+msgstr "mp3"
 
 msgid "Needs rebuild"
 msgstr "Needs rebuild"

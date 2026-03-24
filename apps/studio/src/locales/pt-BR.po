@@ -81,6 +81,11 @@ msgstr "{0} termos"
 msgid "{0} texts"
 msgstr "{0} textos"
 
+#. placeholder {0}: String(generatedAudioCount)
+#. placeholder {1}: String(displayEntries.length)
+msgid "{0}/{1} audio"
+msgstr "{0}/{1} áudio"
+
 #. placeholder {0}: String(selectedPageIds.size)
 msgid "{0}/5 pages selected"
 msgstr "{0}/5 páginas selecionadas"
@@ -105,6 +110,12 @@ msgstr "0 = determinístico, 2 = criatividade máxima"
 
 msgid "1 image selected"
 msgstr "1 imagem selecionada"
+
+msgid "24000"
+msgstr "24000"
+
+msgid "64k"
+msgstr "64k"
 
 msgid "A fill-in-the-blank activity."
 msgstr "Uma atividade de preencher lacunas."
@@ -321,6 +332,9 @@ msgstr "Automático"
 msgid "Avg Duration"
 msgstr "Duração média"
 
+msgid "Azure"
+msgstr "Azure"
+
 msgid "Azure Speech"
 msgstr "Azure Speech"
 
@@ -478,6 +492,9 @@ msgstr "Fechar dados da seção"
 msgid "Comma-separated language codes routed to Azure."
 msgstr "Códigos de idioma separados por vírgula roteados para Azure."
 
+msgid "Comma-separated language codes routed to Gemini."
+msgstr "Códigos de idioma separados por vírgula roteados para o Gemini."
+
 msgid "Comma-separated language codes routed to OpenAI."
 msgstr "Códigos de idioma separados por vírgula roteados para OpenAI."
 
@@ -616,8 +633,26 @@ msgstr "Duração"
 msgid "Dynamic"
 msgstr "Dinâmico"
 
+msgid "e.g. azure-tts"
+msgstr "ex.: azure-tts"
+
 msgid "e.g. eastus, westeurope"
 msgstr "ex.: eastus, westeurope"
+
+msgid "e.g. en, fr"
+msgstr "ex.: en, fr"
+
+msgid "e.g. en, hi, ta"
+msgstr "ex.: en, hi, ta"
+
+msgid "e.g. es, ta, si, sw"
+msgstr "ex.: es, ta, si, sw"
+
+msgid "e.g. gemini-2.5-pro-preview-tts"
+msgstr "ex.: gemini-2.5-pro-preview-tts"
+
+msgid "e.g. gpt-4o-mini-tts"
+msgstr "ex.: gpt-4o-mini-tts"
 
 msgid "e.g., A cheerful leopard family in a green forest, children's book style..."
 msgstr "ex.: Uma família de leopardos felizes em uma floresta verde, estilo livro infantil..."
@@ -773,6 +808,15 @@ msgstr "Capa"
 
 msgid "Full-size source page preview for the selected quiz."
 msgstr "Pré-visualização em tamanho real da página de origem do quiz selecionado."
+
+msgid "Gemini"
+msgstr "Gemini"
+
+msgid "Gemini TTS outputs WAV audio in this integration; other providers continue using the configured format."
+msgstr "O Gemini TTS gera áudio WAV nesta integração; outros provedores continuam usando o formato configurado."
+
+msgid "Gemini Voice"
+msgstr "Voz do Gemini"
 
 msgid "General"
 msgstr "Geral"
@@ -1137,6 +1181,9 @@ msgstr "Perdas"
 
 msgid "Model"
 msgstr "Modelo"
+
+msgid "mp3"
+msgstr "mp3"
 
 msgid "Needs rebuild"
 msgstr "Precisa ser reconstruído"

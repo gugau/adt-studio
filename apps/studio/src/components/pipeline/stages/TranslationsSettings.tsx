@@ -220,9 +220,9 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general" 
                 onChange={(e) => { setDefaultProvider(e.target.value); markDirty("speech") }}
                 className="flex h-8 w-48 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm"
               >
-                <option value="openai">OpenAI</option>
-                <option value="azure">Azure</option>
-                <option value="gemini">Gemini</option>
+                <option value="openai">{t`OpenAI`}</option>
+                <option value="azure">{t`Azure`}</option>
+                <option value="gemini">{t`Gemini`}</option>
               </select>
               <p className="text-xs text-muted-foreground">{t`Provider used for languages not assigned to a specific provider.`}</p>
             </div>
@@ -236,7 +236,7 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general" 
               <Input
                 value={openaiModel}
                 onChange={(e) => { setOpenaiModel(e.target.value); markDirty("speech") }}
-                placeholder="e.g. gpt-4o-mini-tts"
+                placeholder={t`e.g. gpt-4o-mini-tts`}
                 className="w-72 h-8 text-xs"
               />
             </div>
@@ -245,7 +245,7 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general" 
               <Input
                 value={openaiLanguages}
                 onChange={(e) => { setOpenaiLanguages(e.target.value); markDirty("speech") }}
-                placeholder="e.g. en, fr"
+                placeholder={t`e.g. en, fr`}
                 className="w-72 h-8 text-xs"
               />
               <p className="text-xs text-muted-foreground">{t`Comma-separated language codes routed to OpenAI.`}</p>
@@ -260,7 +260,7 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general" 
               <Input
                 value={azureModel}
                 onChange={(e) => { setAzureModel(e.target.value); markDirty("speech") }}
-                placeholder="e.g. azure-tts"
+                placeholder={t`e.g. azure-tts`}
                 className="w-72 h-8 text-xs"
               />
             </div>
@@ -269,7 +269,7 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general" 
               <Input
                 value={azureLanguages}
                 onChange={(e) => { setAzureLanguages(e.target.value); markDirty("speech") }}
-                placeholder="e.g. es, ta, si, sw"
+                placeholder={t`e.g. es, ta, si, sw`}
                 className="w-72 h-8 text-xs"
               />
               <p className="text-xs text-muted-foreground">{t`Comma-separated language codes routed to Azure.`}</p>
@@ -278,25 +278,25 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general" 
 
           {/* Gemini Provider */}
           <div className="space-y-3 rounded-md border p-3">
-            <h3 className="text-xs font-semibold">Gemini</h3>
+            <h3 className="text-xs font-semibold">{t`Gemini`}</h3>
             <div className="space-y-1.5">
-              <Label className="text-xs">Model</Label>
+              <Label className="text-xs">{t`Model`}</Label>
               <Input
                 value={geminiModel}
                 onChange={(e) => { setGeminiModel(e.target.value); markDirty("speech") }}
-                placeholder="e.g. gemini-2.5-pro-preview-tts"
+                placeholder={t`e.g. gemini-2.5-pro-preview-tts`}
                 className="w-72 h-8 text-xs"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Languages</Label>
+              <Label className="text-xs">{t`Languages`}</Label>
               <Input
                 value={geminiLanguages}
                 onChange={(e) => { setGeminiLanguages(e.target.value); markDirty("speech") }}
-                placeholder="e.g. en, hi, ta"
+                placeholder={t`e.g. en, hi, ta`}
                 className="w-72 h-8 text-xs"
               />
-              <p className="text-xs text-muted-foreground">Comma-separated language codes routed to Gemini.</p>
+              <p className="text-xs text-muted-foreground">{t`Comma-separated language codes routed to Gemini.`}</p>
             </div>
           </div>
 
@@ -309,7 +309,7 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general" 
                 <Input
                   value={format}
                   onChange={(e) => { setFormat(e.target.value); markDirty("speech") }}
-                  placeholder="mp3"
+                  placeholder={t`mp3`}
                   className="w-32 h-8 text-xs"
                 />
               </div>
@@ -318,7 +318,7 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general" 
                 <Input
                   value={bitRate}
                   onChange={(e) => { setBitRate(e.target.value); markDirty("speech") }}
-                  placeholder="64k"
+                  placeholder={t`64k`}
                   className="w-32 h-8 text-xs"
                 />
               </div>
@@ -327,13 +327,13 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general" 
                 <Input
                   value={sampleRate}
                   onChange={(e) => { setSampleRate(e.target.value); markDirty("speech") }}
-                  placeholder="24000"
+                  placeholder={t`24000`}
                   className="w-32 h-8 text-xs"
                 />
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              Gemini TTS outputs WAV audio in this integration; other providers continue using the configured format.
+              {t`Gemini TTS outputs WAV audio in this integration; other providers continue using the configured format.`}
             </p>
           </div>
         </div>
