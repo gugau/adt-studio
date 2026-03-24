@@ -292,10 +292,6 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
           highlightMode={highlightMode}
           onHighlightModeChange={setHighlightMode}
           onExpandedChange={setAccessibilityCardExpanded}
-          onOpenValidation={() => navigate({
-            to: "/books/$label/$step",
-            params: { label: bookLabel, step: "validation" },
-          })}
         />
 
         <PreviewValidationCard

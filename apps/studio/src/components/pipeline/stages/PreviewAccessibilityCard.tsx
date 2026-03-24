@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronRight,
-  ExternalLink,
   Eye,
   EyeOff,
   FileWarning,
@@ -33,15 +32,14 @@ interface PreviewAccessibilityCardProps {
   otherCardExpanded?: boolean
   highlightMode: boolean
   onHighlightModeChange: (enabled: boolean) => void
-  onOpenValidation: () => void
   onExpandedChange?: (expanded: boolean) => void
 }
 
 const SEVERITY_STYLES = {
   critical: "bg-red-600",
   serious: "bg-orange-500",
-  moderate: "bg-amber-400",
-  minor: "bg-yellow-300",
+  moderate: "bg-yellow-400",
+  minor: "bg-blue-400",
   unknown: "bg-slate-300",
 } as const
 
@@ -56,7 +54,6 @@ export function PreviewAccessibilityCard({
   otherCardExpanded = false,
   highlightMode,
   onHighlightModeChange,
-  onOpenValidation,
   onExpandedChange,
 }: PreviewAccessibilityCardProps) {
   const storageKey = `adt-preview-a11y-card:${label}`
@@ -278,12 +275,6 @@ export function PreviewAccessibilityCard({
               </div>
             </div>
 
-            <div className="flex items-center justify-end border-t pt-2">
-              <Button variant="outline" size="sm" className="h-8 text-xs" onClick={onOpenValidation}>
-                <ExternalLink className="h-3.5 w-3.5" />
-                Open Validation
-              </Button>
-            </div>
           </TabsContent>
 
           <TabsContent value="total" className="m-0 space-y-3.5">
@@ -292,8 +283,8 @@ export function PreviewAccessibilityCard({
                 <div className="grid grid-cols-2 gap-2.5">
                   <MetricTile label="Pages audited" value={assessment.summary.pageCount} />
                   <MetricTile label="Pages with findings" value={pagesWithFindings} tone={pagesWithFindings > 0 ? "warning" : "success"} />
-                  <MetricTile label="Total findings" value={assessment.summary.violationCount + assessment.summary.incompleteCount} tone={assessment.summary.violationCount > 0 ? "warning" : "default"} />
-                  <MetricTile label="Needs review" value={assessment.summary.incompleteCount} />
+                  <MetricTile label="Total findings" value={assessment.summary.violationCount + assessment.summary.incompleteCount} tone={assessment.summary.violationCount > 0 ? "caution" : "default"} />
+                  <MetricTile label="Needs review" value={assessment.summary.incompleteCount} tone={assessment.summary.incompleteCount > 0 ? "info" : "default"} />
                 </div>
 
                 <div className="rounded-2xl border bg-card/70 px-3.5 py-3.5">
@@ -339,17 +330,11 @@ export function PreviewAccessibilityCard({
                 </div>
 
                 <div className="rounded-2xl border bg-card/70 px-3.5 py-3.5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-xs font-medium text-muted-foreground">Recurring book-wide findings</div>
-                      <div className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                        Repeated patterns across the packaged ADT output.
-                      </div>
+                  <div>
+                    <div className="text-xs font-medium text-muted-foreground">Recurring book-wide findings</div>
+                    <div className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                      Repeated patterns across the packaged ADT output.
                     </div>
-                    <Button variant="outline" size="sm" className="h-8 text-xs" onClick={onOpenValidation}>
-                      <ExternalLink className="h-3.5 w-3.5" />
-                      Open Validation
-                    </Button>
                   </div>
 
                   <div className="mt-3 space-y-2.5">
@@ -399,21 +384,23 @@ function MetricTile({
 }: {
   label: string
   value: number
-  tone?: "default" | "warning" | "success"
+  tone?: "default" | "warning" | "success" | "caution" | "info"
 }) {
-  return (
-    <div
-      className={cn(
-        "rounded-2xl border px-3.5 py-3",
-        tone === "warning"
-          ? "border-amber-200 bg-amber-50/80 dark:border-amber-900 dark:bg-amber-950/20"
+  const toneClass =
+    tone === "warning"
+      ? "border-orange-500 bg-orange-50/40 dark:bg-orange-950/10"
+      : tone === "caution"
+        ? "border-yellow-500 bg-yellow-50/40 dark:bg-yellow-950/10"
+        : tone === "info"
+          ? "border-blue-500 bg-blue-50/40 dark:bg-blue-950/10"
           : tone === "success"
-            ? "border-emerald-200 bg-emerald-50/80 dark:border-emerald-900 dark:bg-emerald-950/20"
-            : "bg-card/70",
-      )}
-    >
-      <div className="text-[11px] text-muted-foreground">{label}</div>
-      <div className="mt-1 text-lg font-semibold tabular-nums">{value}</div>
+            ? "border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/10"
+            : "bg-card"
+
+  return (
+    <div className={cn("rounded-lg border-2 p-4", toneClass)}>
+      <div className="mb-1 text-xs text-muted-foreground">{label}</div>
+      <div className="text-2xl font-semibold tabular-nums">{value}</div>
     </div>
   )
 }

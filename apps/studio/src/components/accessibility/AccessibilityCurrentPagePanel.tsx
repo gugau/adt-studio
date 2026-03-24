@@ -23,20 +23,24 @@ function SummaryCard({
 }: {
   label: string
   value: number | string
-  tone?: "default" | "warning" | "success"
+  tone?: "default" | "warning" | "success" | "caution" | "info"
   compact?: boolean
 }) {
   const toneClass =
     tone === "warning"
-      ? "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20"
-      : tone === "success"
-        ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/20"
-        : "bg-card"
+      ? "border-orange-500 bg-orange-50/40 dark:bg-orange-950/10"
+      : tone === "caution"
+        ? "border-yellow-500 bg-yellow-50/40 dark:bg-yellow-950/10"
+        : tone === "info"
+          ? "border-blue-500 bg-blue-50/40 dark:bg-blue-950/10"
+          : tone === "success"
+            ? "border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/10"
+            : "bg-card"
 
   return (
-    <div className={cn("rounded-xl border", compact ? "px-3 py-2.5" : "p-3", toneClass)}>
-      <div className="mb-1 text-[11px] text-muted-foreground">{label}</div>
-      <div className={cn("font-semibold tabular-nums", compact ? "text-lg" : "text-xl")}>{value}</div>
+    <div className={cn("rounded-lg border-2", compact ? "px-3 py-2.5" : "p-4", toneClass)}>
+      <div className="mb-1 text-xs text-muted-foreground">{label}</div>
+      <div className={cn("font-semibold tabular-nums", compact ? "text-lg" : "text-2xl")}>{value}</div>
     </div>
   )
 }
@@ -233,13 +237,13 @@ export function AccessibilityCurrentPagePanel({
             <SummaryCard
               label="Violations"
               value={summary.issueCount}
-              tone={summary.issueCount > 0 ? "warning" : "success"}
+              tone={summary.issueCount > 0 ? "caution" : "success"}
               compact
             />
             <SummaryCard
               label="Needs review"
               value={summary.reviewCount}
-              tone={summary.reviewCount > 0 ? "warning" : "default"}
+              tone={summary.reviewCount > 0 ? "info" : "default"}
               compact
             />
           </div>
@@ -291,12 +295,12 @@ export function AccessibilityCurrentPagePanel({
           <SummaryCard
             label="Violations"
             value={summary.issueCount}
-            tone={summary.issueCount > 0 ? "warning" : "success"}
+            tone={summary.issueCount > 0 ? "caution" : "success"}
           />
           <SummaryCard
             label="Needs review"
             value={summary.reviewCount}
-            tone={summary.reviewCount > 0 ? "warning" : "default"}
+            tone={summary.reviewCount > 0 ? "info" : "default"}
           />
         </div>
 

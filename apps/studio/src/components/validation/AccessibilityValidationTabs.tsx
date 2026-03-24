@@ -1,17 +1,12 @@
 import { useEffect, useMemo, useState } from "react"
 import type { AccessibilityCategoryKey, AccessibilitySeverity } from "@/lib/accessibility-summary"
-import {
-  ChevronDown,
-  ChevronRight,
-  Download,
-} from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
-import { useAccessibilityAssessment, useVersionHistory } from "@/hooks/use-debug"
+import { useAccessibilityAssessment } from "@/hooks/use-debug"
 import { buildAccessibilityOverview, buildFrequentAccessibilityFindings } from "@/lib/accessibility-summary"
 import { cn } from "@/lib/utils"
 
@@ -20,6 +15,13 @@ interface AccessibilityTabProps {
 }
 
 const SEVERITY_ORDER: AccessibilitySeverity[] = ["critical", "serious", "moderate", "minor", "unknown"]
+const SEVERITY_RANK: Record<AccessibilitySeverity, number> = {
+  critical: 0,
+  serious: 1,
+  moderate: 2,
+  minor: 3,
+  unknown: 4,
+}
 const SEVERITY_LABELS: Record<AccessibilitySeverity, string> = {
   critical: "Critical",
   serious: "Serious",
@@ -43,21 +45,21 @@ function SummaryCard({
 }) {
   const toneClass =
     tone === "error"
-      ? "border-red-500 bg-red-50/50 dark:bg-red-950/10"
+      ? "border-red-500 bg-muted/40"
       : tone === "warning"
-        ? "border-orange-500 bg-orange-50/40 dark:bg-orange-950/10"
+        ? "border-orange-500 bg-muted/40"
         : tone === "caution"
-          ? "border-yellow-500 bg-yellow-50/40 dark:bg-yellow-950/10"
+          ? "border-yellow-500 bg-muted/40"
           : tone === "success"
-            ? "border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/10"
+            ? "border-emerald-500 bg-muted/40"
             : tone === "info"
-              ? "border-blue-500 bg-blue-50/40 dark:bg-blue-950/10"
+              ? "border-blue-500 bg-muted/40"
               : tone === "muted"
                 ? "border-gray-400 bg-muted/40"
                 : "bg-card"
 
   const classes = cn(
-    "rounded-lg border-2 p-4 text-left transition-colors",
+    "min-w-[7rem] rounded-lg border-2 px-3 py-2 text-left transition-colors",
     toneClass,
     onClick ? "cursor-pointer hover:border-primary/40 hover:bg-muted/60" : "",
     active ? "ring-2 ring-primary/35 border-primary/40" : "",
@@ -65,8 +67,8 @@ function SummaryCard({
 
   const content = (
     <>
-      <div className="mb-1 text-xs text-muted-foreground">{label}</div>
-      <div className="text-2xl font-semibold tabular-nums">{value}</div>
+      <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div className="text-lg font-semibold tabular-nums">{value}</div>
     </>
   )
 
@@ -119,21 +121,6 @@ function EmptyState({ message }: { message: string }) {
   return <div className="p-6 text-sm text-muted-foreground">{message}</div>
 }
 
-function downloadJson(data: unknown, filename: string): void {
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
-    type: "application/json",
-  })
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement("a")
-  anchor.href = url
-  anchor.download = filename
-  document.body.appendChild(anchor)
-  anchor.click()
-  setTimeout(() => {
-    document.body.removeChild(anchor)
-    URL.revokeObjectURL(url)
-  }, 1500)
-}
 
 function formatFindingPageLabel(page: { pageNumber: number | null; title: string | null; href: string }): string {
   if (page.pageNumber != null) {
@@ -168,7 +155,7 @@ function FindingPageLinks({
             onClick={() => onOpenPage(page.href)}
           >
             {formatFindingPageLabel(page)}
-            <span className="ml-1 text-muted-foreground">({page.count})</span>
+            {page.count > 1 ? <span className="ml-1 text-muted-foreground">({page.count})</span> : null}
           </Button>
         ))}
         {pages.length > 6 ? (
@@ -190,43 +177,49 @@ function FrequentFindingCard({
   finding,
   pageCount,
   onOpenPage,
+  onFilterSeverity,
+  onFilterCategory,
 }: {
   finding: ReturnType<typeof buildFrequentAccessibilityFindings>[number]
   pageCount: number
   onOpenPage: (href: string) => void
+  onFilterSeverity: (severity: AccessibilitySeverity) => void
+  onFilterCategory: (category: AccessibilityCategoryKey) => void
 }) {
   const coveragePercent = Math.round(finding.pageCoverage * 100)
-  const coverageLabel = finding.pagesAffected === pageCount
-    ? "All pages"
-    : finding.pageCoverage >= 0.6
-      ? "Most pages"
-      : finding.pagesAffected === 1
-        ? "One page"
-        : `${finding.pagesAffected} pages`
 
   return (
     <div className="rounded-lg border px-3 py-3">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className={cn("font-mono text-[11px]", !finding.reviewOnly && "border-red-200 bg-red-50 text-red-700")}>
-              {finding.id}
-            </Badge>
-            <Badge variant="secondary" className="text-[11px]">{coverageLabel}</Badge>
-            <Badge variant="outline" className="text-[11px]">{finding.categoryLabel}</Badge>
-            {finding.reviewOnly ? (
-              <Badge variant="outline" className="text-[11px]">Needs review</Badge>
-            ) : null}
-          </div>
-          <div className="mt-2 font-medium">{finding.help}</div>
-          <div className="mt-1 text-xs text-muted-foreground">{finding.description}</div>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge
+            className={cn(
+              "cursor-pointer text-[11px]",
+              finding.impact === "critical" ? "bg-red-500 text-white hover:bg-red-600"
+                : finding.impact === "serious" ? "bg-orange-500 text-white hover:bg-orange-600"
+                : finding.impact === "moderate" ? "bg-yellow-400 text-yellow-950 hover:bg-yellow-500"
+                : finding.impact === "minor" ? "bg-blue-400 text-white hover:bg-blue-500"
+                : "bg-gray-400 text-white hover:bg-gray-500",
+            )}
+            onClick={() => onFilterSeverity(finding.impact)}
+          >
+            {SEVERITY_LABELS[finding.impact]}
+          </Badge>
+          <Badge
+            variant="outline"
+            className="cursor-pointer text-[11px] hover:bg-muted"
+            onClick={() => onFilterCategory(finding.categoryKey)}
+          >
+            {finding.categoryLabel}
+          </Badge>
         </div>
-
-        <div className="min-w-[9rem] shrink-0 text-right">
-          <div className="text-xs text-muted-foreground">{finding.pagesAffected} of {pageCount} pages</div>
-          <div className="mt-1 text-sm font-semibold tabular-nums">{finding.count} observations</div>
-        </div>
+        <div className="text-sm font-semibold tabular-nums">{finding.count} observations</div>
       </div>
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <span className="font-medium">{finding.help}</span>
+        <Badge variant="outline" className="shrink-0 font-mono text-[11px]">{finding.id}</Badge>
+      </div>
+      <div className="mt-1 text-xs text-muted-foreground">{finding.description}</div>
 
       <div className="mt-3 space-y-1">
         <div className="flex items-center justify-between text-[11px] text-muted-foreground">
@@ -237,11 +230,11 @@ function FrequentFindingCard({
           <div
             className={cn(
               "h-2 rounded-full",
-              finding.reviewOnly
-                ? "bg-orange-400"
-                : finding.pageCoverage >= 0.6
-                  ? "bg-red-500"
-                  : "bg-orange-400",
+              finding.impact === "critical" ? "bg-red-500"
+                : finding.impact === "serious" ? "bg-orange-500"
+                : finding.impact === "moderate" ? "bg-yellow-400"
+                : finding.impact === "minor" ? "bg-blue-400"
+                : "bg-gray-400",
             )}
             style={{ width: `${Math.max(8, coveragePercent)}%` }}
           />
@@ -253,104 +246,11 @@ function FrequentFindingCard({
   )
 }
 
-function SeverityFindingCard({
-  finding,
-  onOpenPage,
-}: {
-  finding: ReturnType<typeof buildFrequentAccessibilityFindings>[number]
-  onOpenPage: (href: string) => void
-}) {
-  return (
-    <div className="rounded-lg border bg-card p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={finding.reviewOnly ? "outline" : "destructive"} className="font-mono text-[11px]">
-              {finding.id}
-            </Badge>
-            <Badge variant="outline" className="text-[11px]">{finding.categoryLabel}</Badge>
-            {finding.reviewOnly ? <Badge variant="outline" className="text-[11px]">Needs review</Badge> : null}
-          </div>
-          <div className="mt-2 font-medium">{finding.help}</div>
-          <div className="mt-1 text-xs text-muted-foreground">{finding.description}</div>
-        </div>
 
-        <div className="shrink-0 text-right">
-          <div className="text-xs text-muted-foreground">{finding.pagesAffected} pages affected</div>
-          <div className="mt-1 text-sm font-semibold tabular-nums">{finding.count} observations</div>
-        </div>
-      </div>
-
-      <FindingPageLinks pages={finding.pages} onOpenPage={onOpenPage} />
-    </div>
-  )
-}
-
-function VersionRow({
-  version,
-  data,
-  currentVersion,
-  onDownload,
-}: {
-  version: number
-  data?: unknown
-  currentVersion: number | null
-  onDownload: (version: number, data: unknown) => void
-}) {
-  const [expanded, setExpanded] = useState(version === currentVersion)
-
-  return (
-    <div className="border-b border-border/50 last:border-b-0">
-      <div className="flex items-center gap-2 px-4 py-2.5">
-        <Button
-          variant="ghost"
-          className="h-auto flex-1 justify-start rounded-none px-0 py-0 text-xs"
-          onClick={() => setExpanded((open) => !open)}
-        >
-          {expanded ? <ChevronDown className="mr-2 h-3.5 w-3.5" /> : <ChevronRight className="mr-2 h-3.5 w-3.5" />}
-          Version {version}
-          {version === currentVersion ? <Badge className="ml-2 text-[10px]">Latest</Badge> : null}
-        </Button>
-
-        {data ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-[11px]"
-            onClick={() => onDownload(version, data)}
-          >
-            <Download className="mr-1.5 h-3.5 w-3.5" />
-            JSON
-          </Button>
-        ) : null}
-      </div>
-
-      {expanded ? (
-        <div className="border-t border-border/50 bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
-          {data ? (
-            <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-md bg-background p-3 text-[11px]">
-              {JSON.stringify(data, null, 2)}
-            </pre>
-          ) : (
-            <span>No data stored for this version.</span>
-          )}
-        </div>
-      ) : null}
-    </div>
-  )
-}
 
 export function AccessibilityOverviewTab({ label }: AccessibilityTabProps) {
   const navigate = useNavigate()
   const { data, isLoading, error } = useAccessibilityAssessment(label)
-  const history = useVersionHistory(
-    label,
-    "accessibility-assessment",
-    "book",
-    true,
-    { enabled: !!data?.assessment },
-  )
-  const [showHistory, setShowHistory] = useState(false)
   const [severityFilter, setSeverityFilter] = useState<AccessibilitySeverity | null>(null)
   const [categoryFilter, setCategoryFilter] = useState<AccessibilityCategoryKey | null>(null)
 
@@ -368,22 +268,39 @@ export function AccessibilityOverviewTab({ label }: AccessibilityTabProps) {
 
   const assessment = data.assessment
   const overview = buildAccessibilityOverview(assessment)
-  const frequentFindings = buildFrequentAccessibilityFindings(assessment, { limit: 100 })
-  const recurringFindings = frequentFindings.filter((finding) => finding.pagesAffected > 1)
-  const pagesWithFindings = assessment.pages.filter((page) => page.violations.length > 0 || page.incomplete.length > 0 || page.error).length
-  const currentVersion = data.version
-  const filteredFindings = severityFilter
-    ? frequentFindings.filter((finding) => finding.impact === severityFilter)
-    : []
-  const filteredPageCount = new Set(
-    filteredFindings.flatMap((finding) => finding.pages.map((page) => page.sectionId)),
-  ).size
-  const categoryFindings = categoryFilter
-    ? frequentFindings.filter((finding) => finding.categoryKey === categoryFilter)
-    : []
-  const categoryPageCount = new Set(
-    categoryFindings.flatMap((finding) => finding.pages.map((page) => page.sectionId)),
-  ).size
+  const allFindings = buildFrequentAccessibilityFindings(assessment, { limit: 100 })
+    .sort((a, b) => {
+      const severityDiff = SEVERITY_RANK[a.impact] - SEVERITY_RANK[b.impact]
+      if (severityDiff !== 0) return severityDiff
+      return b.pagesAffected - a.pagesAffected
+    })
+
+  let totalObservations = 0
+  for (const finding of allFindings) {
+    totalObservations += finding.count
+  }
+
+  // Severity counts filtered by active category filter
+  const severityCounts: Record<AccessibilitySeverity, number> = { critical: 0, serious: 0, moderate: 0, minor: 0, unknown: 0 }
+  const severityFiltered = categoryFilter ? allFindings.filter((f) => f.categoryKey === categoryFilter) : allFindings
+  for (const finding of severityFiltered) {
+    severityCounts[finding.impact] += finding.count
+  }
+
+  // Category counts filtered by active severity filter
+  const categoryCounts = new Map<AccessibilityCategoryKey, number>()
+  const categoryFiltered = severityFilter ? allFindings.filter((f) => f.impact === severityFilter) : allFindings
+  for (const finding of categoryFiltered) {
+    categoryCounts.set(finding.categoryKey, (categoryCounts.get(finding.categoryKey) ?? 0) + finding.count)
+  }
+
+  const visibleFindings = allFindings.filter((finding) => {
+    if (severityFilter && finding.impact !== severityFilter) return false
+    if (categoryFilter && finding.categoryKey !== categoryFilter) return false
+    return true
+  })
+
+  const hasActiveFilter = severityFilter !== null || categoryFilter !== null
 
   const openPreviewToPage = (href: string) => {
     void navigate({
@@ -393,140 +310,64 @@ export function AccessibilityOverviewTab({ label }: AccessibilityTabProps) {
     })
   }
 
-  return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-        <span><span className="text-muted-foreground">Pages audited</span> <span className="font-semibold tabular-nums">{assessment.summary.pageCount}</span></span>
-        <span className="text-muted-foreground/40">&middot;</span>
-        <span><span className="text-muted-foreground">With findings</span> <span className="font-semibold tabular-nums">{pagesWithFindings}</span></span>
-        <span className="text-muted-foreground/40">&middot;</span>
-        <span><span className="text-muted-foreground">Total findings</span> <span className="font-semibold tabular-nums">{overview.totalChecks}</span></span>
-        <span className="text-muted-foreground/40">&middot;</span>
-        <span><span className="text-muted-foreground">Violations</span> <span className="font-semibold tabular-nums">{assessment.summary.violationCount}</span></span>
-        <span className="text-muted-foreground/40">&middot;</span>
-        <span><span className="text-muted-foreground">Needs review</span> <span className="font-semibold tabular-nums">{assessment.summary.incompleteCount}</span></span>
-        <div className="ml-auto flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs"
-            onClick={() => downloadJson(assessment, `${label}-accessibility.json`)}
-          >
-            <Download className="h-3.5 w-3.5" />
-            JSON
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs"
-            onClick={() => setShowHistory((open) => !open)}
-          >
-            {showHistory ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-            {showHistory ? "Hide history" : "Show history"}
-          </Button>
-        </div>
-      </div>
+  const activeSeverityLabel = severityFilter ? SEVERITY_LABELS[severityFilter] : null
+  const activeCategoryLabel = categoryFilter
+    ? (overview.categories.find((c) => c.key === categoryFilter)?.label ?? categoryFilter)
+    : null
 
-      <div className="rounded-xl border bg-card p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h4 className="text-sm font-medium">Severity distribution</h4>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Select a severity level to inspect the related findings and jump directly to affected pages in Preview.
-            </p>
-          </div>
-          {severityFilter ? (
-            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setSeverityFilter(null)}>
-              Clear selection
-            </Button>
-          ) : null}
-        </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+  return (
+    <div className="p-6">
+      <div className="rounded-t-xl border border-b-0 bg-card p-4 space-y-4">
+        <div className="flex flex-wrap gap-3">
+          <SummaryCard
+            label="All Severities"
+            value={severityFiltered.reduce((sum, f) => sum + f.count, 0)}
+            tone="default"
+            active={severityFilter === null}
+            onClick={() => setSeverityFilter(null)}
+          />
           {SEVERITY_ORDER.map((severity) => {
-            const count = overview.severity[severity]
-            const tone = severity === "critical" || severity === "serious"
-              ? (count > 0 ? "warning" : "success")
-              : severity === "moderate"
-                ? (count > 0 ? "warning" : "default")
-                : severity === "minor"
-                  ? (count > 0 ? "default" : "success")
-                  : "default"
+            const count = severityCounts[severity]
+            if (severity === "unknown" && count === 0) return null
+            const SEVERITY_TONES: Record<AccessibilitySeverity, "error" | "warning" | "caution" | "info" | "muted"> = {
+              critical: "error",
+              serious: "warning",
+              moderate: "caution",
+              minor: "info",
+              unknown: "muted",
+            }
             return (
               <SummaryCard
                 key={severity}
                 label={SEVERITY_LABELS[severity]}
                 value={count}
-                tone={tone}
+                tone={SEVERITY_TONES[severity]}
                 active={severityFilter === severity}
-                onClick={count > 0 ? () => setSeverityFilter((current) => current === severity ? null : severity) : undefined}
+                onClick={count > 0 ? () => setSeverityFilter(severity) : undefined}
               />
             )
           })}
         </div>
-        {!severityFilter ? (
-          <div className="mt-4 rounded-lg border border-dashed bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
-            No severity selected yet. Click a severity card above to inspect the findings behind that count.
-          </div>
-        ) : null}
-      </div>
 
-      {severityFilter ? (
-        <div className="space-y-4 rounded-xl border border-primary/25 bg-primary/5 p-4 shadow-sm">
-          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-primary/15 pb-4">
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="secondary" className="border-primary/20 bg-primary/10 text-[11px] text-primary hover:bg-primary/10">Severity detail</Badge>
-                <Badge variant="outline" className="border-primary/30 bg-background/80 text-[11px]">{SEVERITY_LABELS[severityFilter]}</Badge>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium">{SEVERITY_LABELS[severityFilter]} findings</h4>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {filteredFindings.length} grouped findings across {filteredPageCount} page{filteredPageCount === 1 ? "" : "s"}. Use the page links below to open the affected page in Preview.
-                </p>
-              </div>
-            </div>
-            <Button variant="outline" size="sm" className="h-8 border-primary/20 bg-background/80 text-xs hover:bg-background" onClick={() => setSeverityFilter(null)}>
-              Back to summary
-            </Button>
-          </div>
-          {filteredFindings.length > 0 ? (
-            <div className="space-y-3">
-              {filteredFindings.map((finding) => (
-                <SeverityFindingCard
-                  key={`${finding.reviewOnly ? "review" : "violation"}:${finding.id}`}
-                  finding={finding}
-                  onOpenPage={openPreviewToPage}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-lg border border-dashed px-4 py-4 text-sm text-muted-foreground">
-              No findings were reported for this severity.
-            </div>
-          )}
-        </div>
-      ) : null}
-
-      <div className="rounded-xl border bg-card p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h4 className="text-sm font-medium">Categories</h4>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Select a category to inspect the related findings and where they occur.
-            </p>
-          </div>
-          {categoryFilter ? (
-            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setCategoryFilter(null)}>
-              Clear selection
-            </Button>
-          ) : null}
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setCategoryFilter(null)}
+            className={cn(
+              "inline-flex items-center rounded-md border px-2.5 py-1 text-[11px] transition-colors",
+              categoryFilter === null
+                ? "border-primary/35 bg-primary/10 text-primary ring-1 ring-primary/20"
+                : "border-border bg-background hover:border-primary/30 hover:bg-muted",
+            )}
+          >
+            All Categories
+            <span className="ml-1 text-muted-foreground">{categoryFiltered.reduce((sum, f) => sum + f.count, 0)}</span>
+          </button>
           {overview.categories.map((category) => (
             <button
               key={category.key}
               type="button"
-              onClick={() => setCategoryFilter((current) => current === category.key ? null : category.key)}
+              onClick={() => setCategoryFilter(category.key)}
               className={cn(
                 "inline-flex items-center rounded-md border px-2.5 py-1 text-[11px] transition-colors",
                 categoryFilter === category.key
@@ -535,114 +376,73 @@ export function AccessibilityOverviewTab({ label }: AccessibilityTabProps) {
               )}
             >
               {category.label}
-              <span className="ml-1 text-muted-foreground">{category.count}</span>
+              <span className="ml-1 text-muted-foreground">{categoryCounts.get(category.key) ?? 0}</span>
             </button>
           ))}
           {overview.categories.length === 0 ? (
             <span className="text-xs text-muted-foreground">No finding categories reported.</span>
           ) : null}
         </div>
-        {!categoryFilter ? (
-          <div className="mt-4 rounded-lg border border-dashed bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
-            No category selected yet. Click a category chip above to inspect the findings behind that count.
-          </div>
-        ) : null}
       </div>
 
-      {categoryFilter ? (
-        <div className="space-y-4 rounded-xl border border-primary/25 bg-primary/5 p-4 shadow-sm">
-          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-primary/15 pb-4">
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="secondary" className="border-primary/20 bg-primary/10 text-[11px] text-primary hover:bg-primary/10">Category detail</Badge>
-                <Badge variant="outline" className="border-primary/30 bg-background/80 text-[11px]">
-                  {overview.categories.find((category) => category.key === categoryFilter)?.label ?? categoryFilter}
+      <div className="flex h-9 items-center justify-between border-x border-b bg-muted/40 px-4">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          {hasActiveFilter ? (
+            <>
+              <span>Filtered by:</span>
+              {activeSeverityLabel ? (
+                <Badge
+                  variant="secondary"
+                  className="cursor-pointer gap-1 text-[11px]"
+                  onClick={() => setSeverityFilter(null)}
+                >
+                  {activeSeverityLabel}
+                  <span className="text-muted-foreground/60">&times;</span>
                 </Badge>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium">
-                  {overview.categories.find((category) => category.key === categoryFilter)?.label ?? categoryFilter} findings
-                </h4>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {categoryFindings.length} grouped findings across {categoryPageCount} page{categoryPageCount === 1 ? "" : "s"}. Use the page links below to open the affected page in Preview.
-                </p>
-              </div>
-            </div>
-            <Button variant="outline" size="sm" className="h-8 border-primary/20 bg-background/80 text-xs hover:bg-background" onClick={() => setCategoryFilter(null)}>
-              Back to summary
-            </Button>
-          </div>
-          {categoryFindings.length > 0 ? (
-            <div className="space-y-3">
-              {categoryFindings.map((finding) => (
-                <SeverityFindingCard
-                  key={`category:${finding.reviewOnly ? "review" : "violation"}:${finding.id}`}
-                  finding={finding}
-                  onOpenPage={openPreviewToPage}
-                />
-              ))}
-            </div>
+              ) : null}
+              {activeCategoryLabel ? (
+                <Badge
+                  variant="secondary"
+                  className="cursor-pointer gap-1 text-[11px]"
+                  onClick={() => setCategoryFilter(null)}
+                >
+                  {activeCategoryLabel}
+                  <span className="text-muted-foreground/60">&times;</span>
+                </Badge>
+              ) : null}
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]" onClick={() => { setSeverityFilter(null); setCategoryFilter(null) }}>
+                Clear all
+              </Button>
+            </>
           ) : (
-            <div className="rounded-lg border border-dashed px-4 py-4 text-sm text-muted-foreground">
-              No findings were reported for this category.
-            </div>
+            <span>All findings</span>
           )}
         </div>
-      ) : null}
+        <p className="text-[11px] text-muted-foreground tabular-nums">
+          {visibleFindings.length === allFindings.length
+            ? `${allFindings.length} findings`
+            : `${visibleFindings.length} of ${allFindings.length} findings`}
+        </p>
+      </div>
 
-      <div className="space-y-3">
-        <div>
-          <h4 className="text-sm font-medium">Recurring book-wide findings</h4>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Findings that recur across multiple pages and are most likely to reflect shared template or workflow patterns.
-          </p>
-        </div>
-        {recurringFindings.length > 0 ? (
-          <div className="space-y-3">
-            {recurringFindings.map((finding) => (
-              <FrequentFindingCard
-                key={`${finding.reviewOnly ? "review" : "violation"}:${finding.id}`}
-                finding={finding}
-                pageCount={assessment.summary.pageCount}
-                onOpenPage={openPreviewToPage}
-              />
-            ))}
-          </div>
+      <div className="rounded-b-xl border border-t-0 p-4 space-y-3">
+        {visibleFindings.length > 0 ? (
+          visibleFindings.map((finding) => (
+            <FrequentFindingCard
+              key={`${finding.reviewOnly ? "review" : "violation"}:${finding.id}`}
+              finding={finding}
+              pageCount={assessment.summary.pageCount}
+              onOpenPage={openPreviewToPage}
+              onFilterSeverity={(severity) => setSeverityFilter(severity)}
+              onFilterCategory={(category) => setCategoryFilter(category)}
+            />
+          ))
         ) : (
           <div className="rounded-lg border border-dashed px-4 py-4 text-sm text-muted-foreground">
-            No recurring book-wide findings were reported.
+            {hasActiveFilter ? "No findings match the current filters." : "No findings were reported."}
           </div>
         )}
       </div>
-
-      {showHistory ? (
-        <div className="rounded-xl border bg-card">
-          <div className="border-b px-4 py-3">
-            <h4 className="text-sm font-medium">Assessment history</h4>
-            <p className="mt-1 text-xs text-muted-foreground">Versioned accessibility assessment outputs for this book.</p>
-          </div>
-
-          {history.isLoading ? (
-            <div className="p-4 text-sm text-muted-foreground">Loading history…</div>
-          ) : history.error ? (
-            <div className="p-4 text-sm text-red-700">Failed to load history: {history.error.message}</div>
-          ) : history.data?.versions.length ? (
-            history.data.versions.map((entry) => (
-              <VersionRow
-                key={entry.version}
-                version={entry.version}
-                data={entry.data}
-                currentVersion={currentVersion}
-                onDownload={(version, versionData) => {
-                  downloadJson(versionData, `${label}-accessibility-v${version}.json`)
-                }}
-              />
-            ))
-          ) : (
-            <div className="p-4 text-xs text-muted-foreground">No previous versions found.</div>
-          )}
-        </div>
-      ) : null}
     </div>
   )
 }
