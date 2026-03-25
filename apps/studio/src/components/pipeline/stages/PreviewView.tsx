@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import type { AccessibilityFinding } from "@adt/types"
 import { Loader2, AlertCircle } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate, useSearch } from "@tanstack/react-router"
@@ -17,6 +18,8 @@ import { PreviewValidationCard } from "./PreviewValidationCard"
 
 const HIGHLIGHT_STYLE_ID = "adt-preview-a11y-highlights"
 const HIGHLIGHT_ATTR = "data-adt-a11y-hover"
+const HIGHLIGHT_SEVERITY_ATTR = "data-adt-a11y-hover-severity"
+const HIGHLIGHT_PAGE_ATTR = "data-adt-a11y-hover-page"
 
 export function PreviewView({ bookLabel }: { bookLabel: string }) {
   const queryClient = useQueryClient()
@@ -66,15 +69,24 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
     }
   }, [currentPreviewPage, matchedPage])
 
-  const highlightFindingTargets = useCallback((targets: string[] | null) => {
+  const highlightFindingTargets = useCallback((finding: AccessibilityFinding | null) => {
     const doc = iframeRef.current?.contentDocument
     if (!doc) return
     clearHighlight(doc)
-    if (!targets || targets.length === 0) return
+    if (!finding) return
+    const targets = finding.nodes.flatMap((node) => node.target)
+    if (targets.length === 0) return
     ensureHighlightStyles(doc)
+    const severity = getHighlightSeverity(finding.impact)
     for (const selector of targets) {
-      for (const el of querySelectorAllSafe(doc, selector)) {
+      const elements = querySelectorAllSafe(doc, selector)
+      const hasRootMatch = selector.trim().toLowerCase() === "html" || elements.some((el) => el === doc.documentElement)
+      if (hasRootMatch) {
+        setPageHighlight(doc, severity)
+      }
+      for (const el of elements) {
         el.setAttribute(HIGHLIGHT_ATTR, "true")
+        el.setAttribute(HIGHLIGHT_SEVERITY_ATTR, severity)
       }
     }
   }, [])
@@ -308,7 +320,10 @@ function deriveReviewPageNumber(pageId: string | null): number | null {
 function clearHighlight(doc: Document): void {
   for (const el of doc.querySelectorAll(`[${HIGHLIGHT_ATTR}]`)) {
     el.removeAttribute(HIGHLIGHT_ATTR)
+    el.removeAttribute(HIGHLIGHT_SEVERITY_ATTR)
   }
+  doc.documentElement.removeAttribute(HIGHLIGHT_PAGE_ATTR)
+  doc.body?.removeAttribute(HIGHLIGHT_PAGE_ATTR)
 }
 
 function ensureHighlightStyles(doc: Document): void {
@@ -317,13 +332,86 @@ function ensureHighlightStyles(doc: Document): void {
   style.id = HIGHLIGHT_STYLE_ID
   style.textContent = `
     [${HIGHLIGHT_ATTR}="true"] {
-      outline: 2px solid rgba(37, 99, 235, 0.98) !important;
+      outline-width: 2px !important;
+      outline-style: solid !important;
       outline-offset: 2px !important;
-      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.98), 0 0 0 6px rgba(37, 99, 235, 0.28) !important;
       transition: outline-color 120ms ease, box-shadow 120ms ease;
+    }
+
+    [${HIGHLIGHT_ATTR}="true"][${HIGHLIGHT_SEVERITY_ATTR}="critical"] {
+      outline-color: rgba(239, 68, 68, 0.98) !important;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.98), 0 0 0 6px rgba(239, 68, 68, 0.28) !important;
+    }
+
+    [${HIGHLIGHT_ATTR}="true"][${HIGHLIGHT_SEVERITY_ATTR}="serious"] {
+      outline-color: rgba(249, 115, 22, 0.98) !important;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.98), 0 0 0 6px rgba(249, 115, 22, 0.28) !important;
+    }
+
+    [${HIGHLIGHT_ATTR}="true"][${HIGHLIGHT_SEVERITY_ATTR}="moderate"] {
+      outline-color: rgba(234, 179, 8, 0.98) !important;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.98), 0 0 0 6px rgba(234, 179, 8, 0.3) !important;
+    }
+
+    [${HIGHLIGHT_ATTR}="true"][${HIGHLIGHT_SEVERITY_ATTR}="minor"] {
+      outline-color: rgba(96, 165, 250, 0.98) !important;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.98), 0 0 0 6px rgba(96, 165, 250, 0.28) !important;
+    }
+
+    [${HIGHLIGHT_ATTR}="true"][${HIGHLIGHT_SEVERITY_ATTR}="unknown"] {
+      outline-color: rgba(107, 114, 128, 0.98) !important;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.98), 0 0 0 6px rgba(107, 114, 128, 0.24) !important;
+    }
+
+    body[${HIGHLIGHT_PAGE_ATTR}]::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      border: 4px solid transparent;
+      box-sizing: border-box;
+      z-index: 2147483647;
+    }
+
+    body[${HIGHLIGHT_PAGE_ATTR}="critical"]::before {
+      border-color: rgba(239, 68, 68, 0.95);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.92), 0 0 0 6px rgba(239, 68, 68, 0.24);
+    }
+
+    body[${HIGHLIGHT_PAGE_ATTR}="serious"]::before {
+      border-color: rgba(249, 115, 22, 0.95);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.92), 0 0 0 6px rgba(249, 115, 22, 0.22);
+    }
+
+    body[${HIGHLIGHT_PAGE_ATTR}="moderate"]::before {
+      border-color: rgba(234, 179, 8, 0.95);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.92), 0 0 0 6px rgba(234, 179, 8, 0.22);
+    }
+
+    body[${HIGHLIGHT_PAGE_ATTR}="minor"]::before {
+      border-color: rgba(96, 165, 250, 0.95);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.92), 0 0 0 6px rgba(96, 165, 250, 0.22);
+    }
+
+    body[${HIGHLIGHT_PAGE_ATTR}="unknown"]::before {
+      border-color: rgba(107, 114, 128, 0.95);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.92), 0 0 0 6px rgba(107, 114, 128, 0.2);
     }
   `
   doc.head.appendChild(style)
+}
+
+function setPageHighlight(doc: Document, severity: "critical" | "serious" | "moderate" | "minor" | "unknown"): void {
+  doc.documentElement.setAttribute(HIGHLIGHT_PAGE_ATTR, severity)
+  doc.body?.setAttribute(HIGHLIGHT_PAGE_ATTR, severity)
+}
+
+function getHighlightSeverity(impact: string | null | undefined): "critical" | "serious" | "moderate" | "minor" | "unknown" {
+  if (impact === "critical" || impact === "serious" || impact === "moderate" || impact === "minor") {
+    return impact
+  }
+
+  return "unknown"
 }
 
 function querySelectorAllSafe(doc: Document, selector: string): Element[] {

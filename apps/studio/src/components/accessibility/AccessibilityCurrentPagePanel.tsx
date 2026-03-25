@@ -24,6 +24,22 @@ const SEVERITY_BORDER: Record<Severity, string> = {
   unknown: "border-gray-400",
 }
 
+const FINDING_HOVER_BORDER: Record<Severity, string> = {
+  critical: "hover:border-red-400/70",
+  serious: "hover:border-orange-400/70",
+  moderate: "hover:border-yellow-400/80",
+  minor: "hover:border-blue-400/70",
+  unknown: "hover:border-gray-400/70",
+}
+
+function getFindingSeverity(impact: string | null | undefined): Severity {
+  if (impact === "critical" || impact === "serious" || impact === "moderate" || impact === "minor") {
+    return impact
+  }
+
+  return "unknown"
+}
+
 function computeSeverityCounts(page: AccessibilityPageResult): Record<Severity, number> {
   const counts: Record<Severity, number> = { critical: 0, serious: 0, moderate: 0, minor: 0, unknown: 0 }
   for (const f of [...page.violations, ...page.incomplete]) {
@@ -48,7 +64,7 @@ interface AccessibilityCurrentPagePanelProps {
   emptyMessage?: string
   className?: string
   embedded?: boolean
-  onFindingHover?: (targets: string[] | null) => void
+  onFindingHover?: (finding: AccessibilityFinding | null) => void
 }
 
 const URL_PATTERN = /https?:\/\/[^\s<>"']+/g
@@ -116,7 +132,7 @@ function LinkifiedText({
   )
 }
 
-function FindingsList({ page, embedded = false, onFindingHover }: { page: AccessibilityPageResult; embedded?: boolean; onFindingHover?: (targets: string[] | null) => void }) {
+function FindingsList({ page, embedded = false, onFindingHover }: { page: AccessibilityPageResult; embedded?: boolean; onFindingHover?: (finding: AccessibilityFinding | null) => void }) {
   const allFindings = useMemo(
     () => sortFindings([...page.violations, ...page.incomplete]),
     [page.violations, page.incomplete],
@@ -137,13 +153,8 @@ function FindingsList({ page, embedded = false, onFindingHover }: { page: Access
           {allFindings.map((finding, index) => (
             <div
               key={`${finding.id}-${index}`}
-              className="space-y-2 rounded-xl border bg-card/80 px-3 py-3 transition-colors hover:border-blue-400/60"
-              onMouseEnter={() => {
-                if (onFindingHover) {
-                  const targets = finding.nodes.flatMap((n) => n.target)
-                  onFindingHover(targets.length > 0 ? targets : null)
-                }
-              }}
+              className={cn("space-y-2 rounded-xl border bg-card/80 px-3 py-3 transition-colors", FINDING_HOVER_BORDER[getFindingSeverity(finding.impact)])}
+              onMouseEnter={() => onFindingHover?.(finding)}
               onMouseLeave={() => onFindingHover?.(null)}
             >
               <div className="flex flex-wrap items-center gap-2">

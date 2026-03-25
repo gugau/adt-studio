@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import type { AccessibilityAssessmentOutput, AccessibilityPageResult } from "@adt/types"
+import type { AccessibilityAssessmentOutput, AccessibilityFinding, AccessibilityPageResult } from "@adt/types"
 import {
   AlertTriangle,
   CheckCircle2,
@@ -23,7 +23,7 @@ interface PreviewAccessibilityCardProps {
   panelOpen: boolean
   otherCardExpanded?: boolean
   onExpandedChange?: (expanded: boolean) => void
-  onFindingHover?: (targets: string[] | null) => void
+  onFindingHover?: (finding: AccessibilityFinding | null) => void
 }
 
 export function PreviewAccessibilityCard({
