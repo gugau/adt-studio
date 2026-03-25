@@ -104,16 +104,6 @@
       "count": 2
     }
   },
-  "src/components/pipeline/stages/TranslationsSettings.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 7
-    }
-  },
-  "src/components/pipeline/stages/VoiceMappingsEditor.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 2
-    }
-  },
   "src/components/pipeline/stages/quizzes-image-state.test.ts": {
     "lingui/no-unlocalized-strings": {
       "count": 15
@@ -172,11 +162,6 @@
   "src/lib/render-strategy.test.ts": {
     "lingui/no-unlocalized-strings": {
       "count": 36
-    }
-  },
-  "src/lib/section-constants.ts": {
-    "lingui/no-unlocalized-strings": {
-      "count": 24
     }
   },
   "src/routes/books.$label.debug.tsx": {

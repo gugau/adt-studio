@@ -162,6 +162,9 @@ msgstr "A true or false activity."
 msgid "Active Configuration"
 msgstr "Active Configuration"
 
+msgid "Activities"
+msgstr "Activities"
+
 msgid "Activities disabled"
 msgstr "Activities disabled"
 
@@ -203,6 +206,9 @@ msgstr "Activity: Multiple Choice"
 
 msgid "Activity: Open-Ended Answer"
 msgstr "Activity: Open-Ended Answer"
+
+msgid "Activity: Other"
+msgstr "Activity: Other"
 
 msgid "Activity: Sorting"
 msgstr "Activity: Sorting"
@@ -274,6 +280,9 @@ msgstr "All sections have been deleted"
 
 msgid "All steps"
 msgstr "All steps"
+
+msgid "An activity that does not fit the standard categories."
+msgstr "An activity that does not fit the standard categories."
 
 msgid "An AI image is being generated. Cancel it and navigate?"
 msgstr "An AI image is being generated. Cancel it and navigate?"
@@ -1793,6 +1802,9 @@ msgstr "Step"
 
 msgid "Storyboard"
 msgstr "Storyboard"
+
+msgid "Structure"
+msgstr "Structure"
 
 msgid "Style"
 msgstr "Style"
