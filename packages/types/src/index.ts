@@ -160,12 +160,19 @@ export {
 } from "./accessibility.js"
 
 export {
+  ReviewerValidationConfig,
+  type ReviewerValidationCatalog,
+  getReviewerValidationCatalog,
+} from "./reviewer-validation-config.js"
+
+export {
   ReviewerValidationStatus,
   ReviewerValidationFieldType,
   ReviewerValidationIdentificationField,
   ReviewerValidationInstruction,
   ReviewerValidationCriterion,
   ReviewerValidationSection,
+  ReviewerValidationCatalogSnapshot,
   ReviewerValidationSession,
   ReviewerPageValidationResult,
   ReviewerPageValidationRecord,

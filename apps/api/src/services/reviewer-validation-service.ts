@@ -1,9 +1,11 @@
 import fs from "node:fs"
 import path from "node:path"
 import {
-  ReviewerPageValidationRecord,
-  ReviewerValidationSession,
+  ReviewerPageValidationRecord as ReviewerPageValidationRecordSchema,
+  ReviewerValidationSession as ReviewerValidationSessionSchema,
   parseBookLabel,
+  type ReviewerPageValidationRecord,
+  type ReviewerValidationSession,
 } from "@adt/types"
 import { createBookStorage, openBookDb } from "@adt/storage"
 import { HTTPException } from "hono/http-exception"
@@ -80,9 +82,9 @@ export function listReviewerValidationSessions(label: string, booksDir: string):
   const { safeLabel, dbPath } = getDbPath(label, booksDir)
   ensureBookExists(dbPath, safeLabel)
 
-  return parseLatestRows(dbPath, REVIEWER_VALIDATION_SESSION_NODE, ReviewerValidationSession).map((row) => ({
+  return parseLatestRows(dbPath, REVIEWER_VALIDATION_SESSION_NODE, ReviewerValidationSessionSchema).map((row) => ({
     version: row.version,
-    session: row.data,
+    session: row.data as ReviewerValidationSession,
   }))
 }
 
@@ -96,9 +98,9 @@ export function saveReviewerValidationSession(
 
   const storage = createBookStorage(safeLabel, booksDir)
   try {
-    const parsed = ReviewerValidationSession.parse(session)
+    const parsed = ReviewerValidationSessionSchema.parse(session)
     const version = storage.putNodeData(REVIEWER_VALIDATION_SESSION_NODE, parsed.session_id, parsed)
-    return { version, session: parsed }
+    return { version, session: parsed as ReviewerValidationSession }
   } finally {
     storage.close()
   }
@@ -112,8 +114,8 @@ export function listReviewerPageValidationRecords(
   const { safeLabel, dbPath } = getDbPath(label, booksDir)
   ensureBookExists(dbPath, safeLabel)
 
-  return parseLatestRows(dbPath, REVIEWER_PAGE_VALIDATION_NODE, ReviewerPageValidationRecord)
-    .map((row) => ({ version: row.version, record: row.data }))
+  return parseLatestRows(dbPath, REVIEWER_PAGE_VALIDATION_NODE, ReviewerPageValidationRecordSchema)
+    .map((row) => ({ version: row.version, record: row.data as ReviewerPageValidationRecord }))
     .filter(({ record }) => record.session_id === filters.sessionId)
     .filter(({ record }) => (filters.pageId ? record.page_id === filters.pageId : true))
     .filter(({ record }) => (filters.language ? record.language === filters.language : true))
@@ -137,9 +139,9 @@ export function saveReviewerPageValidationRecord(
 
   const storage = createBookStorage(safeLabel, booksDir)
   try {
-    const parsed = ReviewerPageValidationRecord.parse(record)
+    const parsed = ReviewerPageValidationRecordSchema.parse(record)
     const version = storage.putNodeData(REVIEWER_PAGE_VALIDATION_NODE, buildReviewerPageValidationItemId(parsed), parsed)
-    return { version, record: parsed }
+    return { version, record: parsed as ReviewerPageValidationRecord }
   } finally {
     storage.close()
   }

@@ -44,6 +44,13 @@ export const ReviewerValidationSection = z.object({
 })
 export type ReviewerValidationSection = z.infer<typeof ReviewerValidationSection>
 
+export const ReviewerValidationCatalogSnapshot = z.object({
+  identificationFields: z.array(ReviewerValidationIdentificationField),
+  instructions: z.array(ReviewerValidationInstruction),
+  pageSections: z.array(ReviewerValidationSection),
+})
+export type ReviewerValidationCatalogSnapshot = z.infer<typeof ReviewerValidationCatalogSnapshot>
+
 export const ReviewerValidationSession = z
   .object({
     session_id: z.string().min(1),
@@ -55,6 +62,7 @@ export const ReviewerValidationSession = z
     comments: z.string().optional(),
     started_at: z.string().datetime().optional(),
     completed_at: z.string().datetime().optional(),
+    catalog_snapshot: ReviewerValidationCatalogSnapshot.optional(),
   })
   .superRefine((value, ctx) => {
     if (

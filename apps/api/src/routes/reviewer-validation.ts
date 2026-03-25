@@ -1,10 +1,9 @@
 import { Hono } from "hono"
+import { loadBookConfig } from "@adt/pipeline"
 import { HTTPException } from "hono/http-exception"
 import {
   ReviewerPageValidationRecord,
-  ReviewerPageValidationSections,
-  ReviewerValidationIdentificationFields,
-  ReviewerValidationInstructions,
+  getReviewerValidationCatalog,
   ReviewerValidationSession,
   parseBookLabel,
 } from "@adt/types"
@@ -16,17 +15,13 @@ import {
   saveReviewerValidationSession,
 } from "../services/reviewer-validation-service.js"
 
-export function createReviewerValidationRoutes(booksDir: string): Hono {
+export function createReviewerValidationRoutes(booksDir: string, configPath?: string): Hono {
   const app = new Hono()
 
   app.get("/books/:label/validation/catalog", (c) => {
-    parseBookLabel(c.req.param("label"))
-
-    return c.json({
-      identificationFields: ReviewerValidationIdentificationFields,
-      instructions: ReviewerValidationInstructions,
-      pageSections: ReviewerPageValidationSections,
-    })
+    const safeLabel = parseBookLabel(c.req.param("label"))
+    const config = configPath ? loadBookConfig(safeLabel, booksDir, configPath) : null
+    return c.json(getReviewerValidationCatalog(config?.reviewer_validation))
   })
 
   app.get("/books/:label/validation/sessions", (c) => {
@@ -37,13 +32,19 @@ export function createReviewerValidationRoutes(booksDir: string): Hono {
 
   app.post("/books/:label/validation/sessions", async (c) => {
     const { label } = c.req.param()
+    const safeLabel = parseBookLabel(label)
     const body = await c.req.json<unknown>()
     const parsed = ReviewerValidationSession.safeParse(body)
     if (!parsed.success) {
       throw new HTTPException(400, { message: parsed.error.message })
     }
 
-    const saved = saveReviewerValidationSession(label, booksDir, parsed.data)
+    const config = configPath ? loadBookConfig(safeLabel, booksDir, configPath) : null
+    const catalogSnapshot = getReviewerValidationCatalog(config?.reviewer_validation)
+    const saved = saveReviewerValidationSession(label, booksDir, {
+      ...parsed.data,
+      catalog_snapshot: parsed.data.catalog_snapshot ?? catalogSnapshot,
+    })
     return c.json(saved, 201)
   })
 

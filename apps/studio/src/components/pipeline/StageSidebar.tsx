@@ -68,6 +68,7 @@ const TRANSLATIONS_SETTINGS_TABS = [
 
 const VALIDATION_SETTINGS_TABS = [
   { key: "general", label: "Accessibility" },
+  { key: "reviewer-checklist", label: "Reviewer Checklist" },
 ]
 
 const SETTINGS_TABS: Record<string, { key: string; label: string }[]> = {

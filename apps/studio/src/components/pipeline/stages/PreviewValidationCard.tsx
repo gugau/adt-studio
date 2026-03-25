@@ -190,6 +190,11 @@ export function PreviewValidationCard({
     () => sortedSessions.find((entry) => entry.session.session_id === activeSessionId) ?? null,
     [sortedSessions, activeSessionId],
   )
+  const activeCatalog = useMemo(
+    () => activeSession?.session.catalog_snapshot ?? catalog.data ?? null,
+    [activeSession?.session.catalog_snapshot, catalog.data],
+  )
+  const activePageSections = activeCatalog?.pageSections ?? []
 
   const currentPageQueryParams = useMemo(() => {
     if (!activeSessionId || !currentPage.pageId) {
@@ -314,20 +319,20 @@ export function PreviewValidationCard({
   }, [activeSession, sessions.isLoading])
 
   useEffect(() => {
-    if (!catalog.data?.pageSections) {
+    if (activePageSections.length === 0) {
       return
     }
 
-    const nextDraft = buildInitialDraftResults(catalog.data.pageSections, currentRecordEntry?.record ?? null)
+    const nextDraft = buildInitialDraftResults(activePageSections, currentRecordEntry?.record ?? null)
     setDraftResults(nextDraft)
     setExplicitCriterionIds(new Set(Object.keys(nextDraft)))
     setOverallComment(currentRecordEntry?.record.overall_comment ?? "")
     setDirty(false)
-  }, [catalog.data?.pageSections, currentRecordEntry?.version, currentPage.pageId])
+  }, [activePageSections, currentRecordEntry?.version, currentPage.pageId])
 
   const criteriaCount = useMemo(
-    () => catalog.data?.pageSections.reduce((total, section) => total + section.criteria.length, 0) ?? 0,
-    [catalog.data?.pageSections],
+    () => activePageSections.reduce((total, section) => total + section.criteria.length, 0),
+    [activePageSections],
   )
 
   const resumeTarget = useMemo(
@@ -347,7 +352,7 @@ export function PreviewValidationCard({
 
   const resolvedResults = useMemo(() => {
     const map = new Map<string, DerivedCriterionStatus>()
-    for (const section of catalog.data?.pageSections ?? []) {
+    for (const section of activePageSections) {
       for (const criterion of section.criteria) {
         map.set(
           criterion.id,
@@ -372,7 +377,7 @@ export function PreviewValidationCard({
     }
     return map
   }, [
-    catalog.data?.pageSections,
+    activePageSections,
     draftResults,
     glossaryAvailable,
     glossaryPending,
@@ -635,12 +640,12 @@ export function PreviewValidationCard({
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto px-4 py-3.5 text-sm">
-        {catalog.isLoading || sessions.isLoading ? (
+        {sessions.isLoading || (!activeCatalog && catalog.isLoading) ? (
           <div className="flex items-center justify-center rounded-2xl border bg-card/70 px-4 py-10 text-sm text-muted-foreground">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Loading reviewer validation…
           </div>
-        ) : catalog.error ? (
+        ) : !activeCatalog && catalog.error ? (
           <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
             Failed to load validation checklist: {catalog.error.message}
           </div>
@@ -784,7 +789,7 @@ export function PreviewValidationCard({
               </div>
             </div>
 
-            {catalog.data?.pageSections.map((section, index) => {
+            {activePageSections.map((section, index) => {
               const sectionResults = section.criteria.map(
                 (criterion) => resolvedResults.get(criterion.id) ?? { status: "not-reviewed", isDerived: false, reason: null },
               )

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useQueries } from "@tanstack/react-query"
 import { ClipboardCheck, ExternalLink, FileWarning, SkipForward } from "lucide-react"
-import type { ReviewerValidationStatus } from "@adt/types"
+import type { ReviewerValidationCatalogSnapshot, ReviewerValidationStatus } from "@adt/types"
 import { api, type ReviewerPageValidationRecordEntry } from "@/api/client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -20,6 +20,51 @@ import {
 import { findResumeReviewerPage } from "@/lib/reviewer-validation-progress"
 import { getReviewerSessionStorageKey } from "@/lib/reviewer-validation-session"
 import { cn } from "@/lib/utils"
+
+
+function normalizeChecklistSnapshot(snapshot: ReviewerValidationCatalogSnapshot | null | undefined) {
+  if (!snapshot) {
+    return null
+  }
+
+  return {
+    identificationFields: snapshot.identificationFields.map((field) => ({
+      id: field.id,
+      label: field.label,
+      description: field.description ?? null,
+      type: field.type,
+      required: field.required,
+    })),
+    instructions: snapshot.instructions.map((instruction) => ({
+      id: instruction.id,
+      title: instruction.title,
+      body: instruction.body,
+      bullets: instruction.bullets ?? [],
+    })),
+    pageSections: snapshot.pageSections.map((section) => ({
+      id: section.id,
+      label: section.label,
+      criteria: section.criteria.map((criterion) => ({
+        id: criterion.id,
+        label: criterion.label,
+        guidance: criterion.guidance,
+        requires_comment_on_failure: criterion.requires_comment_on_failure,
+        requires_suggested_modification_on_failure: criterion.requires_suggested_modification_on_failure,
+      })),
+    })),
+  }
+}
+
+function hasChecklistSnapshotDrift(
+  sessionSnapshot: ReviewerValidationCatalogSnapshot | null | undefined,
+  currentCatalog: ReviewerValidationCatalogSnapshot | null | undefined,
+): boolean {
+  if (!sessionSnapshot || !currentCatalog) {
+    return false
+  }
+
+  return JSON.stringify(normalizeChecklistSnapshot(sessionSnapshot)) !== JSON.stringify(normalizeChecklistSnapshot(currentCatalog))
+}
 
 function SummaryCard({
   label,
@@ -170,10 +215,19 @@ export function ReviewerValidationSummaryTab({
     () => (activeSessionId ? recordsBySessionId.get(activeSessionId) ?? [] : []),
     [activeSessionId, recordsBySessionId],
   )
+  const activeCatalog = useMemo(
+    () => activeSession?.session.catalog_snapshot ?? catalog.data ?? null,
+    [activeSession?.session.catalog_snapshot, catalog.data],
+  )
+  const activePageSections = activeCatalog?.pageSections ?? []
+  const sessionUsesOlderChecklistSnapshot = useMemo(
+    () => hasChecklistSnapshotDrift(activeSession?.session.catalog_snapshot, catalog.data ?? null),
+    [activeSession?.session.catalog_snapshot, catalog.data],
+  )
 
   const criterionMeta = useMemo(() => {
     const map = new Map<string, { sectionLabel: string; criterionLabel: string }>()
-    for (const section of catalog.data?.pageSections ?? []) {
+    for (const section of activePageSections) {
       for (const criterion of section.criteria) {
         map.set(criterion.id, {
           sectionLabel: section.label,
@@ -182,7 +236,7 @@ export function ReviewerValidationSummaryTab({
       }
     }
     return map
-  }, [catalog.data?.pageSections])
+  }, [activePageSections])
 
   const aggregate = useMemo(() => {
     const allSessionRecords = [...recordsBySessionId.values()].flat()
@@ -202,8 +256,8 @@ export function ReviewerValidationSummaryTab({
   }, [recordsBySessionId, sortedSessions])
 
   const criteriaCount = useMemo(
-    () => catalog.data?.pageSections.reduce((total, section) => total + section.criteria.length, 0) ?? 0,
-    [catalog.data?.pageSections],
+    () => activePageSections.reduce((total, section) => total + section.criteria.length, 0),
+    [activePageSections],
   )
 
   const activeMetrics = useMemo(() => {
@@ -309,11 +363,11 @@ export function ReviewerValidationSummaryTab({
   const anyRecordQueryLoading = sessionRecordQueries.some((query) => query.isLoading)
   const anyRecordQueryError = sessionRecordQueries.find((query) => query.error)?.error
 
-  if (catalog.isLoading || sessions.isLoading || anyRecordQueryLoading) {
+  if (sessions.isLoading || anyRecordQueryLoading || (!activeCatalog && catalog.isLoading)) {
     return <LoadingState message="Loading reviewer validation summary..." />
   }
 
-  if (catalog.error) {
+  if (!activeCatalog && catalog.error) {
     return <ErrorState message={`Failed to load reviewer validation checklist: ${catalog.error.message}`} />
   }
 
@@ -416,6 +470,12 @@ export function ReviewerValidationSummaryTab({
                 </Badge>
               ) : null}
             </div>
+
+            {sessionUsesOlderChecklistSnapshot ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200">
+                This session is using an older reviewer checklist snapshot. Newer checklist settings will apply only to newly created reviewer sessions.
+              </div>
+            ) : null}
 
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <SummaryCard label="Pages reviewed" value={activeMetrics.pagesReviewed} />

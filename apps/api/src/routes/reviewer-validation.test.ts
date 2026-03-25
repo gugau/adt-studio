@@ -13,6 +13,7 @@ const label = "validation-book"
 describe("Reviewer validation routes", () => {
   let tmpDir: string
   let app: Hono
+  let configPath: string
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "reviewer-validation-routes-"))
@@ -45,9 +46,17 @@ describe("Reviewer validation routes", () => {
       storage.close()
     }
 
+    configPath = path.join(tmpDir, "config.yaml")
+    fs.writeFileSync(configPath, [
+      "text_types:",
+      "  heading: Heading",
+      "text_group_types:",
+      "  paragraph: Paragraph",
+    ].join("\n"))
+
     app = new Hono()
     app.onError(errorHandler)
-    app.route("/api", createReviewerValidationRoutes(tmpDir))
+    app.route("/api", createReviewerValidationRoutes(tmpDir, configPath))
   })
 
   afterEach(() => {
@@ -89,6 +98,7 @@ describe("Reviewer validation routes", () => {
     expect(listBody.sessions[0].session.reviewer_name).toBe("Ada Reviewer")
 
     expect(listBody.sessions[0].session.language).toBe("en")
+    expect(listBody.sessions[0].session.catalog_snapshot?.pageSections).toHaveLength(10)
   })
 
   it("stores multiple versions of reviewer page validation records and lists latest results for a session", async () => {
@@ -162,4 +172,40 @@ describe("Reviewer validation routes", () => {
     const res = await app.request(`/api/books/${label}/validation/page-results`)
     expect(res.status).toBe(400)
   })
+
+
+  it("returns config-defined reviewer validation catalog overrides", async () => {
+    fs.writeFileSync(configPath, [
+      "text_types:",
+      "  heading: Heading",
+      "text_group_types:",
+      "  paragraph: Paragraph",
+      "reviewer_validation:",
+      "  sections:",
+      "    - id: custom-checks",
+      "      label: Custom checks",
+      "      criteria:",
+      "        - id: custom-criterion",
+      "          label: Custom criterion",
+      "          guidance: Check this custom requirement.",
+      "  instructions:",
+      "    - id: custom-workflow",
+      "      title: Custom workflow",
+      "      body: Follow the custom workflow.",
+      "  identification_fields:",
+      "    - id: reviewer-name",
+      "      label: Reviewer name",
+      "      type: text",
+      "      required: true",
+    ].join("\n"))
+
+    const res = await app.request(`/api/books/${label}/validation/catalog`)
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.pageSections).toHaveLength(1)
+    expect(body.pageSections[0].id).toBe("custom-checks")
+    expect(body.instructions[0].id).toBe("custom-workflow")
+    expect(body.identificationFields).toHaveLength(1)
+  })
+
 })

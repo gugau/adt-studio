@@ -101,7 +101,7 @@ app.route("/api", createTaskRoutes(taskService))
 app.route("/api", createPresetRoutes(configPath))
 app.route("/api", createAdtPreviewRoutes(booksDir, webAssetsDir, configPath))
 app.route("/api", createSpeechConfigRoutes(configPath))
-app.route("/api", createReviewerValidationRoutes(booksDir))
+app.route("/api", createReviewerValidationRoutes(booksDir, configPath))
 
 export default app
 export { booksDir }

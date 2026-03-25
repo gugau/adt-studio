@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { ImageFilters } from "./image-filtering.js"
 import { SpeechConfig } from "./speech.js"
+import { ReviewerValidationConfig } from "./reviewer-validation-config.js"
 
 export const DEFAULT_LLM_MAX_RETRIES = 5
 
@@ -132,6 +133,7 @@ export const AppConfig = z
     speech: SpeechConfig.optional(),
     styleguide: z.string().regex(/^[a-zA-Z0-9_-]+$/).optional(),
     accessibility_assessment: AccessibilityAssessmentConfig.optional(),
+    reviewer_validation: ReviewerValidationConfig.optional(),
   })
   .superRefine((value, ctx) => {
     if (
