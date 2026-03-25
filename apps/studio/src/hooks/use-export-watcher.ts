@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, createContext, useContext } from "react"
+import type { I18n } from "@lingui/core"
 import { msg } from "@lingui/core/macro"
 import { useLingui } from "@lingui/react"
 import { api } from "@/api/client"
@@ -46,7 +47,7 @@ export function useExportWatcherSetup(label: string): ExportWatcherValue {
     if (task.status === "completed") {
       const format = pendingExport.format
       setPendingExport(null)
-      triggerExportDownload(label, format).catch((err) => {
+      triggerExportDownload(label, format, i18n).catch((err) => {
         setError({ format, message: err instanceof Error ? err.message : String(err) })
       })
     } else if (task.status === "failed") {
@@ -67,7 +68,7 @@ export function useExportWatcherSetup(label: string): ExportWatcherValue {
             setPendingExport({ taskId: result.taskId, format })
           } else {
             // Sync fallback (no task system) — download immediately
-            triggerExportDownload(label, format).catch((err) => {
+            triggerExportDownload(label, format, i18n).catch((err) => {
               setError({ format, message: err instanceof Error ? err.message : String(err) })
             })
           }
@@ -77,7 +78,7 @@ export function useExportWatcherSetup(label: string): ExportWatcherValue {
         }
       )
     },
-    [label]
+    [i18n, label]
   )
 
   return {
@@ -90,7 +91,8 @@ export function useExportWatcherSetup(label: string): ExportWatcherValue {
 
 async function triggerExportDownload(
   label: string,
-  format: ExportFormat
+  format: ExportFormat,
+  i18n: I18n,
 ): Promise<void> {
   let blob: Blob | null
   if (format === "book") {
