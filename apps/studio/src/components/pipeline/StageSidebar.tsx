@@ -336,6 +336,7 @@ const TASK_KIND_LABELS: Record<string, string> = {
   "image-generate": "Image Gen",
   "re-render": "Re-render",
   "ai-edit": "AI Edit",
+  "prepare-export": "Export",
 }
 
 function TaskIndicator({ bookLabel }: { bookLabel: string }) {

@@ -753,8 +753,8 @@ msgstr "Export the book as a Readium WebPub package — a standards-based format
 msgid "Export the complete Accessible Digital Textbook as a ZIP archive. Includes all HTML pages, images, audio files, quizzes, and the compiled web application — ready to upload to a distribution platform or open locally."
 msgstr "Export the complete Accessible Digital Textbook as a ZIP archive. Includes all HTML pages, images, audio files, quizzes, and the compiled web application — ready to upload to a distribution platform or open locally."
 
-msgid "Export timed out — the book may be too large"
-msgstr "Export timed out — the book may be too large"
+#~ msgid "Export timed out — the book may be too large"
+#~ msgstr "Export timed out — the book may be too large"
 
 msgid "Export WebPub"
 msgstr "Export WebPub"
