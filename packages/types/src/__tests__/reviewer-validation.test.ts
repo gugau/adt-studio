@@ -1,44 +1,11 @@
 import { describe, expect, it } from "vitest"
 import {
   ReviewerPageValidationRecord,
-  ReviewerPageValidationSections,
-  ReviewerValidationIdentificationFields,
-  ReviewerValidationInstructions,
   ReviewerValidationCatalogSnapshot,
   ReviewerValidationSession,
 } from "../reviewer-validation.js"
-import { getReviewerValidationCatalog } from "../reviewer-validation-config.js"
 
-describe("reviewer validation catalog", () => {
-  it("includes the extracted page validation sections and criteria", () => {
-    expect(ReviewerPageValidationSections).toHaveLength(10)
-    expect(ReviewerPageValidationSections[0]?.label).toBe("Text extracted accuracy")
-
-    const criteriaCount = ReviewerPageValidationSections.reduce(
-      (total, section) => total + section.criteria.length,
-      0,
-    )
-
-    expect(criteriaCount).toBe(39)
-  })
-
-  it("includes reviewer identification fields and workflow instructions", () => {
-    expect(ReviewerValidationIdentificationFields.map((field) => field.id)).toEqual([
-      "reviewer-name",
-      "institution",
-      "start-page",
-      "end-page",
-      "start-date",
-      "end-date",
-      "comments",
-    ])
-
-    expect(ReviewerValidationInstructions.map((instruction) => instruction.id)).toEqual([
-      "objective",
-      "workflow",
-    ])
-  })
-
+describe("reviewer validation schemas", () => {
   it("supports future per-reviewer and per-language page records", () => {
     const session = ReviewerValidationSession.parse({
       session_id: "session-1",
@@ -79,10 +46,24 @@ describe("reviewer validation catalog", () => {
     expect(result.error?.issues[0]?.path).toEqual(["end_page"])
   })
 
-
-  it("returns config-defined reviewer validation catalog values when provided", () => {
-    const catalog = getReviewerValidationCatalog({
-      sections: [
+  it("supports catalog snapshots on reviewer sessions", () => {
+    const snapshot = ReviewerValidationCatalogSnapshot.parse({
+      identificationFields: [
+        {
+          id: "reviewer-name",
+          label: "Reviewer name",
+          type: "text",
+          required: true,
+        },
+      ],
+      instructions: [
+        {
+          id: "workflow",
+          title: "Workflow",
+          body: "Review pages in order.",
+        },
+      ],
+      pageSections: [
         {
           id: "custom-checks",
           label: "Custom checks",
@@ -95,36 +76,6 @@ describe("reviewer validation catalog", () => {
           ],
         },
       ],
-      instructions: [
-        {
-          id: "custom-workflow",
-          title: "Custom workflow",
-          body: "Do the custom workflow.",
-        },
-      ],
-      identification_fields: [
-        {
-          id: "reviewer-name",
-          label: "Reviewer name",
-          type: "text",
-          required: true,
-        },
-      ],
-    })
-
-    expect(catalog.pageSections).toHaveLength(1)
-    expect(catalog.pageSections[0]?.id).toBe("custom-checks")
-    expect(catalog.instructions[0]?.id).toBe("custom-workflow")
-    expect(catalog.identificationFields).toHaveLength(1)
-  })
-
-
-
-  it("supports catalog snapshots on reviewer sessions", () => {
-    const snapshot = ReviewerValidationCatalogSnapshot.parse({
-      identificationFields: ReviewerValidationIdentificationFields,
-      instructions: ReviewerValidationInstructions,
-      pageSections: ReviewerPageValidationSections,
     })
 
     const session = ReviewerValidationSession.parse({
@@ -133,7 +84,7 @@ describe("reviewer validation catalog", () => {
       catalog_snapshot: snapshot,
     })
 
-    expect(session.catalog_snapshot?.pageSections).toHaveLength(10)
+    expect(session.catalog_snapshot?.pageSections).toHaveLength(1)
+    expect(session.catalog_snapshot?.pageSections[0]?.id).toBe("custom-checks")
   })
-
 })

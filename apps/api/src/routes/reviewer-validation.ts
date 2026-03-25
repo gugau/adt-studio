@@ -3,7 +3,6 @@ import { loadBookConfig } from "@adt/pipeline"
 import { HTTPException } from "hono/http-exception"
 import {
   ReviewerPageValidationRecord,
-  getReviewerValidationCatalog,
   ReviewerValidationSession,
   parseBookLabel,
 } from "@adt/types"
@@ -14,6 +13,7 @@ import {
   saveReviewerPageValidationRecord,
   saveReviewerValidationSession,
 } from "../services/reviewer-validation-service.js"
+import { getReviewerValidationCatalog } from "../services/reviewer-validation-catalog.js"
 
 export function createReviewerValidationRoutes(booksDir: string, configPath?: string): Hono {
   const app = new Hono()

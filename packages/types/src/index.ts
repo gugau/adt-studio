@@ -162,7 +162,6 @@ export {
 export {
   ReviewerValidationConfig,
   type ReviewerValidationCatalog,
-  getReviewerValidationCatalog,
 } from "./reviewer-validation-config.js"
 
 export {
@@ -176,7 +175,4 @@ export {
   ReviewerValidationSession,
   ReviewerPageValidationResult,
   ReviewerPageValidationRecord,
-  ReviewerValidationIdentificationFields,
-  ReviewerValidationInstructions,
-  ReviewerPageValidationSections,
 } from "./reviewer-validation.js"
