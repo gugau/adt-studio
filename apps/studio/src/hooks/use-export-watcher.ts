@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, createContext, useContext } from "react"
+import { msg } from "@lingui/core/macro"
+import { useLingui } from "@lingui/react"
 import { api } from "@/api/client"
 import { useBookTasks } from "./use-book-tasks"
 
@@ -31,6 +33,7 @@ export function useExportWatcher(): ExportWatcherValue {
 }
 
 export function useExportWatcherSetup(label: string): ExportWatcherValue {
+  const { i18n } = useLingui()
   const [pendingExport, setPendingExport] = useState<PendingExport | null>(null)
   const [error, setError] = useState<ExportError | null>(null)
   const { getTask } = useBookTasks(label)
@@ -49,11 +52,11 @@ export function useExportWatcherSetup(label: string): ExportWatcherValue {
     } else if (task.status === "failed") {
       setError({
         format: pendingExport.format,
-        message: task.error ?? "Export preparation failed",
+        message: task.error ?? i18n._(msg`Export preparation failed`),
       })
       setPendingExport(null)
     }
-  }, [pendingExport, getTask, label])
+  }, [pendingExport, getTask, i18n, label])
 
   const startExport = useCallback(
     (format: ExportFormat) => {
@@ -107,7 +110,11 @@ async function triggerExportDownload(
   const ext = format === "webpub" ? "webpub" : "zip"
   const defaultPath = format === "scorm" ? `${label}-scorm.zip` : `${label}.${ext}`
   const filterName =
-    format === "webpub" ? "WebPub" : format === "scorm" ? "SCORM Package" : "ZIP Archive"
+    format === "webpub"
+      ? i18n._(msg`WebPub`)
+      : format === "scorm"
+        ? i18n._(msg`SCORM Package`)
+        : i18n._(msg`ZIP Archive`)
 
   const savePath = await save({
     defaultPath,

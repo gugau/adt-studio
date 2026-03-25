@@ -758,6 +758,9 @@ msgstr "Exportar ADT"
 msgid "Export as a SCORM 1.2 package for upload to a Learning Management System (LMS). Includes activity completion tracking and offline support."
 msgstr "Exportar como pacote SCORM 1.2 para upload em um Sistema de Gestão de Aprendizagem (LMS). Inclui rastreamento de conclusão de atividade e suporte offline."
 
+msgid "Export preparation failed"
+msgstr "Falha ao preparar a exportação"
+
 msgid "Export SCORM"
 msgstr "Exportar SCORM"
 
@@ -1680,6 +1683,9 @@ msgstr "Salvando..."
 msgid "SCORM Export"
 msgstr "Exportação SCORM"
 
+msgid "SCORM Package"
+msgstr "Pacote SCORM"
+
 msgid "Search languages..."
 msgstr "Buscar idiomas..."
 
@@ -2140,6 +2146,9 @@ msgstr "Pacote web"
 msgid "Web Rendering"
 msgstr "Renderização web"
 
+msgid "WebPub"
+msgstr "WebPub"
+
 msgid "WebPub Export"
 msgstr "Exportação WebPub"
 
@@ -2157,6 +2166,9 @@ msgstr "Envolve solicitações de 'Gerar nova'. Suporta variáveis user_prompt, 
 
 msgid "Your Books"
 msgstr "Seus livros"
+
+msgid "ZIP Archive"
+msgstr "Arquivo ZIP"
 
 msgid "Zoom"
 msgstr "Zoom"
