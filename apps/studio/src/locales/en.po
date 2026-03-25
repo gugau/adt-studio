@@ -275,6 +275,9 @@ msgstr "AI Rendering"
 msgid "AI sees the current image and modifies it"
 msgstr "AI sees the current image and modifies it"
 
+msgid "AIza..."
+msgstr "AIza..."
+
 msgid "All sections have been deleted"
 msgstr "All sections have been deleted"
 
@@ -835,6 +838,9 @@ msgstr "Full-size source page preview for the selected quiz."
 
 msgid "Gemini"
 msgstr "Gemini"
+
+msgid "Gemini API Key"
+msgstr "Gemini API Key"
 
 msgid "Gemini API key is required to generate audio."
 msgstr "Gemini API key is required to generate audio."
@@ -1764,6 +1770,9 @@ msgstr "Show Pruned"
 msgid "Show pruned images"
 msgstr "Show pruned images"
 
+msgid "sk-..."
+msgstr "sk-..."
+
 msgid "Skip segmentation for images whose shortest side is below this threshold."
 msgstr "Skip segmentation for images whose shortest side is below this threshold."
 
@@ -2076,6 +2085,9 @@ msgstr "Use an LLM to detect and split composited images (e.g., multiple photos 
 
 msgid "Use an LLM to filter out decorative or non-educational images."
 msgstr "Use an LLM to filter out decorative or non-educational images."
+
+msgid "Used for Gemini TTS providers such as gemini-2.5-pro-preview-tts."
+msgstr "Used for Gemini TTS providers such as gemini-2.5-pro-preview-tts."
 
 #. placeholder {0}: data.validationErrors.length
 msgid "Validation Errors ({0})"

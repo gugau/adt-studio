@@ -139,7 +139,7 @@ export function ApiKeyDialog({
               <Input
                 id="openai-key-input"
                 type={showKey ? "text" : "password"}
-                placeholder="sk-..."
+                placeholder={t`sk-...`}
                 value={openaiDraft}
                 onChange={(e) => setOpenaiDraft(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") handleSave() }}
@@ -209,12 +209,14 @@ export function ApiKeyDialog({
 
         {tab === "gemini" && (
           <div className="space-y-2">
-            <Label htmlFor="gemini-key-input">Gemini API Key</Label>
+            <Label htmlFor="gemini-key-input">
+              <Trans>Gemini API Key</Trans>
+            </Label>
             <div className="relative">
               <Input
                 id="gemini-key-input"
                 type={showKey ? "text" : "password"}
-                placeholder="AIza..."
+                placeholder={t`AIza...`}
                 value={geminiKeyDraft}
                 onChange={(e) => setGeminiKeyDraft(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") handleSave() }}
@@ -232,7 +234,9 @@ export function ApiKeyDialog({
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Used for Gemini TTS providers such as gemini-2.5-pro-preview-tts.
+              <Trans>
+                Used for Gemini TTS providers such as gemini-2.5-pro-preview-tts.
+              </Trans>
             </p>
           </div>
         )}
