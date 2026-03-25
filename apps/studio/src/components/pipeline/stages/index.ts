@@ -1,5 +1,5 @@
 export { BookView } from "./BookView"
-export { ExtractView } from "./ExtractView"
+export { ExtractView } from "./extract/ExtractView"
 export { StoryboardView } from "./StoryboardView"
 export { QuizzesView } from "./QuizzesView"
 export { CaptionsView } from "./CaptionsView"

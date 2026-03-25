@@ -32,6 +32,9 @@ msgstr ""
 #~ msgid "Untitled"
 #~ msgstr "Untitled"
 
+msgid "_page"
+msgstr "_page"
+
 msgid "? This will remove all extracted data and cannot be undone."
 msgstr "? This will remove all extracted data and cannot be undone."
 

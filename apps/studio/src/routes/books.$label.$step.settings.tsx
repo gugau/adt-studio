@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { STAGES, isStageSlug } from "@/components/pipeline/stage-config"
-import { ExtractSettings } from "@/components/pipeline/stages/ExtractSettings"
+import { ExtractSettings } from "@/components/pipeline/stages/extract/ExtractSettings"
 import { StoryboardSettings } from "@/components/pipeline/stages/StoryboardSettings"
 import { QuizzesSettings } from "@/components/pipeline/stages/QuizzesSettings"
 import { GlossarySettings } from "@/components/pipeline/stages/GlossarySettings"

@@ -6,9 +6,9 @@ import { useBook } from "@/hooks/use-books"
 import { usePages, usePageImage } from "@/hooks/use-pages"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
-import { ExtractPageDetail } from "./ExtractPageDetail"
-import { useStepHeader } from "../StepViewRouter"
-import { StageRunCard } from "../StageRunCard"
+import { ExtractPageDetail } from "./components/ExtractPageDetail"
+import { useStepHeader } from "../../StepViewRouter"
+import { StageRunCard } from "../../StageRunCard"
 import type { PageSummaryItem } from "@/api/client"
 
 function PageCard({

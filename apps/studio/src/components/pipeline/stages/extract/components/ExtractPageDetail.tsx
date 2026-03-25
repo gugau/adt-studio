@@ -328,7 +328,10 @@ export function ExtractPageDetail({
               }}
             />
             <div className="px-2 py-1 flex items-center justify-between border-t bg-muted/30">
-              <span className="text-[10px] text-muted-foreground truncate">{pageId}_page</span>
+              <span className="text-[10px] text-muted-foreground truncate">
+                {pageId}
+                {t`_page`}
+              </span>
               {pageImageDims && (
                 <span className="text-[10px] text-muted-foreground shrink-0 ml-1">
                   {pageImageDims.w}&times;{pageImageDims.h}

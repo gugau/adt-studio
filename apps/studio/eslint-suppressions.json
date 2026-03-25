@@ -54,11 +54,6 @@
       "count": 9
     }
   },
-  "src/components/pipeline/stages/ExtractPageDetail.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 5
-    }
-  },
   "src/components/pipeline/stages/ImageCropDialog.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 1
@@ -86,7 +81,7 @@
   },
   "src/components/pipeline/stages/StoryboardSectionDetail.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 28
+      "count": 24
     }
   },
   "src/components/pipeline/stages/TextToSpeechSettings.tsx": {

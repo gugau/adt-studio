@@ -40,6 +40,8 @@ export default [
             "htmlFor",
             "data-testid",
             { regex: { pattern: "^data-" } },
+            // Any identifier-like prop/variable ending with capitalized "Id" (e.g. studentId, pageId)
+            { regex: { pattern: "^[A-Za-z0-9_]*Id$" } },
 
             // --- SVG attributes ---
             "fill",
@@ -173,6 +175,8 @@ export default [
           ignore: [
             // npm package names and module paths (e.g. "@tanstack/react-router")
             "^@?[a-zA-Z0-9_-]+(/[a-zA-Z0-9_.-]+)+",
+            // TypeScript import() / type strings using path aliases (e.g. "@/api/client")
+            "^@/[a-zA-Z0-9_.-]+(/[a-zA-Z0-9_.-]+)*$",
             // locale codes (e.g. "en", "pt-BR", "es")
             "^[a-z]{2}(-[A-Z]{2})?$",
             // absolute URLs
