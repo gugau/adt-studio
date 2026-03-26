@@ -90,10 +90,8 @@ msgstr "{0}/{1} audio"
 msgid "{0}/5 pages selected"
 msgstr "{0}/5 pages selected"
 
-#. placeholder {0}: Math.floor(elapsed / 60)
-#. placeholder {1}: elapsed % 60
-msgid "{0}m {1}s"
-msgstr "{0}m {1}s"
+#~ msgid "{0}m {1}s"
+#~ msgstr "{0}m {1}s"
 
 #. placeholder {0}: String(Math.floor(diff / 60_000))
 msgid "{0}m ago"
@@ -103,8 +101,8 @@ msgstr "{0}m ago"
 msgid "{0}s ago"
 msgstr "{0}s ago"
 
-msgid "{elapsed}s"
-msgstr "{elapsed}s"
+#~ msgid "{elapsed}s"
+#~ msgstr "{elapsed}s"
 
 msgid "{missingAudioCount} missing"
 msgstr "{missingAudioCount} missing"
@@ -167,8 +165,8 @@ msgstr "A table-filling activity."
 msgid "A true or false activity."
 msgstr "A true or false activity."
 
-msgid "Active Configuration"
-msgstr "Active Configuration"
+#~ msgid "Active Configuration"
+#~ msgstr "Active Configuration"
 
 msgid "Activities"
 msgstr "Activities"
@@ -252,8 +250,8 @@ msgstr "Add your first book"
 msgid "ADT Export"
 msgstr "ADT Export"
 
-msgid "ADT Preview"
-msgstr "ADT Preview"
+#~ msgid "ADT Preview"
+#~ msgstr "ADT Preview"
 
 #. placeholder {0}: quiz.afterPageId
 msgid "After {0}"
@@ -262,8 +260,8 @@ msgstr "After {0}"
 msgid "AI"
 msgstr "AI"
 
-msgid "AI Edit"
-msgstr "AI Edit"
+#~ msgid "AI Edit"
+#~ msgstr "AI Edit"
 
 msgid "AI editing..."
 msgstr "AI editing..."
@@ -280,8 +278,8 @@ msgstr "AI Overlay"
 #~ msgid "AI reasoning"
 #~ msgstr "AI reasoning"
 
-msgid "AI Rendering"
-msgstr "AI Rendering"
+#~ msgid "AI Rendering"
+#~ msgstr "AI Rendering"
 
 msgid "AI sees the current image and modifies it"
 msgstr "AI sees the current image and modifies it"
@@ -379,8 +377,8 @@ msgstr "Back to Editor"
 msgid "Back to preview"
 msgstr "Back to preview"
 
-msgid "Background Tasks"
-msgstr "Background Tasks"
+#~ msgid "Background Tasks"
+#~ msgstr "Background Tasks"
 
 #. placeholder {0}: section.backgroundColor
 msgid "Background: {0}"
@@ -410,8 +408,8 @@ msgstr "Book data is outdated and must be rebuilt."
 msgid "Book Metadata"
 msgstr "Book Metadata"
 
-msgid "Book Override"
-msgstr "Book Override"
+#~ msgid "Book Override"
+#~ msgstr "Book Override"
 
 msgid "Book Subtitle"
 msgstr "Book Subtitle"
@@ -527,8 +525,8 @@ msgstr "Comma-separated language codes routed to Gemini."
 msgid "Comma-separated language codes routed to OpenAI."
 msgstr "Comma-separated language codes routed to OpenAI."
 
-msgid "Config"
-msgstr "Config"
+#~ msgid "Config"
+#~ msgstr "Config"
 
 msgid "Configure API keys for AI pipeline features."
 msgstr "Configure API keys for AI pipeline features."
@@ -566,8 +564,8 @@ msgstr "Crop"
 msgid "Crop Image"
 msgstr "Crop Image"
 
-msgid "Cropping Prompt"
-msgstr "Cropping Prompt"
+#~ msgid "Cropping Prompt"
+#~ msgstr "Cropping Prompt"
 
 msgid "Current"
 msgstr "Current"
@@ -575,8 +573,8 @@ msgstr "Current"
 msgid "Custom"
 msgstr "Custom"
 
-msgid "Debug Panel"
-msgstr "Debug Panel"
+#~ msgid "Debug Panel"
+#~ msgstr "Debug Panel"
 
 msgid "Decrease indent"
 msgstr "Decrease indent"
@@ -795,8 +793,8 @@ msgstr "Extracted Text"
 msgid "Extracting..."
 msgstr "Extracting..."
 
-msgid "Extraction Prompt"
-msgstr "Extraction Prompt"
+#~ msgid "Extraction Prompt"
+#~ msgstr "Extraction Prompt"
 
 msgid "Extracts the correct answer key from the generated activity HTML."
 msgstr "Extracts the correct answer key from the generated activity HTML."
@@ -805,8 +803,8 @@ msgstr "Extracts the correct answer key from the generated activity HTML."
 msgid "Failed to load books: {0}"
 msgstr "Failed to load books: {0}"
 
-msgid "Failed to load config:"
-msgstr "Failed to load config:"
+#~ msgid "Failed to load config:"
+#~ msgstr "Failed to load config:"
 
 msgid "Failed to load stats:"
 msgstr "Failed to load stats:"
@@ -868,8 +866,8 @@ msgstr "Gemini TTS outputs WAV audio in this integration; other providers contin
 msgid "Gemini Voice"
 msgstr "Gemini Voice"
 
-msgid "General"
-msgstr "General"
+#~ msgid "General"
+#~ msgstr "General"
 
 msgid "Generate"
 msgstr "Generate"
@@ -931,8 +929,8 @@ msgstr "Generation Prompt"
 msgid "Get started"
 msgstr "Get started"
 
-msgid "Global Only"
-msgstr "Global Only"
+#~ msgid "Global Only"
+#~ msgstr "Global Only"
 
 msgid "Glossary"
 msgstr "Glossary"
@@ -943,11 +941,11 @@ msgstr "Glossary Generation"
 msgid "Glossary Prompt"
 msgstr "Glossary Prompt"
 
-msgid "Go to book"
-msgstr "Go to book"
+#~ msgid "Go to book"
+#~ msgstr "Go to book"
 
-msgid "Group Types"
-msgstr "Group Types"
+#~ msgid "Group Types"
+#~ msgstr "Group Types"
 
 msgid "Groups content into logical sections"
 msgstr "Groups content into logical sections"
@@ -994,8 +992,8 @@ msgstr "Image Filters"
 msgid "Image generated"
 msgstr "Image generated"
 
-msgid "Image Generation"
-msgstr "Image Generation"
+#~ msgid "Image Generation"
+#~ msgstr "Image Generation"
 
 msgid "Image Generation Prompt"
 msgstr "Image Generation Prompt"
@@ -1133,8 +1131,8 @@ msgstr "Loading Book..."
 msgid "Loading books..."
 msgstr "Loading books..."
 
-msgid "Loading config..."
-msgstr "Loading config..."
+#~ msgid "Loading config..."
+#~ msgstr "Loading config..."
 
 msgid "Loading glossary..."
 msgstr "Loading glossary..."
@@ -1175,8 +1173,8 @@ msgstr "Loading voice mappings..."
 msgid "Loading..."
 msgstr "Loading..."
 
-msgid "Logs"
-msgstr "Logs"
+#~ msgid "Logs"
+#~ msgstr "Logs"
 
 msgid "Lower values produce more consistent styling across pages."
 msgstr "Lower values produce more consistent styling across pages."
@@ -1193,8 +1191,8 @@ msgstr "Math"
 msgid "Max side (px)"
 msgstr "Max side (px)"
 
-msgid "Meaningfulness Prompt"
-msgstr "Meaningfulness Prompt"
+#~ msgid "Meaningfulness Prompt"
+#~ msgstr "Meaningfulness Prompt"
 
 msgid "Merge facing pages as spreads"
 msgstr "Merge facing pages as spreads"
@@ -1211,14 +1209,14 @@ msgstr "Messages"
 msgid "Metadata"
 msgstr "Metadata"
 
-msgid "Metadata Extraction"
-msgstr "Metadata Extraction"
+#~ msgid "Metadata Extraction"
+#~ msgstr "Metadata Extraction"
 
 msgid "Metadata Extraction Prompt"
 msgstr "Metadata Extraction Prompt"
 
-msgid "Metadata Prompt"
-msgstr "Metadata Prompt"
+#~ msgid "Metadata Prompt"
+#~ msgstr "Metadata Prompt"
 
 msgid "Min complexity"
 msgstr "Min complexity"
@@ -1301,8 +1299,8 @@ msgstr "No metadata yet — run the pipeline to extract book details"
 msgid "No page linked"
 msgstr "No page linked"
 
-msgid "No pages extracted yet"
-msgstr "No pages extracted yet"
+#~ msgid "No pages extracted yet"
+#~ msgstr "No pages extracted yet"
 
 msgid "No pages extracted yet. Run the pipeline to extract content."
 msgstr "No pages extracted yet. Run the pipeline to extract content."
@@ -1385,11 +1383,11 @@ msgstr "Output Tokens"
 msgid "Package and preview the final ADT web application."
 msgstr "Package and preview the final ADT web application."
 
-msgid "Packaging"
-msgstr "Packaging"
+#~ msgid "Packaging"
+#~ msgstr "Packaging"
 
-msgid "Packaging preview..."
-msgstr "Packaging preview..."
+#~ msgid "Packaging preview..."
+#~ msgstr "Packaging preview..."
 
 msgid "page"
 msgstr "page"
@@ -1466,8 +1464,8 @@ msgstr "Pixel Art"
 msgid "Polishing paragraphs to perfection..."
 msgstr "Polishing paragraphs to perfection..."
 
-msgid "Pop out to new window"
-msgstr "Pop out to new window"
+#~ msgid "Pop out to new window"
+#~ msgstr "Pop out to new window"
 
 msgid "Portuguese (BR)"
 msgstr "Portuguese (BR)"
@@ -1530,8 +1528,8 @@ msgstr "Quiz Generation"
 msgid "Quiz Generation Prompt"
 msgstr "Quiz Generation Prompt"
 
-msgid "Quiz Prompt"
-msgstr "Quiz Prompt"
+#~ msgid "Quiz Prompt"
+#~ msgstr "Quiz Prompt"
 
 msgid "Quiz Section Types"
 msgstr "Quiz Section Types"
@@ -1545,8 +1543,8 @@ msgstr "Quizzes are linked to other pages in this book"
 msgid "Re-enable type"
 msgstr "Re-enable type"
 
-msgid "Re-package ADT"
-msgstr "Re-package ADT"
+#~ msgid "Re-package ADT"
+#~ msgstr "Re-package ADT"
 
 msgid "Re-render"
 msgstr "Re-render"
@@ -1587,8 +1585,8 @@ msgstr "Remove this block"
 msgid "Remove type"
 msgstr "Remove type"
 
-msgid "Render Strategies"
-msgstr "Render Strategies"
+#~ msgid "Render Strategies"
+#~ msgstr "Render Strategies"
 
 msgid "Render Strategy"
 msgstr "Render Strategy"
@@ -1694,7 +1692,6 @@ msgstr "Search sections..."
 
 #. placeholder {0}: String(group.sectionIndex + 1)
 #. placeholder {0}: String(i + 1)
-#. placeholder {0}: i + 1
 msgid "Section {0}"
 msgstr "Section {0}"
 
@@ -1704,7 +1701,6 @@ msgid "Section {0} — {1}"
 msgstr "Section {0} — {1}"
 
 #. placeholder {0}: String(i + 1)
-#. placeholder {0}: i + 1
 msgid "Section {0} (pruned)"
 msgstr "Section {0} (pruned)"
 
@@ -1720,8 +1716,8 @@ msgstr "Section not found."
 msgid "Section pruned from flow"
 msgstr "Section pruned from flow"
 
-msgid "Section Render Strategies"
-msgstr "Section Render Strategies"
+#~ msgid "Section Render Strategies"
+#~ msgstr "Section Render Strategies"
 
 msgid "Section Text"
 msgstr "Section Text"
@@ -1738,8 +1734,8 @@ msgstr "sections"
 msgid "Segment"
 msgstr "Segment"
 
-msgid "Segmentation Prompt"
-msgstr "Segmentation Prompt"
+#~ msgid "Segmentation Prompt"
+#~ msgstr "Segmentation Prompt"
 
 msgid "Segmenting..."
 msgstr "Segmenting..."
@@ -1804,14 +1800,14 @@ msgstr "Skip segmentation for images whose shortest side is below this threshold
 msgid "Spanish"
 msgstr "Spanish"
 
-msgid "Speech"
-msgstr "Speech"
+#~ msgid "Speech"
+#~ msgstr "Speech"
 
 msgid "Speech Generation"
 msgstr "Speech Generation"
 
-msgid "Speech Prompts"
-msgstr "Speech Prompts"
+#~ msgid "Speech Prompts"
+#~ msgstr "Speech Prompts"
 
 msgid "Spread Mode"
 msgstr "Spread Mode"
@@ -1828,8 +1824,8 @@ msgstr "Standalone Text"
 msgid "Stanza"
 msgstr "Stanza"
 
-msgid "Stats"
-msgstr "Stats"
+#~ msgid "Stats"
+#~ msgstr "Stats"
 
 msgid "Step"
 msgstr "Step"
@@ -1864,8 +1860,8 @@ msgstr "Subscription Key"
 msgid "Success"
 msgstr "Success"
 
-msgid "Summary Prompt"
-msgstr "Summary Prompt"
+#~ msgid "Summary Prompt"
+#~ msgstr "Summary Prompt"
 
 msgid "System Prompt"
 msgstr "System Prompt"
@@ -1916,8 +1912,8 @@ msgstr "Text Groups"
 msgid "Text Only"
 msgstr "Text Only"
 
-msgid "Text Types"
-msgstr "Text Types"
+#~ msgid "Text Types"
+#~ msgstr "Text Types"
 
 msgid "The AI is having a think..."
 msgstr "The AI is having a think..."
@@ -2087,8 +2083,8 @@ msgstr "Unsaved:"
 msgid "Untangling nested divs with care..."
 msgstr "Untangling nested divs with care..."
 
-msgid "Untitled"
-msgstr "Untitled"
+#~ msgid "Untitled"
+#~ msgstr "Untitled"
 
 msgid "Upload a new image file from your computer"
 msgstr "Upload a new image file from your computer"
@@ -2122,8 +2118,8 @@ msgstr "Validation Errors ({0})"
 msgid "Version {0}"
 msgstr "Version {0}"
 
-msgid "Versions"
-msgstr "Versions"
+#~ msgid "Versions"
+#~ msgstr "Versions"
 
 msgid "View HTML source"
 msgstr "View HTML source"
@@ -2131,8 +2127,8 @@ msgstr "View HTML source"
 msgid "Voice Mappings"
 msgstr "Voice Mappings"
 
-msgid "Voices"
-msgstr "Voices"
+#~ msgid "Voices"
+#~ msgstr "Voices"
 
 msgid "Wall Clock"
 msgstr "Wall Clock"
