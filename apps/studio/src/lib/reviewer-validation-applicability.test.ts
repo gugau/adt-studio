@@ -60,7 +60,7 @@ describe("resolveReviewerValidationCriterionStatus", () => {
     ).toEqual({
       status: "not-applicable",
       isDerived: true,
-      reason: "Defaulted to N/A because this page does not contain any images.",
+      reason: { kind: "page-has-no-images", language: null },
     })
   })
 
@@ -84,7 +84,7 @@ describe("resolveReviewerValidationCriterionStatus", () => {
     ).toEqual({
       status: "not-applicable",
       isDerived: true,
-      reason: "Defaulted to N/A because this page does not contain an interactive activity or exercise.",
+      reason: { kind: "page-has-no-activity", language: null },
     })
   })
 
@@ -108,7 +108,7 @@ describe("resolveReviewerValidationCriterionStatus", () => {
     ).toEqual({
       status: "not-applicable",
       isDerived: true,
-      reason: "Defaulted to N/A because sign language is not enabled for this book.",
+      reason: { kind: "sign-language-unavailable", language: null },
     })
   })
 
@@ -132,7 +132,7 @@ describe("resolveReviewerValidationCriterionStatus", () => {
     ).toEqual({
       status: "not-applicable",
       isDerived: true,
-      reason: "Defaulted to N/A until this reviewer session has a language selected.",
+      reason: { kind: "translation-language-required", language: null },
     })
   })
 })

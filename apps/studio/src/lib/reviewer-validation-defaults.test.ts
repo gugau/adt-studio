@@ -1,31 +1,45 @@
-import { describe, expect, it } from "vitest"
-import { getReviewerValidationDefaultReason } from "./reviewer-validation-defaults"
+import { describe, expect, it, vi } from "vitest"
 
-describe("getReviewerValidationDefaultReason", () => {
-  it("returns consistent copy for non-language-specific defaults", () => {
-    expect(getReviewerValidationDefaultReason("page-has-no-images")).toBe(
-      "Defaulted to N/A because this page does not contain any images.",
-    )
-    expect(getReviewerValidationDefaultReason("page-has-no-activity")).toBe(
-      "Defaulted to N/A because this page does not contain an interactive activity or exercise.",
-    )
-    expect(getReviewerValidationDefaultReason("easy-read-unavailable")).toBe(
-      "Defaulted to N/A because Easy Read output is not currently available for this book.",
-    )
-    expect(getReviewerValidationDefaultReason("sign-language-unavailable")).toBe(
-      "Defaulted to N/A because sign language is not enabled for this book.",
-    )
-    expect(getReviewerValidationDefaultReason("glossary-unavailable")).toBe(
-      "Defaulted to N/A because Glossary has not been generated for this book yet.",
-    )
+vi.mock("@lingui/core/macro", () => ({
+  msg(strings: TemplateStringsArray, ...values: unknown[]) {
+    let text = ""
+    for (let index = 0; index < strings.length; index += 1) {
+      text += strings[index]
+      if (index < values.length) {
+        text += String(values[index])
+      }
+    }
+    return { id: text }
+  },
+}))
+
+const { createReviewerValidationDefaultReason, getReviewerValidationDefaultReasonMessage } = await import("./reviewer-validation-defaults")
+
+describe("reviewer-validation-defaults", () => {
+  it("returns structured reasons for non-language-specific defaults", () => {
+    expect(createReviewerValidationDefaultReason("page-has-no-images")).toEqual({ kind: "page-has-no-images", language: null })
+    expect(createReviewerValidationDefaultReason("sign-language-unavailable")).toEqual({ kind: "sign-language-unavailable", language: null })
+  })
+
+  it("returns message descriptors for default reasons", () => {
+    expect(getReviewerValidationDefaultReasonMessage(createReviewerValidationDefaultReason("page-has-no-images"))).toEqual({
+      id: "Defaulted to N/A because this page does not contain any images.",
+    })
+    expect(getReviewerValidationDefaultReasonMessage(createReviewerValidationDefaultReason("glossary-unavailable"))).toEqual({
+      id: "Defaulted to N/A because Glossary has not been generated for this book yet.",
+    })
   })
 
   it("supports language-aware default reasons", () => {
     expect(
-      getReviewerValidationDefaultReason("text-and-speech-language-unavailable", { language: "sw" }),
-    ).toBe("Defaulted to N/A because no Text & Speech audio is available for sw.")
+      getReviewerValidationDefaultReasonMessage(
+        createReviewerValidationDefaultReason("text-and-speech-language-unavailable", { language: "sw" }),
+      ),
+    ).toEqual({ id: "Defaulted to N/A because no Text & Speech audio is available for sw." })
     expect(
-      getReviewerValidationDefaultReason("translation-language-unavailable", { language: "fr" }),
-    ).toBe("Defaulted to N/A because no translation output is available for fr.")
+      getReviewerValidationDefaultReasonMessage(
+        createReviewerValidationDefaultReason("translation-language-unavailable", { language: "fr" }),
+      ),
+    ).toEqual({ id: "Defaulted to N/A because no translation output is available for fr." })
   })
 })

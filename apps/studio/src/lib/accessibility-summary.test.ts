@@ -1,12 +1,26 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import type { AccessibilityAssessmentOutput } from "@adt/types"
-import {
+
+vi.mock("@lingui/core/macro", () => ({
+  msg(strings: TemplateStringsArray, ...values: unknown[]) {
+    let text = ""
+    for (let index = 0; index < strings.length; index += 1) {
+      text += strings[index]
+      if (index < values.length) {
+        text += String(values[index])
+      }
+    }
+    return { id: text }
+  },
+}))
+
+const {
   buildAccessibilityOverview,
   buildFrequentAccessibilityFindings,
   findAccessibilityPage,
   normalizeAccessibilityHref,
   summarizeAccessibilityPage,
-} from "./accessibility-summary"
+} = await import("./accessibility-summary")
 
 const assessment: AccessibilityAssessmentOutput = {
   generatedAt: "2026-03-16T10:00:00.000Z",
@@ -125,11 +139,11 @@ describe("buildAccessibilityOverview", () => {
     expect(overview.totalChecks).toBe(5)
     expect(overview.severity.critical).toBe(1)
     expect(overview.severity.moderate).toBe(3)
-    expect(overview.categories[0]).toMatchObject({ label: "Structure & semantics", count: 3 })
+    expect(overview.categories[0]).toMatchObject({ key: "structure-semantics", label: "structure-semantics", count: 3 })
     expect(overview.categories).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ label: "Text alternatives", count: 1 }),
-        expect.objectContaining({ label: "Visual & sensory cues", count: 1 }),
+        expect.objectContaining({ key: "text-alternatives", label: "text-alternatives", count: 1 }),
+        expect.objectContaining({ key: "visual-cues", label: "visual-cues", count: 1 }),
       ])
     )
   })
@@ -144,7 +158,7 @@ describe("buildFrequentAccessibilityFindings", () => {
       pagesAffected: 2,
       count: 2,
       reviewOnly: false,
-      categoryLabel: "Structure & semantics",
+      categoryLabel: "structure-semantics",
     })
     expect(findings.find((entry) => entry.id === "image-alt")).toMatchObject({
       pagesAffected: 1,
@@ -179,7 +193,7 @@ describe("summarizeAccessibilityPage", () => {
     })
     expect(pageSummary?.categories).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ label: "Text alternatives", count: 1 }),
+        expect.objectContaining({ key: "text-alternatives", label: "text-alternatives", count: 1 }),
       ])
     )
   })
