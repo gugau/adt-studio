@@ -41,7 +41,7 @@ import {
   normalizeDefaultRenderStrategy,
 } from "@/lib/render-strategy"
 import { getSectionTypeLabel } from "@/lib/section-constants"
-import { hasSectioningChanges, hasSectioningData } from "./storyboard-rerun-policy"
+import { hasSectioningChanges, hasSectioningData } from "./lib/storyboard-rerun-policy"
 
 /** "two_column_story" → "Two Column Story" */
 function titleCase(slug: string): string {

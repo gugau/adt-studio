@@ -226,6 +226,7 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   // Stable shell — loaded once, never changes.
   // Mirrors the preview's renderPageHtml output: same CSS, fonts, body classes.
   const srcdoc = useMemo(
+    // eslint-disable-next-line lingui/no-unlocalized-strings
     () => `<!DOCTYPE html>
 <html>
 <head>
@@ -352,6 +353,7 @@ ${interactiveScript}
       doc.head.appendChild(styleEl)
     }
     const selectors = prunedDataIds.map((id) => `[data-id="${id}"]`).join(",\n")
+    // eslint-disable-next-line lingui/no-unlocalized-strings
     styleEl.textContent = `${selectors} { opacity: 0.3; filter: grayscale(1); transition: opacity 0.3s, filter 0.3s; }`
   }, [prunedDataIds, iframeReady])
 
@@ -380,6 +382,7 @@ ${interactiveScript}
     }
 
     const selectors = changedElements.map((c) => `[data-id="${c.dataId}"]`).join(",\n")
+    // eslint-disable-next-line lingui/no-unlocalized-strings
     styleEl.textContent = `
 ${selectors} {
   position: relative;

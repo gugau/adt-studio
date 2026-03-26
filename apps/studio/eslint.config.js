@@ -40,8 +40,8 @@ export default [
             "htmlFor",
             "data-testid",
             { regex: { pattern: "^data-" } },
-            // Any identifier-like prop/variable ending with capitalized "Id" (e.g. studentId, pageId)
-            { regex: { pattern: "^[A-Za-z0-9_]*Id$" } },
+            // Identifier-like prop/variable ending with "id" or "Id" (e.g. pageid, pageId, studentId)
+            { regex: { pattern: "^[A-Za-z0-9_]*(id|Id)$" } },
 
             // --- SVG attributes ---
             "fill",
@@ -96,6 +96,11 @@ export default [
             "showFlex",
             "flex1",
 
+            // --- iframe srcdoc / injected style strings (never user-visible) ---
+            "srcdoc",
+            "interactiveStyles",
+            "textContent",
+
             // --- TanStack Query cache keys ---
             "queryKey",
 
@@ -140,10 +145,12 @@ export default [
             "*.getAttribute",
             "*.querySelector",
             "*.querySelectorAll",
+            "*.closest",
             "*.append",
             "*.prepend",
             "*.setProperty",
             "*.open",
+            "*.getContext",
 
             // --- DOM event types ---
             "*.addEventListener",
@@ -192,6 +199,15 @@ export default [
             "^use (client|server)$",
             // Data URIs (e.g. "data:image/png;base64,...")
             "^data:",
+            // HTML fragments used in innerHTML assignments (e.g. `<div id="content">`)
+            "^<[a-z]",
+            // Closing HTML tags used in string operations (e.g. "</section>")
+            "^</[a-z]",
+            // CSS selectors and rule blocks (e.g. `[data-id="..."]`, `body[data-editable=...] {...}`)
+            "^[\\[.]?[a-z].*\\{",
+            "^\\[data-",
+            // Underscore-prefixed internal ID fragments (e.g. "_tx" in data-id template literals)
+            "^_[a-z]",
           ],
         },
       ],

@@ -8,7 +8,7 @@ import type { PageDetail, VersionEntry } from "@/api/client"
 import { useApiKey } from "@/hooks/use-api-key"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useBookTasks } from "@/hooks/use-book-tasks"
-import { useStepHeader } from "../StepViewRouter"
+import { useStepHeader } from "../../../StepViewRouter"
 import { BookPreviewFrame, type BookPreviewFrameHandle } from "./BookPreviewFrame"
 import { SectionEditToolbar } from "./SectionEditToolbar"
 import { ImageCropDialog } from "./ImageCropDialog"
@@ -565,7 +565,7 @@ export function StoryboardSectionDetail({
         api.reRenderPage(bookLabel, pageId, apiKey, sectionIndex).catch(() => {})
       }
     } catch (err) {
-      setAiError(err instanceof Error ? err.message : "Save failed")
+      setAiError(err instanceof Error ? err.message : t`Save failed`)
     } finally {
       setSaving(false)
     }
@@ -603,7 +603,7 @@ export function StoryboardSectionDetail({
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
       await minDelay
     } catch (err) {
-      setAiError(err instanceof Error ? err.message : "Save failed")
+      setAiError(err instanceof Error ? err.message : t`Save failed`)
     } finally {
       setSaving(false)
     }
@@ -619,7 +619,7 @@ export function StoryboardSectionDetail({
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages"] })
       onNavigateSection?.(result.clonedSectionIndex)
     } catch (err) {
-      setAiError(err instanceof Error ? err.message : "Clone failed")
+      setAiError(err instanceof Error ? err.message : t`Clone failed`)
     } finally {
       setCloning(false)
     }
@@ -640,7 +640,7 @@ export function StoryboardSectionDetail({
         api.reRenderPage(bookLabel, pageId, apiKey, result.mergedSectionIndex).catch(() => {})
       }
     } catch (err) {
-      setAiError(err instanceof Error ? err.message : "Merge failed")
+      setAiError(err instanceof Error ? err.message : t`Merge failed`)
     } finally {
       setMerging(false)
     }
@@ -661,7 +661,7 @@ export function StoryboardSectionDetail({
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages"] })
       onNavigateSection?.(Math.max(0, Math.min(sectionIndex, result.remainingSections - 1)))
     } catch (err) {
-      setAiError(err instanceof Error ? err.message : "Delete failed")
+      setAiError(err instanceof Error ? err.message : t`Delete failed`)
     } finally {
       setDeleting(false)
     }
@@ -673,7 +673,7 @@ export function StoryboardSectionDetail({
     setPanelOpen(false)
     api.reRenderPage(bookLabel, pageId, apiKey, sectionIndex, prompt)
       .catch((err) => {
-        setAiError(err instanceof Error ? err.message : "Re-render failed")
+        setAiError(err instanceof Error ? err.message : t`Re-render failed`)
       })
   }
 
@@ -1364,7 +1364,7 @@ export function StoryboardSectionDetail({
       try {
         result = await api.uploadCroppedImage(bookLabel, pageId, targetId, file)
       } catch (err) {
-        setAiError(err instanceof Error ? err.message : "Image upload failed")
+        setAiError(err instanceof Error ? err.message : t`Image upload failed`)
         return
       }
 
@@ -1427,8 +1427,9 @@ export function StoryboardSectionDetail({
         const result = await api.segmentImage(bookLabel, dataId, pageId, apiKey)
 
         if (!result.segmented || !result.regions || result.regions.length === 0) {
-          setAiError("No segmentation needed for this image")
-          setTimeout(() => setAiError((prev) => prev === "No segmentation needed for this image" ? null : prev), 3000)
+          const noSegMsg = t`No segmentation needed for this image`
+          setAiError(noSegMsg)
+          setTimeout(() => setAiError((prev) => prev === noSegMsg ? null : prev), 3000)
           return
         }
 
@@ -1441,7 +1442,7 @@ export function StoryboardSectionDetail({
           regions: result.regions,
         })
       } catch (err) {
-        setAiError(err instanceof Error ? err.message : "Segmentation failed")
+        setAiError(err instanceof Error ? err.message : t`Segmentation failed`)
       } finally {
         setSegmenting(false)
       }
@@ -1464,7 +1465,7 @@ export function StoryboardSectionDetail({
         const result = await api.applySegmentation(bookLabel, imageId, pageId, confirmedRegions)
 
         if (!result.segments || result.segments.length === 0) {
-          setAiError("Segmentation produced no valid segments")
+          setAiError(t`Segmentation produced no valid segments`)
           return
         }
 
@@ -1516,7 +1517,7 @@ export function StoryboardSectionDetail({
           }
         })
       } catch (err) {
-        setAiError(err instanceof Error ? err.message : "Segmentation apply failed")
+        setAiError(err instanceof Error ? err.message : t`Segmentation apply failed`)
       }
     },
     [segmentPreview, bookLabel, pageId, page.sectioning, page.rendering, sectionIndex]
@@ -1609,6 +1610,7 @@ export function StoryboardSectionDetail({
       setPendingRendering((prev) => {
         const rBase = prev ?? pageDataRef.current.rendering
         if (!rBase) return prev
+        // eslint-disable-next-line lingui/no-unlocalized-strings
         const imgTag = `<img data-id="${newImageId}" src="${BASE_URL}/books/${bookLabel}/images/${newImageId}"${dims ? ` width="${dims.w}" height="${dims.h}"` : ""} alt="${newImageId}" class="w-full" />`
         return {
           ...rBase,
@@ -1671,7 +1673,7 @@ export function StoryboardSectionDetail({
         const result = await api.uploadNewImage(bookLabel, pageId, file)
         addImageToSection(result.imageId, { w: result.width, h: result.height })
       } catch (err) {
-        setAiError(err instanceof Error ? err.message : "Image upload failed")
+        setAiError(err instanceof Error ? err.message : t`Image upload failed`)
       }
     },
     [bookLabel, pageId, addImageToSection]
@@ -1738,7 +1740,7 @@ export function StoryboardSectionDetail({
       apiKey,
       currentHtml,
     ).catch((err) => {
-      setAiError(err instanceof Error ? err.message : "AI edit failed")
+      setAiError(err instanceof Error ? err.message : t`AI edit failed`)
     })
   }
 
@@ -1836,6 +1838,7 @@ export function StoryboardSectionDetail({
         if (saved.type === "image" && pending.type === "image" && saved.imageId !== pending.imageId) {
           if (!seen.has(pending.imageId)) {
             seen.add(pending.imageId)
+            // eslint-disable-next-line lingui/no-unlocalized-strings
             changes.push({ dataId: pending.imageId, originalText: `Was: ${saved.imageId}` })
           }
         }
@@ -1913,7 +1916,7 @@ export function StoryboardSectionDetail({
           title={htmlPreview ? t`Back to preview` : t`View HTML source`}
         >
           <Code className="h-3.5 w-3.5" />
-          <span className="text-[10px]">HTML</span>
+          <span className="text-[10px]">{t`HTML`}</span>
         </button>
       )}
       <button

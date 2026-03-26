@@ -112,6 +112,9 @@ msgstr "{elapsed}s"
 msgid "{missingAudioCount} missing"
 msgstr "{missingAudioCount} faltantes"
 
+msgid "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
+msgstr "{regionCount, plural, one {{regionCount} región detectada} other {{regionCount} regiones detectadas}}"
+
 #~ msgid "{stepLabel} Settings"
 #~ msgstr "Configuración de {0}"
 
@@ -268,6 +271,9 @@ msgstr "IA"
 msgid "AI Edit"
 msgstr "Edición con IA"
 
+msgid "AI edit failed"
+msgstr "Error al editar con IA"
+
 msgid "AI editing..."
 msgstr "Edición con IA..."
 
@@ -327,6 +333,9 @@ msgstr "Aplicar"
 
 msgid "Apply page background colors"
 msgstr "Aplicar colores de fondo de página"
+
+msgid "Apply Segmentation"
+msgstr "Aplicar segmentación"
 
 msgid "Are you sure you want to delete"
 msgstr "¿Seguro que quieres eliminar"
@@ -515,6 +524,9 @@ msgstr "Haz clic para elegir una imagen de referencia de estilo"
 msgid "Click to select an image"
 msgstr "Haz clic para seleccionar una imagen"
 
+msgid "Clone failed"
+msgstr "Error al clonar"
+
 msgid "Clone this section"
 msgstr "Clonar esta sección"
 
@@ -611,6 +623,9 @@ msgstr "Eliminar"
 msgid "Delete book"
 msgstr "Eliminar libro"
 
+msgid "Delete failed"
+msgstr "Error al eliminar"
+
 msgid "Delete group"
 msgstr "Eliminar grupo"
 
@@ -646,6 +661,9 @@ msgstr "Descartar"
 
 msgid "Display"
 msgstr "Visualización"
+
+msgid "Drag to move boxes, drag edges/corners to resize"
+msgstr "Arrastra para mover los recuadros; arrastra los bordes o las esquinas para cambiar el tamaño"
 
 msgid "Drag to reorder"
 msgstr "Arrastra para reordenar"
@@ -970,6 +988,9 @@ msgstr "Ocultar imágenes eliminadas"
 msgid "Higher values filter out simple or blank images."
 msgstr "Valores más altos filtran imágenes simples o en blanco."
 
+msgid "HTML"
+msgstr "HTML"
+
 msgid "Illustration"
 msgstr "Ilustración"
 
@@ -1023,6 +1044,9 @@ msgstr "Tipo de imagen"
 
 msgid "Image unavailable"
 msgstr "Imagen no disponible"
+
+msgid "Image upload failed"
+msgstr "Error al subir imagen"
 
 msgid "Images"
 msgstr "Imágenes"
@@ -1202,6 +1226,9 @@ msgstr "Indicación de significado"
 msgid "Merge facing pages as spreads"
 msgstr "Combinar páginas enfrentadas como dobles"
 
+msgid "Merge failed"
+msgstr "Error al fusionar"
+
 msgid "Merge with next section"
 msgstr "Fusionar con la siguiente sección"
 
@@ -1327,6 +1354,9 @@ msgstr "Sin secciones para esta página"
 
 msgid "No sections on this page"
 msgstr "Sin secciones en esta página"
+
+msgid "No segmentation needed for this image"
+msgstr "No se necesita segmentación para esta imagen"
 
 msgid "No text extracted"
 msgstr "No se extrajo texto"
@@ -1554,6 +1584,9 @@ msgstr "Reempaquetar ADT"
 msgid "Re-render"
 msgstr "Re-renderizar"
 
+msgid "Re-render failed"
+msgstr "Error al re-renderizar"
+
 msgid "Re-render section"
 msgstr "Re-renderizar sección"
 
@@ -1680,6 +1713,9 @@ msgstr "Guarda los cambios antes de re-renderizar"
 msgid "Save changes first to preview the latest version"
 msgstr "Guarda los cambios primero para previsualizar la versión más reciente"
 
+msgid "Save failed"
+msgstr "Error al guardar"
+
 msgid "Saving..."
 msgstr "Guardando..."
 
@@ -1740,6 +1776,21 @@ msgstr "secciones"
 
 msgid "Segment"
 msgstr "Segmentar"
+
+msgid "Segment Preview"
+msgstr "Vista previa de segmentos"
+
+msgid "Segmentation apply failed"
+msgstr "Error al aplicar segmentación"
+
+msgid "Segmentation failed"
+msgstr "Error de segmentación"
+
+msgid "Segmentation preview"
+msgstr "Vista previa de segmentación"
+
+msgid "Segmentation produced no valid segments"
+msgstr "La segmentación no produjo segmentos válidos"
 
 msgid "Segmentation Prompt"
 msgstr "Indicación de segmentación"

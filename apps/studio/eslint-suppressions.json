@@ -49,16 +49,6 @@
       "count": 20
     }
   },
-  "src/components/pipeline/stages/BookPreviewFrame.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 9
-    }
-  },
-  "src/components/pipeline/stages/ImageCropDialog.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 1
-    }
-  },
   "src/components/pipeline/stages/PreviewView.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 6
@@ -69,19 +59,9 @@
       "count": 1
     }
   },
-  "src/components/pipeline/stages/SegmentPreviewDialog.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 5
-    }
-  },
   "src/components/pipeline/stages/SpeechPromptsEditor.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 1
-    }
-  },
-  "src/components/pipeline/stages/StoryboardSectionDetail.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 24
     }
   },
   "src/components/pipeline/stages/TextToSpeechSettings.tsx": {
@@ -97,11 +77,6 @@
   "src/components/pipeline/stages/quizzes-image-state.test.ts": {
     "lingui/no-unlocalized-strings": {
       "count": 15
-    }
-  },
-  "src/components/pipeline/stages/storyboard-rerun-policy.test.ts": {
-    "lingui/no-unlocalized-strings": {
-      "count": 12
     }
   },
   "src/components/pipeline/stages/translations-view-state.test.ts": {

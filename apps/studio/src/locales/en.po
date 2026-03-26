@@ -112,6 +112,9 @@ msgstr "{elapsed}s"
 msgid "{missingAudioCount} missing"
 msgstr "{missingAudioCount} missing"
 
+msgid "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
+msgstr "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
+
 #~ msgid "{stepLabel} Settings"
 #~ msgstr "{stepLabel} Settings"
 
@@ -268,6 +271,9 @@ msgstr "AI"
 msgid "AI Edit"
 msgstr "AI Edit"
 
+msgid "AI edit failed"
+msgstr "AI edit failed"
+
 msgid "AI editing..."
 msgstr "AI editing..."
 
@@ -327,6 +333,9 @@ msgstr "Apply"
 
 msgid "Apply page background colors"
 msgstr "Apply page background colors"
+
+msgid "Apply Segmentation"
+msgstr "Apply Segmentation"
 
 msgid "Are you sure you want to delete"
 msgstr "Are you sure you want to delete"
@@ -515,6 +524,9 @@ msgstr "Click to pick a style reference image"
 msgid "Click to select an image"
 msgstr "Click to select an image"
 
+msgid "Clone failed"
+msgstr "Clone failed"
+
 msgid "Clone this section"
 msgstr "Clone this section"
 
@@ -611,6 +623,9 @@ msgstr "Delete"
 msgid "Delete book"
 msgstr "Delete book"
 
+msgid "Delete failed"
+msgstr "Delete failed"
+
 msgid "Delete group"
 msgstr "Delete group"
 
@@ -646,6 +661,9 @@ msgstr "Discard"
 
 msgid "Display"
 msgstr "Display"
+
+msgid "Drag to move boxes, drag edges/corners to resize"
+msgstr "Drag to move boxes, drag edges/corners to resize"
 
 msgid "Drag to reorder"
 msgstr "Drag to reorder"
@@ -970,6 +988,9 @@ msgstr "Hide pruned images"
 msgid "Higher values filter out simple or blank images."
 msgstr "Higher values filter out simple or blank images."
 
+msgid "HTML"
+msgstr "HTML"
+
 msgid "Illustration"
 msgstr "Illustration"
 
@@ -1023,6 +1044,9 @@ msgstr "Image Type"
 
 msgid "Image unavailable"
 msgstr "Image unavailable"
+
+msgid "Image upload failed"
+msgstr "Image upload failed"
 
 msgid "Images"
 msgstr "Images"
@@ -1202,6 +1226,9 @@ msgstr "Meaningfulness Prompt"
 msgid "Merge facing pages as spreads"
 msgstr "Merge facing pages as spreads"
 
+msgid "Merge failed"
+msgstr "Merge failed"
+
 msgid "Merge with next section"
 msgstr "Merge with next section"
 
@@ -1327,6 +1354,9 @@ msgstr "No sections for this page"
 
 msgid "No sections on this page"
 msgstr "No sections on this page"
+
+msgid "No segmentation needed for this image"
+msgstr "No segmentation needed for this image"
 
 msgid "No text extracted"
 msgstr "No text extracted"
@@ -1554,6 +1584,9 @@ msgstr "Re-package ADT"
 msgid "Re-render"
 msgstr "Re-render"
 
+msgid "Re-render failed"
+msgstr "Re-render failed"
+
 msgid "Re-render section"
 msgstr "Re-render section"
 
@@ -1680,6 +1713,9 @@ msgstr "Save changes before re-rendering"
 msgid "Save changes first to preview the latest version"
 msgstr "Save changes first to preview the latest version"
 
+msgid "Save failed"
+msgstr "Save failed"
+
 msgid "Saving..."
 msgstr "Saving..."
 
@@ -1740,6 +1776,21 @@ msgstr "sections"
 
 msgid "Segment"
 msgstr "Segment"
+
+msgid "Segment Preview"
+msgstr "Segment Preview"
+
+msgid "Segmentation apply failed"
+msgstr "Segmentation apply failed"
+
+msgid "Segmentation failed"
+msgstr "Segmentation failed"
+
+msgid "Segmentation preview"
+msgstr "Segmentation preview"
+
+msgid "Segmentation produced no valid segments"
+msgstr "Segmentation produced no valid segments"
 
 msgid "Segmentation Prompt"
 msgstr "Segmentation Prompt"

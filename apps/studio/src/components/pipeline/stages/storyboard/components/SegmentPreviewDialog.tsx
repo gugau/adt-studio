@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react"
 import { Loader2 } from "lucide-react"
+import { Trans, useLingui } from "@lingui/react/macro"
 
 export interface SegmentRegion {
   label: string
@@ -32,12 +33,14 @@ export function SegmentPreviewDialog({
   onApply,
   onClose,
 }: SegmentPreviewDialogProps) {
+  const { t } = useLingui()
   const [regions, setRegions] = useState<SegmentRegion[]>(initialRegions)
   const [applying, setApplying] = useState(false)
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
   const [displaySize, setDisplaySize] = useState<{ w: number; h: number } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<{ mode: DragMode; regionIdx: number } | null>(null)
+  const regionCount = regions.length
 
   // Compute display size: fit image within available space
   useEffect(() => {
@@ -204,9 +207,9 @@ export function SegmentPreviewDialog({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-background border-b shrink-0">
         <h2 className="text-sm font-medium">
-          Segment Preview
+          <Trans>Segment Preview</Trans>
           <span className="ml-2 text-xs text-muted-foreground">
-            {regions.length} region{regions.length !== 1 ? "s" : ""} detected
+            {t`${regionCount} {regionCount, plural, one {region} other {regions}} detected`}
           </span>
         </h2>
         <div className="flex items-center gap-2">
@@ -216,7 +219,7 @@ export function SegmentPreviewDialog({
             disabled={applying}
             className="text-xs font-medium rounded px-3 py-1.5 bg-muted hover:bg-accent transition-colors cursor-pointer disabled:opacity-50"
           >
-            Cancel
+            <Trans>Cancel</Trans>
           </button>
           <button
             type="button"
@@ -225,7 +228,7 @@ export function SegmentPreviewDialog({
             className="flex items-center gap-1 text-xs font-medium rounded px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white cursor-pointer transition-colors disabled:opacity-50"
           >
             {applying && <Loader2 className="h-3 w-3 animate-spin" />}
-            Apply Segmentation
+            <Trans>Apply Segmentation</Trans>
           </button>
         </div>
       </div>
@@ -240,7 +243,7 @@ export function SegmentPreviewDialog({
           >
             <img
               src={imageSrc}
-              alt="Segmentation preview"
+              alt={t`Segmentation preview`}
               className="w-full h-full block"
               draggable={false}
             />
@@ -298,7 +301,9 @@ export function SegmentPreviewDialog({
 
       {/* Info bar */}
       <div className="bg-background border-t shrink-0 px-4 py-2 flex items-center gap-4 text-[10px] text-muted-foreground">
-        <span>Drag to move boxes, drag edges/corners to resize</span>
+        <span>
+          <Trans>Drag to move boxes, drag edges/corners to resize</Trans>
+        </span>
         {selectedIdx != null && regions[selectedIdx] && (
           <span className="ml-auto font-mono">
             {regions[selectedIdx].label}: ({regions[selectedIdx].cropLeft}, {regions[selectedIdx].cropTop}) → ({regions[selectedIdx].cropRight}, {regions[selectedIdx].cropBottom})
