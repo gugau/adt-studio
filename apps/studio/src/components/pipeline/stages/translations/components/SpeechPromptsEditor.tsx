@@ -125,7 +125,7 @@ export function SpeechPromptsEditor({ bookLabel, headerTarget }: SpeechPromptsEd
             <Input
               value={newLangKey}
               onChange={(e) => setNewLangKey(e.target.value)}
-              placeholder="e.g. fr, es-mx"
+              placeholder={t`e.g. fr, es-mx`}
               className="w-40 h-7 text-xs"
               onKeyDown={(e) => e.key === "Enter" && addLanguage()}
               autoFocus

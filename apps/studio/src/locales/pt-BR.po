@@ -271,6 +271,9 @@ msgstr "Exportação ADT"
 msgid "ADT Preview"
 msgstr "Prévia ADT"
 
+msgid "ADT Studio"
+msgstr "ADT Studio"
+
 #. placeholder {0}: quiz.afterPageId
 msgid "After {0}"
 msgstr "Após {0}"
@@ -394,6 +397,9 @@ msgstr "Voz Azure"
 
 msgid "Back Cover"
 msgstr "Contracapa"
+
+msgid "Back to books"
+msgstr "Voltar para livros"
 
 msgid "Back to Editor"
 msgstr "Voltar ao editor"
@@ -540,6 +546,9 @@ msgstr "Falha ao clonar"
 msgid "Clone this section"
 msgstr "Clonar esta seção"
 
+msgid "Close"
+msgstr "Fechar"
+
 msgid "Close section data"
 msgstr "Fechar dados da seção"
 
@@ -600,8 +609,14 @@ msgstr "Atual"
 msgid "Custom"
 msgstr "Personalizado"
 
+msgid "Debug - {label}"
+msgstr "Depuração - {label}"
+
 msgid "Debug Panel"
 msgstr "Painel de depuração"
+
+msgid "Debug Panel (Cmd+Shift+D)"
+msgstr "Painel de depuração (Cmd+Shift+D)"
 
 msgid "Decrease indent"
 msgstr "Diminuir recuo"
@@ -998,6 +1013,9 @@ msgstr "Ocultar imagens removidas"
 msgid "Higher values filter out simple or blank images."
 msgstr "Valores mais altos filtram imagens simples ou em branco."
 
+msgid "Hit"
+msgstr "Acerto"
+
 msgid "HTML"
 msgstr "HTML"
 
@@ -1024,6 +1042,9 @@ msgstr "Filtragem de imagens"
 
 msgid "Image Filters"
 msgstr "Filtros de imagem"
+
+msgid "Image Gen"
+msgstr "Geração de imagem"
 
 msgid "Image generated"
 msgstr "Imagem gerada"
@@ -1093,6 +1114,9 @@ msgstr "Item"
 
 msgid "Item ID..."
 msgstr "ID do item..."
+
+msgid "KB"
+msgstr "KB"
 
 msgid "Keeps pages whole unless mixed activity types require splitting"
 msgstr "Mantém páginas inteiras, a menos que tipos mistos de atividade exijam divisão"
@@ -1209,6 +1233,9 @@ msgstr "Carregando estatísticas..."
 msgid "Loading table of contents..."
 msgstr "Carregando sumário..."
 
+msgid "Loading template..."
+msgstr "Carregando template..."
+
 msgid "Loading text catalog..."
 msgstr "Carregando catálogo de textos..."
 
@@ -1274,6 +1301,9 @@ msgstr "Dimensão mínima da imagem (px)"
 
 msgid "Min side (px)"
 msgstr "Lado mínimo (px)"
+
+msgid "Miss"
+msgstr "Falha"
 
 msgid "Misses"
 msgstr "Perdas"
@@ -1394,6 +1424,9 @@ msgstr "Nenhum"
 
 msgid "Number of pages of content to include per quiz question."
 msgstr "Número de páginas de conteúdo a incluir por questão de quiz."
+
+msgid "of"
+msgstr "de"
 
 msgid "Only pages containing these section types are counted when grouping pages for quiz generation."
 msgstr "Apenas páginas que contêm esses tipos de seção são contadas ao agrupar páginas para geração de quiz."
@@ -1913,6 +1946,12 @@ msgstr "Estatísticas"
 msgid "Step"
 msgstr "Etapa"
 
+msgid "Step failed"
+msgstr "Falha na etapa"
+
+msgid "Step run failed"
+msgstr "Falha ao executar a etapa"
+
 msgid "Storyboard"
 msgstr "Storyboard"
 
@@ -1955,14 +1994,23 @@ msgstr "Tabela"
 msgid "Table of Contents"
 msgstr "Sumário"
 
+msgid "Task Running"
+msgstr "Tarefa em execução"
+
 msgid "Task running..."
 msgstr "Tarefa em execução..."
+
+msgid "Tasks Running"
+msgstr "Tarefas em execução"
 
 msgid "Teaching the pixels new tricks..."
 msgstr "Ensinando novos truques aos pixels..."
 
 msgid "Temperature"
 msgstr "Temperatura"
+
+msgid "Template not found."
+msgstr "Template nao encontrado."
 
 msgid "Template Rendering"
 msgstr "Renderização por template"

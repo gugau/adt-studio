@@ -363,7 +363,7 @@ function TaskIndicator({ bookLabel }: { bookLabel: string }) {
           <StepProgressRing size={28} state="running" colorClass="bg-violet-600" />
         </div>
         <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
-          {i18n._(msg`Background Tasks`)}
+          {runningCount === 1 ? i18n._(msg`Task Running`) : i18n._(msg`Tasks Running`)}
         </span>
       </div>
     </div>
@@ -372,7 +372,8 @@ function TaskIndicator({ bookLabel }: { bookLabel: string }) {
 
 function TaskRow({ task }: { task: TaskInfoResponse }) {
   const { i18n } = useLingui()
-  const kindLabel = TASK_KIND_LABELS[task.kind]
+  const kindLabelDescriptor = TASK_KIND_LABELS[task.kind]
+  const kindLabel = kindLabelDescriptor ? i18n._(kindLabelDescriptor) : task.kind
   const [, tick] = useState(0)
   useEffect(() => {
     const id = window.setInterval(() => tick((n) => n + 1), 1000)

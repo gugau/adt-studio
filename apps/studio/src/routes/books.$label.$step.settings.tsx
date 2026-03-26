@@ -11,7 +11,6 @@ import { TranslationsSettings } from "@/components/pipeline/stages/translations/
 import { getStageLabelI18n } from "@/components/pipeline/pipeline-i18n"
 import { cn } from "@/lib/utils"
 import { Trans } from "@lingui/react/macro"
-import { useLingui } from "@lingui/react/macro"
 
 export const Route = createFileRoute("/books/$label/$step/settings")({
   component: StepSettingsPage,
@@ -47,7 +46,6 @@ function StepSettingsPage() {
     )
   }
 
-  const stepLabel = stage.label
   const Icon = stage.icon
   const [headerTarget, setHeaderTarget] = useState<HTMLDivElement | null>(null)
 

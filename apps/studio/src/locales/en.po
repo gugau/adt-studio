@@ -271,6 +271,9 @@ msgstr "ADT Export"
 msgid "ADT Preview"
 msgstr "ADT Preview"
 
+msgid "ADT Studio"
+msgstr "ADT Studio"
+
 #. placeholder {0}: quiz.afterPageId
 msgid "After {0}"
 msgstr "After {0}"
@@ -394,6 +397,9 @@ msgstr "Azure Voice"
 
 msgid "Back Cover"
 msgstr "Back Cover"
+
+msgid "Back to books"
+msgstr "Back to books"
 
 msgid "Back to Editor"
 msgstr "Back to Editor"
@@ -540,6 +546,9 @@ msgstr "Clone failed"
 msgid "Clone this section"
 msgstr "Clone this section"
 
+msgid "Close"
+msgstr "Close"
+
 msgid "Close section data"
 msgstr "Close section data"
 
@@ -600,8 +609,14 @@ msgstr "Current"
 msgid "Custom"
 msgstr "Custom"
 
+msgid "Debug - {label}"
+msgstr "Debug - {label}"
+
 msgid "Debug Panel"
 msgstr "Debug Panel"
+
+msgid "Debug Panel (Cmd+Shift+D)"
+msgstr "Debug Panel (Cmd+Shift+D)"
 
 msgid "Decrease indent"
 msgstr "Decrease indent"
@@ -998,6 +1013,9 @@ msgstr "Hide pruned images"
 msgid "Higher values filter out simple or blank images."
 msgstr "Higher values filter out simple or blank images."
 
+msgid "Hit"
+msgstr "Hit"
+
 msgid "HTML"
 msgstr "HTML"
 
@@ -1024,6 +1042,9 @@ msgstr "Image Filtering"
 
 msgid "Image Filters"
 msgstr "Image Filters"
+
+msgid "Image Gen"
+msgstr "Image Gen"
 
 msgid "Image generated"
 msgstr "Image generated"
@@ -1093,6 +1114,9 @@ msgstr "Item"
 
 msgid "Item ID..."
 msgstr "Item ID..."
+
+msgid "KB"
+msgstr "KB"
 
 msgid "Keeps pages whole unless mixed activity types require splitting"
 msgstr "Keeps pages whole unless mixed activity types require splitting"
@@ -1209,6 +1233,9 @@ msgstr "Loading stats..."
 msgid "Loading table of contents..."
 msgstr "Loading table of contents..."
 
+msgid "Loading template..."
+msgstr "Loading template..."
+
 msgid "Loading text catalog..."
 msgstr "Loading text catalog..."
 
@@ -1274,6 +1301,9 @@ msgstr "Min image dimension (px)"
 
 msgid "Min side (px)"
 msgstr "Min side (px)"
+
+msgid "Miss"
+msgstr "Miss"
 
 msgid "Misses"
 msgstr "Misses"
@@ -1394,6 +1424,9 @@ msgstr "None"
 
 msgid "Number of pages of content to include per quiz question."
 msgstr "Number of pages of content to include per quiz question."
+
+msgid "of"
+msgstr "of"
 
 msgid "Only pages containing these section types are counted when grouping pages for quiz generation."
 msgstr "Only pages containing these section types are counted when grouping pages for quiz generation."
@@ -1913,6 +1946,12 @@ msgstr "Stats"
 msgid "Step"
 msgstr "Step"
 
+msgid "Step failed"
+msgstr "Step failed"
+
+msgid "Step run failed"
+msgstr "Step run failed"
+
 msgid "Storyboard"
 msgstr "Storyboard"
 
@@ -1955,14 +1994,23 @@ msgstr "Table"
 msgid "Table of Contents"
 msgstr "Table of Contents"
 
+msgid "Task Running"
+msgstr "Task Running"
+
 msgid "Task running..."
 msgstr "Task running..."
+
+msgid "Tasks Running"
+msgstr "Tasks Running"
 
 msgid "Teaching the pixels new tricks..."
 msgstr "Teaching the pixels new tricks..."
 
 msgid "Temperature"
 msgstr "Temperature"
+
+msgid "Template not found."
+msgstr "Template not found."
 
 msgid "Template Rendering"
 msgstr "Template Rendering"

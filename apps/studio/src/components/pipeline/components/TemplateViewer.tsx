@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { api } from "@/api/client"
+import { Trans } from "@lingui/react/macro"
 
 interface TemplateViewerProps {
   /** Template name to fetch (e.g. "two_column_render") */
@@ -82,7 +83,9 @@ export function TemplateViewer({
       </div>
 
       {isLoading ? (
-        <div className="text-sm text-muted-foreground">Loading template...</div>
+        <div className="text-sm text-muted-foreground">
+          <Trans>Loading template...</Trans>
+        </div>
       ) : templateData?.content != null ? (
         <div className="relative flex-1 min-h-0 border rounded-md overflow-hidden">
           <pre
@@ -103,7 +106,7 @@ export function TemplateViewer({
         </div>
       ) : (
         <div className="text-sm text-muted-foreground">
-          Template not found.
+          <Trans>Template not found.</Trans>
         </div>
       )}
     </div>
