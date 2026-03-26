@@ -877,13 +877,23 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-  exportBook: async (label: string): Promise<Blob> => {
+  prepareExport: (label: string, format: "book" | "webpub" | "scorm" = "book") =>
+    request<{ taskId?: string; status: string; label: string }>(
+      `/books/${label}/prepare-export?format=${format}`,
+      { method: "POST" }
+    ),
+
+  exportBook: async (label: string): Promise<Blob | null> => {
+    if (!isTauri()) {
+      triggerDirectDownload(`${BASE_URL}/books/${label}/export`)
+      return null
+    }
     const url = `${BASE_URL}/books/${label}/export`
     const res = await fetch(url, {
       method: "GET",
       headers: { Accept: "application/zip" },
       mode: "cors",
-      signal: AbortSignal.timeout(300_000),
+      signal: AbortSignal.timeout(1_800_000),
     })
     if (!res.ok) {
       const body = await res.json().catch(() => ({ error: res.statusText }))
@@ -893,13 +903,17 @@ export const api = {
     return new Blob([buf], { type: "application/zip" })
   },
 
-  exportWebpub: async (label: string): Promise<Blob> => {
+  exportWebpub: async (label: string): Promise<Blob | null> => {
+    if (!isTauri()) {
+      triggerDirectDownload(`${BASE_URL}/books/${label}/export-webpub`)
+      return null
+    }
     const url = `${BASE_URL}/books/${label}/export-webpub`
     const res = await fetch(url, {
       method: "GET",
       headers: { Accept: "application/zip" },
       mode: "cors",
-      signal: AbortSignal.timeout(300_000),
+      signal: AbortSignal.timeout(1_800_000),
     })
     if (!res.ok) {
       const body = await res.json().catch(() => ({ error: res.statusText }))
@@ -909,13 +923,17 @@ export const api = {
     return new Blob([buf], { type: "application/zip" })
   },
 
-  exportScorm: async (label: string): Promise<Blob> => {
+  exportScorm: async (label: string): Promise<Blob | null> => {
+    if (!isTauri()) {
+      triggerDirectDownload(`${BASE_URL}/books/${label}/export-scorm`)
+      return null
+    }
     const url = `${BASE_URL}/books/${label}/export-scorm`
     const res = await fetch(url, {
       method: "GET",
       headers: { Accept: "application/zip" },
       mode: "cors",
-      signal: AbortSignal.timeout(300_000),
+      signal: AbortSignal.timeout(1_800_000),
     })
     if (!res.ok) {
       const body = await res.json().catch(() => ({ error: res.statusText }))
@@ -924,4 +942,18 @@ export const api = {
     const buf = await res.arrayBuffer()
     return new Blob([buf], { type: "application/zip" })
   },
+}
+
+function isTauri(): boolean {
+  return BASE_URL.startsWith("http")
+}
+
+/** Trigger a native browser download via anchor click (same-origin only). */
+function triggerDirectDownload(url: string): void {
+  const a = document.createElement("a")
+  a.href = url
+  a.download = ""
+  document.body.appendChild(a)
+  a.click()
+  setTimeout(() => document.body.removeChild(a), 1500)
 }

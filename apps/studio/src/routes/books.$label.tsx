@@ -6,6 +6,7 @@ import { DebugPanel } from "@/components/debug/DebugPanel"
 import { DebugPanelStateProvider, type DebugTabValue } from "@/components/debug/debug-panel-state"
 import { StageSidebar } from "@/components/pipeline/StageSidebar"
 import { useBookRunStatus, BookRunProvider } from "@/hooks/use-book-run"
+import { useExportWatcherSetup, ExportWatcherProvider } from "@/hooks/use-export-watcher"
 
 interface SectionNavContext {
   sectionIndex: number
@@ -41,6 +42,7 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
   const [debugOpen, setDebugOpen] = useState(false)
   const [debugDefaultTab, setDebugDefaultTab] = useState<DebugTabValue>("stats")
   const isDebugRoute = !!matchRoute({ to: "/books/$label/debug", params: { label } })
+  const exportWatcher = useExportWatcherSetup(label)
 
   const activeStep = step ?? "book"
   const [sectionIndex, setSectionIndex] = useState(0)
@@ -144,7 +146,9 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
 
             <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
               <SectionNavCtx.Provider value={sectionNav}>
-                <Outlet />
+                <ExportWatcherProvider value={exportWatcher}>
+                  <Outlet />
+                </ExportWatcherProvider>
               </SectionNavCtx.Provider>
             </div>
           </div>
