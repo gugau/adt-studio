@@ -27,18 +27,18 @@ const SEVERITY_RANK: Record<AccessibilitySeverity, number> = {
   unknown: 4,
 }
 
-function getSeverityLabel(i18n: I18n, severity: AccessibilitySeverity): string {
+function SeverityLabel({ severity }: { severity: AccessibilitySeverity }) {
   switch (severity) {
     case "critical":
-      return i18n._(msg`Critical`)
+      return <Trans>Critical</Trans>
     case "serious":
-      return i18n._(msg`Serious`)
+      return <Trans>Serious</Trans>
     case "moderate":
-      return i18n._(msg`Moderate`)
+      return <Trans>Moderate</Trans>
     case "minor":
-      return i18n._(msg`Minor`)
+      return <Trans>Minor</Trans>
     default:
-      return i18n._(msg`Unknown`)
+      return <Trans>Unknown</Trans>
   }
 }
 
@@ -49,7 +49,7 @@ function SummaryCard({
   active = false,
   onClick,
 }: {
-  label: string
+  label: React.ReactNode
   value: number | string
   tone?: "default" | "error" | "warning" | "caution" | "success" | "info" | "muted"
   active?: boolean
@@ -217,7 +217,7 @@ function FrequentFindingCard({
             )}
             onClick={() => onFilterSeverity(finding.impact)}
           >
-            {getSeverityLabel(i18n, finding.impact)}
+            <SeverityLabel severity={finding.impact} />
           </Badge>
           <Badge
             variant="outline"
@@ -332,7 +332,7 @@ export function AccessibilityOverviewTab({ label }: AccessibilityTabProps) {
     })
   }
 
-  const activeSeverityLabel = severityFilter ? getSeverityLabel(i18n, severityFilter) : null
+  const activeSeverityLabel = severityFilter ? <SeverityLabel severity={severityFilter} /> : null
   const activeCategoryLabel = categoryFilter
     ? getAccessibilityCategoryLabel(i18n, categoryFilter)
     : null
@@ -361,7 +361,7 @@ export function AccessibilityOverviewTab({ label }: AccessibilityTabProps) {
             return (
               <SummaryCard
                 key={severity}
-                label={getSeverityLabel(i18n, severity)}
+                label={<SeverityLabel severity={severity} />}
                 value={count}
                 tone={SEVERITY_TONES[severity]}
                 active={severityFilter === severity}
