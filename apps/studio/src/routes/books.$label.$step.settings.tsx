@@ -5,7 +5,7 @@ import { ExtractSettings } from "@/components/pipeline/stages/extract/ExtractSet
 import { StoryboardSettings } from "@/components/pipeline/stages/storyboard/StoryboardSettings"
 import { QuizzesSettings } from "@/components/pipeline/stages/QuizzesSettings"
 import { GlossarySettings } from "@/components/pipeline/stages/glossary/GlossarySettings"
-import { TocSettings } from "@/components/pipeline/stages/TocSettings"
+import { TocSettings } from "@/components/pipeline/stages/toc/TocSettings"
 import { CaptionsSettings } from "@/components/pipeline/stages/captions/CaptionsSettings"
 import { TranslationsSettings } from "@/components/pipeline/stages/TranslationsSettings"
 import { getStageLabelI18n } from "@/components/pipeline/pipeline-i18n"
