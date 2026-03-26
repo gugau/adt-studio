@@ -2170,8 +2170,14 @@ msgstr "Run the pipeline through at least the"
 msgid "Run the pipeline through at least the <0>Storyboard</0> stage first."
 msgstr "Run the pipeline through at least the <0>Storyboard</0> stage first."
 
+msgid "Run whole-book validation checks and configure accessibility assessment settings."
+msgstr "Run whole-book validation checks and configure accessibility assessment settings."
+
 msgid "Run-only tags"
 msgstr "Run-only tags"
+
+msgid "Running Validation..."
+msgstr "Running Validation..."
 
 msgid "Runs in background — you can keep editing"
 msgstr "Runs in background — you can keep editing"
