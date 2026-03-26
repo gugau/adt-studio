@@ -407,9 +407,6 @@ msgstr "Back to Editor"
 msgid "Back to preview"
 msgstr "Back to preview"
 
-msgid "Background Tasks"
-msgstr "Background Tasks"
-
 #. placeholder {0}: section.backgroundColor
 msgid "Background: {0}"
 msgstr "Background: {0}"
@@ -1042,9 +1039,6 @@ msgstr "Image Filtering"
 
 msgid "Image Filters"
 msgstr "Image Filters"
-
-msgid "Image Gen"
-msgstr "Image Gen"
 
 msgid "Image generated"
 msgstr "Image generated"

@@ -407,9 +407,6 @@ msgstr "Volver al editor"
 msgid "Back to preview"
 msgstr "Volver a vista previa"
 
-msgid "Background Tasks"
-msgstr "Tareas en segundo plano"
-
 #. placeholder {0}: section.backgroundColor
 msgid "Background: {0}"
 msgstr "Fondo: {0}"
@@ -1042,9 +1039,6 @@ msgstr "Filtrado de imágenes"
 
 msgid "Image Filters"
 msgstr "Filtros de imagen"
-
-msgid "Image Gen"
-msgstr "Gen. de imagen"
 
 msgid "Image generated"
 msgstr "Imagen generada"
