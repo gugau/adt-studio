@@ -71,6 +71,7 @@ export default [
             "value",
 
             // --- CSS class & color props (never user-visible) ---
+            "rootMargin",
             "color",
             "hex",
             "textColor",

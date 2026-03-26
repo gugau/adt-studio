@@ -1,7 +1,7 @@
 export { BookView } from "./BookView"
 export { ExtractView } from "./extract/ExtractView"
 export { StoryboardView } from "./storyboard/StoryboardView"
-export { QuizzesView } from "./QuizzesView"
+export { QuizzesView } from "./quizzes/QuizzesView"
 export { CaptionsView } from "./captions/CaptionsView"
 export { GlossaryView } from "./glossary/GlossaryView"
 export { TocView } from "./toc/TocView"
