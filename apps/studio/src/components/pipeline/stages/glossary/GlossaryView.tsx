@@ -5,10 +5,10 @@ import { Badge } from "@/components/ui/badge"
 import { api } from "@/api/client"
 import type { GlossaryOutput, VersionEntry } from "@/api/client"
 import { useGlossary } from "@/hooks/use-glossary"
-import { useStepHeader } from "../StepViewRouter"
+import { useStepHeader } from "../../StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
-import { StageRunCard } from "../StageRunCard"
+import { StageRunCard } from "../../StageRunCard"
 import { useLingui } from "@lingui/react/macro"
 
 
