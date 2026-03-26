@@ -5,10 +5,10 @@ import { useLingui } from "@lingui/react/macro"
 import { api } from "@/api/client"
 import type { TocGenerationOutput, TocEntry, TocSection, VersionEntry } from "@/api/client"
 import { useToc } from "@/hooks/use-toc"
-import { useStepHeader } from "../../StepViewRouter"
+import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
-import { StageRunCard } from "../../StageRunCard"
+import { StageRunCard } from "../../components/StageRunCard"
 
 type TocData = Omit<TocGenerationOutput, "version">
 

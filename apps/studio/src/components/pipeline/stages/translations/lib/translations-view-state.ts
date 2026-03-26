@@ -1,4 +1,4 @@
-import { getBaseLanguage, normalizeLocale } from "../../../lib/languages"
+import { getBaseLanguage, normalizeLocale } from "../../../../../lib/languages"
 
 interface ResolveTranslationLanguageStateInput {
   selectedLang: string | null

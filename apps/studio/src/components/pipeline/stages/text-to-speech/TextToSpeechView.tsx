@@ -2,14 +2,17 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { Loader2, Play, Pause } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { api, getAudioUrl } from "@/api/client"
-import { useStepHeader } from "../../StepViewRouter"
+import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
-import { StageRunCard } from "../../StageRunCard"
+import { StageRunCard } from "../../components/StageRunCard"
 import { cn } from "@/lib/utils"
+import { Trans, useLingui } from "@lingui/react/macro"
+import { plural } from "@lingui/core/macro"
 
 
 export function TextToSpeechView({ bookLabel }: { bookLabel: string }) {
+  const { t } = useLingui()
   const { setExtra } = useStepHeader()
   const { stageState, queueRun } = useBookRun()
   const { apiKey, hasApiKey, azureKey, azureRegion, geminiKey } = useApiKey()
@@ -74,10 +77,20 @@ export function TextToSpeechView({ bookLabel }: { bookLabel: string }) {
     setExtra(
       <div className="flex items-center gap-1.5 ml-auto">
         {languages.length > 0 && (
-          <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{languages.length} {languages.length === 1 ? "language" : "languages"}</span>
+          <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">
+            {t`${plural(languages.length, {
+              one: "# language",
+              other: "# languages",
+            })}`}
+          </span>
         )}
         {totalEntries > 0 && (
-          <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{totalEntries} audio files</span>
+          <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">
+            {t`${plural(totalEntries, {
+              one: "# audio file",
+              other: "# audio files",
+            })}`}
+          </span>
         )}
       </div>
     )
@@ -90,7 +103,9 @@ export function TextToSpeechView({ bookLabel }: { bookLabel: string }) {
     return (
       <div className="flex items-center justify-center py-12 text-muted-foreground">
         <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">Loading audio data...</span>
+        <span className="text-sm">
+          <Trans>Loading audio data...</Trans>
+        </span>
       </div>
     )
   }

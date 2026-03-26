@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label"
 import { useQuery } from "@tanstack/react-query"
 import { DEFAULT_LLM_MAX_RETRIES } from "@adt/types"
 import { api } from "@/api/client"
+import { Trans, useLingui } from "@lingui/react/macro"
 
 interface PromptViewerBaseProps {
   /** Prompt template name to fetch (e.g. "page_sectioning") */
@@ -60,6 +61,8 @@ export function PromptViewer({
   enabled = true,
   hideModel = false,
 }: PromptViewerProps) {
+  const { t } = useLingui()
+
   const { data: promptData, isLoading } = useQuery({
     queryKey: ["prompts", promptName, bookLabel],
     queryFn: () => api.getPrompt(promptName, bookLabel),
@@ -109,7 +112,7 @@ export function PromptViewer({
       {!hideModel && (
         <div className="shrink-0 flex items-end gap-3">
           <div className="min-w-0 max-w-xs flex-1">
-            <Label className="text-xs">Model</Label>
+            <Label className="text-xs">{t`Model`}</Label>
             <Input
               value={model ?? ""}
               onChange={(e) => onModelChange?.(e.target.value)}
@@ -119,7 +122,7 @@ export function PromptViewer({
           </div>
           {onMaxRetriesChange && (
             <div className="w-20">
-              <Label className="text-xs">Retries</Label>
+              <Label className="text-xs">{t`Retries`}</Label>
               <Input
                 type="number"
                 min={0}
@@ -135,7 +138,9 @@ export function PromptViewer({
 
       {/* Prompt editor */}
       {isLoading ? (
-        <div className="text-sm text-muted-foreground">Loading prompt...</div>
+        <div className="text-sm text-muted-foreground">
+          <Trans>Loading prompt...</Trans>
+        </div>
       ) : promptData?.content != null ? (
         <div className="relative flex-1 min-h-0 border rounded-md overflow-hidden">
           {/* Syntax-highlighted underlay */}
@@ -158,7 +163,7 @@ export function PromptViewer({
         </div>
       ) : (
         <div className="text-sm text-muted-foreground">
-          Prompt template not found.
+          <Trans>Prompt template not found.</Trans>
         </div>
       )}
     </div>

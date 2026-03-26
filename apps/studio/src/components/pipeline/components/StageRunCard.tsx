@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { PIPELINE } from "@adt/types"
 import type { StageName } from "@adt/types"
-import { STAGES } from "./stage-config"
+import { STAGES } from "../stage-config"
 import {
   getStageLabelI18n,
   getStageRunningLabelI18n,
   getStageDescriptionI18n,
   getStepLabelI18n,
-} from "./pipeline-i18n"
+} from "../pipeline-i18n"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useLingui } from "@lingui/react/macro"
 

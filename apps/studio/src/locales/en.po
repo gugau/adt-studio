@@ -44,6 +44,10 @@ msgstr "(active)"
 msgid "(template)"
 msgstr "(template)"
 
+#. placeholder {0}: languages.length
+msgid "{0, plural, one {# language} other {# languages}}"
+msgstr "{0, plural, one {# language} other {# languages}}"
+
 #. placeholder {0}: lockedLang.name
 msgid "{0} — type country or Enter for base"
 msgstr "{0} — type country or Enter for base"
@@ -117,6 +121,9 @@ msgstr "{regionCount} {regionCount, plural, one {region} other {regions}} detect
 
 #~ msgid "{stepLabel} Settings"
 #~ msgstr "{stepLabel} Settings"
+
+msgid "{totalEntries, plural, one {# audio file} other {# audio files}}"
+msgstr "{totalEntries, plural, one {# audio file} other {# audio files}}"
 
 #. placeholder {0}: String(filterSectionIndex + 1)
 msgid "/ Section {0}"
@@ -1157,6 +1164,9 @@ msgstr "LLM-based filter to determine if extracted images are meaningful."
 msgid "LLM-based segmentation to detect and split composited images into individual segments. Requires GPT-5.2+ for accurate bounding box coordinates."
 msgstr "LLM-based segmentation to detect and split composited images into individual segments. Requires GPT-5.2+ for accurate bounding box coordinates."
 
+msgid "Loading audio data..."
+msgstr "Loading audio data..."
+
 msgid "Loading Book..."
 msgstr "Loading Book..."
 
@@ -1183,6 +1193,9 @@ msgstr "Loading pages..."
 
 msgid "Loading preview..."
 msgstr "Loading preview..."
+
+msgid "Loading prompt..."
+msgstr "Loading prompt..."
 
 msgid "Loading quizzes..."
 msgstr "Loading quizzes..."
@@ -1526,6 +1539,9 @@ msgstr "Preview of the HTML/CSS patterns used for LLM-generated pages."
 msgid "Prompt"
 msgstr "Prompt"
 
+msgid "Prompt template not found."
+msgstr "Prompt template not found."
+
 msgid "Provider Routing"
 msgstr "Provider Routing"
 
@@ -1655,6 +1671,9 @@ msgstr "Restore element"
 
 msgid "Restore section to flow"
 msgstr "Restore section to flow"
+
+msgid "Retries"
+msgstr "Retries"
 
 msgid "Retry"
 msgstr "Retry"

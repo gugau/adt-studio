@@ -44,6 +44,10 @@ msgstr "(activo)"
 msgid "(template)"
 msgstr "(plantilla)"
 
+#. placeholder {0}: languages.length
+msgid "{0, plural, one {# language} other {# languages}}"
+msgstr "{0, plural, one {# idioma} other {# idiomas}}"
+
 #. placeholder {0}: lockedLang.name
 msgid "{0} — type country or Enter for base"
 msgstr "{0} — escribe el país o pulsa Enter para el básico"
@@ -117,6 +121,9 @@ msgstr "{regionCount, plural, one {{regionCount} región detectada} other {{regi
 
 #~ msgid "{stepLabel} Settings"
 #~ msgstr "Configuración de {0}"
+
+msgid "{totalEntries, plural, one {# audio file} other {# audio files}}"
+msgstr "{totalEntries, plural, one {# archivo de audio} other {# archivos de audio}}"
 
 #. placeholder {0}: String(filterSectionIndex + 1)
 msgid "/ Section {0}"
@@ -1157,6 +1164,9 @@ msgstr "Filtro basado en LLM para determinar si las imágenes extraídas son rel
 msgid "LLM-based segmentation to detect and split composited images into individual segments. Requires GPT-5.2+ for accurate bounding box coordinates."
 msgstr "Segmentación basada en LLM para detectar y dividir imágenes compuestas en segmentos individuales. Requiere GPT-5.2+ para coordenadas precisas de cuadros delimitadores."
 
+msgid "Loading audio data..."
+msgstr "Cargando datos de audio..."
+
 msgid "Loading Book..."
 msgstr "Cargando libro..."
 
@@ -1183,6 +1193,9 @@ msgstr "Cargando páginas..."
 
 msgid "Loading preview..."
 msgstr "Cargando vista previa..."
+
+msgid "Loading prompt..."
+msgstr "Cargando prompt..."
 
 msgid "Loading quizzes..."
 msgstr "Cargando quizzes..."
@@ -1526,6 +1539,9 @@ msgstr "Vista previa de los patrones HTML/CSS usados para páginas generadas por
 msgid "Prompt"
 msgstr "Prompt"
 
+msgid "Prompt template not found."
+msgstr "No se encontró la plantilla de prompt."
+
 msgid "Provider Routing"
 msgstr "Enrutamiento de proveedores"
 
@@ -1655,6 +1671,9 @@ msgstr "Restaurar elemento"
 
 msgid "Restore section to flow"
 msgstr "Restaurar sección al flujo"
+
+msgid "Retries"
+msgstr "Reintentos"
 
 msgid "Retry"
 msgstr "Reintentar"

@@ -44,6 +44,10 @@ msgstr "(ativo)"
 msgid "(template)"
 msgstr "(template)"
 
+#. placeholder {0}: languages.length
+msgid "{0, plural, one {# language} other {# languages}}"
+msgstr "{0, plural, one {# idioma} other {# idiomas}}"
+
 #. placeholder {0}: lockedLang.name
 msgid "{0} — type country or Enter for base"
 msgstr "{0} — digite o país ou pressione Enter para o padrão"
@@ -117,6 +121,9 @@ msgstr "{regionCount, plural, one {{regionCount} região detectada} other {{regi
 
 #~ msgid "{stepLabel} Settings"
 #~ msgstr "Configurações de {0}"
+
+msgid "{totalEntries, plural, one {# audio file} other {# audio files}}"
+msgstr "{totalEntries, plural, one {# arquivo de audio} other {# arquivos de audio}}"
 
 #. placeholder {0}: String(filterSectionIndex + 1)
 msgid "/ Section {0}"
@@ -1157,6 +1164,9 @@ msgstr "Filtro baseado em LLM para determinar se as imagens extraídas são rele
 msgid "LLM-based segmentation to detect and split composited images into individual segments. Requires GPT-5.2+ for accurate bounding box coordinates."
 msgstr "Segmentação baseada em LLM para detectar e dividir imagens compostas em segmentos individuais. Requer GPT-5.2+ para coordenadas precisas de caixas delimitadoras."
 
+msgid "Loading audio data..."
+msgstr "Carregando dados de audio..."
+
 msgid "Loading Book..."
 msgstr "Carregando livro..."
 
@@ -1183,6 +1193,9 @@ msgstr "Carregando páginas..."
 
 msgid "Loading preview..."
 msgstr "Carregando pré-visualização..."
+
+msgid "Loading prompt..."
+msgstr "Carregando prompt..."
 
 msgid "Loading quizzes..."
 msgstr "Carregando quizzes..."
@@ -1526,6 +1539,9 @@ msgstr "Pré-visualização dos padrões HTML/CSS usados para páginas geradas p
 msgid "Prompt"
 msgstr "Prompt"
 
+msgid "Prompt template not found."
+msgstr "Modelo de prompt nao encontrado."
+
 msgid "Provider Routing"
 msgstr "Roteamento de provedores"
 
@@ -1655,6 +1671,9 @@ msgstr "Restaurar elemento"
 
 msgid "Restore section to flow"
 msgstr "Restaurar seção ao fluxo"
+
+msgid "Retries"
+msgstr "Tentativas"
 
 msgid "Retry"
 msgstr "Tentar novamente"

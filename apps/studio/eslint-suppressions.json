@@ -6,12 +6,12 @@
   },
   "src/components/config/AdvancedLayoutPanel.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 34
+      "count": 33
     }
   },
   "src/components/config/ConfigEditor.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 50
+      "count": 49
     }
   },
   "src/components/debug/LlmLogsTab.tsx": {
@@ -24,17 +24,12 @@
       "count": 1
     }
   },
-  "src/components/pipeline/PromptViewer.tsx": {
+  "src/components/pipeline/components/StageSidebar.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 4
+      "count": 7
     }
   },
-  "src/components/pipeline/StageRunCard.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 1
-    }
-  },
-  "src/components/pipeline/TemplateViewer.tsx": {
+  "src/components/pipeline/components/TemplateViewer.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 2
     }
@@ -51,12 +46,7 @@
   },
   "src/components/pipeline/stages/text-to-speech/TextToSpeechSettings.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 15
-    }
-  },
-  "src/components/pipeline/stages/text-to-speech/TextToSpeechView.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 2
+      "count": 12
     }
   },
   "src/components/pipeline/stages/translations/components/SpeechPromptsEditor.tsx": {

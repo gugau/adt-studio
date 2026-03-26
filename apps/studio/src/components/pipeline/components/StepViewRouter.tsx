@@ -1,6 +1,6 @@
 import { createContext, useContext, useCallback, useState, type ReactNode } from "react"
-import { STAGES, toCamelLabel } from "./stage-config"
-import { getStageLabelI18n } from "./pipeline-i18n"
+import { STAGES, toCamelLabel } from "../stage-config"
+import { getStageLabelI18n } from "../pipeline-i18n"
 import {
   BookView,
   ExtractView,
@@ -12,7 +12,7 @@ import {
   TranslationsView,
   PreviewView,
   ExportView,
-} from "./stages"
+} from "../stages"
 import { cn } from "@/lib/utils"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"

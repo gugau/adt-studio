@@ -21,10 +21,10 @@ import {
   STAGES,
   hasStagePages,
   toCamelLabel,
-} from "./stage-config"
+} from "../stage-config"
 import { useSettingsDialog } from "@/routes/__root"
 import type { TaskInfoResponse } from "@/api/client"
-import { getStageLabelI18n } from "./pipeline-i18n"
+import { getStageLabelI18n } from "../pipeline-i18n"
 
 const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   general: msg`General`,
