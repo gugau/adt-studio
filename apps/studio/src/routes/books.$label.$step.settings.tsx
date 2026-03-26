@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { STAGES, isStageSlug } from "@/components/pipeline/stage-config"
+import { resolveSettingsStageSlug } from "@/components/pipeline/settings-routing"
 import { ExtractSettings } from "@/components/pipeline/stages/ExtractSettings"
 import { StoryboardSettings } from "@/components/pipeline/stages/StoryboardSettings"
 import { QuizzesSettings } from "@/components/pipeline/stages/QuizzesSettings"
@@ -72,29 +73,36 @@ function StepSettingsPage() {
 
       {/* Settings content */}
       <div className="flex-1 min-h-0 overflow-auto">
-        {step === "extract" ? (
-          <ExtractSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
-        ) : step === "storyboard" ? (
-          <StoryboardSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
-        ) : step === "quizzes" ? (
-          <QuizzesSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
-        ) : step === "glossary" ? (
-          <GlossarySettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
-        ) : step === "toc" ? (
-          <TocSettings bookLabel={label} headerTarget={headerTarget} />
-        ) : step === "captions" ? (
-          <CaptionsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
-        ) : step === "text-and-speech" ? (
-          <TranslationsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
-        ) : step === "validation" ? (
-          <ValidationSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
-        ) : (
-          <div className="p-4 max-w-2xl">
-            <p className="text-sm text-muted-foreground">
-              <Trans>Settings for this step are not yet available.</Trans>
-            </p>
-          </div>
-        )}
+        {(() => {
+          const settingsStage = resolveSettingsStageSlug(step)
+
+          switch (settingsStage) {
+            case "extract":
+              return <ExtractSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
+            case "storyboard":
+              return <StoryboardSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
+            case "quizzes":
+              return <QuizzesSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
+            case "glossary":
+              return <GlossarySettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
+            case "toc":
+              return <TocSettings bookLabel={label} headerTarget={headerTarget} />
+            case "captions":
+              return <CaptionsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
+            case "text-and-speech":
+              return <TranslationsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
+            case "validation":
+              return <ValidationSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
+            default:
+              return (
+                <div className="p-4 max-w-2xl">
+                  <p className="text-sm text-muted-foreground">
+                    <Trans>Settings for this step are not yet available.</Trans>
+                  </p>
+                </div>
+              )
+          }
+        })()}
       </div>
     </div>
   )
