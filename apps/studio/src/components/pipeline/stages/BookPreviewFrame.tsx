@@ -16,12 +16,18 @@ function previewAssetsUrl(bookLabel: string): string {
  *  The iframe is scaled down via CSS transform to fit the actual panel width. */
 const RENDER_WIDTH = 1280
 
+export type Alignment = "left" | "center" | "right"
+
 export interface BookPreviewFrameHandle {
   /** Get the iframe element's bounding rect in the viewport */
   getIframeRect: () => DOMRect | null
   /** Regenerate Tailwind CSS including the given extra HTML, then inject into iframe.
    *  Use after AI edits introduce new Tailwind classes not yet in the DB. */
   refreshCss: (extraHtml: string) => Promise<void>
+  /** Read the current text alignment of a data-id element in the iframe. */
+  getElementAlignment: (dataId: string) => Alignment
+  /** Change the text alignment of a data-id element. */
+  changeAlignment: (dataId: string, alignment: Alignment) => void
 }
 
 export interface BookPreviewFrameProps {
@@ -39,6 +45,8 @@ export interface BookPreviewFrameProps {
   onSelectElement?: (dataId: string, rect: DOMRect) => void
   /** Called when a text element is edited (blur/Enter after contenteditable) */
   onTextChanged?: (dataId: string, newText: string, fullHtml: string) => void
+  /** Called when text alignment is changed on a data-id element via changeAlignment() */
+  onAlignmentChanged?: (dataId: string, alignment: Alignment, fullHtml: string) => void
   /** When true (default), applies data-background-color to the iframe body */
   applyBodyBackground?: boolean
 }
@@ -63,6 +71,7 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   changedElements,
   onSelectElement,
   onTextChanged,
+  onAlignmentChanged,
   applyBodyBackground,
 }, ref) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -70,8 +79,50 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
 
   const assetsPrefix = previewAssetsUrl(bookLabel)
 
+  function extractFullHtml(): string {
+    const doc = iframeRef.current?.contentDocument
+    if (!doc?.body) return ""
+    const wrapper = doc.getElementById("content")
+    if (wrapper) {
+      const cls = (wrapper.getAttribute("class") || "").trim()
+      return cls ? wrapper.outerHTML : wrapper.innerHTML
+    }
+    return doc.body.innerHTML
+  }
+
+  function detectAlignment(el: Element): Alignment {
+    const cl = el.classList
+    if (cl.contains("text-center")) return "center"
+    if (cl.contains("text-right")) return "right"
+    return "left"
+  }
+
   useImperativeHandle(ref, () => ({
     getIframeRect: () => iframeRef.current?.getBoundingClientRect() ?? null,
+    getElementAlignment: (dataId: string): Alignment => {
+      const doc = iframeRef.current?.contentDocument
+      if (!doc) return "left"
+      const el = doc.querySelector(`[data-id="${CSS.escape(dataId)}"]`)
+      if (!el) return "left"
+      return detectAlignment(el)
+    },
+    changeAlignment: (dataId: string, alignment: Alignment) => {
+      const doc = iframeRef.current?.contentDocument
+      if (!doc) return
+      const el = doc.querySelector(`[data-id="${CSS.escape(dataId)}"]`) as HTMLElement | null
+      if (!el) return
+      el.classList.remove("text-left", "text-center", "text-right")
+      el.classList.add(`text-${alignment}`)
+      // Temporarily strip the selection outline so it doesn't get baked into the stored HTML
+      const savedOutline = el.style.outline
+      const savedOffset = el.style.outlineOffset
+      el.style.outline = ""
+      el.style.outlineOffset = ""
+      const fullHtml = extractFullHtml()
+      el.style.outline = savedOutline
+      el.style.outlineOffset = savedOffset
+      callbacksRef.current.onAlignmentChanged?.(dataId, alignment, fullHtml)
+    },
     refreshCss: async (extraHtml: string) => {
       const doc = iframeRef.current?.contentDocument
       if (!doc?.head) return
@@ -247,8 +298,8 @@ ${interactiveScript}
   )
 
   // Listen for postMessage from iframe
-  const callbacksRef = useRef({ onSelectElement, onTextChanged })
-  callbacksRef.current = { onSelectElement, onTextChanged }
+  const callbacksRef = useRef({ onSelectElement, onTextChanged, onAlignmentChanged })
+  callbacksRef.current = { onSelectElement, onTextChanged, onAlignmentChanged }
 
   const handleMessage = useCallback((e: MessageEvent) => {
     const iframe = iframeRef.current

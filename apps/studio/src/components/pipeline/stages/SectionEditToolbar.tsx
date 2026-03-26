@@ -1,4 +1,5 @@
-import { Crop, Eye, EyeOff, Pencil, Scissors, Sparkles, Trash2, Type, Upload } from "lucide-react"
+import { AlignCenter, AlignLeft, AlignRight, Crop, Eye, EyeOff, Pencil, Scissors, Sparkles, Trash2, Type, Upload } from "lucide-react"
+import type { Alignment } from "./BookPreviewFrame"
 import {
   Select,
   SelectContent,
@@ -42,6 +43,10 @@ export interface SectionEditToolbarProps {
   segmenting?: boolean
   /** Called when delete/remove block is requested */
   onDelete?: (dataId: string) => void
+  /** Current text alignment of the selected element */
+  currentAlignment?: Alignment
+  /** Called when text alignment is changed */
+  onChangeAlignment?: (dataId: string, alignment: Alignment) => void
 }
 
 /**
@@ -66,9 +71,17 @@ export function SectionEditToolbar({
   onSegment,
   segmenting,
   onDelete,
+  currentAlignment,
+  onChangeAlignment,
 }: SectionEditToolbarProps) {
   const { t } = useLingui()
   if (!dataId) return null
+
+  const ALIGN_OPTIONS = [
+    { value: "left" as Alignment, Icon: AlignLeft, label: () => t`Align left` },
+    { value: "center" as Alignment, Icon: AlignCenter, label: () => t`Align center` },
+    { value: "right" as Alignment, Icon: AlignRight, label: () => t`Align right` },
+  ]
 
   if (isImage) {
     // Image popover: positioned ABOVE the element (card height ~110px: thumbnail 48 + info + padding + actions)
@@ -221,6 +234,25 @@ export function SectionEditToolbar({
             {textType}
           </span>
         )
+      )}
+
+      {onChangeAlignment && (
+        <>
+          <span className="border-l h-4 mx-0.5" />
+          <div className="flex items-center">
+            {ALIGN_OPTIONS.map(({ value, Icon, label }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => onChangeAlignment(dataId, value)}
+                className={`p-0.5 rounded transition-colors cursor-pointer ${currentAlignment === value ? "bg-accent text-accent-foreground" : "hover:bg-muted text-muted-foreground"}`}
+                title={label()}
+              >
+                <Icon className="h-3 w-3" />
+              </button>
+            ))}
+          </div>
+        </>
       )}
 
       <span className="flex items-center gap-0.5 text-[10px] text-blue-500">

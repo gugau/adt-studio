@@ -289,6 +289,15 @@ msgstr "La IA ve la imagen actual y la modifica"
 msgid "AIza..."
 msgstr "AIza..."
 
+msgid "Align center"
+msgstr "Alinear al centro"
+
+msgid "Align left"
+msgstr "Alinear a la izquierda"
+
+msgid "Align right"
+msgstr "Alinear a la derecha"
+
 msgid "All sections have been deleted"
 msgstr "Todas las secciones han sido eliminadas"
 

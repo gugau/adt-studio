@@ -1292,6 +1292,31 @@ export function StoryboardSectionDetail({
     [parts, pendingSectioning, page.sectioning, sectionIndex]
   )
 
+  // Handle toolbar alignment change — delegates to BookPreviewFrame imperative method
+  const handleToolbarAlignment = useCallback(
+    (dataId: string, alignment: "left" | "center" | "right") => {
+      previewFrameRef.current?.changeAlignment(dataId, alignment)
+    },
+    []
+  )
+
+  // Handle alignment change callback from BookPreviewFrame
+  const handleAlignmentChanged = useCallback(
+    (_dataId: string, _alignment: string, fullHtml: string) => {
+      if (!page.rendering) return
+      const base = pendingRendering ?? page.rendering
+      const updated: RenderingData = {
+        ...base,
+        sections: base.sections.map((s) => {
+          if (s.sectionIndex !== sectionIndex) return s
+          return { ...s, html: fullHtml }
+        }),
+      }
+      setPendingRendering(updated)
+    },
+    [page.rendering, pendingRendering, sectionIndex]
+  )
+
   // Handle crop apply: upload cropped image, update sectioning + rendering HTML
   const handleCropApply = useCallback(
     async (blob: Blob) => {
@@ -1762,6 +1787,7 @@ export function StoryboardSectionDetail({
       textType: textEntry?.textType,
       isPruned: isImage ? imagePart?.isPruned ?? false : textEntry?.isPruned ?? false,
       imageSrc: isImage ? `${BASE_URL}/books/${bookLabel}/images/${dataId}` : undefined,
+      alignment: !isImage ? previewFrameRef.current?.getElementAlignment(dataId) ?? "left" : undefined,
     }
   }
 
@@ -1982,6 +2008,7 @@ export function StoryboardSectionDetail({
                   changedElements={changedElements}
                   onSelectElement={handleSelectElement}
                   onTextChanged={handleTextChanged}
+                  onAlignmentChanged={handleAlignmentChanged}
                   applyBodyBackground={applyBodyBackground}
                 />
             )}
@@ -2239,6 +2266,8 @@ export function StoryboardSectionDetail({
           onSegment={selectedInfo.isImage && hasApiKey ? handleSegment : undefined}
           segmenting={segmenting}
           onDelete={handleDeleteBlock}
+          currentAlignment={selectedInfo.alignment}
+          onChangeAlignment={!selectedInfo.isImage ? handleToolbarAlignment : undefined}
         />
       )}
 
