@@ -2,10 +2,10 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { Loader2, Play, Pause } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { api, getAudioUrl } from "@/api/client"
-import { useStepHeader } from "../StepViewRouter"
+import { useStepHeader } from "../../StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
-import { StageRunCard } from "../StageRunCard"
+import { StageRunCard } from "../../StageRunCard"
 import { cn } from "@/lib/utils"
 
 

@@ -49,24 +49,19 @@
       "count": 20
     }
   },
-  "src/components/pipeline/stages/PreviewView.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 6
-    }
-  },
-  "src/components/pipeline/stages/SpeechPromptsEditor.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 1
-    }
-  },
-  "src/components/pipeline/stages/TextToSpeechSettings.tsx": {
+  "src/components/pipeline/stages/text-to-speech/TextToSpeechSettings.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 15
     }
   },
-  "src/components/pipeline/stages/TextToSpeechView.tsx": {
+  "src/components/pipeline/stages/text-to-speech/TextToSpeechView.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 2
+    }
+  },
+  "src/components/pipeline/stages/translations/components/SpeechPromptsEditor.tsx": {
+    "lingui/no-unlocalized-strings": {
+      "count": 1
     }
   },
   "src/components/ui/dialog.tsx": {

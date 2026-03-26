@@ -167,6 +167,9 @@ msgstr "A sorting activity."
 msgid "A storyboard must be built before exporting."
 msgstr "A storyboard must be built before exporting."
 
+msgid "A storyboard must be built before previewing."
+msgstr "A storyboard must be built before previewing."
+
 msgid "A table-filling activity."
 msgstr "A table-filling activity."
 
@@ -1420,6 +1423,9 @@ msgstr "Package and preview the final ADT web application."
 
 msgid "Packaging"
 msgstr "Packaging"
+
+msgid "Packaging failed"
+msgstr "Packaging failed"
 
 msgid "Packaging preview..."
 msgstr "Packaging preview..."

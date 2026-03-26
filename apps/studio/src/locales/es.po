@@ -167,6 +167,9 @@ msgstr "Una actividad de ordenamiento."
 msgid "A storyboard must be built before exporting."
 msgstr "Se debe crear un storyboard antes de exportar."
 
+msgid "A storyboard must be built before previewing."
+msgstr "Se debe crear un storyboard antes de previsualizar."
+
 msgid "A table-filling activity."
 msgstr "Una actividad de completar tablas."
 
@@ -1420,6 +1423,9 @@ msgstr "Empaqueta y previsualiza la aplicación web ADT final."
 
 msgid "Packaging"
 msgstr "Empaquetando"
+
+msgid "Packaging failed"
+msgstr "El empaquetado falló"
 
 msgid "Packaging preview..."
 msgstr "Empaquetando vista previa..."

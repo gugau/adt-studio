@@ -22,8 +22,8 @@ import { LanguagePicker } from "@/components/LanguagePicker"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useStepConfig } from "@/hooks/use-step-config"
 import { normalizeLocale } from "@/lib/languages"
-import { SpeechPromptsEditor } from "./SpeechPromptsEditor"
-import { VoiceMappingsEditor } from "./VoiceMappingsEditor"
+import { SpeechPromptsEditor } from "./components/SpeechPromptsEditor"
+import { VoiceMappingsEditor } from "./components/VoiceMappingsEditor"
 import { useLingui } from "@lingui/react/macro"
 
 export function TranslationsSettings({ bookLabel, headerTarget, tab = "general" }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string }) {
