@@ -1,5 +1,6 @@
 import { Fragment, useMemo } from "react"
 import type { AccessibilityFinding, AccessibilityPageResult } from "@adt/types"
+import { Trans, useLingui } from "@lingui/react/macro"
 import type { PageAccessibilitySummary } from "@/lib/accessibility-summary"
 import { ExternalLink } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -69,7 +70,6 @@ interface AccessibilityCurrentPagePanelProps {
 
 const URL_PATTERN = /https?:\/\/[^\s<>"']+/g
 
-
 function splitTrailingPunctuation(url: string) {
   const match = url.match(/[),.;:!?]+$/)
   if (!match) {
@@ -132,7 +132,23 @@ function LinkifiedText({
   )
 }
 
+function SeverityLabel({ severity }: { severity: Severity }) {
+  switch (severity) {
+    case "critical":
+      return <Trans>critical</Trans>
+    case "serious":
+      return <Trans>serious</Trans>
+    case "moderate":
+      return <Trans>moderate</Trans>
+    case "minor":
+      return <Trans>minor</Trans>
+    default:
+      return <Trans>unknown</Trans>
+  }
+}
+
 function FindingsList({ page, embedded = false, onFindingHover }: { page: AccessibilityPageResult; embedded?: boolean; onFindingHover?: (finding: AccessibilityFinding | null) => void }) {
+  const { t } = useLingui()
   const allFindings = useMemo(
     () => sortFindings([...page.violations, ...page.incomplete]),
     [page.violations, page.incomplete],
@@ -146,7 +162,7 @@ function FindingsList({ page, embedded = false, onFindingHover }: { page: Access
         </div>
       ) : allFindings.length === 0 ? (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50/80 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-400">
-          No accessibility findings were reported for this page.
+          <Trans>No accessibility findings were reported for this page.</Trans>
         </div>
       ) : (
         <div className="space-y-3">
@@ -160,7 +176,7 @@ function FindingsList({ page, embedded = false, onFindingHover }: { page: Access
               <div className="flex flex-wrap items-center gap-2">
                 <Badge
                   className={cn(
-                    "text-[11px] capitalize border-0",
+                    "border-0 text-[11px] capitalize",
                     finding.impact === "critical" ? "bg-red-500 text-white"
                       : finding.impact === "serious" ? "bg-orange-500 text-white"
                       : finding.impact === "moderate" ? "bg-yellow-400 text-yellow-950"
@@ -168,7 +184,7 @@ function FindingsList({ page, embedded = false, onFindingHover }: { page: Access
                       : "bg-gray-400 text-white",
                   )}
                 >
-                  {finding.impact ?? "unknown"}
+                  <SeverityLabel severity={getFindingSeverity(finding.impact)} />
                 </Badge>
               </div>
               <div className="flex items-start justify-between gap-2">
@@ -185,14 +201,14 @@ function FindingsList({ page, embedded = false, onFindingHover }: { page: Access
               <LinkifiedText text={finding.description} className="text-xs leading-relaxed text-muted-foreground" />
               {finding.nodes.length > 0 ? (
                 <div className="space-y-1.5">
-                  <div className="text-xs font-medium text-muted-foreground">Nodes</div>
+                  <div className="text-xs font-medium text-muted-foreground"><Trans>Nodes</Trans></div>
                   {finding.nodes.map((node, nodeIndex) => (
                     <div key={`${finding.id}-${nodeIndex}`} className="rounded-lg bg-muted/40 px-2.5 py-2 text-xs font-mono">
-                      <div>{node.target.join(", ") || "(no target)"}</div>
+                      <div>{node.target.join(", ") || t`(no target)`}</div>
                       {node.failureSummary ? (
                         <LinkifiedText
                           text={node.failureSummary}
-                          className="mt-1 font-sans leading-relaxed text-muted-foreground whitespace-pre-wrap"
+                          className="mt-1 whitespace-pre-wrap font-sans leading-relaxed text-muted-foreground"
                           preserveWhitespace
                         />
                       ) : null}
@@ -211,16 +227,19 @@ function FindingsList({ page, embedded = false, onFindingHover }: { page: Access
 export function AccessibilityCurrentPagePanel({
   page,
   summary,
-  emptyMessage = "Open a page in Preview to show its page-specific accessibility findings here.",
+  emptyMessage,
   className = "",
   embedded = false,
   onFindingHover,
 }: AccessibilityCurrentPagePanelProps) {
+  const { t } = useLingui()
+  const resolvedEmptyMessage = emptyMessage ?? t`Open a page in Preview to show its page-specific accessibility findings here.`
+
   if (!page || !summary) {
     return (
       <div className={cn(embedded ? "rounded-2xl border bg-card/70 px-3 py-3" : "rounded-xl border bg-card p-4", className)}>
         <div className="rounded-lg border border-dashed px-4 py-4 text-sm text-muted-foreground">
-          {emptyMessage}
+          {resolvedEmptyMessage}
         </div>
       </div>
     )
@@ -228,18 +247,18 @@ export function AccessibilityCurrentPagePanel({
 
   const severityCounts = computeSeverityCounts(page)
 
+  const severityTiles = SEVERITY_ORDER.filter((s) => severityCounts[s] > 0).map((s) => (
+    <div key={s} className={cn("min-w-[4.5rem] rounded-lg border-2 px-3 py-2", embedded ? "" : "min-w-[5rem]", SEVERITY_BORDER[s])}>
+      <div className="text-[11px] text-muted-foreground capitalize"><SeverityLabel severity={s} /></div>
+      <div className={cn(embedded ? "text-lg" : "text-xl", "font-semibold tabular-nums")}>{severityCounts[s]}</div>
+    </div>
+  ))
+
   if (embedded) {
     return (
       <div className={cn("space-y-3", className)}>
-        <div className="rounded-2xl border bg-card/70 px-3.5 py-3.5 space-y-3">
-          <div className="flex flex-wrap gap-2">
-            {SEVERITY_ORDER.filter((s) => severityCounts[s] > 0).map((s) => (
-              <div key={s} className={cn("rounded-lg border-2 px-3 py-2 min-w-[4.5rem]", SEVERITY_BORDER[s])}>
-                <div className="text-[11px] text-muted-foreground capitalize">{s}</div>
-                <div className="text-lg font-semibold tabular-nums">{severityCounts[s]}</div>
-              </div>
-            ))}
-          </div>
+        <div className="space-y-3 rounded-2xl border bg-card/70 px-3.5 py-3.5">
+          <div className="flex flex-wrap gap-2">{severityTiles}</div>
           <FindingsList page={page} embedded onFindingHover={onFindingHover} />
         </div>
       </div>
@@ -249,14 +268,7 @@ export function AccessibilityCurrentPagePanel({
   return (
     <div className={cn("overflow-hidden rounded-xl border bg-card", className)}>
       <div className="space-y-4 px-4 py-4">
-        <div className="flex flex-wrap gap-2">
-          {SEVERITY_ORDER.filter((s) => severityCounts[s] > 0).map((s) => (
-            <div key={s} className={cn("rounded-lg border-2 px-3 py-2 min-w-[5rem]", SEVERITY_BORDER[s])}>
-              <div className="text-xs text-muted-foreground capitalize">{s}</div>
-              <div className="text-xl font-semibold tabular-nums">{severityCounts[s]}</div>
-            </div>
-          ))}
-        </div>
+        <div className="flex flex-wrap gap-2">{severityTiles}</div>
         <FindingsList page={page} embedded onFindingHover={onFindingHover} />
       </div>
     </div>

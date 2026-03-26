@@ -6,7 +6,7 @@
   },
   "src/components/accessibility/AccessibilityCurrentPagePanel.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 9
+      "count": 5
     }
   },
   "src/components/config/AdvancedLayoutPanel.tsx": {
@@ -89,14 +89,9 @@
       "count": 1
     }
   },
-  "src/components/pipeline/stages/PreviewAccessibilityCard.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 14
-    }
-  },
   "src/components/pipeline/stages/PreviewValidationCard.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 56
+      "count": 3
     }
   },
   "src/components/pipeline/stages/PreviewView.tsx": {
@@ -134,11 +129,6 @@
       "count": 2
     }
   },
-  "src/components/pipeline/stages/ValidationView.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 11
-    }
-  },
   "src/components/pipeline/stages/quizzes-image-state.test.ts": {
     "lingui/no-unlocalized-strings": {
       "count": 15
@@ -166,17 +156,17 @@
   },
   "src/components/validation/AccessibilityValidationTabs.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 43
+      "count": 6
     }
   },
   "src/components/validation/ReviewerChecklistSettingsTab.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 34
+      "count": 4
     }
   },
   "src/components/validation/ReviewerValidationSummaryTab.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 50
+      "count": 2
     }
   },
   "src/hooks/run-state.test.ts": {
@@ -194,11 +184,6 @@
       "count": 3
     }
   },
-  "src/lib/accessibility-summary.ts": {
-    "lingui/no-unlocalized-strings": {
-      "count": 8
-    }
-  },
   "src/lib/activity-utils.ts": {
     "lingui/no-unlocalized-strings": {
       "count": 2
@@ -212,11 +197,6 @@
   "src/lib/render-strategy.test.ts": {
     "lingui/no-unlocalized-strings": {
       "count": 36
-    }
-  },
-  "src/lib/reviewer-validation-defaults.ts": {
-    "lingui/no-unlocalized-strings": {
-      "count": 12
     }
   },
   "src/routes/books.$label.$step.settings.tsx": {

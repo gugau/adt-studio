@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { AlertCircle, Loader2, RotateCcw, ShieldCheck } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate, useSearch } from "@tanstack/react-router"
+import { Trans, useLingui } from "@lingui/react/macro"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { api } from "@/api/client"
@@ -22,6 +23,7 @@ function normalizeValidationTab(value: string | undefined) {
 }
 
 export function ValidationView({ bookLabel }: { bookLabel: string }) {
+  const { t } = useLingui()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const search = useSearch({ strict: false }) as { tab?: string }
@@ -44,7 +46,7 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
         queryClient.invalidateQueries({ queryKey: ["book-config", bookLabel] }),
       ])
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Packaging failed")
+      setError(e instanceof Error ? e.message : t`Packaging failed`)
     } finally {
       setPackaging(false)
     }
@@ -58,14 +60,15 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
 
   if (!storyboardDone) {
     return (
-      <div className="p-6 max-w-xl flex flex-col items-center gap-3 text-center">
-        <AlertCircle className="w-8 h-8 text-muted-foreground/50" />
+      <div className="flex max-w-xl flex-col items-center gap-3 p-6 text-center">
+        <AlertCircle className="h-8 w-8 text-muted-foreground/50" />
         <p className="text-sm text-muted-foreground">
-          A storyboard must be built before running validation.
+          <Trans>A storyboard must be built before running validation.</Trans>
         </p>
         <p className="text-sm text-muted-foreground">
-          Run the pipeline through
-          at least the <span className="font-medium text-foreground">Storyboard</span> stage first.
+          <Trans>
+            Run the pipeline through at least the <span className="font-medium text-foreground">Storyboard</span> stage first.
+          </Trans>
         </p>
       </div>
     )
@@ -75,7 +78,7 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
     return (
       <div className="flex h-full items-center justify-center py-12 text-muted-foreground">
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        <span className="text-sm">Packaging validation results...</span>
+        <span className="text-sm"><Trans>Packaging validation results...</Trans></span>
       </div>
     )
   }
@@ -89,16 +92,16 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
               <ShieldCheck className="h-4 w-4" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold">Validation</h3>
+              <h3 className="text-sm font-semibold"><Trans>Validation</Trans></h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Whole-book checks for packaged ADT output, plus reviewer findings captured from Preview.
+                <Trans>Whole-book checks for packaged ADT output, plus reviewer findings captured from Preview.</Trans>
               </p>
             </div>
           </div>
 
           <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => void runPackage()}>
             <RotateCcw className="h-3.5 w-3.5" />
-            Refresh validation
+            <Trans>Refresh validation</Trans>
           </Button>
         </div>
 
@@ -124,10 +127,10 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
         <div className="border-b border-border bg-background px-4 py-2">
           <TabsList className="h-auto gap-1 bg-muted/80 p-1">
             <TabsTrigger value="accessibility-summary" className="px-3 py-1.5 text-xs">
-              Accessibility Summary
+              <Trans>Accessibility Summary</Trans>
             </TabsTrigger>
             <TabsTrigger value="reviewer-validation" className="px-3 py-1.5 text-xs">
-              Reviewer Validation
+              <Trans>Reviewer Validation</Trans>
             </TabsTrigger>
           </TabsList>
         </div>

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react"
 import type { AccessibilityAssessmentOutput, AccessibilityFinding, AccessibilityPageResult } from "@adt/types"
+import { useLingui } from "@lingui/react/macro"
+import { Trans } from "@lingui/react/macro"
 import {
   AlertTriangle,
   CheckCircle2,
@@ -38,6 +40,7 @@ export function PreviewAccessibilityCard({
   onExpandedChange,
   onFindingHover,
 }: PreviewAccessibilityCardProps) {
+  const { t } = useLingui()
   const storageKey = `adt-preview-a11y-card:${label}`
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") {
@@ -59,7 +62,6 @@ export function PreviewAccessibilityCard({
       setCollapsed(true)
     }
   }, [panelOpen])
-
 
   useEffect(() => {
     onExpandedChange?.(!collapsed)
@@ -91,21 +93,21 @@ export function PreviewAccessibilityCard({
   }, [collapsed, otherCardExpanded, panelOpen])
 
   const overallSummary = isLoading
-    ? "Checking accessibility"
+    ? t`Checking accessibility`
     : error
-      ? "Unavailable"
+      ? t`Unavailable`
       : assessment
         ? ""
-        : "No assessment"
+        : t`No assessment`
   const pageSummary = currentPage
     ? currentPage.hasError
-      ? "Accessibility check failed for this page"
-      : `${currentPage.totalCount} ${currentPage.totalCount === 1 ? "finding" : "findings"} this page`
+      ? t`Accessibility check failed for this page`
+      : t`${currentPage.totalCount} ${currentPage.totalCount === 1 ? "finding" : "findings"} this page`
     : assessment
-      ? "Open a page to see page-level findings"
+      ? t`Open a page to see page-level findings`
       : isLoading
-        ? "Loading page-level findings"
-        : "Package preview to generate results"
+        ? t`Loading page-level findings`
+        : t`Package preview to generate results`
 
   if (collapsed) {
     if (!showCollapsedCard) {
@@ -120,7 +122,7 @@ export function PreviewAccessibilityCard({
           collapsedCardVisible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0",
         )}
         onClick={() => setCollapsed(false)}
-        title="Show accessibility summary"
+        title={t`Show accessibility summary`}
       >
         <div className="mt-0.5 shrink-0">
           {isLoading ? (
@@ -136,7 +138,7 @@ export function PreviewAccessibilityCard({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-3 text-sm">
-            <span className="font-medium">Accessibility</span>
+            <span className="font-medium"><Trans>Accessibility</Trans></span>
             {overallSummary ? <span className="shrink-0 text-[11px] text-muted-foreground">{overallSummary}</span> : null}
           </div>
           <div className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{pageSummary}</div>
@@ -162,12 +164,12 @@ export function PreviewAccessibilityCard({
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold">Accessibility Findings</h3>
+          <h3 className="text-sm font-semibold"><Trans>Accessibility Findings</Trans></h3>
           {!assessment && (isLoading || error) ? (
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
               {isLoading
-                ? "Refreshing results for this packaged preview."
-                : "Accessibility results are temporarily unavailable."}
+                ? <Trans>Refreshing results for this packaged preview.</Trans>
+                : <Trans>Accessibility results are temporarily unavailable.</Trans>}
             </p>
           ) : null}
         </div>
@@ -176,7 +178,7 @@ export function PreviewAccessibilityCard({
           size="icon"
           className="h-7 w-7 rounded-full"
           onClick={() => setCollapsed(true)}
-          title="Collapse accessibility summary"
+          title={t`Collapse accessibility summary`}
         >
           <ChevronDown className="h-4 w-4" />
         </Button>
@@ -187,7 +189,7 @@ export function PreviewAccessibilityCard({
           page={currentPageResult}
           summary={currentPage}
           embedded
-          emptyMessage="Open a page in Preview to show its page-specific accessibility findings here."
+          emptyMessage={t`Open a page in Preview to show its page-specific accessibility findings here.`}
           onFindingHover={onFindingHover}
         />
       </div>

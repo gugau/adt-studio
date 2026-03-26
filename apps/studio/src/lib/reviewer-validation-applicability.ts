@@ -1,10 +1,10 @@
 import type { ReviewerValidationStatus } from "@adt/types"
-import { getReviewerValidationDefaultReason } from "./reviewer-validation-defaults"
+import { createReviewerValidationDefaultReason, type ReviewerValidationDefaultReason } from "./reviewer-validation-defaults"
 
 export type DerivedCriterionStatus = {
   status: ReviewerValidationStatus
   isDerived: boolean
-  reason: string | null
+  reason: ReviewerValidationDefaultReason | null
 }
 
 export type ReviewerValidationApplicabilityContext = {
@@ -75,7 +75,7 @@ export function resolveReviewerValidationCriterionStatus({
     return {
       status: "not-applicable",
       isDerived: true,
-      reason: getReviewerValidationDefaultReason("page-has-no-images"),
+      reason: createReviewerValidationDefaultReason("page-has-no-images"),
     }
   }
 
@@ -83,7 +83,7 @@ export function resolveReviewerValidationCriterionStatus({
     return {
       status: "not-applicable",
       isDerived: true,
-      reason: getReviewerValidationDefaultReason("page-has-no-activity"),
+      reason: createReviewerValidationDefaultReason("page-has-no-activity"),
     }
   }
 
@@ -91,7 +91,7 @@ export function resolveReviewerValidationCriterionStatus({
     return {
       status: "not-applicable",
       isDerived: true,
-      reason: getReviewerValidationDefaultReason("easy-read-unavailable"),
+      reason: createReviewerValidationDefaultReason("easy-read-unavailable"),
     }
   }
 
@@ -99,7 +99,7 @@ export function resolveReviewerValidationCriterionStatus({
     return {
       status: "not-applicable",
       isDerived: true,
-      reason: getReviewerValidationDefaultReason("sign-language-unavailable"),
+      reason: createReviewerValidationDefaultReason("sign-language-unavailable"),
     }
   }
 
@@ -111,7 +111,7 @@ export function resolveReviewerValidationCriterionStatus({
       return {
         status: "not-applicable",
         isDerived: true,
-        reason: getReviewerValidationDefaultReason("glossary-unavailable"),
+        reason: createReviewerValidationDefaultReason("glossary-unavailable"),
       }
     }
   }
@@ -121,7 +121,7 @@ export function resolveReviewerValidationCriterionStatus({
       return {
         status: "not-applicable",
         isDerived: true,
-        reason: getReviewerValidationDefaultReason("text-and-speech-unavailable"),
+        reason: createReviewerValidationDefaultReason("text-and-speech-unavailable"),
       }
     }
     if (ttsPending) {
@@ -131,7 +131,7 @@ export function resolveReviewerValidationCriterionStatus({
       return {
         status: "not-applicable",
         isDerived: true,
-        reason: getReviewerValidationDefaultReason("text-and-speech-language-unavailable", { language: sessionLanguage }),
+        reason: createReviewerValidationDefaultReason("text-and-speech-language-unavailable", { language: sessionLanguage }),
       }
     }
   }
@@ -141,7 +141,7 @@ export function resolveReviewerValidationCriterionStatus({
       return {
         status: "not-applicable",
         isDerived: true,
-        reason: getReviewerValidationDefaultReason("translation-unavailable"),
+        reason: createReviewerValidationDefaultReason("translation-unavailable"),
       }
     }
     if (translationPending) {
@@ -151,14 +151,14 @@ export function resolveReviewerValidationCriterionStatus({
       return {
         status: "not-applicable",
         isDerived: true,
-        reason: getReviewerValidationDefaultReason("translation-language-required"),
+        reason: createReviewerValidationDefaultReason("translation-language-required"),
       }
     }
     if (!translationAvailable) {
       return {
         status: "not-applicable",
         isDerived: true,
-        reason: getReviewerValidationDefaultReason("translation-language-unavailable", { language: sessionLanguage }),
+        reason: createReviewerValidationDefaultReason("translation-language-unavailable", { language: sessionLanguage }),
       }
     }
   }

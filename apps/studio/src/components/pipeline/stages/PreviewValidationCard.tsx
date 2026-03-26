@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { Trans, useLingui } from "@lingui/react/macro"
 import { useQuery } from "@tanstack/react-query"
 import type {
   ReviewerPageValidationRecord,
@@ -38,6 +39,7 @@ import {
 } from "@/lib/reviewer-validation-applicability"
 import { findResumeReviewerPage } from "@/lib/reviewer-validation-progress"
 import { getReviewerSessionStorageKey } from "@/lib/reviewer-validation-session"
+import { formatReviewerValidationDefaultReason } from "@/lib/reviewer-validation-defaults"
 import { cn } from "@/lib/utils"
 import {
   useReviewerPageValidationRecords,
@@ -86,12 +88,25 @@ type SessionFormState = {
 }
 
 const COLLAPSED_STORAGE_PREFIX = "adt-preview-review-card"
-const STATUS_OPTIONS: Array<{ value: ReviewerValidationStatus; label: string }> = [
-  { value: "pass", label: "Pass" },
-  { value: "needs-changes", label: "Needs changes" },
-  { value: "not-applicable", label: "N/A" },
-  { value: "not-reviewed", label: "Not reviewed" },
+const STATUS_OPTIONS: Array<{ value: ReviewerValidationStatus }> = [
+  { value: "pass" },
+  { value: "needs-changes" },
+  { value: "not-applicable" },
+  { value: "not-reviewed" },
 ]
+
+function getStatusLabel(t: ReturnType<typeof useLingui>["t"], value: ReviewerValidationStatus): string {
+  switch (value) {
+    case "pass":
+      return t`Pass`
+    case "needs-changes":
+      return t`Needs changes`
+    case "not-applicable":
+      return t`N/A`
+    default:
+      return t`Not reviewed`
+  }
+}
 
 const DEFAULT_SESSION_FORM: SessionFormState = {
   reviewerName: "",
@@ -139,6 +154,7 @@ export function PreviewValidationCard({
   onNavigateToPage,
   onExpandedChange,
 }: PreviewValidationCardProps) {
+  const { t, i18n } = useLingui()
   const storageKey = `${COLLAPSED_STORAGE_PREFIX}:${label}`
   const activeSessionStorageKey = getReviewerSessionStorageKey(label)
   const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -406,23 +422,25 @@ export function PreviewValidationCard({
   const isOnResumePage = !!resumeTarget && resumeTarget.pageId === currentPage.pageId
 
   const collapsedSummary = !activeSession
-    ? "Start reviewer validation"
+    ? t`Start reviewer validation`
     : !currentPage.pageId
-      ? "Open a page to review"
-      : `${counts.reviewed}/${criteriaCount} checked`
+      ? t`Open a page to review`
+      : t`${counts.reviewed}/${criteriaCount} checked`
   const collapsedDetail = !activeSession
-    ? "Create a reviewer session for this book."
+    ? t`Create a reviewer session for this book.`
     : resumeTarget
       ? isOnResumePage
-        ? `Resume target: page ${resumeTarget.pageNumber ?? resumeTarget.pageId}`
-        : `Continue on page ${resumeTarget.pageNumber ?? resumeTarget.pageId}`
+        ? t`Resume target: page ${resumeTarget.pageNumber ?? resumeTarget.pageId}`
+        : t`Continue on page ${resumeTarget.pageNumber ?? resumeTarget.pageId}`
       : currentPage.pageId
         ? counts.needsChanges > 0
-          ? `${counts.needsChanges} item${counts.needsChanges === 1 ? "" : "s"} need changes on this page`
+          ? counts.needsChanges === 1
+            ? t`1 item needs changes on this page`
+            : t`${counts.needsChanges} items need changes on this page`
           : counts.reviewed > 0
-            ? "No changes flagged on this page"
-            : "This page has not been reviewed yet"
-        : "Navigate within Preview to capture page-specific review notes"
+            ? t`No changes flagged on this page`
+            : t`This page has not been reviewed yet`
+        : t`Navigate within Preview to capture page-specific review notes`
 
   const handleSessionFormChange = (field: keyof SessionFormState, value: string) => {
     setSessionForm((current) => ({ ...current, [field]: value }))
@@ -431,7 +449,7 @@ export function PreviewValidationCard({
   const handleCreateSession = async () => {
     setSessionError(null)
     if (!sessionForm.reviewerName.trim()) {
-      setSessionError("Reviewer name is required.")
+      setSessionError(t`Reviewer name is required.`)
       return
     }
 
@@ -451,7 +469,7 @@ export function PreviewValidationCard({
       setShowSessionForm(false)
       setSessionForm(DEFAULT_SESSION_FORM)
     } catch (error) {
-      setSessionError(error instanceof Error ? error.message : "Failed to create reviewer session")
+      setSessionError(error instanceof Error ? error.message : t`Failed to create reviewer session`)
     }
   }
 
@@ -548,7 +566,7 @@ export function PreviewValidationCard({
           }
           setCollapsed(false)
         }}
-        title={collapsedCardShowsResume ? `Continue reviewer validation on page ${resumeTarget?.pageNumber ?? resumeTarget?.pageId}` : "Show reviewer validation"}
+        title={collapsedCardShowsResume ? t`Continue reviewer validation on page ${resumeTarget?.pageNumber ?? resumeTarget?.pageId}` : t`Show reviewer validation`}
       >
         <div className="mt-0.5 shrink-0">
           {saveRecordMutation.isPending || saveSessionMutation.isPending ? (
@@ -562,7 +580,7 @@ export function PreviewValidationCard({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-3 text-sm">
-            <span className="font-medium">Validation</span>
+            <span className="font-medium"><Trans>Validation</Trans></span>
             {activeSession ? (
               <span className="shrink-0 text-[11px] text-muted-foreground">{activeSession.session.reviewer_name}</span>
             ) : null}
@@ -584,11 +602,11 @@ export function PreviewValidationCard({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold">Validation</h3>
+            <h3 className="text-sm font-semibold"><Trans>Validation</Trans></h3>
             {activeSession?.session.language ? <Badge variant="outline">{activeSession.session.language}</Badge> : null}
           </div>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            Record reviewer findings for the current page and save them to the active validation session.
+            <Trans>Record reviewer findings for the current page and save them to the active validation session.</Trans>
           </p>
         </div>
         <Button
@@ -596,7 +614,7 @@ export function PreviewValidationCard({
           size="icon"
           className="h-7 w-7 rounded-full"
           onClick={() => setCollapsed(true)}
-          title="Collapse validation"
+          title={t`Collapse validation`}
         >
           <ChevronDown className="h-4 w-4" />
         </Button>
@@ -613,7 +631,7 @@ export function PreviewValidationCard({
             }}
           >
             <SelectTrigger className="h-8 text-xs">
-              <SelectValue placeholder="Select reviewer session" />
+              <SelectValue placeholder={t`Select reviewer session`} />
             </SelectTrigger>
             <SelectContent>
               {sortedSessions.map((entry) => (
@@ -635,7 +653,7 @@ export function PreviewValidationCard({
           }}
         >
           <Plus className="h-3.5 w-3.5" />
-          New session
+          <Trans>New session</Trans>
         </Button>
       </div>
 
@@ -643,54 +661,54 @@ export function PreviewValidationCard({
         {sessions.isLoading || (!activeCatalog && catalog.isLoading) ? (
           <div className="flex items-center justify-center rounded-2xl border bg-card/70 px-4 py-10 text-sm text-muted-foreground">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Loading reviewer validation…
+            <Trans>Loading reviewer validation…</Trans>
           </div>
         ) : !activeCatalog && catalog.error ? (
           <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-            Failed to load validation checklist: {catalog.error.message}
+            <Trans>Failed to load validation checklist:</Trans> {catalog.error.message}
           </div>
         ) : showSessionForm || !activeSession ? (
           <div className="space-y-4 rounded-2xl border bg-card/70 px-4 py-4">
             <div>
-              <h4 className="text-sm font-medium">Start a reviewer session</h4>
+              <h4 className="text-sm font-medium"><Trans>Start a reviewer session</Trans></h4>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                Sessions let different reviewers capture findings independently, including language-specific reviews.
+                <Trans>Sessions let different reviewers capture findings independently, including language-specific reviews.</Trans>
               </p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="reviewer-name" className="text-xs">Reviewer name</Label>
+                <Label htmlFor="reviewer-name" className="text-xs"><Trans>Reviewer name</Trans></Label>
                 <Input
                   id="reviewer-name"
                   value={sessionForm.reviewerName}
                   onChange={(event) => handleSessionFormChange("reviewerName", event.target.value)}
                   className="h-8 text-xs"
-                  placeholder="Jane Reviewer"
+                  placeholder={t`Jane Reviewer`}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="reviewer-institution" className="text-xs">Institution</Label>
+                <Label htmlFor="reviewer-institution" className="text-xs"><Trans>Institution</Trans></Label>
                 <Input
                   id="reviewer-institution"
                   value={sessionForm.institution}
                   onChange={(event) => handleSessionFormChange("institution", event.target.value)}
                   className="h-8 text-xs"
-                  placeholder="UNICEF"
+                  placeholder={t`UNICEF`}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="reviewer-language" className="text-xs">Language</Label>
+                <Label htmlFor="reviewer-language" className="text-xs"><Trans>Language</Trans></Label>
                 <Input
                   id="reviewer-language"
                   value={sessionForm.language}
                   onChange={(event) => handleSessionFormChange("language", event.target.value)}
                   className="h-8 text-xs"
-                  placeholder="en"
+                  placeholder={t`en`}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="reviewer-start-page" className="text-xs">Start page</Label>
+                <Label htmlFor="reviewer-start-page" className="text-xs"><Trans>Start page</Trans></Label>
                 <Input
                   id="reviewer-start-page"
                   type="number"
@@ -701,7 +719,7 @@ export function PreviewValidationCard({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="reviewer-end-page" className="text-xs">End page</Label>
+                <Label htmlFor="reviewer-end-page" className="text-xs"><Trans>End page</Trans></Label>
                 <Input
                   id="reviewer-end-page"
                   type="number"
@@ -712,13 +730,13 @@ export function PreviewValidationCard({
                 />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="reviewer-comments" className="text-xs">Comments</Label>
+                <Label htmlFor="reviewer-comments" className="text-xs"><Trans>Comments</Trans></Label>
                 <Textarea
                   id="reviewer-comments"
                   value={sessionForm.comments}
                   onChange={(event) => handleSessionFormChange("comments", event.target.value)}
                   className="min-h-[88px] text-xs"
-                  placeholder="Optional notes about the review scope or assignments"
+                  placeholder={t`Optional notes about the review scope or assignments`}
                 />
               </div>
             </div>
@@ -732,18 +750,18 @@ export function PreviewValidationCard({
             <div className="flex items-center justify-end gap-2">
               {sortedSessions.length > 0 ? (
                 <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShowSessionForm(false)}>
-                  Cancel
+                  <Trans>Cancel</Trans>
                 </Button>
               ) : null}
               <Button size="sm" className="h-8 text-xs" onClick={() => void handleCreateSession()} disabled={saveSessionMutation.isPending}>
                 {saveSessionMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
-                Create session
+                <Trans>Create session</Trans>
               </Button>
             </div>
           </div>
         ) : !currentPage.pageId || !currentPage.href ? (
           <div className="rounded-2xl border border-dashed bg-card/70 px-4 py-8 text-sm text-muted-foreground">
-            Open a page in Preview to start recording reviewer validation findings.
+            <Trans>Open a page in Preview to start recording reviewer validation findings.</Trans>
           </div>
         ) : (
           <div className="space-y-3.5">
@@ -758,12 +776,12 @@ export function PreviewValidationCard({
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <Badge variant="secondary" className="shrink-0">
-                    {currentPage.pageNumber != null ? `Page ${currentPage.pageNumber}` : "Current Preview Page"}
+                    {currentPage.pageNumber != null ? t`Page ${currentPage.pageNumber}` : t`Current Preview Page`}
                   </Badge>
                   {resumeTarget ? (
                     isOnResumePage ? (
                       <Badge variant="outline" className="shrink-0 text-[11px]">
-                        Resume target
+                        <Trans>Resume target</Trans>
                       </Badge>
                     ) : (
                       <Button
@@ -774,7 +792,7 @@ export function PreviewValidationCard({
                         onClick={handleResumeReview}
                       >
                         <SkipForward className="h-3.5 w-3.5" />
-                        Continue page {resumeTarget.pageNumber ?? resumeTarget.pageId}
+                        <Trans>Continue page {resumeTarget.pageNumber ?? resumeTarget.pageId}</Trans>
                       </Button>
                     )
                   ) : null}
@@ -782,10 +800,10 @@ export function PreviewValidationCard({
               </div>
 
               <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <SummaryTile label="Checked" value={`${counts.reviewed}/${criteriaCount}`} />
-                <SummaryTile label="Pass" value={counts.pass} tone="success" />
-                <SummaryTile label="Needs changes" value={counts.needsChanges} tone="warning" />
-                <SummaryTile label="N/A" value={counts.notApplicable} />
+                <SummaryTile label={t`Checked`} value={`${counts.reviewed}/${criteriaCount}`} />
+                <SummaryTile label={t`Pass`} value={counts.pass} tone="success" />
+                <SummaryTile label={t`Needs changes`} value={counts.needsChanges} tone="warning" />
+                <SummaryTile label={t`N/A`} value={counts.notApplicable} />
               </div>
             </div>
 
@@ -802,7 +820,7 @@ export function PreviewValidationCard({
                     <div>
                       <div>{section.label}</div>
                       <div className="mt-1 text-xs font-normal text-muted-foreground">
-                        {reviewed}/{section.criteria.length} checked{needsChanges > 0 ? ` · ${needsChanges} need changes` : ""}
+                        {t`${reviewed}/${section.criteria.length} checked`}{needsChanges > 0 ? t` · ${needsChanges} need changes` : ""}
                       </div>
                     </div>
                     <Badge variant={needsChanges > 0 ? "destructive" : "outline"} className="text-[11px]">
@@ -828,14 +846,14 @@ export function PreviewValidationCard({
                               </div>
                               {resolved.isDerived ? (
                                 <Badge variant="outline" className="shrink-0 text-[10px] text-muted-foreground">
-                                  Default N/A
+                                  <Trans>Default N/A</Trans>
                                 </Badge>
                               ) : null}
                             </div>
 
                             {resolved.reason ? (
                               <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50/80 px-2.5 py-2 text-[11px] leading-relaxed text-muted-foreground dark:border-slate-800 dark:bg-slate-950/30">
-                                {resolved.reason}
+                                {formatReviewerValidationDefaultReason(i18n, resolved.reason)}
                               </div>
                             ) : null}
 
@@ -856,7 +874,7 @@ export function PreviewValidationCard({
                                   )}
                                   onClick={() => handleStatusChange(criterion.id, option.value)}
                                 >
-                                  {option.label}
+                                  {getStatusLabel(t, option.value)}
                                 </button>
                               ))}
                             </div>
@@ -864,23 +882,23 @@ export function PreviewValidationCard({
                             {showNotes ? (
                               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                                 <div className="space-y-1.5 sm:col-span-2">
-                                  <Label htmlFor={`${criterion.id}-comment`} className="text-[11px]">Comment</Label>
+                                  <Label htmlFor={`${criterion.id}-comment`} className="text-[11px]"><Trans>Comment</Trans></Label>
                                   <Textarea
                                     id={`${criterion.id}-comment`}
                                     value={draft.comment}
                                     onChange={(event) => handleTextChange(criterion.id, "comment", event.target.value)}
                                     className="min-h-[72px] text-xs"
-                                    placeholder="Describe the issue or note why this criterion needs attention"
+                                    placeholder={t`Describe the issue or note why this criterion needs attention`}
                                   />
                                 </div>
                                 <div className="space-y-1.5 sm:col-span-2">
-                                  <Label htmlFor={`${criterion.id}-suggestion`} className="text-[11px]">Suggested modification</Label>
+                                  <Label htmlFor={`${criterion.id}-suggestion`} className="text-[11px]"><Trans>Suggested modification</Trans></Label>
                                   <Textarea
                                     id={`${criterion.id}-suggestion`}
                                     value={draft.suggested_modification}
                                     onChange={(event) => handleTextChange(criterion.id, "suggested_modification", event.target.value)}
                                     className="min-h-[72px] text-xs"
-                                    placeholder="Optional suggestion for fixing or improving this item"
+                                    placeholder={t`Optional suggestion for fixing or improving this item`}
                                   />
                                 </div>
                               </div>
@@ -895,7 +913,7 @@ export function PreviewValidationCard({
             })}
 
             <div className="rounded-2xl border bg-card/70 px-3.5 py-3.5">
-              <Label htmlFor="page-review-overall-comment" className="text-xs">Overall page note</Label>
+              <Label htmlFor="page-review-overall-comment" className="text-xs"><Trans>Overall page note</Trans></Label>
               <Textarea
                 id="page-review-overall-comment"
                 value={overallComment}
@@ -904,7 +922,7 @@ export function PreviewValidationCard({
                   setDirty(true)
                 }}
                 className="mt-2 min-h-[88px] text-xs"
-                placeholder="Optional page-level summary or handoff note"
+                placeholder={t`Optional page-level summary or handoff note`}
               />
             </div>
           </div>
@@ -914,7 +932,7 @@ export function PreviewValidationCard({
       <div className="flex items-center justify-between gap-3 border-t px-4 py-3">
         <Button variant="outline" size="sm" className="h-8 text-xs" onClick={onOpenValidation}>
           <ExternalLink className="h-3.5 w-3.5" />
-          Open Validation
+          <Trans>Open Validation</Trans>
         </Button>
         <Button
           size="sm"
@@ -923,7 +941,7 @@ export function PreviewValidationCard({
           disabled={!activeSession || !currentPage.pageId || !dirty || saveRecordMutation.isPending}
         >
           {saveRecordMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-          Save page review
+          <Trans>Save page review</Trans>
         </Button>
       </div>
     </div>

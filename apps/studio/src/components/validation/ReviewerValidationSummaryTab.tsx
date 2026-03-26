@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { Trans, useLingui } from "@lingui/react/macro"
 import { useQueries } from "@tanstack/react-query"
 import { ClipboardCheck, ExternalLink, FileWarning, SkipForward } from "lucide-react"
 import type { ReviewerValidationCatalogSnapshot, ReviewerValidationStatus } from "@adt/types"
@@ -146,6 +147,7 @@ export function ReviewerValidationSummaryTab({
   onOpenPreview,
   onOpenPreviewToPage,
 }: ReviewerValidationSummaryTabProps) {
+  const { t } = useLingui()
   const catalog = useReviewerValidationCatalog(label)
   const sessions = useReviewerValidationSessions(label)
   const accessibilityAssessment = useAccessibilityAssessment(label)
@@ -351,7 +353,7 @@ export function ReviewerValidationSummaryTab({
   const flaggedSectionCounts = useMemo(() => {
     const counts = new Map<string, number>()
     for (const entry of flaggedEntries) {
-      const sectionLabel = entry.sectionLabel ?? "Uncategorized"
+      const sectionLabel = entry.sectionLabel ?? t`Uncategorized`
       counts.set(sectionLabel, (counts.get(sectionLabel) ?? 0) + 1)
     }
 
@@ -364,29 +366,29 @@ export function ReviewerValidationSummaryTab({
   const anyRecordQueryError = sessionRecordQueries.find((query) => query.error)?.error
 
   if (sessions.isLoading || anyRecordQueryLoading || (!activeCatalog && catalog.isLoading)) {
-    return <LoadingState message="Loading reviewer validation summary..." />
+    return <LoadingState message={t`Loading reviewer validation summary...`} />
   }
 
   if (!activeCatalog && catalog.error) {
-    return <ErrorState message={`Failed to load reviewer validation checklist: ${catalog.error.message}`} />
+    return <ErrorState message={t`Failed to load reviewer validation checklist: ${catalog.error.message}`} />
   }
 
   if (sessions.error) {
-    return <ErrorState message={`Failed to load reviewer validation sessions: ${sessions.error.message}`} />
+    return <ErrorState message={t`Failed to load reviewer validation sessions: ${sessions.error.message}`} />
   }
 
   if (anyRecordQueryError) {
-    return <ErrorState message={`Failed to load reviewer page results: ${anyRecordQueryError.message}`} />
+    return <ErrorState message={t`Failed to load reviewer page results: ${anyRecordQueryError.message}`} />
   }
 
   if (sortedSessions.length === 0) {
     return (
       <EmptyState
-        message="No reviewer validation sessions have been started yet. Open Preview to create a reviewer session and begin recording page-level findings."
+        message={t`No reviewer validation sessions have been started yet. Open Preview to create a reviewer session and begin recording page-level findings.`}
         action={onOpenPreview ? (
           <Button variant="outline" size="sm" className="h-8 text-xs" onClick={onOpenPreview}>
             <ExternalLink className="h-3.5 w-3.5" />
-            Open Preview
+            <Trans>Open Preview</Trans>
           </Button>
         ) : undefined}
       />
@@ -396,8 +398,8 @@ export function ReviewerValidationSummaryTab({
   return (
     <div className="space-y-6 p-6">
       <SectionHeader
-        title="Reviewer validation summary"
-        description="Track reviewer progress and review findings captured from Preview."
+        title={t`Reviewer validation summary`}
+        description={t`Track reviewer progress and review findings captured from Preview.`}
         action={
           onOpenPreview || (resumeTarget && onOpenPreviewToPage) ? (
             <div className="flex flex-wrap gap-2">
@@ -409,13 +411,13 @@ export function ReviewerValidationSummaryTab({
                   onClick={() => onOpenPreviewToPage(resumeTarget.href)}
                 >
                   <SkipForward className="h-3.5 w-3.5" />
-                  Continue page {resumeTarget.pageNumber ?? resumeTarget.pageId}
+                  <Trans>Continue page {resumeTarget.pageNumber ?? resumeTarget.pageId}</Trans>
                 </Button>
               ) : null}
               {onOpenPreview ? (
                 <Button variant="outline" size="sm" className="h-8 text-xs" onClick={onOpenPreview}>
                   <ExternalLink className="h-3.5 w-3.5" />
-                  Open Preview
+                  <Trans>Open Preview</Trans>
                 </Button>
               ) : null}
             </div>
@@ -424,25 +426,25 @@ export function ReviewerValidationSummaryTab({
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <SummaryCard label="Sessions" value={aggregate.sessions} />
-        <SummaryCard label="Languages" value={aggregate.languages} />
-        <SummaryCard label="Pages reviewed" value={aggregate.pagesReviewed} />
-        <SummaryCard label="Criteria reviewed" value={aggregate.criteriaReviewed} />
-        <SummaryCard label="Flagged findings" value={aggregate.flagged} tone={aggregate.flagged > 0 ? "warning" : "success"} />
+        <SummaryCard label={t`Sessions`} value={aggregate.sessions} />
+        <SummaryCard label={t`Languages`} value={aggregate.languages} />
+        <SummaryCard label={t`Pages reviewed`} value={aggregate.pagesReviewed} />
+        <SummaryCard label={t`Criteria reviewed`} value={aggregate.criteriaReviewed} />
+        <SummaryCard label={t`Flagged findings`} value={aggregate.flagged} tone={aggregate.flagged > 0 ? "warning" : "success"} />
       </div>
 
       <div className="rounded-xl border bg-card p-4">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h4 className="text-sm font-medium">Active reviewer session</h4>
+            <h4 className="text-sm font-medium"><Trans>Active reviewer session</Trans></h4>
             <p className="mt-1 text-xs text-muted-foreground">
-              Review one session at a time to inspect page coverage and flagged findings.
+              <Trans>Review one session at a time to inspect page coverage and flagged findings.</Trans>
             </p>
           </div>
           <div className="w-full sm:w-72">
             <Select value={activeSessionId ?? undefined} onValueChange={setActiveSessionId}>
               <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Select reviewer session" />
+                <SelectValue placeholder={t`Select reviewer session`} />
               </SelectTrigger>
               <SelectContent>
                 {sortedSessions.map((entry) => (
@@ -466,38 +468,38 @@ export function ReviewerValidationSummaryTab({
               {activeSession.session.institution ? <Badge variant="outline">{activeSession.session.institution}</Badge> : null}
               {activeSession.session.start_page != null || activeSession.session.end_page != null ? (
                 <Badge variant="outline">
-                  Pages {activeSession.session.start_page ?? "?"}–{activeSession.session.end_page ?? "?"}
+                  <Trans>Pages {activeSession.session.start_page ?? "?"}–{activeSession.session.end_page ?? "?"}</Trans>
                 </Badge>
               ) : null}
             </div>
 
             {sessionUsesOlderChecklistSnapshot ? (
               <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200">
-                This session is using an older reviewer checklist snapshot. Newer checklist settings will apply only to newly created reviewer sessions.
+                <Trans>This session is using an older reviewer checklist snapshot. Newer checklist settings will apply only to newly created reviewer sessions.</Trans>
               </div>
             ) : null}
 
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <SummaryCard label="Pages reviewed" value={activeMetrics.pagesReviewed} />
-              <SummaryCard label="Criteria reviewed" value={activeMetrics.criteriaReviewed} />
-              <SummaryCard label="Passed" value={activeMetrics.passCount} tone="success" />
-              <SummaryCard label="Needs changes" value={activeMetrics.flagged.length} tone={activeMetrics.flagged.length > 0 ? "warning" : "success"} />
+              <SummaryCard label={t`Pages reviewed`} value={activeMetrics.pagesReviewed} />
+              <SummaryCard label={t`Criteria reviewed`} value={activeMetrics.criteriaReviewed} />
+              <SummaryCard label={t`Passed`} value={activeMetrics.passCount} tone="success" />
+              <SummaryCard label={t`Needs changes`} value={activeMetrics.flagged.length} tone={activeMetrics.flagged.length > 0 ? "warning" : "success"} />
             </div>
 
             <div className="rounded-lg border bg-background/60 p-4">
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div>
-                  <h5 className="text-sm font-medium">Review progress</h5>
+                  <h5 className="text-sm font-medium"><Trans>Review progress</Trans></h5>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {activeProgress.isBookScoped
-                      ? "Completion across all pages in this book for the active reviewer session."
+                      ? t`Completion across all pages in this book for the active reviewer session.`
                       : activeProgress.isSessionScoped
-                        ? "Completion across the assigned page range for this reviewer session."
-                        : "Completion across pages that have been opened and reviewed in this session."}
+                        ? t`Completion across the assigned page range for this reviewer session.`
+                        : t`Completion across pages that have been opened and reviewed in this session.`}
                   </p>
                 </div>
                 <Badge variant="outline" className="tabular-nums">
-                  {activeProgress.percent}% complete
+                  <Trans>{activeProgress.percent}% complete</Trans>
                 </Badge>
               </div>
 
@@ -514,28 +516,28 @@ export function ReviewerValidationSummaryTab({
               <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                 <span>
                   {activeMetrics.criteriaReviewed}
-                  {activeProgress.expectedCriteriaCount > 0 ? ` / ${activeProgress.expectedCriteriaCount}` : ""} criteria reviewed
+                  {activeProgress.expectedCriteriaCount > 0 ? ` / ${activeProgress.expectedCriteriaCount}` : ""} <Trans>criteria reviewed</Trans>
                 </span>
                 {activeProgress.isBookScoped ? (
                   <span>
-                    {activeMetrics.pagesReviewed} of {activeProgress.totalBookPages} book pages reviewed
+                    <Trans>{activeMetrics.pagesReviewed} of {activeProgress.totalBookPages} book pages reviewed</Trans>
                   </span>
                 ) : activeProgress.isSessionScoped ? (
                   <span>
-                    {activeMetrics.pagesReviewed} of {activeProgress.assignedPageCount} assigned pages reviewed
+                    <Trans>{activeMetrics.pagesReviewed} of {activeProgress.assignedPageCount} assigned pages reviewed</Trans>
                   </span>
                 ) : (
                   <span>
-                    {activeMetrics.pagesReviewed} {activeMetrics.pagesReviewed === 1 ? "page" : "pages"} reviewed so far
+                    {t`${activeMetrics.pagesReviewed} ${activeMetrics.pagesReviewed === 1 ? "page" : "pages"} reviewed so far`}
                   </span>
                 )}
                 {activeProgress.criteriaPerPage > 0 ? (
-                  <span>{activeProgress.criteriaPerPage} checks per page</span>
+                  <span><Trans>{activeProgress.criteriaPerPage} checks per page</Trans></span>
                 ) : null}
                 {activeMetrics.flagged.length > 0 ? (
-                  <span>{activeMetrics.flagged.length} flagged findings in this review</span>
+                  <span><Trans>{activeMetrics.flagged.length} flagged findings in this review</Trans></span>
                 ) : activeProgress.percent >= 100 ? (
-                  <span>No flagged findings in reviewed pages</span>
+                  <span><Trans>No flagged findings in reviewed pages</Trans></span>
                 ) : null}
               </div>
             </div>
@@ -544,13 +546,13 @@ export function ReviewerValidationSummaryTab({
               <div className="rounded-lg border bg-background/60 p-4">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div>
-                    <h5 className="text-sm font-medium">Flagged by review area</h5>
+                    <h5 className="text-sm font-medium"><Trans>Flagged by review area</Trans></h5>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Review areas with the most items marked as needing changes in this session.
+                      <Trans>Review areas with the most items marked as needing changes in this session.</Trans>
                     </p>
                   </div>
                   <Badge variant={flaggedSectionCounts.length > 0 ? "secondary" : "outline"}>
-                    {flaggedSectionCounts.length} areas
+                    {flaggedSectionCounts.length} <Trans>areas</Trans>
                   </Badge>
                 </div>
 
@@ -563,14 +565,14 @@ export function ReviewerValidationSummaryTab({
                       >
                         <div className="pr-3 text-sm font-medium leading-snug">{entry.sectionLabel}</div>
                         <Badge variant="outline" className="tabular-nums">
-                          {entry.count} flagged
+                          {entry.count} <Trans>flagged</Trans>
                         </Badge>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="rounded-lg border border-dashed px-4 py-4 text-sm text-muted-foreground">
-                    No review areas are currently flagged in this reviewer session.
+                    <Trans>No review areas are currently flagged in this reviewer session.</Trans>
                   </div>
                 )}
               </div>
@@ -578,13 +580,13 @@ export function ReviewerValidationSummaryTab({
               <div className="rounded-lg border bg-background/60 p-4">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div>
-                    <h5 className="text-sm font-medium">Flagged findings</h5>
+                    <h5 className="text-sm font-medium"><Trans>Flagged findings</Trans></h5>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Items marked as needing changes for this reviewer session.
+                      <Trans>Items marked as needing changes for this reviewer session.</Trans>
                     </p>
                   </div>
                   <Badge variant="outline" className={cn(flaggedEntries.length > 0 && "border-red-200 bg-red-50 text-red-700")}>
-                    {flaggedEntries.length} flagged
+                    {flaggedEntries.length} <Trans>flagged</Trans>
                   </Badge>
                 </div>
 
@@ -593,18 +595,18 @@ export function ReviewerValidationSummaryTab({
                     {flaggedEntries.map((entry, index) => (
                       <div key={`${entry.pageId}-${entry.criterionLabel ?? index}-${index}`} className="rounded-lg border px-3 py-3">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <Badge variant="outline">{entry.sectionLabel ?? "Uncategorized"}</Badge>
-                          {entry.pageNumber != null ? <Badge variant="secondary">Page {entry.pageNumber}</Badge> : null}
+                          <Badge variant="outline">{entry.sectionLabel ?? t`Uncategorized`}</Badge>
+                          {entry.pageNumber != null ? <Badge variant="secondary"><Trans>Page {entry.pageNumber}</Trans></Badge> : null}
                           <Badge variant="outline" className="font-mono text-[11px]">{entry.pageId}</Badge>
                         </div>
-                        <div className="mt-2 text-sm font-medium leading-snug">{entry.criterionLabel ?? "Unknown criterion"}</div>
+                        <div className="mt-2 text-sm font-medium leading-snug">{entry.criterionLabel ?? t`Unknown criterion`}</div>
                         <div className="mt-1 text-xs break-all text-muted-foreground">{entry.href}</div>
                         {entry.comment ? (
                           <div className="mt-2 text-sm text-foreground">{entry.comment}</div>
                         ) : null}
                         {entry.suggestedModification ? (
                           <div className="mt-2 rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-                            <span className="font-medium text-foreground">Suggested modification:</span> {entry.suggestedModification}
+                            <span className="font-medium text-foreground"><Trans>Suggested modification:</Trans></span> {entry.suggestedModification}
                           </div>
                         ) : null}
                       </div>
@@ -612,7 +614,7 @@ export function ReviewerValidationSummaryTab({
                   </div>
                 ) : (
                   <div className="rounded-lg border border-dashed px-4 py-4 text-sm text-muted-foreground">
-                    No items are currently flagged as needing changes in this reviewer session.
+                    <Trans>No items are currently flagged as needing changes in this reviewer session.</Trans>
                   </div>
                 )}
               </div>
@@ -620,14 +622,14 @@ export function ReviewerValidationSummaryTab({
 
             {activeSession.session.comments ? (
               <div className="rounded-lg border bg-background/60 p-4">
-                <div className="mb-1 text-xs font-medium text-muted-foreground">Session comments</div>
+                <div className="mb-1 text-xs font-medium text-muted-foreground"><Trans>Session comments</Trans></div>
                 <div className="text-sm whitespace-pre-wrap text-foreground">{activeSession.session.comments}</div>
               </div>
             ) : null}
           </div>
         ) : (
           <div className="rounded-lg border border-dashed px-4 py-4 text-sm text-muted-foreground">
-            Select a reviewer session to inspect its progress and findings.
+            <Trans>Select a reviewer session to inspect its progress and findings.</Trans>
           </div>
         )}
       </div>

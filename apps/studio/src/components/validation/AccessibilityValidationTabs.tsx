@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { Trans, useLingui } from "@lingui/react/macro"
 import type { AccessibilityCategoryKey, AccessibilitySeverity } from "@/lib/accessibility-summary"
 import { ExternalLink } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
@@ -8,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
 import { useAccessibilityAssessment } from "@/hooks/use-debug"
-import { buildAccessibilityOverview, buildFrequentAccessibilityFindings } from "@/lib/accessibility-summary"
+import { buildAccessibilityOverview, buildFrequentAccessibilityFindings, getAccessibilityCategoryLabel } from "@/lib/accessibility-summary"
 import { cn } from "@/lib/utils"
 
 interface AccessibilityTabProps {
@@ -23,12 +24,20 @@ const SEVERITY_RANK: Record<AccessibilitySeverity, number> = {
   minor: 3,
   unknown: 4,
 }
-const SEVERITY_LABELS: Record<AccessibilitySeverity, string> = {
-  critical: "Critical",
-  serious: "Serious",
-  moderate: "Moderate",
-  minor: "Minor",
-  unknown: "Unknown",
+
+function getSeverityLabel(t: ReturnType<typeof useLingui>["t"], severity: AccessibilitySeverity): string {
+  switch (severity) {
+    case "critical":
+      return t`Critical`
+    case "serious":
+      return t`Serious`
+    case "moderate":
+      return t`Moderate`
+    case "minor":
+      return t`Minor`
+    default:
+      return t`Unknown`
+  }
 }
 
 function SummaryCard({
@@ -89,8 +98,8 @@ function SectionHeader({
   description,
   action,
 }: {
-  title: string
-  description: string
+  title: React.ReactNode
+  description: React.ReactNode
   action?: React.ReactNode
 }) {
   return (
@@ -104,11 +113,11 @@ function SectionHeader({
   )
 }
 
-function LoadingState({ message }: { message: string }) {
+function LoadingState({ message }: { message: React.ReactNode }) {
   return <div className="p-6 text-sm text-muted-foreground">{message}</div>
 }
 
-function ErrorState({ message }: { message: string }) {
+function ErrorState({ message }: { message: React.ReactNode }) {
   return (
     <div className="p-6">
       <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -118,14 +127,14 @@ function ErrorState({ message }: { message: string }) {
   )
 }
 
-function EmptyState({ message }: { message: string }) {
+function EmptyState({ message }: { message: React.ReactNode }) {
   return <div className="p-6 text-sm text-muted-foreground">{message}</div>
 }
 
 
-function formatFindingPageLabel(page: { pageNumber: number | null; title: string | null; href: string }): string {
+function formatFindingPageLabel(t: ReturnType<typeof useLingui>["t"], page: { pageNumber: number | null; title: string | null; href: string }): string {
   if (page.pageNumber != null) {
-    return `Page ${page.pageNumber}`
+    return t`Page ${page.pageNumber}`
   }
   if (page.title) {
     return page.title
@@ -140,12 +149,13 @@ function FindingPageLinks({
   pages: Array<{ sectionId: string; href: string; title: string | null; pageNumber: number | null; count: number }>
   onOpenPage: (href: string) => void
 }) {
+  const { t } = useLingui()
   const [expanded, setExpanded] = useState(false)
   const visiblePages = expanded ? pages : pages.slice(0, 6)
 
   return (
     <div className="mt-3 space-y-2">
-      <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Affected pages</div>
+      <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground"><Trans>Affected pages</Trans></div>
       <div className="flex flex-wrap gap-2">
         {visiblePages.map((page) => (
           <Button
@@ -155,7 +165,7 @@ function FindingPageLinks({
             className="h-7 px-2.5 text-[11px]"
             onClick={() => onOpenPage(page.href)}
           >
-            {formatFindingPageLabel(page)}
+            {formatFindingPageLabel(t, page)}
             {page.count > 1 ? <span className="ml-1 text-muted-foreground">({page.count})</span> : null}
           </Button>
         ))}
@@ -166,7 +176,7 @@ function FindingPageLinks({
             className="h-7 px-2.5 text-[11px]"
             onClick={() => setExpanded((open) => !open)}
           >
-            {expanded ? "Show fewer" : `Show all ${pages.length}`}
+            {expanded ? t`Show fewer` : t`Show all ${pages.length}`}
           </Button>
         ) : null}
       </div>
@@ -187,6 +197,7 @@ function FrequentFindingCard({
   onFilterSeverity: (severity: AccessibilitySeverity) => void
   onFilterCategory: (category: AccessibilityCategoryKey) => void
 }) {
+  const { t, i18n } = useLingui()
   const coveragePercent = Math.round(finding.pageCoverage * 100)
 
   return (
@@ -204,17 +215,17 @@ function FrequentFindingCard({
             )}
             onClick={() => onFilterSeverity(finding.impact)}
           >
-            {SEVERITY_LABELS[finding.impact]}
+            {getSeverityLabel(t, finding.impact)}
           </Badge>
           <Badge
             variant="outline"
             className="cursor-pointer text-[11px] hover:bg-muted"
             onClick={() => onFilterCategory(finding.categoryKey)}
           >
-            {finding.categoryLabel}
+            {getAccessibilityCategoryLabel(i18n, finding.categoryKey)}
           </Badge>
         </div>
-        <div className="text-sm font-semibold tabular-nums">{finding.count} observations</div>
+        <div className="text-sm font-semibold tabular-nums">{t`${finding.count} observations`}</div>
       </div>
       <div className="mt-2 flex items-center justify-between gap-2">
         <span className="font-medium">{finding.help}</span>
@@ -231,7 +242,7 @@ function FrequentFindingCard({
 
       <div className="mt-3 space-y-1">
         <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-          <span>Page coverage</span>
+          <span><Trans>Page coverage</Trans></span>
           <span>{coveragePercent}%</span>
         </div>
         <div className="h-2 rounded-full bg-muted">
@@ -257,21 +268,22 @@ function FrequentFindingCard({
 
 
 export function AccessibilityOverviewTab({ label }: AccessibilityTabProps) {
+  const { t, i18n } = useLingui()
   const navigate = useNavigate()
   const { data, isLoading, error } = useAccessibilityAssessment(label)
   const [severityFilter, setSeverityFilter] = useState<AccessibilitySeverity | null>(null)
   const [categoryFilter, setCategoryFilter] = useState<AccessibilityCategoryKey | null>(null)
 
   if (isLoading) {
-    return <LoadingState message="Loading accessibility summary..." />
+    return <LoadingState message={<Trans>Loading accessibility summary...</Trans>} />
   }
 
   if (error) {
-    return <ErrorState message={`Failed to load accessibility results: ${error.message}`} />
+    return <ErrorState message={t`Failed to load accessibility results: ${error.message}`} />
   }
 
   if (!data?.assessment) {
-    return <EmptyState message="No accessibility assessment has been generated yet. Package the ADT output to create one." />
+    return <EmptyState message={<Trans>No accessibility assessment has been generated yet. Package the ADT output to create one.</Trans>} />
   }
 
   const assessment = data.assessment
@@ -318,9 +330,9 @@ export function AccessibilityOverviewTab({ label }: AccessibilityTabProps) {
     })
   }
 
-  const activeSeverityLabel = severityFilter ? SEVERITY_LABELS[severityFilter] : null
+  const activeSeverityLabel = severityFilter ? getSeverityLabel(t, severityFilter) : null
   const activeCategoryLabel = categoryFilter
-    ? (overview.categories.find((c) => c.key === categoryFilter)?.label ?? categoryFilter)
+    ? getAccessibilityCategoryLabel(i18n, categoryFilter)
     : null
 
   return (
@@ -328,7 +340,7 @@ export function AccessibilityOverviewTab({ label }: AccessibilityTabProps) {
       <div className="rounded-t-xl border border-b-0 bg-card p-4 space-y-4">
         <div className="flex flex-wrap gap-3">
           <SummaryCard
-            label="All Severities"
+            label={t`All Severities`}
             value={severityFiltered.reduce((sum, f) => sum + f.count, 0)}
             tone="default"
             active={severityFilter === null}
@@ -347,7 +359,7 @@ export function AccessibilityOverviewTab({ label }: AccessibilityTabProps) {
             return (
               <SummaryCard
                 key={severity}
-                label={SEVERITY_LABELS[severity]}
+                label={getSeverityLabel(t, severity)}
                 value={count}
                 tone={SEVERITY_TONES[severity]}
                 active={severityFilter === severity}
@@ -368,7 +380,7 @@ export function AccessibilityOverviewTab({ label }: AccessibilityTabProps) {
                 : "border-border bg-background hover:border-primary/30 hover:bg-muted",
             )}
           >
-            All Categories
+            <Trans>All Categories</Trans>
             <span className="ml-1 text-muted-foreground">{categoryFiltered.reduce((sum, f) => sum + f.count, 0)}</span>
           </button>
           {overview.categories.map((category) => (
@@ -383,12 +395,12 @@ export function AccessibilityOverviewTab({ label }: AccessibilityTabProps) {
                   : "border-border bg-background hover:border-primary/30 hover:bg-muted",
               )}
             >
-              {category.label}
+              {getAccessibilityCategoryLabel(i18n, category.key)}
               <span className="ml-1 text-muted-foreground">{categoryCounts.get(category.key) ?? 0}</span>
             </button>
           ))}
           {overview.categories.length === 0 ? (
-            <span className="text-xs text-muted-foreground">No finding categories reported.</span>
+            <span className="text-xs text-muted-foreground"><Trans>No finding categories reported.</Trans></span>
           ) : null}
         </div>
       </div>
@@ -397,7 +409,7 @@ export function AccessibilityOverviewTab({ label }: AccessibilityTabProps) {
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           {hasActiveFilter ? (
             <>
-              <span>Filtered by:</span>
+              <span><Trans>Filtered by:</Trans></span>
               {activeSeverityLabel ? (
                 <Badge
                   variant="secondary"
@@ -419,17 +431,17 @@ export function AccessibilityOverviewTab({ label }: AccessibilityTabProps) {
                 </Badge>
               ) : null}
               <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]" onClick={() => { setSeverityFilter(null); setCategoryFilter(null) }}>
-                Clear all
+                <Trans>Clear all</Trans>
               </Button>
             </>
           ) : (
-            <span>All findings</span>
+            <span><Trans>All findings</Trans></span>
           )}
         </div>
         <p className="text-[11px] text-muted-foreground tabular-nums">
           {visibleFindings.length === allFindings.length
-            ? `${allFindings.length} findings`
-            : `${visibleFindings.length} of ${allFindings.length} findings`}
+            ? t`${allFindings.length} findings`
+            : t`${visibleFindings.length} of ${allFindings.length} findings`}
         </p>
       </div>
 
@@ -447,7 +459,7 @@ export function AccessibilityOverviewTab({ label }: AccessibilityTabProps) {
           ))
         ) : (
           <div className="rounded-lg border border-dashed px-4 py-4 text-sm text-muted-foreground">
-            {hasActiveFilter ? "No findings match the current filters." : "No findings were reported."}
+            {hasActiveFilter ? t`No findings match the current filters.` : t`No findings were reported.`}
           </div>
         )}
       </div>
@@ -456,6 +468,7 @@ export function AccessibilityOverviewTab({ label }: AccessibilityTabProps) {
 }
 
 export function AccessibilityConfigTab({ label }: AccessibilityTabProps) {
+  const { t } = useLingui()
   const [runOnlyTagsInput, setRunOnlyTagsInput] = useState("")
   const [disabledRulesInput, setDisabledRulesInput] = useState("")
   const [configDirty, setConfigDirty] = useState(false)
@@ -518,14 +531,14 @@ export function AccessibilityConfigTab({ label }: AccessibilityTabProps) {
   return (
     <div className="space-y-6 p-6">
       <SectionHeader
-        title="Accessibility assessment configuration"
-        description="Control which axe checks run during packaging for this document. Changes apply on the next package run."
+        title={t`Accessibility assessment configuration`}
+        description={t`Control which axe checks run during packaging for this document. Changes apply on the next package run.`}
       />
 
       <div className="rounded-xl border bg-card p-4">
         <div className="grid gap-5 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="run-only-tags">Enabled axe tags</Label>
+            <Label htmlFor="run-only-tags"><Trans>Enabled axe tags</Trans></Label>
             <Textarea
               id="run-only-tags"
               value={runOnlyTagsInput}
@@ -533,16 +546,16 @@ export function AccessibilityConfigTab({ label }: AccessibilityTabProps) {
                 setRunOnlyTagsInput(event.target.value)
                 setConfigDirty(true)
               }}
-              placeholder="wcag2a\nwcag2aa\nbest-practice"
+              placeholder={t`wcag2a\nwcag2aa\nbest-practice`}
               className="min-h-40 font-mono text-xs"
             />
             <p className="text-xs text-muted-foreground">
-              One tag per line or comma-separated. Leave as-is to keep the current package defaults.
+              <Trans>One tag per line or comma-separated. Leave as-is to keep the current package defaults.</Trans>
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="disabled-rules">Disabled axe rules</Label>
+            <Label htmlFor="disabled-rules"><Trans>Disabled axe rules</Trans></Label>
             <Textarea
               id="disabled-rules"
               value={disabledRulesInput}
@@ -550,11 +563,11 @@ export function AccessibilityConfigTab({ label }: AccessibilityTabProps) {
                 setDisabledRulesInput(event.target.value)
                 setConfigDirty(true)
               }}
-              placeholder="color-contrast"
+              placeholder={t`color-contrast`}
               className="min-h-40 font-mono text-xs"
             />
             <p className="text-xs text-muted-foreground">
-              Use this for checks you intentionally want to suppress, such as known false positives.
+              <Trans>Use this for checks you intentionally want to suppress, such as known false positives.</Trans>
             </p>
           </div>
         </div>
@@ -566,7 +579,7 @@ export function AccessibilityConfigTab({ label }: AccessibilityTabProps) {
             onClick={saveConfig}
             disabled={updateConfig.isPending}
           >
-            Save settings
+            <Trans>Save settings</Trans>
           </Button>
           <Button
             variant="outline"
@@ -575,11 +588,11 @@ export function AccessibilityConfigTab({ label }: AccessibilityTabProps) {
             onClick={resetConfig}
             disabled={updateConfig.isPending || !hasOverride}
           >
-            Reset to defaults
+            <Trans>Reset to defaults</Trans>
           </Button>
           {updateConfig.isSuccess ? (
             <span className="text-xs text-emerald-700 dark:text-emerald-400">
-              Saved. Re-package Preview to apply.
+              <Trans>Saved. Re-package Preview to apply.</Trans>
             </span>
           ) : null}
           {updateConfig.isError ? (
@@ -589,14 +602,14 @@ export function AccessibilityConfigTab({ label }: AccessibilityTabProps) {
       </div>
 
       <div className="rounded-xl border bg-card p-4">
-        <h4 className="text-sm font-medium">Current effective values</h4>
+        <h4 className="text-sm font-medium"><Trans>Current effective values</Trans></h4>
         <p className="mt-1 text-xs text-muted-foreground">
-          These values reflect either the saved book override or the latest packaged defaults.
+          <Trans>These values reflect either the saved book override or the latest packaged defaults.</Trans>
         </p>
 
         <div className="mt-4 grid gap-5 md:grid-cols-2">
           <div>
-            <div className="mb-2 text-xs font-medium text-muted-foreground">Run-only tags</div>
+            <div className="mb-2 text-xs font-medium text-muted-foreground"><Trans>Run-only tags</Trans></div>
             <div className="flex flex-wrap gap-2">
               {parseList(runOnlyTagsInput).map((tag) => (
                 <Badge key={tag} variant="outline" className="font-mono text-[11px]">
@@ -607,7 +620,7 @@ export function AccessibilityConfigTab({ label }: AccessibilityTabProps) {
           </div>
 
           <div>
-            <div className="mb-2 text-xs font-medium text-muted-foreground">Disabled rules</div>
+            <div className="mb-2 text-xs font-medium text-muted-foreground"><Trans>Disabled rules</Trans></div>
             <div className="flex flex-wrap gap-2">
               {parseList(disabledRulesInput).map((rule) => (
                 <Badge key={rule} variant="outline" className="font-mono text-[11px]">
@@ -615,7 +628,7 @@ export function AccessibilityConfigTab({ label }: AccessibilityTabProps) {
                 </Badge>
               ))}
               {parseList(disabledRulesInput).length === 0 ? (
-                <span className="text-xs text-muted-foreground">No disabled rules</span>
+                <span className="text-xs text-muted-foreground"><Trans>No disabled rules</Trans></span>
               ) : null}
             </div>
           </div>

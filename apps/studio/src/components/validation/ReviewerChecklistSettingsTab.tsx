@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { Trans, useLingui } from "@lingui/react/macro"
 import type { ReviewerValidationSection } from "@adt/types"
 import { ListChecks, Plus, RotateCcw, Save, Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -75,7 +76,7 @@ function toEditableSections(sections: ReviewerValidationSection[]): EditableSect
   }))
 }
 
-function serializeSections(sections: EditableSection[]): ReviewerValidationSection[] {
+function serializeSections(sections: EditableSection[], defaultGuidance: string): ReviewerValidationSection[] {
   return sections
     .filter((section) => section.enabled)
     .map((section) => ({
@@ -86,7 +87,7 @@ function serializeSections(sections: EditableSection[]): ReviewerValidationSecti
         .map((criterion) => ({
           id: criterion.id,
           label: criterion.label.trim() || criterion.id,
-          guidance: criterion.guidance.trim() || "Add reviewer guidance.",
+          guidance: criterion.guidance.trim() || defaultGuidance,
           requires_comment_on_failure: criterion.requires_comment_on_failure,
           requires_suggested_modification_on_failure: criterion.requires_suggested_modification_on_failure,
         })),
@@ -94,7 +95,7 @@ function serializeSections(sections: EditableSection[]): ReviewerValidationSecti
     .filter((section) => section.criteria.length > 0)
 }
 
-function SectionHeader({ title, description }: { title: string; description: string }) {
+function SectionHeader({ title, description }: { title: React.ReactNode; description: React.ReactNode }) {
   return (
     <div>
       <h3 className="text-lg font-semibold tracking-tight">{title}</h3>
@@ -104,6 +105,7 @@ function SectionHeader({ title, description }: { title: string; description: str
 }
 
 export function ReviewerChecklistSettingsTab({ label }: { label: string }) {
+  const { t } = useLingui()
   const { data: catalogData, isLoading, error } = useReviewerValidationCatalog(label)
   const { data: bookConfigData } = useBookConfig(label)
   const updateConfig = useUpdateBookConfig()
@@ -150,13 +152,13 @@ export function ReviewerChecklistSettingsTab({ label }: { label: string }) {
       ...current,
       {
         id: `custom-section-${index}`,
-        label: `Custom section ${index}`,
+        label: t`Custom section ${index}`,
         enabled: true,
         criteria: [
           {
             id: `custom-criterion-${index}-1`,
-            label: "New checklist item",
-            guidance: "Describe what the reviewer should check.",
+            label: t`New checklist item`,
+            guidance: t`Describe what the reviewer should check.`,
             requires_comment_on_failure: true,
             requires_suggested_modification_on_failure: false,
             enabled: true,
@@ -176,8 +178,8 @@ export function ReviewerChecklistSettingsTab({ label }: { label: string }) {
           ...section.criteria,
           {
             id: `${section.id}-criterion-${index}`,
-            label: "New checklist item",
-            guidance: "Describe what the reviewer should check.",
+            label: t`New checklist item`,
+            guidance: t`Describe what the reviewer should check.`,
             requires_comment_on_failure: true,
             requires_suggested_modification_on_failure: false,
             enabled: true,
@@ -205,7 +207,7 @@ export function ReviewerChecklistSettingsTab({ label }: { label: string }) {
       ? { ...(currentConfig.reviewer_validation as Record<string, unknown>) }
       : {}
 
-    reviewerValidation.sections = serializeSections(sections)
+    reviewerValidation.sections = serializeSections(sections, t`Add reviewer guidance.`)
     currentConfig.reviewer_validation = reviewerValidation
 
     updateConfig.mutate({ label, config: currentConfig })
@@ -234,14 +236,14 @@ export function ReviewerChecklistSettingsTab({ label }: { label: string }) {
   }
 
   if (isLoading) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading reviewer checklist…</div>
+    return <div className="p-6 text-sm text-muted-foreground"><Trans>Loading reviewer checklist…</Trans></div>
   }
 
   if (error || !catalogData) {
     return (
       <div className="p-6">
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error instanceof Error ? error.message : "Unable to load reviewer checklist settings."}
+          {error instanceof Error ? error.message : t`Unable to load reviewer checklist settings.`}
         </div>
       </div>
     )
@@ -250,37 +252,37 @@ export function ReviewerChecklistSettingsTab({ label }: { label: string }) {
   return (
     <div className="space-y-5 p-6">
       <SectionHeader
-        title="Reviewer checklist"
-        description="Choose which per-page validation items reviewers must check, customize the wording and guidance, and add your own checklist items for this document."
+        title={t`Reviewer checklist`}
+        description={t`Choose which per-page validation items reviewers must check, customize the wording and guidance, and add your own checklist items for this document.`}
       />
 
       <div className="rounded-xl border bg-card p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-sm text-muted-foreground">
-            {sections.filter((section) => section.enabled).length} active sections · {enabledCriteriaCount} active checklist items
+            {sections.filter((section) => section.enabled).length} <Trans>active sections</Trans> · {enabledCriteriaCount} <Trans>active checklist items</Trans>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" className="h-8 text-xs" onClick={addSection}>
               <Plus className="mr-1.5 h-3.5 w-3.5" />
-              Add section
+              <Trans>Add section</Trans>
             </Button>
             <Button size="sm" className="h-8 text-xs" onClick={saveChecklist} disabled={updateConfig.isPending}>
               <Save className="mr-1.5 h-3.5 w-3.5" />
-              Save checklist
+              <Trans>Save checklist</Trans>
             </Button>
             <Button variant="outline" size="sm" className="h-8 text-xs" onClick={resetChecklist} disabled={updateConfig.isPending || !hasOverride}>
               <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-              Reset to inherited defaults
+              <Trans>Reset to inherited defaults</Trans>
             </Button>
           </div>
         </div>
 
         <div className="mt-3 text-xs text-muted-foreground">
-          Existing reviewer sessions keep their own checklist snapshot. New checklist changes apply to newly created sessions.
+          <Trans>Existing reviewer sessions keep their own checklist snapshot. New checklist changes apply to newly created sessions.</Trans>
         </div>
 
         {updateConfig.isSuccess ? (
-          <div className="mt-3 text-xs text-emerald-700 dark:text-emerald-400">Reviewer checklist settings saved.</div>
+          <div className="mt-3 text-xs text-emerald-700 dark:text-emerald-400"><Trans>Reviewer checklist settings saved.</Trans></div>
         ) : null}
         {updateConfig.isError ? (
           <div className="mt-3 text-xs text-red-700">{updateConfig.error.message}</div>
@@ -310,16 +312,16 @@ export function ReviewerChecklistSettingsTab({ label }: { label: string }) {
                         <Switch
                           checked={section.enabled}
                           onCheckedChange={(checked) => setSection(section.id, (current) => ({ ...current, enabled: checked }))}
-                          aria-label={`Enable ${section.label}`}
+                          aria-label={t`Enable ${section.label}`}
                         />
                         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                           <ListChecks className="h-4 w-4 text-slate-500" />
-                          <span>Section {sectionIndex + 1}</span>
+                          <Trans>Section {sectionIndex + 1}</Trans>
                         </div>
                       </div>
 
                       <Badge variant={section.enabled ? "secondary" : "outline"}>
-                        {activeCriteriaCount} active item{activeCriteriaCount === 1 ? "" : "s"}
+                         {activeCriteriaCount} {activeCriteriaCount === 1 ? t`active item` : t`active items`}
                       </Badge>
                       <Badge variant="outline" className="font-mono text-[11px]">
                         {section.id}
@@ -327,7 +329,7 @@ export function ReviewerChecklistSettingsTab({ label }: { label: string }) {
                     </div>
 
                     <div className="space-y-1">
-                      <Label htmlFor={`${section.id}-label`}>Section label</Label>
+                      <Label htmlFor={`${section.id}-label`}><Trans>Section label</Trans></Label>
                       <Input
                         id={`${section.id}-label`}
                         value={section.label}
@@ -347,7 +349,7 @@ export function ReviewerChecklistSettingsTab({ label }: { label: string }) {
                     </div>
                   </div>
 
-                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeSection(section.id)} title="Remove section">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeSection(section.id)} title={t`Remove section`}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -370,10 +372,10 @@ export function ReviewerChecklistSettingsTab({ label }: { label: string }) {
                             <Switch
                               checked={criterion.enabled}
                               onCheckedChange={(checked) => setCriterion(section.id, criterion.id, (current) => ({ ...current, enabled: checked }))}
-                              aria-label={`Enable ${criterion.label}`}
+                              aria-label={t`Enable ${criterion.label}`}
                             />
                             <Badge variant={criterion.enabled ? "secondary" : "outline"}>
-                              Item {criterionIndex + 1}
+<Trans>Item {criterionIndex + 1}</Trans>
                             </Badge>
                             <Badge variant="outline" className="font-mono text-[11px]">
                               {criterion.id}
@@ -381,7 +383,7 @@ export function ReviewerChecklistSettingsTab({ label }: { label: string }) {
                           </div>
 
                           <div className="space-y-1">
-                            <Label htmlFor={`${criterion.id}-label`}>Checklist item</Label>
+                            <Label htmlFor={`${criterion.id}-label`}><Trans>Checklist item</Trans></Label>
                             <Input
                               id={`${criterion.id}-label`}
                               value={criterion.label}
@@ -396,7 +398,7 @@ export function ReviewerChecklistSettingsTab({ label }: { label: string }) {
                           </div>
 
                           <div className="space-y-1">
-                            <Label htmlFor={`${criterion.id}-guidance`}>Reviewer guidance</Label>
+                            <Label htmlFor={`${criterion.id}-guidance`}><Trans>Reviewer guidance</Trans></Label>
                             <Textarea
                               id={`${criterion.id}-guidance`}
                               value={criterion.guidance}
@@ -411,19 +413,19 @@ export function ReviewerChecklistSettingsTab({ label }: { label: string }) {
                                 checked={criterion.requires_comment_on_failure}
                                 onCheckedChange={(checked) => setCriterion(section.id, criterion.id, (current) => ({ ...current, requires_comment_on_failure: checked }))}
                               />
-                              <span>Require comment on failure</span>
+                              <span><Trans>Require comment on failure</Trans></span>
                             </label>
                             <label className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950/20">
                               <Switch
                                 checked={criterion.requires_suggested_modification_on_failure}
                                 onCheckedChange={(checked) => setCriterion(section.id, criterion.id, (current) => ({ ...current, requires_suggested_modification_on_failure: checked }))}
                               />
-                              <span>Require suggested modification</span>
+                              <span><Trans>Require suggested modification</Trans></span>
                             </label>
                           </div>
                         </div>
 
-                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeCriterion(section.id, criterion.id)} title="Remove checklist item">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeCriterion(section.id, criterion.id)} title={t`Remove checklist item`}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -434,7 +436,7 @@ export function ReviewerChecklistSettingsTab({ label }: { label: string }) {
                 <div className="pt-0.5">
                   <Button variant="outline" size="sm" className="h-8 text-xs bg-background" onClick={() => addCriterion(section.id)}>
                     <Plus className="mr-1.5 h-3.5 w-3.5" />
-                    Add checklist item to this section
+                    <Trans>Add checklist item to this section</Trans>
                   </Button>
                 </div>
               </div>

@@ -3,6 +3,8 @@ import type {
   AccessibilityFinding,
   AccessibilityPageResult,
 } from "@adt/types"
+import type { I18n, MessageDescriptor } from "@lingui/core"
+import { msg } from "@lingui/core/macro"
 
 export type AccessibilitySeverity = "critical" | "serious" | "moderate" | "minor" | "unknown"
 export type AccessibilityCategoryKey =
@@ -17,7 +19,7 @@ export type AccessibilityCategoryKey =
 
 export interface AccessibilityCategorySummary {
   key: AccessibilityCategoryKey
-  label: string
+  label: AccessibilityCategoryKey
   count: number
   pagesAffected: number
 }
@@ -41,7 +43,7 @@ export interface FrequentAccessibilityFindingSummary {
   pagesAffected: number
   pageCoverage: number
   categoryKey: AccessibilityCategoryKey
-  categoryLabel: string
+  categoryLabel: AccessibilityCategoryKey
   pages: AccessibilityFindingPageSummary[]
 }
 
@@ -74,15 +76,15 @@ const CATEGORY_ORDER: AccessibilityCategoryKey[] = [
   "other",
 ]
 
-const CATEGORY_LABELS: Record<AccessibilityCategoryKey, string> = {
-  "text-alternatives": "Text alternatives",
-  "structure-semantics": "Structure & semantics",
-  "keyboard-navigation": "Keyboard & navigation",
-  "forms-controls": "Forms & controls",
-  tables: "Tables",
-  "media-timing": "Media & timing",
-  "visual-cues": "Visual & sensory cues",
-  other: "Other",
+const CATEGORY_LABELS: Record<AccessibilityCategoryKey, MessageDescriptor> = {
+  "text-alternatives": msg`Text alternatives`,
+  "structure-semantics": msg`Structure & semantics`,
+  "keyboard-navigation": msg`Keyboard & navigation`,
+  "forms-controls": msg`Forms & controls`,
+  tables: msg`Tables`,
+  "media-timing": msg`Media & timing`,
+  "visual-cues": msg`Visual & sensory cues`,
+  other: msg`Other`,
 }
 
 const CATEGORY_TAGS: Array<{ key: AccessibilityCategoryKey; tags: string[] }> = [
@@ -114,8 +116,8 @@ function getCategoryKey(finding: AccessibilityFinding): AccessibilityCategoryKey
   return "other"
 }
 
-function getCategoryLabel(key: AccessibilityCategoryKey): string {
-  return CATEGORY_LABELS[key]
+export function getAccessibilityCategoryLabel(i18n: I18n, key: AccessibilityCategoryKey): string {
+  return i18n._(CATEGORY_LABELS[key])
 }
 
 function buildCategorySummary(
@@ -138,7 +140,7 @@ function buildCategorySummary(
       if (!entry) return null
       return {
         key,
-        label: getCategoryLabel(key),
+        label: key,
         count: entry.count,
         pagesAffected: entry.pages.size,
       }
@@ -199,7 +201,7 @@ export function buildAccessibilityOverview(
         if (!entry) return null
         return {
           key,
-          label: getCategoryLabel(key),
+          label: key,
           count: entry.count,
           pagesAffected: entry.pages.size,
         }
@@ -295,7 +297,7 @@ export function buildFrequentAccessibilityFindings(
       pagesAffected: finding.pages.size,
       pageCoverage: finding.pages.size / pageCount,
       categoryKey: finding.categoryKey,
-      categoryLabel: getCategoryLabel(finding.categoryKey),
+      categoryLabel: finding.categoryKey,
       pages: [...finding.pages.values()].sort((left, right) => {
         if (left.pageNumber != null && right.pageNumber != null && left.pageNumber !== right.pageNumber) {
           return left.pageNumber - right.pageNumber
