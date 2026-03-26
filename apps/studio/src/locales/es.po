@@ -753,6 +753,9 @@ msgstr "Criteria reviewed"
 msgid "critical"
 msgstr "critical"
 
+msgid "Critical"
+msgstr "Critical"
+
 msgid "Crop"
 msgstr "Recortar"
 
@@ -1575,6 +1578,9 @@ msgstr "Lado mínimo (px)"
 msgid "minor"
 msgstr "minor"
 
+msgid "Minor"
+msgstr "Minor"
+
 msgid "Misses"
 msgstr "Fallos"
 
@@ -1583,6 +1589,9 @@ msgstr "Modelo"
 
 msgid "moderate"
 msgstr "moderate"
+
+msgid "Moderate"
+msgstr "Moderate"
 
 msgid "mp3"
 msgstr "mp3"
@@ -1745,6 +1754,9 @@ msgstr "Nodes"
 
 msgid "None"
 msgstr "Ninguno"
+
+msgid "Not reviewed"
+msgstr "Not reviewed"
 
 msgid "Number of pages of content to include per quiz question."
 msgstr "Número de páginas de contenido a incluir por pregunta de quiz."
@@ -2326,6 +2338,9 @@ msgstr "Separador"
 msgid "serious"
 msgstr "serious"
 
+msgid "Serious"
+msgstr "Serious"
+
 msgid "Session comments"
 msgstr "Session comments"
 
@@ -2690,6 +2705,9 @@ msgstr "UNICEF"
 
 msgid "unknown"
 msgstr "unknown"
+
+msgid "Unknown"
+msgstr "Unknown"
 
 msgid "Unknown criterion"
 msgstr "Unknown criterion"

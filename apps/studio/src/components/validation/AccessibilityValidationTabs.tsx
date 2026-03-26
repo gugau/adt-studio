@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
+import type { I18n } from "@lingui/core"
+import { msg } from "@lingui/core/macro"
 import { Trans, useLingui } from "@lingui/react/macro"
 import type { AccessibilityCategoryKey, AccessibilitySeverity } from "@/lib/accessibility-summary"
 import { ExternalLink } from "lucide-react"
@@ -25,18 +27,18 @@ const SEVERITY_RANK: Record<AccessibilitySeverity, number> = {
   unknown: 4,
 }
 
-function getSeverityLabel(t: ReturnType<typeof useLingui>["t"], severity: AccessibilitySeverity): string {
+function getSeverityLabel(i18n: I18n, severity: AccessibilitySeverity): string {
   switch (severity) {
     case "critical":
-      return t`Critical`
+      return i18n._(msg`Critical`)
     case "serious":
-      return t`Serious`
+      return i18n._(msg`Serious`)
     case "moderate":
-      return t`Moderate`
+      return i18n._(msg`Moderate`)
     case "minor":
-      return t`Minor`
+      return i18n._(msg`Minor`)
     default:
-      return t`Unknown`
+      return i18n._(msg`Unknown`)
   }
 }
 
@@ -132,9 +134,9 @@ function EmptyState({ message }: { message: React.ReactNode }) {
 }
 
 
-function formatFindingPageLabel(t: ReturnType<typeof useLingui>["t"], page: { pageNumber: number | null; title: string | null; href: string }): string {
+function formatFindingPageLabel(i18n: I18n, page: { pageNumber: number | null; title: string | null; href: string }): string {
   if (page.pageNumber != null) {
-    return t`Page ${page.pageNumber}`
+    return i18n._(msg`Page ${page.pageNumber}`)
   }
   if (page.title) {
     return page.title
@@ -149,7 +151,7 @@ function FindingPageLinks({
   pages: Array<{ sectionId: string; href: string; title: string | null; pageNumber: number | null; count: number }>
   onOpenPage: (href: string) => void
 }) {
-  const { t } = useLingui()
+  const { t, i18n } = useLingui()
   const [expanded, setExpanded] = useState(false)
   const visiblePages = expanded ? pages : pages.slice(0, 6)
 
@@ -165,7 +167,7 @@ function FindingPageLinks({
             className="h-7 px-2.5 text-[11px]"
             onClick={() => onOpenPage(page.href)}
           >
-            {formatFindingPageLabel(t, page)}
+            {formatFindingPageLabel(i18n, page)}
             {page.count > 1 ? <span className="ml-1 text-muted-foreground">({page.count})</span> : null}
           </Button>
         ))}
@@ -215,7 +217,7 @@ function FrequentFindingCard({
             )}
             onClick={() => onFilterSeverity(finding.impact)}
           >
-            {getSeverityLabel(t, finding.impact)}
+            {getSeverityLabel(i18n, finding.impact)}
           </Badge>
           <Badge
             variant="outline"
@@ -330,7 +332,7 @@ export function AccessibilityOverviewTab({ label }: AccessibilityTabProps) {
     })
   }
 
-  const activeSeverityLabel = severityFilter ? getSeverityLabel(t, severityFilter) : null
+  const activeSeverityLabel = severityFilter ? getSeverityLabel(i18n, severityFilter) : null
   const activeCategoryLabel = categoryFilter
     ? getAccessibilityCategoryLabel(i18n, categoryFilter)
     : null
@@ -359,7 +361,7 @@ export function AccessibilityOverviewTab({ label }: AccessibilityTabProps) {
             return (
               <SummaryCard
                 key={severity}
-                label={getSeverityLabel(t, severity)}
+                label={getSeverityLabel(i18n, severity)}
                 value={count}
                 tone={SEVERITY_TONES[severity]}
                 active={severityFilter === severity}

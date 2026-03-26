@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
+import type { I18n } from "@lingui/core"
+import { msg } from "@lingui/core/macro"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { useQuery } from "@tanstack/react-query"
 import type {
@@ -95,16 +97,16 @@ const STATUS_OPTIONS: Array<{ value: ReviewerValidationStatus }> = [
   { value: "not-reviewed" },
 ]
 
-function getStatusLabel(t: ReturnType<typeof useLingui>["t"], value: ReviewerValidationStatus): string {
+function getStatusLabel(i18n: I18n, value: ReviewerValidationStatus): string {
   switch (value) {
     case "pass":
-      return t`Pass`
+      return i18n._(msg`Pass`)
     case "needs-changes":
-      return t`Needs changes`
+      return i18n._(msg`Needs changes`)
     case "not-applicable":
-      return t`N/A`
+      return i18n._(msg`N/A`)
     default:
-      return t`Not reviewed`
+      return i18n._(msg`Not reviewed`)
   }
 }
 
@@ -874,7 +876,7 @@ export function PreviewValidationCard({
                                   )}
                                   onClick={() => handleStatusChange(criterion.id, option.value)}
                                 >
-                                  {getStatusLabel(t, option.value)}
+                                  {getStatusLabel(i18n, option.value)}
                                 </button>
                               ))}
                             </div>
