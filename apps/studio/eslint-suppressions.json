@@ -79,11 +79,6 @@
       "count": 15
     }
   },
-  "src/components/pipeline/stages/translations-view-state.test.ts": {
-    "lingui/no-unlocalized-strings": {
-      "count": 5
-    }
-  },
   "src/components/ui/dialog.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 1
