@@ -200,6 +200,8 @@ export default [
             "^#[0-9a-fA-F]+$",
             // React Server Components directives (shadcn boilerplate)
             "^use (client|server)$",
+            // Brand name (never translated)
+            "^ADT Studio$",
             // Data URIs (e.g. "data:image/png;base64,...")
             "^data:",
             // HTML fragments used in innerHTML assignments (e.g. `<div id="content">`)

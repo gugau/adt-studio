@@ -1,9 +1,4 @@
 {
-  "src/api/client.test.ts": {
-    "lingui/no-unlocalized-strings": {
-      "count": 17
-    }
-  },
   "src/components/config/AdvancedLayoutPanel.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 33
@@ -34,11 +29,6 @@
       "count": 2
     }
   },
-  "src/components/pipeline/stage-config.test.ts": {
-    "lingui/no-unlocalized-strings": {
-      "count": 16
-    }
-  },
   "src/components/pipeline/stage-config.ts": {
     "lingui/no-unlocalized-strings": {
       "count": 20
@@ -64,11 +54,6 @@
       "count": 1
     }
   },
-  "src/hooks/run-state.test.ts": {
-    "lingui/no-unlocalized-strings": {
-      "count": 35
-    }
-  },
   "src/hooks/use-book-run.ts": {
     "lingui/no-unlocalized-strings": {
       "count": 3
@@ -84,16 +69,6 @@
       "count": 2
     }
   },
-  "src/lib/label-validation.test.ts": {
-    "lingui/no-unlocalized-strings": {
-      "count": 29
-    }
-  },
-  "src/lib/render-strategy.test.ts": {
-    "lingui/no-unlocalized-strings": {
-      "count": 36
-    }
-  },
   "src/routes/books.$label.debug.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 5
@@ -101,22 +76,12 @@
   },
   "src/routes/books.$label.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 3
+      "count": 2
     }
   },
   "src/routes/books.new.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 55
-    }
-  },
-  "src/routes/index.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 1
-    }
-  },
-  "src/vite-env.d.ts": {
-    "lingui/no-unlocalized-strings": {
-      "count": 1
+      "count": 54
     }
   }
 }
