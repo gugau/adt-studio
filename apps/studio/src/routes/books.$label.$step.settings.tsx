@@ -6,7 +6,7 @@ import { StoryboardSettings } from "@/components/pipeline/stages/storyboard/Stor
 import { QuizzesSettings } from "@/components/pipeline/stages/QuizzesSettings"
 import { GlossarySettings } from "@/components/pipeline/stages/GlossarySettings"
 import { TocSettings } from "@/components/pipeline/stages/TocSettings"
-import { CaptionsSettings } from "@/components/pipeline/stages/CaptionsSettings"
+import { CaptionsSettings } from "@/components/pipeline/stages/captions/CaptionsSettings"
 import { TranslationsSettings } from "@/components/pipeline/stages/TranslationsSettings"
 import { getStageLabelI18n } from "@/components/pipeline/pipeline-i18n"
 import { cn } from "@/lib/utils"
