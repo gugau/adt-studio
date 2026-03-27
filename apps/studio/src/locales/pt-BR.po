@@ -249,6 +249,13 @@ msgstr "Adicionar idioma"
 msgid "Add your first book"
 msgstr "Adicione seu primeiro livro"
 
+msgid "ADT Book"
+msgstr "Livro ADT"
+
+#. placeholder {0}: selectedBook.title
+msgid "ADT Book — {0}"
+msgstr "Livro ADT — {0}"
+
 msgid "ADT Export"
 msgstr "Exportação ADT"
 
@@ -370,6 +377,9 @@ msgstr "Chave de assinatura do Azure Speech"
 msgid "Azure Voice"
 msgstr "Voz Azure"
 
+msgid "Back"
+msgstr "Voltar"
+
 msgid "Back Cover"
 msgstr "Contracapa"
 
@@ -406,6 +416,9 @@ msgstr "Autor"
 
 msgid "Book data is outdated and must be rebuilt."
 msgstr "Os dados do livro estão desatualizados e precisam ser reconstruídos."
+
+#~ msgid "Book Examples"
+#~ msgstr "Exemplos de livros"
 
 msgid "Book Metadata"
 msgstr "Metadados do livro"
@@ -491,6 +504,9 @@ msgstr "Mudar idioma"
 msgid "Chart / Graph"
 msgstr "Gráfico / Tabela"
 
+msgid "Choose a Preset"
+msgstr "Escolher um Preset"
+
 msgid "Choose an existing image from this project"
 msgstr "Escolha uma imagem existente deste projeto"
 
@@ -515,8 +531,14 @@ msgstr "Clique para selecionar uma imagem"
 msgid "Clone this section"
 msgstr "Clonar esta seção"
 
+msgid "Close"
+msgstr "Fechar"
+
 msgid "Close section data"
 msgstr "Fechar dados da seção"
+
+msgid "coming soon"
+msgstr "em breve"
 
 msgid "Comma-separated language codes routed to Azure."
 msgstr "Códigos de idioma separados por vírgula roteados para Azure."
@@ -541,6 +563,9 @@ msgstr "Consultando o conselho de estilo..."
 
 msgid "Content"
 msgstr "Conteúdo"
+
+msgid "Continue"
+msgstr "Continuar"
 
 msgid "Controls how page content is grouped during the sectioning step."
 msgstr "Controla como o conteúdo da página é agrupado durante a etapa de secionamento."
@@ -742,6 +767,12 @@ msgstr "Erros"
 
 msgid "Est. Cost"
 msgstr "Custo estimado"
+
+msgid "Example Books"
+msgstr "Livros de exemplo"
+
+#~ msgid "Examples — {0}"
+#~ msgstr "Exemplos — {0}"
 
 msgid "Exclude from render"
 msgstr "Excluir da renderização"
@@ -966,6 +997,9 @@ msgstr "Ocultar imagens removidas"
 
 msgid "Higher values filter out simple or blank images."
 msgstr "Valores mais altos filtram imagens simples ou em branco."
+
+msgid "Home"
+msgstr "Início"
 
 msgid "Illustration"
 msgstr "Ilustração"
@@ -1313,6 +1347,9 @@ msgstr "Sem PDF"
 msgid "No pipeline data yet. Run the pipeline to see stats."
 msgstr "Ainda não há dados do pipeline. Execute o pipeline para ver as estatísticas."
 
+msgid "No preview available."
+msgstr "Pré-visualização não disponível."
+
 msgid "No quizzes for this page"
 msgstr "Nenhum quiz para esta página"
 
@@ -1324,6 +1361,9 @@ msgstr "Sem seções para esta página"
 
 msgid "No sections on this page"
 msgstr "Sem seções nesta página"
+
+#~ msgid "No settings match your search."
+#~ msgstr "Nenhuma configuração corresponde à sua pesquisa."
 
 msgid "No text extracted"
 msgstr "Nenhum texto extraído"
@@ -1369,6 +1409,13 @@ msgstr "Instruções opcionais para o LLM..."
 
 msgid "Original"
 msgstr "Original"
+
+msgid "Original PDF"
+msgstr "PDF Original"
+
+#. placeholder {0}: selectedBook.title
+msgid "Original PDF — {0}"
+msgstr "PDF Original — {0}"
 
 msgid "Other"
 msgstr "Outro"
@@ -1566,11 +1613,17 @@ msgstr "Renderizando novamente..."
 msgid "Re-run {stageLabel}"
 msgstr "Reexecutar {0}"
 
+msgid "Real books processed with this preset — before and after."
+msgstr "Livros reais processados com este preset — antes e depois."
+
 msgid "Realistic / Photo"
 msgstr "Realista / Foto"
 
 msgid "Rearranging atoms of HTML..."
 msgstr "Reorganizando os átomos de HTML..."
+
+msgid "Recommended for"
+msgstr "Recomendado para"
 
 msgid "Region"
 msgstr "Região"
@@ -1686,11 +1739,17 @@ msgstr "Exportação SCORM"
 msgid "SCORM Package"
 msgstr "Pacote SCORM"
 
+#~ msgid "Search for some settings"
+#~ msgstr "Pesquisar configurações"
+
 msgid "Search languages..."
 msgstr "Buscar idiomas..."
 
 msgid "Search sections..."
 msgstr "Buscar seções..."
+
+#~ msgid "Search settings"
+#~ msgstr "Pesquisar configurações"
 
 #. placeholder {0}: String(group.sectionIndex + 1)
 #. placeholder {0}: String(i + 1)
@@ -1734,6 +1793,12 @@ msgstr "Modo de seção"
 
 msgid "sections"
 msgstr "seções"
+
+msgid "See examples"
+msgstr "Ver exemplos"
+
+#~ msgid "See examples for {0}"
+#~ msgstr "Ver exemplos de {0}"
 
 msgid "Segment"
 msgstr "Segmentar"

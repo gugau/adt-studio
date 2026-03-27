@@ -249,6 +249,13 @@ msgstr "Add Language"
 msgid "Add your first book"
 msgstr "Add your first book"
 
+msgid "ADT Book"
+msgstr "ADT Book"
+
+#. placeholder {0}: selectedBook.title
+msgid "ADT Book — {0}"
+msgstr "ADT Book — {0}"
+
 msgid "ADT Export"
 msgstr "ADT Export"
 
@@ -370,6 +377,9 @@ msgstr "Azure Speech subscription key"
 msgid "Azure Voice"
 msgstr "Azure Voice"
 
+msgid "Back"
+msgstr "Back"
+
 msgid "Back Cover"
 msgstr "Back Cover"
 
@@ -406,6 +416,9 @@ msgstr "Book Author"
 
 msgid "Book data is outdated and must be rebuilt."
 msgstr "Book data is outdated and must be rebuilt."
+
+#~ msgid "Book Examples"
+#~ msgstr "Book Examples"
 
 msgid "Book Metadata"
 msgstr "Book Metadata"
@@ -491,6 +504,9 @@ msgstr "Change language"
 msgid "Chart / Graph"
 msgstr "Chart / Graph"
 
+msgid "Choose a Preset"
+msgstr "Choose a Preset"
+
 msgid "Choose an existing image from this project"
 msgstr "Choose an existing image from this project"
 
@@ -515,8 +531,14 @@ msgstr "Click to select an image"
 msgid "Clone this section"
 msgstr "Clone this section"
 
+msgid "Close"
+msgstr "Close"
+
 msgid "Close section data"
 msgstr "Close section data"
+
+msgid "coming soon"
+msgstr "coming soon"
 
 msgid "Comma-separated language codes routed to Azure."
 msgstr "Comma-separated language codes routed to Azure."
@@ -541,6 +563,9 @@ msgstr "Consulting the style council..."
 
 msgid "Content"
 msgstr "Content"
+
+msgid "Continue"
+msgstr "Continue"
 
 msgid "Controls how page content is grouped during the sectioning step."
 msgstr "Controls how page content is grouped during the sectioning step."
@@ -742,6 +767,12 @@ msgstr "Errors"
 
 msgid "Est. Cost"
 msgstr "Est. Cost"
+
+msgid "Example Books"
+msgstr "Example Books"
+
+#~ msgid "Examples — {0}"
+#~ msgstr "Examples — {0}"
 
 msgid "Exclude from render"
 msgstr "Exclude from render"
@@ -966,6 +997,9 @@ msgstr "Hide pruned images"
 
 msgid "Higher values filter out simple or blank images."
 msgstr "Higher values filter out simple or blank images."
+
+msgid "Home"
+msgstr "Home"
 
 msgid "Illustration"
 msgstr "Illustration"
@@ -1313,6 +1347,9 @@ msgstr "No PDF"
 msgid "No pipeline data yet. Run the pipeline to see stats."
 msgstr "No pipeline data yet. Run the pipeline to see stats."
 
+msgid "No preview available."
+msgstr "No preview available."
+
 msgid "No quizzes for this page"
 msgstr "No quizzes for this page"
 
@@ -1324,6 +1361,9 @@ msgstr "No sections for this page"
 
 msgid "No sections on this page"
 msgstr "No sections on this page"
+
+#~ msgid "No settings match your search."
+#~ msgstr "No settings match your search."
 
 msgid "No text extracted"
 msgstr "No text extracted"
@@ -1369,6 +1409,13 @@ msgstr "Optional instructions for the LLM..."
 
 msgid "Original"
 msgstr "Original"
+
+msgid "Original PDF"
+msgstr "Original PDF"
+
+#. placeholder {0}: selectedBook.title
+msgid "Original PDF — {0}"
+msgstr "Original PDF — {0}"
 
 msgid "Other"
 msgstr "Other"
@@ -1566,11 +1613,17 @@ msgstr "Re-rendering..."
 msgid "Re-run {stageLabel}"
 msgstr "Re-run {stageLabel}"
 
+msgid "Real books processed with this preset — before and after."
+msgstr "Real books processed with this preset — before and after."
+
 msgid "Realistic / Photo"
 msgstr "Realistic / Photo"
 
 msgid "Rearranging atoms of HTML..."
 msgstr "Rearranging atoms of HTML..."
+
+msgid "Recommended for"
+msgstr "Recommended for"
 
 msgid "Region"
 msgstr "Region"
@@ -1686,11 +1739,17 @@ msgstr "SCORM Export"
 msgid "SCORM Package"
 msgstr "SCORM Package"
 
+#~ msgid "Search for some settings"
+#~ msgstr "Search for some settings"
+
 msgid "Search languages..."
 msgstr "Search languages..."
 
 msgid "Search sections..."
 msgstr "Search sections..."
+
+#~ msgid "Search settings"
+#~ msgstr "Search settings"
 
 #. placeholder {0}: String(group.sectionIndex + 1)
 #. placeholder {0}: String(i + 1)
@@ -1734,6 +1793,12 @@ msgstr "Sectioning Mode"
 
 msgid "sections"
 msgstr "sections"
+
+msgid "See examples"
+msgstr "See examples"
+
+#~ msgid "See examples for {0}"
+#~ msgstr "See examples for {0}"
 
 msgid "Segment"
 msgstr "Segment"
