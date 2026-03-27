@@ -4,26 +4,6 @@
       "count": 33
     }
   },
-  "src/components/config/ConfigEditor.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 49
-    }
-  },
-  "src/components/pipeline/stages/text-to-speech/TextToSpeechSettings.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 12
-    }
-  },
-  "src/hooks/use-inline-page-edit.ts": {
-    "lingui/no-unlocalized-strings": {
-      "count": 3
-    }
-  },
-  "src/lib/activity-utils.ts": {
-    "lingui/no-unlocalized-strings": {
-      "count": 2
-    }
-  },
   "src/routes/books.new.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 54

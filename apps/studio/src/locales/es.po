@@ -12,26 +12,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#. js-lingui-explicit-id
-#~ msgid "Settings"
-#~ msgstr "Configuración"
-
-#. js-lingui-explicit-id
-#~ msgid "API Key Settings"
-#~ msgstr "Configuración de clave API"
-
-#. js-lingui-explicit-id
-#~ msgid "Re-package ADT"
-#~ msgstr "Reempaquetar ADT"
-
-#. js-lingui-explicit-id
-#~ msgid "No pages extracted yet"
-#~ msgstr "Aún no se han extraído páginas"
-
-#. js-lingui-explicit-id
-#~ msgid "Untitled"
-#~ msgstr "Sin título"
-
 msgid "_page"
 msgstr "_página"
 
@@ -43,10 +23,6 @@ msgstr "(activo)"
 
 msgid "(template)"
 msgstr "(plantilla)"
-
-#. placeholder {0}: languages.length
-msgid "{0, plural, one {# language} other {# languages}}"
-msgstr "{0, plural, one {# idioma} other {# idiomas}}"
 
 #. placeholder {0}: lockedLang.name
 msgid "{0} — type country or Enter for base"
@@ -118,12 +94,6 @@ msgstr "{missingAudioCount} faltantes"
 
 msgid "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
 msgstr "{regionCount, plural, one {{regionCount} región detectada} other {{regionCount} regiones detectadas}}"
-
-#~ msgid "{stepLabel} Settings"
-#~ msgstr "Configuración de {0}"
-
-msgid "{totalEntries, plural, one {# audio file} other {# audio files}}"
-msgstr "{totalEntries, plural, one {# archivo de audio} other {# archivos de audio}}"
 
 #. placeholder {0}: String(filterSectionIndex + 1)
 msgid "/ Section {0}"
@@ -298,9 +268,6 @@ msgstr "Imagen con IA"
 
 msgid "AI Overlay"
 msgstr "Superposición por IA"
-
-#~ msgid "AI reasoning"
-#~ msgstr "Razonamiento de la IA"
 
 msgid "AI Rendering"
 msgstr "Renderizado con IA"
@@ -813,9 +780,6 @@ msgstr "Exporta el libro como un paquete Readium WebPub — un formato basado en
 msgid "Export the complete Accessible Digital Textbook as a ZIP archive. Includes all HTML pages, images, audio files, quizzes, and the compiled web application — ready to upload to a distribution platform or open locally."
 msgstr "Exporta el Libro de Texto Digital Accesible completo como un archivo ZIP. Incluye todas las páginas HTML, imágenes, archivos de audio, cuestionarios y la aplicación web compilada — listo para subirlo a una plataforma de distribución o abrirlo localmente."
 
-#~ msgid "Export timed out — the book may be too large"
-#~ msgstr "La exportación expiró — el libro puede ser demasiado grande"
-
 msgid "Export WebPub"
 msgstr "Exportar WebPub"
 
@@ -1182,9 +1146,6 @@ msgstr "Filtro basado en LLM para determinar si las imágenes extraídas son rel
 msgid "LLM-based segmentation to detect and split composited images into individual segments. Requires GPT-5.2+ for accurate bounding box coordinates."
 msgstr "Segmentación basada en LLM para detectar y dividir imágenes compuestas en segmentos individuales. Requiere GPT-5.2+ para coordenadas precisas de cuadros delimitadores."
 
-msgid "Loading audio data..."
-msgstr "Cargando datos de audio..."
-
 msgid "Loading Book..."
 msgstr "Cargando libro..."
 
@@ -1524,9 +1485,6 @@ msgstr "Pendiente..."
 msgid "Per-Step Breakdown"
 msgstr "Desglose por etapa"
 
-#~ msgid "pg {0}"
-#~ msgstr "pg {0}"
-
 msgid "Photograph"
 msgstr "Fotografía"
 
@@ -1641,9 +1599,6 @@ msgstr "Re-renderizar sección"
 
 msgid "Re-render this section"
 msgstr "Re-renderizar esta sección"
-
-#~ msgid "Re-rendering page..."
-#~ msgstr "Rerenderizando página..."
 
 msgid "Re-rendering..."
 msgstr "Volviendo a renderizar..."
