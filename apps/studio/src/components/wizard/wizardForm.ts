@@ -14,6 +14,8 @@ export const defaultWizardValues = {
   selectedPreset: null as string | null,
   label: "",
   file: null as File | null,
+  startPage: "",
+  endPage: "",
   outputLanguages: [] as string[],
   layoutType: "",
 }

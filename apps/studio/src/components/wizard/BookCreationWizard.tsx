@@ -8,6 +8,7 @@ import { useWizard } from "./index"
 import { useWizardForm } from "./wizardForm"
 import { STEPS } from "./steps"
 import { Step0Preset } from "./step0preset"
+import { PdfCoverPreview } from "./shared/PdfCoverPreview"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 
 function WizardHeader({ step }: { step: number }) {
@@ -83,7 +84,7 @@ function WizardFooter({
 function PreviewContainer({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="bg-white rounded-xl shadow-sm border border-[#e5e5e5] flex items-center justify-center shrink-0"
+      className="flex items-center justify-center shrink-0"
       style={{ width: 650, height: 812 }}
     >
       {children}
@@ -97,6 +98,7 @@ export function BookCreationWizard() {
   const [previewOpen, setPreviewOpen] = useState(false)
 
   const values = useStore(form.store, (s) => s.values)
+  const file = useStore(form.store, (s) => s.values.file)
   const stepIndex = currentStep - 1
   const canContinue = currentStep >= 1 ? STEPS[stepIndex].isValid(values) : false
   const canCreate = STEPS.every((s) => s.isValid(values))
@@ -116,9 +118,11 @@ export function BookCreationWizard() {
   function handleCreate() {
     console.log("Wizard form values:", form.state.values)
   }
-
-  const previewContent = <span className="text-sm text-[#a3a3a3]">Book preview</span>
-  const preview = <PreviewContainer>{previewContent}</PreviewContainer>
+  const preview = (
+    <PreviewContainer>
+      <PdfCoverPreview file={currentStep === 1 ? file : undefined} width={650} height={812} />
+    </PreviewContainer>
+  )
 
   return (
     <div className="h-screen bg-[#f5f5f5] flex lg:gap-[10px]">

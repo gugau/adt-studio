@@ -428,10 +428,6 @@ msgstr "Sobrescrição por livro"
 
 msgid "Book preview"
 msgstr "Pré-visualização do livro"
-
-msgid "Book Preview"
-msgstr "Pré-visualização do livro"
-
 msgid "Book Subtitle"
 msgstr "Subtítulo do livro"
 
@@ -582,8 +578,8 @@ msgstr "Capa de {0}"
 msgid "Create a new image from a text description"
 msgstr "Crie uma nova imagem a partir de uma descrição de texto"
 
-msgid "Create Book"
-msgstr "Criar livro"
+#~ msgid "Create Book"
+#~ msgstr "Criar livro"
 
 msgid "Create descriptive captions for images to improve accessibility."
 msgstr "Cria legendas descritivas para imagens para melhorar a acessibilidade."
@@ -1194,6 +1190,9 @@ msgstr "Carregando página..."
 msgid "Loading pages..."
 msgstr "Carregando páginas..."
 
+msgid "Loading preview"
+msgstr "Carregando pré-visualização"
+
 msgid "Loading preview..."
 msgstr "Carregando pré-visualização..."
 
@@ -1296,8 +1295,8 @@ msgstr "novo_tipo"
 msgid "Next"
 msgstr "Próximo"
 
-msgid "Next Step"
-msgstr "Próximo passo"
+#~ msgid "Next Step"
+#~ msgstr "Próximo passo"
 
 msgid "No captions for this page"
 msgstr "Sem legendas para esta página"
@@ -1667,8 +1666,8 @@ msgstr "Prompt de renderização"
 msgid "Replace"
 msgstr "Substituir"
 
-msgid "Required Fields"
-msgstr "Campos obrigatórios"
+#~ msgid "Required Fields"
+#~ msgstr "Campos obrigatórios"
 
 msgid "Resolving source language..."
 msgstr "Resolvendo idioma de origem..."
@@ -1914,8 +1913,8 @@ msgstr "Estatísticas"
 msgid "Step"
 msgstr "Etapa"
 
-msgid "Step {step} of {TOTAL_STEPS}"
-msgstr "Passo {step} de {TOTAL_STEPS}"
+#~ msgid "Step {step} of {TOTAL_STEPS}"
+#~ msgstr "Passo {step} de {TOTAL_STEPS}"
 
 msgid "Storyboard"
 msgstr "Storyboard"
