@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { PRESETS, type PresetId } from "./constants"
+import { PRESETS, type PresetId } from "@/components/wizard/constants"
 import { PresetCard } from "./PresetCard"
 import { ExamplesModal } from "./ExamplesModal"
 

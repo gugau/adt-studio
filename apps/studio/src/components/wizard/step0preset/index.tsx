@@ -5,8 +5,7 @@ import { useStore } from "@tanstack/react-form"
 import { Button } from "@/components/ui/button"
 import { useWizard } from "@/components/wizard"
 import { useWizardForm } from "@/components/wizard/wizardForm"
-import { PRESET_DEFAULTS } from "@/components/wizard/steps"
-import { type PresetId } from "./constants"
+import { PRESET_DEFAULTS, type PresetId } from "@/components/wizard/constants"
 import { PresetGrid } from "./PresetGrid"
 
 export function Step0Preset() {

@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/hover-card"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
-import { type PresetConfig, type PresetId } from "./constants"
+import { type PresetConfig, type PresetId } from "@/components/wizard/constants"
 
 function FeaturesHoverCard({ preset }: { preset: PresetConfig }) {
   const { t } = useLingui()

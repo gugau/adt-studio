@@ -9,12 +9,13 @@ import { useWizardForm } from "./wizardForm"
 import { STEPS } from "./steps"
 import { Step0Preset } from "./step0preset"
 import { PdfCoverPreview } from "./shared/PdfCoverPreview"
+import { LayoutPreview } from "./step2LayoutOptions/LayoutPreview"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 
 function WizardHeader({ step }: { step: number }) {
   const def = STEPS[step - 1]
   return (
-    <div className="flex flex-col gap-3 px-8 pt-8 pb-6 border-b border-[#e5e5e5]">
+    <div className="flex flex-col gap-3 px-8 pt-6">
       <div className="flex items-center justify-between">
         <span className="inline-flex items-center bg-[#fef2f2] text-[#ef4444] text-[12px] font-semibold leading-4 px-[10px] py-[4px] rounded-[4px]">
           Required Fields
@@ -99,6 +100,7 @@ export function BookCreationWizard() {
 
   const values = useStore(form.store, (s) => s.values)
   const file = useStore(form.store, (s) => s.values.file)
+  const renderStrategy = useStore(form.store, (s) => s.values.renderStrategy)
   const stepIndex = currentStep - 1
   const canContinue = currentStep >= 1 ? STEPS[stepIndex].isValid(values) : false
   const canCreate = STEPS.every((s) => s.isValid(values))
@@ -118,9 +120,15 @@ export function BookCreationWizard() {
   function handleCreate() {
     console.log("Wizard form values:", form.state.values)
   }
+  function renderPreviewContent() {
+    if (currentStep === 1) return <PdfCoverPreview file={file} width={650} height={812} />
+    if (currentStep === 2) return <LayoutPreview strategy={renderStrategy} />
+    return <span className="text-sm text-[#a3a3a3]">Book preview</span>
+  }
+
   const preview = (
     <PreviewContainer>
-      <PdfCoverPreview file={currentStep === 1 ? file : undefined} width={650} height={812} />
+      {renderPreviewContent()}
     </PreviewContainer>
   )
 

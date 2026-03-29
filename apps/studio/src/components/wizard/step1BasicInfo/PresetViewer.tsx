@@ -3,7 +3,7 @@ import { RotateCcw } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
 import { useWizard } from "@/components/wizard"
 import { useWizardForm } from "@/components/wizard/wizardForm"
-import { PRESETS } from "@/components/wizard/step0preset/constants"
+import { PRESETS } from "@/components/wizard/constants"
 
 export function PresetViewer() {
   const { setCurrentStep } = useWizard()

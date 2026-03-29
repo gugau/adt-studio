@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { type PresetConfig, type ExampleBook } from "./constants"
+import { type PresetConfig, type ExampleBook } from "@/components/wizard/constants"
 
 type EmbedTab = "pdf" | "adt"
 
