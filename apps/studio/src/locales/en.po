@@ -426,6 +426,12 @@ msgstr "Book Metadata"
 msgid "Book Override"
 msgstr "Book Override"
 
+msgid "Book preview"
+msgstr "Book preview"
+
+msgid "Book Preview"
+msgstr "Book Preview"
+
 msgid "Book Subtitle"
 msgstr "Book Subtitle"
 
@@ -575,6 +581,9 @@ msgstr "Cover of {title}"
 
 msgid "Create a new image from a text description"
 msgstr "Create a new image from a text description"
+
+msgid "Create Book"
+msgstr "Create Book"
 
 msgid "Create descriptive captions for images to improve accessibility."
 msgstr "Create descriptive captions for images to improve accessibility."
@@ -1287,6 +1296,9 @@ msgstr "new_type_key"
 msgid "Next"
 msgstr "Next"
 
+msgid "Next Step"
+msgstr "Next Step"
+
 msgid "No captions for this page"
 msgstr "No captions for this page"
 
@@ -1362,8 +1374,8 @@ msgstr "No sections for this page"
 msgid "No sections on this page"
 msgstr "No sections on this page"
 
-#~ msgid "No settings match your search."
-#~ msgstr "No settings match your search."
+msgid "No settings match your search."
+msgstr "No settings match your search."
 
 msgid "No text extracted"
 msgstr "No text extracted"
@@ -1655,6 +1667,9 @@ msgstr "Rendering Prompt"
 msgid "Replace"
 msgstr "Replace"
 
+msgid "Required Fields"
+msgstr "Required Fields"
+
 msgid "Resolving source language..."
 msgstr "Resolving source language..."
 
@@ -1748,8 +1763,8 @@ msgstr "Search languages..."
 msgid "Search sections..."
 msgstr "Search sections..."
 
-#~ msgid "Search settings"
-#~ msgstr "Search settings"
+msgid "Search settings"
+msgstr "Search settings"
 
 #. placeholder {0}: String(group.sectionIndex + 1)
 #. placeholder {0}: String(i + 1)
@@ -1898,6 +1913,9 @@ msgstr "Stats"
 
 msgid "Step"
 msgstr "Step"
+
+msgid "Step {step} of {TOTAL_STEPS}"
+msgstr "Step {step} of {TOTAL_STEPS}"
 
 msgid "Storyboard"
 msgstr "Storyboard"

@@ -1,18 +1,26 @@
 import { useNavigate } from "@tanstack/react-router"
 import { ArrowLeft, ArrowRight, Home } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
+import { useStore } from "@tanstack/react-form"
 import { Button } from "@/components/ui/button"
 import { useWizard } from "@/components/wizard"
+import { useWizardForm } from "@/components/wizard/wizardForm"
 import { type PresetId } from "./constants"
 import { PresetGrid } from "./PresetGrid"
 
 export function Step0Preset() {
   const navigate = useNavigate()
-  const { state, setStep0 } = useWizard()
-  const selected = state.step0.selectedPreset
+  const { setCurrentStep } = useWizard()
+  const form = useWizardForm()
+
+  const selected = useStore(form.store, (s) => s.values.selectedPreset) as PresetId | null
 
   function handleSelect(id: PresetId) {
-    setStep0({ selectedPreset: id })
+    form.setFieldValue("selectedPreset", id)
+  }
+
+  function handleContinue() {
+    if (selected) setCurrentStep(1)
   }
 
   return (
@@ -43,7 +51,7 @@ export function Step0Preset() {
         </Button>
         <Button
           disabled={!selected}
-          onClick={() => {}}
+          onClick={handleContinue}
           className="h-9 px-3 py-2 bg-[#2b7fff] text-white hover:bg-[#1a6fef] border-0"
         >
           <Trans>Continue</Trans>

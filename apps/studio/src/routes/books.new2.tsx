@@ -1,11 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { WizardProvider } from "@/components/wizard"
-import { Step0Preset } from "@/components/wizard/step0preset"
+import { WizardFormProvider } from "@/components/wizard/WizardFormProvider"
+import { BookCreationWizard } from "@/components/wizard/BookCreationWizard"
 
 function AddBookPage() {
   return (
     <WizardProvider>
-      <Step0Preset />
+      <WizardFormProvider>
+        <BookCreationWizard />
+      </WizardFormProvider>
     </WizardProvider>
   )
 }

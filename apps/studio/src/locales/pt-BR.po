@@ -426,6 +426,12 @@ msgstr "Metadados do livro"
 msgid "Book Override"
 msgstr "Sobrescrição por livro"
 
+msgid "Book preview"
+msgstr "Pré-visualização do livro"
+
+msgid "Book Preview"
+msgstr "Pré-visualização do livro"
+
 msgid "Book Subtitle"
 msgstr "Subtítulo do livro"
 
@@ -575,6 +581,9 @@ msgstr "Capa de {0}"
 
 msgid "Create a new image from a text description"
 msgstr "Crie uma nova imagem a partir de uma descrição de texto"
+
+msgid "Create Book"
+msgstr "Criar livro"
 
 msgid "Create descriptive captions for images to improve accessibility."
 msgstr "Cria legendas descritivas para imagens para melhorar a acessibilidade."
@@ -1287,6 +1296,9 @@ msgstr "novo_tipo"
 msgid "Next"
 msgstr "Próximo"
 
+msgid "Next Step"
+msgstr "Próximo passo"
+
 msgid "No captions for this page"
 msgstr "Sem legendas para esta página"
 
@@ -1362,8 +1374,8 @@ msgstr "Sem seções para esta página"
 msgid "No sections on this page"
 msgstr "Sem seções nesta página"
 
-#~ msgid "No settings match your search."
-#~ msgstr "Nenhuma configuração corresponde à sua pesquisa."
+msgid "No settings match your search."
+msgstr "Nenhuma configuração corresponde à sua pesquisa."
 
 msgid "No text extracted"
 msgstr "Nenhum texto extraído"
@@ -1655,6 +1667,9 @@ msgstr "Prompt de renderização"
 msgid "Replace"
 msgstr "Substituir"
 
+msgid "Required Fields"
+msgstr "Campos obrigatórios"
+
 msgid "Resolving source language..."
 msgstr "Resolvendo idioma de origem..."
 
@@ -1748,8 +1763,8 @@ msgstr "Buscar idiomas..."
 msgid "Search sections..."
 msgstr "Buscar seções..."
 
-#~ msgid "Search settings"
-#~ msgstr "Pesquisar configurações"
+msgid "Search settings"
+msgstr "Pesquisar configurações"
 
 #. placeholder {0}: String(group.sectionIndex + 1)
 #. placeholder {0}: String(i + 1)
@@ -1898,6 +1913,9 @@ msgstr "Estatísticas"
 
 msgid "Step"
 msgstr "Etapa"
+
+msgid "Step {step} of {TOTAL_STEPS}"
+msgstr "Passo {step} de {TOTAL_STEPS}"
 
 msgid "Storyboard"
 msgstr "Storyboard"
