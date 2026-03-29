@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Eye, ArrowLeft, ArrowRight, Zap } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
 import { Button } from "@/components/ui/button"
+import { useBooks } from "@/hooks/use-books"
 import { useWizard } from "./index"
 import { useWizardForm } from "./wizardForm"
 import { STEPS } from "./steps"
@@ -96,14 +97,20 @@ function PreviewContainer({ children }: { children: React.ReactNode }) {
 export function BookCreationWizard() {
   const { currentStep, setCurrentStep } = useWizard()
   const form = useWizardForm()
+  const { data: books } = useBooks()
   const [previewOpen, setPreviewOpen] = useState(false)
 
   const values = useStore(form.store, (s) => s.values)
   const file = useStore(form.store, (s) => s.values.file)
   const renderStrategy = useStore(form.store, (s) => s.values.renderStrategy)
   const stepIndex = currentStep - 1
-  const canContinue = currentStep >= 1 ? STEPS[stepIndex].isValid(values) : false
-  const canCreate = STEPS.every((s) => s.isValid(values))
+  const existingBookLabels = books?.map((b: { label: string }) => b.label) ?? []
+  const stepValidationContext = { existingBookLabels }
+  const canContinue =
+    currentStep >= 1
+      ? STEPS[stepIndex].isValid(values, stepValidationContext)
+      : false
+  const canCreate = STEPS.every((s) => s.isValid(values, stepValidationContext))
 
   if (currentStep === 0) return <Step0Preset />
 

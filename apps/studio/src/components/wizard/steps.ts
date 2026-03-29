@@ -2,15 +2,20 @@
 import type { ComponentType } from "react"
 import type { WizardFormValues } from "./wizardForm"
 import { Step1 } from "./step1BasicInfo"
-// import { Step2 } from "./steps/Step2"
+import { isStep1BasicInfoValid } from "./step1BasicInfo/projectLabelSchema"
+import { Step2 } from "./step2LayoutOptions"
 // import { Step3 } from "./steps/Step3"
 // import { Step4 } from "./steps/Step4"
+
+export interface WizardStepValidationContext {
+  existingBookLabels?: readonly string[]
+}
 
 export interface StepDef {
   title: string
   description: string
   component: ComponentType
-  isValid: (values: WizardFormValues) => boolean
+  isValid: (values: WizardFormValues, context?: WizardStepValidationContext) => boolean
 }
 
 export const STEPS: StepDef[] = [
@@ -18,14 +23,15 @@ export const STEPS: StepDef[] = [
     title: "Basic Information",
     description: "Configure basic document information and file paths",
     component: Step1,
-    isValid: (v) => !!v.file && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(v.label),
+    isValid: (v, ctx) =>
+      isStep1BasicInfoValid(v, ctx?.existingBookLabels ?? []),
   },
-  // {
-  //   title: "Layout Options",
-  //   description: "Configure layout options for your document",
-  //   component: Step2,
-  //   isValid: (v) => !!v.file,
-  // },
+  {
+    title: "Visual Layout",
+    description: "Choose how the content should be formatted.",
+    component: Step2,
+    isValid: (v) => v.renderStrategy !== "",
+  },
   // {
   //   title: "Image Processing",
   //   description: "Configure image processing settings",
@@ -39,10 +45,3 @@ export const STEPS: StepDef[] = [
   //   isValid: (v) => v.layoutType !== "",
   // },
 ]
-// TODO: get the presets from @step0preset/constants.ts
-export const PRESET_DEFAULTS: Record<string, Partial<WizardFormValues>> = {
-  textbook:  { layoutType: "textbook",  outputLanguages: ["en"] },
-  storybook: { layoutType: "storybook", outputLanguages: ["en"] },
-  reference: { layoutType: "reference", outputLanguages: ["en"] },
-  custom:    {},
-}
