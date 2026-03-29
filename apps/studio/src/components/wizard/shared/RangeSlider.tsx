@@ -2,7 +2,7 @@
 import { CircleHelp, Minus, Plus } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
 import { Button } from "@/components/ui/button"
-import { TooltipProvider, TooltipRoot, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 
 interface RangeSliderProps {
   label: string
@@ -90,48 +90,48 @@ export function RangeSlider({
   const [start, end] = value
 
   return (
-    <TooltipProvider delayDuration={300}>
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-1.5">
-          <span className="text-sm font-medium text-black">{label}</span>
-          <TooltipRoot>
-            <TooltipTrigger asChild>
-              <button type="button" className="text-[#a3a3a3] hover:text-[#737373] transition-colors duration-150">
-                <CircleHelp className="h-3.5 w-3.5" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>{tooltip}</TooltipContent>
-          </TooltipRoot>
-        </div>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-1.5">
+        <span className="text-sm font-medium text-black">{label}</span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button type="button" className="text-[#a3a3a3] hover:text-[#737373] transition-colors duration-150">
+              <CircleHelp className="h-3.5 w-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent
+          side="right"
+          >{tooltip}</TooltipContent>
+        </Tooltip>
+      </div>
 
-        <Slider
+      <Slider
+        min={min}
+        max={max || 1}
+        step={1}
+        value={[start, end]}
+        onValueChange={([s, e]) => onChange([s, e])}
+        disabled={disabled}
+      />
+
+      <div className="flex items-center justify-between">
+        <MinMaxInput
+          label={startLabel}
+          value={start}
           min={min}
-          max={max || 1}
-          step={1}
-          value={[start, end]}
-          onValueChange={([s, e]) => onChange([s, e])}
+          max={end}
+          onChange={(v) => onChange([v, end])}
           disabled={disabled}
         />
-
-        <div className="flex items-center justify-between">
-          <MinMaxInput
-            label={startLabel}
-            value={start}
-            min={min}
-            max={end}
-            onChange={(v) => onChange([v, end])}
-            disabled={disabled}
-          />
-          <MinMaxInput
-            label={endLabel}
-            value={end}
-            min={start}
-            max={max}
-            onChange={(v) => onChange([start, v])}
-            disabled={disabled}
-          />
-        </div>
+        <MinMaxInput
+          label={endLabel}
+          value={end}
+          min={start}
+          max={max}
+          onChange={(v) => onChange([start, v])}
+          disabled={disabled}
+        />
       </div>
-    </TooltipProvider>
+    </div>
   )
 }
