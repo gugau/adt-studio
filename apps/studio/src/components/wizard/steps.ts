@@ -1,4 +1,3 @@
-/* eslint-disable lingui/no-unlocalized-strings */
 // TODO: Add translations and define better descriptions for each step
 import type { ComponentType } from "react"
 import type { WizardFormValues } from "./wizardForm"
@@ -21,24 +20,24 @@ export const STEPS: StepDef[] = [
     component: Step1,
     isValid: (v) => !!v.file && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(v.label),
   },
-  {
-    title: "Layout Options",
-    description: "Configure layout options for your document",
-    component: Step2,
-    isValid: (v) => !!v.file,
-  },
-  {
-    title: "Image Processing",
-    description: "Configure image processing settings",
-    component: Step3,
-    isValid: (v) => v.outputLanguages.length > 0,
-  },
-  {
-    title: "Filters",
-    description: "Configure filters for your configuration",
-    component: Step4,
-    isValid: (v) => v.layoutType !== "",
-  },
+  // {
+  //   title: "Layout Options",
+  //   description: "Configure layout options for your document",
+  //   component: Step2,
+  //   isValid: (v) => !!v.file,
+  // },
+  // {
+  //   title: "Image Processing",
+  //   description: "Configure image processing settings",
+  //   component: Step3,
+  //   isValid: (v) => v.outputLanguages.length > 0,
+  // },
+  // {
+  //   title: "Filters",
+  //   description: "Configure filters for your configuration",
+  //   component: Step4,
+  //   isValid: (v) => v.layoutType !== "",
+  // },
 ]
 // TODO: get the presets from @step0preset/constants.ts
 export const PRESET_DEFAULTS: Record<string, Partial<WizardFormValues>> = {
