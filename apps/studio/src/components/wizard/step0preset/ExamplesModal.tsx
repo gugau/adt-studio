@@ -9,37 +9,10 @@ import {
   DialogPortal,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { type PresetConfig, type ExampleBook } from "./constants"
 
 type EmbedTab = "pdf" | "adt"
-
-function TabBar({
-  active,
-  onChange,
-}: {
-  active: EmbedTab
-  onChange: (t: EmbedTab) => void
-}) {
-  return (
-    <div className="flex border-b border-[#e5e5e5] shrink-0">
-      {(["pdf", "adt"] as EmbedTab[]).map((tab) => (
-        <button
-          key={tab}
-          type="button"
-          onClick={() => onChange(tab)}
-          className={[
-            "px-4 py-2.5 text-sm font-medium transition-colors relative",
-            active === tab
-              ? "text-[#2b7fff] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#2b7fff]"
-              : "text-[#737373] hover:text-[#0a0a0a]",
-          ].join(" ")}
-        >
-          {tab === "pdf" ? <Trans>Original PDF</Trans> : <Trans>ADT Book</Trans>}
-        </button>
-      ))}
-    </div>
-  )
-}
 
 function BookItem({
   book,
@@ -167,33 +140,52 @@ export function ExamplesModal({ open, onClose, preset }: ExamplesModalProps) {
           </div>
 
           <div className="flex-1 flex flex-col min-w-0">
-            <TabBar active={activeTab} onChange={setActiveTab} />
+            <Tabs
+              value={activeTab}
+              onValueChange={(value) => setActiveTab(value as EmbedTab)}
+              className="flex flex-1 flex-col min-h-0"
+            >
+              <TabsList className="h-auto w-full justify-start rounded-none bg-transparent p-0 border-b border-[#e5e5e5] shrink-0">
+                <TabsTrigger
+                  value="pdf"
+                  className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-[#737373] shadow-none data-[state=active]:border-[#2b7fff] data-[state=active]:bg-transparent data-[state=active]:text-[#2b7fff] data-[state=active]:shadow-none"
+                >
+                  <Trans>Original PDF</Trans>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="adt"
+                  className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-[#737373] shadow-none data-[state=active]:border-[#2b7fff] data-[state=active]:bg-transparent data-[state=active]:text-[#2b7fff] data-[state=active]:shadow-none"
+                >
+                  <Trans>ADT Book</Trans>
+                </TabsTrigger>
+              </TabsList>
 
-            <div className="flex-1 overflow-hidden">
-              {embedUrl ? (
-                activeTab === "adt" ? (
-                  <div className="w-full h-full p-4 bg-[#f5f5f5]">
+              <div className="flex-1 overflow-hidden">
+                {embedUrl ? (
+                  activeTab === "adt" ? (
+                    <div className="w-full h-full p-4 bg-[#f5f5f5]">
+                      <iframe
+                        key={embedUrl}
+                        src={embedUrl}
+                        title={t`ADT Book — ${selectedBook.title}`}
+                        className="w-full h-full border-0 rounded-md bg-white"
+                      />
+                    </div>
+                  ) : (
                     <iframe
                       key={embedUrl}
                       src={embedUrl}
-                      title={t`ADT Book — ${selectedBook.title}`}
-                      className="w-full h-full border-0 rounded-md bg-white"
+                      title={t`Original PDF — ${selectedBook.title}`}
+                      className="w-full h-full border-0"
                     />
-                  </div>
+                  )
                 ) : (
-                  <iframe
-                    key={embedUrl}
-                    src={embedUrl}
-                    title={t`Original PDF — ${selectedBook.title}`}
-                    className="w-full h-full border-0"
-                  />
-                )
-              ) : (
-                <div className="flex items-center justify-center h-full text-sm text-[#737373]">
-                  <Trans>No preview available.</Trans>
-                </div>
-              )}
-            </div>
+                  <div className="flex items-center justify-center h-full text-sm text-[#737373]">
+                    <Trans>No preview available.</Trans>
+                  </div>
+                )}
+              </div>
+            </Tabs>
           </div>
 
           <DialogPrimitive.Close
