@@ -31,19 +31,29 @@ export function suggestLabel(file: File) {
     .slice(0, 64)
 }
 
+const pdfCache = { file: null as File | null, totalPages: 0 }
+
 export function usePdfUpload() {
   const form = useWizardForm()
   const file = useStore(form.store, (s) => s.values.file)
-  const [totalPages, setTotalPages] = useState(0)
+  const [totalPages, setTotalPages] = useState(pdfCache.file === file ? pdfCache.totalPages : 0)
 
   useEffect(() => {
     if (!file) {
+      pdfCache.file = null
+      pdfCache.totalPages = 0
       setTotalPages(0)
       form.setFieldValue("startPage", "")
       form.setFieldValue("endPage", "")
       return
     }
+    if (pdfCache.file === file) {
+      setTotalPages(pdfCache.totalPages)
+      return
+    }
     getPdfPageCount(file).then((count) => {
+      pdfCache.file = file
+      pdfCache.totalPages = count
       setTotalPages(count)
       form.setFieldValue("startPage", "1")
       form.setFieldValue("endPage", String(count))
