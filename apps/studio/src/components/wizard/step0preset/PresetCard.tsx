@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useId, useState } from "react"
 import { Info, Settings, Search } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import {
@@ -7,6 +7,7 @@ import {
   HoverCardContent,
 } from "@/components/ui/hover-card"
 import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
 import { type PresetConfig, type PresetId } from "./constants"
 
 function FeaturesHoverCard({ preset }: { preset: PresetConfig }) {
@@ -61,6 +62,7 @@ function FeaturesHoverCard({ preset }: { preset: PresetConfig }) {
 interface PresetCardProps {
   preset: PresetConfig
   selected: boolean
+  radioName: string
   onSelect: (id: PresetId) => void
   onShowExamples: (id: PresetId) => void
 }
@@ -68,23 +70,35 @@ interface PresetCardProps {
 export function PresetCard({
   preset,
   selected,
+  radioName,
   onSelect,
   onShowExamples,
 }: PresetCardProps) {
   const { Icon } = preset
+  const radioId = useId()
 
   return (
-    <button
-      type="button"
-      onClick={() => onSelect(preset.id)}
-      className={[
-        "w-full rounded-lg p-1 text-left transition-all cursor-pointer",
-        "border border-[#e5e5e5] focus:outline-none",
+    <label
+      className={cn(
+        "block w-full rounded-lg p-1 text-left transition-all cursor-pointer",
+        "border border-[#e5e5e5] outline-none",
+        "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#2b7fff] has-[:focus-visible]:ring-offset-0",
         selected
           ? "ring-2 ring-[#2b7fff] ring-offset-0"
           : "hover:border-[#2b7fff]/50",
-      ].join(" ")}
+      )}
     >
+      <input
+        id={radioId}
+        type="radio"
+        name={radioName}
+        value={preset.id}
+        checked={selected}
+        onChange={() => onSelect(preset.id)}
+        className="sr-only"
+        aria-label={preset.title}
+      />
+      <span className="block">
       <div
         className={`h-[200px] w-full rounded flex items-center justify-center ${preset.bgColor}`}
       >
@@ -142,6 +156,7 @@ export function PresetCard({
           </HoverCard>
         </div>
       </div>
-    </button>
+      </span>
+    </label>
   )
 }

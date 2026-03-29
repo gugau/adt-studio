@@ -5,6 +5,7 @@ import { useStore } from "@tanstack/react-form"
 import { Button } from "@/components/ui/button"
 import { useWizard } from "@/components/wizard"
 import { useWizardForm } from "@/components/wizard/wizardForm"
+import { PRESET_DEFAULTS } from "@/components/wizard/steps"
 import { type PresetId } from "./constants"
 import { PresetGrid } from "./PresetGrid"
 
@@ -20,7 +21,12 @@ export function Step0Preset() {
   }
 
   function handleContinue() {
-    if (selected) setCurrentStep(1)
+    if (!selected) return
+    const defaults = PRESET_DEFAULTS[selected] ?? {}
+    for (const [key, val] of Object.entries(defaults)) {
+      form.setFieldValue(key as never, val as never)
+    }
+    setCurrentStep(1)
   }
 
   return (
@@ -34,7 +40,10 @@ export function Step0Preset() {
         <Trans>Home</Trans>
       </button>
 
-      <h1 className="text-2xl sm:text-[30px] font-semibold leading-tight sm:leading-9 tracking-[-0.75px] text-[#030303] text-center">
+      <h1
+        id="preset-step-heading"
+        className="text-2xl sm:text-[30px] font-semibold leading-tight sm:leading-9 tracking-[-0.75px] text-[#030303] text-center"
+      >
         <Trans>Choose a Preset</Trans>
       </h1>
 

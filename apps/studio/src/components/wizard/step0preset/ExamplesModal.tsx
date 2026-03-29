@@ -2,7 +2,13 @@ import { useState } from "react"
 import { BookOpen, X } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
-import { Dialog, DialogOverlay, DialogPortal } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogDescription,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { type PresetConfig, type ExampleBook } from "./constants"
 
 type EmbedTab = "pdf" | "adt"
@@ -107,12 +113,12 @@ export function ExamplesModal({ open, onClose, preset }: ExamplesModalProps) {
         >
           <div className="shrink-0 flex flex-col w-full md:w-[240px] max-h-[38%] md:max-h-none overflow-y-auto border-b md:border-b-0 md:border-r border-[#e5e5e5]">
             <div className="px-5 pt-5 pb-4">
-              <h2 className="text-base font-bold text-[#0a0a0a] leading-snug mb-1.5">
+              <DialogTitle className="text-base font-bold text-[#0a0a0a] leading-snug mb-1.5">
                 {preset.title}
-              </h2>
-              <p className="text-xs text-[#737373] leading-[18px]">
+              </DialogTitle>
+              <DialogDescription className="text-xs text-[#737373] leading-[18px]">
                 {preset.description}
-              </p>
+              </DialogDescription>
             </div>
 
             <div className="px-5 pb-4">
