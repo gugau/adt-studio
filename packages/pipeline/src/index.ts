@@ -196,3 +196,7 @@ export {
   pad3,
   convertLatexToMathml,
 } from "./package-web.js"
+export {
+  runAccessibilityAssessment,
+  type RunAccessibilityAssessmentOptions,
+} from "./accessibility-assessment.js"

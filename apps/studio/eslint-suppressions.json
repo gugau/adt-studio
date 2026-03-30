@@ -4,14 +4,34 @@
       "count": 17
     }
   },
+  "src/components/accessibility/AccessibilityCurrentPagePanel.tsx": {
+    "lingui/no-unlocalized-strings": {
+      "count": 5
+    }
+  },
   "src/components/config/AdvancedLayoutPanel.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 34
+      "count": 33
     }
   },
   "src/components/config/ConfigEditor.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 50
+    }
+  },
+  "src/components/debug/ConfigTab.tsx": {
+    "lingui/no-unlocalized-strings": {
+      "count": 16
+    }
+  },
+  "src/components/debug/DebugPanel.tsx": {
+    "lingui/no-unlocalized-strings": {
+      "count": 2
+    }
+  },
+  "src/components/debug/DebugTabsNav.tsx": {
+    "lingui/no-unlocalized-strings": {
+      "count": 4
     }
   },
   "src/components/debug/LlmLogsTab.tsx": {
@@ -34,6 +54,11 @@
       "count": 1
     }
   },
+  "src/components/pipeline/StageSidebar.tsx": {
+    "lingui/no-unlocalized-strings": {
+      "count": 37
+    }
+  },
   "src/components/pipeline/TemplateViewer.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 2
@@ -46,7 +71,7 @@
   },
   "src/components/pipeline/stage-config.ts": {
     "lingui/no-unlocalized-strings": {
-      "count": 20
+      "count": 32
     }
   },
   "src/components/pipeline/stages/BookPreviewFrame.tsx": {
@@ -64,9 +89,14 @@
       "count": 1
     }
   },
+  "src/components/pipeline/stages/PreviewValidationCard.tsx": {
+    "lingui/no-unlocalized-strings": {
+      "count": 3
+    }
+  },
   "src/components/pipeline/stages/PreviewView.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 6
+      "count": 8
     }
   },
   "src/components/pipeline/stages/QuizzesView.tsx": {
@@ -94,11 +124,6 @@
       "count": 15
     }
   },
-  "src/components/pipeline/stages/TextToSpeechView.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 2
-    }
-  },
   "src/components/pipeline/stages/quizzes-image-state.test.ts": {
     "lingui/no-unlocalized-strings": {
       "count": 15
@@ -122,6 +147,21 @@
   "src/components/ui/sheet.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 1
+    }
+  },
+  "src/components/validation/AccessibilityValidationTabs.tsx": {
+    "lingui/no-unlocalized-strings": {
+      "count": 6
+    }
+  },
+  "src/components/validation/ReviewerChecklistSettingsTab.tsx": {
+    "lingui/no-unlocalized-strings": {
+      "count": 4
+    }
+  },
+  "src/components/validation/ReviewerValidationSummaryTab.tsx": {
+    "lingui/no-unlocalized-strings": {
+      "count": 2
     }
   },
   "src/hooks/run-state.test.ts": {
@@ -154,6 +194,11 @@
       "count": 36
     }
   },
+  "src/routes/books.$label.$step.settings.tsx": {
+    "lingui/no-unlocalized-strings": {
+      "count": 1
+    }
+  },
   "src/routes/books.$label.debug.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 5
@@ -166,7 +211,7 @@
   },
   "src/routes/books.new.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 55
+      "count": 54
     }
   },
   "src/routes/index.tsx": {
