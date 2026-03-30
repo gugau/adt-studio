@@ -35,6 +35,9 @@ interface StageRunCardProps {
   showRunButton?: boolean
   onRun: () => void
   disabled: boolean
+  /** Tighter layout for parallel band cards */
+  density?: "default" | "compact"
+  className?: string
 }
 
 const HOVER_BG_BY_COLOR: Record<string, string> = {
@@ -55,6 +58,8 @@ export function StageRunCard({
   showRunButton = true,
   onRun,
   disabled,
+  density = "default",
+  className,
 }: StageRunCardProps) {
   const { t } = useLingui()
   const stage = STAGES.find((s) => s.slug === stageSlug) ?? STAGES[0]
@@ -75,11 +80,18 @@ export function StageRunCard({
       : cn("bg-gray-200 text-gray-700", hoverColorClass, "hover:text-white")
 
   const stageLabel = getStageLabelI18n(stageSlug)
+  const compact = density === "compact"
 
   return (
-    <Card className={cn("overflow-hidden max-w-xl shadow-none", borderColor)}>
+    <Card className={cn("overflow-hidden max-w-xl shadow-none", borderColor, className)}>
       {/* Colored header */}
-      <CardHeader className={cn("flex-row items-center gap-2.5 space-y-0 px-4 py-2 text-white", color)}>
+      <CardHeader
+        className={cn(
+          "flex-row items-center gap-2.5 space-y-0 text-white",
+          compact ? "px-3 py-1.5" : "px-4 py-2",
+          color,
+        )}
+      >
         <div className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20">
           <Icon className="w-3 h-3" />
         </div>
@@ -93,13 +105,16 @@ export function StageRunCard({
       {/* Main row: sub-steps | button | description */}
       <CardContent
         className={cn(
-          "flex items-center px-5 py-3",
-          showRunButton || hasSubSteps ? "gap-5" : "justify-center"
+          "flex items-center",
+          compact
+            ? "flex-col items-stretch px-3 py-2 gap-2.5 sm:flex-row sm:items-center sm:gap-3"
+            : "px-5 py-3 gap-5",
+          !(showRunButton || hasSubSteps) && "justify-center",
         )}
       >
         {/* Sub-steps */}
         {hasSubSteps && (
-          <div className="space-y-1.5 w-48 shrink-0">
+          <div className={cn("space-y-1 shrink-0", compact ? "w-full min-w-0 sm:w-40" : "space-y-1.5 w-48")}>
             {subSteps.map(({ key }) => {
               const state = stepState(key)
               const progress = stepProgress(key)
@@ -114,7 +129,8 @@ export function StageRunCard({
                 <div key={key}>
                   <div
                     className={cn(
-                      "flex items-center gap-2.5 text-xs whitespace-nowrap",
+                      "flex items-center gap-2 text-[11px] sm:text-xs whitespace-nowrap",
+                      compact && "gap-1.5",
                       isDone
                         ? "text-muted-foreground"
                         : isSkipped
@@ -158,17 +174,19 @@ export function StageRunCard({
               <div
                 onClick={(e) => { e.stopPropagation(); e.preventDefault() }}
                 className={cn(
-                "flex items-center justify-center w-12 h-12 rounded-full opacity-60 cursor-default",
+                "flex items-center justify-center rounded-full opacity-60 cursor-default",
+                compact ? "w-10 h-10" : "w-12 h-12",
                 color, "text-white",
               )}>
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className={cn("animate-spin", compact ? "w-4 h-4" : "w-5 h-5")} />
               </div>
             ) : (
               <Button
                 variant="ghost"
                 size="icon"
                 className={cn(
-                  "w-12 h-12 rounded-full transition-all cursor-pointer [&_svg]:size-5",
+                  "rounded-full transition-all cursor-pointer",
+                  compact ? "w-10 h-10 [&_svg]:size-4" : "w-12 h-12 [&_svg]:size-5",
                   "hover:scale-105 active:scale-95 disabled:opacity-30 disabled:cursor-default disabled:hover:scale-100",
                   buttonToneClass,
                 )}
@@ -182,7 +200,11 @@ export function StageRunCard({
                       : t`Run ${stageLabel}`
                 }
               >
-                {hasError || isCompleted ? <RotateCcw className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
+                {hasError || isCompleted ? (
+                  <RotateCcw className={compact ? "w-4 h-4" : "w-5 h-5"} />
+                ) : (
+                  <Play className={cn(compact ? "w-4 h-4 ml-0.5" : "w-5 h-5 ml-0.5")} />
+                )}
               </Button>
             )}
           </div>
@@ -192,7 +214,8 @@ export function StageRunCard({
         {getStageDescriptionI18n(stageSlug) && (
           <p
             className={cn(
-              "min-w-0 text-xs text-muted-foreground leading-relaxed",
+              "min-w-0 text-muted-foreground leading-relaxed",
+              compact ? "text-[11px] line-clamp-3 flex-1" : "text-xs",
               showRunButton || hasSubSteps ? "flex-1" : "max-w-md text-center"
             )}
           >

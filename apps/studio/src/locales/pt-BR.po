@@ -231,6 +231,9 @@ msgstr "Adicionar"
 msgid "Add {0} Images"
 msgstr "Adicionar {0} imagens"
 
+msgid "Add an API key in settings to run pipeline stages."
+msgstr "Adicione uma chave de API nas configurações para executar as etapas do pipeline."
+
 msgid "Add Book"
 msgstr "Adicionar livro"
 
@@ -245,6 +248,9 @@ msgstr "Adicionar imagem"
 
 msgid "Add Language"
 msgstr "Adicionar idioma"
+
+msgid "Add stage"
+msgstr "Adicionar etapa"
 
 msgid "Add your first book"
 msgstr "Adicione seu primeiro livro"
@@ -294,6 +300,9 @@ msgstr "Todas as seções foram excluídas"
 
 msgid "All steps"
 msgstr "Todas as etapas"
+
+msgid "Already added"
+msgstr "Já adicionado"
 
 msgid "An activity that does not fit the standard categories."
 msgstr "Uma atividade que não se enquadra nas categorias padrão."
@@ -354,6 +363,9 @@ msgstr "Autores"
 
 msgid "Auto"
 msgstr "Automático"
+
+msgid "Available once Storyboard is complete. Re-export anytime after optional stages add more content."
+msgstr "Disponível quando o Storyboard estiver concluído. Reexporte a qualquer momento depois que etapas opcionais adicionarem mais conteúdo."
 
 msgid "Avg Duration"
 msgstr "Duração média"
@@ -428,6 +440,9 @@ msgstr "Título do livro"
 msgid "Boxed Text"
 msgstr "Texto em caixa"
 
+msgid "Branch out"
+msgstr "Ramificar"
+
 msgid "Brewing a fresh batch of HTML..."
 msgstr "Preparando uma nova leva de HTML..."
 
@@ -491,6 +506,9 @@ msgstr "Mudar idioma"
 msgid "Chart / Graph"
 msgstr "Gráfico / Tabela"
 
+msgid "Choose a pipeline stage to open. It will appear in the top bar after it has been run."
+msgstr "Escolha uma etapa do pipeline para abrir. Ela aparecerá na barra superior depois de ser executada."
+
 msgid "Choose an existing image from this project"
 msgstr "Escolha uma imagem existente deste projeto"
 
@@ -541,6 +559,9 @@ msgstr "Consultando o conselho de estilo..."
 
 msgid "Content"
 msgstr "Conteúdo"
+
+msgid "Continue"
+msgstr "Continuar"
 
 msgid "Controls how page content is grouped during the sectioning step."
 msgstr "Controla como o conteúdo da página é agrupado durante a etapa de secionamento."
@@ -643,6 +664,9 @@ msgstr "Descartar"
 
 msgid "Display"
 msgstr "Exibição"
+
+msgid "Done"
+msgstr "Concluído"
 
 msgid "Drag to reorder"
 msgstr "Arraste para reordenar"
@@ -758,6 +782,9 @@ msgstr "Exportar ADT"
 msgid "Export as a SCORM 1.2 package for upload to a Learning Management System (LMS). Includes activity completion tracking and offline support."
 msgstr "Exportar como pacote SCORM 1.2 para upload em um Sistema de Gestão de Aprendizagem (LMS). Inclui rastreamento de conclusão de atividade e suporte offline."
 
+msgid "Export is not blocked by the stages below. As soon as Storyboard is done, you can ship a bundle. Quizzes, captions, glossary, Text & Speech, and Preview are optional ways to enrich the book—you can export again anytime later."
+msgstr "O Export não é bloqueado pelas etapas abaixo. Assim que o Storyboard estiver concluído, você já pode entregar um pacote. Quizzes, captions, glossary, Text & Speech e Preview são formas opcionais de enriquecer o livro — você pode exportar novamente a qualquer momento."
+
 msgid "Export preparation failed"
 msgstr "Falha ao preparar a exportação"
 
@@ -822,6 +849,9 @@ msgstr "Filtrar por ID da imagem..."
 
 msgid "Filter by item ID..."
 msgstr "Filtrar por ID do item..."
+
+msgid "Finish Storyboard first, then Export unlocks in the sidebar too."
+msgstr "Conclua o Storyboard primeiro; depois o Export também é liberado na barra lateral."
 
 msgid "First"
 msgstr "Primeira"
@@ -946,6 +976,9 @@ msgstr "Prompt de glossário"
 msgid "Go to book"
 msgstr "Ir para o livro"
 
+msgid "Go to Export"
+msgstr "Ir para Export"
+
 msgid "Group Types"
 msgstr "Tipos de grupo"
 
@@ -966,6 +999,9 @@ msgstr "Ocultar imagens removidas"
 
 msgid "Higher values filter out simple or blank images."
 msgstr "Valores mais altos filtram imagens simples ou em branco."
+
+msgid "HTML"
+msgstr "HTML"
 
 msgid "Illustration"
 msgstr "Ilustração"
@@ -1301,11 +1337,14 @@ msgstr "Ainda não há metadados — execute o pipeline para extrair os detalhes
 msgid "No page linked"
 msgstr "Nenhuma página vinculada"
 
-msgid "No pages extracted yet"
-msgstr "Nenhuma página extraída ainda"
+#~ msgid "No pages extracted yet"
+#~ msgstr "Nenhuma página extraída ainda"
 
 msgid "No pages extracted yet. Run the pipeline to extract content."
 msgstr "Nenhuma página extraída ainda. Execute o pipeline para extrair o conteúdo."
+
+msgid "No pages match your search"
+msgstr "Nenhuma página corresponde à sua busca"
 
 msgid "No PDF"
 msgstr "Sem PDF"
@@ -1324,6 +1363,9 @@ msgstr "Sem seções para esta página"
 
 msgid "No sections on this page"
 msgstr "Sem seções nesta página"
+
+msgid "No selection"
+msgstr "Sem seleção"
 
 msgid "No text extracted"
 msgstr "Nenhum texto extraído"
@@ -1349,6 +1391,9 @@ msgstr "Número de páginas de conteúdo a incluir por questão de quiz."
 msgid "Only pages containing these section types are counted when grouping pages for quiz generation."
 msgstr "Apenas páginas que contêm esses tipos de seção são contadas ao agrupar páginas para geração de quiz."
 
+msgid "Open"
+msgstr "Abrir"
+
 msgid "Open page preview for {pageId}"
 msgstr "Abrir pré-visualização da página {0}"
 
@@ -1366,6 +1411,9 @@ msgstr "Voz OpenAI"
 
 msgid "Optional instructions for the LLM..."
 msgstr "Instruções opcionais para o LLM..."
+
+msgid "Options"
+msgstr "Opções"
 
 msgid "Original"
 msgstr "Original"
@@ -1424,6 +1472,9 @@ msgstr "Prompt de secionamento de página"
 msgid "pages"
 msgstr "páginas"
 
+msgid "Pages"
+msgstr "Páginas"
+
 msgid "Pages per Quiz"
 msgstr "Páginas por quiz"
 
@@ -1432,6 +1483,12 @@ msgstr "Colagem em papel"
 
 msgid "Paragraph"
 msgstr "Parágrafo"
+
+msgid "Parallel"
+msgstr "Paralelo"
+
+msgid "Parallel enrichment"
+msgstr "Enriquecimento paralelo"
 
 msgid "PDF Extraction"
 msgstr "Extração de PDF"
@@ -1448,6 +1505,9 @@ msgstr "Detalhamento por etapa"
 #~ msgid "pg {0}"
 #~ msgstr "pg {0}"
 
+msgid "Phase {n}"
+msgstr "Fase {n}"
+
 msgid "Photograph"
 msgstr "Fotografia"
 
@@ -1456,6 +1516,9 @@ msgstr "Escolher do livro"
 
 msgid "Pick from Book"
 msgstr "Escolher do livro"
+
+msgid "Pipeline map"
+msgstr "Mapa do pipeline"
 
 msgid "Pipeline Stages"
 msgstr "Etapas do pipeline"
@@ -1545,8 +1608,8 @@ msgstr "Os quizzes estão vinculados a outras páginas deste livro"
 msgid "Re-enable type"
 msgstr "Reativar tipo"
 
-msgid "Re-package ADT"
-msgstr "Reempacotar ADT"
+#~ msgid "Re-package ADT"
+#~ msgstr "Reempacotar ADT"
 
 msgid "Re-render"
 msgstr "Rerenderizar"
@@ -1563,8 +1626,15 @@ msgstr "Rerenderizar esta seção"
 msgid "Re-rendering..."
 msgstr "Renderizando novamente..."
 
+#. placeholder {0}: getStageLabelI18n(slug)
+msgid "Re-run {0}"
+msgstr "Executar novamente {0}"
+
 msgid "Re-run {stageLabel}"
 msgstr "Reexecutar {0}"
+
+msgid "Ready"
+msgstr "Pronto"
 
 msgid "Realistic / Photo"
 msgstr "Realista / Foto"
@@ -1623,11 +1693,21 @@ msgstr "Tentar exportar novamente"
 msgid "Rewriting the story of this section..."
 msgstr "Reescrevendo a história desta seção..."
 
+#. placeholder {0}: getStageLabelI18n(slug)
+msgid "Run {0}"
+msgstr "Executar {0}"
+
 msgid "Run {stageLabel}"
 msgstr "Executar {0}"
 
 msgid "Run the pipeline through at least the"
 msgstr "Execute o pipeline pelo menos até a etapa"
+
+msgid "Run this section to unlock page navigation."
+msgstr "Execute esta seção para desbloquear a navegação por páginas."
+
+msgid "Running"
+msgstr "Em execução"
 
 msgid "Runs in background — you can keep editing"
 msgstr "Executa em segundo plano — você pode continuar editando"
@@ -1692,6 +1772,9 @@ msgstr "Buscar idiomas..."
 msgid "Search sections..."
 msgstr "Buscar seções..."
 
+msgid "Search..."
+msgstr "Buscar..."
+
 #. placeholder {0}: String(group.sectionIndex + 1)
 #. placeholder {0}: String(i + 1)
 #. placeholder {0}: i + 1
@@ -1735,6 +1818,9 @@ msgstr "Modo de seção"
 msgid "sections"
 msgstr "seções"
 
+msgid "Sections"
+msgstr "Seções"
+
 msgid "Segment"
 msgstr "Segmentar"
 
@@ -1747,8 +1833,14 @@ msgstr "Segmentando..."
 msgid "Select a node type and enter an item ID to view versions."
 msgstr "Selecione um tipo de nó e insira um ID de item para ver as versões."
 
+msgid "Select a page-based section to navigate pages."
+msgstr "Selecione uma seção baseada em páginas para navegar pelas páginas."
+
 msgid "Select activity type..."
 msgstr "Selecionar tipo de atividade..."
+
+msgid "Select an item to see details and actions"
+msgstr "Selecione um item para ver detalhes e ações"
 
 msgid "Select node type..."
 msgstr "Selecionar tipo de nó..."
@@ -1764,6 +1856,9 @@ msgstr "Selecionar template..."
 
 msgid "Select up to 5 pages to use as visual references. The LLM will analyze them and generate a styleguide."
 msgstr "Selecione até 5 páginas para usar como referências visuais. O LLM irá analisá-las e gerar um guia de estilo."
+
+msgid "Select..."
+msgstr "Selecionar..."
 
 msgid "Selected: {styleImageId}"
 msgstr "Selecionada: {0}"
@@ -1782,6 +1877,9 @@ msgstr "Configurações"
 
 msgid "Settings for this step are not yet available."
 msgstr "As configurações para esta etapa ainda não estão disponíveis."
+
+msgid "Ship"
+msgstr "Entregar"
 
 msgid "Show all"
 msgstr "Mostrar todas"
@@ -1979,6 +2077,12 @@ msgstr "A estratégia de renderização usada para seções sem um mapeamento ex
 msgid "The table of contents."
 msgstr "O índice."
 
+msgid "These stages share one prerequisite: Storyboard. They do not depend on each other. Text & Speech comes next once all four are complete."
+msgstr "Essas etapas compartilham um único pré-requisito: Storyboard. Elas não dependem umas das outras. Text & Speech vem em seguida quando as quatro estiverem concluídas."
+
+msgid "This is a dependency graph, not a single queue. Once Storyboard is done, you can already export—everything below is optional enrichment. Four stages then branch in parallel and merge again before Text & Speech."
+msgstr "Isto é um grafo de dependências, não uma fila única. Quando o Storyboard estiver concluído, você já pode exportar — tudo abaixo é enriquecimento opcional. Em seguida, quatro etapas se ramificam em paralelo e voltam a se unir antes de Text & Speech."
+
 msgid "This page has no captioned images"
 msgstr "Esta página não tem imagens legendadas"
 
@@ -2163,6 +2267,9 @@ msgstr "Envolve solicitações de 'Editar esta imagem'. A IA recebe a imagem ori
 
 msgid "Wraps 'Generate new' requests. Supports user_prompt, style, and image_type variables. Uses Liquid syntax for conditionals."
 msgstr "Envolve solicitações de 'Gerar nova'. Suporta variáveis user_prompt, style e image_type. Usa sintaxe Liquid para condicionais."
+
+msgid "You can export right after Storyboard"
+msgstr "Você pode exportar logo após o Storyboard"
 
 msgid "Your Books"
 msgstr "Seus livros"

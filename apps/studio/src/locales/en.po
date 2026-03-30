@@ -231,6 +231,9 @@ msgstr "Add"
 msgid "Add {0} Images"
 msgstr "Add {0} Images"
 
+msgid "Add an API key in settings to run pipeline stages."
+msgstr "Add an API key in settings to run pipeline stages."
+
 msgid "Add Book"
 msgstr "Add Book"
 
@@ -245,6 +248,9 @@ msgstr "Add Image"
 
 msgid "Add Language"
 msgstr "Add Language"
+
+msgid "Add stage"
+msgstr "Add stage"
 
 msgid "Add your first book"
 msgstr "Add your first book"
@@ -294,6 +300,9 @@ msgstr "All sections have been deleted"
 
 msgid "All steps"
 msgstr "All steps"
+
+msgid "Already added"
+msgstr "Already added"
 
 msgid "An activity that does not fit the standard categories."
 msgstr "An activity that does not fit the standard categories."
@@ -354,6 +363,9 @@ msgstr "Authors"
 
 msgid "Auto"
 msgstr "Auto"
+
+msgid "Available once Storyboard is complete. Re-export anytime after optional stages add more content."
+msgstr "Available once Storyboard is complete. Re-export anytime after optional stages add more content."
 
 msgid "Avg Duration"
 msgstr "Avg Duration"
@@ -428,6 +440,9 @@ msgstr "Book Title"
 msgid "Boxed Text"
 msgstr "Boxed Text"
 
+msgid "Branch out"
+msgstr "Branch out"
+
 msgid "Brewing a fresh batch of HTML..."
 msgstr "Brewing a fresh batch of HTML..."
 
@@ -491,6 +506,9 @@ msgstr "Change language"
 msgid "Chart / Graph"
 msgstr "Chart / Graph"
 
+msgid "Choose a pipeline stage to open. It will appear in the top bar after it has been run."
+msgstr "Choose a pipeline stage to open. It will appear in the top bar after it has been run."
+
 msgid "Choose an existing image from this project"
 msgstr "Choose an existing image from this project"
 
@@ -541,6 +559,9 @@ msgstr "Consulting the style council..."
 
 msgid "Content"
 msgstr "Content"
+
+msgid "Continue"
+msgstr "Continue"
 
 msgid "Controls how page content is grouped during the sectioning step."
 msgstr "Controls how page content is grouped during the sectioning step."
@@ -643,6 +664,9 @@ msgstr "Discard"
 
 msgid "Display"
 msgstr "Display"
+
+msgid "Done"
+msgstr "Done"
 
 msgid "Drag to reorder"
 msgstr "Drag to reorder"
@@ -758,6 +782,9 @@ msgstr "Export ADT"
 msgid "Export as a SCORM 1.2 package for upload to a Learning Management System (LMS). Includes activity completion tracking and offline support."
 msgstr "Export as a SCORM 1.2 package for upload to a Learning Management System (LMS). Includes activity completion tracking and offline support."
 
+msgid "Export is not blocked by the stages below. As soon as Storyboard is done, you can ship a bundle. Quizzes, captions, glossary, Text & Speech, and Preview are optional ways to enrich the book—you can export again anytime later."
+msgstr "Export is not blocked by the stages below. As soon as Storyboard is done, you can ship a bundle. Quizzes, captions, glossary, Text & Speech, and Preview are optional ways to enrich the book—you can export again anytime later."
+
 msgid "Export preparation failed"
 msgstr "Export preparation failed"
 
@@ -822,6 +849,9 @@ msgstr "Filter by image ID..."
 
 msgid "Filter by item ID..."
 msgstr "Filter by item ID..."
+
+msgid "Finish Storyboard first, then Export unlocks in the sidebar too."
+msgstr "Finish Storyboard first, then Export unlocks in the sidebar too."
 
 msgid "First"
 msgstr "First"
@@ -946,6 +976,9 @@ msgstr "Glossary Prompt"
 msgid "Go to book"
 msgstr "Go to book"
 
+msgid "Go to Export"
+msgstr "Go to Export"
+
 msgid "Group Types"
 msgstr "Group Types"
 
@@ -966,6 +999,9 @@ msgstr "Hide pruned images"
 
 msgid "Higher values filter out simple or blank images."
 msgstr "Higher values filter out simple or blank images."
+
+msgid "HTML"
+msgstr "HTML"
 
 msgid "Illustration"
 msgstr "Illustration"
@@ -1301,11 +1337,14 @@ msgstr "No metadata yet — run the pipeline to extract book details"
 msgid "No page linked"
 msgstr "No page linked"
 
-msgid "No pages extracted yet"
-msgstr "No pages extracted yet"
+#~ msgid "No pages extracted yet"
+#~ msgstr "No pages extracted yet"
 
 msgid "No pages extracted yet. Run the pipeline to extract content."
 msgstr "No pages extracted yet. Run the pipeline to extract content."
+
+msgid "No pages match your search"
+msgstr "No pages match your search"
 
 msgid "No PDF"
 msgstr "No PDF"
@@ -1324,6 +1363,9 @@ msgstr "No sections for this page"
 
 msgid "No sections on this page"
 msgstr "No sections on this page"
+
+msgid "No selection"
+msgstr "No selection"
 
 msgid "No text extracted"
 msgstr "No text extracted"
@@ -1349,6 +1391,9 @@ msgstr "Number of pages of content to include per quiz question."
 msgid "Only pages containing these section types are counted when grouping pages for quiz generation."
 msgstr "Only pages containing these section types are counted when grouping pages for quiz generation."
 
+msgid "Open"
+msgstr "Open"
+
 msgid "Open page preview for {pageId}"
 msgstr "Open page preview for {pageId}"
 
@@ -1366,6 +1411,9 @@ msgstr "OpenAI Voice"
 
 msgid "Optional instructions for the LLM..."
 msgstr "Optional instructions for the LLM..."
+
+msgid "Options"
+msgstr "Options"
 
 msgid "Original"
 msgstr "Original"
@@ -1424,6 +1472,9 @@ msgstr "Page Sectioning Prompt"
 msgid "pages"
 msgstr "pages"
 
+msgid "Pages"
+msgstr "Pages"
+
 msgid "Pages per Quiz"
 msgstr "Pages per Quiz"
 
@@ -1432,6 +1483,12 @@ msgstr "Paper Collage"
 
 msgid "Paragraph"
 msgstr "Paragraph"
+
+msgid "Parallel"
+msgstr "Parallel"
+
+msgid "Parallel enrichment"
+msgstr "Parallel enrichment"
 
 msgid "PDF Extraction"
 msgstr "PDF Extraction"
@@ -1448,6 +1505,9 @@ msgstr "Per-Step Breakdown"
 #~ msgid "pg {0}"
 #~ msgstr "pg {0}"
 
+msgid "Phase {n}"
+msgstr "Phase {n}"
+
 msgid "Photograph"
 msgstr "Photograph"
 
@@ -1456,6 +1516,9 @@ msgstr "Pick from book"
 
 msgid "Pick from Book"
 msgstr "Pick from Book"
+
+msgid "Pipeline map"
+msgstr "Pipeline map"
 
 msgid "Pipeline Stages"
 msgstr "Pipeline Stages"
@@ -1545,8 +1608,8 @@ msgstr "Quizzes are linked to other pages in this book"
 msgid "Re-enable type"
 msgstr "Re-enable type"
 
-msgid "Re-package ADT"
-msgstr "Re-package ADT"
+#~ msgid "Re-package ADT"
+#~ msgstr "Re-package ADT"
 
 msgid "Re-render"
 msgstr "Re-render"
@@ -1563,8 +1626,15 @@ msgstr "Re-render this section"
 msgid "Re-rendering..."
 msgstr "Re-rendering..."
 
+#. placeholder {0}: getStageLabelI18n(slug)
+msgid "Re-run {0}"
+msgstr "Re-run {0}"
+
 msgid "Re-run {stageLabel}"
 msgstr "Re-run {stageLabel}"
+
+msgid "Ready"
+msgstr "Ready"
 
 msgid "Realistic / Photo"
 msgstr "Realistic / Photo"
@@ -1623,11 +1693,21 @@ msgstr "Retry Export"
 msgid "Rewriting the story of this section..."
 msgstr "Rewriting the story of this section..."
 
+#. placeholder {0}: getStageLabelI18n(slug)
+msgid "Run {0}"
+msgstr "Run {0}"
+
 msgid "Run {stageLabel}"
 msgstr "Run {stageLabel}"
 
 msgid "Run the pipeline through at least the"
 msgstr "Run the pipeline through at least the"
+
+msgid "Run this section to unlock page navigation."
+msgstr "Run this section to unlock page navigation."
+
+msgid "Running"
+msgstr "Running"
 
 msgid "Runs in background — you can keep editing"
 msgstr "Runs in background — you can keep editing"
@@ -1692,6 +1772,9 @@ msgstr "Search languages..."
 msgid "Search sections..."
 msgstr "Search sections..."
 
+msgid "Search..."
+msgstr "Search..."
+
 #. placeholder {0}: String(group.sectionIndex + 1)
 #. placeholder {0}: String(i + 1)
 #. placeholder {0}: i + 1
@@ -1735,6 +1818,9 @@ msgstr "Sectioning Mode"
 msgid "sections"
 msgstr "sections"
 
+msgid "Sections"
+msgstr "Sections"
+
 msgid "Segment"
 msgstr "Segment"
 
@@ -1747,8 +1833,14 @@ msgstr "Segmenting..."
 msgid "Select a node type and enter an item ID to view versions."
 msgstr "Select a node type and enter an item ID to view versions."
 
+msgid "Select a page-based section to navigate pages."
+msgstr "Select a page-based section to navigate pages."
+
 msgid "Select activity type..."
 msgstr "Select activity type..."
+
+msgid "Select an item to see details and actions"
+msgstr "Select an item to see details and actions"
 
 msgid "Select node type..."
 msgstr "Select node type..."
@@ -1764,6 +1856,9 @@ msgstr "Select template..."
 
 msgid "Select up to 5 pages to use as visual references. The LLM will analyze them and generate a styleguide."
 msgstr "Select up to 5 pages to use as visual references. The LLM will analyze them and generate a styleguide."
+
+msgid "Select..."
+msgstr "Select..."
 
 msgid "Selected: {styleImageId}"
 msgstr "Selected: {styleImageId}"
@@ -1782,6 +1877,9 @@ msgstr "Settings"
 
 msgid "Settings for this step are not yet available."
 msgstr "Settings for this step are not yet available."
+
+msgid "Ship"
+msgstr "Ship"
 
 msgid "Show all"
 msgstr "Show all"
@@ -1979,6 +2077,12 @@ msgstr "The rendering strategy used for sections without an explicit mapping."
 msgid "The table of contents."
 msgstr "The table of contents."
 
+msgid "These stages share one prerequisite: Storyboard. They do not depend on each other. Text & Speech comes next once all four are complete."
+msgstr "These stages share one prerequisite: Storyboard. They do not depend on each other. Text & Speech comes next once all four are complete."
+
+msgid "This is a dependency graph, not a single queue. Once Storyboard is done, you can already export—everything below is optional enrichment. Four stages then branch in parallel and merge again before Text & Speech."
+msgstr "This is a dependency graph, not a single queue. Once Storyboard is done, you can already export—everything below is optional enrichment. Four stages then branch in parallel and merge again before Text & Speech."
+
 msgid "This page has no captioned images"
 msgstr "This page has no captioned images"
 
@@ -2163,6 +2267,9 @@ msgstr "Wraps 'Edit this image' requests. The AI receives the original image alo
 
 msgid "Wraps 'Generate new' requests. Supports user_prompt, style, and image_type variables. Uses Liquid syntax for conditionals."
 msgstr "Wraps 'Generate new' requests. Supports user_prompt, style, and image_type variables. Uses Liquid syntax for conditionals."
+
+msgid "You can export right after Storyboard"
+msgstr "You can export right after Storyboard"
 
 msgid "Your Books"
 msgstr "Your Books"

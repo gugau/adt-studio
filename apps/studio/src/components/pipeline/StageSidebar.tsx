@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { createPortal } from "react-dom"
-import { Link, useMatchRoute, useSearch } from "@tanstack/react-router"
+import { Link, useMatchRoute, useNavigate, useSearch } from "@tanstack/react-router"
 import { Trans } from "@lingui/react/macro"
 import {
   Loader2,
@@ -13,6 +13,15 @@ import { useLingui } from "@lingui/react"
 import { msg } from "@lingui/core/macro"
 import type { MessageDescriptor } from "@lingui/core"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  SelectSeparator,
+} from "@/components/ui/select"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useBookTasks } from "@/hooks/use-book-tasks"
 import { StepProgressRing } from "./StepProgressRing"
@@ -123,216 +132,147 @@ export function StageSidebar({
 }) {
   const { i18n } = useLingui()
   const matchRoute = useMatchRoute()
+  const navigate = useNavigate()
   const search = useSearch({ strict: false }) as { tab?: string }
   const { stageState } = useBookRun()
   const { openSettings } = useSettingsDialog()
-
-  const effectivePagesOpen =
-    hasStagePages(activeStep) &&
-    stageState(activeStep) === "done"
 
   const isSettings = !!matchRoute({
     to: "/books/$label/$step/settings",
     params: { label: bookLabel, step: activeStep },
   })
-  const activeTab = search.tab ?? "general"
+  const settingsTabs = getSettingsTabs(activeStep, i18n)
+  const canOpenPages = hasStagePages(activeStep) && stageState(activeStep) === "done" && !isSettings
 
-  // The rail collapses (icon-only, hover to expand) only when pages are showing
-  // and we're not in settings. Otherwise it's always expanded with labels visible.
-  const railCollapsed = effectivePagesOpen && !isSettings
-  // When the rail is collapsed, labels/buttons are always in the DOM but clipped
-  // by overflow-hidden on the inner panel. This avoids display toggling which
-  // would flash before the width transition completes.
-  const x = {
-    gap:       "gap-2.5",
-    showLabel: "inline",
-    showFlex:  "flex",
-    flex1:     "flex-1",
-  }
+  const [filter, setFilter] = useState("")
+  const [viewMode, setViewMode] = useState<"pages" | "sections">("pages")
 
-  const storyboardDone = stageState("storyboard") === "done"
+  const stageLabel = activeStep === "book" ? toCamelLabel(bookLabel) : getStageLabelI18n(activeStep)
 
-  const stageItems = STAGES.map((step, index) => {
-    const isActive = step.slug === activeStep
-    const Icon = step.icon
-    const settingsTabs = getSettingsTabs(step.slug, i18n)
-    const showSubTabs = isActive && isSettings && !!settingsTabs
-    const state = stageState(step.slug)
-    const stageCompleted = state === "done"
-    const ringState = state
+  const options = useMemo(() => {
+    const items: Array<{ value: string; label: string; kind: "mode" | "tab" }> = []
+    if (canOpenPages) {
+      items.push({ value: "mode:pages", label: i18n._(msg`Pages`), kind: "mode" })
+      items.push({ value: "mode:sections", label: i18n._(msg`Sections`), kind: "mode" })
+    }
+    if (settingsTabs?.length) {
+      for (const tab of settingsTabs) {
+        items.push({ value: `settings:${tab.key}`, label: tab.label, kind: "tab" })
+      }
+    }
+    return items
+  }, [canOpenPages, settingsTabs, i18n])
 
-    // "book" is always filled; "preview" and "export" fill once storyboard is done;
-    // pipeline stages fill when their own stage is completed.
-    const iconFilled =
-      step.slug === "book"
-        ? true
-        : step.slug === "preview" || step.slug === "export"
-          ? storyboardDone
-          : stageCompleted
+  const optionValue = useMemo(() => {
+    if (canOpenPages) return `mode:${viewMode}`
+    if (isSettings) return `settings:${search.tab ?? "general"}`
+    // Fallback to first settings tab (if any) so select shows something reasonable
+    return settingsTabs?.[0]?.key ? `settings:${settingsTabs[0].key}` : ""
+  }, [canOpenPages, viewMode, isSettings, search.tab, settingsTabs])
 
-    const stepLabel = step.slug === "book" ? toCamelLabel(bookLabel) : getStageLabelI18n(step.slug)
+  return (
+    <nav className="flex flex-col flex-1 min-h-0">
+      {/* Section options select */}
+      <div className="shrink-0 p-3 border-b">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-foreground truncate">{stageLabel}</p>
+            <p className="text-[10px] text-muted-foreground truncate">
+              <Trans>Options</Trans>
+            </p>
+          </div>
 
-    return (
-      <div key={step.slug} className="relative">
-        {/* Connector line */}
-        {index < STAGES.length - 1 && (
-          <div className="absolute left-[24px] top-[36px] bottom-[-10px] w-0.5 bg-border z-10" />
-        )}
-
-        {/* Step row */}
-        <div
-          className={cn(
-            "group/row flex items-center py-2 text-sm transition-colors overflow-hidden",
-            x.gap,
-            isActive
-              ? cn(step.color, "text-white font-medium rounded-l-[14px] ml-0.5 pl-2 pr-2.5")
-              : "text-muted-foreground hover:text-foreground hover:bg-muted px-2.5"
-          )}
-        >
-          <Link
-            to={selectedPageId && hasStagePages(step.slug) ? "/books/$label/$step/$pageId" : "/books/$label/$step"}
-            params={selectedPageId && hasStagePages(step.slug)
-              ? { label: bookLabel, step: step.slug, pageId: selectedPageId }
-              : { label: bookLabel, step: step.slug }}
-            className={cn("flex items-center gap-2.5 min-w-7", x.flex1)}
-            title={stepLabel}
-          >
-            <div className="relative shrink-0">
-              <div
-                className={cn(
-                  "flex items-center justify-center w-7 h-7 rounded-full transition-colors",
-                  iconFilled
-                    ? isActive
-                      ? "bg-white/20 text-white"
-                      : cn(step.color, "text-white")
-                    : "bg-muted text-muted-foreground ring-1 ring-border"
-                )}
-              >
-                <Icon className="w-3.5 h-3.5" />
-              </div>
-              <StepProgressRing size={28} state={ringState} colorClass={isActive ? "bg-white" : step.color} />
-            </div>
-            <span className={cn("truncate hidden", x.showLabel)}>
-              {stepLabel}
-            </span>
-          </Link>
-
-          {settingsTabs ? (
-            <Link
-              to="/books/$label/$step/settings"
-              params={{ label: bookLabel, step: step.slug }}
-              search={{ tab: "general" }}
-              title={`${stepLabel} ${i18n._(msg`Settings`)}`}
-              className={cn(
-                "shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full transition-colors ",
-                isActive
-                  ? "text-white/60 hover:text-white hover:bg-white/20"
-                  : "opacity-0 group-hover/row:opacity-100 text-muted-foreground/50 group-hover/row:bg-muted hover:text-foreground hover:bg-muted-foreground/20"
-              )}
-            >
-              <Settings className="w-3.5 h-3.5" />
-            </Link>
-          ) : step.slug === "book" ? (
+          {activeStep === "book" ? (
             <button
               type="button"
               onClick={openSettings}
               title={i18n._(msg`API Key Settings`)}
-              className={cn(
-                "shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full transition-colors cursor-pointer",
-                isActive
-                  ? "text-white/60 hover:text-white hover:bg-white/20"
-                  : "opacity-0 group-hover/row:opacity-100 text-muted-foreground/50 group-hover/row:bg-muted hover:text-foreground hover:bg-muted-foreground/20"
-              )}
+              className="shrink-0 inline-flex items-center justify-center h-9 w-9 rounded-md border border-input bg-background hover:bg-muted transition-colors cursor-pointer"
             >
-              <Settings className="w-3.5 h-3.5" />
-            </button>
-          ) : step.slug === "preview" ? (
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new CustomEvent("adt:repackage"))}
-              title={i18n._(msg`Re-package ADT`)}
-              className={cn(
-                "shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full transition-colors cursor-pointer",
-                isActive
-                  ? "text-white/60 hover:text-white hover:bg-white/20"
-                  : "opacity-0 group-hover/row:opacity-100 text-muted-foreground/50 group-hover/row:bg-muted hover:text-foreground hover:bg-muted-foreground/20"
-              )}
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <Settings className="h-4 w-4" />
             </button>
           ) : null}
         </div>
 
-        {/* Settings sub-tabs */}
-        {showSubTabs && (
-          <div className={cn("ml-[42px] mr-2 mt-0.5 mb-1 flex-col gap-0.5 hidden", x.showFlex)}>
-            {settingsTabs!.map((tab) => (
-              <Button
-                key={tab.key}
-                variant="ghost"
-                size="sm"
-                asChild
-                className={cn(
-                  "h-auto justify-start rounded text-xs px-2 py-1 whitespace-nowrap",
-                  activeTab === tab.key
-                    ? cn(step.textColor, "font-medium", step.bgLight)
-                    : "font-normal text-muted-foreground hover:text-foreground hover:bg-muted/50"
+        {options.length > 0 && (
+          <div className="mt-2">
+            <Select
+              value={optionValue}
+              onValueChange={(v) => {
+                if (v.startsWith("mode:")) {
+                  const mode = v === "mode:sections" ? "sections" : "pages"
+                  setViewMode(mode)
+                  // Ensure we are on the main step route (not settings)
+                  navigate({ to: "/books/$label/$step", params: { label: bookLabel, step: activeStep } })
+                  return
+                }
+                if (v.startsWith("settings:")) {
+                  const tab = v.slice("settings:".length)
+                  navigate({
+                    to: "/books/$label/$step/settings",
+                    params: { label: bookLabel, step: activeStep },
+                    search: { tab },
+                  })
+                }
+              }}
+            >
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder={i18n._(msg`Select...`)} />
+              </SelectTrigger>
+              <SelectContent>
+                {canOpenPages && (
+                  <>
+                    <SelectItem value="mode:pages">{i18n._(msg`Pages`)}</SelectItem>
+                    <SelectItem value="mode:sections">{i18n._(msg`Sections`)}</SelectItem>
+                    {settingsTabs?.length ? <SelectSeparator /> : null}
+                  </>
                 )}
-              >
-                <Link
-                  to="/books/$label/$step/settings"
-                  params={{ label: bookLabel, step: step.slug }}
-                  search={{ tab: tab.key }}
-                >
-                  {tab.label}
-                </Link>
-              </Button>
-            ))}
+                {settingsTabs?.map((tab) => (
+                  <SelectItem key={tab.key} value={`settings:${tab.key}`}>
+                    {tab.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         )}
-      </div>
-    )
-  })
 
-  return (
-    <nav className="flex flex-col flex-1 min-h-0">
-      <div className="flex flex-1 min-h-0">
-        {/* Stage rail */}
-        <div className={cn(
-          "shrink-0 relative group/rail",
-          railCollapsed ? "w-12" : "flex-1"
-        )}>
-          <div className={cn(
-            "absolute inset-y-0 left-0 flex flex-col bg-background overflow-hidden",
-            railCollapsed
-              ? "w-12 group-hover/rail:w-[220px] z-20 transition-[width] duration-150 delay-150 group-hover/rail:delay-100 group-hover/rail:shadow-lg"
-              : "inset-x-0"
-          )}>
-            <div className="flex flex-col pt-1.5 pb-2 gap-0.5 flex-1 overflow-y-auto overflow-x-hidden">
-              {stageItems}
-            </div>
-            {/* Task indicator */}
-            <TaskIndicator bookLabel={bookLabel} />
-            {/* Right edge — follows the expanding rail */}
-            <div className="absolute inset-y-0 right-0 w-px border-r" />
-          </div>
-        </div>
-
-        {/* Pages panel — only when pages are open and not in settings */}
-        {effectivePagesOpen && !isSettings && (
-          <div className="flex-1 min-w-0 flex flex-col overflow-hidden border-l">
-            <PageIndex
-              bookLabel={bookLabel}
-              activeStep={activeStep}
-              selectedPageId={selectedPageId}
-              onSelectPage={onSelectPage}
-              sectionIndex={sectionIndex}
-              onSelectSection={onSelectSection}
+        {canOpenPages && (
+          <div className="mt-2">
+            <Input
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              placeholder={i18n._(msg`Search...`)}
+              className="h-9 text-sm"
             />
           </div>
         )}
       </div>
 
+      {/* Inside-section navigation */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        {canOpenPages ? (
+          <PageIndex
+            bookLabel={bookLabel}
+            activeStep={activeStep}
+            selectedPageId={selectedPageId}
+            onSelectPage={onSelectPage}
+            sectionIndex={sectionIndex}
+            onSelectSection={viewMode === "sections" ? onSelectSection : undefined}
+            filter={filter}
+          />
+        ) : (
+          <div className="flex-1 min-h-0 p-4 text-xs text-muted-foreground">
+            {hasStagePages(activeStep) ? (
+              <Trans>Run this section to unlock page navigation.</Trans>
+            ) : (
+              <Trans>Select a page-based section to navigate pages.</Trans>
+            )}
+          </div>
+        )}
+      </div>
+
+      <TaskIndicator bookLabel={bookLabel} />
     </nav>
   )
 }
@@ -418,6 +358,7 @@ function PageIndex({
   onSelectPage,
   sectionIndex,
   onSelectSection,
+  filter,
 }: {
   bookLabel: string
   activeStep: string
@@ -425,18 +366,28 @@ function PageIndex({
   onSelectPage?: (pageId: string) => void
   sectionIndex?: number
   onSelectSection?: (index: number) => void
+  filter: string
 }) {
   const { data: pages } = usePages(bookLabel)
   const activeStepDef = STAGES.find((s) => s.slug === activeStep)
   const parentRef = useRef<HTMLDivElement>(null)
 
+  const filteredPages = useMemo(() => {
+    const f = filter.trim().toLowerCase()
+    if (!f) return pages ?? []
+    return (pages ?? []).filter((p) => {
+      const label = `${p.textPreview ?? ""} pg ${p.pageNumber}`.toLowerCase()
+      return label.includes(f)
+    })
+  }, [pages, filter])
+
   const selectedIndex = useMemo(
-    () => pages?.findIndex((p) => p.pageId === selectedPageId) ?? -1,
-    [pages, selectedPageId],
+    () => filteredPages.findIndex((p) => p.pageId === selectedPageId),
+    [filteredPages, selectedPageId],
   )
 
   const virtualizer = useVirtualizer({
-    count: pages?.length ?? 0,
+    count: filteredPages.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 52,
     overscan: 5,
@@ -448,10 +399,10 @@ function PageIndex({
     }
   }, [selectedIndex, virtualizer])
 
-  if (!pages?.length) {
+  if (!filteredPages.length) {
     return (
       <div className="flex-1 overflow-y-auto px-3 py-4 text-xs text-muted-foreground text-center">
-        <Trans>No pages extracted yet</Trans>
+        <Trans>No pages match your search</Trans>
       </div>
     )
   }
@@ -466,7 +417,7 @@ function PageIndex({
         }}
       >
         {virtualizer.getVirtualItems().map((virtualRow) => {
-          const page = pages[virtualRow.index]
+          const page = filteredPages[virtualRow.index]
           const isActive = page.pageId === selectedPageId
           return (
             <div

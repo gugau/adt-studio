@@ -86,7 +86,7 @@
   },
   "src/components/pipeline/stages/StoryboardSectionDetail.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 28
+      "count": 27
     }
   },
   "src/components/pipeline/stages/TextToSpeechSettings.tsx": {

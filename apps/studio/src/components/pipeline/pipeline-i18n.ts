@@ -43,6 +43,21 @@ export const STAGE_DESCRIPTION_MESSAGES: Record<string, MessageDescriptor> = {
   preview: msg`Package and preview the final ADT web application.`,
 }
 
+/** Book hub — parallel enrichment band (DAG branch) */
+/** Sidebar — marks the start of the parallel enrichment block */
+export const PIPELINE_SIDEBAR_PARALLEL_MARKER = msg`Parallel`
+
+export const PIPELINE_BOOK_PARALLEL_TITLE = msg`Parallel enrichment`
+export const PIPELINE_BOOK_PARALLEL_HINT = msg`These stages share one prerequisite: Storyboard. They do not depend on each other. Text & Speech comes next once all four are complete.`
+
+export function getPipelineBookParallelTitleI18n(): string {
+  return i18n._(PIPELINE_BOOK_PARALLEL_TITLE)
+}
+
+export function getPipelineBookParallelHintI18n(): string {
+  return i18n._(PIPELINE_BOOK_PARALLEL_HINT)
+}
+
 export const STEP_LABEL_MESSAGES: Record<string, MessageDescriptor> = {
   extract: msg`PDF Extraction`,
   metadata: msg`Metadata`,

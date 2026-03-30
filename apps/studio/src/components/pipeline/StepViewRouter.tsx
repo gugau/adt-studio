@@ -45,7 +45,7 @@ interface ViewEntry {
 }
 
 const VIEW_MAP: Record<string, ViewEntry> = {
-  book: { component: BookView },
+  book: { component: BookView, fullHeight: true },
   extract: { component: ExtractView, fullHeight: true },
   storyboard: { component: StoryboardView, fullHeight: true },
   quizzes: { component: QuizzesView },

@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from "react"
-import { createPortal } from "react-dom"
 import { Check, Eye, EyeOff, LayoutGrid, Loader2, ChevronDown, Sparkles, PanelRightOpen, PanelRightClose, Play, PenLine, Save, Merge, X, Code, GripHorizontal } from "lucide-react"
 import { SectionDataPanel } from "./SectionDataPanel"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
@@ -8,14 +7,14 @@ import type { PageDetail, VersionEntry } from "@/api/client"
 import { useApiKey } from "@/hooks/use-api-key"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useBookTasks } from "@/hooks/use-book-tasks"
-import { useStepHeader } from "../StepViewRouter"
+import { useRightSidebarControls } from "../RightSidebarContext"
 import { BookPreviewFrame, type BookPreviewFrameHandle } from "./BookPreviewFrame"
 import { SectionEditToolbar } from "./SectionEditToolbar"
 import { ImageCropDialog } from "./ImageCropDialog"
 import { AiImageDialog } from "./AiImageDialog"
 import { AddImageDialog } from "./AddImageDialog"
 import { SegmentPreviewDialog, type SegmentRegion } from "./SegmentPreviewDialog"
-import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { useLingui } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
 import { i18n } from "@lingui/core"
@@ -302,7 +301,7 @@ export function StoryboardSectionDetail({
   const { t } = useLingui()
   const queryClient = useQueryClient()
   const { apiKey, hasApiKey } = useApiKey()
-  const { headerSlotEl } = useStepHeader()
+  const { setHeader } = useRightSidebarControls()
   const { data: activeConfigData } = useActiveConfig(bookLabel)
   const applyBodyBackground = (activeConfigData?.merged as Record<string, unknown> | undefined)?.apply_body_background !== false
 
@@ -1849,90 +1848,124 @@ export function StoryboardSectionDetail({
   const hasTextParts = parts.some((p) => p.type === "text_group")
   const hasImageParts = parts.some((p) => p.type === "image")
 
-  // Header controls rendered via portal into the purple step header
-  const headerControls = (
-    <>
-      {navigationExtra}
-      <button
-        type="button"
-        onClick={toggleSectionPruned}
-        className={`flex items-center justify-center w-7 h-7 rounded transition-colors cursor-pointer ${
-          section?.isPruned
-            ? "bg-amber-500/30 hover:bg-amber-500/40"
-            : "bg-white/10 hover:bg-white/20"
-        }`}
-        title={section?.isPruned ? t`Restore section to flow` : t`Prune section from flow`}
-      >
-        {section?.isPruned ? (
-          <EyeOff className="h-3.5 w-3.5 text-amber-200" />
-        ) : (
-          <Eye className="h-3.5 w-3.5" />
-        )}
-      </button>
-      <VersionPicker
-        currentVersion={page.versions.rendering}
-        saving={saving}
-        dirty={renderingDirty}
-        bookLabel={bookLabel}
-        node="web-rendering"
-        itemId={pageId}
-        inline
-        onPreview={(data) => setPendingRendering(data as RenderingData)}
-        onSave={saveRendering}
-        onDiscard={() => {
-          setPendingRendering(null)
-        }}
-      />
-      {renderedSection?.html && hasApiKey ? (
-        <div className="relative flex-1 min-w-[100px]">
-          <Sparkles className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-400" />
-          <Input
-            value={aiInstruction}
-            onChange={(e) => setAiInstruction(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault()
-                handleAiEdit()
-              }
-            }}
-            placeholder={hasActiveTask ? t`Task running...` : t`Ask AI to edit...`}
-            disabled={hasActiveTask}
-            className={`pl-7 h-7 text-[11px] bg-white border-white/40 text-gray-900 placeholder:text-gray-400 focus-visible:ring-white/50 ${hasActiveTask ? "opacity-60" : ""}`}
-          />
+  const sidebarHeader = useMemo(() => {
+    return (
+      <div className="space-y-3">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold leading-none">{t`Storyboard`}</p>
+          {navigationExtra && <div className="flex items-center gap-1.5 flex-wrap">{navigationExtra}</div>}
         </div>
-      ) : (
-        <div className="flex-1" />
-      )}
-      {renderedSection?.html && (
-        <button
-          type="button"
-          onClick={() => setHtmlPreview((v) => !v)}
-          className={`flex items-center gap-1 px-2 py-1 rounded transition-colors cursor-pointer shrink-0 ${
-            htmlPreview ? "bg-white/30" : "bg-white/10 hover:bg-white/20"
-          }`}
-          title={htmlPreview ? t`Back to preview` : t`View HTML source`}
-        >
-          <Code className="h-3.5 w-3.5" />
-          <span className="text-[10px]">HTML</span>
-        </button>
-      )}
-      <button
-        type="button"
-        onClick={() => setPanelOpen((v) => !v)}
-        className="flex items-center gap-1 px-2 py-1 rounded bg-white/10 hover:bg-white/20 transition-colors cursor-pointer shrink-0"
-        title={panelOpen ? t`Close section data` : t`Open section data`}
-      >
-        {panelOpen ? (
-          <PanelRightClose className="h-3.5 w-3.5" />
-        ) : (
-          <PanelRightOpen className="h-3.5 w-3.5" />
-        )}
-        <span className="text-[10px]">{t`Section Data`}</span>
-        {dirty && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" title={t`Unsaved changes`} />}
-      </button>
-      {navigationArrows}
-    </>
-  )
+
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={toggleSectionPruned}
+            className={`flex items-center justify-center w-7 h-7 rounded transition-colors cursor-pointer ${
+              section?.isPruned ? "bg-amber-500/20 hover:bg-amber-500/30" : "bg-muted hover:bg-muted/80"
+            }`}
+            title={section?.isPruned ? t`Restore section to flow` : t`Prune section from flow`}
+          >
+            {section?.isPruned ? (
+              <EyeOff className="h-3.5 w-3.5 text-amber-700 dark:text-amber-300" />
+            ) : (
+              <Eye className="h-3.5 w-3.5" />
+            )}
+          </button>
+
+          <VersionPicker
+            currentVersion={page.versions.rendering}
+            saving={saving}
+            dirty={renderingDirty}
+            bookLabel={bookLabel}
+            node="web-rendering"
+            itemId={pageId}
+            inline
+            onPreview={(data) => setPendingRendering(data as RenderingData)}
+            onSave={saveRendering}
+            onDiscard={() => {
+              setPendingRendering(null)
+            }}
+          />
+
+          <div className="flex-1" />
+
+          {renderedSection?.html && (
+            <button
+              type="button"
+              onClick={() => setHtmlPreview((v) => !v)}
+              className={`flex items-center gap-1 px-2 py-1 rounded transition-colors cursor-pointer shrink-0 ${
+                htmlPreview ? "bg-muted" : "bg-muted/60 hover:bg-muted"
+              }`}
+              title={htmlPreview ? t`Back to preview` : t`View HTML source`}
+            >
+              <Code className="h-3.5 w-3.5" />
+              <span className="text-[10px]">{t`HTML`}</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setPanelOpen((v) => !v)}
+            className="flex items-center gap-1 px-2 py-1 rounded bg-muted/60 hover:bg-muted transition-colors cursor-pointer shrink-0"
+            title={panelOpen ? t`Close section data` : t`Open section data`}
+          >
+            {panelOpen ? (
+              <PanelRightClose className="h-3.5 w-3.5" />
+            ) : (
+              <PanelRightOpen className="h-3.5 w-3.5" />
+            )}
+            <span className="text-[10px]">{t`Section Data`}</span>
+            {dirty && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" title={t`Unsaved changes`} />}
+          </button>
+        </div>
+
+        {renderedSection?.html && hasApiKey ? (
+          <div className="relative w-full">
+            <Sparkles className="absolute left-3 top-3 h-3 w-3 text-muted-foreground" />
+            <Textarea
+              value={aiInstruction}
+              onChange={(e) => setAiInstruction(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault()
+                  handleAiEdit()
+                }
+              }}
+              placeholder={hasActiveTask ? t`Task running...` : t`Ask AI to edit...`}
+              disabled={hasActiveTask}
+              className={`pl-8 min-h-[96px] text-xs resize-none ${hasActiveTask ? "opacity-60" : ""}`}
+            />
+          </div>
+        ) : null}
+      </div>
+    )
+  }, [
+    t,
+    navigationExtra,
+    toggleSectionPruned,
+    section?.isPruned,
+    page.versions.rendering,
+    saving,
+    renderingDirty,
+    bookLabel,
+    pageId,
+    setPendingRendering,
+    saveRendering,
+    setPendingRendering,
+    renderedSection?.html,
+    htmlPreview,
+    panelOpen,
+    dirty,
+    hasApiKey,
+    aiInstruction,
+    hasActiveTask,
+    handleAiEdit,
+  ])
+
+  useEffect(() => {
+    setHeader(sidebarHeader)
+    return () => setHeader(null)
+  }, [setHeader, sidebarHeader])
 
   if (!section) {
     return (
@@ -1944,7 +1977,6 @@ export function StoryboardSectionDetail({
 
   return (
     <>
-    {headerSlotEl && createPortal(headerControls, headerSlotEl)}
     <div className="h-full flex flex-col relative overflow-hidden">
       {/* Error bar below header */}
       {aiError && (
