@@ -13,6 +13,7 @@ import { Step0Preset } from "./step0preset"
 import { StudioTopBar } from "@/components/StudioTopBar"
 import { PdfCoverPreview } from "./shared/PdfCoverPreview"
 import { LayoutPreview, getPreviewWidth } from "./step2LayoutOptions/LayoutPreview"
+import { ImageProcessingPreviewPane } from "./step3ImageProcessing/ImageProcessingPreviewPane"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 
@@ -145,7 +146,7 @@ function PreviewContainer({
 }
 
 export function BookCreationWizard() {
-  const { currentStep, setCurrentStep } = useWizard()
+  const { currentStep, setCurrentStep, previewFocus } = useWizard()
   const form = useWizardForm()
   const { data: books } = useBooks()
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -191,6 +192,8 @@ export function BookCreationWizard() {
   function renderPreviewContent() {
     if (currentStep === 1) return <PdfCoverPreview file={file} width={650} height={812} />
     if (currentStep === 2) return <LayoutPreview strategy={renderStrategy} />
+    if (currentStep === 3)
+      return <ImageProcessingPreviewPane focus={previewFocus} />
     return <span className="text-sm text-[#a3a3a3]">Book preview</span>
   }
 
@@ -244,7 +247,6 @@ export function BookCreationWizard() {
           {previewDesktop}
         </main>
       </div>
-
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="flex max-h-[92dvh] w-full max-w-[min(95vw,calc(100vw-1rem))] flex-col overflow-hidden border-0 bg-[#f5f5f5] p-4 sm:p-6 rounded-lg">
           <DialogTitle className="sr-only">Book Preview</DialogTitle>

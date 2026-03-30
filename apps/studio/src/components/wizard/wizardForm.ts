@@ -27,6 +27,11 @@ export const defaultWizardValues = {
   layoutType: "",
   pageGrouping: "" as WizardPageGrouping,
   sectioningMode: "" as WizardSectioningMode,
+  imageCropping: false,
+  imageSegmentation: true,
+  segmentationMinSide: "",
+  imageFilterMinSide: 100,
+  imageFilterMaxSide: 5000,
 }
 
 export type WizardFormValues = typeof defaultWizardValues
@@ -34,3 +39,4 @@ export type WizardFormValues = typeof defaultWizardValues
 export function useWizardForm() {
   return useTypedAppFormContext({ defaultValues: defaultWizardValues })
 }
+

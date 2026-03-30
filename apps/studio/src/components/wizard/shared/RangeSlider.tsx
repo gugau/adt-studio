@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 interface RangeSliderProps {
   label: string;
-  tooltip: string;
+  tooltip?: string;
   min: number;
   max: number;
   value: [number, number];
@@ -23,6 +23,18 @@ interface RangeSliderProps {
   disabled?: boolean;
   startLabel?: string;
   endLabel?: string;
+}
+
+export interface SingleValueSliderProps {
+  label: string;
+  tooltip?: string;
+  min: number;
+  max: number;
+  value: number;
+  onChange: (value: number) => void;
+  disabled?: boolean;
+  minValueLabel?: string;
+  valueUnit?: string;
 }
 
 function clampToRange(n: number, lo: number, hi: number) {
@@ -101,6 +113,72 @@ function MinMaxInput({
   );
 }
 
+export function SingleValueSlider({
+  label,
+  tooltip,
+  min,
+  max,
+  value,
+  onChange,
+  disabled,
+  minValueLabel = "None",
+  valueUnit = "px",
+}: SingleValueSliderProps) {
+  const groupLabelId = useId();
+  const boundedMin = Number.isFinite(min) ? min : 0;
+  const boundedMax =
+    Number.isFinite(max) && max >= boundedMin ? max : boundedMin;
+  const v = clampToRange(value, boundedMin, boundedMax);
+
+  return (
+    <div
+      className="flex flex-col gap-3"
+      role="group"
+      aria-labelledby={groupLabelId}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          <Label
+            id={groupLabelId}
+            className="cursor-default text-sm font-medium text-black"
+          >
+            {label}
+          </Label>
+          {tooltip && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="text-[#a3a3a3] transition-colors duration-150 hover:text-[#737373]"
+                >
+                  <CircleHelp className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{tooltip}</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+        <span className="text-xs font-medium tabular-nums text-muted-foreground">
+          {v <= boundedMin ? minValueLabel : `${v} ${valueUnit}`}
+        </span>
+      </div>
+
+      <Slider
+        aria-labelledby={groupLabelId}
+        min={boundedMin}
+        max={boundedMax}
+        step={1}
+        value={[v]}
+        onValueChange={(next) => {
+          const n = next[0];
+          if (n !== undefined) onChange(n);
+        }}
+        disabled={disabled}
+      />
+    </div>
+  );
+}
+
 export function RangeSlider({
   label,
   tooltip,
@@ -140,17 +218,19 @@ export function RangeSlider({
         >
           {label}
         </Label>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              className="text-[#a3a3a3] transition-colors duration-150 hover:text-[#737373]"
-            >
-              <CircleHelp className="h-3.5 w-3.5" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right">{tooltip}</TooltipContent>
-        </Tooltip>
+        {tooltip && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="text-[#a3a3a3] transition-colors duration-150 hover:text-[#737373]"
+              >
+                <CircleHelp className="h-3.5 w-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{tooltip}</TooltipContent>
+          </Tooltip>
+        )}
       </div>
 
       <Slider

@@ -1,11 +1,10 @@
 // TODO: Add translations and define better descriptions for each step
 import type { ComponentType } from "react"
 import type { WizardFormValues } from "./wizardForm"
-import { Step1 } from "./step1BasicInfo"
 import { isStep1BasicInfoValid } from "./step1BasicInfo/projectLabelSchema"
+import { Step1 } from "./step1BasicInfo"
 import { Step2 } from "./step2LayoutOptions"
-// import { Step3 } from "./steps/Step3"
-// import { Step4 } from "./steps/Step4"
+import { Step3 } from "./step3ImageProcessing"
 
 export interface WizardStepValidationContext {
   existingBookLabels?: readonly string[]
@@ -35,16 +34,17 @@ export const STEPS: StepDef[] = [
       v.pageGrouping !== "" &&
       v.sectioningMode !== "",
   },
-  // {
-  //   title: "Image Processing",
-  //   description: "Configure image processing settings",
-  //   component: Step3,
-  //   isValid: (v) => v.outputLanguages.length > 0,
-  // },
-  // {
-  //   title: "Filters",
-  //   description: "Configure filters for your configuration",
-  //   component: Step4,
-  //   isValid: (v) => v.layoutType !== "",
-  // },
+  {
+    title: "Image Processing",
+    description:
+      "Control LLM cropping and segmentation for extracted images — matching extract-stage image filters.",
+    component: Step3,
+    isValid: (v) => {
+      if (!v.imageSegmentation) return true
+      const t = v.segmentationMinSide.trim()
+      if (!t) return true
+      const n = Number(t)
+      return Number.isInteger(n) && n >= 0
+    },
+  },
 ]
