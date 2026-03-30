@@ -1,13 +1,25 @@
 import { useEffect, useRef, useState } from "react"
 import { Loader2 } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
-import * as pdfjsLib from "pdfjs-dist"
 import { cn } from "@/lib/utils"
+import { getPdfJs } from "@/components/wizard/shared/pdfjsLoader"
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.mjs",
-  import.meta.url,
-).href
+const JPEG_QUALITY = 0.92
+const MAX_COVER_CACHE_ENTRIES = 4
+
+const coverRenderCache = new Map<string, string>()
+
+function pdfCoverCacheKey(file: File, width: number, height: number): string {
+  return `${file.lastModified}:${file.size}:${width}:${height}`
+}
+
+function rememberCoverDataUrl(key: string, dataUrl: string) {
+  if (coverRenderCache.size >= MAX_COVER_CACHE_ENTRIES) {
+    const oldest = coverRenderCache.keys().next().value
+    if (oldest !== undefined) coverRenderCache.delete(oldest)
+  }
+  coverRenderCache.set(key, dataUrl)
+}
 
 interface PdfCoverPreviewProps {
   file?: File | null
@@ -32,35 +44,79 @@ function PdfCoverCanvas({ file, width, height }: { file: File; width: number; he
   useEffect(() => {
     setReady(false)
     let cancelled = false
+    const isCancelled = () => cancelled
+    const key = pdfCoverCacheKey(file, width, height)
+    const cached = coverRenderCache.get(key)
 
-    async function render() {
-      const buffer = await file.arrayBuffer()
-      if (cancelled) return
-
-      const pdf = await pdfjsLib.getDocument({ data: buffer }).promise
-      if (cancelled) return
-
-      const page = await pdf.getPage(1)
-      if (cancelled) return
-
-      const unscaled = page.getViewport({ scale: 1 })
-      const scale = Math.min(width / unscaled.width, height / unscaled.height)
-      const viewport = page.getViewport({ scale })
-
+    async function drawDataUrlToCanvas(dataUrl: string): Promise<boolean> {
+      if (isCancelled()) return false
       const canvas = canvasRef.current
-      if (!canvas || cancelled) return
-
+      if (!canvas) return false
+      const img = new Image()
+      img.src = dataUrl
+      try {
+        await img.decode()
+      } catch {
+        coverRenderCache.delete(key)
+        return false
+      }
+      if (isCancelled()) return false
       const ctx = canvas.getContext("2d")
-      if (!ctx) return
-
-      canvas.width = viewport.width
-      canvas.height = viewport.height
-
-      await page.render({ canvas, viewport, canvasContext: ctx }).promise
-      if (!cancelled) setReady(true)
+      if (!ctx) return false
+      canvas.width = img.naturalWidth
+      canvas.height = img.naturalHeight
+      ctx.drawImage(img, 0, 0)
+      setReady(true)
+      return true
     }
 
-    render()
+    async function renderFromPdf() {
+      const pdfjsLib = await getPdfJs()
+      if (isCancelled()) return
+
+      const buffer = await file.arrayBuffer()
+      if (isCancelled()) return
+
+      const pdf = await pdfjsLib.getDocument({ data: buffer }).promise
+      if (isCancelled()) {
+        await pdf.destroy().catch(() => {})
+        return
+      }
+
+      try {
+        const page = await pdf.getPage(1)
+        if (isCancelled()) return
+
+        const unscaled = page.getViewport({ scale: 1 })
+        const scale = Math.min(width / unscaled.width, height / unscaled.height)
+        const viewport = page.getViewport({ scale })
+
+        const canvas = canvasRef.current
+        if (!canvas || isCancelled()) return
+
+        const ctx = canvas.getContext("2d")
+        if (!ctx) return
+
+        canvas.width = viewport.width
+        canvas.height = viewport.height
+
+        await page.render({ canvas, viewport, canvasContext: ctx }).promise
+        if (isCancelled()) return
+
+        rememberCoverDataUrl(key, canvas.toDataURL("image/jpeg", JPEG_QUALITY))
+        setReady(true)
+      } finally {
+        await pdf.destroy().catch(() => {})
+      }
+    }
+
+    async function run() {
+      if (cached && (await drawDataUrlToCanvas(cached))) return
+      if (isCancelled()) return
+      await renderFromPdf()
+    }
+
+    run()
     return () => {
       cancelled = true
     }

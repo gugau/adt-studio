@@ -4,18 +4,28 @@ import { Upload, Trash2, XCircle } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
 import { Button } from "@/components/ui/button"
 import { useWizardForm } from "@/components/wizard/wizardForm"
+import { getPdfJs } from "@/components/wizard/shared/pdfjsLoader"
 import { cn } from "@/lib/utils"
 
 type OverlayState = "idle" | "dragging" | "error"
 
-
-
 async function getPdfPageCount(file: File): Promise<number> {
+  const pdfjs = await getPdfJs()
   const buffer = await file.arrayBuffer()
-  const text = new TextDecoder("latin1").decode(new Uint8Array(buffer))
-  const matches = text.match(/\/Count\s+(\d+)/g)
-  if (matches) return Math.max(...matches.map((m) => parseInt(m.replace(/\/Count\s+/, ""), 10)))
-  return 0
+  const pdf = await pdfjs.getDocument({ data: buffer }).promise
+  try {
+    return pdf.numPages
+  } finally {
+    await pdf.destroy()
+  }
+}
+
+function waitTwoAnimationFrames(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve())
+    })
+  })
 }
 
 function formatBytes(bytes: number) {
@@ -51,13 +61,30 @@ export function usePdfUpload() {
       setTotalPages(pdfCache.totalPages)
       return
     }
-    getPdfPageCount(file).then((count) => {
-      pdfCache.file = file
-      pdfCache.totalPages = count
-      setTotalPages(count)
-      form.setFieldValue("startPage", "1")
-      form.setFieldValue("endPage", String(count))
-    })
+
+    let cancelled = false
+    ;(async () => {
+      await waitTwoAnimationFrames()
+      if (cancelled) return
+      try {
+        const count = await getPdfPageCount(file)
+        if (cancelled) return
+        pdfCache.file = file
+        pdfCache.totalPages = count
+        setTotalPages(count)
+        form.setFieldValue("startPage", "1")
+        form.setFieldValue("endPage", String(count))
+      } catch {
+        if (cancelled) return
+        pdfCache.file = file
+        pdfCache.totalPages = 0
+        setTotalPages(0)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
   }, [file])
 
   const setFile = useCallback(

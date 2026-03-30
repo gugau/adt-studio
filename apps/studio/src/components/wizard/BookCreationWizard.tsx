@@ -12,6 +12,7 @@ import { Step0Preset } from "./step0preset"
 import { PdfCoverPreview } from "./shared/PdfCoverPreview"
 import { LayoutPreview, getPreviewWidth } from "./step2LayoutOptions/LayoutPreview"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
+import { cn } from "@/lib/utils"
 
 function WizardHeader({ step }: { step: number }) {
   const def = STEPS[step - 1]
@@ -34,7 +35,6 @@ function WizardHeader({ step }: { step: number }) {
     </div>
   )
 }
-// TODO: The next step buttons became the creation button on the last step and the "create book right away" should only be visible on the earlier steps, the idea is for it to be a quick way for the user to create the book directly, when a preset was selected.
 function WizardFooter({
   isLastStep,
   canContinue,
@@ -50,35 +50,57 @@ function WizardFooter({
   onNext: () => void
   onCreate: () => void
 }) {
+  const showQuickCreate = canCreate && !isLastStep
+
   return (
-    <div className="flex items-center gap-2 px-6 py-4 border-t border-[#e5e5e5]">
-      <Button type="button" variant="outline" onClick={onBack} className="flex items-center gap-1.5 h-10 px-4 font-medium">
-        <ArrowLeft className="h-4 w-4" />
+    <div
+      className={cn(
+        "grid w-full gap-2 px-6 py-4 border-t border-[#e5e5e5] transition-[grid-template-columns] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+        showQuickCreate ? "grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]" : "grid-cols-[minmax(0,1fr)_minmax(0,0fr)_minmax(0,1fr)]",
+      )}
+    >
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onBack}
+        className="flex h-10 min-w-0 w-full items-center justify-center gap-1.5 px-4 font-medium"
+      >
+        <ArrowLeft className="h-4 w-4 shrink-0" />
         Back
       </Button>
 
+      <div className="min-h-10 min-w-0 overflow-hidden">
+        {showQuickCreate ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCreate}
+            className="flex h-10 min-w-0 w-full items-center justify-center gap-1.5 px-4 font-medium"
+          >
+            <Zap className="h-4 w-4 shrink-0" />
+            Create Book
+          </Button>
+        ) : null}
+      </div>
+
       <Button
         type="button"
-        variant="ghost"
-        disabled={!canCreate}
-        onClick={onCreate}
-        className="flex items-center gap-1.5 h-10 px-4 font-medium text-[#737373] disabled:opacity-40"
+        disabled={isLastStep ? !canCreate : !canContinue}
+        onClick={isLastStep ? onCreate : onNext}
+        className="flex h-10 min-w-0 w-full items-center justify-center gap-1.5 bg-[#2b7fff] px-4 font-medium text-white transition-opacity duration-300 ease-out hover:bg-[#1a6fef] disabled:opacity-50 border-0"
       >
-        <Zap className="h-4 w-4" />
-        Create Book right away
+        {isLastStep ? (
+          <>
+            <Zap className="h-4 w-4 shrink-0" />
+            Create Book
+          </>
+        ) : (
+          <>
+            Next Step
+            <ArrowRight className="h-4 w-4 shrink-0" />
+          </>
+        )}
       </Button>
-
-      {!isLastStep && (
-        <Button
-          type="button"
-          disabled={!canContinue}
-          onClick={onNext}
-          className="ml-auto flex items-center gap-1.5 h-10 px-4 bg-[#2b7fff] text-white hover:bg-[#1a6fef] border-0 font-medium disabled:opacity-50"
-        >
-          Next Step
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      )}
     </div>
   )
 }
