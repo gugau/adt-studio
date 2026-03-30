@@ -9,14 +9,12 @@ import {
   Building2,
   User,
   Globe,
-  Settings,
-  Home,
   Pencil,
 } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
 import { Button } from "@/components/ui/button"
-import { useSettingsDialog } from "@/routes/__root"
+import { StudioTopBar } from "@/components/StudioTopBar"
 import { Badge } from "@/components/ui/badge"
 import { DeleteBookDialog } from "@/components/books/DeleteBookDialog"
 import { useBooks, useDeleteBook } from "@/hooks/use-books"
@@ -26,7 +24,6 @@ import {
   getStageDescriptionI18n,
 } from "@/components/pipeline/pipeline-i18n"
 import type { BookSummary } from "@/api/client"
-import { LocaleSwitcher } from "@/components/LocaleSwitcher"
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -185,7 +182,6 @@ function HomePage() {
   const { data: books, isLoading, error } = useBooks()
   const deleteMutation = useDeleteBook()
   const [deleteLabel, setDeleteLabel] = useState<string | null>(null)
-  const { openSettings } = useSettingsDialog()
 
   if (isLoading) {
     return (
@@ -207,25 +203,7 @@ function HomePage() {
 
   return (
     <div className="flex flex-1 min-h-0 flex-col">
-      {/* Top bar — matches book page header */}
-      <div className="shrink-0 min-h-11 py-1 flex items-center bg-gray-700 text-white px-4">
-        <div className="flex items-center gap-2.5">
-          <Home className="w-4 h-4 shrink-0" />
-          <span className="text-sm font-semibold">ADT Studio</span>
-        </div>
-        <div className="ml-auto flex items-center gap-1.5">
-          <LocaleSwitcher />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 shrink-0 text-white/70 hover:text-white hover:bg-gray-600"
-            onClick={openSettings}
-            title={t`API Key Settings`}
-          >
-            <Settings className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      </div>
+      <StudioTopBar />
 
       <div className="flex flex-1 min-h-0">
       {/* Left — pipeline stages (30%) */}

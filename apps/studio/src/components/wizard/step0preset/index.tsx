@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router"
-import { ArrowLeft, ArrowRight, Home } from "lucide-react"
+import { ArrowLeft, ArrowRight } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { useStore } from "@tanstack/react-form"
 import { Button } from "@/components/ui/button"
@@ -29,16 +29,7 @@ export function Step0Preset() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-white flex flex-col items-center justify-center gap-6 sm:gap-8 px-4 pt-20 pb-10 relative">
-      <button
-        type="button"
-        onClick={() => navigate({ to: "/" })}
-        className="absolute left-4 sm:left-6 top-4 sm:top-6 flex items-center gap-1.5 rounded-md bg-white border border-[#e5e5e5] h-9 px-3 py-2 text-sm font-medium text-[#0a0a0a] hover:bg-[#f5f5f5] transition-colors"
-      >
-        <Home className="h-4 w-4" />
-        <Trans>Home</Trans>
-      </button>
-
+    <div className="flex flex-1 min-h-0 w-full bg-white flex-col items-center justify-center gap-6 sm:gap-8 px-4 py-10">
       <h1
         id="preset-step-heading"
         className="text-2xl sm:text-[30px] font-semibold leading-tight sm:leading-9 tracking-[-0.75px] text-[#030303] text-center"

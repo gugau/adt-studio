@@ -1,6 +1,7 @@
 /* eslint-disable lingui/no-unlocalized-strings */
 // TODO: Add translations
 import { useState, type CSSProperties } from "react"
+import { Trans } from "@lingui/react/macro"
 import { Eye, ArrowLeft, ArrowRight, Zap } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
 import { Button } from "@/components/ui/button"
@@ -9,6 +10,7 @@ import { useWizard } from "./index"
 import { useWizardForm } from "./wizardForm"
 import { STEPS } from "./steps"
 import { Step0Preset } from "./step0preset"
+import { StudioTopBar } from "@/components/StudioTopBar"
 import { PdfCoverPreview } from "./shared/PdfCoverPreview"
 import { LayoutPreview, getPreviewWidth } from "./step2LayoutOptions/LayoutPreview"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
@@ -160,7 +162,16 @@ export function BookCreationWizard() {
       : false
   const canCreate = STEPS.every((s) => s.isValid(values, stepValidationContext))
 
-  if (currentStep === 0) return <Step0Preset />
+  if (currentStep === 0) {
+    return (
+      <div className="flex flex-1 min-h-0 flex-col h-full bg-white">
+        <StudioTopBar brandLinksHome trailingTitle={<Trans>Add Book</Trans>} />
+        <div className="flex flex-1 min-h-0 flex-col overflow-auto">
+          <Step0Preset />
+        </div>
+      </div>
+    )
+  }
 
   const StepComponent = STEPS[stepIndex].component
 
@@ -196,40 +207,43 @@ export function BookCreationWizard() {
   )
 
   return (
-    <div className="h-screen bg-[#f5f5f5] flex lg:gap-[10px]">
-      <aside className="bg-white flex flex-col w-full lg:w-[633px] lg:shrink-0 overflow-hidden">
-        <div className="flex items-center justify-end px-4 py-2.5 border-b border-[#e5e5e5] lg:hidden">
-          <button
-            type="button"
-            onClick={() => setPreviewOpen(true)}
-            className="flex items-center gap-1.5 text-sm font-medium text-[#2b7fff]"
-          >
-            <Eye className="h-4 w-4" />
-            Preview
-          </button>
-        </div>
-
-        <div className="mx-auto flex w-full min-h-0 lg:pr-8 flex-1 flex-col overflow-hidden">
-          <WizardHeader step={currentStep} />
-
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <StepComponent />
+    <div className="flex flex-1 min-h-0 flex-col h-full bg-[#f5f5f5]">
+      <StudioTopBar brandLinksHome trailingTitle={<Trans>Add Book</Trans>} />
+      <div className="flex flex-1 min-h-0 lg:gap-[10px] overflow-hidden">
+        <aside className="bg-white flex flex-col w-full lg:w-[633px] lg:shrink-0 overflow-hidden">
+          <div className="flex items-center justify-end px-4 py-2.5 border-b border-[#e5e5e5] lg:hidden">
+            <button
+              type="button"
+              onClick={() => setPreviewOpen(true)}
+              className="flex items-center gap-1.5 text-sm font-medium text-[#2b7fff]"
+            >
+              <Eye className="h-4 w-4" />
+              Preview
+            </button>
           </div>
-        </div>
 
-        <WizardFooter
-          isLastStep={currentStep === STEPS.length}
-          canContinue={canContinue}
-          canCreate={canCreate}
-          onBack={handleBack}
-          onNext={handleNext}
-          onCreate={handleCreate}
-        />
-      </aside>
+          <div className="mx-auto flex w-full min-h-0 lg:pr-8 flex-1 flex-col overflow-hidden">
+            <WizardHeader step={currentStep} />
 
-      <main className="hidden flex-1 items-center justify-center overflow-auto lg:flex">
-        {previewDesktop}
-      </main>
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <StepComponent />
+            </div>
+          </div>
+
+          <WizardFooter
+            isLastStep={currentStep === STEPS.length}
+            canContinue={canContinue}
+            canCreate={canCreate}
+            onBack={handleBack}
+            onNext={handleNext}
+            onCreate={handleCreate}
+          />
+        </aside>
+
+        <main className="hidden flex-1 items-center justify-center overflow-auto lg:flex">
+          {previewDesktop}
+        </main>
+      </div>
 
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="flex max-h-[92dvh] w-full max-w-[min(95vw,calc(100vw-1rem))] flex-col overflow-hidden border-0 bg-[#f5f5f5] p-4 sm:p-6 rounded-lg">
