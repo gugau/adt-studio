@@ -111,6 +111,8 @@ export function ReviewerChecklistSettingsTab({ label }: { label: string }) {
   const updateConfig = useUpdateBookConfig()
   const [sections, setSections] = useState<EditableSection[]>([])
   const [dirty, setDirty] = useState(false)
+  const reviewerValidationConfig = (bookConfigData?.config?.reviewer_validation ?? null) as Record<string, unknown> | null
+  const reviewerValidationEnabled = catalogData?.enabled ?? false
 
   useEffect(() => {
     if (!catalogData || dirty) {
@@ -121,14 +123,40 @@ export function ReviewerChecklistSettingsTab({ label }: { label: string }) {
   }, [catalogData, dirty])
 
   const hasOverride = useMemo(() => {
-    const reviewerValidation = (bookConfigData?.config?.reviewer_validation ?? null) as Record<string, unknown> | null
-    return Boolean(reviewerValidation && Array.isArray(reviewerValidation.sections))
-  }, [bookConfigData?.config])
+    return Boolean(
+      reviewerValidationConfig && (
+        Array.isArray(reviewerValidationConfig.sections) || typeof reviewerValidationConfig.enabled === "boolean"
+      ),
+    )
+  }, [reviewerValidationConfig])
 
   const enabledCriteriaCount = useMemo(
     () => sections.reduce((total, section) => total + section.criteria.filter((criterion) => criterion.enabled).length, 0),
     [sections],
   )
+
+  const updateReviewerValidationConfig = (mutator: (reviewerValidation: Record<string, unknown>) => void) => {
+    const currentConfig = { ...(bookConfigData?.config ?? {}) } as Record<string, unknown>
+    const reviewerValidation = currentConfig.reviewer_validation && typeof currentConfig.reviewer_validation === "object"
+      ? { ...(currentConfig.reviewer_validation as Record<string, unknown>) }
+      : {}
+
+    mutator(reviewerValidation)
+
+    if (Object.keys(reviewerValidation).length > 0) {
+      currentConfig.reviewer_validation = reviewerValidation
+    } else {
+      delete currentConfig.reviewer_validation
+    }
+
+    updateConfig.mutate({ label, config: currentConfig })
+  }
+
+  const setReviewerValidationEnabled = (enabled: boolean) => {
+    updateReviewerValidationConfig((reviewerValidation) => {
+      reviewerValidation.enabled = enabled
+    })
+  }
 
   const setSection = (sectionId: string, updater: (section: EditableSection) => EditableSection) => {
     setSections((current) => current.map((section) => (section.id === sectionId ? updater(section) : section)))
@@ -202,36 +230,16 @@ export function ReviewerChecklistSettingsTab({ label }: { label: string }) {
   }
 
   const saveChecklist = () => {
-    const currentConfig = { ...(bookConfigData?.config ?? {}) } as Record<string, unknown>
-    const reviewerValidation = currentConfig.reviewer_validation && typeof currentConfig.reviewer_validation === "object"
-      ? { ...(currentConfig.reviewer_validation as Record<string, unknown>) }
-      : {}
-
-    reviewerValidation.sections = serializeSections(sections, t`Add reviewer guidance.`)
-    currentConfig.reviewer_validation = reviewerValidation
-
-    updateConfig.mutate({ label, config: currentConfig })
+    updateReviewerValidationConfig((reviewerValidation) => {
+      reviewerValidation.sections = serializeSections(sections, t`Add reviewer guidance.`)
+    })
     setDirty(false)
   }
 
   const resetChecklist = () => {
-    const currentConfig = { ...(bookConfigData?.config ?? {}) } as Record<string, unknown>
-    const reviewerValidation = currentConfig.reviewer_validation && typeof currentConfig.reviewer_validation === "object"
-      ? { ...(currentConfig.reviewer_validation as Record<string, unknown>) }
-      : null
-
-    if (reviewerValidation) {
+    updateReviewerValidationConfig((reviewerValidation) => {
       delete reviewerValidation.sections
-      if (Object.keys(reviewerValidation).length > 0) {
-        currentConfig.reviewer_validation = reviewerValidation
-      } else {
-        delete currentConfig.reviewer_validation
-      }
-    } else {
-      delete currentConfig.reviewer_validation
-    }
-
-    updateConfig.mutate({ label, config: currentConfig })
+    })
     setDirty(false)
   }
 
@@ -256,6 +264,39 @@ export function ReviewerChecklistSettingsTab({ label }: { label: string }) {
         description={t`Choose which per-page validation items reviewers must check, customize the wording and guidance, and add your own checklist items for this document.`}
       />
 
+      <div className="rounded-xl border bg-card p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-1">
+            <div className="text-sm font-medium text-foreground"><Trans>Reviewer validation checklist</Trans></div>
+            <p className="text-sm text-muted-foreground">
+              <Trans>Enable or disable reviewer-authored checklist reviews for this book. Automated accessibility assessment remains available either way.</Trans>
+            </p>
+          </div>
+
+          <label className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950/20">
+            <Switch
+              checked={reviewerValidationEnabled}
+              onCheckedChange={setReviewerValidationEnabled}
+              aria-label={reviewerValidationEnabled ? t`Disable reviewer validation` : t`Enable reviewer validation`}
+            />
+            <span>
+              {reviewerValidationEnabled ? <Trans>Enabled</Trans> : <Trans>Disabled</Trans>}
+            </span>
+          </label>
+        </div>
+      </div>
+
+      {!reviewerValidationEnabled ? (
+        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/60 p-5 text-sm text-muted-foreground dark:border-slate-700 dark:bg-slate-950/20">
+          <p className="font-medium text-foreground"><Trans>Reviewer checklist reviews are currently disabled.</Trans></p>
+          <p className="mt-2">
+            <Trans>Turn this on to show the Validation review card in Preview and the Reviewer Validation tab in the Validation step.</Trans>
+          </p>
+        </div>
+      ) : null}
+
+      {reviewerValidationEnabled ? (
+        <>
       <div className="rounded-xl border bg-card p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-sm text-muted-foreground">
@@ -444,6 +485,8 @@ export function ReviewerChecklistSettingsTab({ label }: { label: string }) {
           )
         })}
       </div>
+        </>
+      ) : null}
     </div>
   )
 }

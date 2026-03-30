@@ -10,6 +10,18 @@ import { createReviewerValidationRoutes } from "./reviewer-validation.js"
 
 const label = "validation-book"
 
+
+function enableReviewerValidation(configPath: string) {
+  fs.writeFileSync(configPath, [
+    "text_types:",
+    "  heading: Heading",
+    "text_group_types:",
+    "  paragraph: Paragraph",
+    "reviewer_validation:",
+    "  enabled: true",
+  ].join("\n"))
+}
+
 describe("Reviewer validation routes", () => {
   let tmpDir: string
   let app: Hono
@@ -68,12 +80,15 @@ describe("Reviewer validation routes", () => {
     expect(res.status).toBe(200)
 
     const body = await res.json()
+    expect(body.enabled).toBe(false)
     expect(body.identificationFields).toHaveLength(7)
     expect(body.instructions).toHaveLength(2)
     expect(body.pageSections).toHaveLength(10)
   })
 
   it("stores and returns reviewer validation sessions", async () => {
+    enableReviewerValidation(configPath)
+
     const session: ReviewerValidationSession = {
       session_id: "session-1",
       reviewer_name: "Ada Reviewer",
@@ -102,6 +117,8 @@ describe("Reviewer validation routes", () => {
   })
 
   it("stores multiple versions of reviewer page validation records and lists latest results for a session", async () => {
+    enableReviewerValidation(configPath)
+
     const session: ReviewerValidationSession = {
       session_id: "session-1",
       reviewer_name: "Ada Reviewer",
@@ -173,6 +190,39 @@ describe("Reviewer validation routes", () => {
     expect(res.status).toBe(400)
   })
 
+  it("blocks creating reviewer sessions when reviewer validation is disabled", async () => {
+    const session: ReviewerValidationSession = {
+      session_id: "session-disabled",
+      reviewer_name: "Ada Reviewer",
+    }
+
+    const res = await app.request(`/api/books/${label}/validation/sessions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(session),
+    })
+
+    expect(res.status).toBe(409)
+    expect(await res.text()).toContain("Reviewer validation is disabled")
+  })
+
+  it("blocks saving reviewer page results when reviewer validation is disabled", async () => {
+    const record: ReviewerPageValidationRecord = {
+      session_id: "session-disabled",
+      page_id: "pg001",
+      href: "content/pages/pg001.html",
+      results: [],
+    }
+
+    const res = await app.request(`/api/books/${label}/validation/page-results`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(record),
+    })
+
+    expect(res.status).toBe(409)
+    expect(await res.text()).toContain("Reviewer validation is disabled")
+  })
 
   it("returns config-defined reviewer validation catalog overrides", async () => {
     fs.writeFileSync(configPath, [
@@ -181,6 +231,7 @@ describe("Reviewer validation routes", () => {
       "text_group_types:",
       "  paragraph: Paragraph",
       "reviewer_validation:",
+      "  enabled: true",
       "  sections:",
       "    - id: custom-checks",
       "      label: Custom checks",
@@ -199,9 +250,14 @@ describe("Reviewer validation routes", () => {
       "      required: true",
     ].join("\n"))
 
+    app = new Hono()
+    app.onError(errorHandler)
+    app.route("/api", createReviewerValidationRoutes(tmpDir, configPath))
+
     const res = await app.request(`/api/books/${label}/validation/catalog`)
     expect(res.status).toBe(200)
     const body = await res.json()
+    expect(body.enabled).toBe(true)
     expect(body.pageSections).toHaveLength(1)
     expect(body.pageSections[0].id).toBe("custom-checks")
     expect(body.instructions[0].id).toBe("custom-workflow")

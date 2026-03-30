@@ -53,6 +53,7 @@ describe("AppConfig", () => {
       text_types: { heading: "Heading" },
       text_group_types: { paragraph: "Paragraph" },
       reviewer_validation: {
+        enabled: true,
         identification_fields: [
           {
             id: "reviewer-name",
@@ -86,6 +87,7 @@ describe("AppConfig", () => {
 
     expect(result.success).toBe(true)
     if (result.success) {
+      expect(result.data.reviewer_validation?.enabled).toBe(true)
       expect(result.data.reviewer_validation?.sections?.[0]?.id).toBe("custom-checks")
     }
   })

@@ -910,8 +910,14 @@ msgstr "Description..."
 msgid "Diagram"
 msgstr "Diagram"
 
+msgid "Disable reviewer validation"
+msgstr "Disable reviewer validation"
+
 msgid "Disable type"
 msgstr "Disable type"
+
+msgid "Disabled"
+msgstr "Disabled"
 
 msgid "Disabled axe rules"
 msgstr "Disabled axe rules"
@@ -1022,6 +1028,15 @@ msgstr "Enable {0}"
 
 msgid "Enable for scanned books where two pages appear on a single PDF page."
 msgstr "Enable for scanned books where two pages appear on a single PDF page."
+
+msgid "Enable or disable reviewer-authored checklist reviews for this book. Automated accessibility assessment remains available either way."
+msgstr "Enable or disable reviewer-authored checklist reviews for this book. Automated accessibility assessment remains available either way."
+
+msgid "Enable reviewer validation"
+msgstr "Enable reviewer validation"
+
+msgid "Enabled"
+msgstr "Enabled"
 
 msgid "Enabled axe tags"
 msgstr "Enabled axe tags"
@@ -2208,6 +2223,9 @@ msgstr "Reviewer checklist"
 msgid "Reviewer Checklist"
 msgstr "Reviewer Checklist"
 
+msgid "Reviewer checklist reviews are currently disabled."
+msgstr "Reviewer checklist reviews are currently disabled."
+
 msgid "Reviewer checklist settings saved."
 msgstr "Reviewer checklist settings saved."
 
@@ -2222,6 +2240,9 @@ msgstr "Reviewer name is required."
 
 msgid "Reviewer Validation"
 msgstr "Reviewer Validation"
+
+msgid "Reviewer validation checklist"
+msgstr "Reviewer validation checklist"
 
 msgid "Reviewer validation summary"
 msgstr "Reviewer validation summary"
@@ -2786,6 +2807,9 @@ msgstr "Treats each page as a single section"
 
 msgid "Try Activity"
 msgstr "Try Activity"
+
+msgid "Turn this on to show the Validation review card in Preview and the Reviewer Validation tab in the Validation step."
+msgstr "Turn this on to show the Validation review card in Preview and the Reviewer Validation tab in the Validation step."
 
 msgid "Two-column template for story content"
 msgstr "Two-column template for story content"

@@ -396,6 +396,7 @@ export interface AccessibilityAssessmentResponse {
 }
 
 export interface ReviewerValidationCatalogResponse {
+  enabled: boolean
   identificationFields: ReviewerValidationIdentificationField[]
   instructions: ReviewerValidationInstruction[]
   pageSections: ReviewerValidationSection[]

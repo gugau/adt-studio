@@ -21,6 +21,11 @@ function loadDefaultReviewerValidationConfig(
   return ReviewerValidationConfig.parse(parsed ?? {})
 }
 
+export function isReviewerValidationEnabled(config?: ReviewerValidationConfigType | null): boolean {
+  const overrides = ReviewerValidationConfig.parse(config ?? {})
+  return overrides.enabled ?? false
+}
+
 export function getReviewerValidationCatalog(
   config?: ReviewerValidationConfigType | null,
   defaultsPath?: string,

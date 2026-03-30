@@ -9,6 +9,7 @@ import { api } from "@/api/client"
 import { useBookRun } from "@/hooks/use-book-run"
 import { AccessibilityOverviewTab } from "@/components/validation/AccessibilityValidationTabs"
 import { ReviewerValidationSummaryTab } from "@/components/validation/ReviewerValidationSummaryTab"
+import { useReviewerValidationCatalog } from "@/hooks/use-reviewer-validation"
 
 const VALIDATION_TABS = new Set([
   "accessibility-summary",
@@ -28,11 +29,16 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
   const navigate = useNavigate()
   const search = useSearch({ strict: false }) as { tab?: string }
   const { stageState } = useBookRun()
+  const reviewerValidationCatalog = useReviewerValidationCatalog(bookLabel)
+  const reviewerValidationEnabled = reviewerValidationCatalog.data?.enabled ?? false
   const storyboardDone = stageState("storyboard") === "done"
   const ranRef = useRef(false)
   const [packaging, setPackaging] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const tab = useMemo(() => normalizeValidationTab(search.tab), [search.tab])
+  const tab = useMemo(() => {
+    const normalized = normalizeValidationTab(search.tab)
+    return reviewerValidationEnabled ? normalized : "accessibility-summary"
+  }, [reviewerValidationEnabled, search.tab])
 
   const runPackage = async () => {
     setPackaging(true)
@@ -129,9 +135,11 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
             <TabsTrigger value="accessibility-summary" className="px-3 py-1.5 text-xs">
               <Trans>Accessibility Summary</Trans>
             </TabsTrigger>
-            <TabsTrigger value="reviewer-validation" className="px-3 py-1.5 text-xs">
-              <Trans>Reviewer Validation</Trans>
-            </TabsTrigger>
+            {reviewerValidationEnabled ? (
+              <TabsTrigger value="reviewer-validation" className="px-3 py-1.5 text-xs">
+                <Trans>Reviewer Validation</Trans>
+              </TabsTrigger>
+            ) : null}
           </TabsList>
         </div>
 
@@ -139,20 +147,22 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
           <TabsContent value="accessibility-summary" className="m-0 h-full">
             <AccessibilityOverviewTab label={bookLabel} />
           </TabsContent>
-          <TabsContent value="reviewer-validation" className="m-0 h-full">
-            <ReviewerValidationSummaryTab
-              label={bookLabel}
-              onOpenPreview={() => navigate({
-                to: "/books/$label/$step",
-                params: { label: bookLabel, step: "preview" },
-              })}
-              onOpenPreviewToPage={(href) => navigate({
-                to: "/books/$label/$step",
-                params: { label: bookLabel, step: "preview" },
-                search: { previewHref: href },
-              })}
-            />
-          </TabsContent>
+          {reviewerValidationEnabled ? (
+            <TabsContent value="reviewer-validation" className="m-0 h-full">
+              <ReviewerValidationSummaryTab
+                label={bookLabel}
+                onOpenPreview={() => navigate({
+                  to: "/books/$label/$step",
+                  params: { label: bookLabel, step: "preview" },
+                })}
+                onOpenPreviewToPage={(href) => navigate({
+                  to: "/books/$label/$step",
+                  params: { label: bookLabel, step: "preview" },
+                  search: { previewHref: href },
+                })}
+              />
+            </TabsContent>
+          ) : null}
         </div>
       </Tabs>
     </div>

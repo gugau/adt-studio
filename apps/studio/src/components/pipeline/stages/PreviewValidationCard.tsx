@@ -208,9 +208,17 @@ export function PreviewValidationCard({
     () => sortedSessions.find((entry) => entry.session.session_id === activeSessionId) ?? null,
     [sortedSessions, activeSessionId],
   )
+  const liveCatalogSnapshot = useMemo(
+    () => (catalog.data ? {
+      identificationFields: catalog.data.identificationFields,
+      instructions: catalog.data.instructions,
+      pageSections: catalog.data.pageSections,
+    } : null),
+    [catalog.data],
+  )
   const activeCatalog = useMemo(
-    () => activeSession?.session.catalog_snapshot ?? catalog.data ?? null,
-    [activeSession?.session.catalog_snapshot, catalog.data],
+    () => activeSession?.session.catalog_snapshot ?? liveCatalogSnapshot,
+    [activeSession?.session.catalog_snapshot, liveCatalogSnapshot],
   )
   const activePageSections = activeCatalog?.pageSections ?? []
 

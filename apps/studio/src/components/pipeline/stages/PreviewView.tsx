@@ -6,6 +6,7 @@ import { useNavigate, useSearch } from "@tanstack/react-router"
 import { api, getAdtUrl } from "@/api/client"
 import { useDebugPanelState } from "@/components/debug/debug-panel-state"
 import { useAccessibilityAssessment } from "@/hooks/use-debug"
+import { useReviewerValidationCatalog } from "@/hooks/use-reviewer-validation"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useBookTasks } from "@/hooks/use-book-tasks"
 import {
@@ -45,6 +46,8 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
   const [accessibilityCardExpanded, setAccessibilityCardExpanded] = useState(false)
   const [validationCardExpanded, setValidationCardExpanded] = useState(false)
   const { data, isLoading: assessmentLoading, error: assessmentError } = useAccessibilityAssessment(bookLabel)
+  const reviewerValidationCatalog = useReviewerValidationCatalog(bookLabel)
+  const reviewerValidationEnabled = reviewerValidationCatalog.data?.enabled ?? false
 
   const assessment = data?.assessment ?? null
   const matchedPage = useMemo(
@@ -266,19 +269,21 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
           onFindingHover={highlightFindingTargets}
         />
 
-        <PreviewValidationCard
-          label={bookLabel}
-          panelOpen={panelOpen}
-          otherCardExpanded={accessibilityCardExpanded}
-          currentPage={currentValidationPage}
-          onNavigateToPage={navigatePreviewToHref}
-          onExpandedChange={setValidationCardExpanded}
-          onOpenValidation={() => navigate({
-            to: "/books/$label/$step",
-            params: { label: bookLabel, step: "validation" },
-            search: { tab: "reviewer-validation" },
-          })}
-        />
+        {reviewerValidationEnabled ? (
+          <PreviewValidationCard
+            label={bookLabel}
+            panelOpen={panelOpen}
+            otherCardExpanded={accessibilityCardExpanded}
+            currentPage={currentValidationPage}
+            onNavigateToPage={navigatePreviewToHref}
+            onExpandedChange={setValidationCardExpanded}
+            onOpenValidation={() => navigate({
+              to: "/books/$label/$step",
+              params: { label: bookLabel, step: "validation" },
+              search: { tab: "reviewer-validation" },
+            })}
+          />
+        ) : null}
       </div>
     )
   }
