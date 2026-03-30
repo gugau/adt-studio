@@ -10,6 +10,43 @@ const stageStateMock = vi.fn((slug: string) => {
 const matchRouteMock = vi.fn(() => true)
 const searchMock = { tab: "reviewer-checklist" }
 
+vi.mock("@lingui/core", () => ({
+  i18n: {
+    _: (value: unknown) => {
+      if (typeof value === "string") return value
+      if (value && typeof value === "object" && "id" in value && typeof value.id === "string") {
+        return value.id
+      }
+      return String(value ?? "")
+    },
+  },
+}))
+
+vi.mock("@lingui/core/macro", () => ({
+  msg(strings: TemplateStringsArray, ...values: unknown[]) {
+    let text = ""
+    for (let index = 0; index < strings.length; index += 1) {
+      text += strings[index]
+      if (index < values.length) text += String(values[index])
+    }
+    return { id: text }
+  },
+}))
+
+vi.mock("@lingui/react", () => ({
+  useLingui: () => ({
+    i18n: {
+      _: (value: unknown) => {
+        if (typeof value === "string") return value
+        if (value && typeof value === "object" && "id" in value && typeof value.id === "string") {
+          return value.id
+        }
+        return String(value ?? "")
+      },
+    },
+  }),
+}))
+
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, title, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
     <a title={title} {...props}>{children}</a>
@@ -61,7 +98,7 @@ afterEach(() => {
 
 describe("StageSidebar", () => {
   it("shows Validation before Preview and exposes Validation settings tabs", async () => {
-    const { StageSidebar } = await import("./StageSidebar")
+    const { StageSidebar } = await import("./components/StageSidebar")
     const { container } = render(
       <StageSidebar
         bookLabel="demo-book"

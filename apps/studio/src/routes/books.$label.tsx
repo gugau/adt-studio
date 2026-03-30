@@ -4,7 +4,7 @@ import { Home, Terminal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DebugPanel } from "@/components/debug/DebugPanel"
 import { DebugPanelStateProvider, type DebugTabValue } from "@/components/debug/debug-panel-state"
-import { StageSidebar } from "@/components/pipeline/StageSidebar"
+import { StageSidebar } from "@/components/pipeline/components/StageSidebar"
 import { useBookRunStatus, BookRunProvider } from "@/hooks/use-book-run"
 import { useExportWatcherSetup, ExportWatcherProvider } from "@/hooks/use-export-watcher"
 

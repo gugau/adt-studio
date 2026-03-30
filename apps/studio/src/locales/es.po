@@ -35,6 +35,9 @@ msgstr ""
 msgid " · {needsChanges} need changes"
 msgstr " · {needsChanges} need changes"
 
+msgid "_page"
+msgstr "_page"
+
 msgid "? This will remove all extracted data and cannot be undone."
 msgstr "? Esto eliminará todos los datos extraídos y no se puede deshacer."
 
@@ -149,8 +152,10 @@ msgstr "{0}/5 páginas seleccionadas"
 msgid "{0}% complete"
 msgstr "{0}% complete"
 
-#~ msgid "{0}m {1}s"
-#~ msgstr "{0}m {1}s"
+#. placeholder {0}: Math.floor(elapsed / 60)
+#. placeholder {1}: elapsed % 60
+msgid "{0}m {1}s"
+msgstr "{0}m {1}s"
 
 #. placeholder {0}: String(Math.floor(diff / 60_000))
 msgid "{0}m ago"
@@ -160,11 +165,14 @@ msgstr "Hace {0}min"
 msgid "{0}s ago"
 msgstr "Hace {0}s"
 
-#~ msgid "{elapsed}s"
-#~ msgstr "{elapsed}s"
+msgid "{elapsed}s"
+msgstr "{elapsed}s"
 
 msgid "{missingAudioCount} missing"
 msgstr "{missingAudioCount} faltantes"
+
+msgid "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
+msgstr "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
 
 #. placeholder {0}: section.criteria.length
 msgid "{reviewed}/{0} checked"
@@ -374,8 +382,11 @@ msgstr "Después de {0}"
 msgid "AI"
 msgstr "IA"
 
-#~ msgid "AI Edit"
-#~ msgstr "Edición con IA"
+msgid "AI Edit"
+msgstr "Edición con IA"
+
+msgid "AI edit failed"
+msgstr "AI edit failed"
 
 msgid "AI editing..."
 msgstr "Edición con IA..."
@@ -392,8 +403,8 @@ msgstr "Superposición por IA"
 #~ msgid "AI reasoning"
 #~ msgstr "Razonamiento de la IA"
 
-#~ msgid "AI Rendering"
-#~ msgstr "Renderizado con IA"
+msgid "AI Rendering"
+msgstr "Renderizado con IA"
 
 msgid "AI sees the current image and modifies it"
 msgstr "La IA ve la imagen actual y la modifica"
@@ -445,6 +456,9 @@ msgstr "Aplicar"
 
 msgid "Apply page background colors"
 msgstr "Aplicar colores de fondo de página"
+
+msgid "Apply Segmentation"
+msgstr "Apply Segmentation"
 
 msgid "Are you sure you want to delete"
 msgstr "¿Seguro que quieres eliminar"
@@ -651,8 +665,14 @@ msgstr "Haz clic para elegir una imagen de referencia de estilo"
 msgid "Click to select an image"
 msgstr "Haz clic para seleccionar una imagen"
 
+msgid "Clone failed"
+msgstr "Clone failed"
+
 msgid "Clone this section"
 msgstr "Clonar esta sección"
+
+msgid "Close"
+msgstr "Close"
 
 msgid "Close section data"
 msgstr "Cerrar datos de sección"
@@ -762,8 +782,8 @@ msgstr "Recortar"
 msgid "Crop Image"
 msgstr "Recortar imagen"
 
-#~ msgid "Cropping Prompt"
-#~ msgstr "Indicación de recorte"
+msgid "Cropping Prompt"
+msgstr "Indicación de recorte"
 
 msgid "Current"
 msgstr "Actual"
@@ -854,6 +874,9 @@ msgstr "Eliminar"
 msgid "Delete book"
 msgstr "Eliminar libro"
 
+msgid "Delete failed"
+msgstr "Delete failed"
+
 msgid "Delete group"
 msgstr "Eliminar grupo"
 
@@ -901,6 +924,9 @@ msgstr "Descartar"
 
 msgid "Display"
 msgstr "Visualización"
+
+msgid "Drag to move boxes, drag edges/corners to resize"
+msgstr "Drag to move boxes, drag edges/corners to resize"
 
 msgid "Drag to reorder"
 msgstr "Arrastra para reordenar"
@@ -1070,8 +1096,8 @@ msgstr "Texto extraído"
 msgid "Extracting..."
 msgstr "Extrayendo..."
 
-#~ msgid "Extraction Prompt"
-#~ msgstr "Indicación de extracción"
+msgid "Extraction Prompt"
+msgstr "Indicación de extracción"
 
 msgid "Extracts the correct answer key from the generated activity HTML."
 msgstr "Extrae la clave de respuesta correcta del HTML de la actividad generada."
@@ -1180,8 +1206,8 @@ msgstr "Gemini TTS genera audio WAV en esta integración; otros proveedores cont
 msgid "Gemini Voice"
 msgstr "Voz de Gemini"
 
-#~ msgid "General"
-#~ msgstr "General"
+msgid "General"
+msgstr "General"
 
 msgid "Generate"
 msgstr "Generar"
@@ -1255,8 +1281,8 @@ msgstr "Generación de glosario"
 msgid "Glossary Prompt"
 msgstr "Prompt de glosario"
 
-#~ msgid "Go to book"
-#~ msgstr "Ir al libro"
+msgid "Go to book"
+msgstr "Ir al libro"
 
 #~ msgid "Group Types"
 #~ msgstr "Tipos de grupo"
@@ -1278,6 +1304,12 @@ msgstr "Ocultar imágenes eliminadas"
 
 msgid "Higher values filter out simple or blank images."
 msgstr "Valores más altos filtran imágenes simples o en blanco."
+
+msgid "Hit"
+msgstr "Hit"
+
+msgid "HTML"
+msgstr "HTML"
 
 msgid "Illustration"
 msgstr "Ilustración"
@@ -1306,8 +1338,8 @@ msgstr "Filtros de imagen"
 msgid "Image generated"
 msgstr "Imagen generada"
 
-#~ msgid "Image Generation"
-#~ msgstr "Generación de imágenes"
+msgid "Image Generation"
+msgstr "Generación de imágenes"
 
 msgid "Image Generation Prompt"
 msgstr "Prompt de generación de imagen"
@@ -1332,6 +1364,9 @@ msgstr "Tipo de imagen"
 
 msgid "Image unavailable"
 msgstr "Imagen no disponible"
+
+msgid "Image upload failed"
+msgstr "Image upload failed"
 
 msgid "Images"
 msgstr "Imágenes"
@@ -1381,6 +1416,9 @@ msgstr "Items marked as needing changes for this reviewer session."
 
 msgid "Jane Reviewer"
 msgstr "Jane Reviewer"
+
+msgid "KB"
+msgstr "KB"
 
 msgid "Keeps pages whole unless mixed activity types require splitting"
 msgstr "Mantiene las páginas completas a menos que tipos mixtos de actividad requieran división"
@@ -1488,6 +1526,9 @@ msgstr "Cargando páginas..."
 msgid "Loading preview..."
 msgstr "Cargando vista previa..."
 
+msgid "Loading prompt..."
+msgstr "Loading prompt..."
+
 msgid "Loading quizzes..."
 msgstr "Cargando quizzes..."
 
@@ -1508,6 +1549,9 @@ msgstr "Cargando estadísticas..."
 
 msgid "Loading table of contents..."
 msgstr "Cargando tabla de contenidos..."
+
+msgid "Loading template..."
+msgstr "Loading template..."
 
 msgid "Loading text catalog..."
 msgstr "Cargando catálogo de textos..."
@@ -1536,14 +1580,17 @@ msgstr "Matemáticas"
 msgid "Max side (px)"
 msgstr "Lado máximo (px)"
 
-#~ msgid "Meaningfulness Prompt"
-#~ msgstr "Indicación de significado"
+msgid "Meaningfulness Prompt"
+msgstr "Indicación de significado"
 
 msgid "Media & timing"
 msgstr "Media & timing"
 
 msgid "Merge facing pages as spreads"
 msgstr "Combinar páginas enfrentadas como dobles"
+
+msgid "Merge failed"
+msgstr "Merge failed"
 
 msgid "Merge with next section"
 msgstr "Fusionar con la siguiente sección"
@@ -1563,8 +1610,8 @@ msgstr "Metadatos"
 msgid "Metadata Extraction Prompt"
 msgstr "Prompt de extracción de metadatos"
 
-#~ msgid "Metadata Prompt"
-#~ msgstr "Indicación de metadatos"
+msgid "Metadata Prompt"
+msgstr "Indicación de metadatos"
 
 msgid "Min complexity"
 msgstr "Complejidad mínima"
@@ -1580,6 +1627,9 @@ msgstr "minor"
 
 msgid "Minor"
 msgstr "Minor"
+
+msgid "Miss"
+msgstr "Miss"
 
 msgid "Misses"
 msgstr "Fallos"
@@ -1734,6 +1784,9 @@ msgstr "Sin secciones para esta página"
 msgid "No sections on this page"
 msgstr "Sin secciones en esta página"
 
+msgid "No segmentation needed for this image"
+msgstr "No segmentation needed for this image"
+
 msgid "No text extracted"
 msgstr "No se extrajo texto"
 
@@ -1760,6 +1813,9 @@ msgstr "Not reviewed"
 
 msgid "Number of pages of content to include per quiz question."
 msgstr "Número de páginas de contenido a incluir por pregunta de quiz."
+
+msgid "of"
+msgstr "of"
 
 msgid "One tag per line or comma-separated. Leave as-is to keep the current package defaults."
 msgstr "One tag per line or comma-separated. Leave as-is to keep the current package defaults."
@@ -1836,8 +1892,8 @@ msgstr "Empaqueta y previsualiza la aplicación web ADT final."
 msgid "Package preview to generate results"
 msgstr "Package preview to generate results"
 
-#~ msgid "Packaging"
-#~ msgstr "Empaquetando"
+msgid "Packaging"
+msgstr "Empaquetando"
 
 msgid "Packaging failed"
 msgstr "Packaging failed"
@@ -1961,6 +2017,9 @@ msgstr "Vista previa de los patrones HTML/CSS usados para páginas generadas por
 msgid "Prompt"
 msgstr "Prompt"
 
+msgid "Prompt template not found."
+msgstr "Prompt template not found."
+
 msgid "Provider Routing"
 msgstr "Enrutamiento de proveedores"
 
@@ -2004,8 +2063,8 @@ msgstr "Generación de cuestionarios"
 msgid "Quiz Generation Prompt"
 msgstr "Prompt de generación de quiz"
 
-#~ msgid "Quiz Prompt"
-#~ msgstr "Indicación de cuestionario"
+msgid "Quiz Prompt"
+msgstr "Indicación de cuestionario"
 
 msgid "Quiz Section Types"
 msgstr "Tipos de sección del quiz"
@@ -2019,11 +2078,14 @@ msgstr "Los quizzes están vinculados a otras páginas de este libro"
 msgid "Re-enable type"
 msgstr "Reactivar tipo"
 
-#~ msgid "Re-package ADT"
-#~ msgstr "Reempaquetar ADT"
+msgid "Re-package ADT"
+msgstr "Reempaquetar ADT"
 
 msgid "Re-render"
 msgstr "Re-renderizar"
+
+msgid "Re-render failed"
+msgstr "Re-render failed"
 
 msgid "Re-render section"
 msgstr "Re-renderizar sección"
@@ -2122,6 +2184,9 @@ msgstr "Resume target"
 msgid "Resume target: page {0}"
 msgstr "Resume target: page {0}"
 
+msgid "Retries"
+msgstr "Retries"
+
 msgid "Retry"
 msgstr "Reintentar"
 
@@ -2139,6 +2204,9 @@ msgstr "Review progress"
 
 msgid "Reviewer checklist"
 msgstr "Reviewer checklist"
+
+msgid "Reviewer Checklist"
+msgstr "Reviewer Checklist"
 
 msgid "Reviewer checklist settings saved."
 msgstr "Reviewer checklist settings saved."
@@ -2230,6 +2298,9 @@ msgstr "Guarda los cambios primero para previsualizar la versión más reciente"
 msgid "Save checklist"
 msgstr "Save checklist"
 
+msgid "Save failed"
+msgstr "Save failed"
+
 msgid "Save page review"
 msgstr "Save page review"
 
@@ -2256,7 +2327,7 @@ msgstr "Buscar secciones..."
 
 #. placeholder {0}: String(group.sectionIndex + 1)
 #. placeholder {0}: String(i + 1)
-#. placeholder {0}: sectionIndex + 1
+#. placeholder {0}: i + 1
 msgid "Section {0}"
 msgstr "Sección {0}"
 
@@ -2266,6 +2337,7 @@ msgid "Section {0} — {1}"
 msgstr "Sección {0} — {1}"
 
 #. placeholder {0}: String(i + 1)
+#. placeholder {0}: i + 1
 msgid "Section {0} (pruned)"
 msgstr "Sección {0} (eliminada)"
 
@@ -2302,8 +2374,23 @@ msgstr "secciones"
 msgid "Segment"
 msgstr "Segmentar"
 
-#~ msgid "Segmentation Prompt"
-#~ msgstr "Indicación de segmentación"
+msgid "Segment Preview"
+msgstr "Segment Preview"
+
+msgid "Segmentation apply failed"
+msgstr "Segmentation apply failed"
+
+msgid "Segmentation failed"
+msgstr "Segmentation failed"
+
+msgid "Segmentation preview"
+msgstr "Segmentation preview"
+
+msgid "Segmentation produced no valid segments"
+msgstr "Segmentation produced no valid segments"
+
+msgid "Segmentation Prompt"
+msgstr "Indicación de segmentación"
 
 msgid "Segmenting..."
 msgstr "Segmentando..."
@@ -2402,14 +2489,14 @@ msgstr "Omitir segmentación para imágenes cuyo lado más corto esté por debaj
 msgid "Spanish"
 msgstr "Español"
 
-#~ msgid "Speech"
-#~ msgstr "Voz"
+msgid "Speech"
+msgstr "Voz"
 
 msgid "Speech Generation"
 msgstr "Generación de voz"
 
-#~ msgid "Speech Prompts"
-#~ msgstr "Indicaciones de voz"
+msgid "Speech Prompts"
+msgstr "Indicaciones de voz"
 
 msgid "Spread Mode"
 msgstr "Modo de páginas dobles"
@@ -2440,6 +2527,12 @@ msgstr "Start reviewer validation"
 
 msgid "Step"
 msgstr "Etapa"
+
+msgid "Step failed"
+msgstr "Step failed"
+
+msgid "Step run failed"
+msgstr "Step run failed"
 
 msgid "Storyboard"
 msgstr "Storyboard"
@@ -2480,8 +2573,8 @@ msgstr "Suggested modification"
 msgid "Suggested modification:"
 msgstr "Suggested modification:"
 
-#~ msgid "Summary Prompt"
-#~ msgstr "Indicación de resumen"
+msgid "Summary Prompt"
+msgstr "Indicación de resumen"
 
 msgid "System Prompt"
 msgstr "Prompt del sistema"
@@ -2495,14 +2588,23 @@ msgstr "Índice"
 msgid "Tables"
 msgstr "Tables"
 
+msgid "Task Running"
+msgstr "Task Running"
+
 msgid "Task running..."
 msgstr "Tarea en ejecución..."
+
+msgid "Tasks Running"
+msgstr "Tasks Running"
 
 msgid "Teaching the pixels new tricks..."
 msgstr "Enseñando nuevos trucos a los píxeles..."
 
 msgid "Temperature"
 msgstr "Temperatura"
+
+msgid "Template not found."
+msgstr "Template not found."
 
 msgid "Template Rendering"
 msgstr "Renderización por plantilla"
@@ -2538,8 +2640,8 @@ msgstr "Grupos de texto"
 msgid "Text Only"
 msgstr "Solo texto"
 
-#~ msgid "Text Types"
-#~ msgstr "Tipos de texto"
+msgid "Text Types"
+msgstr "Tipos de texto"
 
 msgid "The AI is having a think..."
 msgstr "La IA está pensando..."
@@ -2742,8 +2844,8 @@ msgstr "Sin guardar:"
 msgid "Untangling nested divs with care..."
 msgstr "Desenredando divs anidados con cuidado..."
 
-#~ msgid "Untitled"
-#~ msgstr "Sin título"
+msgid "Untitled"
+msgstr "Sin título"
 
 msgid "Upload a new image file from your computer"
 msgstr "Sube un nuevo archivo de imagen desde tu computadora"
@@ -2795,8 +2897,8 @@ msgstr "Visual & sensory cues"
 msgid "Voice Mappings"
 msgstr "Asignaciones de voz"
 
-#~ msgid "Voices"
-#~ msgstr "Voces"
+msgid "Voices"
+msgstr "Voces"
 
 msgid "Wall Clock"
 msgstr "Tiempo transcurrido"

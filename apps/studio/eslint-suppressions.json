@@ -11,7 +11,7 @@
   },
   "src/components/config/AdvancedLayoutPanel.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 34
+      "count": 33
     }
   },
   "src/components/config/ConfigEditor.tsx": {
@@ -216,7 +216,7 @@
   },
   "src/routes/books.new.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 55
+      "count": 54
     }
   },
   "src/routes/index.tsx": {

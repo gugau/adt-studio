@@ -4,7 +4,7 @@ import { getBookOverviewStages, isPipelineStage, type NonBookStageDefinition } f
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { useAccessibilityAssessment } from "@/hooks/use-debug"
-import { StageRunCard } from "../StageRunCard"
+import { StageRunCard } from "../components/StageRunCard"
 
 interface ViewProps {
   bookLabel: string

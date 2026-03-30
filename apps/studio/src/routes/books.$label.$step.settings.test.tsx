@@ -6,6 +6,17 @@ import { cleanup, render, screen } from "@testing-library/react"
 const useParamsMock = vi.fn(() => ({ label: "demo-book", step: "validation" }))
 const useSearchMock = vi.fn(() => ({ tab: "general" }))
 
+vi.mock("@lingui/core/macro", () => ({
+  msg(strings: TemplateStringsArray, ...values: unknown[]) {
+    let text = ""
+    for (let index = 0; index < strings.length; index += 1) {
+      text += strings[index]
+      if (index < values.length) text += String(values[index])
+    }
+    return { id: text }
+  },
+}))
+
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => () => ({
     useParams: () => useParamsMock(),
@@ -47,13 +58,13 @@ vi.mock("@/lib/utils", () => ({
   cn: (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(" "),
 }))
 
-vi.mock("@/components/pipeline/stages/ExtractSettings", () => ({ ExtractSettings: () => <div>extract-settings</div> }))
-vi.mock("@/components/pipeline/stages/StoryboardSettings", () => ({ StoryboardSettings: () => <div>storyboard-settings</div> }))
-vi.mock("@/components/pipeline/stages/QuizzesSettings", () => ({ QuizzesSettings: () => <div>quizzes-settings</div> }))
-vi.mock("@/components/pipeline/stages/GlossarySettings", () => ({ GlossarySettings: () => <div>glossary-settings</div> }))
-vi.mock("@/components/pipeline/stages/TocSettings", () => ({ TocSettings: () => <div>toc-settings</div> }))
-vi.mock("@/components/pipeline/stages/CaptionsSettings", () => ({ CaptionsSettings: () => <div>captions-settings</div> }))
-vi.mock("@/components/pipeline/stages/TranslationsSettings", () => ({ TranslationsSettings: () => <div>translations-settings</div> }))
+vi.mock("@/components/pipeline/stages/extract/ExtractSettings", () => ({ ExtractSettings: () => <div>extract-settings</div> }))
+vi.mock("@/components/pipeline/stages/storyboard/StoryboardSettings", () => ({ StoryboardSettings: () => <div>storyboard-settings</div> }))
+vi.mock("@/components/pipeline/stages/quizzes/QuizzesSettings", () => ({ QuizzesSettings: () => <div>quizzes-settings</div> }))
+vi.mock("@/components/pipeline/stages/glossary/GlossarySettings", () => ({ GlossarySettings: () => <div>glossary-settings</div> }))
+vi.mock("@/components/pipeline/stages/toc/TocSettings", () => ({ TocSettings: () => <div>toc-settings</div> }))
+vi.mock("@/components/pipeline/stages/captions/CaptionsSettings", () => ({ CaptionsSettings: () => <div>captions-settings</div> }))
+vi.mock("@/components/pipeline/stages/translations/TranslationsSettings", () => ({ TranslationsSettings: () => <div>translations-settings</div> }))
 
 const validationSettingsMock = vi.fn(({ bookLabel, tab }: { bookLabel: string; tab?: string }) => (
   <div data-testid="validation-settings">

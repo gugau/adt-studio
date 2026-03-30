@@ -2,13 +2,13 @@ import { useState } from "react"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { STAGES, isStageSlug } from "@/components/pipeline/stage-config"
 import { resolveSettingsStageSlug } from "@/components/pipeline/settings-routing"
-import { ExtractSettings } from "@/components/pipeline/stages/ExtractSettings"
-import { StoryboardSettings } from "@/components/pipeline/stages/StoryboardSettings"
-import { QuizzesSettings } from "@/components/pipeline/stages/QuizzesSettings"
-import { GlossarySettings } from "@/components/pipeline/stages/GlossarySettings"
-import { TocSettings } from "@/components/pipeline/stages/TocSettings"
-import { CaptionsSettings } from "@/components/pipeline/stages/CaptionsSettings"
-import { TranslationsSettings } from "@/components/pipeline/stages/TranslationsSettings"
+import { ExtractSettings } from "@/components/pipeline/stages/extract/ExtractSettings"
+import { StoryboardSettings } from "@/components/pipeline/stages/storyboard/StoryboardSettings"
+import { QuizzesSettings } from "@/components/pipeline/stages/quizzes/QuizzesSettings"
+import { GlossarySettings } from "@/components/pipeline/stages/glossary/GlossarySettings"
+import { TocSettings } from "@/components/pipeline/stages/toc/TocSettings"
+import { CaptionsSettings } from "@/components/pipeline/stages/captions/CaptionsSettings"
+import { TranslationsSettings } from "@/components/pipeline/stages/translations/TranslationsSettings"
 import { ValidationSettings } from "@/components/pipeline/stages/ValidationSettings"
 import { getStageLabelI18n } from "@/components/pipeline/pipeline-i18n"
 import { cn } from "@/lib/utils"
@@ -41,7 +41,7 @@ export function StepSettingsPage() {
             params={{ label, step: "book" }}
             className="text-sm text-primary hover:underline"
           >
-            Go to book
+            <Trans>Go to book</Trans>
           </Link>
         </div>
       </div>
