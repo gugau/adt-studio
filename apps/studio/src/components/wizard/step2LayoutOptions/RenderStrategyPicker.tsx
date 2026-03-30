@@ -12,11 +12,17 @@ import {
 
 const RADIO_NAME = "renderStrategy"
 
+const CATEGORY_CHIP: Record<StrategyCategory, string> = {
+  template: "Template",
+  ai: "AI",
+}
+
 function StrategyRadio({
   id,
   Icon,
   title,
   description,
+  category,
   selected,
   onSelect,
 }: {
@@ -24,19 +30,24 @@ function StrategyRadio({
   Icon: ElementType
   title: string
   description: string
+  category: StrategyCategory
   selected: boolean
   onSelect: () => void
 }) {
+  const chip = CATEGORY_CHIP[category]
+  const categoryHint = STRATEGY_CATEGORIES[category].description
+
   return (
     <label
       htmlFor={`strategy-${id}`}
       className={cn(
-        "flex w-full cursor-pointer items-center gap-2 rounded-lg p-2 text-left transition-colors",
+        "flex w-full cursor-pointer items-stretch gap-2 rounded-lg p-2 text-left transition-colors",
         "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-background",
         selected
           ? "border border-[#2b7fff] bg-[#eff6ff] hover:bg-[#e0edff]"
           : "border border-[#e5e5e5] bg-white hover:bg-[#fafafa]",
       )}
+      title={categoryHint}
     >
       <input
         type="radio"
@@ -57,54 +68,25 @@ function StrategyRadio({
           aria-hidden
         />
       </div>
-      <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 pr-1">
-        <span className="text-sm font-semibold leading-5 text-black">
-          {title}
-        </span>
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 pr-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+          <span className="text-sm font-semibold leading-5 text-black">{title}</span>
+          <span
+            className={cn(
+              "inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[10px] font-medium leading-none",
+              category === "template"
+                ? "border-border bg-muted/60 text-muted-foreground"
+                : "border-[#bfdbfe] bg-[#eff6ff] text-[#1d4ed8]",
+            )}
+          >
+            {chip}
+          </span>
+        </div>
         <span className="text-xs font-normal leading-4 text-[#737373] whitespace-normal">
           {description}
         </span>
       </div>
     </label>
-  )
-}
-
-function CategoryGroup({
-  category,
-  selected,
-  onSelect,
-}: {
-  category: StrategyCategory
-  selected: RenderStrategyId | ""
-  onSelect: (id: RenderStrategyId) => void
-}) {
-  const meta = STRATEGY_CATEGORIES[category]
-  const strategies = RENDER_STRATEGIES.filter((s) => s.category === category)
-
-  return (
-    <fieldset className="flex flex-col gap-2">
-      <legend className="flex flex-col gap-0.5 pb-1">
-        <span className="text-sm font-semibold text-[#0a0a0a]">
-          {meta.label}
-        </span>
-        <span className="text-xs text-[#a3a3a3]">
-          {meta.description}
-        </span>
-      </legend>
-      <div className="flex flex-col gap-2">
-        {strategies.map((strategy) => (
-          <StrategyRadio
-            key={strategy.id}
-            id={strategy.id}
-            Icon={strategy.Icon}
-            title={strategy.title}
-            description={strategy.description}
-            selected={selected === strategy.id}
-            onSelect={() => onSelect(strategy.id)}
-          />
-        ))}
-      </div>
-    </fieldset>
   )
 }
 
@@ -117,19 +99,32 @@ export function RenderStrategyPicker() {
   }
 
   return (
-    <div className="flex w-full flex-col gap-2">
-      <div className="flex items-center gap-1">
-        <span className="text-sm font-medium leading-[14px] text-[#0a0a0a]">
-          Render Strategy
-        </span>
+    <fieldset className="flex w-full flex-col gap-2 border-0 p-0">
+      <legend className="flex w-full items-center gap-1 pb-2">
+        <span className="text-sm font-medium leading-[14px] text-[#0a0a0a]">Render Strategy</span>
         <span className="text-sm font-medium leading-[14px] text-[#ef4444]" aria-hidden>
           *
         </span>
+      </legend>
+      <p className="pb-1 text-xs leading-relaxed text-[#737373]">
+        Pick one layout approach.{" "}
+        <span className="text-[#525252]">Template</span> options are deterministic;{" "}
+        <span className="text-[#525252]">AI</span> options generate a fresh layout per page.
+      </p>
+      <div className="flex flex-col gap-2">
+        {RENDER_STRATEGIES.map((strategy) => (
+          <StrategyRadio
+            key={strategy.id}
+            id={strategy.id}
+            Icon={strategy.Icon}
+            title={strategy.title}
+            description={strategy.description}
+            category={strategy.category}
+            selected={renderStrategy === strategy.id}
+            onSelect={() => handleSelect(strategy.id)}
+          />
+        ))}
       </div>
-      <div className="flex flex-col gap-5">
-        <CategoryGroup category="ai" selected={renderStrategy} onSelect={handleSelect} />
-        <CategoryGroup category="template" selected={renderStrategy} onSelect={handleSelect} />
-      </div>
-    </div>
+    </fieldset>
   )
 }

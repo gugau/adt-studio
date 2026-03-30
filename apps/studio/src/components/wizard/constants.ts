@@ -48,22 +48,6 @@ export interface RenderStrategyOption extends WizardOption {
 
 export const RENDER_STRATEGIES = [
   {
-    id: "two_column",
-    Icon: BookOpen,
-    title: "Two Columns",
-    description:
-      "The ideal choice for novels, focused on a clean and continuous reading experience.",
-    category: "template",
-  },
-  {
-    id: "two_column_story",
-    Icon: TwoColumnStoryStrategyIcon,
-    title: "Two Columns Story",
-    description:
-      "Perfect for children's books, pairing large images with minimal text.",
-    category: "template",
-  },
-  {
     id: "llm",
     Icon: Sparkles,
     title: "Dynamic",
@@ -78,6 +62,22 @@ export const RENDER_STRATEGIES = [
     description:
       "AI-powered layout that preserves the original page as a background with text overlay.",
     category: "ai",
+  },
+  {
+    id: "two_column",
+    Icon: BookOpen,
+    title: "Two Columns",
+    description:
+      "The ideal choice for novels, focused on a clean and continuous reading experience.",
+    category: "template",
+  },
+  {
+    id: "two_column_story",
+    Icon: TwoColumnStoryStrategyIcon,
+    title: "Two Columns Story",
+    description:
+      "Perfect for children's books, pairing large images with minimal text.",
+    category: "template",
   },
 ] as const satisfies readonly RenderStrategyOption[]
 
