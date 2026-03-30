@@ -20,6 +20,7 @@ export const defaultWizardValues = {
   outputLanguages: [] as OutputLanguageId[],
   renderStrategy: "" as RenderStrategyId | "",
   layoutType: "",
+  spreadMode: false,
 }
 
 export type WizardFormValues = typeof defaultWizardValues

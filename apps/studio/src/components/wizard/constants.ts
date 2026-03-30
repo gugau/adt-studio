@@ -102,6 +102,7 @@ export interface PresetDefaults {
   layoutType: string
   renderStrategy: RenderStrategyId | ""
   outputLanguages: OutputLanguageId[]
+  spreadMode: boolean
 }
 
 // ─── Preset types ────────────────────────────────────────────────────────────
@@ -251,7 +252,7 @@ export const PRESETS: PresetConfig[] = [
       FEATURE_ACTIVITIES,
       FEATURE_SPEECH,
     ],
-    defaults: { layoutType: "textbook", renderStrategy: "two_column", outputLanguages: ["en"] },
+    defaults: { layoutType: "textbook", renderStrategy: "two_column", outputLanguages: ["en"], spreadMode: false },
   },
   {
     id: "storybook",
@@ -283,7 +284,7 @@ export const PRESETS: PresetConfig[] = [
       FEATURE_EXPRESSIVE_TTS,
       FEATURE_EASY_READ,
     ],
-    defaults: { layoutType: "storybook", renderStrategy: "two_column_story", outputLanguages: ["en"] },
+    defaults: { layoutType: "storybook", renderStrategy: "two_column_story", outputLanguages: ["en"], spreadMode: true },
   },
   {
     id: "reference",
@@ -315,7 +316,7 @@ export const PRESETS: PresetConfig[] = [
       FEATURE_AUTO_GLOSSARY,
       FEATURE_SPEECH,
     ],
-    defaults: { layoutType: "reference", renderStrategy: "two_column", outputLanguages: ["en"] },
+    defaults: { layoutType: "reference", renderStrategy: "two_column", outputLanguages: ["en"], spreadMode: false },
   },
   {
     id: "custom",
@@ -348,7 +349,7 @@ export const PRESETS: PresetConfig[] = [
       FEATURE_SPEECH,
       FEATURE_EASY_READ,
     ],
-    defaults: { layoutType: "custom", renderStrategy: "", outputLanguages: [] },
+    defaults: { layoutType: "custom", renderStrategy: "", outputLanguages: [], spreadMode: false },
   },
 ]
 
