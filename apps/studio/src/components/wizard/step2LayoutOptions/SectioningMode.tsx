@@ -1,22 +1,9 @@
-/* eslint-disable lingui/no-unlocalized-strings */
+
 import { useStore } from "@tanstack/react-form"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { useWizardForm } from "@/components/wizard/wizardForm"
-import type { SectioningModeId } from "@/components/wizard/constants"
 import { InfoCarousel, type CarouselSlide } from "@/components/wizard/InfoCarousel"
-
-const SECTIONING_OPTIONS: { value: SectioningModeId; label: string }[] = [
-  { value: "page", label: "Page" },
-  { value: "dynamic", label: "Dynamic" },
-  { value: "section", label: "Section" },
-]
+import { SectioningModeSelect } from "./SectioningModeSelect"
 
 function PageDiagram() {
   return (
@@ -146,23 +133,11 @@ export function SectioningMode() {
         </span>
         <InfoCarousel label="About section mode" slides={SLIDES} />
       </div>
-      <Select
-        value={sectioningMode === "" ? undefined : sectioningMode}
-        onValueChange={(v) =>
-          form.setFieldValue("sectioningMode", v as SectioningModeId)
-        }
-      >
-        <SelectTrigger id="wizard-sectioning-mode" className="w-full">
-          <SelectValue placeholder="Select section mode" />
-        </SelectTrigger>
-        <SelectContent>
-          {SECTIONING_OPTIONS.map((o) => (
-            <SelectItem key={o.value} value={o.value}>
-              {o.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <SectioningModeSelect
+        id="wizard-sectioning-mode"
+        value={sectioningMode}
+        onValueChange={(v) => form.setFieldValue("sectioningMode", v)}
+      />
     </div>
   )
 }
