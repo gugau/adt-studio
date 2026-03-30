@@ -1,6 +1,7 @@
 import fs from "node:fs"
 import path from "node:path"
 import { parseDocument, DomUtils } from "htmlparser2"
+import temml from "temml"
 import type { Storage } from "@adt/storage"
 import type {
   PageSectioningOutput,
@@ -152,7 +153,7 @@ export async function packageAdtWeb(
           }
 
           // Rewrite image URLs and copy referenced images
-          const { html: rewrittenHtml, referencedImages } = rewriteImageUrls(
+          let { html: rewrittenHtml, referencedImages } = rewriteImageUrls(
             rs.html,
             label,
             imageMap,
@@ -171,8 +172,12 @@ export async function packageAdtWeb(
             }
           }
 
-          // Check for math content
-          if (containsMathContent(rewrittenHtml)) hasMath = true
+          // Convert LaTeX math to MathML
+          const sectionHasMath = containsMathContent(rewrittenHtml)
+          if (sectionHasMath) {
+            hasMath = true
+            rewrittenHtml = convertLatexToMathml(rewrittenHtml)
+          }
 
           const isFirstPage = pageList.length === 0
           const filename = isFirstPage ? "index.html" : `${sectionId}.html`
@@ -184,7 +189,7 @@ export async function packageAdtWeb(
             pageTitle: title,
             pageIndex: pageList.length + 1,
             activityAnswers: rs.activityAnswers,
-            hasMath: containsMathContent(rewrittenHtml),
+            hasMath: sectionHasMath,
             bundleVersion,
             applyBodyBackground,
           })
@@ -320,6 +325,12 @@ export async function packageAdtWeb(
       if (transRow) {
         const translated = transRow.data as TextCatalogOutput
         for (const e of translated.entries) textsMap[e.id] = e.text
+      }
+    }
+    // Convert any LaTeX in text catalog entries to MathML
+    for (const [id, text] of Object.entries(textsMap)) {
+      if (containsMathContent(text)) {
+        textsMap[id] = convertLatexString(text)
       }
     }
     writeJson(path.join(localeDir, "texts.json"), textsMap)
@@ -728,9 +739,9 @@ function injectOpacityClass(html: string): string {
 }
 
 export function renderPageHtml(opts: RenderPageOptions): string {
-  const mathScript = opts.hasMath
-    ? `    <script src="./assets/libs/mathjax/es5/tex-mml-chtml.js"></script>\n`
-    : ""
+  // LaTeX is converted to static MathML at build time by Temml,
+  // so no client-side math library is needed.
+  const mathScript = ""
 
   const answersScript =
     opts.activityAnswers && Object.keys(opts.activityAnswers).length > 0
@@ -1092,10 +1103,153 @@ const MATH_INDICATORS = [
   "\\\\[",
   "<math",
   "\\begin{",
+  // HTML-encoded forms (htmlparser2's getOuterHTML encodes $ as &#x24;)
+  "&#x24;",
 ]
 
+/**
+ * Regex that matches LaTeX commands commonly found undelimited in LLM output.
+ * Matches: \text{}, \hat{}, \frac{}{}, \sqrt{}, \vec{}, \bar{}, \overline{},
+ * \circ, ^\circ, _{...}, ^{...}, \times, \div, \pm, \leq, \geq, \neq,
+ * \alpha, \beta, etc.
+ */
+const UNDELIMITED_LATEX_RE = /\\(?:text|hat|frac|sqrt|vec|bar|overline|underline|mathbf|mathrm|mathit|circ|times|div|pm|mp|leq|geq|neq|approx|equiv|sim|alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|omega|phi|psi|infty|partial|nabla|sum|prod|int|lim|log|ln|sin|cos|tan|sec|csc|cot|left|right|cdot|ldots|cdots|quad|qquad|binom)\b|[_^]\{/
+
 function containsMathContent(html: string): boolean {
-  return MATH_INDICATORS.some((indicator) => html.includes(indicator))
+  if (MATH_INDICATORS.some((indicator) => html.includes(indicator))) return true
+  return UNDELIMITED_LATEX_RE.test(html)
+}
+
+/**
+ * Returns true if the text is mixed prose with embedded math, rather than a
+ * pure math expression. We detect this by looking for 3+ consecutive regular
+ * English words — pure LaTeX expressions rarely have that.
+ */
+function isMixedContent(text: string): boolean {
+  const words = text.split(/\s+/)
+  let consecutive = 0
+  for (const word of words) {
+    if (/^[a-zA-Z]{3,}[.,;:!?]?$/.test(word)) {
+      consecutive++
+      if (consecutive >= 3) return true
+    } else {
+      consecutive = 0
+    }
+  }
+  return false
+}
+
+// ---------------------------------------------------------------------------
+// LaTeX → MathML conversion
+// ---------------------------------------------------------------------------
+
+/**
+ * Render LaTeX via Temml. Returns null on failure.
+ * Temml may embed errors as `<span class="temml-error">` instead of throwing,
+ * so we check the output for error spans as well.
+ */
+function tryTemml(latex: string, displayMode: boolean): string | null {
+  try {
+    const result = temml.renderToString(latex, { displayMode })
+    if (result.includes("temml-error")) return null
+    return result
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Try inline mode first, fall back to display mode if that fails.
+ * Handles commands like \tag{} and \\ that require display mode.
+ */
+function renderLatexWithFallback(latex: string): string | null {
+  return tryTemml(latex, false) ?? tryTemml(latex, true)
+}
+
+/**
+ * Decode HTML entities for $ that htmlparser2 serialization may produce,
+ * so that LaTeX delimiters can be matched by the regex patterns below.
+ */
+function decodeDollarEntities(s: string): string {
+  return s.replace(/&#x24;/g, "$").replace(/&#36;/g, "$")
+}
+
+/**
+ * Convert a plain text string containing LaTeX to MathML.
+ * Handles delimited ($, $$, \(, \[) and undelimited LaTeX.
+ * Used for text catalog entries (texts.json) that are plain strings.
+ *
+ * For mixed prose+math (e.g. "the space M = (X, V), where X ∈ ℝ^{N×3}"),
+ * only delimited math is converted — the undelimited pass is skipped to
+ * avoid rendering the entire paragraph as a math expression.
+ */
+export function convertLatexString(text: string): string {
+  text = decodeDollarEntities(text)
+
+  let converted = convertDelimitedLatex(text)
+
+  // If delimited conversion didn't change anything, try undelimited —
+  // but only if the text looks like a pure math expression, not prose.
+  if (converted === text && UNDELIMITED_LATEX_RE.test(text) && !isMixedContent(text)) {
+    return renderLatexWithFallback(text.trim()) ?? converted
+  }
+
+  return converted
+}
+
+/**
+ * Replace delimited LaTeX math ($$, $, \[, \() with MathML.
+ */
+function convertDelimitedLatex(text: string): string {
+  // Process display math first ($$...$$ and \[...\]) then inline ($...$ and \(...\))
+  // to avoid $$...$$ being matched as two inline $...$ blocks.
+
+  // $$...$$ — display math
+  text = text.replace(/\$\$([\s\S]+?)\$\$/g, (_match, latex: string) =>
+    tryTemml(latex.trim(), true) ?? _match
+  )
+
+  // \[...\] — display math
+  text = text.replace(/\\\[([\s\S]+?)\\\]/g, (_match, latex: string) =>
+    tryTemml(latex.trim(), true) ?? _match
+  )
+
+  // $...$ — inline math (avoid matching escaped \$ or empty $$)
+  // Negative lookbehind for backslash; content must be non-empty and not start/end with space
+  text = text.replace(/(?<!\\)\$([^\s$](?:[^$]*[^\s$])?)\$/g, (_match, latex: string) =>
+    tryTemml(latex.trim(), false) ?? _match
+  )
+
+  // \(...\) — inline math
+  text = text.replace(/\\\(([\s\S]+?)\\\)/g, (_match, latex: string) =>
+    tryTemml(latex.trim(), false) ?? _match
+  )
+
+  return text
+}
+
+/**
+ * Replace LaTeX math in HTML content with MathML rendered by Temml.
+ * Handles delimited math ($, $$, \(, \[) and undelimited LaTeX in text nodes.
+ */
+export function convertLatexToMathml(html: string): string {
+  html = decodeDollarEntities(html)
+
+  // First pass: convert delimited math anywhere in the string
+  html = convertDelimitedLatex(html)
+
+  // Second pass: convert undelimited LaTeX in text nodes (content between > and <).
+  // Only applies to pure math nodes — mixed prose+math is left as-is to avoid
+  // rendering entire paragraphs as a single math expression.
+  html = html.replace(/(>)([^<]+)(<)/g, (_match, open: string, text: string, close: string) => {
+    if (!UNDELIMITED_LATEX_RE.test(text)) return _match
+    if (text.includes("<math")) return _match
+    if (isMixedContent(text)) return _match
+    const mathml = renderLatexWithFallback(text.trim())
+    return mathml ? `${open}${mathml}${close}` : _match
+  })
+
+  return html
 }
 
 // ---------------------------------------------------------------------------

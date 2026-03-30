@@ -1,6 +1,7 @@
 import { useRef, useMemo, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from "react"
 import DOMPurify from "dompurify"
 import { BASE_URL } from "@/api/client"
+import { convertLatexInHtml } from "@/lib/latex-to-mathml"
 
 // In Tauri, BASE_URL is "http://localhost:3001/api"; extract the origin so the iframe
 // can resolve relative image URLs (stored in the DB) via a <base> tag (see Lesson #2).
@@ -105,7 +106,9 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   const measureTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const sanitizedHtml = useMemo(() => DOMPurify.sanitize(html), [html])
-  latestHtmlRef.current = sanitizedHtml
+  // Convert LaTeX to MathML for display — the underlying data stays as LaTeX
+  const displayHtml = useMemo(() => convertLatexInHtml(sanitizedHtml), [sanitizedHtml])
+  latestHtmlRef.current = displayHtml
 
   // Interactive script — always present in the iframe, gated by data-editable on <body>.
   // This avoids srcdoc changes (and thus iframe reloads) when the editable prop toggles.
@@ -326,8 +329,8 @@ ${interactiveScript}
   // When html prop changes, reset height and update the body directly (no iframe reload)
   useEffect(() => {
     setContentHeight(800)
-    if (readyRef.current) injectContent(sanitizedHtml)
-  }, [sanitizedHtml, applyBodyBackground])
+    if (readyRef.current) injectContent(displayHtml)
+  }, [displayHtml, applyBodyBackground])
 
   // Toggle editability dynamically via data attribute (no iframe reload needed)
   useEffect(() => {
