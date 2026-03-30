@@ -1704,8 +1704,8 @@ msgstr "No metadata yet — run the pipeline to extract book details"
 msgid "No page linked"
 msgstr "No page linked"
 
-#~ msgid "No pages extracted yet"
-#~ msgstr "No pages extracted yet"
+msgid "No pages extracted yet"
+msgstr "No pages extracted yet"
 
 msgid "No pages extracted yet. Run the pipeline to extract content."
 msgstr "No pages extracted yet. Run the pipeline to extract content."

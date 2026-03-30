@@ -1704,8 +1704,8 @@ msgstr "Aún no hay metadatos — ejecuta el pipeline para extraer los detalles 
 msgid "No page linked"
 msgstr "No hay página vinculada"
 
-#~ msgid "No pages extracted yet"
-#~ msgstr "Ninguna página extraída aún"
+msgid "No pages extracted yet"
+msgstr "Ninguna página extraída aún"
 
 msgid "No pages extracted yet. Run the pipeline to extract content."
 msgstr "Aún no se extrajeron páginas. Ejecuta el pipeline para extraer el contenido."
