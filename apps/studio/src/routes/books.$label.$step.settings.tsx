@@ -21,7 +21,7 @@ export const Route = createFileRoute("/books/$label/$step/settings")({
   }),
 })
 
-function StepSettingsPage() {
+export function StepSettingsPage() {
   const { label, step } = Route.useParams()
   const { tab } = Route.useSearch()
   const stage = isStageSlug(step) ? STAGES.find((s) => s.slug === step) : undefined
