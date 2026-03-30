@@ -194,4 +194,5 @@ export {
   renderQuizHtml,
   buildQuizAnswers,
   pad3,
+  convertLatexToMathml,
 } from "./package-web.js"

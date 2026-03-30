@@ -1097,10 +1097,9 @@ export function buildGlossaryJson(
 // ---------------------------------------------------------------------------
 
 const MATH_INDICATORS = [
-  "\\$",
-  "\\$$",
-  "\\\\(",
-  "\\\\[",
+  "$",
+  "\\(",
+  "\\[",
   "<math",
   "\\begin{",
   // HTML-encoded forms (htmlparser2's getOuterHTML encodes $ as &#x24;)
@@ -1111,9 +1110,10 @@ const MATH_INDICATORS = [
  * Regex that matches LaTeX commands commonly found undelimited in LLM output.
  * Matches: \text{}, \hat{}, \frac{}{}, \sqrt{}, \vec{}, \bar{}, \overline{},
  * \circ, ^\circ, _{...}, ^{...}, \times, \div, \pm, \leq, \geq, \neq,
- * \alpha, \beta, etc.
+ * \mathcal{}, \mathbb{}, \in, \leftarrow, etc.
+ * Also matches bare subscript/superscript like X_i or X^2.
  */
-const UNDELIMITED_LATEX_RE = /\\(?:text|hat|frac|sqrt|vec|bar|overline|underline|mathbf|mathrm|mathit|circ|times|div|pm|mp|leq|geq|neq|approx|equiv|sim|alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|omega|phi|psi|infty|partial|nabla|sum|prod|int|lim|log|ln|sin|cos|tan|sec|csc|cot|left|right|cdot|ldots|cdots|quad|qquad|binom)\b|[_^]\{/
+const UNDELIMITED_LATEX_RE = /\\(?:text|mbox|hat|frac|sqrt|vec|bar|overline|underline|mathbf|mathrm|mathit|mathcal|mathbb|mathfrak|mathscr|circ|times|div|pm|mp|leq|geq|neq|approx|equiv|sim|in|notin|subset|supset|cup|cap|leftarrow|rightarrow|Leftarrow|Rightarrow|alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|omega|phi|psi|infty|partial|nabla|sum|prod|int|lim|log|ln|sin|cos|tan|sec|csc|cot|left|right|cdot|ldots|cdots|quad|qquad|binom|tag)\b|[_^]\{|[A-Za-z][_^][A-Za-z0-9]/
 
 function containsMathContent(html: string): boolean {
   if (MATH_INDICATORS.some((indicator) => html.includes(indicator))) return true
@@ -1137,6 +1137,36 @@ function isMixedContent(text: string): boolean {
     }
   }
   return false
+}
+
+/**
+ * For mixed prose+math text nodes, find individual LaTeX expressions and
+ * convert them to MathML inline, preserving the surrounding prose text.
+ *
+ * Matches compound expressions like `\mathcal{Z}_m`, `Z_r`, `f_\theta`,
+ * `\{P_i, M_i\}`, etc. Each expression must contain at least one LaTeX
+ * marker (backslash command, subscript, or superscript).
+ */
+function convertInlineLatexFragments(text: string): string {
+  // First: handle \{...\} groups (escaped brace groups with content)
+  text = text.replace(/\\{(?:[^{}]|\{[^{}]*\})*\\}/g, (expr) => {
+    const mathml = tryTemml(expr.trim(), false) ?? tryTemml(expr.trim(), true)
+    return mathml ?? expr
+  })
+
+  // Match LaTeX expressions: optional leading alphanumeric, one or more "atoms",
+  // with optional alphanumeric glue between atoms.
+  // Atoms: \command{...}, _\command{...}, _{...}, ^{...}, _x, ^x, \{ or \}
+  const LATEX_EXPR_RE = /[A-Za-z0-9]*(?:(?:\\[a-zA-Z]+(?:\{(?:[^{}]|\{[^{}]*\})*\})*|[_^]\\[a-zA-Z]+(?:\{(?:[^{}]|\{[^{}]*\})*\})*|[_^]\{(?:[^{}]|\{[^{}]*\})*\}|[_^][A-Za-z0-9]|\\[{}])[A-Za-z0-9]*)+/g
+
+  text = text.replace(LATEX_EXPR_RE, (expr) => {
+    const trimmed = expr.trim()
+    if (!trimmed) return expr
+    const mathml = tryTemml(trimmed, false) ?? tryTemml(trimmed, true)
+    return mathml ?? expr
+  })
+
+  return text
 }
 
 // ---------------------------------------------------------------------------
@@ -1175,6 +1205,20 @@ function decodeDollarEntities(s: string): string {
 }
 
 /**
+ * Decode common HTML entities that Liquid's `escape` filter introduces into
+ * LaTeX content (e.g., `>` → `&gt;`, `<` → `&lt;`). Without this, temml
+ * receives `\tau&gt;0` instead of `\tau>0` and fails to parse.
+ */
+function decodeHtmlEntities(s: string): string {
+  return s
+    .replace(/&gt;/g, ">")
+    .replace(/&lt;/g, "<")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+}
+
+/**
  * Convert a plain text string containing LaTeX to MathML.
  * Handles delimited ($, $$, \(, \[) and undelimited LaTeX.
  * Used for text catalog entries (texts.json) that are plain strings.
@@ -1188,10 +1232,14 @@ export function convertLatexString(text: string): string {
 
   let converted = convertDelimitedLatex(text)
 
-  // If delimited conversion didn't change anything, try undelimited —
-  // but only if the text looks like a pure math expression, not prose.
-  if (converted === text && UNDELIMITED_LATEX_RE.test(text) && !isMixedContent(text)) {
-    return renderLatexWithFallback(text.trim()) ?? converted
+  // If delimited conversion didn't change anything, try undelimited.
+  if (converted === text && UNDELIMITED_LATEX_RE.test(text)) {
+    // Pure math expression — render as a single block
+    if (!isMixedContent(text)) {
+      return renderLatexWithFallback(text.trim()) ?? converted
+    }
+    // Mixed prose+math — convert individual LaTeX fragments inline
+    return convertInlineLatexFragments(converted)
   }
 
   return converted
@@ -1203,26 +1251,28 @@ export function convertLatexString(text: string): string {
 function convertDelimitedLatex(text: string): string {
   // Process display math first ($$...$$ and \[...\]) then inline ($...$ and \(...\))
   // to avoid $$...$$ being matched as two inline $...$ blocks.
+  // Decode HTML entities (e.g., &gt; → >) inside captured LaTeX before rendering,
+  // since Liquid's escape filter encodes <, >, & in text content.
 
   // $$...$$ — display math
   text = text.replace(/\$\$([\s\S]+?)\$\$/g, (_match, latex: string) =>
-    tryTemml(latex.trim(), true) ?? _match
+    tryTemml(decodeHtmlEntities(latex.trim()), true) ?? _match
   )
 
   // \[...\] — display math
   text = text.replace(/\\\[([\s\S]+?)\\\]/g, (_match, latex: string) =>
-    tryTemml(latex.trim(), true) ?? _match
+    tryTemml(decodeHtmlEntities(latex.trim()), true) ?? _match
   )
 
   // $...$ — inline math (avoid matching escaped \$ or empty $$)
   // Negative lookbehind for backslash; content must be non-empty and not start/end with space
   text = text.replace(/(?<!\\)\$([^\s$](?:[^$]*[^\s$])?)\$/g, (_match, latex: string) =>
-    tryTemml(latex.trim(), false) ?? _match
+    tryTemml(decodeHtmlEntities(latex.trim()), false) ?? _match
   )
 
   // \(...\) — inline math
   text = text.replace(/\\\(([\s\S]+?)\\\)/g, (_match, latex: string) =>
-    tryTemml(latex.trim(), false) ?? _match
+    tryTemml(decodeHtmlEntities(latex.trim()), false) ?? _match
   )
 
   return text
@@ -1239,13 +1289,17 @@ export function convertLatexToMathml(html: string): string {
   html = convertDelimitedLatex(html)
 
   // Second pass: convert undelimited LaTeX in text nodes (content between > and <).
-  // Only applies to pure math nodes — mixed prose+math is left as-is to avoid
-  // rendering entire paragraphs as a single math expression.
+  // For pure math nodes, render the entire text as a single expression.
+  // For mixed prose+math, find and convert individual LaTeX fragments inline.
   html = html.replace(/(>)([^<]+)(<)/g, (_match, open: string, text: string, close: string) => {
     if (!UNDELIMITED_LATEX_RE.test(text)) return _match
     if (text.includes("<math")) return _match
-    if (isMixedContent(text)) return _match
-    const mathml = renderLatexWithFallback(text.trim())
+    const decoded = decodeHtmlEntities(text)
+    if (isMixedContent(decoded)) {
+      const converted = convertInlineLatexFragments(decoded)
+      return converted !== decoded ? `${open}${converted}${close}` : _match
+    }
+    const mathml = renderLatexWithFallback(decoded.trim())
     return mathml ? `${open}${mathml}${close}` : _match
   })
 

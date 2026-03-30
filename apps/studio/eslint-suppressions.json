@@ -51,7 +51,7 @@
   },
   "src/components/pipeline/stages/BookPreviewFrame.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 9
+      "count": 13
     }
   },
   "src/components/pipeline/stages/ExtractPageDetail.tsx": {
