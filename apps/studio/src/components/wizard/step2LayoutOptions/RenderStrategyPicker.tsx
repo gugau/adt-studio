@@ -117,7 +117,7 @@ export function RenderStrategyPicker() {
   }
 
   return (
-    <div className="flex w-full max-w-[33.8rem] flex-col gap-2">
+    <div className="flex w-full flex-col gap-2">
       <div className="flex items-center gap-1">
         <span className="text-sm font-medium leading-[14px] text-[#0a0a0a]">
           Render Strategy

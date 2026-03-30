@@ -30,7 +30,10 @@ export const STEPS: StepDef[] = [
     title: "Visual Layout",
     description: "Choose how the content should be formatted.",
     component: Step2,
-    isValid: (v) => v.renderStrategy !== "",
+    isValid: (v) =>
+      v.renderStrategy !== "" &&
+      v.pageGrouping !== "" &&
+      v.sectioningMode !== "",
   },
   // {
   //   title: "Image Processing",

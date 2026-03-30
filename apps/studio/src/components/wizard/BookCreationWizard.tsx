@@ -155,10 +155,12 @@ export function BookCreationWizard() {
           </button>
         </div>
 
-        <WizardHeader step={currentStep} />
+        <div className="mx-auto flex w-full min-h-0 lg:pr-8 flex-1 flex-col overflow-hidden">
+          <WizardHeader step={currentStep} />
 
-        <div className="flex-1 min-h-0 overflow-y-auto">
-          <StepComponent />
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <StepComponent />
+          </div>
         </div>
 
         <WizardFooter

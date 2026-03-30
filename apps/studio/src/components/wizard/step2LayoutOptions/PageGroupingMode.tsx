@@ -1,25 +1,14 @@
 /* eslint-disable lingui/no-unlocalized-strings */
-import { useState } from "react"
-import { CircleHelp, ChevronLeft, ChevronRight } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { SegmentedControl } from "@/components/ui/segmented-control"
 import { useWizardForm } from "@/components/wizard/wizardForm"
-import { cn } from "@/lib/utils"
+import { InfoCarousel, type CarouselSlide } from "@/components/wizard/InfoCarousel"
 
-const GROUPING_OPTIONS = [
+const GROUPING_OPTIONS: { value: "spread" | "single"; label: string }[] = [
   { value: "spread", label: "Spread" },
   { value: "single", label: "Single" },
-] as const
+]
 
 function SpreadDiagram() {
   return (
@@ -66,7 +55,7 @@ function SingleDiagram() {
   )
 }
 
-const SLIDES = [
+const SLIDES: CarouselSlide[] = [
   {
     title: "Spread Mode",
     description:
@@ -76,121 +65,30 @@ const SLIDES = [
   {
     title: "Single Mode",
     description:
-      "When your PDF isn’t built around facing pages, single mode keeps every page separate: nothing is merged across a spread. That matches how most textbooks, novels, and reference books are read — one page at a time.",
+      "When your PDF isn't built around facing pages, single mode keeps every page separate: nothing is merged across a spread. That matches how most textbooks, novels, and reference books are read — one page at a time.",
     Diagram: SingleDiagram,
   },
-] as const
-
-function GroupingCarousel() {
-  const [index, setIndex] = useState(0)
-
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="overflow-hidden">
-        <div
-          className="flex transition-transform duration-300 ease-in-out"
-          style={{ transform: `translateX(-${index * 100}%)` }}
-        >
-          {SLIDES.map((slide) => (
-            <div key={slide.title} className="w-full shrink-0">
-              <Card className="flex h-[270px] flex-col gap-3 border-0 bg-transparent p-0 shadow-none">
-                <CardHeader className="space-y-1.5 p-0">
-                  <CardTitle className="text-sm font-semibold leading-tight">
-                    {slide.title}
-                  </CardTitle>
-                  <CardDescription className="text-xs leading-relaxed">
-                    {slide.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="mt-auto p-0">
-                  <Card className="border-border bg-muted/40 p-3 shadow-none">
-                    <slide.Diagram />
-                  </Card>
-                </CardContent>
-              </Card>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
-          disabled={index === 0}
-          onClick={() => setIndex((i) => Math.max(0, i - 1))}
-          aria-label="Previous slide"
-        >
-          <ChevronLeft className="size-4" />
-        </Button>
-
-        <div className="flex gap-1.5">
-          {SLIDES.map((_, i) => (
-            <Button
-              key={i}
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => setIndex(i)}
-              className={cn(
-                "size-2 min-h-2 min-w-2 shrink-0 rounded-full p-0 hover:bg-transparent",
-                i === index ? "bg-primary" : "bg-muted-foreground/40 hover:bg-muted-foreground/60",
-              )}
-              aria-label={`Slide ${i + 1}`}
-              aria-current={i === index ? "true" : undefined}
-            />
-          ))}
-        </div>
-
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
-          disabled={index === SLIDES.length - 1}
-          onClick={() => setIndex((i) => Math.min(SLIDES.length - 1, i + 1))}
-          aria-label="Next slide"
-        >
-          <ChevronRight className="size-4" />
-        </Button>
-      </div>
-    </div>
-  )
-}
+]
 
 export function PageGroupingMode() {
   const form = useWizardForm()
-  const spreadMode = useStore(form.store, (s) => s.values.spreadMode)
+  const pageGrouping = useStore(form.store, (s) => s.values.pageGrouping)
 
   return (
-    <div className="flex w-full max-w-[33.8rem] flex-col gap-3">
+    <div className="flex w-full flex-col gap-3">
       <div className="flex items-center gap-1">
         <Label className="text-sm font-medium text-foreground">
           Page Grouping Mode
         </Label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="size-7 text-muted-foreground hover:text-foreground"
-              aria-label="About page grouping"
-            >
-              <CircleHelp className="size-[14px]" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent side="right" align="start" className="w-80 p-4">
-            <GroupingCarousel />
-          </PopoverContent>
-        </Popover>
+        <span className="text-sm font-medium text-destructive" aria-hidden>
+          *
+        </span>
+        <InfoCarousel label="About page grouping" slides={SLIDES} />
       </div>
       <SegmentedControl
-        options={GROUPING_OPTIONS as unknown as { value: string; label: string }[]}
-        value={spreadMode ? "spread" : "single"}
-        onValueChange={(v) => form.setFieldValue("spreadMode", v === "spread")}
+        options={GROUPING_OPTIONS}
+        value={pageGrouping}
+        onValueChange={(v) => form.setFieldValue("pageGrouping", v)}
       />
     </div>
   )

@@ -1,5 +1,10 @@
 import { createFormHook, createFormHookContexts } from "@tanstack/react-form"
-import type { RenderStrategyId, OutputLanguageId } from "./constants"
+import type {
+  RenderStrategyId,
+  OutputLanguageId,
+  WizardPageGrouping,
+  WizardSectioningMode,
+} from "./constants"
 
 export const { fieldContext, formContext, useFieldContext, useFormContext } =
   createFormHookContexts()
@@ -20,7 +25,8 @@ export const defaultWizardValues = {
   outputLanguages: [] as OutputLanguageId[],
   renderStrategy: "" as RenderStrategyId | "",
   layoutType: "",
-  spreadMode: false,
+  pageGrouping: "" as WizardPageGrouping,
+  sectioningMode: "" as WizardSectioningMode,
 }
 
 export type WizardFormValues = typeof defaultWizardValues

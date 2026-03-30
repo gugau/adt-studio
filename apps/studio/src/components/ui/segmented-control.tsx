@@ -7,7 +7,7 @@ export interface SegmentedControlOption<T extends string = string> {
 
 interface SegmentedControlProps<T extends string = string> {
   options: SegmentedControlOption<T>[]
-  value: T
+  value: T | ""
   onValueChange: (value: T) => void
   className?: string
 }
@@ -19,6 +19,7 @@ export function SegmentedControl<T extends string = string>({
   className,
 }: SegmentedControlProps<T>) {
   const activeIndex = options.findIndex((o) => o.value === value)
+  const showIndicator = activeIndex >= 0 && options.length > 0
 
   return (
     <div
@@ -28,13 +29,15 @@ export function SegmentedControl<T extends string = string>({
       )}
       role="radiogroup"
     >
-      <div
-        className="absolute top-1 bottom-1 rounded-lg bg-white shadow-sm transition-all duration-200"
-        style={{
-          width: `calc((100% - 8px) / ${options.length})`,
-          left: `calc(4px + ${activeIndex} * (100% - 8px) / ${options.length})`,
-        }}
-      />
+      {showIndicator ? (
+        <div
+          className="absolute top-1 bottom-1 rounded-lg bg-white shadow-sm transition-all duration-200"
+          style={{
+            width: `calc((100% - 8px) / ${options.length})`,
+            left: `calc(4px + ${activeIndex} * (100% - 8px) / ${options.length})`,
+          }}
+        />
+      ) : null}
       {options.map((option) => (
         <button
           key={option.value}

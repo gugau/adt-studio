@@ -98,11 +98,18 @@ export type OutputLanguageId = (typeof OUTPUT_LANGUAGES)[number]["id"]
 
 // ─── Preset defaults — typed against the option IDs above ────────────────────
 
+export type SectioningModeId = "page" | "dynamic" | "section"
+
+
+export type WizardPageGrouping = "" | "spread" | "single"
+
+export type WizardSectioningMode = "" | SectioningModeId
+
 export interface PresetDefaults {
   layoutType: string
   renderStrategy: RenderStrategyId | ""
-  outputLanguages: OutputLanguageId[]
-  spreadMode: boolean
+  pageGrouping: WizardPageGrouping
+  sectioningMode: WizardSectioningMode
 }
 
 // ─── Preset types ────────────────────────────────────────────────────────────
@@ -252,7 +259,7 @@ export const PRESETS: PresetConfig[] = [
       FEATURE_ACTIVITIES,
       FEATURE_SPEECH,
     ],
-    defaults: { layoutType: "textbook", renderStrategy: "two_column", outputLanguages: ["en"], spreadMode: false },
+    defaults: { layoutType: "textbook", renderStrategy: "two_column", pageGrouping: "single", sectioningMode: "section" },
   },
   {
     id: "storybook",
@@ -284,7 +291,7 @@ export const PRESETS: PresetConfig[] = [
       FEATURE_EXPRESSIVE_TTS,
       FEATURE_EASY_READ,
     ],
-    defaults: { layoutType: "storybook", renderStrategy: "two_column_story", outputLanguages: ["en"], spreadMode: true },
+    defaults: { layoutType: "storybook", renderStrategy: "two_column_story", pageGrouping: "spread", sectioningMode: "section" },
   },
   {
     id: "reference",
@@ -316,7 +323,7 @@ export const PRESETS: PresetConfig[] = [
       FEATURE_AUTO_GLOSSARY,
       FEATURE_SPEECH,
     ],
-    defaults: { layoutType: "reference", renderStrategy: "two_column", outputLanguages: ["en"], spreadMode: false },
+    defaults: { layoutType: "reference", renderStrategy: "two_column", pageGrouping: "single", sectioningMode: "section" },
   },
   {
     id: "custom",
@@ -349,7 +356,7 @@ export const PRESETS: PresetConfig[] = [
       FEATURE_SPEECH,
       FEATURE_EASY_READ,
     ],
-    defaults: { layoutType: "custom", renderStrategy: "", outputLanguages: [], spreadMode: false },
+    defaults: { layoutType: "", renderStrategy: "", pageGrouping: "", sectioningMode: "" },
   },
 ]
 
