@@ -1,6 +1,6 @@
 /* eslint-disable lingui/no-unlocalized-strings */
 // TODO: Add translations
-import { useState } from "react"
+import { useState, type CSSProperties } from "react"
 import { Eye, ArrowLeft, ArrowRight, Zap } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,7 @@ import { STEPS } from "./steps"
 import { Step0Preset } from "./step0preset"
 import { PdfCoverPreview } from "./shared/PdfCoverPreview"
 import { LayoutPreview, getPreviewWidth } from "./step2LayoutOptions/LayoutPreview"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 
 function WizardHeader({ step }: { step: number }) {
   const def = STEPS[step - 1]
@@ -83,11 +83,37 @@ function WizardFooter({
   )
 }
 
-function PreviewContainer({ children, width = 650 }: { children: React.ReactNode; width?: number }) {
+function previewShellVars(width: number): CSSProperties {
+  return {
+    "--preview-w": `${width}px`,
+    "--preview-ar": `${width} / 812`,
+  } as CSSProperties
+}
+
+function PreviewContainer({
+  children,
+  width = 650,
+  variant = "desktop",
+}: {
+  children: React.ReactNode
+  width?: number
+  variant?: "desktop" | "dialog"
+}) {
+  if (variant === "dialog") {
+    return (
+      <div
+        className="mx-auto h-auto max-h-[min(812px,calc(100dvh-9rem))] w-[var(--preview-w)] max-w-full shrink-0 overflow-hidden [aspect-ratio:var(--preview-ar)] transition-[width] duration-500"
+        style={previewShellVars(width)}
+      >
+        <div className="flex h-full min-h-0 w-full flex-col">{children}</div>
+      </div>
+    )
+  }
+
   return (
     <div
-      className="flex items-center justify-center shrink-0 h-[812px] max-w-[80%] max-h-[80%] transition-[width] duration-500"
-      style={{ width }}
+      className="flex h-[812px] max-h-[80%] max-w-[80%] w-[var(--preview-w)] shrink-0 items-center justify-center transition-[width] duration-500"
+      style={{ "--preview-w": `${width}px` } as CSSProperties}
     >
       {children}
     </div>
@@ -135,8 +161,14 @@ export function BookCreationWizard() {
     return <span className="text-sm text-[#a3a3a3]">Book preview</span>
   }
 
-  const preview = (
-    <PreviewContainer width={previewWidth}>
+  const previewDesktop = (
+    <PreviewContainer width={previewWidth} variant="desktop">
+      {renderPreviewContent()}
+    </PreviewContainer>
+  )
+
+  const previewDialog = (
+    <PreviewContainer width={previewWidth} variant="dialog">
       {renderPreviewContent()}
     </PreviewContainer>
   )
@@ -173,14 +205,20 @@ export function BookCreationWizard() {
         />
       </aside>
 
-      <main className="hidden lg:flex flex-1 items-center justify-center overflow-auto max-w">
-        {preview}
+      <main className="hidden flex-1 items-center justify-center overflow-auto lg:flex">
+        {previewDesktop}
       </main>
 
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="flex flex-col items-center justify-center bg-[#f5f5f5] border-0 p-8 max-w-none w-auto">
+        <DialogContent className="flex max-h-[92dvh] w-full max-w-[min(95vw,calc(100vw-1rem))] flex-col overflow-hidden border-0 bg-[#f5f5f5] p-4 sm:p-6 rounded-lg">
           <DialogTitle className="sr-only">Book Preview</DialogTitle>
-          {preview}
+          <DialogDescription className="sr-only">
+            This is a preview of the options you have selected for your book, each option affects
+            the preview in a different way.
+          </DialogDescription>
+          <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto">
+            {previewDialog}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

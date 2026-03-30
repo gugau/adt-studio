@@ -97,17 +97,7 @@ function Carousel({ slides }: { slides: readonly CarouselSlide[] }) {
   )
 }
 
-export function InfoCarousel({
-  label,
-  slides,
-  align = "center",
-  side = "right",
-}: {
-  label: string
-  slides: readonly CarouselSlide[]
-  align?: "start" | "center" | "end"
-  side?: "top" | "bottom" | "left" | "right"
-}) {
+export function InfoCarousel({ label, slides }: { label: string; slides: readonly CarouselSlide[] }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -121,7 +111,13 @@ export function InfoCarousel({
           <CircleHelp className="size-[14px]" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent side={side} align={align} className="w-80 p-4">
+      <PopoverContent
+        side="top"
+        align="center"
+        avoidCollisions
+        collisionPadding={12}
+        className="w-80 max-w-[calc(100vw-1rem)] p-4"
+      >
         <Carousel slides={slides} />
       </PopoverContent>
     </Popover>
