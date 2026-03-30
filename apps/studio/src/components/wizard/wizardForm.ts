@@ -1,4 +1,5 @@
 import { createFormHook, createFormHookContexts } from "@tanstack/react-form"
+import type { RenderStrategyId, OutputLanguageId } from "./constants"
 
 export const { fieldContext, formContext, useFieldContext, useFormContext } =
   createFormHookContexts()
@@ -16,7 +17,8 @@ export const defaultWizardValues = {
   file: null as File | null,
   startPage: "",
   endPage: "",
-  outputLanguages: [] as string[],
+  outputLanguages: [] as OutputLanguageId[],
+  renderStrategy: "" as RenderStrategyId | "",
   layoutType: "",
 }
 

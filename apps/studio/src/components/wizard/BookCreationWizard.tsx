@@ -10,7 +10,7 @@ import { useWizardForm } from "./wizardForm"
 import { STEPS } from "./steps"
 import { Step0Preset } from "./step0preset"
 import { PdfCoverPreview } from "./shared/PdfCoverPreview"
-import { LayoutPreview } from "./step2LayoutOptions/LayoutPreview"
+import { LayoutPreview, getPreviewWidth } from "./step2LayoutOptions/LayoutPreview"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 
 function WizardHeader({ step }: { step: number }) {
@@ -83,11 +83,11 @@ function WizardFooter({
   )
 }
 
-function PreviewContainer({ children }: { children: React.ReactNode }) {
+function PreviewContainer({ children, width = 650 }: { children: React.ReactNode; width?: number }) {
   return (
     <div
-      className="flex items-center justify-center shrink-0"
-      style={{ width: 650, height: 812 }}
+      className="flex items-center justify-center shrink-0 h-[812px] max-w-[80%] max-h-[80%] transition-[width] duration-500"
+      style={{ width }}
     >
       {children}
     </div>
@@ -127,6 +127,8 @@ export function BookCreationWizard() {
   function handleCreate() {
     console.log("Wizard form values:", form.state.values)
   }
+  const previewWidth = currentStep === 2 ? getPreviewWidth(renderStrategy) : 650
+
   function renderPreviewContent() {
     if (currentStep === 1) return <PdfCoverPreview file={file} width={650} height={812} />
     if (currentStep === 2) return <LayoutPreview strategy={renderStrategy} />
@@ -134,7 +136,7 @@ export function BookCreationWizard() {
   }
 
   const preview = (
-    <PreviewContainer>
+    <PreviewContainer width={previewWidth}>
       {renderPreviewContent()}
     </PreviewContainer>
   )
@@ -169,7 +171,7 @@ export function BookCreationWizard() {
         />
       </aside>
 
-      <main className="hidden lg:flex flex-1 items-center justify-center overflow-auto">
+      <main className="hidden lg:flex flex-1 items-center justify-center overflow-auto max-w">
         {preview}
       </main>
 
