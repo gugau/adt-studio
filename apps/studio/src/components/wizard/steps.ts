@@ -5,6 +5,7 @@ import { isStep1BasicInfoValid } from "./step1BasicInfo/projectLabelSchema"
 import { Step1 } from "./step1BasicInfo"
 import { Step2 } from "./step2LayoutOptions"
 import { Step3 } from "./step3ImageProcessing"
+import { Step4 } from "./step4Languages"
 
 export interface WizardStepValidationContext {
   existingBookLabels?: readonly string[]
@@ -46,5 +47,12 @@ export const STEPS: StepDef[] = [
       const n = Number(t)
       return Number.isInteger(n) && n >= 0
     },
+  },
+  {
+    title: "Languages",
+    description:
+      "Set the editing language and choose output languages for the book.",
+    component: Step4,
+    isValid: () => true,
   },
 ]

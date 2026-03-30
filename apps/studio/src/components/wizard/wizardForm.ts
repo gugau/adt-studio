@@ -1,7 +1,6 @@
 import { createFormHook, createFormHookContexts } from "@tanstack/react-form"
 import type {
   RenderStrategyId,
-  OutputLanguageId,
   WizardPageGrouping,
   WizardSectioningMode,
 } from "./constants"
@@ -22,7 +21,7 @@ export const defaultWizardValues = {
   file: null as File | null,
   startPage: "",
   endPage: "",
-  outputLanguages: [] as OutputLanguageId[],
+  outputLanguages: [] as string[],
   renderStrategy: "" as RenderStrategyId | "",
   layoutType: "",
   pageGrouping: "" as WizardPageGrouping,
@@ -32,6 +31,7 @@ export const defaultWizardValues = {
   segmentationMinSide: "",
   imageFilterMinSide: 100,
   imageFilterMaxSide: 5000,
+  editingLanguage: "",
 }
 
 export type WizardFormValues = typeof defaultWizardValues

@@ -14,6 +14,7 @@ import { StudioTopBar } from "@/components/StudioTopBar"
 import { PdfCoverPreview } from "./shared/PdfCoverPreview"
 import { LayoutPreview, getPreviewWidth } from "./step2LayoutOptions/LayoutPreview"
 import { ImageProcessingPreviewPane } from "./step3ImageProcessing/ImageProcessingPreviewPane"
+import { LanguagesPreviewPane } from "./step4Languages/LanguagesPreviewPane"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 
@@ -154,6 +155,8 @@ export function BookCreationWizard() {
   const values = useStore(form.store, (s) => s.values)
   const file = useStore(form.store, (s) => s.values.file)
   const renderStrategy = useStore(form.store, (s) => s.values.renderStrategy)
+  const editingLanguage = useStore(form.store, (s) => s.values.editingLanguage)
+  const outputLanguages = useStore(form.store, (s) => s.values.outputLanguages)
   const stepIndex = currentStep - 1
   const existingBookLabels = books?.map((b: { label: string }) => b.label) ?? []
   const stepValidationContext = { existingBookLabels }
@@ -194,6 +197,8 @@ export function BookCreationWizard() {
     if (currentStep === 2) return <LayoutPreview strategy={renderStrategy} />
     if (currentStep === 3)
       return <ImageProcessingPreviewPane focus={previewFocus} />
+    if (currentStep === 4)
+      return <LanguagesPreviewPane editingLanguage={editingLanguage} outputLanguages={outputLanguages} />
     return <span className="text-sm text-[#a3a3a3]">Book preview</span>
   }
 
