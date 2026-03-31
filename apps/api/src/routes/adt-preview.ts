@@ -26,6 +26,8 @@ import {
   buildTextCatalog,
   pad3,
   loadBookConfig,
+  buildPreferredImageAltMap,
+  rewriteImageUrls,
 } from "@adt/pipeline"
 
 // ---------------------------------------------------------------------------
@@ -688,8 +690,19 @@ export function createAdtPreviewRoutes(
       const manifest = buildPagesManifest(storage)
       const manifestIndex = manifest.findIndex((e) => e.section_id === pageId)
 
+      const sectionMeta = sectioningParsed?.success
+        ? sectioningParsed.data.sections[targetSectionIndex]
+        : undefined
+      const preferredImageAltMap = buildPreferredImageAltMap(storage, ownerPageId, sectionMeta)
+      const { html: previewSectionHtml } = rewriteImageUrls(
+        renderedSection.html,
+        label,
+        new Map<string, string>(),
+        preferredImageAltMap,
+      )
+
       const html = renderPageHtml({
-        content: renderedSection.html,
+        content: previewSectionHtml,
         language,
         sectionId: pageId,
         pageTitle: title,

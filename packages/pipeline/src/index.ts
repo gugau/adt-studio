@@ -189,6 +189,7 @@ export {
   buildPreviewTailwindCss,
   buildGlossaryJson,
   buildImageMap,
+  buildPreferredImageAltMap,
   rewriteImageUrls,
   htmlToXhtml,
   renderQuizHtml,
@@ -199,3 +200,10 @@ export {
   runAccessibilityAssessment,
   type RunAccessibilityAssessmentOptions,
 } from "./accessibility-assessment.js"
+export {
+  runBrowserAccessibilityAssessment,
+  buildBrowserAccessibilityRecheckPlan,
+  type RunBrowserAccessibilityAssessmentOptions,
+  type BrowserAccessibilityRecheckTarget,
+  type BuildBrowserAccessibilityRecheckPlanOptions,
+} from "./browser-accessibility-assessment.js"

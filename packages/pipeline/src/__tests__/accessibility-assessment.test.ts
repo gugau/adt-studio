@@ -2,7 +2,40 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
+import type { Storage, PageData } from "@adt/storage"
 import { runAccessibilityAssessment } from "../accessibility-assessment.js"
+import { packageAdtWeb } from "../package-web.js"
+
+function createMockStorage(
+  pages: PageData[],
+  nodeData: Record<string, Record<string, unknown>>,
+): Storage {
+  return {
+    getLatestNodeData(node: string, itemId: string) {
+      const data = nodeData[node]?.[itemId]
+      return data !== undefined ? { version: 1, data } : null
+    },
+    getPages: () => pages,
+    getPageImageBase64: () => "",
+    getImageBase64: () => "",
+    getPageImages: () => [],
+    putNodeData: () => 1,
+    clearExtractedData: () => {},
+    putExtractedPage: () => {},
+    appendLlmLog: () => {},
+    close: () => {},
+  }
+}
+
+function createWebAssets(webAssetsDir: string): void {
+  fs.mkdirSync(webAssetsDir, { recursive: true })
+  fs.writeFileSync(path.join(webAssetsDir, "base.js"), 'window.__ADT_BUNDLE_TEST__ = "ok";\n')
+  fs.writeFileSync(path.join(webAssetsDir, "fonts.css"), "body { font-family: serif; }")
+  fs.writeFileSync(
+    path.join(webAssetsDir, "tailwind_css.css"),
+    "@tailwind base;\n@tailwind components;\n@tailwind utilities;\n",
+  )
+}
 
 describe("runAccessibilityAssessment", () => {
   let tmpDir: string
@@ -47,7 +80,6 @@ describe("runAccessibilityAssessment", () => {
     expect(result.pages[0].violations.some((item) => item.id === "image-alt")).toBe(true)
   })
 
-
   it("uses configured run tags and disabled rules", async () => {
     const bookDir = path.join(tmpDir, "book")
     const adtDir = path.join(bookDir, "adt")
@@ -90,5 +122,177 @@ describe("runAccessibilityAssessment", () => {
 
     expect(result.summary.pagesWithErrors).toBe(1)
     expect(result.pages[0].error).toContain("outside the ADT directory")
+  })
+
+  it("does not report page-has-heading-one when a page-level h1 is present", async () => {
+    const bookDir = path.join(tmpDir, "book")
+    const adtDir = path.join(bookDir, "adt")
+    const contentDir = path.join(adtDir, "content")
+    fs.mkdirSync(contentDir, { recursive: true })
+
+    fs.writeFileSync(
+      path.join(contentDir, "pages.json"),
+      JSON.stringify([{ section_id: "pg001_sec001", href: "index.html", page_number: 1 }])
+    )
+
+    fs.writeFileSync(
+      path.join(adtDir, "index.html"),
+      '<!doctype html><html lang="en"><head><title>Page One</title></head><body><main><h1 class="sr-only">Page One</h1><img src="cover.png" alt="Cover image"></main></body></html>'
+    )
+
+    const result = await runAccessibilityAssessment({ bookDir })
+
+    expect(result.pages[0].violations.some((item) => item.id === "page-has-heading-one")).toBe(false)
+  })
+
+  it("does not report image-alt when single-image sections expose image_associated_text fallback", async () => {
+    const bookDir = path.join(tmpDir, "book-associated-alt")
+    const webAssetsDir = path.join(tmpDir, "assets-web")
+    const imagesDir = path.join(bookDir, "images")
+    fs.mkdirSync(bookDir, { recursive: true })
+    fs.mkdirSync(imagesDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+    fs.writeFileSync(path.join(imagesDir, "pg001_im001.png"), "pngdata")
+
+    const pages: PageData[] = [{ pageId: "pg001", pageNumber: 1, text: "Page one" }]
+    const storage = createMockStorage(pages, {
+      "web-rendering": {
+        pg001: {
+          sections: [
+            {
+              sectionIndex: 0,
+              sectionType: "content",
+              reasoning: "ok",
+              html: '<div id="content" class="container"><section role="article" data-section-type="content" data-section-id="pg001_sec001"><img data-id="pg001_im001" src="/api/books/book/images/pg001_im001"></section></div>',
+            },
+          ],
+        },
+      },
+      "page-sectioning": {
+        pg001: {
+          reasoning: "ok",
+          sections: [
+            {
+              sectionId: "pg001_sec001",
+              sectionType: "content",
+              parts: [
+                {
+                  type: "image",
+                  imageId: "pg001_im001",
+                  isPruned: false,
+                },
+                {
+                  type: "text_group",
+                  groupId: "pg001_gp001",
+                  groupType: "paragraph",
+                  texts: [
+                    { textId: "tx001", textType: "image_associated_text", text: "A lifecycle diagram with six stages", isPruned: false },
+                  ],
+                  isPruned: false,
+                },
+              ],
+              backgroundColor: "#fff",
+              textColor: "#000",
+              pageNumber: 1,
+              isPruned: false,
+            },
+          ],
+        },
+      },
+    })
+
+    await packageAdtWeb(storage, {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Book Title",
+      webAssetsDir,
+    })
+
+    const result = await runAccessibilityAssessment({ bookDir })
+    const violationIds = result.pages[0].violations.map((item) => item.id)
+    expect(violationIds).not.toContain("image-alt")
+  })
+
+  it("does not report missing main, missing h1, or image-alt for packaged output with fallback heading and caption-backed alt", async () => {
+    const bookDir = path.join(tmpDir, "book-packaged")
+    const webAssetsDir = path.join(tmpDir, "assets-web")
+    const imagesDir = path.join(bookDir, "images")
+    fs.mkdirSync(bookDir, { recursive: true })
+    fs.mkdirSync(imagesDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+    fs.writeFileSync(path.join(imagesDir, "pg001_im001.png"), "pngdata")
+
+    const pages: PageData[] = [{ pageId: "pg001", pageNumber: 1, text: "Page one" }]
+    const storage = createMockStorage(pages, {
+      "web-rendering": {
+        pg001: {
+          sections: [
+            {
+              sectionIndex: 0,
+              sectionType: "content",
+              reasoning: "ok",
+              html: '<div id="content" class="container"><section role="article" data-section-type="content" data-section-id="pg001_sec001"><p data-id="tx001">Hello world</p><img data-id="pg001_im001" src="/api/books/book/images/pg001_im001"></section></div>',
+            },
+          ],
+        },
+      },
+      "page-sectioning": {
+        pg001: {
+          reasoning: "ok",
+          sections: [
+            {
+              sectionId: "pg001_sec001",
+              sectionType: "content",
+              parts: [
+                {
+                  type: "text_group",
+                  groupId: "pg001_gp001",
+                  groupType: "paragraph",
+                  texts: [
+                    { textId: "tx001", textType: "section_text", text: "Hello world", isPruned: false },
+                  ],
+                  isPruned: false,
+                },
+                {
+                  type: "image_part",
+                  imageId: "pg001_im001",
+                  isPruned: false,
+                },
+              ],
+              backgroundColor: "#fff",
+              textColor: "#000",
+              pageNumber: 1,
+              isPruned: false,
+            },
+          ],
+        },
+      },
+      "image-captioning": {
+        pg001: {
+          captions: [
+            { imageId: "pg001_im001", reasoning: "r", caption: "A labeled diagram" },
+          ],
+        },
+      },
+    })
+
+    await packageAdtWeb(storage, {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Book Title",
+      webAssetsDir,
+    })
+
+    const result = await runAccessibilityAssessment({ bookDir })
+    const violationIds = result.pages[0].violations.map((item) => item.id)
+
+    expect(violationIds).not.toContain("landmark-one-main")
+    expect(violationIds).not.toContain("page-has-heading-one")
+    expect(violationIds).not.toContain("aria-allowed-role")
+    expect(violationIds).not.toContain("image-alt")
   })
 })
