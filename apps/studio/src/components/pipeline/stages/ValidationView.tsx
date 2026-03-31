@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { api } from "@/api/client"
 import { useBookRun } from "@/hooks/use-book-run"
+import { useBookTasks } from "@/hooks/use-book-tasks"
 import { AccessibilityOverviewTab } from "@/components/validation/AccessibilityValidationTabs"
 import { ReviewerValidationSummaryTab } from "@/components/validation/ReviewerValidationSummaryTab"
 import { useReviewerValidationCatalog } from "@/hooks/use-reviewer-validation"
@@ -29,32 +30,46 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
   const navigate = useNavigate()
   const search = useSearch({ strict: false }) as { tab?: string }
   const { stageState } = useBookRun()
+  const { isTaskRunning, getTask } = useBookTasks(bookLabel)
   const reviewerValidationCatalog = useReviewerValidationCatalog(bookLabel)
   const reviewerValidationEnabled = reviewerValidationCatalog.data?.enabled ?? false
   const storyboardDone = stageState("storyboard") === "done"
   const ranRef = useRef(false)
-  const [packaging, setPackaging] = useState(true)
+  const [isSubmittingPackage, setIsSubmittingPackage] = useState(false)
+  const [pendingPackagingTaskId, setPendingPackagingTaskId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const tab = useMemo(() => {
     const normalized = normalizeValidationTab(search.tab)
     return reviewerValidationEnabled ? normalized : "accessibility-summary"
   }, [reviewerValidationEnabled, search.tab])
 
+  const invalidateValidationQueries = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "step-status"] }),
+      queryClient.invalidateQueries({ queryKey: ["debug", "accessibility", bookLabel] }),
+      queryClient.invalidateQueries({ queryKey: ["debug", "versions", bookLabel, "accessibility-assessment", "book"] }),
+      queryClient.invalidateQueries({ queryKey: ["book-config", bookLabel] }),
+    ])
+  }
+
   const runPackage = async () => {
-    setPackaging(true)
+    setIsSubmittingPackage(true)
     setError(null)
+    let taskId: string | undefined
     try {
-      await api.packageAdt(bookLabel)
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "step-status"] }),
-        queryClient.invalidateQueries({ queryKey: ["debug", "accessibility", bookLabel] }),
-        queryClient.invalidateQueries({ queryKey: ["debug", "versions", bookLabel, "accessibility-assessment", "book"] }),
-        queryClient.invalidateQueries({ queryKey: ["book-config", bookLabel] }),
-      ])
+      const result = await api.packageAdt(bookLabel)
+      taskId = result.taskId
+      if (taskId) {
+        setPendingPackagingTaskId(taskId)
+        return
+      }
+      await invalidateValidationQueries()
     } catch (e) {
       setError(e instanceof Error ? e.message : t`Packaging failed`)
     } finally {
-      setPackaging(false)
+      if (!taskId) {
+        setIsSubmittingPackage(false)
+      }
     }
   }
 
@@ -63,6 +78,32 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
     ranRef.current = true
     void runPackage()
   }, [bookLabel, storyboardDone])
+
+
+  useEffect(() => {
+    if (!pendingPackagingTaskId) {
+      return
+    }
+
+    const task = getTask(pendingPackagingTaskId)
+    if (!task) {
+      return
+    }
+
+    if (task.status === "completed") {
+      void invalidateValidationQueries().finally(() => {
+        setPendingPackagingTaskId(null)
+        setIsSubmittingPackage(false)
+      })
+      return
+    }
+
+    if (task.status === "failed") {
+      setError(task.error ?? t`Packaging failed`)
+      setPendingPackagingTaskId(null)
+      setIsSubmittingPackage(false)
+    }
+  }, [bookLabel, getTask, pendingPackagingTaskId, queryClient, t])
 
   if (!storyboardDone) {
     return (
@@ -79,6 +120,8 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
       </div>
     )
   }
+
+  const packaging = isSubmittingPackage || pendingPackagingTaskId !== null || isTaskRunning("package-adt")
 
   if (packaging) {
     return (
