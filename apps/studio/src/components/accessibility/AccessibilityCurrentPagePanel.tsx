@@ -271,7 +271,7 @@ function FindingsList({ page, embedded = false, onFindingHover }: { page: Access
           {page.error}
         </div>
       ) : !hasFindings ? (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50/80 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-400">
+        <div className="px-3 py-2 text-sm text-muted-foreground">
           <Trans>No accessibility findings were reported for this page.</Trans>
         </div>
       ) : (
