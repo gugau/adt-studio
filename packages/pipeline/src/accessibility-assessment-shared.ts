@@ -109,6 +109,22 @@ export function normalizeNode(node: unknown): AccessibilityNodeResult {
   }
 }
 
+/**
+ * Returns true when every node in a finding reports "Axe encountered an error",
+ * meaning axe-core itself failed to evaluate the rule (common in JSDOM where
+ * layout APIs are missing). These findings carry no actionable signal.
+ */
+export function isAxeInternalError(finding: AccessibilityFinding): boolean {
+  return (
+    finding.nodes.length > 0 &&
+    finding.nodes.every(
+      (node) =>
+        typeof node.failureSummary === "string" &&
+        node.failureSummary.includes("Axe encountered an error"),
+    )
+  )
+}
+
 export function normalizeFinding(finding: unknown): AccessibilityFinding {
   if (typeof finding !== "object" || finding === null) {
     return {

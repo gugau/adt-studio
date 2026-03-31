@@ -4,6 +4,7 @@ import os from "node:os"
 import path from "node:path"
 import type { Storage, PageData } from "@adt/storage"
 import { runAccessibilityAssessment } from "../accessibility-assessment.js"
+import { isAxeInternalError } from "../accessibility-assessment-shared.js"
 import { packageAdtWeb } from "../package-web.js"
 
 function createMockStorage(
@@ -36,6 +37,48 @@ function createWebAssets(webAssetsDir: string): void {
     "@tailwind base;\n@tailwind components;\n@tailwind utilities;\n",
   )
 }
+
+describe("isAxeInternalError", () => {
+  it("returns true when all nodes report axe-internal errors", () => {
+    expect(isAxeInternalError({
+      id: "landmark-one-main",
+      impact: "moderate",
+      description: "",
+      help: "",
+      helpUrl: "",
+      tags: [],
+      nodes: [
+        { target: ["html"], failureSummary: "Fix all of the following:\n  Axe encountered an error; test the page for this type of problem manually" },
+      ],
+    })).toBe(true)
+  })
+
+  it("returns false for real failures", () => {
+    expect(isAxeInternalError({
+      id: "image-alt",
+      impact: "critical",
+      description: "",
+      help: "",
+      helpUrl: "",
+      tags: [],
+      nodes: [
+        { target: ["img"], html: "<img src=\"x.png\">", failureSummary: "Fix any of the following:\n  Element does not have an alt attribute" },
+      ],
+    })).toBe(false)
+  })
+
+  it("returns false for findings with no nodes", () => {
+    expect(isAxeInternalError({
+      id: "test",
+      impact: null,
+      description: "",
+      help: "",
+      helpUrl: "",
+      tags: [],
+      nodes: [],
+    })).toBe(false)
+  })
+})
 
 describe("runAccessibilityAssessment", () => {
   let tmpDir: string
@@ -213,6 +256,34 @@ describe("runAccessibilityAssessment", () => {
     const result = await runAccessibilityAssessment({ bookDir })
     const violationIds = result.pages[0].violations.map((item) => item.id)
     expect(violationIds).not.toContain("image-alt")
+  })
+
+  it("filters out axe-internal-error incomplete findings from JSDOM", async () => {
+    const bookDir = path.join(tmpDir, "book-axe-errors")
+    const adtDir = path.join(bookDir, "adt")
+    const contentDir = path.join(adtDir, "content")
+    fs.mkdirSync(contentDir, { recursive: true })
+
+    fs.writeFileSync(
+      path.join(contentDir, "pages.json"),
+      JSON.stringify([{ section_id: "pg001_sec001", href: "index.html", page_number: 1 }])
+    )
+
+    // Valid page with <main> and <h1> — JSDOM may still report these rules as
+    // incomplete with "Axe encountered an error" due to missing layout APIs.
+    fs.writeFileSync(
+      path.join(adtDir, "index.html"),
+      '<!doctype html><html lang="en"><head><title>Page</title></head><body><main><h1>Title</h1><p>Content</p></main></body></html>'
+    )
+
+    const result = await runAccessibilityAssessment({ bookDir })
+
+    // No incomplete findings should have the axe-internal-error pattern
+    for (const page of result.pages) {
+      for (const finding of page.incomplete) {
+        expect(isAxeInternalError(finding)).toBe(false)
+      }
+    }
   })
 
   it("does not report missing main, missing h1, or image-alt for packaged output with fallback heading and caption-backed alt", async () => {

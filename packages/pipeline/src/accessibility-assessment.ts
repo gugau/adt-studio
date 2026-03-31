@@ -15,6 +15,7 @@ import {
   derivePageId,
   getAxeSource,
   getUniquePackagedPageEntries,
+  isAxeInternalError,
   normalizeFinding,
   resolvePackagedPageFilePath,
   type PackagedPageManifestEntry,
@@ -106,8 +107,10 @@ async function auditPackagedPage(
     const violations = Array.isArray(result.violations)
       ? result.violations.map(normalizeFinding)
       : []
+    // Filter out incomplete findings where axe-core itself errored (common in
+    // JSDOM which lacks layout APIs). These are false positives, not real issues.
     const incomplete = Array.isArray(result.incomplete)
-      ? result.incomplete.map(normalizeFinding)
+      ? result.incomplete.map(normalizeFinding).filter((f) => !isAxeInternalError(f))
       : []
     const passCount = Array.isArray(result.passes) ? result.passes.length : 0
     const inapplicableCount = Array.isArray(result.inapplicable)
