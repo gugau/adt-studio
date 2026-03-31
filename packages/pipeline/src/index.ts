@@ -182,7 +182,9 @@ export {
 export {
   packageAdtWeb,
   packageWebpub,
+  computePackagingInputHash,
   type PackageAdtWebOptions,
+  type ComputePackagingInputHashOptions,
   renderPageHtml,
   NAV_HTML,
   type RenderPageOptions,

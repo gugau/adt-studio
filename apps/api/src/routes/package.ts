@@ -6,6 +6,7 @@ import { parseBookLabel } from "@adt/types"
 import { createBookStorage } from "@adt/storage"
 import {
   packageAdtWeb,
+  computePackagingInputHash,
   loadBookConfig,
   normalizeLocale,
   runAccessibilityAssessment,
@@ -131,6 +132,23 @@ async function runPackaging(
     )
     const title = metadata?.title ?? safeLabel
 
+    // Check build cache — skip if all inputs are unchanged
+    const inputHash = computePackagingInputHash({
+      storage,
+      bookDir,
+      label: safeLabel,
+      language,
+      outputLanguages,
+      title,
+      webAssetsDir,
+      applyBodyBackground: config.apply_body_background,
+      config: config as unknown as Record<string, unknown>,
+    })
+    const hashPath = path.join(bookDir, "adt", ".build-hash")
+    if (fs.existsSync(hashPath) && fs.readFileSync(hashPath, "utf-8").trim() === inputHash) {
+      return
+    }
+
     await packageAdtWeb(storage, {
       bookDir,
       label: safeLabel,
@@ -160,6 +178,9 @@ async function runPackaging(
     }
 
     storage.putNodeData("accessibility-assessment", "book", accessibilityOutput)
+
+    // Write build hash after successful completion
+    fs.writeFileSync(hashPath, inputHash, "utf-8")
   } finally {
     storage.close()
   }

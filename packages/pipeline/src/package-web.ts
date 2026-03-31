@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto"
 import fs from "node:fs"
 import path from "node:path"
 import { parseDocument, DomUtils } from "htmlparser2"
@@ -38,6 +39,70 @@ interface PageEntry {
   section_id: string
   href: string
   page_number?: number
+}
+
+// ---------------------------------------------------------------------------
+// Build-cache helpers
+// ---------------------------------------------------------------------------
+
+function collectDirectoryFingerprint(dirPath: string, prefix = ""): Array<[string, number]> {
+  if (!fs.existsSync(dirPath)) return []
+  const entries: Array<[string, number]> = []
+  for (const entry of fs.readdirSync(dirPath, { withFileTypes: true })) {
+    const rel = prefix ? `${prefix}/${entry.name}` : entry.name
+    if (entry.isDirectory()) {
+      entries.push(...collectDirectoryFingerprint(path.join(dirPath, entry.name), rel))
+    } else {
+      const stat = fs.statSync(path.join(dirPath, entry.name))
+      entries.push([rel, stat.size])
+    }
+  }
+  return entries
+}
+
+export interface ComputePackagingInputHashOptions {
+  storage: Storage
+  bookDir: string
+  label: string
+  language: string
+  outputLanguages: string[]
+  title: string
+  webAssetsDir: string
+  bundleVersion?: string
+  applyBodyBackground?: boolean
+  config: Record<string, unknown>
+}
+
+export function computePackagingInputHash(options: ComputePackagingInputHashOptions): string {
+  const hash = createHash("sha256")
+
+  // 1. Storage entity versions (exclude outputs like accessibility-assessment)
+  const fingerprint = options.storage.getNodeVersionFingerprint(["accessibility-assessment"])
+  hash.update(JSON.stringify(fingerprint))
+
+  // 2. Packaging options that affect output
+  hash.update(JSON.stringify({
+    label: options.label,
+    language: options.language,
+    outputLanguages: options.outputLanguages,
+    title: options.title,
+    bundleVersion: options.bundleVersion ?? "1",
+    applyBodyBackground: options.applyBodyBackground ?? false,
+  }))
+
+  // 3. Book config (affects rendering, accessibility, etc.)
+  hash.update(JSON.stringify(options.config))
+
+  // 4. Web assets directory fingerprint (file names + sizes)
+  const assetEntries = collectDirectoryFingerprint(options.webAssetsDir).sort((a, b) => a[0].localeCompare(b[0]))
+  hash.update(JSON.stringify(assetEntries))
+
+  // 5. Images directory fingerprint
+  const imagesDir = path.join(options.bookDir, "images")
+  const imageEntries = collectDirectoryFingerprint(imagesDir).sort((a, b) => a[0].localeCompare(b[0]))
+  hash.update(JSON.stringify(imageEntries))
+
+  return hash.digest("hex")
 }
 
 // ---------------------------------------------------------------------------

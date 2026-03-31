@@ -27,12 +27,13 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
   const navigate = useNavigate()
   const search = useSearch({ strict: false }) as { previewHref?: string }
   const { stageState } = useBookRun()
-  const { isTaskRunning, tasks } = useBookTasks(bookLabel)
+  const { isTaskRunning, getTask } = useBookTasks(bookLabel)
   const storyboardDone = stageState("storyboard") === "done"
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const ranRef = useRef(false)
   const { panelOpen } = useDebugPanelState()
   const [isSubmittingPackage, setIsSubmittingPackage] = useState(false)
+  const [pendingTaskId, setPendingTaskId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
   const [version, setVersion] = useState(0)
@@ -118,31 +119,33 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
     }
   }, [])
 
-  const taskPackaging = isTaskRunning("package-adt")
-  const packaging = isSubmittingPackage || taskPackaging
-  const prevTaskPackagingRef = useRef(false)
+  const packaging = isSubmittingPackage || isTaskRunning("package-adt")
+
   useEffect(() => {
-    if (prevTaskPackagingRef.current && !taskPackaging) {
+    if (!pendingTaskId) return
+    const task = getTask(pendingTaskId)
+    if (!task) return
+    if (task.status === "completed") {
+      setPendingTaskId(null)
       setIsSubmittingPackage(false)
-      const packagingTask = tasks.find((task) => task.kind === "package-adt")
-      if (packagingTask?.status === "failed") {
-        setError(packagingTask.error ?? "Packaging failed")
-      } else {
-        void Promise.all([
-          queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "step-status"] }),
-          queryClient.invalidateQueries({ queryKey: ["debug", "accessibility", bookLabel] }),
-          queryClient.invalidateQueries({ queryKey: ["debug", "versions", bookLabel, "accessibility-assessment", "book"] }),
-        ]).then(() => {
-          setVersion((value) => Math.max(value + 1, Date.now()))
-          setReady(true)
-        })
-      }
+      void Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "step-status"] }),
+        queryClient.invalidateQueries({ queryKey: ["debug", "accessibility", bookLabel] }),
+        queryClient.invalidateQueries({ queryKey: ["debug", "versions", bookLabel, "accessibility-assessment", "book"] }),
+      ]).then(() => {
+        setVersion((value) => Math.max(value + 1, Date.now()))
+        setReady(true)
+      })
+    } else if (task.status === "failed") {
+      setPendingTaskId(null)
+      setIsSubmittingPackage(false)
+      setError(task.error ?? "Packaging failed")
     }
-    prevTaskPackagingRef.current = taskPackaging
-  }, [bookLabel, taskPackaging, queryClient, tasks])
+  }, [pendingTaskId, getTask, bookLabel, queryClient])
 
   const runPackage = useCallback(async () => {
     setIsSubmittingPackage(true)
+    setPendingTaskId(null)
     setError(null)
     setReady(false)
     setCurrentPreviewPage({ sectionId: null, href: null, title: null, hasImages: false, hasActivity: false, signLanguageEnabled: false })
@@ -150,6 +153,9 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
     try {
       const result = await api.packageAdt(bookLabel)
       taskId = result.taskId
+      if (taskId) {
+        setPendingTaskId(taskId)
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Packaging failed")
     } finally {
