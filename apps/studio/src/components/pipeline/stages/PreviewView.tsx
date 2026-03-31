@@ -155,15 +155,22 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
       taskId = result.taskId
       if (taskId) {
         setPendingTaskId(taskId)
+      } else {
+        // Synchronous completion (cache hit) — no task to wait for
+        setIsSubmittingPackage(false)
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "step-status"] }),
+          queryClient.invalidateQueries({ queryKey: ["debug", "accessibility", bookLabel] }),
+          queryClient.invalidateQueries({ queryKey: ["debug", "versions", bookLabel, "accessibility-assessment", "book"] }),
+        ])
+        setVersion((value) => Math.max(value + 1, Date.now()))
+        setReady(true)
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Packaging failed")
-    } finally {
-      if (!taskId) {
-        setIsSubmittingPackage(false)
-      }
+      setIsSubmittingPackage(false)
     }
-  }, [bookLabel])
+  }, [bookLabel, queryClient])
 
   // Only trigger packaging when storyboard is done
   useEffect(() => {

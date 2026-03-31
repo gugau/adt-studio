@@ -278,7 +278,7 @@ function FindingsList({ page, embedded = false, onFindingHover }: { page: Access
         <div className="space-y-4">
           <FindingsSection
             title={<Trans>Issues</Trans>}
-            description={<Trans>These are confirmed by automated checks.</Trans>}
+            description={null}
             findings={issues}
             onFindingHover={onFindingHover}
           />

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react"
 import type { AccessibilityAssessmentOutput, AccessibilityFinding, AccessibilityPageResult } from "@adt/types"
+import type { I18n } from "@lingui/core"
+import { msg } from "@lingui/core/macro"
 import { Trans, useLingui } from "@lingui/react/macro"
 import {
   AlertTriangle,
@@ -29,17 +31,17 @@ interface PreviewAccessibilityCardProps {
 }
 
 function formatFindingCount(
-  t: ReturnType<typeof useLingui>["t"],
+  i18n: I18n,
   issueCount: number,
   reviewCount: number,
 ): string {
-  const issuesLabel = issueCount > 0 ? t`${issueCount} ${issueCount === 1 ? "issue" : "issues"}` : null
+  const issuesLabel = issueCount > 0 ? i18n._(msg`${issueCount} ${issueCount === 1 ? "issue" : "issues"}`) : null
   const reviewLabel = reviewCount > 0
-    ? t`${reviewCount} ${reviewCount === 1 ? "manual review item" : "manual review items"}`
+    ? i18n._(msg`${reviewCount} ${reviewCount === 1 ? "manual review item" : "manual review items"}`)
     : null
 
   if (issuesLabel && reviewLabel) {
-    return t`${issuesLabel}, ${reviewLabel}`
+    return i18n._(msg`${issuesLabel}, ${reviewLabel}`)
   }
   if (issuesLabel) {
     return issuesLabel
@@ -47,19 +49,19 @@ function formatFindingCount(
   if (reviewLabel) {
     return reviewLabel
   }
-  return t`No findings`
+  return i18n._(msg`No findings`)
 }
 
 function formatPageSummary(
-  t: ReturnType<typeof useLingui>["t"],
+  i18n: I18n,
   page: PageAccessibilitySummary,
 ): string {
   if (page.hasError) {
-    return t`Accessibility check failed for this page`
+    return i18n._(msg`Accessibility check failed for this page`)
   }
 
-  const countSummary = formatFindingCount(t, page.issueCount, page.reviewCount)
-  return page.totalCount > 0 ? t`${countSummary} this page` : t`No findings this page`
+  const countSummary = formatFindingCount(i18n, page.issueCount, page.reviewCount)
+  return page.totalCount > 0 ? i18n._(msg`${countSummary} this page`) : i18n._(msg`No findings this page`)
 }
 
 function StatusIcon({
@@ -104,7 +106,7 @@ export function PreviewAccessibilityCard({
   onExpandedChange,
   onFindingHover,
 }: PreviewAccessibilityCardProps) {
-  const { t } = useLingui()
+  const { t, i18n } = useLingui()
   const storageKey = `adt-preview-a11y-card:${label}`
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") {
@@ -165,11 +167,11 @@ export function PreviewAccessibilityCard({
     : error
       ? t`Unavailable`
       : assessment
-        ? formatFindingCount(t, violationCount, incompleteCount)
+        ? formatFindingCount(i18n,violationCount, incompleteCount)
         : t`No assessment`
 
   const pageSummary = currentPage
-    ? formatPageSummary(t, currentPage)
+    ? formatPageSummary(i18n,currentPage)
     : assessment
       ? t`Open a page to see page-level findings`
       : isLoading
@@ -180,15 +182,7 @@ export function PreviewAccessibilityCard({
     ? t`Refreshing results for this packaged preview.`
     : error
       ? t`Accessibility results are temporarily unavailable.`
-      : assessment
-        ? violationCount > 0 && incompleteCount > 0
-          ? t`${formatFindingCount(t, violationCount, incompleteCount)}. Confirmed issues and manual-review items are listed separately below.`
-          : violationCount > 0
-            ? t`${formatFindingCount(t, violationCount, incompleteCount)}. Confirmed issues are listed below.`
-            : incompleteCount > 0
-              ? t`${formatFindingCount(t, violationCount, incompleteCount)}. These checks need manual review.`
-              : t`No issues were reported for this preview.`
-        : null
+      : null
 
   if (collapsed) {
     if (!showCollapsedCard) {

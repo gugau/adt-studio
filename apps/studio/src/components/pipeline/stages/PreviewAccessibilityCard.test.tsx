@@ -15,12 +15,38 @@ function templateToString(strings: TemplateStringsArray, values: unknown[]) {
   return text
 }
 
+const mockI18n = {
+  _(descriptor: { id: string; values?: Record<string, unknown> }) {
+    if (!descriptor.values) return descriptor.id
+    let result = descriptor.id
+    for (const [key, value] of Object.entries(descriptor.values)) {
+      result = result.replace(`{${key}}`, String(value))
+    }
+    return result
+  },
+}
+
+vi.mock("@lingui/core/macro", () => ({
+  msg: (strings: TemplateStringsArray, ...values: unknown[]) => {
+    // Build a message descriptor that matches Lingui's format
+    let id = ""
+    for (let i = 0; i < strings.length; i++) {
+      id += strings[i]
+      if (i < values.length) id += `{${i}}`
+    }
+    const vals: Record<string, unknown> = {}
+    for (let i = 0; i < values.length; i++) vals[String(i)] = values[i]
+    return { id, values: vals }
+  },
+}))
+
 vi.mock("@lingui/react/macro", () => ({
   Trans: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useLingui: () => ({
     t(strings: TemplateStringsArray, ...values: unknown[]) {
       return templateToString(strings, values)
     },
+    i18n: mockI18n,
   }),
 }))
 
@@ -119,10 +145,8 @@ describe("PreviewAccessibilityCard", () => {
       />,
     )
 
-    expect(screen.getByText("2 issues, 1 manual review item. Confirmed issues and manual-review items are listed separately below.")).toBeTruthy()
     expect(screen.getAllByText("Issues").length).toBeGreaterThan(0)
     expect(screen.getAllByText("Manual review").length).toBeGreaterThan(0)
-    expect(screen.getByText("These are confirmed by automated checks.")).toBeTruthy()
     expect(screen.getByText("Axe could not fully evaluate these checks in preview. Verify them in-browser or by inspection.")).toBeTruthy()
     expect(screen.getByText("Add alt text")).toBeTruthy()
     expect(screen.getByText("Review contrast")).toBeTruthy()
@@ -161,7 +185,7 @@ describe("PreviewAccessibilityCard", () => {
       />,
     )
 
-    expect(screen.getByText("2 manual review items. These checks need manual review.")).toBeTruthy()
-    expect(screen.queryByText(/^2 issues$/)).toBeNull()
+    expect(screen.getAllByText("Manual review").length).toBeGreaterThan(0)
+    expect(screen.queryByText(/^Issues$/)).toBeNull()
   })
 })

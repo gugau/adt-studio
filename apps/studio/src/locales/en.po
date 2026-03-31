@@ -144,17 +144,14 @@ msgstr "{0} terms"
 msgid "{0} texts"
 msgstr "{0} texts"
 
-#. placeholder {0}: formatFindingCount(t, violationCount, incompleteCount)
-msgid "{0}. Confirmed issues and manual-review items are listed separately below."
-msgstr "{0}. Confirmed issues and manual-review items are listed separately below."
+#~ msgid "{0}. Confirmed issues and manual-review items are listed separately below."
+#~ msgstr "{0}. Confirmed issues and manual-review items are listed separately below."
 
-#. placeholder {0}: formatFindingCount(t, violationCount, incompleteCount)
-msgid "{0}. Confirmed issues are listed below."
-msgstr "{0}. Confirmed issues are listed below."
+#~ msgid "{0}. Confirmed issues are listed below."
+#~ msgstr "{0}. Confirmed issues are listed below."
 
-#. placeholder {0}: formatFindingCount(t, violationCount, incompleteCount)
-msgid "{0}. These checks need manual review."
-msgstr "{0}. These checks need manual review."
+#~ msgid "{0}. These checks need manual review."
+#~ msgstr "{0}. These checks need manual review."
 
 #. placeholder {0}: String(generatedAudioCount)
 #. placeholder {1}: String(displayEntries.length)
@@ -186,14 +183,28 @@ msgstr "{0}m ago"
 msgid "{0}s ago"
 msgstr "{0}s ago"
 
+msgid "{countSummary} this page"
+msgstr "{countSummary} this page"
+
 msgid "{elapsed}s"
 msgstr "{elapsed}s"
+
+#. placeholder {0}: issueCount === 1 ? "issue" : "issues"
+msgid "{issueCount} {0}"
+msgstr "{issueCount} {0}"
+
+msgid "{issuesLabel}, {reviewLabel}"
+msgstr "{issuesLabel}, {reviewLabel}"
 
 msgid "{missingAudioCount} missing"
 msgstr "{missingAudioCount} missing"
 
 msgid "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
 msgstr "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
+
+#. placeholder {0}: reviewCount === 1 ? "manual review item" : "manual review items"
+msgid "{reviewCount} {0}"
+msgstr "{reviewCount} {0}"
 
 #. placeholder {0}: section.criteria.length
 msgid "{reviewed}/{0} checked"
@@ -269,8 +280,8 @@ msgstr "Accessibility"
 msgid "Accessibility assessment configuration"
 msgstr "Accessibility assessment configuration"
 
-#~ msgid "Accessibility check failed for this page"
-#~ msgstr "Accessibility check failed for this page"
+msgid "Accessibility check failed for this page"
+msgstr "Accessibility check failed for this page"
 
 msgid "Accessibility Findings"
 msgstr "Accessibility Findings"
@@ -1751,8 +1762,14 @@ msgstr "No extracted text yet. Run the pipeline first."
 msgid "No finding categories reported."
 msgstr "No finding categories reported."
 
+msgid "No findings"
+msgstr "No findings"
+
 #~ msgid "No findings match the current filters."
 #~ msgstr "No findings match the current filters."
+
+msgid "No findings this page"
+msgstr "No findings this page"
 
 #~ msgid "No findings were reported."
 #~ msgstr "No findings were reported."
@@ -1784,8 +1801,11 @@ msgstr "No issues or manual review items match the current filters."
 msgid "No issues or manual review items were reported."
 msgstr "No issues or manual review items were reported."
 
-msgid "No issues were reported for this preview."
-msgstr "No issues were reported for this preview."
+#~ msgid "No issues were reported for this page."
+#~ msgstr "No issues were reported for this page."
+
+#~ msgid "No issues were reported for this preview."
+#~ msgstr "No issues were reported for this preview."
 
 msgid "No items are currently flagged as needing changes in this reviewer session."
 msgstr "No items are currently flagged as needing changes in this reviewer session."
@@ -2766,8 +2786,8 @@ msgstr "The rendering strategy used for sections without an explicit mapping."
 msgid "The table of contents."
 msgstr "The table of contents."
 
-msgid "These are confirmed by automated checks."
-msgstr "These are confirmed by automated checks."
+#~ msgid "These are confirmed by automated checks."
+#~ msgstr "These are confirmed by automated checks."
 
 msgid "These values reflect either the saved book override or the latest packaged defaults."
 msgstr "These values reflect either the saved book override or the latest packaged defaults."

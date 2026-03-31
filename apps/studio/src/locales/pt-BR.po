@@ -144,17 +144,14 @@ msgstr "{0} termos"
 msgid "{0} texts"
 msgstr "{0} textos"
 
-#. placeholder {0}: formatFindingCount(t, violationCount, incompleteCount)
-msgid "{0}. Confirmed issues and manual-review items are listed separately below."
-msgstr "{0}. Problemas confirmados e itens de revisão manual estão listados separadamente abaixo."
+#~ msgid "{0}. Confirmed issues and manual-review items are listed separately below."
+#~ msgstr "{0}. Problemas confirmados e itens de revisão manual estão listados separadamente abaixo."
 
-#. placeholder {0}: formatFindingCount(t, violationCount, incompleteCount)
-msgid "{0}. Confirmed issues are listed below."
-msgstr "{0}. Problemas confirmados estão listados abaixo."
+#~ msgid "{0}. Confirmed issues are listed below."
+#~ msgstr "{0}. Problemas confirmados estão listados abaixo."
 
-#. placeholder {0}: formatFindingCount(t, violationCount, incompleteCount)
-msgid "{0}. These checks need manual review."
-msgstr "{0}. Essas verificações precisam de revisão manual."
+#~ msgid "{0}. These checks need manual review."
+#~ msgstr "{0}. Essas verificações precisam de revisão manual."
 
 #. placeholder {0}: String(generatedAudioCount)
 #. placeholder {1}: String(displayEntries.length)
@@ -186,14 +183,28 @@ msgstr "Há {0}min"
 msgid "{0}s ago"
 msgstr "Há {0}s"
 
+msgid "{countSummary} this page"
+msgstr "{countSummary} nesta página"
+
 msgid "{elapsed}s"
 msgstr "{elapsed}s"
+
+#. placeholder {0}: issueCount === 1 ? "issue" : "issues"
+msgid "{issueCount} {0}"
+msgstr "{issueCount} {0}"
+
+msgid "{issuesLabel}, {reviewLabel}"
+msgstr "{issuesLabel}, {reviewLabel}"
 
 msgid "{missingAudioCount} missing"
 msgstr "{missingAudioCount} faltando"
 
 msgid "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
 msgstr "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
+
+#. placeholder {0}: reviewCount === 1 ? "manual review item" : "manual review items"
+msgid "{reviewCount} {0}"
+msgstr "{reviewCount} {0}"
 
 #. placeholder {0}: section.criteria.length
 msgid "{reviewed}/{0} checked"
@@ -269,8 +280,8 @@ msgstr "Accessibility"
 msgid "Accessibility assessment configuration"
 msgstr "Accessibility assessment configuration"
 
-#~ msgid "Accessibility check failed for this page"
-#~ msgstr "Accessibility check failed for this page"
+msgid "Accessibility check failed for this page"
+msgstr "Accessibility check failed for this page"
 
 msgid "Accessibility Findings"
 msgstr "Accessibility Findings"
@@ -1751,8 +1762,14 @@ msgstr "Nenhum texto extraído ainda. Execute o pipeline primeiro."
 msgid "No finding categories reported."
 msgstr "No finding categories reported."
 
+msgid "No findings"
+msgstr "Sem descobertas"
+
 #~ msgid "No findings match the current filters."
 #~ msgstr "No findings match the current filters."
+
+msgid "No findings this page"
+msgstr "Sem descobertas nesta página"
 
 #~ msgid "No findings were reported."
 #~ msgstr "No findings were reported."
@@ -1784,8 +1801,11 @@ msgstr "Nenhum problema ou item de revisão manual corresponde aos filtros atuai
 msgid "No issues or manual review items were reported."
 msgstr "Nenhum problema ou item de revisão manual foi relatado."
 
-msgid "No issues were reported for this preview."
-msgstr "Nenhum problema foi relatado para esta pré-visualização."
+#~ msgid "No issues were reported for this page."
+#~ msgstr "Nenhum problema foi relatado para esta página."
+
+#~ msgid "No issues were reported for this preview."
+#~ msgstr "Nenhum problema foi relatado para esta pré-visualização."
 
 msgid "No items are currently flagged as needing changes in this reviewer session."
 msgstr "No items are currently flagged as needing changes in this reviewer session."
@@ -2766,8 +2786,8 @@ msgstr "A estratégia de renderização usada para seções sem um mapeamento ex
 msgid "The table of contents."
 msgstr "O índice."
 
-msgid "These are confirmed by automated checks."
-msgstr "Estes são confirmados por verificações automáticas."
+#~ msgid "These are confirmed by automated checks."
+#~ msgstr "Estes são confirmados por verificações automáticas."
 
 msgid "These values reflect either the saved book override or the latest packaged defaults."
 msgstr "These values reflect either the saved book override or the latest packaged defaults."
