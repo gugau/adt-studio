@@ -131,6 +131,18 @@ async function auditBrowserPage(
         await fonts.ready
       }
     })
+    // Wait for the app JS to remove opacity-0 from #content (fade-in animation).
+    // Without this, axe-core computes blended colors through opacity:0 and reports
+    // false contrast violations.  Falls back after timeout for pages without JS.
+    await page.waitForFunction(
+      () => {
+        const el = document.getElementById("content")
+        return !el || !el.classList.contains("opacity-0")
+      },
+      { timeout: 5_000 },
+    ).catch(() => {
+      // Timeout is non-fatal — run axe anyway with whatever state we have
+    })
     await page.addScriptTag({ content: axeSource })
     const title = (await page.title()) || null
     const result = await page.evaluate(async (ruleIds) => {
@@ -280,4 +292,5 @@ interface PlaywrightPage {
   title(): Promise<string>
   addScriptTag(opts: { content: string }): Promise<unknown>
   evaluate<Result>(pageFunction: ((arg: string[]) => Promise<Result>) | (() => Promise<Result>), arg?: string[]): Promise<Result>
+  waitForFunction(pageFunction: () => boolean, opts?: { timeout?: number }): Promise<unknown>
 }
