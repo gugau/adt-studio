@@ -58,7 +58,7 @@ msgstr "{0} — escribe el país o pulsa Enter para el básico"
 #. placeholder {1}: finding.count === 1 ? "issue" : "issues"
 #. placeholder {1}: finding.count === 1 ? "manual review item" : "manual review items"
 msgid "{0} {1}"
-msgstr ""
+msgstr "{0} {1}"
 
 #. placeholder {0}: activeMetrics.pagesReviewed
 #. placeholder {1}: activeMetrics.pagesReviewed === 1 ? "page" : "pages"
@@ -97,7 +97,7 @@ msgstr "{0} imágenes seleccionadas"
 
 #. placeholder {0}: visibleFindingsUniverse.length
 msgid "{0} items"
-msgstr ""
+msgstr "{0} elementos"
 
 #. placeholder {0}: counts.needsChanges
 msgid "{0} items need changes on this page"
@@ -126,7 +126,7 @@ msgstr "{0} of {1} book pages reviewed"
 #. placeholder {0}: visibleFindings.length
 #. placeholder {1}: visibleFindingsUniverse.length
 msgid "{0} of {1} items"
-msgstr ""
+msgstr "{0} de {1} elementos"
 
 #. placeholder {0}: String(displayPages.length)
 msgid "{0} pages"
@@ -146,15 +146,15 @@ msgstr "{0} textos"
 
 #. placeholder {0}: formatFindingCount(t, violationCount, incompleteCount)
 msgid "{0}. Confirmed issues and manual-review items are listed separately below."
-msgstr ""
+msgstr "{0}. Los problemas confirmados y los elementos de revisión manual se enumeran por separado a continuación."
 
 #. placeholder {0}: formatFindingCount(t, violationCount, incompleteCount)
 msgid "{0}. Confirmed issues are listed below."
-msgstr ""
+msgstr "{0}. Los problemas confirmados se enumeran a continuación."
 
 #. placeholder {0}: formatFindingCount(t, violationCount, incompleteCount)
 msgid "{0}. These checks need manual review."
-msgstr ""
+msgstr "{0}. Estas verificaciones necesitan revisión manual."
 
 #. placeholder {0}: String(generatedAudioCount)
 #. placeholder {1}: String(displayEntries.length)
@@ -440,7 +440,7 @@ msgstr "All Categories"
 #~ msgstr "All findings"
 
 msgid "All issues and manual review items"
-msgstr ""
+msgstr "Todos los problemas y elementos de revisión manual"
 
 msgid "All sections have been deleted"
 msgstr "Todas las secciones han sido eliminadas"
@@ -521,7 +521,7 @@ msgid "Avg Duration"
 msgstr "Duración media"
 
 msgid "Axe could not fully evaluate these checks in preview. Verify them in-browser or by inspection."
-msgstr ""
+msgstr "Axe no pudo evaluar completamente estas verificaciones en la vista previa. Verifícalas en el navegador o mediante inspección."
 
 msgid "Azure"
 msgstr "Azure"
@@ -1444,7 +1444,7 @@ msgid "Instruction Text"
 msgstr "Texto de instrucción"
 
 msgid "Issues"
-msgstr ""
+msgstr "Problemas"
 
 msgid "Item"
 msgstr "Ítem"
@@ -1614,7 +1614,7 @@ msgid "Lower values produce more consistent styling across pages."
 msgstr "Valores más bajos producen estilos más consistentes entre páginas."
 
 msgid "Manual review"
-msgstr ""
+msgstr "Revisión manual"
 
 msgid "Map"
 msgstr "Mapa"
@@ -1779,13 +1779,13 @@ msgid "No images on this page"
 msgstr "No hay imágenes en esta página"
 
 msgid "No issues or manual review items match the current filters."
-msgstr ""
+msgstr "Ningún problema o elemento de revisión manual coincide con los filtros actuales."
 
 msgid "No issues or manual review items were reported."
-msgstr ""
+msgstr "No se reportaron problemas ni elementos de revisión manual."
 
 msgid "No issues were reported for this preview."
-msgstr ""
+msgstr "No se reportaron problemas para esta vista previa."
 
 msgid "No items are currently flagged as needing changes in this reviewer session."
 msgstr "No items are currently flagged as needing changes in this reviewer session."
@@ -2767,7 +2767,7 @@ msgid "The table of contents."
 msgstr "La tabla de contenidos."
 
 msgid "These are confirmed by automated checks."
-msgstr ""
+msgstr "Estos son confirmados por verificaciones automáticas."
 
 msgid "These values reflect either the saved book override or the latest packaged defaults."
 msgstr "These values reflect either the saved book override or the latest packaged defaults."
