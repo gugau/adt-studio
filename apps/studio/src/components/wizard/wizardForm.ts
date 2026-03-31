@@ -32,6 +32,7 @@ export const defaultWizardValues = {
   imageFilterMinSide: 100,
   imageFilterMaxSide: 5000,
   editingLanguage: "",
+  styleguide: "",
 }
 
 export type WizardFormValues = typeof defaultWizardValues

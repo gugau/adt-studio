@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 import type { ElementType } from "react"
 import { TwoColumnStoryStrategyIcon } from "@/components/wizard/icons/TwoColumnStoryStrategyIcon"
+import type { WizardFormValues } from "./wizardForm"
 
 // ─── Option shape ────────────────────────────────────────────────────────────
 
@@ -83,44 +84,19 @@ export const RENDER_STRATEGIES = [
 
 export type RenderStrategyId = (typeof RENDER_STRATEGIES)[number]["id"]
 
-export const RENDER_STRATEGY_IDS = RENDER_STRATEGIES.map((s) => s.id) as RenderStrategyId[]
-
-// ─── Output Languages (future step) ─────────────────────────────────────────
-
-export const OUTPUT_LANGUAGES = [
-  { id: "en", label: "English" },
-  { id: "pt-BR", label: "Portuguese (Brazil)" },
-  { id: "es", label: "Spanish" },
-  { id: "fr", label: "French" },
-] as const
-
-export type OutputLanguageId = (typeof OUTPUT_LANGUAGES)[number]["id"]
-
-// ─── Preset defaults — typed against the option IDs above ────────────────────
+// ─── Preset defaults — typed against the wizard form ────────────────────────
 
 export type SectioningModeId = "page" | "dynamic" | "section"
-
 
 export type WizardPageGrouping = "" | "spread" | "single"
 
 export type WizardSectioningMode = "" | SectioningModeId
 
-export interface PresetDefaults {
-  layoutType: string
-  renderStrategy: RenderStrategyId | ""
-  pageGrouping: WizardPageGrouping
-  sectioningMode: WizardSectioningMode
-}
+export type PresetDefaults = Partial<WizardFormValues>
 
 // ─── Preset types ────────────────────────────────────────────────────────────
 
 export type PresetId = "textbook" | "storybook" | "reference" | "custom"
-
-export interface PresetFeature {
-  id: string
-  label: string
-  description: string
-}
 
 export interface ExampleBook {
   title: string
@@ -139,83 +115,9 @@ export interface PresetConfig {
   description: string
   recommendedFor: string[]
   exampleBooks: ExampleBook[]
-  features: PresetFeature[]
   defaults: PresetDefaults
 }
 
-// ─── Shared features ─────────────────────────────────────────────────────────
-
-const FEATURE_AUTO_GLOSSARY: PresetFeature = {
-  id: "auto-glossary",
-  label: "Auto-Glossary",
-  description: "AI detects and defines complex terms automatically.",
-}
-
-const FEATURE_EASY_READ: PresetFeature = {
-  id: "easy-read",
-  label: "Easy-Read Mode",
-  description: "Generate a simplified version of the text.",
-}
-
-const FEATURE_QUIZ: PresetFeature = {
-  id: "quiz-generation",
-  label: "Quiz Generation",
-  description:
-    "Identifies key educational concepts and generates interactive multiple-choice questions.",
-}
-
-const FEATURE_SPEECH: PresetFeature = {
-  id: "speech-generation",
-  label: "Speech Generation",
-  description:
-    "Enables a page-level audio player with the ability to hear specific phrases by clicking directly on the text.",
-}
-
-const FEATURE_ALT_TEXT: PresetFeature = {
-  id: "alt-text",
-  label: "Technical Alt-Text",
-  description:
-    "Generates detailed alt-text for diagrams, charts, and technical figures.",
-}
-
-const FEATURE_ACTIVITIES: PresetFeature = {
-  id: "activities",
-  label: "Activity Conversion",
-  description:
-    "Automatically converts interactive activities into accessible digital formats.",
-}
-
-const FEATURE_CHAPTER_NAV: PresetFeature = {
-  id: "chapter-nav",
-  label: "Chapter Navigation",
-  description:
-    "Generates a structured table of contents with deep links to each chapter.",
-}
-
-const FEATURE_EXPRESSIVE_TTS: PresetFeature = {
-  id: "expressive-tts",
-  label: "Expressive TTS Voices",
-  description: "Uses storyteller-style voices tuned for young audiences.",
-}
-
-const FEATURE_GLOSSARY_TABLES: PresetFeature = {
-  id: "glossary-tables",
-  label: "Glossaries & Tables",
-  description: "Extracts and preserves tables, glossaries, and structured lists.",
-}
-
-const FEATURE_RENDER_CONTROL: PresetFeature = {
-  id: "render-control",
-  label: "Render Strategy Control",
-  description:
-    "Full control over per-type render strategies (LLM, template, activity).",
-}
-
-const FEATURE_CUSTOM_PRUNING: PresetFeature = {
-  id: "custom-pruning",
-  label: "Custom Pruning & Filters",
-  description: "Define which text and section types to include or exclude.",
-}
 
 // ─── Demo URLs (shared across all presets until per-preset assets are ready) ─
 
@@ -252,14 +154,14 @@ export const PRESETS: PresetConfig[] = [
       { title: "História e Sociedade — Vol. 1", comingSoon: true },
       { title: "Língua Portuguesa — 3° Ano", comingSoon: true },
     ],
-    features: [
-      FEATURE_AUTO_GLOSSARY,
-      FEATURE_QUIZ,
-      FEATURE_ALT_TEXT,
-      FEATURE_ACTIVITIES,
-      FEATURE_SPEECH,
-    ],
-    defaults: { layoutType: "textbook", renderStrategy: "two_column", pageGrouping: "single", sectioningMode: "section" },
+    defaults: {
+      layoutType: "textbook",
+      renderStrategy: "two_column",
+      pageGrouping: "single",
+      sectioningMode: "section",
+      imageCropping: true,
+      imageSegmentation: true,
+    },
   },
   {
     id: "storybook",
@@ -285,13 +187,14 @@ export const PRESETS: PresetConfig[] = [
       { title: "Adventure Tales — Vol. 1", comingSoon: true },
       { title: "The Lost Forest", comingSoon: true },
     ],
-    features: [
-      FEATURE_CHAPTER_NAV,
-      FEATURE_SPEECH,
-      FEATURE_EXPRESSIVE_TTS,
-      FEATURE_EASY_READ,
-    ],
-    defaults: { layoutType: "storybook", renderStrategy: "two_column_story", pageGrouping: "spread", sectioningMode: "section" },
+    defaults: {
+      layoutType: "storybook",
+      renderStrategy: "two_column_story",
+      pageGrouping: "spread",
+      sectioningMode: "section",
+      imageCropping: false,
+      imageSegmentation: true,
+    },
   },
   {
     id: "reference",
@@ -317,13 +220,14 @@ export const PRESETS: PresetConfig[] = [
       { title: "Engineering Handbook Vol. 2", comingSoon: true },
       { title: "Legal Compliance Guide", comingSoon: true },
     ],
-    features: [
-      FEATURE_GLOSSARY_TABLES,
-      FEATURE_ALT_TEXT,
-      FEATURE_AUTO_GLOSSARY,
-      FEATURE_SPEECH,
-    ],
-    defaults: { layoutType: "reference", renderStrategy: "two_column", pageGrouping: "single", sectioningMode: "section" },
+    defaults: {
+      layoutType: "reference",
+      renderStrategy: "two_column",
+      pageGrouping: "single",
+      sectioningMode: "section",
+      imageCropping: true,
+      imageSegmentation: false,
+    },
   },
   {
     id: "custom",
@@ -347,19 +251,52 @@ export const PRESETS: PresetConfig[] = [
       },
       { title: "Mixed Content Project", comingSoon: true },
     ],
-    features: [
-      FEATURE_RENDER_CONTROL,
-      FEATURE_CUSTOM_PRUNING,
-      FEATURE_ALT_TEXT,
-      FEATURE_AUTO_GLOSSARY,
-      FEATURE_QUIZ,
-      FEATURE_SPEECH,
-      FEATURE_EASY_READ,
-    ],
-    defaults: { layoutType: "", renderStrategy: "", pageGrouping: "", sectioningMode: "" },
+    defaults: {},
   },
 ]
 
-export const PRESET_DEFAULTS: Record<string, PresetDefaults> = Object.fromEntries(
+export const PRESET_DEFAULTS: Record<PresetId, PresetDefaults> = Object.fromEntries(
   PRESETS.map((p) => [p.id, p.defaults]),
-)
+) as Record<PresetId, PresetDefaults>
+
+
+const FIELD_LABELS: Partial<Record<keyof WizardFormValues, string>> = {
+  renderStrategy: "Render Strategy",
+  pageGrouping: "Page Grouping",
+  sectioningMode: "Sectioning",
+  imageCropping: "Smart Cropping",
+  imageSegmentation: "Image Segmentation",
+  imageFilterMinSide: "Min Image Size",
+  imageFilterMaxSide: "Max Image Size",
+  styleguide: "Style Guide",
+}
+
+const VALUE_LABELS: Record<string, string> = {
+  two_column: "Two Columns",
+  two_column_story: "Two Columns Story",
+  llm: "Dynamic",
+  "llm-overlay": "Dynamic Overlay",
+  single: "Single Page",
+  spread: "Spread",
+  page: "Per Page",
+  dynamic: "Dynamic",
+  section: "By Section",
+}
+
+function formatDefaultValue(key: keyof WizardFormValues, value: unknown): string {
+  if (typeof value === "boolean") return value ? "On" : "Off"
+  if (typeof value === "number") return `${value}px`
+  const str = String(value)
+  return VALUE_LABELS[str] ?? str
+}
+
+export function getPresetDefaultEntries(
+  defaults: PresetDefaults,
+): { label: string; value: string }[] {
+  return Object.entries(defaults)
+    .filter(([key]) => key in FIELD_LABELS)
+    .map(([key, value]) => ({
+      label: FIELD_LABELS[key as keyof WizardFormValues]!,
+      value: formatDefaultValue(key as keyof WizardFormValues, value),
+    }))
+}

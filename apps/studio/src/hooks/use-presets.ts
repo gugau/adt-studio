@@ -42,6 +42,16 @@ export function useGenerateStyleguide() {
   })
 }
 
+export function useUploadStyleguide() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (file: File) => api.uploadStyleguide(file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["styleguides"] })
+    },
+  })
+}
+
 export function useGlobalConfig() {
   return useQuery({
     queryKey: ["global-config"],

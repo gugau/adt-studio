@@ -21,9 +21,9 @@ export function Step0Preset() {
 
   function handleContinue() {
     if (!selected) return
-    const defaults = PRESET_DEFAULTS[selected] ?? {}
+    const defaults = PRESET_DEFAULTS[selected]
     for (const [key, val] of Object.entries(defaults)) {
-      form.setFieldValue(key as never, val as never)
+      form.setFieldValue(key as keyof typeof defaults, val as never)
     }
     setCurrentStep(1)
   }

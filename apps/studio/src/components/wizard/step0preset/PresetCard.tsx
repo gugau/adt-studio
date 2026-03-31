@@ -1,59 +1,50 @@
-import { useId, useState } from "react"
-import { Info, Settings, Search } from "lucide-react"
-import { Trans, useLingui } from "@lingui/react/macro"
+import { useId } from "react"
+import { Info, Settings } from "lucide-react"
+import { Trans } from "@lingui/react/macro"
 import {
   HoverCard,
   HoverCardTrigger,
   HoverCardContent,
 } from "@/components/ui/hover-card"
-import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
-import { type PresetConfig, type PresetId } from "@/components/wizard/constants"
+import {
+  type PresetConfig,
+  type PresetId,
+  getPresetDefaultEntries,
+} from "@/components/wizard/constants"
 
-function FeaturesHoverCard({ preset }: { preset: PresetConfig }) {
-  const { t } = useLingui()
-  const [search, setSearch] = useState("")
+function DefaultsHoverCard({ preset }: { preset: PresetConfig }) {
+  const entries = getPresetDefaultEntries(preset.defaults)
 
-  const filtered = preset.features.filter(
-    (f) =>
-      search === "" ||
-      f.label.toLowerCase().includes(search.toLowerCase()) ||
-      f.description.toLowerCase().includes(search.toLowerCase()),
-  )
+  if (entries.length === 0) {
+    return (
+      <HoverCardContent side="bottom" align="end" className="w-[280px] p-4">
+        <p className="text-sm text-[#737373] text-center">
+          <Trans>No preset defaults — all options start empty.</Trans>
+        </p>
+      </HoverCardContent>
+    )
+  }
 
   return (
-    <HoverCardContent side="bottom" align="end" className="w-[320px] p-0">
-      <div className="border-b border-[#e5e5e5] p-2">
-        <div className="relative flex items-center">
-          <Search className="absolute left-3 h-4 w-4 text-[#737373] pointer-events-none" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t`Search settings`}
-            className="pl-9 h-9 border-[#e5e5e5] text-sm placeholder:text-[#737373]"
-          />
-        </div>
-      </div>
-      <div className="flex flex-col max-h-[260px] overflow-y-auto">
-        {filtered.length === 0 ? (
-          <p className="px-4 py-5 text-sm text-center text-[#737373]">
-            <Trans>No settings match your search.</Trans>
-          </p>
-        ) : (
-          filtered.map((feature, idx) => (
-            <div
-              key={feature.id}
-              className={`flex flex-col gap-0.5 px-4 py-2.5 ${idx > 0 ? "border-t border-[#e5e5e5]" : ""}`}
-            >
-              <span className="text-sm font-medium text-black">
-                {feature.label}
-              </span>
-              <span className="text-xs text-[#737373] leading-[18px]">
-                {feature.description}
-              </span>
-            </div>
-          ))
-        )}
+    <HoverCardContent side="bottom" align="end" className="w-[280px] p-0">
+      <div className="flex flex-col">
+        {entries.map((entry, idx) => (
+          <div
+            key={entry.label}
+            className={cn(
+              "flex items-center justify-between px-4 py-2.5",
+              idx > 0 && "border-t border-[#e5e5e5]",
+            )}
+          >
+            <span className="text-xs font-medium text-[#737373]">
+              {entry.label}
+            </span>
+            <span className="text-xs font-semibold text-black">
+              {entry.value}
+            </span>
+          </div>
+        ))}
       </div>
     </HoverCardContent>
   )
@@ -76,6 +67,7 @@ export function PresetCard({
 }: PresetCardProps) {
   const { Icon } = preset
   const radioId = useId()
+  const defaultEntries = getPresetDefaultEntries(preset.defaults)
 
   return (
     <label
@@ -134,7 +126,7 @@ export function PresetCard({
               e.stopPropagation()
               onShowExamples(preset.id)
             }}
-            className="flex items-center gap-1.5 text-xs font-medium text-[#2b7fff] hover:underline w-fit"
+            className="flex items-center gap-1.5 text-xs font-medium text-[#2b7fff] hover:underline w-fit cursor-pointer"
           >
             <Info className="h-3.5 w-3.5 shrink-0" />
             <Trans>See examples</Trans>
@@ -148,11 +140,11 @@ export function PresetCard({
               >
                 <Settings className="h-3.5 w-3.5 text-[#0a0a0a]" />
                 <span className="text-xs font-semibold text-[#0a0a0a] leading-4">
-                  +{preset.features.length}
+                  {defaultEntries.length}
                 </span>
               </div>
             </HoverCardTrigger>
-            <FeaturesHoverCard preset={preset} />
+            <DefaultsHoverCard preset={preset} />
           </HoverCard>
         </div>
       </div>

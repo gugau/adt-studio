@@ -88,6 +88,28 @@ table{border-collapse:collapse;width:100%;margin:0.75rem 0;}th,td{border:1px sol
     return c.json({ name, html })
   })
 
+  // POST /styleguides/upload — Upload a styleguide .md file
+  app.post("/styleguides/upload", async (c) => {
+    const body = await c.req.parseBody()
+    const file = body["file"]
+    if (!(file instanceof File)) {
+      throw new HTTPException(400, { message: "Missing file" })
+    }
+    if (!file.name.endsWith(".md")) {
+      throw new HTTPException(400, { message: "Only .md files are accepted" })
+    }
+    const name = file.name.replace(/\.md$/, "")
+    const result = StyleguideName.safeParse(name)
+    if (!result.success) {
+      throw new HTTPException(400, { message: "Invalid styleguide name" })
+    }
+    const styleguidesDir = path.join(path.dirname(configPath), "assets", "styleguides")
+    fs.mkdirSync(styleguidesDir, { recursive: true })
+    const content = await file.text()
+    fs.writeFileSync(path.join(styleguidesDir, `${result.data}.md`), content, "utf-8")
+    return c.json({ name: result.data })
+  })
+
   // GET /config — Return the global base config
   app.get("/config", (c) => {
     if (!fs.existsSync(configPath)) {
