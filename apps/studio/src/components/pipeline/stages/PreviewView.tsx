@@ -32,6 +32,7 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const ranRef = useRef(false)
   const { panelOpen } = useDebugPanelState()
+  const [isSubmittingPackage, setIsSubmittingPackage] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
   const [version, setVersion] = useState(0)
@@ -117,11 +118,12 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
     }
   }, [])
 
-  const packaging = isTaskRunning("package-adt")
-
-  const prevPackagingRef = useRef(false)
+  const taskPackaging = isTaskRunning("package-adt")
+  const packaging = isSubmittingPackage || taskPackaging
+  const prevTaskPackagingRef = useRef(false)
   useEffect(() => {
-    if (prevPackagingRef.current && !packaging) {
+    if (prevTaskPackagingRef.current && !taskPackaging) {
+      setIsSubmittingPackage(false)
       const packagingTask = tasks.find((task) => task.kind === "package-adt")
       if (packagingTask?.status === "failed") {
         setError(packagingTask.error ?? "Packaging failed")
@@ -136,17 +138,24 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
         })
       }
     }
-    prevPackagingRef.current = packaging
-  }, [bookLabel, packaging, queryClient, tasks])
+    prevTaskPackagingRef.current = taskPackaging
+  }, [bookLabel, taskPackaging, queryClient, tasks])
 
   const runPackage = useCallback(async () => {
+    setIsSubmittingPackage(true)
     setError(null)
     setReady(false)
     setCurrentPreviewPage({ sectionId: null, href: null, title: null, hasImages: false, hasActivity: false, signLanguageEnabled: false })
+    let taskId: string | undefined
     try {
-      await api.packageAdt(bookLabel)
+      const result = await api.packageAdt(bookLabel)
+      taskId = result.taskId
     } catch (e) {
       setError(e instanceof Error ? e.message : "Packaging failed")
+    } finally {
+      if (!taskId) {
+        setIsSubmittingPackage(false)
+      }
     }
   }, [bookLabel])
 
