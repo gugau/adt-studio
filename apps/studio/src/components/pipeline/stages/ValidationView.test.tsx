@@ -4,20 +4,11 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { cleanup, render, screen, waitFor } from "@testing-library/react"
 
 const navigateMock = vi.fn()
-const invalidateQueriesMock = vi.fn(() => Promise.resolve())
 const packageAdtMock = vi.fn(() => Promise.resolve({ status: "completed", label: "demo-book" }))
 const useSearchMock = vi.fn(() => ({ tab: "accessibility-summary" }))
 const reviewerCatalogMock = vi.fn(() => ({ data: { enabled: false }, isLoading: false, error: null }))
 const isTaskRunningMock = vi.fn(() => false)
 const getTaskMock = vi.fn(() => undefined)
-
-vi.mock("@tanstack/react-query", async () => {
-  const actual = await vi.importActual<typeof import("@tanstack/react-query")>("@tanstack/react-query")
-  return {
-    ...actual,
-    useQueryClient: () => ({ invalidateQueries: invalidateQueriesMock }),
-  }
-})
 
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => navigateMock,
@@ -100,7 +91,7 @@ describe("ValidationView", () => {
     expect(screen.getByText("Reviewer Validation")).toBeTruthy()
   })
 
-  it("waits for package task completion before invalidating accessibility queries", async () => {
+  it("exits loading state after async package task completes", async () => {
     packageAdtMock.mockResolvedValue({ status: "submitted", label: "demo-book", taskId: "task-1" })
     getTaskMock.mockImplementation((taskId: string) => {
       if (taskId !== "task-1") return undefined
@@ -111,9 +102,8 @@ describe("ValidationView", () => {
     render(<ValidationView bookLabel="demo-book" />)
 
     await waitFor(() => expect(packageAdtMock).toHaveBeenCalledWith("demo-book"))
-    await waitFor(() => expect(invalidateQueriesMock).toHaveBeenCalled())
+    await waitFor(() => expect(screen.getByText("Accessibility Summary")).toBeTruthy())
 
-    expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["debug", "accessibility", "demo-book"] })
-    expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["debug", "versions", "demo-book", "accessibility-assessment", "book"] })
+    expect(screen.getByText(/accessibility-summary:demo-book/)).toBeTruthy()
   })
 })

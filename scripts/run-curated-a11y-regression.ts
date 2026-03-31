@@ -91,72 +91,76 @@ function countViolations(result: AssessmentResult): Map<string, number> {
 async function assessBook(label: string): Promise<BookSummary> {
   const sourceBookDir = path.join(booksRoot, label)
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'adt-a11y-'))
-  const tempBookDir = path.join(tempRoot, label)
-  fs.cpSync(sourceBookDir, tempBookDir, { recursive: true })
-
-  let before: AssessmentResult | null = null
-  let beforeError: string | undefined
-
   try {
-    before = await runAccessibilityAssessment({ bookDir: tempBookDir })
-  } catch (error) {
-    beforeError = error instanceof Error ? error.message : String(error)
-  }
+    const tempBookDir = path.join(tempRoot, label)
+    fs.cpSync(sourceBookDir, tempBookDir, { recursive: true })
 
-  const storage = createBookStorage(label, tempRoot)
-  try {
-    const config = loadBookConfig(label, tempRoot)
-    const metadataRow = storage.getLatestNodeData('metadata', 'book')
-    const metadata = metadataRow?.data as { title?: string | null; language_code?: string | null } | null
-    const language = normalizeLocale(config.editing_language ?? metadata?.language_code ?? 'en')
-    const outputLanguages = Array.from(
-      new Set(
-        (config.output_languages?.length ? config.output_languages : [language]).map((code) => normalizeLocale(code))
+    let before: AssessmentResult | null = null
+    let beforeError: string | undefined
+
+    try {
+      before = await runAccessibilityAssessment({ bookDir: tempBookDir })
+    } catch (error) {
+      beforeError = error instanceof Error ? error.message : String(error)
+    }
+
+    const storage = createBookStorage(label, tempRoot)
+    try {
+      const config = loadBookConfig(label, tempRoot)
+      const metadataRow = storage.getLatestNodeData('metadata', 'book')
+      const metadata = metadataRow?.data as { title?: string | null; language_code?: string | null } | null
+      const language = normalizeLocale(config.editing_language ?? metadata?.language_code ?? 'en')
+      const outputLanguages = Array.from(
+        new Set(
+          (config.output_languages?.length ? config.output_languages : [language]).map((code) => normalizeLocale(code))
+        )
       )
-    )
-    const title = metadata?.title ?? label
+      const title = metadata?.title ?? label
 
-    await packageAdtWeb(storage, {
-      bookDir: tempBookDir,
-      label,
-      language,
-      outputLanguages,
-      title,
-      webAssetsDir,
-      applyBodyBackground: config.apply_body_background,
-    })
+      await packageAdtWeb(storage, {
+        bookDir: tempBookDir,
+        label,
+        language,
+        outputLanguages,
+        title,
+        webAssetsDir,
+        applyBodyBackground: config.apply_body_background,
+      })
+    } finally {
+      storage.close()
+    }
+
+    try {
+      const after = await runAccessibilityAssessment({ bookDir: tempBookDir })
+      const afterCounts = countViolations(after)
+      const beforeCounts = before ? countViolations(before) : null
+
+      return {
+        label,
+        pagesBefore: before?.summary.pageCount,
+        pagesAfter: after.summary.pageCount,
+        beforeError,
+        rules: Object.fromEntries(
+          DEFAULT_TARGET_RULES.map((rule) => [
+            rule,
+            {
+              before: beforeCounts ? (beforeCounts.get(rule) ?? 0) : 'n/a',
+              after: afterCounts.get(rule) ?? 0,
+            },
+          ])
+        ),
+        topAfter: Array.from(afterCounts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 6),
+      }
+    } catch (error) {
+      return {
+        label,
+        pagesBefore: before?.summary.pageCount,
+        beforeError,
+        error: error instanceof Error ? error.message : String(error),
+      }
+    }
   } finally {
-    storage.close()
-  }
-
-  try {
-    const after = await runAccessibilityAssessment({ bookDir: tempBookDir })
-    const afterCounts = countViolations(after)
-    const beforeCounts = before ? countViolations(before) : null
-
-    return {
-      label,
-      pagesBefore: before?.summary.pageCount,
-      pagesAfter: after.summary.pageCount,
-      beforeError,
-      rules: Object.fromEntries(
-        DEFAULT_TARGET_RULES.map((rule) => [
-          rule,
-          {
-            before: beforeCounts ? (beforeCounts.get(rule) ?? 0) : 'n/a',
-            after: afterCounts.get(rule) ?? 0,
-          },
-        ])
-      ),
-      topAfter: Array.from(afterCounts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 6),
-    }
-  } catch (error) {
-    return {
-      label,
-      pagesBefore: before?.summary.pageCount,
-      beforeError,
-      error: error instanceof Error ? error.message : String(error),
-    }
+    fs.rmSync(tempRoot, { recursive: true, force: true })
   }
 }
 

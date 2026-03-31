@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { AlertCircle, Loader2, RotateCcw, ShieldCheck } from "lucide-react"
-import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate, useSearch } from "@tanstack/react-router"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -26,7 +25,6 @@ function normalizeValidationTab(value: string | undefined) {
 
 export function ValidationView({ bookLabel }: { bookLabel: string }) {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const search = useSearch({ strict: false }) as { tab?: string }
   const { stageState } = useBookRun()
@@ -43,16 +41,7 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
     return reviewerValidationEnabled ? normalized : "accessibility-summary"
   }, [reviewerValidationEnabled, search.tab])
 
-  const invalidateValidationQueries = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "step-status"] }),
-      queryClient.invalidateQueries({ queryKey: ["debug", "accessibility", bookLabel] }),
-      queryClient.invalidateQueries({ queryKey: ["debug", "versions", bookLabel, "accessibility-assessment", "book"] }),
-      queryClient.invalidateQueries({ queryKey: ["book-config", bookLabel] }),
-    ])
-  }
-
-  const runPackage = async () => {
+  const runPackage = useCallback(async () => {
     setIsSubmittingPackage(true)
     setError(null)
     let taskId: string | undefined
@@ -63,7 +52,6 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
         setPendingPackagingTaskId(taskId)
         return
       }
-      await invalidateValidationQueries()
     } catch (e) {
       setError(e instanceof Error ? e.message : t`Packaging failed`)
     } finally {
@@ -71,39 +59,29 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
         setIsSubmittingPackage(false)
       }
     }
-  }
+  }, [bookLabel, t])
 
   useEffect(() => {
     if (!storyboardDone || ranRef.current) return
     ranRef.current = true
     void runPackage()
-  }, [bookLabel, storyboardDone])
+  }, [storyboardDone, runPackage])
 
-
+  // Track task completion/failure to update local loading/error state.
+  // Query invalidation is handled by the SSE task-complete handler in use-book-run.ts.
   useEffect(() => {
-    if (!pendingPackagingTaskId) {
-      return
-    }
-
+    if (!pendingPackagingTaskId) return
     const task = getTask(pendingPackagingTaskId)
-    if (!task) {
-      return
-    }
-
+    if (!task) return
     if (task.status === "completed") {
-      void invalidateValidationQueries().finally(() => {
-        setPendingPackagingTaskId(null)
-        setIsSubmittingPackage(false)
-      })
-      return
-    }
-
-    if (task.status === "failed") {
+      setPendingPackagingTaskId(null)
+      setIsSubmittingPackage(false)
+    } else if (task.status === "failed") {
       setError(task.error ?? t`Packaging failed`)
       setPendingPackagingTaskId(null)
       setIsSubmittingPackage(false)
     }
-  }, [bookLabel, getTask, pendingPackagingTaskId, queryClient, t])
+  }, [getTask, pendingPackagingTaskId, t])
 
   if (!storyboardDone) {
     return (

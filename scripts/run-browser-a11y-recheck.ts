@@ -152,52 +152,56 @@ function summarizeBrowserRecheck(
 async function assessBook(label: string): Promise<BookSummary> {
   const sourceBookDir = path.join(booksRoot, label)
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'adt-a11y-browser-'))
-  const tempBookDir = path.join(tempRoot, label)
-  fs.cpSync(sourceBookDir, tempBookDir, { recursive: true })
-
-  const storage = createBookStorage(label, tempRoot)
   try {
-    const config = loadBookConfig(label, tempRoot)
-    const metadataRow = storage.getLatestNodeData('metadata', 'book')
-    const metadata = metadataRow?.data as { title?: string | null; language_code?: string | null } | null
-    const language = normalizeLocale(config.editing_language ?? metadata?.language_code ?? 'en')
-    const outputLanguages = Array.from(
-      new Set(
-        (config.output_languages?.length ? config.output_languages : [language]).map((code) => normalizeLocale(code))
+    const tempBookDir = path.join(tempRoot, label)
+    fs.cpSync(sourceBookDir, tempBookDir, { recursive: true })
+
+    const storage = createBookStorage(label, tempRoot)
+    try {
+      const config = loadBookConfig(label, tempRoot)
+      const metadataRow = storage.getLatestNodeData('metadata', 'book')
+      const metadata = metadataRow?.data as { title?: string | null; language_code?: string | null } | null
+      const language = normalizeLocale(config.editing_language ?? metadata?.language_code ?? 'en')
+      const outputLanguages = Array.from(
+        new Set(
+          (config.output_languages?.length ? config.output_languages : [language]).map((code) => normalizeLocale(code))
+        )
       )
-    )
-    const title = metadata?.title ?? label
+      const title = metadata?.title ?? label
 
-    await packageAdtWeb(storage, {
-      bookDir: tempBookDir,
-      label,
-      language,
-      outputLanguages,
-      title,
-      webAssetsDir,
-      applyBodyBackground: config.apply_body_background,
-    })
+      await packageAdtWeb(storage, {
+        bookDir: tempBookDir,
+        label,
+        language,
+        outputLanguages,
+        title,
+        webAssetsDir,
+        applyBodyBackground: config.apply_body_background,
+      })
+    } finally {
+      storage.close()
+    }
+
+    try {
+      const base = await runAccessibilityAssessment({ bookDir: tempBookDir })
+      const browser = await runBrowserAccessibilityAssessment({
+        bookDir: tempBookDir,
+        baseAssessment: base,
+        fullPageRuleIds,
+      })
+
+      return {
+        label,
+        ...summarizeBrowserRecheck(base, browser),
+      }
+    } catch (error) {
+      return {
+        label,
+        error: error instanceof Error ? error.message : String(error),
+      }
+    }
   } finally {
-    storage.close()
-  }
-
-  try {
-    const base = await runAccessibilityAssessment({ bookDir: tempBookDir })
-    const browser = await runBrowserAccessibilityAssessment({
-      bookDir: tempBookDir,
-      baseAssessment: base,
-      fullPageRuleIds,
-    })
-
-    return {
-      label,
-      ...summarizeBrowserRecheck(base, browser),
-    }
-  } catch (error) {
-    return {
-      label,
-      error: error instanceof Error ? error.message : String(error),
-    }
+    fs.rmSync(tempRoot, { recursive: true, force: true })
   }
 }
 
