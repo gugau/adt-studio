@@ -131,11 +131,20 @@ async function auditBrowserPage(
         await fonts.ready
       }
     })
-    // Strip opacity-0 from #content so axe-core sees fully-opaque text.
-    // The class is a fade-in animation detail, not relevant to accessibility.
+    // Force #content to full opacity before axe-core runs.  The page ships
+    // with opacity-0 and its own JS adds transition-opacity + removes the
+    // class on load — if that transition is in-flight when axe reads
+    // computed styles, intermediate opacity values cause spurious
+    // color-contrast violations.  Inline styles + transition:none
+    // guarantee the element is fully opaque regardless of timing.
     await page.evaluate(() => {
       const el = document.getElementById("content")
-      if (el) el.classList.remove("opacity-0")
+      if (el) {
+        el.classList.remove("opacity-0")
+        el.style.opacity = "1"
+        el.style.transition = "none"
+        void el.offsetHeight
+      }
     })
     await page.addScriptTag({ content: axeSource })
     const title = (await page.title()) || null
