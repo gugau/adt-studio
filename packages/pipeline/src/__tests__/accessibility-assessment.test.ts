@@ -4,8 +4,9 @@ import os from "node:os"
 import path from "node:path"
 import type { Storage, PageData } from "@adt/storage"
 import { runAccessibilityAssessment } from "../accessibility-assessment.js"
-import { isAxeInternalError } from "../accessibility-assessment-shared.js"
+import { isAxeInternalError, mergeAccessibilityResults } from "../accessibility-assessment-shared.js"
 import { packageAdtWeb } from "../package-web.js"
+import type { AccessibilityAssessmentOutput, BrowserAccessibilityAssessmentOutput } from "@adt/types"
 
 function createMockStorage(
   pages: PageData[],
@@ -77,6 +78,95 @@ describe("isAxeInternalError", () => {
       tags: [],
       nodes: [],
     })).toBe(false)
+  })
+})
+
+describe("mergeAccessibilityResults", () => {
+  const makeFinding = (id: string, failureSummary?: string) => ({
+    id,
+    impact: "moderate" as const,
+    description: "",
+    help: "",
+    helpUrl: "",
+    tags: [],
+    nodes: [{ target: ["html"], failureSummary: failureSummary ?? `Issue: ${id}` }],
+  })
+
+  const basePage = {
+    pageId: "pg001",
+    sectionId: "pg001_sec001",
+    href: "index.html",
+    pageNumber: 1,
+    title: "Page",
+    violationCount: 1,
+    incompleteCount: 2,
+    passCount: 5,
+    inapplicableCount: 0,
+    violations: [makeFinding("image-alt")],
+    incomplete: [
+      makeFinding("landmark-one-main", "Axe encountered an error; test the page for this type of problem manually"),
+      makeFinding("page-has-heading-one", "Axe encountered an error; test the page for this type of problem manually"),
+    ],
+  }
+
+  const base: AccessibilityAssessmentOutput = {
+    generatedAt: "2026-01-01T00:00:00Z",
+    tool: "axe-core",
+    runOnlyTags: ["wcag2a"],
+    disabledRules: [],
+    pages: [basePage],
+    summary: { pageCount: 1, pagesWithViolations: 1, pagesWithErrors: 0, violationCount: 1, incompleteCount: 2 },
+  }
+
+  it("replaces JSDOM incompletes with browser results for rechecked rules", () => {
+    const browser: BrowserAccessibilityAssessmentOutput = {
+      generatedAt: "2026-01-01T00:01:00Z",
+      tool: "axe-core-playwright",
+      baseGeneratedAt: base.generatedAt,
+      ruleIds: ["landmark-one-main", "page-has-heading-one", "color-contrast"],
+      pages: [{
+        ...basePage,
+        recheckedRuleIds: ["landmark-one-main", "page-has-heading-one", "color-contrast"],
+        violations: [makeFinding("color-contrast")],
+        violationCount: 1,
+        incomplete: [],
+        incompleteCount: 0,
+        passCount: 2,
+      }],
+      summary: { pageCount: 1, recheckedPageCount: 1, pagesWithViolations: 1, pagesWithErrors: 0, violationCount: 1, incompleteCount: 0 },
+    }
+
+    const merged = mergeAccessibilityResults(base, browser)
+
+    expect(merged.pages[0].violations.map((f) => f.id)).toEqual(["image-alt", "color-contrast"])
+    expect(merged.pages[0].incomplete).toEqual([])
+    expect(merged.summary.violationCount).toBe(2)
+    expect(merged.summary.incompleteCount).toBe(0)
+  })
+
+  it("preserves JSDOM incompletes for rules NOT rechecked by browser", () => {
+    const browser: BrowserAccessibilityAssessmentOutput = {
+      generatedAt: "2026-01-01T00:01:00Z",
+      tool: "axe-core-playwright",
+      baseGeneratedAt: base.generatedAt,
+      ruleIds: ["landmark-one-main"],
+      pages: [{
+        ...basePage,
+        recheckedRuleIds: ["landmark-one-main"],
+        violations: [],
+        violationCount: 0,
+        incomplete: [],
+        incompleteCount: 0,
+        passCount: 1,
+      }],
+      summary: { pageCount: 1, recheckedPageCount: 1, pagesWithViolations: 0, pagesWithErrors: 0, violationCount: 0, incompleteCount: 0 },
+    }
+
+    const merged = mergeAccessibilityResults(base, browser)
+
+    // page-has-heading-one was NOT rechecked, so its incomplete stays
+    expect(merged.pages[0].incomplete.map((f) => f.id)).toEqual(["page-has-heading-one"])
+    expect(merged.summary.incompleteCount).toBe(1)
   })
 })
 

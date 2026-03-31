@@ -1,7 +1,13 @@
 import fs from "node:fs"
 import path from "node:path"
 import { z } from "zod"
-import type { AccessibilityFinding, AccessibilityNodeResult } from "@adt/types"
+import type {
+  AccessibilityAssessmentOutput,
+  AccessibilityFinding,
+  AccessibilityNodeResult,
+  AccessibilityPageResult,
+  BrowserAccessibilityAssessmentOutput,
+} from "@adt/types"
 
 export const DEFAULT_AXE_RUN_ONLY_TAGS = [
   "wcag2a",
@@ -164,5 +170,60 @@ export function normalizeFinding(finding: unknown): AccessibilityFinding {
       ? (finding as { tags: unknown[] }).tags.filter((tag): tag is string => typeof tag === "string")
       : [],
     nodes: rawNodes.map(normalizeNode),
+  }
+}
+
+/**
+ * Merge JSDOM base assessment with a browser recheck to produce a single
+ * clean AccessibilityAssessmentOutput.  For each page that the browser
+ * rechecked, JSDOM incompletes for the rechecked rules are replaced by the
+ * browser's authoritative results.
+ */
+export function mergeAccessibilityResults(
+  base: AccessibilityAssessmentOutput,
+  browser: BrowserAccessibilityAssessmentOutput,
+): AccessibilityAssessmentOutput {
+  const browserPagesByHref = new Map(browser.pages.map((p) => [p.href, p]))
+
+  const pages: AccessibilityPageResult[] = base.pages.map((basePage) => {
+    const browserPage = browserPagesByHref.get(basePage.href)
+    if (!browserPage) return basePage
+
+    const recheckedRuleSet = new Set(browserPage.recheckedRuleIds)
+
+    // Keep JSDOM incompletes for rules the browser did NOT recheck
+    const keptIncomplete = basePage.incomplete.filter(
+      (f) => !recheckedRuleSet.has(f.id),
+    )
+
+    // Merge violations: keep all JSDOM violations plus any new browser violations
+    const existingViolationIds = new Set(basePage.violations.map((f) => f.id))
+    const newBrowserViolations = browserPage.violations.filter(
+      (f) => !existingViolationIds.has(f.id),
+    )
+    const violations = [...basePage.violations, ...newBrowserViolations]
+
+    // Browser incompletes for rechecked rules (real incompletes, not JSDOM artifacts)
+    const incomplete = [...keptIncomplete, ...browserPage.incomplete]
+
+    return {
+      ...basePage,
+      violations,
+      violationCount: violations.length,
+      incomplete,
+      incompleteCount: incomplete.length,
+    }
+  })
+
+  return {
+    ...base,
+    pages,
+    summary: {
+      pageCount: pages.length,
+      pagesWithViolations: pages.filter((p) => p.violationCount > 0).length,
+      pagesWithErrors: pages.filter((p) => Boolean(p.error)).length,
+      violationCount: pages.reduce((sum, p) => sum + p.violationCount, 0),
+      incompleteCount: pages.reduce((sum, p) => sum + p.incompleteCount, 0),
+    },
   }
 }

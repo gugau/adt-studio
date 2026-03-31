@@ -208,3 +208,4 @@ export {
   type BrowserAccessibilityRecheckTarget,
   type BuildBrowserAccessibilityRecheckPlanOptions,
 } from "./browser-accessibility-assessment.js"
+export { mergeAccessibilityResults } from "./accessibility-assessment-shared.js"

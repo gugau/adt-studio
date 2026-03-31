@@ -9,6 +9,8 @@ import {
   loadBookConfig,
   normalizeLocale,
   runAccessibilityAssessment,
+  runBrowserAccessibilityAssessment,
+  mergeAccessibilityResults,
 } from "@adt/pipeline"
 import type { TaskService } from "../services/task-service.js"
 
@@ -139,10 +141,24 @@ async function runPackaging(
       applyBodyBackground: config.apply_body_background,
     })
 
-    const accessibilityOutput = await runAccessibilityAssessment({
+    const baseAccessibility = await runAccessibilityAssessment({
       bookDir,
       config: config.accessibility_assessment,
     })
+
+    // Recheck JSDOM incompletes with a real browser (Playwright) when available.
+    // Falls back to the JSDOM-only result if Chromium is not installed.
+    let accessibilityOutput = baseAccessibility
+    try {
+      const browserAccessibility = await runBrowserAccessibilityAssessment({
+        bookDir,
+        baseAssessment: baseAccessibility,
+      })
+      accessibilityOutput = mergeAccessibilityResults(baseAccessibility, browserAccessibility)
+    } catch {
+      // Playwright/Chromium not available — use JSDOM results as-is
+    }
+
     storage.putNodeData("accessibility-assessment", "book", accessibilityOutput)
   } finally {
     storage.close()
