@@ -11,6 +11,10 @@ export interface HtmlValidationResult {
 }
 
 const EXEMPT_TAGS = new Set(["style", "script"])
+/** Matches fill-in-the-blank inline markers like [[blank:item-1]] or [[blank:item-1:hint]] */
+const BLANK_MARKER_RE = /\[\[blank:item-\d+(?::[^\]]+)?\]\]/g
+/** Matches placeholder sequences used in textbooks for blanks (3+ underscores or 3+ dots) */
+const TEXTBOOK_BLANK_RE = /_{3,}|\.{3,}/g
 const DISALLOWED_TAGS = new Set(["script", "iframe", "object", "embed"])
 const URL_ATTRS = new Set(["src", "href", "xlink:href", "formaction"])
 const NAMED_HTML_ENTITIES: Record<string, string> = {
@@ -226,13 +230,35 @@ function walkNode(
     ) {
       const actualText = normalizeText(DomUtils.getText(node))
       const expectedText = normalizeText(options.expectedTexts.get(dataId)!)
-      replacementText = options.expectedTexts.get(dataId)!
-      if (actualText !== expectedText) {
-        const similarity = textSimilarity(actualText, expectedText)
-        if (similarity < TEXT_SIMILARITY_THRESHOLD) {
-          errors.push(
-            `Text mismatch for data-id "${dataId}": expected "${expectedText.slice(0, 80)}" but got "${actualText.slice(0, 80)}"`
-          )
+
+      // Check if the element contains [[blank:item-N]] markers (fill-in-the-blank
+      // inline blanks). When present, strip them before comparing similarity so we
+      // don't flag the blank placeholders as a text mismatch. Also skip the
+      // replacement step to preserve the markers in the output HTML.
+      const hasBlankMarkers = BLANK_MARKER_RE.test(actualText)
+
+      if (hasBlankMarkers) {
+        // Compare without the blank markers in actual and underscore placeholders in expected
+        const strippedActual = normalizeText(actualText.replace(BLANK_MARKER_RE, ""))
+        const strippedExpected = normalizeText(expectedText.replace(TEXTBOOK_BLANK_RE, ""))
+        if (strippedActual !== strippedExpected) {
+          const similarity = textSimilarity(strippedActual, strippedExpected)
+          if (similarity < TEXT_SIMILARITY_THRESHOLD) {
+            errors.push(
+              `Text mismatch for data-id "${dataId}": expected "${strippedExpected.slice(0, 80)}" but got "${strippedActual.slice(0, 80)}"`
+            )
+          }
+        }
+        // Do NOT set replacementText — preserve the blank markers in the HTML
+      } else {
+        replacementText = options.expectedTexts.get(dataId)!
+        if (actualText !== expectedText) {
+          const similarity = textSimilarity(actualText, expectedText)
+          if (similarity < TEXT_SIMILARITY_THRESHOLD) {
+            errors.push(
+              `Text mismatch for data-id "${dataId}": expected "${expectedText.slice(0, 80)}" but got "${actualText.slice(0, 80)}"`
+            )
+          }
         }
       }
     }
