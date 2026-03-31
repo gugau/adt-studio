@@ -28,6 +28,7 @@ import {
   loadBookConfig,
   buildPreferredImageAltMap,
   rewriteImageUrls,
+  convertLatexToMathml,
 } from "@adt/pipeline"
 
 // ---------------------------------------------------------------------------
@@ -422,6 +423,16 @@ export function createAdtPreviewRoutes(
     return c.body(fs.readFileSync(resolved))
   })
 
+  // /convert-math — Convert LaTeX in HTML to MathML (used by storyboard preview)
+  app.post("/books/:label/adt-preview/convert-math", async (c) => {
+    resolveBook(c.req.param("label")) // validate label
+    const body = await c.req.json()
+    const html = typeof body?.html === "string" ? body.html : ""
+    if (!html) return c.json({ html: "" })
+    const converted = convertLatexToMathml(html)
+    return c.json({ html: converted })
+  })
+
   // /content/pages.json — All rendered pages
   app.get("/books/:label/adt-preview/content/pages.json", (c) => {
     const pages = withStorage(c.req.param("label"), (storage) => buildPagesManifest(storage))
@@ -701,14 +712,16 @@ export function createAdtPreviewRoutes(
         preferredImageAltMap,
       )
 
+      const previewHasMath = /(?:\\\(|\\\)|\\\[|\\\]|\$[^$]+\$|\\frac|\\sqrt|\\sum|\\int|\\text\{|\\hat\{|\\circ)/.test(previewSectionHtml)
+
       const html = renderPageHtml({
-        content: previewSectionHtml,
+        content: convertLatexToMathml(previewSectionHtml),
         language,
         sectionId: pageId,
         pageTitle: title,
         pageIndex: manifestIndex >= 0 ? manifestIndex + 1 : 1,
         activityAnswers: renderedSection.activityAnswers,
-        hasMath: false,
+        hasMath: previewHasMath,
         bundleVersion: "1",
         applyBodyBackground,
         embed,

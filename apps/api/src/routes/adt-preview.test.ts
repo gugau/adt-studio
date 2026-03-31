@@ -152,6 +152,39 @@ describe("ADT preview routes", () => {
     expect(html).toContain('data-id="hero-image-duplicate" src="/api/books/preview-book/images/hero-image-duplicate" alt=""')
   })
 
+  it("preserves preview image-alt cleanup while converting latex to mathml", async () => {
+    const storage = createBookStorage(label, tmpDir)
+    try {
+      storage.putNodeData("web-rendering", `${label}_p1`, {
+        sections: [
+          {
+            sectionIndex: 0,
+            sectionType: "content",
+            reasoning: "ok",
+            html: `<section data-section-id="${label}_p1_sec001"><p>First section body</p></section>`,
+          },
+          {
+            sectionIndex: 1,
+            sectionType: "content",
+            reasoning: "ok",
+            html: `<section role="article" data-section-id="${label}_p1_sec002"><img data-id="hero-image" src="/api/books/${label}/images/hero-image"><p>The area is $\pi r^2$</p></section>`,
+          },
+        ],
+      })
+    } finally {
+      storage.close()
+    }
+
+    const app = createAdtPreviewRoutes(tmpDir, webAssetsDir, path.resolve(process.cwd(), "config.yaml"))
+    const res = await app.request(`/books/${label}/adt-preview/${label}_p1_sec002.html`)
+
+    expect(res.status).toBe(200)
+    const html = await res.text()
+    expect(html).not.toContain('role="article"')
+    expect(html).toContain('alt="Preview hero image"')
+    expect(html).toContain('<math')
+  })
+
   it("includes quiz pages anchored to pages without rendered sections in pages.json", async () => {
     const storage = createBookStorage(label, tmpDir)
     try {
