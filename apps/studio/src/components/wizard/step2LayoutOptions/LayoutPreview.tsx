@@ -1,5 +1,5 @@
 /* eslint-disable lingui/no-unlocalized-strings */
-import { Sparkles, Layers, LayoutTemplate } from "lucide-react"
+import { Sparkles, LayoutTemplate } from "lucide-react"
 import type { RenderStrategyId } from "@/components/wizard/constants"
 
 // ─── Per-strategy preview width ──────────────────────────────────────────────
@@ -20,86 +20,243 @@ export function getPreviewWidth(strategy: string): number {
 const LOREM =
   "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."
 
-// ─── Dynamic (LLM) — informational ─────────────────────────────────────────
+// ─── Dynamic (LLM) — textbook-style page mockup (The Water Cycle) ──────────
 
 function DynamicPreview() {
   return (
-    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 overflow-y-auto px-4 py-6 @sm:gap-6 @sm:px-8 @sm:py-10 @md:px-12 @md:py-16">
-      <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-4 @sm:gap-6">
-        <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-violet-50 @sm:size-20">
-          <Sparkles className="size-8 text-[#2b7fff] @sm:size-10" strokeWidth={1.5} />
+    <div className="flex h-full min-h-0 flex-col overflow-y-auto px-3 py-4 text-[#0a0a0a] @min-[420px]:px-5 @min-[420px]:py-6 @min-[540px]:px-8 @min-[540px]:py-8 @min-[620px]:px-10 @min-[620px]:py-10">
+      {/* Chapter heading */}
+      <div className="mb-2 flex items-center gap-2 border-b-2 border-[#2b7fff]/30 pb-2 @min-[540px]:mb-3 @min-[540px]:pb-3">
+        <div className="flex size-5 shrink-0 items-center justify-center rounded bg-[#2b7fff] text-[8px] font-bold text-white @min-[540px]:size-6 @min-[540px]:text-[10px]">
+          5
         </div>
-        <div className="flex flex-col items-center gap-2 text-center @sm:gap-3">
-          <h3 className="text-balance text-lg font-semibold text-[#0a0a0a] @sm:text-xl">
-            AI-Generated Layout
-          </h3>
-          <p className="max-w-sm text-pretty text-sm leading-relaxed text-[#737373]">
-            The AI analyzes each page's content — text blocks, images, headings,
-            tables — and generates a completely new HTML layout from scratch,
-            optimized for readability on screen.
+        <h2 className="text-sm font-bold tracking-tight @min-[420px]:text-base @min-[540px]:text-lg @min-[620px]:text-xl">
+          The Water Cycle
+        </h2>
+      </div>
+
+      {/* Intro paragraph */}
+      <p className="mb-2 text-[8px] leading-[12px] text-[#525252] @min-[420px]:text-[9px] @min-[420px]:leading-[13px] @min-[540px]:mb-3 @min-[540px]:text-[10px] @min-[540px]:leading-[14px] @min-[620px]:text-xs @min-[620px]:leading-4">
+        Water is always moving. It travels from the oceans into the sky, falls as
+        rain or snow, flows through rivers, and eventually returns to the sea. This
+        continuous journey is called the water cycle.
+      </p>
+
+      {/* Diagram + caption row */}
+      <div className="mb-2 flex items-start gap-2 @min-[540px]:mb-3 @min-[540px]:gap-3">
+        <div className="relative flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-md @min-[420px]:h-20 @min-[420px]:w-28 @min-[540px]:h-24 @min-[540px]:w-36">
+          {/* Water cycle diagram */}
+          <div className="absolute inset-0 bg-gradient-to-b from-sky-200 via-sky-100 to-blue-100" />
+          <svg className="absolute inset-0 h-full w-full" viewBox="0 0 144 96" fill="none" preserveAspectRatio="none" aria-hidden>
+            {/* Ocean */}
+            <rect x="0" y="72" width="144" height="24" fill="#3b82f6" opacity="0.35" />
+            <path d="M0 72 Q18 68 36 72 Q54 76 72 72 Q90 68 108 72 Q126 76 144 72" stroke="#3b82f6" strokeWidth="1" fill="none" opacity="0.5" />
+            {/* Mountain/land */}
+            <polygon points="100,40 70,72 130,72" fill="#65a30d" opacity="0.4" />
+            <polygon points="110,50 90,72 130,72" fill="#4d7c0f" opacity="0.3" />
+            {/* Evaporation arrows */}
+            <path d="M30 70 L30 48" stroke="#60a5fa" strokeWidth="1.5" strokeDasharray="2 2" opacity="0.7" />
+            <path d="M30 48 L27 52 M30 48 L33 52" stroke="#60a5fa" strokeWidth="1.5" opacity="0.7" />
+            <path d="M50 68 L45 45" stroke="#60a5fa" strokeWidth="1.5" strokeDasharray="2 2" opacity="0.6" />
+            {/* Cloud */}
+            <ellipse cx="60" cy="24" rx="22" ry="10" fill="#94a3b8" opacity="0.5" />
+            <ellipse cx="50" cy="22" rx="14" ry="8" fill="#cbd5e1" opacity="0.6" />
+            <ellipse cx="72" cy="22" rx="12" ry="7" fill="#cbd5e1" opacity="0.5" />
+            {/* Rain drops */}
+            <line x1="55" y1="34" x2="52" y2="44" stroke="#3b82f6" strokeWidth="1.2" opacity="0.6" />
+            <line x1="62" y1="34" x2="59" y2="46" stroke="#3b82f6" strokeWidth="1.2" opacity="0.5" />
+            <line x1="69" y1="34" x2="66" y2="42" stroke="#3b82f6" strokeWidth="1.2" opacity="0.6" />
+            {/* River flowing down */}
+            <path d="M105 52 Q100 60 90 66 Q80 70 65 72" stroke="#3b82f6" strokeWidth="1.5" fill="none" opacity="0.5" />
+            {/* Sun */}
+            <circle cx="130" cy="16" r="8" fill="#fbbf24" opacity="0.6" />
+          </svg>
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <p className="text-[7px] font-medium italic text-[#737373] @min-[420px]:text-[8px] @min-[540px]:text-[9px]">
+            Figure 5.1 — The water cycle: evaporation from oceans, condensation
+            into clouds, precipitation as rain, and runoff back to the sea.
+          </p>
+          <p className="text-[8px] leading-[12px] text-[#525252] @min-[420px]:text-[9px] @min-[420px]:leading-[13px] @min-[540px]:text-[10px] @min-[540px]:leading-[14px] @min-[620px]:text-xs @min-[620px]:leading-4">
+            The sun heats water in oceans, lakes, and rivers, turning it into
+            vapor that rises into the atmosphere. As the vapor cools at higher
+            altitudes, it condenses into tiny droplets that form clouds.
           </p>
         </div>
-        <div className="flex w-full max-w-sm flex-col items-center gap-2 rounded-lg border border-[#e5e5e5] bg-[#fafafa] px-4 py-3 @sm:px-5">
-          <span className="text-xs font-medium uppercase tracking-wider text-[#a3a3a3]">
-            How it works
+      </div>
+
+      {/* Exercise box */}
+      <div className="mb-2 rounded-lg border border-[#2b7fff]/25 bg-[#eff6ff] px-2.5 py-2 @min-[420px]:px-3 @min-[540px]:mb-3 @min-[540px]:px-4 @min-[540px]:py-3">
+        <div className="mb-1 flex items-center gap-1.5">
+          <Sparkles className="h-3 w-3 text-[#2b7fff] @min-[540px]:h-3.5 @min-[540px]:w-3.5" strokeWidth={2} />
+          <span className="text-[9px] font-bold uppercase tracking-wide text-[#2b7fff] @min-[420px]:text-[10px] @min-[540px]:text-[11px]">
+            Activity 5.1
           </span>
-          <ol className="flex w-full flex-col gap-1.5 text-xs leading-relaxed text-[#525252]">
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-[#2b7fff] text-[10px] font-bold text-white">1</span>
-              Content is extracted from the PDF page
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-[#2b7fff] text-[10px] font-bold text-white">2</span>
-              AI designs a fresh layout using Tailwind CSS
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-[#2b7fff] text-[10px] font-bold text-white">3</span>
-              Visual refinement loop compares output to original
-            </li>
-          </ol>
         </div>
+        <p className="mb-1.5 text-[8px] leading-[11px] text-[#525252] @min-[420px]:text-[9px] @min-[420px]:leading-[12px] @min-[540px]:text-[10px] @min-[540px]:leading-[13px]">
+          Match each stage of the water cycle to its definition:
+        </p>
+        <div className="flex flex-col gap-1">
+          {["Evaporation", "Condensation", "Precipitation"].map((label) => (
+            <div key={label} className="flex items-center gap-2">
+              <div className="h-3.5 w-3.5 shrink-0 rounded border border-[#2b7fff]/30 bg-white @min-[540px]:h-4 @min-[540px]:w-4" />
+              <span className="text-[8px] text-[#525252] @min-[420px]:text-[9px] @min-[540px]:text-[10px]">
+                {label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Did-you-know callout */}
+      <div className="rounded-lg border border-amber-300/40 bg-amber-50/60 px-2.5 py-2 @min-[420px]:px-3 @min-[540px]:px-4 @min-[540px]:py-2.5">
+        <span className="text-[9px] font-bold text-amber-700 @min-[420px]:text-[10px] @min-[540px]:text-[11px]">
+          Did you know?
+        </span>
+        <p className="mt-0.5 text-[8px] leading-[11px] text-amber-900/70 @min-[420px]:text-[9px] @min-[420px]:leading-[12px] @min-[540px]:text-[10px] @min-[540px]:leading-[13px]">
+          A single water molecule can take over 3,000 years to complete one full
+          trip through the water cycle — from ocean to sky to river and back again.
+        </p>
       </div>
     </div>
   )
 }
 
-// ─── Dynamic Overlay (LLM-Overlay) — informational ─────────────────────────
+// ─── Dynamic Overlay (LLM-Overlay) — illustrated page with text overlay (Ocean Life) ─
 
 function OverlayPreview() {
   return (
-    <div className="flex min-h-0 flex-1 flex-col justify-center items-center gap-4 overflow-y-auto px-4 py-6 @sm:gap-6 @sm:px-8 @sm:py-10 @md:px-12 @md:py-16">
-      <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-4 @sm:gap-6">
-        <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 @sm:size-20">
-          <Layers className="size-8 text-amber-500 @sm:size-10" strokeWidth={1.5} />
-        </div>
-        <div className="flex flex-col items-center gap-2 text-center @sm:gap-3">
-          <h3 className="text-balance text-lg font-semibold text-[#0a0a0a] @sm:text-xl">
-            Original Page + Text Overlay
-          </h3>
-          <p className="max-w-sm text-pretty text-sm leading-relaxed text-[#737373]">
-            The original PDF page is kept as a background image. The AI positions
-            extracted text on top of it, making content selectable and accessible
-            while preserving the original visual design.
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
+      {/* Original page background — underwater coral reef scene */}
+      <div className="absolute inset-0" aria-hidden>
+        {/* Deep ocean gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0ea5e9] via-[#0284c7] to-[#0c4a6e]" />
+        {/* Light rays from surface */}
+        <div className="absolute left-[20%] top-0 h-[60%] w-[8%] origin-top rotate-[8deg] bg-gradient-to-b from-white/15 to-transparent" />
+        <div className="absolute left-[40%] top-0 h-[50%] w-[5%] origin-top -rotate-[3deg] bg-gradient-to-b from-white/10 to-transparent" />
+        <div className="absolute right-[30%] top-0 h-[55%] w-[6%] origin-top rotate-[5deg] bg-gradient-to-b from-white/12 to-transparent" />
+
+        <svg className="absolute bottom-0 h-full w-full" viewBox="0 0 650 812" fill="none" preserveAspectRatio="none">
+          {/* Sandy ocean floor */}
+          <rect x="0" y="700" width="650" height="112" fill="#d4a76a" opacity="0.3" />
+          <ellipse cx="200" cy="740" rx="80" ry="8" fill="#c2956b" opacity="0.2" />
+          <ellipse cx="480" cy="750" rx="60" ry="6" fill="#c2956b" opacity="0.15" />
+
+          {/* Coral formations */}
+          {/* Left coral cluster — branching coral */}
+          <path d="M80 720 Q80 660 65 620 Q55 590 50 560" stroke="#f472b6" strokeWidth="8" fill="none" opacity="0.5" strokeLinecap="round" />
+          <path d="M80 720 Q90 670 100 640 Q115 610 120 580" stroke="#fb7185" strokeWidth="7" fill="none" opacity="0.45" strokeLinecap="round" />
+          <path d="M80 720 Q75 680 60 660" stroke="#ec4899" strokeWidth="6" fill="none" opacity="0.4" strokeLinecap="round" />
+          <circle cx="50" cy="555" r="10" fill="#f472b6" opacity="0.5" />
+          <circle cx="120" cy="575" r="12" fill="#fb7185" opacity="0.45" />
+          <circle cx="60" cy="655" r="8" fill="#ec4899" opacity="0.4" />
+
+          {/* Center coral — brain/dome coral */}
+          <ellipse cx="325" cy="710" rx="55" ry="30" fill="#a78bfa" opacity="0.35" />
+          <ellipse cx="325" cy="705" rx="45" ry="22" fill="#c4b5fd" opacity="0.25" />
+          <path d="M290 700 Q310 690 325 700 Q340 710 360 700" stroke="#7c3aed" strokeWidth="1.5" fill="none" opacity="0.3" />
+          <path d="M295 710 Q315 700 330 710 Q345 720 355 710" stroke="#7c3aed" strokeWidth="1.5" fill="none" opacity="0.25" />
+
+          {/* Right coral — sea fan */}
+          <path d="M540 730 Q530 670 520 620 Q510 570 530 530" stroke="#f97316" strokeWidth="3" fill="none" opacity="0.4" />
+          <path d="M540 730 Q550 680 560 640 Q570 600 555 560" stroke="#fb923c" strokeWidth="3" fill="none" opacity="0.35" />
+          <path d="M525 600 Q540 580 555 590" stroke="#f97316" strokeWidth="2" fill="none" opacity="0.3" />
+          <path d="M518 640 Q535 625 558 635" stroke="#fb923c" strokeWidth="2" fill="none" opacity="0.3" />
+          <path d="M522 570 Q538 555 548 568" stroke="#f97316" strokeWidth="2" fill="none" opacity="0.25" />
+
+          {/* Seaweed */}
+          <path d="M160 740 Q155 690 165 650 Q170 620 160 590" stroke="#22c55e" strokeWidth="5" fill="none" opacity="0.35" strokeLinecap="round" />
+          <path d="M170 740 Q175 700 168 670 Q160 640 172 610" stroke="#16a34a" strokeWidth="4" fill="none" opacity="0.3" strokeLinecap="round" />
+          <path d="M450 735 Q445 700 455 670 Q460 645 450 620" stroke="#22c55e" strokeWidth="4" fill="none" opacity="0.3" strokeLinecap="round" />
+
+          {/* Fish */}
+          {/* Orange fish — right side */}
+          <ellipse cx="480" cy="340" rx="18" ry="10" fill="#fb923c" opacity="0.6" />
+          <polygon points="498,340 512,332 512,348" fill="#f97316" opacity="0.5" />
+          <circle cx="472" cy="337" r="2" fill="#1e293b" opacity="0.6" />
+          {/* Blue fish — left side */}
+          <ellipse cx="140" cy="420" rx="15" ry="8" fill="#60a5fa" opacity="0.55" />
+          <polygon points="125,420 112,413 112,427" fill="#3b82f6" opacity="0.45" />
+          <circle cx="148" cy="418" r="1.5" fill="#1e293b" opacity="0.55" />
+          {/* Small fish school — upper center */}
+          <ellipse cx="300" cy="240" rx="8" ry="4" fill="#fbbf24" opacity="0.4" />
+          <ellipse cx="320" cy="235" rx="8" ry="4" fill="#fbbf24" opacity="0.35" />
+          <ellipse cx="310" cy="250" rx="8" ry="4" fill="#fbbf24" opacity="0.38" />
+          <ellipse cx="335" cy="245" rx="8" ry="4" fill="#fbbf24" opacity="0.32" />
+
+          {/* Bubbles */}
+          <circle cx="200" cy="500" r="4" fill="white" opacity="0.15" />
+          <circle cx="210" cy="470" r="3" fill="white" opacity="0.12" />
+          <circle cx="195" cy="440" r="2.5" fill="white" opacity="0.1" />
+          <circle cx="420" cy="480" r="3.5" fill="white" opacity="0.13" />
+          <circle cx="430" cy="450" r="2" fill="white" opacity="0.1" />
+
+          {/* Sea turtle — center */}
+          <ellipse cx="380" cy="460" rx="22" ry="16" fill="#16a34a" opacity="0.4" />
+          <ellipse cx="380" cy="460" rx="18" ry="12" fill="#22c55e" opacity="0.3" />
+          <circle cx="397" cy="454" r="4" fill="#15803d" opacity="0.45" />
+          <circle cx="399" cy="453" r="1.2" fill="#1e293b" opacity="0.4" />
+          {/* Flippers */}
+          <path d="M365 468 Q350 478 345 475" stroke="#16a34a" strokeWidth="4" fill="none" opacity="0.35" strokeLinecap="round" />
+          <path d="M395 468 Q410 478 415 475" stroke="#16a34a" strokeWidth="4" fill="none" opacity="0.35" strokeLinecap="round" />
+        </svg>
+      </div>
+
+      {/* Text overlay layer — positioned over the illustration */}
+      <div className="relative z-10 flex h-full flex-col px-4 py-5 @min-[420px]:px-6 @min-[420px]:py-6 @min-[540px]:px-8 @min-[540px]:py-8 @min-[620px]:px-10 @min-[620px]:py-10">
+        {/* Title area — top of page */}
+        <div className="mb-3 @min-[540px]:mb-4">
+          <h2 className="text-base font-extrabold tracking-tight text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)] @min-[420px]:text-lg @min-[540px]:text-xl @min-[620px]:text-2xl">
+            Life in the Coral Reef
+          </h2>
+          <p className="mt-1 text-[9px] font-semibold leading-snug text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)] @min-[420px]:text-[10px] @min-[540px]:text-[11px] @min-[620px]:text-xs">
+            Chapter 7 — Marine Biology
           </p>
         </div>
-        <div className="flex w-full max-w-sm flex-col items-center gap-2 rounded-lg border border-[#e5e5e5] bg-[#fafafa] px-4 py-3 @sm:px-5">
-          <span className="text-xs font-medium uppercase tracking-wider text-[#a3a3a3]">
-            How it works
-          </span>
-          <ol className="flex w-full flex-col gap-1.5 text-xs leading-relaxed text-[#525252]">
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">1</span>
-              Original page rendered as full background
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">2</span>
-              AI positions text in their original locations
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">3</span>
-              Text becomes selectable, searchable, and accessible
-            </li>
-          </ol>
+
+        {/* Flowing body text — wrapping around the reef */}
+        <div className="flex flex-1 flex-col gap-2 @min-[540px]:gap-3">
+          {/* Top text block */}
+          <div className="rounded-md bg-white/75 px-2.5 py-1.5 shadow-sm backdrop-blur-sm @min-[540px]:px-3 @min-[540px]:py-2">
+            <p className="text-[8px] leading-[12px] text-[#1a1a1a] @min-[420px]:text-[9px] @min-[420px]:leading-[13px] @min-[540px]:text-[10px] @min-[540px]:leading-[14px] @min-[620px]:text-[11px] @min-[620px]:leading-4">
+              Coral reefs cover less than 1% of the ocean floor, yet they support
+              roughly 25% of all marine species. Often called the "rainforests of
+              the sea," these underwater ecosystems are built by tiny animals called
+              coral polyps.
+            </p>
+          </div>
+
+          {/* Side text blocks — flanking the central reef illustration */}
+          <div className="flex gap-2 @min-[540px]:gap-3">
+            <div className="flex-1 rounded-md bg-white/75 px-2.5 py-1.5 shadow-sm backdrop-blur-sm @min-[540px]:px-3 @min-[540px]:py-2">
+              <p className="text-[8px] leading-[12px] text-[#1a1a1a] @min-[420px]:text-[9px] @min-[420px]:leading-[13px] @min-[540px]:text-[10px] @min-[540px]:leading-[14px] @min-[620px]:text-[11px] @min-[620px]:leading-4">
+                Each polyp secretes a hard calcium carbonate skeleton. Over hundreds
+                of years, millions of these skeletons build up into the massive reef
+                structures we see today.
+              </p>
+            </div>
+            {/* Gap where the reef illustration shows through */}
+            <div className="w-[30%] shrink-0 @min-[420px]:w-[35%] @min-[540px]:w-[40%]" />
+            <div className="flex-1 rounded-md bg-white/75 px-2.5 py-1.5 shadow-sm backdrop-blur-sm @min-[540px]:px-3 @min-[540px]:py-2">
+              <p className="text-[8px] leading-[12px] text-[#1a1a1a] @min-[420px]:text-[9px] @min-[420px]:leading-[13px] @min-[540px]:text-[10px] @min-[540px]:leading-[14px] @min-[620px]:text-[11px] @min-[620px]:leading-4">
+                Clownfish, sea turtles, and parrotfish are just a few of the
+                thousands of species that depend on reefs for food, shelter, and
+                nursery grounds.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex-1" />
+
+          {/* Bottom text block */}
+          <div className="rounded-md bg-white/75 px-2.5 py-1.5 shadow-sm backdrop-blur-sm @min-[540px]:px-3 @min-[540px]:py-2">
+            <p className="text-[8px] leading-[12px] text-[#1a1a1a] @min-[420px]:text-[9px] @min-[420px]:leading-[13px] @min-[540px]:text-[10px] @min-[540px]:leading-[14px] @min-[620px]:text-[11px] @min-[620px]:leading-4">
+              Rising ocean temperatures cause coral bleaching — when stressed corals
+              expel the colorful algae living inside them and turn white. Without
+              these algae, corals slowly starve. Protecting reefs means reducing
+              pollution, overfishing, and greenhouse gas emissions.
+            </p>
+          </div>
         </div>
       </div>
     </div>
