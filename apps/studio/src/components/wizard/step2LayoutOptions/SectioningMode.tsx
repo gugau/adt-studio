@@ -2,7 +2,7 @@
 import { useStore } from "@tanstack/react-form"
 import { Label } from "@/components/ui/label"
 import { useWizardForm } from "@/components/wizard/wizardForm"
-import { InfoCarousel, type CarouselSlide } from "@/components/wizard/InfoCarousel"
+import { InfoCarousel, type CarouselSlide } from "@/components/wizard/shared/InfoCarousel"
 import { SectioningModeSelect } from "./SectioningModeSelect"
 
 function PageDiagram() {

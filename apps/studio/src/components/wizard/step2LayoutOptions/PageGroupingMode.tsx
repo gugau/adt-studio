@@ -3,7 +3,7 @@ import { useStore } from "@tanstack/react-form"
 import { Label } from "@/components/ui/label"
 import { SegmentedControl } from "@/components/ui/segmented-control"
 import { useWizardForm } from "@/components/wizard/wizardForm"
-import { InfoCarousel, type CarouselSlide } from "@/components/wizard/InfoCarousel"
+import { InfoCarousel, type CarouselSlide } from "@/components/wizard/shared/InfoCarousel"
 
 const GROUPING_OPTIONS: { value: "spread" | "single"; label: string }[] = [
   { value: "spread", label: "Spread" },
