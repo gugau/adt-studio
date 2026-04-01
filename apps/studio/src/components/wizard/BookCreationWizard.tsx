@@ -129,10 +129,10 @@ function PreviewContainer({
   if (variant === "dialog") {
     return (
       <div
-        className="mx-auto h-auto max-h-[min(812px,calc(100dvh-9rem))] w-[var(--preview-w)] max-w-full shrink-0 overflow-hidden [aspect-ratio:var(--preview-ar)] transition-[width] duration-500"
+        className="mx-auto w-[var(--preview-w)] max-w-full shrink-0 [aspect-ratio:var(--preview-ar)] transition-[width] duration-500"
         style={previewShellVars(width)}
       >
-        <div className="flex h-full min-h-0 w-full flex-col">{children}</div>
+        {children}
       </div>
     )
   }
@@ -194,11 +194,11 @@ export function BookCreationWizard() {
   }
   const previewWidth = currentStep === 2 ? getPreviewWidth(renderStrategy) : 650
 
-  function renderPreviewContent() {
+  function renderPreviewContent({mobileMode}: {mobileMode: boolean} = {mobileMode: false}) {
     if (currentStep === 1) return <PdfCoverPreview file={file} width={650} height={812} />
     if (currentStep === 2) return <LayoutPreview strategy={renderStrategy} />
     if (currentStep === 3)
-      return <ImageProcessingPreviewPane focus={previewFocus} />
+      return <ImageProcessingPreviewPane focus={previewFocus} mobile={mobileMode} />
     if (currentStep === 4)
       return <LanguagesPreviewPane editingLanguage={editingLanguage} outputLanguages={outputLanguages} />
     if (currentStep === 5)
@@ -214,7 +214,7 @@ export function BookCreationWizard() {
 
   const previewDialog = (
     <PreviewContainer width={previewWidth} variant="dialog">
-      {renderPreviewContent()}
+      {renderPreviewContent({mobileMode: true})}
     </PreviewContainer>
   )
 
@@ -257,13 +257,13 @@ export function BookCreationWizard() {
         </main>
       </div>
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="flex max-h-[92dvh] w-full max-w-[min(95vw,calc(100vw-1rem))] flex-col overflow-hidden border-0 bg-[#f5f5f5] p-4 sm:p-6 rounded-lg">
+        <DialogContent className="flex max-h-[96dvh] w-full max-w-[min(97vw,calc(100vw-0.5rem))] flex-col overflow-hidden border-0 bg-[#f5f5f5] p-3 sm:p-5 rounded-lg">
           <DialogTitle className="sr-only">Book Preview</DialogTitle>
           <DialogDescription className="sr-only">
             This is a preview of the options you have selected for your book, each option affects
             the preview in a different way.
           </DialogDescription>
-          <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto">
+          <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto h-full">
             {previewDialog}
           </div>
         </DialogContent>

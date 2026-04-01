@@ -1,6 +1,23 @@
-import type { ReactNode } from "react"
+/* eslint-disable lingui/no-unlocalized-strings */
+import { useState, useCallback, useEffect, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
+  type CarouselApi,
+} from "@/components/ui/carousel"
 import type { ImageProcessingPreviewFocus } from "./imageProcessingPreviewTypes"
+
+/** Mobile carousel skips the idle placeholder */
+const MOBILE_FOCUSES: ImageProcessingPreviewFocus[] = [
+  "cropping",
+  "segmentation",
+  "minSide",
+  "filterSize",
+]
 
 function PreviewShell({
   label,
@@ -23,7 +40,7 @@ function PreviewShell({
           {label}
         </p>
       </div>
-      <div className="min-h-0 flex-1 overflow-auto bg-[#fafafa]">{children}</div>
+      <div className="min-h-0 flex-1 overflow-auto bg-[#fafafa] h-full flex">{children}</div>
     </div>
   )
 }
@@ -86,7 +103,7 @@ function CroppingIllustration() {
       </div>
 
       <div className="flex flex-col items-center gap-1.5 text-muted-foreground" aria-hidden>
-        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="none">
+        <svg className="h-5 w-5 rotate-90 sm:rotate-0" viewBox="0 0 20 20" fill="none">
           <path d="M4 10h12M12 6l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         <span className="text-[9px] font-semibold uppercase tracking-wider">LLM crop</span>
@@ -110,7 +127,7 @@ function CroppingIllustration() {
   )
 }
 
-/** Composite collage split into separate assets. */
+/** Composite collage split into separate assets. */  
 function SegmentationIllustration() {
   return (
     <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-4 px-4 py-6">
@@ -147,7 +164,7 @@ function SegmentationIllustration() {
     </div>
   )
 }
-
+/** Images smaller than your minimum dimension skip segmentation — saving cost and avoiding false splits on icons. */
 function MinSideIllustration() {
   return (
     <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-6 px-6 py-8">
@@ -183,6 +200,7 @@ function MinSideIllustration() {
   )
 }
 
+/** Images outside the min/max size range are excluded from processing — filtering out tiny icons and oversized scans. */
 function FilterSizeIllustration() {
   return (
     <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-6 px-6 py-8">
@@ -231,18 +249,100 @@ const LABELS: Record<ImageProcessingPreviewFocus, string> = {
   filterSize: "Image filter size",
 }
 
+const ILLUSTRATIONS: Record<ImageProcessingPreviewFocus, React.FC> = {
+  idle: IdleIllustration,
+  cropping: CroppingIllustration,
+  segmentation: SegmentationIllustration,
+  minSide: MinSideIllustration,
+  filterSize: FilterSizeIllustration,
+}
+
+function MobileCarousel() {
+  const [api, setApi] = useState<CarouselApi>()
+  const [current, setCurrent] = useState(0)
+
+  const onSelect = useCallback(() => {
+    if (!api) return
+    setCurrent(api.selectedScrollSnap())
+  }, [api])
+
+  useEffect(() => {
+    if (!api) return
+    onSelect()
+    api.on("select", onSelect)
+    return () => {
+      api.off("select", onSelect)
+    }
+  }, [api, onSelect])
+
+  const currentFocus = MOBILE_FOCUSES[current]
+
+  return (
+    <PreviewShell label={LABELS[currentFocus]} className="min-h-[600px]">
+      <Carousel
+        setApi={setApi}
+        opts={{ loop: true }}
+        className="flex min-h-0 flex-1 flex-col w-full h-auto"
+      >
+        <CarouselContent className="m-0 min-h-0 flex-1 w-full h-auto">
+          {MOBILE_FOCUSES.map((f) => {
+            const Illustration = ILLUSTRATIONS[f]
+            return (
+              <CarouselItem
+                key={f}
+                className="flex min-h-[600px] h-full items-center justify-center p-0"
+              >
+                <Illustration />
+              </CarouselItem>
+            )
+          })}
+        </CarouselContent>
+
+        <div className="flex items-center justify-center gap-3 border-t border-border/60 px-4 py-2.5">
+          <CarouselPrevious className="static translate-y-0 size-7 rounded-full" />
+
+          <div className="flex items-center gap-1.5">
+            {MOBILE_FOCUSES.map((f, i) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => api?.scrollTo(i)}
+                className={cn(
+                  "h-1.5 rounded-full transition-all duration-300",
+                  i === current
+                    ? "w-4 bg-primary"
+                    : "w-1.5 bg-muted-foreground/25 hover:bg-muted-foreground/40",
+                )}
+                aria-label={LABELS[f]}
+              />
+            ))}
+          </div>
+
+          <CarouselNext className="static translate-y-0 size-7 rounded-full" />
+        </div>
+      </Carousel>
+    </PreviewShell>
+  )
+}
+
 export function ImageProcessingPreviewPane({
   focus,
+  mobile = false,
 }: {
   focus: ImageProcessingPreviewFocus
+  mobile?: boolean
 }) {
+  if (mobile) {
+    return <MobileCarousel />
+  }
+
+  const Illustration = ILLUSTRATIONS[focus]
+
   return (
     <PreviewShell label={LABELS[focus]} key={focus}>
-      {focus === "idle" ? <IdleIllustration /> : null}
-      {focus === "cropping" ? <CroppingIllustration /> : null}
-      {focus === "segmentation" ? <SegmentationIllustration /> : null}
-      {focus === "minSide" ? <MinSideIllustration /> : null}
-      {focus === "filterSize" ? <FilterSizeIllustration /> : null}
+      <div className="flex min-h-0 flex-1 items-center justify-center">
+        <Illustration />
+      </div>
     </PreviewShell>
   )
 }
