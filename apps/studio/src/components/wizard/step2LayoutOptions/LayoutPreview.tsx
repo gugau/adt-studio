@@ -1,5 +1,5 @@
 /* eslint-disable lingui/no-unlocalized-strings */
-import { Sparkles, Layers } from "lucide-react"
+import { Sparkles, Layers, LayoutTemplate } from "lucide-react"
 import type { RenderStrategyId } from "@/components/wizard/constants"
 
 // ─── Per-strategy preview width ──────────────────────────────────────────────
@@ -181,9 +181,24 @@ export function LayoutPreview({ strategy }: { strategy: string }) {
       {Preview ? (
         <Preview />
       ) : (
-        <span className="flex min-h-[12rem] w-full items-center justify-center px-4 py-8 text-center text-sm text-[#a3a3a3]">
-          Select a layout to preview
-        </span>
+        <>
+          <div className="shrink-0 border-b border-border/80 bg-muted/25 px-3 py-2">
+            <p className="text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Render Strategy
+            </p>
+          </div>
+          <div className="flex min-h-[280px] flex-1 flex-col items-center justify-center gap-6 px-6 py-8">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-dashed border-border bg-white text-muted-foreground">
+              <LayoutTemplate className="h-7 w-7" />
+            </div>
+            <div className="max-w-[280px] text-center">
+              <p className="text-base font-semibold text-foreground">Render Strategy</p>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Select a render strategy to preview how your book pages will be laid out.
+              </p>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )
