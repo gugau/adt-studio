@@ -63,38 +63,48 @@ function IdleIllustration() {
 /** Before: noisy margins; after: tight crop around the illustration. */
 function CroppingIllustration() {
   return (
-    <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-5 px-4 py-6 @sm:flex-row @sm:gap-6 @sm:px-6">
-      <div className="flex flex-col items-center gap-2">
-        <span className="text-xs font-medium text-muted-foreground">Before cropping</span>
-        <div className="relative rounded-lg border-2 border-dashed border-amber-400/60 bg-amber-50/50 p-3">
-          <div className="absolute left-1 top-1 text-[8px] font-mono text-amber-700/80">margin</div>
-          <div className="absolute bottom-1 right-1 text-[8px] font-mono text-amber-700/80">noise</div>
-          <div
-            className="relative h-24 w-28 rounded bg-gradient-to-br from-sky-300 via-amber-200 to-emerald-400"
-            aria-hidden
-          />
-          <div className="absolute -right-1 top-1/2 h-8 w-3 -translate-y-1/2 rounded-sm bg-red-300/90 text-[6px] leading-tight text-red-950">
-            txt
+    <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-6 px-4 py-6 @sm:flex-row @sm:gap-8 @sm:px-6">
+      <div className="flex flex-col items-center gap-2.5">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Before</span>
+        <div className="relative rounded-xl border-2 border-dashed border-amber-300/70 bg-amber-50/40 p-4 transition-shadow">
+          <div className="absolute left-1.5 top-1.5 flex items-center gap-0.5 rounded bg-amber-100/80 px-1 py-px">
+            <svg className="h-2.5 w-2.5 text-amber-600/70" viewBox="0 0 16 16" fill="none" aria-hidden>
+              <path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <span className="text-[7px] font-medium text-amber-600/80">margin</span>
+          </div>
+          <div className="relative h-[100px] w-[120px] overflow-hidden rounded-md bg-gradient-to-br from-sky-300 via-amber-200 to-emerald-400 shadow-inner" aria-hidden>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(255,255,255,0.3),transparent_60%)]" />
+          </div>
+          <div className="absolute -right-1.5 top-1/2 flex -translate-y-1/2 items-center rounded-sm bg-red-400/80 px-1 py-0.5 shadow-sm">
+            <span className="text-[6px] font-bold text-white">ABC</span>
+          </div>
+          <div className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 rounded bg-amber-100/80 px-1 py-px">
+            <span className="text-[7px] font-medium text-amber-600/80">noise</span>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-1 text-muted-foreground" aria-hidden>
-        <span className="text-2xl">→</span>
-        <span className="text-[10px] font-medium uppercase">LLM crop</span>
+      <div className="flex flex-col items-center gap-1.5 text-muted-foreground" aria-hidden>
+        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="none">
+          <path d="M4 10h12M12 6l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span className="text-[9px] font-semibold uppercase tracking-wider">LLM crop</span>
       </div>
 
-      <div className="flex flex-col items-center gap-2">
-        <span className="text-xs font-medium text-muted-foreground">After cropping</span>
-        <div className="rounded-lg border-2 border-primary/40 bg-white p-0.5 shadow-sm ring-2 ring-primary/20">
-          <div
-            className="h-24 w-28 rounded bg-gradient-to-br from-sky-300 via-amber-200 to-emerald-400"
-            aria-hidden
-          />
+      <div className="flex flex-col items-center gap-2.5">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">After</span>
+        <div className="rounded-xl border-2 border-emerald-400/50 bg-white p-1 shadow-md ring-1 ring-emerald-400/20 transition-shadow">
+          <div className="relative h-[100px] w-[120px] overflow-hidden rounded-lg bg-gradient-to-br from-sky-300 via-amber-200 to-emerald-400" aria-hidden>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(255,255,255,0.3),transparent_60%)]" />
+          </div>
         </div>
-        <span className="max-w-[140px] text-center text-[10px] leading-snug text-muted-foreground">
-          Stray edge text and excess whitespace removed
-        </span>
+        <div className="flex items-center gap-1">
+          <svg className="h-3 w-3 text-emerald-500" viewBox="0 0 16 16" fill="none" aria-hidden>
+            <path d="M3 8.5l3.5 3.5L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="text-[10px] font-medium text-emerald-600">Clean & focused</span>
+        </div>
       </div>
     </div>
   )
