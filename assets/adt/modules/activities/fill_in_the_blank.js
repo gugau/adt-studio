@@ -39,8 +39,8 @@ export const hydrateFitbSentences = (container) => {
                 /\[\[blank:item-(\d+)(?::([^\]]+))?\]\]/g,
                 (_match, itemNum, hint) => {
                     ariaCounter++;
-                    const valueAttr = hint
-                        ? ` value="${hint.replace(/"/g, '&quot;')}"`
+                    const placeholderAttr = hint
+                        ? ` placeholder="${hint.replace(/"/g, '&quot;')}"`
                         : '';
                     const blankLabel = totalBlanks > 1
                         ? translateText('fitb-blank-label-n-of-m', { n: ariaCounter, m: totalBlanks })
@@ -49,16 +49,19 @@ export const hydrateFitbSentences = (container) => {
                     const label = blankLabel.startsWith('fitb-')
                         ? (totalBlanks > 1 ? `Blank ${ariaCounter} of ${totalBlanks}` : 'Blank')
                         : blankLabel;
+                    // Size the input to roughly fit the expected answer.
+                    // Use the hint length when available, otherwise a sensible default.
+                    const charWidth = hint ? Math.max(hint.length + 2, 6) : 8;
                     return `<input type="text" `
                         + `id="fitb-input-${itemNum}" `
-                        + `class="fitb-inline-input inline-block mx-1 px-2 py-1 border-b-2 border-gray-400 bg-transparent text-center focus:border-blue-500 focus:outline-none" `
-                        + `style="min-width: 80px; max-width: 100%; width: auto;" `
-                        + `aria-label="${label}" `
+                        + `class="fitb-inline-input inline-block mx-1 px-1 py-0.5 border-b-2 border-gray-400 bg-transparent text-center focus:border-blue-500 focus:outline-none" `
+                        + `style="width: ${charWidth}ch; min-width: 4ch; max-width: 100%;" `
+                        + `aria-label="${label.replace(/"/g, '&quot;')}" `
                         + `aria-invalid="false" `
                         + `autocomplete="off" `
                         + `data-aria-id="aria-${ariaCounter}-0-0" `
                         + `data-activity-item="item-${itemNum}" `
-                        + `tabindex="0"${valueAttr} />`;
+                        + `tabindex="0"${placeholderAttr} />`;
                 }
             );
 

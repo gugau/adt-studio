@@ -29,7 +29,7 @@ Rules for `[[blank:item-N]]` markers:
 - The marker replaces the missing word — do NOT leave the original word in the text
 - Markers are placed inside elements that have a `data-id` attribute
 - At runtime, JavaScript will replace these markers with interactive `<input>` elements
-- **Hint/placeholder text**: If the textbook already shows the answer or a hint for a blank (e.g., the word is visible but dotted/underlined), use `[[blank:item-N:hint text]]`. The hint appears as placeholder text inside the input field. Example: `[[blank:item-1:estrella]]` renders an input pre-filled with gray "estrella" placeholder text. Only add a hint when the textbook explicitly provides the answer or a clue next to the blank.
+- **Hint/placeholder text**: If the input text contains `[placeholder:word]` markers (e.g., `[placeholder:afloja]`), these indicate the textbook showed the answer as a visible hint in the blank. Convert each one to `[[blank:item-N:word]]` — for example, `[placeholder:afloja]` becomes `[[blank:item-3:afloja]]`. The hint appears as gray placeholder text inside the input field. You may also use `[[blank:item-N:hint]]` when the textbook visibly shows the answer or a hint even without a `[placeholder:]` marker (e.g., the word is dotted/underlined).
 
 ```html
 <div class="flex flex-col gap-4 mb-6 max-w-2xl mx-auto">

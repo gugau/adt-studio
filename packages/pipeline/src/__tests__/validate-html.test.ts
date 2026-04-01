@@ -875,6 +875,45 @@ describe("validateSectionHtml", () => {
     )
   })
 
+  it("reports error when [[blank:item-N]] markers lack fitb-sentence class", () => {
+    const html = `
+      <section>
+        <p data-id="tx001">The [[blank:item-1]] is a type of star.</p>
+      </section>
+    `
+    const expectedTexts = new Map([["tx001", "The ___ is a type of star."]])
+    const result = validateSectionHtml(
+      html,
+      ["tx001"],
+      [],
+      undefined,
+      { expectedTexts }
+    )
+    expect(result.valid).toBe(false)
+    expect(result.errors).toContainEqual(
+      expect.stringContaining('missing the "fitb-sentence" class')
+    )
+  })
+
+  it("accepts [[blank:item-N]] markers when fitb-sentence is on an ancestor", () => {
+    const html = `
+      <section>
+        <div class="fitb-sentence">
+          <span data-id="tx001">The [[blank:item-1]] is a type of star.</span>
+        </div>
+      </section>
+    `
+    const expectedTexts = new Map([["tx001", "The ___ is a type of star."]])
+    const result = validateSectionHtml(
+      html,
+      ["tx001"],
+      [],
+      undefined,
+      { expectedTexts }
+    )
+    expect(result.valid).toBe(true)
+  })
+
   it("does not substitute expected text on image data-ids", () => {
     const html = `
       <section>
