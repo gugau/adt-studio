@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Loader2 } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
 
@@ -82,16 +82,6 @@ export function ImageCropDialog({ imageSrc, onApply, onClose }: ImageCropDialogP
   const scale = displaySize && imageNatural ? displaySize.w / imageNatural.w : 1
   // Keep ref in sync so mouse handlers always see the latest value
   scaleRef.current = scale
-
-  const toDisplay = useCallback(
-    (r: CropRegion) => ({
-      left: r.cropLeft * scale,
-      top: r.cropTop * scale,
-      width: (r.cropRight - r.cropLeft) * scale,
-      height: (r.cropBottom - r.cropTop) * scale,
-    }),
-    [scale]
-  )
 
   const getEdge = (e: React.MouseEvent, rect: DOMRect): string => {
     const x = e.clientX - rect.left
@@ -239,7 +229,10 @@ export function ImageCropDialog({ imageSrc, onApply, onClose }: ImageCropDialogP
     try {
       const blob = await getCroppedImage(loadedImageRef.current, region)
       await onApply(blob)
-    } finally {
+      // Don't setApplying(false) here — onApply closes the dialog (unmounts this component).
+      // Calling setState on an unmounting component causes React DOM reconciliation errors.
+    } catch {
+      // On error the dialog stays open — reset so user can retry
       setApplying(false)
     }
   }
