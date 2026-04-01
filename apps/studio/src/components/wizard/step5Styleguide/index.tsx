@@ -1,9 +1,10 @@
 /* eslint-disable lingui/no-unlocalized-strings */
-import { useRef } from "react"
+import { useMemo, useRef, useState } from "react"
 import { useStore } from "@tanstack/react-form"
 import { Palette, Check, Upload } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import { useStyleguides, useUploadStyleguide } from "@/hooks/use-presets"
 
@@ -51,8 +52,17 @@ export function Step5() {
   const styleguide = useStore(form.store, (s) => s.values.styleguide)
   const { data: styleguidesData, isLoading } = useStyleguides()
   const available = styleguidesData?.styleguides ?? []
+  const [search, setSearch] = useState("")
   const uploadMutation = useUploadStyleguide()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const allStyleguides = available
+  const showSearch = allStyleguides.length > 8
+  const visibleStyleguides = useMemo(() => {
+    if (!showSearch) return allStyleguides
+    const query = search.trim().toLowerCase()
+    if (!query) return allStyleguides
+    return allStyleguides.filter((sg) => sg.toLowerCase().includes(query))
+  }, [allStyleguides, search, showSearch])
 
   function select(name: string) {
     form.setFieldValue("styleguide", styleguide === name ? "" : name)
@@ -83,24 +93,36 @@ export function Step5() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <StyleguideOption
-          name="None"
-          selected={styleguide === ""}
-          onSelect={() => form.setFieldValue("styleguide", "")}
-        />
-
-        {isLoading && (
-          <p className="px-4 py-3 text-sm text-muted-foreground">Loading style guides...</p>
+        {showSearch && (
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search style guides..."
+          />
         )}
 
-        {available.map((sg) => (
-          <StyleguideOption
-            key={sg}
-            name={sg}
-            selected={styleguide === sg}
-            onSelect={() => select(sg)}
-          />
-        ))}
+        <div className="max-h-96 overflow-y-auto pr-1">
+          <div className="flex flex-col gap-2">
+            <StyleguideOption
+              name="None"
+              selected={styleguide === ""}
+              onSelect={() => form.setFieldValue("styleguide", "")}
+            />
+
+            {isLoading && (
+              <p className="px-4 py-3 text-sm text-muted-foreground">Loading style guides...</p>
+            )}
+
+            {visibleStyleguides.map((sg) => (
+              <StyleguideOption
+                key={sg}
+                name={sg}
+                selected={styleguide === sg}
+                onSelect={() => select(sg)}
+              />
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">
