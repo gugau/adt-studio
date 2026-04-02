@@ -1,5 +1,6 @@
-/* eslint-disable lingui/no-unlocalized-strings */
 import { Sparkles, LayoutTemplate } from "lucide-react"
+import { msg } from "@lingui/core/macro"
+import { Trans, useLingui } from "@lingui/react/macro"
 import type { RenderStrategyId } from "@/components/wizard/constants"
 
 // ─── Per-strategy preview width ──────────────────────────────────────────────
@@ -17,12 +18,17 @@ export function getPreviewWidth(strategy: string): number {
 
 // ─── Shared placeholder primitives ──────────────────────────────────────────
 
+/* eslint-disable lingui/no-unlocalized-strings */
 const LOREM =
   "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."
+
+const DYNAMIC_PREVIEW_STAGE_LABELS = [msg`Evaporation`, msg`Condensation`, msg`Precipitation`] as const
 
 // ─── Dynamic (LLM) — textbook-style page mockup (The Water Cycle) ──────────
 
 function DynamicPreview() {
+  const { i18n } = useLingui()
+
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto px-3 py-4 text-[#0a0a0a] @min-[420px]:px-5 @min-[420px]:py-6 @min-[540px]:px-8 @min-[540px]:py-8 @min-[620px]:px-10 @min-[620px]:py-10">
       {/* Chapter heading */}
@@ -31,15 +37,17 @@ function DynamicPreview() {
           5
         </div>
         <h2 className="text-sm font-bold tracking-tight @min-[420px]:text-base @min-[540px]:text-lg @min-[620px]:text-xl">
-          The Water Cycle
+          <Trans>The Water Cycle</Trans>
         </h2>
       </div>
 
       {/* Intro paragraph */}
       <p className="mb-2 text-[8px] leading-[12px] text-[#525252] @min-[420px]:text-[9px] @min-[420px]:leading-[13px] @min-[540px]:mb-3 @min-[540px]:text-[10px] @min-[540px]:leading-[14px] @min-[620px]:text-xs @min-[620px]:leading-4">
-        Water is always moving. It travels from the oceans into the sky, falls as
-        rain or snow, flows through rivers, and eventually returns to the sea. This
-        continuous journey is called the water cycle.
+        <Trans>
+          Water is always moving. It travels from the oceans into the sky, falls as
+          rain or snow, flows through rivers, and eventually returns to the sea. This
+          continuous journey is called the water cycle.
+        </Trans>
       </p>
 
       {/* Diagram + caption row */}
@@ -74,13 +82,17 @@ function DynamicPreview() {
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <p className="text-[7px] font-medium italic text-[#737373] @min-[420px]:text-[8px] @min-[540px]:text-[9px]">
-            Figure 5.1 — The water cycle: evaporation from oceans, condensation
-            into clouds, precipitation as rain, and runoff back to the sea.
+            <Trans>
+              Figure 5.1 - The water cycle: evaporation from oceans, condensation
+              into clouds, precipitation as rain, and runoff back to the sea.
+            </Trans>
           </p>
           <p className="text-[8px] leading-[12px] text-[#525252] @min-[420px]:text-[9px] @min-[420px]:leading-[13px] @min-[540px]:text-[10px] @min-[540px]:leading-[14px] @min-[620px]:text-xs @min-[620px]:leading-4">
-            The sun heats water in oceans, lakes, and rivers, turning it into
-            vapor that rises into the atmosphere. As the vapor cools at higher
-            altitudes, it condenses into tiny droplets that form clouds.
+            <Trans>
+              The sun heats water in oceans, lakes, and rivers, turning it into
+              vapor that rises into the atmosphere. As the vapor cools at higher
+              altitudes, it condenses into tiny droplets that form clouds.
+            </Trans>
           </p>
         </div>
       </div>
@@ -90,18 +102,18 @@ function DynamicPreview() {
         <div className="mb-1 flex items-center gap-1.5">
           <Sparkles className="h-3 w-3 text-[#2b7fff] @min-[540px]:h-3.5 @min-[540px]:w-3.5" strokeWidth={2} />
           <span className="text-[9px] font-bold uppercase tracking-wide text-[#2b7fff] @min-[420px]:text-[10px] @min-[540px]:text-[11px]">
-            Activity 5.1
+            <Trans>Activity 5.1</Trans>
           </span>
         </div>
         <p className="mb-1.5 text-[8px] leading-[11px] text-[#525252] @min-[420px]:text-[9px] @min-[420px]:leading-[12px] @min-[540px]:text-[10px] @min-[540px]:leading-[13px]">
-          Match each stage of the water cycle to its definition:
+          <Trans>Match each stage of the water cycle to its definition:</Trans>
         </p>
         <div className="flex flex-col gap-1">
-          {["Evaporation", "Condensation", "Precipitation"].map((label) => (
-            <div key={label} className="flex items-center gap-2">
+          {DYNAMIC_PREVIEW_STAGE_LABELS.map((labelMsg, idx) => (
+            <div key={idx} className="flex items-center gap-2">
               <div className="h-3.5 w-3.5 shrink-0 rounded border border-[#2b7fff]/30 bg-white @min-[540px]:h-4 @min-[540px]:w-4" />
               <span className="text-[8px] text-[#525252] @min-[420px]:text-[9px] @min-[540px]:text-[10px]">
-                {label}
+                {i18n._(labelMsg)}
               </span>
             </div>
           ))}
@@ -111,11 +123,13 @@ function DynamicPreview() {
       {/* Did-you-know callout */}
       <div className="rounded-lg border border-amber-300/40 bg-amber-50/60 px-2.5 py-2 @min-[420px]:px-3 @min-[540px]:px-4 @min-[540px]:py-2.5">
         <span className="text-[9px] font-bold text-amber-700 @min-[420px]:text-[10px] @min-[540px]:text-[11px]">
-          Did you know?
+          <Trans>Did you know?</Trans>
         </span>
         <p className="mt-0.5 text-[8px] leading-[11px] text-amber-900/70 @min-[420px]:text-[9px] @min-[420px]:leading-[12px] @min-[540px]:text-[10px] @min-[540px]:leading-[13px]">
-          A single water molecule can take over 3,000 years to complete one full
-          trip through the water cycle — from ocean to sky to river and back again.
+          <Trans>
+            A single water molecule can take over 3,000 years to complete one full
+            trip through the water cycle - from ocean to sky to river and back again.
+          </Trans>
         </p>
       </div>
     </div>
@@ -207,10 +221,10 @@ function OverlayPreview() {
         {/* Title area — top of page */}
         <div className="mb-3 @min-[540px]:mb-4">
           <h2 className="text-base font-extrabold tracking-tight text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)] @min-[420px]:text-lg @min-[540px]:text-xl @min-[620px]:text-2xl">
-            Life in the Coral Reef
+            <Trans>Life in the Coral Reef</Trans>
           </h2>
           <p className="mt-1 text-[9px] font-semibold leading-snug text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)] @min-[420px]:text-[10px] @min-[540px]:text-[11px] @min-[620px]:text-xs">
-            Chapter 7 — Marine Biology
+            <Trans>Chapter 7 - Marine Biology</Trans>
           </p>
         </div>
 
@@ -219,10 +233,12 @@ function OverlayPreview() {
           {/* Top text block */}
           <div className="rounded-md bg-white/75 px-2.5 py-1.5 shadow-sm backdrop-blur-sm @min-[540px]:px-3 @min-[540px]:py-2">
             <p className="text-[8px] leading-[12px] text-[#1a1a1a] @min-[420px]:text-[9px] @min-[420px]:leading-[13px] @min-[540px]:text-[10px] @min-[540px]:leading-[14px] @min-[620px]:text-[11px] @min-[620px]:leading-4">
-              Coral reefs cover less than 1% of the ocean floor, yet they support
-              roughly 25% of all marine species. Often called the "rainforests of
-              the sea," these underwater ecosystems are built by tiny animals called
-              coral polyps.
+              <Trans>
+                Coral reefs cover less than 1% of the ocean floor, yet they support
+                roughly 25% of all marine species. Often called the &apos;rainforests of
+                the sea,&apos; these underwater ecosystems are built by tiny animals called
+                coral polyps.
+              </Trans>
             </p>
           </div>
 
@@ -230,18 +246,22 @@ function OverlayPreview() {
           <div className="flex gap-2 @min-[540px]:gap-3">
             <div className="flex-1 rounded-md bg-white/75 px-2.5 py-1.5 shadow-sm backdrop-blur-sm @min-[540px]:px-3 @min-[540px]:py-2">
               <p className="text-[8px] leading-[12px] text-[#1a1a1a] @min-[420px]:text-[9px] @min-[420px]:leading-[13px] @min-[540px]:text-[10px] @min-[540px]:leading-[14px] @min-[620px]:text-[11px] @min-[620px]:leading-4">
-                Each polyp secretes a hard calcium carbonate skeleton. Over hundreds
-                of years, millions of these skeletons build up into the massive reef
-                structures we see today.
+                <Trans>
+                  Each polyp secretes a hard calcium carbonate skeleton. Over hundreds
+                  of years, millions of these skeletons build up into the massive reef
+                  structures we see today.
+                </Trans>
               </p>
             </div>
             {/* Gap where the reef illustration shows through */}
             <div className="w-[30%] shrink-0 @min-[420px]:w-[35%] @min-[540px]:w-[40%]" />
             <div className="flex-1 rounded-md bg-white/75 px-2.5 py-1.5 shadow-sm backdrop-blur-sm @min-[540px]:px-3 @min-[540px]:py-2">
               <p className="text-[8px] leading-[12px] text-[#1a1a1a] @min-[420px]:text-[9px] @min-[420px]:leading-[13px] @min-[540px]:text-[10px] @min-[540px]:leading-[14px] @min-[620px]:text-[11px] @min-[620px]:leading-4">
-                Clownfish, sea turtles, and parrotfish are just a few of the
-                thousands of species that depend on reefs for food, shelter, and
-                nursery grounds.
+                <Trans>
+                  Clownfish, sea turtles, and parrotfish are just a few of the
+                  thousands of species that depend on reefs for food, shelter, and
+                  nursery grounds.
+                </Trans>
               </p>
             </div>
           </div>
@@ -251,10 +271,12 @@ function OverlayPreview() {
           {/* Bottom text block */}
           <div className="rounded-md bg-white/75 px-2.5 py-1.5 shadow-sm backdrop-blur-sm @min-[540px]:px-3 @min-[540px]:py-2">
             <p className="text-[8px] leading-[12px] text-[#1a1a1a] @min-[420px]:text-[9px] @min-[420px]:leading-[13px] @min-[540px]:text-[10px] @min-[540px]:leading-[14px] @min-[620px]:text-[11px] @min-[620px]:leading-4">
-              Rising ocean temperatures cause coral bleaching — when stressed corals
-              expel the colorful algae living inside them and turn white. Without
-              these algae, corals slowly starve. Protecting reefs means reducing
-              pollution, overfishing, and greenhouse gas emissions.
+              <Trans>
+                Rising ocean temperatures cause coral bleaching - when stressed corals
+                expel the colorful algae living inside them and turn white. Without
+                these algae, corals slowly starve. Protecting reefs means reducing
+                pollution, overfishing, and greenhouse gas emissions.
+              </Trans>
             </p>
           </div>
         </div>
@@ -266,33 +288,35 @@ function OverlayPreview() {
 // ─── Two Column (always two columns — scale type + margins when container is narrow)
 
 function TwoColumnPreview() {
+  const body = LOREM
+
   return (
     <div className="flex h-full min-h-0 flex-row gap-2 px-2 py-4 text-[#0a0a0a] @min-[420px]:gap-3 @min-[420px]:px-3 @min-[420px]:py-6 @min-[540px]:gap-4 @min-[540px]:px-5 @min-[620px]:px-[30px] @min-[620px]:py-[66px]">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-1 overflow-y-hidden px-1 @min-[420px]:gap-1.5 @min-[420px]:px-2 @min-[540px]:gap-2 @min-[620px]:gap-[10px] @min-[620px]:px-4">
         <p className="text-center text-sm font-semibold leading-tight tracking-[-0.6px] @min-[420px]:text-base @min-[420px]:leading-snug @min-[540px]:text-lg @min-[540px]:leading-7 @min-[620px]:text-2xl @min-[620px]:leading-8">
-          Chapter One
+          <Trans>Chapter One</Trans>
         </p>
         <p className="text-[8px] leading-[11px] text-justify @min-[420px]:text-[9px] @min-[420px]:leading-[12px] @min-[540px]:text-[10px] @min-[540px]:leading-[13px] @min-[620px]:text-xs @min-[620px]:leading-[14px]">
-          {LOREM}
+          {body}
         </p>
         <p className="text-[8px] leading-[11px] text-justify @min-[420px]:text-[9px] @min-[420px]:leading-[12px] @min-[540px]:text-[10px] @min-[540px]:leading-[13px] @min-[620px]:text-xs @min-[620px]:leading-[14px]">
-          {LOREM}
+          {body}
         </p>
         <p className="text-[8px] leading-[11px] text-justify @min-[420px]:text-[9px] @min-[420px]:leading-[12px] @min-[540px]:text-[10px] @min-[540px]:leading-[13px] @min-[620px]:text-xs @min-[620px]:leading-[14px]">
-          {LOREM}
+          {body}
         </p>
         <p className="text-[8px] leading-[11px] text-justify @min-[420px]:text-[9px] @min-[420px]:leading-[12px] @min-[540px]:text-[10px] @min-[540px]:leading-[13px] @min-[620px]:text-xs @min-[620px]:leading-[14px]">
-          {LOREM}
+          {body}
         </p>
         <p className="min-h-0 flex-1 overflow-hidden text-[8px] leading-[11px] text-justify @min-[420px]:text-[9px] @min-[420px]:leading-[12px] @min-[540px]:text-[10px] @min-[540px]:leading-[13px] @min-[620px]:text-xs @min-[620px]:leading-[14px]">
-          {LOREM}
+          {body}
         </p>
       </div>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-1 overflow-y-auto px-1 text-[8px] leading-[11px] text-justify @min-[420px]:gap-1.5 @min-[420px]:px-2 @min-[420px]:text-[9px] @min-[420px]:leading-[12px] @min-[540px]:gap-2 @min-[540px]:text-[10px] @min-[540px]:leading-[13px] @min-[620px]:gap-[10px] @min-[620px]:px-4 @min-[620px]:text-xs @min-[620px]:leading-[14px]">
-        <p>{LOREM}</p>
-        <p>{LOREM}</p>
-        <p>{LOREM}</p>
-        <p>{LOREM}</p>
+        <p>{body}</p>
+        <p>{body}</p>
+        <p>{body}</p>
+        <p>{body}</p>
       </div>
     </div>
   )
@@ -312,9 +336,10 @@ function TwoColumnStoryPreview() {
       </div>
       <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center px-1 @min-[420px]:px-2 @min-[620px]:px-4">
         <p className="text-pretty text-center text-[11px] font-semibold leading-snug tracking-[0.3px] text-[#0a0a0a] @min-[380px]:text-xs @min-[380px]:leading-snug @min-[480px]:text-sm @min-[480px]:leading-normal @min-[540px]:text-base @min-[540px]:leading-7 @min-[620px]:text-2xl @min-[620px]:leading-9 @min-[760px]:text-[30px] @min-[760px]:leading-10">
-          This is Pip! He is a happy caramel dog with a very wiggly tail. Pip
-          loves the green grass, the bright yellow sun, and making new friends
-          in his garden.
+          <Trans>
+            This is Pip! He is a happy caramel dog with a very wiggly tail. Pip loves the green
+            grass, the bright yellow sun, and making new friends in his garden.
+          </Trans>
         </p>
       </div>
     </div>
@@ -341,7 +366,7 @@ export function LayoutPreview({ strategy }: { strategy: string }) {
         <>
           <div className="shrink-0 border-b border-border/80 bg-muted/25 px-3 py-2">
             <p className="text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Render Strategy
+              <Trans>Render Strategy</Trans>
             </p>
           </div>
           <div className="flex min-h-[280px] flex-1 flex-col items-center justify-center gap-6 px-6 py-8">
@@ -349,9 +374,13 @@ export function LayoutPreview({ strategy }: { strategy: string }) {
               <LayoutTemplate className="h-7 w-7" />
             </div>
             <div className="max-w-[280px] text-center">
-              <p className="text-base font-semibold text-foreground">Render Strategy</p>
+              <p className="text-base font-semibold text-foreground">
+                <Trans>Render Strategy</Trans>
+              </p>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Select a render strategy to preview how your book pages will be laid out.
+                <Trans>
+                  Select a render strategy to preview how your book pages will be laid out.
+                </Trans>
               </p>
             </div>
           </div>

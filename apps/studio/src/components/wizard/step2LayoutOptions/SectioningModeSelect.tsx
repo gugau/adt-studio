@@ -1,3 +1,6 @@
+import { useMemo } from "react"
+import { msg } from "@lingui/core/macro"
+import { useLingui } from "@lingui/react/macro"
 import {
   Select,
   SelectContent,
@@ -42,15 +45,13 @@ function SectionIcon({ className }: { className?: string }) {
   )
 }
 
-const SECTIONING_OPTIONS: {
-  value: SectioningModeId
-  label: string
-  Icon: (props: { className?: string }) => React.JSX.Element
-}[] = [
-  { value: "page", label: "Page", Icon: PageIcon },
-  { value: "dynamic", label: "Dynamic", Icon: DynamicIcon },
-  { value: "section", label: "Section", Icon: SectionIcon },
-]
+const SECTIONING_SELECT_PLACEHOLDER = msg`Select section mode`
+
+const SECTIONING_OPTIONS_META = [
+  { value: "page" as const, labelMsg: msg`Page`, Icon: PageIcon },
+  { value: "dynamic" as const, labelMsg: msg`Dynamic`, Icon: DynamicIcon },
+  { value: "section" as const, labelMsg: msg`Section`, Icon: SectionIcon },
+] as const
 
 export type SectioningModeSelectProps = {
   id: string
@@ -59,7 +60,19 @@ export type SectioningModeSelectProps = {
 }
 
 export function SectioningModeSelect({ id, value, onValueChange }: SectioningModeSelectProps) {
-  const selected = SECTIONING_OPTIONS.find((o) => o.value === value)
+  const { i18n } = useLingui()
+
+  const options = useMemo(
+    () =>
+      SECTIONING_OPTIONS_META.map(({ value: v, labelMsg, Icon }) => ({
+        value: v,
+        label: i18n._(labelMsg),
+        Icon,
+      })),
+    [i18n],
+  )
+
+  const selected = options.find((o) => o.value === value)
 
   return (
     <Select
@@ -67,7 +80,7 @@ export function SectioningModeSelect({ id, value, onValueChange }: SectioningMod
       onValueChange={(v) => onValueChange(v as SectioningModeId)}
     >
       <SelectTrigger id={id} className="w-full">
-        <SelectValue placeholder="Select section mode">
+        <SelectValue placeholder={i18n._(SECTIONING_SELECT_PLACEHOLDER)}>
           {selected && (
             <span className="flex items-center gap-2">
               <selected.Icon className="size-4 shrink-0 text-muted-foreground" />
@@ -77,7 +90,7 @@ export function SectioningModeSelect({ id, value, onValueChange }: SectioningMod
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
-        {SECTIONING_OPTIONS.map((o) => (
+        {options.map((o) => (
           <SelectItem key={o.value} value={o.value}>
             <span className="flex items-center gap-2">
               <o.Icon className="size-4 shrink-0 text-muted-foreground" />

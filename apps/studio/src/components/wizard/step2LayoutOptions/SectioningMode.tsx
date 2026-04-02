@@ -1,9 +1,22 @@
-
+import { useMemo } from "react"
 import { useStore } from "@tanstack/react-form"
+import { msg } from "@lingui/core/macro"
+import { Trans, useLingui } from "@lingui/react/macro"
 import { Label } from "@/components/ui/label"
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import { InfoCarousel, type CarouselSlide } from "@/components/wizard/shared/InfoCarousel"
 import { SectioningModeSelect } from "./SectioningModeSelect"
+
+const INFO_CAROUSEL_LABEL = msg`About section mode`
+
+const CAROUSEL_PAGE_TITLE = msg`Page Mode`
+const CAROUSEL_PAGE_DESCRIPTION = msg`The entire page is treated as a single section - all text and images stay together as one unit. Best for storybooks, reference books, and any content where each page is self-contained.`
+
+const CAROUSEL_DYNAMIC_TITLE = msg`Dynamic Mode`
+const CAROUSEL_DYNAMIC_DESCRIPTION = msg`Keeps the page as one section by default, but intelligently splits when it detects multiple distinct activities - such as a mix of multiple-choice, open-ended, and sorting exercises on the same page. Best for textbooks with varied exercises.`
+
+const CAROUSEL_SECTION_TITLE = msg`Section Mode`
+const CAROUSEL_SECTION_DESCRIPTION = msg`Groups content into multiple logical sections based on topic and structure. The AI identifies natural boundaries - headings, topic shifts, figures - and organizes content accordingly. Most granular option, ideal for dense or mixed-content pages.`
 
 function PageDiagram() {
   return (
@@ -17,7 +30,9 @@ function PageDiagram() {
           <div className="h-1 w-2/3 rounded-full bg-primary/30" />
         </div>
       </div>
-      <div className="text-[8px] text-muted-foreground">=</div>
+      <div className="text-[8px] text-muted-foreground">
+        <Trans>=</Trans>
+      </div>
       <div className="flex h-[72px] w-[52px] flex-col rounded border-2 border-primary/40 bg-primary/5 p-1.5">
         <div className="flex flex-1 flex-col gap-1">
           <div className="h-1 w-full rounded-full bg-primary/40" />
@@ -114,41 +129,42 @@ function SectionDiagram() {
   )
 }
 
-const SLIDES: CarouselSlide[] = [
-  {
-    title: "Page Mode",
-    description:
-      "The entire page is treated as a single section — all text and images stay together as one unit. Best for storybooks, reference books, and any content where each page is self-contained.",
-    Diagram: PageDiagram,
-  },
-  {
-    title: "Dynamic Mode",
-    description:
-      "Keeps the page as one section by default, but intelligently splits when it detects multiple distinct activities — such as a mix of multiple-choice, open-ended, and sorting exercises on the same page. Best for textbooks with varied exercises.",
-    Diagram: DynamicDiagram,
-  },
-  {
-    title: "Section Mode",
-    description:
-      "Groups content into multiple logical sections based on topic and structure. The AI identifies natural boundaries — headings, topic shifts, figures — and organizes content accordingly. Most granular option, ideal for dense or mixed-content pages.",
-    Diagram: SectionDiagram,
-  },
-]
-
 export function SectioningMode() {
   const form = useWizardForm()
   const sectioningMode = useStore(form.store, (s) => s.values.sectioningMode)
+  const { i18n } = useLingui()
+
+  const slides = useMemo(
+    (): CarouselSlide[] => [
+      {
+        title: i18n._(CAROUSEL_PAGE_TITLE),
+        description: i18n._(CAROUSEL_PAGE_DESCRIPTION),
+        Diagram: PageDiagram,
+      },
+      {
+        title: i18n._(CAROUSEL_DYNAMIC_TITLE),
+        description: i18n._(CAROUSEL_DYNAMIC_DESCRIPTION),
+        Diagram: DynamicDiagram,
+      },
+      {
+        title: i18n._(CAROUSEL_SECTION_TITLE),
+        description: i18n._(CAROUSEL_SECTION_DESCRIPTION),
+        Diagram: SectionDiagram,
+      },
+    ],
+    [i18n],
+  )
 
   return (
     <div className="flex w-full flex-col gap-3">
       <div className="flex items-center gap-1">
         <Label htmlFor="wizard-sectioning-mode" className="text-sm font-medium text-foreground">
-          Section Mode
+          <Trans>Section Mode</Trans>
         </Label>
         <span className="text-sm font-medium text-destructive" aria-hidden>
           *
         </span>
-        <InfoCarousel label="About section mode" slides={SLIDES} />
+        <InfoCarousel label={i18n._(INFO_CAROUSEL_LABEL)} slides={slides} />
       </div>
       <SectioningModeSelect
         id="wizard-sectioning-mode"
