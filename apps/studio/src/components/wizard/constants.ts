@@ -132,7 +132,7 @@ export const PRESETS: PresetConfig[] = [
     Icon: GraduationCap,
     iconColor: "text-blue-500",
     bgColor: "bg-blue-500/5",
-    title: msg`Textbooks & Academic`,
+    title: msg`Textbooks & Activities`,
     description: msg`Structured chapters, exercises. Best for educational content with complex layouts.`,
     recommendedFor: [
       msg`School textbooks and workbooks`,

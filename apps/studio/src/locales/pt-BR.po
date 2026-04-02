@@ -2497,8 +2497,8 @@ msgstr "Só texto"
 msgid "Text Types"
 msgstr "Tipos de texto"
 
-msgid "Textbooks & Academic"
-msgstr "Livros Didáticos & Acadêmicos"
+msgid "Textbooks & Activities"
+msgstr "Livros Didáticos & Atividades"
 
 msgid "The AI is having a think..."
 msgstr "A IA está pensando..."

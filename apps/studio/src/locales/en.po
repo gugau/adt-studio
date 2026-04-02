@@ -2503,8 +2503,8 @@ msgstr "Text Only"
 msgid "Text Types"
 msgstr "Text Types"
 
-msgid "Textbooks & Academic"
-msgstr "Textbooks & Academic"
+msgid "Textbooks & Activities"
+msgstr "Textbooks & Activities"
 
 msgid "The AI is having a think..."
 msgstr "The AI is having a think..."
