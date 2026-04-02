@@ -1,5 +1,7 @@
 import { useEffect, useCallback, useRef, createContext, useContext, useState } from "react"
 import { useQueryClient, useQuery } from "@tanstack/react-query"
+import { i18n } from "@lingui/core"
+import { msg } from "@lingui/core/macro"
 import {
   api,
   BASE_URL,
@@ -10,6 +12,7 @@ import { STEP_TO_STAGE, PIPELINE, getStageClearOrder } from "@adt/types"
 import type { StageName } from "@adt/types"
 import { isStageComplete } from "./run-state"
 import { bookTasksKey } from "./use-book-tasks"
+import { invalidateStoryboardDependents } from "./use-page-mutations"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -186,8 +189,8 @@ export function useBookRunStatus(label: string): BookRunContextValue {
             ...old,
             stages: { ...old.stages, [uiStage]: "error" },
             steps: { ...old.steps, [pipelineStep]: "error" },
-            stepErrors: { ...old.stepErrors, [pipelineStep]: d.error ?? "Step failed" },
-            error: d.error ?? "Step failed",
+            stepErrors: { ...old.stepErrors, [pipelineStep]: d.error ?? i18n._(msg`Step failed`) },
+            error: d.error ?? i18n._(msg`Step failed`),
           }
         })
       }
@@ -214,7 +217,7 @@ export function useBookRunStatus(label: string): BookRunContextValue {
           const d = JSON.parse(me.data)
           queryClient.setQueryData<StepStatusResponse>(stepStatusKey(label), (old) => {
             if (!old) return old
-            return { ...old, error: d.error ?? "Step run failed" }
+            return { ...old, error: d.error ?? i18n._(msg`Step run failed`) }
           })
         } catch { /* ignore */ }
       }
@@ -251,9 +254,15 @@ export function useBookRunStatus(label: string): BookRunContextValue {
           const completedTask = idx !== -1 ? tasks[idx] : undefined
           if (completedTask?.kind === "package-adt") {
             queryClient.invalidateQueries({ queryKey: ["books", label, "step-status"] })
+            queryClient.invalidateQueries({ queryKey: ["debug", "accessibility", label] })
+            queryClient.invalidateQueries({ queryKey: ["debug", "versions", label, "accessibility-assessment", "book"] })
+            queryClient.invalidateQueries({ queryKey: ["book-config", label] })
           }
           if ((completedTask?.kind === "image-generate" || completedTask?.kind === "re-render" || completedTask?.kind === "ai-edit") && completedTask.pageId) {
             queryClient.invalidateQueries({ queryKey: ["books", label, "pages", completedTask.pageId] })
+          }
+          if (completedTask?.kind === "re-render" || completedTask?.kind === "ai-edit" || completedTask?.kind === "image-generate") {
+            invalidateStoryboardDependents(queryClient, label)
           }
           // Always refetch tasks so we pick up the final state even if we missed start
           queryClient.invalidateQueries({ queryKey: bookTasksKey(label) })

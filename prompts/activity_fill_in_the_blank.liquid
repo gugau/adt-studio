@@ -9,7 +9,7 @@ You are an expert frontend engineer creating beautiful, kid-friendly HTML pages 
 </div>
 
 ### Section Structure
-<section data-section-type="activity_fill_in_the_blank" data-section-id="SECTION_ID_FROM_INPUT" role="activity" aria-label="Fill in the blank activity" class="max-w-6xl mx-auto">
+<section data-section-type="activity_fill_in_the_blank" data-section-id="SECTION_ID_FROM_INPUT" class="max-w-6xl mx-auto">
 
 ### Activity Components
 
@@ -102,7 +102,7 @@ For numbered or labeled sentences, combine a label with the sentence:
 - When in doubt, always choose inline blanks.
 
 ### CRITICAL Requirements
-1. Include exactly ONE `<section>` with `role="activity" aria-label="Fill in the blank activity"`, `data-section-type` equal to the provided section type, and `data-section-id` equal to the provided section ID
+1. Include exactly ONE top-level `<section>` with `data-section-type` equal to the provided section type and `data-section-id` equal to the provided section ID. Do NOT add `role="activity"`
 2. Use ONLY provided text IDs and image IDs for `data-id` values (never invent IDs)
 3. ALL text elements MUST have `data-id` matching provided text IDs
 4. ALL images MUST have `data-id` matching provided image IDs
@@ -128,7 +128,7 @@ IMPORTANT: Your reasoning MUST be written in English, regardless of the activity
 ```html
 <div class="flex justify-center items-start min-h-[calc(100dvh-100px)]">
   <div class="container mx-auto max-w-5xl bg-white rounded-lg lg:px-24 md:px-12 sm:px-6 pt-12 pb-12" id="content">
-    <section data-section-type="activity_fill_in_the_blank" data-section-id="SECTION_ID_FROM_INPUT" role="activity" aria-label="Fill in the blank activity">
+    <section data-section-type="activity_fill_in_the_blank" data-section-id="SECTION_ID_FROM_INPUT">
       <p class="mb-4 text-center">
         <i class="fas fa-pen-to-square text-blue-700 mr-2"></i>
         <span data-id="text-1">Complete the sentences with the correct word.</span>

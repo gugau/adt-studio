@@ -4,18 +4,74 @@ import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
 import { parseBookLabel } from "@adt/types"
 import { createBookStorage } from "@adt/storage"
-import { packageAdtWeb, loadBookConfig, normalizeLocale } from "@adt/pipeline"
+import {
+  packageAdtWeb,
+  computePackagingInputHash,
+  loadBookConfig,
+  normalizeLocale,
+  runAccessibilityAssessment,
+  runBrowserAccessibilityAssessment,
+  mergeAccessibilityResults,
+} from "@adt/pipeline"
+import type { Storage } from "@adt/storage"
 import type { TaskService } from "../services/task-service.js"
+
+function isPackagingCached(
+  storage: Storage,
+  safeLabel: string,
+  booksDir: string,
+  bookDir: string,
+  webAssetsDir: string,
+  configPath?: string,
+): boolean {
+  const hashPath = path.join(bookDir, "adt", ".build-hash")
+  if (!fs.existsSync(hashPath)) return false
+
+  const { language, outputLanguages, title, config } = resolvePackagingParams(
+    storage, safeLabel, booksDir, configPath,
+  )
+  const currentHash = computePackagingInputHash({
+    storage, bookDir, label: safeLabel, language, outputLanguages, title,
+    webAssetsDir, applyBodyBackground: config.apply_body_background,
+    config: config as unknown as Record<string, unknown>,
+  })
+  return fs.readFileSync(hashPath, "utf-8").trim() === currentHash
+}
+
+function resolvePackagingParams(
+  storage: Storage,
+  safeLabel: string,
+  booksDir: string,
+  configPath?: string,
+) {
+  const config = loadBookConfig(safeLabel, booksDir, configPath)
+  const metadataRow = storage.getLatestNodeData("metadata", "book")
+  const metadata = metadataRow?.data as {
+    title?: string | null
+    language_code?: string | null
+  } | null
+  const language = normalizeLocale(
+    config.editing_language ?? metadata?.language_code ?? "en",
+  )
+  const outputLanguages = Array.from(
+    new Set(
+      (config.output_languages && config.output_languages.length > 0
+        ? config.output_languages
+        : [language]).map((code) => normalizeLocale(code)),
+    ),
+  )
+  const title = metadata?.title ?? safeLabel
+  return { config, language, outputLanguages, title }
+}
 
 export function createPackageRoutes(
   booksDir: string,
   webAssetsDir: string,
   configPath?: string,
-  taskService?: TaskService
+  taskService?: TaskService,
 ): Hono {
   const app = new Hono()
 
-  // POST /books/:label/package-adt — Package the ADT web application
   app.post("/books/:label/package-adt", async (c) => {
     const { label } = c.req.param()
     let safeLabel: string
@@ -40,7 +96,6 @@ export function createPackageRoutes(
       })
     }
 
-    // Validate before submitting task
     const storage = createBookStorage(safeLabel, booksDir)
     try {
       const pages = storage.getPages()
@@ -52,11 +107,15 @@ export function createPackageRoutes(
           message: "At least one page must have a web rendering before packaging",
         })
       }
+
+      // Fast path: skip task submission entirely when build cache is valid
+      if (isPackagingCached(storage, safeLabel, booksDir, bookDir, webAssetsDir, configPath)) {
+        return c.json({ status: "completed", label: safeLabel })
+      }
     } finally {
       storage.close()
     }
 
-    // If TaskService is available, run as a tracked task
     if (taskService) {
       const { taskId } = taskService.submitTask(
         safeLabel,
@@ -65,12 +124,11 @@ export function createPackageRoutes(
         async () => {
           await runPackaging(safeLabel, booksDir, bookDir, webAssetsDir, configPath)
         },
-        { url: `/books/${safeLabel}/preview` }
+        { url: `/books/${safeLabel}/preview` },
       )
       return c.json({ status: "submitted", taskId, label: safeLabel })
     }
 
-    // Fallback: run synchronously (shouldn't happen in practice)
     try {
       await runPackaging(safeLabel, booksDir, bookDir, webAssetsDir, configPath)
       return c.json({ status: "completed", label: safeLabel })
@@ -81,7 +139,6 @@ export function createPackageRoutes(
     }
   })
 
-  // GET /books/:label/package-adt/status — Check if ADT is packaged
   app.get("/books/:label/package-adt/status", (c) => {
     const { label } = c.req.param()
     let safeLabel: string
@@ -107,27 +164,31 @@ async function runPackaging(
   booksDir: string,
   bookDir: string,
   webAssetsDir: string,
-  configPath?: string
+  configPath?: string,
 ): Promise<void> {
   const storage = createBookStorage(safeLabel, booksDir)
   try {
-    const config = loadBookConfig(safeLabel, booksDir, configPath)
-    const metadataRow = storage.getLatestNodeData("metadata", "book")
-    const metadata = metadataRow?.data as {
-      title?: string | null
-      language_code?: string | null
-    } | null
-    const language = normalizeLocale(
-      config.editing_language ?? metadata?.language_code ?? "en"
+    const { config, language, outputLanguages, title } = resolvePackagingParams(
+      storage, safeLabel, booksDir, configPath,
     )
-    const outputLanguages = Array.from(
-      new Set(
-        (config.output_languages && config.output_languages.length > 0
-          ? config.output_languages
-          : [language]).map((code) => normalizeLocale(code))
-      )
-    )
-    const title = metadata?.title ?? safeLabel
+
+    // Check build cache — skip if all inputs are unchanged
+    const hashOptions = {
+      storage,
+      bookDir,
+      label: safeLabel,
+      language,
+      outputLanguages,
+      title,
+      webAssetsDir,
+      applyBodyBackground: config.apply_body_background,
+      config: config as unknown as Record<string, unknown>,
+    }
+    const hashPath = path.join(bookDir, "adt", ".build-hash")
+    const preHash = computePackagingInputHash(hashOptions)
+    if (fs.existsSync(hashPath) && fs.readFileSync(hashPath, "utf-8").trim() === preHash) {
+      return
+    }
 
     await packageAdtWeb(storage, {
       bookDir,
@@ -138,6 +199,30 @@ async function runPackaging(
       webAssetsDir,
       applyBodyBackground: config.apply_body_background,
     })
+
+    const baseAccessibility = await runAccessibilityAssessment({
+      bookDir,
+      config: config.accessibility_assessment,
+    })
+
+    // Recheck JSDOM incompletes with a real browser (Playwright) when available.
+    // Falls back to the JSDOM-only result if Chromium is not installed.
+    let accessibilityOutput = baseAccessibility
+    try {
+      const browserAccessibility = await runBrowserAccessibilityAssessment({
+        bookDir,
+        baseAssessment: baseAccessibility,
+      })
+      accessibilityOutput = mergeAccessibilityResults(baseAccessibility, browserAccessibility)
+    } catch {
+      // Playwright/Chromium not available — use JSDOM results as-is
+    }
+
+    storage.putNodeData("accessibility-assessment", "book", accessibilityOutput)
+
+    // Recompute hash after build — packageAdtWeb may update storage (e.g. text-catalog)
+    const postHash = computePackagingInputHash(hashOptions)
+    fs.writeFileSync(hashPath, postHash, "utf-8")
   } finally {
     storage.close()
   }

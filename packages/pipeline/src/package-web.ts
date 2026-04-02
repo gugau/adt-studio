@@ -1,9 +1,12 @@
+import { createHash } from "node:crypto"
 import fs from "node:fs"
 import path from "node:path"
 import { parseDocument, DomUtils } from "htmlparser2"
+import temml from "temml"
 import type { Storage } from "@adt/storage"
 import type {
   PageSectioningOutput,
+  PageSection,
   TextCatalogOutput,
   GlossaryOutput,
   QuizGenerationOutput,
@@ -12,12 +15,14 @@ import type {
   TTSOutput,
   TocGenerationOutput,
   Quiz,
+  ImageCaptioningOutput,
 } from "@adt/types"
 import { WebRenderingOutput as WebRenderingOutputSchema } from "@adt/types"
 import type { Progress } from "./progress.js"
 import { nullProgress } from "./progress.js"
 import { getBaseLanguage, normalizeLocale } from "./language-context.js"
 import { buildTextCatalog } from "./text-catalog.js"
+import { normalizeHtmlSectionSemantics } from "./html-semantics.js"
 
 export interface PackageAdtWebOptions {
   bookDir: string
@@ -34,6 +39,70 @@ interface PageEntry {
   section_id: string
   href: string
   page_number?: number
+}
+
+// ---------------------------------------------------------------------------
+// Build-cache helpers
+// ---------------------------------------------------------------------------
+
+function collectDirectoryFingerprint(dirPath: string, prefix = ""): Array<[string, number]> {
+  if (!fs.existsSync(dirPath)) return []
+  const entries: Array<[string, number]> = []
+  for (const entry of fs.readdirSync(dirPath, { withFileTypes: true })) {
+    const rel = prefix ? `${prefix}/${entry.name}` : entry.name
+    if (entry.isDirectory()) {
+      entries.push(...collectDirectoryFingerprint(path.join(dirPath, entry.name), rel))
+    } else {
+      const stat = fs.statSync(path.join(dirPath, entry.name))
+      entries.push([rel, stat.size])
+    }
+  }
+  return entries
+}
+
+export interface ComputePackagingInputHashOptions {
+  storage: Storage
+  bookDir: string
+  label: string
+  language: string
+  outputLanguages: string[]
+  title: string
+  webAssetsDir: string
+  bundleVersion?: string
+  applyBodyBackground?: boolean
+  config: Record<string, unknown>
+}
+
+export function computePackagingInputHash(options: ComputePackagingInputHashOptions): string {
+  const hash = createHash("sha256")
+
+  // 1. Storage entity versions (exclude outputs like accessibility-assessment)
+  const fingerprint = options.storage.getNodeVersionFingerprint(["accessibility-assessment"])
+  hash.update(JSON.stringify(fingerprint))
+
+  // 2. Packaging options that affect output
+  hash.update(JSON.stringify({
+    label: options.label,
+    language: options.language,
+    outputLanguages: options.outputLanguages,
+    title: options.title,
+    bundleVersion: options.bundleVersion ?? "1",
+    applyBodyBackground: options.applyBodyBackground ?? false,
+  }))
+
+  // 3. Book config (affects rendering, accessibility, etc.)
+  hash.update(JSON.stringify(options.config))
+
+  // 4. Web assets directory fingerprint (file names + sizes)
+  const assetEntries = collectDirectoryFingerprint(options.webAssetsDir).sort((a, b) => a[0].localeCompare(b[0]))
+  hash.update(JSON.stringify(assetEntries))
+
+  // 5. Images directory fingerprint
+  const imagesDir = path.join(options.bookDir, "images")
+  const imageEntries = collectDirectoryFingerprint(imagesDir).sort((a, b) => a[0].localeCompare(b[0]))
+  hash.update(JSON.stringify(imageEntries))
+
+  return hash.digest("hex")
 }
 
 // ---------------------------------------------------------------------------
@@ -133,6 +202,7 @@ export async function packageAdtWeb(
 
     const sectioningRow = storage.getLatestNodeData("page-sectioning", page.pageId)
     const sectioning = sectioningRow?.data as PageSectioningOutput | undefined
+    const imageCaptionMap = loadImageCaptionMap(storage, page.pageId)
 
     const renderRow = storage.getLatestNodeData("web-rendering", page.pageId)
     if (renderRow) {
@@ -152,10 +222,12 @@ export async function packageAdtWeb(
           }
 
           // Rewrite image URLs and copy referenced images
-          const { html: rewrittenHtml, referencedImages } = rewriteImageUrls(
+          const preferredImageAltMap = buildPreferredImageAltMap(storage, page.pageId, sectionMeta)
+          let { html: rewrittenHtml, referencedImages } = rewriteImageUrls(
             rs.html,
             label,
             imageMap,
+            preferredImageAltMap,
           )
 
           for (const imageId of referencedImages) {
@@ -171,20 +243,27 @@ export async function packageAdtWeb(
             }
           }
 
-          // Check for math content
-          if (containsMathContent(rewrittenHtml)) hasMath = true
+          // Convert LaTeX math to MathML
+          const sectionHasMath = containsMathContent(rewrittenHtml)
+          if (sectionHasMath) {
+            hasMath = true
+            rewrittenHtml = convertLatexToMathml(rewrittenHtml)
+          }
 
           const isFirstPage = pageList.length === 0
           const filename = isFirstPage ? "index.html" : `${sectionId}.html`
+
+          const headingText = sectionMeta ? findHeadingText(sectionMeta) : null
 
           const pageHtml = renderPageHtml({
             content: rewrittenHtml,
             language,
             sectionId,
             pageTitle: title,
+            pageHeading: headingText?.text ?? title,
             pageIndex: pageList.length + 1,
             activityAnswers: rs.activityAnswers,
-            hasMath: containsMathContent(rewrittenHtml),
+            hasMath: sectionHasMath,
             bundleVersion,
             applyBodyBackground,
           })
@@ -200,16 +279,13 @@ export async function packageAdtWeb(
           pageList.push(entry)
 
           // Build TOC entry from first heading text in this section
-          if (sectionMeta) {
-            const headingText = findHeadingText(sectionMeta)
-            if (headingText) {
-              tocEntries.push({
-                section_id: sectionId,
-                href: filename,
-                title: headingText.text,
-                chapter_id: headingText.textId,
-              })
-            }
+          if (headingText) {
+            tocEntries.push({
+              section_id: sectionId,
+              href: filename,
+              title: headingText.text,
+              chapter_id: headingText.textId,
+            })
           }
         }
       }
@@ -229,6 +305,7 @@ export async function packageAdtWeb(
         language,
         sectionId: quizId,
         pageTitle: title,
+        pageHeading: quiz.question,
         pageIndex: pageList.length + 1,
         activityAnswers: buildQuizAnswers(quiz, quizId),
         hasMath: false,
@@ -320,6 +397,12 @@ export async function packageAdtWeb(
       if (transRow) {
         const translated = transRow.data as TextCatalogOutput
         for (const e of translated.entries) textsMap[e.id] = e.text
+      }
+    }
+    // Convert any LaTeX in text catalog entries to MathML
+    for (const [id, text] of Object.entries(textsMap)) {
+      if (containsMathContent(text)) {
+        textsMap[id] = convertLatexString(text)
       }
     }
     writeJson(path.join(localeDir, "texts.json"), textsMap)
@@ -699,8 +782,10 @@ export interface RenderPageOptions {
   activityAnswers?: Record<string, string | boolean | number>
   hasMath: boolean
   bundleVersion: string
-  /** When true, content is placed directly in <body> without a <div id="content"> wrapper.
-   *  Used for quiz pages whose template provides its own #content element. */
+  pageHeading?: string
+  /** When true, content is placed directly inside the page-level <main> without adding a
+   *  generated <div id="content"> wrapper. Used for quiz pages whose template provides
+   *  its own #content element. */
   skipContentWrapper?: boolean
   applyBodyBackground?: boolean
   /** When true, renders a minimal page without navigation/sidebar chrome.
@@ -727,33 +812,49 @@ function injectOpacityClass(html: string): string {
   )
 }
 
+export function promoteFirstHeadingToH1(html: string): string {
+  if (/<h1\b/i.test(html)) return html
+  return html.replace(/<h([2-6])(\b[^>]*)>([\s\S]*?)<\/h\1>/i, '<h1$2>$3</h1>')
+}
+
 export function renderPageHtml(opts: RenderPageOptions): string {
-  const mathScript = opts.hasMath
-    ? `    <script src="./assets/libs/mathjax/es5/tex-mml-chtml.js"></script>\n`
-    : ""
+  // LaTeX is converted to static MathML at build time by Temml,
+  // so no client-side math library is needed.
+  const mathScript = ""
 
   const answersScript =
     opts.activityAnswers && Object.keys(opts.activityAnswers).length > 0
       ? `\n    <script type="text/javascript">\n        window.correctAnswers = JSON.parse('${escapeInlineScriptJson(JSON.stringify(opts.activityAnswers))}');\n    </script>`
       : ""
 
+  const normalizedContent = promoteFirstHeadingToH1(opts.content)
+
   // When content already has <div id="content"> (LLM-generated), use it directly to avoid
-  // a duplicate #content element that breaks `body > .container` queries in the ADT JS
-  // (used for audio/TTS init, fade animation, and layout adjustments).
+  // a duplicate #content element.
   // Inject opacity-0 into the existing wrapper for the fade-in animation (skip in embed mode).
-  const contentAlreadyWrapped = /^\s*<div\b[^>]*\bid="content"/.test(opts.content)
+  const contentAlreadyWrapped = /^\s*<div\b[^>]*\bid="content"/.test(normalizedContent)
   const contentBlock = opts.skipContentWrapper
-    ? `    ${opts.content}`
+    ? `      ${normalizedContent}`
     : contentAlreadyWrapped
-      ? `    ${!opts.embed ? injectOpacityClass(opts.content) : opts.content}`
-      : `    <div id="content"${opts.embed ? "" : ` class="opacity-0"`}>
-    ${opts.content}
-    </div>`
+      ? `      ${!opts.embed ? injectOpacityClass(normalizedContent) : normalizedContent}`
+      : `      <div id="content"${opts.embed ? "" : ` class="opacity-0"`}>
+        ${normalizedContent}
+      </div>`
+
+  const fallbackPageHeading = (opts.pageHeading ?? opts.pageTitle).trim()
+  const fallbackHeadingHtml = /<h1\b/i.test(normalizedContent) || fallbackPageHeading.length === 0
+    ? ""
+    : `      <h1 class="sr-only" id="page-heading">${escapeHtml(fallbackPageHeading)}</h1>
+`
+
+  const mainBlock = `    <main class="w-full">
+${fallbackHeadingHtml}${contentBlock}
+    </main>`
 
   // Extract data-background-color from content to apply on <body>
   let bodyStyle = ""
   if (opts.applyBodyBackground !== false) {
-    const bgMatch = opts.content.match(/data-background-color="([^"]*)"/)
+    const bgMatch = normalizedContent.match(/data-background-color="([^"]*)"/)
     bodyStyle = bgMatch?.[1]
       ? ` style="background-color: ${escapeAttr(bgMatch[1])};"`
       : ""
@@ -790,7 +891,7 @@ export function renderPageHtml(opts: RenderPageOptions): string {
 ${mathScript}${embedStyles}</head>
 
 <body class="min-h-screen flex items-center justify-center"${bodyStyle}>
-${contentBlock}
+${mainBlock}
 ${answersScript}
     <div class="relative z-50" id="interface-container"></div>
     <div class="relative z-50" id="nav-container"${opts.embed ? ' style="display:none"' : ""}></div>
@@ -897,7 +998,6 @@ export function renderQuizHtml(
 <div id="content" class="container content mx-auto w-full min-h-screen px-8 py-8 flex items-center justify-center opacity-0">
     <section
         id="simple-main"
-        role="activity"
         data-section-type="activity_quiz"
         data-id="${escapeAttr(quizId)}"
         data-area-id="${escapeAttr(quizId)}"
@@ -968,15 +1068,102 @@ export function buildImageMap(imagesDir: string): Map<string, string> {
   return map
 }
 
+
+function loadImageCaptionMap(storage: Storage, pageId: string): Map<string, string> {
+  const row = storage.getLatestNodeData("image-captioning", pageId)
+  if (!row) return new Map<string, string>()
+
+  const data = row.data as ImageCaptioningOutput
+  const map = new Map<string, string>()
+  for (const caption of data.captions ?? []) {
+    if (caption.caption?.trim()) {
+      map.set(caption.imageId, caption.caption.trim())
+    }
+  }
+  return map
+}
+
+function buildSectionImageAltMap(section: PageSection): Map<string, string> {
+  const imageParts = section.parts.filter(
+    (part): part is Extract<PageSection["parts"][number], { type: "image" }> =>
+      part.type === "image" && !part.isPruned,
+  )
+  if (imageParts.length !== 1) {
+    return new Map<string, string>()
+  }
+
+  const textParts = section.parts.filter(
+    (part): part is Extract<PageSection["parts"][number], { type: "text_group" }> =>
+      part.type === "text_group" && !part.isPruned,
+  )
+
+  const associatedTexts = textParts
+    .flatMap((part) => part.texts)
+    .filter((text) => !text.isPruned && text.textType === "image_associated_text")
+    .map((text) => text.text.replace(/\s+/g, " ").trim())
+    .filter((text) => text.length > 0)
+
+  if (associatedTexts.length === 0) {
+    return new Map<string, string>()
+  }
+
+  return new Map([[imageParts[0].imageId, associatedTexts.join(" ")]])
+}
+
+function applyDuplicateImageAltPolicy(
+  section: PageSection,
+  altTextByImageId: Map<string, string>,
+): Map<string, string> {
+  const normalizedAltToFirstImageId = new Map<string, string>()
+  const normalizedAltMap = new Map(altTextByImageId)
+
+  for (const part of section.parts) {
+    if (part.type !== "image" || part.isPruned) continue
+    const altText = normalizedAltMap.get(part.imageId)?.trim()
+    if (!altText) continue
+
+    const dedupeKey = altText.replace(/\s+/g, " ").trim().toLowerCase()
+    if (!dedupeKey) continue
+
+    if (normalizedAltToFirstImageId.has(dedupeKey)) {
+      normalizedAltMap.set(part.imageId, "")
+      continue
+    }
+
+    normalizedAltToFirstImageId.set(dedupeKey, part.imageId)
+  }
+
+  return normalizedAltMap
+}
+
+export function buildPreferredImageAltMap(
+  storage: Storage,
+  pageId: string,
+  section?: PageSection,
+): Map<string, string> {
+  const imageCaptionMap = loadImageCaptionMap(storage, pageId)
+  const sectionImageAltMap = section ? buildSectionImageAltMap(section) : new Map<string, string>()
+  const preferredImageAltMap = new Map(sectionImageAltMap)
+  for (const [imageId, altText] of imageCaptionMap) {
+    preferredImageAltMap.set(imageId, altText)
+  }
+  return section ? applyDuplicateImageAltPolicy(section, preferredImageAltMap) : preferredImageAltMap
+}
+
+export function normalizeSectionRoles(html: string): string {
+  return normalizeHtmlSectionSemantics(html)
+}
+
 /** Rewrite image URLs from /api/books/{label}/images/{id} to images/{filename} */
 export function rewriteImageUrls(
   html: string,
   label: string,
   imageMap: Map<string, string>,
+  altTextByImageId?: Map<string, string>,
 ): { html: string; referencedImages: string[] } {
   const prefix = `/api/books/${label}/images/`
   const referencedImages: string[] = []
-  const doc = parseDocument(html)
+  const doc = parseDocument(normalizeSectionRoles(html))
 
   const imgs = DomUtils.findAll(
     (el) => el.type === "tag" && el.name === "img",
@@ -984,11 +1171,13 @@ export function rewriteImageUrls(
   )
 
   for (const img of imgs) {
+    let resolvedImageId: string | undefined
     const src = img.attribs.src ?? ""
     if (src.startsWith(prefix)) {
       const imageId = src.slice(prefix.length)
       const filename = imageMap.get(imageId)
       if (filename) {
+        resolvedImageId = imageId
         img.attribs.src = `images/${filename}`
         referencedImages.push(imageId)
         delete img.attribs.width
@@ -1006,6 +1195,7 @@ export function rewriteImageUrls(
     const dataId = img.attribs["data-id"]
     if (dataId && imageMap.has(dataId) && !img.attribs.src?.startsWith("images/")) {
       const filename = imageMap.get(dataId)!
+      resolvedImageId = dataId
       img.attribs.src = `images/${filename}`
       if (!referencedImages.includes(dataId)) {
         referencedImages.push(dataId)
@@ -1020,9 +1210,17 @@ export function rewriteImageUrls(
           : sizeStyle
       }
     }
+
+    const imageIdForAlt = resolvedImageId ?? dataId
+    const hasPreferredAlt = imageIdForAlt ? altTextByImageId?.has(imageIdForAlt) ?? false : false
+    const altText = imageIdForAlt ? altTextByImageId?.get(imageIdForAlt)?.trim() ?? "" : ""
+    if (hasPreferredAlt && (img.attribs.alt === undefined || img.attribs.alt.trim() === "")) {
+      img.attribs.alt = altText
+    }
   }
 
-  return { html: DomUtils.getOuterHTML(doc), referencedImages }
+  const normalizedHtml = DomUtils.getOuterHTML(doc).replace(/(<img\b[^>]*?)\salt(?=[\s>])/g, "$1 alt=\"\"")
+  return { html: normalizedHtml, referencedImages }
 }
 
 /**
@@ -1086,16 +1284,213 @@ export function buildGlossaryJson(
 // ---------------------------------------------------------------------------
 
 const MATH_INDICATORS = [
-  "\\$",
-  "\\$$",
-  "\\\\(",
-  "\\\\[",
+  "$",
+  "\\(",
+  "\\[",
   "<math",
   "\\begin{",
+  // HTML-encoded forms (htmlparser2's getOuterHTML encodes $ as &#x24;)
+  "&#x24;",
 ]
 
+/**
+ * Regex that matches LaTeX commands commonly found undelimited in LLM output.
+ * Matches: \text{}, \hat{}, \frac{}{}, \sqrt{}, \vec{}, \bar{}, \overline{},
+ * \circ, ^\circ, _{...}, ^{...}, \times, \div, \pm, \leq, \geq, \neq,
+ * \mathcal{}, \mathbb{}, \in, \leftarrow, etc.
+ * Also matches bare subscript/superscript like X_i or X^2.
+ */
+const UNDELIMITED_LATEX_RE = /\\(?:text|mbox|hat|frac|sqrt|vec|bar|overline|underline|mathbf|mathrm|mathit|mathcal|mathbb|mathfrak|mathscr|circ|times|div|pm|mp|leq|geq|neq|approx|equiv|sim|in|notin|subset|supset|cup|cap|leftarrow|rightarrow|Leftarrow|Rightarrow|alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|omega|phi|psi|infty|partial|nabla|sum|prod|int|lim|log|ln|sin|cos|tan|sec|csc|cot|left|right|cdot|ldots|cdots|quad|qquad|binom|tag)\b|[_^]\{|[A-Za-z][_^][A-Za-z0-9]/
+
 function containsMathContent(html: string): boolean {
-  return MATH_INDICATORS.some((indicator) => html.includes(indicator))
+  if (MATH_INDICATORS.some((indicator) => html.includes(indicator))) return true
+  return UNDELIMITED_LATEX_RE.test(html)
+}
+
+/**
+ * Returns true if the text is mixed prose with embedded math, rather than a
+ * pure math expression. We detect this by looking for 3+ consecutive regular
+ * English words — pure LaTeX expressions rarely have that.
+ */
+function isMixedContent(text: string): boolean {
+  const words = text.split(/\s+/)
+  let consecutive = 0
+  for (const word of words) {
+    if (/^[a-zA-Z]{3,}[.,;:!?]?$/.test(word)) {
+      consecutive++
+      if (consecutive >= 3) return true
+    } else {
+      consecutive = 0
+    }
+  }
+  return false
+}
+
+/**
+ * For mixed prose+math text nodes, find individual LaTeX expressions and
+ * convert them to MathML inline, preserving the surrounding prose text.
+ *
+ * Matches compound expressions like `\mathcal{Z}_m`, `Z_r`, `f_\theta`,
+ * `\{P_i, M_i\}`, etc. Each expression must contain at least one LaTeX
+ * marker (backslash command, subscript, or superscript).
+ */
+function convertInlineLatexFragments(text: string): string {
+  // First: handle \{...\} groups (escaped brace groups with content)
+  text = text.replace(/\\{(?:[^{}]|\{[^{}]*\})*\\}/g, (expr) => {
+    const mathml = tryTemml(expr.trim(), false) ?? tryTemml(expr.trim(), true)
+    return mathml ?? expr
+  })
+
+  // Match LaTeX expressions: optional leading alphanumeric, one or more "atoms",
+  // with optional alphanumeric glue between atoms.
+  // Atoms: \command{...}, _\command{...}, _{...}, ^{...}, _x, ^x, \{ or \}
+  const LATEX_EXPR_RE = /[A-Za-z0-9]*(?:(?:\\[a-zA-Z]+(?:\{(?:[^{}]|\{[^{}]*\})*\})*|[_^]\\[a-zA-Z]+(?:\{(?:[^{}]|\{[^{}]*\})*\})*|[_^]\{(?:[^{}]|\{[^{}]*\})*\}|[_^][A-Za-z0-9]|\\[{}])[A-Za-z0-9]*)+/g
+
+  text = text.replace(LATEX_EXPR_RE, (expr) => {
+    const trimmed = expr.trim()
+    if (!trimmed) return expr
+    const mathml = tryTemml(trimmed, false) ?? tryTemml(trimmed, true)
+    return mathml ?? expr
+  })
+
+  return text
+}
+
+// ---------------------------------------------------------------------------
+// LaTeX → MathML conversion
+// ---------------------------------------------------------------------------
+
+/**
+ * Render LaTeX via Temml. Returns null on failure.
+ * Temml may embed errors as `<span class="temml-error">` instead of throwing,
+ * so we check the output for error spans as well.
+ */
+function tryTemml(latex: string, displayMode: boolean): string | null {
+  try {
+    const result = temml.renderToString(latex, { displayMode })
+    if (result.includes("temml-error")) return null
+    return result
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Try inline mode first, fall back to display mode if that fails.
+ * Handles commands like \tag{} and \\ that require display mode.
+ */
+function renderLatexWithFallback(latex: string): string | null {
+  return tryTemml(latex, false) ?? tryTemml(latex, true)
+}
+
+/**
+ * Decode HTML entities for $ that htmlparser2 serialization may produce,
+ * so that LaTeX delimiters can be matched by the regex patterns below.
+ */
+function decodeDollarEntities(s: string): string {
+  return s.replace(/&#x24;/g, "$").replace(/&#36;/g, "$")
+}
+
+/**
+ * Decode common HTML entities that Liquid's `escape` filter introduces into
+ * LaTeX content (e.g., `>` → `&gt;`, `<` → `&lt;`). Without this, temml
+ * receives `\tau&gt;0` instead of `\tau>0` and fails to parse.
+ */
+function decodeHtmlEntities(s: string): string {
+  return s
+    .replace(/&gt;/g, ">")
+    .replace(/&lt;/g, "<")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+}
+
+/**
+ * Convert a plain text string containing LaTeX to MathML.
+ * Handles delimited ($, $$, \(, \[) and undelimited LaTeX.
+ * Used for text catalog entries (texts.json) that are plain strings.
+ *
+ * For mixed prose+math (e.g. "the space M = (X, V), where X ∈ ℝ^{N×3}"),
+ * only delimited math is converted — the undelimited pass is skipped to
+ * avoid rendering the entire paragraph as a math expression.
+ */
+export function convertLatexString(text: string): string {
+  text = decodeDollarEntities(text)
+
+  let converted = convertDelimitedLatex(text)
+
+  // If delimited conversion didn't change anything, try undelimited.
+  if (converted === text && UNDELIMITED_LATEX_RE.test(text)) {
+    // Pure math expression — render as a single block
+    if (!isMixedContent(text)) {
+      return renderLatexWithFallback(text.trim()) ?? converted
+    }
+    // Mixed prose+math — convert individual LaTeX fragments inline
+    return convertInlineLatexFragments(converted)
+  }
+
+  return converted
+}
+
+/**
+ * Replace delimited LaTeX math ($$, $, \[, \() with MathML.
+ */
+function convertDelimitedLatex(text: string): string {
+  // Process display math first ($$...$$ and \[...\]) then inline ($...$ and \(...\))
+  // to avoid $$...$$ being matched as two inline $...$ blocks.
+  // Decode HTML entities (e.g., &gt; → >) inside captured LaTeX before rendering,
+  // since Liquid's escape filter encodes <, >, & in text content.
+
+  // $$...$$ — display math
+  text = text.replace(/\$\$([\s\S]+?)\$\$/g, (_match, latex: string) =>
+    tryTemml(decodeHtmlEntities(latex.trim()), true) ?? _match
+  )
+
+  // \[...\] — display math
+  text = text.replace(/\\\[([\s\S]+?)\\\]/g, (_match, latex: string) =>
+    tryTemml(decodeHtmlEntities(latex.trim()), true) ?? _match
+  )
+
+  // $...$ — inline math (avoid matching escaped \$ or empty $$)
+  // Negative lookbehind for backslash; content must be non-empty and not start/end with space
+  text = text.replace(/(?<!\\)\$([^\s$](?:[^$]*[^\s$])?)\$/g, (_match, latex: string) =>
+    tryTemml(decodeHtmlEntities(latex.trim()), false) ?? _match
+  )
+
+  // \(...\) — inline math
+  text = text.replace(/\\\(([\s\S]+?)\\\)/g, (_match, latex: string) =>
+    tryTemml(decodeHtmlEntities(latex.trim()), false) ?? _match
+  )
+
+  return text
+}
+
+/**
+ * Replace LaTeX math in HTML content with MathML rendered by Temml.
+ * Handles delimited math ($, $$, \(, \[) and undelimited LaTeX in text nodes.
+ */
+export function convertLatexToMathml(html: string): string {
+  html = decodeDollarEntities(html)
+
+  // First pass: convert delimited math anywhere in the string
+  html = convertDelimitedLatex(html)
+
+  // Second pass: convert undelimited LaTeX in text nodes (content between > and <).
+  // For pure math nodes, render the entire text as a single expression.
+  // For mixed prose+math, find and convert individual LaTeX fragments inline.
+  html = html.replace(/(>)([^<]+)(<)/g, (_match, open: string, text: string, close: string) => {
+    if (!UNDELIMITED_LATEX_RE.test(text)) return _match
+    if (text.includes("<math")) return _match
+    const decoded = decodeHtmlEntities(text)
+    if (isMixedContent(decoded)) {
+      const converted = convertInlineLatexFragments(decoded)
+      return converted !== decoded ? `${open}${converted}${close}` : _match
+    }
+    const mathml = renderLatexWithFallback(decoded.trim())
+    return mathml ? `${open}${mathml}${close}` : _match
+  })
+
+  return html
 }
 
 // ---------------------------------------------------------------------------
