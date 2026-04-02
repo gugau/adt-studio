@@ -1,10 +1,11 @@
-/* eslint-disable lingui/no-unlocalized-strings */
 import { useStore } from "@tanstack/react-form"
+import { msg } from "@lingui/core/macro"
+import { useLingui } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import { SingleValueSlider, RangeSlider } from "@/components/wizard/shared/RangeSlider"
 import { ImageProcessingFeatureSwitch } from "./ImageProcessingFeatureSwitch"
-import { useWizard, useDelayedPreviewFocus } from "@/components/wizard"
+import { useDelayedPreviewFocus } from "@/components/wizard"
 
 function parseMinSidePx(raw: string): number {
   const n = parseInt(raw.trim(), 10)
@@ -12,6 +13,21 @@ function parseMinSidePx(raw: string): number {
 }
 
 const MIN_SIDE_SLIDER_MAX = 2048
+
+const MIN_DIM_LABEL = msg`Minimum image dimension`
+const MIN_DIM_NONE = msg`None`
+const MIN_DIM_HELP = msg`Leave at None to run segmentation on all qualifying images (subject to pipeline rules).`
+const VALUE_UNIT_PX = msg`px`
+
+const TITLE_SMART_CROPPING = msg`Smart Cropping`
+const SUBTITLE_SMART_CROPPING = msg`Best for complex content like textbooks - automatically trims stray text, artifacts, and extra margins from extracted images.`
+
+const TITLE_SEGMENTATION = msg`Image Segmentation`
+const SUBTITLE_SEGMENTATION = msg`Detects and splits composited illustrations into separate regions so each asset can be placed and refined on its own.`
+
+const FILTER_LABEL = msg`Image Filter Size`
+const FILTER_MIN_LABEL = msg`Min Side`
+const FILTER_MAX_LABEL = msg`Max Side`
 
 function SegmentationThresholdPanel({
   segmentationMinSide,
@@ -22,6 +38,9 @@ function SegmentationThresholdPanel({
   onMinSideChange: (v: string) => void
   disabled: boolean
 }) {
+  const { i18n } = useLingui()
+  // Preview focus id (not user-visible).
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- ImageProcessingPreviewFocus key
   const { onMouseEnter, onMouseLeave } = useDelayedPreviewFocus("minSide")
   const px = parseMinSidePx(segmentationMinSide)
 
@@ -37,24 +56,24 @@ function SegmentationThresholdPanel({
       onMouseLeave={onMouseLeave}
     >
       <SingleValueSlider
-        label="Minimum image dimension"
+        label={i18n._(MIN_DIM_LABEL)}
         min={0}
         max={MIN_SIDE_SLIDER_MAX}
         value={px}
         onChange={(n) => onMinSideChange(n === 0 ? "" : String(n))}
         disabled={disabled}
-        minValueLabel="None"
-        valueUnit="px"
+        minValueLabel={i18n._(MIN_DIM_NONE)}
+        valueUnit={i18n._(VALUE_UNIT_PX)}
       />
-      <p className="mt-3 text-sm text-muted-foreground">
-        Leave at None to run segmentation on all qualifying images (subject to pipeline rules).
-      </p>
+      <p className="mt-3 text-sm text-muted-foreground">{i18n._(MIN_DIM_HELP)}</p>
     </div>
   )
 }
 
 export function Step3() {
   const form = useWizardForm()
+  const { i18n } = useLingui()
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- ImageProcessingPreviewFocus key
   const filterSizeHover = useDelayedPreviewFocus("filterSize")
 
   const imageCropping = useStore(form.store, (s) => s.values.imageCropping)
@@ -67,8 +86,8 @@ export function Step3() {
     <div className="flex w-full flex-col gap-5 p-8">
       <ImageProcessingFeatureSwitch
         id="wizard-image-cropping"
-        title="Smart Cropping"
-        subtitle="Best for complex content like textbooks — automatically trims stray text, artifacts, and extra margins from extracted images."
+        title={i18n._(TITLE_SMART_CROPPING)}
+        subtitle={i18n._(SUBTITLE_SMART_CROPPING)}
         previewFocus="cropping"
         checked={imageCropping}
         onCheckedChange={(checked) => form.setFieldValue("imageCropping", checked)}
@@ -77,8 +96,8 @@ export function Step3() {
       <div className="flex w-full flex-col">
         <ImageProcessingFeatureSwitch
           id="wizard-image-segmentation"
-          title="Image Segmentation"
-          subtitle="Detects and splits composited illustrations into separate regions so each asset can be placed and refined on its own."
+          title={i18n._(TITLE_SEGMENTATION)}
+          subtitle={i18n._(SUBTITLE_SEGMENTATION)}
           previewFocus="segmentation"
           checked={imageSegmentation}
           onCheckedChange={(checked) => form.setFieldValue("imageSegmentation", checked)}
@@ -117,7 +136,7 @@ export function Step3() {
         onMouseLeave={filterSizeHover.onMouseLeave}
       >
         <RangeSlider
-          label="Image Filter Size"
+          label={i18n._(FILTER_LABEL)}
           min={0}
           max={10000}
           value={[imageFilterMinSide, imageFilterMaxSide]}
@@ -125,8 +144,8 @@ export function Step3() {
             form.setFieldValue("imageFilterMinSide", lo)
             form.setFieldValue("imageFilterMaxSide", hi)
           }}
-          startLabel="Min Side"
-          endLabel="Max Side"
+          startLabel={i18n._(FILTER_MIN_LABEL)}
+          endLabel={i18n._(FILTER_MAX_LABEL)}
         />
       </div>
     </div>

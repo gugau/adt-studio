@@ -1,5 +1,7 @@
-/* eslint-disable lingui/no-unlocalized-strings */
-import { useState, useCallback, useEffect, type ReactNode } from "react"
+import { useState, useCallback, useEffect, type FC, type ReactNode } from "react"
+import type { MessageDescriptor } from "@lingui/core"
+import { msg } from "@lingui/core/macro"
+import { Trans, useLingui } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
 import {
   Carousel,
@@ -11,23 +13,27 @@ import {
 } from "@/components/ui/carousel"
 import type { ImageProcessingPreviewFocus } from "./imageProcessingPreviewTypes"
 
-/** Mobile carousel skips the idle placeholder */
+/** Mobile carousel skips the idle placeholder (focus ids, not UI copy). */
+/* eslint-disable lingui/no-unlocalized-strings */
 const MOBILE_FOCUSES: ImageProcessingPreviewFocus[] = [
   "cropping",
   "segmentation",
   "minSide",
   "filterSize",
 ]
+/* eslint-enable lingui/no-unlocalized-strings */
 
 function PreviewShell({
-  label,
+  labelMsg,
   children,
   className,
 }: {
-  label: string
+  labelMsg: MessageDescriptor
   children: ReactNode
   className?: string
 }) {
+  const { i18n } = useLingui()
+
   return (
     <div
       className={cn(
@@ -37,7 +43,7 @@ function PreviewShell({
     >
       <div className="shrink-0 border-b border-border/80 bg-muted/25 px-3 py-2">
         <p className="text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-          {label}
+          {i18n._(labelMsg)}
         </p>
       </div>
       <div className="min-h-0 flex-1 overflow-auto bg-[#fafafa] h-full flex">{children}</div>
@@ -67,37 +73,48 @@ function IdleIllustration() {
         </div>
       </div>
       <div className="max-w-[280px] text-center">
-        <p className="text-base font-semibold text-foreground">Preview</p>
+        <p className="text-base font-semibold text-foreground">
+          <Trans>Preview</Trans>
+        </p>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Hover a setting to see how LLM cropping, segmentation, or the size threshold changes extracted
-          images.
+          <Trans>
+            Hover a setting to see how LLM cropping, segmentation, or the size threshold changes
+            extracted images.
+          </Trans>
         </p>
       </div>
     </div>
   )
 }
 
-/** Before: noisy margins; after: tight crop around the illustration. */
 function CroppingIllustration() {
   return (
     <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-6 px-4 py-6 @sm:flex-row @sm:gap-8 @sm:px-6">
       <div className="flex flex-col items-center gap-2.5">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Before</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <Trans>Before</Trans>
+        </span>
         <div className="relative rounded-xl border-2 border-dashed border-amber-300/70 bg-amber-50/40 p-4 transition-shadow">
           <div className="absolute left-1.5 top-1.5 flex items-center gap-0.5 rounded bg-amber-100/80 px-1 py-px">
             <svg className="h-2.5 w-2.5 text-amber-600/70" viewBox="0 0 16 16" fill="none" aria-hidden>
               <path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
-            <span className="text-[7px] font-medium text-amber-600/80">margin</span>
+            <span className="text-[7px] font-medium text-amber-600/80">
+              <Trans>margin</Trans>
+            </span>
           </div>
           <div className="relative h-[100px] w-[120px] overflow-hidden rounded-md bg-gradient-to-br from-sky-300 via-amber-200 to-emerald-400 shadow-inner" aria-hidden>
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(255,255,255,0.3),transparent_60%)]" />
           </div>
           <div className="absolute -right-1.5 top-1/2 flex -translate-y-1/2 items-center rounded-sm bg-red-400/80 px-1 py-0.5 shadow-sm">
-            <span className="text-[6px] font-bold text-white">ABC</span>
+            <span className="text-[6px] font-bold text-white">
+              <Trans>ABC</Trans>
+            </span>
           </div>
           <div className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5 rounded bg-amber-100/80 px-1 py-px">
-            <span className="text-[7px] font-medium text-amber-600/80">noise</span>
+            <span className="text-[7px] font-medium text-amber-600/80">
+              <Trans>noise</Trans>
+            </span>
           </div>
         </div>
       </div>
@@ -106,11 +123,15 @@ function CroppingIllustration() {
         <svg className="h-5 w-5 rotate-90 sm:rotate-0" viewBox="0 0 20 20" fill="none">
           <path d="M4 10h12M12 6l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <span className="text-[9px] font-semibold uppercase tracking-wider">LLM crop</span>
+        <span className="text-[9px] font-semibold uppercase tracking-wider">
+          <Trans>LLM crop</Trans>
+        </span>
       </div>
 
       <div className="flex flex-col items-center gap-2.5">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">After</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <Trans>After</Trans>
+        </span>
         <div className="rounded-xl border-2 border-emerald-400/50 bg-white p-1 shadow-md ring-1 ring-emerald-400/20 transition-shadow">
           <div className="relative h-[100px] w-[120px] overflow-hidden rounded-lg bg-gradient-to-br from-sky-300 via-amber-200 to-emerald-400" aria-hidden>
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(255,255,255,0.3),transparent_60%)]" />
@@ -120,19 +141,30 @@ function CroppingIllustration() {
           <svg className="h-3 w-3 text-emerald-500" viewBox="0 0 16 16" fill="none" aria-hidden>
             <path d="M3 8.5l3.5 3.5L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <span className="text-[10px] font-medium text-emerald-600">Clean & focused</span>
+          <span className="text-[10px] font-medium text-emerald-600">
+            <Trans>Clean & focused</Trans>
+          </span>
         </div>
       </div>
     </div>
   )
 }
 
-/** Composite collage split into separate assets. */  
+const SEGMENT_PREVIEW_PARTS = [
+  { slug: "sky", labelMsg: msg`Sky`, className: "h-10 w-14 bg-sky-400/90" },
+  { slug: "sun", labelMsg: msg`Sun`, className: "h-10 w-10 rounded-full bg-amber-300" },
+  { slug: "hill", labelMsg: msg`Hill`, className: "h-10 w-16 rounded-sm bg-emerald-600" },
+] as const
+
 function SegmentationIllustration() {
+  const { i18n } = useLingui()
+
   return (
     <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-4 px-4 py-6">
       <div className="flex flex-col items-center gap-2">
-        <span className="text-xs font-medium text-muted-foreground">Single composited image</span>
+        <span className="text-xs font-medium text-muted-foreground">
+          <Trans>Single composited image</Trans>
+        </span>
         <div className="relative flex h-28 w-36 items-center justify-center overflow-hidden rounded-lg border border-border bg-white shadow-inner">
           <div className="absolute left-2 top-2 h-10 w-12 rounded bg-sky-300/90" />
           <div className="absolute right-4 top-4 h-8 w-8 rounded-full bg-amber-300" />
@@ -143,70 +175,79 @@ function SegmentationIllustration() {
 
       <div className="flex items-center gap-2 text-muted-foreground" aria-hidden>
         <span className="text-xl">↓</span>
-        <span className="text-[10px] font-medium uppercase tracking-wide">Split segments</span>
+        <span className="text-[10px] font-medium uppercase tracking-wide">
+          <Trans>Split segments</Trans>
+        </span>
       </div>
 
       <div className="flex flex-wrap items-end justify-center gap-2">
-        {[
-          { k: "sky", className: "h-10 w-14 bg-sky-400/90" },
-          { k: "sun", className: "h-10 w-10 rounded-full bg-amber-300" },
-          { k: "hill", className: "h-10 w-16 rounded-sm bg-emerald-600" },
-        ].map(({ k, className: c }) => (
-          <div key={k} className="flex flex-col items-center gap-1">
+        {SEGMENT_PREVIEW_PARTS.map(({ slug, labelMsg, className: c }) => (
+          <div key={slug} className="flex flex-col items-center gap-1">
             <div className={cn("rounded-md border border-primary/30 shadow-sm", c)} />
-            <span className="text-[9px] font-medium capitalize text-muted-foreground">{k}</span>
+            <span className="text-[9px] font-medium text-muted-foreground">{i18n._(labelMsg)}</span>
           </div>
         ))}
       </div>
       <p className="max-w-xs text-center text-xs leading-relaxed text-muted-foreground">
-        The model detects bounding boxes so each visual element can be stored and laid out separately.
+        <Trans>
+          The model detects bounding boxes so each visual element can be stored and laid out separately.
+        </Trans>
       </p>
     </div>
   )
 }
-/** Images smaller than your minimum dimension skip segmentation — saving cost and avoiding false splits on icons. */
+
 function MinSideIllustration() {
   return (
     <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-6 px-6 py-8">
       <p className="max-w-sm text-center text-sm text-muted-foreground">
-        Images smaller than your minimum dimension skip segmentation — saving cost and avoiding false
-        splits on icons.
+        <Trans>
+          Images smaller than your minimum dimension skip segmentation - saving cost and avoiding false
+          splits on icons.
+        </Trans>
       </p>
       <div className="flex flex-wrap items-start justify-center gap-8">
         <div className="flex flex-col items-center gap-2">
           <div className="relative flex h-20 w-24 items-center justify-center rounded-lg border-2 border-emerald-500/40 bg-white">
             <div className="h-14 w-20 rounded bg-gradient-to-br from-violet-300 to-indigo-400" />
-            <span className="absolute -bottom-5 text-[10px] font-medium text-emerald-700">Large enough</span>
+            <span className="absolute -bottom-5 text-[10px] font-medium text-emerald-700">
+              <Trans>Large enough</Trans>
+            </span>
             <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] text-white">
               ✓
             </span>
           </div>
-          <span className="pt-4 text-xs text-muted-foreground">Segmentation runs</span>
+          <span className="pt-4 text-xs text-muted-foreground">
+            <Trans>Segmentation runs</Trans>
+          </span>
         </div>
         <div className="flex flex-col items-center gap-2">
           <div className="relative flex h-12 w-12 items-center justify-center rounded-lg border border-muted bg-muted/30">
             <div className="h-6 w-6 rounded bg-muted-foreground/30" />
             <span className="absolute -bottom-5 text-[10px] font-medium text-muted-foreground">
-              Too small
+              <Trans>Too small</Trans>
             </span>
             <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-muted-foreground/80 text-[10px] text-white">
-              —
+              <Trans>-</Trans>
             </span>
           </div>
-          <span className="pt-4 text-xs text-muted-foreground">Skipped</span>
+          <span className="pt-4 text-xs text-muted-foreground">
+            <Trans>Skipped</Trans>
+          </span>
         </div>
       </div>
     </div>
   )
 }
 
-/** Images outside the min/max size range are excluded from processing — filtering out tiny icons and oversized scans. */
 function FilterSizeIllustration() {
   return (
     <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-6 px-6 py-8">
       <p className="max-w-sm text-center text-sm text-muted-foreground">
-        Images outside the min/max size range are excluded from processing — filtering out tiny icons
-        and oversized scans.
+        <Trans>
+          Images outside the min/max size range are excluded from processing - filtering out tiny icons and
+          oversized scans.
+        </Trans>
       </p>
       <div className="flex flex-wrap items-end justify-center gap-6">
         <div className="flex flex-col items-center gap-2">
@@ -216,7 +257,9 @@ function FilterSizeIllustration() {
               ✕
             </span>
           </div>
-          <span className="text-[10px] font-medium text-muted-foreground">Too small</span>
+          <span className="text-[10px] font-medium text-muted-foreground">
+            <Trans>Too small</Trans>
+          </span>
         </div>
         <div className="flex flex-col items-center gap-2">
           <div className="relative flex h-20 w-24 items-center justify-center rounded-lg border-2 border-emerald-500/40 bg-white">
@@ -225,7 +268,9 @@ function FilterSizeIllustration() {
               ✓
             </span>
           </div>
-          <span className="text-[10px] font-medium text-emerald-700">Within range</span>
+          <span className="text-[10px] font-medium text-emerald-700">
+            <Trans>Within range</Trans>
+          </span>
         </div>
         <div className="flex flex-col items-center gap-2">
           <div className="relative flex h-24 w-28 items-center justify-center rounded border border-muted bg-muted/30">
@@ -234,22 +279,24 @@ function FilterSizeIllustration() {
               ✕
             </span>
           </div>
-          <span className="text-[10px] font-medium text-muted-foreground">Too large</span>
+          <span className="text-[10px] font-medium text-muted-foreground">
+            <Trans>Too large</Trans>
+          </span>
         </div>
       </div>
     </div>
   )
 }
 
-const LABELS: Record<ImageProcessingPreviewFocus, string> = {
-  idle: "Image processing",
-  cropping: "LLM cropping",
-  segmentation: "LLM segmentation",
-  minSide: "Minimum size threshold",
-  filterSize: "Image filter size",
+const PREVIEW_LABEL_MSGS: Record<ImageProcessingPreviewFocus, MessageDescriptor> = {
+  idle: msg`Image processing`,
+  cropping: msg`LLM cropping`,
+  segmentation: msg`LLM segmentation`,
+  minSide: msg`Minimum size threshold`,
+  filterSize: msg`Image filter size`,
 }
 
-const ILLUSTRATIONS: Record<ImageProcessingPreviewFocus, React.FC> = {
+const ILLUSTRATIONS: Record<ImageProcessingPreviewFocus, FC> = {
   idle: IdleIllustration,
   cropping: CroppingIllustration,
   segmentation: SegmentationIllustration,
@@ -258,6 +305,7 @@ const ILLUSTRATIONS: Record<ImageProcessingPreviewFocus, React.FC> = {
 }
 
 function MobileCarousel() {
+  const { i18n } = useLingui()
   const [api, setApi] = useState<CarouselApi>()
   const [current, setCurrent] = useState(0)
 
@@ -276,9 +324,10 @@ function MobileCarousel() {
   }, [api, onSelect])
 
   const currentFocus = MOBILE_FOCUSES[current]
+  const currentLabelMsg = PREVIEW_LABEL_MSGS[currentFocus]
 
   return (
-    <PreviewShell label={LABELS[currentFocus]} className="min-h-[600px]">
+    <PreviewShell labelMsg={currentLabelMsg} className="min-h-[600px]">
       <Carousel
         setApi={setApi}
         opts={{ loop: true }}
@@ -313,7 +362,7 @@ function MobileCarousel() {
                     ? "w-4 bg-primary"
                     : "w-1.5 bg-muted-foreground/25 hover:bg-muted-foreground/40",
                 )}
-                aria-label={LABELS[f]}
+                aria-label={i18n._(PREVIEW_LABEL_MSGS[f])}
               />
             ))}
           </div>
@@ -339,7 +388,7 @@ export function ImageProcessingPreviewPane({
   const Illustration = ILLUSTRATIONS[focus]
 
   return (
-    <PreviewShell label={LABELS[focus]} key={focus}>
+    <PreviewShell labelMsg={PREVIEW_LABEL_MSGS[focus]} key={focus}>
       <div className="flex min-h-0 flex-1 items-center justify-center">
         <Illustration />
       </div>
