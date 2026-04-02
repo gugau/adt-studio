@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { BookOpen, X } from "lucide-react"
+import { BookOpen, Loader2, X } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import {
@@ -11,8 +11,62 @@ import {
 } from "@/components/ui/dialog"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { type PresetConfig, type ExampleBook } from "@/components/wizard/constants"
+import { usePdfPreviewPages } from "@/components/wizard/shared/usePdfPreviewPages"
 
 type EmbedTab = "pdf" | "adt"
+
+function PdfCanvasPreview({
+  src,
+  title,
+}: {
+  src?: string
+  title: string
+}) {
+  const { t } = useLingui()
+  const { pages, isLoading, error } = usePdfPreviewPages({
+    src,
+    mode: "all",
+  })
+
+  if (!src) {
+    return (
+      <div className="flex items-center justify-center h-full text-sm text-[#737373]">
+        <Trans>No preview available.</Trans>
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative h-full w-full overflow-auto bg-[#f5f5f5]" aria-label={title}>
+      {isLoading && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#f5f5f5]">
+          <div className="flex items-center gap-2 text-sm text-[#737373]">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <Trans>Loading preview...</Trans>
+          </div>
+        </div>
+      )}
+
+      {error ? (
+        <div className="flex h-full items-center justify-center px-6 text-center text-sm text-[#737373]">
+          <Trans>Unable to render PDF preview.</Trans>
+        </div>
+      ) : (
+        <div className="mx-auto flex min-h-full w-full max-w-[1100px] flex-col items-center gap-4 p-4">
+          {pages.map((pageDataUrl, index) => (
+            <img
+              key={`${index + 1}-${pageDataUrl.slice(0, 24)}`}
+              src={pageDataUrl}
+              alt={t`${title} - page ${index + 1}`}
+              className="w-full bg-white shadow-sm"
+              loading="lazy"
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function BookItem({
   book,
@@ -68,8 +122,6 @@ export function ExamplesModal({ open, onClose, preset }: ExamplesModalProps) {
   const [activeTab, setActiveTab] = useState<EmbedTab>("pdf")
 
   const pdfUrl = selectedBook.pdfUrl
-    ? `${selectedBook.pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`
-    : undefined
   const embedUrl = activeTab === "pdf" ? pdfUrl : selectedBook.adtUrl
 
   return (
@@ -172,11 +224,9 @@ export function ExamplesModal({ open, onClose, preset }: ExamplesModalProps) {
                       />
                     </div>
                   ) : (
-                    <iframe
-                      key={embedUrl}
-                      src={embedUrl}
+                    <PdfCanvasPreview
+                      src={selectedBook.pdfUrl}
                       title={t`Original PDF — ${selectedBook.title}`}
-                      className="w-full h-full border-0"
                     />
                   )
                 ) : (

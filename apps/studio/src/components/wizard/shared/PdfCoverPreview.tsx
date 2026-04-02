@@ -1,25 +1,8 @@
-import { useEffect, useRef, useState } from "react"
+import { useMemo } from "react"
 import { Loader2, BookOpen } from "lucide-react"
-import { Trans } from "@lingui/react/macro"
+import { Trans, useLingui } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
-import { getPdfJs } from "@/components/wizard/shared/pdfjsLoader"
-
-const JPEG_QUALITY = 0.92
-const MAX_COVER_CACHE_ENTRIES = 4
-
-const coverRenderCache = new Map<string, string>()
-
-function pdfCoverCacheKey(file: File, width: number, height: number): string {
-  return `${file.lastModified}:${file.size}:${width}:${height}`
-}
-
-function rememberCoverDataUrl(key: string, dataUrl: string) {
-  if (coverRenderCache.size >= MAX_COVER_CACHE_ENTRIES) {
-    const oldest = coverRenderCache.keys().next().value
-    if (oldest !== undefined) coverRenderCache.delete(oldest)
-  }
-  coverRenderCache.set(key, dataUrl)
-}
+import { usePdfPreviewPages } from "@/components/wizard/shared/usePdfPreviewPages"
 
 interface PdfCoverPreviewProps {
   file?: File | null
@@ -55,89 +38,15 @@ function PdfCoverPlaceholder() {
 }
 
 function PdfCoverCanvas({ file, width, height }: { file: File; width: number; height: number }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [ready, setReady] = useState(false)
-
-  useEffect(() => {
-    setReady(false)
-    let cancelled = false
-    const isCancelled = () => cancelled
-    const key = pdfCoverCacheKey(file, width, height)
-    const cached = coverRenderCache.get(key)
-
-    async function drawDataUrlToCanvas(dataUrl: string): Promise<boolean> {
-      if (isCancelled()) return false
-      const canvas = canvasRef.current
-      if (!canvas) return false
-      const img = new Image()
-      img.src = dataUrl
-      try {
-        await img.decode()
-      } catch {
-        coverRenderCache.delete(key)
-        return false
-      }
-      if (isCancelled()) return false
-      const ctx = canvas.getContext("2d")
-      if (!ctx) return false
-      canvas.width = img.naturalWidth
-      canvas.height = img.naturalHeight
-      ctx.drawImage(img, 0, 0)
-      setReady(true)
-      return true
-    }
-
-    async function renderFromPdf() {
-      const pdfjsLib = await getPdfJs()
-      if (isCancelled()) return
-
-      const buffer = await file.arrayBuffer()
-      if (isCancelled()) return
-
-      const pdf = await pdfjsLib.getDocument({ data: buffer }).promise
-      if (isCancelled()) {
-        await pdf.destroy().catch(() => {})
-        return
-      }
-
-      try {
-        const page = await pdf.getPage(1)
-        if (isCancelled()) return
-
-        const unscaled = page.getViewport({ scale: 1 })
-        const scale = Math.min(width / unscaled.width, height / unscaled.height)
-        const viewport = page.getViewport({ scale })
-
-        const canvas = canvasRef.current
-        if (!canvas || isCancelled()) return
-
-        const ctx = canvas.getContext("2d")
-        if (!ctx) return
-
-        canvas.width = viewport.width
-        canvas.height = viewport.height
-
-        await page.render({ canvas, viewport, canvasContext: ctx }).promise
-        if (isCancelled()) return
-
-        rememberCoverDataUrl(key, canvas.toDataURL("image/jpeg", JPEG_QUALITY))
-        setReady(true)
-      } finally {
-        await pdf.destroy().catch(() => {})
-      }
-    }
-
-    async function run() {
-      if (cached && (await drawDataUrlToCanvas(cached))) return
-      if (isCancelled()) return
-      await renderFromPdf()
-    }
-
-    run()
-    return () => {
-      cancelled = true
-    }
-  }, [file, width, height])
+  const { t } = useLingui()
+  const { pages, isLoading } = usePdfPreviewPages({
+    file,
+    mode: "first",
+    width,
+    height,
+  })
+  const coverDataUrl = useMemo(() => pages[0], [pages])
+  const ready = !isLoading && Boolean(coverDataUrl)
 
   return (
     <div
@@ -158,13 +67,16 @@ function PdfCoverCanvas({ file, width, height }: { file: File; width: number; he
           </span>
         </div>
       )}
-      <canvas
-        ref={canvasRef}
-        className={cn(
-          "max-h-full max-w-full rounded-lg shadow-sm transition-opacity duration-500",
-          ready ? "opacity-100" : "opacity-0",
-        )}
-      />
+      {coverDataUrl ? (
+        <img
+          src={coverDataUrl}
+          alt={t`PDF cover preview`}
+          className={cn(
+            "max-h-full max-w-full rounded-lg shadow-sm transition-opacity duration-500",
+            ready ? "opacity-100" : "opacity-0",
+          )}
+        />
+      ) : null}
     </div>
   )
 }
