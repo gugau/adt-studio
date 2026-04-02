@@ -1,12 +1,22 @@
-/* eslint-disable lingui/no-unlocalized-strings */
 import { useMemo, useRef, useState } from "react"
 import { useStore } from "@tanstack/react-form"
+import { msg } from "@lingui/core/macro"
+import { useLingui } from "@lingui/react/macro"
 import { Palette, Check, Upload } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import { useStyleguides, useUploadStyleguide } from "@/hooks/use-presets"
+
+const DESCRIPTION_PRIMARY = msg`A style guide provides consistent HTML and CSS patterns that the LLM uses when generating pages. It controls typography, colors, spacing, and component styles so every page in your book has a unified look.`
+const DESCRIPTION_SECONDARY = msg`Selecting "None" lets the LLM choose its own styling for each page.`
+const SEARCH_PLACEHOLDER = msg`Search style guides...`
+const NONE_OPTION = msg`None`
+const LOADING_STYLEGUIDES = msg`Loading style guides...`
+const UPLOADING = msg`Uploading...`
+const UPLOAD_STYLE_GUIDE = msg`Upload Style Guide`
+const UPLOAD_FAILED = msg`Upload failed`
 
 function StyleguideOption({
   name,
@@ -49,6 +59,7 @@ function StyleguideOption({
 
 export function Step5() {
   const form = useWizardForm()
+  const { i18n } = useLingui()
   const styleguide = useStore(form.store, (s) => s.values.styleguide)
   const { data: styleguidesData, isLoading } = useStyleguides()
   const available = styleguidesData?.styleguides ?? []
@@ -83,12 +94,10 @@ export function Step5() {
     <div className="flex w-full flex-col gap-5 p-8">
       <div className="flex flex-col gap-1">
         <p className="text-sm text-muted-foreground leading-relaxed">
-          A style guide provides consistent HTML and CSS patterns that the LLM uses when generating
-          pages. It controls typography, colors, spacing, and component styles so every page in
-          your book has a unified look.
+          {i18n._(DESCRIPTION_PRIMARY)}
         </p>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Selecting "None" lets the LLM choose its own styling for each page.
+          {i18n._(DESCRIPTION_SECONDARY)}
         </p>
       </div>
 
@@ -97,20 +106,20 @@ export function Step5() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search style guides..."
+            placeholder={i18n._(SEARCH_PLACEHOLDER)}
           />
         )}
 
         <div className="max-h-96 overflow-y-auto pr-1">
           <div className="flex flex-col gap-2">
             <StyleguideOption
-              name="None"
+              name={i18n._(NONE_OPTION)}
               selected={styleguide === ""}
               onSelect={() => form.setFieldValue("styleguide", "")}
             />
 
             {isLoading && (
-              <p className="px-4 py-3 text-sm text-muted-foreground">Loading style guides...</p>
+              <p className="px-4 py-3 text-sm text-muted-foreground">{i18n._(LOADING_STYLEGUIDES)}</p>
             )}
 
             {visibleStyleguides.map((sg) => (
@@ -141,11 +150,11 @@ export function Step5() {
           onClick={() => fileInputRef.current?.click()}
         >
           <Upload className="h-4 w-4" />
-          {uploadMutation.isPending ? "Uploading..." : "Upload Style Guide"}
+          {uploadMutation.isPending ? i18n._(UPLOADING) : i18n._(UPLOAD_STYLE_GUIDE)}
         </Button>
         {uploadMutation.isError && (
           <p className="text-sm text-destructive">
-            {uploadMutation.error?.message ?? "Upload failed"}
+            {uploadMutation.error?.message ?? i18n._(UPLOAD_FAILED)}
           </p>
         )}
       </div>
