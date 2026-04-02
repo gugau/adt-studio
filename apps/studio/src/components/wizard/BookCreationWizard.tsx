@@ -11,7 +11,7 @@ import { useBooks, useCreateBook } from "@/hooks/use-books"
 import { useWizard } from "./index"
 import { useWizardForm } from "./wizardForm"
 import { STEPS } from "./steps"
-import { buildConfigOverrides, parseOptionalPage, validatePageRange } from "./bookCreationConfig"
+import { buildConfigOverrides } from "./bookCreationConfig"
 import { Step0Preset } from "./step0preset"
 import { StudioTopBar } from "@/components/StudioTopBar"
 import { PdfCoverPreview } from "./shared/PdfCoverPreview"
@@ -20,6 +20,7 @@ import { ImageProcessingPreviewPane } from "./step3ImageProcessing/ImageProcessi
 import { LanguagesPreviewPane } from "./step4Languages/LanguagesPreviewPane"
 import { StyleguidePreviewPane } from "./step5Styleguide/StyleguidePreviewPane"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
 function WizardHeader({ step, hideStepCount = false }: { step: number; hideStepCount?: boolean }) {
@@ -96,32 +97,43 @@ function WizardFooter({
           </span>
         </Button>
 
-        <Button
-          type="button"
-          disabled={(isLastStep || quickMode) ? !canCreate : !canContinue}
-          onClick={isLastStep || quickMode ? onCreate : onNext}
-          className="flex h-10 min-w-0 w-full items-center justify-center overflow-hidden bg-[#2b7fff] px-4 font-medium text-white transition-opacity duration-300 ease-out hover:bg-[#1a6fef] disabled:opacity-50 border-0"
-        >
-          <span
-            key={isLastStep ? "create-final" : quickMode ? "create-quick" : "next"}
-            className={cn(
-              "flex items-center gap-1.5",
-              isLastStep ? "animate-btn-final-enter" : "animate-btn-label-enter",
-            )}
-          >
-            {isLastStep || quickMode ? (
-              <>
-                <Zap className="h-4 w-4 shrink-0" />
-                {t`Create Book`}
-              </>
-            ) : (
-              <>
-                {t`Next Step`}
-                <ArrowRight className="h-4 w-4 shrink-0" />
-              </>
-            )}
-          </span>
-        </Button>
+        <TooltipProvider>
+          <Tooltip open={quickMode && !canContinue ? undefined : false}>
+            <TooltipTrigger asChild>
+              <span className="min-w-0 w-full">
+                <Button
+                  type="button"
+                  disabled={(isLastStep || quickMode) ? !canCreate : !canContinue}
+                  onClick={isLastStep || quickMode ? onCreate : onNext}
+                  className="flex h-10 w-full items-center justify-center overflow-hidden bg-[#2b7fff] px-4 font-medium text-white transition-opacity duration-300 ease-out hover:bg-[#1a6fef] disabled:opacity-50 border-0"
+                >
+                  <span
+                    key={isLastStep ? "create-final" : quickMode ? "create-quick" : "next"}
+                    className={cn(
+                      "flex items-center gap-1.5",
+                      isLastStep ? "animate-btn-final-enter" : "animate-btn-label-enter",
+                    )}
+                  >
+                    {isLastStep || quickMode ? (
+                      <>
+                        <Zap className="h-4 w-4 shrink-0" />
+                        {t`Create Book`}
+                      </>
+                    ) : (
+                      <>
+                        {t`Next Step`}
+                        <ArrowRight className="h-4 w-4 shrink-0" />
+                      </>
+                    )}
+                  </span>
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              {t`Upload a PDF and fill the Project name with a valid label first`}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
   )
@@ -165,7 +177,7 @@ function PreviewContainer({
 }
 
 export function BookCreationWizard() {
-  const { i18n, t } = useLingui()
+  const { t } = useLingui()
   const navigate = useNavigate()
   const { currentStep, setCurrentStep, previewFocus } = useWizard()
   const form = useWizardForm()
@@ -186,25 +198,7 @@ export function BookCreationWizard() {
   }, [currentStep])
 
   const values = useStore(form.store, (s) => s.values)
-  const {
-    selectedPreset,
-    file,
-    renderStrategy,
-    label,
-    startPage,
-    endPage,
-    pageGrouping,
-    sectioningMode,
-    layoutType,
-    imageCropping,
-    imageSegmentation,
-    segmentationMinSide,
-    imageFilterMinSide,
-    imageFilterMaxSide,
-    editingLanguage,
-    outputLanguages,
-    styleguide,
-  } = values
+  const { selectedPreset, file, renderStrategy, editingLanguage, outputLanguages, styleguide } = values
   const stepIndex = currentStep - 1
   const existingBookLabels = books?.map((b: { label: string }) => b.label) ?? []
   const stepValidationContext = { existingBookLabels }
@@ -213,6 +207,7 @@ export function BookCreationWizard() {
       ? STEPS[stepIndex].isValid(values, stepValidationContext)
       : false
   const canCreate = STEPS.every((s) => s.isValid(values, stepValidationContext))
+  const isQuickMode = currentStep === 1 && !isDetailed && selectedPreset !== "custom"
 
   if (currentStep === 0) {
     return (
@@ -236,44 +231,12 @@ export function BookCreationWizard() {
   }
 
   async function handleCreate() {
-    if (!file || !label.trim()) {
-      setSubmitError(t`Book label and PDF file are required.`)
-      return
-    }
-
     setSubmitError(null)
-
-    const parsedStartPage = parseOptionalPage(startPage)
-    const parsedEndPage = parseOptionalPage(endPage)
-    const pageRangeError = validatePageRange({ parsedStartPage, parsedEndPage })
-
-    if (pageRangeError) {
-      setSubmitError(i18n._(pageRangeError))
-      return
-    }
-
-    const configOverrides = buildConfigOverrides({
-      renderStrategy,
-      sectioningMode,
-      pageGrouping,
-      imageFilterMinSide,
-      imageFilterMaxSide,
-      imageCropping,
-      imageSegmentation,
-      layoutType,
-      styleguide,
-      editingLanguage,
-      outputLanguages,
-      parsedStartPage,
-      parsedEndPage,
-      segmentationMinSide,
-    })
-
     try {
       const book = await createMutation.mutateAsync({
-        label: label.trim(),
-        pdf: file,
-        config: configOverrides,
+        label: values.label.trim(),
+        pdf: values.file!,
+        config: buildConfigOverrides(values),
       })
 
       if (hasApiKey && apiKey) {
@@ -282,21 +245,14 @@ export function BookCreationWizard() {
             book.label,
             apiKey,
             { fromStage: "extract", toStage: "storyboard" },
-            {
-              azure: { key: azureKey, region: azureRegion },
-              geminiApiKey: geminiKey,
-            },
+            { azure: { key: azureKey, region: azureRegion }, geminiApiKey: geminiKey },
           )
         } catch {}
       }
 
-      navigate({
-        to: "/books/$label/$step",
-        params: { label: book.label, step: "book" },
-      })
+      navigate({ to: "/books/$label/$step", params: { label: book.label, step: "book" } })
     } catch (error) {
-      const message = error instanceof Error ? error.message : t`Failed to create book.`
-      setSubmitError(message)
+      setSubmitError(error instanceof Error ? error.message : t`Failed to create book.`)
     }
   }
   const previewWidth = currentStep === 2 ? getPreviewWidth(renderStrategy) : 650
@@ -342,7 +298,7 @@ export function BookCreationWizard() {
           </div>
 
           <div className="mx-auto flex w-full min-h-0 lg:pr-8 flex-1 flex-col overflow-hidden">
-            <WizardHeader step={currentStep} hideStepCount={currentStep === 1 && !isDetailed && selectedPreset !== "custom"} />
+            <WizardHeader step={currentStep} hideStepCount={isQuickMode} />
 
             <div className="min-h-0 flex-1 overflow-y-auto">
               <StepComponent />
@@ -362,7 +318,7 @@ export function BookCreationWizard() {
             onBack={handleBack}
             onNext={handleNext}
             onCreate={handleCreate}
-            quickMode={currentStep === 1 && !isDetailed && selectedPreset !== "custom"}
+            quickMode={isQuickMode}
             onConfigure={() => setIsDetailed(true)}
           />
         </aside>

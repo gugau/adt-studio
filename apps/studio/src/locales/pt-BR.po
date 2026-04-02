@@ -490,8 +490,8 @@ msgstr "Os dados do livro estão desatualizados e precisam ser reconstruídos."
 #~ msgid "Book Examples"
 #~ msgstr "Exemplos de livros"
 
-msgid "Book label and PDF file are required."
-msgstr "Etiqueta do livro e arquivo PDF são necessários."
+#~ msgid "Book label and PDF file are required."
+#~ msgstr "Etiqueta do livro e arquivo PDF são necessários."
 
 msgid "Book Metadata"
 msgstr "Metadados do livro"
@@ -1354,8 +1354,8 @@ msgstr "Imagens grandes, fluxo narrativo. Melhor para livros ilustrados com voze
 msgid "Last"
 msgstr "Última"
 
-msgid "Last page must be greater than or equal to first page."
-msgstr "A última página deve ser maior ou igual à primeira página."
+#~ msgid "Last page must be greater than or equal to first page."
+#~ msgstr "A última página deve ser maior ou igual à primeira página."
 
 msgid "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 msgstr "Deixe em Nenhum para executar segmentação em todas as imagens qualificadas (sujeito às regras do pipeline)."
@@ -1811,8 +1811,8 @@ msgstr "Pré-visualização da página {0}"
 msgid "Page Range"
 msgstr "Intervalo de páginas"
 
-msgid "Page range must use whole numbers greater than or equal to 1."
-msgstr "O intervalo de páginas deve usar números inteiros maiores ou iguais a 1."
+#~ msgid "Page range must use whole numbers greater than or equal to 1."
+#~ msgstr "O intervalo de páginas deve usar números inteiros maiores ou iguais a 1."
 
 msgid "Page Sectioning"
 msgstr "Secionamento de páginas"
@@ -2715,6 +2715,9 @@ msgstr "Sem título"
 
 msgid "Upload a new image file from your computer"
 msgstr "Envie um novo arquivo de imagem do seu computador"
+
+msgid "Upload a PDF and fill the Project name with a valid label first"
+msgstr "Envie um PDF e preencha o nome do projeto com um rótulo válido primeiro"
 
 msgid "Upload a PDF to get started"
 msgstr "Envie um PDF para começar"

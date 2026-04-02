@@ -1,94 +1,30 @@
-import type { MessageDescriptor } from "@lingui/core"
-import { msg } from "@lingui/core/macro"
+import type { WizardFormValues } from "./wizardForm"
 
-export function parseOptionalPage(value: string): number | undefined {
-  return value.trim() ? Number(value) : undefined
-}
+export function buildConfigOverrides(values: WizardFormValues): Record<string, unknown> {
+  const parsedStartPage = values.startPage.trim() ? Number(values.startPage) : undefined
+  const parsedEndPage = values.endPage.trim() ? Number(values.endPage) : undefined
 
-export function validatePageRange({
-  parsedStartPage,
-  parsedEndPage,
-}: {
-  parsedStartPage: number | undefined
-  parsedEndPage: number | undefined
-}): MessageDescriptor | null {
-  const hasInvalidStart =
-    parsedStartPage !== undefined &&
-    (!Number.isInteger(parsedStartPage) || parsedStartPage < 1)
-  const hasInvalidEnd =
-    parsedEndPage !== undefined &&
-    (!Number.isInteger(parsedEndPage) || parsedEndPage < 1)
-
-  if (hasInvalidStart || hasInvalidEnd) {
-    return msg`Page range must use whole numbers greater than or equal to 1.`
-  }
-
-  if (
-    parsedStartPage !== undefined &&
-    parsedEndPage !== undefined &&
-    parsedEndPage < parsedStartPage
-  ) {
-    return msg`Last page must be greater than or equal to first page.`
-  }
-
-  return null
-}
-
-export function buildConfigOverrides({
-  renderStrategy,
-  sectioningMode,
-  pageGrouping,
-  imageFilterMinSide,
-  imageFilterMaxSide,
-  imageCropping,
-  imageSegmentation,
-  layoutType,
-  styleguide,
-  editingLanguage,
-  outputLanguages,
-  parsedStartPage,
-  parsedEndPage,
-  segmentationMinSide,
-}: {
-  renderStrategy: string
-  sectioningMode: string
-  pageGrouping: string
-  imageFilterMinSide: number
-  imageFilterMaxSide: number
-  imageCropping: boolean
-  imageSegmentation: boolean
-  layoutType: string
-  styleguide: string
-  editingLanguage: string
-  outputLanguages: string[]
-  parsedStartPage: number | undefined
-  parsedEndPage: number | undefined
-  segmentationMinSide: string
-}): Record<string, unknown> {
-  const configOverrides: Record<string, unknown> = {
-    default_render_strategy: renderStrategy,
-    page_sectioning: { mode: sectioningMode },
-    spread_mode: pageGrouping === "spread",
+  const config: Record<string, unknown> = {
+    default_render_strategy: values.renderStrategy,
+    page_sectioning: { mode: values.sectioningMode },
+    spread_mode: values.pageGrouping === "spread",
     image_filters: {
-      min_side: imageFilterMinSide,
-      max_side: imageFilterMaxSide,
-      cropping: imageCropping,
-      segmentation: imageSegmentation,
+      min_side: values.imageFilterMinSide,
+      max_side: values.imageFilterMaxSide,
+      cropping: values.imageCropping,
+      segmentation: values.imageSegmentation,
     },
   }
 
-  if (layoutType) configOverrides.layout_type = layoutType
-  if (styleguide.trim()) configOverrides.styleguide = styleguide.trim()
-  if (editingLanguage.trim()) configOverrides.editing_language = editingLanguage.trim()
-  if (outputLanguages.length > 0) configOverrides.output_languages = outputLanguages
-  if (parsedStartPage !== undefined) configOverrides.start_page = parsedStartPage
-  if (parsedEndPage !== undefined) configOverrides.end_page = parsedEndPage
-
-  if (imageSegmentation && segmentationMinSide.trim()) {
-    configOverrides.image_segmentation = {
-      min_side: Number(segmentationMinSide),
-    }
+  if (values.layoutType) config.layout_type = values.layoutType
+  if (values.styleguide.trim()) config.styleguide = values.styleguide.trim()
+  if (values.editingLanguage.trim()) config.editing_language = values.editingLanguage.trim()
+  if (values.outputLanguages.length > 0) config.output_languages = values.outputLanguages
+  if (parsedStartPage !== undefined) config.start_page = parsedStartPage
+  if (parsedEndPage !== undefined) config.end_page = parsedEndPage
+  if (values.imageSegmentation && values.segmentationMinSide.trim()) {
+    config.image_segmentation = { min_side: Number(values.segmentationMinSide) }
   }
 
-  return configOverrides
+  return config
 }

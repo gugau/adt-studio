@@ -496,8 +496,8 @@ msgstr "Book data is outdated and must be rebuilt."
 #~ msgid "Book Examples"
 #~ msgstr "Book Examples"
 
-msgid "Book label and PDF file are required."
-msgstr "Book label and PDF file are required."
+#~ msgid "Book label and PDF file are required."
+#~ msgstr "Book label and PDF file are required."
 
 msgid "Book Metadata"
 msgstr "Book Metadata"
@@ -1360,8 +1360,8 @@ msgstr "Large images, narrative flow. Best for illustrated books with high-fidel
 msgid "Last"
 msgstr "Last"
 
-msgid "Last page must be greater than or equal to first page."
-msgstr "Last page must be greater than or equal to first page."
+#~ msgid "Last page must be greater than or equal to first page."
+#~ msgstr "Last page must be greater than or equal to first page."
 
 msgid "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 msgstr "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
@@ -1817,8 +1817,8 @@ msgstr "Page preview {pageId}"
 msgid "Page Range"
 msgstr "Page Range"
 
-msgid "Page range must use whole numbers greater than or equal to 1."
-msgstr "Page range must use whole numbers greater than or equal to 1."
+#~ msgid "Page range must use whole numbers greater than or equal to 1."
+#~ msgstr "Page range must use whole numbers greater than or equal to 1."
 
 msgid "Page Sectioning"
 msgstr "Page Sectioning"
@@ -2721,6 +2721,9 @@ msgstr "Untitled"
 
 msgid "Upload a new image file from your computer"
 msgstr "Upload a new image file from your computer"
+
+msgid "Upload a PDF and fill the Project name with a valid label first"
+msgstr "Upload a PDF and fill the Project name with a valid label first"
 
 msgid "Upload a PDF to get started"
 msgstr "Upload a PDF to get started"
