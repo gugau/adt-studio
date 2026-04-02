@@ -3,6 +3,7 @@ import { useStore } from "@tanstack/react-form"
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import { RangeSlider } from "@/components/wizard/shared/RangeSlider"
 import { usePdfUpload } from "./PdfUpload"
+import { t } from "@lingui/core/macro"
 
 export function PageRange() {
   const form = useWizardForm()
@@ -17,8 +18,8 @@ export function PageRange() {
 
   return (
     <RangeSlider
-      label="Page Range"
-      tooltip="In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
+      label={t`Page Range`}
+      tooltip={t`In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized.`}
       min={1}
       max={totalPages || 1}
       value={[start, end]}

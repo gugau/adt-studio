@@ -1,5 +1,5 @@
-// TODO: Add translations
 import { useCallback, useEffect, useRef, useState } from "react"
+import { Trans, useLingui } from "@lingui/react/macro"
 import { Upload, Trash2, XCircle } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
 import { Button } from "@/components/ui/button"
@@ -29,7 +29,9 @@ function waitTwoAnimationFrames(): Promise<void> {
 }
 
 function formatBytes(bytes: number) {
+  /* eslint-disable-next-line lingui/no-unlocalized-strings */
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+  /* eslint-disable-next-line lingui/no-unlocalized-strings */
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
@@ -103,6 +105,7 @@ export function usePdfUpload() {
 }
 
 export function PdfUpload() {
+  const { t } = useLingui()
   const { file, setFile, clearFile } = usePdfUpload()
   const pdfRef = useRef<HTMLInputElement>(null)
   const [overlay, setOverlay] = useState<OverlayState>("idle")
@@ -194,7 +197,9 @@ export function PdfUpload() {
                 overlay === "dragging" ? "scale-100" : "scale-75",
               )}
             />
-            <span className="text-base font-semibold text-[#2b7fff]">Drop PDF here</span>
+            <span className="text-base font-semibold text-[#2b7fff]">
+              <Trans>Drop PDF here</Trans>
+            </span>
           </div>
           <div
             className={cn(
@@ -206,7 +211,7 @@ export function PdfUpload() {
           >
             <XCircle className="h-10 w-10 text-[#ef4444]" />
             <span className="text-center text-base font-semibold text-[#ef4444]">
-              Only PDF files are supported
+              <Trans>Only PDF files are supported</Trans>
             </span>
           </div>
         </div>
@@ -214,7 +219,7 @@ export function PdfUpload() {
 
       <div className="flex flex-col gap-2">
         <label className="text-sm font-medium text-[#0a0a0a]">
-          PDF File <span className="text-[#ef4444]">*</span>
+          <Trans>PDF File</Trans> <span className="text-[#ef4444]">*</span>
         </label>
         <input ref={pdfRef} type="file" accept="application/pdf" className="hidden" onChange={handleFileChange} />
 
@@ -232,6 +237,7 @@ export function PdfUpload() {
                 variant="ghost"
                 size="icon"
                 onClick={clearFile}
+                aria-label={t`Remove PDF`}
                 className="h-8 w-8 text-[#737373] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors shrink-0"
               >
                 <Trash2 className="h-4 w-4" />
@@ -245,10 +251,13 @@ export function PdfUpload() {
               onKeyDown={(e) => e.key === "Enter" && pdfRef.current?.click()}
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
+              aria-label={t`Upload PDF or drag and drop`}
               className="flex flex-col items-center justify-center gap-2 border border-dashed border-[#d4d4d4] rounded-lg h-full cursor-pointer hover:border-[#2b7fff]/60 hover:bg-[#2b7fff]/[0.02] transition-colors duration-200"
             >
               <Upload className="h-4 w-4 text-[#737373]" />
-              <span className="text-sm text-[#737373]">Upload PDF or drag and drop</span>
+              <span className="text-sm text-[#737373]">
+                <Trans>Upload PDF or drag and drop</Trans>
+              </span>
             </div>
           )}
         </div>
