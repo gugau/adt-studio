@@ -94,6 +94,7 @@ export function usePdfPreviewPages(params: UsePdfPreviewPagesParams) {
                 : 1200 / base.width
             const viewport = page.getViewport({ scale })
             const canvas = document.createElement("canvas")
+            // eslint-disable-next-line lingui/no-unlocalized-strings -- Canvas API context id
             const ctx = canvas.getContext("2d")
             if (!ctx) throw new Error("Canvas context unavailable")
 
