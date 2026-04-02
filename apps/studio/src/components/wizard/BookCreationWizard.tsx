@@ -2,7 +2,7 @@
 // TODO: Add translations
 import { useState, useEffect, useRef, type CSSProperties } from "react"
 import { Trans } from "@lingui/react/macro"
-import { Eye, ArrowLeft, ArrowRight, Zap } from "lucide-react"
+import { Eye, ArrowLeft, ArrowRight, Zap, SlidersHorizontal } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
 import { Button } from "@/components/ui/button"
 import { useBooks } from "@/hooks/use-books"
@@ -19,7 +19,7 @@ import { StyleguidePreviewPane } from "./step5Styleguide/StyleguidePreviewPane"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 
-function WizardHeader({ step }: { step: number }) {
+function WizardHeader({ step, hideStepCount = false }: { step: number; hideStepCount?: boolean }) {
   const def = STEPS[step - 1]
   return (
     <div className="flex flex-col gap-3 px-8 pt-6">
@@ -27,9 +27,11 @@ function WizardHeader({ step }: { step: number }) {
         <span className="inline-flex items-center bg-[#fef2f2] text-[#ef4444] text-[12px] font-semibold leading-4 px-[10px] py-[4px] rounded-[4px]">
           Required Fields
         </span>
-        <span className="text-[14px] font-bold leading-5 text-[#3b82f6] uppercase tracking-wide">
-          Step {step} of {STEPS.length}
-        </span>
+        {!hideStepCount && (
+          <span className="text-[14px] font-bold leading-5 text-[#3b82f6] uppercase tracking-wide animate-wizard-enter">
+            Step {step} of {STEPS.length}
+          </span>
+        )}
       </div>
       <div className="flex flex-col gap-1">
         <h1 className="text-[30px] font-semibold leading-9 tracking-[-0.75px] text-black">
@@ -47,6 +49,8 @@ function WizardFooter({
   onBack,
   onNext,
   onCreate,
+  quickMode = false,
+  onConfigure,
 }: {
   isLastStep: boolean
   canContinue: boolean
@@ -54,58 +58,65 @@ function WizardFooter({
   onBack: () => void
   onNext: () => void
   onCreate: () => void
+  quickMode?: boolean
+  onConfigure?: () => void
 }) {
-  const showQuickCreate = canCreate && !isLastStep
-
   return (
-    <div
-      className={cn(
-        "grid w-full gap-2 px-6 py-4 border-t border-[#e5e5e5] transition-[grid-template-columns] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
-        showQuickCreate ? "grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]" : "grid-cols-[minmax(0,1fr)_minmax(0,0fr)_minmax(0,1fr)]",
+    <div className="border-t border-[#e5e5e5] px-6 py-4 flex flex-col gap-2">
+      {quickMode && (
+        <p className="text-center text-xs text-[#a3a3a3] animate-btn-label-enter">
+          Your preset is ready — create now or walk through each step
+        </p>
       )}
-    >
-      <Button
-        type="button"
-        variant="outline"
-        onClick={onBack}
-        className="flex h-10 min-w-0 w-full items-center justify-center gap-1.5 px-4 font-medium"
-      >
-        <ArrowLeft className="h-4 w-4 shrink-0" />
-        Back
-      </Button>
+      <div className="grid grid-cols-2 w-full gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={quickMode ? onConfigure : onBack}
+          className="flex h-10 min-w-0 w-full items-center justify-center overflow-hidden px-4 font-medium"
+        >
+          <span key={quickMode ? "step-by-step" : "back"} className="flex items-center gap-1.5 animate-btn-label-enter">
+            {quickMode ? (
+              <>
+                <SlidersHorizontal className="h-4 w-4 shrink-0" />
+                Step by Step
+              </>
+            ) : (
+              <>
+                <ArrowLeft className="h-4 w-4 shrink-0" />
+                Back
+              </>
+            )}
+          </span>
+        </Button>
 
-      <div className="min-h-10 min-w-0 overflow-hidden">
-        {showQuickCreate ? (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCreate}
-            className="flex h-10 min-w-0 w-full items-center justify-center gap-1.5 px-4 font-medium"
+        <Button
+          type="button"
+          disabled={(isLastStep || quickMode) ? !canCreate : !canContinue}
+          onClick={isLastStep || quickMode ? onCreate : onNext}
+          className="flex h-10 min-w-0 w-full items-center justify-center overflow-hidden bg-[#2b7fff] px-4 font-medium text-white transition-opacity duration-300 ease-out hover:bg-[#1a6fef] disabled:opacity-50 border-0"
+        >
+          <span
+            key={isLastStep ? "create-final" : quickMode ? "create-quick" : "next"}
+            className={cn(
+              "flex items-center gap-1.5",
+              isLastStep ? "animate-btn-final-enter" : "animate-btn-label-enter",
+            )}
           >
-            <Zap className="h-4 w-4 shrink-0" />
-            Create Book
-          </Button>
-        ) : null}
+            {isLastStep || quickMode ? (
+              <>
+                <Zap className="h-4 w-4 shrink-0" />
+                Create Book
+              </>
+            ) : (
+              <>
+                Next Step
+                <ArrowRight className="h-4 w-4 shrink-0" />
+              </>
+            )}
+          </span>
+        </Button>
       </div>
-
-      <Button
-        type="button"
-        disabled={isLastStep ? !canCreate : !canContinue}
-        onClick={isLastStep ? onCreate : onNext}
-        className="flex h-10 min-w-0 w-full items-center justify-center gap-1.5 bg-[#2b7fff] px-4 font-medium text-white transition-opacity duration-300 ease-out hover:bg-[#1a6fef] disabled:opacity-50 border-0"
-      >
-        {isLastStep ? (
-          <>
-            <Zap className="h-4 w-4 shrink-0" />
-            Create Book
-          </>
-        ) : (
-          <>
-            Next Step
-            <ArrowRight className="h-4 w-4 shrink-0" />
-          </>
-        )}
-      </Button>
     </div>
   )
 }
@@ -152,6 +163,7 @@ export function BookCreationWizard() {
   const form = useWizardForm()
   const { data: books } = useBooks()
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [isDetailed, setIsDetailed] = useState(false)
   const prevStepRef = useRef(currentStep)
   const [cameBackToPreset, setCameBackToPreset] = useState(false)
 
@@ -163,6 +175,7 @@ export function BookCreationWizard() {
   }, [currentStep])
 
   const values = useStore(form.store, (s) => s.values)
+  const selectedPreset = useStore(form.store, (s) => s.values.selectedPreset)
   const file = useStore(form.store, (s) => s.values.file)
   const renderStrategy = useStore(form.store, (s) => s.values.renderStrategy)
   const editingLanguage = useStore(form.store, (s) => s.values.editingLanguage)
@@ -182,7 +195,7 @@ export function BookCreationWizard() {
       <div className="flex flex-1 min-h-0 flex-col h-full bg-white">
         <StudioTopBar brandLinksHome trailingTitle={<Trans>Add Book</Trans>} />
         <div className="flex flex-1 min-h-0 flex-col overflow-auto">
-          <Step0Preset showWarning={cameBackToPreset} />
+          <Step0Preset showWarning={cameBackToPreset} onPresetChanged={() => setIsDetailed(false)} />
         </div>
       </div>
     )
@@ -244,7 +257,7 @@ export function BookCreationWizard() {
           </div>
 
           <div className="mx-auto flex w-full min-h-0 lg:pr-8 flex-1 flex-col overflow-hidden">
-            <WizardHeader step={currentStep} />
+            <WizardHeader step={currentStep} hideStepCount={currentStep === 1 && !isDetailed && selectedPreset !== "custom"} />
 
             <div className="min-h-0 flex-1 overflow-y-auto">
               <StepComponent />
@@ -258,6 +271,8 @@ export function BookCreationWizard() {
             onBack={handleBack}
             onNext={handleNext}
             onCreate={handleCreate}
+            quickMode={currentStep === 1 && !isDetailed && selectedPreset !== "custom"}
+            onConfigure={() => setIsDetailed(true)}
           />
         </aside>
 
