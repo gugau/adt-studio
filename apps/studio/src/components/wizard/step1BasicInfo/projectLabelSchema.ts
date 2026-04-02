@@ -16,7 +16,7 @@ export function createProjectLabelSchema(existingLabels: readonly string[]) {
       i18n._(LABEL_FORMAT_MSG),
     )
     .refine(
-      (val) => !existingLabels.includes(val),
+      (val) => !existingLabels.some((l) => l.toLowerCase() === val.toLowerCase()),
       i18n._(LABEL_DUPLICATE_MSG),
     )
 }
