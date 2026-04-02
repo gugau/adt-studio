@@ -1,4 +1,3 @@
-/* eslint-disable lingui/no-unlocalized-strings */
 import {
   Sparkles,
   Layers,
@@ -8,6 +7,8 @@ import {
   Library,
   SlidersHorizontal,
 } from "lucide-react"
+import type { MessageDescriptor } from "@lingui/core"
+import { msg } from "@lingui/core/macro"
 import type { ElementType } from "react"
 import { TwoColumnStoryStrategyIcon } from "@/components/wizard/icons/TwoColumnStoryStrategyIcon"
 import type { WizardFormValues } from "./wizardForm"
@@ -17,8 +18,8 @@ import type { WizardFormValues } from "./wizardForm"
 export interface WizardOption<TId extends string = string> {
   id: TId
   Icon?: ElementType
-  title: string
-  description?: string
+  title: MessageDescriptor
+  description?: MessageDescriptor
 }
 
 // ─── Render Strategy categories ──────────────────────────────────────────────
@@ -26,18 +27,18 @@ export interface WizardOption<TId extends string = string> {
 export type StrategyCategory = "template" | "ai"
 
 export interface StrategyCategoryMeta {
-  label: string
-  description: string
+  label: MessageDescriptor
+  description: MessageDescriptor
 }
 
 export const STRATEGY_CATEGORIES: Record<StrategyCategory, StrategyCategoryMeta> = {
   template: {
-    label: "Template-based",
-    description: "Fast, consistent results with no AI cost",
+    label: msg`Template-based`,
+    description: msg`Fast, consistent results with no AI cost`,
   },
   ai: {
-    label: "AI-powered",
-    description: "Adaptive layouts generated per page (slower, uses API credits)",
+    label: msg`AI-powered`,
+    description: msg`Adaptive layouts generated per page (slower, uses API credits)`,
   },
 }
 
@@ -51,33 +52,29 @@ export const RENDER_STRATEGIES = [
   {
     id: "llm",
     Icon: Sparkles,
-    title: "Dynamic",
-    description:
-      "Automatically adapts the layout based on each page's content using AI.",
+    title: msg`Dynamic`,
+    description: msg`Automatically adapts the layout based on each page's content using AI.`,
     category: "ai",
   },
   {
     id: "llm-overlay",
     Icon: Layers,
-    title: "Dynamic Overlay",
-    description:
-      "AI-powered layout that preserves the original page as a background with text overlay.",
+    title: msg`Dynamic Overlay`,
+    description: msg`AI-powered layout that preserves the original page as a background with text overlay.`,
     category: "ai",
   },
   {
     id: "two_column",
     Icon: BookOpen,
-    title: "Two Columns",
-    description:
-      "The ideal choice for novels, focused on a clean and continuous reading experience.",
+    title: msg`Two Columns`,
+    description: msg`The ideal choice for novels, focused on a clean and continuous reading experience.`,
     category: "template",
   },
   {
     id: "two_column_story",
     Icon: TwoColumnStoryStrategyIcon,
-    title: "Two Columns Story",
-    description:
-      "Perfect for children's books, pairing large images with minimal text.",
+    title: msg`Two Columns Story`,
+    description: msg`Perfect for children's books, pairing large images with minimal text.`,
     category: "template",
   },
 ] as const satisfies readonly RenderStrategyOption[]
@@ -99,7 +96,7 @@ export type PresetDefaults = Partial<WizardFormValues>
 export type PresetId = "textbook" | "storybook" | "reference" | "custom"
 
 export interface ExampleBook {
-  title: string
+  title: MessageDescriptor
   pdfUrl?: string
   adtUrl?: string
   comingSoon?: boolean
@@ -111,9 +108,9 @@ export interface PresetConfig {
   Icon: React.ElementType
   iconColor: string
   bgColor: string
-  title: string
-  description: string
-  recommendedFor: string[]
+  title: MessageDescriptor
+  description: MessageDescriptor
+  recommendedFor: MessageDescriptor[]
   exampleBooks: ExampleBook[]
   defaults: PresetDefaults
 }
@@ -135,24 +132,23 @@ export const PRESETS: PresetConfig[] = [
     Icon: GraduationCap,
     iconColor: "text-blue-500",
     bgColor: "bg-blue-500/5",
-    title: "Textbooks & Academic",
-    description:
-      "Structured chapters, exercises. Best for educational content with complex layouts.",
+    title: msg`Textbooks & Academic`,
+    description: msg`Structured chapters, exercises. Best for educational content with complex layouts.`,
     recommendedFor: [
-      "School textbooks and workbooks",
-      "University academic publications",
-      "Scientific papers and journals",
-      "Technical manuals with diagrams",
+      msg`School textbooks and workbooks`,
+      msg`University academic publications`,
+      msg`Scientific papers and journals`,
+      msg`Technical manuals with diagrams`,
     ],
     exampleBooks: [
       {
-        title: "Práticas de Alfabetização e de Matemática",
+        title: msg`Práticas de Alfabetização e de Matemática`,
         pdfUrl: DEMO_PDF_URL,
         adtUrl: DEMO_ADT_URL,
       },
-      { title: "Ciências da Natureza — Ensino Fundamental", comingSoon: true },
-      { title: "História e Sociedade — Vol. 1", comingSoon: true },
-      { title: "Língua Portuguesa — 3° Ano", comingSoon: true },
+      { title: msg`Ciências da Natureza - Ensino Fundamental`, comingSoon: true },
+      { title: msg`História e Sociedade - Vol. 1`, comingSoon: true },
+      { title: msg`Língua Portuguesa - 3° Ano`, comingSoon: true },
     ],
     defaults: {
       layoutType: "textbook",
@@ -172,23 +168,22 @@ export const PRESETS: PresetConfig[] = [
     Icon: BookHeart,
     iconColor: "text-amber-500",
     bgColor: "bg-amber-500/5",
-    title: "Storybook",
-    description:
-      "Large images, narrative flow. Best for illustrated books with high-fidelity TTS voices.",
+    title: msg`Storybook`,
+    description: msg`Large images, narrative flow. Best for illustrated books with high-fidelity TTS voices.`,
     recommendedFor: [
-      "Illustrated children's books",
-      "Young adult fiction",
-      "Chapter books with images",
-      "Picture books and early readers",
+      msg`Illustrated children's books`,
+      msg`Young adult fiction`,
+      msg`Chapter books with images`,
+      msg`Picture books and early readers`,
     ],
     exampleBooks: [
       {
-        title: "Sample Illustrated Story",
+        title: msg`Sample Illustrated Story`,
         pdfUrl: DEMO_PDF_URL,
         adtUrl: DEMO_ADT_URL,
       },
-      { title: "Adventure Tales — Vol. 1", comingSoon: true },
-      { title: "The Lost Forest", comingSoon: true },
+      { title: msg`Adventure Tales - Vol. 1`, comingSoon: true },
+      { title: msg`The Lost Forest`, comingSoon: true },
     ],
     defaults: {
       layoutType: "storybook",
@@ -207,23 +202,22 @@ export const PRESETS: PresetConfig[] = [
     Icon: Library,
     iconColor: "text-emerald-500",
     bgColor: "bg-emerald-500/5",
-    title: "Reference",
-    description:
-      "Dense text, tables, glossaries. Best for technical material and documentation.",
+    title: msg`Reference`,
+    description: msg`Dense text, tables, glossaries. Best for technical material and documentation.`,
     recommendedFor: [
-      "Technical documentation",
-      "Legal and compliance manuals",
-      "Medical references",
-      "Engineering handbooks",
+      msg`Technical documentation`,
+      msg`Legal and compliance manuals`,
+      msg`Medical references`,
+      msg`Engineering handbooks`,
     ],
     exampleBooks: [
       {
-        title: "Sample Reference Manual",
+        title: msg`Sample Reference Manual`,
         pdfUrl: DEMO_PDF_URL,
         adtUrl: DEMO_ADT_URL,
       },
-      { title: "Engineering Handbook Vol. 2", comingSoon: true },
-      { title: "Legal Compliance Guide", comingSoon: true },
+      { title: msg`Engineering Handbook Vol. 2`, comingSoon: true },
+      { title: msg`Legal Compliance Guide`, comingSoon: true },
     ],
     defaults: {
       layoutType: "reference",
@@ -242,21 +236,21 @@ export const PRESETS: PresetConfig[] = [
     Icon: SlidersHorizontal,
     iconColor: "text-violet-500",
     bgColor: "bg-violet-500/5",
-    title: "Custom",
-    description: "Full control over render strategies, pruning, and filters.",
+    title: msg`Custom`,
+    description: msg`Full control over render strategies, pruning, and filters.`,
     recommendedFor: [
-      "Any content type",
-      "Specialized workflows",
-      "Experimental configurations",
-      "Multi-format publications",
+      msg`Any content type`,
+      msg`Specialized workflows`,
+      msg`Experimental configurations`,
+      msg`Multi-format publications`,
     ],
     exampleBooks: [
       {
-        title: "Custom Layout Demo",
+        title: msg`Custom Layout Demo`,
         pdfUrl: DEMO_PDF_URL,
         adtUrl: DEMO_ADT_URL,
       },
-      { title: "Mixed Content Project", comingSoon: true },
+      { title: msg`Mixed Content Project`, comingSoon: true },
     ],
     defaults: {},
   },
@@ -267,31 +261,34 @@ export const PRESET_DEFAULTS: Record<PresetId, PresetDefaults> = Object.fromEntr
 ) as Record<PresetId, PresetDefaults>
 
 
-const FIELD_LABELS: Partial<Record<keyof WizardFormValues, string>> = {
-  renderStrategy: "Render Strategy",
-  pageGrouping: "Page Grouping",
-  sectioningMode: "Sectioning",
-  imageCropping: "Smart Cropping",
-  imageSegmentation: "Image Segmentation",
-  imageFilterMinSide: "Min Image Size",
-  imageFilterMaxSide: "Max Image Size",
-  styleguide: "Style Guide",
+const FIELD_LABELS: Partial<Record<keyof WizardFormValues, MessageDescriptor>> = {
+  renderStrategy: msg`Render Strategy`,
+  pageGrouping: msg`Page Grouping`,
+  sectioningMode: msg`Sectioning`,
+  imageCropping: msg`Smart Cropping`,
+  imageSegmentation: msg`Image Segmentation`,
+  imageFilterMinSide: msg`Min Image Size`,
+  imageFilterMaxSide: msg`Max Image Size`,
+  styleguide: msg`Style Guide`,
 }
 
-const VALUE_LABELS: Record<string, string> = {
-  two_column: "Two Columns",
-  two_column_story: "Two Columns Story",
-  llm: "Dynamic",
-  "llm-overlay": "Dynamic Overlay",
-  single: "Single Page",
-  spread: "Spread",
-  page: "Per Page",
-  dynamic: "Dynamic",
-  section: "By Section",
+const VALUE_LABELS: Record<string, MessageDescriptor> = {
+  two_column: msg`Two Columns`,
+  two_column_story: msg`Two Columns Story`,
+  llm: msg`Dynamic`,
+  "llm-overlay": msg`Dynamic Overlay`,
+  single: msg`Single Page`,
+  spread: msg`Spread`,
+  page: msg`Per Page`,
+  dynamic: msg`Dynamic`,
+  section: msg`By Section`,
 }
 
-function formatDefaultValue(key: keyof WizardFormValues, value: unknown): string {
-  if (typeof value === "boolean") return value ? "On" : "Off"
+function formatDefaultValue(
+  key: keyof WizardFormValues,
+  value: unknown,
+): MessageDescriptor | string {
+  if (typeof value === "boolean") return value ? msg`On` : msg`Off`
   if (typeof value === "number") return `${value}px`
   const str = String(value)
   return VALUE_LABELS[str] ?? str
@@ -299,7 +296,7 @@ function formatDefaultValue(key: keyof WizardFormValues, value: unknown): string
 
 export function getPresetDefaultEntries(
   defaults: PresetDefaults,
-): { label: string; value: string }[] {
+): { label: MessageDescriptor; value: MessageDescriptor | string }[] {
   return Object.entries(defaults)
     .filter(([key]) => key in FIELD_LABELS)
     .map(([key, value]) => ({

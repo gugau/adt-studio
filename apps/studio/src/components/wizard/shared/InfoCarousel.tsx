@@ -1,5 +1,5 @@
-/* eslint-disable lingui/no-unlocalized-strings */
 import { useState, type ElementType } from "react"
+import { useLingui } from "@lingui/react/macro"
 import { ChevronLeft, ChevronRight, CircleHelp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -19,6 +19,7 @@ export interface CarouselSlide {
 }
 
 function Carousel({ slides }: { slides: readonly CarouselSlide[] }) {
+  const { t } = useLingui()
   const [index, setIndex] = useState(0)
 
   return (
@@ -58,7 +59,7 @@ function Carousel({ slides }: { slides: readonly CarouselSlide[] }) {
           className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
           disabled={index === 0}
           onClick={() => setIndex((i) => Math.max(0, i - 1))}
-          aria-label="Previous slide"
+          aria-label={t`Previous slide`}
         >
           <ChevronLeft className="size-4" />
         </Button>
@@ -75,7 +76,7 @@ function Carousel({ slides }: { slides: readonly CarouselSlide[] }) {
                 "size-2 min-h-2 min-w-2 shrink-0 rounded-full p-0 hover:bg-transparent",
                 i === index ? "bg-primary" : "bg-muted-foreground/40 hover:bg-muted-foreground/60",
               )}
-              aria-label={`Slide ${i + 1}`}
+              aria-label={t`Slide ${i + 1}`}
               aria-current={i === index ? "true" : undefined}
             />
           ))}
@@ -88,7 +89,7 @@ function Carousel({ slides }: { slides: readonly CarouselSlide[] }) {
           className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
           disabled={index === slides.length - 1}
           onClick={() => setIndex((i) => Math.min(slides.length - 1, i + 1))}
-          aria-label="Next slide"
+          aria-label={t`Next slide`}
         >
           <ChevronRight className="size-4" />
         </Button>

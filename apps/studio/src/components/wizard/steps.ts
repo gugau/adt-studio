@@ -1,4 +1,5 @@
-// TODO: Add translations and define better descriptions for each step
+import type { MessageDescriptor } from "@lingui/core"
+import { msg } from "@lingui/core/macro"
 import type { ComponentType } from "react"
 import type { WizardFormValues } from "./wizardForm"
 import { isStep1BasicInfoValid } from "./step1BasicInfo/projectLabelSchema"
@@ -13,23 +14,23 @@ export interface WizardStepValidationContext {
 }
 
 export interface StepDef {
-  title: string
-  description: string
+  title: MessageDescriptor
+  description: MessageDescriptor
   component: ComponentType
   isValid: (values: WizardFormValues, context?: WizardStepValidationContext) => boolean
 }
 
 export const STEPS: StepDef[] = [
   {
-    title: "Basic Information",
-    description: "Configure basic document information and file paths",
+    title: msg`Basic Information`,
+    description: msg`Configure basic document information and file paths`,
     component: Step1,
     isValid: (v, ctx) =>
       isStep1BasicInfoValid(v, ctx?.existingBookLabels ?? []),
   },
   {
-    title: "Visual Layout",
-    description: "Choose how the content should be formatted.",
+    title: msg`Visual Layout`,
+    description: msg`Choose how the content should be formatted.`,
     component: Step2,
     isValid: (v) =>
       v.renderStrategy !== "" &&
@@ -37,9 +38,8 @@ export const STEPS: StepDef[] = [
       v.sectioningMode !== "",
   },
   {
-    title: "Image Processing",
-    description:
-      "Control LLM cropping and segmentation for extracted images — matching extract-stage image filters.",
+    title: msg`Image Processing`,
+    description: msg`Control LLM cropping and segmentation for extracted images - matching extract-stage image filters.`,
     component: Step3,
     isValid: (v) => {
       if (!v.imageSegmentation) return true
@@ -50,16 +50,14 @@ export const STEPS: StepDef[] = [
     },
   },
   {
-    title: "Languages",
-    description:
-      "Set the editing language and choose output languages for the book.",
+    title: msg`Languages`,
+    description: msg`Set the editing language and choose output languages for the book.`,
     component: Step4,
     isValid: () => true,
   },
   {
-    title: "Style Guide",
-    description:
-      "Choose a style guide to control the look and feel of the generated pages.",
+    title: msg`Style Guide`,
+    description: msg`Choose a style guide to control the look and feel of the generated pages.`,
     component: Step5,
     isValid: () => true,
   },

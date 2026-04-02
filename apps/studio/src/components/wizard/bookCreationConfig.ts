@@ -1,3 +1,6 @@
+import type { MessageDescriptor } from "@lingui/core"
+import { msg } from "@lingui/core/macro"
+
 export function parseOptionalPage(value: string): number | undefined {
   return value.trim() ? Number(value) : undefined
 }
@@ -8,7 +11,7 @@ export function validatePageRange({
 }: {
   parsedStartPage: number | undefined
   parsedEndPage: number | undefined
-}): string | null {
+}): MessageDescriptor | null {
   const hasInvalidStart =
     parsedStartPage !== undefined &&
     (!Number.isInteger(parsedStartPage) || parsedStartPage < 1)
@@ -17,7 +20,7 @@ export function validatePageRange({
     (!Number.isInteger(parsedEndPage) || parsedEndPage < 1)
 
   if (hasInvalidStart || hasInvalidEnd) {
-    return "Page range must use whole numbers greater than or equal to 1."
+    return msg`Page range must use whole numbers greater than or equal to 1.`
   }
 
   if (
@@ -25,7 +28,7 @@ export function validatePageRange({
     parsedEndPage !== undefined &&
     parsedEndPage < parsedStartPage
   ) {
-    return "Last page must be greater than or equal to first page."
+    return msg`Last page must be greater than or equal to first page.`
   }
 
   return null

@@ -1,5 +1,3 @@
-/* eslint-disable lingui/no-unlocalized-strings */
-// TODO: Add translations
 import { useId } from "react";
 import { CircleHelp, Minus, Plus } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
@@ -121,7 +119,7 @@ export function SingleValueSlider({
   value,
   onChange,
   disabled,
-  minValueLabel = "None",
+  minValueLabel,
   valueUnit = "px",
 }: SingleValueSliderProps) {
   const groupLabelId = useId();
@@ -187,8 +185,8 @@ export function RangeSlider({
   value,
   onChange,
   disabled,
-  startLabel = "Initial Page",
-  endLabel = "Final Page",
+  startLabel,
+  endLabel,
 }: RangeSliderProps) {
   const [start, end] = value;
   const groupLabelId = useId();
@@ -245,7 +243,7 @@ export function RangeSlider({
 
       <div className="flex items-center justify-between gap-2">
         <MinMaxInput
-          label={startLabel}
+          label={startLabel ?? ""}
           value={start}
           min={boundedMin}
           max={end}
@@ -253,7 +251,7 @@ export function RangeSlider({
           disabled={disabled}
         />
         <MinMaxInput
-          label={endLabel}
+          label={endLabel ?? ""}
           value={end}
           min={start}
           max={boundedMax}

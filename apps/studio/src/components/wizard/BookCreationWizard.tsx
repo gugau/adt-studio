@@ -1,7 +1,6 @@
-/* eslint-disable lingui/no-unlocalized-strings */
-// TODO: Add translations
+
 import { useState, useEffect, useRef, type CSSProperties } from "react"
-import { Trans } from "@lingui/react/macro"
+import { Trans, useLingui } from "@lingui/react/macro"
 import { Eye, ArrowLeft, ArrowRight, Zap, SlidersHorizontal } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
 import { useNavigate } from "@tanstack/react-router"
@@ -24,24 +23,25 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { cn } from "@/lib/utils"
 
 function WizardHeader({ step, hideStepCount = false }: { step: number; hideStepCount?: boolean }) {
+  const { i18n, t } = useLingui()
   const def = STEPS[step - 1]
   return (
     <div className="flex flex-col gap-3 px-8 pt-6">
       <div className="flex items-center justify-between">
         <span className="inline-flex items-center bg-[#fef2f2] text-[#ef4444] text-[12px] font-semibold leading-4 px-[10px] py-[4px] rounded-[4px]">
-          Required Fields
+          {t`Required Fields`}
         </span>
         {!hideStepCount && (
           <span className="text-[14px] font-bold leading-5 text-[#3b82f6] uppercase tracking-wide animate-wizard-enter">
-            Step {step} of {STEPS.length}
+            {t`Step ${step} of ${STEPS.length}`}
           </span>
         )}
       </div>
       <div className="flex flex-col gap-1">
         <h1 className="text-[30px] font-semibold leading-9 tracking-[-0.75px] text-black">
-          {def.title}
+          {i18n._(def.title)}
         </h1>
-        <p className="text-[14px] font-medium text-[#737373]">{def.description}</p>
+        <p className="text-[14px] font-medium text-[#737373]">{i18n._(def.description)}</p>
       </div>
     </div>
   )
@@ -65,11 +65,13 @@ function WizardFooter({
   quickMode?: boolean
   onConfigure?: () => void
 }) {
+  const { i18n, t } = useLingui()
+
   return (
     <div className="border-t border-[#e5e5e5] px-6 py-4 flex flex-col gap-2">
       {quickMode && (
         <p className="text-center text-xs text-[#a3a3a3] animate-btn-label-enter">
-          Your preset is ready — create now or walk through each step
+          {t`Your preset is ready - create now or walk through each step`}
         </p>
       )}
       <div className="grid grid-cols-2 w-full gap-2">
@@ -83,12 +85,12 @@ function WizardFooter({
             {quickMode ? (
               <>
                 <SlidersHorizontal className="h-4 w-4 shrink-0" />
-                Step by Step
+                {t`Step by Step`}
               </>
             ) : (
               <>
                 <ArrowLeft className="h-4 w-4 shrink-0" />
-                Back
+                {t`Back`}
               </>
             )}
           </span>
@@ -110,11 +112,11 @@ function WizardFooter({
             {isLastStep || quickMode ? (
               <>
                 <Zap className="h-4 w-4 shrink-0" />
-                Create Book
+                {t`Create Book`}
               </>
             ) : (
               <>
-                Next Step
+                {t`Next Step`}
                 <ArrowRight className="h-4 w-4 shrink-0" />
               </>
             )}
@@ -163,6 +165,7 @@ function PreviewContainer({
 }
 
 export function BookCreationWizard() {
+  const { i18n, t } = useLingui()
   const navigate = useNavigate()
   const { currentStep, setCurrentStep, previewFocus } = useWizard()
   const form = useWizardForm()
@@ -234,7 +237,7 @@ export function BookCreationWizard() {
 
   async function handleCreate() {
     if (!file || !label.trim()) {
-      setSubmitError("Book label and PDF file are required.")
+      setSubmitError(t`Book label and PDF file are required.`)
       return
     }
 
@@ -245,7 +248,7 @@ export function BookCreationWizard() {
     const pageRangeError = validatePageRange({ parsedStartPage, parsedEndPage })
 
     if (pageRangeError) {
-      setSubmitError(pageRangeError)
+      setSubmitError(i18n._(pageRangeError))
       return
     }
 
@@ -284,9 +287,7 @@ export function BookCreationWizard() {
               geminiApiKey: geminiKey,
             },
           )
-        } catch {
-          // Book creation already succeeded; user can rerun stages later from the book page.
-        }
+        } catch {}
       }
 
       navigate({
@@ -294,7 +295,7 @@ export function BookCreationWizard() {
         params: { label: book.label, step: "book" },
       })
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to create book."
+      const message = error instanceof Error ? error.message : t`Failed to create book.`
       setSubmitError(message)
     }
   }
@@ -309,7 +310,7 @@ export function BookCreationWizard() {
       return <LanguagesPreviewPane editingLanguage={editingLanguage} outputLanguages={outputLanguages} />
     if (currentStep === 5)
       return <StyleguidePreviewPane styleguide={styleguide} />
-    return <span className="text-sm text-[#a3a3a3]">Book preview</span>
+    return <span className="text-sm text-[#a3a3a3]">{t`Book preview`}</span>
   }
 
   const previewDesktop = (
@@ -336,7 +337,7 @@ export function BookCreationWizard() {
               className="flex items-center gap-1.5 text-sm font-medium text-[#2b7fff]"
             >
               <Eye className="h-4 w-4" />
-              Preview
+              {t`Preview`}
             </button>
           </div>
 
@@ -351,7 +352,7 @@ export function BookCreationWizard() {
 
           {(submitError || createMutation.isError) && (
             <p className="px-6 pb-3 text-sm text-center text-[#ef4444] animate-btn-label-enter">
-              {submitError ?? createMutation.error?.message ?? "Failed to create book."}
+              {submitError ?? createMutation.error?.message ?? t`Failed to create book.`}
             </p>
           )}
           <WizardFooter
@@ -372,10 +373,9 @@ export function BookCreationWizard() {
       </div>
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="flex max-h-[96dvh] w-full max-w-[min(97vw,calc(100vw-0.5rem))] flex-col overflow-hidden border-0 bg-[#f5f5f5] p-3 sm:p-5 rounded-lg">
-          <DialogTitle className="sr-only">Book Preview</DialogTitle>
+          <DialogTitle className="sr-only">{t`Book Preview`}</DialogTitle>
           <DialogDescription className="sr-only">
-            This is a preview of the options you have selected for your book, each option affects
-            the preview in a different way.
+            {t`This is a preview of the options you have selected for your book, each option affects the preview in a different way.`}
           </DialogDescription>
           <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto h-full">
             {previewDialog}
