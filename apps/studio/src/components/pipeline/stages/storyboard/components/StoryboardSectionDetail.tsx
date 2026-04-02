@@ -8,6 +8,7 @@ import type { PageDetail, VersionEntry } from "@/api/client"
 import { useApiKey } from "@/hooks/use-api-key"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useBookTasks } from "@/hooks/use-book-tasks"
+import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import { useStepHeader } from "../../../components/StepViewRouter"
 import { BookPreviewFrame, type BookPreviewFrameHandle } from "./BookPreviewFrame"
 import { SectionEditToolbar } from "./SectionEditToolbar"
@@ -557,6 +558,7 @@ export function StoryboardSectionDetail({
       setPendingRendering(null)
       needsRerenderRef.current = false
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
+      invalidateStoryboardDependents(queryClient, bookLabel)
       await minDelay
 
       // Only re-render when changes require LLM (e.g., unprune, type change, reorder)
@@ -573,6 +575,7 @@ export function StoryboardSectionDetail({
 
   const discardSectioning = () => {
     setPendingSectioning(null)
+    setPendingRendering(null)
     needsRerenderRef.current = false
   }
 
@@ -601,6 +604,7 @@ export function StoryboardSectionDetail({
       setPendingRendering(null)
       setPendingSectioning(null)
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
+      invalidateStoryboardDependents(queryClient, bookLabel)
       await minDelay
     } catch (err) {
       setAiError(err instanceof Error ? err.message : t`Save failed`)
@@ -617,6 +621,7 @@ export function StoryboardSectionDetail({
       const result = await api.cloneSection(bookLabel, pageId, sectionIndex)
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages"] })
+      invalidateStoryboardDependents(queryClient, bookLabel)
       onNavigateSection?.(result.clonedSectionIndex)
     } catch (err) {
       setAiError(err instanceof Error ? err.message : t`Clone failed`)
@@ -633,6 +638,7 @@ export function StoryboardSectionDetail({
       const result = await api.mergeSection(bookLabel, pageId, sectionIndex, direction)
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages"] })
+      invalidateStoryboardDependents(queryClient, bookLabel)
       onNavigateSection?.(result.mergedSectionIndex)
 
       // Auto re-render the merged section so the LLM generates proper HTML for the combined content
@@ -659,6 +665,7 @@ export function StoryboardSectionDetail({
       const result = await api.deleteSection(bookLabel, pageId, sectionIndex)
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages"] })
+      invalidateStoryboardDependents(queryClient, bookLabel)
       onNavigateSection?.(Math.max(0, Math.min(sectionIndex, result.remainingSections - 1)))
     } catch (err) {
       setAiError(err instanceof Error ? err.message : t`Delete failed`)
@@ -808,6 +815,26 @@ export function StoryboardSectionDetail({
     [pendingRendering, page.rendering, sectionIndex]
   )
 
+  // Update a single activity answer value in the rendering
+  const updateAnswer = useCallback(
+    (itemKey: string, value: string) => {
+      const rBase = pendingRendering ?? page.rendering
+      if (!rBase) return
+      const updated = {
+        ...rBase,
+        sections: rBase.sections.map((s) => {
+          if (s.sectionIndex !== sectionIndex) return s
+          return {
+            ...s,
+            activityAnswers: { ...s.activityAnswers, [itemKey]: value },
+          }
+        }),
+      }
+      setPendingRendering(updated)
+    },
+    [pendingRendering, page.rendering, sectionIndex]
+  )
+
   // Delete selected block from rendered HTML
   const handleDeleteBlock = useCallback(
     (dataId: string) => {
@@ -938,6 +965,73 @@ export function StoryboardSectionDetail({
       }),
     }
     setPendingSectioning(updated)
+  }
+
+  // Edit text content for a specific text entry (from sidebar)
+  const editText = (partIndex: number, textIndex: number, newText: string) => {
+    // 1. Update sectioning data
+    const sBase = pendingSectioning ?? page.sectioning
+    if (!sBase) return
+    const updatedSectioning: SectioningData = {
+      ...sBase,
+      sections: sBase.sections.map((s, si) => {
+        if (si !== sectionIndex) return s
+        return {
+          ...s,
+          parts: s.parts.map((p, pi) => {
+            if (pi !== partIndex || p.type !== "text_group") return p
+            return {
+              ...p,
+              texts: p.texts.map((t, ti) => {
+                if (ti !== textIndex) return t
+                return { ...t, text: newText }
+              }),
+            }
+          }),
+        }
+      }),
+    }
+    setPendingSectioning(updatedSectioning)
+
+    // 2. Forward-propagate to rendering HTML if available
+    const rBase = pendingRendering ?? page.rendering
+    if (rBase) {
+      const currentSection = getRenderedSectionByIndex(rBase, sectionIndex)
+      if (currentSection?.html) {
+        // Resolve the actual data-id from the HTML (may differ from positional
+        // index after delete/duplicate operations that shift the texts array).
+        const part = sBase.sections[sectionIndex]?.parts[partIndex]
+        if (part?.type === "text_group") {
+          const actualIds = resolveGroupDataIds(part.groupId)
+          const textId = actualIds[textIndex]
+          if (!textId) {
+            needsRerenderRef.current = true
+            return
+          }
+          const parser = new DOMParser()
+          const doc = parser.parseFromString(currentSection.html, "text/html")
+          const el = doc.querySelector(`[data-id="${textId}"]`)
+          if (el) {
+            el.textContent = newText
+            const updatedHtml = doc.body.innerHTML
+            const updatedRendering: RenderingData = {
+              ...rBase,
+              sections: rBase.sections.map((s) => {
+                if (s.sectionIndex !== sectionIndex) return s
+                return { ...s, html: updatedHtml }
+              }),
+            }
+            setPendingRendering(updatedRendering)
+          } else {
+            // Element not found in HTML — need re-render to sync
+            needsRerenderRef.current = true
+          }
+        }
+      }
+    } else {
+      // No rendering data — need re-render to sync
+      needsRerenderRef.current = true
+    }
   }
 
   // Change group type for a specific text group
@@ -2257,6 +2351,7 @@ export function StoryboardSectionDetail({
         sectionTypes={sectionTypes}
         textTypes={textTypes}
         groupTypes={groupTypes}
+        activityAnswers={renderedSection?.activityAnswers}
         onChangeSectionType={changeSectionType}
         onToggleSectionPruned={toggleSectionPruned}
         onTogglePartPruned={togglePartPruned}
@@ -2265,6 +2360,7 @@ export function StoryboardSectionDetail({
         onToggleTextPruned={toggleTextPruned}
         onDeleteTextEntry={deleteTextEntry}
         onDuplicateTextEntry={duplicateTextEntry}
+        onEditText={editText}
         onAddGroup={addGroup}
         onDuplicateGroup={duplicateGroup}
         onDeleteGroup={deleteGroup}
@@ -2275,6 +2371,7 @@ export function StoryboardSectionDetail({
         onDeleteSection={handleDeleteSection}
         onRerender={handleRerender}
         onAddImage={() => setAddImageDialogOpen(true)}
+        onUpdateAnswer={updateAnswer}
         versionPickerNode={
           <VersionPicker
             currentVersion={page.versions.sectioning}
