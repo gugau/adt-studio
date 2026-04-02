@@ -22,6 +22,8 @@ export function PageRange() {
       tooltip={t`In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized.`}
       min={1}
       max={totalPages || 1}
+      startLabel={t`Initial Page`}
+      endLabel={t`Final Page`}
       value={[start, end]}
       onChange={([s, e]) => {
         form.setFieldValue("startPage", String(s))
