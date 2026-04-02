@@ -94,7 +94,7 @@ export function PresetCard({
       />
       <span className="block">
       <div
-        className={`h-[200px] w-full rounded flex items-center justify-center ${preset.bgColor}`}
+        className={`h-[200px] w-full rounded overflow-hidden flex items-center justify-center ${preset.bgColor}`}
       >
         {preset.imageSrc ? (
           <img
@@ -102,11 +102,13 @@ export function PresetCard({
             alt={i18n._(preset.title)}
             className="w-[163px] h-[168px] object-contain"
           />
-        ) : (
+        ) : preset.id === "custom" ? (
           <Icon
-            className={`w-16 h-16 ${preset.iconColor} opacity-60`}
+            className={`size-24 ${preset.iconColor} opacity-60`}
             strokeWidth={1.5}
           />
+        ) : (
+          <Icon className="w-full h-full" />
         )}
       </div>
 

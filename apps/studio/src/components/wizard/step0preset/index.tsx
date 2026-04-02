@@ -74,11 +74,9 @@ export function Step0Preset({
         >
           <Trans>Choose a Preset</Trans>
         </h1>
-        {presetChanged && (
-          <p className="text-sm font-medium text-[#ef4444] text-center animate-wizard-enter">
-            <Trans>Changing the preset will reset your current configuration.</Trans>
-          </p>
-        )}
+        <p className={`text-sm font-medium text-[#ef4444] text-center transition-opacity duration-200 ${presetChanged ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+          <Trans>Changing the preset will reset your current configuration.</Trans>
+        </p>
       </div>
 
       <PresetGrid selected={selected} onSelect={handleSelect} />

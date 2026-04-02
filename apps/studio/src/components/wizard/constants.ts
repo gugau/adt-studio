@@ -2,15 +2,15 @@ import {
   Sparkles,
   Layers,
   BookOpen,
-  GraduationCap,
-  BookHeart,
-  Library,
   SlidersHorizontal,
 } from "lucide-react"
 import type { MessageDescriptor } from "@lingui/core"
 import { msg } from "@lingui/core/macro"
 import type { ElementType } from "react"
 import { TwoColumnStoryStrategyIcon } from "@/components/wizard/icons/TwoColumnStoryStrategyIcon"
+import { TextbookWireframePreview } from "@/components/wizard/icons/TextbookWireframePreview"
+import { StorybookWireframePreview } from "@/components/wizard/icons/StorybookWireframePreview"
+import { ReferenceWireframePreview } from "@/components/wizard/icons/ReferenceWireframePreview"
 import type { WizardFormValues } from "./wizardForm"
 
 // ─── Option shape ────────────────────────────────────────────────────────────
@@ -129,7 +129,7 @@ export const PRESETS: PresetConfig[] = [
   {
     id: "textbook",
     imageSrc: null,
-    Icon: GraduationCap,
+    Icon: TextbookWireframePreview,
     iconColor: "text-blue-500",
     bgColor: "bg-blue-500/5",
     title: msg`Textbooks & Activities`,
@@ -165,7 +165,7 @@ export const PRESETS: PresetConfig[] = [
   {
     id: "storybook",
     imageSrc: null,
-    Icon: BookHeart,
+    Icon: StorybookWireframePreview,
     iconColor: "text-amber-500",
     bgColor: "bg-amber-500/5",
     title: msg`Storybook`,
@@ -199,7 +199,7 @@ export const PRESETS: PresetConfig[] = [
   {
     id: "reference",
     imageSrc: null,
-    Icon: Library,
+    Icon: ReferenceWireframePreview,
     iconColor: "text-emerald-500",
     bgColor: "bg-emerald-500/5",
     title: msg`Reference`,
