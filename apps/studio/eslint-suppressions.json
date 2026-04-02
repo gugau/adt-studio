@@ -4,16 +4,6 @@
       "count": 17
     }
   },
-  "src/components/config/AdvancedLayoutPanel.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 34
-    }
-  },
-  "src/components/config/ConfigEditor.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 50
-    }
-  },
   "src/components/debug/LlmLogsTab.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 3
@@ -161,17 +151,7 @@
   },
   "src/routes/books.$label.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 3
-    }
-  },
-  "src/routes/books.new.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 55
-    }
-  },
-  "src/routes/index.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 1
+      "count": 2
     }
   },
   "src/vite-env.d.ts": {

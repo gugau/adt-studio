@@ -67,6 +67,9 @@ export default [
             // --- Form / input props (non-visible values) ---
             "defaultValue",
             "value",
+            // Form field name constants (e.g. const RADIO_NAME = "renderStrategy")
+            "RADIO_NAME",
+            "radioName",
 
             // --- CSS class & color props (never user-visible) ---
             "color",
@@ -77,6 +80,11 @@ export default [
             "borderDark",
             "iconColor",
             "colorClass",
+            "bgColor",
+            "imageSrc",
+            "pdfUrl",
+            "adtUrl",
+            "comingSoon",
 
             // --- Pipeline / config identifiers ---
             "slug",
@@ -87,6 +95,7 @@ export default [
             "direction",
             "fromStage",
             "toStage",
+            "category",
 
             // --- CSS utility class variable names (StageSidebar layout constants) ---
             "gap",
@@ -162,6 +171,9 @@ export default [
             // --- TanStack Router route definitions ---
             "createFileRoute",
 
+            // --- TanStack Form (field paths are identifiers, not UI copy) ---
+            "*.setFieldValue",
+
             // --- CSS class composition utilities ---
             "cn",
             "cva",
@@ -171,6 +183,8 @@ export default [
             "*.toFixed",
           ],
           ignore: [
+            // project brand name (intentional non-translatable literal)
+            "^ADT Studio$",
             // npm package names and module paths (e.g. "@tanstack/react-router")
             "^@?[a-zA-Z0-9_-]+(/[a-zA-Z0-9_.-]+)+",
             // locale codes (e.g. "en", "pt-BR", "es")
@@ -188,6 +202,8 @@ export default [
             "^use (client|server)$",
             // Data URIs (e.g. "data:image/png;base64,...")
             "^data:",
+            // Byte-size literals (e.g. "12 KB", "1.5MB", "2 gb", "10tb")
+            "^[0-9]+(?:\\.[0-9]+)?\\s?(?:B|KB|MB|GB|TB|b|kb|mb|gb|tb)$",
           ],
         },
       ],

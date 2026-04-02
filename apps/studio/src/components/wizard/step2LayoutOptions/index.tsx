@@ -1,4 +1,3 @@
-/* eslint-disable lingui/no-unlocalized-strings */
 import { RenderStrategyPicker } from "./RenderStrategyPicker"
 import { PageGroupingMode } from "./PageGroupingMode"
 import { SectioningMode } from "./SectioningMode"
