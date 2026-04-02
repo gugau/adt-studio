@@ -4,11 +4,15 @@ import { useState, useEffect, useRef, type CSSProperties } from "react"
 import { Trans } from "@lingui/react/macro"
 import { Eye, ArrowLeft, ArrowRight, Zap, SlidersHorizontal } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
+import { useNavigate } from "@tanstack/react-router"
 import { Button } from "@/components/ui/button"
-import { useBooks } from "@/hooks/use-books"
+import { api } from "@/api/client"
+import { useApiKey } from "@/hooks/use-api-key"
+import { useBooks, useCreateBook } from "@/hooks/use-books"
 import { useWizard } from "./index"
 import { useWizardForm } from "./wizardForm"
 import { STEPS } from "./steps"
+import { buildConfigOverrides, parseOptionalPage, validatePageRange } from "./bookCreationConfig"
 import { Step0Preset } from "./step0preset"
 import { StudioTopBar } from "@/components/StudioTopBar"
 import { PdfCoverPreview } from "./shared/PdfCoverPreview"
@@ -159,11 +163,15 @@ function PreviewContainer({
 }
 
 export function BookCreationWizard() {
+  const navigate = useNavigate()
   const { currentStep, setCurrentStep, previewFocus } = useWizard()
   const form = useWizardForm()
+  const createMutation = useCreateBook()
   const { data: books } = useBooks()
+  const { apiKey, hasApiKey, azureKey, azureRegion, geminiKey } = useApiKey()
   const [previewOpen, setPreviewOpen] = useState(false)
   const [isDetailed, setIsDetailed] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const prevStepRef = useRef(currentStep)
   const [cameBackToPreset, setCameBackToPreset] = useState(false)
 
@@ -175,12 +183,25 @@ export function BookCreationWizard() {
   }, [currentStep])
 
   const values = useStore(form.store, (s) => s.values)
-  const selectedPreset = useStore(form.store, (s) => s.values.selectedPreset)
-  const file = useStore(form.store, (s) => s.values.file)
-  const renderStrategy = useStore(form.store, (s) => s.values.renderStrategy)
-  const editingLanguage = useStore(form.store, (s) => s.values.editingLanguage)
-  const outputLanguages = useStore(form.store, (s) => s.values.outputLanguages)
-  const styleguide = useStore(form.store, (s) => s.values.styleguide)
+  const {
+    selectedPreset,
+    file,
+    renderStrategy,
+    label,
+    startPage,
+    endPage,
+    pageGrouping,
+    sectioningMode,
+    layoutType,
+    imageCropping,
+    imageSegmentation,
+    segmentationMinSide,
+    imageFilterMinSide,
+    imageFilterMaxSide,
+    editingLanguage,
+    outputLanguages,
+    styleguide,
+  } = values
   const stepIndex = currentStep - 1
   const existingBookLabels = books?.map((b: { label: string }) => b.label) ?? []
   const stepValidationContext = { existingBookLabels }
@@ -211,8 +232,71 @@ export function BookCreationWizard() {
     if (currentStep < STEPS.length) setCurrentStep(currentStep + 1)
   }
 
-  function handleCreate() {
-    console.log("Wizard form values:", form.state.values)
+  async function handleCreate() {
+    if (!file || !label.trim()) {
+      setSubmitError("Book label and PDF file are required.")
+      return
+    }
+
+    setSubmitError(null)
+
+    const parsedStartPage = parseOptionalPage(startPage)
+    const parsedEndPage = parseOptionalPage(endPage)
+    const pageRangeError = validatePageRange({ parsedStartPage, parsedEndPage })
+
+    if (pageRangeError) {
+      setSubmitError(pageRangeError)
+      return
+    }
+
+    const configOverrides = buildConfigOverrides({
+      renderStrategy,
+      sectioningMode,
+      pageGrouping,
+      imageFilterMinSide,
+      imageFilterMaxSide,
+      imageCropping,
+      imageSegmentation,
+      layoutType,
+      styleguide,
+      editingLanguage,
+      outputLanguages,
+      parsedStartPage,
+      parsedEndPage,
+      segmentationMinSide,
+    })
+
+    try {
+      const book = await createMutation.mutateAsync({
+        label: label.trim(),
+        pdf: file,
+        config: configOverrides,
+      })
+
+      if (hasApiKey && apiKey) {
+        try {
+          await api.runStages(
+            book.label,
+            apiKey,
+            { fromStage: "extract", toStage: "storyboard" },
+            {
+              azure: { key: azureKey, region: azureRegion },
+              geminiApiKey: geminiKey,
+            },
+          )
+        } catch {
+          // Book creation already succeeded; user can rerun stages later from the book page.
+        }
+      }
+
+      navigate({
+        to: "/books/$label/$step",
+        params: { label: book.label, step: "book" },
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to create book."
+      setSubmitError(message)
+    }
   }
   const previewWidth = currentStep === 2 ? getPreviewWidth(renderStrategy) : 650
 
@@ -264,10 +348,16 @@ export function BookCreationWizard() {
             </div>
           </div>
 
+
+          {(submitError || createMutation.isError) && (
+            <p className="px-6 pb-3 text-sm text-center text-[#ef4444] animate-btn-label-enter">
+              {submitError ?? createMutation.error?.message ?? "Failed to create book."}
+            </p>
+          )}
           <WizardFooter
             isLastStep={currentStep === STEPS.length}
             canContinue={canContinue}
-            canCreate={canCreate}
+            canCreate={canCreate && !createMutation.isPending}
             onBack={handleBack}
             onNext={handleNext}
             onCreate={handleCreate}
