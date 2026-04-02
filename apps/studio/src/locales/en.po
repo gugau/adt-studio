@@ -1847,6 +1847,10 @@ msgstr "PDF Extraction"
 msgid "PDF File"
 msgstr "PDF File"
 
+#. placeholder {0}: index + 1
+msgid "PDF page {0} preview"
+msgstr "PDF page {0} preview"
+
 msgid "Pencil Sketch"
 msgstr "Pencil Sketch"
 

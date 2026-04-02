@@ -91,7 +91,9 @@ export function usePdfPreviewPages(params: UsePdfPreviewPagesParams) {
             const scale =
               mode === "first" && width && height
                 ? Math.min(width / base.width, height / base.height)
-                : 1200 / base.width
+                : mode === "all" && width
+                  ? width / base.width
+                  : 1200 / base.width
             const viewport = page.getViewport({ scale })
             const canvas = document.createElement("canvas")
             // eslint-disable-next-line lingui/no-unlocalized-strings -- Canvas API context id

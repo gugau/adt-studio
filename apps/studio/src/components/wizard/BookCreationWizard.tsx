@@ -168,7 +168,7 @@ function PreviewContainer({
 
   return (
     <div
-      className="flex h-[812px] max-h-[80%] max-w-[80%] w-[var(--preview-w)] shrink-0 items-center justify-center transition-[width] duration-500"
+      className="flex h-[812px] max-h-[80%] max-w-[80%] w-[var(--preview-w)] shrink-0 items-stretch transition-[width] duration-500"
       style={{ "--preview-w": `${width}px` } as CSSProperties}
     >
       {children}
