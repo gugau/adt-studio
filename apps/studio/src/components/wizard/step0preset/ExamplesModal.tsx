@@ -77,11 +77,13 @@ function BookItem({
   selected: boolean
   onSelect: () => void
 }) {
+  const { i18n } = useLingui()
+
   if (book.comingSoon) {
     return (
       <div className="w-full rounded-md border border-[#e5e5e5] px-3 py-2.5 opacity-50 cursor-not-allowed">
         <span className="text-sm text-[#737373] leading-snug">
-          {book.title}{" "}
+          {i18n._(book.title)}{" "}
           <span className="text-xs italic">
             (<Trans>coming soon</Trans>)
           </span>
@@ -101,7 +103,7 @@ function BookItem({
           : "border-[#e5e5e5] text-[#0a0a0a] hover:border-[#2b7fff]/50",
       ].join(" ")}
     >
-      {book.title}
+      {i18n._(book.title)}
     </button>
   )
 }
@@ -113,7 +115,7 @@ interface ExamplesModalProps {
 }
 
 export function ExamplesModal({ open, onClose, preset }: ExamplesModalProps) {
-  const { t } = useLingui()
+  const { i18n, t } = useLingui()
 
   const availableBooks = preset.exampleBooks.filter((b) => !b.comingSoon)
   const [selectedBook, setSelectedBook] = useState<ExampleBook>(
@@ -139,10 +141,10 @@ export function ExamplesModal({ open, onClose, preset }: ExamplesModalProps) {
           <div className="shrink-0 flex flex-col w-full md:w-[240px] max-h-[38%] md:max-h-none overflow-y-auto border-b md:border-b-0 md:border-r border-[#e5e5e5]">
             <div className="px-5 pt-5 pb-4">
               <DialogTitle className="text-base font-bold text-[#0a0a0a] leading-snug mb-1.5">
-                {preset.title}
+                {i18n._(preset.title)}
               </DialogTitle>
               <DialogDescription className="text-xs text-[#737373] leading-[18px]">
-                {preset.description}
+                {i18n._(preset.description)}
               </DialogDescription>
             </div>
 
@@ -152,10 +154,10 @@ export function ExamplesModal({ open, onClose, preset }: ExamplesModalProps) {
               </p>
               <ul className="flex flex-col gap-2">
                 {preset.recommendedFor.map((item) => (
-                  <li key={item} className="flex items-start gap-2">
+                  <li key={i18n._(item)} className="flex items-start gap-2">
                     <BookOpen className="h-4 w-4 text-[#2b7fff] shrink-0 mt-0.5" />
                     <span className="text-xs text-[#0a0a0a] leading-[18px]">
-                      {item}
+                      {i18n._(item)}
                     </span>
                   </li>
                 ))}
@@ -178,9 +180,9 @@ export function ExamplesModal({ open, onClose, preset }: ExamplesModalProps) {
               <div className="flex flex-col gap-2">
                 {preset.exampleBooks.map((book) => (
                   <BookItem
-                    key={book.title}
+                    key={i18n._(book.title)}
                     book={book}
-                    selected={selectedBook.title === book.title}
+                    selected={selectedBook === book}
                     onSelect={() => {
                       setSelectedBook(book)
                       setActiveTab("pdf")
@@ -219,14 +221,14 @@ export function ExamplesModal({ open, onClose, preset }: ExamplesModalProps) {
                       <iframe
                         key={embedUrl}
                         src={embedUrl}
-                        title={t`ADT Book — ${selectedBook.title}`}
+                        title={t`ADT Book - ${i18n._(selectedBook.title)}`}
                         className="w-full h-full border-0 rounded-md bg-white"
                       />
                     </div>
                   ) : (
                     <PdfCanvasPreview
                       src={selectedBook.pdfUrl}
-                      title={t`Original PDF — ${selectedBook.title}`}
+                      title={t`Original PDF - ${i18n._(selectedBook.title)}`}
                     />
                   )
                 ) : (

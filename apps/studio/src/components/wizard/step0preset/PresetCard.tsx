@@ -1,6 +1,6 @@
 import { useId } from "react"
 import { Info, Settings } from "lucide-react"
-import { Trans } from "@lingui/react/macro"
+import { Trans, useLingui } from "@lingui/react/macro"
 import {
   HoverCard,
   HoverCardTrigger,
@@ -14,6 +14,7 @@ import {
 } from "@/components/wizard/constants"
 
 function DefaultsHoverCard({ preset }: { preset: PresetConfig }) {
+  const { i18n } = useLingui()
   const entries = getPresetDefaultEntries(preset.defaults)
 
   if (entries.length === 0) {
@@ -31,17 +32,17 @@ function DefaultsHoverCard({ preset }: { preset: PresetConfig }) {
       <div className="flex flex-col">
         {entries.map((entry, idx) => (
           <div
-            key={entry.label}
+            key={`${idx}-${i18n._(entry.label)}`}
             className={cn(
               "flex items-center justify-between px-4 py-2.5",
               idx > 0 && "border-t border-[#e5e5e5]",
             )}
           >
             <span className="text-xs font-medium text-[#737373]">
-              {entry.label}
+              {i18n._(entry.label)}
             </span>
             <span className="text-xs font-semibold text-black">
-              {entry.value}
+              {typeof entry.value === "string" ? entry.value : i18n._(entry.value)}
             </span>
           </div>
         ))}
@@ -65,6 +66,7 @@ export function PresetCard({
   onSelect,
   onShowExamples,
 }: PresetCardProps) {
+  const { i18n } = useLingui()
   const { Icon } = preset
   const radioId = useId()
   const defaultEntries = getPresetDefaultEntries(preset.defaults)
@@ -88,7 +90,7 @@ export function PresetCard({
         checked={selected}
         onChange={() => onSelect(preset.id)}
         className="sr-only"
-        aria-label={preset.title}
+        aria-label={i18n._(preset.title)}
       />
       <span className="block">
       <div
@@ -97,7 +99,7 @@ export function PresetCard({
         {preset.imageSrc ? (
           <img
             src={preset.imageSrc}
-            alt={preset.title}
+            alt={i18n._(preset.title)}
             className="w-[163px] h-[168px] object-contain"
           />
         ) : (
@@ -110,10 +112,10 @@ export function PresetCard({
 
       <div className="px-4 pt-4 pb-3 flex flex-col gap-2">
         <span className="text-sm font-bold text-black leading-5">
-          {preset.title}
+          {i18n._(preset.title)}
         </span>
         <span className="text-[10px] text-[#737373] leading-[14px] line-clamp-3">
-          {preset.description}
+          {i18n._(preset.description)}
         </span>
 
         <div

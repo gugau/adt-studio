@@ -1,4 +1,3 @@
-/* eslint-disable lingui/no-unlocalized-strings */
 import { useRef } from "react"
 import { useNavigate } from "@tanstack/react-router"
 import { ArrowLeft, ArrowRight } from "lucide-react"
@@ -10,6 +9,7 @@ import { useWizardForm, defaultWizardValues } from "@/components/wizard/wizardFo
 import { PRESET_DEFAULTS, type PresetId } from "@/components/wizard/constants"
 import { PresetGrid } from "./PresetGrid"
 
+/* eslint-disable-next-line lingui/no-unlocalized-strings */
 const PRESERVED_FIELDS = ["label", "file", "startPage", "endPage"] as const
 
 export function Step0Preset({
@@ -22,6 +22,8 @@ export function Step0Preset({
   const navigate = useNavigate()
   const { setCurrentStep } = useWizard()
   const form = useWizardForm()
+
+
 
   const selected = useStore(form.store, (s) => s.values.selectedPreset) as PresetId | null
   const initialPreset = useRef(selected)
@@ -74,7 +76,7 @@ export function Step0Preset({
         </h1>
         {presetChanged && (
           <p className="text-sm font-medium text-[#ef4444] text-center animate-wizard-enter">
-            Changing the preset will reset your current configuration.
+            <Trans>Changing the preset will reset your current configuration.</Trans>
           </p>
         )}
       </div>
