@@ -1,6 +1,6 @@
 /* eslint-disable lingui/no-unlocalized-strings */
 // TODO: Add translations
-import { useState, type CSSProperties } from "react"
+import { useState, useEffect, useRef, type CSSProperties } from "react"
 import { Trans } from "@lingui/react/macro"
 import { Eye, ArrowLeft, ArrowRight, Zap } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
@@ -152,6 +152,15 @@ export function BookCreationWizard() {
   const form = useWizardForm()
   const { data: books } = useBooks()
   const [previewOpen, setPreviewOpen] = useState(false)
+  const prevStepRef = useRef(currentStep)
+  const [cameBackToPreset, setCameBackToPreset] = useState(false)
+
+  useEffect(() => {
+    if (currentStep === 0 && prevStepRef.current > 0) {
+      setCameBackToPreset(true)
+    }
+    prevStepRef.current = currentStep
+  }, [currentStep])
 
   const values = useStore(form.store, (s) => s.values)
   const file = useStore(form.store, (s) => s.values.file)
@@ -173,7 +182,7 @@ export function BookCreationWizard() {
       <div className="flex flex-1 min-h-0 flex-col h-full bg-white">
         <StudioTopBar brandLinksHome trailingTitle={<Trans>Add Book</Trans>} />
         <div className="flex flex-1 min-h-0 flex-col overflow-auto">
-          <Step0Preset />
+          <Step0Preset showWarning={cameBackToPreset} />
         </div>
       </div>
     )
@@ -268,6 +277,7 @@ export function BookCreationWizard() {
           </div>
         </DialogContent>
       </Dialog>
+
     </div>
   )
 }

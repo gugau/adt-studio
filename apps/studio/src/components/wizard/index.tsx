@@ -3,11 +3,11 @@ import {
   useContext,
   useState,
   useCallback,
+  useEffect,
   useRef,
   type ReactNode,
 } from "react"
 import type { ImageProcessingPreviewFocus } from "./step3ImageProcessing/imageProcessingPreviewTypes"
-
 
 interface WizardContextValue {
   currentStep: number
@@ -20,6 +20,16 @@ const WizardContext = createContext<WizardContextValue | null>(null)
 
 export function WizardProvider({ children }: { children: ReactNode }) {
   const [currentStep, setCurrentStepRaw] = useState(0)
+
+  useEffect(() => {
+    if (currentStep === 0) return
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+    }
+    window.addEventListener("beforeunload", handler)
+    return () => window.removeEventListener("beforeunload", handler)
+  }, [currentStep])
+
   const [previewFocus, setPreviewFocusRaw] =
     useState<ImageProcessingPreviewFocus>("idle")
 
