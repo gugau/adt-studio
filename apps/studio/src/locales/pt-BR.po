@@ -305,6 +305,9 @@ msgstr "Accessibility results are temporarily unavailable."
 msgid "Accessibility Summary"
 msgstr "Accessibility Summary"
 
+msgid "Actions disabled while storyboard is running"
+msgstr "Ações desabilitadas enquanto o storyboard está em execução"
+
 msgid "active checklist items"
 msgstr "active checklist items"
 
@@ -1117,6 +1120,9 @@ msgstr "Editar esta imagem"
 
 msgid "Editing"
 msgstr "Editando"
+
+msgid "Editing is disabled while the storyboard is running"
+msgstr "A edição está desabilitada enquanto o storyboard está em execução"
 
 msgid "Editing Language"
 msgstr "Idioma de edição"
@@ -2373,6 +2379,9 @@ msgstr "renderização"
 msgid "Rendering Prompt"
 msgstr "Prompt de renderização"
 
+msgid "Rendering this section..."
+msgstr "Renderizando esta seção..."
+
 msgid "Replace"
 msgstr "Substituir"
 
@@ -2602,6 +2611,9 @@ msgstr "Corpo da seção"
 
 msgid "Section Types"
 msgstr "Tipos de seção"
+
+#~ msgid "Sectioning"
+#~ msgstr "Seccionamento"
 
 msgid "Sectioning Mode"
 msgstr "Modo de seção"
@@ -3164,6 +3176,12 @@ msgstr "Mapeamentos de voz"
 
 msgid "Voices"
 msgstr "Vozes"
+
+msgid "Wait for storyboard to complete"
+msgstr "Aguarde a conclusão do storyboard"
+
+msgid "Waiting for page to be processed..."
+msgstr "Aguardando a página ser processada..."
 
 msgid "Wall Clock"
 msgstr "Tempo decorrido"
