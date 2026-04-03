@@ -1,0 +1,474 @@
+import { useState, useEffect, useRef, useCallback } from "react"
+import { Volume2, Loader2, Play, Pause, WandSparkles } from "lucide-react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { api, getAudioUrl, BASE_URL } from "@/api/client"
+import type { TextCatalogEntry } from "@/api/client"
+import { useActiveConfig } from "@/hooks/use-debug"
+import { useBook } from "@/hooks/use-books"
+import { useStepHeader } from "../../components/StepViewRouter"
+import { useBookRun } from "@/hooks/use-book-run"
+import { useApiKey } from "@/hooks/use-api-key"
+import { StageRunCard } from "../../components/StageRunCard"
+import { useVirtualizer } from "@tanstack/react-virtual"
+import { cn } from "@/lib/utils"
+import { normalizeLocale } from "@/lib/languages"
+import { languageUsesSpeechProvider } from "@/lib/speech-routing"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import { resolveTranslationLanguageState } from "../translations/lib/translations-view-state"
+import { msg } from "@lingui/core/macro"
+import { useLingui } from "@lingui/react/macro"
+
+const IMAGE_ID_RE = /_im\d{3}/
+function isImageEntry(id: string): boolean {
+  return IMAGE_ID_RE.test(id)
+}
+
+const ANSWER_ID_RE = /_ans_/
+function isAnswerEntry(id: string): boolean {
+  return ANSWER_ID_RE.test(id)
+}
+
+const langNames = new Intl.DisplayNames(["en"], { type: "language" })
+function displayLang(code: string): string {
+  try { return langNames.of(code) ?? code } catch { return code }
+}
+
+export function SpeechView({ bookLabel, selectedPageId, onSelectPage }: { bookLabel: string; selectedPageId?: string; onSelectPage?: (pageId: string | null) => void }) {
+  const { t, i18n } = useLingui()
+  const { setExtra } = useStepHeader()
+  const { data: activeConfigData } = useActiveConfig(bookLabel)
+  const { data: book, isLoading: isBookLoading } = useBook(bookLabel)
+  const queryClient = useQueryClient()
+  const { stageState, queueRun, error: runError } = useBookRun()
+  const { apiKey, hasApiKey, azureKey, azureRegion, geminiKey } = useApiKey()
+  const speechState = stageState("speech")
+  const speechDone = speechState === "done"
+  const hasStageError = speechState === "error"
+  const isRunning = speechState === "running" || speechState === "queued"
+
+  const handleRunSpeech = useCallback(() => {
+    if (!hasApiKey || isRunning) return
+    queueRun({
+      fromStage: "speech",
+      toStage: "speech",
+      apiKey,
+      providerCredentials: {
+        azure: { key: azureKey, region: azureRegion },
+        geminiApiKey: geminiKey,
+      },
+    })
+  }, [hasApiKey, isRunning, apiKey, azureKey, azureRegion, geminiKey, queueRun])
+
+  const { data: catalog, isLoading } = useQuery({
+    queryKey: ["books", bookLabel, "text-catalog"],
+    queryFn: () => api.getTextCatalog(bookLabel),
+    enabled: !!bookLabel,
+  })
+
+  const { data: ttsData } = useQuery({
+    queryKey: ["books", bookLabel, "tts"],
+    queryFn: () => api.getTTS(bookLabel),
+    enabled: !!bookLabel,
+  })
+
+  const merged = activeConfigData?.merged as Record<string, unknown> | undefined
+  const speechConfig = merged?.speech
+  const outputLanguages = Array.from(
+    new Set(((merged?.output_languages as string[] | undefined) ?? []).map((code) => normalizeLocale(code)))
+  )
+  const bookLanguage = book?.languageCode ?? book?.metadata?.language_code ?? null
+  const configuredEditingLanguage = merged?.editing_language as string | undefined
+
+  const hasExplicitOutputLanguages = outputLanguages.length > 0
+
+  const [selectedLang, setSelectedLang] = useState<string | null>(null)
+  const [generateErrorById, setGenerateErrorById] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    if (hasExplicitOutputLanguages && outputLanguages.length > 0 && !selectedLang) {
+      setSelectedLang(outputLanguages[0])
+    }
+  }, [outputLanguages.length, hasExplicitOutputLanguages])
+
+  const entries = catalog?.entries ?? []
+  const displayEntries = selectedPageId
+    ? entries.filter((e) => e.id.startsWith(selectedPageId + "_"))
+    : entries
+
+  const { editingLanguage } = resolveTranslationLanguageState({
+    selectedLang,
+    configuredEditingLanguage,
+    bookLanguage,
+    isBookLoading,
+  })
+
+  const audioLang = selectedLang ??
+    (hasExplicitOutputLanguages ? (outputLanguages[0] ?? editingLanguage) : editingLanguage)
+  const currentLanguageUsesGemini =
+    !!audioLang && languageUsesSpeechProvider(audioLang, "gemini", speechConfig)
+  const geminiRoutedLanguages = (
+    outputLanguages.length > 0
+      ? outputLanguages
+      : editingLanguage
+        ? [editingLanguage]
+        : []
+  ).filter((language, index, array) =>
+    languageUsesSpeechProvider(language, "gemini", speechConfig) &&
+    array.indexOf(language) === index
+  )
+  const allowGeminiPartialView =
+    hasStageError &&
+    geminiRoutedLanguages.length > 0
+  const showRunCard = (!speechDone || isRunning) && !allowGeminiPartialView
+
+  // Build audio lookup
+  const audioMap = new Map<string, { fileName: string; voice: string }>()
+  if (ttsData && audioLang && ttsData.languages[audioLang]) {
+    for (const e of ttsData.languages[audioLang].entries) {
+      audioMap.set(e.textId, { fileName: e.fileName, voice: e.voice })
+    }
+  }
+  const totalAudioFiles = ttsData
+    ? Object.values(ttsData.languages).reduce((sum, lang) => sum + lang.entries.length, 0)
+    : 0
+  const generatedAudioCount = displayEntries.filter((entry) => audioMap.has(entry.id)).length
+  const missingAudioCount = Math.max(displayEntries.length - generatedAudioCount, 0)
+
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const virtualizer = useVirtualizer({
+    count: displayEntries.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 60,
+    overscan: 5,
+  })
+
+  const generateAudioMutation = useMutation({
+    mutationFn: async (variables: { textId: string; language: string }) => {
+      if (!geminiKey) {
+        throw new Error(i18n._(msg`Gemini API key is required to generate audio.`))
+      }
+      return api.generateGeminiTTSForItem(
+        bookLabel,
+        variables.textId,
+        variables.language,
+        {
+          geminiApiKey: geminiKey,
+          openaiApiKey: apiKey || undefined,
+          azure: azureKey && azureRegion
+            ? { key: azureKey, region: azureRegion }
+            : undefined,
+        }
+      )
+    },
+    onMutate: (variables) => {
+      setGenerateErrorById((prev) => {
+        if (!(variables.textId in prev)) return prev
+        const next = { ...prev }
+        delete next[variables.textId]
+        return next
+      })
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "tts"] }),
+        queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "step-status"] }),
+      ])
+    },
+    onError: (error, variables) => {
+      setGenerateErrorById((prev) => ({
+        ...prev,
+        [variables.textId]:
+          error instanceof Error ? error.message : String(error),
+      }))
+      queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "step-status"] })
+    },
+  })
+
+  const handleGenerateAudio = useCallback(
+    (textId: string) => {
+      if (!audioLang || !currentLanguageUsesGemini) return
+      generateAudioMutation.mutate({ textId, language: audioLang })
+    },
+    [audioLang, currentLanguageUsesGemini, generateAudioMutation]
+  )
+
+  useEffect(() => {
+    if (!catalog) return
+    setExtra(
+      <div className="flex items-center gap-1.5 ml-auto">
+        <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{t`${String(displayEntries.length)} texts`}</span>
+        {currentLanguageUsesGemini ? (
+          <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">
+            {t`${String(generatedAudioCount)}/${String(displayEntries.length)} audio`}
+          </span>
+        ) : totalAudioFiles > 0 && (
+          <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{t`${String(totalAudioFiles)} audio`}</span>
+        )}
+        {currentLanguageUsesGemini && missingAudioCount > 0 && (
+          <span className="text-[10px] bg-amber-100 text-amber-900 rounded-full px-2 py-0.5">
+            {t`${missingAudioCount} missing`}
+          </span>
+        )}
+      </div>
+    )
+    return () => setExtra(null)
+  }, [catalog, t, displayEntries.length, totalAudioFiles, currentLanguageUsesGemini, generatedAudioCount, missingAudioCount])
+
+  if (!showRunCard && isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12 text-muted-foreground">
+        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+        <span className="text-sm">{t`Loading text catalog...`}</span>
+      </div>
+    )
+  }
+
+  if (showRunCard || !catalog || entries.length === 0) {
+    return (
+      <div className="p-4">
+        <StageRunCard
+          stageSlug="speech"
+          isRunning={isRunning}
+          completed={speechDone}
+          onRun={handleRunSpeech}
+          disabled={!hasApiKey || isRunning}
+        />
+      </div>
+    )
+  }
+
+  const showAllButton = selectedPageId ? (
+    <div className="flex justify-center pt-2 pb-4">
+      <button
+        type="button"
+        onClick={() => onSelectPage?.(null)}
+        className="text-xs font-medium text-rose-600 hover:text-rose-700 hover:underline transition-colors"
+      >
+        {t`Show all speech entries`}
+      </button>
+    </div>
+  ) : null
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="shrink-0 px-4 pt-4 space-y-3">
+        {allowGeminiPartialView && runError && (
+          <Alert variant="destructive" className="rounded-md">
+            <AlertDescription className="text-xs whitespace-pre-wrap break-words">
+              {runError}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Language tabs — only when there are multiple output languages */}
+        {outputLanguages.length > 1 && (
+        <div className="flex gap-1.5">
+          {outputLanguages.map((lang) => (
+              <button
+                key={lang}
+                type="button"
+                onClick={() => setSelectedLang(lang)}
+                className={cn(
+                  "text-xs h-7 px-3 rounded-md font-medium transition-colors cursor-pointer",
+                  selectedLang === lang
+                    ? "bg-foreground text-background"
+                    : "bg-muted text-muted-foreground hover:bg-accent"
+                )}
+              >
+                {displayLang(lang)}
+                <span className={cn(
+                  "ml-1 text-[10px]",
+                  selectedLang === lang ? "opacity-60" : "opacity-50"
+                )}>
+                  ({lang})
+                </span>
+              </button>
+          ))}
+        </div>
+        )}
+      </div>
+
+      {/* Entries */}
+      {selectedPageId && displayEntries.length === 0 && entries.length > 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+          <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center mb-3">
+            <Volume2 className="w-6 h-6 text-rose-300" />
+          </div>
+          <p className="text-sm font-medium">{t`No speech entries for this page`}</p>
+          <p className="text-xs mt-1">{t`This page has no text entries with audio`}</p>
+        </div>
+      ) : (
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
+        <div style={{ height: virtualizer.getTotalSize(), width: "100%", position: "relative" }}>
+          {virtualizer.getVirtualItems().map((virtualRow) => {
+            const entry = displayEntries[virtualRow.index]
+            const audio = audioMap.get(entry.id)
+            const isImg = isImageEntry(entry.id)
+            const isAnswer = isAnswerEntry(entry.id)
+
+            return (
+              <div
+                key={entry.id}
+                data-index={virtualRow.index}
+                ref={virtualizer.measureElement}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
+                <div className="pb-1">
+                  <div className={cn("flex items-start gap-3 px-3 py-2.5 rounded-md border", isAnswer ? "bg-amber-50/60" : "bg-card")}>
+                    {isImg && (
+                      <img
+                        src={`${BASE_URL}/books/${bookLabel}/images/${entry.id}`}
+                        alt=""
+                        className="shrink-0 w-16 h-12 rounded object-cover ring-1 ring-border"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[10px] text-muted-foreground">
+                        {entry.id}
+                        {isAnswer && <span className="ml-1.5 text-[9px] font-medium text-amber-700 bg-amber-100 rounded px-1 py-0.5">{t`Answer`}</span>}
+                      </span>
+                      <p className="text-sm leading-relaxed mt-0.5">{entry.text}</p>
+                    </div>
+                    {!isAnswer && <AudioAction
+                      audio={audio}
+                      audioLang={audioLang}
+                      bookLabel={bookLabel}
+                      textId={entry.id}
+                      canGenerate={currentLanguageUsesGemini}
+                      hasGeminiKey={geminiKey.length > 0}
+                      onGenerate={handleGenerateAudio}
+                      isGenerating={
+                        generateAudioMutation.isPending &&
+                        generateAudioMutation.variables?.textId === entry.id &&
+                        generateAudioMutation.variables?.language === audioLang
+                      }
+                      errorMessage={generateErrorById[entry.id]}
+                    />}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        {showAllButton}
+      </div>
+      )}
+    </div>
+  )
+}
+
+function PlayButton({ audioUrl }: { audioUrl: string }) {
+  const [playing, setPlaying] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  const toggle = () => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio(audioUrl)
+      audioRef.current.addEventListener("ended", () => setPlaying(false))
+    }
+    if (playing) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+      setPlaying(false)
+    } else {
+      audioRef.current.play()
+      setPlaying(true)
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+    }
+  }, [])
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      className={cn(
+        "shrink-0 flex items-center justify-center w-6 h-6 rounded-full transition-all mt-3 cursor-pointer",
+        playing ? "bg-rose-500 text-white hover:bg-rose-600 scale-110" : "bg-muted text-muted-foreground hover:bg-rose-100 hover:text-rose-600 hover:scale-110"
+      )}
+    >
+      {playing ? <Pause className="w-2.5 h-2.5" /> : <Play className="w-2.5 h-2.5 ml-0.5" />}
+    </button>
+  )
+}
+
+function AudioAction({
+  audio,
+  audioLang,
+  bookLabel,
+  textId,
+  canGenerate,
+  hasGeminiKey,
+  onGenerate,
+  isGenerating,
+  errorMessage,
+}: {
+  audio?: { fileName: string; voice: string }
+  audioLang: string | null
+  bookLabel: string
+  textId: string
+  canGenerate: boolean
+  hasGeminiKey: boolean
+  onGenerate: (textId: string) => void
+  isGenerating: boolean
+  errorMessage?: string
+}) {
+  const { t } = useLingui()
+
+  if (audio && audioLang) {
+    return (
+      <PlayButton
+        key={audioLang}
+        audioUrl={getAudioUrl(bookLabel, audioLang, audio.fileName)}
+      />
+    )
+  }
+
+  if (!canGenerate) {
+    return null
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1 shrink-0">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="h-7 px-2 text-[10px]"
+        disabled={isGenerating || !hasGeminiKey}
+        onClick={() => onGenerate(textId)}
+        title={
+          hasGeminiKey
+            ? t`Generate missing Gemini audio`
+            : t`Set a Gemini API key to generate audio`
+        }
+      >
+        {isGenerating ? (
+          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+        ) : (
+          <WandSparkles className="mr-1 h-3 w-3" />
+        )}
+        {t`Generate`}
+      </Button>
+      {errorMessage && (
+        <p className="max-w-44 text-[10px] leading-tight text-red-500 text-right">
+          {errorMessage}
+        </p>
+      )}
+    </div>
+  )
+}

@@ -30,6 +30,10 @@ export const STAGE_SUB_STEPS: Record<StageName, StageSubStep[]> = Object.fromEnt
 
 interface StageRunCardProps {
   stageSlug: string
+  /** Additional pipeline stage slugs whose sub-steps should be shown in this card. */
+  additionalStageSlugs?: string[]
+  /** Override the internal error check (useful when combining multiple stages). */
+  overrideHasError?: boolean
   isRunning: boolean
   completed?: boolean
   showRunButton?: boolean
@@ -50,6 +54,8 @@ const HOVER_BG_BY_COLOR: Record<string, string> = {
 
 export function StageRunCard({
   stageSlug,
+  additionalStageSlugs,
+  overrideHasError,
   isRunning,
   completed,
   showRunButton = true,
@@ -60,11 +66,14 @@ export function StageRunCard({
   const stage = STAGES.find((s) => s.slug === stageSlug) ?? STAGES[0]
   const { stageState, stepState, stepProgress, stepError, error } = useBookRun()
   const stageStatus = stageState(stageSlug)
-  const subSteps = STAGE_SUB_STEPS[stageSlug as StageName] ?? []
+  const subSteps = [
+    ...(STAGE_SUB_STEPS[stageSlug as StageName] ?? []),
+    ...(additionalStageSlugs?.flatMap((s) => STAGE_SUB_STEPS[s as StageName] ?? []) ?? []),
+  ]
   const Icon = stage.icon
   const color = stage.color
   const borderColor = stage.borderDark
-  const hasError = stageStatus === "error"
+  const hasError = overrideHasError ?? stageStatus === "error"
   const isCompleted = completed ?? (stageStatus === "done")
   const hasSubSteps = subSteps.length > 0
   const hoverColorClass = HOVER_BG_BY_COLOR[color] ?? "hover:bg-gray-600"

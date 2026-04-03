@@ -33,7 +33,7 @@ describe("reviewer-validation-defaults", () => {
   it("supports language-aware default reasons", () => {
     expect(
       getReviewerValidationDefaultReasonMessage(
-        createReviewerValidationDefaultReason("text-and-speech-language-unavailable", { language: "sw" }),
+        createReviewerValidationDefaultReason("speech-language-unavailable", { language: "sw" }),
       ),
     ).toEqual({ id: "Defaulted to N/A because no Text & Speech audio is available for sw." })
     expect(

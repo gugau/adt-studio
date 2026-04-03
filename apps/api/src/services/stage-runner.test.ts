@@ -177,6 +177,12 @@ function seedTextAndSpeechBook(booksDir: string, label: string): void {
         },
       ],
     })
+
+    // Pre-seed text catalog so the speech stage can read it
+    storage.putNodeData("text-catalog", "book", {
+      entries: [{ id: "pg001_t001", text: "Hello world" }],
+      generatedAt: new Date().toISOString(),
+    })
   } finally {
     storage.close()
   }
@@ -351,7 +357,7 @@ describe("createStageRunner storyboard render-only", () => {
   })
 })
 
-describe("createStageRunner text-and-speech Gemini partial failures", () => {
+describe("createStageRunner speech Gemini partial failures", () => {
   let tmpDir = ""
 
   beforeEach(() => {
@@ -402,8 +408,8 @@ speech:
         geminiApiKey: "gm-test",
         promptsDir,
         configPath,
-        fromStage: "text-and-speech",
-        toStage: "text-and-speech",
+        fromStage: "speech",
+        toStage: "speech",
       },
       { emit: (event) => events.push(event) }
     )
@@ -472,8 +478,8 @@ speech:
         geminiApiKey: "gm-test",
         promptsDir,
         configPath,
-        fromStage: "text-and-speech",
-        toStage: "text-and-speech",
+        fromStage: "speech",
+        toStage: "speech",
       },
       { emit: (event) => events.push(event) }
     )

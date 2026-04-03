@@ -32,8 +32,8 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 })
 
-/** Pipeline stages shown in the sidebar (skip the "book" overview entry) */
-const PIPELINE_STEPS = getPipelineStages()
+/** Pipeline stages shown in the sidebar — skip "book" overview and "speech" (combined into "Text & Speech") */
+const PIPELINE_STEPS = getPipelineStages().filter((s) => s.slug !== "speech")
 
 function DetailRow({
   icon: Icon,

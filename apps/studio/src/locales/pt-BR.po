@@ -76,6 +76,9 @@ msgstr "{0} {1} reviewed so far"
 msgid "{0} audio"
 msgstr "{0} áudios"
 
+#~ msgid "{0} audio files generated"
+#~ msgstr "{0} arquivos de áudio gerados"
+
 #. placeholder {0}: activeProgress.criteriaPerPage
 msgid "{0} checks per page"
 msgstr "{0} checks per page"
@@ -83,6 +86,10 @@ msgstr "{0} checks per page"
 #. placeholder {0}: entries.length
 msgid "{0} entries"
 msgstr "{0} entradas"
+
+#. placeholder {0}: String(totalAudioFiles)
+msgid "{0} files"
+msgstr "{0} arquivos"
 
 #~ msgid "{0} findings"
 #~ msgstr "{0} findings"
@@ -118,6 +125,9 @@ msgstr "{0} idiomas"
 #. placeholder {1}: activeProgress.assignedPageCount
 msgid "{0} of {1} assigned pages reviewed"
 msgstr "{0} of {1} assigned pages reviewed"
+
+#~ msgid "{0} of {1} audio files generated"
+#~ msgstr "{0} de {1} arquivos de áudio gerados"
 
 #. placeholder {0}: activeMetrics.pagesReviewed
 #. placeholder {1}: activeProgress.totalBookPages
@@ -156,6 +166,11 @@ msgstr "{0} textos"
 
 #~ msgid "{0}. These checks need manual review."
 #~ msgstr "{0}. Essas verificações precisam de revisão manual."
+
+#. placeholder {0}: String(generatedAudioCount)
+#. placeholder {1}: String(displayEntries.length)
+msgid "{0}/{1}"
+msgstr "{0}/{1}"
 
 #. placeholder {0}: String(generatedAudioCount)
 #. placeholder {1}: String(displayEntries.length)
@@ -408,6 +423,9 @@ msgstr "Add reviewer guidance."
 msgid "Add section"
 msgstr "Add section"
 
+msgid "Add Translations"
+msgstr "Adicionar traduções"
+
 msgid "Add your first book"
 msgstr "Adicione seu primeiro livro"
 
@@ -456,6 +474,9 @@ msgstr "A IA vê a imagem atual e a modifica"
 
 msgid "AIza..."
 msgstr "AIza..."
+
+msgid "All"
+msgstr "Todos"
 
 msgid "All Categories"
 msgstr "All Categories"
@@ -615,6 +636,12 @@ msgstr "Autor"
 msgid "Book data is outdated and must be rebuilt."
 msgstr "Os dados do livro estão desatualizados e precisam ser reconstruídos."
 
+msgid "book language"
+msgstr "idioma do livro"
+
+msgid "Book Language"
+msgstr "Idioma do livro"
+
 msgid "Book Metadata"
 msgstr "Metadados do livro"
 
@@ -711,6 +738,9 @@ msgstr "Checklist item"
 msgid "Choose an existing image from this project"
 msgstr "Escolha uma imagem existente deste projeto"
 
+msgid "Choose Provider"
+msgstr "Escolher provedor"
+
 msgid "Choose which per-page validation items reviewers must check, customize the wording and guidance, and add your own checklist items for this document."
 msgstr "Choose which per-page validation items reviewers must check, customize the wording and guidance, and add your own checklist items for this document."
 
@@ -725,6 +755,12 @@ msgstr "Clear all"
 
 msgid "Clear language"
 msgstr "Limpar idioma"
+
+#~ msgid "Clear Speech"
+#~ msgstr "Limpar voz"
+
+msgid "Clear speech data"
+msgstr "Limpar dados de voz"
 
 msgid "Click images to select"
 msgstr "Clique nas imagens para selecionar"
@@ -794,6 +830,9 @@ msgstr "Completion across the assigned page range for this reviewer session."
 
 msgid "Configure API keys for AI pipeline features."
 msgstr "Configure as chaves de API para os recursos de IA."
+
+#~ msgid "Configure Voices"
+#~ msgstr "Configurar vozes"
 
 msgid "Confirm merge"
 msgstr "Confirmar mesclagem"
@@ -1345,6 +1384,15 @@ msgstr "Gerar"
 msgid "Generate and customize the table of contents for the book navigation."
 msgstr "Gere e personalize o sumário para a navegação do livro."
 
+#~ msgid "Generate audio narration for text entries."
+#~ msgstr "Gerar narração de áudio para as entradas de texto."
+
+msgid "Generate audio narration for the book content."
+msgstr "Gerar narração de áudio para o conteúdo do livro."
+
+#~ msgid "Generate audio narration for the translated book content."
+#~ msgstr "Gerar narração em áudio para o conteúdo traduzido do livro."
+
 msgid "Generate comprehension quizzes and activities based on the book content."
 msgstr "Gera questionários e atividades de compreensão com base no conteúdo do livro."
 
@@ -1378,8 +1426,11 @@ msgstr "Gerando imagem..."
 msgid "Generating Quizzes..."
 msgstr "Gerando questionários..."
 
-msgid "Generating Text & Speech..."
-msgstr "Gerando texto e fala..."
+msgid "Generating Speech..."
+msgstr "Gerando voz..."
+
+#~ msgid "Generating Text & Speech..."
+#~ msgstr "Gerando texto e fala..."
 
 msgid "Generating TOC..."
 msgstr "Gerando sumário..."
@@ -1584,8 +1635,8 @@ msgstr "Idiomas"
 msgid "Last"
 msgstr "Última"
 
-msgid "Leave empty to output only in the book language."
-msgstr "Deixe vazio para gerar apenas no idioma do livro."
+#~ msgid "Leave empty to output only in the book language."
+#~ msgstr "Deixe vazio para gerar apenas no idioma do livro."
 
 msgid "Leave empty to process all pages."
 msgstr "Deixe vazio para processar todas as páginas."
@@ -1959,6 +2010,9 @@ msgstr "Nenhuma seção correspondente"
 msgid "No metadata yet — run the pipeline to extract book details"
 msgstr "Ainda não há metadados — execute o pipeline para extrair os detalhes do livro"
 
+#~ msgid "No output languages configured"
+#~ msgstr "Nenhum idioma de saída configurado"
+
 msgid "No page linked"
 msgstr "Nenhuma página vinculada"
 
@@ -1998,6 +2052,9 @@ msgstr "Sem seções nesta página"
 msgid "No segmentation needed for this image"
 msgstr "No segmentation needed for this image"
 
+msgid "No speech entries for this page"
+msgstr "Nenhuma entrada de voz para esta página"
+
 msgid "No text extracted"
 msgstr "Nenhum texto extraído"
 
@@ -2018,6 +2075,9 @@ msgstr "Nodes"
 
 msgid "None"
 msgstr "Nenhum"
+
+msgid "Not detected"
+msgstr "Não detectado"
 
 msgid "Not reviewed"
 msgstr "Not reviewed"
@@ -2066,6 +2126,9 @@ msgstr "Chave de API da OpenAI"
 
 msgid "OpenAI Voice"
 msgstr "Voz OpenAI"
+
+msgid "optional"
+msgstr "opcional"
 
 msgid "Optional instructions for the LLM..."
 msgstr "Instruções opcionais para o LLM..."
@@ -2337,6 +2400,9 @@ msgstr "Refresh validation"
 msgid "Refreshing results for this packaged preview."
 msgstr "Refreshing results for this packaged preview."
 
+msgid "Regenerate speech"
+msgstr "Regenerar áudio"
+
 msgid "Region"
 msgstr "Região"
 
@@ -2382,6 +2448,9 @@ msgstr "Require comment on failure"
 msgid "Require suggested modification"
 msgstr "Require suggested modification"
 
+msgid "Rerun translation"
+msgstr "Reexecutar tradução"
+
 msgid "Reset to defaults"
 msgstr "Reset to defaults"
 
@@ -2415,6 +2484,12 @@ msgstr "Tentar novamente"
 
 msgid "Retry Export"
 msgstr "Tentar exportar novamente"
+
+#~ msgid "Retry Speech"
+#~ msgstr "Tentar voz novamente"
+
+msgid "Retry Translation"
+msgstr "Tentar tradução novamente"
 
 msgid "Review areas with the most items marked as needing changes in this session."
 msgstr "Review areas with the most items marked as needing changes in this session."
@@ -2461,11 +2536,23 @@ msgstr "Reescrevendo a história desta seção..."
 msgid "Run {stageLabel}"
 msgstr "Executar {0}"
 
+msgid "Run Speech"
+msgstr "Executar voz"
+
 msgid "Run the pipeline through at least the"
 msgstr "Execute o pipeline pelo menos até a etapa"
 
 msgid "Run the pipeline through at least the <0>Storyboard</0> stage first."
 msgstr "Run the pipeline through at least the <0>Storyboard</0> stage first."
+
+msgid "Run Translation"
+msgstr "Executar tradução"
+
+#~ msgid "Run Translation & Speech"
+#~ msgstr "Executar tradução e áudio"
+
+#~ msgid "Run translation first to enable speech generation."
+#~ msgstr "Execute a tradução primeiro para habilitar a geração de voz."
 
 msgid "Run whole-book validation checks and configure accessibility assessment settings."
 msgstr "Run whole-book validation checks and configure accessibility assessment settings."
@@ -2500,14 +2587,20 @@ msgstr "Salvar e reexecutar glossário"
 msgid "Save & Rerun Quizzes"
 msgstr "Salvar e reexecutar quizzes"
 
+#~ msgid "Save & Rerun Speech Generation"
+#~ msgstr "Salvar e regerar voz"
+
 msgid "Save & Rerun Storyboard"
 msgstr "Salvar e reexecutar storyboard"
 
 msgid "Save & Rerun TOC Generation"
 msgstr "Salvar e reexecutar geração do sumário"
 
-msgid "Save & Rerun Translations + Audio"
-msgstr "Salvar e reexecutar traduções + áudio"
+msgid "Save & Rerun Translations"
+msgstr "Salvar e retraduzir"
+
+#~ msgid "Save & Rerun Translations + Audio"
+#~ msgstr "Salvar e reexecutar traduções + áudio"
 
 #~ msgid "Save changes before cloning"
 #~ msgstr "Salve as alterações antes de clonar"
@@ -2712,8 +2805,14 @@ msgstr "Mostrar todas"
 msgid "Show all {0}"
 msgstr "Show all {0}"
 
-msgid "Show all text & speech"
-msgstr "Mostrar todos os textos e áudios"
+msgid "Show all speech entries"
+msgstr "Mostrar todas as entradas de voz"
+
+#~ msgid "Show all text & speech"
+#~ msgstr "Mostrar todos os textos e áudios"
+
+msgid "Show all translations"
+msgstr "Mostrar todas as traduções"
 
 msgid "Show fewer"
 msgstr "Show fewer"
@@ -2968,6 +3067,9 @@ msgstr "Esta página não tem imagens legendadas"
 msgid "This page has no storyboard sections"
 msgstr "Esta página não tem seções de storyboard"
 
+msgid "This page has no text entries with audio"
+msgstr "Esta página não tem entradas de texto com áudio"
+
 msgid "This page has no translatable text entries"
 msgstr "Esta página não tem entradas de texto traduzíveis"
 
@@ -2998,6 +3100,9 @@ msgstr "Isso salvará suas configurações e reexecutará a legendagem de imagen
 msgid "This will save your settings and re-run quiz generation."
 msgstr "Isso salvará suas configurações e reexecutará a geração de quizzes."
 
+#~ msgid "This will save your settings and re-run speech generation for all languages."
+#~ msgstr "Isso salvará suas configurações e regerará a voz para todos os idiomas."
+
 msgid "This will save your settings and re-run the extraction pipeline. Any manual edits to extracted text will be overwritten for affected pages."
 msgstr "Isso salvará suas configurações e reexecutará o pipeline de extração. Edições manuais no texto extraído serão sobrescritas nas páginas afetadas."
 
@@ -3007,8 +3112,11 @@ msgstr "Isso salvará suas configurações e reexecutará o pipeline do storyboa
 msgid "This will save your settings and re-run the storyboard pipeline. Sectioning and rendering will be regenerated for all pages."
 msgstr "Isso salvará suas configurações e reexecutará o pipeline do storyboard. O secionamento e a renderização serão regenerados para todas as páginas."
 
-msgid "This will save your settings and re-run translations and audio generation, rebuilding the text catalog, translating to output languages, and generating speech."
-msgstr "Isso salvará suas configurações e reexecutará traduções e geração de áudio, reconstruindo o catálogo de textos, traduzindo para os idiomas de saída e gerando fala."
+#~ msgid "This will save your settings and re-run translations and audio generation, rebuilding the text catalog, translating to output languages, and generating speech."
+#~ msgstr "Isso salvará suas configurações e reexecutará traduções e geração de áudio, reconstruindo o catálogo de textos, traduzindo para os idiomas de saída e gerando fala."
+
+msgid "This will save your settings and re-run translations, rebuilding the text catalog and translating to output languages."
+msgstr "Isso salvará suas configurações e retraduzirá, reconstruindo o catálogo de texto e traduzindo para os idiomas de saída."
 
 msgid "Time"
 msgstr "Hora"
@@ -3036,6 +3144,12 @@ msgstr "Track reviewer progress and review findings captured from Preview."
 
 msgid "Translate the book content and generate audio narration."
 msgstr "Traduza o conteúdo do livro e gera narração em áudio."
+
+#~ msgid "Translate the book content into target languages."
+#~ msgstr "Traduzir o conteúdo do livro para os idiomas de destino."
+
+msgid "Translating..."
+msgstr "Traduzindo..."
 
 msgid "Translation"
 msgstr "Tradução"
@@ -3158,6 +3272,9 @@ msgstr "Ver código HTML"
 
 msgid "Visual & sensory cues"
 msgstr "Visual & sensory cues"
+
+msgid "Voice"
+msgstr "Voz"
 
 msgid "Voice Mappings"
 msgstr "Mapeamentos de voz"

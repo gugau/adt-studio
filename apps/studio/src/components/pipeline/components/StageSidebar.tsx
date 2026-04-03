@@ -96,7 +96,7 @@ function getSettingsTabs(
     captions: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE["caption-prompt"]) },
     ],
-    "text-and-speech": [
+    translation: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.languages) },
       { key: "prompt", label: i18n._(SETTINGS_TAB_MESSAGE["translation-prompt"]) },
       { key: "speech", label: i18n._(SETTINGS_TAB_MESSAGE.speech) },
@@ -159,7 +159,8 @@ export function StageSidebar({
   const storyboardDone = stageState("storyboard") === "done"
   const validationCompleted = Boolean(accessibilityAssessment?.assessment)
 
-  const stageItems = STAGES.map((step, index) => {
+  const visibleStages = STAGES.filter((s) => s.slug !== "speech")
+  const stageItems = visibleStages.map((step, index) => {
     const isActive = step.slug === activeStep
     const Icon = step.icon
     const settingsTabs = getSettingsTabs(step.slug, i18n)
@@ -182,7 +183,7 @@ export function StageSidebar({
     return (
       <div key={step.slug} className="relative">
         {/* Connector line */}
-        {index < STAGES.length - 1 && (
+        {index < visibleStages.length - 1 && (
           <div className="absolute left-[24px] top-[36px] bottom-[-10px] w-0.5 bg-border z-10" />
         )}
 

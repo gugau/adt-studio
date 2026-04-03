@@ -667,7 +667,7 @@ describe("Page routes", () => {
     }
   }
 
-  /** Assert that all caption + text-and-speech node data and step_runs were cleared. */
+  /** Assert that all caption + translation + speech node data and step_runs were cleared. */
   function expectAllDownstreamCleared(dir: string, bookLabel: string) {
     const s = createBookStorage(bookLabel, dir)
     try {
@@ -687,7 +687,7 @@ describe("Page routes", () => {
     }
   }
 
-  /** Assert that text-and-speech (but NOT image-captioning) node data and step_runs were cleared. */
+  /** Assert that translation + speech (but NOT image-captioning) node data and step_runs were cleared. */
   function expectTextAndSpeechCleared(dir: string, bookLabel: string) {
     const s = createBookStorage(bookLabel, dir)
     try {
@@ -709,7 +709,7 @@ describe("Page routes", () => {
   }
 
   describe("PUT /api/books/:label/pages/:pageId/sectioning clears downstream", () => {
-    it("clears caption + text-and-speech data on sectioning save", async () => {
+    it("clears caption + translation + speech data on sectioning save", async () => {
       seedDownstreamData(tmpDir, label)
 
       const data = {
@@ -746,7 +746,7 @@ describe("Page routes", () => {
   })
 
   describe("PUT /api/books/:label/pages/:pageId/rendering clears downstream", () => {
-    it("clears caption + text-and-speech data on rendering save", async () => {
+    it("clears caption + translation + speech data on rendering save", async () => {
       seedDownstreamData(tmpDir, label)
 
       const data = {
@@ -773,7 +773,7 @@ describe("Page routes", () => {
   })
 
   describe("POST clone clears downstream", () => {
-    it("clears caption + text-and-speech data on section clone", async () => {
+    it("clears caption + translation + speech data on section clone", async () => {
       seedDownstreamData(tmpDir, label)
 
       const res = await app.request(
@@ -787,7 +787,7 @@ describe("Page routes", () => {
   })
 
   describe("POST delete clears downstream", () => {
-    it("clears caption + text-and-speech data on section delete", async () => {
+    it("clears caption + translation + speech data on section delete", async () => {
       // Need at least 2 sections so delete is valid
       const s = createBookStorage(label, tmpDir)
       try {
@@ -837,7 +837,7 @@ describe("Page routes", () => {
   })
 
   describe("POST crop (images) clears downstream", () => {
-    it("clears caption + text-and-speech data on image crop", async () => {
+    it("clears caption + translation + speech data on image crop", async () => {
       seedDownstreamData(tmpDir, label)
 
       // Minimal valid PNG (1x1 pixel)
@@ -865,7 +865,7 @@ describe("Page routes", () => {
     })
   })
 
-  describe("PUT image-captioning clears text-and-speech downstream", () => {
+  describe("PUT image-captioning clears translation + speech downstream", () => {
     it("clears text-catalog/translations/TTS but keeps image-captioning", async () => {
       seedDownstreamData(tmpDir, label)
 

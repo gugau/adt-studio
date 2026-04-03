@@ -13,7 +13,8 @@ interface ViewProps {
 }
 
 export function BookView({ bookLabel }: ViewProps) {
-  const overviewSteps = getBookOverviewStages()
+  // Filter out "speech" — it's combined with "translation" into one "Text & Speech" card
+  const overviewSteps = getBookOverviewStages().filter((s) => s.slug !== "speech")
   const { stageState, queueRun } = useBookRun()
   const { apiKey, hasApiKey, azureKey, azureRegion, geminiKey } = useApiKey()
   const { data: accessibilityAssessment } = useAccessibilityAssessment(bookLabel)
@@ -25,9 +26,12 @@ export function BookView({ bookLabel }: ViewProps) {
     const state = stageState(stage.slug)
     if (state === "running" || state === "queued") return
 
+    // "Text & Speech" card runs translation → speech
+    const toStage = stage.slug === "translation" ? "speech" : stage.slug
+
     queueRun({
       fromStage: stage.slug,
-      toStage: stage.slug,
+      toStage,
       apiKey,
       providerCredentials: {
         azure: { key: azureKey, region: azureRegion },
@@ -40,10 +44,29 @@ export function BookView({ bookLabel }: ViewProps) {
     <div className="flex max-w-xl flex-col items-start">
       {overviewSteps.map((step, index) => {
         const isLast = index === overviewSteps.length - 1
-        const state = step.slug === "validation" && validationCompleted ? "done" : stageState(step.slug)
+
+        // For "translation", combine with speech stage state
+        const isTextAndSpeech = step.slug === "translation"
+        const translationState = stageState("translation")
+        const speechState = stageState("speech")
+
+        const state = step.slug === "validation" && validationCompleted
+          ? "done"
+          : isTextAndSpeech
+            ? (translationState === "running" || translationState === "queued" || speechState === "running" || speechState === "queued")
+              ? "running"
+              : (translationState === "done" && speechState === "done")
+                ? "done"
+                : (translationState === "error" || speechState === "error")
+                  ? "error"
+                  : translationState
+            : stageState(step.slug)
         const isRunning = step.slug !== "validation" && (state === "running" || state === "queued")
         const stageCompleted = state === "done"
         const showRunButton = isPipelineStage(step) && step.slug !== "preview"
+        const hasError = isTextAndSpeech
+          ? translationState === "error" || speechState === "error"
+          : undefined
 
         return (
           <div key={step.slug} className="w-full">
@@ -54,6 +77,8 @@ export function BookView({ bookLabel }: ViewProps) {
             >
               <StageRunCard
                 stageSlug={step.slug}
+                additionalStageSlugs={isTextAndSpeech ? ["speech"] : undefined}
+                overrideHasError={hasError}
                 isRunning={isRunning}
                 completed={stageCompleted}
                 showRunButton={showRunButton}

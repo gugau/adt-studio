@@ -12,8 +12,8 @@ describe("pipeline effects", () => {
       "quiz-generation",
       "text-catalog",
       "catalog-translation",
-      "tts",
       "text-catalog-translation",
+      "tts",
       "package-web",
       "accessibility-assessment",
     ])
@@ -29,9 +29,15 @@ describe("pipeline effects", () => {
     ])
   })
 
-  it("derives stage-output cache resources from produced nodes", () => {
-    expect(getCacheResourcesForStageOutput("text-and-speech")).toEqual([
+  it("derives stage-output cache resources for translation stage", () => {
+    expect(getCacheResourcesForStageOutput("translation")).toEqual([
       "text-catalog",
+      "step-status",
+    ])
+  })
+
+  it("derives stage-output cache resources for speech stage", () => {
+    expect(getCacheResourcesForStageOutput("speech")).toEqual([
       "tts",
       "step-status",
     ])

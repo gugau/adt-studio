@@ -8,8 +8,8 @@ export type ReviewerValidationDefaultReasonKind =
   | "easy-read-unavailable"
   | "sign-language-unavailable"
   | "glossary-unavailable"
-  | "text-and-speech-unavailable"
-  | "text-and-speech-language-unavailable"
+  | "speech-unavailable"
+  | "speech-language-unavailable"
   | "translation-unavailable"
   | "translation-language-required"
   | "translation-language-unavailable"
@@ -43,9 +43,9 @@ export function getReviewerValidationDefaultReasonMessage(
       return msg`Defaulted to N/A because sign language is not enabled for this book.`
     case "glossary-unavailable":
       return msg`Defaulted to N/A because Glossary has not been generated for this book yet.`
-    case "text-and-speech-unavailable":
+    case "speech-unavailable":
       return msg`Defaulted to N/A because Text & Speech audio has not been generated yet.`
-    case "text-and-speech-language-unavailable":
+    case "speech-language-unavailable":
       return reason.language
         ? msg`Defaulted to N/A because no Text & Speech audio is available for ${reason.language}.`
         : msg`Defaulted to N/A because no Text & Speech audio is available yet.`

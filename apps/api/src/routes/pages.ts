@@ -326,7 +326,7 @@ async function executeAiImageGeneration(params: AiImageGenParams): Promise<{
   }
 }
 
-/** Clear caption + downstream text-and-speech data when images change. */
+/** Clear caption + downstream translation + speech data when images change. */
 function clearCaptionData(storage: Storage): void {
   storage.clearNodesByType(["image-captioning", "text-catalog", "text-catalog-translation", "tts"])
   storage.clearStepRuns(["image-captioning", "text-catalog", "catalog-translation", "tts"])

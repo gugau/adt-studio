@@ -9,6 +9,7 @@ import { GlossarySettings } from "@/components/pipeline/stages/glossary/Glossary
 import { TocSettings } from "@/components/pipeline/stages/toc/TocSettings"
 import { CaptionsSettings } from "@/components/pipeline/stages/captions/CaptionsSettings"
 import { TranslationsSettings } from "@/components/pipeline/stages/translations/TranslationsSettings"
+import { SpeechSettings } from "@/components/pipeline/stages/speech/SpeechSettings"
 import { ValidationSettings } from "@/components/pipeline/stages/ValidationSettings"
 import { getStageLabelI18n } from "@/components/pipeline/pipeline-i18n"
 import { cn } from "@/lib/utils"
@@ -89,8 +90,13 @@ export function StepSettingsPage() {
               return <TocSettings bookLabel={label} headerTarget={headerTarget} />
             case "captions":
               return <CaptionsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
-            case "text-and-speech":
+            case "translation": {
+              const speechTabs: Record<string, string> = { speech: "general", "speech-prompts": "speech-prompts", voices: "voices" }
+              if (tab in speechTabs) {
+                return <SpeechSettings bookLabel={label} headerTarget={headerTarget} tab={speechTabs[tab]} />
+              }
               return <TranslationsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
+            }
             case "validation":
               return <ValidationSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             default:

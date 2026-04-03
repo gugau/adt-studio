@@ -5,7 +5,8 @@ export const SETTINGS_STAGE_SLUGS = [
   "glossary",
   "toc",
   "captions",
-  "text-and-speech",
+  "translation",
+  "speech",
   "validation",
 ] as const
 

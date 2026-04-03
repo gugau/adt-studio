@@ -475,6 +475,9 @@ export const api = {
   deleteBook: (label: string) =>
     request<{ ok: boolean }>(`/books/${label}`, { method: "DELETE" }),
 
+  clearStage: (label: string, stageName: string) =>
+    request<{ ok: boolean; stage: string }>(`/books/${label}/stages/${stageName}`, { method: "DELETE" }),
+
   runStages: (
     label: string,
     apiKey: string,

@@ -25,12 +25,14 @@ export function LanguagePicker({
   multiple,
   label,
   hint,
+  bookLanguage,
 }: {
   selected: string | Set<string>
   onSelect: (code: string) => void
   multiple?: boolean
   label: string
   hint?: string
+  bookLanguage?: string | null
 }) {
   const { t } = useLingui()
   const [search, setSearch] = useState("")
@@ -66,7 +68,8 @@ export function LanguagePicker({
   // Build dropdown items based on phase
   const items: DropdownItem[] = useMemo(() => {
     if (lockedLang) {
-      // Phase 2: show base language first, then suggested countries, then all others
+      // Phase 2: show base language first, then suggested countries.
+      // Other countries only appear when the user is searching.
       const q = search.toLowerCase()
       const { suggested, all } = getCountriesForLanguage(lockedLang.code)
       const result: DropdownItem[] = [
@@ -83,7 +86,10 @@ export function LanguagePicker({
         }
       }
       for (const c of suggested) addCountry(c)
-      for (const c of all) addCountry(c)
+      // Only search all countries when the user has typed something
+      if (q) {
+        for (const c of all) addCountry(c)
+      }
       return result
     }
     // Phase 1: show languages
@@ -145,12 +151,16 @@ export function LanguagePicker({
 
   const lockLanguage = useCallback(
     (lang: Language) => {
-      // Always enter phase 2 — any language can be paired with any country
+      // Only enter phase 2 if the language has defined regional variants
+      if (!lang.countries || lang.countries.length === 0) {
+        commit(lang.code)
+        return
+      }
       setLockedLang(lang)
       setSearch("")
       setHighlighted(0)
     },
-    []
+    [commit]
   )
 
   const clearSelection = useCallback(
@@ -257,22 +267,28 @@ export function LanguagePicker({
       {/* Selected badges for multi-select */}
       {multiple && selectedSet && selectedSet.size > 0 && (
         <div className="flex flex-wrap gap-1">
-          {Array.from(selectedSet).map((code) => (
-            <Badge
-              key={code}
-              variant="secondary"
-              className="gap-1 pr-1 text-xs font-normal"
-            >
-              {getDisplayName(code) || code}
-              <button
-                type="button"
-                onClick={() => onSelect(code)}
-                className="ml-0.5 rounded-full p-0.5 hover:bg-muted-foreground/20"
+          {Array.from(selectedSet).map((code) => {
+            const isBookLang = bookLanguage != null && normalizeLocale(code) === normalizeLocale(bookLanguage)
+            return (
+              <Badge
+                key={code}
+                variant="secondary"
+                className="gap-1 pr-1 text-xs font-normal"
               >
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          ))}
+                {getDisplayName(code) || code}
+                {isBookLang && (
+                  <span className="text-[10px] text-muted-foreground font-normal">({t`book language`})</span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => onSelect(code)}
+                  className="ml-0.5 rounded-full p-0.5 hover:bg-muted-foreground/20"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            )
+          })}
         </div>
       )}
 

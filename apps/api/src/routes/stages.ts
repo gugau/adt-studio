@@ -135,6 +135,43 @@ export function createStageRoutes(
     return c.json({ status: result.status, label, fromStage, toStage })
   })
 
+  // DELETE /books/:label/stages/:stageName — Clear a stage's data and step runs
+  app.delete("/books/:label/stages/:stageName", (c) => {
+    const { label, stageName } = c.req.param()
+
+    let safeLabel: string
+    try {
+      safeLabel = parseBookLabel(label)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      throw new HTTPException(400, { message })
+    }
+
+    const parsed = StageName.safeParse(stageName)
+    if (!parsed.success) {
+      throw new HTTPException(400, { message: `Invalid stage name: ${stageName}` })
+    }
+
+    const stage = parsed.data
+    const storage = createBookStorage(safeLabel, booksDir)
+    try {
+      const nodes = getStageClearNodes(stage)
+      if (nodes.length > 0) {
+        storage.clearNodesByType(nodes)
+      }
+      const stagesToClear = getStageClearOrder(stage)
+      const stepsToClear = PIPELINE
+        .filter((s) => stagesToClear.includes(s.name))
+        .flatMap((s) => s.steps.map((step) => step.name))
+      storage.clearStepRuns(stepsToClear)
+    } finally {
+      storage.close()
+    }
+
+    console.log(`[stages] ${label}: cleared stage ${stage}`)
+    return c.json({ ok: true, stage })
+  })
+
   // GET /books/:label/step-status — Unified stage + step status
   // DB step_runs is the single source of truth for step/stage state.
   // Only "queued" comes from the in-memory run queue.
