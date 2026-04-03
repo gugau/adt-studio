@@ -2,13 +2,14 @@ import { lingui } from "@lingui/vite-plugin"
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
 import tailwindcss from "@tailwindcss/vite"
-import { TanStackRouterVite } from "@tanstack/router-plugin/vite"
+import { tanstackRouter } from "@tanstack/router-plugin/vite"
 import { fileURLToPath, URL } from "node:url"
 
 export default defineConfig({
+  base: "./",
   plugins: [
     lingui(),
-    TanStackRouterVite({ quoteStyle: "double" }),
+    tanstackRouter({ quoteStyle: "double" }),
     react({
       babel: {
         plugins: ["@lingui/babel-plugin-lingui-macro"],

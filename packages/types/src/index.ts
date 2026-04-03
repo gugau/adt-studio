@@ -182,3 +182,15 @@ export {
   ReviewerPageValidationResult,
   ReviewerPageValidationRecord,
 } from "./reviewer-validation.js"
+
+export {
+  screenshotIpcViewportSchema,
+  screenshotIpcRequestSchema,
+  screenshotIpcCloseSchema,
+  screenshotIpcUtilityToMainSchema,
+  screenshotIpcReplySuccessSchema,
+  screenshotIpcReplyErrorSchema,
+  screenshotIpcReplySchema,
+  type ScreenshotIpcUtilityToMain,
+  type ScreenshotIpcReply,
+} from "./screenshot-ipc.js"

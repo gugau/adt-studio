@@ -1,0 +1,77 @@
+import {
+  screenshotIpcReplyErrorSchema,
+  screenshotIpcReplySuccessSchema,
+  screenshotIpcUtilityToMainSchema,
+} from '@adt/types'
+import { app, BrowserWindow } from 'electron'
+import { electronApp, optimizer } from '@electron-toolkit/utils'
+import { createWindow } from './main-window'
+import { startApiServer, stopApiServer } from './api-process'
+import { screenshot, close as closeScreenshotWindows } from './screenshot'
+
+app.whenReady().then(() => {
+  electronApp.setAppUserModelId('com.electron')
+
+  app.on('browser-window-created', (_, window) => {
+    optimizer.watchWindowShortcuts(window)
+  })
+
+  const apiProcess = startApiServer()
+
+
+  /*
+    The child (API) process cannot access Electron APIs directly, 
+    so the main process handles screenshot operations on its behalf via IPC messaging.
+    */
+  apiProcess.on('message', async (msg: unknown) => {
+    const parsed = screenshotIpcUtilityToMainSchema.safeParse(msg)
+    if (!parsed.success) {
+      console.warn('[screenshot-ipc] invalid utility message:', parsed.error.flatten())
+      return
+    }
+
+    const m = parsed.data
+
+    if (m.type === 'screenshot-base64') {
+      try {
+        const base64 = await screenshot(m.html, m.viewport)
+        apiProcess.postMessage(
+          screenshotIpcReplySuccessSchema.parse({
+            type: 'screenshot-base64-reply',
+            id: m.id,
+            base64,
+          })
+        )
+      } catch (error) {
+        apiProcess.postMessage(
+          screenshotIpcReplyErrorSchema.parse({
+            type: 'screenshot-base64-reply',
+            id: m.id,
+            error: error instanceof Error ? error.message : String(error),
+          })
+        )
+      }
+      return
+    }
+
+    if (m.type === 'screenshot-close') {
+      await closeScreenshotWindows()
+    }
+  })
+
+  app.on('activate', function () {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+
+  createWindow()
+})
+
+app.on('before-quit', () => {
+  stopApiServer()
+})
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
+})

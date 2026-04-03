@@ -11,6 +11,7 @@
     "test:watch": "pnpm build && vitest",
     "typecheck": "tsc --build",
     "lint": "eslint",
+    "clean": "tsc --build --clean",
     "build": "tsc --build",
     "dev": "pnpm --parallel --filter @adt/api --filter @adt/studio dev",
     "dev:api": "pnpm --filter @adt/api dev",
@@ -35,7 +36,8 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "esbuild"
+      "esbuild",
+      "electron"
     ]
   },
   "license": "AGPL-3.0-or-later"

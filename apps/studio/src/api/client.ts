@@ -10,7 +10,11 @@ import type {
 export function resolveBaseUrl(
   loc: Pick<Location, "protocol" | "hostname"> = window.location,
 ): string {
-  if (loc.protocol === "tauri:" || loc.hostname === "tauri.localhost") {
+  if (
+    loc.protocol === "tauri:" || 
+    loc.hostname === "tauri.localhost" || 
+    navigator.userAgent.toLowerCase().includes("electron")
+  ) {
     return "http://localhost:3001/api"
   }
   return "/api"
@@ -177,18 +181,18 @@ export interface PageDetail {
       sectionType: string
       parts: Array<
         | {
-            type: "text_group"
-            groupId: string
-            groupType: string
-            texts: Array<{ textId: string; textType: string; text: string; isPruned: boolean }>
-            isPruned: boolean
-          }
+          type: "text_group"
+          groupId: string
+          groupType: string
+          texts: Array<{ textId: string; textType: string; text: string; isPruned: boolean }>
+          isPruned: boolean
+        }
         | {
-            type: "image"
-            imageId: string
-            isPruned: boolean
-            reason?: string
-          }
+          type: "image"
+          imageId: string
+          isPruned: boolean
+          reason?: string
+        }
       >
       backgroundColor: string
       textColor: string
