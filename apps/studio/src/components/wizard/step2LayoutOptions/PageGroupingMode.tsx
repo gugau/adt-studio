@@ -5,6 +5,8 @@ import { Trans, useLingui } from "@lingui/react/macro"
 import { Label } from "@/components/ui/label"
 import { SegmentedControl } from "@/components/ui/segmented-control"
 import { useWizardForm } from "@/components/wizard/wizardForm"
+import { usePresetRecommendations } from "@/components/wizard/usePresetRecommendations"
+import { PRESETS } from "@/components/wizard/constants"
 import { InfoCarousel, type CarouselSlide } from "@/components/wizard/shared/InfoCarousel"
 
 const GROUPING_OPTION_SPREAD_LABEL = msg`Spread`
@@ -73,7 +75,12 @@ function SingleDiagram() {
 export function PageGroupingMode() {
   const form = useWizardForm()
   const pageGrouping = useStore(form.store, (s) => s.values.pageGrouping)
+  const selectedPresetId = useStore(form.store, (s) => s.values.selectedPreset)
   const { i18n } = useLingui()
+  const recommendations = usePresetRecommendations()
+  const recommended = recommendations.pageGrouping || undefined
+
+  const preset = PRESETS.find((p) => p.id === selectedPresetId)
 
   const groupingOptions = useMemo(
     () => [
@@ -82,6 +89,10 @@ export function PageGroupingMode() {
     ],
     [i18n],
   )
+
+  const recommendedOption = recommended
+    ? groupingOptions.find((o) => o.value === recommended)
+    : null
 
   const slides = useMemo(
     (): CarouselSlide[] => [
@@ -115,6 +126,13 @@ export function PageGroupingMode() {
         value={pageGrouping}
         onValueChange={(v) => form.setFieldValue("pageGrouping", v)}
       />
+      {recommendedOption && preset && (
+        <p className="text-xs text-[#737373]">
+          <Trans>
+            For {i18n._(preset.title)}, we recommend {recommendedOption.label}.
+          </Trans>
+        </p>
+      )}
     </div>
   )
 }

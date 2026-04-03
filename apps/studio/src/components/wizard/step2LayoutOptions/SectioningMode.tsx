@@ -4,6 +4,8 @@ import { msg } from "@lingui/core/macro"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { Label } from "@/components/ui/label"
 import { useWizardForm } from "@/components/wizard/wizardForm"
+import { usePresetRecommendations } from "@/components/wizard/usePresetRecommendations"
+import { PRESETS } from "@/components/wizard/constants"
 import { InfoCarousel, type CarouselSlide } from "@/components/wizard/shared/InfoCarousel"
 import { SectioningModeSelect } from "./SectioningModeSelect"
 
@@ -132,7 +134,11 @@ function SectionDiagram() {
 export function SectioningMode() {
   const form = useWizardForm()
   const sectioningMode = useStore(form.store, (s) => s.values.sectioningMode)
+  const selectedPresetId = useStore(form.store, (s) => s.values.selectedPreset)
   const { i18n } = useLingui()
+  const recommendations = usePresetRecommendations()
+  const recommended = recommendations.sectioningMode || undefined
+  const preset = PRESETS.find((p) => p.id === selectedPresetId)
 
   const slides = useMemo(
     (): CarouselSlide[] => [
@@ -170,6 +176,8 @@ export function SectioningMode() {
         id="wizard-sectioning-mode"
         value={sectioningMode}
         onValueChange={(v) => form.setFieldValue("sectioningMode", v)}
+        recommended={recommended}
+        presetLabel={preset?.title}
       />
     </div>
   )

@@ -1,6 +1,7 @@
 import { useMemo } from "react"
 import { msg } from "@lingui/core/macro"
 import { useLingui } from "@lingui/react/macro"
+import type { MessageDescriptor } from "@lingui/core"
 import {
   Select,
   SelectContent,
@@ -57,10 +58,12 @@ export type SectioningModeSelectProps = {
   id: string
   value: SectioningModeId | ""
   onValueChange: (value: SectioningModeId) => void
+  recommended?: SectioningModeId
+  presetLabel?: MessageDescriptor
 }
 
-export function SectioningModeSelect({ id, value, onValueChange }: SectioningModeSelectProps) {
-  const { i18n } = useLingui()
+export function SectioningModeSelect({ id, value, onValueChange, recommended, presetLabel }: SectioningModeSelectProps) {
+  const { i18n, t } = useLingui()
 
   const options = useMemo(
     () =>
@@ -95,6 +98,13 @@ export function SectioningModeSelect({ id, value, onValueChange }: SectioningMod
             <span className="flex items-center gap-2">
               <o.Icon className="size-4 shrink-0 text-muted-foreground" />
               {o.label}
+              {recommended === o.value && (
+                <span className="inline-flex items-center rounded-full border border-[#e5e5e5] bg-[#f5f5f5] px-2 py-0.5 text-[10px] font-medium leading-none text-[#525252]">
+                  {presetLabel
+                    ? t`Recommended for ${i18n._(presetLabel)}`
+                    : t`Recommended`}
+                </span>
+              )}
             </span>
           </SelectItem>
         ))}

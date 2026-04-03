@@ -94,16 +94,26 @@ function StrategyRadio({
 }
 
 export function RenderStrategyPicker() {
-  const { i18n } = useLingui()
+  const { i18n, t } = useLingui()
   const form = useWizardForm()
   const renderStrategy = useStore(form.store, (s) => s.values.renderStrategy)
   const selectedPresetId = useStore(form.store, (s) => s.values.selectedPreset)
-
   const preset = PRESETS.find((p) => p.id === selectedPresetId)
+
   const allowedIds = preset?.renderStrategies
+  const recommended = preset?.recommendedStrategies
+  const presetLabel = preset?.title
+
   const strategies = allowedIds
     ? RENDER_STRATEGIES.filter((s) => allowedIds.includes(s.id))
     : RENDER_STRATEGIES
+
+  const recommendedStrategies = recommended?.length
+    ? strategies.filter((s) => recommended.includes(s.id))
+    : []
+  const otherStrategies = recommended?.length
+    ? strategies.filter((s) => !recommended.includes(s.id))
+    : strategies
 
   function handleSelect(id: RenderStrategyId) {
     form.setFieldValue("renderStrategy", id)
@@ -126,19 +136,56 @@ export function RenderStrategyPicker() {
         <span className="text-[#525252]">{i18n._(STRATEGY_CATEGORIES.ai.label)}</span>{" "}
         <Trans>options generate a fresh layout per page.</Trans>
       </p>
-      <div className="flex flex-col gap-2">
-        {strategies.map((strategy) => (
-          <StrategyRadio
-            key={strategy.id}
-            id={strategy.id}
-            Icon={strategy.Icon}
-            title={strategy.title}
-            description={strategy.description}
-            category={strategy.category}
-            selected={renderStrategy === strategy.id}
-            onSelect={() => handleSelect(strategy.id)}
-          />
-        ))}
+
+      <div className="flex flex-col gap-3">
+        {recommendedStrategies.length > 0 && (
+          <div className="flex flex-col gap-2 rounded-xl border border-dashed border-[#d4d4d4] bg-[#fafafa] p-3">
+            <p className="flex items-center gap-1.5 px-1 text-xs font-medium text-[#525252]">
+              <span aria-hidden>↓</span>
+              {presetLabel
+                ? t`Best for ${i18n._(presetLabel)}`
+                : t`Best for your preset`}
+            </p>
+            {recommendedStrategies.map((strategy) => (
+              <StrategyRadio
+                key={strategy.id}
+                id={strategy.id}
+                Icon={strategy.Icon}
+                title={strategy.title}
+                description={strategy.description}
+                category={strategy.category}
+                selected={renderStrategy === strategy.id}
+                onSelect={() => handleSelect(strategy.id)}
+              />
+            ))}
+          </div>
+        )}
+
+        {otherStrategies.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {recommendedStrategies.length > 0 && (
+              <div className="flex items-center gap-2 px-1">
+                <div className="h-px flex-1 bg-[#e5e5e5]" />
+                <span className="text-[11px] font-medium text-[#a3a3a3]">
+                  <Trans>Other options</Trans>
+                </span>
+                <div className="h-px flex-1 bg-[#e5e5e5]" />
+              </div>
+            )}
+            {otherStrategies.map((strategy) => (
+              <StrategyRadio
+                key={strategy.id}
+                id={strategy.id}
+                Icon={strategy.Icon}
+                title={strategy.title}
+                description={strategy.description}
+                category={strategy.category}
+                selected={renderStrategy === strategy.id}
+                onSelect={() => handleSelect(strategy.id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </fieldset>
   )
