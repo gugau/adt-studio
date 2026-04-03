@@ -166,30 +166,32 @@ export function extractPdfStream(
   const end = Math.min(endPage ?? totalPagesInPdf, totalPagesInPdf);
 
   async function* generatePages(): AsyncGenerator<ExtractedPage, void, unknown> {
-    if (spreadMode) {
-      const logicalGroups = computeSpreadGroups(start, end);
-      const totalLogical = logicalGroups.length;
+    try {
+      if (spreadMode) {
+        const logicalGroups = computeSpreadGroups(start, end);
+        const totalLogical = logicalGroups.length;
 
-      for (let g = 0; g < totalLogical; g++) {
-        const group = logicalGroups[g];
-        const page =
-          group.length === 2
-            ? await extractSpreadPage(doc, group[0], group[1])
-            : await extractPage(doc, group[0]);
+        for (let g = 0; g < totalLogical; g++) {
+          const group = logicalGroups[g];
+          const page =
+            group.length === 2
+              ? await extractSpreadPage(doc, group[0], group[1])
+              : await extractPage(doc, group[0]);
 
-        onProgress?.({ page: g + 1, totalPages: totalLogical });
-        yield page;
-        await new Promise((resolve) => setTimeout(resolve, 0));
+          onProgress?.({ page: g + 1, totalPages: totalLogical });
+          yield page;
+        }
+      } else {
+        const rangeSize = end - start;
+        for (let i = start; i < end; i++) {
+          const page = await extractPage(doc, i);
+
+          onProgress?.({ page: i - start + 1, totalPages: rangeSize });
+          yield page;
+        }
       }
-    } else {
-      const rangeSize = end - start;
-      for (let i = start; i < end; i++) {
-        const page = await extractPage(doc, i);
-
-        onProgress?.({ page: i - start + 1, totalPages: rangeSize });
-        yield page;
-        await new Promise((resolve) => setTimeout(resolve, 0));
-      }
+    } finally {
+      doc.destroy();
     }
   }
 
