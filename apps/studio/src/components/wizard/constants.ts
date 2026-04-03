@@ -2,6 +2,7 @@ import {
   Sparkles,
   Layers,
   BookOpen,
+  AlignLeft,
   SlidersHorizontal,
 } from "lucide-react"
 import type { MessageDescriptor } from "@lingui/core"
@@ -64,6 +65,13 @@ export const RENDER_STRATEGIES = [
     category: "ai",
   },
   {
+    id: "single_column",
+    Icon: AlignLeft,
+    title: msg`Single Column`,
+    description: msg`Full-width single column layout. Ideal for reference material, documentation, and dense technical content.`,
+    category: "template",
+  },
+  {
     id: "two_column",
     Icon: BookOpen,
     title: msg`Two Columns`,
@@ -110,6 +118,7 @@ export interface PresetConfig {
   bgColor: string
   title: MessageDescriptor
   description: MessageDescriptor
+  renderStrategies?: readonly RenderStrategyId[]
   recommendedFor: MessageDescriptor[]
   exampleBooks: ExampleBook[]
   defaults: PresetDefaults
@@ -134,6 +143,7 @@ export const PRESETS: PresetConfig[] = [
     bgColor: "bg-blue-500/5",
     title: msg`Textbooks & Activities`,
     description: msg`Structured chapters, exercises. Best for educational content with complex layouts.`,
+    renderStrategies: ["llm", "llm-overlay", "two_column", "two_column_story"],
     recommendedFor: [
       msg`School textbooks and workbooks`,
       msg`University academic publications`,
@@ -171,6 +181,7 @@ export const PRESETS: PresetConfig[] = [
     bgColor: "bg-amber-500/5",
     title: msg`Storybook`,
     description: msg`Large images, narrative flow. Best for illustrated books with high-fidelity TTS voices.`,
+    renderStrategies: ["llm", "llm-overlay", "two_column", "two_column_story"],
     recommendedFor: [
       msg`Illustrated children's books`,
       msg`Young adult fiction`,
@@ -205,6 +216,7 @@ export const PRESETS: PresetConfig[] = [
     bgColor: "bg-emerald-500/5",
     title: msg`Reference`,
     description: msg`Dense text, tables, glossaries. Best for technical material and documentation.`,
+    renderStrategies: ["llm", "llm-overlay", "single_column", "two_column"],
     recommendedFor: [
       msg`Technical documentation`,
       msg`Legal and compliance manuals`,
@@ -222,7 +234,7 @@ export const PRESETS: PresetConfig[] = [
     ],
     defaults: {
       layoutType: "reference",
-      renderStrategy: "two_column",
+      renderStrategy: "single_column",
       pageGrouping: "single",
       sectioningMode: "page",
       imageCropping: false,
@@ -274,6 +286,7 @@ const FIELD_LABELS: Partial<Record<keyof WizardFormValues, MessageDescriptor>> =
 }
 
 const VALUE_LABELS: Record<string, MessageDescriptor> = {
+  single_column: msg`Single Column`,
   two_column: msg`Two Columns`,
   two_column_story: msg`Two Columns Story`,
   llm: msg`Dynamic`,

@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import {
   RENDER_STRATEGIES,
+  PRESETS,
   STRATEGY_CATEGORIES,
   type RenderStrategyId,
   type StrategyCategory,
@@ -96,6 +97,13 @@ export function RenderStrategyPicker() {
   const { i18n } = useLingui()
   const form = useWizardForm()
   const renderStrategy = useStore(form.store, (s) => s.values.renderStrategy)
+  const selectedPresetId = useStore(form.store, (s) => s.values.selectedPreset)
+
+  const preset = PRESETS.find((p) => p.id === selectedPresetId)
+  const allowedIds = preset?.renderStrategies
+  const strategies = allowedIds
+    ? RENDER_STRATEGIES.filter((s) => allowedIds.includes(s.id))
+    : RENDER_STRATEGIES
 
   function handleSelect(id: RenderStrategyId) {
     form.setFieldValue("renderStrategy", id)
@@ -119,7 +127,7 @@ export function RenderStrategyPicker() {
         <Trans>options generate a fresh layout per page.</Trans>
       </p>
       <div className="flex flex-col gap-2">
-        {RENDER_STRATEGIES.map((strategy) => (
+        {strategies.map((strategy) => (
           <StrategyRadio
             key={strategy.id}
             id={strategy.id}

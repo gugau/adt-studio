@@ -135,6 +135,9 @@ msgstr "1 imagen seleccionada"
 msgid "24000"
 msgstr "24000"
 
+msgid "3.2.1 — Authentication Methods"
+msgstr "3.2.1 — Métodos de Autenticación"
+
 msgid "64k"
 msgstr "64k"
 
@@ -288,6 +291,9 @@ msgstr "Agregar idioma"
 
 msgid "Add your first book"
 msgstr "Agrega tu primer libro"
+
+msgid "Additional terminology may be introduced in later sections. All terms are listed in the glossary appendix at the end of this document for quick reference."
+msgstr "Es posible que se introduzca terminología adicional en secciones posteriores. Todos los términos están listados en el apéndice de glosario al final de este documento para una consulta rápida."
 
 msgid "ADT Book"
 msgstr "Libro ADT"
@@ -707,7 +713,7 @@ msgid "Controls how page content is grouped during the sectioning step."
 msgstr "Controla cómo se agrupa el contenido de la página durante el paso de seccionamiento."
 
 msgid "Converted"
-msgstr ""
+msgstr "Convertido"
 
 msgid "Coral reefs cover less than 1% of the ocean floor, yet they support roughly 25% of all marine species. Often called the 'rainforests of the sea,' these underwater ecosystems are built by tiny animals called coral polyps."
 msgstr "Los arrecifes de coral cubren menos del 1% del fondo oceánico, pero albergan aproximadamente el 25% de todas las especies marinas. A menudo llamados 'los bosques lluviosos del mar', estos ecosistemas submarinos son construidos por pequeños animales llamados pólipos de coral."
@@ -780,6 +786,9 @@ msgstr "Voz predeterminada usada cuando no se especifica para un idioma."
 
 msgid "Defaults to the book's own language"
 msgstr "Por defecto, el idioma del libro"
+
+msgid "Definitions and Terminology"
+msgstr "Definiciones y Terminología"
 
 msgid "Delete"
 msgstr "Eliminar"
@@ -1088,6 +1097,9 @@ msgstr "Control total sobre estrategias de renderizado, poda y filtros."
 
 msgid "Full-size source page preview for the selected quiz."
 msgstr "Vista previa a tamaño completo de la página de origen del quiz seleccionado."
+
+msgid "Full-width single column layout. Ideal for reference material, documentation, and dense technical content."
+msgstr "Diseño de columna única a ancho completo. Ideal para material de referencia, documentación y contenido técnico denso."
 
 msgid "Fully interactive"
 msgstr "Totalmente interactivo"
@@ -1729,6 +1741,9 @@ msgstr "ruido"
 msgid "None"
 msgstr "Ninguno"
 
+msgid "Note"
+msgstr "Nota"
+
 msgid "Number of pages of content to include per quiz question."
 msgstr "Número de páginas de contenido a incluir por pregunta de quiz."
 
@@ -2222,6 +2237,9 @@ msgstr "Sección {0} — {1}"
 msgid "Section {0} (pruned)"
 msgstr "Sección {0} (eliminada)"
 
+msgid "Section 3.2"
+msgstr "Sección 3.2"
+
 msgid "Section Data"
 msgstr "Datos de sección"
 
@@ -2341,6 +2359,9 @@ msgstr "Mostrar imágenes eliminadas"
 
 msgid "Single"
 msgstr "Único"
+
+msgid "Single Column"
+msgstr "Columna Única"
 
 msgid "Single composited image"
 msgstr "Imagen compuesta única"
@@ -2503,6 +2524,9 @@ msgstr "Renderización por plantilla"
 msgid "Template-based"
 msgstr "Basado en plantillas"
 
+msgid "Terms marked with an asterisk (*) are defined by the ISO standard and may differ from colloquial usage in other fields."
+msgstr "Los términos marcados con asterisco (*) están definidos por la norma ISO y pueden diferir del uso coloquial en otros campos."
+
 msgid "Text & Images"
 msgstr "Texto e imágenes"
 
@@ -2554,6 +2578,9 @@ msgstr "La instrucción predeterminada de TTS enviada a OpenAI para todos los id
 
 msgid "The entire page is treated as a single section - all text and images stay together as one unit. Best for storybooks, reference books, and any content where each page is self-contained."
 msgstr "Toda la página se trata como una sola sección - todo el texto e imágenes permanecen juntos como una unidad. Mejor para libros de cuentos, libros de referencia y cualquier contenido donde cada página sea autónoma."
+
+msgid "The following terms are used throughout this manual. Familiarity with these definitions is required before proceeding to the implementation chapters."
+msgstr "Los siguientes términos se utilizan a lo largo de este manual. Es necesario conocer estas definiciones antes de continuar con los capítulos de implementación."
 
 msgid "The foreword or introduction."
 msgstr "El prefacio o introducción."
@@ -2698,6 +2725,9 @@ msgstr "Trata cada página como una sola sección"
 
 msgid "Try Activity"
 msgstr "Probar actividad"
+
+msgid "Two authentication methods are supported: Bearer tokens passed in the Authorization header, and API keys passed as a query parameter. Bearer tokens are preferred for server-to-server requests due to their short expiry window."
+msgstr "Se admiten dos métodos de autenticación: tokens Bearer pasados en el encabezado Authorization y claves de API pasadas como parámetro de consulta. Los tokens Bearer son preferidos para solicitudes servidor a servidor debido a su corta ventana de expiración."
 
 msgid "Two Columns"
 msgstr "Dos Columnas"

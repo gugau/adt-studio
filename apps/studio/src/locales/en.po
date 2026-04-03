@@ -141,6 +141,9 @@ msgstr "1 image selected"
 msgid "24000"
 msgstr "24000"
 
+msgid "3.2.1 — Authentication Methods"
+msgstr "3.2.1 — Authentication Methods"
+
 msgid "64k"
 msgstr "64k"
 
@@ -294,6 +297,9 @@ msgstr "Add Language"
 
 msgid "Add your first book"
 msgstr "Add your first book"
+
+msgid "Additional terminology may be introduced in later sections. All terms are listed in the glossary appendix at the end of this document for quick reference."
+msgstr "Additional terminology may be introduced in later sections. All terms are listed in the glossary appendix at the end of this document for quick reference."
 
 msgid "ADT Book"
 msgstr "ADT Book"
@@ -787,6 +793,9 @@ msgstr "Default voice used when not specified for a language."
 msgid "Defaults to the book's own language"
 msgstr "Defaults to the book's own language"
 
+msgid "Definitions and Terminology"
+msgstr "Definitions and Terminology"
+
 msgid "Delete"
 msgstr "Delete"
 
@@ -1094,6 +1103,9 @@ msgstr "Full control over render strategies, pruning, and filters."
 
 msgid "Full-size source page preview for the selected quiz."
 msgstr "Full-size source page preview for the selected quiz."
+
+msgid "Full-width single column layout. Ideal for reference material, documentation, and dense technical content."
+msgstr "Full-width single column layout. Ideal for reference material, documentation, and dense technical content."
 
 msgid "Fully interactive"
 msgstr "Fully interactive"
@@ -1735,6 +1747,9 @@ msgstr "noise"
 msgid "None"
 msgstr "None"
 
+msgid "Note"
+msgstr "Note"
+
 msgid "Number of pages of content to include per quiz question."
 msgstr "Number of pages of content to include per quiz question."
 
@@ -2228,6 +2243,9 @@ msgstr "Section {0} — {1}"
 msgid "Section {0} (pruned)"
 msgstr "Section {0} (pruned)"
 
+msgid "Section 3.2"
+msgstr "Section 3.2"
+
 msgid "Section Data"
 msgstr "Section Data"
 
@@ -2347,6 +2365,9 @@ msgstr "Show pruned images"
 
 msgid "Single"
 msgstr "Single"
+
+msgid "Single Column"
+msgstr "Single Column"
 
 msgid "Single composited image"
 msgstr "Single composited image"
@@ -2509,6 +2530,9 @@ msgstr "Template Rendering"
 msgid "Template-based"
 msgstr "Template-based"
 
+msgid "Terms marked with an asterisk (*) are defined by the ISO standard and may differ from colloquial usage in other fields."
+msgstr "Terms marked with an asterisk (*) are defined by the ISO standard and may differ from colloquial usage in other fields."
+
 msgid "Text & Images"
 msgstr "Text & Images"
 
@@ -2560,6 +2584,9 @@ msgstr "The default TTS instruction sent to OpenAI for all languages unless over
 
 msgid "The entire page is treated as a single section - all text and images stay together as one unit. Best for storybooks, reference books, and any content where each page is self-contained."
 msgstr "The entire page is treated as a single section - all text and images stay together as one unit. Best for storybooks, reference books, and any content where each page is self-contained."
+
+msgid "The following terms are used throughout this manual. Familiarity with these definitions is required before proceeding to the implementation chapters."
+msgstr "The following terms are used throughout this manual. Familiarity with these definitions is required before proceeding to the implementation chapters."
 
 msgid "The foreword or introduction."
 msgstr "The foreword or introduction."
@@ -2704,6 +2731,9 @@ msgstr "Treats each page as a single section"
 
 msgid "Try Activity"
 msgstr "Try Activity"
+
+msgid "Two authentication methods are supported: Bearer tokens passed in the Authorization header, and API keys passed as a query parameter. Bearer tokens are preferred for server-to-server requests due to their short expiry window."
+msgstr "Two authentication methods are supported: Bearer tokens passed in the Authorization header, and API keys passed as a query parameter. Bearer tokens are preferred for server-to-server requests due to their short expiry window."
 
 msgid "Two Columns"
 msgstr "Two Columns"

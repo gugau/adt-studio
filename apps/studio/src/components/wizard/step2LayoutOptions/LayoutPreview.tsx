@@ -8,6 +8,7 @@ import type { RenderStrategyId } from "@/components/wizard/constants"
 const STRATEGY_WIDTHS: Record<RenderStrategyId, number> = {
   llm: 650,
   "llm-overlay": 650,
+  single_column: 650,
   two_column: 650,
   two_column_story: 980,
 }
@@ -285,6 +286,113 @@ function OverlayPreview() {
   )
 }
 
+// ─── Single Column — full-width reference/documentation layout ───────────────
+
+function SingleColumnPreview() {
+  return (
+    <div className="flex h-full min-h-0 flex-col overflow-y-auto px-4 py-5 text-[#0a0a0a] @min-[420px]:px-6 @min-[420px]:py-6 @min-[540px]:px-10 @min-[540px]:py-8 @min-[620px]:px-14 @min-[620px]:py-10">
+
+      {/* Section heading */}
+      <div className="mb-3 border-b border-[#e5e5e5] pb-2 @min-[540px]:mb-4 @min-[540px]:pb-3">
+        <p className="text-[8px] font-semibold uppercase tracking-widest text-[#737373] @min-[420px]:text-[9px] @min-[540px]:text-[10px]">
+          <Trans>Section 3.2</Trans>
+        </p>
+        <h2 className="text-sm font-bold leading-tight @min-[420px]:text-base @min-[540px]:text-lg @min-[620px]:text-xl">
+          <Trans>Definitions and Terminology</Trans>
+        </h2>
+      </div>
+
+      {/* Intro paragraph */}
+      <p className="mb-3 text-[8px] leading-[13px] text-[#525252] @min-[420px]:text-[9px] @min-[420px]:leading-[14px] @min-[540px]:mb-4 @min-[540px]:text-[10px] @min-[540px]:leading-[15px] @min-[620px]:text-xs @min-[620px]:leading-4">
+        <Trans>
+          The following terms are used throughout this manual. Familiarity with these definitions is
+          required before proceeding to the implementation chapters.
+        </Trans>
+      </p>
+
+      {/* Definition list */}
+      <div className="mb-3 flex flex-col divide-y divide-[#f0f0f0] rounded-lg border border-[#e5e5e5] @min-[540px]:mb-4">
+        {([
+          ["API", "Application Programming Interface — a set of rules that allows programs to communicate."],
+          ["Endpoint", "A specific URL where an API can be accessed and a request submitted."],
+          ["Payload", "The data sent within the body of a request or response message."],
+          ["Token", "A unique string used to authenticate and authorize API requests."],
+        ] as const).map(([term, def]) => (
+          <div key={term} className="flex gap-2 px-2.5 py-1.5 @min-[540px]:gap-3 @min-[540px]:px-3 @min-[540px]:py-2">
+            <span className="w-14 shrink-0 text-[8px] font-bold text-[#0a0a0a] @min-[420px]:w-16 @min-[420px]:text-[9px] @min-[540px]:w-20 @min-[540px]:text-[10px] @min-[620px]:text-xs">
+              {term}
+            </span>
+            <span className="text-[8px] leading-[12px] text-[#525252] @min-[420px]:text-[9px] @min-[420px]:leading-[13px] @min-[540px]:text-[10px] @min-[540px]:leading-[14px] @min-[620px]:text-xs @min-[620px]:leading-4">
+              {def}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Note callout */}
+      <div className="mb-3 rounded border-l-2 border-[#737373] bg-[#f5f5f5] px-2.5 py-1.5 @min-[540px]:mb-4 @min-[540px]:px-3 @min-[540px]:py-2">
+        <p className="text-[8px] font-semibold text-[#404040] @min-[420px]:text-[9px] @min-[540px]:text-[10px] @min-[620px]:text-xs">
+          <Trans>Note</Trans>
+        </p>
+        <p className="mt-0.5 text-[8px] leading-[12px] text-[#525252] @min-[420px]:text-[9px] @min-[420px]:leading-[13px] @min-[540px]:text-[10px] @min-[540px]:leading-[14px] @min-[620px]:text-xs @min-[620px]:leading-4">
+          <Trans>
+            Terms marked with an asterisk (*) are defined by the ISO standard and may differ from
+            colloquial usage in other fields.
+          </Trans>
+        </p>
+      </div>
+
+      {/* Sub-section */}
+      <h3 className="mb-1.5 text-[9px] font-bold uppercase tracking-wide text-[#0a0a0a] @min-[420px]:text-[10px] @min-[540px]:mb-2 @min-[540px]:text-[11px] @min-[620px]:text-xs">
+        <Trans>3.2.1 — Authentication Methods</Trans>
+      </h3>
+      <p className="mb-3 text-[8px] leading-[13px] text-[#525252] @min-[420px]:text-[9px] @min-[420px]:leading-[14px] @min-[540px]:mb-4 @min-[540px]:text-[10px] @min-[540px]:leading-[15px] @min-[620px]:text-xs @min-[620px]:leading-4">
+        <Trans>
+          Two authentication methods are supported: Bearer tokens passed in the Authorization
+          header, and API keys passed as a query parameter. Bearer tokens are preferred for
+          server-to-server requests due to their short expiry window.
+        </Trans>
+      </p>
+
+      {/* Table */}
+      <div className="mb-3 overflow-hidden rounded-lg border border-[#e5e5e5] @min-[540px]:mb-4">
+        <div className="grid grid-cols-3 divide-x divide-[#e5e5e5] bg-[#f5f5f5]">
+          {(["Method", "Transport", "Expiry"] as const).map((h) => (
+            <div key={h} className="px-2 py-1 @min-[540px]:px-3 @min-[540px]:py-1.5">
+              <span className="text-[7px] font-bold uppercase tracking-wide text-[#404040] @min-[420px]:text-[8px] @min-[540px]:text-[9px] @min-[620px]:text-[10px]">
+                {h}
+              </span>
+            </div>
+          ))}
+        </div>
+        {([
+          ["Bearer Token", "Header", "1 hour"],
+          ["API Key", "Query param", "Never"],
+          ["OAuth 2.0", "Header", "Custom"],
+        ] as const).map(([method, transport, expiry], i) => (
+          <div key={i} className="grid grid-cols-3 divide-x divide-[#f0f0f0] border-t border-[#f0f0f0]">
+            {([method, transport, expiry] as const).map((cell) => (
+              <div key={cell} className="px-2 py-1 @min-[540px]:px-3 @min-[540px]:py-1.5">
+                <span className="text-[7px] text-[#525252] @min-[420px]:text-[8px] @min-[540px]:text-[9px] @min-[620px]:text-[10px]">
+                  {cell}
+                </span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      {/* Closing paragraph */}
+      <p className="text-[8px] leading-[13px] text-[#525252] @min-[420px]:text-[9px] @min-[420px]:leading-[14px] @min-[540px]:text-[10px] @min-[540px]:leading-[15px] @min-[620px]:text-xs @min-[620px]:leading-4">
+        <Trans>
+          Additional terminology may be introduced in later sections. All terms are listed in the
+          glossary appendix at the end of this document for quick reference.
+        </Trans>
+      </p>
+    </div>
+  )
+}
+
 // ─── Two Column (always two columns — scale type + margins when container is narrow)
 
 function TwoColumnPreview() {
@@ -351,6 +459,7 @@ function TwoColumnStoryPreview() {
 const STRATEGY_PREVIEWS: Record<RenderStrategyId, React.FC> = {
   llm: DynamicPreview,
   "llm-overlay": OverlayPreview,
+  single_column: SingleColumnPreview,
   two_column: TwoColumnPreview,
   two_column_story: TwoColumnStoryPreview,
 }
