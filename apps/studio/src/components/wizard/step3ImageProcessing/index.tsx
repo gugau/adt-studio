@@ -1,6 +1,6 @@
 import { useStore } from "@tanstack/react-form"
 import { msg } from "@lingui/core/macro"
-import { useLingui } from "@lingui/react/macro"
+import { useLingui, Trans } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import { SingleValueSlider, RangeSlider } from "@/components/wizard/shared/RangeSlider"
@@ -18,6 +18,9 @@ const MIN_DIM_LABEL = msg`Minimum image dimension`
 const MIN_DIM_NONE = msg`None`
 const MIN_DIM_HELP = msg`Leave at None to run segmentation on all qualifying images (subject to pipeline rules).`
 const VALUE_UNIT_PX = msg`px`
+
+const TITLE_ACTIVITIES = msg`Activities Generator`
+const SUBTITLE_ACTIVITIES = msg`Detects activities already present in the book and transforms them into interactive HTML elements like radio buttons and text inputs.`
 
 const TITLE_SMART_CROPPING = msg`Smart Cropping`
 const SUBTITLE_SMART_CROPPING = msg`Best for complex content like textbooks - automatically trims stray text, artifacts, and extra margins from extracted images.`
@@ -76,6 +79,7 @@ export function Step3() {
   // eslint-disable-next-line lingui/no-unlocalized-strings -- ImageProcessingPreviewFocus key
   const filterSizeHover = useDelayedPreviewFocus("filterSize")
 
+  const activitiesGenerator = useStore(form.store, (s) => s.values.activitiesGenerator)
   const imageCropping = useStore(form.store, (s) => s.values.imageCropping)
   const imageSegmentation = useStore(form.store, (s) => s.values.imageSegmentation)
   const segmentationMinSide = useStore(form.store, (s) => s.values.segmentationMinSide)
@@ -83,70 +87,90 @@ export function Step3() {
   const imageFilterMaxSide = useStore(form.store, (s) => s.values.imageFilterMaxSide)
 
   return (
-    <div className="flex w-full flex-col gap-5 p-8">
-      <ImageProcessingFeatureSwitch
-        id="wizard-image-cropping"
-        title={i18n._(TITLE_SMART_CROPPING)}
-        subtitle={i18n._(SUBTITLE_SMART_CROPPING)}
-        previewFocus="cropping"
-        checked={imageCropping}
-        onCheckedChange={(checked) => form.setFieldValue("imageCropping", checked)}
-      />
-
-      <div className="flex w-full flex-col">
+    <div className="flex w-full flex-col gap-8 p-8">
+      <div className="flex flex-col gap-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-[#737373]">
+          <Trans>Activities</Trans>
+        </p>
         <ImageProcessingFeatureSwitch
-          id="wizard-image-segmentation"
-          title={i18n._(TITLE_SEGMENTATION)}
-          subtitle={i18n._(SUBTITLE_SEGMENTATION)}
-          previewFocus="segmentation"
-          checked={imageSegmentation}
-          onCheckedChange={(checked) => form.setFieldValue("imageSegmentation", checked)}
+          id="wizard-activities-generator"
+          title={i18n._(TITLE_ACTIVITIES)}
+          subtitle={i18n._(SUBTITLE_ACTIVITIES)}
+          previewFocus="activities"
+          checked={activitiesGenerator}
+          onCheckedChange={(checked) => form.setFieldValue("activitiesGenerator", checked)}
         />
-        <div
-          className={cn(
-            "grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none",
-            imageSegmentation ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-          )}
-        >
-          <div
-            className={cn(
-              "min-h-0 overflow-hidden transition-[opacity,transform] duration-300 ease-in-out motion-reduce:transition-none",
-              imageSegmentation
-                ? "opacity-100 translate-y-0"
-                : "pointer-events-none opacity-0 -translate-y-1",
-            )}
-            aria-hidden={!imageSegmentation}
-            inert={!imageSegmentation ? true : undefined}
-          >
-            <SegmentationThresholdPanel
-              segmentationMinSide={segmentationMinSide}
-              onMinSideChange={(v) => form.setFieldValue("segmentationMinSide", v)}
-              disabled={!imageSegmentation}
-            />
-          </div>
-        </div>
       </div>
 
-      <div
-        className={cn(
-          "rounded-lg border border-border bg-white px-4 py-3 shadow-sm transition-colors",
-          "hover:bg-muted hover:border-input",
-        )}
-        onMouseEnter={filterSizeHover.onMouseEnter}
-        onMouseLeave={filterSizeHover.onMouseLeave}
-      >
-        <RangeSlider
-          label={i18n._(FILTER_LABEL)}
-          min={0}
-          max={10000}
-          value={[imageFilterMinSide, imageFilterMaxSide]}
-          onChange={([lo, hi]) => {
-            form.setFieldValue("imageFilterMinSide", lo)
-            form.setFieldValue("imageFilterMaxSide", hi)
-          }}
-          startLabel={i18n._(FILTER_MIN_LABEL)}
-          endLabel={i18n._(FILTER_MAX_LABEL)}
+      <div className="flex flex-col gap-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-[#737373]">
+          <Trans>Images</Trans>
+        </p>
+
+        <ImageProcessingFeatureSwitch
+          id="wizard-image-cropping"
+          title={i18n._(TITLE_SMART_CROPPING)}
+          subtitle={i18n._(SUBTITLE_SMART_CROPPING)}
+          previewFocus="cropping"
+          checked={imageCropping}
+          onCheckedChange={(checked) => form.setFieldValue("imageCropping", checked)}
         />
+
+        <div className="flex w-full flex-col">
+          <ImageProcessingFeatureSwitch
+            id="wizard-image-segmentation"
+            title={i18n._(TITLE_SEGMENTATION)}
+            subtitle={i18n._(SUBTITLE_SEGMENTATION)}
+            previewFocus="segmentation"
+            checked={imageSegmentation}
+            onCheckedChange={(checked) => form.setFieldValue("imageSegmentation", checked)}
+          />
+          <div
+            className={cn(
+              "grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none",
+              imageSegmentation ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+            )}
+          >
+            <div
+              className={cn(
+                "min-h-0 overflow-hidden transition-[opacity,transform] duration-300 ease-in-out motion-reduce:transition-none",
+                imageSegmentation
+                  ? "opacity-100 translate-y-0"
+                  : "pointer-events-none opacity-0 -translate-y-1",
+              )}
+              aria-hidden={!imageSegmentation}
+              inert={!imageSegmentation ? true : undefined}
+            >
+              <SegmentationThresholdPanel
+                segmentationMinSide={segmentationMinSide}
+                onMinSideChange={(v) => form.setFieldValue("segmentationMinSide", v)}
+                disabled={!imageSegmentation}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div
+          className={cn(
+            "rounded-lg border border-border bg-white px-4 py-3 shadow-sm transition-colors",
+            "hover:bg-muted hover:border-input",
+          )}
+          onMouseEnter={filterSizeHover.onMouseEnter}
+          onMouseLeave={filterSizeHover.onMouseLeave}
+        >
+          <RangeSlider
+            label={i18n._(FILTER_LABEL)}
+            min={0}
+            max={10000}
+            value={[imageFilterMinSide, imageFilterMaxSide]}
+            onChange={([lo, hi]) => {
+              form.setFieldValue("imageFilterMinSide", lo)
+              form.setFieldValue("imageFilterMaxSide", hi)
+            }}
+            startLabel={i18n._(FILTER_MIN_LABEL)}
+            endLabel={i18n._(FILTER_MAX_LABEL)}
+          />
+        </div>
       </div>
     </div>
   )

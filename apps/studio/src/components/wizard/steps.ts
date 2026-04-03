@@ -38,8 +38,8 @@ export const STEPS: StepDef[] = [
       v.sectioningMode !== "",
   },
   {
-    title: msg`Image Processing`,
-    description: msg`Control LLM cropping and segmentation for extracted images - matching extract-stage image filters.`,
+    title: msg`Processing`,
+    description: msg`Configure activity detection and image processing options for extracted content.`,
     component: Step3,
     isValid: (v) => {
       if (!v.imageSegmentation) return true

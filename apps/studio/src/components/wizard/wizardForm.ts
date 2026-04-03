@@ -26,6 +26,7 @@ export const defaultWizardValues = {
   layoutType: "",
   pageGrouping: "" as WizardPageGrouping,
   sectioningMode: "" as WizardSectioningMode,
+  activitiesGenerator: false,
   imageCropping: false,
   imageSegmentation: true,
   segmentationMinSide: "",

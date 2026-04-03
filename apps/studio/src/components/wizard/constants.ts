@@ -155,6 +155,7 @@ export const PRESETS: PresetConfig[] = [
       renderStrategy: "llm",
       pageGrouping: "single",
       sectioningMode: "dynamic",
+      activitiesGenerator: true,
       imageCropping: false,
       imageSegmentation: true,
       imageFilterMinSide: 50,

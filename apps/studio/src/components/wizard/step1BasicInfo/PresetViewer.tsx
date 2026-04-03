@@ -32,9 +32,13 @@ export function PresetViewer() {
 
       <div className="flex items-center gap-3 border border-[#e5e5e5] rounded-lg p-1">
         <div
-          className={`flex items-center justify-center shrink-0 rounded w-[97px] h-[80px] ${preset.bgColor}`}
+          className={`flex items-center justify-center shrink-0 rounded overflow-hidden w-[97px] h-[80px] ${preset.bgColor}`}
         >
-          <preset.Icon className={`w-8 h-8 ${preset.iconColor} opacity-60`} strokeWidth={1.5} />
+          {preset.id === "custom" ? (
+            <preset.Icon className={`size-10 ${preset.iconColor} opacity-60`} strokeWidth={1.5} />
+          ) : (
+            <preset.Icon className="w-full h-full" />
+          )}
         </div>
         <div className="flex flex-col gap-1 flex-1 min-w-0 px-2 py-1">
           <p className="text-sm font-bold text-black">{i18n._(preset.title)}</p>

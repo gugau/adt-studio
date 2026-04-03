@@ -16,6 +16,7 @@ import type { ImageProcessingPreviewFocus } from "./imageProcessingPreviewTypes"
 /** Mobile carousel skips the idle placeholder (focus ids, not UI copy). */
 /* eslint-disable lingui/no-unlocalized-strings */
 const MOBILE_FOCUSES: ImageProcessingPreviewFocus[] = [
+  "activities",
   "cropping",
   "segmentation",
   "minSide",
@@ -82,6 +83,85 @@ function IdleIllustration() {
             extracted images.
           </Trans>
         </p>
+      </div>
+    </div>
+  )
+}
+
+function ActivitiesIllustration() {
+  return (
+    <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-6 px-4 py-6 @sm:flex-row @sm:gap-8 @sm:px-6">
+      <div className="flex flex-col items-center gap-2.5">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <Trans>PDF</Trans>
+        </span>
+        <div className="w-[138px] rounded-xl border border-border bg-white p-3 shadow-sm">
+          <div className="mb-2.5 h-2 w-20 rounded bg-muted-foreground/20" />
+          <div className="mb-1.5 h-1.5 w-full rounded bg-muted-foreground/15" />
+          <div className="mb-2.5 h-1.5 w-4/5 rounded bg-muted-foreground/15" />
+          <div className="flex flex-col gap-1.5">
+            {["w-3/4", "w-2/3", "w-4/5"].map((w, i) => (
+              <div key={i} className="flex items-center gap-1.5">
+                <div className="h-3 w-3 shrink-0 rounded-full border border-muted-foreground/30" />
+                <div className={`h-1.5 rounded bg-muted-foreground/15 ${w}`} />
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 mb-1 h-2 w-16 rounded bg-muted-foreground/20" />
+          <div className="flex items-center gap-1">
+            <div className="h-1.5 w-12 rounded bg-muted-foreground/15" />
+            <div className="h-3.5 w-14 rounded border border-dashed border-muted-foreground/25 bg-muted/20" />
+            <div className="h-1.5 w-8 rounded bg-muted-foreground/15" />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col items-center gap-1.5 text-muted-foreground" aria-hidden>
+        <svg className="h-5 w-5 rotate-90 @sm:rotate-0" viewBox="0 0 20 20" fill="none">
+          <path d="M4 10h12M12 6l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span className="text-[9px] font-semibold uppercase tracking-wider">
+          <Trans>Converted</Trans>
+        </span>
+      </div>
+
+      <div className="flex flex-col items-center gap-2.5">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <Trans>Interactive</Trans>
+        </span>
+        <div className="w-[138px] rounded-xl border border-[#2b7fff]/30 bg-white p-3 shadow-md ring-1 ring-[#2b7fff]/10">
+          <div className="mb-2.5 h-2 w-20 rounded bg-muted-foreground/20" />
+          <div className="mb-1.5 h-1.5 w-full rounded bg-muted-foreground/15" />
+          <div className="mb-2.5 h-1.5 w-4/5 rounded bg-muted-foreground/15" />
+          <div className="flex flex-col gap-1.5">
+            {[
+              { w: "w-3/4", checked: false },
+              { w: "w-2/3", checked: true },
+              { w: "w-4/5", checked: false },
+            ].map(({ w, checked }, i) => (
+              <div key={i} className={`flex items-center gap-1.5 rounded-md px-1 py-0.5 ${checked ? "bg-[#2b7fff]/8" : ""}`}>
+                <div className={`h-3 w-3 shrink-0 rounded-full border ${checked ? "border-[#2b7fff] bg-[#2b7fff]" : "border-muted-foreground/40 bg-white"} flex items-center justify-center`}>
+                  {checked && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                </div>
+                <div className={`h-1.5 rounded bg-muted-foreground/15 ${w}`} />
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 mb-1 h-2 w-16 rounded bg-muted-foreground/20" />
+          <div className="flex items-center gap-1">
+            <div className="h-1.5 w-12 rounded bg-muted-foreground/15" />
+            <div className="h-4 w-14 rounded border border-[#2b7fff]/40 bg-[#2b7fff]/5 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)]" />
+            <div className="h-1.5 w-8 rounded bg-muted-foreground/15" />
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <svg className="h-3 w-3 text-emerald-500" viewBox="0 0 16 16" fill="none" aria-hidden>
+            <path d="M3 8.5l3.5 3.5L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="text-[10px] font-medium text-emerald-600">
+            <Trans>Fully interactive</Trans>
+          </span>
+        </div>
       </div>
     </div>
   )
@@ -290,6 +370,7 @@ function FilterSizeIllustration() {
 
 const PREVIEW_LABEL_MSGS: Record<ImageProcessingPreviewFocus, MessageDescriptor> = {
   idle: msg`Image processing`,
+  activities: msg`Activities generator`,
   cropping: msg`LLM cropping`,
   segmentation: msg`LLM segmentation`,
   minSide: msg`Minimum size threshold`,
@@ -298,6 +379,7 @@ const PREVIEW_LABEL_MSGS: Record<ImageProcessingPreviewFocus, MessageDescriptor>
 
 const ILLUSTRATIONS: Record<ImageProcessingPreviewFocus, FC> = {
   idle: IdleIllustration,
+  activities: ActivitiesIllustration,
   cropping: CroppingIllustration,
   segmentation: SegmentationIllustration,
   minSide: MinSideIllustration,

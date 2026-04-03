@@ -8,6 +8,7 @@ export function buildConfigOverrides(values: WizardFormValues): Record<string, u
     default_render_strategy: values.renderStrategy,
     page_sectioning: { mode: values.sectioningMode },
     spread_mode: values.pageGrouping === "spread",
+    generate_activities: values.activitiesGenerator,
     image_filters: {
       min_side: values.imageFilterMinSide,
       max_side: values.imageFilterMaxSide,

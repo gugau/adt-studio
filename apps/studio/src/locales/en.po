@@ -213,6 +213,12 @@ msgstr "Activities disabled"
 msgid "Activities enabled"
 msgstr "Activities enabled"
 
+msgid "Activities generator"
+msgstr "Activities generator"
+
+msgid "Activities Generator"
+msgstr "Activities Generator"
+
 msgid "Activity 5.1"
 msgstr "Activity 5.1"
 
@@ -676,6 +682,9 @@ msgstr "Condensation"
 msgid "Config"
 msgstr "Config"
 
+msgid "Configure activity detection and image processing options for extracted content."
+msgstr "Configure activity detection and image processing options for extracted content."
+
 msgid "Configure API keys for AI pipeline features."
 msgstr "Configure API keys for AI pipeline features."
 
@@ -694,8 +703,8 @@ msgstr "Content"
 msgid "Continue"
 msgstr "Continue"
 
-msgid "Control LLM cropping and segmentation for extracted images - matching extract-stage image filters."
-msgstr "Control LLM cropping and segmentation for extracted images - matching extract-stage image filters."
+#~ msgid "Control LLM cropping and segmentation for extracted images - matching extract-stage image filters."
+#~ msgstr "Control LLM cropping and segmentation for extracted images - matching extract-stage image filters."
 
 msgid "Controls how page content is grouped during the sectioning step."
 msgstr "Controls how page content is grouped during the sectioning step."
@@ -804,6 +813,9 @@ msgstr "Description"
 
 msgid "Description..."
 msgstr "Description..."
+
+msgid "Detects activities already present in the book and transforms them into interactive HTML elements like radio buttons and text inputs."
+msgstr "Detects activities already present in the book and transforms them into interactive HTML elements like radio buttons and text inputs."
 
 msgid "Detects and splits composited illustrations into separate regions so each asset can be placed and refined on its own."
 msgstr "Detects and splits composited illustrations into separate regions so each asset can be placed and refined on its own."
@@ -1077,6 +1089,9 @@ msgstr "Full control over render strategies, pruning, and filters."
 msgid "Full-size source page preview for the selected quiz."
 msgstr "Full-size source page preview for the selected quiz."
 
+msgid "Fully interactive"
+msgstr "Fully interactive"
+
 msgid "Gemini"
 msgstr "Gemini"
 
@@ -1121,6 +1136,9 @@ msgstr "Generate Styleguide from Pages"
 
 msgid "Generate with AI"
 msgstr "Generate with AI"
+
+msgid "Generated"
+msgstr "Generated"
 
 msgid "Generates the interactive HTML for this activity type."
 msgstr "Generates the interactive HTML for this activity type."
@@ -1260,8 +1278,8 @@ msgstr "Image Overlay"
 msgid "Image processing"
 msgstr "Image processing"
 
-msgid "Image Processing"
-msgstr "Image Processing"
+#~ msgid "Image Processing"
+#~ msgstr "Image Processing"
 
 msgid "Image Segmentation"
 msgstr "Image Segmentation"
@@ -1316,6 +1334,9 @@ msgstr "Inside Cover"
 
 msgid "Instruction Text"
 msgstr "Instruction Text"
+
+msgid "Interactive"
+msgstr "Interactive"
 
 msgid "Item"
 msgstr "Item"
@@ -1838,6 +1859,9 @@ msgstr "Paper Collage"
 msgid "Paragraph"
 msgstr "Paragraph"
 
+msgid "PDF"
+msgstr "PDF"
+
 msgid "PDF cover preview"
 msgstr "PDF cover preview"
 
@@ -1922,6 +1946,9 @@ msgstr "Preview of the HTML/CSS patterns used for LLM-generated pages."
 
 msgid "Previous slide"
 msgstr "Previous slide"
+
+msgid "Processing"
+msgstr "Processing"
 
 msgid "Prompt"
 msgstr "Prompt"

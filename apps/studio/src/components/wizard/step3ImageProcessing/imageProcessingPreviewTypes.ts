@@ -1,1 +1,1 @@
-export type ImageProcessingPreviewFocus = "idle" | "cropping" | "segmentation" | "minSide" | "filterSize"
+export type ImageProcessingPreviewFocus = "idle" | "activities" | "cropping" | "segmentation" | "minSide" | "filterSize"
