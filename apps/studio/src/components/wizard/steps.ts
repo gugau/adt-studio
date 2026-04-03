@@ -5,7 +5,7 @@ import type { WizardFormValues } from "./wizardForm"
 import { isStep1BasicInfoValid } from "./step1BasicInfo/projectLabelSchema"
 import { Step1 } from "./step1BasicInfo"
 import { Step2 } from "./step2LayoutOptions"
-import { Step3 } from "./step3ImageProcessing"
+import { Step3 } from "./step3ContentProcessing"
 import { Step4 } from "./step4Languages"
 import { Step5 } from "./step5Styleguide"
 
@@ -38,7 +38,7 @@ export const STEPS: StepDef[] = [
       v.sectioningMode !== "",
   },
   {
-    title: msg`Processing`,
+    title: msg`Content Processing`,
     description: msg`Configure activity detection and image processing options for extracted content.`,
     component: Step3,
     isValid: (v) => {

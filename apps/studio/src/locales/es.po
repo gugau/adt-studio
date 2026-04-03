@@ -694,6 +694,9 @@ msgstr "Consultando al consejo de estilo..."
 msgid "Content"
 msgstr "Contenido"
 
+msgid "Content Processing"
+msgstr "Procesamiento de Contenido"
+
 msgid "Continue"
 msgstr "Continuar"
 
@@ -702,6 +705,9 @@ msgstr "Continuar"
 
 msgid "Controls how page content is grouped during the sectioning step."
 msgstr "Controla cómo se agrupa el contenido de la página durante el paso de seccionamiento."
+
+msgid "Converted"
+msgstr ""
 
 msgid "Coral reefs cover less than 1% of the ocean floor, yet they support roughly 25% of all marine species. Often called the 'rainforests of the sea,' these underwater ecosystems are built by tiny animals called coral polyps."
 msgstr "Los arrecifes de coral cubren menos del 1% del fondo oceánico, pero albergan aproximadamente el 25% de todas las especies marinas. A menudo llamados 'los bosques lluviosos del mar', estos ecosistemas submarinos son construidos por pequeños animales llamados pólipos de coral."
@@ -1131,8 +1137,8 @@ msgstr "Generar guía de estilo desde páginas"
 msgid "Generate with AI"
 msgstr "Generar con IA"
 
-msgid "Generated"
-msgstr "Generado"
+#~ msgid "Generated"
+#~ msgstr "Generado"
 
 msgid "Generates the interactive HTML for this activity type."
 msgstr "Genera el HTML interactivo para este tipo de actividad."
@@ -1941,8 +1947,8 @@ msgstr "Vista previa de los patrones HTML/CSS usados para páginas generadas por
 msgid "Previous slide"
 msgstr "Diapositiva anterior"
 
-msgid "Processing"
-msgstr "Procesamiento"
+#~ msgid "Processing"
+#~ msgstr "Procesamiento"
 
 msgid "Prompt"
 msgstr "Prompt"

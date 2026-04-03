@@ -7,7 +7,7 @@ import {
   useRef,
   type ReactNode,
 } from "react"
-import type { ImageProcessingPreviewFocus } from "./step3ImageProcessing/imageProcessingPreviewTypes"
+import type { ImageProcessingPreviewFocus } from "./step3ContentProcessing/imageProcessingPreviewTypes"
 
 interface WizardContextValue {
   currentStep: number

@@ -700,6 +700,9 @@ msgstr "Consulting the style council..."
 msgid "Content"
 msgstr "Content"
 
+msgid "Content Processing"
+msgstr "Content Processing"
+
 msgid "Continue"
 msgstr "Continue"
 
@@ -708,6 +711,9 @@ msgstr "Continue"
 
 msgid "Controls how page content is grouped during the sectioning step."
 msgstr "Controls how page content is grouped during the sectioning step."
+
+msgid "Converted"
+msgstr "Converted"
 
 msgid "Coral reefs cover less than 1% of the ocean floor, yet they support roughly 25% of all marine species. Often called the 'rainforests of the sea,' these underwater ecosystems are built by tiny animals called coral polyps."
 msgstr "Coral reefs cover less than 1% of the ocean floor, yet they support roughly 25% of all marine species. Often called the 'rainforests of the sea,' these underwater ecosystems are built by tiny animals called coral polyps."
@@ -1137,8 +1143,8 @@ msgstr "Generate Styleguide from Pages"
 msgid "Generate with AI"
 msgstr "Generate with AI"
 
-msgid "Generated"
-msgstr "Generated"
+#~ msgid "Generated"
+#~ msgstr "Generated"
 
 msgid "Generates the interactive HTML for this activity type."
 msgstr "Generates the interactive HTML for this activity type."
@@ -1947,8 +1953,8 @@ msgstr "Preview of the HTML/CSS patterns used for LLM-generated pages."
 msgid "Previous slide"
 msgstr "Previous slide"
 
-msgid "Processing"
-msgstr "Processing"
+#~ msgid "Processing"
+#~ msgstr "Processing"
 
 msgid "Prompt"
 msgstr "Prompt"
