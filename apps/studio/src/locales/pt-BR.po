@@ -505,8 +505,20 @@ msgstr "Prompt de resposta"
 msgid "Answers"
 msgstr "Respostas"
 
+msgid "Anthropic"
+msgstr "Anthropic"
+
+msgid "Anthropic API Key"
+msgstr "Chave de API da Anthropic"
+
+msgid "Any OpenAI-compatible endpoint (Ollama, vLLM, Together AI, etc.). Use the \"custom:\" prefix when selecting models, e.g. custom:llama3."
+msgstr "Qualquer endpoint compatível com OpenAI (Ollama, vLLM, Together AI, etc.). Use o prefixo \"custom:\" ao selecionar modelos, ex. custom:llama3."
+
 msgid "Any other section type."
 msgstr "Qualquer outro tipo de seção."
+
+msgid "API Key (optional)"
+msgstr "Chave de API (opcional)"
 
 msgid "API key required to re-render"
 msgstr "Chave de API necessária para rerenderizar"
@@ -584,6 +596,9 @@ msgstr "Azure Speech"
 msgid "Azure Speech subscription key"
 msgstr "Chave de assinatura do Azure Speech"
 
+msgid "Azure Speech Subscription Key"
+msgstr "Chave de assinatura do Azure Speech"
+
 msgid "Azure Voice"
 msgstr "Voz Azure"
 
@@ -608,6 +623,9 @@ msgstr "Fundo: {0}"
 
 msgid "base"
 msgstr "base"
+
+msgid "Base URL"
+msgstr "URL base"
 
 msgid "Be descriptive — include style, colors, mood, and composition."
 msgstr "Seja descritivo — inclua estilo, cores, humor e composição."
@@ -740,6 +758,9 @@ msgstr "Clear all"
 
 msgid "Clear language"
 msgstr "Limpar idioma"
+
+msgid "Clear model"
+msgstr "Limpar modelo"
 
 msgid "Click images to select"
 msgstr "Clique nas imagens para selecionar"
@@ -903,8 +924,8 @@ msgstr "Current effective values"
 msgid "Current Preview Page"
 msgstr "Current Preview Page"
 
-#~ msgid "Custom"
-#~ msgstr "Personalizado"
+msgid "Custom"
+msgstr "Personalizado"
 
 msgid "Custom section {index}"
 msgstr "Custom section {index}"
@@ -1111,6 +1132,9 @@ msgstr "ex.: gemini-2.5-pro-preview-tts"
 
 msgid "e.g. gpt-4o-mini-tts"
 msgstr "ex.: gpt-4o-mini-tts"
+
+msgid "e.g. http://localhost:11434/v1"
+msgstr "ex. http://localhost:11434/v1"
 
 msgid "e.g. Kore"
 msgstr "ex.: Kore"
@@ -1351,11 +1375,14 @@ msgstr "Pré-visualização em tamanho real da página de origem do quiz selecio
 msgid "Gemini"
 msgstr "Gemini"
 
-msgid "Gemini API Key"
-msgstr "Chave da API do Gemini"
+#~ msgid "Gemini API Key"
+#~ msgstr "Chave da API do Gemini"
 
 msgid "Gemini API key is required to generate audio."
 msgstr "É necessária uma chave de API do Gemini para gerar áudio."
+
+#~ msgid "Gemini TTS"
+#~ msgstr "Gemini TTS"
 
 msgid "Gemini TTS outputs WAV audio in this integration; other providers continue using the configured format."
 msgstr "O Gemini TTS gera áudio WAV nesta integração; outros provedores continuam usando o formato configurado."
@@ -1440,6 +1467,15 @@ msgstr "Prompt de glossário"
 
 msgid "Go to book"
 msgstr "Ir para o livro"
+
+msgid "Google"
+msgstr "Google"
+
+#~ msgid "Google AI"
+#~ msgstr "Google AI"
+
+msgid "Google AI API Key"
+msgstr "Chave de API do Google AI"
 
 #~ msgid "Group Types"
 #~ msgstr "Tipos de grupo"
@@ -1613,6 +1649,9 @@ msgstr "Idiomas"
 
 msgid "Last"
 msgstr "Última"
+
+msgid "Leave empty if not required"
+msgstr "Deixe vazio se não for necessário"
 
 msgid "Leave empty to output only in the book language."
 msgstr "Deixe vazio para gerar apenas no idioma do livro."
@@ -2781,6 +2820,9 @@ msgstr "Mostrar:"
 msgid "sk-..."
 msgstr "sk-..."
 
+msgid "sk-ant-..."
+msgstr "sk-ant-..."
+
 msgid "Skip segmentation for images whose shortest side is below this threshold."
 msgstr "Pular segmentação para imagens cujo lado menor está abaixo deste limite."
 
@@ -2859,8 +2901,8 @@ msgstr "Pré-visualização do guia de estilo"
 msgid "Styleguide Preview — {styleguide}"
 msgstr "Pré-visualização do guia de estilo — {0}"
 
-msgid "Subscription Key"
-msgstr "Chave de assinatura"
+#~ msgid "Subscription Key"
+#~ msgstr "Chave de assinatura"
 
 msgid "Success"
 msgstr "Sucesso"
@@ -3070,6 +3112,9 @@ msgstr "até"
 msgid "TOC Generation Prompt"
 msgstr "Prompt de geração de sumário"
 
+msgid "Toggle model list"
+msgstr "Alternar lista de modelos"
+
 msgid "Tokens"
 msgstr "Tokens"
 
@@ -3190,8 +3235,20 @@ msgstr "Usa um LLM para filtrar imagens decorativas ou não educativas."
 msgid "Use this for checks you intentionally want to suppress, such as known false positives."
 msgstr "Use this for checks you intentionally want to suppress, such as known false positives."
 
-msgid "Used for Gemini TTS providers such as gemini-2.5-pro-preview-tts."
-msgstr "Usada para provedores de TTS do Gemini, como gemini-2.5-pro-preview-tts."
+msgid "Used for Azure Speech TTS provider."
+msgstr "Utilizada para o provedor de TTS do Azure Speech."
+
+msgid "Used for Claude models (claude-opus-4-6, claude-sonnet-4-6, etc.)"
+msgstr "Utilizada para modelos Claude (claude-opus-4-6, claude-sonnet-4-6, etc.)"
+
+#~ msgid "Used for Gemini LLM models (gemini-2.5-pro, gemini-2.5-flash, etc.)"
+#~ msgstr "Utilizada para modelos Gemini LLM (gemini-2.5-pro, gemini-2.5-flash, etc.)"
+
+msgid "Used for Gemini models — both LLM (gemini-2.5-pro, etc.) and TTS (gemini-2.5-pro-preview-tts, etc.)"
+msgstr "Utilizada para modelos Gemini — tanto LLM (gemini-2.5-pro, etc.) quanto TTS (gemini-2.5-pro-preview-tts, etc.)"
+
+#~ msgid "Used for Gemini TTS providers such as gemini-2.5-pro-preview-tts."
+#~ msgstr "Usada para provedores de TTS do Gemini, como gemini-2.5-pro-preview-tts."
 
 msgid "Validation"
 msgstr "Validation"

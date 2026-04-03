@@ -230,6 +230,31 @@ export function createStageRunner(): StageRunner {
   }
 }
 
+/**
+ * Set all LLM provider API keys as env vars, returning a restore function.
+ */
+function setProviderEnvKeys(options: StageRunOptions): () => void {
+  const envKeys: Array<{ envVar: string; previous: string | undefined; value: string | undefined }> = [
+    { envVar: "OPENAI_API_KEY", previous: process.env.OPENAI_API_KEY, value: options.apiKey },
+    { envVar: "ANTHROPIC_API_KEY", previous: process.env.ANTHROPIC_API_KEY, value: options.anthropicApiKey },
+    { envVar: "GOOGLE_GENERATIVE_AI_API_KEY", previous: process.env.GOOGLE_GENERATIVE_AI_API_KEY, value: options.googleApiKey },
+    { envVar: "CUSTOM_OPENAI_BASE_URL", previous: process.env.CUSTOM_OPENAI_BASE_URL, value: options.customBaseUrl },
+    { envVar: "CUSTOM_OPENAI_API_KEY", previous: process.env.CUSTOM_OPENAI_API_KEY, value: options.customApiKey },
+  ]
+  for (const { envVar, value } of envKeys) {
+    if (value) process.env[envVar] = value
+  }
+  return () => {
+    for (const { envVar, previous } of envKeys) {
+      if (previous !== undefined) {
+        process.env[envVar] = previous
+      } else {
+        delete process.env[envVar]
+      }
+    }
+  }
+}
+
 async function runExtractStep(
   label: string,
   options: StageRunOptions,
@@ -237,8 +262,7 @@ async function runExtractStep(
 ): Promise<void> {
   const { booksDir, apiKey, promptsDir, configPath } = options
 
-  const previousKey = process.env.OPENAI_API_KEY
-  process.env.OPENAI_API_KEY = apiKey
+  const restoreEnvKeys = setProviderEnvKeys(options)
 
   const storage = createBookStorage(label, booksDir)
 
@@ -521,11 +545,7 @@ async function runExtractStep(
     }
   } finally {
     storage.close()
-    if (previousKey !== undefined) {
-      process.env.OPENAI_API_KEY = previousKey
-    } else {
-      delete process.env.OPENAI_API_KEY
-    }
+    restoreEnvKeys()
   }
 }
 
@@ -536,8 +556,7 @@ async function runStoryboardStep(
 ): Promise<void> {
   const { booksDir, apiKey, promptsDir, webAssetsDir, configPath, renderOnly } = options
 
-  const previousKey = process.env.OPENAI_API_KEY
-  process.env.OPENAI_API_KEY = apiKey
+  const restoreEnvKeys = setProviderEnvKeys(options)
 
   const storage = createBookStorage(label, booksDir)
   let visualRefinement: VisualRefinementDeps | undefined
@@ -870,11 +889,7 @@ async function runStoryboardStep(
       await visualRefinement.screenshotRenderer.close()
     }
     storage.close()
-    if (previousKey !== undefined) {
-      process.env.OPENAI_API_KEY = previousKey
-    } else {
-      delete process.env.OPENAI_API_KEY
-    }
+    restoreEnvKeys()
   }
 }
 
@@ -889,8 +904,7 @@ async function runQuizzesStep(
 ): Promise<void> {
   const { booksDir, apiKey, promptsDir, configPath } = options
 
-  const previousKey = process.env.OPENAI_API_KEY
-  process.env.OPENAI_API_KEY = apiKey
+  const restoreEnvKeys = setProviderEnvKeys(options)
 
   const storage = createBookStorage(label, booksDir)
 
@@ -983,11 +997,7 @@ async function runQuizzesStep(
     console.log(`[stage-run] ${label}: quizzes complete`)
   } finally {
     storage.close()
-    if (previousKey !== undefined) {
-      process.env.OPENAI_API_KEY = previousKey
-    } else {
-      delete process.env.OPENAI_API_KEY
-    }
+    restoreEnvKeys()
   }
 }
 
@@ -1002,8 +1012,7 @@ async function runCaptionsStep(
 ): Promise<void> {
   const { booksDir, apiKey, promptsDir, configPath } = options
 
-  const previousKey = process.env.OPENAI_API_KEY
-  process.env.OPENAI_API_KEY = apiKey
+  const restoreEnvKeys = setProviderEnvKeys(options)
 
   const storage = createBookStorage(label, booksDir)
 
@@ -1154,11 +1163,7 @@ async function runCaptionsStep(
     console.log(`[stage-run] ${label}: captions complete`)
   } finally {
     storage.close()
-    if (previousKey !== undefined) {
-      process.env.OPENAI_API_KEY = previousKey
-    } else {
-      delete process.env.OPENAI_API_KEY
-    }
+    restoreEnvKeys()
   }
 }
 
@@ -1173,8 +1178,7 @@ async function runGlossaryStep(
 ): Promise<void> {
   const { booksDir, apiKey, promptsDir, configPath } = options
 
-  const previousKey = process.env.OPENAI_API_KEY
-  process.env.OPENAI_API_KEY = apiKey
+  const restoreEnvKeys = setProviderEnvKeys(options)
 
   const storage = createBookStorage(label, booksDir)
 
@@ -1252,11 +1256,7 @@ async function runGlossaryStep(
     console.log(`[stage-run] ${label}: glossary complete (${glossary.items.length} terms)`)
   } finally {
     storage.close()
-    if (previousKey !== undefined) {
-      process.env.OPENAI_API_KEY = previousKey
-    } else {
-      delete process.env.OPENAI_API_KEY
-    }
+    restoreEnvKeys()
   }
 }
 
@@ -1271,8 +1271,7 @@ async function runTocStep(
 ): Promise<void> {
   const { booksDir, apiKey, promptsDir, configPath } = options
 
-  const previousKey = process.env.OPENAI_API_KEY
-  process.env.OPENAI_API_KEY = apiKey
+  const restoreEnvKeys = setProviderEnvKeys(options)
 
   const storage = createBookStorage(label, booksDir)
 
@@ -1338,11 +1337,7 @@ async function runTocStep(
     console.log(`[stage-run] ${label}: TOC complete (${toc.entries.length} entries)`)
   } finally {
     storage.close()
-    if (previousKey !== undefined) {
-      process.env.OPENAI_API_KEY = previousKey
-    } else {
-      delete process.env.OPENAI_API_KEY
-    }
+    restoreEnvKeys()
   }
 }
 
@@ -1357,8 +1352,7 @@ async function runTextAndSpeechStep(
 ): Promise<void> {
   const { booksDir, apiKey, promptsDir, configPath } = options
 
-  const previousKey = process.env.OPENAI_API_KEY
-  process.env.OPENAI_API_KEY = apiKey
+  const restoreEnvKeys = setProviderEnvKeys(options)
 
   const storage = createBookStorage(label, booksDir)
 
@@ -1819,11 +1813,7 @@ async function runTextAndSpeechStep(
     console.log(`[stage-run] ${label}: text & speech complete`)
   } finally {
     storage.close()
-    if (previousKey !== undefined) {
-      process.env.OPENAI_API_KEY = previousKey
-    } else {
-      delete process.env.OPENAI_API_KEY
-    }
+    restoreEnvKeys()
   }
 }
 
