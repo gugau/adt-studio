@@ -5,6 +5,7 @@ import { usePage, usePageImage } from "@/hooks/use-pages"
 import { api, BASE_URL } from "@/api/client"
 import type { VersionEntry } from "@/api/client"
 import { useActiveConfig } from "@/hooks/use-debug"
+import { useBookRun } from "@/hooks/use-book-run"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
 import { getTextGroupLabel, getTextTypeLabel } from "@/lib/text-type-labels"
@@ -200,6 +201,8 @@ export function ExtractPageDetail({
     ? Object.keys((activeConfigData.merged as Record<string, unknown>).text_types as Record<string, string> ?? {})
     : []
   const [pageImageDims, setPageImageDims] = useState<{ w: number; h: number } | null>(null)
+  const { stageState } = useBookRun()
+  const storyboardRunning = stageState("storyboard") === "running" || stageState("storyboard") === "queued"
   const [savingText, setSavingText] = useState(false)
   const [savingImages, setSavingImages] = useState(false)
   const [pendingTextData, setPendingTextData] = useState<TextClassData | null>(null)
@@ -244,6 +247,17 @@ export function ExtractPageDetail({
     })
   }
 
+  const toggleGroupPrune = (groupId: string) => {
+    const base = pendingTextData ?? page?.textClassification
+    if (!base) return
+    setPendingTextData({
+      ...base,
+      groups: base.groups.map((g) =>
+        g.groupId === groupId ? { ...g, isPruned: !g.isPruned } : g
+      ),
+    })
+  }
+
   const toggleImagePrune = (imageId: string) => {
     const base = pendingImageData ?? page?.imageClassification
     if (!base) return
@@ -257,7 +271,7 @@ export function ExtractPageDetail({
   }
 
   const saveTextChanges = async () => {
-    if (!pendingTextData) return
+    if (!pendingTextData || storyboardRunning) return
     setSavingText(true)
     const minDelay = new Promise((r) => setTimeout(r, 400))
     await api.updateTextClassification(bookLabel, pageId, pendingTextData)
@@ -268,7 +282,7 @@ export function ExtractPageDetail({
   }
 
   const saveImageChanges = async () => {
-    if (!pendingImageData) return
+    if (!pendingImageData || storyboardRunning) return
     setSavingImages(true)
     const minDelay = new Promise((r) => setTimeout(r, 400))
     await api.updateImageClassification(bookLabel, pageId, pendingImageData)
@@ -408,11 +422,26 @@ export function ExtractPageDetail({
                 const maxTypeLen = Math.max(...group.texts.map((tx) => tx.textType.length), 0)
                 const colWidth = `${Math.max(maxTypeLen * 0.65 + 1.5, 4)}em`
                 return (
-                  <div key={group.groupId} className="rounded border overflow-hidden">
-                    <div className="px-3 py-1.5 bg-muted/50 border-b flex items-center gap-1.5">
+                  <div key={group.groupId} className={`rounded border overflow-hidden ${group.isPruned ? "opacity-40" : ""}`}>
+                    <div className="px-3 py-1.5 bg-muted/50 border-b flex items-center gap-1.5 group/grp">
                       <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         {getTextGroupLabel(group.groupType)}
                       </span>
+                      <button
+                        type="button"
+                        onClick={() => toggleGroupPrune(group.groupId)}
+                        className={`shrink-0 flex items-center justify-center w-5 h-5 rounded-full cursor-pointer transition-colors ${
+                          group.isPruned
+                            ? "bg-destructive hover:bg-destructive/80"
+                            : "opacity-0 group-hover/grp:opacity-100 bg-black/30 hover:bg-black/50"
+                        }`}
+                        title={group.isPruned ? t`Unprune group` : t`Prune group`}
+                      >
+                        {group.isPruned
+                          ? <EyeOff className="h-3 w-3 text-white" />
+                          : <Eye className="h-3 w-3 text-white" />
+                        }
+                      </button>
                     </div>
                     <div className="divide-y">
                       {group.texts.map((tx, i) => (

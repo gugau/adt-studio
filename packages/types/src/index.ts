@@ -19,6 +19,7 @@ export {
   STEP_TO_STAGE,
   STAGE_BY_NAME,
   ALL_STEP_NAMES,
+  PAGE_PROGRESS_STEPS,
 } from "./pipeline.js"
 
 export {

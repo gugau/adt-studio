@@ -329,6 +329,9 @@ msgstr "Accessibility results are temporarily unavailable."
 msgid "Accessibility Summary"
 msgstr "Accessibility Summary"
 
+msgid "Actions disabled while storyboard is running"
+msgstr "Ações desabilitadas enquanto o storyboard está em execução"
+
 msgid "active checklist items"
 msgstr "active checklist items"
 
@@ -526,8 +529,20 @@ msgstr "Prompt de resposta"
 msgid "Answers"
 msgstr "Respostas"
 
+msgid "Anthropic"
+msgstr "Anthropic"
+
+msgid "Anthropic API Key"
+msgstr "Chave de API da Anthropic"
+
+msgid "Any OpenAI-compatible endpoint (Ollama, vLLM, Together AI, etc.). Use the \"custom:\" prefix when selecting models, e.g. custom:llama3."
+msgstr "Qualquer endpoint compatível com OpenAI (Ollama, vLLM, Together AI, etc.). Use o prefixo \"custom:\" ao selecionar modelos, ex. custom:llama3."
+
 msgid "Any other section type."
 msgstr "Qualquer outro tipo de seção."
+
+msgid "API Key (optional)"
+msgstr "Chave de API (opcional)"
 
 msgid "API key required to re-render"
 msgstr "Chave de API necessária para rerenderizar"
@@ -611,6 +626,9 @@ msgstr "Azure Speech"
 msgid "Azure Speech subscription key"
 msgstr "Chave de assinatura do Azure Speech"
 
+msgid "Azure Speech Subscription Key"
+msgstr "Chave de assinatura do Azure Speech"
+
 msgid "Azure Voice"
 msgstr "Voz Azure"
 
@@ -635,6 +653,9 @@ msgstr "Fundo: {0}"
 
 msgid "base"
 msgstr "base"
+
+msgid "Base URL"
+msgstr "URL base"
 
 msgid "Be descriptive — include style, colors, mood, and composition."
 msgstr "Seja descritivo — inclua estilo, cores, humor e composição."
@@ -768,6 +789,9 @@ msgstr "Clear all"
 msgid "Clear language"
 msgstr "Limpar idioma"
 
+msgid "Clear model"
+msgstr "Limpar modelo"
+
 msgid "Click \"Add Videos\" to upload MP4 or WebM files."
 msgstr "Clique em \"Adicionar Vídeos\" para enviar arquivos MP4 ou WebM."
 
@@ -792,8 +816,11 @@ msgstr "Clone failed"
 msgid "Close"
 msgstr "Close"
 
-msgid "Close section data"
-msgstr "Fechar dados da seção"
+msgid "Close edit panel"
+msgstr "Fechar painel de edição"
+
+#~ msgid "Close section data"
+#~ msgstr "Fechar dados da seção"
 
 msgid "Collapse accessibility summary"
 msgstr "Collapse accessibility summary"
@@ -933,8 +960,8 @@ msgstr "Current effective values"
 msgid "Current Preview Page"
 msgstr "Current Preview Page"
 
-#~ msgid "Custom"
-#~ msgstr "Personalizado"
+msgid "Custom"
+msgstr "Personalizado"
 
 msgid "Custom section {index}"
 msgstr "Custom section {index}"
@@ -1145,6 +1172,9 @@ msgstr "ex.: gemini-2.5-pro-preview-tts"
 msgid "e.g. gpt-4o-mini-tts"
 msgstr "ex.: gpt-4o-mini-tts"
 
+msgid "e.g. http://localhost:11434/v1"
+msgstr "ex. http://localhost:11434/v1"
+
 msgid "e.g. Kore"
 msgstr "ex.: Kore"
 
@@ -1172,8 +1202,14 @@ msgstr "Edite o template Liquid/HTML abaixo. As alterações são salvas quando 
 msgid "Edit this image"
 msgstr "Editar esta imagem"
 
+msgid "Edit this section"
+msgstr "Editar esta seção"
+
 msgid "Editing"
 msgstr "Editando"
+
+msgid "Editing is disabled while the storyboard is running"
+msgstr "A edição está desabilitada enquanto o storyboard está em execução"
 
 msgid "Editing Language"
 msgstr "Idioma de edição"
@@ -1384,11 +1420,14 @@ msgstr "Pré-visualização em tamanho real da página de origem do quiz selecio
 msgid "Gemini"
 msgstr "Gemini"
 
-msgid "Gemini API Key"
-msgstr "Chave da API do Gemini"
+#~ msgid "Gemini API Key"
+#~ msgstr "Chave da API do Gemini"
 
 msgid "Gemini API key is required to generate audio."
 msgstr "É necessária uma chave de API do Gemini para gerar áudio."
+
+#~ msgid "Gemini TTS"
+#~ msgstr "Gemini TTS"
 
 msgid "Gemini TTS outputs WAV audio in this integration; other providers continue using the configured format."
 msgstr "O Gemini TTS gera áudio WAV nesta integração; outros provedores continuam usando o formato configurado."
@@ -1473,6 +1512,18 @@ msgstr "Prompt de glossário"
 
 msgid "Go to book"
 msgstr "Ir para o livro"
+
+msgid "Google"
+msgstr "Google"
+
+#~ msgid "Google AI"
+#~ msgstr "Google AI"
+
+msgid "Google AI API Key"
+msgstr "Chave de API do Google AI"
+
+msgid "Group text labels near vector images (e.g. chart dimensions, speech bubbles) and extract as raster crops. Disable to extract only the core vector shapes."
+msgstr "Agrupa rótulos de texto próximos a imagens vetoriais (por exemplo, dimensões de gráficos, balões de fala) e os extrai como recortes rasterizados. Desative para extrair apenas as formas vetoriais principais."
 
 #~ msgid "Group Types"
 #~ msgstr "Tipos de grupo"
@@ -1576,6 +1627,9 @@ msgstr "Incluir na renderização"
 #~ msgid "Include section in render"
 #~ msgstr "Incluir seção na renderização"
 
+msgid "Include text overlays in vector groups"
+msgstr "Incluir sobreposições de texto em grupos vetoriais"
+
 #~ msgid "Increase font size"
 #~ msgstr "Aumentar tamanho da fonte"
 
@@ -1646,6 +1700,9 @@ msgstr "Idiomas"
 
 msgid "Last"
 msgstr "Última"
+
+msgid "Leave empty if not required"
+msgstr "Deixe vazio se não for necessário"
 
 msgid "Leave empty to output only in the book language."
 msgstr "Deixe vazio para gerar apenas no idioma do livro."
@@ -2118,14 +2175,17 @@ msgstr "Open a page to review"
 msgid "Open a page to see page-level findings"
 msgstr "Open a page to see page-level findings"
 
+msgid "Open edit panel"
+msgstr "Abrir painel de edição"
+
 msgid "Open page preview for {pageId}"
 msgstr "Abrir pré-visualização da página {0}"
 
 msgid "Open Preview"
 msgstr "Open Preview"
 
-msgid "Open section data"
-msgstr "Abrir dados da seção"
+#~ msgid "Open section data"
+#~ msgstr "Abrir dados da seção"
 
 msgid "Open Validation"
 msgstr "Open Validation"
@@ -2168,6 +2228,9 @@ msgstr "Tokens de saída"
 
 msgid "Overall page note"
 msgstr "Overall page note"
+
+msgid "Overview"
+msgstr "Visão geral"
 
 msgid "Package and preview the final ADT web application."
 msgstr "Empacota e pré-visualiza a aplicação web ADT final."
@@ -2335,6 +2398,9 @@ msgstr "Remover"
 msgid "Prune element"
 msgstr "Remover elemento"
 
+msgid "Prune group"
+msgstr "Remover grupo"
+
 msgid "Prune image"
 msgstr "Remover imagem"
 
@@ -2464,6 +2530,9 @@ msgstr "renderização"
 
 msgid "Rendering Prompt"
 msgstr "Prompt de renderização"
+
+msgid "Rendering this section..."
+msgstr "Renderizando esta seção..."
 
 msgid "Replace"
 msgstr "Substituir"
@@ -2677,8 +2746,8 @@ msgstr "Seção {0} — {1}"
 msgid "Section {0} (pruned)"
 msgstr "Seção {0} (removida)"
 
-msgid "Section Data"
-msgstr "Dados da seção"
+#~ msgid "Section Data"
+#~ msgstr "Dados da seção"
 
 msgid "Section Heading"
 msgstr "Cabeçalho da seção"
@@ -2704,11 +2773,14 @@ msgstr "Corpo da seção"
 msgid "Section Types"
 msgstr "Tipos de seção"
 
+#~ msgid "Sectioning"
+#~ msgstr "Seccionamento"
+
 msgid "Sectioning Mode"
 msgstr "Modo de seção"
 
-msgid "Sectioning Overview"
-msgstr "Visão geral das seções"
+#~ msgid "Sectioning Overview"
+#~ msgstr "Visão geral das seções"
 
 msgid "Sectioning Reasoning"
 msgstr "Raciocínio de seção"
@@ -2840,6 +2912,9 @@ msgstr "Tamanho"
 msgid "sk-..."
 msgstr "sk-..."
 
+msgid "sk-ant-..."
+msgstr "sk-ant-..."
+
 msgid "Skip segmentation for images whose shortest side is below this threshold."
 msgstr "Pular segmentação para imagens cujo lado menor está abaixo deste limite."
 
@@ -2918,8 +2993,8 @@ msgstr "Pré-visualização do guia de estilo"
 msgid "Styleguide Preview — {styleguide}"
 msgstr "Pré-visualização do guia de estilo — {0}"
 
-msgid "Subscription Key"
-msgstr "Chave de assinatura"
+#~ msgid "Subscription Key"
+#~ msgstr "Chave de assinatura"
 
 msgid "Success"
 msgstr "Sucesso"
@@ -3129,6 +3204,9 @@ msgstr "até"
 msgid "TOC Generation Prompt"
 msgstr "Prompt de geração de sumário"
 
+msgid "Toggle model list"
+msgstr "Alternar lista de modelos"
+
 msgid "Tokens"
 msgstr "Tokens"
 
@@ -3210,6 +3288,9 @@ msgstr "Slug de etapa desconhecido: {0}"
 msgid "Unknown step: {step}"
 msgstr "Etapa desconhecida: {0}"
 
+msgid "Unprune group"
+msgstr "Restaurar grupo"
+
 msgid "Unprune image"
 msgstr "Restaurar imagem"
 
@@ -3261,8 +3342,20 @@ msgstr "Usa um LLM para filtrar imagens decorativas ou não educativas."
 msgid "Use this for checks you intentionally want to suppress, such as known false positives."
 msgstr "Use this for checks you intentionally want to suppress, such as known false positives."
 
-msgid "Used for Gemini TTS providers such as gemini-2.5-pro-preview-tts."
-msgstr "Usada para provedores de TTS do Gemini, como gemini-2.5-pro-preview-tts."
+msgid "Used for Azure Speech TTS provider."
+msgstr "Utilizada para o provedor de TTS do Azure Speech."
+
+msgid "Used for Claude models (claude-opus-4-6, claude-sonnet-4-6, etc.)"
+msgstr "Utilizada para modelos Claude (claude-opus-4-6, claude-sonnet-4-6, etc.)"
+
+#~ msgid "Used for Gemini LLM models (gemini-2.5-pro, gemini-2.5-flash, etc.)"
+#~ msgstr "Utilizada para modelos Gemini LLM (gemini-2.5-pro, gemini-2.5-flash, etc.)"
+
+msgid "Used for Gemini models — both LLM (gemini-2.5-pro, etc.) and TTS (gemini-2.5-pro-preview-tts, etc.)"
+msgstr "Utilizada para modelos Gemini — tanto LLM (gemini-2.5-pro, etc.) quanto TTS (gemini-2.5-pro-preview-tts, etc.)"
+
+#~ msgid "Used for Gemini TTS providers such as gemini-2.5-pro-preview-tts."
+#~ msgstr "Usada para provedores de TTS do Gemini, como gemini-2.5-pro-preview-tts."
 
 msgid "Validation"
 msgstr "Validation"
@@ -3273,6 +3366,9 @@ msgstr "Erros de validação ({0})"
 
 msgid "Variant:"
 msgstr "Variante:"
+
+msgid "Vector Extraction"
+msgstr "Extração vetorial"
 
 #. placeholder {0}: String(version)
 msgid "Version {0}"
@@ -3292,6 +3388,12 @@ msgstr "Mapeamentos de voz"
 
 msgid "Voices"
 msgstr "Vozes"
+
+msgid "Wait for storyboard to complete"
+msgstr "Aguarde a conclusão do storyboard"
+
+msgid "Waiting for page to be processed..."
+msgstr "Aguardando a página ser processada..."
 
 msgid "Wall Clock"
 msgstr "Tempo decorrido"
@@ -3327,6 +3429,9 @@ msgstr "O que a IA deve alterar?"
 
 msgid "When enabled, background colors from the styleguide are applied to the full page body."
 msgstr "Quando ativado, as cores de fundo do guia de estilo são aplicadas ao corpo completo da página."
+
+msgid "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."
+msgstr "Quando ativado, rótulos de texto próximos a imagens vetoriais (ex.: dimensões de gráficos, balões de fala) são agrupados e extraídos como recortes rasterizados. Desative para extrair apenas as formas vetoriais sem texto."
 
 msgid "Whole-book checks for packaged ADT output, plus reviewer findings captured from Preview."
 msgstr "Whole-book checks for packaged ADT output, plus reviewer findings captured from Preview."
