@@ -1,7 +1,7 @@
 
-import { useState, useEffect, useRef, type CSSProperties } from "react"
+import { useState, type CSSProperties } from "react"
 import { Trans, useLingui } from "@lingui/react/macro"
-import { Eye, ArrowLeft, ArrowRight, Zap, SlidersHorizontal } from "lucide-react"
+import { Eye, ArrowLeft, ArrowRight, Zap } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
 import { useNavigate } from "@tanstack/react-router"
 import { Button } from "@/components/ui/button"
@@ -23,7 +23,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
-function WizardHeader({ step, hideStepCount = false }: { step: number; hideStepCount?: boolean }) {
+function WizardHeader({ step }: { step: number }) {
   const { i18n, t } = useLingui()
   const def = STEPS[step - 1]
   return (
@@ -32,11 +32,9 @@ function WizardHeader({ step, hideStepCount = false }: { step: number; hideStepC
         <span className="inline-flex items-center bg-[#fef2f2] text-[#ef4444] text-[12px] font-semibold leading-4 px-[10px] py-[4px] rounded-[4px]">
           {t`Required Fields`}
         </span>
-        {!hideStepCount && (
-          <span className="text-[14px] font-bold leading-5 text-[#3b82f6] uppercase tracking-wide animate-wizard-enter">
-            {t`Step ${step} of ${STEPS.length}`}
-          </span>
-        )}
+        <span className="text-[14px] font-bold leading-5 text-[#3b82f6] uppercase tracking-wide animate-wizard-enter">
+          {t`Step ${step} of ${STEPS.length}`}
+        </span>
       </div>
       <div className="flex flex-col gap-1">
         <h1 className="text-[30px] font-semibold leading-9 tracking-[-0.75px] text-black">
@@ -54,8 +52,6 @@ function WizardFooter({
   onBack,
   onNext,
   onCreate,
-  quickMode = false,
-  onConfigure,
 }: {
   isLastStep: boolean
   canContinue: boolean
@@ -63,58 +59,42 @@ function WizardFooter({
   onBack: () => void
   onNext: () => void
   onCreate: () => void
-  quickMode?: boolean
-  onConfigure?: () => void
 }) {
-  const { i18n, t } = useLingui()
+  const { t } = useLingui()
 
   return (
     <div className="border-t border-[#e5e5e5] px-6 py-4 flex flex-col gap-2">
-      {quickMode && (
-        <p className="text-center text-xs text-[#a3a3a3] animate-btn-label-enter">
-          {t`Your preset is ready - create now or walk through each step`}
-        </p>
-      )}
       <div className="grid grid-cols-2 w-full gap-2">
         <Button
           type="button"
           variant="outline"
-          onClick={quickMode ? onConfigure : onBack}
+          onClick={onBack}
           className="flex h-10 min-w-0 w-full items-center justify-center overflow-hidden px-4 font-medium"
         >
-          <span key={quickMode ? "step-by-step" : "back"} className="flex items-center gap-1.5 animate-btn-label-enter">
-            {quickMode ? (
-              <>
-                <SlidersHorizontal className="h-4 w-4 shrink-0" />
-                {t`Step by Step`}
-              </>
-            ) : (
-              <>
-                <ArrowLeft className="h-4 w-4 shrink-0" />
-                {t`Back`}
-              </>
-            )}
+          <span className="flex items-center gap-1.5 animate-btn-label-enter">
+            <ArrowLeft className="h-4 w-4 shrink-0" />
+            {t`Back`}
           </span>
         </Button>
 
         <TooltipProvider>
-          <Tooltip open={quickMode && !canContinue ? undefined : false}>
+          <Tooltip open={isLastStep && !canCreate ? undefined : false}>
             <TooltipTrigger asChild>
               <span className="min-w-0 w-full">
                 <Button
                   type="button"
-                  disabled={(isLastStep || quickMode) ? !canCreate : !canContinue}
-                  onClick={isLastStep || quickMode ? onCreate : onNext}
+                  disabled={isLastStep ? !canCreate : !canContinue}
+                  onClick={isLastStep ? onCreate : onNext}
                   className="flex h-10 w-full items-center justify-center overflow-hidden bg-[#2b7fff] px-4 font-medium text-white transition-opacity duration-300 ease-out hover:bg-[#1a6fef] disabled:opacity-50 border-0"
                 >
                   <span
-                    key={isLastStep ? "create-final" : quickMode ? "create-quick" : "next"}
+                    key={isLastStep ? "create-final" : "next"}
                     className={cn(
                       "flex items-center gap-1.5",
                       isLastStep ? "animate-btn-final-enter" : "animate-btn-label-enter",
                     )}
                   >
-                    {isLastStep || quickMode ? (
+                    {isLastStep ? (
                       <>
                         <Zap className="h-4 w-4 shrink-0" />
                         {t`Create Book`}
@@ -185,20 +165,10 @@ export function BookCreationWizard() {
   const { data: books } = useBooks()
   const { apiKey, hasApiKey, azureKey, azureRegion, geminiKey } = useApiKey()
   const [previewOpen, setPreviewOpen] = useState(false)
-  const [isDetailed, setIsDetailed] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const prevStepRef = useRef(currentStep)
-  const [cameBackToPreset, setCameBackToPreset] = useState(false)
-
-  useEffect(() => {
-    if (currentStep === 0 && prevStepRef.current > 0) {
-      setCameBackToPreset(true)
-    }
-    prevStepRef.current = currentStep
-  }, [currentStep])
 
   const values = useStore(form.store, (s) => s.values)
-  const { selectedPreset, file, renderStrategy, editingLanguage, outputLanguages, styleguide } = values
+  const { file, renderStrategy, editingLanguage, outputLanguages, styleguide } = values
   const stepIndex = currentStep - 1
   const existingBookLabels = books?.map((b: { label: string }) => b.label) ?? []
   const stepValidationContext = { existingBookLabels }
@@ -207,14 +177,13 @@ export function BookCreationWizard() {
       ? STEPS[stepIndex].isValid(values, stepValidationContext)
       : false
   const canCreate = STEPS.every((s) => s.isValid(values, stepValidationContext))
-  const isQuickMode = currentStep === 1 && !isDetailed && selectedPreset !== "custom"
 
   if (currentStep === 0) {
     return (
       <div className="flex flex-1 min-h-0 flex-col h-full bg-white">
         <StudioTopBar brandLinksHome trailingTitle={<Trans>Add Book</Trans>} />
         <div className="flex flex-1 min-h-0 flex-col overflow-auto">
-          <Step0Preset showWarning={cameBackToPreset} onPresetChanged={() => setIsDetailed(false)} />
+          <Step0Preset />
         </div>
       </div>
     )
@@ -298,7 +267,7 @@ export function BookCreationWizard() {
           </div>
 
           <div className="mx-auto flex w-full min-h-0 lg:pr-8 flex-1 flex-col overflow-hidden">
-            <WizardHeader step={currentStep} hideStepCount={isQuickMode} />
+            <WizardHeader step={currentStep} />
 
             <div className="min-h-0 flex-1 overflow-y-auto">
               <StepComponent />
@@ -318,8 +287,6 @@ export function BookCreationWizard() {
             onBack={handleBack}
             onNext={handleNext}
             onCreate={handleCreate}
-            quickMode={isQuickMode}
-            onConfigure={() => setIsDetailed(true)}
           />
         </aside>
 

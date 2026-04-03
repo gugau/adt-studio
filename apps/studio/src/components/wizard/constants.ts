@@ -97,7 +97,7 @@ export type WizardPageGrouping = "" | "spread" | "single"
 
 export type WizardSectioningMode = "" | SectioningModeId
 
-export type PresetDefaults = Partial<WizardFormValues>
+export type PresetRecommendations = Partial<WizardFormValues>
 
 // ─── Preset types ────────────────────────────────────────────────────────────
 
@@ -119,9 +119,10 @@ export interface PresetConfig {
   title: MessageDescriptor
   description: MessageDescriptor
   renderStrategies?: readonly RenderStrategyId[]
+  recommendedStrategies?: readonly RenderStrategyId[]
   recommendedFor: MessageDescriptor[]
   exampleBooks: ExampleBook[]
-  defaults: PresetDefaults
+  recommendations: PresetRecommendations
 }
 
 
@@ -144,6 +145,7 @@ export const PRESETS: PresetConfig[] = [
     title: msg`Textbooks & Activities`,
     description: msg`Structured chapters, exercises. Best for educational content with complex layouts.`,
     renderStrategies: ["llm", "llm-overlay", "two_column", "two_column_story"],
+    recommendedStrategies: ["llm"],
     recommendedFor: [
       msg`School textbooks and workbooks`,
       msg`University academic publications`,
@@ -160,8 +162,7 @@ export const PRESETS: PresetConfig[] = [
       { title: msg`História e Sociedade - Vol. 1`, comingSoon: true },
       { title: msg`Língua Portuguesa - 3° Ano`, comingSoon: true },
     ],
-    defaults: {
-      layoutType: "textbook",
+    recommendations: {
       renderStrategy: "llm",
       pageGrouping: "single",
       sectioningMode: "dynamic",
@@ -182,6 +183,7 @@ export const PRESETS: PresetConfig[] = [
     title: msg`Storybook`,
     description: msg`Large images, narrative flow. Best for illustrated books with high-fidelity TTS voices.`,
     renderStrategies: ["llm", "llm-overlay", "two_column", "two_column_story"],
+    recommendedStrategies: ["llm-overlay", "two_column_story"],
     recommendedFor: [
       msg`Illustrated children's books`,
       msg`Young adult fiction`,
@@ -197,8 +199,7 @@ export const PRESETS: PresetConfig[] = [
       { title: msg`Adventure Tales - Vol. 1`, comingSoon: true },
       { title: msg`The Lost Forest`, comingSoon: true },
     ],
-    defaults: {
-      layoutType: "storybook",
+    recommendations: {
       renderStrategy: "two_column_story",
       pageGrouping: "spread",
       sectioningMode: "page",
@@ -217,6 +218,7 @@ export const PRESETS: PresetConfig[] = [
     title: msg`Reference`,
     description: msg`Dense text, tables, glossaries. Best for technical material and documentation.`,
     renderStrategies: ["llm", "llm-overlay", "single_column", "two_column"],
+    recommendedStrategies: ["single_column"],
     recommendedFor: [
       msg`Technical documentation`,
       msg`Legal and compliance manuals`,
@@ -232,8 +234,7 @@ export const PRESETS: PresetConfig[] = [
       { title: msg`Engineering Handbook Vol. 2`, comingSoon: true },
       { title: msg`Legal Compliance Guide`, comingSoon: true },
     ],
-    defaults: {
-      layoutType: "reference",
+    recommendations: {
       renderStrategy: "single_column",
       pageGrouping: "single",
       sectioningMode: "page",
@@ -265,13 +266,13 @@ export const PRESETS: PresetConfig[] = [
       },
       { title: msg`Mixed Content Project`, comingSoon: true },
     ],
-    defaults: {},
+    recommendations: {},
   },
 ]
 
-export const PRESET_DEFAULTS: Record<PresetId, PresetDefaults> = Object.fromEntries(
-  PRESETS.map((p) => [p.id, p.defaults]),
-) as Record<PresetId, PresetDefaults>
+export const PRESET_RECOMMENDATIONS: Record<PresetId, PresetRecommendations> = Object.fromEntries(
+  PRESETS.map((p) => [p.id, p.recommendations]),
+) as Record<PresetId, PresetRecommendations>
 
 
 const FIELD_LABELS: Partial<Record<keyof WizardFormValues, MessageDescriptor>> = {
@@ -308,10 +309,10 @@ function formatDefaultValue(
   return VALUE_LABELS[str] ?? str
 }
 
-export function getPresetDefaultEntries(
-  defaults: PresetDefaults,
+export function getPresetRecommendationEntries(
+  recommendations: PresetRecommendations,
 ): { label: MessageDescriptor; value: MessageDescriptor | string }[] {
-  return Object.entries(defaults)
+  return Object.entries(recommendations)
     .filter(([key]) => key in FIELD_LABELS)
     .map(([key, value]) => ({
       label: FIELD_LABELS[key as keyof WizardFormValues]!,

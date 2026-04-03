@@ -1,56 +1,18 @@
-import { useRef } from "react"
 import { useNavigate } from "@tanstack/react-router"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { useStore } from "@tanstack/react-form"
 import { Button } from "@/components/ui/button"
 import { useWizard } from "@/components/wizard"
-import { useWizardForm, defaultWizardValues } from "@/components/wizard/wizardForm"
-import { PRESET_DEFAULTS, type PresetId } from "@/components/wizard/constants"
+import { useWizardForm } from "@/components/wizard/wizardForm"
+import { type PresetId } from "@/components/wizard/constants"
 import { PresetGrid } from "./PresetGrid"
 
-/* eslint-disable-next-line lingui/no-unlocalized-strings */
-const PRESERVED_FIELDS = ["label", "file", "startPage", "endPage"] as const
-
-export function Step0Preset({
-  showWarning = false,
-  onPresetChanged,
-}: {
-  showWarning?: boolean
-  onPresetChanged?: () => void
-}) {
+export function Step0Preset() {
   const navigate = useNavigate()
   const { setCurrentStep } = useWizard()
   const form = useWizardForm()
-
-
-
   const selected = useStore(form.store, (s) => s.values.selectedPreset) as PresetId | null
-  const initialPreset = useRef(selected)
-  const presetChanged = showWarning && selected !== initialPreset.current
-
-  function applyPreset(id: PresetId) {
-    const preserved: Partial<Record<(typeof PRESERVED_FIELDS)[number], unknown>> = {}
-    for (const field of PRESERVED_FIELDS) {
-      preserved[field] = form.getFieldValue(field)
-    }
-
-    for (const [key, val] of Object.entries(defaultWizardValues)) {
-      if (!PRESERVED_FIELDS.includes(key as never)) {
-        form.setFieldValue(key as never, val as never)
-      }
-    }
-
-    for (const [key, val] of Object.entries(PRESET_DEFAULTS[id])) {
-      form.setFieldValue(key as never, val as never)
-    }
-
-    for (const [key, val] of Object.entries(preserved)) {
-      form.setFieldValue(key as never, val as never)
-    }
-
-    form.setFieldValue("selectedPreset", id)
-  }
 
   function handleSelect(id: PresetId) {
     form.setFieldValue("selectedPreset", id)
@@ -58,10 +20,6 @@ export function Step0Preset({
 
   function handleContinue() {
     if (!selected) return
-    if (!showWarning || presetChanged) {
-      applyPreset(selected)
-      if (presetChanged) onPresetChanged?.()
-    }
     setCurrentStep(1)
   }
 
@@ -74,9 +32,6 @@ export function Step0Preset({
         >
           <Trans>Choose a Preset</Trans>
         </h1>
-        <p className={`text-sm font-medium text-[#ef4444] text-center transition-opacity duration-200 ${presetChanged ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
-          <Trans>Changing the preset will reset your current configuration.</Trans>
-        </p>
       </div>
 
       <PresetGrid selected={selected} onSelect={handleSelect} />

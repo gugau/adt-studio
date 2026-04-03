@@ -10,12 +10,12 @@ import { cn } from "@/lib/utils"
 import {
   type PresetConfig,
   type PresetId,
-  getPresetDefaultEntries,
+  getPresetRecommendationEntries,
 } from "@/components/wizard/constants"
 
 function DefaultsHoverCard({ preset }: { preset: PresetConfig }) {
   const { i18n } = useLingui()
-  const entries = getPresetDefaultEntries(preset.defaults)
+  const entries = getPresetRecommendationEntries(preset.recommendations)
 
   if (entries.length === 0) {
     return (
@@ -69,7 +69,7 @@ export function PresetCard({
   const { i18n } = useLingui()
   const { Icon } = preset
   const radioId = useId()
-  const defaultEntries = getPresetDefaultEntries(preset.defaults)
+  const defaultEntries = getPresetRecommendationEntries(preset.recommendations)
 
   return (
     <label
