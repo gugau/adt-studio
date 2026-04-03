@@ -762,8 +762,11 @@ msgstr "Clone failed"
 msgid "Close"
 msgstr "Close"
 
-msgid "Close section data"
-msgstr "Close section data"
+msgid "Close edit panel"
+msgstr "Close edit panel"
+
+#~ msgid "Close section data"
+#~ msgstr "Close section data"
 
 msgid "Collapse accessibility summary"
 msgstr "Collapse accessibility summary"
@@ -1138,6 +1141,9 @@ msgstr "Edit the Liquid/HTML template below. Changes are saved when you click Sa
 
 msgid "Edit this image"
 msgstr "Edit this image"
+
+msgid "Edit this section"
+msgstr "Edit this section"
 
 msgid "Editing"
 msgstr "Editing"
@@ -2079,14 +2085,17 @@ msgstr "Open a page to review"
 msgid "Open a page to see page-level findings"
 msgstr "Open a page to see page-level findings"
 
+msgid "Open edit panel"
+msgstr "Open edit panel"
+
 msgid "Open page preview for {pageId}"
 msgstr "Open page preview for {pageId}"
 
 msgid "Open Preview"
 msgstr "Open Preview"
 
-msgid "Open section data"
-msgstr "Open section data"
+#~ msgid "Open section data"
+#~ msgstr "Open section data"
 
 msgid "Open Validation"
 msgstr "Open Validation"
@@ -2129,6 +2138,9 @@ msgstr "Output Tokens"
 
 msgid "Overall page note"
 msgstr "Overall page note"
+
+msgid "Overview"
+msgstr "Overview"
 
 msgid "Package and preview the final ADT web application."
 msgstr "Package and preview the final ADT web application."
@@ -2624,8 +2636,8 @@ msgstr "Section {0} — {1}"
 msgid "Section {0} (pruned)"
 msgstr "Section {0} (pruned)"
 
-msgid "Section Data"
-msgstr "Section Data"
+#~ msgid "Section Data"
+#~ msgstr "Section Data"
 
 msgid "Section Heading"
 msgstr "Section Heading"
@@ -2654,8 +2666,8 @@ msgstr "Section Types"
 msgid "Sectioning Mode"
 msgstr "Sectioning Mode"
 
-msgid "Sectioning Overview"
-msgstr "Sectioning Overview"
+#~ msgid "Sectioning Overview"
+#~ msgstr "Sectioning Overview"
 
 msgid "Sectioning Reasoning"
 msgstr "Sectioning Reasoning"
