@@ -24,7 +24,7 @@ interface ModelSelectProps {
 export function ModelSelect({
   value,
   onChange,
-  placeholder = "openai:gpt-5.2",
+  placeholder = "openai:gpt-5.4",
   groups,
   className,
   inputClassName,

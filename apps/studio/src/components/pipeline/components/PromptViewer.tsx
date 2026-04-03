@@ -60,7 +60,7 @@ export function PromptViewer({
   onContentChange,
   maxRetries,
   onMaxRetriesChange,
-  modelPlaceholder = "openai:gpt-5.2",
+  modelPlaceholder = "openai:gpt-5.4",
   modelGroups = LLM_MODEL_GROUPS,
   enabled = true,
   hideModel = false,

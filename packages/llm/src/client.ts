@@ -17,7 +17,7 @@ import { sanitizeMessages, type LlmLogEntry } from "./log.js"
 import { createLogger, type LogLevel } from "./logger.js"
 
 export interface CreateLLMModelOptions {
-  modelId: string // "openai:gpt-5.2" format
+  modelId: string // "openai:gpt-5.4" format
   cacheDir?: string
   promptEngine?: PromptEngine
   onLog?: (entry: LlmLogEntry) => void
