@@ -33,7 +33,7 @@ export const PageSectioningConfig = StepConfig.extend({
 })
 export type PageSectioningConfig = z.infer<typeof PageSectioningConfig>
 
-export const BookFormat = z.enum(["web", "webpub"])
+export const BookFormat = z.enum(["web", "webpub", "epub"])
 export type BookFormat = z.infer<typeof BookFormat>
 
 export const LayoutType = z.enum(["textbook", "storybook", "reference", "custom"])

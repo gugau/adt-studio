@@ -1418,6 +1418,12 @@ msgstr "Introduce un nombre de proyecto válido"
 msgid "Enter hex color and press Enter"
 msgstr "Ingresa un color hex y presiona Enter"
 
+msgid "EPUB"
+msgstr "EPUB"
+
+msgid "EPUB Export"
+msgstr "Exportar EPUB"
+
 msgid "Error"
 msgstr "Error"
 
@@ -1457,6 +1463,9 @@ msgstr "Exportar ADT"
 msgid "Export as a SCORM 1.2 package for upload to a Learning Management System (LMS). Includes activity completion tracking and offline support."
 msgstr "Exportar como paquete SCORM 1.2 para subir a un Sistema de Gestión del Aprendizaje (LMS). Incluye seguimiento de finalización de actividad y soporte sin conexión."
 
+msgid "Export EPUB"
+msgstr "Exportar EPUB"
+
 msgid "Export preparation failed"
 msgstr "La preparación de la exportación falló"
 
@@ -1465,6 +1474,9 @@ msgstr "Exportar SCORM"
 
 msgid "Export the book as a Readium WebPub package — a standards-based format for distributing digital publications on the web. Suitable for reading systems that support the Readium Web Publication Manifest specification."
 msgstr "Exporta el libro como un paquete Readium WebPub — un formato basado en estándares para distribuir publicaciones digitales en la web. Adecuado para sistemas de lectura que admiten la especificación Readium Web Publication Manifest."
+
+msgid "Export the book as an EPUB 3 file — the standard format for digital books. Compatible with e-readers, reading apps, and accessibility tools."
+msgstr "Exporta el libro como un archivo EPUB 3 — el formato estándar para libros digitales. Compatible con lectores electrónicos, aplicaciones de lectura y herramientas de accesibilidad."
 
 msgid "Export the complete Accessible Digital Textbook as a ZIP archive. Includes all HTML pages, images, audio files, quizzes, and the compiled web application — ready to upload to a distribution platform or open locally."
 msgstr "Exporta el Libro de Texto Digital Accesible completo como un archivo ZIP. Incluye todas las páginas HTML, imágenes, archivos de audio, cuestionarios y la aplicación web compilada — listo para subirlo a una plataforma de distribución o abrirlo localmente."

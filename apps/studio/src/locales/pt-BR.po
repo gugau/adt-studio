@@ -1418,6 +1418,12 @@ msgstr "Insira um nome de projeto válido"
 msgid "Enter hex color and press Enter"
 msgstr "Digite uma cor hex e pressione Enter"
 
+msgid "EPUB"
+msgstr "EPUB"
+
+msgid "EPUB Export"
+msgstr "Exportar EPUB"
+
 msgid "Error"
 msgstr "Erro"
 
@@ -1457,6 +1463,9 @@ msgstr "Exportar ADT"
 msgid "Export as a SCORM 1.2 package for upload to a Learning Management System (LMS). Includes activity completion tracking and offline support."
 msgstr "Exportar como pacote SCORM 1.2 para upload em um Sistema de Gestão de Aprendizagem (LMS). Inclui rastreamento de conclusão de atividade e suporte offline."
 
+msgid "Export EPUB"
+msgstr "Exportar EPUB"
+
 msgid "Export preparation failed"
 msgstr "Falha ao preparar a exportação"
 
@@ -1465,6 +1474,9 @@ msgstr "Exportar SCORM"
 
 msgid "Export the book as a Readium WebPub package — a standards-based format for distributing digital publications on the web. Suitable for reading systems that support the Readium Web Publication Manifest specification."
 msgstr "Exporte o livro como um pacote Readium WebPub — um formato baseado em padrões para distribuir publicações digitais na web. Adequado para sistemas de leitura que suportam a especificação Readium Web Publication Manifest."
+
+msgid "Export the book as an EPUB 3 file — the standard format for digital books. Compatible with e-readers, reading apps, and accessibility tools."
+msgstr "Exporte o livro como um arquivo EPUB 3 — o formato padrão para livros digitais. Compatível com leitores eletrônicos, aplicativos de leitura e ferramentas de acessibilidade."
 
 msgid "Export the complete Accessible Digital Textbook as a ZIP archive. Includes all HTML pages, images, audio files, quizzes, and the compiled web application — ready to upload to a distribution platform or open locally."
 msgstr "Exporte o Accessible Digital Textbook completo como um arquivo ZIP. Inclui todas as páginas HTML, imagens, arquivos de áudio, questionários e a aplicação web compilada — pronto para enviar para uma plataforma de distribuição ou abrir localmente."

@@ -180,6 +180,10 @@ export {
   type PipelineDAGResult,
 } from "./dag.js"
 export {
+  packageEpub,
+  type PackageEpubOptions,
+} from "./package-epub.js"
+export {
   packageAdtWeb,
   packageWebpub,
   computePackagingInputHash,

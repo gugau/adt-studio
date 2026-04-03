@@ -1,4 +1,4 @@
-import { FileDown, Loader2, BookOpen, AlertCircle, GraduationCap } from "lucide-react"
+import { FileDown, Loader2, BookOpen, AlertCircle, GraduationCap, BookText } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { Button } from "@/components/ui/button"
 import { useBookRun } from "@/hooks/use-book-run"
@@ -10,6 +10,7 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
   const storyboardDone = stageState("storyboard") === "done"
 
   const adtError = error?.format === "book" ? error.message : null
+  const epubError = error?.format === "epub" ? error.message : null
   const scormError = error?.format === "scorm" ? error.message : null
   const webpubError = error?.format === "webpub" ? error.message : null
 
@@ -62,6 +63,42 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
           {adtError && (
             <p className="text-[11px] leading-tight text-red-500">
               {adtError}
+            </p>
+          )}
+        </div>
+      </section>
+
+      {/* EPUB Export */}
+      <section className="rounded-lg border p-4 flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <BookText className="w-5 h-5 text-purple-600" />
+          <h3 className="text-sm font-semibold"><Trans>EPUB Export</Trans></h3>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          <Trans>Export the book as an EPUB 3 file — the standard format for digital books. Compatible with e-readers, reading apps, and accessibility tools.</Trans>
+        </p>
+        <div className="flex flex-col gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className={
+              epubError
+                ? "bg-red-50 text-red-600 border-red-200 hover:bg-red-100 w-fit"
+                : "bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100 w-fit"
+            }
+            onClick={() => startExport("epub")}
+            disabled={isPreparing}
+          >
+            {preparingFormat === "epub" ? (
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <BookText className="mr-1.5 h-3.5 w-3.5" />
+            )}
+            {epubError ? <Trans>Retry Export</Trans> : <Trans>Export EPUB</Trans>}
+          </Button>
+          {epubError && (
+            <p className="text-[11px] leading-tight text-red-500">
+              {epubError}
             </p>
           )}
         </div>

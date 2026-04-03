@@ -5,7 +5,7 @@ import { useLingui } from "@lingui/react"
 import { api } from "@/api/client"
 import { useBookTasks } from "./use-book-tasks"
 
-type ExportFormat = "book" | "webpub" | "scorm"
+type ExportFormat = "book" | "webpub" | "scorm" | "epub"
 
 interface PendingExport {
   taskId: string
@@ -99,6 +99,8 @@ async function triggerExportDownload(
     blob = await api.exportBook(label)
   } else if (format === "webpub") {
     blob = await api.exportWebpub(label)
+  } else if (format === "epub") {
+    blob = await api.exportEpub(label)
   } else {
     blob = await api.exportScorm(label)
   }
@@ -109,14 +111,16 @@ async function triggerExportDownload(
   const { save } = await import("@tauri-apps/plugin-dialog")
   const { writeFile } = await import("@tauri-apps/plugin-fs")
 
-  const ext = format === "webpub" ? "webpub" : "zip"
+  const ext = format === "webpub" ? "webpub" : format === "epub" ? "epub" : "zip"
   const defaultPath = format === "scorm" ? `${label}-scorm.zip` : `${label}.${ext}`
   const filterName =
     format === "webpub"
       ? i18n._(msg`WebPub`)
-      : format === "scorm"
-        ? i18n._(msg`SCORM Package`)
-        : i18n._(msg`ZIP Archive`)
+      : format === "epub"
+        ? i18n._(msg`EPUB`)
+        : format === "scorm"
+          ? i18n._(msg`SCORM Package`)
+          : i18n._(msg`ZIP Archive`)
 
   const savePath = await save({
     defaultPath,

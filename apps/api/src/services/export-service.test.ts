@@ -4,7 +4,7 @@ import os from "node:os"
 import path from "node:path"
 import { openBookDb, createBookStorage } from "@adt/storage"
 import { unzipSync } from "fflate"
-import { prepareExport, exportBook, exportWebpub } from "./export-service.js"
+import { prepareExport, exportBook, exportWebpub, exportEpub } from "./export-service.js"
 
 let tmpDir: string
 let webAssetsDir: string
@@ -347,5 +347,79 @@ describe("exportWebpub", () => {
 
     await expect(prepareExport("missing-assets", "webpub", tmpDir, path.join(tmpDir, "no-assets")))
       .rejects.toThrow("Web assets directory not found")
+  })
+})
+
+describe("exportEpub", () => {
+  it("produces a valid EPUB ZIP with required structure", async () => {
+    createBookWithMetadata("epub-test", "Test Book")
+    addPagesAndRenderings("epub-test", 2)
+
+    await prepareExport("epub-test", "epub", tmpDir, webAssetsDir)
+    const result = await exportEpub("epub-test", tmpDir)
+    expect(result.filename).toBe("Test Book.epub")
+    expect(result.safeFilename).toBe("epub-test.epub")
+
+    const buf = await streamToBuffer(result.stream)
+    const files = unzipSync(buf)
+    expect(files["mimetype"]).toBeDefined()
+    expect(new TextDecoder().decode(files["mimetype"])).toBe("application/epub+zip")
+    expect(files["META-INF/container.xml"]).toBeDefined()
+    expect(files["OEBPS/content.opf"]).toBeDefined()
+    expect(files["OEBPS/toc.xhtml"]).toBeDefined()
+    expect(files["OEBPS/toc.ncx"]).toBeDefined()
+  })
+
+  it("includes content pages as HTML files from ADT package", async () => {
+    createBookWithMetadata("epub-pages", "Pages Book")
+    addPagesAndRenderings("epub-pages", 2)
+
+    await prepareExport("epub-pages", "epub", tmpDir, webAssetsDir)
+    const result = await exportEpub("epub-pages", tmpDir)
+    const buf = await streamToBuffer(result.stream)
+    const files = unzipSync(buf)
+
+    // Should have content pages in OEBPS/ (copied from adt/)
+    const htmlFiles = Object.keys(files).filter(f =>
+      f.startsWith("OEBPS/") && f.endsWith(".html") &&
+      !f.includes("toc.") && !f.includes("content/")
+    )
+    expect(htmlFiles.length).toBeGreaterThanOrEqual(2)
+
+    // Content should be proper HTML documents
+    const content = new TextDecoder().decode(files[htmlFiles[0]])
+    expect(content).toContain("<!DOCTYPE html>")
+  })
+
+  it("includes content pages in OPF manifest and spine", async () => {
+    createBookWithMetadata("epub-opf", "OPF Test")
+    addPagesAndRenderings("epub-opf", 2)
+
+    await prepareExport("epub-opf", "epub", tmpDir, webAssetsDir)
+    const result = await exportEpub("epub-opf", tmpDir)
+    const buf = await streamToBuffer(result.stream)
+    const files = unzipSync(buf)
+    const opf = new TextDecoder().decode(files["OEBPS/content.opf"])
+
+    expect(opf).toContain('version="3.0"')
+    expect(opf).toContain("<dc:title>OPF Test</dc:title>")
+    expect(opf).toContain("<dc:language>en</dc:language>")
+    expect(opf).toContain("<dc:creator>Author</dc:creator>")
+    // Spine entries
+    expect(opf).toContain("itemref idref=")
+  })
+
+  it("falls back to label when metadata has no title", async () => {
+    createTestDb("epub-no-title")
+    addPages("epub-no-title", 1)
+
+    await prepareExport("epub-no-title", "epub", tmpDir, webAssetsDir)
+    const result = await exportEpub("epub-no-title", tmpDir)
+    expect(result.filename).toBe("epub-no-title.epub")
+    expect(result.safeFilename).toBe("epub-no-title.epub")
+  })
+
+  it("throws for non-existent book", async () => {
+    await expect(exportEpub("ghost", tmpDir)).rejects.toThrow("not found")
   })
 })

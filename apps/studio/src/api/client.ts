@@ -1015,7 +1015,7 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-  prepareExport: (label: string, format: "book" | "webpub" | "scorm" = "book") =>
+  prepareExport: (label: string, format: "book" | "webpub" | "scorm" | "epub" = "book") =>
     request<{ taskId?: string; status: string; label: string }>(
       `/books/${label}/prepare-export?format=${format}`,
       { method: "POST" }
@@ -1059,6 +1059,26 @@ export const api = {
     }
     const buf = await res.arrayBuffer()
     return new Blob([buf], { type: "application/zip" })
+  },
+
+  exportEpub: async (label: string): Promise<Blob | null> => {
+    if (!isTauri()) {
+      triggerDirectDownload(`${BASE_URL}/books/${label}/export-epub`)
+      return null
+    }
+    const url = `${BASE_URL}/books/${label}/export-epub`
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/epub+zip" },
+      mode: "cors",
+      signal: AbortSignal.timeout(300_000),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ error: res.statusText }))
+      throw new Error(body.error ?? `EPUB export failed: ${res.status}`)
+    }
+    const buf = await res.arrayBuffer()
+    return new Blob([buf], { type: "application/epub+zip" })
   },
 
   exportScorm: async (label: string): Promise<Blob | null> => {

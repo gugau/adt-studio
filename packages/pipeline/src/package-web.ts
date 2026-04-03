@@ -768,7 +768,7 @@ img {
  * Walk all .html files in `dir` and inject a `<style>` block right before
  * `</head>` that overrides reader-injected column pagination CSS.
  */
-function injectWebpubStyles(dir: string): void {
+export function injectWebpubStyles(dir: string): void {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const fullPath = path.join(dir, entry.name)
     if (entry.isDirectory()) {
@@ -2192,7 +2192,7 @@ function escapeInlineScriptJson(s: string): string {
     .replace(/&/g, "\\u0026")
 }
 
-function copyDirRecursive(
+export function copyDirRecursive(
   src: string,
   dest: string,
   skip?: Set<string>,
