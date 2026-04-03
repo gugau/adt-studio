@@ -381,7 +381,7 @@ function PageSectionRows({
               {page.pageId}
               {sections[0]?.pageNumber != null && (
                 <span className="text-muted-foreground font-normal ml-1.5">
-                  (p.{sections[0].pageNumber})
+                  <Trans>(p.{sections[0].pageNumber})</Trans>
                 </span>
               )}
             </span>

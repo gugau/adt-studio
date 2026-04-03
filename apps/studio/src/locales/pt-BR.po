@@ -47,6 +47,10 @@ msgstr "(ativo)"
 msgid "(no target)"
 msgstr "(no target)"
 
+#. placeholder {0}: sections[0].pageNumber
+msgid "(p.{0})"
+msgstr "(p.{0})"
+
 msgid "(template)"
 msgstr "(template)"
 
