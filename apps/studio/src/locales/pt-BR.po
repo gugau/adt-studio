@@ -72,6 +72,12 @@ msgstr "{0} {1} reviewed so far"
 #~ msgid "{0} {1} this page"
 #~ msgstr "{0} {1} this page"
 
+#. placeholder {0}: bbox.w
+#. placeholder {1}: bbox.h
+#. placeholder {2}: points.length
+msgid "{0} × {1}px · {2} points"
+msgstr "{0} × {1}px · {2} pontos"
+
 #. placeholder {0}: String(totalAudioFiles)
 msgid "{0} audio"
 msgstr "{0} áudios"
@@ -393,6 +399,9 @@ msgstr "Adicionar livro"
 msgid "Add checklist item to this section"
 msgstr "Add checklist item to this section"
 
+msgid "Add class"
+msgstr "Adicionar classe"
+
 msgid "Add entry below"
 msgstr "Adicionar entrada abaixo"
 
@@ -459,6 +468,9 @@ msgstr "A IA vê a imagem atual e a modifica"
 
 msgid "AIza..."
 msgstr "AIza..."
+
+#~ msgid "Align {align}"
+#~ msgstr "Alinhar {align}"
 
 msgid "All Categories"
 msgstr "All Categories"
@@ -596,6 +608,9 @@ msgstr "Fundo"
 #. placeholder {0}: section.backgroundColor
 msgid "Background: {0}"
 msgstr "Fundo: {0}"
+
+msgid "base"
+msgstr "base"
 
 msgid "Be descriptive — include style, colors, mood, and composition."
 msgstr "Seja descritivo — inclua estilo, cores, humor e composição."
@@ -897,8 +912,14 @@ msgstr "Current Preview Page"
 msgid "Custom section {index}"
 msgstr "Custom section {index}"
 
+msgid "Custom:"
+msgstr "Personalizado:"
+
 #~ msgid "Debug Panel"
 #~ msgstr "Painel de depuração"
+
+#~ msgid "Decrease font size"
+#~ msgstr "Diminuir tamanho da fonte"
 
 msgid "Decrease indent"
 msgstr "Diminuir recuo"
@@ -1037,14 +1058,17 @@ msgstr "Exibição"
 msgid "Drag to move boxes, drag edges/corners to resize"
 msgstr "Drag to move boxes, drag edges/corners to resize"
 
-msgid "Drag to move the crop box, drag edges/corners to resize. Click and drag on the image to draw a new box."
-msgstr "Arraste para mover a caixa de recorte, arraste bordas/cantos para redimensionar. Clique e arraste na imagem para desenhar uma nova caixa."
+#~ msgid "Drag to move the crop box, drag edges/corners to resize. Click and drag on the image to draw a new box."
+#~ msgstr "Arraste para mover a caixa de recorte, arraste bordas/cantos para redimensionar. Clique e arraste na imagem para desenhar uma nova caixa."
 
 msgid "Drag to reorder"
 msgstr "Arraste para reordenar"
 
 msgid "Drag to reorder or move to another group"
 msgstr "Arraste para reordenar ou mover para outro grupo"
+
+msgid "Drag vertices to reshape. Click midpoints (+) to add points. Right-click a vertex to remove it."
+msgstr "Arraste os vértices para remodelar. Clique nos pontos médios (+) para adicionar pontos. Clique com o botão direito em um vértice para removê-lo."
 
 msgid "Duplicate"
 msgstr "Duplicar"
@@ -1161,6 +1185,9 @@ msgstr "End page"
 
 msgid "English"
 msgstr "Inglês"
+
+msgid "Enter hex color and press Enter"
+msgstr "Digite uma cor hex e pressione Enter"
 
 msgid "Error"
 msgstr "Erro"
@@ -1420,6 +1447,9 @@ msgstr "Prompt de glossário"
 msgid "Go to book"
 msgstr "Ir para o livro"
 
+msgid "Group text labels near vector images (e.g. chart dimensions, speech bubbles) and extract as raster crops. Disable to extract only the core vector shapes."
+msgstr "Agrupa rótulos de texto próximos a imagens vetoriais (por exemplo, dimensões de gráficos, balões de fala) e os extrai como recortes rasterizados. Desative para extrair apenas as formas vetoriais principais."
+
 #~ msgid "Group Types"
 #~ msgstr "Tipos de grupo"
 
@@ -1521,6 +1551,12 @@ msgstr "Incluir na renderização"
 
 #~ msgid "Include section in render"
 #~ msgstr "Incluir seção na renderização"
+
+msgid "Include text overlays in vector groups"
+msgstr "Incluir sobreposições de texto em grupos vetoriais"
+
+#~ msgid "Increase font size"
+#~ msgstr "Aumentar tamanho da fonte"
 
 msgid "Increase indent"
 msgstr "Aumentar recuo"
@@ -1956,6 +1992,9 @@ msgstr "Sem link"
 msgid "No log entries found yet."
 msgstr "Nenhuma entrada de registro encontrada ainda."
 
+msgid "No matches"
+msgstr "Sem resultados"
+
 msgid "No matches for \"{search}\""
 msgstr "Nenhum resultado para \"{0}\""
 
@@ -2213,6 +2252,9 @@ msgstr "Etapas do pipeline"
 msgid "Pixel Art"
 msgstr "Pixel Art"
 
+#~ msgid "points"
+#~ msgstr "pontos"
+
 msgid "Polishing paragraphs to perfection..."
 msgstr "Polindo parágrafos até a perfeição..."
 
@@ -2221,6 +2263,9 @@ msgstr "Polindo parágrafos até a perfeição..."
 
 msgid "Portuguese (BR)"
 msgstr "Português (BR)"
+
+msgid "Press Enter to add"
+msgstr "Pressione Enter para adicionar"
 
 msgid "Prev"
 msgstr "Anterior"
@@ -2309,6 +2354,9 @@ msgstr "Reempacotar ADT"
 
 msgid "Re-render"
 msgstr "Rerenderizar"
+
+msgid "Re-render (your edits will be preserved)"
+msgstr "Rerenderizar (suas edições serão preservadas)"
 
 msgid "Re-render failed"
 msgstr "Re-render failed"
@@ -2399,6 +2447,9 @@ msgstr "Reset to inherited defaults"
 
 msgid "Resolving source language..."
 msgstr "Resolvendo idioma de origem..."
+
+msgid "Responsive / State variants"
+msgstr "Variantes responsivas / de estado"
 
 msgid "Restore"
 msgstr "Restaurar"
@@ -2556,6 +2607,9 @@ msgstr "Exportação SCORM"
 
 msgid "SCORM Package"
 msgstr "Pacote SCORM"
+
+#~ msgid "Search classes..."
+#~ msgstr "Buscar classes..."
 
 msgid "Search languages..."
 msgstr "Buscar idiomas..."
@@ -2895,6 +2949,9 @@ msgstr "Classificação de texto"
 msgid "Text Classification Prompt"
 msgstr "Prompt de classificação de texto"
 
+#~ msgid "Text color"
+#~ msgstr "Cor do texto"
+
 #. placeholder {0}: section.textColor
 msgid "Text color: {0}"
 msgstr "Cor do texto: {0}"
@@ -3070,6 +3127,9 @@ msgstr "Template de duas colunas para conteúdo narrativo"
 msgid "Type"
 msgstr "Tipo"
 
+msgid "Type class name or search..."
+msgstr "Digite nome da classe ou pesquise..."
+
 msgid "Types used during page sectioning. Pruned types are classified but excluded from rendering. Disabled types are hidden from the LLM entirely."
 msgstr "Tipos usados durante o secionamento de páginas. Tipos removidos são classificados, mas excluídos da renderização. Tipos desativados são ocultados do LLM completamente."
 
@@ -3158,6 +3218,12 @@ msgstr "Validation"
 msgid "Validation Errors ({0})"
 msgstr "Erros de validação ({0})"
 
+msgid "Variant:"
+msgstr "Variante:"
+
+msgid "Vector Extraction"
+msgstr "Extração vetorial"
+
 #. placeholder {0}: String(version)
 msgid "Version {0}"
 msgstr "Versão {0}"
@@ -3217,6 +3283,9 @@ msgstr "O que a IA deve alterar?"
 
 msgid "When enabled, background colors from the styleguide are applied to the full page body."
 msgstr "Quando ativado, as cores de fundo do guia de estilo são aplicadas ao corpo completo da página."
+
+msgid "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."
+msgstr "Quando ativado, rótulos de texto próximos a imagens vetoriais (ex.: dimensões de gráficos, balões de fala) são agrupados e extraídos como recortes rasterizados. Desative para extrair apenas as formas vetoriais sem texto."
 
 msgid "Whole-book checks for packaged ADT output, plus reviewer findings captured from Preview."
 msgstr "Whole-book checks for packaged ADT output, plus reviewer findings captured from Preview."

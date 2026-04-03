@@ -480,8 +480,10 @@ export function SectionDataPanel({
                   ? t`Wait for storyboard to complete`
                   : !hasApiKey
                     ? t`API key required to re-render`
-                    : dirty || renderingDirty
+                    : dirty
                       ? t`Save changes before re-rendering`
+                      : renderingDirty
+                        ? t`Re-render (your edits will be preserved)`
                       : t`Re-render this section`
               }
             >
