@@ -3,6 +3,8 @@ import { msg } from "@lingui/core/macro"
 import { useLingui, Trans } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
 import { useWizardForm } from "@/components/wizard/wizardForm"
+import { usePresetRecommendations } from "@/components/wizard/usePresetRecommendations"
+import { PRESETS } from "@/components/wizard/constants"
 import { SingleValueSlider, RangeSlider } from "@/components/wizard/shared/RangeSlider"
 import { ImageProcessingFeatureSwitch } from "./ImageProcessingFeatureSwitch"
 import { useDelayedPreviewFocus } from "@/components/wizard"
@@ -76,6 +78,9 @@ function SegmentationThresholdPanel({
 export function Step3() {
   const form = useWizardForm()
   const { i18n } = useLingui()
+  const recommendations = usePresetRecommendations()
+  const selectedPresetId = useStore(form.store, (s) => s.values.selectedPreset)
+  const preset = PRESETS.find((p) => p.id === selectedPresetId)
   // eslint-disable-next-line lingui/no-unlocalized-strings -- ImageProcessingPreviewFocus key
   const filterSizeHover = useDelayedPreviewFocus("filterSize")
 
@@ -99,6 +104,8 @@ export function Step3() {
           previewFocus="activities"
           checked={activitiesGenerator}
           onCheckedChange={(checked) => form.setFieldValue("activitiesGenerator", checked)}
+          recommended={recommendations.activitiesGenerator === true}
+          presetLabel={preset?.title}
         />
       </div>
 
@@ -114,6 +121,8 @@ export function Step3() {
           previewFocus="cropping"
           checked={imageCropping}
           onCheckedChange={(checked) => form.setFieldValue("imageCropping", checked)}
+          recommended={recommendations.imageCropping === true}
+          presetLabel={preset?.title}
         />
 
         <div className="flex w-full flex-col">
@@ -124,6 +133,8 @@ export function Step3() {
             previewFocus="segmentation"
             checked={imageSegmentation}
             onCheckedChange={(checked) => form.setFieldValue("imageSegmentation", checked)}
+            recommended={recommendations.imageSegmentation === true}
+            presetLabel={preset?.title}
           />
           <div
             className={cn(

@@ -1,3 +1,5 @@
+import type { MessageDescriptor } from "@lingui/core"
+import { useLingui } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
 import { ImageProcessingSwitch } from "./ImageProcessingSwitch"
 import type { ImageProcessingPreviewFocus } from "./imageProcessingPreviewTypes"
@@ -12,6 +14,8 @@ export type ImageProcessingFeatureSwitchProps = {
   id: string
   className?: string
   disabled?: boolean
+  recommended?: boolean
+  presetLabel?: MessageDescriptor
 }
 
 
@@ -23,7 +27,10 @@ export function ImageProcessingFeatureSwitch({
   previewFocus,
   id,
   disabled = false,
+  recommended = false,
+  presetLabel,
 }: ImageProcessingFeatureSwitchProps) {
+  const { i18n, t } = useLingui()
   const { onMouseEnter, onMouseLeave } = useDelayedPreviewFocus(previewFocus)
 
   function toggle() {
@@ -62,12 +69,21 @@ export function ImageProcessingFeatureSwitch({
     >
       <div className="flex min-w-0 flex-1 flex-row items-center self-stretch">
         <div className="flex min-h-px min-w-px flex-1 flex-col items-start justify-center gap-0.5">
-          <p
-            id={`${id}-title`}
-            className="w-full select-none text-lg font-semibold leading-[26px] tracking-tight text-foreground"
-          >
-            {title}
-          </p>
+          <div className="flex items-center gap-2">
+            <p
+              id={`${id}-title`}
+              className="select-none text-lg font-semibold leading-[26px] tracking-tight text-foreground"
+            >
+              {title}
+            </p>
+            {recommended && (
+              <span className="inline-flex shrink-0 items-center rounded-full border border-[#e5e5e5] bg-[#f5f5f5] px-2 py-0.5 text-[10px] font-medium leading-none text-[#525252]">
+                {presetLabel
+                  ? t`Recommended for ${i18n._(presetLabel)}`
+                  : t`Recommended`}
+              </span>
+            )}
+          </div>
           <p
             id={`${id}-subtitle`}
             className="w-full select-none text-base font-normal leading-5 text-muted-foreground"
