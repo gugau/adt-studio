@@ -5,7 +5,7 @@ import { useStore } from "@tanstack/react-form"
 import { Button } from "@/components/ui/button"
 import { useWizard } from "@/components/wizard"
 import { useWizardForm } from "@/components/wizard/wizardForm"
-import { type PresetId } from "@/components/wizard/constants"
+import { type PresetId, PRESETS } from "@/components/wizard/constants"
 import { PresetGrid } from "./PresetGrid"
 
 export function Step0Preset() {
@@ -20,6 +20,12 @@ export function Step0Preset() {
 
   function handleContinue() {
     if (!selected) return
+    const preset = PRESETS.find((p) => p.id === selected)
+    if (preset?.formDefaults) {
+      for (const [key, value] of Object.entries(preset.formDefaults)) {
+        form.setFieldValue(key as never, value as never)
+      }
+    }
     setCurrentStep(1)
   }
 

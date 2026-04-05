@@ -4,35 +4,38 @@ import {
   BookOpen,
   AlignLeft,
   SlidersHorizontal,
-} from "lucide-react"
-import type { MessageDescriptor } from "@lingui/core"
-import { msg } from "@lingui/core/macro"
-import type { ElementType } from "react"
-import { TwoColumnStoryStrategyIcon } from "@/components/wizard/icons/TwoColumnStoryStrategyIcon"
-import { TextbookWireframePreview } from "@/components/wizard/icons/TextbookWireframePreview"
-import { StorybookWireframePreview } from "@/components/wizard/icons/StorybookWireframePreview"
-import { ReferenceWireframePreview } from "@/components/wizard/icons/ReferenceWireframePreview"
-import type { WizardFormValues } from "./wizardForm"
+} from "lucide-react";
+import type { MessageDescriptor } from "@lingui/core";
+import { msg } from "@lingui/core/macro";
+import type { ElementType } from "react";
+import { TwoColumnStoryStrategyIcon } from "@/components/wizard/icons/TwoColumnStoryStrategyIcon";
+import { TextbookWireframePreview } from "@/components/wizard/icons/TextbookWireframePreview";
+import { StorybookWireframePreview } from "@/components/wizard/icons/StorybookWireframePreview";
+import { ReferenceWireframePreview } from "@/components/wizard/icons/ReferenceWireframePreview";
+import type { WizardFormValues } from "./wizardForm";
 
 // ─── Option shape ────────────────────────────────────────────────────────────
 
 export interface WizardOption<TId extends string = string> {
-  id: TId
-  Icon?: ElementType
-  title: MessageDescriptor
-  description?: MessageDescriptor
+  id: TId;
+  Icon?: ElementType;
+  title: MessageDescriptor;
+  description?: MessageDescriptor;
 }
 
 // ─── Render Strategy categories ──────────────────────────────────────────────
 
-export type StrategyCategory = "template" | "ai"
+export type StrategyCategory = "template" | "ai";
 
 export interface StrategyCategoryMeta {
-  label: MessageDescriptor
-  description: MessageDescriptor
+  label: MessageDescriptor;
+  description: MessageDescriptor;
 }
 
-export const STRATEGY_CATEGORIES: Record<StrategyCategory, StrategyCategoryMeta> = {
+export const STRATEGY_CATEGORIES: Record<
+  StrategyCategory,
+  StrategyCategoryMeta
+> = {
   template: {
     label: msg`Template-based`,
     description: msg`Fast, consistent results with no AI cost`,
@@ -41,10 +44,10 @@ export const STRATEGY_CATEGORIES: Record<StrategyCategory, StrategyCategoryMeta>
     label: msg`AI-powered`,
     description: msg`Adaptive layouts generated per page (slower, uses API credits)`,
   },
-}
+};
 
 export interface RenderStrategyOption extends WizardOption {
-  category: StrategyCategory
+  category: StrategyCategory;
 }
 
 // ─── Render Strategies (Step 2) ──────────────────────────────────────────────
@@ -85,53 +88,54 @@ export const RENDER_STRATEGIES = [
     description: msg`Perfect for children's books, pairing large images with minimal text.`,
     category: "template",
   },
-] as const satisfies readonly RenderStrategyOption[]
+] as const satisfies readonly RenderStrategyOption[];
 
-export type RenderStrategyId = (typeof RENDER_STRATEGIES)[number]["id"]
+export type RenderStrategyId = (typeof RENDER_STRATEGIES)[number]["id"];
 
 // ─── Preset defaults — typed against the wizard form ────────────────────────
 
-export type SectioningModeId = "page" | "dynamic" | "section"
+export type SectioningModeId = "page" | "dynamic" | "section";
 
-export type WizardPageGrouping = "" | "spread" | "single"
+export type WizardPageGrouping = "" | "spread" | "single";
 
-export type WizardSectioningMode = "" | SectioningModeId
+export type WizardSectioningMode = "" | SectioningModeId;
 
-export type PresetRecommendations = Partial<WizardFormValues>
+export type PresetRecommendations = Partial<WizardFormValues>;
 
 // ─── Preset types ────────────────────────────────────────────────────────────
 
-export type PresetId = "textbook" | "storybook" | "reference" | "custom"
+export type PresetId = "textbook" | "storybook" | "reference" | "custom";
 
 export interface ExampleBook {
-  title: MessageDescriptor
-  pdfUrl?: string
-  adtUrl?: string
-  comingSoon?: boolean
+  title: MessageDescriptor;
+  pdfUrl?: string;
+  adtUrl?: string;
+  comingSoon?: boolean;
 }
 
 export interface PresetConfig {
-  id: PresetId
-  imageSrc: string | null
-  Icon: React.ElementType
-  iconColor: string
-  bgColor: string
-  title: MessageDescriptor
-  description: MessageDescriptor
-  renderStrategies?: readonly RenderStrategyId[]
-  recommendedStrategies?: readonly RenderStrategyId[]
-  recommendedFor: MessageDescriptor[]
-  exampleBooks: ExampleBook[]
-  recommendations: PresetRecommendations
+  id: PresetId;
+  imageSrc: string | null;
+  Icon: React.ElementType;
+  iconColor: string;
+  bgColor: string;
+  title: MessageDescriptor;
+  description: MessageDescriptor;
+  renderStrategies?: readonly RenderStrategyId[];
+  recommendedStrategies?: readonly RenderStrategyId[];
+  recommendedFor: MessageDescriptor[];
+  exampleBooks: ExampleBook[];
+  recommendations: PresetRecommendations;
+  formDefaults?: Partial<WizardFormValues>;
+  baseConfig?: Record<string, unknown>;
 }
-
 
 // ─── Demo URLs (shared across all presets until per-preset assets are ready) ─
 
 const DEMO_PDF_URL =
-  "https://ontheline.trincoll.edu/images/bookdown/sample-local-pdf.pdf"
+  "https://ontheline.trincoll.edu/images/bookdown/sample-local-pdf.pdf";
 const DEMO_ADT_URL =
-  "https://elasticsounds.github.io/adt-brazil-demo/index.html"
+  "https://elasticsounds.github.io/adt-brazil-demo/index.html";
 
 // ─── Presets ─────────────────────────────────────────────────────────────────
 
@@ -158,7 +162,10 @@ export const PRESETS: PresetConfig[] = [
         pdfUrl: DEMO_PDF_URL,
         adtUrl: DEMO_ADT_URL,
       },
-      { title: msg`Ciências da Natureza - Ensino Fundamental`, comingSoon: true },
+      {
+        title: msg`Ciências da Natureza - Ensino Fundamental`,
+        comingSoon: true,
+      },
       { title: msg`História e Sociedade - Vol. 1`, comingSoon: true },
       { title: msg`Língua Portuguesa - 3° Ano`, comingSoon: true },
     ],
@@ -169,9 +176,135 @@ export const PRESETS: PresetConfig[] = [
       activitiesGenerator: true,
       imageCropping: false,
       imageSegmentation: true,
+    },
+    formDefaults: {
       imageFilterMinSide: 50,
       imageFilterMaxSide: 3500,
-      styleguide: "default",
+    },
+    baseConfig: {
+      render_strategies: {
+        llm: {
+          render_type: "llm",
+          config: {
+            prompt: "web_generation_html",
+            model: "openai:gpt-5.2",
+            max_retries: 5,
+            timeout: 180,
+            temperature: 0.3,
+            visual_refinement: { enabled: true, max_iterations: 20 },
+          },
+        },
+        "llm-overlay": {
+          render_type: "llm",
+          config: {
+            prompt: "web_generation_html_overlay",
+            model: "openai:gpt-5.2",
+            max_retries: 25,
+            timeout: 180,
+            temperature: 0.3,
+            visual_refinement: { enabled: true, max_iterations: 5 },
+          },
+        },
+        two_column: {
+          render_type: "template",
+          config: { template: "two_column_render" },
+        },
+        activity_multiple_choice: {
+          render_type: "activity",
+          config: {
+            prompt: "activity_multiple_choice",
+            answer_prompt: "activity_multiple_choice_answers",
+            model: "openai:gpt-5.2",
+            max_retries: 5,
+            timeout: 180,
+            temperature: 0.3,
+            visual_refinement: { enabled: true, max_iterations: 5 },
+          },
+        },
+        activity_true_false: {
+          render_type: "activity",
+          config: {
+            prompt: "activity_true_false",
+            answer_prompt: "activity_true_false_answers",
+            model: "openai:gpt-5.2",
+            max_retries: 5,
+            timeout: 180,
+            temperature: 0.3,
+            visual_refinement: { enabled: true, max_iterations: 5 },
+          },
+        },
+        activity_fill_in_the_blank: {
+          render_type: "activity",
+          config: {
+            prompt: "activity_fill_in_the_blank",
+            answer_prompt: "activity_fill_in_the_blank_answers",
+            model: "openai:gpt-5.2",
+            max_retries: 5,
+            timeout: 180,
+            temperature: 0.3,
+            visual_refinement: { enabled: true, max_iterations: 5 },
+          },
+        },
+        activity_fill_in_a_table: {
+          render_type: "activity",
+          config: {
+            prompt: "activity_fill_in_a_table",
+            answer_prompt: "activity_fill_in_a_table_answers",
+            model: "openai:gpt-5.2",
+            max_retries: 5,
+            timeout: 180,
+            temperature: 0.3,
+            visual_refinement: { enabled: true, max_iterations: 5 },
+          },
+        },
+        activity_matching: {
+          render_type: "activity",
+          config: {
+            prompt: "activity_matching",
+            answer_prompt: "activity_matching_answers",
+            model: "openai:gpt-5.2",
+            max_retries: 5,
+            timeout: 180,
+            temperature: 0.3,
+            visual_refinement: { enabled: true, max_iterations: 5 },
+          },
+        },
+        activity_sorting: {
+          render_type: "activity",
+          config: {
+            prompt: "activity_sorting",
+            answer_prompt: "activity_sorting_answers",
+            model: "openai:gpt-5.2",
+            max_retries: 5,
+            timeout: 180,
+            temperature: 0.3,
+            visual_refinement: { enabled: true, max_iterations: 5 },
+          },
+        },
+        activity_open_ended_answer: {
+          render_type: "activity",
+          config: {
+            prompt: "activity_open_ended_answer",
+            model: "openai:gpt-5.2",
+            max_retries: 5,
+            timeout: 180,
+            temperature: 0.3,
+            visual_refinement: { enabled: true, max_iterations: 5 },
+          },
+        },
+      },
+      section_render_strategies: {
+        activity_multiple_choice: "activity_multiple_choice",
+        activity_true_false: "activity_true_false",
+        activity_fill_in_the_blank: "activity_fill_in_the_blank",
+        activity_fill_in_a_table: "activity_fill_in_a_table",
+        activity_matching: "activity_matching",
+        activity_sorting: "activity_sorting",
+        activity_open_ended_answer: "activity_open_ended_answer",
+      },
+      pruned_text_types: ["header_text", "footer_text", "page_number"],
+      pruned_section_types: ["back_cover", "credits", "inside_cover"],
+      image_filters: { min_stddev: 2 },
     },
   },
   {
@@ -205,8 +338,56 @@ export const PRESETS: PresetConfig[] = [
       sectioningMode: "page",
       imageCropping: false,
       imageSegmentation: false,
+    },
+    formDefaults: {
       imageFilterMinSide: 150,
       imageFilterMaxSide: 3500,
+    },
+    baseConfig: {
+      render_strategies: {
+        two_column_story: {
+          render_type: "template",
+          config: { template: "two_column_story" },
+        },
+        two_column: {
+          render_type: "template",
+          config: { template: "two_column_render" },
+        },
+        llm: {
+          render_type: "llm",
+          config: {
+            prompt: "web_generation_html",
+            model: "openai:gpt-5.2",
+            max_retries: 5,
+            timeout: 180,
+          },
+        },
+        "llm-overlay": {
+          render_type: "llm",
+          config: {
+            prompt: "web_generation_html_overlay",
+            model: "openai:gpt-5.2",
+            max_retries: 25,
+            timeout: 180,
+          },
+        },
+      },
+      section_render_strategies: {},
+      pruned_text_types: ["header_text", "footer_text", "page_number"],
+      pruned_section_types: [
+        "back_cover",
+        "credits",
+        "inside_cover",
+        "activity_multiple_choice",
+        "activity_true_false",
+        "activity_fill_in_the_blank",
+        "activity_fill_in_a_table",
+        "activity_matching",
+        "activity_sorting",
+        "activity_open_ended_answer",
+      ],
+      image_filters: { min_stddev: 2 },
+      quiz_generation: { pages_per_quiz: 3 },
     },
   },
   {
@@ -240,8 +421,57 @@ export const PRESETS: PresetConfig[] = [
       sectioningMode: "page",
       imageCropping: false,
       imageSegmentation: false,
+    },
+    formDefaults: {
       imageFilterMinSide: 100,
       imageFilterMaxSide: 5000,
+    },
+    baseConfig: {
+      render_strategies: {
+        single_column: {
+          render_type: "template",
+          config: { template: "one_column_render" },
+        },
+        two_column: {
+          render_type: "template",
+          config: { template: "two_column_render" },
+        },
+        llm: {
+          render_type: "llm",
+          config: {
+            prompt: "web_generation_html",
+            model: "openai:gpt-5.2",
+            max_retries: 5,
+            timeout: 180,
+            visual_refinement: { enabled: true, max_iterations: 20 },
+          },
+        },
+        "llm-overlay": {
+          render_type: "llm",
+          config: {
+            prompt: "web_generation_html_overlay",
+            model: "openai:gpt-5.2",
+            max_retries: 25,
+            timeout: 180,
+            visual_refinement: { enabled: true, max_iterations: 5 },
+          },
+        },
+      },
+      section_render_strategies: {},
+      pruned_text_types: ["header_text", "footer_text", "page_number"],
+      pruned_section_types: [
+        "back_cover",
+        "credits",
+        "inside_cover",
+        "activity_multiple_choice",
+        "activity_true_false",
+        "activity_fill_in_the_blank",
+        "activity_fill_in_a_table",
+        "activity_matching",
+        "activity_sorting",
+        "activity_open_ended_answer",
+      ],
+      image_filters: { min_stddev: 2 },
     },
   },
   {
@@ -268,23 +498,22 @@ export const PRESETS: PresetConfig[] = [
     ],
     recommendations: {},
   },
-]
+];
 
-export const PRESET_RECOMMENDATIONS: Record<PresetId, PresetRecommendations> = Object.fromEntries(
-  PRESETS.map((p) => [p.id, p.recommendations]),
-) as Record<PresetId, PresetRecommendations>
+export const PRESET_RECOMMENDATIONS: Record<PresetId, PresetRecommendations> =
+  Object.fromEntries(PRESETS.map((p) => [p.id, p.recommendations])) as Record<
+    PresetId,
+    PresetRecommendations
+  >;
 
-
-const FIELD_LABELS: Partial<Record<keyof WizardFormValues, MessageDescriptor>> = {
-  renderStrategy: msg`Render Strategy`,
-  pageGrouping: msg`Page Grouping`,
-  sectioningMode: msg`Sectioning`,
-  imageCropping: msg`Smart Cropping`,
-  imageSegmentation: msg`Image Segmentation`,
-  imageFilterMinSide: msg`Min Image Size`,
-  imageFilterMaxSide: msg`Max Image Size`,
-  styleguide: msg`Style Guide`,
-}
+const FIELD_LABELS: Partial<Record<keyof WizardFormValues, MessageDescriptor>> =
+  {
+    renderStrategy: msg`Render Strategy`,
+    pageGrouping: msg`Page Grouping`,
+    sectioningMode: msg`Sectioning`,
+    imageCropping: msg`Smart Cropping`,
+    imageSegmentation: msg`Image Segmentation`,
+  };
 
 const VALUE_LABELS: Record<string, MessageDescriptor> = {
   single_column: msg`Single Column`,
@@ -297,16 +526,16 @@ const VALUE_LABELS: Record<string, MessageDescriptor> = {
   page: msg`Per Page`,
   dynamic: msg`Dynamic`,
   section: msg`By Section`,
-}
+};
 
 function formatDefaultValue(
   key: keyof WizardFormValues,
   value: unknown,
 ): MessageDescriptor | string {
-  if (typeof value === "boolean") return value ? msg`On` : msg`Off`
-  if (typeof value === "number") return `${value}px`
-  const str = String(value)
-  return VALUE_LABELS[str] ?? str
+  if (typeof value === "boolean") return value ? msg`On` : msg`Off`;
+  if (typeof value === "number") return `${value}px`;
+  const str = String(value);
+  return VALUE_LABELS[str] ?? str;
 }
 
 export function getPresetRecommendationEntries(
@@ -317,5 +546,5 @@ export function getPresetRecommendationEntries(
     .map(([key, value]) => ({
       label: FIELD_LABELS[key as keyof WizardFormValues]!,
       value: formatDefaultValue(key as keyof WizardFormValues, value),
-    }))
+    }));
 }
