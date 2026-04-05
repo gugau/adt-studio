@@ -57,24 +57,22 @@ export function usePdfPreviewPages(params: UsePdfPreviewPagesParams) {
     }
 
     let cancelled = false
+    let objectUrl: string | null = null
+
     setPages([])
     setIsLoading(true)
     setError(null)
 
     ;(async () => {
       try {
-        const bytes = file
-          ? await file.arrayBuffer()
-          : await fetch(src as string).then(async (response) => {
-              if (!response.ok) throw new Error(`HTTP ${response.status}`)
-              return response.arrayBuffer()
-            })
-        if (cancelled) return
+        const documentSource = file
+          ? { url: (objectUrl = URL.createObjectURL(file)) }
+          : { url: src as string }
 
         const pdfjs = await getPdfJs()
         if (cancelled) return
 
-        const pdf = await pdfjs.getDocument({ data: bytes }).promise
+        const pdf = await pdfjs.getDocument(documentSource).promise
         if (cancelled) {
           await pdf.destroy().catch(() => {})
           return
@@ -83,7 +81,8 @@ export function usePdfPreviewPages(params: UsePdfPreviewPagesParams) {
         try {
           const result: string[] = []
           const lastPage = mode === "first" ? 1 : pdf.numPages
-          for (let pageNumber = 1; pageNumber <= lastPage; pageNumber += 1) {
+
+          for (let pageNumber = 1; pageNumber <= lastPage; pageNumber++) {
             const page = await pdf.getPage(pageNumber)
             if (cancelled) return
 
@@ -104,13 +103,14 @@ export function usePdfPreviewPages(params: UsePdfPreviewPagesParams) {
             canvas.height = Math.floor(viewport.height)
             await page.render({ canvas, canvasContext: ctx, viewport }).promise
             if (cancelled) return
+
             result.push(canvas.toDataURL("image/jpeg", JPEG_QUALITY))
+
+            setPages([...result])
+            if (pageNumber === 1) setIsLoading(false)
           }
 
-          if (cancelled) return
           rememberInCache(cacheKey, result)
-          setPages(result)
-          setIsLoading(false)
         } finally {
           await pdf.destroy().catch(() => {})
         }
@@ -123,6 +123,7 @@ export function usePdfPreviewPages(params: UsePdfPreviewPagesParams) {
 
     return () => {
       cancelled = true
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
   }, [file, src, mode, width, height])
 
