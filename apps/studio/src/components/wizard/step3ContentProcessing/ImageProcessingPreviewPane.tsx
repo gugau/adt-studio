@@ -200,7 +200,7 @@ function CroppingIllustration() {
       </div>
 
       <div className="flex flex-col items-center gap-1.5 text-muted-foreground" aria-hidden>
-        <svg className="h-5 w-5 rotate-90 sm:rotate-0" viewBox="0 0 20 20" fill="none">
+        <svg className="h-5 w-5 rotate-90 @sm:rotate-0" viewBox="0 0 20 20" fill="none">
           <path d="M4 10h12M12 6l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         <span className="text-[9px] font-semibold uppercase tracking-wider">
