@@ -12,6 +12,7 @@ import { useWizard } from "./index"
 import { useWizardForm } from "./wizardForm"
 import { STEPS } from "./steps"
 import { buildConfigOverrides } from "./bookCreationConfig"
+import { getPresetAccent, type PresetAccent } from "./constants"
 import { Step0Preset } from "./step0preset"
 import { StudioTopBar } from "@/components/StudioTopBar"
 import { PdfCoverPreview } from "./shared/PdfCoverPreview"
@@ -23,7 +24,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
-function WizardHeader({ step }: { step: number }) {
+function WizardHeader({ step, accent }: { step: number; accent: PresetAccent }) {
   const { i18n, t } = useLingui()
   const def = STEPS[step - 1]
   return (
@@ -32,7 +33,10 @@ function WizardHeader({ step }: { step: number }) {
         <span className="inline-flex items-center bg-[#fef2f2] text-[#ef4444] text-[12px] font-semibold leading-4 px-[10px] py-[4px] rounded-[4px]">
           {t`Required Fields`}
         </span>
-        <span className="text-[14px] font-bold leading-5 text-[#3b82f6] uppercase tracking-wide animate-wizard-enter">
+        <span
+          className="text-[14px] font-bold leading-5 uppercase tracking-wide animate-wizard-enter"
+          style={{ color: accent.text, transition: "color 0.4s ease" }}
+        >
           {t`Step ${step} of ${STEPS.length}`}
         </span>
       </div>
@@ -52,6 +56,7 @@ function WizardFooter({
   onBack,
   onNext,
   onCreate,
+  accent,
 }: {
   isLastStep: boolean
   canContinue: boolean
@@ -59,6 +64,7 @@ function WizardFooter({
   onBack: () => void
   onNext: () => void
   onCreate: () => void
+  accent: PresetAccent
 }) {
   const { t } = useLingui()
 
@@ -85,7 +91,8 @@ function WizardFooter({
                   type="button"
                   disabled={isLastStep ? !canCreate : !canContinue}
                   onClick={isLastStep ? onCreate : onNext}
-                  className="flex h-10 w-full items-center justify-center overflow-hidden bg-[#2b7fff] px-4 font-medium text-white transition-opacity duration-300 ease-out hover:bg-[#1a6fef] disabled:opacity-50 border-0"
+                  className="flex h-10 w-full items-center justify-center overflow-hidden px-4 font-medium text-white transition-[background-color,opacity] duration-300 ease-out hover:opacity-90 disabled:opacity-50 border-0"
+                  style={{ backgroundColor: accent.bg }}
                 >
                   <span
                     key={isLastStep ? "create-final" : "next"}
@@ -169,6 +176,7 @@ export function BookCreationWizard() {
 
   const values = useStore(form.store, (s) => s.values)
   const { file, renderStrategy, editingLanguage, outputLanguages, styleguide } = values
+  const accent = getPresetAccent(values.selectedPreset)
   const stepIndex = currentStep - 1
   const existingBookLabels = books?.map((b: { label: string }) => b.label) ?? []
   const stepValidationContext = { existingBookLabels }
@@ -259,7 +267,8 @@ export function BookCreationWizard() {
             <button
               type="button"
               onClick={() => setPreviewOpen(true)}
-              className="flex items-center gap-1.5 text-sm font-medium text-[#2b7fff]"
+              className="flex items-center gap-1.5 text-sm font-medium"
+              style={{ color: accent.text, transition: "color 0.4s ease" }}
             >
               <Eye className="h-4 w-4" />
               {t`Preview`}
@@ -267,7 +276,7 @@ export function BookCreationWizard() {
           </div>
 
           <div className="mx-auto flex w-full min-h-0 lg:pr-8 flex-1 flex-col overflow-hidden">
-            <WizardHeader step={currentStep} />
+            <WizardHeader step={currentStep} accent={accent} />
 
             <div className="min-h-0 flex-1 overflow-y-auto">
               <StepComponent />
@@ -287,6 +296,7 @@ export function BookCreationWizard() {
             onBack={handleBack}
             onNext={handleNext}
             onCreate={handleCreate}
+            accent={accent}
           />
         </aside>
 

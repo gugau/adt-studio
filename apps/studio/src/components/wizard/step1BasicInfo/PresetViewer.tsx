@@ -3,7 +3,7 @@ import { Trans, useLingui } from "@lingui/react/macro"
 import { useStore } from "@tanstack/react-form"
 import { useWizard } from "@/components/wizard"
 import { useWizardForm } from "@/components/wizard/wizardForm"
-import { PRESETS } from "@/components/wizard/constants"
+import { PRESETS, getPresetAccent } from "@/components/wizard/constants"
 
 export function PresetViewer() {
   const { i18n } = useLingui()
@@ -11,6 +11,7 @@ export function PresetViewer() {
   const form = useWizardForm()
   const selectedPreset = useStore(form.store, (s) => s.values.selectedPreset)
   const preset = PRESETS.find((p) => p.id === selectedPreset)
+  const accent = getPresetAccent(selectedPreset)
 
   if (!preset) return null
 
@@ -23,7 +24,8 @@ export function PresetViewer() {
         <button
           type="button"
           onClick={() => setCurrentStep(0)}
-          className="flex items-center gap-1.5 text-xs font-medium text-[#2b7fff] hover:text-[#1a6fef] transition-colors cursor-pointer hover:underline"
+          className="flex items-center gap-1.5 text-xs font-medium transition-[color,opacity] duration-300 cursor-pointer hover:underline hover:opacity-80"
+          style={{ color: accent.text }}
         >
           <RotateCcw className="h-3 w-3" />
           <Trans>Change Preset</Trans>

@@ -4,7 +4,7 @@ import { useLingui, Trans } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import { usePresetRecommendations } from "@/components/wizard/usePresetRecommendations"
-import { PRESETS } from "@/components/wizard/constants"
+import { PRESETS, getPresetAccent } from "@/components/wizard/constants"
 import { SingleValueSlider, RangeSlider } from "@/components/wizard/shared/RangeSlider"
 import { ImageProcessingFeatureSwitch } from "./ImageProcessingFeatureSwitch"
 import { useDelayedPreviewFocus } from "@/components/wizard"
@@ -38,10 +38,12 @@ function SegmentationThresholdPanel({
   segmentationMinSide,
   onMinSideChange,
   disabled,
+  color,
 }: {
   segmentationMinSide: string
   onMinSideChange: (v: string) => void
   disabled: boolean
+  color?: string
 }) {
   const { i18n } = useLingui()
   // Preview focus id (not user-visible).
@@ -69,6 +71,7 @@ function SegmentationThresholdPanel({
         disabled={disabled}
         minValueLabel={i18n._(MIN_DIM_NONE)}
         valueUnit={i18n._(VALUE_UNIT_PX)}
+        color={color}
       />
       <p className="mt-3 text-sm text-muted-foreground">{i18n._(MIN_DIM_HELP)}</p>
     </div>
@@ -81,6 +84,7 @@ export function Step3() {
   const recommendations = usePresetRecommendations()
   const selectedPresetId = useStore(form.store, (s) => s.values.selectedPreset)
   const preset = PRESETS.find((p) => p.id === selectedPresetId)
+  const accent = getPresetAccent(selectedPresetId)
   // eslint-disable-next-line lingui/no-unlocalized-strings -- ImageProcessingPreviewFocus key
   const filterSizeHover = useDelayedPreviewFocus("filterSize")
 
@@ -106,6 +110,7 @@ export function Step3() {
           onCheckedChange={(checked) => form.setFieldValue("activitiesGenerator", checked)}
           recommended={recommendations.activitiesGenerator === true}
           presetLabel={preset?.title}
+          accent={accent}
         />
       </div>
 
@@ -123,6 +128,7 @@ export function Step3() {
           onCheckedChange={(checked) => form.setFieldValue("imageCropping", checked)}
           recommended={recommendations.imageCropping === true}
           presetLabel={preset?.title}
+          accent={accent}
         />
 
         <div className="flex w-full flex-col">
@@ -135,6 +141,7 @@ export function Step3() {
             onCheckedChange={(checked) => form.setFieldValue("imageSegmentation", checked)}
             recommended={recommendations.imageSegmentation === true}
             presetLabel={preset?.title}
+            accent={accent}
           />
           <div
             className={cn(
@@ -156,6 +163,7 @@ export function Step3() {
                 segmentationMinSide={segmentationMinSide}
                 onMinSideChange={(v) => form.setFieldValue("segmentationMinSide", v)}
                 disabled={!imageSegmentation}
+                color={accent.bg}
               />
             </div>
           </div>
@@ -180,6 +188,7 @@ export function Step3() {
             }}
             startLabel={i18n._(FILTER_MIN_LABEL)}
             endLabel={i18n._(FILTER_MAX_LABEL)}
+            color={accent.bg}
           />
         </div>
       </div>

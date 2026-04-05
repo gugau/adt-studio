@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { SectioningModeId } from "@/components/wizard/constants"
+import type { SectioningModeId, PresetAccent } from "@/components/wizard/constants"
 
 function PageIcon({ className }: { className?: string }) {
   return (
@@ -60,9 +60,10 @@ export type SectioningModeSelectProps = {
   onValueChange: (value: SectioningModeId) => void
   recommended?: SectioningModeId
   presetLabel?: MessageDescriptor
+  accent?: PresetAccent
 }
 
-export function SectioningModeSelect({ id, value, onValueChange, recommended, presetLabel }: SectioningModeSelectProps) {
+export function SectioningModeSelect({ id, value, onValueChange, recommended, presetLabel, accent }: SectioningModeSelectProps) {
   const { i18n, t } = useLingui()
 
   const options = useMemo(
@@ -99,7 +100,13 @@ export function SectioningModeSelect({ id, value, onValueChange, recommended, pr
               <o.Icon className="size-4 shrink-0 text-muted-foreground" />
               {o.label}
               {recommended === o.value && (
-                <span className="inline-flex items-center rounded-full border border-[#e5e5e5] bg-[#f5f5f5] px-2 py-0.5 text-[10px] font-medium leading-none text-[#525252]">
+                <span
+                  className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium leading-none"
+                  style={accent
+                    ? { borderColor: `${accent.bg}40`, backgroundColor: `${accent.bg}10`, color: accent.text, transition: "border-color 0.4s ease, background-color 0.4s ease, color 0.4s ease" }
+                    : { borderColor: "#e5e5e5", backgroundColor: "#f5f5f5", color: "#525252" }
+                  }
+                >
                   {presetLabel
                     ? t`Recommended for ${i18n._(presetLabel)}`
                     : t`Recommended`}

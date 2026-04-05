@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import { useStyleguides, useUploadStyleguide } from "@/hooks/use-presets"
+import { getPresetAccent, type PresetAccent } from "@/components/wizard/constants"
 
 const DESCRIPTION_PRIMARY = msg`A style guide provides consistent HTML and CSS patterns that the LLM uses when generating pages. It controls typography, colors, spacing, and component styles so every page in your book has a unified look.`
 const DESCRIPTION_SECONDARY = msg`Selecting "None" lets the LLM choose its own styling for each page.`
@@ -22,30 +23,40 @@ function StyleguideOption({
   name,
   selected,
   onSelect,
+  accent,
 }: {
   name: string
   selected: boolean
   onSelect: () => void
+  accent: PresetAccent
 }) {
   return (
     <button
       type="button"
       onClick={onSelect}
       className={cn(
-        "flex w-full cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 shadow-sm transition-colors text-left",
+        "flex w-full cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 shadow-sm text-left",
         "bg-white border-border",
         "hover:bg-muted hover:border-input",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        selected && "border-primary/50 bg-primary/5",
+        selected && "border",
       )}
+      style={
+        selected
+          ? { borderColor: `${accent.bg}80`, backgroundColor: `${accent.bg}0d`, transition: "border-color 0.4s ease, background-color 0.4s ease" }
+          : { transition: "border-color 0.4s ease, background-color 0.4s ease" }
+      }
     >
       <div
         className={cn(
-          "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors",
-          selected
-            ? "border-primary bg-primary text-primary-foreground"
-            : "border-muted-foreground/30 bg-white",
+          "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
+          selected ? "text-white" : "border-muted-foreground/30 bg-white",
         )}
+        style={
+          selected
+            ? { borderColor: accent.bg, backgroundColor: accent.bg, transition: "border-color 0.4s ease, background-color 0.4s ease" }
+            : { transition: "border-color 0.4s ease, background-color 0.4s ease" }
+        }
       >
         {selected && <Check className="h-3 w-3" />}
       </div>
@@ -61,6 +72,8 @@ export function Step5() {
   const form = useWizardForm()
   const { i18n } = useLingui()
   const styleguide = useStore(form.store, (s) => s.values.styleguide)
+  const selectedPreset = useStore(form.store, (s) => s.values.selectedPreset)
+  const accent = getPresetAccent(selectedPreset)
   const { data: styleguidesData, isLoading } = useStyleguides()
   const available = styleguidesData?.styleguides ?? []
   const [search, setSearch] = useState("")
@@ -116,6 +129,7 @@ export function Step5() {
               name={i18n._(NONE_OPTION)}
               selected={styleguide === ""}
               onSelect={() => form.setFieldValue("styleguide", "")}
+              accent={accent}
             />
 
             {isLoading && (
@@ -128,6 +142,7 @@ export function Step5() {
                 name={sg}
                 selected={styleguide === sg}
                 onSelect={() => select(sg)}
+                accent={accent}
               />
             ))}
           </div>

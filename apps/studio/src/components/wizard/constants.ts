@@ -500,6 +500,27 @@ export const PRESETS: PresetConfig[] = [
   },
 ];
 
+// ─── Preset accent colors ────────────────────────────────────────────────────
+
+export interface PresetAccent {
+  bg: string
+  hover: string
+  text: string
+}
+
+const PRESET_ACCENT_MAP: Record<string, PresetAccent> = {
+  textbook:  { bg: "#3b82f6", hover: "#2563eb", text: "#3b82f6" },
+  storybook: { bg: "#f59e0b", hover: "#d97706", text: "#f59e0b" },
+  reference: { bg: "#10b981", hover: "#059669", text: "#10b981" },
+  custom:    { bg: "#8b5cf6", hover: "#7c3aed", text: "#8b5cf6" },
+}
+
+const DEFAULT_PRESET_ACCENT: PresetAccent = { bg: "#2b7fff", hover: "#1a6fef", text: "#2b7fff" }
+
+export function getPresetAccent(presetId: string | null | undefined): PresetAccent {
+  return (presetId ? PRESET_ACCENT_MAP[presetId] : undefined) ?? DEFAULT_PRESET_ACCENT
+}
+
 export const PRESET_RECOMMENDATIONS: Record<PresetId, PresetRecommendations> =
   Object.fromEntries(PRESETS.map((p) => [p.id, p.recommendations])) as Record<
     PresetId,

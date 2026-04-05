@@ -5,7 +5,7 @@ import { useStore } from "@tanstack/react-form"
 import { Button } from "@/components/ui/button"
 import { useWizard } from "@/components/wizard"
 import { useWizardForm } from "@/components/wizard/wizardForm"
-import { type PresetId, PRESETS } from "@/components/wizard/constants"
+import { type PresetId, PRESETS, getPresetAccent } from "@/components/wizard/constants"
 import { PresetGrid } from "./PresetGrid"
 
 export function Step0Preset() {
@@ -13,6 +13,7 @@ export function Step0Preset() {
   const { setCurrentStep } = useWizard()
   const form = useWizardForm()
   const selected = useStore(form.store, (s) => s.values.selectedPreset) as PresetId | null
+  const accent = getPresetAccent(selected)
 
   function handleSelect(id: PresetId) {
     form.setFieldValue("selectedPreset", id)
@@ -54,7 +55,8 @@ export function Step0Preset() {
         <Button
           disabled={!selected}
           onClick={handleContinue}
-          className="h-9 px-3 py-2 bg-[#2b7fff] text-white hover:bg-[#1a6fef] border-0"
+          className="h-9 px-3 py-2 text-white transition-[background-color,opacity] duration-300 ease-out hover:opacity-90 disabled:opacity-50 border-0"
+          style={{ backgroundColor: accent.bg }}
         >
           <Trans>Continue</Trans>
           <ArrowRight className="h-4 w-4 ml-1.5" />

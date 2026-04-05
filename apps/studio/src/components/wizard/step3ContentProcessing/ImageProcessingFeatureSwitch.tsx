@@ -1,7 +1,8 @@
 import type { MessageDescriptor } from "@lingui/core"
+import type { PresetAccent } from "@/components/wizard/constants"
 import { useLingui } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
-import { ImageProcessingSwitch } from "./ImageProcessingSwitch"
+import { WizardSwitch } from "@/components/wizard/shared/WizardSwitch"
 import type { ImageProcessingPreviewFocus } from "./imageProcessingPreviewTypes"
 import { useDelayedPreviewFocus } from "@/components/wizard"
 
@@ -16,6 +17,7 @@ export type ImageProcessingFeatureSwitchProps = {
   disabled?: boolean
   recommended?: boolean
   presetLabel?: MessageDescriptor
+  accent?: PresetAccent
 }
 
 
@@ -29,6 +31,7 @@ export function ImageProcessingFeatureSwitch({
   disabled = false,
   recommended = false,
   presetLabel,
+  accent,
 }: ImageProcessingFeatureSwitchProps) {
   const { i18n, t } = useLingui()
   const { onMouseEnter, onMouseLeave } = useDelayedPreviewFocus(previewFocus)
@@ -77,7 +80,13 @@ export function ImageProcessingFeatureSwitch({
               {title}
             </p>
             {recommended && (
-              <span className="inline-flex shrink-0 items-center rounded-full border border-[#e5e5e5] bg-[#f5f5f5] px-2 py-0.5 text-[10px] font-medium leading-none text-[#525252]">
+              <span
+                className="inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[10px] font-medium leading-none"
+                style={accent
+                  ? { borderColor: `${accent.bg}40`, backgroundColor: `${accent.bg}10`, color: accent.text, transition: "border-color 0.4s ease, background-color 0.4s ease, color 0.4s ease" }
+                  : { borderColor: "#e5e5e5", backgroundColor: "#f5f5f5", color: "#525252" }
+                }
+              >
                 {presetLabel
                   ? t`Recommended for ${i18n._(presetLabel)}`
                   : t`Recommended`}
@@ -92,11 +101,12 @@ export function ImageProcessingFeatureSwitch({
           </p>
         </div>
       </div>
-      <ImageProcessingSwitch
+      <WizardSwitch
         id={`${id}-switch`}
         checked={checked}
         decorative
         disabled={disabled}
+        color={accent?.bg}
       />
     </div>
   )

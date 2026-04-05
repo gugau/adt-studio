@@ -8,6 +8,8 @@ import {
   RENDER_STRATEGIES,
   PRESETS,
   STRATEGY_CATEGORIES,
+  getPresetAccent,
+  type PresetAccent,
   type RenderStrategyId,
   type StrategyCategory,
 } from "@/components/wizard/constants"
@@ -27,6 +29,7 @@ function StrategyRadio({
   category,
   selected,
   onSelect,
+  accent,
 }: {
   id: RenderStrategyId
   Icon: ElementType
@@ -35,6 +38,7 @@ function StrategyRadio({
   category: StrategyCategory
   selected: boolean
   onSelect: () => void
+  accent: PresetAccent
 }) {
   const { i18n } = useLingui()
   const chip = CATEGORY_CHIP[category]
@@ -44,12 +48,15 @@ function StrategyRadio({
     <label
       htmlFor={`strategy-${id}`}
       className={cn(
-        "flex w-full cursor-pointer items-stretch gap-2 rounded-lg p-2 text-left transition-colors",
+        "flex w-full cursor-pointer items-stretch gap-2 rounded-lg p-2 text-left",
         "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-background",
-        selected
-          ? "border border-[#2b7fff] bg-[#eff6ff] hover:bg-[#e0edff]"
-          : "border border-[#e5e5e5] bg-white hover:bg-[#fafafa]",
+        selected ? "border" : "border border-[#e5e5e5] bg-white hover:bg-[#fafafa]",
       )}
+      style={
+        selected
+          ? { borderColor: accent.bg, backgroundColor: `${accent.bg}12`, transition: "border-color 0.4s ease, background-color 0.4s ease" }
+          : { transition: "border-color 0.4s ease, background-color 0.4s ease" }
+      }
       title={i18n._(categoryHint)}
     >
       <input
@@ -63,10 +70,8 @@ function StrategyRadio({
       />
       <div className="flex size-14 shrink-0 items-center justify-center">
         <Icon
-          className={cn(
-            "size-10 shrink-0 transition-colors",
-            selected ? "text-[#2b7fff]" : "text-[#a3a3a3]",
-          )}
+          className={cn("size-10 shrink-0", !selected && "text-[#a3a3a3]")}
+          style={selected ? { color: accent.text, transition: "color 0.4s ease" } : { transition: "color 0.4s ease" }}
           strokeWidth={1.5}
           aria-hidden
         />
@@ -103,6 +108,7 @@ export function RenderStrategyPicker() {
   const allowedIds = preset?.renderStrategies
   const recommended = preset?.recommendedStrategies
   const presetLabel = preset?.title
+  const accent = getPresetAccent(selectedPresetId)
 
   const strategies = allowedIds
     ? RENDER_STRATEGIES.filter((s) => allowedIds.includes(s.id))
@@ -156,6 +162,7 @@ export function RenderStrategyPicker() {
                 category={strategy.category}
                 selected={renderStrategy === strategy.id}
                 onSelect={() => handleSelect(strategy.id)}
+                accent={accent}
               />
             ))}
           </div>
@@ -182,6 +189,7 @@ export function RenderStrategyPicker() {
                 category={strategy.category}
                 selected={renderStrategy === strategy.id}
                 onSelect={() => handleSelect(strategy.id)}
+                accent={accent}
               />
             ))}
           </div>

@@ -21,6 +21,7 @@ interface RangeSliderProps {
   disabled?: boolean;
   startLabel?: string;
   endLabel?: string;
+  color?: string;
 }
 
 export interface SingleValueSliderProps {
@@ -33,6 +34,7 @@ export interface SingleValueSliderProps {
   disabled?: boolean;
   minValueLabel?: string;
   valueUnit?: string;
+  color?: string;
 }
 
 function clampToRange(n: number, lo: number, hi: number) {
@@ -121,6 +123,7 @@ export function SingleValueSlider({
   disabled,
   minValueLabel,
   valueUnit = "px",
+  color,
 }: SingleValueSliderProps) {
   const groupLabelId = useId();
   const boundedMin = Number.isFinite(min) ? min : 0;
@@ -172,6 +175,7 @@ export function SingleValueSlider({
           if (n !== undefined) onChange(n);
         }}
         disabled={disabled}
+        color={color}
       />
     </div>
   );
@@ -187,6 +191,7 @@ export function RangeSlider({
   disabled,
   startLabel,
   endLabel,
+  color,
 }: RangeSliderProps) {
   const [start, end] = value;
   const groupLabelId = useId();
@@ -239,6 +244,7 @@ export function RangeSlider({
         value={sliderValue}
         onValueChange={([s, e]) => onChange([s, e])}
         disabled={disabled}
+        color={color}
       />
 
       <div className="flex items-center justify-between gap-2">

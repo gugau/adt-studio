@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 import {
   type PresetConfig,
   type PresetId,
+  getPresetAccent,
   getPresetRecommendationEntries,
 } from "@/components/wizard/constants"
 
@@ -70,17 +71,21 @@ export function PresetCard({
   const { Icon } = preset
   const radioId = useId()
   const defaultEntries = getPresetRecommendationEntries(preset.recommendations)
+  const accent = getPresetAccent(preset.id)
 
   return (
     <label
       className={cn(
         "block w-full rounded-lg p-1 text-left transition-all cursor-pointer",
         "border border-[#e5e5e5] outline-none",
-        "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#2b7fff] has-[:focus-visible]:ring-offset-0",
-        selected
-          ? "ring-2 ring-[#2b7fff] ring-offset-0"
-          : "hover:border-[#2b7fff]/50",
+        "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-offset-0",
+        !selected && "hover:border-[#e5e5e5]",
       )}
+      style={
+        selected
+          ? { boxShadow: `0 0 0 2px ${accent.bg}`, transition: "box-shadow 0.3s ease" }
+          : { transition: "box-shadow 0.3s ease" }
+      }
     >
       <input
         id={radioId}

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label"
 import { SegmentedControl } from "@/components/ui/segmented-control"
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import { usePresetRecommendations } from "@/components/wizard/usePresetRecommendations"
-import { PRESETS } from "@/components/wizard/constants"
+import { PRESETS, getPresetAccent } from "@/components/wizard/constants"
 import { InfoCarousel, type CarouselSlide } from "@/components/wizard/shared/InfoCarousel"
 
 const GROUPING_OPTION_SPREAD_LABEL = msg`Spread`
@@ -81,6 +81,7 @@ export function PageGroupingMode() {
   const recommended = recommendations.pageGrouping || undefined
 
   const preset = PRESETS.find((p) => p.id === selectedPresetId)
+  const accent = getPresetAccent(selectedPresetId)
 
   const groupingOptions = useMemo(
     () => [
@@ -125,6 +126,7 @@ export function PageGroupingMode() {
         options={groupingOptions}
         value={pageGrouping}
         onValueChange={(v) => form.setFieldValue("pageGrouping", v)}
+        color={accent.bg}
       />
       {recommendedOption && preset && (
         <p className="text-xs text-[#737373]">

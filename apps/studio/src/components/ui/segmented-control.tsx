@@ -10,6 +10,7 @@ interface SegmentedControlProps<T extends string = string> {
   value: T | ""
   onValueChange: (value: T) => void
   className?: string
+  color?: string
 }
 
 export function SegmentedControl<T extends string = string>({
@@ -17,6 +18,7 @@ export function SegmentedControl<T extends string = string>({
   value,
   onValueChange,
   className,
+  color,
 }: SegmentedControlProps<T>) {
   const activeIndex = options.findIndex((o) => o.value === value)
   const showIndicator = activeIndex >= 0 && options.length > 0
@@ -46,11 +48,16 @@ export function SegmentedControl<T extends string = string>({
           aria-checked={value === option.value}
           onClick={() => onValueChange(option.value)}
           className={cn(
-            "relative z-10 flex h-7 flex-1 cursor-pointer items-center justify-center rounded-md text-sm transition-colors",
+            "relative z-10 flex h-7 flex-1 cursor-pointer items-center justify-center rounded-md text-sm",
             value === option.value
-              ? "font-bold text-[#2b7fff]"
+              ? "font-bold"
               : "font-normal text-[#737373] hover:text-[#525252]",
           )}
+          style={
+            value === option.value
+              ? { color: color ?? "#2b7fff", transition: "color 0.4s ease" }
+              : { transition: "color 0.4s ease" }
+          }
         >
           {option.label}
         </button>

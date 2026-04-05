@@ -5,7 +5,7 @@ import { Trans, useLingui } from "@lingui/react/macro"
 import { Label } from "@/components/ui/label"
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import { usePresetRecommendations } from "@/components/wizard/usePresetRecommendations"
-import { PRESETS } from "@/components/wizard/constants"
+import { PRESETS, getPresetAccent } from "@/components/wizard/constants"
 import { InfoCarousel, type CarouselSlide } from "@/components/wizard/shared/InfoCarousel"
 import { SectioningModeSelect } from "./SectioningModeSelect"
 
@@ -139,6 +139,7 @@ export function SectioningMode() {
   const recommendations = usePresetRecommendations()
   const recommended = recommendations.sectioningMode || undefined
   const preset = PRESETS.find((p) => p.id === selectedPresetId)
+  const accent = getPresetAccent(selectedPresetId)
 
   const slides = useMemo(
     (): CarouselSlide[] => [
@@ -178,6 +179,7 @@ export function SectioningMode() {
         onValueChange={(v) => form.setFieldValue("sectioningMode", v)}
         recommended={recommended}
         presetLabel={preset?.title}
+        accent={accent}
       />
     </div>
   )
