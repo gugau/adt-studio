@@ -1,19 +1,42 @@
 import { useNavigate } from "@tanstack/react-router"
-import { ArrowLeft, ArrowRight } from "lucide-react"
+import { ArrowLeft, ArrowRight, RotateCcw } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { useStore } from "@tanstack/react-form"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useWizard } from "@/components/wizard"
-import { useWizardForm } from "@/components/wizard/wizardForm"
+import { useWizardForm, defaultWizardValues } from "@/components/wizard/wizardForm"
 import { type PresetId, PRESETS, getPresetAccent } from "@/components/wizard/constants"
 import { PresetGrid } from "./PresetGrid"
+// eslint-disable-next-line lingui/no-unlocalized-strings -- Preset reset warning text
+const STEP1_FIELDS = new Set(["label", "file", "startPage", "endPage", "selectedPreset"])
+
+function resetToPreset(form: ReturnType<typeof useWizardForm>, id: PresetId) {
+  const preset = PRESETS.find((p) => p.id === id)
+
+  for (const [key, value] of Object.entries(defaultWizardValues)) {
+    if (STEP1_FIELDS.has(key)) continue
+    form.setFieldValue(key as never, value as never)
+  }
+
+  if (preset?.formDefaults) {
+    for (const [key, value] of Object.entries(preset.formDefaults)) {
+      form.setFieldValue(key as never, value as never)
+    }
+  }
+}
 
 export function Step0Preset() {
   const navigate = useNavigate()
-  const { setCurrentStep } = useWizard()
+  const { setCurrentStep, committedStep0Preset, setCommittedStep0Preset } = useWizard()
   const form = useWizardForm()
   const selected = useStore(form.store, (s) => s.values.selectedPreset) as PresetId | null
   const accent = getPresetAccent(selected)
+
+  const presetChanged =
+    committedStep0Preset !== null &&
+    selected !== null &&
+    selected !== committedStep0Preset
 
   function handleSelect(id: PresetId) {
     form.setFieldValue("selectedPreset", id)
@@ -21,12 +44,10 @@ export function Step0Preset() {
 
   function handleContinue() {
     if (!selected) return
-    const preset = PRESETS.find((p) => p.id === selected)
-    if (preset?.formDefaults) {
-      for (const [key, value] of Object.entries(preset.formDefaults)) {
-        form.setFieldValue(key as never, value as never)
-      }
+    if (presetChanged) {
+      resetToPreset(form, selected)
     }
+    setCommittedStep0Preset(selected)
     setCurrentStep(1)
   }
 
@@ -39,6 +60,29 @@ export function Step0Preset() {
         >
           <Trans>Choose a Preset</Trans>
         </h1>
+        <div
+          className="flex min-h-[2.75rem] w-full max-w-lg items-center justify-center px-2"
+          aria-live="polite"
+        >
+          <p
+            className={cn(
+              "flex items-center justify-center gap-1.5 text-center text-sm text-red-600 transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none motion-reduce:transform-none",
+              presetChanged
+                ? "opacity-100 translate-y-0"
+                : "pointer-events-none select-none opacity-0 translate-y-1",
+            )}
+            aria-hidden={!presetChanged}
+          >
+            <RotateCcw
+              className={cn(
+                "h-3.5 w-3.5 shrink-0 transition-transform duration-300 ease-out motion-reduce:transition-none",
+                presetChanged ? "rotate-0" : "-rotate-45 scale-90",
+              )}
+              aria-hidden
+            />
+            <Trans>Continuing will reset your current configuration.</Trans>
+          </p>
+        </div>
       </div>
 
       <PresetGrid selected={selected} onSelect={handleSelect} />

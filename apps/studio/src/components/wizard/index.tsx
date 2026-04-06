@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react"
 import type { ImageProcessingPreviewFocus } from "./step3ContentProcessing/imageProcessingPreviewTypes"
+import type { PresetId } from "./constants"
 
 interface WizardContextValue {
   currentStep: number
@@ -15,6 +16,8 @@ interface WizardContextValue {
   stepDirection: "forward" | "back"
   previewFocus: ImageProcessingPreviewFocus
   setPreviewFocus: (focus: ImageProcessingPreviewFocus) => void
+  committedStep0Preset: PresetId | null
+  setCommittedStep0Preset: (id: PresetId) => void
 }
 
 const WizardContext = createContext<WizardContextValue | null>(null)
@@ -35,6 +38,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   const [previewFocus, setPreviewFocusRaw] =
     useState<ImageProcessingPreviewFocus>("idle")
 
+  const [committedStep0Preset, setCommittedStep0Preset] = useState<PresetId | null>(null)
+
   const setCurrentStep = useCallback((step: number) => {
     setStepDirection(step > currentStep ? "forward" : "back")
     setCurrentStepRaw(step)
@@ -48,7 +53,15 @@ export function WizardProvider({ children }: { children: ReactNode }) {
 
   return (
     <WizardContext.Provider
-      value={{ currentStep, setCurrentStep, stepDirection, previewFocus, setPreviewFocus }}
+      value={{
+        currentStep,
+        setCurrentStep,
+        stepDirection,
+        previewFocus,
+        setPreviewFocus,
+        committedStep0Preset,
+        setCommittedStep0Preset,
+      }}
     >
       {children}
     </WizardContext.Provider>
