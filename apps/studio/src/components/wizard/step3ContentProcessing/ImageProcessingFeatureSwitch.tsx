@@ -51,7 +51,7 @@ export function ImageProcessingFeatureSwitch({
       aria-describedby={`${id}-subtitle`}
       tabIndex={disabled ? -1 : 0}
       className={cn(
-        "flex w-full min-h-[72px] cursor-pointer select-none items-center justify-center gap-2.5 rounded-lg border px-4 py-2 shadow-sm transition-colors",
+        "flex w-full cursor-pointer select-none items-center justify-center gap-2.5 rounded-lg border px-4 py-3 shadow-sm transition-colors",
         "bg-white border-border",
         "hover:bg-muted hover:border-input",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
@@ -75,7 +75,7 @@ export function ImageProcessingFeatureSwitch({
           <div className="flex items-center gap-2">
             <p
               id={`${id}-title`}
-              className="select-none text-lg font-semibold leading-[26px] tracking-tight text-foreground"
+              className="select-none text-sm font-semibold leading-5 text-foreground"
             >
               {title}
             </p>
@@ -95,7 +95,7 @@ export function ImageProcessingFeatureSwitch({
           </div>
           <p
             id={`${id}-subtitle`}
-            className="w-full select-none text-base font-normal leading-5 text-muted-foreground"
+            className="w-full select-none text-xs font-normal leading-4 text-muted-foreground"
           >
             {subtitle}
           </p>

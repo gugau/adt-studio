@@ -98,7 +98,7 @@ export function Step3() {
   return (
     <div className="flex w-full flex-col gap-8 p-8">
       <div className="flex flex-col gap-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-[#737373]">
+        <p className="text-xs font-semibold text-[#737373]">
           <Trans>Activities</Trans>
         </p>
         <ImageProcessingFeatureSwitch
@@ -115,7 +115,7 @@ export function Step3() {
       </div>
 
       <div className="flex flex-col gap-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-[#737373]">
+        <p className="text-xs font-semibold text-[#737373]">
           <Trans>Images</Trans>
         </p>
 
