@@ -1540,11 +1540,11 @@ msgstr "Texto de cabeçalho"
 msgid "Heading"
 msgstr "Título"
 
-msgid "Hide Pruned"
-msgstr "Ocultar removidas"
+#~ msgid "Hide Pruned"
+#~ msgstr "Ocultar removidas"
 
-msgid "Hide pruned images"
-msgstr "Ocultar imagens removidas"
+#~ msgid "Hide pruned images"
+#~ msgstr "Ocultar imagens removidas"
 
 msgid "Higher values filter out simple or blank images."
 msgstr "Valores mais altos filtram imagens simples ou em branco."
@@ -1612,8 +1612,8 @@ msgstr "Imagem indisponível"
 msgid "Image upload failed"
 msgstr "Image upload failed"
 
-msgid "Images"
-msgstr "Imagens"
+#~ msgid "Images"
+#~ msgstr "Imagens"
 
 msgid "Images only"
 msgstr "Somente imagens"
@@ -1673,6 +1673,9 @@ msgstr "Items marked as needing changes for this reviewer session."
 msgid "Jane Reviewer"
 msgstr "Jane Reviewer"
 
+msgid "JSON"
+msgstr "JSON"
+
 msgid "KB"
 msgstr "KB"
 
@@ -1703,6 +1706,9 @@ msgstr "Idiomas"
 
 msgid "Last"
 msgstr "Última"
+
+msgid "Layers"
+msgstr "Camadas"
 
 msgid "Leave empty if not required"
 msgstr "Deixe vazio se não for necessário"
@@ -1956,6 +1962,12 @@ msgstr "moderate"
 msgid "Moderate"
 msgstr "Moderate"
 
+msgid "Move down"
+msgstr "Mover para baixo"
+
+msgid "Move up"
+msgstr "Mover para cima"
+
 msgid "mp3"
 msgstr "mp3"
 
@@ -2108,6 +2120,9 @@ msgstr "Nenhum quiz para esta página"
 
 msgid "No rendered content for this section"
 msgstr "Sem conteúdo renderizado para esta seção"
+
+msgid "No rendered HTML for this section"
+msgstr "Sem HTML renderizado para esta seção"
 
 msgid "No review areas are currently flagged in this reviewer session."
 msgstr "No review areas are currently flagged in this reviewer session."
@@ -2419,8 +2434,8 @@ msgstr "removido"
 msgid "Pruned"
 msgstr "Removido"
 
-msgid "Pruned Images"
-msgstr "Imagens removidas"
+#~ msgid "Pruned Images"
+#~ msgstr "Imagens removidas"
 
 #. placeholder {0}: reason ?? ""
 msgid "Pruned: {0}"
@@ -2897,11 +2912,11 @@ msgstr "Mostrar todos os textos e áudios"
 msgid "Show fewer"
 msgstr "Show fewer"
 
-msgid "Show Pruned"
-msgstr "Mostrar removidas"
+#~ msgid "Show Pruned"
+#~ msgstr "Mostrar removidas"
 
-msgid "Show pruned images"
-msgstr "Mostrar imagens removidas"
+#~ msgid "Show pruned images"
+#~ msgstr "Mostrar imagens removidas"
 
 msgid "Show reviewer validation"
 msgstr "Show reviewer validation"
@@ -3078,8 +3093,8 @@ msgstr "Prompt de classificação de texto"
 msgid "Text color: {0}"
 msgstr "Cor do texto: {0}"
 
-msgid "Text Groups"
-msgstr "Grupos de texto"
+#~ msgid "Text Groups"
+#~ msgstr "Grupos de texto"
 
 msgid "Text Only"
 msgstr "Só texto"

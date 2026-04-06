@@ -17,7 +17,7 @@ import type {
   Quiz,
   ImageCaptioningOutput,
 } from "@adt/types"
-import { WebRenderingOutput as WebRenderingOutputSchema } from "@adt/types"
+import { WebRenderingOutput as WebRenderingOutputSchema, flattenImageParts, flattenTextParts } from "@adt/types"
 import type { Progress } from "./progress.js"
 import { nullProgress } from "./progress.js"
 import { getBaseLanguage, normalizeLocale } from "./language-context.js"
@@ -1117,18 +1117,12 @@ function loadImageCaptionMap(storage: Storage, pageId: string): Map<string, stri
 }
 
 function buildSectionImageAltMap(section: PageSection): Map<string, string> {
-  const imageParts = section.parts.filter(
-    (part): part is Extract<PageSection["parts"][number], { type: "image" }> =>
-      part.type === "image" && !part.isPruned,
-  )
+  const imageParts = flattenImageParts(section.parts)
   if (imageParts.length !== 1) {
     return new Map<string, string>()
   }
 
-  const textParts = section.parts.filter(
-    (part): part is Extract<PageSection["parts"][number], { type: "text_group" }> =>
-      part.type === "text_group" && !part.isPruned,
-  )
+  const textParts = flattenTextParts(section.parts)
 
   const associatedTexts = textParts
     .flatMap((part) => part.texts)
@@ -1150,8 +1144,7 @@ function applyDuplicateImageAltPolicy(
   const normalizedAltToFirstImageId = new Map<string, string>()
   const normalizedAltMap = new Map(altTextByImageId)
 
-  for (const part of section.parts) {
-    if (part.type !== "image" || part.isPruned) continue
+  for (const part of flattenImageParts(section.parts)) {
     const altText = normalizedAltMap.get(part.imageId)?.trim()
     if (!altText) continue
 
@@ -2148,9 +2141,7 @@ const HEADING_TEXT_TYPES = new Set([
 function findHeadingText(
   section: import("@adt/types").PageSection,
 ): { textId: string; text: string } | null {
-  for (const part of section.parts) {
-    if (part.type !== "text_group" || part.isPruned) continue
-    // Check if this is a heading group type OR contains heading text types
+  for (const part of flattenTextParts(section.parts)) {
     for (const t of part.texts) {
       if (t.isPruned) continue
       if (HEADING_TEXT_TYPES.has(t.textType)) {

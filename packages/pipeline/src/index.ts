@@ -58,8 +58,11 @@ export {
   sectionPage,
   buildSectioningConfig,
   buildGroupSummaries,
+  structureActivityParts,
   type SectioningConfig,
   type SectionPageInput,
+  type GroupSummary,
+  type TextEntrySummary,
 } from "./page-sectioning.js"
 export {
   renderPage,
@@ -69,6 +72,8 @@ export {
   type RenderPageInput,
   type RenderSectionInput,
   type SectionPart,
+  type GroupPart,
+  type NestedGroupPart,
   type TextInput,
   type ImageInput,
 } from "./web-rendering.js"

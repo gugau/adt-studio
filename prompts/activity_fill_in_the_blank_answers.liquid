@@ -103,16 +103,36 @@ Provide correct text for each blank based on:
 This is the base64 image of the entire page from the textbook for context only.
 {% image page_image_base64 %}
 
-{% for image in images %}
-Image ID: {{ image.image_id }}{% if image.width %} ({{ image.width }}×{{ image.height }}px){% endif %}
-{% image image.image_base64 %}
-{% endfor %}
-
 Activity Type: {{ section_type }}
 
-Textbook Context:
-{% for text in texts %}
+Textbook Context (in document order):
+{% for part in ordered_parts %}
+{% if part.part_type == "text_group" %}
+{% for text in part.texts %}
 - {{ text.text }}
+{% endfor %}
+{% elsif part.part_type == "image" %}
+[Image: {{ part.image_id }}{% if part.width %} ({{ part.width }}×{{ part.height }}px){% endif %}]
+{% image part.image_base64 %}
+{% elsif part.part_type == "group" %}
+[{{ part.group_type }}]:
+{% for child in part.parts %}
+{% if child.part_type == "text_group" %}
+{% for text in child.texts %}
+  - {{ text.text }}
+{% endfor %}
+{% elsif child.part_type == "group" %}
+  [{{ child.group_type }}]:
+{% for grandchild in child.parts %}
+{% if grandchild.part_type == "text_group" %}
+{% for text in grandchild.texts %}
+    - {{ text.text }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
 {% endfor %}
 
 Activity HTML:

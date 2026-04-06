@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react"
 import {
+  ArrowDown,
+  ArrowUp,
   ChevronDown,
   Crop,
   Eye,
@@ -984,6 +986,14 @@ export interface SectionEditToolbarProps {
   segmenting?: boolean
   onDelete?: (dataId: string) => void
   onClassesChange?: (dataId: string, classes: string[]) => void
+  /** Move element before its previous sibling within the same parent */
+  onMoveUp?: (dataId: string) => void
+  /** Move element after its next sibling within the same parent */
+  onMoveDown?: (dataId: string) => void
+  /** Whether the element can move up (has a previous sibling) */
+  canMoveUp?: boolean
+  /** Whether the element can move down (has a next sibling) */
+  canMoveDown?: boolean
 }
 
 export function SectionEditToolbar({
@@ -1008,6 +1018,10 @@ export function SectionEditToolbar({
   segmenting,
   onDelete,
   onClassesChange,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown,
 }: SectionEditToolbarProps) {
   const { t } = useLingui()
   const [cropMenuOpen, setCropMenuOpen] = useState(false)
@@ -1063,6 +1077,20 @@ export function SectionEditToolbar({
           <span className="text-[10px] font-mono text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5">
             &lt;{containerTagName ?? "div"}&gt;
           </span>
+          {(onMoveUp || onMoveDown) && (
+            <span className="flex items-center gap-0.5 ml-auto">
+              {onMoveUp && (
+                <button type="button" onClick={() => onMoveUp(dataId)} disabled={!canMoveUp} className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default" title={t`Move up`}>
+                  <ArrowUp className="h-3 w-3 text-muted-foreground" />
+                </button>
+              )}
+              {onMoveDown && (
+                <button type="button" onClick={() => onMoveDown(dataId)} disabled={!canMoveDown} className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default" title={t`Move down`}>
+                  <ArrowDown className="h-3 w-3 text-muted-foreground" />
+                </button>
+              )}
+            </span>
+          )}
         </div>
         {elementClasses && onClassesChange && (
           <div className="border-t pt-1">
@@ -1101,6 +1129,20 @@ export function SectionEditToolbar({
             </div>
           )}
           <div className="flex items-center gap-1 border-t pt-2 flex-wrap">
+            {(onMoveUp || onMoveDown) && (
+              <span className="flex items-center gap-0.5 mr-1">
+                {onMoveUp && (
+                  <button type="button" onClick={() => onMoveUp(dataId)} disabled={!canMoveUp} className="flex items-center gap-0.5 text-[10px] font-medium rounded px-1.5 py-1 bg-muted hover:bg-accent transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default" title={t`Move up`}>
+                    <ArrowUp className="h-3 w-3" />
+                  </button>
+                )}
+                {onMoveDown && (
+                  <button type="button" onClick={() => onMoveDown(dataId)} disabled={!canMoveDown} className="flex items-center gap-0.5 text-[10px] font-medium rounded px-1.5 py-1 bg-muted hover:bg-accent transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default" title={t`Move down`}>
+                    <ArrowDown className="h-3 w-3" />
+                  </button>
+                )}
+              </span>
+            )}
             {onCrop && (
               <div className="relative inline-flex" ref={cropMenuRef}>
                 <button type="button" onClick={() => onCrop(dataId)} className={`flex items-center gap-1 text-[10px] font-medium px-2 py-1 bg-muted hover:bg-accent transition-colors cursor-pointer ${onRecropFromPage ? "rounded-l" : "rounded"}`}>
@@ -1202,6 +1244,20 @@ export function SectionEditToolbar({
         <span className="flex items-center gap-0.5 text-[10px] text-blue-500">
           <Pencil className="h-2.5 w-2.5" /><Trans>Editing</Trans>
         </span>
+        {(onMoveUp || onMoveDown) && (
+          <span className="flex items-center gap-0.5">
+            {onMoveUp && (
+              <button type="button" onClick={() => onMoveUp(dataId)} disabled={!canMoveUp} className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default" title={t`Move up`}>
+                <ArrowUp className="h-3 w-3 text-muted-foreground" />
+              </button>
+            )}
+            {onMoveDown && (
+              <button type="button" onClick={() => onMoveDown(dataId)} disabled={!canMoveDown} className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default" title={t`Move down`}>
+                <ArrowDown className="h-3 w-3 text-muted-foreground" />
+              </button>
+            )}
+          </span>
+        )}
         {onDelete && (
           <button type="button" onClick={() => onDelete(dataId)} className="p-0.5 rounded hover:bg-red-100 transition-colors cursor-pointer" title={t`Remove this block`}>
             <Trash2 className="h-3 w-3 text-red-600" />

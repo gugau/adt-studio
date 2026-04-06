@@ -5,7 +5,7 @@ import { createLLMModel, createPromptEngine } from "@adt/llm"
 import type { LLMModel } from "@adt/llm"
 import { renderPage, buildRenderStrategyResolver, createTemplateEngine, loadBookConfig, createScreenshotRenderer, runVisualReviewLoop, DEFAULT_VISUAL_REVIEW_MODEL_ID } from "@adt/pipeline"
 import type { VisualRefinementDeps } from "@adt/pipeline"
-import { PageSectioningOutput, WebRenderingOutput, webRenderingLLMSchema } from "@adt/types"
+import { PageSectioningOutput, WebRenderingOutput, webRenderingLLMSchema, flattenImageParts } from "@adt/types"
 import { loadStyleguideContent } from "./styleguide.js"
 
 export interface ReRenderOptions {
@@ -82,8 +82,8 @@ export async function reRenderPage(
     }
     // Add any images referenced in sections but not found on this page
     for (const section of sectioning.sections) {
-      for (const part of section.parts) {
-        if (part.type === "image" && !part.isPruned && !renderImages.has(part.imageId)) {
+      for (const part of flattenImageParts(section.parts)) {
+        if (!renderImages.has(part.imageId)) {
           const dims = storage.getImageDimensions(part.imageId)
           renderImages.set(part.imageId, { base64: storage.getImageBase64(part.imageId), width: dims?.width, height: dims?.height })
         }

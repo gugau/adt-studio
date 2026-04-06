@@ -1,7 +1,7 @@
 import { Liquid } from "liquidjs"
 import type { SectionRendering } from "@adt/types"
 import { validateSectionHtml } from "./validate-html.js"
-import type { RenderConfig, RenderSectionInput } from "./web-rendering.js"
+import type { RenderConfig, RenderSectionInput, SectionPart } from "./web-rendering.js"
 
 export interface TemplateEngine {
   render(templateName: string, context: Record<string, unknown>): Promise<string>
@@ -28,6 +28,63 @@ export function createTemplateEngine(templatesDir: string): TemplateEngine {
   }
 }
 
+/** Recursively map SectionParts to template-friendly objects. */
+function mapPartsForTemplate(parts: SectionPart[], imageUrlPrefix: string): unknown[] {
+  return parts.map((part) => {
+    if (part.type === "group") {
+      return {
+        type: "group",
+        group_id: part.groupId,
+        group_type: part.groupType,
+        texts: part.texts.map((t) => ({
+          text_id: t.textId,
+          text_type: t.textType,
+          text: t.text,
+        })),
+      }
+    }
+    if (part.type === "nested_group") {
+      return {
+        type: "nested_group",
+        group_id: part.groupId,
+        group_type: part.groupType,
+        parts: mapPartsForTemplate(part.parts, imageUrlPrefix),
+        ...(part.answer ? { answer: part.answer } : {}),
+        ...(part.reasoning ? { reasoning: part.reasoning } : {}),
+      }
+    }
+    const segMatch = part.imageId.match(/^(.+)_seg\d{3}_v\d+$/)
+    return {
+      type: "image",
+      image_id: part.imageId,
+      image_url: `${imageUrlPrefix}/${part.imageId}`,
+      is_segment: !!segMatch,
+      source_image_id: segMatch ? segMatch[1] : null,
+    }
+  })
+}
+
+/** Recursively collect text and image IDs from SectionParts for validation. */
+function collectIdsForValidation(
+  parts: SectionPart[],
+  allowedTextIds: string[],
+  allowedImageIds: string[],
+  expectedTexts: Map<string, string>,
+): void {
+  for (const part of parts) {
+    if (part.type === "group") {
+      for (const t of part.texts) {
+        allowedTextIds.push(t.textId)
+        expectedTexts.set(t.textId, t.text)
+      }
+    } else if (part.type === "image") {
+      allowedImageIds.push(part.imageId)
+    } else if (part.type === "nested_group") {
+      collectIdsForValidation(part.parts, allowedTextIds, allowedImageIds, expectedTexts)
+    }
+  }
+}
+
 /**
  * Render a single section using a Liquid template.
  * Deterministic — no LLM call, no retries. If validation fails, throws.
@@ -46,28 +103,7 @@ export async function renderSectionTemplate(
     text_color: input.textColor,
     label: input.label,
     image_url_prefix: imageUrlPrefix,
-    parts: input.parts.map((part) => {
-      if (part.type === "group") {
-        return {
-          type: "group",
-          group_id: part.groupId,
-          group_type: part.groupType,
-          texts: part.texts.map((t) => ({
-            text_id: t.textId,
-            text_type: t.textType,
-            text: t.text,
-          })),
-        }
-      }
-      const segMatch = part.imageId.match(/^(.+)_seg\d{3}_v\d+$/)
-      return {
-        type: "image",
-        image_id: part.imageId,
-        image_url: `${imageUrlPrefix}/${part.imageId}`,
-        is_segment: !!segMatch,
-        source_image_id: segMatch ? segMatch[1] : null,
-      }
-    }),
+    parts: mapPartsForTemplate(input.parts, imageUrlPrefix),
   }
 
   const html = await templateEngine.render(config.templateName, context)
@@ -76,16 +112,7 @@ export async function renderSectionTemplate(
   const allowedTextIds: string[] = []
   const allowedImageIds: string[] = []
   const expectedTexts = new Map<string, string>()
-  for (const part of input.parts) {
-    if (part.type === "group") {
-      for (const t of part.texts) {
-        allowedTextIds.push(t.textId)
-        expectedTexts.set(t.textId, t.text)
-      }
-    } else {
-      allowedImageIds.push(part.imageId)
-    }
-  }
+  collectIdsForValidation(input.parts, allowedTextIds, allowedImageIds, expectedTexts)
 
   const check = validateSectionHtml(
     html,

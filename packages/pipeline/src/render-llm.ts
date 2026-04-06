@@ -3,7 +3,7 @@ import { webRenderingLLMSchema, activityAnswersLLMSchema } from "@adt/types"
 import type { LLMModel, ValidationResult } from "@adt/llm"
 import { validateSectionHtml } from "./validate-html.js"
 import { getViewportBreakpoints, type ScreenshotRenderer } from "./screenshot.js"
-import type { RenderConfig, RenderSectionInput, TextInput, ImageInput } from "./web-rendering.js"
+import type { RenderConfig, RenderSectionInput, ImageInput, SectionPart } from "./web-rendering.js"
 import { runVisualReviewLoop } from "./visual-review.js"
 
 /** Dependencies for the optional visual refinement loop. */
@@ -24,55 +24,40 @@ export interface VisualRefinementDeps {
  * - Validation allows activity_gen_* prefixed data-ids
  * - If config.answerPromptName is set, a second LLM call generates correct answers
  */
-export async function renderSectionLlm(
-  input: RenderSectionInput,
-  config: RenderConfig,
-  llmModel: LLMModel,
-  visualRefinement?: VisualRefinementDeps,
-): Promise<SectionRendering> {
-  const texts: TextInput[] = []
-  const images: ImageInput[] = []
+/** Recursively collect all images from parts (including nested groups). */
+function collectImages(parts: SectionPart[]): ImageInput[] {
+  const result: ImageInput[] = []
+  for (const part of parts) {
+    if (part.type === "image") result.push({ imageId: part.imageId, imageBase64: part.imageBase64, width: part.width, height: part.height })
+    else if (part.type === "nested_group") result.push(...collectImages(part.parts))
+  }
+  return result
+}
 
-  for (const part of input.parts) {
-    if (part.type === "group") {
-      texts.push(...part.texts)
-    } else {
-      images.push({ imageId: part.imageId, imageBase64: part.imageBase64, width: part.width, height: part.height })
+type OrderedPart =
+  | { part_type: "text_group"; group_id: string; group_type: string; texts: Array<{ text_id: string; text_type: string; text: string }> }
+  | { part_type: "image"; image_id: string; image_base64: string; width?: number; height?: number }
+  | { part_type: "group"; group_id: string; group_type: string; parts: OrderedPart[]; answer?: string; reasoning?: string }
+
+/** Build an image lookup map from parts (including nested groups). */
+function buildImageLookup(parts: SectionPart[]): Map<string, { base64: string; width?: number; height?: number }> {
+  const map = new Map<string, { base64: string; width?: number; height?: number }>()
+  for (const part of parts) {
+    if (part.type === "image") {
+      map.set(part.imageId, { base64: part.imageBase64, width: part.width, height: part.height })
+    } else if (part.type === "nested_group") {
+      for (const [k, v] of buildImageLookup(part.parts)) map.set(k, v)
     }
   }
+  return map
+}
 
-  const isActivity = config.renderType === "activity"
-  const taskType = isActivity ? "activity-rendering" : "web-rendering"
-
-  // Build structured groups (preserves groupId/groupType for prompts that need it)
-  const groups: Array<{
-    group_id: string
-    group_type: string
-    texts: Array<{ text_id: string; text_type: string; text: string }>
-  }> = []
-  for (const part of input.parts) {
+/** Recursively build ordered parts preserving nested group structure for the LLM prompt. */
+function buildOrderedParts(parts: SectionPart[], imgLookup: Map<string, { base64: string; width?: number; height?: number }>): OrderedPart[] {
+  const result: OrderedPart[] = []
+  for (const part of parts) {
     if (part.type === "group") {
-      groups.push({
-        group_id: part.groupId,
-        group_type: part.groupType,
-        texts: part.texts.map((t) => ({
-          text_id: t.textId,
-          text_type: t.textType,
-          text: t.text,
-        })),
-      })
-    }
-  }
-
-  // Build ordered parts list preserving document flow (text groups + images interleaved).
-  // This helps overlay prompts understand spatial relationships between content.
-  const orderedParts: Array<
-    | { part_type: "text_group"; group_id: string; group_type: string; texts: Array<{ text_id: string; text_type: string; text: string }> }
-    | { part_type: "image"; image_id: string }
-  > = []
-  for (const part of input.parts) {
-    if (part.type === "group") {
-      orderedParts.push({
+      result.push({
         part_type: "text_group",
         group_id: part.groupId,
         group_type: part.groupType,
@@ -82,32 +67,50 @@ export async function renderSectionLlm(
           text: t.text,
         })),
       })
-    } else {
-      orderedParts.push({
+    } else if (part.type === "image") {
+      result.push({
         part_type: "image",
         image_id: part.imageId,
+        image_base64: part.imageBase64,
+        ...(part.width != null ? { width: part.width } : {}),
+        ...(part.height != null ? { height: part.height } : {}),
+      })
+    } else if (part.type === "nested_group") {
+      result.push({
+        part_type: "group",
+        group_id: part.groupId,
+        group_type: part.groupType,
+        parts: buildOrderedParts(part.parts, imgLookup),
+        ...(part.answer ? { answer: part.answer } : {}),
+        ...(part.reasoning ? { reasoning: part.reasoning } : {}),
       })
     }
   }
+  return result
+}
+
+export async function renderSectionLlm(
+  input: RenderSectionInput,
+  config: RenderConfig,
+  llmModel: LLMModel,
+  visualRefinement?: VisualRefinementDeps,
+): Promise<SectionRendering> {
+  const images = collectImages(input.parts)
+
+  const isActivity = config.renderType === "activity"
+  const taskType = isActivity ? "activity-rendering" : "web-rendering"
+
+  // Build ordered parts — the canonical representation for all prompts.
+  // Preserves document flow and nested group structure (option_group → option → text).
+  const imgLookup = buildImageLookup(input.parts)
+  const orderedParts = buildOrderedParts(input.parts, imgLookup)
 
   const context = {
     label: input.label,
     page_image_base64: input.pageImageBase64,
     section_id: input.sectionId,
     section_type: input.sectionType,
-    texts: texts.map((t) => ({
-      text_id: t.textId,
-      text_type: t.textType,
-      text: t.text,
-    })),
-    groups,
     ordered_parts: orderedParts,
-    images: images.map((img) => ({
-      image_id: img.imageId,
-      image_base64: img.imageBase64,
-      ...(img.width != null && { width: img.width }),
-      ...(img.height != null && { height: img.height }),
-    })),
     styleguide: input.styleguide ?? "",
     viewports: getViewportBreakpoints(),
     _isActivity: isActivity,
@@ -223,21 +226,44 @@ export async function renderSectionLlm(
   }
 }
 
+/** Recursively collect text and image info from ordered parts for validation. */
+function collectValidationIds(
+  parts: OrderedPart[],
+  textIds: string[],
+  imageIds: string[],
+  textMap: Map<string, string>,
+): void {
+  for (const part of parts) {
+    if (part.part_type === "text_group") {
+      for (const t of part.texts) {
+        textIds.push(t.text_id)
+        textMap.set(t.text_id, t.text)
+      }
+    } else if (part.part_type === "image") {
+      imageIds.push(part.image_id)
+    } else if (part.part_type === "group") {
+      collectValidationIds(part.parts, textIds, imageIds, textMap)
+    }
+  }
+}
+
 function validateWebRendering(
   result: unknown,
   context: Record<string, unknown>
 ): ValidationResult {
   const r = result as { reasoning: string; content: string }
   const label = context.label as string
-  const texts = context.texts as Array<{ text_id: string; text: string }>
-  const images = context.images as Array<{ image_id: string }>
+  const parts = context.ordered_parts as OrderedPart[]
   const isActivity = context._isActivity as boolean | undefined
   const sectionId = context.section_id as string
   const sectionType = context.section_type as string
-  const allowedTextIds = texts.map((t) => t.text_id)
-  const allowedImageIds = images.map((img) => img.image_id)
+
+  const allowedTextIds: string[] = []
+  const allowedImageIds: string[] = []
+  const expectedTexts = new Map<string, string>()
+  collectValidationIds(parts, allowedTextIds, allowedImageIds, expectedTexts)
+
   const imageUrlPrefix = `/api/books/${label}/images`
-  const expectedTexts = new Map(texts.map((t) => [t.text_id, t.text]))
 
   const check = validateSectionHtml(
     r.content,

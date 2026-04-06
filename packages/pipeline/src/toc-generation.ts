@@ -1,5 +1,5 @@
 import type { AppConfig, TocEntry, TocGenerationOutput, PageSectioningOutput } from "@adt/types"
-import { tocLLMSchema, WebRenderingOutput, PageSectioningOutput as PageSectioningOutputSchema, DEFAULT_LLM_MAX_RETRIES } from "@adt/types"
+import { tocLLMSchema, WebRenderingOutput, PageSectioningOutput as PageSectioningOutputSchema, DEFAULT_LLM_MAX_RETRIES, flattenTextParts } from "@adt/types"
 import type { LLMModel } from "@adt/llm"
 import type { Storage, PageData } from "@adt/storage"
 import { buildLanguageContext } from "./language-context.js"
@@ -96,8 +96,8 @@ function collectHeadingsAndToc(
 
       const sectionId = section.sectionId ?? `${page.pageId}_sec${String(i + 1).padStart(3, "0")}`
 
-      for (const part of section.parts) {
-        if (part.type !== "text_group" || part.isPruned) continue
+      for (const part of flattenTextParts(section.parts)) {
+        let found = false
         for (const t of part.texts) {
           if (t.isPruned) continue
           if (HEADING_TEXT_TYPES.has(t.textType)) {
@@ -108,10 +108,11 @@ function collectHeadingsAndToc(
               textType: t.textType,
               pageNumber: section.pageNumber,
             })
-            break // one heading per section
+            found = true
+            break // one heading per text group
           }
         }
-        if (headings.length > 0 && headings[headings.length - 1].sectionId === sectionId) break
+        if (found) break // one heading per section
       }
     }
   }

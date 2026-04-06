@@ -4,7 +4,7 @@ import path from "node:path"
 import { z } from "zod"
 import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
-import { parseBookLabel, TextClassificationOutput, ImageClassificationOutput, PageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES } from "@adt/types"
+import { parseBookLabel, TextClassificationOutput, ImageClassificationOutput, PageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES, type SectionPart, flattenImageParts } from "@adt/types"
 import { openBookDb } from "@adt/storage"
 import { createBookStorage } from "@adt/storage"
 import type { Storage } from "@adt/storage"
@@ -258,15 +258,20 @@ async function executeAiImageGeneration(params: AiImageGenParams): Promise<{
               const sectioning = parsed.data
               const si = params.sectionIndex
               if (si < sectioning.sections.length) {
+                const swapImageInParts = (parts: SectionPart[], targetId: string, replacementId: string): SectionPart[] =>
+                  parts.map((p) => {
+                    if (p.type === "image" && p.imageId === targetId) return { ...p, imageId: replacementId }
+                    if (p.type === "group") return { ...p, parts: swapImageInParts(p.parts, targetId, replacementId) }
+                    return p
+                  })
+
                 if (params.mode === "swap" && params.targetImageId) {
-                  const tid = params.targetImageId
-                  sectioning.sections[si].parts = sectioning.sections[si].parts.map((p) =>
-                    p.type === "image" && p.imageId === tid ? { ...p, imageId: newImageId } : p
+                  sectioning.sections[si].parts = swapImageInParts(
+                    sectioning.sections[si].parts, params.targetImageId, newImageId
                   )
                 } else if (params.mode === "add") {
-                  const alreadyExists = sectioning.sections[si].parts.some(
-                    (p) => p.type === "image" && p.imageId === newImageId
-                  )
+                  const alreadyExists = flattenImageParts(sectioning.sections[si].parts)
+                    .some((p) => p.imageId === newImageId)
                   if (!alreadyExists) {
                     sectioning.sections[si].parts.push({ type: "image", imageId: newImageId, isPruned: false })
                   }

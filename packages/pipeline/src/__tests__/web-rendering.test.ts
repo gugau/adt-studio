@@ -166,6 +166,31 @@ function imagePart(imageId: string, isPruned = false) {
 }
 
 describe("renderPage", () => {
+  // Helper to extract flat texts from ordered_parts
+  function extractTextsFromParts(parts: unknown[]): Array<{ text_id: string; text_type: string; text: string }> {
+    const result: Array<{ text_id: string; text_type: string; text: string }> = []
+    for (const p of parts as Array<Record<string, unknown>>) {
+      if (p.part_type === "text_group") {
+        result.push(...(p.texts as Array<{ text_id: string; text_type: string; text: string }>))
+      } else if (p.part_type === "group") {
+        result.push(...extractTextsFromParts(p.parts as unknown[]))
+      }
+    }
+    return result
+  }
+
+  function extractImagesFromParts(parts: unknown[]): Array<{ image_id: string; image_base64: string }> {
+    const result: Array<{ image_id: string; image_base64: string }> = []
+    for (const p of parts as Array<Record<string, unknown>>) {
+      if (p.part_type === "image") {
+        result.push(p as unknown as { image_id: string; image_base64: string })
+      } else if (p.part_type === "group") {
+        result.push(...extractImagesFromParts(p.parts as unknown[]))
+      }
+    }
+    return result
+  }
+
   const htmlResponse = {
     reasoning: "test",
     content: '<div id="content" class="container"><section data-section-type="text_only" data-section-id="pg001_sec001"><p data-id="pg001_gp001_tx001">Hello</p></section></div>',
@@ -314,10 +339,7 @@ describe("renderPage", () => {
       fakeLlm
     )
 
-    const images = capturedContext?.images as Array<{
-      image_id: string
-      image_base64: string
-    }>
+    const images = extractImagesFromParts(capturedContext?.ordered_parts as unknown[])
     expect(images).toHaveLength(1)
     expect(images[0].image_id).toBe("pg001_im001")
     expect(images[0].image_base64).toBe("imagedata")
@@ -370,11 +392,7 @@ describe("renderPage", () => {
       fakeLlm
     )
 
-    const texts = capturedContext?.texts as Array<{
-      text_id: string
-      text_type: string
-      text: string
-    }>
+    const texts = extractTextsFromParts(capturedContext?.ordered_parts as unknown[])
     expect(texts).toHaveLength(2)
     expect(texts[0].text_id).toBe("pg001_gp001_tx001")
     expect(texts[1].text_id).toBe("pg001_gp001_tx002")
@@ -427,11 +445,7 @@ describe("renderPage", () => {
       fakeLlm
     )
 
-    const texts = capturedContext?.texts as Array<{
-      text_id: string
-      text_type: string
-      text: string
-    }>
+    const texts = extractTextsFromParts(capturedContext?.ordered_parts as unknown[])
     expect(texts).toHaveLength(2)
     expect(texts[0].text_id).toBe("pg001_gp001_tx002")
     expect(texts[1].text_id).toBe("pg001_gp001_tx003")
@@ -482,9 +496,7 @@ describe("renderPage", () => {
       fakeLlm
     )
 
-    const texts = capturedContext?.texts as Array<{
-      text_id: string
-    }>
+    const texts = extractTextsFromParts(capturedContext?.ordered_parts as unknown[])
     expect(texts).toHaveLength(1)
     expect(texts[0].text_id).toBe("pg001_gp001_tx001")
   })
@@ -1002,11 +1014,11 @@ describe("renderPage", () => {
     )
 
     // Only unpruned parts should be passed to the renderer
-    const texts = capturedContext?.texts as Array<{ text_id: string }>
+    const texts = extractTextsFromParts(capturedContext?.ordered_parts as unknown[])
     expect(texts).toHaveLength(1)
     expect(texts[0].text_id).toBe("pg001_gp001_tx001")
 
-    const images = capturedContext?.images as Array<{ image_id: string }>
+    const images = extractImagesFromParts(capturedContext?.ordered_parts as unknown[])
     expect(images).toHaveLength(0)
   })
 })

@@ -269,20 +269,42 @@ Page image for context (use this to determine EXACT positions for each text grou
 Section ID: {{ section_id }}
 Section type: {{ section_type }}
 
-{% for image in images %}
-Image ID: {{ image.image_id }}
-{% image image.image_base64 %}
-{% endfor %}
-
 Page content in DOCUMENT FLOW ORDER (top-to-bottom as they appear on the page).
 Use this ordering plus the page image to determine the vertical position of each group:
 {% for part in ordered_parts %}
-{% if part.part_type == "image" %}
-[IMAGE: {{ part.image_id }}]
-{% else %}
+{% if part.part_type == "text_group" %}
 [TEXT GROUP: {{ part.group_id }} ({{ part.group_type }})]
 {% for text in part.texts %}
   - id: {{ text.text_id }} | type: {{ text.text_type }} | text: "{{ text.text }}"
+{% endfor %}
+{% elsif part.part_type == "image" %}
+[IMAGE: {{ part.image_id }}{% if part.width %} ({{ part.width }}×{{ part.height }}px){% endif %}]
+{% image part.image_base64 %}
+{% elsif part.part_type == "group" %}
+[{{ part.group_type }}: {{ part.group_id }}]
+{% for child in part.parts %}
+{% if child.part_type == "text_group" %}
+  [TEXT GROUP: {{ child.group_id }} ({{ child.group_type }})]
+{% for text in child.texts %}
+    - id: {{ text.text_id }} | type: {{ text.text_type }} | text: "{{ text.text }}"
+{% endfor %}
+{% elsif child.part_type == "image" %}
+  [IMAGE: {{ child.image_id }}{% if child.width %} ({{ child.width }}×{{ child.height }}px){% endif %}]
+  {% image child.image_base64 %}
+{% elsif child.part_type == "group" %}
+  [{{ child.group_type }}: {{ child.group_id }}]
+{% for grandchild in child.parts %}
+{% if grandchild.part_type == "text_group" %}
+    [TEXT GROUP: {{ grandchild.group_id }} ({{ grandchild.group_type }})]
+{% for text in grandchild.texts %}
+      - id: {{ text.text_id }} | type: {{ text.text_type }} | text: "{{ text.text }}"
+{% endfor %}
+{% elsif grandchild.part_type == "image" %}
+    [IMAGE: {{ grandchild.image_id }}{% if grandchild.width %} ({{ grandchild.width }}×{{ grandchild.height }}px){% endif %}]
+    {% image grandchild.image_base64 %}
+{% endif %}
+{% endfor %}
+{% endif %}
 {% endfor %}
 {% endif %}
 {% endfor %}

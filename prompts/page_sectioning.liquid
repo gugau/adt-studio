@@ -41,12 +41,13 @@ CLASSIFICATION RULES (use these to disambiguate activity types):
 - activity_other is a last resort — only use it when the learning mechanic itself is truly unique (e.g., free drawing, crafts, physical movement) and no other activity type applies.
 
 RULES:
-- ONLY use IDs that are explicitly listed below in "Text groups" and "Image" entries. Do NOT invent or generate new IDs.
+- ONLY use IDs that are explicitly listed below in "Content parts". Do NOT invent or generate new IDs.
+- You can reference a whole text group by its group ID (e.g., "pg001_gp001") or an individual text entry by its text ID (e.g., "pg001_gp001_tx001"). Both are valid.
 {% if sectioning_mode == "page" %}
 - Create EXACTLY ONE section containing ALL listed group IDs and ALL listed image IDs
 - Choose the single most appropriate section type for the page as a whole
 - ALL listed group IDs and ALL listed image IDs must be assigned to this one section
-- If no image IDs are listed below, do NOT include any image IDs in part_ids
+- If no image IDs are listed below, do NOT include any image IDs in parts
 {% elsif sectioning_mode == "dynamic" %}
 - DEFAULT: Keep all content in a SINGLE section. Prefer one section per page.
 - SPLIT the page into multiple sections when ANY of these conditions are true:
@@ -70,6 +71,31 @@ RULES:
 - Extract page number if visible (headers, footers, margins). Use null if none found
 - For background_color: hex code of predominant background. Default #ffffff
 - For text_color: hex code of predominant text color. Must contrast with background. Default #000000
+
+PARTS FORMAT:
+Each section's "parts" array accepts:
+- Plain string IDs: group IDs, text entry IDs, or image IDs. Use group IDs when the entire group belongs together. Use individual text entry IDs when you need to pair specific texts with images.
+- Group objects for structured pairing: `{ "group_type": "<type>", "items": [...] }` where items are string IDs or nested group objects.
+
+For CONTENT sections: list group IDs and image IDs as plain strings. Example:
+  "parts": ["pg001_gp001", "pg001_im001", "pg001_gp002"]
+
+For ACTIVITY sections where items need pairing (e.g., sorting where each option has a label + image):
+  Use group objects to pair related content. Example for a sorting activity:
+  "parts": [
+    "pg001_gp001",
+    { "group_type": "option_group", "items": [
+      { "group_type": "option", "items": ["pg001_gp002_tx001", "pg001_im001"] },
+      { "group_type": "option", "items": ["pg001_gp002_tx002", "pg001_im002"] }
+    ]}
+  ]
+  This pairs each text label with its corresponding image in an option.
+
+GROUPING GUIDELINES:
+- For multiple choice: wrap answer choices in an option_group, each choice as an option. If a choice has both text and an image, group them together.
+- For sorting/matching: pair each item's label text with its associated image in an option, then wrap all options in an option_group.
+- For content sections: no grouping needed — just list IDs as strings.
+- Only create groups when the content genuinely needs structural pairing for rendering.
 {% endchat %}
 
 {% chat role: "user" %}
@@ -81,16 +107,21 @@ Image {{ image.image_id }}:
 {% image image.imageBase64 %}
 {% endfor %}
 
-Text groups:
+Content parts:
 {% for group in groups %}
-- {{ group.group_id }} ({{ group.group_type }}): {{ group.text }}
+Group {{ group.group_id }} ({{ group.group_type }}):
+{% for text in group.texts %}
+  - {{ text.text_id }} ({{ text.text_type }}): {{ text.text }}
+{% endfor %}
 {% endfor %}
 
 {% if sectioning_mode == "page" %}
 Please place ALL content into a single section.
 {% elsif sectioning_mode == "dynamic" %}
 Keep this page as a single section UNLESS it contains multiple separate activities OR multiple multiple-choice/true-false questions. Split when activities have different types, different instructions, or are visually separate on the page — even if they share the same activity type. Each multiple-choice or true/false question gets its own section.
+For activity sections with paired content (e.g., sorting options with text labels and images), use group objects to structure the pairing.
 {% else %}
 Please organize these into sections.
+For activity sections with paired content (e.g., sorting options with text labels and images), use group objects to structure the pairing.
 {% endif %}
 {% endchat %}

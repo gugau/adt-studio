@@ -121,13 +121,42 @@ This is the base64 image of the entire page from the textbook for context only.
 Section ID: {{ section_id }}
 Section type: {{ section_type }}
 
-{% for image in images %}
-Image ID: {{ image.image_id }}{% if image.width %} ({{ image.width }}×{{ image.height }}px){% endif %}
-{% image image.image_base64 %}
+Content parts (in document order):
+{% for part in ordered_parts %}
+{% if part.part_type == "text_group" %}
+[Group: {{ part.group_id }} | type: {{ part.group_type }}]
+{% for text in part.texts %}
+  - id: {{ text.text_id }} | type: {{ text.text_type }} | text: "{{ text.text }}"
 {% endfor %}
-
-Allowed text IDs and exact text values (must be copied verbatim):
-{% for text in texts %}
-- id: {{ text.text_id }} | type: {{ text.text_type }} | text: "{{ text.text }}"
+{% elsif part.part_type == "image" %}
+[Image: {{ part.image_id }}{% if part.width %} ({{ part.width }}×{{ part.height }}px){% endif %}]
+{% image part.image_base64 %}
+{% elsif part.part_type == "group" %}
+[{{ part.group_type }}: {{ part.group_id }}]
+{% for child in part.parts %}
+{% if child.part_type == "text_group" %}
+  [Group: {{ child.group_id }} | type: {{ child.group_type }}]
+{% for text in child.texts %}
+    - id: {{ text.text_id }} | type: {{ text.text_type }} | text: "{{ text.text }}"
+{% endfor %}
+{% elsif child.part_type == "image" %}
+  [Image: {{ child.image_id }}{% if child.width %} ({{ child.width }}×{{ child.height }}px){% endif %}]
+  {% image child.image_base64 %}
+{% elsif child.part_type == "group" %}
+  [{{ child.group_type }}: {{ child.group_id }}]
+{% for grandchild in child.parts %}
+{% if grandchild.part_type == "text_group" %}
+    [Group: {{ grandchild.group_id }} | type: {{ grandchild.group_type }}]
+{% for text in grandchild.texts %}
+      - id: {{ text.text_id }} | type: {{ text.text_type }} | text: "{{ text.text }}"
+{% endfor %}
+{% elsif grandchild.part_type == "image" %}
+    [Image: {{ grandchild.image_id }}{% if grandchild.width %} ({{ grandchild.width }}×{{ grandchild.height }}px){% endif %}]
+    {% image grandchild.image_base64 %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
 {% endfor %}
 {% endchat %}

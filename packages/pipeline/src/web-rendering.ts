@@ -22,9 +22,27 @@ export interface ImageInput {
   height?: number
 }
 
+export interface GroupPart {
+  type: "group"
+  groupId: string
+  groupType: string
+  texts: TextInput[]
+}
+
+export interface NestedGroupPart {
+  type: "nested_group"
+  groupId: string
+  groupType: string
+  parts: SectionPart[]
+  answer?: string
+  reasoning?: string
+  metadata?: Record<string, unknown>
+}
+
 export type SectionPart =
-  | { type: "group"; groupId: string; groupType: string; texts: TextInput[] }
+  | GroupPart
   | { type: "image"; imageId: string; imageBase64: string; width?: number; height?: number }
+  | NestedGroupPart
 
 export interface VisualRefinementConfig {
   enabled: boolean
@@ -120,6 +138,20 @@ function expandParts(
       const imgData = images.get(part.imageId)
       if (imgData) {
         parts.push({ type: "image", imageId: part.imageId, imageBase64: imgData.base64, width: imgData.width, height: imgData.height })
+      }
+    } else if (part.type === "group") {
+      // Preserve nested group structure for the renderer
+      const childParts = expandParts(part.parts, images)
+      if (childParts.length > 0) {
+        parts.push({
+          type: "nested_group",
+          groupId: part.groupId,
+          groupType: part.groupType,
+          parts: childParts,
+          ...(part.answer ? { answer: part.answer } : {}),
+          ...(part.reasoning ? { reasoning: part.reasoning } : {}),
+          ...(part.metadata ? { metadata: part.metadata } : {}),
+        })
       }
     }
   }

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useQueries, useQueryClient, useMutation } from "@tanstack/react-query"
 import { api, BASE_URL, type PageSummaryItem, type PageDetail } from "@/api/client"
-import type { SectionPart, PageSection } from "@adt/types"
+import type { SectionPart, PageSection, SectionImagePart } from "@adt/types"
+import { flattenTextParts, flattenImageParts } from "@adt/types"
 import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import {
   ChevronDown,
@@ -22,8 +23,8 @@ import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
 
-type DetailPanel = "preview" | "metadata" | "textGroups" | "images" | "prunedImages"
-const ALL_PANELS: DetailPanel[] = ["preview", "metadata", "textGroups", "images", "prunedImages"]
+type DetailPanel = "preview" | "metadata" | "content" | "prunedImages"
+const ALL_PANELS: DetailPanel[] = ["preview", "metadata", "content", "prunedImages"]
 
 interface SectioningOverviewProps {
   bookLabel: string
@@ -53,9 +54,8 @@ export function SectioningOverview({ bookLabel, pages, onNavigateToSection }: Se
   const panelLabels: Record<DetailPanel, string> = {
     preview: t`Preview`,
     metadata: t`Metadata`,
-    textGroups: t`Text Groups`,
-    images: t`Images`,
-    prunedImages: t`Pruned Images`,
+    content: t`Content`,
+    prunedImages: t`Pruned`,
   }
 
   // Fetch full page details for all pages that have sections
@@ -419,8 +419,6 @@ function PageSectionRows({
 
       {/* Section rows */}
       {sections.map((section, idx) => {
-        const textParts = section.parts.filter((p) => p.type === "text_group")
-        const imageParts = section.parts.filter((p) => p.type === "image")
         const isExpanded = expanded.has(idx)
 
         // Get rendering reasoning if available
@@ -437,8 +435,6 @@ function PageSectionRows({
             sectionCount={sections.length}
             hasPrevPage={hasPrevPage}
             hasNextPage={hasNextPage}
-            textParts={textParts}
-            imageParts={imageParts}
             isExpanded={isExpanded}
             onToggle={() => toggleSection(idx)}
             renderReasoning={renderSection?.reasoning}
@@ -462,6 +458,163 @@ function PageSectionRows({
 }
 
 // ---------------------------------------------------------------------------
+// Recursive parts mappers for image mutations inside nested groups
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Ordered, nested parts tree for the overview detail panel
+// ---------------------------------------------------------------------------
+
+function OverviewPartsTree({
+  parts,
+  showPruned,
+  bookLabel,
+  selectedImageId,
+  onImageClick,
+  depth = 0,
+}: {
+  parts: readonly SectionPart[]
+  showPruned: boolean
+  bookLabel: string
+  selectedImageId: string | null
+  onImageClick: (e: React.MouseEvent, img: { imageId: string; isPruned: boolean }) => void
+  depth?: number
+}) {
+  return (
+    <>
+      {parts.map((part, idx) => {
+        if (part.isPruned && !showPruned) return null
+
+        if (part.type === "text_group") {
+          return (
+            <div
+              key={part.groupId}
+              className={cn(
+                "border rounded p-2",
+                part.isPruned && "opacity-50 border-dashed",
+                depth > 0 && "ml-4"
+              )}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-mono text-[10px] text-muted-foreground">{part.groupId}</span>
+                <span className="text-[10px] px-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+                  {part.groupType}
+                </span>
+                {part.isPruned && (
+                  <span className="text-[10px] px-1 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                    <Trans>pruned</Trans>
+                  </span>
+                )}
+              </div>
+              <div className="space-y-0.5">
+                {part.texts.map((text) => (
+                  <div
+                    key={text.textId}
+                    className={cn(
+                      "flex gap-2 text-xs",
+                      text.isPruned && "opacity-40 line-through"
+                    )}
+                  >
+                    <span className="shrink-0 text-[10px] font-mono text-muted-foreground w-24">{text.textType}</span>
+                    <span className="text-foreground">{text.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        }
+
+        if (part.type === "image") {
+          if (part.isPruned && !showPruned) return null
+          return (
+            <div
+              key={part.imageId}
+              className={cn(
+                "inline-flex border rounded p-1.5 flex-col items-center gap-1 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-shadow",
+                part.isPruned && "opacity-50 border-dashed",
+                selectedImageId === part.imageId && "ring-2 ring-primary",
+                depth > 0 && "ml-4"
+              )}
+              onClick={(e) => onImageClick(e, part)}
+            >
+              <img
+                src={`${BASE_URL}/books/${bookLabel}/images/${part.imageId}`}
+                alt={part.imageId}
+                className="h-16 w-auto object-contain rounded"
+              />
+              <span className="text-[10px] font-mono text-muted-foreground">{part.imageId}</span>
+              {part.isPruned && (
+                <span className="text-[10px] text-amber-600"><Trans>pruned</Trans></span>
+              )}
+            </div>
+          )
+        }
+
+        // type === "group"
+        if (part.type === "group") {
+          return (
+            <div
+              key={part.groupId || `group-${idx}`}
+              className={cn(
+                "border rounded-lg p-2 border-violet-200 dark:border-violet-800 bg-violet-50/30 dark:bg-violet-950/10",
+                part.isPruned && "opacity-50 border-dashed",
+                depth > 0 && "ml-4"
+              )}
+            >
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="text-[10px] px-1.5 rounded bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-400 font-medium">
+                  {part.groupType}
+                </span>
+                <span className="font-mono text-[10px] text-muted-foreground">{part.groupId}</span>
+                {part.isPruned && (
+                  <span className="text-[10px] px-1 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                    <Trans>pruned</Trans>
+                  </span>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <OverviewPartsTree
+                  parts={part.parts}
+                  showPruned={showPruned}
+                  bookLabel={bookLabel}
+                  selectedImageId={selectedImageId}
+                  onImageClick={onImageClick}
+                  depth={depth + 1}
+                />
+              </div>
+            </div>
+          )
+        }
+
+        return null
+      })}
+    </>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Recursive parts mappers for image mutations inside nested groups
+// ---------------------------------------------------------------------------
+
+function mapImageInParts(
+  parts: SectionPart[],
+  fn: (p: Extract<SectionPart, { type: "image" }>) => SectionPart | null,
+): SectionPart[] {
+  const result: SectionPart[] = []
+  for (const p of parts) {
+    if (p.type === "image") {
+      const mapped = fn(p)
+      if (mapped !== null) result.push(mapped)
+    } else if (p.type === "group") {
+      result.push({ ...p, parts: mapImageInParts(p.parts, fn) })
+    } else {
+      result.push(p)
+    }
+  }
+  return result
+}
+
+// ---------------------------------------------------------------------------
 // Individual section row with expandable detail
 // ---------------------------------------------------------------------------
 
@@ -472,8 +625,6 @@ function SectionRow({
   sectionCount,
   hasPrevPage,
   hasNextPage,
-  textParts,
-  imageParts,
   isExpanded,
   onToggle,
   renderReasoning,
@@ -496,8 +647,6 @@ function SectionRow({
   sectionCount: number
   hasPrevPage: boolean
   hasNextPage: boolean
-  textParts: SectionPart[]
-  imageParts: SectionPart[]
   isExpanded: boolean
   onToggle: () => void
   renderReasoning?: string
@@ -515,6 +664,8 @@ function SectionRow({
   onInvalidatePages: (...pageIds: string[]) => void
 }) {
   const { t } = useLingui()
+  const textParts = flattenTextParts(section.parts)
+  const imageParts = flattenImageParts(section.parts)
   const textCount = textParts.length
   const imageCount = imageParts.length
 
@@ -632,8 +783,6 @@ function SectionRow({
             <SectionDetail
               section={section}
               sectionIndex={sectionIndex}
-              textParts={textParts as Extract<SectionPart, { type: "text_group" }>[]}
-              imageParts={imageParts as Extract<SectionPart, { type: "image" }>[]}
               renderReasoning={renderReasoning}
               bookLabel={bookLabel}
               pageId={page.pageId}
@@ -657,8 +806,6 @@ function SectionRow({
 function SectionDetail({
   section,
   sectionIndex,
-  textParts,
-  imageParts,
   renderReasoning,
   bookLabel,
   pageId,
@@ -668,10 +815,8 @@ function SectionDetail({
   onNavigate,
   onInvalidatePages,
 }: {
-  section: { sectionId: string; sectionType: string; backgroundColor: string; textColor: string }
+  section: PageSection
   sectionIndex: number
-  textParts: Array<{ type: "text_group"; groupId: string; groupType: string; texts: Array<{ textId: string; textType: string; text: string; isPruned: boolean }>; isPruned: boolean }>
-  imageParts: Array<{ type: "image"; imageId: string; isPruned: boolean; reason?: string }>
   renderReasoning?: string
   bookLabel: string
   pageId: string
@@ -722,8 +867,8 @@ function SectionDetail({
           if (si !== sectionIndex) return s
           return {
             ...s,
-            parts: s.parts.map((p: SectionPart) =>
-              p.type === "image" && p.imageId === cropTarget ? { ...p, imageId: result.imageId } : p
+            parts: mapImageInParts(s.parts, (p) =>
+              p.imageId === cropTarget ? { ...p, imageId: result.imageId } : p
             ),
           }
         }),
@@ -767,8 +912,8 @@ function SectionDetail({
           if (si !== sectionIndex) return s
           return {
             ...s,
-            parts: s.parts.map((p: SectionPart) =>
-              p.type === "image" && p.imageId === targetId ? { ...p, imageId: result.imageId } : p
+            parts: mapImageInParts(s.parts, (p) =>
+              p.imageId === targetId ? { ...p, imageId: result.imageId } : p
             ),
           }
         }),
@@ -807,7 +952,7 @@ function SectionDetail({
         ...pageData.sectioning,
         sections: pageData.sectioning.sections.map((s: PageSection, si: number) => {
           if (si !== sectionIndex) return s
-          return { ...s, parts: s.parts.filter((p: SectionPart) => !(p.type === "image" && p.imageId === dataId)) }
+          return { ...s, parts: mapImageInParts(s.parts, (p) => p.imageId === dataId ? null : p) }
         }),
       }
       await api.updateSectioning(bookLabel, pageId, updated)
@@ -825,8 +970,8 @@ function SectionDetail({
           if (si !== sectionIndex) return s
           return {
             ...s,
-            parts: s.parts.map((p: SectionPart) =>
-              p.type === "image" && p.imageId === dataId ? { ...p, isPruned: !p.isPruned } : p
+            parts: mapImageInParts(s.parts, (p) =>
+              p.imageId === dataId ? { ...p, isPruned: !p.isPruned } : p
             ),
           }
         }),
@@ -907,87 +1052,23 @@ function SectionDetail({
           )}
 
           {/* Text groups */}
-          {visiblePanels.has("textGroups") && textParts.length > 0 && (
+          {/* Ordered content parts */}
+          {visiblePanels.has("content") && section.parts.length > 0 && (
             <div>
               <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
-                <Trans>Text Groups</Trans>
+                <Trans>Content</Trans>
               </h4>
-              <div className="space-y-2">
-                {textParts.map((part) => (
-                  <div
-                    key={part.groupId}
-                    className={cn(
-                      "border rounded p-2",
-                      part.isPruned && "opacity-50 border-dashed"
-                    )}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-mono text-[10px] text-muted-foreground">{part.groupId}</span>
-                      <span className="text-[10px] px-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
-                        {part.groupType}
-                      </span>
-                      {part.isPruned && (
-                        <span className="text-[10px] px-1 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
-                          <Trans>pruned</Trans>
-                        </span>
-                      )}
-                    </div>
-                    <div className="space-y-0.5">
-                      {part.texts.map((text) => (
-                        <div
-                          key={text.textId}
-                          className={cn(
-                            "flex gap-2 text-xs",
-                            text.isPruned && "opacity-40 line-through"
-                          )}
-                        >
-                          <span className="shrink-0 text-[10px] font-mono text-muted-foreground w-24">{text.textType}</span>
-                          <span className="text-foreground">{text.text}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+              <div className="space-y-1.5">
+                <OverviewPartsTree
+                  parts={section.parts}
+                  showPruned={visiblePanels.has("prunedImages")}
+                  bookLabel={bookLabel}
+                  selectedImageId={selectedImage?.imageId ?? null}
+                  onImageClick={handleImageClick}
+                />
               </div>
             </div>
           )}
-
-          {/* Images */}
-          {visiblePanels.has("images") && imageParts.length > 0 && (() => {
-            const showPruned = visiblePanels.has("prunedImages")
-            const filteredImages = showPruned ? imageParts : imageParts.filter((img) => !img.isPruned)
-            if (filteredImages.length === 0) return null
-            return (
-            <div>
-              <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
-                <Trans>Images</Trans>
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {filteredImages.map((img) => (
-                  <div
-                    key={img.imageId}
-                    className={cn(
-                      "border rounded p-1.5 flex flex-col items-center gap-1 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-shadow",
-                      img.isPruned && "opacity-50 border-dashed",
-                      selectedImage?.imageId === img.imageId && "ring-2 ring-primary"
-                    )}
-                    onClick={(e) => handleImageClick(e, img)}
-                  >
-                    <img
-                      src={`${BASE_URL}/books/${bookLabel}/images/${img.imageId}`}
-                      alt={img.imageId}
-                      className="h-16 w-auto object-contain rounded"
-                    />
-                    <span className="text-[10px] font-mono text-muted-foreground">{img.imageId}</span>
-                    {img.isPruned && (
-                      <span className="text-[10px] text-amber-600"><Trans>pruned</Trans></span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-            )
-          })()}
         </div>
       </div>
 

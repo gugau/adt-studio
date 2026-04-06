@@ -47,14 +47,28 @@ This is the base64 image of the entire page from the textbook for context only.
 
 The section type for this section is: {{ section_type }}.
 
-{% for image in images %}
-ID of the following image is: {{ image.image_id }}.
-{% image image.image_base64 %}
-{% endfor %}
-
-The following are text for the section to use for web asset generation. You may use it verbatim or modify it as needed.
-{% for text in texts %}
+Content parts (in document order):
+{% for part in ordered_parts %}
+{% if part.part_type == "text_group" %}
+{% for text in part.texts %}
 id: {{ text.text_id }} text type: {{ text.text_type }}.
 text: {{ text.text }}
+{% endfor %}
+{% elsif part.part_type == "image" %}
+ID of the following image is: {{ part.image_id }}.
+{% image part.image_base64 %}
+{% elsif part.part_type == "group" %}
+{% for child in part.parts %}
+{% if child.part_type == "text_group" %}
+{% for text in child.texts %}
+id: {{ text.text_id }} text type: {{ text.text_type }}.
+text: {{ text.text }}
+{% endfor %}
+{% elsif child.part_type == "image" %}
+ID of the following image is: {{ child.image_id }}.
+{% image child.image_base64 %}
+{% endif %}
+{% endfor %}
+{% endif %}
 {% endfor %}
 {% endchat %}

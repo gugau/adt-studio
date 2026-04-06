@@ -12,6 +12,7 @@ import {
   type TTSOutput,
   type TocGenerationOutput,
   type Quiz,
+  flattenTextParts,
 } from "@adt/types"
 import { createBookStorage, type Storage } from "@adt/storage"
 import {
@@ -285,8 +286,7 @@ function buildHeadingBasedToc(storage: Storage): Array<{ section_id: string; hre
       const sectionId = sectionMeta.sectionId ?? `${page.pageId}_sec${String(rs.sectionIndex + 1).padStart(3, "0")}`
 
       // Find first heading text in section parts
-      for (const part of sectionMeta.parts) {
-        if (part.type !== "text_group" || part.isPruned) continue
+      for (const part of flattenTextParts(sectionMeta.parts)) {
         let found = false
         for (const t of part.texts) {
           if (t.isPruned) continue

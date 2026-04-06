@@ -5,6 +5,8 @@ import {
   buildSectioningConfig,
   buildGroupSummaries,
   sectionPage,
+  structureActivityParts,
+  type GroupSummary,
 } from "../page-sectioning.js"
 
 describe("buildSectioningConfig", () => {
@@ -86,7 +88,7 @@ describe("buildSectioningConfig", () => {
 })
 
 describe("buildGroupSummaries", () => {
-  it("builds summaries from unpruned text entries", () => {
+  it("builds summaries with individual text entry IDs", () => {
     const textClassification: TextClassificationOutput = {
       reasoning: "test",
       groups: [
@@ -115,12 +117,17 @@ describe("buildGroupSummaries", () => {
       {
         groupId: "pg001_gp001",
         groupType: "paragraph",
-        text: "Hello world. More text.",
+        texts: [
+          { textId: "pg001_gp001_tx001", textType: "section_text", text: "Hello world." },
+          { textId: "pg001_gp001_tx002", textType: "section_text", text: "More text." },
+        ],
       },
       {
         groupId: "pg001_gp002",
         groupType: "heading",
-        text: "Chapter 1",
+        texts: [
+          { textId: "pg001_gp002_tx001", textType: "section_heading", text: "Chapter 1" },
+        ],
       },
     ])
   })
@@ -153,7 +160,7 @@ describe("buildGroupSummaries", () => {
     expect(summaries[0].groupId).toBe("pg001_gp002")
   })
 
-  it("excludes pruned texts within a group", () => {
+  it("excludes pruned texts but preserves correct IDs", () => {
     const textClassification: TextClassificationOutput = {
       reasoning: "test",
       groups: [
@@ -171,7 +178,14 @@ describe("buildGroupSummaries", () => {
 
     const summaries = buildGroupSummaries(textClassification)
     expect(summaries).toEqual([
-      { groupId: "pg001_gp001", groupType: "paragraph", text: "Body text" },
+      {
+        groupId: "pg001_gp001",
+        groupType: "paragraph",
+        texts: [
+          // tx002 because tx001 (pruned) is at index 0
+          { textId: "pg001_gp001_tx002", textType: "section_text", text: "Body text" },
+        ],
+      },
     ])
   })
 })
@@ -211,14 +225,14 @@ describe("sectionPage", () => {
       sections: [
         {
           section_type: "text_only",
-          part_ids: ["pg001_gp001"],
+          parts: ["pg001_gp001"],
           background_color: "#ffffff",
           text_color: "#000000",
           page_number: 1,
         },
         {
           section_type: "credits",
-          part_ids: ["pg001_gp002"],
+          parts: ["pg001_gp002"],
           background_color: "#f0f0f0",
           text_color: "#333333",
           page_number: null,
@@ -390,7 +404,7 @@ describe("sectionPage", () => {
       sections: [
         {
           section_type: "text_only",
-          part_ids: ["pg001_gp001"],
+          parts: ["pg001_gp001"],
           background_color: "#ffffff",
           text_color: "#000000",
           page_number: 1,
@@ -470,6 +484,129 @@ describe("sectionPage", () => {
     })
   })
 
+  it("expands LLM group objects into nested SectionParts", async () => {
+    // Simulate the LLM producing structured groups for a multiple choice section
+    const response = {
+      reasoning: "Multiple choice question",
+      sections: [
+        {
+          section_type: "activity_multiple_choice",
+          parts: [
+            "pg001_gp001",
+            "pg001_gp002_tx001",
+            {
+              group_type: "option_group",
+              items: [
+                { group_type: "option", items: ["pg001_gp002_tx002"] },
+                { group_type: "option", items: ["pg001_gp002_tx003"] },
+                { group_type: "option", items: ["pg001_gp002_tx004"] },
+              ],
+            },
+          ],
+          background_color: "#ffffff",
+          text_color: "#000000",
+          page_number: 1,
+        },
+      ],
+    }
+
+    const fakeLlm: LLMModel = {
+      generateObject: async <T>() =>
+        ({ object: response as T }) as GenerateObjectResult<T>,
+    }
+
+    const result = await sectionPage(
+      {
+        pageId: "pg001",
+        pageNumber: 1,
+        pageImageBase64: "base64img",
+        textClassification: {
+          reasoning: "test",
+          groups: [
+            {
+              groupId: "pg001_gp001",
+              groupType: "list",
+              texts: [
+                { textType: "instruction_text", text: "Choose the best answer.", isPruned: false },
+              ],
+              isPruned: false,
+            },
+            {
+              groupId: "pg001_gp002",
+              groupType: "other",
+              texts: [
+                { textType: "section_text", text: "Elena was taken to her grandfather.", isPruned: false },
+                { textType: "activity_option", text: "Elena's arrival", isPruned: false },
+                { textType: "activity_option", text: "Elena's journey", isPruned: false },
+                { textType: "activity_option", text: "Elena's costume", isPruned: false },
+              ],
+              isPruned: false,
+            },
+          ],
+        },
+        imageClassification: { images: [] },
+        images: [],
+      },
+      {
+        sectionTypes: [{ key: "activity_multiple_choice", description: "Multiple choice" }],
+        prunedSectionTypes: [],
+        promptName: "page_sectioning",
+        modelId: "openai:gpt-4o",
+      },
+      fakeLlm
+    )
+
+    const section = result.sections[0]
+    expect(section.sectionType).toBe("activity_multiple_choice")
+
+    // First part: instruction text_group (whole group referenced by group ID)
+    expect(section.parts[0]).toEqual({
+      type: "text_group",
+      groupId: "pg001_gp001",
+      groupType: "list",
+      texts: [
+        { textId: "pg001_gp001_tx001", textType: "instruction_text", text: "Choose the best answer.", isPruned: false },
+      ],
+      isPruned: false,
+    })
+
+    // Second part: individual text entry for the question
+    expect(section.parts[1]).toMatchObject({
+      type: "text_group",
+      groupId: "pg001_gp002_tx001_tg",
+      texts: [
+        { textId: "pg001_gp002_tx001", textType: "section_text", text: "Elena was taken to her grandfather." },
+      ],
+    })
+
+    // Third part: option_group wrapping 3 options
+    const optionGroup = section.parts[2]
+    expect(optionGroup.type).toBe("group")
+    if (optionGroup.type === "group") {
+      expect(optionGroup.groupType).toBe("option_group")
+      expect(optionGroup.parts).toHaveLength(3)
+
+      // Each option is a group wrapping a single-text text_group
+      for (const opt of optionGroup.parts) {
+        expect(opt.type).toBe("group")
+        if (opt.type === "group") {
+          expect(opt.groupType).toBe("option")
+          expect(opt.parts).toHaveLength(1)
+          expect(opt.parts[0].type).toBe("text_group")
+        }
+      }
+
+      // Verify option texts
+      const optionTexts = optionGroup.parts.map((opt) => {
+        if (opt.type === "group" && opt.parts[0].type === "text_group") {
+          return opt.parts[0].texts[0].text
+        }
+        return ""
+      })
+      expect(optionTexts).toEqual(["Elena's arrival", "Elena's journey", "Elena's costume"])
+    }
+  })
+
   it("throws when no section types configured", async () => {
     const fakeLlm: LLMModel = {
       generateObject: async <T>() =>
@@ -511,5 +648,156 @@ describe("sectionPage", () => {
         fakeLlm
       )
     ).rejects.toThrow("No section types configured")
+  })
+})
+
+describe("structureActivityParts", () => {
+  it("returns content sections unchanged", () => {
+    const parts: import("@adt/types").SectionPart[] = [
+      {
+        type: "text_group",
+        groupId: "tg1",
+        groupType: "paragraph",
+        texts: [{ textId: "t1", textType: "section_text", text: "Hello", isPruned: false }],
+        isPruned: false,
+      },
+      { type: "image", imageId: "img1", isPruned: false },
+    ]
+
+    const result = structureActivityParts("text_only", parts)
+    expect(result).toEqual(parts)
+  })
+
+  it("wraps all-option text_group entries into option_group", () => {
+    // Like pg012 word bank: a text_group where all entries are activity_option
+    const parts: import("@adt/types").SectionPart[] = [
+      {
+        type: "text_group",
+        groupId: "tg1",
+        groupType: "paragraph",
+        texts: [{ textId: "t1", textType: "instruction_text", text: "Fill in blanks", isPruned: false }],
+        isPruned: false,
+      },
+      {
+        type: "text_group",
+        groupId: "tg2",
+        groupType: "list",
+        texts: [
+          { textId: "t2", textType: "activity_option", text: "word1", isPruned: false },
+          { textId: "t3", textType: "activity_option", text: "word2", isPruned: false },
+        ],
+        isPruned: false,
+      },
+    ]
+
+    const result = structureActivityParts("activity_fill_in_the_blank", parts)
+    expect(result).toHaveLength(2)
+    expect(result[0].type).toBe("text_group") // instruction unchanged
+    expect(result[1].type).toBe("group")
+    if (result[1].type === "group") {
+      expect(result[1].groupType).toBe("option_group")
+      expect(result[1].parts).toHaveLength(2)
+      expect(result[1].parts[0].type).toBe("group")
+      if (result[1].parts[0].type === "group") {
+        expect(result[1].parts[0].groupType).toBe("option")
+      }
+    }
+  })
+
+  it("splits mixed text_group into question + options", () => {
+    // Like pg011: section_text + activity_option in same text_group
+    const parts: import("@adt/types").SectionPart[] = [
+      {
+        type: "text_group",
+        groupId: "tg1",
+        groupType: "other",
+        texts: [
+          { textId: "t1", textType: "section_text", text: "Question text", isPruned: false },
+          { textId: "t2", textType: "activity_option", text: "Option A", isPruned: false },
+          { textId: "t3", textType: "activity_option", text: "Option B", isPruned: false },
+        ],
+        isPruned: false,
+      },
+    ]
+
+    const result = structureActivityParts("activity_multiple_choice", parts)
+    expect(result).toHaveLength(2)
+
+    // First: question text_group with options removed
+    expect(result[0].type).toBe("text_group")
+    if (result[0].type === "text_group") {
+      expect(result[0].texts).toHaveLength(1)
+      expect(result[0].texts[0].textType).toBe("section_text")
+    }
+
+    // Second: option_group with 2 options
+    expect(result[1].type).toBe("group")
+    if (result[1].type === "group") {
+      expect(result[1].groupType).toBe("option_group")
+      expect(result[1].parts).toHaveLength(2)
+    }
+  })
+
+  it("preserves images between text parts", () => {
+    const parts: import("@adt/types").SectionPart[] = [
+      {
+        type: "text_group",
+        groupId: "tg1",
+        groupType: "other",
+        texts: [
+          { textId: "t1", textType: "activity_option", text: "Opt A", isPruned: false },
+          { textId: "t2", textType: "activity_option", text: "Opt B", isPruned: false },
+        ],
+        isPruned: false,
+      },
+      { type: "image", imageId: "img1", isPruned: false },
+      {
+        type: "text_group",
+        groupId: "tg2",
+        groupType: "other",
+        texts: [
+          { textId: "t3", textType: "activity_option", text: "Opt C", isPruned: false },
+        ],
+        isPruned: false,
+      },
+    ]
+
+    const result = structureActivityParts("activity_multiple_choice", parts)
+    // Options before image → option_group, then image, then another option_group
+    expect(result).toHaveLength(3)
+    expect(result[0].type).toBe("group") // option_group for Opt A, B
+    expect(result[1].type).toBe("image")
+    expect(result[2].type).toBe("group") // option_group for Opt C
+  })
+
+  it("handles pruned option entries gracefully", () => {
+    const parts: import("@adt/types").SectionPart[] = [
+      {
+        type: "text_group",
+        groupId: "tg1",
+        groupType: "other",
+        texts: [
+          { textId: "t1", textType: "activity_option", text: "Active", isPruned: false },
+          { textId: "t2", textType: "activity_option", text: "Pruned", isPruned: true },
+        ],
+        isPruned: false,
+      },
+    ]
+
+    const result = structureActivityParts("activity_true_false", parts)
+    // Pruned entries are excluded from option extraction; only the active option
+    // becomes an option group. Since no non-pruned non-option entries remain,
+    // the text_group is fully consumed.
+    expect(result).toHaveLength(1)
+
+    expect(result[0].type).toBe("group")
+    if (result[0].type === "group") {
+      expect(result[0].groupType).toBe("option_group")
+      expect(result[0].parts).toHaveLength(1)
+      // The single active option
+      if (result[0].parts[0].type === "group") {
+        expect(result[0].parts[0].groupType).toBe("option")
+      }
+    }
   })
 })

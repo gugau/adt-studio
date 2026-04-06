@@ -101,10 +101,18 @@ export {
   SectionTextEntry,
   SectionTextPart,
   SectionImagePart,
+  SectionGroupPart,
+  type SectionGroupPartType,
   SectionPart,
   PageSection,
   PageSectioningOutput,
   buildPageSectioningLLMSchema,
+  type LLMPartGroup,
+  type LLMPartGroupItem,
+  type LLMSectionPart,
+  flattenParts,
+  flattenImageParts,
+  flattenTextParts,
 } from "./page-sectioning.js"
 
 export {

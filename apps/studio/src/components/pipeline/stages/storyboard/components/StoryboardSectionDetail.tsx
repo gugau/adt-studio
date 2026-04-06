@@ -916,6 +916,152 @@ export function StoryboardSectionDetail({
     [pendingRendering, page.rendering, sectionIndex]
   )
 
+  // Determine the "swap unit" for an element: the block-level node that should be
+  // reordered when the user moves the element up/down within its parent container.
+  function getSwapUnit(doc: Document, dataId: string): { unit: Element; parent: Element } | null {
+    const el = doc.querySelector(`[data-id="${dataId}"]`)
+    if (!el) return null
+
+    const blockParent = el.closest("div, p, figure, li, tr, section[data-section-id]")
+    const isSectionWrapper = blockParent?.getAttribute("data-section-id") != null
+    const isOuterContainer =
+      blockParent?.id === "content" || blockParent?.classList.contains("container")
+
+    let unit: Element
+    if (!blockParent || isSectionWrapper || isOuterContainer) {
+      unit = el
+    } else if (blockParent.querySelectorAll("[data-id]").length <= 1) {
+      // Block parent wraps only this element — swap the whole block
+      unit = blockParent
+    } else {
+      unit = el
+    }
+
+    const parent = unit.parentElement
+    if (!parent) return null
+    return { unit, parent }
+  }
+
+  // Compute whether the currently-selected element can move up/down.
+  const moveInfo = useMemo(() => {
+    if (!selectedElement) return null
+    const rBase = pendingRendering ?? page.rendering
+    if (!rBase) return null
+    const currentSection = getRenderedSectionByIndex(rBase, sectionIndex)
+    if (!currentSection?.html) return null
+
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(currentSection.html, "text/html")
+    const info = getSwapUnit(doc, selectedElement.dataId)
+    if (!info) return null
+
+    return {
+      canMoveUp: info.unit.previousElementSibling !== null,
+      canMoveDown: info.unit.nextElementSibling !== null,
+    }
+  }, [selectedElement, pendingRendering, page.rendering, sectionIndex])
+
+  // Swap an element with its previous or next sibling in the rendered HTML.
+  const swapElementInRendering = useCallback(
+    (dataId: string, direction: "up" | "down") => {
+      const rBase = pendingRendering ?? page.rendering
+      if (!rBase) return
+      const currentSection = getRenderedSectionByIndex(rBase, sectionIndex)
+      if (!currentSection?.html) return
+
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(currentSection.html, "text/html")
+      const info = getSwapUnit(doc, dataId)
+      if (!info) return
+
+      const { unit, parent } = info
+
+      if (direction === "up") {
+        const prev = unit.previousElementSibling
+        if (!prev) return
+        parent.insertBefore(unit, prev)
+      } else {
+        const next = unit.nextElementSibling
+        if (!next) return
+        parent.insertBefore(next, unit)
+      }
+
+      const newHtml = doc.body.innerHTML
+      const updated: RenderingData = {
+        ...rBase,
+        sections: rBase.sections.map((s) => {
+          if (s.sectionIndex !== sectionIndex) return s
+          return { ...s, html: newHtml }
+        }),
+      }
+      setPendingRendering(updated)
+    },
+    [pendingRendering, page.rendering, sectionIndex]
+  )
+
+  const handleMoveUp = useCallback(
+    (dataId: string) => swapElementInRendering(dataId, "up"),
+    [swapElementInRendering]
+  )
+
+  const handleMoveDown = useCallback(
+    (dataId: string) => swapElementInRendering(dataId, "down"),
+    [swapElementInRendering]
+  )
+
+  // Tags where child type matters — don't allow dropping arbitrary elements inside these
+  const STRICT_CHILD_TAGS = new Set(["table", "thead", "tbody", "tfoot", "tr", "ul", "ol", "dl", "select"])
+
+  // Reorder an element by drag-and-drop: move drag element before/after/inside drop element.
+  // Supports cross-container moves. Uses CSS selectors to identify elements.
+  const reorderElementInRendering = useCallback(
+    (dragSelector: string, dropSelector: string, position: "before" | "after" | "inside") => {
+      if (dragSelector === dropSelector) return
+      const rBase = pendingRendering ?? page.rendering
+      if (!rBase) return
+      const currentSection = getRenderedSectionByIndex(rBase, sectionIndex)
+      if (!currentSection?.html) return
+
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(currentSection.html, "text/html")
+
+      const dragEl = doc.querySelector(dragSelector)
+      const dropEl = doc.querySelector(dropSelector)
+      if (!dragEl || !dropEl) return
+
+      // Prevent dropping an element inside itself (would create a cycle)
+      if (dragEl.contains(dropEl)) return
+
+      if (position === "inside") {
+        // Drop into a container — guard against structural tags
+        if (STRICT_CHILD_TAGS.has(dropEl.tagName.toLowerCase())) return
+        dropEl.appendChild(dragEl)
+      } else {
+        const targetParent = dropEl.parentElement
+        if (!targetParent) return
+        // Guard against inserting into structural containers
+        if (STRICT_CHILD_TAGS.has(targetParent.tagName.toLowerCase())) return
+
+        if (position === "before") {
+          targetParent.insertBefore(dragEl, dropEl)
+        } else {
+          targetParent.insertBefore(dragEl, dropEl.nextSibling)
+        }
+      }
+
+      const newHtml = doc.body.innerHTML
+      const updated: RenderingData = {
+        ...rBase,
+        sections: rBase.sections.map((s) => {
+          if (s.sectionIndex !== sectionIndex) return s
+          return { ...s, html: newHtml }
+        }),
+      }
+      setPendingRendering(updated)
+    },
+    [pendingRendering, page.rendering, sectionIndex]
+  )
+
   // Clone data-id elements in the rendered HTML and insert after the originals.
   // `mappings` is an array of { sourceDataId, newDataId } pairs.
   // For group duplication, pass all text entries of the source group mapped to new IDs.
@@ -2562,6 +2708,10 @@ export function StoryboardSectionDetail({
           onDelete={!storyboardRunning ? handleDeleteBlock : undefined}
           elementClasses={selectedElementClasses ?? undefined}
           onClassesChange={handleClassesChange}
+          onMoveUp={!storyboardRunning ? handleMoveUp : undefined}
+          onMoveDown={!storyboardRunning ? handleMoveDown : undefined}
+          canMoveUp={moveInfo?.canMoveUp}
+          canMoveDown={moveInfo?.canMoveDown}
         />
       )}
 
@@ -2631,6 +2781,16 @@ export function StoryboardSectionDetail({
         hasApiKey={hasApiKey}
         showPrunedImages={showPrunedImages}
         onToggleShowPrunedImages={() => setShowPrunedImages((v) => !v)}
+        sectionHtml={renderedSection?.html}
+        selectedDataId={selectedElement?.dataId}
+        onSelectElement={(dataId) => {
+          // Highlight in layers only — no floating toolbar (no rect info from layers panel)
+          setSelectedElement(dataId ? { dataId, rect: new DOMRect(), iframeTop: 0, iframeLeft: 0 } : null)
+          setSelectedElementClasses(dataId ? (previewFrameRef.current?.getElementClasses(dataId) ?? null) : null)
+        }}
+        onMoveElement={(dataId, dir) => swapElementInRendering(dataId, dir)}
+        onReorderElement={reorderElementInRendering}
+        prunedDataIds={prunedDataIds}
       />
       )}
 

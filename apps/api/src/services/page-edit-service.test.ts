@@ -146,12 +146,12 @@ describe("page-edit-service", () => {
           context: {
             section_id: string
             section_type: string
-            images: Array<{ image_id: string }>
+            ordered_parts: Array<{ part_type: string; image_id?: string }>
           }
         }).context
         const sectionId = context.section_id
         const sectionType = context.section_type
-        const imageId = context.images[0]?.image_id
+        const imageId = context.ordered_parts.find((p) => p.part_type === "image")?.image_id
         return {
           object: {
             reasoning: "rerendered",
