@@ -112,7 +112,7 @@ export function PageGroupingMode() {
   )
 
   return (
-    <div className="flex w-full flex-col gap-3">
+    <div id="wizard-page-grouping" className="flex w-full flex-col gap-3">
       <div className="flex items-center gap-1">
         <Label className="text-sm font-medium text-foreground">
           <Trans>Page Grouping Mode</Trans>

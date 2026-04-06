@@ -27,7 +27,7 @@ export function ProjectNameField({
   onBlur,
   errors,
 }: ProjectNameFieldProps) {
-  const inputId = useId()
+  const inputId = "wizard-project-name"
   const hintId = useId()
   const errorId = useId()
   const hasError = errors.length > 0

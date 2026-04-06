@@ -18,6 +18,8 @@ export interface StepDef {
   description: MessageDescriptor
   component: ComponentType
   isValid: (values: WizardFormValues, context?: WizardStepValidationContext) => boolean
+  scrollToFirstInvalid?: (values: WizardFormValues, context?: WizardStepValidationContext) => string | null
+  hint?: (values: WizardFormValues, context?: WizardStepValidationContext) => MessageDescriptor | null
 }
 
 export const STEPS: StepDef[] = [
@@ -25,8 +27,17 @@ export const STEPS: StepDef[] = [
     title: msg`Basic Information`,
     description: msg`Configure basic document information and file paths`,
     component: Step1,
-    isValid: (v, ctx) =>
-      isStep1BasicInfoValid(v, ctx?.existingBookLabels ?? []),
+    isValid: (v, ctx) => isStep1BasicInfoValid(v, ctx?.existingBookLabels ?? []),
+    scrollToFirstInvalid: (v, ctx) => {
+      if (!v.file) return "wizard-pdf-upload"
+      if (!isStep1BasicInfoValid(v, ctx?.existingBookLabels ?? [])) return "wizard-project-name"
+      return null
+    },
+    hint: (v, ctx) => {
+      if (!v.file) return msg`Upload a PDF to continue`
+      if (!isStep1BasicInfoValid(v, ctx?.existingBookLabels ?? [])) return msg`Enter a valid project name`
+      return null
+    },
   },
   {
     title: msg`Visual Layout`,
@@ -36,6 +47,18 @@ export const STEPS: StepDef[] = [
       v.renderStrategy !== "" &&
       v.pageGrouping !== "" &&
       v.sectioningMode !== "",
+    scrollToFirstInvalid: (v) => {
+      if (!v.renderStrategy) return "wizard-render-strategy"
+      if (!v.pageGrouping) return "wizard-page-grouping"
+      if (!v.sectioningMode) return "wizard-sectioning-mode"
+      return null
+    },
+    hint: (v) => {
+      if (!v.renderStrategy) return msg`Select a render strategy to continue`
+      if (!v.pageGrouping) return msg`Select a page grouping to continue`
+      if (!v.sectioningMode) return msg`Select a section mode to continue`
+      return null
+    },
   },
   {
     title: msg`Content Processing`,
@@ -47,6 +70,20 @@ export const STEPS: StepDef[] = [
       if (!t) return true
       const n = Number(t)
       return Number.isInteger(n) && n >= 0
+    },
+    scrollToFirstInvalid: (v) => {
+      if (v.imageSegmentation && v.segmentationMinSide.trim()) {
+        const n = Number(v.segmentationMinSide.trim())
+        if (!Number.isInteger(n) || n < 0) return "wizard-segmentation-min-side"
+      }
+      return null
+    },
+    hint: (v) => {
+      if (v.imageSegmentation && v.segmentationMinSide.trim()) {
+        const n = Number(v.segmentationMinSide.trim())
+        if (!Number.isInteger(n) || n < 0) return msg`Enter a valid minimum dimension (whole number ≥ 0)`
+      }
+      return null
     },
   },
   {

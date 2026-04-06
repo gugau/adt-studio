@@ -1358,6 +1358,12 @@ msgstr "Engineering handbooks"
 msgid "English"
 msgstr "English"
 
+msgid "Enter a valid minimum dimension (whole number ≥ 0)"
+msgstr "Enter a valid minimum dimension (whole number ≥ 0)"
+
+msgid "Enter a valid project name"
+msgstr "Enter a valid project name"
+
 msgid "Enter hex color and press Enter"
 msgstr "Enter hex color and press Enter"
 
@@ -3132,11 +3138,20 @@ msgstr "Segmenting..."
 msgid "Select a node type and enter an item ID to view versions."
 msgstr "Select a node type and enter an item ID to view versions."
 
+msgid "Select a page grouping to continue"
+msgstr "Select a page grouping to continue"
+
+msgid "Select a render strategy to continue"
+msgstr "Select a render strategy to continue"
+
 msgid "Select a render strategy to preview how your book pages will be laid out."
 msgstr "Select a render strategy to preview how your book pages will be laid out."
 
 msgid "Select a reviewer session to inspect its progress and findings."
 msgstr "Select a reviewer session to inspect its progress and findings."
+
+msgid "Select a section mode to continue"
+msgstr "Select a section mode to continue"
 
 msgid "Select a style guide to preview how it styles the generated pages - typography, colors, and component layout."
 msgstr "Select a style guide to preview how it styles the generated pages - typography, colors, and component layout."
@@ -3745,8 +3760,11 @@ msgstr "Untitled"
 msgid "Upload a new image file from your computer"
 msgstr "Upload a new image file from your computer"
 
-msgid "Upload a PDF and fill the Project name with a valid label first"
-msgstr "Upload a PDF and fill the Project name with a valid label first"
+#~ msgid "Upload a PDF and fill the Project name with a valid label first"
+#~ msgstr "Upload a PDF and fill the Project name with a valid label first"
+
+msgid "Upload a PDF to continue"
+msgstr "Upload a PDF to continue"
 
 msgid "Upload a PDF to get started"
 msgstr "Upload a PDF to get started"

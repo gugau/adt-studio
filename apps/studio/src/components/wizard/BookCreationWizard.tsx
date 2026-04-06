@@ -1,5 +1,5 @@
 
-import { useState, type CSSProperties } from "react"
+import { useState, useEffect, type CSSProperties } from "react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { Eye, ArrowLeft, ArrowRight, Zap } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
@@ -21,7 +21,6 @@ import { ImageProcessingPreviewPane } from "./step3ContentProcessing/ImageProces
 import { LanguagesPreviewPane } from "./step4Languages/LanguagesPreviewPane"
 import { StyleguidePreviewPane } from "./step5Styleguide/StyleguidePreviewPane"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
 function WizardHeader({ step, accent }: { step: number; accent: PresetAccent }) {
@@ -57,6 +56,8 @@ function WizardFooter({
   onNext,
   onCreate,
   accent,
+  hint,
+  onScrollToInvalid,
 }: {
   isLastStep: boolean
   canContinue: boolean
@@ -65,11 +66,38 @@ function WizardFooter({
   onNext: () => void
   onCreate: () => void
   accent: PresetAccent
+  hint?: string
+  onScrollToInvalid?: () => void
 }) {
   const { t } = useLingui()
+  const isValid = isLastStep ? canCreate : canContinue
+  const [attempted, setAttempted] = useState(false)
+
+  useEffect(() => {
+    if (isValid) setAttempted(false)
+  }, [isValid])
+
+  function handleNext() {
+    if (isValid) {
+      isLastStep ? onCreate() : onNext()
+    } else {
+      setAttempted(true)
+      onScrollToInvalid?.()
+    }
+  }
 
   return (
     <div className="border-t border-[#e5e5e5] px-6 py-4 flex flex-col gap-2">
+      <div
+        className={cn(
+          "grid transition-[grid-template-rows,opacity] duration-200 ease-in-out motion-reduce:transition-none",
+          attempted && hint ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+        )}
+      >
+        <div className="overflow-hidden">
+          <p className="pb-1 text-center text-xs text-red-600">{hint}</p>
+        </div>
+      </div>
       <div className="grid grid-cols-2 w-full gap-2">
         <Button
           type="button"
@@ -83,44 +111,32 @@ function WizardFooter({
           </span>
         </Button>
 
-        <TooltipProvider>
-          <Tooltip open={isLastStep && !canCreate ? undefined : false}>
-            <TooltipTrigger asChild>
-              <span className="min-w-0 w-full">
-                <Button
-                  type="button"
-                  disabled={isLastStep ? !canCreate : !canContinue}
-                  onClick={isLastStep ? onCreate : onNext}
-                  className="flex h-10 w-full items-center justify-center overflow-hidden px-4 font-medium text-white transition-[background-color,opacity] duration-300 ease-out hover:opacity-90 disabled:opacity-50 border-0"
-                  style={{ backgroundColor: accent.bg }}
-                >
-                  <span
-                    key={isLastStep ? "create-final" : "next"}
-                    className={cn(
-                      "flex items-center gap-1.5",
-                      isLastStep ? "animate-btn-final-enter" : "animate-btn-label-enter",
-                    )}
-                  >
-                    {isLastStep ? (
-                      <>
-                        <Zap className="h-4 w-4 shrink-0" />
-                        {t`Create Book`}
-                      </>
-                    ) : (
-                      <>
-                        {t`Next Step`}
-                        <ArrowRight className="h-4 w-4 shrink-0" />
-                      </>
-                    )}
-                  </span>
-                </Button>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="top">
-              {t`Upload a PDF and fill the Project name with a valid label first`}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Button
+          type="button"
+          onClick={handleNext}
+          className="flex h-10 w-full items-center justify-center overflow-hidden px-4 font-medium text-white transition-[background-color,opacity] duration-300 ease-out hover:opacity-90 border-0"
+          style={{ backgroundColor: accent.bg }}
+        >
+          <span
+            key={isLastStep ? "create-final" : "next"}
+            className={cn(
+              "flex items-center gap-1.5",
+              isLastStep ? "animate-btn-final-enter" : "animate-btn-label-enter",
+            )}
+          >
+            {isLastStep ? (
+              <>
+                <Zap className="h-4 w-4 shrink-0" />
+                {t`Create Book`}
+              </>
+            ) : (
+              <>
+                {t`Next Step`}
+                <ArrowRight className="h-4 w-4 shrink-0" />
+              </>
+            )}
+          </span>
+        </Button>
       </div>
     </div>
   )
@@ -164,7 +180,7 @@ function PreviewContainer({
 }
 
 export function BookCreationWizard() {
-  const { t } = useLingui()
+  const { t, i18n } = useLingui()
   const navigate = useNavigate()
   const { currentStep, setCurrentStep, stepDirection, previewFocus } = useWizard()
   const form = useWizardForm()
@@ -185,6 +201,22 @@ export function BookCreationWizard() {
       ? STEPS[stepIndex].isValid(values, stepValidationContext)
       : false
   const canCreate = STEPS.every((s) => s.isValid(values, stepValidationContext))
+  const stepDef = STEPS[stepIndex]
+  const hintDescriptor = stepDef?.hint?.(values, stepValidationContext) ?? null
+  const hint = hintDescriptor ? i18n._(hintDescriptor) : undefined
+
+  function handleScrollToInvalid() {
+    const fieldId = stepDef?.scrollToFirstInvalid?.(values, stepValidationContext)
+    if (!fieldId) return
+    const el = document.getElementById(fieldId)
+    if (!el) return
+    el.scrollIntoView({ behavior: "smooth", block: "center" })
+    // eslint-disable-next-line lingui/no-unlocalized-strings
+    const focusable = el.matches("input,button,select,textarea,[tabindex]")
+      ? el
+      : el.querySelector<HTMLElement>("input,button,select,textarea,[tabindex]")
+    if (focusable) setTimeout(() => focusable.focus({ preventScroll: true }), 300)
+  }
 
   if (currentStep === 0) {
     return (
@@ -278,7 +310,7 @@ export function BookCreationWizard() {
           <div className="mx-auto flex w-full min-h-0 lg:pr-8 flex-1 flex-col overflow-hidden">
             <WizardHeader step={currentStep} accent={accent} />
 
-            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+            <div className="wizard-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
               <div
                 key={currentStep}
                 className={stepDirection === "forward" ? "animate-step-enter-forward" : "animate-step-enter-back"}
@@ -295,6 +327,7 @@ export function BookCreationWizard() {
             </p>
           )}
           <WizardFooter
+            key={currentStep}
             isLastStep={currentStep === STEPS.length}
             canContinue={canContinue}
             canCreate={canCreate && !createMutation.isPending}
@@ -302,6 +335,8 @@ export function BookCreationWizard() {
             onNext={handleNext}
             onCreate={handleCreate}
             accent={accent}
+            hint={hint}
+            onScrollToInvalid={handleScrollToInvalid}
           />
         </aside>
 

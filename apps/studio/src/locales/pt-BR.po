@@ -1358,6 +1358,12 @@ msgstr "Manuais de engenharia"
 msgid "English"
 msgstr "Inglês"
 
+msgid "Enter a valid minimum dimension (whole number ≥ 0)"
+msgstr "Insira uma dimensão mínima válida (número inteiro ≥ 0)"
+
+msgid "Enter a valid project name"
+msgstr "Insira um nome de projeto válido"
+
 msgid "Enter hex color and press Enter"
 msgstr "Digite uma cor hex e pressione Enter"
 
@@ -3132,11 +3138,20 @@ msgstr "Segmentando..."
 msgid "Select a node type and enter an item ID to view versions."
 msgstr "Selecione um tipo de nó e insira um ID de item para ver as versões."
 
+msgid "Select a page grouping to continue"
+msgstr "Selecione um agrupamento de páginas para continuar"
+
+msgid "Select a render strategy to continue"
+msgstr "Selecione uma estratégia de renderização para continuar"
+
 msgid "Select a render strategy to preview how your book pages will be laid out."
 msgstr "Selecione uma estratégia de renderização para pré-visualizar como as páginas do seu livro serão dispostas."
 
 msgid "Select a reviewer session to inspect its progress and findings."
 msgstr "Select a reviewer session to inspect its progress and findings."
+
+msgid "Select a section mode to continue"
+msgstr "Selecione um modo de seção para continuar"
 
 msgid "Select a style guide to preview how it styles the generated pages - typography, colors, and component layout."
 msgstr "Selecione um guia de estilo para pré-visualizar como ele estiliza as páginas geradas - tipografia, cores e layout de componentes."
@@ -3745,8 +3760,11 @@ msgstr "Sem título"
 msgid "Upload a new image file from your computer"
 msgstr "Envie um novo arquivo de imagem do seu computador"
 
-msgid "Upload a PDF and fill the Project name with a valid label first"
-msgstr "Envie um PDF e preencha o nome do projeto com um rótulo válido primeiro"
+#~ msgid "Upload a PDF and fill the Project name with a valid label first"
+#~ msgstr "Envie um PDF e preencha o nome do projeto com um rótulo válido primeiro"
+
+msgid "Upload a PDF to continue"
+msgstr "Envie um PDF para continuar"
 
 msgid "Upload a PDF to get started"
 msgstr "Envie um PDF para começar"

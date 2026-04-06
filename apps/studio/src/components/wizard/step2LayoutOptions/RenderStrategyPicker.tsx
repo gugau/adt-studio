@@ -126,7 +126,7 @@ export function RenderStrategyPicker() {
   }
 
   return (
-    <fieldset className="flex w-full flex-col gap-2 border-0 p-0">
+    <fieldset id="wizard-render-strategy" className="flex w-full flex-col gap-2 border-0 p-0">
       <legend className="flex w-full items-center gap-1 pb-2">
         <span className="text-sm font-medium leading-[14px] text-[#0a0a0a]">
           <Trans>Render Strategy</Trans>

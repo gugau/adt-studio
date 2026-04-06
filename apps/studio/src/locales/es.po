@@ -1358,6 +1358,12 @@ msgstr "Manuales de ingeniería"
 msgid "English"
 msgstr "English"
 
+msgid "Enter a valid minimum dimension (whole number ≥ 0)"
+msgstr "Introduce una dimensión mínima válida (número entero ≥ 0)"
+
+msgid "Enter a valid project name"
+msgstr "Introduce un nombre de proyecto válido"
+
 msgid "Enter hex color and press Enter"
 msgstr "Ingresa un color hex y presiona Enter"
 
@@ -3132,11 +3138,20 @@ msgstr "Segmentando..."
 msgid "Select a node type and enter an item ID to view versions."
 msgstr "Selecciona un tipo de nodo e ingresa un ID de elemento para ver las versiones."
 
+msgid "Select a page grouping to continue"
+msgstr "Selecciona un grupo de páginas para continuar"
+
+msgid "Select a render strategy to continue"
+msgstr "Selecciona una estrategia de renderizado para continuar"
+
 msgid "Select a render strategy to preview how your book pages will be laid out."
 msgstr "Selecciona una estrategia de renderizado para previsualizar cómo se dispondrán las páginas de tu libro."
 
 msgid "Select a reviewer session to inspect its progress and findings."
 msgstr "Select a reviewer session to inspect its progress and findings."
+
+msgid "Select a section mode to continue"
+msgstr "Selecciona un modo de sección para continuar"
 
 msgid "Select a style guide to preview how it styles the generated pages - typography, colors, and component layout."
 msgstr "Selecciona una guía de estilo para previsualizar cómo estiliza las páginas generadas - tipografía, colores y diseño de componentes."
@@ -3745,8 +3760,11 @@ msgstr "Sin título"
 msgid "Upload a new image file from your computer"
 msgstr "Sube un nuevo archivo de imagen desde tu computadora"
 
-msgid "Upload a PDF and fill the Project name with a valid label first"
-msgstr "Sube un PDF y llena el nombre del Proyecto con una etiqueta válida primero"
+#~ msgid "Upload a PDF and fill the Project name with a valid label first"
+#~ msgstr "Sube un PDF y llena el nombre del Proyecto con una etiqueta válida primero"
+
+msgid "Upload a PDF to continue"
+msgstr "Sube un PDF para continuar"
 
 msgid "Upload a PDF to get started"
 msgstr "Sube un PDF para comenzar"

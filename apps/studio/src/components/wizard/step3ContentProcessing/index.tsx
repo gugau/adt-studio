@@ -42,11 +42,13 @@ function SegmentationThresholdPanel({
   onMinSideChange,
   disabled,
   color,
+  id,
 }: {
   segmentationMinSide: string
   onMinSideChange: (v: string) => void
   disabled: boolean
   color?: string
+  id?: string
 }) {
   const { i18n } = useLingui()
   // Preview focus id (not user-visible).
@@ -56,6 +58,7 @@ function SegmentationThresholdPanel({
 
   return (
     <div
+      id={id}
       className={cn(
         "mt-3 rounded-lg border border-border bg-white px-4 py-3 shadow-sm transition-colors",
         !disabled && "hover:bg-muted hover:border-input",
@@ -176,6 +179,7 @@ export function Step3() {
               inert={!imageSegmentation ? true : undefined}
             >
               <SegmentationThresholdPanel
+                id="wizard-segmentation-min-side"
                 segmentationMinSide={segmentationMinSide}
                 onMinSideChange={(v) => form.setFieldValue("segmentationMinSide", v)}
                 disabled={!imageSegmentation}

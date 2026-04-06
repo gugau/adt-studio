@@ -256,6 +256,7 @@ export function PdfUpload() {
             </div>
           ) : (
             <div
+              id="wizard-pdf-upload"
               role="button"
               tabIndex={0}
               onClick={() => pdfRef.current?.click()}
