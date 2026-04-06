@@ -744,8 +744,8 @@ msgstr "Prompt de leyenda"
 msgid "Captioning Images..."
 msgstr "Subtitulando imágenes..."
 
-msgid "Captions"
-msgstr "Subtítulos"
+#~ msgid "Captions"
+#~ msgstr "Subtítulos"
 
 msgid "Cartoon"
 msgstr "Dibujo animado"
@@ -783,6 +783,12 @@ msgstr "Libro infantil clásico"
 msgid "Classified Text"
 msgstr "Texto clasificado"
 
+msgid "Classifying images…"
+msgstr "Clasificando imágenes…"
+
+msgid "Classifying text…"
+msgstr "Clasificando texto…"
+
 msgid "Clear all"
 msgstr "Clear all"
 
@@ -794,6 +800,9 @@ msgstr "Borrar modelo"
 
 msgid "Click \"Add Videos\" to upload MP4 or WebM files."
 msgstr "Haga clic en \"Agregar Videos\" para cargar archivos MP4 o WebM."
+
+msgid "Click an image to select"
+msgstr "Haz clic en una imagen para seleccionar"
 
 msgid "Click images to select"
 msgstr "Haz clic en las imágenes para seleccionar"
@@ -1564,6 +1573,9 @@ msgstr "Texto asociado a la imagen"
 msgid "Image Captioning"
 msgstr "Subtitulado de imágenes"
 
+msgid "Image Captions"
+msgstr "Leyendas de Imágenes"
+
 msgid "Image Cropping"
 msgstr "Recorte de imágenes"
 
@@ -2088,6 +2100,9 @@ msgstr "No hay secciones coincidentes"
 msgid "No metadata yet — run the pipeline to extract book details"
 msgstr "Aún no hay metadatos — ejecuta el pipeline para extraer los detalles del libro"
 
+msgid "No other images in this book"
+msgstr "No hay otras imágenes en este libro"
+
 msgid "No page linked"
 msgstr "No hay página vinculada"
 
@@ -2380,6 +2395,9 @@ msgstr "Vista previa de la página vinculada"
 msgid "Preview of the HTML/CSS patterns used for LLM-generated pages."
 msgstr "Vista previa de los patrones HTML/CSS usados para páginas generadas por LLM."
 
+msgid "Processing metadata…"
+msgstr "Procesando metadatos…"
+
 msgid "Prompt"
 msgstr "Prompt"
 
@@ -2545,6 +2563,9 @@ msgstr "Renderizando esta sección..."
 
 msgid "Replace"
 msgstr "Reemplazar"
+
+msgid "Replace from Book"
+msgstr "Reemplazar del libro"
 
 msgid "Replace Video?"
 msgstr "¿Reemplazar Video?"
@@ -3329,6 +3350,9 @@ msgstr "Sube un PDF para comenzar"
 
 msgid "Upload and assign sign language videos to book pages."
 msgstr "Carga y asigna videos de lengua de señas a las páginas del libro."
+
+msgid "Upload from Disk"
+msgstr "Subir desde disco"
 
 msgid "Upload image"
 msgstr "Subir imagen"

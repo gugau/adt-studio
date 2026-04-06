@@ -65,15 +65,15 @@ export const PIPELINE: StageDef[] = [
     label: "Extract",
     dependsOn: [],
     steps: [
-      { name: "extract", label: "PDF Extraction" },
+      { name: "extract", label: "PDF Extraction", pageProgress: true },
       { name: "metadata", label: "Metadata", dependsOn: ["extract"] },
-      { name: "image-filtering", label: "Image Filtering", dependsOn: ["extract"] },
+      { name: "image-filtering", label: "Image Filtering", dependsOn: ["extract"], pageProgress: true },
       { name: "image-segmentation", label: "Image Segmentation", dependsOn: ["image-filtering"] },
-      { name: "image-cropping", label: "Image Cropping", dependsOn: ["image-segmentation"] },
+      { name: "image-cropping", label: "Image Cropping", dependsOn: ["image-segmentation"], pageProgress: true },
       { name: "image-meaningfulness", label: "Image Meaningfulness", dependsOn: ["image-segmentation"] },
-      { name: "text-classification", label: "Text Classification", dependsOn: ["extract"] },
+      { name: "text-classification", label: "Text Classification", dependsOn: ["extract"], pageProgress: true },
       { name: "book-summary", label: "Book Summary", dependsOn: ["text-classification"] },
-      { name: "translation", label: "Translation", dependsOn: ["text-classification"] },
+      { name: "translation", label: "Translation", dependsOn: ["text-classification"], pageProgress: true },
     ],
   },
   {
@@ -95,7 +95,7 @@ export const PIPELINE: StageDef[] = [
   },
   {
     name: "captions",
-    label: "Captions",
+    label: "Image Captions",
     dependsOn: ["storyboard"],
     steps: [
       { name: "image-captioning", label: "Image Captioning" },

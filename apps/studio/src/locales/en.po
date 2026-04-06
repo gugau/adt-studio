@@ -744,8 +744,8 @@ msgstr "Caption Prompt"
 msgid "Captioning Images..."
 msgstr "Captioning Images..."
 
-msgid "Captions"
-msgstr "Captions"
+#~ msgid "Captions"
+#~ msgstr "Captions"
 
 msgid "Cartoon"
 msgstr "Cartoon"
@@ -783,6 +783,12 @@ msgstr "Classic Storybook"
 msgid "Classified Text"
 msgstr "Classified Text"
 
+msgid "Classifying images…"
+msgstr "Classifying images…"
+
+msgid "Classifying text…"
+msgstr "Classifying text…"
+
 msgid "Clear all"
 msgstr "Clear all"
 
@@ -794,6 +800,9 @@ msgstr "Clear model"
 
 msgid "Click \"Add Videos\" to upload MP4 or WebM files."
 msgstr "Click \"Add Videos\" to upload MP4 or WebM files."
+
+msgid "Click an image to select"
+msgstr "Click an image to select"
 
 msgid "Click images to select"
 msgstr "Click images to select"
@@ -1564,6 +1573,9 @@ msgstr "Image Associated Text"
 msgid "Image Captioning"
 msgstr "Image Captioning"
 
+msgid "Image Captions"
+msgstr "Image Captions"
+
 msgid "Image Cropping"
 msgstr "Image Cropping"
 
@@ -2088,6 +2100,9 @@ msgstr "No matching sections"
 msgid "No metadata yet — run the pipeline to extract book details"
 msgstr "No metadata yet — run the pipeline to extract book details"
 
+msgid "No other images in this book"
+msgstr "No other images in this book"
+
 msgid "No page linked"
 msgstr "No page linked"
 
@@ -2380,6 +2395,9 @@ msgstr "Preview linked page"
 msgid "Preview of the HTML/CSS patterns used for LLM-generated pages."
 msgstr "Preview of the HTML/CSS patterns used for LLM-generated pages."
 
+msgid "Processing metadata…"
+msgstr "Processing metadata…"
+
 msgid "Prompt"
 msgstr "Prompt"
 
@@ -2545,6 +2563,9 @@ msgstr "Rendering this section..."
 
 msgid "Replace"
 msgstr "Replace"
+
+msgid "Replace from Book"
+msgstr "Replace from Book"
 
 msgid "Replace Video?"
 msgstr "Replace Video?"
@@ -3329,6 +3350,9 @@ msgstr "Upload a PDF to get started"
 
 msgid "Upload and assign sign language videos to book pages."
 msgstr "Upload and assign sign language videos to book pages."
+
+msgid "Upload from Disk"
+msgstr "Upload from Disk"
 
 msgid "Upload image"
 msgstr "Upload image"
