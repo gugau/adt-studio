@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, useState } from "react";
 import { CircleHelp, Minus, Plus } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
@@ -57,9 +57,16 @@ function MinMaxInput({
   disabled?: boolean;
 }) {
   const inputId = useId();
+  const [draft, setDraft] = useState<string | null>(null);
 
   function clamp(v: number) {
     return Math.min(max, Math.max(min, v));
+  }
+
+  function commit(raw: string) {
+    setDraft(null);
+    const parsed = parseInt(raw, 10);
+    if (!isNaN(parsed)) onChange(clamp(parsed));
   }
 
   return (
@@ -85,12 +92,15 @@ function MinMaxInput({
           id={inputId}
           type="number"
           disabled={disabled}
-          value={disabled ? "" : value}
+          value={disabled ? "" : (draft ?? value)}
           min={min}
           max={max}
-          onChange={(e) => {
-            const parsed = parseInt(e.target.value, 10);
-            if (!isNaN(parsed)) onChange(clamp(parsed));
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={(e) => commit(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.currentTarget.blur();
+            }
           }}
           className={cn(
             "h-8 w-full rounded-none border-0 bg-white px-2 py-0 text-center text-[11.2px] shadow-none",
