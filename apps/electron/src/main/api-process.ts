@@ -64,7 +64,23 @@ function resolvePaths() {
 }
 
 
-export function startApiServer(): UtilityProcess {
+const API_HEALTH_URL = 'http://localhost:3001/api/health'
+
+async function waitForApi(timeoutMs = 15_000, intervalMs = 200): Promise<void> {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    try {
+      const res = await fetch(API_HEALTH_URL)
+      if (res.ok) return
+    } catch {
+      // not up yet
+    }
+    await new Promise((r) => setTimeout(r, intervalMs))
+  }
+  throw new Error(`API server did not start within ${timeoutMs}ms`)
+}
+
+export async function startApiServer(): Promise<UtilityProcess> {
   if (apiProcess) return apiProcess
 
   const paths = resolvePaths()
@@ -102,10 +118,16 @@ export function startApiServer(): UtilityProcess {
     console.error('[api-server]', data.toString().trimEnd())
   })
 
+  const exitBeforeReady = new Promise<never>((_, reject) => {
+    apiProcess!.once('exit', (code) => reject(new Error(`API server exited early (code=${code})`)))
+  })
+
   apiProcess.on('exit', (code) => {
     console.log(`[api-process] API server exited (code=${code})`)
     apiProcess = null
   })
+
+  await Promise.race([waitForApi(), exitBeforeReady])
 
   return apiProcess
 }

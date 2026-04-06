@@ -10,7 +10,7 @@ async function screenshot(html: string, viewport: { width: number; height: numbe
   const win = new BrowserWindow({
     width: viewport.width,
     height: viewport.height,
-    show: true,
+    show: false,
     webPreferences: { offscreen: true },
   });
 

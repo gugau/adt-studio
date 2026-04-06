@@ -16,7 +16,7 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 app.whenReady().then(async () => {
-  const apiProcess = startApiServer()
+  const apiProcess = await startApiServer()
 
   electronApp.setAppUserModelId('com.electron')
 
@@ -25,7 +25,6 @@ app.whenReady().then(async () => {
   })
 
   
-  await new Promise<void>((resolve) => setTimeout(resolve, 2000))
   /*
     The child (API) process cannot access Electron APIs directly, 
     so the main process handles screenshot operations on its behalf via IPC messaging.
