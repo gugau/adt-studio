@@ -764,9 +764,6 @@ export const api = {
   getTemplates: () =>
     request<{ templates: string[] }>(`/templates`),
 
-  getPreset: (name: string) =>
-    request<{ config: Record<string, unknown> }>(`/presets/${name}`),
-
   getStyleguides: () =>
     request<{ styleguides: string[] }>(`/styleguides`),
 
