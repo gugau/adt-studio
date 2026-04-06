@@ -4,6 +4,16 @@ import { app, utilityProcess, type UtilityProcess } from 'electron'
 
 let apiProcess: UtilityProcess | null = null
 
+export type ApiLogEntry = { stream: 'stdout' | 'stderr'; line: string; timestamp: number }
+type LogForwarder = (entry: ApiLogEntry) => void
+
+let logForwarder: LogForwarder | null = null
+export const isApiDebugMode = process.env.ADT_DEBUG === 'true'
+
+export function setLogForwarder(fn: LogForwarder | null): void {
+  logForwarder = fn
+}
+
 /**
  * api-server.mjs, WASM, and node_modules are asar-unpacked (native deps). They live under
  * resources/app.asar.unpacked/out/main/, not inside app.asar next to this file.
@@ -90,6 +100,7 @@ export async function startApiServer(): Promise<UtilityProcess> {
     'Books dir': paths.booksDir,
     'Prompts dir': paths.promptsDir,
     'Config path': paths.configPath,
+    'Debug mode': isApiDebugMode ? 'true' : 'false',
   });
 
   apiProcess = utilityProcess.fork(paths.serverPath, [], {
@@ -111,11 +122,15 @@ export async function startApiServer(): Promise<UtilityProcess> {
   })
 
   apiProcess.stdout?.on('data', (data: Buffer) => {
-    console.log('[api-server]', data.toString().trimEnd())
+    const line = data.toString().trimEnd()
+    console.log('[api-server]', line)
+    if (isApiDebugMode) logForwarder?.({ stream: 'stdout', line, timestamp: Date.now() })
   })
 
   apiProcess.stderr?.on('data', (data: Buffer) => {
-    console.error('[api-server]', data.toString().trimEnd())
+    const line = data.toString().trimEnd()
+    console.error('[api-server]', line)
+    if (isApiDebugMode) logForwarder?.({ stream: 'stderr', line, timestamp: Date.now() })
   })
 
   const exitBeforeReady = new Promise<never>((_, reject) => {

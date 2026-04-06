@@ -5,3 +5,16 @@ declare module "*.po" {
   const messages: Messages
   export { messages }
 }
+
+interface ElectronApiLogEntry {
+  stream: "stdout" | "stderr"
+  line: string
+  timestamp: number
+}
+
+interface Window {
+  api: {
+    onApiLog: (callback: (entry: ElectronApiLogEntry) => void) => () => void
+    isApiDebugMode: () => Promise<boolean>
+  }
+}

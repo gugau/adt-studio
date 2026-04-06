@@ -1,4 +1,5 @@
 import { TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { isElectron } from "@/lib/utils"
 
 interface DebugTabsNavProps {
   isRunning: boolean
@@ -22,6 +23,11 @@ export function DebugTabsNav({ isRunning }: DebugTabsNavProps) {
       <TabsTrigger value="versions" className="text-xs px-2 py-1">
         Versions
       </TabsTrigger>
+      {isElectron() && (
+        <TabsTrigger value="api-logs" className="text-xs px-2 py-1">
+          API Logs
+        </TabsTrigger>
+      )}
     </TabsList>
   )
 }

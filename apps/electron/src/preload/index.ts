@@ -1,8 +1,17 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
+import type { ApiLogEntry } from '../main/api-process'
 
-// Custom APIs for renderer
-const api = {}
+type ApiLogCallback = (entry: ApiLogEntry) => void
+
+const api = {
+  onApiLog: (callback: ApiLogCallback): (() => void) => {
+    const handler = (_: Electron.IpcRendererEvent, entry: ApiLogEntry) => callback(entry)
+    ipcRenderer.on('api-log', handler)
+    return () => ipcRenderer.off('api-log', handler)
+  },
+  isApiDebugMode: (): Promise<boolean> => ipcRenderer.invoke('api-debug-mode'),
+}
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

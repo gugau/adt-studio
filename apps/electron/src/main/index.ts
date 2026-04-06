@@ -1,15 +1,15 @@
+import "dotenv/config";
 import {
   screenshotIpcReplyErrorSchema,
   screenshotIpcReplySuccessSchema,
   screenshotIpcUtilityToMainSchema,
 } from '@adt/types'
-import { app, BrowserWindow, protocol } from 'electron'
+import { app, BrowserWindow, ipcMain, protocol } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 import { createWindow } from './main-window'
-import { startApiServer, stopApiServer } from './api-process'
+import { startApiServer, stopApiServer, setLogForwarder, isApiDebugMode } from './api-process'
 import { screenshot, close as closeScreenshotWindows } from './screenshot'
 import { registerHtmlRenderProtocol } from './html-render-protocol'
-
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'html-render', privileges: { standard: true, secure: true } }
@@ -68,6 +68,16 @@ app.whenReady().then(async () => {
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+
+  ipcMain.handle('api-debug-mode', () => isApiDebugMode)
+
+  if (isApiDebugMode) {
+    setLogForwarder((entry) => {
+      BrowserWindow.getAllWindows().forEach((win) => {
+        win.webContents.send('api-log', entry)
+      })
+    })
+  }
 
   createWindow()
   registerHtmlRenderProtocol()
