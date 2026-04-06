@@ -2755,6 +2755,9 @@ msgstr "Recommended for {0}"
 msgid "Record reviewer findings for the current page and save them to the active validation session."
 msgstr "Record reviewer findings for the current page and save them to the active validation session."
 
+msgid "Recrop from page"
+msgstr "Recrop from page"
+
 msgid "Recrop from Page"
 msgstr "Recrop from Page"
 
@@ -3311,6 +3314,9 @@ msgstr "Step run failed"
 
 msgid "Storyboard"
 msgstr "Storyboard"
+
+msgid "Storyboard has already been run. Changes made here will not take effect until storyboard is re-run."
+msgstr "Storyboard has already been run. Changes made here will not take effect until storyboard is re-run."
 
 msgid "Storybook"
 msgstr "Storybook"
