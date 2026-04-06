@@ -7,7 +7,7 @@ import { Step1 } from "./step1BasicInfo"
 import { Step2 } from "./step2LayoutOptions"
 import { Step3 } from "./step3ContentProcessing"
 import { Step4 } from "./step4Languages"
-import { Step5 } from "./step5Styleguide"
+// import { Step5 } from "./step5Styleguide"
 
 export interface WizardStepValidationContext {
   existingBookLabels?: readonly string[]
@@ -55,10 +55,10 @@ export const STEPS: StepDef[] = [
     component: Step4,
     isValid: () => true,
   },
-  {
-    title: msg`Style Guide`,
-    description: msg`Choose a style guide to control the look and feel of the generated pages.`,
-    component: Step5,
-    isValid: () => true,
-  },
+  // {
+  //   title: msg`Style Guide`,
+  //   description: msg`Choose a style guide to control the look and feel of the generated pages.`,
+  //   component: Step5,
+  //   isValid: () => true,
+  // },
 ]
