@@ -176,6 +176,7 @@ export const PRESETS: PresetConfig[] = [
       activitiesGenerator: true,
       imageCropping: false,
       imageSegmentation: true,
+      figureExtraction: true,
     },
     formDefaults: {
       imageFilterMinSide: 50,
@@ -421,6 +422,7 @@ export const PRESETS: PresetConfig[] = [
       sectioningMode: "page",
       imageCropping: false,
       imageSegmentation: false,
+      figureExtraction: true,
     },
     formDefaults: {
       imageFilterMinSide: 100,
@@ -534,6 +536,7 @@ const FIELD_LABELS: Partial<Record<keyof WizardFormValues, MessageDescriptor>> =
     sectioningMode: msg`Sectioning`,
     imageCropping: msg`Smart Cropping`,
     imageSegmentation: msg`Image Segmentation`,
+    figureExtraction: msg`Figure Extraction`,
   };
 
 const VALUE_LABELS: Record<string, MessageDescriptor> = {

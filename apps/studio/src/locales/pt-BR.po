@@ -605,6 +605,9 @@ msgstr "Peça para a IA editar..."
 msgid "Asking the AI to put on its creative hat..."
 msgstr "Pedindo para a IA colocar o chapéu criativo..."
 
+msgid "Asset"
+msgstr "Recurso"
+
 msgid "Assign to section..."
 msgstr "Atribuir à seção..."
 
@@ -1170,6 +1173,9 @@ msgstr "Detecta atividades já presentes no livro e as transforma em elementos H
 msgid "Detects and splits composited illustrations into separate regions so each asset can be placed and refined on its own."
 msgstr "Detecta e divide ilustrações compostas em regiões separadas para que cada elemento possa ser colocado e refinado individualmente."
 
+msgid "Detects complex charts and figures that contain a mix of text, vectors and images and crops them out of the page."
+msgstr "Detecta gráficos e figuras complexas que contêm uma mistura de texto, vetores e imagens e os recorta da página."
+
 msgid "Diagram"
 msgstr "Diagrama"
 
@@ -1415,6 +1421,9 @@ msgstr "Extração"
 msgid "Extract text and images from each page of the PDF using AI-powered analysis."
 msgstr "Extrai texto e imagens de cada página do PDF usando análise com IA."
 
+msgid "Extracted"
+msgstr "Extraído"
+
 #. placeholder {0}: String(count)
 msgid "Extracted Images ({0})"
 msgstr "Imagens extraídas ({0})"
@@ -1472,8 +1481,17 @@ msgstr "Falhou:"
 msgid "Fast, consistent results with no AI cost"
 msgstr "Resultados rápidos e consistentes sem custo de IA"
 
+msgid "figure"
+msgstr "figura"
+
 msgid "Figure 5.1 - The water cycle: evaporation from oceans, condensation into clouds, precipitation as rain, and runoff back to the sea."
 msgstr "Figura 5.1 - O ciclo da água: evaporação dos oceanos, condensação em nuvens, precipitação como chuva e escoamento de volta ao mar."
+
+msgid "Figure extraction"
+msgstr "Extração de figura"
+
+msgid "Figure Extraction"
+msgstr "Extração de Figura"
 
 msgid "Fill in the Blank"
 msgstr "Preencher lacunas"
@@ -1794,6 +1812,9 @@ msgstr "Texto de instrução"
 
 msgid "Interactive"
 msgstr "Interativo"
+
+msgid "Isolated asset"
+msgstr "Recurso isolado"
 
 msgid "Issues"
 msgstr "Problemas"

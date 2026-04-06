@@ -605,6 +605,9 @@ msgstr "Ask AI to edit..."
 msgid "Asking the AI to put on its creative hat..."
 msgstr "Asking the AI to put on its creative hat..."
 
+msgid "Asset"
+msgstr "Asset"
+
 msgid "Assign to section..."
 msgstr "Assign to section..."
 
@@ -1170,6 +1173,9 @@ msgstr "Detects activities already present in the book and transforms them into 
 msgid "Detects and splits composited illustrations into separate regions so each asset can be placed and refined on its own."
 msgstr "Detects and splits composited illustrations into separate regions so each asset can be placed and refined on its own."
 
+msgid "Detects complex charts and figures that contain a mix of text, vectors and images and crops them out of the page."
+msgstr "Detects complex charts and figures that contain a mix of text, vectors and images and crops them out of the page."
+
 msgid "Diagram"
 msgstr "Diagram"
 
@@ -1415,6 +1421,9 @@ msgstr "Extract"
 msgid "Extract text and images from each page of the PDF using AI-powered analysis."
 msgstr "Extract text and images from each page of the PDF using AI-powered analysis."
 
+msgid "Extracted"
+msgstr "Extracted"
+
 #. placeholder {0}: String(count)
 msgid "Extracted Images ({0})"
 msgstr "Extracted Images ({0})"
@@ -1472,8 +1481,17 @@ msgstr "Failed:"
 msgid "Fast, consistent results with no AI cost"
 msgstr "Fast, consistent results with no AI cost"
 
+msgid "figure"
+msgstr "figure"
+
 msgid "Figure 5.1 - The water cycle: evaporation from oceans, condensation into clouds, precipitation as rain, and runoff back to the sea."
 msgstr "Figure 5.1 - The water cycle: evaporation from oceans, condensation into clouds, precipitation as rain, and runoff back to the sea."
+
+msgid "Figure extraction"
+msgstr "Figure extraction"
+
+msgid "Figure Extraction"
+msgstr "Figure Extraction"
 
 msgid "Fill in the Blank"
 msgstr "Fill in the Blank"
@@ -1794,6 +1812,9 @@ msgstr "Instruction Text"
 
 msgid "Interactive"
 msgstr "Interactive"
+
+msgid "Isolated asset"
+msgstr "Isolated asset"
 
 msgid "Issues"
 msgstr "Issues"

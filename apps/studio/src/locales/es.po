@@ -605,6 +605,9 @@ msgstr "Pide a la IA que edite..."
 msgid "Asking the AI to put on its creative hat..."
 msgstr "Pidiendo a la IA que se ponga su sombrero creativo..."
 
+msgid "Asset"
+msgstr "Recurso"
+
 msgid "Assign to section..."
 msgstr "Asignar a sección..."
 
@@ -1170,6 +1173,9 @@ msgstr "Detecta actividades ya presentes en el libro y las transforma en element
 msgid "Detects and splits composited illustrations into separate regions so each asset can be placed and refined on its own."
 msgstr "Detecta y divide ilustraciones compuestas en regiones separadas para que cada recurso pueda colocarse y refinarse por separado."
 
+msgid "Detects complex charts and figures that contain a mix of text, vectors and images and crops them out of the page."
+msgstr "Detecta gráficos y figuras complejas que contienen una mezcla de texto, vectores e imágenes y los recorta de la página."
+
 msgid "Diagram"
 msgstr "Diagrama"
 
@@ -1415,6 +1421,9 @@ msgstr "Extracción"
 msgid "Extract text and images from each page of the PDF using AI-powered analysis."
 msgstr "Extrae texto e imágenes de cada página del PDF usando análisis con IA."
 
+msgid "Extracted"
+msgstr "Extraído"
+
 #. placeholder {0}: String(count)
 msgid "Extracted Images ({0})"
 msgstr "Imágenes extraídas ({0})"
@@ -1472,8 +1481,17 @@ msgstr "Error:"
 msgid "Fast, consistent results with no AI cost"
 msgstr "Resultados rápidos y consistentes sin costo de IA"
 
+msgid "figure"
+msgstr "figura"
+
 msgid "Figure 5.1 - The water cycle: evaporation from oceans, condensation into clouds, precipitation as rain, and runoff back to the sea."
 msgstr "Figura 5.1 - El ciclo del agua: evaporación de los océanos, condensación en nubes, precipitación como lluvia y escorrentía de vuelta al mar."
+
+msgid "Figure extraction"
+msgstr "Extracción de figuras"
+
+msgid "Figure Extraction"
+msgstr "Extracción de Figuras"
 
 msgid "Fill in the Blank"
 msgstr "Completar espacios"
@@ -1794,6 +1812,9 @@ msgstr "Texto de instrucción"
 
 msgid "Interactive"
 msgstr "Interactivo"
+
+msgid "Isolated asset"
+msgstr "Recurso aislado"
 
 msgid "Issues"
 msgstr "Problemas"

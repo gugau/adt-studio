@@ -73,6 +73,8 @@ export default [
             // Form field name constants (e.g. const RADIO_NAME = "renderStrategy")
             "RADIO_NAME",
             "radioName",
+            // Image processing preview pane focus key (ImageProcessingPreviewFocus — not user-visible)
+            "previewFocus",
 
             // --- CSS class & color props (never user-visible) ---
             "rootMargin",

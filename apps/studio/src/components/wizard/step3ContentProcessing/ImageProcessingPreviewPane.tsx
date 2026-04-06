@@ -18,6 +18,7 @@ import type { ImageProcessingPreviewFocus } from "./imageProcessingPreviewTypes"
 /* eslint-disable lingui/no-unlocalized-strings */
 const MOBILE_FOCUSES: ImageProcessingPreviewFocus[] = [
   "activities",
+  "figureExtraction",
   "cropping",
   "segmentation",
   "minSide",
@@ -134,6 +135,96 @@ function ActivitiesIllustration() {
           </svg>
           <span className="text-[10px] font-medium text-emerald-600">
             <Trans>Fully interactive</Trans>
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FigureExtractionIllustration() {
+  return (
+    <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-6 px-4 py-6 @sm:flex-row @sm:gap-8 @sm:px-6">
+      <div className="flex flex-col items-center gap-2.5">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <Trans>Page</Trans>
+        </span>
+        <div className="w-[126px] rounded-xl border border-border bg-white p-3 shadow-sm">
+          <div className="mb-1.5 h-1.5 w-full rounded bg-muted-foreground/20" />
+          <div className="mb-2.5 h-1.5 w-4/5 rounded bg-muted-foreground/15" />
+
+          {/* Embedded complex figure: detected, dashed violet outline */}
+          <div className="relative mb-2.5 rounded-md border-2 border-dashed border-violet-400/60 bg-violet-50/30 px-2 pb-1.5 pt-2">
+            <div className="absolute -right-2 -top-2 rounded-full bg-violet-500 px-1.5 py-px shadow-sm">
+              <span className="text-[6px] font-bold leading-none text-white">
+                <Trans>figure</Trans>
+              </span>
+            </div>
+            {/* Bar chart: bars at different heights */}
+            <div className="flex items-end gap-1">
+              <div className="flex flex-1 flex-col items-center gap-0.5">
+                <div className="h-6 w-full rounded-t bg-sky-400/70" />
+                <div className="h-1 w-3 rounded bg-muted-foreground/25" />
+              </div>
+              <div className="flex flex-1 flex-col items-center gap-0.5">
+                {/* Tallest bar — contains a raster image fragment inside */}
+                <div className="relative h-9 w-full rounded-t bg-violet-400/70">
+                  <div className="absolute inset-x-0.5 top-0.5 h-3 rounded-sm bg-gradient-to-br from-amber-300/90 to-rose-400/80" />
+                </div>
+                <div className="h-1 w-3 rounded bg-muted-foreground/25" />
+              </div>
+              <div className="flex flex-1 flex-col items-center gap-0.5">
+                <div className="h-4 w-full rounded-t bg-emerald-400/70" />
+                <div className="h-1 w-3 rounded bg-muted-foreground/25" />
+              </div>
+            </div>
+            <div className="mt-0.5 h-px bg-muted-foreground/25" />
+          </div>
+
+          <div className="h-1.5 w-full rounded bg-muted-foreground/15" />
+          <div className="mt-1 h-1.5 w-3/4 rounded bg-muted-foreground/15" />
+        </div>
+      </div>
+
+      <div className="flex flex-col items-center gap-1.5 text-muted-foreground" aria-hidden>
+        <svg className="h-5 w-5 rotate-90 @sm:rotate-0" viewBox="0 0 20 20" fill="none">
+          <path d="M4 10h12M12 6l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span className="text-[9px] font-semibold uppercase tracking-wider">
+          <Trans>Extracted</Trans>
+        </span>
+      </div>
+
+      <div className="flex flex-col items-center gap-2.5">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <Trans>Asset</Trans>
+        </span>
+        <div className="rounded-xl border-2 border-emerald-400/50 bg-white p-2.5 shadow-md ring-1 ring-emerald-400/20">
+          {/* Same chart, clean and standalone */}
+          <div className="flex items-end gap-1.5">
+            <div className="flex flex-1 flex-col items-center gap-0.5">
+              <div className="h-7 w-full rounded-t bg-sky-400/70" />
+              <div className="h-1 w-3.5 rounded bg-muted-foreground/25" />
+            </div>
+            <div className="flex flex-1 flex-col items-center gap-0.5">
+              <div className="relative h-11 w-full rounded-t bg-violet-400/70">
+                <div className="absolute inset-x-0.5 top-0.5 h-3.5 rounded-sm bg-gradient-to-br from-amber-300/90 to-rose-400/80" />
+              </div>
+              <div className="h-1 w-3.5 rounded bg-muted-foreground/25" />
+            </div>
+            <div className="flex flex-1 flex-col items-center gap-0.5">
+              <div className="h-5 w-full rounded-t bg-emerald-400/70" />
+              <div className="h-1 w-3.5 rounded bg-muted-foreground/25" />
+            </div>
+          </div>
+          <div className="mt-0.5 h-px bg-muted-foreground/25" />
+        </div>
+        <div className="flex items-center gap-1">
+          <svg className="h-3 w-3 text-emerald-500" viewBox="0 0 16 16" fill="none" aria-hidden>
+            <path d="M3 8.5l3.5 3.5L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="text-[10px] font-medium text-emerald-600">
+            <Trans>Isolated asset</Trans>
           </span>
         </div>
       </div>
@@ -345,6 +436,7 @@ function FilterSizeIllustration() {
 const PREVIEW_LABEL_MSGS: Record<ImageProcessingPreviewFocus, MessageDescriptor> = {
   idle: msg`Image processing`,
   activities: msg`Activities generator`,
+  figureExtraction: msg`Figure extraction`,
   cropping: msg`LLM cropping`,
   segmentation: msg`LLM segmentation`,
   minSide: msg`Minimum size threshold`,
@@ -354,6 +446,7 @@ const PREVIEW_LABEL_MSGS: Record<ImageProcessingPreviewFocus, MessageDescriptor>
 const ILLUSTRATIONS: Record<ImageProcessingPreviewFocus, FC> = {
   idle: IdleIllustration,
   activities: ActivitiesIllustration,
+  figureExtraction: FigureExtractionIllustration,
   cropping: CroppingIllustration,
   segmentation: SegmentationIllustration,
   minSide: MinSideIllustration,

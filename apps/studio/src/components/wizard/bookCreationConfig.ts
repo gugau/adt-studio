@@ -14,7 +14,7 @@ export function buildConfigOverrides(values: WizardFormValues): Record<string, u
     default_render_strategy: values.renderStrategy,
     page_sectioning: { mode: values.sectioningMode },
     spread_mode: values.pageGrouping === "spread",
-    vector_text_grouping: true,
+    vector_text_grouping: values.figureExtraction,
     apply_body_background: true,
     generate_activities: values.activitiesGenerator,
     image_filters: {

@@ -28,6 +28,7 @@ export const defaultWizardValues = {
   activitiesGenerator: false,
   imageCropping: false,
   imageSegmentation: false,
+  figureExtraction: false,
   segmentationMinSide: "",
   imageFilterMinSide: 0,
   imageFilterMaxSide: 5000,

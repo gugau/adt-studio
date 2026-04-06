@@ -24,6 +24,9 @@ const VALUE_UNIT_PX = msg`px`
 const TITLE_ACTIVITIES = msg`Activities Generator`
 const SUBTITLE_ACTIVITIES = msg`Detects activities already present in the book and transforms them into interactive HTML elements like radio buttons and text inputs.`
 
+const TITLE_FIGURE_EXTRACTION = msg`Figure Extraction`
+const SUBTITLE_FIGURE_EXTRACTION = msg`Detects complex charts and figures that contain a mix of text, vectors and images and crops them out of the page.`
+
 const TITLE_SMART_CROPPING = msg`Smart Cropping`
 const SUBTITLE_SMART_CROPPING = msg`Best for complex content like textbooks - automatically trims stray text, artifacts, and extra margins from extracted images.`
 
@@ -89,6 +92,7 @@ export function Step3() {
   const filterSizeHover = useDelayedPreviewFocus("filterSize")
 
   const activitiesGenerator = useStore(form.store, (s) => s.values.activitiesGenerator)
+  const figureExtraction = useStore(form.store, (s) => s.values.figureExtraction)
   const imageCropping = useStore(form.store, (s) => s.values.imageCropping)
   const imageSegmentation = useStore(form.store, (s) => s.values.imageSegmentation)
   const segmentationMinSide = useStore(form.store, (s) => s.values.segmentationMinSide)
@@ -118,6 +122,18 @@ export function Step3() {
         <p className="text-xs font-semibold text-[#737373]">
           <Trans>Images</Trans>
         </p>
+
+        <ImageProcessingFeatureSwitch
+          id="wizard-figure-extraction"
+          title={i18n._(TITLE_FIGURE_EXTRACTION)}
+          subtitle={i18n._(SUBTITLE_FIGURE_EXTRACTION)}
+          previewFocus="figureExtraction"
+          checked={figureExtraction}
+          onCheckedChange={(checked) => form.setFieldValue("figureExtraction", checked)}
+          recommended={recommendations.figureExtraction === true}
+          presetLabel={preset?.title}
+          accent={accent}
+        />
 
         <ImageProcessingFeatureSwitch
           id="wizard-image-cropping"
