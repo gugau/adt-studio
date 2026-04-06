@@ -17,6 +17,7 @@ export default [
           ignoreNames: [
             // --- HTML / JSX structural attributes ---
             "className",
+            "headerClass",
             "style",
             "id",
             "type",

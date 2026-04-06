@@ -12,28 +12,17 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#. js-lingui-explicit-id
-#~ msgid "Settings"
-#~ msgstr "Configuración"
-
-#. js-lingui-explicit-id
-#~ msgid "API Key Settings"
-#~ msgstr "Configuración de clave API"
-
-#. js-lingui-explicit-id
-#~ msgid "Re-package ADT"
-#~ msgstr "Reempaquetar ADT"
-
-#. js-lingui-explicit-id
-#~ msgid "No pages extracted yet"
-#~ msgstr "Aún no se han extraído páginas"
-
-#. js-lingui-explicit-id
-#~ msgid "Untitled"
-#~ msgstr "Sin título"
+msgid " and "
+msgstr " y "
 
 msgid "-"
 msgstr "-"
+
+msgid ", "
+msgstr ", "
+
+msgid ", and "
+msgstr " y "
 
 msgid "? This will remove all extracted data and cannot be undone."
 msgstr "? Esto eliminará todos los datos extraídos y no se puede deshacer."
@@ -112,15 +101,9 @@ msgstr "{elapsed}s"
 msgid "{missingAudioCount} missing"
 msgstr "{missingAudioCount} faltantes"
 
-#~ msgid "{stepLabel} Settings"
-#~ msgstr "Configuración de {0}"
-
 #. placeholder {0}: index + 1
 msgid "{title} - page {0}"
 msgstr "{title} - página {0}"
-
-#~ msgid "{title} - page {pageLabel}"
-#~ msgstr "{title} - página {pageLabel}"
 
 #. placeholder {0}: String(filterSectionIndex + 1)
 msgid "/ Section {0}"
@@ -305,9 +288,6 @@ msgstr "Libro ADT"
 msgid "ADT Book - {0}"
 msgstr "Libro ADT - {0}"
 
-#~ msgid "ADT Book — {0}"
-#~ msgstr "Libro ADT — {0}"
-
 msgid "ADT Export"
 msgstr "Exportación ADT"
 
@@ -341,9 +321,6 @@ msgstr "Imagen con IA"
 
 msgid "AI Overlay"
 msgstr "Superposición por IA"
-
-#~ msgid "AI reasoning"
-#~ msgstr "Razonamiento de la IA"
 
 msgid "AI Rendering"
 msgstr "Renderizado con IA"
@@ -483,13 +460,13 @@ msgstr "Antes"
 
 #. placeholder {0}: i18n._(presetLabel)
 msgid "Best for {0}"
-msgstr ""
+msgstr "Mejor para {0}"
 
 msgid "Best for complex content like textbooks - automatically trims stray text, artifacts, and extra margins from extracted images."
 msgstr "Mejor para contenido complejo como libros de texto: recorta automáticamente texto suelto, artefactos y márgenes extra de las imágenes extraídas."
 
 msgid "Best for your preset"
-msgstr ""
+msgstr "Mejor para tu preajuste"
 
 msgid "Beta"
 msgstr "Beta"
@@ -503,17 +480,8 @@ msgstr "Libro"
 msgid "Book Author"
 msgstr "Autor del libro"
 
-#~ msgid "Book Cover"
-#~ msgstr "Portada del Libro"
-
 msgid "Book data is outdated and must be rebuilt."
 msgstr "Los datos del libro están desactualizados y deben reconstruirse."
-
-#~ msgid "Book Examples"
-#~ msgstr "Ejemplos de libros"
-
-#~ msgid "Book label and PDF file are required."
-#~ msgstr "Se requiere etiqueta del libro y archivo PDF."
 
 msgid "Book Metadata"
 msgstr "Metadatos del libro"
@@ -608,9 +576,6 @@ msgstr "Cambiar idioma"
 msgid "Change Preset"
 msgstr "Cambiar Preajuste"
 
-#~ msgid "Changing the preset will reset your current configuration."
-#~ msgstr "Cambiar el preajuste restablecerá tu configuración actual."
-
 msgid "Chapter 7 - Marine Biology"
 msgstr "Capítulo 7 - Biología Marina"
 
@@ -628,9 +593,6 @@ msgstr "Elegir un Preset"
 
 msgid "Choose a style guide to control the look and feel of the generated pages."
 msgstr "Elige una guía de estilo para controlar el aspecto de las páginas generadas."
-
-msgid "Choose an editing language and output languages to see how your book will be processed and translated."
-msgstr "Elige un idioma de edición y idiomas de salida para ver cómo se procesará y traducirá tu libro."
 
 msgid "Choose an existing image from this project"
 msgstr "Elige una imagen existente de este proyecto"
@@ -716,9 +678,6 @@ msgstr "Procesamiento de Contenido"
 msgid "Continue"
 msgstr "Continuar"
 
-#~ msgid "Control LLM cropping and segmentation for extracted images - matching extract-stage image filters."
-#~ msgstr "Controlar el recorte y segmentación del LLM para imágenes extraídas - coincidiendo con los filtros de imagen de la etapa de extracción."
-
 msgid "Controls how page content is grouped during the sectioning step."
 msgstr "Controla cómo se agrupa el contenido de la página durante el paso de seccionamiento."
 
@@ -793,9 +752,6 @@ msgstr "Voz predeterminada"
 
 msgid "Default voice used when not specified for a language."
 msgstr "Voz predeterminada usada cuando no se especifica para un idioma."
-
-msgid "Defaults to the book's own language"
-msgstr "Por defecto, el idioma del libro"
 
 msgid "Definitions and Terminology"
 msgstr "Definiciones y Terminología"
@@ -941,6 +897,9 @@ msgstr "Edita la plantilla Liquid/HTML a continuación. Los cambios se guardan c
 msgid "Edit this image"
 msgstr "Editar esta imagen"
 
+msgid "Edited in"
+msgstr "Editado en"
+
 msgid "Editing"
 msgstr "Editando"
 
@@ -977,9 +936,6 @@ msgstr "Evaporación"
 msgid "Example Books"
 msgstr "Libros de ejemplo"
 
-#~ msgid "Examples — {0}"
-#~ msgstr "Ejemplos — {0}"
-
 msgid "Exclude from render"
 msgstr "Excluir de la renderización"
 
@@ -1009,9 +965,6 @@ msgstr "Exporta el libro como un paquete Readium WebPub — un formato basado en
 
 msgid "Export the complete Accessible Digital Textbook as a ZIP archive. Includes all HTML pages, images, audio files, quizzes, and the compiled web application — ready to upload to a distribution platform or open locally."
 msgstr "Exporta el Libro de Texto Digital Accesible completo como un archivo ZIP. Incluye todas las páginas HTML, imágenes, archivos de audio, cuestionarios y la aplicación web compilada — listo para subirlo a una plataforma de distribución o abrirlo localmente."
-
-#~ msgid "Export timed out — the book may be too large"
-#~ msgstr "La exportación expiró — el libro puede ser demasiado grande"
 
 msgid "Export WebPub"
 msgstr "Exportar WebPub"
@@ -1090,7 +1043,7 @@ msgstr "Texto de pie de página"
 #. placeholder {0}: i18n._(preset.title)
 #. placeholder {1}: recommendedOption.label
 msgid "For {0}, we recommend {1}."
-msgstr ""
+msgstr "Para {0}, recomendamos {1}."
 
 msgid "Foreword"
 msgstr "Prefacio"
@@ -1163,9 +1116,6 @@ msgstr "Generar guía de estilo desde páginas"
 
 msgid "Generate with AI"
 msgstr "Generar con IA"
-
-#~ msgid "Generated"
-#~ msgstr "Generado"
 
 msgid "Generates the interactive HTML for this activity type."
 msgstr "Genera el HTML interactivo para este tipo de actividad."
@@ -1245,9 +1195,6 @@ msgstr "Colina"
 msgid "História e Sociedade - Vol. 1"
 msgstr "Historia y Sociedad - Vol. 1"
 
-#~ msgid "Home"
-#~ msgstr "Inicio"
-
 msgid "Hover a setting to see how LLM cropping, segmentation, or the size threshold changes extracted images."
 msgstr "Pasa el cursor sobre una configuración para ver cómo el recorte, segmentación o el umbral de tamaño del LLM cambian las imágenes extraídas."
 
@@ -1304,9 +1251,6 @@ msgstr "Texto sobre la imagen"
 
 msgid "Image processing"
 msgstr "Procesamiento de imágenes"
-
-#~ msgid "Image Processing"
-#~ msgstr "Procesamiento de Imágenes"
 
 msgid "Image Segmentation"
 msgstr "Segmentación de imágenes"
@@ -1371,6 +1315,9 @@ msgstr "Ítem"
 msgid "Item ID..."
 msgstr "ID del elemento..."
 
+msgid "its original language"
+msgstr "su idioma original"
+
 msgid "Keeps pages whole unless mixed activity types require splitting"
 msgstr "Mantiene las páginas completas a menos que tipos mixtos de actividad requieran división"
 
@@ -1390,9 +1337,6 @@ msgstr "Etiqueta"
 msgid "Language"
 msgstr "Idioma"
 
-msgid "Language Setup"
-msgstr "Configuración de Idioma"
-
 msgid "Language-Specific Prompts"
 msgstr "Prompts por idioma"
 
@@ -1407,9 +1351,6 @@ msgstr "Imágenes grandes, flujo narrativo. Mejor para libros ilustrados con voc
 
 msgid "Last"
 msgstr "Última"
-
-#~ msgid "Last page must be greater than or equal to first page."
-#~ msgstr "La última página debe ser mayor o igual a la primera página."
 
 msgid "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 msgstr "Dejar en Ninguno para ejecutar segmentación en todas las imágenes calificadas (sujeto a reglas de la canalización)."
@@ -1558,9 +1499,6 @@ msgstr "Asocia cada etapa del ciclo del agua con su definición:"
 msgid "Math"
 msgstr "Matemáticas"
 
-#~ msgid "Max Image Size"
-#~ msgstr "Tamaño Máximo de Imagen"
-
 msgid "Max Side"
 msgstr "Lado Máximo"
 
@@ -1602,9 +1540,6 @@ msgstr "Complejidad mínima"
 
 msgid "Min image dimension (px)"
 msgstr "Dimensión mínima de imagen (px)"
-
-#~ msgid "Min Image Size"
-#~ msgstr "Tamaño Mínimo de Imagen"
 
 msgid "Min Side"
 msgstr "Lado Mínimo"
@@ -1732,9 +1667,6 @@ msgstr "Sin secciones para esta página"
 msgid "No sections on this page"
 msgstr "Sin secciones en esta página"
 
-#~ msgid "No settings match your search."
-#~ msgstr "Ninguna configuración coincide con tu búsqueda."
-
 msgid "No text extracted"
 msgstr "No se extrajo texto"
 
@@ -1804,15 +1736,15 @@ msgstr "las opciones generan un diseño nuevo por página."
 msgid "Original"
 msgstr "Original"
 
+msgid "Original language"
+msgstr "Idioma original"
+
 msgid "Original PDF"
 msgstr "PDF Original"
 
 #. placeholder {0}: i18n._(selectedBook.title)
 msgid "Original PDF - {0}"
 msgstr "PDF Original - {0}"
-
-#~ msgid "Original PDF — {0}"
-#~ msgstr "PDF Original — {0}"
 
 msgid "Other"
 msgstr "Otro"
@@ -1821,7 +1753,7 @@ msgid "Other images"
 msgstr "Otras imágenes"
 
 msgid "Other options"
-msgstr ""
+msgstr "Otras opciones"
 
 msgid "Output Languages"
 msgstr "Idiomas de salida"
@@ -1850,14 +1782,8 @@ msgstr "Página"
 msgid "Page {0}"
 msgstr "Página {0}"
 
-#~ msgid "Page {currentPage} of {0}"
-#~ msgstr ""
-
 msgid "Page {pageId}"
 msgstr "Página {0}"
-
-#~ msgid "Page {pageNumber} of {pageCount}"
-#~ msgstr "Página {pageNumber} de {pageCount}"
 
 msgid "Page Grouping"
 msgstr "Agrupación de Páginas"
@@ -1876,9 +1802,6 @@ msgstr "Vista previa de la página {0}"
 
 msgid "Page Range"
 msgstr "Rango de páginas"
-
-#~ msgid "Page range must use whole numbers greater than or equal to 1."
-#~ msgstr "El rango de páginas debe usar números enteros mayores o iguales a 1."
 
 msgid "Page Sectioning"
 msgstr "Seccionamiento de páginas"
@@ -1901,23 +1824,14 @@ msgstr "Párrafo"
 msgid "PDF"
 msgstr "PDF"
 
-#~ msgid "PDF cover preview"
-#~ msgstr "Vista previa de la portada del PDF"
-
 msgid "PDF Extraction"
 msgstr "Extracción de PDF"
 
 msgid "PDF File"
 msgstr "Archivo PDF"
 
-#~ msgid "PDF page {0} preview"
-#~ msgstr "Vista previa de la página {0} del PDF"
-
 msgid "PDF page {pageLabel} preview"
 msgstr "Vista previa de la página {pageLabel} del PDF"
-
-#~ msgid "PDF page {pageNumber} preview"
-#~ msgstr "Vista previa de la página {pageNumber} del PDF"
 
 msgid "Pencil Sketch"
 msgstr "Dibujo a lápiz"
@@ -1933,9 +1847,6 @@ msgstr "Desglose por etapa"
 
 msgid "Perfect for children's books, pairing large images with minimal text."
 msgstr "Perfecto para libros infantiles, combinando imágenes grandes con texto mínimo."
-
-#~ msgid "pg {0}"
-#~ msgstr "pg {0}"
 
 msgid "Photograph"
 msgstr "Fotografía"
@@ -1991,9 +1902,6 @@ msgstr "Vista previa de los patrones HTML/CSS usados para páginas generadas por
 msgid "Previous slide"
 msgstr "Diapositiva anterior"
 
-#~ msgid "Processing"
-#~ msgstr "Procesamiento"
-
 msgid "Prompt"
 msgstr "Prompt"
 
@@ -2030,6 +1938,9 @@ msgstr "Eliminado: {0}"
 
 msgid "Pruned: {reason}"
 msgstr "Eliminado: {0}"
+
+msgid "published in"
+msgstr "publicado en"
 
 msgid "Publisher"
 msgstr "Editorial"
@@ -2070,14 +1981,14 @@ msgstr "Re-renderizar sección"
 msgid "Re-render this section"
 msgstr "Re-renderizar esta sección"
 
-#~ msgid "Re-rendering page..."
-#~ msgstr "Rerenderizando página..."
-
 msgid "Re-rendering..."
 msgstr "Volviendo a renderizar..."
 
 msgid "Re-run {stageLabel}"
 msgstr "Reejecutar {0}"
+
+msgid "Readers see"
+msgstr "Los lectores ven"
 
 msgid "Real books processed with this preset — before and after."
 msgstr "Libros reales procesados con este preset — antes y después."
@@ -2089,14 +2000,14 @@ msgid "Rearranging atoms of HTML..."
 msgstr "Reorganizando los átomos de HTML..."
 
 msgid "Recommended"
-msgstr ""
+msgstr "Recomendado"
 
 msgid "Recommended for"
 msgstr "Recomendado para"
 
 #. placeholder {0}: i18n._(presetLabel)
 msgid "Recommended for {0}"
-msgstr ""
+msgstr "Recomendado para {0}"
 
 msgid "Reference"
 msgstr "Referencia"
@@ -2239,17 +2150,11 @@ msgstr "Exportación SCORM"
 msgid "SCORM Package"
 msgstr "Paquete SCORM"
 
-#~ msgid "Search for some settings"
-#~ msgstr "Buscar configuraciones"
-
 msgid "Search languages..."
 msgstr "Buscar idiomas..."
 
 msgid "Search sections..."
 msgstr "Buscar secciones..."
-
-#~ msgid "Search settings"
-#~ msgstr "Buscar configuraciones"
 
 msgid "Search style guides..."
 msgstr "Buscar guías de estilo..."
@@ -2311,9 +2216,6 @@ msgstr "secciones"
 
 msgid "See examples"
 msgstr "Ver ejemplos"
-
-#~ msgid "See examples for {0}"
-#~ msgstr "Ver ejemplos de {0}"
 
 msgid "Segment"
 msgstr "Segmentar"
@@ -2475,12 +2377,6 @@ msgstr "Etapa"
 #. placeholder {0}: STEPS.length
 msgid "Step {step} of {0}"
 msgstr "Paso {step} de {0}"
-
-#~ msgid "Step {step} of {TOTAL_STEPS}"
-#~ msgstr "Paso {step} de {TOTAL_STEPS}"
-
-#~ msgid "Step by Step"
-#~ msgstr "Paso a Paso"
 
 msgid "Storyboard"
 msgstr "Storyboard"
@@ -2825,9 +2721,6 @@ msgstr "Sube un PDF y completa el nombre del proyecto con una etiqueta válida p
 msgid "Upload a PDF to get started"
 msgstr "Sube un PDF para comenzar"
 
-#~ msgid "Upload a PDF to preview its cover page here."
-#~ msgstr "Sube un PDF para previsualizar su portada aquí."
-
 msgid "Upload a PDF to preview its pages here."
 msgstr "Sube un PDF para previsualizar sus páginas aquí."
 
@@ -2914,6 +2807,9 @@ msgstr "Cuando está activado, los colores de fondo de la guía de estilo se apl
 msgid "When your PDF isn't built around facing pages, single mode keeps every page separate: nothing is merged across a spread. That matches how most textbooks, novels, and reference books are read - one page at a time."
 msgstr "Cuando tu PDF no está construido alrededor de páginas enfrentadas, el modo único mantiene cada página separada: nada se fusiona a través de una extensión. Eso coincide con cómo se leen la mayoría de los libros de texto, novelas y libros de referencia - una página a la vez."
 
+msgid "While editing"
+msgstr "Mientras edita"
+
 msgid "Within range"
 msgstr "Dentro del rango"
 
@@ -2928,9 +2824,6 @@ msgstr "Ficción para jóvenes adultos"
 
 msgid "Your Books"
 msgstr "Tus libros"
-
-#~ msgid "Your preset is ready - create now or walk through each step"
-#~ msgstr "Tu preajuste está listo - crea ahora o recorre cada paso"
 
 msgid "ZIP Archive"
 msgstr "Archivo ZIP"
