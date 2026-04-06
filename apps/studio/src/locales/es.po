@@ -119,6 +119,9 @@ msgstr "{missingAudioCount} faltantes"
 msgid "{title} - page {0}"
 msgstr "{title} - página {0}"
 
+#~ msgid "{title} - page {pageLabel}"
+#~ msgstr "{title} - página {pageLabel}"
+
 #. placeholder {0}: String(filterSectionIndex + 1)
 msgid "/ Section {0}"
 msgstr "/ Sección {0}"
@@ -478,8 +481,15 @@ msgstr "Sé descriptivo — incluye tema, colores, estado de ánimo y composici�
 msgid "Before"
 msgstr "Antes"
 
+#. placeholder {0}: i18n._(presetLabel)
+msgid "Best for {0}"
+msgstr ""
+
 msgid "Best for complex content like textbooks - automatically trims stray text, artifacts, and extra margins from extracted images."
 msgstr "Mejor para contenido complejo como libros de texto: recorta automáticamente texto suelto, artefactos y márgenes extra de las imágenes extraídas."
+
+msgid "Best for your preset"
+msgstr ""
 
 msgid "Beta"
 msgstr "Beta"
@@ -493,8 +503,8 @@ msgstr "Libro"
 msgid "Book Author"
 msgstr "Autor del libro"
 
-msgid "Book Cover"
-msgstr "Portada del Libro"
+#~ msgid "Book Cover"
+#~ msgstr "Portada del Libro"
 
 msgid "Book data is outdated and must be rebuilt."
 msgstr "Los datos del libro están desactualizados y deben reconstruirse."
@@ -598,8 +608,8 @@ msgstr "Cambiar idioma"
 msgid "Change Preset"
 msgstr "Cambiar Preajuste"
 
-msgid "Changing the preset will reset your current configuration."
-msgstr "Cambiar el preajuste restablecerá tu configuración actual."
+#~ msgid "Changing the preset will reset your current configuration."
+#~ msgstr "Cambiar el preajuste restablecerá tu configuración actual."
 
 msgid "Chapter 7 - Marine Biology"
 msgstr "Capítulo 7 - Biología Marina"
@@ -1077,6 +1087,11 @@ msgstr "Vector plano"
 msgid "Footer Text"
 msgstr "Texto de pie de página"
 
+#. placeholder {0}: i18n._(preset.title)
+#. placeholder {1}: recommendedOption.label
+msgid "For {0}, we recommend {1}."
+msgstr ""
+
 msgid "Foreword"
 msgstr "Prefacio"
 
@@ -1543,8 +1558,8 @@ msgstr "Asocia cada etapa del ciclo del agua con su definición:"
 msgid "Math"
 msgstr "Matemáticas"
 
-msgid "Max Image Size"
-msgstr "Tamaño Máximo de Imagen"
+#~ msgid "Max Image Size"
+#~ msgstr "Tamaño Máximo de Imagen"
 
 msgid "Max Side"
 msgstr "Lado Máximo"
@@ -1588,8 +1603,8 @@ msgstr "Complejidad mínima"
 msgid "Min image dimension (px)"
 msgstr "Dimensión mínima de imagen (px)"
 
-msgid "Min Image Size"
-msgstr "Tamaño Mínimo de Imagen"
+#~ msgid "Min Image Size"
+#~ msgstr "Tamaño Mínimo de Imagen"
 
 msgid "Min Side"
 msgstr "Lado Mínimo"
@@ -1805,6 +1820,9 @@ msgstr "Otro"
 msgid "Other images"
 msgstr "Otras imágenes"
 
+msgid "Other options"
+msgstr ""
+
 msgid "Output Languages"
 msgstr "Idiomas de salida"
 
@@ -1832,8 +1850,14 @@ msgstr "Página"
 msgid "Page {0}"
 msgstr "Página {0}"
 
+#~ msgid "Page {currentPage} of {0}"
+#~ msgstr ""
+
 msgid "Page {pageId}"
 msgstr "Página {0}"
+
+#~ msgid "Page {pageNumber} of {pageCount}"
+#~ msgstr "Página {pageNumber} de {pageCount}"
 
 msgid "Page Grouping"
 msgstr "Agrupación de Páginas"
@@ -1877,8 +1901,8 @@ msgstr "Párrafo"
 msgid "PDF"
 msgstr "PDF"
 
-msgid "PDF cover preview"
-msgstr "Vista previa de la portada del PDF"
+#~ msgid "PDF cover preview"
+#~ msgstr "Vista previa de la portada del PDF"
 
 msgid "PDF Extraction"
 msgstr "Extracción de PDF"
@@ -1886,9 +1910,14 @@ msgstr "Extracción de PDF"
 msgid "PDF File"
 msgstr "Archivo PDF"
 
-#. placeholder {0}: index + 1
-msgid "PDF page {0} preview"
-msgstr "Vista previa de la página {0} del PDF"
+#~ msgid "PDF page {0} preview"
+#~ msgstr "Vista previa de la página {0} del PDF"
+
+msgid "PDF page {pageLabel} preview"
+msgstr "Vista previa de la página {pageLabel} del PDF"
+
+#~ msgid "PDF page {pageNumber} preview"
+#~ msgstr "Vista previa de la página {pageNumber} del PDF"
 
 msgid "Pencil Sketch"
 msgstr "Dibujo a lápiz"
@@ -2059,8 +2088,15 @@ msgstr "Realista / Foto"
 msgid "Rearranging atoms of HTML..."
 msgstr "Reorganizando los átomos de HTML..."
 
+msgid "Recommended"
+msgstr ""
+
 msgid "Recommended for"
 msgstr "Recomendado para"
+
+#. placeholder {0}: i18n._(presetLabel)
+msgid "Recommended for {0}"
+msgstr ""
 
 msgid "Reference"
 msgstr "Referencia"
@@ -2443,8 +2479,8 @@ msgstr "Paso {step} de {0}"
 #~ msgid "Step {step} of {TOTAL_STEPS}"
 #~ msgstr "Paso {step} de {TOTAL_STEPS}"
 
-msgid "Step by Step"
-msgstr "Paso a Paso"
+#~ msgid "Step by Step"
+#~ msgstr "Paso a Paso"
 
 msgid "Storyboard"
 msgstr "Storyboard"
@@ -2789,8 +2825,11 @@ msgstr "Sube un PDF y completa el nombre del proyecto con una etiqueta válida p
 msgid "Upload a PDF to get started"
 msgstr "Sube un PDF para comenzar"
 
-msgid "Upload a PDF to preview its cover page here."
-msgstr "Sube un PDF para previsualizar su portada aquí."
+#~ msgid "Upload a PDF to preview its cover page here."
+#~ msgstr "Sube un PDF para previsualizar su portada aquí."
+
+msgid "Upload a PDF to preview its pages here."
+msgstr "Sube un PDF para previsualizar sus páginas aquí."
 
 msgid "Upload failed"
 msgstr "Error al subir"
@@ -2890,8 +2929,8 @@ msgstr "Ficción para jóvenes adultos"
 msgid "Your Books"
 msgstr "Tus libros"
 
-msgid "Your preset is ready - create now or walk through each step"
-msgstr "Tu preajuste está listo - crea ahora o recorre cada paso"
+#~ msgid "Your preset is ready - create now or walk through each step"
+#~ msgstr "Tu preajuste está listo - crea ahora o recorre cada paso"
 
 msgid "ZIP Archive"
 msgstr "Archivo ZIP"
