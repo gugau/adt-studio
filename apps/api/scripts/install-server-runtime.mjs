@@ -1,9 +1,9 @@
 /**
  * Install packages that must stay external to the esbuild bundle (see bundle-server.mjs)
- * into apps/api/dist/node_modules/. Same versions as @adt/pipeline so tooling stays aligned.
+ * into apps/api/dist-electron/node_modules/. Same versions as @adt/pipeline so tooling stays aligned.
  *
  * Used by Electron (copy-builds → out/main) and by the Docker image after build:server.
- * Uses npm in dist/ (not pnpm) so installs are not treated as workspace packages.
+ * Uses npm in dist-electron/ (not pnpm) so installs are not treated as workspace packages.
  */
 import { spawnSync } from "node:child_process"
 import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs"
@@ -13,7 +13,7 @@ import { fileURLToPath } from "node:url"
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const apiRoot = path.resolve(__dirname, "..")
 const monorepoRoot = path.resolve(apiRoot, "../..")
-const dist = path.join(apiRoot, "dist")
+const dist = path.join(apiRoot, "dist-electron")
 const pipelinePkgPath = path.join(monorepoRoot, "packages/pipeline/package.json")
 
 const p = JSON.parse(readFileSync(pipelinePkgPath, "utf8"))

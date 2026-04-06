@@ -3,6 +3,7 @@ node_modules/
 package-lock.json
 
 # Build output
+dist-electron/
 dist/
 apps/studio/src/locales/*.js
 .output/

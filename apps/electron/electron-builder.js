@@ -1,3 +1,9 @@
+const path = require("path");
+
+require("dotenv").config({
+  path: path.resolve(__dirname, "../../.env"),
+});
+
 const extraResources = [
   {
     from: "../../prompts",
@@ -12,11 +18,16 @@ const extraResources = [
     to: "config.yaml",
   },
   {
+    from: "../../config",
+    to: "config",
+  },
+  {
     from: "../../assets",
     to: "assets",
   },
 ];
 
+const version = (process.env.APP_VERSION || require("./package.json").version)
 const productName = "ADT-Studio";
 const artifactName =  `${productName}-\${version}.\${ext}`
 .toLowerCase()
@@ -28,6 +39,9 @@ const config = {
   directories: {
     buildResources: "build",
     output: "release",
+  },
+  extraMetadata: {
+    version
   },
   extraResources,
   // Native/tooling deps live next to api-server.mjs; they cannot load from asar.

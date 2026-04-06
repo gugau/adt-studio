@@ -6,7 +6,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const studioDist = resolve(__dirname, '../../studio/dist')
 const rendererOut = resolve(__dirname, '../out/renderer')
 
-const apiDist = resolve(__dirname, '../../api/dist')
+const apiDist = resolve(__dirname, '../../api/dist-electron')
 const mainOut = resolve(__dirname, '../out/main')
 
 const apiFiles = [

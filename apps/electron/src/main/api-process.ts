@@ -53,7 +53,7 @@ function resolvePaths() {
   }
 
   return {
-    serverPath: join(root, 'apps', 'api', 'dist', 'api-server.mjs'),
+    serverPath: join(root, 'apps', 'electron', 'out', 'main', 'api-server.mjs'),
     root,
     booksDir,
     promptsDir: join(root, 'prompts'),
@@ -62,6 +62,7 @@ function resolvePaths() {
     webAssetsDir: join(root, 'assets', 'adt'),
   }
 }
+
 
 export function startApiServer(): UtilityProcess {
   if (apiProcess) return apiProcess
@@ -115,4 +116,8 @@ export function stopApiServer(): void {
   console.log('[api-process] Stopping API server')
   apiProcess.kill()
   apiProcess = null
+}
+
+export {
+  apiProcess
 }

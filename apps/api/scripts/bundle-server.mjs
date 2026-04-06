@@ -26,18 +26,11 @@ await build({
   outfile: path.join(outDir, "api-server.mjs"),
   // These packages cannot be bundled — they locate assets (native binaries, CSS files)
   // via paths relative to their own package directory, which breaks when inlined.
-  // JSDOM reads lib/jsdom/browser/default-stylesheet.css via __dirname; bundling makes
-  // __dirname point at dist/ and breaks that path. Playwright also requires
-  // chromium-bidi (a native dep) that can't be resolved at bundle time. Externals are
-  // installed into dist/node_modules/ by install-server-runtime.mjs.
-  external: [
-    "esbuild",
-    "tailwindcss",
-    "postcss",
-    "playwright",
-    "playwright-core",
-    "jsdom",
-  ],
+  // Playwright also requires chromium-bidi (a native dep) that can't be resolved at
+  // bundle time. All four are installed into dist/node_modules/ by the Dockerfile
+  // build stage. npm handles esbuild's platform binary (@esbuild/linux-x64)
+  // as an optional dependency automatically.
+  external: ["esbuild", "tailwindcss", "postcss", "playwright", "playwright-core"],
   banner: {
     js: [
       // Polyfill __dirname, __filename, and require for ESM

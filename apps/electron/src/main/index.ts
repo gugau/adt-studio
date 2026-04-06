@@ -3,22 +3,29 @@ import {
   screenshotIpcReplySuccessSchema,
   screenshotIpcUtilityToMainSchema,
 } from '@adt/types'
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, protocol } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 import { createWindow } from './main-window'
 import { startApiServer, stopApiServer } from './api-process'
 import { screenshot, close as closeScreenshotWindows } from './screenshot'
+import { registerHtmlRenderProtocol } from './html-render-protocol'
 
-app.whenReady().then(() => {
+
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'html-render', privileges: { standard: true, secure: true } }
+]);
+
+app.whenReady().then(async () => {
+  const apiProcess = startApiServer()
+
   electronApp.setAppUserModelId('com.electron')
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  const apiProcess = startApiServer()
-
-
+  
+  await new Promise<void>((resolve) => setTimeout(resolve, 2000))
   /*
     The child (API) process cannot access Electron APIs directly, 
     so the main process handles screenshot operations on its behalf via IPC messaging.
@@ -34,7 +41,7 @@ app.whenReady().then(() => {
 
     if (m.type === 'screenshot-base64') {
       try {
-        const base64 = await screenshot(m.html, m.viewport)
+        const base64 = await screenshot(m.html, m.viewport ?? { width: 1024, height: 768 })
         apiProcess.postMessage(
           screenshotIpcReplySuccessSchema.parse({
             type: 'screenshot-base64-reply',
@@ -64,6 +71,7 @@ app.whenReady().then(() => {
   })
 
   createWindow()
+  registerHtmlRenderProtocol()
 })
 
 app.on('before-quit', () => {

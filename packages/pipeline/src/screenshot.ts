@@ -60,7 +60,7 @@ export async function _createScreenshotRenderer(): Promise<ScreenshotRenderer> {
     async screenshot(
       html: string,
       viewport = { width: 1024, height: 768 }
-    ): Promise<string> {
+    ): Promise<string> {  
       const context = await browser.newContext({ viewport })
       try {
         const page = await context.newPage()
@@ -129,11 +129,11 @@ export async function _createElectronScreenshotRenderer(): Promise<ScreenshotRen
       const id = randomUUID()
       return new Promise((resolve, reject) => {
         const onMessage = (ev: { data: unknown }) => {
-          parentPort.off("message", onMessage)
           const parsed = screenshotIpcReplySchema.safeParse(ev.data)
           if (!parsed.success) return
           const msg = parsed.data
           if (msg.id !== id) return
+          parentPort.off("message", onMessage)
           if ("error" in msg) {
             reject(new Error(msg.error))
             return

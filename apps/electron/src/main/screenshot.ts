@@ -1,76 +1,32 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-import { tmpdir } from "node:os"
 import { BrowserWindow } from "electron"
+import { randomUUID } from "node:crypto";
+import { htmlStore } from "./html-render-protocol";
 
 const windows = new Set<InstanceType<typeof BrowserWindow>>()
-
-async function screenshot(
-  html: string,
-  viewport = { width: 1024, height: 768 }
-): Promise<string> {
-  const tmpDir = mkdtempSync(join(tmpdir(), "adt-screenshot-"))
-  const htmlPath = join(tmpDir, "index.html")
-  writeFileSync(htmlPath, html, "utf8")
+async function screenshot(html: string, viewport: { width: number; height: number }): Promise<string> {
+  const id = randomUUID();
+  htmlStore.set(id, html);
 
   const win = new BrowserWindow({
     width: viewport.width,
     height: viewport.height,
-    show: false,
-    useContentSize: true,
-    autoHideMenuBar: true,
-    skipTaskbar: true,
-    webPreferences: {
-      backgroundThrottling: false,
-    },
-  })
+    show: true,
+    webPreferences: { offscreen: true },
+  });
 
-  windows.add(win)
-  const wc = win.webContents
+  const loadPromise = new Promise<void>((resolve, reject) => {
+    win.webContents.once('did-finish-load', resolve);
+    win.webContents.once('did-fail-load', (_, _code, desc) => reject(new Error(desc)));
+  });
 
-  const applyLayout = (w: number, h: number) => {
-    win.setContentSize(w, h)
-  }
+  await win.loadURL(`html-render://${id}`);
+  await loadPromise;
 
-  applyLayout(viewport.width, viewport.height)
+  const image = await win.webContents.capturePage();
+  win.destroy();
+  htmlStore.delete(id);
 
-  try {
-    await wc.loadFile(htmlPath)
-
-    const scroll = (await wc.executeJavaScript(`(async () => {
-      await document.fonts.ready
-      const el = document.documentElement
-      const body = document.body
-      const w = Math.max(
-        el.scrollWidth,
-        body?.scrollWidth ?? 0,
-        el.clientWidth
-      )
-      const h = Math.max(
-        el.scrollHeight,
-        body?.scrollHeight ?? 0,
-        el.clientHeight
-      )
-      return { scrollW: w, scrollH: h }
-    })()`)) as { scrollW: number; scrollH: number }
-
-    const maxDim = 16_384
-    const capW = Math.min(Math.max(scroll.scrollW, viewport.width), maxDim)
-    const capH = Math.min(Math.max(scroll.scrollH, viewport.height), maxDim)
-    if (capW !== viewport.width || capH !== viewport.height) {
-      applyLayout(capW, capH)
-      await new Promise((r) => setTimeout(r, 50))
-    }
-
-    const image = await wc.capturePage()
-    return image.toPNG().toString("base64")
-  } finally {
-    win.destroy()
-    windows.delete(win)
-    try {
-      rmSync(tmpDir, { recursive: true, force: true })
-    } catch {}
-  }
+  return image.toPNG().toString('base64');
 }
 
 async function close(): Promise<void> {
@@ -79,7 +35,7 @@ async function close(): Promise<void> {
       win.destroy()
     }
     windows.clear()
-  } catch {}
+  } catch { }
 }
 
 export { screenshot, close }
