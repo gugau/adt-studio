@@ -778,8 +778,8 @@ msgstr "Prompt de legenda"
 msgid "Captioning Images..."
 msgstr "Legendando imagens..."
 
-msgid "Captions"
-msgstr "Legendas"
+#~ msgid "Captions"
+#~ msgstr "Legendas"
 
 msgid "carousel"
 msgstr "carrossel"
@@ -844,6 +844,12 @@ msgstr "Livro infantil clássico"
 msgid "Classified Text"
 msgstr "Texto classificado"
 
+msgid "Classifying images…"
+msgstr "Classificando imagens…"
+
+msgid "Classifying text…"
+msgstr "Classificando texto…"
+
 msgid "Clean & focused"
 msgstr "Limpo e focado"
 
@@ -858,6 +864,9 @@ msgstr "Limpar modelo"
 
 msgid "Click \"Add Videos\" to upload MP4 or WebM files."
 msgstr "Clique em \"Adicionar Vídeos\" para enviar arquivos MP4 ou WebM."
+
+msgid "Click an image to select"
+msgstr "Clique em uma imagem para selecionar"
 
 msgid "Click images to select"
 msgstr "Clique nas imagens para selecionar"
@@ -1681,6 +1690,9 @@ msgstr "Texto associado à imagem"
 msgid "Image Captioning"
 msgstr "Legendagem de imagens"
 
+msgid "Image Captions"
+msgstr "Legendas de Imagens"
+
 msgid "Image Cropping"
 msgstr "Recorte de imagens"
 
@@ -2256,6 +2268,9 @@ msgstr "Nenhuma seção correspondente"
 msgid "No metadata yet — run the pipeline to extract book details"
 msgstr "Ainda não há metadados — execute o pipeline para extrair os detalhes do livro"
 
+msgid "No other images in this book"
+msgstr "Nenhuma outra imagem neste livro"
+
 msgid "No page linked"
 msgstr "Nenhuma página vinculada"
 
@@ -2612,6 +2627,9 @@ msgstr "Visualizar página vinculada"
 msgid "Preview of the HTML/CSS patterns used for LLM-generated pages."
 msgstr "Pré-visualização dos padrões HTML/CSS usados para páginas geradas por LLM."
 
+msgid "Processing metadata…"
+msgstr "Processando metadados…"
+
 msgid "Previous slide"
 msgstr "Slide anterior"
 
@@ -2799,6 +2817,9 @@ msgstr "Renderizando esta seção..."
 
 msgid "Replace"
 msgstr "Substituir"
+
+msgid "Replace from Book"
+msgstr "Substituir do livro"
 
 msgid "Replace Video?"
 msgstr "Substituir Vídeo?"
@@ -3717,6 +3738,9 @@ msgstr "Envie e atribua vídeos de língua de sinais às páginas do livro."
 
 msgid "Upload failed"
 msgstr "Falha no envio"
+
+msgid "Upload from Disk"
+msgstr "Enviar do disco"
 
 msgid "Upload image"
 msgstr "Enviar imagem"
