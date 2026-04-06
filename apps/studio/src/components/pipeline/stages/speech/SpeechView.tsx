@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
-import { Volume2, Loader2, Play, Pause, WandSparkles, RefreshCw, MoreVertical, Clock, Trash2 } from "lucide-react"
+import { Volume2, Languages, Loader2, Play, Pause, WandSparkles, RefreshCw, MoreVertical, Clock, Trash2, Settings } from "lucide-react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
-import { Settings } from "lucide-react"
 import { api, getAudioUrl, BASE_URL } from "@/api/client"
 import type { TextCatalogEntry } from "@/api/client"
 import { useActiveConfig } from "@/hooks/use-debug"
@@ -10,13 +9,13 @@ import { useBook } from "@/hooks/use-books"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
-import { StageRunCard } from "../../components/StageRunCard"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import { cn } from "@/lib/utils"
 import { normalizeLocale } from "@/lib/languages"
 import { languageUsesSpeechProvider } from "@/lib/speech-routing"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { resolveTranslationLanguageState } from "../translations/lib/translations-view-state"
 import { msg } from "@lingui/core/macro"
 import { useLingui } from "@lingui/react/macro"
@@ -47,6 +46,44 @@ function displayLang(code: string): string {
   try { return langNames.of(code) ?? code } catch { return code }
 }
 
+function LanguageSummary({ bookLanguage, outputLanguages }: { bookLanguage: string | null; outputLanguages: string[] }) {
+  const { t } = useLingui()
+  return (
+    <>
+      <div>
+        <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">{t`Book Language`}</div>
+        <p className="text-sm">
+          {bookLanguage ? (
+            <>{displayLang(bookLanguage)} <span className="text-muted-foreground text-xs">({bookLanguage})</span></>
+          ) : (
+            <span className="text-muted-foreground italic">{t`Not detected`}</span>
+          )}
+        </p>
+      </div>
+      <div>
+        <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">{t`Output Languages`}</div>
+        {outputLanguages.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5">
+            {outputLanguages.map((lang) => (
+              <span key={lang} className="text-xs bg-muted rounded-full px-2.5 py-0.5 font-medium">
+                {displayLang(lang)} <span className="text-muted-foreground font-normal">({lang})</span>
+              </span>
+            ))}
+          </div>
+        ) : bookLanguage ? (
+          <div className="flex flex-wrap gap-1.5">
+            <span className="text-xs bg-muted rounded-full px-2.5 py-0.5 font-medium">
+              {displayLang(bookLanguage)} <span className="text-muted-foreground font-normal">({bookLanguage})</span>
+            </span>
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground italic">{t`Not detected`}</p>
+        )}
+      </div>
+    </>
+  )
+}
+
 export function SpeechView({ bookLabel, selectedPageId, onSelectPage }: { bookLabel: string; selectedPageId?: string; onSelectPage?: (pageId: string | null) => void }) {
   const { t, i18n } = useLingui()
   const { setExtra } = useStepHeader()
@@ -55,10 +92,29 @@ export function SpeechView({ bookLabel, selectedPageId, onSelectPage }: { bookLa
   const queryClient = useQueryClient()
   const { stageState, queueRun, error: runError } = useBookRun()
   const { apiKey, hasApiKey, azureKey, azureRegion, geminiKey } = useApiKey()
+  // Translation state (for initial cards & control panel)
+  const translationState = stageState("translation")
+  const translationDone = translationState === "done"
+  const isTranslationRunning = translationState === "running" || translationState === "queued"
+
+  // Speech state
   const speechState = stageState("speech")
   const speechDone = speechState === "done"
   const hasStageError = speechState === "error"
   const isRunning = speechState === "running" || speechState === "queued"
+
+  const handleRunTranslations = useCallback(() => {
+    if (!hasApiKey || isTranslationRunning) return
+    queueRun({
+      fromStage: "translation",
+      toStage: "translation",
+      apiKey,
+      providerCredentials: {
+        azure: { key: azureKey, region: azureRegion },
+        geminiApiKey: geminiKey,
+      },
+    })
+  }, [hasApiKey, isTranslationRunning, apiKey, azureKey, azureRegion, geminiKey, queueRun])
 
   const handleRunSpeech = useCallback(() => {
     if (!hasApiKey || isRunning) return
@@ -72,6 +128,19 @@ export function SpeechView({ bookLabel, selectedPageId, onSelectPage }: { bookLa
       },
     })
   }, [hasApiKey, isRunning, apiKey, azureKey, azureRegion, geminiKey, queueRun])
+
+  const handleRunTranslationAndSpeech = useCallback(() => {
+    if (!hasApiKey || isTranslationRunning) return
+    queueRun({
+      fromStage: "translation",
+      toStage: "speech",
+      apiKey,
+      providerCredentials: {
+        azure: { key: azureKey, region: azureRegion },
+        geminiApiKey: geminiKey,
+      },
+    })
+  }, [hasApiKey, isTranslationRunning, apiKey, azureKey, azureRegion, geminiKey, queueRun])
 
   const { data: catalog, isLoading } = useQuery({
     queryKey: ["books", bookLabel, "text-catalog"],
@@ -273,16 +342,96 @@ export function SpeechView({ bookLabel, selectedPageId, onSelectPage }: { bookLa
     )
   }
 
+  // Show styled initial cards when speech hasn't been generated
   if (showRunCard || !catalog || entries.length === 0) {
+    const resolvedBookLang = editingLanguage || bookLanguage
     return (
-      <div className="p-4">
-        <StageRunCard
-          stageSlug="speech"
-          isRunning={isRunning}
-          completed={speechDone}
-          onRun={handleRunSpeech}
-          disabled={!hasApiKey || isRunning}
-        />
+      <div className="p-4 space-y-4">
+        {/* Translation info card */}
+        <Card className="overflow-hidden max-w-xl shadow-none border-pink-600">
+          <CardHeader className="flex-row items-center gap-2.5 space-y-0 px-4 py-2 text-white bg-pink-600">
+            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20">
+              <Languages className="w-3 h-3" />
+            </div>
+            <CardTitle className="text-sm leading-normal tracking-normal">
+              {t`Translation`}
+              {translationDone && <span className="font-normal text-white/60 ml-1.5">({t`done`})</span>}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-5 py-4 space-y-3">
+            <LanguageSummary bookLanguage={resolvedBookLang} outputLanguages={outputLanguages} />
+            {!translationDone && (
+              <div className="flex items-center gap-3 pt-1">
+                <Link
+                  to="/books/$label/$step/settings"
+                  params={{ label: bookLabel, step: "translation" }}
+                  search={{ tab: "general" }}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-pink-600 hover:text-pink-700 transition-colors"
+                >
+                  <Settings className="w-3 h-3" />
+                  {t`Add Translations`}
+                </Link>
+                <div className="flex-1" />
+                <Button
+                  size="sm"
+                  className="h-8 bg-pink-600 hover:bg-pink-700 text-white text-xs"
+                  onClick={handleRunTranslations}
+                  disabled={!hasApiKey || isTranslationRunning}
+                >
+                  {isTranslationRunning ? (
+                    <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                  ) : (
+                    <Play className="mr-1 h-3 w-3" />
+                  )}
+                  {translationState === "error" ? t`Retry Translation` : t`Run Translation`}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Speech card */}
+        <Card className="overflow-hidden max-w-xl shadow-none border-rose-600">
+          <CardHeader className="flex-row items-center gap-2.5 space-y-0 px-4 py-2 text-white bg-rose-600">
+            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20">
+              <Volume2 className="w-3 h-3" />
+            </div>
+            <CardTitle className="text-sm leading-normal tracking-normal">{t`Speech`}</CardTitle>
+          </CardHeader>
+          <CardContent className="px-5 py-4 space-y-3">
+            <div>
+              <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">{t`Voice`}</div>
+              <p className="text-sm font-medium">{providerLabel} <span className="font-normal text-muted-foreground">·</span> {defaultVoice}
+                {defaultModel && <>{" "}<span className="font-normal text-muted-foreground">·</span> <span className="font-normal text-muted-foreground">{defaultModel}</span></>}
+              </p>
+            </div>
+            <div className="flex items-center gap-3 pt-1">
+              <Link
+                to="/books/$label/$step/settings"
+                params={{ label: bookLabel, step: "translation" }}
+                search={{ tab: "speech" }}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 transition-colors"
+              >
+                <Settings className="w-3 h-3" />
+                {t`Choose Provider`}
+              </Link>
+              <div className="flex-1" />
+              <Button
+                size="sm"
+                className="h-8 bg-rose-600 hover:bg-rose-700 text-white text-xs"
+                onClick={handleRunTranslationAndSpeech}
+                disabled={!hasApiKey || isTranslationRunning || isRunning}
+              >
+                {isRunning ? (
+                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                ) : (
+                  <Play className="mr-1 h-3 w-3" />
+                )}
+                {speechState === "error" ? t`Retry Speech` : t`Run Speech`}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -376,60 +525,113 @@ export function SpeechView({ bookLabel, selectedPageId, onSelectPage }: { bookLa
           </div>
         )}
 
-        {/* Speech control panel */}
-        <div className="rounded-lg border border-rose-200 bg-rose-50/30 px-4 py-2.5 space-y-2">
-          <div className="flex items-center gap-2">
-            <Volume2 className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-            <p className="flex-1 text-xs font-medium text-rose-900">
-              {t`Speech`}
-              <span className="font-normal text-rose-600 ml-1.5">
-                {currentLanguageUsesGemini
-                  ? t`${String(generatedAudioCount)}/${String(displayEntries.length)}`
-                  : t`${String(totalAudioFiles)} files`}
-              </span>
-            </p>
-            {isRunning ? (
-              <Loader2 className="w-4 h-4 animate-spin text-rose-500 shrink-0" />
-            ) : (
-              <div className="flex items-center gap-1">
+        {/* Translation & Speech control panels */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Translation panel */}
+          <div className="rounded-lg border border-pink-200 bg-pink-50/30 px-4 py-2.5 space-y-2">
+            <div className="flex items-center gap-2">
+              <Languages className="w-3.5 h-3.5 text-pink-500 shrink-0" />
+              <p className="flex-1 text-xs font-medium text-pink-900">{t`Translation`}</p>
+              {isTranslationRunning ? (
+                <Loader2 className="w-4 h-4 animate-spin text-pink-500 shrink-0" />
+              ) : (
                 <button
                   type="button"
-                  onClick={handleRunSpeech}
+                  onClick={handleRunTranslations}
                   disabled={!hasApiKey}
-                  className="flex items-center justify-center w-6 h-6 rounded text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer disabled:opacity-50"
-                  title={t`Regenerate all speech`}
+                  className="flex items-center justify-center w-6 h-6 rounded text-pink-600 hover:bg-pink-100 transition-colors cursor-pointer disabled:opacity-50"
+                  title={t`Rerun translation`}
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
                 </button>
-                <button
-                  type="button"
-                  onClick={() => clearSpeechMutation.mutate()}
-                  disabled={clearSpeechMutation.isPending}
-                  className="flex items-center justify-center w-6 h-6 rounded text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer disabled:opacity-50"
-                  title={t`Clear speech data`}
-                >
-                  {clearSpeechMutation.isPending ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-3.5 w-3.5" />
-                  )}
-                </button>
-              </div>
-            )}
+              )}
+            </div>
+            <div className="text-[11px] text-pink-800/70">
+              {bookLanguage && <span>{displayLang(bookLanguage)}</span>}
+              {outputLanguages.length > 0 && (
+                <span>
+                  {bookLanguage && <span className="text-pink-300"> → </span>}
+                  {outputLanguages.map((l) => displayLang(l)).join(", ")}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              <Link
+                to="/books/$label/$step/settings"
+                params={{ label: bookLabel, step: "translation" }}
+                search={{ tab: "general" }}
+                className="inline-flex items-center gap-1 text-[10px] font-medium text-pink-600 hover:text-pink-700 transition-colors"
+              >
+                <Settings className="w-2.5 h-2.5" />
+                {t`Languages`}
+              </Link>
+              <Link
+                to="/books/$label/$step/settings"
+                params={{ label: bookLabel, step: "translation" }}
+                search={{ tab: "prompt" }}
+                className="inline-flex items-center gap-1 text-[10px] font-medium text-pink-600 hover:text-pink-700 transition-colors"
+              >
+                <Settings className="w-2.5 h-2.5" />
+                {t`Prompt`}
+              </Link>
+            </div>
           </div>
-          <div className="text-[11px] text-rose-800/70">
-            {providerLabel} <span className="text-rose-300">·</span> {defaultVoice}
-            {defaultModel && <>{" "}<span className="text-rose-300">·</span> {defaultModel}</>}
+
+          {/* Speech panel */}
+          <div className="rounded-lg border border-rose-200 bg-rose-50/30 px-4 py-2.5 space-y-2">
+            <div className="flex items-center gap-2">
+              <Volume2 className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+              <p className="flex-1 text-xs font-medium text-rose-900">
+                {t`Speech`}
+                <span className="font-normal text-rose-600 ml-1.5">
+                  {currentLanguageUsesGemini
+                    ? t`${String(generatedAudioCount)}/${String(displayEntries.length)}`
+                    : t`${String(totalAudioFiles)} files`}
+                </span>
+              </p>
+              {isRunning ? (
+                <Loader2 className="w-4 h-4 animate-spin text-rose-500 shrink-0" />
+              ) : (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handleRunSpeech}
+                    disabled={!hasApiKey}
+                    className="flex items-center justify-center w-6 h-6 rounded text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer disabled:opacity-50"
+                    title={t`Regenerate all speech`}
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => clearSpeechMutation.mutate()}
+                    disabled={clearSpeechMutation.isPending}
+                    className="flex items-center justify-center w-6 h-6 rounded text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer disabled:opacity-50"
+                    title={t`Clear speech data`}
+                  >
+                    {clearSpeechMutation.isPending ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="text-[11px] text-rose-800/70">
+              {providerLabel} <span className="text-rose-300">·</span> {defaultVoice}
+              {defaultModel && <>{" "}<span className="text-rose-300">·</span> {defaultModel}</>}
+            </div>
+            <Link
+              to="/books/$label/$step/settings"
+              params={{ label: bookLabel, step: "translation" }}
+              search={{ tab: "speech" }}
+              className="inline-flex items-center gap-1 text-[10px] font-medium text-rose-600 hover:text-rose-700 transition-colors"
+            >
+              <Settings className="w-2.5 h-2.5" />
+              {t`Choose Provider`}
+            </Link>
           </div>
-          <Link
-            to="/books/$label/$step/settings"
-            params={{ label: bookLabel, step: "translation" }}
-            search={{ tab: "speech" }}
-            className="inline-flex items-center gap-1 text-[10px] font-medium text-rose-600 hover:text-rose-700 transition-colors"
-          >
-            <Settings className="w-2.5 h-2.5" />
-            {t`Speech Settings`}
-          </Link>
         </div>
       </div>
 

@@ -1070,6 +1070,9 @@ msgstr "Descartar"
 msgid "Display"
 msgstr "Visualización"
 
+msgid "done"
+msgstr "listo"
+
 msgid "Drag to move boxes, drag edges/corners to resize"
 msgstr "Drag to move boxes, drag edges/corners to resize"
 
@@ -1402,8 +1405,8 @@ msgstr "Genera cuestionarios y actividades de comprensión basados en el conteni
 msgid "Generate from pages"
 msgstr "Generar desde páginas"
 
-msgid "Generate missing Gemini audio"
-msgstr "Generar audio de Gemini faltante"
+#~ msgid "Generate missing Gemini audio"
+#~ msgstr "Generar audio de Gemini faltante"
 
 msgid "Generate new"
 msgstr "Generar nueva"
@@ -2133,8 +2136,8 @@ msgstr "Clave de API de OpenAI"
 msgid "OpenAI Voice"
 msgstr "Voz OpenAI"
 
-msgid "optional"
-msgstr "opcional"
+#~ msgid "optional"
+#~ msgstr "opcional"
 
 msgid "Optional instructions for the LLM..."
 msgstr "Instrucciones opcionales para el LLM..."
@@ -2412,8 +2415,8 @@ msgstr "Regenerar"
 msgid "Regenerate all speech"
 msgstr "Regenerar todo el audio"
 
-msgid "Regenerate speech"
-msgstr "Regenerar audio"
+#~ msgid "Regenerate speech"
+#~ msgstr "Regenerar audio"
 
 msgid "Region"
 msgstr "Región"
@@ -2497,8 +2500,8 @@ msgstr "Reintentar"
 msgid "Retry Export"
 msgstr "Reintentar exportación"
 
-#~ msgid "Retry Speech"
-#~ msgstr "Reintentar voz"
+msgid "Retry Speech"
+msgstr "Reintentar voz"
 
 msgid "Retry Translation"
 msgstr "Reintentar traducción"
@@ -2859,8 +2862,8 @@ msgstr "Generación de voz"
 msgid "Speech Prompts"
 msgstr "Indicaciones de voz"
 
-msgid "Speech Settings"
-msgstr "Configuración de voz"
+#~ msgid "Speech Settings"
+#~ msgstr "Configuración de voz"
 
 msgid "Spread Mode"
 msgstr "Modo de páginas dobles"

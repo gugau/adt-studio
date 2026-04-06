@@ -1070,6 +1070,9 @@ msgstr "Discard"
 msgid "Display"
 msgstr "Display"
 
+msgid "done"
+msgstr "done"
+
 msgid "Drag to move boxes, drag edges/corners to resize"
 msgstr "Drag to move boxes, drag edges/corners to resize"
 
@@ -1402,8 +1405,8 @@ msgstr "Generate comprehension quizzes and activities based on the book content.
 msgid "Generate from pages"
 msgstr "Generate from pages"
 
-msgid "Generate missing Gemini audio"
-msgstr "Generate missing Gemini audio"
+#~ msgid "Generate missing Gemini audio"
+#~ msgstr "Generate missing Gemini audio"
 
 msgid "Generate new"
 msgstr "Generate new"
@@ -2133,8 +2136,8 @@ msgstr "OpenAI API Key"
 msgid "OpenAI Voice"
 msgstr "OpenAI Voice"
 
-msgid "optional"
-msgstr "optional"
+#~ msgid "optional"
+#~ msgstr "optional"
 
 msgid "Optional instructions for the LLM..."
 msgstr "Optional instructions for the LLM..."
@@ -2412,8 +2415,8 @@ msgstr "Regenerate"
 msgid "Regenerate all speech"
 msgstr "Regenerate all speech"
 
-msgid "Regenerate speech"
-msgstr "Regenerate speech"
+#~ msgid "Regenerate speech"
+#~ msgstr "Regenerate speech"
 
 msgid "Region"
 msgstr "Region"
@@ -2497,8 +2500,8 @@ msgstr "Retry"
 msgid "Retry Export"
 msgstr "Retry Export"
 
-#~ msgid "Retry Speech"
-#~ msgstr "Retry Speech"
+msgid "Retry Speech"
+msgstr "Retry Speech"
 
 msgid "Retry Translation"
 msgstr "Retry Translation"
@@ -2859,8 +2862,8 @@ msgstr "Speech Generation"
 msgid "Speech Prompts"
 msgstr "Speech Prompts"
 
-msgid "Speech Settings"
-msgstr "Speech Settings"
+#~ msgid "Speech Settings"
+#~ msgstr "Speech Settings"
 
 msgid "Spread Mode"
 msgstr "Spread Mode"
