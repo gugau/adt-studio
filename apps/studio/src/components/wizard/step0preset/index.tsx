@@ -11,7 +11,7 @@ import { PresetGrid } from "./PresetGrid"
 // eslint-disable-next-line lingui/no-unlocalized-strings -- Preset reset warning text
 const STEP1_FIELDS = new Set(["label", "file", "startPage", "endPage", "selectedPreset"])
 
-function resetToPreset(form: ReturnType<typeof useWizardForm>, id: PresetId) {
+function applyPreset(form: ReturnType<typeof useWizardForm>, id: PresetId) {
   const preset = PRESETS.find((p) => p.id === id)
 
   for (const [key, value] of Object.entries(defaultWizardValues)) {
@@ -44,8 +44,8 @@ export function Step0Preset() {
 
   function handleContinue() {
     if (!selected) return
-    if (presetChanged) {
-      resetToPreset(form, selected)
+    if (presetChanged || committedStep0Preset === null) {
+      applyPreset(form, selected)
     }
     setCommittedStep0Preset(selected)
     setCurrentStep(1)
