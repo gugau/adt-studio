@@ -778,9 +778,6 @@ msgstr "Prompt de leyenda"
 msgid "Captioning Images..."
 msgstr "Subtitulando imágenes..."
 
-#~ msgid "Captions"
-#~ msgstr "Subtítulos"
-
 msgid "carousel"
 msgstr "carrusel"
 
@@ -822,9 +819,6 @@ msgstr "Checklist item"
 
 msgid "Choose a Preset"
 msgstr "Elegir un Preajuste"
-
-msgid "Choose a style guide to control the look and feel of the generated pages."
-msgstr "Elige una guía de estilo para controlar el aspecto de las páginas generadas."
 
 msgid "Choose an existing image from this project"
 msgstr "Elige una imagen existente de este proyecto"
@@ -2627,11 +2621,11 @@ msgstr "Vista previa de la página vinculada"
 msgid "Preview of the HTML/CSS patterns used for LLM-generated pages."
 msgstr "Vista previa de los patrones HTML/CSS usados para páginas generadas por LLM."
 
-msgid "Processing metadata…"
-msgstr "Procesando metadatos…"
-
 msgid "Previous slide"
 msgstr "Diapositiva anterior"
+
+msgid "Processing metadata…"
+msgstr "Procesando metadatos…"
 
 msgid "Prompt"
 msgstr "Prompt"
