@@ -23,7 +23,12 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
   const storyboardState = stageState("storyboard")
   const storyboardDone = storyboardState === "done"
   const storyboardRunning = storyboardState === "running" || storyboardState === "queued"
-  const showRunCard = !storyboardDone || storyboardRunning
+  // Show page content during a run (or after an error) once pages have data.
+  // Only show the run card when idle or no data exists yet.
+  const hasPageData = (pages ?? []).some((p) => p.sectionCount > 0)
+  const showRunCard = storyboardRunning || storyboardState === "error"
+    ? !hasPageData
+    : !storyboardDone
 
   const handleRunStoryboard = useCallback(() => {
     if (!hasApiKey || storyboardRunning) return
@@ -141,7 +146,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
         overviewMode ? "bg-white/30 text-white" : "bg-white/15 hover:bg-white/25 text-white/70"
       }`}
       onClick={() => setOverviewMode((v) => !v)}
-      title={t`Sectioning Overview`}
+      title={t`Overview`}
     >
       <Table2 className="h-3.5 w-3.5" />
     </button>
@@ -186,7 +191,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
       setExtra(
         <>
           <span className="text-white/40 text-sm">/</span>
-          <span className="text-sm font-medium">{t`Sectioning Overview`}</span>
+          <span className="text-sm font-medium">{t`Overview`}</span>
           <div className="ml-auto flex gap-1">
             {overviewToggle}
           </div>
@@ -313,6 +318,14 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
   }
 
   if (!page.sectioning) {
+    if (storyboardRunning) {
+      return (
+        <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <Trans>Waiting for page to be processed...</Trans>
+        </div>
+      )
+    }
     return (
       <div className="p-4">
         <StageRunCard

@@ -3,30 +3,10 @@ import path from "node:path"
 import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
 import yaml from "js-yaml"
-import { PresetName, StyleguideName } from "@adt/types"
+import { StyleguideName } from "@adt/types"
 
 export function createPresetRoutes(configPath: string): Hono {
   const app = new Hono()
-  const presetsDir = path.join(path.dirname(configPath), "config", "presets")
-
-  // GET /presets/:name — Return preset config overrides
-  app.get("/presets/:name", (c) => {
-    const result = PresetName.safeParse(c.req.param("name"))
-
-    if (!result.success) {
-      throw new HTTPException(404, { message: `Unknown preset: ${c.req.param("name")}` })
-    }
-
-    const name = result.data
-    const presetPath = path.join(presetsDir, `${name}.yaml`)
-    if (!fs.existsSync(presetPath)) {
-      throw new HTTPException(404, { message: `Preset not found: ${name}` })
-    }
-
-    const content = fs.readFileSync(presetPath, "utf-8")
-    const parsed = yaml.load(content) as Record<string, unknown>
-    return c.json({ config: parsed })
-  })
 
   // GET /styleguides — List available styleguide names
   app.get("/styleguides", (c) => {
@@ -86,6 +66,28 @@ export function createPresetRoutes(configPath: string): Hono {
 table{border-collapse:collapse;width:100%;margin:0.75rem 0;}th,td{border:1px solid #e5e7eb;padding:0.4rem 0.75rem;text-align:left;font-size:0.85rem;}th{background:#f9fafb;font-weight:600;}</style>
 </head><body><p style="margin:0.5rem 0;line-height:1.6;">${bodyHtml}</p></body></html>`
     return c.json({ name, html })
+  })
+
+  // POST /styleguides/upload — Upload a styleguide .md file
+  app.post("/styleguides/upload", async (c) => {
+    const body = await c.req.parseBody()
+    const file = body["file"]
+    if (!(file instanceof File)) {
+      throw new HTTPException(400, { message: "Missing file" })
+    }
+    if (!file.name.endsWith(".md")) {
+      throw new HTTPException(400, { message: "Only .md files are accepted" })
+    }
+    const name = file.name.replace(/\.md$/, "")
+    const result = StyleguideName.safeParse(name)
+    if (!result.success) {
+      throw new HTTPException(400, { message: "Invalid styleguide name" })
+    }
+    const styleguidesDir = path.join(path.dirname(configPath), "assets", "styleguides")
+    fs.mkdirSync(styleguidesDir, { recursive: true })
+    const content = await file.text()
+    fs.writeFileSync(path.join(styleguidesDir, `${result.data}.md`), content, "utf-8")
+    return c.json({ name: result.data })
   })
 
   // GET /config — Return the global base config

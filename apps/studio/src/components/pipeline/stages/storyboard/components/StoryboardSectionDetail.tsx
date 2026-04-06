@@ -8,6 +8,7 @@ import type { PageDetail, VersionEntry } from "@/api/client"
 import { useApiKey } from "@/hooks/use-api-key"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useBookTasks } from "@/hooks/use-book-tasks"
+import { useBookRun } from "@/hooks/use-book-run"
 import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import { useStepHeader } from "../../../components/StepViewRouter"
 import { BookPreviewFrame, type BookPreviewFrameHandle } from "./BookPreviewFrame"
@@ -15,6 +16,7 @@ import { SectionEditToolbar } from "./SectionEditToolbar"
 import { ImageCropDialog } from "./ImageCropDialog"
 import { AiImageDialog } from "./AiImageDialog"
 import { AddImageDialog } from "./AddImageDialog"
+import { ReplaceFromBookDialog } from "./ReplaceFromBookDialog"
 import { SegmentPreviewDialog, type SegmentRegion } from "./SegmentPreviewDialog"
 import { Input } from "@/components/ui/input"
 import { useLingui } from "@lingui/react/macro"
@@ -403,6 +405,8 @@ export function StoryboardSectionDetail({
   const queryClient = useQueryClient()
   const { apiKey, hasApiKey } = useApiKey()
   const { headerSlotEl } = useStepHeader()
+  const { stageState } = useBookRun()
+  const storyboardRunning = stageState("storyboard") === "running" || stageState("storyboard") === "queued"
   const { data: activeConfigData } = useActiveConfig(bookLabel)
   const applyBodyBackground = (activeConfigData?.merged as Record<string, unknown> | undefined)?.apply_body_background !== false
 
@@ -457,6 +461,7 @@ export function StoryboardSectionDetail({
 
   // Image crop state
   const [cropTarget, setCropTarget] = useState<string | null>(null)
+  const [recropPageSrc, setRecropPageSrc] = useState<string | null>(null)
 
   // Image replace / AI image state — tracked via unified task system
   const [aiImageDialogTarget, setAiImageDialogTarget] = useState<string | null>(null)
@@ -504,6 +509,7 @@ export function StoryboardSectionDetail({
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const replaceTargetRef = useRef<string | null>(null)
+  const [replaceFromBookTarget, setReplaceFromBookTarget] = useState<string | null>(null)
 
   // Image segmentation state
   const [segmenting, setSegmenting] = useState(false)
@@ -618,7 +624,7 @@ export function StoryboardSectionDetail({
 
   // Save / discard sectioning
   const saveSectioning = async () => {
-    if (!pendingSectioning) return
+    if (!pendingSectioning || storyboardRunning) return
     setSaving(true)
     setPanelOpen(false)
     const shouldRerender = needsRerenderRef.current
@@ -689,7 +695,7 @@ export function StoryboardSectionDetail({
 
   // Save rendering (including back-propagation to sectioning)
   const saveRendering = async () => {
-    if (!pendingRendering) return
+    if (!pendingRendering || storyboardRunning) return
     setSaving(true)
     setPanelOpen(false)
     try {
@@ -723,7 +729,7 @@ export function StoryboardSectionDetail({
 
   // Clone current section
   const handleCloneSection = async () => {
-    if (cloning || dirty || renderingDirty || saving) return
+    if (cloning || dirty || renderingDirty || saving || storyboardRunning) return
     setCloning(true)
     try {
       const result = await api.cloneSection(bookLabel, pageId, sectionIndex)
@@ -779,20 +785,20 @@ export function StoryboardSectionDetail({
 
   // Confirmation wrappers for merge actions
   const handleMergeSection = (direction: "next" | "prev") => {
-    if (merging || dirty || renderingDirty || saving) return
+    if (merging || dirty || renderingDirty || saving || storyboardRunning) return
     const label = direction === "prev" ? t`merge with previous` : t`merge with next`
     setConfirmMerge({ action: () => executeMergeSection(direction), label })
   }
 
   const handleMergeCrossPage = (direction: "next" | "prev") => {
-    if (merging || dirty || renderingDirty || saving) return
+    if (merging || dirty || renderingDirty || saving || storyboardRunning) return
     const label = direction === "prev" ? t`merge into previous page` : t`merge into next page`
     setConfirmMerge({ action: () => executeMergeCrossPage(direction), label })
   }
 
   // Delete current section
   const handleDeleteSection = () => {
-    if (deleting || dirty || renderingDirty || saving) return
+    if (deleting || dirty || renderingDirty || saving || storyboardRunning) return
     setConfirmDeleteSection(true)
   }
 
@@ -816,7 +822,7 @@ export function StoryboardSectionDetail({
   // If there are pending rendering edits, diff them against the saved version
   // and inject structured instructions so the LLM preserves the user's changes.
   const handleRerender = (prompt?: string) => {
-    if (hasActiveTask || dirty || saving || !hasApiKey) return
+    if (hasActiveTask || storyboardRunning || dirty || renderingDirty || saving || !hasApiKey) return
     setPanelOpen(false)
 
     // Build edit instructions from pending changes
@@ -1074,6 +1080,7 @@ export function StoryboardSectionDetail({
 
   // Toggle isPruned on the current section
   const toggleSectionPruned = () => {
+    if (storyboardRunning) return
     const base = pendingSectioning ?? page.sectioning
     if (!base) return
     // Unpruning requires re-render
@@ -1623,10 +1630,23 @@ export function StoryboardSectionDetail({
       }
 
       setCropTarget(null)
+      setRecropPageSrc(null)
       setSelectedElement(null)
     },
     [cropTarget, bookLabel, pageId, pendingSectioning, page.sectioning, pendingRendering, page.rendering, sectionIndex]
   )
+
+  // Recrop from page: fetch the full page image and open crop dialog with it
+  const handleRecropFromPage = useCallback(async (dataId: string) => {
+    setSelectedElement(null)
+    try {
+      const { imageBase64 } = await api.getPageImage(bookLabel, pageId)
+      setCropTarget(dataId)
+      setRecropPageSrc(`data:image/png;base64,${imageBase64}`)
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : t`Failed to load page image`)
+    }
+  }, [bookLabel, pageId, t])
 
   // Image replace: open native file picker
   const handleImageReplace = useCallback((dataId: string) => {
@@ -1692,6 +1712,61 @@ export function StoryboardSectionDetail({
       }
     },
     [bookLabel, pageId, pendingSectioning, page.sectioning, pendingRendering, page.rendering, sectionIndex]
+  )
+
+  // Replace from book: open picker dialog
+  const handleReplaceFromBook = useCallback((dataId: string) => {
+    setReplaceFromBookTarget(dataId)
+    setSelectedElement(null)
+  }, [])
+
+  // Process replace-from-book selection: swap image in sectioning + rendering
+  const handleReplaceFromBookSelect = useCallback(
+    (newImageId: string) => {
+      const targetId = replaceFromBookTarget
+      if (!targetId) return
+      setReplaceFromBookTarget(null)
+
+      // Update sectioning
+      const sBase = pendingSectioning ?? page.sectioning
+      if (sBase) {
+        const updatedSectioning: SectioningData = {
+          ...sBase,
+          sections: sBase.sections.map((s, si) => {
+            if (si !== sectionIndex) return s
+            return {
+              ...s,
+              parts: s.parts.map((p) => {
+                if (p.type === "image" && p.imageId === targetId) {
+                  return { ...p, imageId: newImageId }
+                }
+                return p
+              }),
+            }
+          }),
+        }
+        setPendingSectioning(updatedSectioning)
+      }
+
+      // Update rendering HTML
+      const rBase = pendingRendering ?? page.rendering
+      if (rBase) {
+        const oldSrc = `${BASE_URL}/books/${bookLabel}/images/${targetId}`
+        const newSrc = `${BASE_URL}/books/${bookLabel}/images/${newImageId}`
+        const updatedRendering: RenderingData = {
+          ...rBase,
+          sections: rBase.sections.map((s) => {
+            if (s.sectionIndex !== sectionIndex) return s
+            let html = s.html
+            html = html.replace(new RegExp(`data-id="${escapeRegex(targetId)}"`, "g"), `data-id="${newImageId}"`)
+            html = html.replace(new RegExp(escapeRegex(oldSrc), "g"), newSrc)
+            return { ...s, html }
+          }),
+        }
+        setPendingRendering(updatedRendering)
+      }
+    },
+    [bookLabel, replaceFromBookTarget, pendingSectioning, page.sectioning, pendingRendering, page.rendering, sectionIndex]
   )
 
   // Open AI image dialog for a specific image
@@ -2009,7 +2084,7 @@ export function StoryboardSectionDetail({
 
   // AI edit handler
   const handleAiEdit = async () => {
-    if (!aiInstruction.trim() || !hasApiKey || hasActiveTask) return
+    if (!aiInstruction.trim() || !hasApiKey || hasActiveTask || storyboardRunning) return
     setAiError(null)
 
     const currentHtml = renderedSection?.html
@@ -2190,8 +2265,8 @@ export function StoryboardSectionDetail({
                 handleAiEdit()
               }
             }}
-            placeholder={hasActiveTask ? t`Task running...` : t`Ask AI to edit...`}
-            disabled={hasActiveTask}
+            placeholder={hasActiveTask || storyboardRunning ? t`Task running...` : t`Ask AI to edit...`}
+            disabled={hasActiveTask || storyboardRunning}
             className={`pl-7 h-7 text-[11px] bg-white border-white/40 text-gray-900 placeholder:text-gray-400 focus-visible:ring-white/50 ${hasActiveTask ? "opacity-60" : ""}`}
           />
         </div>
@@ -2215,14 +2290,14 @@ export function StoryboardSectionDetail({
         type="button"
         onClick={() => setPanelOpen((v) => !v)}
         className="flex items-center gap-1 px-2 py-1 rounded bg-white/10 hover:bg-white/20 transition-colors cursor-pointer shrink-0"
-        title={panelOpen ? t`Close section data` : t`Open section data`}
+        title={panelOpen ? t`Close edit panel` : t`Open edit panel`}
       >
         {panelOpen ? (
           <PanelRightClose className="h-3.5 w-3.5" />
         ) : (
           <PanelRightOpen className="h-3.5 w-3.5" />
         )}
-        <span className="text-[10px]">{t`Section Data`}</span>
+        <span className="text-[10px]">{t`Edit`}</span>
         {dirty && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" title={t`Unsaved changes`} />}
       </button>
       {navigationArrows}
@@ -2272,7 +2347,7 @@ export function StoryboardSectionDetail({
                   html={renderedSection.html}
                   bookLabel={bookLabel}
                   className="w-full rounded border"
-                  editable={!hasActiveTask}
+                  editable={!hasActiveTask && !storyboardRunning}
                   prunedDataIds={prunedDataIds}
                   changedElements={changedElements}
                   onSelectElement={handleSelectElement}
@@ -2281,6 +2356,11 @@ export function StoryboardSectionDetail({
                 />
             )}
           </>
+        ) : storyboardRunning && !section?.isPruned ? (
+          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+            <Loader2 className="w-8 h-8 animate-spin text-violet-400 mb-3" />
+            <p className="text-sm font-medium">{t`Rendering this section...`}</p>
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <div className="w-12 h-12 rounded-full bg-violet-50 flex items-center justify-center mb-3">
@@ -2528,14 +2608,16 @@ export function StoryboardSectionDetail({
           isPruned={selectedInfo.isPruned}
           textTypes={textTypes}
           imageSrc={selectedInfo.imageSrc}
-          onChangeTextType={selectedInfo.isContainer ? undefined : handleToolbarChangeTextType}
-          onTogglePrune={selectedInfo.isContainer ? undefined : handleToolbarPrune}
-          onCrop={selectedInfo.isImage ? (dataId) => setCropTarget(dataId) : undefined}
-          onReplace={selectedInfo.isImage ? handleImageReplace : undefined}
-          onAiImage={selectedInfo.isImage && hasApiKey ? handleAiImage : undefined}
-          onSegment={selectedInfo.isImage && hasApiKey ? handleSegment : undefined}
+          onChangeTextType={storyboardRunning || selectedInfo.isContainer ? undefined : handleToolbarChangeTextType}
+          onTogglePrune={storyboardRunning || selectedInfo.isContainer ? undefined : handleToolbarPrune}
+          onCrop={selectedInfo.isImage && !storyboardRunning ? (dataId) => setCropTarget(dataId) : undefined}
+          onRecropFromPage={selectedInfo.isImage && !storyboardRunning ? handleRecropFromPage : undefined}
+          onReplace={selectedInfo.isImage && !storyboardRunning ? handleImageReplace : undefined}
+          onReplaceFromBook={selectedInfo.isImage && !storyboardRunning ? handleReplaceFromBook : undefined}
+          onAiImage={selectedInfo.isImage && hasApiKey && !storyboardRunning ? handleAiImage : undefined}
+          onSegment={selectedInfo.isImage && hasApiKey && !storyboardRunning ? handleSegment : undefined}
           segmenting={segmenting}
-          onDelete={handleDeleteBlock}
+          onDelete={!storyboardRunning ? handleDeleteBlock : undefined}
           elementClasses={selectedElementClasses ?? undefined}
           onClassesChange={handleClassesChange}
         />
@@ -2600,6 +2682,7 @@ export function StoryboardSectionDetail({
         cloning={cloning}
         deleting={deleting}
         saving={saving}
+        pipelineRunning={storyboardRunning}
         rerendering={hasActiveTask}
         dirty={dirty}
         renderingDirty={renderingDirty}
@@ -2627,9 +2710,19 @@ export function StoryboardSectionDetail({
     {/* Image crop dialog */}
     {cropTarget && (
       <ImageCropDialog
-        imageSrc={`${BASE_URL}/books/${bookLabel}/images/${cropTarget}`}
+        imageSrc={recropPageSrc ?? `${BASE_URL}/books/${bookLabel}/images/${cropTarget}`}
         onApply={handleCropApply}
-        onClose={() => setCropTarget(null)}
+        onClose={() => { setCropTarget(null); setRecropPageSrc(null) }}
+      />
+    )}
+
+    {/* Replace from book dialog */}
+    {replaceFromBookTarget && (
+      <ReplaceFromBookDialog
+        bookLabel={bookLabel}
+        currentImageId={replaceFromBookTarget}
+        onSelect={handleReplaceFromBookSelect}
+        onClose={() => setReplaceFromBookTarget(null)}
       />
     )}
 

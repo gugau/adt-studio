@@ -32,6 +32,10 @@ export function getAudioUrl(label: string, language: string, fileName: string): 
   return `${BASE_URL}/books/${label}/audio/${language}/${fileName}`
 }
 
+export function getSignLanguageVideoUrl(label: string, videoId: string): string {
+  return `${BASE_URL}/books/${label}/sign-language-videos/${videoId}`
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${BASE_URL}${path}`
   const res = await fetch(url, {
@@ -84,6 +88,10 @@ export interface AzureCredentials {
 }
 
 export interface StageRunProviderCredentials {
+  anthropicApiKey?: string
+  googleApiKey?: string
+  customBaseUrl?: string
+  customApiKey?: string
   azure?: AzureCredentials
   geminiApiKey?: string
 }
@@ -100,6 +108,18 @@ function buildApiHeaders(
   providerCredentials?: StageRunProviderCredentials
 ): Record<string, string> {
   const headers: Record<string, string> = { "X-OpenAI-Key": apiKey }
+  if (providerCredentials?.anthropicApiKey) {
+    headers["X-Anthropic-API-Key"] = providerCredentials.anthropicApiKey
+  }
+  if (providerCredentials?.googleApiKey) {
+    headers["X-Google-API-Key"] = providerCredentials.googleApiKey
+  }
+  if (providerCredentials?.customBaseUrl) {
+    headers["X-Custom-Base-URL"] = providerCredentials.customBaseUrl
+  }
+  if (providerCredentials?.customApiKey) {
+    headers["X-Custom-API-Key"] = providerCredentials.customApiKey
+  }
   if (providerCredentials?.azure?.key) {
     headers["X-Azure-Speech-Key"] = providerCredentials.azure.key
   }
@@ -133,6 +153,7 @@ export interface PageSummaryItem {
   wordCount: number
   sectionCount: number
   prunedSections: number[]
+  sections: Array<{ sectionId: string; sectionIndex: number }>
 }
 
 export interface SectionRendering {
@@ -154,6 +175,7 @@ export interface PageDetail {
       groupId: string
       groupType: string
       texts: Array<{ textType: string; text: string; isPruned: boolean }>
+      isPruned: boolean
     }>
   } | null
   imageClassification: {
@@ -441,6 +463,17 @@ export interface LlmLogsParams {
   itemId?: string
   limit?: number
   offset?: number
+}
+
+// --- Sign Language Video types ---
+
+export interface SignLanguageVideo {
+  videoId: string
+  sectionId: string | null
+  originalName: string
+  mimeType: string
+  sizeBytes: number
+  createdAt: string
 }
 
 // --- Task types ---
@@ -859,14 +892,20 @@ export const api = {
   getTemplates: () =>
     request<{ templates: string[] }>(`/templates`),
 
-  getPreset: (name: string) =>
-    request<{ config: Record<string, unknown> }>(`/presets/${name}`),
-
   getStyleguides: () =>
     request<{ styleguides: string[] }>(`/styleguides`),
 
   getStyleguidePreview: (name: string) =>
     request<{ name: string; html: string }>(`/styleguides/${name}/preview`),
+
+  uploadStyleguide: (file: File) => {
+    const form = new FormData()
+    form.append("file", file)
+    return request<{ name: string }>(`/styleguides/upload`, {
+      method: "POST",
+      body: form,
+    })
+  },
 
   generateStyleguide: (label: string, pageIds: string[], apiKey: string, signal?: AbortSignal) =>
     request<{ name: string; content: string; reasoning: string }>(
@@ -878,6 +917,34 @@ export const api = {
         signal: signal ?? AbortSignal.timeout(180_000),
       }
     ),
+
+  getSignLanguageVideos: (label: string) =>
+    request<{ videos: SignLanguageVideo[] }>(`/books/${label}/sign-language-videos`),
+
+  uploadSignLanguageVideo: (label: string, file: File) => {
+    const formData = new FormData()
+    formData.append("video", file)
+    return request<{ videoId: string; originalName: string; mimeType: string; sizeBytes: number }>(
+      `/books/${label}/sign-language-videos`,
+      { method: "POST", body: formData }
+    )
+  },
+
+  assignSignLanguageVideo: (label: string, videoId: string, sectionId: string | null) =>
+    request<{ ok: boolean }>(`/books/${label}/sign-language-videos/${videoId}/assign`, {
+      method: "PUT",
+      body: JSON.stringify({ sectionId }),
+    }),
+
+  deleteSignLanguageVideo: (label: string, videoId: string) =>
+    request<{ ok: boolean }>(`/books/${label}/sign-language-videos/${videoId}`, {
+      method: "DELETE",
+    }),
+
+  deleteAllSignLanguageVideos: (label: string) =>
+    request<{ ok: boolean }>(`/books/${label}/sign-language-videos`, {
+      method: "DELETE",
+    }),
 
   getGlobalConfig: () =>
     request<{ config: Record<string, unknown> }>(`/config`),

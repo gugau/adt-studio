@@ -39,9 +39,6 @@ export type BookFormat = z.infer<typeof BookFormat>
 export const LayoutType = z.enum(["textbook", "storybook", "reference", "custom"])
 export type LayoutType = z.infer<typeof LayoutType>
 
-export const PresetName = z.enum(["textbook", "storybook", "reference"])
-export type PresetName = z.infer<typeof PresetName>
-
 export const StyleguideName = z.string().regex(/^[a-zA-Z0-9_-]+$/)
 export type StyleguideName = z.infer<typeof StyleguideName>
 
@@ -127,7 +124,9 @@ export const AppConfig = z
     image_cropping: StepConfig.optional(),
     layout_type: LayoutType.optional(),
     spread_mode: z.boolean().optional(),
+    vector_text_grouping: z.boolean().optional(),
     apply_body_background: z.boolean().optional(),
+    generate_activities: z.boolean().optional(),
     start_page: z.number().int().min(1).optional(),
     end_page: z.number().int().min(1).optional(),
     speech: SpeechConfig.optional(),

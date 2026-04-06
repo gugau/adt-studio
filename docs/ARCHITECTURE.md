@@ -31,7 +31,7 @@ adt-studio/
 │
 ├── prompts/                     # Liquid (.liquid) templates for all LLM calls
 ├── templates/                   # HTML layout templates for rendering steps
-├── config/                      # Runtime configuration presets and voice configs
+├── config/                      # Runtime configuration (voice configs, styleguides)
 ├── docs/                        # Architecture and developer documentation
 ├── config.yaml                  # Global pipeline configuration
 └── docker-compose.yml           # Docker orchestration

@@ -202,7 +202,7 @@ export async function renderPage(
 
 const DEFAULT_RENDER_CONFIG = {
   prompt: "web_generation_html",
-  model: "openai:gpt-5.2",
+  model: "openai:gpt-5.4",
   max_retries: DEFAULT_LLM_MAX_RETRIES,
   timeout: 180,
   temperature: 0.3,
@@ -219,15 +219,24 @@ const DEFAULT_VISUAL_REFINEMENT = {
  * Build a resolver that returns a RenderConfig for a given section type.
  *
  * Resolution order:
- *   1. section_render_strategies[sectionType] → named strategy
- *   2. default_render_strategy → named strategy
+ *   1. section_render_strategies[sectionType] → named strategy in render_strategies
+ *   2. default_render_strategy → named strategy in render_strategies
  *   3. Hard-coded defaults
+ *
+ * When generate_activities is false, activity_* entries are stripped from
+ * section_render_strategies so they fall through to the default strategy
+ * instead of being routed to the activity renderer. Pruning already prevents
+ * activity sections from reaching the renderer; this is an extra safeguard.
  */
 export function buildRenderStrategyResolver(
   appConfig: AppConfig
 ): (sectionType: string) => RenderConfig {
   const strategies = appConfig.render_strategies ?? {}
-  const sectionMapping = appConfig.section_render_strategies ?? {}
+  const rawSectionMapping = appConfig.section_render_strategies ?? {}
+  const sectionMapping =
+    appConfig.generate_activities === false
+      ? Object.fromEntries(Object.entries(rawSectionMapping).filter(([k]) => !k.startsWith("activity_")))
+      : rawSectionMapping
   const defaultName = appConfig.default_render_strategy
 
   return (sectionType: string): RenderConfig => {

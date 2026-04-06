@@ -40,6 +40,7 @@ export function buildGroupSummaries(
 ): Array<{ groupId: string; groupType: string; text: string }> {
   return textClassification.groups
     .map((g) => {
+      if (g.isPruned) return null
       const unprunedTexts = g.texts.filter((t) => !t.isPruned)
       if (unprunedTexts.length === 0) return null
 
@@ -160,7 +161,7 @@ export async function sectionPage(
             text: t.text,
             isPruned: t.isPruned,
           })),
-          isPruned: false,
+          isPruned: group.isPruned,
         }
       }
 
@@ -313,6 +314,16 @@ function validatePageSectioning(
   return { valid: errors.length === 0, errors }
 }
 
+const ACTIVITY_SECTION_TYPES = [
+  "activity_multiple_choice",
+  "activity_true_false",
+  "activity_fill_in_the_blank",
+  "activity_fill_in_a_table",
+  "activity_matching",
+  "activity_sorting",
+  "activity_open_ended_answer",
+]
+
 /**
  * Build SectioningConfig from AppConfig.
  */
@@ -324,11 +335,13 @@ export function buildSectioningConfig(appConfig: AppConfig): SectioningConfig {
     .filter(([key]) => !disabledSet.has(key))
     .map(([key, description]) => ({ key, description }))
 
+  const extraPruned = appConfig.generate_activities === false ? ACTIVITY_SECTION_TYPES : []
+
   return {
     sectionTypes,
-    prunedSectionTypes: appConfig.pruned_section_types ?? [],
+    prunedSectionTypes: [...(appConfig.pruned_section_types ?? []), ...extraPruned],
     promptName: appConfig.page_sectioning?.prompt ?? "page_sectioning",
-    modelId: appConfig.page_sectioning?.model ?? "openai:gpt-5.2",
+    modelId: appConfig.page_sectioning?.model ?? "openai:gpt-5.4",
     maxRetries:
       appConfig.page_sectioning?.max_retries ?? DEFAULT_LLM_MAX_RETRIES,
     mode: appConfig.page_sectioning?.mode ?? "dynamic",

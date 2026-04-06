@@ -23,6 +23,7 @@ const sampleClassification: TextClassificationOutput = {
         { textType: "section_text", text: "Hello world", isPruned: false },
         { textType: "instruction_text", text: "Read this aloud.", isPruned: false },
       ],
+      isPruned: false,
     },
   ],
 }
@@ -71,7 +72,7 @@ describe("translation", () => {
       text_group_types: { paragraph: "Paragraph" },
       editing_language: "fr",
       text_classification: { model: "openai:gpt-4.1-mini" },
-      translation: { prompt: "custom_translation", model: "openai:gpt-5.2" },
+      translation: { prompt: "custom_translation", model: "openai:gpt-5.4" },
     }
 
     const config = buildTranslationConfig(appConfig, "en")
@@ -79,7 +80,7 @@ describe("translation", () => {
       sourceLanguage: "en",
       targetLanguage: "fr",
       promptName: "custom_translation",
-      modelId: "openai:gpt-5.2",
+      modelId: "openai:gpt-5.4",
       maxRetries: 5,
     })
   })
@@ -180,6 +181,7 @@ describe("translation", () => {
           groupId: "pg001_gp001",
           groupType: "paragraph",
           texts: [],
+          isPruned: false,
         },
       ],
     }

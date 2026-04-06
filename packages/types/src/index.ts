@@ -6,6 +6,7 @@ export {
   RenderMethod,
   PageRow,
   ImageRow,
+  SignLanguageVideoRow,
 } from "./db.js"
 
 export {
@@ -18,6 +19,7 @@ export {
   STEP_TO_STAGE,
   STAGE_BY_NAME,
   ALL_STEP_NAMES,
+  PAGE_PROGRESS_STEPS,
 } from "./pipeline.js"
 
 export {
@@ -46,7 +48,6 @@ export { BookLabel, parseBookLabel } from "./book.js"
 export {
   BookFormat,
   LayoutType,
-  PresetName,
   StyleguideName,
   DEFAULT_LLM_MAX_RETRIES,
   StepConfig,
