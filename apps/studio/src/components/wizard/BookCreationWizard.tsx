@@ -166,7 +166,7 @@ function PreviewContainer({
 export function BookCreationWizard() {
   const { t } = useLingui()
   const navigate = useNavigate()
-  const { currentStep, setCurrentStep, previewFocus } = useWizard()
+  const { currentStep, setCurrentStep, stepDirection, previewFocus } = useWizard()
   const form = useWizardForm()
   const createMutation = useCreateBook()
   const { data: books } = useBooks()
@@ -278,8 +278,13 @@ export function BookCreationWizard() {
           <div className="mx-auto flex w-full min-h-0 lg:pr-8 flex-1 flex-col overflow-hidden">
             <WizardHeader step={currentStep} accent={accent} />
 
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              <StepComponent />
+            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+              <div
+                key={currentStep}
+                className={stepDirection === "forward" ? "animate-step-enter-forward" : "animate-step-enter-back"}
+              >
+                <StepComponent />
+              </div>
             </div>
           </div>
 

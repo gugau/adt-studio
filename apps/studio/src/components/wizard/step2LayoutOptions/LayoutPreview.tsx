@@ -2,6 +2,8 @@ import { Sparkles, LayoutTemplate } from "lucide-react"
 import { msg } from "@lingui/core/macro"
 import { Trans, useLingui } from "@lingui/react/macro"
 import type { RenderStrategyId } from "@/components/wizard/constants"
+import { RENDER_STRATEGIES } from "@/components/wizard/constants"
+import { PreviewShell } from "@/components/wizard/shared/PreviewShell"
 
 // ─── Per-strategy preview width ──────────────────────────────────────────────
 
@@ -464,37 +466,39 @@ const STRATEGY_PREVIEWS: Record<RenderStrategyId, React.FC> = {
   two_column_story: TwoColumnStoryPreview,
 }
 
+const RENDER_STRATEGY_LABEL = msg`Render Strategy`
+
 export function LayoutPreview({ strategy }: { strategy: string }) {
+  const { i18n } = useLingui()
   const Preview = STRATEGY_PREVIEWS[strategy as RenderStrategyId]
+  const strategyDef = RENDER_STRATEGIES.find((s) => s.id === strategy)
+  const label = strategyDef ? i18n._(strategyDef.title) : i18n._(RENDER_STRATEGY_LABEL)
+
+  if (Preview) {
+    return (
+      <PreviewShell label={label}>
+        <Preview />
+      </PreviewShell>
+    )
+  }
 
   return (
-    <div className="@container flex h-full min-h-0 w-full flex-col overflow-hidden rounded-md bg-white shadow-[0px_17px_38px_0px_rgba(0,0,0,0.1),0px_69px_69px_0px_rgba(0,0,0,0.09),0px_155px_93px_0px_rgba(0,0,0,0.05)] animate-in fade-in duration-300">
-      {Preview ? (
-        <Preview />
-      ) : (
-        <>
-          <div className="shrink-0 border-b border-border/80 bg-muted/25 px-3 py-2">
-            <p className="text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              <Trans>Render Strategy</Trans>
-            </p>
-          </div>
-          <div className="flex min-h-[280px] flex-1 flex-col items-center justify-center gap-6 px-6 py-8">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-dashed border-border bg-white text-muted-foreground">
-              <LayoutTemplate className="h-7 w-7" />
-            </div>
-            <div className="max-w-[280px] text-center">
-              <p className="text-base font-semibold text-foreground">
-                <Trans>Render Strategy</Trans>
-              </p>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                <Trans>
-                  Select a render strategy to preview how your book pages will be laid out.
-                </Trans>
-              </p>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
+    <PreviewShell label={label}>
+      <div className="flex min-h-[280px] flex-1 flex-col items-center justify-center gap-6 px-6 py-8">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-dashed border-border bg-white text-muted-foreground">
+          <LayoutTemplate className="h-7 w-7" />
+        </div>
+        <div className="max-w-[280px] text-center">
+          <p className="text-base font-semibold text-foreground">
+            <Trans>Render Strategy</Trans>
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            <Trans>
+              Select a render strategy to preview how your book pages will be laid out.
+            </Trans>
+          </p>
+        </div>
+      </div>
+    </PreviewShell>
   )
 }

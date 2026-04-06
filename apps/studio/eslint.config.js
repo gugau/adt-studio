@@ -16,8 +16,8 @@ export default [
         {
           ignoreNames: [
             // --- HTML / JSX structural attributes ---
-            "className",
-            "headerClass",
+            // Any prop/identifier containing "className" (e.g. className, bodyClassName, headerClassName)
+            { regex: { pattern: "className", flags: "i" } },
             "style",
             "id",
             "type",

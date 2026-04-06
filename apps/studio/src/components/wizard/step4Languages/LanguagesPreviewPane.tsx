@@ -5,6 +5,7 @@ import { useLingui } from "@lingui/react/macro"
 import { ArrowRight, PenLine, Globe } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getDisplayName } from "@/lib/languages"
+import { PreviewShell } from "@/components/wizard/shared/PreviewShell"
 
 const HEADER_LABEL = msg`Languages`
 const WHILE_EDITING_LABEL = msg`While editing`
@@ -78,17 +79,17 @@ function MockLines() {
 function MockCard({
   icon,
   role,
-  headerClass,
+  headerClassName,
   children,
 }: {
   icon: ReactNode
   role: string
-  headerClass: string
+  headerClassName: string
   children: ReactNode
 }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-white shadow-sm">
-      <div className={cn("flex items-center gap-1.5 px-3 py-2", headerClass)}>
+      <div className={cn("flex items-center gap-1.5 px-3 py-2", headerClassName)}>
         {icon}
         <span className="text-[10px] font-semibold uppercase tracking-wide">{role}</span>
       </div>
@@ -142,19 +143,13 @@ export function LanguagesPreviewPane({
   const originalLanguageLabel = i18n._(ORIGINAL_LANGUAGE_LABEL)
 
   return (
-    <div className="@container flex h-full min-h-0 w-full flex-col overflow-hidden rounded-md bg-white shadow-[0px_17px_38px_0px_rgba(0,0,0,0.1),0px_69px_69px_0px_rgba(0,0,0,0.09),0px_155px_93px_0px_rgba(0,0,0,0.05)]">
-      <div className="shrink-0 border-b border-border/80 bg-muted/25 px-3 py-2">
-        <p className="text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-          {i18n._(HEADER_LABEL)}
-        </p>
-      </div>
-      <div className="min-h-0 flex-1 overflow-auto bg-[#fafafa]">
+    <PreviewShell label={i18n._(HEADER_LABEL)}>
         <div className="flex h-full min-h-[280px] flex-col items-center justify-center gap-5 px-5 py-8">
           <div className="flex w-full items-stretch gap-2">
             <MockCard
               icon={<PenLine className="h-3 w-3 text-sky-500" />}
               role={i18n._(WHILE_EDITING_LABEL)}
-              headerClass="bg-sky-50 text-sky-700 border-b border-sky-100"
+              headerClassName="bg-sky-50 text-sky-700 border-b border-sky-100"
             >
               {hasEditing ? (
                 <LanguageChip key={editingLanguage} code={editingLanguage} variant="primary" />
@@ -171,7 +166,7 @@ export function LanguagesPreviewPane({
             <MockCard
               icon={<Globe className="h-3 w-3 text-emerald-500" />}
               role={i18n._(READERS_SEE_LABEL)}
-              headerClass="bg-emerald-50 text-emerald-700 border-b border-emerald-100"
+              headerClassName="bg-emerald-50 text-emerald-700 border-b border-emerald-100"
             >
               {hasOutput ? (
                 <div className="flex flex-wrap justify-center gap-1">
@@ -194,7 +189,6 @@ export function LanguagesPreviewPane({
             outputLanguages={outputLanguages}
           />
         </div>
-      </div>
-    </div>
+    </PreviewShell>
   )
 }

@@ -1,35 +1,11 @@
-import type { MessageDescriptor } from "@lingui/core"
 import { msg } from "@lingui/core/macro"
 import { Trans, useLingui } from "@lingui/react/macro"
-import type { ReactNode } from "react"
 import { Palette } from "lucide-react"
 import { useStyleguidePreview } from "@/hooks/use-presets"
+import { PreviewShell } from "@/components/wizard/shared/PreviewShell"
 
 const PREVIEW_HEADER = msg`Style guide`
 const IFRAME_TITLE = msg`Styleguide Preview`
-
-function PreviewShell({
-  labelMsg,
-  labelOverride,
-  children,
-}: {
-  labelMsg: MessageDescriptor
-  labelOverride?: string
-  children: ReactNode
-}) {
-  const { i18n } = useLingui()
-
-  return (
-    <div className="@container flex h-full min-h-0 w-full flex-col overflow-hidden rounded-md bg-white shadow-[0px_17px_38px_0px_rgba(0,0,0,0.1),0px_69px_69px_0px_rgba(0,0,0,0.09),0px_155px_93px_0px_rgba(0,0,0,0.05)]">
-      <div className="shrink-0 border-b border-border/80 bg-muted/25 px-3 py-2">
-        <p className="text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-          {labelOverride ?? i18n._(labelMsg)}
-        </p>
-      </div>
-      <div className="min-h-0 flex-1 overflow-auto bg-[#fafafa]">{children}</div>
-    </div>
-  )
-}
 
 function IdleIllustration() {
   return (
@@ -61,17 +37,18 @@ export function StyleguidePreviewPane({
   const { data: previewData, isLoading } = useStyleguidePreview(
     styleguide || null,
   )
+  const label = styleguide || i18n._(PREVIEW_HEADER)
 
   if (!styleguide) {
     return (
-      <PreviewShell labelMsg={PREVIEW_HEADER}>
+      <PreviewShell label={label}>
         <IdleIllustration />
       </PreviewShell>
     )
   }
 
   return (
-    <PreviewShell labelMsg={PREVIEW_HEADER} labelOverride={styleguide}>
+    <PreviewShell label={label}>
       {isLoading ? (
         <div className="flex h-full min-h-[280px] items-center justify-center text-sm text-muted-foreground">
           <Trans>Loading preview...</Trans>
