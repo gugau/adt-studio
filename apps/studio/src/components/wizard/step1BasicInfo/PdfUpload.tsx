@@ -4,6 +4,7 @@ import { Upload, Trash2, XCircle } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
 import { Button } from "@/components/ui/button"
 import { useWizardForm } from "@/components/wizard/wizardForm"
+import { useBooks } from "@/hooks/use-books"
 import { getPdfJs } from "@/components/wizard/shared/pdfjsLoader"
 import { cn } from "@/lib/utils"
 
@@ -43,10 +44,19 @@ export function suggestLabel(file: File) {
     .slice(0, 64)
 }
 
+function suggestUniqueLabel(file: File, existingLabels: string[]): string {
+  const base = suggestLabel(file)
+  if (!existingLabels.includes(base)) return base
+  let i = 2
+  while (existingLabels.includes(`${base}-${i}`)) i++
+  return `${base}-${i}`
+}
+
 const pdfCache = { file: null as File | null, totalPages: 0 }
 
 export function usePdfUpload() {
   const form = useWizardForm()
+  const { data: books } = useBooks()
   const file = useStore(form.store, (s) => s.values.file)
   const [totalPages, setTotalPages] = useState(pdfCache.file === file ? pdfCache.totalPages : 0)
 
@@ -91,10 +101,11 @@ export function usePdfUpload() {
 
   const setFile = useCallback(
     (f: File) => {
+      const existingLabels = books?.map((b: { label: string }) => b.label) ?? []
       form.setFieldValue("file", f)
-      form.setFieldValue("label", suggestLabel(f))
+      form.setFieldValue("label", suggestUniqueLabel(f, existingLabels))
     },
-    [form],
+    [form, books],
   )
 
   const clearFile = useCallback(() => {
