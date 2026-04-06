@@ -3,7 +3,11 @@ import { createPortal } from "react-dom"
 import { Link, useMatchRoute, useSearch } from "@tanstack/react-router"
 import { Trans } from "@lingui/react/macro"
 import {
+  ChevronDown,
+  ChevronRight,
+  Info,
   Loader2,
+  Puzzle,
   RotateCcw,
   Settings,
 } from "lucide-react"
@@ -20,6 +24,9 @@ import { StepProgressRing } from "./StepProgressRing"
 import { usePages, usePageImage } from "@/hooks/use-pages"
 import {
   STAGES,
+  CORE_STAGE_SLUGS,
+  LEARNING_TOOL_SLUGS,
+  PACKAGING_SLUGS,
   hasStagePages,
   toCamelLabel,
 } from "../stage-config"
@@ -161,7 +168,27 @@ export function StageSidebar({
   const storyboardDone = stageState("storyboard") === "done"
   const validationCompleted = Boolean(accessibilityAssessment?.assessment)
 
-  const stageItems = STAGES.map((step, index) => {
+  // Learning Tools collapse state — persisted in localStorage
+  const [learningToolsOpen, setLearningToolsOpen] = useState(() => {
+    try { return localStorage.getItem("adt:learning-tools-open") !== "false" } catch { return true }
+  })
+  const toggleLearningTools = useCallback(() => {
+    setLearningToolsOpen((prev) => {
+      const next = !prev
+      try { localStorage.setItem("adt:learning-tools-open", String(next)) } catch { /* noop */ }
+      return next
+    })
+  }, [])
+
+  // If the active step is a learning tool, force the section open
+  const effectiveLearningToolsOpen = learningToolsOpen || LEARNING_TOOL_SLUGS.has(activeStep as any)
+
+  // Split stages into sections
+  const coreStages = STAGES.filter((s) => CORE_STAGE_SLUGS.has(s.slug as any))
+  const learningToolStages = STAGES.filter((s) => LEARNING_TOOL_SLUGS.has(s.slug as any))
+  const packagingStages = STAGES.filter((s) => PACKAGING_SLUGS.has(s.slug as any))
+
+  function renderStageItem(step: (typeof STAGES)[number], showConnector: boolean) {
     const isActive = step.slug === activeStep
     const Icon = step.icon
     const settingsTabs = getSettingsTabs(step.slug, i18n)
@@ -184,7 +211,7 @@ export function StageSidebar({
     return (
       <div key={step.slug} className="relative">
         {/* Connector line */}
-        {index < STAGES.length - 1 && (
+        {showConnector && (
           <div className="absolute left-[24px] top-[36px] bottom-[-10px] w-0.5 bg-border z-10" />
         )}
 
@@ -301,7 +328,7 @@ export function StageSidebar({
         )}
       </div>
     )
-  })
+  }
 
   return (
     <nav className="flex flex-col flex-1 min-h-0">
@@ -317,8 +344,55 @@ export function StageSidebar({
               ? "w-12 group-hover/rail:w-[220px] z-20 transition-[width] duration-150 delay-150 group-hover/rail:delay-100 group-hover/rail:shadow-lg"
               : "inset-x-0"
           )}>
-            <div className="flex flex-col pt-1.5 pb-2 gap-0.5 flex-1 overflow-y-auto overflow-x-hidden">
-              {stageItems}
+            <div className="flex flex-col pt-1.5 pb-2 flex-1 overflow-y-auto overflow-x-hidden">
+              {/* Core stages */}
+              <div className="flex flex-col gap-0.5">
+                {coreStages.map((step, i) => renderStageItem(step, i < coreStages.length - 1))}
+              </div>
+
+              {/* Learning Tools section */}
+              <div className="mt-3 pt-2 border-t border-border/50">
+                <button
+                  type="button"
+                  onClick={toggleLearningTools}
+                  className={cn(
+                    "flex items-center gap-2 w-full px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors",
+                    "text-muted-foreground/70 hover:text-muted-foreground"
+                  )}
+                >
+                  <Puzzle className="w-3.5 h-3.5 shrink-0" />
+                  <span className={cn("truncate hidden", x.showLabel)}>
+                    <Trans>Learning Tools</Trans>
+                  </span>
+                  <LearningToolsInfo i18n={i18n} showLabel={x.showLabel} />
+                  <span className={cn("ml-auto hidden", x.showLabel)}>
+                    {effectiveLearningToolsOpen
+                      ? <ChevronDown className="w-3.5 h-3.5" />
+                      : <ChevronRight className="w-3.5 h-3.5" />
+                    }
+                  </span>
+                </button>
+                {effectiveLearningToolsOpen && (
+                  <div className="flex flex-col gap-0.5 mt-0.5">
+                    {learningToolStages.map((step, i) => renderStageItem(step, i < learningToolStages.length - 1))}
+                  </div>
+                )}
+              </div>
+
+              {/* Packaging section */}
+              <div className="mt-3 pt-2 border-t border-border/50">
+                <div className={cn(
+                  "flex items-center gap-2 px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wider",
+                  "text-muted-foreground/70"
+                )}>
+                  <span className={cn("truncate hidden", x.showLabel)}>
+                    <Trans>Packaging</Trans>
+                  </span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  {packagingStages.map((step, i) => renderStageItem(step, i < packagingStages.length - 1))}
+                </div>
+              </div>
             </div>
             {/* Task indicator */}
             <TaskIndicator bookLabel={bookLabel} />
@@ -344,6 +418,48 @@ export function StageSidebar({
       </div>
 
     </nav>
+  )
+}
+
+/* ---------- LearningToolsInfo ---------- */
+
+function LearningToolsInfo({ i18n, showLabel }: { i18n: ReturnType<typeof useLingui>["i18n"]; showLabel: string }) {
+  const [show, setShow] = useState(false)
+  const [pos, setPos] = useState({ top: 0, left: 0 })
+  const iconRef = useRef<HTMLSpanElement>(null)
+
+  const handleEnter = useCallback(() => {
+    if (!iconRef.current) return
+    const rect = iconRef.current.getBoundingClientRect()
+    setPos({ top: rect.bottom + 6, left: rect.left + rect.width / 2 })
+    setShow(true)
+  }, [])
+
+  const handleLeave = useCallback(() => setShow(false), [])
+
+  return (
+    <>
+      <span
+        ref={iconRef}
+        className={cn("hidden text-muted-foreground/50 hover:text-muted-foreground", showLabel)}
+        onMouseEnter={handleEnter}
+        onMouseLeave={handleLeave}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Info className="w-3 h-3" />
+      </span>
+      {show && createPortal(
+        <div
+          className="fixed z-50 -translate-x-1/2 w-48 px-2.5 py-1.5 rounded-md bg-popover text-popover-foreground text-[10px] leading-snug font-normal normal-case tracking-normal shadow-md ring-1 ring-border animate-in fade-in duration-75"
+          style={{ top: pos.top, left: pos.left }}
+          onMouseEnter={handleEnter}
+          onMouseLeave={handleLeave}
+        >
+          {i18n._(msg`Optional learning tools that can be added to the book. Please complete the Storyboard stage before adding learning tools.`)}
+        </div>,
+        document.body,
+      )}
+    </>
   )
 }
 

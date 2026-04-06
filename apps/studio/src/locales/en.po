@@ -1716,6 +1716,9 @@ msgstr "Languages"
 msgid "Last"
 msgstr "Last"
 
+msgid "Learning Tools"
+msgstr "Learning Tools"
+
 msgid "Leave empty if not required"
 msgstr "Leave empty if not required"
 
@@ -2219,6 +2222,9 @@ msgstr "OpenAI Voice"
 
 msgid "Optional instructions for the LLM..."
 msgstr "Optional instructions for the LLM..."
+
+msgid "Optional learning tools that can be added to the book. Please complete the Storyboard stage before adding learning tools."
+msgstr "Optional learning tools that can be added to the book. Please complete the Storyboard stage before adding learning tools."
 
 msgid "Optional notes about the review scope or assignments"
 msgstr "Optional notes about the review scope or assignments"

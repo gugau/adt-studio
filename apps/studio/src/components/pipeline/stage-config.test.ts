@@ -16,11 +16,11 @@ describe("stage-config", () => {
     expect(pipelineSlugs).toEqual([
       "extract",
       "storyboard",
-      "quizzes",
       "captions",
+      "quizzes",
       "glossary",
-      "toc",
       "text-and-speech",
+      "toc",
       "preview",
     ])
   })
@@ -30,12 +30,12 @@ describe("stage-config", () => {
     expect(overviewSlugs).toEqual([
       "extract",
       "storyboard",
-      "quizzes",
       "captions",
+      "quizzes",
       "glossary",
-      "toc",
       "text-and-speech",
       "sign-language",
+      "toc",
       "validation",
       "preview",
       "export",
