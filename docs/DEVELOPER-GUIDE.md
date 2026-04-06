@@ -271,7 +271,7 @@ render_strategies:
     render_type: llm
     config:
       prompt: web_generation_html
-      model: openai:gpt-5.2
+      model: openai:gpt-5.4
       visual_refinement:
         enabled: true
         prompt: visual_review
@@ -343,6 +343,10 @@ pnpm test             # Run all Vitest tests
 pnpm test:watch       # Tests in watch mode
 pnpm lint             # ESLint across all packages
 pnpm build            # Full production build
+pnpm a11y:regression  # Curated packaged-output accessibility regression (markdown)
+pnpm a11y:regression:json  # Same regression as machine-readable JSON
+pnpm a11y:browser-recheck  # Playwright recheck for manual-review items + contrast
+pnpm a11y:browser-recheck:json  # Same browser recheck as machine-readable JSON
 ```
 
 **Desktop app** (optional — requires [Rust](https://rustup.rs/)):

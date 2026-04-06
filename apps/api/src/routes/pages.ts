@@ -7,6 +7,7 @@ import { HTTPException } from "hono/http-exception"
 import { parseBookLabel, TextClassificationOutput, ImageClassificationOutput, PageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES } from "@adt/types"
 import { openBookDb } from "@adt/storage"
 import { createBookStorage } from "@adt/storage"
+import type { Storage } from "@adt/storage"
 import { reRenderPage, aiEditSection } from "../services/page-edit-service.js"
 import type { TaskService } from "../services/task-service.js"
 import { segmentPageImages, getSegmentedImageId, loadBookConfig, applyCrop, generateStyleguide, buildStyleguideGenerationConfig } from "@adt/pipeline"
@@ -22,6 +23,7 @@ interface PageSummary {
   wordCount: number
   sectionCount: number
   prunedSections: number[]
+  sections: Array<{ sectionId: string; sectionIndex: number }>
 }
 
 interface PageDetail {
@@ -30,12 +32,14 @@ interface PageDetail {
   text: string
   textClassification: unknown | null
   imageClassification: unknown | null
+  imageCropping: unknown | null
   sectioning: unknown | null
   rendering: unknown | null
   imageCaptioning: unknown | null
   versions: {
     textClassification: number | null
     imageClassification: number | null
+    imageCropping: number | null
     sectioning: number | null
     rendering: number | null
     imageCaptioning: number | null
@@ -267,7 +271,7 @@ async function executeAiImageGeneration(params: AiImageGenParams): Promise<{
                     sectioning.sections[si].parts.push({ type: "image", imageId: newImageId, isPruned: false })
                   }
                 }
-                storage.putNodeData("page-sectioning", pageId, sectioning)
+                saveStoryboardNode(storage, "page-sectioning", pageId, sectioning)
               }
             }
           }
@@ -305,7 +309,7 @@ async function executeAiImageGeneration(params: AiImageGenParams): Promise<{
                 }
                 return { ...s, html }
               })
-              storage.putNodeData("web-rendering", pageId, rendering)
+              saveStoryboardNode(storage, "web-rendering", pageId, rendering)
             }
           }
         } finally {
@@ -321,6 +325,27 @@ async function executeAiImageGeneration(params: AiImageGenParams): Promise<{
   } finally {
     db.close()
   }
+}
+
+/** Clear caption + downstream text-and-speech data when images change. */
+function clearCaptionData(storage: Storage): void {
+  storage.clearNodesByType(["image-captioning", "text-catalog", "text-catalog-translation", "tts"])
+  storage.clearStepRuns(["image-captioning", "text-catalog", "catalog-translation", "tts"])
+}
+
+/**
+ * Save storyboard node data and clear stale downstream data.
+ * Use for all user-initiated storyboard saves (NOT pipeline stage runs).
+ */
+function saveStoryboardNode(
+  storage: Storage,
+  node: "page-sectioning" | "web-rendering",
+  itemId: string,
+  data: unknown
+): number {
+  const version = storage.putNodeData(node, itemId, data)
+  clearCaptionData(storage)
+  return version
 }
 
 export function createPageRoutes(
@@ -390,9 +415,10 @@ export function createPageRoutes(
         }
       }
 
-      // Get section counts and pruned indices per page from page-sectioning node data
+      // Get section counts, pruned indices, and sectionIds per page from page-sectioning node data
       const sectionCounts = new Map<string, number>()
       const prunedSections = new Map<string, number[]>()
+      const sectionIdsByPage = new Map<string, Array<{ sectionId: string; sectionIndex: number }>>()
       const sectionRows = db.all(
         "SELECT item_id, data FROM node_data WHERE node = ? ORDER BY version DESC",
         ["page-sectioning"]
@@ -401,13 +427,19 @@ export function createPageRoutes(
         if (!sectionCounts.has(row.item_id)) {
           try {
             const parsed = JSON.parse(row.data)
-            const sections = parsed.sections as Array<{ isPruned?: boolean }>
+            const sections = parsed.sections as Array<{ sectionId?: string; isPruned?: boolean }>
             sectionCounts.set(row.item_id, sections?.length ?? 0)
             const pruned = (sections ?? []).reduce<number[]>((acc, s, i) => {
               if (s.isPruned) acc.push(i)
               return acc
             }, [])
             if (pruned.length > 0) prunedSections.set(row.item_id, pruned)
+            // Collect non-pruned sectionIds for video assignment
+            const sectionIds = (sections ?? [])
+              .map((s, i) => ({ sectionId: s.sectionId ?? `${row.item_id}_sec${String(i + 1).padStart(3, "0")}`, sectionIndex: i, isPruned: s.isPruned }))
+              .filter((s) => !s.isPruned)
+              .map(({ sectionId, sectionIndex }) => ({ sectionId, sectionIndex }))
+            sectionIdsByPage.set(row.item_id, sectionIds)
           } catch {
             sectionCounts.set(row.item_id, 0)
           }
@@ -447,6 +479,7 @@ export function createPageRoutes(
         wordCount: p.text.trim() ? p.text.trim().split(/\s+/).length : 0,
         sectionCount: sectionCounts.get(p.page_id) ?? 0,
         prunedSections: prunedSections.get(p.page_id) ?? [],
+        sections: sectionIdsByPage.get(p.page_id) ?? [],
       }))
 
       return c.json(result)
@@ -495,6 +528,7 @@ export function createPageRoutes(
 
       const textClassNode = getNodeData("text-classification")
       const imageClassNode = getNodeData("image-filtering")
+      const imageCroppingNode = getNodeData("image-cropping")
       const sectioningNode = getNodeData("page-sectioning")
       const renderingNode = getNodeData("web-rendering")
       const imageCaptioningNode = getNodeData("image-captioning")
@@ -505,12 +539,14 @@ export function createPageRoutes(
         text: page.text,
         textClassification: textClassNode?.data ?? null,
         imageClassification: imageClassNode?.data ?? null,
+        imageCropping: imageCroppingNode?.data ?? null,
         sectioning: sectioningNode?.data ?? null,
         rendering: renderingNode?.data ?? null,
         imageCaptioning: imageCaptioningNode?.data ?? null,
         versions: {
           textClassification: textClassNode?.version ?? null,
           imageClassification: imageClassNode?.version ?? null,
+          imageCropping: imageCroppingNode?.version ?? null,
           sectioning: sectioningNode?.version ?? null,
           rendering: renderingNode?.version ?? null,
           imageCaptioning: imageCaptioningNode?.version ?? null,
@@ -642,7 +678,7 @@ export function createPageRoutes(
         throw new HTTPException(404, { message: `Page not found: ${pageId}` })
       }
 
-      const version = storage.putNodeData("page-sectioning", pageId, parsed.data)
+      const version = saveStoryboardNode(storage, "page-sectioning", pageId, parsed.data)
       return c.json({ version })
     } finally {
       storage.close()
@@ -670,7 +706,7 @@ export function createPageRoutes(
         throw new HTTPException(404, { message: `Page not found: ${pageId}` })
       }
 
-      const version = storage.putNodeData("web-rendering", pageId, parsed.data)
+      const version = saveStoryboardNode(storage, "web-rendering", pageId, parsed.data)
       return c.json({ version })
     } finally {
       storage.close()
@@ -699,6 +735,9 @@ export function createPageRoutes(
       }
 
       const version = storage.putNodeData("image-captioning", pageId, parsed.data)
+      // Caption change cascades to text-catalog/translations/TTS
+      storage.clearNodesByType(["text-catalog", "text-catalog-translation", "tts"])
+      storage.clearStepRuns(["text-catalog", "catalog-translation", "tts"])
       return c.json({ version })
     } finally {
       storage.close()
@@ -866,7 +905,7 @@ export function createPageRoutes(
                   s.sectionIndex === idx ? { ...s, html: result.html } : s
                 ),
               }
-              storage.putNodeData("web-rendering", pageId, updated)
+              saveStoryboardNode(storage, "web-rendering", pageId, updated)
             }
           } finally {
             storage.close()
@@ -989,9 +1028,9 @@ export function createPageRoutes(
         }
         updatedRendering = { sections: shifted }
       }
-      const sectioningVersion = storage.putNodeData("page-sectioning", pageId, updatedSectioning)
+      const sectioningVersion = saveStoryboardNode(storage, "page-sectioning", pageId, updatedSectioning)
       if (updatedRendering) {
-        renderingVersion = storage.putNodeData("web-rendering", pageId, updatedRendering)
+        renderingVersion = saveStoryboardNode(storage, "web-rendering", pageId, updatedRendering)
       }
 
       return c.json({
@@ -1129,15 +1168,155 @@ export function createPageRoutes(
         updatedRendering = { sections: shifted }
       }
 
-      const sectioningVersion = storage.putNodeData("page-sectioning", pageId, updatedSectioning)
+      const sectioningVersion = saveStoryboardNode(storage, "page-sectioning", pageId, updatedSectioning)
       if (updatedRendering) {
-        renderingVersion = storage.putNodeData("web-rendering", pageId, updatedRendering)
+        renderingVersion = saveStoryboardNode(storage, "web-rendering", pageId, updatedRendering)
       }
 
       return c.json({
         mergedSectionIndex: keepIdx,
         sectioningVersion,
         renderingVersion,
+      })
+    } finally {
+      storage.close()
+    }
+  })
+
+  // POST /books/:label/pages/:pageId/sections/:sectionIndex/merge-cross-page — Merge a section into an adjacent page
+  app.post("/books/:label/pages/:pageId/sections/:sectionIndex/merge-cross-page", async (c) => {
+    const MergeCrossPageParams = z.object({
+      label: z.string().min(1),
+      pageId: z.string().min(1),
+      sectionIndex: z.coerce.number().int().min(0),
+    })
+    const parsedParams = MergeCrossPageParams.safeParse(c.req.param())
+    if (!parsedParams.success) {
+      throw new HTTPException(400, {
+        message: `Invalid route params: ${parsedParams.error.issues.map((i) => i.message).join(", ")}`,
+      })
+    }
+    const { label, pageId, sectionIndex: idx } = parsedParams.data
+    const safeLabel = parseBookLabel(label)
+
+    const MergeCrossPageQuery = z.object({
+      direction: z.enum(["next", "prev"]).default("next"),
+    })
+    const parsedQuery = MergeCrossPageQuery.safeParse({ direction: c.req.query("direction") })
+    if (!parsedQuery.success) {
+      throw new HTTPException(400, {
+        message: `Invalid query params: ${parsedQuery.error.issues.map((i) => i.message).join(", ")}`,
+      })
+    }
+    const { direction } = parsedQuery.data
+
+    const storage = createBookStorage(safeLabel, booksDir)
+    try {
+      const pages = storage.getPages()
+      const pageIndex = pages.findIndex((p) => p.pageId === pageId)
+      if (pageIndex === -1) {
+        throw new HTTPException(404, { message: `Page not found: ${pageId}` })
+      }
+
+      // Determine the target page
+      const targetPageIndex = direction === "next" ? pageIndex + 1 : pageIndex - 1
+      if (targetPageIndex < 0 || targetPageIndex >= pages.length) {
+        throw new HTTPException(400, { message: `No ${direction === "next" ? "next" : "previous"} page to merge into` })
+      }
+      const targetPageId = pages[targetPageIndex].pageId
+
+      // Load source sectioning
+      const srcRow = storage.getLatestNodeData("page-sectioning", pageId)
+      if (!srcRow) {
+        throw new HTTPException(400, { message: "Source page has no sectioning data" })
+      }
+      const srcParsed = PageSectioningOutput.safeParse(srcRow.data)
+      if (!srcParsed.success) {
+        throw new HTTPException(400, { message: "Invalid source page-sectioning data" })
+      }
+      const srcSectioning = srcParsed.data
+
+      if (idx >= srcSectioning.sections.length) {
+        throw new HTTPException(400, { message: `Section index ${idx} out of range (page has ${srcSectioning.sections.length} sections)` })
+      }
+      const movedSection = srcSectioning.sections[idx]
+
+      // Load target sectioning
+      const tgtRow = storage.getLatestNodeData("page-sectioning", targetPageId)
+      if (!tgtRow) {
+        throw new HTTPException(400, { message: "Target page has no sectioning data" })
+      }
+      const tgtParsed = PageSectioningOutput.safeParse(tgtRow.data)
+      if (!tgtParsed.success) {
+        throw new HTTPException(400, { message: "Invalid target page-sectioning data" })
+      }
+      const tgtSectioning = tgtParsed.data
+
+      if (tgtSectioning.sections.length === 0) {
+        throw new HTTPException(400, { message: "Target page has no sections to merge into" })
+      }
+
+      // Merge into the adjacent section on the target page:
+      // "next" → prepend parts into first section of next page
+      // "prev" → append parts into last section of previous page
+      const tgtIdx = direction === "next" ? 0 : tgtSectioning.sections.length - 1
+      const newTgtSections = [...tgtSectioning.sections]
+      if (direction === "next") {
+        newTgtSections[tgtIdx] = {
+          ...newTgtSections[tgtIdx],
+          parts: [...movedSection.parts, ...newTgtSections[tgtIdx].parts],
+        }
+      } else {
+        newTgtSections[tgtIdx] = {
+          ...newTgtSections[tgtIdx],
+          parts: [...newTgtSections[tgtIdx].parts, ...movedSection.parts],
+        }
+      }
+
+      // Remove from source
+      const newSrcSections = [...srcSectioning.sections]
+      newSrcSections.splice(idx, 1)
+
+      // Renumber source sections
+      for (let i = 0; i < newSrcSections.length; i++) {
+        newSrcSections[i].sectionId = `${pageId}_sec${String(i + 1).padStart(3, "0")}`
+      }
+
+      // Renumber target sections (IDs stay with target page prefix)
+      for (let i = 0; i < newTgtSections.length; i++) {
+        newTgtSections[i].sectionId = `${targetPageId}_sec${String(i + 1).padStart(3, "0")}`
+      }
+
+      // Save updated sectionings
+      const srcVersion = saveStoryboardNode(storage, "page-sectioning", pageId, {
+        ...srcSectioning,
+        sections: newSrcSections,
+      })
+      const tgtVersion = saveStoryboardNode(storage, "page-sectioning", targetPageId, {
+        ...tgtSectioning,
+        sections: newTgtSections,
+      })
+
+      // Clear rendering for both pages (merged content invalidates existing renders)
+      let srcRenderVersion: number | null = null
+      let tgtRenderVersion: number | null = null
+      const srcRenderRow = storage.getLatestNodeData("web-rendering", pageId)
+      if (srcRenderRow) {
+        srcRenderVersion = saveStoryboardNode(storage, "web-rendering", pageId, { sections: [] })
+      }
+      const tgtRenderRow = storage.getLatestNodeData("web-rendering", targetPageId)
+      if (tgtRenderRow) {
+        tgtRenderVersion = saveStoryboardNode(storage, "web-rendering", targetPageId, { sections: [] })
+      }
+
+      return c.json({
+        sourcePageId: pageId,
+        targetPageId,
+        targetSectionIndex: tgtIdx,
+        sourceSectioningVersion: srcVersion,
+        targetSectioningVersion: tgtVersion,
+        sourceRenderingVersion: srcRenderVersion,
+        targetRenderingVersion: tgtRenderVersion,
       })
     } finally {
       storage.close()
@@ -1236,9 +1415,9 @@ export function createPageRoutes(
         updatedRendering = { sections: shifted }
       }
 
-      const sectioningVersion = storage.putNodeData("page-sectioning", pageId, updatedSectioning)
+      const sectioningVersion = saveStoryboardNode(storage, "page-sectioning", pageId, updatedSectioning)
       if (updatedRendering) {
-        renderingVersion = storage.putNodeData("web-rendering", pageId, updatedRendering)
+        renderingVersion = saveStoryboardNode(storage, "web-rendering", pageId, updatedRendering)
       }
 
       return c.json({
@@ -1430,6 +1609,14 @@ export function createPageRoutes(
         [newImageId, pageId, `images/${filename}`, hash, width, height, "crop"]
       )
 
+      // Clear caption data since the image content changed
+      const storage = createBookStorage(safeLabel, booksDir)
+      try {
+        clearCaptionData(storage)
+      } finally {
+        storage.close()
+      }
+
       return c.json({ imageId: newImageId, width, height })
     } finally {
       db.close()
@@ -1508,6 +1695,14 @@ export function createPageRoutes(
         [newImageId, pageId, `images/${filename}`, hash, width, height]
       )
 
+      // Clear caption data since a new image was added
+      const storage = createBookStorage(safeLabel, booksDir)
+      try {
+        clearCaptionData(storage)
+      } finally {
+        storage.close()
+      }
+
       return c.json({ imageId: newImageId, width, height })
     } finally {
       db.close()
@@ -1544,7 +1739,7 @@ export function createPageRoutes(
 
       // Build segmentation config — always use default model for manual segmentation
       const config = loadBookConfig(safeLabel, booksDir, configPath)
-      const modelId = config.image_segmentation?.model || "openai:gpt-5.2"
+      const modelId = config.image_segmentation?.model || "openai:gpt-5.4"
       const promptName = config.image_segmentation?.prompt ?? "image_segmentation"
       const maxRetries =
         config.image_segmentation?.max_retries ?? DEFAULT_LLM_MAX_RETRIES
@@ -1674,6 +1869,7 @@ export function createPageRoutes(
         })
       }
 
+      clearCaptionData(storage)
       return c.json({ segments })
     } catch (err) {
       console.error(`[segment/apply] Error applying segmentation for ${imageId}:`, err)

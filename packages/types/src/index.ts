@@ -1,8 +1,12 @@
 export {
   SCHEMA_VERSION,
   ImageSource,
+  RenderMethodEnum,
+  type RenderMethodValue,
+  RenderMethod,
   PageRow,
   ImageRow,
+  SignLanguageVideoRow,
 } from "./db.js"
 
 export {
@@ -15,6 +19,7 @@ export {
   STEP_TO_STAGE,
   STAGE_BY_NAME,
   ALL_STEP_NAMES,
+  PAGE_PROGRESS_STEPS,
 } from "./pipeline.js"
 
 export {
@@ -52,6 +57,7 @@ export {
   RenderType,
   VisualRefinementStrategyConfig,
   RenderStrategyConfig,
+  AccessibilityAssessmentConfig,
   AppConfig,
   type TypeDef,
 } from "./config.js"
@@ -148,3 +154,32 @@ export {
   TocGenerationOutput,
   tocLLMSchema,
 } from "./toc.js"
+
+export {
+  AccessibilityNodeResult,
+  AccessibilityFinding,
+  AccessibilityPageResult,
+  BrowserAccessibilityPageResult,
+  AccessibilityAssessmentSummary,
+  BrowserAccessibilityAssessmentSummary,
+  AccessibilityAssessmentOutput,
+  BrowserAccessibilityAssessmentOutput,
+} from "./accessibility.js"
+
+export {
+  ReviewerValidationConfig,
+  type ReviewerValidationCatalog,
+} from "./reviewer-validation-config.js"
+
+export {
+  ReviewerValidationStatus,
+  ReviewerValidationFieldType,
+  ReviewerValidationIdentificationField,
+  ReviewerValidationInstruction,
+  ReviewerValidationCriterion,
+  ReviewerValidationSection,
+  ReviewerValidationCatalogSnapshot,
+  ReviewerValidationSession,
+  ReviewerPageValidationResult,
+  ReviewerPageValidationRecord,
+} from "./reviewer-validation.js"

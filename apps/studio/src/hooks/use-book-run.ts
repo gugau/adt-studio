@@ -1,15 +1,20 @@
 import { useEffect, useCallback, useRef, createContext, useContext, useState } from "react"
 import { useQueryClient, useQuery } from "@tanstack/react-query"
+import { i18n } from "@lingui/core"
+import { msg } from "@lingui/core/macro"
 import {
   api,
   BASE_URL,
   type TaskInfoResponse,
   type StageRunProviderCredentials,
 } from "@/api/client"
-import { STEP_TO_STAGE, PIPELINE, getStageClearOrder } from "@adt/types"
+import { STEP_TO_STAGE, PIPELINE, getStageClearOrder, PAGE_PROGRESS_STEPS } from "@adt/types"
 import type { StageName } from "@adt/types"
 import { isStageComplete } from "./run-state"
+import { playCompletionSound } from "@/lib/completion-sound"
 import { bookTasksKey } from "./use-book-tasks"
+import { invalidateStoryboardDependents } from "./use-page-mutations"
+import { useApiKey } from "./use-api-key"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -82,6 +87,7 @@ const stepStatusKey = (label: string) => ["books", label, "step-status"] as cons
 
 export function useBookRunStatus(label: string): BookRunContextValue {
   const queryClient = useQueryClient()
+  const { anthropicKey, googleKey, customBaseUrl, customApiKey, azureKey, azureRegion, geminiKey } = useApiKey()
 
   // Primary source of truth: enriched step-status from the server
   const { data } = useQuery<StepStatusResponse>({
@@ -95,6 +101,9 @@ export function useBookRunStatus(label: string): BookRunContextValue {
   // every progress tick — only the counter bump causes the memo to recalc.
   const progressRef = useRef<Map<string, StepProgress>>(new Map())
   const [progressTick, setProgressTick] = useState(0)
+
+  // Throttle progressive page invalidations during storyboard runs
+  const lastPageInvalidateRef = useRef<number>(0)
 
   // Serialized run queue — chains API calls so they arrive in click order
   const runChainRef = useRef<Promise<void>>(Promise.resolve())
@@ -154,9 +163,20 @@ export function useBookRunStatus(label: string): BookRunContextValue {
             steps: { ...old.steps, [pipelineStep]: "running" },
           }
         })
+        // Progressively refresh page data during storyboard steps so the UI
+        // can show sections/renderings as they complete (throttled to ~2s).
+        // Invalidates both the page list (sidebar) and individual page details.
+        if ((PAGE_PROGRESS_STEPS as ReadonlySet<string>).has(pipelineStep)) {
+          const now = Date.now()
+          if (now - lastPageInvalidateRef.current > 2000) {
+            lastPageInvalidateRef.current = now
+            queryClient.invalidateQueries({ queryKey: ["books", label, "pages"] })
+          }
+        }
       } else if (d.type === "step-complete" || d.type === "step-skip") {
         // Mark step as done/skipped, recompute stage state
         const nextStepState: StepState = d.type === "step-skip" ? "skipped" : "done"
+        let stageCompleted = false
         queryClient.setQueryData<StepStatusResponse>(stepStatusKey(label), (old) => {
           if (!old) return old
           const steps = { ...old.steps, [pipelineStep]: nextStepState }
@@ -169,8 +189,10 @@ export function useBookRunStatus(label: string): BookRunContextValue {
             [uiStage]: allDone ? "done" : old.stages[uiStage],
           }
 
+          stageCompleted = allDone
           return { ...old, stages, steps }
         })
+        if (stageCompleted) playCompletionSound()
         progressRef.current.delete(pipelineStep)
 
         // Also invalidate data queries for the completed step's stage
@@ -186,8 +208,8 @@ export function useBookRunStatus(label: string): BookRunContextValue {
             ...old,
             stages: { ...old.stages, [uiStage]: "error" },
             steps: { ...old.steps, [pipelineStep]: "error" },
-            stepErrors: { ...old.stepErrors, [pipelineStep]: d.error ?? "Step failed" },
-            error: d.error ?? "Step failed",
+            stepErrors: { ...old.stepErrors, [pipelineStep]: d.error ?? i18n._(msg`Step failed`) },
+            error: d.error ?? i18n._(msg`Step failed`),
           }
         })
       }
@@ -196,6 +218,7 @@ export function useBookRunStatus(label: string): BookRunContextValue {
     // A queued run has started executing — full refetch to reconcile
     es.addEventListener("queue-next", () => {
       progressRef.current.clear()
+      lastPageInvalidateRef.current = 0
       queryClient.invalidateQueries({ queryKey: stepStatusKey(label) })
     })
 
@@ -214,7 +237,7 @@ export function useBookRunStatus(label: string): BookRunContextValue {
           const d = JSON.parse(me.data)
           queryClient.setQueryData<StepStatusResponse>(stepStatusKey(label), (old) => {
             if (!old) return old
-            return { ...old, error: d.error ?? "Step run failed" }
+            return { ...old, error: d.error ?? i18n._(msg`Step run failed`) }
           })
         } catch { /* ignore */ }
       }
@@ -251,9 +274,15 @@ export function useBookRunStatus(label: string): BookRunContextValue {
           const completedTask = idx !== -1 ? tasks[idx] : undefined
           if (completedTask?.kind === "package-adt") {
             queryClient.invalidateQueries({ queryKey: ["books", label, "step-status"] })
+            queryClient.invalidateQueries({ queryKey: ["debug", "accessibility", label] })
+            queryClient.invalidateQueries({ queryKey: ["debug", "versions", label, "accessibility-assessment", "book"] })
+            queryClient.invalidateQueries({ queryKey: ["book-config", label] })
           }
           if ((completedTask?.kind === "image-generate" || completedTask?.kind === "re-render" || completedTask?.kind === "ai-edit") && completedTask.pageId) {
             queryClient.invalidateQueries({ queryKey: ["books", label, "pages", completedTask.pageId] })
+          }
+          if (completedTask?.kind === "re-render" || completedTask?.kind === "ai-edit" || completedTask?.kind === "image-generate") {
+            invalidateStoryboardDependents(queryClient, label)
           }
           // Always refetch tasks so we pick up the final state even if we missed start
           queryClient.invalidateQueries({ queryKey: bookTasksKey(label) })
@@ -266,6 +295,8 @@ export function useBookRunStatus(label: string): BookRunContextValue {
 
         return { tasks }
       })
+
+      if (d.type === "task-complete") playCompletionSound()
     })
 
     return () => {
@@ -278,7 +309,16 @@ export function useBookRunStatus(label: string): BookRunContextValue {
   // ------------------------------------------------------------------
   const queueRun = useCallback(
     (options: QueueRunOptions) => {
-      const { fromStage, toStage, apiKey, renderOnly, providerCredentials } = options
+      const { fromStage, toStage, apiKey, renderOnly } = options
+      const providerCredentials: StageRunProviderCredentials = {
+        anthropicApiKey: anthropicKey || undefined,
+        googleApiKey: googleKey || undefined,
+        customBaseUrl: customBaseUrl || undefined,
+        customApiKey: customApiKey || undefined,
+        azure: { key: azureKey, region: azureRegion },
+        geminiApiKey: geminiKey || undefined,
+        ...options.providerCredentials,
+      }
 
       // Optimistically mark target stage(s) as queued and clear downstream
       const stagesToClear = new Set(getStageClearOrder(fromStage as StageName))
@@ -328,7 +368,7 @@ export function useBookRunStatus(label: string): BookRunContextValue {
         }
       })
     },
-    [label, queryClient]
+    [label, queryClient, anthropicKey, googleKey, customBaseUrl, customApiKey, azureKey, azureRegion, geminiKey]
   )
 
   // ------------------------------------------------------------------

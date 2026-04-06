@@ -82,6 +82,7 @@ export async function classifyPageText(
       text: t.text,
       isPruned: prunedSet.has(t.text_type),
     })),
+    isPruned: false,
   }))
 
   return {
@@ -139,7 +140,7 @@ export function buildClassifyConfig(appConfig: AppConfig): ClassifyConfig {
     textGroupTypes,
     prunedTextTypes: appConfig.pruned_text_types ?? [],
     promptName: appConfig.text_classification?.prompt ?? "text_classification",
-    modelId: appConfig.text_classification?.model ?? "openai:gpt-5.2",
+    modelId: appConfig.text_classification?.model ?? "openai:gpt-5.4",
     maxRetries:
       appConfig.text_classification?.max_retries ?? DEFAULT_LLM_MAX_RETRIES,
   }

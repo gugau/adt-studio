@@ -1,5 +1,6 @@
 import type { ExtractedPage } from "@adt/pdf"
 import type { LlmLogEntry } from "@adt/llm"
+import type { RenderMethodValue } from "@adt/types"
 
 export interface PageData {
   pageId: string
@@ -11,6 +12,8 @@ export interface ImageData {
   imageId: string
   width: number
   height: number
+  /** How this image was produced: vector SVG render, page crop, or direct raster extraction */
+  renderMethod?: RenderMethodValue
 }
 
 export interface NodeDataRow {
@@ -37,6 +40,15 @@ export interface SegmentedImageInput {
   height: number
 }
 
+export interface SignLanguageVideoData {
+  videoId: string
+  sectionId: string | null
+  originalName: string
+  mimeType: string
+  sizeBytes: number
+  createdAt: string
+}
+
 export interface Storage {
   clearExtractedData(): void
   clearNodesByType(nodes: string[]): void
@@ -45,6 +57,7 @@ export interface Storage {
   getPages(): PageData[]
   getPageImageBase64(pageId: string): string
   getImageBase64(imageId: string): string
+  getImageDimensions(imageId: string): { width: number; height: number } | null
   getPageImages(pageId: string): ImageData[]
 
   /** Write a cropped image to disk as {imageId}_crop_v{version}.png and register it in the DB with source="crop". */
@@ -71,12 +84,28 @@ export interface Storage {
   /** Clear step run records for specific steps (used when clearing downstream data). */
   clearStepRuns(steps: string[]): void
 
+  /** Get a compact fingerprint of all entity versions for cache invalidation. */
+  getNodeVersionFingerprint(excludeNodes?: string[]): Array<{ node: string; itemId: string; version: number }>
+
   appendLlmLog(entry: LlmLogEntry): void
 
   /** Store a debug image (e.g. screenshot) by hash as a file under the book directory. */
   putDebugImage(hash: string, data: Buffer): void
   /** Clear all debug images (used when regenerating storyboard outputs). */
   clearDebugImages(): void
+
+  /** Add a sign language video to the book. */
+  putSignLanguageVideo(videoId: string, buffer: Buffer, originalName: string, mimeType: string): void
+  /** List all sign language videos. */
+  getSignLanguageVideos(): SignLanguageVideoData[]
+  /** Assign a sign language video to a section (or null to unassign). */
+  assignSignLanguageVideo(videoId: string, sectionId: string | null): void
+  /** Delete a sign language video. */
+  deleteSignLanguageVideo(videoId: string): void
+  /** Delete all sign language videos. */
+  deleteAllSignLanguageVideos(): void
+  /** Get the file path for a sign language video (for serving). */
+  getSignLanguageVideoPath(videoId: string): string | null
 
   close(): void
 }

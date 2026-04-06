@@ -25,7 +25,9 @@ import { createTaskService } from "./services/task-service.js"
 import { createPresetRoutes } from "./routes/presets.js"
 import { createAdtPreviewRoutes } from "./routes/adt-preview.js"
 import { createSpeechConfigRoutes } from "./routes/speech-config.js"
+import { createReviewerValidationRoutes } from "./routes/reviewer-validation.js"
 import { createTocRoutes } from "./routes/toc.js"
+import { createSignLanguageVideoRoutes } from "./routes/sign-language-videos.js"
 
 // Resolve paths relative to monorepo root (2 levels up from apps/api/)
 const projectRoot = path.resolve(
@@ -39,10 +41,6 @@ const configPath = path.resolve(
 let webAssetsDir: string
 const adtResourcesZip = process.env.ADT_RESOURCES_ZIP
 if (adtResourcesZip && fs.existsSync(adtResourcesZip)) {
-  // Tauri sidecar mode: extract zip to a temp dir preserving the full directory tree.
-  // Cannot use raw resource dir — Tauri's **/* glob flattens ALL subdirectory levels
-  // (LESSONS_LEARNT #7): libs/fontawesome/css/ and interface_translations/{lang}/
-  // would be mangled. The zip preserves the tree; extract once at startup.
   const extractDir = path.join(os.tmpdir(), `adt-assets-${process.pid}`)
   fs.mkdirSync(extractDir, { recursive: true })
   const unzipped = unzipSync(new Uint8Array(fs.readFileSync(adtResourcesZip)))
@@ -57,8 +55,6 @@ if (adtResourcesZip && fs.existsSync(adtResourcesZip)) {
   })
   process.on("SIGTERM", () => process.exit(0))
 } else {
-  // Local dev mode: use assets/adt/ directly (full tree, all tools available).
-  // ADT_RESOURCES_ZIP is never set in pnpm dev, so this branch always runs there.
   webAssetsDir = path.resolve(
     process.env.WEB_ASSETS_DIR ?? path.join(projectRoot, "assets", "adt")
   )
@@ -73,10 +69,10 @@ const app = new Hono()
 
 app.use("*", logger())
 const ALLOWED_ORIGINS = [
-  "http://localhost:5173",    // Vite dev
-  "tauri://localhost",        // Tauri macOS
-  "https://tauri.localhost",  // Tauri Windows
-  "http://tauri.localhost",   // Tauri Linux
+  "http://localhost:5173",
+  "tauri://localhost",
+  "https://tauri.localhost",
+  "http://tauri.localhost",
 ]
 
 app.use(
@@ -106,6 +102,8 @@ app.route("/api", createTaskRoutes(taskService))
 app.route("/api", createPresetRoutes(configPath))
 app.route("/api", createAdtPreviewRoutes(booksDir, webAssetsDir, configPath))
 app.route("/api", createSpeechConfigRoutes(configPath))
+app.route("/api", createReviewerValidationRoutes(booksDir, configPath))
+app.route("/api", createSignLanguageVideoRoutes(booksDir))
 
 export default app
 export { booksDir }

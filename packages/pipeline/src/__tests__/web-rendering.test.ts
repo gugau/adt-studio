@@ -50,7 +50,7 @@ describe("buildRenderStrategyResolver", () => {
       render_strategies: {
         llm: {
           render_type: "llm",
-          config: { prompt: "default_prompt", model: "openai:gpt-5.2" },
+          config: { prompt: "default_prompt", model: "openai:gpt-5.4" },
         },
         custom: {
           render_type: "llm",
@@ -71,7 +71,7 @@ describe("buildRenderStrategyResolver", () => {
 
     const textOnly = resolve("text_only")
     expect(textOnly.promptName).toBe("default_prompt")
-    expect(textOnly.modelId).toBe("openai:gpt-5.2")
+    expect(textOnly.modelId).toBe("openai:gpt-5.4")
   })
 
   it("falls back to hardcoded defaults when no config provided", () => {
@@ -84,7 +84,7 @@ describe("buildRenderStrategyResolver", () => {
     const config = resolve("anything")
     expect(config.renderType).toBe("llm")
     expect(config.promptName).toBe("web_generation_html")
-    expect(config.modelId).toBe("openai:gpt-5.2")
+    expect(config.modelId).toBe("openai:gpt-5.4")
     expect(config.maxRetries).toBe(5)
     expect(config.timeoutMs).toBe(180000)
     expect(config.templateName).toBe("")
@@ -98,7 +98,7 @@ describe("buildRenderStrategyResolver", () => {
       render_strategies: {
         llm_default: {
           render_type: "llm",
-          config: { prompt: "default_prompt", model: "openai:gpt-5.2" },
+          config: { prompt: "default_prompt", model: "openai:gpt-5.4" },
         },
       },
       section_render_strategies: {
@@ -111,7 +111,7 @@ describe("buildRenderStrategyResolver", () => {
 
     expect(config.renderType).toBe("llm")
     expect(config.promptName).toBe("default_prompt")
-    expect(config.modelId).toBe("openai:gpt-5.2")
+    expect(config.modelId).toBe("openai:gpt-5.4")
   })
 
   it("resolves template strategy with render type and template name", () => {
@@ -122,7 +122,7 @@ describe("buildRenderStrategyResolver", () => {
       render_strategies: {
         llm: {
           render_type: "llm",
-          config: { prompt: "default_prompt", model: "openai:gpt-5.2" },
+          config: { prompt: "default_prompt", model: "openai:gpt-5.4" },
         },
         two_column: {
           render_type: "template",
@@ -168,7 +168,7 @@ function imagePart(imageId: string, isPruned = false) {
 describe("renderPage", () => {
   const htmlResponse = {
     reasoning: "test",
-    content: '<div id="content" class="container"><section role="article" data-section-type="text_only" data-section-id="pg001_sec001"><p data-id="pg001_gp001_tx001">Hello</p></section></div>',
+    content: '<div id="content" class="container"><section data-section-type="text_only" data-section-id="pg001_sec001"><p data-id="pg001_gp001_tx001">Hello</p></section></div>',
   }
 
   it("skips pruned sections", async () => {
@@ -279,7 +279,7 @@ describe("renderPage", () => {
     const imgResponse = {
       reasoning: "test",
       content:
-        '<div id="content" class="container"><section role="article" data-section-type="images_only" data-section-id="pg001_sec001"><img data-id="pg001_im001" src="placeholder" alt="test" /></section></div>',
+        '<div id="content" class="container"><section data-section-type="images_only" data-section-id="pg001_sec001"><img data-id="pg001_im001" src="placeholder" alt="test" /></section></div>',
     }
 
     const fakeLlm: LLMModel = {
@@ -333,7 +333,7 @@ describe("renderPage", () => {
           object: {
             reasoning: "test",
             content:
-              '<div id="content" class="container"><section role="article" data-section-type="text_only" data-section-id="pg001_sec001"><p data-id="pg001_gp001_tx001">Hello</p><p data-id="pg001_gp001_tx002">World</p></section></div>',
+              '<div id="content" class="container"><section data-section-type="text_only" data-section-id="pg001_sec001"><p data-id="pg001_gp001_tx001">Hello</p><p data-id="pg001_gp001_tx002">World</p></section></div>',
           } as T,
         } as GenerateObjectResult<T>
       },
@@ -390,7 +390,7 @@ describe("renderPage", () => {
           object: {
             reasoning: "test",
             content:
-              '<div id="content" class="container"><section role="article" data-section-type="text_only" data-section-id="pg001_sec001"><p data-id="pg001_gp001_tx002">Second</p><p data-id="pg001_gp001_tx003">Third</p></section></div>',
+              '<div id="content" class="container"><section data-section-type="text_only" data-section-id="pg001_sec001"><p data-id="pg001_gp001_tx002">Second</p><p data-id="pg001_gp001_tx003">Third</p></section></div>',
           } as T,
         } as GenerateObjectResult<T>
       },
@@ -447,7 +447,7 @@ describe("renderPage", () => {
           object: {
             reasoning: "test",
             content:
-              '<div id="content" class="container"><section role="article" data-section-type="text_only" data-section-id="pg001_sec001"><p data-id="pg001_gp001_tx001">Hello</p></section></div>',
+              '<div id="content" class="container"><section data-section-type="text_only" data-section-id="pg001_sec001"><p data-id="pg001_gp001_tx001">Hello</p></section></div>',
           } as T,
         } as GenerateObjectResult<T>
       },
@@ -497,7 +497,7 @@ describe("renderPage", () => {
         return {
           object: {
             reasoning: `section ${callCount}`,
-            content: `<div id="content" class="container"><section role="article" data-section-type="text_only" data-section-id="pg001_sec00${callCount}"><p data-id="pg001_gp00${callCount}_tx001">Text ${callCount}</p></section></div>`,
+            content: `<div id="content" class="container"><section data-section-type="text_only" data-section-id="pg001_sec00${callCount}"><p data-id="pg001_gp00${callCount}_tx001">Text ${callCount}</p></section></div>`,
           } as T,
         } as GenerateObjectResult<T>
       },
@@ -560,7 +560,7 @@ describe("renderPage", () => {
         templateCalled = true
         capturedTemplateName = templateName
         capturedContext = context
-        return '<section role="article" data-section-type="text_only" data-section-id="pg001_sec001"><p data-id="pg001_gp001_tx001">Hello</p></section>'
+        return '<section data-section-type="text_only" data-section-id="pg001_sec001"><p data-id="pg001_gp001_tx001">Hello</p></section>'
       },
     }
 
@@ -679,8 +679,8 @@ describe("renderPage", () => {
         calls.push(modelId)
         const content =
           modelId === "openai:model-a"
-            ? '<div id="content" class="container"><section role="article" data-section-type="text_only" data-section-id="pg001_sec001"><p data-id="pg001_gp001_tx001">First</p></section></div>'
-            : '<div id="content" class="container"><section role="article" data-section-type="text_only" data-section-id="pg001_sec002"><p data-id="pg001_gp002_tx001">Second</p></section></div>'
+            ? '<div id="content" class="container"><section data-section-type="text_only" data-section-id="pg001_sec001"><p data-id="pg001_gp001_tx001">First</p></section></div>'
+            : '<div id="content" class="container"><section data-section-type="text_only" data-section-id="pg001_sec002"><p data-id="pg001_gp002_tx001">Second</p></section></div>'
         return {
           object: { reasoning: "test", content } as T,
         } as GenerateObjectResult<T>
@@ -759,7 +759,7 @@ describe("renderPage", () => {
     const activityHtmlResponse = {
       reasoning: "activity reasoning",
       content:
-        '<div id="content" class="container"><section role="article" data-section-type="activity_multiple_choice" data-section-id="pg001_sec001"><div data-id="pg001_gp001_tx001">Question</div><div data-id="activity_gen_opt1">Option A</div></section></div>',
+        '<div id="content" class="container"><section data-section-type="activity_multiple_choice" data-section-id="pg001_sec001"><div data-id="pg001_gp001_tx001">Question</div><div data-id="activity_gen_opt1">Option A</div></section></div>',
     }
     const activityAnswersResponse = {
       reasoning: "answer reasoning",
@@ -782,7 +782,7 @@ describe("renderPage", () => {
     const activityResolveConfig = (): RenderConfig => ({
       renderType: "activity",
       promptName: "activity_multiple_choice",
-      modelId: "openai:gpt-5.2",
+      modelId: "openai:gpt-5.4",
       maxRetries: 5,
       timeoutMs: 180000,
       answerPromptName: "activity_multiple_choice_answers",
@@ -835,7 +835,7 @@ describe("renderPage", () => {
     const activityHtmlResponse = {
       reasoning: "open ended reasoning",
       content:
-        '<div id="content" class="container"><section role="article" data-section-type="activity_open_ended_answer" data-section-id="pg001_sec001"><div data-id="pg001_gp001_tx001">Question</div><textarea data-id="activity_gen_input1"></textarea></section></div>',
+        '<div id="content" class="container"><section data-section-type="activity_open_ended_answer" data-section-id="pg001_sec001"><div data-id="pg001_gp001_tx001">Question</div><textarea data-id="activity_gen_input1"></textarea></section></div>',
     }
 
     const fakeLlm: LLMModel = {
@@ -848,7 +848,7 @@ describe("renderPage", () => {
     const activityResolveConfig = (): RenderConfig => ({
       renderType: "activity",
       promptName: "activity_open_ended_answer",
-      modelId: "openai:gpt-5.2",
+      modelId: "openai:gpt-5.4",
       maxRetries: 5,
       timeoutMs: 180000,
       answerPromptName: "",
@@ -898,7 +898,7 @@ describe("renderPage", () => {
     const llmHtmlResponse = {
       reasoning: "normal section reasoning",
       content:
-        '<div id="content" class="container"><section role="article" data-section-type="text" data-section-id="pg001_sec001"><div data-id="pg001_gp001_tx001">Body text</div></section></div>',
+        '<div id="content" class="container"><section data-section-type="text" data-section-id="pg001_sec001"><div data-id="pg001_gp001_tx001">Body text</div></section></div>',
     }
 
     const fakeLlm: LLMModel = {
@@ -911,7 +911,7 @@ describe("renderPage", () => {
     const nonActivityConfig = (): RenderConfig => ({
       renderType: "llm",
       promptName: "web_generation_html",
-      modelId: "openai:gpt-5.2",
+      modelId: "openai:gpt-5.4",
       maxRetries: 5,
       timeoutMs: 180000,
       answerPromptName: "activity_true_false_answers",
@@ -962,7 +962,7 @@ describe("renderPage", () => {
         return {
           object: {
             reasoning: "test",
-            content: '<div id="content" class="container"><section role="article"><p data-id="pg001_gp001_tx001">Hello</p></section></div>',
+            content: '<div id="content" class="container"><section><p data-id="pg001_gp001_tx001">Hello</p></section></div>',
           } as T,
         } as GenerateObjectResult<T>
       },
@@ -1027,7 +1027,7 @@ describe("buildRenderStrategyResolver — activity", () => {
           config: {
             prompt: "activity_multiple_choice",
             answer_prompt: "activity_multiple_choice_answers",
-            model: "openai:gpt-5.2",
+            model: "openai:gpt-5.4",
             max_retries: 5,
             timeout: 180,
           },
@@ -1044,7 +1044,7 @@ describe("buildRenderStrategyResolver — activity", () => {
     expect(config.renderType).toBe("activity")
     expect(config.promptName).toBe("activity_multiple_choice")
     expect(config.answerPromptName).toBe("activity_multiple_choice_answers")
-    expect(config.modelId).toBe("openai:gpt-5.2")
+    expect(config.modelId).toBe("openai:gpt-5.4")
     expect(config.maxRetries).toBe(5)
     expect(config.timeoutMs).toBe(180000)
   })
@@ -1058,7 +1058,7 @@ describe("buildRenderStrategyResolver — activity", () => {
           render_type: "activity",
           config: {
             prompt: "activity_open_ended_answer",
-            model: "openai:gpt-5.2",
+            model: "openai:gpt-5.4",
           },
         },
       },

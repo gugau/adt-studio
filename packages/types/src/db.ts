@@ -1,9 +1,15 @@
 import { z } from "zod"
 
-export const SCHEMA_VERSION = 9
+export const SCHEMA_VERSION = 11
 
 export const ImageSource = z.enum(["page", "extract", "crop", "segment", "upload"])
 export type ImageSource = z.infer<typeof ImageSource>
+
+export const RenderMethodEnum = z.enum(["vector", "page-crop", "raster"])
+export type RenderMethodValue = z.infer<typeof RenderMethodEnum>
+
+export const RenderMethod = RenderMethodEnum.nullable()
+export type RenderMethod = z.infer<typeof RenderMethod>
 
 export const PageRow = z.object({
   page_id: z.string(),
@@ -20,5 +26,17 @@ export const ImageRow = z.object({
   width: z.number().int(),
   height: z.number().int(),
   source: ImageSource,
+  render_method: RenderMethod,
 })
 export type ImageRow = z.infer<typeof ImageRow>
+
+export const SignLanguageVideoRow = z.object({
+  video_id: z.string(),
+  section_id: z.string().nullable(),
+  path: z.string(),
+  original_name: z.string(),
+  mime_type: z.string(),
+  size_bytes: z.number().int(),
+  created_at: z.string(),
+})
+export type SignLanguageVideoRow = z.infer<typeof SignLanguageVideoRow>

@@ -22,6 +22,7 @@ export const StepName = z.enum([
   "catalog-translation",
   "tts",
   "package-web",
+  "accessibility-assessment",
 ])
 export type StepName = z.infer<typeof StepName>
 
@@ -46,6 +47,8 @@ export interface StepDef {
   label: string
   /** Steps within the same stage that must complete first */
   dependsOn?: StepName[]
+  /** Step processes pages individually and emits page-level progress */
+  pageProgress?: boolean
 }
 
 export interface StageDef {
@@ -78,8 +81,8 @@ export const PIPELINE: StageDef[] = [
     label: "Storyboard",
     dependsOn: ["extract"],
     steps: [
-      { name: "page-sectioning", label: "Page Sectioning" },
-      { name: "web-rendering", label: "Web Rendering", dependsOn: ["page-sectioning"] },
+      { name: "page-sectioning", label: "Page Sectioning", pageProgress: true },
+      { name: "web-rendering", label: "Web Rendering", dependsOn: ["page-sectioning"], pageProgress: true },
     ],
   },
   {
@@ -130,6 +133,11 @@ export const PIPELINE: StageDef[] = [
     dependsOn: ["text-and-speech"],
     steps: [
       { name: "package-web", label: "Web Package" },
+      {
+        name: "accessibility-assessment",
+        label: "Accessibility Assessment",
+        dependsOn: ["package-web"],
+      },
     ],
   },
 ]
@@ -152,4 +160,9 @@ export const STAGE_BY_NAME: Record<StageName, StageDef> = Object.fromEntries(
 /** All step names that appear in the pipeline */
 export const ALL_STEP_NAMES: ReadonlySet<StepName> = new Set(
   PIPELINE.flatMap((stage) => stage.steps.map((step) => step.name))
+)
+
+/** Steps that process pages individually and emit page-level progress */
+export const PAGE_PROGRESS_STEPS: ReadonlySet<StepName> = new Set(
+  PIPELINE.flatMap((stage) => stage.steps.filter((step) => step.pageProgress).map((step) => step.name))
 )

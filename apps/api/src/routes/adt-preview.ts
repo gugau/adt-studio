@@ -26,6 +26,9 @@ import {
   buildTextCatalog,
   pad3,
   loadBookConfig,
+  buildPreferredImageAltMap,
+  rewriteImageUrls,
+  convertLatexToMathml,
 } from "@adt/pipeline"
 
 // ---------------------------------------------------------------------------
@@ -53,6 +56,8 @@ const MIME_TYPES: Record<string, string> = {
   ".ogg": "audio/ogg",
   ".map": "application/json",
   ".dic": "application/octet-stream",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
 }
 
 function getMimeType(filePath: string): string {
@@ -121,6 +126,48 @@ function buildTextsMap(
     }
   }
   return textsMap
+}
+
+/** Build a map from sectionId → 1-based pageIndex matching the manifest order */
+function buildSectionIdToPageIndex(storage: Storage): Map<string, number> {
+  const pages = storage.getPages()
+  const quizData = getQuizData(storage)
+  const quizzesByAfterPageId = new Map<string, Quiz[]>()
+  if (quizData?.quizzes) {
+    for (const quiz of quizData.quizzes) {
+      const existing = quizzesByAfterPageId.get(quiz.afterPageId) ?? []
+      existing.push(quiz)
+      quizzesByAfterPageId.set(quiz.afterPageId, existing)
+    }
+  }
+
+  const map = new Map<string, number>()
+  let index = 0
+  for (const page of pages) {
+    const renderRow = storage.getLatestNodeData("web-rendering", page.pageId)
+    if (renderRow) {
+      const parsed = WebRenderingOutput.safeParse(renderRow.data)
+      if (parsed.success && parsed.data.sections.length > 0) {
+        const sectioningRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+        const sectioningParsed = sectioningRow ? PageSectioningOutput.safeParse(sectioningRow.data) : null
+        const sectioning = sectioningParsed?.success ? sectioningParsed.data : undefined
+        const sections = [...parsed.data.sections].sort((a, b) => a.sectionIndex - b.sectionIndex)
+        for (const rs of sections) {
+          const sectionMeta = sectioning?.sections?.[rs.sectionIndex]
+          if (sectionMeta?.isPruned) continue
+          index++
+          const sectionId = sectionMeta?.sectionId ?? `${page.pageId}_sec${String(rs.sectionIndex + 1).padStart(3, "0")}`
+          map.set(sectionId, index)
+        }
+      }
+    }
+    // Quiz pages also increment the index but aren't tied to a sectionId for video purposes
+    const quizzes = quizzesByAfterPageId.get(page.pageId)
+    if (quizzes) {
+      index += quizzes.length
+    }
+  }
+  return map
 }
 
 /** Build the pages.json manifest — one entry per rendered section, interleaving quiz pages */
@@ -295,6 +342,8 @@ function buildPreviewConfig(storage: Storage, language: string) {
     }
   }
 
+  const hasSignLanguageVideos = storage.getSignLanguageVideos().some((v) => v.sectionId !== null)
+
   return {
     title: getBookTitle(storage),
     bundleVersion: "1",
@@ -303,7 +352,7 @@ function buildPreviewConfig(storage: Storage, language: string) {
       default: language,
     },
     features: {
-      signLanguage: false,
+      signLanguage: hasSignLanguageVideos,
       easyRead: false,
       glossary: hasGlossary,
       eli5: false,
@@ -418,6 +467,16 @@ export function createAdtPreviewRoutes(
 
     c.header("Content-Type", getMimeType(resolved))
     return c.body(fs.readFileSync(resolved))
+  })
+
+  // /convert-math — Convert LaTeX in HTML to MathML (used by storyboard preview)
+  app.post("/books/:label/adt-preview/convert-math", async (c) => {
+    resolveBook(c.req.param("label")) // validate label
+    const body = await c.req.json()
+    const html = typeof body?.html === "string" ? body.html : ""
+    if (!html) return c.json({ html: "" })
+    const converted = convertLatexToMathml(html)
+    return c.json({ html: converted })
   })
 
   // /content/pages.json — All rendered pages
@@ -546,11 +605,58 @@ export function createAdtPreviewRoutes(
     return c.body(JSON.stringify(audioMap))
   })
 
-  // /content/i18n/:lang/videos.json — Empty (no video support in preview)
+  // /content/i18n/:lang/videos.json — Sign language video mapping
+  // The ADT JS runtime expects keys like "video-{pageIndex}" and files served from "video/" path.
+  // Each video is assigned to a sectionId which maps 1:1 to a pageIndex.
   app.get("/books/:label/adt-preview/content/i18n/:lang/videos.json", (c) => {
-    resolveBook(c.req.param("label"))
+    const videosMap = withStorage(c.req.param("label"), (storage) => {
+      const map: Record<string, string> = {}
+      const sectionToIndex = buildSectionIdToPageIndex(storage)
+      for (const video of storage.getSignLanguageVideos()) {
+        if (video.sectionId) {
+          const ext = video.mimeType === "video/webm" ? ".webm" : ".mp4"
+          const filename = `sl_${video.sectionId}${ext}`
+          const idx = sectionToIndex.get(video.sectionId)
+          if (idx !== undefined) {
+            map[`video-${idx}`] = filename
+          }
+        }
+      }
+      return map
+    })
     c.header("Content-Type", "application/json")
-    return c.body("{}")
+    return c.body(JSON.stringify(videosMap))
+  })
+
+  // /content/i18n/:lang/video/* — Serve sign language video files
+  // URL uses section-based names (sl_pg001_sec001.mp4) that map back to stored video files via the DB
+  app.get("/books/:label/adt-preview/content/i18n/:lang/video/*", (c) => {
+    const { label } = c.req.param()
+
+    const requestedFile = c.req.path.split("/video/").pop()
+    if (!requestedFile) throw new HTTPException(400, { message: "Missing video path" })
+
+    // Extract sectionId from the filename (e.g. "sl_pg001_sec001.mp4" → "pg001_sec001")
+    const match = requestedFile.match(/^sl_(.+)\.\w+$/)
+    if (!match) throw new HTTPException(400, { message: "Invalid video filename" })
+    const sectionId = match[1]
+
+    const storage = createBookStorage(label, booksDir)
+    try {
+      const video = storage.getSignLanguageVideos().find((v) => v.sectionId === sectionId)
+      if (!video) throw new HTTPException(404, { message: "No video assigned to this section" })
+
+      const filePath = storage.getSignLanguageVideoPath(video.videoId)
+      if (!filePath || !fs.existsSync(filePath)) {
+        throw new HTTPException(404, { message: "Video file not found" })
+      }
+
+      c.header("Content-Type", getMimeType(filePath))
+      c.header("Cache-Control", "public, max-age=86400")
+      return c.body(fs.readFileSync(filePath))
+    } finally {
+      storage.close()
+    }
   })
 
   // /content/i18n/:lang/audio/* — Serve audio files
@@ -688,14 +794,27 @@ export function createAdtPreviewRoutes(
       const manifest = buildPagesManifest(storage)
       const manifestIndex = manifest.findIndex((e) => e.section_id === pageId)
 
+      const sectionMeta = sectioningParsed?.success
+        ? sectioningParsed.data.sections[targetSectionIndex]
+        : undefined
+      const preferredImageAltMap = buildPreferredImageAltMap(storage, ownerPageId, sectionMeta)
+      const { html: previewSectionHtml } = rewriteImageUrls(
+        renderedSection.html,
+        label,
+        new Map<string, string>(),
+        preferredImageAltMap,
+      )
+
+      const previewHasMath = /(?:\\\(|\\\)|\\\[|\\\]|\$[^$]+\$|\\frac|\\sqrt|\\sum|\\int|\\text\{|\\hat\{|\\circ)/.test(previewSectionHtml)
+
       const html = renderPageHtml({
-        content: renderedSection.html,
+        content: convertLatexToMathml(previewSectionHtml),
         language,
         sectionId: pageId,
         pageTitle: title,
         pageIndex: manifestIndex >= 0 ? manifestIndex + 1 : 1,
         activityAnswers: renderedSection.activityAnswers,
-        hasMath: false,
+        hasMath: previewHasMath,
         bundleVersion: "1",
         applyBodyBackground,
         embed,

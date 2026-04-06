@@ -4,7 +4,7 @@ import type sqlite from "node-sqlite3-wasm"
 import type { ExtractedPage, ExtractedImage } from "@adt/pdf"
 import type { LlmLogEntry } from "@adt/llm"
 import { parseBookLabel } from "@adt/types"
-import type { Storage, PageData, ImageData, NodeDataRow, CroppedImageInput, SegmentedImageInput } from "./storage.js"
+import type { Storage, PageData, ImageData, NodeDataRow, CroppedImageInput, SegmentedImageInput, SignLanguageVideoData } from "./storage.js"
 import { openBookDb } from "./db.js"
 
 export interface BookPaths {
@@ -12,6 +12,7 @@ export interface BookPaths {
   dbPath: string
   imagesDir: string
   debugImagesDir: string
+  videosDir: string
 }
 
 export function resolveBookPaths(label: string, booksRoot: string): BookPaths {
@@ -26,6 +27,7 @@ export function resolveBookPaths(label: string, booksRoot: string): BookPaths {
     dbPath: path.join(bookDir, `${safeLabel}.db`),
     imagesDir: path.join(bookDir, "images"),
     debugImagesDir: path.join(bookDir, ".debug-images"),
+    videosDir: path.join(bookDir, "videos"),
   }
 }
 
@@ -35,6 +37,7 @@ export function createBookStorage(label: string, booksRoot: string): Storage {
   fs.mkdirSync(paths.bookDir, { recursive: true })
   fs.mkdirSync(paths.imagesDir, { recursive: true })
   fs.mkdirSync(paths.debugImagesDir, { recursive: true })
+  fs.mkdirSync(paths.videosDir, { recursive: true })
 
   const db = openBookDb(paths.dbPath)
 
@@ -112,15 +115,25 @@ export function createBookStorage(label: string, booksRoot: string): Storage {
       return fs.readFileSync(filePath).toString("base64")
     },
 
+    getImageDimensions(imageId: string): { width: number; height: number } | null {
+      const rows = db.all(
+        "SELECT width, height FROM images WHERE image_id = ?",
+        [imageId]
+      ) as Array<{ width: number; height: number }>
+      if (rows.length === 0) return null
+      return { width: rows[0].width, height: rows[0].height }
+    },
+
     getPageImages(pageId: string): ImageData[] {
       const rows = db.all(
-        "SELECT image_id, width, height FROM images WHERE page_id = ? ORDER BY image_id",
+        "SELECT image_id, width, height, render_method FROM images WHERE page_id = ? ORDER BY image_id",
         [pageId]
-      ) as Array<{ image_id: string; width: number; height: number }>
+      ) as Array<{ image_id: string; width: number; height: number; render_method: string | null }>
       return rows.map((r) => ({
         imageId: r.image_id,
         width: r.width,
         height: r.height,
+        renderMethod: r.render_method as ImageData["renderMethod"],
       }))
     },
 
@@ -258,6 +271,18 @@ export function createBookStorage(label: string, booksRoot: string): Storage {
       }
     },
 
+    getNodeVersionFingerprint(excludeNodes: string[] = []): Array<{ node: string; itemId: string; version: number }> {
+      let sql = "SELECT node, item_id, MAX(version) as version FROM node_data"
+      const params: string[] = []
+      if (excludeNodes.length > 0) {
+        sql += ` WHERE node NOT IN (${excludeNodes.map(() => "?").join(", ")})`
+        params.push(...excludeNodes)
+      }
+      sql += " GROUP BY node, item_id ORDER BY node, item_id"
+      const rows = db.all(sql, params) as Array<{ node: string; item_id: string; version: number }>
+      return rows.map((r) => ({ node: r.node, itemId: r.item_id, version: r.version }))
+    },
+
     appendLlmLog(entry: LlmLogEntry): void {
       db.run(
         "INSERT INTO llm_log (request_id, timestamp, step, item_id, success, error_count, data) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -284,6 +309,72 @@ export function createBookStorage(label: string, booksRoot: string): Storage {
 
     clearDebugImages(): void {
       clearImageFiles(paths.debugImagesDir)
+    },
+
+    putSignLanguageVideo(videoId: string, buffer: Buffer, originalName: string, mimeType: string): void {
+      const ext = mimeType === "video/webm" ? ".webm" : ".mp4"
+      const filename = `${videoId}${ext}`
+      const filePath = path.join(paths.videosDir, filename)
+      fs.writeFileSync(filePath, buffer)
+      try {
+        db.run(
+          `INSERT INTO sign_language_videos (video_id, section_id, path, original_name, mime_type, size_bytes, created_at)
+           VALUES (?, NULL, ?, ?, ?, ?, ?)`,
+          [videoId, `videos/${filename}`, originalName, mimeType, buffer.length, new Date().toISOString()]
+        )
+      } catch (err) {
+        // Clean up the written file if DB insert fails
+        try { fs.unlinkSync(filePath) } catch { /* ignore */ }
+        throw err
+      }
+    },
+
+    getSignLanguageVideos(): SignLanguageVideoData[] {
+      const rows = db.all(
+        "SELECT video_id, section_id, original_name, mime_type, size_bytes, created_at FROM sign_language_videos ORDER BY created_at"
+      ) as Array<{ video_id: string; section_id: string | null; original_name: string; mime_type: string; size_bytes: number; created_at: string }>
+      return rows.map((r) => ({
+        videoId: r.video_id,
+        sectionId: r.section_id,
+        originalName: r.original_name,
+        mimeType: r.mime_type,
+        sizeBytes: r.size_bytes,
+        createdAt: r.created_at,
+      }))
+    },
+
+    assignSignLanguageVideo(videoId: string, sectionId: string | null): void {
+      db.run("UPDATE sign_language_videos SET section_id = ? WHERE video_id = ?", [sectionId, videoId])
+    },
+
+    deleteSignLanguageVideo(videoId: string): void {
+      const rows = db.all("SELECT path FROM sign_language_videos WHERE video_id = ?", [videoId]) as Array<{ path: string }>
+      if (rows.length > 0) {
+        const filePath = path.resolve(paths.bookDir, rows[0].path)
+        if (filePath.startsWith(paths.bookDir + path.sep)) {
+          try { fs.unlinkSync(filePath) } catch { /* file may already be gone */ }
+        }
+        db.run("DELETE FROM sign_language_videos WHERE video_id = ?", [videoId])
+      }
+    },
+
+    deleteAllSignLanguageVideos(): void {
+      const rows = db.all("SELECT path FROM sign_language_videos") as Array<{ path: string }>
+      for (const row of rows) {
+        const filePath = path.resolve(paths.bookDir, row.path)
+        if (filePath.startsWith(paths.bookDir + path.sep)) {
+          try { fs.unlinkSync(filePath) } catch { /* file may already be gone */ }
+        }
+      }
+      db.run("DELETE FROM sign_language_videos")
+    },
+
+    getSignLanguageVideoPath(videoId: string): string | null {
+      const rows = db.all("SELECT path FROM sign_language_videos WHERE video_id = ?", [videoId]) as Array<{ path: string }>
+      if (rows.length === 0) return null
+      const filePath = path.resolve(paths.bookDir, rows[0].path)
+      if (!filePath.startsWith(paths.bookDir + path.sep)) return null
+      return filePath
     },
 
     close(): void {
@@ -329,15 +420,16 @@ function writeImage(
 
   db.run(
     `INSERT INTO images
-       (image_id, page_id, path, hash, width, height, source)
-     VALUES (?, ?, ?, ?, ?, ?, ?)
+       (image_id, page_id, path, hash, width, height, source, render_method)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT (image_id) DO UPDATE SET
        page_id = excluded.page_id,
        path = excluded.path,
        hash = excluded.hash,
        width = excluded.width,
        height = excluded.height,
-       source = excluded.source`,
+       source = excluded.source,
+       render_method = excluded.render_method`,
     [
       image.imageId,
       pageId,
@@ -346,6 +438,7 @@ function writeImage(
       image.width,
       image.height,
       source,
+      image.renderMethod ?? null,
     ]
   )
 }

@@ -1,3 +1,12 @@
+import type {
+  AccessibilityAssessmentOutput,
+  ReviewerPageValidationRecord,
+  ReviewerValidationIdentificationField,
+  ReviewerValidationInstruction,
+  ReviewerValidationSection,
+  ReviewerValidationSession,
+} from "@adt/types"
+
 export function resolveBaseUrl(
   loc: Pick<Location, "protocol" | "hostname"> = window.location,
 ): string {
@@ -17,6 +26,10 @@ export function getAdtUrl(label: string): string {
 
 export function getAudioUrl(label: string, language: string, fileName: string): string {
   return `${BASE_URL}/books/${label}/audio/${language}/${fileName}`
+}
+
+export function getSignLanguageVideoUrl(label: string, videoId: string): string {
+  return `${BASE_URL}/books/${label}/sign-language-videos/${videoId}`
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -71,6 +84,10 @@ export interface AzureCredentials {
 }
 
 export interface StageRunProviderCredentials {
+  anthropicApiKey?: string
+  googleApiKey?: string
+  customBaseUrl?: string
+  customApiKey?: string
   azure?: AzureCredentials
   geminiApiKey?: string
 }
@@ -87,6 +104,18 @@ function buildApiHeaders(
   providerCredentials?: StageRunProviderCredentials
 ): Record<string, string> {
   const headers: Record<string, string> = { "X-OpenAI-Key": apiKey }
+  if (providerCredentials?.anthropicApiKey) {
+    headers["X-Anthropic-API-Key"] = providerCredentials.anthropicApiKey
+  }
+  if (providerCredentials?.googleApiKey) {
+    headers["X-Google-API-Key"] = providerCredentials.googleApiKey
+  }
+  if (providerCredentials?.customBaseUrl) {
+    headers["X-Custom-Base-URL"] = providerCredentials.customBaseUrl
+  }
+  if (providerCredentials?.customApiKey) {
+    headers["X-Custom-API-Key"] = providerCredentials.customApiKey
+  }
   if (providerCredentials?.azure?.key) {
     headers["X-Azure-Speech-Key"] = providerCredentials.azure.key
   }
@@ -120,6 +149,7 @@ export interface PageSummaryItem {
   wordCount: number
   sectionCount: number
   prunedSections: number[]
+  sections: Array<{ sectionId: string; sectionIndex: number }>
 }
 
 export interface SectionRendering {
@@ -141,6 +171,7 @@ export interface PageDetail {
       groupId: string
       groupType: string
       texts: Array<{ textType: string; text: string; isPruned: boolean }>
+      isPruned: boolean
     }>
   } | null
   imageClassification: {
@@ -148,6 +179,17 @@ export interface PageDetail {
       imageId: string
       isPruned: boolean
       reason?: string
+    }>
+  } | null
+  imageCropping: {
+    crops: Array<{
+      imageId: string
+      reasoning: string
+      shouldCrop: boolean
+      cropLeft?: number
+      cropTop?: number
+      cropRight?: number
+      cropBottom?: number
     }>
   } | null
   sectioning: {
@@ -185,6 +227,7 @@ export interface PageDetail {
   versions: {
     textClassification: number | null
     imageClassification: number | null
+    imageCropping: number | null
     sectioning: number | null
     rendering: number | null
     imageCaptioning: number | null
@@ -381,11 +424,52 @@ export interface VersionListResponse {
   versions: VersionEntry[]
 }
 
+export interface AccessibilityAssessmentResponse {
+  version: number | null
+  assessment: AccessibilityAssessmentOutput | null
+}
+
+export interface ReviewerValidationCatalogResponse {
+  enabled: boolean
+  identificationFields: ReviewerValidationIdentificationField[]
+  instructions: ReviewerValidationInstruction[]
+  pageSections: ReviewerValidationSection[]
+}
+
+export interface ReviewerValidationSessionEntry {
+  version: number
+  session: ReviewerValidationSession
+}
+
+export interface ReviewerValidationSessionsResponse {
+  sessions: ReviewerValidationSessionEntry[]
+}
+
+export interface ReviewerPageValidationRecordEntry {
+  version: number
+  record: ReviewerPageValidationRecord
+}
+
+export interface ReviewerPageValidationRecordsResponse {
+  records: ReviewerPageValidationRecordEntry[]
+}
+
 export interface LlmLogsParams {
   step?: string
   itemId?: string
   limit?: number
   offset?: number
+}
+
+// --- Sign Language Video types ---
+
+export interface SignLanguageVideo {
+  videoId: string
+  sectionId: string | null
+  originalName: string
+  mimeType: string
+  sizeBytes: number
+  createdAt: string
 }
 
 // --- Task types ---
@@ -522,6 +606,12 @@ export const api = {
       { method: "POST" }
     ),
 
+  mergeSectionCrossPage: (label: string, pageId: string, sectionIndex: number, direction: "next" | "prev") =>
+    request<{ sourcePageId: string; targetPageId: string; targetSectionIndex: number; sourceSectioningVersion: number; targetSectioningVersion: number; sourceRenderingVersion: number | null; targetRenderingVersion: number | null }>(
+      `/books/${label}/pages/${pageId}/sections/${sectionIndex}/merge-cross-page?direction=${direction}`,
+      { method: "POST" }
+    ),
+
   deleteSection: (label: string, pageId: string, sectionIndex: number) =>
     request<{ sectioningVersion: number; renderingVersion: number | null; remainingSections: number }>(
       `/books/${label}/pages/${pageId}/sections/${sectionIndex}`,
@@ -639,6 +729,40 @@ export const api = {
 
   getActiveConfig: (label: string) =>
     request<ActiveConfigResponse>(`/books/${label}/debug/config`),
+
+  getAccessibilityAssessment: (label: string) =>
+    request<AccessibilityAssessmentResponse>(`/books/${label}/debug/accessibility`),
+
+  getReviewerValidationCatalog: (label: string) =>
+    request<ReviewerValidationCatalogResponse>(`/books/${label}/validation/catalog`),
+
+  getReviewerValidationSessions: (label: string) =>
+    request<ReviewerValidationSessionsResponse>(`/books/${label}/validation/sessions`),
+
+  saveReviewerValidationSession: (label: string, session: ReviewerValidationSession) =>
+    request<ReviewerValidationSessionEntry>(`/books/${label}/validation/sessions`, {
+      method: "POST",
+      body: JSON.stringify(session),
+    }),
+
+  getReviewerPageValidationRecords: (
+    label: string,
+    params: { sessionId: string; pageId?: string; language?: string },
+  ) => {
+    const qs = new URLSearchParams()
+    qs.set("sessionId", params.sessionId)
+    if (params.pageId) qs.set("pageId", params.pageId)
+    if (params.language) qs.set("language", params.language)
+    return request<ReviewerPageValidationRecordsResponse>(
+      `/books/${label}/validation/page-results?${qs.toString()}`,
+    )
+  },
+
+  saveReviewerPageValidationRecord: (label: string, record: ReviewerPageValidationRecord) =>
+    request<ReviewerPageValidationRecordEntry>(`/books/${label}/validation/page-results`, {
+      method: "POST",
+      body: JSON.stringify(record),
+    }),
 
   getVersionHistory: (
     label: string,
@@ -789,6 +913,34 @@ export const api = {
         signal: signal ?? AbortSignal.timeout(180_000),
       }
     ),
+
+  getSignLanguageVideos: (label: string) =>
+    request<{ videos: SignLanguageVideo[] }>(`/books/${label}/sign-language-videos`),
+
+  uploadSignLanguageVideo: (label: string, file: File) => {
+    const formData = new FormData()
+    formData.append("video", file)
+    return request<{ videoId: string; originalName: string; mimeType: string; sizeBytes: number }>(
+      `/books/${label}/sign-language-videos`,
+      { method: "POST", body: formData }
+    )
+  },
+
+  assignSignLanguageVideo: (label: string, videoId: string, sectionId: string | null) =>
+    request<{ ok: boolean }>(`/books/${label}/sign-language-videos/${videoId}/assign`, {
+      method: "PUT",
+      body: JSON.stringify({ sectionId }),
+    }),
+
+  deleteSignLanguageVideo: (label: string, videoId: string) =>
+    request<{ ok: boolean }>(`/books/${label}/sign-language-videos/${videoId}`, {
+      method: "DELETE",
+    }),
+
+  deleteAllSignLanguageVideos: (label: string) =>
+    request<{ ok: boolean }>(`/books/${label}/sign-language-videos`, {
+      method: "DELETE",
+    }),
 
   getGlobalConfig: () =>
     request<{ config: Record<string, unknown> }>(`/config`),

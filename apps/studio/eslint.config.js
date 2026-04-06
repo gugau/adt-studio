@@ -41,6 +41,8 @@ export default [
             "htmlFor",
             "data-testid",
             { regex: { pattern: "^data-" } },
+            // Identifier-like prop/variable ending with "id" or "Id" (e.g. pageid, pageId, studentId)
+            { regex: { pattern: "^[A-Za-z0-9_]*(id|Id)$" } },
 
             // --- SVG attributes ---
             "fill",
@@ -73,6 +75,7 @@ export default [
             "radioName",
 
             // --- CSS class & color props (never user-visible) ---
+            "rootMargin",
             "color",
             "hex",
             "textColor",
@@ -86,6 +89,9 @@ export default [
             "pdfUrl",
             "adtUrl",
             "comingSoon",
+
+            // --- Data labels (technical CSS descriptions, pipeline labels — not user-facing prose) ---
+            "label",
 
             // --- Pipeline / config identifiers ---
             "slug",
@@ -103,6 +109,11 @@ export default [
             "showLabel",
             "showFlex",
             "flex1",
+
+            // --- iframe srcdoc / injected style strings (never user-visible) ---
+            "srcdoc",
+            "interactiveStyles",
+            "textContent",
 
             // --- TanStack Query cache keys ---
             "queryKey",
@@ -148,10 +159,12 @@ export default [
             "*.getAttribute",
             "*.querySelector",
             "*.querySelectorAll",
+            "*.closest",
             "*.append",
             "*.prepend",
             "*.setProperty",
             "*.open",
+            "*.getContext",
 
             // --- DOM event types ---
             "*.addEventListener",
@@ -161,6 +174,7 @@ export default [
             // --- String / array operations (used for internal comparisons) ---
             "*.replace",
             "*.startsWith",
+            "*.endsWith",
             "*.includes",
 
             // --- URL / search params manipulation ---
@@ -188,6 +202,8 @@ export default [
             "^ADT Studio$",
             // npm package names and module paths (e.g. "@tanstack/react-router")
             "^@?[a-zA-Z0-9_-]+(/[a-zA-Z0-9_.-]+)+",
+            // TypeScript import() / type strings using path aliases (e.g. "@/api/client")
+            "^@/[a-zA-Z0-9_.-]+(/[a-zA-Z0-9_.-]+)*$",
             // locale codes (e.g. "en", "pt-BR", "es")
             "^[a-z]{2}(-[A-Z]{2})?$",
             // absolute URLs
@@ -197,14 +213,29 @@ export default [
             // Tailwind CSS classes, internal identifiers, and status values
             // (all-lowercase-no-spaces: bg-gray-600, hover:bg-white, gap-2.5, "success", "error", "done")
             "^[a-z][a-z0-9._:-]*$",
+            // Multi-class Tailwind strings (space-separated tokens, e.g. "bg-red-600 text-white hover:bg-red-700")
+            "^[a-z][a-z0-9._:/-]*( [a-z!][a-z0-9._:/-]*)+$",
             // Hex color values (e.g. "#ffffff", "#2563eb")
             "^#[0-9a-fA-F]+$",
+            // CSS dimension values (e.g. "10px", "1.5rem", "48px")
+            "^[0-9]",
             // React Server Components directives (shadcn boilerplate)
             "^use (client|server)$",
+            // Brand name (never translated)
+            "^ADT Studio$",
             // Data URIs (e.g. "data:image/png;base64,...")
             "^data:",
             // Byte-size literals (e.g. "12 KB", "1.5MB", "2 gb", "10tb")
             "^[0-9]+(?:\\.[0-9]+)?\\s?(?:B|KB|MB|GB|TB|b|kb|mb|gb|tb)$",
+            // HTML fragments used in innerHTML assignments (e.g. `<div id="content">`)
+            "^<[a-z]",
+            // Closing HTML tags used in string operations (e.g. "</section>")
+            "^</[a-z]",
+            // CSS selectors and rule blocks (e.g. `[data-id="..."]`, `body[data-editable=...] {...}`)
+            "^[\\[.]?[a-z].*\\{",
+            "^\\[data-",
+            // Underscore-prefixed internal ID fragments (e.g. "_tx" in data-id template literals)
+            "^_[a-z]",
           ],
         },
       ],

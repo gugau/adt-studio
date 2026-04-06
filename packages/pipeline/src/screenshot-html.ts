@@ -7,7 +7,7 @@
  */
 import fs from "node:fs"
 import path from "node:path"
-import { buildPreviewTailwindCss } from "./package-web.js"
+import { buildPreviewTailwindCss, normalizeSectionRoles, promoteFirstHeadingToH1 } from "./package-web.js"
 
 export interface BuildScreenshotHtmlOptions {
   /** The section HTML fragment (content inside <body>). */
@@ -38,7 +38,7 @@ export async function buildScreenshotHtml(
   } = options
 
   // Rewrite image src attributes to inline base64 data URIs
-  const htmlWithInlineImages = rewriteImageSrcs(sectionHtml, label, images)
+  const htmlWithInlineImages = normalizeSectionRoles(rewriteImageSrcs(sectionHtml, label, images))
 
   // Build Tailwind CSS from the section content
   const tailwindCss = await buildPreviewTailwindCss(
@@ -49,6 +49,17 @@ export async function buildScreenshotHtml(
   // Build inline font-face CSS with base64-encoded font files
   const fontCss = buildInlineFontCss(webAssetsDir)
 
+  const normalizedHtml = promoteFirstHeadingToH1(htmlWithInlineImages)
+
+  // Detect if the section contains FITB blank markers that need hydration
+  const hasFitbMarkers = /\[\[blank:item-\d+/.test(normalizedHtml)
+
+  const contentBlock = /^\s*<div\b[^>]*\bid="content"/.test(normalizedHtml)
+    ? normalizedHtml
+    : `<div id="content">
+  ${normalizedHtml}
+  </div>`
+
   return `<!DOCTYPE html>
 <html lang="${escapeAttr(language)}">
 <head>
@@ -58,7 +69,10 @@ export async function buildScreenshotHtml(
   <style>${fontCss}</style>
 </head>
 <body class="min-h-screen flex items-center justify-center">
-  ${/^\s*<div\b[^>]*\bid="content"/.test(htmlWithInlineImages) ? htmlWithInlineImages : `<div id="content">\n  ${htmlWithInlineImages}\n  </div>`}
+  <main class="w-full">
+    ${contentBlock}
+  </main>
+${hasFitbMarkers ? FITB_HYDRATION_SCRIPT : ""}
 </body>
 </html>`
 }
@@ -129,6 +143,38 @@ function buildInlineFontCss(webAssetsDir: string): string {
 
   return rules.join("\n")
 }
+
+/**
+ * Minimal inline script that hydrates [[blank:item-N]] markers into styled
+ * <input> elements for screenshot rendering. This mirrors the runtime
+ * hydrateFitbSentences() logic but without event listeners or accessibility
+ * features — purely visual so the visual review LLM sees actual input fields.
+ */
+const FITB_HYDRATION_SCRIPT = `<script>
+(function() {
+  var sentences = document.querySelectorAll('.fitb-sentence');
+  sentences.forEach(function(sentence) {
+    var targets = sentence.querySelectorAll('[data-id]');
+    var elements = targets.length > 0 ? targets : [sentence];
+    elements.forEach(function(el) {
+      var html = el.innerHTML;
+      if (html.indexOf('[[blank:') === -1) return;
+      el.innerHTML = html.replace(
+        /\\[\\[blank:item-(\\d+)(?::([^\\]]+))?\\]\\]/g,
+        function(_, itemNum, hint) {
+          var charWidth = hint ? Math.max(hint.length + 2, 6) : 8;
+          var valueAttr = hint ? ' placeholder="' + hint.replace(/"/g, '&quot;') + '"' : '';
+          return '<input type="text"'
+            + ' class="fitb-inline-input inline-block mx-1 px-1 py-0.5 border-b-2 border-gray-400 bg-transparent text-center"'
+            + ' style="width: ' + charWidth + 'ch; min-width: 4ch; max-width: 100%;"'
+            + ' data-activity-item="item-' + itemNum + '"'
+            + valueAttr + ' />';
+        }
+      );
+    });
+  });
+})();
+</script>`
 
 function escapeAttr(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;")

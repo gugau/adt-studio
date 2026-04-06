@@ -1,5 +1,5 @@
 import fs from "node:fs"
-import { extractPdf, type ExtractResult } from "@adt/pdf"
+import { extractPdfStream, type ExtractStreamResult } from "@adt/pdf"
 import type { Storage } from "@adt/storage"
 import type { Progress } from "./progress.js"
 import { toBookMetadata } from "./metadata-model.js"
@@ -9,22 +9,23 @@ export interface ExtractOptions {
   startPage?: number
   endPage?: number
   spreadMode?: boolean
+  vectorTextGrouping?: boolean
 }
 
 export async function extractPDF(
   options: ExtractOptions,
   storage: Storage,
   progress: Progress
-): Promise<ExtractResult> {
-  const { pdfPath, startPage, endPage, spreadMode } = options
+): Promise<void> {
+  const { pdfPath, startPage, endPage, spreadMode, vectorTextGrouping } = options
 
   progress.emit({ type: "step-start", step: "extract" })
 
   try {
     const pdfBuffer = fs.readFileSync(pdfPath)
 
-    const result = await extractPdf(
-      { pdfBuffer, startPage, endPage, spreadMode },
+    const { pdfMetadata, pages } = extractPdfStream(
+      { pdfBuffer, startPage, endPage, spreadMode, vectorTextGrouping },
       (p) => {
         progress.emit({
           type: "step-progress",
@@ -37,15 +38,17 @@ export async function extractPDF(
     )
 
     storage.clearExtractedData()
-    storage.putNodeData("metadata", "book", toBookMetadata(result.pdfMetadata))
+    storage.putNodeData("metadata", "book", toBookMetadata(pdfMetadata))
 
-    for (const page of result.pages) {
+    for await (const page of pages) {
       storage.putExtractedPage(page)
+      // Store extraction debug info (grouping decisions, render method choices)
+      if (page.extractionDebug) {
+        storage.putNodeData("extraction-debug", page.pageId, page.extractionDebug)
+      }
     }
 
     progress.emit({ type: "step-complete", step: "extract" })
-
-    return result
   } catch (err) {
     progress.emit({
       type: "step-error",
