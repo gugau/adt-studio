@@ -128,7 +128,10 @@ export const SUPPORTED_LANGUAGES: Language[] = [
   { code: "ml", name: "Malayalam" },
   { code: "mr", name: "Marathi" },
   { code: "mn", name: "Mongolian" },
-  { code: "ne", name: "Nepali" },
+  { code: "ne", name: "Nepali", countries: [
+    { code: "np", name: "Nepal" },
+    { code: "in", name: "India" },
+  ]},
   { code: "no", name: "Norwegian" },
   { code: "ps", name: "Pashto" },
   { code: "fa", name: "Persian", countries: [

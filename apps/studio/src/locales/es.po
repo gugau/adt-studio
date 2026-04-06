@@ -1384,6 +1384,9 @@ msgstr "Generar"
 msgid "Generate and customize the table of contents for the book navigation."
 msgstr "Genera y personaliza la tabla de contenidos para la navegación del libro."
 
+msgid "Generate audio"
+msgstr "Generar audio"
+
 #~ msgid "Generate audio narration for text entries."
 #~ msgstr "Generar narración de audio para las entradas de texto."
 
@@ -1926,6 +1929,9 @@ msgstr "No accessibility findings were reported for this page."
 msgid "No assessment"
 msgstr "No assessment"
 
+msgid "No audio"
+msgstr "Sin audio"
+
 msgid "No captions for this page"
 msgstr "Sin leyendas para esta página"
 
@@ -2400,6 +2406,12 @@ msgstr "Refresh validation"
 msgid "Refreshing results for this packaged preview."
 msgstr "Refreshing results for this packaged preview."
 
+msgid "Regenerate"
+msgstr "Regenerar"
+
+msgid "Regenerate all speech"
+msgstr "Regenerar todo el audio"
+
 msgid "Regenerate speech"
 msgstr "Regenerar audio"
 
@@ -2846,6 +2858,9 @@ msgstr "Generación de voz"
 
 msgid "Speech Prompts"
 msgstr "Indicaciones de voz"
+
+msgid "Speech Settings"
+msgstr "Configuración de voz"
 
 msgid "Spread Mode"
 msgstr "Modo de páginas dobles"
@@ -3319,6 +3334,9 @@ msgstr "Cuando está activado, los colores de fondo de la guía de estilo se apl
 
 msgid "Whole-book checks for packaged ADT output, plus reviewer findings captured from Preview."
 msgstr "Whole-book checks for packaged ADT output, plus reviewer findings captured from Preview."
+
+msgid "Word-level timecodes"
+msgstr "Códigos de tiempo por palabra"
 
 msgid "Wraps 'Edit this image' requests. The AI receives the original image alongside this prompt. Supports user_prompt and style variables."
 msgstr "Envuelve solicitudes de 'Editar esta imagen'. La IA recibe la imagen original junto con este prompt. Soporta variables user_prompt y style."

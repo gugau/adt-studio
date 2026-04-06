@@ -1384,6 +1384,9 @@ msgstr "Generate"
 msgid "Generate and customize the table of contents for the book navigation."
 msgstr "Generate and customize the table of contents for the book navigation."
 
+msgid "Generate audio"
+msgstr "Generate audio"
+
 #~ msgid "Generate audio narration for text entries."
 #~ msgstr "Generate audio narration for text entries."
 
@@ -1926,6 +1929,9 @@ msgstr "No accessibility findings were reported for this page."
 msgid "No assessment"
 msgstr "No assessment"
 
+msgid "No audio"
+msgstr "No audio"
+
 msgid "No captions for this page"
 msgstr "No captions for this page"
 
@@ -2400,6 +2406,12 @@ msgstr "Refresh validation"
 msgid "Refreshing results for this packaged preview."
 msgstr "Refreshing results for this packaged preview."
 
+msgid "Regenerate"
+msgstr "Regenerate"
+
+msgid "Regenerate all speech"
+msgstr "Regenerate all speech"
+
 msgid "Regenerate speech"
 msgstr "Regenerate speech"
 
@@ -2846,6 +2858,9 @@ msgstr "Speech Generation"
 
 msgid "Speech Prompts"
 msgstr "Speech Prompts"
+
+msgid "Speech Settings"
+msgstr "Speech Settings"
 
 msgid "Spread Mode"
 msgstr "Spread Mode"
@@ -3317,6 +3332,9 @@ msgstr "When enabled, background colors from the styleguide are applied to the f
 
 msgid "Whole-book checks for packaged ADT output, plus reviewer findings captured from Preview."
 msgstr "Whole-book checks for packaged ADT output, plus reviewer findings captured from Preview."
+
+msgid "Word-level timecodes"
+msgstr "Word-level timecodes"
 
 msgid "Wraps 'Edit this image' requests. The AI receives the original image alongside this prompt. Supports user_prompt and style variables."
 msgstr "Wraps 'Edit this image' requests. The AI receives the original image alongside this prompt. Supports user_prompt and style variables."

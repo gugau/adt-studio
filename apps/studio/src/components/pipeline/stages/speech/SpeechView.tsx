@@ -1,6 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from "react"
-import { Volume2, Loader2, Play, Pause, WandSparkles } from "lucide-react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { Volume2, Loader2, Play, Pause, WandSparkles, RefreshCw, MoreVertical, Clock, Trash2 } from "lucide-react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Link } from "@tanstack/react-router"
+import { Settings } from "lucide-react"
 import { api, getAudioUrl, BASE_URL } from "@/api/client"
 import type { TextCatalogEntry } from "@/api/client"
 import { useActiveConfig } from "@/hooks/use-debug"
@@ -27,6 +29,17 @@ function isImageEntry(id: string): boolean {
 const ANSWER_ID_RE = /_ans_/
 function isAnswerEntry(id: string): boolean {
   return ANSWER_ID_RE.test(id)
+}
+
+type CatalogFilter = "all" | "text" | "captions" | "activities" | "answers" | "glossary" | "quizzes"
+
+function getEntryType(id: string): CatalogFilter {
+  if (id.startsWith("gl")) return "glossary"
+  if (id.startsWith("qz")) return "quizzes"
+  if (ANSWER_ID_RE.test(id)) return "answers"
+  if (IMAGE_ID_RE.test(id)) return "captions"
+  if (/_ac\d{3}/.test(id)) return "activities"
+  return "text"
 }
 
 const langNames = new Intl.DisplayNames(["en"], { type: "language" })
@@ -84,6 +97,7 @@ export function SpeechView({ bookLabel, selectedPageId, onSelectPage }: { bookLa
 
   const [selectedLang, setSelectedLang] = useState<string | null>(null)
   const [generateErrorById, setGenerateErrorById] = useState<Record<string, string>>({})
+  const [catalogFilter, setCatalogFilter] = useState<CatalogFilter>("all")
 
   useEffect(() => {
     if (hasExplicitOutputLanguages && outputLanguages.length > 0 && !selectedLang) {
@@ -92,30 +106,43 @@ export function SpeechView({ bookLabel, selectedPageId, onSelectPage }: { bookLa
   }, [outputLanguages.length, hasExplicitOutputLanguages])
 
   const entries = catalog?.entries ?? []
-  const displayEntries = selectedPageId
+  const filteredByPage = selectedPageId
     ? entries.filter((e) => e.id.startsWith(selectedPageId + "_"))
     : entries
+  const displayEntries = catalogFilter === "all"
+    ? filteredByPage
+    : filteredByPage.filter((e) => getEntryType(e.id) === catalogFilter)
 
-  const { editingLanguage } = resolveTranslationLanguageState({
+  const typeCounts = useMemo(() => {
+    const counts: Record<CatalogFilter, number> = { all: 0, text: 0, captions: 0, activities: 0, answers: 0, glossary: 0, quizzes: 0 }
+    for (const e of filteredByPage) {
+      counts[getEntryType(e.id)]++
+      counts.all++
+    }
+    return counts
+  }, [filteredByPage])
+
+  const { editingLanguage, isSourceLang: isSelectedSourceLang } = resolveTranslationLanguageState({
     selectedLang,
     configuredEditingLanguage,
     bookLanguage,
     isBookLoading,
   })
+  const isSourceLang = !hasExplicitOutputLanguages || isSelectedSourceLang
+
+  // Translation data (read-only in speech view)
+  const translationData = selectedLang ? catalog?.translations?.[selectedLang] : undefined
+  const translatedEntries = isSourceLang ? entries : (translationData?.entries ?? [])
+  const translatedMap = new Map(translatedEntries.map((e) => [e.id, e.text]))
 
   const audioLang = selectedLang ??
     (hasExplicitOutputLanguages ? (outputLanguages[0] ?? editingLanguage) : editingLanguage)
   const currentLanguageUsesGemini =
     !!audioLang && languageUsesSpeechProvider(audioLang, "gemini", speechConfig)
   const geminiRoutedLanguages = (
-    outputLanguages.length > 0
-      ? outputLanguages
-      : editingLanguage
-        ? [editingLanguage]
-        : []
+    outputLanguages.length > 0 ? outputLanguages : editingLanguage ? [editingLanguage] : []
   ).filter((language, index, array) =>
-    languageUsesSpeechProvider(language, "gemini", speechConfig) &&
-    array.indexOf(language) === index
+    languageUsesSpeechProvider(language, "gemini", speechConfig) && array.indexOf(language) === index
   )
   const allowGeminiPartialView =
     hasStageError &&
@@ -135,13 +162,24 @@ export function SpeechView({ bookLabel, selectedPageId, onSelectPage }: { bookLa
   const generatedAudioCount = displayEntries.filter((entry) => audioMap.has(entry.id)).length
   const missingAudioCount = Math.max(displayEntries.length - generatedAudioCount, 0)
 
+  // Speech config
+  const speechCfg = speechConfig as { default_provider?: string; voice?: string; model?: string } | undefined
+  const defaultProvider = speechCfg?.default_provider ?? "openai"
+  const defaultVoice = speechCfg?.voice ?? "alloy"
+  const defaultModel = speechCfg?.model ?? (defaultProvider === "openai" ? "gpt-4o-mini-tts" : undefined)
+  const providerLabel = defaultProvider.charAt(0).toUpperCase() + defaultProvider.slice(1)
+
   const scrollRef = useRef<HTMLDivElement>(null)
   const virtualizer = useVirtualizer({
     count: displayEntries.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => 60,
-    overscan: 5,
+    estimateSize: () => 140,
+    overscan: 3,
   })
+
+  useEffect(() => {
+    virtualizer.scrollToOffset(0)
+  }, [catalogFilter, selectedLang, selectedPageId])
 
   const generateAudioMutation = useMutation({
     mutationFn: async (variables: { textId: string; language: string }) => {
@@ -192,6 +230,17 @@ export function SpeechView({ bookLabel, selectedPageId, onSelectPage }: { bookLa
     },
     [audioLang, currentLanguageUsesGemini, generateAudioMutation]
   )
+
+  const clearSpeechMutation = useMutation({
+    mutationFn: () => api.clearStage(bookLabel, "speech"),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "tts"] }),
+        queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "step-status"] }),
+      ])
+      setGenerateErrorById({})
+    },
+  })
 
   useEffect(() => {
     if (!catalog) return
@@ -261,10 +310,10 @@ export function SpeechView({ bookLabel, selectedPageId, onSelectPage }: { bookLa
           </Alert>
         )}
 
-        {/* Language tabs — only when there are multiple output languages */}
+        {/* Language tabs */}
         {outputLanguages.length > 1 && (
-        <div className="flex gap-1.5">
-          {outputLanguages.map((lang) => (
+          <div className="flex gap-1.5">
+            {outputLanguages.map((lang) => (
               <button
                 key={lang}
                 type="button"
@@ -284,9 +333,104 @@ export function SpeechView({ bookLabel, selectedPageId, onSelectPage }: { bookLa
                   ({lang})
                 </span>
               </button>
-          ))}
-        </div>
+            ))}
+          </div>
         )}
+
+        {/* Catalog type filters */}
+        {filteredByPage.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {([
+              ["all", t`All`],
+              ["text", t`Text`],
+              ["captions", t`Captions`],
+              ["activities", t`Activities`],
+              ["answers", t`Answers`],
+              ["glossary", t`Glossary`],
+              ["quizzes", t`Quizzes`],
+            ] as const).map(([key, label]) => {
+              const count = typeCounts[key]
+              if (key !== "all" && count === 0) return null
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setCatalogFilter(key)}
+                  className={cn(
+                    "text-[11px] h-6 px-2.5 rounded-full font-medium transition-colors cursor-pointer",
+                    catalogFilter === key
+                      ? "bg-foreground text-background"
+                      : "bg-muted text-muted-foreground hover:bg-accent"
+                  )}
+                >
+                  {label}
+                  <span className={cn(
+                    "ml-1 text-[10px]",
+                    catalogFilter === key ? "opacity-60" : "opacity-50"
+                  )}>
+                    {count}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Speech control panel */}
+        <div className="rounded-lg border border-rose-200 bg-rose-50/30 px-4 py-2.5 space-y-2">
+          <div className="flex items-center gap-2">
+            <Volume2 className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+            <p className="flex-1 text-xs font-medium text-rose-900">
+              {t`Speech`}
+              <span className="font-normal text-rose-600 ml-1.5">
+                {currentLanguageUsesGemini
+                  ? t`${String(generatedAudioCount)}/${String(displayEntries.length)}`
+                  : t`${String(totalAudioFiles)} files`}
+              </span>
+            </p>
+            {isRunning ? (
+              <Loader2 className="w-4 h-4 animate-spin text-rose-500 shrink-0" />
+            ) : (
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={handleRunSpeech}
+                  disabled={!hasApiKey}
+                  className="flex items-center justify-center w-6 h-6 rounded text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer disabled:opacity-50"
+                  title={t`Regenerate all speech`}
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => clearSpeechMutation.mutate()}
+                  disabled={clearSpeechMutation.isPending}
+                  className="flex items-center justify-center w-6 h-6 rounded text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer disabled:opacity-50"
+                  title={t`Clear speech data`}
+                >
+                  {clearSpeechMutation.isPending ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-3.5 w-3.5" />
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="text-[11px] text-rose-800/70">
+            {providerLabel} <span className="text-rose-300">·</span> {defaultVoice}
+            {defaultModel && <>{" "}<span className="text-rose-300">·</span> {defaultModel}</>}
+          </div>
+          <Link
+            to="/books/$label/$step/settings"
+            params={{ label: bookLabel, step: "translation" }}
+            search={{ tab: "speech" }}
+            className="inline-flex items-center gap-1 text-[10px] font-medium text-rose-600 hover:text-rose-700 transition-colors"
+          >
+            <Settings className="w-2.5 h-2.5" />
+            {t`Speech Settings`}
+          </Link>
+        </div>
       </div>
 
       {/* Entries */}
@@ -299,49 +443,40 @@ export function SpeechView({ bookLabel, selectedPageId, onSelectPage }: { bookLa
           <p className="text-xs mt-1">{t`This page has no text entries with audio`}</p>
         </div>
       ) : (
-      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
-        <div style={{ height: virtualizer.getTotalSize(), width: "100%", position: "relative" }}>
-          {virtualizer.getVirtualItems().map((virtualRow) => {
-            const entry = displayEntries[virtualRow.index]
-            const audio = audioMap.get(entry.id)
-            const isImg = isImageEntry(entry.id)
-            const isAnswer = isAnswerEntry(entry.id)
+        <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 pt-3">
+          <div style={{ height: virtualizer.getTotalSize(), width: "100%", position: "relative" }}>
+            {virtualizer.getVirtualItems().map((virtualRow) => {
+              const entry = displayEntries[virtualRow.index]
+              const audio = audioMap.get(entry.id)
+              const isImg = isImageEntry(entry.id)
+              const isAnswer = isAnswerEntry(entry.id)
+              const translated = translatedMap.get(entry.id)
 
-            return (
-              <div
-                key={entry.id}
-                data-index={virtualRow.index}
-                ref={virtualizer.measureElement}
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  transform: `translateY(${virtualRow.start}px)`,
-                }}
-              >
-                <div className="pb-1">
-                  <div className={cn("flex items-start gap-3 px-3 py-2.5 rounded-md border", isAnswer ? "bg-amber-50/60" : "bg-card")}>
-                    {isImg && (
-                      <img
-                        src={`${BASE_URL}/books/${bookLabel}/images/${entry.id}`}
-                        alt=""
-                        className="shrink-0 w-16 h-12 rounded object-cover ring-1 ring-border"
-                      />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <span className="text-[10px] text-muted-foreground">
-                        {entry.id}
-                        {isAnswer && <span className="ml-1.5 text-[9px] font-medium text-amber-700 bg-amber-100 rounded px-1 py-0.5">{t`Answer`}</span>}
-                      </span>
-                      <p className="text-sm leading-relaxed mt-0.5">{entry.text}</p>
-                    </div>
-                    {!isAnswer && <AudioAction
+              return (
+                <div
+                  key={entry.id}
+                  data-index={virtualRow.index}
+                  ref={virtualizer.measureElement}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <div className="pb-2">
+                    <SpeechEntryCard
+                      entry={entry}
+                      translated={isSourceLang ? null : (translated ?? null)}
+                      editingLanguage={editingLanguage}
+                      selectedLang={isSourceLang ? null : (selectedLang ?? null)}
                       audio={audio}
                       audioLang={audioLang}
                       bookLabel={bookLabel}
-                      textId={entry.id}
-                      canGenerate={currentLanguageUsesGemini}
+                      isImg={isImg}
+                      isAnswer={isAnswer}
+                      canGenerate={currentLanguageUsesGemini && !isAnswer}
                       hasGeminiKey={geminiKey.length > 0}
                       onGenerate={handleGenerateAudio}
                       isGenerating={
@@ -350,77 +485,46 @@ export function SpeechView({ bookLabel, selectedPageId, onSelectPage }: { bookLa
                         generateAudioMutation.variables?.language === audioLang
                       }
                       errorMessage={generateErrorById[entry.id]}
-                    />}
+                    />
                   </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
+          {showAllButton}
         </div>
-        {showAllButton}
-      </div>
       )}
     </div>
   )
 }
 
-function PlayButton({ audioUrl }: { audioUrl: string }) {
-  const [playing, setPlaying] = useState(false)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+/* ---------- Entry card ---------- */
 
-  const toggle = () => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio(audioUrl)
-      audioRef.current.addEventListener("ended", () => setPlaying(false))
-    }
-    if (playing) {
-      audioRef.current.pause()
-      audioRef.current.currentTime = 0
-      setPlaying(false)
-    } else {
-      audioRef.current.play()
-      setPlaying(true)
-    }
-  }
-
-  useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current = null
-      }
-    }
-  }, [])
-
-  return (
-    <button
-      type="button"
-      onClick={toggle}
-      className={cn(
-        "shrink-0 flex items-center justify-center w-6 h-6 rounded-full transition-all mt-3 cursor-pointer",
-        playing ? "bg-rose-500 text-white hover:bg-rose-600 scale-110" : "bg-muted text-muted-foreground hover:bg-rose-100 hover:text-rose-600 hover:scale-110"
-      )}
-    >
-      {playing ? <Pause className="w-2.5 h-2.5" /> : <Play className="w-2.5 h-2.5 ml-0.5" />}
-    </button>
-  )
-}
-
-function AudioAction({
+function SpeechEntryCard({
+  entry,
+  translated,
+  editingLanguage,
+  selectedLang,
   audio,
   audioLang,
   bookLabel,
-  textId,
+  isImg,
+  isAnswer,
   canGenerate,
   hasGeminiKey,
   onGenerate,
   isGenerating,
   errorMessage,
 }: {
+  entry: TextCatalogEntry
+  translated: string | null
+  editingLanguage: string
+  selectedLang: string | null
   audio?: { fileName: string; voice: string }
   audioLang: string | null
   bookLabel: string
-  textId: string
+  isImg: boolean
+  isAnswer: boolean
   canGenerate: boolean
   hasGeminiKey: boolean
   onGenerate: (textId: string) => void
@@ -429,46 +533,318 @@ function AudioAction({
 }) {
   const { t } = useLingui()
 
-  if (audio && audioLang) {
-    return (
-      <PlayButton
-        key={audioLang}
-        audioUrl={getAudioUrl(bookLabel, audioLang, audio.fileName)}
-      />
-    )
-  }
+  return (
+    <div className={cn("rounded-lg border px-4 py-3 space-y-2.5", isAnswer ? "bg-amber-50/60" : "bg-card")}>
+      {/* Header: ID + badges + action menu */}
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] text-muted-foreground font-mono truncate flex-1">
+          {entry.id}
+          {isAnswer && <span className="ml-1.5 text-[9px] font-medium text-amber-700 bg-amber-100 rounded px-1 py-0.5 font-sans">{t`Answer`}</span>}
+        </span>
+        {audio && audioLang && (
+          <span className="text-[9px] text-muted-foreground bg-muted rounded px-1.5 py-0.5 shrink-0">
+            {audio.voice}
+          </span>
+        )}
+        {audio && canGenerate && (
+          <EntryMenu
+            onRegenerate={() => onGenerate(entry.id)}
+            isRegenerating={isGenerating}
+            hasGeminiKey={hasGeminiKey}
+          />
+        )}
+      </div>
 
-  if (!canGenerate) {
-    return null
-  }
+      {/* Text content */}
+      <div className="space-y-1">
+        {isImg && (
+          <img
+            src={`${BASE_URL}/books/${bookLabel}/images/${entry.id}`}
+            alt=""
+            className="w-20 h-14 rounded object-cover ring-1 ring-border"
+          />
+        )}
+        <div>
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+            {displayLang(editingLanguage)}
+          </span>
+          <p className="text-sm leading-relaxed">{entry.text}</p>
+        </div>
+        {translated !== null && selectedLang && (
+          <div>
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+              {displayLang(selectedLang)}
+            </span>
+            <p className="text-sm leading-relaxed text-muted-foreground">{translated || <span className="italic">{t`Pending...`}</span>}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Audio section */}
+      {!isAnswer && (
+        <div className="space-y-1.5">
+          {audio && audioLang ? (
+            <WaveformPlayer audioUrl={getAudioUrl(bookLabel, audioLang, audio.fileName)} />
+          ) : canGenerate ? (
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 px-2.5 text-[10px]"
+                disabled={isGenerating || !hasGeminiKey}
+                onClick={() => onGenerate(entry.id)}
+                title={
+                  hasGeminiKey
+                    ? t`Generate audio`
+                    : t`Set a Gemini API key to generate audio`
+                }
+              >
+                {isGenerating ? (
+                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                ) : (
+                  <WandSparkles className="mr-1 h-3 w-3" />
+                )}
+                {t`Generate`}
+              </Button>
+              {errorMessage && (
+                <p className="text-[10px] leading-tight text-red-500 truncate flex-1">
+                  {errorMessage}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="h-6 flex items-center">
+              <span className="text-[10px] text-muted-foreground italic">{t`No audio`}</span>
+            </div>
+          )}
+
+          {/* Timecode placeholder */}
+          {audio && audioLang && (
+            <div className="flex items-center gap-1.5 pt-0.5">
+              <Clock className="w-3 h-3 text-muted-foreground/40" />
+              <span className="text-[10px] text-muted-foreground/40">{t`Word-level timecodes`}</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ---------- Entry action menu ---------- */
+
+function EntryMenu({ onRegenerate, isRegenerating, hasGeminiKey }: { onRegenerate: () => void; isRegenerating: boolean; hasGeminiKey: boolean }) {
+  const { t } = useLingui()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [open])
 
   return (
-    <div className="flex flex-col items-end gap-1 shrink-0">
-      <Button
+    <div ref={ref} className="relative shrink-0">
+      <button
         type="button"
-        variant="outline"
-        size="sm"
-        className="h-7 px-2 text-[10px]"
-        disabled={isGenerating || !hasGeminiKey}
-        onClick={() => onGenerate(textId)}
-        title={
-          hasGeminiKey
-            ? t`Generate missing Gemini audio`
-            : t`Set a Gemini API key to generate audio`
-        }
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-center w-6 h-6 rounded text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
       >
-        {isGenerating ? (
-          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-        ) : (
-          <WandSparkles className="mr-1 h-3 w-3" />
-        )}
-        {t`Generate`}
-      </Button>
-      {errorMessage && (
-        <p className="max-w-44 text-[10px] leading-tight text-red-500 text-right">
-          {errorMessage}
-        </p>
+        <MoreVertical className="w-3.5 h-3.5" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-20 bg-popover border rounded shadow-md min-w-[140px] py-1">
+          <button
+            type="button"
+            disabled={isRegenerating || !hasGeminiKey}
+            onClick={() => { onRegenerate(); setOpen(false) }}
+            className="w-full text-left px-3 py-1.5 text-xs hover:bg-accent transition-colors flex items-center gap-2 disabled:opacity-50"
+          >
+            {isRegenerating ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <RefreshCw className="w-3 h-3" />
+            )}
+            {t`Regenerate`}
+          </button>
+        </div>
       )}
+    </div>
+  )
+}
+
+/* ---------- Waveform player ---------- */
+
+let activePlayer: { stop: () => void } | null = null
+
+function formatTime(s: number): string {
+  const m = Math.floor(s / 60)
+  const sec = Math.floor(s % 60)
+  return `${m}:${sec.toString().padStart(2, "0")}`
+}
+
+function computePeaks(buffer: AudioBuffer, barCount: number): number[] {
+  const data = buffer.getChannelData(0)
+  const step = Math.max(1, Math.floor(data.length / barCount))
+  const peaks: number[] = []
+  for (let i = 0; i < barCount; i++) {
+    let max = 0
+    const start = i * step
+    const end = Math.min(start + step, data.length)
+    for (let j = start; j < end; j++) {
+      const v = Math.abs(data[j])
+      if (v > max) max = v
+    }
+    peaks.push(max)
+  }
+  const maxPeak = Math.max(...peaks, 0.01)
+  return peaks.map((p) => p / maxPeak)
+}
+
+const BAR_COUNT = 60
+
+function WaveformPlayer({ audioUrl }: { audioUrl: string }) {
+  const [playing, setPlaying] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [peaks, setPeaks] = useState<number[] | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const rafRef = useRef<number>(0)
+  const fetchedRef = useRef(false)
+
+  // Fetch waveform data eagerly
+  useEffect(() => {
+    if (fetchedRef.current) return
+    fetchedRef.current = true
+    fetch(audioUrl)
+      .then((r) => r.arrayBuffer())
+      .then((buf) => new AudioContext().decodeAudioData(buf))
+      .then((decoded) => {
+        setPeaks(computePeaks(decoded, BAR_COUNT))
+        setDuration(decoded.duration)
+      })
+      .catch(() => {})
+  }, [audioUrl])
+
+  const tick = useCallback(() => {
+    if (audioRef.current) {
+      setProgress(audioRef.current.currentTime)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+  }, [])
+
+  const stop = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+    }
+    cancelAnimationFrame(rafRef.current)
+    setPlaying(false)
+    setProgress(0)
+  }, [])
+
+  const toggle = () => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio(audioUrl)
+      audioRef.current.addEventListener("loadedmetadata", () => {
+        setDuration(audioRef.current!.duration)
+      })
+      audioRef.current.addEventListener("ended", () => {
+        activePlayer = null
+        setPlaying(false)
+        setProgress(0)
+        cancelAnimationFrame(rafRef.current)
+      })
+    }
+    if (playing) {
+      activePlayer = null
+      audioRef.current.pause()
+      cancelAnimationFrame(rafRef.current)
+      setPlaying(false)
+    } else {
+      if (activePlayer) activePlayer.stop()
+      activePlayer = { stop }
+      audioRef.current.play()
+      setPlaying(true)
+      rafRef.current = requestAnimationFrame(tick)
+    }
+  }
+
+  const seek = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!audioRef.current || !duration) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+    audioRef.current.currentTime = pct * duration
+    setProgress(pct * duration)
+  }
+
+  useEffect(() => {
+    return () => {
+      cancelAnimationFrame(rafRef.current)
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+      if (activePlayer?.stop === stop) activePlayer = null
+    }
+  }, [stop])
+
+  const pct = duration > 0 ? (progress / duration) * 100 : 0
+
+  return (
+    <div className="flex items-center gap-2.5 bg-muted/40 rounded-lg px-3 py-2">
+      <button
+        type="button"
+        onClick={toggle}
+        className={cn(
+          "shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all cursor-pointer",
+          playing ? "bg-rose-500 text-white hover:bg-rose-600 scale-105" : "bg-rose-100 text-rose-600 hover:bg-rose-200"
+        )}
+      >
+        {playing ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 ml-0.5" />}
+      </button>
+
+      <div className="flex-1 min-w-0 space-y-1">
+        <div
+          className="relative h-8 cursor-pointer rounded overflow-hidden"
+          onClick={seek}
+        >
+          {peaks ? (
+            <div className="flex items-end h-full gap-px">
+              {peaks.map((p, i) => {
+                const barPct = ((i + 0.5) / BAR_COUNT) * 100
+                return (
+                  <div
+                    key={i}
+                    className="flex-1 rounded-sm transition-colors"
+                    style={{
+                      height: `${Math.max(8, p * 100)}%`,
+                      backgroundColor: barPct <= pct ? "rgb(244 63 94)" : "rgb(228 228 231)",
+                    }}
+                  />
+                )
+              })}
+            </div>
+          ) : (
+            <div className="h-full bg-muted rounded relative flex items-center justify-center">
+              <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+            </div>
+          )}
+        </div>
+        <div className="flex items-center justify-between px-0.5">
+          <span className="text-[9px] text-muted-foreground tabular-nums">
+            {duration > 0 ? formatTime(progress) : "0:00"}
+          </span>
+          <span className="text-[9px] text-muted-foreground tabular-nums">
+            {duration > 0 ? formatTime(duration) : "—"}
+          </span>
+        </div>
+      </div>
     </div>
   )
 }
