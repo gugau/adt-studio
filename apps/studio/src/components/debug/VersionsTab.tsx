@@ -15,7 +15,7 @@ import { useVersionHistory } from "@/hooks/use-debug"
 
 const NODE_TYPES = [
   "extraction-debug",
-  "text-classification",
+  "page-structuring",
   "image-filtering",
   "image-cropping",
   "page-sectioning",

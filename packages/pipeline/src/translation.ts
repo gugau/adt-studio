@@ -1,5 +1,5 @@
 import { z } from "zod"
-import type { TextClassificationOutput, AppConfig } from "@adt/types"
+import type { TextClassificationOutput, ContentNodeData, PageStructuringOutput, AppConfig } from "@adt/types"
 import { DEFAULT_LLM_MAX_RETRIES } from "@adt/types"
 import type { LLMModel, ValidationResult } from "@adt/llm"
 import {
@@ -45,7 +45,7 @@ export function buildTranslationConfig(
     promptName: appConfig.translation?.prompt ?? "translation",
     modelId:
       appConfig.translation?.model ??
-      appConfig.text_classification?.model ??
+      appConfig.page_structuring?.model ?? appConfig.text_classification?.model ??
       "openai:gpt-4.1",
     maxRetries: appConfig.translation?.max_retries ?? DEFAULT_LLM_MAX_RETRIES,
   }
@@ -119,5 +119,86 @@ export async function translatePageText(
   return {
     reasoning: `Translated from ${config.sourceLanguage} to ${config.targetLanguage}. Original reasoning: ${textClassification.reasoning}`,
     groups: translatedGroups,
+  }
+}
+
+/**
+ * Translate all text in a PageStructuringOutput tree.
+ * Depth-first walk to collect text from leaf nodes, batch translate,
+ * then reconstruct the tree with translated text in the same order.
+ */
+export async function translatePageStructuring(
+  pageId: string,
+  structuring: PageStructuringOutput,
+  config: TranslationConfig,
+  llmModel: LLMModel
+): Promise<PageStructuringOutput> {
+  // Depth-first collect all text leaf nodes
+  const texts: Array<{ index: number; text: string }> = []
+
+  function collectTexts(nodes: ContentNodeData[]) {
+    for (const node of nodes) {
+      if (node.text !== undefined) {
+        texts.push({ index: texts.length, text: node.text })
+      }
+      if (node.children) {
+        collectTexts(node.children)
+      }
+    }
+  }
+
+  collectTexts(structuring.nodes)
+
+  if (texts.length === 0) return structuring
+
+  const result = await llmModel.generateObject<{
+    translations: string[]
+  }>({
+    schema: translationSchema,
+    prompt: config.promptName,
+    context: {
+      ...buildTranslationLanguageContext(config.sourceLanguage, config.targetLanguage),
+      texts,
+    },
+    validate: (raw: unknown): ValidationResult => {
+      const r = raw as { translations: string[] }
+      if (r.translations.length !== texts.length) {
+        return {
+          valid: false,
+          errors: [
+            `Expected ${texts.length} translations but got ${r.translations.length}. You must return exactly one translation for each input text, in the same order.`,
+          ],
+        }
+      }
+      return { valid: true, errors: [] }
+    },
+    maxRetries: config.maxRetries,
+    maxTokens: 16384,
+    log: {
+      taskType: "translation",
+      pageId,
+      promptName: config.promptName,
+    },
+  })
+
+  // Reconstruct tree with translated text in depth-first order
+  let textIndex = 0
+
+  function applyTranslations(nodes: ContentNodeData[]): ContentNodeData[] {
+    return nodes.map((node) => {
+      const translated = { ...node }
+      if (node.text !== undefined) {
+        translated.text = result.object.translations[textIndex++]
+      }
+      if (node.children) {
+        translated.children = applyTranslations(node.children)
+      }
+      return translated
+    })
+  }
+
+  return {
+    reasoning: `Translated from ${config.sourceLanguage} to ${config.targetLanguage}. Original reasoning: ${structuring.reasoning}`,
+    nodes: applyTranslations(structuring.nodes),
   }
 }

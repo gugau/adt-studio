@@ -51,7 +51,7 @@ export function buildCaptionConfig(appConfig: AppConfig): CaptionConfig {
     promptName: appConfig.image_captioning?.prompt ?? "image_captioning",
     modelId:
       appConfig.image_captioning?.model ??
-      appConfig.text_classification?.model ??
+      appConfig.page_structuring?.model ?? appConfig.text_classification?.model ??
       "openai:gpt-4.1",
     maxRetries:
       appConfig.image_captioning?.max_retries ?? DEFAULT_LLM_MAX_RETRIES,

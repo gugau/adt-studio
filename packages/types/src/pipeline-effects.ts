@@ -68,7 +68,7 @@ const NODE_CACHE_RESOURCES: Record<PipelineNodeName, readonly PipelineCacheResou
   "image-segmentation": ["pages"],
   "image-cropping": ["pages"],
   "image-meaningfulness": ["pages"],
-  "text-classification": ["pages"],
+  "page-structuring": ["pages"],
   "translation": ["pages"],
   "page-sectioning": ["pages"],
   "web-rendering": ["pages"],

@@ -1,5 +1,6 @@
 import type {
   AccessibilityAssessmentOutput,
+  ContentNodeData,
   ReviewerPageValidationRecord,
   ReviewerValidationIdentificationField,
   ReviewerValidationInstruction,
@@ -165,14 +166,9 @@ export interface PageDetail {
   pageId: string
   pageNumber: number
   text: string
-  textClassification: {
+  pageStructuring: {
     reasoning: string
-    groups: Array<{
-      groupId: string
-      groupType: string
-      texts: Array<{ textType: string; text: string; isPruned: boolean }>
-      isPruned: boolean
-    }>
+    nodes: Array<ContentNodeData>
   } | null
   imageClassification: {
     images: Array<{
@@ -225,7 +221,7 @@ export interface PageDetail {
     captions: Array<{ imageId: string; reasoning: string; caption: string }>
   } | null
   versions: {
-    textClassification: number | null
+    pageStructuring: number | null
     imageClassification: number | null
     imageCropping: number | null
     sectioning: number | null
@@ -535,8 +531,8 @@ export const api = {
   getPageImage: (label: string, pageId: string) =>
     request<{ imageBase64: string }>(`/books/${label}/pages/${pageId}/image`),
 
-  updateTextClassification: (label: string, pageId: string, data: unknown) =>
-    request<{ version: number }>(`/books/${label}/pages/${pageId}/text-classification`, {
+  updatePageStructuring: (label: string, pageId: string, data: unknown) =>
+    request<{ version: number }>(`/books/${label}/pages/${pageId}/page-structuring`, {
       method: "PUT",
       body: JSON.stringify(data),
     }),

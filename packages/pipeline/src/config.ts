@@ -1,7 +1,7 @@
 import fs from "node:fs"
 import path from "node:path"
 import yaml from "js-yaml"
-import { AppConfig, parseBookLabel } from "@adt/types"
+import { AppConfig, migrateAppConfig, parseBookLabel } from "@adt/types"
 
 /**
  * Deep-merge two plain objects. Plain objects recurse;
@@ -42,7 +42,7 @@ export function loadConfig(configPath?: string): AppConfig {
     throw new Error(`Config file not found: ${resolved}`)
   }
   const raw = yaml.load(fs.readFileSync(resolved, "utf-8"))
-  return AppConfig.parse(raw)
+  return AppConfig.parse(migrateAppConfig(raw as Record<string, unknown>))
 }
 
 export function loadBookConfig(
@@ -59,7 +59,6 @@ export function loadBookConfig(
   )
   if (!fs.existsSync(bookConfigPath)) return base
   const overrides = yaml.load(fs.readFileSync(bookConfigPath, "utf-8"))
-  return AppConfig.parse(
-    deepMerge(base, overrides as Record<string, unknown>)
-  )
+  const merged = deepMerge(base, overrides as Record<string, unknown>)
+  return AppConfig.parse(migrateAppConfig(merged as Record<string, unknown>))
 }

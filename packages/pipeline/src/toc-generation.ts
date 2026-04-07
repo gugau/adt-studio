@@ -28,7 +28,7 @@ export function buildTocGenerationConfig(
     promptName: appConfig.toc_generation?.prompt ?? "toc_generation",
     modelId:
       appConfig.toc_generation?.model ??
-      appConfig.text_classification?.model ??
+      appConfig.page_structuring?.model ?? appConfig.text_classification?.model ??
       "openai:gpt-4.1",
     maxRetries: appConfig.toc_generation?.max_retries ?? DEFAULT_LLM_MAX_RETRIES,
     language,

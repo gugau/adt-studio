@@ -216,7 +216,7 @@ describe("createBookStorage", () => {
     storage.putExtractedPage(makePage(1))
     storage.putExtractedPage(makePage(2))
     storage.putNodeData("metadata", "book", { title: "Test" })
-    storage.putNodeData("text-classification", "pg001", { reasoning: "test" })
+    storage.putNodeData("page-structuring", "pg001", { reasoning: "test" })
     storage.clearExtractedData()
 
     const db = openBookDb(paths.dbPath)
@@ -333,13 +333,13 @@ describe("putNodeData / getLatestNodeData", () => {
   it("stores and retrieves versioned data", () => {
     const { storage } = createTempStorage()
 
-    const v1 = storage.putNodeData("text-classification", "pg001", { reasoning: "v1" })
+    const v1 = storage.putNodeData("page-structuring", "pg001", { reasoning: "v1" })
     expect(v1).toBe(1)
 
-    const v2 = storage.putNodeData("text-classification", "pg001", { reasoning: "v2" })
+    const v2 = storage.putNodeData("page-structuring", "pg001", { reasoning: "v2" })
     expect(v2).toBe(2)
 
-    const latest = storage.getLatestNodeData("text-classification", "pg001")
+    const latest = storage.getLatestNodeData("page-structuring", "pg001")
     expect(latest).not.toBeNull()
     expect(latest!.version).toBe(2)
     expect(latest!.data).toEqual({ reasoning: "v2" })
@@ -349,17 +349,17 @@ describe("putNodeData / getLatestNodeData", () => {
 
   it("returns null for missing node data", () => {
     const { storage } = createTempStorage()
-    expect(storage.getLatestNodeData("text-classification", "pg999")).toBeNull()
+    expect(storage.getLatestNodeData("page-structuring", "pg999")).toBeNull()
     storage.close()
   })
 
   it("handles different nodes independently", () => {
     const { storage } = createTempStorage()
 
-    storage.putNodeData("text-classification", "pg001", { a: 1 })
+    storage.putNodeData("page-structuring", "pg001", { a: 1 })
     storage.putNodeData("page-sectioning", "pg001", { b: 2 })
 
-    const tc = storage.getLatestNodeData("text-classification", "pg001")
+    const tc = storage.getLatestNodeData("page-structuring", "pg001")
     const ps = storage.getLatestNodeData("page-sectioning", "pg001")
     expect(tc!.data).toEqual({ a: 1 })
     expect(ps!.data).toEqual({ b: 2 })
@@ -375,7 +375,7 @@ describe("appendLlmLog", () => {
     storage.appendLlmLog({
       requestId: "req-aaa",
       timestamp: "2024-01-01T00:00:00.000Z",
-      taskType: "text-classification",
+      taskType: "page-structuring",
       pageId: "pg001",
       promptName: "text_classification",
       modelId: "gpt-4o",
@@ -416,12 +416,12 @@ describe("appendLlmLog", () => {
     }>
     expect(rows).toHaveLength(2)
     expect(rows[0].request_id).toBe("req-aaa")
-    expect(rows[0].step).toBe("text-classification")
+    expect(rows[0].step).toBe("page-structuring")
     expect(rows[0].item_id).toBe("pg001")
     expect(rows[0].success).toBe(1)
     expect(rows[0].error_count).toBe(2)
     expect(rows[0].timestamp).toBe("2024-01-01T00:00:00.000Z")
-    expect(JSON.parse(rows[0].data).taskType).toBe("text-classification")
+    expect(JSON.parse(rows[0].data).taskType).toBe("page-structuring")
     expect(rows[1].request_id).toBe("req-bbb")
     expect(rows[1].step).toBe("web-rendering")
     expect(rows[1].item_id).toBe("pg002")

@@ -27,7 +27,7 @@ export function buildGlossaryConfig(
     promptName: appConfig.glossary?.prompt ?? "glossary",
     modelId:
       appConfig.glossary?.model ??
-      appConfig.text_classification?.model ??
+      appConfig.page_structuring?.model ?? appConfig.text_classification?.model ??
       "openai:gpt-4.1",
     maxRetries: appConfig.glossary?.max_retries ?? DEFAULT_LLM_MAX_RETRIES,
     language,

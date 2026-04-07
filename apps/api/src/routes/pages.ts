@@ -4,7 +4,7 @@ import path from "node:path"
 import { z } from "zod"
 import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
-import { parseBookLabel, TextClassificationOutput, ImageClassificationOutput, PageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES } from "@adt/types"
+import { parseBookLabel, TextClassificationOutput, PageStructuringOutput, ImageClassificationOutput, PageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES } from "@adt/types"
 import { openBookDb } from "@adt/storage"
 import { createBookStorage } from "@adt/storage"
 import type { Storage } from "@adt/storage"
@@ -30,14 +30,14 @@ interface PageDetail {
   pageId: string
   pageNumber: number
   text: string
-  textClassification: unknown | null
+  pageStructuring: unknown | null
   imageClassification: unknown | null
   imageCropping: unknown | null
   sectioning: unknown | null
   rendering: unknown | null
   imageCaptioning: unknown | null
   versions: {
-    textClassification: number | null
+    pageStructuring: number | null
     imageClassification: number | null
     imageCropping: number | null
     sectioning: number | null
@@ -446,11 +446,11 @@ export function createPageRoutes(
         }
       }
 
-      // Get classified text per page from text-classification node data
+      // Get classified text per page from page-structuring (or legacy text-classification) node data
       const classifiedText = new Map<string, string>()
       const textClassRows = db.all(
-        "SELECT item_id, data FROM node_data WHERE node = ? ORDER BY version DESC",
-        ["text-classification"]
+        "SELECT item_id, data FROM node_data WHERE node IN (?, ?) ORDER BY version DESC",
+        ["page-structuring", "text-classification"]
       ) as Array<{ item_id: string; data: string }>
       for (const row of textClassRows) {
         if (!classifiedText.has(row.item_id)) {
@@ -526,7 +526,7 @@ export function createPageRoutes(
         return { data: JSON.parse(rows[0].data), version: rows[0].version }
       }
 
-      const textClassNode = getNodeData("text-classification")
+      const pageStructuringNode = getNodeData("page-structuring") ?? getNodeData("text-classification")
       const imageClassNode = getNodeData("image-filtering")
       const imageCroppingNode = getNodeData("image-cropping")
       const sectioningNode = getNodeData("page-sectioning")
@@ -537,14 +537,14 @@ export function createPageRoutes(
         pageId: page.page_id,
         pageNumber: page.page_number,
         text: page.text,
-        textClassification: textClassNode?.data ?? null,
+        pageStructuring: pageStructuringNode?.data ?? null,
         imageClassification: imageClassNode?.data ?? null,
         imageCropping: imageCroppingNode?.data ?? null,
         sectioning: sectioningNode?.data ?? null,
         rendering: renderingNode?.data ?? null,
         imageCaptioning: imageCaptioningNode?.data ?? null,
         versions: {
-          textClassification: textClassNode?.version ?? null,
+          pageStructuring: pageStructuringNode?.version ?? null,
           imageClassification: imageClassNode?.version ?? null,
           imageCropping: imageCroppingNode?.version ?? null,
           sectioning: sectioningNode?.version ?? null,
@@ -601,16 +601,19 @@ export function createPageRoutes(
     }
   })
 
-  // PUT /books/:label/pages/:pageId/text-classification — Update text classification
-  app.put("/books/:label/pages/:pageId/text-classification", async (c) => {
+  // PUT /books/:label/pages/:pageId/page-structuring — Update page structuring
+  app.put("/books/:label/pages/:pageId/page-structuring", async (c) => {
     const { label, pageId } = c.req.param()
     const safeLabel = parseBookLabel(label)
 
     const body = await c.req.json()
-    const parsed = TextClassificationOutput.safeParse(body)
-    if (!parsed.success) {
+    // Accept both new PageStructuringOutput and legacy TextClassificationOutput
+    const parsedNew = PageStructuringOutput.safeParse(body)
+    const parsedLegacy = parsedNew.success ? null : TextClassificationOutput.safeParse(body)
+    const parsed = parsedNew.success ? parsedNew : parsedLegacy
+    if (!parsed || !parsed.success) {
       throw new HTTPException(400, {
-        message: `Invalid text-classification data: ${parsed.error.message}`,
+        message: `Invalid page-structuring data: ${parsedNew.error?.message}`,
       })
     }
 
@@ -622,7 +625,7 @@ export function createPageRoutes(
         throw new HTTPException(404, { message: `Page not found: ${pageId}` })
       }
 
-      const version = storage.putNodeData("text-classification", pageId, parsed.data)
+      const version = storage.putNodeData("page-structuring", pageId, parsed.data)
       return c.json({ version })
     } finally {
       storage.close()

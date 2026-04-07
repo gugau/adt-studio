@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { AlertTriangle, Check, Crop, Eye, EyeOff, FileText, Image, ImageOff, Layers, Loader2, ChevronDown, X } from "lucide-react"
+import { AlertTriangle, Check, ChevronRight, Crop, Eye, EyeOff, FileText, Image, ImageOff, Layers, Loader2, ChevronDown, X } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { usePage, usePageImage } from "@/hooks/use-pages"
 import { api, BASE_URL } from "@/api/client"
 import type { VersionEntry } from "@/api/client"
+import type { ContentNodeData } from "@adt/types"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useBookRun } from "@/hooks/use-book-run"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
-import { getTextGroupLabel, getTextTypeLabel } from "@/lib/text-type-labels"
+import { getTextGroupLabel, getTextTypeLabel, getImageTypeLabel } from "@/lib/text-type-labels"
 import { ImageCropDialog } from "@/components/pipeline/stages/storyboard/components/ImageCropDialog"
 
 function VersionPicker({
@@ -198,8 +199,235 @@ function ImageCard({ imageId, bookLabel, isPruned, reason, onTogglePrune, onRecr
   )
 }
 
-type TextClassData = NonNullable<import("@/api/client").PageDetail["textClassification"]>
+type PageStructuringData = NonNullable<import("@/api/client").PageDetail["pageStructuring"]>
+
+function ContentNodeView({
+  node,
+  depth,
+  configuredTextTypes,
+  configuredImageTypes,
+  configuredContainerTypes,
+  bookLabel,
+  collapsed,
+  onUpdate,
+  onTogglePrune,
+  onToggleCollapse,
+}: {
+  node: ContentNodeData
+  depth: number
+  configuredTextTypes: string[]
+  configuredImageTypes: string[]
+  configuredContainerTypes: string[]
+  bookLabel: string
+  collapsed: Set<string>
+  onUpdate: (nodeId: string, field: string, value: string) => void
+  onTogglePrune: (nodeId: string) => void
+  onToggleCollapse: (nodeId: string) => void
+}) {
+  const { t } = useLingui()
+  const isContainer = node.children != null && node.children.length > 0
+  const isImage = node.imageId != null
+  const isText = node.text != null
+  const isCollapsed = collapsed.has(node.nodeId)
+
+  // Container node
+  if (isContainer) {
+    return (
+      <div
+        className={`rounded border overflow-hidden ${node.isPruned ? "opacity-40" : ""}`}
+        style={{ marginLeft: depth * 16 }}
+      >
+        <div className="px-3 py-1.5 bg-muted/50 border-b flex items-center gap-1.5 group/container">
+          <button
+            type="button"
+            onClick={() => onToggleCollapse(node.nodeId)}
+            className="shrink-0 flex items-center justify-center w-4 h-4 cursor-pointer"
+          >
+            {isCollapsed
+              ? <ChevronRight className="h-3 w-3 text-muted-foreground" />
+              : <ChevronDown className="h-3 w-3 text-muted-foreground" />
+            }
+          </button>
+          <select
+            value={node.nodeType}
+            onChange={(e) => onUpdate(node.nodeId, "nodeType", e.target.value)}
+            className="shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-transparent border-0 outline-none focus:ring-1 focus:ring-ring cursor-pointer appearance-none"
+          >
+            {!configuredContainerTypes.includes(node.nodeType) && (
+              <option value={node.nodeType}>{getTextGroupLabel(node.nodeType)}</option>
+            )}
+            {configuredContainerTypes.map((ct) => (
+              <option key={ct} value={ct}>
+                {getTextGroupLabel(ct)}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => onTogglePrune(node.nodeId)}
+            className={`shrink-0 flex items-center justify-center w-5 h-5 rounded-full cursor-pointer transition-colors ${
+              node.isPruned
+                ? "bg-destructive hover:bg-destructive/80"
+                : "opacity-0 group-hover/container:opacity-100 bg-black/30 hover:bg-black/50"
+            }`}
+            title={node.isPruned ? t`Unprune` : t`Prune`}
+          >
+            {node.isPruned
+              ? <EyeOff className="h-3 w-3 text-white" />
+              : <Eye className="h-3 w-3 text-white" />
+            }
+          </button>
+        </div>
+        {!isCollapsed && (
+          <div className="py-1 space-y-1">
+            {node.children!.map((child) => (
+              <ContentNodeView
+                key={child.nodeId}
+                node={child}
+                depth={depth + 1}
+                configuredTextTypes={configuredTextTypes}
+                configuredImageTypes={configuredImageTypes}
+                configuredContainerTypes={configuredContainerTypes}
+                bookLabel={bookLabel}
+                collapsed={collapsed}
+                onUpdate={onUpdate}
+                onTogglePrune={onTogglePrune}
+                onToggleCollapse={onToggleCollapse}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Image leaf node
+  if (isImage) {
+    // eslint-disable-next-line lingui/no-unlocalized-strings
+    const imgSrc = `${BASE_URL}/books/${bookLabel}/images/${node.imageId}`
+    return (
+      <div
+        className={`group/node flex items-center gap-2 px-3 py-1.5 text-sm ${node.isPruned ? "opacity-40" : ""}`}
+        style={{ marginLeft: depth * 16 }}
+      >
+        <select
+          value={node.nodeType}
+          onChange={(e) => onUpdate(node.nodeId, "nodeType", e.target.value)}
+          className="shrink-0 text-xs font-medium text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5 text-center border-0 outline-none focus:ring-1 focus:ring-ring cursor-pointer appearance-none"
+          style={{ width: `${Math.max(node.nodeType.length * 0.65 + 1.5, 4)}em` }}
+        >
+          {!configuredImageTypes.includes(node.nodeType) && (
+            <option value={node.nodeType}>{getImageTypeLabel(node.nodeType)}</option>
+          )}
+          {configuredImageTypes.map((it) => (
+            <option key={it} value={it}>
+              {getImageTypeLabel(it)}
+            </option>
+          ))}
+        </select>
+        <img
+          src={imgSrc}
+          alt={node.imageId}
+          className="h-16 max-w-[120px] object-contain rounded border"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
+        />
+        <span className="text-[10px] text-muted-foreground truncate">{node.imageId}</span>
+        <button
+          type="button"
+          onClick={() => onTogglePrune(node.nodeId)}
+          className={`shrink-0 ml-auto flex items-center justify-center w-5 h-5 rounded-full cursor-pointer transition-colors ${
+            node.isPruned
+              ? "bg-destructive hover:bg-destructive/80"
+              : "opacity-0 group-hover/node:opacity-100 bg-black/30 hover:bg-black/50"
+          }`}
+          title={node.isPruned ? t`Unprune` : t`Prune`}
+        >
+          {node.isPruned
+            ? <EyeOff className="h-3 w-3 text-white" />
+            : <Eye className="h-3 w-3 text-white" />
+          }
+        </button>
+      </div>
+    )
+  }
+
+  // Text leaf node
+  if (isText) {
+    return (
+      <div
+        className={`group/node flex items-start gap-2 px-3 py-1.5 text-sm ${node.isPruned ? "opacity-40" : ""}`}
+        style={{ marginLeft: depth * 16 }}
+      >
+        <select
+          value={node.nodeType}
+          onChange={(e) => onUpdate(node.nodeId, "nodeType", e.target.value)}
+          className="shrink-0 text-xs font-medium text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5 text-center border-0 outline-none focus:ring-1 focus:ring-ring cursor-pointer appearance-none"
+          style={{ width: `${Math.max(node.nodeType.length * 0.65 + 1.5, 4)}em` }}
+        >
+          {!configuredTextTypes.includes(node.nodeType) && (
+            <option value={node.nodeType}>{getTextTypeLabel(node.nodeType)}</option>
+          )}
+          {configuredTextTypes.map((tt) => (
+            <option key={tt} value={tt}>
+              {getTextTypeLabel(tt)}
+            </option>
+          ))}
+        </select>
+        <textarea
+          value={node.text ?? ""}
+          onChange={(e) => onUpdate(node.nodeId, "text", e.target.value)}
+          rows={1}
+          className="leading-relaxed flex-1 min-w-0 bg-transparent border-0 outline-none resize-none p-0 focus:ring-1 focus:ring-ring focus:rounded"
+          onInput={(e) => {
+            const el = e.target as HTMLTextAreaElement
+            el.style.height = "auto"
+            el.style.height = el.scrollHeight + "px"
+          }}
+          ref={(el) => {
+            if (el) {
+              el.style.height = "auto"
+              el.style.height = el.scrollHeight + "px"
+            }
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => onTogglePrune(node.nodeId)}
+          className={`shrink-0 self-center flex items-center justify-center w-5 h-5 rounded-full cursor-pointer transition-colors ${
+            node.isPruned
+              ? "bg-destructive hover:bg-destructive/80"
+              : "opacity-0 group-hover/node:opacity-100 bg-black/30 hover:bg-black/50"
+          }`}
+          title={node.isPruned ? t`Unprune` : t`Prune`}
+        >
+          {node.isPruned
+            ? <EyeOff className="h-3 w-3 text-white" />
+            : <Eye className="h-3 w-3 text-white" />
+          }
+        </button>
+      </div>
+    )
+  }
+
+  // Empty node (shouldn't happen but handle gracefully)
+  return null
+}
 type ImageClassData = NonNullable<import("@/api/client").PageDetail["imageClassification"]>
+
+/** Recursively find and update a node by ID in a tree */
+function updateNodeInTree(
+  nodes: ContentNodeData[],
+  nodeId: string,
+  updater: (node: ContentNodeData) => ContentNodeData
+): ContentNodeData[] {
+  return nodes.map((node) => {
+    if (node.nodeId === nodeId) return updater(node)
+    if (node.children) {
+      return { ...node, children: updateNodeInTree(node.children, nodeId, updater) }
+    }
+    return node
+  })
+}
 
 export function ExtractPageDetail({
   bookLabel,
@@ -212,19 +440,27 @@ export function ExtractPageDetail({
   const { data: page, isLoading } = usePage(bookLabel, pageId)
   const { data: imageData } = usePageImage(bookLabel, pageId)
   const { data: activeConfigData } = useActiveConfig(bookLabel)
-  const configuredTextTypes = activeConfigData?.merged
-    ? Object.keys((activeConfigData.merged as Record<string, unknown>).text_types as Record<string, string> ?? {})
+  const mergedConfig = activeConfigData?.merged as Record<string, unknown> | undefined
+  const configuredTextTypes = mergedConfig
+    ? Object.keys((mergedConfig.text_types ?? {}) as Record<string, string>)
+    : []
+  const configuredImageTypes = mergedConfig
+    ? Object.keys((mergedConfig.image_types ?? {}) as Record<string, string>)
+    : []
+  const configuredContainerTypes = mergedConfig
+    ? Object.keys((mergedConfig.container_types ?? {}) as Record<string, string>)
     : []
   const [pageImageDims, setPageImageDims] = useState<{ w: number; h: number } | null>(null)
   const { stageState, stepState } = useBookRun()
   const storyboardRunning = stageState("storyboard") === "running" || stageState("storyboard") === "queued"
   const storyboardDone = stageState("storyboard") === "done"
   const metadataRunning = stepState("metadata") === "running"
-  const textClassRunning = stepState("text-classification") === "running"
+  const pageStructuringRunning = stepState("page-structuring") === "running"
   const imageFilterRunning = stepState("image-filtering") === "running"
   const [savingText, setSavingText] = useState(false)
   const [savingImages, setSavingImages] = useState(false)
-  const [pendingTextData, setPendingTextData] = useState<TextClassData | null>(null)
+  const [pendingTextData, setPendingTextData] = useState<PageStructuringData | null>(null)
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
   const [pendingImageData, setPendingImageData] = useState<ImageClassData | null>(null)
   const [cropTarget, setCropTarget] = useState<string | null>(null)
   const [cropPageSrc, setCropPageSrc] = useState<string | null>(null)
@@ -274,45 +510,34 @@ export function ExtractPageDetail({
   }, [cropTarget, bookLabel, pageId, queryClient, pendingImageData, page?.imageClassification])
 
   // Effective data: pending if dirty, otherwise server
-  const textClassData = pendingTextData ?? page?.textClassification ?? null
+  const structuringData = pendingTextData ?? page?.pageStructuring ?? null
   const imageClassData = pendingImageData ?? page?.imageClassification ?? null
   const textDirty = pendingTextData != null
   const imageDirty = pendingImageData != null
 
-  const updateTextField = (groupId: string, textIndex: number, field: "text" | "textType", value: string) => {
-    const base = pendingTextData ?? page?.textClassification
+  const updateNodeField = (nodeId: string, field: string, value: string) => {
+    const base = pendingTextData ?? page?.pageStructuring
     if (!base) return
     setPendingTextData({
       ...base,
-      groups: base.groups.map((g) =>
-        g.groupId === groupId
-          ? { ...g, texts: g.texts.map((tx, i) => (i === textIndex ? { ...tx, [field]: value } : tx)) }
-          : g
-      ),
+      nodes: updateNodeInTree(base.nodes, nodeId, (node) => ({ ...node, [field]: value })),
     })
   }
 
-  const toggleTextPrune = (groupId: string, textIndex: number) => {
-    const base = pendingTextData ?? page?.textClassification
+  const toggleNodePrune = (nodeId: string) => {
+    const base = pendingTextData ?? page?.pageStructuring
     if (!base) return
     setPendingTextData({
       ...base,
-      groups: base.groups.map((g) =>
-        g.groupId === groupId
-          ? { ...g, texts: g.texts.map((tx, i) => (i === textIndex ? { ...tx, isPruned: !tx.isPruned } : tx)) }
-          : g
-      ),
+      nodes: updateNodeInTree(base.nodes, nodeId, (node) => ({ ...node, isPruned: !node.isPruned })),
     })
   }
 
-  const toggleGroupPrune = (groupId: string) => {
-    const base = pendingTextData ?? page?.textClassification
-    if (!base) return
-    setPendingTextData({
-      ...base,
-      groups: base.groups.map((g) =>
-        g.groupId === groupId ? { ...g, isPruned: !g.isPruned } : g
-      ),
+  const toggleCollapse = (nodeId: string) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      next.has(nodeId) ? next.delete(nodeId) : next.add(nodeId)
+      return next
     })
   }
 
@@ -332,7 +557,7 @@ export function ExtractPageDetail({
     if (!pendingTextData || storyboardRunning) return
     setSavingText(true)
     const minDelay = new Promise((r) => setTimeout(r, 400))
-    await api.updateTextClassification(bookLabel, pageId, pendingTextData)
+    await api.updatePageStructuring(bookLabel, pageId, pendingTextData)
     setPendingTextData(null)
     await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
     await minDelay
@@ -490,115 +715,57 @@ export function ExtractPageDetail({
           </div>
         )}
 
-        {/* Classified text — processing indicator */}
-        {!textClassData && textClassRunning && (
+        {/* Page structure — processing indicator */}
+        {!structuringData && pageStructuringRunning && (
           <div className="mt-4 flex items-center gap-2 rounded border border-dashed p-3 text-xs text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-            <Trans>Classifying text…</Trans>
+            <Trans>Structuring page…</Trans>
           </div>
         )}
 
-        {/* Classified text */}
-        {textClassData && textClassData.groups.length > 0 && (
+        {/* Page structure tree */}
+        {structuringData && structuringData.nodes.length > 0 && (
           <div className="mt-4">
             <h3 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
               <Layers className="h-3 w-3" />
-              <Trans>Classified Text</Trans>
+              <Trans>Page Structure</Trans>
               <VersionPicker
-                currentVersion={page.versions.textClassification}
+                currentVersion={page.versions.pageStructuring}
                 saving={savingText}
                 dirty={textDirty}
                 bookLabel={bookLabel}
-                node="text-classification"
+                node="page-structuring"
                 itemId={pageId}
-                onPreview={(data) => setPendingTextData(data as TextClassData)}
+                onPreview={(data) => setPendingTextData(data as PageStructuringData)}
                 onSave={saveTextChanges}
                 onDiscard={() => setPendingTextData(null)}
               />
             </h3>
-            <div className="space-y-3">
-              {textClassData.groups.map((group) => {
-                const maxTypeLen = Math.max(...group.texts.map((tx) => tx.textType.length), 0)
-                const colWidth = `${Math.max(maxTypeLen * 0.65 + 1.5, 4)}em`
-                return (
-                  <div key={group.groupId} className={`rounded border overflow-hidden ${group.isPruned ? "opacity-40" : ""}`}>
-                    <div className="px-3 py-1.5 bg-muted/50 border-b flex items-center gap-1.5 group/grp">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        {getTextGroupLabel(group.groupType)}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => toggleGroupPrune(group.groupId)}
-                        className={`shrink-0 flex items-center justify-center w-5 h-5 rounded-full cursor-pointer transition-colors ${
-                          group.isPruned
-                            ? "bg-destructive hover:bg-destructive/80"
-                            : "opacity-0 group-hover/grp:opacity-100 bg-black/30 hover:bg-black/50"
-                        }`}
-                        title={group.isPruned ? t`Unprune group` : t`Prune group`}
-                      >
-                        {group.isPruned
-                          ? <EyeOff className="h-3 w-3 text-white" />
-                          : <Eye className="h-3 w-3 text-white" />
-                        }
-                      </button>
-                    </div>
-                    <div className="divide-y">
-                      {group.texts.map((tx, i) => (
-                        <div key={i} className={`group/text px-3 py-1.5 flex items-start gap-2 text-sm ${tx.isPruned ? "opacity-40" : ""}`}>
-                          <select
-                            value={tx.textType}
-                            onChange={(e) => updateTextField(group.groupId, i, "textType", e.target.value)}
-                            className="shrink-0 text-xs font-medium text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5 text-center border-0 outline-none focus:ring-1 focus:ring-ring cursor-pointer appearance-none"
-                            style={{ width: colWidth }}
-                          >
-                            {configuredTextTypes.includes(tx.textType) ? null : (
-                              <option value={tx.textType}>{getTextTypeLabel(tx.textType)}</option>
-                            )}
-                            {configuredTextTypes.map((tt) => (
-                              <option key={tt} value={tt}>
-                                {getTextTypeLabel(tt)}
-                              </option>
-                            ))}
-                          </select>
-                          <textarea
-                            value={tx.text}
-                            onChange={(e) => updateTextField(group.groupId, i, "text", e.target.value)}
-                            rows={1}
-                            className="leading-relaxed flex-1 min-w-0 bg-transparent border-0 outline-none resize-none p-0 focus:ring-1 focus:ring-ring focus:rounded"
-                            onInput={(e) => {
-                              const el = e.target as HTMLTextAreaElement
-                              el.style.height = "auto"
-                              el.style.height = el.scrollHeight + "px"
-                            }}
-                            ref={(el) => {
-                              if (el) {
-                                el.style.height = "auto"
-                                el.style.height = el.scrollHeight + "px"
-                              }
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => toggleTextPrune(group.groupId, i)}
-                            className={`shrink-0 self-center flex items-center justify-center w-5 h-5 rounded-full cursor-pointer transition-colors ${
-                              tx.isPruned
-                                ? "bg-destructive hover:bg-destructive/80"
-                                : "opacity-0 group-hover/text:opacity-100 bg-black/30 hover:bg-black/50"
-                            }`}
-                            title={tx.isPruned ? t`Unprune text` : t`Prune text`}
-                          >
-                            {tx.isPruned
-                              ? <EyeOff className="h-3 w-3 text-white" />
-                              : <Eye className="h-3 w-3 text-white" />
-                            }
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )
-              })}
+            <div className="space-y-1">
+              {structuringData.nodes.map((node) => (
+                <ContentNodeView
+                  key={node.nodeId}
+                  node={node}
+                  depth={0}
+                  configuredTextTypes={configuredTextTypes}
+                  configuredImageTypes={configuredImageTypes}
+                  configuredContainerTypes={configuredContainerTypes}
+                  bookLabel={bookLabel}
+                  collapsed={collapsed}
+                  onUpdate={updateNodeField}
+                  onTogglePrune={toggleNodePrune}
+                  onToggleCollapse={toggleCollapse}
+                />
+              ))}
             </div>
+            <details className="mt-4">
+              <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
+                JSON
+              </summary>
+              <pre className="mt-2 p-3 bg-muted/50 rounded text-xs overflow-auto max-h-96 whitespace-pre-wrap">
+                {JSON.stringify(structuringData, null, 2)}
+              </pre>
+            </details>
           </div>
         )}
       </div>

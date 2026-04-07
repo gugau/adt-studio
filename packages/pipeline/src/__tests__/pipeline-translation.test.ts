@@ -111,22 +111,24 @@ vi.mock("../metadata-extraction.js", async () => {
   }
 })
 
-vi.mock("../text-classification.js", async () => {
-  const actual = await vi.importActual<typeof import("../text-classification.js")>(
-    "../text-classification.js"
+vi.mock("../page-structuring.js", async () => {
+  const actual = await vi.importActual<typeof import("../page-structuring.js")>(
+    "../page-structuring.js"
   )
 
   return {
     ...actual,
-    classifyPageText: vi.fn(async () => ({
-      reasoning: "Mock text classification",
-      groups: [
+    structurePage: vi.fn(async () => ({
+      reasoning: "Mock page structuring",
+      nodes: [
         {
-          groupId: "pg001_gp001",
-          groupType: "paragraph",
-          texts: [
+          nodeId: "pg001_nd001",
+          nodeType: "paragraph",
+          isPruned: false,
+          children: [
             {
-              textType: "section_text",
+              nodeId: "pg001_nd002",
+              nodeType: "section_text",
               text: "Hello world",
               isPruned: false,
             },
@@ -174,7 +176,7 @@ vi.mock("../web-rendering.js", async () => {
           sectionIndex: 0,
           sectionType: "text_only",
           reasoning: "Mock render",
-          html: "<section><p data-text-id=\"pg001_gp001_tx001\">FR:Hello world</p></section>",
+          html: "<section><p data-text-id=\"pg001_nd002\">Hello world</p></section>",
         },
       ],
     })),
@@ -182,7 +184,7 @@ vi.mock("../web-rendering.js", async () => {
 })
 
 describe("runPipeline translation flow", () => {
-  it("creates translated text-classification versions when editing language differs", async () => {
+  it("creates translated page-structuring versions when editing language differs", async () => {
     const { runPipeline } = await import("../pipeline.js")
 
     const booksRoot = fs.mkdtempSync(
@@ -199,7 +201,9 @@ describe("runPipeline translation flow", () => {
       configPath,
       `text_types:
   section_text: Main body text
-text_group_types:
+image_types:
+  inline_image: An inline image
+container_types:
   paragraph: Paragraph
 editing_language: fr
 `
@@ -219,23 +223,26 @@ editing_language: fr
     const db = openBookDb(paths.dbPath)
     try {
       const rows = db.all(
-        "SELECT version, data FROM node_data WHERE node = 'text-classification' AND item_id = ? ORDER BY version ASC",
+        "SELECT version, data FROM node_data WHERE node = 'page-structuring' AND item_id = ? ORDER BY version ASC",
         ["pg001"]
       ) as Array<{ version: number; data: string }>
 
       expect(rows).toHaveLength(2)
 
       const v1 = JSON.parse(rows[0].data) as {
-        groups: Array<{ texts: Array<{ text: string }> }>
+        reasoning: string
+        nodes: Array<{ nodeId: string; nodeType: string; children?: Array<{ text: string }> }>
       }
       const v2 = JSON.parse(rows[1].data) as {
         reasoning: string
-        groups: Array<{ texts: Array<{ text: string }> }>
+        nodes: Array<{ nodeId: string; nodeType: string; children?: Array<{ text: string }> }>
       }
 
-      expect(v1.groups[0].texts[0].text).toBe("Hello world")
-      expect(v2.groups[0].texts[0].text).toBe("FR:Hello world")
+      expect(v1.reasoning).toBe("Mock page structuring")
+      expect(v1.nodes[0].children![0].text).toBe("Hello world")
+
       expect(v2.reasoning).toContain("Translated from en to fr.")
+      expect(v2.nodes[0].children![0].text).toBe("FR:Hello world")
     } finally {
       db.close()
     }

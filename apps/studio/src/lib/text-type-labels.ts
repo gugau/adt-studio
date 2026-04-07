@@ -25,17 +25,33 @@ const TEXT_TYPE_LABEL_MESSAGES: Record<string, MessageDescriptor> = {
   other: msg`Other`,
 }
 
+const IMAGE_TYPE_LABEL_MESSAGES: Record<string, MessageDescriptor> = {
+  inline_image: msg`Inline Image`,
+  background_image: msg`Background Image`,
+  diagram: msg`Diagram`,
+  photo: msg`Photo`,
+  icon: msg`Icon`,
+}
+
 const TEXT_GROUP_LABEL_MESSAGES: Record<string, MessageDescriptor> = {
   heading: msg`Heading`,
   paragraph: msg`Paragraph`,
   stanza: msg`Stanza`,
   list: msg`List`,
   table: msg`Table`,
+  sidebar: msg`Sidebar`,
+  activity: msg`Activity`,
   other: msg`Other`,
 }
 
 export function getTextTypeLabel(type: string): string {
   const descriptor = TEXT_TYPE_LABEL_MESSAGES[type]
+  if (descriptor) return i18n._(descriptor)
+  return type.replace(/_/g, " ")
+}
+
+export function getImageTypeLabel(type: string): string {
+  const descriptor = IMAGE_TYPE_LABEL_MESSAGES[type]
   if (descriptor) return i18n._(descriptor)
   return type.replace(/_/g, " ")
 }

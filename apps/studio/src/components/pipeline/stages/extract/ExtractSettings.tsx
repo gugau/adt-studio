@@ -65,7 +65,7 @@ export function ExtractSettings({ bookLabel, headerTarget, tab = "general" }: { 
 
   const merged = activeConfigData?.merged as Record<string, unknown> | undefined
   const metadata = useStepConfig(merged, "metadata", markDirty)
-  const textClassification = useStepConfig(merged, "text_classification", markDirty)
+  const pageStructuring = useStepConfig(merged, "page_structuring", markDirty)
   const imageMeaningfulness = useStepConfig(merged, "image_meaningfulness", markDirty)
   const imageCropping = useStepConfig(merged, "image_cropping", markDirty)
   const imageSegmentation = useStepConfig(merged, "image_segmentation", markDirty)
@@ -198,9 +198,9 @@ export function ExtractSettings({ bookLabel, headerTarget, tab = "general" }: { 
       const existing = (bookConfigData?.config?.metadata ?? {}) as Record<string, unknown>
       overrides.metadata = { ...existing, ...metadata.configOverrides }
     }
-    if (shouldWrite("text_classification")) {
-      const existing = (bookConfigData?.config?.text_classification ?? {}) as Record<string, unknown>
-      overrides.text_classification = { ...existing, ...textClassification.configOverrides }
+    if (shouldWrite("page_structuring")) {
+      const existing = (bookConfigData?.config?.page_structuring ?? {}) as Record<string, unknown>
+      overrides.page_structuring = { ...existing, ...pageStructuring.configOverrides }
     }
     if (shouldWrite("image_meaningfulness")) {
       const existing = (bookConfigData?.config?.image_meaningfulness ?? {}) as Record<string, unknown>
@@ -230,7 +230,7 @@ export function ExtractSettings({ bookLabel, headerTarget, tab = "general" }: { 
     // Save any edited prompts first
     const promptSaves: Promise<unknown>[] = []
     if (metadataPromptDraft != null) promptSaves.push(api.updatePrompt("metadata_extraction", metadataPromptDraft, bookLabel))
-    if (extractionPromptDraft != null) promptSaves.push(api.updatePrompt("text_classification", extractionPromptDraft, bookLabel))
+    if (extractionPromptDraft != null) promptSaves.push(api.updatePrompt("page_structuring", extractionPromptDraft, bookLabel))
     if (meaningfulnessPromptDraft != null) promptSaves.push(api.updatePrompt("image_meaningfulness", meaningfulnessPromptDraft, bookLabel))
     if (croppingPromptDraft != null) promptSaves.push(api.updatePrompt("image_cropping", croppingPromptDraft, bookLabel))
     if (segmentationPromptDraft != null) promptSaves.push(api.updatePrompt("image_segmentation", segmentationPromptDraft, bookLabel))
@@ -528,14 +528,14 @@ export function ExtractSettings({ bookLabel, headerTarget, tab = "general" }: { 
 
       {tab === "prompt" && (
         <PromptViewer
-          promptName="text_classification"
+          promptName="page_structuring"
           bookLabel={bookLabel}
-          title={t`Text Classification Prompt`}
-          description={t`The prompt template used for text classification. This is a Liquid template processed with page context.`}
-          model={textClassification.model}
-          onModelChange={textClassification.onModelChange}
-          maxRetries={textClassification.maxRetries}
-          onMaxRetriesChange={textClassification.onMaxRetriesChange}
+          title={t`Page Structuring Prompt`}
+          description={t`The prompt template used for page structuring. This is a Liquid template processed with page context.`}
+          model={pageStructuring.model}
+          onModelChange={pageStructuring.onModelChange}
+          maxRetries={pageStructuring.maxRetries}
+          onMaxRetriesChange={pageStructuring.onMaxRetriesChange}
           onContentChange={setExtractionPromptDraft}
           enabled={tab === "prompt"}
         />

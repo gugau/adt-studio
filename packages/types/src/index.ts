@@ -61,6 +61,7 @@ export {
   AccessibilityAssessmentConfig,
   AppConfig,
   type TypeDef,
+  migrateAppConfig,
 } from "./config.js"
 
 export {
@@ -69,6 +70,14 @@ export {
   TextClassificationOutput,
   buildTextClassificationLLMSchema,
 } from "./text-classification.js"
+
+export {
+  type ContentNodeData,
+  ContentNode,
+  PageStructuringOutput,
+  type LLMContentNode,
+  buildPageStructuringLLMSchema,
+} from "./page-structuring.js"
 
 export {
   ImageFilters,

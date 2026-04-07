@@ -16,6 +16,7 @@ import type {
   TextClassificationOutput,
   ImageClassificationOutput,
   PageSectioningOutput,
+  PageStructuringOutput,
   BookMetadata,
   BookSummaryOutput,
   TextCatalogOutput,
@@ -27,14 +28,14 @@ import type {
 import { extractPDF } from "./pdf-extraction.js"
 import { extractMetadata, buildMetadataConfig } from "./metadata-extraction.js"
 import { generateBookSummary, buildBookSummaryConfig } from "./book-summary.js"
-import { classifyPageText, buildClassifyConfig } from "./text-classification.js"
+import { structurePage, buildStructureConfig } from "./page-structuring.js"
 import { classifyPageImages, buildImageClassifyConfig } from "./image-filtering.js"
 import { filterPageImageMeaningfulness, buildMeaningfulnessConfig } from "./image-meaningfulness.js"
 import { cropPageImages, applyCrops, buildCroppingConfig, getCroppedImageId } from "./image-cropping.js"
 import { segmentPageImages, applySegmentation, buildSegmentationConfig, getSegmentedImageId } from "./image-segmentation.js"
 import { sectionPage, buildSectioningConfig } from "./page-sectioning.js"
 import { renderPage, buildRenderStrategyResolver } from "./web-rendering.js"
-import { translatePageText, buildTranslationConfig } from "./translation.js"
+import { translatePageStructuring, buildTranslationConfig } from "./translation.js"
 import { createTemplateEngine } from "./render-template.js"
 import { captionPageImages, buildCaptionConfig, extractImageIds } from "./image-captioning.js"
 import { generateGlossary, buildGlossaryConfig } from "./glossary.js"
@@ -176,7 +177,7 @@ export async function runFullPipeline(
     // Build all step configs upfront
     const metadataConfig = buildMetadataConfig(config)
     const bookSummaryConfig = buildBookSummaryConfig(config)
-    const textClassifyConfig = buildClassifyConfig(config)
+    const structureConfig = buildStructureConfig(config)
     const imageClassifyConfig = buildImageClassifyConfig(config)
     const meaningfulnessConfig = buildMeaningfulnessConfig(config)
     const segmentationConfig = buildSegmentationConfig(config)
@@ -439,21 +440,34 @@ export async function runFullPipeline(
       })
     })
 
-    executors.set("text-classification", async (p) => {
-      const model = getModel(textClassifyConfig.modelId)
+    executors.set("page-structuring", async (p) => {
+      const model = getModel(structureConfig.modelId)
       const pages = storage.getPages()
       const totalPages = pages.length
       await processWithConcurrency(pages, effectiveConcurrency, async (page) => {
         const imageBase64 = storage.getPageImageBase64(page.pageId)
-        const result = await classifyPageText(
-          { pageId: page.pageId, pageNumber: page.pageNumber, text: page.text, imageBase64 },
-          textClassifyConfig,
+        // Gather unpruned images for this page so the LLM can place them in the tree
+        const filterRow = storage.getLatestNodeData("image-filtering", page.pageId)
+        const imageClassification = filterRow?.data as ImageClassificationOutput | undefined
+        const unprunedImageIds = new Set(
+          (imageClassification?.images ?? []).filter((img) => !img.isPruned).map((img) => img.imageId)
+        )
+        const allPageImages = storage.getPageImages(page.pageId)
+        const images = allPageImages
+          .filter((img) => unprunedImageIds.has(img.imageId))
+          .map((img) => ({
+            imageId: img.imageId,
+            imageBase64: storage.getImageBase64(img.imageId),
+          }))
+        const result = await structurePage(
+          { pageId: page.pageId, pageNumber: page.pageNumber, text: page.text, imageBase64, images },
+          structureConfig,
           model,
         )
-        storage.putNodeData("text-classification", page.pageId, result)
+        storage.putNodeData("page-structuring", page.pageId, result)
         p.emit({
           type: "step-progress",
-          step: "text-classification",
+          step: "page-structuring",
           message: page.pageId,
           page: pages.indexOf(page) + 1,
           totalPages,
@@ -470,11 +484,11 @@ export async function runFullPipeline(
       const pages = storage.getPages()
       const totalPages = pages.length
       await processWithConcurrency(pages, effectiveConcurrency, async (page) => {
-        const classRow = storage.getLatestNodeData("text-classification", page.pageId)
+        const classRow = storage.getLatestNodeData("page-structuring", page.pageId)
         if (!classRow) return
-        const textClassification = classRow.data as TextClassificationOutput
-        const translated = await translatePageText(page.pageId, textClassification, translationConfig, model)
-        storage.putNodeData("text-classification", page.pageId, translated)
+        const structuring = classRow.data as PageStructuringOutput
+        const translated = await translatePageStructuring(page.pageId, structuring, translationConfig, model)
+        storage.putNodeData("page-structuring", page.pageId, translated)
         p.emit({
           type: "step-progress",
           step: "translation",
@@ -488,11 +502,11 @@ export async function runFullPipeline(
     // ── Storyboard stage ────────────────────────────────────────
 
     executors.set("page-sectioning", async (p) => {
-      const model = getModel(textClassifyConfig.modelId)
+      const model = getModel(structureConfig.modelId)
       const pages = storage.getPages()
       const totalPages = pages.length
       await processWithConcurrency(pages, effectiveConcurrency, async (page) => {
-        const textClassRow = storage.getLatestNodeData("text-classification", page.pageId)
+        const textClassRow = storage.getLatestNodeData("page-structuring", page.pageId)
         const imageClassRow = storage.getLatestNodeData("image-filtering", page.pageId)
         if (!textClassRow || !imageClassRow) return
         const textClassification = textClassRow.data as TextClassificationOutput

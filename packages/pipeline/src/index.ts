@@ -12,6 +12,12 @@ export {
   type PageInput,
 } from "./text-classification.js"
 export {
+  structurePage,
+  buildStructureConfig,
+  type StructureConfig,
+  type PageInput as StructurePageInput,
+} from "./page-structuring.js"
+export {
   classifyPageImages,
   buildImageClassifyConfig,
   type ImageClassifyConfig,
@@ -103,6 +109,7 @@ export {
 } from "./language-context.js"
 export {
   translatePageText,
+  translatePageStructuring,
   buildTranslationConfig,
   type TranslationConfig,
 } from "./translation.js"

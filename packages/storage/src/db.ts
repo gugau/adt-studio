@@ -207,7 +207,7 @@ function migrateV6toV7(db: sqlite.Database): void {
     // Most step names match their node_data node name directly
     const directSteps = [
       "metadata", "book-summary", "image-filtering", "image-segmentation",
-      "image-cropping", "text-classification", "page-sectioning",
+      "image-cropping", "page-structuring", "page-sectioning",
       "web-rendering", "quiz-generation", "image-captioning", "glossary",
       "text-catalog", "tts",
     ]
@@ -233,8 +233,8 @@ function migrateV6toV7(db: sqlite.Database): void {
       db.run("INSERT OR IGNORE INTO step_completions (step, completed_at) VALUES (?, ?)", ["image-meaningfulness", now])
     }
 
-    // translation: stored under text-classification node
-    if (nodes.has("text-classification")) {
+    // translation: stored under page-structuring node (or legacy text-classification)
+    if (nodes.has("page-structuring") || nodes.has("text-classification")) {
       db.run("INSERT OR IGNORE INTO step_completions (step, completed_at) VALUES (?, ?)", ["translation", now])
     }
 

@@ -20,12 +20,21 @@ text_types:
   page_number: Page numbers
   other: Any text not covered above
 
-text_group_types:
+image_types:
+  inline_image: An image that is part of the content flow
+  background_image: A decorative background or page-spanning image
+  diagram: A chart, diagram, or technical illustration
+  photo: A photograph
+  icon: A small decorative or functional icon
+
+container_types:
   heading: A heading or title block
   paragraph: A block of continuous prose
   stanza: A verse or stanza of poetry
   list: A list of items (ordered or unordered)
   table: A data table with rows and columns
+  sidebar: A sidebar or callout box
+  activity: An activity or exercise block
   other: Anything that doesn't fit the above
 
 section_types:
@@ -105,8 +114,8 @@ metadata:
   prompt: metadata_extraction
   model: openai:gpt-5.4
 
-text_classification:
-  prompt: text_classification
+page_structuring:
+  prompt: page_structuring
   model: openai:gpt-5.4
 
 image_meaningfulness:

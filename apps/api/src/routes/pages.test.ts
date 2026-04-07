@@ -52,7 +52,7 @@ describe("Page routes", () => {
       })
 
       // Simulate pipeline output for page 1
-      storage.putNodeData("text-classification", `${label}_p1`, {
+      storage.putNodeData("page-structuring", `${label}_p1`, {
         reasoning: "test reasoning",
         groups: [
           {
@@ -145,8 +145,8 @@ describe("Page routes", () => {
       expect(body.pageId).toBe(`${label}_p1`)
       expect(body.pageNumber).toBe(1)
       expect(body.text).toBe("Page one text content")
-      expect(body.textClassification).toBeTruthy()
-      expect(body.textClassification.groups).toHaveLength(1)
+      expect(body.pageStructuring).toBeTruthy()
+      expect(body.pageStructuring.groups).toHaveLength(1)
       expect(body.imagClassification).toBeFalsy // typo check
       expect(body.imageClassification).toBeTruthy()
       expect(body.sectioning).toBeTruthy()
@@ -165,7 +165,7 @@ describe("Page routes", () => {
       expect(res.status).toBe(200)
       const body = await res.json()
       expect(body.pageId).toBe(`${label}_p2`)
-      expect(body.textClassification).toBeNull()
+      expect(body.pageStructuring).toBeNull()
       expect(body.rendering).toBeNull()
     })
 
@@ -197,7 +197,7 @@ describe("Page routes", () => {
     })
   })
 
-  describe("PUT /api/books/:label/pages/:pageId/text-classification", () => {
+  describe("PUT /api/books/:label/pages/:pageId/page-structuring", () => {
     it("saves text classification and returns version", async () => {
       const data = {
         reasoning: "updated reasoning",
@@ -214,7 +214,7 @@ describe("Page routes", () => {
       }
 
       const res = await app.request(
-        `/api/books/${label}/pages/${label}_p1/text-classification`,
+        `/api/books/${label}/pages/${label}_p1/page-structuring`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -229,7 +229,7 @@ describe("Page routes", () => {
 
     it("returns 400 for invalid body", async () => {
       const res = await app.request(
-        `/api/books/${label}/pages/${label}_p1/text-classification`,
+        `/api/books/${label}/pages/${label}_p1/page-structuring`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -247,7 +247,7 @@ describe("Page routes", () => {
       }
 
       const res = await app.request(
-        `/api/books/${label}/pages/fake-page/text-classification`,
+        `/api/books/${label}/pages/fake-page/page-structuring`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

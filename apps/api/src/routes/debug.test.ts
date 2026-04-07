@@ -20,7 +20,7 @@ describe("Debug routes", () => {
       // Insert LLM log entries with known data
       const entries = [
         {
-          step: "text-classification",
+          step: "page-structuring",
           item_id: `${label}_p1`,
           data: {
             promptName: "classify-text",
@@ -32,7 +32,7 @@ describe("Debug routes", () => {
           },
         },
         {
-          step: "text-classification",
+          step: "page-structuring",
           item_id: `${label}_p2`,
           data: {
             promptName: "classify-text",
@@ -114,9 +114,9 @@ describe("Debug routes", () => {
       })
 
       // Add node_data with multiple versions
-      storage.putNodeData("text-classification", `${label}_p1`, { version: "v1" })
-      storage.putNodeData("text-classification", `${label}_p1`, { version: "v2" })
-      storage.putNodeData("text-classification", `${label}_p1`, { version: "v3" })
+      storage.putNodeData("page-structuring", `${label}_p1`, { version: "v1" })
+      storage.putNodeData("page-structuring", `${label}_p1`, { version: "v2" })
+      storage.putNodeData("page-structuring", `${label}_p1`, { version: "v3" })
       const assessment: AccessibilityAssessmentOutput = {
         generatedAt: "2026-03-09T00:00:00.000Z",
         tool: "axe-core",
@@ -187,14 +187,14 @@ describe("Debug routes", () => {
 
     it("filters by step", async () => {
       const res = await app.request(
-        `/api/books/${label}/debug/llm-logs?step=text-classification`
+        `/api/books/${label}/debug/llm-logs?step=page-structuring`
       )
       expect(res.status).toBe(200)
       const body = await res.json()
       expect(body.total).toBe(2)
       expect(body.logs).toHaveLength(2)
       for (const log of body.logs) {
-        expect(log.step).toBe("text-classification")
+        expect(log.step).toBe("page-structuring")
       }
     })
 
@@ -248,7 +248,7 @@ describe("Debug routes", () => {
 
       // Check step-level data
       const textStep = body.steps.find(
-        (s: { step: string }) => s.step === "text-classification"
+        (s: { step: string }) => s.step === "page-structuring"
       )
       expect(textStep).toBeDefined()
       expect(textStep.calls).toBe(2)
@@ -300,7 +300,7 @@ describe("Debug routes", () => {
   describe("GET /api/books/:label/debug/versions/:node/:itemId", () => {
     it("returns version list without data by default", async () => {
       const res = await app.request(
-        `/api/books/${label}/debug/versions/text-classification/${label}_p1`
+        `/api/books/${label}/debug/versions/page-structuring/${label}_p1`
       )
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -312,7 +312,7 @@ describe("Debug routes", () => {
 
     it("includes data when includeData=true", async () => {
       const res = await app.request(
-        `/api/books/${label}/debug/versions/text-classification/${label}_p1?includeData=true`
+        `/api/books/${label}/debug/versions/page-structuring/${label}_p1?includeData=true`
       )
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -332,7 +332,7 @@ describe("Debug routes", () => {
 
     it("returns 404 for nonexistent book", async () => {
       const res = await app.request(
-        "/api/books/no-such-book/debug/versions/text-classification/p1"
+        "/api/books/no-such-book/debug/versions/page-structuring/p1"
       )
       expect(res.status).toBe(404)
     })

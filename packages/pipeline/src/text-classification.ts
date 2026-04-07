@@ -128,10 +128,11 @@ function validateTextClassification(
  * Build ClassifyConfig from AppConfig.
  */
 export function buildClassifyConfig(appConfig: AppConfig): ClassifyConfig {
-  const textTypes: TypeDef[] = Object.entries(appConfig.text_types).map(
+  // migrateAppConfig normalizes legacy keys, so we can read canonical keys directly
+  const textTypes: TypeDef[] = Object.entries(appConfig.text_types ?? {}).map(
     ([key, description]) => ({ key, description })
   )
-  const textGroupTypes: TypeDef[] = Object.entries(appConfig.text_group_types).map(
+  const textGroupTypes: TypeDef[] = Object.entries(appConfig.container_types ?? {}).map(
     ([key, description]) => ({ key, description })
   )
 
@@ -139,9 +140,8 @@ export function buildClassifyConfig(appConfig: AppConfig): ClassifyConfig {
     textTypes,
     textGroupTypes,
     prunedTextTypes: appConfig.pruned_text_types ?? [],
-    promptName: appConfig.text_classification?.prompt ?? "text_classification",
-    modelId: appConfig.text_classification?.model ?? "openai:gpt-5.4",
-    maxRetries:
-      appConfig.text_classification?.max_retries ?? DEFAULT_LLM_MAX_RETRIES,
+    promptName: appConfig.page_structuring?.prompt ?? "text_classification",
+    modelId: appConfig.page_structuring?.model ?? "openai:gpt-5.4",
+    maxRetries: appConfig.page_structuring?.max_retries ?? DEFAULT_LLM_MAX_RETRIES,
   }
 }

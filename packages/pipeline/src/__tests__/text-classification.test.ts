@@ -6,8 +6,8 @@ describe("buildClassifyConfig", () => {
   it("extracts text classification model and prompt config", () => {
     const appConfig: AppConfig = {
       text_types: { heading: "Heading" },
-      text_group_types: { paragraph: "Paragraph" },
-      text_classification: {
+      container_types: { paragraph: "Paragraph" },
+      page_structuring: {
         prompt: "custom_prompt",
         model: "openai:gpt-4.1-mini",
         max_retries: 8,
@@ -23,7 +23,7 @@ describe("buildClassifyConfig", () => {
   it("defaults text classification model and prompt", () => {
     const appConfig: AppConfig = {
       text_types: { heading: "Heading" },
-      text_group_types: { paragraph: "Paragraph" },
+      container_types: { paragraph: "Paragraph" },
     }
 
     const config = buildClassifyConfig(appConfig)

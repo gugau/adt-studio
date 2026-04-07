@@ -359,6 +359,9 @@ msgstr "Activities disabled"
 msgid "Activities enabled"
 msgstr "Activities enabled"
 
+msgid "Activity"
+msgstr "Activity"
+
 msgid "Activity Input Placeholder"
 msgstr "Activity Input Placeholder"
 
@@ -644,6 +647,9 @@ msgstr "Back to preview"
 msgid "Background"
 msgstr "Background"
 
+msgid "Background Image"
+msgstr "Background Image"
+
 #~ msgid "Background Tasks"
 #~ msgstr "Background Tasks"
 
@@ -780,14 +786,14 @@ msgstr "Choose which per-page validation items reviewers must check, customize t
 msgid "Classic Storybook"
 msgstr "Classic Storybook"
 
-msgid "Classified Text"
-msgstr "Classified Text"
+#~ msgid "Classified Text"
+#~ msgstr "Classified Text"
 
 msgid "Classifying images…"
 msgstr "Classifying images…"
 
-msgid "Classifying text…"
-msgstr "Classifying text…"
+#~ msgid "Classifying text…"
+#~ msgstr "Classifying text…"
 
 msgid "Clear all"
 msgstr "Clear all"
@@ -1564,6 +1570,9 @@ msgstr "Hit"
 msgid "HTML"
 msgstr "HTML"
 
+msgid "Icon"
+msgstr "Icon"
+
 msgid "Illustration"
 msgstr "Illustration"
 
@@ -1653,6 +1662,9 @@ msgstr "Increase indent"
 
 msgid "Infographic"
 msgstr "Infographic"
+
+msgid "Inline Image"
+msgstr "Inline Image"
 
 msgid "Input Tokens"
 msgstr "Input Tokens"
@@ -2306,6 +2318,15 @@ msgstr "Page Sectioning"
 msgid "Page Sectioning Prompt"
 msgstr "Page Sectioning Prompt"
 
+msgid "Page Structure"
+msgstr "Page Structure"
+
+msgid "Page Structuring"
+msgstr "Page Structuring"
+
+msgid "Page Structuring Prompt"
+msgstr "Page Structuring Prompt"
+
 msgid "pages"
 msgstr "pages"
 
@@ -2349,6 +2370,9 @@ msgstr "Per-Step Breakdown"
 
 #~ msgid "pg {0}"
 #~ msgstr "pg {0}"
+
+msgid "Photo"
+msgstr "Photo"
 
 msgid "Photograph"
 msgstr "Photograph"
@@ -2419,8 +2443,8 @@ msgstr "Prune"
 msgid "Prune element"
 msgstr "Prune element"
 
-msgid "Prune group"
-msgstr "Prune group"
+#~ msgid "Prune group"
+#~ msgstr "Prune group"
 
 msgid "Prune image"
 msgstr "Prune image"
@@ -2428,8 +2452,8 @@ msgstr "Prune image"
 msgid "Prune section from flow"
 msgstr "Prune section from flow"
 
-msgid "Prune text"
-msgstr "Prune text"
+#~ msgid "Prune text"
+#~ msgstr "Prune text"
 
 msgid "pruned"
 msgstr "pruned"
@@ -2933,6 +2957,9 @@ msgstr "Show reviewer validation"
 msgid "Show:"
 msgstr "Show:"
 
+msgid "Sidebar"
+msgstr "Sidebar"
+
 msgid "Sign Language"
 msgstr "Sign Language"
 
@@ -3007,6 +3034,9 @@ msgstr "Structure"
 
 msgid "Structure & semantics"
 msgstr "Structure & semantics"
+
+msgid "Structuring page…"
+msgstr "Structuring page…"
 
 msgid "Style"
 msgstr "Style"
@@ -3092,11 +3122,11 @@ msgstr "Text alternatives"
 msgid "Text Catalog"
 msgstr "Text Catalog"
 
-msgid "Text Classification"
-msgstr "Text Classification"
+#~ msgid "Text Classification"
+#~ msgstr "Text Classification"
 
-msgid "Text Classification Prompt"
-msgstr "Text Classification Prompt"
+#~ msgid "Text Classification Prompt"
+#~ msgstr "Text Classification Prompt"
 
 #~ msgid "Text color"
 #~ msgstr "Text color"
@@ -3138,8 +3168,11 @@ msgstr "The front cover of the book."
 msgid "The inside cover of the book."
 msgstr "The inside cover of the book."
 
-msgid "The prompt template used for text classification. This is a Liquid template processed with page context."
-msgstr "The prompt template used for text classification. This is a Liquid template processed with page context."
+msgid "The prompt template used for page structuring. This is a Liquid template processed with page context."
+msgstr "The prompt template used for page structuring. This is a Liquid template processed with page context."
+
+#~ msgid "The prompt template used for text classification. This is a Liquid template processed with page context."
+#~ msgstr "The prompt template used for text classification. This is a Liquid template processed with page context."
 
 msgid "The prompt template used to extract book metadata (title, author, etc.) from the first few pages. This is a Liquid template processed with page context."
 msgstr "The prompt template used to extract book metadata (title, author, etc.) from the first few pages. This is a Liquid template processed with page context."
@@ -3321,14 +3354,17 @@ msgstr "Unknown step slug: {step}"
 msgid "Unknown step: {step}"
 msgstr "Unknown step: {step}"
 
-msgid "Unprune group"
-msgstr "Unprune group"
+msgid "Unprune"
+msgstr "Unprune"
+
+#~ msgid "Unprune group"
+#~ msgstr "Unprune group"
 
 msgid "Unprune image"
 msgstr "Unprune image"
 
-msgid "Unprune text"
-msgstr "Unprune text"
+#~ msgid "Unprune text"
+#~ msgstr "Unprune text"
 
 msgid "Unsaved changes"
 msgstr "Unsaved changes"

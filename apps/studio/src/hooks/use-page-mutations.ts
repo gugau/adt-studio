@@ -9,10 +9,10 @@ export function invalidateStoryboardDependents(queryClient: QueryClient, label: 
   queryClient.invalidateQueries({ queryKey: ["books", label, "step-status"] })
 }
 
-export function useSaveTextClassification(label: string, pageId: string) {
+export function useSavePageStructuring(label: string, pageId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (data: unknown) => api.updateTextClassification(label, pageId, data),
+    mutationFn: (data: unknown) => api.updatePageStructuring(label, pageId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["books", label, "pages", pageId] })
     },

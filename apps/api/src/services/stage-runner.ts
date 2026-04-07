@@ -8,11 +8,11 @@ import {
   extractPDF,
   extractMetadata,
   buildMetadataConfig,
-  classifyPageText,
-  buildClassifyConfig,
+  structurePage,
+  buildStructureConfig,
   classifyPageImages,
   buildImageClassifyConfig,
-  translatePageText,
+  translatePageStructuring,
   buildTranslationConfig,
   getBaseLanguage,
   normalizeLocale,
@@ -68,6 +68,7 @@ import { STAGE_ORDER } from "@adt/types"
 import type {
   AppConfig,
   TextClassificationOutput,
+  PageStructuringOutput,
   ImageClassificationOutput,
   PageSectioningOutput,
   WebRenderingOutput,
@@ -345,14 +346,14 @@ async function runExtractStep(
     )
 
     // Step 3: Per-page classification
-    const textClassifyConfig = buildClassifyConfig(config)
+    const structureConfig = buildStructureConfig(config)
     const imageClassifyConfig = buildStageRunnerImageClassifyConfig(config, storage)
     const meaningfulnessConfig = buildMeaningfulnessConfig(config)
     const segmentationConfig = buildSegmentationConfig(config)
     const croppingConfig = buildCroppingConfig(config)
 
     const llmModel = createLLMModel({
-      modelId: textClassifyConfig.modelId,
+      modelId: structureConfig.modelId,
       cacheDir,
       promptEngine,
       rateLimiter,
@@ -416,7 +417,7 @@ async function runExtractStep(
           await classifyPage(
             page,
             storage,
-            { textClassifyConfig, imageClassifyConfig, meaningfulnessConfig, segmentationConfig, croppingConfig },
+            { structureConfig, imageClassifyConfig, meaningfulnessConfig, segmentationConfig, croppingConfig },
             llmModel,
             {
               onClassifyImages: () => {
@@ -433,7 +434,7 @@ async function runExtractStep(
                 completedClassifyText++
                 progress.emit({
                   type: "step-progress",
-                  step: "text-classification",
+                  step: "page-structuring",
                   message: `${completedClassifyText}/${totalPages}`,
                   page: completedClassifyText,
                   totalPages,
@@ -469,7 +470,7 @@ async function runExtractStep(
         } catch (err) {
           const msg = toErrorMessage(err)
           const step =
-            err instanceof StepError ? err.step : "text-classification"
+            err instanceof StepError ? err.step : "page-structuring"
           console.error(`[stage-run] ${label}: ${page.pageId} failed at ${step}: ${msg}`)
           failedPages.push(`${page.pageId} [${step}]: ${msg}`)
           progress.emit({
@@ -504,7 +505,7 @@ async function runExtractStep(
     } else {
       progress.emit({ type: "step-skip", step: "image-meaningfulness" })
     }
-    progress.emit({ type: "step-complete", step: "text-classification" })
+    progress.emit({ type: "step-complete", step: "page-structuring" })
     if (translationConfig) {
       progress.emit({ type: "step-complete", step: "translation" })
     } else {
@@ -758,14 +759,14 @@ async function runStoryboardStep(
         effectiveConcurrency,
         async (page: PageData) => {
           try {
-            // Get text-classification data
+            // Get page-structuring data (fallback to text-classification for backward compat)
             const textClassificationRow = storage.getLatestNodeData(
-              "text-classification",
+              "page-structuring",
               page.pageId
-            )
+            ) ?? storage.getLatestNodeData("text-classification", page.pageId)
             if (!textClassificationRow) {
               console.log(
-                `[stage-run] ${label}: skipping ${page.pageId} (no text-classification)`
+                `[stage-run] ${label}: skipping ${page.pageId} (no page-structuring)`
               )
               return
             }
@@ -1819,7 +1820,7 @@ async function runTextAndSpeechStep(
 }
 
 interface ClassifyConfigs {
-  textClassifyConfig: ReturnType<typeof buildClassifyConfig>
+  structureConfig: ReturnType<typeof buildStructureConfig>
   imageClassifyConfig: ReturnType<typeof buildImageClassifyConfig>
   meaningfulnessConfig: MeaningfulnessConfig | null
   segmentationConfig: SegmentationConfig | null
@@ -1845,29 +1846,17 @@ async function classifyPage(
   segmentationModel: ReturnType<typeof createLLMModel> | null,
   croppingModel: ReturnType<typeof createLLMModel> | null
 ): Promise<void> {
-  const { textClassifyConfig, imageClassifyConfig, meaningfulnessConfig, segmentationConfig, croppingConfig } = configs
+  const { structureConfig, imageClassifyConfig, meaningfulnessConfig, segmentationConfig, croppingConfig } = configs
 
   const imageBase64 = storage.getPageImageBase64(page.pageId)
   const images = storage.getPageImages(page.pageId)
 
-  // Start text classification (async) while doing image classification (sync)
-  const textPromise = classifyPageText(
-    {
-      pageId: page.pageId,
-      pageNumber: page.pageNumber,
-      text: page.text,
-      imageBase64,
-    },
-    textClassifyConfig,
-    llmModel
-  )
-
+  // Image classification (sync)
   let imageResult: ImageClassificationOutput
   try {
     imageResult = classifyPageImages(page.pageId, images, imageClassifyConfig)
     callbacks.onClassifyImages()
   } catch (err) {
-    await textPromise.catch(() => undefined)
     wrapStepError("image-filtering", err)
     return // unreachable but satisfies TS
   }
@@ -1902,7 +1891,6 @@ async function classifyPage(
         )
       }
     } catch (err) {
-      await textPromise.catch(() => undefined)
       wrapStepError("image-filtering", err)
     }
   }
@@ -2044,25 +2032,47 @@ async function classifyPage(
     }
   }
 
-  let textResult: Awaited<ReturnType<typeof classifyPageText>>
+  // Page structuring (needs image filtering to complete first for image IDs)
+  const unprunedImgIds = new Set(
+    imageResult.images.filter((img) => !img.isPruned).map((img) => img.imageId)
+  )
+  const allPageImages = storage.getPageImages(page.pageId)
+  const structureImages = allPageImages
+    .filter((img) => unprunedImgIds.has(img.imageId))
+    .map((img) => ({
+      imageId: img.imageId,
+      imageBase64: storage.getImageBase64(img.imageId),
+    }))
+
+  let textResult: Awaited<ReturnType<typeof structurePage>>
   try {
-    textResult = await textPromise
-    storage.putNodeData("text-classification", page.pageId, textResult)
+    textResult = await structurePage(
+      {
+        pageId: page.pageId,
+        pageNumber: page.pageNumber,
+        text: page.text,
+        imageBase64,
+        images: structureImages,
+      },
+      structureConfig,
+      llmModel
+    )
+    storage.putNodeData("page-structuring", page.pageId, textResult)
     callbacks.onClassifyText()
   } catch (err) {
-    wrapStepError("text-classification", err)
+    wrapStepError("page-structuring", err)
   }
 
   // Translate (if needed)
   if (translationConfig && translationModel) {
     try {
-      const translated = await translatePageText(
+      const translated = await translatePageStructuring(
         page.pageId,
-        textResult as TextClassificationOutput,
+        textResult as PageStructuringOutput,
         translationConfig,
         translationModel
       )
-      storage.putNodeData("text-classification", page.pageId, translated)
+      storage.putNodeData("page-structuring", page.pageId, translated)
       callbacks.onTranslate()
     } catch (err) {
       wrapStepError("translation", err)

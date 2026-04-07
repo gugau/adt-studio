@@ -435,7 +435,7 @@ function addExtractNodes(label: string, count: number, includeSummary = true): v
   try {
     for (let i = 1; i <= count; i++) {
       const pageId = `${label}_p${i}`
-      storage.putNodeData("text-classification", pageId, { groups: [] })
+      storage.putNodeData("page-structuring", pageId, { groups: [] })
       storage.putNodeData("image-filtering", pageId, { images: [] })
     }
     if (includeSummary) {
@@ -547,7 +547,7 @@ describe("GET /books/:label/step-status", () => {
     "image-segmentation",
     "image-cropping",
     "image-meaningfulness",
-    "text-classification",
+    "page-structuring",
     "book-summary",
     "translation",
   ] as const
