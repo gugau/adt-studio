@@ -1,9 +1,12 @@
-import { BrowserWindow } from "electron"
+import { BrowserWindow } from "electron";
 import { randomUUID } from "node:crypto";
 import { htmlStore } from "./html-render-protocol";
 
-const windows = new Set<InstanceType<typeof BrowserWindow>>()
-async function screenshot(html: string, viewport: { width: number; height: number }): Promise<string> {
+const windows = new Set<InstanceType<typeof BrowserWindow>>();
+async function screenshot(
+  html: string,
+  viewport: { width: number; height: number },
+): Promise<string> {
   const id = randomUUID();
   htmlStore.set(id, html);
 
@@ -15,8 +18,10 @@ async function screenshot(html: string, viewport: { width: number; height: numbe
   });
 
   const loadPromise = new Promise<void>((resolve, reject) => {
-    win.webContents.once('did-finish-load', resolve);
-    win.webContents.once('did-fail-load', (_, _code, desc) => reject(new Error(desc)));
+    win.webContents.once("did-finish-load", resolve);
+    win.webContents.once("did-fail-load", (_, _code, desc) =>
+      reject(new Error(desc)),
+    );
   });
 
   await win.loadURL(`html-render://${id}`);
@@ -26,16 +31,16 @@ async function screenshot(html: string, viewport: { width: number; height: numbe
   win.destroy();
   htmlStore.delete(id);
 
-  return image.toPNG().toString('base64');
+  return image.toPNG().toString("base64");
 }
 
 async function close(): Promise<void> {
   try {
     for (const win of windows) {
-      win.destroy()
+      win.destroy();
     }
-    windows.clear()
-  } catch { }
+    windows.clear();
+  } catch {}
 }
 
-export { screenshot, close }
+export { screenshot, close };
