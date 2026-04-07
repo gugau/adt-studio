@@ -27,11 +27,11 @@ const extraResources = [
   },
 ];
 
-const version = (process.env.APP_VERSION || require("./package.json").version)
+const version = process.env.APP_VERSION || require("./package.json").version;
 const productName = "ADT-Studio";
-const artifactName =  `${productName}-\${version}.\${ext}`
-.toLowerCase()
-.replace(/ /g, '-');
+const artifactName = `${productName}-\${version}.\${ext}`
+  .toLowerCase()
+  .replace(/ /g, "-");
 
 const config = {
   appId: "com.nees.adt-studio",
@@ -41,23 +41,20 @@ const config = {
     output: "release",
   },
   extraMetadata: {
-    version
+    version,
   },
   extraResources,
-  // Native/tooling deps live next to api-server.mjs; they cannot load from asar.
   asarUnpack: [
     "out/main/api-server.mjs",
     "out/main/*.wasm",
     "out/main/node_modules/**",
   ],
-  files: [
-    "out/**/*",
-    "!out/renderer/placeholder-*",
-  ],
+  files: ["out/**/*", "!out/renderer/placeholder-*"],
   win: {
     target: ["nsis"],
     icon: "build/icon.ico",
   },
+  afterSign: "scripts/notarize.js",
   nsis: {
     artifactName,
     oneClick: false,
@@ -66,12 +63,32 @@ const config = {
   mac: {
     target: ["dmg"],
     icon: "build/icon.icns",
+    category: "public.app-category.developer-tools",
+    type: "distribution",
+    hardenedRuntime: true,
+    gatekeeperAssess: false,
+    entitlements: "build/entitlements.mac.plist",
     entitlementsInherit: "build/entitlements.mac.plist",
+    identity: "Developer ID Application",
+    extraResources,
+    extendInfo: {
+      NSCameraUsageDescription:
+        "Application requests access to the device's camera.",
+      NSMicrophoneUsageDescription:
+        "Application requests access to the device's microphone.",
+      NSDocumentsFolderUsageDescription:
+        "Application requests access to the user's Documents folder.",
+      NSDownloadsFolderUsageDescription:
+        "Application requests access to the user's Downloads folder.",
+    },
+  },
+  dmg: {
+    artifactName,
   },
   linux: {
     target: ["AppImage"],
     icon: "build",
-  }
+  },
 };
 
 module.exports = config;
