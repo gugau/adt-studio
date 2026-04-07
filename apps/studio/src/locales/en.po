@@ -1009,6 +1009,9 @@ msgstr "Create from scratch using your description"
 msgid "Create session"
 msgstr "Create session"
 
+msgid "Creating..."
+msgstr "Creating..."
+
 msgid "Credits"
 msgstr "Credits"
 
@@ -3759,9 +3762,6 @@ msgstr "Untitled"
 
 msgid "Upload a new image file from your computer"
 msgstr "Upload a new image file from your computer"
-
-#~ msgid "Upload a PDF and fill the Project name with a valid label first"
-#~ msgstr "Upload a PDF and fill the Project name with a valid label first"
 
 msgid "Upload a PDF to continue"
 msgstr "Upload a PDF to continue"
