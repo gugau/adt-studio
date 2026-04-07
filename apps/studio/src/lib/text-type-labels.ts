@@ -27,6 +27,7 @@ const TEXT_TYPE_LABEL_MESSAGES: Record<string, MessageDescriptor> = {
 
 const IMAGE_TYPE_LABEL_MESSAGES: Record<string, MessageDescriptor> = {
   inline_image: msg`Inline Image`,
+  full_bleed_image: msg`Full Bleed Image`,
   background_image: msg`Background Image`,
   diagram: msg`Diagram`,
   photo: msg`Photo`,

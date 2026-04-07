@@ -54,6 +54,12 @@ export interface LLMContentNode {
   children?: LLMContentNode[] | null
 }
 
+export interface PageStructuringRefinementLLMOutput {
+  approved: boolean
+  reasoning: string
+  nodes: LLMContentNode[]
+}
+
 /**
  * Maximum nesting depth for the LLM schema.
  * OpenAI structured outputs don't support $ref-based recursive schemas,
@@ -61,15 +67,7 @@ export interface LLMContentNode {
  */
 const LLM_SCHEMA_MAX_DEPTH = 5
 
-/**
- * Build an LLM-facing schema for page structuring.
- *
- * Uses concrete nesting (not z.lazy) because OpenAI's structured output API
- * rejects $ref-based JSON Schema produced by z.lazy. The schema is unrolled
- * to LLM_SCHEMA_MAX_DEPTH levels — leaf nodes at the deepest level cannot
- * have children.
- */
-export function buildPageStructuringLLMSchema() {
+function buildLLMContentNodeSchema() {
   // OpenAI structured outputs require every property in `required`.
   // Use .nullable() instead of .optional() so fields are always present
   // but can be null when not applicable.
@@ -90,8 +88,28 @@ export function buildPageStructuringLLMSchema() {
     })
   }
 
+  return nodeSchema
+}
+
+/**
+ * Build an LLM-facing schema for page structuring.
+ *
+ * Uses concrete nesting (not z.lazy) because OpenAI's structured output API
+ * rejects $ref-based JSON Schema produced by z.lazy. The schema is unrolled
+ * to LLM_SCHEMA_MAX_DEPTH levels — leaf nodes at the deepest level cannot
+ * have children.
+ */
+export function buildPageStructuringLLMSchema() {
   return z.object({
     reasoning: z.string(),
-    nodes: z.array(nodeSchema),
+    nodes: z.array(buildLLMContentNodeSchema()),
+  })
+}
+
+export function buildPageStructuringRefinementLLMSchema() {
+  return z.object({
+    approved: z.boolean(),
+    reasoning: z.string(),
+    nodes: z.array(buildLLMContentNodeSchema()),
   })
 }

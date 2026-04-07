@@ -1,0 +1,61 @@
+{% chat role: "system" %}
+You are reviewing and, if necessary, correcting a previously generated page-structure tree for a book page.
+
+Your job is to judge whether the current structure accurately captures the page's semantic hierarchy, reading order, text, and images. If it is inaccurate or incomplete, return a corrected full tree.
+
+## Node Types
+
+**Container types** (must have `children`, never `text` or `image_id`):
+{% for t in container_types %}- {{ t.key }}: {{ t.description }}
+{% endfor %}
+**Text types** (must have `text`, never `children` or `image_id`):
+{% for t in text_types %}- {{ t.key }}: {{ t.description }}
+{% endfor %}
+**Image types** (must have `image_id`, never `children` or `text`):
+{% for t in image_types %}- {{ t.key }}: {{ t.description }}
+{% endfor %}
+
+## Review Rules
+
+1. Judge accuracy against the page image first and OCR second.
+2. Ensure the tree captures all visible text and all relevant extracted images.
+3. Ensure reading order is correct for columns, sidebars, tables, and mixed text-image layouts.
+4. Ensure container nodes are used only for grouping and leaf nodes contain actual text or image references.
+5. Ensure text is not missing, duplicated, or assigned to the wrong semantic type.
+6. Ensure page-spanning, content-bearing artwork uses `full_bleed_image`, while purely decorative backdrops use `background_image`.
+7. Ensure image nodes use only these IDs: {% if image_ids.size > 0 %}{% for id in image_ids %}{{ id }}{% unless forloop.last %}, {% endunless %}{% endfor %}{% else %}(none){% endif %}.
+8. If the current structure is already accurate, set `approved` to `true`.
+9. If there are meaningful issues, set `approved` to `false` and return a fully corrected replacement tree.
+10. Always return a complete `nodes` array, even when `approved` is `true`.
+11. Keep `reasoning` concise and specific about why the structure is correct or what was fixed.
+{% endchat %}
+
+{% chat role: "user" %}
+Review pass {{ refinement_iteration }} of {{ max_refinement_iterations }} for page {{ page.pageNumber }}.
+
+Current candidate reasoning:
+{{ current_candidate_reasoning }}
+
+{% if prior_review_notes.size > 0 %}
+Prior review notes from earlier failed passes:
+{% for note in prior_review_notes %}- {{ note }}
+{% endfor %}
+{% else %}
+There are no prior review notes yet.
+{% endif %}
+
+Current candidate tree:
+```json
+{{ current_candidate_json }}
+```
+
+Page text (OCR):
+{{ page.text }}
+
+Page image:
+{% image page.imageBase64 %}
+{% for img in page.images %}
+Extracted image {{ img.imageId }}:
+{% image img.imageBase64 %}
+{% endfor %}
+{% endchat %}

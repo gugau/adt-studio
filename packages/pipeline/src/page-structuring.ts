@@ -2,12 +2,18 @@ import {
   type PageStructuringOutput,
   type ContentNodeData,
   type LLMContentNode,
+  type PageStructuringRefinementLLMOutput,
   buildPageStructuringLLMSchema,
+  buildPageStructuringRefinementLLMSchema,
   type TypeDef,
   type AppConfig,
   DEFAULT_LLM_MAX_RETRIES,
 } from "@adt/types"
 import type { LLMModel, ValidationResult } from "@adt/llm"
+
+const PAGE_STRUCTURING_REFINEMENT_PROMPT = "page_structuring_refinement"
+const PAGE_STRUCTURING_MAX_REFINEMENTS = 3
+const PAGE_STRUCTURING_MAX_TOKENS = 16384
 
 export interface StructureConfig {
   textTypes: TypeDef[]
@@ -28,6 +34,11 @@ export interface PageInput {
   images: Array<{ imageId: string; imageBase64: string }>
 }
 
+interface RawPageStructuringResult {
+  reasoning: string
+  nodes: LLMContentNode[]
+}
+
 /**
  * Structure the content of a single page into a tree. Pure function — no side effects.
  * The caller handles concurrency, storage writes, and progress.
@@ -44,32 +55,18 @@ export async function structurePage(
     throw new Error("No container types configured")
   }
 
-  const schema = buildPageStructuringLLMSchema()
-
   const imageIds = page.images.map((img) => img.imageId)
+  const baseContext = buildPageStructuringContext(page, config, imageIds)
+  const validate = (raw: unknown) =>
+    validatePageStructuring(raw, config.textTypes, config.imageTypes, config.containerTypes, imageIds)
 
-  const result = await llmModel.generateObject<{
-    reasoning: string
-    nodes: LLMContentNode[]
-  }>({
-    schema,
+  const result = await llmModel.generateObject<RawPageStructuringResult>({
+    schema: buildPageStructuringLLMSchema(),
     prompt: config.promptName,
-    context: {
-      page: {
-        pageNumber: page.pageNumber,
-        text: page.text,
-        imageBase64: page.imageBase64,
-        images: page.images,
-      },
-      text_types: config.textTypes,
-      image_types: config.imageTypes,
-      container_types: config.containerTypes,
-      image_ids: imageIds,
-    },
-    validate: (raw: unknown) =>
-      validatePageStructuring(raw, config.textTypes, config.imageTypes, config.containerTypes, imageIds),
+    context: baseContext,
+    validate,
     maxRetries: config.maxRetries,
-    maxTokens: 16384,
+    maxTokens: PAGE_STRUCTURING_MAX_TOKENS,
     log: {
       taskType: "page-structuring",
       pageId: page.pageId,
@@ -77,43 +74,134 @@ export async function structurePage(
     },
   })
 
-  // Post-process: assign nodeIds and mark pruned entries
-  const prunedSet = new Set(config.prunedTextTypes)
+  let candidate: RawPageStructuringResult = result.object
+  const priorReviewNotes: string[] = []
+
+  for (let iteration = 1; iteration <= PAGE_STRUCTURING_MAX_REFINEMENTS; iteration++) {
+    const refinement = await runPageStructuringRefinementPass({
+      page,
+      config,
+      llmModel,
+      candidate,
+      imageIds,
+      iteration,
+      priorReviewNotes,
+      validate,
+      baseContext,
+    })
+    candidate = {
+      reasoning: refinement.reasoning,
+      nodes: refinement.nodes,
+    }
+    if (refinement.approved) break
+    priorReviewNotes.push(refinement.reasoning)
+  }
+
+  return {
+    reasoning: candidate.reasoning,
+    nodes: finalizePageStructuringNodes(page.pageId, candidate.nodes, config.prunedTextTypes),
+  }
+}
+
+function buildPageStructuringContext(
+  page: PageInput,
+  config: StructureConfig,
+  imageIds: string[]
+): Record<string, unknown> {
+  return {
+    page: {
+      pageNumber: page.pageNumber,
+      text: page.text,
+      imageBase64: page.imageBase64,
+      images: page.images,
+    },
+    text_types: config.textTypes,
+    image_types: config.imageTypes,
+    container_types: config.containerTypes,
+    image_ids: imageIds,
+  }
+}
+
+function finalizePageStructuringNodes(
+  pageId: string,
+  llmNodes: LLMContentNode[],
+  prunedTextTypes: string[]
+): ContentNodeData[] {
+  const prunedSet = new Set(prunedTextTypes)
   let nodeCounter = 0
 
-  function assignIds(llmNodes: LLMContentNode[]): ContentNodeData[] {
-    return llmNodes.map((n) => {
+  function assignIds(nodes: LLMContentNode[]): ContentNodeData[] {
+    return nodes.map((node) => {
       nodeCounter++
-      const nodeId = `${page.pageId}_nd${String(nodeCounter).padStart(3, "0")}`
+      const nodeId = `${pageId}_nd${String(nodeCounter).padStart(3, "0")}`
 
-      if (n.children && n.children.length > 0) {
-        // Container node
+      if (node.children && node.children.length > 0) {
         return {
           nodeId,
-          nodeType: n.node_type,
-          children: assignIds(n.children),
+          nodeType: node.node_type,
+          children: assignIds(node.children),
           isPruned: false,
         }
       }
 
-      // Leaf node (text or image)
-      const node: ContentNodeData = {
+      const finalized: ContentNodeData = {
         nodeId,
-        nodeType: n.node_type,
-        isPruned: prunedSet.has(n.node_type),
+        nodeType: node.node_type,
+        isPruned: prunedSet.has(node.node_type),
       }
-      if (n.text != null) node.text = n.text
-      if (n.image_id != null) node.imageId = n.image_id
-      return node
+      if (node.text != null) finalized.text = node.text
+      if (node.image_id != null) finalized.imageId = node.image_id
+      return finalized
     })
   }
 
-  const nodes = assignIds(result.object.nodes)
+  return assignIds(llmNodes)
+}
 
-  return {
-    reasoning: result.object.reasoning,
-    nodes,
-  }
+async function runPageStructuringRefinementPass(options: {
+  page: PageInput
+  config: StructureConfig
+  llmModel: LLMModel
+  candidate: RawPageStructuringResult
+  imageIds: string[]
+  iteration: number
+  priorReviewNotes: string[]
+  validate: (raw: unknown) => ValidationResult
+  baseContext: Record<string, unknown>
+}): Promise<PageStructuringRefinementLLMOutput> {
+  const {
+    page,
+    config,
+    llmModel,
+    candidate,
+    iteration,
+    priorReviewNotes,
+    validate,
+    baseContext,
+  } = options
+
+  const result = await llmModel.generateObject<PageStructuringRefinementLLMOutput>({
+    schema: buildPageStructuringRefinementLLMSchema(),
+    prompt: PAGE_STRUCTURING_REFINEMENT_PROMPT,
+    context: {
+      ...baseContext,
+      current_candidate_reasoning: candidate.reasoning,
+      current_candidate_json: JSON.stringify(candidate, null, 2),
+      refinement_iteration: iteration,
+      max_refinement_iterations: PAGE_STRUCTURING_MAX_REFINEMENTS,
+      prior_review_notes: priorReviewNotes,
+    },
+    validate,
+    maxRetries: config.maxRetries,
+    maxTokens: PAGE_STRUCTURING_MAX_TOKENS,
+    log: {
+      taskType: "page-structuring",
+      pageId: page.pageId,
+      promptName: PAGE_STRUCTURING_REFINEMENT_PROMPT,
+    },
+  })
+
+  return result.object
 }
 
 function validatePageStructuring(
@@ -124,6 +212,22 @@ function validatePageStructuring(
   validImageIds: string[]
 ): ValidationResult {
   const r = result as { nodes: LLMContentNode[] }
+  return validatePageStructuringNodes(
+    r.nodes,
+    textTypes,
+    imageTypes,
+    containerTypes,
+    validImageIds
+  )
+}
+
+function validatePageStructuringNodes(
+  nodes: LLMContentNode[],
+  textTypes: TypeDef[],
+  imageTypes: TypeDef[],
+  containerTypes: TypeDef[],
+  validImageIds: string[]
+): ValidationResult {
   const textTypeKeys = new Set(textTypes.map((t) => t.key))
   const imageTypeKeys = new Set(imageTypes.map((t) => t.key))
   const containerTypeKeys = new Set(containerTypes.map((t) => t.key))
@@ -189,7 +293,7 @@ function validatePageStructuring(
     }
   }
 
-  walkNodes(r.nodes, "nodes")
+  walkNodes(nodes, "nodes")
   return { valid: errors.length === 0, errors }
 }
 

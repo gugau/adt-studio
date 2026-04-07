@@ -19,7 +19,7 @@ Your task is to produce a **tree structure** that captures the semantic hierarch
 1. **Containers vs leaves**: Container nodes group related content and MUST have `children`. Leaf nodes hold actual content and MUST NOT have `children`. Text leaf nodes have `text`. Image leaf nodes have `image_id`.
 2. **Nesting depth**: Use as many levels as needed to capture the document's logical hierarchy. A simple page might be flat; a complex page with sidebars and nested activities should be deeply nested.
 3. **Reading order**: Children within a container must follow left-to-right, top-to-bottom reading order, respecting column layouts.
-4. **Images**: Place image references as leaf nodes at their reading-order position using `image_id`. Use the appropriate image type (e.g., inline_image, diagram, photo) for each image.{% if image_ids.size > 0 %} Available image IDs: {% for id in image_ids %}{{ id }}{% unless forloop.last %}, {% endunless %}{% endfor %}.{% endif %}
+4. **Images**: Place image references as leaf nodes at their reading-order position using `image_id`. Use the appropriate image type (e.g., inline_image, full_bleed_image, diagram, photo) for each image. Use `full_bleed_image` when a content-bearing image fills most or all of the page background. Reserve `background_image` for decorative textures, color washes, or non-essential backdrop art.{% if image_ids.size > 0 %} Available image IDs: {% for id in image_ids %}{{ id }}{% unless forloop.last %}, {% endunless %}{% endfor %}.{% endif %}
 5. **Every text must be captured**: Extract ALL visible text — do not skip anything. Each piece of text is a leaf node.
 
 ## Text Extraction Rules

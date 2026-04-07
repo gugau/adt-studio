@@ -76,7 +76,9 @@ export {
   ContentNode,
   PageStructuringOutput,
   type LLMContentNode,
+  type PageStructuringRefinementLLMOutput,
   buildPageStructuringLLMSchema,
+  buildPageStructuringRefinementLLMSchema,
 } from "./page-structuring.js"
 
 export {

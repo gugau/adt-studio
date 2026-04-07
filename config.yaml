@@ -22,7 +22,8 @@ text_types:
 
 image_types:
   inline_image: An image that is part of the content flow
-  background_image: A decorative background or page-spanning image
+  full_bleed_image: A content-bearing image that fills most or all of the page background
+  background_image: A decorative or texture-like background element, not the main content image
   diagram: A chart, diagram, or technical illustration
   photo: A photograph
   icon: A small decorative or functional icon
