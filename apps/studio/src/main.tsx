@@ -1,6 +1,6 @@
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
-import { RouterProvider, createHashHistory, createRouter } from "@tanstack/react-router"
+import { RouterProvider, createBrowserHistory, createRouter } from "@tanstack/react-router"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { I18nProvider } from "@lingui/react"
 import { i18n } from "@lingui/core"
@@ -48,7 +48,7 @@ const router = createRouter({
       return url
     },
   },
-  history: createHashHistory(),
+  history: createBrowserHistory(),
 })
 
 declare module "@tanstack/react-router" {

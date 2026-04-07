@@ -73,6 +73,7 @@ const ALLOWED_ORIGINS = [
   "tauri://localhost",
   "https://tauri.localhost",
   "http://tauri.localhost",
+  "app://adt.studio",
 ]
 
 app.use(

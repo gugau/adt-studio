@@ -6,7 +6,6 @@ import { tanstackRouter } from "@tanstack/router-plugin/vite"
 import { fileURLToPath, URL } from "node:url"
 
 export default defineConfig({
-  base: "./",
   plugins: [
     lingui(),
     tanstackRouter({ quoteStyle: "double" }),

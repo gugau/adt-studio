@@ -2,6 +2,7 @@ import { shell, BrowserWindow } from "electron";
 import { join } from "path";
 import { is } from "@electron-toolkit/utils";
 import icon from "../../resources/icon.png?asset";
+import { STUDIO_APP_ORIGIN } from "./studio-app-protocol";
 
 export function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -31,7 +32,6 @@ export function createWindow(): void {
   if (is.dev && process.env.NODE_ENV === "development") {
     mainWindow.loadURL(STUDIO_DEV_URL);
   } else {
-    const STUDIO_PROD_URL = join(__dirname, "../renderer/index.html");
-    mainWindow.loadFile(STUDIO_PROD_URL);
+    mainWindow.loadURL(`${STUDIO_APP_ORIGIN}/`);
   }
 }

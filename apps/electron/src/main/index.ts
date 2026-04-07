@@ -1,50 +1,63 @@
 import "dotenv/config";
-import { app, BrowserWindow, ipcMain, protocol } from 'electron'
-import { electronApp, optimizer } from '@electron-toolkit/utils'
-import { createWindow } from './main-window'
-import { startApiServer, stopApiServer, setLogForwarder, isApiDebugMode } from './api-process'
-import { registerHtmlRenderProtocol } from './html-render-protocol'
+import { app, BrowserWindow, ipcMain, protocol } from "electron";
+import { electronApp, optimizer } from "@electron-toolkit/utils";
+import { createWindow } from "./main-window";
+import {
+  startApiServer,
+  stopApiServer,
+  setLogForwarder,
+  isApiDebugMode,
+} from "./api-process";
+import { registerHtmlRenderProtocol } from "./html-render-protocol";
 import { handleScreenshotMessages } from "./screenshot.handler";
+import { join } from "node:path";
+import {
+  registerStudioAppProtocol,
+  STUDIO_APP_SCHEME_PRIVILEGES,
+} from "./studio-app-protocol";
 
 protocol.registerSchemesAsPrivileged([
-  { scheme: 'html-render', privileges: { standard: true, secure: true } }
+  STUDIO_APP_SCHEME_PRIVILEGES,
+  { scheme: "html-render", privileges: { standard: true, secure: true } },
 ]);
 
 app.whenReady().then(async () => {
-  const apiProcess = await startApiServer()
+  const apiProcess = await startApiServer();
 
-  electronApp.setAppUserModelId('com.electron')
+  electronApp.setAppUserModelId("com.electron");
 
-  app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
-  })
-  
-  apiProcess.on('message', handleScreenshotMessages(apiProcess))
+  registerStudioAppProtocol(join(__dirname, "../renderer"));
+  registerHtmlRenderProtocol();
 
-  app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
+  app.on("browser-window-created", (_, window) => {
+    optimizer.watchWindowShortcuts(window);
+  });
 
-  ipcMain.handle('api-debug-mode', () => isApiDebugMode)
+  apiProcess.on("message", handleScreenshotMessages(apiProcess));
+
+  app.on("activate", function () {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+
+  ipcMain.handle("api-debug-mode", () => isApiDebugMode);
 
   if (isApiDebugMode) {
     setLogForwarder((entry) => {
       BrowserWindow.getAllWindows().forEach((win) => {
-        win.webContents.send('api-log', entry)
-      })
-    })
+        win.webContents.send("api-log", entry);
+      });
+    });
   }
 
-  createWindow()
-  registerHtmlRenderProtocol()
-})
+  createWindow();
+});
 
-app.on('before-quit', () => {
-  stopApiServer()
-})
+app.on("before-quit", () => {
+  stopApiServer();
+});
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
+    app.quit();
   }
-})
+});
