@@ -4,7 +4,7 @@ import os from "node:os"
 import path from "node:path"
 import { openBookDb, createBookStorage } from "@adt/storage"
 import { unzipSync } from "fflate"
-import { prepareExport, exportBook, exportWebpub } from "./export-service.js"
+import { prepareExport, exportProject, exportWebpub } from "./export-service.js"
 
 let tmpDir: string
 let webAssetsDir: string
@@ -95,12 +95,12 @@ function createWebAssets(dir: string): void {
   )
 }
 
-describe("exportBook", () => {
+describe("exportProject", () => {
   it("produces a valid ZIP containing the db file", async () => {
     createTestDb("export-test")
     addPages("export-test", 1)
 
-    const result = await exportBook("export-test", tmpDir)
+    const result = await exportProject("export-test", tmpDir)
     expect(result.stream).toBeInstanceOf(ReadableStream)
     expect(result.filename).toBe("export-test.zip")
 
@@ -114,7 +114,7 @@ describe("exportBook", () => {
     addPages("with-pdf", 1)
     addPdf("with-pdf")
 
-    const result = await exportBook("with-pdf", tmpDir)
+    const result = await exportProject("with-pdf", tmpDir)
     const zipBuffer = await streamToBuffer(result.stream)
     const files = unzipSync(zipBuffer)
     expect(files["with-pdf.pdf"]).toBeDefined()
@@ -126,7 +126,7 @@ describe("exportBook", () => {
     addPages("with-imgs", 1)
     addImageFile("with-imgs", "my-img")
 
-    const result = await exportBook("with-imgs", tmpDir)
+    const result = await exportProject("with-imgs", tmpDir)
     const zipBuffer = await streamToBuffer(result.stream)
     const files = unzipSync(zipBuffer)
     expect(files["images/my-img.png"]).toBeDefined()
@@ -138,7 +138,7 @@ describe("exportBook", () => {
     addPages("with-config", 1)
     addConfigYaml("with-config")
 
-    const result = await exportBook("with-config", tmpDir)
+    const result = await exportProject("with-config", tmpDir)
     const zipBuffer = await streamToBuffer(result.stream)
     const files = unzipSync(zipBuffer)
     expect(files["config.yaml"]).toBeDefined()
@@ -150,20 +150,20 @@ describe("exportBook", () => {
     createTestDb("not-accepted")
     addPages("not-accepted", 1)
 
-    const result = await exportBook("not-accepted", tmpDir)
+    const result = await exportProject("not-accepted", tmpDir)
     expect(result.stream).toBeInstanceOf(ReadableStream)
     expect(result.filename).toBe("not-accepted.zip")
   })
 
   it("throws for non-existent book", async () => {
-    await expect(exportBook("ghost", tmpDir)).rejects.toThrow("not found")
+    await expect(exportProject("ghost", tmpDir)).rejects.toThrow("not found")
   })
 
   it("throws when web assets directory is missing (prepareExport)", async () => {
     createTestDb("missing-assets")
     addPages("missing-assets", 1)
 
-    await expect(prepareExport("missing-assets", "book", tmpDir, path.join(tmpDir, "missing-assets-dir")))
+    await expect(prepareExport("missing-assets", "project", tmpDir, path.join(tmpDir, "missing-assets-dir")))
       .rejects.toThrow("Web assets directory not found")
   })
 
@@ -175,7 +175,7 @@ describe("exportBook", () => {
     addImageFile("full-book", "img-b")
     addConfigYaml("full-book")
 
-    const result = await exportBook("full-book", tmpDir)
+    const result = await exportProject("full-book", tmpDir)
     const zipBuffer = await streamToBuffer(result.stream)
     const files = unzipSync(zipBuffer)
     const paths = Object.keys(files).sort()

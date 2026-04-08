@@ -1015,18 +1015,18 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-  prepareExport: (label: string, format: "book" | "webpub" | "scorm" = "book") =>
+  prepareExport: (label: string, format: "project" | "webpub" | "scorm" | "adt" = "project") =>
     request<{ taskId?: string; status: string; label: string }>(
       `/books/${label}/prepare-export?format=${format}`,
       { method: "POST" }
     ),
 
-  exportBook: async (label: string): Promise<Blob | null> => {
+  exportProject: async (label: string): Promise<Blob | null> => {
     if (!isTauri()) {
-      triggerDirectDownload(`${BASE_URL}/books/${label}/export`)
+      triggerDirectDownload(`${BASE_URL}/books/${label}/export-project`)
       return null
     }
-    const url = `${BASE_URL}/books/${label}/export`
+    const url = `${BASE_URL}/books/${label}/export-project`
     const res = await fetch(url, {
       method: "GET",
       headers: { Accept: "application/zip" },
@@ -1076,6 +1076,26 @@ export const api = {
     if (!res.ok) {
       const body = await res.json().catch(() => ({ error: res.statusText }))
       throw new Error(body.error ?? `SCORM export failed: ${res.status}`)
+    }
+    const buf = await res.arrayBuffer()
+    return new Blob([buf], { type: "application/zip" })
+  },
+
+  exportAdt: async (label: string): Promise<Blob | null> => {
+    if (!isTauri()) {
+      triggerDirectDownload(`${BASE_URL}/books/${label}/export-adt`)
+      return null
+    }
+    const url = `${BASE_URL}/books/${label}/export-adt`
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/zip" },
+      mode: "cors",
+      signal: AbortSignal.timeout(1_800_000),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ error: res.statusText }))
+      throw new Error(body.error ?? `ADT export failed: ${res.status}`)
     }
     const buf = await res.arrayBuffer()
     return new Blob([buf], { type: "application/zip" })

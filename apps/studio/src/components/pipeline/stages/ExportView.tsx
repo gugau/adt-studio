@@ -1,4 +1,4 @@
-import { FileDown, Loader2, BookOpen, AlertCircle, GraduationCap } from "lucide-react"
+import { FileDown, Loader2, BookOpen, AlertCircle, GraduationCap, Globe } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { Button } from "@/components/ui/button"
 import { useBookRun } from "@/hooks/use-book-run"
@@ -9,7 +9,8 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
   const { stageState } = useBookRun()
   const storyboardDone = stageState("storyboard") === "done"
 
-  const adtError = error?.format === "book" ? error.message : null
+  const projectError = error?.format === "project" ? error.message : null
+  const adtError = error?.format === "adt" ? error.message : null
   const scormError = error?.format === "scorm" ? error.message : null
   const webpubError = error?.format === "webpub" ? error.message : null
 
@@ -30,15 +31,55 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
   }
 
   return (
-    <div className="p-6 max-w-xl flex flex-col gap-6">
-      {/* ADT Export */}
-      <section className="rounded-lg border p-4 flex flex-col gap-3">
+    <div className="p-6 max-w-2xl flex flex-col gap-3">
+      <section className="rounded-lg border p-4 flex flex-col gap-3 transition-colors">
         <div className="flex items-center gap-2">
           <FileDown className="w-5 h-5 text-emerald-600" />
-          <h3 className="text-sm font-semibold"><Trans>ADT Export</Trans></h3>
+          <h3 className="text-sm font-semibold"><Trans>Project Archive</Trans></h3>
         </div>
         <p className="text-sm text-muted-foreground">
-          <Trans>Export the complete Accessible Digital Textbook as a ZIP archive. Includes all HTML pages, images, audio files, quizzes, and the compiled web application — ready to upload to a distribution platform or open locally.</Trans>
+          <Trans>
+            Export the entire project as a ZIP archive — includes the source PDF, extracted images,
+            all pipeline outputs, the database, and the compiled web application.
+            Use this to back up or transfer the project to another machine.
+          </Trans>
+        </p>
+        <div className="flex flex-col gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className={
+              projectError
+                ? "bg-red-50 text-red-600 border-red-200 hover:bg-red-100 w-fit transition-colors"
+                : "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 w-fit transition-colors"
+            }
+            onClick={() => startExport("project")}
+            disabled={isPreparing}
+          >
+            {preparingFormat === "project" ? (
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <FileDown className="mr-1.5 h-3.5 w-3.5" />
+            )}
+            {projectError ? <Trans>Retry Export</Trans> : <Trans>Export Project Archive</Trans>}
+          </Button>
+          {projectError && (
+            <p className="text-[11px] leading-tight text-red-500">{projectError}</p>
+          )}
+        </div>
+      </section>
+
+      <section className="rounded-lg border p-4 flex flex-col gap-3 transition-colors">
+        <div className="flex items-center gap-2">
+          <Globe className="w-5 h-5 text-sky-600" />
+          <h3 className="text-sm font-semibold"><Trans>Web Export</Trans></h3>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          <Trans>
+            Export the complete Accessible Digital Textbook as a ZIP archive — includes all HTML pages,
+            images, audio files, quizzes, and the compiled web application.
+            Ready to upload to a distribution platform or open locally.
+          </Trans>
         </p>
         <div className="flex flex-col gap-1">
           <Button
@@ -46,29 +87,26 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
             size="sm"
             className={
               adtError
-                ? "bg-red-50 text-red-600 border-red-200 hover:bg-red-100 w-fit"
-                : "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 w-fit"
+                ? "bg-red-50 text-red-600 border-red-200 hover:bg-red-100 w-fit transition-colors"
+                : "bg-sky-50 text-sky-600 border-sky-200 hover:bg-sky-100 w-fit transition-colors"
             }
-            onClick={() => startExport("book")}
+            onClick={() => startExport("adt")}
             disabled={isPreparing}
           >
-            {preparingFormat === "book" ? (
+            {preparingFormat === "adt" ? (
               <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
             ) : (
-              <FileDown className="mr-1.5 h-3.5 w-3.5" />
+              <Globe className="mr-1.5 h-3.5 w-3.5" />
             )}
-            {adtError ? <Trans>Retry Export</Trans> : <Trans>Export ADT</Trans>}
+            {adtError ? <Trans>Retry Export</Trans> : <Trans>Export Web</Trans>}
           </Button>
           {adtError && (
-            <p className="text-[11px] leading-tight text-red-500">
-              {adtError}
-            </p>
+            <p className="text-[11px] leading-tight text-red-500">{adtError}</p>
           )}
         </div>
       </section>
 
-      {/* SCORM Export */}
-      <section className="rounded-lg border p-4 flex flex-col gap-3">
+      <section className="rounded-lg border p-4 flex flex-col gap-3 transition-colors">
         <div className="flex items-center gap-2">
           <GraduationCap className="w-5 h-5 text-amber-600" />
           <h3 className="text-sm font-semibold"><Trans>SCORM Export</Trans></h3>
@@ -82,8 +120,8 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
             size="sm"
             className={
               scormError
-                ? "bg-red-50 text-red-600 border-red-200 hover:bg-red-100 w-fit"
-                : "bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100 w-fit"
+                ? "bg-red-50 text-red-600 border-red-200 hover:bg-red-100 w-fit transition-colors"
+                : "bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100 w-fit transition-colors"
             }
             onClick={() => startExport("scorm")}
             disabled={isPreparing}
@@ -96,15 +134,12 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
             {scormError ? <Trans>Retry Export</Trans> : <Trans>Export SCORM</Trans>}
           </Button>
           {scormError && (
-            <p className="text-[11px] leading-tight text-red-500">
-              {scormError}
-            </p>
+            <p className="text-[11px] leading-tight text-red-500">{scormError}</p>
           )}
         </div>
       </section>
 
-      {/* WebPub Export */}
-      <section className="rounded-lg border p-4 flex flex-col gap-3">
+      <section className="rounded-lg border p-4 flex flex-col gap-3 transition-colors">
         <div className="flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-blue-600" />
           <h3 className="text-sm font-semibold"><Trans>WebPub Export</Trans></h3>
@@ -121,8 +156,8 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
             size="sm"
             className={
               webpubError
-                ? "bg-red-50 text-red-600 border-red-200 hover:bg-red-100 w-fit"
-                : "bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 w-fit"
+                ? "bg-red-50 text-red-600 border-red-200 hover:bg-red-100 w-fit transition-colors"
+                : "bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 w-fit transition-colors"
             }
             onClick={() => startExport("webpub")}
             disabled={isPreparing}
@@ -135,13 +170,10 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
             {webpubError ? <Trans>Retry Export</Trans> : <Trans>Export WebPub</Trans>}
           </Button>
           {webpubError && (
-            <p className="text-[11px] leading-tight text-red-500">
-              {webpubError}
-            </p>
+            <p className="text-[11px] leading-tight text-red-500">{webpubError}</p>
           )}
         </div>
       </section>
-
     </div>
   )
 }

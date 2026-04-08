@@ -480,8 +480,11 @@ msgstr "Livro ADT"
 msgid "ADT Book - {0}"
 msgstr "Livro ADT - {0}"
 
-msgid "ADT Export"
-msgstr "Exportação ADT"
+#~ msgid "ADT Export"
+#~ msgstr "Exportação ADT"
+
+msgid "ADT Package"
+msgstr "Pacote ADT"
 
 msgid "Adventure Tales - Vol. 1"
 msgstr "Contos de Aventura - Vol. 1"
@@ -1451,8 +1454,8 @@ msgstr "Expiração"
 msgid "Export"
 msgstr "Exportar"
 
-msgid "Export ADT"
-msgstr "Exportar ADT"
+#~ msgid "Export ADT"
+#~ msgstr "Exportar ADT"
 
 msgid "Export as a SCORM 1.2 package for upload to a Learning Management System (LMS). Includes activity completion tracking and offline support."
 msgstr "Exportar como pacote SCORM 1.2 para upload em um Sistema de Gestão de Aprendizagem (LMS). Inclui rastreamento de conclusão de atividade e suporte offline."
@@ -1460,14 +1463,29 @@ msgstr "Exportar como pacote SCORM 1.2 para upload em um Sistema de Gestão de A
 msgid "Export preparation failed"
 msgstr "Falha ao preparar a exportação"
 
+msgid "Export Project Archive"
+msgstr "Exportar Arquivo do Projeto"
+
 msgid "Export SCORM"
 msgstr "Exportar SCORM"
 
 msgid "Export the book as a Readium WebPub package — a standards-based format for distributing digital publications on the web. Suitable for reading systems that support the Readium Web Publication Manifest specification."
 msgstr "Exporte o livro como um pacote Readium WebPub — um formato baseado em padrões para distribuir publicações digitais na web. Adequado para sistemas de leitura que suportam a especificação Readium Web Publication Manifest."
 
-msgid "Export the complete Accessible Digital Textbook as a ZIP archive. Includes all HTML pages, images, audio files, quizzes, and the compiled web application — ready to upload to a distribution platform or open locally."
-msgstr "Exporte o Accessible Digital Textbook completo como um arquivo ZIP. Inclui todas as páginas HTML, imagens, arquivos de áudio, questionários e a aplicação web compilada — pronto para enviar para uma plataforma de distribuição ou abrir localmente."
+msgid "Export the complete Accessible Digital Textbook as a ZIP archive — includes all HTML pages, images, audio files, quizzes, and the compiled web application. Ready to upload to a distribution platform or open locally."
+msgstr "Exporte o Livro Didático Digital Acessível completo como um arquivo ZIP — inclui todas as páginas HTML, imagens, arquivos de áudio, questionários e o aplicativo web compilado. Pronto para enviar para uma plataforma de distribuição ou abrir localmente."
+
+#~ msgid "Export the complete Accessible Digital Textbook as a ZIP archive. Includes all HTML pages, images, audio files, quizzes, and the compiled web application — ready to upload to a distribution platform or open locally."
+#~ msgstr "Exporte o Accessible Digital Textbook completo como um arquivo ZIP. Inclui todas as páginas HTML, imagens, arquivos de áudio, questionários e a aplicação web compilada — pronto para enviar para uma plataforma de distribuição ou abrir localmente."
+
+msgid "Export the entire project as a ZIP archive — includes the source PDF, extracted images, all pipeline outputs, the database, and the compiled web application. Use this to back up or transfer the project to another machine."
+msgstr "Exporte o projeto inteiro como um arquivo ZIP — inclui o PDF original, imagens extraídas, todos os resultados do pipeline, o banco de dados e o aplicativo web compilado. Use isso para fazer backup ou transferir o projeto para outra máquina."
+
+#~ msgid "Export timed out — the book may be too large"
+#~ msgstr "A exportação expirou — o livro pode ser muito grande"
+
+msgid "Export Web"
+msgstr "Exportar Web"
 
 msgid "Export WebPub"
 msgstr "Exportar WebPub"
@@ -1608,6 +1626,9 @@ msgstr "Capa"
 
 msgid "Full control over render strategies, pruning, and filters."
 msgstr "Controle total sobre estratégias de renderização, poda e filtros."
+
+#~ msgid "Full Project"
+#~ msgstr "Projeto Completo"
 
 msgid "Full-size source page preview for the selected quiz."
 msgstr "Pré-visualização em tamanho real da página de origem do quiz selecionado."
@@ -2734,6 +2755,9 @@ msgstr "Slide anterior"
 
 msgid "Processing metadata…"
 msgstr "Processando metadados…"
+
+msgid "Project Archive"
+msgstr "Arquivo do Projeto"
 
 msgid "Project Name"
 msgstr "Nome do Projeto"
@@ -3989,11 +4013,17 @@ msgstr ""
 "wcag2aa\n"
 "best-practice"
 
+msgid "Web Export"
+msgstr "Exportação Web"
+
 msgid "Web Package"
 msgstr "Pacote web"
 
 msgid "Web Rendering"
 msgstr "Renderização web"
+
+#~ msgid "Web Version"
+#~ msgstr "Versão Web"
 
 msgid "WebPub"
 msgstr "WebPub"

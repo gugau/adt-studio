@@ -5,7 +5,7 @@ import { useLingui } from "@lingui/react"
 import { api } from "@/api/client"
 import { useBookTasks } from "./use-book-tasks"
 
-type ExportFormat = "book" | "webpub" | "scorm"
+type ExportFormat = "project" | "webpub" | "scorm" | "adt"
 
 interface PendingExport {
   taskId: string
@@ -95,12 +95,14 @@ async function triggerExportDownload(
   i18n: I18n,
 ): Promise<void> {
   let blob: Blob | null
-  if (format === "book") {
-    blob = await api.exportBook(label)
+  if (format === "project") {
+    blob = await api.exportProject(label)
   } else if (format === "webpub") {
     blob = await api.exportWebpub(label)
-  } else {
+  } else if (format === "scorm") {
     blob = await api.exportScorm(label)
+  } else {
+    blob = await api.exportAdt(label)
   }
 
   if (!blob) return // Browser mode — direct download already triggered
@@ -110,13 +112,21 @@ async function triggerExportDownload(
   const { writeFile } = await import("@tauri-apps/plugin-fs")
 
   const ext = format === "webpub" ? "webpub" : "zip"
-  const defaultPath = format === "scorm" ? `${label}-scorm.zip` : `${label}.${ext}`
+  const defaultPath =
+    format === "scorm" ? `${label}-scorm.zip`
+    : format === "adt" ? `${label}-adt.zip`
+    : format === "project" ? `${label}-project.zip`
+    : `${label}.${ext}`
   const filterName =
     format === "webpub"
       ? i18n._(msg`WebPub`)
       : format === "scorm"
         ? i18n._(msg`SCORM Package`)
-        : i18n._(msg`ZIP Archive`)
+        : format === "adt"
+          ? i18n._(msg`ADT Package`)
+          : format === "project"
+            ? i18n._(msg`Project Archive`)
+            : i18n._(msg`ZIP Archive`)
 
   const savePath = await save({
     defaultPath,

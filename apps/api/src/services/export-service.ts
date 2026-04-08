@@ -20,13 +20,28 @@ export interface ExportResult {
 }
 
 /**
+ * Read book title from metadata for use in export filenames.
+ * Falls back to the safe label if metadata is not available.
+ */
+function readBookTitle(label: string, resolvedDir: string): string {
+  const storage = createBookStorage(label, resolvedDir)
+  try {
+    const metadataRow = storage.getLatestNodeData("metadata", "book")
+    const metadata = metadataRow?.data as { title?: string | null } | null
+    return metadata?.title ?? label
+  } finally {
+    storage.close()
+  }
+}
+
+/**
  * Prepare export by rebuilding the adt/ (and optionally webpub/) directories.
  * Called as a separate step before the actual download so the client can show
  * a spinner during the rebuild.
  */
 export async function prepareExport(
   label: string,
-  format: "book" | "webpub" | "scorm",
+  format: "project" | "webpub" | "scorm" | "adt",
   booksDir: string,
   webAssetsDir: string,
   configPath?: string,
@@ -80,7 +95,7 @@ export async function prepareExport(
   }
 }
 
-export async function exportBook(
+export async function exportProject(
   label: string,
   booksDir: string,
 ): Promise<ExportResult> {
@@ -116,17 +131,7 @@ export async function exportWebpub(
     throw new Error(`Book not found: ${safeLabel}`)
   }
 
-  // Read title from metadata for the filename
-  let title = safeLabel
-  const storage = createBookStorage(safeLabel, resolvedDir)
-  try {
-    const metadataRow = storage.getLatestNodeData("metadata", "book")
-    const metadata = metadataRow?.data as { title?: string | null } | null
-    title = metadata?.title ?? safeLabel
-  } finally {
-    storage.close()
-  }
-
+  const title = readBookTitle(safeLabel, resolvedDir)
   const webpubDir = path.join(bookDir, "webpub")
 
   return {
@@ -137,6 +142,12 @@ export async function exportWebpub(
 }
 
 export interface ScormExportResult {
+  stream: ReadableStream<Uint8Array>
+  filename: string
+  safeFilename: string
+}
+
+export interface AdtExportResult {
   stream: ReadableStream<Uint8Array>
   filename: string
   safeFilename: string
@@ -154,17 +165,7 @@ export async function exportScorm(
     throw new Error(`Book not found: ${safeLabel}`)
   }
 
-  // Read title from metadata for the filename
-  let title = safeLabel
-  const storage = createBookStorage(safeLabel, resolvedDir)
-  try {
-    const metadataRow = storage.getLatestNodeData("metadata", "book")
-    const metadata = metadataRow?.data as { title?: string | null } | null
-    title = metadata?.title ?? safeLabel
-  } finally {
-    storage.close()
-  }
-
+  const title = readBookTitle(safeLabel, resolvedDir)
   const adtDir = path.join(bookDir, "adt")
   if (!fs.existsSync(adtDir)) {
     throw new Error("ADT directory not found — run the pipeline first")
@@ -174,6 +175,31 @@ export async function exportScorm(
     stream: createZipStream(adtDir),
     filename: `${title}.zip`,
     safeFilename: `${safeLabel}.zip`,
+  }
+}
+
+export async function exportAdt(
+  label: string,
+  booksDir: string,
+): Promise<AdtExportResult> {
+  const safeLabel = parseBookLabel(label)
+  const resolvedDir = path.resolve(booksDir)
+  const bookDir = path.join(resolvedDir, safeLabel)
+
+  if (!fs.existsSync(bookDir)) {
+    throw new Error(`Book not found: ${safeLabel}`)
+  }
+
+  const title = readBookTitle(safeLabel, resolvedDir)
+  const adtDir = path.join(bookDir, "adt")
+  if (!fs.existsSync(adtDir)) {
+    throw new Error("ADT directory not found — run the pipeline first")
+  }
+
+  return {
+    stream: createZipStream(adtDir),
+    filename: `${title}-web.zip`,
+    safeFilename: `${safeLabel}-web.zip`,
   }
 }
 

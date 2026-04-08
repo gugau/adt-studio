@@ -12,7 +12,7 @@ import {
   getBookConfig,
   updateBookConfig,
 } from "../services/book-service.js"
-import { prepareExport, exportBook, exportWebpub, exportScorm } from "../services/export-service.js"
+import { prepareExport, exportProject, exportWebpub, exportScorm, exportAdt } from "../services/export-service.js"
 import type { TaskService } from "../services/task-service.js"
 
 const MIME_TYPES: Record<string, string> = {
@@ -146,7 +146,7 @@ export function createBookRoutes(
   // POST /books/:label/prepare-export — Rebuild adt/ (and webpub/ if needed) before download
   app.post("/books/:label/prepare-export", async (c) => {
     const { label } = c.req.param()
-    const format = (c.req.query("format") ?? "book") as "book" | "webpub" | "scorm"
+    const format = (c.req.query("format") ?? "project") as "project" | "webpub" | "scorm" | "adt"
     const safeLabel = parseBookLabel(label)
 
     try {
@@ -158,7 +158,7 @@ export function createBookRoutes(
           async () => {
             await prepareExport(label, format, booksDir, webAssetsDir ?? "", configPath)
           },
-          { url: `/books/${safeLabel}/export` }
+          { url: `/books/${safeLabel}/export-project` }
         )
         return c.json({ status: "submitted", taskId, label: safeLabel })
       }
@@ -178,11 +178,11 @@ export function createBookRoutes(
     }
   })
 
-  // GET /books/:label/export — Download book as ZIP
-  app.get("/books/:label/export", async (c) => {
+  // GET /books/:label/export-project — Download full project archive as ZIP
+  app.get("/books/:label/export-project", async (c) => {
     const { label } = c.req.param()
     try {
-      const result = await exportBook(label, booksDir)
+      const result = await exportProject(label, booksDir)
       c.header("Content-Type", "application/zip")
       c.header(
         "Content-Disposition",
@@ -231,6 +231,30 @@ export function createBookRoutes(
     const { label } = c.req.param()
     try {
       const result = await exportScorm(label, booksDir)
+      c.header("Content-Type", "application/zip")
+      const encodedName = encodeURIComponent(result.filename)
+      c.header(
+        "Content-Disposition",
+        `attachment; filename="${result.safeFilename}"; filename*=UTF-8''${encodedName}`
+      )
+      return c.body(result.stream)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      if (message.includes("Web assets directory not found")) {
+        throw new HTTPException(500, { message })
+      }
+      if (message.includes("Book not found")) {
+        throw new HTTPException(404, { message })
+      }
+      throw new HTTPException(400, { message })
+    }
+  })
+
+  // GET /books/:label/export-adt — Download ADT web package (adt/ directory)
+  app.get("/books/:label/export-adt", async (c) => {
+    const { label } = c.req.param()
+    try {
+      const result = await exportAdt(label, booksDir)
       c.header("Content-Type", "application/zip")
       const encodedName = encodeURIComponent(result.filename)
       c.header(
