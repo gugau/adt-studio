@@ -39,17 +39,5 @@ security import cert.p12 -k "$KEYCHAIN" -P "$P12_PASSWORD" -T /usr/bin/codesign
 security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PWD" "$KEYCHAIN"
 security find-identity -v -p codesigning "$KEYCHAIN" || true
 
-pnpm install
 
-# Maybe useless, try without and remove the following lines
-# set -euo pipefail
-# DMG=$(ls release/*.dmg | head -n1)
-# echo "DMG encontrado: $DMG"
-# xcrun notarytool submit "$DMG" \
-# --apple-id "$APPLEID" \
-# --password "$APPLEIDPASS" \
-# --team-id "$APPLEIDTEAM" \
-# --wait
-# xcrun stapler staple "$DMG"
-
-APPLEID="$APPLEID" APPLEIDPASS="$APPLEIDPASS" APPLEIDTEAM="$APPLEIDTEAM" APP_PLATFORM="darwin" pnpm build:mac
+APPLEID="$APPLEID" APPLEIDPASS="$APPLEIDPASS" APPLEIDTEAM="$APPLEIDTEAM" APP_PLATFORM="darwin" pnpm --filter @adt/electron build:mac

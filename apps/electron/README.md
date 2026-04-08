@@ -29,6 +29,10 @@ From repository root:
 pnpm install
 ```
 
+```bash
+pnpm build
+```
+
 ## Development
 
 Run a local production-like preview (build first, then launch):
@@ -61,7 +65,7 @@ All generated artifacts are written to:
 apps/electron/release/
 ```
 
-## Signing And Notarization (In Progress)
+## Signing And Notarization
 
 `electron-builder` runs `scripts/notarize.js` in `afterSign`.
 
@@ -77,6 +81,18 @@ To skip signing/notarization in CI or local tests:
 
 ```bash
 SKIP_NOTARIZE=true pnpm --filter @adt/electron build:win
+```
+
+### Sign and release mac version
+
+1. Enter on electron folder
+```bash
+cd apps/electron
+```
+2. Maybe you will need add a permission to run the script (optional)
+3. Run mac-sign-release
+```bash
+./scripts/mac-sign-release.sh
 ```
 
 ## Useful Notes
