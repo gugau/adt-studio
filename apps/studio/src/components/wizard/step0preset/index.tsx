@@ -60,6 +60,13 @@ export function Step0Preset() {
         >
           <Trans>Choose a Preset</Trans>
         </h1>
+        <p className="max-w-xl text-center text-sm text-[#525252]">
+          <Trans>
+            Presets add recommendations and specific settings for your use case. You still choose
+            each option step by step, and you can go back to select a different preset at any
+            time.
+          </Trans>
+        </p>
         <div
           className="flex min-h-[2.75rem] w-full max-w-lg items-center justify-center px-2"
           aria-live="polite"

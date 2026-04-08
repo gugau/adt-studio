@@ -21,11 +21,39 @@ export function getPreviewWidth(strategy: string): number {
 
 // ─── Shared placeholder primitives ──────────────────────────────────────────
 
-/* eslint-disable lingui/no-unlocalized-strings */
+/* eslint-disable lingui/no-unlocalized-strings -- Lorem ipsum: layout mockup filler only (not translated) */
 const LOREM =
   "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."
+/* eslint-enable lingui/no-unlocalized-strings */
 
 const DYNAMIC_PREVIEW_STAGE_LABELS = [msg`Evaporation`, msg`Condensation`, msg`Precipitation`] as const
+
+const SINGLE_COLUMN_DEFINITIONS = [
+  {
+    term: msg`API`,
+    definition: msg`Application Programming Interface — a set of rules that allows programs to communicate.`,
+  },
+  {
+    term: msg`Endpoint`,
+    definition: msg`A specific URL where an API can be accessed and a request submitted.`,
+  },
+  {
+    term: msg`Payload`,
+    definition: msg`The data sent within the body of a request or response message.`,
+  },
+  {
+    term: msg`Token`,
+    definition: msg`A unique string used to authenticate and authorize API requests.`,
+  },
+] as const
+
+const SINGLE_COLUMN_TABLE_HEADERS = [msg`Method`, msg`Transport`, msg`Expiry`] as const
+
+const SINGLE_COLUMN_TABLE_ROWS = [
+  [msg`Bearer Token`, msg`Header`, msg`1 hour`],
+  [msg`API Key`, msg`Query param`, msg`Never`],
+  [msg`OAuth 2.0`, msg`Header`, msg`Custom`],
+] as const
 
 // ─── Dynamic (LLM) — textbook-style page mockup (The Water Cycle) ──────────
 
@@ -291,6 +319,8 @@ function OverlayPreview() {
 // ─── Single Column — full-width reference/documentation layout ───────────────
 
 function SingleColumnPreview() {
+  const { i18n } = useLingui()
+
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto px-4 py-5 text-[#0a0a0a] @min-[420px]:px-6 @min-[420px]:py-6 @min-[540px]:px-10 @min-[540px]:py-8 @min-[620px]:px-14 @min-[620px]:py-10">
 
@@ -314,18 +344,16 @@ function SingleColumnPreview() {
 
       {/* Definition list */}
       <div className="mb-3 flex flex-col divide-y divide-[#f0f0f0] rounded-lg border border-[#e5e5e5] @min-[540px]:mb-4">
-        {([
-          ["API", "Application Programming Interface — a set of rules that allows programs to communicate."],
-          ["Endpoint", "A specific URL where an API can be accessed and a request submitted."],
-          ["Payload", "The data sent within the body of a request or response message."],
-          ["Token", "A unique string used to authenticate and authorize API requests."],
-        ] as const).map(([term, def]) => (
-          <div key={term} className="flex gap-2 px-2.5 py-1.5 @min-[540px]:gap-3 @min-[540px]:px-3 @min-[540px]:py-2">
+        {SINGLE_COLUMN_DEFINITIONS.map(({ term, definition }, idx) => (
+          <div
+            key={idx}
+            className="flex gap-2 px-2.5 py-1.5 @min-[540px]:gap-3 @min-[540px]:px-3 @min-[540px]:py-2"
+          >
             <span className="w-14 shrink-0 text-[8px] font-bold text-[#0a0a0a] @min-[420px]:w-16 @min-[420px]:text-[9px] @min-[540px]:w-20 @min-[540px]:text-[10px] @min-[620px]:text-xs">
-              {term}
+              {i18n._(term)}
             </span>
             <span className="text-[8px] leading-[12px] text-[#525252] @min-[420px]:text-[9px] @min-[420px]:leading-[13px] @min-[540px]:text-[10px] @min-[540px]:leading-[14px] @min-[620px]:text-xs @min-[620px]:leading-4">
-              {def}
+              {i18n._(definition)}
             </span>
           </div>
         ))}
@@ -359,24 +387,20 @@ function SingleColumnPreview() {
       {/* Table */}
       <div className="mb-3 overflow-hidden rounded-lg border border-[#e5e5e5] @min-[540px]:mb-4">
         <div className="grid grid-cols-3 divide-x divide-[#e5e5e5] bg-[#f5f5f5]">
-          {(["Method", "Transport", "Expiry"] as const).map((h) => (
-            <div key={h} className="px-2 py-1 @min-[540px]:px-3 @min-[540px]:py-1.5">
+          {SINGLE_COLUMN_TABLE_HEADERS.map((h, idx) => (
+            <div key={idx} className="px-2 py-1 @min-[540px]:px-3 @min-[540px]:py-1.5">
               <span className="text-[7px] font-bold uppercase tracking-wide text-[#404040] @min-[420px]:text-[8px] @min-[540px]:text-[9px] @min-[620px]:text-[10px]">
-                {h}
+                {i18n._(h)}
               </span>
             </div>
           ))}
         </div>
-        {([
-          ["Bearer Token", "Header", "1 hour"],
-          ["API Key", "Query param", "Never"],
-          ["OAuth 2.0", "Header", "Custom"],
-        ] as const).map(([method, transport, expiry], i) => (
-          <div key={i} className="grid grid-cols-3 divide-x divide-[#f0f0f0] border-t border-[#f0f0f0]">
-            {([method, transport, expiry] as const).map((cell) => (
-              <div key={cell} className="px-2 py-1 @min-[540px]:px-3 @min-[540px]:py-1.5">
+        {SINGLE_COLUMN_TABLE_ROWS.map((row, rowIdx) => (
+          <div key={rowIdx} className="grid grid-cols-3 divide-x divide-[#f0f0f0] border-t border-[#f0f0f0]">
+            {row.map((cell, colIdx) => (
+              <div key={`${rowIdx}-${colIdx}`} className="px-2 py-1 @min-[540px]:px-3 @min-[540px]:py-1.5">
                 <span className="text-[7px] text-[#525252] @min-[420px]:text-[8px] @min-[540px]:text-[9px] @min-[620px]:text-[10px]">
-                  {cell}
+                  {i18n._(cell)}
                 </span>
               </div>
             ))}

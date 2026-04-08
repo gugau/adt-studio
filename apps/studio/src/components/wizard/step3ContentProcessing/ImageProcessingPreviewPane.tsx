@@ -436,7 +436,7 @@ function FilterSizeIllustration() {
 const PREVIEW_LABEL_MSGS: Record<ImageProcessingPreviewFocus, MessageDescriptor> = {
   idle: msg`Image processing`,
   activities: msg`Activities generator`,
-  figureExtraction: msg`Figure extraction`,
+  figureExtraction: msg`Figure Extraction`,
   cropping: msg`LLM cropping`,
   segmentation: msg`LLM segmentation`,
   minSide: msg`Minimum size threshold`,

@@ -91,6 +91,7 @@ export default [
             "pdfUrl",
             "adtUrl",
             "comingSoon",
+            { regex: { pattern: "Class$" } },
 
             // --- Data labels (technical CSS descriptions, pipeline labels — not user-facing prose) ---
             "label",

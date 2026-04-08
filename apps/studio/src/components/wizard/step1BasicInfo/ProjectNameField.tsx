@@ -1,6 +1,7 @@
-/* eslint-disable lingui/no-unlocalized-strings */
-// TODO: Add translations
 import { useId } from "react"
+import { useLingui } from "@lingui/react"
+import { t } from "@lingui/core/macro"
+import { Trans } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -27,6 +28,7 @@ export function ProjectNameField({
   onBlur,
   errors,
 }: ProjectNameFieldProps) {
+  const { i18n } = useLingui()
   const inputId = "wizard-project-name"
   const hintId = useId()
   const errorId = useId()
@@ -39,14 +41,14 @@ export function ProjectNameField({
         htmlFor={inputId}
         className="cursor-pointer text-sm font-medium text-[#0a0a0a]"
       >
-        Project Name <span className="text-[#ef4444]">*</span>
+        <Trans>Project Name</Trans> <span className="text-[#ef4444]">*</span>
       </Label>
       <Input
         id={inputId}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
-        placeholder="my-book"
+        placeholder={i18n._(t`my-book-slug`)}
         className={hasError ? "border-[#ef4444]" : ""}
         aria-invalid={hasError}
         aria-describedby={hasError ? errorId : hintId}
@@ -60,7 +62,7 @@ export function ProjectNameField({
             hasError ? "pointer-events-none opacity-0" : "opacity-100",
           )}
         >
-          A unique identifier used as the book folder name.
+          <Trans>A unique identifier used as the book folder name.</Trans>
         </p>
         <p
           id={errorId}

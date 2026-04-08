@@ -1,7 +1,7 @@
 
 import { useState, useEffect, type CSSProperties } from "react"
 import { Trans, useLingui } from "@lingui/react/macro"
-import { Eye, ArrowLeft, ArrowRight, Zap } from "lucide-react"
+import { Eye, ArrowLeft, ArrowRight, Zap, Loader2 } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
 import { useNavigate } from "@tanstack/react-router"
 import { Button } from "@/components/ui/button"
@@ -52,6 +52,7 @@ function WizardFooter({
   isLastStep,
   canContinue,
   canCreate,
+  isCreating,
   onBack,
   onNext,
   onCreate,
@@ -62,6 +63,7 @@ function WizardFooter({
   isLastStep: boolean
   canContinue: boolean
   canCreate: boolean
+  isCreating: boolean
   onBack: () => void
   onNext: () => void
   onCreate: () => void
@@ -114,7 +116,8 @@ function WizardFooter({
         <Button
           type="button"
           onClick={handleNext}
-          className="flex h-10 w-full items-center justify-center overflow-hidden px-4 font-medium text-white transition-[background-color,opacity] duration-300 ease-out hover:opacity-90 border-0"
+          disabled={isCreating}
+          className="flex h-10 w-full items-center justify-center overflow-hidden px-4 font-medium text-white transition-[background-color,opacity] duration-300 ease-out hover:opacity-90 border-0 disabled:opacity-60"
           style={{ backgroundColor: accent.bg }}
         >
           <span
@@ -126,8 +129,12 @@ function WizardFooter({
           >
             {isLastStep ? (
               <>
-                <Zap className="h-4 w-4 shrink-0" />
-                {t`Create Book`}
+                {isCreating ? (
+                  <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                ) : (
+                  <Zap className="h-4 w-4 shrink-0" />
+                )}
+                {isCreating ? t`Creating...` : t`Create ADT`}
               </>
             ) : (
               <>
@@ -189,6 +196,7 @@ export function BookCreationWizard() {
   const { apiKey, hasApiKey, azureKey, azureRegion, geminiKey } = useApiKey()
   const [previewOpen, setPreviewOpen] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [isCreating, setIsCreating] = useState(false)
 
   const values = useStore(form.store, (s) => s.values)
   const { file, renderStrategy, editingLanguage, outputLanguages, styleguide } = values
@@ -241,6 +249,7 @@ export function BookCreationWizard() {
 
   async function handleCreate() {
     setSubmitError(null)
+    setIsCreating(true)
     try {
       const book = await createMutation.mutateAsync({
         label: values.label.trim(),
@@ -262,6 +271,7 @@ export function BookCreationWizard() {
       navigate({ to: "/books/$label/$step", params: { label: book.label, step: "book" } })
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : t`Failed to create book.`)
+      setIsCreating(false)
     }
   }
   const previewWidth = currentStep === 2 ? getPreviewWidth(renderStrategy) : 650
@@ -330,7 +340,8 @@ export function BookCreationWizard() {
             key={currentStep}
             isLastStep={currentStep === STEPS.length}
             canContinue={canContinue}
-            canCreate={canCreate && !createMutation.isPending}
+            canCreate={canCreate && !isCreating}
+            isCreating={isCreating}
             onBack={handleBack}
             onNext={handleNext}
             onCreate={handleCreate}
