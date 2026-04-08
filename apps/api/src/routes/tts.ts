@@ -344,7 +344,7 @@ export function createTTSRoutes(booksDir: string, configPath?: string, taskServi
 
     const storage = createBookStorage(safeLabel, booksDir)
     try {
-      storage.clearNodesByType(["tts"])
+      storage.clearNodesByType(["tts", "tts-timestamps"])
       storage.clearStepRuns(["tts"])
 
       // Remove audio files on disk
