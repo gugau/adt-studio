@@ -516,7 +516,11 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
           <>
             <button
               type="button"
-              onClick={() => audioLang && transcribeAllMutation.mutate(audioLang)}
+              onClick={() => {
+                if (!audioLang) return
+                if (!window.confirm(t`Are you sure you want to generate all word level timestamps?`)) return
+                transcribeAllMutation.mutate(audioLang)
+              }}
               disabled={!apiKey || totalAudioFiles === 0 || transcribeAllMutation.isPending || isTaskRunning("transcribe-timestamps")}
               title={apiKey ? t`Calculate word timestamps for all entries` : t`OpenAI key required`}
               className="text-white/60 hover:text-white transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-default"
@@ -525,7 +529,10 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
             </button>
             <button
               type="button"
-              onClick={handleDeleteTTS}
+              onClick={() => {
+                if (!window.confirm(t`Are you sure you want to delete generated speech?`)) return
+                handleDeleteTTS()
+              }}
               disabled={totalAudioFiles === 0}
               title={t`Delete all speech`}
               className="text-white/60 hover:text-white transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-default"
