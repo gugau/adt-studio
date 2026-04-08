@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import type { ApiLogEntry } from '../main/api-process'
+import type { ApiLogEntry } from '../main/api/types'
 
 type ApiLogCallback = (entry: ApiLogEntry) => void
 
@@ -11,11 +11,11 @@ const api = {
     return () => ipcRenderer.off('api-log', handler)
   },
   isApiDebugMode: (): Promise<boolean> => ipcRenderer.invoke('api-debug-mode'),
+  get apiPort(): number {
+    return ipcRenderer.sendSync('api-port')
+  },
 }
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)

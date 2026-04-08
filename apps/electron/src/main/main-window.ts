@@ -2,7 +2,7 @@ import { shell, BrowserWindow } from "electron";
 import { join } from "path";
 import { is } from "@electron-toolkit/utils";
 import icon from "../../resources/icon.png?asset";
-import { STUDIO_APP_ORIGIN } from "./studio-app-protocol";
+import { STUDIO_APP_ORIGIN } from "./protocols/studio-app.protocol";
 
 export function createWindow(): void {
   const mainWindow = new BrowserWindow({

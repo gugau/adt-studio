@@ -16,5 +16,6 @@ interface Window {
   api: {
     onApiLog: (callback: (entry: ElectronApiLogEntry) => void) => () => void
     isApiDebugMode: () => Promise<boolean>
+    apiPort: number
   }
 }

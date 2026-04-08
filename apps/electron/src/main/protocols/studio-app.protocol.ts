@@ -14,7 +14,7 @@ export const STUDIO_APP_SCHEME_PRIVILEGES = {
     corsEnabled: true,
     stream: true,
   },
-} as const;
+} as Electron.CustomScheme;
 
 function isPathInsideRoot(filePath: string, rootDir: string): boolean {
   const resolvedFile = path.resolve(filePath);

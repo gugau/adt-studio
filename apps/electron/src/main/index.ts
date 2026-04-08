@@ -6,23 +6,24 @@ import {
   startApiServer,
   stopApiServer,
   setLogForwarder,
+  apiPort,
   isApiDebugMode,
-} from "./api-process";
-import { registerHtmlRenderProtocol } from "./html-render-protocol";
+} from "./api";
+import { HTML_RENDER_SCHEME_PRIVILEGES, registerHtmlRenderProtocol } from "./protocols/html-render.protocol";
 import { handleScreenshotMessages } from "./screenshot.handler";
 import { join } from "node:path";
 import {
   registerStudioAppProtocol,
   STUDIO_APP_SCHEME_PRIVILEGES,
-} from "./studio-app-protocol";
+} from "./protocols/studio-app.protocol";
 
 protocol.registerSchemesAsPrivileged([
   STUDIO_APP_SCHEME_PRIVILEGES,
-  { scheme: "html-render", privileges: { standard: true, secure: true } },
+  HTML_RENDER_SCHEME_PRIVILEGES,
 ]);
 
 app.whenReady().then(async () => {
-  const apiProcess = await startApiServer();
+  const { apiProcess } = await startApiServer();
 
   electronApp.setAppUserModelId("com.electron");
 
@@ -40,6 +41,9 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.handle("api-debug-mode", () => isApiDebugMode);
+  ipcMain.on("api-port", (event) => {
+    event.returnValue = apiPort;
+  });
 
   if (isApiDebugMode) {
     setLogForwarder((entry) => {

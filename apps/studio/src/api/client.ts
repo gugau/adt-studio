@@ -1,3 +1,4 @@
+import { isElectron } from "@/lib/utils"
 import type {
   AccessibilityAssessmentOutput,
   ReviewerPageValidationRecord,
@@ -10,13 +11,18 @@ import type {
 export function resolveBaseUrl(
   loc: Pick<Location, "protocol" | "hostname"> = window.location,
 ): string {
+  if (isElectron()) {
+    const apiPort = window.api.apiPort
+    return `http://localhost:${apiPort}/api`
+  }
+
   if (
     loc.protocol === "tauri:" || 
-    loc.hostname === "tauri.localhost" || 
-    navigator.userAgent.toLowerCase().includes("electron")
+    loc.hostname === "tauri.localhost"
   ) {
     return "http://localhost:3001/api"
   }
+  
   return "/api"
 }
 
