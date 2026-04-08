@@ -88,7 +88,7 @@ export function PageGroupingMode() {
       { value: "spread" as const, label: i18n._(GROUPING_OPTION_SPREAD_LABEL) },
       { value: "single" as const, label: i18n._(GROUPING_OPTION_SINGLE_LABEL) },
     ],
-    [i18n],
+    [i18n, i18n.locale],
   )
 
   const recommendedOption = recommended
@@ -108,7 +108,7 @@ export function PageGroupingMode() {
         Diagram: SingleDiagram,
       },
     ],
-    [i18n],
+    [i18n, i18n.locale],
   )
 
   return (

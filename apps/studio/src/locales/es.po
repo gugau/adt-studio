@@ -291,6 +291,9 @@ msgstr "Una actividad de completar tablas."
 msgid "A true or false activity."
 msgstr "Una actividad de verdadero o falso."
 
+msgid "A unique identifier used as the book folder name."
+msgstr "Un identificador único usado como el nombre de la carpeta del libro."
+
 #. placeholder {0}: replaceConfirm?.file.name
 msgid "A video named \"{0}\" already exists. Do you want to replace it?"
 msgstr "Ya existe un video llamado \"{0}\". ¿Desea reemplazarlo?"
@@ -997,8 +1000,8 @@ msgstr "Crea una nueva imagen a partir de una descripción de texto"
 msgid "Create a reviewer session for this book."
 msgstr "Create a reviewer session for this book."
 
-msgid "Create Book"
-msgstr "Crear Libro"
+msgid "Create ADT"
+msgstr "Crear ADT"
 
 msgid "Create descriptive captions for images to improve accessibility."
 msgstr "Crea subtítulos descriptivos para las imágenes para mejorar la accesibilidad."
@@ -1495,9 +1498,6 @@ msgstr "figura"
 
 msgid "Figure 5.1 - The water cycle: evaporation from oceans, condensation into clouds, precipitation as rain, and runoff back to the sea."
 msgstr "Figura 5.1 - El ciclo del agua: evaporación de los océanos, condensación en nubes, precipitación como lluvia y escorrentía de vuelta al mar."
-
-msgid "Figure extraction"
-msgstr "Extracción de figuras"
 
 msgid "Figure Extraction"
 msgstr "Extracción de Figuras"
@@ -2169,6 +2169,9 @@ msgstr "mp3"
 msgid "Multi-format publications"
 msgstr "Publicaciones multiformato"
 
+msgid "my-book-slug"
+msgstr "mi-libro-slug"
+
 msgid "N/A"
 msgstr "N/A"
 
@@ -2636,6 +2639,12 @@ msgstr "Precipitación"
 msgid "Preset"
 msgstr "Preajuste"
 
+msgid "Presets add recommendations and specific settings for your use case. You still choose each option step by step, and you can go back to select a different preset at any time."
+msgstr "Los preajustes añaden recomendaciones y configuraciones específicas para tu caso. Aún eliges cada opción paso a paso, y puedes volver a seleccionar un preajuste diferente en cualquier momento."
+
+#~ msgid "Presets pre-fill the workflow with recommended settings for your use case. You can still review and change any option later."
+#~ msgstr "Los preajustes completan el flujo de trabajo con configuraciones recomendadas para su caso de uso. Aún puede revisar y cambiar cualquier opción más tarde."
+
 msgid "Press Enter to add"
 msgstr "Presiona Enter para agregar"
 
@@ -2656,6 +2665,9 @@ msgstr "Diapositiva anterior"
 
 msgid "Processing metadata…"
 msgstr "Procesando metadatos…"
+
+msgid "Project Name"
+msgstr "Nombre del Proyecto"
 
 msgid "Prompt"
 msgstr "Prompt"

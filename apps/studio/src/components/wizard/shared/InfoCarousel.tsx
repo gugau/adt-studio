@@ -31,7 +31,7 @@ function Carousel({ slides }: { slides: readonly CarouselSlide[] }) {
         >
           {slides.map((slide) => (
             <div key={slide.title} className="w-full shrink-0">
-              <Card className="flex h-[270px] flex-col gap-3 border-0 bg-transparent p-0 shadow-none">
+              <Card className="flex min-h-[270px] flex-col gap-3 border-0 bg-transparent p-0 shadow-none">
                 <CardHeader className="space-y-1.5 p-0">
                   <CardTitle className="text-sm font-semibold leading-tight">
                     {slide.title}

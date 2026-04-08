@@ -159,7 +159,7 @@ export function SectioningMode() {
         Diagram: SectionDiagram,
       },
     ],
-    [i18n],
+    [i18n, i18n.locale],
   )
 
   return (

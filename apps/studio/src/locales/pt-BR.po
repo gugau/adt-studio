@@ -291,6 +291,9 @@ msgstr "Uma atividade de preenchimento de tabela."
 msgid "A true or false activity."
 msgstr "Uma atividade de verdadeiro ou falso."
 
+msgid "A unique identifier used as the book folder name."
+msgstr "Um identificador único usado como nome da pasta do livro."
+
 #. placeholder {0}: replaceConfirm?.file.name
 msgid "A video named \"{0}\" already exists. Do you want to replace it?"
 msgstr "Já existe um vídeo chamado \"{0}\". Deseja substituí-lo?"
@@ -299,7 +302,7 @@ msgid "ABC"
 msgstr "ABC"
 
 msgid "About page grouping"
-msgstr "Sobre agrupamento de páginas"
+msgstr "Sobre o agrupamento de páginas"
 
 msgid "About section mode"
 msgstr "Sobre modo de seção"
@@ -500,7 +503,7 @@ msgid "AI sees the current image and modifies it"
 msgstr "A IA vê a imagem atual e a modifica"
 
 msgid "AI-powered"
-msgstr "Impulsionado por IA"
+msgstr "IA"
 
 msgid "AI-powered layout that preserves the original page as a background with text overlay."
 msgstr "Layout impulsionado por IA que preserva a página original como fundo com sobreposição de texto."
@@ -797,7 +800,7 @@ msgid "Change language"
 msgstr "Mudar idioma"
 
 msgid "Change Preset"
-msgstr "Alterar Predefinido"
+msgstr "Alterar Predefinição"
 
 msgid "Chapter 7 - Marine Biology"
 msgstr "Capítulo 7 - Biologia Marinha"
@@ -821,7 +824,7 @@ msgid "Checklist item"
 msgstr "Checklist item"
 
 msgid "Choose a Preset"
-msgstr "Escolher um Predefinido"
+msgstr "Escolha uma Predefinição"
 
 msgid "Choose an existing image from this project"
 msgstr "Escolha uma imagem existente deste projeto"
@@ -997,8 +1000,8 @@ msgstr "Crie uma nova imagem a partir de uma descrição de texto"
 msgid "Create a reviewer session for this book."
 msgstr "Create a reviewer session for this book."
 
-msgid "Create Book"
-msgstr "Criar Livro"
+msgid "Create ADT"
+msgstr "Criar ADT"
 
 msgid "Create descriptive captions for images to improve accessibility."
 msgstr "Cria legendas descritivas para imagens para melhorar a acessibilidade."
@@ -1496,11 +1499,8 @@ msgstr "figura"
 msgid "Figure 5.1 - The water cycle: evaporation from oceans, condensation into clouds, precipitation as rain, and runoff back to the sea."
 msgstr "Figura 5.1 - O ciclo da água: evaporação dos oceanos, condensação em nuvens, precipitação como chuva e escoamento de volta ao mar."
 
-msgid "Figure extraction"
-msgstr "Extração de figura"
-
 msgid "Figure Extraction"
-msgstr "Extração de Figura"
+msgstr "Extração de Figuras"
 
 msgid "Fill in the Blank"
 msgstr "Preencher lacunas"
@@ -2041,7 +2041,7 @@ msgid "Manual review"
 msgstr "Revisão manual"
 
 msgid "Many printed books are designed with facing pages in mind - illustrations that span two pages, or text that flows across a spread. Spread mode merges each pair of facing pages so content isn't split apart. The cover stays standalone, then pages are paired: 2+3, 4+5, etc."
-msgstr "Muitos livros impressos são projetados com páginas opostas em mente - ilustrações que abrangem duas páginas ou texto que flui por uma abertura. O modo de espalhamento mescla cada par de páginas opostas para que o conteúdo não seja dividido. A capa permanece independente, depois as páginas são emparelhadas: 2+3, 4+5, etc."
+msgstr "Muitos livros impressos são pensados em duplas de páginas — ilustrações que atravessam a abertura ou texto que segue de uma página à outra. No modo de duplas, cada par de páginas opostas é tratado junto, para o conteúdo não ser cortado no meio. A capa fica sozinha; em seguida, as páginas são emparelhadas: 2+3, 4+5 etc."
 
 msgid "Map"
 msgstr "Mapa"
@@ -2168,6 +2168,9 @@ msgstr "mp3"
 
 msgid "Multi-format publications"
 msgstr "Publicações multi-formato"
+
+msgid "my-book-slug"
+msgstr "meu-livro-slug"
 
 msgid "N/A"
 msgstr "N/A"
@@ -2443,10 +2446,10 @@ msgid "Optional suggestion for fixing or improving this item"
 msgstr "Optional suggestion for fixing or improving this item"
 
 msgid "options are deterministic;"
-msgstr "opções são determinísticas;"
+msgstr "entrega resultados previsíveis;"
 
 msgid "options generate a fresh layout per page."
-msgstr "opções geram um layout novo por página."
+msgstr "gera um novo layout para cada página."
 
 msgid "Original language"
 msgstr "Língua original"
@@ -2521,7 +2524,7 @@ msgid "Page Grouping"
 msgstr "Agrupamento de Páginas"
 
 msgid "Page Grouping Mode"
-msgstr "Modo de Agrupamento de Páginas"
+msgstr "Modo de agrupamento de páginas"
 
 msgid "Page Mode"
 msgstr "Modo de Página"
@@ -2636,6 +2639,9 @@ msgstr "Precipitação"
 msgid "Preset"
 msgstr "Predefinido"
 
+msgid "Presets add recommendations and specific settings for your use case. You still choose each option step by step, and you can go back to select a different preset at any time."
+msgstr "As predefinições adicionam recomendações e configurações específicas para o seu caso de uso. Você ainda escolhe cada opção etapa por etapa e pode voltar para selecionar outra predefinição a qualquer momento."
+
 msgid "Press Enter to add"
 msgstr "Pressione Enter para adicionar"
 
@@ -2656,6 +2662,9 @@ msgstr "Slide anterior"
 
 msgid "Processing metadata…"
 msgstr "Processando metadados…"
+
+msgid "Project Name"
+msgstr "Nome do Projeto"
 
 msgid "Prompt"
 msgstr "Prompt"
@@ -3251,7 +3260,7 @@ msgid "Sign Language"
 msgstr "Língua de Sinais"
 
 msgid "Single"
-msgstr "Único"
+msgstr "Individual"
 
 msgid "Single Column"
 msgstr "Coluna Única"
@@ -3260,7 +3269,7 @@ msgid "Single composited image"
 msgstr "Imagem composta única"
 
 msgid "Single Mode"
-msgstr "Modo Único"
+msgstr "Modo individual"
 
 msgid "Single Page"
 msgstr "Página Única"
@@ -3312,10 +3321,10 @@ msgid "Split segments"
 msgstr "Segmentos divididos"
 
 msgid "Spread"
-msgstr "Espalhamento"
+msgstr "Dupla"
 
 msgid "Spread Mode"
-msgstr "Modo de páginas duplas"
+msgstr "Modo de duplas"
 
 msgid "Sprinkling some digital fairy dust..."
 msgstr "Salpicando um pouco de pó mágico digital..."
@@ -3448,7 +3457,7 @@ msgid "Template Rendering"
 msgstr "Renderização por template"
 
 msgid "Template-based"
-msgstr "Baseado em modelo"
+msgstr "Baseado em templates"
 
 msgid "Terms marked with an asterisk (*) are defined by the ISO standard and may differ from colloquial usage in other fields."
 msgstr "Termos marcados com um asterisco (*) são definidos pelo padrão ISO e podem diferir do uso coloquial em outros campos."
@@ -3900,7 +3909,7 @@ msgid "When enabled, text labels near vector images (e.g. chart dimensions, spee
 msgstr "Quando ativado, rótulos de texto próximos a imagens vetoriais (ex.: dimensões de gráficos, balões de fala) são agrupados e extraídos como recortes rasterizados. Desative para extrair apenas as formas vetoriais sem texto."
 
 msgid "When your PDF isn't built around facing pages, single mode keeps every page separate: nothing is merged across a spread. That matches how most textbooks, novels, and reference books are read - one page at a time."
-msgstr "Quando seu PDF não é construído em torno de páginas opostas, o modo único mantém cada página separada: nada é mesclado em uma abertura. Isso corresponde a como a maioria dos livros didáticos, romances e livros de referência são lidos - uma página de cada vez."
+msgstr "Quando o PDF não foi feito em torno de páginas opostas, o modo individual mantém cada página separada: nada é unido como numa dupla. É o jeito usual de ler livros didáticos, romances e obras de referência — uma página por vez."
 
 msgid "While editing"
 msgstr "Durante a edição"

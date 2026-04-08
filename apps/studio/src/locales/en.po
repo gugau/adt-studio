@@ -291,6 +291,9 @@ msgstr "A table-filling activity."
 msgid "A true or false activity."
 msgstr "A true or false activity."
 
+msgid "A unique identifier used as the book folder name."
+msgstr "A unique identifier used as the book folder name."
+
 #. placeholder {0}: replaceConfirm?.file.name
 msgid "A video named \"{0}\" already exists. Do you want to replace it?"
 msgstr "A video named \"{0}\" already exists. Do you want to replace it?"
@@ -997,8 +1000,8 @@ msgstr "Create a new image from a text description"
 msgid "Create a reviewer session for this book."
 msgstr "Create a reviewer session for this book."
 
-msgid "Create Book"
-msgstr "Create Book"
+msgid "Create ADT"
+msgstr "Create ADT"
 
 msgid "Create descriptive captions for images to improve accessibility."
 msgstr "Create descriptive captions for images to improve accessibility."
@@ -1495,9 +1498,6 @@ msgstr "figure"
 
 msgid "Figure 5.1 - The water cycle: evaporation from oceans, condensation into clouds, precipitation as rain, and runoff back to the sea."
 msgstr "Figure 5.1 - The water cycle: evaporation from oceans, condensation into clouds, precipitation as rain, and runoff back to the sea."
-
-msgid "Figure extraction"
-msgstr "Figure extraction"
 
 msgid "Figure Extraction"
 msgstr "Figure Extraction"
@@ -2169,6 +2169,9 @@ msgstr "mp3"
 msgid "Multi-format publications"
 msgstr "Multi-format publications"
 
+msgid "my-book-slug"
+msgstr "my-book-slug"
+
 msgid "N/A"
 msgstr "N/A"
 
@@ -2636,6 +2639,12 @@ msgstr "Precipitation"
 msgid "Preset"
 msgstr "Preset"
 
+msgid "Presets add recommendations and specific settings for your use case. You still choose each option step by step, and you can go back to select a different preset at any time."
+msgstr "Presets add recommendations and specific settings for your use case. You still choose each option step by step, and you can go back to select a different preset at any time."
+
+#~ msgid "Presets pre-fill the workflow with recommended settings for your use case. You can still review and change any option later."
+#~ msgstr "Presets pre-fill the workflow with recommended settings for your use case. You can still review and change any option later."
+
 msgid "Press Enter to add"
 msgstr "Press Enter to add"
 
@@ -2656,6 +2665,9 @@ msgstr "Previous slide"
 
 msgid "Processing metadata…"
 msgstr "Processing metadata…"
+
+msgid "Project Name"
+msgstr "Project Name"
 
 msgid "Prompt"
 msgstr "Prompt"
