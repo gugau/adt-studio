@@ -36,6 +36,9 @@ msgstr "? Isso removerá todos os dados extraídos e não poderá ser desfeito."
 msgid "(active)"
 msgstr "(ativo)"
 
+msgid "(base)"
+msgstr "(base)"
+
 msgid "(no target)"
 msgstr "(no target)"
 
@@ -222,20 +225,17 @@ msgstr "="
 msgid "0 = deterministic, 2 = max creativity"
 msgstr "0 = determinístico, 2 = criatividade máxima"
 
+msgid "1 hour"
+msgstr "1 hora"
+
 msgid "1 image selected"
 msgstr "1 imagem selecionada"
 
 msgid "1 item needs changes on this page"
 msgstr "1 item needs changes on this page"
 
-msgid "24000"
-msgstr "24000"
-
 msgid "3.2.1 — Authentication Methods"
 msgstr "3.2.1 — Métodos de Autenticação"
-
-msgid "64k"
-msgstr "64k"
 
 msgid "A book with this name already exists."
 msgstr "Um livro com este nome já existe."
@@ -273,6 +273,9 @@ msgstr "Uma única molécula de água pode levar mais de 3.000 anos para complet
 msgid "A sorting activity."
 msgstr "Uma atividade de ordenação."
 
+msgid "A specific URL where an API can be accessed and a request submitted."
+msgstr "Uma URL específica em que uma API pode ser acessada e uma solicitação enviada."
+
 msgid "A storyboard must be built before adding sign language videos."
 msgstr "Um storyboard deve ser criado antes de adicionar vídeos de língua de sinais."
 
@@ -294,6 +297,9 @@ msgstr "Uma atividade de verdadeiro ou falso."
 msgid "A unique identifier used as the book folder name."
 msgstr "Um identificador único usado como nome da pasta do livro."
 
+msgid "A unique string used to authenticate and authorize API requests."
+msgstr "Uma sequência única usada para autenticar e autorizar solicitações à API."
+
 #. placeholder {0}: replaceConfirm?.file.name
 msgid "A video named \"{0}\" already exists. Do you want to replace it?"
 msgstr "Já existe um vídeo chamado \"{0}\". Deseja substituí-lo?"
@@ -306,6 +312,9 @@ msgstr "Sobre o agrupamento de páginas"
 
 msgid "About section mode"
 msgstr "Sobre modo de seção"
+
+msgid "Accent Prompt"
+msgstr "Prompt de sotaque"
 
 msgid "Accessibility"
 msgstr "Accessibility"
@@ -434,8 +443,14 @@ msgstr "Adicionar grupo"
 msgid "Add Image"
 msgstr "Adicionar imagem"
 
+msgid "Add language"
+msgstr "Adicionar idioma"
+
 msgid "Add Language"
 msgstr "Adicionar idioma"
+
+msgid "Add languages to translate the book content into."
+msgstr "Adicione idiomas para traduzir o conteúdo do livro."
 
 msgid "Add reviewer guidance."
 msgstr "Add reviewer guidance."
@@ -443,11 +458,17 @@ msgstr "Add reviewer guidance."
 msgid "Add section"
 msgstr "Add section"
 
+msgid "Add Translations"
+msgstr "Adicionar traduções"
+
 msgid "Add Videos"
 msgstr "Adicionar Vídeos"
 
 msgid "Add your first book"
 msgstr "Adicione seu primeiro livro"
+
+msgid "Additional Languages"
+msgstr "Idiomas adicionais"
 
 msgid "Additional terminology may be introduced in later sections. All terms are listed in the glossary appendix at the end of this document for quick reference."
 msgstr "Terminologia adicional pode ser introduzida em seções posteriores. Todos os termos estão listados no apêndice do glossário no final deste documento para referência rápida."
@@ -511,6 +532,9 @@ msgstr "Layout impulsionado por IA que preserva a página original como fundo co
 msgid "AIza..."
 msgstr "AIza..."
 
+msgid "All"
+msgstr "Tudo"
+
 msgid "All Categories"
 msgstr "All Categories"
 
@@ -559,6 +583,12 @@ msgstr "Qualquer endpoint compatível com OpenAI (Ollama, vLLM, Together AI, etc
 msgid "Any other section type."
 msgstr "Qualquer outro tipo de seção."
 
+msgid "API"
+msgstr "API"
+
+msgid "API Key"
+msgstr "Chave de API"
+
 msgid "API Key (optional)"
 msgstr "Chave de API (opcional)"
 
@@ -570,6 +600,9 @@ msgstr "Configurações da chave de API"
 
 msgid "API Keys"
 msgstr "Chaves de API"
+
+msgid "Application Programming Interface — a set of rules that allows programs to communicate."
+msgstr "Interface de programação de aplicativos (API) — conjunto de regras que permite que programas se comuniquem."
 
 msgid "Apply"
 msgstr "Aplicar"
@@ -590,11 +623,17 @@ msgstr "Tem certeza que deseja {label}? Esta ação não pode ser desfeita."
 msgid "Are you sure you want to delete"
 msgstr "Tem certeza de que deseja excluir"
 
+msgid "Are you sure you want to delete generated speech?"
+msgstr "Tem certeza de que deseja excluir o áudio gerado?"
+
 msgid "Are you sure you want to delete this image? This action cannot be undone."
 msgstr "Tem certeza de que deseja excluir esta imagem? Esta ação não pode ser desfeita."
 
 msgid "Are you sure you want to delete this section? This action cannot be undone."
 msgstr "Tem certeza de que deseja excluir esta seção? Esta ação não pode ser desfeita."
+
+msgid "Are you sure you want to generate word-level timestamps for {langDisplay}?"
+msgstr "Tem certeza de que deseja gerar marcações de tempo por palavra para {langDisplay}?"
 
 msgid "areas"
 msgstr "areas"
@@ -613,9 +652,6 @@ msgstr "Recurso"
 
 msgid "Assign to section..."
 msgstr "Atribuir à seção..."
-
-msgid "Audio Settings"
-msgstr "Configurações de áudio"
 
 msgid "Author"
 msgstr "Autor"
@@ -637,9 +673,6 @@ msgstr "Axe não pôde avaliar completamente essas verificações na pré-visual
 
 msgid "Azure"
 msgstr "Azure"
-
-msgid "Azure Speech"
-msgstr "Azure Speech"
 
 msgid "Azure Speech subscription key"
 msgstr "Chave de assinatura do Azure Speech"
@@ -675,6 +708,9 @@ msgstr "Fundo: {0}"
 msgid "base"
 msgstr "base"
 
+msgid "Base Language"
+msgstr "Idioma base"
+
 msgid "Base URL"
 msgstr "URL base"
 
@@ -686,6 +722,9 @@ msgstr "Seja descritivo — inclua estilo, cores, humor e composição."
 
 msgid "Be descriptive — include subject, colors, mood, and composition."
 msgstr "Seja descritivo — inclua assunto, cores, humor e composição."
+
+msgid "Bearer Token"
+msgstr "Token Bearer"
 
 msgid "Before"
 msgstr "Antes"
@@ -714,6 +753,9 @@ msgstr "Autor"
 
 msgid "Book data is outdated and must be rebuilt."
 msgstr "Os dados do livro estão desatualizados e precisam ser reconstruídos."
+
+msgid "Book Language"
+msgstr "Idioma do livro"
 
 msgid "Book Metadata"
 msgstr "Metadados do livro"
@@ -772,6 +814,9 @@ msgstr "Acertos em cache"
 msgid "Cached"
 msgstr "Em cache"
 
+msgid "Calculate word timestamps for all entries"
+msgstr "Calcular marcações de tempo por palavra para todas as entradas"
+
 msgid "Calls"
 msgstr "Chamadas"
 
@@ -783,6 +828,9 @@ msgstr "Prompt de legenda"
 
 msgid "Captioning Images..."
 msgstr "Legendando imagens..."
+
+msgid "Captions"
+msgstr "Legendas"
 
 msgid "carousel"
 msgstr "carrossel"
@@ -831,6 +879,9 @@ msgstr "Escolha uma imagem existente deste projeto"
 
 msgid "Choose how the content should be formatted."
 msgstr "Escolha como o conteúdo deve ser formatado."
+
+msgid "Choose Provider"
+msgstr "Escolher provedor"
 
 msgid "Choose which per-page validation items reviewers must check, customize the wording and guidance, and add your own checklist items for this document."
 msgstr "Choose which per-page validation items reviewers must check, customize the wording and guidance, and add your own checklist items for this document."
@@ -906,15 +957,6 @@ msgstr "color-contrast"
 
 msgid "coming soon"
 msgstr "em breve"
-
-msgid "Comma-separated language codes routed to Azure."
-msgstr "Códigos de idioma separados por vírgula roteados para Azure."
-
-msgid "Comma-separated language codes routed to Gemini."
-msgstr "Códigos de idioma separados por vírgula roteados para o Gemini."
-
-msgid "Comma-separated language codes routed to OpenAI."
-msgstr "Códigos de idioma separados por vírgula roteados para OpenAI."
 
 msgid "Comment"
 msgstr "Comment"
@@ -1066,11 +1108,17 @@ msgstr "Personalizado:"
 msgid "Decrease indent"
 msgstr "Diminuir recuo"
 
+msgid "default"
+msgstr "padrão"
+
 msgid "Default"
 msgstr "Padrão"
 
 msgid "Default (from prompt)"
 msgstr "Padrão (do prompt)"
+
+msgid "Default model"
+msgstr "Modelo padrão"
 
 msgid "Default N/A"
 msgstr "Default N/A"
@@ -1097,11 +1145,11 @@ msgid "Defaulted to N/A because Glossary has not been generated for this book ye
 msgstr "Defaulted to N/A because Glossary has not been generated for this book yet."
 
 #. placeholder {0}: reason.language
-msgid "Defaulted to N/A because no Text & Speech audio is available for {0}."
-msgstr "Defaulted to N/A because no Text & Speech audio is available for {0}."
+msgid "Defaulted to N/A because no Speech audio is available for {0}."
+msgstr "Padrão N/A porque não há áudio de voz disponível para {0}."
 
-msgid "Defaulted to N/A because no Text & Speech audio is available yet."
-msgstr "Defaulted to N/A because no Text & Speech audio is available yet."
+msgid "Defaulted to N/A because no Speech audio is available yet."
+msgstr "Padrão N/A porque ainda não há áudio de voz disponível."
 
 #. placeholder {0}: reason.language
 msgid "Defaulted to N/A because no translation output is available for {0}."
@@ -1113,8 +1161,8 @@ msgstr "Defaulted to N/A because no translation output is available yet."
 msgid "Defaulted to N/A because sign language is not enabled for this book."
 msgstr "Defaulted to N/A because sign language is not enabled for this book."
 
-msgid "Defaulted to N/A because Text & Speech audio has not been generated yet."
-msgstr "Defaulted to N/A because Text & Speech audio has not been generated yet."
+msgid "Defaulted to N/A because Speech audio has not been generated yet."
+msgstr "Padrão N/A porque o áudio de voz ainda não foi gerado."
 
 msgid "Defaulted to N/A because this page does not contain an interactive activity or exercise."
 msgstr "Defaulted to N/A because this page does not contain an interactive activity or exercise."
@@ -1128,11 +1176,17 @@ msgstr "Defaulted to N/A because Translation has not been generated yet."
 msgid "Defaulted to N/A until this reviewer session has a language selected."
 msgstr "Defaulted to N/A until this reviewer session has a language selected."
 
+msgid "Defaults"
+msgstr "Padrões"
+
 msgid "Definitions and Terminology"
 msgstr "Definições e Terminologia"
 
 msgid "Delete"
 msgstr "Excluir"
+
+msgid "Delete all speech"
+msgstr "Excluir todo o áudio"
 
 msgid "Delete book"
 msgstr "Excluir livro"
@@ -1248,32 +1302,14 @@ msgstr "Sobreposição Dinâmica"
 msgid "e.g. alloy"
 msgstr "ex.: alloy"
 
-msgid "e.g. azure-tts"
-msgstr "ex.: azure-tts"
-
 msgid "e.g. eastus, westeurope"
 msgstr "ex.: eastus, westeurope"
 
 msgid "e.g. en-US-JennyNeural"
 msgstr "ex.: en-US-JennyNeural"
 
-msgid "e.g. en, fr"
-msgstr "ex.: en, fr"
-
-msgid "e.g. en, hi, ta"
-msgstr "ex.: en, hi, ta"
-
-msgid "e.g. es, ta, si, sw"
-msgstr "ex.: es, ta, si, sw"
-
 msgid "e.g. fr, es-mx"
 msgstr "ex.: fr, es-mx"
-
-msgid "e.g. gemini-2.5-pro-preview-tts"
-msgstr "ex.: gemini-2.5-pro-preview-tts"
-
-msgid "e.g. gpt-4o-mini-tts"
-msgstr "ex.: gpt-4o-mini-tts"
 
 msgid "e.g. http://localhost:11434/v1"
 msgstr "ex. http://localhost:11434/v1"
@@ -1352,8 +1388,14 @@ msgstr "Enabled"
 msgid "Enabled axe tags"
 msgstr "Enabled axe tags"
 
+msgid "End"
+msgstr "Fim"
+
 msgid "End page"
 msgstr "End page"
+
+msgid "Endpoint"
+msgstr "Endpoint"
 
 msgid "Engineering Handbook Vol. 2"
 msgstr "Manual de Engenharia Vol. 2"
@@ -1399,6 +1441,9 @@ msgstr "Expandir todas as seções"
 
 msgid "Experimental configurations"
 msgstr "Configurações experimentais"
+
+msgid "Expiry"
+msgstr "Expiração"
 
 msgid "Export"
 msgstr "Exportar"
@@ -1576,9 +1621,6 @@ msgstr "Gemini"
 msgid "Gemini API key is required to generate audio."
 msgstr "É necessária uma chave de API do Gemini para gerar áudio."
 
-msgid "Gemini TTS outputs WAV audio in this integration; other providers continue using the configured format."
-msgstr "O Gemini TTS gera áudio WAV nesta integração; outros provedores continuam usando o formato configurado."
-
 msgid "Gemini Voice"
 msgstr "Voz do Gemini"
 
@@ -1590,6 +1632,9 @@ msgstr "Gerar"
 
 msgid "Generate and customize the table of contents for the book navigation."
 msgstr "Gere e personalize o sumário para a navegação do livro."
+
+msgid "Generate audio narration for the book content."
+msgstr "Gerar narração de áudio para o conteúdo do livro."
 
 msgid "Generate comprehension quizzes and activities based on the book content."
 msgstr "Gera questionários e atividades de compreensão com base no conteúdo do livro."
@@ -1612,6 +1657,9 @@ msgstr "Gerar guia de estilo a partir das páginas"
 msgid "Generate with AI"
 msgstr "Gerar com IA"
 
+msgid "Generate word timestamps"
+msgstr "Gerar marcações de tempo por palavra"
+
 msgid "Generates the interactive HTML for this activity type."
 msgstr "Gera o HTML interativo para este tipo de atividade."
 
@@ -1624,8 +1672,8 @@ msgstr "Gerando imagem..."
 msgid "Generating Quizzes..."
 msgstr "Gerando questionários..."
 
-msgid "Generating Text & Speech..."
-msgstr "Gerando texto e fala..."
+msgid "Generating Speech..."
+msgstr "Gerando voz..."
 
 msgid "Generating TOC..."
 msgstr "Gerando sumário..."
@@ -1668,6 +1716,9 @@ msgstr "Agrupa conteúdo em seções lógicas"
 
 msgid "Groups content into multiple logical sections based on topic and structure. The AI identifies natural boundaries - headings, topic shifts, figures - and organizes content accordingly. Most granular option, ideal for dense or mixed-content pages."
 msgstr "Agrupa conteúdo em várias seções lógicas com base em tópico e estrutura. A IA identifica limites naturais - cabeçalhos, mudanças de tópico, figuras - e organiza o conteúdo de acordo. Opção mais granular, ideal para páginas densas ou de conteúdo misto."
+
+msgid "Header"
+msgstr "Cabeçalho"
 
 msgid "Header Text"
 msgstr "Texto de cabeçalho"
@@ -2121,6 +2172,9 @@ msgstr "Prompt de extração de metadados"
 msgid "Metadata Prompt"
 msgstr "Prompt de metadados"
 
+msgid "Method"
+msgstr "Método"
+
 msgid "Min complexity"
 msgstr "Complexidade mínima"
 
@@ -2163,9 +2217,6 @@ msgstr "moderate"
 msgid "Moderate"
 msgstr "Moderate"
 
-msgid "mp3"
-msgstr "mp3"
-
 msgid "Multi-format publications"
 msgstr "Publicações multi-formato"
 
@@ -2186,6 +2237,9 @@ msgstr "Needs changes"
 
 msgid "Needs rebuild"
 msgstr "Precisa ser reconstruído"
+
+msgid "Never"
+msgstr "Nunca"
 
 msgid "New"
 msgstr "Novo"
@@ -2276,6 +2330,9 @@ msgstr "No items are currently flagged as needing changes in this reviewer sessi
 
 msgid "No language-specific prompts configured."
 msgstr "Nenhum prompt por idioma configurado."
+
+msgid "No languages configured. Add languages in the Language settings."
+msgstr "Nenhum idioma configurado. Adicione idiomas nas configurações de Idioma."
 
 msgid "No link"
 msgstr "Sem link"
@@ -2370,6 +2427,9 @@ msgstr "ruído"
 msgid "None"
 msgstr "Nenhum"
 
+msgid "Not detected"
+msgstr "Não detectado"
+
 msgid "Not reviewed"
 msgstr "Not reviewed"
 
@@ -2378,6 +2438,9 @@ msgstr "Nota"
 
 msgid "Number of pages of content to include per quiz question."
 msgstr "Número de páginas de conteúdo a incluir por questão de quiz."
+
+msgid "OAuth 2.0"
+msgstr "OAuth 2.0"
 
 msgid "of"
 msgstr "of"
@@ -2429,6 +2492,9 @@ msgstr "OpenAI"
 
 msgid "OpenAI API Key"
 msgstr "Chave de API da OpenAI"
+
+msgid "OpenAI key required"
+msgstr "Chave da OpenAI necessária"
 
 msgid "OpenAI Voice"
 msgstr "Voz OpenAI"
@@ -2573,6 +2639,9 @@ msgstr "Pass"
 msgid "Passed"
 msgstr "Passed"
 
+msgid "Payload"
+msgstr "Payload"
+
 msgid "PDF"
 msgstr "PDF"
 
@@ -2672,11 +2741,8 @@ msgstr "Prompt"
 msgid "Prompt template not found."
 msgstr "Prompt template not found."
 
-msgid "Provider Routing"
-msgstr "Roteamento de provedores"
-
-msgid "Provider used for languages not assigned to a specific provider."
-msgstr "Provedor usado para idiomas não atribuídos a um provedor específico."
+msgid "Provider"
+msgstr "Provedor"
 
 msgid "Provides consistent HTML/CSS patterns for LLM-generated pages."
 msgstr "Fornece padrões HTML/CSS consistentes para páginas geradas por LLM."
@@ -2724,6 +2790,9 @@ msgstr "Editora"
 msgid "px"
 msgstr "px"
 
+msgid "Query param"
+msgstr "Parâmetro de consulta"
+
 msgid "Quiz Generation"
 msgstr "Geração de questionários"
 
@@ -2768,6 +2837,12 @@ msgstr "Renderizando novamente..."
 
 msgid "Re-run {stageLabel}"
 msgstr "Reexecutar {0}"
+
+msgid "Re-run speech"
+msgstr "Reexecutar áudio"
+
+msgid "Re-run translation"
+msgstr "Reexecutar tradução"
 
 msgid "Readers see"
 msgstr "Leitores veem"
@@ -3002,14 +3077,17 @@ msgstr "Salvar e reexecutar glossário"
 msgid "Save & Rerun Quizzes"
 msgstr "Salvar e reexecutar quizzes"
 
+msgid "Save & Rerun Speech"
+msgstr "Salvar e reexecutar voz"
+
 msgid "Save & Rerun Storyboard"
 msgstr "Salvar e reexecutar storyboard"
 
 msgid "Save & Rerun TOC Generation"
 msgstr "Salvar e reexecutar geração do sumário"
 
-msgid "Save & Rerun Translations + Audio"
-msgstr "Salvar e reexecutar traduções + áudio"
+msgid "Save & Rerun Translations"
+msgstr "Salvar e reexecutar traduções"
 
 msgid "Save changes before re-rendering"
 msgstr "Salve as alterações antes de rerenderizar"
@@ -3238,8 +3316,8 @@ msgstr "Mostrar todas"
 msgid "Show all {0}"
 msgstr "Show all {0}"
 
-msgid "Show all text & speech"
-msgstr "Mostrar todos os textos e áudios"
+msgid "Show all translations"
+msgstr "Mostrar todas as traduções"
 
 msgid "Show fewer"
 msgstr "Show fewer"
@@ -3337,6 +3415,9 @@ msgstr "Texto independente"
 
 msgid "Stanza"
 msgstr "Estrofe"
+
+msgid "Start"
+msgstr "Início"
 
 msgid "Start a reviewer session"
 msgstr "Start a reviewer session"
@@ -3471,9 +3552,6 @@ msgstr "Texto e imagens"
 msgid "Text & Single Image"
 msgstr "Texto e imagem única"
 
-msgid "Text & Speech"
-msgstr "Texto e fala"
-
 msgid "Text alternatives"
 msgstr "Text alternatives"
 
@@ -3513,6 +3591,9 @@ msgstr "A contracapa do livro."
 
 msgid "The credits page."
 msgstr "A página de créditos."
+
+msgid "The data sent within the body of a request or response message."
+msgstr "Os dados enviados no corpo de uma mensagem de requisição ou resposta."
 
 msgid "The default TTS instruction sent to OpenAI for all languages unless overridden below."
 msgstr "A instrução padrão de TTS enviada ao OpenAI para todos os idiomas, a menos que seja substituída abaixo."
@@ -3622,6 +3703,9 @@ msgstr "Isso salvará suas configurações e reexecutará a legendagem de imagen
 msgid "This will save your settings and re-run quiz generation."
 msgstr "Isso salvará suas configurações e reexecutará a geração de quizzes."
 
+msgid "This will save your settings and re-run speech generation."
+msgstr "Isso salvará suas configurações e reexecutará a geração de voz."
+
 msgid "This will save your settings and re-run the extraction pipeline. Any manual edits to extracted text will be overwritten for affected pages."
 msgstr "Isso salvará suas configurações e reexecutará o pipeline de extração. Edições manuais no texto extraído serão sobrescritas nas páginas afetadas."
 
@@ -3631,11 +3715,14 @@ msgstr "Isso salvará suas configurações e reexecutará o pipeline do storyboa
 msgid "This will save your settings and re-run the storyboard pipeline. Sectioning and rendering will be regenerated for all pages."
 msgstr "Isso salvará suas configurações e reexecutará o pipeline do storyboard. O secionamento e a renderização serão regenerados para todas as páginas."
 
-msgid "This will save your settings and re-run translations and audio generation, rebuilding the text catalog, translating to output languages, and generating speech."
-msgstr "Isso salvará suas configurações e reexecutará traduções e geração de áudio, reconstruindo o catálogo de textos, traduzindo para os idiomas de saída e gerando fala."
+msgid "This will save your settings and re-run translations, rebuilding the text catalog and translating to output languages."
+msgstr "Isso salvará suas configurações e reexecutará as traduções, reconstruindo o catálogo de texto e traduzindo para os idiomas de saída."
 
 msgid "Time"
 msgstr "Hora"
+
+msgid "Timestamps"
+msgstr "Marcações de tempo"
 
 msgid "to"
 msgstr "até"
@@ -3645,6 +3732,9 @@ msgstr "Prompt de geração de sumário"
 
 msgid "Toggle model list"
 msgstr "Alternar lista de modelos"
+
+msgid "Token"
+msgstr "Token"
 
 msgid "Tokens"
 msgstr "Tokens"
@@ -3667,14 +3757,20 @@ msgstr "Total de tokens"
 msgid "Track reviewer progress and review findings captured from Preview."
 msgstr "Track reviewer progress and review findings captured from Preview."
 
-msgid "Translate the book content and generate audio narration."
-msgstr "Traduza o conteúdo do livro e gera narração em áudio."
+msgid "Translate the book content to output languages."
+msgstr "Traduzir o conteúdo do livro para os idiomas de saída."
+
+msgid "Translating languages..."
+msgstr "Traduzindo idiomas..."
 
 msgid "Translation"
 msgstr "Tradução"
 
 msgid "Translation Prompt"
 msgstr "Prompt de tradução"
+
+msgid "Transport"
+msgstr "Transporte"
 
 msgid "Treats each page as a single section"
 msgstr "Trata cada página como uma única seção"
@@ -3855,6 +3951,9 @@ msgstr "Visual & sensory cues"
 msgid "Visual Layout"
 msgstr "Layout Visual"
 
+msgid "Voice"
+msgstr "Voz"
+
 msgid "Voice Mappings"
 msgstr "Mapeamentos de voz"
 
@@ -3919,6 +4018,9 @@ msgstr "Whole-book checks for packaged ADT output, plus reviewer findings captur
 
 msgid "Within range"
 msgstr "Dentro do alcance"
+
+msgid "words"
+msgstr "palavras"
 
 msgid "Wraps 'Edit this image' requests. The AI receives the original image alongside this prompt. Supports user_prompt and style variables."
 msgstr "Envolve solicitações de 'Editar esta imagem'. A IA recebe a imagem original junto com este prompt. Suporta variáveis user_prompt e style."
