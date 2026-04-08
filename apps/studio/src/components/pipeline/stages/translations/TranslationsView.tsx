@@ -518,7 +518,8 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
               type="button"
               onClick={() => {
                 if (!audioLang) return
-                if (!window.confirm(t`Are you sure you want to generate all word level timestamps?`)) return
+                const langDisplay = langNames.of(audioLang) ?? audioLang
+                if (!window.confirm(t`Are you sure you want to generate word-level timestamps for ${langDisplay}?`)) return
                 transcribeAllMutation.mutate(audioLang)
               }}
               disabled={!apiKey || totalAudioFiles === 0 || transcribeAllMutation.isPending || isTaskRunning("transcribe-timestamps")}

@@ -605,8 +605,14 @@ msgstr "¿Estás seguro de que quieres eliminar esta imagen? Esta acción no se 
 msgid "Are you sure you want to delete this section? This action cannot be undone."
 msgstr "¿Estás seguro de que quieres eliminar esta sección? Esta acción no se puede deshacer."
 
-msgid "Are you sure you want to generate all word level timestamps?"
-msgstr "¿Estás seguro de que quieres generar todas las marcas de tiempo a nivel de palabra?"
+#~ msgid "Are you sure you want to generate all word level timestamps?"
+#~ msgstr "¿Estás seguro de que quieres generar todas las marcas de tiempo a nivel de palabra?"
+
+#~ msgid "Are you sure you want to generate word-level timestamps for {audioLang}?"
+#~ msgstr "¿Estás seguro de que deseas generar marcas de tiempo a nivel de palabra para {audioLang}?"
+
+msgid "Are you sure you want to generate word-level timestamps for {langDisplay}?"
+msgstr "¿Estás seguro de que deseas generar marcas de tiempo a nivel de palabra para {langDisplay}?"
 
 msgid "areas"
 msgstr "areas"

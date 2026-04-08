@@ -964,7 +964,6 @@ export function createTTSRoutes(booksDir: string, configPath?: string, taskServi
             // Non-critical
           }
 
-          const merged: Record<string, WordTimestampEntry> = { ...existing }
           let count = 0
 
           for (const ttsEntry of toTranscribe) {
@@ -981,20 +980,26 @@ export function createTTSRoutes(booksDir: string, configPath?: string, taskServi
               textPrompt,
             )
 
-            merged[ttsEntry.textId] = {
+            const entry: WordTimestampEntry = {
               textId: ttsEntry.textId,
               language: normalizedLanguage,
               words: result.words,
               duration: result.duration,
             }
+
+            // Write incrementally to avoid overwriting concurrent user edits
+            const currentRow = storage.getLatestNodeData("tts-timestamps", normalizedLanguage)
+            const current = currentRow
+              ? (currentRow.data as WordTimestampOutput).entries
+              : {}
+            storage.putNodeData("tts-timestamps", normalizedLanguage, {
+              entries: { ...current, [ttsEntry.textId]: entry },
+              generatedAt: new Date().toISOString(),
+            } satisfies WordTimestampOutput)
+
             count++
             emitProgress(`${count}/${toTranscribe.length}`, Math.round((count / toTranscribe.length) * 100))
           }
-
-          storage.putNodeData("tts-timestamps", normalizedLanguage, {
-            entries: merged,
-            generatedAt: new Date().toISOString(),
-          } satisfies WordTimestampOutput)
 
           return { count, skipped: ttsEntries.length - toTranscribe.length }
         } finally {
