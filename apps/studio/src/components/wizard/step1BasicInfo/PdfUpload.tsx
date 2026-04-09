@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Trans, useLingui } from "@lingui/react/macro"
+import { msg } from "@lingui/core/macro"
 import { Upload, Trash2, XCircle } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
 import { Button } from "@/components/ui/button"
@@ -56,9 +57,11 @@ const pdfCache = { file: null as File | null, totalPages: 0 }
 
 export function usePdfUpload() {
   const form = useWizardForm()
+  const { i18n } = useLingui()
   const { data: books } = useBooks()
   const file = useStore(form.store, (s) => s.values.file)
   const [totalPages, setTotalPages] = useState(pdfCache.file === file ? pdfCache.totalPages : 0)
+  const [pdfError, setPdfError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!file) {
@@ -74,6 +77,7 @@ export function usePdfUpload() {
       return
     }
 
+    setPdfError(null)
     let cancelled = false
     ;(async () => {
       await waitTwoAnimationFrames()
@@ -88,9 +92,11 @@ export function usePdfUpload() {
         form.setFieldValue("endPage", String(count))
       } catch {
         if (cancelled) return
-        pdfCache.file = file
+        pdfCache.file = null
         pdfCache.totalPages = 0
         setTotalPages(0)
+        setPdfError(i18n._(msg`Could not read this PDF. The file may be corrupted or password-protected.`))
+        form.setFieldValue("file", null)
       }
     })()
 
@@ -112,12 +118,12 @@ export function usePdfUpload() {
     form.setFieldValue("file", null)
   }, [form])
 
-  return { file, totalPages, setFile, clearFile }
+  return { file, totalPages, pdfError, setFile, clearFile }
 }
 
 export function PdfUpload() {
   const { t } = useLingui()
-  const { file, setFile, clearFile } = usePdfUpload()
+  const { file, pdfError, setFile, clearFile } = usePdfUpload()
   const pdfRef = useRef<HTMLInputElement>(null)
   const [overlay, setOverlay] = useState<OverlayState>("idle")
   const overlayRef = useRef<OverlayState>("idle")
@@ -274,6 +280,9 @@ export function PdfUpload() {
           )}
         </div>
 
+        {pdfError && (
+          <p className="text-xs text-[#ef4444] mt-1">{pdfError}</p>
+        )}
       </div>
     </>
   )

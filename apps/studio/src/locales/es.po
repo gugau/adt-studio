@@ -1030,6 +1030,9 @@ msgstr "Convertido"
 msgid "Coral reefs cover less than 1% of the ocean floor, yet they support roughly 25% of all marine species. Often called the 'rainforests of the sea,' these underwater ecosystems are built by tiny animals called coral polyps."
 msgstr "Los arrecifes de coral cubren menos del 1% del fondo oceánico, pero sostienen aproximadamente el 25% de todas las especies marinas. A menudo llamados 'los bosques lluviosos del mar', estos ecosistemas submarinos son construidos por pequeños animales llamados pólipos de coral."
 
+msgid "Could not read this PDF. The file may be corrupted or password-protected."
+msgstr "No se pudo leer este PDF. El archivo puede estar dañado o protegido con contraseña."
+
 msgid "Cover"
 msgstr "Portada"
 
