@@ -3,6 +3,7 @@ import {
   type AppConfig,
   type SectionRendering,
   type WebRenderingOutput,
+  webRenderingLLMSchema,
   DEFAULT_LLM_MAX_RETRIES,
 } from "@adt/types"
 import type { LLMModel } from "@adt/llm"
@@ -195,6 +196,58 @@ export async function renderPage(
     }
 
     sections.push(rendering)
+  }
+
+  // --- Activity consistency pass ---
+  // When a page has 2+ activity sections of the same type, the LLM may produce
+  // visually inconsistent HTML across them.  Use the first rendered section of
+  // each activity type as the "reference style" and rewrite subsequent ones to
+  // match its structure/classes while preserving their own content.
+  const CONSISTENCY_PROMPT = "activity_multiple_choice_consistency"
+  const activityTypes = new Set(
+    sections
+      .filter((s) => s.sectionType.startsWith("activity_"))
+      .map((s) => s.sectionType)
+  )
+
+  for (const actType of activityTypes) {
+    const group = sections.filter((s) => s.sectionType === actType)
+    if (group.length < 2) continue
+
+    const referenceHtml = group[0].html
+    const config = resolveConfig(actType)
+
+    for (let g = 1; g < group.length; g++) {
+      const target = group[g]
+      try {
+        const result = await getLLMModel(llmModel, config.modelId).generateObject<{
+          reasoning: string
+          content: string
+        }>({
+          schema: webRenderingLLMSchema,
+          prompt: CONSISTENCY_PROMPT,
+          context: {
+            reference_html: referenceHtml,
+            target_html: target.html,
+          },
+          maxRetries: config.maxRetries,
+          maxTokens: 16384,
+          temperature: 0.1,
+          timeoutMs: config.timeoutMs,
+          log: {
+            taskType: "activity-consistency",
+            pageId: input.pageId,
+            promptName: CONSISTENCY_PROMPT,
+          },
+        })
+        target.html = result.object.content
+      } catch (err) {
+        // If consistency pass fails, keep the original HTML — it's better than nothing
+        console.warn(
+          `Activity consistency pass failed for section ${target.sectionIndex}: ${err}`
+        )
+      }
+    }
   }
 
   return { sections }
