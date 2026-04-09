@@ -1077,21 +1077,24 @@ export const removeGlossaryHighlights = () => {
   });
 
   // Look for empty wrapper spans that may have been created
-  document.querySelectorAll('span:not([class])').forEach(span => {
-    // Check if this is likely a wrapper we created (no attributes, only text nodes)
-    if (span.attributes.length === 0 &&
-      span.childNodes.length > 0 &&
-      Array.from(span.childNodes).every(node => node.nodeType === 3)) {
+  // In fixed-layout mode, skip this — spans carry font styling (font-family, color, etc.)
+  if (!window.appConfig?.fixedLayout) {
+    document.querySelectorAll('span:not([class])').forEach(span => {
+      // Check if this is likely a wrapper we created (no attributes, only text nodes)
+      if (span.attributes.length === 0 &&
+        span.childNodes.length > 0 &&
+        Array.from(span.childNodes).every(node => node.nodeType === 3)) {
 
-      // Get the text content
-      const text = document.createTextNode(span.textContent);
+        // Get the text content
+        const text = document.createTextNode(span.textContent);
 
-      // Replace the span with its content
-      if (span.parentNode) {
-        span.parentNode.replaceChild(text, span);
+        // Replace the span with its content
+        if (span.parentNode) {
+          span.parentNode.replaceChild(text, span);
+        }
       }
-    }
-  });
+    });
+  }
 };
 
 /**

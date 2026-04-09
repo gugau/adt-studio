@@ -62,6 +62,7 @@ export const STEP_LABEL_MESSAGES: Record<string, MessageDescriptor> = {
   "image-meaningfulness": msg`Image Meaningfulness`,
   "text-classification": msg`Text Classification`,
   translation: msg`Translation`,
+  "positioned-text-extraction": msg`Positioned Text`,
   "page-sectioning": msg`Page Sectioning`,
   "web-rendering": msg`Web Rendering`,
   "quiz-generation": msg`Quiz Generation`,

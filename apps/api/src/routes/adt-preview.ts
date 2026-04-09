@@ -310,7 +310,7 @@ function buildHeadingBasedToc(storage: Storage): Array<{ section_id: string; hre
 }
 
 /** Build config.json that reflects actual book capabilities */
-function buildPreviewConfig(storage: Storage, language: string) {
+function buildPreviewConfig(storage: Storage, language: string, fixedLayout?: boolean) {
   const glossary = getGlossary(storage)
   const hasGlossary = glossary !== undefined && glossary.items.length > 0
 
@@ -373,6 +373,7 @@ function buildPreviewConfig(storage: Storage, language: string) {
       trackerUrl: "",
       srcUrl: "",
     },
+    ...(fixedLayout ? { fixedLayout: true } : {}),
   }
 }
 
@@ -423,9 +424,10 @@ export function createAdtPreviewRoutes(
 
   // /assets/config.json — Dynamic config reflecting book capabilities
   app.get("/books/:label/adt-preview/assets/config.json", (c) => {
-    const config = withStorage(c.req.param("label"), (storage) => {
+    const config = withStorage(c.req.param("label"), (storage, safeLabel) => {
       const language = getBookLanguage(storage)
-      return buildPreviewConfig(storage, language)
+      const bookConfig = loadBookConfig(safeLabel, booksDir, configPath)
+      return buildPreviewConfig(storage, language, bookConfig.layout_type === "fixed")
     })
     c.header("Content-Type", "application/json")
     return c.body(JSON.stringify(config))

@@ -215,3 +215,12 @@ export {
   type BuildBrowserAccessibilityRecheckPlanOptions,
 } from "./browser-accessibility-assessment.js"
 export { mergeAccessibilityResults } from "./accessibility-assessment-shared.js"
+export {
+  processFixedLayoutPages,
+  sectionFixedLayoutPage,
+  renderFixedLayoutPage,
+  createBackgroundSampler,
+  contrastRatio,
+  addContrastStrokes,
+  type BackgroundSampler,
+} from "./fixed-layout-rendering.js"

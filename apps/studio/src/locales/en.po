@@ -778,6 +778,9 @@ msgstr "Book Summary Prompt"
 msgid "Book Title"
 msgstr "Book Title"
 
+msgid "Books where the page design is the content"
+msgstr "Books where the page design is the content"
+
 msgid "Boxed Text"
 msgstr "Boxed Text"
 
@@ -921,6 +924,9 @@ msgstr "Click an image to select"
 
 msgid "Click images to select"
 msgstr "Click images to select"
+
+msgid "Click Next to continue to language settings."
+msgstr "Click Next to continue to language settings."
 
 msgid "Click to edit"
 msgstr "Click to edit"
@@ -1332,6 +1338,9 @@ msgstr "e.g., Make the background brighter, add more trees..."
 msgid "Each polyp secretes a hard calcium carbonate skeleton. Over hundreds of years, millions of these skeletons build up into the massive reef structures we see today."
 msgstr "Each polyp secretes a hard calcium carbonate skeleton. Over hundreds of years, millions of these skeletons build up into the massive reef structures we see today."
 
+msgid "Early readers with rich artwork"
+msgstr "Early readers with rich artwork"
+
 msgid "Edit"
 msgstr "Edit"
 
@@ -1580,8 +1589,17 @@ msgstr "Final Page"
 msgid "First"
 msgstr "First"
 
+msgid "Fixed Layout"
+msgstr "Fixed Layout"
+
 msgid "Fixed two-column template layout"
 msgstr "Fixed two-column template layout"
+
+msgid "Fixed-layout books use the original page images as backgrounds with positioned text extracted from the PDF. Activities detection, figure extraction, and image cropping or segmentation don't apply to this layout."
+msgstr "Fixed-layout books use the original page images as backgrounds with positioned text extracted from the PDF. Activities detection, figure extraction, and image cropping or segmentation don't apply to this layout."
+
+msgid "Fixed-layout books with positioned text over page images. Page images as backgrounds with positioned text for accessibility and TTS. Produces pre-paginated EPUB."
+msgstr "Fixed-layout books with positioned text over page images. Page images as backgrounds with positioned text for accessibility and TTS. Produces pre-paginated EPUB."
 
 msgid "flagged"
 msgstr "flagged"
@@ -2295,6 +2313,9 @@ msgstr "No captions for this page"
 msgid "No changes flagged on this page"
 msgstr "No changes flagged on this page"
 
+msgid "No content processing needed"
+msgstr "No content processing needed"
+
 msgid "No data"
 msgstr "No data"
 
@@ -2714,8 +2735,14 @@ msgstr "Polishing paragraphs to perfection..."
 msgid "Portuguese (BR)"
 msgstr "Portuguese (BR)"
 
+msgid "Positioned Text"
+msgstr "Positioned Text"
+
 msgid "Práticas de Alfabetização e de Matemática"
 msgstr "Práticas de Alfabetização e de Matemática"
+
+msgid "Pre-paginated storybooks"
+msgstr "Pre-paginated storybooks"
 
 msgid "Precipitation"
 msgstr "Precipitation"
@@ -3064,6 +3091,9 @@ msgstr "Running Validation..."
 
 msgid "Runs in background — you can keep editing"
 msgstr "Runs in background — you can keep editing"
+
+msgid "Sample Fixed Layout Book"
+msgstr "Sample Fixed Layout Book"
 
 msgid "Sample Illustrated Story"
 msgstr "Sample Illustrated Story"

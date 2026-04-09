@@ -486,7 +486,10 @@ function wrapTextInSpans(element, wordTimestamps, translatedText) {
     }
   }
 
-  element.innerHTML = html.join(' ');
+  // In fixed-layout mode, preserve the original styled spans (font-family, color, etc.)
+  if (!window.appConfig?.fixedLayout) {
+    element.innerHTML = html.join(' ');
+  }
 
   // Add event parameter to the click handler
   element.querySelectorAll('[data-glossary-term="true"]').forEach(term => {

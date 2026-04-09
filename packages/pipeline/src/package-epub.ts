@@ -2,7 +2,7 @@ import fs from "node:fs"
 import path from "node:path"
 import type { Storage } from "@adt/storage"
 import type { BookMetadata, TocGenerationOutput } from "@adt/types"
-import { type PackageAdtWebOptions, copyDirRecursive, injectWebpubStyles } from "./package-web.js"
+import { type PackageAdtWebOptions, copyDirRecursive, injectWebpubStyles, htmlToXhtml } from "./package-web.js"
 
 export type PackageEpubOptions = PackageAdtWebOptions
 
@@ -54,8 +54,47 @@ export function packageEpub(
   const offlineJs = path.join(oebpsDir, "assets", "offline-preloader.js")
   if (fs.existsSync(offlineJs)) fs.unlinkSync(offlineJs)
 
-  // Inject reader-override CSS (same as webpub)
-  injectWebpubStyles(oebpsDir)
+  // Override config: disable navigation controls and tutorial for EPUB readers
+  const configPath = path.join(oebpsDir, "assets", "config.json")
+  if (fs.existsSync(configPath)) {
+    const config = JSON.parse(fs.readFileSync(configPath, "utf-8"))
+    config.features.showNavigationControls = false
+    config.features.showTutorial = false
+    if (options.fixedLayout) {
+      config.fixedLayout = true
+    }
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2))
+
+    // Inject config as inline script so it's available before the async bundle.
+    // Apple Books may not support fetch() for local resources, so the async
+    // config.json load can fail — causing features to fall back to defaults.
+    const inlineConfigScript = `<script>window.appConfig=${JSON.stringify(config)};</script>`
+    injectInlineScript(oebpsDir, inlineConfigScript)
+  }
+
+  // Inject reader-override CSS
+  injectWebpubStyles(oebpsDir, { fixedLayout: options.fixedLayout })
+
+  // ------------------------------------------------------------------
+  // Convert content HTML pages to XHTML (required by EPUB 3 / Apple Books)
+  // ------------------------------------------------------------------
+  const pagesJsonPath = path.join(oebpsDir, "content", "pages.json")
+  const rawPages = JSON.parse(fs.readFileSync(pagesJsonPath, "utf-8")) as PageEntry[]
+  for (const page of rawPages) {
+    if (!page.href.endsWith(".html")) continue
+    const htmlPath = path.join(oebpsDir, page.href)
+    if (!fs.existsSync(htmlPath)) continue
+
+    const html = fs.readFileSync(htmlPath, "utf-8")
+    const xhtml = convertPageToXhtml(html)
+    const xhtmlHref = page.href.replace(/\.html$/, ".xhtml")
+
+    fs.writeFileSync(path.join(oebpsDir, xhtmlHref), xhtml)
+    fs.unlinkSync(htmlPath)
+    page.href = xhtmlHref
+  }
+  // Update pages.json with .xhtml hrefs
+  fs.writeFileSync(pagesJsonPath, JSON.stringify(rawPages, null, 2))
 
   // ------------------------------------------------------------------
   // Load metadata
@@ -102,10 +141,18 @@ export function packageEpub(
   fs.mkdirSync(path.join(epubDir, "META-INF"), { recursive: true })
   fs.writeFileSync(path.join(epubDir, "META-INF", "container.xml"), CONTAINER_XML)
 
+  // META-INF/com.apple.ibooks.display-options.xml (Apple Books compatibility)
+  if (options.fixedLayout) {
+    fs.writeFileSync(
+      path.join(epubDir, "META-INF", "com.apple.ibooks.display-options.xml"),
+      IBOOKS_DISPLAY_OPTIONS,
+    )
+  }
+
   // OEBPS/content.opf
   fs.writeFileSync(
     path.join(oebpsDir, "content.opf"),
-    buildOpf({ title, authors, publisher, language, pageList, allFiles, coverHref }),
+    buildOpf({ title, authors, publisher, language, pageList, allFiles, coverHref, fixedLayout: options.fixedLayout }),
   )
 
   // OEBPS/toc.xhtml (EPUB 3 navigation document)
@@ -126,6 +173,7 @@ export function packageEpub(
 // ---------------------------------------------------------------------------
 
 const EPUB_MIME_TYPES: Record<string, string> = {
+  ".xhtml": "application/xhtml+xml",
   ".html": "text/html",
   ".css": "text/css",
   ".js": "application/javascript",
@@ -171,6 +219,15 @@ function collectFiles(
 // EPUB structural documents
 // ---------------------------------------------------------------------------
 
+const IBOOKS_DISPLAY_OPTIONS = `<?xml version="1.0" encoding="UTF-8"?>
+<display_options>
+  <platform name="*">
+    <option name="specified-fonts">true</option>
+    <option name="fixed-layout">true</option>
+    <option name="open-to-spread">false</option>
+  </platform>
+</display_options>`
+
 const CONTAINER_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
   <rootfiles>
@@ -186,8 +243,9 @@ function buildOpf(opts: {
   pageList: PageEntry[]
   allFiles: Array<{ href: string; mediaType: string }>
   coverHref?: string
+  fixedLayout?: boolean
 }): string {
-  const { title, authors, publisher, language, pageList, allFiles, coverHref } = opts
+  const { title, authors, publisher, language, pageList, allFiles, coverHref, fixedLayout } = opts
   const now = new Date().toISOString().replace(/\.\d{3}Z$/, "Z")
 
   // Metadata
@@ -205,6 +263,10 @@ function buildOpf(opts: {
   }
   if (coverHref) {
     metaLines.push(`    <meta name="cover" content="cover-image"/>`)
+  }
+  if (fixedLayout) {
+    metaLines.push(`    <meta property="rendition:layout">pre-paginated</meta>`)
+    metaLines.push(`    <meta property="rendition:spread">none</meta>`)
   }
 
   // Manifest — enumerate all files in OEBPS
@@ -229,7 +291,7 @@ function buildOpf(opts: {
 
     const props: string[] = []
     if (file.href === coverHref) props.push("cover-image")
-    if (pageHrefs.has(file.href)) props.push("scripted")
+    if (!fixedLayout && pageHrefs.has(file.href)) props.push("scripted")
     const propsAttr = props.length > 0 ? ` properties="${props.join(" ")}"` : ""
 
     manifestLines.push(
@@ -244,7 +306,7 @@ function buildOpf(opts: {
   })
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="pub-id">
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="pub-id"${fixedLayout ? ` prefix="rendition: http://www.idpf.org/vocab/rendition/#"` : ""}>
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
 ${metaLines.join("\n")}
   </metadata>
@@ -334,6 +396,24 @@ ${navPoints}
 // Helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Inject an inline `<script>` tag into all HTML/XHTML content pages in a directory.
+ * Inserts right before `</head>` so the script runs before the body is parsed.
+ */
+function injectInlineScript(dir: string, script: string): void {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name)
+    if (entry.isDirectory()) {
+      injectInlineScript(fullPath, script)
+    } else if (entry.isFile() && /\.(html|xhtml)$/.test(entry.name)) {
+      const content = fs.readFileSync(fullPath, "utf-8")
+      if (content.includes("</head>")) {
+        fs.writeFileSync(fullPath, content.replace("</head>", `${script}\n</head>`))
+      }
+    }
+  }
+}
+
 function escapeXml(str: string): string {
   return str
     .replace(/&/g, "&amp;")
@@ -341,4 +421,42 @@ function escapeXml(str: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;")
+}
+
+/**
+ * Convert an HTML content page to well-formed XHTML for EPUB 3.
+ *
+ * - Adds XML declaration and XHTML namespace
+ * - Converts HTML to XML-safe markup (self-closing tags, etc.)
+ * - Preserves all inline styles and content
+ */
+function convertPageToXhtml(html: string): string {
+  // Extract the content between <html> and </html>, converting the body
+  const xhtmlBody = htmlToXhtml(html)
+
+  // The htmlToXhtml parser strips the doctype and may mangle the html tag.
+  // Rebuild a clean XHTML document with proper namespace.
+  // Extract lang attribute from original
+  const langMatch = html.match(/lang="([^"]*)"/)
+  const lang = langMatch ? langMatch[1] : "en"
+
+  // Extract <head> content (between <head> and </head>)
+  const headMatch = xhtmlBody.match(/<head[^>]*>([\s\S]*?)<\/head>/)
+  const headContent = headMatch ? headMatch[1] : ""
+
+  // Extract <body> with attributes and content
+  const bodyMatch = xhtmlBody.match(/<body([^>]*)>([\s\S]*?)<\/body>/)
+  const bodyAttrs = bodyMatch ? bodyMatch[1] : ""
+  const bodyContent = bodyMatch ? bodyMatch[2] : ""
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="${escapeXml(lang)}">
+<head>
+${headContent}
+</head>
+<body${bodyAttrs}>
+${bodyContent}
+</body>
+</html>`
 }

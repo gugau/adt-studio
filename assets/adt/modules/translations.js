@@ -241,6 +241,12 @@ const applyTranslationToElements = (key, translationKey) => {
                     return;
                 }
 
+                // In fixed-layout mode, skip elements inside .text-overlay
+                // to preserve the original styled spans (font-family, color, etc.)
+                if (window.appConfig?.fixedLayout && element.closest('.text-overlay')) {
+                    return;
+                }
+
                 // Set the content with proper line breaks
                 element.innerHTML = translatedText;
             }

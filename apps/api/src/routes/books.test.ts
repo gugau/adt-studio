@@ -550,6 +550,7 @@ describe("GET /books/:label/step-status", () => {
     "text-classification",
     "book-summary",
     "translation",
+    "positioned-text-extraction",
   ] as const
 
   function markExtractStageComplete(label: string): void {

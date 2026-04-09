@@ -778,6 +778,9 @@ msgstr "Prompt de resumo do livro"
 msgid "Book Title"
 msgstr "Título do livro"
 
+msgid "Books where the page design is the content"
+msgstr "Livros onde o design da página é o conteúdo"
+
 msgid "Boxed Text"
 msgstr "Texto em caixa"
 
@@ -921,6 +924,9 @@ msgstr "Clique em uma imagem para selecionar"
 
 msgid "Click images to select"
 msgstr "Clique nas imagens para selecionar"
+
+msgid "Click Next to continue to language settings."
+msgstr "Clique em Avançar para continuar para as configurações de idioma."
 
 msgid "Click to edit"
 msgstr "Clique para editar"
@@ -1332,6 +1338,9 @@ msgstr "ex.: Deixe o fundo mais claro, adicione mais árvores..."
 msgid "Each polyp secretes a hard calcium carbonate skeleton. Over hundreds of years, millions of these skeletons build up into the massive reef structures we see today."
 msgstr "Cada pólipo secreta um esqueleto duro de carbonato de cálcio. Ao longo de centenas de anos, milhões desses esqueletos formam as enormes estruturas de recifes que vemos hoje."
 
+msgid "Early readers with rich artwork"
+msgstr "Primeiros leitores com arte rica"
+
 msgid "Edit"
 msgstr "Editar"
 
@@ -1580,8 +1589,17 @@ msgstr "Página Final"
 msgid "First"
 msgstr "Primeira"
 
+msgid "Fixed Layout"
+msgstr "Layout fixo"
+
 msgid "Fixed two-column template layout"
 msgstr "Layout fixo de duas colunas (template)"
+
+msgid "Fixed-layout books use the original page images as backgrounds with positioned text extracted from the PDF. Activities detection, figure extraction, and image cropping or segmentation don't apply to this layout."
+msgstr "Livros de layout fixo usam as imagens originais das páginas como fundo com texto posicionado extraído do PDF. Detecção de atividades, extração de figuras, recorte ou segmentação de imagens não se aplicam a este layout."
+
+msgid "Fixed-layout books with positioned text over page images. Page images as backgrounds with positioned text for accessibility and TTS. Produces pre-paginated EPUB."
+msgstr "Livros de layout fixo com texto posicionado sobre as imagens das páginas. Imagens das páginas como fundo com texto posicionado para acessibilidade e TTS. Produz EPUB pré-paginado."
 
 msgid "flagged"
 msgstr "flagged"
@@ -2295,6 +2313,9 @@ msgstr "Sem legendas para esta página"
 msgid "No changes flagged on this page"
 msgstr "No changes flagged on this page"
 
+msgid "No content processing needed"
+msgstr "Não é necessário processamento de conteúdo"
+
 msgid "No data"
 msgstr "Sem dados"
 
@@ -2714,8 +2735,14 @@ msgstr "Polindo parágrafos até a perfeição..."
 msgid "Portuguese (BR)"
 msgstr "Português (BR)"
 
+msgid "Positioned Text"
+msgstr "Texto Posicionado"
+
 msgid "Práticas de Alfabetização e de Matemática"
 msgstr "Práticas de Alfabetização e de Matemática"
+
+msgid "Pre-paginated storybooks"
+msgstr "Livros de histórias pré-paginados"
 
 msgid "Precipitation"
 msgstr "Precipitação"
@@ -3064,6 +3091,9 @@ msgstr "Running Validation..."
 
 msgid "Runs in background — you can keep editing"
 msgstr "Executa em segundo plano — você pode continuar editando"
+
+msgid "Sample Fixed Layout Book"
+msgstr "Livro de layout fixo de exemplo"
 
 msgid "Sample Illustrated Story"
 msgstr "História Ilustrada de Exemplo"

@@ -72,6 +72,7 @@ const NODE_CACHE_RESOURCES: Record<PipelineNodeName, readonly PipelineCacheResou
   "image-meaningfulness": ["pages"],
   "text-classification": ["pages"],
   "translation": ["pages"],
+  "positioned-text-extraction": ["pages"],
   "page-sectioning": ["pages"],
   "web-rendering": ["pages"],
   "quiz-generation": ["quizzes"],

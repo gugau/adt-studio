@@ -12,3 +12,12 @@ export type {
 export { renderSvgToPng } from "./svg-render.js";
 export { getPngMetadata, decodePng, cropPng } from "./png-utils.js";
 export type { PngMetadata } from "./png-utils.js";
+export { stitchImagesHorizontally } from "./image-utils.js";
+export {
+  extractAllPositionedText,
+  extractPositionedText,
+  extractPositionedTextSpread,
+  type PositionedTextOutput,
+  type PositionedTextPageInfo,
+  type PositionedParagraph,
+} from "./positioned-text.js";

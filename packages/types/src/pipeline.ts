@@ -12,6 +12,7 @@ export const StepName = z.enum([
   "image-meaningfulness",
   "text-classification",
   "translation",
+  "positioned-text-extraction",
   "page-sectioning",
   "web-rendering",
   "quiz-generation",
@@ -75,6 +76,7 @@ export const PIPELINE: StageDef[] = [
       { name: "text-classification", label: "Text Classification", dependsOn: ["extract"], pageProgress: true },
       { name: "book-summary", label: "Book Summary", dependsOn: ["text-classification"] },
       { name: "translation", label: "Translation", dependsOn: ["text-classification"], pageProgress: true },
+      { name: "positioned-text-extraction", label: "Positioned Text", dependsOn: ["extract"] },
     ],
   },
   {

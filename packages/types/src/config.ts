@@ -36,7 +36,7 @@ export type PageSectioningConfig = z.infer<typeof PageSectioningConfig>
 export const BookFormat = z.enum(["web", "webpub", "epub"])
 export type BookFormat = z.infer<typeof BookFormat>
 
-export const LayoutType = z.enum(["textbook", "storybook", "reference", "custom"])
+export const LayoutType = z.enum(["textbook", "storybook", "reference", "fixed", "custom"])
 export type LayoutType = z.infer<typeof LayoutType>
 
 export const StyleguideName = z.string().regex(/^[a-zA-Z0-9_-]+$/)

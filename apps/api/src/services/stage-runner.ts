@@ -1,4 +1,5 @@
 import crypto from "node:crypto"
+import fs from "node:fs"
 import path from "node:path"
 import { createBookStorage } from "@adt/storage"
 import type { Storage } from "@adt/storage"
@@ -545,6 +546,32 @@ async function runExtractStep(
       })
       throw err
     }
+
+    // Positioned text extraction (only for fixed-layout mode)
+    if (config.layout_type === "fixed") {
+      progress.emit({ type: "step-start", step: "positioned-text-extraction" })
+      try {
+        const { extractAllPositionedText } = await import("@adt/pdf")
+        const pdfBuf = fs.readFileSync(pdfPath)
+        const results = extractAllPositionedText(pdfBuf, pages, config.spread_mode)
+        for (const [pageId, result] of results) {
+          storage.putNodeData("positioned-text-extraction", pageId, result)
+        }
+        progress.emit({ type: "step-complete", step: "positioned-text-extraction" })
+        console.log(`[stage-run] ${label}: positioned text extraction complete (${results.size} pages)`)
+      } catch (err) {
+        const msg = toErrorMessage(err)
+        console.error(`[stage-run] ${label}: positioned text extraction failed: ${msg}`)
+        progress.emit({
+          type: "step-error",
+          step: "positioned-text-extraction",
+          error: msg,
+        })
+        throw err
+      }
+    } else {
+      progress.emit({ type: "step-skip", step: "positioned-text-extraction" })
+    }
   } finally {
     storage.close()
     restoreEnvKeys()
@@ -639,6 +666,20 @@ async function runStoryboardStep(
     const pages = storage.getPages()
     const totalPages = pages.length
     const effectiveConcurrency = config.concurrency ?? 32
+
+    if (config.layout_type === "fixed") {
+      // -- FIXED-LAYOUT PATH --
+      // Both sectioning and rendering are done together from positioned text
+      console.log(`[stage-run] ${label}: fixed-layout rendering for ${totalPages} pages`)
+      progress.emit({ type: "step-start", step: "page-sectioning" })
+      const { processFixedLayoutPages } = await import("@adt/pipeline")
+      const imageUrlPrefix = `/api/books/${label}/images`
+      processFixedLayoutPages(storage, imageUrlPrefix)
+      progress.emit({ type: "step-complete", step: "page-sectioning" })
+      progress.emit({ type: "step-complete", step: "web-rendering" })
+      console.log(`[stage-run] ${label}: fixed-layout rendering complete`)
+      return
+    }
 
     if (renderOnly) {
       // -- RENDER-ONLY PATH --

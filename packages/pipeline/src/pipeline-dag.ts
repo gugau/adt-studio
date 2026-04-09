@@ -55,6 +55,7 @@ import {
   type ProviderRouting,
 } from "./speech.js"
 import { packageAdtWeb } from "./package-web.js"
+import { processFixedLayoutPages } from "./fixed-layout-rendering.js"
 import { runAccessibilityAssessment } from "./accessibility-assessment.js"
 import { loadBookConfig } from "./config.js"
 import { nullProgress, type Progress } from "./progress.js"
@@ -485,9 +486,35 @@ export async function runFullPipeline(
       })
     })
 
+    const isFixedLayout = config.layout_type === "fixed"
+
+    executors.set("positioned-text-extraction", async (p) => {
+      if (!isFixedLayout) return
+      const pages = storage.getPages()
+      const pdfBuf = fs.readFileSync(path.join(bookDir, `${label}.pdf`))
+      const { extractAllPositionedText } = await import("@adt/pdf")
+      const results = extractAllPositionedText(pdfBuf, pages, config.spread_mode)
+      for (const [pageId, result] of results) {
+        storage.putNodeData("positioned-text-extraction", pageId, result)
+      }
+      p.emit({
+        type: "step-progress",
+        step: "positioned-text-extraction",
+        message: `${results.size} pages`,
+        page: results.size,
+        totalPages: pages.length,
+      })
+    })
+
     // ── Storyboard stage ────────────────────────────────────────
 
     executors.set("page-sectioning", async (p) => {
+      if (isFixedLayout) {
+        // Fixed-layout: both sectioning and rendering are handled together
+        const imageUrlPrefix = `/api/books/${label}/images`
+        processFixedLayoutPages(storage, imageUrlPrefix)
+        return
+      }
       const model = getModel(textClassifyConfig.modelId)
       const pages = storage.getPages()
       const totalPages = pages.length
@@ -529,6 +556,9 @@ export async function runFullPipeline(
     })
 
     executors.set("web-rendering", async (p) => {
+      // Fixed-layout rendering is already done in page-sectioning step
+      if (isFixedLayout) return
+
       const renderModels = new Map<string, LLMModel>()
       const resolveRenderModel = (modelId: string): LLMModel => {
         let model = renderModels.get(modelId)

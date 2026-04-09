@@ -12,6 +12,7 @@ import mupdf, {
   type PDFObject,
 } from "mupdf";
 import { cropPng, decodePng, stitchPngsHorizontally } from "./png-utils.js";
+import { stitchImagesHorizontally } from "./image-utils.js";
 import { extractTextFromStructuredText } from "./fm-sinhala.js";
 import type { RenderMethodValue } from "@adt/types";
 import { renderSvgToPng } from "./svg-render.js";
@@ -561,14 +562,53 @@ async function extractSpreadPage(
     groups: [...leftResult.debug.groups, ...rightResult.debug.groups],
   };
 
+  // Auto-stitch spread images: find the largest image from each page and
+  // stitch them if both exist and have similar height. This handles the
+  // common storybook case where a single illustration spans two PDF pages.
+  const allLeft = [...leftRaster, ...leftResult.images];
+  const allRight = [...rightRaster, ...rightResult.images];
+  const leftLargest = findLargestImage(allLeft);
+  const rightLargest = findLargestImage(allRight);
+  let images: ExtractedImage[] = [...leftRaster, ...rightRaster, ...leftResult.images, ...rightResult.images];
+
+  if (leftLargest && rightLargest && areSimilarHeight(leftLargest, rightLargest)) {
+    const stitchedBuf = stitchImagesHorizontally(
+      leftLargest.buffer, leftLargest.format,
+      rightLargest.buffer, rightLargest.format,
+    );
+    const nextIdx = images.length + 1;
+    const stitched: ExtractedImage = {
+      imageId: pageId + "_im" + String(nextIdx).padStart(3, "0") + "_spread",
+      pageId,
+      buffer: stitchedBuf,
+      format: "png",
+      width: stitchedBuf.readUInt32BE(16),
+      height: stitchedBuf.readUInt32BE(20),
+      hash: hashBuffer(stitchedBuf),
+    };
+    images.push(stitched);
+  }
+
   return {
     pageId,
     pageNumber: leftNum,
     text,
     pageImage,
-    images: [...leftRaster, ...rightRaster, ...leftResult.images, ...rightResult.images],
+    images,
     extractionDebug,
   };
+}
+
+function findLargestImage(images: ExtractedImage[]): ExtractedImage | null {
+  if (images.length === 0) return null;
+  return images.reduce((best, img) =>
+    img.width * img.height > best.width * best.height ? img : best
+  );
+}
+
+function areSimilarHeight(a: ExtractedImage, b: ExtractedImage): boolean {
+  const ratio = Math.min(a.height, b.height) / Math.max(a.height, b.height);
+  return ratio >= 0.9; // within 10%
 }
 
 interface PageSvgData {

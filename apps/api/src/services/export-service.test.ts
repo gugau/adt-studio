@@ -381,7 +381,7 @@ describe("exportEpub", () => {
 
     // Should have content pages in OEBPS/ (copied from adt/)
     const htmlFiles = Object.keys(files).filter(f =>
-      f.startsWith("OEBPS/") && f.endsWith(".html") &&
+      f.startsWith("OEBPS/") && (f.endsWith(".html") || f.endsWith(".xhtml")) &&
       !f.includes("toc.") && !f.includes("content/")
     )
     expect(htmlFiles.length).toBeGreaterThanOrEqual(2)
@@ -421,5 +421,211 @@ describe("exportEpub", () => {
 
   it("throws for non-existent book", async () => {
     await expect(exportEpub("ghost", tmpDir)).rejects.toThrow("not found")
+  })
+
+  it("reflowable EPUB does not include rendition:layout metadata", async () => {
+    createBookWithMetadata("epub-reflow", "Reflowable Book")
+    addPagesAndRenderings("epub-reflow", 1)
+
+    await prepareExport("epub-reflow", "epub", tmpDir, webAssetsDir)
+    const result = await exportEpub("epub-reflow", tmpDir)
+    const buf = await streamToBuffer(result.stream)
+    const files = unzipSync(buf)
+    const opf = new TextDecoder().decode(files["OEBPS/content.opf"])
+
+    expect(opf).not.toContain("rendition:layout")
+    expect(opf).not.toContain("pre-paginated")
+  })
+})
+
+describe("exportEpub — fixed-layout", () => {
+  function createFixedLayoutBook(label: string, title: string): void {
+    const bookDir = path.join(tmpDir, label)
+    fs.mkdirSync(bookDir, { recursive: true })
+    fs.mkdirSync(path.join(bookDir, "images"), { recursive: true })
+    const db = openBookDb(path.join(bookDir, `${label}.db`))
+    db.run(
+      "INSERT INTO node_data (node, item_id, version, data) VALUES (?, ?, ?, ?)",
+      [
+        "metadata",
+        "book",
+        1,
+        JSON.stringify({
+          title,
+          authors: ["Illustrator"],
+          publisher: null,
+          language_code: "en",
+          cover_page_number: 1,
+          reasoning: "test",
+        }),
+      ]
+    )
+    db.close()
+
+    // Write config.yaml with fixed-layout layout (triggers fixed-layout mode)
+    fs.writeFileSync(
+      path.join(bookDir, "config.yaml"),
+      "layout_type: fixed\n"
+    )
+  }
+
+  function addFixedLayoutPages(label: string, count: number): void {
+    const storage = createBookStorage(label, tmpDir)
+    try {
+      for (let i = 1; i <= count; i++) {
+        const pageId = `${label}_p${i}`
+        const sectionId = `${pageId}_sec001`
+        storage.putExtractedPage({
+          pageId,
+          pageNumber: i,
+          text: `Page ${i} text`,
+          pageImage: {
+            imageId: `${pageId}_page`,
+            buffer: Buffer.from("fake-png"),
+            format: "png",
+            hash: `hash${i}`,
+            width: 800,
+            height: 600,
+          },
+          images: [],
+        })
+
+        // Positioned text output (as produced by positioned-text-extraction step)
+        storage.putNodeData("positioned-text-extraction", pageId, {
+          paragraphs: [
+            {
+              top: 100,
+              left: 144,
+              lineHeight: 96,
+              html: '<span style="font-family:Palatino,serif;font-size:48.0pt;color:#000000">Hello World</span>',
+            },
+          ],
+          pageWidth: 400,
+          pageHeight: 300,
+          renderWidth: 800,
+          renderHeight: 600,
+        })
+
+        // Fixed-layout sectioning (one section per page)
+        storage.putNodeData("page-sectioning", pageId, {
+          reasoning: "Fixed-layout mode",
+          sections: [
+            {
+              sectionId,
+              sectionType: "fixed-layout-page",
+              parts: [{ type: "image", imageId: `${pageId}_page`, isPruned: false }],
+              backgroundColor: "#ffffff",
+              textColor: "#000000",
+              pageNumber: i,
+              isPruned: false,
+            },
+          ],
+        })
+
+        // Fixed-layout rendered HTML (page image + positioned text overlay)
+        storage.putNodeData("web-rendering", pageId, {
+          sections: [
+            {
+              sectionIndex: 0,
+              sectionType: "fixed-layout-page",
+              reasoning: "Fixed-layout",
+              html: `<div id="content" style="position:relative;width:400px;height:300px;margin:0 auto;overflow:hidden">
+  <img src="/api/books/${label}/images/${pageId}_page" alt="" data-id="${pageId}_page" style="position:absolute;top:0;left:0;width:100%;height:100%"/>
+  <div class="text-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%">
+    <p data-id="${pageId}_p000" style="position:absolute;top:50px;left:72px;line-height:48px"><span style="font-family:Palatino,serif;font-size:48px;color:#000000">Hello World</span></p>
+  </div>
+</div>`,
+            },
+          ],
+        })
+      }
+    } finally {
+      storage.close()
+    }
+  }
+
+  it("produces EPUB with pre-paginated rendition metadata", async () => {
+    createFixedLayoutBook("fl-epub", "Storybook")
+    addFixedLayoutPages("fl-epub", 2)
+
+    await prepareExport("fl-epub", "epub", tmpDir, webAssetsDir)
+    const result = await exportEpub("fl-epub", tmpDir)
+    const buf = await streamToBuffer(result.stream)
+    const files = unzipSync(buf)
+    const opf = new TextDecoder().decode(files["OEBPS/content.opf"])
+
+    expect(opf).toContain("rendition:layout")
+    expect(opf).toContain("pre-paginated")
+    expect(opf).toContain("rendition:spread")
+    expect(opf).toContain("none")
+  })
+
+  it("content pages have fixed viewport meta", async () => {
+    createFixedLayoutBook("fl-viewport", "Viewport Book")
+    addFixedLayoutPages("fl-viewport", 1)
+
+    await prepareExport("fl-viewport", "epub", tmpDir, webAssetsDir)
+    const result = await exportEpub("fl-viewport", tmpDir)
+    const buf = await streamToBuffer(result.stream)
+    const files = unzipSync(buf)
+
+    const htmlFiles = Object.keys(files).filter(f =>
+      f.startsWith("OEBPS/") && (f.endsWith(".html") || f.endsWith(".xhtml")) &&
+      !f.includes("toc.") && !f.includes("content/")
+    )
+    expect(htmlFiles.length).toBeGreaterThanOrEqual(1)
+
+    const html = new TextDecoder().decode(files[htmlFiles[0]])
+    // Fixed-layout pages have viewport matching page dimensions (1x)
+    expect(html).toContain("width=400")
+    expect(html).toContain("height=300")
+    expect(html).not.toContain("device-width")
+  })
+
+  it("content pages contain positioned text with data-id attributes", async () => {
+    createFixedLayoutBook("fl-text", "Text Overlay Book")
+    addFixedLayoutPages("fl-text", 1)
+
+    await prepareExport("fl-text", "epub", tmpDir, webAssetsDir)
+    const result = await exportEpub("fl-text", tmpDir)
+    const buf = await streamToBuffer(result.stream)
+    const files = unzipSync(buf)
+
+    const htmlFiles = Object.keys(files).filter(f =>
+      f.startsWith("OEBPS/") && (f.endsWith(".html") || f.endsWith(".xhtml")) &&
+      !f.includes("toc.") && !f.includes("content/")
+    )
+    const html = new TextDecoder().decode(files[htmlFiles[0]])
+
+    // Should contain positioned text spans with data-id for TTS/accessibility
+    expect(html).toContain("data-id=")
+    expect(html).toContain("Hello")
+    expect(html).toContain("World")
+    // Page image should be present
+    expect(html).toContain("_page")
+  })
+
+  it("has valid EPUB structure alongside fixed-layout metadata", async () => {
+    createFixedLayoutBook("fl-structure", "Structure Book")
+    addFixedLayoutPages("fl-structure", 2)
+
+    await prepareExport("fl-structure", "epub", tmpDir, webAssetsDir)
+    const result = await exportEpub("fl-structure", tmpDir)
+    const buf = await streamToBuffer(result.stream)
+    const files = unzipSync(buf)
+
+    // Standard EPUB structure still present
+    expect(new TextDecoder().decode(files["mimetype"])).toBe("application/epub+zip")
+    expect(files["META-INF/container.xml"]).toBeDefined()
+    expect(files["OEBPS/content.opf"]).toBeDefined()
+    expect(files["OEBPS/toc.xhtml"]).toBeDefined()
+    expect(files["OEBPS/toc.ncx"]).toBeDefined()
+
+    // OPF still has correct version and book metadata
+    const opf = new TextDecoder().decode(files["OEBPS/content.opf"])
+    expect(opf).toContain('version="3.0"')
+    expect(opf).toContain("<dc:title>Structure Book</dc:title>")
+    expect(opf).toContain("<dc:creator>Illustrator</dc:creator>")
+    expect(opf).toContain("itemref idref=")
   })
 })

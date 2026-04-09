@@ -18,11 +18,31 @@ export function classifyPageImages(
 ): ImageClassificationOutput {
   const { min_side, max_side, min_stddev } = config.filters
 
+  // When a spread-stitched image exists, identify the original halves to prune.
+  // Spread images have IDs ending in "_spread" and are derived from the two
+  // largest images (one from each page in a two-page spread).
+  const hasSpread = images.some((img) => img.imageId.endsWith("_spread"))
+  let spreadSourceIds: Set<string> | null = null
+  if (hasSpread) {
+    // The original halves are the two largest non-spread, non-page images
+    const candidates = images
+      .filter((img) => !img.imageId.endsWith("_spread") && img.imageId !== `${pageId}_page`)
+      .sort((a, b) => b.width * b.height - a.width * a.height)
+    if (candidates.length >= 2) {
+      spreadSourceIds = new Set([candidates[0].imageId, candidates[1].imageId])
+    }
+  }
+
   return {
     images: images.map((img) => {
       // Full-page renders are always pruned
       if (img.imageId === `${pageId}_page`) {
         return { imageId: img.imageId, isPruned: true, reason: "full-page render" }
+      }
+
+      // Original halves are pruned when a stitched spread exists
+      if (spreadSourceIds?.has(img.imageId)) {
+        return { imageId: img.imageId, isPruned: true, reason: "replaced by spread-stitched image" }
       }
 
       const shortSide = Math.min(img.width, img.height)

@@ -175,6 +175,11 @@ export {
 } from "./reviewer-validation-config.js"
 
 export {
+  PositionedParagraph,
+  PositionedTextOutput,
+} from "./positioned-text.js"
+
+export {
   ReviewerValidationStatus,
   ReviewerValidationFieldType,
   ReviewerValidationIdentificationField,

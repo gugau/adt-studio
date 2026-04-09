@@ -198,6 +198,7 @@ async function runPackaging(
       title,
       webAssetsDir,
       applyBodyBackground: config.apply_body_background,
+      fixedLayout: config.layout_type === "fixed",
     })
 
     const baseAccessibility = await runAccessibilityAssessment({

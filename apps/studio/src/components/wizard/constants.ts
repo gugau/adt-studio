@@ -11,6 +11,7 @@ import type { ElementType } from "react";
 import { TwoColumnStoryStrategyIcon } from "@/components/wizard/icons/TwoColumnStoryStrategyIcon";
 import { TextbookWireframePreview } from "@/components/wizard/icons/TextbookWireframePreview";
 import { StorybookWireframePreview } from "@/components/wizard/icons/StorybookWireframePreview";
+import { FixedLayoutWireframePreview } from "@/components/wizard/icons/FixedLayoutWireframePreview";
 import { ReferenceWireframePreview } from "@/components/wizard/icons/ReferenceWireframePreview";
 import type { WizardFormValues } from "./wizardForm";
 
@@ -104,7 +105,7 @@ export type PresetRecommendations = Partial<WizardFormValues>;
 
 // ─── Preset types ────────────────────────────────────────────────────────────
 
-export type PresetId = "textbook" | "storybook" | "reference" | "custom";
+export type PresetId = "textbook" | "storybook" | "fixed" | "reference" | "custom";
 
 export interface ExampleBook {
   title: MessageDescriptor;
@@ -392,6 +393,52 @@ export const PRESETS: PresetConfig[] = [
     },
   },
   {
+    id: "fixed",
+    imageSrc: null,
+    Icon: FixedLayoutWireframePreview,
+    iconColor: "text-pink-500",
+    bgColor: "bg-pink-500/5",
+    title: msg`Fixed Layout`,
+    description: msg`Fixed-layout books with positioned text over page images. Page images as backgrounds with positioned text for accessibility and TTS. Produces pre-paginated EPUB.`,
+    renderStrategies: ["two_column_story"],
+    recommendedStrategies: ["two_column_story"],
+    recommendedFor: [
+      msg`Illustrated children's books`,
+      msg`Early readers with rich artwork`,
+      msg`Pre-paginated storybooks`,
+      msg`Books where the page design is the content`,
+    ],
+    exampleBooks: [
+      { title: msg`Sample Fixed Layout Book`, comingSoon: true },
+    ],
+    recommendations: {
+      renderStrategy: "two_column_story",
+      pageGrouping: "spread",
+      sectioningMode: "page",
+      imageCropping: false,
+      imageSegmentation: false,
+      figureExtraction: false,
+    },
+    formDefaults: {
+      imageFilterMinSide: 150,
+      imageFilterMaxSide: 3500,
+    },
+    baseConfig: {
+      spread_mode: true,
+      page_sectioning: { mode: "page" },
+      render_strategies: {
+        two_column_story: {
+          render_type: "template",
+          config: { template: "two_column_story" },
+        },
+      },
+      section_render_strategies: {},
+      pruned_text_types: ["header_text", "footer_text", "page_number"],
+      pruned_section_types: ["back_cover", "credits", "inside_cover"],
+      image_filters: { min_stddev: 2 },
+    },
+  },
+  {
     id: "reference",
     imageSrc: null,
     Icon: ReferenceWireframePreview,
@@ -513,6 +560,7 @@ export interface PresetAccent {
 const PRESET_ACCENT_MAP: Record<string, PresetAccent> = {
   textbook:  { bg: "#3b82f6", hover: "#2563eb", text: "#3b82f6" },
   storybook: { bg: "#f59e0b", hover: "#d97706", text: "#f59e0b" },
+  fixed:     { bg: "#ec4899", hover: "#db2777", text: "#ec4899" },
   reference: { bg: "#10b981", hover: "#059669", text: "#10b981" },
   custom:    { bg: "#8b5cf6", hover: "#7c3aed", text: "#8b5cf6" },
 }

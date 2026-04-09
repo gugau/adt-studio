@@ -46,20 +46,24 @@ export const STEPS: StepDef[] = [
     description: msg`Choose how the content should be formatted.`,
     component: Step2,
     hasRequiredFields: true,
-    isValid: (v) =>
-      v.renderStrategy !== "" &&
-      v.pageGrouping !== "" &&
-      v.sectioningMode !== "",
+    isValid: (v) => {
+      const fixedLayout = v.selectedPreset === "fixed"
+      if (v.pageGrouping === "") return false
+      if (fixedLayout) return true
+      return v.renderStrategy !== "" && v.sectioningMode !== ""
+    },
     scrollToFirstInvalid: (v) => {
-      if (!v.renderStrategy) return "wizard-render-strategy"
+      const fixedLayout = v.selectedPreset === "fixed"
+      if (!fixedLayout && !v.renderStrategy) return "wizard-render-strategy"
       if (!v.pageGrouping) return "wizard-page-grouping"
-      if (!v.sectioningMode) return "wizard-sectioning-mode"
+      if (!fixedLayout && !v.sectioningMode) return "wizard-sectioning-mode"
       return null
     },
     hint: (v) => {
-      if (!v.renderStrategy) return msg`Select a render strategy to continue`
+      const fixedLayout = v.selectedPreset === "fixed"
+      if (!fixedLayout && !v.renderStrategy) return msg`Select a render strategy to continue`
       if (!v.pageGrouping) return msg`Select a page grouping to continue`
-      if (!v.sectioningMode) return msg`Select a section mode to continue`
+      if (!fixedLayout && !v.sectioningMode) return msg`Select a section mode to continue`
       return null
     },
   },
