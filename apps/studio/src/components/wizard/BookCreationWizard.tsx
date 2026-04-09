@@ -196,7 +196,6 @@ export function BookCreationWizard() {
   const { apiKey, hasApiKey, azureKey, azureRegion, geminiKey } = useApiKey()
   const [previewOpen, setPreviewOpen] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [isCreating, setIsCreating] = useState(false)
 
   const values = useStore(form.store, (s) => s.values)
   const { file, renderStrategy, editingLanguage, outputLanguages, styleguide } = values
@@ -249,7 +248,6 @@ export function BookCreationWizard() {
 
   async function handleCreate() {
     setSubmitError(null)
-    setIsCreating(true)
     try {
       const book = await createMutation.mutateAsync({
         label: values.label.trim(),
@@ -273,7 +271,6 @@ export function BookCreationWizard() {
       navigate({ to: "/books/$label/$step", params: { label: book.label, step: "book" } })
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : t`Failed to create book.`)
-      setIsCreating(false)
     }
   }
   const previewWidth = currentStep === 2 ? getPreviewWidth(renderStrategy) : 650
@@ -342,8 +339,8 @@ export function BookCreationWizard() {
             key={currentStep}
             isLastStep={currentStep === STEPS.length}
             canContinue={canContinue}
-            canCreate={canCreate && !isCreating}
-            isCreating={isCreating}
+            canCreate={canCreate && !createMutation.isPending}
+            isCreating={createMutation.isPending}
             onBack={handleBack}
             onNext={handleNext}
             onCreate={handleCreate}
