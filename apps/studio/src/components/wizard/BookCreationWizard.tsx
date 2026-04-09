@@ -192,7 +192,7 @@ export function BookCreationWizard() {
   const { currentStep, setCurrentStep, stepDirection, previewFocus } = useWizard()
   const form = useWizardForm()
   const createMutation = useCreateBook()
-  const { data: books } = useBooks()
+  const { data: books, isPending: booksLoading } = useBooks()
   const { apiKey, hasApiKey, azureKey, azureRegion, geminiKey } = useApiKey()
   const [previewOpen, setPreviewOpen] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -201,7 +201,7 @@ export function BookCreationWizard() {
   const { file, renderStrategy, editingLanguage, outputLanguages, styleguide } = values
   const accent = getPresetAccent(values.selectedPreset)
   const stepIndex = currentStep - 1
-  const existingBookLabels = books?.map((b: { label: string }) => b.label) ?? []
+  const existingBookLabels = booksLoading ? undefined : books?.map((b: { label: string }) => b.label)
   const stepValidationContext = { existingBookLabels }
   const canContinue =
     currentStep >= 1

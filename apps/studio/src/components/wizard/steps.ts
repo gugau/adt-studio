@@ -27,7 +27,7 @@ export const STEPS: StepDef[] = [
     title: msg`Basic Information`,
     description: msg`Configure basic document information and file paths`,
     component: Step1,
-    isValid: (v, ctx) => isStep1BasicInfoValid(v, ctx?.existingBookLabels ?? []),
+    isValid: (v, ctx) => ctx?.existingBookLabels !== undefined && isStep1BasicInfoValid(v, ctx.existingBookLabels),
     scrollToFirstInvalid: (v, ctx) => {
       if (!v.file) return "wizard-pdf-upload"
       if (!isStep1BasicInfoValid(v, ctx?.existingBookLabels ?? [])) return "wizard-project-name"
