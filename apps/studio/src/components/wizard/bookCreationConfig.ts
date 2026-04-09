@@ -35,7 +35,8 @@ export function buildConfigOverrides(values: WizardFormValues): Record<string, u
   if (parsedStartPage !== undefined) config.start_page = parsedStartPage
   if (parsedEndPage !== undefined) config.end_page = parsedEndPage
   if (values.imageSegmentation && values.segmentationMinSide.trim()) {
-    config.image_segmentation = { min_side: Number(values.segmentationMinSide) }
+    const n = Number(values.segmentationMinSide.trim())
+    if (!isNaN(n)) config.image_segmentation = { min_side: n }
   }
 
   return config
