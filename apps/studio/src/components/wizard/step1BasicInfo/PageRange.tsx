@@ -1,4 +1,3 @@
-// TODO: Add translations
 import { useStore } from "@tanstack/react-form"
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import { RangeSlider } from "@/components/wizard/shared/RangeSlider"
