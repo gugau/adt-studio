@@ -1,5 +1,5 @@
 
-import { useState, useEffect, type CSSProperties } from "react"
+import { useState, useEffect, useRef, type CSSProperties } from "react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { Eye, ArrowLeft, ArrowRight, Zap, Loader2 } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
@@ -200,6 +200,8 @@ export function BookCreationWizard() {
   const { apiKey, hasApiKey, azureKey, azureRegion, geminiKey } = useApiKey()
   const [previewOpen, setPreviewOpen] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [isCreating, setIsCreating] = useState(false)
+  const creatingRef = useRef(false)
 
   const values = useStore(form.store, (s) => s.values)
   const { file, renderStrategy, editingLanguage, outputLanguages, styleguide } = values
@@ -251,7 +253,10 @@ export function BookCreationWizard() {
   }
 
   async function handleCreate() {
+    if (creatingRef.current) return
+    creatingRef.current = true
     setSubmitError(null)
+    setIsCreating(true)
     try {
       const book = await createMutation.mutateAsync({
         label: values.label.trim(),
@@ -274,6 +279,8 @@ export function BookCreationWizard() {
 
       navigate({ to: "/books/$label/$step", params: { label: book.label, step: "book" } })
     } catch (error) {
+      creatingRef.current = false
+      setIsCreating(false)
       setSubmitError(error instanceof Error ? error.message : t`Failed to create book.`)
     }
   }
@@ -343,8 +350,8 @@ export function BookCreationWizard() {
             key={currentStep}
             isLastStep={currentStep === STEPS.length}
             canContinue={canContinue}
-            canCreate={canCreate && !createMutation.isPending}
-            isCreating={createMutation.isPending}
+            canCreate={canCreate && !isCreating}
+            isCreating={isCreating}
             onBack={handleBack}
             onNext={handleNext}
             onCreate={handleCreate}

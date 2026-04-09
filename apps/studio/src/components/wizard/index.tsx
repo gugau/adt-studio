@@ -80,6 +80,12 @@ export function useDelayedPreviewFocus(focus: ImageProcessingPreviewFocus) {
   const { setPreviewFocus } = useWizard()
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null)
 
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [])
+
   const onMouseEnter = useCallback(() => {
     timerRef.current = setTimeout(() => setPreviewFocus(focus), PREVIEW_HOVER_DELAY)
   }, [focus, setPreviewFocus])
