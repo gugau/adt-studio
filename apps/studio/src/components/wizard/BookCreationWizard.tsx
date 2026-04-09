@@ -265,7 +265,9 @@ export function BookCreationWizard() {
             { fromStage: "extract", toStage: "storyboard" },
             { azure: { key: azureKey, region: azureRegion }, geminiApiKey: geminiKey },
           )
-        } catch {}
+        } catch (pipelineError) {
+          console.error("[wizard] pipeline kickoff failed:", pipelineError)
+        }
       }
 
       navigate({ to: "/books/$label/$step", params: { label: book.label, step: "book" } })
