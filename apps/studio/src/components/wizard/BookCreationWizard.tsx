@@ -29,9 +29,13 @@ function WizardHeader({ step, accent }: { step: number; accent: PresetAccent }) 
   return (
     <div className="flex flex-col gap-3 px-8 pt-6">
       <div className="flex items-center justify-between">
-        <span className="inline-flex items-center bg-[#fef2f2] text-[#ef4444] text-[12px] font-semibold leading-4 px-[10px] py-[4px] rounded-[4px]">
-          {t`Required Fields`}
-        </span>
+        {def.hasRequiredFields ? (
+          <span className="inline-flex items-center bg-[#fef2f2] text-[#ef4444] text-[12px] font-semibold leading-4 px-[10px] py-[4px] rounded-[4px]">
+            {t`Required Fields`}
+          </span>
+        ) : (
+          <span />
+        )}
         <span
           className="text-[14px] font-bold leading-5 uppercase tracking-wide animate-wizard-enter"
           style={{ color: accent.text, transition: "color 0.4s ease" }}

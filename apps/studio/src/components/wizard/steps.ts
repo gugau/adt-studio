@@ -17,6 +17,7 @@ export interface StepDef {
   title: MessageDescriptor
   description: MessageDescriptor
   component: ComponentType
+  hasRequiredFields?: boolean
   isValid: (values: WizardFormValues, context?: WizardStepValidationContext) => boolean
   scrollToFirstInvalid?: (values: WizardFormValues, context?: WizardStepValidationContext) => string | null
   hint?: (values: WizardFormValues, context?: WizardStepValidationContext) => MessageDescriptor | null
@@ -27,6 +28,7 @@ export const STEPS: StepDef[] = [
     title: msg`Basic Information`,
     description: msg`Configure basic document information and file paths`,
     component: Step1,
+    hasRequiredFields: true,
     isValid: (v, ctx) => ctx?.existingBookLabels !== undefined && isStep1BasicInfoValid(v, ctx.existingBookLabels),
     scrollToFirstInvalid: (v, ctx) => {
       if (!v.file) return "wizard-pdf-upload"
@@ -43,6 +45,7 @@ export const STEPS: StepDef[] = [
     title: msg`Visual Layout`,
     description: msg`Choose how the content should be formatted.`,
     component: Step2,
+    hasRequiredFields: true,
     isValid: (v) =>
       v.renderStrategy !== "" &&
       v.pageGrouping !== "" &&
