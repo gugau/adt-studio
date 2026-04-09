@@ -542,14 +542,6 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
             </button>
           </>
         )}
-        <Link
-          to="/books/$label/$step/settings"
-          params={{ label: bookLabel, step: stageSlug }}
-          search={{ tab: "general" }}
-          className="text-white/60 hover:text-white transition-colors"
-        >
-          <Settings className="w-3.5 h-3.5" />
-        </Link>
       </div>
     )
     return () => setExtra(null)
