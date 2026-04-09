@@ -147,6 +147,8 @@ export function createBookRoutes(
   app.post("/books/:label/prepare-export", async (c) => {
     const { label } = c.req.param()
     const format = (c.req.query("format") ?? "project") as "project" | "webpub" | "scorm" | "adt"
+    const featuresStr = c.req.query("features")
+    const features = featuresStr ? JSON.parse(featuresStr) : undefined
     const safeLabel = parseBookLabel(label)
 
     try {
@@ -156,7 +158,7 @@ export function createBookRoutes(
           "prepare-export",
           `Preparing ${format} export`,
           async () => {
-            await prepareExport(label, format, booksDir, webAssetsDir ?? "", configPath)
+            await prepareExport(label, format, booksDir, webAssetsDir ?? "", configPath, features)
           },
           { url: `/books/${safeLabel}/export-project` }
         )
@@ -164,7 +166,7 @@ export function createBookRoutes(
       }
 
       // Fallback: run synchronously (tests)
-      await prepareExport(label, format, booksDir, webAssetsDir ?? "", configPath)
+      await prepareExport(label, format, booksDir, webAssetsDir ?? "", configPath, features)
       return c.json({ status: "completed", label: safeLabel })
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)

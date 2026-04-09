@@ -844,14 +844,14 @@ describe("GET /books/:label/step-status", () => {
   })
 })
 
-describe("GET /books/:label/export", () => {
+describe("GET /books/:label/export-project", () => {
   const webAssetsDir = path.resolve(process.cwd(), "assets", "adt")
 
   it("returns ZIP for valid book", async () => {
     createTestBook("export-book")
     addPagesAndRenderings("export-book", 2)
     const app = createBookRoutes(tmpDir, webAssetsDir)
-    const res = await app.request("/books/export-book/export")
+    const res = await app.request("/books/export-book/export-project")
     expect(res.status).toBe(200)
     expect(res.headers.get("Content-Type")).toBe("application/zip")
     expect(res.headers.get("Content-Disposition")).toContain("export-book.zip")
@@ -863,13 +863,13 @@ describe("GET /books/:label/export", () => {
     createTestBook("not-accepted-export")
     addPagesAndRenderings("not-accepted-export", 1)
     const app = createBookRoutes(tmpDir, webAssetsDir)
-    const res = await app.request("/books/not-accepted-export/export")
+    const res = await app.request("/books/not-accepted-export/export-project")
     expect(res.status).toBe(200)
   })
 
   it("returns 404 for missing book", async () => {
     const app = createBookRoutes(tmpDir, webAssetsDir)
-    const res = await app.request("/books/ghost/export")
+    const res = await app.request("/books/ghost/export-project")
     expect(res.status).toBe(404)
   })
 

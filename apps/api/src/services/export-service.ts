@@ -34,6 +34,13 @@ function readBookTitle(label: string, resolvedDir: string): string {
   }
 }
 
+export interface ExportFeatures {
+  glossary?: boolean
+  readAloud?: boolean
+  quizzes?: boolean
+  // TODO: Add sign language toggle support 
+}
+
 /**
  * Prepare export by rebuilding the adt/ (and optionally webpub/) directories.
  * Called as a separate step before the actual download so the client can show
@@ -45,6 +52,7 @@ export async function prepareExport(
   booksDir: string,
   webAssetsDir: string,
   configPath?: string,
+  features?: ExportFeatures,
 ): Promise<void> {
   const safeLabel = parseBookLabel(label)
   const resolvedDir = path.resolve(booksDir)
@@ -83,6 +91,7 @@ export async function prepareExport(
       title,
       webAssetsDir,
       applyBodyBackground: config.apply_body_background,
+      features,
     }
 
     await packageAdtWeb(storage, opts)

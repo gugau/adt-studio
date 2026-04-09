@@ -1015,11 +1015,20 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-  prepareExport: (label: string, format: "project" | "webpub" | "scorm" | "adt" = "project") =>
-    request<{ taskId?: string; status: string; label: string }>(
-      `/books/${label}/prepare-export?format=${format}`,
+  prepareExport: (
+    label: string,
+    format: "project" | "webpub" | "scorm" | "adt" = "project",
+    features?: { glossary?: boolean; readAloud?: boolean; quizzes?: boolean }
+  ) => {
+    const params = new URLSearchParams({ format })
+    if (features) {
+      params.append("features", JSON.stringify(features))
+    }
+    return request<{ taskId?: string; status: string; label: string }>(
+      `/books/${label}/prepare-export?${params.toString()}`,
       { method: "POST" }
-    ),
+    )
+  },
 
   exportProject: async (label: string): Promise<Blob | null> => {
     if (!isTauri()) {

@@ -33,6 +33,12 @@ export interface PackageAdtWebOptions {
   webAssetsDir: string
   bundleVersion?: string
   applyBodyBackground?: boolean
+  features?: {
+    glossary?: boolean
+    readAloud?: boolean
+    quizzes?: boolean
+    // TODO: Add sign language toggle support when sign language becomes a pipeline step
+  }
 }
 
 interface PageEntry {
@@ -133,6 +139,7 @@ export async function packageAdtWeb(
     webAssetsDir,
     bundleVersion = "1",
     applyBodyBackground,
+    features,
   } = options
   const language = normalizeLocale(rawLanguage)
   const outputLanguages = Array.from(new Set(rawOutputLanguages.map((code) => normalizeLocale(code))))
@@ -195,7 +202,7 @@ export async function packageAdtWeb(
 
   // Build a map from afterPageId -> quizzes for interleaving
   const quizzesByAfterPageId = new Map<string, Quiz[]>()
-  if (quizData?.quizzes) {
+  if ((features?.quizzes !== false) && quizData?.quizzes) {
     for (const quiz of quizData.quizzes) {
       const existing = quizzesByAfterPageId.get(quiz.afterPageId) ?? []
       existing.push(quiz)
@@ -417,25 +424,28 @@ export async function packageAdtWeb(
     writeJson(path.join(localeDir, "texts.json"), textsMap)
 
     // audios.json + copy audio files
-    const audioDir = path.join(localeDir, "audio")
-    fs.mkdirSync(audioDir, { recursive: true })
-
-    const legacyLang = lang.replace("-", "_")
-    const ttsRow =
-      storage.getLatestNodeData("tts", lang) ??
-      storage.getLatestNodeData("tts", legacyLang)
-    const ttsData = ttsRow?.data as TTSOutput | undefined
     const audioMap: Record<string, string> = {}
 
-    if (ttsData?.entries) {
-      for (const entry of ttsData.entries) {
-        const srcFile = path.join(bookDir, "audio", lang, entry.fileName)
-        const legacySrcFile = path.join(bookDir, "audio", legacyLang, entry.fileName)
-        const resolvedSrcFile = fs.existsSync(srcFile) ? srcFile : legacySrcFile
-        if (fs.existsSync(resolvedSrcFile)) {
-          const destFile = path.join(audioDir, entry.fileName)
-          fs.copyFileSync(resolvedSrcFile, destFile)
-          audioMap[entry.textId] = entry.fileName
+    if (features?.readAloud !== false) {
+      const audioDir = path.join(localeDir, "audio")
+      fs.mkdirSync(audioDir, { recursive: true })
+
+      const legacyLang = lang.replace("-", "_")
+      const ttsRow =
+        storage.getLatestNodeData("tts", lang) ??
+        storage.getLatestNodeData("tts", legacyLang)
+      const ttsData = ttsRow?.data as TTSOutput | undefined
+
+      if (ttsData?.entries) {
+        for (const entry of ttsData.entries) {
+          const srcFile = path.join(bookDir, "audio", lang, entry.fileName)
+          const legacySrcFile = path.join(bookDir, "audio", legacyLang, entry.fileName)
+          const resolvedSrcFile = fs.existsSync(srcFile) ? srcFile : legacySrcFile
+          if (fs.existsSync(resolvedSrcFile)) {
+            const destFile = path.join(audioDir, entry.fileName)
+            fs.copyFileSync(resolvedSrcFile, destFile)
+            audioMap[entry.textId] = entry.fileName
+          }
         }
       }
     }
@@ -466,17 +476,18 @@ export async function packageAdtWeb(
     }
     writeJson(path.join(localeDir, "videos.json"), videosMap)
 
-    // glossary.json
-    const glossaryJson = buildGlossaryJson(glossary, catalog, textsMap, baseLang === sourceLanguage)
-    writeJson(path.join(localeDir, "glossary.json"), glossaryJson)
+    if (features?.glossary !== false) {
+      const glossaryJson = buildGlossaryJson(glossary, catalog, textsMap, baseLang === sourceLanguage)
+      writeJson(path.join(localeDir, "glossary.json"), glossaryJson)
+    }
   }
 
   // ------------------------------------------------------------------
   // config.json
   // ------------------------------------------------------------------
-  const hasGlossary = glossary !== undefined && glossary.items.length > 0
-  const hasQuiz = quizData !== undefined && quizData.quizzes.length > 0
-  const hasTTS = outputLanguages.some(
+  const hasGlossary = (features?.glossary !== false) && (glossary !== undefined && glossary.items.length > 0)
+  const hasQuiz = (features?.quizzes !== false) && (quizData !== undefined && quizData.quizzes.length > 0)
+  const hasTTS = (features?.readAloud !== false) && outputLanguages.some(
     (lang) => {
       const legacyLang = lang.replace("-", "_")
       return (

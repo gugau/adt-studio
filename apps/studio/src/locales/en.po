@@ -49,6 +49,9 @@ msgstr "(p.{0})"
 msgid "(template)"
 msgstr "(template)"
 
+#~ msgid "{0}"
+#~ msgstr "{0}"
+
 #. placeholder {0}: lockedLang.name
 msgid "{0} — type country or Enter for base"
 msgstr "{0} — type country or Enter for base"
@@ -541,6 +544,12 @@ msgstr "All"
 msgid "All Categories"
 msgstr "All Categories"
 
+#~ msgid "All findings"
+#~ msgstr "All findings"
+
+msgid "All images have text descriptions"
+msgstr "All images have text descriptions"
+
 msgid "All issues and manual review items"
 msgstr "All issues and manual review items"
 
@@ -552,6 +561,9 @@ msgstr "All Severities"
 
 msgid "All steps"
 msgstr "All steps"
+
+#~ msgid "Always Included"
+#~ msgstr "Always Included"
 
 msgid "An activity that does not fit the standard categories."
 msgstr "An activity that does not fit the standard categories."
@@ -656,6 +668,18 @@ msgstr "Asset"
 msgid "Assign to section..."
 msgstr "Assign to section..."
 
+#~ msgid "Audio Narration"
+#~ msgstr "Audio Narration"
+
+msgid "Audio narration (largest impact on file size)"
+msgstr "Audio narration (largest impact on file size)"
+
+#~ msgid "Audio narration is available for all text"
+#~ msgstr "Audio narration is available for all text"
+
+#~ msgid "Audio Settings"
+#~ msgstr "Audio Settings"
+
 msgid "Author"
 msgstr "Author"
 
@@ -700,6 +724,9 @@ msgstr "Back to Editor"
 
 msgid "Back to preview"
 msgstr "Back to preview"
+
+msgid "Back up or transfer the full project including the database, PDF, and all pipeline outputs."
+msgstr "Back up or transfer the full project including the database, PDF, and all pipeline outputs."
 
 msgid "Background"
 msgstr "Background"
@@ -880,6 +907,9 @@ msgstr "Choose a Preset"
 msgid "Choose an existing image from this project"
 msgstr "Choose an existing image from this project"
 
+msgid "Choose features to include in this export"
+msgstr "Choose features to include in this export"
+
 msgid "Choose how the content should be formatted."
 msgstr "Choose how the content should be formatted."
 
@@ -988,6 +1018,9 @@ msgstr "Configure API keys for AI pipeline features."
 msgid "Configure basic document information and file paths"
 msgstr "Configure basic document information and file paths"
 
+msgid "Configure features to include in the export"
+msgstr "Configure features to include in the export"
+
 msgid "Confirm merge"
 msgstr "Confirm merge"
 
@@ -1059,6 +1092,9 @@ msgstr "Create from scratch using your description"
 
 msgid "Create session"
 msgstr "Create session"
+
+msgid "Creates a ZIP archive of the full project — database, source PDF, and all pipeline outputs. Use it to back up or transfer the project to another machine."
+msgstr "Creates a ZIP archive of the full project — database, source PDF, and all pipeline outputs. Use it to back up or transfer the project to another machine."
 
 msgid "Creating..."
 msgstr "Creating..."
@@ -1233,6 +1269,9 @@ msgstr "Description"
 msgid "Description..."
 msgstr "Description..."
 
+#~ msgid "Descriptions for all images in the book"
+#~ msgstr "Descriptions for all images in the book"
+
 msgid "Detects activities already present in the book and transforms them into interactive HTML elements like radio buttons and text inputs."
 msgstr "Detects activities already present in the book and transforms them into interactive HTML elements like radio buttons and text inputs."
 
@@ -1268,6 +1307,9 @@ msgstr "Discard"
 
 msgid "Display"
 msgstr "Display"
+
+msgid "Download a full backup of this project"
+msgstr "Download a full backup of this project"
 
 msgid "Drag to move boxes, drag edges/corners to resize"
 msgstr "Drag to move boxes, drag edges/corners to resize"
@@ -1412,6 +1454,9 @@ msgstr "Engineering handbooks"
 msgid "English"
 msgstr "English"
 
+#~ msgid "Enhance Accessibility"
+#~ msgstr "Enhance Accessibility"
+
 msgid "Enter a valid minimum dimension (whole number ≥ 0)"
 msgstr "Enter a valid minimum dimension (whole number ≥ 0)"
 
@@ -1457,38 +1502,44 @@ msgstr "Export"
 #~ msgid "Export ADT"
 #~ msgstr "Export ADT"
 
-msgid "Export as a SCORM 1.2 package for upload to a Learning Management System (LMS). Includes activity completion tracking and offline support."
-msgstr "Export as a SCORM 1.2 package for upload to a Learning Management System (LMS). Includes activity completion tracking and offline support."
+#~ msgid "Export Archive"
+#~ msgstr "Export Archive"
+
+#~ msgid "Export as a SCORM 1.2 package for upload to a Learning Management System (LMS). Includes activity completion tracking and offline support."
+#~ msgstr "Export as a SCORM 1.2 package for upload to a Learning Management System (LMS). Includes activity completion tracking and offline support."
+
+msgid "Export Options"
+msgstr "Export Options"
 
 msgid "Export preparation failed"
 msgstr "Export preparation failed"
 
-msgid "Export Project Archive"
-msgstr "Export Project Archive"
+#~ msgid "Export Project Archive"
+#~ msgstr "Export Project Archive"
 
-msgid "Export SCORM"
-msgstr "Export SCORM"
+#~ msgid "Export SCORM"
+#~ msgstr "Export SCORM"
 
-msgid "Export the book as a Readium WebPub package — a standards-based format for distributing digital publications on the web. Suitable for reading systems that support the Readium Web Publication Manifest specification."
-msgstr "Export the book as a Readium WebPub package — a standards-based format for distributing digital publications on the web. Suitable for reading systems that support the Readium Web Publication Manifest specification."
+#~ msgid "Export the book as a Readium WebPub package — a standards-based format for distributing digital publications on the web. Suitable for reading systems that support the Readium Web Publication Manifest specification."
+#~ msgstr "Export the book as a Readium WebPub package — a standards-based format for distributing digital publications on the web. Suitable for reading systems that support the Readium Web Publication Manifest specification."
 
-msgid "Export the complete Accessible Digital Textbook as a ZIP archive — includes all HTML pages, images, audio files, quizzes, and the compiled web application. Ready to upload to a distribution platform or open locally."
-msgstr "Export the complete Accessible Digital Textbook as a ZIP archive — includes all HTML pages, images, audio files, quizzes, and the compiled web application. Ready to upload to a distribution platform or open locally."
+#~ msgid "Export the complete Accessible Digital Textbook as a ZIP archive — includes all HTML pages, images, audio files, quizzes, and the compiled web application. Ready to upload to a distribution platform or open locally."
+#~ msgstr "Export the complete Accessible Digital Textbook as a ZIP archive — includes all HTML pages, images, audio files, quizzes, and the compiled web application. Ready to upload to a distribution platform or open locally."
 
 #~ msgid "Export the complete Accessible Digital Textbook as a ZIP archive. Includes all HTML pages, images, audio files, quizzes, and the compiled web application — ready to upload to a distribution platform or open locally."
 #~ msgstr "Export the complete Accessible Digital Textbook as a ZIP archive. Includes all HTML pages, images, audio files, quizzes, and the compiled web application — ready to upload to a distribution platform or open locally."
 
-msgid "Export the entire project as a ZIP archive — includes the source PDF, extracted images, all pipeline outputs, the database, and the compiled web application. Use this to back up or transfer the project to another machine."
-msgstr "Export the entire project as a ZIP archive — includes the source PDF, extracted images, all pipeline outputs, the database, and the compiled web application. Use this to back up or transfer the project to another machine."
+#~ msgid "Export the entire project as a ZIP archive — includes the source PDF, extracted images, all pipeline outputs, the database, and the compiled web application. Use this to back up or transfer the project to another machine."
+#~ msgstr "Export the entire project as a ZIP archive — includes the source PDF, extracted images, all pipeline outputs, the database, and the compiled web application. Use this to back up or transfer the project to another machine."
 
 #~ msgid "Export timed out — the book may be too large"
 #~ msgstr "Export timed out — the book may be too large"
 
-msgid "Export Web"
-msgstr "Export Web"
+#~ msgid "Export Web"
+#~ msgstr "Export Web"
 
-msgid "Export WebPub"
-msgstr "Export WebPub"
+#~ msgid "Export WebPub"
+#~ msgstr "Export WebPub"
 
 msgid "Exporting..."
 msgstr "Exporting..."
@@ -1615,6 +1666,9 @@ msgstr "Foreword"
 msgid "Format"
 msgstr "Format"
 
+#~ msgid "Format:"
+#~ msgstr "Format:"
+
 msgid "Forms & controls"
 msgstr "Forms & controls"
 
@@ -1623,6 +1677,9 @@ msgstr "From reference image..."
 
 msgid "Front Cover"
 msgstr "Front Cover"
+
+msgid "Full ADT bundle — HTML pages, images, audio, quizzes, and the compiled web app."
+msgstr "Full ADT bundle — HTML pages, images, audio, quizzes, and the compiled web app."
 
 msgid "Full control over render strategies, pruning, and filters."
 msgstr "Full control over render strategies, pruning, and filters."
@@ -1873,6 +1930,15 @@ msgstr "Include in render"
 msgid "Include text overlays in vector groups"
 msgstr "Include text overlays in vector groups"
 
+#~ msgid "Included Features"
+#~ msgstr "Included Features"
+
+#~ msgid "Including:"
+#~ msgstr "Including:"
+
+#~ msgid "Increase font size"
+#~ msgstr "Increase font size"
+
 msgid "Increase indent"
 msgstr "Increase indent"
 
@@ -1896,6 +1962,9 @@ msgstr "Instruction Text"
 
 msgid "Interactive"
 msgstr "Interactive"
+
+msgid "Interactive assessment questions"
+msgstr "Interactive assessment questions"
 
 msgid "Isolated asset"
 msgstr "Isolated asset"
@@ -1952,6 +2021,9 @@ msgstr "Language-Specific Prompts"
 
 msgid "Languages"
 msgstr "Languages"
+
+msgid "Large"
+msgstr "Large"
 
 msgid "Large enough"
 msgstr "Large enough"
@@ -2108,6 +2180,12 @@ msgstr "Loading voice mappings..."
 
 msgid "Loading..."
 msgstr "Loading..."
+
+#~ msgid "Logs"
+#~ msgstr "Logs"
+
+msgid "Lookup definitions for key terms"
+msgstr "Lookup definitions for key terms"
 
 msgid "Lower values produce more consistent styling across pages."
 msgstr "Lower values produce more consistent styling across pages."
@@ -2454,6 +2532,9 @@ msgstr "None"
 msgid "Not detected"
 msgstr "Not detected"
 
+msgid "Not generated"
+msgstr "Not generated"
+
 msgid "Not reviewed"
 msgstr "Not reviewed"
 
@@ -2522,6 +2603,9 @@ msgstr "OpenAI key required"
 
 msgid "OpenAI Voice"
 msgstr "OpenAI Voice"
+
+msgid "Optional Features"
+msgstr "Optional Features"
 
 msgid "Optional instructions for the LLM..."
 msgstr "Optional instructions for the LLM..."
@@ -2871,8 +2955,14 @@ msgstr "Re-run speech"
 msgid "Re-run translation"
 msgstr "Re-run translation"
 
+#~ msgid "Read Aloud"
+#~ msgstr "Read Aloud"
+
 msgid "Readers see"
 msgstr "Readers see"
+
+msgid "Readium Web Publication format for standards-based digital distribution platforms."
+msgstr "Readium Web Publication format for standards-based digital distribution platforms."
 
 msgid "Real books processed with this preset — before and after."
 msgstr "Real books processed with this preset — before and after."
@@ -3059,11 +3149,20 @@ msgstr "Rising ocean temperatures cause coral bleaching - when stressed corals e
 msgid "Run {stageLabel}"
 msgstr "Run {stageLabel}"
 
+msgid "Run the Image Captions stage to describe all images for screen readers (WCAG 1.1.1)"
+msgstr "Run the Image Captions stage to describe all images for screen readers (WCAG 1.1.1)"
+
 msgid "Run the pipeline through at least the"
 msgstr "Run the pipeline through at least the"
 
 msgid "Run the pipeline through at least the <0>Storyboard</0> stage first."
 msgstr "Run the pipeline through at least the <0>Storyboard</0> stage first."
+
+#~ msgid "Run the Speech stage to generate audio for users with visual or reading difficulties (WCAG 1.2)"
+#~ msgstr "Run the Speech stage to generate audio for users with visual or reading difficulties (WCAG 1.2)"
+
+msgid "Run the Table of Contents stage to add navigation between sections (WCAG 2.4.5)"
+msgstr "Run the Table of Contents stage to add navigation between sections (WCAG 2.4.5)"
 
 msgid "Run whole-book validation checks and configure accessibility assessment settings."
 msgstr "Run whole-book validation checks and configure accessibility assessment settings."
@@ -3297,6 +3396,9 @@ msgstr "Select template..."
 msgid "Select up to 5 pages to use as visual references. The LLM will analyze them and generate a styleguide."
 msgstr "Select up to 5 pages to use as visual references. The LLM will analyze them and generate a styleguide."
 
+#~ msgid "Select which features to include"
+#~ msgstr "Select which features to include"
+
 msgid "Selected: {styleImageId}"
 msgstr "Selected: {styleImageId}"
 
@@ -3363,6 +3465,9 @@ msgstr "Show:"
 
 msgid "Sign Language"
 msgstr "Sign Language"
+
+msgid "Sign language videos are assigned to sections"
+msgstr "Sign language videos are assigned to sections"
 
 msgid "Single"
 msgstr "Single"
@@ -3486,6 +3591,12 @@ msgstr "Structure & semantics"
 msgid "Structured chapters, exercises. Best for educational content with complex layouts."
 msgstr "Structured chapters, exercises. Best for educational content with complex layouts."
 
+#~ msgid "Structured navigation for the book"
+#~ msgstr "Structured navigation for the book"
+
+msgid "Structured navigation is included"
+msgstr "Structured navigation is included"
+
 msgid "Style"
 msgstr "Style"
 
@@ -3518,6 +3629,9 @@ msgstr "Suggested modification"
 
 msgid "Suggested modification:"
 msgstr "Suggested modification:"
+
+#~ msgid "Summary"
+#~ msgstr "Summary"
 
 msgid "Summary Prompt"
 msgstr "Summary Prompt"
@@ -3925,8 +4039,17 @@ msgstr "Upload PDF or drag and drop"
 msgid "Upload sign language videos and assign them to sections."
 msgstr "Upload sign language videos and assign them to sections."
 
+msgid "Upload sign language videos in the Sign Language stage for deaf and hard of hearing users (WCAG 1.2.6)"
+msgstr "Upload sign language videos in the Sign Language stage for deaf and hard of hearing users (WCAG 1.2.6)"
+
+#~ msgid "Upload sign language videos to make this book fully accessible to deaf and hard of hearing users"
+#~ msgstr "Upload sign language videos to make this book fully accessible to deaf and hard of hearing users"
+
 msgid "Upload Style Guide"
 msgstr "Upload Style Guide"
+
+msgid "Upload to an LMS as a SCORM 1.2 package with completion tracking and offline support."
+msgstr "Upload to an LMS as a SCORM 1.2 package with completion tracking and offline support."
 
 msgid "Uploading..."
 msgstr "Uploading..."
@@ -4031,6 +4154,9 @@ msgstr "WebPub Export"
 
 msgid "What should the AI change?"
 msgstr "What should the AI change?"
+
+msgid "What's included"
+msgstr "What's included"
 
 msgid "When enabled, background colors from the styleguide are applied to the full page body."
 msgstr "When enabled, background colors from the styleguide are applied to the full page body."

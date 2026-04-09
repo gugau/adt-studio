@@ -163,7 +163,7 @@ describe("exportProject", () => {
     createTestDb("missing-assets")
     addPages("missing-assets", 1)
 
-    await expect(prepareExport("missing-assets", "project", tmpDir, path.join(tmpDir, "missing-assets-dir")))
+    await expect(prepareExport("missing-assets", "project", tmpDir, path.join(tmpDir, "missing-assets-dir"), undefined, undefined))
       .rejects.toThrow("Web assets directory not found")
   })
 

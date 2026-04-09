@@ -4,12 +4,14 @@ import { msg } from "@lingui/core/macro"
 import { useLingui } from "@lingui/react"
 import { api } from "@/api/client"
 import { useBookTasks } from "./use-book-tasks"
+import type { ExportFeatureToggles } from "./use-export-features"
 
 type ExportFormat = "project" | "webpub" | "scorm" | "adt"
 
 interface PendingExport {
   taskId: string
   format: ExportFormat
+  features?: ExportFeatureToggles
 }
 
 interface ExportError {
@@ -18,7 +20,7 @@ interface ExportError {
 }
 
 export interface ExportWatcherValue {
-  startExport: (format: ExportFormat) => void
+  startExport: (format: ExportFormat, features?: ExportFeatureToggles) => void
   isPreparing: boolean
   preparingFormat: ExportFormat | null
   error: ExportError | null
@@ -60,12 +62,12 @@ export function useExportWatcherSetup(label: string): ExportWatcherValue {
   }, [pendingExport, getTask, i18n, label])
 
   const startExport = useCallback(
-    (format: ExportFormat) => {
+    (format: ExportFormat, features?: ExportFeatureToggles) => {
       setError(null)
-      api.prepareExport(label, format).then(
+      api.prepareExport(label, format, features).then(
         (result) => {
           if (result.taskId) {
-            setPendingExport({ taskId: result.taskId, format })
+            setPendingExport({ taskId: result.taskId, format, features })
           } else {
             // Sync fallback (no task system) — download immediately
             triggerExportDownload(label, format, i18n).catch((err) => {

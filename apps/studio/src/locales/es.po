@@ -49,6 +49,9 @@ msgstr "(p.{0})"
 msgid "(template)"
 msgstr "(plantilla)"
 
+#~ msgid "{0}"
+#~ msgstr "{0}"
+
 #. placeholder {0}: lockedLang.name
 msgid "{0} — type country or Enter for base"
 msgstr "{0} — escribe el país o pulsa Enter para el básico"
@@ -541,6 +544,12 @@ msgstr "Todo"
 msgid "All Categories"
 msgstr "All Categories"
 
+#~ msgid "All findings"
+#~ msgstr "All findings"
+
+msgid "All images have text descriptions"
+msgstr "Todas las imágenes tienen descripciones de texto"
+
 msgid "All issues and manual review items"
 msgstr "Todos los problemas y elementos de revisión manual"
 
@@ -552,6 +561,9 @@ msgstr "All Severities"
 
 msgid "All steps"
 msgstr "Todas las etapas"
+
+#~ msgid "Always Included"
+#~ msgstr "Siempre incluido"
 
 msgid "An activity that does not fit the standard categories."
 msgstr "Una actividad que no encaja en las categorías estándar."
@@ -656,6 +668,18 @@ msgstr "Recurso"
 msgid "Assign to section..."
 msgstr "Asignar a sección..."
 
+#~ msgid "Audio Narration"
+#~ msgstr "Narración de audio"
+
+msgid "Audio narration (largest impact on file size)"
+msgstr "Narración de audio (mayor impacto en el tamaño del archivo)"
+
+#~ msgid "Audio narration is available for all text"
+#~ msgstr "La narración de audio está disponible para todo el texto"
+
+#~ msgid "Audio Settings"
+#~ msgstr "Configuración de audio"
+
 msgid "Author"
 msgstr "Autor"
 
@@ -700,6 +724,9 @@ msgstr "Volver al editor"
 
 msgid "Back to preview"
 msgstr "Volver a vista previa"
+
+msgid "Back up or transfer the full project including the database, PDF, and all pipeline outputs."
+msgstr "Haz una copia de seguridad o transfiere el proyecto completo incluyendo la base de datos, el PDF y todos los resultados del pipeline."
 
 msgid "Background"
 msgstr "Fondo"
@@ -880,6 +907,9 @@ msgstr "Elegir un Preajuste"
 msgid "Choose an existing image from this project"
 msgstr "Elige una imagen existente de este proyecto"
 
+msgid "Choose features to include in this export"
+msgstr "Elige características para incluir en esta exportación"
+
 msgid "Choose how the content should be formatted."
 msgstr "Elige cómo debe formatearse el contenido."
 
@@ -988,6 +1018,9 @@ msgstr "Configura las claves de API para las funciones de IA."
 msgid "Configure basic document information and file paths"
 msgstr "Configura la información básica del documento y las rutas de archivo"
 
+msgid "Configure features to include in the export"
+msgstr "Configura las características a incluir en la exportación"
+
 msgid "Confirm merge"
 msgstr "Confirmar fusión"
 
@@ -1059,6 +1092,9 @@ msgstr "Crear desde cero con tu descripción"
 
 msgid "Create session"
 msgstr "Create session"
+
+msgid "Creates a ZIP archive of the full project — database, source PDF, and all pipeline outputs. Use it to back up or transfer the project to another machine."
+msgstr ""
 
 msgid "Creating..."
 msgstr "Creando..."
@@ -1233,6 +1269,9 @@ msgstr "Descripción"
 msgid "Description..."
 msgstr "Descripción..."
 
+#~ msgid "Descriptions for all images in the book"
+#~ msgstr "Descripciones de todas las imágenes del libro"
+
 msgid "Detects activities already present in the book and transforms them into interactive HTML elements like radio buttons and text inputs."
 msgstr "Detecta actividades ya presentes en el libro y las transforma en elementos HTML interactivos como botones de opción y campos de texto."
 
@@ -1268,6 +1307,9 @@ msgstr "Descartar"
 
 msgid "Display"
 msgstr "Visualización"
+
+msgid "Download a full backup of this project"
+msgstr ""
 
 msgid "Drag to move boxes, drag edges/corners to resize"
 msgstr "Drag to move boxes, drag edges/corners to resize"
@@ -1412,6 +1454,9 @@ msgstr "Manuales de ingeniería"
 msgid "English"
 msgstr "English"
 
+#~ msgid "Enhance Accessibility"
+#~ msgstr "Mejorar la accesibilidad"
+
 msgid "Enter a valid minimum dimension (whole number ≥ 0)"
 msgstr "Introduce una dimensión mínima válida (número entero ≥ 0)"
 
@@ -1457,38 +1502,44 @@ msgstr "Exportar"
 #~ msgid "Export ADT"
 #~ msgstr "Exportar ADT"
 
-msgid "Export as a SCORM 1.2 package for upload to a Learning Management System (LMS). Includes activity completion tracking and offline support."
-msgstr "Exportar como paquete SCORM 1.2 para subir a un Sistema de Gestión del Aprendizaje (LMS). Incluye seguimiento de finalización de actividad y soporte sin conexión."
+#~ msgid "Export Archive"
+#~ msgstr "Exportar archivo"
+
+#~ msgid "Export as a SCORM 1.2 package for upload to a Learning Management System (LMS). Includes activity completion tracking and offline support."
+#~ msgstr "Exportar como paquete SCORM 1.2 para subir a un Sistema de Gestión del Aprendizaje (LMS). Incluye seguimiento de finalización de actividad y soporte sin conexión."
+
+msgid "Export Options"
+msgstr "Opciones de exportación"
 
 msgid "Export preparation failed"
 msgstr "La preparación de la exportación falló"
 
-msgid "Export Project Archive"
-msgstr "Exportar Archivo del Proyecto"
+#~ msgid "Export Project Archive"
+#~ msgstr "Exportar Archivo del Proyecto"
 
-msgid "Export SCORM"
-msgstr "Exportar SCORM"
+#~ msgid "Export SCORM"
+#~ msgstr "Exportar SCORM"
 
-msgid "Export the book as a Readium WebPub package — a standards-based format for distributing digital publications on the web. Suitable for reading systems that support the Readium Web Publication Manifest specification."
-msgstr "Exporta el libro como un paquete Readium WebPub — un formato basado en estándares para distribuir publicaciones digitales en la web. Adecuado para sistemas de lectura que admiten la especificación Readium Web Publication Manifest."
+#~ msgid "Export the book as a Readium WebPub package — a standards-based format for distributing digital publications on the web. Suitable for reading systems that support the Readium Web Publication Manifest specification."
+#~ msgstr "Exporta el libro como un paquete Readium WebPub — un formato basado en estándares para distribuir publicaciones digitales en la web. Adecuado para sistemas de lectura que admiten la especificación Readium Web Publication Manifest."
 
-msgid "Export the complete Accessible Digital Textbook as a ZIP archive — includes all HTML pages, images, audio files, quizzes, and the compiled web application. Ready to upload to a distribution platform or open locally."
-msgstr "Exportar el Libro de Texto Digital Accesible completo como un archivo ZIP — incluye todas las páginas HTML, imágenes, archivos de audio, cuestionarios y la aplicación web compilada. Listo para subir a una plataforma de distribución o abrir localmente."
+#~ msgid "Export the complete Accessible Digital Textbook as a ZIP archive — includes all HTML pages, images, audio files, quizzes, and the compiled web application. Ready to upload to a distribution platform or open locally."
+#~ msgstr "Exportar el Libro de Texto Digital Accesible completo como un archivo ZIP — incluye todas las páginas HTML, imágenes, archivos de audio, cuestionarios y la aplicación web compilada. Listo para subir a una plataforma de distribución o abrir localmente."
 
 #~ msgid "Export the complete Accessible Digital Textbook as a ZIP archive. Includes all HTML pages, images, audio files, quizzes, and the compiled web application — ready to upload to a distribution platform or open locally."
 #~ msgstr "Exporta el Libro de Texto Digital Accesible completo como un archivo ZIP. Incluye todas las páginas HTML, imágenes, archivos de audio, cuestionarios y la aplicación web compilada — listo para subirlo a una plataforma de distribución o abrirlo localmente."
 
-msgid "Export the entire project as a ZIP archive — includes the source PDF, extracted images, all pipeline outputs, the database, and the compiled web application. Use this to back up or transfer the project to another machine."
-msgstr "Exportar todo el proyecto como un archivo ZIP — incluye el PDF original, imágenes extraídas, todos los resultados del proceso, la base de datos y la aplicación web compilada. Úselo para respaldar o transferir el proyecto a otra máquina."
+#~ msgid "Export the entire project as a ZIP archive — includes the source PDF, extracted images, all pipeline outputs, the database, and the compiled web application. Use this to back up or transfer the project to another machine."
+#~ msgstr "Exportar todo el proyecto como un archivo ZIP — incluye el PDF original, imágenes extraídas, todos los resultados del proceso, la base de datos y la aplicación web compilada. Úselo para respaldar o transferir el proyecto a otra máquina."
 
 #~ msgid "Export timed out — the book may be too large"
 #~ msgstr "La exportación expiró — el libro puede ser demasiado grande"
 
-msgid "Export Web"
-msgstr "Exportar Web"
+#~ msgid "Export Web"
+#~ msgstr "Exportar Web"
 
-msgid "Export WebPub"
-msgstr "Exportar WebPub"
+#~ msgid "Export WebPub"
+#~ msgstr "Exportar WebPub"
 
 msgid "Exporting..."
 msgstr "Exportando..."
@@ -1615,6 +1666,9 @@ msgstr "Prefacio"
 msgid "Format"
 msgstr "Formato"
 
+#~ msgid "Format:"
+#~ msgstr "Formato:"
+
 msgid "Forms & controls"
 msgstr "Forms & controls"
 
@@ -1623,6 +1677,9 @@ msgstr "Desde imagen de referencia..."
 
 msgid "Front Cover"
 msgstr "Portada"
+
+msgid "Full ADT bundle — HTML pages, images, audio, quizzes, and the compiled web app."
+msgstr "Paquete ADT completo — páginas HTML, imágenes, audio, cuestionarios y la aplicación web compilada."
 
 msgid "Full control over render strategies, pruning, and filters."
 msgstr "Control total sobre estrategias de renderizado, poda y filtros."
@@ -1873,6 +1930,15 @@ msgstr "Incluir en la renderización"
 msgid "Include text overlays in vector groups"
 msgstr "Incluir superposiciones de texto en grupos vectoriales"
 
+#~ msgid "Included Features"
+#~ msgstr "Características incluidas"
+
+#~ msgid "Including:"
+#~ msgstr "Incluye:"
+
+#~ msgid "Increase font size"
+#~ msgstr "Aumentar tamaño de fuente"
+
 msgid "Increase indent"
 msgstr "Aumentar sangría"
 
@@ -1896,6 +1962,9 @@ msgstr "Texto de instrucción"
 
 msgid "Interactive"
 msgstr "Interactivo"
+
+msgid "Interactive assessment questions"
+msgstr "Preguntas de evaluación interactivas"
 
 msgid "Isolated asset"
 msgstr "Recurso aislado"
@@ -1952,6 +2021,9 @@ msgstr "Prompts por idioma"
 
 msgid "Languages"
 msgstr "Idiomas"
+
+msgid "Large"
+msgstr "Grande"
 
 msgid "Large enough"
 msgstr "Lo suficientemente grande"
@@ -2108,6 +2180,12 @@ msgstr "Cargando asignaciones de voz..."
 
 msgid "Loading..."
 msgstr "Cargando..."
+
+#~ msgid "Logs"
+#~ msgstr "Logs"
+
+msgid "Lookup definitions for key terms"
+msgstr "Buscar definiciones de términos clave"
 
 msgid "Lower values produce more consistent styling across pages."
 msgstr "Valores más bajos producen estilos más consistentes entre páginas."
@@ -2454,6 +2532,9 @@ msgstr "Ninguno"
 msgid "Not detected"
 msgstr "No detectado"
 
+msgid "Not generated"
+msgstr ""
+
 msgid "Not reviewed"
 msgstr "Not reviewed"
 
@@ -2522,6 +2603,9 @@ msgstr "Se requiere clave de OpenAI"
 
 msgid "OpenAI Voice"
 msgstr "Voz OpenAI"
+
+msgid "Optional Features"
+msgstr "Características opcionales"
 
 msgid "Optional instructions for the LLM..."
 msgstr "Instrucciones opcionales para el LLM..."
@@ -2871,8 +2955,14 @@ msgstr "Reejecutar audio"
 msgid "Re-run translation"
 msgstr "Reejecutar traducción"
 
+#~ msgid "Read Aloud"
+#~ msgstr "Lectura en voz alta"
+
 msgid "Readers see"
 msgstr "Los lectores ven"
+
+msgid "Readium Web Publication format for standards-based digital distribution platforms."
+msgstr "Formato Readium Web Publication para plataformas de distribución digital basadas en estándares."
 
 msgid "Real books processed with this preset — before and after."
 msgstr "Libros reales procesados con este preajuste — antes y después."
@@ -3059,11 +3149,20 @@ msgstr "El aumento de las temperaturas oceánicas causa el blanqueamiento de cor
 msgid "Run {stageLabel}"
 msgstr "Ejecutar {0}"
 
+msgid "Run the Image Captions stage to describe all images for screen readers (WCAG 1.1.1)"
+msgstr "Ejecuta la etapa de Pies de foto de imagen para describir todas las imágenes para lectores de pantalla (WCAG 1.1.1)"
+
 msgid "Run the pipeline through at least the"
 msgstr "Ejecuta el pipeline al menos hasta la etapa"
 
 msgid "Run the pipeline through at least the <0>Storyboard</0> stage first."
 msgstr "Run the pipeline through at least the <0>Storyboard</0> stage first."
+
+#~ msgid "Run the Speech stage to generate audio for users with visual or reading difficulties (WCAG 1.2)"
+#~ msgstr "Ejecuta la etapa de Voz para generar audio para usuarios con dificultades visuales o de lectura (WCAG 1.2)"
+
+msgid "Run the Table of Contents stage to add navigation between sections (WCAG 2.4.5)"
+msgstr "Ejecuta la etapa de Tabla de contenidos para agregar navegación entre secciones (WCAG 2.4.5)"
 
 msgid "Run whole-book validation checks and configure accessibility assessment settings."
 msgstr "Run whole-book validation checks and configure accessibility assessment settings."
@@ -3297,6 +3396,9 @@ msgstr "Seleccionar plantilla..."
 msgid "Select up to 5 pages to use as visual references. The LLM will analyze them and generate a styleguide."
 msgstr "Selecciona hasta 5 páginas para usar como referencias visuales. El LLM las analizará y generará una guía de estilo."
 
+#~ msgid "Select which features to include"
+#~ msgstr "Selecciona las características a incluir"
+
 msgid "Selected: {styleImageId}"
 msgstr "Seleccionada: {0}"
 
@@ -3363,6 +3465,9 @@ msgstr "Mostrar:"
 
 msgid "Sign Language"
 msgstr "Lengua de Señas"
+
+msgid "Sign language videos are assigned to sections"
+msgstr "Los videos en lengua de señas están asignados a secciones"
 
 msgid "Single"
 msgstr "Único"
@@ -3486,6 +3591,12 @@ msgstr "Structure & semantics"
 msgid "Structured chapters, exercises. Best for educational content with complex layouts."
 msgstr "Capítulos estructurados, ejercicios. Mejor para contenido educativo con diseños complejos."
 
+#~ msgid "Structured navigation for the book"
+#~ msgstr "Navegación estructurada del libro"
+
+msgid "Structured navigation is included"
+msgstr "La navegación estructurada está incluida"
+
 msgid "Style"
 msgstr "Estilo"
 
@@ -3518,6 +3629,9 @@ msgstr "Suggested modification"
 
 msgid "Suggested modification:"
 msgstr "Suggested modification:"
+
+#~ msgid "Summary"
+#~ msgstr "Resumen"
 
 msgid "Summary Prompt"
 msgstr "Indicación de resumen"
@@ -3925,8 +4039,17 @@ msgstr "Sube un PDF o arrastra y suelta"
 msgid "Upload sign language videos and assign them to sections."
 msgstr "Sube videos de lengua de señas y asígnalos a secciones."
 
+msgid "Upload sign language videos in the Sign Language stage for deaf and hard of hearing users (WCAG 1.2.6)"
+msgstr "Sube videos en lengua de señas en la etapa de Lengua de Señas para usuarios sordos y con discapacidad auditiva (WCAG 1.2.6)"
+
+#~ msgid "Upload sign language videos to make this book fully accessible to deaf and hard of hearing users"
+#~ msgstr "Sube videos de lengua de señas para que este libro sea completamente accesible para usuarios sordos y con discapacidad auditiva"
+
 msgid "Upload Style Guide"
 msgstr "Subir Guía de Estilo"
+
+msgid "Upload to an LMS as a SCORM 1.2 package with completion tracking and offline support."
+msgstr "Sube a un LMS como paquete SCORM 1.2 con seguimiento de finalización y soporte sin conexión."
 
 msgid "Uploading..."
 msgstr "Subiendo..."
@@ -4033,6 +4156,9 @@ msgstr "Exportación WebPub"
 
 msgid "What should the AI change?"
 msgstr "¿Qué debería cambiar la IA?"
+
+msgid "What's included"
+msgstr ""
 
 msgid "When enabled, background colors from the styleguide are applied to the full page body."
 msgstr "Cuando está activado, los colores de fondo de la guía de estilo se aplican al cuerpo completo de la página."
