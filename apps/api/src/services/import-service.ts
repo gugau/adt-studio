@@ -41,9 +41,7 @@ export async function importProject(
     throw new Error(`Invalid project archive: book label "${rawLabel}" is not valid`)
   }
 
-  const pdfEntry = filePaths.find(
-    (p) => p === `${rawLabel}.pdf` || p.startsWith(`${rawLabel}/`) === false && p.endsWith(".pdf")
-  )
+  const pdfEntry = filePaths.find((p) => p.endsWith(".pdf") && !p.includes("/"))
   if (!pdfEntry) {
     throw new Error("Invalid project archive: missing PDF file at root level")
   }
