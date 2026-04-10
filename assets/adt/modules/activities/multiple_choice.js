@@ -325,11 +325,6 @@ const selectOption = (option) => {
     groupOptions.forEach(opt => {
         opt.setAttribute('aria-checked', 'false');
         setOptionState(opt, 'default');
-        const feedback = opt.querySelector('.feedback-container');
-        if (feedback) {
-            feedback.classList.add('hidden');
-            feedback.classList.remove('bg-white', 'rounded-md', 'px-3', 'py-2', 'mt-3');
-        }
     });
 
     selectClickedOption(option);
@@ -361,27 +356,11 @@ const clearGroupValidationStyling = (groupName) => {
     const groupOptions = getOptionsForGroup(groupName);
     groupOptions.forEach(option => {
         option.removeAttribute('aria-invalid');
-
-        const feedback = option.querySelector('.feedback-container');
-        if (feedback) {
-            feedback.classList.add('hidden');
-            feedback.classList.remove('bg-white', 'rounded-md', 'px-3', 'py-2', 'mt-3');
-
-            const feedbackIcon = feedback.querySelector('.feedback-icon');
-            const feedbackText = feedback.querySelector('.feedback-text');
-
-            if (feedbackIcon) {
-                feedbackIcon.className = 'feedback-icon';
-                feedbackIcon.textContent = '';
-            }
-            if (feedbackText) {
-                feedbackText.className = 'feedback-text';
-                feedbackText.textContent = '';
-            }
-        }
-
+        option.querySelector('.result-mark')?.remove();
         setOptionState(option, 'default');
     });
+    // Remove summary banner — score changed, will be recalculated on next submit
+    document.querySelector('.mcq-summary-banner')?.remove();
 };
 
 /**
@@ -395,27 +374,12 @@ const clearAllValidationStyling = () => {
 
     document.querySelectorAll(".activity-option").forEach(option => {
         option.removeAttribute('aria-invalid');
-
-        const feedback = option.querySelector('.feedback-container');
-        if (feedback) {
-            feedback.classList.add('hidden');
-            feedback.classList.remove('bg-white', 'rounded-md', 'px-3', 'py-2', 'mt-3');
-
-            const feedbackIcon = feedback.querySelector('.feedback-icon');
-            const feedbackText = feedback.querySelector('.feedback-text');
-
-            if (feedbackIcon) {
-                feedbackIcon.className = 'feedback-icon';
-                feedbackIcon.textContent = '';
-            }
-            if (feedbackText) {
-                feedbackText.className = 'feedback-text';
-                feedbackText.textContent = '';
-            }
-        }
-
+        option.querySelector('.result-mark')?.remove();
         setOptionState(option, 'default');
     });
+
+    // Remove inline summary banner
+    document.querySelector('.mcq-summary-banner')?.remove();
 
     const validationResults = document.getElementById('validation-results-announcement');
     if (validationResults) {
@@ -476,7 +440,10 @@ export const checkMultipleChoice = () => {
         const isCorrect = raw === true || raw === "true";
 
         styleSelectedOption(state.selectedOption, isCorrect);
-        showFeedback(state.selectedOption, isCorrect);
+        showResultMark(state.selectedOption, isCorrect);
+        if (section) {
+            showInlineSummary(section, { correct: isCorrect ? 1 : 0, total: 1, allCorrect: isCorrect });
+        }
         recordAttemptResult(isCorrect);
         if (typeof updateResetButtonVisibility === 'function') {
             updateResetButtonVisibility();
@@ -502,6 +469,9 @@ export const checkMultipleChoice = () => {
         // Check each group — answered groups get correct/incorrect feedback,
         // unanswered groups are marked as skipped (incorrect).
         let allCorrect = true;
+        let correctCount = 0;
+        const totalGroups = allGroupNames.size;
+
         for (const groupName of allGroupNames) {
             const selectedOption = selectedByGroup.get(groupName);
 
@@ -511,9 +481,11 @@ export const checkMultipleChoice = () => {
                 const isCorrect = raw === true || raw === "true";
 
                 styleSelectedOption(selectedOption, isCorrect);
-                showFeedback(selectedOption, isCorrect);
+                showResultMark(selectedOption, isCorrect);
 
-                if (!isCorrect) {
+                if (isCorrect) {
+                    correctCount++;
+                } else {
                     allCorrect = false;
                 }
             } else {
@@ -527,12 +499,15 @@ export const checkMultipleChoice = () => {
                     const isAnswer = raw === true || raw === "true";
                     if (isAnswer) {
                         setOptionState(opt, 'correct');
-                        showFeedback(opt, true);
+                        showResultMark(opt, true);
                     }
                 }
             }
         }
 
+        if (section) {
+            showInlineSummary(section, { correct: correctCount, total: totalGroups, allCorrect });
+        }
         recordAttemptResult(allCorrect);
         if (typeof updateResetButtonVisibility === 'function') {
             updateResetButtonVisibility();
@@ -545,57 +520,71 @@ export const checkMultipleChoice = () => {
     }
 };
 
+/**
+ * Show an inline summary banner at the bottom of the activity section.
+ * Replaces the toast popup for better accessibility — persistent, in-context,
+ * and announced to screen readers via aria-live.
+ */
+const showInlineSummary = (section, { correct, total, allCorrect }) => {
+    // Remove any existing banner
+    section.querySelector('.mcq-summary-banner')?.remove();
+
+    const banner = document.createElement('div');
+    banner.className = 'mcq-summary-banner mt-8 rounded-xl px-6 py-4 flex items-center gap-3 shadow-sm';
+    banner.setAttribute('role', 'status');
+    banner.setAttribute('aria-live', 'polite');
+
+    if (allCorrect) {
+        banner.classList.add('bg-green-50', 'border', 'border-green-200');
+        banner.innerHTML = `
+            <span class="text-2xl" aria-hidden="true">🎉</span>
+            <span class="text-green-800 font-semibold text-lg">${translateText('multiple-choice-correct-answer')}</span>
+        `;
+    } else {
+        banner.classList.add('bg-amber-50', 'border', 'border-amber-200');
+        const scoreText = total > 1
+            ? `${correct} / ${total}`
+            : '';
+        banner.innerHTML = `
+            <span class="text-2xl" aria-hidden="true">🔄</span>
+            <div class="flex flex-col">
+                ${scoreText ? `<span class="text-amber-900 font-semibold text-lg">${scoreText}</span>` : ''}
+                <span class="text-amber-800 text-base">${translateText('multiple-choice-try-again')}</span>
+            </div>
+        `;
+    }
+
+    section.appendChild(banner);
+
+    // Smooth scroll so the banner is visible
+    banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+};
+
 const styleSelectedOption = (option, isCorrect) => {
     setOptionState(option, isCorrect ? 'correct' : 'incorrect');
     option.setAttribute('aria-invalid', isCorrect ? 'false' : 'true');
 };
 
 /**
- * Show visual feedback on an option. Pure display — no side effects.
+ * Show a ✓ or ✗ result badge overlaid on the option.
+ * Works universally regardless of option content (text, images, cards).
  */
-const showFeedback = (option, isCorrect) => {
-    const feedbackContainer = option.querySelector('.feedback-container');
+const showResultMark = (option, isCorrect) => {
+    // Remove any existing mark first
+    option.querySelector('.result-mark')?.remove();
 
-    if (!feedbackContainer) {
-        console.warn('Feedback container not found for option:', option);
-        return;
+    const mark = document.createElement('div');
+    mark.className = 'result-mark absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-md';
+    mark.classList.add(isCorrect ? 'bg-green-500' : 'bg-red-400');
+    mark.textContent = isCorrect ? '✓' : '✗';
+    mark.setAttribute('aria-label', isCorrect ? 'Correct' : 'Incorrect');
+
+    // Ensure the option is positioned so the badge can be absolutely placed
+    if (!['relative', 'absolute', 'fixed', 'sticky'].includes(getComputedStyle(option).position)) {
+        option.classList.add('relative');
     }
 
-    const feedbackIcon = feedbackContainer.querySelector('.feedback-icon');
-    const feedbackText = feedbackContainer.querySelector('.feedback-text');
-
-    if (!feedbackIcon || !feedbackText) {
-        console.warn('Feedback children missing for option:', option);
-        return;
-    }
-
-    feedbackContainer.classList.remove('hidden');
-
-    // Ensure feedback is always readable regardless of parent background color.
-    // Use an opaque background with proper contrast for accessibility (WCAG AA).
-    feedbackContainer.classList.add('bg-white', 'rounded-md', 'px-3', 'py-2', 'mt-3');
-
-    const dataExplanation = option.getAttribute('data-explanation');
-    const globalExplanation = window?.multipleChoiceExplanations?.[getActivityItem(option)];
-    const explanation = dataExplanation || globalExplanation;
-
-    if (isCorrect) {
-        feedbackIcon.className = 'feedback-icon hidden';
-        feedbackIcon.textContent = '';
-
-        feedbackText.className = 'feedback-text text-lg font-semibold text-green-800';
-        feedbackText.textContent = explanation || translateText('multiple-choice-correct-answer');
-
-        feedbackContainer.setAttribute('role', 'status');
-        feedbackContainer.setAttribute('aria-live', 'polite');
-    } else {
-        feedbackIcon.className = 'feedback-icon hidden';
-        feedbackIcon.textContent = '';
-        feedbackText.className = 'feedback-text text-lg font-semibold text-red-800';
-        feedbackText.textContent = explanation || translateText('multiple-choice-try-again');
-
-        feedbackContainer.setAttribute('role', 'alert');
-    }
+    option.appendChild(mark);
 };
 
 /**
