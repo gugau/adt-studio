@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import {
   Plus,
@@ -10,6 +10,7 @@ import {
   User,
   Globe,
   Pencil,
+  Upload,
 } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
@@ -17,7 +18,7 @@ import { Button } from "@/components/ui/button"
 import { StudioTopBar } from "@/components/StudioTopBar"
 import { Badge } from "@/components/ui/badge"
 import { DeleteBookDialog } from "@/components/books/DeleteBookDialog"
-import { useBooks, useDeleteBook } from "@/hooks/use-books"
+import { useBooks, useDeleteBook, useImportBook } from "@/hooks/use-books"
 import { getPipelineStages } from "@/components/pipeline/stage-config"
 import {
   getStageLabelI18n,
@@ -181,7 +182,22 @@ function HomePage() {
   const { t } = useLingui()
   const { data: books, isLoading, error } = useBooks()
   const deleteMutation = useDeleteBook()
+  const importMutation = useImportBook()
   const [deleteLabel, setDeleteLabel] = useState<string | null>(null)
+  const { openSettings } = useSettingsDialog()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  function handleImportClick() {
+    fileInputRef.current?.click()
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) {
+      importMutation.mutate(file)
+      e.target.value = ""
+    }
+  }
 
   if (isLoading) {
     return (
@@ -260,12 +276,31 @@ function HomePage() {
             <Trans>Your Books</Trans>
             {bookList.length > 0 && ` (${bookList.length})`}
           </h2>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/books/new" className="gap-1.5">
-              <Plus className="h-3.5 w-3.5" />
-              <Trans>Add Book</Trans>
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".zip"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleImportClick}
+              disabled={importMutation.isPending}
+              className="gap-1.5"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              {importMutation.isPending ? <Trans>Importing...</Trans> : <Trans>Import</Trans>}
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/books/new" className="gap-1.5">
+                <Plus className="h-3.5 w-3.5" />
+                <Trans>Add Book</Trans>
+              </Link>
+            </Button>
+          </div>
         </div>
         <div className="space-y-3">
           {bookList.map((book) => (

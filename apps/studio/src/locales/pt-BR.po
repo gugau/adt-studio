@@ -182,7 +182,7 @@ msgid "{bytes} B"
 msgstr "{bytes} B"
 
 msgid "{count} translations"
-msgstr ""
+msgstr "{count} traduções"
 
 msgid "{countSummary} this page"
 msgstr "{countSummary} nesta página"
@@ -191,7 +191,7 @@ msgid "{elapsed}s"
 msgstr "{elapsed}s"
 
 msgid "{generatedFeatureCount} of 5 features generated"
-msgstr ""
+msgstr "{generatedFeatureCount} de 5 recursos gerados"
 
 msgid "{imageCount} images"
 msgstr "{imageCount} imagens"
@@ -207,7 +207,7 @@ msgid "{missingAudioCount} missing"
 msgstr "{missingAudioCount} faltando"
 
 msgid "{pageCount} pages"
-msgstr ""
+msgstr "{pageCount} páginas"
 
 msgid "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
 msgstr "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
@@ -641,7 +641,7 @@ msgid "Apply Segmentation"
 msgstr "Apply Segmentation"
 
 msgid "Archive contents"
-msgstr ""
+msgstr "Conteúdo do arquivo"
 
 #. placeholder {0}: confirmMerge?.label ?? ""
 msgid "Are you sure you want to {0}? This action cannot be undone."
@@ -1936,6 +1936,12 @@ msgstr "Imagens menores que sua dimensão mínima pulam a segmentação - econom
 msgid "Images with shortest side below min or longest side above max are pruned."
 msgstr "Imagens com lado menor abaixo do mínimo ou lado maior acima do máximo são removidas."
 
+msgid "Import"
+msgstr "Importar"
+
+msgid "Importing..."
+msgstr "Importando..."
+
 msgid "In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
 msgstr "Caso não queira converter o livro inteiro, ajuste os controles deslizantes para definir quais páginas serão digitalizadas."
 
@@ -2660,7 +2666,7 @@ msgid "Other options"
 msgstr "Outras opções"
 
 msgid "Output languages"
-msgstr ""
+msgstr "Idiomas de saída"
 
 msgid "Output Languages"
 msgstr "Idiomas de saída"
@@ -2811,7 +2817,7 @@ msgid "Picture books and early readers"
 msgstr "Livros ilustrados e leitores iniciantes"
 
 msgid "Pipeline features"
-msgstr ""
+msgstr "Recursos do pipeline"
 
 msgid "Pipeline Stages"
 msgstr "Etapas do pipeline"

@@ -182,7 +182,7 @@ msgid "{bytes} B"
 msgstr "{bytes} B"
 
 msgid "{count} translations"
-msgstr ""
+msgstr "{count} traducciones"
 
 msgid "{countSummary} this page"
 msgstr "{countSummary} en esta página"
@@ -191,7 +191,7 @@ msgid "{elapsed}s"
 msgstr "{elapsed}s"
 
 msgid "{generatedFeatureCount} of 5 features generated"
-msgstr ""
+msgstr "{generatedFeatureCount} de 5 características generadas"
 
 msgid "{imageCount} images"
 msgstr "{imageCount} imágenes"
@@ -207,7 +207,7 @@ msgid "{missingAudioCount} missing"
 msgstr "{missingAudioCount} faltantes"
 
 msgid "{pageCount} pages"
-msgstr ""
+msgstr "{pageCount} páginas"
 
 msgid "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
 msgstr "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
@@ -641,7 +641,7 @@ msgid "Apply Segmentation"
 msgstr "Apply Segmentation"
 
 msgid "Archive contents"
-msgstr ""
+msgstr "Contenido del archivo"
 
 #. placeholder {0}: confirmMerge?.label ?? ""
 msgid "Are you sure you want to {0}? This action cannot be undone."
@@ -1936,6 +1936,12 @@ msgstr "Las imágenes más pequeñas que tu dimensión mínima omiten la segment
 msgid "Images with shortest side below min or longest side above max are pruned."
 msgstr "Las imágenes con el lado más corto por debajo del mínimo o el lado más largo por encima del máximo se eliminan."
 
+msgid "Import"
+msgstr "Importar"
+
+msgid "Importing..."
+msgstr "Importando..."
+
 msgid "In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
 msgstr "En caso de que no quieras convertir todo el libro, ajusta los controles deslizantes para definir qué páginas se digitalizarán."
 
@@ -2660,7 +2666,7 @@ msgid "Other options"
 msgstr "Otras opciones"
 
 msgid "Output languages"
-msgstr ""
+msgstr "Idiomas de salida"
 
 msgid "Output Languages"
 msgstr "Idiomas de salida"
@@ -2811,7 +2817,7 @@ msgid "Picture books and early readers"
 msgstr "Libros ilustrados y primeros lectores"
 
 msgid "Pipeline features"
-msgstr ""
+msgstr "Características del pipeline"
 
 msgid "Pipeline Stages"
 msgstr "Etapas del pipeline"

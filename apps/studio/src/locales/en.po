@@ -1936,6 +1936,12 @@ msgstr "Images smaller than your minimum dimension skip segmentation - saving co
 msgid "Images with shortest side below min or longest side above max are pruned."
 msgstr "Images with shortest side below min or longest side above max are pruned."
 
+msgid "Import"
+msgstr "Import"
+
+msgid "Importing..."
+msgstr "Importing..."
+
 msgid "In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
 msgstr "In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
 

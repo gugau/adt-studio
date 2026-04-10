@@ -530,6 +530,15 @@ export const api = {
   deleteBook: (label: string) =>
     request<{ ok: boolean }>(`/books/${label}`, { method: "DELETE" }),
 
+  importBook: (zip: File) => {
+    const formData = new FormData()
+    formData.append("zip", zip)
+    return request<BookSummary>("/books/import", {
+      method: "POST",
+      body: formData,
+    })
+  },
+
   runStages: (
     label: string,
     apiKey: string,
