@@ -1,4 +1,4 @@
-import { shell, BrowserWindow } from "electron";
+import { shell, BrowserWindow, dialog } from "electron";
 import { join } from "path";
 import { is } from "@electron-toolkit/utils";
 import icon from "../../resources/icon.png?asset";
@@ -20,6 +20,23 @@ export function createWindow(): void {
 
   mainWindow.on("ready-to-show", () => {
     mainWindow.show();
+  });
+
+  mainWindow.webContents.on("will-prevent-unload", async (event) => {
+    // TODO: ADD TRANSLATIONS
+    const { response } = await dialog.showMessageBox(mainWindow, {
+      type: "warning",
+      buttons: ["Stay", "Quit"],
+      defaultId: 0,
+      cancelId: 0,
+      noLink: true,
+      message: "Leave the app?",
+      detail: "Your current progress will be lost.",
+    });
+
+    if (response === 1) {
+      event.preventDefault();
+    }
   });
 
   mainWindow.webContents.setWindowOpenHandler((details) => {

@@ -53,9 +53,11 @@ export function registerStudioAppProtocol(rendererDistDir: string): void {
 
     try {
       const st = await stat(candidate);
+      
       if (st.isFile()) {
         return net.fetch(pathToFileURL(candidate).href);
       }
+
       if (st.isDirectory()) {
         const indexInDir = path.join(candidate, "index.html");
         if (isPathInsideRoot(indexInDir, root)) {
