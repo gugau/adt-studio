@@ -4,7 +4,7 @@ import { is } from "@electron-toolkit/utils";
 import icon from "../../resources/icon.png?asset";
 import { STUDIO_APP_ORIGIN } from "./protocols/studio-app.protocol";
 
-export function createWindow(): void {
+export function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
@@ -51,4 +51,6 @@ export function createWindow(): void {
   } else {
     mainWindow.loadURL(`${STUDIO_APP_ORIGIN}/`);
   }
+
+  return mainWindow;
 }

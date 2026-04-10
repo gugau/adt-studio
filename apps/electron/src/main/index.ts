@@ -16,6 +16,7 @@ import {
   registerStudioAppProtocol,
   STUDIO_APP_SCHEME_PRIVILEGES,
 } from "./protocols/studio-app.protocol";
+import { createSplashWindow } from "./splash-window";
 
 protocol.registerSchemesAsPrivileged([
   STUDIO_APP_SCHEME_PRIVILEGES,
@@ -23,6 +24,7 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 app.whenReady().then(async () => {
+  const splashWindow = createSplashWindow();
   const { apiProcess } = await startApiServer();
 
   electronApp.setAppUserModelId("com.electron");
@@ -53,7 +55,12 @@ app.whenReady().then(async () => {
     });
   }
 
-  createWindow();
+  const mainWindow = createWindow();
+  mainWindow.once("ready-to-show", () => {
+    if (!splashWindow.isDestroyed()) {
+      splashWindow.destroy();
+    }
+  });
 });
 
 app.on("before-quit", () => {
