@@ -36,6 +36,7 @@ const artifactName = `${productName}-\${version}.\${ext}`
 const config = {
   appId: "com.nees.adt-studio",
   productName,
+  electronVersion: "41.1.1",
   directories: {
     buildResources: "build",
     output: "release",
