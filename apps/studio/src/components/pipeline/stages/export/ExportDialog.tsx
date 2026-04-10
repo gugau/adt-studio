@@ -311,10 +311,10 @@ function AccessibilityChecklist({ items }: { items: AccessibilityItem[] }) {
         </Trans>
       </p>
       <ul className="divide-y divide-slate-100">
-        {items.map((item, i) => {
+        {items.map((item) => {
           const Icon = item.icon;
           return (
-            <li key={i} className="px-4 py-3 flex items-start gap-3">
+            <li key={item.wcagCode} className="px-4 py-3 flex items-start gap-3">
               <div
                 className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${item.iconBg}`}
               >

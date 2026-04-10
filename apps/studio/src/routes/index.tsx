@@ -194,6 +194,7 @@ function HomePage() {
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (file) {
+      // TODO: add error feedback (toast/alert) when import fails — currently fails silently
       importMutation.mutate(file)
       e.target.value = ""
     }

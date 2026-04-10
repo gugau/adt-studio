@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback, createContext, useContext } from "react"
+import { useState, useEffect, createContext, useContext } from "react"
 import type { I18n } from "@lingui/core"
 import { msg } from "@lingui/core/macro"
 import { useLingui } from "@lingui/react"
+import { useMutation } from "@tanstack/react-query"
 import { api } from "@/api/client"
 import { useBookTasks } from "./use-book-tasks"
 import type { ExportFeatureToggles } from "./use-export-features"
@@ -61,32 +62,29 @@ export function useExportWatcherSetup(label: string): ExportWatcherValue {
     }
   }, [pendingExport, getTask, i18n, label])
 
-  const startExport = useCallback(
-    (format: ExportFormat, features?: ExportFeatureToggles) => {
-      setError(null)
-      api.prepareExport(label, format, features).then(
-        (result) => {
-          if (result.taskId) {
-            setPendingExport({ taskId: result.taskId, format, features })
-          } else {
-            // Sync fallback (no task system) — download immediately
-            triggerExportDownload(label, format, i18n).catch((err) => {
-              setError({ format, message: err instanceof Error ? err.message : String(err) })
-            })
-          }
-        },
-        (err) => {
+  const prepareMutation = useMutation({
+    mutationFn: ({ format, features }: { format: ExportFormat; features?: ExportFeatureToggles }) =>
+      api.prepareExport(label, format, features),
+    onMutate: () => setError(null),
+    onSuccess: (result, { format, features }) => {
+      if (result.taskId) {
+        setPendingExport({ taskId: result.taskId, format, features })
+      } else {
+        triggerExportDownload(label, format, i18n).catch((err) => {
           setError({ format, message: err instanceof Error ? err.message : String(err) })
-        }
-      )
+        })
+      }
     },
-    [i18n, label]
-  )
+    onError: (err, { format }) => {
+      setError({ format, message: err instanceof Error ? err.message : String(err) })
+    },
+  })
 
   return {
-    startExport,
-    isPreparing: pendingExport !== null,
-    preparingFormat: pendingExport?.format ?? null,
+    startExport: (format: ExportFormat, features?: ExportFeatureToggles) =>
+      prepareMutation.mutate({ format, features }),
+    isPreparing: prepareMutation.isPending || pendingExport !== null,
+    preparingFormat: pendingExport?.format ?? (prepareMutation.isPending ? prepareMutation.variables?.format ?? null : null),
     error,
   }
 }

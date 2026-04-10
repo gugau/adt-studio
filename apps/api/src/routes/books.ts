@@ -168,7 +168,14 @@ export function createBookRoutes(
     const { label } = c.req.param()
     const format = (c.req.query("format") ?? "project") as "project" | "webpub" | "scorm" | "adt"
     const featuresStr = c.req.query("features")
-    const features = featuresStr ? JSON.parse(featuresStr) : undefined
+    let features: Record<string, boolean> | undefined
+    if (featuresStr) {
+      try {
+        features = JSON.parse(featuresStr)
+      } catch {
+        throw new HTTPException(400, { message: "Invalid features JSON" })
+      }
+    }
     const safeLabel = parseBookLabel(label)
 
     try {

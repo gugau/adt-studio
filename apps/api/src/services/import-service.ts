@@ -1,7 +1,7 @@
 import fs from "node:fs"
 import path from "node:path"
 import { unzipSync } from "fflate"
-import { parseBookLabel, BookLabel } from "@adt/types"
+import { parseBookLabel } from "@adt/types"
 import type { BookSummary } from "./book-service.js"
 
 export interface ImportResult extends BookSummary {}
@@ -37,9 +37,6 @@ export async function importProject(
   }
 
   const rawLabel = dbEntry.replace(/\.db$/, "")
-  if (!BookLabel.safeParse(rawLabel).success) {
-    throw new Error(`Invalid project archive: book label "${rawLabel}" is not valid`)
-  }
 
   const pdfEntry = filePaths.find((p) => p.endsWith(".pdf") && !p.includes("/"))
   if (!pdfEntry) {
@@ -62,6 +59,7 @@ export async function importProject(
       const destPath = path.join(bookDir, renamedPath)
 
       if (!destPath.startsWith(bookDir + path.sep) && destPath !== bookDir) {
+        // TODO: throw an error instead of silently skipping — the user should know their archive contains suspicious paths
         continue
       }
 
@@ -85,7 +83,9 @@ export async function importProject(
       rebuildReason: null,
     }
   } catch (err) {
-    fs.rmSync(bookDir, { recursive: true, force: true })
+    try {
+      fs.rmSync(bookDir, { recursive: true, force: true })
+    } catch { /* preserve original error */ }
     throw err
   }
 }
