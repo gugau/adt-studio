@@ -181,11 +181,17 @@ msgstr "Hace {0}s"
 msgid "{bytes} B"
 msgstr "{bytes} B"
 
+msgid "{count} translations"
+msgstr ""
+
 msgid "{countSummary} this page"
 msgstr "{countSummary} en esta página"
 
 msgid "{elapsed}s"
 msgstr "{elapsed}s"
+
+msgid "{generatedFeatureCount} of 5 features generated"
+msgstr ""
 
 msgid "{imageCount} images"
 msgstr "{imageCount} imágenes"
@@ -199,6 +205,9 @@ msgstr "{issuesLabel}, {reviewLabel}"
 
 msgid "{missingAudioCount} missing"
 msgstr "{missingAudioCount} faltantes"
+
+msgid "{pageCount} pages"
+msgstr ""
 
 msgid "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
 msgstr "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
@@ -287,6 +296,9 @@ msgstr "Se debe crear un storyboard antes de exportar."
 
 msgid "A storyboard must be built before running validation."
 msgstr "A storyboard must be built before running validation."
+
+msgid "A structured table of contents lets readers jump directly to any section, which is especially important for keyboard and assistive technology users."
+msgstr "Un índice estructurado permite a los lectores saltar directamente a cualquier sección, lo cual es especialmente importante para los usuarios de teclado y tecnología asistiva."
 
 msgid "A style guide provides consistent HTML and CSS patterns that the LLM uses when generating pages. It controls typography, colors, spacing, and component styles so every page in your book has a unified look."
 msgstr "Una guía de estilo proporciona patrones consistentes de HTML y CSS que el LLM utiliza al generar páginas. Controla la tipografía, colores, espaciado y estilos de componentes para que cada página de tu libro tenga un aspecto unificado."
@@ -547,8 +559,8 @@ msgstr "All Categories"
 #~ msgid "All findings"
 #~ msgstr "All findings"
 
-msgid "All images have text descriptions"
-msgstr "Todas las imágenes tienen descripciones de texto"
+#~ msgid "All images have text descriptions"
+#~ msgstr "Todas las imágenes tienen descripciones de texto"
 
 msgid "All issues and manual review items"
 msgstr "Todos los problemas y elementos de revisión manual"
@@ -627,6 +639,9 @@ msgstr "Aplicar colores de fondo de página"
 
 msgid "Apply Segmentation"
 msgstr "Apply Segmentation"
+
+msgid "Archive contents"
+msgstr ""
 
 #. placeholder {0}: confirmMerge?.label ?? ""
 msgid "Are you sure you want to {0}? This action cannot be undone."
@@ -1097,7 +1112,7 @@ msgid "Creates a ZIP archive of the full project — database, source PDF, and a
 msgstr ""
 
 msgid "Creating..."
-msgstr "Creando..."
+msgstr "Crea un archivo ZIP del proyecto completo: base de datos, PDF fuente y todos los resultados del proceso. Úselo para hacer una copia de seguridad o transferir el proyecto a otra máquina."
 
 msgid "Credits"
 msgstr "Créditos"
@@ -1309,7 +1324,7 @@ msgid "Display"
 msgstr "Visualización"
 
 msgid "Download a full backup of this project"
-msgstr ""
+msgstr "Descargar una copia de seguridad completa de este proyecto"
 
 msgid "Drag to move boxes, drag edges/corners to resize"
 msgstr "Drag to move boxes, drag edges/corners to resize"
@@ -2533,7 +2548,7 @@ msgid "Not detected"
 msgstr "No detectado"
 
 msgid "Not generated"
-msgstr ""
+msgstr "No generado"
 
 msgid "Not reviewed"
 msgstr "Not reviewed"
@@ -2643,6 +2658,9 @@ msgstr "Otras imágenes"
 
 msgid "Other options"
 msgstr "Otras opciones"
+
+msgid "Output languages"
+msgstr ""
 
 msgid "Output Languages"
 msgstr "Idiomas de salida"
@@ -2791,6 +2809,9 @@ msgstr "Elige un enfoque de diseño."
 
 msgid "Picture books and early readers"
 msgstr "Libros ilustrados y primeros lectores"
+
+msgid "Pipeline features"
+msgstr ""
 
 msgid "Pipeline Stages"
 msgstr "Etapas del pipeline"
@@ -3149,8 +3170,8 @@ msgstr "El aumento de las temperaturas oceánicas causa el blanqueamiento de cor
 msgid "Run {stageLabel}"
 msgstr "Ejecutar {0}"
 
-msgid "Run the Image Captions stage to describe all images for screen readers (WCAG 1.1.1)"
-msgstr "Ejecuta la etapa de Pies de foto de imagen para describir todas las imágenes para lectores de pantalla (WCAG 1.1.1)"
+#~ msgid "Run the Image Captions stage to describe all images for screen readers (WCAG 1.1.1)"
+#~ msgstr "Ejecuta la etapa de Pies de foto de imagen para describir todas las imágenes para lectores de pantalla (WCAG 1.1.1)"
 
 msgid "Run the pipeline through at least the"
 msgstr "Ejecuta el pipeline al menos hasta la etapa"
@@ -3161,8 +3182,8 @@ msgstr "Run the pipeline through at least the <0>Storyboard</0> stage first."
 #~ msgid "Run the Speech stage to generate audio for users with visual or reading difficulties (WCAG 1.2)"
 #~ msgstr "Ejecuta la etapa de Voz para generar audio para usuarios con dificultades visuales o de lectura (WCAG 1.2)"
 
-msgid "Run the Table of Contents stage to add navigation between sections (WCAG 2.4.5)"
-msgstr "Ejecuta la etapa de Tabla de contenidos para agregar navegación entre secciones (WCAG 2.4.5)"
+#~ msgid "Run the Table of Contents stage to add navigation between sections (WCAG 2.4.5)"
+#~ msgstr "Ejecuta la etapa de Tabla de contenidos para agregar navegación entre secciones (WCAG 2.4.5)"
 
 msgid "Run whole-book validation checks and configure accessibility assessment settings."
 msgstr "Run whole-book validation checks and configure accessibility assessment settings."
@@ -3250,6 +3271,12 @@ msgstr "Exportación SCORM"
 
 msgid "SCORM Package"
 msgstr "Paquete SCORM"
+
+msgid "Screen readers cannot interpret images without text alternatives. Adding captions ensures blind and low-vision readers understand every illustration."
+msgstr "Los lectores de pantalla no pueden interpretar imágenes sin alternativas textuales. Agregar subtítulos asegura que los lectores ciegos y con baja visión entiendan cada ilustración."
+
+#~ msgid "Search classes..."
+#~ msgstr "Buscar clases..."
 
 msgid "Search languages..."
 msgstr "Buscar idiomas..."
@@ -3466,8 +3493,11 @@ msgstr "Mostrar:"
 msgid "Sign Language"
 msgstr "Lengua de Señas"
 
-msgid "Sign language videos are assigned to sections"
-msgstr "Los videos en lengua de señas están asignados a secciones"
+#~ msgid "Sign language videos are assigned to sections"
+#~ msgstr "Los videos en lengua de señas están asignados a secciones"
+
+msgid "Sign language videos provide access for deaf and hard of hearing readers who may not be fluent in written language."
+msgstr "Los videos en lenguaje de señas brindan acceso a lectores sordos y con dificultades auditivas que pueden no ser fluidos en el lenguaje escrito."
 
 msgid "Single"
 msgstr "Único"
@@ -3594,8 +3624,8 @@ msgstr "Capítulos estructurados, ejercicios. Mejor para contenido educativo con
 #~ msgid "Structured navigation for the book"
 #~ msgstr "Navegación estructurada del libro"
 
-msgid "Structured navigation is included"
-msgstr "La navegación estructurada está incluida"
+#~ msgid "Structured navigation is included"
+#~ msgstr "La navegación estructurada está incluida"
 
 msgid "Style"
 msgstr "Estilo"
@@ -3804,6 +3834,9 @@ msgstr "La tabla de contenidos."
 
 msgid "The Water Cycle"
 msgstr "El Ciclo del Agua"
+
+msgid "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."
+msgstr "Estas funciones mejoran el acceso para personas con discapacidades. Ejecutarlas antes de exportar ayuda a que su libro cumpla con los estándares de accesibilidad ADT."
 
 msgid "These values reflect either the saved book override or the latest packaged defaults."
 msgstr "These values reflect either the saved book override or the latest packaged defaults."
@@ -4039,8 +4072,8 @@ msgstr "Sube un PDF o arrastra y suelta"
 msgid "Upload sign language videos and assign them to sections."
 msgstr "Sube videos de lengua de señas y asígnalos a secciones."
 
-msgid "Upload sign language videos in the Sign Language stage for deaf and hard of hearing users (WCAG 1.2.6)"
-msgstr "Sube videos en lengua de señas en la etapa de Lengua de Señas para usuarios sordos y con discapacidad auditiva (WCAG 1.2.6)"
+#~ msgid "Upload sign language videos in the Sign Language stage for deaf and hard of hearing users (WCAG 1.2.6)"
+#~ msgstr "Sube videos en lengua de señas en la etapa de Lengua de Señas para usuarios sordos y con discapacidad auditiva (WCAG 1.2.6)"
 
 #~ msgid "Upload sign language videos to make this book fully accessible to deaf and hard of hearing users"
 #~ msgstr "Sube videos de lengua de señas para que este libro sea completamente accesible para usuarios sordos y con discapacidad auditiva"
@@ -4157,8 +4190,8 @@ msgstr "Exportación WebPub"
 msgid "What should the AI change?"
 msgstr "¿Qué debería cambiar la IA?"
 
-msgid "What's included"
-msgstr ""
+#~ msgid "What's included"
+#~ msgstr "Qué está incluido"
 
 msgid "When enabled, background colors from the styleguide are applied to the full page body."
 msgstr "Cuando está activado, los colores de fondo de la guía de estilo se aplican al cuerpo completo de la página."

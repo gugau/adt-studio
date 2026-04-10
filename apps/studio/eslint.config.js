@@ -130,6 +130,9 @@ export default [
             // --- React internals ---
             "displayName",
 
+            // --- Accessibility metadata (standardized WCAG codes, not translatable) ---
+            "wcagCode",
+
             // --- i18n locale metadata (intentionally not translated — must stay in native script) ---
             "LOCALE_LABEL_MESSAGES",
             "LOCALE_FLAGS",
@@ -199,6 +202,9 @@ export default [
 
             // --- Math / formatting (unit suffixes in template literals) ---
             "*.toFixed",
+
+            // --- Feature toggle callbacks (toggle key arguments are identifiers, not user-visible) ---
+            "onFeatureToggleChange",
           ],
           ignore: [
             // project brand name (intentional non-translatable literal)
