@@ -35,7 +35,28 @@ Use this exact outer shell:
 7. Do not output visible raw text outside an element that has a valid provided `data-id`. The only exception is single-digit numbers used as option markers.
 8. No markdown, no code fences in `content`, and no additional top-level fields.
 
-## Multiple Choice — Required Interactive Elements
+## Step 1: Determine Question Structure (CRITICAL — do this BEFORE writing any HTML)
+
+Analyze the page image, the provided images, and the instruction text to determine how many **independent questions** this activity contains and how many **options per question**.
+
+### Counting rules
+1. Look at the **page image layout** — how are images and content visually grouped? Rows, columns, grids, pairs?
+2. Count the provided images. If there are N images and the activity involves **comparing or choosing between image pairs** (e.g., big vs small, correct vs incorrect, before vs after), then you have **N/2 questions with 2 options each**, not 1 question with N options.
+3. If images are arranged in **rows of 2** on the page (side by side), each row is almost certainly one question with 2 image options.
+4. If images are arranged in a **grid of 4+** and the student picks ONE, that is 1 question with multiple options.
+5. The instruction text describes the **task** (e.g., "circle the big picture"), NOT the question count. Do not let it mislead you — always verify against the visual layout.
+
+### Radio group assignment
+- Each independent question gets its own unique radio `name` (e.g., `question-1`, `question-2`, …).
+- Option numbering (inside `.option-letter`) restarts at 1 for each question group.
+- If the page has only one question, use a single `name` for all options.
+
+### State your analysis in `reasoning`
+Your `reasoning` field MUST include: how many questions you identified, how many options per question, and why (e.g., "8 images in 4 rows of 2 → 4 binary-choice questions, each comparing big vs small").
+
+## Step 2: Build the HTML
+
+### Multiple Choice — Required Interactive Elements
 
 Each answer option MUST use this exact interactive structure. You have full creative freedom on layout and styling for everything else (non-interactive content, images, question text, etc.), but every selectable option MUST contain these elements exactly:
 
@@ -74,8 +95,11 @@ Each answer option MUST use this exact interactive structure. You have full crea
 - Styling, spacing, and typography for non-interactive elements
 - Whether option content is text, images, or both
 
+### Image card options
+When each option is primarily an image (image-based choices), present each option as a visual card — the image is the main content inside the `<label>`. For **binary image comparison** activities (2 options per question), display each question's options side by side (e.g., `grid grid-cols-2 gap-4`) so both images are visible simultaneously for comparison. Each card/label gets its own `<img>` with `data-id` — do NOT put multiple images inside the same option.
+
 ### Image sizing rule
-For image-based choices, compute each option image's width as a **percentage of the widest option image** and set `style="width:X%"`. Do NOT use fixed pixel widths.
+For image-based choices, compute each option image's width as a **percentage of the widest option image** within that question group and set `style="width:X%"`. Do NOT use fixed pixel widths.
 {% endchat %}
 
 {% chat role: "user" %}

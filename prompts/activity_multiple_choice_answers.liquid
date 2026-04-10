@@ -41,8 +41,8 @@ The `answers` field is REQUIRED and must be a JSON array, never null or missing.
 
 ### Activity Structure:
 - **Radio inputs**: Each option has `data-activity-item="<item_id>"` (e.g., "item-1", "item-2", "item-3")
-- **One correct answer**: Only one option should be marked as correct per question
-- **Multiple questions**: If there are multiple questions, provide answers for all
+- **Question groups**: Options sharing the same radio `name` attribute belong to one question group. Each group has exactly ONE correct answer (`true`).
+- **Multiple questions**: A single section may contain multiple question groups (different `name` attributes). Provide answers for ALL options across ALL groups.
 
 ### Your Task:
 For each question, identify which option (by its `data-activity-item` value) is the correct answer based on the context.

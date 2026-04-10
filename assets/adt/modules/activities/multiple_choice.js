@@ -138,15 +138,17 @@ export const prepareMultipleChoice = (section) => {
         });
     }
 
-    restorePreviousSelection(section);
-
     const activityOptions = section.querySelectorAll(".activity-option");
 
-    // Remove any previous event listeners
+    // Remove any previous event listeners by cloning nodes.
+    // This must happen BEFORE restorePreviousSelection so that restored
+    // references in selectedByGroup point to the live DOM nodes.
     activityOptions.forEach((option) => {
         const newOption = option.cloneNode(true);
         option.parentNode.replaceChild(newOption, option);
     });
+
+    restorePreviousSelection(section);
 
     // Add new event listeners
     section.querySelectorAll(".activity-option").forEach((option) => {
@@ -486,15 +488,8 @@ export const checkMultipleChoice = () => {
         );
     } else {
         // --- Multi-group: check all groups ---
-        // Ensure every group has a selection
-        const unansweredGroups = [];
-        for (const groupName of allGroupNames) {
-            if (!selectedByGroup.has(groupName)) {
-                unansweredGroups.push(groupName);
-            }
-        }
-
-        if (unansweredGroups.length > 0) {
+        // Require at least one selection before allowing submit
+        if (selectedByGroup.size === 0) {
             const announcement = document.getElementById('validation-results-announcement');
             if (announcement) {
                 announcement.setAttribute('aria-live', 'assertive');
@@ -504,18 +499,37 @@ export const checkMultipleChoice = () => {
             return;
         }
 
-        // Check each group
+        // Check each group — answered groups get correct/incorrect feedback,
+        // unanswered groups are marked as skipped (incorrect).
         let allCorrect = true;
-        for (const [groupName, selectedOption] of selectedByGroup) {
-            const dataActivityItem = getActivityItem(selectedOption);
-            const raw = correctAnswers[dataActivityItem];
-            const isCorrect = raw === true || raw === "true";
+        for (const groupName of allGroupNames) {
+            const selectedOption = selectedByGroup.get(groupName);
 
-            styleSelectedOption(selectedOption, isCorrect);
-            showFeedback(selectedOption, isCorrect);
+            if (selectedOption) {
+                const dataActivityItem = getActivityItem(selectedOption);
+                const raw = correctAnswers[dataActivityItem];
+                const isCorrect = raw === true || raw === "true";
 
-            if (!isCorrect) {
+                styleSelectedOption(selectedOption, isCorrect);
+                showFeedback(selectedOption, isCorrect);
+
+                if (!isCorrect) {
+                    allCorrect = false;
+                }
+            } else {
+                // Unanswered group — highlight the correct option so the student
+                // can see what they missed.
                 allCorrect = false;
+                const groupOptions = getOptionsForGroup(groupName);
+                for (const opt of groupOptions) {
+                    const itemId = getActivityItem(opt);
+                    const raw = correctAnswers[itemId];
+                    const isAnswer = raw === true || raw === "true";
+                    if (isAnswer) {
+                        setOptionState(opt, 'correct');
+                        showFeedback(opt, true);
+                    }
+                }
             }
         }
 
