@@ -2373,10 +2373,10 @@ export function StoryboardSectionDetail({
 
       </div>
 
-      {/* Pruned section overlay — pointer-events-none allows scrolling through */}
+      {/* Pruned section overlay */}
       {section?.isPruned && !hasActiveTask && (
-        <div className="absolute inset-0 z-30 bg-background/60 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
-          <div className="flex flex-col items-center gap-3 text-center max-w-xs pointer-events-auto">
+        <div className="absolute inset-0 z-30 bg-background/60 backdrop-blur-[1px] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3 text-center max-w-xs">
             <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
               <EyeOff className="w-5 h-5 text-amber-600" />
             </div>
