@@ -126,7 +126,6 @@ export const AppConfig = z
     spread_mode: z.boolean().optional(),
     vector_text_grouping: z.boolean().optional(),
     apply_body_background: z.boolean().optional(),
-    generate_activities: z.boolean().optional(),
     start_page: z.number().int().min(1).optional(),
     end_page: z.number().int().min(1).optional(),
     speech: SpeechConfig.optional(),
