@@ -557,19 +557,6 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
     return () => setExtra(null)
   }, [catalog, t, displayEntries.length, outputLanguages.length, selectedLang, translationVersion, saving, dirty, bookLabel, isSourceLang, totalAudioFiles, selectedPageId, currentLanguageUsesGemini, generatedAudioCount, missingAudioCount, hasApiKey, isRunning, apiKey, queueRun, stageSlug, isSpeechStage, handleDeleteTTS, audioLang, transcribeAllMutation, isTaskRunning])
 
-  if (!storyboardDone) {
-    return <StoryboardRequired action={isSpeechStage ? "generating speech" : "translating"} />
-  }
-
-  if (!showRunCard && isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">{t`Loading text catalog...`}</span>
-      </div>
-    )
-  }
-
   // Resolve speech config summary for display
   const speechSummary = useMemo(() => {
     if (!speechConfig || typeof speechConfig !== "object") {
@@ -583,6 +570,19 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
     const providerModel = providers?.[provider]?.model as string | undefined
     return { provider, voice, model: providerModel ?? model ?? "gpt-4o-mini-tts" }
   }, [speechConfig])
+
+  if (!storyboardDone) {
+    return <StoryboardRequired action={isSpeechStage ? "generating speech" : "translating"} />
+  }
+
+  if (!showRunCard && isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12 text-muted-foreground">
+        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+        <span className="text-sm">{t`Loading text catalog...`}</span>
+      </div>
+    )
+  }
 
   if (showRunCard || !catalog || entries.length === 0) {
     return (
