@@ -44,11 +44,6 @@
       "count": 3
     }
   },
-  "src/components/pipeline/stages/PreviewView.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 7
-    }
-  },
   "src/components/pipeline/stages/storyboard/components/BookPreviewFrame.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 2

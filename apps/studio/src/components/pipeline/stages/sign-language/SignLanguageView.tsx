@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
-import { Upload, Trash2, Video, AlertCircle, Loader2, ArrowUp, ArrowDown, X } from "lucide-react"
+import { Upload, Trash2, Video, Loader2, ArrowUp, ArrowDown, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useBookRun } from "@/hooks/use-book-run"
+import { StoryboardRequired } from "../StageEmptyStates"
 import { usePages } from "@/hooks/use-pages"
 import {
   useSignLanguageVideos,
@@ -72,19 +73,7 @@ export function SignLanguageView({ bookLabel }: { bookLabel: string }) {
   }, [sortField])
 
   if (!storyboardDone) {
-    return (
-      <div className="p-6 max-w-xl flex flex-col items-center gap-3 text-center">
-        <AlertCircle className="w-8 h-8 text-muted-foreground/50" />
-        <p className="text-sm text-muted-foreground">
-          <Trans>A storyboard must be built before adding sign language videos.</Trans>
-        </p>
-        <p className="text-sm text-muted-foreground">
-          <Trans>Run the pipeline through at least the</Trans>{" "}
-          <span className="font-medium text-foreground"><Trans>Storyboard</Trans></span>{" "}
-          <Trans>stage first.</Trans>
-        </p>
-      </div>
-    )
+    return <StoryboardRequired action="adding sign language videos" />
   }
 
   function handleUpload() {

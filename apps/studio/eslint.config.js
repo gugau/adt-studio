@@ -131,10 +131,11 @@ export default [
             "*.info",
             "*.debug",
 
-            // --- Error constructors ---
+            // --- Error constructors & state error setters ---
             "Error",
             "TypeError",
             "RangeError",
+            "setError",
 
             // --- Module system ---
             "require",

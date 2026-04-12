@@ -1,12 +1,18 @@
-import { FileDown, Loader2, BookOpen, AlertCircle, GraduationCap } from "lucide-react"
+import { FileDown, Loader2, BookOpen, GraduationCap } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { Button } from "@/components/ui/button"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useExportWatcher } from "@/hooks/use-export-watcher"
+import { usePages } from "@/hooks/use-pages"
+import { StoryboardRequired, AllPagesPruned } from "./StageEmptyStates"
 
 export function ExportView({ bookLabel }: { bookLabel: string }) {
   const { startExport, isPreparing, preparingFormat, error } = useExportWatcher()
   const { stageState } = useBookRun()
+  const { data: pages } = usePages(bookLabel)
+  const allPagesPruned = pages && pages.length > 0
+    ? pages.every((p) => p.sectionCount > 0 && p.prunedSections.length >= p.sectionCount)
+    : false
   const storyboardDone = stageState("storyboard") === "done"
 
   const adtError = error?.format === "book" ? error.message : null
@@ -14,19 +20,11 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
   const webpubError = error?.format === "webpub" ? error.message : null
 
   if (!storyboardDone) {
-    return (
-      <div className="p-6 max-w-xl flex flex-col items-center gap-3 text-center">
-        <AlertCircle className="w-8 h-8 text-muted-foreground/50" />
-        <p className="text-sm text-muted-foreground">
-          <Trans>A storyboard must be built before exporting.</Trans>
-        </p>
-        <p className="text-sm text-muted-foreground">
-          <Trans>Run the pipeline through at least the</Trans>{" "}
-          <span className="font-medium text-foreground"><Trans>Storyboard</Trans></span>{" "}
-          <Trans>stage first.</Trans>
-        </p>
-      </div>
-    )
+    return <StoryboardRequired action="exporting" />
+  }
+
+  if (allPagesPruned) {
+    return <AllPagesPruned context="export" />
   }
 
   return (

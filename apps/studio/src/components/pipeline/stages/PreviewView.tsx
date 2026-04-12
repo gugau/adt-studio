@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import type { AccessibilityFinding } from "@adt/types"
-import { Loader2, AlertCircle } from "lucide-react"
+import { Loader2 } from "lucide-react"
+import { Trans } from "@lingui/react/macro"
+import { useLingui } from "@lingui/react/macro"
 import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate, useSearch } from "@tanstack/react-router"
 import { api, getAdtUrl } from "@/api/client"
@@ -8,6 +10,8 @@ import { useDebugPanelState } from "@/components/debug/debug-panel-state"
 import { useAccessibilityAssessment } from "@/hooks/use-debug"
 import { useReviewerValidationCatalog } from "@/hooks/use-reviewer-validation"
 import { useBookRun } from "@/hooks/use-book-run"
+import { usePages } from "@/hooks/use-pages"
+import { StoryboardRequired, AllPagesPruned } from "./StageEmptyStates"
 import { useBookTasks } from "@/hooks/use-book-tasks"
 import {
   findAccessibilityPage,
@@ -23,12 +27,17 @@ const HIGHLIGHT_SEVERITY_ATTR = "data-adt-a11y-hover-severity"
 const HIGHLIGHT_PAGE_ATTR = "data-adt-a11y-hover-page"
 
 export function PreviewView({ bookLabel }: { bookLabel: string }) {
+  const { t } = useLingui()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const search = useSearch({ strict: false }) as { previewHref?: string }
   const { stageState } = useBookRun()
   const { isTaskRunning, getTask } = useBookTasks(bookLabel)
   const storyboardDone = stageState("storyboard") === "done"
+  const { data: pages } = usePages(bookLabel)
+  const allPagesPruned = pages && pages.length > 0
+    ? pages.every((p) => p.sectionCount > 0 && p.prunedSections.length >= p.sectionCount)
+    : false
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const ranRef = useRef(false)
   const { panelOpen } = useDebugPanelState()
@@ -224,25 +233,18 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
   }, [bookLabel, currentPreviewPage.href, navigate, navigatePreviewToHref, ready, search.previewHref])
 
   if (!storyboardDone) {
-    return (
-      <div className="p-6 max-w-xl flex flex-col items-center gap-3 text-center">
-        <AlertCircle className="w-8 h-8 text-muted-foreground/50" />
-        <p className="text-sm text-muted-foreground">
-          A storyboard must be built before previewing.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Run the pipeline through
-          at least the <span className="font-medium text-foreground">Storyboard</span> stage first.
-        </p>
-      </div>
-    )
+    return <StoryboardRequired action="previewing" />
+  }
+
+  if (allPagesPruned) {
+    return <AllPagesPruned context="preview" />
   }
 
   if (packaging) {
     return (
       <div className="flex items-center justify-center py-12 text-muted-foreground">
         <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">Packaging preview...</span>
+        <span className="text-sm"><Trans>Packaging preview...</Trans></span>
       </div>
     )
   }
@@ -264,7 +266,7 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
           ref={iframeRef}
           src={`${getAdtUrl(bookLabel)}/v-${version}/`}
           className="h-full w-full border-0"
-          title="ADT Preview"
+          title={t`ADT Preview`}
           onLoad={syncCurrentPreviewPage}
         />
 
@@ -357,6 +359,7 @@ function ensureHighlightStyles(doc: Document): void {
   if (doc.getElementById(HIGHLIGHT_STYLE_ID)) return
   const style = doc.createElement("style")
   style.id = HIGHLIGHT_STYLE_ID
+  /* eslint-disable lingui/no-unlocalized-strings */
   style.textContent = `
     [${HIGHLIGHT_ATTR}="true"] {
       outline-width: 2px !important;
@@ -425,6 +428,7 @@ function ensureHighlightStyles(doc: Document): void {
       box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.92), 0 0 0 6px rgba(107, 114, 128, 0.2);
     }
   `
+  /* eslint-enable lingui/no-unlocalized-strings */
   doc.head.appendChild(style)
 }
 

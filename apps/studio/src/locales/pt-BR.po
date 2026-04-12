@@ -295,14 +295,17 @@ msgstr "Uma página separadora entre seções."
 msgid "A sorting activity."
 msgstr "Uma atividade de ordenação."
 
-msgid "A storyboard must be built before adding sign language videos."
-msgstr "Um storyboard deve ser criado antes de adicionar vídeos de língua de sinais."
+msgid "A storyboard must be built before {translatedAction}."
+msgstr "É necessário criar um storyboard antes de {translatedAction}."
 
-msgid "A storyboard must be built before exporting."
-msgstr "É necessário criar um storyboard antes de exportar."
+#~ msgid "A storyboard must be built before adding sign language videos."
+#~ msgstr "Um storyboard deve ser criado antes de adicionar vídeos de língua de sinais."
 
-msgid "A storyboard must be built before running validation."
-msgstr "A storyboard must be built before running validation."
+#~ msgid "A storyboard must be built before exporting."
+#~ msgstr "É necessário criar um storyboard antes de exportar."
+
+#~ msgid "A storyboard must be built before running validation."
+#~ msgstr "A storyboard must be built before running validation."
 
 msgid "A table-filling activity."
 msgstr "Uma atividade de preenchimento de tabela."
@@ -462,14 +465,17 @@ msgstr "Adicionar Vídeos"
 msgid "Add your first book"
 msgstr "Adicione seu primeiro livro"
 
+msgid "adding sign language videos"
+msgstr "adicionar vídeos de língua de sinais"
+
 msgid "Additional Languages"
 msgstr "Idiomas adicionais"
 
 msgid "ADT Export"
 msgstr "Exportação ADT"
 
-#~ msgid "ADT Preview"
-#~ msgstr "Prévia ADT"
+msgid "ADT Preview"
+msgstr "Prévia ADT"
 
 msgid "Affected pages"
 msgstr "Affected pages"
@@ -525,6 +531,9 @@ msgstr "All Categories"
 
 msgid "All issues and manual review items"
 msgstr "Todos os problemas e itens de revisão manual"
+
+msgid "All pages in this book have been pruned or have no content to render. Return to the <0>Extract</0> stage to adjust pruning settings, then re-run the pipeline."
+msgstr "Todas as páginas deste livro foram removidas ou não têm conteúdo para exibir. Volte à etapa <0>Extract</0> para ajustar as configurações de remoção e execute o pipeline novamente."
 
 msgid "All sections have been deleted"
 msgstr "Todas as seções foram excluídas"
@@ -1384,6 +1393,9 @@ msgstr "Exporte o Accessible Digital Textbook completo como um arquivo ZIP. Incl
 msgid "Export WebPub"
 msgstr "Exportar WebPub"
 
+msgid "exporting"
+msgstr "exportar"
+
 msgid "Exporting..."
 msgstr "Exportando..."
 
@@ -2196,6 +2208,9 @@ msgstr "Nenhuma página extraída ainda"
 msgid "No pages extracted yet. Run the pipeline to extract content."
 msgstr "Nenhuma página extraída ainda. Execute o pipeline para extrair o conteúdo."
 
+msgid "No pages to preview"
+msgstr "Nenhuma página para previsualizar"
+
 msgid "No PDF"
 msgstr "Sem PDF"
 
@@ -2258,6 +2273,9 @@ msgstr "Não detectado"
 
 msgid "Not reviewed"
 msgstr "Not reviewed"
+
+msgid "Nothing to export"
+msgstr "Nada para exportar"
 
 msgid "Number of pages of content to include per quiz question."
 msgstr "Número de páginas de conteúdo a incluir por questão de quiz."
@@ -2355,8 +2373,8 @@ msgstr "Empacotando"
 msgid "Packaging failed"
 msgstr "Packaging failed"
 
-#~ msgid "Packaging preview..."
-#~ msgstr "Empacotando prévia..."
+msgid "Packaging preview..."
+msgstr "Empacotando prévia..."
 
 msgid "Packaging validation results..."
 msgstr "Packaging validation results..."
@@ -2487,6 +2505,9 @@ msgstr "Visualizar página vinculada"
 
 msgid "Preview of the HTML/CSS patterns used for LLM-generated pages."
 msgstr "Pré-visualização dos padrões HTML/CSS usados para páginas geradas por LLM."
+
+msgid "previewing"
+msgstr "previsualizar"
 
 msgid "Processing metadata…"
 msgstr "Processando metadados…"
@@ -2760,17 +2781,20 @@ msgstr "Reescrevendo a história desta seção..."
 msgid "Run {stageLabel}"
 msgstr "Executar {0}"
 
-msgid "Run the pipeline through at least the"
-msgstr "Execute o pipeline pelo menos até a etapa"
+#~ msgid "Run the pipeline through at least the"
+#~ msgstr "Execute o pipeline pelo menos até a etapa"
 
 msgid "Run the pipeline through at least the <0>Storyboard</0> stage first."
-msgstr "Run the pipeline through at least the <0>Storyboard</0> stage first."
+msgstr "Execute o pipeline pelo menos até a etapa <0>Storyboard</0> primeiro."
 
 msgid "Run whole-book validation checks and configure accessibility assessment settings."
 msgstr "Run whole-book validation checks and configure accessibility assessment settings."
 
 msgid "Run-only tags"
 msgstr "Run-only tags"
+
+msgid "running validation"
+msgstr "executar a validação"
 
 msgid "Running Validation..."
 msgstr "Running Validation..."
@@ -3077,8 +3101,8 @@ msgstr "Modo de páginas duplas"
 msgid "Sprinkling some digital fairy dust..."
 msgstr "Salpicando um pouco de pó mágico digital..."
 
-msgid "stage first."
-msgstr "primeiro."
+#~ msgid "stage first."
+#~ msgstr "primeiro."
 
 msgid "Standalone Text"
 msgstr "Texto independente"

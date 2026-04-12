@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { AlertCircle, Loader2, RotateCcw, ShieldCheck } from "lucide-react"
+import { Loader2, RotateCcw, ShieldCheck } from "lucide-react"
 import { useNavigate, useSearch } from "@tanstack/react-router"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -10,6 +10,7 @@ import { useBookTasks } from "@/hooks/use-book-tasks"
 import { AccessibilityOverviewTab } from "@/components/validation/AccessibilityValidationTabs"
 import { ReviewerValidationSummaryTab } from "@/components/validation/ReviewerValidationSummaryTab"
 import { useReviewerValidationCatalog } from "@/hooks/use-reviewer-validation"
+import { StoryboardRequired } from "./StageEmptyStates"
 
 const VALIDATION_TABS = new Set([
   "accessibility-summary",
@@ -84,19 +85,7 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
   }, [getTask, pendingPackagingTaskId, t])
 
   if (!storyboardDone) {
-    return (
-      <div className="flex max-w-xl flex-col items-center gap-3 p-6 text-center">
-        <AlertCircle className="h-8 w-8 text-muted-foreground/50" />
-        <p className="text-sm text-muted-foreground">
-          <Trans>A storyboard must be built before running validation.</Trans>
-        </p>
-        <p className="text-sm text-muted-foreground">
-          <Trans>
-            Run the pipeline through at least the <span className="font-medium text-foreground">Storyboard</span> stage first.
-          </Trans>
-        </p>
-      </div>
-    )
+    return <StoryboardRequired action="running validation" />
   }
 
   const packaging = isSubmittingPackage || pendingPackagingTaskId !== null || isTaskRunning("package-adt")
