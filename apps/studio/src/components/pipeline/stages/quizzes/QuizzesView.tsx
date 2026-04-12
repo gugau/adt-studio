@@ -8,6 +8,7 @@ import { usePageImage } from "@/hooks/use-pages"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
+import { StoryboardRequired } from "../StageEmptyStates"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
 import { getRequestedPageId, getQuizImageRenderState } from "./lib/quizzes-image-state"
@@ -277,6 +278,7 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
   const { setExtra } = useStepHeader()
   const { stageState, queueRun } = useBookRun()
   const { apiKey, hasApiKey } = useApiKey()
+  const storyboardDone = stageState("storyboard") === "done"
   const quizzesState = stageState("quizzes")
   const quizzesDone = quizzesState === "done"
   const quizzesRunning = quizzesState === "running" || quizzesState === "queued"
@@ -372,6 +374,10 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
           : q
       ),
     })
+  }
+
+  if (!storyboardDone) {
+    return <StoryboardRequired action="generating quizzes" />
   }
 
   if (!showRunCard && isLoading) {

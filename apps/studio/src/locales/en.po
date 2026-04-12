@@ -1570,17 +1570,32 @@ msgstr "Generate word timestamps"
 msgid "Generates the interactive HTML for this activity type."
 msgstr "Generates the interactive HTML for this activity type."
 
+msgid "generating captions"
+msgstr "generating captions"
+
+msgid "generating glossary"
+msgstr "generating glossary"
+
 msgid "Generating Glossary..."
 msgstr "Generating Glossary..."
 
 msgid "Generating image..."
 msgstr "Generating image..."
 
+msgid "generating quizzes"
+msgstr "generating quizzes"
+
 msgid "Generating Quizzes..."
 msgstr "Generating Quizzes..."
 
+msgid "generating speech"
+msgstr "generating speech"
+
 msgid "Generating Speech..."
 msgstr "Generating Speech..."
+
+msgid "generating table of contents"
+msgstr "generating table of contents"
 
 #~ msgid "Generating Text & Speech..."
 #~ msgstr "Generating Text & Speech..."
@@ -3410,6 +3425,9 @@ msgstr "Track reviewer progress and review findings captured from Preview."
 
 msgid "Translate the book content to output languages."
 msgstr "Translate the book content to output languages."
+
+msgid "translating"
+msgstr "translating"
 
 msgid "Translating languages..."
 msgstr "Translating languages..."

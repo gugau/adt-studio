@@ -7,6 +7,7 @@ import type { TocGenerationOutput, TocEntry, TocSection, VersionEntry } from "@/
 import { useToc } from "@/hooks/use-toc"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
+import { StoryboardRequired } from "../StageEmptyStates"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
 
@@ -240,6 +241,7 @@ export function TocView({ bookLabel }: { bookLabel: string }) {
   const { setExtra } = useStepHeader()
   const { stageState, queueRun } = useBookRun()
   const { apiKey, hasApiKey } = useApiKey()
+  const storyboardDone = stageState("storyboard") === "done"
   const tocState = stageState("toc")
   const tocDone = tocState === "done"
   const tocRunning = tocState === "running" || tocState === "queued"
@@ -353,6 +355,10 @@ export function TocView({ bookLabel }: { bookLabel: string }) {
     const newLevel = Math.max(1, Math.min(3, entry.level + delta))
     if (newLevel === entry.level) return
     updateEntry(id, { level: newLevel })
+  }
+
+  if (!storyboardDone) {
+    return <StoryboardRequired action="generating table of contents" />
   }
 
   if (!showRunCard && isLoading) {

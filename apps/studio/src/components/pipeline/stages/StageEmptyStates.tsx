@@ -2,7 +2,17 @@ import { AlertCircle, FileX2 } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
 
-type StageAction = "previewing" | "exporting" | "running validation" | "adding sign language videos"
+type StageAction =
+  | "previewing"
+  | "exporting"
+  | "running validation"
+  | "adding sign language videos"
+  | "generating quizzes"
+  | "generating captions"
+  | "generating glossary"
+  | "generating table of contents"
+  | "translating"
+  | "generating speech"
 
 export function StoryboardRequired({ action }: { action: StageAction }) {
   const { t } = useLingui()
@@ -12,6 +22,12 @@ export function StoryboardRequired({ action }: { action: StageAction }) {
     "exporting": t`exporting`,
     "running validation": t`running validation`,
     "adding sign language videos": t`adding sign language videos`,
+    "generating quizzes": t`generating quizzes`,
+    "generating captions": t`generating captions`,
+    "generating glossary": t`generating glossary`,
+    "generating table of contents": t`generating table of contents`,
+    "translating": t`translating`,
+    "generating speech": t`generating speech`,
   }
 
   const translatedAction = actionLabels[action]

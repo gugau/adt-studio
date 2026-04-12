@@ -1570,17 +1570,32 @@ msgstr "Gerar marcações de tempo por palavra"
 msgid "Generates the interactive HTML for this activity type."
 msgstr "Gera o HTML interativo para este tipo de atividade."
 
+msgid "generating captions"
+msgstr "gerar legendas"
+
+msgid "generating glossary"
+msgstr "gerar glossário"
+
 msgid "Generating Glossary..."
 msgstr "Gerando glossário..."
 
 msgid "Generating image..."
 msgstr "Gerando imagem..."
 
+msgid "generating quizzes"
+msgstr "gerar questionários"
+
 msgid "Generating Quizzes..."
 msgstr "Gerando questionários..."
 
+msgid "generating speech"
+msgstr "gerar áudio"
+
 msgid "Generating Speech..."
 msgstr "Gerando voz..."
+
+msgid "generating table of contents"
+msgstr "gerar índice"
 
 #~ msgid "Generating Text & Speech..."
 #~ msgstr "Gerando texto e fala..."
@@ -3410,6 +3425,9 @@ msgstr "Track reviewer progress and review findings captured from Preview."
 
 msgid "Translate the book content to output languages."
 msgstr "Traduzir o conteúdo do livro para os idiomas de saída."
+
+msgid "translating"
+msgstr "traduzir"
 
 msgid "Translating languages..."
 msgstr "Traduzindo idiomas..."

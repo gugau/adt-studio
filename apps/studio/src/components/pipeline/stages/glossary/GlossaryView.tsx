@@ -7,6 +7,7 @@ import type { GlossaryOutput, VersionEntry } from "@/api/client"
 import { useGlossary } from "@/hooks/use-glossary"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
+import { StoryboardRequired } from "../StageEmptyStates"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
 import { useLingui } from "@lingui/react/macro"
@@ -137,6 +138,7 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
   const { setExtra } = useStepHeader()
   const { stageState, queueRun } = useBookRun()
   const { apiKey, hasApiKey } = useApiKey()
+  const storyboardDone = stageState("storyboard") === "done"
   const glossaryState = stageState("glossary")
   const glossaryDone = glossaryState === "done"
   const glossaryRunning = glossaryState === "running" || glossaryState === "queued"
@@ -202,6 +204,10 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
         item.word === word ? { ...item, definition: newDefinition } : item
       ),
     })
+  }
+
+  if (!storyboardDone) {
+    return <StoryboardRequired action="generating glossary" />
   }
 
   if (!showRunCard && isLoading) {

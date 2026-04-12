@@ -6,6 +6,7 @@ import type { PageDetail, VersionEntry } from "@/api/client"
 import { usePages, usePage } from "@/hooks/use-pages"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
+import { StoryboardRequired } from "../StageEmptyStates"
 import { useApiKey } from "@/hooks/use-api-key"
 import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import { StageRunCard } from "../../components/StageRunCard"
@@ -344,6 +345,7 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
   const { setExtra } = useStepHeader()
   const { stageState, queueRun } = useBookRun()
   const { apiKey, hasApiKey } = useApiKey()
+  const storyboardDone = stageState("storyboard") === "done"
   const captionsState = stageState("captions")
   const captionsDone = captionsState === "done"
   const captionsRunning = captionsState === "running" || captionsState === "queued"
@@ -415,6 +417,10 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
     )
     return () => setExtra(null)
   }, [pages, totalImages, displayPages.length, setExtra, selectedPageId, selectedPageSummary?.pageNumber, selectedPageSummary?.sectionCount, hasSections, sectionIndex, setSectionIndex])
+
+  if (!storyboardDone) {
+    return <StoryboardRequired action="generating captions" />
+  }
 
   if (!showRunCard && isLoading) {
     return (

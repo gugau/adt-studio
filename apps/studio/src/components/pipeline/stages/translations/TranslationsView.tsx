@@ -8,6 +8,7 @@ import { useActiveConfig } from "@/hooks/use-debug"
 import { useBook } from "@/hooks/use-books"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
+import { StoryboardRequired } from "../StageEmptyStates"
 import { useBookTasks } from "@/hooks/use-book-tasks"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
@@ -178,6 +179,7 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
   const { stageState, queueRun, error: runError } = useBookRun()
   const { isTaskRunning } = useBookTasks(bookLabel)
   const { apiKey, hasApiKey, azureKey, azureRegion, geminiKey } = useApiKey()
+  const storyboardDone = stageState("storyboard") === "done"
   const translateState = stageState("translate")
   const speechState = stageState("speech")
   const activeState = isSpeechStage ? speechState : translateState
@@ -554,6 +556,10 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
     )
     return () => setExtra(null)
   }, [catalog, t, displayEntries.length, outputLanguages.length, selectedLang, translationVersion, saving, dirty, bookLabel, isSourceLang, totalAudioFiles, selectedPageId, currentLanguageUsesGemini, generatedAudioCount, missingAudioCount, hasApiKey, isRunning, apiKey, queueRun, stageSlug, isSpeechStage, handleDeleteTTS, audioLang, transcribeAllMutation, isTaskRunning])
+
+  if (!storyboardDone) {
+    return <StoryboardRequired action={isSpeechStage ? "generating speech" : "translating"} />
+  }
 
   if (!showRunCard && isLoading) {
     return (
