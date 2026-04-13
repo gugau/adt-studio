@@ -33,7 +33,7 @@ const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   "text-types": msg`Text Types`,
   "container-types": msg`Container Types`,
   "metadata-prompt": msg`Metadata Prompt`,
-  prompt: msg`Extraction Prompt`,
+  prompt: msg`Structuring Prompt`,
   "meaningfulness-prompt": msg`Meaningfulness Prompt`,
   "cropping-prompt": msg`Cropping Prompt`,
   "segmentation-prompt": msg`Segmentation Prompt`,

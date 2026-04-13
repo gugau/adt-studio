@@ -255,6 +255,7 @@ function ContentNodeView({
               }
             }}
             className="shrink-0 text-[11px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 border-0 outline-none focus:ring-1 focus:ring-ring cursor-pointer appearance-none bg-primary/10 text-primary"
+            style={{ width: `${Math.max((getTextGroupLabel(node.structure ?? "")).length * 0.85 + 1.5, 4.5)}em` }}
           >
             {!configuredContainerTypes.includes(node.structure ?? "") && (
               <option value={node.structure ?? ""}>{getTextGroupLabel(node.structure ?? "")}</option>
@@ -340,7 +341,7 @@ function ContentNodeView({
             value={node.role ?? ""}
             onChange={(e) => onUpdate(node.nodeId, "role", e.target.value)}
             className="shrink-0 text-[11px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 bg-muted text-muted-foreground border-0 outline-none focus:ring-1 focus:ring-ring cursor-pointer appearance-none mt-px"
-            style={{ width: `${Math.max((node.role ?? "").length * 0.75 + 2, 4.5)}em` }}
+            style={{ width: `${Math.max((getTextTypeLabel(node.role ?? "")).length * 0.85 + 1.5, 4.5)}em` }}
           >
             {!configuredTextTypes.includes(node.role ?? "") && (
               <option value={node.role ?? ""}>{getTextTypeLabel(node.role ?? "")}</option>

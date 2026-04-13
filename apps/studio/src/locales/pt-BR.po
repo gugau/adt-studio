@@ -1533,8 +1533,8 @@ msgstr "Texto extraído"
 msgid "Extracting..."
 msgstr "Extraindo..."
 
-msgid "Extraction Prompt"
-msgstr "Prompt de extração"
+#~ msgid "Extraction Prompt"
+#~ msgstr "Prompt de extração"
 
 msgid "Extracts the correct answer key from the generated activity HTML."
 msgstr "Extrai a chave de resposta correta do HTML da atividade gerada."
@@ -3572,6 +3572,9 @@ msgstr "Capítulos estruturados, exercícios. Melhor para conteúdo educacional 
 
 msgid "Structuring page…"
 msgstr "Estruturando página…"
+
+msgid "Structuring Prompt"
+msgstr "Prompt de Estruturação"
 
 msgid "Style"
 msgstr "Estilo"
