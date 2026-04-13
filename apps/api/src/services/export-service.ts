@@ -123,7 +123,7 @@ export async function exportProject(
   }
 
   return {
-    stream: createZipStream(bookDir),
+    stream: createZipStream(bookDir, new Set(["adt", "webpub"])),
     filename: `${safeLabel}.zip`,
   }
 }
@@ -221,13 +221,14 @@ export async function exportAdt(
 /**
  * Collect relative file paths under a directory (lightweight — no file content read).
  */
-function collectFilePaths(dir: string, prefix = ""): string[] {
+function collectFilePaths(dir: string, prefix = "", excludeDirs?: Set<string>): string[] {
   const result: string[] = []
   const entries = fs.readdirSync(dir, { withFileTypes: true })
   for (const entry of entries) {
     const zipPath = prefix ? `${prefix}/${entry.name}` : entry.name
     if (entry.isDirectory()) {
-      result.push(...collectFilePaths(path.join(dir, entry.name), zipPath))
+      if (excludeDirs && !prefix && excludeDirs.has(entry.name)) continue
+      result.push(...collectFilePaths(path.join(dir, entry.name), zipPath, excludeDirs))
     } else if (entry.isFile()) {
       result.push(zipPath)
     }
@@ -239,8 +240,8 @@ function collectFilePaths(dir: string, prefix = ""): string[] {
  * Create a streaming ZIP of a directory. Files are read and compressed one at a
  * time so memory stays bounded regardless of total directory size.
  */
-function createZipStream(sourceDir: string): ReadableStream<Uint8Array> {
-  const filePaths = collectFilePaths(sourceDir)
+function createZipStream(sourceDir: string, excludeDirs?: Set<string>): ReadableStream<Uint8Array> {
+  const filePaths = collectFilePaths(sourceDir, "", excludeDirs)
 
   return new ReadableStream({
     async start(controller) {
