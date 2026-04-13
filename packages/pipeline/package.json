@@ -8,11 +8,7 @@
     ".": "./dist/index.js"
   },
   "bin": {
-    "pipeline": "./dist/cli.js",
-    "eval-structuring": "./dist/eval-structuring.js"
-  },
-  "scripts": {
-    "eval-structuring": "tsx src/eval-structuring.ts"
+    "pipeline": "./dist/cli.js"
   },
   "dependencies": {
     "@adt/llm": "workspace:*",
