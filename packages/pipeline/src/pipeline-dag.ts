@@ -721,7 +721,7 @@ export async function runFullPipeline(
       })
     })
 
-    // ── Text & Speech stage ─────────────────────────────────────
+    // ── Translate + Speech stages ────────────────────────────────
 
     executors.set("text-catalog", async () => {
       const pages = storage.getPages()

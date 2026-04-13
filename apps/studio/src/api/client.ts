@@ -343,6 +343,26 @@ export interface GenerateSingleTTSResponse {
   remainingItems: number
 }
 
+// --- Word timestamp types ---
+
+export interface WordTimestamp {
+  word: string
+  start: number
+  end: number
+}
+
+export interface WordTimestampEntry {
+  textId: string
+  language: string
+  words: WordTimestamp[]
+  duration: number
+}
+
+export interface WordTimestampResponse {
+  entries: Record<string, WordTimestampEntry>
+  generatedAt: string | null
+}
+
 // --- Debug types ---
 
 export interface LlmLogEntry {
@@ -481,6 +501,8 @@ export interface TaskInfoResponse {
   result?: unknown
   startedAt?: number
   completedAt?: number
+  progressMessage?: string
+  progressPercent?: number
 }
 
 export const api = {
@@ -856,6 +878,9 @@ export const api = {
   getTTS: (label: string) =>
     request<TTSResponse>(`/books/${label}/tts`),
 
+  deleteTTS: (label: string) =>
+    request<{ ok: boolean }>(`/books/${label}/tts`, { method: "DELETE" }),
+
   generateGeminiTTSForItem: (
     label: string,
     textId: string,
@@ -877,6 +902,33 @@ export const api = {
       body: JSON.stringify({ textId, language }),
     }),
 
+  getWordTimestamps: (label: string, language: string) =>
+    request<WordTimestampResponse>(`/books/${label}/tts/timestamps/${language}`),
+
+  transcribeOne: (label: string, textId: string, language: string, openaiApiKey: string) =>
+    request<{ entry: WordTimestampEntry }>(`/books/${label}/tts/transcribe-one`, {
+      method: "POST",
+      headers: {
+        "X-OpenAI-Key": openaiApiKey,
+      },
+      body: JSON.stringify({ textId, language }),
+    }),
+
+  saveWordTimestamps: (label: string, language: string, textId: string, data: { words: WordTimestamp[]; duration: number }) =>
+    request<{ ok: boolean }>(`/books/${label}/tts/timestamps/${language}/${textId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  transcribeAll: (label: string, language: string, openaiApiKey: string) =>
+    request<{ taskId: string | null; count?: number; skipped?: number }>(`/books/${label}/tts/transcribe-all`, {
+      method: "POST",
+      headers: {
+        "X-OpenAI-Key": openaiApiKey,
+      },
+      body: JSON.stringify({ language }),
+    }),
+
   packageAdt: (label: string) =>
     request<{ status: string; label: string; taskId?: string }>(
       `/books/${label}/package-adt`,
@@ -894,14 +946,20 @@ export const api = {
   getTemplates: () =>
     request<{ templates: string[] }>(`/templates`),
 
-  getPreset: (name: string) =>
-    request<{ config: Record<string, unknown> }>(`/presets/${name}`),
-
   getStyleguides: () =>
     request<{ styleguides: string[] }>(`/styleguides`),
 
   getStyleguidePreview: (name: string) =>
     request<{ name: string; html: string }>(`/styleguides/${name}/preview`),
+
+  uploadStyleguide: (file: File) => {
+    const form = new FormData()
+    form.append("file", file)
+    return request<{ name: string }>(`/styleguides/upload`, {
+      method: "POST",
+      body: form,
+    })
+  },
 
   generateStyleguide: (label: string, pageIds: string[], apiKey: string, signal?: AbortSignal) =>
     request<{ name: string; content: string; reasoning: string }>(

@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { createFileRoute, Link } from "@tanstack/react-router"
+import { X } from "lucide-react"
 import { STAGES, isStageSlug } from "@/components/pipeline/stage-config"
 import { resolveSettingsStageSlug } from "@/components/pipeline/settings-routing"
 import { ExtractSettings } from "@/components/pipeline/stages/extract/ExtractSettings"
@@ -69,6 +70,13 @@ export function StepSettingsPage() {
         <span className="text-white/40 text-sm">/</span>
         <span className="text-sm font-medium"><Trans>Settings</Trans></span>
         <div ref={setHeaderTarget} className="ml-auto" />
+        <Link
+          to="/books/$label/$step"
+          params={{ label, step }}
+          className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-black/15 text-white/80 hover:bg-black/25 hover:text-white transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </Link>
       </div>
 
       {/* Settings content */}
@@ -89,8 +97,10 @@ export function StepSettingsPage() {
               return <TocSettings bookLabel={label} headerTarget={headerTarget} />
             case "captions":
               return <CaptionsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
-            case "text-and-speech":
-              return <TranslationsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
+            case "translate":
+              return <TranslationsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} stageSlug="translate" />
+            case "speech":
+              return <TranslationsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} stageSlug="speech" />
             case "validation":
               return <ValidationSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             default:

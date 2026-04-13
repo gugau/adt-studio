@@ -31,7 +31,7 @@ adt-studio/
 │
 ├── prompts/                     # Liquid (.liquid) templates for all LLM calls
 ├── templates/                   # HTML layout templates for rendering steps
-├── config/                      # Runtime configuration presets and voice configs
+├── config/                      # Runtime configuration (voice configs, styleguides)
 ├── docs/                        # Architecture and developer documentation
 ├── config.yaml                  # Global pipeline configuration
 └── docker-compose.yml           # Docker orchestration
@@ -120,12 +120,14 @@ captions  ───────────────────────�
 glossary  ─────────────────────────────────────────────────────────┘ (after: storyboard)
   (all three run in parallel)
                             │
-text-and-speech ────────────┘  (after: quizzes, captions, glossary)
+translate ──────────────────┘  (after: quizzes, captions, glossary)
   ├── text-catalog
-  ├── catalog-translation    (after: text-catalog)
-  └── tts                    (after: catalog-translation)
+  └── catalog-translation    (after: text-catalog)
                             │
-package ────────────────────┘  (after: text-and-speech)
+speech ────────────────────┘  (after: translate)
+  └── tts
+                            │
+package ────────────────────┘  (after: speech)
   └── package-web
 ```
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { Check, Languages, X } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
@@ -25,12 +26,14 @@ export function LanguagePicker({
   multiple,
   label,
   hint,
+  size = "sm",
 }: {
   selected: string | Set<string>
   onSelect: (code: string) => void
   multiple?: boolean
   label: string
   hint?: string
+  size?: "sm" | "default"
 }) {
   const { t } = useLingui()
   const [search, setSearch] = useState("")
@@ -66,7 +69,7 @@ export function LanguagePicker({
   // Build dropdown items based on phase
   const items: DropdownItem[] = useMemo(() => {
     if (lockedLang) {
-      // Phase 2: show base language first, then suggested countries, then all others
+      // Phase 2: show base language first, then suggested countries (typing filters all countries)
       const q = search.toLowerCase()
       const { suggested, all } = getCountriesForLanguage(lockedLang.code)
       const result: DropdownItem[] = [
@@ -82,8 +85,11 @@ export function LanguagePicker({
           })
         }
       }
+      // Show only suggested countries when browsing; if the user is searching, also check all countries
       for (const c of suggested) addCountry(c)
-      for (const c of all) addCountry(c)
+      if (q) {
+        for (const c of all) addCountry(c)
+      }
       return result
     }
     // Phase 1: show languages
@@ -247,9 +253,9 @@ export function LanguagePicker({
     <div className="space-y-2">
       {(label || hint) && (
         <div>
-          {label && <Label className="text-xs">{label}</Label>}
+          {label && <Label className={size === "default" ? "text-sm font-medium" : "text-xs"}>{label}</Label>}
           {hint && (
-            <p className="text-xs text-muted-foreground mt-0.5">{hint}</p>
+            <p className={cn(size === "default" ? "text-sm" : "text-xs", "text-muted-foreground mt-0.5")}>{hint}</p>
           )}
         </div>
       )}
@@ -277,7 +283,7 @@ export function LanguagePicker({
       )}
 
       <div ref={containerRef} className="relative">
-        <Languages className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground z-10" />
+        <Languages className={cn("pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground z-10", size === "default" ? "h-4 w-4 left-3" : "h-3.5 w-3.5")} />
         {/* Locked language chip shown inside the input area */}
         {open && lockedLang && (
           <span className="absolute left-8 top-1/2 -translate-y-1/2 text-xs bg-accent text-accent-foreground rounded px-1.5 py-0.5 z-10 pointer-events-none">
@@ -294,7 +300,11 @@ export function LanguagePicker({
           onFocus={() => setOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder={placeholderText()}
-          className={`h-8 text-xs ${lockedLang && open ? "pl-[calc(var(--chip-offset,5rem)+0.75rem)]" : "pl-8"} ${!multiple && selectedCode ? "pr-16" : ""}`}
+          className={cn(
+            size === "default" ? "h-10 text-sm" : "h-8 text-xs",
+            lockedLang && open ? "pl-[calc(var(--chip-offset,5rem)+0.75rem)]" : size === "default" ? "pl-10" : "pl-8",
+            !multiple && selectedCode && "pr-16",
+          )}
           style={
             lockedLang && open
               ? { paddingLeft: `calc(${lockedLang.name.length * 0.55}rem + 2.5rem)` }
@@ -329,13 +339,15 @@ export function LanguagePicker({
                     key={item.code}
                     type="button"
                     onClick={() => handleItemClick(item)}
-                    className={`flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs outline-none transition-colors ${
+                    className={cn(
+                      "flex w-full items-center gap-2 rounded-sm outline-none transition-colors",
+                      size === "default" ? "px-2.5 py-2 text-sm" : "px-2 py-1.5 text-xs",
                       active
                         ? "bg-primary/10 text-primary font-medium"
                         : i === highlighted
                           ? "bg-accent text-accent-foreground"
-                          : "hover:bg-accent hover:text-accent-foreground"
-                    }`}
+                          : "hover:bg-accent hover:text-accent-foreground",
+                    )}
                   >
                     <span className="flex h-4 w-4 items-center justify-center">
                       {active && <Check className="h-3.5 w-3.5" />}

@@ -48,7 +48,6 @@ export { BookLabel, parseBookLabel } from "./book.js"
 export {
   BookFormat,
   LayoutType,
-  PresetName,
   StyleguideName,
   DEFAULT_LLM_MAX_RETRIES,
   StepConfig,
@@ -155,6 +154,9 @@ export {
   SpeechConfig,
   SpeechFileEntry,
   TTSOutput,
+  WordTimestamp,
+  WordTimestampEntry,
+  WordTimestampOutput,
 } from "./speech.js"
 
 export {

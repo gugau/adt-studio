@@ -16,7 +16,8 @@ export default [
         {
           ignoreNames: [
             // --- HTML / JSX structural attributes ---
-            "className",
+            // Any prop/identifier containing "className" (e.g. className, bodyClassName, headerClassName)
+            { regex: { pattern: "className", flags: "i" } },
             "style",
             "id",
             "type",
@@ -69,6 +70,11 @@ export default [
             // --- Form / input props (non-visible values) ---
             "defaultValue",
             "value",
+            // Form field name constants (e.g. const RADIO_NAME = "renderStrategy")
+            "RADIO_NAME",
+            "radioName",
+            // Image processing preview pane focus key (ImageProcessingPreviewFocus — not user-visible)
+            "previewFocus",
 
             // --- CSS class & color props (never user-visible) ---
             "rootMargin",
@@ -80,6 +86,12 @@ export default [
             "borderDark",
             "iconColor",
             "colorClass",
+            "bgColor",
+            "imageSrc",
+            "pdfUrl",
+            "adtUrl",
+            "comingSoon",
+            { regex: { pattern: "Class$" } },
 
             // --- Data labels (technical CSS descriptions, pipeline labels — not user-facing prose) ---
             "label",
@@ -93,6 +105,7 @@ export default [
             "direction",
             "fromStage",
             "toStage",
+            "category",
 
             // --- CSS utility class variable names (StageSidebar layout constants) ---
             "gap",
@@ -176,6 +189,9 @@ export default [
             // --- TanStack Router route definitions ---
             "createFileRoute",
 
+            // --- TanStack Form (field paths are identifiers, not UI copy) ---
+            "*.setFieldValue",
+
             // --- CSS class composition utilities ---
             "cn",
             "cva",
@@ -185,6 +201,8 @@ export default [
             "*.toFixed",
           ],
           ignore: [
+            // project brand name (intentional non-translatable literal)
+            "^ADT Studio$",
             // npm package names and module paths (e.g. "@tanstack/react-router")
             "^@?[a-zA-Z0-9_-]+(/[a-zA-Z0-9_.-]+)+",
             // TypeScript import() / type strings using path aliases (e.g. "@/api/client")
@@ -210,6 +228,8 @@ export default [
             "^ADT Studio$",
             // Data URIs (e.g. "data:image/png;base64,...")
             "^data:",
+            // Byte-size literals (e.g. "12 KB", "1.5MB", "2 gb", "10tb")
+            "^[0-9]+(?:\\.[0-9]+)?\\s?(?:B|KB|MB|GB|TB|b|kb|mb|gb|tb)$",
             // HTML fragments used in innerHTML assignments (e.g. `<div id="content">`)
             "^<[a-z]",
             // Closing HTML tags used in string operations (e.g. "</section>")
