@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { Check, ChevronDown, Languages, Loader2, Play, Pause, WandSparkles } from "lucide-react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useNavigate } from "@tanstack/react-router"
 import { api, getAudioUrl, BASE_URL } from "@/api/client"
 import type { TextCatalogEntry, VersionEntry } from "@/api/client"
 import { useActiveConfig } from "@/hooks/use-debug"
@@ -8,12 +9,14 @@ import { useBook } from "@/hooks/use-books"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
+import { useTranslationEvaluations } from "@/hooks/use-translation-evaluation"
 import { StageRunCard } from "../../components/StageRunCard"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import { cn } from "@/lib/utils"
 import { normalizeLocale } from "@/lib/languages"
 import { languageUsesSpeechProvider } from "@/lib/speech-routing"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { resolveTranslationLanguageState } from "./lib/translations-view-state"
 import { msg } from "@lingui/core/macro"
@@ -32,6 +35,41 @@ function isAnswerEntry(id: string): boolean {
 const langNames = new Intl.DisplayNames(["en"], { type: "language" })
 function displayLang(code: string): string {
   try { return langNames.of(code) ?? code } catch { return code }
+}
+
+function TranslationEvalStatusBadge({
+  status,
+}: {
+  status: "acceptable" | "needs-review" | "stale" | "not-evaluated"
+}) {
+  const { t } = useLingui()
+
+  if (status === "acceptable") {
+    return (
+      <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">
+        {t`Acceptable`}
+      </Badge>
+    )
+  }
+  if (status === "needs-review") {
+    return (
+      <Badge className="bg-orange-600 text-white hover:bg-orange-600">
+        {t`Needs review`}
+      </Badge>
+    )
+  }
+  if (status === "stale") {
+    return (
+      <Badge variant="outline" className="border-orange-200 bg-orange-50 text-orange-700">
+        {t`Stale`}
+      </Badge>
+    )
+  }
+  return (
+    <Badge variant="outline">
+      {t`Not evaluated`}
+    </Badge>
+  )
 }
 
 
@@ -156,6 +194,7 @@ function VersionPicker({
 export function TranslationsView({ bookLabel, selectedPageId, onSelectPage }: { bookLabel: string; selectedPageId?: string; onSelectPage?: (pageId: string | null) => void }) {
   const { t, i18n } = useLingui()
   const { setExtra } = useStepHeader()
+  const navigate = useNavigate()
   const { data: activeConfigData } = useActiveConfig(bookLabel)
   const { data: book, isLoading: isBookLoading } = useBook(bookLabel)
   const queryClient = useQueryClient()
@@ -186,6 +225,7 @@ export function TranslationsView({ bookLabel, selectedPageId, onSelectPage }: { 
     queryFn: () => api.getTTS(bookLabel),
     enabled: !!bookLabel,
   })
+  const { data: evaluationData } = useTranslationEvaluations(bookLabel)
 
   const merged = activeConfigData?.merged as Record<string, unknown> | undefined
   const speechConfig = merged?.speech
@@ -265,7 +305,10 @@ export function TranslationsView({ bookLabel, selectedPageId, onSelectPage }: { 
     const minDelay = new Promise((r) => setTimeout(r, 400))
     await api.updateTranslation(bookLabel, selectedLang, { entries: pendingEntries })
     setPendingEntries(null)
-    await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "text-catalog"] })
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "text-catalog"] }),
+      queryClient.invalidateQueries({ queryKey: ["evaluations", "translations", bookLabel] }),
+    ])
     await minDelay
     setSaving(false)
   }, [pendingEntries, selectedLang, bookLabel, queryClient])
@@ -357,6 +400,25 @@ export function TranslationsView({ bookLabel, selectedPageId, onSelectPage }: { 
     [audioLang, currentLanguageUsesGemini, generateAudioMutation]
   )
 
+  const selectedEvaluation = useMemo(() => {
+    if (!selectedLang || isSourceLang) return null
+    return evaluationData?.evaluations.find((item) => item.language === selectedLang) ?? null
+  }, [evaluationData?.evaluations, isSourceLang, selectedLang])
+
+  const selectedEvaluationItems = selectedEvaluation?.evaluation?.items ?? []
+  const evaluationByEntryId = useMemo(
+    () => new Map(selectedEvaluationItems.map((item) => [item.entry_id, item])),
+    [selectedEvaluationItems],
+  )
+  const selectedEvaluationStatus = useMemo(() => {
+    if (isSourceLang || !selectedLang) return null
+    if (!selectedEvaluation?.evaluation) return "not-evaluated" as const
+    if (selectedEvaluation.isStale) return "stale" as const
+    return selectedEvaluation.evaluation.summary.unacceptable > 0
+      ? "needs-review" as const
+      : "acceptable" as const
+  }, [isSourceLang, selectedLang, selectedEvaluation])
+
   useEffect(() => {
     if (!catalog) return
     setExtra(
@@ -392,10 +454,30 @@ export function TranslationsView({ bookLabel, selectedPageId, onSelectPage }: { 
             onDiscard={() => setPendingEntries(null)}
           />
         )}
+        {selectedEvaluationStatus ? (
+          <TranslationEvalStatusBadge status={selectedEvaluationStatus} />
+        ) : null}
+        {selectedLang && !isSourceLang ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-6 px-2 text-[10px]"
+            onClick={() => {
+              void navigate({
+                to: "/books/$label/$step",
+                params: { label: bookLabel, step: "validation" },
+                search: { tab: "translation-evaluation" },
+              })
+            }}
+          >
+            {t`View eval`}
+          </Button>
+        ) : null}
       </div>
     )
     return () => setExtra(null)
-  }, [catalog, t, displayEntries.length, outputLanguages.length, selectedLang, translationVersion, saving, dirty, bookLabel, isSourceLang, totalAudioFiles, selectedPageId, currentLanguageUsesGemini, generatedAudioCount, missingAudioCount])
+  }, [catalog, t, displayEntries.length, outputLanguages.length, selectedLang, translationVersion, saving, dirty, bookLabel, isSourceLang, totalAudioFiles, selectedPageId, currentLanguageUsesGemini, generatedAudioCount, missingAudioCount, selectedEvaluationStatus, navigate])
 
   if (!showRunCard && isLoading) {
     return (
@@ -572,7 +654,23 @@ export function TranslationsView({ bookLabel, selectedPageId, onSelectPage }: { 
                       </div>
                       <div className="flex items-start gap-2">
                         <div className="flex-1 min-w-0">
-                          <span className="text-[10px] text-muted-foreground">&nbsp;</span>
+                          <div className="flex min-h-4 items-center gap-1.5">
+                            {(() => {
+                              const evaluationItem = evaluationByEntryId.get(entry.id)
+                              if (!evaluationItem) {
+                                return <span className="text-[10px] text-muted-foreground">&nbsp;</span>
+                              }
+                              return evaluationItem.acceptable ? (
+                                <Badge className="h-5 bg-emerald-600 px-1.5 text-[9px] text-white hover:bg-emerald-600">
+                                  {t`OK`}
+                                </Badge>
+                              ) : (
+                                <Badge className="h-5 bg-orange-600 px-1.5 text-[9px] text-white hover:bg-orange-600">
+                                  {t`Review`}
+                                </Badge>
+                              )
+                            })()}
+                          </div>
                           <textarea
                             value={translated ?? ""}
                             onChange={(e) => updateEntry(entry.id, e.target.value)}
