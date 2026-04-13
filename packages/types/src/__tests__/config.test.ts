@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { AppConfig, RenderStrategyConfig } from "../config.js"
+import { TranslationEvaluationResult } from "../translation-evaluation.js"
 
 describe("RenderStrategyConfig", () => {
   it("allows answer_prompt for activity render types", () => {
@@ -92,4 +93,81 @@ describe("AppConfig", () => {
     }
   })
 
+  it("accepts translation_evaluation config", () => {
+    const result = AppConfig.safeParse({
+      text_types: { heading: "Heading" },
+      text_group_types: { paragraph: "Paragraph" },
+      translation_evaluation: {
+        enable_translation_evaluation: true,
+        judge_model: "openai:/gpt-4.1-mini",
+        max_retries: 3,
+        evaluation_scope_mode: "sample",
+        evaluation_scope_count: 100,
+        sampling_method: "random",
+        sampling_seed: 1234,
+        batch_size: 10,
+        judge_instructions: "Review {{ inputs }} against {{ outputs }}.",
+        additional_guidance: "Prefer classroom-friendly terminology.",
+      },
+    })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.translation_evaluation?.enable_translation_evaluation).toBe(true)
+      expect(result.data.translation_evaluation?.evaluation_scope_count).toBe(100)
+      expect(result.data.translation_evaluation?.batch_size).toBe(10)
+    }
+  })
+})
+
+describe("TranslationEvaluationResult", () => {
+  it("accepts acceptable and unacceptable counts that match total", () => {
+    const result = TranslationEvaluationResult.safeParse({
+      generated_at: "2026-04-06T12:00:00.000Z",
+      provider: "mlflow",
+      language: "fr",
+      source_catalog_version: 4,
+      translation_version: 3,
+      eval_config_hash: "cfg-123",
+      summary: {
+        total: 2,
+        acceptable: 1,
+        unacceptable: 1,
+      },
+      items: [
+        {
+          entry_id: "pg001:body",
+          acceptable: true,
+          rationale: "The translation preserves the meaning.",
+        },
+        {
+          entry_id: "pg002:body",
+          acceptable: false,
+          rationale: "The translation omits a key instruction.",
+          issue_types: ["omission-or-addition"],
+        },
+      ],
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  it("rejects summaries whose totals do not match", () => {
+    const result = TranslationEvaluationResult.safeParse({
+      generated_at: "2026-04-06T12:00:00.000Z",
+      provider: "mlflow",
+      language: "fr",
+      source_catalog_version: 4,
+      translation_version: 3,
+      eval_config_hash: "cfg-123",
+      summary: {
+        total: 2,
+        acceptable: 2,
+        unacceptable: 1,
+      },
+      items: [],
+    })
+
+    expect(result.success).toBe(false)
+  })
 })

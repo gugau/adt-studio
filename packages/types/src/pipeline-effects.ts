@@ -4,6 +4,7 @@ import type { StageName, StepName } from "./pipeline.js"
 export type PipelineNodeName =
   | StepName
   | "text-catalog-translation"
+  | "translation-evaluation"
 
 /**
  * Shared, UI-agnostic cache/resource tags used by apps to derive
@@ -18,6 +19,7 @@ export type PipelineCacheResource =
   | "toc"
   | "text-catalog"
   | "tts"
+  | "evaluations"
   | "step-status"
   | "debug"
 
@@ -82,6 +84,7 @@ const NODE_CACHE_RESOURCES: Record<PipelineNodeName, readonly PipelineCacheResou
   "package-web": [],
   "accessibility-assessment": ["debug"],
   "text-catalog-translation": ["text-catalog"],
+  "translation-evaluation": ["evaluations"],
 }
 
 const CACHE_RESOURCE_ORDER: readonly PipelineCacheResource[] = [
@@ -93,6 +96,7 @@ const CACHE_RESOURCE_ORDER: readonly PipelineCacheResource[] = [
   "toc",
   "text-catalog",
   "tts",
+  "evaluations",
   "step-status",
   "debug",
 ]
