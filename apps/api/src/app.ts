@@ -28,6 +28,8 @@ import { createSpeechConfigRoutes } from "./routes/speech-config.js"
 import { createReviewerValidationRoutes } from "./routes/reviewer-validation.js"
 import { createTocRoutes } from "./routes/toc.js"
 import { createSignLanguageVideoRoutes } from "./routes/sign-language-videos.js"
+import { createTranslationEvaluationRoutes } from "./routes/translation-evaluations.js"
+import { createEvalServiceClient } from "./services/eval-service-client.js"
 
 // Resolve paths relative to monorepo root (2 levels up from apps/api/)
 const projectRoot = path.resolve(
@@ -64,6 +66,12 @@ const eventBus = createBookEventBus()
 const stageRunner = createStageRunner()
 const stageService = createStageService(stageRunner, eventBus)
 const taskService = createTaskService(eventBus)
+const evalServiceClient = process.env.EVAL_SERVICE_URL
+  ? createEvalServiceClient({
+      baseUrl: process.env.EVAL_SERVICE_URL,
+      token: process.env.EVAL_SERVICE_TOKEN,
+    })
+  : undefined
 
 const app = new Hono()
 
@@ -103,6 +111,7 @@ app.route("/api", createPresetRoutes(configPath))
 app.route("/api", createAdtPreviewRoutes(booksDir, webAssetsDir, configPath))
 app.route("/api", createSpeechConfigRoutes(configPath))
 app.route("/api", createReviewerValidationRoutes(booksDir, configPath))
+app.route("/api", createTranslationEvaluationRoutes(booksDir, configPath, taskService, evalServiceClient))
 app.route("/api", createSignLanguageVideoRoutes(booksDir))
 
 export default app
