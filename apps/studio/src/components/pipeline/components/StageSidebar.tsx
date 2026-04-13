@@ -51,6 +51,7 @@ const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   "speech-prompts": msg`Speech Prompts`,
   voices: msg`Voices`,
   "toc-prompt": msg`Generation Prompt`,
+  "translation-evaluation": msg`Translation Evaluation`,
 }
 
 const TASK_KIND_LABELS: Record<string, MessageDescriptor> = {
@@ -106,6 +107,7 @@ function getSettingsTabs(
     ],
     validation: [
       { key: "general", label: i18n._(msg`Accessibility`) },
+      { key: "translation-evaluation", label: i18n._(SETTINGS_TAB_MESSAGE["translation-evaluation"]) },
       { key: "reviewer-checklist", label: i18n._(msg`Reviewer Checklist`) },
     ],
   }

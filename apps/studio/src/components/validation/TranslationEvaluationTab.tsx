@@ -1,0 +1,438 @@
+import { useEffect, useMemo, useState } from "react"
+import { CheckCircle2, ChevronDown, ChevronRight, FlaskConical, Loader2, TriangleAlert } from "lucide-react"
+import { Trans, useLingui } from "@lingui/react/macro"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { useBookConfig } from "@/hooks/use-book-config"
+import { useBookTasks } from "@/hooks/use-book-tasks"
+import {
+  useRunTranslationEvaluation,
+  useTranslationEvaluations,
+} from "@/hooks/use-translation-evaluation"
+import { cn } from "@/lib/utils"
+
+function truncatePreview(text: string, maxLength = 220) {
+  const normalized = text.replace(/\s+/g, " ").trim()
+  if (normalized.length <= maxLength) return normalized
+  return `${normalized.slice(0, maxLength - 1).trimEnd()}…`
+}
+
+function SummaryCard({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string
+  value: number | string
+  tone?: "default" | "warning" | "success"
+}) {
+  const toneClass =
+    tone === "warning"
+      ? "border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/20"
+      : tone === "success"
+        ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/20"
+        : "bg-card"
+
+  return (
+    <div className={`rounded-lg border p-4 ${toneClass}`}>
+      <div className="mb-1 text-xs text-muted-foreground">{label}</div>
+      <div className="text-2xl font-semibold tabular-nums">{value}</div>
+    </div>
+  )
+}
+
+function LoadingState({ message }: { message: string }) {
+  return <div className="p-6 text-sm text-muted-foreground">{message}</div>
+}
+
+function ErrorState({ message }: { message: string }) {
+  return (
+    <div className="p-6">
+      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        {message}
+      </div>
+    </div>
+  )
+}
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="p-6">
+      <div className="rounded-xl border border-dashed bg-card px-4 py-6 text-sm text-muted-foreground">
+        {message}
+      </div>
+    </div>
+  )
+}
+
+function StatusBadge({
+  acceptable,
+  isStale,
+}: {
+  acceptable: boolean | null
+  isStale: boolean
+}) {
+  if (isStale) {
+    return (
+      <Badge variant="outline" className="border-orange-200 bg-orange-50 text-orange-700">
+        <Trans>Stale</Trans>
+      </Badge>
+    )
+  }
+  if (acceptable === null) {
+    return (
+      <Badge variant="outline">
+        <Trans>Not evaluated</Trans>
+      </Badge>
+    )
+  }
+  if (acceptable) {
+    return (
+      <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">
+        <Trans>Acceptable</Trans>
+      </Badge>
+    )
+  }
+  return (
+    <Badge className="bg-orange-600 text-white hover:bg-orange-600">
+      <Trans>Needs review</Trans>
+    </Badge>
+  )
+}
+
+function TranslationEvaluationResultCard({
+  item,
+}: {
+  item: NonNullable<NonNullable<ReturnType<typeof useTranslationEvaluations>["data"]>["evaluations"][number]["evaluation"]>["items"][number]
+}) {
+  const { t } = useLingui()
+  const [isOpen, setIsOpen] = useState(!item.acceptable)
+
+  useEffect(() => {
+    setIsOpen(!item.acceptable)
+  }, [item.acceptable, item.entry_id, item.rationale, item.source_text, item.translated_text])
+
+  const rationalePreview = useMemo(() => truncatePreview(item.rationale), [item.rationale])
+
+  return (
+    <div
+      className={cn(
+        "rounded-xl border p-4 transition-colors",
+        item.acceptable
+          ? "bg-card"
+          : "border-orange-200 bg-orange-50/40 dark:border-orange-900 dark:bg-orange-950/10",
+      )}
+    >
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className="font-mono text-[11px]">
+                {item.entry_id}
+              </Badge>
+              {item.acceptable ? (
+                <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">
+                  <CheckCircle2 className="mr-1 h-3 w-3" />
+                  <Trans>Acceptable</Trans>
+                </Badge>
+              ) : (
+                <Badge className="bg-orange-600 text-white hover:bg-orange-600">
+                  <TriangleAlert className="mr-1 h-3 w-3" />
+                  <Trans>Needs review</Trans>
+                </Badge>
+              )}
+            </div>
+
+            <p className="text-sm text-foreground">
+              {isOpen ? item.rationale : rationalePreview}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2 lg:items-end">
+            {item.issue_types && item.issue_types.length > 0 ? (
+              <div className="flex flex-wrap gap-2 lg:justify-end">
+                {item.issue_types.map((issueType) => (
+                  <Badge key={`${item.entry_id}-${issueType}`} variant="outline" className="font-mono text-[11px]">
+                    {issueType}
+                  </Badge>
+                ))}
+              </div>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => setIsOpen((current) => !current)}
+              className="inline-flex items-center gap-1 self-start rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:self-end"
+            >
+              {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              {isOpen ? <Trans>Collapse details</Trans> : <Trans>Expand details</Trans>}
+            </button>
+          </div>
+        </div>
+
+        {isOpen ? (
+          <div className="grid gap-4 rounded-lg border bg-background/60 p-4 md:grid-cols-2">
+            <div className="space-y-1">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <Trans>Original</Trans>
+              </div>
+              <p className="whitespace-pre-wrap text-sm text-foreground">
+                {item.source_text?.trim() || t`Not stored in this evaluation version.`}
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <Trans>Translation</Trans>
+              </div>
+              <p className="whitespace-pre-wrap text-sm text-foreground">
+                {item.translated_text?.trim() || t`Not stored in this evaluation version.`}
+              </p>
+            </div>
+
+            <div className="space-y-1 md:col-span-2">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <Trans>Rationale</Trans>
+              </div>
+              <p className="whitespace-pre-wrap text-sm text-foreground">{item.rationale}</p>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+export function TranslationEvaluationTab({ label }: { label: string }) {
+  const { t } = useLingui()
+  const evaluations = useTranslationEvaluations(label)
+  const runEvaluation = useRunTranslationEvaluation(label)
+  const bookConfig = useBookConfig(label)
+  const { isTaskRunning, tasks } = useBookTasks(label)
+  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null)
+
+  const items = evaluations.data?.evaluations ?? []
+  const translationEvaluationConfig = (bookConfig.data?.config?.translation_evaluation ?? null) as
+    | { enable_translation_evaluation?: boolean; enabled?: boolean }
+    | null
+  const translationEvaluationEnabled = translationEvaluationConfig?.enable_translation_evaluation === true
+    || translationEvaluationConfig?.enabled === true
+  const evaluationRunning = isTaskRunning("translation-evaluation")
+  const activeEvaluationTask = useMemo(() => {
+    return [...tasks]
+      .filter((task) => task.kind === "translation-evaluation" && (task.status === "running" || task.status === "queued"))
+      .sort((left, right) => (right.startedAt ?? 0) - (left.startedAt ?? 0))[0] ?? null
+  }, [tasks])
+  const latestTaskError = useMemo(() => {
+    return [...tasks]
+      .filter((task) => task.kind === "translation-evaluation" && task.status === "failed" && task.error)
+      .sort((left, right) => (right.completedAt ?? 0) - (left.completedAt ?? 0))[0]?.error ?? null
+  }, [tasks])
+
+  useEffect(() => {
+    if (items.length === 0) {
+      setSelectedLanguage(null)
+      return
+    }
+    setSelectedLanguage((current) => {
+      if (current && items.some((item) => item.language === current)) {
+        return current
+      }
+      return items[0]?.language ?? null
+    })
+  }, [items])
+
+  const selectedEvaluation = useMemo(
+    () => items.find((item) => item.language === selectedLanguage) ?? null,
+    [items, selectedLanguage],
+  )
+
+  const summary = selectedEvaluation?.evaluation?.summary ?? null
+  const acceptable = summary ? summary.acceptable : null
+  const unacceptable = summary ? summary.unacceptable : null
+  const total = summary ? summary.total : selectedEvaluation?.currentTranslationVersion ? "Pending" : 0
+  const issueTypeCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const item of selectedEvaluation?.evaluation?.items ?? []) {
+      for (const issueType of item.issue_types ?? []) {
+        counts.set(issueType, (counts.get(issueType) ?? 0) + 1)
+      }
+    }
+    return [...counts.entries()].sort((left, right) => right[1] - left[1])
+  }, [selectedEvaluation?.evaluation?.items])
+
+  if (evaluations.isLoading) {
+    return <LoadingState message={t`Loading translation evaluations...`} />
+  }
+
+  if (evaluations.error) {
+    return <ErrorState message={t`Failed to load translation evaluations: ${evaluations.error.message}`} />
+  }
+
+  if (items.length === 0) {
+    return <EmptyState message={t`No translated languages are available yet. Generate translations in Text & Speech first.`} />
+  }
+
+  return (
+    <div className="space-y-6 p-6">
+      <div className="flex flex-col gap-4 rounded-xl border bg-card p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <FlaskConical className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-semibold"><Trans>Translation evaluation</Trans></h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              <Trans>Run MLflow-backed LLM review on translated catalog entries and inspect acceptable versus needs-review verdicts by language.</Trans>
+            </p>
+          </div>
+
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-64">
+            <Select
+              value={selectedLanguage ?? items[0]?.language ?? ""}
+              onValueChange={setSelectedLanguage}
+            >
+              <SelectTrigger className="w-full sm:min-w-56">
+                <SelectValue placeholder={t`Select language`} />
+              </SelectTrigger>
+              <SelectContent>
+                {items.map((item) => (
+                  <SelectItem key={item.language} value={item.language}>
+                    {item.language}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!selectedLanguage || evaluationRunning || runEvaluation.isPending || !translationEvaluationEnabled}
+              onClick={() => {
+                if (!selectedLanguage) return
+                runEvaluation.mutate(selectedLanguage)
+              }}
+            >
+              {evaluationRunning || runEvaluation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+              <Trans>Run evaluation</Trans>
+            </Button>
+          </div>
+        </div>
+
+        {!translationEvaluationEnabled ? (
+          <div className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-700">
+            <Trans>Translation evaluation is disabled in book settings. Enable it before running a new evaluation.</Trans>
+          </div>
+        ) : null}
+
+        {activeEvaluationTask ? (
+          <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-3 text-sm text-sky-800">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-2">
+                <Loader2 className="mt-0.5 h-4 w-4 animate-spin" />
+                <div className="space-y-1">
+                  <div className="font-medium">
+                    <Trans>Translation evaluation is running</Trans>
+                  </div>
+                  <div>{activeEvaluationTask.progressMessage ?? activeEvaluationTask.description}</div>
+                  <div className="text-xs text-sky-700/80">
+                    <Trans>The cards below continue to show the last saved evaluation until this task finishes.</Trans>
+                  </div>
+                </div>
+              </div>
+              {typeof activeEvaluationTask.progressPercent === "number" ? (
+                <Badge variant="outline" className="border-sky-300 bg-white text-sky-800 tabular-nums">
+                  {Math.round(activeEvaluationTask.progressPercent)}%
+                </Badge>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
+        {runEvaluation.error ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {runEvaluation.error.message}
+          </div>
+        ) : null}
+
+        {!runEvaluation.error && latestTaskError ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {latestTaskError}
+          </div>
+        ) : null}
+      </div>
+
+      {selectedEvaluation ? (
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="secondary">{selectedEvaluation.language}</Badge>
+            <StatusBadge
+              acceptable={selectedEvaluation.evaluation ? selectedEvaluation.evaluation.summary.unacceptable === 0 : null}
+              isStale={selectedEvaluation.isStale}
+            />
+            {selectedEvaluation.evaluationVersion != null ? (
+              <Badge variant="outline" className="tabular-nums">
+                <Trans>Eval v{selectedEvaluation.evaluationVersion}</Trans>
+              </Badge>
+            ) : null}
+            {selectedEvaluation.currentTranslationVersion != null ? (
+              <Badge variant="outline" className="tabular-nums">
+                <Trans>Translation v{selectedEvaluation.currentTranslationVersion}</Trans>
+              </Badge>
+            ) : null}
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-4">
+            <SummaryCard label={t`Entries`} value={total} />
+            <SummaryCard label={t`Acceptable`} value={acceptable ?? 0} tone="success" />
+            <SummaryCard label={t`Needs review`} value={unacceptable ?? 0} tone={(unacceptable ?? 0) > 0 ? "warning" : "default"} />
+            <SummaryCard label={t`Current`} value={selectedEvaluation.isStale ? t`No` : t`Yes`} tone={selectedEvaluation.isStale ? "warning" : "success"} />
+          </div>
+
+          {issueTypeCounts.length > 0 ? (
+            <div className="rounded-xl border bg-card p-4">
+              <div className="mb-3 text-sm font-semibold"><Trans>Common issue types</Trans></div>
+              <div className="flex flex-wrap gap-2">
+                {issueTypeCounts.map(([issueType, count]) => (
+                  <Badge key={issueType} variant="outline" className="font-mono text-[11px]">
+                    {issueType} ({count})
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {selectedEvaluation.evaluation ? (
+            <div className="space-y-3">
+              {selectedEvaluation.evaluation.items.map((item) => (
+                <TranslationEvaluationResultCard key={item.entry_id} item={item} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState message={t`No evaluation has been stored for this language yet. Run an evaluation to generate verdicts.`} />
+          )}
+
+          {selectedEvaluation.evaluation?.mlflow?.url ? (
+            <div className="flex justify-end">
+              <a
+                className="text-sm text-primary underline-offset-4 hover:underline"
+                href={selectedEvaluation.evaluation.mlflow.url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Trans>Open MLflow run</Trans>
+              </a>
+            </div>
+          ) : null}
+        </>
+      ) : null}
+    </div>
+  )
+}

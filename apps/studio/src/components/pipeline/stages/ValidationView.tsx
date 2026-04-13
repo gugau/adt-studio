@@ -9,11 +9,13 @@ import { useBookRun } from "@/hooks/use-book-run"
 import { useBookTasks } from "@/hooks/use-book-tasks"
 import { AccessibilityOverviewTab } from "@/components/validation/AccessibilityValidationTabs"
 import { ReviewerValidationSummaryTab } from "@/components/validation/ReviewerValidationSummaryTab"
+import { TranslationEvaluationTab } from "@/components/validation/TranslationEvaluationTab"
 import { useReviewerValidationCatalog } from "@/hooks/use-reviewer-validation"
 
 const VALIDATION_TABS = new Set([
   "accessibility-summary",
   "reviewer-validation",
+  "translation-evaluation",
 ] as const)
 
 function normalizeValidationTab(value: string | undefined) {
@@ -38,7 +40,10 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
   const [error, setError] = useState<string | null>(null)
   const tab = useMemo(() => {
     const normalized = normalizeValidationTab(search.tab)
-    return reviewerValidationEnabled ? normalized : "accessibility-summary"
+    if (normalized === "reviewer-validation" && !reviewerValidationEnabled) {
+      return "accessibility-summary"
+    }
+    return normalized
   }, [reviewerValidationEnabled, search.tab])
 
   const runPackage = useCallback(async () => {
@@ -156,6 +161,9 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
             <TabsTrigger value="accessibility-summary" className="px-3 py-1.5 text-xs">
               <Trans>Accessibility Summary</Trans>
             </TabsTrigger>
+            <TabsTrigger value="translation-evaluation" className="px-3 py-1.5 text-xs">
+              <Trans>Translation Evaluation</Trans>
+            </TabsTrigger>
             {reviewerValidationEnabled ? (
               <TabsTrigger value="reviewer-validation" className="px-3 py-1.5 text-xs">
                 <Trans>Reviewer Validation</Trans>
@@ -167,6 +175,9 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
         <div className="min-h-0 flex-1 overflow-auto">
           <TabsContent value="accessibility-summary" className="m-0 h-full">
             <AccessibilityOverviewTab label={bookLabel} />
+          </TabsContent>
+          <TabsContent value="translation-evaluation" className="m-0 h-full">
+            <TranslationEvaluationTab label={bookLabel} />
           </TabsContent>
           {reviewerValidationEnabled ? (
             <TabsContent value="reviewer-validation" className="m-0 h-full">

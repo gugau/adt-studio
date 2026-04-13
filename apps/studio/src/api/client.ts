@@ -5,6 +5,7 @@ import type {
   ReviewerValidationInstruction,
   ReviewerValidationSection,
   ReviewerValidationSession,
+  TranslationEvaluationResult,
 } from "@adt/types"
 
 export function resolveBaseUrl(
@@ -454,6 +455,26 @@ export interface ReviewerPageValidationRecordsResponse {
   records: ReviewerPageValidationRecordEntry[]
 }
 
+export interface TranslationEvaluationStatusResponse {
+  language: string
+  currentSourceCatalogVersion: number | null
+  currentTranslationVersion: number | null
+  evaluationVersion: number | null
+  evaluation: TranslationEvaluationResult | null
+  isStale: boolean
+}
+
+export interface TranslationEvaluationStatusesResponse {
+  evaluations: TranslationEvaluationStatusResponse[]
+}
+
+export interface TranslationEvaluationRunResponse {
+  status: string
+  taskId: string
+  label: string
+  language: string
+}
+
 export interface LlmLogsParams {
   step?: string
   itemId?: string
@@ -483,6 +504,8 @@ export interface TaskInfoResponse {
   url?: string
   error?: string
   result?: unknown
+  progressMessage?: string
+  progressPercent?: number
   startedAt?: number
   completedAt?: number
 }
@@ -762,6 +785,17 @@ export const api = {
     request<ReviewerPageValidationRecordEntry>(`/books/${label}/validation/page-results`, {
       method: "POST",
       body: JSON.stringify(record),
+    }),
+
+  getTranslationEvaluations: (label: string) =>
+    request<TranslationEvaluationStatusesResponse>(`/books/${label}/evaluations/translations`),
+
+  getTranslationEvaluation: (label: string, language: string) =>
+    request<TranslationEvaluationStatusResponse>(`/books/${label}/evaluations/translations/${language}`),
+
+  runTranslationEvaluation: (label: string, language: string) =>
+    request<TranslationEvaluationRunResponse>(`/books/${label}/evaluations/translations/${language}/run`, {
+      method: "POST",
     }),
 
   getVersionHistory: (
