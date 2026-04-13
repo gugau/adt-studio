@@ -13,6 +13,12 @@ export interface GenerateObjectOptions {
   system?: string
   messages?: Message[]
 
+  /**
+   * Schema enforcement mode. Defaults to "auto" (provider decides).
+   * Use "json" for recursive schemas — embeds the schema in the prompt
+   * instead of using server-side structured output (which has depth limits).
+   */
+  mode?: "auto" | "json" | "tool"
   validate?: (result: unknown, context: Record<string, unknown>) => ValidationResult
   maxRetries?: number
   maxTokens?: number

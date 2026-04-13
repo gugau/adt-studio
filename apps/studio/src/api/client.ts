@@ -561,6 +561,16 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  reStructurePage: (label: string, pageId: string, apiKey: string) =>
+    request<{ taskId?: string; status?: string; version?: number; pageStructuring?: unknown }>(
+      `/books/${label}/pages/${pageId}/re-structure`,
+      {
+        method: "POST",
+        headers: { "X-OpenAI-Key": apiKey },
+        signal: AbortSignal.timeout(30_000),
+      }
+    ),
+
   reRenderPage: (label: string, pageId: string, apiKey: string, sectionIndex?: number, prompt?: string) =>
     request<{ taskId?: string; status?: string; version?: number; rendering?: { sections: SectionRendering[] } }>(
       `/books/${label}/pages/${pageId}/re-render${sectionIndex !== undefined ? `?sectionIndex=${sectionIndex}` : ""}`,

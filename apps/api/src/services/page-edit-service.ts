@@ -3,9 +3,9 @@ import path from "node:path"
 import { createBookStorage } from "@adt/storage"
 import { createLLMModel, createPromptEngine } from "@adt/llm"
 import type { LLMModel } from "@adt/llm"
-import { renderPage, buildRenderStrategyResolver, createTemplateEngine, loadBookConfig, createScreenshotRenderer, runVisualReviewLoop, DEFAULT_VISUAL_REVIEW_MODEL_ID } from "@adt/pipeline"
+import { renderPage, buildRenderStrategyResolver, createTemplateEngine, loadBookConfig, createScreenshotRenderer, runVisualReviewLoop, DEFAULT_VISUAL_REVIEW_MODEL_ID, structurePage, buildStructureConfig } from "@adt/pipeline"
 import type { VisualRefinementDeps } from "@adt/pipeline"
-import { PageSectioningOutput, WebRenderingOutput, webRenderingLLMSchema } from "@adt/types"
+import { PageSectioningOutput, WebRenderingOutput, webRenderingLLMSchema, ImageClassificationOutput } from "@adt/types"
 import { loadStyleguideContent } from "./styleguide.js"
 
 export interface ReRenderOptions {
@@ -24,6 +24,20 @@ export interface ReRenderOptions {
 export interface ReRenderResult {
   version: number
   rendering: unknown
+}
+
+export interface ReStructurePageOptions {
+  label: string
+  pageId: string
+  booksDir: string
+  promptsDir: string
+  configPath?: string
+  apiKey: string
+}
+
+export interface ReStructurePageResult {
+  version: number
+  pageStructuring: unknown
 }
 
 export interface AiEditSectionOptions {
@@ -407,6 +421,83 @@ export async function aiEditSection(
     }
 
     return { html, reasoning: result.object.reasoning }
+  } finally {
+    storage.close()
+    if (previousKey !== undefined) {
+      process.env.OPENAI_API_KEY = previousKey
+    } else {
+      delete process.env.OPENAI_API_KEY
+    }
+  }
+}
+
+export async function reStructurePage(
+  options: ReStructurePageOptions
+): Promise<ReStructurePageResult> {
+  const { label, pageId, booksDir, promptsDir, configPath, apiKey } = options
+
+  const previousKey = process.env.OPENAI_API_KEY
+  process.env.OPENAI_API_KEY = apiKey
+
+  const storage = createBookStorage(label, booksDir)
+  try {
+    const pages = storage.getPages()
+    const page = pages.find((p) => p.pageId === pageId)
+    if (!page) throw new Error(`Page not found: ${pageId}`)
+
+    // Load config and build structure config
+    const config = loadBookConfig(label, booksDir, configPath)
+    const structureConfig = buildStructureConfig(config)
+
+    // Create LLM model
+    const cacheDir = path.join(path.resolve(booksDir), label, ".cache")
+    const bookPromptsDir = path.join(path.resolve(booksDir), label, "prompts")
+    const promptEngine = createPromptEngine([bookPromptsDir, promptsDir])
+    const llmModel = createLLMModel({
+      modelId: structureConfig.modelId,
+      cacheDir,
+      promptEngine,
+      onLog: (entry) => storage.appendLlmLog(entry),
+    })
+
+    // Get page image
+    const imageBase64 = storage.getPageImageBase64(pageId)
+
+    // Get unpruned images from current image classification
+    const imageClassRow = storage.getLatestNodeData("image-filtering", pageId)
+    const allPageImages = storage.getPageImages(pageId)
+    let structureImages: Array<{ imageId: string; imageBase64: string }> = []
+
+    if (imageClassRow) {
+      const parsed = ImageClassificationOutput.safeParse(imageClassRow.data)
+      if (parsed.success) {
+        const unprunedIds = new Set(
+          parsed.data.images.filter((img) => !img.isPruned).map((img) => img.imageId)
+        )
+        structureImages = allPageImages
+          .filter((img) => unprunedIds.has(img.imageId))
+          .map((img) => ({
+            imageId: img.imageId,
+            imageBase64: storage.getImageBase64(img.imageId),
+          }))
+      }
+    }
+
+    // Run page structuring
+    const result = await structurePage(
+      {
+        pageId: page.pageId,
+        pageNumber: page.pageNumber,
+        text: page.text,
+        imageBase64,
+        images: structureImages,
+      },
+      structureConfig,
+      llmModel
+    )
+
+    const version = storage.putNodeData("page-structuring", pageId, result)
+    return { version, pageStructuring: result }
   } finally {
     storage.close()
     if (previousKey !== undefined) {

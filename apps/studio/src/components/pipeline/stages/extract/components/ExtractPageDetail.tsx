@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { AlertTriangle, Check, ChevronRight, Crop, Eye, EyeOff, FileText, Image, ImageOff, Layers, Loader2, ChevronDown, X } from "lucide-react"
+import { AlertTriangle, Check, Crop, Eye, EyeOff, FileText, Image, ImageOff, Layers, Loader2, ChevronDown, X, RefreshCw } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { usePage, usePageImage } from "@/hooks/use-pages"
 import { api, BASE_URL } from "@/api/client"
@@ -7,9 +7,11 @@ import type { VersionEntry } from "@/api/client"
 import type { ContentNodeData } from "@adt/types"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useBookRun } from "@/hooks/use-book-run"
+import { useBookTasks } from "@/hooks/use-book-tasks"
+import { useApiKey } from "@/hooks/use-api-key"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
-import { getTextGroupLabel, getTextTypeLabel, getImageTypeLabel } from "@/lib/text-type-labels"
+import { getTextGroupLabel, getTextTypeLabel } from "@/lib/text-type-labels"
 import { ImageCropDialog } from "@/components/pipeline/stages/storyboard/components/ImageCropDialog"
 
 function VersionPicker({
@@ -205,7 +207,6 @@ function ContentNodeView({
   node,
   depth,
   configuredTextTypes,
-  configuredImageTypes,
   configuredContainerTypes,
   bookLabel,
   collapsed,
@@ -216,7 +217,6 @@ function ContentNodeView({
   node: ContentNodeData
   depth: number
   configuredTextTypes: string[]
-  configuredImageTypes: string[]
   configuredContainerTypes: string[]
   bookLabel: string
   collapsed: Set<string>
@@ -225,36 +225,39 @@ function ContentNodeView({
   onToggleCollapse: (nodeId: string) => void
 }) {
   const { t } = useLingui()
-  const isContainer = node.children != null && node.children.length > 0
-  const isImage = node.imageId != null
+  const hasChildren = node.children != null && node.children.length > 0
+  const isContainer = hasChildren || (node.structure != null && node.imageId != null)
   const isText = node.text != null
   const isCollapsed = collapsed.has(node.nodeId)
 
-  // Container node
+  // Container node (includes image containers and containers with background images)
   if (isContainer) {
+    // eslint-disable-next-line lingui/no-unlocalized-strings
+    const imgSrc = node.imageId ? `${BASE_URL}/books/${bookLabel}/images/${node.imageId}` : null
+    const hasBody = hasChildren || imgSrc != null
     return (
-      <div
-        className={`rounded border overflow-hidden ${node.isPruned ? "opacity-40" : ""}`}
-        style={{ marginLeft: depth * 16 }}
-      >
-        <div className="px-3 py-1.5 bg-muted/50 border-b flex items-center gap-1.5 group/container">
-          <button
-            type="button"
-            onClick={() => onToggleCollapse(node.nodeId)}
-            className="shrink-0 flex items-center justify-center w-4 h-4 cursor-pointer"
-          >
-            {isCollapsed
-              ? <ChevronRight className="h-3 w-3 text-muted-foreground" />
-              : <ChevronDown className="h-3 w-3 text-muted-foreground" />
-            }
-          </button>
+      <div className={`relative ${node.isPruned ? "opacity-40" : ""}`} style={{ paddingLeft: depth * 20 }}>
+        {/* Vertical connector from parent */}
+        {depth > 0 && (
+          <div
+            className="absolute top-0 bottom-0 border-l border-muted-foreground/15"
+            style={{ left: (depth - 1) * 20 + 9 }}
+          />
+        )}
+        <div className="group/container relative flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-muted/40 transition-colors">
           <select
-            value={node.nodeType}
-            onChange={(e) => onUpdate(node.nodeId, "nodeType", e.target.value)}
-            className="shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-transparent border-0 outline-none focus:ring-1 focus:ring-ring cursor-pointer appearance-none"
+            value={node.structure ?? ""}
+            onChange={(e) => onUpdate(node.nodeId, "structure", e.target.value)}
+            onClick={(e) => {
+              if (hasBody && (e.target as HTMLSelectElement).value === node.structure) {
+                e.preventDefault()
+                onToggleCollapse(node.nodeId)
+              }
+            }}
+            className="shrink-0 text-[11px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 border-0 outline-none focus:ring-1 focus:ring-ring cursor-pointer appearance-none bg-primary/10 text-primary"
           >
-            {!configuredContainerTypes.includes(node.nodeType) && (
-              <option value={node.nodeType}>{getTextGroupLabel(node.nodeType)}</option>
+            {!configuredContainerTypes.includes(node.structure ?? "") && (
+              <option value={node.structure ?? ""}>{getTextGroupLabel(node.structure ?? "")}</option>
             )}
             {configuredContainerTypes.map((ct) => (
               <option key={ct} value={ct}>
@@ -262,31 +265,48 @@ function ContentNodeView({
               </option>
             ))}
           </select>
+          {node.imageId && (
+            <span className="text-[10px] text-muted-foreground/60 font-mono truncate">{node.imageId}</span>
+          )}
           <button
             type="button"
             onClick={() => onTogglePrune(node.nodeId)}
-            className={`shrink-0 flex items-center justify-center w-5 h-5 rounded-full cursor-pointer transition-colors ${
+            className={`shrink-0 ml-auto flex items-center justify-center w-5 h-5 rounded cursor-pointer transition-colors ${
               node.isPruned
-                ? "bg-destructive hover:bg-destructive/80"
-                : "opacity-0 group-hover/container:opacity-100 bg-black/30 hover:bg-black/50"
+                ? "text-destructive hover:bg-destructive/10"
+                : "text-muted-foreground/40 opacity-0 group-hover/container:opacity-100 hover:bg-muted hover:text-muted-foreground"
             }`}
             title={node.isPruned ? t`Unprune` : t`Prune`}
           >
             {node.isPruned
-              ? <EyeOff className="h-3 w-3 text-white" />
-              : <Eye className="h-3 w-3 text-white" />
+              ? <EyeOff className="h-3.5 w-3.5" />
+              : <Eye className="h-3.5 w-3.5" />
             }
           </button>
         </div>
-        {!isCollapsed && (
-          <div className="py-1 space-y-1">
-            {node.children!.map((child) => (
+        {hasBody && !isCollapsed && (
+          <div className="relative">
+            {imgSrc && (
+              <div className="relative py-1" style={{ paddingLeft: (depth + 1) * 20 }}>
+                {/* Connector line through image area */}
+                <div
+                  className="absolute top-0 bottom-0 border-l border-muted-foreground/15"
+                  style={{ left: depth * 20 + 9 }}
+                />
+                <img
+                  src={imgSrc}
+                  alt={node.imageId!}
+                  className="relative max-h-[140px] max-w-full object-contain rounded-lg border border-border/50 shadow-sm"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
+                />
+              </div>
+            )}
+            {hasChildren && node.children!.map((child) => (
               <ContentNodeView
                 key={child.nodeId}
                 node={child}
                 depth={depth + 1}
                 configuredTextTypes={configuredTextTypes}
-                configuredImageTypes={configuredImageTypes}
                 configuredContainerTypes={configuredContainerTypes}
                 bookLabel={bookLabel}
                 collapsed={collapsed}
@@ -301,110 +321,69 @@ function ContentNodeView({
     )
   }
 
-  // Image leaf node
-  if (isImage) {
-    // eslint-disable-next-line lingui/no-unlocalized-strings
-    const imgSrc = `${BASE_URL}/books/${bookLabel}/images/${node.imageId}`
-    return (
-      <div
-        className={`group/node flex items-center gap-2 px-3 py-1.5 text-sm ${node.isPruned ? "opacity-40" : ""}`}
-        style={{ marginLeft: depth * 16 }}
-      >
-        <select
-          value={node.nodeType}
-          onChange={(e) => onUpdate(node.nodeId, "nodeType", e.target.value)}
-          className="shrink-0 text-xs font-medium text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5 text-center border-0 outline-none focus:ring-1 focus:ring-ring cursor-pointer appearance-none"
-          style={{ width: `${Math.max(node.nodeType.length * 0.65 + 1.5, 4)}em` }}
-        >
-          {!configuredImageTypes.includes(node.nodeType) && (
-            <option value={node.nodeType}>{getImageTypeLabel(node.nodeType)}</option>
-          )}
-          {configuredImageTypes.map((it) => (
-            <option key={it} value={it}>
-              {getImageTypeLabel(it)}
-            </option>
-          ))}
-        </select>
-        <img
-          src={imgSrc}
-          alt={node.imageId}
-          className="h-16 max-w-[120px] object-contain rounded border"
-          onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
-        />
-        <span className="text-[10px] text-muted-foreground truncate">{node.imageId}</span>
-        <button
-          type="button"
-          onClick={() => onTogglePrune(node.nodeId)}
-          className={`shrink-0 ml-auto flex items-center justify-center w-5 h-5 rounded-full cursor-pointer transition-colors ${
-            node.isPruned
-              ? "bg-destructive hover:bg-destructive/80"
-              : "opacity-0 group-hover/node:opacity-100 bg-black/30 hover:bg-black/50"
-          }`}
-          title={node.isPruned ? t`Unprune` : t`Prune`}
-        >
-          {node.isPruned
-            ? <EyeOff className="h-3 w-3 text-white" />
-            : <Eye className="h-3 w-3 text-white" />
-          }
-        </button>
-      </div>
-    )
-  }
-
   // Text leaf node
   if (isText) {
     return (
       <div
-        className={`group/node flex items-start gap-2 px-3 py-1.5 text-sm ${node.isPruned ? "opacity-40" : ""}`}
-        style={{ marginLeft: depth * 16 }}
+        className={`relative ${node.isPruned ? "opacity-40" : ""}`}
+        style={{ paddingLeft: depth * 20 }}
       >
-        <select
-          value={node.nodeType}
-          onChange={(e) => onUpdate(node.nodeId, "nodeType", e.target.value)}
-          className="shrink-0 text-xs font-medium text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5 text-center border-0 outline-none focus:ring-1 focus:ring-ring cursor-pointer appearance-none"
-          style={{ width: `${Math.max(node.nodeType.length * 0.65 + 1.5, 4)}em` }}
-        >
-          {!configuredTextTypes.includes(node.nodeType) && (
-            <option value={node.nodeType}>{getTextTypeLabel(node.nodeType)}</option>
-          )}
-          {configuredTextTypes.map((tt) => (
-            <option key={tt} value={tt}>
-              {getTextTypeLabel(tt)}
-            </option>
-          ))}
-        </select>
-        <textarea
-          value={node.text ?? ""}
-          onChange={(e) => onUpdate(node.nodeId, "text", e.target.value)}
-          rows={1}
-          className="leading-relaxed flex-1 min-w-0 bg-transparent border-0 outline-none resize-none p-0 focus:ring-1 focus:ring-ring focus:rounded"
-          onInput={(e) => {
-            const el = e.target as HTMLTextAreaElement
-            el.style.height = "auto"
-            el.style.height = el.scrollHeight + "px"
-          }}
-          ref={(el) => {
-            if (el) {
+        {/* Vertical connector from parent */}
+        {depth > 0 && (
+          <div
+            className="absolute top-0 bottom-0 border-l border-muted-foreground/15"
+            style={{ left: (depth - 1) * 20 + 9 }}
+          />
+        )}
+        <div className="group/node relative flex items-start gap-2 rounded-md px-1.5 py-1 hover:bg-muted/40 transition-colors">
+          <select
+            value={node.role ?? ""}
+            onChange={(e) => onUpdate(node.nodeId, "role", e.target.value)}
+            className="shrink-0 text-[11px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 bg-muted text-muted-foreground border-0 outline-none focus:ring-1 focus:ring-ring cursor-pointer appearance-none mt-px"
+            style={{ width: `${Math.max((node.role ?? "").length * 0.75 + 2, 4.5)}em` }}
+          >
+            {!configuredTextTypes.includes(node.role ?? "") && (
+              <option value={node.role ?? ""}>{getTextTypeLabel(node.role ?? "")}</option>
+            )}
+            {configuredTextTypes.map((tt) => (
+              <option key={tt} value={tt}>
+                {getTextTypeLabel(tt)}
+              </option>
+            ))}
+          </select>
+          <textarea
+            value={node.text ?? ""}
+            onChange={(e) => onUpdate(node.nodeId, "text", e.target.value)}
+            rows={1}
+            className="leading-relaxed flex-1 min-w-0 text-[13px] bg-transparent border-0 outline-none resize-none overflow-hidden p-0 focus:ring-1 focus:ring-ring focus:rounded mt-px"
+            onInput={(e) => {
+              const el = e.target as HTMLTextAreaElement
               el.style.height = "auto"
               el.style.height = el.scrollHeight + "px"
+            }}
+            ref={(el) => {
+              if (el) {
+                el.style.height = "auto"
+                el.style.height = el.scrollHeight + "px"
+              }
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => onTogglePrune(node.nodeId)}
+            className={`shrink-0 self-center flex items-center justify-center w-5 h-5 rounded cursor-pointer transition-colors ${
+              node.isPruned
+                ? "text-destructive hover:bg-destructive/10"
+                : "text-muted-foreground/40 opacity-0 group-hover/node:opacity-100 hover:bg-muted hover:text-muted-foreground"
+            }`}
+            title={node.isPruned ? t`Unprune` : t`Prune`}
+          >
+            {node.isPruned
+              ? <EyeOff className="h-3.5 w-3.5" />
+              : <Eye className="h-3.5 w-3.5" />
             }
-          }}
-        />
-        <button
-          type="button"
-          onClick={() => onTogglePrune(node.nodeId)}
-          className={`shrink-0 self-center flex items-center justify-center w-5 h-5 rounded-full cursor-pointer transition-colors ${
-            node.isPruned
-              ? "bg-destructive hover:bg-destructive/80"
-              : "opacity-0 group-hover/node:opacity-100 bg-black/30 hover:bg-black/50"
-          }`}
-          title={node.isPruned ? t`Unprune` : t`Prune`}
-        >
-          {node.isPruned
-            ? <EyeOff className="h-3 w-3 text-white" />
-            : <Eye className="h-3 w-3 text-white" />
-          }
-        </button>
+          </button>
+        </div>
       </div>
     )
   }
@@ -444,19 +423,19 @@ export function ExtractPageDetail({
   const configuredTextTypes = mergedConfig
     ? Object.keys((mergedConfig.text_types ?? {}) as Record<string, string>)
     : []
-  const configuredImageTypes = mergedConfig
-    ? Object.keys((mergedConfig.image_types ?? {}) as Record<string, string>)
-    : []
   const configuredContainerTypes = mergedConfig
     ? Object.keys((mergedConfig.container_types ?? {}) as Record<string, string>)
     : []
   const [pageImageDims, setPageImageDims] = useState<{ w: number; h: number } | null>(null)
+  const { apiKey } = useApiKey()
   const { stageState, stepState } = useBookRun()
+  const { isTaskRunning } = useBookTasks(bookLabel)
   const storyboardRunning = stageState("storyboard") === "running" || stageState("storyboard") === "queued"
   const storyboardDone = stageState("storyboard") === "done"
   const metadataRunning = stepState("metadata") === "running"
   const pageStructuringRunning = stepState("page-structuring") === "running"
   const imageFilterRunning = stepState("image-filtering") === "running"
+  const reStructuring = isTaskRunning("re-structure", pageId)
   const [savingText, setSavingText] = useState(false)
   const [savingImages, setSavingImages] = useState(false)
   const [pendingTextData, setPendingTextData] = useState<PageStructuringData | null>(null)
@@ -575,6 +554,16 @@ export function ExtractPageDetail({
     setSavingImages(false)
   }
 
+  const handleReStructure = async () => {
+    if (!apiKey || reStructuring) return
+    try {
+      await api.reStructurePage(bookLabel, pageId, apiKey)
+      setPendingTextData(null)
+    } catch {
+      // API call failed — task was never submitted, nothing to track
+    }
+  }
+
   if (isLoading) {
     return <div className="p-4 text-sm text-muted-foreground"><Trans>Loading page...</Trans></div>
   }
@@ -687,18 +676,8 @@ export function ExtractPageDetail({
             </div>
           )
         })()}
-      </div>
 
-      {/* Right: Raw text */}
-      <div className="flex-1 min-w-0">
-        {/* Metadata — processing indicator */}
-        {metadataRunning && (
-          <div className="mb-4 flex items-center gap-2 rounded border border-dashed p-3 text-xs text-muted-foreground">
-            <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-            <Trans>Processing metadata…</Trans>
-          </div>
-        )}
-
+        {/* Extracted text */}
         {page.text ? (
           <div>
             <h3 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
@@ -714,10 +693,21 @@ export function ExtractPageDetail({
             <Trans>No extracted text yet. Run the pipeline first.</Trans>
           </div>
         )}
+      </div>
+
+      {/* Right: Page structure */}
+      <div className="flex-1 min-w-0">
+        {/* Metadata — processing indicator */}
+        {metadataRunning && (
+          <div className="mb-4 flex items-center gap-2 rounded border border-dashed p-3 text-xs text-muted-foreground">
+            <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+            <Trans>Processing metadata…</Trans>
+          </div>
+        )}
 
         {/* Page structure — processing indicator */}
         {!structuringData && pageStructuringRunning && (
-          <div className="mt-4 flex items-center gap-2 rounded border border-dashed p-3 text-xs text-muted-foreground">
+          <div className="mb-4 flex items-center gap-2 rounded border border-dashed p-3 text-xs text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
             <Trans>Structuring page…</Trans>
           </div>
@@ -725,10 +715,11 @@ export function ExtractPageDetail({
 
         {/* Page structure tree */}
         {structuringData && structuringData.nodes.length > 0 && (
-          <div className="mt-4">
+          <div className="mb-4">
             <h3 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
               <Layers className="h-3 w-3" />
               <Trans>Page Structure</Trans>
+              <div className="ml-auto flex items-center gap-1.5">
               <VersionPicker
                 currentVersion={page.versions.pageStructuring}
                 saving={savingText}
@@ -740,15 +731,26 @@ export function ExtractPageDetail({
                 onSave={saveTextChanges}
                 onDiscard={() => setPendingTextData(null)}
               />
+              {apiKey && !textDirty && (
+                <button
+                  type="button"
+                  onClick={handleReStructure}
+                  disabled={reStructuring || pageStructuringRunning}
+                  className="flex items-center rounded p-0.5 bg-muted hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={t`Re-run page structuring`}
+                >
+                  <RefreshCw className={`h-3 w-3 ${reStructuring ? "animate-spin" : ""}`} />
+                </button>
+              )}
+              </div>
             </h3>
-            <div className="space-y-1">
+            <div>
               {structuringData.nodes.map((node) => (
                 <ContentNodeView
                   key={node.nodeId}
                   node={node}
                   depth={0}
                   configuredTextTypes={configuredTextTypes}
-                  configuredImageTypes={configuredImageTypes}
                   configuredContainerTypes={configuredContainerTypes}
                   bookLabel={bookLabel}
                   collapsed={collapsed}
@@ -758,16 +760,9 @@ export function ExtractPageDetail({
                 />
               ))}
             </div>
-            <details className="mt-4">
-              <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
-                JSON
-              </summary>
-              <pre className="mt-2 p-3 bg-muted/50 rounded text-xs overflow-auto max-h-96 whitespace-pre-wrap">
-                {JSON.stringify(structuringData, null, 2)}
-              </pre>
-            </details>
           </div>
         )}
+
       </div>
       </div>
       {cropTarget && cropPageSrc && (

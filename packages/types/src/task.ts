@@ -3,6 +3,7 @@ import { z } from "zod"
 export const TaskKind = z.enum([
   "image-generate",
   "re-render",
+  "re-structure",
   "ai-edit",
   "package-adt",
   "prepare-export",

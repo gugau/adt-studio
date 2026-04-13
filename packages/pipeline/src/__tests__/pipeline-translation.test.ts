@@ -123,12 +123,12 @@ vi.mock("../page-structuring.js", async () => {
       nodes: [
         {
           nodeId: "pg001_nd001",
-          nodeType: "paragraph",
+          structure: "group",
           isPruned: false,
           children: [
             {
               nodeId: "pg001_nd002",
-              nodeType: "section_text",
+              role: "body",
               text: "Hello world",
               isPruned: false,
             },
@@ -200,11 +200,11 @@ describe("runPipeline translation flow", () => {
     fs.writeFileSync(
       configPath,
       `text_types:
-  section_text: Main body text
+  body: Body text
 image_types:
-  inline_image: An inline image
+  photo: Photograph
 container_types:
-  paragraph: Paragraph
+  group: Content group
 editing_language: fr
 `
     )
@@ -231,11 +231,11 @@ editing_language: fr
 
       const v1 = JSON.parse(rows[0].data) as {
         reasoning: string
-        nodes: Array<{ nodeId: string; nodeType: string; children?: Array<{ text: string }> }>
+        nodes: Array<{ nodeId: string; structure?: string; role?: string; children?: Array<{ text: string }> }>
       }
       const v2 = JSON.parse(rows[1].data) as {
         reasoning: string
-        nodes: Array<{ nodeId: string; nodeType: string; children?: Array<{ text: string }> }>
+        nodes: Array<{ nodeId: string; structure?: string; role?: string; children?: Array<{ text: string }> }>
       }
 
       expect(v1.reasoning).toBe("Mock page structuring")

@@ -1,33 +1,47 @@
 {% chat role: "system" %}
 You are reviewing and, if necessary, correcting a previously generated page-structure tree for a book page.
 
-Your job is to judge whether the current structure accurately captures the page's semantic hierarchy, reading order, text, and images. If it is inaccurate or incomplete, return a corrected full tree.
+Your job is to first **evaluate** the current tree, then **fix** any issues found. If the tree is already accurate, approve it as-is.
 
-## Node Types
+## Node Fields
 
-**Container types** (must have `children`, never `text` or `image_id`):
+Every node has either `structure` (for containers) or `role` (for leaves), never both.
+
+**Container nodes** — have `structure` and `children`, never `text`. May include `image_id` to associate an image with the container:
 {% for t in container_types %}- {{ t.key }}: {{ t.description }}
 {% endfor %}
-**Text types** (must have `text`, never `children` or `image_id`):
+**Text leaf nodes** — have `role` and `text`, never `children` or `image_id`:
 {% for t in text_types %}- {{ t.key }}: {{ t.description }}
 {% endfor %}
-**Image types** (must have `image_id`, never `children` or `text`):
-{% for t in image_types %}- {{ t.key }}: {{ t.description }}
-{% endfor %}
+
+## Evaluation Dimensions
+
+Evaluate the tree against each of these dimensions:
+
+- **Text completeness**: Does the tree capture ALL provided text? Every line of input text must appear in a leaf node. Missing text is the most critical failure.
+- **Text accuracy**: Does the extracted text match what's on the page image? Check for errors, hallucinated text, or garbled content.
+- **Tree structure**: Does the hierarchy make semantic sense? Are containers used appropriately? Is nesting depth reasonable? Are images represented as "image" containers?
+- **Type accuracy**: Are the correct `structure` values on containers and correct `role` values on leaves? Check against the configured types above.
+- **Image placement**: Are images placed at the correct position in the reading flow using "image" containers? Are all available images accounted for?
+- **Reading order**: Does the content follow the correct reading order (left-to-right, top-to-bottom, respecting columns)?
+
+## Evaluation Guidelines
+
+- **Text granularity**: Text should be broken at sentence boundaries — each sentence or logical unit should be its own leaf node. Do NOT consider fine-grained splitting an issue. DO flag combining multiple sentences into a single leaf node, as downstream processing (TTS, translation) requires sentence-level granularity.
+- **Spreads**: The page image may show a two-page spread. The tree should capture ALL visible content from the image, even if it spans two pages. Do NOT consider content from both pages of a spread an issue.
+- **Text corrections**: The structurer is instructed to correct extraction errors when the page image clearly shows different text. Do NOT consider corrected text an issue if it matches the page image.
+- **Visual separators**: Lines of dashes, asterisks, underscores, or similar characters that serve as visual dividers are decorative and should be omitted. Do NOT consider missing separator text an issue.
+- **Text within images**: When text is visually layered on, overlaid on, or contained within an image (speech bubbles, signs, posters, annotations, labels on diagrams, title text over illustrations, text banners over photos), that text MUST be children of the "image" container — never siblings outside it. If text sits on top of an image, it belongs inside that image's container. Flag any text-on-image content placed outside its image container as a structural error.
 
 ## Review Rules
 
-1. Judge accuracy against the page image first and OCR second.
-2. Ensure the tree captures all visible text and all relevant extracted images.
-3. Ensure reading order is correct for columns, sidebars, tables, and mixed text-image layouts.
-4. Ensure container nodes are used only for grouping and leaf nodes contain actual text or image references.
-5. Ensure text is not missing, duplicated, or assigned to the wrong semantic type.
-6. Ensure page-spanning, content-bearing artwork uses `full_bleed_image`, while purely decorative backdrops use `background_image`.
-7. Ensure image nodes use only these IDs: {% if image_ids.size > 0 %}{% for id in image_ids %}{{ id }}{% unless forloop.last %}, {% endunless %}{% endfor %}{% else %}(none){% endif %}.
-8. If the current structure is already accurate, set `approved` to `true`.
-9. If there are meaningful issues, set `approved` to `false` and return a fully corrected replacement tree.
-10. Always return a complete `nodes` array, even when `approved` is `true`.
-11. Keep `reasoning` concise and specific about why the structure is correct or what was fixed.
+1. Evaluate the candidate tree against ALL the dimensions and guidelines above.
+2. If there are meaningful issues, set `approved` to `false`, describe what was wrong in `reasoning`, and return a fully corrected replacement tree.
+3. If the current structure is already accurate, set `approved` to `true`.
+4. Always return a complete `nodes` array, even when `approved` is `true`.
+5. Avoid unnecessary single-child container wrappers — a lone leaf can stand on its own (but "image" containers without children are fine for standalone images).
+6. Ensure image containers use only these IDs: {% if image_ids.size > 0 %}{% for id in image_ids %}{{ id }}{% unless forloop.last %}, {% endunless %}{% endfor %}{% else %}(none){% endif %}. Each image ID should appear at most once.
+7. Keep `reasoning` concise and specific about what was evaluated and what, if anything, was fixed.
 {% endchat %}
 
 {% chat role: "user" %}

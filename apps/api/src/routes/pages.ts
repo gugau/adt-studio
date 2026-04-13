@@ -8,7 +8,7 @@ import { parseBookLabel, TextClassificationOutput, PageStructuringOutput, ImageC
 import { openBookDb } from "@adt/storage"
 import { createBookStorage } from "@adt/storage"
 import type { Storage } from "@adt/storage"
-import { reRenderPage, aiEditSection } from "../services/page-edit-service.js"
+import { reRenderPage, reStructurePage, aiEditSection } from "../services/page-edit-service.js"
 import type { TaskService } from "../services/task-service.js"
 import { segmentPageImages, getSegmentedImageId, loadBookConfig, applyCrop, generateStyleguide, buildStyleguideGenerationConfig } from "@adt/pipeline"
 import { createLLMModel, createPromptEngine, renderLiquidTemplate, generateImageWithCache } from "@adt/llm"
@@ -848,6 +848,59 @@ export function createPageRoutes(
       booksDir,
       promptsDir,
       webAssetsDir,
+      configPath,
+      apiKey,
+    })
+
+    return c.json(result)
+  })
+
+  // POST /books/:label/pages/:pageId/re-structure — Re-run page structuring for a single page
+  app.post("/books/:label/pages/:pageId/re-structure", async (c) => {
+    const { label, pageId } = c.req.param()
+    const safeLabel = parseBookLabel(label)
+
+    const apiKey = c.req.header("X-OpenAI-Key")
+    if (!apiKey) {
+      throw new HTTPException(400, { message: "Missing X-OpenAI-Key header" })
+    }
+
+    const storage = createBookStorage(safeLabel, booksDir)
+    try {
+      const pages = storage.getPages()
+      const page = pages.find((p) => p.pageId === pageId)
+      if (!page) {
+        throw new HTTPException(404, { message: `Page not found: ${pageId}` })
+      }
+    } finally {
+      storage.close()
+    }
+
+    if (taskService) {
+      const { taskId } = taskService.submitTask(
+        safeLabel,
+        "re-structure",
+        `Re-structuring ${pageId}`,
+        async () => {
+          return await reStructurePage({
+            label: safeLabel,
+            pageId,
+            booksDir,
+            promptsDir,
+            configPath,
+            apiKey,
+          })
+        },
+        { pageId, url: `/books/${safeLabel}/extract/${pageId}` }
+      )
+      return c.json({ taskId, status: "submitted" })
+    }
+
+    const result = await reStructurePage({
+      label: safeLabel,
+      pageId,
+      booksDir,
+      promptsDir,
       configPath,
       apiKey,
     })

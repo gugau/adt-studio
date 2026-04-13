@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto"
-import { generateObject, APICallError, NoObjectGeneratedError, type LanguageModel, type CoreMessage } from "ai"
+import { generateObject, generateText, APICallError, NoObjectGeneratedError, type LanguageModel, type CoreMessage } from "ai"
 import { createOpenAI, openai } from "@ai-sdk/openai"
 import { anthropic } from "@ai-sdk/anthropic"
 import { google } from "@ai-sdk/google"
@@ -89,6 +89,7 @@ export function createLLMModel(options: CreateLLMModelOptions): LLMModel {
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         const hash = computeHash({
           modelId,
+          mode: opts.mode,
           system,
           messages: currentMessages,
           schema: opts.schema,
@@ -350,13 +351,18 @@ async function callLLM<T>(
   messages: Message[]
 ): Promise<{ object: T; usage: TokenUsage }> {
   const coreMessages = convertMessages(messages)
+
+  if (opts.mode === "json") {
+    return callLLMJson<T>(model, opts, system, coreMessages)
+  }
+
   const generateOpts: Record<string, unknown> = {
     model,
     schema: opts.schema,
     system,
     messages: coreMessages,
     maxRetries: 0,
-    abortSignal: AbortSignal.timeout(opts.timeoutMs ?? 90_000),
+    abortSignal: AbortSignal.timeout(opts.timeoutMs ?? 180_000),
   }
   if (opts.maxTokens) {
     generateOpts.maxTokens = opts.maxTokens
@@ -370,6 +376,62 @@ async function callLLM<T>(
 
   return {
     object: generated.object as T,
+    usage: {
+      inputTokens: generated.usage.promptTokens,
+      outputTokens: generated.usage.completionTokens,
+    },
+  }
+}
+
+/**
+ * JSON mode: use generateText with response_format: json_object, then
+ * parse and validate with Zod ourselves. This avoids sending the schema
+ * to OpenAI's structured output API (which rejects recursive/deep schemas).
+ * The prompt templates describe the expected JSON structure.
+ */
+async function callLLMJson<T>(
+  model: LanguageModel,
+  opts: GenerateObjectOptions,
+  system: string | undefined,
+  messages: CoreMessage[]
+): Promise<{ object: T; usage: TokenUsage }> {
+  const textOpts: Record<string, unknown> = {
+    model,
+    system,
+    messages,
+    maxRetries: 0,
+    abortSignal: AbortSignal.timeout(opts.timeoutMs ?? 180_000),
+    providerOptions: {
+      openai: { structuredOutputs: false, responseFormat: { type: "json_object" } },
+    },
+  }
+  if (opts.maxTokens) {
+    textOpts.maxTokens = opts.maxTokens
+  }
+  if (opts.temperature !== undefined) {
+    textOpts.temperature = opts.temperature
+  }
+
+  const generated = await (generateText as Function)(textOpts) as Awaited<
+    ReturnType<typeof generateText>
+  >
+
+  const text = generated.text as string
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(text)
+  } catch {
+    throw new Error(
+      `LLM response is not valid JSON: ${text.slice(0, 200)}...`
+    )
+  }
+
+  // Validate against Zod schema
+  const schema = opts.schema as { parse?: (v: unknown) => T }
+  const object = schema.parse ? schema.parse(parsed) : (parsed as T)
+
+  return {
+    object,
     usage: {
       inputTokens: generated.usage.promptTokens,
       outputTokens: generated.usage.completionTokens,

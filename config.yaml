@@ -1,42 +1,32 @@
 text_types:
-  book_title: Main title of the book
-  book_subtitle: Subtitle of the book
-  book_author: Author name(s)
-  book_metadata: Publisher, copyright, ISBN, edition info
-  section_heading: Chapter or section headings
-  section_text: Main body/narrative text
-  instruction_text: Instructions for activities or exercises
-  activity_number: Numbering for activities/exercises (e.g., "1.", "A)")
-  activity_title: Title of an activity or exercise
-  activity_option: Multiple choice or selectable options
-  activity_input_placeholder_text: Placeholder text in input fields
-  fill_in_the_blank: Text with blanks to fill in (use ___ for blanks)
-  image_associated_text: Captions, labels, or descriptions tied to images
-  image_overlay: Text overlaid directly on images
+  heading: A chapter, section, or subsection heading that introduces content; not metadata, labels, or merely bold text
+  text: General narrative, descriptive, or explanatory text
   math: Mathematical expressions (use LaTeX notation)
-  standalone_text: Text that doesn't fit other categories
-  header_text: Running headers
-  footer_text: Running footers
+  activity_instruction: Directions or prompts for activities and exercises
+  activity_question: A specific question to be answered within an activity or exercise
+  activity_fill_in_the_blank: Text with blanks to be filled in — use ___ for each blank
+  caption: Descriptive text accompanying an image, such as a caption or credit line
+  label: A short identifier for an image or figure, such as "Figure 3.1" or "Image A"
+  activity_number: A letter or number labeling a single activity or question (e.g., A, B, 1, 2)
+  book_metadata: Book or publication metadata such as publisher, copyright, ISBN, edition, or author credits
   page_number: Page numbers
-  other: Any text not covered above
-
-image_types:
-  inline_image: An image that is part of the content flow
-  full_bleed_image: A content-bearing image that fills most or all of the page background
-  background_image: A decorative or texture-like background element, not the main content image
-  diagram: A chart, diagram, or technical illustration
-  photo: A photograph
-  icon: A small decorative or functional icon
+  header: Running page headers
+  footer: Running page footers
+  quote: Quoted or cited text
 
 container_types:
-  heading: A heading or title block
-  paragraph: A block of continuous prose
-  stanza: A verse or stanza of poetry
-  list: A list of items (ordered or unordered)
-  table: A data table with rows and columns
-  sidebar: A sidebar or callout box
-  activity: An activity or exercise block
-  other: Anything that doesn't fit the above
+  image: An image — set image_id on this container. May have children for captions, labels, or text within the image.
+  activity: A single question, exercise, or activity
+  activity_option: A selectable choice in a multiple-choice or matching activity
+  group: A generic content grouping when no more specific container fits
+  list: An ordered or unordered list
+  list_item: A single item within a list
+  panel: A visually boxed, bordered, or shaded section of content
+  sidebar: A sidebar, callout, or aside set apart from the main content flow
+  table: A data table or grid with rows and columns — not just any boxed text
+  table_row: A single row within a table
+  table_cell: A single cell within a table row
+  preformatted: Content where line breaks are significant, such as poetry, verse, addresses, or lyrics
 
 section_types:
   front_cover: >
@@ -261,9 +251,9 @@ quiz_generation:
     - images_only
 
 pruned_text_types:
-  - header_text
-  - footer_text
   - page_number
+  - header
+  - footer
 
 pruned_section_types:
   - back_cover

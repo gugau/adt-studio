@@ -33,16 +33,14 @@ const basePage: PageInput = {
 
 const baseConfig: StructureConfig = {
   textTypes: [
-    { key: "header_text", description: "Header text" },
-    { key: "section_text", description: "Body text" },
-  ],
-  imageTypes: [
-    { key: "inline_image", description: "Inline image" },
+    { key: "header", description: "Running page header" },
+    { key: "body", description: "Body text" },
   ],
   containerTypes: [
-    { key: "paragraph", description: "Paragraph" },
+    { key: "image", description: "An image" },
+    { key: "group", description: "Content group" },
   ],
-  prunedTextTypes: ["header_text"],
+  prunedTextTypes: ["header"],
   promptName: "page_structuring",
   modelId: "openai:gpt-5.4",
   maxRetries: 2,
@@ -81,8 +79,8 @@ function makeScriptedLLMModel(
   }
 }
 
-function textNode(nodeType: string, text: string): LLMContentNode {
-  return { node_type: nodeType, text }
+function textNode(role: string, text: string): LLMContentNode {
+  return { role, text }
 }
 
 function refinement(
@@ -102,15 +100,15 @@ describe("structurePage", () => {
           attempts: [
             {
               reasoning: "Initial structure",
-              nodes: [textNode("section_text", "Body")],
+              nodes: [textNode("body", "Body")],
             },
           ],
         },
         {
           attempts: [
             refinement(true, "Structure is accurate after review", [
-              textNode("header_text", "Header"),
-              textNode("section_text", "Body revised"),
+              textNode("header", "Header"),
+              textNode("body", "Body revised"),
             ]),
           ],
         },
@@ -133,13 +131,13 @@ describe("structurePage", () => {
     expect(result.nodes).toEqual([
       {
         nodeId: "pg001_nd001",
-        nodeType: "header_text",
+        role: "header",
         text: "Header",
         isPruned: true,
       },
       {
         nodeId: "pg001_nd002",
-        nodeType: "section_text",
+        role: "body",
         text: "Body revised",
         isPruned: false,
       },
@@ -154,28 +152,28 @@ describe("structurePage", () => {
           attempts: [
             {
               reasoning: "Initial structure",
-              nodes: [textNode("section_text", "Body")],
+              nodes: [textNode("body", "Body")],
             },
           ],
         },
         {
           attempts: [
-            refinement(false, "Missed the header", [textNode("section_text", "Body only")]),
+            refinement(false, "Missed the header", [textNode("body", "Body only")]),
           ],
         },
         {
           attempts: [
             refinement(false, "Reading order still needs work", [
-              textNode("header_text", "Header"),
-              textNode("section_text", "Body first"),
+              textNode("header", "Header"),
+              textNode("body", "Body first"),
             ]),
           ],
         },
         {
           attempts: [
             refinement(true, "Structure is now correct", [
-              textNode("header_text", "Header"),
-              textNode("section_text", "Body final"),
+              textNode("header", "Header"),
+              textNode("body", "Body final"),
             ]),
           ],
         },
@@ -196,7 +194,7 @@ describe("structurePage", () => {
     expect(result.reasoning).toBe("Structure is now correct")
     expect(result.nodes[1]).toMatchObject({
       nodeId: "pg001_nd002",
-      nodeType: "section_text",
+      role: "body",
       text: "Body final",
     })
   })
@@ -209,25 +207,25 @@ describe("structurePage", () => {
           attempts: [
             {
               reasoning: "Initial structure",
-              nodes: [textNode("section_text", "Initial")],
+              nodes: [textNode("body", "Initial")],
             },
           ],
         },
         {
           attempts: [
-            refinement(false, "Needs header", [textNode("section_text", "Draft 1")]),
+            refinement(false, "Needs header", [textNode("body", "Draft 1")]),
           ],
         },
         {
           attempts: [
-            refinement(false, "Needs image placement", [textNode("section_text", "Draft 2")]),
+            refinement(false, "Needs image placement", [textNode("body", "Draft 2")]),
           ],
         },
         {
           attempts: [
             refinement(false, "Best available but still imperfect", [
-              textNode("header_text", "Header"),
-              textNode("section_text", "Draft 3"),
+              textNode("header", "Header"),
+              textNode("body", "Draft 3"),
             ]),
           ],
         },
@@ -242,13 +240,13 @@ describe("structurePage", () => {
     expect(result.nodes).toEqual([
       {
         nodeId: "pg001_nd001",
-        nodeType: "header_text",
+        role: "header",
         text: "Header",
         isPruned: true,
       },
       {
         nodeId: "pg001_nd002",
-        nodeType: "section_text",
+        role: "body",
         text: "Draft 3",
         isPruned: false,
       },
@@ -259,7 +257,7 @@ describe("structurePage", () => {
     const seenOptions: GenerateObjectOptions[] = []
     const invalidRefinement = refinement(false, "Bad refinement", [
       {
-        node_type: "unknown_type",
+        role: "unknown_type",
         image_id: "missing_image",
       },
     ])
@@ -269,7 +267,7 @@ describe("structurePage", () => {
           attempts: [
             {
               reasoning: "Initial structure",
-              nodes: [textNode("section_text", "Body")],
+              nodes: [textNode("body", "Body")],
             },
           ],
         },
@@ -277,7 +275,7 @@ describe("structurePage", () => {
           attempts: [
             invalidRefinement,
             refinement(true, "Fixed after validation retry", [
-              textNode("section_text", "Body corrected"),
+              textNode("body", "Body corrected"),
             ]),
           ],
         },
@@ -292,12 +290,12 @@ describe("structurePage", () => {
     )
 
     expect(validation?.valid).toBe(false)
-    expect(validation?.errors.join("\n")).toContain('Invalid node_type "unknown_type"')
+    expect(validation?.errors.join("\n")).toContain('Invalid role "unknown_type"')
     expect(validation?.errors.join("\n")).toContain('Invalid image_id "missing_image"')
     expect(result.reasoning).toBe("Fixed after validation retry")
     expect(result.nodes[0]).toMatchObject({
       nodeId: "pg001_nd001",
-      nodeType: "section_text",
+      role: "body",
       text: "Body corrected",
       isPruned: false,
     })

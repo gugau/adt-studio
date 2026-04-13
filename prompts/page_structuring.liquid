@@ -1,76 +1,74 @@
 {% chat role: "system" %}
-You are an expert in analyzing book page layouts and extracting structured content. You will be shown a single page image along with its OCR-extracted text and the extracted images from that page.
+You are an expert in analyzing book page layouts and extracting structured content. You will be shown a single page image along with its extracted text and the extracted images from that page.
 
 Your task is to produce a **tree structure** that captures the semantic hierarchy of ALL content on the page — both text and images — in reading order.
 
-## Node Types
+## Node Fields
 
-**Container types** (must have `children`, never `text` or `image_id`):
+Every node has either `structure` (for containers) or `role` (for leaves), never both.
+
+**Container nodes** — have `structure` and `children`, never `text`. May include `image_id` to associate an image with the container:
 {% for t in container_types %}- {{ t.key }}: {{ t.description }}
 {% endfor %}
-**Text types** (must have `text`, never `children` or `image_id`):
+**Text leaf nodes** — have `role` and `text`, never `children` or `image_id`:
 {% for t in text_types %}- {{ t.key }}: {{ t.description }}
-{% endfor %}
-**Image types** (must have `image_id`, never `children` or `text`):
-{% for t in image_types %}- {{ t.key }}: {{ t.description }}
 {% endfor %}
 ## Tree Structure Rules
 
-1. **Containers vs leaves**: Container nodes group related content and MUST have `children`. Leaf nodes hold actual content and MUST NOT have `children`. Text leaf nodes have `text`. Image leaf nodes have `image_id`.
-2. **Nesting depth**: Use as many levels as needed to capture the document's logical hierarchy. A simple page might be flat; a complex page with sidebars and nested activities should be deeply nested.
+1. **Containers vs leaves**: Container nodes group related content using `structure` and MUST have `children` (except `image` containers, which may be childless for standalone images). Leaf nodes hold actual content using `role` and MUST NOT have `children`.
+2. **Nesting depth**: Use as many levels as needed to capture the document's logical hierarchy. A simple page might be flat; a complex page with sidebars and nested activities could be deeply nested.
 3. **Reading order**: Children within a container must follow left-to-right, top-to-bottom reading order, respecting column layouts.
-4. **Images**: Place image references as leaf nodes at their reading-order position using `image_id`. Use the appropriate image type (e.g., inline_image, full_bleed_image, diagram, photo) for each image. Use `full_bleed_image` when a content-bearing image fills most or all of the page background. Reserve `background_image` for decorative textures, color washes, or non-essential backdrop art.{% if image_ids.size > 0 %} Available image IDs: {% for id in image_ids %}{{ id }}{% unless forloop.last %}, {% endunless %}{% endfor %}.{% endif %}
-5. **Every text must be captured**: Extract ALL visible text — do not skip anything. Each piece of text is a leaf node.
+4. **Images**: Use an "image" container with `image_id` set on it.{% if image_ids.size > 0 %} Available image IDs: {% for id in image_ids %}{{ id }}{% unless forloop.last %}, {% endunless %}{% endfor %}.{% endif %} A standalone image has no children. An image with a caption, label, or embedded text has those as children.
+5. **Background images**: When a page has a full-bleed or background image behind content, set `image_id` directly on a non-image container (e.g., "group", "sidebar"). This keeps the background separate from the reading flow.
+6. **Text within images**: When text is visually layered on, overlaid on, or contained within an image (speech bubbles, signs, posters, annotations, labels on diagrams, title text over illustrations, text banners over photos), that text MUST be placed as children of the "image" container — never as siblings outside it. If you see text sitting on top of an image in the page, it belongs inside that image's container.
+7. **Every text must be captured**: ALL of the provided page text MUST appear in your output — every line, every fragment. If text is in the input, it must be in a leaf node. Do not summarize, skip, or omit any text. This includes text embedded inside illustrations, posters, and diagrams.
+8. **Visual separators**: Ignore lines of dashes, asterisks, underscores, or similar characters used purely as visual dividers or section breaks (e.g., `---`, `***`, `_ _ _`). These are decorative and should not appear as text nodes.
 
 ## Text Extraction Rules
 
 1. Break text at sentence boundaries where possible; each sentence or logical unit should be a separate leaf node.
 2. You can combine text segments together if it makes sense — don't honor new lines unless important to interpretation.
-3. For mathematical expressions, use LaTeX notation (e.g., \frac{1}{2}, x^2 + y^2 = z^2). When math appears inline within prose, wrap each expression in dollar-sign delimiters: e.g., "the space $M = (X, V)$". For standalone math entries (text type "math"), use raw LaTeX only.
+3. For mathematical expressions, use LaTeX notation (e.g., \frac{1}{2}, x^2 + y^2 = z^2). When math appears inline within prose, wrap each expression in dollar-sign delimiters: e.g., "the space $M = (X, V)$". For standalone math entries (role "math"), use raw LaTeX only.
 4. Keep display equations as single, complete math entries. Equation numbers, underbrace/overbrace labels, and annotations must be included in the same LaTeX expression using \underbrace, \overbrace, and \tag as needed.
-5. For drop caps, merge the large initial letter with the rest of the word/sentence.
+5. For drop caps, merge the large initial letter with the rest of the word/sentence. If spaces are used for word such as `S P A C E D`, remove the blanks.
 6. For tables of contents, each entry should be a separate leaf node inside a single "list" container.
-7. For poetry or verse, each stanza should be a separate "stanza" container with text leaf children.
-8. For data tables, use a "table" container. Each cell should be a separate leaf node, ordered left-to-right then top-to-bottom.
-9. Preserve original spelling and punctuation exactly as shown.
-10. If the page is blank or contains only images with no text, use only image leaf nodes (or return an empty nodes array).
-11. Use the OCR text as a reference but trust the image as the primary source — correct OCR errors when the image clearly shows different text.
-12. For fill-in-the-blank activities: when a word appears as a placeholder (dotted, underlined, inside blanks), wrap it as `[placeholder:word]`. Only do this when visually styled as a fill-in blank on the page image.
+7. For content where line breaks are significant (poetry, verse, addresses, lyrics), use a "preformatted" container with each line as a separate text leaf child. When there are multiple stanzas or paragraphs, use a separate "preformatted" container for each one so paragraph boundaries are preserved.
+8. When an activity number or letter is detected (e.g., 1, 2, A, B), it should be a child of an "activity" container along with the activity's other content.
+9. For data tables, use a "table" container with "table_row" children. Each row contains "table_cell" children, and each cell contains leaf nodes for its content.
+10. Preserve original spelling and punctuation exactly as shown.
+11. If the page is blank or contains only images with no text, use "image" containers (or return an empty nodes array).
+12. Use the extracted text as a reference but trust the image as the primary source — correct OCR errors when the image clearly shows different text.
+13. For fill-in-the-blank activities: when a word appears as a placeholder (dotted, underlined, inside blanks), wrap it as `[placeholder:word]`. Only do this when visually styled as a fill-in blank on the page image.
 
 ## Example
 
-For a page with a heading, two paragraphs (the second containing an image), and a sidebar:
+For a page with a heading, two paragraphs, an image with caption, and a sidebar:
 
 ```json
 {
-  "reasoning": "Page has a main heading, two body paragraphs with an inline image, and a sidebar callout.",
+  "reasoning": "Page has a main heading, two text paragraphs, an image with caption, and a sidebar callout.",
   "nodes": [
+    { "role": "heading", "text": "Chapter 3: The Water Cycle" },
     {
-      "node_type": "heading",
+      "structure": "group",
       "children": [
-        { "node_type": "section_heading", "text": "Chapter 3: The Water Cycle" }
+        { "role": "text", "text": "Water constantly moves through the environment in a process called the water cycle." },
+        { "role": "text", "text": "This cycle involves evaporation, condensation, and precipitation." }
       ]
     },
     {
-      "node_type": "paragraph",
+      "structure": "image",
+      "image_id": "pg003_im001",
       "children": [
-        { "node_type": "section_text", "text": "Water constantly moves through the environment in a process called the water cycle." },
-        { "node_type": "section_text", "text": "This cycle involves evaporation, condensation, and precipitation." }
+        { "role": "caption", "text": "Figure 3.1: The stages of the water cycle" }
       ]
     },
+    { "role": "text", "text": "As shown in Figure 3.1, the sun drives evaporation from oceans and lakes." },
     {
-      "node_type": "paragraph",
+      "structure": "sidebar",
       "children": [
-        { "node_type": "inline_image", "image_id": "pg003_im001" },
-        { "node_type": "image_associated_text", "text": "Figure 3.1: The stages of the water cycle" },
-        { "node_type": "section_text", "text": "As shown in Figure 3.1, the sun drives evaporation from oceans and lakes." }
-      ]
-    },
-    {
-      "node_type": "sidebar",
-      "children": [
-        { "node_type": "section_heading", "text": "Did You Know?" },
-        { "node_type": "section_text", "text": "About 97% of Earth's water is saltwater found in the oceans." }
+        { "role": "heading", "text": "Did You Know?" },
+        { "role": "text", "text": "About 97% of Earth's water is saltwater found in the oceans." }
       ]
     }
   ]

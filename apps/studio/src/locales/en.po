@@ -362,14 +362,20 @@ msgstr "Activities enabled"
 msgid "Activity"
 msgstr "Activity"
 
-msgid "Activity Input Placeholder"
-msgstr "Activity Input Placeholder"
+#~ msgid "Activity Input Placeholder"
+#~ msgstr "Activity Input Placeholder"
+
+msgid "Activity Instruction"
+msgstr "Activity Instruction"
 
 msgid "Activity Number"
 msgstr "Activity Number"
 
 msgid "Activity Option"
 msgstr "Activity Option"
+
+msgid "Activity Question"
+msgstr "Activity Question"
 
 msgid "Activity Rendering"
 msgstr "Activity Rendering"
@@ -380,8 +386,8 @@ msgstr "Activity section types are available for classification and rendering."
 msgid "Activity section types are hidden from the classifier and skipped during rendering."
 msgstr "Activity section types are hidden from the classifier and skipped during rendering."
 
-msgid "Activity Title"
-msgstr "Activity Title"
+#~ msgid "Activity Title"
+#~ msgstr "Activity Title"
 
 msgid "Activity: Fill in a Table"
 msgstr "Activity: Fill in a Table"
@@ -647,8 +653,8 @@ msgstr "Back to preview"
 msgid "Background"
 msgstr "Background"
 
-msgid "Background Image"
-msgstr "Background Image"
+#~ msgid "Background Image"
+#~ msgstr "Background Image"
 
 #~ msgid "Background Tasks"
 #~ msgstr "Background Tasks"
@@ -675,11 +681,14 @@ msgstr "Beta"
 msgid "Bit Rate"
 msgstr "Bit Rate"
 
+#~ msgid "Body"
+#~ msgstr "Body"
+
 msgid "Book"
 msgstr "Book"
 
-msgid "Book Author"
-msgstr "Book Author"
+#~ msgid "Book Author"
+#~ msgstr "Book Author"
 
 msgid "Book data is outdated and must be rebuilt."
 msgstr "Book data is outdated and must be rebuilt."
@@ -690,8 +699,8 @@ msgstr "Book Metadata"
 #~ msgid "Book Override"
 #~ msgstr "Book Override"
 
-msgid "Book Subtitle"
-msgstr "Book Subtitle"
+#~ msgid "Book Subtitle"
+#~ msgstr "Book Subtitle"
 
 msgid "Book Summary"
 msgstr "Book Summary"
@@ -699,8 +708,8 @@ msgstr "Book Summary"
 msgid "Book Summary Prompt"
 msgstr "Book Summary Prompt"
 
-msgid "Book Title"
-msgstr "Book Title"
+#~ msgid "Book Title"
+#~ msgstr "Book Title"
 
 msgid "Boxed Text"
 msgstr "Boxed Text"
@@ -744,6 +753,9 @@ msgstr "Calls"
 msgid "Cancel"
 msgstr "Cancel"
 
+msgid "Caption"
+msgstr "Caption"
+
 msgid "Caption Prompt"
 msgstr "Caption Prompt"
 
@@ -758,6 +770,9 @@ msgstr "Cartoon"
 
 msgid "Catalog Translation"
 msgstr "Catalog Translation"
+
+#~ msgid "Cell"
+#~ msgstr "Cell"
 
 msgid "Change"
 msgstr "Change"
@@ -986,6 +1001,9 @@ msgstr "Custom:"
 
 #~ msgid "Debug Panel"
 #~ msgstr "Debug Panel"
+
+#~ msgid "Decorative"
+#~ msgstr "Decorative"
 
 #~ msgid "Decrease font size"
 #~ msgstr "Decrease font size"
@@ -1381,6 +1399,9 @@ msgstr "Failed to load validation checklist:"
 msgid "Failed:"
 msgstr "Failed:"
 
+#~ msgid "Figure"
+#~ msgstr "Figure"
+
 msgid "Fill in the Blank"
 msgstr "Fill in the Blank"
 
@@ -1411,8 +1432,11 @@ msgstr "Flagged findings"
 msgid "Flat Vector"
 msgstr "Flat Vector"
 
-msgid "Footer Text"
-msgstr "Footer Text"
+msgid "Footer"
+msgstr "Footer"
+
+#~ msgid "Footer Text"
+#~ msgstr "Footer Text"
 
 msgid "Foreword"
 msgstr "Foreword"
@@ -1540,6 +1564,9 @@ msgstr "Google"
 msgid "Google AI API Key"
 msgstr "Google AI API Key"
 
+msgid "Group"
+msgstr "Group"
+
 msgid "Group text labels near vector images (e.g. chart dimensions, speech bubbles) and extract as raster crops. Disable to extract only the core vector shapes."
 msgstr "Group text labels near vector images (e.g. chart dimensions, speech bubbles) and extract as raster crops. Disable to extract only the core vector shapes."
 
@@ -1549,8 +1576,11 @@ msgstr "Group text labels near vector images (e.g. chart dimensions, speech bubb
 msgid "Groups content into logical sections"
 msgstr "Groups content into logical sections"
 
-msgid "Header Text"
-msgstr "Header Text"
+msgid "Header"
+msgstr "Header"
+
+#~ msgid "Header Text"
+#~ msgstr "Header Text"
 
 msgid "Heading"
 msgstr "Heading"
@@ -1570,14 +1600,17 @@ msgstr "Hit"
 msgid "HTML"
 msgstr "HTML"
 
-msgid "Icon"
-msgstr "Icon"
+#~ msgid "Icon"
+#~ msgstr "Icon"
 
 msgid "Illustration"
 msgstr "Illustration"
 
-msgid "Image Associated Text"
-msgstr "Image Associated Text"
+msgid "Image"
+msgstr "Image"
+
+#~ msgid "Image Associated Text"
+#~ msgstr "Image Associated Text"
 
 msgid "Image Captioning"
 msgstr "Image Captioning"
@@ -1615,14 +1648,17 @@ msgstr "Image Meaningfulness"
 msgid "Image Meaningfulness Prompt"
 msgstr "Image Meaningfulness Prompt"
 
-msgid "Image Overlay"
-msgstr "Image Overlay"
+#~ msgid "Image Overlay"
+#~ msgstr "Image Overlay"
 
 msgid "Image Segmentation"
 msgstr "Image Segmentation"
 
 msgid "Image Segmentation Prompt"
 msgstr "Image Segmentation Prompt"
+
+#~ msgid "Image Text"
+#~ msgstr "Image Text"
 
 msgid "Image Type"
 msgstr "Image Type"
@@ -1663,8 +1699,8 @@ msgstr "Increase indent"
 msgid "Infographic"
 msgstr "Infographic"
 
-msgid "Inline Image"
-msgstr "Inline Image"
+#~ msgid "Inline Image"
+#~ msgstr "Inline Image"
 
 msgid "Input Tokens"
 msgstr "Input Tokens"
@@ -1675,8 +1711,11 @@ msgstr "Inside Cover"
 msgid "Institution"
 msgstr "Institution"
 
-msgid "Instruction Text"
-msgstr "Instruction Text"
+#~ msgid "Instruction"
+#~ msgstr "Instruction"
+
+#~ msgid "Instruction Text"
+#~ msgstr "Instruction Text"
 
 msgid "Issues"
 msgstr "Issues"
@@ -1745,6 +1784,9 @@ msgstr "Linked to: {value}"
 
 msgid "List"
 msgstr "List"
+
+msgid "List Item"
+msgstr "List Item"
 
 msgid "Live"
 msgstr "Live"
@@ -2341,11 +2383,14 @@ msgstr "Pages per Quiz"
 msgid "Pages reviewed"
 msgstr "Pages reviewed"
 
+msgid "Panel"
+msgstr "Panel"
+
 msgid "Paper Collage"
 msgstr "Paper Collage"
 
-msgid "Paragraph"
-msgstr "Paragraph"
+#~ msgid "Paragraph"
+#~ msgstr "Paragraph"
 
 msgid "Parts"
 msgstr "Parts"
@@ -2371,8 +2416,8 @@ msgstr "Per-Step Breakdown"
 #~ msgid "pg {0}"
 #~ msgstr "pg {0}"
 
-msgid "Photo"
-msgstr "Photo"
+#~ msgid "Photo"
+#~ msgstr "Photo"
 
 msgid "Photograph"
 msgstr "Photograph"
@@ -2403,6 +2448,9 @@ msgstr "Polishing paragraphs to perfection..."
 
 msgid "Portuguese (BR)"
 msgstr "Portuguese (BR)"
+
+msgid "Preformatted"
+msgstr "Preformatted"
 
 msgid "Press Enter to add"
 msgstr "Press Enter to add"
@@ -2492,6 +2540,9 @@ msgstr "Quizzes"
 msgid "Quizzes are linked to other pages in this book"
 msgstr "Quizzes are linked to other pages in this book"
 
+msgid "Quote"
+msgstr "Quote"
+
 msgid "Re-enable type"
 msgstr "Re-enable type"
 
@@ -2521,6 +2572,12 @@ msgstr "Re-rendering..."
 
 msgid "Re-run {stageLabel}"
 msgstr "Re-run {stageLabel}"
+
+msgid "Re-run page structuring"
+msgstr "Re-run page structuring"
+
+msgid "Re-structure"
+msgstr "Re-structure"
 
 msgid "Realistic / Photo"
 msgstr "Realistic / Photo"
@@ -2679,6 +2736,9 @@ msgstr "Reviewer validation summary"
 msgid "Rewriting the story of this section..."
 msgstr "Rewriting the story of this section..."
 
+#~ msgid "Row"
+#~ msgstr "Row"
+
 msgid "Run {stageLabel}"
 msgstr "Run {stageLabel}"
 
@@ -2803,8 +2863,8 @@ msgstr "Section {0} (pruned)"
 #~ msgid "Section Data"
 #~ msgstr "Section Data"
 
-msgid "Section Heading"
-msgstr "Section Heading"
+#~ msgid "Section Heading"
+#~ msgstr "Section Heading"
 
 msgid "Section label"
 msgstr "Section label"
@@ -2821,8 +2881,8 @@ msgstr "Section pruned from flow"
 #~ msgid "Section Render Strategies"
 #~ msgstr "Section Render Strategies"
 
-msgid "Section Text"
-msgstr "Section Text"
+#~ msgid "Section Text"
+#~ msgstr "Section Text"
 
 msgid "Section Types"
 msgstr "Section Types"
@@ -2996,11 +3056,11 @@ msgstr "Sprinkling some digital fairy dust..."
 msgid "stage first."
 msgstr "stage first."
 
-msgid "Standalone Text"
-msgstr "Standalone Text"
+#~ msgid "Standalone Text"
+#~ msgstr "Standalone Text"
 
-msgid "Stanza"
-msgstr "Stanza"
+#~ msgid "Stanza"
+#~ msgstr "Stanza"
 
 msgid "Start a reviewer session"
 msgstr "Start a reviewer session"
@@ -3077,8 +3137,14 @@ msgstr "System Prompt"
 msgid "Table"
 msgstr "Table"
 
+msgid "Table Cell"
+msgstr "Table Cell"
+
 msgid "Table of Contents"
 msgstr "Table of Contents"
+
+msgid "Table Row"
+msgstr "Table Row"
 
 msgid "Tables"
 msgstr "Tables"

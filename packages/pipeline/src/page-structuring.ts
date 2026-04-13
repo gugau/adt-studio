@@ -17,12 +17,13 @@ const PAGE_STRUCTURING_MAX_TOKENS = 16384
 
 export interface StructureConfig {
   textTypes: TypeDef[]
-  imageTypes: TypeDef[]
   containerTypes: TypeDef[]
   prunedTextTypes: string[]
   promptName: string
   modelId: string
   maxRetries: number
+  /** Max self-review refinement passes. Defaults to PAGE_STRUCTURING_MAX_REFINEMENTS (3). Set to 0 to skip refinement. */
+  maxRefinements?: number
 }
 
 export interface PageInput {
@@ -58,10 +59,11 @@ export async function structurePage(
   const imageIds = page.images.map((img) => img.imageId)
   const baseContext = buildPageStructuringContext(page, config, imageIds)
   const validate = (raw: unknown) =>
-    validatePageStructuring(raw, config.textTypes, config.imageTypes, config.containerTypes, imageIds)
+    validatePageStructuring(raw, config.textTypes, config.containerTypes, imageIds)
 
   const result = await llmModel.generateObject<RawPageStructuringResult>({
     schema: buildPageStructuringLLMSchema(),
+    mode: "json",
     prompt: config.promptName,
     context: baseContext,
     validate,
@@ -77,7 +79,8 @@ export async function structurePage(
   let candidate: RawPageStructuringResult = result.object
   const priorReviewNotes: string[] = []
 
-  for (let iteration = 1; iteration <= PAGE_STRUCTURING_MAX_REFINEMENTS; iteration++) {
+  const maxRefinements = config.maxRefinements ?? PAGE_STRUCTURING_MAX_REFINEMENTS
+  for (let iteration = 1; iteration <= maxRefinements; iteration++) {
     const refinement = await runPageStructuringRefinementPass({
       page,
       config,
@@ -116,7 +119,6 @@ function buildPageStructuringContext(
       images: page.images,
     },
     text_types: config.textTypes,
-    image_types: config.imageTypes,
     container_types: config.containerTypes,
     image_ids: imageIds,
   }
@@ -135,22 +137,26 @@ function finalizePageStructuringNodes(
       nodeCounter++
       const nodeId = `${pageId}_nd${String(nodeCounter).padStart(3, "0")}`
 
-      if (node.children && node.children.length > 0) {
-        return {
+      const hasChildren = node.children != null && node.children.length > 0
+      const isImageContainer = node.structure === "image" && node.image_id != null
+
+      if (hasChildren || isImageContainer) {
+        const container: ContentNodeData = {
           nodeId,
-          nodeType: node.node_type,
-          children: assignIds(node.children),
+          structure: node.structure!,
+          children: hasChildren ? assignIds(node.children!) : [],
           isPruned: false,
         }
+        if (node.image_id != null) container.imageId = node.image_id
+        return container
       }
 
       const finalized: ContentNodeData = {
         nodeId,
-        nodeType: node.node_type,
-        isPruned: prunedSet.has(node.node_type),
+        role: node.role!,
+        isPruned: prunedSet.has(node.role!),
       }
       if (node.text != null) finalized.text = node.text
-      if (node.image_id != null) finalized.imageId = node.image_id
       return finalized
     })
   }
@@ -182,6 +188,7 @@ async function runPageStructuringRefinementPass(options: {
 
   const result = await llmModel.generateObject<PageStructuringRefinementLLMOutput>({
     schema: buildPageStructuringRefinementLLMSchema(),
+    mode: "json",
     prompt: PAGE_STRUCTURING_REFINEMENT_PROMPT,
     context: {
       ...baseContext,
@@ -207,7 +214,6 @@ async function runPageStructuringRefinementPass(options: {
 function validatePageStructuring(
   result: unknown,
   textTypes: TypeDef[],
-  imageTypes: TypeDef[],
   containerTypes: TypeDef[],
   validImageIds: string[]
 ): ValidationResult {
@@ -215,7 +221,6 @@ function validatePageStructuring(
   return validatePageStructuringNodes(
     r.nodes,
     textTypes,
-    imageTypes,
     containerTypes,
     validImageIds
   )
@@ -224,76 +229,119 @@ function validatePageStructuring(
 function validatePageStructuringNodes(
   nodes: LLMContentNode[],
   textTypes: TypeDef[],
-  imageTypes: TypeDef[],
   containerTypes: TypeDef[],
   validImageIds: string[]
 ): ValidationResult {
   const textTypeKeys = new Set(textTypes.map((t) => t.key))
-  const imageTypeKeys = new Set(imageTypes.map((t) => t.key))
   const containerTypeKeys = new Set(containerTypes.map((t) => t.key))
-  const allTypeKeys = new Set([...textTypeKeys, ...imageTypeKeys, ...containerTypeKeys])
   const imageIdSet = new Set(validImageIds)
 
   const errors: string[] = []
 
-  function walkNodes(nodes: LLMContentNode[], path: string) {
+  let tooDeep = false
+
+  function walkNodes(nodes: LLMContentNode[], path: string, depth: number) {
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i]
       const nodePath = `${path}[${i}]`
 
-      if (!allTypeKeys.has(node.node_type)) {
-        errors.push(
-          `${nodePath}: Invalid node_type "${node.node_type}". Must be one of: ${[...allTypeKeys].join(", ")}`
-        )
-      }
-
       const hasChildren = node.children != null && node.children.length > 0
       const hasText = node.text != null
       const hasImage = node.image_id != null
+      const hasStructure = node.structure != null
+      const hasRole = node.role != null
 
-      // Container nodes must use container types
-      if (hasChildren && !containerTypeKeys.has(node.node_type)) {
+      // Image container: structure "image" with image_id, optionally with children
+      const isImageContainer = hasStructure && node.structure === "image" && hasImage
+
+      // Detect nodes that look like failed containers — the LLM wanted to nest
+      // deeper but couldn't. Allow image containers without children.
+      if (!hasChildren && hasStructure && !hasText && !hasImage) {
+        tooDeep = true
         errors.push(
-          `${nodePath}: node_type "${node.node_type}" has children but is not a container type. Container types: ${[...containerTypeKeys].join(", ")}`
+          `${nodePath}: Node has structure "${node.structure}" but no children, text, or image_id. The tree is nested too deeply — simplify by removing unnecessary intermediate containers or flattening content.`
         )
+        continue
       }
 
-      // Text nodes must use text types
-      if (hasText && !textTypeKeys.has(node.node_type)) {
-        errors.push(
-          `${nodePath}: node_type "${node.node_type}" has text but is not a text type. Text types: ${[...textTypeKeys].join(", ")}`
-        )
-      }
-
-      // Image nodes must use image types
-      if (hasImage && !imageTypeKeys.has(node.node_type)) {
-        errors.push(
-          `${nodePath}: node_type "${node.node_type}" has image_id but is not an image type. Image types: ${[...imageTypeKeys].join(", ")}`
-        )
+      if (hasChildren || isImageContainer) {
+        // Container node: must have structure, no role. May have image_id.
+        if (!hasStructure) {
+          errors.push(
+            `${nodePath}: Container node (has children) is missing "structure". Set structure to one of: ${[...containerTypeKeys].join(", ")}`
+          )
+        } else if (!containerTypeKeys.has(node.structure!)) {
+          errors.push(
+            `${nodePath}: Invalid structure "${node.structure}". Must be one of: ${[...containerTypeKeys].join(", ")}`
+          )
+        }
+        if (hasRole) {
+          errors.push(
+            `${nodePath}: Container node should not have "role" — use "structure" for containers and "role" for leaves.`
+          )
+        }
+        if (hasImage && !imageIdSet.has(node.image_id!)) {
+          errors.push(
+            `${nodePath}: Invalid image_id "${node.image_id}". Must be one of: ${validImageIds.join(", ")}`
+          )
+        }
+      } else if (hasText) {
+        // Text leaf: must have role from text types, no structure
+        if (!hasRole) {
+          errors.push(
+            `${nodePath}: Text leaf node is missing "role". Set role to one of: ${[...textTypeKeys].join(", ")}`
+          )
+        } else if (!textTypeKeys.has(node.role!)) {
+          errors.push(
+            `${nodePath}: Invalid role "${node.role}" for text leaf. Must be one of: ${[...textTypeKeys].join(", ")}`
+          )
+        }
+        if (hasStructure) {
+          errors.push(
+            `${nodePath}: Text leaf should not have "structure" — use "role" for leaves and "structure" for containers.`
+          )
+        }
+      } else {
+        // Node doesn't fit container or text-leaf pattern
+        if (hasRole && !textTypeKeys.has(node.role!)) {
+          errors.push(
+            `${nodePath}: Invalid role "${node.role}". Must be one of: ${[...textTypeKeys].join(", ")}`
+          )
+        }
+        if (hasImage && !imageIdSet.has(node.image_id!)) {
+          errors.push(
+            `${nodePath}: Invalid image_id "${node.image_id}". Must be one of: ${validImageIds.join(", ")}`
+          )
+        }
+        if (!hasRole && !hasStructure) {
+          errors.push(
+            `${nodePath}: Node has no structure, role, text, or image_id. Every node must be either a container (structure + children) or a leaf (role + text).`
+          )
+        }
       }
 
       // Leaf nodes should not have both text and image
       if (hasText && hasImage) {
         errors.push(
-          `${nodePath}: Node has both text and image_id. A leaf node should have one or the other.`
-        )
-      }
-
-      // Validate image IDs
-      if (hasImage && !imageIdSet.has(node.image_id!)) {
-        errors.push(
-          `${nodePath}: Invalid image_id "${node.image_id}". Must be one of: ${validImageIds.join(", ")}`
+          `${nodePath}: Node has both text and image_id. Use an "image" container with text children instead.`
         )
       }
 
       // Recurse into children
       if (hasChildren) {
-        walkNodes(node.children!, `${nodePath}.children`)
+        walkNodes(node.children!, `${nodePath}.children`, depth + 1)
       }
     }
   }
 
-  walkNodes(nodes, "nodes")
+  walkNodes(nodes, "nodes", 0)
+
+  if (tooDeep) {
+    errors.push(
+      "IMPORTANT: Your tree nesting is too deep. Reduce nesting by removing unnecessary intermediate containers. Not every visual grouping needs its own container — flatten where possible."
+    )
+  }
+
   return { valid: errors.length === 0, errors }
 }
 
@@ -305,16 +353,12 @@ export function buildStructureConfig(appConfig: AppConfig): StructureConfig {
   const textTypes: TypeDef[] = Object.entries(appConfig.text_types ?? {}).map(
     ([key, description]) => ({ key, description })
   )
-  const imageTypes: TypeDef[] = Object.entries(appConfig.image_types ?? {}).map(
-    ([key, description]) => ({ key, description })
-  )
   const containerTypes: TypeDef[] = Object.entries(appConfig.container_types ?? {}).map(
     ([key, description]) => ({ key, description })
   )
 
   return {
     textTypes,
-    imageTypes,
     containerTypes,
     prunedTextTypes: appConfig.pruned_text_types ?? [],
     promptName: appConfig.page_structuring?.prompt ?? "page_structuring",
