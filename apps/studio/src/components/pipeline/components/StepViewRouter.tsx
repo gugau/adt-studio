@@ -1,6 +1,9 @@
 import { createContext, useContext, useCallback, useState, type ReactNode } from "react"
+import { Link } from "@tanstack/react-router"
+import { Settings } from "lucide-react"
 import { STAGES, toCamelLabel } from "../stage-config"
 import { getStageLabelI18n } from "../pipeline-i18n"
+import { SETTINGS_STAGE_SLUGS } from "../settings-routing"
 import {
   BookView,
   ExtractView,
@@ -110,6 +113,16 @@ export function StepViewRouter({ step, bookLabel, selectedPageId, onSelectPage }
           )}
           <div ref={setHeaderSlotEl} className="contents" />
           {headerExtra}
+          {(SETTINGS_STAGE_SLUGS as readonly string[]).includes(step) && (
+            <Link
+              to="/books/$label/$step/settings"
+              params={{ label: bookLabel, step }}
+              search={{ tab: "general" }}
+              className="ml-auto text-white/60 hover:text-white transition-colors"
+            >
+              <Settings className="w-3.5 h-3.5" />
+            </Link>
+          )}
         </div>
 
         {/* Step content */}

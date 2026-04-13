@@ -73,7 +73,7 @@ export function StepSettingsPage() {
         <Link
           to="/books/$label/$step"
           params={{ label, step }}
-          className="text-white/60 hover:text-white transition-colors"
+          className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-black/15 text-white/80 hover:bg-black/25 hover:text-white transition-colors"
         >
           <X className="w-4 h-4" />
         </Link>
