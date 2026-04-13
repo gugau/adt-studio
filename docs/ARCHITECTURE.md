@@ -66,6 +66,33 @@ Data and dependencies flow in one direction only:
 └─────────────────────────────────────────────────────┘
 ```
 
+### Optional Translation Evaluation Runtime
+
+Translation evaluation adds an optional runtime boundary alongside the main ADT Studio stack:
+
+```text
+apps/studio
+   |
+   v
+apps/api
+   |
+   +--> eval-service
+           |
+           v
+         mlflow
+```
+
+Responsibilities:
+
+- `apps/api`
+  - owns books, config, tasks, versioned results, and UI-facing APIs
+- `eval-service`
+  - executes translation evaluations with MLflow `make_judge`
+- `mlflow`
+  - stores run metadata and artifacts
+
+This is intentionally separate from the main Node/TypeScript runtime. ADT Studio stores the normalized result locally after each successful run; it does not depend on MLflow as the system of record.
+
 **Rule**: Frontend apps communicate with the API over HTTP only. They never import from `packages/` directly.
 
 **Exception**: `@adt/types` may be imported by `apps/studio` for the shared `PIPELINE` constant and derived lookups (stage/step names, ordering). No business logic — type-level constants only.
@@ -178,10 +205,33 @@ PDF file
                      │
               [text-catalog]    ─── collects all translatable text
               [catalog-translation]  ─── translates per language
+              [translation-evaluation] ─── optional MLflow-backed quality review
               [tts]             ─── generates audio
                      │
               [package-web]     ─── bundles HTML + assets + audio → export
 ```
+
+### Translation Evaluation Flow
+
+Translation evaluation is not a normal pipeline step. It is an optional validation workflow that runs against generated translations.
+
+Request path:
+
+1. User enables translation evaluation in Validation settings.
+2. User starts a run from `Validation -> Translation Evaluation`.
+3. API loads the latest source `text-catalog` and target `text-catalog-translation`.
+4. API resolves translation-evaluation config from the book config.
+5. API applies scope/sampling rules and submits a `translation-evaluation` background task.
+6. API sends a normalized request to `eval-service`.
+7. `eval-service` uses MLflow `make_judge`.
+8. `eval-service` logs the run to MLflow and returns a normalized result.
+9. API stores the returned result as a versioned `translation-evaluation` node.
+10. Studio refreshes and shows the stored result.
+
+This separation keeps:
+
+- evaluation execution in the Python/MLflow runtime
+- user-visible state and history in ADT Studio storage
 
 ---
 
@@ -202,6 +252,35 @@ books/
 ```
 
 The `.db` file uses entity versioning — `node_data` rows are never overwritten. Each `putNodeData()` call inserts a new row with `version = MAX(version) + 1`. Full rollback history is preserved.
+
+Translation evaluation results follow the same pattern. Each saved evaluation result is stored as a new `translation-evaluation` node version keyed by language.
+
+## Translation Evaluation Configuration
+
+Translation evaluation config lives under `translation_evaluation` in the merged book config.
+
+Key fields:
+
+- `enable_translation_evaluation`
+- `judge_model`
+- `max_retries`
+- `evaluation_scope_mode`
+- `evaluation_scope_count`
+- `sampling_method`
+- `sampling_seed`
+- `batch_size`
+- `judge_instructions`
+- `additional_guidance`
+
+Legacy compatibility is still supported for:
+
+- `enabled`
+- `sample_size`
+
+Scope selection and execution are intentionally separate:
+
+- scope mode/count define how many entries are selected for the run
+- batch size defines how many selected entries are processed per chunk
 
 ---
 
@@ -238,14 +317,21 @@ API ──── step-start ────► mark step + stage as "running"
 | API routes | `apps/api/src/routes/` |
 | API stage runners | `apps/api/src/services/step-runner.ts` |
 | Stage queue + SSE service | `apps/api/src/services/stage-service.ts` |
+| Translation evaluation route | `apps/api/src/routes/translation-evaluations.ts` |
+| Translation evaluation storage service | `apps/api/src/services/translation-evaluation-service.ts` |
+| Eval service client | `apps/api/src/services/eval-service-client.ts` |
 | API client (frontend) | `apps/studio/src/api/client.ts` |
 | Book layout + run context | `apps/studio/src/routes/books.$label.tsx` |
 | Unified stage/step status hook | `apps/studio/src/hooks/use-book-run.ts` |
 | Stage sidebar | `apps/studio/src/components/pipeline/StageSidebar.tsx` |
 | Stage color + icon config | `apps/studio/src/components/pipeline/stage-config.ts` |
 | Stage view components | `apps/studio/src/components/pipeline/stages/` |
+| Translation evaluation results UI | `apps/studio/src/components/validation/TranslationEvaluationTab.tsx` |
+| Translation evaluation settings UI | `apps/studio/src/components/validation/TranslationEvaluationSettingsTab.tsx` |
 | Global pipeline config | `config.yaml` |
 | LLM prompt templates | `prompts/*.liquid` |
 | HTML rendering templates | `templates/` |
+| Translation evaluation worker | `services/eval-service/app/main.py` |
 | Coding standards | `docs/GUIDELINES.md` |
 | Architecture decision records | `docs/DECISIONS.md` |
+| Translation evaluation details | `docs/TRANSLATION-EVALUATION.md` |

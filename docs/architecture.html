@@ -419,6 +419,7 @@
 <div class="tabs">
   <button class="tab active" onclick="showTab('architecture')">Architecture</button>
   <button class="tab" onclick="showTab('dataflow')">Data Flow</button>
+  <button class="tab" onclick="showTab('translation-eval')">Translation Eval</button>
   <button class="tab" onclick="showTab('libraries')">Libraries</button>
   <button class="tab" onclick="showTab('principles')">Core Principles</button>
   <button class="tab" onclick="showTab('security')">Security</button>
@@ -504,6 +505,11 @@
     <h3 style="color: var(--danger);">Boundary Rule</h3>
     <p>Frontend apps (studio, desktop) MUST NOT import directly from packages. All data flows through the API via HTTP. This ensures clean separation and allows the API to enforce validation, authentication, and business logic.</p>
   </div>
+
+  <div class="card" style="border-color: var(--accent5);">
+    <h3 style="color: var(--accent5);">Optional Translation Evaluation Runtime</h3>
+    <p>Translation evaluation adds an external worker boundary. <code>apps/api</code> submits normalized evaluation requests to <code>eval-service</code>, which runs MLflow <code>make_judge</code> and logs runs to MLflow. ADT Studio still stores normalized results locally and does not read results back from MLflow directly.</p>
+  </div>
 </div>
 
 <!-- ==================== DATA FLOW ==================== -->
@@ -575,6 +581,72 @@
   <div class="card">
     <h3>LLM Caching</h3>
     <p>Every LLM call is cached by hashing all ordered inputs (model, prompt, parameters). If a pipeline step is re-run with identical parameters, the cached response is returned instantly. Cache lives inside the book directory so it travels with the book.</p>
+  </div>
+</div>
+
+<!-- ==================== TRANSLATION EVAL ==================== -->
+<div id="translation-eval" class="tab-content">
+  <h2 style="margin-bottom: 1.5rem;">Translation Evaluation</h2>
+
+  <div class="card">
+    <h3>Purpose</h3>
+    <p>Translation evaluation is an optional validation workflow for translated <code>text-catalog</code> entries. It reviews generated translations, stores a normalized acceptable/needs-review result per entry, and exposes the results in the Validation UI without making MLflow the system of record.</p>
+  </div>
+
+  <div class="flow-container">
+    <div class="flow-step" style="border-color: var(--accent4);">
+      <div class="icon">🖥️</div>
+      <div class="name">Validation UI</div>
+      <div class="pkg">apps/studio</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="border-color: var(--accent);">
+      <div class="icon">🌐</div>
+      <div class="name">Run API</div>
+      <div class="pkg">apps/api</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="border-color: var(--accent2);">
+      <div class="icon">🧪</div>
+      <div class="name">Eval Service</div>
+      <div class="pkg">services/eval-service</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="border-color: var(--accent3);">
+      <div class="icon">📊</div>
+      <div class="name">MLflow Run</div>
+      <div class="pkg">mlflow</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="border-color: var(--accent5);">
+      <div class="icon">💾</div>
+      <div class="name">Stored Result</div>
+      <div class="pkg">book DB</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Docker Compose Infra</h3>
+    <p>When enabled in Docker Compose, translation evaluation adds two services:</p>
+    <p style="margin-top: 0.75rem;"><strong>eval-service</strong> — FastAPI worker that receives normalized evaluation requests from <code>apps/api</code>, runs MLflow <code>make_judge</code>, and returns normalized results.</p>
+    <p style="margin-top: 0.5rem;"><strong>mlflow</strong> — tracking server that stores run metadata and artifacts for each evaluation run.</p>
+  </div>
+
+  <div class="card">
+    <h3>Request Flow</h3>
+    <p>1. The user enables translation evaluation in Validation settings.</p>
+    <p>2. The API loads source and translated text catalogs for the selected language.</p>
+    <p>3. The API applies scope, sampling, batching, and judge configuration.</p>
+    <p>4. The API submits a <code>translation-evaluation</code> task and calls <code>eval-service</code>.</p>
+    <p>5. The worker evaluates the selected entries with MLflow <code>make_judge</code>.</p>
+    <p>6. The worker logs the run to MLflow and returns a normalized result payload.</p>
+    <p>7. The API stores the payload as a versioned <code>translation-evaluation</code> node and Studio renders the stored result.</p>
+  </div>
+
+  <div class="card">
+    <h3>Settings</h3>
+    <p>Translation evaluation settings live under <code>translation_evaluation</code> in the book config. The current model supports:</p>
+    <p style="margin-top: 0.75rem;"><code>enable_translation_evaluation</code>, <code>judge_model</code>, <code>max_retries</code>, <code>evaluation_scope_mode</code>, <code>evaluation_scope_count</code>, <code>sampling_method</code>, <code>sampling_seed</code>, <code>batch_size</code>, <code>judge_instructions</code>, and <code>additional_guidance</code>.</p>
   </div>
 </div>
 
