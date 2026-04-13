@@ -381,8 +381,8 @@ export function ExportDialog({
   error,
 }: ExportDialogProps) {
   const { t } = useLingui();
-  const availableFeatures = useAvailableExportFeatures();
-  const allFeatures = useAllProjectFeatures();
+  const availableFeatures = useAvailableExportFeatures(bookLabel);
+  const allFeatures = useAllProjectFeatures(bookLabel);
   const formatConfigByType = buildExportFormatConfig(t);
 
   const formatError =
@@ -437,7 +437,7 @@ export function ExportDialog({
           readers who may not be fluent in written language.
         </Trans>
       ),
-      done: false,
+      done: allFeatures.toggleable.signLanguage,
       iconBg: "bg-cyan-50",
       iconText: "text-cyan-600",
     },
@@ -447,6 +447,7 @@ export function ExportDialog({
     allFeatures.toggleable.glossary,
     allFeatures.toggleable.readAloud,
     allFeatures.toggleable.quizzes,
+    allFeatures.toggleable.signLanguage,
     allFeatures.present.captions,
     allFeatures.present.toc,
   ].filter(Boolean).length;
@@ -519,7 +520,7 @@ export function ExportDialog({
                       <div className="flex items-center gap-2 text-xs text-slate-500">
                         <FolderArchive className="w-3.5 h-3.5 text-slate-400" />
                         <Trans>
-                          {generatedFeatureCount} of 5 features generated
+                          {generatedFeatureCount} of 6 features generated
                         </Trans>
                       </div>
                     </div>
@@ -555,6 +556,14 @@ export function ExportDialog({
                         done={allFeatures.toggleable.quizzes}
                       />
                       <ProjectIncludedItem
+                        icon={Hand}
+                        label={<Trans>Sign Language</Trans>}
+                        textColor="text-cyan-600"
+                        bgLight="bg-cyan-50"
+                        borderColor="border-cyan-200"
+                        done={allFeatures.toggleable.signLanguage}
+                      />
+                      <ProjectIncludedItem
                         icon={Image}
                         label={<Trans>Image Captions</Trans>}
                         textColor="text-teal-600"
@@ -578,7 +587,8 @@ export function ExportDialog({
               {selectedFormat !== "project" &&
                 (availableFeatures.glossary ||
                   availableFeatures.readAloud ||
-                  availableFeatures.quizzes) && (
+                  availableFeatures.quizzes ||
+                  availableFeatures.signLanguage) && (
                   <div className="space-y-2">
                     <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                       <Trans>Optional Features</Trans>
@@ -640,6 +650,30 @@ export function ExportDialog({
                             onFeatureToggleChange("quizzes", v)
                           }
                           disabled={isPreparing}
+                        />
+                      )}
+                      {availableFeatures.signLanguage && (
+                        <FeatureToggleRow
+                          icon={Hand}
+                          label={<Trans>Sign Language</Trans>}
+                          description={
+                            <Trans>
+                              Sign language video overlays for each page
+                            </Trans>
+                          }
+                          textColor="text-cyan-600"
+                          bgLight="bg-cyan-50"
+                          borderColor="border-cyan-200"
+                          checked={featureToggles.signLanguage}
+                          onCheckedChange={(v) =>
+                            onFeatureToggleChange("signLanguage", v)
+                          }
+                          disabled={isPreparing}
+                          badge={
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-orange-600 bg-orange-50 border border-orange-200 px-1.5 py-0.5 rounded-full">
+                              <Trans>Large</Trans>
+                            </span>
+                          }
                         />
                       )}
                     </div>

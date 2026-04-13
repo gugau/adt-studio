@@ -190,8 +190,11 @@ msgstr "{countSummary} nesta página"
 msgid "{elapsed}s"
 msgstr "{elapsed}s"
 
-msgid "{generatedFeatureCount} of 5 features generated"
-msgstr "{generatedFeatureCount} de 5 recursos gerados"
+#~ msgid "{generatedFeatureCount} of 5 features generated"
+#~ msgstr "{generatedFeatureCount} de 5 recursos gerados"
+
+msgid "{generatedFeatureCount} of 6 features generated"
+msgstr "{generatedFeatureCount} de 6 recursos gerados"
 
 msgid "{imageCount} images"
 msgstr "{imageCount} imagens"
@@ -3498,6 +3501,9 @@ msgstr "Mostrar:"
 
 msgid "Sign Language"
 msgstr "Língua de Sinais"
+
+msgid "Sign language video overlays for each page"
+msgstr "Sobreposições de vídeo em língua de sinais para cada página"
 
 #~ msgid "Sign language videos are assigned to sections"
 #~ msgstr "Os vídeos em linguagem de sinais são atribuídos a seções"

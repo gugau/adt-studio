@@ -37,7 +37,7 @@ export interface PackageAdtWebOptions {
     glossary?: boolean
     readAloud?: boolean
     quizzes?: boolean
-    // TODO: Add sign language toggle support when sign language becomes a pipeline step
+    signLanguage?: boolean
   }
 }
 
@@ -454,22 +454,24 @@ export async function packageAdtWeb(
     // videos.json — map "video-{pageIndex}" → video filename for assigned sign language videos
     // The ADT JS runtime expects keys prefixed with "video-" and files in a "video/" directory.
     // Each video is assigned to a sectionId which maps 1:1 to a pageIndex.
-    const allVideos = storage.getSignLanguageVideos()
     const videosMap: Record<string, string> = {}
-    const videoDir = path.join(localeDir, "video")
-    if (allVideos.some((v) => v.sectionId)) {
-      fs.mkdirSync(videoDir, { recursive: true })
-      for (const video of allVideos) {
-        if (!video.sectionId) continue
-        const ext = video.mimeType === "video/webm" ? ".webm" : ".mp4"
-        // Use section-based naming (e.g. sl_pg001_sec001.mp4) matching audio file conventions
-        const filename = `sl_${video.sectionId}${ext}`
-        const srcPath = storage.getSignLanguageVideoPath(video.videoId)
-        if (srcPath && fs.existsSync(srcPath)) {
-          fs.copyFileSync(srcPath, path.join(videoDir, filename))
-          const idx = sectionIdToPageIndex.get(video.sectionId)
-          if (idx !== undefined) {
-            videosMap[`video-${idx}`] = filename
+    if (features?.signLanguage !== false) {
+      const allVideos = storage.getSignLanguageVideos()
+      const videoDir = path.join(localeDir, "video")
+      if (allVideos.some((v) => v.sectionId)) {
+        fs.mkdirSync(videoDir, { recursive: true })
+        for (const video of allVideos) {
+          if (!video.sectionId) continue
+          const ext = video.mimeType === "video/webm" ? ".webm" : ".mp4"
+          // Use section-based naming (e.g. sl_pg001_sec001.mp4) matching audio file conventions
+          const filename = `sl_${video.sectionId}${ext}`
+          const srcPath = storage.getSignLanguageVideoPath(video.videoId)
+          if (srcPath && fs.existsSync(srcPath)) {
+            fs.copyFileSync(srcPath, path.join(videoDir, filename))
+            const idx = sectionIdToPageIndex.get(video.sectionId)
+            if (idx !== undefined) {
+              videosMap[`video-${idx}`] = filename
+            }
           }
         }
       }
@@ -497,7 +499,7 @@ export async function packageAdtWeb(
     },
   )
 
-  const hasSignLanguageVideos = storage.getSignLanguageVideos().some((v) => v.sectionId !== null)
+  const hasSignLanguageVideos = (features?.signLanguage !== false) && storage.getSignLanguageVideos().some((v) => v.sectionId !== null)
 
   const configJson = {
     title,

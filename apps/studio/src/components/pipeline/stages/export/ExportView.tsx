@@ -21,6 +21,7 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
     glossary: true,
     readAloud: true,
     quizzes: true,
+    signLanguage: true,
   })
 
   const [exportDialogOpen, setExportDialogOpen] = useState(false)

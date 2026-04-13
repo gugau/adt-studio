@@ -38,7 +38,7 @@ export interface ExportFeatures {
   glossary?: boolean
   readAloud?: boolean
   quizzes?: boolean
-  // TODO: Add sign language toggle support 
+  signLanguage?: boolean
 }
 
 /**
