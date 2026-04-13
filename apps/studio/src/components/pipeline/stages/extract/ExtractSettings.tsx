@@ -25,7 +25,7 @@ import { useBookRun } from "@/hooks/use-book-run"
 import { useStepConfig } from "@/hooks/use-step-config"
 import { normalizeLocale } from "@/lib/languages"
 import { useLingui } from "@lingui/react/macro"
-import { getTextTypeLabel } from "@/lib/text-type-labels"
+import { getTextTypeLabel, getTextGroupLabel } from "@/lib/text-type-labels"
 
 export function ExtractSettings({ bookLabel, headerTarget, tab = "general" }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string }) {
   const { t } = useLingui()
@@ -45,6 +45,7 @@ export function ExtractSettings({ bookLabel, headerTarget, tab = "general" }: { 
   const [editingLanguage, setEditingLanguage] = useState("")
   const [textTypes, setTextTypes] = useState<Record<string, string>>({})
   const [prunedTextTypes, setPrunedTextTypes] = useState<Set<string>>(new Set())
+  const [containerTypes, setContainerTypes] = useState<Record<string, string>>({})
   const [minSide, setMinSide] = useState("")
   const [maxSide, setMaxSide] = useState("")
   const [minStddev, setMinStddev] = useState("")
@@ -89,6 +90,9 @@ export function ExtractSettings({ bookLabel, headerTarget, tab = "general" }: { 
     if (m.text_types && typeof m.text_types === "object") {
       setTextTypes(m.text_types as Record<string, string>)
     }
+    if (m.container_types && typeof m.container_types === "object") {
+      setContainerTypes(m.container_types as Record<string, string>)
+    }
     if (Array.isArray(m.pruned_text_types)) {
       setPrunedTextTypes(new Set(m.pruned_text_types as string[]))
     }
@@ -109,6 +113,8 @@ export function ExtractSettings({ bookLabel, headerTarget, tab = "general" }: { 
 
   const [newTypeKey, setNewTypeKey] = useState("")
   const [newTypeDesc, setNewTypeDesc] = useState("")
+  const [newContainerKey, setNewContainerKey] = useState("")
+  const [newContainerDesc, setNewContainerDesc] = useState("")
 
   const togglePruned = (key: string) => {
     markDirty("pruned_text_types")
@@ -149,6 +155,29 @@ export function ExtractSettings({ bookLabel, headerTarget, tab = "general" }: { 
     setNewTypeDesc("")
   }
 
+  const updateContainerDescription = (key: string, description: string) => {
+    markDirty("container_types")
+    setContainerTypes((prev) => ({ ...prev, [key]: description }))
+  }
+
+  const removeContainerType = (key: string) => {
+    markDirty("container_types")
+    setContainerTypes((prev) => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+  }
+
+  const addContainerType = () => {
+    const key = newContainerKey.trim().toLowerCase().replace(/\s+/g, "_")
+    if (!key || key in containerTypes) return
+    markDirty("container_types")
+    setContainerTypes((prev) => ({ ...prev, [key]: newContainerDesc.trim() }))
+    setNewContainerKey("")
+    setNewContainerDesc("")
+  }
+
   // Helper: only write a field if the user changed it or the book config already had it
   const shouldWrite = (field: string) =>
     dirty[field] || (bookConfigData?.config && field in bookConfigData.config)
@@ -183,6 +212,9 @@ export function ExtractSettings({ bookLabel, headerTarget, tab = "general" }: { 
     }
     if (shouldWrite("pruned_text_types")) {
       overrides.pruned_text_types = Array.from(prunedTextTypes)
+    }
+    if (shouldWrite("container_types")) {
+      overrides.container_types = containerTypes
     }
     if (shouldWrite("image_filters")) {
       const filters: Record<string, unknown> = {}
@@ -503,6 +535,73 @@ export function ExtractSettings({ bookLabel, headerTarget, tab = "general" }: { 
                 className="h-7 px-2 text-xs shrink-0"
                 onClick={addTextType}
                 disabled={!newTypeKey.trim() || newTypeKey.trim().toLowerCase().replace(/\s+/g, "_") in textTypes}
+              >
+                {t`Add`}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab === "container-types" && (
+        <div>
+          <p className="text-xs text-muted-foreground mb-3">
+            {t`Container types used to group content during page structuring.`}
+          </p>
+          <div className="rounded-md border divide-y">
+            {/* Header */}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50">
+              <span className="text-xs font-medium text-muted-foreground shrink-0 w-40">{t`Type`}</span>
+              <span className="text-xs font-medium text-muted-foreground flex-1 min-w-0">{t`Description`}</span>
+              <span className="shrink-0 w-5" />
+            </div>
+            {Object.entries(containerTypes).map(([key, description]) => (
+              <div
+                key={key}
+                className="flex items-center gap-2 px-3 py-1.5 group"
+              >
+                <span className="text-xs shrink-0 w-40 truncate font-mono font-medium">
+                  {getTextGroupLabel(key)}
+                </span>
+                <Input
+                  value={description}
+                  onChange={(e) => updateContainerDescription(key, e.target.value)}
+                  className="h-7 text-xs flex-1 min-w-0"
+                  placeholder={t`Description...`}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeContainerType(key)}
+                  className="shrink-0 p-0.5 rounded text-muted-foreground/0 group-hover:text-muted-foreground hover:!text-destructive transition-colors"
+                  title={t`Remove type`}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+            {/* Add new container type */}
+            <div className="flex items-center gap-2 px-3 py-1.5">
+              <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <Input
+                value={newContainerKey}
+                onChange={(e) => setNewContainerKey(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addContainerType()}
+                className="h-7 text-xs w-40 shrink-0"
+                placeholder="new_container_key"
+              />
+              <Input
+                value={newContainerDesc}
+                onChange={(e) => setNewContainerDesc(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addContainerType()}
+                className="h-7 text-xs flex-1 min-w-0"
+                placeholder={t`Description...`}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs shrink-0"
+                onClick={addContainerType}
+                disabled={!newContainerKey.trim() || newContainerKey.trim().toLowerCase().replace(/\s+/g, "_") in containerTypes}
               >
                 {t`Add`}
               </Button>

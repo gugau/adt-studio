@@ -1018,6 +1018,12 @@ msgstr "Confirmar reexecução"
 msgid "Consulting the style council..."
 msgstr "Consultando o conselho de estilo..."
 
+msgid "Container Types"
+msgstr "Tipos de Contêiner"
+
+msgid "Container types used to group content during page structuring."
+msgstr "Tipos de contêiner usados para agrupar conteúdo durante a estruturação de páginas."
+
 msgid "Content"
 msgstr "Conteúdo"
 

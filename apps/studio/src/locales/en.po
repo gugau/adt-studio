@@ -1018,6 +1018,12 @@ msgstr "Confirm Rerun"
 msgid "Consulting the style council..."
 msgstr "Consulting the style council..."
 
+msgid "Container Types"
+msgstr "Container Types"
+
+msgid "Container types used to group content during page structuring."
+msgstr "Container types used to group content during page structuring."
+
 msgid "Content"
 msgstr "Content"
 

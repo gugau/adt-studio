@@ -118,7 +118,7 @@ export function StepViewRouter({ step, bookLabel, selectedPageId, onSelectPage }
               to="/books/$label/$step/settings"
               params={{ label: bookLabel, step }}
               search={{ tab: "general" }}
-              className="ml-auto text-white/60 hover:text-white transition-colors"
+              className={cn("text-white/60 hover:text-white transition-colors", !headerExtra && "ml-auto")}
             >
               <Settings className="w-3.5 h-3.5" />
             </Link>

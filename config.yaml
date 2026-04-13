@@ -2,12 +2,12 @@ text_types:
   heading: A chapter, section, or subsection heading that introduces content; not metadata, labels, or merely bold text
   text: General narrative, descriptive, or explanatory text
   math: Mathematical expressions (use LaTeX notation)
+  activity_number: A letter or number labeling a single activity or question (e.g., A, B, 1, 2)  
   activity_instruction: Directions or prompts for activities and exercises
   activity_question: A specific question to be answered within an activity or exercise
   activity_fill_in_the_blank: Text with blanks to be filled in — use ___ for each blank
   caption: Descriptive text accompanying an image, such as a caption or credit line
   label: A short identifier for an image or figure, such as "Figure 3.1" or "Image A"
-  activity_number: A letter or number labeling a single activity or question (e.g., A, B, 1, 2)
   book_metadata: Book or publication metadata such as publisher, copyright, ISBN, edition, or author credits
   page_number: Page numbers
   header: Running page headers

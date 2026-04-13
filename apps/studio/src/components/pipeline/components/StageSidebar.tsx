@@ -31,6 +31,7 @@ import { ALL_STEP_NAMES, PAGE_PROGRESS_STEPS } from "@adt/types"
 const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   general: msg`General`,
   "text-types": msg`Text Types`,
+  "container-types": msg`Container Types`,
   "metadata-prompt": msg`Metadata Prompt`,
   prompt: msg`Extraction Prompt`,
   "meaningfulness-prompt": msg`Meaningfulness Prompt`,
@@ -70,6 +71,7 @@ function getSettingsTabs(
     extract: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.general) },
       { key: "text-types", label: i18n._(SETTINGS_TAB_MESSAGE["text-types"]) },
+      { key: "container-types", label: i18n._(SETTINGS_TAB_MESSAGE["container-types"]) },
       { key: "metadata-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["metadata-prompt"]) },
       { key: "prompt", label: i18n._(SETTINGS_TAB_MESSAGE.prompt) },
       { key: "meaningfulness-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["meaningfulness-prompt"]) },
