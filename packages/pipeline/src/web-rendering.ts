@@ -219,9 +219,10 @@ const DEFAULT_VISUAL_REFINEMENT = {
  * Build a resolver that returns a RenderConfig for a given section type.
  *
  * Resolution order:
- *   1. section_render_strategies[sectionType] → named strategy
- *   2. default_render_strategy → named strategy
+ *   1. section_render_strategies[sectionType] → named strategy in render_strategies
+ *   2. default_render_strategy → named strategy in render_strategies
  *   3. Hard-coded defaults
+ *
  */
 export function buildRenderStrategyResolver(
   appConfig: AppConfig

@@ -327,7 +327,7 @@ export function buildSectioningConfig(appConfig: AppConfig): SectioningConfig {
 
   return {
     sectionTypes,
-    prunedSectionTypes: appConfig.pruned_section_types ?? [],
+    prunedSectionTypes: [...(appConfig.pruned_section_types ?? [])],
     promptName: appConfig.page_sectioning?.prompt ?? "page_sectioning",
     modelId: appConfig.page_sectioning?.model ?? "openai:gpt-5.4",
     maxRetries:

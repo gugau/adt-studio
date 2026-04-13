@@ -39,9 +39,6 @@ export type BookFormat = z.infer<typeof BookFormat>
 export const LayoutType = z.enum(["textbook", "storybook", "reference", "custom"])
 export type LayoutType = z.infer<typeof LayoutType>
 
-export const PresetName = z.enum(["textbook", "storybook", "reference"])
-export type PresetName = z.infer<typeof PresetName>
-
 export const StyleguideName = z.string().regex(/^[a-zA-Z0-9_-]+$/)
 export type StyleguideName = z.infer<typeof StyleguideName>
 

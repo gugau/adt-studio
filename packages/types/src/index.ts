@@ -48,7 +48,6 @@ export { BookLabel, parseBookLabel } from "./book.js"
 export {
   BookFormat,
   LayoutType,
-  PresetName,
   StyleguideName,
   DEFAULT_LLM_MAX_RETRIES,
   StepConfig,

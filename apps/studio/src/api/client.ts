@@ -940,14 +940,20 @@ export const api = {
   getTemplates: () =>
     request<{ templates: string[] }>(`/templates`),
 
-  getPreset: (name: string) =>
-    request<{ config: Record<string, unknown> }>(`/presets/${name}`),
-
   getStyleguides: () =>
     request<{ styleguides: string[] }>(`/styleguides`),
 
   getStyleguidePreview: (name: string) =>
     request<{ name: string; html: string }>(`/styleguides/${name}/preview`),
+
+  uploadStyleguide: (file: File) => {
+    const form = new FormData()
+    form.append("file", file)
+    return request<{ name: string }>(`/styleguides/upload`, {
+      method: "POST",
+      body: form,
+    })
+  },
 
   generateStyleguide: (label: string, pageIds: string[], apiKey: string, signal?: AbortSignal) =>
     request<{ name: string; content: string; reasoning: string }>(
