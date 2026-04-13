@@ -184,7 +184,6 @@ function HomePage() {
   const deleteMutation = useDeleteBook()
   const importMutation = useImportBook()
   const [deleteLabel, setDeleteLabel] = useState<string | null>(null)
-  const { openSettings } = useSettingsDialog()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   function handleImportClick() {

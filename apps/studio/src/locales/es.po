@@ -1112,10 +1112,10 @@ msgid "Create session"
 msgstr "Create session"
 
 msgid "Creates a ZIP archive of the full project — database, source PDF, and all pipeline outputs. Use it to back up or transfer the project to another machine."
-msgstr ""
+msgstr "Crea un archivo ZIP del proyecto completo — base de datos, PDF de origen y todas las salidas del pipeline. Úselo para hacer una copia de seguridad o transferir el proyecto a otra máquina."
 
 msgid "Creating..."
-msgstr "Crea un archivo ZIP del proyecto completo: base de datos, PDF fuente y todos los resultados del proceso. Úselo para hacer una copia de seguridad o transferir el proyecto a otra máquina."
+msgstr "Creando..."
 
 msgid "Credits"
 msgstr "Créditos"
