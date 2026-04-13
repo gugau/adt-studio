@@ -1655,6 +1655,9 @@ msgstr "Página Final"
 msgid "First"
 msgstr "Primera"
 
+msgid "First language is the default"
+msgstr "El primer idioma es el predeterminado"
+
 msgid "Fixed two-column template layout"
 msgstr "Plantilla de diseño fijo de dos columnas"
 
@@ -2405,6 +2408,9 @@ msgstr "Sin leyendas para esta página"
 
 msgid "No changes flagged on this page"
 msgstr "No changes flagged on this page"
+
+msgid "No cover available"
+msgstr "Portada no disponible"
 
 msgid "No data"
 msgstr "Sin datos"

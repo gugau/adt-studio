@@ -39,6 +39,7 @@ export interface ExportFeatures {
   readAloud?: boolean
   quizzes?: boolean
   signLanguage?: boolean
+  languages?: string[]
 }
 
 /**
@@ -83,11 +84,16 @@ export async function prepareExport(
     )
     const title = metadata?.title ?? safeLabel
 
+    const requestedLanguages = features?.languages
+    const finalLanguages = requestedLanguages && requestedLanguages.length > 0
+      ? requestedLanguages.filter((lang) => outputLanguages.includes(normalizeLocale(lang))).map(normalizeLocale)
+      : outputLanguages
+
     const opts = {
       bookDir,
       label: safeLabel,
       language,
-      outputLanguages,
+      outputLanguages: finalLanguages.length > 0 ? finalLanguages : outputLanguages,
       title,
       webAssetsDir,
       applyBodyBackground: config.apply_body_background,

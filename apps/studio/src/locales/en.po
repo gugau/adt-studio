@@ -1655,6 +1655,9 @@ msgstr "Final Page"
 msgid "First"
 msgstr "First"
 
+msgid "First language is the default"
+msgstr "First language is the default"
+
 msgid "Fixed two-column template layout"
 msgstr "Fixed two-column template layout"
 
@@ -2405,6 +2408,9 @@ msgstr "No captions for this page"
 
 msgid "No changes flagged on this page"
 msgstr "No changes flagged on this page"
+
+msgid "No cover available"
+msgstr "No cover available"
 
 msgid "No data"
 msgstr "No data"

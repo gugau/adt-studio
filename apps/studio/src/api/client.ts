@@ -1027,7 +1027,7 @@ export const api = {
   prepareExport: (
     label: string,
     format: "project" | "webpub" | "scorm" | "adt" = "project",
-    features?: { glossary?: boolean; readAloud?: boolean; quizzes?: boolean; signLanguage?: boolean }
+    features?: { glossary?: boolean; readAloud?: boolean; quizzes?: boolean; signLanguage?: boolean; languages?: string[] }
   ) => {
     const params = new URLSearchParams({ format })
     if (features) {

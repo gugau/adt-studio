@@ -24,6 +24,8 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
     signLanguage: true,
   })
 
+  const [languageOrder, setLanguageOrder] = useState<string[] | null>(null)
+
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat | null>(null)
 
@@ -34,7 +36,11 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
 
   const handleConfirmExport = () => {
     if (selectedFormat) {
-      startExport(selectedFormat, selectedFormat === "project" ? undefined : featureToggles)
+      const features = selectedFormat === "project" ? undefined : {
+        ...featureToggles,
+        languages: languageOrder ?? undefined,
+      }
+      startExport(selectedFormat, features)
       setExportDialogOpen(false)
     }
   }
@@ -113,6 +119,8 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
         bookLabel={bookLabel}
         featureToggles={featureToggles}
         onFeatureToggleChange={(feature, value) => setFeatureToggles((prev) => ({ ...prev, [feature]: value }))}
+        languageOrder={languageOrder}
+        onLanguageOrderChange={setLanguageOrder}
         onConfirmExport={handleConfirmExport}
         isPreparing={isPreparing}
         preparingFormat={preparingFormat}

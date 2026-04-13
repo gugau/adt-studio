@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useState, useRef, useLayoutEffect, useCallback } from "react";
 import {
   Loader2,
   BookOpen,
@@ -13,6 +13,7 @@ import {
   FileText,
   Building2,
   ChevronDown,
+  ChevronUp,
   Database,
   FolderArchive,
   type LucideIcon,
@@ -90,14 +91,11 @@ function BookCover({
             className="max-w-full max-h-full object-contain shadow-md rounded-sm border border-slate-200"
           />
         ) : (
-          <div className="flex items-center justify-center opacity-20">
-            {FormatIcon ? (
-              <FormatIcon
-                className={`w-12 h-12 ${formatConfig?.textColor ?? "text-slate-300"}`}
-              />
-            ) : (
-              <BookOpen className="w-12 h-12 text-slate-300" />
-            )}
+          <div className="w-full aspect-[3/4] max-w-[180px] rounded-sm border border-slate-200 bg-gradient-to-br from-slate-100 to-slate-200 flex flex-col items-center justify-center gap-3 shadow-md">
+            <BookOpen className="w-10 h-10 text-slate-300" />
+            <p className="text-[11px] text-slate-400 font-medium px-4 text-center leading-tight">
+              <Trans>No cover available</Trans>
+            </p>
           </div>
         )}
       </div>
@@ -352,6 +350,195 @@ function AccessibilityChecklist({ items }: { items: AccessibilityItem[] }) {
   );
 }
 
+/**
+ * Collapsible, FLIP-animated language reorder list.
+ *
+ * Collapsed (default): compact summary showing count + default language.
+ * Expanded: full reorder list with up/down arrows and toggle switches.
+ * Uses FLIP animation so items slide smoothly on reorder.
+ * Max-height with scroll prevents the list from dominating the dialog.
+ */
+function LanguageOrderSection({
+  configLanguages,
+  orderedLanguages,
+  includedSet,
+  isPreparing,
+  onMove,
+  onToggle,
+}: {
+  configLanguages: string[];
+  orderedLanguages: string[];
+  includedSet: Set<string>;
+  isPreparing: boolean;
+  onMove: (lang: string, dir: "up" | "down") => void;
+  onToggle: (lang: string, included: boolean) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const positionsRef = useRef<Map<string, DOMRect>>(new Map());
+
+  const capturePositions = useCallback(() => {
+    if (!containerRef.current) return;
+    const map = new Map<string, DOMRect>();
+    for (const el of containerRef.current.querySelectorAll<HTMLElement>(
+      "[data-lang-key]",
+    )) {
+      map.set(el.dataset.langKey!, el.getBoundingClientRect());
+    }
+    positionsRef.current = map;
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!containerRef.current) return;
+    const prev = positionsRef.current;
+    if (prev.size === 0) return;
+
+    for (const el of containerRef.current.querySelectorAll<HTMLElement>(
+      "[data-lang-key]",
+    )) {
+      const key = el.dataset.langKey!;
+      const oldRect = prev.get(key);
+      if (!oldRect) continue;
+      const newRect = el.getBoundingClientRect();
+      const dy = oldRect.top - newRect.top;
+      if (Math.abs(dy) < 1) continue;
+      el.style.transition = "none";
+      el.style.transform = `translateY(${dy}px)`;
+      el.offsetHeight;
+      el.style.transition = "transform 200ms cubic-bezier(0.22, 1, 0.36, 1)";
+      el.style.transform = "";
+    }
+    positionsRef.current = new Map();
+  });
+
+  const handleMove = (lang: string, dir: "up" | "down") => {
+    capturePositions();
+    onMove(lang, dir);
+  };
+
+  const handleToggle = (lang: string, included: boolean) => {
+    capturePositions();
+    onToggle(lang, included);
+  };
+
+  const includedCount = orderedLanguages.length;
+  const totalCount = configLanguages.length;
+  const isCustomized = includedCount !== totalCount || orderedLanguages.some((l, i) => l !== configLanguages[i]);
+  const excludedLanguages = configLanguages.filter((l) => !includedSet.has(l));
+
+  return (
+    <div className="rounded-lg border border-slate-200 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full px-4 py-3 bg-slate-50 flex items-center gap-3 hover:bg-slate-100/80 transition-colors"
+      >
+        <Globe className="w-4 h-4 text-teal-600 flex-shrink-0" />
+        <div className="flex-1 min-w-0 flex items-center gap-2 text-left">
+          <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+            <Trans>Languages</Trans>
+          </h4>
+          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border text-slate-500 bg-slate-100 border-slate-200">
+            {includedCount}/{totalCount}
+          </span>
+          {isCustomized && (
+            <span className="w-1.5 h-1.5 rounded-full bg-teal-500 flex-shrink-0" />
+          )}
+        </div>
+        <ChevronDown
+          className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      <div
+        className={`grid transition-[grid-template-rows] duration-200 ease-out ${expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+      >
+        <div className="overflow-hidden">
+          <div className="px-4 pt-2 pb-1">
+            <p className="text-[10px] text-slate-400">
+              <Trans>First language is the default</Trans>
+            </p>
+          </div>
+          <div
+            ref={containerRef}
+            className="px-3 pb-3 space-y-1 max-h-52 overflow-y-auto scrollbar-thin"
+          >
+            {orderedLanguages.map((lang, idx) => (
+              <div
+                key={lang}
+                data-lang-key={lang}
+                className="flex items-center gap-2 p-2 rounded-lg border border-slate-200 bg-white"
+              >
+                <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-teal-50 border-teal-200 border">
+                  <Globe className="w-3 h-3 text-teal-600" />
+                </div>
+                <div className="flex-1 min-w-0 flex items-center gap-2">
+                  <span className="text-sm font-medium text-slate-900">
+                    {getDisplayName(lang)}
+                  </span>
+                  {idx === 0 && (
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-teal-600 bg-teal-50 border border-teal-200 px-1.5 py-0.5 rounded-full leading-none">
+                      <Trans>Default</Trans>
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => handleMove(lang, "up")}
+                    disabled={isPreparing || idx === 0}
+                    className="p-1 rounded hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronUp className="w-3.5 h-3.5 text-slate-500" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleMove(lang, "down")}
+                    disabled={
+                      isPreparing || idx === orderedLanguages.length - 1
+                    }
+                    className="p-1 rounded hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                  </button>
+                </div>
+                <Switch
+                  checked={true}
+                  onCheckedChange={() => handleToggle(lang, false)}
+                  disabled={isPreparing || orderedLanguages.length <= 1}
+                  className="flex-shrink-0"
+                />
+              </div>
+            ))}
+            {excludedLanguages.map((lang) => (
+              <div
+                key={lang}
+                data-lang-key={lang}
+                className="flex items-center gap-2 p-2 rounded-lg border border-dashed border-slate-200 bg-slate-50/50"
+              >
+                <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 bg-slate-100 border-slate-200 border">
+                  <Globe className="w-3 h-3 text-slate-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium text-slate-400">
+                    {getDisplayName(lang)}
+                  </span>
+                </div>
+                <Switch
+                  checked={false}
+                  onCheckedChange={() => handleToggle(lang, true)}
+                  disabled={isPreparing}
+                  className="flex-shrink-0"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface ExportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -362,6 +549,8 @@ interface ExportDialogProps {
     feature: keyof ExportFeatureToggles,
     value: boolean,
   ) => void;
+  languageOrder: string[] | null;
+  onLanguageOrderChange: (langs: string[] | null) => void;
   onConfirmExport: () => void;
   isPreparing: boolean;
   preparingFormat: string | null;
@@ -375,6 +564,8 @@ export function ExportDialog({
   bookLabel,
   featureToggles,
   onFeatureToggleChange,
+  languageOrder,
+  onLanguageOrderChange,
   onConfirmExport,
   isPreparing,
   preparingFormat,
@@ -384,6 +575,37 @@ export function ExportDialog({
   const availableFeatures = useAvailableExportFeatures(bookLabel);
   const allFeatures = useAllProjectFeatures(bookLabel);
   const formatConfigByType = buildExportFormatConfig(t);
+
+  const { data: configData } = useBookConfig(bookLabel);
+  const config = configData?.config as Record<string, unknown> | undefined;
+  const configLanguages = Array.from(
+    new Set(
+      ((config?.output_languages as string[] | undefined) ?? []).map((code) =>
+        normalizeLocale(code),
+      ),
+    ),
+  );
+
+  const orderedLanguages = languageOrder ?? configLanguages;
+  const includedSet = new Set(orderedLanguages);
+
+  const toggleLanguage = (lang: string, included: boolean) => {
+    if (included) {
+      onLanguageOrderChange([...orderedLanguages, lang]);
+    } else {
+      onLanguageOrderChange(orderedLanguages.filter((l) => l !== lang));
+    }
+  };
+
+  const moveLanguage = (lang: string, direction: "up" | "down") => {
+    const list = [...orderedLanguages];
+    const idx = list.indexOf(lang);
+    if (idx < 0) return;
+    const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= list.length) return;
+    [list[idx], list[targetIdx]] = [list[targetIdx], list[idx]];
+    onLanguageOrderChange(list);
+  };
 
   const formatError =
     selectedFormat && error?.format === selectedFormat ? error.message : null;
@@ -679,6 +901,17 @@ export function ExportDialog({
                     </div>
                   </div>
                 )}
+
+              {selectedFormat !== "project" && configLanguages.length > 1 && (
+                <LanguageOrderSection
+                  configLanguages={configLanguages}
+                  orderedLanguages={orderedLanguages}
+                  includedSet={includedSet}
+                  isPreparing={isPreparing}
+                  onMove={moveLanguage}
+                  onToggle={toggleLanguage}
+                />
+              )}
 
               {selectedFormat !== "project" && (
                 <AccessibilityChecklist items={accessibilityItems} />
