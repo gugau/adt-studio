@@ -17,6 +17,10 @@ services:
       - PROMPTS_DIR=/app/prompts
       - TEMPLATES_DIR=/app/templates
       - CONFIG_PATH=/app/config.yaml
+      # Optional translation-evaluation service wiring. Leave unset to disable
+      # manual evaluation runs from the Studio UI.
+      - EVAL_SERVICE_URL=${EVAL_SERVICE_URL:-}
+      - EVAL_SERVICE_TOKEN=${EVAL_SERVICE_TOKEN:-}
     networks:
       - internal
     healthcheck:
@@ -38,6 +42,57 @@ services:
     depends_on:
       api:
         condition: service_healthy
+    restart: unless-stopped
+
+  eval-service:
+    build:
+      context: .
+      dockerfile: docker/eval-service.Dockerfile
+    ports:  
+      - "${EVAL_SERVICE_PORT:-8082}:8081"
+    environment:
+      - PORT=8081
+      - EVAL_DATA_DIR=/app/data
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MLFLOW_EXPERIMENT_NAME=${MLFLOW_EXPERIMENT_NAME:-adt-translation-evaluation}
+      - MLFLOW_TRACKING_TOKEN=${MLFLOW_TRACKING_TOKEN:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    volumes:
+      - ./eval-data:/app/data
+    networks:
+      - internal
+    depends_on:
+      mlflow:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8081/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:latest
+    command:
+      - mlflow
+      - server
+      - --host
+      - 0.0.0.0
+      - --port
+      - "5000"
+      - --backend-store-uri
+      - sqlite:////mlflow/mlflow.db
+      - --artifacts-destination
+      - /mlflow/artifacts
+      - --allowed-hosts
+      - "mlflow:5000,localhost:${MLFLOW_PORT:-5001},127.0.0.1:${MLFLOW_PORT:-5001}"
+    ports:
+      - "${MLFLOW_PORT:-5001}:5000"
+    volumes:
+      - ./mlflow:/mlflow
+    networks:
+      - internal
     restart: unless-stopped
 
 networks:

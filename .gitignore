@@ -64,3 +64,8 @@ coverage/
 
 # Auto-generated TTS cache artifacts from pipeline test runs
 packages/pipeline/src/__tests__/fixtures/raven-cache/tts/*.mp3
+
+mlflow/
+eval-data/
+__pycache__/
+*__pycache__/*
