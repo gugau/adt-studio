@@ -21,7 +21,6 @@ import { usePages, usePageImage } from "@/hooks/use-pages"
 import {
   STAGES,
   hasStagePages,
-  toCamelLabel,
 } from "../stage-config"
 import type { TaskInfoResponse } from "@/api/client"
 import { getStageLabelI18n, getStepLabelI18n } from "../pipeline-i18n"
@@ -117,7 +116,6 @@ function getSettingsTabs(
 
 /** Stage groups for visual separators in the icon rail */
 const STAGE_GROUPS = [
-  ["book"],
   ["extract", "storyboard", "quizzes", "captions", "glossary", "toc"],
   ["translate", "speech", "sign-language"],
   ["validation", "preview", "export"],
@@ -192,7 +190,8 @@ export function StageSidebar({
     }
   }, [activeStep])
 
-  const stageItems = STAGES.map((step, index) => {
+  const visibleStages = STAGES.filter((s) => s.slug !== "book")
+  const stageItems = visibleStages.map((step, index) => {
     const isActive = step.slug === activeStep
     const Icon = step.icon
     const state = step.slug === "validation" && validationCompleted ? "done" : stageState(step.slug)
@@ -200,14 +199,12 @@ export function StageSidebar({
     const ringState = state
 
     const iconFilled =
-      step.slug === "book"
-        ? true
-        : step.slug === "sign-language" || step.slug === "validation" || step.slug === "preview" || step.slug === "export"
-          ? storyboardDone
-          : stageCompleted
+      step.slug === "sign-language" || step.slug === "validation" || step.slug === "preview" || step.slug === "export"
+        ? storyboardDone
+        : stageCompleted
 
-    const stepLabel = step.slug === "book" ? toCamelLabel(bookLabel) : getStageLabelI18n(step.slug)
-    const prevGroup = index > 0 ? getGroupIndex(STAGES[index - 1].slug) : -1
+    const stepLabel = getStageLabelI18n(step.slug)
+    const prevGroup = index > 0 ? getGroupIndex(visibleStages[index - 1].slug) : -1
     const curGroup = getGroupIndex(step.slug)
     const showSeparator = index > 0 && prevGroup !== curGroup
 
