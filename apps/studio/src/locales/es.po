@@ -452,6 +452,9 @@ msgstr "Agregar idioma"
 msgid "Add languages to translate the book content into."
 msgstr "Agrega idiomas para traducir el contenido del libro."
 
+msgid "Add optional features to enrich the reading experience. You can run these in any order, or skip them entirely."
+msgstr ""
+
 msgid "Add reviewer guidance."
 msgstr "Add reviewer guidance."
 
@@ -482,6 +485,9 @@ msgstr "Libro ADT - {0}"
 
 msgid "ADT Export"
 msgstr "Exportación ADT"
+
+msgid "ADT Studio transforms your PDF into an accessible digital textbook through a series of stages. Here's a quick overview of how it works."
+msgstr ""
 
 msgid "Adventure Tales - Vol. 1"
 msgstr "Cuentos de Aventura - Vol. 1"
@@ -1409,6 +1415,9 @@ msgstr "Manuales de ingeniería"
 msgid "English"
 msgstr "English"
 
+msgid "Enhance your book"
+msgstr ""
+
 msgid "Enter a valid minimum dimension (whole number ≥ 0)"
 msgstr "Introduce una dimensión mínima válida (número entero ≥ 0)"
 
@@ -1940,6 +1949,9 @@ msgstr "Imágenes grandes, flujo narrativo. Mejor para libros ilustrados con voc
 
 msgid "Last"
 msgstr "Última"
+
+msgid "Learn about the book pipeline stages"
+msgstr ""
 
 msgid "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 msgstr "Dejar en Ninguno para ejecutar segmentación en todas las imágenes calificadas (sujeto a reglas de la canalización)."
@@ -2690,6 +2702,9 @@ msgstr "Elige un enfoque de diseño."
 msgid "Picture books and early readers"
 msgstr "Libros ilustrados y primeros lectores"
 
+msgid "Pipeline overview"
+msgstr ""
+
 msgid "Pipeline Stages"
 msgstr "Etapas del pipeline"
 
@@ -2725,6 +2740,9 @@ msgstr "Anterior"
 
 msgid "Preview"
 msgstr "Previsualización"
+
+msgid "Preview and export"
+msgstr ""
 
 msgid "Preview linked page"
 msgstr "Vista previa de la página vinculada"
@@ -3367,8 +3385,14 @@ msgstr "sk-..."
 msgid "sk-ant-..."
 msgstr "sk-ant-..."
 
+msgid "Skip"
+msgstr ""
+
 msgid "Skip segmentation for images whose shortest side is below this threshold."
 msgstr "Omitir segmentación para imágenes cuyo lado más corto esté por debajo de este umbral."
+
+msgid "Skip tour"
+msgstr ""
 
 msgid "Skipped"
 msgstr "Omitido"
@@ -3427,6 +3451,9 @@ msgstr "Inicio"
 
 msgid "Start a reviewer session"
 msgstr "Start a reviewer session"
+
+msgid "Start by extracting content from your PDF, then build the storyboard to create the visual layout. These two stages are required — everything else is optional."
+msgstr ""
 
 msgid "Start page"
 msgstr "Start page"
@@ -3594,6 +3621,9 @@ msgstr "La IA preservará el estilo original al aplicar tus cambios."
 
 msgid "The back cover of the book."
 msgstr "La contraportada del libro."
+
+msgid "The core path"
+msgstr ""
 
 msgid "The credits page."
 msgstr "La página de créditos."
@@ -3763,6 +3793,9 @@ msgstr "Tokens totales"
 msgid "Track reviewer progress and review findings captured from Preview."
 msgstr "Track reviewer progress and review findings captured from Preview."
 
+msgid "Translate"
+msgstr ""
+
 msgid "Translate the book content to output languages."
 msgstr "Traducir el contenido del libro a los idiomas de salida."
 
@@ -3841,8 +3874,8 @@ msgstr "Unknown"
 msgid "Unknown criterion"
 msgstr "Unknown criterion"
 
-msgid "Unknown stage"
-msgstr "Etapa desconocida"
+#~ msgid "Unknown stage"
+#~ msgstr "Etapa desconocida"
 
 msgid "Unknown step slug: {step}"
 msgstr "Slug de etapa desconocido: {0}"
@@ -4004,6 +4037,9 @@ msgstr "WebPub"
 msgid "WebPub Export"
 msgstr "Exportación WebPub"
 
+msgid "Welcome to your book pipeline"
+msgstr ""
+
 msgid "What should the AI change?"
 msgstr "¿Qué debería cambiar la IA?"
 
@@ -4012,6 +4048,9 @@ msgstr "Cuando está activado, los colores de fondo de la guía de estilo se apl
 
 msgid "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."
 msgstr "Cuando está activado, las etiquetas de texto cercanas a imágenes vectoriales (p. ej. dimensiones de gráficos, globos de diálogo) se agrupan y extraen como recortes rasterizados. Desactive para extraer solo las formas vectoriales sin texto."
+
+msgid "When you're ready, preview the final result, run validation checks, and export the finished digital textbook."
+msgstr ""
 
 msgid "When your PDF isn't built around facing pages, single mode keeps every page separate: nothing is merged across a spread. That matches how most textbooks, novels, and reference books are read - one page at a time."
 msgstr "Cuando tu PDF no está construido alrededor de páginas enfrentadas, el modo único mantiene cada página separada: nada se fusiona a través de una extensión. Eso coincide con cómo se leen la mayoría de los libros de texto, novelas y libros de referencia - una página a la vez."

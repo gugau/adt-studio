@@ -452,6 +452,9 @@ msgstr "Add Language"
 msgid "Add languages to translate the book content into."
 msgstr "Add languages to translate the book content into."
 
+msgid "Add optional features to enrich the reading experience. You can run these in any order, or skip them entirely."
+msgstr "Add optional features to enrich the reading experience. You can run these in any order, or skip them entirely."
+
 msgid "Add reviewer guidance."
 msgstr "Add reviewer guidance."
 
@@ -482,6 +485,9 @@ msgstr "ADT Book - {0}"
 
 msgid "ADT Export"
 msgstr "ADT Export"
+
+msgid "ADT Studio transforms your PDF into an accessible digital textbook through a series of stages. Here's a quick overview of how it works."
+msgstr "ADT Studio transforms your PDF into an accessible digital textbook through a series of stages. Here's a quick overview of how it works."
 
 msgid "Adventure Tales - Vol. 1"
 msgstr "Adventure Tales - Vol. 1"
@@ -1409,6 +1415,9 @@ msgstr "Engineering handbooks"
 msgid "English"
 msgstr "English"
 
+msgid "Enhance your book"
+msgstr "Enhance your book"
+
 msgid "Enter a valid minimum dimension (whole number ≥ 0)"
 msgstr "Enter a valid minimum dimension (whole number ≥ 0)"
 
@@ -1940,6 +1949,9 @@ msgstr "Large images, narrative flow. Best for illustrated books with high-fidel
 
 msgid "Last"
 msgstr "Last"
+
+msgid "Learn about the book pipeline stages"
+msgstr "Learn about the book pipeline stages"
 
 msgid "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 msgstr "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
@@ -2690,6 +2702,9 @@ msgstr "Pick one layout approach."
 msgid "Picture books and early readers"
 msgstr "Picture books and early readers"
 
+msgid "Pipeline overview"
+msgstr "Pipeline overview"
+
 msgid "Pipeline Stages"
 msgstr "Pipeline Stages"
 
@@ -2725,6 +2740,9 @@ msgstr "Prev"
 
 msgid "Preview"
 msgstr "Preview"
+
+msgid "Preview and export"
+msgstr "Preview and export"
 
 msgid "Preview linked page"
 msgstr "Preview linked page"
@@ -3367,8 +3385,14 @@ msgstr "sk-..."
 msgid "sk-ant-..."
 msgstr "sk-ant-..."
 
+msgid "Skip"
+msgstr "Skip"
+
 msgid "Skip segmentation for images whose shortest side is below this threshold."
 msgstr "Skip segmentation for images whose shortest side is below this threshold."
+
+msgid "Skip tour"
+msgstr "Skip tour"
 
 msgid "Skipped"
 msgstr "Skipped"
@@ -3427,6 +3451,9 @@ msgstr "Start"
 
 msgid "Start a reviewer session"
 msgstr "Start a reviewer session"
+
+msgid "Start by extracting content from your PDF, then build the storyboard to create the visual layout. These two stages are required — everything else is optional."
+msgstr "Start by extracting content from your PDF, then build the storyboard to create the visual layout. These two stages are required — everything else is optional."
 
 msgid "Start page"
 msgstr "Start page"
@@ -3594,6 +3621,9 @@ msgstr "The AI will preserve the original style while applying your changes."
 
 msgid "The back cover of the book."
 msgstr "The back cover of the book."
+
+msgid "The core path"
+msgstr "The core path"
 
 msgid "The credits page."
 msgstr "The credits page."
@@ -3763,6 +3793,9 @@ msgstr "Total Tokens"
 msgid "Track reviewer progress and review findings captured from Preview."
 msgstr "Track reviewer progress and review findings captured from Preview."
 
+msgid "Translate"
+msgstr "Translate"
+
 msgid "Translate the book content to output languages."
 msgstr "Translate the book content to output languages."
 
@@ -3841,8 +3874,8 @@ msgstr "Unknown"
 msgid "Unknown criterion"
 msgstr "Unknown criterion"
 
-msgid "Unknown stage"
-msgstr "Unknown stage"
+#~ msgid "Unknown stage"
+#~ msgstr "Unknown stage"
 
 msgid "Unknown step slug: {step}"
 msgstr "Unknown step slug: {step}"
@@ -4002,6 +4035,9 @@ msgstr "WebPub"
 msgid "WebPub Export"
 msgstr "WebPub Export"
 
+msgid "Welcome to your book pipeline"
+msgstr "Welcome to your book pipeline"
+
 msgid "What should the AI change?"
 msgstr "What should the AI change?"
 
@@ -4010,6 +4046,9 @@ msgstr "When enabled, background colors from the styleguide are applied to the f
 
 msgid "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."
 msgstr "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."
+
+msgid "When you're ready, preview the final result, run validation checks, and export the finished digital textbook."
+msgstr "When you're ready, preview the final result, run validation checks, and export the finished digital textbook."
 
 msgid "When your PDF isn't built around facing pages, single mode keeps every page separate: nothing is merged across a spread. That matches how most textbooks, novels, and reference books are read - one page at a time."
 msgstr "When your PDF isn't built around facing pages, single mode keeps every page separate: nothing is merged across a spread. That matches how most textbooks, novels, and reference books are read - one page at a time."
