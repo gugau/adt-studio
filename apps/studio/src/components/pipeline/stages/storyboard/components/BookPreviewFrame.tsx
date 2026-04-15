@@ -59,6 +59,8 @@ export interface BookPreviewFrameProps {
   /** Book label — used to load the correct Tailwind CSS and font assets from the API */
   bookLabel: string
   className?: string
+  /** Override the fixed viewport width the iframe renders at (default 1280). */
+  renderWidth?: number
   /** Enable interactive mode — click/edit elements with data-id attributes */
   editable?: boolean
   /** data-id values of pruned elements — shown faded/greyed in the preview */
@@ -89,6 +91,7 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   html,
   bookLabel,
   className,
+  renderWidth: renderWidthProp,
   editable = false,
   prunedDataIds,
   changedElements,
@@ -96,6 +99,7 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   onTextChanged,
   applyBodyBackground,
 }, ref) {
+  const effectiveRenderWidth = renderWidthProp ?? RENDER_WIDTH
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
@@ -611,11 +615,11 @@ ${selectors}:hover {
       const entry = entries[0]
       if (!entry) return
       const availableWidth = entry.contentRect.width
-      setScale(Math.min(1, availableWidth / RENDER_WIDTH))
+      setScale(Math.min(1, availableWidth / effectiveRenderWidth))
     })
     ro.observe(wrapper)
     return () => ro.disconnect()
-  }, [])
+  }, [effectiveRenderWidth])
 
   // One-time iframe setup
   useEffect(() => {
@@ -657,7 +661,7 @@ ${selectors}:hover {
         srcDoc={srcdoc}
         scrolling="no"
         style={{
-          width: RENDER_WIDTH,
+          width: effectiveRenderWidth,
           height: contentHeight,
           border: "none",
           transformOrigin: "top left",

@@ -12,6 +12,7 @@ import { useBookRun } from "@/hooks/use-book-run"
 import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import { useStepHeader } from "../../../components/StepViewRouter"
 import { BookPreviewFrame, type BookPreviewFrameHandle } from "./BookPreviewFrame"
+import { DevicePicker, DEVICE_WIDTHS, type DeviceMode } from "../../../components/DevicePicker"
 import { SectionEditToolbar } from "./SectionEditToolbar"
 import { ImageCropDialog } from "./ImageCropDialog"
 import { AiImageDialog } from "./AiImageDialog"
@@ -444,6 +445,7 @@ export function StoryboardSectionDetail({
 
   // Section data panel state
   const [panelOpen, setPanelOpen] = useState(false)
+  const [deviceMode, setDeviceMode] = useState<DeviceMode>("desktop")
   const [htmlPreview, setHtmlPreview] = useState(false)
   const [htmlPanelHeight, setHtmlPanelHeight] = useState(() => Math.floor(window.innerHeight * 0.35))
   const htmlPanelRef = useRef<HTMLDivElement>(null)
@@ -2300,6 +2302,7 @@ export function StoryboardSectionDetail({
         <span className="text-[10px]">{t`Edit`}</span>
         {dirty && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" title={t`Unsaved changes`} />}
       </button>
+      <DevicePicker value={deviceMode} onChange={setDeviceMode} />
       {navigationArrows}
     </>
   )
@@ -2334,7 +2337,13 @@ export function StoryboardSectionDetail({
             <p className="text-xs mt-1">{t`All sections have been deleted`}</p>
           </div>
         ) : renderedSection?.html ? (
-          <>
+          <div className={`${deviceMode !== "desktop" ? "flex justify-center" : ""}`}>
+            <div
+              className={`transition-[width] duration-300 ease-in-out ${
+                deviceMode !== "desktop" ? "border-x border-border/40 shadow-sm" : ""
+              }`}
+              style={{ width: deviceMode === "desktop" ? "100%" : DEVICE_WIDTHS[deviceMode], maxWidth: "100%" }}
+            >
             {activityPreviewMode ? (
               <iframe
                 src={`${BASE_URL}/books/${bookLabel}/adt-preview/${pageId}_sec${String(sectionIndex + 1).padStart(3, "0")}.html?embed=1&v=${page.versions.rendering ?? 0}`}
@@ -2347,6 +2356,7 @@ export function StoryboardSectionDetail({
                   html={renderedSection.html}
                   bookLabel={bookLabel}
                   className="w-full rounded border"
+                  renderWidth={DEVICE_WIDTHS[deviceMode]}
                   editable={!hasActiveTask && !storyboardRunning}
                   prunedDataIds={prunedDataIds}
                   changedElements={changedElements}
@@ -2355,7 +2365,8 @@ export function StoryboardSectionDetail({
                   applyBodyBackground={applyBodyBackground}
                 />
             )}
-          </>
+            </div>
+          </div>
         ) : storyboardRunning && !section?.isPruned ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <Loader2 className="w-8 h-8 animate-spin text-violet-400 mb-3" />

@@ -9,6 +9,8 @@ import { useAccessibilityAssessment } from "@/hooks/use-debug"
 import { useReviewerValidationCatalog } from "@/hooks/use-reviewer-validation"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useBookTasks } from "@/hooks/use-book-tasks"
+import { useStepHeader } from "@/components/pipeline/components/StepViewRouter"
+import { DevicePicker, DEVICE_WIDTHS, type DeviceMode } from "@/components/pipeline/components/DevicePicker"
 import {
   findAccessibilityPage,
   normalizeAccessibilityHref,
@@ -27,6 +29,17 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
   const navigate = useNavigate()
   const search = useSearch({ strict: false }) as { previewHref?: string }
   const { stageState } = useBookRun()
+  const { setExtra } = useStepHeader()
+  const [deviceMode, setDeviceMode] = useState<DeviceMode>("desktop")
+
+  useEffect(() => {
+    setExtra(
+      <div className="ml-auto">
+        <DevicePicker value={deviceMode} onChange={setDeviceMode} />
+      </div>
+    )
+    return () => setExtra(null)
+  }, [deviceMode, setExtra])
   const { isTaskRunning, getTask } = useBookTasks(bookLabel)
   const storyboardDone = stageState("storyboard") === "done"
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -259,14 +272,20 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
 
   if (ready) {
     return (
-      <div className="relative h-full w-full bg-muted/20">
-        <iframe
-          ref={iframeRef}
-          src={`${getAdtUrl(bookLabel)}/v-${version}/`}
-          className="h-full w-full border-0"
-          title="ADT Preview"
-          onLoad={syncCurrentPreviewPage}
-        />
+      <div className="relative h-full w-full bg-muted/20 flex justify-center overflow-auto">
+        <div
+          className={`h-full transition-[width] duration-300 ease-in-out relative shrink-0 ${
+            deviceMode !== "desktop" ? "border-x border-border/40 shadow-sm" : ""
+          }`}
+          style={{ width: deviceMode === "desktop" ? "100%" : DEVICE_WIDTHS[deviceMode] }}
+        >
+          <iframe
+            ref={iframeRef}
+            src={`${getAdtUrl(bookLabel)}/v-${version}/`}
+            className="h-full w-full border-0"
+            title="ADT Preview"
+            onLoad={syncCurrentPreviewPage}
+          />
 
         <PreviewAccessibilityCard
           label={bookLabel}
@@ -306,6 +325,7 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
             })}
           />
         ) : null}
+        </div>
       </div>
     )
   }
