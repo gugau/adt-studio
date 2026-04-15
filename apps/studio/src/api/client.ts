@@ -76,6 +76,7 @@ export interface ImportPreview {
   videoCount: number
   coverBase64: string | null
   stages: Record<string, { status: string; stepCount: number; doneCount: number }>
+  validationError: string | null
 }
 
 export interface BookDetail extends BookSummary {

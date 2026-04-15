@@ -106,6 +106,13 @@ function PreviewCard({ preview, fileName, fileSize }: { preview: ImportPreview; 
           <p className="text-[11px] text-slate-400 truncate">{fileName} &middot; {formatBytes(fileSize)}</p>
         </div>
 
+        {preview.validationError && (
+          <div className="mx-5 mb-3 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
+            <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+            <p className="text-[11px] leading-tight text-amber-700">{preview.validationError}</p>
+          </div>
+        )}
+
         <div className="px-5 pb-3">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
             <Trans>Book info</Trans>
@@ -350,7 +357,7 @@ export function ImportProject() {
             <Trans>Back</Trans>
           </Button>
           <Button
-            disabled={!preview || importMutation.isPending}
+            disabled={!preview || !!preview.validationError || importMutation.isPending}
             onClick={handleImport}
             className="h-9 px-3 py-2 text-white bg-amber-500 hover:bg-amber-600 disabled:opacity-50 border-0"
           >

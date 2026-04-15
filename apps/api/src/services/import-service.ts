@@ -21,6 +21,7 @@ export interface ImportPreview {
   videoCount: number
   coverBase64: string | null
   stages: Record<string, { status: string; stepCount: number; doneCount: number }>
+  validationError: string | null
 }
 
 function resolveUniqueLabel(baseLabel: string, booksDir: string): string {
@@ -75,60 +76,76 @@ export function previewImport(zipBuffer: Buffer): ImportPreview {
   let publisher: string | null = null
   let languageCode: string | null = null
   let pageCount = 0
+  let validationError: string | null = null
   const stages: ImportPreview["stages"] = {}
 
   try {
     fs.writeFileSync(tmpDbPath, entries[dbEntry])
     const db = openBookDb(tmpDbPath)
     try {
-      const pages = db.all("SELECT COUNT(*) as count FROM pages") as Array<{ count: number }>
-      pageCount = pages[0]?.count ?? 0
+      const tables = db.all(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('pages', 'node_data', 'step_runs')",
+      ) as Array<{ name: string }>
+      const tableNames = new Set(tables.map((t) => t.name))
 
-      const metaRows = db.all(
-        "SELECT data FROM node_data WHERE node = ? AND item_id = ? ORDER BY version DESC LIMIT 1",
-        ["metadata", "book"],
-      ) as Array<{ data: string }>
-      if (metaRows.length > 0) {
-        const parsed = BookMetadata.safeParse(JSON.parse(metaRows[0].data))
-        if (parsed.success) {
-          title = parsed.data.title
-          authors = parsed.data.authors
-          publisher = parsed.data.publisher
-          languageCode = parsed.data.language_code
+      if (!tableNames.has("pages") || !tableNames.has("node_data")) {
+        validationError = "The database does not contain the expected ADT tables. This may not be a valid ADT Studio project."
+      } else {
+        const pages = db.all("SELECT COUNT(*) as count FROM pages") as Array<{ count: number }>
+        pageCount = pages[0]?.count ?? 0
+
+        if (pageCount === 0) {
+          validationError = "The database contains no pages. This project may be incomplete or corrupted."
         }
-      }
 
-      const stepRuns = db.all("SELECT step, status FROM step_runs") as Array<{
-        step: string
-        status: string
-      }>
+        const metaRows = db.all(
+          "SELECT data FROM node_data WHERE node = ? AND item_id = ? ORDER BY version DESC LIMIT 1",
+          ["metadata", "book"],
+        ) as Array<{ data: string }>
+        if (metaRows.length > 0) {
+          const parsed = BookMetadata.safeParse(JSON.parse(metaRows[0].data))
+          if (parsed.success) {
+            title = parsed.data.title
+            authors = parsed.data.authors
+            publisher = parsed.data.publisher
+            languageCode = parsed.data.language_code
+          }
+        }
 
-      for (const stage of PIPELINE) {
-        const stageSteps: string[] = stage.steps.map((s) => s.name)
-        const matching = stepRuns.filter((r) => stageSteps.includes(r.step))
-        stages[stage.name] = {
-          status: matching.length === 0
-            ? "pending"
-            : matching.every((r) => r.status === "done")
-              ? "done"
-              : matching.some((r) => r.status === "error")
-                ? "error"
-                : matching.some((r) => r.status === "running")
-                  ? "running"
-                  : "partial",
-          stepCount: stageSteps.length,
-          doneCount: matching.filter((r) => r.status === "done").length,
+        if (tableNames.has("step_runs")) {
+          const stepRuns = db.all("SELECT step, status FROM step_runs") as Array<{
+            step: string
+            status: string
+          }>
+
+          for (const stage of PIPELINE) {
+            const stageSteps: string[] = stage.steps.map((s) => s.name)
+            const matching = stepRuns.filter((r) => stageSteps.includes(r.step))
+            stages[stage.name] = {
+              status: matching.length === 0
+                ? "pending"
+                : matching.every((r) => r.status === "done")
+                  ? "done"
+                  : matching.some((r) => r.status === "error")
+                    ? "error"
+                    : matching.some((r) => r.status === "running")
+                      ? "running"
+                      : "partial",
+              stepCount: stageSteps.length,
+              doneCount: matching.filter((r) => r.status === "done").length,
+            }
+          }
         }
       }
     } finally {
       db.close()
     }
   } catch {
-    // If DB can't be read, return what we can from the file listing
+    validationError = "Could not read the project database. The file may be corrupted or not a valid ADT Studio project."
   } finally {
     try {
       fs.rmSync(tmpDir, { recursive: true, force: true })
-    } catch { /* best-effort cleanup */ }
+    } catch { /* ignore */ }
   }
 
   return {
@@ -143,6 +160,7 @@ export function previewImport(zipBuffer: Buffer): ImportPreview {
     videoCount,
     coverBase64,
     stages,
+    validationError,
   }
 }
 
@@ -187,8 +205,7 @@ export async function importProject(
       const destPath = path.join(bookDir, renamedPath)
 
       if (!destPath.startsWith(bookDir + path.sep) && destPath !== bookDir) {
-        // TODO: throw an error instead of silently skipping — the user should know their archive contains suspicious paths
-        continue
+        throw new Error("Invalid project archive: contains paths that escape the project directory")
       }
 
       const destDir = path.dirname(destPath)
@@ -197,6 +214,26 @@ export async function importProject(
       }
 
       fs.writeFileSync(destPath, data)
+    }
+
+    const dbPath = path.join(bookDir, `${targetLabel}.db`)
+    const db = openBookDb(dbPath)
+    try {
+      const tables = db.all(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('pages', 'node_data')",
+      ) as Array<{ name: string }>
+      const tableNames = new Set(tables.map((t) => t.name))
+
+      if (!tableNames.has("pages") || !tableNames.has("node_data")) {
+        throw new Error("Invalid project archive: database does not contain expected ADT tables")
+      }
+
+      const pages = db.all("SELECT COUNT(*) as count FROM pages") as Array<{ count: number }>
+      if ((pages[0]?.count ?? 0) === 0) {
+        throw new Error("Invalid project archive: database contains no pages")
+      }
+    } finally {
+      db.close()
     }
 
     return {
@@ -213,7 +250,7 @@ export async function importProject(
   } catch (err) {
     try {
       fs.rmSync(bookDir, { recursive: true, force: true })
-    } catch { /* preserve original error */ }
+    } catch { /* ignore */ }
     throw err
   }
 }
