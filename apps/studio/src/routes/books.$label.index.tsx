@@ -4,7 +4,7 @@ export const Route = createFileRoute("/books/$label/")({
   beforeLoad: ({ params }) => {
     throw redirect({
       to: "/books/$label/$step",
-      params: { label: params.label, step: "extract" },
+      params: { label: params.label, step: "book" },
     })
   },
   component: () => null,

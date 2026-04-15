@@ -496,9 +496,6 @@ msgstr "Después"
 msgid "After {0}"
 msgstr "Después de {0}"
 
-msgid "After extraction, your content flows into the Storyboard for layout."
-msgstr "Después de la extracción, tu contenido pasa al Storyboard para el diseño."
-
 msgid "AI"
 msgstr "IA"
 
@@ -1484,9 +1481,6 @@ msgstr "Extracción"
 msgid "Extract text and images from each page of the PDF using AI-powered analysis."
 msgstr "Extrae texto e imágenes de cada página del PDF usando análisis con IA."
 
-msgid "Extract text, images, and document structure from your PDF to start building the book."
-msgstr "Extrae texto, imágenes y la estructura del documento de tu PDF para comenzar a construir el libro."
-
 msgid "Extracted"
 msgstr "Extraído"
 
@@ -1499,9 +1493,6 @@ msgstr "Texto extraído"
 
 msgid "Extracting..."
 msgstr "Extrayendo..."
-
-msgid "Extraction failed. You can retry to extract content from your PDF."
-msgstr "La extracción falló. Puedes reintentar para extraer contenido de tu PDF."
 
 msgid "Extraction Prompt"
 msgstr "Indicación de extracción"
@@ -2999,9 +2990,6 @@ msgstr "Reintentar"
 msgid "Retry Export"
 msgstr "Reintentar exportación"
 
-msgid "Retry extraction"
-msgstr "Reintentar extracción"
-
 msgid "Review areas with the most items marked as needing changes in this session."
 msgstr "Review areas with the most items marked as needing changes in this session."
 
@@ -3049,9 +3037,6 @@ msgstr "El aumento de las temperaturas oceánicas causa el blanqueamiento de cor
 
 msgid "Run {stageLabel}"
 msgstr "Ejecutar {0}"
-
-msgid "Run extraction"
-msgstr "Ejecutar extracción"
 
 msgid "Run the pipeline through at least the"
 msgstr "Ejecuta el pipeline al menos hasta la etapa"
@@ -3856,8 +3841,8 @@ msgstr "Unknown"
 msgid "Unknown criterion"
 msgstr "Unknown criterion"
 
-#~ msgid "Unknown stage"
-#~ msgstr "Etapa desconocida"
+msgid "Unknown stage"
+msgstr "Etapa desconocida"
 
 msgid "Unknown step slug: {step}"
 msgstr "Slug de etapa desconocido: {0}"
@@ -4049,14 +4034,8 @@ msgstr "Envuelve solicitudes de 'Editar esta imagen'. La IA recibe la imagen ori
 msgid "Wraps 'Generate new' requests. Supports user_prompt, style, and image_type variables. Uses Liquid syntax for conditionals."
 msgstr "Envuelve solicitudes de 'Generar nueva'. Soporta variables user_prompt, style e image_type. Usa sintaxis Liquid para condicionales."
 
-msgid "You can export now, or enhance it with optional features:"
-msgstr "Puedes exportar ahora o mejorarlo con funciones opcionales:"
-
 msgid "Young adult fiction"
 msgstr "Ficción para jóvenes adultos"
-
-msgid "Your book is ready to export!"
-msgstr "¡Tu libro está listo para exportar!"
 
 msgid "Your Books"
 msgstr "Tus libros"
