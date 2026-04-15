@@ -496,6 +496,9 @@ msgstr "After"
 msgid "After {0}"
 msgstr "After {0}"
 
+msgid "After extraction, your content flows into the Storyboard for layout."
+msgstr "After extraction, your content flows into the Storyboard for layout."
+
 msgid "AI"
 msgstr "AI"
 
@@ -1481,6 +1484,9 @@ msgstr "Extract"
 msgid "Extract text and images from each page of the PDF using AI-powered analysis."
 msgstr "Extract text and images from each page of the PDF using AI-powered analysis."
 
+msgid "Extract text, images, and document structure from your PDF to start building the book."
+msgstr "Extract text, images, and document structure from your PDF to start building the book."
+
 msgid "Extracted"
 msgstr "Extracted"
 
@@ -1493,6 +1499,9 @@ msgstr "Extracted Text"
 
 msgid "Extracting..."
 msgstr "Extracting..."
+
+msgid "Extraction failed. You can retry to extract content from your PDF."
+msgstr "Extraction failed. You can retry to extract content from your PDF."
 
 msgid "Extraction Prompt"
 msgstr "Extraction Prompt"
@@ -2990,6 +2999,9 @@ msgstr "Retry"
 msgid "Retry Export"
 msgstr "Retry Export"
 
+msgid "Retry extraction"
+msgstr "Retry extraction"
+
 msgid "Review areas with the most items marked as needing changes in this session."
 msgstr "Review areas with the most items marked as needing changes in this session."
 
@@ -3037,6 +3049,9 @@ msgstr "Rising ocean temperatures cause coral bleaching - when stressed corals e
 
 msgid "Run {stageLabel}"
 msgstr "Run {stageLabel}"
+
+msgid "Run extraction"
+msgstr "Run extraction"
 
 msgid "Run the pipeline through at least the"
 msgstr "Run the pipeline through at least the"
@@ -3841,8 +3856,8 @@ msgstr "Unknown"
 msgid "Unknown criterion"
 msgstr "Unknown criterion"
 
-msgid "Unknown stage"
-msgstr "Unknown stage"
+#~ msgid "Unknown stage"
+#~ msgstr "Unknown stage"
 
 msgid "Unknown step slug: {step}"
 msgstr "Unknown step slug: {step}"
@@ -4032,8 +4047,14 @@ msgstr "Wraps 'Edit this image' requests. The AI receives the original image alo
 msgid "Wraps 'Generate new' requests. Supports user_prompt, style, and image_type variables. Uses Liquid syntax for conditionals."
 msgstr "Wraps 'Generate new' requests. Supports user_prompt, style, and image_type variables. Uses Liquid syntax for conditionals."
 
+msgid "You can export now, or enhance it with optional features:"
+msgstr "You can export now, or enhance it with optional features:"
+
 msgid "Young adult fiction"
 msgstr "Young adult fiction"
+
+msgid "Your book is ready to export!"
+msgstr "Your book is ready to export!"
 
 msgid "Your Books"
 msgstr "Your Books"

@@ -13,6 +13,7 @@ import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import { useStepHeader } from "../../../components/StepViewRouter"
 import { BookPreviewFrame, type BookPreviewFrameHandle } from "./BookPreviewFrame"
 import { DevicePicker, DEVICE_WIDTHS, type DeviceMode } from "../../../components/DevicePicker"
+import { BookReadyBanner } from "../../../components/BookReadyBanner"
 import { SectionEditToolbar } from "./SectionEditToolbar"
 import { ImageCropDialog } from "./ImageCropDialog"
 import { AiImageDialog } from "./AiImageDialog"
@@ -2325,6 +2326,8 @@ export function StoryboardSectionDetail({
           <p className="text-[10px] text-destructive">{aiError}</p>
         </div>
       )}
+
+      <BookReadyBanner bookLabel={bookLabel} />
 
       {/* Preview — fills remaining space, scrolls independently */}
       <div className="flex-1 overflow-auto px-4 py-4 relative" ref={scrollContainerRef}>

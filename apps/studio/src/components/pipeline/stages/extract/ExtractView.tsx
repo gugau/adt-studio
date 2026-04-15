@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { AlignLeft, ArrowLeft, ArrowRight, BookOpen, Building2, FileText, Globe, Image, Loader2, User } from "lucide-react"
+import { AlignLeft, ArrowLeft, ArrowRight, BookOpen, Building2, FileText, Globe, Image, Loader2, Play, RotateCcw, User, FileSearch, ArrowRight as ArrowRightIcon } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
 import { useBook } from "@/hooks/use-books"
@@ -8,7 +8,8 @@ import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { ExtractPageDetail } from "./components/ExtractPageDetail"
 import { useStepHeader } from "../../components/StepViewRouter"
-import { StageRunCard } from "../../components/StageRunCard"
+import { getStepLabelI18n } from "../../pipeline-i18n"
+import { PIPELINE } from "@adt/types"
 import type { PageSummaryItem } from "@/api/client"
 
 /** Returns true once the element has scrolled into view. */
@@ -104,6 +105,151 @@ function PageCard({
   )
 }
 
+
+function ExtractWelcome({ bookLabel, onRun, isRunning, isError, disabled }: {
+  bookLabel: string
+  onRun: () => void
+  isRunning: boolean
+  isError: boolean
+  disabled: boolean
+}) {
+  const { t } = useLingui()
+  const { data: book } = useBook(bookLabel)
+  const { stepState, stepProgress, stepError } = useBookRun()
+
+  const extractStage = PIPELINE.find((s) => s.name === "extract")
+  const steps = extractStage?.steps ?? []
+  const title = book?.title ?? book?.metadata?.title ?? bookLabel
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full px-6">
+      <div className="w-full max-w-md flex flex-col items-center text-center">
+        {/* Icon */}
+        <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-5">
+          <FileSearch className="w-8 h-8 text-blue-500" />
+        </div>
+
+        {/* Title & subtitle */}
+        <h2 className="text-lg font-semibold tracking-tight mb-2">{title}</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed mb-6 max-w-sm">
+          {isError
+            ? <Trans>Extraction failed. You can retry to extract content from your PDF.</Trans>
+            : <Trans>Extract text, images, and document structure from your PDF to start building the book.</Trans>
+          }
+        </p>
+
+        {/* Run button */}
+        <button
+          type="button"
+          onClick={onRun}
+          disabled={disabled}
+          className={`
+            inline-flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-medium
+            transition-all duration-200 cursor-pointer
+            ${isRunning
+              ? "bg-blue-50 text-blue-600 cursor-default"
+              : isError
+                ? "bg-red-500 text-white hover:bg-red-600 active:scale-[0.98] shadow-md shadow-red-500/20"
+                : "bg-blue-500 text-white hover:bg-blue-600 active:scale-[0.98] shadow-md shadow-blue-500/20"
+            }
+            disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:active:scale-100
+          `}
+        >
+          {isRunning ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <Trans>Extracting...</Trans>
+            </>
+          ) : isError ? (
+            <>
+              <RotateCcw className="w-4 h-4" />
+              <Trans>Retry extraction</Trans>
+            </>
+          ) : (
+            <>
+              <Play className="w-4 h-4" />
+              <Trans>Run extraction</Trans>
+            </>
+          )}
+        </button>
+
+        {/* Step progress (shown while running) */}
+        {isRunning && (
+          <div className="mt-6 w-full max-w-xs">
+            <div className="space-y-1.5">
+              {steps.map((step) => {
+                const state = stepState(step.name)
+                const progress = stepProgress(step.name)
+                const error = stepError(step.name)
+                const isDone = state === "done"
+                const isActive = state === "running"
+                const isFailed = state === "error"
+
+                return (
+                  <div key={step.name} className="flex items-center gap-2 text-xs">
+                    <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                      {isDone ? (
+                        <div className="w-3.5 h-3.5 rounded-full bg-blue-500 flex items-center justify-center">
+                          <svg className="w-2 h-2 text-white" viewBox="0 0 12 12" fill="none">
+                            <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </div>
+                      ) : isActive ? (
+                        <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin" />
+                      ) : isFailed ? (
+                        <div className="w-3.5 h-3.5 rounded-full bg-red-500 flex items-center justify-center">
+                          <svg className="w-2 h-2 text-white" viewBox="0 0 12 12" fill="none">
+                            <path d="M3 3L9 9M9 3L3 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                          </svg>
+                        </div>
+                      ) : (
+                        <div className="w-3.5 h-3.5 rounded-full border-2 border-muted-foreground/20" />
+                      )}
+                    </div>
+                    <span className={`flex-1 ${isActive ? "text-foreground font-medium" : isDone ? "text-muted-foreground" : "text-muted-foreground/60"}`}>
+                      {getStepLabelI18n(step.name)}
+                    </span>
+                    {progress && (progress.totalPages ?? 0) > 0 && isActive && (
+                      <span className="text-muted-foreground tabular-nums">
+                        {progress.page ?? 0}/{progress.totalPages}
+                      </span>
+                    )}
+                    {isFailed && error && (
+                      <span className="text-red-500 truncate max-w-[140px]" title={error}>{error}</span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Error detail */}
+        {isError && !isRunning && (
+          <div className="mt-4 w-full max-w-xs">
+            {steps.map((step) => {
+              const error = stepError(step.name)
+              if (!error) return null
+              return (
+                <div key={step.name} className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-700">
+                  <span className="font-medium">{getStepLabelI18n(step.name)}:</span> {error}
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* What happens next */}
+        {!isRunning && !isError && (
+          <div className="mt-8 flex items-center gap-2 text-xs text-muted-foreground/60">
+            <ArrowRightIcon className="w-3 h-3" />
+            <Trans>After extraction, your content flows into the Storyboard for layout.</Trans>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 function BookBanner({ bookLabel, pages, metadataRunning }: { bookLabel: string; pages: PageSummaryItem[] | undefined; metadataRunning?: boolean }) {
   const { t } = useLingui()
@@ -302,20 +448,25 @@ export function ExtractView({ bookLabel, selectedPageId: selectedPageIdProp, onS
     )
   }
 
+  // Welcome / run card — full-height centered layout
+  if (showRunCard) {
+    return (
+      <ExtractWelcome
+        bookLabel={bookLabel}
+        onRun={handleRetryExtract}
+        isRunning={extractRunning}
+        isError={extractError}
+        disabled={!hasApiKey || extractRunning}
+      />
+    )
+  }
+
   // Page grid view
   return (
     <div>
-      {!showRunCard && pageList.length > 0 && <BookBanner bookLabel={bookLabel} pages={pages} metadataRunning={metadataRunning} />}
+      {pageList.length > 0 && <BookBanner bookLabel={bookLabel} pages={pages} metadataRunning={metadataRunning} />}
       <div className="p-4">
-      {showRunCard ? (
-        <StageRunCard
-          stageSlug="extract"
-          isRunning={extractRunning}
-          completed={extractDone}
-          onRun={handleRetryExtract}
-          disabled={!extractError || !hasApiKey || extractRunning}
-        />
-      ) : pageList.length === 0 ? (
+      {pageList.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           <Trans>No pages extracted yet. Run the pipeline to extract content.</Trans>
         </p>
