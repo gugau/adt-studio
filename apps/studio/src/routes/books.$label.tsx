@@ -47,6 +47,7 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
   const [debugDefaultTab, setDebugDefaultTab] = useState<DebugTabValue>("stats")
   const isDebugRoute = !!matchRoute({ to: "/books/$label/debug", params: { label } })
   const [topBarEl, setTopBarEl] = useState<HTMLElement | null>(null)
+  const [onboardingOpen, setOnboardingOpen] = useState(false)
   const exportWatcher = useExportWatcherSetup(label)
 
   const activeStep = step ?? "book"
@@ -126,7 +127,7 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
   return (
     <DebugPanelStateProvider value={debugPanelState}>
       <>
-        <PipelineOnboarding bookLabel={label} onDone={() => {}} />
+        <PipelineOnboarding bookLabel={label} open={onboardingOpen} onOpenChange={setOnboardingOpen} />
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex min-h-0 flex-1">
             <StageSidebar
@@ -136,6 +137,7 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
               onSelectPage={onSelectPage}
               sectionIndex={sectionIndex}
               onSelectSection={setSectionIndex}
+              onOpenHelp={() => setOnboardingOpen(true)}
               topBarSlot={<div ref={setTopBarEl} className="flex flex-1 min-w-0 h-full" />}
               content={
                 <TopBarPortalCtx.Provider value={topBarEl}>

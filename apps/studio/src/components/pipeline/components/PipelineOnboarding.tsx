@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { ArrowLeft, ArrowRight, FileText, LayoutGrid, HelpCircle, Image, BookOpen, List, Languages, AudioLines, Hand, ShieldCheck, Eye, FileDown, Rocket } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { Button } from "@/components/ui/button"
@@ -78,11 +78,31 @@ function StageGrid({ stages }: { stages: StageItem[] }) {
   )
 }
 
-export function PipelineOnboarding({ bookLabel, onDone }: { bookLabel: string; onDone: () => void }) {
+export function PipelineOnboarding({
+  bookLabel,
+  open: controlledOpen,
+  onOpenChange,
+}: {
+  bookLabel: string
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+}) {
   const { t } = useLingui()
-  const [open, setOpen] = useState(() => !hasSeen(bookLabel))
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(() => !hasSeen(bookLabel))
+  const isControlled = controlledOpen !== undefined
+  const open = isControlled ? controlledOpen : uncontrolledOpen
   const [step, setStep] = useState(0)
   const [direction, setDirection] = useState<"forward" | "back">("forward")
+  const [dontShowAgain, setDontShowAgain] = useState(false)
+
+  // Auto-open on first visit for this book (controlled mode)
+  const didAutoOpen = useRef(false)
+  useEffect(() => {
+    if (isControlled && !didAutoOpen.current && !hasSeen(bookLabel) && !controlledOpen) {
+      didAutoOpen.current = true
+      onOpenChange?.(true)
+    }
+  }, [isControlled, bookLabel, controlledOpen, onOpenChange])
 
   const slides: Slide[] = [
     {
@@ -124,10 +144,15 @@ export function PipelineOnboarding({ bookLabel, onDone }: { bookLabel: string; o
   const slide = slides[step]
 
   const handleClose = useCallback(() => {
-    markSeen(bookLabel)
-    setOpen(false)
-    onDone()
-  }, [bookLabel, onDone])
+    if (dontShowAgain) markSeen(bookLabel)
+    if (isControlled) {
+      onOpenChange?.(false)
+    } else {
+      setUncontrolledOpen(false)
+      markSeen(bookLabel)
+    }
+    setStep(0)
+  }, [bookLabel, dontShowAgain, isControlled, onOpenChange])
 
   const handleNext = useCallback(() => {
     if (isLast) {
@@ -213,7 +238,7 @@ export function PipelineOnboarding({ bookLabel, onDone }: { bookLabel: string; o
         </div>
 
         {/* Footer */}
-        <div className="border-t border-[#e5e5e5] px-6 py-4">
+        <div className="border-t border-[#e5e5e5] px-6 py-4 space-y-3">
           <div className="grid grid-cols-2 w-full gap-2">
             <Button
               variant="outline"
@@ -238,6 +263,15 @@ export function PipelineOnboarding({ bookLabel, onDone }: { bookLabel: string; o
               )}
             </Button>
           </div>
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={dontShowAgain}
+              onChange={(e) => setDontShowAgain(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-gray-300 text-violet-600 focus:ring-violet-500 cursor-pointer"
+            />
+            <span className="text-xs text-muted-foreground"><Trans>Don't show this again</Trans></span>
+          </label>
         </div>
       </DialogContent>
     </Dialog>

@@ -1272,6 +1272,9 @@ msgstr "Discard"
 msgid "Display"
 msgstr "Display"
 
+msgid "Don't show this again"
+msgstr "Don't show this again"
+
 msgid "Drag to move boxes, drag edges/corners to resize"
 msgstr "Drag to move boxes, drag edges/corners to resize"
 

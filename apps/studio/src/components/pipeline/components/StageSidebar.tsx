@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { createPortal } from "react-dom"
 import { Link, useMatchRoute, useSearch } from "@tanstack/react-router"
 import { Trans } from "@lingui/react/macro"
-import { Home, Loader2 } from "lucide-react"
+import { HelpCircle, Home, Loader2 } from "lucide-react"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import { cn } from "@/lib/utils"
 import { useLingui } from "@lingui/react"
@@ -136,6 +136,7 @@ export function StageSidebar({
   onSelectSection,
   topBarSlot,
   content,
+  onOpenHelp,
 }: {
   bookLabel: string
   activeStep: string
@@ -145,6 +146,7 @@ export function StageSidebar({
   onSelectSection?: (index: number) => void
   topBarSlot?: React.ReactNode
   content?: React.ReactNode
+  onOpenHelp?: () => void
 }) {
   const { i18n } = useLingui()
   const matchRoute = useMatchRoute()
@@ -277,6 +279,24 @@ export function StageSidebar({
             {stageItems}
           </div>
           <TaskIndicator bookLabel={bookLabel} compact />
+          {onOpenHelp && (
+            <div className="border-t">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={onOpenHelp}
+                    className="flex items-center justify-center w-full py-2 text-muted-foreground/60 hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    <HelpCircle className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={6}>
+                  <Trans>Pipeline overview</Trans>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          )}
         </nav>
 
         {/* Secondary panel */}
