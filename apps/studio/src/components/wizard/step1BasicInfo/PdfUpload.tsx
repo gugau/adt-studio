@@ -1,15 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
-import { Upload, Trash2, XCircle } from "lucide-react"
+import { Upload, Trash2 } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
 import { Button } from "@/components/ui/button"
+import { FileDropOverlay, useFileDropZone } from "@/components/ui/file-drop-overlay"
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import { useBooks } from "@/hooks/use-books"
 import { getPdfJs } from "@/components/wizard/shared/pdfjsLoader"
 import { cn } from "@/lib/utils"
-
-type OverlayState = "idle" | "dragging" | "error"
 
 async function getPdfPageCount(file: File): Promise<number> {
   const pdfjs = await getPdfJs()
@@ -125,33 +124,11 @@ export function PdfUpload() {
   const { t } = useLingui()
   const { file, pdfError, setFile, clearFile } = usePdfUpload()
   const pdfRef = useRef<HTMLInputElement>(null)
-  const [overlay, setOverlay] = useState<OverlayState>("idle")
-  const overlayRef = useRef<OverlayState>("idle")
-  const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  function setOverlayState(s: OverlayState) {
-    overlayRef.current = s
-    setOverlay(s)
-  }
-
-  const acceptDrop = useCallback((f: File | undefined) => {
-    if (!f) return
-    if (f.type !== "application/pdf") {
-      if (errorTimerRef.current) clearTimeout(errorTimerRef.current)
-      setOverlayState("error")
-      errorTimerRef.current = setTimeout(() => {
-        setOverlayState("idle")
-      }, 2000)
-      return
-    }
-    setOverlayState("idle")
-    setFile(f)
-  }, [setFile])
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    acceptDrop(e.dataTransfer.files[0])
-  }, [acceptDrop])
+  const { overlay, handleDrop } = useFileDropZone({
+    accept: (f) => f.type === "application/pdf",
+    onAccept: setFile,
+  })
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const picked = e.target.files?.[0]
@@ -159,80 +136,14 @@ export function PdfUpload() {
     e.target.value = ""
   }, [setFile])
 
-  useEffect(() => {
-    function onDragEnter(e: DragEvent) {
-      if (e.dataTransfer?.types.includes("Files")) setOverlayState("dragging")
-    }
-    function onDragLeave(e: DragEvent) {
-      if (e.relatedTarget === null && overlayRef.current !== "error") setOverlayState("idle")
-    }
-    function onDragOver(e: DragEvent) { e.preventDefault() }
-    function onDrop(e: DragEvent) {
-      e.preventDefault()
-      acceptDrop(e.dataTransfer?.files[0])
-    }
-
-    window.addEventListener("dragenter", onDragEnter)
-    window.addEventListener("dragleave", onDragLeave)
-    window.addEventListener("dragover", onDragOver)
-    window.addEventListener("drop", onDrop)
-    return () => {
-      window.removeEventListener("dragenter", onDragEnter)
-      window.removeEventListener("dragleave", onDragLeave)
-      window.removeEventListener("dragover", onDragOver)
-      window.removeEventListener("drop", onDrop)
-      if (errorTimerRef.current) clearTimeout(errorTimerRef.current)
-    }
-  }, [acceptDrop])
-
   return (
     <>
-      <div
-        className={cn(
-          "fixed inset-0 z-50 m-1 flex flex-col items-center justify-center rounded-lg pointer-events-none",
-          "transition-[opacity,background-color,border-color] duration-300 ease-out",
-          overlay === "idle" && "border-4 border-transparent opacity-0",
-          overlay === "dragging" &&
-            "border-4 border-dashed border-[#2b7fff] bg-[#2b7fff]/10 opacity-100",
-          overlay === "error" &&
-            "border-4 border-dashed border-[#ef4444] bg-[#ef4444]/10 opacity-100",
-        )}
-        aria-hidden
-      >
-        <div className="grid min-h-[5.5rem] w-full max-w-md place-items-center px-4">
-          <div
-            className={cn(
-              "col-start-1 row-start-1 flex flex-col items-center gap-3 transition-all duration-300 ease-out",
-              overlay === "error"
-                ? "pointer-events-none scale-95 opacity-0"
-                : "scale-100 opacity-100",
-            )}
-          >
-            <Upload
-              className={cn(
-                "h-10 w-10 text-[#2b7fff] transition-transform duration-300 ease-out",
-                overlay === "dragging" ? "scale-100" : "scale-75",
-              )}
-            />
-            <span className="text-base font-semibold text-[#2b7fff]">
-              <Trans>Drop PDF here</Trans>
-            </span>
-          </div>
-          <div
-            className={cn(
-              "col-start-1 row-start-1 flex flex-col items-center gap-3 transition-all duration-300 ease-out",
-              overlay === "error"
-                ? "scale-100 opacity-100"
-                : "pointer-events-none scale-95 opacity-0",
-            )}
-          >
-            <XCircle className="h-10 w-10 text-[#ef4444]" />
-            <span className="text-center text-base font-semibold text-[#ef4444]">
-              <Trans>Only PDF files are supported</Trans>
-            </span>
-          </div>
-        </div>
-      </div>
+      <FileDropOverlay
+        overlay={overlay}
+        dropLabel={<Trans>Drop PDF here</Trans>}
+        errorLabel={<Trans>Only PDF files are supported</Trans>}
+        accent="blue"
+      />
 
       <div className="flex flex-col gap-2">
         <label className="text-sm font-medium text-[#0a0a0a]">
