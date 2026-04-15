@@ -17,6 +17,7 @@ const LOCALE_LABEL_MESSAGES: Record<AppLocale, MessageDescriptor> = {
   en: msg`English`,
   "pt-BR": msg`Portuguese (BR)`,
   es: msg`Spanish`,
+  fr: msg`French`,
 }
 
 export function LocaleSwitcher({ className }: { className?: string }) {

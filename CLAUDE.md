@@ -156,7 +156,7 @@ Or create a new tag in the GitHub UI pointing at `main`.
 
 ## Internationalization (i18n)
 
-The Studio app uses **Lingui v5** for i18n. All user-visible text in `apps/studio/` must be translated to all supported locales: **`en`, `pt-BR`, `es`**.
+The Studio app uses **Lingui v5** for i18n. All user-visible text in `apps/studio/` must be translated to all supported locales: **`en`, `pt-BR`, `es`, `fr`**.
 
 ### Rules
 - **Every user-visible string must be wrapped** in a Lingui macro — no raw string literals in JSX or component output
@@ -164,7 +164,7 @@ The Studio app uses **Lingui v5** for i18n. All user-visible text in `apps/studi
   - In JSX content: `<Trans>Your string</Trans>`
   - In non-React code (utils, constants): `msg\`Your string\`` + `i18n._()` at runtime
 - **After adding or changing any string**, run `pnpm --filter @adt/studio extract` to update all `.po` catalog files and commit them alongside the code change
-- **All locales must be fully translated** — no empty `msgstr` entries in `es.po` or `pt-BR.po`
+- **All locales must be fully translated** — no empty `msgstr` entries in `es.po`, `pt-BR.po`, or `fr.po`
 - CI enforces both rules automatically via the `i18n` job in `.github/workflows/ci.yml`
 
 ### Available locales
@@ -172,6 +172,7 @@ Defined in `apps/studio/src/i18n/locales.ts` (single source of truth for locale 
 - `en` — English (source locale)
 - `pt-BR` — Portuguese (Brazil)
 - `es` — Spanish
+- `fr` — French
 
 ### ESLint — hardcoded string detection
 The `lingui/no-unlocalized-strings` rule in `apps/studio/eslint.config.js` flags raw strings that should be wrapped in a macro. It has an `ignoreNames` list for prop names whose values are never user-visible (e.g. `variant`, `className`, `href`).
