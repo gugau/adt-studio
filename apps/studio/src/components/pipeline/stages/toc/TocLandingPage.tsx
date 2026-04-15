@@ -176,6 +176,13 @@ export function TocLandingPage({
         </p>
       </div>
 
+      <PrerequisiteWarnings
+        storyboardReady={storyboardReady}
+        hasNoPages={hasNoPages}
+        allPagesPruned={allPagesPruned}
+        stageName="a table of contents"
+      />
+
       {/* Info banner */}
       <div className="rounded-xl bg-amber-50 px-5 py-4">
         <div className="flex items-center gap-2.5 mb-2">
@@ -194,13 +201,6 @@ export function TocLandingPage({
           </Trans>
         </p>
       </div>
-
-      <PrerequisiteWarnings
-        storyboardReady={storyboardReady}
-        hasNoPages={hasNoPages}
-        allPagesPruned={allPagesPruned}
-        stageName="a table of contents"
-      />
     </LandingPageShell>
   )
 }

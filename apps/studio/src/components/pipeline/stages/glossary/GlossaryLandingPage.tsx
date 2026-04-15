@@ -208,6 +208,13 @@ export function GlossaryLandingPage({
         </p>
       </div>
 
+      <PrerequisiteWarnings
+        storyboardReady={storyboardReady}
+        hasNoPages={hasNoPages}
+        allPagesPruned={allPagesPruned}
+        stageName="a glossary"
+      />
+
       {/* Info banner */}
       <div className="rounded-xl bg-lime-50 px-5 py-4">
         <div className="flex items-center gap-2.5 mb-2">
@@ -226,13 +233,6 @@ export function GlossaryLandingPage({
           </Trans>
         </p>
       </div>
-
-      <PrerequisiteWarnings
-        storyboardReady={storyboardReady}
-        hasNoPages={hasNoPages}
-        allPagesPruned={allPagesPruned}
-        stageName="a glossary"
-      />
     </LandingPageShell>
   )
 }

@@ -152,6 +152,13 @@ export function CaptionsLandingPage({
         </p>
       </div>
 
+      <PrerequisiteWarnings
+        storyboardReady={storyboardReady}
+        hasNoPages={hasNoPages}
+        allPagesPruned={allPagesPruned}
+        stageName="captions"
+      />
+
       <div className="rounded-xl bg-teal-50 px-5 py-4">
         <div className="flex items-center gap-2.5 mb-2">
           <div className="shrink-0 rounded-full bg-teal-100 p-1.5">
@@ -170,13 +177,6 @@ export function CaptionsLandingPage({
           </Trans>
         </p>
       </div>
-
-      <PrerequisiteWarnings
-        storyboardReady={storyboardReady}
-        hasNoPages={hasNoPages}
-        allPagesPruned={allPagesPruned}
-        stageName="captions"
-      />
 
       {canRun && hasNoImages && (
         <div className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
