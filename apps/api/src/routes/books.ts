@@ -13,7 +13,7 @@ import {
   updateBookConfig,
 } from "../services/book-service.js"
 import { prepareExport, exportProject, exportWebpub, exportScorm, exportAdt } from "../services/export-service.js"
-import { importProject } from "../services/import-service.js"
+import { importProject, previewImport } from "../services/import-service.js"
 import type { TaskService } from "../services/task-service.js"
 
 const MIME_TYPES: Record<string, string> = {
@@ -87,6 +87,25 @@ export function createBookRoutes(
       if (message.includes("already exists")) {
         throw new HTTPException(409, { message })
       }
+      throw new HTTPException(400, { message })
+    }
+  })
+
+  app.post("/books/preview-import", async (c) => {
+    const formData = await c.req.formData()
+    const zip = formData.get("zip")
+
+    if (!(zip instanceof File)) {
+      throw new HTTPException(400, { message: "zip file is required" })
+    }
+
+    const zipBuffer = Buffer.from(await zip.arrayBuffer())
+
+    try {
+      const preview = previewImport(zipBuffer)
+      return c.json(preview)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
       throw new HTTPException(400, { message })
     }
   })

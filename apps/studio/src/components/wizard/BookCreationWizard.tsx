@@ -14,6 +14,7 @@ import { STEPS } from "./steps"
 import { buildConfigOverrides } from "./bookCreationConfig"
 import { getPresetAccent, type PresetAccent } from "./constants"
 import { Step0Preset } from "./step0preset"
+import { ImportProject } from "@/components/import/ImportProject"
 import { StudioTopBar } from "@/components/StudioTopBar"
 import { PdfCoverPreview } from "./shared/PdfCoverPreview"
 import { LayoutPreview, getPreviewWidth } from "./step2LayoutOptions/LayoutPreview"
@@ -229,6 +230,17 @@ export function BookCreationWizard() {
       ? el
       : el.querySelector<HTMLElement>("input,button,select,textarea,[tabindex]")
     if (focusable) setTimeout(() => focusable.focus({ preventScroll: true }), 300)
+  }
+
+  if (currentStep === -1) {
+    return (
+      <div className="flex flex-1 min-h-0 flex-col h-full bg-white">
+        <StudioTopBar brandLinksHome trailingTitle={<Trans>Import Project</Trans>} />
+        <div className="flex flex-1 min-h-0 flex-col overflow-auto">
+          <ImportProject />
+        </div>
+      </div>
+    )
   }
 
   if (currentStep === 0) {

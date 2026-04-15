@@ -64,6 +64,20 @@ export interface BookSummary {
   rebuildReason: string | null
 }
 
+export interface ImportPreview {
+  label: string
+  title: string | null
+  authors: string[]
+  publisher: string | null
+  languageCode: string | null
+  pageCount: number
+  hasSourcePdf: boolean
+  imageCount: number
+  videoCount: number
+  coverBase64: string | null
+  stages: Record<string, { status: string; stepCount: number; doneCount: number }>
+}
+
 export interface BookDetail extends BookSummary {
   metadata: {
     title: string | null
@@ -529,6 +543,15 @@ export const api = {
 
   deleteBook: (label: string) =>
     request<{ ok: boolean }>(`/books/${label}`, { method: "DELETE" }),
+
+  previewImport: (zip: File) => {
+    const formData = new FormData()
+    formData.append("zip", zip)
+    return request<ImportPreview>("/books/preview-import", {
+      method: "POST",
+      body: formData,
+    })
+  },
 
   importBook: (zip: File) => {
     const formData = new FormData()

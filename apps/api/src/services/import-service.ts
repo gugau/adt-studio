@@ -1,10 +1,27 @@
 import fs from "node:fs"
+import os from "node:os"
 import path from "node:path"
 import { unzipSync } from "fflate"
-import { parseBookLabel } from "@adt/types"
+import { parseBookLabel, BookMetadata, PIPELINE } from "@adt/types"
+import { renderPdfCover } from "@adt/pdf"
+import { openBookDb } from "@adt/storage"
 import type { BookSummary } from "./book-service.js"
 
 export interface ImportResult extends BookSummary {}
+
+export interface ImportPreview {
+  label: string
+  title: string | null
+  authors: string[]
+  publisher: string | null
+  languageCode: string | null
+  pageCount: number
+  hasSourcePdf: boolean
+  imageCount: number
+  videoCount: number
+  coverBase64: string | null
+  stages: Record<string, { status: string; stepCount: number; doneCount: number }>
+}
 
 function resolveUniqueLabel(baseLabel: string, booksDir: string): string {
   const resolvedDir = path.resolve(booksDir)
@@ -16,6 +33,117 @@ function resolveUniqueLabel(baseLabel: string, booksDir: string): string {
     n++
   }
   return `${baseLabel}-${n}`
+}
+
+export function previewImport(zipBuffer: Buffer): ImportPreview {
+  let entries: Record<string, Uint8Array>
+  try {
+    entries = unzipSync(zipBuffer)
+  } catch {
+    throw new Error("Invalid ZIP file")
+  }
+
+  const filePaths = Object.keys(entries)
+
+  const dbEntry = filePaths.find((p) => p.endsWith(".db") && !p.includes("/"))
+  if (!dbEntry) {
+    throw new Error("Invalid project archive: missing database file (.db) at root level")
+  }
+
+  const rawLabel = dbEntry.replace(/\.db$/, "")
+  const safeLabel = parseBookLabel(rawLabel)
+
+  const pdfEntry = filePaths.find((p) => p.endsWith(".pdf") && !p.includes("/"))
+  const hasPdf = !!pdfEntry
+  const imageCount = filePaths.filter((p) => p.startsWith("images/") && !p.endsWith("/")).length
+  const videoCount = filePaths.filter((p) => p.startsWith("videos/") && !p.endsWith("/")).length
+
+  let coverBase64: string | null = null
+  if (pdfEntry) {
+    const pdfBuffer = Buffer.from(entries[pdfEntry])
+    const coverPng = renderPdfCover(pdfBuffer)
+    if (coverPng) {
+      coverBase64 = coverPng.toString("base64")
+    }
+  }
+
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "adt-preview-"))
+  const tmpDbPath = path.join(tmpDir, `${safeLabel}.db`)
+
+  let title: string | null = null
+  let authors: string[] = []
+  let publisher: string | null = null
+  let languageCode: string | null = null
+  let pageCount = 0
+  const stages: ImportPreview["stages"] = {}
+
+  try {
+    fs.writeFileSync(tmpDbPath, entries[dbEntry])
+    const db = openBookDb(tmpDbPath)
+    try {
+      const pages = db.all("SELECT COUNT(*) as count FROM pages") as Array<{ count: number }>
+      pageCount = pages[0]?.count ?? 0
+
+      const metaRows = db.all(
+        "SELECT data FROM node_data WHERE node = ? AND item_id = ? ORDER BY version DESC LIMIT 1",
+        ["metadata", "book"],
+      ) as Array<{ data: string }>
+      if (metaRows.length > 0) {
+        const parsed = BookMetadata.safeParse(JSON.parse(metaRows[0].data))
+        if (parsed.success) {
+          title = parsed.data.title
+          authors = parsed.data.authors
+          publisher = parsed.data.publisher
+          languageCode = parsed.data.language_code
+        }
+      }
+
+      const stepRuns = db.all("SELECT step, status FROM step_runs") as Array<{
+        step: string
+        status: string
+      }>
+
+      for (const stage of PIPELINE) {
+        const stageSteps: string[] = stage.steps.map((s) => s.name)
+        const matching = stepRuns.filter((r) => stageSteps.includes(r.step))
+        stages[stage.name] = {
+          status: matching.length === 0
+            ? "pending"
+            : matching.every((r) => r.status === "done")
+              ? "done"
+              : matching.some((r) => r.status === "error")
+                ? "error"
+                : matching.some((r) => r.status === "running")
+                  ? "running"
+                  : "partial",
+          stepCount: stageSteps.length,
+          doneCount: matching.filter((r) => r.status === "done").length,
+        }
+      }
+    } finally {
+      db.close()
+    }
+  } catch {
+    // If DB can't be read, return what we can from the file listing
+  } finally {
+    try {
+      fs.rmSync(tmpDir, { recursive: true, force: true })
+    } catch { /* best-effort cleanup */ }
+  }
+
+  return {
+    label: safeLabel,
+    title,
+    authors,
+    publisher,
+    languageCode,
+    pageCount,
+    hasSourcePdf: hasPdf,
+    imageCount,
+    videoCount,
+    coverBase64,
+    stages,
+  }
 }
 
 export async function importProject(

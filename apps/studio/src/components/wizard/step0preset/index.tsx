@@ -1,6 +1,6 @@
-import { useNavigate } from "@tanstack/react-router"
 import { ArrowLeft, ArrowRight, RotateCcw } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
+import { useNavigate } from "@tanstack/react-router"
 import { useStore } from "@tanstack/react-form"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"

@@ -2153,6 +2153,26 @@ async function extractVectorImagesFromSvg(
 // Exports for testing
 // ============================================================================
 
+/**
+ * Render the first page of a PDF as a PNG thumbnail.
+ * Returns the PNG buffer, or null if rendering fails.
+ */
+export function renderPdfCover(pdfBuffer: Buffer): Buffer | null {
+  try {
+    const doc = openPdfFromBuffer(pdfBuffer);
+    try {
+      const page = doc.loadPage(0);
+      const matrix = mupdf.Matrix.scale(1, 1);
+      const pixmap = page.toPixmap(matrix, mupdf.ColorSpace.DeviceRGB, false);
+      return Buffer.from(pixmap.asPNG());
+    } finally {
+      doc.destroy();
+    }
+  } catch {
+    return null;
+  }
+}
+
 /** @internal Exported for testing */
 export const _testing = {
   parseSvgPathBbox,

@@ -443,6 +443,9 @@ msgstr "Adicionar"
 msgid "Add {0} Images"
 msgstr "Adicionar {0} imagens"
 
+#~ msgid "Add a Book"
+#~ msgstr "Adicionar um livro"
+
 msgid "Add Book"
 msgstr "Adicionar livro"
 
@@ -802,6 +805,9 @@ msgstr "Autor"
 msgid "Book data is outdated and must be rebuilt."
 msgstr "Os dados do livro estão desatualizados e precisam ser reconstruídos."
 
+msgid "Book info"
+msgstr "Informações do livro"
+
 msgid "Book Language"
 msgstr "Idioma do livro"
 
@@ -1093,6 +1099,12 @@ msgstr "Capa"
 msgid "Cover of {title}"
 msgstr "Capa de {0}"
 
+msgid "Create a new book from a PDF"
+msgstr "Criar um novo livro a partir de um PDF"
+
+#~ msgid "Create a new book from a PDF or import an existing project archive."
+#~ msgstr "Crie um novo livro a partir de um PDF ou importe um arquivo de projeto existente."
+
 msgid "Create a new image from a text description"
 msgstr "Crie uma nova imagem a partir de uma descrição de texto"
 
@@ -1104,6 +1116,9 @@ msgstr "Criar ADT"
 
 msgid "Create descriptive captions for images to improve accessibility."
 msgstr "Cria legendas descritivas para imagens para melhorar a acessibilidade."
+
+#~ msgid "Create from scratch"
+#~ msgstr "Criar do zero"
 
 msgid "Create from scratch using your description"
 msgstr "Criar do zero usando sua descrição"
@@ -1326,6 +1341,9 @@ msgstr "Descartar"
 msgid "Display"
 msgstr "Exibição"
 
+msgid "Don't have a project yet?"
+msgstr "Ainda não tem um projeto?"
+
 msgid "Download a full backup of this project"
 msgstr "Baixar um backup completo deste projeto"
 
@@ -1343,6 +1361,9 @@ msgstr "Arraste os vértices para remodelar. Clique nos pontos médios (+) para 
 
 msgid "Drop PDF here"
 msgstr "Solte o PDF aqui"
+
+msgid "Drop ZIP here"
+msgstr "Solte o ZIP aqui"
 
 msgid "Duplicate"
 msgstr "Duplicar"
@@ -1622,6 +1643,9 @@ msgstr "Falha ao carregar estatísticas:"
 msgid "Failed to load validation checklist:"
 msgstr "Failed to load validation checklist:"
 
+msgid "Failed to read archive"
+msgstr "Falha ao ler o arquivo"
+
 msgid "Failed:"
 msgstr "Falhou:"
 
@@ -1858,6 +1882,9 @@ msgstr "Livros infantis ilustrados"
 msgid "Illustration"
 msgstr "Ilustração"
 
+msgid "image"
+msgstr "imagem"
+
 msgid "Image Associated Text"
 msgstr "Texto associado à imagem"
 
@@ -1924,6 +1951,9 @@ msgstr "Imagem indisponível"
 msgid "Image upload failed"
 msgstr "Image upload failed"
 
+msgid "images"
+msgstr "imagens"
+
 msgid "Images"
 msgstr "Imagens"
 
@@ -1944,6 +1974,21 @@ msgstr "Imagens com lado menor abaixo do mínimo ou lado maior acima do máximo 
 
 msgid "Import"
 msgstr "Importar"
+
+#~ msgid "Import a project"
+#~ msgstr "Importar um projeto"
+
+msgid "Import a Project"
+msgstr "Importar um projeto"
+
+#~ msgid "Import an existing project"
+#~ msgstr "Importar um projeto existente"
+
+msgid "Import project"
+msgstr "Importar projeto"
+
+msgid "Import Project"
+msgstr "Importar projeto"
 
 msgid "Importing..."
 msgstr "Importando..."
@@ -2568,6 +2613,9 @@ msgstr "Não gerado"
 msgid "Not reviewed"
 msgstr "Not reviewed"
 
+#~ msgid "Not run"
+#~ msgstr "Não executado"
+
 msgid "Note"
 msgstr "Nota"
 
@@ -2597,6 +2645,9 @@ msgstr "Apenas páginas que contêm esses tipos de seção são contadas ao agru
 
 msgid "Only PDF files are supported"
 msgstr "Apenas arquivos PDF são suportados"
+
+msgid "Only ZIP files are supported"
+msgstr "Apenas arquivos ZIP são suportados"
 
 msgid "Open a page in Preview to show its page-specific accessibility findings here."
 msgstr "Open a page in Preview to show its page-specific accessibility findings here."
@@ -2825,6 +2876,9 @@ msgstr "Escolha uma abordagem de layout."
 msgid "Picture books and early readers"
 msgstr "Livros ilustrados e leitores iniciantes"
 
+#~ msgid "Pipeline"
+#~ msgstr "Pipeline"
+
 msgid "Pipeline features"
 msgstr "Recursos do pipeline"
 
@@ -2997,6 +3051,9 @@ msgstr "Reexecutar tradução"
 msgid "Readers see"
 msgstr "Leitores veem"
 
+msgid "Reading archive..."
+msgstr "Lendo arquivo..."
+
 msgid "Readium Web Publication format for standards-based digital distribution platforms."
 msgstr "Formato Readium Web Publication para plataformas de distribuição digital baseadas em padrões."
 
@@ -3051,6 +3108,9 @@ msgstr "Remove checklist item"
 
 msgid "Remove entry"
 msgstr "Remover entrada"
+
+msgid "Remove file"
+msgstr "Remover arquivo"
 
 msgid "Remove PDF"
 msgstr "Remover PDF"
@@ -3115,8 +3175,14 @@ msgstr "Variantes responsivas / de estado"
 msgid "Restore"
 msgstr "Restaurar"
 
+#~ msgid "Restore a project from a backup"
+#~ msgstr "Restaurar um projeto a partir de um backup"
+
 msgid "Restore element"
 msgstr "Restaurar elemento"
+
+#~ msgid "Restore from a previously exported project archive (.zip)"
+#~ msgstr "Restaurar a partir de um arquivo de projeto exportado anteriormente (.zip)"
 
 msgid "Restore section to flow"
 msgstr "Restaurar seção ao fluxo"
@@ -3145,6 +3211,9 @@ msgstr "Review one session at a time to inspect page coverage and flagged findin
 
 msgid "Review progress"
 msgstr "Review progress"
+
+msgid "Review the project details below and confirm the import."
+msgstr "Revise os detalhes do projeto abaixo e confirme a importação."
 
 msgid "Reviewer checklist"
 msgstr "Reviewer checklist"
@@ -3949,6 +4018,9 @@ msgstr "Total de tokens"
 msgid "Track reviewer progress and review findings captured from Preview."
 msgstr "Track reviewer progress and review findings captured from Preview."
 
+msgid "Translate"
+msgstr "Traduzir"
+
 msgid "Translate the book content to output languages."
 msgstr "Traduzir o conteúdo do livro para os idiomas de saída."
 
@@ -3969,6 +4041,9 @@ msgstr "Trata cada página como uma única seção"
 
 msgid "Try Activity"
 msgstr "Testar atividade"
+
+msgid "Try another file"
+msgstr "Tentar outro arquivo"
 
 msgid "Turn this on to show the Validation review card in Preview and the Reviewer Validation tab in the Validation step."
 msgstr "Turn this on to show the Validation review card in Preview and the Reviewer Validation tab in the Validation step."
@@ -4060,6 +4135,9 @@ msgstr "Sem título"
 msgid "Upload a new image file from your computer"
 msgstr "Envie um novo arquivo de imagem do seu computador"
 
+#~ msgid "Upload a PDF and configure the pipeline step by step"
+#~ msgstr "Envie um PDF e configure o pipeline passo a passo"
+
 msgid "Upload a PDF to continue"
 msgstr "Envie um PDF para continuar"
 
@@ -4068,6 +4146,12 @@ msgstr "Envie um PDF para começar"
 
 msgid "Upload a PDF to preview its pages here."
 msgstr "Envie um PDF para pré-visualizar suas páginas aqui."
+
+#~ msgid "Upload a previously exported project archive to restore it."
+#~ msgstr "Envie um arquivo de projeto exportado anteriormente para restaurá-lo."
+
+msgid "Upload an ADT Studio project archive (.zip) exported by you or shared by a colleague."
+msgstr "Envie um arquivo de projeto do ADT Studio (.zip) exportado por você ou compartilhado por um colega."
 
 msgid "Upload and assign sign language videos to book pages."
 msgstr "Envie e atribua vídeos de língua de sinais às páginas do livro."
@@ -4101,6 +4185,9 @@ msgstr "Enviar Guia de Estilo"
 
 msgid "Upload to an LMS as a SCORM 1.2 package with completion tracking and offline support."
 msgstr "Faça upload para um LMS como pacote SCORM 1.2 com rastreamento de conclusão e suporte offline."
+
+msgid "Upload ZIP or drag and drop"
+msgstr "Envie um ZIP ou arraste e solte"
 
 msgid "Uploading..."
 msgstr "Enviando..."
@@ -4142,6 +4229,12 @@ msgstr "Extração vetorial"
 #. placeholder {0}: String(version)
 msgid "Version {0}"
 msgstr "Versão {0}"
+
+msgid "video"
+msgstr "vídeo"
+
+msgid "videos"
+msgstr "vídeos"
 
 msgid "View HTML source"
 msgstr "Ver código HTML"
