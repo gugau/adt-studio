@@ -59,7 +59,7 @@ const VIEW_MAP: Record<string, ViewEntry> = {
   quizzes: { component: QuizzesView, fullHeight: true },
   captions: { component: CaptionsView, fullHeight: true },
   glossary: { component: GlossaryView, fullHeight: true },
-  toc: { component: TocView },
+  toc: { component: TocView, fullHeight: true },
   translate: { component: TranslationsView, fullHeight: true },
   speech: { component: TranslationsView, fullHeight: true },
   "sign-language": { component: SignLanguageView, fullHeight: true },

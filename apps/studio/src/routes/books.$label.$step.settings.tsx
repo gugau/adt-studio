@@ -11,6 +11,7 @@ import { QuizzesLandingPage } from "@/components/pipeline/stages/quizzes/Quizzes
 import { GlossarySettings } from "@/components/pipeline/stages/glossary/GlossarySettings"
 import { GlossaryLandingPage } from "@/components/pipeline/stages/glossary/GlossaryLandingPage"
 import { TocSettings } from "@/components/pipeline/stages/toc/TocSettings"
+import { TocLandingPage } from "@/components/pipeline/stages/toc/TocLandingPage"
 import { CaptionsSettings } from "@/components/pipeline/stages/captions/CaptionsSettings"
 import { CaptionsLandingPage } from "@/components/pipeline/stages/captions/CaptionsLandingPage"
 import { TranslationsSettings } from "@/components/pipeline/stages/translations/TranslationsSettings"
@@ -96,6 +97,8 @@ export function StepSettingsPage() {
                 return <CaptionsLandingPage bookLabel={label} />
               case "glossary":
                 return <GlossaryLandingPage bookLabel={label} />
+              case "toc":
+                return <TocLandingPage bookLabel={label} />
             }
           }
 

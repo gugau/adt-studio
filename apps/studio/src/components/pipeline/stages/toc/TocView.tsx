@@ -7,8 +7,7 @@ import type { TocGenerationOutput, TocEntry, TocSection, VersionEntry } from "@/
 import { useToc } from "@/hooks/use-toc"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
-import { useApiKey } from "@/hooks/use-api-key"
-import { StageRunCard } from "../../components/StageRunCard"
+import { TocLandingPage } from "./TocLandingPage"
 
 type TocData = Omit<TocGenerationOutput, "version">
 
@@ -237,24 +236,29 @@ export function TocView({ bookLabel }: { bookLabel: string }) {
   const { t } = useLingui()
   const queryClient = useQueryClient()
   const { data, isLoading } = useToc(bookLabel)
-  const { setExtra } = useStepHeader()
-  const { stageState, queueRun } = useBookRun()
-  const { apiKey, hasApiKey } = useApiKey()
+  const { setExtra, setOnLabelClick } = useStepHeader()
+  const { stageState } = useBookRun()
   const tocState = stageState("toc")
+  const tocIdle = tocState === "idle"
   const tocDone = tocState === "done"
-  const tocRunning = tocState === "running" || tocState === "queued"
-  const showRunCard = !tocDone || tocRunning
+
+  const hasTocData = (data?.entries ?? []).length > 0
+
+  const [showConfig, setShowConfig] = useState(false)
+
+  useEffect(() => {
+    if (!tocIdle) {
+      setOnLabelClick(() => setShowConfig((v) => !v))
+      return () => setOnLabelClick(null)
+    }
+    setOnLabelClick(null)
+  }, [tocIdle, setOnLabelClick])
 
   const { data: sections } = useQuery({
     queryKey: ["books", bookLabel, "toc-sections"],
     queryFn: () => api.getTocSections(bookLabel),
     enabled: !!bookLabel && tocDone,
   })
-
-  const handleRunToc = useCallback(() => {
-    if (!hasApiKey || tocRunning) return
-    queueRun({ fromStage: "toc", toStage: "toc", apiKey })
-  }, [hasApiKey, tocRunning, apiKey, queueRun])
 
   const [pending, setPending] = useState<TocData | null>(null)
   const [saving, setSaving] = useState(false)
@@ -355,27 +359,8 @@ export function TocView({ bookLabel }: { bookLabel: string }) {
     updateEntry(id, { level: newLevel })
   }
 
-  if (!showRunCard && isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">{t`Loading table of contents...`}</span>
-      </div>
-    )
-  }
-
-  if (showRunCard || entries.length === 0) {
-    return (
-      <div className="p-4">
-        <StageRunCard
-          stageSlug="toc"
-          isRunning={tocRunning}
-          completed={tocDone}
-          onRun={handleRunToc}
-          disabled={!hasApiKey || tocRunning}
-        />
-      </div>
-    )
+  if ((tocIdle && (!hasTocData || isLoading)) || showConfig) {
+    return <TocLandingPage bookLabel={bookLabel} />
   }
 
   return (

@@ -103,6 +103,7 @@ function getSettingsTabs(
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE["glossary-prompt"]) },
     ],
     toc: [
+      { key: "config", label: i18n._(SETTINGS_TAB_MESSAGE.config) },
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE["toc-prompt"]) },
     ],
     captions: [
