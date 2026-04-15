@@ -7,8 +7,7 @@ import type { GlossaryOutput, VersionEntry } from "@/api/client"
 import { useGlossary } from "@/hooks/use-glossary"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
-import { useApiKey } from "@/hooks/use-api-key"
-import { StageRunCard } from "../../components/StageRunCard"
+import { GlossaryLandingPage } from "./GlossaryLandingPage"
 import { useLingui } from "@lingui/react/macro"
 
 
@@ -134,21 +133,24 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
   const { t } = useLingui()
   const queryClient = useQueryClient()
   const { data, isLoading } = useGlossary(bookLabel)
-  const { setExtra } = useStepHeader()
-  const { stageState, queueRun } = useBookRun()
-  const { apiKey, hasApiKey } = useApiKey()
+  const { setExtra, setOnLabelClick } = useStepHeader()
+  const { stageState } = useBookRun()
   const glossaryState = stageState("glossary")
-  const glossaryDone = glossaryState === "done"
-  const glossaryRunning = glossaryState === "running" || glossaryState === "queued"
-  const showRunCard = !glossaryDone || glossaryRunning
+  const glossaryIdle = glossaryState === "idle"
 
-  const handleRunGlossary = useCallback(() => {
-    if (!hasApiKey || glossaryRunning) return
-    queueRun({ fromStage: "glossary", toStage: "glossary", apiKey })
-  }, [hasApiKey, glossaryRunning, apiKey, queueRun])
+  const hasGlossaryData = (data?.items ?? []).length > 0
 
+  const [showConfig, setShowConfig] = useState(false)
   const [pending, setPending] = useState<GlossaryData | null>(null)
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!glossaryIdle) {
+      setOnLabelClick(() => setShowConfig((v) => !v))
+      return () => setOnLabelClick(null)
+    }
+    setOnLabelClick(null)
+  }, [glossaryIdle, setOnLabelClick])
 
   // Reset pending when data changes
   useEffect(() => {
@@ -204,27 +206,8 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
     })
   }
 
-  if (!showRunCard && isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">{t`Loading glossary...`}</span>
-      </div>
-    )
-  }
-
-  if (showRunCard || items.length === 0) {
-    return (
-      <div className="p-4">
-        <StageRunCard
-          stageSlug="glossary"
-          isRunning={glossaryRunning}
-          completed={glossaryDone}
-          onRun={handleRunGlossary}
-          disabled={!hasApiKey || glossaryRunning}
-        />
-      </div>
-    )
+  if ((glossaryIdle && (!hasGlossaryData || isLoading)) || showConfig) {
+    return <GlossaryLandingPage bookLabel={bookLabel} />
   }
 
   return (

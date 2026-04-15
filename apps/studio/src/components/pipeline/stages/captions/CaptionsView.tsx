@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { Check, ChevronDown, Image as ImageIcon, Loader2 } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { api, BASE_URL } from "@/api/client"
@@ -7,9 +7,8 @@ import type { ContentNodeData } from "@adt/types"
 import { usePages, usePage } from "@/hooks/use-pages"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
-import { useApiKey } from "@/hooks/use-api-key"
 import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
-import { StageRunCard } from "../../components/StageRunCard"
+import { CaptionsLandingPage } from "./CaptionsLandingPage"
 import { useSectionNav } from "@/routes/books.$label"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
@@ -344,22 +343,28 @@ function PageCaptions({
 export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { bookLabel: string; selectedPageId?: string; onSelectPage?: (pageId: string | null) => void }) {
   const { t } = useLingui()
   const { data: pages, isLoading } = usePages(bookLabel)
-  const { setExtra } = useStepHeader()
-  const { stageState, queueRun } = useBookRun()
-  const { apiKey, hasApiKey } = useApiKey()
+  const { setExtra, setOnLabelClick } = useStepHeader()
+  const { stageState } = useBookRun()
   const captionsState = stageState("captions")
-  const captionsDone = captionsState === "done"
-  const captionsRunning = captionsState === "running" || captionsState === "queued"
-  const showRunCard = !captionsDone || captionsRunning
+  const captionsIdle = captionsState === "idle"
   const { sectionIndex, setSectionIndex } = useSectionNav()
-
-  const handleRunCaptions = useCallback(() => {
-    if (!hasApiKey || captionsRunning) return
-    queueRun({ fromStage: "captions", toStage: "captions", apiKey })
-  }, [hasApiKey, captionsRunning, apiKey, queueRun])
 
   const pagesWithImages = (pages ?? []).filter((p) => p.imageCount > 0)
   const hasCaptionData = pagesWithImages.some((p) => p.hasCaptioning)
+
+  const [showConfig, setShowConfig] = useState(false)
+
+  useEffect(() => {
+    if (selectedPageId) setShowConfig(false)
+  }, [selectedPageId])
+
+  useEffect(() => {
+    if (!captionsIdle) {
+      setOnLabelClick(() => setShowConfig((v) => !v))
+      return () => setOnLabelClick(null)
+    }
+    setOnLabelClick(null)
+  }, [captionsIdle, setOnLabelClick])
 
   const displayPages = selectedPageId
     ? pagesWithImages.filter((p) => p.pageId === selectedPageId)
@@ -419,27 +424,8 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
     return () => setExtra(null)
   }, [pages, totalImages, displayPages.length, setExtra, selectedPageId, selectedPageSummary?.pageNumber, selectedPageSummary?.sectionCount, hasSections, sectionIndex, setSectionIndex])
 
-  if (!showRunCard && isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">{t`Loading pages...`}</span>
-      </div>
-    )
-  }
-
-  if (showRunCard || pagesWithImages.length === 0 || !hasCaptionData) {
-    return (
-      <div className="p-4">
-        <StageRunCard
-          stageSlug="captions"
-          isRunning={captionsRunning}
-          completed={captionsDone}
-          onRun={handleRunCaptions}
-          disabled={!hasApiKey || captionsRunning}
-        />
-      </div>
-    )
+  if ((captionsIdle && (!hasCaptionData || isLoading)) || showConfig) {
+    return <CaptionsLandingPage bookLabel={bookLabel} />
   }
 
   if (selectedPageId && displayPages.length === 0 && pagesWithImages.length > 0) {

@@ -7,9 +7,12 @@ import { ExtractSettings } from "@/components/pipeline/stages/extract/ExtractSet
 import { SectioningSettings } from "@/components/pipeline/stages/sectioning/SectioningSettings"
 import { StoryboardSettings } from "@/components/pipeline/stages/storyboard/StoryboardSettings"
 import { QuizzesSettings } from "@/components/pipeline/stages/quizzes/QuizzesSettings"
+import { QuizzesLandingPage } from "@/components/pipeline/stages/quizzes/QuizzesLandingPage"
 import { GlossarySettings } from "@/components/pipeline/stages/glossary/GlossarySettings"
+import { GlossaryLandingPage } from "@/components/pipeline/stages/glossary/GlossaryLandingPage"
 import { TocSettings } from "@/components/pipeline/stages/toc/TocSettings"
 import { CaptionsSettings } from "@/components/pipeline/stages/captions/CaptionsSettings"
+import { CaptionsLandingPage } from "@/components/pipeline/stages/captions/CaptionsLandingPage"
 import { TranslationsSettings } from "@/components/pipeline/stages/translations/TranslationsSettings"
 import { ValidationSettings } from "@/components/pipeline/stages/ValidationSettings"
 import { getStageLabelI18n } from "@/components/pipeline/pipeline-i18n"
@@ -84,6 +87,17 @@ export function StepSettingsPage() {
       <div className="flex-1 min-h-0 overflow-auto">
         {(() => {
           const settingsStage = resolveSettingsStageSlug(step)
+
+          if (tab === "config") {
+            switch (settingsStage) {
+              case "quizzes":
+                return <QuizzesLandingPage bookLabel={label} />
+              case "captions":
+                return <CaptionsLandingPage bookLabel={label} />
+              case "glossary":
+                return <GlossaryLandingPage bookLabel={label} />
+            }
+          }
 
           switch (settingsStage) {
             case "extract":

@@ -55,6 +55,7 @@ const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   "speech-prompts": msg`Speech Prompts`,
   voices: msg`Voices`,
   "toc-prompt": msg`Generation Prompt`,
+  config: msg`Configuration`,
 }
 
 const TASK_KIND_LABELS: Record<string, MessageDescriptor> = {
@@ -93,16 +94,19 @@ function getSettingsTabs(
       { key: "image-generation", label: i18n._(SETTINGS_TAB_MESSAGE["image-generation"]) },
     ],
     quizzes: [
+      { key: "config", label: i18n._(SETTINGS_TAB_MESSAGE.config) },
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.general) },
       { key: "prompt", label: i18n._(SETTINGS_TAB_MESSAGE["quiz-prompt"]) },
     ],
     glossary: [
+      { key: "config", label: i18n._(SETTINGS_TAB_MESSAGE.config) },
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE["glossary-prompt"]) },
     ],
     toc: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE["toc-prompt"]) },
     ],
     captions: [
+      { key: "config", label: i18n._(SETTINGS_TAB_MESSAGE.config) },
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE["caption-prompt"]) },
     ],
     translate: [

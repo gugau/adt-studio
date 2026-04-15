@@ -8,8 +8,7 @@ import { usePageImage } from "@/hooks/use-pages"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
-import { useApiKey } from "@/hooks/use-api-key"
-import { StageRunCard } from "../../components/StageRunCard"
+import { QuizzesLandingPage } from "./QuizzesLandingPage"
 import { getRequestedPageId, getQuizImageRenderState } from "./lib/quizzes-image-state"
 import { useLingui } from "@lingui/react/macro"
 
@@ -274,22 +273,27 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
   const { t } = useLingui()
   const queryClient = useQueryClient()
   const { data, isLoading } = useQuizzes(bookLabel)
-  const { setExtra } = useStepHeader()
-  const { stageState, queueRun } = useBookRun()
-  const { apiKey, hasApiKey } = useApiKey()
+  const { setExtra, setOnLabelClick } = useStepHeader()
+  const { stageState } = useBookRun()
   const quizzesState = stageState("quizzes")
-  const quizzesDone = quizzesState === "done"
-  const quizzesRunning = quizzesState === "running" || quizzesState === "queued"
-  const showRunCard = !quizzesDone || quizzesRunning
-
-  const handleRunQuizzes = useCallback(() => {
-    if (!hasApiKey || quizzesRunning) return
-    queueRun({ fromStage: "quizzes", toStage: "quizzes", apiKey })
-  }, [hasApiKey, quizzesRunning, apiKey, queueRun])
+  const quizzesIdle = quizzesState === "idle"
 
   const [pending, setPending] = useState<QuizData | null>(null)
   const [saving, setSaving] = useState(false)
   const [lightboxPageId, setLightboxPageId] = useState<string | null>(null)
+  const [showConfig, setShowConfig] = useState(false)
+
+  useEffect(() => {
+    if (selectedPageId) setShowConfig(false)
+  }, [selectedPageId])
+
+  useEffect(() => {
+    if (!quizzesIdle) {
+      setOnLabelClick(() => setShowConfig((v) => !v))
+      return () => setOnLabelClick(null)
+    }
+    setOnLabelClick(null)
+  }, [quizzesIdle, setOnLabelClick])
 
   // Reset pending when data changes
   useEffect(() => {
@@ -374,27 +378,8 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
     })
   }
 
-  if (!showRunCard && isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">{t`Loading quizzes...`}</span>
-      </div>
-    )
-  }
-
-  if (showRunCard || quizzes.length === 0) {
-    return (
-      <div className="p-4">
-        <StageRunCard
-          stageSlug="quizzes"
-          isRunning={quizzesRunning}
-          completed={quizzesDone}
-          onRun={handleRunQuizzes}
-          disabled={!hasApiKey || quizzesRunning}
-        />
-      </div>
-    )
+  if ((quizzesIdle && (quizzes.length === 0 || isLoading)) || showConfig) {
+    return <QuizzesLandingPage bookLabel={bookLabel} />
   }
 
   if (selectedPageId && displayQuizzes.length === 0 && quizzes.length > 0) {

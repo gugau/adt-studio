@@ -29,11 +29,12 @@ export function useAccessibilityAssessment(label: string) {
   })
 }
 
-export function useActiveConfig(label: string) {
+export function useActiveConfig(label: string, options?: { refetchOnMount?: boolean | "always" }) {
   return useQuery({
     queryKey: ["debug", "config", label],
     queryFn: () => api.getActiveConfig(label),
     enabled: !!label,
+    refetchOnMount: options?.refetchOnMount,
   })
 }
 
