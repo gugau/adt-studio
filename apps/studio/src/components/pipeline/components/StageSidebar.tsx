@@ -2,17 +2,17 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { createPortal } from "react-dom"
 import { Link, useMatchRoute, useSearch } from "@tanstack/react-router"
 import { Trans } from "@lingui/react/macro"
-import {
-  Loader2,
-  RotateCcw,
-  Settings,
-} from "lucide-react"
+import { Home, Loader2 } from "lucide-react"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import { cn } from "@/lib/utils"
 import { useLingui } from "@lingui/react"
 import { msg } from "@lingui/core/macro"
 import type { MessageDescriptor } from "@lingui/core"
-import { Button } from "@/components/ui/button"
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useAccessibilityAssessment } from "@/hooks/use-debug"
 import { useBookTasks } from "@/hooks/use-book-tasks"
@@ -23,10 +23,10 @@ import {
   hasStagePages,
   toCamelLabel,
 } from "../stage-config"
-import { useSettingsDialog } from "@/routes/__root"
 import type { TaskInfoResponse } from "@/api/client"
 import { getStageLabelI18n, getStepLabelI18n } from "../pipeline-i18n"
 import { ALL_STEP_NAMES, PAGE_PROGRESS_STEPS } from "@adt/types"
+import { SETTINGS_STAGE_SLUGS } from "../settings-routing"
 
 const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   general: msg`General`,
@@ -115,6 +115,18 @@ function getSettingsTabs(
   return tabs[slug]
 }
 
+/** Stage groups for visual separators in the icon rail */
+const STAGE_GROUPS = [
+  ["book"],
+  ["extract", "storyboard", "quizzes", "captions", "glossary", "toc"],
+  ["translate", "speech", "sign-language"],
+  ["validation", "preview", "export"],
+]
+
+function getGroupIndex(slug: string): number {
+  return STAGE_GROUPS.findIndex((g) => g.includes(slug))
+}
+
 export function StageSidebar({
   bookLabel,
   activeStep,
@@ -122,6 +134,8 @@ export function StageSidebar({
   onSelectPage,
   sectionIndex,
   onSelectSection,
+  topBarSlot,
+  content,
 }: {
   bookLabel: string
   activeStep: string
@@ -129,14 +143,14 @@ export function StageSidebar({
   onSelectPage?: (pageId: string | null) => void
   sectionIndex?: number
   onSelectSection?: (index: number) => void
+  topBarSlot?: React.ReactNode
+  content?: React.ReactNode
 }) {
   const { i18n } = useLingui()
   const matchRoute = useMatchRoute()
   const search = useSearch({ strict: false }) as { tab?: string }
   const { stageState } = useBookRun()
   const { data: accessibilityAssessment } = useAccessibilityAssessment(bookLabel)
-  const { openSettings } = useSettingsDialog()
-
   const currentState = stageState(activeStep)
   const effectivePagesOpen =
     hasStagePages(activeStep) &&
@@ -148,33 +162,41 @@ export function StageSidebar({
   })
   const activeTab = search.tab ?? "general"
 
-  // The rail collapses (icon-only, hover to expand) only when pages are showing
-  // and we're not in settings. Otherwise it's always expanded with labels visible.
-  const railCollapsed = effectivePagesOpen && !isSettings
-  // When the rail is collapsed, labels/buttons are always in the DOM but clipped
-  // by overflow-hidden on the inner panel. This avoids display toggling which
-  // would flash before the width transition completes.
-  const x = {
-    gap:       "gap-2.5",
-    showLabel: "inline",
-    showFlex:  "flex",
-    flex1:     "flex-1",
-  }
-
   const storyboardDone = stageState("storyboard") === "done"
   const validationCompleted = Boolean(accessibilityAssessment?.assessment)
+
+  const hasSettingsTabs = !!(SETTINGS_STAGE_SLUGS as readonly string[]).includes(activeStep)
+  const settingsTabs = getSettingsTabs(activeStep, i18n)
+
+  // Determine secondary panel mode
+  const showSecondaryPanel = effectivePagesOpen || hasSettingsTabs
+  const [panelTab, setPanelTab] = useState<"pages" | "settings">(
+    isSettings ? "settings" : "pages",
+  )
+
+  // Sync panelTab when navigating to/from settings route
+  useEffect(() => {
+    if (isSettings) {
+      setPanelTab("settings")
+    }
+  }, [isSettings])
+
+  // Reset panel tab when switching stages
+  const prevStepRef = useRef(activeStep)
+  useEffect(() => {
+    if (prevStepRef.current !== activeStep) {
+      setPanelTab("pages")
+      prevStepRef.current = activeStep
+    }
+  }, [activeStep])
 
   const stageItems = STAGES.map((step, index) => {
     const isActive = step.slug === activeStep
     const Icon = step.icon
-    const settingsTabs = getSettingsTabs(step.slug, i18n)
-    const showSubTabs = isActive && isSettings && !!settingsTabs
     const state = step.slug === "validation" && validationCompleted ? "done" : stageState(step.slug)
     const stageCompleted = state === "done"
     const ringState = state
 
-    // "book" is always filled; "validation", "preview" and "export" fill once storyboard is done;
-    // pipeline stages fill when their own stage is completed.
     const iconFilled =
       step.slug === "book"
         ? true
@@ -183,181 +205,190 @@ export function StageSidebar({
           : stageCompleted
 
     const stepLabel = step.slug === "book" ? toCamelLabel(bookLabel) : getStageLabelI18n(step.slug)
+    const prevGroup = index > 0 ? getGroupIndex(STAGES[index - 1].slug) : -1
+    const curGroup = getGroupIndex(step.slug)
+    const showSeparator = index > 0 && prevGroup !== curGroup
 
     return (
-      <div key={step.slug} className="relative">
-        {/* Connector line */}
-        {index < STAGES.length - 1 && (
-          <div className="absolute left-[24px] top-[36px] bottom-[-10px] w-0.5 bg-border z-10" />
+      <div key={step.slug}>
+        {showSeparator && (
+          <div className="mx-2.5 my-1.5 h-px bg-border" />
         )}
-
-        {/* Step row */}
-        <div
-          className={cn(
-            "group/row flex items-center py-2 text-sm transition-colors overflow-hidden",
-            x.gap,
-            isActive
-              ? cn(step.color, "text-white font-medium rounded-l-[14px] ml-0.5 pl-2 pr-2.5")
-              : "text-muted-foreground hover:text-foreground hover:bg-muted px-2.5"
-          )}
-        >
-          <Link
-            to={selectedPageId && hasStagePages(step.slug) ? "/books/$label/$step/$pageId" : "/books/$label/$step"}
-            params={selectedPageId && hasStagePages(step.slug)
-              ? { label: bookLabel, step: step.slug, pageId: selectedPageId }
-              : { label: bookLabel, step: step.slug }}
-            className={cn("flex items-center gap-2.5 min-w-7", x.flex1)}
-            title={stepLabel}
-          >
-            <div className="relative shrink-0">
-              <div
-                className={cn(
-                  "flex items-center justify-center w-7 h-7 rounded-full transition-colors",
-                  iconFilled
-                    ? isActive
-                      ? "bg-white/20 text-white"
-                      : cn(step.color, "text-white")
-                    : "bg-muted text-muted-foreground ring-1 ring-border"
-                )}
-              >
-                <Icon className="w-3.5 h-3.5" />
-              </div>
-              <StepProgressRing size={28} state={ringState} colorClass={isActive ? "bg-white" : step.color} />
-            </div>
-            <span className={cn("truncate hidden", x.showLabel)}>
-              {stepLabel}
-            </span>
-          </Link>
-
-          {settingsTabs ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
             <Link
-              to="/books/$label/$step/settings"
-              params={{ label: bookLabel, step: step.slug }}
-              search={{ tab: "general" }}
-              title={`${stepLabel} ${i18n._(msg`Settings`)}`}
+              to={selectedPageId && hasStagePages(step.slug) ? "/books/$label/$step/$pageId" : "/books/$label/$step"}
+              params={selectedPageId && hasStagePages(step.slug)
+                ? { label: bookLabel, step: step.slug, pageId: selectedPageId }
+                : { label: bookLabel, step: step.slug }}
               className={cn(
-                "shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full transition-colors ",
+                "flex items-center justify-center w-full py-2 transition-colors",
                 isActive
-                  ? "text-white/60 hover:text-white hover:bg-white/20"
-                  : "opacity-0 group-hover/row:opacity-100 text-muted-foreground/50 group-hover/row:bg-muted hover:text-foreground hover:bg-muted-foreground/20"
+                  ? cn(step.color, "text-white")
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
               )}
             >
-              <Settings className="w-3.5 h-3.5" />
-            </Link>
-          ) : step.slug === "book" ? (
-            <button
-              type="button"
-              onClick={openSettings}
-              title={i18n._(msg`API Key Settings`)}
-              className={cn(
-                "shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full transition-colors cursor-pointer",
-                isActive
-                  ? "text-white/60 hover:text-white hover:bg-white/20"
-                  : "opacity-0 group-hover/row:opacity-100 text-muted-foreground/50 group-hover/row:bg-muted hover:text-foreground hover:bg-muted-foreground/20"
-              )}
-            >
-              <Settings className="w-3.5 h-3.5" />
-            </button>
-          ) : step.slug === "preview" ? (
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new CustomEvent("adt:repackage"))}
-              title={i18n._(msg`Re-package ADT`)}
-              className={cn(
-                "shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full transition-colors cursor-pointer",
-                isActive
-                  ? "text-white/60 hover:text-white hover:bg-white/20"
-                  : "opacity-0 group-hover/row:opacity-100 text-muted-foreground/50 group-hover/row:bg-muted hover:text-foreground hover:bg-muted-foreground/20"
-              )}
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
-          ) : null}
-        </div>
-
-        {/* Settings sub-tabs */}
-        {showSubTabs && (
-          <div className={cn("ml-[42px] mr-2 mt-0.5 mb-1 flex-col gap-0.5 hidden", x.showFlex)}>
-            {settingsTabs!.map((tab) => (
-              <Button
-                key={tab.key}
-                variant="ghost"
-                size="sm"
-                asChild
-                className={cn(
-                  "h-auto justify-start rounded text-xs px-2 py-1 whitespace-nowrap",
-                  activeTab === tab.key
-                    ? cn(step.textColor, "font-medium", step.bgLight)
-                    : "font-normal text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                )}
-              >
-                <Link
-                  to="/books/$label/$step/settings"
-                  params={{ label: bookLabel, step: step.slug }}
-                  search={{ tab: tab.key }}
+              <div className="relative shrink-0">
+                <div
+                  className={cn(
+                    "flex items-center justify-center w-7 h-7 rounded-full transition-colors",
+                    iconFilled
+                      ? isActive
+                        ? "bg-white/20 text-white"
+                        : cn(step.color, "text-white")
+                      : "bg-muted text-muted-foreground ring-1 ring-border"
+                  )}
                 >
-                  {tab.label}
-                </Link>
-              </Button>
-            ))}
-          </div>
-        )}
+                  <Icon className="w-3.5 h-3.5" />
+                </div>
+                <StepProgressRing size={28} state={ringState} colorClass={isActive ? "bg-white" : step.color} />
+              </div>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="right" sideOffset={6}>
+            {stepLabel}
+          </TooltipContent>
+        </Tooltip>
       </div>
     )
   })
 
   return (
-    <nav className="flex flex-col flex-1 min-h-0">
-      <div className="flex flex-1 min-h-0">
-        {/* Stage rail */}
-        <div className={cn(
-          "shrink-0 relative group/rail",
-          railCollapsed ? "w-12" : "flex-1"
-        )}>
-          <div className={cn(
-            "absolute inset-y-0 left-0 flex flex-col bg-background overflow-hidden",
-            railCollapsed
-              ? "w-12 group-hover/rail:w-[220px] z-20 transition-[width] duration-150 delay-150 group-hover/rail:delay-100 group-hover/rail:shadow-lg"
-              : "inset-x-0"
-          )}>
-            <div className="flex flex-col pt-1.5 pb-2 gap-0.5 flex-1 overflow-y-auto overflow-x-hidden">
-              {stageItems}
-            </div>
-            {/* Task indicator */}
-            <TaskIndicator bookLabel={bookLabel} />
-            {/* Right edge — follows the expanding rail */}
-            <div className="absolute inset-y-0 right-0 w-px border-r" />
-          </div>
+    <div className="flex flex-col flex-1 min-h-0">
+      {/* Top row — home + top bar (step header spans full width) */}
+      <div className="flex shrink-0 h-10">
+        <div className="w-12 shrink-0 flex items-center justify-center bg-gray-700 border-r">
+          <Link
+            to="/"
+            className="flex h-full w-full items-center justify-center transition-colors hover:bg-gray-800"
+            title={i18n._(msg`Back to books`)}
+          >
+            <Home className="h-4 w-4 text-white" />
+          </Link>
         </div>
-
-        {/* Pages panel — only when pages are open and not in settings */}
-        {effectivePagesOpen && !isSettings && (
-          <div className="flex-1 min-w-0 flex flex-col overflow-hidden border-l">
-            <PageIndex
-              bookLabel={bookLabel}
-              activeStep={activeStep}
-              selectedPageId={selectedPageId}
-              onSelectPage={onSelectPage}
-              sectionIndex={sectionIndex}
-              onSelectSection={onSelectSection}
-              stageRunning={currentState === "running"}
-            />
-          </div>
-        )}
+        {topBarSlot}
       </div>
 
-    </nav>
+      {/* Content row — icon rail + panel + main content */}
+      <div className="flex flex-1 min-h-0">
+        {/* Icon rail */}
+        <nav className="w-12 shrink-0 flex flex-col border-r">
+          <div className="flex flex-col pb-2 gap-0.5 flex-1 overflow-y-auto overflow-x-hidden">
+            {stageItems}
+          </div>
+          <TaskIndicator bookLabel={bookLabel} compact />
+        </nav>
+
+        {/* Secondary panel */}
+        {showSecondaryPanel && (
+          <div className="w-[180px] shrink-0 min-w-0 flex flex-col overflow-hidden border-r">
+            {effectivePagesOpen && hasSettingsTabs && (
+              <div className="shrink-0 h-[52px] flex items-center px-2 border-b">
+                <div className="flex flex-1 rounded-lg bg-muted p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setPanelTab("pages")}
+                    className={cn(
+                      "flex-1 py-1 text-xs font-medium rounded-md transition-all",
+                      panelTab === "pages"
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Trans>Pages</Trans>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPanelTab("settings")}
+                    className={cn(
+                      "flex-1 py-1 text-xs font-medium rounded-md transition-all",
+                      panelTab === "settings"
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Trans>Settings</Trans>
+                  </button>
+                </div>
+              </div>
+            )}
+            {panelTab === "pages" && effectivePagesOpen ? (
+              <PageIndex
+                bookLabel={bookLabel}
+                activeStep={activeStep}
+                selectedPageId={selectedPageId}
+                onSelectPage={onSelectPage}
+                sectionIndex={sectionIndex}
+                onSelectSection={onSelectSection}
+                stageRunning={currentState === "running"}
+              />
+            ) : (panelTab === "settings" || !effectivePagesOpen) && settingsTabs ? (
+              <SettingsNavPanel
+                bookLabel={bookLabel}
+                activeStep={activeStep}
+                settingsTabs={settingsTabs}
+                activeTab={activeTab}
+                isSettings={isSettings}
+              />
+            ) : null}
+          </div>
+        )}
+
+        {/* Main content */}
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          {content}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ---------- SettingsNavPanel ---------- */
+
+function SettingsNavPanel({
+  bookLabel,
+  activeStep,
+  settingsTabs,
+  activeTab,
+  isSettings,
+}: {
+  bookLabel: string
+  activeStep: string
+  settingsTabs: { key: string; label: string }[]
+  activeTab: string
+  isSettings: boolean
+}) {
+  const stepConfig = STAGES.find((s) => s.slug === activeStep)
+
+  return (
+    <div className="flex-1 overflow-y-auto pt-1">
+      {settingsTabs.map((tab) => (
+        <Link
+          key={tab.key}
+          to="/books/$label/$step/settings"
+          params={{ label: bookLabel, step: activeStep }}
+          search={{ tab: tab.key }}
+          className={cn(
+            "block px-4 py-2.5 text-sm transition-colors",
+            isSettings && activeTab === tab.key
+              ? cn(stepConfig?.textColor, "font-medium", stepConfig?.bgLight)
+              : "text-foreground hover:bg-muted"
+          )}
+        >
+          {tab.label}
+        </Link>
+      ))}
+    </div>
   )
 }
 
 /* ---------- TaskIndicator ---------- */
 
-function TaskIndicator({ bookLabel }: { bookLabel: string }) {
+function TaskIndicator({ bookLabel, compact }: { bookLabel: string; compact?: boolean }) {
   const { i18n } = useLingui()
   const { runningTasks, runningCount } = useBookTasks(bookLabel)
   const { stepState, stepProgress } = useBookRun()
 
-  // Build step-progress rows for running pipeline steps that have page-level progress
   const stageProgressRows: { step: string; label: string; page: number; totalPages: number }[] = []
   for (const step of PAGE_PROGRESS_STEPS) {
     if (stepState(step) === "running") {
@@ -373,7 +404,6 @@ function TaskIndicator({ bookLabel }: { bookLabel: string }) {
     }
   }
 
-  // Non-page-progress steps that are currently running (e.g. metadata, book-summary)
   const activeSteps: { step: string; label: string }[] = []
   for (const step of ALL_STEP_NAMES) {
     if (!PAGE_PROGRESS_STEPS.has(step) && stepState(step) === "running") {
@@ -385,9 +415,51 @@ function TaskIndicator({ bookLabel }: { bookLabel: string }) {
 
   if (totalCount === 0) return null
 
+  if (compact) {
+    return (
+      <div className="border-t group/tasks">
+        <div className="hidden group-hover/tasks:block absolute bottom-full left-full ml-1 mb-1 w-52 bg-popover border rounded-md shadow-lg p-2 z-50">
+          {stageProgressRows.map((row) => (
+            <div key={row.step} className="flex items-center gap-2 px-1 py-1">
+              <Loader2 className="w-3 h-3 animate-spin text-violet-500 shrink-0" />
+              <p className="flex-1 min-w-0 text-xs font-medium truncate">{row.label}</p>
+              <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+                {row.page}/{row.totalPages}
+              </span>
+            </div>
+          ))}
+          {activeSteps.map((row) => (
+            <div key={row.step} className="flex items-center gap-2 px-1 py-1">
+              <Loader2 className="w-3 h-3 animate-spin text-violet-500 shrink-0" />
+              <p className="flex-1 min-w-0 text-xs font-medium truncate">{row.label}</p>
+            </div>
+          ))}
+          {runningTasks.map((task) => (
+            <TaskRow key={task.taskId} task={task} />
+          ))}
+        </div>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center justify-center py-2">
+              <div className="relative shrink-0 flex items-center justify-center w-7 h-7">
+                <div className="flex items-center justify-center w-7 h-7 rounded-full bg-violet-600 text-white">
+                  <span className="text-xs font-bold leading-none">{totalCount}</span>
+                </div>
+                <StepProgressRing size={28} state="running" colorClass="bg-violet-600" />
+              </div>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right" sideOffset={6}>
+            {totalCount === 1 ? i18n._(msg`Task Running`) : i18n._(msg`Tasks Running`)}
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    )
+  }
+
   return (
     <div className="border-t group/tasks">
-      {/* Task list — visible on hover */}
       <div className="hidden group-hover/tasks:block px-2 pt-1.5 pb-0.5 flex-col gap-0.5">
         {stageProgressRows.map((row) => (
           <div key={row.step} className="flex items-center gap-2 px-1 py-1">
@@ -413,7 +485,6 @@ function TaskIndicator({ bookLabel }: { bookLabel: string }) {
         ))}
       </div>
 
-      {/* Indicator row */}
       <div className="flex items-center gap-2.5 px-2.5 py-2 overflow-hidden">
         <div className="relative shrink-0 flex items-center justify-center w-7 h-7">
           <div className="flex items-center justify-center w-7 h-7 rounded-full bg-violet-600 text-white">
@@ -583,7 +654,6 @@ function PageRow({
   onSelect: () => void
   sectionIndex?: number
   onSelectSection?: (index: number) => void
-  /** Whether the parent stage is currently running */
   stageRunning?: boolean
 }) {
   const { i18n } = useLingui()
@@ -629,7 +699,6 @@ function PageRow({
 
   const imgSrc = data?.imageBase64 ? `data:image/png;base64,${data.imageBase64}` : null
 
-  // Page is still being processed during a storyboard run
   const pageProcessing = stageRunning && !page.hasRendering
 
   const showSections = isActive && page.sectionCount > 1 && onSelectSection

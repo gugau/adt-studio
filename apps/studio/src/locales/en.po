@@ -2616,6 +2616,9 @@ msgstr "Page Sectioning Prompt"
 msgid "pages"
 msgstr "pages"
 
+msgid "Pages"
+msgstr "Pages"
+
 #. placeholder {0}: activeSession.session.start_page ?? "?"
 #. placeholder {1}: activeSession.session.end_page ?? "?"
 msgid "Pages {0}–{1}"
@@ -2817,8 +2820,8 @@ msgstr "Quizzes are linked to other pages in this book"
 msgid "Re-enable type"
 msgstr "Re-enable type"
 
-msgid "Re-package ADT"
-msgstr "Re-package ADT"
+#~ msgid "Re-package ADT"
+#~ msgstr "Re-package ADT"
 
 msgid "Re-render"
 msgstr "Re-render"

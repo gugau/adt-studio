@@ -1,9 +1,7 @@
 import { createContext, useContext, useCallback, useState, type ReactNode } from "react"
-import { Link } from "@tanstack/react-router"
-import { Settings } from "lucide-react"
+import { createPortal } from "react-dom"
 import { STAGES, toCamelLabel } from "../stage-config"
 import { getStageLabelI18n } from "../pipeline-i18n"
-import { SETTINGS_STAGE_SLUGS } from "../settings-routing"
 import {
   BookView,
   ExtractView,
@@ -21,6 +19,7 @@ import {
 import { cn } from "@/lib/utils"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
+import { useTopBarPortal } from "@/routes/books.$label"
 
 // Context for views to inject content into the step header
 interface StepHeaderControls {
@@ -68,6 +67,7 @@ const VIEW_MAP: Record<string, ViewEntry> = {
 
 export function StepViewRouter({ step, bookLabel, selectedPageId, onSelectPage }: { step: string; bookLabel: string; selectedPageId?: string; onSelectPage?: (pageId: string | null) => void }) {
   const { t } = useLingui()
+  const topBarEl = useTopBarPortal()
   const entry = VIEW_MAP[step]
   const stepConfig = STAGES.find((s) => s.slug === step)
   const [headerExtra, setHeaderExtra] = useState<ReactNode>(null)
@@ -92,39 +92,31 @@ export function StepViewRouter({ step, bookLabel, selectedPageId, onSelectPage }
   const Icon = stepConfig.icon
   const stepLabel = step === "book" ? toCamelLabel(bookLabel) : getStageLabelI18n(step)
 
+  const header = (
+    <div className={cn("flex-1 h-full px-4 flex items-center gap-3 text-white", stepConfig.color)}>
+      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20">
+        <Icon className="w-3 h-3" />
+      </div>
+      {labelClickHandler ? (
+        <button
+          type="button"
+          onClick={labelClickHandler.fn}
+          className="text-sm font-semibold hover:text-white/70 transition-colors"
+        >
+         {stepLabel}
+        </button>
+      ) : (
+        <h2 className="text-sm font-semibold">{stepLabel}</h2>
+      )}
+      <div ref={setHeaderSlotEl} className="contents" />
+      {headerExtra}
+    </div>
+  )
+
   return (
     <StepHeaderContext.Provider value={controls}>
+      {topBarEl && createPortal(header, topBarEl)}
       <div className="flex flex-col h-full">
-        {/* Step header */}
-        <div className={cn("shrink-0 h-10 px-4 flex items-center gap-3 text-white", stepConfig.color)}>
-          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20">
-            <Icon className="w-3 h-3" />
-          </div>
-          {labelClickHandler ? (
-            <button
-              type="button"
-              onClick={labelClickHandler.fn}
-              className="text-sm font-semibold hover:text-white/70 transition-colors"
-            >
-             {stepLabel}
-            </button>
-          ) : (
-            <h2 className="text-sm font-semibold">{stepLabel}</h2>
-          )}
-          <div ref={setHeaderSlotEl} className="contents" />
-          {headerExtra}
-          {(SETTINGS_STAGE_SLUGS as readonly string[]).includes(step) && (
-            <Link
-              to="/books/$label/$step/settings"
-              params={{ label: bookLabel, step }}
-              search={{ tab: "general" }}
-              className="ml-auto text-white/60 hover:text-white transition-colors"
-            >
-              <Settings className="w-3.5 h-3.5" />
-            </Link>
-          )}
-        </div>
-
         {/* Step content */}
         {entry.fullHeight ? (
           <div className="flex-1 min-h-0 overflow-auto">

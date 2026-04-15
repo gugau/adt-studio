@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { createFileRoute, Link } from "@tanstack/react-router"
+import { createPortal } from "react-dom"
 import { X } from "lucide-react"
 import { STAGES, isStageSlug } from "@/components/pipeline/stage-config"
 import { resolveSettingsStageSlug } from "@/components/pipeline/settings-routing"
@@ -14,6 +15,7 @@ import { ValidationSettings } from "@/components/pipeline/stages/ValidationSetti
 import { getStageLabelI18n } from "@/components/pipeline/pipeline-i18n"
 import { cn } from "@/lib/utils"
 import { Trans } from "@lingui/react/macro"
+import { useTopBarPortal } from "./books.$label"
 
 export const Route = createFileRoute("/books/$label/$step/settings")({
   component: StepSettingsPage,
@@ -25,14 +27,12 @@ export const Route = createFileRoute("/books/$label/$step/settings")({
 export function StepSettingsPage() {
   const { label, step } = Route.useParams()
   const { tab } = Route.useSearch()
+  const topBarEl = useTopBarPortal()
   const stage = isStageSlug(step) ? STAGES.find((s) => s.slug === step) : undefined
 
   if (!stage) {
     return (
       <div className="flex flex-col h-full">
-        <div className="shrink-0 h-10 px-4 flex items-center gap-2 text-white bg-gray-700">
-          <span className="text-sm font-semibold"><Trans>Unknown stage</Trans></span>
-        </div>
         <div className="p-4 max-w-2xl">
           <p className="text-sm text-muted-foreground">
             <Trans>Unknown step slug: {step}</Trans>
@@ -49,35 +49,37 @@ export function StepSettingsPage() {
     )
   }
 
-  const stepLabel = stage.label
   const Icon = stage.icon
   const [headerTarget, setHeaderTarget] = useState<HTMLDivElement | null>(null)
 
+  const header = (
+    <div className={cn("flex-1 h-full px-4 flex items-center gap-2 text-white", stage.color)}>
+      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20">
+        <Icon className="w-3 h-3" />
+      </div>
+      <Link
+        to="/books/$label/$step"
+        params={{ label, step }}
+        className="text-sm font-semibold hover:text-white/70 transition-colors"
+      >
+        {getStageLabelI18n(step)}
+      </Link>
+      <span className="text-white/40 text-sm">/</span>
+      <span className="text-sm font-medium"><Trans>Settings</Trans></span>
+      <div ref={setHeaderTarget} className="ml-auto" />
+      <Link
+        to="/books/$label/$step"
+        params={{ label, step }}
+        className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-black/15 text-white/80 hover:bg-black/25 hover:text-white transition-colors"
+      >
+        <X className="w-4 h-4" />
+      </Link>
+    </div>
+  )
+
   return (
     <div className="flex flex-col h-full">
-      {/* Step header */}
-      <div className={cn("shrink-0 h-10 px-4 flex items-center gap-2 text-white", stage.color)}>
-        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20">
-          <Icon className="w-3 h-3" />
-        </div>
-        <Link
-          to="/books/$label/$step"
-          params={{ label, step }}
-          className="text-sm font-semibold hover:text-white/70 transition-colors"
-        >
-          {getStageLabelI18n(step)}
-        </Link>
-        <span className="text-white/40 text-sm">/</span>
-        <span className="text-sm font-medium"><Trans>Settings</Trans></span>
-        <div ref={setHeaderTarget} className="ml-auto" />
-        <Link
-          to="/books/$label/$step"
-          params={{ label, step }}
-          className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-black/15 text-white/80 hover:bg-black/25 hover:text-white transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </Link>
-      </div>
+      {topBarEl && createPortal(header, topBarEl)}
 
       {/* Settings content */}
       <div className="flex-1 min-h-0 overflow-auto">

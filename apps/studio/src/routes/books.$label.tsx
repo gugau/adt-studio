@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo, createContext, useContext } from "react"
-import { createFileRoute, Outlet, useParams, useNavigate, Link, useMatchRoute } from "@tanstack/react-router"
-import { Home, Terminal } from "lucide-react"
+import { createFileRoute, Outlet, useParams, useNavigate, useMatchRoute } from "@tanstack/react-router"
+import { Terminal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DebugPanel } from "@/components/debug/DebugPanel"
 import { DebugPanelStateProvider, type DebugTabValue } from "@/components/debug/debug-panel-state"
@@ -19,6 +19,9 @@ const SectionNavCtx = createContext<SectionNavContext>({
   skipNextResetRef: { current: false },
 })
 export function useSectionNav() { return useContext(SectionNavCtx) }
+
+const TopBarPortalCtx = createContext<HTMLElement | null>(null)
+export function useTopBarPortal() { return useContext(TopBarPortalCtx) }
 
 export const Route = createFileRoute("/books/$label")({
   component: BookLayout,
@@ -42,6 +45,7 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
   const [debugOpen, setDebugOpen] = useState(false)
   const [debugDefaultTab, setDebugDefaultTab] = useState<DebugTabValue>("stats")
   const isDebugRoute = !!matchRoute({ to: "/books/$label/debug", params: { label } })
+  const [topBarEl, setTopBarEl] = useState<HTMLElement | null>(null)
   const exportWatcher = useExportWatcherSetup(label)
 
   const activeStep = step ?? "book"
@@ -123,34 +127,24 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
       <>
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex min-h-0 flex-1">
-            <div className="relative w-[220px] shrink-0">
-              <div className="absolute inset-y-0 left-0 z-30 flex w-full flex-col overflow-hidden bg-background">
-                <div className="flex h-10 shrink-0 items-center border-r border-gray-700 bg-gray-700 text-white">
-                  <Link
-                    to="/"
-                    className="flex h-full min-w-0 flex-1 items-center justify-start gap-2.5 px-4 transition-colors hover:bg-gray-800"
-                    title="Back to books"
-                  >
-                    <Home className="h-4 w-4 shrink-0" />
-                    <span className="truncate text-sm font-semibold">
-                      ADT Studio
-                    </span>
-                  </Link>
-                </div>
-
-                <div className="flex min-h-0 flex-1 flex-col border-r border-gray-300">
-                  <StageSidebar bookLabel={label} activeStep={activeStep} selectedPageId={pageId} onSelectPage={onSelectPage} sectionIndex={sectionIndex} onSelectSection={setSectionIndex} />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-              <SectionNavCtx.Provider value={sectionNav}>
-                <ExportWatcherProvider value={exportWatcher}>
-                  <Outlet />
-                </ExportWatcherProvider>
-              </SectionNavCtx.Provider>
-            </div>
+            <StageSidebar
+              bookLabel={label}
+              activeStep={activeStep}
+              selectedPageId={pageId}
+              onSelectPage={onSelectPage}
+              sectionIndex={sectionIndex}
+              onSelectSection={setSectionIndex}
+              topBarSlot={<div ref={setTopBarEl} className="flex flex-1 min-w-0 h-full" />}
+              content={
+                <TopBarPortalCtx.Provider value={topBarEl}>
+                  <SectionNavCtx.Provider value={sectionNav}>
+                    <ExportWatcherProvider value={exportWatcher}>
+                      <Outlet />
+                    </ExportWatcherProvider>
+                  </SectionNavCtx.Provider>
+                </TopBarPortalCtx.Provider>
+              }
+            />
           </div>
 
           {debugOpen && !isDebugRoute && (
