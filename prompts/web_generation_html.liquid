@@ -21,6 +21,10 @@ You are an expert frontend engineer. Generate a beautiful, kid-friendly HTML pag
 12. Text must NEVER be hidden behind images — if positioning text near or on top of images, always use `z-10` on text containers
 13. Preserve the original text alignment — most body text and headings are LEFT-ALIGNED. Do NOT center text unless it is clearly centered in the original page image. When in doubt, default to left alignment.
 14. Output natural-language text as literal Unicode characters. Do NOT encode letters as numeric or hex HTML entities (for example, avoid `&#...;` and `&#x...;`). Only use standard HTML escaping where required for markup syntax (for example `&amp;`, `&lt;`, `&gt;`, and quotes in attributes).
+15. Text-group rendering: when a group contains MULTIPLE texts that form a single reading flow (e.g., sentences of a paragraph), wrap the whole group in ONE block-level element (`<p>`, `<h1>`, etc.) WITHOUT its own `data-id`, and place each individual text inside an inner `<span data-id="...">...</span>`. Do NOT emit one `<p>` per text — that forces each sentence onto its own line and breaks paragraph flow.
+    - CORRECT: `<p><span data-id="a">First sentence.</span> <span data-id="b">Second sentence.</span></p>`
+    - INCORRECT: `<p data-id="a">First sentence.</p><p data-id="b">Second sentence.</p>`
+    - For a single-text group, use a plain `<p data-id="...">...</p>` (no wrapping span needed).
 ## RESPONSIVE DESIGN
 Your HTML will be tested at these viewport widths. Use ONLY these Tailwind responsive prefixes:
 {% for vp in viewports %}- **{{ vp.label }}** ({{ vp.width }}px){% if vp.tailwind_prefix != "" %}: `{{ vp.tailwind_prefix }}` prefix{% else %}: default (no prefix — mobile-first base styles){% endif %}
