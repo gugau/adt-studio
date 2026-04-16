@@ -12,6 +12,7 @@ export interface BookPaths {
   dbPath: string
   imagesDir: string
   debugImagesDir: string
+  thumbnailsDir: string
   videosDir: string
 }
 
@@ -27,6 +28,7 @@ export function resolveBookPaths(label: string, booksRoot: string): BookPaths {
     dbPath: path.join(bookDir, `${safeLabel}.db`),
     imagesDir: path.join(bookDir, "images"),
     debugImagesDir: path.join(bookDir, ".debug-images"),
+    thumbnailsDir: path.join(bookDir, "thumbnails"),
     videosDir: path.join(bookDir, "videos"),
   }
 }
@@ -37,6 +39,7 @@ export function createBookStorage(label: string, booksRoot: string): Storage {
   fs.mkdirSync(paths.bookDir, { recursive: true })
   fs.mkdirSync(paths.imagesDir, { recursive: true })
   fs.mkdirSync(paths.debugImagesDir, { recursive: true })
+  fs.mkdirSync(paths.thumbnailsDir, { recursive: true })
   fs.mkdirSync(paths.videosDir, { recursive: true })
 
   const db = openBookDb(paths.dbPath)
@@ -311,6 +314,24 @@ export function createBookStorage(label: string, booksRoot: string): Storage {
       clearImageFiles(paths.debugImagesDir)
     },
 
+    putSectionThumbnail(pageId: string, sectionIndex: number, data: Buffer): void {
+      const filename = buildThumbnailFilename(pageId, sectionIndex)
+      const filePath = path.join(paths.thumbnailsDir, filename)
+      fs.writeFileSync(filePath, data)
+    },
+
+    getSectionThumbnailPath(filename: string): string | null {
+      if (!/^[a-zA-Z0-9_-]+\.png$/.test(filename)) return null
+      const filePath = path.join(paths.thumbnailsDir, filename)
+      const resolved = path.resolve(filePath)
+      if (!resolved.startsWith(path.resolve(paths.thumbnailsDir) + path.sep)) return null
+      return fs.existsSync(resolved) ? resolved : null
+    },
+
+    clearSectionThumbnails(): void {
+      clearImageFiles(paths.thumbnailsDir)
+    },
+
     putSignLanguageVideo(videoId: string, buffer: Buffer, originalName: string, mimeType: string): void {
       const ext = mimeType === "video/webm" ? ".webm" : ".mp4"
       const filename = `${videoId}${ext}`
@@ -381,6 +402,11 @@ export function createBookStorage(label: string, booksRoot: string): Storage {
       db.close()
     },
   }
+}
+
+export function buildThumbnailFilename(pageId: string, sectionIndex: number): string {
+  const idx = String(sectionIndex + 1).padStart(3, "0")
+  return `${pageId}_sec${idx}.png`
 }
 
 function clearImageFiles(imagesDir: string): void {

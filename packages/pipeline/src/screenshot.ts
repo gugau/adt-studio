@@ -24,11 +24,17 @@ export function getViewportBreakpoints() {
   }))
 }
 
+export interface ScreenshotOptions {
+  /** Capture the full page height (default true). When false, captures only viewport-sized region. */
+  fullPage?: boolean
+}
+
 export interface ScreenshotRenderer {
   /** Render HTML to a PNG screenshot and return it as base64. */
   screenshot(
     html: string,
-    viewport?: { width: number; height: number }
+    viewport?: { width: number; height: number },
+    options?: ScreenshotOptions
   ): Promise<string>
   /** Release browser resources. */
   close(): Promise<void>
@@ -52,15 +58,17 @@ export async function createScreenshotRenderer(): Promise<ScreenshotRenderer> {
   return {
     async screenshot(
       html: string,
-      viewport = { width: 1024, height: 768 }
+      viewport = { width: 1024, height: 768 },
+      options: ScreenshotOptions = {}
     ): Promise<string> {
+      const { fullPage = true } = options
       const context = await browser.newContext({ viewport })
       try {
         const page = await context.newPage()
         await page.setContent(html, { waitUntil: "load" })
         // Wait for web fonts to finish loading before screenshotting
         await page.waitForFunction("document.fonts.ready")
-        const buffer = await page.screenshot({ fullPage: true, type: "png" })
+        const buffer = await page.screenshot({ fullPage, type: "png" })
         return buffer.toString("base64")
       } finally {
         await context.close()
@@ -87,5 +95,5 @@ interface PlaywrightContext {
 interface PlaywrightPage {
   setContent(html: string, opts?: { waitUntil?: string }): Promise<void>
   waitForFunction(expression: string): Promise<unknown>
-  screenshot(opts?: { fullPage?: boolean; type?: string }): Promise<Buffer>
+  screenshot(opts?: { fullPage?: boolean; type?: string; clip?: { x: number; y: number; width: number; height: number } }): Promise<Buffer>
 }

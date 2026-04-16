@@ -11,8 +11,13 @@ import { useBookTasks } from "@/hooks/use-book-tasks"
 import { useApiKey } from "@/hooks/use-api-key"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
-import { getTextGroupLabel, getTextTypeLabel } from "@/lib/text-type-labels"
 import { ImageCropDialog } from "@/components/pipeline/stages/storyboard/components/ImageCropDialog"
+import {
+  ContentNodeBlock,
+  updateNodeInTree as updateNodeInTreeSingle,
+  removeNodeFromTree,
+  insertNodeIntoTree,
+} from "@/components/pipeline/stages/storyboard/components/ContentNodeBlock"
 
 function VersionPicker({
   currentVersion,
@@ -202,211 +207,13 @@ function ImageCard({ imageId, bookLabel, isPruned, reason, onTogglePrune, onRecr
 }
 
 type PageStructuringData = NonNullable<import("@/api/client").PageDetail["pageStructuring"]>
-
-function ContentNodeView({
-  node,
-  depth,
-  configuredTextTypes,
-  configuredContainerTypes,
-  bookLabel,
-  collapsed,
-  onUpdate,
-  onTogglePrune,
-  onToggleCollapse,
-}: {
-  node: ContentNodeData
-  depth: number
-  configuredTextTypes: string[]
-  configuredContainerTypes: string[]
-  bookLabel: string
-  collapsed: Set<string>
-  onUpdate: (nodeId: string, field: string, value: string) => void
-  onTogglePrune: (nodeId: string) => void
-  onToggleCollapse: (nodeId: string) => void
-}) {
-  const { t } = useLingui()
-  const hasChildren = node.children != null && node.children.length > 0
-  const isContainer = hasChildren || (node.structure != null && node.imageId != null)
-  const isText = node.text != null
-  const isCollapsed = collapsed.has(node.nodeId)
-
-  // Container node (includes image containers and containers with background images)
-  if (isContainer) {
-    // eslint-disable-next-line lingui/no-unlocalized-strings
-    const imgSrc = node.imageId ? `${BASE_URL}/books/${bookLabel}/images/${node.imageId}` : null
-    const hasBody = hasChildren || imgSrc != null
-    return (
-      <div className={`relative ${node.isPruned ? "opacity-40" : ""}`} style={{ paddingLeft: depth * 20 }}>
-        {/* Vertical connector from parent */}
-        {depth > 0 && (
-          <div
-            className="absolute top-0 bottom-0 border-l border-muted-foreground/15"
-            style={{ left: (depth - 1) * 20 + 9 }}
-          />
-        )}
-        <div className="group/container relative flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-muted/40 transition-colors">
-          <select
-            value={node.structure ?? ""}
-            onChange={(e) => onUpdate(node.nodeId, "structure", e.target.value)}
-            onClick={(e) => {
-              if (hasBody && (e.target as HTMLSelectElement).value === node.structure) {
-                e.preventDefault()
-                onToggleCollapse(node.nodeId)
-              }
-            }}
-            className="shrink-0 text-[11px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 border-0 outline-none focus:ring-1 focus:ring-ring cursor-pointer appearance-none bg-primary/10 text-primary"
-            style={{ width: `${Math.max((getTextGroupLabel(node.structure ?? "")).length * 0.85 + 1.5, 4.5)}em` }}
-          >
-            {!configuredContainerTypes.includes(node.structure ?? "") && (
-              <option value={node.structure ?? ""}>{getTextGroupLabel(node.structure ?? "")}</option>
-            )}
-            {configuredContainerTypes.map((ct) => (
-              <option key={ct} value={ct}>
-                {getTextGroupLabel(ct)}
-              </option>
-            ))}
-          </select>
-          {node.imageId && (
-            <span className="text-[10px] text-muted-foreground/60 font-mono truncate">{node.imageId}</span>
-          )}
-          <button
-            type="button"
-            onClick={() => onTogglePrune(node.nodeId)}
-            className={`shrink-0 ml-auto flex items-center justify-center w-5 h-5 rounded cursor-pointer transition-colors ${
-              node.isPruned
-                ? "text-destructive hover:bg-destructive/10"
-                : "text-muted-foreground/40 opacity-0 group-hover/container:opacity-100 hover:bg-muted hover:text-muted-foreground"
-            }`}
-            title={node.isPruned ? t`Unprune` : t`Prune`}
-          >
-            {node.isPruned
-              ? <EyeOff className="h-3.5 w-3.5" />
-              : <Eye className="h-3.5 w-3.5" />
-            }
-          </button>
-        </div>
-        {hasBody && !isCollapsed && (
-          <div className="relative">
-            {imgSrc && (
-              <div className="relative py-1" style={{ paddingLeft: (depth + 1) * 20 }}>
-                {/* Connector line through image area */}
-                <div
-                  className="absolute top-0 bottom-0 border-l border-muted-foreground/15"
-                  style={{ left: depth * 20 + 9 }}
-                />
-                <img
-                  src={imgSrc}
-                  alt={node.imageId!}
-                  className="relative max-h-[140px] max-w-full object-contain rounded-lg border border-border/50 shadow-sm"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
-                />
-              </div>
-            )}
-            {hasChildren && node.children!.map((child) => (
-              <ContentNodeView
-                key={child.nodeId}
-                node={child}
-                depth={depth + 1}
-                configuredTextTypes={configuredTextTypes}
-                configuredContainerTypes={configuredContainerTypes}
-                bookLabel={bookLabel}
-                collapsed={collapsed}
-                onUpdate={onUpdate}
-                onTogglePrune={onTogglePrune}
-                onToggleCollapse={onToggleCollapse}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  // Text leaf node
-  if (isText) {
-    return (
-      <div
-        className={`relative ${node.isPruned ? "opacity-40" : ""}`}
-        style={{ paddingLeft: depth * 20 }}
-      >
-        {/* Vertical connector from parent */}
-        {depth > 0 && (
-          <div
-            className="absolute top-0 bottom-0 border-l border-muted-foreground/15"
-            style={{ left: (depth - 1) * 20 + 9 }}
-          />
-        )}
-        <div className="group/node relative flex items-start gap-2 rounded-md px-1.5 py-1 hover:bg-muted/40 transition-colors">
-          <select
-            value={node.role ?? ""}
-            onChange={(e) => onUpdate(node.nodeId, "role", e.target.value)}
-            className="shrink-0 text-[11px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 bg-muted text-muted-foreground border-0 outline-none focus:ring-1 focus:ring-ring cursor-pointer appearance-none mt-px"
-            style={{ width: `${Math.max((getTextTypeLabel(node.role ?? "")).length * 0.85 + 1.5, 4.5)}em` }}
-          >
-            {!configuredTextTypes.includes(node.role ?? "") && (
-              <option value={node.role ?? ""}>{getTextTypeLabel(node.role ?? "")}</option>
-            )}
-            {configuredTextTypes.map((tt) => (
-              <option key={tt} value={tt}>
-                {getTextTypeLabel(tt)}
-              </option>
-            ))}
-          </select>
-          <textarea
-            value={node.text ?? ""}
-            onChange={(e) => onUpdate(node.nodeId, "text", e.target.value)}
-            rows={1}
-            className="leading-relaxed flex-1 min-w-0 text-[13px] bg-transparent border-0 outline-none resize-none overflow-hidden p-0 focus:ring-1 focus:ring-ring focus:rounded mt-px"
-            onInput={(e) => {
-              const el = e.target as HTMLTextAreaElement
-              el.style.height = "auto"
-              el.style.height = el.scrollHeight + "px"
-            }}
-            ref={(el) => {
-              if (el) {
-                el.style.height = "auto"
-                el.style.height = el.scrollHeight + "px"
-              }
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => onTogglePrune(node.nodeId)}
-            className={`shrink-0 self-center flex items-center justify-center w-5 h-5 rounded cursor-pointer transition-colors ${
-              node.isPruned
-                ? "text-destructive hover:bg-destructive/10"
-                : "text-muted-foreground/40 opacity-0 group-hover/node:opacity-100 hover:bg-muted hover:text-muted-foreground"
-            }`}
-            title={node.isPruned ? t`Unprune` : t`Prune`}
-          >
-            {node.isPruned
-              ? <EyeOff className="h-3.5 w-3.5" />
-              : <Eye className="h-3.5 w-3.5" />
-            }
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  // Empty node (shouldn't happen but handle gracefully)
-  return null
-}
 type ImageClassData = NonNullable<import("@/api/client").PageDetail["imageClassification"]>
 
-/** Recursively find and update a node by ID in a tree */
-function updateNodeInTree(
-  nodes: ContentNodeData[],
-  nodeId: string,
-  updater: (node: ContentNodeData) => ContentNodeData
-): ContentNodeData[] {
-  return nodes.map((node) => {
-    if (node.nodeId === nodeId) return updater(node)
-    if (node.children) {
-      return { ...node, children: updateNodeInTree(node.children, nodeId, updater) }
-    }
-    return node
-  })
+// eslint-disable-next-line lingui/no-unlocalized-strings
+const VIRTUAL_ROOT_ID = "__extract_virtual_root__"
+
+function wrapRoot(nodes: ContentNodeData[]): ContentNodeData {
+  return { nodeId: VIRTUAL_ROOT_ID, isPruned: false, children: nodes }
 }
 
 export function ExtractPageDetail({
@@ -421,12 +228,8 @@ export function ExtractPageDetail({
   const { data: imageData } = usePageImage(bookLabel, pageId)
   const { data: activeConfigData } = useActiveConfig(bookLabel)
   const mergedConfig = activeConfigData?.merged as Record<string, unknown> | undefined
-  const configuredTextTypes = mergedConfig
-    ? Object.keys((mergedConfig.text_types ?? {}) as Record<string, string>)
-    : []
-  const configuredContainerTypes = mergedConfig
-    ? Object.keys((mergedConfig.container_types ?? {}) as Record<string, string>)
-    : []
+  const leafTypes = mergedConfig?.text_types as Record<string, string> | undefined
+  const containerTypes = mergedConfig?.container_types as Record<string, string> | undefined
   const [pageImageDims, setPageImageDims] = useState<{ w: number; h: number } | null>(null)
   const { apiKey } = useApiKey()
   const { stageState, stepState } = useBookRun()
@@ -440,7 +243,6 @@ export function ExtractPageDetail({
   const [savingText, setSavingText] = useState(false)
   const [savingImages, setSavingImages] = useState(false)
   const [pendingTextData, setPendingTextData] = useState<PageStructuringData | null>(null)
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
   const [pendingImageData, setPendingImageData] = useState<ImageClassData | null>(null)
   const [cropTarget, setCropTarget] = useState<string | null>(null)
   const [cropPageSrc, setCropPageSrc] = useState<string | null>(null)
@@ -495,29 +297,31 @@ export function ExtractPageDetail({
   const textDirty = pendingTextData != null
   const imageDirty = pendingImageData != null
 
-  const updateNodeField = (nodeId: string, field: string, value: string) => {
+  const updateTree = (updater: (root: ContentNodeData) => ContentNodeData | null) => {
     const base = pendingTextData ?? page?.pageStructuring
     if (!base) return
-    setPendingTextData({
-      ...base,
-      nodes: updateNodeInTree(base.nodes, nodeId, (node) => ({ ...node, [field]: value })),
-    })
+    const next = updater(wrapRoot(base.nodes))
+    if (!next) return
+    setPendingTextData({ ...base, nodes: next.children ?? [] })
   }
 
-  const toggleNodePrune = (nodeId: string) => {
-    const base = pendingTextData ?? page?.pageStructuring
-    if (!base) return
-    setPendingTextData({
-      ...base,
-      nodes: updateNodeInTree(base.nodes, nodeId, (node) => ({ ...node, isPruned: !node.isPruned })),
-    })
+  const handleTogglePruned = (nodeId: string) => {
+    updateTree((root) => updateNodeInTreeSingle(root, nodeId, (n) => ({ ...n, isPruned: !n.isPruned })))
   }
 
-  const toggleCollapse = (nodeId: string) => {
-    setCollapsed((prev) => {
-      const next = new Set(prev)
-      next.has(nodeId) ? next.delete(nodeId) : next.add(nodeId)
-      return next
+  const handleEditText = (nodeId: string, newText: string) => {
+    updateTree((root) => updateNodeInTreeSingle(root, nodeId, (n) => ({ ...n, text: newText })))
+  }
+
+  const handleChangeType = (nodeId: string, field: "structure" | "role", newType: string) => {
+    updateTree((root) => updateNodeInTreeSingle(root, nodeId, (n) => ({ ...n, [field]: newType })))
+  }
+
+  const handleMoveNode = (dragNodeId: string, targetParentId: string | null, insertIndex: number) => {
+    updateTree((root) => {
+      const [treeWithout, draggedNode] = removeNodeFromTree(root, dragNodeId)
+      if (!treeWithout || !draggedNode) return null
+      return insertNodeIntoTree(treeWithout, draggedNode, targetParentId ?? VIRTUAL_ROOT_ID, insertIndex)
     })
   }
 
@@ -745,19 +549,22 @@ export function ExtractPageDetail({
               )}
               </div>
             </h3>
-            <div>
-              {structuringData.nodes.map((node) => (
-                <ContentNodeView
+            <div className="space-y-0.5">
+              {structuringData.nodes.map((node, i) => (
+                <ContentNodeBlock
                   key={node.nodeId}
                   node={node}
-                  depth={0}
-                  configuredTextTypes={configuredTextTypes}
-                  configuredContainerTypes={configuredContainerTypes}
+                  parentId={null}
+                  indexInParent={i}
                   bookLabel={bookLabel}
-                  collapsed={collapsed}
-                  onUpdate={updateNodeField}
-                  onTogglePrune={toggleNodePrune}
-                  onToggleCollapse={toggleCollapse}
+                  depth={0}
+                  disabled={storyboardRunning}
+                  containerTypes={containerTypes}
+                  leafTypes={leafTypes}
+                  onTogglePruned={handleTogglePruned}
+                  onEditText={handleEditText}
+                  onChangeType={handleChangeType}
+                  onMoveNode={handleMoveNode}
                 />
               ))}
             </div>

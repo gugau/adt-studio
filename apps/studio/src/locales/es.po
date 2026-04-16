@@ -42,9 +42,8 @@ msgstr "(base)"
 msgid "(no target)"
 msgstr "(no target)"
 
-#. placeholder {0}: sections[0].pageNumber
-msgid "(p.{0})"
-msgstr "(p.{0})"
+#~ msgid "(p.{0})"
+#~ msgstr "(p.{0})"
 
 msgid "(template)"
 msgstr "(plantilla)"
@@ -571,6 +570,9 @@ msgstr "Una actividad de respuesta abierta."
 msgid "Answer"
 msgstr "Respuesta"
 
+#~ msgid "Answer Key"
+#~ msgstr "Clave de respuestas"
+
 msgid "Answer Prompt"
 msgstr "Prompt de respuesta"
 
@@ -604,6 +606,9 @@ msgstr "Clave de API (opcional)"
 msgid "API key required to re-render"
 msgstr "Se requiere clave de API para re-renderizar"
 
+msgid "API key required to save and re-render"
+msgstr "Se requiere clave de API para guardar y volver a renderizar"
+
 msgid "API Key Settings"
 msgstr "Configuración de clave API"
 
@@ -625,6 +630,9 @@ msgstr "Apply Segmentation"
 #. placeholder {0}: confirmMerge?.label ?? ""
 msgid "Are you sure you want to {0}? This action cannot be undone."
 msgstr "¿Seguro que quieres {0}? Esta acción no se puede deshacer."
+
+msgid "Are you sure you want to {label}?"
+msgstr "¿Estás seguro de que quieres {label}?"
 
 msgid "Are you sure you want to {label}? This action cannot be undone."
 msgstr "¿Seguro que quieres {label}? Esta acción no se puede deshacer."
@@ -1009,6 +1017,9 @@ msgstr "Configura las claves de API para las funciones de IA."
 msgid "Configure basic document information and file paths"
 msgstr "Configura la información básica del documento y las rutas de archivo"
 
+msgid "Confirm"
+msgstr "Confirmar"
+
 msgid "Confirm merge"
 msgstr "Confirmar fusión"
 
@@ -1029,6 +1040,9 @@ msgstr "Contenido"
 
 msgid "Content Processing"
 msgstr "Procesamiento de Contenido"
+
+msgid "Content Tree"
+msgstr "Árbol de contenido"
 
 msgid "Continue"
 msgstr "Continuar"
@@ -1242,6 +1256,10 @@ msgstr "Eliminar grupo"
 msgid "Delete section"
 msgstr "Eliminar sección"
 
+#. placeholder {0}: String(sectionIdx + 1)
+msgid "Delete section {0}? This cannot be undone."
+msgstr "¿Eliminar sección {0}? Esta acción no se puede deshacer."
+
 msgid "Delete text entry"
 msgstr "Eliminar entrada de texto"
 
@@ -1317,6 +1335,12 @@ msgstr "Arrastra para reordenar o mover a otro grupo"
 msgid "Drag vertices to reshape. Click midpoints (+) to add points. Right-click a vertex to remove it."
 msgstr "Arrastra los vértices para cambiar la forma. Haz clic en los puntos medios (+) para agregar puntos. Haz clic derecho en un vértice para eliminarlo."
 
+#~ msgid "Drop content here"
+#~ msgstr "Soltar contenido aquí"
+
+msgid "Drop here"
+msgstr "Soltar aquí"
+
 msgid "Drop PDF here"
 msgstr "Suelta el PDF aquí"
 
@@ -1386,8 +1410,8 @@ msgstr "Edita la plantilla Liquid/HTML a continuación. Los cambios se guardan c
 msgid "Edit this image"
 msgstr "Editar esta imagen"
 
-msgid "Edit this section"
-msgstr "Editar esta sección"
+#~ msgid "Edit this section"
+#~ msgstr "Editar esta sección"
 
 msgid "Edited in"
 msgstr "Editado en"
@@ -1400,6 +1424,9 @@ msgstr "La edición está deshabilitada mientras el storyboard se está ejecutan
 
 msgid "Editing Language"
 msgstr "Idioma de edición"
+
+msgid "Empty"
+msgstr "Vacío"
 
 msgid "Empty group — drag text entries here"
 msgstr "Grupo vacío — arrastra entradas de texto aquí"
@@ -1645,6 +1672,9 @@ msgstr "Formato"
 msgid "Forms & controls"
 msgstr "Forms & controls"
 
+msgid "From page"
+msgstr "De la página"
+
 msgid "From reference image..."
 msgstr "Desde imagen de referencia..."
 
@@ -1752,6 +1782,9 @@ msgstr "Prompt de glosario"
 
 msgid "Go to book"
 msgstr "Ir al libro"
+
+msgid "Go to preview"
+msgstr "Ir a vista previa"
 
 msgid "Google"
 msgstr "Google"
@@ -2355,6 +2388,9 @@ msgstr "Sin leyendas para esta página"
 msgid "No changes flagged on this page"
 msgstr "No changes flagged on this page"
 
+msgid "No content"
+msgstr "Sin contenido"
+
 msgid "No data"
 msgstr "Sin datos"
 
@@ -2620,8 +2656,8 @@ msgstr "Tokens de salida"
 msgid "Overall page note"
 msgstr "Overall page note"
 
-msgid "Overview"
-msgstr "Vista general"
+#~ msgid "Overview"
+#~ msgstr "Vista general"
 
 msgid "Package and preview the final ADT web application."
 msgstr "Empaqueta y previsualiza la aplicación web ADT final."
@@ -2646,7 +2682,7 @@ msgstr "Página"
 
 #. placeholder {0}: String(page.pageNumber)
 #. placeholder {0}: String(pageNumber)
-#. placeholder {0}: String(selectedPage.pageNumber)
+#. placeholder {0}: String(pageSummary.pageNumber)
 msgid "Page {0}"
 msgstr "Página {0}"
 
@@ -2716,6 +2752,12 @@ msgstr "Collage en papel"
 
 #~ msgid "Paragraph"
 #~ msgstr "Párrafo"
+
+msgid "part"
+msgstr "parte"
+
+msgid "parts"
+msgstr "partes"
 
 msgid "Parts"
 msgstr "Partes"
@@ -2851,6 +2893,9 @@ msgstr "Eliminar elemento"
 
 msgid "Prune image"
 msgstr "Eliminar imagen"
+
+msgid "Prune section"
+msgstr "Podar sección"
 
 msgid "Prune section from flow"
 msgstr "Eliminar sección del flujo"
@@ -3013,6 +3058,9 @@ msgstr "Quitar este bloque"
 msgid "Remove type"
 msgstr "Eliminar tipo"
 
+#~ msgid "Render"
+#~ msgstr "Renderizado"
+
 msgid "Render Reasoning"
 msgstr "Razonamiento de renderizado"
 
@@ -3167,6 +3215,9 @@ msgstr "Ejemplo de Manual de Referencia"
 msgid "Save"
 msgstr "Guardar"
 
+#~ msgid "Save & Re-render"
+#~ msgstr "Guardar y re-renderizar"
+
 msgid "Save & Rerun"
 msgstr "Guardar y reejecutar"
 
@@ -3261,6 +3312,10 @@ msgstr "Sección {0} — {1}"
 msgid "Section {0} (pruned)"
 msgstr "Sección {0} (eliminada)"
 
+#. placeholder {0}: String(sectionIdx + 1)
+msgid "Section {0} preview"
+msgstr "Vista previa de sección {0}"
+
 msgid "Section 3.2"
 msgstr "Sección 3.2"
 
@@ -3297,8 +3352,8 @@ msgstr "Seccionamiento"
 msgid "Sectioning Mode"
 msgstr "Modo de sección"
 
-msgid "Sectioning Reasoning"
-msgstr "Razonamiento de sección"
+#~ msgid "Sectioning Reasoning"
+#~ msgstr "Razonamiento de sección"
 
 msgid "sections"
 msgstr "secciones"
@@ -3970,8 +4025,8 @@ msgstr "Slug de etapa desconocido: {0}"
 msgid "Unknown step: {step}"
 msgstr "Paso desconocido: {0}"
 
-msgid "Unprune"
-msgstr "Restaurar"
+#~ msgid "Unprune"
+#~ msgstr "Restaurar"
 
 #~ msgid "Unprune group"
 #~ msgstr "Restaurar grupo"
@@ -3979,11 +4034,19 @@ msgstr "Restaurar"
 msgid "Unprune image"
 msgstr "Restaurar imagen"
 
+msgid "Unprune section"
+msgstr "Restaurar sección"
+
 #~ msgid "Unprune text"
 #~ msgstr "Restaurar texto"
 
 msgid "Unsaved changes"
 msgstr "Cambios sin guardar"
+
+#. placeholder {0}: pendingByPage.size
+#. placeholder {1}: pendingByPage.size === 1 ? "page" : "pages"
+msgid "Unsaved changes on {0} {1}"
+msgstr "Cambios sin guardar en {0} {1}"
 
 msgid "Unsaved:"
 msgstr "Sin guardar:"

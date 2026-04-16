@@ -1,5 +1,6 @@
 import {
   type PageSectioningOutput,
+  type ContentNodeData,
   type AppConfig,
   type SectionRendering,
   type WebRenderingOutput,
@@ -121,10 +122,58 @@ function expandParts(
       if (imgData) {
         parts.push({ type: "image", imageId: part.imageId, imageBase64: imgData.base64, width: imgData.width, height: imgData.height })
       }
+    } else if (part.type === "content_node") {
+      flattenContentNode(part.node, images, parts)
     }
   }
 
   return parts
+}
+
+/**
+ * Recursively flatten a ContentNodeData subtree into render-ready SectionParts.
+ * Text leaves become group parts, image leaves become image parts.
+ * Container nodes recurse into their children.
+ */
+function flattenContentNode(
+  node: ContentNodeData,
+  images: Map<string, { base64: string; width?: number; height?: number }>,
+  parts: SectionPart[]
+): void {
+  if (node.isPruned) return
+
+  // Text leaf
+  if (node.text != null && node.role) {
+    parts.push({
+      type: "group",
+      groupId: node.nodeId,
+      groupType: node.role,
+      texts: [{ textId: node.nodeId, textType: node.role, text: node.text }],
+    })
+    return
+  }
+
+  // Image leaf
+  if (node.imageId && !node.children?.length) {
+    const imgData = images.get(node.imageId)
+    if (imgData) {
+      parts.push({
+        type: "image",
+        imageId: node.imageId,
+        imageBase64: imgData.base64,
+        width: imgData.width,
+        height: imgData.height,
+      })
+    }
+    return
+  }
+
+  // Container — recurse into children
+  if (node.children) {
+    for (const child of node.children) {
+      flattenContentNode(child, images, parts)
+    }
+  }
 }
 
 /**

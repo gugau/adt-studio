@@ -41,11 +41,13 @@ CLASSIFICATION RULES (use these to disambiguate activity types):
 - activity_other is a last resort — only use it when the learning mechanic itself is truly unique (e.g., free drawing, crafts, physical movement) and no other activity type applies.
 
 RULES:
-- ONLY use IDs that are explicitly listed below in "Text groups" and "Image" entries. Do NOT invent or generate new IDs.
+{% if nodes %}- ONLY use IDs that are explicitly listed below in "Content nodes" and "Image" entries. Do NOT invent or generate new IDs.
+{% else %}- ONLY use IDs that are explicitly listed below in "Text groups" and "Image" entries. Do NOT invent or generate new IDs.
+{% endif %}
 {% if sectioning_mode == "page" %}
-- Create EXACTLY ONE section containing ALL listed group IDs and ALL listed image IDs
+- Create EXACTLY ONE section containing ALL listed {% if nodes %}node{% else %}group{% endif %} IDs and ALL listed image IDs
 - Choose the single most appropriate section type for the page as a whole
-- ALL listed group IDs and ALL listed image IDs must be assigned to this one section
+- ALL listed {% if nodes %}node{% else %}group{% endif %} IDs and ALL listed image IDs must be assigned to this one section
 - If no image IDs are listed below, do NOT include any image IDs in part_ids
 {% elsif sectioning_mode == "dynamic" %}
 - DEFAULT: Keep all content in a SINGLE section. Prefer one section per page.
@@ -57,14 +59,14 @@ RULES:
 - NOTE: A single activity with many questions (e.g., one set of fill-in-the-blank sentences under shared instructions) stays as ONE section. But two separate activities with their own instructions are separate sections, even if both are the same type.
 - When splitting multiple-choice or true/false questions: put any shared header, instructions, or passage text into the FIRST section, then give each question its own section. Include the question prompt and its answer choices together in each section.
 - When splitting: group consecutive content that belongs to the same activity together.
-- IMPORTANT: When splitting, do NOT pre-label activity types in your reasoning. First decide WHICH groups belong together, then apply the CLASSIFICATION RULES (including the 3-step count) to each section individually. The reasoning must show the per-section analysis with item counts.
-- ALL listed group IDs must be assigned to at least one section
+- IMPORTANT: When splitting, do NOT pre-label activity types in your reasoning. First decide WHICH {% if nodes %}nodes{% else %}groups{% endif %} belong together, then apply the CLASSIFICATION RULES (including the 3-step count) to each section individually. The reasoning must show the per-section analysis with item counts.
+- ALL listed {% if nodes %}node{% else %}group{% endif %} IDs must be assigned to at least one section
 - ALL listed image IDs must be assigned to at least one section — assign each image to the section it visually belongs to
-- Group/image IDs may appear in multiple sections only when it makes strong pedagogical sense (e.g. shared instructions)
+- {% if nodes %}Node{% else %}Group{% endif %}/image IDs may appear in multiple sections only when it makes strong pedagogical sense (e.g. shared instructions)
 {% else %}
-- ALL listed group IDs must be assigned to at least one section
+- ALL listed {% if nodes %}node{% else %}group{% endif %} IDs must be assigned to at least one section
 - ALL listed image IDs must be assigned to at least one section — assign each image to the section it visually belongs to
-- Group/image IDs may appear in multiple sections only when it makes strong pedagogical sense (e.g. shared instructions)
+- {% if nodes %}Node{% else %}Group{% endif %}/image IDs may appear in multiple sections only when it makes strong pedagogical sense (e.g. shared instructions)
 - Keep related content together — prefer fewer, more comprehensive sections over many small ones
 {% endif %}
 - Extract page number if visible (headers, footers, margins). Use null if none found
@@ -81,10 +83,17 @@ Image {{ image.image_id }}:
 {% image image.imageBase64 %}
 {% endfor %}
 
+{% if nodes %}
+Content nodes:
+{% for node in nodes %}
+- {{ node.node_id }} ({{ node.node_type }}): {{ node.text }}
+{% endfor %}
+{% else %}
 Text groups:
 {% for group in groups %}
 - {{ group.group_id }} ({{ group.group_type }}): {{ group.text }}
 {% endfor %}
+{% endif %}
 
 {% if sectioning_mode == "page" %}
 Please place ALL content into a single section.

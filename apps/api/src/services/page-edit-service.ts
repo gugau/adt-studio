@@ -3,9 +3,9 @@ import path from "node:path"
 import { createBookStorage } from "@adt/storage"
 import { createLLMModel, createPromptEngine } from "@adt/llm"
 import type { LLMModel } from "@adt/llm"
-import { renderPage, buildRenderStrategyResolver, createTemplateEngine, loadBookConfig, createScreenshotRenderer, runVisualReviewLoop, DEFAULT_VISUAL_REVIEW_MODEL_ID, structurePage, buildStructureConfig } from "@adt/pipeline"
-import type { VisualRefinementDeps } from "@adt/pipeline"
-import { PageSectioningOutput, WebRenderingOutput, webRenderingLLMSchema, ImageClassificationOutput } from "@adt/types"
+import { renderPage, buildRenderStrategyResolver, createTemplateEngine, loadBookConfig, createScreenshotRenderer, runVisualReviewLoop, DEFAULT_VISUAL_REVIEW_MODEL_ID, structurePage, buildStructureConfig, renderSectionThumbnail } from "@adt/pipeline"
+import type { VisualRefinementDeps, ScreenshotRenderer } from "@adt/pipeline"
+import { PageSectioningOutput, WebRenderingOutput, webRenderingLLMSchema, ImageClassificationOutput, type ContentNodeData } from "@adt/types"
 import { loadStyleguideContent } from "./styleguide.js"
 
 export interface ReRenderOptions {
@@ -70,6 +70,7 @@ export async function reRenderPage(
 
   const storage = createBookStorage(label, booksDir)
   let visualRefinement: VisualRefinementDeps | undefined
+  let screenshotRenderer: ScreenshotRenderer | undefined
 
   try {
     // Read latest pipeline data
@@ -100,6 +101,8 @@ export async function reRenderPage(
         if (part.type === "image" && !part.isPruned && !renderImages.has(part.imageId)) {
           const dims = storage.getImageDimensions(part.imageId)
           renderImages.set(part.imageId, { base64: storage.getImageBase64(part.imageId), width: dims?.width, height: dims?.height })
+        } else if (part.type === "content_node" && !part.isPruned) {
+          collectImageIdsFromNode(part.node, renderImages, storage)
         }
       }
     }
@@ -137,13 +140,13 @@ export async function reRenderPage(
       throw new Error(`Section index ${sectionIndex} out of range`)
     }
 
-    // Set up visual refinement if any render strategy enables it
+    // Set up shared screenshot renderer for visual refinement + thumbnails
     if (webAssetsDir) {
       const hasVisualRefinement = Object.values(config.render_strategies ?? {}).some(
         (s) => s.config?.visual_refinement?.enabled
       )
+      screenshotRenderer = await createScreenshotRenderer()
       if (hasVisualRefinement) {
-        const screenshotRenderer = await createScreenshotRenderer()
         visualRefinement = {
           screenshotRenderer,
           webAssetsDir,
@@ -152,6 +155,28 @@ export async function reRenderPage(
             const hash = crypto.createHash("sha256").update(base64).digest("hex").slice(0, 16)
             storage.putDebugImage(hash, Buffer.from(base64, "base64"))
           },
+        }
+      }
+    }
+
+    const captureThumbnails = async (rendering: WebRenderingOutput): Promise<void> => {
+      if (!screenshotRenderer || !webAssetsDir) return
+      const thumbImages = new Map<string, { base64: string }>()
+      for (const [id, img] of renderImages) thumbImages.set(id, { base64: img.base64 })
+      for (const section of rendering.sections) {
+        try {
+          const buffer = await renderSectionThumbnail({
+            section,
+            label,
+            images: thumbImages,
+            webAssetsDir,
+            screenshotRenderer,
+          })
+          storage.putSectionThumbnail(pageId, section.sectionIndex, buffer)
+        } catch (err) {
+          console.error(
+            `[page-edit] ${label}: thumbnail failed for ${pageId} sec${section.sectionIndex}: ${err instanceof Error ? err.message : String(err)}`
+          )
         }
       }
     }
@@ -186,6 +211,7 @@ export async function reRenderPage(
 
     if (sectionIndex === undefined) {
       const version = storage.putNodeData("web-rendering", pageId, renderResult)
+      await captureThumbnails(renderResult)
       return { version, rendering: renderResult }
     }
 
@@ -209,10 +235,11 @@ export async function reRenderPage(
     const mergedRendering = { sections: mergedSections }
 
     const version = storage.putNodeData("web-rendering", pageId, mergedRendering)
+    await captureThumbnails(mergedRendering)
     return { version, rendering: mergedRendering }
   } finally {
-    if (visualRefinement) {
-      await visualRefinement.screenshotRenderer.close()
+    if (screenshotRenderer) {
+      await screenshotRenderer.close()
     }
     storage.clearNodesByType(["image-captioning", "text-catalog", "text-catalog-translation", "tts", "tts-timestamps"])
     storage.clearStepRuns(["image-captioning", "text-catalog", "catalog-translation", "tts"])
@@ -504,6 +531,30 @@ export async function reStructurePage(
       process.env.OPENAI_API_KEY = previousKey
     } else {
       delete process.env.OPENAI_API_KEY
+    }
+  }
+}
+
+/**
+ * Recursively collect image IDs from a content node tree and add them to the render images map.
+ */
+function collectImageIdsFromNode(
+  node: ContentNodeData,
+  renderImages: Map<string, { base64: string; width?: number; height?: number }>,
+  storage: { getImageBase64: (id: string) => string; getImageDimensions: (id: string) => { width: number; height: number } | null }
+): void {
+  if (node.isPruned) return
+  if (node.imageId && !renderImages.has(node.imageId)) {
+    try {
+      const dims = storage.getImageDimensions(node.imageId)
+      renderImages.set(node.imageId, { base64: storage.getImageBase64(node.imageId), width: dims?.width, height: dims?.height })
+    } catch {
+      // Image not found in storage — skip
+    }
+  }
+  if (node.children) {
+    for (const child of node.children) {
+      collectImageIdsFromNode(child, renderImages, storage)
     }
   }
 }

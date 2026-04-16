@@ -138,16 +138,14 @@ function finalizePageStructuringNodes(
       const nodeId = `${pageId}_nd${String(nodeCounter).padStart(3, "0")}`
 
       const hasChildren = node.children != null && node.children.length > 0
-      const isImageContainer = node.structure === "image" && node.image_id != null
 
-      if (hasChildren || isImageContainer) {
+      if (hasChildren) {
         const container: ContentNodeData = {
           nodeId,
           structure: node.structure!,
-          children: hasChildren ? assignIds(node.children!) : [],
+          children: assignIds(node.children!),
           isPruned: false,
         }
-        if (node.image_id != null) container.imageId = node.image_id
         return container
       }
 
@@ -157,6 +155,7 @@ function finalizePageStructuringNodes(
         isPruned: prunedSet.has(node.role!),
       }
       if (node.text != null) finalized.text = node.text
+      if (node.image_id != null) finalized.imageId = node.image_id
       return finalized
     })
   }
@@ -251,11 +250,8 @@ function validatePageStructuringNodes(
       const hasStructure = node.structure != null
       const hasRole = node.role != null
 
-      // Image container: structure "image" with image_id, optionally with children
-      const isImageContainer = hasStructure && node.structure === "image" && hasImage
-
       // Detect nodes that look like failed containers — the LLM wanted to nest
-      // deeper but couldn't. Allow image containers without children.
+      // deeper but couldn't.
       if (!hasChildren && hasStructure && !hasText && !hasImage) {
         tooDeep = true
         errors.push(
@@ -264,8 +260,8 @@ function validatePageStructuringNodes(
         continue
       }
 
-      if (hasChildren || isImageContainer) {
-        // Container node: must have structure, no role. May have image_id.
+      if (hasChildren) {
+        // Container node: must have structure, no role, no image_id.
         if (!hasStructure) {
           errors.push(
             `${nodePath}: Container node (has children) is missing "structure". Set structure to one of: ${[...containerTypeKeys].join(", ")}`
@@ -280,9 +276,9 @@ function validatePageStructuringNodes(
             `${nodePath}: Container node should not have "role" — use "structure" for containers and "role" for leaves.`
           )
         }
-        if (hasImage && !imageIdSet.has(node.image_id!)) {
+        if (hasImage) {
           errors.push(
-            `${nodePath}: Invalid image_id "${node.image_id}". Must be one of: ${validImageIds.join(", ")}`
+            `${nodePath}: Container node should not have "image_id". Use an image leaf child (role: "image") inside the container instead.`
           )
         }
       } else if (hasText) {
@@ -323,7 +319,7 @@ function validatePageStructuringNodes(
       // Leaf nodes should not have both text and image
       if (hasText && hasImage) {
         errors.push(
-          `${nodePath}: Node has both text and image_id. Use an "image" container with text children instead.`
+          `${nodePath}: Node has both text and image_id. Use an "image_group" container with an image leaf child and text children instead.`
         )
       }
 

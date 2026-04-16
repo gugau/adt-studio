@@ -64,6 +64,8 @@ export {
   sectionPage,
   buildSectioningConfig,
   buildGroupSummaries,
+  buildNodeSummaries,
+  findNodeById,
   type SectioningConfig,
   type SectionPageInput,
 } from "./page-sectioning.js"
@@ -94,6 +96,12 @@ export {
   type ScreenshotRenderer,
 } from "./screenshot.js"
 export { buildScreenshotHtml } from "./screenshot-html.js"
+export {
+  renderSectionThumbnail,
+  DEFAULT_THUMBNAIL_VIEWPORT,
+  type ThumbnailViewport,
+  type RenderSectionThumbnailInput,
+} from "./section-thumbnail.js"
 export {
   createTemplateEngine,
   renderSectionTemplate,

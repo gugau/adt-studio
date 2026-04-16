@@ -5,6 +5,7 @@ import { SectionDataPanel } from "./SectionDataPanel"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { api, BASE_URL } from "@/api/client"
 import type { PageDetail, VersionEntry } from "@/api/client"
+import type { ContentNodeData } from "@adt/types"
 import { useApiKey } from "@/hooks/use-api-key"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useBookTasks } from "@/hooks/use-book-tasks"
@@ -189,6 +190,23 @@ function VersionPicker({
 
 type SectioningData = NonNullable<PageDetail["sectioning"]>
 type RenderingData = NonNullable<PageDetail["rendering"]>
+
+/** Deep-update a node in a ContentNodeData tree by nodeId. Returns a new tree (immutable). */
+function updateNodeInTree<T extends { nodeId: string; children?: T[] }>(
+  node: T,
+  nodeId: string,
+  updater: (n: T) => T,
+): T {
+  if (node.nodeId === nodeId) return updater(node)
+  if (!node.children) return node
+  let changed = false
+  const updatedChildren = node.children.map((c) => {
+    const updated = updateNodeInTree(c, nodeId, updater)
+    if (updated !== c) changed = true
+    return updated
+  })
+  return changed ? { ...node, children: updatedChildren } : node
+}
 
 function getRenderedSectionByIndex(
   rendering: RenderingData | null | undefined,
@@ -384,6 +402,8 @@ export function StoryboardSectionDetail({
   onNavigateSection,
   hasPrevPage,
   hasNextPage,
+  panelOpen: panelOpen_prop,
+  onPanelOpenChange,
 }: {
   bookLabel: string
   pageId: string
@@ -400,6 +420,9 @@ export function StoryboardSectionDetail({
   /** Whether there is a page before/after this one (for cross-page merge) */
   hasPrevPage?: boolean
   hasNextPage?: boolean
+  /** Controlled edit panel open state — lifted to parent to persist across page changes */
+  panelOpen?: boolean
+  onPanelOpenChange?: (open: boolean) => void
 }) {
   const { t } = useLingui()
   const queryClient = useQueryClient()
@@ -442,8 +465,10 @@ export function StoryboardSectionDetail({
 
   // Track current pageId so async callbacks can detect stale closures
 
-  // Section data panel state
-  const [panelOpen, setPanelOpen] = useState(false)
+  // Section data panel state — controlled from parent to persist across page changes
+  const [localPanelOpen, setLocalPanelOpen] = useState(false)
+  const panelOpen = panelOpen_prop ?? localPanelOpen
+  const setPanelOpen = onPanelOpenChange ?? setLocalPanelOpen
   const [htmlPreview, setHtmlPreview] = useState(false)
   const [htmlPanelHeight, setHtmlPanelHeight] = useState(() => Math.floor(window.innerHeight * 0.35))
   const htmlPanelRef = useRef<HTMLDivElement>(null)
@@ -569,7 +594,7 @@ export function StoryboardSectionDetail({
   })
 
   const textTypes = configQuery.data?.merged?.text_types as Record<string, string> | undefined
-  const groupTypes = configQuery.data?.merged?.text_group_types as Record<string, string> | undefined
+  const groupTypes = configQuery.data?.merged?.container_types as Record<string, string> | undefined
   const allSectionTypes = configQuery.data?.merged?.section_types as Record<string, string> | undefined
   const disabledSectionTypes = new Set(configQuery.data?.merged?.disabled_section_types as string[] ?? [])
   const sectionTypes = allSectionTypes
@@ -1202,6 +1227,126 @@ export function StoryboardSectionDetail({
       // No rendering data — need re-render to sync
       needsRerenderRef.current = true
     }
+  }
+
+  // Toggle pruned state of a node within a content_node part
+  const toggleNodePruned = (partIndex: number, nodeId: string) => {
+    needsRerenderRef.current = true
+    const base = pendingSectioning ?? page.sectioning
+    if (!base) return
+    const updated: SectioningData = {
+      ...base,
+      sections: base.sections.map((s, si) => {
+        if (si !== sectionIndex) return s
+        return {
+          ...s,
+          parts: s.parts.map((p, pi) => {
+            if (pi !== partIndex || p.type !== "content_node") return p
+            return { ...p, node: updateNodeInTree(p.node, nodeId, (n) => ({ ...n, isPruned: !n.isPruned })) }
+          }),
+        }
+      }),
+    }
+    setPendingSectioning(updated)
+  }
+
+  // Edit text of a node within a content_node part
+  const editNodeText = (partIndex: number, nodeId: string, newText: string) => {
+    needsRerenderRef.current = true
+    const base = pendingSectioning ?? page.sectioning
+    if (!base) return
+    const updated: SectioningData = {
+      ...base,
+      sections: base.sections.map((s, si) => {
+        if (si !== sectionIndex) return s
+        return {
+          ...s,
+          parts: s.parts.map((p, pi) => {
+            if (pi !== partIndex || p.type !== "content_node") return p
+            return { ...p, node: updateNodeInTree(p.node, nodeId, (n) => ({ ...n, text: newText })) }
+          }),
+        }
+      }),
+    }
+    setPendingSectioning(updated)
+  }
+
+  // Change structure/role type of a node within a content_node part
+  const changeNodeType = (partIndex: number, nodeId: string, field: "structure" | "role", newType: string) => {
+    needsRerenderRef.current = true
+    const base = pendingSectioning ?? page.sectioning
+    if (!base) return
+    const updated: SectioningData = {
+      ...base,
+      sections: base.sections.map((s, si) => {
+        if (si !== sectionIndex) return s
+        return {
+          ...s,
+          parts: s.parts.map((p, pi) => {
+            if (pi !== partIndex || p.type !== "content_node") return p
+            return { ...p, node: updateNodeInTree(p.node, nodeId, (n) => ({ ...n, [field]: newType })) }
+          }),
+        }
+      }),
+    }
+    setPendingSectioning(updated)
+  }
+
+  // Move a node within the content tree: remove from current parent, insert at new position
+  const moveNodeInTree = (partIndex: number, dragNodeId: string, targetParentId: string | null, insertIndex: number) => {
+    needsRerenderRef.current = true
+    const base = pendingSectioning ?? page.sectioning
+    if (!base) return
+
+    const updated: SectioningData = {
+      ...base,
+      sections: base.sections.map((s, si) => {
+        if (si !== sectionIndex) return s
+        return {
+          ...s,
+          parts: s.parts.map((p, pi) => {
+            if (pi !== partIndex || p.type !== "content_node") return p
+            // 1. Extract the dragged node and remove it from the tree
+            let draggedNode: ContentNodeData | null = null
+            const removeNode = (n: ContentNodeData): ContentNodeData => {
+              if (!n.children) return n
+              const filtered = n.children.filter((c) => {
+                if (c.nodeId === dragNodeId) { draggedNode = c; return false }
+                return true
+              }).map(removeNode)
+              return { ...n, children: filtered }
+            }
+            const treeWithout = removeNode(p.node)
+            if (!draggedNode) return p
+
+            // 2. Insert at target position
+            if (targetParentId === null || targetParentId === p.node.nodeId) {
+              // Insert at root level of this content_node part's children
+              const children = [...(treeWithout.children ?? [])]
+              children.splice(insertIndex, 0, draggedNode)
+              return { ...p, node: { ...treeWithout, children } }
+            }
+            // Insert into a specific parent container
+            let inserted = false
+            const insertInto = (n: ContentNodeData): ContentNodeData => {
+              if (n.nodeId === targetParentId) {
+                inserted = true
+                const children = [...(n.children ?? [])]
+                children.splice(insertIndex, 0, draggedNode!)
+                return { ...n, children }
+              }
+              if (!n.children) return n
+              return { ...n, children: n.children.map(insertInto) }
+            }
+            const result = insertInto(treeWithout)
+            // If target not found, abort — don't lose the dragged node
+            if (!inserted) return p
+            return { ...p, node: result }
+          }),
+        }
+      }),
+    }
+    setPendingSectioning(updated)
   }
 
   // Change group type for a specific text group
@@ -2288,7 +2433,7 @@ export function StoryboardSectionDetail({
       )}
       <button
         type="button"
-        onClick={() => setPanelOpen((v) => !v)}
+        onClick={() => setPanelOpen(!panelOpen)}
         className="flex items-center gap-1 px-2 py-1 rounded bg-white/10 hover:bg-white/20 transition-colors cursor-pointer shrink-0"
         title={panelOpen ? t`Close edit panel` : t`Open edit panel`}
       >
@@ -2323,8 +2468,8 @@ export function StoryboardSectionDetail({
         </div>
       )}
 
-      {/* Preview — fills remaining space, scrolls independently */}
-      <div className="flex-1 overflow-auto px-4 py-4 relative" ref={scrollContainerRef}>
+      {/* Preview — fills remaining space, scrolls independently; shrinks when edit panel is open */}
+      <div className={`flex-1 overflow-auto px-4 py-4 relative transition-[margin] duration-200 ${panelOpen ? "mr-[480px]" : ""}`} ref={scrollContainerRef}>
         {!section ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
@@ -2623,7 +2768,7 @@ export function StoryboardSectionDetail({
         />
       )}
 
-      {/* Slide-out section data panel */}
+      {/* Slide-out section data panel — inside the flex row so it sits beside the preview */}
       {section && (
       <SectionDataPanel
         open={panelOpen}
@@ -2645,6 +2790,10 @@ export function StoryboardSectionDetail({
         onDeleteTextEntry={deleteTextEntry}
         onDuplicateTextEntry={duplicateTextEntry}
         onEditText={editText}
+        onToggleNodePruned={toggleNodePruned}
+        onEditNodeText={editNodeText}
+        onChangeNodeType={changeNodeType}
+        onMoveNode={moveNodeInTree}
         onAddGroup={addGroup}
         onDuplicateGroup={duplicateGroup}
         onDeleteGroup={deleteGroup}

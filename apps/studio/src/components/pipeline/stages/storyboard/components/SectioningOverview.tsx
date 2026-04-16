@@ -1,29 +1,128 @@
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useRef, useCallback } from "react"
 import { useQueries, useQueryClient, useMutation } from "@tanstack/react-query"
 import { api, BASE_URL, type PageSummaryItem, type PageDetail } from "@/api/client"
-import type { SectionPart, PageSection } from "@adt/types"
+import type { SectionPart, PageSection, ContentNodeData } from "@adt/types"
 import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import {
   ChevronDown,
   ChevronRight,
+  GripVertical,
   Layers,
   Image,
   FileText,
   Loader2,
+  Puzzle,
+  Save,
   SlidersHorizontal,
+  X,
 } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { SectionActionsDropdown } from "./SectionActionsDropdown"
 import { SectionEditToolbar } from "./SectionEditToolbar"
 import { ImageCropDialog } from "./ImageCropDialog"
 import { AiImageDialog } from "./AiImageDialog"
+import { ContentNodeBlock, updateNodeInTree, treeContainsNode, removeNodeFromTree, insertNodeIntoTree } from "./ContentNodeBlock"
 import { useApiKey } from "@/hooks/use-api-key"
 import { useBookRun } from "@/hooks/use-book-run"
+import { useActiveConfig } from "@/hooks/use-debug"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
+import { getSectionTypeLabel } from "@/lib/section-constants"
 
-type DetailPanel = "preview" | "metadata" | "textGroups" | "images" | "prunedImages"
-const ALL_PANELS: DetailPanel[] = ["preview", "metadata", "textGroups", "images", "prunedImages"]
+function getSectionTypeDisplayLabel(value: string): string {
+  return getSectionTypeLabel(value) || value.replace(/_/g, " ")
+}
+
+function SectionTypeIcon({ sectionType, className }: { sectionType: string; className?: string }) {
+  if (sectionType.startsWith("activity") || sectionType.startsWith("exercise")) {
+    return <Puzzle className={className} />
+  }
+  if (sectionType === "images_only" || sectionType === "image") {
+    return <Image className={className} />
+  }
+  return <Layers className={className} />
+}
+
+/** Recursively extract text from a ContentNodeData tree for preview */
+function extractNodeText(node: ContentNodeData): string {
+  if (node.text) return node.text
+  if (node.children) return node.children.map(extractNodeText).join(" ")
+  return ""
+}
+
+/**
+ * Extract context for each activity answer item from rendered HTML.
+ * Returns a map of item ID → context string (question text, option label, or surrounding text for blanks).
+ */
+function extractAnswerContexts(html: string): Map<string, string> {
+  const ctx = new Map<string, string>()
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, "text/html")
+
+  // Multiple choice / checkboxes: find inputs with data-activity-item
+  const inputs = doc.querySelectorAll("[data-activity-item]")
+  for (const input of inputs) {
+    const itemId = input.getAttribute("data-activity-item")
+    if (!itemId) continue
+    // Find the label or parent text that describes this option
+    const label = input.closest("label")
+    if (label) {
+      ctx.set(itemId, label.textContent?.trim() ?? "")
+      continue
+    }
+    // Check for an associated label via "for" attribute
+    const id = input.getAttribute("id")
+    if (id) {
+      const assocLabel = doc.querySelector(`label[for="${id}"]`)
+      if (assocLabel) {
+        ctx.set(itemId, assocLabel.textContent?.trim() ?? "")
+        continue
+      }
+    }
+    // Fallback: use parent li/div text
+    const container = input.closest("li") ?? input.closest("div")
+    if (container) {
+      ctx.set(itemId, container.textContent?.trim() ?? "")
+    }
+  }
+
+  // Fill-in-the-blank: find [[blank:item-N]] or [[blank:item-N:hint]] markers in raw HTML
+  const blankRe = /\[\[blank:(item-\d+)(?::([^\]]+))?\]\]/g
+  let match
+  while ((match = blankRe.exec(html)) !== null) {
+    const itemId = match[1]
+    if (ctx.has(itemId)) continue
+    // Extract surrounding sentence context (up to 80 chars each side)
+    const start = Math.max(0, match.index - 80)
+    const end = Math.min(html.length, match.index + match[0].length + 80)
+    let snippet = html.slice(start, end)
+    // Strip HTML tags from snippet
+    snippet = snippet.replace(/<[^>]+>/g, "").trim()
+    // Replace the blank marker with ___
+    snippet = snippet.replace(/\[\[blank:item-\d+(?::[^\]]+)?\]\]/g, "___")
+    ctx.set(itemId, snippet)
+  }
+
+  return ctx
+}
+
+/** A flattened section entry with its parent page context */
+interface FlatSection {
+  page: PageDetail
+  section: PageSection
+  sectionIndex: number // index within the page
+  pageNumber: number | null
+}
+
+type DetailPanel = "preview" | "metadata" | "textGroups" | "images" | "prunedImages" | "answers"
+const ALL_PANELS: DetailPanel[] = ["preview", "metadata", "textGroups", "images", "prunedImages", "answers"]
 
 interface SectioningOverviewProps {
   bookLabel: string
@@ -38,8 +137,26 @@ export function SectioningOverview({ bookLabel, pages, onNavigateToSection }: Se
   const storyboardRunning = stageState("storyboard") === "running" || stageState("storyboard") === "queued"
   const [confirmDialog, setConfirmDialog] = useState<{ message: string; onConfirm: () => void } | null>(null)
   const [visiblePanels, setVisiblePanels] = useState<Set<DetailPanel>>(() => new Set(ALL_PANELS))
+  const [expanded, setExpanded] = useState<Set<number>>(new Set())
   const [allExpanded, setAllExpanded] = useState(false)
-  const [expandSignal, setExpandSignal] = useState<{ action: "expand" | "collapse"; tick: number }>({ action: "collapse", tick: 0 })
+  // Pending (unsaved) sectioning changes per page
+  const [pendingByPage, setPendingByPage] = useState<Map<string, NonNullable<PageDetail["sectioning"]>>>(new Map())
+  const [saving, setSaving] = useState(false)
+  const { apiKey, hasApiKey } = useApiKey()
+  const hasPendingChanges = pendingByPage.size > 0
+
+  const { data: activeConfigData } = useActiveConfig(bookLabel)
+  const mergedConfig = activeConfigData?.merged as Record<string, unknown> | undefined
+  const containerTypes = mergedConfig?.container_types as Record<string, string> | undefined
+  const leafTypes = mergedConfig?.text_types as Record<string, string> | undefined
+  const allSectionTypes = mergedConfig?.section_types as Record<string, string> | undefined
+  const disabledSectionTypes = new Set(mergedConfig?.disabled_section_types as string[] ?? [])
+  const sectionTypes = allSectionTypes
+    ? Object.fromEntries(Object.entries(allSectionTypes).filter(([k]) => !disabledSectionTypes.has(k)))
+    : undefined
+  // Drag state for section reordering
+  const [dragIdx, setDragIdx] = useState<number | null>(null)
+  const [dropIdx, setDropIdx] = useState<number | null>(null)
 
   const togglePanel = (panel: DetailPanel) => {
     setVisiblePanels((prev) => {
@@ -56,6 +173,7 @@ export function SectioningOverview({ bookLabel, pages, onNavigateToSection }: Se
     textGroups: t`Text Groups`,
     images: t`Images`,
     prunedImages: t`Pruned Images`,
+    answers: t`Answers`,
   }
 
   // Fetch full page details for all pages that have sections
@@ -73,8 +191,29 @@ export function SectioningOverview({ bookLabel, pages, onNavigateToSection }: Se
     .map((q) => q.data)
     .filter((d): d is PageDetail => d != null)
 
-  // Build ordered list of all page IDs (including those without sections) for adjacency
+  // Build ordered list of all page IDs for adjacency checks
   const allPageIds = pages.map((p) => p.pageId)
+
+  // Build effective page details — overlaying pending sectioning changes
+  const effectivePages: PageDetail[] = pageDetails.map((p) => {
+    const pending = pendingByPage.get(p.pageId)
+    return pending ? { ...p, sectioning: pending } : p
+  })
+
+  // Build flat section list across all pages
+  const flatSections: FlatSection[] = []
+  for (const page of effectivePages) {
+    if (!page.sectioning) continue
+    for (let si = 0; si < page.sectioning.sections.length; si++) {
+      const section = page.sectioning.sections[si]
+      flatSections.push({
+        page,
+        section,
+        sectionIndex: si,
+        pageNumber: section.pageNumber ?? null,
+      })
+    }
+  }
 
   const invalidatePages = (...pageIds: string[]) => {
     for (const pid of pageIds) {
@@ -123,7 +262,77 @@ export function SectioningOverview({ bookLabel, pages, onNavigateToSection }: Se
     onSuccess: (_data, vars) => invalidatePages(vars.pageId),
   })
 
-  const isMutating = storyboardRunning || mergeMutation.isPending || mergeCrossPageMutation.isPending || cloneMutation.isPending || deleteMutation.isPending || togglePruneMutation.isPending
+  const updateSectioningMutation = useMutation({
+    mutationFn: ({ pageId, sectioning }: { pageId: string; sectioning: NonNullable<PageDetail["sectioning"]> }) =>
+      api.updateSectioning(bookLabel, pageId, sectioning),
+    onSuccess: (_data, vars) => invalidatePages(vars.pageId),
+  })
+
+  // Defer a sectioning edit to the pending state (shown immediately, persisted on Save)
+  const stagePendingSectioning = useCallback((pageId: string, sectioning: NonNullable<PageDetail["sectioning"]>) => {
+    setPendingByPage((prev) => {
+      const next = new Map(prev)
+      next.set(pageId, sectioning)
+      return next
+    })
+  }, [])
+
+  const discardPending = useCallback(() => {
+    setPendingByPage(new Map())
+  }, [])
+
+  const saveAllPending = useCallback(async () => {
+    if (pendingByPage.size === 0 || saving) return
+    setSaving(true)
+    const entries = Array.from(pendingByPage.entries())
+    try {
+      for (const [pageId, sectioning] of entries) {
+        await api.updateSectioning(bookLabel, pageId, sectioning)
+      }
+      // Trigger re-render for each affected page
+      if (hasApiKey) {
+        for (const [pageId] of entries) {
+          api.reRenderPage(bookLabel, pageId, apiKey).catch(() => {})
+        }
+      }
+      setPendingByPage(new Map())
+      for (const [pageId] of entries) {
+        invalidatePages(pageId)
+      }
+    } finally {
+      setSaving(false)
+    }
+  }, [pendingByPage, saving, bookLabel, hasApiKey, apiKey])
+
+  const isMutating = saving || storyboardRunning || mergeMutation.isPending || mergeCrossPageMutation.isPending || cloneMutation.isPending || deleteMutation.isPending || togglePruneMutation.isPending || updateSectioningMutation.isPending
+
+  const toggleSection = (idx: number) => {
+    setExpanded((prev) => {
+      const next = new Set(prev)
+      if (next.has(idx)) next.delete(idx)
+      else next.add(idx)
+      return next
+    })
+  }
+
+  // Drag-and-drop reorder handler (same-page only)
+  const handleDrop = useCallback((fromGlobalIdx: number, toGlobalIdx: number) => {
+    if (fromGlobalIdx === toGlobalIdx) return
+    const from = flatSections[fromGlobalIdx]
+    const to = flatSections[toGlobalIdx]
+    if (!from || !to) return
+    // Only allow same-page reorder
+    if (from.page.pageId !== to.page.pageId) return
+    const page = from.page
+    if (!page.sectioning) return
+
+    const sections = [...page.sectioning.sections]
+    const [moved] = sections.splice(from.sectionIndex, 1)
+    sections.splice(to.sectionIndex, 0, moved)
+
+    const updated = { ...page.sectioning, sections }
+    stagePendingSectioning(page.pageId, updated)
+  }, [flatSections, stagePendingSectioning])
 
   if (isLoading) {
     return (
@@ -134,7 +343,7 @@ export function SectioningOverview({ bookLabel, pages, onNavigateToSection }: Se
     )
   }
 
-  if (pageDetails.length === 0) {
+  if (flatSections.length === 0) {
     return (
       <div className="p-6 text-sm text-muted-foreground">
         <Trans>No sectioning data available.</Trans>
@@ -170,13 +379,18 @@ export function SectioningOverview({ bookLabel, pages, onNavigateToSection }: Se
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-muted/50 border-b">
-                <th className="text-left px-3 py-2 font-medium text-muted-foreground w-8">
+                <th className="text-left px-2 py-2 font-medium text-muted-foreground w-6" />
+                <th className="text-left px-1 py-2 font-medium text-muted-foreground w-8">
                   <button
                     type="button"
                     onClick={() => {
                       const next = !allExpanded
                       setAllExpanded(next)
-                      setExpandSignal({ action: next ? "expand" : "collapse", tick: Date.now() })
+                      if (next) {
+                        setExpanded(new Set(flatSections.map((_, i) => i)))
+                      } else {
+                        setExpanded(new Set())
+                      }
                     }}
                     className="hover:bg-accent rounded p-0.5 transition-colors"
                     title={allExpanded ? t`Collapse all sections` : t`Expand all sections`}
@@ -188,13 +402,13 @@ export function SectioningOverview({ bookLabel, pages, onNavigateToSection }: Se
                     )}
                   </button>
                 </th>
-                <th className="text-left px-3 py-2 font-medium text-muted-foreground w-24">
-                  <Trans>Page</Trans>
+                <th className="text-left px-3 py-2 font-medium text-muted-foreground w-10">
+                  #
                 </th>
                 <th className="text-left px-3 py-2 font-medium text-muted-foreground w-40">
                   <Trans>Section</Trans>
                 </th>
-                <th className="text-left px-3 py-2 font-medium text-muted-foreground w-36">
+                <th className="text-left px-3 py-2 font-medium text-muted-foreground whitespace-nowrap">
                   <Trans>Type</Trans>
                 </th>
                 <th className="text-left px-3 py-2 font-medium text-muted-foreground">
@@ -207,39 +421,89 @@ export function SectioningOverview({ bookLabel, pages, onNavigateToSection }: Se
               </tr>
             </thead>
             <tbody>
-              {pageDetails.map((page) => {
+              {flatSections.map((entry, globalIdx) => {
+                const { page, section, sectionIndex } = entry
                 const pageIdx = allPageIds.indexOf(page.pageId)
                 const hasPrevPage = pageIdx > 0
                 const hasNextPage = pageIdx < allPageIds.length - 1
+                const sectionCount = page.sectioning!.sections.length
+                const isExpanded = expanded.has(globalIdx)
+
+                const textParts = section.parts.filter((p) => p.type === "text_group")
+                const imageParts = section.parts.filter((p) => p.type === "image")
+                const contentNodeParts = section.parts.filter((p) => p.type === "content_node")
+                const textCount = textParts.length + contentNodeParts.length
+                const imageCount = imageParts.length
+
+                // Content preview
+                const firstText = textParts[0]
+                let preview: string | null = null
+                if (firstText?.type === "text_group") {
+                  preview = firstText.texts.map((tx) => tx.text).join(" ").slice(0, 120)
+                } else if (contentNodeParts.length > 0) {
+                  const firstNode = contentNodeParts[0]
+                  if (firstNode.type === "content_node") {
+                    preview = extractNodeText(firstNode.node).slice(0, 120)
+                  }
+                }
+
+                // Rendering data
+                const renderSection = page.rendering?.sections.find((r) => r.sectionIndex === sectionIndex)
+
+                // Determine if this row is a drop target
+                const isDragOver = dropIdx === globalIdx && dragIdx !== null && dragIdx !== globalIdx
+                // Only highlight if same page
+                const dragEntry = dragIdx != null ? flatSections[dragIdx] : null
+                const samePageDrag = dragEntry != null && dragEntry.page.pageId === page.pageId
 
                 return (
-                  <PageSectionRows
-                    key={page.pageId}
+                  <SectionRow
+                    key={`${page.pageId}-${section.sectionId}`}
                     page={page}
-                    bookLabel={bookLabel}
+                    section={section}
+                    sectionIndex={sectionIndex}
+                    sectionCount={sectionCount}
+                    globalIndex={globalIdx + 1}
                     hasPrevPage={hasPrevPage}
                     hasNextPage={hasNextPage}
-                    onNavigateToSection={onNavigateToSection}
-                    onMerge={(sectionIndex, direction) =>
-                      mergeMutation.mutate({ pageId: page.pageId, sectionIndex, direction })
-                    }
-                    onMergeCrossPage={(sectionIndex, direction) =>
-                      mergeCrossPageMutation.mutate({ pageId: page.pageId, sectionIndex, direction })
-                    }
-                    onClone={(sectionIndex) =>
-                      cloneMutation.mutate({ pageId: page.pageId, sectionIndex })
-                    }
-                    onDelete={(sectionIndex) =>
-                      deleteMutation.mutate({ pageId: page.pageId, sectionIndex })
-                    }
-                    onTogglePrune={(sectionIndex) =>
-                      togglePruneMutation.mutate({ pageId: page.pageId, sectionIndex })
-                    }
+                    textParts={textParts}
+                    imageParts={imageParts}
+                    textCount={textCount}
+                    imageCount={imageCount}
+                    preview={preview}
+                    isExpanded={isExpanded}
+                    onToggle={() => toggleSection(globalIdx)}
+                    renderReasoning={renderSection?.reasoning}
+                    activityAnswers={renderSection?.activityAnswers}
+                    renderedHtml={renderSection?.html}
+                    bookLabel={bookLabel}
+                    onMerge={(direction) => mergeMutation.mutate({ pageId: page.pageId, sectionIndex, direction })}
+                    onMergeCrossPage={(direction) => mergeCrossPageMutation.mutate({ pageId: page.pageId, sectionIndex, direction })}
+                    onClone={() => cloneMutation.mutate({ pageId: page.pageId, sectionIndex })}
+                    onDelete={() => deleteMutation.mutate({ pageId: page.pageId, sectionIndex })}
+                    onTogglePrune={() => togglePruneMutation.mutate({ pageId: page.pageId, sectionIndex })}
                     onConfirmAction={setConfirmDialog}
                     isMutating={isMutating}
                     visiblePanels={visiblePanels}
-                    expandSignal={expandSignal}
+                    renderingVersion={page.versions.rendering}
                     onInvalidatePages={invalidatePages}
+                    containerTypes={containerTypes}
+                    leafTypes={leafTypes}
+                    sectionTypes={sectionTypes}
+                    onUpdateSectioning={(sectioning) => stagePendingSectioning(page.pageId, sectioning)}
+                    sectioning={page.sectioning!}
+                    disabled={isMutating}
+                    pageNumber={entry.pageNumber}
+                    isDragOver={isDragOver && samePageDrag}
+                    onDragStart={() => setDragIdx(globalIdx)}
+                    onDragOver={() => setDropIdx(globalIdx)}
+                    onDragEnd={() => {
+                      if (dragIdx != null && dropIdx != null && dragIdx !== dropIdx) {
+                        handleDrop(dragIdx, dropIdx)
+                      }
+                      setDragIdx(null)
+                      setDropIdx(null)
+                    }}
                   />
                 )
               })}
@@ -258,6 +522,40 @@ export function SectioningOverview({ bookLabel, pages, onNavigateToSection }: Se
           }}
           onCancel={() => setConfirmDialog(null)}
         />
+      )}
+
+      {/* Floating save/discard bar — shown when there are pending changes */}
+      {hasPendingChanges && !saving && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 bg-popover border shadow-lg rounded-full px-3 py-1.5 animate-in slide-in-from-bottom-4">
+          <span className="text-xs text-muted-foreground pl-1">
+            <Trans>Unsaved changes on {pendingByPage.size} {pendingByPage.size === 1 ? "page" : "pages"}</Trans>
+          </span>
+          <button
+            type="button"
+            onClick={discardPending}
+            className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-full border hover:bg-accent transition-colors"
+          >
+            <X className="h-3 w-3" />
+            <Trans>Discard</Trans>
+          </button>
+          <button
+            type="button"
+            onClick={saveAllPending}
+            disabled={!hasApiKey}
+            className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+            title={!hasApiKey ? t`API key required to save and re-render` : undefined}
+          >
+            <Save className="h-3 w-3" />
+            <Trans>Save</Trans>
+          </button>
+        </div>
+      )}
+
+      {saving && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 bg-popover border shadow-lg rounded-full px-3 py-1.5">
+          <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+          <span className="text-xs text-muted-foreground"><Trans>Saving...</Trans></span>
+        </div>
       )}
     </div>
   )
@@ -304,165 +602,7 @@ function ConfirmDialog({
 }
 
 // ---------------------------------------------------------------------------
-// Per-page section rows (with reasoning header)
-// ---------------------------------------------------------------------------
-
-function PageSectionRows({
-  page,
-  bookLabel,
-  hasPrevPage,
-  hasNextPage,
-  onNavigateToSection,
-  onMerge,
-  onMergeCrossPage,
-  onClone,
-  onDelete,
-  onTogglePrune,
-  onConfirmAction,
-  isMutating,
-  visiblePanels,
-  expandSignal,
-  onInvalidatePages,
-}: {
-  page: PageDetail
-  bookLabel: string
-  hasPrevPage: boolean
-  hasNextPage: boolean
-  onNavigateToSection?: (pageId: string, sectionIndex: number) => void
-  onMerge: (sectionIndex: number, direction: "prev" | "next") => void
-  onMergeCrossPage: (sectionIndex: number, direction: "prev" | "next") => void
-  onClone: (sectionIndex: number) => void
-  onDelete: (sectionIndex: number) => void
-  onTogglePrune: (sectionIndex: number) => void
-  onConfirmAction: (dialog: { message: string; onConfirm: () => void }) => void
-  isMutating: boolean
-  visiblePanels: Set<DetailPanel>
-  expandSignal: { action: "expand" | "collapse"; tick: number }
-  onInvalidatePages: (...pageIds: string[]) => void
-}) {
-  const { t } = useLingui()
-  const [expanded, setExpanded] = useState<Set<number>>(new Set())
-  const [reasoningOpen, setReasoningOpen] = useState(false)
-
-  const lastTick = useRef(expandSignal.tick)
-  useEffect(() => {
-    if (expandSignal.tick === lastTick.current) return
-    lastTick.current = expandSignal.tick
-    if (!page.sectioning) return
-    if (expandSignal.action === "expand") {
-      setExpanded(new Set(page.sectioning.sections.map((_, i) => i)))
-    } else {
-      setExpanded(new Set())
-    }
-  }, [expandSignal, page.sectioning])
-
-  if (!page.sectioning) return null
-
-  const sections = page.sectioning.sections
-  const reasoning = page.sectioning.reasoning
-
-  const toggleSection = (idx: number) => {
-    setExpanded((prev) => {
-      const next = new Set(prev)
-      if (next.has(idx)) next.delete(idx)
-      else next.add(idx)
-      return next
-    })
-  }
-
-  return (
-    <>
-      {/* Page reasoning header row */}
-      <tr className="bg-muted/30 border-b border-t">
-        <td colSpan={7} className="px-0 py-0">
-          <button
-            type="button"
-            onClick={() => setReasoningOpen(!reasoningOpen)}
-            className="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-muted/50 transition-colors"
-          >
-            <span className="font-medium text-xs">
-              {page.pageId}
-              {sections[0]?.pageNumber != null && (
-                <span className="text-muted-foreground font-normal ml-1.5">
-                  <Trans>(p.{sections[0].pageNumber})</Trans>
-                </span>
-              )}
-            </span>
-            <span className="text-muted-foreground text-[10px] ml-1">
-              — {sections.length} {sections.length === 1 ? t`section` : t`sections`}
-            </span>
-            {reasoning && reasoning !== "No content to section" && (
-              <>
-                {reasoningOpen ? (
-                  <ChevronDown className="h-3 w-3 text-muted-foreground ml-auto shrink-0" />
-                ) : (
-                  <ChevronRight className="h-3 w-3 text-muted-foreground ml-auto shrink-0" />
-                )}
-              </>
-            )}
-          </button>
-          {/* Expanded reasoning */}
-          {reasoningOpen && reasoning && reasoning !== "No content to section" && (
-            <div className="px-3 pb-3 pt-0">
-              <div className="rounded border bg-violet-50/50 dark:bg-violet-950/20 p-3">
-                <span className="text-[10px] font-medium text-violet-600 dark:text-violet-400 uppercase tracking-wider">
-                  {t`Sectioning Reasoning`}
-                </span>
-                <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-mono leading-relaxed mt-1.5">
-                  {reasoning}
-                </pre>
-              </div>
-            </div>
-          )}
-        </td>
-      </tr>
-
-      {/* Section rows */}
-      {sections.map((section, idx) => {
-        const textParts = section.parts.filter((p) => p.type === "text_group")
-        const imageParts = section.parts.filter((p) => p.type === "image")
-        const isExpanded = expanded.has(idx)
-
-        // Get rendering reasoning if available
-        const renderSection = page.rendering?.sections.find(
-          (r) => r.sectionIndex === idx
-        )
-
-        return (
-          <SectionRow
-            key={section.sectionId}
-            page={page}
-            section={section}
-            sectionIndex={idx}
-            sectionCount={sections.length}
-            hasPrevPage={hasPrevPage}
-            hasNextPage={hasNextPage}
-            textParts={textParts}
-            imageParts={imageParts}
-            isExpanded={isExpanded}
-            onToggle={() => toggleSection(idx)}
-            renderReasoning={renderSection?.reasoning}
-            bookLabel={bookLabel}
-            onNavigate={onNavigateToSection ? () => onNavigateToSection(page.pageId, idx) : undefined}
-            onMerge={(direction) => onMerge(idx, direction)}
-            onMergeCrossPage={(direction) => onMergeCrossPage(idx, direction)}
-            onClone={() => onClone(idx)}
-            onDelete={() => onDelete(idx)}
-            onTogglePrune={() => onTogglePrune(idx)}
-            onConfirmAction={onConfirmAction}
-            isMutating={isMutating}
-            visiblePanels={visiblePanels}
-            renderingVersion={page.versions.rendering}
-            onInvalidatePages={onInvalidatePages}
-          />
-        )
-      })}
-    </>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Individual section row with expandable detail
+// Individual section row
 // ---------------------------------------------------------------------------
 
 function SectionRow({
@@ -470,15 +610,20 @@ function SectionRow({
   section,
   sectionIndex,
   sectionCount,
+  globalIndex,
   hasPrevPage,
   hasNextPage,
   textParts,
   imageParts,
+  textCount,
+  imageCount,
+  preview,
   isExpanded,
   onToggle,
   renderReasoning,
+  activityAnswers,
+  renderedHtml,
   bookLabel,
-  onNavigate,
   onMerge,
   onMergeCrossPage,
   onClone,
@@ -489,20 +634,36 @@ function SectionRow({
   visiblePanels,
   renderingVersion,
   onInvalidatePages,
+  containerTypes,
+  leafTypes,
+  sectionTypes,
+  onUpdateSectioning,
+  sectioning,
+  disabled,
+  pageNumber,
+  isDragOver,
+  onDragStart,
+  onDragOver,
+  onDragEnd,
 }: {
   page: PageDetail
   section: PageSection
   sectionIndex: number
   sectionCount: number
+  globalIndex: number
   hasPrevPage: boolean
   hasNextPage: boolean
   textParts: SectionPart[]
   imageParts: SectionPart[]
+  textCount: number
+  imageCount: number
+  preview: string | null
   isExpanded: boolean
   onToggle: () => void
   renderReasoning?: string
+  activityAnswers?: Record<string, string | boolean | number>
+  renderedHtml?: string
   bookLabel: string
-  onNavigate?: () => void
   onMerge: (direction: "prev" | "next") => void
   onMergeCrossPage: (direction: "prev" | "next") => void
   onClone: () => void
@@ -513,65 +674,121 @@ function SectionRow({
   visiblePanels: Set<DetailPanel>
   renderingVersion: number | null
   onInvalidatePages: (...pageIds: string[]) => void
+  containerTypes?: Record<string, string>
+  leafTypes?: Record<string, string>
+  sectionTypes?: Record<string, string>
+  onUpdateSectioning: (sectioning: NonNullable<PageDetail["sectioning"]>) => void
+  sectioning: NonNullable<PageDetail["sectioning"]>
+  disabled: boolean
+  pageNumber: number | null
+  isDragOver: boolean
+  onDragStart: () => void
+  onDragOver: () => void
+  onDragEnd: () => void
 }) {
   const { t } = useLingui()
-  const textCount = textParts.length
-  const imageCount = imageParts.length
 
-  // Build a content preview from the first text group
-  const firstText = textParts[0]
-  const preview = firstText?.type === "text_group"
-    ? firstText.texts.map((tx) => tx.text).join(" ").slice(0, 120)
-    : null
+  const handleSectionTypeChange = (newType: string) => {
+    const updated: NonNullable<PageDetail["sectioning"]> = {
+      ...sectioning,
+      sections: sectioning.sections.map((s, i) =>
+        i === sectionIndex ? { ...s, sectionType: newType } : s
+      ),
+    }
+    onUpdateSectioning(updated)
+  }
 
   return (
     <>
       <tr
         className={cn(
           "border-b hover:bg-muted/30 cursor-pointer transition-colors",
-          section.isPruned && "opacity-50"
+          section.isPruned && "opacity-50",
+          isDragOver && "bg-violet-100/50 dark:bg-violet-900/20"
         )}
         onClick={onToggle}
+        draggable
+        onDragStart={(e) => {
+          e.dataTransfer.effectAllowed = "move"
+          onDragStart()
+        }}
+        onDragOver={(e) => {
+          e.preventDefault()
+          e.dataTransfer.dropEffect = "move"
+          onDragOver()
+        }}
+        onDrop={(e) => {
+          e.preventDefault()
+          onDragEnd()
+        }}
+        onDragEnd={onDragEnd}
       >
-        <td className="px-3 py-2">
+        {/* Drag handle */}
+        <td className="px-2 py-2">
+          <GripVertical className="h-3 w-3 text-muted-foreground/40 cursor-grab" />
+        </td>
+        {/* Expand toggle */}
+        <td className="px-1 py-2">
           {isExpanded ? (
             <ChevronDown className="h-3 w-3 text-muted-foreground" />
           ) : (
             <ChevronRight className="h-3 w-3 text-muted-foreground" />
           )}
         </td>
+        {/* Global index */}
         <td className="px-3 py-2">
           <span className="font-mono text-muted-foreground">
-            {page.pageId}
+            {globalIndex}
           </span>
         </td>
+        {/* Section ID */}
         <td className="px-3 py-2">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              onNavigate?.()
-            }}
-            className={cn(
-              "font-mono hover:underline",
-              onNavigate ? "text-violet-600 dark:text-violet-400" : "text-foreground"
-            )}
+          <span
+            className="font-mono text-foreground"
             title={section.sectionId}
           >
             {section.sectionId}
-          </button>
+          </span>
           {section.isPruned && (
             <span className="ml-1.5 text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-1 rounded">
               <Trans>pruned</Trans>
             </span>
           )}
         </td>
-        <td className="px-3 py-2">
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-            <Layers className="h-3 w-3" />
-            {section.sectionType}
-          </span>
+        {/* Section type */}
+        <td className="px-3 py-2 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+          {sectionTypes ? (
+            <Select
+              value={section.sectionType}
+              onValueChange={handleSectionTypeChange}
+              disabled={isMutating}
+            >
+              <SelectTrigger className="h-6 text-xs font-medium px-1.5 py-0 w-auto border-0 bg-muted/50 whitespace-nowrap gap-1 [&>span]:line-clamp-none [&>span]:flex [&>span]:items-center [&>span]:gap-1.5">
+                <SectionTypeIcon sectionType={section.sectionType} className="h-3.5 w-3.5 shrink-0" />
+                <span>{getSectionTypeDisplayLabel(section.sectionType)}</span>
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(sectionTypes).map(([key, desc]) => (
+                  <SelectItem key={key} value={key} className="text-xs">
+                    <span className="inline-flex items-center gap-1.5">
+                      <SectionTypeIcon sectionType={key} className="h-3.5 w-3.5 shrink-0" />
+                      {getSectionTypeDisplayLabel(key)}
+                    </span>
+                    {desc && (
+                      <span className="ml-1 text-muted-foreground text-[10px]">{desc}</span>
+                    )}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap">
+              <SectionTypeIcon sectionType={section.sectionType} className="h-3.5 w-3.5 shrink-0" />
+              {getSectionTypeDisplayLabel(section.sectionType)}
+            </span>
+          )}
         </td>
+        {/* Content preview */}
         <td className="px-3 py-2 text-muted-foreground truncate max-w-xs">
           {preview ? (
             <span title={preview}>{preview}…</span>
@@ -581,6 +798,7 @@ function SectionRow({
             <span className="italic"><Trans>Empty section</Trans></span>
           )}
         </td>
+        {/* Part counts */}
         <td className="px-3 py-2 text-center">
           <div className="flex items-center justify-center gap-2">
             {textCount > 0 && (
@@ -597,6 +815,7 @@ function SectionRow({
             )}
           </div>
         </td>
+        {/* Actions dropdown */}
         <td className="px-3 py-2">
           <SectionActionsDropdown
             sectionIndex={sectionIndex}
@@ -628,20 +847,27 @@ function SectionRow({
       {/* Expanded detail */}
       {isExpanded && (
         <tr className="border-b bg-muted/10">
-          <td colSpan={7} className="px-6 py-3">
+          <td colSpan={8} className="px-6 py-3">
             <SectionDetail
               section={section}
               sectionIndex={sectionIndex}
               textParts={textParts as Extract<SectionPart, { type: "text_group" }>[]}
               imageParts={imageParts as Extract<SectionPart, { type: "image" }>[]}
               renderReasoning={renderReasoning}
+              activityAnswers={activityAnswers}
+              renderedHtml={renderedHtml}
               bookLabel={bookLabel}
               pageId={page.pageId}
               onConfirmAction={onConfirmAction}
               visiblePanels={visiblePanels}
               renderingVersion={renderingVersion}
-              onNavigate={onNavigate}
               onInvalidatePages={onInvalidatePages}
+              containerTypes={containerTypes}
+              leafTypes={leafTypes}
+              onUpdateSectioning={onUpdateSectioning}
+              sectioning={sectioning}
+              disabled={disabled}
+              pageNumber={pageNumber}
             />
           </td>
         </tr>
@@ -660,26 +886,40 @@ function SectionDetail({
   textParts,
   imageParts,
   renderReasoning,
+  activityAnswers,
+  renderedHtml,
   bookLabel,
   pageId,
   onConfirmAction,
   visiblePanels,
   renderingVersion,
-  onNavigate,
   onInvalidatePages,
+  containerTypes,
+  leafTypes,
+  onUpdateSectioning,
+  sectioning,
+  disabled,
+  pageNumber,
 }: {
-  section: { sectionId: string; sectionType: string; backgroundColor: string; textColor: string }
+  section: { sectionId: string; sectionType: string; backgroundColor: string; textColor: string; parts: SectionPart[] }
   sectionIndex: number
   textParts: Array<{ type: "text_group"; groupId: string; groupType: string; texts: Array<{ textId: string; textType: string; text: string; isPruned: boolean }>; isPruned: boolean }>
   imageParts: Array<{ type: "image"; imageId: string; isPruned: boolean; reason?: string }>
   renderReasoning?: string
+  activityAnswers?: Record<string, string | boolean | number>
+  renderedHtml?: string
   bookLabel: string
   pageId: string
   onConfirmAction: (dialog: { message: string; onConfirm: () => void }) => void
   visiblePanels: Set<DetailPanel>
   renderingVersion: number | null
-  onNavigate?: () => void
   onInvalidatePages: (...pageIds: string[]) => void
+  containerTypes?: Record<string, string>
+  leafTypes?: Record<string, string>
+  onUpdateSectioning: (sectioning: NonNullable<PageDetail["sectioning"]>) => void
+  sectioning: NonNullable<PageDetail["sectioning"]>
+  disabled: boolean
+  pageNumber: number | null
 }) {
   const { t } = useLingui()
   const { apiKey, hasApiKey } = useApiKey()
@@ -698,6 +938,102 @@ function SectionDetail({
   const [recropPageSrc, setRecropPageSrc] = useState<string | null>(null)
   const [aiImageTarget, setAiImageTarget] = useState<string | null>(null)
 
+  // Content node handlers
+  const contentNodeParts = section.parts
+    .map((p, i) => ({ part: p, index: i }))
+    .filter((x) => x.part.type === "content_node")
+
+  const showAnswers = visiblePanels.has("answers")
+
+  const updatePartNode = (partIndex: number, updater: (node: ContentNodeData) => ContentNodeData) => {
+    const updated: NonNullable<PageDetail["sectioning"]> = {
+      ...sectioning,
+      sections: sectioning.sections.map((s, si) => {
+        if (si !== sectionIndex) return s
+        return {
+          ...s,
+          parts: s.parts.map((p, pi) => {
+            if (pi !== partIndex || p.type !== "content_node") return p
+            return { ...p, node: updater(p.node) }
+          }),
+        }
+      }),
+    }
+    onUpdateSectioning(updated)
+  }
+
+  const handleToggleNodePruned = (partIndex: number, nodeId: string) => {
+    updatePartNode(partIndex, (root) =>
+      updateNodeInTree(root, nodeId, (n) => ({ ...n, isPruned: !n.isPruned })),
+    )
+  }
+
+  const handleEditNodeText = (partIndex: number, nodeId: string, newText: string) => {
+    updatePartNode(partIndex, (root) =>
+      updateNodeInTree(root, nodeId, (n) => ({ ...n, text: newText })),
+    )
+  }
+
+  const handleChangeNodeType = (partIndex: number, nodeId: string, field: "structure" | "role", newType: string) => {
+    updatePartNode(partIndex, (root) =>
+      updateNodeInTree(root, nodeId, (n) => ({ ...n, [field]: newType })),
+    )
+  }
+
+  const handleMoveNode = (targetPartIndex: number, dragNodeId: string, targetParentId: string | null, insertIndex: number) => {
+    // Find which part contains the dragged node
+    const sourceEntry = contentNodeParts.find(({ part }) =>
+      part.type === "content_node" && treeContainsNode(part.node, dragNodeId)
+    )
+    if (!sourceEntry) return
+
+    const sourcePartIndex = sourceEntry.index
+
+    if (sourcePartIndex === targetPartIndex) {
+      // Same-part move: use existing single-tree logic
+      updatePartNode(targetPartIndex, (root) => {
+        const [treeWithout, draggedNode] = removeNodeFromTree(root, dragNodeId)
+        if (!treeWithout || !draggedNode) return root
+        const result = insertNodeIntoTree(treeWithout, draggedNode, targetParentId, insertIndex)
+        return result ?? root
+      })
+    } else {
+      // Cross-part move: remove from source, insert into target
+      const sourcePart = sourceEntry.part
+      if (sourcePart.type !== "content_node") return
+
+      const [sourceTreeAfter, draggedNode] = removeNodeFromTree(sourcePart.node, dragNodeId)
+      if (!draggedNode) return
+
+      const targetEntry = contentNodeParts.find(({ index: i }) => i === targetPartIndex)
+      if (!targetEntry || targetEntry.part.type !== "content_node") return
+
+      const targetResult = insertNodeIntoTree(targetEntry.part.node, draggedNode, targetParentId, insertIndex)
+      if (!targetResult) return
+
+      // Build updated parts array
+      const updated: NonNullable<PageDetail["sectioning"]> = {
+        ...sectioning,
+        sections: sectioning.sections.map((s, si) => {
+          if (si !== sectionIndex) return s
+          const newParts = s.parts.map((p, pi) => {
+            if (pi === sourcePartIndex && p.type === "content_node") {
+              // Source part: removed the node — if root was removed, mark for deletion
+              if (!sourceTreeAfter) return null
+              return { ...p, node: sourceTreeAfter }
+            }
+            if (pi === targetPartIndex && p.type === "content_node") {
+              return { ...p, node: targetResult }
+            }
+            return p
+          }).filter((p): p is NonNullable<typeof p> => p !== null)
+          return { ...s, parts: newParts }
+        }),
+      }
+      onUpdateSectioning(updated)
+    }
+  }
+
   const handleImageClick = useCallback((e: React.MouseEvent, img: { imageId: string; isPruned: boolean }) => {
     if (storyboardRunning) return
     e.stopPropagation()
@@ -713,7 +1049,6 @@ function SectionDetail({
   const handleCropApply = useCallback(async (blob: Blob) => {
     if (!cropTarget) return
     const result = await api.uploadCroppedImage(bookLabel, pageId, cropTarget, blob)
-    // Swap the imageId in sectioning data
     const pageData = queryClient.getQueryData<PageDetail>(["books", bookLabel, "pages", pageId])
     if (pageData?.sectioning) {
       const updated = {
@@ -795,7 +1130,6 @@ function SectionDetail({
       sectionIndex,
       mode: "swap",
     })
-    // Task-based: server saves on completion. Invalidate after a short delay to pick up the task.
     setTimeout(() => onInvalidatePages(pageId), 2000)
   }, [aiImageTarget, bookLabel, pageId, apiKey, sectionIndex, onInvalidatePages])
 
@@ -836,8 +1170,8 @@ function SectionDetail({
     onInvalidatePages(pageId)
   }, [bookLabel, pageId, sectionIndex, queryClient, onInvalidatePages])
 
-  const sectionFilename = `${pageId}_sec${String(sectionIndex + 1).padStart(3, "0")}.html`
-  const previewSrc = `${BASE_URL}/books/${bookLabel}/adt-preview/${sectionFilename}?embed=1&v=${renderingVersion ?? 0}`
+  const thumbnailFilename = `${pageId}_sec${String(sectionIndex + 1).padStart(3, "0")}.png`
+  const thumbnailSrc = `${BASE_URL}/books/${bookLabel}/thumbnails/${thumbnailFilename}?v=${renderingVersion ?? 0}`
 
   return (
     <div className="space-y-3">
@@ -848,25 +1182,16 @@ function SectionDetail({
             <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
               <Trans>Preview</Trans>
             </h4>
-            <button
-              type="button"
-              className="w-[200px] h-[260px] border rounded overflow-hidden bg-white relative cursor-pointer hover:ring-2 hover:ring-violet-400 transition-shadow"
-              onClick={() => onNavigate?.()}
-              title={t`Edit this section`}
+            <div
+              className="w-[200px] h-[260px] border rounded overflow-hidden bg-white relative"
             >
-              <iframe
-                src={previewSrc}
-                title={t`Section preview`}
-                className="pointer-events-none origin-top-left"
-                style={{
-                  width: "800px",
-                  height: "1040px",
-                  transform: "scale(0.25)",
-                  transformOrigin: "top left",
-                }}
-                sandbox="allow-same-origin"
+              <img
+                src={thumbnailSrc}
+                alt={t`Section preview`}
+                className="w-full h-full object-contain"
+                loading="lazy"
               />
-            </button>
+            </div>
           </div>
         )}
 
@@ -876,6 +1201,12 @@ function SectionDetail({
           {visiblePanels.has("metadata") && (
             <>
               <div className="flex items-center gap-4 text-xs">
+                {pageNumber != null && (
+                  <>
+                    <span className="text-muted-foreground"><Trans>From page</Trans>:</span>
+                    <span className="font-mono">{pageNumber}</span>
+                  </>
+                )}
                 <span className="text-muted-foreground"><Trans>Background</Trans>:</span>
                 <span className="flex items-center gap-1">
                   <span
@@ -903,11 +1234,43 @@ function SectionDetail({
                   <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{renderReasoning}</p>
                 </div>
               )}
+
             </>
           )}
 
-          {/* Text groups */}
-          {visiblePanels.has("textGroups") && textParts.length > 0 && (
+          {/* Content tree (interactive) — for content_node parts */}
+          {visiblePanels.has("textGroups") && contentNodeParts.length > 0 && (
+            <div>
+              <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
+                <Trans>Content</Trans>
+              </h4>
+              <div className="space-y-1">
+                {contentNodeParts.map(({ part, index: partIndex }) => {
+                  if (part.type !== "content_node") return null
+                  return (
+                    <ContentNodeBlock
+                      key={part.nodeId}
+                      node={part.node}
+                      parentId={null}
+                      indexInParent={0}
+                      bookLabel={bookLabel}
+                      depth={0}
+                      disabled={disabled}
+                      containerTypes={containerTypes}
+                      leafTypes={leafTypes}
+                      onTogglePruned={(nodeId) => handleToggleNodePruned(partIndex, nodeId)}
+                      onEditText={(nodeId, newText) => handleEditNodeText(partIndex, nodeId, newText)}
+                      onChangeType={(nodeId, field, newType) => handleChangeNodeType(partIndex, nodeId, field, newType)}
+                      onMoveNode={(dragId, targetParentId, insertIdx) => handleMoveNode(partIndex, dragId, targetParentId, insertIdx)}
+                    />
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Text groups (legacy flat format) */}
+          {visiblePanels.has("textGroups") && contentNodeParts.length === 0 && textParts.length > 0 && (
             <div>
               <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
                 <Trans>Text Groups</Trans>
@@ -950,6 +1313,11 @@ function SectionDetail({
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Activity answers — after tree, with context from rendered HTML */}
+          {showAnswers && activityAnswers != null && Object.keys(activityAnswers).length > 0 && (
+            <ActivityAnswerKey answers={activityAnswers} renderedHtml={renderedHtml} />
           )}
 
           {/* Images */}
@@ -1045,6 +1413,69 @@ function SectionDetail({
           onClose={() => setAiImageTarget(null)}
         />
       )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Activity Answer Key — shows answers with context from rendered HTML
+// ---------------------------------------------------------------------------
+
+function ActivityAnswerKey({
+  answers,
+  renderedHtml,
+}: {
+  answers: Record<string, string | boolean | number>
+  renderedHtml?: string
+}) {
+  // Extract context for each answer item from the rendered HTML
+  const contexts = renderedHtml ? extractAnswerContexts(renderedHtml) : new Map<string, string>()
+
+  // Sort entries by item number (item-1, item-2, ...)
+  const sorted = Object.entries(answers).sort(([a], [b]) => {
+    const na = parseInt(a.replace(/\D/g, ""), 10)
+    const nb = parseInt(b.replace(/\D/g, ""), 10)
+    if (!isNaN(na) && !isNaN(nb)) return na - nb
+    return a.localeCompare(b)
+  })
+
+  return (
+    <div>
+      <h4 className="text-[10px] font-medium text-amber-700 dark:text-amber-400 uppercase tracking-wider mb-1.5">
+        <Trans>Answers</Trans>
+      </h4>
+      <div className="space-y-1.5">
+        {sorted.map(([id, value]) => {
+          const context = contexts.get(id)
+          const strValue = String(value)
+          const isBoolTrue = value === true || strValue === "true"
+          const isBoolFalse = value === false || strValue === "false"
+
+          return (
+            <div
+              key={id}
+              className="flex items-center gap-2.5 rounded-lg border border-amber-200 dark:border-amber-800/40 bg-amber-50/80 dark:bg-amber-950/20 px-3 py-2"
+            >
+              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-200/80 dark:bg-amber-800/40 text-amber-800 dark:text-amber-300 shrink-0">
+                {id}
+              </span>
+              <span className={cn(
+                "text-[12px] font-medium shrink-0",
+                isBoolTrue && "text-green-700 dark:text-green-400",
+                isBoolFalse && "text-red-600 dark:text-red-400",
+                !isBoolTrue && !isBoolFalse && "text-foreground/80",
+              )}>
+                {strValue}
+              </span>
+              {context && (
+                <span className="text-[11px] text-muted-foreground/60 truncate" title={context}>
+                  — {context}
+                </span>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

@@ -10,9 +10,11 @@ import {
   Plus,
   RefreshCw,
   Trash2,
+  TreePine,
   X,
 } from "lucide-react"
 import { SectionActionsDropdown } from "./SectionActionsDropdown"
+import { ContentNodeBlock, EditableText } from "./ContentNodeBlock"
 import { BASE_URL } from "@/api/client"
 import {
   Select,
@@ -60,6 +62,10 @@ interface SectionDataPanelProps {
   onDeleteGroup: (partIndex: number) => void
   onReorderParts: (fromIndex: number, toIndex: number) => void
   onEditText: (partIndex: number, textIndex: number, newText: string) => void
+  onToggleNodePruned: (partIndex: number, nodeId: string) => void
+  onEditNodeText: (partIndex: number, nodeId: string, newText: string) => void
+  onChangeNodeType: (partIndex: number, nodeId: string, field: "structure" | "role", newType: string) => void
+  onMoveNode: (partIndex: number, dragNodeId: string, targetParentId: string | null, insertIndex: number) => void
   onMoveText: (
     fromPartIndex: number,
     textIndex: number,
@@ -141,83 +147,6 @@ function ImageCard({
   )
 }
 
-// -- Inline editable text --
-
-function EditableText({
-  value,
-  onCommit,
-  disabled,
-}: {
-  value: string
-  onCommit: (newText: string) => void
-  disabled?: boolean
-}) {
-  const { t } = useLingui()
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(value)
-  // Guard against double-commit (Enter triggers blur when textarea is removed)
-  // and against committing on Escape (blur fires when editing is cancelled).
-  const cancelRef = useRef(false)
-
-  // Sync draft when value changes externally while not editing
-  useEffect(() => {
-    if (!editing) setDraft(value)
-  }, [value, editing])
-
-  const commit = useCallback(() => {
-    if (cancelRef.current) {
-      cancelRef.current = false
-      return
-    }
-    setEditing(false)
-    const trimmed = draft.trim()
-    if (trimmed && trimmed !== value) {
-      onCommit(trimmed)
-    } else {
-      setDraft(value)
-    }
-  }, [draft, value, onCommit])
-
-  if (!editing) {
-    return (
-      <span
-        className={cn("leading-relaxed flex-1 min-w-0 text-xs rounded px-0.5 -mx-0.5 transition-colors", disabled ? "cursor-default opacity-60" : "cursor-text hover:bg-accent/50")}
-        onClick={() => {
-          if (!disabled) setEditing(true)
-        }}
-        title={disabled ? undefined : t`Click to edit`}
-      >
-        {value}
-      </span>
-    )
-  }
-
-  return (
-    <textarea
-      value={draft}
-      onChange={(e) => setDraft(e.target.value)}
-      onBlur={commit}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault()
-          // Let blur handler do the commit — prevents double-fire
-          cancelRef.current = false
-          e.currentTarget.blur()
-        }
-        if (e.key === "Escape") {
-          // Discard edit — suppress the blur commit
-          cancelRef.current = true
-          setDraft(value)
-          setEditing(false)
-        }
-      }}
-      className="leading-relaxed flex-1 min-w-0 text-xs rounded border border-ring bg-background px-1 py-0.5 -mx-0.5 resize-none focus:outline-none focus:ring-1 focus:ring-ring"
-      rows={Math.max(2, Math.ceil(draft.length / 50))}
-      autoFocus
-    />
-  )
-}
-
 // -- Drag types --
 
 const DRAG_TYPE_GROUP = "application/x-group-index"
@@ -245,6 +174,10 @@ export function SectionDataPanel({
   onDeleteTextEntry,
   onDuplicateTextEntry,
   onEditText,
+  onToggleNodePruned,
+  onEditNodeText,
+  onChangeNodeType,
+  onMoveNode,
   onAddGroup,
   onDuplicateGroup,
   onDeleteGroup,
@@ -278,6 +211,7 @@ export function SectionDataPanel({
   const parts = section.parts
 
   const hasTextParts = parts.some((p) => p.type === "text_group")
+  const hasContentNodeParts = parts.some((p) => p.type === "content_node")
   const hasImageParts = parts.some((p) => p.type === "image")
 
   // -- Group drag state --
@@ -435,9 +369,10 @@ export function SectionDataPanel({
 
   return (
     <div
-      className={`absolute top-0 right-0 h-full w-[480px] flex flex-col bg-background border-l shadow-lg transition-transform duration-200 ease-in-out z-30 ${
+      className={cn(
+        "absolute top-0 right-0 h-full w-[480px] flex flex-col bg-background border-l shadow-lg transition-transform duration-200 ease-in-out z-30",
         open ? "translate-x-0" : "translate-x-full"
-      }`}
+      )}
     >
       {/* Panel header */}
       <div className="border-b">
@@ -861,6 +796,36 @@ export function SectionDataPanel({
           </button>
         </div>
 
+        {/* Content Tree — for content_node parts */}
+        {hasContentNodeParts && (
+          <div>
+            <h3 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              <TreePine className="h-3 w-3" />
+              {t`Content Tree`}
+            </h3>
+            {parts.map((p, partIndex) => {
+              if (p.type !== "content_node") return null
+              return (
+                <ContentNodeBlock
+                  key={p.nodeId}
+                  node={p.node}
+                  parentId={null}
+                  indexInParent={0}
+                  bookLabel={bookLabel}
+                  depth={0}
+                  disabled={!!pipelineRunning}
+                  containerTypes={groupTypes}
+                  leafTypes={textTypes}
+                  onTogglePruned={(nodeId) => onToggleNodePruned(partIndex, nodeId)}
+                  onEditText={(nodeId, newText) => onEditNodeText(partIndex, nodeId, newText)}
+                  onChangeType={(nodeId, field, newType) => onChangeNodeType(partIndex, nodeId, field, newType)}
+                  onMoveNode={(dragId, targetParentId, insertIdx) => onMoveNode(partIndex, dragId, targetParentId, insertIdx)}
+                />
+              )
+            })}
+          </div>
+        )}
+
         {/* Activity Answers */}
         {activityAnswers && Object.keys(activityAnswers).length > 0 && (
           <div>
@@ -971,3 +936,6 @@ export function SectionDataPanel({
     </div>
   )
 }
+
+// NOTE: ContentNodeBlock and EditableText are imported from ./ContentNodeBlock
+

@@ -59,8 +59,9 @@ import {
   getSegmentedImageId,
   createScreenshotRenderer,
   DEFAULT_VISUAL_REVIEW_MODEL_ID,
+  renderSectionThumbnail,
 } from "@adt/pipeline"
-import type { TranslationConfig, QuizPageInput, ProviderRouting, MeaningfulnessConfig, CroppingConfig, SegmentationConfig, VisualRefinementDeps } from "@adt/pipeline"
+import type { TranslationConfig, QuizPageInput, ProviderRouting, MeaningfulnessConfig, CroppingConfig, SegmentationConfig, VisualRefinementDeps, ScreenshotRenderer } from "@adt/pipeline"
 import { loadStyleguideContent } from "./styleguide.js"
 import { createTTSSynthesizer, createAzureTTSSynthesizer, createGeminiTTSSynthesizer } from "@adt/llm"
 import type { TTSSynthesizer } from "@adt/llm"
@@ -563,6 +564,7 @@ async function runStoryboardStep(
 
   const storage = createBookStorage(label, booksDir)
   let visualRefinement: VisualRefinementDeps | undefined
+  let screenshotRenderer: ScreenshotRenderer | undefined
 
   try {
     const config = loadBookConfig(label, booksDir, configPath)
@@ -617,13 +619,13 @@ async function runStoryboardStep(
       return model
     }
 
-    // Set up visual refinement if any render strategy enables it
+    // Set up shared screenshot renderer for visual refinement + thumbnails
     if (webAssetsDir) {
       const hasVisualRefinement = Object.values(config.render_strategies ?? {}).some(
         (s) => s.config?.visual_refinement?.enabled
       )
+      screenshotRenderer = await createScreenshotRenderer()
       if (hasVisualRefinement) {
-        const screenshotRenderer = await createScreenshotRenderer()
         visualRefinement = {
           screenshotRenderer,
           webAssetsDir,
@@ -632,6 +634,32 @@ async function runStoryboardStep(
             const hash = crypto.createHash("sha256").update(base64).digest("hex").slice(0, 16)
             storage.putDebugImage(hash, Buffer.from(base64, "base64"))
           },
+        }
+      }
+    }
+
+    const captureThumbnails = async (
+      pageId: string,
+      renderResult: WebRenderingOutput,
+      renderImages: Map<string, { base64: string; width?: number; height?: number }>
+    ): Promise<void> => {
+      if (!screenshotRenderer || !webAssetsDir) return
+      const thumbImages = new Map<string, { base64: string }>()
+      for (const [id, img] of renderImages) thumbImages.set(id, { base64: img.base64 })
+      for (const section of renderResult.sections) {
+        try {
+          const buffer = await renderSectionThumbnail({
+            section,
+            label,
+            images: thumbImages,
+            webAssetsDir,
+            screenshotRenderer,
+          })
+          storage.putSectionThumbnail(pageId, section.sectionIndex, buffer)
+        } catch (err) {
+          console.error(
+            `[stage-run] ${label}: thumbnail failed for ${pageId} sec${section.sectionIndex}: ${toErrorMessage(err)}`
+          )
         }
       }
     }
@@ -704,6 +732,7 @@ async function runStoryboardStep(
               visualRefinement,
             )
             storage.putNodeData("web-rendering", page.pageId, renderResult)
+            await captureThumbnails(page.pageId, renderResult, renderImages)
             completedRendering++
             progress.emit({
               type: "step-progress",
@@ -771,7 +800,11 @@ async function runStoryboardStep(
               )
               return
             }
-            const textClassification = textClassificationRow.data as TextClassificationOutput
+            // Detect tree-based data (has `nodes` array) vs legacy flat data (has `groups` array)
+            const rawData = textClassificationRow.data as Record<string, unknown>
+            const isTree = rawData && Array.isArray(rawData.nodes)
+            const contentTree = isTree ? (rawData as unknown as PageStructuringOutput) : undefined
+            const textClassification = !isTree ? (rawData as unknown as TextClassificationOutput) : undefined
 
             // Get image-filtering data
             const imageClassificationRow = storage.getLatestNodeData(
@@ -807,6 +840,7 @@ async function runStoryboardStep(
                 pageNumber: page.pageNumber,
                 pageImageBase64,
                 textClassification,
+                contentTree,
                 imageClassification,
                 images: sectionImages,
               },
@@ -851,6 +885,7 @@ async function runStoryboardStep(
               visualRefinement,
             )
             storage.putNodeData("web-rendering", page.pageId, renderResult)
+            await captureThumbnails(page.pageId, renderResult, renderImages)
             completedRendering++
             progress.emit({
               type: "step-progress",
@@ -888,8 +923,8 @@ async function runStoryboardStep(
       console.log(`[stage-run] ${label}: storyboard complete`)
     }
   } finally {
-    if (visualRefinement) {
-      await visualRefinement.screenshotRenderer.close()
+    if (screenshotRenderer) {
+      await screenshotRenderer.close()
     }
     storage.close()
     restoreEnvKeys()

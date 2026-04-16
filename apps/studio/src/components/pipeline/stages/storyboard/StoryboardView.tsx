@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from "react"
-import { ArrowLeft, ArrowRight, LayoutGrid, Loader2, Table2 } from "lucide-react"
+import { ArrowLeft, ArrowRight, LayoutGrid, Loader2, FileText, Eye } from "lucide-react"
 import { usePages, usePage } from "@/hooks/use-pages"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
@@ -16,7 +16,8 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
   const { t } = useLingui()
   const { data: pages, isLoading: pagesLoading } = usePages(bookLabel)
   const setSelectedPageId = onSelectPage ?? (() => {})
-  const [overviewMode, setOverviewMode] = useState(false)
+  const [activeTab, setActiveTab] = useState<"content" | "preview">("content")
+  const [editPanelOpen, setEditPanelOpen] = useState(false)
   const { setExtra, setOnLabelClick } = useStepHeader()
   const { stageState, queueRun } = useBookRun()
   const { apiKey, hasApiKey } = useApiKey()
@@ -138,23 +139,39 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
     </>
   ) : null
 
-  // Overview toggle button (reused in multiple header states)
-  const overviewToggle = (
-    <button
-      type="button"
-      className={`flex items-center justify-center w-7 h-7 rounded transition-colors ${
-        overviewMode ? "bg-white/30 text-white" : "bg-white/15 hover:bg-white/25 text-white/70"
-      }`}
-      onClick={() => setOverviewMode((v) => !v)}
-      title={t`Overview`}
-    >
-      <Table2 className="h-3.5 w-3.5" />
-    </button>
+  // Tab buttons for Content / Preview
+  const tabButtons = (
+    <div className="flex items-center gap-0.5 bg-white/10 rounded p-0.5">
+      <button
+        type="button"
+        className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors ${
+          activeTab === "content"
+            ? "bg-white/25 text-white"
+            : "text-white/60 hover:text-white hover:bg-white/10"
+        }`}
+        onClick={() => setActiveTab("content")}
+      >
+        <FileText className="h-3 w-3" />
+        {t`Content`}
+      </button>
+      <button
+        type="button"
+        className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors ${
+          activeTab === "preview"
+            ? "bg-white/25 text-white"
+            : "text-white/60 hover:text-white hover:bg-white/10"
+        }`}
+        onClick={() => setActiveTab("preview")}
+      >
+        <Eye className="h-3 w-3" />
+        {t`Preview`}
+      </button>
+    </div>
   )
 
   const navigationArrows = (
-    <div className="flex gap-1">
-      {overviewToggle}
+    <div className="flex items-center gap-1.5">
+      {tabButtons}
       <button
         type="button"
         className="flex items-center justify-center w-7 h-7 rounded bg-white/15 hover:bg-white/25 transition-colors disabled:opacity-30 disabled:cursor-default"
@@ -185,17 +202,13 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
       }
     }
 
-    // Overview mode: show overview header
-    if (overviewMode) {
+    // Content tab: simple header with tab buttons only (SectioningOverview shows all pages)
+    if (activeTab === "content") {
       setOnLabelClick(null)
       setExtra(
-        <>
-          <span className="text-white/40 text-sm">/</span>
-          <span className="text-sm font-medium">{t`Overview`}</span>
-          <div className="ml-auto flex gap-1">
-            {overviewToggle}
-          </div>
-        </>
+        <div className="ml-auto flex items-center gap-1.5">
+          {tabButtons}
+        </div>
       )
       return () => {
         setExtra(null)
@@ -203,8 +216,8 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
       }
     }
 
-    // When StoryboardSectionDetail is rendered, it manages the header itself
-    if (page?.sectioning && sectionCount > 0) return
+    // When StoryboardSectionDetail is rendered (preview tab), it manages the header itself
+    if (activeTab === "preview" && page?.sectioning && sectionCount > 0) return
 
     if (selectedPageSummary) {
       setOnLabelClick(null)
@@ -213,7 +226,6 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
           <span className="text-white/40 text-sm">/</span>
           <span className="text-sm font-medium">{t`Page ${String(selectedPageSummary.pageNumber)}`}</span>
           <div className="ml-auto flex gap-1">
-            {overviewToggle}
             <button
               type="button"
               className="flex items-center justify-center w-7 h-7 rounded bg-white/15 hover:bg-white/25 transition-colors disabled:opacity-30 disabled:cursor-default"
@@ -241,7 +253,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
       setExtra(null)
       setOnLabelClick(null)
     }
-  }, [selectedPageId, selectedPageSummary?.pageNumber, sectionIndex, sectionCount, canGoPrev, canGoNext, prevPageId, nextPageId, setExtra, setOnLabelClick, page?.sectioning, showRunCard, overviewMode])
+  }, [selectedPageId, selectedPageSummary?.pageNumber, sectionIndex, sectionCount, canGoPrev, canGoNext, prevPageId, nextPageId, setExtra, setOnLabelClick, page?.sectioning, showRunCard, activeTab])
 
   // Keyboard arrow navigation
   useEffect(() => {
@@ -293,14 +305,14 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
     )
   }
 
-  // Overview mode: show sectioning table for all pages
-  if (overviewMode) {
+  // Content tab: sectioning overview for all pages
+  if (activeTab === "content") {
     return (
       <SectioningOverview
         bookLabel={bookLabel}
         pages={pageList}
         onNavigateToSection={(pageId, sectionIdx) => {
-          setOverviewMode(false)
+          setActiveTab("preview")
           setSelectedPageId(pageId)
           setSectionIndex(sectionIdx)
         }}
@@ -363,6 +375,8 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
       onNavigateSection={setSectionIndex}
       hasPrevPage={!!prevPageId}
       hasNextPage={!!nextPageId}
+      panelOpen={editPanelOpen}
+      onPanelOpenChange={setEditPanelOpen}
     />
   )
 }

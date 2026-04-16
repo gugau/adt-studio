@@ -42,9 +42,8 @@ msgstr "(base)"
 msgid "(no target)"
 msgstr "(no target)"
 
-#. placeholder {0}: sections[0].pageNumber
-msgid "(p.{0})"
-msgstr "(p.{0})"
+#~ msgid "(p.{0})"
+#~ msgstr "(p.{0})"
 
 msgid "(template)"
 msgstr "(template)"
@@ -571,6 +570,9 @@ msgstr "An open-ended answer activity."
 msgid "Answer"
 msgstr "Answer"
 
+#~ msgid "Answer Key"
+#~ msgstr "Answer Key"
+
 msgid "Answer Prompt"
 msgstr "Answer Prompt"
 
@@ -604,6 +606,9 @@ msgstr "API Key (optional)"
 msgid "API key required to re-render"
 msgstr "API key required to re-render"
 
+msgid "API key required to save and re-render"
+msgstr "API key required to save and re-render"
+
 msgid "API Key Settings"
 msgstr "API Key Settings"
 
@@ -625,6 +630,9 @@ msgstr "Apply Segmentation"
 #. placeholder {0}: confirmMerge?.label ?? ""
 msgid "Are you sure you want to {0}? This action cannot be undone."
 msgstr "Are you sure you want to {0}? This action cannot be undone."
+
+msgid "Are you sure you want to {label}?"
+msgstr "Are you sure you want to {label}?"
 
 msgid "Are you sure you want to {label}? This action cannot be undone."
 msgstr "Are you sure you want to {label}? This action cannot be undone."
@@ -1009,6 +1017,9 @@ msgstr "Configure API keys for AI pipeline features."
 msgid "Configure basic document information and file paths"
 msgstr "Configure basic document information and file paths"
 
+msgid "Confirm"
+msgstr "Confirm"
+
 msgid "Confirm merge"
 msgstr "Confirm merge"
 
@@ -1029,6 +1040,9 @@ msgstr "Content"
 
 msgid "Content Processing"
 msgstr "Content Processing"
+
+msgid "Content Tree"
+msgstr "Content Tree"
 
 msgid "Continue"
 msgstr "Continue"
@@ -1242,6 +1256,10 @@ msgstr "Delete group"
 msgid "Delete section"
 msgstr "Delete section"
 
+#. placeholder {0}: String(sectionIdx + 1)
+msgid "Delete section {0}? This cannot be undone."
+msgstr "Delete section {0}? This cannot be undone."
+
 msgid "Delete text entry"
 msgstr "Delete text entry"
 
@@ -1317,6 +1335,12 @@ msgstr "Drag to reorder or move to another group"
 msgid "Drag vertices to reshape. Click midpoints (+) to add points. Right-click a vertex to remove it."
 msgstr "Drag vertices to reshape. Click midpoints (+) to add points. Right-click a vertex to remove it."
 
+#~ msgid "Drop content here"
+#~ msgstr "Drop content here"
+
+msgid "Drop here"
+msgstr "Drop here"
+
 msgid "Drop PDF here"
 msgstr "Drop PDF here"
 
@@ -1386,8 +1410,8 @@ msgstr "Edit the Liquid/HTML template below. Changes are saved when you click Sa
 msgid "Edit this image"
 msgstr "Edit this image"
 
-msgid "Edit this section"
-msgstr "Edit this section"
+#~ msgid "Edit this section"
+#~ msgstr "Edit this section"
 
 msgid "Edited in"
 msgstr "Edited in"
@@ -1400,6 +1424,9 @@ msgstr "Editing is disabled while the storyboard is running"
 
 msgid "Editing Language"
 msgstr "Editing Language"
+
+msgid "Empty"
+msgstr "Empty"
 
 msgid "Empty group — drag text entries here"
 msgstr "Empty group — drag text entries here"
@@ -1645,6 +1672,9 @@ msgstr "Format"
 msgid "Forms & controls"
 msgstr "Forms & controls"
 
+msgid "From page"
+msgstr "From page"
+
 msgid "From reference image..."
 msgstr "From reference image..."
 
@@ -1752,6 +1782,9 @@ msgstr "Glossary Prompt"
 
 msgid "Go to book"
 msgstr "Go to book"
+
+msgid "Go to preview"
+msgstr "Go to preview"
 
 msgid "Google"
 msgstr "Google"
@@ -2355,6 +2388,9 @@ msgstr "No captions for this page"
 msgid "No changes flagged on this page"
 msgstr "No changes flagged on this page"
 
+msgid "No content"
+msgstr "No content"
+
 msgid "No data"
 msgstr "No data"
 
@@ -2620,8 +2656,8 @@ msgstr "Output Tokens"
 msgid "Overall page note"
 msgstr "Overall page note"
 
-msgid "Overview"
-msgstr "Overview"
+#~ msgid "Overview"
+#~ msgstr "Overview"
 
 msgid "Package and preview the final ADT web application."
 msgstr "Package and preview the final ADT web application."
@@ -2646,7 +2682,7 @@ msgstr "Page"
 
 #. placeholder {0}: String(page.pageNumber)
 #. placeholder {0}: String(pageNumber)
-#. placeholder {0}: String(selectedPage.pageNumber)
+#. placeholder {0}: String(pageSummary.pageNumber)
 msgid "Page {0}"
 msgstr "Page {0}"
 
@@ -2716,6 +2752,12 @@ msgstr "Paper Collage"
 
 #~ msgid "Paragraph"
 #~ msgstr "Paragraph"
+
+msgid "part"
+msgstr "part"
+
+msgid "parts"
+msgstr "parts"
 
 msgid "Parts"
 msgstr "Parts"
@@ -2851,6 +2893,9 @@ msgstr "Prune element"
 
 msgid "Prune image"
 msgstr "Prune image"
+
+msgid "Prune section"
+msgstr "Prune section"
 
 msgid "Prune section from flow"
 msgstr "Prune section from flow"
@@ -3013,6 +3058,9 @@ msgstr "Remove this block"
 msgid "Remove type"
 msgstr "Remove type"
 
+#~ msgid "Render"
+#~ msgstr "Render"
+
 msgid "Render Reasoning"
 msgstr "Render Reasoning"
 
@@ -3167,6 +3215,9 @@ msgstr "Sample Reference Manual"
 msgid "Save"
 msgstr "Save"
 
+#~ msgid "Save & Re-render"
+#~ msgstr "Save & Re-render"
+
 msgid "Save & Rerun"
 msgstr "Save & Rerun"
 
@@ -3261,6 +3312,10 @@ msgstr "Section {0} — {1}"
 msgid "Section {0} (pruned)"
 msgstr "Section {0} (pruned)"
 
+#. placeholder {0}: String(sectionIdx + 1)
+msgid "Section {0} preview"
+msgstr "Section {0} preview"
+
 msgid "Section 3.2"
 msgstr "Section 3.2"
 
@@ -3297,8 +3352,8 @@ msgstr "Sectioning"
 msgid "Sectioning Mode"
 msgstr "Sectioning Mode"
 
-msgid "Sectioning Reasoning"
-msgstr "Sectioning Reasoning"
+#~ msgid "Sectioning Reasoning"
+#~ msgstr "Sectioning Reasoning"
 
 msgid "sections"
 msgstr "sections"
@@ -3970,8 +4025,8 @@ msgstr "Unknown step slug: {step}"
 msgid "Unknown step: {step}"
 msgstr "Unknown step: {step}"
 
-msgid "Unprune"
-msgstr "Unprune"
+#~ msgid "Unprune"
+#~ msgstr "Unprune"
 
 #~ msgid "Unprune group"
 #~ msgstr "Unprune group"
@@ -3979,11 +4034,19 @@ msgstr "Unprune"
 msgid "Unprune image"
 msgstr "Unprune image"
 
+msgid "Unprune section"
+msgstr "Unprune section"
+
 #~ msgid "Unprune text"
 #~ msgstr "Unprune text"
 
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
+
+#. placeholder {0}: pendingByPage.size
+#. placeholder {1}: pendingByPage.size === 1 ? "page" : "pages"
+msgid "Unsaved changes on {0} {1}"
+msgstr "Unsaved changes on {0} {1}"
 
 msgid "Unsaved:"
 msgstr "Unsaved:"

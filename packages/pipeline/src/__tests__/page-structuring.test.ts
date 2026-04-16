@@ -37,7 +37,7 @@ const baseConfig: StructureConfig = {
     { key: "body", description: "Body text" },
   ],
   containerTypes: [
-    { key: "image", description: "An image" },
+    { key: "image_group", description: "An image group" },
     { key: "group", description: "Content group" },
   ],
   prunedTextTypes: ["header"],

@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { ContentNode } from "./page-structuring.js"
 
 export const SectionTextEntry = z.object({
   textId: z.string(),
@@ -25,7 +26,15 @@ export const SectionImagePart = z.object({
 })
 export type SectionImagePart = z.infer<typeof SectionImagePart>
 
-export const SectionPart = z.discriminatedUnion("type", [SectionTextPart, SectionImagePart])
+export const SectionContentNodePart = z.object({
+  type: z.literal("content_node"),
+  nodeId: z.string(),
+  node: ContentNode,
+  isPruned: z.boolean(),
+})
+export type SectionContentNodePart = z.infer<typeof SectionContentNodePart>
+
+export const SectionPart = z.discriminatedUnion("type", [SectionTextPart, SectionImagePart, SectionContentNodePart])
 export type SectionPart = z.infer<typeof SectionPart>
 
 export const PageSection = z.object({

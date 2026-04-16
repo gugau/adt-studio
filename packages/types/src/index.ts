@@ -111,6 +111,7 @@ export {
   SectionTextEntry,
   SectionTextPart,
   SectionImagePart,
+  SectionContentNodePart,
   SectionPart,
   PageSection,
   PageSectioningOutput,

@@ -2,6 +2,7 @@ export type { Storage, PageData, ImageData, NodeDataRow, CroppedImageInput, Segm
 export {
   createBookStorage,
   resolveBookPaths,
+  buildThumbnailFilename,
   type BookPaths,
 } from "./book-storage.js"
 export { openBookDb, cleanupInterruptedSteps } from "./db.js"

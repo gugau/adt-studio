@@ -12,7 +12,7 @@ export interface ContentNodeData {
   role?: string
   /** Text content — present on text leaf nodes only */
   text?: string
-  /** Image reference — image leaf nodes, or container background image */
+  /** Image reference — present on image leaf nodes only (role: "image") */
   imageId?: string
   /** Child nodes — present on container nodes only */
   children?: ContentNodeData[]
@@ -24,8 +24,8 @@ export interface ContentNodeData {
  *
  * Nodes are either:
  *   - Leaf (text): has `role` + `text`, no `children`
- *   - Leaf (image): has `role` + `imageId`, no `children`
- *   - Container: has `structure` + `children`, optionally `imageId` for background
+ *   - Leaf (image): has `role: "image"` + `imageId`, no `children`
+ *   - Container: has `structure` + `children`
  */
 export const ContentNode: z.ZodType<ContentNodeData> = z.lazy(() =>
   z.object({

@@ -207,6 +207,12 @@ export interface PageDetail {
             isPruned: boolean
             reason?: string
           }
+        | {
+            type: "content_node"
+            nodeId: string
+            node: ContentNodeData
+            isPruned: boolean
+          }
       >
       backgroundColor: string
       textColor: string

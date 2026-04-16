@@ -15,7 +15,7 @@ text_types:
   quote: Quoted or cited text
 
 container_types:
-  image: An image — set image_id on this container. May have children for captions, labels, or text within the image.
+  image_group: An image group — contains an image leaf child and optional captions, labels, or text associated with the image.
   activity: A single question, exercise, or activity
   activity_option: A selectable choice in a multiple-choice or matching activity
   group: A generic content grouping when no more specific container fits

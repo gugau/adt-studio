@@ -7,20 +7,22 @@ Your task is to produce a **tree structure** that captures the semantic hierarch
 
 Every node has either `structure` (for containers) or `role` (for leaves), never both.
 
-**Container nodes** — have `structure` and `children`, never `text`. May include `image_id` to associate an image with the container:
+**Container nodes** — have `structure` and `children`, never `text` or `image_id`:
 {% for t in container_types %}- {{ t.key }}: {{ t.description }}
 {% endfor %}
 **Text leaf nodes** — have `role` and `text`, never `children` or `image_id`:
 {% for t in text_types %}- {{ t.key }}: {{ t.description }}
 {% endfor %}
+**Image leaf nodes** — have `role: "image"` and `image_id`, never `children` or `text`.
+
 ## Tree Structure Rules
 
-1. **Containers vs leaves**: Container nodes group related content using `structure` and MUST have `children` (except `image` containers, which may be childless for standalone images). Leaf nodes hold actual content using `role` and MUST NOT have `children`.
+1. **Containers vs leaves**: Container nodes group related content using `structure` and MUST have `children`. Leaf nodes hold actual content using `role` and MUST NOT have `children`.
 2. **Nesting depth**: Use as many levels as needed to capture the document's logical hierarchy. A simple page might be flat; a complex page with sidebars and nested activities could be deeply nested.
 3. **Reading order**: Children within a container must follow left-to-right, top-to-bottom reading order, respecting column layouts.
-4. **Images**: Use an "image" container with `image_id` set on it.{% if image_ids.size > 0 %} Available image IDs: {% for id in image_ids %}{{ id }}{% unless forloop.last %}, {% endunless %}{% endfor %}.{% endif %} A standalone image has no children. An image with a caption, label, or embedded text has those as children.
-5. **Background images**: When a page has a full-bleed or background image behind content, set `image_id` directly on a non-image container (e.g., "group", "sidebar"). This keeps the background separate from the reading flow.
-6. **Text within images**: When text is visually layered on, overlaid on, or contained within an image (speech bubbles, signs, posters, annotations, labels on diagrams, title text over illustrations, text banners over photos), that text MUST be placed as children of the "image" container — never as siblings outside it. If you see text sitting on top of an image in the page, it belongs inside that image's container.
+4. **Images**: Images are always leaf nodes with `role: "image"` and `image_id`.{% if image_ids.size > 0 %} Available image IDs: {% for id in image_ids %}{{ id }}{% unless forloop.last %}, {% endunless %}{% endfor %}.{% endif %} A standalone image is a leaf node on its own. An image with a caption, label, or associated text should be wrapped in an `image_group` container, with the image leaf and text leaves as siblings.
+5. **Background images**: When a page has a full-bleed or background image behind content, wrap all the content in an `image_group` container with the background image as the first child (a leaf with `role: "image"`) and the overlaid content as subsequent children.
+6. **Text within images**: When text is visually layered on, overlaid on, or contained within an image (speech bubbles, signs, posters, annotations, labels on diagrams, title text over illustrations, text banners over photos), that text MUST be placed as siblings of the image leaf inside an `image_group` container — never outside the container. If you see text sitting on top of an image in the page, it belongs inside the same `image_group`.
 7. **Every text must be captured**: ALL of the provided page text MUST appear in your output — every line, every fragment. If text is in the input, it must be in a leaf node. Do not summarize, skip, or omit any text. This includes text embedded inside illustrations, posters, and diagrams.
 8. **Visual separators**: Ignore lines of dashes, asterisks, underscores, or similar characters used purely as visual dividers or section breaks (e.g., `---`, `***`, `_ _ _`). These are decorative and should not appear as text nodes.
 
@@ -36,7 +38,7 @@ Every node has either `structure` (for containers) or `role` (for leaves), never
 8. When an activity number or letter is detected (e.g., 1, 2, A, B), it should be a child of an "activity" container along with the activity's other content.
 9. For data tables, use a "table" container with "table_row" children. Each row contains "table_cell" children, and each cell contains leaf nodes for its content.
 10. Preserve original spelling and punctuation exactly as shown.
-11. If the page is blank or contains only images with no text, use "image" containers (or return an empty nodes array).
+11. If the page is blank or contains only images with no text, use image leaf nodes with `role: "image"` (or return an empty nodes array).
 12. Use the extracted text as a reference but trust the image as the primary source — correct OCR errors when the image clearly shows different text.
 13. For fill-in-the-blank activities: when a word appears as a placeholder (dotted, underlined, inside blanks), wrap it as `[placeholder:word]`. Only do this when visually styled as a fill-in blank on the page image.
 
@@ -57,9 +59,9 @@ For a page with a heading, two paragraphs, an image with caption, and a sidebar:
       ]
     },
     {
-      "structure": "image",
-      "image_id": "pg003_im001",
+      "structure": "image_group",
       "children": [
+        { "role": "image", "image_id": "pg003_im001" },
         { "role": "caption", "text": "Figure 3.1: The stages of the water cycle" }
       ]
     },

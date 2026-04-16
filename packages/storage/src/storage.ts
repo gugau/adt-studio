@@ -94,6 +94,13 @@ export interface Storage {
   /** Clear all debug images (used when regenerating storyboard outputs). */
   clearDebugImages(): void
 
+  /** Write a section preview thumbnail PNG to disk as thumbnails/{pageId}_sec{NNN}.png. */
+  putSectionThumbnail(pageId: string, sectionIndex: number, data: Buffer): void
+  /** Resolve the filesystem path for a stored section thumbnail, or null if not present. */
+  getSectionThumbnailPath(filename: string): string | null
+  /** Delete all section preview thumbnails. */
+  clearSectionThumbnails(): void
+
   /** Add a sign language video to the book. */
   putSignLanguageVideo(videoId: string, buffer: Buffer, originalName: string, mimeType: string): void
   /** List all sign language videos. */

@@ -3,7 +3,7 @@ import path from "node:path"
 import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
 import { parseBookLabel, PIPELINE } from "@adt/types"
-import { openBookDb } from "@adt/storage"
+import { openBookDb, resolveBookPaths } from "@adt/storage"
 import {
   listBooks,
   getBook,
@@ -358,6 +358,38 @@ export function createBookRoutes(
     } finally {
       db.close()
     }
+  })
+
+  // GET /books/:label/thumbnails/:filename — Serve section preview thumbnail PNG
+  app.get("/books/:label/thumbnails/:filename", (c) => {
+    const { label, filename } = c.req.param()
+    let paths: ReturnType<typeof resolveBookPaths>
+    try {
+      paths = resolveBookPaths(label, booksDir)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      throw new HTTPException(400, { message })
+    }
+    if (!/^[a-zA-Z0-9_-]+\.png$/.test(filename)) {
+      throw new HTTPException(400, { message: "Invalid thumbnail filename" })
+    }
+    const thumbPath = path.resolve(paths.thumbnailsDir, filename)
+    if (!thumbPath.startsWith(path.resolve(paths.thumbnailsDir) + path.sep)) {
+      throw new HTTPException(400, { message: "Invalid thumbnail path" })
+    }
+    let stat: fs.Stats
+    try {
+      stat = fs.statSync(thumbPath)
+    } catch {
+      throw new HTTPException(404, { message: `Thumbnail not found: ${filename}` })
+    }
+    if (!stat.isFile()) {
+      throw new HTTPException(404, { message: `Thumbnail not found: ${filename}` })
+    }
+    const buffer = fs.readFileSync(thumbPath)
+    c.header("Content-Type", "image/png")
+    c.header("Cache-Control", "public, max-age=3600")
+    return c.body(buffer)
   })
 
   // GET /books/:label/adt/* — Serve packaged ADT static files
