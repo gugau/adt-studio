@@ -135,7 +135,10 @@ function expandParts(
 /**
  * Recursively flatten a ContentNodeData subtree into render-ready SectionParts.
  * Text leaves become group parts, image leaves become image parts.
- * Container nodes recurse into their children.
+ * Consecutive text-leaf children of a container are merged into a single
+ * group (keyed by the container's structure) so that e.g. a "group"/paragraph
+ * container with multiple sentence leaves is rendered as one paragraph rather
+ * than one block per sentence.
  */
 function flattenContentNode(
   node: ContentNodeData,
@@ -170,12 +173,35 @@ function flattenContentNode(
     return
   }
 
-  // Container — recurse into children
-  if (node.children) {
-    for (const child of node.children) {
+  // Container — walk children, buffering runs of text leaves into one group
+  // tagged with this container's structure so the renderer sees a paragraph
+  // (or whatever the container represents), not a sequence of lone sentences.
+  if (!node.children) return
+
+  let buffer: TextInput[] = []
+  const flush = () => {
+    if (buffer.length === 0) return
+    parts.push({
+      type: "group",
+      groupId: node.nodeId,
+      groupType: node.structure ?? "group",
+      texts: buffer,
+    })
+    buffer = []
+  }
+
+  for (const child of node.children) {
+    if (child.isPruned) continue
+    const isTextLeaf =
+      child.text != null && child.role && !child.children?.length
+    if (isTextLeaf) {
+      buffer.push({ textId: child.nodeId, textType: child.role!, text: child.text! })
+    } else {
+      flush()
       flattenContentNode(child, images, parts)
     }
   }
+  flush()
 }
 
 /**
