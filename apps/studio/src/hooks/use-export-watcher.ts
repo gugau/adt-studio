@@ -80,11 +80,15 @@ export function useExportWatcherSetup(label: string): ExportWatcherValue {
     },
   })
 
+  const preparingFormat: ExportFormat | null =
+    pendingExport?.format
+    ?? (prepareMutation.isPending ? prepareMutation.variables?.format ?? null : null)
+
   return {
     startExport: (format: ExportFormat, features?: ExportFeatureToggles) =>
       prepareMutation.mutate({ format, features }),
     isPreparing: prepareMutation.isPending || pendingExport !== null,
-    preparingFormat: pendingExport?.format ?? (prepareMutation.isPending ? prepareMutation.variables?.format ?? null : null),
+    preparingFormat,
     error,
   }
 }

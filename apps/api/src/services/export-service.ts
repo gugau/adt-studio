@@ -17,6 +17,7 @@ const COMPRESSED_EXTS = new Set([
 export interface ExportResult {
   stream: ReadableStream<Uint8Array>
   filename: string
+  safeFilename: string
 }
 
 /**
@@ -122,9 +123,12 @@ export async function exportProject(
     throw new Error(`Book not found: ${safeLabel}`)
   }
 
+  const title = readBookTitle(safeLabel, resolvedDir)
+
   return {
     stream: createZipStream(bookDir, new Set(["adt", "webpub"])),
-    filename: `${safeLabel}.zip`,
+    filename: `${title}.zip`,
+    safeFilename: `${safeLabel}.zip`,
   }
 }
 

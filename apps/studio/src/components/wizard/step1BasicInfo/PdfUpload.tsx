@@ -8,7 +8,7 @@ import { FileDropOverlay, useFileDropZone } from "@/components/ui/file-drop-over
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import { useBooks } from "@/hooks/use-books"
 import { getPdfJs } from "@/components/wizard/shared/pdfjsLoader"
-import { cn } from "@/lib/utils"
+import { cn, formatBytes } from "@/lib/utils"
 
 async function getPdfPageCount(file: File): Promise<number> {
   const pdfjs = await getPdfJs()
@@ -27,13 +27,6 @@ function waitTwoAnimationFrames(): Promise<void> {
       requestAnimationFrame(() => resolve())
     })
   })
-}
-
-function formatBytes(bytes: number) {
-  /* eslint-disable-next-line lingui/no-unlocalized-strings */
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
-  /* eslint-disable-next-line lingui/no-unlocalized-strings */
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
 export function suggestLabel(file: File) {

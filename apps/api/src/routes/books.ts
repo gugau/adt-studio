@@ -232,9 +232,10 @@ export function createBookRoutes(
     try {
       const result = await exportProject(label, booksDir)
       c.header("Content-Type", "application/zip")
+      const encodedName = encodeURIComponent(result.filename)
       c.header(
         "Content-Disposition",
-        `attachment; filename="${result.filename}"`
+        `attachment; filename="${result.safeFilename}"; filename*=UTF-8''${encodedName}`
       )
       return c.body(result.stream)
     } catch (err) {

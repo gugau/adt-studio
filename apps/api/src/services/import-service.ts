@@ -36,41 +36,33 @@ function resolveUniqueLabel(baseLabel: string, booksDir: string): string {
   return `${baseLabel}-${n}`
 }
 
-export function previewImport(zipBuffer: Buffer): ImportPreview {
-  let entries: Record<string, Uint8Array>
+function unzipBuffer(zipBuffer: Buffer): Record<string, Uint8Array> {
   try {
-    entries = unzipSync(zipBuffer)
+    return unzipSync(zipBuffer)
   } catch {
     throw new Error("Invalid ZIP file")
   }
+}
 
-  const filePaths = Object.keys(entries)
-
-  const dbEntry = filePaths.find((p) => p.endsWith(".db") && !p.includes("/"))
-  if (!dbEntry) {
-    throw new Error("Invalid project archive: missing database file (.db) at root level")
+function findRequiredEntry(filePaths: string[], ext: string, label: string): string {
+  const entry = filePaths.find((p) => p.endsWith(ext) && !p.includes("/"))
+  if (!entry) {
+    throw new Error(`Invalid project archive: missing ${label} file (${ext}) at root level`)
   }
+  return entry
+}
 
-  const rawLabel = dbEntry.replace(/\.db$/, "")
-  const safeLabel = parseBookLabel(rawLabel)
+interface DbMetadata {
+  title: string | null
+  authors: string[]
+  publisher: string | null
+  languageCode: string | null
+  pageCount: number
+  validationError: string | null
+  stages: ImportPreview["stages"]
+}
 
-  const pdfEntry = filePaths.find((p) => p.endsWith(".pdf") && !p.includes("/"))
-  const hasPdf = !!pdfEntry
-  const imageCount = filePaths.filter((p) => p.startsWith("images/") && !p.endsWith("/")).length
-  const videoCount = filePaths.filter((p) => p.startsWith("videos/") && !p.endsWith("/")).length
-
-  let coverBase64: string | null = null
-  if (pdfEntry) {
-    const pdfBuffer = Buffer.from(entries[pdfEntry])
-    const coverPng = renderPdfCover(pdfBuffer)
-    if (coverPng) {
-      coverBase64 = coverPng.toString("base64")
-    }
-  }
-
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "adt-preview-"))
-  const tmpDbPath = path.join(tmpDir, `${safeLabel}.db`)
-
+function readDbMetadata(dbPath: string): DbMetadata {
   let title: string | null = null
   let authors: string[] = []
   let publisher: string | null = null
@@ -80,8 +72,7 @@ export function previewImport(zipBuffer: Buffer): ImportPreview {
   const stages: ImportPreview["stages"] = {}
 
   try {
-    fs.writeFileSync(tmpDbPath, entries[dbEntry])
-    const db = openBookDb(tmpDbPath)
+    const db = openBookDb(dbPath)
     try {
       const tables = db.all(
         "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('pages', 'node_data', 'step_runs')",
@@ -142,25 +133,48 @@ export function previewImport(zipBuffer: Buffer): ImportPreview {
     }
   } catch {
     validationError = "Could not read the project database. The file may be corrupted or not a valid ADT Studio project."
-  } finally {
-    try {
-      fs.rmSync(tmpDir, { recursive: true, force: true })
-    } catch { /* ignore */ }
   }
 
-  return {
-    label: safeLabel,
-    title,
-    authors,
-    publisher,
-    languageCode,
-    pageCount,
-    hasSourcePdf: hasPdf,
-    imageCount,
-    videoCount,
-    coverBase64,
-    stages,
-    validationError,
+  return { title, authors, publisher, languageCode, pageCount, validationError, stages }
+}
+
+export function previewImport(zipBuffer: Buffer): ImportPreview {
+  const entries = unzipBuffer(zipBuffer)
+  const filePaths = Object.keys(entries)
+
+  const dbEntry = findRequiredEntry(filePaths, ".db", "database")
+  const rawLabel = dbEntry.replace(/\.db$/, "")
+  const safeLabel = parseBookLabel(rawLabel)
+
+  const pdfEntry = filePaths.find((p) => p.endsWith(".pdf") && !p.includes("/"))
+  const imageCount = filePaths.filter((p) => p.startsWith("images/") && !p.endsWith("/")).length
+  const videoCount = filePaths.filter((p) => p.startsWith("videos/") && !p.endsWith("/")).length
+
+  let coverBase64: string | null = null
+  if (pdfEntry) {
+    const pdfBuffer = Buffer.from(entries[pdfEntry])
+    const coverPng = renderPdfCover(pdfBuffer)
+    if (coverPng) {
+      coverBase64 = coverPng.toString("base64")
+    }
+  }
+
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "adt-preview-"))
+  const tmpDbPath = path.join(tmpDir, `${safeLabel}.db`)
+  try {
+    fs.writeFileSync(tmpDbPath, entries[dbEntry])
+    const meta = readDbMetadata(tmpDbPath)
+
+    return {
+      label: safeLabel,
+      ...meta,
+      hasSourcePdf: !!pdfEntry,
+      imageCount,
+      videoCount,
+      coverBase64,
+    }
+  } finally {
+    try { fs.rmSync(tmpDir, { recursive: true, force: true }) } catch { /* ignore */ }
   }
 }
 
@@ -168,26 +182,13 @@ export async function importProject(
   zipBuffer: Buffer,
   booksDir: string,
 ): Promise<ImportResult> {
-  let entries: Record<string, Uint8Array>
-  try {
-    entries = unzipSync(zipBuffer)
-  } catch {
-    throw new Error("Invalid ZIP file")
-  }
-
+  const entries = unzipBuffer(zipBuffer)
   const filePaths = Object.keys(entries)
 
-  const dbEntry = filePaths.find((p) => p.endsWith(".db") && !p.includes("/"))
-  if (!dbEntry) {
-    throw new Error("Invalid project archive: missing database file (.db) at root level")
-  }
-
+  const dbEntry = findRequiredEntry(filePaths, ".db", "database")
   const rawLabel = dbEntry.replace(/\.db$/, "")
 
-  const pdfEntry = filePaths.find((p) => p.endsWith(".pdf") && !p.includes("/"))
-  if (!pdfEntry) {
-    throw new Error("Invalid project archive: missing PDF file at root level")
-  }
+  findRequiredEntry(filePaths, ".pdf", "PDF")
 
   const safeLabel = parseBookLabel(rawLabel)
   const targetLabel = resolveUniqueLabel(safeLabel, booksDir)
@@ -217,40 +218,25 @@ export async function importProject(
     }
 
     const dbPath = path.join(bookDir, `${targetLabel}.db`)
-    const db = openBookDb(dbPath)
-    try {
-      const tables = db.all(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('pages', 'node_data')",
-      ) as Array<{ name: string }>
-      const tableNames = new Set(tables.map((t) => t.name))
+    const meta = readDbMetadata(dbPath)
 
-      if (!tableNames.has("pages") || !tableNames.has("node_data")) {
-        throw new Error("Invalid project archive: database does not contain expected ADT tables")
-      }
-
-      const pages = db.all("SELECT COUNT(*) as count FROM pages") as Array<{ count: number }>
-      if ((pages[0]?.count ?? 0) === 0) {
-        throw new Error("Invalid project archive: database contains no pages")
-      }
-    } finally {
-      db.close()
+    if (meta.validationError) {
+      throw new Error(meta.validationError)
     }
 
     return {
       label: targetLabel,
-      title: null,
-      authors: [],
-      publisher: null,
-      languageCode: null,
-      pageCount: 0,
+      title: meta.title,
+      authors: meta.authors,
+      publisher: meta.publisher,
+      languageCode: meta.languageCode,
+      pageCount: meta.pageCount,
       hasSourcePdf: fs.existsSync(path.join(bookDir, `${targetLabel}.pdf`)),
       needsRebuild: false,
       rebuildReason: null,
     }
   } catch (err) {
-    try {
-      fs.rmSync(bookDir, { recursive: true, force: true })
-    } catch { /* ignore */ }
+    try { fs.rmSync(bookDir, { recursive: true, force: true }) } catch { /* ignore */ }
     throw err
   }
 }

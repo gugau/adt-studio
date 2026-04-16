@@ -24,7 +24,7 @@ import { Trans, useLingui } from "@lingui/react/macro"
 import type { MessageDescriptor } from "@lingui/core"
 import { Button } from "@/components/ui/button"
 import { FileDropOverlay, useFileDropZone } from "@/components/ui/file-drop-overlay"
-import { cn } from "@/lib/utils"
+import { cn, formatBytes } from "@/lib/utils"
 import { useImportBook } from "@/hooks/use-books"
 import { api } from "@/api/client"
 import type { ImportPreview } from "@/api/client"
@@ -32,12 +32,6 @@ import type { ImportPreview } from "@/api/client"
 /* eslint-disable-next-line lingui/no-unlocalized-strings */
 const DROP_ZONE_HEIGHT = "h-[334px]"
 
-function formatBytes(bytes: number) {
-  /* eslint-disable-next-line lingui/no-unlocalized-strings */
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
-  /* eslint-disable-next-line lingui/no-unlocalized-strings */
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
 
 const FEATURE_STAGES: {
   name: string
@@ -297,7 +291,7 @@ export function ImportProject() {
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const picked = e.target.files?.[0]
-      if (picked) {
+      if (picked && isZipFile(picked)) {
         setZipFile(picked)
         loadPreview(picked)
       }
@@ -334,7 +328,7 @@ export function ImportProject() {
       return
     }
     setAccepted(true)
-    const timer = setTimeout(() => setShowPreview(true), 500)
+    const timer = setTimeout(() => setShowPreview(true), 1200)
     return () => clearTimeout(timer)
   }, [hasPreview])
 
@@ -348,7 +342,7 @@ export function ImportProject() {
       const timer = setTimeout(() => setDeferredError(null), 300)
       return () => clearTimeout(timer)
     }
-  }, [activeError])
+  }, [!!activeError])
 
   useEffect(() => {
     if (friendlyImportError) {
@@ -357,7 +351,7 @@ export function ImportProject() {
       const timer = setTimeout(() => setDeferredImportError(null), 300)
       return () => clearTimeout(timer)
     }
-  }, [friendlyImportError])
+  }, [!!friendlyImportError])
 
   return (
     <>
@@ -442,8 +436,12 @@ export function ImportProject() {
                         : "border-[#d4d4d4] hover:border-amber-500/60 hover:bg-amber-500/[0.02]",
                 )}
               >
-                {accepted ? (
-                  <div className="flex items-center gap-2 animate-in fade-in duration-200">
+                <div className="grid place-items-center [&>*]:col-start-1 [&>*]:row-start-1">
+                  {/* Accepted state */}
+                  <div className={cn(
+                    "flex items-center gap-2 transition-all duration-300 ease-out",
+                    accepted ? "opacity-100 scale-100" : "opacity-0 scale-90 pointer-events-none",
+                  )}>
                     <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center">
                       <svg className="w-3 h-3 text-emerald-600" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </div>
@@ -451,23 +449,29 @@ export function ImportProject() {
                       <Trans>File accepted</Trans>
                     </span>
                   </div>
-                ) : previewLoading ? (
-                  <>
+                  {/* Loading state */}
+                  <div className={cn(
+                    "flex flex-col items-center gap-2 transition-all duration-300 ease-out",
+                    previewLoading && !accepted ? "opacity-100 scale-100" : "opacity-0 scale-90 pointer-events-none",
+                  )}>
                     <Loader2 className="h-5 w-5 text-amber-500 animate-spin" />
                     <span className="text-sm text-[#737373]">
                       <Trans>Reading archive...</Trans>
                     </span>
-                  </>
-                ) : (
-                  <>
+                  </div>
+                  {/* Idle / error state */}
+                  <div className={cn(
+                    "flex flex-col items-center gap-2 transition-all duration-300 ease-out",
+                    !previewLoading && !accepted ? "opacity-100 scale-100" : "opacity-0 scale-90 pointer-events-none",
+                  )}>
                     <Upload className={cn("h-5 w-5", hasError ? "text-red-400" : "text-[#737373]")} />
                     <span className={cn("text-sm", hasError ? "text-red-500" : "text-[#737373]")}>
                       {hasError
                         ? <Trans>Try another file</Trans>
                         : <Trans>Upload ZIP or drag and drop</Trans>}
                     </span>
-                  </>
-                )}
+                  </div>
+                </div>
               </div>
             </div>
 
