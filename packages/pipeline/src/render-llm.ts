@@ -162,7 +162,11 @@ export async function renderSectionLlm(
       promptContext: {
         page_image_base64: input.pageImageBase64,
         section_type: input.sectionType,
+        section_index: input.sectionIndex,
+        section_count: input.sectionCount,
         current_html: generatedHtml,
+        section_texts: texts.map((t) => ({ text_id: t.textId, text: t.text })),
+        section_images: images.map((img) => ({ image_id: img.imageId })),
       },
       originalImageIntroText: "Here is the original page image (this is what the rendered page should resemble):",
       firstIterationScreenshotsText: "\nHere are screenshots of the current rendered HTML at three viewport sizes:\n",

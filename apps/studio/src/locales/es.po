@@ -445,8 +445,8 @@ msgstr "Agregar clase"
 msgid "Add entry below"
 msgstr "Agregar entrada debajo"
 
-msgid "Add Group"
-msgstr "Agregar grupo"
+#~ msgid "Add Group"
+#~ msgstr "Agregar grupo"
 
 msgid "Add Image"
 msgstr "Agregar imagen"
@@ -1250,8 +1250,8 @@ msgstr "Eliminar libro"
 msgid "Delete failed"
 msgstr "Delete failed"
 
-msgid "Delete group"
-msgstr "Eliminar grupo"
+#~ msgid "Delete group"
+#~ msgstr "Eliminar grupo"
 
 msgid "Delete section"
 msgstr "Eliminar sección"
@@ -1260,8 +1260,8 @@ msgstr "Eliminar sección"
 msgid "Delete section {0}? This cannot be undone."
 msgstr "¿Eliminar sección {0}? Esta acción no se puede deshacer."
 
-msgid "Delete text entry"
-msgstr "Eliminar entrada de texto"
+#~ msgid "Delete text entry"
+#~ msgstr "Eliminar entrada de texto"
 
 msgid "Delete video"
 msgstr "Eliminar video"
@@ -1326,11 +1326,11 @@ msgstr "Visualización"
 msgid "Drag to move boxes, drag edges/corners to resize"
 msgstr "Drag to move boxes, drag edges/corners to resize"
 
-msgid "Drag to reorder"
-msgstr "Arrastra para reordenar"
+#~ msgid "Drag to reorder"
+#~ msgstr "Arrastra para reordenar"
 
-msgid "Drag to reorder or move to another group"
-msgstr "Arrastra para reordenar o mover a otro grupo"
+#~ msgid "Drag to reorder or move to another group"
+#~ msgstr "Arrastra para reordenar o mover a otro grupo"
 
 msgid "Drag vertices to reshape. Click midpoints (+) to add points. Right-click a vertex to remove it."
 msgstr "Arrastra los vértices para cambiar la forma. Haz clic en los puntos medios (+) para agregar puntos. Haz clic derecho en un vértice para eliminarlo."
@@ -1347,11 +1347,11 @@ msgstr "Suelta el PDF aquí"
 msgid "Duplicate"
 msgstr "Duplicar"
 
-msgid "Duplicate group"
-msgstr "Duplicar grupo"
+#~ msgid "Duplicate group"
+#~ msgstr "Duplicar grupo"
 
-msgid "Duplicate text entry"
-msgstr "Duplicar entrada de texto"
+#~ msgid "Duplicate text entry"
+#~ msgstr "Duplicar entrada de texto"
 
 msgid "Duration"
 msgstr "Duración"
@@ -1428,8 +1428,8 @@ msgstr "Idioma de edición"
 msgid "Empty"
 msgstr "Vacío"
 
-msgid "Empty group — drag text entries here"
-msgstr "Grupo vacío — arrastra entradas de texto aquí"
+#~ msgid "Empty group — drag text entries here"
+#~ msgstr "Grupo vacío — arrastra entradas de texto aquí"
 
 msgid "Empty section"
 msgstr "Sección vacía"
@@ -3709,6 +3709,9 @@ msgstr "Manuales técnicos con diagramas"
 msgid "Temperature"
 msgstr "Temperatura"
 
+msgid "Template"
+msgstr "Plantilla"
+
 msgid "Template not found."
 msgstr "Template not found."
 
@@ -4044,7 +4047,7 @@ msgid "Unsaved changes"
 msgstr "Cambios sin guardar"
 
 #. placeholder {0}: pendingByPage.size
-#. placeholder {1}: pendingByPage.size === 1 ? "page" : "pages"
+#. placeholder {1}: pendingByPage.size === 1 ? t`page` : t`pages`
 msgid "Unsaved changes on {0} {1}"
 msgstr "Cambios sin guardar en {0} {1}"
 

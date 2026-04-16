@@ -56,6 +56,8 @@ export interface RenderSectionInput {
   pageId: string
   pageImageBase64: string
   sectionIndex: number
+  /** Total number of sections on this page (so the reviewer knows this section covers only 1/N of the page). */
+  sectionCount: number
   sectionId: string
   sectionType: string
   backgroundColor: string
@@ -210,6 +212,7 @@ export async function renderPage(
       pageId: input.pageId,
       pageImageBase64: input.pageImageBase64,
       sectionIndex: i,
+      sectionCount: input.sectioning.sections.length,
       sectionId: section.sectionId,
       sectionType: section.sectionType,
       backgroundColor: section.backgroundColor,

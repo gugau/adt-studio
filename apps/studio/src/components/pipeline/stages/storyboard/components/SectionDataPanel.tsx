@@ -1,20 +1,15 @@
-import { useState, useRef, useCallback, useEffect, type ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 import {
-  Copy,
   Eye,
   EyeOff,
-  GripVertical,
   ImagePlus,
-  Layers,
   Loader2,
-  Plus,
   RefreshCw,
-  Trash2,
   TreePine,
   X,
 } from "lucide-react"
 import { SectionActionsDropdown } from "./SectionActionsDropdown"
-import { ContentNodeBlock, EditableText } from "./ContentNodeBlock"
+import { ContentNodeBlock } from "./ContentNodeBlock"
 import { BASE_URL } from "@/api/client"
 import {
   Select,
@@ -52,26 +47,10 @@ interface SectionDataPanelProps {
   onChangeSectionType: (type: string) => void
   onToggleSectionPruned: () => void
   onTogglePartPruned: (partIndex: number) => void
-  onChangeGroupType: (partIndex: number, type: string) => void
-  onChangeTextType: (partIndex: number, textIndex: number, type: string) => void
-  onToggleTextPruned: (partIndex: number, textIndex: number) => void
-  onDeleteTextEntry: (partIndex: number, textIndex: number) => void
-  onDuplicateTextEntry: (partIndex: number, textIndex: number) => void
-  onAddGroup: () => void
-  onDuplicateGroup: (partIndex: number) => void
-  onDeleteGroup: (partIndex: number) => void
-  onReorderParts: (fromIndex: number, toIndex: number) => void
-  onEditText: (partIndex: number, textIndex: number, newText: string) => void
   onToggleNodePruned: (partIndex: number, nodeId: string) => void
   onEditNodeText: (partIndex: number, nodeId: string, newText: string) => void
   onChangeNodeType: (partIndex: number, nodeId: string, field: "structure" | "role", newType: string) => void
   onMoveNode: (partIndex: number, dragNodeId: string, targetParentId: string | null, insertIndex: number) => void
-  onMoveText: (
-    fromPartIndex: number,
-    textIndex: number,
-    toPartIndex: number,
-    toTextIndex: number
-  ) => void
   onMergeSection: (dir: "prev" | "next") => void
   onMergeCrossPage?: (dir: "prev" | "next") => void
   hasPrevPage?: boolean
@@ -147,11 +126,6 @@ function ImageCard({
   )
 }
 
-// -- Drag types --
-
-const DRAG_TYPE_GROUP = "application/x-group-index"
-const DRAG_TYPE_TEXT = "application/x-text-entry"
-
 // -- Component --
 
 export function SectionDataPanel({
@@ -168,21 +142,10 @@ export function SectionDataPanel({
   onChangeSectionType,
   onToggleSectionPruned,
   onTogglePartPruned,
-  onChangeGroupType,
-  onChangeTextType,
-  onToggleTextPruned,
-  onDeleteTextEntry,
-  onDuplicateTextEntry,
-  onEditText,
   onToggleNodePruned,
   onEditNodeText,
   onChangeNodeType,
   onMoveNode,
-  onAddGroup,
-  onDuplicateGroup,
-  onDeleteGroup,
-  onReorderParts,
-  onMoveText,
   onMergeSection,
   onMergeCrossPage,
   hasPrevPage,
@@ -210,162 +173,8 @@ export function SectionDataPanel({
   const [rerenderPrompt, setRerenderPrompt] = useState("")
   const parts = section.parts
 
-  const hasTextParts = parts.some((p) => p.type === "text_group")
   const hasContentNodeParts = parts.some((p) => p.type === "content_node")
   const hasImageParts = parts.some((p) => p.type === "image")
-
-  // -- Group drag state --
-  const [dragGroupIdx, setDragGroupIdx] = useState<number | null>(null)
-  // dropGroupSlot tracks the insertion point: "before:3" means insert before partIndex 3, "after:3" means insert after
-  const [dropGroupSlot, setDropGroupSlot] = useState<string | null>(null)
-
-  // -- Text drag state --
-  const [dragText, setDragText] = useState<{
-    partIndex: number
-    textIndex: number
-  } | null>(null)
-  const [dropTarget, setDropTarget] = useState<{
-    partIndex: number
-    textIndex: number
-  } | null>(null)
-  const dragCounterRef = useRef(0)
-
-  // -- Group drag handlers --
-  const handleGroupDragStart = useCallback(
-    (e: React.DragEvent, partIndex: number) => {
-      e.dataTransfer.effectAllowed = "move"
-      e.dataTransfer.setData(DRAG_TYPE_GROUP, String(partIndex))
-      setDragGroupIdx(partIndex)
-    },
-    []
-  )
-
-  const handleGroupDragEnd = useCallback(() => {
-    setDragGroupIdx(null)
-    setDropGroupSlot(null)
-  }, [])
-
-  const handleGroupDragOver = useCallback(
-    (e: React.DragEvent, partIndex: number) => {
-      if (dragGroupIdx === null) return
-      if (!e.dataTransfer.types.includes(DRAG_TYPE_GROUP)) return
-      e.preventDefault()
-      e.dataTransfer.dropEffect = "move"
-      // Determine if cursor is in the top or bottom half of the element
-      const rect = e.currentTarget.getBoundingClientRect()
-      const midY = rect.top + rect.height / 2
-      const slot = e.clientY < midY ? `before:${partIndex}` : `after:${partIndex}`
-      setDropGroupSlot(slot)
-    },
-    [dragGroupIdx]
-  )
-
-  // Drop zone between groups: handles drops in the gaps
-  const handleGapDragOver = useCallback(
-    (e: React.DragEvent, insertBeforePartIndex: number) => {
-      if (dragGroupIdx === null) return
-      if (!e.dataTransfer.types.includes(DRAG_TYPE_GROUP)) return
-      e.preventDefault()
-      e.dataTransfer.dropEffect = "move"
-      setDropGroupSlot(`before:${insertBeforePartIndex}`)
-    },
-    [dragGroupIdx]
-  )
-
-  const handleGroupDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault()
-      if (!dropGroupSlot) return
-      const fromStr = e.dataTransfer.getData(DRAG_TYPE_GROUP)
-      if (!fromStr) return
-      const fromIndex = parseInt(fromStr, 10)
-      const [position, idxStr] = dropGroupSlot.split(":")
-      const targetIdx = parseInt(idxStr, 10)
-      const toIndex = position === "after" ? targetIdx + 1 : targetIdx
-      // Adjust: if dragging from before the insertion point, the removal shifts indices
-      const adjustedTo = fromIndex < toIndex ? toIndex - 1 : toIndex
-      if (fromIndex !== adjustedTo) {
-        onReorderParts(fromIndex, adjustedTo)
-      }
-      setDragGroupIdx(null)
-      setDropGroupSlot(null)
-    },
-    [onReorderParts, dropGroupSlot]
-  )
-
-  // -- Text drag handlers --
-  const handleTextDragStart = useCallback(
-    (e: React.DragEvent, partIndex: number, textIndex: number) => {
-      e.stopPropagation() // don't trigger group drag
-      e.dataTransfer.effectAllowed = "move"
-      e.dataTransfer.setData(
-        DRAG_TYPE_TEXT,
-        JSON.stringify({ partIndex, textIndex })
-      )
-      setDragText({ partIndex, textIndex })
-    },
-    []
-  )
-
-  const handleTextDragEnd = useCallback(() => {
-    setDragText(null)
-    setDropTarget(null)
-    dragCounterRef.current = 0
-  }, [])
-
-  const handleTextDragOver = useCallback(
-    (e: React.DragEvent, partIndex: number, textIndex: number) => {
-      if (!dragText) return
-      if (!e.dataTransfer.types.includes(DRAG_TYPE_TEXT)) return
-      e.preventDefault()
-      e.stopPropagation()
-      e.dataTransfer.dropEffect = "move"
-      setDropTarget({ partIndex, textIndex })
-    },
-    [dragText]
-  )
-
-  const handleGroupBodyDragOver = useCallback(
-    (e: React.DragEvent, partIndex: number, textCount: number) => {
-      if (!dragText) return
-      if (!e.dataTransfer.types.includes(DRAG_TYPE_TEXT)) return
-      e.preventDefault()
-      e.dataTransfer.dropEffect = "move"
-      // Drop at the end of the group
-      setDropTarget({ partIndex, textIndex: textCount })
-    },
-    [dragText]
-  )
-
-  const handleTextDrop = useCallback(
-    (e: React.DragEvent, toPartIndex: number, toTextIndex: number) => {
-      if (!e.dataTransfer.types.includes(DRAG_TYPE_TEXT)) return // let group drops bubble up
-      e.preventDefault()
-      e.stopPropagation()
-      const raw = e.dataTransfer.getData(DRAG_TYPE_TEXT)
-      if (!raw) return
-      const { partIndex: fromPartIndex, textIndex: fromTextIndex } = JSON.parse(
-        raw
-      ) as { partIndex: number; textIndex: number }
-
-      if (fromPartIndex === toPartIndex && fromTextIndex === toTextIndex) {
-        // No-op
-      } else {
-        onMoveText(fromPartIndex, fromTextIndex, toPartIndex, toTextIndex)
-      }
-      setDragText(null)
-      setDropTarget(null)
-      dragCounterRef.current = 0
-    },
-    [onMoveText]
-  )
-
-  const handleGroupBodyDrop = useCallback(
-    (e: React.DragEvent, partIndex: number, textCount: number) => {
-      handleTextDrop(e, partIndex, textCount)
-    },
-    [handleTextDrop]
-  )
 
   return (
     <div
@@ -518,284 +327,6 @@ export function SectionDataPanel({
 
       {/* Panel body — scrollable */}
       <div className="overflow-auto flex-1 px-4 py-3 space-y-5">
-        {/* Text groups */}
-        <div>
-          <h3 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-            <Layers className="h-3 w-3" />
-            {t`Text Groups`}
-          </h3>
-          {hasTextParts && (
-            <div>
-              {parts.map((p, partIndex) => {
-                if (p.type !== "text_group") return null
-                const isGroupDragging = dragGroupIdx === partIndex
-                const showDropLine = dropGroupSlot === `before:${partIndex}` && dragGroupIdx !== null && dragGroupIdx !== partIndex
-                return (
-                  <div key={p.groupId}>
-                    {/* Drop zone gap before each group */}
-                    <div
-                      className={`transition-all duration-150 ${dragGroupIdx !== null ? "py-1.5" : "py-1"}`}
-                      onDragOver={(e) => handleGapDragOver(e, partIndex)}
-                      onDrop={handleGroupDrop}
-                    >
-                      {showDropLine && (
-                        <div className="h-0.5 bg-primary rounded-full" />
-                      )}
-                    </div>
-                    <div
-                      className={`group/card rounded border overflow-hidden transition-all duration-150 ${
-                        p.isPruned ? "opacity-40" : ""
-                      } ${isGroupDragging ? "opacity-50 scale-[0.98]" : ""}`}
-                      onDragOver={(e) => handleGroupDragOver(e, partIndex)}
-                      onDrop={handleGroupDrop}
-                    >
-                    <div className="px-3 py-1.5 bg-muted/50 border-b flex items-center gap-1.5">
-                      {/* Drag handle — visible on hover */}
-                      <div
-                        draggable={!pipelineRunning}
-                        onDragStart={(e) => { if (pipelineRunning) { e.preventDefault(); return } handleGroupDragStart(e, partIndex) }}
-                        onDragEnd={handleGroupDragEnd}
-                        className={cn("p-0.5 -ml-1 rounded transition-colors opacity-0 group-hover/card:opacity-100", pipelineRunning ? "cursor-default opacity-30" : "cursor-grab active:cursor-grabbing hover:bg-accent")}
-                        title={pipelineRunning ? undefined : t`Drag to reorder`}
-                      >
-                        <GripVertical className="h-3 w-3 text-muted-foreground" />
-                      </div>
-                      {groupTypes ? (
-                        <Select
-                          value={p.groupType}
-                          onValueChange={(val) => onChangeGroupType(partIndex, val)}
-                          disabled={pipelineRunning}
-                        >
-                          <SelectTrigger className="h-5 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0 w-auto min-w-[60px] border-0 bg-transparent text-muted-foreground">
-                            <SelectValue>{p.groupType}</SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(groupTypes).map(([key, desc]) => (
-                              <SelectItem key={key} value={key} className="text-xs">
-                                {key}
-                                <span className="ml-1 text-muted-foreground text-[10px]">{desc}</span>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                          {p.groupType}
-                        </span>
-                      )}
-                      <div className="ml-auto flex items-center gap-0.5">
-                        <button
-                          type="button"
-                          onClick={() => onDuplicateGroup(partIndex)}
-                          disabled={pipelineRunning}
-                          className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
-                          title={t`Duplicate group`}
-                        >
-                          <Copy className="h-3 w-3 text-muted-foreground" />
-                        </button>
-                        {p.isPruned && (
-                          <button
-                            type="button"
-                            onClick={() => onDeleteGroup(partIndex)}
-                            disabled={pipelineRunning}
-                            className="p-0.5 rounded hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
-                            title={t`Delete group`}
-                          >
-                            <Trash2 className="h-3 w-3 text-red-600" />
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => onTogglePartPruned(partIndex)}
-                          disabled={pipelineRunning}
-                          className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
-                          title={
-                            p.isPruned
-                              ? t`Include in render`
-                              : t`Exclude from render`
-                          }
-                        >
-                          {p.isPruned ? (
-                            <EyeOff className="h-3 w-3 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-3 w-3 text-muted-foreground" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                    <div
-                      className="divide-y"
-                      onDragOver={(e) =>
-                        handleGroupBodyDragOver(e, partIndex, p.texts.length)
-                      }
-                      onDrop={(e) =>
-                        handleGroupBodyDrop(e, partIndex, p.texts.length)
-                      }
-                    >
-                      {p.texts.length === 0 && (
-                        <div className="px-3 py-3 text-xs text-muted-foreground/50 italic text-center">
-                          {t`Empty group — drag text entries here`}
-                        </div>
-                      )}
-                      {p.texts.map((textEntry, ti) => {
-                        const isTextDragging =
-                          dragText?.partIndex === partIndex &&
-                          dragText?.textIndex === ti
-                        const isTextDropTarget =
-                          dropTarget?.partIndex === partIndex &&
-                          dropTarget?.textIndex === ti &&
-                          dragText !== null
-                        return (
-                          <div
-                            key={textEntry.textId}
-                            className={`group/text px-3 py-1.5 flex items-start gap-2 text-sm transition-all duration-150 ${
-                              textEntry.isPruned ? "opacity-40" : ""
-                            } ${isTextDragging ? "opacity-30 bg-muted/30" : ""} ${
-                              isTextDropTarget
-                                ? "border-t-2 !border-t-primary"
-                                : ""
-                            }`}
-                            onDragOver={(e) =>
-                              handleTextDragOver(e, partIndex, ti)
-                            }
-                            onDrop={(e) => handleTextDrop(e, partIndex, ti)}
-                          >
-                            {/* Drag handle — visible on hover */}
-                            <div
-                              draggable={!pipelineRunning}
-                              onDragStart={(e) => { if (pipelineRunning) { e.preventDefault(); return } handleTextDragStart(e, partIndex, ti) }}
-                              onDragEnd={handleTextDragEnd}
-                              className={cn("shrink-0 p-0.5 mt-0.5 rounded transition-colors opacity-0 group-hover/text:opacity-100", pipelineRunning ? "cursor-default opacity-30" : "cursor-grab active:cursor-grabbing hover:bg-accent")}
-                              title={pipelineRunning ? undefined : t`Drag to reorder or move to another group`}
-                            >
-                              <GripVertical className="h-3 w-3 text-muted-foreground/50" />
-                            </div>
-                            {textTypes ? (
-                              <Select
-                                value={textEntry.textType}
-                                onValueChange={(val) =>
-                                  onChangeTextType(partIndex, ti, val)
-                                }
-                                disabled={pipelineRunning}
-                              >
-                                <SelectTrigger className="shrink-0 h-5 text-[10px] font-medium px-1.5 py-0 w-auto min-w-[60px] border-0 bg-muted/50">
-                                  <SelectValue>{textEntry.textType}</SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {Object.entries(textTypes).map(
-                                    ([key, desc]) => (
-                                      <SelectItem
-                                        key={key}
-                                        value={key}
-                                        className="text-xs"
-                                      >
-                                        {key}
-                                        <span className="ml-1 text-muted-foreground text-[10px]">
-                                          {desc}
-                                        </span>
-                                      </SelectItem>
-                                    )
-                                  )}
-                                </SelectContent>
-                              </Select>
-                            ) : (
-                              <span className="shrink-0 text-xs font-medium text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5 text-center">
-                                {textEntry.textType}
-                              </span>
-                            )}
-                            <EditableText
-                              value={textEntry.text}
-                              onCommit={(newText) =>
-                                onEditText(partIndex, ti, newText)
-                              }
-                              disabled={pipelineRunning}
-                            />
-                            <div className="shrink-0 flex items-center gap-0.5 self-center opacity-0 group-hover/text:opacity-100 transition-opacity">
-                              <button
-                                type="button"
-                                onClick={() => onDuplicateTextEntry(partIndex, ti)}
-                                disabled={pipelineRunning}
-                                className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
-                                title={t`Duplicate text entry`}
-                              >
-                                <Copy className="h-3 w-3 text-muted-foreground" />
-                              </button>
-                              {textEntry.isPruned && (
-                                <button
-                                  type="button"
-                                  onClick={() => onDeleteTextEntry(partIndex, ti)}
-                                  disabled={pipelineRunning}
-                                  className="p-0.5 rounded hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
-                                  title={t`Delete text entry`}
-                                >
-                                  <Trash2 className="h-3 w-3 text-red-600" />
-                                </button>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => onToggleTextPruned(partIndex, ti)}
-                                disabled={pipelineRunning}
-                                className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
-                                title={
-                                  textEntry.isPruned
-                                    ? t`Include in render`
-                                    : t`Exclude from render`
-                                }
-                              >
-                                {textEntry.isPruned ? (
-                                  <EyeOff className="h-3 w-3 text-muted-foreground" />
-                                ) : (
-                                  <Eye className="h-3 w-3 text-muted-foreground" />
-                                )}
-                              </button>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                    </div>
-                  </div>
-                )
-              })}
-              {/* Drop zone after the last group */}
-              {dragGroupIdx !== null && (() => {
-                const lastTextGroupIdx = parts.reduce((last, p, i) => p.type === "text_group" ? i : last, -1)
-                const showDropLine = dropGroupSlot === `after:${lastTextGroupIdx}` && dragGroupIdx !== lastTextGroupIdx
-                return (
-                  <div
-                    className="py-1.5"
-                    onDragOver={(e) => {
-                      if (!e.dataTransfer.types.includes(DRAG_TYPE_GROUP)) return
-                      e.preventDefault()
-                      e.dataTransfer.dropEffect = "move"
-                      setDropGroupSlot(`after:${lastTextGroupIdx}`)
-                    }}
-                    onDrop={handleGroupDrop}
-                  >
-                    {showDropLine && (
-                      <div className="h-0.5 bg-primary rounded-full" />
-                    )}
-                  </div>
-                )
-              })()}
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={onAddGroup}
-            disabled={pipelineRunning}
-            className={cn(
-              "flex items-center justify-center gap-1.5 w-full rounded border border-dashed py-3 text-xs transition-colors mt-3",
-              pipelineRunning
-                ? "border-muted-foreground/20 text-muted-foreground/50 cursor-default"
-                : "border-muted-foreground/30 hover:border-muted-foreground/60 text-muted-foreground hover:text-foreground cursor-pointer"
-            )}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            {t`Add Group`}
-          </button>
-        </div>
-
         {/* Content Tree — for content_node parts */}
         {hasContentNodeParts && (
           <div>

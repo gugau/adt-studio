@@ -642,20 +642,36 @@ export function moveNodeInTree(
   insertIndex: number,
 ): ContentNodeData | null {
   let draggedNode: ContentNodeData | null = null
+  let dragParentId: string | null = null
+  let dragIndexInParent = -1
   const removeNode = (n: ContentNodeData): ContentNodeData => {
     if (!n.children) return n
-    const filtered = n.children.filter((c) => {
-      if (c.nodeId === dragNodeId) { draggedNode = c; return false }
-      return true
-    }).map(removeNode)
-    return { ...n, children: filtered }
+    const newChildren: ContentNodeData[] = []
+    for (let i = 0; i < n.children.length; i++) {
+      const c = n.children[i]
+      if (c.nodeId === dragNodeId) {
+        draggedNode = c
+        dragParentId = n.nodeId
+        dragIndexInParent = i
+        continue
+      }
+      newChildren.push(removeNode(c))
+    }
+    return { ...n, children: newChildren }
   }
   const treeWithout = removeNode(root)
   if (!draggedNode) return null
 
+  // When source and target share a parent and the drag originated before the
+  // insert position, the post-removal children have shifted left by 1.
+  const effectiveParentId = targetParentId ?? root.nodeId
+  const adjustedIndex = dragParentId === effectiveParentId && dragIndexInParent < insertIndex
+    ? insertIndex - 1
+    : insertIndex
+
   if (targetParentId === null || targetParentId === root.nodeId) {
     const children = [...(treeWithout.children ?? [])]
-    children.splice(insertIndex, 0, draggedNode)
+    children.splice(adjustedIndex, 0, draggedNode)
     return { ...treeWithout, children }
   }
 
@@ -664,7 +680,7 @@ export function moveNodeInTree(
     if (n.nodeId === targetParentId) {
       inserted = true
       const children = [...(n.children ?? [])]
-      children.splice(insertIndex, 0, draggedNode!)
+      children.splice(adjustedIndex, 0, draggedNode!)
       return { ...n, children }
     }
     if (!n.children) return n

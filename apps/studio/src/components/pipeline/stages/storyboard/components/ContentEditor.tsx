@@ -613,7 +613,7 @@ function RenderTypeIndicator({
       )}
     >
       {isTemplate ? <LayoutTemplate className="h-2.5 w-2.5" /> : <Sparkles className="h-2.5 w-2.5" />}
-      {isTemplate ? "Template" : "AI"}
+      {isTemplate ? <Trans>Template</Trans> : <Trans>AI</Trans>}
     </span>
   )
 }
@@ -671,7 +671,7 @@ function extractAnswerContexts(html: string): Map<string, string> {
     if (label) { ctx.set(itemId, label.textContent?.trim() ?? ""); continue }
     const id = input.getAttribute("id")
     if (id) {
-      const assocLabel = doc.querySelector(`label[for="${id}"]`)
+      const assocLabel = doc.querySelector(`label[for="${CSS.escape(id)}"]`)
       if (assocLabel) { ctx.set(itemId, assocLabel.textContent?.trim() ?? ""); continue }
     }
     const container = input.closest("li") ?? input.closest("div")

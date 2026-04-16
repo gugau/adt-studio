@@ -16,7 +16,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
   const { t } = useLingui()
   const { data: pages, isLoading: pagesLoading } = usePages(bookLabel)
   const setSelectedPageId = onSelectPage ?? (() => {})
-  const [activeTab, setActiveTab] = useState<"content" | "preview">("content")
+  const [activeTab, setActiveTab] = useState<"content" | "preview">("preview")
   const [editPanelOpen, setEditPanelOpen] = useState(false)
   const { setExtra, setOnLabelClick } = useStepHeader()
   const { stageState, queueRun } = useBookRun()
@@ -51,6 +51,17 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
       setSelectedPageId(pageList[0].pageId)
     }
   }, [selectedPageIdProp, pageList.length, showRunCard, setSelectedPageId])
+
+  // When the user picks a different page from the left nav, switch back to Preview.
+  // Only fires for real page-to-page transitions, not initial selection from null.
+  const prevSelectedPageIdRef = useRef<string | null>(null)
+  useEffect(() => {
+    const prev = prevSelectedPageIdRef.current
+    if (prev && selectedPageIdProp && prev !== selectedPageIdProp) {
+      setActiveTab("preview")
+    }
+    prevSelectedPageIdRef.current = selectedPageIdProp ?? null
+  }, [selectedPageIdProp])
 
   const selectedPageId = selectedPageIdProp ?? null
   const currentPageIndex = selectedPageId ? pageList.findIndex((p) => p.pageId === selectedPageId) : -1

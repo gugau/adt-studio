@@ -292,7 +292,9 @@ export function SectioningOverview({ bookLabel, pages, onNavigateToSection }: Se
       // Trigger re-render for each affected page
       if (hasApiKey) {
         for (const [pageId] of entries) {
-          api.reRenderPage(bookLabel, pageId, apiKey).catch(() => {})
+          api.reRenderPage(bookLabel, pageId, apiKey).catch((err) => {
+            console.error(`[saveAllPending] re-render failed for page ${pageId}:`, err)
+          })
         }
       }
       setPendingByPage(new Map())
@@ -328,7 +330,8 @@ export function SectioningOverview({ bookLabel, pages, onNavigateToSection }: Se
 
     const sections = [...page.sectioning.sections]
     const [moved] = sections.splice(from.sectionIndex, 1)
-    sections.splice(to.sectionIndex, 0, moved)
+    const insertIndex = to.sectionIndex > from.sectionIndex ? to.sectionIndex - 1 : to.sectionIndex
+    sections.splice(insertIndex, 0, moved)
 
     const updated = { ...page.sectioning, sections }
     stagePendingSectioning(page.pageId, updated)
@@ -528,7 +531,7 @@ export function SectioningOverview({ bookLabel, pages, onNavigateToSection }: Se
       {hasPendingChanges && !saving && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 bg-popover border shadow-lg rounded-full px-3 py-1.5 animate-in slide-in-from-bottom-4">
           <span className="text-xs text-muted-foreground pl-1">
-            <Trans>Unsaved changes on {pendingByPage.size} {pendingByPage.size === 1 ? "page" : "pages"}</Trans>
+            <Trans>Unsaved changes on {pendingByPage.size} {pendingByPage.size === 1 ? t`page` : t`pages`}</Trans>
           </span>
           <button
             type="button"
