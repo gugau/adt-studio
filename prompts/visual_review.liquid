@@ -66,6 +66,7 @@ On mobile only (no prefix), favor a single-column stacked layout (images and tex
 ## RULES
 - Preserve ALL data-id attributes exactly as they are
 - Elements with `data-id` attributes are TEXT-ONLY containers — their inner content is replaced with literal text at render time. Do NOT nest any HTML tags (like `<span>`, `<strong>`, `<em>`, etc.) inside them. Any styling must be applied to the element itself via Tailwind classes, not to nested child elements.
+- Preserve paragraph-flow groupings. When multiple `data-id` elements (typically `<span>`s) are wrapped in a single non-data-id block like `<p>` or `<h1>`, this is an intentional pattern that keeps sentences flowing as one paragraph. Do NOT split them into one block per `data-id` (e.g. `<p data-id="a">...</p><p data-id="b">...</p>`) — that breaks paragraph flow. Keep the wrapping block and the inner `<span data-id="...">` structure intact.
 - Preserve ALL text content exactly — do not change, add, or remove any words
 - Preserve ALL image tags and their data-id attributes
 - Only change layout and styling: Tailwind CSS classes, inline styles, spacing, positioning
