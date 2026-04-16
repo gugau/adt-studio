@@ -318,6 +318,12 @@ msgstr "Um identificador único usado como nome da pasta do livro."
 msgid "A unique string used to authenticate and authorize API requests."
 msgstr "Uma sequência única usada para autenticar e autorizar solicitações à API."
 
+msgid "A valid project archive contains a .db database file at its root. Make sure you're uploading a file exported from ADT Studio."
+msgstr "Um arquivo de projeto válido contém um arquivo de banco de dados .db na raiz. Certifique-se de estar enviando um arquivo exportado do ADT Studio."
+
+msgid "A valid project must include the original PDF file. The archive may have been modified after export."
+msgstr "Um projeto válido deve incluir o arquivo PDF original. O arquivo pode ter sido modificado após a exportação."
+
 #. placeholder {0}: replaceConfirm?.file.name
 msgid "A video named \"{0}\" already exists. Do you want to replace it?"
 msgstr "Já existe um vídeo chamado \"{0}\". Deseja substituí-lo?"
@@ -1660,6 +1666,9 @@ msgstr "Figura 5.1 - O ciclo da água: evaporação dos oceanos, condensação e
 
 msgid "Figure Extraction"
 msgstr "Extração de Figuras"
+
+msgid "File accepted"
+msgstr "Arquivo aceito"
 
 msgid "Fill in the Blank"
 msgstr "Preencher lacunas"
@@ -3629,6 +3638,9 @@ msgstr "Slide {0}"
 msgid "Smart Cropping"
 msgstr "Corte Inteligente"
 
+msgid "Something went wrong"
+msgstr "Algo deu errado"
+
 msgid "Spanish"
 msgstr "Espanhol"
 
@@ -3838,6 +3850,9 @@ msgstr "Tipos de texto"
 msgid "Textbooks & Activities"
 msgstr "Livros Didáticos & Atividades"
 
+msgid "The .db file exists but doesn't have the expected structure. This ZIP may contain a database from another application."
+msgstr "O arquivo .db existe mas não tem a estrutura esperada. Este ZIP pode conter um banco de dados de outro aplicativo."
+
 msgid "The AI is having a think..."
 msgstr "A IA está pensando..."
 
@@ -3853,11 +3868,20 @@ msgstr "A página de créditos."
 msgid "The data sent within the body of a request or response message."
 msgstr "Os dados enviados no corpo de uma mensagem de requisição ou resposta."
 
+msgid "The database in this archive is not from ADT Studio"
+msgstr "O banco de dados neste arquivo não é do ADT Studio"
+
+msgid "The database was found but contains no pages. The project may be incomplete or corrupted."
+msgstr "O banco de dados foi encontrado mas não contém páginas. O projeto pode estar incompleto ou corrompido."
+
 msgid "The default TTS instruction sent to OpenAI for all languages unless overridden below."
 msgstr "A instrução padrão de TTS enviada ao OpenAI para todos os idiomas, a menos que seja substituída abaixo."
 
 msgid "The entire page is treated as a single section - all text and images stay together as one unit. Best for storybooks, reference books, and any content where each page is self-contained."
 msgstr "A página inteira é tratada como uma única seção - todo o texto e imagens permanecem juntos como uma unidade. Melhor para livros de histórias, livros de referência e qualquer conteúdo onde cada página é autossuficiente."
+
+msgid "The file may be damaged or incomplete. Try downloading it again from the source."
+msgstr "O arquivo pode estar danificado ou incompleto. Tente baixá-lo novamente da fonte."
 
 msgid "The following terms are used throughout this manual. Familiarity with these definitions is required before proceeding to the implementation chapters."
 msgstr "Os seguintes termos são usados ao longo deste manual. Familiaridade com essas definições é necessária antes de prosseguir para os capítulos de implementação."
@@ -3879,6 +3903,9 @@ msgstr "A Floresta Perdida"
 
 msgid "The model detects bounding boxes so each visual element can be stored and laid out separately."
 msgstr "O modelo detecta caixas delimitadoras para que cada elemento visual possa ser armazenado e disposto separadamente."
+
+msgid "The project archive is missing its PDF"
+msgstr "O arquivo do projeto está sem o PDF"
 
 msgid "The prompt template used for text classification. This is a Liquid template processed with page context."
 msgstr "O template de prompt usado para classificação de texto. Este é um template Liquid processado com contexto de página."
@@ -3922,11 +3949,23 @@ msgstr "O índice."
 msgid "The Water Cycle"
 msgstr "O Ciclo da Água"
 
+msgid "The ZIP includes paths that try to write outside the project directory. This archive cannot be imported for security reasons."
+msgstr "O ZIP inclui caminhos que tentam gravar fora do diretório do projeto. Este arquivo não pode ser importado por razões de segurança."
+
 msgid "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."
 msgstr "Esses recursos melhoram o acesso para pessoas com deficiência. Executá-los antes de exportar ajuda seu livro a atender aos padrões de acessibilidade ADT."
 
 msgid "These values reflect either the saved book override or the latest packaged defaults."
 msgstr "These values reflect either the saved book override or the latest packaged defaults."
+
+msgid "This archive contains unsafe file paths"
+msgstr "Este arquivo contém caminhos de arquivo inseguros"
+
+msgid "This doesn't look like an ADT Studio project"
+msgstr "Isto não parece um projeto do ADT Studio"
+
+msgid "This file couldn't be read as a ZIP archive"
+msgstr "Este arquivo não pôde ser lido como um arquivo ZIP"
 
 msgid "This is a preview of the options you have selected for your book, each option affects the preview in a different way."
 msgstr "Esta é uma pré-visualização das opções que você selecionou para o seu livro, cada opção afeta a pré-visualização de uma maneira diferente."
@@ -3945,6 +3984,9 @@ msgstr "Esta página não tem entradas de texto traduzíveis"
 
 msgid "This page has not been reviewed yet"
 msgstr "This page has not been reviewed yet"
+
+msgid "This project appears to be empty"
+msgstr "Este projeto parece estar vazio"
 
 msgid "This section has no storyboard rendering yet"
 msgstr "Esta seção ainda não tem renderização de storyboard"

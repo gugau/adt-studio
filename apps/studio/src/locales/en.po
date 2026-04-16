@@ -318,6 +318,12 @@ msgstr "A unique identifier used as the book folder name."
 msgid "A unique string used to authenticate and authorize API requests."
 msgstr "A unique string used to authenticate and authorize API requests."
 
+msgid "A valid project archive contains a .db database file at its root. Make sure you're uploading a file exported from ADT Studio."
+msgstr "A valid project archive contains a .db database file at its root. Make sure you're uploading a file exported from ADT Studio."
+
+msgid "A valid project must include the original PDF file. The archive may have been modified after export."
+msgstr "A valid project must include the original PDF file. The archive may have been modified after export."
+
 #. placeholder {0}: replaceConfirm?.file.name
 msgid "A video named \"{0}\" already exists. Do you want to replace it?"
 msgstr "A video named \"{0}\" already exists. Do you want to replace it?"
@@ -1660,6 +1666,9 @@ msgstr "Figure 5.1 - The water cycle: evaporation from oceans, condensation into
 
 msgid "Figure Extraction"
 msgstr "Figure Extraction"
+
+msgid "File accepted"
+msgstr "File accepted"
 
 msgid "Fill in the Blank"
 msgstr "Fill in the Blank"
@@ -3629,6 +3638,9 @@ msgstr "Slide {0}"
 msgid "Smart Cropping"
 msgstr "Smart Cropping"
 
+msgid "Something went wrong"
+msgstr "Something went wrong"
+
 msgid "Spanish"
 msgstr "Spanish"
 
@@ -3838,6 +3850,9 @@ msgstr "Text Types"
 msgid "Textbooks & Activities"
 msgstr "Textbooks & Activities"
 
+msgid "The .db file exists but doesn't have the expected structure. This ZIP may contain a database from another application."
+msgstr "The .db file exists but doesn't have the expected structure. This ZIP may contain a database from another application."
+
 msgid "The AI is having a think..."
 msgstr "The AI is having a think..."
 
@@ -3853,11 +3868,20 @@ msgstr "The credits page."
 msgid "The data sent within the body of a request or response message."
 msgstr "The data sent within the body of a request or response message."
 
+msgid "The database in this archive is not from ADT Studio"
+msgstr "The database in this archive is not from ADT Studio"
+
+msgid "The database was found but contains no pages. The project may be incomplete or corrupted."
+msgstr "The database was found but contains no pages. The project may be incomplete or corrupted."
+
 msgid "The default TTS instruction sent to OpenAI for all languages unless overridden below."
 msgstr "The default TTS instruction sent to OpenAI for all languages unless overridden below."
 
 msgid "The entire page is treated as a single section - all text and images stay together as one unit. Best for storybooks, reference books, and any content where each page is self-contained."
 msgstr "The entire page is treated as a single section - all text and images stay together as one unit. Best for storybooks, reference books, and any content where each page is self-contained."
+
+msgid "The file may be damaged or incomplete. Try downloading it again from the source."
+msgstr "The file may be damaged or incomplete. Try downloading it again from the source."
 
 msgid "The following terms are used throughout this manual. Familiarity with these definitions is required before proceeding to the implementation chapters."
 msgstr "The following terms are used throughout this manual. Familiarity with these definitions is required before proceeding to the implementation chapters."
@@ -3879,6 +3903,9 @@ msgstr "The Lost Forest"
 
 msgid "The model detects bounding boxes so each visual element can be stored and laid out separately."
 msgstr "The model detects bounding boxes so each visual element can be stored and laid out separately."
+
+msgid "The project archive is missing its PDF"
+msgstr "The project archive is missing its PDF"
 
 msgid "The prompt template used for text classification. This is a Liquid template processed with page context."
 msgstr "The prompt template used for text classification. This is a Liquid template processed with page context."
@@ -3922,11 +3949,23 @@ msgstr "The table of contents."
 msgid "The Water Cycle"
 msgstr "The Water Cycle"
 
+msgid "The ZIP includes paths that try to write outside the project directory. This archive cannot be imported for security reasons."
+msgstr "The ZIP includes paths that try to write outside the project directory. This archive cannot be imported for security reasons."
+
 msgid "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."
 msgstr "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."
 
 msgid "These values reflect either the saved book override or the latest packaged defaults."
 msgstr "These values reflect either the saved book override or the latest packaged defaults."
+
+msgid "This archive contains unsafe file paths"
+msgstr "This archive contains unsafe file paths"
+
+msgid "This doesn't look like an ADT Studio project"
+msgstr "This doesn't look like an ADT Studio project"
+
+msgid "This file couldn't be read as a ZIP archive"
+msgstr "This file couldn't be read as a ZIP archive"
 
 msgid "This is a preview of the options you have selected for your book, each option affects the preview in a different way."
 msgstr "This is a preview of the options you have selected for your book, each option affects the preview in a different way."
@@ -3945,6 +3984,9 @@ msgstr "This page has no translatable text entries"
 
 msgid "This page has not been reviewed yet"
 msgstr "This page has not been reviewed yet"
+
+msgid "This project appears to be empty"
+msgstr "This project appears to be empty"
 
 msgid "This section has no storyboard rendering yet"
 msgstr "This section has no storyboard rendering yet"

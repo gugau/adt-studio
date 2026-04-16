@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Link, useNavigate } from "@tanstack/react-router"
 import {
   ArrowLeft,
@@ -13,7 +13,6 @@ import {
   BookOpen,
   AudioLines,
   HelpCircle,
-  Hand,
   List,
   LayoutDashboard,
   Languages,
@@ -204,6 +203,57 @@ function isZipFile(f: File) {
   return f.name.endsWith(".zip") || f.type === "application/zip" || f.type === "application/x-zip-compressed"
 }
 
+interface FriendlyError {
+  title: string
+  hint: string
+}
+
+function useFriendlyError(rawError: string | null): FriendlyError | null {
+  const { t } = useLingui()
+  if (!rawError) return null
+
+  if (rawError.includes("Invalid ZIP file"))
+    return {
+      title: t`This file couldn't be read as a ZIP archive`,
+      hint: t`The file may be damaged or incomplete. Try downloading it again from the source.`,
+    }
+
+  if (rawError.includes("missing database file"))
+    return {
+      title: t`This doesn't look like an ADT Studio project`,
+      hint: t`A valid project archive contains a .db database file at its root. Make sure you're uploading a file exported from ADT Studio.`,
+    }
+
+  if (rawError.includes("missing PDF file"))
+    return {
+      title: t`The project archive is missing its PDF`,
+      hint: t`A valid project must include the original PDF file. The archive may have been modified after export.`,
+    }
+
+  if (rawError.includes("does not contain expected ADT tables"))
+    return {
+      title: t`The database in this archive is not from ADT Studio`,
+      hint: t`The .db file exists but doesn't have the expected structure. This ZIP may contain a database from another application.`,
+    }
+
+  if (rawError.includes("contains no pages"))
+    return {
+      title: t`This project appears to be empty`,
+      hint: t`The database was found but contains no pages. The project may be incomplete or corrupted.`,
+    }
+
+  if (rawError.includes("paths that escape"))
+    return {
+      title: t`This archive contains unsafe file paths`,
+      hint: t`The ZIP includes paths that try to write outside the project directory. This archive cannot be imported for security reasons.`,
+    }
+
+  return {
+    title: t`Something went wrong`,
+    hint: rawError,
+  }
+}
+
 export function ImportProject() {
   const { t } = useLingui()
   const navigate = useNavigate()
@@ -214,10 +264,16 @@ export function ImportProject() {
   const [previewLoading, setPreviewLoading] = useState(false)
   const [previewError, setPreviewError] = useState<string | null>(null)
 
+  const friendlyPreviewError = useFriendlyError(previewError)
+  const friendlyImportError = useFriendlyError(
+    importMutation.error ? (importMutation.error instanceof Error ? importMutation.error.message : String(importMutation.error)) : null,
+  )
+
   const loadPreview = useCallback(async (file: File) => {
     setPreviewLoading(true)
     setPreviewError(null)
     setPreview(null)
+    importMutation.reset()
     try {
       const result = await api.previewImport(file)
       setPreview(result)
@@ -226,7 +282,7 @@ export function ImportProject() {
     } finally {
       setPreviewLoading(false)
     }
-  }, [t])
+  }, [t, importMutation.reset])
 
   const handleAccept = useCallback((f: File) => {
     setZipFile(f)
@@ -254,6 +310,7 @@ export function ImportProject() {
     setZipFile(null)
     setPreview(null)
     setPreviewError(null)
+    importMutation.reset()
   }
 
   function handleImport() {
@@ -262,6 +319,45 @@ export function ImportProject() {
       onSuccess: () => navigate({ to: "/" }),
     })
   }
+
+  const hasPreview = zipFile && preview && !previewError
+  const hasError = friendlyPreviewError || friendlyImportError
+  const activeError = friendlyImportError ?? friendlyPreviewError
+
+  const [accepted, setAccepted] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
+
+  useEffect(() => {
+    if (!hasPreview) {
+      setAccepted(false)
+      setShowPreview(false)
+      return
+    }
+    setAccepted(true)
+    const timer = setTimeout(() => setShowPreview(true), 500)
+    return () => clearTimeout(timer)
+  }, [hasPreview])
+
+  const [deferredError, setDeferredError] = useState<FriendlyError | null>(null)
+  const [deferredImportError, setDeferredImportError] = useState<FriendlyError | null>(null)
+
+  useEffect(() => {
+    if (activeError) {
+      setDeferredError(activeError)
+    } else {
+      const timer = setTimeout(() => setDeferredError(null), 300)
+      return () => clearTimeout(timer)
+    }
+  }, [activeError])
+
+  useEffect(() => {
+    if (friendlyImportError) {
+      setDeferredImportError(friendlyImportError)
+    } else {
+      const timer = setTimeout(() => setDeferredImportError(null), 300)
+      return () => clearTimeout(timer)
+    }
+  }, [friendlyImportError])
 
   return (
     <>
@@ -277,11 +373,11 @@ export function ImportProject() {
             <Trans>Import a Project</Trans>
           </h1>
           <p className="max-w-xl text-center text-sm text-[#525252]">
-            {zipFile && preview
+            {hasPreview
               ? <Trans>Review the project details below and confirm the import.</Trans>
               : <Trans>Upload an ADT Studio project archive (.zip) exported by you or shared by a colleague.</Trans>}
           </p>
-          {!zipFile && (
+          {!zipFile && !hasError && (
             <p className="text-center text-xs text-slate-400">
               <Trans>Don't have a project yet?</Trans>{" "}
               <Link to="/books/new" className="text-blue-500 hover:text-blue-600 underline underline-offset-2 transition-colors">
@@ -299,80 +395,145 @@ export function ImportProject() {
           onChange={handleFileChange}
         />
 
-        {/* Content area */}
-        <div className={`w-full flex justify-center px-4 ${zipFile && preview ? "" : DROP_ZONE_HEIGHT}`}>
-          {zipFile && previewLoading ? (
-            <div className="flex flex-col items-center justify-center gap-3 h-full">
-              <Loader2 className="h-8 w-8 text-amber-500 animate-spin" />
-              <span className="text-sm text-[#737373]">
-                <Trans>Reading archive...</Trans>
-              </span>
-            </div>
-          ) : zipFile && preview ? (
-            <div className="relative">
-              <PreviewCard preview={preview} fileName={zipFile.name} fileSize={zipFile.size} />
-              <button
-                type="button"
-                onClick={clearFile}
-                className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-white border border-[#e5e5e5] text-[#737373] hover:text-[#ef4444] hover:border-[#ef4444]/50 transition-colors shadow-sm"
-                aria-label={t`Remove file`}
+        <div className="w-full flex flex-col items-center gap-4 px-4">
+          {/* Error banner — animated in/out */}
+          <div className={cn(
+            "w-full max-w-md transition-all duration-300 ease-out",
+            hasError
+              ? "opacity-100 max-h-40 scale-100"
+              : "opacity-0 max-h-0 scale-95 overflow-hidden pointer-events-none",
+          )}>
+            {(activeError || deferredError) && (
+              <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50/60 px-4 py-3">
+                <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-red-700">{(activeError ?? deferredError)!.title}</p>
+                  <p className="text-xs text-red-600/80 mt-0.5 leading-relaxed">{(activeError ?? deferredError)!.hint}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Crossfade container — drop zone and preview share the same cell */}
+          <div className="w-full grid place-items-center [&>*]:col-start-1 [&>*]:row-start-1">
+            {/* Drop zone layer */}
+            <div className={cn(
+              "w-full flex justify-center transition-all ease-out",
+              showPreview
+                ? "opacity-0 scale-95 pointer-events-none duration-300"
+                : `opacity-100 scale-100 ${DROP_ZONE_HEIGHT} duration-300`,
+            )}>
+              <div
+                role="button"
+                tabIndex={showPreview ? -1 : 0}
+                onClick={() => fileInputRef.current?.click()}
+                onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleDrop}
+                aria-label={t`Upload ZIP or drag and drop`}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg w-full max-w-md h-full cursor-pointer transition-colors duration-300",
+                  accepted
+                    ? "border-emerald-400 bg-emerald-50/40"
+                    : previewLoading
+                      ? "border-amber-400/60 bg-amber-500/[0.02]"
+                      : hasError
+                        ? "border-red-300 hover:border-red-400 bg-red-50/30 hover:bg-red-50/50"
+                        : "border-[#d4d4d4] hover:border-amber-500/60 hover:bg-amber-500/[0.02]",
+                )}
               >
-                <Trash2 className="h-3 w-3" />
-              </button>
+                {accepted ? (
+                  <div className="flex items-center gap-2 animate-in fade-in duration-200">
+                    <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center">
+                      <svg className="w-3 h-3 text-emerald-600" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </div>
+                    <span className="text-sm font-medium text-emerald-600">
+                      <Trans>File accepted</Trans>
+                    </span>
+                  </div>
+                ) : previewLoading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 text-amber-500 animate-spin" />
+                    <span className="text-sm text-[#737373]">
+                      <Trans>Reading archive...</Trans>
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className={cn("h-5 w-5", hasError ? "text-red-400" : "text-[#737373]")} />
+                    <span className={cn("text-sm", hasError ? "text-red-500" : "text-[#737373]")}>
+                      {hasError
+                        ? <Trans>Try another file</Trans>
+                        : <Trans>Upload ZIP or drag and drop</Trans>}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
-          ) : zipFile && previewError ? (
-            <div className="flex flex-col items-center justify-center gap-3 h-full max-w-md">
-              <AlertCircle className="h-8 w-8 text-[#ef4444]" />
-              <p className="text-sm text-[#ef4444] text-center">{previewError}</p>
-              <Button variant="outline" size="sm" onClick={clearFile}>
-                <Trans>Try another file</Trans>
-              </Button>
+
+            {/* Preview card layer */}
+            <div className={cn(
+              "w-full flex justify-center transition-all duration-500 ease-out",
+              showPreview
+                ? "opacity-100 scale-100"
+                : "opacity-0 scale-95 pointer-events-none",
+            )}>
+              {hasPreview && (
+                <div className="relative">
+                  <PreviewCard preview={preview} fileName={zipFile.name} fileSize={zipFile.size} />
+                  <button
+                    type="button"
+                    onClick={clearFile}
+                    className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-white border border-[#e5e5e5] text-[#737373] hover:text-[#ef4444] hover:border-[#ef4444]/50 transition-colors shadow-sm"
+                    aria-label={t`Remove file`}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
             </div>
-          ) : (
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={() => fileInputRef.current?.click()}
-              onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleDrop}
-              aria-label={t`Upload ZIP or drag and drop`}
-              className="flex flex-col items-center justify-center gap-2 border border-dashed border-[#d4d4d4] rounded-lg w-full max-w-md h-full cursor-pointer hover:border-amber-500/60 hover:bg-amber-500/[0.02] transition-colors duration-200"
-            >
-              <Upload className="h-5 w-5 text-[#737373]" />
-              <span className="text-sm text-[#737373]">
-                <Trans>Upload ZIP or drag and drop</Trans>
-              </span>
-            </div>
-          )}
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Button
-            variant="secondary"
-            onClick={() => navigate({ to: "/" })}
-            className="h-9 px-3 py-2 bg-[#f5f5f5] text-[#262626] hover:bg-[#e5e5e5] border-0"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1.5" />
-            <Trans>Back</Trans>
-          </Button>
-          <Button
-            disabled={!preview || !!preview.validationError || importMutation.isPending}
-            onClick={handleImport}
-            className="h-9 px-3 py-2 text-white bg-amber-500 hover:bg-amber-600 disabled:opacity-50 border-0"
-          >
-            {importMutation.isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                <Trans>Importing...</Trans>
-              </>
-            ) : (
-              <>
-                <Upload className="h-4 w-4 mr-1.5" />
-                <Trans>Import</Trans>
-              </>
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="secondary"
+              onClick={() => navigate({ to: "/" })}
+              className="h-9 px-3 py-2 bg-[#f5f5f5] text-[#262626] hover:bg-[#e5e5e5] border-0"
+            >
+              <ArrowLeft className="h-4 w-4 mr-1.5" />
+              <Trans>Back</Trans>
+            </Button>
+            <Button
+              disabled={!preview || !!preview.validationError || importMutation.isPending}
+              onClick={handleImport}
+              className="h-9 px-3 py-2 text-white bg-amber-500 hover:bg-amber-600 disabled:opacity-50 border-0"
+            >
+              {importMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                  <Trans>Importing...</Trans>
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-1.5" />
+                  <Trans>Import</Trans>
+                </>
+              )}
+            </Button>
+          </div>
+          {/* Import mutation error — shown below buttons */}
+          <div className={cn(
+            "transition-all duration-300 ease-out",
+            friendlyImportError
+              ? "opacity-100 max-h-10"
+              : "opacity-0 max-h-0 overflow-hidden",
+          )}>
+            {(friendlyImportError || deferredImportError) && (
+              <p className="text-xs text-red-500 text-center">{(friendlyImportError ?? deferredImportError)!.title}</p>
             )}
-          </Button>
+          </div>
         </div>
       </div>
     </>
