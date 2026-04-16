@@ -135,10 +135,10 @@ function expandParts(
 /**
  * Recursively flatten a ContentNodeData subtree into render-ready SectionParts.
  * Text leaves become group parts, image leaves become image parts.
- * Consecutive text-leaf children of a container are merged into a single
- * group (keyed by the container's structure) so that e.g. a "group"/paragraph
- * container with multiple sentence leaves is rendered as one paragraph rather
- * than one block per sentence.
+ * Consecutive text-leaf children of a container that share the same role are
+ * merged into a single group (keyed on that role), so e.g. a run of `text`
+ * sentences renders as one paragraph while a sibling `heading` leaf stays its
+ * own group.
  */
 function flattenContentNode(
   node: ContentNodeData,
@@ -173,21 +173,25 @@ function flattenContentNode(
     return
   }
 
-  // Container — walk children, buffering runs of text leaves into one group
-  // tagged with this container's structure so the renderer sees a paragraph
-  // (or whatever the container represents), not a sequence of lone sentences.
+  // Container — walk children, buffering runs of same-role text leaves so
+  // sentence runs render as one paragraph while different-role siblings stay
+  // separate.
   if (!node.children) return
 
+  let bufferRole: string | null = null
+  let bufferGroupId: string | null = null
   let buffer: TextInput[] = []
   const flush = () => {
-    if (buffer.length === 0) return
+    if (buffer.length === 0 || bufferRole == null || bufferGroupId == null) return
     parts.push({
       type: "group",
-      groupId: node.nodeId,
-      groupType: node.structure ?? "group",
+      groupId: bufferGroupId,
+      groupType: bufferRole,
       texts: buffer,
     })
     buffer = []
+    bufferRole = null
+    bufferGroupId = null
   }
 
   for (const child of node.children) {
@@ -195,6 +199,11 @@ function flattenContentNode(
     const isTextLeaf =
       child.text != null && child.role && !child.children?.length
     if (isTextLeaf) {
+      if (bufferRole !== null && bufferRole !== child.role) flush()
+      if (bufferRole === null) {
+        bufferRole = child.role!
+        bufferGroupId = child.nodeId
+      }
       buffer.push({ textId: child.nodeId, textType: child.role!, text: child.text! })
     } else {
       flush()
