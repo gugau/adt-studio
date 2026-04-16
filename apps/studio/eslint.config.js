@@ -76,6 +76,10 @@ export default [
             // Image processing preview pane focus key (ImageProcessingPreviewFocus — not user-visible)
             "previewFocus",
 
+            // --- CSS inline style properties (el.style.* assignments) ---
+            "transition",
+            "transform",
+
             // --- CSS class & color props (never user-visible) ---
             "rootMargin",
             "color",
