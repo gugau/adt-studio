@@ -1121,6 +1121,22 @@ describe("convertLatexToMathml (HTML)", () => {
     const result = convertLatexToMathml(html)
     expect(result).toContain("<math")
   })
+
+  it("does not convert snake_case identifiers in prose as math", () => {
+    const html = '<p>Set the variable_name to the desired value and review snake_case style.</p>'
+    const result = convertLatexToMathml(html)
+    expect(result).toBe(html)
+    expect(result).not.toContain("<math")
+  })
+
+  it("does not mangle snake_case words embedded in math-containing prose", () => {
+    const html = '<p>Please configure the variable_name setting before running any experiments where X_i represents each independent measurement taken during the trial.</p>'
+    const result = convertLatexToMathml(html)
+    // snake_case word must be preserved verbatim
+    expect(result).toContain("variable_name")
+    // X_i should be converted to math
+    expect(result).toContain("<math")
+  })
 })
 
 describe("packageWebpub", () => {
