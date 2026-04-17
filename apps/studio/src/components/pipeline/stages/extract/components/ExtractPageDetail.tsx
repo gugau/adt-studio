@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { AlertTriangle, Check, Crop, Eye, EyeOff, FileText, Image, ImageOff, Layers, Loader2, ChevronDown, X, RefreshCw } from "lucide-react"
+import { AlertTriangle, Braces, Check, Crop, Eye, EyeOff, FileText, Image, ImageOff, Layers, List, Loader2, ChevronDown, X, RefreshCw } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { usePage, usePageImage } from "@/hooks/use-pages"
 import { api, BASE_URL } from "@/api/client"
@@ -247,6 +247,7 @@ export function ExtractPageDetail({
   const [cropTarget, setCropTarget] = useState<string | null>(null)
   const [cropPageSrc, setCropPageSrc] = useState<string | null>(null)
   const [cacheBust, setCacheBust] = useState(0)
+  const [structureView, setStructureView] = useState<"tree" | "json">("tree")
   const queryClient = useQueryClient()
 
   // Clear pending state when page changes
@@ -525,6 +526,26 @@ export function ExtractPageDetail({
               <Layers className="h-3 w-3" />
               <Trans>Page Structure</Trans>
               <div className="ml-auto flex items-center gap-1.5">
+              <div className="inline-flex items-center rounded bg-muted p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setStructureView("tree")}
+                  className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${structureView === "tree" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                  title={t`Tree view`}
+                >
+                  <List className="h-3 w-3" />
+                  <Trans>Tree</Trans>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStructureView("json")}
+                  className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${structureView === "json" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                  title={t`JSON view`}
+                >
+                  <Braces className="h-3 w-3" />
+                  <Trans>JSON</Trans>
+                </button>
+              </div>
               <VersionPicker
                 currentVersion={page.versions.pageStructuring}
                 saving={savingText}
@@ -549,25 +570,31 @@ export function ExtractPageDetail({
               )}
               </div>
             </h3>
-            <div className="space-y-0.5">
-              {structuringData.nodes.map((node, i) => (
-                <ContentNodeBlock
-                  key={node.nodeId}
-                  node={node}
-                  parentId={null}
-                  indexInParent={i}
-                  bookLabel={bookLabel}
-                  depth={0}
-                  disabled={storyboardRunning}
-                  containerTypes={containerTypes}
-                  leafTypes={leafTypes}
-                  onTogglePruned={handleTogglePruned}
-                  onEditText={handleEditText}
-                  onChangeType={handleChangeType}
-                  onMoveNode={handleMoveNode}
-                />
-              ))}
-            </div>
+            {structureView === "tree" ? (
+              <div className="space-y-0.5">
+                {structuringData.nodes.map((node, i) => (
+                  <ContentNodeBlock
+                    key={node.nodeId}
+                    node={node}
+                    parentId={null}
+                    indexInParent={i}
+                    bookLabel={bookLabel}
+                    depth={0}
+                    disabled={storyboardRunning}
+                    containerTypes={containerTypes}
+                    leafTypes={leafTypes}
+                    onTogglePruned={handleTogglePruned}
+                    onEditText={handleEditText}
+                    onChangeType={handleChangeType}
+                    onMoveNode={handleMoveNode}
+                  />
+                ))}
+              </div>
+            ) : (
+              <pre className="text-[11px] leading-snug font-mono bg-muted/30 border border-border/40 rounded-md p-2 overflow-auto max-h-[60vh] whitespace-pre-wrap break-words">
+                {JSON.stringify(structuringData, null, 2)}
+              </pre>
+            )}
           </div>
         )}
 

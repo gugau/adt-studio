@@ -77,7 +77,6 @@ const LEAF_STYLES: Record<string, TypeStyle> = {
   book_metadata: { ...GREY, icon: <Type className={IC} /> },
   header: { ...GREY, icon: <Type className={IC} /> },
   footer: { ...GREY, icon: <Type className={IC} /> },
-  image: { ...GREEN, icon: <Image className={IC} /> },
 }
 
 const DEFAULT_CONTAINER_STYLE: TypeStyle = { ...BLUE, icon: <Layers className={IC} /> }
@@ -332,7 +331,6 @@ export function ContentNodeBlock({
   const isContainer = hasChildren || (node.structure != null)
   const isText = node.text != null
   const imgSrc = node.imageId ? `${BASE_URL}/books/${bookLabel}/images/${node.imageId}` : null
-  const isImageLeaf = !isContainer && !isText && !!node.imageId
 
   const handleDragStart = (e: React.DragEvent) => {
     if (disabled) { e.preventDefault(); return }
@@ -447,6 +445,17 @@ export function ContentNodeBlock({
             {collapsed && hasChildren && (
               <span className="text-[9px] text-muted-foreground/40">{node.children!.length}</span>
             )}
+            {imgSrc && (
+              <>
+                <img
+                  src={imgSrc}
+                  alt={node.imageId ?? "image"}
+                  className="h-12 w-auto object-contain rounded border border-border/40"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
+                />
+                <span className="text-[9px] text-muted-foreground/40 font-mono truncate">{node.imageId}</span>
+              </>
+            )}
             <div className="ml-auto flex items-center gap-0.5">
               {dragHandle}
               {pruneBtn}
@@ -512,35 +521,6 @@ export function ContentNodeBlock({
           </div>
           {dragHandle}
           {pruneBtn}
-        </div>
-        {dropIndicator("after")}
-      </div>
-    )
-  }
-
-  // Image leaf block
-  if (isImageLeaf && imgSrc) {
-    return (
-      <div className="relative">
-        {dropIndicator("before")}
-        <div
-          className={cn(
-            "group/block flex items-center gap-1 rounded-md py-0.5 px-1.5 transition-colors",
-            node.isPruned ? "opacity-40" : "hover:bg-accent/40 hover:outline hover:outline-1 hover:outline-border/50",
-          )}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-        >
-          <span className={cn("inline-flex items-center rounded px-1 py-0.5 shrink-0", GREEN.bg, GREEN.text)}>
-            <Image className={IC} />
-          </span>
-          <img src={imgSrc} alt={node.imageId ?? "image"} className="h-16 w-auto object-contain rounded border border-border/40" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />
-          <span className="text-[9px] text-muted-foreground/40 font-mono truncate">{node.imageId}</span>
-          <div className="ml-auto flex items-center gap-0.5">
-            {dragHandle}
-            {pruneBtn}
-          </div>
         </div>
         {dropIndicator("after")}
       </div>

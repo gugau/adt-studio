@@ -2003,6 +2003,12 @@ msgstr "sua língua original"
 msgid "Jane Reviewer"
 msgstr "Jane Reviewer"
 
+msgid "JSON"
+msgstr "JSON"
+
+msgid "JSON view"
+msgstr "Visualização JSON"
+
 msgid "KB"
 msgstr "KB"
 
@@ -3958,6 +3964,12 @@ msgstr "Transporte"
 
 msgid "Treats each page as a single section"
 msgstr "Trata cada página como uma única seção"
+
+msgid "Tree"
+msgstr "Árvore"
+
+msgid "Tree view"
+msgstr "Visualização em árvore"
 
 msgid "Try Activity"
 msgstr "Testar atividade"

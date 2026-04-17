@@ -5,32 +5,44 @@ Your task is to produce a **tree structure** that captures the semantic hierarch
 
 ## Node Fields
 
-Every node has either `structure` (for containers) or `role` (for leaves), never both.
+Every node is either a **container** (uses `structure`) or a **text leaf** (uses `role` + `text`) — never both.
 
-**Container nodes** — have `structure` and `children`, never `text` or `image_id`:
+**Container nodes** — have `structure` and `children`, never `role` or `text`:
 {% for t in container_types %}- {{ t.key }}: {{ t.description }}
 {% endfor %}
-**Text leaf nodes** — have `role` and `text`, never `children` or `image_id`:
+The `image_group` container is special: it represents an image and additionally carries `image_id`. Its `children` (optional) hold any associated captions, labels, or overlaid text.
+
+**Text leaf nodes** — have `role` and `text`, never `children`, `structure`, or `image_id`:
 {% for t in text_types %}- {{ t.key }}: {{ t.description }}
 {% endfor %}
-**Image leaf nodes** — have `role: "image"` and `image_id`, never `children` or `text`.
+
+### Common schema mistakes to avoid
+
+Images live on `image_group` **containers**, not on leaves. There is no `role: "image"` leaf.
+
+- ❌ `{ "role": "image", "image_id": "pg001_im001" }` — wrong shape, use `image_group` container
+- ❌ `{ "structure": "image", "image_id": "pg001_im001" }` — `"image"` is not a valid structure
+- ❌ `{ "structure": "image_group", "children": [ { "role": "image", "image_id": "pg001_im001" }, ... ] }` — image_id belongs on the container, not a child leaf
+- ✅ `{ "structure": "image_group", "image_id": "pg001_im001" }` — a standalone image
+- ✅ `{ "structure": "image_group", "image_id": "pg001_im001", "children": [ { "role": "caption", "text": "..." } ] }` — image with a caption
 
 ## Tree Structure Rules
 
-1. **Containers vs leaves**: Container nodes group related content using `structure` and MUST have `children`. Leaf nodes hold actual content using `role` and MUST NOT have `children`.
+1. **Containers vs leaves**: Container nodes group related content using `structure` and MUST have `children` (except `image_group`, which represents an image and may stand alone). Text leaves hold actual content using `role` + `text` and MUST NOT have `children` or `image_id`.
 2. **Nesting depth**: Use as many levels as needed to capture the document's logical hierarchy. A simple page might be flat; a complex page with sidebars and nested activities could be deeply nested.
 3. **Reading order**: Children within a container must follow left-to-right, top-to-bottom reading order, respecting column layouts.
-4. **Images**: Images are always leaf nodes with `role: "image"` and `image_id`.{% if image_ids.size > 0 %} Available image IDs: {% for id in image_ids %}{{ id }}{% unless forloop.last %}, {% endunless %}{% endfor %}.{% endif %} A standalone image is a leaf node on its own. An image with a caption, label, or associated text should be wrapped in an `image_group` container, with the image leaf and text leaves as siblings.
-5. **Background images**: When a page has a full-bleed or background image behind content, wrap all the content in an `image_group` container with the background image as the first child (a leaf with `role: "image"`) and the overlaid content as subsequent children.
-6. **Text within images**: When text is visually layered on, overlaid on, or contained within an image (speech bubbles, signs, posters, annotations, labels on diagrams, title text over illustrations, text banners over photos), that text MUST be placed as siblings of the image leaf inside an `image_group` container — never outside the container. If you see text sitting on top of an image in the page, it belongs inside the same `image_group`.
+4. **Images**: Images are always represented by an `image_group` container carrying `image_id`.{% if image_ids.size > 0 %} Available image IDs: {% for id in image_ids %}{{ id }}{% unless forloop.last %}, {% endunless %}{% endfor %}.{% endif %} A standalone image is an `image_group` with no children. An image with a caption, label, or associated text is an `image_group` with those text leaves as `children`.
+5. **Background images**: When a page has a full-bleed or background image behind content, represent it as an `image_group` whose `image_id` is the background image and whose `children` are the overlaid content (in reading order).
+6. **Text within images**: When text is visually layered on, overlaid on, or contained within an image (speech bubbles, signs, posters, annotations, labels on diagrams, title text over illustrations, text banners over photos), that text MUST appear as `children` of the `image_group` container for that image — never outside it. If you see text sitting on top of an image in the page, it belongs inside the same `image_group`.
 7. **Every text must be captured**: ALL of the provided page text MUST appear in your output — every line, every fragment. If text is in the input, it must be in a leaf node. Do not summarize, skip, or omit any text. This includes text embedded inside illustrations, posters, and diagrams.
-8. **Visual separators**: Ignore lines of dashes, asterisks, underscores, or similar characters used purely as visual dividers or section breaks (e.g., `---`, `***`, `_ _ _`). These are decorative and should not appear as text nodes.
+8. **Every image must be captured**: ALL of the provided image IDs MUST appear as an `image_group` container in your output — each used exactly once, placed at its correct position in reading order. Do not skip or omit any provided image.
+9. **Visual separators**: Ignore lines of dashes, asterisks, underscores, or similar characters used purely as visual dividers or section breaks (e.g., `---`, `***`, `_ _ _`). These are decorative and should not appear as text nodes.
 
 ## Text Extraction Rules
 
 1. Break text at sentence boundaries where possible; each sentence or logical unit should be a separate leaf node.
 2. You can combine text segments together if it makes sense — don't honor new lines unless important to interpretation.
-3. **Paragraph grouping**: When multiple text leaves belong to the same visual paragraph on the page (one block of prose flowing together), they MUST be wrapped together as children of a `structure: "group"` container. Do NOT emit them as flat top-level siblings — the grouping is what preserves paragraph flow downstream.
+3. **Paragraph grouping**: When multiple text leaves belong to the same visual paragraph on the page (one block of prose flowing together), they MUST share a single `structure: "group"` container as siblings. Standalone text leaves do not need to be wrapped — only group leaves that flow together as one paragraph.
 4. For mathematical expressions, use LaTeX notation (e.g., \frac{1}{2}, x^2 + y^2 = z^2). When math appears inline within prose, wrap each expression in dollar-sign delimiters: e.g., "the space $M = (X, V)$". For standalone math entries (role "math"), use raw LaTeX only.
 5. Keep display equations as single, complete math entries. Equation numbers, underbrace/overbrace labels, and annotations must be included in the same LaTeX expression using \underbrace, \overbrace, and \tag as needed.
 6. For drop caps, merge the large initial letter with the rest of the word/sentence. If spaces are used for word such as `S P A C E D`, remove the blanks.
@@ -45,11 +57,11 @@ Every node has either `structure` (for containers) or `role` (for leaves), never
 
 ## Example
 
-For a page with a heading, two paragraphs, an image with caption, and a sidebar:
+For a page with a heading, two paragraphs, an image with caption, a sidebar, and a multiple-choice activity (one option text-only, one image+text):
 
 ```json
 {
-  "reasoning": "Page has a main heading, two text paragraphs, an image with caption, and a sidebar callout.",
+  "reasoning": "Page has a main heading, two text paragraphs, an image with caption, a sidebar callout, and a multiple-choice activity. Each option is wrapped in its own activity_option container even when it holds a single text leaf.",
   "nodes": [
     { "role": "heading", "text": "Chapter 3: The Water Cycle" },
     {
@@ -61,8 +73,8 @@ For a page with a heading, two paragraphs, an image with caption, and a sidebar:
     },
     {
       "structure": "image_group",
+      "image_id": "pg003_im001",
       "children": [
-        { "role": "image", "image_id": "pg003_im001" },
         { "role": "caption", "text": "Figure 3.1: The stages of the water cycle" }
       ]
     },
@@ -72,6 +84,28 @@ For a page with a heading, two paragraphs, an image with caption, and a sidebar:
       "children": [
         { "role": "heading", "text": "Did You Know?" },
         { "role": "text", "text": "About 97% of Earth's water is saltwater found in the oceans." }
+      ]
+    },
+    {
+      "structure": "activity",
+      "children": [
+        { "role": "activity_number", "text": "1" },
+        { "role": "activity_question", "text": "Which stage releases water vapor into the atmosphere?" },
+        {
+          "structure": "activity_option",
+          "children": [{ "role": "text", "text": "Condensation" }]
+        },
+        {
+          "structure": "activity_option",
+          "children": [{ "role": "text", "text": "Evaporation" }]
+        },
+        {
+          "structure": "activity_option",
+          "children": [
+            { "structure": "image_group", "image_id": "pg003_im002" },
+            { "role": "text", "text": "Precipitation" }
+          ]
+        }
       ]
     }
   ]

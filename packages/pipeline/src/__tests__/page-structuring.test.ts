@@ -23,12 +23,7 @@ const basePage: PageInput = {
   pageNumber: 1,
   text: "Header\nBody",
   imageBase64: "cGFnZQ==",
-  images: [
-    {
-      imageId: "pg001_im001",
-      imageBase64: "aW1hZ2U=",
-    },
-  ],
+  images: [],
 }
 
 const baseConfig: StructureConfig = {
@@ -257,7 +252,7 @@ describe("structurePage", () => {
     const seenOptions: GenerateObjectOptions[] = []
     const invalidRefinement = refinement(false, "Bad refinement", [
       {
-        role: "unknown_type",
+        structure: "image_group",
         image_id: "missing_image",
       },
     ])
@@ -290,7 +285,6 @@ describe("structurePage", () => {
     )
 
     expect(validation?.valid).toBe(false)
-    expect(validation?.errors.join("\n")).toContain('Invalid role "unknown_type"')
     expect(validation?.errors.join("\n")).toContain('Invalid image_id "missing_image"')
     expect(result.reasoning).toBe("Fixed after validation retry")
     expect(result.nodes[0]).toMatchObject({

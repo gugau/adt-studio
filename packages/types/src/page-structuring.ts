@@ -8,11 +8,11 @@ export interface ContentNodeData {
   nodeId: string
   /** Container structure type — present on container nodes only */
   structure?: string
-  /** Semantic role — present on leaf nodes only (text or image) */
+  /** Semantic role — present on text leaf nodes only */
   role?: string
   /** Text content — present on text leaf nodes only */
   text?: string
-  /** Image reference — present on image leaf nodes only (role: "image") */
+  /** Image reference — present only on `image_group` containers (the image the group represents) */
   imageId?: string
   /** Child nodes — present on container nodes only */
   children?: ContentNodeData[]
@@ -23,9 +23,10 @@ export interface ContentNodeData {
  * Recursive Zod schema for a content tree node.
  *
  * Nodes are either:
- *   - Leaf (text): has `role` + `text`, no `children`
- *   - Leaf (image): has `role: "image"` + `imageId`, no `children`
- *   - Container: has `structure` + `children`
+ *   - Text leaf: `role` + `text`, no `children`, no `structure`
+ *   - Container: `structure` + `children`
+ *     - `image_group` containers additionally carry `imageId`; children (optional)
+ *       describe associated text such as captions, labels, or overlaid prose
  */
 export const ContentNode: z.ZodType<ContentNodeData> = z.lazy(() =>
   z.object({

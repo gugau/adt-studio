@@ -129,12 +129,39 @@ function expandParts(
     }
   }
 
-  return parts
+  return mergeConsecutiveTextGroups(parts)
+}
+
+/**
+ * Merge adjacent text-group parts that share the same groupType into a
+ * single multi-text group. This catches the case where sectioning picked
+ * individual text leaves as separate part_ids — they arrive as single-text
+ * groups but visually belong to the same paragraph, so we fuse them so the
+ * renderer emits one block with inner spans.
+ */
+function mergeConsecutiveTextGroups(parts: SectionPart[]): SectionPart[] {
+  const merged: SectionPart[] = []
+  for (const part of parts) {
+    const prev = merged[merged.length - 1]
+    if (
+      part.type === "group" &&
+      prev &&
+      prev.type === "group" &&
+      prev.groupType === part.groupType
+    ) {
+      prev.texts.push(...part.texts)
+    } else {
+      merged.push(part)
+    }
+  }
+  return merged
 }
 
 /**
  * Recursively flatten a ContentNodeData subtree into render-ready SectionParts.
- * Text leaves become group parts, image leaves become image parts.
+ * Text leaves become group parts. `image_group` containers carry `imageId` —
+ * the image part is emitted first, then children are walked as associated
+ * captions/labels.
  * Consecutive text-leaf children of a container that share the same role are
  * merged into a single group (keyed on that role), so e.g. a run of `text`
  * sentences renders as one paragraph while a sibling `heading` leaf stays its
@@ -158,8 +185,8 @@ function flattenContentNode(
     return
   }
 
-  // Image leaf
-  if (node.imageId && !node.children?.length) {
+  // image_group container — emit image first, then walk any associated-text children.
+  if (node.imageId) {
     const imgData = images.get(node.imageId)
     if (imgData) {
       parts.push({
@@ -170,7 +197,6 @@ function flattenContentNode(
         height: imgData.height,
       })
     }
-    return
   }
 
   // Container — walk children, buffering runs of same-role text leaves so
