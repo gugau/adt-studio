@@ -23,8 +23,10 @@ Images live on `image_group` **containers**, not on leaves. There is no `role: "
 - ❌ `{ "role": "image", "image_id": "pg001_im001" }` — wrong shape, use `image_group` container
 - ❌ `{ "structure": "image", "image_id": "pg001_im001" }` — `"image"` is not a valid structure
 - ❌ `{ "structure": "image_group", "children": [ { "role": "image", "image_id": "pg001_im001" }, ... ] }` — image_id belongs on the container, not a child leaf
+- ❌ Two sibling `image_group`s with the same `image_id` — represents one image as if it were two; nest the shared content under a single `image_group` instead
 - ✅ `{ "structure": "image_group", "image_id": "pg001_im001" }` — a standalone image
 - ✅ `{ "structure": "image_group", "image_id": "pg001_im001", "children": [ { "role": "caption", "text": "..." } ] }` — image with a caption
+- ✅ `{ "structure": "image_group", "image_id": "pg001_im001", "children": [ { "structure": "activity_option", ... }, { "structure": "activity_option", ... } ] }` — two options sharing one background image
 
 ## Tree Structure Rules
 
@@ -35,8 +37,10 @@ Images live on `image_group` **containers**, not on leaves. There is no `role: "
 5. **Background images**: When a page has a full-bleed or background image behind content, represent it as an `image_group` whose `image_id` is the background image and whose `children` are the overlaid content (in reading order).
 6. **Text within images**: When text is visually layered on, overlaid on, or contained within an image (speech bubbles, signs, posters, annotations, labels on diagrams, title text over illustrations, text banners over photos), that text MUST appear as `children` of the `image_group` container for that image — never outside it. If you see text sitting on top of an image in the page, it belongs inside the same `image_group`.
 7. **Every text must be captured**: ALL of the provided page text MUST appear in your output — every line, every fragment. If text is in the input, it must be in a leaf node. Do not summarize, skip, or omit any text. This includes text embedded inside illustrations, posters, and diagrams.
-8. **Every image must be captured**: ALL of the provided image IDs MUST appear as an `image_group` container in your output — each used exactly once, placed at its correct position in reading order. Do not skip or omit any provided image.
-9. **Visual separators**: Ignore lines of dashes, asterisks, underscores, or similar characters used purely as visual dividers or section breaks (e.g., `---`, `***`, `_ _ _`). These are decorative and should not appear as text nodes.
+8. **Every image must be captured, exactly once**: ALL of the provided image IDs MUST appear as an `image_group` container in your output — each used **exactly once**, placed at its correct position in reading order. Do not skip or omit any provided image.
+9. **Shared backgrounds**: When multiple distinct content blocks (e.g., two activity options, a heading and a paragraph, several text regions) sit on the same background image, place them as **siblings under one `image_group`**. Never create two separate `image_group`s pointing at the same `image_id`.
+10. **Backgrounds without an extracted image_id**: If overlay text sits on a textured or background region that does NOT correspond to any provided `image_id`, emit the text as plain leaves at the appropriate position. Do NOT borrow an unrelated `image_id` to wrap it — every `image_group` must reference an image that genuinely matches that region.
+11. **Visual separators**: Ignore lines of dashes, asterisks, underscores, or similar characters used purely as visual dividers or section breaks (e.g., `---`, `***`, `_ _ _`). These are decorative and should not appear as text nodes.
 
 ## Text Extraction Rules
 
