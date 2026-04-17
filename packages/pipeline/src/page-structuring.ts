@@ -240,7 +240,10 @@ function validatePageStructuringNodes(
   const seenImageIds = new Set<string>()
   const duplicateImageIds = new Set<string>()
 
-  let tooDeep = false
+  // Containers allowed to be empty. image_group represents an image
+  // (children optional for captions). table_cell represents a structural
+  // cell that may legitimately be blank (header gaps, alignment cells).
+  const emptyAllowedStructures = new Set(["image_group", "table_cell"])
 
   function walkNodes(nodes: LLMContentNode[], path: string, depth: number) {
     for (let i = 0; i < nodes.length; i++) {
@@ -290,10 +293,9 @@ function validatePageStructuringNodes(
             `${nodePath}: Only "image_group" containers may carry "image_id". Move this image_id to an image_group, or change this container's structure to "image_group".`
           )
         }
-        if (!hasChildren && node.structure !== "image_group") {
-          tooDeep = true
+        if (!hasChildren && !emptyAllowedStructures.has(node.structure!)) {
           errors.push(
-            `${nodePath}: Container with structure "${node.structure}" has no children. Every container (except a standalone image_group) must have children.`
+            `${nodePath}: Container with structure "${node.structure}" has no children. Containers must hold content; only image_group and table_cell may be empty.`
           )
         }
       } else if (hasImage) {
@@ -330,12 +332,6 @@ function validatePageStructuringNodes(
   }
 
   walkNodes(nodes, "nodes", 0)
-
-  if (tooDeep) {
-    errors.push(
-      "IMPORTANT: Your tree nesting is too deep. Reduce nesting by removing unnecessary intermediate containers. Not every visual grouping needs its own container — flatten where possible."
-    )
-  }
 
   const missingImageIds = validImageIds.filter((id) => !seenImageIds.has(id))
   if (missingImageIds.length > 0) {

@@ -49,7 +49,7 @@ Images live on `image_group` **containers**, not on leaves. There is no `role: "
 7. For tables of contents, each entry should be a separate leaf node inside a single "list" container.
 8. For content where line breaks are significant (poetry, verse, addresses, lyrics), use a "preformatted" container with each line as a separate text leaf child. When there are multiple stanzas or paragraphs, use a separate "preformatted" container for each one so paragraph boundaries are preserved.
 9. When an activity number or letter is detected (e.g., 1, 2, A, B), it should be a child of an "activity" container along with the activity's other content.
-10. For data tables, use a "table" container with "table_row" children. Each row contains "table_cell" children, and each cell contains leaf nodes for its content.
+10. For data tables, use a "table" container with "table_row" children. Each row contains "table_cell" children, and each cell contains leaf nodes for its content. A `table_cell` may be left empty (no children) when the corresponding cell in the page image is visually blank — preserve the column structure rather than skipping the cell.
 11. Preserve original spelling and punctuation exactly as shown.
 12. If the page is blank or contains only images with no text, use image leaf nodes with `role: "image"` (or return an empty nodes array).
 13. Use the extracted text as a reference but trust the image as the primary source — correct OCR errors when the image clearly shows different text.
