@@ -1642,6 +1642,9 @@ msgstr "Formato"
 msgid "Forms & controls"
 msgstr "Forms & controls"
 
+msgid "French"
+msgstr "Francês"
+
 msgid "From reference image..."
 msgstr "A partir de imagem de referência..."
 

@@ -2371,60 +2371,60 @@ export function StoryboardSectionDetail({
           </div>
         )}
 
-        {/* Pruned section overlay */}
-        {section?.isPruned && !hasActiveTask && (
-          <div className="absolute inset-0 z-30 bg-background/60 backdrop-blur-[1px] flex items-center justify-center">
-            <div className="flex flex-col items-center gap-3 text-center max-w-xs">
-              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                <EyeOff className="w-5 h-5 text-amber-600" />
-              </div>
-              <p className="text-sm font-medium text-muted-foreground">{t`Section pruned from flow`}</p>
-              <button
-                type="button"
-                onClick={toggleSectionPruned}
-                className="text-xs font-medium rounded px-3 py-1.5 bg-muted hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
-              >
-                {t`Restore`}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {hasActiveTask && (
-          <div className="absolute inset-0 z-[35] bg-background/50 backdrop-blur-[1px]" />
-        )}
-        {aiLoading && (
-          <div className="absolute inset-0 z-40 bg-background/70 backdrop-blur-[2px] flex items-center justify-center">
-            <div className="flex flex-col items-center gap-5 text-center max-w-xs">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-bounce [animation-delay:0ms]" />
-                <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-bounce [animation-delay:150ms]" />
-                <span className="w-2.5 h-2.5 rounded-full bg-purple-300 animate-bounce [animation-delay:300ms]" />
-              </div>
-              <p className="text-sm font-medium text-foreground animate-pulse">
-                {aiMessages[aiMessageIdx]}
-              </p>
-            </div>
-          </div>
-        )}
-        {(aiEditing || (rerendering && !saving)) && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
-            {aiEditing && (
-              <div className="flex items-center gap-2 rounded-full px-3.5 py-2 shadow-lg text-white text-xs font-medium bg-purple-600">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                <span>{t`AI editing...`}</span>
-              </div>
-            )}
-            {rerendering && !saving && (
-              <div className="flex items-center gap-2 rounded-full px-3.5 py-2 shadow-lg text-white text-xs font-medium bg-blue-600">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                <span>{t`Re-rendering...`}</span>
-              </div>
-            )}
-          </div>
-        )}
-
       </div>
+
+      {/* Pruned section overlay */}
+      {section?.isPruned && !hasActiveTask && (
+        <div className="absolute inset-0 z-30 bg-background/60 backdrop-blur-[1px] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3 text-center max-w-xs">
+            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+              <EyeOff className="w-5 h-5 text-amber-600" />
+            </div>
+            <p className="text-sm font-medium text-muted-foreground">{t`Section pruned from flow`}</p>
+            <button
+              type="button"
+              onClick={toggleSectionPruned}
+              className="text-xs font-medium rounded px-3 py-1.5 bg-muted hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
+            >
+              {t`Restore`}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {hasActiveTask && (
+        <div className="absolute inset-0 z-[35] bg-background/50 backdrop-blur-[1px]" />
+      )}
+      {aiLoading && (
+        <div className="absolute inset-0 z-40 bg-background/70 backdrop-blur-[2px] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-5 text-center max-w-xs">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-bounce [animation-delay:0ms]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-bounce [animation-delay:150ms]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-purple-300 animate-bounce [animation-delay:300ms]" />
+            </div>
+            <p className="text-sm font-medium text-foreground animate-pulse">
+              {aiMessages[aiMessageIdx]}
+            </p>
+          </div>
+        </div>
+      )}
+      {(aiEditing || (rerendering && !saving)) && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+          {aiEditing && (
+            <div className="flex items-center gap-2 rounded-full px-3.5 py-2 shadow-lg text-white text-xs font-medium bg-purple-600">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              <span>{t`AI editing...`}</span>
+            </div>
+          )}
+          {rerendering && !saving && (
+            <div className="flex items-center gap-2 rounded-full px-3.5 py-2 shadow-lg text-white text-xs font-medium bg-blue-600">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              <span>{t`Re-rendering...`}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Slide-up HTML editor panel */}
       {htmlPreview && renderedSection && (
