@@ -49,9 +49,6 @@ msgstr "(p.{0})"
 msgid "(template)"
 msgstr "(plantilla)"
 
-#~ msgid "{0}"
-#~ msgstr "{0}"
-
 #. placeholder {0}: lockedLang.name
 msgid "{0} — type country or Enter for base"
 msgstr "{0} — escribe el país o pulsa Enter para el básico"
@@ -190,9 +187,6 @@ msgstr "{countSummary} en esta página"
 msgid "{elapsed}s"
 msgstr "{elapsed}s"
 
-#~ msgid "{generatedFeatureCount} of 5 features generated"
-#~ msgstr "{generatedFeatureCount} de 5 características generadas"
-
 msgid "{generatedFeatureCount} of 6 features generated"
 msgstr "{generatedFeatureCount} de 6 características generadas"
 
@@ -318,11 +312,8 @@ msgstr "Un identificador único usado como el nombre de la carpeta del libro."
 msgid "A unique string used to authenticate and authorize API requests."
 msgstr "Una cadena única que se usa para autenticar y autorizar solicitudes a la API."
 
-msgid "A valid project archive contains a .db database file at its root. Make sure you're uploading a file exported from ADT Studio."
-msgstr "Un archivo de proyecto válido contiene un archivo de base de datos .db en su raíz. Asegúrate de estar subiendo un archivo exportado desde ADT Studio."
-
-msgid "A valid project must include the original PDF file. The archive may have been modified after export."
-msgstr "Un proyecto válido debe incluir el archivo PDF original. El archivo puede haber sido modificado después de la exportación."
+#~ msgid "A valid project archive must contain a .db and .pdf file. Make sure you're uploading a file exported from ADT Studio."
+#~ msgstr "Un archivo de proyecto válido debe contener un archivo .db y .pdf. Asegúrese de subir un archivo exportado desde ADT Studio."
 
 #. placeholder {0}: replaceConfirm?.file.name
 msgid "A video named \"{0}\" already exists. Do you want to replace it?"
@@ -449,9 +440,6 @@ msgstr "Agregar"
 msgid "Add {0} Images"
 msgstr "Agregar {0} imágenes"
 
-#~ msgid "Add a Book"
-#~ msgstr "Agregar un libro"
-
 msgid "Add Book"
 msgstr "Agregar libro"
 
@@ -506,9 +494,6 @@ msgstr "Libro ADT"
 #. placeholder {0}: i18n._(selectedBook.title)
 msgid "ADT Book - {0}"
 msgstr "Libro ADT - {0}"
-
-#~ msgid "ADT Export"
-#~ msgstr "Exportación ADT"
 
 msgid "ADT Package"
 msgstr "Paquete ADT"
@@ -568,12 +553,6 @@ msgstr "Todo"
 msgid "All Categories"
 msgstr "All Categories"
 
-#~ msgid "All findings"
-#~ msgstr "All findings"
-
-#~ msgid "All images have text descriptions"
-#~ msgstr "Todas las imágenes tienen descripciones de texto"
-
 msgid "All issues and manual review items"
 msgstr "Todos los problemas y elementos de revisión manual"
 
@@ -585,9 +564,6 @@ msgstr "All Severities"
 
 msgid "All steps"
 msgstr "Todas las etapas"
-
-#~ msgid "Always Included"
-#~ msgstr "Siempre incluido"
 
 msgid "An activity that does not fit the standard categories."
 msgstr "Una actividad que no encaja en las categorías estándar."
@@ -695,17 +671,8 @@ msgstr "Recurso"
 msgid "Assign to section..."
 msgstr "Asignar a sección..."
 
-#~ msgid "Audio Narration"
-#~ msgstr "Narración de audio"
-
 msgid "Audio narration (largest impact on file size)"
 msgstr "Narración de audio (mayor impacto en el tamaño del archivo)"
-
-#~ msgid "Audio narration is available for all text"
-#~ msgstr "La narración de audio está disponible para todo el texto"
-
-#~ msgid "Audio Settings"
-#~ msgstr "Configuración de audio"
 
 msgid "Author"
 msgstr "Autor"
@@ -1108,9 +1075,6 @@ msgstr "Portada de {0}"
 msgid "Create a new book from a PDF"
 msgstr "Crear un nuevo libro a partir de un PDF"
 
-#~ msgid "Create a new book from a PDF or import an existing project archive."
-#~ msgstr "Crea un nuevo libro a partir de un PDF o importa un archivo de proyecto existente."
-
 msgid "Create a new image from a text description"
 msgstr "Crea una nueva imagen a partir de una descripción de texto"
 
@@ -1122,9 +1086,6 @@ msgstr "Crear ADT"
 
 msgid "Create descriptive captions for images to improve accessibility."
 msgstr "Crea subtítulos descriptivos para las imágenes para mejorar la accesibilidad."
-
-#~ msgid "Create from scratch"
-#~ msgstr "Crear desde cero"
 
 msgid "Create from scratch using your description"
 msgstr "Crear desde cero con tu descripción"
@@ -1307,9 +1268,6 @@ msgstr "Descripción"
 
 msgid "Description..."
 msgstr "Descripción..."
-
-#~ msgid "Descriptions for all images in the book"
-#~ msgstr "Descripciones de todas las imágenes del libro"
 
 msgid "Detects activities already present in the book and transforms them into interactive HTML elements like radio buttons and text inputs."
 msgstr "Detecta actividades ya presentes en el libro y las transforma en elementos HTML interactivos como botones de opción y campos de texto."
@@ -1499,9 +1457,6 @@ msgstr "Manuales de ingeniería"
 msgid "English"
 msgstr "English"
 
-#~ msgid "Enhance Accessibility"
-#~ msgstr "Mejorar la accesibilidad"
-
 msgid "Enter a valid minimum dimension (whole number ≥ 0)"
 msgstr "Introduce una dimensión mínima válida (número entero ≥ 0)"
 
@@ -1544,47 +1499,11 @@ msgstr "Vencimiento"
 msgid "Export"
 msgstr "Exportar"
 
-#~ msgid "Export ADT"
-#~ msgstr "Exportar ADT"
-
-#~ msgid "Export Archive"
-#~ msgstr "Exportar archivo"
-
-#~ msgid "Export as a SCORM 1.2 package for upload to a Learning Management System (LMS). Includes activity completion tracking and offline support."
-#~ msgstr "Exportar como paquete SCORM 1.2 para subir a un Sistema de Gestión del Aprendizaje (LMS). Incluye seguimiento de finalización de actividad y soporte sin conexión."
-
 msgid "Export Options"
 msgstr "Opciones de exportación"
 
 msgid "Export preparation failed"
 msgstr "La preparación de la exportación falló"
-
-#~ msgid "Export Project Archive"
-#~ msgstr "Exportar Archivo del Proyecto"
-
-#~ msgid "Export SCORM"
-#~ msgstr "Exportar SCORM"
-
-#~ msgid "Export the book as a Readium WebPub package — a standards-based format for distributing digital publications on the web. Suitable for reading systems that support the Readium Web Publication Manifest specification."
-#~ msgstr "Exporta el libro como un paquete Readium WebPub — un formato basado en estándares para distribuir publicaciones digitales en la web. Adecuado para sistemas de lectura que admiten la especificación Readium Web Publication Manifest."
-
-#~ msgid "Export the complete Accessible Digital Textbook as a ZIP archive — includes all HTML pages, images, audio files, quizzes, and the compiled web application. Ready to upload to a distribution platform or open locally."
-#~ msgstr "Exportar el Libro de Texto Digital Accesible completo como un archivo ZIP — incluye todas las páginas HTML, imágenes, archivos de audio, cuestionarios y la aplicación web compilada. Listo para subir a una plataforma de distribución o abrir localmente."
-
-#~ msgid "Export the complete Accessible Digital Textbook as a ZIP archive. Includes all HTML pages, images, audio files, quizzes, and the compiled web application — ready to upload to a distribution platform or open locally."
-#~ msgstr "Exporta el Libro de Texto Digital Accesible completo como un archivo ZIP. Incluye todas las páginas HTML, imágenes, archivos de audio, cuestionarios y la aplicación web compilada — listo para subirlo a una plataforma de distribución o abrirlo localmente."
-
-#~ msgid "Export the entire project as a ZIP archive — includes the source PDF, extracted images, all pipeline outputs, the database, and the compiled web application. Use this to back up or transfer the project to another machine."
-#~ msgstr "Exportar todo el proyecto como un archivo ZIP — incluye el PDF original, imágenes extraídas, todos los resultados del proceso, la base de datos y la aplicación web compilada. Úselo para respaldar o transferir el proyecto a otra máquina."
-
-#~ msgid "Export timed out — the book may be too large"
-#~ msgstr "La exportación expiró — el libro puede ser demasiado grande"
-
-#~ msgid "Export Web"
-#~ msgstr "Exportar Web"
-
-#~ msgid "Export WebPub"
-#~ msgstr "Exportar WebPub"
 
 msgid "Exporting..."
 msgstr "Exportando..."
@@ -1720,9 +1639,6 @@ msgstr "Prefacio"
 msgid "Format"
 msgstr "Formato"
 
-#~ msgid "Format:"
-#~ msgstr "Formato:"
-
 msgid "Forms & controls"
 msgstr "Forms & controls"
 
@@ -1737,9 +1653,6 @@ msgstr "Paquete ADT completo — páginas HTML, imágenes, audio, cuestionarios 
 
 msgid "Full control over render strategies, pruning, and filters."
 msgstr "Control total sobre estrategias de renderizado, poda y filtros."
-
-#~ msgid "Full Project"
-#~ msgstr "Proyecto Completo"
 
 msgid "Full-size source page preview for the selected quiz."
 msgstr "Vista previa a tamaño completo de la página de origen del quiz seleccionado."
@@ -1984,14 +1897,8 @@ msgstr "Las imágenes con el lado más corto por debajo del mínimo o el lado m�
 msgid "Import"
 msgstr "Importar"
 
-#~ msgid "Import a project"
-#~ msgstr "Importar un proyecto"
-
 msgid "Import a Project"
 msgstr "Importar un proyecto"
-
-#~ msgid "Import an existing project"
-#~ msgstr "Importar un proyecto existente"
 
 msgid "Import project"
 msgstr "Importar proyecto"
@@ -2010,15 +1917,6 @@ msgstr "Incluir en la renderización"
 
 msgid "Include text overlays in vector groups"
 msgstr "Incluir superposiciones de texto en grupos vectoriales"
-
-#~ msgid "Included Features"
-#~ msgstr "Características incluidas"
-
-#~ msgid "Including:"
-#~ msgstr "Incluye:"
-
-#~ msgid "Increase font size"
-#~ msgstr "Aumentar tamaño de fuente"
 
 msgid "Increase indent"
 msgstr "Aumentar sangría"
@@ -2262,14 +2160,14 @@ msgstr "Cargando asignaciones de voz..."
 msgid "Loading..."
 msgstr "Cargando..."
 
-#~ msgid "Logs"
-#~ msgstr "Logs"
-
 msgid "Lookup definitions for key terms"
 msgstr "Buscar definiciones de términos clave"
 
 msgid "Lower values produce more consistent styling across pages."
 msgstr "Valores más bajos producen estilos más consistentes entre páginas."
+
+msgid "Make sure you're uploading a .zip file exported from ADT Studio."
+msgstr "Asegúrese de subir un archivo .zip exportado desde ADT Studio."
 
 msgid "Manual review"
 msgstr "Revisión manual"
@@ -2622,9 +2520,6 @@ msgstr "No generado"
 msgid "Not reviewed"
 msgstr "Not reviewed"
 
-#~ msgid "Not run"
-#~ msgstr "No ejecutado"
-
 msgid "Note"
 msgstr "Nota"
 
@@ -2885,9 +2780,6 @@ msgstr "Elige un enfoque de diseño."
 msgid "Picture books and early readers"
 msgstr "Libros ilustrados y primeros lectores"
 
-#~ msgid "Pipeline"
-#~ msgstr "Pipeline"
-
 msgid "Pipeline features"
 msgstr "Características del pipeline"
 
@@ -3054,9 +2946,6 @@ msgstr "Reejecutar audio"
 msgid "Re-run translation"
 msgstr "Reejecutar traducción"
 
-#~ msgid "Read Aloud"
-#~ msgstr "Lectura en voz alta"
-
 msgid "Readers see"
 msgstr "Los lectores ven"
 
@@ -3184,14 +3073,8 @@ msgstr "Variantes responsivas / de estado"
 msgid "Restore"
 msgstr "Restaurar"
 
-#~ msgid "Restore a project from a backup"
-#~ msgstr "Restaurar un proyecto desde una copia de seguridad"
-
 msgid "Restore element"
 msgstr "Restaurar elemento"
-
-#~ msgid "Restore from a previously exported project archive (.zip)"
-#~ msgstr "Restaurar desde un archivo de proyecto exportado anteriormente (.zip)"
 
 msgid "Restore section to flow"
 msgstr "Restaurar sección al flujo"
@@ -3263,20 +3146,11 @@ msgstr "El aumento de las temperaturas oceánicas causa el blanqueamiento de cor
 msgid "Run {stageLabel}"
 msgstr "Ejecutar {0}"
 
-#~ msgid "Run the Image Captions stage to describe all images for screen readers (WCAG 1.1.1)"
-#~ msgstr "Ejecuta la etapa de Pies de foto de imagen para describir todas las imágenes para lectores de pantalla (WCAG 1.1.1)"
-
 msgid "Run the pipeline through at least the"
 msgstr "Ejecuta el pipeline al menos hasta la etapa"
 
 msgid "Run the pipeline through at least the <0>Storyboard</0> stage first."
 msgstr "Run the pipeline through at least the <0>Storyboard</0> stage first."
-
-#~ msgid "Run the Speech stage to generate audio for users with visual or reading difficulties (WCAG 1.2)"
-#~ msgstr "Ejecuta la etapa de Voz para generar audio para usuarios con dificultades visuales o de lectura (WCAG 1.2)"
-
-#~ msgid "Run the Table of Contents stage to add navigation between sections (WCAG 2.4.5)"
-#~ msgstr "Ejecuta la etapa de Tabla de contenidos para agregar navegación entre secciones (WCAG 2.4.5)"
 
 msgid "Run whole-book validation checks and configure accessibility assessment settings."
 msgstr "Run whole-book validation checks and configure accessibility assessment settings."
@@ -3367,9 +3241,6 @@ msgstr "Paquete SCORM"
 
 msgid "Screen readers cannot interpret images without text alternatives. Adding captions ensures blind and low-vision readers understand every illustration."
 msgstr "Los lectores de pantalla no pueden interpretar imágenes sin alternativas textuales. Agregar subtítulos asegura que los lectores ciegos y con baja visión entiendan cada ilustración."
-
-#~ msgid "Search classes..."
-#~ msgstr "Buscar clases..."
 
 msgid "Search languages..."
 msgstr "Buscar idiomas..."
@@ -3516,9 +3387,6 @@ msgstr "Seleccionar plantilla..."
 msgid "Select up to 5 pages to use as visual references. The LLM will analyze them and generate a styleguide."
 msgstr "Selecciona hasta 5 páginas para usar como referencias visuales. El LLM las analizará y generará una guía de estilo."
 
-#~ msgid "Select which features to include"
-#~ msgstr "Selecciona las características a incluir"
-
 msgid "Selected: {styleImageId}"
 msgstr "Seleccionada: {0}"
 
@@ -3589,9 +3457,6 @@ msgstr "Lengua de Señas"
 msgid "Sign language video overlays for each page"
 msgstr "Superposiciones de video en lengua de señas para cada página"
 
-#~ msgid "Sign language videos are assigned to sections"
-#~ msgstr "Los videos en lengua de señas están asignados a secciones"
-
 msgid "Sign language videos provide access for deaf and hard of hearing readers who may not be fluent in written language."
 msgstr "Los videos en lenguaje de señas brindan acceso a lectores sordos y con dificultades auditivas que pueden no ser fluidos en el lenguaje escrito."
 
@@ -3638,8 +3503,8 @@ msgstr "Diapositiva {0}"
 msgid "Smart Cropping"
 msgstr "Recorte Inteligente"
 
-msgid "Something went wrong"
-msgstr "Algo salió mal"
+#~ msgid "Something went wrong"
+#~ msgstr "Algo salió mal"
 
 msgid "Spanish"
 msgstr "Español"
@@ -3720,12 +3585,6 @@ msgstr "Structure & semantics"
 msgid "Structured chapters, exercises. Best for educational content with complex layouts."
 msgstr "Capítulos estructurados, ejercicios. Mejor para contenido educativo con diseños complejos."
 
-#~ msgid "Structured navigation for the book"
-#~ msgstr "Navegación estructurada del libro"
-
-#~ msgid "Structured navigation is included"
-#~ msgstr "La navegación estructurada está incluida"
-
 msgid "Style"
 msgstr "Estilo"
 
@@ -3758,9 +3617,6 @@ msgstr "Suggested modification"
 
 msgid "Suggested modification:"
 msgstr "Suggested modification:"
-
-#~ msgid "Summary"
-#~ msgstr "Resumen"
 
 msgid "Summary Prompt"
 msgstr "Indicación de resumen"
@@ -3850,8 +3706,8 @@ msgstr "Tipos de texto"
 msgid "Textbooks & Activities"
 msgstr "Libros de Texto y Actividades"
 
-msgid "The .db file exists but doesn't have the expected structure. This ZIP may contain a database from another application."
-msgstr "El archivo .db existe pero no tiene la estructura esperada. Este ZIP puede contener una base de datos de otra aplicación."
+#~ msgid "The .db file exists but doesn't have the expected structure. This ZIP may contain a database from another application."
+#~ msgstr "El archivo .db existe pero no tiene la estructura esperada. Este ZIP puede contener una base de datos de otra aplicación."
 
 msgid "The AI is having a think..."
 msgstr "La IA está pensando..."
@@ -3868,11 +3724,11 @@ msgstr "La página de créditos."
 msgid "The data sent within the body of a request or response message."
 msgstr "Los datos enviados en el cuerpo de un mensaje de solicitud o respuesta."
 
-msgid "The database in this archive is not from ADT Studio"
-msgstr "La base de datos en este archivo no es de ADT Studio"
+#~ msgid "The database in this archive is not from ADT Studio"
+#~ msgstr "La base de datos en este archivo no es de ADT Studio"
 
-msgid "The database was found but contains no pages. The project may be incomplete or corrupted."
-msgstr "Se encontró la base de datos pero no contiene páginas. El proyecto puede estar incompleto o dañado."
+#~ msgid "The database was found but contains no pages. The project may be incomplete or corrupted."
+#~ msgstr "Se encontró la base de datos pero no contiene páginas. El proyecto puede estar incompleto o dañado."
 
 msgid "The default TTS instruction sent to OpenAI for all languages unless overridden below."
 msgstr "La instrucción predeterminada de TTS enviada a OpenAI para todos los idiomas, a menos que se anule a continuación."
@@ -3903,9 +3759,6 @@ msgstr "El Bosque Perdido"
 
 msgid "The model detects bounding boxes so each visual element can be stored and laid out separately."
 msgstr "El modelo detecta cajas delimitadoras para que cada elemento visual pueda almacenarse y disponerse por separado."
-
-msgid "The project archive is missing its PDF"
-msgstr "Al archivo del proyecto le falta su PDF"
 
 msgid "The prompt template used for text classification. This is a Liquid template processed with page context."
 msgstr "La plantilla de prompt usada para la clasificación de texto. Es una plantilla Liquid procesada con contexto de página."
@@ -3949,8 +3802,8 @@ msgstr "La tabla de contenidos."
 msgid "The Water Cycle"
 msgstr "El Ciclo del Agua"
 
-msgid "The ZIP includes paths that try to write outside the project directory. This archive cannot be imported for security reasons."
-msgstr "El ZIP incluye rutas que intentan escribir fuera del directorio del proyecto. Este archivo no puede importarse por razones de seguridad."
+#~ msgid "The ZIP includes paths that try to write outside the project directory. This archive cannot be imported for security reasons."
+#~ msgstr "El ZIP incluye rutas que intentan escribir fuera del directorio del proyecto. Este archivo no puede importarse por razones de seguridad."
 
 msgid "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."
 msgstr "Estas funciones mejoran el acceso para personas con discapacidades. Ejecutarlas antes de exportar ayuda a que su libro cumpla con los estándares de accesibilidad ADT."
@@ -3958,11 +3811,14 @@ msgstr "Estas funciones mejoran el acceso para personas con discapacidades. Ejec
 msgid "These values reflect either the saved book override or the latest packaged defaults."
 msgstr "These values reflect either the saved book override or the latest packaged defaults."
 
-msgid "This archive contains unsafe file paths"
-msgstr "Este archivo contiene rutas de archivo inseguras"
+#~ msgid "This archive contains unsafe file paths"
+#~ msgstr "Este archivo contiene rutas de archivo inseguras"
 
-msgid "This doesn't look like an ADT Studio project"
-msgstr "Esto no parece un proyecto de ADT Studio"
+msgid "This doesn't look like a valid ADT Studio project"
+msgstr "Esto no parece ser un proyecto válido de ADT Studio"
+
+#~ msgid "This doesn't look like an ADT Studio project"
+#~ msgstr "Esto no parece un proyecto de ADT Studio"
 
 msgid "This file couldn't be read as a ZIP archive"
 msgstr "Este archivo no pudo leerse como un archivo ZIP"
@@ -3985,8 +3841,8 @@ msgstr "Esta página no tiene entradas de texto traducibles"
 msgid "This page has not been reviewed yet"
 msgstr "This page has not been reviewed yet"
 
-msgid "This project appears to be empty"
-msgstr "Este proyecto parece estar vacío"
+#~ msgid "This project appears to be empty"
+#~ msgstr "Este proyecto parece estar vacío"
 
 msgid "This section has no storyboard rendering yet"
 msgstr "Esta sección aún no tiene renderización de storyboard"
@@ -4177,9 +4033,6 @@ msgstr "Sin título"
 msgid "Upload a new image file from your computer"
 msgstr "Sube un nuevo archivo de imagen desde tu computadora"
 
-#~ msgid "Upload a PDF and configure the pipeline step by step"
-#~ msgstr "Sube un PDF y configura el pipeline paso a paso"
-
 msgid "Upload a PDF to continue"
 msgstr "Sube un PDF para continuar"
 
@@ -4188,9 +4041,6 @@ msgstr "Sube un PDF para comenzar"
 
 msgid "Upload a PDF to preview its pages here."
 msgstr "Sube un PDF para previsualizar sus páginas aquí."
-
-#~ msgid "Upload a previously exported project archive to restore it."
-#~ msgstr "Sube un archivo de proyecto exportado anteriormente para restaurarlo."
 
 msgid "Upload an ADT Studio project archive (.zip) exported by you or shared by a colleague."
 msgstr "Sube un archivo de proyecto de ADT Studio (.zip) exportado por ti o compartido por un colega."
@@ -4215,12 +4065,6 @@ msgstr "Sube un PDF o arrastra y suelta"
 
 msgid "Upload sign language videos and assign them to sections."
 msgstr "Sube videos de lengua de señas y asígnalos a secciones."
-
-#~ msgid "Upload sign language videos in the Sign Language stage for deaf and hard of hearing users (WCAG 1.2.6)"
-#~ msgstr "Sube videos en lengua de señas en la etapa de Lengua de Señas para usuarios sordos y con discapacidad auditiva (WCAG 1.2.6)"
-
-#~ msgid "Upload sign language videos to make this book fully accessible to deaf and hard of hearing users"
-#~ msgstr "Sube videos de lengua de señas para que este libro sea completamente accesible para usuarios sordos y con discapacidad auditiva"
 
 msgid "Upload Style Guide"
 msgstr "Subir Guía de Estilo"
@@ -4331,9 +4175,6 @@ msgstr "Paquete web"
 msgid "Web Rendering"
 msgstr "Renderización web"
 
-#~ msgid "Web Version"
-#~ msgstr "Versión Web"
-
 msgid "WebPub"
 msgstr "WebPub"
 
@@ -4342,9 +4183,6 @@ msgstr "Exportación WebPub"
 
 msgid "What should the AI change?"
 msgstr "¿Qué debería cambiar la IA?"
-
-#~ msgid "What's included"
-#~ msgstr "Qué está incluido"
 
 msgid "When enabled, background colors from the styleguide are applied to the full page body."
 msgstr "Cuando está activado, los colores de fondo de la guía de estilo se aplican al cuerpo completo de la página."

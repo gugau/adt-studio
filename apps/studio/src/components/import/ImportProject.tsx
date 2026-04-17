@@ -212,39 +212,9 @@ function useFriendlyError(rawError: string | null): FriendlyError | null {
       hint: t`The file may be damaged or incomplete. Try downloading it again from the source.`,
     }
 
-  if (rawError.includes("missing database file"))
-    return {
-      title: t`This doesn't look like an ADT Studio project`,
-      hint: t`A valid project archive contains a .db database file at its root. Make sure you're uploading a file exported from ADT Studio.`,
-    }
-
-  if (rawError.includes("missing PDF file"))
-    return {
-      title: t`The project archive is missing its PDF`,
-      hint: t`A valid project must include the original PDF file. The archive may have been modified after export.`,
-    }
-
-  if (rawError.includes("does not contain expected ADT tables"))
-    return {
-      title: t`The database in this archive is not from ADT Studio`,
-      hint: t`The .db file exists but doesn't have the expected structure. This ZIP may contain a database from another application.`,
-    }
-
-  if (rawError.includes("contains no pages"))
-    return {
-      title: t`This project appears to be empty`,
-      hint: t`The database was found but contains no pages. The project may be incomplete or corrupted.`,
-    }
-
-  if (rawError.includes("paths that escape"))
-    return {
-      title: t`This archive contains unsafe file paths`,
-      hint: t`The ZIP includes paths that try to write outside the project directory. This archive cannot be imported for security reasons.`,
-    }
-
   return {
-    title: t`Something went wrong`,
-    hint: rawError,
+    title: t`Invalid project archive`,
+    hint: t`Make sure you're uploading a .zip file exported from ADT Studio.`,
   }
 }
 

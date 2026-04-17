@@ -12,7 +12,7 @@ import {
   getBookConfig,
   updateBookConfig,
 } from "../services/book-service.js"
-import { prepareExport, exportProject, exportWebpub, exportScorm, exportAdt } from "../services/export-service.js"
+import { prepareExport, exportProject, exportWebpub, exportScorm, exportAdt, type ExportFeatures, type ExportResult } from "../services/export-service.js"
 import { importProject, previewImport } from "../services/import-service.js"
 import type { TaskService } from "../services/task-service.js"
 
@@ -32,6 +32,17 @@ const MIME_TYPES: Record<string, string> = {
   ".ico": "image/x-icon",
   ".webp": "image/webp",
   ".dic": "application/octet-stream",
+}
+
+function handleExportError(err: unknown): never {
+  const message = err instanceof Error ? err.message : String(err)
+  if (message.includes("Web assets directory not found")) {
+    throw new HTTPException(500, { message })
+  }
+  if (message.includes("Book not found")) {
+    throw new HTTPException(404, { message })
+  }
+  throw new HTTPException(400, { message })
 }
 
 export function createBookRoutes(
@@ -125,7 +136,13 @@ export function createBookRoutes(
       return c.json(book, 201)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      throw new HTTPException(400, { message })
+      const isValidationError =
+        message.includes("Invalid ZIP") ||
+        message.includes("Invalid project archive") ||
+        message.includes("does not contain") ||
+        message.includes("contains no pages") ||
+        message.includes("paths that escape")
+      throw new HTTPException(isValidationError ? 400 : 500, { message })
     }
   })
 
@@ -187,7 +204,7 @@ export function createBookRoutes(
     const { label } = c.req.param()
     const format = (c.req.query("format") ?? "project") as "project" | "webpub" | "scorm" | "adt"
     const featuresStr = c.req.query("features")
-    let features: Record<string, boolean> | undefined
+    let features: ExportFeatures | undefined
     if (featuresStr) {
       try {
         features = JSON.parse(featuresStr)
@@ -206,7 +223,7 @@ export function createBookRoutes(
           async () => {
             await prepareExport(label, format, booksDir, webAssetsDir ?? "", configPath, features)
           },
-          { url: `/books/${safeLabel}/export-project` }
+          { url: `/books/${safeLabel}/export-${format}` }
         )
         return c.json({ status: "submitted", taskId, label: safeLabel })
       }
@@ -215,113 +232,36 @@ export function createBookRoutes(
       await prepareExport(label, format, booksDir, webAssetsDir ?? "", configPath, features)
       return c.json({ status: "completed", label: safeLabel })
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      if (message.includes("Web assets directory not found")) {
-        throw new HTTPException(500, { message })
-      }
-      if (message.includes("Book not found")) {
-        throw new HTTPException(404, { message })
-      }
-      throw new HTTPException(400, { message })
+      handleExportError(err)
     }
   })
 
-  // GET /books/:label/export-project — Download full project archive as ZIP
-  app.get("/books/:label/export-project", async (c) => {
-    const { label } = c.req.param()
-    try {
-      const result = await exportProject(label, booksDir)
-      c.header("Content-Type", "application/zip")
-      const encodedName = encodeURIComponent(result.filename)
-      c.header(
-        "Content-Disposition",
-        `attachment; filename="${result.safeFilename}"; filename*=UTF-8''${encodedName}`
-      )
-      return c.body(result.stream)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      if (message.includes("Web assets directory not found")) {
-        throw new HTTPException(500, { message })
-      }
-      if (message.includes("Book not found")) {
-        throw new HTTPException(404, { message })
-      }
-      throw new HTTPException(400, { message })
-    }
-  })
+  // Export download routes — each format delegates to its service function,
+  // then streams the ZIP with RFC 5987 Content-Disposition headers.
+  const exportHandlers: Record<string, (label: string, dir: string) => Promise<ExportResult>> = {
+    "export-project": exportProject,
+    "export-webpub": exportWebpub,
+    "export-scorm": exportScorm,
+    "export-adt": exportAdt,
+  }
 
-  // GET /books/:label/export-webpub — Download book as WebPub
-  app.get("/books/:label/export-webpub", async (c) => {
-    const { label } = c.req.param()
-    try {
-      const result = await exportWebpub(label, booksDir)
-      c.header("Content-Type", "application/zip")
-      // Use RFC 5987 filename* for non-ASCII titles, with ASCII fallback
-      const encodedName = encodeURIComponent(result.filename)
-      c.header(
-        "Content-Disposition",
-        `attachment; filename="${result.safeFilename}"; filename*=UTF-8''${encodedName}`
-      )
-      return c.body(result.stream)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      if (message.includes("Web assets directory not found")) {
-        throw new HTTPException(500, { message })
+  for (const [route, handler] of Object.entries(exportHandlers)) {
+    app.get(`/books/:label/${route}`, async (c) => {
+      const { label } = c.req.param()
+      try {
+        const result = await handler(label, booksDir)
+        c.header("Content-Type", "application/zip")
+        const encodedName = encodeURIComponent(result.filename)
+        c.header(
+          "Content-Disposition",
+          `attachment; filename="${result.safeFilename}"; filename*=UTF-8''${encodedName}`
+        )
+        return c.body(result.stream)
+      } catch (err) {
+        handleExportError(err)
       }
-      if (message.includes("Book not found")) {
-        throw new HTTPException(404, { message })
-      }
-      throw new HTTPException(400, { message })
-    }
-  })
-
-  // GET /books/:label/export-scorm — Download SCORM 1.2 package
-  app.get("/books/:label/export-scorm", async (c) => {
-    const { label } = c.req.param()
-    try {
-      const result = await exportScorm(label, booksDir)
-      c.header("Content-Type", "application/zip")
-      const encodedName = encodeURIComponent(result.filename)
-      c.header(
-        "Content-Disposition",
-        `attachment; filename="${result.safeFilename}"; filename*=UTF-8''${encodedName}`
-      )
-      return c.body(result.stream)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      if (message.includes("Web assets directory not found")) {
-        throw new HTTPException(500, { message })
-      }
-      if (message.includes("Book not found")) {
-        throw new HTTPException(404, { message })
-      }
-      throw new HTTPException(400, { message })
-    }
-  })
-
-  // GET /books/:label/export-adt — Download ADT web package (adt/ directory)
-  app.get("/books/:label/export-adt", async (c) => {
-    const { label } = c.req.param()
-    try {
-      const result = await exportAdt(label, booksDir)
-      c.header("Content-Type", "application/zip")
-      const encodedName = encodeURIComponent(result.filename)
-      c.header(
-        "Content-Disposition",
-        `attachment; filename="${result.safeFilename}"; filename*=UTF-8''${encodedName}`
-      )
-      return c.body(result.stream)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      if (message.includes("Web assets directory not found")) {
-        throw new HTTPException(500, { message })
-      }
-      if (message.includes("Book not found")) {
-        throw new HTTPException(404, { message })
-      }
-      throw new HTTPException(400, { message })
-    }
-  })
+    })
+  }
 
   // GET /books/:label/images — List all images in a book
   app.get("/books/:label/images", (c) => {

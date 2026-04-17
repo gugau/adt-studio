@@ -49,9 +49,6 @@ msgstr "(p.{0})"
 msgid "(template)"
 msgstr "(template)"
 
-#~ msgid "{0}"
-#~ msgstr "{0}"
-
 #. placeholder {0}: lockedLang.name
 msgid "{0} — type country or Enter for base"
 msgstr "{0} — type country or Enter for base"
@@ -190,9 +187,6 @@ msgstr "{countSummary} this page"
 msgid "{elapsed}s"
 msgstr "{elapsed}s"
 
-#~ msgid "{generatedFeatureCount} of 5 features generated"
-#~ msgstr "{generatedFeatureCount} of 5 features generated"
-
 msgid "{generatedFeatureCount} of 6 features generated"
 msgstr "{generatedFeatureCount} of 6 features generated"
 
@@ -318,11 +312,8 @@ msgstr "A unique identifier used as the book folder name."
 msgid "A unique string used to authenticate and authorize API requests."
 msgstr "A unique string used to authenticate and authorize API requests."
 
-msgid "A valid project archive contains a .db database file at its root. Make sure you're uploading a file exported from ADT Studio."
-msgstr "A valid project archive contains a .db database file at its root. Make sure you're uploading a file exported from ADT Studio."
-
-msgid "A valid project must include the original PDF file. The archive may have been modified after export."
-msgstr "A valid project must include the original PDF file. The archive may have been modified after export."
+#~ msgid "A valid project archive must contain a .db and .pdf file. Make sure you're uploading a file exported from ADT Studio."
+#~ msgstr "A valid project archive must contain a .db and .pdf file. Make sure you're uploading a file exported from ADT Studio."
 
 #. placeholder {0}: replaceConfirm?.file.name
 msgid "A video named \"{0}\" already exists. Do you want to replace it?"
@@ -449,9 +440,6 @@ msgstr "Add"
 msgid "Add {0} Images"
 msgstr "Add {0} Images"
 
-#~ msgid "Add a Book"
-#~ msgstr "Add a Book"
-
 msgid "Add Book"
 msgstr "Add Book"
 
@@ -506,9 +494,6 @@ msgstr "ADT Book"
 #. placeholder {0}: i18n._(selectedBook.title)
 msgid "ADT Book - {0}"
 msgstr "ADT Book - {0}"
-
-#~ msgid "ADT Export"
-#~ msgstr "ADT Export"
 
 msgid "ADT Package"
 msgstr "ADT Package"
@@ -568,12 +553,6 @@ msgstr "All"
 msgid "All Categories"
 msgstr "All Categories"
 
-#~ msgid "All findings"
-#~ msgstr "All findings"
-
-#~ msgid "All images have text descriptions"
-#~ msgstr "All images have text descriptions"
-
 msgid "All issues and manual review items"
 msgstr "All issues and manual review items"
 
@@ -585,9 +564,6 @@ msgstr "All Severities"
 
 msgid "All steps"
 msgstr "All steps"
-
-#~ msgid "Always Included"
-#~ msgstr "Always Included"
 
 msgid "An activity that does not fit the standard categories."
 msgstr "An activity that does not fit the standard categories."
@@ -695,17 +671,8 @@ msgstr "Asset"
 msgid "Assign to section..."
 msgstr "Assign to section..."
 
-#~ msgid "Audio Narration"
-#~ msgstr "Audio Narration"
-
 msgid "Audio narration (largest impact on file size)"
 msgstr "Audio narration (largest impact on file size)"
-
-#~ msgid "Audio narration is available for all text"
-#~ msgstr "Audio narration is available for all text"
-
-#~ msgid "Audio Settings"
-#~ msgstr "Audio Settings"
 
 msgid "Author"
 msgstr "Author"
@@ -1108,9 +1075,6 @@ msgstr "Cover of {title}"
 msgid "Create a new book from a PDF"
 msgstr "Create a new book from a PDF"
 
-#~ msgid "Create a new book from a PDF or import an existing project archive."
-#~ msgstr "Create a new book from a PDF or import an existing project archive."
-
 msgid "Create a new image from a text description"
 msgstr "Create a new image from a text description"
 
@@ -1122,9 +1086,6 @@ msgstr "Create ADT"
 
 msgid "Create descriptive captions for images to improve accessibility."
 msgstr "Create descriptive captions for images to improve accessibility."
-
-#~ msgid "Create from scratch"
-#~ msgstr "Create from scratch"
 
 msgid "Create from scratch using your description"
 msgstr "Create from scratch using your description"
@@ -1307,9 +1268,6 @@ msgstr "Description"
 
 msgid "Description..."
 msgstr "Description..."
-
-#~ msgid "Descriptions for all images in the book"
-#~ msgstr "Descriptions for all images in the book"
 
 msgid "Detects activities already present in the book and transforms them into interactive HTML elements like radio buttons and text inputs."
 msgstr "Detects activities already present in the book and transforms them into interactive HTML elements like radio buttons and text inputs."
@@ -1499,9 +1457,6 @@ msgstr "Engineering handbooks"
 msgid "English"
 msgstr "English"
 
-#~ msgid "Enhance Accessibility"
-#~ msgstr "Enhance Accessibility"
-
 msgid "Enter a valid minimum dimension (whole number ≥ 0)"
 msgstr "Enter a valid minimum dimension (whole number ≥ 0)"
 
@@ -1544,47 +1499,11 @@ msgstr "Expiry"
 msgid "Export"
 msgstr "Export"
 
-#~ msgid "Export ADT"
-#~ msgstr "Export ADT"
-
-#~ msgid "Export Archive"
-#~ msgstr "Export Archive"
-
-#~ msgid "Export as a SCORM 1.2 package for upload to a Learning Management System (LMS). Includes activity completion tracking and offline support."
-#~ msgstr "Export as a SCORM 1.2 package for upload to a Learning Management System (LMS). Includes activity completion tracking and offline support."
-
 msgid "Export Options"
 msgstr "Export Options"
 
 msgid "Export preparation failed"
 msgstr "Export preparation failed"
-
-#~ msgid "Export Project Archive"
-#~ msgstr "Export Project Archive"
-
-#~ msgid "Export SCORM"
-#~ msgstr "Export SCORM"
-
-#~ msgid "Export the book as a Readium WebPub package — a standards-based format for distributing digital publications on the web. Suitable for reading systems that support the Readium Web Publication Manifest specification."
-#~ msgstr "Export the book as a Readium WebPub package — a standards-based format for distributing digital publications on the web. Suitable for reading systems that support the Readium Web Publication Manifest specification."
-
-#~ msgid "Export the complete Accessible Digital Textbook as a ZIP archive — includes all HTML pages, images, audio files, quizzes, and the compiled web application. Ready to upload to a distribution platform or open locally."
-#~ msgstr "Export the complete Accessible Digital Textbook as a ZIP archive — includes all HTML pages, images, audio files, quizzes, and the compiled web application. Ready to upload to a distribution platform or open locally."
-
-#~ msgid "Export the complete Accessible Digital Textbook as a ZIP archive. Includes all HTML pages, images, audio files, quizzes, and the compiled web application — ready to upload to a distribution platform or open locally."
-#~ msgstr "Export the complete Accessible Digital Textbook as a ZIP archive. Includes all HTML pages, images, audio files, quizzes, and the compiled web application — ready to upload to a distribution platform or open locally."
-
-#~ msgid "Export the entire project as a ZIP archive — includes the source PDF, extracted images, all pipeline outputs, the database, and the compiled web application. Use this to back up or transfer the project to another machine."
-#~ msgstr "Export the entire project as a ZIP archive — includes the source PDF, extracted images, all pipeline outputs, the database, and the compiled web application. Use this to back up or transfer the project to another machine."
-
-#~ msgid "Export timed out — the book may be too large"
-#~ msgstr "Export timed out — the book may be too large"
-
-#~ msgid "Export Web"
-#~ msgstr "Export Web"
-
-#~ msgid "Export WebPub"
-#~ msgstr "Export WebPub"
 
 msgid "Exporting..."
 msgstr "Exporting..."
@@ -1720,9 +1639,6 @@ msgstr "Foreword"
 msgid "Format"
 msgstr "Format"
 
-#~ msgid "Format:"
-#~ msgstr "Format:"
-
 msgid "Forms & controls"
 msgstr "Forms & controls"
 
@@ -1737,9 +1653,6 @@ msgstr "Full ADT bundle — HTML pages, images, audio, quizzes, and the compiled
 
 msgid "Full control over render strategies, pruning, and filters."
 msgstr "Full control over render strategies, pruning, and filters."
-
-#~ msgid "Full Project"
-#~ msgstr "Full Project"
 
 msgid "Full-size source page preview for the selected quiz."
 msgstr "Full-size source page preview for the selected quiz."
@@ -1984,14 +1897,8 @@ msgstr "Images with shortest side below min or longest side above max are pruned
 msgid "Import"
 msgstr "Import"
 
-#~ msgid "Import a project"
-#~ msgstr "Import a project"
-
 msgid "Import a Project"
 msgstr "Import a Project"
-
-#~ msgid "Import an existing project"
-#~ msgstr "Import an existing project"
 
 msgid "Import project"
 msgstr "Import project"
@@ -2010,15 +1917,6 @@ msgstr "Include in render"
 
 msgid "Include text overlays in vector groups"
 msgstr "Include text overlays in vector groups"
-
-#~ msgid "Included Features"
-#~ msgstr "Included Features"
-
-#~ msgid "Including:"
-#~ msgstr "Including:"
-
-#~ msgid "Increase font size"
-#~ msgstr "Increase font size"
 
 msgid "Increase indent"
 msgstr "Increase indent"
@@ -2262,14 +2160,14 @@ msgstr "Loading voice mappings..."
 msgid "Loading..."
 msgstr "Loading..."
 
-#~ msgid "Logs"
-#~ msgstr "Logs"
-
 msgid "Lookup definitions for key terms"
 msgstr "Lookup definitions for key terms"
 
 msgid "Lower values produce more consistent styling across pages."
 msgstr "Lower values produce more consistent styling across pages."
+
+msgid "Make sure you're uploading a .zip file exported from ADT Studio."
+msgstr "Make sure you're uploading a .zip file exported from ADT Studio."
 
 msgid "Manual review"
 msgstr "Manual review"
@@ -2622,9 +2520,6 @@ msgstr "Not generated"
 msgid "Not reviewed"
 msgstr "Not reviewed"
 
-#~ msgid "Not run"
-#~ msgstr "Not run"
-
 msgid "Note"
 msgstr "Note"
 
@@ -2885,9 +2780,6 @@ msgstr "Pick one layout approach."
 msgid "Picture books and early readers"
 msgstr "Picture books and early readers"
 
-#~ msgid "Pipeline"
-#~ msgstr "Pipeline"
-
 msgid "Pipeline features"
 msgstr "Pipeline features"
 
@@ -3054,9 +2946,6 @@ msgstr "Re-run speech"
 msgid "Re-run translation"
 msgstr "Re-run translation"
 
-#~ msgid "Read Aloud"
-#~ msgstr "Read Aloud"
-
 msgid "Readers see"
 msgstr "Readers see"
 
@@ -3184,14 +3073,8 @@ msgstr "Responsive / State variants"
 msgid "Restore"
 msgstr "Restore"
 
-#~ msgid "Restore a project from a backup"
-#~ msgstr "Restore a project from a backup"
-
 msgid "Restore element"
 msgstr "Restore element"
-
-#~ msgid "Restore from a previously exported project archive (.zip)"
-#~ msgstr "Restore from a previously exported project archive (.zip)"
 
 msgid "Restore section to flow"
 msgstr "Restore section to flow"
@@ -3263,20 +3146,11 @@ msgstr "Rising ocean temperatures cause coral bleaching - when stressed corals e
 msgid "Run {stageLabel}"
 msgstr "Run {stageLabel}"
 
-#~ msgid "Run the Image Captions stage to describe all images for screen readers (WCAG 1.1.1)"
-#~ msgstr "Run the Image Captions stage to describe all images for screen readers (WCAG 1.1.1)"
-
 msgid "Run the pipeline through at least the"
 msgstr "Run the pipeline through at least the"
 
 msgid "Run the pipeline through at least the <0>Storyboard</0> stage first."
 msgstr "Run the pipeline through at least the <0>Storyboard</0> stage first."
-
-#~ msgid "Run the Speech stage to generate audio for users with visual or reading difficulties (WCAG 1.2)"
-#~ msgstr "Run the Speech stage to generate audio for users with visual or reading difficulties (WCAG 1.2)"
-
-#~ msgid "Run the Table of Contents stage to add navigation between sections (WCAG 2.4.5)"
-#~ msgstr "Run the Table of Contents stage to add navigation between sections (WCAG 2.4.5)"
 
 msgid "Run whole-book validation checks and configure accessibility assessment settings."
 msgstr "Run whole-book validation checks and configure accessibility assessment settings."
@@ -3367,9 +3241,6 @@ msgstr "SCORM Package"
 
 msgid "Screen readers cannot interpret images without text alternatives. Adding captions ensures blind and low-vision readers understand every illustration."
 msgstr "Screen readers cannot interpret images without text alternatives. Adding captions ensures blind and low-vision readers understand every illustration."
-
-#~ msgid "Search classes..."
-#~ msgstr "Search classes..."
 
 msgid "Search languages..."
 msgstr "Search languages..."
@@ -3516,9 +3387,6 @@ msgstr "Select template..."
 msgid "Select up to 5 pages to use as visual references. The LLM will analyze them and generate a styleguide."
 msgstr "Select up to 5 pages to use as visual references. The LLM will analyze them and generate a styleguide."
 
-#~ msgid "Select which features to include"
-#~ msgstr "Select which features to include"
-
 msgid "Selected: {styleImageId}"
 msgstr "Selected: {styleImageId}"
 
@@ -3589,9 +3457,6 @@ msgstr "Sign Language"
 msgid "Sign language video overlays for each page"
 msgstr "Sign language video overlays for each page"
 
-#~ msgid "Sign language videos are assigned to sections"
-#~ msgstr "Sign language videos are assigned to sections"
-
 msgid "Sign language videos provide access for deaf and hard of hearing readers who may not be fluent in written language."
 msgstr "Sign language videos provide access for deaf and hard of hearing readers who may not be fluent in written language."
 
@@ -3638,8 +3503,8 @@ msgstr "Slide {0}"
 msgid "Smart Cropping"
 msgstr "Smart Cropping"
 
-msgid "Something went wrong"
-msgstr "Something went wrong"
+#~ msgid "Something went wrong"
+#~ msgstr "Something went wrong"
 
 msgid "Spanish"
 msgstr "Spanish"
@@ -3720,12 +3585,6 @@ msgstr "Structure & semantics"
 msgid "Structured chapters, exercises. Best for educational content with complex layouts."
 msgstr "Structured chapters, exercises. Best for educational content with complex layouts."
 
-#~ msgid "Structured navigation for the book"
-#~ msgstr "Structured navigation for the book"
-
-#~ msgid "Structured navigation is included"
-#~ msgstr "Structured navigation is included"
-
 msgid "Style"
 msgstr "Style"
 
@@ -3758,9 +3617,6 @@ msgstr "Suggested modification"
 
 msgid "Suggested modification:"
 msgstr "Suggested modification:"
-
-#~ msgid "Summary"
-#~ msgstr "Summary"
 
 msgid "Summary Prompt"
 msgstr "Summary Prompt"
@@ -3850,8 +3706,8 @@ msgstr "Text Types"
 msgid "Textbooks & Activities"
 msgstr "Textbooks & Activities"
 
-msgid "The .db file exists but doesn't have the expected structure. This ZIP may contain a database from another application."
-msgstr "The .db file exists but doesn't have the expected structure. This ZIP may contain a database from another application."
+#~ msgid "The .db file exists but doesn't have the expected structure. This ZIP may contain a database from another application."
+#~ msgstr "The .db file exists but doesn't have the expected structure. This ZIP may contain a database from another application."
 
 msgid "The AI is having a think..."
 msgstr "The AI is having a think..."
@@ -3868,11 +3724,11 @@ msgstr "The credits page."
 msgid "The data sent within the body of a request or response message."
 msgstr "The data sent within the body of a request or response message."
 
-msgid "The database in this archive is not from ADT Studio"
-msgstr "The database in this archive is not from ADT Studio"
+#~ msgid "The database in this archive is not from ADT Studio"
+#~ msgstr "The database in this archive is not from ADT Studio"
 
-msgid "The database was found but contains no pages. The project may be incomplete or corrupted."
-msgstr "The database was found but contains no pages. The project may be incomplete or corrupted."
+#~ msgid "The database was found but contains no pages. The project may be incomplete or corrupted."
+#~ msgstr "The database was found but contains no pages. The project may be incomplete or corrupted."
 
 msgid "The default TTS instruction sent to OpenAI for all languages unless overridden below."
 msgstr "The default TTS instruction sent to OpenAI for all languages unless overridden below."
@@ -3903,9 +3759,6 @@ msgstr "The Lost Forest"
 
 msgid "The model detects bounding boxes so each visual element can be stored and laid out separately."
 msgstr "The model detects bounding boxes so each visual element can be stored and laid out separately."
-
-msgid "The project archive is missing its PDF"
-msgstr "The project archive is missing its PDF"
 
 msgid "The prompt template used for text classification. This is a Liquid template processed with page context."
 msgstr "The prompt template used for text classification. This is a Liquid template processed with page context."
@@ -3949,8 +3802,8 @@ msgstr "The table of contents."
 msgid "The Water Cycle"
 msgstr "The Water Cycle"
 
-msgid "The ZIP includes paths that try to write outside the project directory. This archive cannot be imported for security reasons."
-msgstr "The ZIP includes paths that try to write outside the project directory. This archive cannot be imported for security reasons."
+#~ msgid "The ZIP includes paths that try to write outside the project directory. This archive cannot be imported for security reasons."
+#~ msgstr "The ZIP includes paths that try to write outside the project directory. This archive cannot be imported for security reasons."
 
 msgid "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."
 msgstr "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."
@@ -3958,11 +3811,14 @@ msgstr "These features improve access for people with disabilities. Running them
 msgid "These values reflect either the saved book override or the latest packaged defaults."
 msgstr "These values reflect either the saved book override or the latest packaged defaults."
 
-msgid "This archive contains unsafe file paths"
-msgstr "This archive contains unsafe file paths"
+#~ msgid "This archive contains unsafe file paths"
+#~ msgstr "This archive contains unsafe file paths"
 
-msgid "This doesn't look like an ADT Studio project"
-msgstr "This doesn't look like an ADT Studio project"
+msgid "This doesn't look like a valid ADT Studio project"
+msgstr "This doesn't look like a valid ADT Studio project"
+
+#~ msgid "This doesn't look like an ADT Studio project"
+#~ msgstr "This doesn't look like an ADT Studio project"
 
 msgid "This file couldn't be read as a ZIP archive"
 msgstr "This file couldn't be read as a ZIP archive"
@@ -3985,8 +3841,8 @@ msgstr "This page has no translatable text entries"
 msgid "This page has not been reviewed yet"
 msgstr "This page has not been reviewed yet"
 
-msgid "This project appears to be empty"
-msgstr "This project appears to be empty"
+#~ msgid "This project appears to be empty"
+#~ msgstr "This project appears to be empty"
 
 msgid "This section has no storyboard rendering yet"
 msgstr "This section has no storyboard rendering yet"
@@ -4177,9 +4033,6 @@ msgstr "Untitled"
 msgid "Upload a new image file from your computer"
 msgstr "Upload a new image file from your computer"
 
-#~ msgid "Upload a PDF and configure the pipeline step by step"
-#~ msgstr "Upload a PDF and configure the pipeline step by step"
-
 msgid "Upload a PDF to continue"
 msgstr "Upload a PDF to continue"
 
@@ -4188,9 +4041,6 @@ msgstr "Upload a PDF to get started"
 
 msgid "Upload a PDF to preview its pages here."
 msgstr "Upload a PDF to preview its pages here."
-
-#~ msgid "Upload a previously exported project archive to restore it."
-#~ msgstr "Upload a previously exported project archive to restore it."
 
 msgid "Upload an ADT Studio project archive (.zip) exported by you or shared by a colleague."
 msgstr "Upload an ADT Studio project archive (.zip) exported by you or shared by a colleague."
@@ -4215,12 +4065,6 @@ msgstr "Upload PDF or drag and drop"
 
 msgid "Upload sign language videos and assign them to sections."
 msgstr "Upload sign language videos and assign them to sections."
-
-#~ msgid "Upload sign language videos in the Sign Language stage for deaf and hard of hearing users (WCAG 1.2.6)"
-#~ msgstr "Upload sign language videos in the Sign Language stage for deaf and hard of hearing users (WCAG 1.2.6)"
-
-#~ msgid "Upload sign language videos to make this book fully accessible to deaf and hard of hearing users"
-#~ msgstr "Upload sign language videos to make this book fully accessible to deaf and hard of hearing users"
 
 msgid "Upload Style Guide"
 msgstr "Upload Style Guide"
@@ -4329,9 +4173,6 @@ msgstr "Web Package"
 msgid "Web Rendering"
 msgstr "Web Rendering"
 
-#~ msgid "Web Version"
-#~ msgstr "Web Version"
-
 msgid "WebPub"
 msgstr "WebPub"
 
@@ -4340,9 +4181,6 @@ msgstr "WebPub Export"
 
 msgid "What should the AI change?"
 msgstr "What should the AI change?"
-
-#~ msgid "What's included"
-#~ msgstr "What's included"
 
 msgid "When enabled, background colors from the styleguide are applied to the full page body."
 msgstr "When enabled, background colors from the styleguide are applied to the full page body."

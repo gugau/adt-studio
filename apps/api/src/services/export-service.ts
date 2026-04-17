@@ -132,16 +132,10 @@ export async function exportProject(
   }
 }
 
-export interface WebpubExportResult {
-  stream: ReadableStream<Uint8Array>
-  filename: string
-  safeFilename: string
-}
-
 export async function exportWebpub(
   label: string,
   booksDir: string,
-): Promise<WebpubExportResult> {
+): Promise<ExportResult> {
   const safeLabel = parseBookLabel(label)
   const resolvedDir = path.resolve(booksDir)
   const bookDir = path.join(resolvedDir, safeLabel)
@@ -160,22 +154,10 @@ export async function exportWebpub(
   }
 }
 
-export interface ScormExportResult {
-  stream: ReadableStream<Uint8Array>
-  filename: string
-  safeFilename: string
-}
-
-export interface AdtExportResult {
-  stream: ReadableStream<Uint8Array>
-  filename: string
-  safeFilename: string
-}
-
 export async function exportScorm(
   label: string,
   booksDir: string,
-): Promise<ScormExportResult> {
+): Promise<ExportResult> {
   const safeLabel = parseBookLabel(label)
   const resolvedDir = path.resolve(booksDir)
   const bookDir = path.join(resolvedDir, safeLabel)
@@ -200,7 +182,7 @@ export async function exportScorm(
 export async function exportAdt(
   label: string,
   booksDir: string,
-): Promise<AdtExportResult> {
+): Promise<ExportResult> {
   const safeLabel = parseBookLabel(label)
   const resolvedDir = path.resolve(booksDir)
   const bookDir = path.join(resolvedDir, safeLabel)

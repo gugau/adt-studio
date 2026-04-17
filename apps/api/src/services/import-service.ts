@@ -44,12 +44,10 @@ function unzipBuffer(zipBuffer: Buffer): Record<string, Uint8Array> {
   }
 }
 
-function findRequiredEntry(filePaths: string[], ext: string, label: string): string {
-  const entry = filePaths.find((p) => p.endsWith(ext) && !p.includes("/"))
-  if (!entry) {
-    throw new Error(`Invalid project archive: missing ${label} file (${ext}) at root level`)
-  }
-  return entry
+const NOT_ADT_PROJECT = "Invalid project archive: expected a .db and .pdf file at the root level"
+
+function findEntry(filePaths: string[], ext: string): string | undefined {
+  return filePaths.find((p) => p.endsWith(ext) && !p.includes("/"))
 }
 
 interface DbMetadata {
@@ -142,11 +140,12 @@ export function previewImport(zipBuffer: Buffer): ImportPreview {
   const entries = unzipBuffer(zipBuffer)
   const filePaths = Object.keys(entries)
 
-  const dbEntry = findRequiredEntry(filePaths, ".db", "database")
+  const dbEntry = findEntry(filePaths, ".db")
+  if (!dbEntry) throw new Error(NOT_ADT_PROJECT)
   const rawLabel = dbEntry.replace(/\.db$/, "")
   const safeLabel = parseBookLabel(rawLabel)
 
-  const pdfEntry = filePaths.find((p) => p.endsWith(".pdf") && !p.includes("/"))
+  const pdfEntry = findEntry(filePaths, ".pdf")
   const imageCount = filePaths.filter((p) => p.startsWith("images/") && !p.endsWith("/")).length
   const videoCount = filePaths.filter((p) => p.startsWith("videos/") && !p.endsWith("/")).length
 
@@ -185,10 +184,11 @@ export async function importProject(
   const entries = unzipBuffer(zipBuffer)
   const filePaths = Object.keys(entries)
 
-  const dbEntry = findRequiredEntry(filePaths, ".db", "database")
+  const dbEntry = findEntry(filePaths, ".db")
+  if (!dbEntry) throw new Error(NOT_ADT_PROJECT)
   const rawLabel = dbEntry.replace(/\.db$/, "")
 
-  findRequiredEntry(filePaths, ".pdf", "PDF")
+  if (!findEntry(filePaths, ".pdf")) throw new Error(NOT_ADT_PROJECT)
 
   const safeLabel = parseBookLabel(rawLabel)
   const targetLabel = resolveUniqueLabel(safeLabel, booksDir)
