@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import {
   Plus,
@@ -16,6 +16,13 @@ import { useLingui } from "@lingui/react/macro"
 import { Button } from "@/components/ui/button"
 import { StudioTopBar } from "@/components/StudioTopBar"
 import { Badge } from "@/components/ui/badge"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { DeleteBookDialog } from "@/components/books/DeleteBookDialog"
 import { useBooks, useDeleteBook } from "@/hooks/use-books"
 import { getPipelineStages } from "@/components/pipeline/stage-config"
@@ -24,6 +31,45 @@ import {
   getStageDescriptionI18n,
 } from "@/components/pipeline/pipeline-i18n"
 import type { BookSummary } from "@/api/client"
+
+type BookSortKey = "modified" | "created" | "alphabetical"
+
+const BOOK_SORT_STORAGE_KEY = "adt.books.sort"
+const VALID_SORT_KEYS: readonly BookSortKey[] = [
+  "modified",
+  "created",
+  "alphabetical",
+]
+
+function readStoredSort(): BookSortKey {
+  if (typeof window === "undefined") return "modified"
+  const stored = window.localStorage.getItem(BOOK_SORT_STORAGE_KEY)
+  return VALID_SORT_KEYS.includes(stored as BookSortKey)
+    ? (stored as BookSortKey)
+    : "modified"
+}
+
+function sortBooks(books: BookSummary[], key: BookSortKey): BookSummary[] {
+  const copy = [...books]
+  switch (key) {
+    case "modified":
+      return copy.sort(
+        (a, b) =>
+          new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime(),
+      )
+    case "created":
+      return copy.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
+    case "alphabetical":
+      return copy.sort((a, b) =>
+        (a.title ?? a.label).localeCompare(b.title ?? b.label, undefined, {
+          sensitivity: "base",
+        }),
+      )
+  }
+}
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -182,6 +228,17 @@ function HomePage() {
   const { data: books, isLoading, error } = useBooks()
   const deleteMutation = useDeleteBook()
   const [deleteLabel, setDeleteLabel] = useState<string | null>(null)
+  const [sortKey, setSortKey] = useState<BookSortKey>(() => readStoredSort())
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    window.localStorage.setItem(BOOK_SORT_STORAGE_KEY, sortKey)
+  }, [sortKey])
+
+  const sortedBooks = useMemo(
+    () => sortBooks(books ?? [], sortKey),
+    [books, sortKey],
+  )
 
   if (isLoading) {
     return (
@@ -199,7 +256,7 @@ function HomePage() {
     )
   }
 
-  const bookList = books ?? []
+  const bookList = sortedBooks
 
   return (
     <div className="flex flex-1 min-h-0 flex-col">
@@ -255,17 +312,43 @@ function HomePage() {
 
       {/* Right — books list (70%) */}
       <div className="flex-1 min-w-0 overflow-auto p-5">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 gap-3">
           <h2 className="text-sm font-medium text-muted-foreground">
             <Trans>Your Books</Trans>
             {bookList.length > 0 && ` (${bookList.length})`}
           </h2>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/books/new" className="gap-1.5">
-              <Plus className="h-3.5 w-3.5" />
-              <Trans>Add Book</Trans>
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            {bookList.length > 1 && (
+              <Select
+                value={sortKey}
+                onValueChange={(value) => setSortKey(value as BookSortKey)}
+              >
+                <SelectTrigger
+                  aria-label={t`Sort books`}
+                  className="h-8 w-[160px] text-xs transition-colors"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  <SelectItem value="modified">
+                    <Trans>Last modified</Trans>
+                  </SelectItem>
+                  <SelectItem value="created">
+                    <Trans>Newest first</Trans>
+                  </SelectItem>
+                  <SelectItem value="alphabetical">
+                    <Trans>A–Z</Trans>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/books/new" className="gap-1.5">
+                <Plus className="h-3.5 w-3.5" />
+                <Trans>Add Book</Trans>
+              </Link>
+            </Button>
+          </div>
         </div>
         <div className="space-y-3">
           {bookList.map((book) => (

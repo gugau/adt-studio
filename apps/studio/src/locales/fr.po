@@ -305,6 +305,9 @@ msgstr "Une chaîne unique utilisée pour authentifier et autoriser les requête
 msgid "A video named \"{0}\" already exists. Do you want to replace it?"
 msgstr "Une vidéo nommée \"{0}\" existe déjà. Voulez-vous la remplacer ?"
 
+msgid "A–Z"
+msgstr "A–Z"
+
 msgid "ABC"
 msgstr "ABC"
 
@@ -1945,6 +1948,9 @@ msgstr "Grandes images, flux narratif. Idéal pour les livres illustrés avec de
 msgid "Last"
 msgstr "Dernier"
 
+msgid "Last modified"
+msgstr "Dernière modification"
+
 msgid "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 msgstr "Laissez sur Aucun pour exécuter la segmentation sur toutes les images éligibles (selon les règles du pipeline)."
 
@@ -2262,6 +2268,9 @@ msgstr "Nouvelle session"
 
 msgid "new_type_key"
 msgstr "new_type_key"
+
+msgid "Newest first"
+msgstr "Plus récents d'abord"
 
 msgid "Next"
 msgstr "Suivant"
@@ -3386,6 +3395,9 @@ msgstr "Diapositive {0}"
 
 msgid "Smart Cropping"
 msgstr "Recadrage intelligent"
+
+msgid "Sort books"
+msgstr "Trier les livres"
 
 msgid "Spanish"
 msgstr "Espagnol"

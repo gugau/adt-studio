@@ -126,6 +126,8 @@ describe("listBooks", () => {
       hasSourcePdf: true,
       needsRebuild: false,
       rebuildReason: null,
+      createdAt: expect.any(String),
+      modifiedAt: expect.any(String),
     })
   })
 
@@ -144,6 +146,8 @@ describe("listBooks", () => {
       hasSourcePdf: false,
       needsRebuild: false,
       rebuildReason: null,
+      createdAt: expect.any(String),
+      modifiedAt: expect.any(String),
     })
   })
 
@@ -164,7 +168,20 @@ describe("listBooks", () => {
       hasSourcePdf: true,
       needsRebuild: false,
       rebuildReason: null,
+      createdAt: expect.any(String),
+      modifiedAt: expect.any(String),
     })
+  })
+
+  it("includes ISO timestamps for creation and last modification", () => {
+    createTestDb("timestamps")
+
+    const books = listBooks(tmpDir)
+    expect(books).toHaveLength(1)
+    expect(() => new Date(books[0].createdAt).toISOString()).not.toThrow()
+    expect(() => new Date(books[0].modifiedAt).toISOString()).not.toThrow()
+    expect(Date.parse(books[0].createdAt)).not.toBeNaN()
+    expect(Date.parse(books[0].modifiedAt)).not.toBeNaN()
   })
 
   it("lists multiple books sorted by label", () => {

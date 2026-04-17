@@ -14,6 +14,28 @@ export interface BookSummary {
   hasSourcePdf: boolean
   needsRebuild: boolean
   rebuildReason: string | null
+  createdAt: string
+  modifiedAt: string
+}
+
+function toIsoDate(ms: number): string {
+  return new Date(ms).toISOString()
+}
+
+function resolveTimestamps(
+  bookDir: string,
+  dbPath: string,
+  pdfPath: string
+): { createdAt: string; modifiedAt: string } {
+  const dirStat = fs.statSync(bookDir)
+  const createdMs = dirStat.birthtimeMs || dirStat.ctimeMs
+
+  const candidates: number[] = [dirStat.mtimeMs]
+  if (fs.existsSync(dbPath)) candidates.push(fs.statSync(dbPath).mtimeMs)
+  if (fs.existsSync(pdfPath)) candidates.push(fs.statSync(pdfPath).mtimeMs)
+
+  const modifiedMs = Math.max(...candidates)
+  return { createdAt: toIsoDate(createdMs), modifiedAt: toIsoDate(modifiedMs) }
 }
 
 export interface BookDetail extends BookSummary {
@@ -89,6 +111,8 @@ export function listBooks(booksDir: string): BookSummary[] {
       }
     }
 
+    const { createdAt, modifiedAt } = resolveTimestamps(bookDir, dbPath, pdfPath)
+
     books.push({
       label,
       title,
@@ -99,6 +123,8 @@ export function listBooks(booksDir: string): BookSummary[] {
       hasSourcePdf: fs.existsSync(pdfPath),
       needsRebuild,
       rebuildReason,
+      createdAt,
+      modifiedAt,
     })
   }
 
@@ -179,6 +205,8 @@ export function getBook(label: string, booksDir: string): BookDetail {
     }
   }
 
+  const { createdAt, modifiedAt } = resolveTimestamps(bookDir, dbPath, pdfPath)
+
   return {
     label: safeLabel,
     title,
@@ -189,6 +217,8 @@ export function getBook(label: string, booksDir: string): BookDetail {
     hasSourcePdf: fs.existsSync(pdfPath),
     needsRebuild,
     rebuildReason,
+    createdAt,
+    modifiedAt,
     metadata,
     bookSummary,
   }
@@ -218,6 +248,8 @@ export function createBook(
     )
   }
 
+  const nowIso = new Date().toISOString()
+
   return {
     label: safeLabel,
     title: null,
@@ -228,6 +260,8 @@ export function createBook(
     hasSourcePdf: true,
     needsRebuild: false,
     rebuildReason: null,
+    createdAt: nowIso,
+    modifiedAt: nowIso,
   }
 }
 

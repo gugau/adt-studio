@@ -62,6 +62,8 @@ export interface BookSummary {
   hasSourcePdf: boolean
   needsRebuild: boolean
   rebuildReason: string | null
+  createdAt: string
+  modifiedAt: string
 }
 
 export interface BookDetail extends BookSummary {
