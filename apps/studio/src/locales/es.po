@@ -312,9 +312,6 @@ msgstr "Un identificador único usado como el nombre de la carpeta del libro."
 msgid "A unique string used to authenticate and authorize API requests."
 msgstr "Una cadena única que se usa para autenticar y autorizar solicitudes a la API."
 
-#~ msgid "A valid project archive must contain a .db and .pdf file. Make sure you're uploading a file exported from ADT Studio."
-#~ msgstr "Un archivo de proyecto válido debe contener un archivo .db y .pdf. Asegúrese de subir un archivo exportado desde ADT Studio."
-
 #. placeholder {0}: replaceConfirm?.file.name
 msgid "A video named \"{0}\" already exists. Do you want to replace it?"
 msgstr "Ya existe un video llamado \"{0}\". ¿Desea reemplazarlo?"
@@ -3509,9 +3506,6 @@ msgstr "Diapositiva {0}"
 msgid "Smart Cropping"
 msgstr "Recorte Inteligente"
 
-#~ msgid "Something went wrong"
-#~ msgstr "Algo salió mal"
-
 msgid "Spanish"
 msgstr "Español"
 
@@ -3712,9 +3706,6 @@ msgstr "Tipos de texto"
 msgid "Textbooks & Activities"
 msgstr "Libros de Texto y Actividades"
 
-#~ msgid "The .db file exists but doesn't have the expected structure. This ZIP may contain a database from another application."
-#~ msgstr "El archivo .db existe pero no tiene la estructura esperada. Este ZIP puede contener una base de datos de otra aplicación."
-
 msgid "The AI is having a think..."
 msgstr "La IA está pensando..."
 
@@ -3729,12 +3720,6 @@ msgstr "La página de créditos."
 
 msgid "The data sent within the body of a request or response message."
 msgstr "Los datos enviados en el cuerpo de un mensaje de solicitud o respuesta."
-
-#~ msgid "The database in this archive is not from ADT Studio"
-#~ msgstr "La base de datos en este archivo no es de ADT Studio"
-
-#~ msgid "The database was found but contains no pages. The project may be incomplete or corrupted."
-#~ msgstr "Se encontró la base de datos pero no contiene páginas. El proyecto puede estar incompleto o dañado."
 
 msgid "The default TTS instruction sent to OpenAI for all languages unless overridden below."
 msgstr "La instrucción predeterminada de TTS enviada a OpenAI para todos los idiomas, a menos que se anule a continuación."
@@ -3808,23 +3793,11 @@ msgstr "La tabla de contenidos."
 msgid "The Water Cycle"
 msgstr "El Ciclo del Agua"
 
-#~ msgid "The ZIP includes paths that try to write outside the project directory. This archive cannot be imported for security reasons."
-#~ msgstr "El ZIP incluye rutas que intentan escribir fuera del directorio del proyecto. Este archivo no puede importarse por razones de seguridad."
-
 msgid "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."
 msgstr "Estas funciones mejoran el acceso para personas con discapacidades. Ejecutarlas antes de exportar ayuda a que su libro cumpla con los estándares de accesibilidad ADT."
 
 msgid "These values reflect either the saved book override or the latest packaged defaults."
 msgstr "These values reflect either the saved book override or the latest packaged defaults."
-
-#~ msgid "This archive contains unsafe file paths"
-#~ msgstr "Este archivo contiene rutas de archivo inseguras"
-
-#~ msgid "This doesn't look like a valid ADT Studio project"
-#~ msgstr "Esto no parece ser un proyecto válido de ADT Studio"
-
-#~ msgid "This doesn't look like an ADT Studio project"
-#~ msgstr "Esto no parece un proyecto de ADT Studio"
 
 msgid "This file couldn't be read as a ZIP archive"
 msgstr "Este archivo no pudo leerse como un archivo ZIP"
@@ -3846,9 +3819,6 @@ msgstr "Esta página no tiene entradas de texto traducibles"
 
 msgid "This page has not been reviewed yet"
 msgstr "This page has not been reviewed yet"
-
-#~ msgid "This project appears to be empty"
-#~ msgstr "Este proyecto parece estar vacío"
 
 msgid "This section has no storyboard rendering yet"
 msgstr "Esta sección aún no tiene renderización de storyboard"
@@ -4222,6 +4192,3 @@ msgstr "Ficción para jóvenes adultos"
 
 msgid "Your Books"
 msgstr "Tus libros"
-
-#~ msgid "ZIP Archive"
-#~ msgstr "Archivo ZIP"

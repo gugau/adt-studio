@@ -312,9 +312,6 @@ msgstr "Um identificador único usado como nome da pasta do livro."
 msgid "A unique string used to authenticate and authorize API requests."
 msgstr "Uma sequência única usada para autenticar e autorizar solicitações à API."
 
-#~ msgid "A valid project archive must contain a .db and .pdf file. Make sure you're uploading a file exported from ADT Studio."
-#~ msgstr "Um arquivo de projeto válido deve conter um arquivo .db e .pdf. Certifique-se de enviar um arquivo exportado do ADT Studio."
-
 #. placeholder {0}: replaceConfirm?.file.name
 msgid "A video named \"{0}\" already exists. Do you want to replace it?"
 msgstr "Já existe um vídeo chamado \"{0}\". Deseja substituí-lo?"
@@ -3509,9 +3506,6 @@ msgstr "Slide {0}"
 msgid "Smart Cropping"
 msgstr "Corte Inteligente"
 
-#~ msgid "Something went wrong"
-#~ msgstr "Algo deu errado"
-
 msgid "Spanish"
 msgstr "Espanhol"
 
@@ -3712,9 +3706,6 @@ msgstr "Tipos de texto"
 msgid "Textbooks & Activities"
 msgstr "Livros Didáticos & Atividades"
 
-#~ msgid "The .db file exists but doesn't have the expected structure. This ZIP may contain a database from another application."
-#~ msgstr "O arquivo .db existe mas não tem a estrutura esperada. Este ZIP pode conter um banco de dados de outro aplicativo."
-
 msgid "The AI is having a think..."
 msgstr "A IA está pensando..."
 
@@ -3729,12 +3720,6 @@ msgstr "A página de créditos."
 
 msgid "The data sent within the body of a request or response message."
 msgstr "Os dados enviados no corpo de uma mensagem de requisição ou resposta."
-
-#~ msgid "The database in this archive is not from ADT Studio"
-#~ msgstr "O banco de dados neste arquivo não é do ADT Studio"
-
-#~ msgid "The database was found but contains no pages. The project may be incomplete or corrupted."
-#~ msgstr "O banco de dados foi encontrado mas não contém páginas. O projeto pode estar incompleto ou corrompido."
 
 msgid "The default TTS instruction sent to OpenAI for all languages unless overridden below."
 msgstr "A instrução padrão de TTS enviada ao OpenAI para todos os idiomas, a menos que seja substituída abaixo."
@@ -3808,23 +3793,11 @@ msgstr "O índice."
 msgid "The Water Cycle"
 msgstr "O Ciclo da Água"
 
-#~ msgid "The ZIP includes paths that try to write outside the project directory. This archive cannot be imported for security reasons."
-#~ msgstr "O ZIP inclui caminhos que tentam gravar fora do diretório do projeto. Este arquivo não pode ser importado por razões de segurança."
-
 msgid "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."
 msgstr "Esses recursos melhoram o acesso para pessoas com deficiência. Executá-los antes de exportar ajuda seu livro a atender aos padrões de acessibilidade ADT."
 
 msgid "These values reflect either the saved book override or the latest packaged defaults."
 msgstr "These values reflect either the saved book override or the latest packaged defaults."
-
-#~ msgid "This archive contains unsafe file paths"
-#~ msgstr "Este arquivo contém caminhos de arquivo inseguros"
-
-#~ msgid "This doesn't look like a valid ADT Studio project"
-#~ msgstr "Isso não parece ser um projeto válido do ADT Studio"
-
-#~ msgid "This doesn't look like an ADT Studio project"
-#~ msgstr "Isto não parece um projeto do ADT Studio"
 
 msgid "This file couldn't be read as a ZIP archive"
 msgstr "Este arquivo não pôde ser lido como um arquivo ZIP"
@@ -3846,9 +3819,6 @@ msgstr "Esta página não tem entradas de texto traduzíveis"
 
 msgid "This page has not been reviewed yet"
 msgstr "This page has not been reviewed yet"
-
-#~ msgid "This project appears to be empty"
-#~ msgstr "Este projeto parece estar vazio"
 
 msgid "This section has no storyboard rendering yet"
 msgstr "Esta seção ainda não tem renderização de storyboard"
@@ -4222,6 +4192,3 @@ msgstr "Ficção para jovens adultos"
 
 msgid "Your Books"
 msgstr "Seus livros"
-
-#~ msgid "ZIP Archive"
-#~ msgstr "Arquivo ZIP"
