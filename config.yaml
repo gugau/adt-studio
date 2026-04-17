@@ -17,7 +17,13 @@ text_types:
 container_types:
   image_group: An image group — contains an image leaf child and optional captions, labels, or text associated with the image.
   activity: A single question, exercise, or activity
-  activity_option: A single selectable choice in a multiple-choice or matching activity. ALWAYS use this container for each option — even text-only ones — so options are identifiable. Wraps the option's content: a `text` leaf for text-only options, an `image_group` for image-only options, or a `text` leaf and an `image_group` together for mixed options. Never use `activity_option` as a `role` on a leaf.
+  activity_option: >
+    A single selectable choice in a multiple-choice or matching activity.
+    ALWAYS use this container for each option — even text-only ones — so
+    options are identifiable. Wraps the option's content: a `text` leaf for
+    text-only options, an `image_group` for image-only options, or a `text`
+    leaf and an `image_group` together for mixed options. Never use
+    `activity_option` as a `role` on a leaf.
   group: A generic content grouping when no more specific container fits
   list: An ordered or unordered list
   list_item: A single item within a list
