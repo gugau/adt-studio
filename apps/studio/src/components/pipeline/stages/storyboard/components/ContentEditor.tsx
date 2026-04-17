@@ -639,7 +639,6 @@ function TextGroupPartView({ part }: { part: Extract<PartData, { type: "text_gro
 }
 
 function ImagePartView({ part, bookLabel }: { part: Extract<PartData, { type: "image" }>; bookLabel: string }) {
-  // eslint-disable-next-line lingui/no-unlocalized-strings
   const imgSrc = `${BASE_URL}/books/${bookLabel}/images/${part.imageId}`
   return (
     <div className="flex items-center gap-2">

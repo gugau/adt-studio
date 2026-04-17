@@ -216,6 +216,8 @@ export default [
             // Tailwind CSS classes, internal identifiers, and status values
             // (all-lowercase-no-spaces: bg-gray-600, hover:bg-white, gap-2.5, "success", "error", "done")
             "^[a-z][a-z0-9._:-]*$",
+            // camelCase identifier strings used as state keys / enum values (e.g. "textGroups", "prunedImages")
+            "^[a-z][a-zA-Z0-9]*$",
             // Multi-class Tailwind strings (space-separated tokens, e.g. "bg-red-600 text-white hover:bg-red-700")
             "^[a-z][a-z0-9._:/-]*( [a-z!][a-z0-9._:/-]*)+$",
             // Hex color values (e.g. "#ffffff", "#2563eb")
