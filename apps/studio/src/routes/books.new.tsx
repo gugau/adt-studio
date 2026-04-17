@@ -5,7 +5,7 @@ import { BookCreationWizard } from "@/components/wizard/BookCreationWizard"
 
 function AddBookPage() {
   return (
-    <WizardProvider initialStep={0}>
+    <WizardProvider>
       <WizardFormProvider>
         <BookCreationWizard />
       </WizardFormProvider>

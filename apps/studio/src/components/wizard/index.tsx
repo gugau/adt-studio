@@ -22,9 +22,9 @@ interface WizardContextValue {
 
 const WizardContext = createContext<WizardContextValue | null>(null)
 
-export function WizardProvider({ children, initialStep = 0 }: { children: ReactNode; initialStep?: number }) {
-  const [currentStep, setCurrentStepRaw] = useState(initialStep)
-  const [stepDirection, setStepDirection] = useState<"forward" | "back">("forward")
+export function WizardProvider({ children }: { children: ReactNode }) {
+  const [currentStep, setCurrentStepRaw] = useState(0)
+  const [stepDirection, setStepDirection] = useState<"forward" | "back">("forward") 
 
   useEffect(() => {
     if (currentStep === 0) return
