@@ -127,6 +127,7 @@ export default [
 
             // --- File dialog / download props (Tauri + browser) ---
             "defaultPath",
+            "suffix",
             "download",
             "filters",
             "extensions",

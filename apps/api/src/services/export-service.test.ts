@@ -102,7 +102,7 @@ describe("exportProject", () => {
 
     const result = await exportProject("export-test", tmpDir)
     expect(result.stream).toBeInstanceOf(ReadableStream)
-    expect(result.filename).toBe("export-test.zip")
+    expect(result.filename).toBe("export-test-project.zip")
 
     const zipBuffer = await streamToBuffer(result.stream)
     const files = unzipSync(zipBuffer)
@@ -152,7 +152,7 @@ describe("exportProject", () => {
 
     const result = await exportProject("not-accepted", tmpDir)
     expect(result.stream).toBeInstanceOf(ReadableStream)
-    expect(result.filename).toBe("not-accepted.zip")
+    expect(result.filename).toBe("not-accepted-project.zip")
   })
 
   it("throws for non-existent book", async () => {

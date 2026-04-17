@@ -115,26 +115,19 @@ async function triggerExportDownload(
   const { save } = await import("@tauri-apps/plugin-dialog")
   const { writeFile } = await import("@tauri-apps/plugin-fs")
 
-  const ext = format === "webpub" ? "webpub" : "zip"
-  const defaultPath =
-    format === "scorm" ? `${label}-scorm.zip`
-    : format === "adt" ? `${label}-adt.zip`
-    : format === "project" ? `${label}-project.zip`
-    : `${label}.${ext}`
-  const filterName =
-    format === "webpub"
-      ? i18n._(msg`WebPub`)
-      : format === "scorm"
-        ? i18n._(msg`SCORM Package`)
-        : format === "adt"
-          ? i18n._(msg`ADT Package`)
-          : format === "project"
-            ? i18n._(msg`Project Archive`)
-            : i18n._(msg`ZIP Archive`)
+  const formatMeta: Record<ExportFormat, { ext: string; suffix: string; filterName: string }> = {
+    project: { ext: "zip", suffix: "-project", filterName: i18n._(msg`Project Archive`) },
+    webpub: { ext: "webpub", suffix: "", filterName: i18n._(msg`WebPub`) },
+    scorm: { ext: "zip", suffix: "-scorm", filterName: i18n._(msg`SCORM Package`) },
+    adt: { ext: "zip", suffix: "-adt", filterName: i18n._(msg`ADT Package`) },
+  }
+  const meta = formatMeta[format]
+  const defaultPath = `${label}${meta.suffix}.${meta.ext}`
+  const filterName = meta.filterName
 
   const savePath = await save({
     defaultPath,
-    filters: [{ name: filterName, extensions: [ext] }],
+    filters: [{ name: filterName, extensions: [meta.ext] }],
   })
 
   if (savePath) {

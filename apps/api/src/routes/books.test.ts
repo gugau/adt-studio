@@ -855,7 +855,7 @@ describe("GET /books/:label/export-project", () => {
     const res = await app.request("/books/export-book/export-project")
     expect(res.status).toBe(200)
     expect(res.headers.get("Content-Type")).toBe("application/zip")
-    expect(res.headers.get("Content-Disposition")).toContain('filename="export-book.zip"')
+    expect(res.headers.get("Content-Disposition")).toContain('filename="export-book-project.zip"')
     const buf = await res.arrayBuffer()
     expect(buf.byteLength).toBeGreaterThan(0)
   })
@@ -1122,7 +1122,7 @@ describe("GET /books/:label/export-adt", () => {
     expect(res.status).toBe(200)
     expect(res.headers.get("Content-Type")).toBe("application/zip")
     const disposition = res.headers.get("Content-Disposition") ?? ""
-    expect(disposition).toContain('filename="adt-export-web.zip"')
+    expect(disposition).toContain('filename="adt-export-adt.zip"')
     expect(disposition).toContain("filename*=UTF-8''")
   })
 

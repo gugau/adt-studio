@@ -127,8 +127,8 @@ export async function exportProject(
 
   return {
     stream: createZipStream(bookDir, new Set(["adt", "webpub"])),
-    filename: `${title}.zip`,
-    safeFilename: `${safeLabel}.zip`,
+    filename: `${title}-project.zip`,
+    safeFilename: `${safeLabel}-project.zip`,
   }
 }
 
@@ -174,8 +174,8 @@ export async function exportScorm(
 
   return {
     stream: createZipStream(adtDir),
-    filename: `${title}.zip`,
-    safeFilename: `${safeLabel}.zip`,
+    filename: `${title}-scorm.zip`,
+    safeFilename: `${safeLabel}-scorm.zip`,
   }
 }
 
@@ -199,8 +199,8 @@ export async function exportAdt(
 
   return {
     stream: createZipStream(adtDir),
-    filename: `${title}-web.zip`,
-    safeFilename: `${safeLabel}-web.zip`,
+    filename: `${title}-adt.zip`,
+    safeFilename: `${safeLabel}-adt.zip`,
   }
 }
 
