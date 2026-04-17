@@ -253,7 +253,7 @@ export function ImportProject() {
     loadPreview(f)
   }, [loadPreview])
 
-  const { overlay, handleDrop } = useFileDropZone({
+  const { overlay } = useFileDropZone({
     accept: isZipFile,
     onAccept: handleAccept,
   })
@@ -261,37 +261,30 @@ export function ImportProject() {
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const picked = e.target.files?.[0]
-      if (picked && isZipFile(picked)) {
-        setZipFile(picked)
-        loadPreview(picked)
-      }
+      if (picked && isZipFile(picked)) handleAccept(picked)
       e.target.value = ""
     },
-    [loadPreview],
+    [handleAccept],
   )
 
-  function clearFile() {
-    setZipFile(null)
-    setPreview(null)
-    setPreviewError(null)
-    importMutation.reset()
-  }
-
-  function handleImport() {
+  const handleImport = useCallback(() => {
     if (!zipFile) return
     importMutation.mutate(zipFile, {
       onSuccess: () => navigate({ to: "/" }),
     })
-  }
+  }, [zipFile, importMutation, navigate])
 
-  const hasPreview = zipFile && preview && !previewError
+  const hasPreview = !!(zipFile && preview && !previewError)
   const hasError = friendlyPreviewError || friendlyImportError
   const activeError = friendlyImportError ?? friendlyPreviewError
 
   const [accepted, setAccepted] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
+  const [isClearing, setIsClearing] = useState(false)
+  const [deferredError, setDeferredError] = useState<FriendlyError | null>(null)
 
   useEffect(() => {
+    if (isClearing) return
     if (!hasPreview) {
       setAccepted(false)
       setShowPreview(false)
@@ -300,10 +293,7 @@ export function ImportProject() {
     setAccepted(true)
     const timer = setTimeout(() => setShowPreview(true), 1200)
     return () => clearTimeout(timer)
-  }, [hasPreview])
-
-  const [deferredError, setDeferredError] = useState<FriendlyError | null>(null)
-  const [deferredImportError, setDeferredImportError] = useState<FriendlyError | null>(null)
+  }, [hasPreview, isClearing])
 
   useEffect(() => {
     if (activeError) {
@@ -314,14 +304,26 @@ export function ImportProject() {
     }
   }, [!!activeError])
 
-  useEffect(() => {
-    if (friendlyImportError) {
-      setDeferredImportError(friendlyImportError)
-    } else {
-      const timer = setTimeout(() => setDeferredImportError(null), 300)
-      return () => clearTimeout(timer)
+  const clearFile = useCallback(() => {
+    if (!hasPreview) {
+      setZipFile(null)
+      setPreview(null)
+      setPreviewError(null)
+      importMutation.reset()
+      return
     }
-  }, [!!friendlyImportError])
+    setIsClearing(true)
+    setShowPreview(false)
+    setAccepted(false)
+    const timer = setTimeout(() => {
+      setZipFile(null)
+      setPreview(null)
+      setPreviewError(null)
+      importMutation.reset()
+      setIsClearing(false)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [hasPreview, importMutation])
 
   return (
     <>
@@ -336,19 +338,31 @@ export function ImportProject() {
           <h1 className="text-2xl sm:text-[30px] font-semibold leading-tight sm:leading-9 tracking-[-0.75px] text-[#030303] text-center">
             <Trans>Import a Project</Trans>
           </h1>
-          <p className="max-w-xl text-center text-sm text-[#525252]">
-            {hasPreview
-              ? <Trans>Review the project details below and confirm the import.</Trans>
-              : <Trans>Upload an ADT Studio project archive (.zip) exported by you or shared by a colleague.</Trans>}
-          </p>
-          {!zipFile && !hasError && (
+          <div className="max-w-xl grid [&>*]:col-start-1 [&>*]:row-start-1">
+            <p className={cn(
+              "text-center text-sm text-[#525252] transition-opacity duration-300 ease-out",
+              showPreview ? "opacity-0 pointer-events-none" : "opacity-100",
+            )}>
+              <Trans>Upload an ADT Studio project archive (.zip) exported by you or shared by a colleague.</Trans>
+            </p>
+            <p className={cn(
+              "text-center text-sm text-[#525252] transition-opacity duration-300 ease-out",
+              showPreview ? "opacity-100" : "opacity-0 pointer-events-none",
+            )}>
+              <Trans>Review the project details below and confirm the import.</Trans>
+            </p>
+          </div>
+          <div className={cn(
+            "transition-all duration-300 ease-out overflow-hidden",
+            !zipFile && !hasError ? "opacity-100 max-h-10 mt-0" : "opacity-0 max-h-0",
+          )}>
             <p className="text-center text-xs text-slate-400">
               <Trans>Don't have a project yet?</Trans>{" "}
               <Link to="/books/new" className="text-blue-500 hover:text-blue-600 underline underline-offset-2 transition-colors">
                 <Trans>Create a new book from a PDF</Trans>
               </Link>
             </p>
-          )}
+          </div>
         </div>
 
         <input
@@ -392,8 +406,6 @@ export function ImportProject() {
                 tabIndex={showPreview ? -1 : 0}
                 onClick={() => fileInputRef.current?.click()}
                 onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={handleDrop}
                 aria-label={t`Upload ZIP or drag and drop`}
                 className={cn(
                   "flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg w-full max-w-md h-full cursor-pointer transition-colors duration-300",
@@ -469,45 +481,32 @@ export function ImportProject() {
           </div>
         </div>
 
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="secondary"
-              onClick={() => navigate({ to: "/" })}
-              className="h-9 px-3 py-2 bg-[#f5f5f5] text-[#262626] hover:bg-[#e5e5e5] border-0"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1.5" />
-              <Trans>Back</Trans>
-            </Button>
-            <Button
-              disabled={!preview || !!preview.validationError || importMutation.isPending}
-              onClick={handleImport}
-              className="h-9 px-3 py-2 text-white bg-amber-500 hover:bg-amber-600 disabled:opacity-50 border-0"
-            >
-              {importMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                  <Trans>Importing...</Trans>
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4 mr-1.5" />
-                  <Trans>Import</Trans>
-                </>
-              )}
-            </Button>
-          </div>
-          {/* Import mutation error — shown below buttons */}
-          <div className={cn(
-            "transition-all duration-300 ease-out",
-            friendlyImportError
-              ? "opacity-100 max-h-10"
-              : "opacity-0 max-h-0 overflow-hidden",
-          )}>
-            {(friendlyImportError || deferredImportError) && (
-              <p className="text-xs text-red-500 text-center">{(friendlyImportError ?? deferredImportError)!.title}</p>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="secondary"
+            onClick={() => navigate({ to: "/" })}
+            className="h-9 px-3 py-2 bg-[#f5f5f5] text-[#262626] hover:bg-[#e5e5e5] border-0"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1.5" />
+            <Trans>Back</Trans>
+          </Button>
+          <Button
+            disabled={!preview || !!preview.validationError || importMutation.isPending}
+            onClick={handleImport}
+            className="h-9 px-3 py-2 text-white bg-amber-500 hover:bg-amber-600 disabled:opacity-50 border-0"
+          >
+            {importMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                <Trans>Importing...</Trans>
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4 mr-1.5" />
+                <Trans>Import</Trans>
+              </>
             )}
-          </div>
+          </Button>
         </div>
       </div>
     </>
