@@ -1,5 +1,6 @@
 import { useState } from "react"
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { createFileRoute, Link, redirect } from "@tanstack/react-router"
+import { hasCompletedOnboarding } from "@/hooks/use-onboarding"
 import {
   Plus,
   ArrowRight,
@@ -26,6 +27,11 @@ import {
 import type { BookSummary } from "@/api/client"
 
 export const Route = createFileRoute("/")({
+  beforeLoad: () => {
+    if (typeof window !== "undefined" && !hasCompletedOnboarding()) {
+      throw redirect({ to: "/onboarding" })
+    }
+  },
   component: HomePage,
 })
 

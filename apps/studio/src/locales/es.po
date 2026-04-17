@@ -243,6 +243,9 @@ msgstr "Ya existe un libro con este nombre."
 msgid "A fill-in-the-blank activity."
 msgstr "Una actividad de completar espacios en blanco."
 
+#~ msgid "A guided wizard sets layout, languages, and processing options."
+#~ msgstr "Un asistente guiado configura el diseño, los idiomas y las opciones de procesamiento."
+
 msgid "A matching activity where students connect related items."
 msgstr "Una actividad de emparejamiento donde los estudiantes conectan elementos relacionados."
 
@@ -483,6 +486,12 @@ msgstr "Libro ADT - {0}"
 msgid "ADT Export"
 msgstr "Exportación ADT"
 
+#~ msgid "ADT Studio uses your own API key to run the pipeline. Your key is stored locally on this device and never sent anywhere else."
+#~ msgstr "ADT Studio usa tu propia clave de API para ejecutar el pipeline. Tu clave se almacena localmente en este dispositivo y nunca se envía a otro lugar."
+
+msgid "ADT Studio uses your own API keys to run the pipeline. Keys are stored locally on this device and never sent anywhere else."
+msgstr "ADT Studio usa tus propias claves de API para ejecutar el pipeline. Las claves se almacenan localmente en este dispositivo y nunca se envían a otro lugar."
+
 msgid "Adventure Tales - Vol. 1"
 msgstr "Cuentos de Aventura - Vol. 1"
 
@@ -601,6 +610,9 @@ msgstr "Configuración de clave API"
 msgid "API Keys"
 msgstr "Claves de API"
 
+msgid "API logs are only available in the desktop app."
+msgstr ""
+
 msgid "Application Programming Interface — a set of rules that allows programs to communicate."
 msgstr "Interfaz de programación de aplicaciones (API): conjunto de reglas que permite que los programas se comuniquen."
 
@@ -644,6 +656,9 @@ msgstr "Organiza el contenido extraído en un storyboard estructurado con págin
 msgid "Ask AI to edit..."
 msgstr "Pide a la IA que edite..."
 
+#~ msgid "Ask, and ADT Studio gets to work."
+#~ msgstr "Pregunta y ADT Studio se pone a trabajar."
+
 msgid "Asking the AI to put on its creative hat..."
 msgstr "Pidiendo a la IA que se ponga su sombrero creativo..."
 
@@ -661,6 +676,9 @@ msgstr "Autores"
 
 msgid "Auto"
 msgstr "Automático"
+
+msgid "Auto-scroll"
+msgstr ""
 
 msgid "Automatically adapts the layout based on each page's content using AI."
 msgstr "Adapta automáticamente el diseño según el contenido de cada página usando IA."
@@ -823,6 +841,10 @@ msgstr "Llamadas"
 msgid "Cancel"
 msgstr "Cancelar"
 
+#. placeholder {0}: String(MAX_ENTRIES)
+msgid "capped at {0}"
+msgstr ""
+
 msgid "Caption Prompt"
 msgstr "Prompt de leyenda"
 
@@ -886,6 +908,9 @@ msgstr "Elegir proveedor"
 msgid "Choose which per-page validation items reviewers must check, customize the wording and guidance, and add your own checklist items for this document."
 msgstr "Choose which per-page validation items reviewers must check, customize the wording and guidance, and add your own checklist items for this document."
 
+#~ msgid "Choose your language"
+#~ msgstr "Elige tu idioma"
+
 msgid "Ciências da Natureza - Ensino Fundamental"
 msgstr "Ciencias de la Naturaleza - Educación Primaria"
 
@@ -903,6 +928,9 @@ msgstr "Clasificando texto…"
 
 msgid "Clean & focused"
 msgstr "Limpio y enfocado"
+
+msgid "Clear"
+msgstr ""
 
 msgid "Clear all"
 msgstr "Clear all"
@@ -976,6 +1004,9 @@ msgstr "Completion across the assigned page range for this reviewer session."
 msgid "Condensation"
 msgstr "Condensación"
 
+#~ msgid "Configure"
+#~ msgstr "Configurar"
+
 msgid "Configure activity detection and image processing options for extracted content."
 msgstr "Configura las opciones de detección de actividades y procesamiento de imágenes para el contenido extraído."
 
@@ -985,11 +1016,17 @@ msgstr "Configura las claves de API para las funciones de IA."
 msgid "Configure basic document information and file paths"
 msgstr "Configura la información básica del documento y las rutas de archivo"
 
+#~ msgid "Configure with the wizard"
+#~ msgstr "Configurar con el asistente"
+
 msgid "Confirm merge"
 msgstr "Confirmar fusión"
 
 msgid "Confirm Rerun"
 msgstr "Confirmar reejecutar"
+
+msgid "Connect an AI provider"
+msgstr "Conecta un proveedor de IA"
 
 msgid "Consulting the style council..."
 msgstr "Consultando al consejo de estilo..."
@@ -1057,6 +1094,12 @@ msgstr "Crear desde cero con tu descripción"
 msgid "Create session"
 msgstr "Create session"
 
+msgid "Create your first book"
+msgstr "Crea tu primer libro"
+
+#~ msgid "Create your first book to see the pipeline in action — you can always come back to these steps later."
+#~ msgstr "Crea tu primer libro para ver el pipeline en acción — siempre puedes volver a estos pasos más tarde."
+
 msgid "Creating..."
 msgstr "Creando..."
 
@@ -1107,6 +1150,9 @@ msgstr "Custom section {index}"
 
 msgid "Custom:"
 msgstr "Personalizado:"
+
+msgid "Debug mode is not enabled."
+msgstr ""
 
 msgid "Decrease indent"
 msgstr "Disminuir sangría"
@@ -1224,6 +1270,9 @@ msgstr "Describe the issue or note why this criterion needs attention"
 msgid "Describe what the reviewer should check."
 msgstr "Describe what the reviewer should check."
 
+#~ msgid "Describe what you want to build"
+#~ msgstr "Describe lo que quieres crear"
+
 msgid "Description"
 msgstr "Descripción"
 
@@ -1278,8 +1327,20 @@ msgstr "Arrastra para reordenar o mover a otro grupo"
 msgid "Drag vertices to reshape. Click midpoints (+) to add points. Right-click a vertex to remove it."
 msgstr "Arrastra los vértices para cambiar la forma. Haz clic en los puntos medios (+) para agregar puntos. Haz clic derecho en un vértice para eliminarlo."
 
+msgid "Drop a PDF and go."
+msgstr "Arrastra un PDF y listo."
+
+#~ msgid "Drop in a PDF and ADT Studio organizes it into a new book project."
+#~ msgstr "Suelta un PDF y ADT Studio lo organiza en un nuevo proyecto de libro."
+
+msgid "Drop in your first PDF and watch the pipeline do its thing. You can always come back to this tour."
+msgstr "Arrastra tu primer PDF y mira cómo trabaja el pipeline. Siempre puedes volver a este recorrido."
+
 msgid "Drop PDF here"
 msgstr "Suelta el PDF aquí"
+
+msgid "Drop your PDF here"
+msgstr "Arrastra tu PDF aquí"
 
 msgid "Duplicate"
 msgstr "Duplicar"
@@ -1331,6 +1392,9 @@ msgstr "ej., Haz el fondo más brillante, añade más árboles..."
 
 msgid "Each polyp secretes a hard calcium carbonate skeleton. Over hundreds of years, millions of these skeletons build up into the massive reef structures we see today."
 msgstr "Cada pólipo secreta un esqueleto duro de carbonato de calcio. Durante cientos de años, millones de estos esqueletos se acumulan en las estructuras masivas de arrecifes que vemos hoy."
+
+#~ msgid "Each stage extracts, validates, and enriches content — fully inspectable."
+#~ msgstr "Cada etapa extrae, valida y enriquece el contenido — totalmente inspeccionable."
 
 msgid "Edit"
 msgstr "Editar"
@@ -1430,6 +1494,9 @@ msgstr "Costo estimado"
 msgid "Evaporation"
 msgstr "Evaporación"
 
+msgid "Every stage, fully inspectable."
+msgstr "Cada etapa, totalmente inspeccionable."
+
 msgid "Example Books"
 msgstr "Libros de Ejemplo"
 
@@ -1465,6 +1532,9 @@ msgstr "Exportar SCORM"
 
 msgid "Export the book as a Readium WebPub package — a standards-based format for distributing digital publications on the web. Suitable for reading systems that support the Readium Web Publication Manifest specification."
 msgstr "Exporta el libro como un paquete Readium WebPub — un formato basado en estándares para distribuir publicaciones digitales en la web. Adecuado para sistemas de lectura que admiten la especificación Readium Web Publication Manifest."
+
+#~ msgid "Export the bundle"
+#~ msgstr "Exportar el paquete"
 
 msgid "Export the complete Accessible Digital Textbook as a ZIP archive. Includes all HTML pages, images, audio files, quizzes, and the compiled web application — ready to upload to a distribution platform or open locally."
 msgstr "Exporta el Libro de Texto Digital Accesible completo como un archivo ZIP. Incluye todas las páginas HTML, imágenes, archivos de audio, cuestionarios y la aplicación web compilada — listo para subirlo a una plataforma de distribución o abrirlo localmente."
@@ -1600,6 +1670,9 @@ msgstr "Formato"
 msgid "Forms & controls"
 msgstr "Forms & controls"
 
+#~ msgid "Four steps take you from a raw PDF to a polished, accessible book bundle."
+#~ msgstr "Cuatro pasos te llevan de un PDF sin procesar a un paquete de libro pulido y accesible."
+
 msgid "French"
 msgstr "Francés"
 
@@ -1696,6 +1769,9 @@ msgstr "Falló la generación. Por favor, inténtalo de nuevo."
 msgid "Generation Prompt"
 msgstr "Prompt de generación"
 
+#~ msgid "Get a key from OpenAI"
+#~ msgstr "Obtén una clave de OpenAI"
+
 msgid "Get started"
 msgstr "Comenzar"
 
@@ -1753,8 +1829,17 @@ msgstr "Hit"
 msgid "Hover a setting to see how LLM cropping, segmentation, or the size threshold changes extracted images."
 msgstr "Pasa el cursor sobre una configuración para ver cómo el recorte, segmentación o el umbral de tamaño del LLM cambian las imágenes extraídas."
 
+#~ msgid "How ADT Studio works"
+#~ msgstr "Cómo funciona ADT Studio"
+
+msgid "How it works"
+msgstr "Cómo funciona"
+
 msgid "HTML"
 msgstr "HTML"
+
+msgid "I'll add it later"
+msgstr "La agregaré más tarde"
 
 msgid "Illustrated children's books"
 msgstr "Libros infantiles ilustrados"
@@ -1846,6 +1931,12 @@ msgstr "Las imágenes más pequeñas que tu dimensión mínima omiten la segment
 msgid "Images with shortest side below min or longest side above max are pruned."
 msgstr "Las imágenes con el lado más corto por debajo del mínimo o el lado más largo por encima del máximo se eliminan."
 
+#~ msgid "Import"
+#~ msgstr "Importar"
+
+#~ msgid "Import a PDF"
+#~ msgstr "Importar un PDF"
+
 msgid "In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
 msgstr "En caso de que no quieras convertir todo el libro, ajusta los controles deslizantes para definir qué páginas se digitalizarán."
 
@@ -1916,6 +2007,9 @@ msgstr "Mantiene la página como una sección por defecto, pero divide inteligen
 msgid "Key must start with \"sk-\""
 msgstr "La clave debe comenzar con \"sk-\""
 
+msgid "Key must start with sk-"
+msgstr "La clave debe empezar con sk-"
+
 msgid "Keyboard & navigation"
 msgstr "Keyboard & navigation"
 
@@ -1944,6 +2038,9 @@ msgstr "Imágenes grandes, flujo narrativo. Mejor para libros ilustrados con voc
 msgid "Last"
 msgstr "Última"
 
+msgid "Launch the app with"
+msgstr ""
+
 msgid "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 msgstr "Dejar en Ninguno para ejecutar segmentación en todas las imágenes calificadas (sujeto a reglas de la canalización)."
 
@@ -1965,8 +2062,14 @@ msgstr "Manuales legales y de cumplimiento"
 msgid "Legal Compliance Guide"
 msgstr "Guía de Cumplimiento Legal"
 
+msgid "Let's build"
+msgstr "Vamos a crear"
+
 msgid "Life in the Coral Reef"
 msgstr "Vida en el Arrecife de Coral"
+
+msgid "lines"
+msgstr ""
 
 msgid "Língua Portuguesa - 3° Ano"
 msgstr "Lengua Portuguesa - 3° Año"
@@ -2129,6 +2232,9 @@ msgstr "Media & timing"
 
 msgid "Medical references"
 msgstr "Referencias médicas"
+
+msgid "Meet ADT Studio"
+msgstr "Conoce ADT Studio"
 
 msgid "Merge facing pages as spreads"
 msgstr "Combinar páginas enfrentadas como dobles"
@@ -2678,6 +2784,9 @@ msgstr "Perfecto para libros infantiles, combinando imágenes grandes con texto 
 msgid "Photograph"
 msgstr "Fotografía"
 
+#~ msgid "Pick a language for the ADT Studio interface. You can always change it later from the top bar."
+#~ msgstr "Elige un idioma para la interfaz de ADT Studio. Siempre puedes cambiarlo más tarde desde la barra superior."
+
 msgid "Pick from book"
 msgstr "Elegir del libro"
 
@@ -2687,8 +2796,14 @@ msgstr "Elegir del libro"
 msgid "Pick one layout approach."
 msgstr "Elige un enfoque de diseño."
 
+msgid "Pick the stages to run."
+msgstr "Elige las etapas que se ejecutan."
+
 msgid "Picture books and early readers"
 msgstr "Libros ilustrados y primeros lectores"
+
+msgid "Pipeline stages"
+msgstr "Etapas del pipeline"
 
 msgid "Pipeline Stages"
 msgstr "Etapas del pipeline"
@@ -2704,6 +2819,9 @@ msgstr "Puliendo párrafos a la perfección..."
 
 msgid "Portuguese (BR)"
 msgstr "Portugués (BR)"
+
+#~ msgid "Portuguese (Brazil)"
+#~ msgstr "Portugués (Brasil)"
 
 msgid "Práticas de Alfabetização e de Matemática"
 msgstr "Prácticas de Alfabetización y Matemáticas"
@@ -2734,6 +2852,9 @@ msgstr "Vista previa de los patrones HTML/CSS usados para páginas generadas por
 
 msgid "Previous slide"
 msgstr "Diapositiva anterior"
+
+#~ msgid "Process"
+#~ msgstr "Procesar"
 
 msgid "Processing metadata…"
 msgstr "Procesando metadatos…"
@@ -2853,6 +2974,9 @@ msgstr "Reejecutar traducción"
 msgid "Readers see"
 msgstr "Los lectores ven"
 
+msgid "Ready when you are"
+msgstr "Listos cuando tú lo estés"
+
 msgid "Real books processed with this preset — before and after."
 msgstr "Libros reales procesados con este preajuste — antes y después."
 
@@ -2861,6 +2985,9 @@ msgstr "Realista / Foto"
 
 msgid "Rearranging atoms of HTML..."
 msgstr "Reorganizando los átomos de HTML..."
+
+#~ msgid "Receiving file..."
+#~ msgstr "Recibiendo archivo..."
 
 msgid "Recommended"
 msgstr "Recomendado"
@@ -2892,6 +3019,9 @@ msgstr "Refreshing results for this packaged preview."
 
 msgid "Region"
 msgstr "Región"
+
+msgid "Release to upload"
+msgstr "Suelta para subir"
 
 msgid "Remove"
 msgstr "Quitar"
@@ -3038,6 +3168,9 @@ msgstr "El aumento de las temperaturas oceánicas causa el blanqueamiento de cor
 msgid "Run {stageLabel}"
 msgstr "Ejecutar {0}"
 
+#~ msgid "Run the pipeline"
+#~ msgstr "Ejecutar el pipeline"
+
 msgid "Run the pipeline through at least the"
 msgstr "Ejecuta el pipeline al menos hasta la etapa"
 
@@ -3094,6 +3227,9 @@ msgstr "Guardar y volver a ejecutar la generación de la tabla de contenidos"
 
 msgid "Save & Rerun Translations"
 msgstr "Guardar y reejecutar traducciones"
+
+msgid "Save and continue"
+msgstr "Guardar y continuar"
 
 msgid "Save changes before re-rendering"
 msgstr "Guarda los cambios antes de re-renderizar"
@@ -3204,6 +3340,9 @@ msgstr "secciones"
 msgid "See examples"
 msgstr "Ver ejemplos"
 
+msgid "See it in action"
+msgstr "Míralo en acción"
+
 msgid "Segment"
 msgstr "Segmentar"
 
@@ -3282,6 +3421,9 @@ msgstr "Seleccionada: {0}"
 msgid "Selecting \"None\" lets the LLM choose its own styling for each page."
 msgstr "Seleccionar \\\"Ninguno\\\" permite al LLM elegir su propio estilo para cada página."
 
+#~ msgid "Send"
+#~ msgstr "Enviar"
+
 msgid "Separator"
 msgstr "Separador"
 
@@ -3311,6 +3453,9 @@ msgstr "Configuración"
 
 msgid "Settings for this step are not yet available."
 msgstr "La configuración para esta etapa aún no está disponible."
+
+#~ msgid "Ship a formatted, accessible book bundle ready for distribution."
+#~ msgstr "Entrega un paquete de libro formateado y accesible listo para su distribución."
 
 msgid "Show accessibility summary"
 msgstr "Show accessibility summary"
@@ -3367,6 +3512,12 @@ msgstr "sk-..."
 msgid "sk-ant-..."
 msgstr "sk-ant-..."
 
+msgid "Skip for now"
+msgstr "Omitir por ahora"
+
+msgid "Skip intro"
+msgstr "Omitir intro"
+
 msgid "Skip segmentation for images whose shortest side is below this threshold."
 msgstr "Omitir segmentación para imágenes cuyo lado más corto esté por debajo de este umbral."
 
@@ -3385,6 +3536,9 @@ msgstr "Diapositiva {0}"
 
 msgid "Smart Cropping"
 msgstr "Recorte Inteligente"
+
+msgid "something calm."
+msgstr "algo sereno."
 
 msgid "Spanish"
 msgstr "Español"
@@ -3416,6 +3570,9 @@ msgstr "Espolvoreando un poco de polvo mágico digital..."
 msgid "stage first."
 msgstr "primero."
 
+msgid "Stages to run"
+msgstr "Etapas a ejecutar"
+
 msgid "Standalone Text"
 msgstr "Texto independiente"
 
@@ -3430,6 +3587,9 @@ msgstr "Start a reviewer session"
 
 msgid "Start page"
 msgstr "Start page"
+
+msgid "Start processing"
+msgstr "Comenzar procesamiento"
 
 msgid "Start reviewer validation"
 msgstr "Start reviewer validation"
@@ -3733,6 +3893,9 @@ msgstr "Marcas de tiempo"
 msgid "to"
 msgstr "hasta"
 
+msgid "to stream API logs here."
+msgstr ""
+
 msgid "TOC Generation Prompt"
 msgstr "Prompt de generación de la tabla de contenidos"
 
@@ -3784,8 +3947,14 @@ msgstr "Trata cada página como una sola sección"
 msgid "Try Activity"
 msgstr "Probar actividad"
 
+#~ msgid "Turn PDFs into accessible, formatted books with an automated pipeline you can inspect, tweak, and re-run at any time."
+#~ msgstr "Convierte PDFs en libros accesibles y formateados con un pipeline automatizado que puedes inspeccionar, ajustar y volver a ejecutar en cualquier momento."
+
 msgid "Turn this on to show the Validation review card in Preview and the Reviewer Validation tab in the Validation step."
 msgstr "Turn this on to show the Validation review card in Preview and the Reviewer Validation tab in the Validation step."
+
+#~ msgid "Turn this PDF into an accessible book"
+#~ msgstr "Convierte este PDF en un libro accesible"
 
 msgid "Two authentication methods are supported: Bearer tokens passed in the Authorization header, and API keys passed as a query parameter. Bearer tokens are preferred for server-to-server requests due to their short expiry window."
 msgstr "Se admiten dos métodos de autenticación: tokens Bearer pasados en el encabezado de Autorización y claves de API pasadas como un parámetro de consulta. Se prefieren los tokens Bearer para solicitudes de servidor a servidor debido a su corta ventana de expiración."
@@ -3969,6 +4138,9 @@ msgstr "Voces"
 msgid "Wait for storyboard to complete"
 msgstr "Espere a que el storyboard se complete"
 
+msgid "Waiting for API output…"
+msgstr ""
+
 msgid "Waiting for page to be processed..."
 msgstr "Esperando a que la página sea procesada..."
 
@@ -4004,6 +4176,9 @@ msgstr "WebPub"
 msgid "WebPub Export"
 msgstr "Exportación WebPub"
 
+#~ msgid "Welcome to"
+#~ msgstr "Te damos la bienvenida a"
+
 msgid "What should the AI change?"
 msgstr "¿Qué debería cambiar la IA?"
 
@@ -4033,6 +4208,9 @@ msgstr "Envuelve solicitudes de 'Editar esta imagen'. La IA recibe la imagen ori
 
 msgid "Wraps 'Generate new' requests. Supports user_prompt, style, and image_type variables. Uses Liquid syntax for conditionals."
 msgstr "Envuelve solicitudes de 'Generar nueva'. Soporta variables user_prompt, style e image_type. Usa sintaxis Liquid para condicionales."
+
+#~ msgid "You're all set"
+#~ msgstr "¡Todo listo!"
 
 msgid "Young adult fiction"
 msgstr "Ficción para jóvenes adultos"

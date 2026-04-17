@@ -1,5 +1,5 @@
 import { useState, createContext, useContext, useCallback, useMemo } from "react"
-import { createRootRoute, Outlet } from "@tanstack/react-router"
+import { createRootRoute, Outlet, useRouterState } from "@tanstack/react-router"
 import { ApiKeyDialog } from "@/components/settings/ApiKeyDialog"
 import { useApiKey } from "@/hooks/use-api-key"
 
@@ -34,7 +34,9 @@ function RootLayout() {
     setAzureRegion,
     setGeminiKey,
   } = useApiKey()
-  const [showKeyDialog, setShowKeyDialog] = useState(!hasApiKey)
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const isOnboarding = pathname.startsWith("/onboarding")
+  const [showKeyDialog, setShowKeyDialog] = useState(!hasApiKey && !isOnboarding)
   const openSettings = useCallback(() => setShowKeyDialog(true), [])
   // Google and Gemini TTS use the same API key — save to both storage keys
   const saveGoogleKey = useMemo(() => (key: string) => { setGoogleKey(key); setGeminiKey(key) }, [setGoogleKey, setGeminiKey])

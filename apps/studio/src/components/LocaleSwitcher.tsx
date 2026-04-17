@@ -20,7 +20,19 @@ const LOCALE_LABEL_MESSAGES: Record<AppLocale, MessageDescriptor> = {
   fr: msg`French`,
 }
 
-export function LocaleSwitcher({ className }: { className?: string }) {
+function localeCode(loc: AppLocale): string {
+  return loc.slice(0, 2).toUpperCase()
+}
+
+export type LocaleSwitcherVariant = "topbar" | "standalone"
+
+export function LocaleSwitcher({
+  className,
+  variant = "topbar",
+}: {
+  className?: string
+  variant?: LocaleSwitcherVariant
+}) {
   const { i18n: lingui } = useLingui()
   const currentLocale = lingui.locale as AppLocale
 
@@ -39,7 +51,9 @@ export function LocaleSwitcher({ className }: { className?: string }) {
       <SelectTrigger
         aria-label={lingui._(msg`Change language`)}
         className={cn(
-          "border-none! bg-transparent! cursor-pointer text-white/70 hover:text-white hover:bg-gray-600! outline-none focus-visible:ring-2! focus-visible:ring-ring! focus-visible:ring-offset-2!",
+          variant === "topbar"
+            ? "border-none! bg-transparent! cursor-pointer text-white/70 hover:text-white hover:bg-gray-600! outline-none focus-visible:ring-2! focus-visible:ring-ring! focus-visible:ring-offset-2!"
+            : "h-9 w-auto gap-2 rounded-full border-border bg-card/80 px-3 shadow-sm backdrop-blur hover:bg-accent cursor-pointer",
           className,
         )}
       >
@@ -51,12 +65,15 @@ export function LocaleSwitcher({ className }: { className?: string }) {
             </span>
           }
         >
-          <span className="flex! items-center justify-center uppercase gap-2 bg-transparent! pr-2">
+          <div className="flex items-center gap-2 uppercase pr-1">
             <Globe className="h-4 w-4" />
-          </span>
+            <span className="text-xs font-medium leading-none">
+              {localeCode(currentLocale)}
+            </span>
+          </div>
         </SelectValue>
       </SelectTrigger>
-      <SelectContent className="min-w-[140px]" sideOffset={2} align="end">
+      <SelectContent className="min-w-[160px]" sideOffset={2} align="end">
         {LOCALES.map((loc) => (
           <SelectItem key={loc} value={loc}>
             <span className="flex items-center gap-2">
