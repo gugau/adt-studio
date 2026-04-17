@@ -12,7 +12,7 @@ import {
 import type { LLMModel, ValidationResult } from "@adt/llm"
 
 const PAGE_STRUCTURING_REFINEMENT_PROMPT = "page_structuring_refinement"
-const PAGE_STRUCTURING_MAX_REFINEMENTS = 3
+const PAGE_STRUCTURING_MAX_REFINEMENTS = 0
 const PAGE_STRUCTURING_MAX_TOKENS = 16384
 
 export interface StructureConfig {
@@ -22,7 +22,7 @@ export interface StructureConfig {
   promptName: string
   modelId: string
   maxRetries: number
-  /** Max self-review refinement passes. Defaults to PAGE_STRUCTURING_MAX_REFINEMENTS (3). Set to 0 to skip refinement. */
+  /** Max self-review refinement passes. Defaults to PAGE_STRUCTURING_MAX_REFINEMENTS (0 — refinement disabled). */
   maxRefinements?: number
 }
 
@@ -147,8 +147,18 @@ function finalizePageStructuringNodes(
           isPruned: false,
         }
         if (hasChildren) container.children = assignIds(node.children!)
-        if (node.image_id != null) container.imageId = node.image_id
+        if (node.background_image_id != null) container.backgroundImageId = node.background_image_id
         return container
+      }
+
+      // Image leaf
+      if (node.image_id != null) {
+        return {
+          nodeId,
+          role: "image",
+          imageId: node.image_id,
+          isPruned: false,
+        }
       }
 
       const finalized: ContentNodeData = {
@@ -237,13 +247,21 @@ function validatePageStructuringNodes(
   const imageIdSet = new Set(validImageIds)
 
   const errors: string[] = []
+  // Tracks every use of an image_id (either as an image leaf or as a
+  // container's background_image_id) so we can enforce "exactly once".
   const seenImageIds = new Set<string>()
   const duplicateImageIds = new Set<string>()
 
-  // Containers allowed to be empty. image_group represents an image
-  // (children optional for captions). table_cell represents a structural
-  // cell that may legitimately be blank (header gaps, alignment cells).
-  const emptyAllowedStructures = new Set(["image_group", "table_cell"])
+  // table_cell may legitimately be blank (header gaps, alignment cells).
+  const emptyAllowedStructures = new Set(["table_cell"])
+
+  function recordImageUse(imageId: string) {
+    if (seenImageIds.has(imageId)) {
+      duplicateImageIds.add(imageId)
+    } else {
+      seenImageIds.add(imageId)
+    }
+  }
 
   function walkNodes(nodes: LLMContentNode[], path: string, depth: number) {
     for (let i = 0; i < nodes.length; i++) {
@@ -253,12 +271,12 @@ function validatePageStructuringNodes(
       const hasChildren = node.children != null && node.children.length > 0
       const hasText = node.text != null
       const hasImage = node.image_id != null
+      const hasBackgroundImage = node.background_image_id != null
       const hasStructure = node.structure != null
       const hasRole = node.role != null
 
-      // A node is a container if it has structure (children optional for
-      // standalone image_group). Otherwise it's a text leaf (role + text).
       if (hasStructure) {
+        // Container node
         if (!containerTypeKeys.has(node.structure!)) {
           errors.push(
             `${nodePath}: Invalid structure "${node.structure}". Must be one of: ${[...containerTypeKeys].join(", ")}`
@@ -266,7 +284,7 @@ function validatePageStructuringNodes(
         }
         if (hasRole) {
           errors.push(
-            `${nodePath}: Container node should not have "role" — use "structure" for containers and "role" for text leaves.`
+            `${nodePath}: Container node should not have "role" — use "structure" for containers and "role" for leaves.`
           )
         }
         if (hasText) {
@@ -274,53 +292,81 @@ function validatePageStructuringNodes(
             `${nodePath}: Container node should not have "text" — text belongs on a child text leaf (role + text).`
           )
         }
-        if (node.structure === "image_group") {
-          if (!hasImage) {
-            errors.push(
-              `${nodePath}: image_group container must have "image_id". An image_group represents an image plus any associated captions/labels as children.`
-            )
-          } else if (!imageIdSet.has(node.image_id!)) {
-            errors.push(
-              `${nodePath}: Invalid image_id "${node.image_id}". Must be one of: ${validImageIds.join(", ")}`
-            )
-          } else if (seenImageIds.has(node.image_id!)) {
-            duplicateImageIds.add(node.image_id!)
-          } else {
-            seenImageIds.add(node.image_id!)
-          }
-        } else if (hasImage) {
+        if (hasImage) {
           errors.push(
-            `${nodePath}: Only "image_group" containers may carry "image_id". Move this image_id to an image_group, or change this container's structure to "image_group".`
+            `${nodePath}: Container node should not have "image_id". For an image, use a leaf { role: "image", image_id: "..." }. For a backdrop, use "background_image_id" on the container.`
           )
+        }
+        if (hasBackgroundImage) {
+          if (!imageIdSet.has(node.background_image_id!)) {
+            errors.push(
+              `${nodePath}: Invalid background_image_id "${node.background_image_id}". Must be one of: ${validImageIds.join(", ")}`
+            )
+          } else {
+            recordImageUse(node.background_image_id!)
+          }
         }
         if (!hasChildren && !emptyAllowedStructures.has(node.structure!)) {
           errors.push(
-            `${nodePath}: Container with structure "${node.structure}" has no children. Containers must hold content; only image_group and table_cell may be empty.`
+            `${nodePath}: Container with structure "${node.structure}" has no children. Containers must hold content; only table_cell may be empty.`
           )
         }
       } else if (hasImage) {
-        // Has image_id but no structure — LLM likely emitted the old image-leaf shape.
-        errors.push(
-          `${nodePath}: Node has "image_id" but no "structure". Images live on image_group containers: { structure: "image_group", image_id: "...", children?: [...captions] }. Do not emit role: "image" leaves.`
-        )
+        // Image leaf — role must be "image", no text, no children.
+        if (hasRole && node.role !== "image") {
+          errors.push(
+            `${nodePath}: Image leaf must use role "image" (got "${node.role}").`
+          )
+        }
+        if (hasText) {
+          errors.push(
+            `${nodePath}: Image leaf should not have "text". For a caption, place a sibling text leaf next to the image.`
+          )
+        }
+        if (hasBackgroundImage) {
+          errors.push(
+            `${nodePath}: "background_image_id" only applies to containers, not leaves.`
+          )
+        }
+        if (!imageIdSet.has(node.image_id!)) {
+          errors.push(
+            `${nodePath}: Invalid image_id "${node.image_id}". Must be one of: ${validImageIds.join(", ")}`
+          )
+        } else {
+          recordImageUse(node.image_id!)
+        }
       } else if (hasText) {
-        // Text leaf: must have role from text types
+        // Text leaf
         if (!hasRole) {
           errors.push(
             `${nodePath}: Text leaf node is missing "role". Set role to one of: ${[...textTypeKeys].join(", ")}`
+          )
+        } else if (node.role === "image") {
+          errors.push(
+            `${nodePath}: role "image" must be used with "image_id" only — not "text".`
           )
         } else if (!textTypeKeys.has(node.role!)) {
           errors.push(
             `${nodePath}: Invalid role "${node.role}" for text leaf. Must be one of: ${[...textTypeKeys].join(", ")}`
           )
         }
+        if (hasBackgroundImage) {
+          errors.push(
+            `${nodePath}: "background_image_id" only applies to containers, not leaves.`
+          )
+        }
+      } else if (hasRole && node.role === "image") {
+        // role: "image" but no image_id
+        errors.push(
+          `${nodePath}: Image leaf with role "image" must have "image_id".`
+        )
       } else if (hasRole && !textTypeKeys.has(node.role!)) {
         errors.push(
-          `${nodePath}: Invalid role "${node.role}". Must be one of: ${[...textTypeKeys].join(", ")}`
+          `${nodePath}: Invalid role "${node.role}". Must be one of: ${[...textTypeKeys].join(", ")}, image`
         )
       } else {
         errors.push(
-          `${nodePath}: Node has no structure, role, text, or image_id. Every node must be either a container (structure + children) or a text leaf (role + text).`
+          `${nodePath}: Node has no structure, role, text, or image_id. Every node must be either a container (structure + children) or a leaf (role + text, or role: "image" + image_id).`
         )
       }
 
@@ -333,15 +379,9 @@ function validatePageStructuringNodes(
 
   walkNodes(nodes, "nodes", 0)
 
-  const missingImageIds = validImageIds.filter((id) => !seenImageIds.has(id))
-  if (missingImageIds.length > 0) {
-    errors.push(
-      `Missing image_group(s) for provided image_id(s): ${missingImageIds.join(", ")}. Every provided image MUST appear exactly once as an image_group container (structure: "image_group", image_id: "...") at its correct position in reading order. If the image has a caption or associated text, include those as text-leaf children of the image_group.`
-    )
-  }
   if (duplicateImageIds.size > 0) {
     errors.push(
-      `Duplicate image_group(s) for image_id(s): ${[...duplicateImageIds].join(", ")}. Each image must appear exactly once in the tree.`
+      `Duplicate use of image_id(s): ${[...duplicateImageIds].join(", ")}. Each image may appear at most once across image leaves and background_image_id.`
     )
   }
 

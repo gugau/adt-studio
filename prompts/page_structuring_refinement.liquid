@@ -5,16 +5,22 @@ Your job is to first **evaluate** the current tree, then **fix** any issues foun
 
 ## Node Fields
 
-Every node is either a **container** (uses `structure`) or a **text leaf** (uses `role` + `text`) — never both.
+Every node is one of three shapes (mutually exclusive):
 
-**Container nodes** — have `structure` and `children`, never `role` or `text`:
+1. **Container node** — `structure` + `children`, optionally `background_image_id`. Never `role`, `text`, or `image_id`.
+2. **Text leaf** — `role` (a text type) + `text`. Never `structure`, `children`, `image_id`, or `background_image_id`.
+3. **Image leaf** — `role: "image"` + `image_id`. Never `structure`, `children`, `text`, or `background_image_id`.
+
+**Container structure types**:
 {% for t in container_types %}- {{ t.key }}: {{ t.description }}
 {% endfor %}
-The `image_group` container is special: it represents an image and additionally carries `image_id`. Its `children` (optional) hold any associated captions, labels, or overlaid text.
+A container may carry `background_image_id` when its content visually sits on top of a background image (CSS `background-image` analogy). The container's `children` are the overlaid content.
 
-**Text leaf nodes** — have `role` and `text`, never `children`, `structure`, or `image_id`:
+**Text leaf roles**:
 {% for t in text_types %}- {{ t.key }}: {{ t.description }}
 {% endfor %}
+
+**Image leaf** — `role: "image"` + `image_id`. Use this for inline/foreground images (illustrations, photos, mascots).
 
 ## Evaluation Dimensions
 
@@ -22,9 +28,9 @@ Evaluate the tree against each of these dimensions:
 
 - **Text completeness**: Does the tree capture ALL provided text? Every line of input text must appear in a leaf node. Missing text is the most critical failure.
 - **Text accuracy**: Does the extracted text match what's on the page image? Check for errors, hallucinated text, or garbled content.
-- **Tree structure**: Does the hierarchy make semantic sense? Are containers used appropriately? Is nesting depth reasonable? Are images represented as `image_group` containers carrying `image_id`?
+- **Tree structure**: Does the hierarchy make semantic sense? Are containers used appropriately? Is nesting depth reasonable? Are foreground images represented as image leaves (`role: "image"` + `image_id`) and backdrop images as `background_image_id` on the container that holds the overlaid content?
 - **Type accuracy**: Are the correct `structure` values on containers and correct `role` values on leaves? Check against the configured types above.
-- **Image placement**: Are images placed at the correct position in the reading flow using `image_group` containers? Are all available images accounted for?
+- **Image placement**: Are images placed at the correct position in the reading flow? Each provided `image_id` should be used at most once (either as an image leaf or as one container's `background_image_id`). Visible images on the page should be used; images that are embedded in the PDF but not visually present on the page may be omitted.
 - **Reading order**: Does the content follow the correct reading order (left-to-right, top-to-bottom, respecting columns)?
 
 ## Evaluation Guidelines
@@ -33,7 +39,7 @@ Evaluate the tree against each of these dimensions:
 - **Spreads**: The page image may show a two-page spread. The tree should capture ALL visible content from the image, even if it spans two pages. Do NOT consider content from both pages of a spread an issue.
 - **Text corrections**: The structurer is instructed to correct extraction errors when the page image clearly shows different text. Do NOT consider corrected text an issue if it matches the page image.
 - **Visual separators**: Lines of dashes, asterisks, underscores, or similar characters that serve as visual dividers are decorative and should be omitted. Do NOT consider missing separator text an issue.
-- **Text within images**: When text is visually layered on, overlaid on, or contained within an image (speech bubbles, signs, posters, annotations, labels on diagrams, title text over illustrations, text banners over photos), that text MUST be `children` of the `image_group` container for that image — never siblings outside it. If text sits on top of an image, it belongs inside that image's `image_group`. Flag any text-on-image content placed outside its image_group as a structural error.
+- **Text within images**: When text is visually layered on, overlaid on, or contained within an image (speech bubbles, signs, posters, annotations, labels on diagrams, title text over illustrations, text banners over photos), that image is a backdrop. The container holding the text MUST carry `background_image_id` set to that image's id, and the text MUST be `children` of that container — never placed outside, and never modeled as a foreground image leaf. Flag any text-on-image content placed outside its background container as a structural error.
 
 ## Review Rules
 
@@ -41,10 +47,10 @@ Evaluate the tree against each of these dimensions:
 2. If there are meaningful issues, set `approved` to `false`, describe what was wrong in `reasoning`, and return a fully corrected replacement tree.
 3. If the current structure is already accurate, set `approved` to `true`.
 4. Always return a complete `nodes` array, even when `approved` is `true`.
-5. Avoid unnecessary single-child container wrappers — a lone leaf can stand on its own. An `image_group` without children is fine for a standalone image.
-6. Ensure `image_group` containers use only these IDs: {% if image_ids.size > 0 %}{% for id in image_ids %}{{ id }}{% unless forloop.last %}, {% endunless %}{% endfor %}{% else %}(none){% endif %}. Each image ID must appear **exactly once**.
-7. Do NOT emit `role: "image"` leaves or `image_id` on non-`image_group` containers. Images live only on `image_group` containers.
-8. **Shared backgrounds**: When multiple content blocks share one background image, nest them as siblings under a single `image_group` — never duplicate the `image_id` across sibling `image_group`s. If overlay text sits on a region with no matching `image_id`, emit it as plain leaves rather than borrowing an unrelated image.
+5. Avoid unnecessary single-child container wrappers — a lone leaf can stand on its own.
+6. Image IDs must be drawn only from this set: {% if image_ids.size > 0 %}{% for id in image_ids %}{{ id }}{% unless forloop.last %}, {% endunless %}{% endfor %}{% else %}(none){% endif %}. Each ID must appear **at most once** in the tree — either as an image leaf (`role: "image"` + `image_id`) or as one container's `background_image_id`. Never both, never twice. An ID may be omitted when the image is embedded in the PDF but not visible on the page.
+7. Do NOT use the obsolete `image_group` structure or place `image_id` on a container. For a foreground image, use an image leaf. For a backdrop, use `background_image_id` on the container.
+8. **Shared backgrounds**: When multiple content blocks share one background image, nest them as siblings under a single container that carries `background_image_id` — never duplicate the same `background_image_id` across sibling containers. If overlay text sits on a region with no matching `image_id`, emit it as plain leaves rather than borrowing an unrelated image.
 9. Keep `reasoning` concise and specific about what was evaluated and what, if anything, was fixed.
 {% endchat %}
 

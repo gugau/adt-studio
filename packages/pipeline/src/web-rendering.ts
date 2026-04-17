@@ -159,9 +159,9 @@ function mergeConsecutiveTextGroups(parts: SectionPart[]): SectionPart[] {
 
 /**
  * Recursively flatten a ContentNodeData subtree into render-ready SectionParts.
- * Text leaves become group parts. `image_group` containers carry `imageId` —
- * the image part is emitted first, then children are walked as associated
- * captions/labels.
+ * Text leaves become group parts. Image leaves (role: "image") emit an image
+ * part. Containers may carry `backgroundImageId` — the background image is
+ * emitted first, then children are walked.
  * Consecutive text-leaf children of a container that share the same role are
  * merged into a single group (keyed on that role), so e.g. a run of `text`
  * sentences renders as one paragraph while a sibling `heading` leaf stays its
@@ -174,6 +174,21 @@ function flattenContentNode(
 ): void {
   if (node.isPruned) return
 
+  // Image leaf
+  if (node.role === "image" && node.imageId) {
+    const imgData = images.get(node.imageId)
+    if (imgData) {
+      parts.push({
+        type: "image",
+        imageId: node.imageId,
+        imageBase64: imgData.base64,
+        width: imgData.width,
+        height: imgData.height,
+      })
+    }
+    return
+  }
+
   // Text leaf
   if (node.text != null && node.role) {
     parts.push({
@@ -185,13 +200,13 @@ function flattenContentNode(
     return
   }
 
-  // image_group container — emit image first, then walk any associated-text children.
-  if (node.imageId) {
-    const imgData = images.get(node.imageId)
+  // Container with optional background image — emit the background first.
+  if (node.backgroundImageId) {
+    const imgData = images.get(node.backgroundImageId)
     if (imgData) {
       parts.push({
         type: "image",
-        imageId: node.imageId,
+        imageId: node.backgroundImageId,
         imageBase64: imgData.base64,
         width: imgData.width,
         height: imgData.height,

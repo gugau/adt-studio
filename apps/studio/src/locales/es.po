@@ -721,6 +721,9 @@ msgstr "Fondo"
 #~ msgid "Background Image"
 #~ msgstr "Imagen de fondo"
 
+msgid "Background image for this container"
+msgstr "Imagen de fondo de este contenedor"
+
 #~ msgid "Background Tasks"
 #~ msgstr "Tareas en segundo plano"
 
@@ -764,6 +767,9 @@ msgstr "Mejor para tu preajuste"
 
 msgid "Beta"
 msgstr "Beta"
+
+msgid "bg"
+msgstr "fondo"
 
 msgid "Bit Rate"
 msgstr "Tasa de bits"

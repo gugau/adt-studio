@@ -5,42 +5,55 @@ Your task is to produce a **tree structure** that captures the semantic hierarch
 
 ## Node Fields
 
-Every node is either a **container** (uses `structure`) or a **text leaf** (uses `role` + `text`) — never both.
+Every node is one of three shapes (mutually exclusive):
 
-**Container nodes** — have `structure` and `children`, never `role` or `text`:
+1. **Container node** — `structure` + `children`, optionally `background_image_id`. Never `role`, `text`, or `image_id`.
+2. **Text leaf** — `role` (a text type) + `text`. Never `structure`, `children`, `image_id`, or `background_image_id`.
+3. **Image leaf** — `role: "image"` + `image_id`. Never `structure`, `children`, `text`, or `background_image_id`.
+
+**Container structure types** — set `structure` to one of:
 {% for t in container_types %}- {{ t.key }}: {{ t.description }}
 {% endfor %}
-The `image_group` container is special: it represents an image and additionally carries `image_id`. Its `children` (optional) hold any associated captions, labels, or overlaid text.
+A container may carry `background_image_id` when its content visually sits on top of a background image (think CSS `background-image` on a `<div>`). The container's `children` are the overlaid content, in reading order.
 
-**Text leaf nodes** — have `role` and `text`, never `children`, `structure`, or `image_id`:
+**Text leaf roles** — set `role` to one of:
 {% for t in text_types %}- {{ t.key }}: {{ t.description }}
 {% endfor %}
 
+**Image leaf** — `role: "image"` + `image_id`. Use this for any inline/foreground image (illustrations, photos, mascots, decorative images). Think HTML `<img>` — a primitive image positioned in the reading flow.
+
+### Foreground vs background
+
+Two ways to put an image in the tree, and they mean different things:
+
+- **Foreground** (image leaf): the image *is* the content at that position. The reader sees an image; nothing is overlaid on it. Use `{ "role": "image", "image_id": "..." }`.
+- **Background** (`background_image_id` on a container): the image is a backdrop, and other content (text, activity options, etc.) sits on top of it. Use `{ "structure": "...", "background_image_id": "...", "children": [ ...overlaid content... ] }`.
+
+Pick foreground when the image is the focal element. Pick background when text or other content visibly sits on top of the image.
+
 ### Common schema mistakes to avoid
 
-Images live on `image_group` **containers**, not on leaves. There is no `role: "image"` leaf.
-
-- ❌ `{ "role": "image", "image_id": "pg001_im001" }` — wrong shape, use `image_group` container
-- ❌ `{ "structure": "image", "image_id": "pg001_im001" }` — `"image"` is not a valid structure
-- ❌ `{ "structure": "image_group", "children": [ { "role": "image", "image_id": "pg001_im001" }, ... ] }` — image_id belongs on the container, not a child leaf
-- ❌ Two sibling `image_group`s with the same `image_id` — represents one image as if it were two; nest the shared content under a single `image_group` instead
-- ✅ `{ "structure": "image_group", "image_id": "pg001_im001" }` — a standalone image
-- ✅ `{ "structure": "image_group", "image_id": "pg001_im001", "children": [ { "role": "caption", "text": "..." } ] }` — image with a caption
-- ✅ `{ "structure": "image_group", "image_id": "pg001_im001", "children": [ { "structure": "activity_option", ... }, { "structure": "activity_option", ... } ] }` — two options sharing one background image
+- ❌ `{ "structure": "image_group", "image_id": "..." }` — `image_group` no longer exists; use an image leaf or `background_image_id` on a container
+- ❌ `{ "structure": "group", "image_id": "..." }` — only image leaves carry `image_id`; for a backdrop use `background_image_id`
+- ❌ `{ "role": "image", "image_id": "...", "text": "..." }` — image leaves have no `text`; for a caption add a sibling text leaf
+- ❌ Two image leaves with the same `image_id`, OR an image leaf and a `background_image_id` referencing the same image — each `image_id` may appear **only once** in the tree
+- ✅ `{ "role": "image", "image_id": "pg001_im001" }` — a standalone foreground image
+- ✅ `{ "structure": "group", "children": [ { "role": "image", "image_id": "pg001_im001" }, { "role": "caption", "text": "Figure 1" } ] }` — image with a caption
+- ✅ `{ "structure": "panel", "background_image_id": "pg001_im002", "children": [ { "role": "text", "text": "Definition: ..." } ] }` — text overlaid on a background image
+- ✅ `{ "structure": "activity", "background_image_id": "pg001_im003", "children": [ { "structure": "activity_option", ... }, { "structure": "activity_option", ... } ] }` — two options sharing one background image
 
 ## Tree Structure Rules
 
-1. **Containers vs leaves**: Container nodes group related content using `structure` and MUST have `children` (except `image_group`, which represents an image and may stand alone). Text leaves hold actual content using `role` + `text` and MUST NOT have `children` or `image_id`.
+1. **Containers vs leaves**: Container nodes group related content using `structure` and MUST have `children` (the only exception is `table_cell`, which may be empty for blank cells). Leaves hold a single piece of content: text leaves use `role` + `text`; image leaves use `role: "image"` + `image_id`.
 2. **Nesting depth**: Use as many levels as needed to capture the document's logical hierarchy. A simple page might be flat; a complex page with sidebars and nested activities could be deeply nested.
 3. **Reading order**: Children within a container must follow left-to-right, top-to-bottom reading order, respecting column layouts.
-4. **Images**: Images are always represented by an `image_group` container carrying `image_id`.{% if image_ids.size > 0 %} Available image IDs: {% for id in image_ids %}{{ id }}{% unless forloop.last %}, {% endunless %}{% endfor %}.{% endif %} A standalone image is an `image_group` with no children. An image with a caption, label, or associated text is an `image_group` with those text leaves as `children`.
-5. **Background images**: When a page has a full-bleed or background image behind content, represent it as an `image_group` whose `image_id` is the background image and whose `children` are the overlaid content (in reading order).
-6. **Text within images**: When text is visually layered on, overlaid on, or contained within an image (speech bubbles, signs, posters, annotations, labels on diagrams, title text over illustrations, text banners over photos), that text MUST appear as `children` of the `image_group` container for that image — never outside it. If you see text sitting on top of an image in the page, it belongs inside the same `image_group`.
-7. **Every text must be captured**: ALL of the provided page text MUST appear in your output — every line, every fragment. If text is in the input, it must be in a leaf node. Do not summarize, skip, or omit any text. This includes text embedded inside illustrations, posters, and diagrams.
-8. **Every image must be captured, exactly once**: ALL of the provided image IDs MUST appear as an `image_group` container in your output — each used **exactly once**, placed at its correct position in reading order. Do not skip or omit any provided image.
-9. **Shared backgrounds**: When multiple distinct content blocks (e.g., two activity options, a heading and a paragraph, several text regions) sit on the same background image, place them as **siblings under one `image_group`**. Never create two separate `image_group`s pointing at the same `image_id`.
-10. **Backgrounds without an extracted image_id**: If overlay text sits on a textured or background region that does NOT correspond to any provided `image_id`, emit the text as plain leaves at the appropriate position. Do NOT borrow an unrelated `image_id` to wrap it — every `image_group` must reference an image that genuinely matches that region.
-11. **Visual separators**: Ignore lines of dashes, asterisks, underscores, or similar characters used purely as visual dividers or section breaks (e.g., `---`, `***`, `_ _ _`). These are decorative and should not appear as text nodes.
+4. **Images**: {% if image_ids.size > 0 %}Available image IDs: {% for id in image_ids %}{{ id }}{% unless forloop.last %}, {% endunless %}{% endfor %}.{% endif %} For each one, decide whether it is **foreground** (a focal image — emit as an image leaf `{ "role": "image", "image_id": "..." }`) or **background** (a backdrop with overlaid content — set `background_image_id` on the container that holds the overlaid children).
+5. **Text within images**: When text is visually layered on, overlaid on, or contained within an image (speech bubbles, signs, posters, annotations, labels on diagrams, title text over illustrations, text banners over photos), that text MUST appear as `children` of the container that carries the image as `background_image_id` — never outside it. If you see text sitting on top of an image in the page, that image is a background and the text belongs inside the same container.
+6. **Every text must be captured**: ALL of the provided page text MUST appear in your output — every line, every fragment. If text is in the input, it must be in a leaf node. Do not summarize, skip, or omit any text. This includes text embedded inside illustrations, posters, and diagrams.
+7. **Each image used at most once**: Use each provided `image_id` no more than once across the whole tree, either as an image leaf OR as a container's `background_image_id` — never both, never twice. You SHOULD reference every image you can see on the page, but if a provided image is embedded in the PDF but not visually present on this page (e.g. an invisible/transparent embed, a decorative artifact, or content the meaningfulness filter missed), omit it rather than forcing a placement.
+8. **Shared backgrounds**: When multiple distinct content blocks (e.g., two activity options, a heading and a paragraph, several text regions) all sit on the same background image, they MUST be siblings under **one** container that carries `background_image_id`. Never duplicate the `background_image_id` across sibling containers — that represents one image as if it were two.
+9. **Backgrounds without an extracted image_id**: If overlay text sits on a textured or background region that does NOT correspond to any provided `image_id`, emit the text as plain leaves at the appropriate position. Do NOT borrow an unrelated `image_id` — every `image_id` you reference must genuinely match the region.
+10. **Visual separators**: Ignore lines of dashes, asterisks, underscores, or similar characters used purely as visual dividers or section breaks (e.g., `---`, `***`, `_ _ _`). These are decorative and should not appear as text nodes.
 
 ## Text Extraction Rules
 
@@ -61,11 +74,11 @@ Images live on `image_group` **containers**, not on leaves. There is no `role: "
 
 ## Example
 
-For a page with a heading, two paragraphs, an image with caption, a sidebar, and a multiple-choice activity (one option text-only, one image+text):
+For a page with a heading, two paragraphs, a foreground image with caption, a sidebar, a definition panel overlaid on a textured background, and a multiple-choice activity (one option text-only, one image+text):
 
 ```json
 {
-  "reasoning": "Page has a main heading, two text paragraphs, an image with caption, a sidebar callout, and a multiple-choice activity. Each option is wrapped in its own activity_option container even when it holds a single text leaf.",
+  "reasoning": "Page has a main heading, two text paragraphs, a foreground image with caption (image leaf wrapped in a group with the caption), a sidebar callout, a definition panel where text sits on a textured background (panel container with background_image_id), and a multiple-choice activity. Each option is wrapped in its own activity_option container even when it holds a single text leaf.",
   "nodes": [
     { "role": "heading", "text": "Chapter 3: The Water Cycle" },
     {
@@ -76,13 +89,21 @@ For a page with a heading, two paragraphs, an image with caption, a sidebar, and
       ]
     },
     {
-      "structure": "image_group",
-      "image_id": "pg003_im001",
+      "structure": "group",
       "children": [
+        { "role": "image", "image_id": "pg003_im001" },
         { "role": "caption", "text": "Figure 3.1: The stages of the water cycle" }
       ]
     },
     { "role": "text", "text": "As shown in Figure 3.1, the sun drives evaporation from oceans and lakes." },
+    {
+      "structure": "panel",
+      "background_image_id": "pg003_im004",
+      "children": [
+        { "role": "heading", "text": "Definition" },
+        { "role": "text", "text": "Evaporation: the process by which water turns into vapor." }
+      ]
+    },
     {
       "structure": "sidebar",
       "children": [
@@ -106,7 +127,7 @@ For a page with a heading, two paragraphs, an image with caption, a sidebar, and
         {
           "structure": "activity_option",
           "children": [
-            { "structure": "image_group", "image_id": "pg003_im002" },
+            { "role": "image", "image_id": "pg003_im002" },
             { "role": "text", "text": "Precipitation" }
           ]
         }

@@ -32,13 +32,13 @@ const baseConfig: StructureConfig = {
     { key: "body", description: "Body text" },
   ],
   containerTypes: [
-    { key: "image_group", description: "An image group" },
     { key: "group", description: "Content group" },
   ],
   prunedTextTypes: ["header"],
   promptName: "page_structuring",
   modelId: "openai:gpt-5.4",
   maxRetries: 2,
+  maxRefinements: 3,
 }
 
 function makeScriptedLLMModel(
@@ -252,7 +252,7 @@ describe("structurePage", () => {
     const seenOptions: GenerateObjectOptions[] = []
     const invalidRefinement = refinement(false, "Bad refinement", [
       {
-        structure: "image_group",
+        role: "image",
         image_id: "missing_image",
       },
     ])

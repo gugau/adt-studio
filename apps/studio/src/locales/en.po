@@ -721,6 +721,9 @@ msgstr "Background"
 #~ msgid "Background Image"
 #~ msgstr "Background Image"
 
+msgid "Background image for this container"
+msgstr "Background image for this container"
+
 #~ msgid "Background Tasks"
 #~ msgstr "Background Tasks"
 
@@ -764,6 +767,9 @@ msgstr "Best for your preset"
 
 msgid "Beta"
 msgstr "Beta"
+
+msgid "bg"
+msgstr "bg"
 
 msgid "Bit Rate"
 msgstr "Bit Rate"

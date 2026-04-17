@@ -2,7 +2,7 @@ text_types:
   heading: A chapter, section, or subsection heading that introduces content; not metadata, labels, or merely bold text
   text: General narrative, descriptive, or explanatory text
   math: Mathematical expressions (use LaTeX notation)
-  activity_number: A letter or number labeling a single activity or question (e.g., A, B, 1, 2)  
+  activity_number: A letter or number labeling a single activity or question (e.g., A, B, 1, 2)
   activity_instruction: Directions or prompts for activities and exercises
   activity_question: A specific question to be answered within an activity or exercise
   activity_fill_in_the_blank: Text with blanks to be filled in — use ___ for each blank
@@ -15,15 +15,13 @@ text_types:
   quote: Quoted or cited text
 
 container_types:
-  image_group: An image group — contains an image leaf child and optional captions, labels, or text associated with the image.
   activity: A single question, exercise, or activity
   activity_option: >
     A single selectable choice in a multiple-choice or matching activity.
     ALWAYS use this container for each option — even text-only ones — so
-    options are identifiable. Wraps the option's content: a `text` leaf for
-    text-only options, an `image_group` for image-only options, or a `text`
-    leaf and an `image_group` together for mixed options. Never use
-    `activity_option` as a `role` on a leaf.
+    options are identifiable. Wraps the option's content: a text leaf for
+    text-only options, an image leaf for image-only options, or both together
+    for mixed options. Never use activity_option as a role on a leaf.
   group: A generic content grouping when no more specific container fits
   list: An ordered or unordered list
   list_item: A single item within a list
@@ -269,7 +267,7 @@ pruned_section_types:
 concurrency: 32
 
 image_filters:
-  min_side: 100
+  min_side: 10
   max_side: 5000
   min_stddev: 2
   meaningfulness: true

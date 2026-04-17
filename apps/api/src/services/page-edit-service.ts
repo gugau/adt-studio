@@ -544,14 +544,17 @@ function collectImageIdsFromNode(
   storage: { getImageBase64: (id: string) => string; getImageDimensions: (id: string) => { width: number; height: number } | null }
 ): void {
   if (node.isPruned) return
-  if (node.imageId && !renderImages.has(node.imageId)) {
+  const ensureLoaded = (imageId: string) => {
+    if (renderImages.has(imageId)) return
     try {
-      const dims = storage.getImageDimensions(node.imageId)
-      renderImages.set(node.imageId, { base64: storage.getImageBase64(node.imageId), width: dims?.width, height: dims?.height })
+      const dims = storage.getImageDimensions(imageId)
+      renderImages.set(imageId, { base64: storage.getImageBase64(imageId), width: dims?.width, height: dims?.height })
     } catch {
       // Image not found in storage — skip
     }
   }
+  if (node.imageId) ensureLoaded(node.imageId)
+  if (node.backgroundImageId) ensureLoaded(node.backgroundImageId)
   if (node.children) {
     for (const child of node.children) {
       collectImageIdsFromNode(child, renderImages, storage)

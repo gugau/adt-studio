@@ -179,7 +179,7 @@ export const PRESETS: PresetConfig[] = [
       figureExtraction: true,
     },
     formDefaults: {
-      imageFilterMinSide: 50,
+      imageFilterMinSide: 10,
       imageFilterMaxSide: 3500,
     },
     baseConfig: {
@@ -341,7 +341,7 @@ export const PRESETS: PresetConfig[] = [
       imageSegmentation: false,
     },
     formDefaults: {
-      imageFilterMinSide: 150,
+      imageFilterMinSide: 10,
       imageFilterMaxSide: 3500,
     },
     baseConfig: {
@@ -425,7 +425,7 @@ export const PRESETS: PresetConfig[] = [
       figureExtraction: true,
     },
     formDefaults: {
-      imageFilterMinSide: 100,
+      imageFilterMinSide: 10,
       imageFilterMaxSide: 5000,
     },
     baseConfig: {

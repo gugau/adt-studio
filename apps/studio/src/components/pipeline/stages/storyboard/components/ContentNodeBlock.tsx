@@ -52,7 +52,6 @@ const GREEN: Pick<TypeStyle, "bg" | "text" | "borderL"> = { bg: "bg-emerald-100 
 const CONTAINER_STYLES: Record<string, TypeStyle> = {
   activity: { ...PURPLE, icon: <Puzzle className={IC} /> },
   group: { ...BLUE, icon: <Layers className={IC} /> },
-  image_group: { ...GREEN, icon: <Image className={IC} /> },
   list: { ...BLUE, icon: <List className={IC} /> },
   list_item: { ...BLUE, icon: <List className={IC} /> },
   panel: { ...BLUE, icon: <PanelTop className={IC} /> },
@@ -60,6 +59,7 @@ const CONTAINER_STYLES: Record<string, TypeStyle> = {
 }
 
 const LEAF_STYLES: Record<string, TypeStyle> = {
+  image: { ...GREEN, icon: <Image className={IC} /> },
   text: { ...GREY, icon: <Type className={IC} /> },
   heading: { ...AMBER, icon: <Hash className={IC} /> },
   section_heading: { ...AMBER, icon: <Hash className={IC} /> },
@@ -329,8 +329,10 @@ export function ContentNodeBlock({
   const [dropPosition, setDropPosition] = useState<"before" | "inside" | "after" | null>(null)
   const hasChildren = node.children != null && node.children.length > 0
   const isContainer = hasChildren || (node.structure != null)
-  const isText = node.text != null
-  const imgSrc = node.imageId ? `${BASE_URL}/books/${bookLabel}/images/${node.imageId}` : null
+  const isImageLeaf = !isContainer && node.role === "image" && node.imageId != null
+  const isText = !isContainer && !isImageLeaf && node.text != null
+  const bgImageSrc = node.backgroundImageId ? `${BASE_URL}/books/${bookLabel}/images/${node.backgroundImageId}` : null
+  const leafImageSrc = isImageLeaf ? `${BASE_URL}/books/${bookLabel}/images/${node.imageId}` : null
 
   const handleDragStart = (e: React.DragEvent) => {
     if (disabled) { e.preventDefault(); return }
@@ -445,15 +447,16 @@ export function ContentNodeBlock({
             {collapsed && hasChildren && (
               <span className="text-[9px] text-muted-foreground/40">{node.children!.length}</span>
             )}
-            {imgSrc && (
+            {bgImageSrc && (
               <>
+                <span className="text-[9px] text-muted-foreground/60 uppercase tracking-wide" title={t`Background image for this container`}>{t`bg`}</span>
                 <img
-                  src={imgSrc}
-                  alt={node.imageId ?? "image"}
-                  className="h-12 w-auto object-contain rounded border border-border/40"
+                  src={bgImageSrc}
+                  alt={node.backgroundImageId ?? "background"}
+                  className="h-10 w-auto object-contain rounded border border-border/40"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
                 />
-                <span className="text-[9px] text-muted-foreground/40 font-mono truncate">{node.imageId}</span>
+                <span className="text-[9px] text-muted-foreground/40 font-mono truncate">{node.backgroundImageId}</span>
               </>
             )}
             <div className="ml-auto flex items-center gap-0.5">
@@ -484,6 +487,44 @@ export function ContentNodeBlock({
               <ContainerDropZone nodeId={node.nodeId} childCount={node.children?.length ?? 0} disabled={disabled} onMoveNode={onMoveNode} />
             </div>
           )}
+        </div>
+        {dropIndicator("after")}
+      </div>
+    )
+  }
+
+  // Image leaf block — primitive image card (like a text leaf, but with a thumbnail)
+  if (isImageLeaf) {
+    return (
+      <div className="relative">
+        {dropIndicator("before")}
+        <div
+          className={cn(
+            "group/block flex items-center gap-2 rounded-md py-1 px-1.5 transition-colors",
+            node.isPruned ? "opacity-40" : "hover:bg-accent/40 hover:outline hover:outline-1 hover:outline-border/50",
+          )}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <TypePill
+            typeValue="image"
+            isContainer={false}
+            disabled={disabled}
+            onChangeType={onChangeType}
+            nodeId={node.nodeId}
+          />
+          {leafImageSrc && (
+            <img
+              src={leafImageSrc}
+              alt={node.imageId ?? "image"}
+              className="h-12 w-auto object-contain rounded border border-border/40"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
+            />
+          )}
+          <span className="text-[10px] text-muted-foreground/60 font-mono truncate flex-1 min-w-0">{node.imageId}</span>
+          {dragHandle}
+          {pruneBtn}
         </div>
         {dropIndicator("after")}
       </div>
