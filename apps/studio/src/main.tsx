@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { messages as enMessages } from "./locales/en.po"
 import { messages as ptBRMessages } from "./locales/pt-BR.po"
 import { messages as esMessages } from "./locales/es.po"
+import { messages as frMessages } from "./locales/fr.po"
 import { routeTree } from "./routeTree.gen"
 import "./styles/globals.css"
 import { LOCALES } from "./i18n/locales"
@@ -20,7 +21,7 @@ function detectLocale(): AppLocale {
   return "en"
 }
 
-i18n.load({ en: enMessages, "pt-BR": ptBRMessages, es: esMessages })
+i18n.load({ en: enMessages, "pt-BR": ptBRMessages, es: esMessages, fr: frMessages })
 i18n.activate(detectLocale())
 
 const queryClient = new QueryClient({

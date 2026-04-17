@@ -73,7 +73,7 @@ export function SectioningModeSelect({ id, value, onValueChange, recommended, pr
         label: i18n._(labelMsg),
         Icon,
       })),
-    [i18n, i18n.locale],
+    [i18n.locale],
   )
 
   const selected = options.find((o) => o.value === value)

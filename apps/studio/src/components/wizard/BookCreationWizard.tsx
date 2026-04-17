@@ -1,5 +1,5 @@
 
-import { useState, useEffect, type CSSProperties } from "react"
+import { useState, useEffect, useRef, type CSSProperties } from "react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { Eye, ArrowLeft, ArrowRight, Zap, Loader2 } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
@@ -29,9 +29,13 @@ function WizardHeader({ step, accent }: { step: number; accent: PresetAccent }) 
   return (
     <div className="flex flex-col gap-3 px-8 pt-6">
       <div className="flex items-center justify-between">
-        <span className="inline-flex items-center bg-[#fef2f2] text-[#ef4444] text-[12px] font-semibold leading-4 px-[10px] py-[4px] rounded-[4px]">
-          {t`Required Fields`}
-        </span>
+        {def.hasRequiredFields ? (
+          <span className="inline-flex items-center bg-[#fef2f2] text-[#ef4444] text-[12px] font-semibold leading-4 px-[10px] py-[4px] rounded-[4px]">
+            {t`Required Fields`}
+          </span>
+        ) : (
+          <span />
+        )}
         <span
           className="text-[14px] font-bold leading-5 uppercase tracking-wide animate-wizard-enter"
           style={{ color: accent.text, transition: "color 0.4s ease" }}
@@ -192,17 +196,18 @@ export function BookCreationWizard() {
   const { currentStep, setCurrentStep, stepDirection, previewFocus } = useWizard()
   const form = useWizardForm()
   const createMutation = useCreateBook()
-  const { data: books } = useBooks()
+  const { data: books, isPending: booksLoading } = useBooks()
   const { apiKey, hasApiKey, azureKey, azureRegion, geminiKey } = useApiKey()
   const [previewOpen, setPreviewOpen] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
+  const creatingRef = useRef(false)
 
   const values = useStore(form.store, (s) => s.values)
   const { file, renderStrategy, editingLanguage, outputLanguages, styleguide } = values
   const accent = getPresetAccent(values.selectedPreset)
   const stepIndex = currentStep - 1
-  const existingBookLabels = books?.map((b: { label: string }) => b.label) ?? []
+  const existingBookLabels = booksLoading ? undefined : books?.map((b: { label: string }) => b.label)
   const stepValidationContext = { existingBookLabels }
   const canContinue =
     currentStep >= 1
@@ -248,6 +253,8 @@ export function BookCreationWizard() {
   }
 
   async function handleCreate() {
+    if (creatingRef.current) return
+    creatingRef.current = true
     setSubmitError(null)
     setIsCreating(true)
     try {
@@ -265,13 +272,16 @@ export function BookCreationWizard() {
             { fromStage: "extract", toStage: "storyboard" },
             { azure: { key: azureKey, region: azureRegion }, geminiApiKey: geminiKey },
           )
-        } catch {}
+        } catch (pipelineError) {
+          console.error("[wizard] pipeline kickoff failed:", pipelineError)
+        }
       }
 
       navigate({ to: "/books/$label/$step", params: { label: book.label, step: "book" } })
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : t`Failed to create book.`)
+      creatingRef.current = false
       setIsCreating(false)
+      setSubmitError(error instanceof Error ? error.message : t`Failed to create book.`)
     }
   }
   const previewWidth = currentStep === 2 ? getPreviewWidth(renderStrategy) : 650

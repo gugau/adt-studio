@@ -223,10 +223,6 @@ const DEFAULT_VISUAL_REFINEMENT = {
  *   2. default_render_strategy → named strategy in render_strategies
  *   3. Hard-coded defaults
  *
- * When generate_activities is false, activity_* entries are stripped from
- * section_render_strategies so they fall through to the default strategy
- * instead of being routed to the activity renderer. Pruning already prevents
- * activity sections from reaching the renderer; this is an extra safeguard.
  */
 export function buildRenderStrategyResolver(
   appConfig: AppConfig

@@ -1,5 +1,4 @@
 import { isElectron } from "@/lib/utils"
-import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.mjs?url"
 import { installCollectionMethodPolyfills } from "@/lib/pdfjs-dist-polyfill"
 
 let pdfjsModule: Promise<typeof import("pdfjs-dist")> | null = null
@@ -13,9 +12,14 @@ export function getPdfJs() {
     }
 
     pdfjsModule = import("pdfjs-dist").then((pdfjs) => {
-      pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+        "pdfjs-dist/build/pdf.worker.mjs",
+        import.meta.url,
+      ).href
       return pdfjs
     })
+
   }
+  
   return pdfjsModule
 }

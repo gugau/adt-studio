@@ -1030,6 +1030,9 @@ msgstr "Converted"
 msgid "Coral reefs cover less than 1% of the ocean floor, yet they support roughly 25% of all marine species. Often called the 'rainforests of the sea,' these underwater ecosystems are built by tiny animals called coral polyps."
 msgstr "Coral reefs cover less than 1% of the ocean floor, yet they support roughly 25% of all marine species. Often called the 'rainforests of the sea,' these underwater ecosystems are built by tiny animals called coral polyps."
 
+msgid "Could not read this PDF. The file may be corrupted or password-protected."
+msgstr "Could not read this PDF. The file may be corrupted or password-protected."
+
 msgid "Cover"
 msgstr "Cover"
 
@@ -1596,6 +1599,9 @@ msgstr "Format"
 
 msgid "Forms & controls"
 msgstr "Forms & controls"
+
+msgid "French"
+msgstr "French"
 
 msgid "From reference image..."
 msgstr "From reference image..."
