@@ -30,17 +30,18 @@ Every node has either `structure` (for containers) or `role` (for leaves), never
 
 1. Break text at sentence boundaries where possible; each sentence or logical unit should be a separate leaf node.
 2. You can combine text segments together if it makes sense — don't honor new lines unless important to interpretation.
-3. For mathematical expressions, use LaTeX notation (e.g., \frac{1}{2}, x^2 + y^2 = z^2). When math appears inline within prose, wrap each expression in dollar-sign delimiters: e.g., "the space $M = (X, V)$". For standalone math entries (role "math"), use raw LaTeX only.
-4. Keep display equations as single, complete math entries. Equation numbers, underbrace/overbrace labels, and annotations must be included in the same LaTeX expression using \underbrace, \overbrace, and \tag as needed.
-5. For drop caps, merge the large initial letter with the rest of the word/sentence. If spaces are used for word such as `S P A C E D`, remove the blanks.
-6. For tables of contents, each entry should be a separate leaf node inside a single "list" container.
-7. For content where line breaks are significant (poetry, verse, addresses, lyrics), use a "preformatted" container with each line as a separate text leaf child. When there are multiple stanzas or paragraphs, use a separate "preformatted" container for each one so paragraph boundaries are preserved.
-8. When an activity number or letter is detected (e.g., 1, 2, A, B), it should be a child of an "activity" container along with the activity's other content.
-9. For data tables, use a "table" container with "table_row" children. Each row contains "table_cell" children, and each cell contains leaf nodes for its content.
-10. Preserve original spelling and punctuation exactly as shown.
-11. If the page is blank or contains only images with no text, use image leaf nodes with `role: "image"` (or return an empty nodes array).
-12. Use the extracted text as a reference but trust the image as the primary source — correct OCR errors when the image clearly shows different text.
-13. For fill-in-the-blank activities: when a word appears as a placeholder (dotted, underlined, inside blanks), wrap it as `[placeholder:word]`. Only do this when visually styled as a fill-in blank on the page image.
+3. **Paragraph grouping**: When multiple text leaves belong to the same visual paragraph on the page (one block of prose flowing together), they MUST be wrapped together as children of a `structure: "group"` container. Do NOT emit them as flat top-level siblings — the grouping is what preserves paragraph flow downstream.
+4. For mathematical expressions, use LaTeX notation (e.g., \frac{1}{2}, x^2 + y^2 = z^2). When math appears inline within prose, wrap each expression in dollar-sign delimiters: e.g., "the space $M = (X, V)$". For standalone math entries (role "math"), use raw LaTeX only.
+5. Keep display equations as single, complete math entries. Equation numbers, underbrace/overbrace labels, and annotations must be included in the same LaTeX expression using \underbrace, \overbrace, and \tag as needed.
+6. For drop caps, merge the large initial letter with the rest of the word/sentence. If spaces are used for word such as `S P A C E D`, remove the blanks.
+7. For tables of contents, each entry should be a separate leaf node inside a single "list" container.
+8. For content where line breaks are significant (poetry, verse, addresses, lyrics), use a "preformatted" container with each line as a separate text leaf child. When there are multiple stanzas or paragraphs, use a separate "preformatted" container for each one so paragraph boundaries are preserved.
+9. When an activity number or letter is detected (e.g., 1, 2, A, B), it should be a child of an "activity" container along with the activity's other content.
+10. For data tables, use a "table" container with "table_row" children. Each row contains "table_cell" children, and each cell contains leaf nodes for its content.
+11. Preserve original spelling and punctuation exactly as shown.
+12. If the page is blank or contains only images with no text, use image leaf nodes with `role: "image"` (or return an empty nodes array).
+13. Use the extracted text as a reference but trust the image as the primary source — correct OCR errors when the image clearly shows different text.
+14. For fill-in-the-blank activities: when a word appears as a placeholder (dotted, underlined, inside blanks), wrap it as `[placeholder:word]`. Only do this when visually styled as a fill-in blank on the page image.
 
 ## Example
 
