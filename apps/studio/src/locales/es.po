@@ -1945,6 +1945,9 @@ msgstr "Interactivo"
 msgid "Interactive assessment questions"
 msgstr "Preguntas de evaluación interactivas"
 
+msgid "Invalid project archive"
+msgstr "Archivo de proyecto no válido"
+
 msgid "Isolated asset"
 msgstr "Recurso aislado"
 
@@ -3814,8 +3817,8 @@ msgstr "These values reflect either the saved book override or the latest packag
 #~ msgid "This archive contains unsafe file paths"
 #~ msgstr "Este archivo contiene rutas de archivo inseguras"
 
-msgid "This doesn't look like a valid ADT Studio project"
-msgstr "Esto no parece ser un proyecto válido de ADT Studio"
+#~ msgid "This doesn't look like a valid ADT Studio project"
+#~ msgstr "Esto no parece ser un proyecto válido de ADT Studio"
 
 #~ msgid "This doesn't look like an ADT Studio project"
 #~ msgstr "Esto no parece un proyecto de ADT Studio"
@@ -4217,5 +4220,5 @@ msgstr "Ficción para jóvenes adultos"
 msgid "Your Books"
 msgstr "Tus libros"
 
-msgid "ZIP Archive"
-msgstr "Archivo ZIP"
+#~ msgid "ZIP Archive"
+#~ msgstr "Archivo ZIP"

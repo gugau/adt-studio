@@ -233,6 +233,10 @@ export default [
             "^#[0-9a-fA-F]+$",
             // CSS dimension values (e.g. "10px", "1.5rem", "48px")
             "^[0-9]",
+            // CSS transform function template literals — lingui joins quasis without expressions,
+            // so `translateY(${dy}px)` becomes "translateY(px)". ignoreNames["transform"] doesn't
+            // fire for MemberExpression LHS (plugin gap), so we match the value directly.
+            "^(translate[XYZ3d]*|rotate[XYZ3d]*|scale[XYZ]?|skew[XY]?|matrix3?d?|perspective)\\(",
             // React Server Components directives (shadcn boilerplate)
             "^use (client|server)$",
             // Brand name (never translated)
