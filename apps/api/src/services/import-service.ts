@@ -250,7 +250,11 @@ export async function importProject(
       rebuildReason: null,
     }
   } catch (err) {
-    try { fs.rmSync(bookDir, { recursive: true, force: true }) } catch { /* ignore */ }
+    try {
+      fs.rmSync(bookDir, { recursive: true, force: true })
+    } catch (cleanupErr) {
+      console.error(`[import] Failed to clean up partial book dir ${bookDir}:`, cleanupErr)
+    }
     throw err
   }
 }

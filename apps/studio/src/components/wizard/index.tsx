@@ -24,7 +24,7 @@ const WizardContext = createContext<WizardContextValue | null>(null)
 
 export function WizardProvider({ children }: { children: ReactNode }) {
   const [currentStep, setCurrentStepRaw] = useState(0)
-  const [stepDirection, setStepDirection] = useState<"forward" | "back">("forward") 
+  const [stepDirection, setStepDirection] = useState<"forward" | "back">("forward")
 
   useEffect(() => {
     if (currentStep === 0) return

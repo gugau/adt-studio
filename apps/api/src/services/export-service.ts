@@ -98,9 +98,9 @@ export async function prepareExport(
     )
     const title = metadata?.title ?? safeLabel
 
-    const requestedLanguages = features?.languages
-    const finalLanguages = requestedLanguages && requestedLanguages.length > 0
-      ? requestedLanguages.filter((lang) => outputLanguages.includes(normalizeLocale(lang))).map(normalizeLocale)
+    const normalizedRequested = features?.languages?.map(normalizeLocale) ?? []
+    const finalLanguages = normalizedRequested.length > 0
+      ? normalizedRequested.filter((lang) => outputLanguages.includes(lang))
       : outputLanguages
 
     const opts = {

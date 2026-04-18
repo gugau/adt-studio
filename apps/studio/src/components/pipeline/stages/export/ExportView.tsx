@@ -6,7 +6,7 @@ import { Trans, useLingui } from "@lingui/react/macro"
 import { Button } from "@/components/ui/button"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useExportWatcher } from "@/hooks/use-export-watcher"
-import { type ExportFeatureToggles } from "@/hooks/use-export-features"
+import { type ExportFeatureToggles, useAvailableExportFeatures } from "@/hooks/use-export-features"
 import { buildExportFormatConfig, type ExportFormat } from "./export-formats"
 import { ExportDialog } from "./ExportDialog"
 
@@ -15,6 +15,7 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
   const { startExport, isPreparing, preparingFormat, error } = useExportWatcher()
   const { stageState } = useBookRun()
   const storyboardDone = stageState("storyboard") === "done"
+  const availableFeatures = useAvailableExportFeatures(bookLabel)
   const formats = buildExportFormatConfig(t)
 
   const [featureToggles, setFeatureToggles] = useState<ExportFeatureToggles>({
@@ -37,7 +38,10 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
   const handleConfirmExport = () => {
     if (selectedFormat) {
       const features = selectedFormat === "project" ? undefined : {
-        ...featureToggles,
+        glossary: featureToggles.glossary && availableFeatures.glossary,
+        readAloud: featureToggles.readAloud && availableFeatures.readAloud,
+        quizzes: featureToggles.quizzes && availableFeatures.quizzes,
+        signLanguage: featureToggles.signLanguage && availableFeatures.signLanguage,
         languages: languageOrder ?? undefined,
       }
       startExport(selectedFormat, features)

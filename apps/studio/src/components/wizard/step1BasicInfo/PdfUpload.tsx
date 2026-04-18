@@ -118,7 +118,7 @@ export function PdfUpload() {
   const { file, pdfError, setFile, clearFile } = usePdfUpload()
   const pdfRef = useRef<HTMLInputElement>(null)
 
-  const { overlay, handleDrop } = useFileDropZone({
+  const { overlay } = useFileDropZone({
     accept: (f) => f.type === "application/pdf",
     onAccept: setFile,
   })
@@ -171,8 +171,6 @@ export function PdfUpload() {
               tabIndex={0}
               onClick={() => pdfRef.current?.click()}
               onKeyDown={(e) => e.key === "Enter" && pdfRef.current?.click()}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleDrop}
               aria-label={t`Upload PDF or drag and drop`}
               className="flex flex-col items-center justify-center gap-2 border border-dashed border-[#d4d4d4] rounded-lg h-full cursor-pointer hover:border-[#2b7fff]/60 hover:bg-[#2b7fff]/[0.02] transition-colors duration-200"
             >

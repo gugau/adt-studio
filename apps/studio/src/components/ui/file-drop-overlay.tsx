@@ -38,14 +38,6 @@ export function useFileDropZone({ accept, onAccept, errorDuration = 2000 }: UseF
     [accept, onAccept, errorDuration],
   )
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault()
-      acceptDrop(e.dataTransfer.files[0])
-    },
-    [acceptDrop],
-  )
-
   useEffect(() => {
     function onDragEnter(e: DragEvent) {
       if (e.dataTransfer?.types.includes("Files")) setOverlayState("dragging")
@@ -74,7 +66,7 @@ export function useFileDropZone({ accept, onAccept, errorDuration = 2000 }: UseF
     }
   }, [acceptDrop])
 
-  return { overlay, handleDrop }
+  return { overlay }
 }
 
 interface FileDropOverlayProps {

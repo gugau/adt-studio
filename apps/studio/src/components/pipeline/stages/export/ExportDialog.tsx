@@ -43,17 +43,10 @@ import {
 } from "@/hooks/use-export-features";
 import {
   buildExportFormatConfig,
-  type FormatConfig,
   type ExportFormat,
 } from "./export-formats";
 
-function BookCover({
-  bookLabel,
-  formatConfig,
-}: {
-  bookLabel: string;
-  formatConfig?: FormatConfig;
-}) {
+function BookCover({ bookLabel }: { bookLabel: string }) {
   const { t } = useLingui();
   const { data: book } = useBook(bookLabel);
   const { data: pages } = usePages(bookLabel);
@@ -79,7 +72,6 @@ function BookCover({
   const publisher = book?.metadata?.publisher;
   const bookLanguage = book?.languageCode ?? book?.metadata?.language_code;
   const pageCount = pages?.length;
-  const FormatIcon = formatConfig?.icon;
 
   return (
     <div className="flex flex-col justify-center gap-2 overflow-hidden border-r border-slate-200 bg-slate-50/50">
@@ -688,7 +680,6 @@ export function ExportDialog({
           {selectedFormat && (
             <BookCover
               bookLabel={bookLabel}
-              formatConfig={formatConfigByType[selectedFormat]}
             />
           )}
 
