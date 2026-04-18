@@ -182,13 +182,14 @@ export function createBookRoutes(
   app.post("/books/:label/prepare-export", async (c) => {
     const { label } = c.req.param()
     const format = (c.req.query("format") ?? "project") as "project" | "webpub" | "scorm" | "adt"
-    const featuresStr = c.req.query("features")
     let features: ExportFeatures | undefined
-    if (featuresStr) {
+    const hasBody = (c.req.header("content-length") ?? "0") !== "0"
+    if (hasBody) {
       try {
-        features = JSON.parse(featuresStr)
+        const body = await c.req.json<{ features?: ExportFeatures }>()
+        features = body.features
       } catch {
-        throw new HTTPException(400, { message: "Invalid features JSON" })
+        throw new HTTPException(400, { message: "Invalid JSON body" })
       }
     }
     const safeLabel = parseBookLabel(label)

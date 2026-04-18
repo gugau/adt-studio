@@ -1059,13 +1059,12 @@ export const api = {
     format: "project" | "webpub" | "scorm" | "adt" = "project",
     features?: { glossary?: boolean; readAloud?: boolean; quizzes?: boolean; signLanguage?: boolean; languages?: string[] }
   ) => {
-    const params = new URLSearchParams({ format })
-    if (features) {
-      params.append("features", JSON.stringify(features))
-    }
     return request<{ taskId?: string; status: string; label: string }>(
-      `/books/${label}/prepare-export?${params.toString()}`,
-      { method: "POST" }
+      `/books/${label}/prepare-export?format=${format}`,
+      {
+        method: "POST",
+        body: features ? JSON.stringify({ features }) : undefined,
+      }
     )
   },
 

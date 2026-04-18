@@ -165,7 +165,7 @@ export function previewImport(zipBuffer: Buffer): ImportPreview {
   let coverBase64: string | null = null
   if (pdfEntry) {
     const pdfBuffer = Buffer.from(entries[pdfEntry])
-    const coverPng = renderPdfCover(pdfBuffer)
+    const coverPng = renderPdfCover(pdfBuffer, { maxWidth: 320 })
     if (coverPng) {
       coverBase64 = coverPng.toString("base64")
     }
