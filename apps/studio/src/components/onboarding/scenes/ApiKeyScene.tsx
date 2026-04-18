@@ -1,57 +1,42 @@
-import { useState } from "react"
-import {
-  ArrowRight,
-  ArrowLeft,
-  KeyRound,
-  Eye,
-  EyeOff,
-  Check,
-} from "lucide-react"
-import { Trans } from "@lingui/react/macro"
-import { useLingui } from "@lingui/react/macro"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useApiKey } from "@/hooks/use-api-key"
-import type { OnboardingStepProps } from "../steps"
+import { useState } from "react";
+import { KeyRound, Eye, EyeOff, Check } from "lucide-react";
+import { Trans } from "@lingui/react/macro";
+import { useLingui } from "@lingui/react/macro";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useApiKey } from "@/hooks/use-api-key";
+import type { OnboardingStepProps } from "../steps";
 
-type TabKey = "openai" | "anthropic" | "google" | "custom" | "azure"
+type TabKey = "openai" | "anthropic" | "google" | "custom" | "azure";
 
 function isValidOpenAIKey(key: string): boolean {
-  const trimmed = key.trim()
-  return trimmed.length > 0 && trimmed.startsWith("sk-")
+  const trimmed = key.trim();
+  return trimmed.length > 0 && trimmed.startsWith("sk-");
 }
 
-export function ApiKeyStep({ onNext, onBack }: OnboardingStepProps) {
-  const { t } = useLingui()
+export function ApiKeyStep(_props: OnboardingStepProps) {
+  const { t } = useLingui();
   const {
     apiKey,
-    setApiKey,
     anthropicKey,
-    setAnthropicKey,
     googleKey,
-    setGoogleKey,
-    setGeminiKey,
     customBaseUrl,
-    setCustomBaseUrl,
     customApiKey,
-    setCustomApiKey,
     azureKey,
-    setAzureKey,
     azureRegion,
-    setAzureRegion,
-  } = useApiKey()
+  } = useApiKey();
 
-  const [tab, setTab] = useState<TabKey>("openai")
-  const [showKey, setShowKey] = useState(false)
-  const [openaiDraft, setOpenaiDraft] = useState(apiKey)
-  const [anthropicDraft, setAnthropicDraft] = useState(anthropicKey)
-  const [googleDraft, setGoogleDraft] = useState(googleKey)
-  const [customBaseUrlDraft, setCustomBaseUrlDraft] = useState(customBaseUrl)
-  const [customApiKeyDraft, setCustomApiKeyDraft] = useState(customApiKey)
-  const [azureKeyDraft, setAzureKeyDraft] = useState(azureKey)
-  const [azureRegionDraft, setAzureRegionDraft] = useState(azureRegion)
+  const [tab, setTab] = useState<TabKey>("openai");
+  const [showKey, setShowKey] = useState(false);
+  const [openaiDraft, setOpenaiDraft] = useState(apiKey);
+  const [anthropicDraft, setAnthropicDraft] = useState(anthropicKey);
+  const [googleDraft, setGoogleDraft] = useState(googleKey);
+  const [customBaseUrlDraft, setCustomBaseUrlDraft] = useState(customBaseUrl);
+  const [customApiKeyDraft, setCustomApiKeyDraft] = useState(customApiKey);
+  const [azureKeyDraft, setAzureKeyDraft] = useState(azureKey);
+  const [azureRegionDraft, setAzureRegionDraft] = useState(azureRegion);
 
   const tabs: { key: TabKey; label: string; isSaved: boolean }[] = [
     { key: "openai", label: t`OpenAI`, isSaved: apiKey.length > 0 },
@@ -59,46 +44,9 @@ export function ApiKeyStep({ onNext, onBack }: OnboardingStepProps) {
     { key: "google", label: t`Google`, isSaved: googleKey.length > 0 },
     { key: "custom", label: t`Custom`, isSaved: customBaseUrl.length > 0 },
     { key: "azure", label: t`Azure`, isSaved: azureKey.length > 0 },
-  ]
+  ];
 
-  const openaiValid =
-    openaiDraft.trim() === "" ||
-    openaiDraft.trim() === apiKey.trim() ||
-    isValidOpenAIKey(openaiDraft)
-
-  const hasChanges =
-    openaiDraft.trim() !== apiKey.trim() ||
-    anthropicDraft.trim() !== anthropicKey.trim() ||
-    googleDraft.trim() !== googleKey.trim() ||
-    customBaseUrlDraft.trim() !== customBaseUrl.trim() ||
-    customApiKeyDraft.trim() !== customApiKey.trim() ||
-    azureKeyDraft.trim() !== azureKey.trim() ||
-    azureRegionDraft.trim() !== azureRegion.trim()
-
-  const canContinue = openaiValid
-  const continueLabel =
-    hasChanges && canContinue ? t`Save and continue` : t`Continue`
-
-  const handleContinue = () => {
-    if (!canContinue) return
-    if (hasChanges) {
-      const trimmedOpenai = openaiDraft.trim()
-      if (isValidOpenAIKey(trimmedOpenai) || trimmedOpenai === "") {
-        setApiKey(trimmedOpenai)
-      }
-      setAnthropicKey(anthropicDraft.trim())
-      const trimmedGoogle = googleDraft.trim()
-      setGoogleKey(trimmedGoogle)
-      setGeminiKey(trimmedGoogle)
-      setCustomBaseUrl(customBaseUrlDraft.trim())
-      setCustomApiKey(customApiKeyDraft.trim())
-      setAzureKey(azureKeyDraft.trim())
-      setAzureRegion(azureRegionDraft.trim())
-    }
-    onNext()
-  }
-
-  const passwordInputClass = "h-11 rounded-xl pr-10"
+  const passwordInputClass = "h-11 rounded-xl pr-10";
   const eyeToggle = (
     <Button
       type="button"
@@ -110,7 +58,7 @@ export function ApiKeyStep({ onNext, onBack }: OnboardingStepProps) {
     >
       {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
     </Button>
-  )
+  );
 
   return (
     <div className="relative flex h-full w-full items-center justify-center p-8">
@@ -138,8 +86,8 @@ export function ApiKeyStep({ onNext, onBack }: OnboardingStepProps) {
                 key={item.key}
                 type="button"
                 onClick={() => {
-                  setTab(item.key)
-                  setShowKey(false)
+                  setTab(item.key);
+                  setShowKey(false);
                 }}
                 className={cn(
                   "-mb-px flex items-center gap-1 whitespace-nowrap border-b-2 px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer",
@@ -200,7 +148,8 @@ export function ApiKeyStep({ onNext, onBack }: OnboardingStepProps) {
               </div>
               <p className="text-xs text-muted-foreground">
                 <Trans>
-                  Used for Claude models (claude-opus-4-6, claude-sonnet-4-6, etc.)
+                  Used for Claude models (claude-opus-4-6, claude-sonnet-4-6,
+                  etc.)
                 </Trans>
               </p>
             </div>
@@ -226,7 +175,8 @@ export function ApiKeyStep({ onNext, onBack }: OnboardingStepProps) {
               </div>
               <p className="text-xs text-muted-foreground">
                 <Trans>
-                  Used for Gemini models — both LLM (gemini-2.5-pro, etc.) and TTS (gemini-2.5-pro-preview-tts, etc.)
+                  Used for Gemini models — both LLM (gemini-2.5-pro, etc.) and
+                  TTS (gemini-2.5-pro-preview-tts, etc.)
                 </Trans>
               </p>
             </div>
@@ -266,7 +216,9 @@ export function ApiKeyStep({ onNext, onBack }: OnboardingStepProps) {
               </div>
               <p className="text-xs text-muted-foreground">
                 <Trans>
-                  Any OpenAI-compatible endpoint (Ollama, vLLM, Together AI, etc.). Use the "custom:" prefix when selecting models, e.g. custom:llama3.
+                  Any OpenAI-compatible endpoint (Ollama, vLLM, Together AI,
+                  etc.). Use the "custom:" prefix when selecting models, e.g.
+                  custom:llama3.
                 </Trans>
               </p>
             </div>
@@ -310,28 +262,7 @@ export function ApiKeyStep({ onNext, onBack }: OnboardingStepProps) {
             </div>
           )}
         </div>
-
-        <div className="animate-onboarding-fade-up flex flex-col items-center gap-2 [animation-delay:460ms]">
-          <Button
-            size="lg"
-            className="rounded-xl px-8 shadow-lg shadow-primary/20"
-            disabled={!canContinue}
-            onClick={handleContinue}
-          >
-            {continueLabel}
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={onBack}>
-              <ArrowLeft className="h-4 w-4" />
-              <Trans>Back</Trans>
-            </Button>
-            <Button variant="ghost" size="sm" onClick={onNext}>
-              <Trans>I'll add it later</Trans>
-            </Button>
-          </div>
-        </div>
       </div>
     </div>
-  )
+  );
 }

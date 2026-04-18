@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  ArrowLeft,
-  ArrowRight,
   Volume2,
   Languages,
   LayoutGrid,
@@ -13,7 +11,6 @@ import {
 import { Trans } from "@lingui/react/macro";
 import { useLingui } from "@lingui/react/macro";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import type { OnboardingStepProps } from "../steps";
 import { t } from "@lingui/core/macro";
 
@@ -24,7 +21,7 @@ const PILLAR_COLORS = {
   sign: { text: "text-cyan-600", bg: "bg-cyan-50" },
 } as const;
 
-export function PitchScene({ onNext, onBack }: OnboardingStepProps) {
+export function PitchScene(_props: OnboardingStepProps) {
   const { t } = useLingui();
   const [mounted, setMounted] = useState(false);
 
@@ -61,7 +58,7 @@ export function PitchScene({ onNext, onBack }: OnboardingStepProps) {
           style={{ transitionDelay: "100ms" }}
         >
           <Trans>
-            This is <span className="text-primary">ADT Studio</span>.
+            This is <span className="text-primary font-bold">ADT Studio</span>.
           </Trans>
         </h1>
 
@@ -103,32 +100,6 @@ export function PitchScene({ onNext, onBack }: OnboardingStepProps) {
               </span>
             );
           })}
-        </div>
-
-        <div
-          className={cn(
-            "mt-10 flex items-center gap-3 transition-opacity duration-500",
-            mounted ? "opacity-100" : "opacity-0",
-          )}
-          style={{ transitionDelay: "600ms" }}
-        >
-          <Button
-            variant="ghost"
-            size="sm"
-            className="rounded-full"
-            onClick={onBack}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <Trans>Back</Trans>
-          </Button>
-          <Button
-            size="lg"
-            className="h-12 rounded-full px-7 text-sm"
-            onClick={onNext}
-          >
-            <Trans>Continue</Trans>
-            <ArrowRight className="h-4 w-4" />
-          </Button>
         </div>
       </div>
 
@@ -281,9 +252,7 @@ function BookCard({ mounted }: { mounted: boolean }) {
         transitionDelay: "600ms",
       }}
     >
-      <div
-        className="flex h-[30px] items-center gap-1.5 px-3 bg-blue-500"
-      >
+      <div className="flex h-[30px] items-center gap-1.5 px-3 bg-blue-500">
         <Check className="h-3 w-3 text-white" />
         <span className="text-[9px] font-extrabold uppercase tracking-[0.1em] text-white">
           <Trans>Accessible book</Trans>

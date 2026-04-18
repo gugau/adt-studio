@@ -1,9 +1,8 @@
-import { ArrowLeft } from "lucide-react"
-import { Trans } from "@lingui/react/macro"
-import { Button } from "@/components/ui/button"
-import type { OnboardingStepProps } from "../steps"
+import { Trans } from "@lingui/react/macro";
+import { Button } from "@/components/ui/button";
+import type { OnboardingStepProps } from "../steps";
 
-export function FinaleScene({ onBack, onFinish, onSkip }: OnboardingStepProps) {
+export function FinaleScene({ onFinish }: OnboardingStepProps) {
   return (
     <div className="relative flex h-full w-full items-center justify-center p-8">
       <div className="flex max-w-2xl flex-col items-center gap-10 text-center">
@@ -30,22 +29,13 @@ export function FinaleScene({ onBack, onFinish, onSkip }: OnboardingStepProps) {
         <div className="flex flex-col items-center gap-3">
           <Button
             size="lg"
-            className="animate-onboarding-fade-up h-12 rounded-full px-10 text-sm [animation-delay:420ms]"
+            className="animate-onboarding-fade-up h-12 rounded-lg px-10 text-sm [animation-delay:420ms]"
             onClick={onFinish}
           >
             <Trans>Create your first book</Trans>
           </Button>
-          <div className="animate-onboarding-fade-up flex items-center gap-2 [animation-delay:540ms]">
-            <Button variant="ghost" size="sm" className="rounded-full" onClick={onBack}>
-              <ArrowLeft className="h-4 w-4" />
-              <Trans>Back</Trans>
-            </Button>
-            <Button variant="ghost" size="sm" className="rounded-full" onClick={onSkip}>
-              <Trans>Skip for now</Trans>
-            </Button>
-          </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

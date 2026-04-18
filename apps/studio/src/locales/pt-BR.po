@@ -279,6 +279,9 @@ msgstr "Uma atividade de correspondência onde os alunos conectam itens relacion
 msgid "A multiple choice activity."
 msgstr "Uma atividade de múltipla escolha."
 
+msgid "A scenic view at dusk."
+msgstr ""
+
 msgid "A section containing only images."
 msgstr "Uma seção contendo apenas imagens."
 
@@ -461,8 +464,8 @@ msgstr "Adicionar"
 msgid "Add {0} Images"
 msgstr "Adicionar {0} imagens"
 
-msgid "Add a caption…"
-msgstr "Adicionar uma legenda…"
+#~ msgid "Add a caption…"
+#~ msgstr "Adicionar uma legenda…"
 
 msgid "Add Book"
 msgstr "Adicionar livro"
@@ -490,6 +493,9 @@ msgstr "Adicionar idioma"
 
 msgid "Add languages to translate the book content into."
 msgstr "Adicione idiomas para traduzir o conteúdo do livro."
+
+msgid "Add later"
+msgstr "Adicionar depois"
 
 msgid "Add reviewer guidance."
 msgstr "Add reviewer guidance."
@@ -712,6 +718,9 @@ msgstr "Recurso"
 
 msgid "Assign to section..."
 msgstr "Atribuir à seção..."
+
+msgid "At the river's edge"
+msgstr ""
 
 msgid "Audio narration"
 msgstr "Narração de áudio"
@@ -2882,8 +2891,8 @@ msgstr "Pass"
 msgid "Passed"
 msgstr "Passed"
 
-msgid "Pause"
-msgstr "Pausar"
+#~ msgid "Pause"
+#~ msgstr "Pausar"
 
 msgid "Payload"
 msgstr "Payload"
@@ -2942,8 +2951,8 @@ msgstr "Escolha as etapas para executar."
 msgid "Picture books and early readers"
 msgstr "Livros ilustrados e leitores iniciantes"
 
-msgid "Pipeline · complete"
-msgstr "Pipeline · concluído"
+#~ msgid "Pipeline · complete"
+#~ msgstr "Pipeline · concluído"
 
 msgid "Pipeline · extract"
 msgstr "Pipeline · extração"
@@ -2963,8 +2972,8 @@ msgstr "Pixel Art"
 msgid "Plants create sugar via <0>photosynthesis</0>, divide by <1>mitosis</1>, and absorb water by <2>osmosis</2>."
 msgstr "As plantas criam açúcar pela <0>fotossíntese</0>, dividem-se por <1>mitose</1>, e absorvem água por <2>osmose</2>."
 
-msgid "Play"
-msgstr "Reproduzir"
+#~ msgid "Play"
+#~ msgstr "Reproduzir"
 
 msgid "Play video"
 msgstr "Reproduzir vídeo"
@@ -3618,6 +3627,9 @@ msgstr "Defina uma chave de API do Gemini para gerar áudio"
 msgid "Set the editing language and choose output languages for the book."
 msgstr "Defina o idioma de edição e escolha os idiomas de saída para o livro."
 
+msgid "Set up later"
+msgstr "Configurar depois"
+
 msgid "Settings"
 msgstr "Configurações"
 
@@ -4012,8 +4024,8 @@ msgstr "A estratégia de renderização usada para seções sem um mapeamento ex
 msgid "The river meets the sea"
 msgstr "O rio encontra o mar"
 
-msgid "The river meets the sea at dawn."
-msgstr "O rio encontra o mar ao amanhecer."
+#~ msgid "The river meets the sea at dawn."
+#~ msgstr "O rio encontra o mar ao amanhecer."
 
 msgid "The sun heats water in oceans, lakes, and rivers, turning it into vapor that rises into the atmosphere. As the vapor cools at higher altitudes, it condenses into tiny droplets that form clouds."
 msgstr "O sol aquece a água nos oceanos, lagos e rios, transformando-a em vapor que sobe para a atmosfera. À medida que o vapor esfria em altitudes mais altas, ele se condensa em pequenas gotas que formam nuvens."

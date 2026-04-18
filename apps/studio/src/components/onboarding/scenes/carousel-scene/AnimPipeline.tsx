@@ -2,7 +2,6 @@ import { ArrowRight, Check, FileText, LayoutGrid } from "lucide-react";
 import { Trans } from "@lingui/react/macro";
 import { useLingui } from "@lingui/react/macro";
 
-
 export function AnimPipeline({ progress }: { progress: number }) {
   const { t } = useLingui();
   const p = progress;

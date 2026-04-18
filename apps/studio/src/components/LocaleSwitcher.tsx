@@ -1,50 +1,54 @@
-import { Globe } from "lucide-react"
-import { useLingui } from "@lingui/react"
-import { msg } from "@lingui/core/macro"
-import { i18n } from "@lingui/core"
-import type { MessageDescriptor } from "@lingui/core"
-import { cn } from "@/lib/utils"
+import { Globe } from "lucide-react";
+import { useLingui } from "@lingui/react";
+import { msg } from "@lingui/core/macro";
+import { i18n } from "@lingui/core";
+import type { MessageDescriptor } from "@lingui/core";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { LOCALES, LOCALE_FLAGS, type AppLocale } from "@/i18n/locales"
+} from "@/components/ui/select";
+import { LOCALES, LOCALE_FLAGS, type AppLocale } from "@/i18n/locales";
 
 const LOCALE_LABEL_MESSAGES: Record<AppLocale, MessageDescriptor> = {
   en: msg`English`,
   "pt-BR": msg`Portuguese (BR)`,
   es: msg`Spanish`,
   fr: msg`French`,
-}
+};
 
 function localeCode(loc: AppLocale): string {
-  return loc.slice(0, 2).toUpperCase()
+  return loc.slice(0, 2).toUpperCase();
 }
 
-export type LocaleSwitcherVariant = "topbar" | "standalone"
+export type LocaleSwitcherVariant = "topbar" | "standalone";
 
 export function LocaleSwitcher({
   className,
   variant = "topbar",
 }: {
-  className?: string
-  variant?: LocaleSwitcherVariant
+  className?: string;
+  variant?: LocaleSwitcherVariant;
 }) {
-  const { i18n: lingui } = useLingui()
-  const currentLocale = lingui.locale as AppLocale
+  const { i18n: lingui } = useLingui();
+  const currentLocale = lingui.locale as AppLocale;
 
   const handleChange = (value: string) => {
-    if (!LOCALES.includes(value as AppLocale)) return
-    const next = value as AppLocale
-    if (next === currentLocale) return
-    i18n.activate(next)
-    const search = new URLSearchParams(window.location.search)
-    search.set("lang", next)
-    window.history.replaceState(null, "", `${window.location.pathname}?${search.toString()}`)
-  }
+    if (!LOCALES.includes(value as AppLocale)) return;
+    const next = value as AppLocale;
+    if (next === currentLocale) return;
+    i18n.activate(next);
+    const search = new URLSearchParams(window.location.search);
+    search.set("lang", next);
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}?${search.toString()}`,
+    );
+  };
 
   return (
     <Select value={currentLocale} onValueChange={handleChange}>
@@ -53,7 +57,7 @@ export function LocaleSwitcher({
         className={cn(
           variant === "topbar"
             ? "border-none! bg-transparent! cursor-pointer text-white/70 hover:text-white hover:bg-gray-600! outline-none focus-visible:ring-2! focus-visible:ring-ring! focus-visible:ring-offset-2!"
-            : "h-9 w-auto gap-2 rounded-full border-border bg-card/80 px-3 shadow-sm backdrop-blur hover:bg-accent cursor-pointer",
+            : "h-9 w-auto gap-2 rounded-lg border-border bg-card/80 px-3 backdrop-blur hover:bg-accent cursor-pointer",
           className,
         )}
       >
@@ -80,11 +84,13 @@ export function LocaleSwitcher({
               <span className="text-base leading-none">
                 {LOCALE_FLAGS[loc]}
               </span>
-              <span className="text-xs">{lingui._(LOCALE_LABEL_MESSAGES[loc])}</span>
+              <span className="text-xs">
+                {lingui._(LOCALE_LABEL_MESSAGES[loc])}
+              </span>
             </span>
           </SelectItem>
         ))}
       </SelectContent>
     </Select>
-  )
+  );
 }

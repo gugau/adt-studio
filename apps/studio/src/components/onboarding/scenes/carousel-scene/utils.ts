@@ -5,6 +5,6 @@ export const lerp = (a: number, b: number, t: number): number =>
 export const seg = (p: number, start: number, end: number): number =>
   Math.max(0, Math.min(1, (p - start) / (end - start)));
 
-export const DURATIONS = [3500, 2500, 9000, 12000];
+export const DURATIONS = [3200, 2500, 4000, 12000];
 export const FEATURE_COUNT = DURATIONS.length;
-export const HOLD_AFTER_MS = 1400;
+export const HOLD_AFTER_MS = 1000;
