@@ -12,7 +12,15 @@ import {
   getBookConfig,
   updateBookConfig,
 } from "../services/book-service.js"
-import { prepareExport, exportProject, exportWebpub, exportScorm, exportAdt, type ExportFeatures, type ExportResult } from "../services/export-service.js"
+import {
+  prepareExport,
+  exportProject,
+  exportWebpub,
+  exportScorm,
+  exportAdt,
+  type ExportFeatures,
+  type ExportResult,
+} from "../services/export-service.js"
 import { importProject, previewImport } from "../services/import-service.js"
 import type { TaskService } from "../services/task-service.js"
 
@@ -32,17 +40,6 @@ const MIME_TYPES: Record<string, string> = {
   ".ico": "image/x-icon",
   ".webp": "image/webp",
   ".dic": "application/octet-stream",
-}
-
-function handleExportError(err: unknown): never {
-  const message = err instanceof Error ? err.message : String(err)
-  if (message.includes("Web assets directory not found")) {
-    throw new HTTPException(500, { message })
-  }
-  if (message.includes("Book not found")) {
-    throw new HTTPException(404, { message })
-  }
-  throw new HTTPException(400, { message })
 }
 
 export function createBookRoutes(
@@ -111,14 +108,8 @@ export function createBookRoutes(
     }
 
     const zipBuffer = Buffer.from(await zip.arrayBuffer())
-
-    try {
-      const preview = previewImport(zipBuffer)
-      return c.json(preview)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      throw new HTTPException(400, { message })
-    }
+    const preview = previewImport(zipBuffer)
+    return c.json(preview)
   })
 
   app.post("/books/import", async (c) => {
@@ -130,20 +121,8 @@ export function createBookRoutes(
     }
 
     const zipBuffer = Buffer.from(await zip.arrayBuffer())
-
-    try {
-      const book = await importProject(zipBuffer, booksDir)
-      return c.json(book, 201)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      const isValidationError =
-        message.includes("Invalid ZIP") ||
-        message.includes("Invalid project archive") ||
-        message.includes("does not contain") ||
-        message.includes("contains no pages") ||
-        message.includes("paths that escape")
-      throw new HTTPException(isValidationError ? 400 : 500, { message })
-    }
+    const book = await importProject(zipBuffer, booksDir)
+    return c.json(book, 201)
   })
 
   app.delete("/books/:label", (c) => {
@@ -214,26 +193,21 @@ export function createBookRoutes(
     }
     const safeLabel = parseBookLabel(label)
 
-    try {
-      if (taskService) {
-        const { taskId } = taskService.submitTask(
-          safeLabel,
-          "prepare-export",
-          `Preparing ${format} export`,
-          async () => {
-            await prepareExport(label, format, booksDir, webAssetsDir ?? "", configPath, features)
-          },
-          { url: `/books/${safeLabel}/export-${format}` }
-        )
-        return c.json({ status: "submitted", taskId, label: safeLabel })
-      }
-
-      // Fallback: run synchronously (tests)
-      await prepareExport(label, format, booksDir, webAssetsDir ?? "", configPath, features)
-      return c.json({ status: "completed", label: safeLabel })
-    } catch (err) {
-      handleExportError(err)
+    if (taskService) {
+      const { taskId } = taskService.submitTask(
+        safeLabel,
+        "prepare-export",
+        `Preparing ${format} export`,
+        async () => {
+          await prepareExport(label, format, booksDir, webAssetsDir ?? "", configPath, features)
+        },
+        { url: `/books/${safeLabel}/export-${format}` }
+      )
+      return c.json({ status: "submitted", taskId, label: safeLabel })
     }
+
+    await prepareExport(label, format, booksDir, webAssetsDir ?? "", configPath, features)
+    return c.json({ status: "completed", label: safeLabel })
   })
 
   // Export download routes — each format delegates to its service function,
@@ -248,18 +222,14 @@ export function createBookRoutes(
   for (const [route, handler] of Object.entries(exportHandlers)) {
     app.get(`/books/:label/${route}`, async (c) => {
       const { label } = c.req.param()
-      try {
-        const result = await handler(label, booksDir)
-        c.header("Content-Type", "application/zip")
-        const encodedName = encodeURIComponent(result.filename)
-        c.header(
-          "Content-Disposition",
-          `attachment; filename="${result.safeFilename}"; filename*=UTF-8''${encodedName}`
-        )
-        return c.body(result.stream)
-      } catch (err) {
-        handleExportError(err)
-      }
+      const result = await handler(label, booksDir)
+      c.header("Content-Type", "application/zip")
+      const encodedName = encodeURIComponent(result.filename)
+      c.header(
+        "Content-Disposition",
+        `attachment; filename="${result.safeFilename}"; filename*=UTF-8''${encodedName}`
+      )
+      return c.body(result.stream)
     })
   }
 

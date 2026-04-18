@@ -2,12 +2,21 @@ import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import { unzipSync } from "fflate"
+import { HTTPException } from "hono/http-exception"
 import { parseBookLabel, BookMetadata, PIPELINE } from "@adt/types"
 import { renderPdfCover } from "@adt/pdf"
 import { openBookDb } from "@adt/storage"
 import type { BookSummary } from "./book-service.js"
 
 export interface ImportResult extends BookSummary {}
+
+function throwInvalidArchive(message: string): never {
+  throw new HTTPException(400, { message })
+}
+
+function throwCorruptProject(message: string): never {
+  throw new HTTPException(500, { message })
+}
 
 export interface ImportPreview {
   label: string
@@ -40,7 +49,7 @@ function unzipBuffer(zipBuffer: Buffer): Record<string, Uint8Array> {
   try {
     return unzipSync(zipBuffer)
   } catch {
-    throw new Error("Invalid ZIP file")
+    throwInvalidArchive("Invalid ZIP file")
   }
 }
 
@@ -57,6 +66,8 @@ interface DbMetadata {
   languageCode: string | null
   pageCount: number
   validationError: string | null
+  /** True when the DB couldn't be opened/read (corrupt). False for structural mismatches (invalid archive). */
+  validationCorrupt: boolean
   stages: ImportPreview["stages"]
 }
 
@@ -67,6 +78,7 @@ function readDbMetadata(dbPath: string): DbMetadata {
   let languageCode: string | null = null
   let pageCount = 0
   let validationError: string | null = null
+  let validationCorrupt = false
   const stages: ImportPreview["stages"] = {}
 
   try {
@@ -131,9 +143,10 @@ function readDbMetadata(dbPath: string): DbMetadata {
     }
   } catch {
     validationError = "Could not read the project database. The file may be corrupted or not a valid ADT Studio project."
+    validationCorrupt = true
   }
 
-  return { title, authors, publisher, languageCode, pageCount, validationError, stages }
+  return { title, authors, publisher, languageCode, pageCount, validationError, validationCorrupt, stages }
 }
 
 export function previewImport(zipBuffer: Buffer): ImportPreview {
@@ -141,7 +154,7 @@ export function previewImport(zipBuffer: Buffer): ImportPreview {
   const filePaths = Object.keys(entries)
 
   const dbEntry = findEntry(filePaths, ".db")
-  if (!dbEntry) throw new Error(NOT_ADT_PROJECT)
+  if (!dbEntry) throwInvalidArchive(NOT_ADT_PROJECT)
   const rawLabel = dbEntry.replace(/\.db$/, "")
   const safeLabel = parseBookLabel(rawLabel)
 
@@ -162,7 +175,7 @@ export function previewImport(zipBuffer: Buffer): ImportPreview {
   const tmpDbPath = path.join(tmpDir, `${safeLabel}.db`)
   try {
     fs.writeFileSync(tmpDbPath, entries[dbEntry])
-    const meta = readDbMetadata(tmpDbPath)
+    const { validationCorrupt: _, ...meta } = readDbMetadata(tmpDbPath)
 
     return {
       label: safeLabel,
@@ -185,10 +198,10 @@ export async function importProject(
   const filePaths = Object.keys(entries)
 
   const dbEntry = findEntry(filePaths, ".db")
-  if (!dbEntry) throw new Error(NOT_ADT_PROJECT)
+  if (!dbEntry) throwInvalidArchive(NOT_ADT_PROJECT)
   const rawLabel = dbEntry.replace(/\.db$/, "")
 
-  if (!findEntry(filePaths, ".pdf")) throw new Error(NOT_ADT_PROJECT)
+  if (!findEntry(filePaths, ".pdf")) throwInvalidArchive(NOT_ADT_PROJECT)
 
   const safeLabel = parseBookLabel(rawLabel)
   const targetLabel = resolveUniqueLabel(safeLabel, booksDir)
@@ -206,7 +219,7 @@ export async function importProject(
       const destPath = path.join(bookDir, renamedPath)
 
       if (!destPath.startsWith(bookDir + path.sep) && destPath !== bookDir) {
-        throw new Error("Invalid project archive: contains paths that escape the project directory")
+        throwInvalidArchive("Invalid project archive: contains paths that escape the project directory")
       }
 
       const destDir = path.dirname(destPath)
@@ -221,7 +234,8 @@ export async function importProject(
     const meta = readDbMetadata(dbPath)
 
     if (meta.validationError) {
-      throw new Error(meta.validationError)
+      if (meta.validationCorrupt) throwCorruptProject(meta.validationError)
+      throwInvalidArchive(meta.validationError)
     }
 
     return {

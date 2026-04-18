@@ -1,6 +1,7 @@
 import fs from "node:fs"
 import path from "node:path"
 import { Zip, ZipDeflate, ZipPassThrough } from "fflate"
+import { HTTPException } from "hono/http-exception"
 import { parseBookLabel } from "@adt/types"
 import { createBookStorage } from "@adt/storage"
 import { packageAdtWeb, packageWebpub, loadBookConfig, normalizeLocale } from "@adt/pipeline"
@@ -18,6 +19,18 @@ export interface ExportResult {
   stream: ReadableStream<Uint8Array>
   filename: string
   safeFilename: string
+}
+
+function throwBookNotFound(label: string): never {
+  throw new HTTPException(404, { message: `Book not found: ${label}` })
+}
+
+function throwWebAssetsMissing(): never {
+  throw new HTTPException(500, { message: "Web assets directory not found" })
+}
+
+function throwAdtDirMissing(): never {
+  throw new HTTPException(400, { message: "ADT directory not found — run the pipeline first" })
 }
 
 /**
@@ -61,10 +74,10 @@ export async function prepareExport(
   const bookDir = path.join(resolvedDir, safeLabel)
 
   if (!fs.existsSync(bookDir)) {
-    throw new Error(`Book not found: ${safeLabel}`)
+    throwBookNotFound(safeLabel)
   }
   if (!webAssetsDir || !fs.existsSync(webAssetsDir)) {
-    throw new Error("Web assets directory not found")
+    throwWebAssetsMissing()
   }
 
   const storage = createBookStorage(safeLabel, resolvedDir)
@@ -120,7 +133,7 @@ export async function exportProject(
   const bookDir = path.join(resolvedDir, safeLabel)
 
   if (!fs.existsSync(bookDir)) {
-    throw new Error(`Book not found: ${safeLabel}`)
+    throwBookNotFound(safeLabel)
   }
 
   const title = readBookTitle(safeLabel, resolvedDir)
@@ -141,7 +154,7 @@ export async function exportWebpub(
   const bookDir = path.join(resolvedDir, safeLabel)
 
   if (!fs.existsSync(bookDir)) {
-    throw new Error(`Book not found: ${safeLabel}`)
+    throwBookNotFound(safeLabel)
   }
 
   const title = readBookTitle(safeLabel, resolvedDir)
@@ -163,13 +176,13 @@ export async function exportScorm(
   const bookDir = path.join(resolvedDir, safeLabel)
 
   if (!fs.existsSync(bookDir)) {
-    throw new Error(`Book not found: ${safeLabel}`)
+    throwBookNotFound(safeLabel)
   }
 
   const title = readBookTitle(safeLabel, resolvedDir)
   const adtDir = path.join(bookDir, "adt")
   if (!fs.existsSync(adtDir)) {
-    throw new Error("ADT directory not found — run the pipeline first")
+    throwAdtDirMissing()
   }
 
   return {
@@ -188,13 +201,13 @@ export async function exportAdt(
   const bookDir = path.join(resolvedDir, safeLabel)
 
   if (!fs.existsSync(bookDir)) {
-    throw new Error(`Book not found: ${safeLabel}`)
+    throwBookNotFound(safeLabel)
   }
 
   const title = readBookTitle(safeLabel, resolvedDir)
   const adtDir = path.join(bookDir, "adt")
   if (!fs.existsSync(adtDir)) {
-    throw new Error("ADT directory not found — run the pipeline first")
+    throwAdtDirMissing()
   }
 
   return {
