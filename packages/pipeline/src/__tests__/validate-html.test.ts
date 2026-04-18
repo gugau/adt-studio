@@ -1066,3 +1066,291 @@ describe("textSimilarity", () => {
     expect(textSimilarity("abc", "xyz")).toBe(0.0)
   })
 })
+
+describe("writable section types require editable inputs", () => {
+  it("fails activity_open_ended_answer with no textarea/input/blank marker", () => {
+    const html = `
+      <section data-section-type="activity_open_ended_answer" data-section-id="pg001_section">
+        <p data-id="pg001_gp001">Write your answer below:</p>
+        <hr class="border-b border-gray-400" />
+        <hr class="border-b border-gray-400" />
+      </section>
+    `
+    const result = validateSectionHtml(html, ["pg001_gp001"], [])
+    expect(result.valid).toBe(false)
+    expect(result.errors).toContainEqual(
+      expect.stringContaining(
+        'Section type "activity_open_ended_answer" requires at least one editable element'
+      )
+    )
+  })
+
+  it("passes activity_open_ended_answer when a <textarea> is present", () => {
+    const html = `
+      <section data-section-type="activity_open_ended_answer" data-section-id="pg001_section">
+        <p data-id="pg001_gp001">Write your answer below:</p>
+        <textarea class="w-full" aria-label="answer"></textarea>
+      </section>
+    `
+    const result = validateSectionHtml(html, ["pg001_gp001"], [])
+    expect(result.valid).toBe(true)
+  })
+
+  it("passes activity_fill_in_the_blank when a [[blank:item-N]] marker is present", () => {
+    const html = `
+      <section data-section-type="activity_fill_in_the_blank" data-section-id="pg001_section">
+        <p class="fitb-sentence" data-id="pg001_gp001">The capital of France is [[blank:item-1]].</p>
+      </section>
+    `
+    const result = validateSectionHtml(
+      html,
+      ["pg001_gp001"],
+      [],
+      undefined,
+      {
+        expectedTexts: new Map([
+          ["pg001_gp001", "The capital of France is ___."],
+        ]),
+      }
+    )
+    expect(result.valid).toBe(true)
+  })
+
+  it("fails activity_fill_in_a_table when no <input> elements are present", () => {
+    const html = `
+      <section data-section-type="activity_fill_in_a_table" data-section-id="pg001_section">
+        <table>
+          <tr>
+            <td data-id="pg001_gp001">Name</td>
+            <td><div class="border-b"></div></td>
+          </tr>
+        </table>
+      </section>
+    `
+    const result = validateSectionHtml(html, ["pg001_gp001"], [])
+    expect(result.valid).toBe(false)
+    expect(result.errors).toContainEqual(
+      expect.stringContaining(
+        'Section type "activity_fill_in_a_table" requires at least one editable element'
+      )
+    )
+  })
+
+  it("does not require editable elements for non-writable section types", () => {
+    const html = `
+      <section data-section-type="text_only" data-section-id="pg001_section">
+        <p data-id="pg001_gp001">Just some prose.</p>
+      </section>
+    `
+    const result = validateSectionHtml(html, ["pg001_gp001"], [])
+    expect(result.valid).toBe(true)
+  })
+})
+
+describe("textbook blank placeholders may be omitted when editable element is provided", () => {
+  it("accepts label text with underscores stripped when a <textarea> is added next to it", () => {
+    const html = `
+      <section data-section-type="activity_open_ended_answer" data-section-id="pg010_section">
+        <div>
+          <p data-id="pg010_gp001_tx001">Nombre:</p>
+          <textarea aria-label="nombre"></textarea>
+        </div>
+      </section>
+    `
+    const result = validateSectionHtml(
+      html,
+      ["pg010_gp001_tx001"],
+      [],
+      undefined,
+      {
+        expectedTexts: new Map([["pg010_gp001_tx001", "Nombre: ___"]]),
+      }
+    )
+    expect(result.valid).toBe(true)
+    expect(result.errors).toEqual([])
+  })
+
+  it("accepts label with multiple stripped underscore runs (e.g. dates)", () => {
+    const html = `
+      <section data-section-type="activity_open_ended_answer" data-section-id="pg011_section">
+        <div>
+          <p data-id="pg011_gp002_tx003">Fecha de nacimiento:</p>
+          <textarea aria-label="fecha"></textarea>
+        </div>
+      </section>
+    `
+    const result = validateSectionHtml(
+      html,
+      ["pg011_gp002_tx003"],
+      [],
+      undefined,
+      {
+        expectedTexts: new Map([
+          ["pg011_gp002_tx003", "Fecha de nacimiento: ___ / ___ / ___"],
+        ]),
+      }
+    )
+    expect(result.valid).toBe(true)
+    expect(result.errors).toEqual([])
+  })
+
+  it("preserves the rendered (stripped) text when underscores were dropped", () => {
+    const html = `
+      <section data-section-type="activity_open_ended_answer" data-section-id="pg010_section">
+        <p data-id="pg010_gp009_tx003">¡Soy !</p>
+        <textarea aria-label="soy"></textarea>
+      </section>
+    `
+    const result = validateSectionHtml(
+      html,
+      ["pg010_gp009_tx003"],
+      [],
+      undefined,
+      {
+        expectedTexts: new Map([["pg010_gp009_tx003", "¡Soy ___ !"]]),
+      }
+    )
+    expect(result.valid).toBe(true)
+    // Rendered HTML should keep the stripped version, not put the underscores back.
+    expect(result.sectionHtml).not.toContain("___")
+  })
+
+  it("still rejects truly different text even with underscore stripping", () => {
+    const html = `
+      <section data-section-type="activity_open_ended_answer" data-section-id="pg010_section">
+        <p data-id="pg010_gp001_tx001">Completely unrelated text here</p>
+        <textarea aria-label="x"></textarea>
+      </section>
+    `
+    const result = validateSectionHtml(
+      html,
+      ["pg010_gp001_tx001"],
+      [],
+      undefined,
+      {
+        expectedTexts: new Map([["pg010_gp001_tx001", "Nombre: ___"]]),
+      }
+    )
+    expect(result.valid).toBe(false)
+    expect(result.errors).toContainEqual(
+      expect.stringContaining('Text mismatch for data-id "pg010_gp001_tx001"')
+    )
+  })
+})
+
+describe("hasEditableElement — input type filtering", () => {
+  it("does not count <input type=\"radio\"> as a writable input", () => {
+    const html = `
+      <section data-section-type="activity_open_ended_answer" data-section-id="pg001_section">
+        <p data-id="pg001_gp001">Question?</p>
+        <input type="radio" value="a" />
+        <input type="radio" value="b" />
+      </section>
+    `
+    const result = validateSectionHtml(html, ["pg001_gp001"], [])
+    expect(result.valid).toBe(false)
+    expect(result.errors).toContainEqual(
+      expect.stringContaining(
+        'Section type "activity_open_ended_answer" requires at least one editable element'
+      )
+    )
+  })
+
+  it("does not count <input type=\"checkbox\">, \"submit\", \"hidden\" as writable", () => {
+    const html = `
+      <section data-section-type="activity_fill_in_the_blank" data-section-id="pg001_section">
+        <p data-id="pg001_gp001">Label</p>
+        <input type="checkbox" />
+        <input type="submit" value="Go" />
+        <input type="hidden" name="x" value="1" />
+      </section>
+    `
+    const result = validateSectionHtml(html, ["pg001_gp001"], [])
+    expect(result.valid).toBe(false)
+    expect(result.errors).toContainEqual(
+      expect.stringContaining(
+        'Section type "activity_fill_in_the_blank" requires at least one editable element'
+      )
+    )
+  })
+
+  it("counts <input> with no type attribute as writable (defaults to text)", () => {
+    const html = `
+      <section data-section-type="activity_fill_in_the_blank" data-section-id="pg001_section">
+        <p data-id="pg001_gp001">Name:</p>
+        <input data-activity-item="item-1" aria-label="name" />
+      </section>
+    `
+    const result = validateSectionHtml(html, ["pg001_gp001"], [])
+    expect(result.valid).toBe(true)
+  })
+
+  it("counts <input type=\"text\"> as writable", () => {
+    const html = `
+      <section data-section-type="activity_fill_in_the_blank" data-section-id="pg001_section">
+        <p data-id="pg001_gp001">Name:</p>
+        <input type="text" data-activity-item="item-1" aria-label="name" />
+      </section>
+    `
+    const result = validateSectionHtml(html, ["pg001_gp001"], [])
+    expect(result.valid).toBe(true)
+  })
+
+  it("ignores [[blank:item-N]] markers inside <style> blocks", () => {
+    const html = `
+      <section data-section-type="activity_fill_in_the_blank" data-section-id="pg001_section">
+        <style>/* [[blank:item-1]] */</style>
+        <p data-id="pg001_gp001">Label</p>
+      </section>
+    `
+    const result = validateSectionHtml(html, ["pg001_gp001"], [])
+    expect(result.valid).toBe(false)
+    expect(result.errors).toContainEqual(
+      expect.stringContaining(
+        'Section type "activity_fill_in_the_blank" requires at least one editable element'
+      )
+    )
+  })
+})
+
+describe("text replacement preserves nested editables", () => {
+  it("does not destroy a <textarea> nested inside a data-id element", () => {
+    const html = `
+      <section data-section-type="activity_open_ended_answer" data-section-id="pg001_section">
+        <p data-id="pg001_gp001">La capital es <textarea aria-label="capital"></textarea></p>
+      </section>
+    `
+    const result = validateSectionHtml(
+      html,
+      ["pg001_gp001"],
+      [],
+      undefined,
+      {
+        expectedTexts: new Map([["pg001_gp001", "La capital es ___"]]),
+      }
+    )
+    expect(result.valid).toBe(true)
+    // The nested textarea must survive — otherwise the page renders as
+    // static text and the learner can no longer write an answer.
+    expect(result.sectionHtml).toContain("<textarea")
+  })
+
+  it("does not destroy a nested <input> writable element", () => {
+    const html = `
+      <section data-section-type="activity_fill_in_the_blank" data-section-id="pg001_section">
+        <p data-id="pg001_gp001">Nombre: <input type="text" data-activity-item="item-1" aria-label="nombre" /></p>
+      </section>
+    `
+    const result = validateSectionHtml(
+      html,
+      ["pg001_gp001"],
+      [],
+      undefined,
+      {
+        expectedTexts: new Map([["pg001_gp001", "Nombre: ___"]]),
+      }
+    )
+    expect(result.valid).toBe(true)
+    expect(result.sectionHtml).toContain("<input")
+  })
+})

@@ -18,10 +18,15 @@ SECTION TYPES:
 {% endfor %}
 
 CLASSIFICATION RULES (use these to disambiguate activity types):
+- WRITABLE-PAGE PRECEDENCE: If the page contains ANY response lines, blank lines, underlines, dotted lines, or empty boxes/cells where the learner is expected to WRITE (a word, a phrase, a sentence, or a longer answer), the section MUST be classified as an activity type — never as text_only, boxed_text, text_and_single_image, text_and_images, or other. This holds regardless of how much surrounding prose, instructions, or imagery the page contains. Choose the activity sub-type using the rules below.
+  • Lines/underscores under or after a question prompt where the learner writes a free-form answer → activity_open_ended_answer
+  • Blanks embedded inside a sentence (the learner supplies a missing word or phrase) → activity_fill_in_the_blank
+  • Empty cells inside a table grid → activity_fill_in_a_table
+  Visual signals that indicate writable response areas include: horizontal lines (solid, dotted, or dashed), runs of underscores ("___"), runs of dots ("..."), empty ruled rows, and blank boxes labelled "Answer:", "Write:", "Respuesta:", "Escribe:", or similar.
 - Classify by the COGNITIVE TASK the learner must perform, not the physical action (circling, coloring, underlining, drawing lines). Look at what the learner must DECIDE or PRODUCE, not how they mark their answer.
 - For EVERY activity section, your "reasoning" field MUST include:
   1. What the instructions ask the learner to do
-  2. What the visual layout shows on the page image
+  2. What the visual layout shows on the page image (call out any response lines or empty fields explicitly)
   3. For sorting/matching activities: an explicit count (e.g., "X total items, Y categories")
   Then choose the activity type based on all of the above.
 - MULTIPLE CHOICE vs SORTING vs MATCHING — Gather all evidence before deciding:

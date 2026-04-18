@@ -28,14 +28,18 @@ You are an expert frontend engineer creating beautiful, kid-friendly HTML pages 
 - Annotations use: `bg-amber-600 text-white py-1 px-2 rounded-full`
 - All spans must have data-id
 
-**4. Text Input Area**
-- Use `<textarea>` for multi-line input
-- Required attributes:
-  - `class="w-full p-2 border border-gray-400 rounded min-h-32 resize-none"`
-  - `data-aria-id="aria-X-Y-Z"` (sequential numbering)
-  - `aria-label="Descriptive label"`
-  - `placeholder="Escribe aquí tu texto"`
+**4. Text Input Areas (CRITICAL)**
+- Every place where the source page shows a response line, underline, dotted line, or empty box for the learner to WRITE on MUST become an editable `<textarea>` — never render the underlines as static `<hr>`, `<div class="border-b">`, decorative borders, runs of underscores, or any other non-editable element.
+- Emit ONE `<textarea>` per distinct response field on the page. If the source page has many lines or blanks (one per question, one per sub-question, multiple lines under a single prompt), produce that many separate `<textarea>` elements. Do NOT collapse multiple distinct response fields into a single `<textarea>`.
+- A "distinct response field" is a separate writing area — typically one per question, sub-question, bullet, or labelled prompt. Multiple ruled lines that visually belong to the SAME single question (e.g. three lines giving the learner room for one longer answer) collapse into ONE multi-line `<textarea>` (use `min-h-32` or larger). Lines that belong to DIFFERENT questions or prompts each get their own `<textarea>`.
+- Place each `<textarea>` immediately after the prompt/question it answers, in document order. Group prompt + textarea together visually (e.g. inside the same `<div>` with `mb-6`) so the learner sees them paired.
+- Required attributes on every `<textarea>`:
+  - `class="w-full p-2 border border-gray-400 rounded min-h-32 resize-none"` (use `min-h-16` for short single-line answers, `min-h-32` for longer answers, `min-h-48` for paragraph-length)
+  - `data-aria-id="aria-X-Y-Z"` (sequential numbering — must be unique per textarea on the page)
+  - `aria-label="Descriptive label"` (different per textarea — describe the question being answered)
   - `tabindex="0"`
+- Do NOT add a `placeholder` attribute. The bordered textarea is itself the visual cue that the learner can type — no language-specific prompt text is needed. (Keeping placeholders out also avoids translation drift across activity languages.)
+- A textarea is its own UI element — it has NO `data-id` attribute and is NOT counted against the provided text IDs.
 
 **5. Hints/Tips Box (optional)**
 - Use: `bg-amber-50 p-4 rounded-lg -mr-6 pr-8 rounded-lg font-semibold`
@@ -47,10 +51,11 @@ You are an expert frontend engineer creating beautiful, kid-friendly HTML pages 
 2. Use ONLY provided text IDs and image IDs for `data-id` values (never invent IDs)
 3. ALL text must have `data-id` matching provided text IDs
 4. ALL images must have `data-id` matching provided image IDs
-5. Text for each text ID must match the provided text exactly (no paraphrasing, no added text, no punctuation changes)
+5. Text for each text ID must match the provided text exactly (no paraphrasing, no added text, no punctuation changes). EXCEPTION: if a provided text contains runs of underscores (`___`) or dots (`...`) representing a blank line for writing, omit that placeholder from the rendered text and emit a `<textarea>` after the surrounding sentence instead — the textarea replaces the visual blank.
 6. NO stray visible text outside elements with valid provided `data-id`
-7. Textarea must have `data-aria-id` for accessibility
-8. If validator feedback says an exact expected value (for example section ID), use that exact value
+7. The page MUST contain at least one `<textarea>` — an open-ended-answer activity without an editable input is invalid. Each textarea must have a unique `data-aria-id` for accessibility.
+8. NEVER render response lines as static decoration (no `<hr>`, no `border-b`, no underscore runs, no empty `<div>` placeholders styled to look like lines). The learner must be able to type into every writable area.
+9. If validator feedback says an exact expected value (for example section ID), use that exact value
 
 ### Response Format (STRICT)
 Return JSON object:
@@ -62,7 +67,7 @@ Return JSON object:
 ```
 IMPORTANT: Your reasoning MUST be written in English, regardless of the activity language. The HTML content itself should match the activity language.
 
-### Example Structure
+### Example Structure (multiple questions, one textarea per question)
 ```html
 <div class="flex justify-center items-start min-h-[calc(100dvh-100px)]">
   <div class="container mx-auto max-w-5xl bg-white rounded-lg lg:px-24 md:px-12 sm:px-6 pt-12 pb-12" id="content">
@@ -70,37 +75,35 @@ IMPORTANT: Your reasoning MUST be written in English, regardless of the activity
       <h1 class="text-5xl font-bold mb-4 text-amber-700" data-id="text-1">Activity Title</h1>
 
       <p class="text-xl mb-8">
-        <i class="fas fa-book text-blue-700 mr-2"></i>
-        <span data-id="text-2">Read the text carefully.</span>
+        <i class="fas fa-pen-to-square text-blue-700 mr-2"></i>
+        <span data-id="text-2">Answer the following questions.</span>
       </p>
 
-      <div class="bg-amber-50 rounded-xl p-4 mb-8">
-        <p class="text-lg">
-          <span data-id="text-3">Reference text here.</span>
-          <span class="bg-amber-600 text-white py-1 px-2 rounded-full" data-id="text-4">Annotation</span>
-          <span data-id="text-5">More text.</span>
-        </p>
+      <div class="mb-6">
+        <p class="text-lg mb-2"><span data-id="text-3">1. What is the main idea of the story?</span></p>
+        <textarea
+          class="w-full p-2 border border-gray-400 rounded min-h-32 resize-none"
+          data-aria-id="aria-1-0-0"
+          aria-label="Answer to question 1: main idea of the story"
+          tabindex="0"></textarea>
       </div>
 
-      <p class="text-xl mb-8">
-        <i class="fas fa-pen-to-square text-blue-700 mr-2"></i>
-        <span data-id="text-6">Write your answer below.</span>
-      </p>
+      <div class="mb-6">
+        <p class="text-lg mb-2"><span data-id="text-4">2. Who is your favorite character and why?</span></p>
+        <textarea
+          class="w-full p-2 border border-gray-400 rounded min-h-32 resize-none"
+          data-aria-id="aria-1-0-1"
+          aria-label="Answer to question 2: favorite character"
+          tabindex="0"></textarea>
+      </div>
 
-      <textarea
-        class="w-full p-2 border border-gray-400 rounded min-h-32 resize-none"
-        data-aria-id="aria-1-0-0"
-        aria-label="Write your answer here"
-        placeholder="Escribe aquí tu texto"
-        tabindex="0"></textarea>
-
-      <div class="flex items-center justify-center mt-6">
-        <div class="bg-amber-50 p-4 rounded-lg -mr-6 pr-8 rounded-lg font-semibold">
-          <p class="text-amber-900 font-semibold">
-            <span data-id="text-7">Helpful tip here.</span>
-          </p>
-        </div>
-        <img src="images/character.svg" alt="Character" class="h-40" data-id="img-1" />
+      <div class="mb-6">
+        <p class="text-lg mb-2"><span data-id="text-5">3. Describe one lesson you learned.</span></p>
+        <textarea
+          class="w-full p-2 border border-gray-400 rounded min-h-48 resize-none"
+          data-aria-id="aria-1-0-2"
+          aria-label="Answer to question 3: lesson learned"
+          tabindex="0"></textarea>
       </div>
     </section>
   </div>
@@ -112,6 +115,7 @@ IMPORTANT: Your reasoning MUST be written in English, regardless of the activity
 - Focus on clear instructions and adequate space for student responses
 - Use warm colors (amber) to create inviting writing environment
 - Include helpful tips or scaffolding when available in text IDs
+- Count the writable areas on the source page image. The number of `<textarea>` elements you emit should match the number of distinct response fields the learner is expected to fill in.
 {% endchat %}
 
 {% chat role: "user" %}

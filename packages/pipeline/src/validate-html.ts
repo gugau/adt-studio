@@ -16,6 +16,29 @@ const EXEMPT_TAGS = new Set(["style", "script"])
 const BLANK_MARKER_RE = /\[\[blank:item-\d+(?::[^\]]+)?\]\]/g
 /** Non-global version for .test() checks (avoids stateful lastIndex issues) */
 const BLANK_MARKER_TEST_RE = /\[\[blank:item-\d+(?::[^\]]+)?\]\]/
+/** Section types whose rendered HTML must contain at least one editable element. */
+const WRITABLE_SECTION_TYPES = new Set([
+  "activity_open_ended_answer",
+  "activity_fill_in_the_blank",
+  "activity_fill_in_a_table",
+])
+/**
+ * Input `type` values that are NOT writable (radio/checkbox/submit/etc.).
+ * An <input> is only counted as an editable element if its type is absent or
+ * is not in this set. A missing type defaults to "text" per the HTML spec.
+ */
+const NON_WRITABLE_INPUT_TYPES = new Set([
+  "radio",
+  "checkbox",
+  "hidden",
+  "submit",
+  "button",
+  "reset",
+  "image",
+  "file",
+  "range",
+  "color",
+])
 /** Matches placeholder sequences used in textbooks for blanks (3+ underscores or 3+ dots) */
 const TEXTBOOK_BLANK_RE = /_{3,}|\.{3,}/g
 /** Matches [placeholder:word] markers added during text classification */
@@ -98,6 +121,21 @@ export function validateSectionHtml(
 
   walkNode(section, allowedIds, imageIdSet, errors, options)
 
+  // Sections whose whole purpose is for the learner to write must contain
+  // at least one editable element. If the LLM emits only static underlines
+  // (decorative borders, <hr>s, runs of underscores), the page looks right
+  // but is unusable — fail loudly so the renderer retries.
+  const sectionType = section.attribs?.["data-section-type"]
+  if (
+    typeof sectionType === "string" &&
+    WRITABLE_SECTION_TYPES.has(sectionType) &&
+    !hasEditableElement(section)
+  ) {
+    errors.push(
+      `Section type "${sectionType}" requires at least one editable element (<textarea>, <input>, or [[blank:item-N]] marker), but none were found. The learner cannot type into this page.`
+    )
+  }
+
   // Verify all expected text IDs are present in the generated HTML.
   // This ensures the LLM doesn't silently drop entries (e.g. duplicated texts).
   if (allowedTextIds.length > 0) {
@@ -158,6 +196,48 @@ function validateRequiredSectionAttributes(
       )
     }
   }
+}
+
+/**
+ * True if the node is a writable input element: a <textarea>, or an <input>
+ * whose type is absent or is a text-accepting type (not radio/checkbox/etc.).
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isWritableInput(node: any): boolean {
+  if (node.type !== "tag") return false
+  const tagName = (node.name ?? "").toLowerCase()
+  if (tagName === "textarea") return true
+  if (tagName !== "input") return false
+  const inputType = (node.attribs?.type ?? "text").toLowerCase()
+  return !NON_WRITABLE_INPUT_TYPES.has(inputType)
+}
+
+/**
+ * Walk the subtree and report whether any editable element is present: a
+ * writable <input>/<textarea>, or text containing a [[blank:item-N]] marker
+ * (which gets hydrated into an <input> at runtime). Skips <script>/<style>
+ * subtrees so markers appearing inside them don't falsely satisfy the check.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function hasEditableElement(node: any): boolean {
+  // htmlparser2 uses dedicated node types for <script>/<style>; these are
+  // never writable and their text content is not rendered as HTML, so any
+  // marker inside them must be ignored.
+  if (node.type === "script" || node.type === "style") return false
+  if (node.type === "tag") {
+    const tagName = (node.name ?? "").toLowerCase()
+    if (tagName === "script" || tagName === "style") return false
+    if (isWritableInput(node)) return true
+  }
+  if (node.type === "text" && typeof node.data === "string") {
+    if (BLANK_MARKER_TEST_RE.test(node.data)) return true
+  }
+  if (node.children) {
+    for (const child of node.children) {
+      if (hasEditableElement(child)) return true
+    }
+  }
+  return false
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -279,12 +359,25 @@ function walkNode(
         }
         // Do NOT set replacementText — preserve the blank markers in the HTML
       } else {
-        replacementText = options.expectedTexts.get(dataId)!
-        if (actualText !== expectedText) {
-          const similarity = textSimilarity(actualText, expectedText)
+        // The LLM is permitted to omit textbook-style blank placeholders
+        // (___ or ...) from the rendered text when it emits a separate
+        // editable element (e.g. a <textarea>) for that input. Compute both
+        // the full and the placeholder-stripped expected; pick whichever is
+        // closer to what the LLM rendered for both the similarity check and
+        // the text replacement.
+        const rawExpected = options.expectedTexts.get(dataId)!
+        const strippedRaw = stripBlankPlaceholders(rawExpected)
+        const strippedExpected = normalizeText(strippedRaw)
+        const fullSim = textSimilarity(actualText, expectedText)
+        const strippedSim = textSimilarity(actualText, strippedExpected)
+        const preferStripped = strippedSim > fullSim
+        const targetExpected = preferStripped ? strippedExpected : expectedText
+        replacementText = preferStripped ? strippedRaw : rawExpected
+        if (actualText !== targetExpected) {
+          const similarity = Math.max(fullSim, strippedSim)
           if (similarity < TEXT_SIMILARITY_THRESHOLD) {
             errors.push(
-              `Text mismatch for data-id "${dataId}": expected "${expectedText.slice(0, 80)}" but got "${actualText.slice(0, 80)}"`
+              `Text mismatch for data-id "${dataId}": expected "${targetExpected.slice(0, 80)}" but got "${actualText.slice(0, 80)}"`
             )
           }
         }
@@ -298,7 +391,7 @@ function walkNode(
     }
   }
 
-  if (replacementText !== undefined) {
+  if (replacementText !== undefined && !hasEditableElement(node)) {
     replaceChildrenWithText(node, replacementText)
   }
 }
@@ -381,6 +474,21 @@ function hasAncestorWithDataId(node: any): boolean {
 function normalizeText(text: string): string {
   return decodePossiblyMalformedHtmlEntities(text)
     .normalize("NFC")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+/**
+ * Remove textbook-style blank placeholders (___ or ...) and inline
+ * [placeholder:word] markers from text, then collapse the whitespace gaps
+ * left behind. Used when the LLM has correctly replaced a visual blank with
+ * an editable element (textarea or input) and the surrounding label text
+ * therefore omits the placeholder.
+ */
+function stripBlankPlaceholders(text: string): string {
+  return text
+    .replace(TEXTBOOK_BLANK_RE, "")
+    .replace(PLACEHOLDER_MARKER_RE, "")
     .replace(/\s+/g, " ")
     .trim()
 }
