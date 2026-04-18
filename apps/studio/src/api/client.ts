@@ -62,6 +62,7 @@ export interface BookSummary {
   hasSourcePdf: boolean
   needsRebuild: boolean
   rebuildReason: string | null
+  completedStages: string[]
   createdAt: string
   modifiedAt: string
 }

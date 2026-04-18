@@ -10,6 +10,7 @@ import {
   User,
   Globe,
   Pencil,
+  Filter,
 } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
@@ -24,8 +25,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { DeleteBookDialog } from "@/components/books/DeleteBookDialog"
+import { StageFilterCombobox } from "@/components/books/StageFilterCombobox"
 import { useBooks, useDeleteBook } from "@/hooks/use-books"
-import { getPipelineStages } from "@/components/pipeline/stage-config"
+import {
+  getPipelineStages,
+  type PipelineStageDefinition,
+} from "@/components/pipeline/stage-config"
 import {
   getStageLabelI18n,
   getStageDescriptionI18n,
@@ -71,12 +76,58 @@ function sortBooks(books: BookSummary[], key: BookSortKey): BookSummary[] {
   }
 }
 
+const STAGE_FILTER_STORAGE_KEY = "adt.books.stage-filter"
+
+function readStoredStageFilter(validSlugs: Set<string>): string[] {
+  if (typeof window === "undefined") return []
+  const raw = window.localStorage.getItem(STAGE_FILTER_STORAGE_KEY)
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(
+      (slug): slug is string =>
+        typeof slug === "string" && validSlugs.has(slug),
+    )
+  } catch {
+    return []
+  }
+}
+
 export const Route = createFileRoute("/")({
   component: HomePage,
 })
 
 /** Pipeline stages shown in the sidebar (skip the "book" overview entry) */
 const PIPELINE_STEPS = getPipelineStages()
+
+function CompletedStageBadges({
+  completedSet,
+  pipelineStages,
+}: {
+  completedSet: Set<string>
+  pipelineStages: readonly PipelineStageDefinition[]
+}) {
+  const visibleStages = pipelineStages.filter((s) => completedSet.has(s.slug))
+  if (visibleStages.length === 0) return null
+
+  return (
+    <div className="mt-3 flex flex-wrap gap-1.5">
+      {visibleStages.map((stage) => {
+        const Icon = stage.icon
+        return (
+          <span
+            key={stage.slug}
+            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors ${stage.bgLight} ${stage.textColor} ${stage.borderColor}`}
+          >
+            <Icon className="h-3 w-3" />
+            {getStageLabelI18n(stage.slug)}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
 
 function DetailRow({
   icon: Icon,
@@ -99,12 +150,18 @@ function DetailRow({
 function BookRow({
   book,
   onDelete,
+  pipelineStages,
 }: {
   book: BookSummary
   onDelete: (label: string) => void
+  pipelineStages: readonly PipelineStageDefinition[]
 }) {
   const { t } = useLingui()
   const hasMetadata = book.title || book.authors.length > 0
+  const completedSet = useMemo(
+    () => new Set(book.completedStages),
+    [book.completedStages],
+  )
   return (
     <div className="group rounded-xl border bg-card transition-all duration-200 hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5">
       <div className="flex items-stretch">
@@ -195,6 +252,11 @@ function BookRow({
               <Trans>No metadata yet — run the pipeline to extract book details</Trans>
             </p>
           )}
+
+          <CompletedStageBadges
+            completedSet={completedSet}
+            pipelineStages={pipelineStages}
+          />
         </Link>
 
         {/* Actions — always visible */}
@@ -230,14 +292,53 @@ function HomePage() {
   const [deleteLabel, setDeleteLabel] = useState<string | null>(null)
   const [sortKey, setSortKey] = useState<BookSortKey>(() => readStoredSort())
 
+  const pipelineStageSlugSet = useMemo(
+    () => new Set(PIPELINE_STEPS.map((s) => s.slug)),
+    [],
+  )
+  const [selectedStages, setSelectedStages] = useState<Set<string>>(() =>
+    new Set(readStoredStageFilter(pipelineStageSlugSet)),
+  )
+
   useEffect(() => {
     if (typeof window === "undefined") return
     window.localStorage.setItem(BOOK_SORT_STORAGE_KEY, sortKey)
   }, [sortKey])
 
-  const sortedBooks = useMemo(
-    () => sortBooks(books ?? [], sortKey),
-    [books, sortKey],
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    window.localStorage.setItem(
+      STAGE_FILTER_STORAGE_KEY,
+      JSON.stringify([...selectedStages]),
+    )
+  }, [selectedStages])
+
+  const toggleStageFilter = (slug: string) => {
+    setSelectedStages((prev) => {
+      const next = new Set(prev)
+      if (next.has(slug)) next.delete(slug)
+      else next.add(slug)
+      return next
+    })
+  }
+
+  const clearStageFilters = () => setSelectedStages(new Set())
+
+  const filteredBooks = useMemo(() => {
+    const list = books ?? []
+    if (selectedStages.size === 0) return list
+    return list.filter((book) => {
+      const completed = new Set(book.completedStages)
+      for (const slug of selectedStages) {
+        if (!completed.has(slug)) return false
+      }
+      return true
+    })
+  }, [books, selectedStages])
+
+  const visibleBooks = useMemo(
+    () => sortBooks(filteredBooks, sortKey),
+    [filteredBooks, sortKey],
   )
 
   if (isLoading) {
@@ -256,7 +357,9 @@ function HomePage() {
     )
   }
 
-  const bookList = sortedBooks
+  const totalBooks = books?.length ?? 0
+  const hasActiveFilter = selectedStages.size > 0
+  const hiddenByFilter = hasActiveFilter && totalBooks > 0 && visibleBooks.length === 0
 
   return (
     <div className="flex flex-1 min-h-0 flex-col">
@@ -315,10 +418,22 @@ function HomePage() {
         <div className="flex items-center justify-between mb-4 gap-3">
           <h2 className="text-sm font-medium text-muted-foreground">
             <Trans>Your Books</Trans>
-            {bookList.length > 0 && ` (${bookList.length})`}
+            {totalBooks > 0 && (
+              hasActiveFilter
+                ? ` (${visibleBooks.length}/${totalBooks})`
+                : ` (${totalBooks})`
+            )}
           </h2>
           <div className="flex items-center gap-2">
-            {bookList.length > 1 && (
+            {totalBooks > 1 && (
+              <StageFilterCombobox
+                pipelineStages={PIPELINE_STEPS}
+                selectedStages={selectedStages}
+                onToggle={toggleStageFilter}
+                onClear={clearStageFilters}
+              />
+            )}
+            {totalBooks > 1 && (
               <Select
                 value={sortKey}
                 onValueChange={(value) => setSortKey(value as BookSortKey)}
@@ -351,14 +466,32 @@ function HomePage() {
           </div>
         </div>
         <div className="space-y-3">
-          {bookList.map((book) => (
+          {visibleBooks.map((book) => (
             <BookRow
               key={book.label}
               book={book}
               onDelete={setDeleteLabel}
+              pipelineStages={PIPELINE_STEPS}
             />
           ))}
-          {bookList.length === 0 && (
+          {hiddenByFilter && (
+            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed bg-muted/30 py-16">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
+                <Filter className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <span className="text-sm font-medium">
+                <Trans>No books match your filters</Trans>
+              </span>
+              <button
+                type="button"
+                onClick={clearStageFilters}
+                className="mt-2 text-xs text-primary transition-colors hover:underline"
+              >
+                <Trans>Clear filters</Trans>
+              </button>
+            </div>
+          )}
+          {!hiddenByFilter && visibleBooks.length === 0 && (
             <Link to="/books/new" className="block">
               <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed bg-muted/30 py-16 transition-all hover:border-primary/40 hover:bg-primary/5 cursor-pointer">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-3">

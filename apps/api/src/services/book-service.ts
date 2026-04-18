@@ -1,8 +1,10 @@
 import fs from "node:fs"
 import path from "node:path"
 import yaml from "js-yaml"
-import { parseBookLabel, BookLabel, BookMetadata, BookSummaryOutput } from "@adt/types"
+import { parseBookLabel, BookLabel, BookMetadata, BookSummaryOutput, PIPELINE } from "@adt/types"
 import { openBookDb } from "@adt/storage"
+
+type BookDb = ReturnType<typeof openBookDb>
 
 export interface BookSummary {
   label: string
@@ -14,8 +16,33 @@ export interface BookSummary {
   hasSourcePdf: boolean
   needsRebuild: boolean
   rebuildReason: string | null
+  completedStages: string[]
   createdAt: string
   modifiedAt: string
+}
+
+function computeCompletedStages(db: BookDb, bookDir: string): string[] {
+  const rows = db.all("SELECT step, status FROM step_runs") as Array<{
+    step: string
+    status: string
+  }>
+  const statusByStep = new Map(rows.map((r) => [r.step, r.status]))
+
+  const completed: string[] = []
+  for (const stage of PIPELINE) {
+    if (stage.steps.length === 0) continue
+    const allDone = stage.steps.every((step) => {
+      const status = statusByStep.get(step.name)
+      return status === "done" || status === "skipped"
+    })
+    if (allDone) completed.push(stage.name)
+  }
+
+  if (fs.existsSync(path.join(bookDir, "adt"))) {
+    completed.push("preview")
+  }
+
+  return completed
 }
 
 function toIsoDate(ms: number): string {
@@ -71,6 +98,7 @@ export function listBooks(booksDir: string): BookSummary[] {
     let pageCount = 0
     let needsRebuild = false
     let rebuildReason: string | null = null
+    let completedStages: string[] = []
 
     if (fs.existsSync(dbPath)) {
       try {
@@ -96,6 +124,7 @@ export function listBooks(booksDir: string): BookSummary[] {
             }
           }
 
+          completedStages = computeCompletedStages(db, bookDir)
         } finally {
           db.close()
         }
@@ -123,6 +152,7 @@ export function listBooks(booksDir: string): BookSummary[] {
       hasSourcePdf: fs.existsSync(pdfPath),
       needsRebuild,
       rebuildReason,
+      completedStages,
       createdAt,
       modifiedAt,
     })
@@ -153,6 +183,7 @@ export function getBook(label: string, booksDir: string): BookDetail {
   let bookSummary: BookSummaryOutput | null = null
   let needsRebuild = false
   let rebuildReason: string | null = null
+  let completedStages: string[] = []
 
   if (fs.existsSync(dbPath)) {
     try {
@@ -190,6 +221,8 @@ export function getBook(label: string, booksDir: string): BookDetail {
             bookSummary = parsed.data
           }
         }
+
+        completedStages = computeCompletedStages(db, bookDir)
       } finally {
         db.close()
       }
@@ -217,6 +250,7 @@ export function getBook(label: string, booksDir: string): BookDetail {
     hasSourcePdf: fs.existsSync(pdfPath),
     needsRebuild,
     rebuildReason,
+    completedStages,
     createdAt,
     modifiedAt,
     metadata,
@@ -260,6 +294,7 @@ export function createBook(
     hasSourcePdf: true,
     needsRebuild: false,
     rebuildReason: null,
+    completedStages: [],
     createdAt: nowIso,
     modifiedAt: nowIso,
   }
