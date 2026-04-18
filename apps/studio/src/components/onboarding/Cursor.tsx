@@ -5,26 +5,23 @@ export function Cursor({
   y,
   visible = true,
   clicking = false,
-  duration = 900,
 }: {
   x: number
   y: number
   visible?: boolean
   clicking?: boolean
-  duration?: number
 }) {
   return (
     <div
       aria-hidden
       className={cn(
-        "pointer-events-none absolute z-50 transition-all ease-[cubic-bezier(0.22,1,0.36,1)]",
+        "pointer-events-none absolute z-50 transition-opacity duration-200",
         visible ? "opacity-100" : "opacity-0",
       )}
       style={{
         left: `${x}%`,
         top: `${y}%`,
         transform: "translate(-2px, -2px)",
-        transitionDuration: `${duration}ms`,
       }}
     >
       <div

@@ -119,7 +119,7 @@ export function ApiKeyStep({ onNext, onBack }: OnboardingStepProps) {
           <KeyRound className="h-8 w-8" />
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3 flex flex-col items-center">
           <h2 className="animate-onboarding-fade-up text-4xl font-semibold tracking-tight text-foreground md:text-5xl [animation-delay:100ms]">
             <Trans>Connect an AI provider</Trans>
           </h2>
