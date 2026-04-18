@@ -267,6 +267,7 @@ function walkNode(
     if (node.data.trim().length > 0) {
       if (isInsideExemptTag(node)) return
       if (hasGeneratedA11yLabelAncestor(node)) return
+      if (hasAriaHiddenAncestor(node)) return
       // Allow single-digit numbers as bare text (used as option markers in activities)
       if (/^\d$/.test(node.data.trim())) return
       if (!hasAncestorWithDataId(node)) {
@@ -359,18 +360,23 @@ function walkNode(
         }
         // Do NOT set replacementText — preserve the blank markers in the HTML
       } else {
-        // The LLM is permitted to omit textbook-style blank placeholders
-        // (___ or ...) from the rendered text when it emits a separate
-        // editable element (e.g. a <textarea>) for that input. Compute both
-        // the full and the placeholder-stripped expected; pick whichever is
-        // closer to what the LLM rendered for both the similarity check and
-        // the text replacement.
+        // The LLM is expected to replace textbook-style blank placeholders
+        // (___ or ...) with a separate editable element. If the raw expected
+        // text contains such a placeholder, we always strip it from the
+        // rendered text — never let the underscores/dots appear visibly
+        // next to the input, even if the LLM kept them in its output.
+        // Compute both full and placeholder-stripped variants; pick the
+        // stripped version whenever the expected text has a placeholder,
+        // otherwise fall back to whichever is closer to the LLM's output.
         const rawExpected = options.expectedTexts.get(dataId)!
         const strippedRaw = stripBlankPlaceholders(rawExpected)
         const strippedExpected = normalizeText(strippedRaw)
+        const hasTextbookPlaceholder =
+          /_{3,}|\.{3,}/.test(rawExpected) ||
+          /\[placeholder:[^\]]+\]/.test(rawExpected)
         const fullSim = textSimilarity(actualText, expectedText)
         const strippedSim = textSimilarity(actualText, strippedExpected)
-        const preferStripped = strippedSim > fullSim
+        const preferStripped = hasTextbookPlaceholder || strippedSim > fullSim
         const targetExpected = preferStripped ? strippedExpected : expectedText
         replacementText = preferStripped ? strippedRaw : rawExpected
         if (actualText !== targetExpected) {
@@ -402,6 +408,25 @@ function hasGeneratedA11yLabelAncestor(node: any): boolean {
   let current = node.parent
   while (current) {
     if (current.attribs?.["data-generated-a11y-label"] === "true") {
+      return true
+    }
+    current = current.parent
+  }
+  return false
+}
+
+/**
+ * True if the node sits inside an element marked aria-hidden="true". Such
+ * content is purely decorative (screen readers skip it), so short visual
+ * characters like "→", "/", "•" used as separators or icons don't need a
+ * data-id. Relaxing this keeps the validator consistent with prompt
+ * guidance that already uses aria-hidden spans for decorative glyphs.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function hasAriaHiddenAncestor(node: any): boolean {
+  let current = node.parent
+  while (current) {
+    if (current.attribs?.["aria-hidden"] === "true") {
       return true
     }
     current = current.parent
