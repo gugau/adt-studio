@@ -419,9 +419,14 @@ function HomePage() {
           <h2 className="text-sm font-medium text-muted-foreground">
             <Trans>Your Books</Trans>
             {totalBooks > 0 && (
-              hasActiveFilter
-                ? ` (${visibleBooks.length}/${totalBooks})`
-                : ` (${totalBooks})`
+              <span
+                key={hasActiveFilter ? `${visibleBooks.length}/${totalBooks}` : `${totalBooks}`}
+                className="ml-1 inline-block animate-count-pulse"
+              >
+                {hasActiveFilter
+                  ? `(${visibleBooks.length}/${totalBooks})`
+                  : `(${totalBooks})`}
+              </span>
             )}
           </h2>
           <div className="flex items-center gap-2">
@@ -467,15 +472,16 @@ function HomePage() {
         </div>
         <div className="space-y-3">
           {visibleBooks.map((book) => (
-            <BookRow
-              key={book.label}
-              book={book}
-              onDelete={setDeleteLabel}
-              pipelineStages={PIPELINE_STEPS}
-            />
+            <div key={book.label} className="animate-wizard-enter">
+              <BookRow
+                book={book}
+                onDelete={setDeleteLabel}
+                pipelineStages={PIPELINE_STEPS}
+              />
+            </div>
           ))}
           {hiddenByFilter && (
-            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed bg-muted/30 py-16">
+            <div className="flex animate-wizard-enter flex-col items-center justify-center rounded-xl border-2 border-dashed bg-muted/30 py-16">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
                 <Filter className="h-6 w-6 text-muted-foreground" />
               </div>
@@ -492,7 +498,7 @@ function HomePage() {
             </div>
           )}
           {!hiddenByFilter && visibleBooks.length === 0 && (
-            <Link to="/books/new" className="block">
+            <Link to="/books/new" className="block animate-wizard-enter">
               <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed bg-muted/30 py-16 transition-all hover:border-primary/40 hover:bg-primary/5 cursor-pointer">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-3">
                   <Plus className="h-6 w-6 text-primary" />
