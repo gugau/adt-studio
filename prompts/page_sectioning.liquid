@@ -18,10 +18,29 @@ SECTION TYPES:
 {% endfor %}
 
 CLASSIFICATION RULES (use these to disambiguate activity types):
+- WRITABLE-PAGE PRECEDENCE: If the page contains ANY response lines, blank lines, underlines, dotted lines, or empty boxes/cells where the learner is expected to WRITE (a word, a phrase, a sentence, or a longer answer), the section MUST be classified as an activity type — never as text_only, boxed_text, text_and_single_image, text_and_images, or other. This holds regardless of how much surrounding prose, instructions, or imagery the page contains. Choose the activity sub-type using the rules below.
+  Visual signals that indicate writable response areas include: horizontal lines (solid, dotted, or dashed), runs of underscores ("___"), runs of dots ("..."), empty ruled rows, empty small squares or rectangular boxes sitting next to a prompt (they are blanks even without a line — the learner writes a number, letter, or short answer inside the box), and blank boxes labelled "Answer:", "Write:", "Respuesta:", "Escribe:", or similar. A small empty square beside a prompt is every bit as much a writable blank as an underline is — do not skip the writable classification just because the textbook used a box instead of a line.
+- WRITABLE SUB-TYPE TEST: The sub-type depends on the STRUCTURE of the response, NOT on whether the correct answer is knowable from the page. A full-width line next to a prompt is NOT automatically open-ended — look at what shape of answer the prompt expects.
+  • STRUCTURED / DISCRETE FIELDS → activity_fill_in_the_blank. Pick this whenever the writing area expects a specific type of short answer: a word, number, letter, date, name, short phrase, or a value copied from the prompt. This covers:
+    - Inline blanks inside a sentence ("El Sol es una ___")
+    - Labeled form fields where the learner writes a specific datum (e.g. "Nombre: ___", "Apellido: ___", "Fecha de nacimiento: ___ / ___ / ___", "Lugar: ___", "Edad: ___") — including when the value is the LEARNER'S OWN information. The structure (one labelled field per datum) is what makes it fill-in-the-blank, not whether a teacher could mark it right.
+    - Determinable answers derivable from the page context: unscrambling scrambled letters, counting syllables/letters/words, filling in missing letters of a partially-written word, choosing the longer/shorter/correct of two given options, solving a shown equation, translating a shown word, copying a specific value from a reading passage.
+    This applies whether the writing area is an inline blank, a small box, an empty cell, or a full-width line beside the prompt.
+  • FREE-FORM COMPOSITION → activity_open_ended_answer. Pick this ONLY when the prompt expects the learner to write sentences or paragraphs in their own words — opinion, description, narrative, explanation, reflection. The writable area is typically large (several ruled lines under one prompt, or a tall box). Examples: "Describe tu personaje favorito", "Explica qué aprendiste", "Escribe un final diferente a la historia", "¿Qué harías tú en esta situación?". Also: dictation activities where the answer comes from the teacher speaking aloud and cannot be derived from the page alone.
+  • Empty cells inside a table grid where the learner fills each cell → activity_fill_in_a_table
+  Decision rule: "Is the learner filling in DISCRETE values (word/number/name/date/short phrase) into one or more labelled fields, OR writing SENTENCES/PARAGRAPHS in free-form composition?"
+    - Discrete values (one per field, however many fields) → activity_fill_in_the_blank
+    - Sentences/paragraphs in the learner's own words → activity_open_ended_answer
+  Worked examples:
+    - "Ordena las letras para formar los meses del año: orene ____" → activity_fill_in_the_blank (discrete word, one per line, derivable answer).
+    - "Nombre: ___, Apellido: ___, Fecha de nacimiento: ___/___/___, Lugar: ___" (an ID form the learner fills with their own info) → activity_fill_in_the_blank. Discrete labelled fields, one value per field — even though the values are the learner's personal data and a teacher could not mark them "wrong".
+    - "Tiene ___ sílabas" for the word "Nacimiento" → activity_fill_in_the_blank (discrete number, determinable).
+    - "Describe a tu familia: _________________" with 4 ruled lines → activity_open_ended_answer (free-form composition about personal life, spans multiple lines).
+    - "¿Qué aprendiste hoy? _________________" with a large box → activity_open_ended_answer.
 - Classify by the COGNITIVE TASK the learner must perform, not the physical action (circling, coloring, underlining, drawing lines). Look at what the learner must DECIDE or PRODUCE, not how they mark their answer.
 - For EVERY activity section, your "reasoning" field MUST include:
   1. What the instructions ask the learner to do
-  2. What the visual layout shows on the page image
+  2. What the visual layout shows on the page image (call out any response lines or empty fields explicitly)
   3. For sorting/matching activities: an explicit count (e.g., "X total items, Y categories")
   Then choose the activity type based on all of the above.
 - MULTIPLE CHOICE vs SORTING vs MATCHING — Gather all evidence before deciding:
@@ -35,8 +54,8 @@ CLASSIFICATION RULES (use these to disambiguate activity types):
   • activity_sorting — learner assigns ALL items to categories, and items OUTNUMBER categories (many-to-one)
   Hard constraint: if total items > total categories, it is activity_sorting, never activity_matching — regardless of what the instruction wording suggests.
 - If there are exactly two options (true/false, yes/no, correct/incorrect) → activity_true_false
-- If no options are provided and the learner writes freely → activity_open_ended_answer
-- If sentences have blanks to fill in with missing words → activity_fill_in_the_blank
+- If the expected answer is FREE-FORM (legitimately varies between students — opinion, description, narrative, reflection, personal data, or teacher-dictated content) → activity_open_ended_answer
+- If the expected answer is DETERMINABLE (one correct value derivable from the prompt or page — unscrambling, counting, missing letters, labelling, copying from a passage, solving) → activity_fill_in_the_blank. This is the right pick whenever the writing area has a correct answer, regardless of whether the blank is inline in a sentence or a full-width line beside the prompt.
 - If a table grid has empty cells to complete → activity_fill_in_a_table
 - activity_other is a last resort — only use it when the learning mechanic itself is truly unique (e.g., free drawing, crafts, physical movement) and no other activity type applies.
 
