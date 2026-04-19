@@ -300,15 +300,17 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
     savedOriginalText = null;
     el.contentEditable = 'false';
     el.removeAttribute('data-adt-editing');
-    // Capture the edited text before restoring MathML display
     var newText = el.textContent || '';
     var dataId = el.getAttribute('data-id');
-    // Restore MathML display immediately so the preview looks correct
-    if (restoreHtml != null) {
-      el.innerHTML = restoreHtml;
+    // If nothing changed, restore the saved MathML display so math content
+    // re-renders (startEditing had swapped it to LaTeX source).
+    if (newText === origText) {
+      if (restoreHtml != null) el.innerHTML = restoreHtml;
+      return;
     }
-    // Only notify parent if text actually changed
-    if (newText === origText) return;
+    // Text was edited: leave the new content in place and let the parent's
+    // re-render replace it. Restoring the pre-edit HTML here would cause a
+    // visible flash of the old text before the parent's update propagates.
     var wrapper = document.getElementById('content');
     var fullHtml;
     if (wrapper) {
