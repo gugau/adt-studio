@@ -62,6 +62,25 @@ For numbered or labeled sentences, combine a label with the sentence:
 </div>
 ```
 
+**Inline letter blanks inside a single word** — when the source text is a single word (no spaces) containing one or more `_` characters at missing-letter positions (e.g. `"en_ro"`, `"m_y_"`, `"_eptiembr_"` — meses/letras activities), still use pattern 2. Replace each `_` with a `[[blank:item-N]]` marker and keep the rest of the letters as plain text inside the same `data-id` span. Wrap the span (or its parent) with the `fitb-sentence` class so the markers hydrate into narrow inline inputs at exactly the letter gaps.
+
+```html
+<!-- Source: "en_ro"  -->
+<span class="fitb-sentence text-2xl tracking-wide" data-id="text-1">en[[blank:item-1]]ro</span>
+
+<!-- Source: "m_y_" (two missing letters) -->
+<span class="fitb-sentence text-2xl tracking-wide" data-id="text-2">m[[blank:item-2]]y[[blank:item-3]]</span>
+
+<!-- Source: "_eptiembr_" (missing letter at start AND end) -->
+<span class="fitb-sentence text-2xl tracking-wide" data-id="text-3">[[blank:item-4]]eptiembr[[blank:item-5]]</span>
+```
+
+Rules for inline letter blanks:
+- Emit ONE marker per `_` in the source word
+- Do NOT leave the `_` character in the rendered text — the marker replaces it
+- Each marker increments `item-N` across the whole page
+- This is still pattern 2 — do NOT fall back to pattern 2b (label + separate input), which would park the input away from the letter gap and look wrong
+
 **2b. Label + Separate Writable Area(s)** — use when the source text is a standalone label (e.g. `"Nombre:"`, `"Fecha de nacimiento:"`, `"Pregunta 1:"`) and the writable area sits next to or below the label rather than inside a sentence.
 
 This pattern is deliberately flexible. Choose the element and sizing based on the expected answer for each specific field:
@@ -99,7 +118,7 @@ Pick the layout that matches the textbook page:
 </div>
 ```
 
-**Multiple inputs per label** (use for dates, addresses, number sequences, or any source text that visibly splits one prompt across multiple blanks such as `"Fecha de nacimiento: ___ / ___ / ___"`):
+**Multiple inputs per label — date/phone/split-value fields** (use for dates like `"Fecha de nacimiento: ___/___/___"`, `"___ / ___ / ___"`, phone numbers like `"Teléfono: ___-___-___"`, or any source text that visibly splits one prompt across multiple blanks separated by `/`, `-`, or similar connectors):
 ```html
 <div class="mb-4 flex items-center gap-3 flex-wrap">
   <label class="font-semibold whitespace-nowrap" data-id="text-1">Fecha de nacimiento:</label>
@@ -122,6 +141,12 @@ Pick the layout that matches the textbook page:
          tabindex="0" type="text" />
 </div>
 ```
+
+Hard rules for split-value fields (critical — this is a common failure mode):
+- The label inside the `data-id` element contains ONLY the leading label text up to (and optionally including) the colon. It must NOT contain any `/`, `-`, or other separator characters that originally sat between the blanks — those live between the inputs as `<span aria-hidden="true">...</span>`, never inside the label. For `"Fecha de nacimiento: ___/___/___"` the label renders as `Fecha de nacimiento:` — if you render `Fecha de nacimiento: //` or `Fecha de nacimiento: / /` (slashes stranded in the label) the layout is wrong.
+- Every input sits in the SAME flex row as the label, interleaved with `<span aria-hidden="true">/</span>` (or `-`) between them. Do NOT put the inputs in a separate grid or row below the label — they must flow next to the label like `Fecha de nacimiento: [d] / [m] / [y]`.
+- Use fixed narrow widths (`w-12` / `w-16` / `w-20`) and `text-center` so the inputs look like date/phone cells, not full-width text boxes.
+- Emit exactly one input per `___` run in the source text. For `___/___/___` → 3 inputs. For `___-___` → 2 inputs.
 
 Rules for this pattern:
 - The label text stays inside its `data-id` element verbatim — never append a marker or strip words from it
@@ -171,13 +196,15 @@ Rules for this pattern:
 
 Pick the pattern per sentence/field — you can mix them on the same page.
 
-- **Inline blanks (pattern 2)**: Use when the source text is a sentence with a missing word (underscores, dots, or an implied gap inside the sentence). Insert a `[[blank:item-N]]` marker inside the `data-id` span at the exact gap position and add the `fitb-sentence` class.
+- **Inline blanks (pattern 2)**: Use when the source text contains the blank INSIDE it — a sentence with a missing word, OR a single word with missing letters marked by `_` (e.g. `"en_ro"`, `"m_y_"`). Insert `[[blank:item-N]]` markers at each gap and add the `fitb-sentence` class.
 - **Label + separate writable area (pattern 2b)**: Use when the source text is a standalone label or question prompt (e.g. `"Nombre:"`, `"Apellido:"`, `"Fecha de nacimiento:"`, `"1. Describe your favorite character"`) and the writable area is visually separate. Keep the label verbatim inside its `data-id` element and emit an `<input>` or `<textarea>` next to or below it. This pattern is flexible — pick `<input>` for short answers, `<textarea>` for sentence/paragraph answers, narrow widths for dates/numbers, multiple inputs per label for split fields like dates.
 - **Hierarchical diagram (pattern 3)**: Use ONLY when the textbook page explicitly shows a tree, concept map, organisational chart, or diagram with connecting lines between levels.
 
-Decision rule: "Does the source text contain an obvious word-shaped gap inside a sentence?"
-- Yes (underscores/dots inside a sentence, or an obvious missing word mid-sentence) → pattern 2
-- No (the source is a label or a standalone question prompt) → pattern 2b
+Decision rule: "Does the source text contain the blank INSIDE it?"
+- Yes, inside a sentence (underscores, dots, or an obvious missing word mid-sentence) → pattern 2
+- Yes, inside a single word (one or more `_` chars marking missing letters — e.g. `"en_ro"`) → pattern 2, one marker per `_`
+- The source text is a label followed by `___<sep>___<sep>___` (date/phone/split value) → pattern 2b "Multiple inputs per label"
+- The source is a plain standalone label or question prompt (e.g. `"Nombre:"`, `"Apellido:"`) → pattern 2b
 - The textbook literally shows a diagram with connecting lines → pattern 3
 
 When in doubt, pattern 2b is safer than pattern 2 — a misplaced marker outside a `data-id` fails validation, but a label + input is always valid.

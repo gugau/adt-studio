@@ -915,6 +915,85 @@ describe("validateSectionHtml", () => {
     expect(result.valid).toBe(true)
   })
 
+  it("accepts inline letter blanks: single-word source with single underscores replaced by markers", () => {
+    const html = `
+      <section>
+        <span class="fitb-sentence" data-id="tx001">en[[blank:item-1]]ro</span>
+      </section>
+    `
+    const expectedTexts = new Map([["tx001", "en_ro"]])
+    const result = validateSectionHtml(
+      html,
+      ["tx001"],
+      [],
+      undefined,
+      { expectedTexts }
+    )
+    expect(result.valid).toBe(true)
+    expect(result.errors).toHaveLength(0)
+    expect(result.sectionHtml).toContain("[[blank:item-1]]")
+  })
+
+  it("accepts inline letter blanks with multiple underscores in a single word", () => {
+    const html = `
+      <section>
+        <span class="fitb-sentence" data-id="tx001">[[blank:item-1]]eptiembr[[blank:item-2]]</span>
+      </section>
+    `
+    const expectedTexts = new Map([["tx001", "_eptiembr_"]])
+    const result = validateSectionHtml(
+      html,
+      ["tx001"],
+      [],
+      undefined,
+      { expectedTexts }
+    )
+    expect(result.valid).toBe(true)
+    expect(result.errors).toHaveLength(0)
+  })
+
+  it("strips orphan separator runs left behind after removing date-style blank runs", () => {
+    const html = `
+      <section>
+        <label data-id="tx001">Fecha de nacimiento:</label>
+      </section>
+    `
+    const expectedTexts = new Map([
+      ["tx001", "Fecha de nacimiento: ___/___/___"],
+    ])
+    const result = validateSectionHtml(
+      html,
+      ["tx001"],
+      [],
+      undefined,
+      { expectedTexts }
+    )
+    expect(result.valid).toBe(true)
+    expect(result.errors).toHaveLength(0)
+    expect(result.sectionHtml).toContain("Fecha de nacimiento:")
+    expect(result.sectionHtml).not.toContain("//")
+  })
+
+  it("strips orphan separator runs with whitespace between the blanks", () => {
+    const html = `
+      <section>
+        <label data-id="tx001">Tel&#xe9;fono:</label>
+      </section>
+    `
+    const expectedTexts = new Map([
+      ["tx001", "Teléfono: ___ - ___ - ___"],
+    ])
+    const result = validateSectionHtml(
+      html,
+      ["tx001"],
+      [],
+      undefined,
+      { expectedTexts }
+    )
+    expect(result.valid).toBe(true)
+    expect(result.sectionHtml).not.toMatch(/-\s*-/)
+  })
+
   it("does not substitute expected text on image data-ids", () => {
     const html = `
       <section>

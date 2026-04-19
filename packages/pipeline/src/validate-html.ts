@@ -347,9 +347,16 @@ function walkNode(
             `Element with data-id "${dataId}" contains [[blank:item-N]] markers but is missing the "fitb-sentence" class (required on the element or an ancestor for runtime hydration)`
           )
         }
-        // Compare without the blank markers in actual and underscore/dot/placeholder markers in expected
+        // Compare without the blank markers in actual and underscore/dot/placeholder markers in expected.
+        // Also strip single `_` chars from the expected so inline letter blanks (e.g. source text `"en_ro"`
+        // rendered as `"en[[blank:item-1]]ro"`) match without the underscore throwing off similarity.
         const strippedActual = normalizeText(actualText.replace(BLANK_MARKER_RE, ""))
-        const strippedExpected = normalizeText(expectedText.replace(TEXTBOOK_BLANK_RE, "").replace(PLACEHOLDER_MARKER_RE, ""))
+        const strippedExpected = normalizeText(
+          expectedText
+            .replace(TEXTBOOK_BLANK_RE, "")
+            .replace(PLACEHOLDER_MARKER_RE, "")
+            .replace(/_/g, "")
+        )
         if (strippedActual !== strippedExpected) {
           const similarity = textSimilarity(strippedActual, strippedExpected)
           if (similarity < TEXT_SIMILARITY_THRESHOLD) {
@@ -509,14 +516,25 @@ function normalizeText(text: string): string {
  * left behind. Used when the LLM has correctly replaced a visual blank with
  * an editable element (textarea or input) and the surrounding label text
  * therefore omits the placeholder.
+ *
+ * Also collapses orphan separator runs left behind when a split field like
+ * `___/___/___` (date) or `___-___-___` (phone) is stripped — those slashes
+ * and dashes belong between inputs, not in the label text.
  */
 function stripBlankPlaceholders(text: string): string {
   return text
     .replace(TEXTBOOK_BLANK_RE, "")
     .replace(PLACEHOLDER_MARKER_RE, "")
+    .replace(ORPHAN_SEPARATOR_RUN_RE, "")
     .replace(/\s+/g, " ")
     .trim()
 }
+
+// Matches 2+ separator characters (/ or -) separated only by whitespace —
+// the kind of leftover you get after stripping placeholder runs from
+// "___/___/___". Real data like "2024/01/15" has alphanumerics between the
+// separators, so it won't match.
+const ORPHAN_SEPARATOR_RUN_RE = /([/\-])(\s*[/\-])+/g
 
 function repairMalformedHtmlEntities(html: string): string {
   let repaired = html
