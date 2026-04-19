@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import {
   Plus,
@@ -92,6 +92,56 @@ function readStoredStageFilter(validSlugs: Set<string>): string[] {
   } catch {
     return []
   }
+}
+
+function useFlipList<T>(
+  items: T[],
+  keyFn: (item: T) => string,
+): React.RefObject<HTMLDivElement | null> {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const prevRectsRef = useRef<Map<string, DOMRect>>(new Map())
+  const keys = items.map(keyFn).join("|")
+
+  useLayoutEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    const children = Array.from(
+      container.querySelectorAll<HTMLElement>("[data-flip-key]"),
+    )
+    const newRects = new Map<string, DOMRect>()
+    for (const el of children) {
+      const key = el.dataset.flipKey
+      if (!key) continue
+      newRects.set(key, el.getBoundingClientRect())
+    }
+
+    for (const el of children) {
+      const key = el.dataset.flipKey
+      if (!key) continue
+      const oldRect = prevRectsRef.current.get(key)
+      const newRect = newRects.get(key)
+      if (!oldRect || !newRect) continue
+      const dx = oldRect.left - newRect.left
+      const dy = oldRect.top - newRect.top
+      if (dx === 0 && dy === 0) continue
+      el.style.transition = "transform 0s"
+      el.style.transform = `translate(${dx}px, ${dy}px)`
+      requestAnimationFrame(() => {
+        el.style.transition = "transform 420ms cubic-bezier(0.22, 1, 0.36, 1)"
+        el.style.transform = ""
+        const onEnd = (event: TransitionEvent) => {
+          if (event.propertyName !== "transform") return
+          el.style.transition = ""
+          el.removeEventListener("transitionend", onEnd)
+        }
+        el.addEventListener("transitionend", onEnd)
+      })
+    }
+
+    prevRectsRef.current = newRects
+  }, [keys])
+
+  return containerRef
 }
 
 export const Route = createFileRoute("/")({
@@ -341,6 +391,8 @@ function HomePage() {
     [filteredBooks, sortKey],
   )
 
+  const listRef = useFlipList(visibleBooks, (book) => book.label)
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center flex-1 text-muted-foreground">
@@ -470,9 +522,17 @@ function HomePage() {
             </Button>
           </div>
         </div>
-        <div className="space-y-3">
-          {visibleBooks.map((book) => (
-            <div key={book.label} className="animate-wizard-enter">
+        <div ref={listRef} className="space-y-3">
+          {visibleBooks.map((book, index) => (
+            <div
+              key={book.label}
+              data-flip-key={book.label}
+              className="animate-wizard-enter will-change-transform"
+              style={{
+                animationDelay: `${Math.min(index, 8) * 40}ms`,
+                animationFillMode: "both",
+              }}
+            >
               <BookRow
                 book={book}
                 onDelete={setDeleteLabel}
