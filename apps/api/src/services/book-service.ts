@@ -1,25 +1,20 @@
 import fs from "node:fs"
 import path from "node:path"
 import yaml from "js-yaml"
-import { parseBookLabel, BookLabel, BookMetadata, BookSummaryOutput, PIPELINE } from "@adt/types"
+import {
+  parseBookLabel,
+  BookLabel,
+  BookMetadata,
+  BookSummaryOutput,
+  PIPELINE,
+  type BookSummary,
+  type BookDetail,
+} from "@adt/types"
 import { openBookDb } from "@adt/storage"
 
 type BookDb = ReturnType<typeof openBookDb>
 
-export interface BookSummary {
-  label: string
-  title: string | null
-  authors: string[]
-  publisher: string | null
-  languageCode: string | null
-  pageCount: number
-  hasSourcePdf: boolean
-  needsRebuild: boolean
-  rebuildReason: string | null
-  completedStages: string[]
-  createdAt: string
-  modifiedAt: string
-}
+export type { BookSummary, BookDetail }
 
 function computeCompletedStages(db: BookDb, bookDir: string): string[] {
   const rows = db.all("SELECT step, status FROM step_runs") as Array<{
@@ -63,11 +58,6 @@ function resolveTimestamps(
 
   const modifiedMs = Math.max(...candidates)
   return { createdAt: toIsoDate(createdMs), modifiedAt: toIsoDate(modifiedMs) }
-}
-
-export interface BookDetail extends BookSummary {
-  metadata: BookMetadata | null
-  bookSummary: BookSummaryOutput | null
 }
 
 function isRecoverableDbError(err: unknown): err is Error {

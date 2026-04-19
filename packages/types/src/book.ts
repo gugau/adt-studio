@@ -1,4 +1,6 @@
 import { z } from "zod"
+import { BookMetadata } from "./metadata.js"
+import { BookSummaryOutput } from "./book-summary.js"
 
 export const BookLabel = z
   .string()
@@ -6,6 +8,28 @@ export const BookLabel = z
   .max(255)
   .regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/, "Label must be filesystem-safe")
 export type BookLabel = z.infer<typeof BookLabel>
+
+export const BookSummary = z.object({
+  label: z.string(),
+  title: z.string().nullable(),
+  authors: z.array(z.string()),
+  publisher: z.string().nullable(),
+  languageCode: z.string().nullable(),
+  pageCount: z.number().int(),
+  hasSourcePdf: z.boolean(),
+  needsRebuild: z.boolean(),
+  rebuildReason: z.string().nullable(),
+  completedStages: z.array(z.string()),
+  createdAt: z.string(),
+  modifiedAt: z.string(),
+})
+export type BookSummary = z.infer<typeof BookSummary>
+
+export const BookDetail = BookSummary.extend({
+  metadata: BookMetadata.nullable(),
+  bookSummary: BookSummaryOutput.nullable(),
+})
+export type BookDetail = z.infer<typeof BookDetail>
 
 export function parseBookLabel(label: string): string {
   const parsed = BookLabel.safeParse(label)
