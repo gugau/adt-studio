@@ -8,7 +8,7 @@ import { fileURLToPath, URL } from "node:url"
 export default defineConfig({
   plugins: [
     lingui(),
-    TanStackRouterVite({ quoteStyle: "double" }),
+    TanStackRouterVite({ quoteStyle: "double", routeFileIgnorePattern: "\\.test\\.tsx?$" }),
     react({
       babel: {
         plugins: ["@lingui/babel-plugin-lingui-macro"],
