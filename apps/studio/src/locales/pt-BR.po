@@ -283,7 +283,7 @@ msgid "A multiple choice activity."
 msgstr "Uma atividade de múltipla escolha."
 
 msgid "A scenic view at dusk."
-msgstr ""
+msgstr "Uma vista cênica ao entardecer."
 
 msgid "A section containing only images."
 msgstr "Uma seção contendo apenas imagens."
@@ -497,8 +497,8 @@ msgstr "Adicionar idioma"
 msgid "Add languages to translate the book content into."
 msgstr "Adicione idiomas para traduzir o conteúdo do livro."
 
-msgid "Add later"
-msgstr "Adicionar depois"
+#~ msgid "Add later"
+#~ msgstr "Adicionar depois"
 
 msgid "Add reviewer guidance."
 msgstr "Add reviewer guidance."
@@ -665,7 +665,7 @@ msgid "API Keys"
 msgstr "Chaves de API"
 
 #~ msgid "API logs are only available in the desktop app."
-#~ msgstr ""
+#~ msgstr "Os logs da API só estão disponíveis no aplicativo de desktop."
 
 msgid "Application Programming Interface — a set of rules that allows programs to communicate."
 msgstr "Interface de programação de aplicativos (API) — conjunto de regras que permite que programas se comuniquem."
@@ -726,7 +726,7 @@ msgid "Assign to section..."
 msgstr "Atribuir à seção..."
 
 msgid "At the river's edge"
-msgstr ""
+msgstr "Na beira do rio"
 
 msgid "Audio narration"
 msgstr "Narração de áudio"
@@ -741,7 +741,7 @@ msgid "Auto"
 msgstr "Automático"
 
 #~ msgid "Auto-scroll"
-#~ msgstr ""
+#~ msgstr "Rolagem automática"
 
 msgid "Automatically adapts the layout based on each page's content using AI."
 msgstr "Adapta automaticamente o layout com base no conteúdo de cada página usando IA."
@@ -911,7 +911,7 @@ msgid "Cancel"
 msgstr "Cancelar"
 
 #~ msgid "capped at {0}"
-#~ msgstr ""
+#~ msgstr "limitado a {0}"
 
 msgid "Caption"
 msgstr "Legenda"
@@ -1010,7 +1010,7 @@ msgid "Clean & focused"
 msgstr "Limpo e focado"
 
 #~ msgid "Clear"
-#~ msgstr ""
+#~ msgstr "Limpar"
 
 msgid "Clear all"
 msgstr "Clear all"
@@ -1238,7 +1238,7 @@ msgid "Custom:"
 msgstr "Personalizado:"
 
 #~ msgid "Debug mode is not enabled."
-#~ msgstr ""
+#~ msgstr "O modo de depuração não está habilitado."
 
 msgid "Decrease indent"
 msgstr "Diminuir recuo"
@@ -1419,8 +1419,8 @@ msgstr "Arraste para reordenar ou mover para outro grupo"
 msgid "Drag vertices to reshape. Click midpoints (+) to add points. Right-click a vertex to remove it."
 msgstr "Arraste os vértices para remodelar. Clique nos pontos médios (+) para adicionar pontos. Clique com o botão direito em um vértice para removê-lo."
 
-msgid "Drop a PDF and go."
-msgstr "Solte um PDF e pronto."
+#~ msgid "Drop a PDF and go."
+#~ msgstr "Solte um PDF e pronto."
 
 msgid "Drop a PDF to get started"
 msgstr "Solte um PDF para começar"
@@ -1440,8 +1440,8 @@ msgstr "Solte seu primeiro PDF e veja o pipeline em ação. Você pode voltar a 
 msgid "Drop PDF here"
 msgstr "Solte o PDF aqui"
 
-msgid "Drop your PDF here"
-msgstr "Solte seu PDF aqui"
+#~ msgid "Drop your PDF here"
+#~ msgstr "Solte seu PDF aqui"
 
 msgid "Duplicate"
 msgstr "Duplicar"
@@ -1604,8 +1604,8 @@ msgstr "Custo estimado"
 msgid "Evaporation"
 msgstr "Evaporação"
 
-msgid "Every stage, fully inspectable."
-msgstr "Cada etapa, totalmente inspecionável."
+#~ msgid "Every stage, fully inspectable."
+#~ msgstr "Cada etapa, totalmente inspecionável."
 
 msgid "Every textbook you publish here ships with audio, structured layouts, translations and sign-language — by default, for everyone."
 msgstr "Cada livro didático publicado aqui vem com áudio, layouts estruturados, traduções e língua de sinais — por padrão, para todos."
@@ -1963,8 +1963,8 @@ msgstr "Como funciona"
 msgid "HTML"
 msgstr "HTML"
 
-msgid "I'll add it later"
-msgstr "Vou adicionar depois"
+#~ msgid "I'll add it later"
+#~ msgstr "Vou adicionar depois"
 
 msgid "Illustrated children's books"
 msgstr "Livros infantis ilustrados"
@@ -2164,7 +2164,7 @@ msgid "Last"
 msgstr "Última"
 
 #~ msgid "Launch the app with"
-#~ msgstr ""
+#~ msgstr "Inicie o aplicativo com"
 
 msgid "Layer on translations, text-to-speech, and a glossary — all inspectable, cacheable, reversible."
 msgstr "Acrescente traduções, conversão de texto em fala e um glossário — tudo inspecionável, armazenável em cache, reversível."
@@ -2200,7 +2200,7 @@ msgid "Life in the Coral Reef"
 msgstr "Vida no Recife de Coral"
 
 #~ msgid "lines"
-#~ msgstr ""
+#~ msgstr "linhas"
 
 msgid "Língua Portuguesa - 3° Ano"
 msgstr "Língua Portuguesa - 3° Ano"
@@ -2912,8 +2912,8 @@ msgstr "Pass"
 msgid "Passed"
 msgstr "Passed"
 
-#~ msgid "Pause"
-#~ msgstr "Pausar"
+msgid "Pause"
+msgstr "Pausar"
 
 msgid "Payload"
 msgstr "Payload"
@@ -2966,8 +2966,8 @@ msgstr "Escolher do livro"
 msgid "Pick one layout approach."
 msgstr "Escolha uma abordagem de layout."
 
-msgid "Pick the stages to run."
-msgstr "Escolha as etapas para executar."
+#~ msgid "Pick the stages to run."
+#~ msgstr "Escolha as etapas para executar."
 
 msgid "Picture books and early readers"
 msgstr "Livros ilustrados e leitores iniciantes"
@@ -2981,8 +2981,8 @@ msgstr "Pipeline · extração"
 msgid "Pipeline · storyboard"
 msgstr "Pipeline · storyboard"
 
-msgid "Pipeline stages"
-msgstr "Etapas do pipeline"
+#~ msgid "Pipeline stages"
+#~ msgstr "Etapas do pipeline"
 
 msgid "Pipeline Stages"
 msgstr "Etapas do pipeline"
@@ -2993,8 +2993,8 @@ msgstr "Pixel Art"
 msgid "Plants create sugar via <0>photosynthesis</0>, divide by <1>mitosis</1>, and absorb water by <2>osmosis</2>."
 msgstr "As plantas criam açúcar pela <0>fotossíntese</0>, dividem-se por <1>mitose</1>, e absorvem água por <2>osmose</2>."
 
-#~ msgid "Play"
-#~ msgstr "Reproduzir"
+msgid "Play"
+msgstr "Reproduzir"
 
 msgid "Play video"
 msgstr "Reproduzir vídeo"
@@ -3422,8 +3422,8 @@ msgstr "Salvar e reexecutar geração do sumário"
 msgid "Save & Rerun Translations"
 msgstr "Salvar e reexecutar traduções"
 
-msgid "Save and continue"
-msgstr "Salvar e continuar"
+#~ msgid "Save and continue"
+#~ msgstr "Salvar e continuar"
 
 msgid "Save changes before re-rendering"
 msgstr "Salve as alterações antes de rerenderizar"
@@ -3537,8 +3537,8 @@ msgstr "seções"
 msgid "See examples"
 msgstr "Ver exemplos"
 
-msgid "See it in action"
-msgstr "Veja em ação"
+#~ msgid "See it in action"
+#~ msgstr "Veja em ação"
 
 msgid "Segment"
 msgstr "Segmentar"
@@ -3648,8 +3648,8 @@ msgstr "Defina uma chave de API do Gemini para gerar áudio"
 msgid "Set the editing language and choose output languages for the book."
 msgstr "Defina o idioma de edição e escolha os idiomas de saída para o livro."
 
-msgid "Set up later"
-msgstr "Configurar depois"
+#~ msgid "Set up later"
+#~ msgstr "Configurar depois"
 
 msgid "Settings"
 msgstr "Configurações"
@@ -3721,8 +3721,8 @@ msgstr "sk-..."
 msgid "sk-ant-..."
 msgstr "sk-ant-..."
 
-msgid "Skip for now"
-msgstr "Pular por enquanto"
+#~ msgid "Skip for now"
+#~ msgstr "Pular por enquanto"
 
 msgid "Skip intro"
 msgstr "Pular intro"
@@ -3779,8 +3779,8 @@ msgstr "Salpicando um pouco de pó mágico digital..."
 msgid "stage first."
 msgstr "primeiro."
 
-msgid "Stages to run"
-msgstr "Etapas a executar"
+#~ msgid "Stages to run"
+#~ msgstr "Etapas a executar"
 
 msgid "Standalone Text"
 msgstr "Texto independente"
@@ -3800,8 +3800,8 @@ msgstr "Comece com um PDF"
 msgid "Start page"
 msgstr "Start page"
 
-msgid "Start processing"
-msgstr "Iniciar processamento"
+#~ msgid "Start processing"
+#~ msgstr "Iniciar processamento"
 
 msgid "Start reviewer validation"
 msgstr "Start reviewer validation"
@@ -4130,7 +4130,7 @@ msgid "to"
 msgstr "até"
 
 #~ msgid "to stream API logs here."
-#~ msgstr ""
+#~ msgstr "para transmitir os logs da API aqui."
 
 msgid "TOC Generation Prompt"
 msgstr "Prompt de geração de sumário"
@@ -4390,7 +4390,7 @@ msgid "WAITING"
 msgstr "AGUARDANDO"
 
 #~ msgid "Waiting for API output…"
-#~ msgstr ""
+#~ msgstr "Aguardando saída da API…"
 
 msgid "Waiting for page to be processed..."
 msgstr "Aguardando a página ser processada..."

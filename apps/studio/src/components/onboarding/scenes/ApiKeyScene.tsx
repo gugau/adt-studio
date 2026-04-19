@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { KeyRound, Eye, EyeOff, Check } from "lucide-react";
 import { Trans } from "@lingui/react/macro";
 import { useLingui } from "@lingui/react/macro";
@@ -20,23 +20,32 @@ export function ApiKeyStep(_props: OnboardingStepProps) {
   const { t } = useLingui();
   const {
     apiKey,
+    setApiKey,
     anthropicKey,
+    setAnthropicKey,
     googleKey,
+    setGoogleKey,
+    setGeminiKey,
     customBaseUrl,
+    setCustomBaseUrl,
     customApiKey,
+    setCustomApiKey,
     azureKey,
+    setAzureKey,
     azureRegion,
+    setAzureRegion,
   } = useApiKey();
 
   const [tab, setTab] = useState<TabKey>("openai");
   const [showKey, setShowKey] = useState(false);
-  const [openaiDraft, setOpenaiDraft] = useState(apiKey);
-  const [anthropicDraft, setAnthropicDraft] = useState(anthropicKey);
-  const [googleDraft, setGoogleDraft] = useState(googleKey);
-  const [customBaseUrlDraft, setCustomBaseUrlDraft] = useState(customBaseUrl);
-  const [customApiKeyDraft, setCustomApiKeyDraft] = useState(customApiKey);
-  const [azureKeyDraft, setAzureKeyDraft] = useState(azureKey);
-  const [azureRegionDraft, setAzureRegionDraft] = useState(azureRegion);
+
+  const handleGoogleChange = useCallback(
+    (value: string) => {
+      setGoogleKey(value);
+      setGeminiKey(value);
+    },
+    [setGoogleKey, setGeminiKey],
+  );
 
   const tabs: { key: TabKey; label: string; isSaved: boolean }[] = [
     { key: "openai", label: t`OpenAI`, isSaved: apiKey.length > 0 },
@@ -114,13 +123,13 @@ export function ApiKeyStep(_props: OnboardingStepProps) {
                   autoComplete="off"
                   spellCheck={false}
                   placeholder={t`sk-...`}
-                  value={openaiDraft}
-                  onChange={(e) => setOpenaiDraft(e.target.value)}
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
                   className={passwordInputClass}
                 />
                 {eyeToggle}
               </div>
-              {openaiDraft.length > 0 && !isValidOpenAIKey(openaiDraft) && (
+              {apiKey.length > 0 && !isValidOpenAIKey(apiKey) && (
                 <p className="text-xs text-destructive">
                   <Trans>Key must start with sk-</Trans>
                 </p>
@@ -140,8 +149,8 @@ export function ApiKeyStep(_props: OnboardingStepProps) {
                   autoComplete="off"
                   spellCheck={false}
                   placeholder={t`sk-ant-...`}
-                  value={anthropicDraft}
-                  onChange={(e) => setAnthropicDraft(e.target.value)}
+                  value={anthropicKey}
+                  onChange={(e) => setAnthropicKey(e.target.value)}
                   className={passwordInputClass}
                 />
                 {eyeToggle}
@@ -167,8 +176,8 @@ export function ApiKeyStep(_props: OnboardingStepProps) {
                   autoComplete="off"
                   spellCheck={false}
                   placeholder={t`AIza...`}
-                  value={googleDraft}
-                  onChange={(e) => setGoogleDraft(e.target.value)}
+                  value={googleKey}
+                  onChange={(e) => handleGoogleChange(e.target.value)}
                   className={passwordInputClass}
                 />
                 {eyeToggle}
@@ -191,8 +200,8 @@ export function ApiKeyStep(_props: OnboardingStepProps) {
                 <Input
                   id="onb-custom-base-url"
                   placeholder={t`e.g. http://localhost:11434/v1`}
-                  value={customBaseUrlDraft}
-                  onChange={(e) => setCustomBaseUrlDraft(e.target.value)}
+                  value={customBaseUrl}
+                  onChange={(e) => setCustomBaseUrl(e.target.value)}
                   className="h-11 rounded-xl"
                 />
               </div>
@@ -207,8 +216,8 @@ export function ApiKeyStep(_props: OnboardingStepProps) {
                     autoComplete="off"
                     spellCheck={false}
                     placeholder={t`Leave empty if not required`}
-                    value={customApiKeyDraft}
-                    onChange={(e) => setCustomApiKeyDraft(e.target.value)}
+                    value={customApiKey}
+                    onChange={(e) => setCustomApiKey(e.target.value)}
                     className={passwordInputClass}
                   />
                   {eyeToggle}
@@ -237,8 +246,8 @@ export function ApiKeyStep(_props: OnboardingStepProps) {
                     autoComplete="off"
                     spellCheck={false}
                     placeholder={t`Azure Speech subscription key`}
-                    value={azureKeyDraft}
-                    onChange={(e) => setAzureKeyDraft(e.target.value)}
+                    value={azureKey}
+                    onChange={(e) => setAzureKey(e.target.value)}
                     className={passwordInputClass}
                   />
                   {eyeToggle}
@@ -251,8 +260,8 @@ export function ApiKeyStep(_props: OnboardingStepProps) {
                 <Input
                   id="onb-azure-region"
                   placeholder={t`e.g. eastus, westeurope`}
-                  value={azureRegionDraft}
-                  onChange={(e) => setAzureRegionDraft(e.target.value)}
+                  value={azureRegion}
+                  onChange={(e) => setAzureRegion(e.target.value)}
                   className="h-11 rounded-xl"
                 />
               </div>
