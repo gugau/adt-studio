@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from "react"
 import { createPortal } from "react-dom"
-import { Check, Eye, EyeOff, LayoutGrid, Loader2, ChevronDown, Sparkles, PanelRightOpen, PanelRightClose, Play, PenLine, Save, Merge, X, Code, GripHorizontal } from "lucide-react"
+import { Check, Eye, EyeOff, LayoutGrid, Loader2, ChevronDown, Sparkles, PanelRightOpen, PanelRightClose, Play, PenLine, Save, Merge, X, Code, GripHorizontal, MessageSquare } from "lucide-react"
 import { SectionDataPanel } from "./SectionDataPanel"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { api, BASE_URL } from "@/api/client"
@@ -18,6 +18,7 @@ import { AiImageDialog } from "./AiImageDialog"
 import { AddImageDialog } from "./AddImageDialog"
 import { ReplaceFromBookDialog } from "./ReplaceFromBookDialog"
 import { SegmentPreviewDialog, type SegmentRegion } from "./SegmentPreviewDialog"
+import { AiEditHistoryDrawer } from "./AiEditHistoryDrawer"
 import { Input } from "@/components/ui/input"
 import { useLingui } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
@@ -537,6 +538,7 @@ export function StoryboardSectionDetail({
   const [aiInstruction, setAiInstruction] = useState("")
   const [aiError, setAiError] = useState<string | null>(null)
   const [aiMessageIdx, setAiMessageIdx] = useState(0)
+  const [showAiHistory, setShowAiHistory] = useState(false)
 
   // Derive AI editing state from active tasks
   const aiEditing = useMemo(
@@ -618,6 +620,22 @@ export function StoryboardSectionDetail({
   const renderingData = pendingRendering ?? page.rendering
   const renderedSection = getRenderedSectionByIndex(renderingData, sectionIndex)
   const renderingDirty = pendingRendering != null
+
+  // When server-delivered HTML for the current section changes to something we
+  // haven't rendered before, refresh the iframe's Tailwind CSS so new classes
+  // get their styles. Local edits call refreshCss directly from their handler
+  // (see handleClassesChange) for immediate feedback — this effect only covers
+  // server-side changes (AI edit complete, re-render complete).
+  const serverHtmlByIndexRef = useRef<Map<number, string>>(new Map())
+  useEffect(() => {
+    const html = getRenderedSectionByIndex(page.rendering, sectionIndex)?.html
+    if (!html) return
+    const prev = serverHtmlByIndexRef.current.get(sectionIndex)
+    serverHtmlByIndexRef.current.set(sectionIndex, html)
+    if (prev !== undefined && prev !== html) {
+      previewFrameRef.current?.refreshCss(html)
+    }
+  }, [page.rendering, sectionIndex])
 
   // Parts are inline in the section data (empty if section missing — hooks still run)
   const parts = section?.parts ?? []
@@ -2273,6 +2291,18 @@ export function StoryboardSectionDetail({
       ) : (
         <div className="flex-1" />
       )}
+      {renderedSection?.html && hasApiKey && (
+        <button
+          type="button"
+          onClick={() => setShowAiHistory((v) => !v)}
+          className={`flex items-center gap-1 px-2 py-1 rounded transition-colors cursor-pointer shrink-0 ${
+            showAiHistory ? "bg-white/30" : "bg-white/10 hover:bg-white/20"
+          }`}
+          title={showAiHistory ? t`Hide AI edit history` : t`Show AI edit history`}
+        >
+          <MessageSquare className="h-3.5 w-3.5" />
+        </button>
+      )}
       {renderedSection?.html && (
         <button
           type="button"
@@ -2320,6 +2350,17 @@ export function StoryboardSectionDetail({
       {aiError && (
         <div className="px-4 py-1.5 border-b shrink-0 text-xs bg-muted/30">
           <p className="text-[10px] text-destructive">{aiError}</p>
+        </div>
+      )}
+
+      {showAiHistory && (
+        <div className="px-4 shrink-0">
+          <AiEditHistoryDrawer
+            open={showAiHistory}
+            label={bookLabel}
+            pageId={pageId}
+            sectionIndex={sectionIndex}
+          />
         </div>
       )}
 

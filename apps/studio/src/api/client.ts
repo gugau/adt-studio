@@ -161,6 +161,14 @@ export interface SectionRendering {
   activityAnswers?: Record<string, string | boolean | number>
 }
 
+export interface AiEditHistoryTurn {
+  correlationId: string
+  timestamp: string
+  instruction: string
+  attempts: Array<{ reasoning: string; timestamp: string; cached: boolean }>
+  verify?: { applied: boolean; reason: string }
+}
+
 export interface PageDetail {
   pageId: string
   pageNumber: number
@@ -614,6 +622,11 @@ export const api = {
         body: JSON.stringify({ instruction, currentHtml }),
         signal: AbortSignal.timeout(30_000),
       }
+    ),
+
+  aiEditHistory: (label: string, pageId: string, sectionIndex: number) =>
+    request<{ history: AiEditHistoryTurn[] }>(
+      `/books/${label}/pages/${pageId}/sections/${sectionIndex}/ai-edit-history`,
     ),
 
   cloneSection: (label: string, pageId: string, sectionIndex: number) =>
