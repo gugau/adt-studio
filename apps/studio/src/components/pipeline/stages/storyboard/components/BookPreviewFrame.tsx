@@ -271,27 +271,8 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
     }, '*');
   }
 
-  function placeCaretAtPoint(x, y) {
-    var range = null;
-    if (document.caretPositionFromPoint) {
-      var pos = document.caretPositionFromPoint(x, y);
-      if (pos) {
-        range = document.createRange();
-        range.setStart(pos.offsetNode, pos.offset);
-        range.collapse(true);
-      }
-    } else if (document.caretRangeFromPoint) {
-      range = document.caretRangeFromPoint(x, y);
-    }
-    if (!range) return false;
-    var sel = window.getSelection();
-    if (!sel) return false;
-    sel.removeAllRanges();
-    sel.addRange(range);
-    return true;
-  }
-
-  function startEditing(el, clickX, clickY) {
+  function startEditing(el) {
+    if (editing === el) return;
     if (el.tagName === 'IMG') return;
     editing = el;
     // Save the current MathML display before swapping to LaTeX
@@ -306,10 +287,6 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
     el.contentEditable = 'true';
     el.setAttribute('data-adt-editing', 'true');
     el.focus();
-    // Place the caret at the click point instead of position 0
-    if (typeof clickX === 'number' && typeof clickY === 'number') {
-      placeCaretAtPoint(clickX, clickY);
-    }
     parent.postMessage({ type: 'editing', dataId: dataId }, '*');
   }
 
@@ -348,6 +325,21 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
     }, '*');
   }
 
+  // Enter edit mode on mousedown (before the browser's default selection
+  // behavior) so native drag-to-select works within the contentEditable
+  // element. Handling this on 'click' was too late: the selection created
+  // during mousedown/drag was wiped when startEditing swapped innerHTML.
+  document.addEventListener('mousedown', function(e) {
+    if (!isEditable()) return;
+    var el = e.target.closest('[data-id]');
+    if (!el) return;
+    if (el.tagName === 'IMG') return;
+    if (editing === el) return;
+    if (editing && editing !== el) finishEditing();
+    selectElement(el);
+    startEditing(el);
+  });
+
   document.addEventListener('click', function(e) {
     if (!isEditable()) return;
     var el = e.target.closest('[data-id]');
@@ -378,9 +370,10 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
       parent.postMessage({ type: 'deselect' }, '*');
       return;
     }
+    if (editing === el) return;
     if (editing && editing !== el) finishEditing();
     selectElement(el);
-    if (el.tagName !== 'IMG') startEditing(el, e.clientX, e.clientY);
+    if (el.tagName !== 'IMG') startEditing(el);
   });
 
   document.addEventListener('keydown', function(e) {
