@@ -26,3 +26,16 @@ export function usePageImage(label: string, pageId: string, options?: { enabled?
     staleTime: Infinity, // Images don't change
   })
 }
+
+export function useAiEditHistory(
+  label: string,
+  pageId: string,
+  sectionIndex: number,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: ["books", label, "pages", pageId, "ai-edit-history", sectionIndex],
+    queryFn: () => api.aiEditHistory(label, pageId, sectionIndex),
+    enabled: !!label && !!pageId && (options?.enabled ?? true),
+  })
+}
