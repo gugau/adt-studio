@@ -66,13 +66,13 @@ For numbered or labeled sentences, combine a label with the sentence:
 
 ```html
 <!-- Source: "en_ro"  -->
-<span class="fitb-sentence text-2xl tracking-wide" data-id="text-1">en[[blank:item-1]]ro</span>
+<span class="fitb-sentence text-lg tracking-wide" data-id="text-1">en[[blank:item-1]]ro</span>
 
 <!-- Source: "m_y_" (two missing letters) -->
-<span class="fitb-sentence text-2xl tracking-wide" data-id="text-2">m[[blank:item-2]]y[[blank:item-3]]</span>
+<span class="fitb-sentence text-lg tracking-wide" data-id="text-2">m[[blank:item-2]]y[[blank:item-3]]</span>
 
 <!-- Source: "_eptiembr_" (missing letter at start AND end) -->
-<span class="fitb-sentence text-2xl tracking-wide" data-id="text-3">[[blank:item-4]]eptiembr[[blank:item-5]]</span>
+<span class="fitb-sentence text-lg tracking-wide" data-id="text-3">[[blank:item-4]]eptiembr[[blank:item-5]]</span>
 ```
 
 Rules for inline letter blanks:
@@ -80,6 +80,7 @@ Rules for inline letter blanks:
 - Do NOT leave the `_` character in the rendered text — the marker replaces it
 - Each marker increments `item-N` across the whole page
 - This is still pattern 2 — do NOT fall back to pattern 2b (label + separate input), which would park the input away from the letter gap and look wrong
+- Default font size is `text-lg` (~18px). Only step up to `text-xl` when the word is very short (≤4 rendered characters including blanks) AND the layout is a single centred row — never in multi-column grids, because longer words (e.g. `_eptiembr_`, `no_iembr_`) wrap and break the card layout at larger sizes
 
 **2b. Label + Separate Writable Area(s)** — use when the source text is a standalone label (e.g. `"Nombre:"`, `"Fecha de nacimiento:"`, `"Pregunta 1:"`) and the writable area sits next to or below the label rather than inside a sentence.
 
@@ -223,6 +224,7 @@ When in doubt, pattern 2b is safer than pattern 2 — a misplaced marker outside
 11. Use semantic colors: green for main level, blue for secondary, gray for tertiary
 12. If validator feedback says an exact expected value (for example section ID), use that exact value
 13. The `fitb-sentence` class MUST be present on any element (or its parent) that contains `[[blank:item-N]]` markers
+14. Font sizing: prefer `text-lg` (~18px) for fitb content. You may use `text-base` when cells are tight, and `text-xl` sparingly for single short words in wide single-column layouts. Avoid `text-2xl` or larger in multi-column grids — long words wrap and overflow the cells on desktop even when the page looks fine on mobile
 
 ### Response Format (STRICT)
 Return JSON object:
