@@ -271,7 +271,27 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
     }, '*');
   }
 
-  function startEditing(el) {
+  function placeCaretAtPoint(x, y) {
+    var range = null;
+    if (document.caretPositionFromPoint) {
+      var pos = document.caretPositionFromPoint(x, y);
+      if (pos) {
+        range = document.createRange();
+        range.setStart(pos.offsetNode, pos.offset);
+        range.collapse(true);
+      }
+    } else if (document.caretRangeFromPoint) {
+      range = document.caretRangeFromPoint(x, y);
+    }
+    if (!range) return false;
+    var sel = window.getSelection();
+    if (!sel) return false;
+    sel.removeAllRanges();
+    sel.addRange(range);
+    return true;
+  }
+
+  function startEditing(el, clickX, clickY) {
     if (el.tagName === 'IMG') return;
     editing = el;
     // Save the current MathML display before swapping to LaTeX
@@ -286,6 +306,10 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
     el.contentEditable = 'true';
     el.setAttribute('data-adt-editing', 'true');
     el.focus();
+    // Place the caret at the click point instead of position 0
+    if (typeof clickX === 'number' && typeof clickY === 'number') {
+      placeCaretAtPoint(clickX, clickY);
+    }
     parent.postMessage({ type: 'editing', dataId: dataId }, '*');
   }
 
@@ -356,7 +380,7 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
     }
     if (editing && editing !== el) finishEditing();
     selectElement(el);
-    if (el.tagName !== 'IMG') startEditing(el);
+    if (el.tagName !== 'IMG') startEditing(el, e.clientX, e.clientY);
   });
 
   document.addEventListener('keydown', function(e) {
