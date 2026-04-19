@@ -37,3 +37,8 @@ export const visualReviewLLMSchema = z.object({
   reasoning: z.string(),
   content: z.string(),
 })
+
+export const editVerifyLLMSchema = z.object({
+  applied: z.boolean(),
+  reason: z.string(),
+})

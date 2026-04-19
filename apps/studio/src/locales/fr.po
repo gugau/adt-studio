@@ -40,6 +40,9 @@ msgstr "(actif)"
 msgid "(base)"
 msgstr "(base)"
 
+msgid "(no instruction text)"
+msgstr "(aucun texte d'instruction)"
+
 msgid "(no target)"
 msgstr "(non cible)"
 
@@ -560,6 +563,9 @@ msgstr "Modification IA"
 msgid "AI edit failed"
 msgstr "La modification IA a échoué"
 
+msgid "AI edit history"
+msgstr "Historique des modifications IA"
+
 msgid "AI editing..."
 msgstr "Modification par IA..."
 
@@ -887,8 +893,14 @@ msgstr "Taux de succès du cache"
 msgid "Cache Hits"
 msgstr "Succès du cache"
 
+msgid "cached"
+msgstr "en cache"
+
 msgid "Cached"
 msgstr "Cached"
+
+msgid "Cached response"
+msgstr "Réponse en cache"
 
 msgid "Calculate word timestamps for all entries"
 msgstr "Calculer les horodatages de mots pour toutes les entrées"
@@ -1919,6 +1931,9 @@ msgstr "En-tête Texte"
 msgid "Heading"
 msgstr "Titre"
 
+msgid "Hide AI edit history"
+msgstr "Masquer l'historique des modifications IA"
+
 msgid "Hide Pruned"
 msgstr "Masquer les élagués"
 
@@ -2311,6 +2326,9 @@ msgstr "Chargement des correspondances de voix..."
 msgid "Loading..."
 msgstr "Chargement..."
 
+msgid "Loading…"
+msgstr "Chargement…"
+
 msgid "Lower values produce more consistent styling across pages."
 msgstr "Les valeurs plus basses produisent un style plus cohérent entre les pages."
 
@@ -2505,6 +2523,9 @@ msgstr "Aucune évaluation d'accessibilité n'a encore été générée. Empaque
 
 msgid "No accessibility findings were reported for this page."
 msgstr "Aucun résultat d'accessibilité n'a été signalé pour cette page."
+
+msgid "No AI edits yet for this section."
+msgstr "Aucune modification IA pour cette section pour l'instant."
 
 msgid "No assessment"
 msgstr "Aucune évaluation"
@@ -3643,6 +3664,9 @@ msgstr "Les paramètres pour cette étape ne sont pas encore disponibles."
 msgid "Show accessibility summary"
 msgstr "Afficher le résumé d'accessibilité"
 
+msgid "Show AI edit history"
+msgstr "Afficher l'historique des modifications IA"
+
 msgid "Show all"
 msgstr "Afficher tout"
 
@@ -4334,6 +4358,9 @@ msgstr "Variant:"
 
 msgid "Vector Extraction"
 msgstr "Extraction vectorielle"
+
+msgid "Verified applied"
+msgstr "Application vérifiée"
 
 #. placeholder {0}: String(version)
 msgid "Version {0}"

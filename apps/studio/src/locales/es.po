@@ -39,6 +39,9 @@ msgstr "(activo)"
 msgid "(base)"
 msgstr "(base)"
 
+msgid "(no instruction text)"
+msgstr "(sin texto de instrucción)"
+
 msgid "(no target)"
 msgstr "(no target)"
 
@@ -559,6 +562,9 @@ msgstr "Edición con IA"
 msgid "AI edit failed"
 msgstr "AI edit failed"
 
+msgid "AI edit history"
+msgstr "Historial de edición con IA"
+
 msgid "AI editing..."
 msgstr "Edición con IA..."
 
@@ -886,8 +892,14 @@ msgstr "Tasa de aciertos de caché"
 msgid "Cache Hits"
 msgstr "Aciertos de caché"
 
+msgid "cached"
+msgstr "en caché"
+
 msgid "Cached"
 msgstr "En caché"
+
+msgid "Cached response"
+msgstr "Respuesta en caché"
 
 msgid "Calculate word timestamps for all entries"
 msgstr "Calcular marcas de tiempo por palabra para todas las entradas"
@@ -1918,6 +1930,9 @@ msgstr "Texto de encabezado"
 msgid "Heading"
 msgstr "Título"
 
+msgid "Hide AI edit history"
+msgstr "Ocultar historial de edición con IA"
+
 msgid "Hide Pruned"
 msgstr "Ocultar eliminadas"
 
@@ -2310,6 +2325,9 @@ msgstr "Cargando asignaciones de voz..."
 msgid "Loading..."
 msgstr "Cargando..."
 
+msgid "Loading…"
+msgstr "Cargando…"
+
 msgid "Lower values produce more consistent styling across pages."
 msgstr "Valores más bajos producen estilos más consistentes entre páginas."
 
@@ -2504,6 +2522,9 @@ msgstr "No accessibility assessment has been generated yet. Package the ADT outp
 
 msgid "No accessibility findings were reported for this page."
 msgstr "No accessibility findings were reported for this page."
+
+msgid "No AI edits yet for this section."
+msgstr "Aún no hay ediciones con IA para esta sección."
 
 msgid "No assessment"
 msgstr "No assessment"
@@ -3642,6 +3663,9 @@ msgstr "La configuración para esta etapa aún no está disponible."
 msgid "Show accessibility summary"
 msgstr "Show accessibility summary"
 
+msgid "Show AI edit history"
+msgstr "Mostrar historial de edición con IA"
+
 msgid "Show all"
 msgstr "Mostrar todas"
 
@@ -4333,6 +4357,9 @@ msgstr "Variante:"
 
 msgid "Vector Extraction"
 msgstr "Extracción vectorial"
+
+msgid "Verified applied"
+msgstr "Aplicación verificada"
 
 #. placeholder {0}: String(version)
 msgid "Version {0}"
