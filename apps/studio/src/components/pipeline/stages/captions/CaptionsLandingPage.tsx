@@ -101,7 +101,7 @@ export function CaptionsLandingPage({
   const { t } = useLingui()
   const { queueRun } = useBookRun()
   const { apiKey, hasApiKey } = useApiKey()
-  const { storyboardReady, hasNoPages, allPagesPruned, canRun, pages } = usePrerequisiteChecks(bookLabel)
+  const { storyboardReady, hasNoPages, allPagesPruned, canRun, pages, isLoading: prereqLoading } = usePrerequisiteChecks(bookLabel)
   const { isRunning, isCompleted, hasError } = useStageStatus("captions")
 
   // ── Image count ─────────────────────────────────────────────────
@@ -157,6 +157,7 @@ export function CaptionsLandingPage({
         hasNoPages={hasNoPages}
         allPagesPruned={allPagesPruned}
         stageName="captions"
+        isLoading={prereqLoading}
       />
 
       <div className="rounded-xl bg-teal-50 px-5 py-4">

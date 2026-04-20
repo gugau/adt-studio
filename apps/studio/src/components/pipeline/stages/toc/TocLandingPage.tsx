@@ -172,7 +172,7 @@ export function TocLandingPage({
   const { t } = useLingui()
   const { queueRun } = useBookRun()
   const { apiKey, hasApiKey } = useApiKey()
-  const { storyboardReady, hasNoPages, allPagesPruned, canRun } = usePrerequisiteChecks(bookLabel)
+  const { storyboardReady, hasNoPages, allPagesPruned, canRun, isLoading: prereqLoading } = usePrerequisiteChecks(bookLabel)
   const { isRunning, isCompleted, hasError } = useStageStatus("toc")
 
   const handleRun = () => {
@@ -223,6 +223,7 @@ export function TocLandingPage({
         hasNoPages={hasNoPages}
         allPagesPruned={allPagesPruned}
         stageName="a table of contents"
+        isLoading={prereqLoading}
       />
 
       {/* Info banner */}

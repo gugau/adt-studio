@@ -141,7 +141,7 @@ export function QuizzesLandingPage({
   const { t } = useLingui()
   const { queueRun } = useBookRun()
   const { apiKey, hasApiKey } = useApiKey()
-  const { storyboardReady, hasNoPages, allPagesPruned, canRun, pages } = usePrerequisiteChecks(bookLabel)
+  const { storyboardReady, hasNoPages, allPagesPruned, canRun, pages, isLoading: prereqLoading } = usePrerequisiteChecks(bookLabel)
   const { isRunning, isCompleted, hasError } = useStageStatus("quizzes")
   const { data: activeConfigData } = useActiveConfig(bookLabel, { refetchOnMount: "always" })
 
@@ -236,6 +236,7 @@ export function QuizzesLandingPage({
         hasNoPages={hasNoPages}
         allPagesPruned={allPagesPruned}
         stageName="quizzes"
+        isLoading={prereqLoading}
       />
 
       {showActivityWarning && (

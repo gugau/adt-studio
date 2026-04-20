@@ -6,12 +6,15 @@ export function PrerequisiteWarnings({
   hasNoPages,
   allPagesPruned,
   stageName,
+  isLoading = false,
 }: {
   storyboardReady: boolean
   hasNoPages: boolean
   allPagesPruned: boolean
   stageName: string
+  isLoading?: boolean
 }) {
+  if (isLoading) return null
   return (
     <>
       {!storyboardReady && (

@@ -162,7 +162,7 @@ export function GlossaryLandingPage({
   const { t } = useLingui()
   const { queueRun } = useBookRun()
   const { apiKey, hasApiKey } = useApiKey()
-  const { storyboardReady, hasNoPages, allPagesPruned, canRun } = usePrerequisiteChecks(bookLabel)
+  const { storyboardReady, hasNoPages, allPagesPruned, canRun, isLoading: prereqLoading } = usePrerequisiteChecks(bookLabel)
   const { isRunning, isCompleted, hasError } = useStageStatus("glossary")
 
   const handleRun = () => {
@@ -213,6 +213,7 @@ export function GlossaryLandingPage({
         hasNoPages={hasNoPages}
         allPagesPruned={allPagesPruned}
         stageName="a glossary"
+        isLoading={prereqLoading}
       />
 
       {/* Info banner */}

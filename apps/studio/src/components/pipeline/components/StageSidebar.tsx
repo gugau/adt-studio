@@ -70,6 +70,7 @@ const TASK_KIND_LABELS: Record<string, MessageDescriptor> = {
 function getSettingsTabs(
   slug: string,
   i18n: ReturnType<typeof useLingui>["i18n"],
+  stageCompleted: boolean,
 ): { key: string; label: string }[] | undefined {
   const tabs: Record<string, { key: string; label: string }[]> = {
     extract: [
@@ -125,7 +126,9 @@ function getSettingsTabs(
       { key: "reviewer-checklist", label: i18n._(msg`Reviewer Checklist`) },
     ],
   }
-  return tabs[slug]
+  const stageTabs = tabs[slug]
+  if (!stageTabs) return undefined
+  return stageCompleted ? stageTabs : stageTabs.filter((t) => t.key !== "config")
 }
 
 export function StageSidebar({
@@ -192,10 +195,10 @@ export function StageSidebar({
   const stageItems = STAGES.map((step, index) => {
     const isActive = step.slug === activeStep
     const Icon = step.icon
-    const settingsTabs = getSettingsTabs(step.slug, i18n)
-    const showSubTabs = isActive && isSettings && !!settingsTabs
     const state = completionOverrides[step.slug] ? "done" : stageState(step.slug)
     const stageCompleted = state === "done"
+    const settingsTabs = getSettingsTabs(step.slug, i18n, stageCompleted)
+    const showSubTabs = isActive && isSettings && !!settingsTabs
     const ringState = state
 
     // "book" is always filled; all other stages fill when their own completion signal is met.
