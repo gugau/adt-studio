@@ -1,17 +1,23 @@
-import type { AppConfig, TocEntry, TocGenerationOutput, PageSectioningOutput } from "@adt/types"
-import { tocLLMSchema, WebRenderingOutput, PageSectioningOutput as PageSectioningOutputSchema, DEFAULT_LLM_MAX_RETRIES } from "@adt/types"
+import type {
+  AppConfig,
+  ContentNodeData,
+  PageSectioningSection,
+  TocEntry,
+  TocGenerationOutput,
+} from "@adt/types"
+import {
+  tocLLMSchema,
+  WebRenderingOutput,
+  PageSectioningOutput,
+  DEFAULT_LLM_MAX_RETRIES,
+} from "@adt/types"
 import type { LLMModel } from "@adt/llm"
 import type { Storage, PageData } from "@adt/storage"
 import { buildLanguageContext } from "./language-context.js"
 import { stripHtml } from "./glossary.js"
 
-/** Heading-level text types that produce TOC entries */
-const HEADING_TEXT_TYPES = new Set([
-  "section_heading",
-  "chapter_title",
-  "book_title",
-  "activity_title",
-])
+/** Role values (leaves) whose text acts as a section heading for TOC. */
+const HEADING_ROLE_TYPES = new Set(["heading"])
 
 export interface TocGenerationConfig {
   promptName: string
@@ -28,7 +34,7 @@ export function buildTocGenerationConfig(
     promptName: appConfig.toc_generation?.prompt ?? "toc_generation",
     modelId:
       appConfig.toc_generation?.model ??
-      appConfig.text_classification?.model ??
+      appConfig.page_sectioning?.model ??
       "openai:gpt-4.1",
     maxRetries: appConfig.toc_generation?.max_retries ?? DEFAULT_LLM_MAX_RETRIES,
     language,
@@ -39,8 +45,20 @@ interface HeadingInfo {
   sectionId: string
   title: string
   textId: string
-  textType: string
+  roleType: string
   pageNumber: number | null
+}
+
+/** Find the first heading leaf anywhere within a section's node tree. */
+function findFirstHeading(section: PageSectioningSection): ContentNodeData | null {
+  const stack: ContentNodeData[] = [...section.nodes]
+  while (stack.length > 0) {
+    const node = stack.shift()!
+    if (node.isPruned) continue
+    if (node.role && HEADING_ROLE_TYPES.has(node.role)) return node
+    if (node.children) stack.unshift(...node.children)
+  }
+  return null
 }
 
 /**
@@ -54,13 +72,13 @@ function collectHeadingsAndToc(
   let originalTocText: string | null = null
 
   for (const page of pages) {
-    const sectioningRow = storage.getLatestNodeData("page-sectioning", page.pageId)
-    if (!sectioningRow) continue
-    const parsed = PageSectioningOutputSchema.safeParse(sectioningRow.data)
+    const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+    if (!structuringRow) continue
+    const parsed = PageSectioningOutput.safeParse(structuringRow.data)
     if (!parsed.success) continue
     const sectioning = parsed.data
 
-    // Check for TOC page — collect its rendered text
+    // Check for TOC page — collect its rendered text.
     const hasTocSection = sectioning.sections.some(
       (s) => s.sectionType === "table_of_contents" && !s.isPruned,
     )
@@ -82,37 +100,28 @@ function collectHeadingsAndToc(
       }
     }
 
-    // Also check if the rendered section exists (so we have valid hrefs)
+    // Also check if the rendered section exists (so we have valid hrefs).
     const renderRow = storage.getLatestNodeData("web-rendering", page.pageId)
     const renderParsed = renderRow ? WebRenderingOutput.safeParse(renderRow.data) : null
     const renderedIndices = new Set(
       renderParsed?.success ? renderParsed.data.sections.map((s) => s.sectionIndex) : [],
     )
 
-    // Collect headings from non-pruned, rendered sections
+    // Collect first heading per non-pruned, rendered section.
     for (let i = 0; i < sectioning.sections.length; i++) {
       const section = sectioning.sections[i]
       if (section.isPruned || !renderedIndices.has(i)) continue
 
-      const sectionId = section.sectionId ?? `${page.pageId}_sec${String(i + 1).padStart(3, "0")}`
+      const heading = findFirstHeading(section)
+      if (!heading) continue
 
-      for (const part of section.parts) {
-        if (part.type !== "text_group" || part.isPruned) continue
-        for (const t of part.texts) {
-          if (t.isPruned) continue
-          if (HEADING_TEXT_TYPES.has(t.textType)) {
-            headings.push({
-              sectionId,
-              title: t.text,
-              textId: t.textId,
-              textType: t.textType,
-              pageNumber: section.pageNumber,
-            })
-            break // one heading per section
-          }
-        }
-        if (headings.length > 0 && headings[headings.length - 1].sectionId === sectionId) break
-      }
+      headings.push({
+        sectionId: section.sectionId,
+        title: heading.text ?? "",
+        textId: heading.nodeId,
+        roleType: heading.role ?? "heading",
+        pageNumber: section.pageNumber,
+      })
     }
   }
 
@@ -153,7 +162,7 @@ export async function generateToc(
       headings: headings.map((h) => ({
         sectionId: h.sectionId,
         title: h.title,
-        textType: h.textType,
+        roleType: h.roleType,
       })),
       has_original_toc: originalTocText !== null,
       original_toc_text: originalTocText ?? "",

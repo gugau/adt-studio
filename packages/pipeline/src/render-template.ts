@@ -38,54 +38,29 @@ export async function renderSectionTemplate(
   templateEngine: TemplateEngine
 ): Promise<SectionRendering> {
   const imageUrlPrefix = `/api/books/${input.label}/images`
+  const { section, context: renderContext } = input
 
-  const context: Record<string, unknown> = {
-    section_id: input.sectionId,
-    section_type: input.sectionType,
-    background_color: input.backgroundColor,
-    text_color: input.textColor,
+  const templateContext: Record<string, unknown> = {
+    section_id: section.sectionId,
+    section_type: section.sectionType,
+    background_color: section.backgroundColor,
+    text_color: section.textColor,
     label: input.label,
     image_url_prefix: imageUrlPrefix,
-    parts: input.parts.map((part) => {
-      if (part.type === "group") {
-        return {
-          type: "group",
-          group_id: part.groupId,
-          group_type: part.groupType,
-          texts: part.texts.map((t) => ({
-            text_id: t.textId,
-            text_type: t.textType,
-            text: t.text,
-          })),
-        }
-      }
-      const segMatch = part.imageId.match(/^(.+)_seg\d{3}_v\d+$/)
-      return {
-        type: "image",
-        image_id: part.imageId,
-        image_url: `${imageUrlPrefix}/${part.imageId}`,
-        is_segment: !!segMatch,
-        source_image_id: segMatch ? segMatch[1] : null,
-      }
-    }),
+    nodes: renderContext.nodes,
+    leaf_texts: renderContext.leaf_texts,
+    image_refs: renderContext.image_refs,
+    group_ids: renderContext.group_ids,
   }
 
-  const html = await templateEngine.render(config.templateName, context)
+  const html = await templateEngine.render(config.templateName, templateContext)
 
   // Validate the template output using the same validator as LLM output
-  const allowedTextIds: string[] = []
-  const allowedImageIds: string[] = []
-  const expectedTexts = new Map<string, string>()
-  for (const part of input.parts) {
-    if (part.type === "group") {
-      for (const t of part.texts) {
-        allowedTextIds.push(t.textId)
-        expectedTexts.set(t.textId, t.text)
-      }
-    } else {
-      allowedImageIds.push(part.imageId)
-    }
-  }
+  const allowedTextIds = renderContext.leaf_texts.map((t) => t.text_id)
+  const allowedImageIds = renderContext.image_refs.map((i) => i.image_id)
+  const expectedTexts = new Map(
+    renderContext.leaf_texts.map((t) => [t.text_id, t.text])
+  )
 
   const check = validateSectionHtml(
     html,
@@ -93,9 +68,10 @@ export async function renderSectionTemplate(
     allowedImageIds,
     imageUrlPrefix,
     {
+      allowedContainerIds: renderContext.group_ids,
       expectedTexts,
-      expectedSectionType: input.sectionType,
-      expectedSectionId: input.sectionId,
+      expectedSectionType: section.sectionType,
+      expectedSectionId: section.sectionId,
     }
   )
   if (!check.valid) {
@@ -106,7 +82,7 @@ export async function renderSectionTemplate(
 
   return {
     sectionIndex: input.sectionIndex,
-    sectionType: input.sectionType,
+    sectionType: section.sectionType,
     reasoning: "template-based rendering",
     html: check.sectionHtml ?? html,
   }

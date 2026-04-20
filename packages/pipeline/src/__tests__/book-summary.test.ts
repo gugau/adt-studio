@@ -84,8 +84,8 @@ describe("generateBookSummary", () => {
 describe("buildBookSummaryConfig", () => {
   it("extracts prompt/model/output language from AppConfig", () => {
     const appConfig: AppConfig = {
-      text_types: { heading: "Heading" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { heading: "Heading" },
+      structure_types: { paragraph: "Paragraph" },
       editing_language: "pt_br",
       book_summary: {
         prompt: "custom_summary",
@@ -103,8 +103,8 @@ describe("buildBookSummaryConfig", () => {
 
   it("defaults prompt/model/output language", () => {
     const appConfig: AppConfig = {
-      text_types: { heading: "Heading" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { heading: "Heading" },
+      structure_types: { paragraph: "Paragraph" },
     }
 
     const config = buildBookSummaryConfig(appConfig)

@@ -37,7 +37,6 @@ export interface CreateLLMModelOptions {
  */
 export function createLLMModel(options: CreateLLMModelOptions): LLMModel {
   const { modelId, cacheDir, promptEngine, onLog, rateLimiter, logLevel } = options
-  const languageModel = resolveModel(modelId)
   const log = createLogger(logLevel)
 
   return {
@@ -89,6 +88,7 @@ export function createLLMModel(options: CreateLLMModelOptions): LLMModel {
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         const hash = computeHash({
           modelId,
+          mode: opts.mode,
           system,
           messages: currentMessages,
           schema: opts.schema,
@@ -107,7 +107,7 @@ export function createLLMModel(options: CreateLLMModelOptions): LLMModel {
             } else {
               if (rateLimiter) await rateLimiter.acquire()
               const generated = await callLLM<T>(
-                languageModel,
+                resolveModel(modelId, { structuredOutputs: opts.mode === "json" ? false : undefined }),
                 opts,
                 system,
                 currentMessages
@@ -121,7 +121,7 @@ export function createLLMModel(options: CreateLLMModelOptions): LLMModel {
           } else {
             if (rateLimiter) await rateLimiter.acquire()
             const generated = await callLLM<T>(
-              languageModel,
+              resolveModel(modelId, { structuredOutputs: opts.mode === "json" ? false : undefined }),
               opts,
               system,
               currentMessages
@@ -291,14 +291,17 @@ export function createLLMModel(options: CreateLLMModelOptions): LLMModel {
   }
 }
 
-function resolveModel(modelId: string): LanguageModel {
+function resolveModel(
+  modelId: string,
+  options: { structuredOutputs?: boolean } = {}
+): LanguageModel {
   const colonIdx = modelId.indexOf(":")
   const provider = colonIdx >= 0 ? modelId.slice(0, colonIdx) : "openai"
   const model = colonIdx >= 0 ? modelId.slice(colonIdx + 1) : modelId
 
   switch (provider) {
     case "openai":
-      return openai(model)
+      return openai(model, options.structuredOutputs !== undefined ? { structuredOutputs: options.structuredOutputs } : undefined)
     case "anthropic":
       return anthropic(model)
     case "google":
@@ -308,7 +311,7 @@ function resolveModel(modelId: string): LanguageModel {
       const apiKey = process.env.CUSTOM_OPENAI_API_KEY
       if (!baseURL) throw new Error("Custom provider requires CUSTOM_OPENAI_BASE_URL to be set (configure in Settings → Custom)")
       const custom = createOpenAI({ baseURL, apiKey: apiKey || "dummy" })
-      return custom(model)
+      return custom(model, options.structuredOutputs !== undefined ? { structuredOutputs: options.structuredOutputs } : undefined)
     }
     default:
       throw new Error(`Unsupported LLM provider: ${provider}`)
@@ -357,6 +360,9 @@ async function callLLM<T>(
     messages: coreMessages,
     maxRetries: 0,
     abortSignal: AbortSignal.timeout(opts.timeoutMs ?? 90_000),
+  }
+  if (opts.mode) {
+    generateOpts.mode = opts.mode
   }
   if (opts.maxTokens) {
     generateOpts.maxTokens = opts.maxTokens

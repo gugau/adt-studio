@@ -87,6 +87,7 @@ export function StepSettingsPage() {
           switch (settingsStage) {
             case "extract":
               return <ExtractSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
+            case "sectioning":
             case "storyboard":
               return <StoryboardSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             case "quizzes":

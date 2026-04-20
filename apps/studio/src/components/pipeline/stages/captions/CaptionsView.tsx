@@ -134,15 +134,13 @@ function VersionPicker({
   )
 }
 
-/** Build a map from imageId → sectionIndex using sectioning data */
+/** Build a map from imageId → sectionIndex by scanning each section's parts. */
 function buildImageSectionMap(page: PageDetail | undefined): Map<string, number> {
   const map = new Map<string, number>()
   if (!page?.sectioning) return map
   page.sectioning.sections.forEach((section, idx) => {
     for (const part of section.parts) {
-      if (part.type === "image") {
-        map.set(part.imageId, idx)
-      }
+      if (part.type === "image") map.set(part.imageId, idx)
     }
   })
   return map

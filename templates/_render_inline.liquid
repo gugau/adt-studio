@@ -1,0 +1,21 @@
+{%- comment -%}
+  Inline render partial — emits leaves as inline `<span>`s rather than
+  block elements. Used when the parent container (paragraph / heading /
+  list_item / table_cell / preformatted) already provides the block
+  wrapper. Non-leaf children fall back to block rendering via
+  `_render_node`.
+
+  Parameters:
+    nodes  — RenderNode[]
+{%- endcomment -%}
+{%- for node in nodes -%}
+{%- if node.role == "image" -%}
+<img data-id="{{ node.node_id | escape }}" src="{{ node.image_url | escape }}">
+{%- elsif node.role == "math" -%}
+<span class="font-mono" data-id="{{ node.node_id | escape }}">{{ node.text | escape }}</span>
+{%- elsif node.role -%}
+<span data-id="{{ node.node_id | escape }}">{{ node.text | escape }}</span>
+{%- else -%}
+{% include "_render_node", nodes: node.children, depth: 0 %}
+{%- endif -%}
+{%- endfor -%}

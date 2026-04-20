@@ -28,16 +28,16 @@ function makeFakeLLMModel(
 describe("buildMeaningfulnessConfig", () => {
   it("returns null when no image_meaningfulness config", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { section_text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
     }
     expect(buildMeaningfulnessConfig(appConfig)).toBeNull()
   })
 
   it("returns null when image_meaningfulness has no model", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { section_text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
       image_meaningfulness: { prompt: "custom_prompt" },
     }
     expect(buildMeaningfulnessConfig(appConfig)).toBeNull()
@@ -45,8 +45,8 @@ describe("buildMeaningfulnessConfig", () => {
 
   it("returns config with defaults when model is set", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { section_text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
       image_meaningfulness: { model: "openai:gpt-4.1" },
     }
     const config = buildMeaningfulnessConfig(appConfig)
@@ -58,8 +58,8 @@ describe("buildMeaningfulnessConfig", () => {
 
   it("uses explicit prompt name when provided", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { section_text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
       image_meaningfulness: {
         model: "openai:gpt-4.1",
         prompt: "custom_meaningfulness",
@@ -74,8 +74,8 @@ describe("buildMeaningfulnessConfig", () => {
 
   it("returns null when image_filters.meaningfulness is false", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { section_text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
       image_meaningfulness: { model: "openai:gpt-4.1" },
       image_filters: { meaningfulness: false },
     }
@@ -84,8 +84,8 @@ describe("buildMeaningfulnessConfig", () => {
 
   it("returns config when image_filters.meaningfulness is true", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { section_text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
       image_meaningfulness: { model: "openai:gpt-4.1" },
       image_filters: { meaningfulness: true },
     }

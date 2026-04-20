@@ -52,7 +52,6 @@ export {
   DEFAULT_LLM_MAX_RETRIES,
   StepConfig,
   QuizGenerationConfig,
-  SectioningMode,
   PageSectioningConfig,
   RenderType,
   VisualRefinementStrategyConfig,
@@ -63,11 +62,18 @@ export {
 } from "./config.js"
 
 export {
-  TextEntry,
-  TextGroup,
-  TextClassificationOutput,
-  buildTextClassificationLLMSchema,
-} from "./text-classification.js"
+  ContentNodeData,
+  PageSectioningSection,
+  PageSectioningOutput,
+  SectionTextEntry,
+  SectionTextPart,
+  SectionImagePart,
+  SectionPart,
+  PageSection,
+  UIPageSectioningOutput,
+  buildPageSectioningLLMSchema,
+  buildPageSectioningRefinementLLMSchema,
+} from "./page-sectioning.js"
 
 export {
   ImageFilters,
@@ -95,16 +101,6 @@ export {
 export { BookMetadata } from "./metadata.js"
 
 export { BookSummaryOutput } from "./book-summary.js"
-
-export {
-  SectionTextEntry,
-  SectionTextPart,
-  SectionImagePart,
-  SectionPart,
-  PageSection,
-  PageSectioningOutput,
-  buildPageSectioningLLMSchema,
-} from "./page-sectioning.js"
 
 export {
   SectionRendering,

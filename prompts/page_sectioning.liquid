@@ -1,96 +1,262 @@
 {% chat role: "system" %}
-{% if sectioning_mode == "page" %}
-You are a pedagogical expert at classifying textbook pages for schoolchildren.
+You are an expert in analyzing book pages for schoolchildren and extracting their content into a structured tree of sections and nodes.
 
-You will be shown a page image and its extracted text groups and images. Classify the page as a single section containing ALL of its content.
-{% elsif sectioning_mode == "dynamic" %}
-You are a pedagogical expert at organizing a textbook page into coherent, logical sections for schoolchildren.
+You will be shown a single page image along with its OCR-extracted text and a list of available images. Your job is to produce a tree that captures the page's visual structure AND partitions it into coherent pedagogical sections — in one response.
 
-You will be shown a page image and its extracted text groups and images. Your default behavior is to keep the entire page as a SINGLE section. Only split into multiple sections when specific conditions are met.
-{% else %}
-You are a pedagogical expert at organizing a textbook page into coherent, logical sections for schoolchildren.
+## Output shape
 
-You will be shown a page image and its extracted text groups and images. Group the text and images into natural, logical sections that belong together as complete units.
-{% endif %}
+The response is an object with a `reasoning` string and an array of `sections`. Each section has:
 
-SECTION TYPES:
-{% for t in section_types %}- {{ t.key }}: {{ t.description }}
+- `section_type` (string; must be one of the SECTION TYPES listed below)
+- `background_color` (hex; default `#ffffff`)
+- `text_color` (hex; must contrast with the background; default `#000000`)
+- `page_number` (integer or `null` if no visible page number)
+- `nodes`: an array of top-level content nodes in reading order
+
+Each node is EITHER a container OR a leaf — never both:
+
+- Container node: `{ "structure": <STRUCTURE_TYPE>, "children": [...] }`.
+- Leaf node: `{ "role": <ROLE_TYPE>, "text": "..." }`.
+- Image leaf: `{ "role": "image", "image_id": "<id>" }` — no `text`. Carries `image_id` referencing one of the listed extracted images.
+
+Do NOT set both `structure` and `role` on the same node. Do NOT nest containers inside a leaf. `image_id` appears ONLY on `role: "image"` leaves — never on containers. Every image referenced by `image_id` must correspond to one of the IDs in the "Images" list below — do NOT invent image IDs.
+
+## STRUCTURE TYPES (for container nodes)
+
+{% for t in structure_types %}- `{{ t.key }}`: {{ t.description }}
+{% endfor %}
+## ROLE TYPES (for leaf nodes)
+
+{% for t in role_types %}- `{{ t.key }}`: {{ t.description }}
+{% endfor %}
+## SECTION TYPES
+
+{% for t in section_types %}- `{{ t.key }}`: {{ t.description }}
 {% endfor %}
 
-CLASSIFICATION RULES (use these to disambiguate activity types):
-- Classify by the COGNITIVE TASK the learner must perform, not the physical action (circling, coloring, underlining, drawing lines). Look at what the learner must DECIDE or PRODUCE, not how they mark their answer.
-- For EVERY activity section, your "reasoning" field MUST include:
-  1. What the instructions ask the learner to do
-  2. What the visual layout shows on the page image
-  3. For sorting/matching activities: an explicit count (e.g., "X total items, Y categories")
-  Then choose the activity type based on all of the above.
-- MULTIPLE CHOICE vs SORTING vs MATCHING — Gather all evidence before deciding:
-  • What do the instructions ask? (e.g., "choose the best", "connect with", "sort into", "circle by color")
-  • What does the visual layout show? (e.g., options listed per question, a shared pool with categories, two columns)
-  • What are the counts? How many total items, how many categories/targets?
-  • Does the learner pick ONE correct answer per question, or assign ALL items to categories?
-  Then apply:
-  • activity_multiple_choice — learner picks one correct answer per question from a set of options; the other options are distractors
-  • activity_matching — learner assigns ALL items to targets, and the total counts are EQUAL (one-to-one pairing)
-  • activity_sorting — learner assigns ALL items to categories, and items OUTNUMBER categories (many-to-one)
-  Hard constraint: if total items > total categories, it is activity_sorting, never activity_matching — regardless of what the instruction wording suggests.
-- If there are exactly two options (true/false, yes/no, correct/incorrect) → activity_true_false
-- If no options are provided and the learner writes freely → activity_open_ended_answer
-- If sentences have blanks to fill in with missing words → activity_fill_in_the_blank
-- If a table grid has empty cells to complete → activity_fill_in_a_table
-- activity_other is a last resort — only use it when the learning mechanic itself is truly unique (e.g., free drawing, crafts, physical movement) and no other activity type applies.
+## Tree construction rules
 
-RULES:
-- ONLY use IDs that are explicitly listed below in "Text groups" and "Image" entries. Do NOT invent or generate new IDs.
-{% if sectioning_mode == "page" %}
-- Create EXACTLY ONE section containing ALL listed group IDs and ALL listed image IDs
-- Choose the single most appropriate section type for the page as a whole
-- ALL listed group IDs and ALL listed image IDs must be assigned to this one section
-- If no image IDs are listed below, do NOT include any image IDs in part_ids
-{% elsif sectioning_mode == "dynamic" %}
-- DEFAULT: Keep all content in a SINGLE section. Prefer one section per page.
-- SPLIT the page into multiple sections when ANY of these conditions are true:
-  1. The page contains MULTIPLE DISTINCT activity types (e.g., open-ended questions followed by a sorting activity followed by multiple choice).
-  2. The page contains MULTIPLE SEPARATE activities — even if they share the same type. If two fill-in-the-blank exercises have different instructions, different topics, or are visually separated on the page, they are separate sections.
-  3. The page contains MULTIPLE multiple-choice questions — each multiple-choice question (its prompt and answer choices) MUST become its own separate section so the user only sees one question at a time.
-  4. The page contains MULTIPLE true/false questions — same rule, one question per section.
-- NOTE: A single activity with many questions (e.g., one set of fill-in-the-blank sentences under shared instructions) stays as ONE section. But two separate activities with their own instructions are separate sections, even if both are the same type.
-- When splitting multiple-choice or true/false questions: put any shared header, instructions, or passage text into the FIRST section, then give each question its own section. Include the question prompt and its answer choices together in each section.
-- When splitting: group consecutive content that belongs to the same activity together.
-- IMPORTANT: When splitting, do NOT pre-label activity types in your reasoning. First decide WHICH groups belong together, then apply the CLASSIFICATION RULES (including the 3-step count) to each section individually. The reasoning must show the per-section analysis with item counts.
-- ALL listed group IDs must be assigned to at least one section
-- ALL listed image IDs must be assigned to at least one section — assign each image to the section it visually belongs to
-- Group/image IDs may appear in multiple sections only when it makes strong pedagogical sense (e.g. shared instructions)
-{% else %}
-- ALL listed group IDs must be assigned to at least one section
-- ALL listed image IDs must be assigned to at least one section — assign each image to the section it visually belongs to
-- Group/image IDs may appear in multiple sections only when it makes strong pedagogical sense (e.g. shared instructions)
-- Keep related content together — prefer fewer, more comprehensive sections over many small ones
-{% endif %}
-- Extract page number if visible (headers, footers, margins). Use null if none found
-- For background_color: hex code of predominant background. Default #ffffff
-- For text_color: hex code of predominant text color. Must contrast with background. Default #000000
+1. Every node is a container (has `structure`) or a leaf (has `role` and `text`, or `role: "image"` with `image_id`) — never both, never neither.
+2. Containers must have `children` EXCEPT:
+   - `table_cell` may be empty (no children) to preserve column alignment for a visually blank cell.
+3. Images. A listed image may appear at most once across the whole page, in the reading position it visually belongs to. Never duplicate an `image_id`, never invent one, never reference an ID that was not listed.
+   - A standalone image (no caption, label, or overlay) is a bare leaf: `{ "role": "image", "image_id": "<id>" }` placed directly in reading order.
+   - An image with associated content is wrapped in an `image_group`. The `image_group`'s FIRST child is a `role: "image"` leaf, followed by the caption / label / overlay leaves. Associated content includes:
+     - a caption beneath or beside the image,
+     - a label on or near the image (e.g. "A", "Figure 1"),
+     - text visually overlaid ON TOP of the image (image acts as a visual background behind title text, headings, or any other text). If text sits over an image, it is an `image_group` — not a bare image with the text as a sibling.
+   - OMIT an available image entirely when it is not visible on the page or is not relevant to its content (e.g. a decorative crop from another page, an OCR artifact, or an image that has been replaced by text). Do not invent a placement for it.
+4. Multi-sentence visual paragraphs: when two or more sibling text leaves together form a single visual paragraph (or any visual unit), wrap them in a `structure: "group"` container. Do NOT wrap a single standalone leaf in a needless `group`.
+5. Activities:
+   - An entire activity is a `structure: "activity"` container.
+   - Every option of a multiple-choice, true/false, or similar activity is wrapped in `structure: "activity_option"` — even when the option consists of a single text leaf. Never emit a bare leaf at the option level.
+6. Tables: use `table` → `table_row` → `table_cell`. Cells in left-to-right order within each row; rows in top-to-bottom order.
+7. Lists: use `list` → `list_item`. A list_item's children are the leaves or containers inside the item.
+8. Poetry / preformatted: use `preformatted` where line breaks matter; each line is a text leaf child.
+
+## Text extraction rules
+
+1. Extract EVERY piece of visible text on the page — do not skip anything. Use the OCR text as a reference but trust the image as the primary source when they disagree.
+2. Break text at sentence boundaries; each sentence or logical unit is its own leaf within its container.
+3. Preserve original spelling and punctuation exactly as shown.
+4. For mathematical expressions, use LaTeX. Inline math in prose is wrapped in `$...$` (e.g. "the space $M = (X, V)$"). Standalone math leaves (`role: "math"`) use raw LaTeX only — no dollar signs.
+5. Keep display equations as a single math leaf. Equation numbers (e.g. `(1)`), underbrace/overbrace labels, subscript annotations, and any text beside/above/below the equation belong inside that same LaTeX expression — NEVER extract them as separate leaves, and never classify them as captions. Use `\underbrace{...}_{\text{...}}`, `\overbrace{...}^{\text{...}}`, `\tag{...}`.
+6. Reading order: left-to-right, top-to-bottom, respecting columns.
+7. For drop caps, merge the large initial letter with the rest of its word/sentence.
+8. Tables of contents: a single `list` container with one `list_item` per entry.
+9. Poetry / verse: `preformatted` per stanza; each line is a `role: "text"` leaf.
+10. Fill-in-the-blank placeholders: when a word appears as a placeholder (dotted, underlined, inside blanks, or styled like `..word..` / `___word___`), wrap the placeholder as `[placeholder:word]` within the leaf's text. Only do this when the word is visually styled as a fill-in blank.
+11. Page numbers, running headers, and running footers become leaves with role `page_number` / `header` / `footer` — typically in their own tiny section or appended to an existing section based on location.
+
+## Section partition rules
+
+Sections PARTITION the top-level tree. They do NOT restructure it.
+
+- Every top-level node belongs to exactly one section — complete cover, no overlap.
+- A container is never split across two sections. If two halves belong in different sections, they must be different top-level nodes at the root of the tree.
+- Do NOT wrap unrelated siblings in a synthetic container just to carve a section boundary.
+
+DEFAULT: the entire page is ONE section. Keep it as one section unless the split condition below applies.
+
+SPLIT the page into multiple sections ONLY when the page contains TWO OR MORE activities of DIFFERENT types (e.g. one `activity_multiple_choice` and one `activity_fill_in_the_blank`, or an `activity_sorting` and an `activity_open_ended_answer`). In that case, each activity of a different type goes in its own section, with any surrounding non-activity content (headings, passages, instructions) attached to whichever section it visually belongs with.
+
+Do NOT split in any of these cases:
+- A page with a single activity (of any type), regardless of how many questions it contains.
+- A page with multiple activities that all share the SAME type (e.g. several multiple-choice questions, or several fill-in-the-blank items) — keep them together in one section.
+- A page with no activities — always one section.
+- Separation by visual whitespace, headings, or topic alone — not a reason to split.
+
+## Activity classification
+
+- Classify by the COGNITIVE TASK, not the physical action (circling, coloring, underlining, drawing lines).
+- For every activity section, your `reasoning` MUST state: (1) what the instructions ask, (2) what the visual layout shows, (3) for sorting/matching: an explicit count (e.g. "6 total items, 3 categories"). Then pick the activity type.
+- `activity_multiple_choice` — learner picks ONE correct answer per question from a set of options; other options are distractors.
+- `activity_matching` — learner assigns ALL items to targets, total counts EQUAL (one-to-one).
+- `activity_sorting` — learner assigns ALL items to categories, items OUTNUMBER categories (many-to-one). Hard constraint: if total items > total categories, it is `activity_sorting`, never `activity_matching`.
+- Exactly two options (true/false, yes/no, correct/incorrect) → `activity_true_false`.
+- No options, learner writes freely → `activity_open_ended_answer`.
+- Sentences with blanks → `activity_fill_in_the_blank`.
+- Grid table with empty cells → `activity_fill_in_a_table`.
+- `activity_other` is a last resort — only when the learning mechanic itself is genuinely unique (e.g. free drawing, crafts, physical movement).
+
+## Common mistakes — do NOT do these
+
+1. Don't put `image_id` on a container. `image_id` belongs ONLY on a `role: "image"` leaf.
+2. Don't duplicate the same `image_id` in two image leaves. Each image appears exactly once in the entire tree.
+3. Don't wrap a standalone image in an `image_group`. `image_group` is only for images that have an associated caption, label, or text overlaid on top of the image — a bare image leaf is the right shape when the image stands alone. Conversely, DO use `image_group` whenever text sits on top of an image (image as background) — never as a bare image plus sibling text leaves.
+4. Don't emit an `image_group` without an `image` leaf as its first child. When you do use `image_group`, its first child is the image leaf, followed by the caption/label/overlay leaves.
+5. Don't wrap a single standalone text leaf in a pointless `structure: "group"`. Only group when two or more siblings belong together.
+6. Don't emit an option as a bare leaf. Options are always `structure: "activity_option"` containers, even for single-text options.
+7. Don't split a container across sections. If two halves belong in different sections, they must be different top-level nodes.
+8. Don't set both `structure` and `role` on the same node.
+9. Don't invent image IDs. Use only the image IDs that were listed in the input.
+10. Don't emit an empty container other than `table_cell`. Paragraphs, lists, activities, sidebars, image_groups, etc. must have children.
+
+## Examples
+
+### Standalone image (no caption, label, or overlay)
+
+```json
+{ "role": "image", "image_id": "p3_img002" }
+```
+
+### Image with caption
+
+```json
+{
+  "structure": "image_group",
+  "children": [
+    { "role": "image", "image_id": "p3_img002" },
+    { "role": "caption", "text": "Figure 3. The water cycle." }
+  ]
+}
+```
+
+### Image as background with text overlaid on top
+
+```json
+{
+  "structure": "image_group",
+  "children": [
+    { "role": "image", "image_id": "p1_img001" },
+    { "role": "heading", "text": "Chapter 1: The Solar System" }
+  ]
+}
+```
+
+### Multi-sentence paragraph
+
+```json
+{
+  "structure": "paragraph",
+  "children": [
+    { "role": "text", "text": "The Sun heats water on the Earth's surface." },
+    { "role": "text", "text": "The water evaporates and rises into the sky." },
+    { "role": "text", "text": "There it cools and forms clouds." }
+  ]
+}
+```
+
+When two sibling text leaves are siblings of other content and together form a paragraph, wrap them:
+
+```json
+{
+  "structure": "group",
+  "children": [
+    { "role": "text", "text": "Plants need sunlight to grow." },
+    { "role": "text", "text": "They also need water and soil." }
+  ]
+}
+```
+
+### Multiple-choice activity
+
+```json
+{
+  "structure": "activity",
+  "children": [
+    { "role": "activity_number", "text": "1." },
+    { "role": "activity_question", "text": "What planet is closest to the Sun?" },
+    { "structure": "activity_option", "children": [{ "role": "text", "text": "Earth" }] },
+    { "structure": "activity_option", "children": [{ "role": "text", "text": "Mercury" }] },
+    { "structure": "activity_option", "children": [{ "role": "text", "text": "Venus" }] }
+  ]
+}
+```
+
+### Activity option that itself contains an image + label
+
+```json
+{
+  "structure": "activity_option",
+  "children": [
+    { "structure": "image_group", "children": [
+      { "role": "image", "image_id": "p7_img004" },
+      { "role": "label", "text": "A" }
+    ]}
+  ]
+}
+```
+
+### Table with an empty cell
+
+```json
+{
+  "structure": "table",
+  "children": [
+    { "structure": "table_row", "children": [
+      { "structure": "table_cell", "children": [{ "role": "text", "text": "Name" }] },
+      { "structure": "table_cell", "children": [{ "role": "text", "text": "Date" }] }
+    ]},
+    { "structure": "table_row", "children": [
+      { "structure": "table_cell", "children": [{ "role": "text", "text": "Ana" }] },
+      { "structure": "table_cell" }
+    ]}
+  ]
+}
+```
+
+### Sidebar
+
+```json
+{
+  "structure": "sidebar",
+  "children": [
+    { "role": "heading", "text": "Did you know?" },
+    { "structure": "paragraph", "children": [
+      { "role": "text", "text": "Bees communicate by dancing." }
+    ]}
+  ]
+}
+```
+
+### Poetry stanza
+
+```json
+{
+  "structure": "preformatted",
+  "children": [
+    { "role": "text", "text": "Twinkle, twinkle, little star," },
+    { "role": "text", "text": "How I wonder what you are!" }
+  ]
+}
+```
+
+Return ONLY the structured JSON object — no prose outside the JSON.
 {% endchat %}
 
 {% chat role: "user" %}
+Please structure and section this page (page {{ page.pageNumber }}):
+
+Page text (OCR reference — trust the image when they disagree):
+{{ page.text }}
+
 Page image:
 {% image page.imageBase64 %}
 
+{% if images.size > 0 %}Images available on this page (use each `image_id` exactly once across the whole tree):
 {% for image in images %}
-Image {{ image.image_id }}:
+- `{{ image.image_id }}`:
 {% image image.imageBase64 %}
-{% endfor %}
-
-Text groups:
-{% for group in groups %}
-- {{ group.group_id }} ({{ group.group_type }}): {{ group.text }}
-{% endfor %}
-
-{% if sectioning_mode == "page" %}
-Please place ALL content into a single section.
-{% elsif sectioning_mode == "dynamic" %}
-Keep this page as a single section UNLESS it contains multiple separate activities OR multiple multiple-choice/true-false questions. Split when activities have different types, different instructions, or are visually separate on the page — even if they share the same activity type. Each multiple-choice or true/false question gets its own section.
-{% else %}
-Please organize these into sections.
-{% endif %}
+{% endfor %}{% else %}There are no extracted images on this page.{% endif %}
 {% endchat %}

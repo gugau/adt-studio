@@ -13,7 +13,6 @@ import {
 import type { LLMModel, LlmLogEntry, LogLevel, TTSSynthesizer } from "@adt/llm"
 import type {
   StepName,
-  TextClassificationOutput,
   ImageClassificationOutput,
   PageSectioningOutput,
   BookMetadata,
@@ -27,14 +26,17 @@ import type {
 import { extractPDF } from "./pdf-extraction.js"
 import { extractMetadata, buildMetadataConfig } from "./metadata-extraction.js"
 import { generateBookSummary, buildBookSummaryConfig } from "./book-summary.js"
-import { classifyPageText, buildClassifyConfig } from "./text-classification.js"
+import {
+  sectionPage,
+  buildPageSectioningConfig,
+  flattenTreeToText,
+} from "./page-sectioning.js"
 import { classifyPageImages, buildImageClassifyConfig } from "./image-filtering.js"
 import { filterPageImageMeaningfulness, buildMeaningfulnessConfig } from "./image-meaningfulness.js"
 import { cropPageImages, applyCrops, buildCroppingConfig, getCroppedImageId } from "./image-cropping.js"
 import { segmentPageImages, applySegmentation, buildSegmentationConfig, getSegmentedImageId } from "./image-segmentation.js"
-import { sectionPage, buildSectioningConfig } from "./page-sectioning.js"
 import { renderPage, buildRenderStrategyResolver } from "./web-rendering.js"
-import { translatePageText, buildTranslationConfig } from "./translation.js"
+import { translatePageTree, buildTranslationConfig } from "./translation.js"
 import { createTemplateEngine } from "./render-template.js"
 import { captionPageImages, buildCaptionConfig, extractImageIds } from "./image-captioning.js"
 import { generateGlossary, buildGlossaryConfig } from "./glossary.js"
@@ -176,12 +178,11 @@ export async function runFullPipeline(
     // Build all step configs upfront
     const metadataConfig = buildMetadataConfig(config)
     const bookSummaryConfig = buildBookSummaryConfig(config)
-    const textClassifyConfig = buildClassifyConfig(config)
+    const pageSectioningConfig = buildPageSectioningConfig(config)
     const imageClassifyConfig = buildImageClassifyConfig(config)
     const meaningfulnessConfig = buildMeaningfulnessConfig(config)
     const segmentationConfig = buildSegmentationConfig(config)
     const croppingConfig = buildCroppingConfig(config)
-    const sectioningConfig = buildSectioningConfig(config)
     const resolveRenderConfig = buildRenderStrategyResolver(config)
     const captionConfig = buildCaptionConfig(config)
 
@@ -218,10 +219,13 @@ export async function runFullPipeline(
 
     executors.set("book-summary", async () => {
       const pages = storage.getPages()
-      const summaryPages = pages.map((page) => ({
-        pageNumber: page.pageNumber,
-        text: page.text,
-      }))
+      const summaryPages = pages.map((page) => {
+        const row = storage.getLatestNodeData("page-sectioning", page.pageId)
+        const text = row
+          ? flattenTreeToText(row.data as PageSectioningOutput)
+          : page.text
+        return { pageNumber: page.pageNumber, text }
+      })
       const model = getModel(bookSummaryConfig.modelId)
       const result = await generateBookSummary(summaryPages, bookSummaryConfig, model)
       storage.putNodeData("book-summary", "book", result)
@@ -439,21 +443,39 @@ export async function runFullPipeline(
       })
     })
 
-    executors.set("text-classification", async (p) => {
-      const model = getModel(textClassifyConfig.modelId)
+    // ── Sectioning stage ─────────────────────────────────────────
+
+    executors.set("page-sectioning", async (p) => {
+      const model = getModel(pageSectioningConfig.modelId)
       const pages = storage.getPages()
       const totalPages = pages.length
       await processWithConcurrency(pages, effectiveConcurrency, async (page) => {
+        const imageClassRow = storage.getLatestNodeData("image-filtering", page.pageId)
+        if (!imageClassRow) return
+        const imageClassification = imageClassRow.data as ImageClassificationOutput
+        const unprunedImageIds = imageClassification.images
+          .filter((img) => !img.isPruned)
+          .map((img) => img.imageId)
+        const availableImages = unprunedImageIds.map((imageId) => ({
+          imageId,
+          imageBase64: storage.getImageBase64(imageId),
+        }))
         const imageBase64 = storage.getPageImageBase64(page.pageId)
-        const result = await classifyPageText(
-          { pageId: page.pageId, pageNumber: page.pageNumber, text: page.text, imageBase64 },
-          textClassifyConfig,
+        const result = await sectionPage(
+          {
+            pageId: page.pageId,
+            pageNumber: page.pageNumber,
+            text: page.text,
+            imageBase64,
+            availableImages,
+          },
+          pageSectioningConfig,
           model,
         )
-        storage.putNodeData("text-classification", page.pageId, result)
+        storage.putNodeData("page-sectioning", page.pageId, result)
         p.emit({
           type: "step-progress",
-          step: "text-classification",
+          step: "page-sectioning",
           message: page.pageId,
           page: pages.indexOf(page) + 1,
           totalPages,
@@ -470,57 +492,19 @@ export async function runFullPipeline(
       const pages = storage.getPages()
       const totalPages = pages.length
       await processWithConcurrency(pages, effectiveConcurrency, async (page) => {
-        const classRow = storage.getLatestNodeData("text-classification", page.pageId)
-        if (!classRow) return
-        const textClassification = classRow.data as TextClassificationOutput
-        const translated = await translatePageText(page.pageId, textClassification, translationConfig, model)
-        storage.putNodeData("text-classification", page.pageId, translated)
+        const row = storage.getLatestNodeData("page-sectioning", page.pageId)
+        if (!row) return
+        const sectioning = row.data as PageSectioningOutput
+        const translated = await translatePageTree(
+          page.pageId,
+          sectioning,
+          translationConfig,
+          model,
+        )
+        storage.putNodeData("page-sectioning", page.pageId, translated)
         p.emit({
           type: "step-progress",
           step: "translation",
-          message: page.pageId,
-          page: pages.indexOf(page) + 1,
-          totalPages,
-        })
-      })
-    })
-
-    // ── Storyboard stage ────────────────────────────────────────
-
-    executors.set("page-sectioning", async (p) => {
-      const model = getModel(textClassifyConfig.modelId)
-      const pages = storage.getPages()
-      const totalPages = pages.length
-      await processWithConcurrency(pages, effectiveConcurrency, async (page) => {
-        const textClassRow = storage.getLatestNodeData("text-classification", page.pageId)
-        const imageClassRow = storage.getLatestNodeData("image-filtering", page.pageId)
-        if (!textClassRow || !imageClassRow) return
-        const textClassification = textClassRow.data as TextClassificationOutput
-        const imageClassification = imageClassRow.data as ImageClassificationOutput
-        const unprunedImageIds = imageClassification.images
-          .filter((img) => !img.isPruned)
-          .map((img) => img.imageId)
-        const sectionImages = unprunedImageIds.map((imageId) => ({
-          imageId,
-          imageBase64: storage.getImageBase64(imageId),
-        }))
-        const pageImageBase64 = storage.getPageImageBase64(page.pageId)
-        const result = await sectionPage(
-          {
-            pageId: page.pageId,
-            pageNumber: page.pageNumber,
-            pageImageBase64,
-            textClassification,
-            imageClassification,
-            images: sectionImages,
-          },
-          sectioningConfig,
-          model,
-        )
-        storage.putNodeData("page-sectioning", page.pageId, result)
-        p.emit({
-          type: "step-progress",
-          step: "page-sectioning",
           message: page.pageId,
           page: pages.indexOf(page) + 1,
           totalPages,
@@ -541,10 +525,10 @@ export async function runFullPipeline(
       const pages = storage.getPages()
       const totalPages = pages.length
       await processWithConcurrency(pages, effectiveConcurrency, async (page) => {
-        const sectionRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+        const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
         const imageClassRow = storage.getLatestNodeData("image-filtering", page.pageId)
-        if (!sectionRow || !imageClassRow) return
-        const sectioning = sectionRow.data as PageSectioningOutput
+        if (!structuringRow || !imageClassRow) return
+        const sectioning = structuringRow.data as PageSectioningOutput
         const imageClassification = imageClassRow.data as ImageClassificationOutput
         const unprunedImageIds = imageClassification.images
           .filter((img) => !img.isPruned)
@@ -557,7 +541,7 @@ export async function runFullPipeline(
         }
         const pageImageBase64 = storage.getPageImageBase64(page.pageId)
         const result = await renderPage(
-          { label, pageId: page.pageId, pageImageBase64, sectioning, images: renderImages },
+          { label, pageId: page.pageId, pageImageBase64, sectioning: sectioning, images: renderImages },
           resolveRenderConfig,
           resolveRenderModel,
           templateEngine,
@@ -585,12 +569,12 @@ export async function runFullPipeline(
       const quizPages: QuizPageInput[] = []
       for (const page of pages) {
         const renderingRow = storage.getLatestNodeData("web-rendering", page.pageId)
-        const sectioningRow = storage.getLatestNodeData("page-sectioning", page.pageId)
-        if (!renderingRow || !sectioningRow) continue
+        const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+        if (!renderingRow || !structuringRow) continue
         quizPages.push({
           pageId: page.pageId,
           rendering: renderingRow.data as WebRenderingOutput,
-          sectioning: sectioningRow.data as PageSectioningOutput,
+          sectioning: structuringRow.data as PageSectioningOutput,
         })
       }
       if (quizPages.length > 0) {
@@ -624,8 +608,8 @@ export async function runFullPipeline(
         const renderingRow = storage.getLatestNodeData("web-rendering", page.pageId)
         if (!renderingRow) return
         const rendering = renderingRow.data as WebRenderingOutput
-        const sectioningRow = storage.getLatestNodeData("page-sectioning", page.pageId)
-        const sectioning = sectioningRow?.data as PageSectioningOutput | undefined
+        const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+        const sectioning = structuringRow?.data as PageSectioningOutput | undefined
         const htmlSections = rendering.sections
           .filter((s) => !sectioning?.sections[s.sectionIndex]?.isPruned)
           .map((s) => s.html)

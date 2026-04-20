@@ -106,13 +106,12 @@ extract ────────────────────────
   ├── image-filtering       (after: extract)                       │
   ├── image-segmentation    (after: image-filtering)               │
   ├── image-cropping        (after: image-segmentation)            │
-  ├── image-meaningfulness  (after: image-segmentation)  [parallel]│
-  ├── text-classification   (after: extract)                       │
-  ├── book-summary          (after: text-classification)           │
-  └── translation           (after: text-classification)  [parallel]
+  └── image-meaningfulness  (after: image-segmentation)  [parallel]│
                                                                    │
 storyboard ────────────────────────────────────────────────────────┤ (after: extract)
-  ├── page-sectioning                                               │
+  ├── page-sectioning       (tree-producing LLM step)              │
+  ├── book-summary          (after: page-sectioning)               │
+  ├── translation           (after: page-sectioning)  [parallel]   │
   └── web-rendering         (after: page-sectioning)               │
                                                                    │
 quizzes   ─────────────────────────────────────────────────────────┤ (after: storyboard)
@@ -159,13 +158,10 @@ PDF file
                      │
                      ▼  stored in books/{label}/{label}.db + images/
                      │
-            ┌────────┴────────┐
-            │                 │
-   [text-classification]  [image-filtering / segmentation / cropping / meaningfulness]
-            │                 │
-            └────────┬────────┘
+   [image-filtering / segmentation / cropping / meaningfulness]
                      │
-                [page-sectioning]  ─── LLM assigns section type to each page
+                [page-sectioning]  ─── LLM produces a tree of content nodes
+                                   ─── partitions nodes into typed sections
                      │
                 [web-rendering]    ─── LLM or template produces HTML per section
                                   ─── optional visual refinement loop (render screenshot → review → revise)

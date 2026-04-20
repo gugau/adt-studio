@@ -3,7 +3,7 @@ You are an expert frontend engineer. Generate a beautiful, kid-friendly HTML pag
 
 ## INPUTS
 1. Original textbook page image (layout reference only)
-2. Content parts in document order — text groups (with grouped text elements) and images
+2. A content tree for the section (indentation shows hierarchy) — containers wrap leaves in reading order
 3. Section type
 
 ## RULES
@@ -48,17 +48,8 @@ Image ID: {{ image.image_id }}
 {% image image.image_base64 %}
 {% endfor %}
 
-Content parts (in document order):
-{% for part in ordered_parts %}
-{% if part.part_type == "text_group" %}
-[Group: {{ part.group_id }} | type: {{ part.group_type }}]
-{% for text in part.texts %}
-  - id: {{ text.text_id }} | type: {{ text.text_type }} | text: "{{ text.text }}"
-{% endfor %}
-{% elsif part.part_type == "image" %}
-[Image: {{ part.image_id }}]
-{% endif %}
-{% endfor %}
+Content tree (indentation shows hierarchy):
+{% include "_render_node", nodes: nodes, depth: 0 %}
 {% if user_instructions != "" %}
 
 ## ADDITIONAL INSTRUCTIONS FROM USER

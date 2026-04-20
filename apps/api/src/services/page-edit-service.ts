@@ -58,35 +58,47 @@ export async function reRenderPage(
   let visualRefinement: VisualRefinementDeps | undefined
 
   try {
-    // Read latest pipeline data
-    const sectionRow = storage.getLatestNodeData("page-sectioning", pageId)
+    const structuringRow = storage.getLatestNodeData("page-sectioning", pageId)
 
-    if (!sectionRow) {
+    if (!structuringRow) {
       throw new Error(
         "Page must have page-sectioning data before re-rendering"
       )
     }
 
-    const sectioningParsed = PageSectioningOutput.safeParse(sectionRow.data)
-    if (!sectioningParsed.success) {
+    const structuringParsed = PageSectioningOutput.safeParse(structuringRow.data)
+    if (!structuringParsed.success) {
       throw new Error("Invalid page-sectioning data")
     }
-    const sectioning = sectioningParsed.data
+    const sectioning = structuringParsed.data
 
     // Build image map: start with all page images, then add any additional images
-    // referenced in section parts (e.g. from cross-page merges).
+    // referenced by image_group nodes (e.g. from cross-page merges).
     const allImages = storage.getPageImages(pageId)
     const renderImages = new Map<string, { base64: string; width?: number; height?: number }>()
     for (const img of allImages) {
       renderImages.set(img.imageId, { base64: storage.getImageBase64(img.imageId), width: img.width, height: img.height })
     }
-    // Add any images referenced in sections but not found on this page
+    // Walk the tree to find any image leaf nodeIds not already covered
+    const collectImageIds = (
+      node: { role?: string; nodeId?: string; isPruned?: boolean; children?: unknown[] },
+      out: Set<string>,
+    ): void => {
+      if (node.isPruned) return
+      if (node.role === "image" && node.nodeId) out.add(node.nodeId)
+      if (Array.isArray(node.children)) {
+        for (const c of node.children) collectImageIds(c as Parameters<typeof collectImageIds>[0], out)
+      }
+    }
+    const referencedIds = new Set<string>()
     for (const section of sectioning.sections) {
-      for (const part of section.parts) {
-        if (part.type === "image" && !part.isPruned && !renderImages.has(part.imageId)) {
-          const dims = storage.getImageDimensions(part.imageId)
-          renderImages.set(part.imageId, { base64: storage.getImageBase64(part.imageId), width: dims?.width, height: dims?.height })
-        }
+      if (section.isPruned) continue
+      for (const n of section.nodes) collectImageIds(n, referencedIds)
+    }
+    for (const imageId of referencedIds) {
+      if (!renderImages.has(imageId)) {
+        const dims = storage.getImageDimensions(imageId)
+        renderImages.set(imageId, { base64: storage.getImageBase64(imageId), width: dims?.width, height: dims?.height })
       }
     }
 
@@ -145,7 +157,7 @@ export async function reRenderPage(
     // Render either a single section (preferred) or the full page.
     // For section re-render we force all other sections to pruned in-memory so
     // renderPage preserves the original sectionIndex while skipping extra LLM calls.
-    const sectioningForRender = sectionIndex === undefined
+    const structuringForRender = sectionIndex === undefined
       ? sectioning
       : {
           ...sectioning,
@@ -159,7 +171,7 @@ export async function reRenderPage(
         label,
         pageId,
         pageImageBase64,
-        sectioning: sectioningForRender,
+        sectioning: structuringForRender,
         images: renderImages,
         styleguide: styleguideContent,
         userPrompt: prompt,

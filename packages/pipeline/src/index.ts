@@ -6,11 +6,22 @@ export {
 export { processWithConcurrency } from "./concurrency.js"
 export { extractPDF, type ExtractOptions } from "./pdf-extraction.js"
 export {
-  classifyPageText,
-  buildClassifyConfig,
-  type ClassifyConfig,
-  type PageInput,
-} from "./text-classification.js"
+  sectionPage,
+  runValidator as validatePageSectioning,
+  finalizePageSectioning,
+  flattenTreeToText,
+  mapLeafTexts,
+  countLeafTexts,
+  buildPageSectioningConfig,
+  type PageSectioningConfig,
+  type PageSectioningInput,
+} from "./page-sectioning.js"
+export {
+  treeToParts,
+  treeToPartsOutput,
+  partsToTree,
+  partsToTreeOutput,
+} from "./sectioning-shim.js"
 export {
   classifyPageImages,
   buildImageClassifyConfig,
@@ -55,22 +66,18 @@ export {
   type BookSummaryPageInput,
 } from "./book-summary.js"
 export {
-  sectionPage,
-  buildSectioningConfig,
-  buildGroupSummaries,
-  type SectioningConfig,
-  type SectionPageInput,
-} from "./page-sectioning.js"
-export {
   renderPage,
   buildRenderStrategyResolver,
+  buildRenderContext,
+  GROUP_CONTAINER_STRUCTURES,
   type RenderConfig,
   type VisualRefinementConfig,
   type RenderPageInput,
   type RenderSectionInput,
-  type SectionPart,
-  type TextInput,
-  type ImageInput,
+  type RenderContext,
+  type RenderNode,
+  type LeafText,
+  type ImageRef,
 } from "./web-rendering.js"
 export { renderSectionLlm, type VisualRefinementDeps } from "./render-llm.js"
 export {
@@ -102,8 +109,9 @@ export {
   type TranslationLanguageContext,
 } from "./language-context.js"
 export {
-  translatePageText,
+  translatePageTree,
   buildTranslationConfig,
+  shouldTranslate,
   type TranslationConfig,
 } from "./translation.js"
 export {
@@ -168,7 +176,6 @@ export {
   type StyleguideGenerationInput,
 } from "./styleguide-generation.js"
 export { loadConfig, loadBookConfig, deepMerge } from "./config.js"
-export { runPipeline, type RunPipelineOptions } from "./pipeline.js"
 export { runFullPipeline, type FullPipelineOptions } from "./pipeline-dag.js"
 export {
   runDAG,

@@ -1,32 +1,65 @@
-text_types:
-  book_title: Main title of the book
-  book_subtitle: Subtitle of the book
-  book_author: Author name(s)
-  book_metadata: Publisher, copyright, ISBN, edition info
-  section_heading: Chapter or section headings
-  section_text: Main body/narrative text
-  instruction_text: Instructions for activities or exercises
-  activity_number: Numbering for activities/exercises (e.g., "1.", "A)")
-  activity_title: Title of an activity or exercise
-  activity_option: Multiple choice or selectable options
-  activity_input_placeholder_text: Placeholder text in input fields
-  fill_in_the_blank: Text with blanks to fill in (use ___ for blanks)
-  image_associated_text: Captions, labels, or descriptions tied to images
-  image_overlay: Text overlaid directly on images
-  math: Mathematical expressions (use LaTeX notation)
-  standalone_text: Text that doesn't fit other categories
-  header_text: Running headers
-  footer_text: Running footers
-  page_number: Page numbers
-  other: Any text not covered above
+structure_types:
+  group: >
+    Generic container used to bind sibling text leaves that form one visual
+    unit (e.g. multi-sentence paragraphs, groups of labels). Use this whenever
+    two or more text leaves belong together visually but none of the more
+    specific containers applies.
+  heading: A heading block — contains one or more leaf nodes that together form a single heading.
+  paragraph: >
+    A prose paragraph. Children are text leaves (usually role "text") in reading order.
+  list: An ordered or unordered list. Children are list_item containers.
+  list_item: One item of a list. Children are the leaf(s) making up that item.
+  table: A data table. Children are table_row containers, in top-to-bottom order.
+  table_row: One row of a table. Children are table_cell containers, in left-to-right order.
+  table_cell: >
+    One cell of a table. May be empty (no children) to preserve column alignment
+    for visually blank cells. When non-empty, children are the leaves or
+    containers inside the cell.
+  sidebar: >
+    A visually separated callout, tip box, or aside. Children are the leaves
+    and containers inside the sidebar.
+  panel: >
+    A generic bordered or visually separated panel that is not a sidebar
+    (e.g. a decorated info panel or a full-page boxed layout).
+  activity: >
+    A complete activity or exercise block. Children include any introductory
+    leaves (activity_number / activity_instruction / activity_question) and
+    one or more activity_option containers.
+  activity_option: >
+    One option or answer choice within an activity. Always a container, even
+    when it holds a single text leaf — never use a bare leaf as an option.
+  image_group: >
+    A container that binds an image to its associated content — a caption,
+    label, or overlay text. MUST have as its first child a leaf with role
+    `image` whose `image_id` references one of the listed extracted images,
+    followed by one or more caption/label/overlay leaves. Only use this
+    when the image has associated content; a standalone image with no
+    associated content is emitted as a bare `role: "image"` leaf instead.
+  preformatted: >
+    A block of preformatted text where line breaks matter (poetry stanzas,
+    code samples, ASCII layouts). Children are the text leaves, one per line.
 
-text_group_types:
-  heading: A heading or title block
-  paragraph: A block of continuous prose
-  stanza: A verse or stanza of poetry
-  list: A list of items (ordered or unordered)
-  table: A data table with rows and columns
-  other: Anything that doesn't fit the above
+role_types:
+  heading: A heading-level leaf (chapter, section, or subheading text).
+  text: Ordinary prose or narrative text.
+  math: A mathematical expression (use LaTeX notation).
+  image: >
+    An image leaf referencing an extracted image. Carries `image_id`
+    (one of the IDs listed in the input). Has no `text`. Emit as a bare
+    leaf in reading order when the image stands alone; wrap in an
+    `image_group` container only when the image has associated content
+    (caption, label, or overlay text).
+  caption: A caption tied to an image or figure.
+  label: A short label, tag, or annotation.
+  activity_number: Numbering for an activity (e.g. "1.", "A)").
+  activity_instruction: A general instruction for the learner at the activity level.
+  activity_question: The question or prompt of the activity.
+  activity_fill_in_the_blank: Text with blanks to fill in (use ___ for blanks).
+  page_number: A page number.
+  header: A running header.
+  footer: A running footer.
+  quote: A quoted passage.
+  book_metadata: Publisher, copyright, ISBN, edition, or author metadata.
 
 section_types:
   front_cover: >
@@ -105,9 +138,10 @@ metadata:
   prompt: metadata_extraction
   model: openai:gpt-5.4
 
-text_classification:
-  prompt: text_classification
+page_sectioning:
+  prompt: page_sectioning
   model: openai:gpt-5.4
+  max_refinements: 1
 
 image_meaningfulness:
   prompt: image_meaningfulness
@@ -115,10 +149,6 @@ image_meaningfulness:
 
 image_cropping:
   prompt: image_cropping
-  model: openai:gpt-5.4
-
-page_sectioning:
-  prompt: page_sectioning
   model: openai:gpt-5.4
 
 default_render_strategy: two_column
@@ -250,9 +280,9 @@ quiz_generation:
     - text_and_images
     - images_only
 
-pruned_text_types:
-  - header_text
-  - footer_text
+pruned_role_types:
+  - header
+  - footer
   - page_number
 
 pruned_section_types:

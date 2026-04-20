@@ -26,8 +26,8 @@ function makeFakeLLMModel(
 describe("buildCatalogTranslationConfig", () => {
   it("uses defaults when no translation config", () => {
     const appConfig: AppConfig = {
-      text_types: { body: "Body" },
-      text_group_types: { paragraph: "Para" },
+      role_types: { body: "Body" },
+      structure_types: { paragraph: "Para" },
     }
     const config = buildCatalogTranslationConfig(appConfig, "en")
     expect(config.sourceLanguage).toBe("en")
@@ -39,8 +39,8 @@ describe("buildCatalogTranslationConfig", () => {
 
   it("uses appConfig overrides", () => {
     const appConfig: AppConfig = {
-      text_types: { body: "Body" },
-      text_group_types: { paragraph: "Para" },
+      role_types: { body: "Body" },
+      structure_types: { paragraph: "Para" },
       translation: {
         model: "openai:gpt-5",
         prompt: "custom_translation",
@@ -76,7 +76,7 @@ describe("getTargetLanguages", () => {
 
 describe("translateCatalogBatch", () => {
   const config = buildCatalogTranslationConfig(
-    { text_types: { body: "Body" }, text_group_types: { p: "P" } },
+    { role_types: { body: "Body" }, structure_types: { p: "P" } },
     "en"
   )
 

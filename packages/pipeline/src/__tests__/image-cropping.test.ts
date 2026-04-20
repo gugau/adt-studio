@@ -54,16 +54,16 @@ function createTestPng(width: number, height: number): Buffer {
 describe("buildCroppingConfig", () => {
   it("returns null when cropping not in image_filters", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { section_text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
     }
     expect(buildCroppingConfig(appConfig)).toBeNull()
   })
 
   it("returns null when cropping is false", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { section_text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
       image_filters: { cropping: false },
       image_cropping: { model: "openai:gpt-4.1" },
     }
@@ -72,8 +72,8 @@ describe("buildCroppingConfig", () => {
 
   it("returns null when cropping is true but no model set", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { section_text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
       image_filters: { cropping: true },
     }
     expect(buildCroppingConfig(appConfig)).toBeNull()
@@ -81,8 +81,8 @@ describe("buildCroppingConfig", () => {
 
   it("returns config when cropping enabled and image_cropping model set", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { section_text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
       image_filters: { cropping: true },
       image_cropping: { model: "openai:gpt-4.1" },
     }
@@ -95,8 +95,8 @@ describe("buildCroppingConfig", () => {
 
   it("falls back to image_meaningfulness model", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { section_text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
       image_filters: { cropping: true },
       image_meaningfulness: { model: "openai:gpt-4.1" },
     }
@@ -108,8 +108,8 @@ describe("buildCroppingConfig", () => {
 
   it("uses explicit prompt name when provided", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { section_text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
       image_filters: { cropping: true },
       image_cropping: {
         model: "openai:gpt-4.1",

@@ -9,6 +9,7 @@ import { i18n } from "@lingui/core"
 export const STAGE_LABEL_MESSAGES: Record<string, MessageDescriptor> = {
   book: msg`Book`,
   extract: msg`Extract`,
+  sectioning: msg`Sectioning`,
   storyboard: msg`Storyboard`,
   quizzes: msg`Quizzes`,
   captions: msg`Image Captions`,
@@ -25,6 +26,7 @@ export const STAGE_LABEL_MESSAGES: Record<string, MessageDescriptor> = {
 export const STAGE_RUNNING_LABEL_MESSAGES: Record<string, MessageDescriptor> = {
   book: msg`Loading Book...`,
   extract: msg`Extracting...`,
+  sectioning: msg`Sectioning Pages...`,
   storyboard: msg`Building Storyboard...`,
   quizzes: msg`Generating Quizzes...`,
   captions: msg`Captioning Images...`,
@@ -40,6 +42,7 @@ export const STAGE_RUNNING_LABEL_MESSAGES: Record<string, MessageDescriptor> = {
 
 export const STAGE_DESCRIPTION_MESSAGES: Record<string, MessageDescriptor> = {
   extract: msg`Extract text and images from each page of the PDF using AI-powered analysis.`,
+  sectioning: msg`Structure each page into a content tree of sections and nodes for downstream rendering.`,
   storyboard: msg`Arrange extracted content into a structured storyboard with pages, sections, and layouts.`,
   quizzes: msg`Generate comprehension quizzes and activities based on the book content.`,
   captions: msg`Create descriptive captions for images to improve accessibility.`,
@@ -60,7 +63,6 @@ export const STEP_LABEL_MESSAGES: Record<string, MessageDescriptor> = {
   "image-segmentation": msg`Image Segmentation`,
   "image-cropping": msg`Image Cropping`,
   "image-meaningfulness": msg`Image Meaningfulness`,
-  "text-classification": msg`Text Classification`,
   translation: msg`Translation`,
   "page-sectioning": msg`Page Sectioning`,
   "web-rendering": msg`Web Rendering`,

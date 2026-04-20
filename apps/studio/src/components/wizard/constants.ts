@@ -303,7 +303,7 @@ export const PRESETS: PresetConfig[] = [
         activity_sorting: "activity_sorting",
         activity_open_ended_answer: "activity_open_ended_answer",
       },
-      pruned_text_types: ["header_text", "footer_text", "page_number"],
+      pruned_role_types: ["header_text", "footer_text", "page_number"],
       pruned_section_types: ["back_cover", "credits", "inside_cover"],
       image_filters: { min_stddev: 2 },
     },
@@ -374,7 +374,7 @@ export const PRESETS: PresetConfig[] = [
         },
       },
       section_render_strategies: {},
-      pruned_text_types: ["header_text", "footer_text", "page_number"],
+      pruned_role_types: ["header_text", "footer_text", "page_number"],
       pruned_section_types: [
         "back_cover",
         "credits",
@@ -460,7 +460,7 @@ export const PRESETS: PresetConfig[] = [
         },
       },
       section_render_strategies: {},
-      pruned_text_types: ["header_text", "footer_text", "page_number"],
+      pruned_role_types: ["header_text", "footer_text", "page_number"],
       pruned_section_types: [
         "back_cover",
         "credits",

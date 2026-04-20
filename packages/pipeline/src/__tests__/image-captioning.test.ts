@@ -92,8 +92,8 @@ describe("extractImageIds", () => {
 describe("buildCaptionConfig", () => {
   it("uses defaults when no image_captioning config", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { section_text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
     }
     const config = buildCaptionConfig(appConfig)
     expect(config.promptName).toBe("image_captioning")
@@ -101,11 +101,11 @@ describe("buildCaptionConfig", () => {
     expect(config.maxRetries).toBe(5)
   })
 
-  it("falls back to text_classification model", () => {
+  it("falls back to page_sectioning model", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
-      text_classification: { model: "openai:gpt-5.4" },
+      structure_types: { paragraph: "Paragraph" },
+      role_types: { text: "Main body text" },
+      page_sectioning: { model: "openai:gpt-5.4" },
     }
     const config = buildCaptionConfig(appConfig)
     expect(config.modelId).toBe("openai:gpt-5.4")
@@ -114,8 +114,8 @@ describe("buildCaptionConfig", () => {
 
   it("uses explicit image_captioning config", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { section_text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
       image_captioning: {
         prompt: "custom_caption",
         model: "openai:gpt-5.4",

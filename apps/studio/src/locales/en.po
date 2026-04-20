@@ -141,6 +141,9 @@ msgstr "{0} questions"
 msgid "{0} terms"
 msgstr "{0} terms"
 
+#~ msgid "{0} text leaves"
+#~ msgstr "{0} text leaves"
+
 #. placeholder {0}: String(displayEntries.length)
 msgid "{0} texts"
 msgstr "{0} texts"
@@ -370,14 +373,14 @@ msgstr "Activities Generator"
 msgid "Activity 5.1"
 msgstr "Activity 5.1"
 
-msgid "Activity Input Placeholder"
-msgstr "Activity Input Placeholder"
+#~ msgid "Activity Input Placeholder"
+#~ msgstr "Activity Input Placeholder"
 
-msgid "Activity Number"
-msgstr "Activity Number"
+#~ msgid "Activity Number"
+#~ msgstr "Activity Number"
 
-msgid "Activity Option"
-msgstr "Activity Option"
+#~ msgid "Activity Option"
+#~ msgstr "Activity Option"
 
 msgid "Activity Rendering"
 msgstr "Activity Rendering"
@@ -388,8 +391,8 @@ msgstr "Activity section types are available for classification and rendering."
 msgid "Activity section types are hidden from the classifier and skipped during rendering."
 msgstr "Activity section types are hidden from the classifier and skipped during rendering."
 
-msgid "Activity Title"
-msgstr "Activity Title"
+#~ msgid "Activity Title"
+#~ msgstr "Activity Title"
 
 msgid "Activity: Fill in a Table"
 msgstr "Activity: Fill in a Table"
@@ -748,8 +751,8 @@ msgstr "Bit Rate"
 msgid "Book"
 msgstr "Book"
 
-msgid "Book Author"
-msgstr "Book Author"
+#~ msgid "Book Author"
+#~ msgstr "Book Author"
 
 msgid "Book data is outdated and must be rebuilt."
 msgstr "Book data is outdated and must be rebuilt."
@@ -757,8 +760,8 @@ msgstr "Book data is outdated and must be rebuilt."
 msgid "Book Language"
 msgstr "Book Language"
 
-msgid "Book Metadata"
-msgstr "Book Metadata"
+#~ msgid "Book Metadata"
+#~ msgstr "Book Metadata"
 
 msgid "Book preview"
 msgstr "Book preview"
@@ -766,17 +769,17 @@ msgstr "Book preview"
 msgid "Book Preview"
 msgstr "Book Preview"
 
-msgid "Book Subtitle"
-msgstr "Book Subtitle"
+#~ msgid "Book Subtitle"
+#~ msgstr "Book Subtitle"
 
 msgid "Book Summary"
 msgstr "Book Summary"
 
-msgid "Book Summary Prompt"
-msgstr "Book Summary Prompt"
+#~ msgid "Book Summary Prompt"
+#~ msgstr "Book Summary Prompt"
 
-msgid "Book Title"
-msgstr "Book Title"
+#~ msgid "Book Title"
+#~ msgstr "Book Title"
 
 msgid "Boxed Text"
 msgstr "Boxed Text"
@@ -892,14 +895,14 @@ msgstr "Ciências da Natureza - Ensino Fundamental"
 msgid "Classic Storybook"
 msgstr "Classic Storybook"
 
-msgid "Classified Text"
-msgstr "Classified Text"
+#~ msgid "Classified Text"
+#~ msgstr "Classified Text"
 
 msgid "Classifying images…"
 msgstr "Classifying images…"
 
-msgid "Classifying text…"
-msgstr "Classifying text…"
+#~ msgid "Classifying text…"
+#~ msgstr "Classifying text…"
 
 msgid "Clean & focused"
 msgstr "Clean & focused"
@@ -993,6 +996,9 @@ msgstr "Confirm Rerun"
 
 msgid "Consulting the style council..."
 msgstr "Consulting the style council..."
+
+#~ msgid "Container Types"
+#~ msgstr "Container Types"
 
 msgid "Content"
 msgstr "Content"
@@ -1205,6 +1211,9 @@ msgstr "Delete section"
 
 msgid "Delete text entry"
 msgstr "Delete text entry"
+
+#~ msgid "Delete type"
+#~ msgstr "Delete type"
 
 msgid "Delete video"
 msgstr "Delete video"
@@ -1550,8 +1559,8 @@ msgstr "Figure 5.1 - The water cycle: evaporation from oceans, condensation into
 msgid "Figure Extraction"
 msgstr "Figure Extraction"
 
-msgid "Fill in the Blank"
-msgstr "Fill in the Blank"
+#~ msgid "Fill in the Blank"
+#~ msgstr "Fill in the Blank"
 
 msgid "Filter by image ID..."
 msgstr "Filter by image ID..."
@@ -1583,8 +1592,8 @@ msgstr "Flagged findings"
 msgid "Flat Vector"
 msgstr "Flat Vector"
 
-msgid "Footer Text"
-msgstr "Footer Text"
+#~ msgid "Footer Text"
+#~ msgstr "Footer Text"
 
 #. placeholder {0}: i18n._(preset.title)
 #. placeholder {1}: recommendedOption.label
@@ -1726,11 +1735,11 @@ msgstr "Groups content into multiple logical sections based on topic and structu
 msgid "Header"
 msgstr "Header"
 
-msgid "Header Text"
-msgstr "Header Text"
+#~ msgid "Header Text"
+#~ msgstr "Header Text"
 
-msgid "Heading"
-msgstr "Heading"
+#~ msgid "Heading"
+#~ msgstr "Heading"
 
 msgid "Hide Pruned"
 msgstr "Hide Pruned"
@@ -1762,8 +1771,8 @@ msgstr "Illustrated children's books"
 msgid "Illustration"
 msgstr "Illustration"
 
-msgid "Image Associated Text"
-msgstr "Image Associated Text"
+#~ msgid "Image Associated Text"
+#~ msgstr "Image Associated Text"
 
 msgid "Image Captioning"
 msgstr "Image Captioning"
@@ -1807,8 +1816,8 @@ msgstr "Image Meaningfulness"
 msgid "Image Meaningfulness Prompt"
 msgstr "Image Meaningfulness Prompt"
 
-msgid "Image Overlay"
-msgstr "Image Overlay"
+#~ msgid "Image Overlay"
+#~ msgstr "Image Overlay"
 
 msgid "Image processing"
 msgstr "Image processing"
@@ -1873,8 +1882,8 @@ msgstr "Inside Cover"
 msgid "Institution"
 msgstr "Institution"
 
-msgid "Instruction Text"
-msgstr "Instruction Text"
+#~ msgid "Instruction Text"
+#~ msgstr "Instruction Text"
 
 msgid "Interactive"
 msgstr "Interactive"
@@ -1944,6 +1953,9 @@ msgstr "Large images, narrative flow. Best for illustrated books with high-fidel
 msgid "Last"
 msgstr "Last"
 
+#~ msgid "Leaf text roles the LLM can assign to each text element. Pruned roles are classified but excluded from rendering."
+#~ msgstr "Leaf text roles the LLM can assign to each text element. Pruned roles are classified but excluded from rendering."
+
 msgid "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 msgstr "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 
@@ -1974,8 +1986,8 @@ msgstr "Língua Portuguesa - 3° Ano"
 msgid "Linked to: {value}"
 msgstr "Linked to: {value}"
 
-msgid "List"
-msgstr "List"
+#~ msgid "List"
+#~ msgstr "List"
 
 msgid "Live"
 msgstr "Live"
@@ -2067,6 +2079,9 @@ msgstr "Loading reviewer validation…"
 msgid "Loading sectioning data..."
 msgstr "Loading sectioning data..."
 
+#~ msgid "Loading sections..."
+#~ msgstr "Loading sections..."
+
 msgid "Loading speech instructions..."
 msgstr "Loading speech instructions..."
 
@@ -2112,14 +2127,17 @@ msgstr "margin"
 msgid "Match each stage of the water cycle to its definition:"
 msgstr "Match each stage of the water cycle to its definition:"
 
-msgid "Math"
-msgstr "Math"
+#~ msgid "Math"
+#~ msgstr "Math"
 
 msgid "Max Side"
 msgstr "Max Side"
 
 msgid "Max side (px)"
 msgstr "Max side (px)"
+
+#~ msgid "Maximum number of reviewer passes after the initial sectioning. Set to 0 to disable refinement."
+#~ msgstr "Maximum number of reviewer passes after the initial sectioning. Set to 0 to disable refinement."
 
 msgid "Meaningfulness Prompt"
 msgstr "Meaningfulness Prompt"
@@ -2259,6 +2277,12 @@ msgstr "New Entry"
 msgid "New session"
 msgstr "New session"
 
+#~ msgid "new_container_key"
+#~ msgstr "new_container_key"
+
+#~ msgid "new_text_key"
+#~ msgstr "new_text_key"
+
 msgid "new_type_key"
 msgstr "new_type_key"
 
@@ -2396,6 +2420,9 @@ msgstr "No reviewer validation sessions have been started yet. Open Preview to c
 
 msgid "No sectioning data available."
 msgstr "No sectioning data available."
+
+#~ msgid "No sections"
+#~ msgstr "No sections"
 
 msgid "No sections for this page"
 msgstr "No sections for this page"
@@ -2598,11 +2625,14 @@ msgstr "Page Grouping"
 msgid "Page Grouping Mode"
 msgstr "Page Grouping Mode"
 
+msgid "Page image"
+msgstr "Page image"
+
 msgid "Page Mode"
 msgstr "Page Mode"
 
-msgid "Page Number"
-msgstr "Page Number"
+#~ msgid "Page Number"
+#~ msgstr "Page Number"
 
 msgid "Page preview {pageId}"
 msgstr "Page preview {pageId}"
@@ -2633,8 +2663,8 @@ msgstr "Pages reviewed"
 msgid "Paper Collage"
 msgstr "Paper Collage"
 
-msgid "Paragraph"
-msgstr "Paragraph"
+#~ msgid "Paragraph"
+#~ msgstr "Paragraph"
 
 msgid "Parts"
 msgstr "Parts"
@@ -2759,8 +2789,8 @@ msgstr "Prune"
 msgid "Prune element"
 msgstr "Prune element"
 
-msgid "Prune group"
-msgstr "Prune group"
+#~ msgid "Prune group"
+#~ msgstr "Prune group"
 
 msgid "Prune image"
 msgstr "Prune image"
@@ -2768,8 +2798,8 @@ msgstr "Prune image"
 msgid "Prune section from flow"
 msgstr "Prune section from flow"
 
-msgid "Prune text"
-msgstr "Prune text"
+#~ msgid "Prune text"
+#~ msgstr "Prune text"
 
 msgid "pruned"
 msgstr "pruned"
@@ -2884,6 +2914,9 @@ msgstr "Recrop from Page"
 msgid "Reference"
 msgstr "Reference"
 
+#~ msgid "Refinement Passes"
+#~ msgstr "Refinement Passes"
+
 msgid "Refresh validation"
 msgstr "Refresh validation"
 
@@ -2914,8 +2947,8 @@ msgstr "Remove section"
 msgid "Remove this block"
 msgstr "Remove this block"
 
-msgid "Remove type"
-msgstr "Remove type"
+#~ msgid "Remove type"
+#~ msgstr "Remove type"
 
 msgid "Render Reasoning"
 msgstr "Render Reasoning"
@@ -3083,6 +3116,9 @@ msgstr "Save & Rerun Glossary"
 msgid "Save & Rerun Quizzes"
 msgstr "Save & Rerun Quizzes"
 
+#~ msgid "Save & Rerun Sectioning"
+#~ msgstr "Save & Rerun Sectioning"
+
 msgid "Save & Rerun Speech"
 msgstr "Save & Rerun Speech"
 
@@ -3165,14 +3201,17 @@ msgstr "Section {0} (pruned)"
 msgid "Section 3.2"
 msgstr "Section 3.2"
 
-msgid "Section Heading"
-msgstr "Section Heading"
+#~ msgid "Section Heading"
+#~ msgstr "Section Heading"
 
 msgid "Section label"
 msgstr "Section label"
 
 msgid "Section Mode"
 msgstr "Section Mode"
+
+#~ msgid "Section not found"
+#~ msgstr "Section not found"
 
 msgid "Section not found."
 msgstr "Section not found."
@@ -3183,8 +3222,14 @@ msgstr "Section preview"
 msgid "Section pruned from flow"
 msgstr "Section pruned from flow"
 
-msgid "Section Text"
-msgstr "Section Text"
+msgid "Section Refinement"
+msgstr "Section Refinement"
+
+#~ msgid "Section Refinement Prompt"
+#~ msgstr "Section Refinement Prompt"
+
+#~ msgid "Section Text"
+#~ msgstr "Section Text"
 
 msgid "Section Types"
 msgstr "Section Types"
@@ -3194,6 +3239,9 @@ msgstr "Sectioning"
 
 msgid "Sectioning Mode"
 msgstr "Sectioning Mode"
+
+msgid "Sectioning Pages..."
+msgstr "Sectioning Pages..."
 
 msgid "Sectioning Reasoning"
 msgstr "Sectioning Reasoning"
@@ -3416,11 +3464,11 @@ msgstr "Sprinkling some digital fairy dust..."
 msgid "stage first."
 msgstr "stage first."
 
-msgid "Standalone Text"
-msgstr "Standalone Text"
+#~ msgid "Standalone Text"
+#~ msgstr "Standalone Text"
 
-msgid "Stanza"
-msgstr "Stanza"
+#~ msgid "Stanza"
+#~ msgstr "Stanza"
 
 msgid "Start"
 msgstr "Start"
@@ -3456,11 +3504,20 @@ msgstr "Storyboard has already been run. Changes made here will not take effect 
 msgid "Storybook"
 msgstr "Storybook"
 
+#~ msgid "Structural containers the LLM can use when building the page tree (paragraphs, lists, tables, activities, etc.)."
+#~ msgstr "Structural containers the LLM can use when building the page tree (paragraphs, lists, tables, activities, etc.)."
+
 msgid "Structure"
 msgstr "Structure"
 
 msgid "Structure & semantics"
 msgstr "Structure & semantics"
+
+msgid "Structure each page into a content tree of sections and nodes for downstream rendering."
+msgstr "Structure each page into a content tree of sections and nodes for downstream rendering."
+
+msgid "Structure Types"
+msgstr "Structure Types"
 
 msgid "Structured chapters, exercises. Best for educational content with complex layouts."
 msgstr "Structured chapters, exercises. Best for educational content with complex layouts."
@@ -3507,8 +3564,8 @@ msgstr "Sun"
 msgid "System Prompt"
 msgstr "System Prompt"
 
-msgid "Table"
-msgstr "Table"
+#~ msgid "Table"
+#~ msgstr "Table"
 
 msgid "Table of Contents"
 msgstr "Table of Contents"
@@ -3564,11 +3621,11 @@ msgstr "Text alternatives"
 msgid "Text Catalog"
 msgstr "Text Catalog"
 
-msgid "Text Classification"
-msgstr "Text Classification"
+#~ msgid "Text Classification"
+#~ msgstr "Text Classification"
 
-msgid "Text Classification Prompt"
-msgstr "Text Classification Prompt"
+#~ msgid "Text Classification Prompt"
+#~ msgstr "Text Classification Prompt"
 
 #. placeholder {0}: section.textColor
 msgid "Text color: {0}"
@@ -3580,8 +3637,8 @@ msgstr "Text Groups"
 msgid "Text Only"
 msgstr "Text Only"
 
-msgid "Text Types"
-msgstr "Text Types"
+#~ msgid "Text Types"
+#~ msgstr "Text Types"
 
 msgid "Textbooks & Activities"
 msgstr "Textbooks & Activities"
@@ -3628,14 +3685,17 @@ msgstr "The Lost Forest"
 msgid "The model detects bounding boxes so each visual element can be stored and laid out separately."
 msgstr "The model detects bounding boxes so each visual element can be stored and laid out separately."
 
-msgid "The prompt template used for text classification. This is a Liquid template processed with page context."
-msgstr "The prompt template used for text classification. This is a Liquid template processed with page context."
+#~ msgid "The prompt template used by the reviewer pass to critique and improve a candidate sectioning. Runs up to the configured number of passes or until the reviewer approves."
+#~ msgstr "The prompt template used by the reviewer pass to critique and improve a candidate sectioning. Runs up to the configured number of passes or until the reviewer approves."
+
+#~ msgid "The prompt template used for text classification. This is a Liquid template processed with page context."
+#~ msgstr "The prompt template used for text classification. This is a Liquid template processed with page context."
 
 msgid "The prompt template used to extract book metadata (title, author, etc.) from the first few pages. This is a Liquid template processed with page context."
 msgstr "The prompt template used to extract book metadata (title, author, etc.) from the first few pages. This is a Liquid template processed with page context."
 
-msgid "The prompt template used to generate a short book summary at the end of extract. The summary is generated in the configured editing language."
-msgstr "The prompt template used to generate a short book summary at the end of extract. The summary is generated in the configured editing language."
+#~ msgid "The prompt template used to generate a short book summary at the end of extract. The summary is generated in the configured editing language."
+#~ msgstr "The prompt template used to generate a short book summary at the end of extract. The summary is generated in the configured editing language."
 
 msgid "The prompt template used to generate captions for images in the book."
 msgstr "The prompt template used to generate captions for images in the book."
@@ -3682,6 +3742,9 @@ msgstr "This is Pip! He is a happy caramel dog with a very wiggly tail. Pip love
 msgid "This page has no captioned images"
 msgstr "This page has no captioned images"
 
+msgid "This page has no sectioning output"
+msgstr "This page has no sectioning output"
+
 msgid "This page has no storyboard sections"
 msgstr "This page has no storyboard sections"
 
@@ -3714,6 +3777,9 @@ msgstr "This will save your settings and re-run speech generation."
 
 msgid "This will save your settings and re-run the extraction pipeline. Any manual edits to extracted text will be overwritten for affected pages."
 msgstr "This will save your settings and re-run the extraction pipeline. Any manual edits to extracted text will be overwritten for affected pages."
+
+#~ msgid "This will save your settings and re-run the sectioning stage for all pages."
+#~ msgstr "This will save your settings and re-run the sectioning stage for all pages."
 
 msgid "This will save your settings and re-run the storyboard pipeline. Only rendering will be regenerated — your existing sections will be preserved."
 msgstr "This will save your settings and re-run the storyboard pipeline. Only rendering will be regenerated — your existing sections will be preserved."
@@ -3808,8 +3874,8 @@ msgstr "Type class name or search..."
 msgid "Types used during page sectioning. Pruned types are classified but excluded from rendering. Disabled types are hidden from the LLM entirely."
 msgstr "Types used during page sectioning. Pruned types are classified but excluded from rendering. Disabled types are hidden from the LLM entirely."
 
-msgid "Types used during text classification. Pruned types are excluded from rendering."
-msgstr "Types used during text classification. Pruned types are excluded from rendering."
+#~ msgid "Types used during text classification. Pruned types are excluded from rendering."
+#~ msgstr "Types used during text classification. Pruned types are excluded from rendering."
 
 msgid "Unable to load reviewer checklist settings."
 msgstr "Unable to load reviewer checklist settings."
@@ -3850,14 +3916,14 @@ msgstr "Unknown step slug: {step}"
 msgid "Unknown step: {step}"
 msgstr "Unknown step: {step}"
 
-msgid "Unprune group"
-msgstr "Unprune group"
+#~ msgid "Unprune group"
+#~ msgstr "Unprune group"
 
 msgid "Unprune image"
 msgstr "Unprune image"
 
-msgid "Unprune text"
-msgstr "Unprune text"
+#~ msgid "Unprune text"
+#~ msgstr "Unprune text"
 
 msgid "Unsaved changes"
 msgstr "Unsaved changes"

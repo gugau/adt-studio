@@ -8,17 +8,16 @@ import {
   extractPDF,
   extractMetadata,
   buildMetadataConfig,
-  classifyPageText,
-  buildClassifyConfig,
   classifyPageImages,
   buildImageClassifyConfig,
-  translatePageText,
+  sectionPage,
+  buildPageSectioningConfig,
+  flattenTreeToText,
+  translatePageTree,
   buildTranslationConfig,
   getBaseLanguage,
   normalizeLocale,
   loadBookConfig,
-  sectionPage,
-  buildSectioningConfig,
   renderPage,
   buildRenderStrategyResolver,
   createTemplateEngine,
@@ -60,14 +59,13 @@ import {
   createScreenshotRenderer,
   DEFAULT_VISUAL_REVIEW_MODEL_ID,
 } from "@adt/pipeline"
-import type { TranslationConfig, QuizPageInput, ProviderRouting, MeaningfulnessConfig, CroppingConfig, SegmentationConfig, VisualRefinementDeps } from "@adt/pipeline"
+import type { PageSectioningConfig, TranslationConfig, QuizPageInput, ProviderRouting, MeaningfulnessConfig, CroppingConfig, SegmentationConfig, VisualRefinementDeps } from "@adt/pipeline"
 import { loadStyleguideContent } from "./styleguide.js"
 import { createTTSSynthesizer, createAzureTTSSynthesizer, createGeminiTTSSynthesizer } from "@adt/llm"
 import type { TTSSynthesizer } from "@adt/llm"
 import { STAGE_ORDER } from "@adt/types"
 import type {
   AppConfig,
-  TextClassificationOutput,
   ImageClassificationOutput,
   PageSectioningOutput,
   WebRenderingOutput,
@@ -164,6 +162,7 @@ type RunFn = (label: string, options: StageRunOptions, progress: StageRunProgres
 
 const STAGE_RUNNERS: Record<StageName, RunFn> = {
   "extract": runExtractStep,
+  "sectioning": runSectioningStep,
   "storyboard": runStoryboardStep,
   "quizzes": runQuizzesStep,
   "captions": runCaptionsStep,
@@ -339,26 +338,11 @@ async function runExtractStep(
     progress.emit({ type: "step-complete", step: "metadata" })
     console.log(`[stage-run] ${label}: metadata complete (lang=${metadataResult.language_code})`)
 
-    // Determine if translation is needed
-    const translationConfig = buildTranslationConfig(
-      config,
-      metadataResult.language_code
-    )
-
-    // Step 3: Per-page classification
-    const textClassifyConfig = buildClassifyConfig(config)
+    // Step 3: Per-page image classification + segmentation + cropping
     const imageClassifyConfig = buildStageRunnerImageClassifyConfig(config, storage)
     const meaningfulnessConfig = buildMeaningfulnessConfig(config)
     const segmentationConfig = buildSegmentationConfig(config)
     const croppingConfig = buildCroppingConfig(config)
-
-    const llmModel = createLLMModel({
-      modelId: textClassifyConfig.modelId,
-      cacheDir,
-      promptEngine,
-      rateLimiter,
-      onLog: onLlmLog,
-    })
 
     const meaningfulnessModel = meaningfulnessConfig
       ? createLLMModel({
@@ -390,23 +374,11 @@ async function runExtractStep(
         })
       : null
 
-    const translationModel = translationConfig
-      ? createLLMModel({
-          modelId: translationConfig.modelId,
-          cacheDir,
-          promptEngine,
-          rateLimiter,
-          onLog: onLlmLog,
-        })
-      : null
-
     const effectiveConcurrency = config.concurrency ?? 32
     const totalPages = pages.length
-    console.log(`[stage-run] ${label}: classifying ${totalPages} pages (concurrency=${effectiveConcurrency})`)
-    let completedClassifyText = 0
+    console.log(`[stage-run] ${label}: classifying images for ${totalPages} pages (concurrency=${effectiveConcurrency})`)
     let completedClassifyImages = 0
     let completedCropping = 0
-    let completedTranslation = 0
     const failedPages: string[] = []
 
     await processWithConcurrency(
@@ -414,11 +386,10 @@ async function runExtractStep(
       effectiveConcurrency,
       async (page: PageData) => {
         try {
-          await classifyPage(
+          await classifyPageImagesPipeline(
             page,
             storage,
-            { textClassifyConfig, imageClassifyConfig, meaningfulnessConfig, segmentationConfig, croppingConfig },
-            llmModel,
+            { imageClassifyConfig, meaningfulnessConfig, segmentationConfig, croppingConfig },
             {
               onClassifyImages: () => {
                 completedClassifyImages++
@@ -427,16 +398,6 @@ async function runExtractStep(
                   step: "image-filtering",
                   message: `${completedClassifyImages}/${totalPages}`,
                   page: completedClassifyImages,
-                  totalPages,
-                })
-              },
-              onClassifyText: () => {
-                completedClassifyText++
-                progress.emit({
-                  type: "step-progress",
-                  step: "text-classification",
-                  message: `${completedClassifyText}/${totalPages}`,
-                  page: completedClassifyText,
                   totalPages,
                 })
               },
@@ -450,19 +411,7 @@ async function runExtractStep(
                   totalPages,
                 })
               },
-              onTranslate: () => {
-                completedTranslation++
-                progress.emit({
-                  type: "step-progress",
-                  step: "translation",
-                  message: `${completedTranslation}/${totalPages}`,
-                  page: completedTranslation,
-                  totalPages,
-                })
-              },
             },
-            translationConfig,
-            translationModel,
             meaningfulnessModel,
             segmentationModel,
             croppingModel
@@ -470,7 +419,7 @@ async function runExtractStep(
         } catch (err) {
           const msg = toErrorMessage(err)
           const step =
-            err instanceof StepError ? err.step : "text-classification"
+            err instanceof StepError ? err.step : "image-filtering"
           console.error(`[stage-run] ${label}: ${page.pageId} failed at ${step}: ${msg}`)
           failedPages.push(`${page.pageId} [${step}]: ${msg}`)
           progress.emit({
@@ -488,7 +437,6 @@ async function runExtractStep(
       )
     }
 
-    // Emit completion for classification steps
     progress.emit({ type: "step-complete", step: "image-filtering" })
     if (segmentationConfig) {
       progress.emit({ type: "step-complete", step: "image-segmentation" })
@@ -505,14 +453,170 @@ async function runExtractStep(
     } else {
       progress.emit({ type: "step-skip", step: "image-meaningfulness" })
     }
-    progress.emit({ type: "step-complete", step: "text-classification" })
+  } finally {
+    storage.close()
+    restoreEnvKeys()
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Sectioning stage (page-sectioning → book-summary → translation)
+// ---------------------------------------------------------------------------
+
+async function runSectioningStep(
+  label: string,
+  options: StageRunOptions,
+  progress: StageRunProgress
+): Promise<void> {
+  const { booksDir, promptsDir, configPath } = options
+
+  const restoreEnvKeys = setProviderEnvKeys(options)
+
+  const storage = createBookStorage(label, booksDir)
+
+  try {
+    const config = loadBookConfig(label, booksDir, configPath)
+    const cacheDir = path.join(path.resolve(booksDir), label, ".cache")
+    const bookPromptsDir = path.join(path.resolve(booksDir), label, "prompts")
+    const promptEngine = createPromptEngine([bookPromptsDir, promptsDir])
+    const rateLimiter = config.rate_limit
+      ? createRateLimiter(config.rate_limit.requests_per_minute)
+      : undefined
+
+    const onLlmLog = (entry: LlmLogEntry) => {
+      storage.appendLlmLog(entry)
+      const step = entry.taskType as StepName
+      progress.emit({
+        type: "llm-log",
+        step,
+        itemId: entry.pageId ?? "",
+        promptName: entry.promptName,
+        modelId: entry.modelId,
+        cacheHit: entry.cacheHit,
+        durationMs: entry.durationMs,
+        inputTokens: entry.usage?.inputTokens,
+        outputTokens: entry.usage?.outputTokens,
+        validationErrors: entry.validationErrors,
+      })
+    }
+
+    const metadataRow = storage.getLatestNodeData("metadata", "book")
+    const metadata = metadataRow?.data as { language_code?: string | null } | null
+    const sourceLanguage = metadata?.language_code ?? null
+
+    const pageSectioningConfig = buildPageSectioningConfig(config)
+    const translationConfig = buildTranslationConfig(config, sourceLanguage)
+
+    const structuringModel = createLLMModel({
+      modelId: pageSectioningConfig.modelId,
+      cacheDir,
+      promptEngine,
+      rateLimiter,
+      onLog: onLlmLog,
+    })
+
+    const translationModel = translationConfig
+      ? createLLMModel({
+          modelId: translationConfig.modelId,
+          cacheDir,
+          promptEngine,
+          rateLimiter,
+          onLog: onLlmLog,
+        })
+      : null
+
+    const pages = storage.getPages()
+    const totalPages = pages.length
+    const effectiveConcurrency = config.concurrency ?? 32
+
+    // Step 1: page-sectioning per page
+    console.log(`[stage-run] ${label}: sectioning ${totalPages} pages (concurrency=${effectiveConcurrency})`)
+    progress.emit({ type: "step-start", step: "page-sectioning" })
+    let completedStructuring = 0
+    let completedTranslation = 0
+    const failedPages: string[] = []
+
+    await processWithConcurrency(
+      pages,
+      effectiveConcurrency,
+      async (page: PageData) => {
+        try {
+          const imageClassRow = storage.getLatestNodeData("image-filtering", page.pageId)
+          const imageClassification = (imageClassRow?.data as ImageClassificationOutput) ?? { images: [] }
+          const unprunedImageIds = imageClassRow
+            ? imageClassification.images.filter((img) => !img.isPruned).map((img) => img.imageId)
+            : storage.getPageImages(page.pageId).map((img) => img.imageId)
+          const availableImages = unprunedImageIds.map((imageId) => ({
+            imageId,
+            imageBase64: storage.getImageBase64(imageId),
+          }))
+
+          const structuringResult = await sectionPage(
+            {
+              pageId: page.pageId,
+              pageNumber: page.pageNumber,
+              text: page.text,
+              imageBase64: storage.getPageImageBase64(page.pageId),
+              availableImages,
+            },
+            pageSectioningConfig,
+            structuringModel,
+          )
+          storage.putNodeData("page-sectioning", page.pageId, structuringResult)
+          completedStructuring++
+          progress.emit({
+            type: "step-progress",
+            step: "page-sectioning",
+            message: `${completedStructuring}/${totalPages}`,
+            page: completedStructuring,
+            totalPages,
+          })
+
+          if (translationConfig && translationModel) {
+            const translated = await translatePageTree(
+              page.pageId,
+              structuringResult,
+              translationConfig,
+              translationModel,
+            )
+            storage.putNodeData("page-sectioning", page.pageId, translated)
+            completedTranslation++
+            progress.emit({
+              type: "step-progress",
+              step: "translation",
+              message: `${completedTranslation}/${totalPages}`,
+              page: completedTranslation,
+              totalPages,
+            })
+          }
+        } catch (err) {
+          const msg = toErrorMessage(err)
+          const step = err instanceof StepError ? err.step : "page-sectioning"
+          console.error(`[stage-run] ${label}: ${page.pageId} failed at ${step}: ${msg}`)
+          failedPages.push(`${page.pageId} [${step}]: ${msg}`)
+          progress.emit({
+            type: "step-error",
+            step,
+            error: `${page.pageId} failed: ${msg}`,
+          })
+        }
+      },
+    )
+
+    if (failedPages.length > 0) {
+      throw new Error(
+        `${failedPages.length} page(s) failed:\n${failedPages.join("\n")}`
+      )
+    }
+
+    progress.emit({ type: "step-complete", step: "page-sectioning" })
     if (translationConfig) {
       progress.emit({ type: "step-complete", step: "translation" })
     } else {
       progress.emit({ type: "step-skip", step: "translation" })
     }
 
-    // Generate book summary from page text
+    // Step 2: book-summary from structured page text
     progress.emit({ type: "step-start", step: "book-summary" })
     try {
       const bookSummaryConfig = buildBookSummaryConfig(config)
@@ -523,26 +627,19 @@ async function runExtractStep(
         rateLimiter,
         onLog: onLlmLog,
       })
-      const summaryPages = pages.map((page) => ({
-        pageNumber: page.pageNumber,
-        text: page.text,
-      }))
-      const summaryResult = await generateBookSummary(
-        summaryPages,
-        bookSummaryConfig,
-        summaryModel
-      )
+      const summaryPages = pages.map((page) => {
+        const row = storage.getLatestNodeData("page-sectioning", page.pageId)
+        const text = row ? flattenTreeToText(row.data as PageSectioningOutput) : page.text
+        return { pageNumber: page.pageNumber, text }
+      })
+      const summaryResult = await generateBookSummary(summaryPages, bookSummaryConfig, summaryModel)
       storage.putNodeData("book-summary", "book", summaryResult)
       progress.emit({ type: "step-complete", step: "book-summary" })
       console.log(`[stage-run] ${label}: book summary complete`)
     } catch (err) {
       const msg = toErrorMessage(err)
       console.error(`[stage-run] ${label}: book summary failed: ${msg}`)
-      progress.emit({
-        type: "step-error",
-        step: "book-summary",
-        error: msg,
-      })
+      progress.emit({ type: "step-error", step: "book-summary", error: msg })
       throw err
     }
   } finally {
@@ -556,7 +653,7 @@ async function runStoryboardStep(
   options: StageRunOptions,
   progress: StageRunProgress
 ): Promise<void> {
-  const { booksDir, apiKey, promptsDir, webAssetsDir, configPath, renderOnly } = options
+  const { booksDir, promptsDir, webAssetsDir, configPath } = options
 
   const restoreEnvKeys = setProviderEnvKeys(options)
 
@@ -640,69 +737,23 @@ async function runStoryboardStep(
     const totalPages = pages.length
     const effectiveConcurrency = config.concurrency ?? 32
 
-    if (renderOnly) {
-      // -- RENDER-ONLY PATH --
-      // Skip sectioning, re-render from existing page-sectioning data
-      console.log(
-        `[stage-run] ${label}: re-rendering storyboard for ${totalPages} pages (concurrency=${effectiveConcurrency})`
-      )
+    console.log(
+      `[stage-run] ${label}: rendering storyboard for ${totalPages} pages (concurrency=${effectiveConcurrency})`
+    )
 
-      progress.emit({ type: "step-skip", step: "page-sectioning" })
+    let completedRendering = 0
+    const failedPages: string[] = []
 
-      let completedRendering = 0
-      const failedPages: string[] = []
-
-      await processWithConcurrency(
-        pages,
-        effectiveConcurrency,
-        async (page: PageData) => {
-          try {
-            // Read existing sectioning data
-            const sectioningRow = storage.getLatestNodeData("page-sectioning", page.pageId)
-            if (!sectioningRow) {
-              console.log(
-                `[stage-run] ${label}: skipping ${page.pageId} (no existing sectioning)`
-              )
-              completedRendering++
-              progress.emit({
-                type: "step-progress",
-                step: "web-rendering",
-                message: `${completedRendering}/${totalPages}`,
-                page: completedRendering,
-                totalPages,
-              })
-              return
-            }
-            const sectioning = sectioningRow.data as PageSectioningOutput
-
-            // Build render images map from page images
-            const allImages = storage.getPageImages(page.pageId)
-            const renderImages = new Map<string, { base64: string; width?: number; height?: number }>()
-            for (const img of allImages) {
-              renderImages.set(img.imageId, { base64: storage.getImageBase64(img.imageId), width: img.width, height: img.height })
-            }
-
-            const pageImageBase64 = storage.getPageImageBase64(page.pageId)
-
-            // Web rendering
+    await processWithConcurrency(
+      pages,
+      effectiveConcurrency,
+      async (page: PageData) => {
+        try {
+          const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+          if (!structuringRow) {
             console.log(
-              `[stage-run] ${label}: rendering ${page.pageId}`
+              `[stage-run] ${label}: skipping ${page.pageId} (no page-sectioning)`
             )
-            const renderResult = await renderPage(
-              {
-                label,
-                pageId: page.pageId,
-                pageImageBase64,
-                sectioning,
-                images: renderImages,
-                styleguide: styleguideContent,
-              },
-              resolveRenderConfig,
-              resolveRenderModel,
-              templateEngine,
-              visualRefinement,
-            )
-            storage.putNodeData("web-rendering", page.pageId, renderResult)
             completedRendering++
             progress.emit({
               type: "step-progress",
@@ -711,181 +762,77 @@ async function runStoryboardStep(
               page: completedRendering,
               totalPages,
             })
-          } catch (err) {
-            const msg = toErrorMessage(err)
-            console.error(
-              `[stage-run] ${label}: ${page.pageId} failed at web-rendering: ${msg}`
-            )
-            failedPages.push(`${page.pageId} [web-rendering]: ${msg}`)
-            progress.emit({
-              type: "step-error",
-              step: "web-rendering",
-              error: `${page.pageId} failed: ${msg}`,
-            })
+            return
           }
-        }
-      )
+          const sectioning = structuringRow.data as PageSectioningOutput
 
-      if (failedPages.length > 0) {
-        throw new Error(
-          `${failedPages.length} page(s) failed:\n${failedPages.join("\n")}`
-        )
-      }
+          const imageClassificationRow = storage.getLatestNodeData(
+            "image-filtering",
+            page.pageId
+          )
+          const imageClassification = (imageClassificationRow?.data as ImageClassificationOutput) ?? { images: [] }
+          const unprunedImageIds = imageClassificationRow
+            ? imageClassification.images.filter((img) => !img.isPruned).map((img) => img.imageId)
+            : storage.getPageImages(page.pageId).map((img) => img.imageId)
 
-      progress.emit({ type: "step-complete", step: "web-rendering" })
-      console.log(`[stage-run] ${label}: storyboard re-render complete`)
-    } else {
-      // -- FULL RUN PATH --
-      // Sectioning config and LLM model only needed for full run
-      const sectioningConfig = buildSectioningConfig(config)
-      const llmModel = createLLMModel({
-        modelId: sectioningConfig.modelId,
-        cacheDir,
-        promptEngine,
-        rateLimiter,
-        onLog: onLlmLog,
-      })
-
-      console.log(
-        `[stage-run] ${label}: running storyboard for ${totalPages} pages (concurrency=${effectiveConcurrency})`
-      )
-
-      let completedSectioning = 0
-      let completedRendering = 0
-      const failedPages: string[] = []
-
-      await processWithConcurrency(
-        pages,
-        effectiveConcurrency,
-        async (page: PageData) => {
-          try {
-            // Get text-classification data
-            const textClassificationRow = storage.getLatestNodeData(
-              "text-classification",
-              page.pageId
-            )
-            if (!textClassificationRow) {
-              console.log(
-                `[stage-run] ${label}: skipping ${page.pageId} (no text-classification)`
-              )
-              return
-            }
-            const textClassification = textClassificationRow.data as TextClassificationOutput
-
-            // Get image-filtering data
-            const imageClassificationRow = storage.getLatestNodeData(
-              "image-filtering",
-              page.pageId
-            )
-            const imageClassification = (imageClassificationRow?.data as ImageClassificationOutput) ?? { images: [] }
-
-            // Get page image
-            const pageImageBase64 = storage.getPageImageBase64(page.pageId)
-
-            // Build image lists from classification (includes crop entries).
-            // Fallback to stored page images for partial runs where classification is missing.
-            const classifiedUnprunedImageIds = imageClassification.images
-              .filter((img) => !img.isPruned)
-              .map((img) => img.imageId)
-            const unprunedImageIds = imageClassificationRow
-              ? classifiedUnprunedImageIds
-              : storage.getPageImages(page.pageId).map((img) => img.imageId)
-
-            const sectionImages = unprunedImageIds.map((imageId) => ({
-              imageId,
-              imageBase64: storage.getImageBase64(imageId),
-            }))
-
-            // Page sectioning
-            console.log(
-              `[stage-run] ${label}: sectioning ${page.pageId}`
-            )
-            const sectionResult = await sectionPage(
-              {
-                pageId: page.pageId,
-                pageNumber: page.pageNumber,
-                pageImageBase64,
-                textClassification,
-                imageClassification,
-                images: sectionImages,
-              },
-              sectioningConfig,
-              llmModel
-            )
-            storage.putNodeData("page-sectioning", page.pageId, sectionResult)
-            completedSectioning++
-            progress.emit({
-              type: "step-progress",
-              step: "page-sectioning",
-              message: `${completedSectioning}/${totalPages}`,
-              page: completedSectioning,
-              totalPages,
-            })
-
-            // Build render images map from classification
-            const pageDims = new Map(storage.getPageImages(page.pageId).map((img) => [img.imageId, { width: img.width, height: img.height }]))
-            const renderImages = new Map<string, { base64: string; width?: number; height?: number }>()
-            for (const imageId of unprunedImageIds) {
-              const dims = pageDims.get(imageId)
-              renderImages.set(imageId, { base64: storage.getImageBase64(imageId), width: dims?.width, height: dims?.height })
-            }
-
-            // Web rendering
-            console.log(
-              `[stage-run] ${label}: rendering ${page.pageId}`
-            )
-            const sectioning = sectionResult as PageSectioningOutput
-            const renderResult = await renderPage(
-              {
-                label,
-                pageId: page.pageId,
-                pageImageBase64,
-                sectioning,
-                images: renderImages,
-                styleguide: styleguideContent,
-              },
-              resolveRenderConfig,
-              resolveRenderModel,
-              templateEngine,
-              visualRefinement,
-            )
-            storage.putNodeData("web-rendering", page.pageId, renderResult)
-            completedRendering++
-            progress.emit({
-              type: "step-progress",
-              step: "web-rendering",
-              message: `${completedRendering}/${totalPages}`,
-              page: completedRendering,
-              totalPages,
-            })
-          } catch (err) {
-            const msg = toErrorMessage(err)
-            const step =
-              err instanceof StepError ? err.step : "page-sectioning"
-            console.error(
-              `[stage-run] ${label}: ${page.pageId} failed at ${step}: ${msg}`
-            )
-            failedPages.push(`${page.pageId} [${step}]: ${msg}`)
-            progress.emit({
-              type: "step-error",
-              step,
-              error: `${page.pageId} failed: ${msg}`,
-            })
+          const pageDims = new Map(
+            storage.getPageImages(page.pageId).map((img) => [img.imageId, { width: img.width, height: img.height }])
+          )
+          const renderImages = new Map<string, { base64: string; width?: number; height?: number }>()
+          for (const imageId of unprunedImageIds) {
+            const dims = pageDims.get(imageId)
+            renderImages.set(imageId, { base64: storage.getImageBase64(imageId), width: dims?.width, height: dims?.height })
           }
+
+          const pageImageBase64 = storage.getPageImageBase64(page.pageId)
+
+          console.log(`[stage-run] ${label}: rendering ${page.pageId}`)
+          const renderResult = await renderPage(
+            {
+              label,
+              pageId: page.pageId,
+              pageImageBase64,
+              sectioning: sectioning,
+              images: renderImages,
+              styleguide: styleguideContent,
+            },
+            resolveRenderConfig,
+            resolveRenderModel,
+            templateEngine,
+            visualRefinement,
+          )
+          storage.putNodeData("web-rendering", page.pageId, renderResult)
+          completedRendering++
+          progress.emit({
+            type: "step-progress",
+            step: "web-rendering",
+            message: `${completedRendering}/${totalPages}`,
+            page: completedRendering,
+            totalPages,
+          })
+        } catch (err) {
+          const msg = toErrorMessage(err)
+          console.error(
+            `[stage-run] ${label}: ${page.pageId} failed at web-rendering: ${msg}`
+          )
+          failedPages.push(`${page.pageId} [web-rendering]: ${msg}`)
+          progress.emit({
+            type: "step-error",
+            step: "web-rendering",
+            error: `${page.pageId} failed: ${msg}`,
+          })
         }
-      )
-
-      if (failedPages.length > 0) {
-        throw new Error(
-          `${failedPages.length} page(s) failed:\n${failedPages.join("\n")}`
-        )
       }
+    )
 
-      // Emit completion for storyboard steps
-      progress.emit({ type: "step-complete", step: "page-sectioning" })
-      progress.emit({ type: "step-complete", step: "web-rendering" })
-      console.log(`[stage-run] ${label}: storyboard complete`)
+    if (failedPages.length > 0) {
+      throw new Error(
+        `${failedPages.length} page(s) failed:\n${failedPages.join("\n")}`
+      )
     }
+
+    progress.emit({ type: "step-complete", step: "web-rendering" })
+    console.log(`[stage-run] ${label}: storyboard complete`)
   } finally {
     if (visualRefinement) {
       await visualRefinement.screenshotRenderer.close()
@@ -965,12 +912,12 @@ async function runQuizzesStep(
     const quizPages: QuizPageInput[] = []
     for (const page of pages) {
       const renderingRow = storage.getLatestNodeData("web-rendering", page.pageId)
-      const sectioningRow = storage.getLatestNodeData("page-sectioning", page.pageId)
-      if (!renderingRow || !sectioningRow) continue
+      const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+      if (!renderingRow || !structuringRow) continue
       quizPages.push({
         pageId: page.pageId,
         rendering: renderingRow.data as WebRenderingOutput,
-        sectioning: sectioningRow.data as PageSectioningOutput,
+        sectioning: structuringRow.data as PageSectioningOutput,
       })
     }
 
@@ -1102,8 +1049,8 @@ async function runCaptionsStep(
 
           const rendering = renderingRow.data as WebRenderingOutput
           // Filter out pruned sections before extracting image IDs
-          const sectioningRow = storage.getLatestNodeData("page-sectioning", page.pageId)
-          const sectioning = sectioningRow?.data as PageSectioningOutput | undefined
+          const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+          const sectioning = structuringRow?.data as PageSectioningOutput | undefined
           const htmlSections = rendering.sections
             .filter((s) => !sectioning?.sections[s.sectionIndex]?.isPruned)
             .map((s) => s.html)
@@ -1863,7 +1810,6 @@ async function runSpeechStep(
 }
 
 interface ClassifyConfigs {
-  textClassifyConfig: ReturnType<typeof buildClassifyConfig>
   imageClassifyConfig: ReturnType<typeof buildImageClassifyConfig>
   meaningfulnessConfig: MeaningfulnessConfig | null
   segmentationConfig: SegmentationConfig | null
@@ -1872,46 +1818,28 @@ interface ClassifyConfigs {
 
 interface ClassifyCallbacks {
   onClassifyImages: () => void
-  onClassifyText: () => void
   onCrop: () => void
-  onTranslate: () => void
 }
 
-async function classifyPage(
+async function classifyPageImagesPipeline(
   page: PageData,
   storage: Storage,
   configs: ClassifyConfigs,
-  llmModel: ReturnType<typeof createLLMModel>,
   callbacks: ClassifyCallbacks,
-  translationConfig: TranslationConfig | null,
-  translationModel: ReturnType<typeof createLLMModel> | null,
   meaningfulnessModel: ReturnType<typeof createLLMModel> | null,
   segmentationModel: ReturnType<typeof createLLMModel> | null,
   croppingModel: ReturnType<typeof createLLMModel> | null
 ): Promise<void> {
-  const { textClassifyConfig, imageClassifyConfig, meaningfulnessConfig, segmentationConfig, croppingConfig } = configs
+  const { imageClassifyConfig, meaningfulnessConfig, segmentationConfig, croppingConfig } = configs
 
   const imageBase64 = storage.getPageImageBase64(page.pageId)
   const images = storage.getPageImages(page.pageId)
-
-  // Start text classification (async) while doing image classification (sync)
-  const textPromise = classifyPageText(
-    {
-      pageId: page.pageId,
-      pageNumber: page.pageNumber,
-      text: page.text,
-      imageBase64,
-    },
-    textClassifyConfig,
-    llmModel
-  )
 
   let imageResult: ImageClassificationOutput
   try {
     imageResult = classifyPageImages(page.pageId, images, imageClassifyConfig)
     callbacks.onClassifyImages()
   } catch (err) {
-    await textPromise.catch(() => undefined)
     wrapStepError("image-filtering", err)
     return // unreachable but satisfies TS
   }
@@ -1946,7 +1874,6 @@ async function classifyPage(
         )
       }
     } catch (err) {
-      await textPromise.catch(() => undefined)
       wrapStepError("image-filtering", err)
     }
   }
@@ -2085,31 +2012,6 @@ async function classifyPage(
       console.error(`[stage-run] image cropping failed for ${page.pageId}: ${toErrorMessage(err)}`)
     } finally {
       callbacks.onCrop()
-    }
-  }
-
-  let textResult: Awaited<ReturnType<typeof classifyPageText>>
-  try {
-    textResult = await textPromise
-    storage.putNodeData("text-classification", page.pageId, textResult)
-    callbacks.onClassifyText()
-  } catch (err) {
-    wrapStepError("text-classification", err)
-  }
-
-  // Translate (if needed)
-  if (translationConfig && translationModel) {
-    try {
-      const translated = await translatePageText(
-        page.pageId,
-        textResult as TextClassificationOutput,
-        translationConfig,
-        translationModel
-      )
-      storage.putNodeData("text-classification", page.pageId, translated)
-      callbacks.onTranslate()
-    } catch (err) {
-      wrapStepError("translation", err)
     }
   }
 }

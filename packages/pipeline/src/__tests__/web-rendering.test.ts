@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import type { AppConfig } from "@adt/types"
+import type { AppConfig, ContentNodeData } from "@adt/types"
 import type { LLMModel, GenerateObjectResult, GenerateObjectOptions } from "@adt/llm"
 import { buildRenderStrategyResolver, renderPage, type RenderConfig } from "../web-rendering.js"
 import type { TemplateEngine } from "../render-template.js"
@@ -17,8 +17,8 @@ const defaultResolveConfig = (): RenderConfig => ({
 describe("buildRenderStrategyResolver", () => {
   it("resolves default strategy from config", () => {
     const appConfig: AppConfig = {
-      text_types: { heading: "Heading" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { heading: "Heading" },
+      structure_types: { paragraph: "Paragraph" },
       default_render_strategy: "llm",
       render_strategies: {
         llm: {
@@ -44,8 +44,8 @@ describe("buildRenderStrategyResolver", () => {
 
   it("resolves section-specific strategy", () => {
     const appConfig: AppConfig = {
-      text_types: { heading: "Heading" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { heading: "Heading" },
+      structure_types: { paragraph: "Paragraph" },
       default_render_strategy: "llm",
       render_strategies: {
         llm: {
@@ -76,8 +76,8 @@ describe("buildRenderStrategyResolver", () => {
 
   it("falls back to hardcoded defaults when no config provided", () => {
     const appConfig: AppConfig = {
-      text_types: { heading: "Heading" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { heading: "Heading" },
+      structure_types: { paragraph: "Paragraph" },
     }
 
     const resolve = buildRenderStrategyResolver(appConfig)
@@ -92,8 +92,8 @@ describe("buildRenderStrategyResolver", () => {
 
   it("falls back to default strategy when section strategy name is missing", () => {
     const appConfig: AppConfig = {
-      text_types: { heading: "Heading" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { heading: "Heading" },
+      structure_types: { paragraph: "Paragraph" },
       default_render_strategy: "llm_default",
       render_strategies: {
         llm_default: {
@@ -116,8 +116,8 @@ describe("buildRenderStrategyResolver", () => {
 
   it("resolves template strategy with render type and template name", () => {
     const appConfig: AppConfig = {
-      text_types: { heading: "Heading" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { heading: "Heading" },
+      structure_types: { paragraph: "Paragraph" },
       default_render_strategy: "llm",
       render_strategies: {
         llm: {
@@ -146,23 +146,37 @@ describe("buildRenderStrategyResolver", () => {
   })
 })
 
-// Helper to build inline text group part
-function textPart(groupId: string, groupType: string, texts: Array<{ textType: string; text: string; isPruned: boolean }>, isPruned = false) {
-  return {
-    type: "text_group" as const,
-    groupId,
-    groupType,
-    texts: texts.map((t, i) => ({
-      textId: `${groupId}_tx${String(i + 1).padStart(3, "0")}`,
-      ...t,
-    })),
-    isPruned,
-  }
+// ── Tree-node helpers ────────────────────────────────────────────
+// These build the new ContentNodeData tree shape. `expandParts` uses each
+// leaf's `nodeId` directly as the rendered `textId`, so leaf nodeIds in
+// these fixtures follow the `${groupId}_tx001` convention to match the
+// data-id values asserted on rendered HTML.
+
+function leafNode(
+  nodeId: string,
+  role: string,
+  text: string,
+  isPruned = false
+): ContentNodeData {
+  return { nodeId, isPruned, role, text }
 }
 
-// Helper to build inline image part
-function imagePart(imageId: string, isPruned = false) {
-  return { type: "image" as const, imageId, isPruned }
+function groupNode(
+  nodeId: string,
+  structure: string,
+  children: ContentNodeData[],
+  isPruned = false
+): ContentNodeData {
+  return { nodeId, isPruned, structure, children }
+}
+
+function imageNode(nodeId: string, imageId: string, isPruned = false): ContentNodeData {
+  return {
+    nodeId,
+    isPruned,
+    structure: "image_group",
+    children: [{ nodeId: imageId, isPruned: false, role: "image" }],
+  }
 }
 
 describe("renderPage", () => {
@@ -191,9 +205,9 @@ describe("renderPage", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "text_only",
-              parts: [
-                textPart("pg001_gp001", "paragraph", [
-                  { textType: "section_text", text: "Hello", isPruned: false },
+              nodes: [
+                groupNode("pg001_gp001", "paragraph", [
+                  leafNode("pg001_gp001_tx001", "section_text", "Hello"),
                 ]),
               ],
               backgroundColor: "#ffffff",
@@ -204,9 +218,9 @@ describe("renderPage", () => {
             {
               sectionId: "pg001_sec002",
               sectionType: "credits",
-              parts: [
-                textPart("pg001_gp002", "paragraph", [
-                  { textType: "section_text", text: "Credits info", isPruned: false },
+              nodes: [
+                groupNode("pg001_gp002", "paragraph", [
+                  leafNode("pg001_gp002_tx001", "section_text", "Credits info"),
                 ]),
               ],
               backgroundColor: "#ffffff",
@@ -250,10 +264,10 @@ describe("renderPage", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "text_only",
-              parts: [
-                textPart("pg001_gp001", "paragraph", [
+              nodes: [
+                groupNode("pg001_gp001", "paragraph", [
                   // All texts pruned — section has no content
-                  { textType: "header_text", text: "Header", isPruned: true },
+                  leafNode("pg001_gp001_tx001", "header_text", "Header", true),
                 ]),
               ],
               backgroundColor: "#ffffff",
@@ -300,7 +314,7 @@ describe("renderPage", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "images_only",
-              parts: [imagePart("pg001_im001")],
+              nodes: [imageNode("pg001_img_node", "pg001_im001")],
               backgroundColor: "#ffffff",
               textColor: "#000000",
               pageNumber: 1,
@@ -350,11 +364,11 @@ describe("renderPage", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "text_only",
-              parts: [
-                textPart("pg001_gp001", "paragraph", [
-                  { textType: "section_text", text: "Hello", isPruned: false },
-                  { textType: "section_text", text: "World", isPruned: false },
-                  { textType: "header_text", text: "Pruned", isPruned: true },
+              nodes: [
+                groupNode("pg001_gp001", "paragraph", [
+                  leafNode("pg001_gp001_tx001", "section_text", "Hello"),
+                  leafNode("pg001_gp001_tx002", "section_text", "World"),
+                  leafNode("pg001_gp001_tx003", "header_text", "Pruned", true),
                 ]),
               ],
               backgroundColor: "#ffffff",
@@ -370,7 +384,7 @@ describe("renderPage", () => {
       fakeLlm
     )
 
-    const texts = capturedContext?.texts as Array<{
+    const texts = capturedContext?.leaf_texts as Array<{
       text_id: string
       text_type: string
       text: string
@@ -407,11 +421,11 @@ describe("renderPage", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "text_only",
-              parts: [
-                textPart("pg001_gp001", "paragraph", [
-                  { textType: "header_text", text: "First (pruned)", isPruned: true },
-                  { textType: "section_text", text: "Second", isPruned: false },
-                  { textType: "section_text", text: "Third", isPruned: false },
+              nodes: [
+                groupNode("pg001_gp001", "paragraph", [
+                  leafNode("pg001_gp001_tx001", "header_text", "First (pruned)", true),
+                  leafNode("pg001_gp001_tx002", "section_text", "Second"),
+                  leafNode("pg001_gp001_tx003", "section_text", "Third"),
                 ]),
               ],
               backgroundColor: "#ffffff",
@@ -427,7 +441,7 @@ describe("renderPage", () => {
       fakeLlm
     )
 
-    const texts = capturedContext?.texts as Array<{
+    const texts = capturedContext?.leaf_texts as Array<{
       text_id: string
       text_type: string
       text: string
@@ -464,9 +478,9 @@ describe("renderPage", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "text_only",
-              parts: [
-                textPart("pg001_gp001", "paragraph", [
-                  { textType: "section_text", text: "Hello", isPruned: false },
+              nodes: [
+                groupNode("pg001_gp001", "paragraph", [
+                  leafNode("pg001_gp001_tx001", "section_text", "Hello"),
                 ]),
               ],
               backgroundColor: "#ffffff",
@@ -482,7 +496,7 @@ describe("renderPage", () => {
       fakeLlm
     )
 
-    const texts = capturedContext?.texts as Array<{
+    const texts = capturedContext?.leaf_texts as Array<{
       text_id: string
     }>
     expect(texts).toHaveLength(1)
@@ -514,9 +528,9 @@ describe("renderPage", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "text_only",
-              parts: [
-                textPart("pg001_gp001", "paragraph", [
-                  { textType: "section_text", text: "First", isPruned: false },
+              nodes: [
+                groupNode("pg001_gp001", "paragraph", [
+                  leafNode("pg001_gp001_tx001", "section_text", "First"),
                 ]),
               ],
               backgroundColor: "#ffffff",
@@ -527,9 +541,9 @@ describe("renderPage", () => {
             {
               sectionId: "pg001_sec002",
               sectionType: "text_only",
-              parts: [
-                textPart("pg001_gp002", "paragraph", [
-                  { textType: "section_text", text: "Second", isPruned: false },
+              nodes: [
+                groupNode("pg001_gp002", "paragraph", [
+                  leafNode("pg001_gp002_tx001", "section_text", "Second"),
                 ]),
               ],
               backgroundColor: "#ffffff",
@@ -591,9 +605,9 @@ describe("renderPage", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "text_only",
-              parts: [
-                textPart("pg001_gp001", "paragraph", [
-                  { textType: "section_text", text: "Hello", isPruned: false },
+              nodes: [
+                groupNode("pg001_gp001", "paragraph", [
+                  leafNode("pg001_gp001_tx001", "section_text", "Hello"),
                 ]),
               ],
               backgroundColor: "#ffffff",
@@ -616,10 +630,11 @@ describe("renderPage", () => {
     expect(result.sections[0].reasoning).toBe("template-based rendering")
     expect(result.sections[0].html).toContain("data-id")
 
-    // Check template context shape
-    const parts = capturedContext?.parts as Array<{ type: string }>
-    expect(parts).toHaveLength(1)
-    expect(parts[0].type).toBe("group")
+    // Check template context shape — tree-based
+    const nodes = capturedContext?.nodes as Array<{ node_id: string; structure?: string }>
+    expect(nodes).toHaveLength(1)
+    expect(nodes[0].node_id).toBe("pg001_gp001")
+    expect(nodes[0].structure).toBe("paragraph")
   })
 
   it("throws when template renderType but no template engine", async () => {
@@ -651,9 +666,9 @@ describe("renderPage", () => {
               {
                 sectionId: "pg001_sec001",
                 sectionType: "text_only",
-                parts: [
-                  textPart("pg001_gp001", "paragraph", [
-                    { textType: "section_text", text: "Hello", isPruned: false },
+                nodes: [
+                  groupNode("pg001_gp001", "paragraph", [
+                    leafNode("pg001_gp001_tx001", "section_text", "Hello"),
                   ]),
                 ],
                 backgroundColor: "#ffffff",
@@ -719,9 +734,9 @@ describe("renderPage", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "cover",
-              parts: [
-                textPart("pg001_gp001", "paragraph", [
-                  { textType: "section_text", text: "First", isPruned: false },
+              nodes: [
+                groupNode("pg001_gp001", "paragraph", [
+                  leafNode("pg001_gp001_tx001", "section_text", "First"),
                 ]),
               ],
               backgroundColor: "#ffffff",
@@ -732,9 +747,9 @@ describe("renderPage", () => {
             {
               sectionId: "pg001_sec002",
               sectionType: "body",
-              parts: [
-                textPart("pg001_gp002", "paragraph", [
-                  { textType: "section_text", text: "Second", isPruned: false },
+              nodes: [
+                groupNode("pg001_gp002", "paragraph", [
+                  leafNode("pg001_gp002_tx001", "section_text", "Second"),
                 ]),
               ],
               backgroundColor: "#ffffff",
@@ -800,9 +815,9 @@ describe("renderPage", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "activity_multiple_choice",
-              parts: [
-                textPart("pg001_gp001", "paragraph", [
-                  { textType: "instruction_text", text: "Question", isPruned: false },
+              nodes: [
+                groupNode("pg001_gp001", "paragraph", [
+                  leafNode("pg001_gp001_tx001", "instruction_text", "Question"),
                 ]),
               ],
               backgroundColor: "#ffffff",
@@ -866,9 +881,9 @@ describe("renderPage", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "activity_open_ended_answer",
-              parts: [
-                textPart("pg001_gp001", "paragraph", [
-                  { textType: "instruction_text", text: "Question", isPruned: false },
+              nodes: [
+                groupNode("pg001_gp001", "paragraph", [
+                  leafNode("pg001_gp001_tx001", "instruction_text", "Question"),
                 ]),
               ],
               backgroundColor: "#ffffff",
@@ -929,9 +944,9 @@ describe("renderPage", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "text",
-              parts: [
-                textPart("pg001_gp001", "paragraph", [
-                  { textType: "body_text", text: "Body text", isPruned: false },
+              nodes: [
+                groupNode("pg001_gp001", "paragraph", [
+                  leafNode("pg001_gp001_tx001", "body_text", "Body text"),
                 ]),
               ],
               backgroundColor: "#ffffff",
@@ -979,14 +994,17 @@ describe("renderPage", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "text_only",
-              parts: [
-                textPart("pg001_gp001", "paragraph", [
-                  { textType: "section_text", text: "Hello", isPruned: false },
+              nodes: [
+                groupNode("pg001_gp001", "paragraph", [
+                  leafNode("pg001_gp001_tx001", "section_text", "Hello"),
                 ]),
-                textPart("pg001_gp002", "heading", [
-                  { textType: "header_text", text: "Pruned group", isPruned: false },
-                ], true), // part-level pruned
-                imagePart("pg001_im001", true), // pruned image
+                groupNode(
+                  "pg001_gp002",
+                  "heading",
+                  [leafNode("pg001_gp002_tx001", "header_text", "Pruned group")],
+                  true // container-level pruned
+                ),
+                imageNode("pg001_img_node", "pg001_im001", true), // pruned image
               ],
               backgroundColor: "#ffffff",
               textColor: "#000000",
@@ -1002,7 +1020,7 @@ describe("renderPage", () => {
     )
 
     // Only unpruned parts should be passed to the renderer
-    const texts = capturedContext?.texts as Array<{ text_id: string }>
+    const texts = capturedContext?.leaf_texts as Array<{ text_id: string }>
     expect(texts).toHaveLength(1)
     expect(texts[0].text_id).toBe("pg001_gp001_tx001")
 
@@ -1014,8 +1032,8 @@ describe("renderPage", () => {
 describe("buildRenderStrategyResolver — activity", () => {
   it("resolves activity strategy with answerPromptName", () => {
     const appConfig: AppConfig = {
-      text_types: { heading: "Heading" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { heading: "Heading" },
+      structure_types: { paragraph: "Paragraph" },
       default_render_strategy: "two_column",
       render_strategies: {
         two_column: {
@@ -1051,8 +1069,8 @@ describe("buildRenderStrategyResolver — activity", () => {
 
   it("resolves activity strategy without answer_prompt to empty answerPromptName", () => {
     const appConfig: AppConfig = {
-      text_types: { heading: "Heading" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { heading: "Heading" },
+      structure_types: { paragraph: "Paragraph" },
       render_strategies: {
         activity_open_ended: {
           render_type: "activity",

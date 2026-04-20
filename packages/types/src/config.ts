@@ -25,11 +25,8 @@ export const QuizGenerationConfig = StepConfig.extend({
 })
 export type QuizGenerationConfig = z.infer<typeof QuizGenerationConfig>
 
-export const SectioningMode = z.enum(["section", "page", "dynamic"])
-export type SectioningMode = z.infer<typeof SectioningMode>
-
 export const PageSectioningConfig = StepConfig.extend({
-  mode: SectioningMode.optional(),
+  max_refinements: z.number().int().min(0).optional(),
 })
 export type PageSectioningConfig = z.infer<typeof PageSectioningConfig>
 
@@ -93,17 +90,16 @@ export type AccessibilityAssessmentConfig = z.infer<typeof AccessibilityAssessme
 
 export const AppConfig = z
   .object({
-    text_types: z.record(z.string(), z.string()),
-    text_group_types: z.record(z.string(), z.string()),
+    structure_types: z.record(z.string(), z.string()),
+    role_types: z.record(z.string(), z.string()),
     section_types: z.record(z.string(), z.string()).optional(),
-    pruned_text_types: z.array(z.string()).optional(),
+    pruned_role_types: z.array(z.string()).optional(),
     pruned_section_types: z.array(z.string()).optional(),
     disabled_section_types: z.array(z.string()).optional(),
-    text_classification: StepConfig.optional(),
+    page_sectioning: PageSectioningConfig.optional(),
     translation: StepConfig.optional(),
     metadata: StepConfig.optional(),
     book_summary: StepConfig.optional(),
-    page_sectioning: PageSectioningConfig.optional(),
     quiz_generation: QuizGenerationConfig.optional(),
     default_render_strategy: z.string().optional(),
     render_strategies: z.record(z.string(), RenderStrategyConfig).optional(),

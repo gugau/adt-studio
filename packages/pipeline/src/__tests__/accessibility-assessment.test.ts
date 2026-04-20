@@ -310,20 +310,24 @@ describe("runAccessibilityAssessment", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "content",
-              parts: [
+              nodes: [
                 {
-                  type: "image",
-                  imageId: "pg001_im001",
+                  nodeId: "pg001_sec001_ig001",
                   isPruned: false,
-                },
-                {
-                  type: "text_group",
-                  groupId: "pg001_gp001",
-                  groupType: "paragraph",
-                  texts: [
-                    { textId: "tx001", textType: "image_associated_text", text: "A lifecycle diagram with six stages", isPruned: false },
+                  structure: "image_group",
+                  children: [
+                    {
+                      nodeId: "pg001_im001",
+                      isPruned: false,
+                      role: "image",
+                    },
+                    {
+                      nodeId: "pg001_gp001_tx001",
+                      isPruned: false,
+                      role: "caption",
+                      text: "A lifecycle diagram with six stages",
+                    },
                   ],
-                  isPruned: false,
                 },
               ],
               backgroundColor: "#fff",
@@ -408,20 +412,31 @@ describe("runAccessibilityAssessment", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "content",
-              parts: [
+              nodes: [
                 {
-                  type: "text_group",
-                  groupId: "pg001_gp001",
-                  groupType: "paragraph",
-                  texts: [
-                    { textId: "tx001", textType: "section_text", text: "Hello world", isPruned: false },
-                  ],
+                  nodeId: "pg001_gp001",
                   isPruned: false,
+                  structure: "paragraph",
+                  children: [
+                    {
+                      nodeId: "tx001",
+                      isPruned: false,
+                      role: "section_text",
+                      text: "Hello world",
+                    },
+                  ],
                 },
                 {
-                  type: "image_part",
-                  imageId: "pg001_im001",
+                  nodeId: "pg001_sec001_ig001",
                   isPruned: false,
+                  structure: "image_group",
+                  children: [
+                    {
+                      nodeId: "pg001_im001",
+                      isPruned: false,
+                      role: "image",
+                    },
+                  ],
                 },
               ],
               backgroundColor: "#fff",
