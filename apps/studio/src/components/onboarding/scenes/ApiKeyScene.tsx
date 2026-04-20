@@ -6,14 +6,62 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { useApiKey } from "@/hooks/use-api-key";
 import type { OnboardingStepProps } from "../steps";
 
 type TabKey = "openai" | "anthropic" | "google" | "custom" | "azure";
 
+const TAB_KEYS: TabKey[] = [
+  "openai",
+  "anthropic",
+  "google",
+  "custom",
+  "azure",
+];
+
 function isValidOpenAIKey(key: string): boolean {
   const trimmed = key.trim();
   return trimmed.length > 0 && trimmed.startsWith("sk-");
+}
+
+function AnimatedTabsContent({
+  value,
+  active,
+  children,
+}: {
+  value: TabKey;
+  active: TabKey;
+  children: React.ReactNode;
+}) {
+  const ownIdx = TAB_KEYS.indexOf(value);
+  const activeIdx = TAB_KEYS.indexOf(active);
+  const isActive = value === active;
+  const offset = ownIdx - activeIdx;
+  const translate = isActive ? 0 : offset > 0 ? 24 : -24;
+  return (
+    <TabsContent
+      value={value}
+      forceMount
+      style={{
+        gridArea: "1 / 1",
+        display: "block",
+        transform: `translateX(${translate}px)`,
+        opacity: isActive ? 1 : 0,
+      }}
+      className={cn(
+        "mt-0 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+        !isActive && "pointer-events-none",
+      )}
+    >
+      {children}
+    </TabsContent>
+  );
 }
 
 export function ApiKeyStep(_props: OnboardingStepProps) {
@@ -88,189 +136,189 @@ export function ApiKeyStep(_props: OnboardingStepProps) {
           </p>
         </div>
 
-        <div className="animate-onboarding-fade-up flex w-full flex-col gap-4 text-left [animation-delay:340ms]">
-          <div className="flex flex-wrap gap-1 border-b border-border">
+        <Tabs
+          value={tab}
+          onValueChange={(v) => {
+            setTab(v as TabKey);
+            setShowKey(false);
+          }}
+          className="animate-onboarding-fade-up flex w-full flex-col gap-4 text-left [animation-delay:340ms]"
+        >
+          <TabsList className="flex h-auto flex-wrap justify-start gap-1 rounded-none border-b border-border bg-transparent p-0 text-muted-foreground">
             {tabs.map((item) => (
-              <button
+              <TabsTrigger
                 key={item.key}
-                type="button"
-                onClick={() => {
-                  setTab(item.key);
-                  setShowKey(false);
-                }}
-                className={cn(
-                  "-mb-px flex items-center gap-1 whitespace-nowrap border-b-2 px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer",
-                  tab === item.key
-                    ? "border-foreground text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground",
-                )}
+                value={item.key}
+                className="-mb-px flex items-center gap-1 whitespace-nowrap rounded-none border-b-2 border-transparent bg-transparent px-2 py-1.5 text-xs font-medium shadow-none transition-colors hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none cursor-pointer"
               >
                 {item.label}
                 {item.isSaved && <Check className="h-3 w-3 text-primary" />}
-              </button>
+              </TabsTrigger>
             ))}
-          </div>
+          </TabsList>
 
-          {tab === "openai" && (
-            <div className="space-y-2">
-              <Label htmlFor="onb-openai-key">
-                <Trans>OpenAI API Key</Trans>
-              </Label>
-              <div className="relative">
-                <Input
-                  id="onb-openai-key"
-                  type={showKey ? "text" : "password"}
-                  autoComplete="off"
-                  spellCheck={false}
-                  placeholder={t`sk-...`}
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  className={passwordInputClass}
-                />
-                {eyeToggle}
+          <div className="relative grid overflow-hidden">
+            <AnimatedTabsContent value="openai" active={tab}>
+              <div className="space-y-2">
+                <Label htmlFor="onb-openai-key">
+                  <Trans>OpenAI API Key</Trans>
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="onb-openai-key"
+                    type={showKey ? "text" : "password"}
+                    autoComplete="off"
+                    spellCheck={false}
+                    placeholder={t`sk-...`}
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    className={passwordInputClass}
+                  />
+                  {eyeToggle}
+                </div>
+                {apiKey.length > 0 && !isValidOpenAIKey(apiKey) && (
+                  <p className="text-xs text-destructive">
+                    <Trans>Key must start with sk-</Trans>
+                  </p>
+                )}
               </div>
-              {apiKey.length > 0 && !isValidOpenAIKey(apiKey) && (
-                <p className="text-xs text-destructive">
-                  <Trans>Key must start with sk-</Trans>
+            </AnimatedTabsContent>
+
+            <AnimatedTabsContent value="anthropic" active={tab}>
+              <div className="space-y-2">
+                <Label htmlFor="onb-anthropic-key">
+                  <Trans>Anthropic API Key</Trans>
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="onb-anthropic-key"
+                    type={showKey ? "text" : "password"}
+                    autoComplete="off"
+                    spellCheck={false}
+                    placeholder={t`sk-ant-...`}
+                    value={anthropicKey}
+                    onChange={(e) => setAnthropicKey(e.target.value)}
+                    className={passwordInputClass}
+                  />
+                  {eyeToggle}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  <Trans>
+                    Used for Claude models (claude-opus-4-6, claude-sonnet-4-6,
+                    etc.)
+                  </Trans>
                 </p>
-              )}
-            </div>
-          )}
-
-          {tab === "anthropic" && (
-            <div className="space-y-2">
-              <Label htmlFor="onb-anthropic-key">
-                <Trans>Anthropic API Key</Trans>
-              </Label>
-              <div className="relative">
-                <Input
-                  id="onb-anthropic-key"
-                  type={showKey ? "text" : "password"}
-                  autoComplete="off"
-                  spellCheck={false}
-                  placeholder={t`sk-ant-...`}
-                  value={anthropicKey}
-                  onChange={(e) => setAnthropicKey(e.target.value)}
-                  className={passwordInputClass}
-                />
-                {eyeToggle}
               </div>
-              <p className="text-xs text-muted-foreground">
-                <Trans>
-                  Used for Claude models (claude-opus-4-6, claude-sonnet-4-6,
-                  etc.)
-                </Trans>
-              </p>
-            </div>
-          )}
+            </AnimatedTabsContent>
 
-          {tab === "google" && (
-            <div className="space-y-2">
-              <Label htmlFor="onb-google-key">
-                <Trans>Google AI API Key</Trans>
-              </Label>
-              <div className="relative">
-                <Input
-                  id="onb-google-key"
-                  type={showKey ? "text" : "password"}
-                  autoComplete="off"
-                  spellCheck={false}
-                  placeholder={t`AIza...`}
-                  value={googleKey}
-                  onChange={(e) => handleGoogleChange(e.target.value)}
-                  className={passwordInputClass}
-                />
-                {eyeToggle}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                <Trans>
-                  Used for Gemini models — both LLM (gemini-2.5-pro, etc.) and
-                  TTS (gemini-2.5-pro-preview-tts, etc.)
-                </Trans>
-              </p>
-            </div>
-          )}
-
-          {tab === "custom" && (
-            <div className="space-y-3">
+            <AnimatedTabsContent value="google" active={tab}>
               <div className="space-y-2">
-                <Label htmlFor="onb-custom-base-url">
-                  <Trans>Base URL</Trans>
-                </Label>
-                <Input
-                  id="onb-custom-base-url"
-                  placeholder={t`e.g. http://localhost:11434/v1`}
-                  value={customBaseUrl}
-                  onChange={(e) => setCustomBaseUrl(e.target.value)}
-                  className="h-11 rounded-xl"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="onb-custom-api-key">
-                  <Trans>API Key (optional)</Trans>
+                <Label htmlFor="onb-google-key">
+                  <Trans>Google AI API Key</Trans>
                 </Label>
                 <div className="relative">
                   <Input
-                    id="onb-custom-api-key"
+                    id="onb-google-key"
                     type={showKey ? "text" : "password"}
                     autoComplete="off"
                     spellCheck={false}
-                    placeholder={t`Leave empty if not required`}
-                    value={customApiKey}
-                    onChange={(e) => setCustomApiKey(e.target.value)}
+                    placeholder={t`AIza...`}
+                    value={googleKey}
+                    onChange={(e) => handleGoogleChange(e.target.value)}
                     className={passwordInputClass}
                   />
                   {eyeToggle}
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  <Trans>
+                    Used for Gemini models — both LLM (gemini-2.5-pro, etc.) and
+                    TTS (gemini-2.5-pro-preview-tts, etc.)
+                  </Trans>
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground">
-                <Trans>
-                  Any OpenAI-compatible endpoint (Ollama, vLLM, Together AI,
-                  etc.). Use the "custom:" prefix when selecting models, e.g.
-                  custom:llama3.
-                </Trans>
-              </p>
-            </div>
-          )}
+            </AnimatedTabsContent>
 
-          {tab === "azure" && (
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <Label htmlFor="onb-azure-key">
-                  <Trans>Azure Speech Subscription Key</Trans>
-                </Label>
-                <div className="relative">
+            <AnimatedTabsContent value="custom" active={tab}>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="onb-custom-base-url">
+                    <Trans>Base URL</Trans>
+                  </Label>
                   <Input
-                    id="onb-azure-key"
-                    type={showKey ? "text" : "password"}
-                    autoComplete="off"
-                    spellCheck={false}
-                    placeholder={t`Azure Speech subscription key`}
-                    value={azureKey}
-                    onChange={(e) => setAzureKey(e.target.value)}
-                    className={passwordInputClass}
+                    id="onb-custom-base-url"
+                    placeholder={t`e.g. http://localhost:11434/v1`}
+                    value={customBaseUrl}
+                    onChange={(e) => setCustomBaseUrl(e.target.value)}
+                    className="h-11 rounded-xl"
                   />
-                  {eyeToggle}
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="onb-custom-api-key">
+                    <Trans>API Key (optional)</Trans>
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="onb-custom-api-key"
+                      type={showKey ? "text" : "password"}
+                      autoComplete="off"
+                      spellCheck={false}
+                      placeholder={t`Leave empty if not required`}
+                      value={customApiKey}
+                      onChange={(e) => setCustomApiKey(e.target.value)}
+                      className={passwordInputClass}
+                    />
+                    {eyeToggle}
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  <Trans>
+                    Any OpenAI-compatible endpoint (Ollama, vLLM, Together AI,
+                    etc.). Use the "custom:" prefix when selecting models, e.g.
+                    custom:llama3.
+                  </Trans>
+                </p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="onb-azure-region">
-                  <Trans>Region</Trans>
-                </Label>
-                <Input
-                  id="onb-azure-region"
-                  placeholder={t`e.g. eastus, westeurope`}
-                  value={azureRegion}
-                  onChange={(e) => setAzureRegion(e.target.value)}
-                  className="h-11 rounded-xl"
-                />
+            </AnimatedTabsContent>
+
+            <AnimatedTabsContent value="azure" active={tab}>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="onb-azure-key">
+                    <Trans>Azure Speech Subscription Key</Trans>
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="onb-azure-key"
+                      type={showKey ? "text" : "password"}
+                      autoComplete="off"
+                      spellCheck={false}
+                      placeholder={t`Azure Speech subscription key`}
+                      value={azureKey}
+                      onChange={(e) => setAzureKey(e.target.value)}
+                      className={passwordInputClass}
+                    />
+                    {eyeToggle}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="onb-azure-region">
+                    <Trans>Region</Trans>
+                  </Label>
+                  <Input
+                    id="onb-azure-region"
+                    placeholder={t`e.g. eastus, westeurope`}
+                    value={azureRegion}
+                    onChange={(e) => setAzureRegion(e.target.value)}
+                    className="h-11 rounded-xl"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  <Trans>Used for Azure Speech TTS provider.</Trans>
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground">
-                <Trans>Used for Azure Speech TTS provider.</Trans>
-              </p>
-            </div>
-          )}
-        </div>
+            </AnimatedTabsContent>
+          </div>
+        </Tabs>
       </div>
     </div>
   );
