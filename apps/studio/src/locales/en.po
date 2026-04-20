@@ -1003,8 +1003,11 @@ msgstr "Completion across the assigned page range for this reviewer session."
 msgid "Condensation"
 msgstr "Condensation"
 
-msgid "Configure activity detection and image processing options for extracted content."
-msgstr "Configure activity detection and image processing options for extracted content."
+#~ msgid "Configure activity detection and image processing options for extracted content."
+#~ msgstr "Configure activity detection and image processing options for extracted content."
+
+msgid "Configure activity detection and image processing options for extracted content. Hover any setting to see how it affects the preview."
+msgstr "Configure activity detection and image processing options for extracted content. Hover any setting to see how it affects the preview."
 
 msgid "Configure API keys for AI pipeline features."
 msgstr "Configure API keys for AI pipeline features."
@@ -2193,11 +2196,14 @@ msgstr "Match each stage of the water cycle to its definition:"
 msgid "Math"
 msgstr "Math"
 
-msgid "Max Side"
-msgstr "Max Side"
+#~ msgid "Max Side"
+#~ msgstr "Max Side"
 
 msgid "Max side (px)"
 msgstr "Max side (px)"
+
+msgid "Max Size (px)"
+msgstr "Max Size (px)"
 
 msgid "Meaningfulness Prompt"
 msgstr "Meaningfulness Prompt"
@@ -2265,11 +2271,14 @@ msgstr "Min complexity"
 msgid "Min image dimension (px)"
 msgstr "Min image dimension (px)"
 
-msgid "Min Side"
-msgstr "Min Side"
+#~ msgid "Min Side"
+#~ msgstr "Min Side"
 
 msgid "Min side (px)"
 msgstr "Min side (px)"
+
+msgid "Min Size (px)"
+msgstr "Min Size (px)"
 
 msgid "Minimum image dimension"
 msgstr "Minimum image dimension"
@@ -3013,8 +3022,8 @@ msgstr "Remove entry"
 msgid "Remove file"
 msgstr "Remove file"
 
-msgid "Remove PDF"
-msgstr "Remove PDF"
+#~ msgid "Remove PDF"
+#~ msgstr "Remove PDF"
 
 msgid "Remove section"
 msgstr "Remove section"
@@ -3045,6 +3054,9 @@ msgstr "Replace"
 
 msgid "Replace from Book"
 msgstr "Replace from Book"
+
+msgid "Replace PDF"
+msgstr "Replace PDF"
 
 msgid "Replace Video?"
 msgstr "Replace Video?"

@@ -1003,8 +1003,11 @@ msgstr "Completion across the assigned page range for this reviewer session."
 msgid "Condensation"
 msgstr "Condensação"
 
-msgid "Configure activity detection and image processing options for extracted content."
-msgstr "Configurar opções de detecção de atividades e processamento de imagens para conteúdo extraído."
+#~ msgid "Configure activity detection and image processing options for extracted content."
+#~ msgstr "Configurar opções de detecção de atividades e processamento de imagens para conteúdo extraído."
+
+msgid "Configure activity detection and image processing options for extracted content. Hover any setting to see how it affects the preview."
+msgstr "Configure as opções de detecção de atividade e processamento de imagem para o conteúdo extraído. Passe o mouse sobre qualquer configuração para ver como ela afeta a visualização."
 
 msgid "Configure API keys for AI pipeline features."
 msgstr "Configure as chaves de API para os recursos de IA."
@@ -2193,11 +2196,14 @@ msgstr "Associe cada estágio do ciclo da água à sua definição:"
 msgid "Math"
 msgstr "Matemática"
 
-msgid "Max Side"
-msgstr "Lado Máximo"
+#~ msgid "Max Side"
+#~ msgstr "Lado Máximo"
 
 msgid "Max side (px)"
 msgstr "Lado máximo (px)"
+
+msgid "Max Size (px)"
+msgstr "Tamanho Máx (px)"
 
 msgid "Meaningfulness Prompt"
 msgstr "Prompt de relevância"
@@ -2265,11 +2271,14 @@ msgstr "Complexidade mínima"
 msgid "Min image dimension (px)"
 msgstr "Dimensão mínima da imagem (px)"
 
-msgid "Min Side"
-msgstr "Lado Mínimo"
+#~ msgid "Min Side"
+#~ msgstr "Lado Mínimo"
 
 msgid "Min side (px)"
 msgstr "Lado mínimo (px)"
+
+msgid "Min Size (px)"
+msgstr "Tamanho Mín (px)"
 
 msgid "Minimum image dimension"
 msgstr "Dimensão mínima da imagem"
@@ -3013,8 +3022,8 @@ msgstr "Remover entrada"
 msgid "Remove file"
 msgstr "Remover arquivo"
 
-msgid "Remove PDF"
-msgstr "Remover PDF"
+#~ msgid "Remove PDF"
+#~ msgstr "Remover PDF"
 
 msgid "Remove section"
 msgstr "Remove section"
@@ -3045,6 +3054,9 @@ msgstr "Substituir"
 
 msgid "Replace from Book"
 msgstr "Substituir do livro"
+
+msgid "Replace PDF"
+msgstr "Substituir PDF"
 
 msgid "Replace Video?"
 msgstr "Substituir Vídeo?"
