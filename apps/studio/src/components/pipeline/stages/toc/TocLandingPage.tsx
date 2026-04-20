@@ -37,39 +37,81 @@ function MockTocPreview() {
           {/* Left column */}
           <div className="flex-1 flex flex-col gap-2">
             <p className="text-center text-[13px] font-bold tracking-tight text-foreground">
-              Chapter One
+              Lorem Ipsum
             </p>
             <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
-              Every living organism requires energy to survive. From the simplest bacteria to the most complex mammals, the ability to convert nutrients into usable energy is fundamental to life.
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.
             </p>
             <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
-              In eukaryotic cells, this process is carried out by specialized structures known as organelles, each performing distinct roles within the cell. The mitochondria are often called the powerhouses of the cell.
+              Ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
             </p>
             <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
-              They are responsible for producing adenosine triphosphate (ATP) through a process known as cellular respiration. This multi-step pathway breaks down glucose and other nutrients.
+              Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Curabitur pretium tincidunt lacus. Nulla gravida orci a odio.
             </p>
             <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
-              Each mitochondrion has a double membrane structure. The outer membrane is smooth, while the inner membrane is folded into cristae that increase the surface area.
+              Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris. Integer in mauris eu nibh euismod gravida.
+            </p>
+            <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
+              Duis ac tellus et risus vulputate vehicula. Donec lobortis risus a elit. Etiam tempor. Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis.
+            </p>
+            <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
+              Proin quam nisl, tincidunt et, mattis eget, convallis nec, purus. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
+            </p>
+            <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
+              Nulla posuere. Donec vitae dolor. Nullam tristique diam non turpis. Cras placerat accumsan nulla. Nullam rutrum. Nam vestibulum accumsan nisl.
+            </p>
+            <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
+              Phasellus leo dolor, tempus non, auctor et, hendrerit quis, nisi. Curabitur ligula sapien, tincidunt non, euismod vitae, posuere imperdiet, leo.
+            </p>
+            <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
+              Maecenas malesuada. Praesent congue erat at massa. Sed cursus turpis vitae tortor. Donec posuere vulputate arcu. Phasellus accumsan cursus velit.
+            </p>
+            <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
+              Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae. Sed aliquam, nisi quis porttitor congue, elit erat euismod.
+            </p>
+            <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
+              Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Proin pharetra nonummy pede. Mauris et orci.
             </p>
           </div>
           {/* Right column */}
           <div className="flex-1 flex flex-col gap-2">
             <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
-              Inside each mitochondrion, the inner membrane forms a series of folds called cristae. These folds dramatically increase the surface area available for chemical reactions.
+              Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; In ac dui quis mi consectetuer lacinia. Nam pretium turpis et arcu.
             </p>
-            <div className="w-full h-24 rounded bg-gradient-to-br from-orange-200 to-pink-200" />
+            <div className="w-full h-20 rounded bg-gradient-to-br from-orange-200 to-pink-200" />
             <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
-              Mitochondria are unique among organelles because they contain their own DNA. This mitochondrial DNA is inherited exclusively from the mother.
+              Duis arcu tortor, suscipit eget, imperdiet nec, imperdiet iaculis, ipsum. Sed aliquam ultrices mauris. Integer ante arcu, accumsan a, consectetuer eget.
             </p>
             <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
-              The presence of their own genetic material supports the theory of endosymbiosis, which proposes that mitochondria were once free-living bacteria.
+              Praesent blandit laoreet nibh. Fusce convallis metus id felis luctus adipiscing. Pellentesque egestas, neque sit amet convallis pulvinar, justo nulla.
+            </p>
+            <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
+              Aenean dolor. Etiam vitae tortor. Morbi vestibulum volutpat enim. Fusce vel dui. Sed et libero. Proin quam. Etiam ultrices. Suspendisse in justo eu magna luctus suscipit.
+            </p>
+            <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
+              Sed lectus. Integer euismod lacus luctus magna. Quisque cursus, metus vitae pharetra auctor, sem massa mattis sem, at interdum magna augue eget diam.
+            </p>
+            <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
+              Vestibulum ullamcorper mauris at ligula. Fusce fermentum. Nullam cursus lacinia erat. Praesent nec nisl a purus blandit viverra. Praesent ac massa.
+            </p>
+            <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
+              Aenean quam. In scelerisque sem at dolor. Maecenas mattis. Sed convallis tristique sem. Proin ut ligula vel nunc egestas porttitor. Morbi lectus risus.
+            </p>
+            <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
+              Iaculis vitae, scelerisque nec, aliquam eget, urna. Nulla ut turpis. Curabitur a felis in nunc fringilla tristique. Morbi mattis ullamcorper velit.
+            </p>
+            <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
+              Phasellus gravida semper nisi. Nullam vel sem. Pellentesque libero tortor, tincidunt et, tincidunt eget, semper nec, quam. Sed hendrerit. Morbi ac felis.
+            </p>
+            <p className="text-[9px] leading-[13px] text-foreground/70 text-justify">
+              Nunc egestas, augue at pellentesque laoreet, felis eros vehicula leo, at malesuada velit leo quis pede. Donec interdum, metus et hendrerit aliquet.
             </p>
           </div>
         </div>
       </div>
 
       {/* Floating TOC panel */}
-      <div className="absolute left-3 top-3 bottom-3 w-[35%] flex flex-col bg-white rounded-lg border border-[#e2e8f0] shadow-xl overflow-hidden">
+      <div className="absolute left-3 top-3 bottom-14 w-[35%] flex flex-col bg-white rounded-lg border border-[#e2e8f0] shadow-xl overflow-hidden">
         {/* Panel header */}
         <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-[#e5e5e5]">
           <span className="text-[8px] font-bold text-foreground">Table of Contents</span>
