@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { Link } from "@tanstack/react-router"
-import { Check, ChevronDown, ChevronRight, ChevronUp, Languages, Loader2, Play, Pause, Plus, RotateCcw, Save, Settings, Trash2, Type, WandSparkles, X } from "lucide-react"
+import { Check, ChevronDown, ChevronRight, ChevronUp, Languages, Loader2, Play, Pause, Plus, RotateCcw, Save, Trash2, Type, WandSparkles, X } from "lucide-react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { api, getAudioUrl, BASE_URL } from "@/api/client"
 import type { TextCatalogEntry, VersionEntry, WordTimestamp, WordTimestampEntry } from "@/api/client"
@@ -10,8 +10,8 @@ import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useBookTasks } from "@/hooks/use-book-tasks"
 import { useApiKey } from "@/hooks/use-api-key"
-import { StageRunCard } from "../../components/StageRunCard"
 import { TranslationsLandingPage } from "./TranslationsLandingPage"
+import { SpeechLandingPage } from "../speech"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import { cn } from "@/lib/utils"
 import { normalizeLocale } from "@/lib/languages"
@@ -194,21 +194,12 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
   }, [selectedPageId])
 
   useEffect(() => {
-    if (!stageIdle && !isSpeechStage) {
+    if (!stageIdle) {
       setOnLabelClick(() => setShowConfig((v) => !v))
       return () => setOnLabelClick(null)
     }
     setOnLabelClick(null)
-  }, [stageIdle, isSpeechStage, setOnLabelClick])
-
-  const handleRun = useCallback(() => {
-    if (!hasApiKey || isRunning) return
-    queueRun({
-      fromStage: stageSlug as "translate" | "speech",
-      toStage: stageSlug as "translate" | "speech",
-      apiKey,
-    })
-  }, [hasApiKey, isRunning, apiKey, queueRun, stageSlug])
+  }, [stageIdle, setOnLabelClick])
 
   const handleDeleteTTS = useCallback(async () => {
     await api.deleteTTS(bookLabel)
@@ -565,21 +556,10 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
 
   const hasCatalogData = entries.length > 0
 
-  const speechSummary = useMemo(() => {
-    if (!speechConfig || typeof speechConfig !== "object") {
-      return { provider: "openai", voice: "alloy", model: "gpt-4o-mini-tts" }
-    }
-    const sc = speechConfig as Record<string, unknown>
-    const provider = (sc.default_provider as string) ?? "openai"
-    const voice = (sc.voice as string) ?? "alloy"
-    const model = (sc.model as string) ?? undefined
-    const providers = sc.providers as Record<string, Record<string, unknown>> | undefined
-    const providerModel = providers?.[provider]?.model as string | undefined
-    return { provider, voice, model: providerModel ?? model ?? "gpt-4o-mini-tts" }
-  }, [speechConfig])
-
-  if (!isSpeechStage && ((stageIdle && (!hasCatalogData || isLoading)) || showConfig)) {
-    return <TranslationsLandingPage bookLabel={bookLabel} />
+  if ((stageIdle && (!hasCatalogData || isLoading)) || showConfig) {
+    return isSpeechStage
+      ? <SpeechLandingPage bookLabel={bookLabel} />
+      : <TranslationsLandingPage bookLabel={bookLabel} />
   }
 
   if (!showRunCard && isLoading) {
@@ -592,44 +572,9 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
   }
 
   if (showRunCard || !catalog || entries.length === 0) {
-    // Speech stage still uses StageRunCard
-    if (isSpeechStage) {
-      return (
-        <div className="p-4">
-          <StageRunCard
-            stageSlug={stageSlug}
-            isRunning={isRunning}
-            completed={stageDone}
-            onRun={handleRun}
-            disabled={!hasApiKey || isRunning}
-          >
-            <div className="space-y-3">
-              <div>
-                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t`Voice`}</p>
-                <p className="text-sm mt-0.5">
-                  <span className="capitalize">{speechSummary.provider}</span>
-                  {" · "}
-                  {speechSummary.voice}
-                  {" · "}
-                  <span className="text-muted-foreground">{speechSummary.model}</span>
-                </p>
-              </div>
-              <Link
-                to="/books/$label/$step/settings"
-                params={{ label: bookLabel, step: "speech" }}
-                search={{ tab: "general" }}
-                className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-700 transition-colors"
-              >
-                <Settings className="w-3 h-3" />
-                {t`Choose Provider`}
-              </Link>
-            </div>
-          </StageRunCard>
-        </div>
-      )
-    }
-    // Translate stage — show landing page
-    return <TranslationsLandingPage bookLabel={bookLabel} />
+    return isSpeechStage
+      ? <SpeechLandingPage bookLabel={bookLabel} />
+      : <TranslationsLandingPage bookLabel={bookLabel} />
   }
 
   const showAllButton = selectedPageId ? (

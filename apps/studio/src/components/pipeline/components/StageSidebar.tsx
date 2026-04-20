@@ -117,6 +117,7 @@ function getSettingsTabs(
       { key: "prompt", label: i18n._(SETTINGS_TAB_MESSAGE["translation-prompt"]) },
     ],
     speech: [
+      { key: "config", label: i18n._(SETTINGS_TAB_MESSAGE.config) },
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.speech) },
       { key: "speech-prompts", label: i18n._(SETTINGS_TAB_MESSAGE["speech-prompts"]) },
       { key: "voices", label: i18n._(SETTINGS_TAB_MESSAGE.voices) },

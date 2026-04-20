@@ -1,0 +1,1 @@
+export { SpeechLandingPage } from "./SpeechLandingPage"

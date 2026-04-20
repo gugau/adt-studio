@@ -16,6 +16,7 @@ import { CaptionsSettings } from "@/components/pipeline/stages/captions/Captions
 import { CaptionsLandingPage } from "@/components/pipeline/stages/captions/CaptionsLandingPage"
 import { TranslationsSettings } from "@/components/pipeline/stages/translations/TranslationsSettings"
 import { TranslationsLandingPage } from "@/components/pipeline/stages/translations/TranslationsLandingPage"
+import { SpeechLandingPage } from "@/components/pipeline/stages/speech/SpeechLandingPage"
 import { ValidationSettings } from "@/components/pipeline/stages/ValidationSettings"
 import { getStageLabelI18n } from "@/components/pipeline/pipeline-i18n"
 import { cn } from "@/lib/utils"
@@ -102,6 +103,8 @@ export function StepSettingsPage() {
                 return <TocLandingPage bookLabel={label} />
               case "translate":
                 return <TranslationsLandingPage bookLabel={label} />
+              case "speech":
+                return <SpeechLandingPage bookLabel={label} />
             }
           }
 
