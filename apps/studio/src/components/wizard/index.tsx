@@ -10,7 +10,11 @@ import {
 import type { ImageProcessingPreviewFocus } from "./step3ContentProcessing/imageProcessingPreviewTypes"
 import type { PresetId } from "./constants"
 
+export type WizardPhase = "upload" | "wizard"
+
 interface WizardContextValue {
+  phase: WizardPhase
+  setPhase: (phase: WizardPhase) => void
   currentStep: number
   setCurrentStep: (step: number) => void
   stepDirection: "forward" | "back"
@@ -23,17 +27,23 @@ interface WizardContextValue {
 const WizardContext = createContext<WizardContextValue | null>(null)
 
 export function WizardProvider({ children }: { children: ReactNode }) {
+  const [phase, setPhaseRaw] = useState<WizardPhase>("upload")
   const [currentStep, setCurrentStepRaw] = useState(0)
-  const [stepDirection, setStepDirection] = useState<"forward" | "back">("forward") 
+  const [stepDirection, setStepDirection] = useState<"forward" | "back">("forward")
+
+  const setPhase = useCallback((next: WizardPhase) => {
+    setStepDirection(next === "wizard" ? "forward" : "back")
+    setPhaseRaw(next)
+  }, [])
 
   useEffect(() => {
-    if (currentStep === 0) return
+    if (phase === "upload" && currentStep === 0) return
     const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault()
     }
     window.addEventListener("beforeunload", handler)
     return () => window.removeEventListener("beforeunload", handler)
-  }, [currentStep])
+  }, [phase, currentStep])
 
   const [previewFocus, setPreviewFocusRaw] =
     useState<ImageProcessingPreviewFocus>("idle")
@@ -54,6 +64,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   return (
     <WizardContext.Provider
       value={{
+        phase,
+        setPhase,
         currentStep,
         setCurrentStep,
         stepDirection,

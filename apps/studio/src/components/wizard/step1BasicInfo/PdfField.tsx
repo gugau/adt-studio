@@ -1,25 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
-import { Upload, Trash2 } from "lucide-react"
+import { Upload, RefreshCw } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
 import { Button } from "@/components/ui/button"
 import { FileDropOverlay, useFileDropZone } from "@/components/ui/file-drop-overlay"
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import { useBooks } from "@/hooks/use-books"
-import { getPdfJs } from "@/components/wizard/shared/pdfjsLoader"
+import { getPdfPageCount } from "@/components/wizard/shared/pdfMetadata"
 import { cn, formatBytes } from "@/lib/utils"
-
-async function getPdfPageCount(file: File): Promise<number> {
-  const pdfjs = await getPdfJs()
-  const buffer = await file.arrayBuffer()
-  const pdf = await pdfjs.getDocument({ data: buffer }).promise
-  try {
-    return pdf.numPages
-  } finally {
-    await pdf.destroy()
-  }
-}
 
 function waitTwoAnimationFrames(): Promise<void> {
   return new Promise((resolve) => {
@@ -37,7 +26,7 @@ export function suggestLabel(file: File) {
     .slice(0, 64)
 }
 
-function suggestUniqueLabel(file: File, existingLabels: string[]): string {
+export function suggestUniqueLabel(file: File, existingLabels: string[]): string {
   const base = suggestLabel(file)
   if (!existingLabels.includes(base)) return base
   let i = 2
@@ -47,7 +36,7 @@ function suggestUniqueLabel(file: File, existingLabels: string[]): string {
 
 const pdfCache = { file: null as File | null, totalPages: 0 }
 
-export function usePdfUpload() {
+export function usePdfField() {
   const form = useWizardForm()
   const { i18n } = useLingui()
   const { data: books } = useBooks()
@@ -113,9 +102,9 @@ export function usePdfUpload() {
   return { file, totalPages, pdfError, setFile, clearFile }
 }
 
-export function PdfUpload() {
+export function PdfField() {
   const { t } = useLingui()
-  const { file, pdfError, setFile, clearFile } = usePdfUpload()
+  const { file, pdfError, setFile } = usePdfField()
   const pdfRef = useRef<HTMLInputElement>(null)
 
   const { overlay, handleDrop } = useFileDropZone({
@@ -128,6 +117,8 @@ export function PdfUpload() {
     if (picked) setFile(picked)
     e.target.value = ""
   }, [setFile])
+
+  const openFilePicker = useCallback(() => pdfRef.current?.click(), [])
 
   return (
     <>
@@ -148,7 +139,17 @@ export function PdfUpload() {
           className={cn("overflow-hidden transition-[height] duration-300 ease-in-out", file ? "h-[60px]" : "h-[112px]")}
         >
           {file ? (
-            <div className="flex items-center gap-3 border border-[#e5e5e5] rounded-lg px-4 py-3 h-full">
+            <div
+              id="wizard-pdf-upload"
+              role="button"
+              tabIndex={0}
+              onClick={openFilePicker}
+              onKeyDown={(e) => e.key === "Enter" && openFilePicker()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleDrop}
+              aria-label={t`Replace PDF`}
+              className="flex items-center gap-3 border border-[#e5e5e5] rounded-lg px-4 py-3 h-full cursor-pointer hover:border-[#2b7fff]/60 hover:bg-[#2b7fff]/[0.02] transition-colors duration-200"
+            >
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-black truncate">{file.name}</p>
                 <p className="text-xs text-[#a3a3a3]">{formatBytes(file.size)}</p>
@@ -156,12 +157,18 @@ export function PdfUpload() {
               <Button
                 type="button"
                 variant="ghost"
-                size="icon"
-                onClick={clearFile}
-                aria-label={t`Remove PDF`}
-                className="h-8 w-8 text-[#737373] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors shrink-0"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  openFilePicker()
+                }}
+                aria-label={t`Replace PDF`}
+                className="h-8 px-2 text-[#737373] hover:text-[#2b7fff] hover:bg-[#2b7fff]/[0.06] transition-colors shrink-0 gap-1.5"
               >
-                <Trash2 className="h-4 w-4" />
+                <RefreshCw className="h-3.5 w-3.5" />
+                <span className="text-xs font-medium">
+                  <Trans>Replace</Trans>
+                </span>
               </Button>
             </div>
           ) : (
@@ -169,8 +176,8 @@ export function PdfUpload() {
               id="wizard-pdf-upload"
               role="button"
               tabIndex={0}
-              onClick={() => pdfRef.current?.click()}
-              onKeyDown={(e) => e.key === "Enter" && pdfRef.current?.click()}
+              onClick={openFilePicker}
+              onKeyDown={(e) => e.key === "Enter" && openFilePicker()}
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
               aria-label={t`Upload PDF or drag and drop`}
