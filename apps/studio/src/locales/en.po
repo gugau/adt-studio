@@ -208,7 +208,6 @@ msgstr "{reviewCount} {0}"
 msgid "{reviewed}/{0} checked"
 msgstr "{reviewed}/{0} checked"
 
-
 msgid "{textCount} text groups"
 msgstr "{textCount} text groups"
 
@@ -782,7 +781,6 @@ msgstr "Book Summary Prompt"
 msgid "Book Title"
 msgstr "Book Title"
 
-
 msgid "Boxed Text"
 msgstr "Boxed Text"
 
@@ -909,10 +907,8 @@ msgstr "Classifying text…"
 msgid "Clean & focused"
 msgstr "Clean & focused"
 
-
 msgid "Clear all"
 msgstr "Clear all"
-
 
 msgid "Clear language"
 msgstr "Clear language"
@@ -1572,13 +1568,11 @@ msgstr "Fill in the Blank"
 #~ msgid "Filter"
 #~ msgstr "Filter"
 
-
 msgid "Filter by image ID..."
 msgstr "Filter by image ID..."
 
 msgid "Filter by item ID..."
 msgstr "Filter by item ID..."
-
 
 msgid "Filtered by:"
 msgstr "Filtered by:"
@@ -2310,7 +2304,6 @@ msgstr "No accessibility findings were reported for this page."
 msgid "No assessment"
 msgstr "No assessment"
 
-
 msgid "No books match your search"
 msgstr "No books match your search"
 
@@ -2442,7 +2435,6 @@ msgstr "No segmentation needed for this image"
 
 msgid "No sign language videos uploaded yet."
 msgstr "No sign language videos uploaded yet."
-
 
 msgid "No text extracted"
 msgstr "No text extracted"
@@ -2931,7 +2923,6 @@ msgstr "Region"
 msgid "Remove"
 msgstr "Remove"
 
-
 msgid "Remove All"
 msgstr "Remove All"
 
@@ -3179,7 +3170,6 @@ msgstr "Search languages..."
 msgid "Search sections..."
 msgstr "Search sections..."
 
-
 msgid "Search style guides..."
 msgstr "Search style guides..."
 
@@ -3306,7 +3296,6 @@ msgstr "Select reviewer session"
 
 msgid "Select section mode"
 msgstr "Select section mode"
-
 
 msgid "Select strategy..."
 msgstr "Select strategy..."

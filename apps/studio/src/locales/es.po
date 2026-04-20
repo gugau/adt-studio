@@ -781,7 +781,6 @@ msgstr "Prompt de resumen del libro"
 msgid "Book Title"
 msgstr "Título del libro"
 
-
 msgid "Boxed Text"
 msgstr "Texto en recuadro"
 
@@ -910,7 +909,6 @@ msgstr "Limpio y enfocado"
 
 msgid "Clear all"
 msgstr "Clear all"
-
 
 msgid "Clear language"
 msgstr "Borrar idioma"
@@ -1570,13 +1568,11 @@ msgstr "Completar espacios"
 #~ msgid "Filter"
 #~ msgstr "Filtrar"
 
-
 msgid "Filter by image ID..."
 msgstr "Filtrar por ID de imagen..."
 
 msgid "Filter by item ID..."
 msgstr "Filtrar por ID de ítem..."
-
 
 msgid "Filtered by:"
 msgstr "Filtered by:"
@@ -2308,7 +2304,6 @@ msgstr "No accessibility findings were reported for this page."
 msgid "No assessment"
 msgstr "No assessment"
 
-
 msgid "No books match your search"
 msgstr "Ningún libro coincide con tu búsqueda"
 
@@ -2440,7 +2435,6 @@ msgstr "No segmentation needed for this image"
 
 msgid "No sign language videos uploaded yet."
 msgstr "Aún no se han cargado videos de lengua de señas."
-
 
 msgid "No text extracted"
 msgstr "No se extrajo texto"
@@ -2929,7 +2923,6 @@ msgstr "Región"
 msgid "Remove"
 msgstr "Quitar"
 
-
 msgid "Remove All"
 msgstr "Eliminar Todo"
 
@@ -3177,7 +3170,6 @@ msgstr "Buscar idiomas..."
 msgid "Search sections..."
 msgstr "Buscar secciones..."
 
-
 msgid "Search style guides..."
 msgstr "Buscar guías de estilo..."
 
@@ -3304,7 +3296,6 @@ msgstr "Select reviewer session"
 
 msgid "Select section mode"
 msgstr "Seleccionar modo de sección"
-
 
 msgid "Select strategy..."
 msgstr "Seleccionar estrategia..."

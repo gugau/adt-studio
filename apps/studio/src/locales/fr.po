@@ -209,7 +209,6 @@ msgstr "{reviewCount} {0}"
 msgid "{reviewed}/{0} checked"
 msgstr "{reviewed}/{0} vérifié"
 
-
 msgid "{textCount} text groups"
 msgstr "{textCount} groupes de texte"
 
@@ -783,7 +782,6 @@ msgstr "Livre Résumé Invite"
 msgid "Book Title"
 msgstr "Titre du livre"
 
-
 msgid "Boxed Text"
 msgstr "Boxed Texte"
 
@@ -910,10 +908,8 @@ msgstr "Classification du texte…"
 msgid "Clean & focused"
 msgstr "Épuré et ciblé"
 
-
 msgid "Clear all"
 msgstr "Clear tout"
-
 
 msgid "Clear language"
 msgstr "Clear langue"
@@ -921,7 +917,8 @@ msgstr "Clear langue"
 msgid "Clear model"
 msgstr "Clear modèle"
 
-
+msgid "Clear search"
+msgstr "Effacer la recherche"
 
 msgid "Click \"Add Videos\" to upload MP4 or WebM files."
 msgstr "Cliquez sur \"Ajouter des vidéos\" pour téléverser des fichiers MP4 ou WebM."
@@ -1571,7 +1568,6 @@ msgstr "Fill dans le Blank"
 
 #~ msgid "Filter"
 #~ msgstr "Filtrer"
-
 
 msgid "Filter by image ID..."
 msgstr "Filtrer by image ID..."
@@ -2312,7 +2308,6 @@ msgstr "Aucun résultat d'accessibilité n'a été signalé pour cette page."
 msgid "No assessment"
 msgstr "Aucune évaluation"
 
-
 msgid "No books match your search"
 msgstr "Aucun livre ne correspond à votre recherche"
 
@@ -2444,7 +2439,6 @@ msgstr "Aucune segmentation nécessaire pour cette image"
 
 msgid "No sign language videos uploaded yet."
 msgstr "Aucune vidéo en langue des signes téléversée."
-
 
 msgid "No text extracted"
 msgstr "Aucun texte extrait"
@@ -2933,7 +2927,6 @@ msgstr "Région"
 msgid "Remove"
 msgstr "Retirer"
 
-
 msgid "Remove All"
 msgstr "Tout retirer"
 
@@ -3181,7 +3174,6 @@ msgstr "Rechercher langues..."
 msgid "Search sections..."
 msgstr "Rechercher des sections..."
 
-
 msgid "Search style guides..."
 msgstr "Rechercher des guides de style..."
 
@@ -3308,7 +3300,6 @@ msgstr "Sélectionner une session de révision"
 
 msgid "Select section mode"
 msgstr "Sélectionner le mode de section"
-
 
 msgid "Select strategy..."
 msgstr "Sélectionner une stratégie..."
