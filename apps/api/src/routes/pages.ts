@@ -935,6 +935,108 @@ export function createPageRoutes(
     return c.json(result)
   })
 
+  // GET /books/:label/pages/:pageId/sections/:sectionIndex/ai-edit-history
+  // Returns chat-shaped history for this section's AI edits.
+  app.get(
+    "/books/:label/pages/:pageId/sections/:sectionIndex/ai-edit-history",
+    (c) => {
+      const { label, pageId, sectionIndex } = c.req.param()
+      const safeLabel = parseBookLabel(label)
+      const idx = parseInt(sectionIndex, 10)
+      if (isNaN(idx) || idx < 0) {
+        throw new HTTPException(400, { message: "Invalid section index" })
+      }
+
+      const dbPath = getDbPath(safeLabel, booksDir)
+      const db = openBookDb(dbPath)
+      try {
+        const rows = db.all(
+          `SELECT id, timestamp, data FROM llm_log
+           WHERE item_id = ?
+             AND success = 1
+             AND json_extract(data, '$.sectionIndex') = ?
+             AND json_extract(data, '$.promptName') IN ('html_edit', 'html_edit_verify')
+           ORDER BY id ASC`,
+          [pageId, idx]
+        ) as Array<{ id: number; timestamp: string; data: string }>
+
+        type Turn = {
+          correlationId: string
+          timestamp: string
+          instruction: string
+          attempts: Array<{ reasoning: string; timestamp: string; cached: boolean }>
+          verify?: { applied: boolean; reason: string }
+        }
+        const turns = new Map<string, Turn>()
+
+        for (const row of rows) {
+          const data = JSON.parse(row.data) as {
+            correlationId?: string
+            promptName: string
+            cacheHit?: boolean
+            messages: Array<{ role: string; content: Array<{ type: string; text?: string }> }>
+          }
+          if (!data.correlationId) continue
+
+          const assistantText = data.messages
+            .find((m) => m.role === "assistant")
+            ?.content.find((p) => p.type === "text")?.text
+          if (!assistantText) continue
+
+          let parsed: Record<string, unknown>
+          try {
+            parsed = JSON.parse(assistantText) as Record<string, unknown>
+          } catch {
+            continue
+          }
+
+          if (data.promptName === "html_edit") {
+            const userText = data.messages
+              .find((m) => m.role === "user")
+              ?.content.map((p) => (p.type === "text" ? p.text : ""))
+              .join("\n") ?? ""
+            const match = userText.match(/## Edit instruction\s*\n\s*([\s\S]*?)(?:\n\s*##|\n\s*$)/)
+            const instruction = (match?.[1] ?? "").trim()
+
+            let turn = turns.get(data.correlationId)
+            if (!turn) {
+              turn = {
+                correlationId: data.correlationId,
+                timestamp: row.timestamp,
+                instruction,
+                attempts: [],
+              }
+              turns.set(data.correlationId, turn)
+            } else if (!turn.instruction && instruction) {
+              turn.instruction = instruction
+            }
+            turn.attempts.push({
+              reasoning: String(parsed.reasoning ?? ""),
+              timestamp: row.timestamp,
+              cached: Boolean(data.cacheHit),
+            })
+          } else if (data.promptName === "html_edit_verify") {
+            const turn = turns.get(data.correlationId)
+            if (turn) {
+              turn.verify = {
+                applied: Boolean(parsed.applied),
+                reason: String(parsed.reason ?? ""),
+              }
+            }
+          }
+        }
+
+        const history = Array.from(turns.values())
+          .filter((t) => t.attempts.length > 0)
+          .sort((a, b) => a.timestamp.localeCompare(b.timestamp))
+
+        return c.json({ history })
+      } finally {
+        db.close()
+      }
+    }
+  )
+
   // POST /books/:label/pages/:pageId/sections/:sectionIndex/clone — Duplicate a section
   app.post("/books/:label/pages/:pageId/sections/:sectionIndex/clone", async (c) => {
     const CloneSectionParams = z.object({

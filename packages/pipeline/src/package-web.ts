@@ -1344,9 +1344,11 @@ const MATH_INDICATORS = [
  * Matches: \text{}, \hat{}, \frac{}{}, \sqrt{}, \vec{}, \bar{}, \overline{},
  * \circ, ^\circ, _{...}, ^{...}, \times, \div, \pm, \leq, \geq, \neq,
  * \mathcal{}, \mathbb{}, \in, \leftarrow, etc.
- * Also matches bare subscript/superscript like X_i or X^2.
+ * Also matches bare subscript/superscript like X_i or X^2, but NOT snake_case
+ * identifiers like `variable_name` — the base letter must not be preceded by
+ * another letter, and the subscript char must not be followed by another letter.
  */
-const UNDELIMITED_LATEX_RE = /\\(?:text|mbox|hat|frac|sqrt|vec|bar|overline|underline|mathbf|mathrm|mathit|mathcal|mathbb|mathfrak|mathscr|circ|times|div|pm|mp|leq|geq|neq|approx|equiv|sim|in|notin|subset|supset|cup|cap|leftarrow|rightarrow|Leftarrow|Rightarrow|alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|omega|phi|psi|infty|partial|nabla|sum|prod|int|lim|log|ln|sin|cos|tan|sec|csc|cot|left|right|cdot|ldots|cdots|quad|qquad|binom|tag)\b|[_^]\{|[A-Za-z][_^][A-Za-z0-9]/
+const UNDELIMITED_LATEX_RE = /\\(?:text|mbox|hat|frac|sqrt|vec|bar|overline|underline|mathbf|mathrm|mathit|mathcal|mathbb|mathfrak|mathscr|circ|times|div|pm|mp|leq|geq|neq|approx|equiv|sim|in|notin|subset|supset|cup|cap|leftarrow|rightarrow|Leftarrow|Rightarrow|alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|omega|phi|psi|infty|partial|nabla|sum|prod|int|lim|log|ln|sin|cos|tan|sec|csc|cot|left|right|cdot|ldots|cdots|quad|qquad|binom|tag)\b|[_^]\{|(?<![A-Za-z])[A-Za-z][_^][A-Za-z0-9](?![A-Za-z])/
 
 function containsMathContent(html: string): boolean {
   if (MATH_INDICATORS.some((indicator) => html.includes(indicator))) return true
@@ -1390,7 +1392,10 @@ function convertInlineLatexFragments(text: string): string {
   // Match LaTeX expressions: optional leading alphanumeric, one or more "atoms",
   // with optional alphanumeric glue between atoms.
   // Atoms: \command{...}, _\command{...}, _{...}, ^{...}, _x, ^x, \{ or \}
-  const LATEX_EXPR_RE = /[A-Za-z0-9]*(?:(?:\\[a-zA-Z]+(?:\{(?:[^{}]|\{[^{}]*\})*\})*|[_^]\\[a-zA-Z]+(?:\{(?:[^{}]|\{[^{}]*\})*\})*|[_^]\{(?:[^{}]|\{[^{}]*\})*\}|[_^][A-Za-z0-9]|\\[{}])[A-Za-z0-9]*)+/g
+  // The expression must start at a word boundary (not inside an identifier),
+  // and bare `_x`/`^x` subscripts cannot be followed by more letters — this
+  // prevents snake_case identifiers like `variable_name` from being matched.
+  const LATEX_EXPR_RE = /(?<![A-Za-z0-9])[A-Za-z0-9]*(?:(?:\\[a-zA-Z]+(?:\{(?:[^{}]|\{[^{}]*\})*\})*|[_^]\\[a-zA-Z]+(?:\{(?:[^{}]|\{[^{}]*\})*\})*|[_^]\{(?:[^{}]|\{[^{}]*\})*\}|[_^][A-Za-z0-9](?![A-Za-z])|\\[{}])[A-Za-z0-9]*)+/g
 
   text = text.replace(LATEX_EXPR_RE, (expr) => {
     const trimmed = expr.trim()

@@ -39,6 +39,9 @@ msgstr "(ativo)"
 msgid "(base)"
 msgstr "(base)"
 
+msgid "(no instruction text)"
+msgstr "(sem texto de instrução)"
+
 msgid "(no target)"
 msgstr "(no target)"
 
@@ -517,6 +520,9 @@ msgstr "Edição com IA"
 msgid "AI edit failed"
 msgstr "AI edit failed"
 
+msgid "AI edit history"
+msgstr "Histórico de edições com IA"
+
 msgid "AI editing..."
 msgstr "Edição por IA..."
 
@@ -835,8 +841,14 @@ msgstr "Taxa de acerto do cache"
 msgid "Cache Hits"
 msgstr "Acertos em cache"
 
+msgid "cached"
+msgstr "em cache"
+
 msgid "Cached"
 msgstr "Em cache"
+
+msgid "Cached response"
+msgstr "Resposta em cache"
 
 msgid "Calculate word timestamps for all entries"
 msgstr "Calcular marcações de tempo por palavra para todas as entradas"
@@ -1774,6 +1786,9 @@ msgstr "Texto de cabeçalho"
 msgid "Heading"
 msgstr "Título"
 
+msgid "Hide AI edit history"
+msgstr "Ocultar histórico de edições com IA"
+
 msgid "Hide Pruned"
 msgstr "Ocultar removidas"
 
@@ -2163,6 +2178,9 @@ msgstr "Carregando mapeamentos de voz..."
 msgid "Loading..."
 msgstr "Carregando..."
 
+msgid "Loading…"
+msgstr "Carregando…"
+
 msgid "Lookup definitions for key terms"
 msgstr "Procurar definições de termos-chave"
 
@@ -2354,6 +2372,9 @@ msgstr "No accessibility assessment has been generated yet. Package the ADT outp
 
 msgid "No accessibility findings were reported for this page."
 msgstr "No accessibility findings were reported for this page."
+
+msgid "No AI edits yet for this section."
+msgstr "Ainda não há edições com IA para esta seção."
 
 msgid "No assessment"
 msgstr "No assessment"
@@ -3429,6 +3450,9 @@ msgstr "As configurações para esta etapa ainda não estão disponíveis."
 msgid "Show accessibility summary"
 msgstr "Show accessibility summary"
 
+msgid "Show AI edit history"
+msgstr "Mostrar histórico de edições com IA"
+
 msgid "Show all"
 msgstr "Mostrar todas"
 
@@ -4087,6 +4111,9 @@ msgstr "Variante:"
 
 msgid "Vector Extraction"
 msgstr "Extração vetorial"
+
+msgid "Verified applied"
+msgstr "Aplicação verificada"
 
 #. placeholder {0}: String(version)
 msgid "Version {0}"
