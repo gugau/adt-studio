@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
 import { Upload, RefreshCw } from "lucide-react"
@@ -8,6 +8,7 @@ import { FileDropOverlay, useFileDropZone } from "@/components/ui/file-drop-over
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import { useBooks } from "@/hooks/use-books"
 import { getPdfPageCount } from "@/components/wizard/shared/pdfMetadata"
+import { getPresetAccent } from "@/components/wizard/constants"
 import { cn, formatBytes } from "@/lib/utils"
 
 function waitTwoAnimationFrames(): Promise<void> {
@@ -104,8 +105,17 @@ export function usePdfField() {
 
 export function PdfField() {
   const { t } = useLingui()
+  const form = useWizardForm()
   const { file, pdfError, setFile } = usePdfField()
   const pdfRef = useRef<HTMLInputElement>(null)
+  const selectedPreset = useStore(form.store, (s) => s.values.selectedPreset)
+  const accent = getPresetAccent(selectedPreset)
+  const accentStyle = {
+    "--accent": accent.bg,
+    "--accent-60": `${accent.bg}99`,
+    "--accent-06": `${accent.bg}0f`,
+    "--accent-02": `${accent.bg}05`,
+  } as CSSProperties
 
   const { overlay, handleDrop } = useFileDropZone({
     accept: (f) => f.type === "application/pdf",
@@ -148,7 +158,8 @@ export function PdfField() {
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
               aria-label={t`Replace PDF`}
-              className="flex items-center gap-3 border border-[#e5e5e5] rounded-lg px-4 py-3 h-full cursor-pointer hover:border-[#2b7fff]/60 hover:bg-[#2b7fff]/[0.02] transition-colors duration-200"
+              style={accentStyle}
+              className="flex items-center gap-3 border border-[#e5e5e5] rounded-lg px-4 py-3 h-full cursor-pointer hover:border-[var(--accent-60)] hover:bg-[var(--accent-02)] transition-colors duration-200"
             >
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-black truncate">{file.name}</p>
@@ -163,7 +174,8 @@ export function PdfField() {
                   openFilePicker()
                 }}
                 aria-label={t`Replace PDF`}
-                className="h-8 px-2 text-[#737373] hover:text-[#2b7fff] hover:bg-[#2b7fff]/[0.06] transition-colors shrink-0 gap-1.5"
+                style={accentStyle}
+                className="h-8 px-2 text-[#737373] hover:text-[var(--accent)] hover:bg-[var(--accent-06)] transition-colors shrink-0 gap-1.5"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
                 <span className="text-xs font-medium">
@@ -181,7 +193,8 @@ export function PdfField() {
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
               aria-label={t`Upload PDF or drag and drop`}
-              className="flex flex-col items-center justify-center gap-2 border border-dashed border-[#d4d4d4] rounded-lg h-full cursor-pointer hover:border-[#2b7fff]/60 hover:bg-[#2b7fff]/[0.02] transition-colors duration-200"
+              style={accentStyle}
+              className="flex flex-col items-center justify-center gap-2 border border-dashed border-[#d4d4d4] rounded-lg h-full cursor-pointer hover:border-[var(--accent-60)] hover:bg-[var(--accent-02)] transition-colors duration-200"
             >
               <Upload className="h-4 w-4 text-[#737373]" />
               <span className="text-sm text-[#737373]">
