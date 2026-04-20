@@ -565,21 +565,6 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
 
   const hasCatalogData = entries.length > 0
 
-  // Show translate landing page for idle state or config toggle
-  if (!isSpeechStage && ((stageIdle && (!hasCatalogData || isLoading)) || showConfig)) {
-    return <TranslationsLandingPage bookLabel={bookLabel} />
-  }
-
-  if (!showRunCard && isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">{t`Loading text catalog...`}</span>
-      </div>
-    )
-  }
-
-  // Resolve speech config summary for display
   const speechSummary = useMemo(() => {
     if (!speechConfig || typeof speechConfig !== "object") {
       return { provider: "openai", voice: "alloy", model: "gpt-4o-mini-tts" }
@@ -592,6 +577,19 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
     const providerModel = providers?.[provider]?.model as string | undefined
     return { provider, voice, model: providerModel ?? model ?? "gpt-4o-mini-tts" }
   }, [speechConfig])
+
+  if (!isSpeechStage && ((stageIdle && (!hasCatalogData || isLoading)) || showConfig)) {
+    return <TranslationsLandingPage bookLabel={bookLabel} />
+  }
+
+  if (!showRunCard && isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12 text-muted-foreground">
+        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+        <span className="text-sm">{t`Loading text catalog...`}</span>
+      </div>
+    )
+  }
 
   if (showRunCard || !catalog || entries.length === 0) {
     // Speech stage still uses StageRunCard
