@@ -171,10 +171,8 @@ export function CaptionsLandingPage({
         </div>
         <p className="text-[12.5px] text-teal-800/80 leading-relaxed pl-[34px]">
           <Trans>
-            Image captions provide alternative text descriptions that screen readers
-            use to convey visual content to users who are blind or have low vision.
-            Adding captions ensures your book meets accessibility standards (WCAG)
-            and can reach the widest possible audience.
+            Screen readers rely on captions to describe images to readers with
+            low vision — required for WCAG compliance.
           </Trans>
         </p>
       </div>

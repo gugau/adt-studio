@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Languages, ChevronDown, Check } from "lucide-react"
+import { ChevronDown, Check } from "lucide-react"
 import { useLingui } from "@lingui/react/macro"
 import { Trans } from "@lingui/react/macro"
 import { useBookRun } from "@/hooks/use-book-run"
@@ -241,7 +241,6 @@ function MockTranslationPreview() {
     </div>
   )
 }
-/* eslint-enable lingui/no-unlocalized-strings */
 
 // ─── Main landing page ────────────────────────────────────────────────────────
 
@@ -307,25 +306,6 @@ export function TranslationsLandingPage({
         stageName="translations"
         isLoading={prereqLoading}
       />
-
-      {/* Info banner */}
-      <div className="rounded-xl bg-pink-50 px-5 py-4">
-        <div className="flex items-center gap-2.5 mb-2">
-          <div className="shrink-0 rounded-full bg-pink-100 p-1.5">
-            <Languages className="w-3.5 h-3.5 text-pink-600" />
-          </div>
-          <span className="text-[13px] font-semibold text-pink-900">
-            <Trans>Reach a wider audience</Trans>
-          </span>
-        </div>
-        <p className="text-[12.5px] text-pink-800/80 leading-relaxed pl-[34px]">
-          <Trans>
-            Translating your book makes it accessible to readers in different
-            languages and regions. The text catalog ensures all content — including
-            quizzes, captions, and glossary terms — is translated consistently.
-          </Trans>
-        </p>
-      </div>
     </LandingPageShell>
   )
 }

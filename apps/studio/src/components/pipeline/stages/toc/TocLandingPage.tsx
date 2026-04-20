@@ -225,25 +225,6 @@ export function TocLandingPage({
         stageName="a table of contents"
         isLoading={prereqLoading}
       />
-
-      {/* Info banner */}
-      <div className="rounded-xl bg-amber-50 px-5 py-4">
-        <div className="flex items-center gap-2.5 mb-2">
-          <div className="shrink-0 rounded-full bg-amber-100 p-1.5">
-            <List className="w-3.5 h-3.5 text-amber-600" />
-          </div>
-          <span className="text-[13px] font-semibold text-amber-900">
-            <Trans>Structured navigation</Trans>
-          </span>
-        </div>
-        <p className="text-[12.5px] text-amber-800/80 leading-relaxed pl-[34px]">
-          <Trans>
-            A well-organized table of contents makes your book easier to navigate.
-            It creates a hierarchical outline of chapters and sections that readers
-            can use to jump directly to the content they need.
-          </Trans>
-        </p>
-      </div>
     </LandingPageShell>
   )
 }

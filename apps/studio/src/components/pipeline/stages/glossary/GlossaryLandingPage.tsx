@@ -1,4 +1,3 @@
-import { BookOpen } from "lucide-react"
 import { useLingui } from "@lingui/react/macro"
 import { Trans } from "@lingui/react/macro"
 import { useBookRun } from "@/hooks/use-book-run"
@@ -215,25 +214,6 @@ export function GlossaryLandingPage({
         stageName="a glossary"
         isLoading={prereqLoading}
       />
-
-      {/* Info banner */}
-      <div className="rounded-xl bg-lime-50 px-5 py-4">
-        <div className="flex items-center gap-2.5 mb-2">
-          <div className="shrink-0 rounded-full bg-lime-100 p-1.5">
-            <BookOpen className="w-3.5 h-3.5 text-lime-600" />
-          </div>
-          <span className="text-[13px] font-semibold text-lime-900">
-            <Trans>Enhances comprehension</Trans>
-          </span>
-        </div>
-        <p className="text-[12.5px] text-lime-800/80 leading-relaxed pl-[34px]">
-          <Trans>
-            A glossary provides quick reference definitions for key terms,
-            helping readers — especially younger audiences and language learners —
-            understand unfamiliar vocabulary without leaving the page.
-          </Trans>
-        </p>
-      </div>
     </LandingPageShell>
   )
 }

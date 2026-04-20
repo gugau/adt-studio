@@ -222,14 +222,13 @@ export function SpeechLandingPage({
             <AudioLines className="w-3.5 h-3.5 text-rose-600" />
           </div>
           <span className="text-[13px] font-semibold text-rose-900">
-            <Trans>Audio accessibility</Trans>
+            <Trans>Recommended for accessibility</Trans>
           </span>
         </div>
         <p className="text-[12.5px] text-rose-800/80 leading-relaxed pl-[34px]">
           <Trans>
-            Spoken narration makes your book accessible to readers who are blind,
-            have low vision, or simply prefer listening. Each page becomes a
-            synchronized audio track so readers can follow along at their own pace.
+            Narration opens the book to readers with low vision or reading
+            difficulties, and to anyone who prefers listening.
           </Trans>
         </p>
       </div>
