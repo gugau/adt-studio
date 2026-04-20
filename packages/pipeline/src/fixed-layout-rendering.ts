@@ -210,8 +210,8 @@ export function renderFixedLayoutPage(
     const lh = Math.round(p.lineHeight * posScale)
 
     const style = transparentText
-      ? `position:absolute;top:${top}px;left:${left}px;line-height:${lh}px;color:transparent;overflow:hidden`
-      : `position:absolute;top:${top}px;left:${left}px;line-height:${lh}px`
+      ? `position:absolute;top:${top}px;left:${left}px;line-height:${lh}px;color:transparent;overflow:hidden;pointer-events:auto`
+      : `position:absolute;top:${top}px;left:${left}px;line-height:${lh}px;pointer-events:auto`
 
     // Scale font sizes within the HTML spans (pt → viewport px)
     let scaledHtml = scaleFontSizes(p.html, fontScale)
@@ -229,7 +229,7 @@ export function renderFixedLayoutPage(
 
   const html = `<div id="content" style="position:relative;width:${viewport.width}px;height:${viewport.height}px;margin:0 auto;overflow:hidden">
 ${imageElements.join("\n")}
-  <div class="text-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%">
+  <div class="text-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none">
 ${paragraphElements.join("\n")}
   </div>
 </div>`

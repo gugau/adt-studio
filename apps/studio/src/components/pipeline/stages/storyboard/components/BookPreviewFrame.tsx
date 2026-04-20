@@ -395,7 +395,6 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   // apply when editing is enabled, without needing to change the srcdoc.
   const interactiveStyles = `body[data-editable="true"] [data-id] { cursor: pointer; transition: outline 0.1s; }
     body[data-editable="true"] [data-id]:hover { outline: 2px solid rgba(59,130,246,0.3); outline-offset: 2px; }
-    body[data-editable="true"] img[data-id] { position: relative; z-index: 1; }
     body[data-editable="true"] div:hover, body[data-editable="true"] section:hover,
     body[data-editable="true"] button:hover, body[data-editable="true"] nav:hover,
     body[data-editable="true"] article:hover, body[data-editable="true"] aside:hover,
