@@ -1,5 +1,27 @@
-import { spawn } from "node:child_process"
+import { spawn, execFileSync } from "node:child_process"
 import { findFreePort } from "./find-free-port.mjs"
+
+function humanize(slug) {
+  const spaced = slug.replace(/[-_]+/g, " ").trim()
+  return spaced ? spaced[0].toUpperCase() + spaced.slice(1) : ""
+}
+
+function detectWorkspaceLabel() {
+  if (process.env.CONDUCTOR_WORKSPACE_NAME) {
+    return humanize(process.env.CONDUCTOR_WORKSPACE_NAME)
+  }
+  try {
+    const branch = execFileSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim()
+    if (!branch || branch === "HEAD") return ""
+    const name = branch.includes("/") ? branch.slice(branch.lastIndexOf("/") + 1) : branch
+    return humanize(name)
+  } catch {
+    return ""
+  }
+}
 
 const apiPort = await findFreePort({ start: 3001 })
 if (!apiPort) {
@@ -11,6 +33,17 @@ const proxyTarget = `http://localhost:${apiPort}`
 console.log(`[dev] API port: ${apiPort}`)
 console.log(`[dev] Studio proxy target: ${proxyTarget}`)
 
+const extraEnv = {
+  PORT: String(apiPort),
+  API_PROXY_TARGET: proxyTarget,
+}
+
+const workspaceLabel = detectWorkspaceLabel()
+if (workspaceLabel) {
+  extraEnv.VITE_WORKSPACE_NAME = workspaceLabel
+  console.log(`[dev] Workspace: ${workspaceLabel}`)
+}
+
 const child = spawn(
   "pnpm",
   ["--parallel", "--filter", "@adt/api", "--filter", "@adt/studio", "dev"],
@@ -19,8 +52,7 @@ const child = spawn(
     shell: process.platform === "win32",
     env: {
       ...process.env,
-      PORT: String(apiPort),
-      API_PROXY_TARGET: proxyTarget,
+      ...extraEnv,
     },
   },
 )
