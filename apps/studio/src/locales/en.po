@@ -1147,6 +1147,9 @@ msgstr "Controls how page content is grouped during the sectioning step."
 msgid "Conversion of light into chemical energy."
 msgstr "Conversion of light into chemical energy."
 
+msgid "Convert any textbook into an accessible digital edition — audio, structured layouts, translations, and sign-language, built in from the very first page."
+msgstr "Convert any textbook into an accessible digital edition — audio, structured layouts, translations, and sign-language, built in from the very first page."
+
 msgid "Converted"
 msgstr "Converted"
 
@@ -1607,8 +1610,8 @@ msgstr "Evaporation"
 #~ msgid "Every stage, fully inspectable."
 #~ msgstr "Every stage, fully inspectable."
 
-msgid "Every textbook you publish here ships with audio, structured layouts, translations and sign-language — by default, for everyone."
-msgstr "Every textbook you publish here ships with audio, structured layouts, translations and sign-language — by default, for everyone."
+#~ msgid "Every textbook you publish here ships with audio, structured layouts, translations and sign-language — by default, for everyone."
+#~ msgstr "Every textbook you publish here ships with audio, structured layouts, translations and sign-language — by default, for everyone."
 
 msgid "Example Books"
 msgstr "Example Books"

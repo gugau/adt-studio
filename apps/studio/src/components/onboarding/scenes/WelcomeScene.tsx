@@ -62,8 +62,9 @@ export function WelcomeScene({ onNext }: OnboardingStepProps) {
         style={{ transitionDelay: "600ms" }}
       >
         <Trans>
-          Every textbook you publish here ships with audio, structured layouts,
-          translations and sign-language — by default, for everyone.
+          Convert any textbook into an accessible digital edition — audio,
+          structured layouts, translations, and sign-language, built in from
+          the very first page.
         </Trans>
       </p>
 

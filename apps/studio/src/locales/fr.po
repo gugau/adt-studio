@@ -1148,6 +1148,9 @@ msgstr "Contrôle la façon dont le contenu des pages est regroupé lors de l'é
 msgid "Conversion of light into chemical energy."
 msgstr "Conversion de la lumière en énergie chimique."
 
+msgid "Convert any textbook into an accessible digital edition — audio, structured layouts, translations, and sign-language, built in from the very first page."
+msgstr "Transformez n'importe quel livre en une édition numérique accessible — audio, mises en page structurées, traductions et langue des signes, intégrés dès la toute première page."
+
 msgid "Converted"
 msgstr "Converti"
 
@@ -1608,8 +1611,8 @@ msgstr "Évaporation"
 #~ msgid "Every stage, fully inspectable."
 #~ msgstr "Chaque étape, entièrement inspectable."
 
-msgid "Every textbook you publish here ships with audio, structured layouts, translations and sign-language — by default, for everyone."
-msgstr "Chaque manuel publié ici est livré avec audio, mises en page structurées, traductions et langue des signes — par défaut, pour tous."
+#~ msgid "Every textbook you publish here ships with audio, structured layouts, translations and sign-language — by default, for everyone."
+#~ msgstr "Chaque manuel publié ici est livré avec audio, mises en page structurées, traductions et langue des signes — par défaut, pour tous."
 
 msgid "Example Books"
 msgstr "Exemple Livres"

@@ -1147,6 +1147,9 @@ msgstr "Controla como o conteúdo da página é agrupado durante a etapa de seci
 msgid "Conversion of light into chemical energy."
 msgstr "Conversão de luz em energia química."
 
+msgid "Convert any textbook into an accessible digital edition — audio, structured layouts, translations, and sign-language, built in from the very first page."
+msgstr "Converta qualquer livro em uma edição digital acessível — áudio, layouts estruturados, traduções e língua de sinais, integrados desde a primeira página."
+
 msgid "Converted"
 msgstr "Convertido"
 
@@ -1607,8 +1610,8 @@ msgstr "Evaporação"
 #~ msgid "Every stage, fully inspectable."
 #~ msgstr "Cada etapa, totalmente inspecionável."
 
-msgid "Every textbook you publish here ships with audio, structured layouts, translations and sign-language — by default, for everyone."
-msgstr "Cada livro didático publicado aqui vem com áudio, layouts estruturados, traduções e língua de sinais — por padrão, para todos."
+#~ msgid "Every textbook you publish here ships with audio, structured layouts, translations and sign-language — by default, for everyone."
+#~ msgstr "Cada livro didático publicado aqui vem com áudio, layouts estruturados, traduções e língua de sinais — por padrão, para todos."
 
 msgid "Example Books"
 msgstr "Livros de Exemplo"
