@@ -227,7 +227,7 @@ function PdfToBookDiagram({ mounted }: { mounted: boolean }) {
         mounted={mounted}
       />
       <FloatGlyph
-        top={320}
+        top={330}
         right={74}
         hex="#0891b2"
         bg="#ecfeff"
@@ -243,7 +243,7 @@ function BookCard({ mounted }: { mounted: boolean }) {
   return (
     <div
       className={cn(
-        "absolute right-0 top-0 z-[15] h-[340px] w-[270px] overflow-hidden rounded-xl border border-border bg-card transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+        "absolute right-0 top-0 z-[15] h-[355px] w-[270px] overflow-hidden rounded-xl border border-border bg-card transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
         mounted ? "rotate-[3deg]" : "translate-x-5 rotate-[3deg] scale-[0.95]",
       )}
       style={{
