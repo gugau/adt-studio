@@ -10,11 +10,14 @@ import {
   User,
   Globe,
   Pencil,
-  Filter,
+  Search,
+  CalendarPlus,
+  Clock,
 } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { StudioTopBar } from "@/components/StudioTopBar"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -25,7 +28,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { DeleteBookDialog } from "@/components/books/DeleteBookDialog"
-import { StageFilterCombobox } from "@/components/books/StageFilterCombobox"
 import { useBooks, useDeleteBook } from "@/hooks/use-books"
 import {
   getPipelineStages,
@@ -73,24 +75,6 @@ function sortBooks(books: BookSummary[], key: BookSortKey): BookSummary[] {
           sensitivity: "base",
         }),
       )
-  }
-}
-
-const STAGE_FILTER_STORAGE_KEY = "adt.books.stage-filter"
-
-function readStoredStageFilter(validSlugs: Set<string>): string[] {
-  if (typeof window === "undefined") return []
-  const raw = window.localStorage.getItem(STAGE_FILTER_STORAGE_KEY)
-  if (!raw) return []
-  try {
-    const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
-    return parsed.filter(
-      (slug): slug is string =>
-        typeof slug === "string" && validSlugs.has(slug),
-    )
-  } catch {
-    return []
   }
 }
 
@@ -206,12 +190,21 @@ function BookRow({
   onDelete: (label: string) => void
   pipelineStages: readonly PipelineStageDefinition[]
 }) {
-  const { t } = useLingui()
+  const { t, i18n } = useLingui()
   const hasMetadata = book.title || book.authors.length > 0
   const completedSet = useMemo(
     () => new Set(book.completedStages),
     [book.completedStages],
   )
+  const dateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(i18n.locale, {
+        dateStyle: "medium",
+      }),
+    [i18n.locale],
+  )
+  const createdLabel = dateFormatter.format(new Date(book.createdAt))
+  const modifiedLabel = dateFormatter.format(new Date(book.modifiedAt))
   return (
     <div className="group rounded-xl border bg-card transition-all duration-200 hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5">
       <div className="flex items-stretch">
@@ -303,6 +296,17 @@ function BookRow({
             </p>
           )}
 
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <CalendarPlus className="h-3 w-3" />
+              <Trans>Created {createdLabel}</Trans>
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              <Trans>Modified {modifiedLabel}</Trans>
+            </span>
+          </div>
+
           <CompletedStageBadges
             completedSet={completedSet}
             pipelineStages={pipelineStages}
@@ -341,50 +345,23 @@ function HomePage() {
   const deleteMutation = useDeleteBook()
   const [deleteLabel, setDeleteLabel] = useState<string | null>(null)
   const [sortKey, setSortKey] = useState<BookSortKey>(() => readStoredSort())
-
-  const pipelineStageSlugSet = useMemo(
-    () => new Set(PIPELINE_STEPS.map((s) => s.slug)),
-    [],
-  )
-  const [selectedStages, setSelectedStages] = useState<Set<string>>(() =>
-    new Set(readStoredStageFilter(pipelineStageSlugSet)),
-  )
+  const [search, setSearch] = useState("")
 
   useEffect(() => {
     if (typeof window === "undefined") return
     window.localStorage.setItem(BOOK_SORT_STORAGE_KEY, sortKey)
   }, [sortKey])
 
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    window.localStorage.setItem(
-      STAGE_FILTER_STORAGE_KEY,
-      JSON.stringify([...selectedStages]),
-    )
-  }, [selectedStages])
-
-  const toggleStageFilter = (slug: string) => {
-    setSelectedStages((prev) => {
-      const next = new Set(prev)
-      if (next.has(slug)) next.delete(slug)
-      else next.add(slug)
-      return next
-    })
-  }
-
-  const clearStageFilters = () => setSelectedStages(new Set())
-
   const filteredBooks = useMemo(() => {
     const list = books ?? []
-    if (selectedStages.size === 0) return list
+    const query = search.trim().toLowerCase()
+    if (!query) return list
     return list.filter((book) => {
-      const completed = new Set(book.completedStages)
-      for (const slug of selectedStages) {
-        if (!completed.has(slug)) return false
-      }
-      return true
+      const title = book.title?.toLowerCase() ?? ""
+      const label = book.label.toLowerCase()
+      return title.includes(query) || label.includes(query)
     })
-  }, [books, selectedStages])
+  }, [books, search])
 
   const visibleBooks = useMemo(
     () => sortBooks(filteredBooks, sortKey),
@@ -410,8 +387,8 @@ function HomePage() {
   }
 
   const totalBooks = books?.length ?? 0
-  const hasActiveFilter = selectedStages.size > 0
-  const hiddenByFilter = hasActiveFilter && totalBooks > 0 && visibleBooks.length === 0
+  const hasActiveSearch = search.trim().length > 0
+  const hiddenByFilter = hasActiveSearch && totalBooks > 0 && visibleBooks.length === 0
 
   return (
     <div className="flex flex-1 min-h-0 flex-col">
@@ -472,10 +449,10 @@ function HomePage() {
             <Trans>Your Books</Trans>
             {totalBooks > 0 && (
               <span
-                key={hasActiveFilter ? `${visibleBooks.length}/${totalBooks}` : `${totalBooks}`}
+                key={hasActiveSearch ? `${visibleBooks.length}/${totalBooks}` : `${totalBooks}`}
                 className="ml-1 inline-block animate-count-pulse"
               >
-                {hasActiveFilter
+                {hasActiveSearch
                   ? `(${visibleBooks.length}/${totalBooks})`
                   : `(${totalBooks})`}
               </span>
@@ -483,12 +460,17 @@ function HomePage() {
           </h2>
           <div className="flex items-center gap-2">
             {totalBooks > 1 && (
-              <StageFilterCombobox
-                pipelineStages={PIPELINE_STEPS}
-                selectedStages={selectedStages}
-                onToggle={toggleStageFilter}
-                onClear={clearStageFilters}
-              />
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t`Search books...`}
+                  aria-label={t`Search books`}
+                  className="h-8 w-[200px] pl-8 text-xs"
+                />
+              </div>
             )}
             {totalBooks > 1 && (
               <Select
@@ -543,17 +525,17 @@ function HomePage() {
           {hiddenByFilter && (
             <div className="flex animate-wizard-enter flex-col items-center justify-center rounded-xl border-2 border-dashed bg-muted/30 py-16">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
-                <Filter className="h-6 w-6 text-muted-foreground" />
+                <Search className="h-6 w-6 text-muted-foreground" />
               </div>
               <span className="text-sm font-medium">
-                <Trans>No books match your filters</Trans>
+                <Trans>No books match your search</Trans>
               </span>
               <button
                 type="button"
-                onClick={clearStageFilters}
+                onClick={() => setSearch("")}
                 className="mt-2 text-xs text-primary transition-colors hover:underline"
               >
-                <Trans>Clear filters</Trans>
+                <Trans>Clear search</Trans>
               </button>
             </div>
           )}

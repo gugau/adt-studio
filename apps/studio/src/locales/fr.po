@@ -209,8 +209,6 @@ msgstr "{reviewCount} {0}"
 msgid "{reviewed}/{0} checked"
 msgstr "{reviewed}/{0} vérifié"
 
-msgid "{selectedCount} selected"
-msgstr "{selectedCount} sélectionnées"
 
 msgid "{textCount} text groups"
 msgstr "{textCount} groupes de texte"
@@ -785,8 +783,6 @@ msgstr "Livre Résumé Invite"
 msgid "Book Title"
 msgstr "Titre du livre"
 
-msgid "Books must have all selected stages completed."
-msgstr "Les livres doivent avoir toutes les étapes sélectionnées terminées."
 
 msgid "Boxed Text"
 msgstr "Boxed Texte"
@@ -914,20 +910,18 @@ msgstr "Classification du texte…"
 msgid "Clean & focused"
 msgstr "Épuré et ciblé"
 
-msgid "Clear"
-msgstr "Effacer"
 
 msgid "Clear all"
 msgstr "Clear tout"
 
-msgid "Clear filters"
-msgstr "Effacer les filtres"
 
 msgid "Clear language"
 msgstr "Clear langue"
 
 msgid "Clear model"
 msgstr "Clear modèle"
+
+
 
 msgid "Click \"Add Videos\" to upload MP4 or WebM files."
 msgstr "Cliquez sur \"Ajouter des vidéos\" pour téléverser des fichiers MP4 ou WebM."
@@ -1075,6 +1069,9 @@ msgstr "Créer à partir de zéro en utilisant votre description"
 
 msgid "Create session"
 msgstr "Créer une session"
+
+msgid "Created {createdLabel}"
+msgstr "Créé le {createdLabel}"
 
 msgid "Creating..."
 msgstr "Création..."
@@ -1575,8 +1572,6 @@ msgstr "Fill dans le Blank"
 #~ msgid "Filter"
 #~ msgstr "Filtrer"
 
-msgid "Filter books by completed stage"
-msgstr "Filtrer les livres par étape terminée"
 
 msgid "Filter by image ID..."
 msgstr "Filtrer by image ID..."
@@ -1584,8 +1579,8 @@ msgstr "Filtrer by image ID..."
 msgid "Filter by item ID..."
 msgstr "Filtrer by élément ID..."
 
-msgid "Filter stages"
-msgstr "Filtrer les étapes"
+#~ msgid "Filter stages"
+#~ msgstr "Filtrer les étapes"
 
 msgid "Filtered by:"
 msgstr "Filtré par :"
@@ -2254,6 +2249,9 @@ msgstr "modéré"
 msgid "Moderate"
 msgstr "Modéré"
 
+msgid "Modified {modifiedLabel}"
+msgstr "Modifié le {modifiedLabel}"
+
 msgid "Multi-format publications"
 msgstr "Publications multi-format"
 
@@ -2314,8 +2312,9 @@ msgstr "Aucun résultat d'accessibilité n'a été signalé pour cette page."
 msgid "No assessment"
 msgstr "Aucune évaluation"
 
-msgid "No books match your filters"
-msgstr "Aucun livre ne correspond à vos filtres"
+
+msgid "No books match your search"
+msgstr "Aucun livre ne correspond à votre recherche"
 
 msgid "No captions for this page"
 msgstr "Aucune légende pour cette page"
@@ -2446,8 +2445,6 @@ msgstr "Aucune segmentation nécessaire pour cette image"
 msgid "No sign language videos uploaded yet."
 msgstr "Aucune vidéo en langue des signes téléversée."
 
-msgid "No stages found."
-msgstr "Aucune étape trouvée."
 
 msgid "No text extracted"
 msgstr "Aucun texte extrait"
@@ -2936,8 +2933,6 @@ msgstr "Région"
 msgid "Remove"
 msgstr "Retirer"
 
-msgid "Remove {label} filter"
-msgstr "Retirer le filtre {label}"
 
 msgid "Remove All"
 msgstr "Tout retirer"
@@ -3174,14 +3169,18 @@ msgstr "Exportation SCORM"
 msgid "SCORM Package"
 msgstr "SCORM Package"
 
+msgid "Search books"
+msgstr "Rechercher des livres"
+
+msgid "Search books..."
+msgstr "Rechercher des livres..."
+
 msgid "Search languages..."
 msgstr "Rechercher langues..."
 
 msgid "Search sections..."
 msgstr "Rechercher des sections..."
 
-msgid "Search stages..."
-msgstr "Rechercher des étapes..."
 
 msgid "Search style guides..."
 msgstr "Rechercher des guides de style..."
@@ -3310,8 +3309,6 @@ msgstr "Sélectionner une session de révision"
 msgid "Select section mode"
 msgstr "Sélectionner le mode de section"
 
-msgid "Select stages to filter"
-msgstr "Sélectionner des étapes à filtrer"
 
 msgid "Select strategy..."
 msgstr "Sélectionner une stratégie..."

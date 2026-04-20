@@ -208,8 +208,6 @@ msgstr "{reviewCount} {0}"
 msgid "{reviewed}/{0} checked"
 msgstr "{reviewed}/{0} checked"
 
-msgid "{selectedCount} selected"
-msgstr "{selectedCount} selecionadas"
 
 msgid "{textCount} text groups"
 msgstr "{textCount} grupos de texto"
@@ -784,8 +782,6 @@ msgstr "Prompt de resumo do livro"
 msgid "Book Title"
 msgstr "Título do livro"
 
-msgid "Books must have all selected stages completed."
-msgstr "Os livros devem ter todas as etapas selecionadas concluídas."
 
 msgid "Boxed Text"
 msgstr "Texto em caixa"
@@ -913,20 +909,19 @@ msgstr "Classificando texto…"
 msgid "Clean & focused"
 msgstr "Limpo e focado"
 
-msgid "Clear"
-msgstr "Limpar"
 
 msgid "Clear all"
 msgstr "Clear all"
 
-msgid "Clear filters"
-msgstr "Limpar filtros"
 
 msgid "Clear language"
 msgstr "Limpar idioma"
 
 msgid "Clear model"
 msgstr "Limpar modelo"
+
+msgid "Clear search"
+msgstr "Limpar busca"
 
 msgid "Click \"Add Videos\" to upload MP4 or WebM files."
 msgstr "Clique em \"Adicionar Vídeos\" para enviar arquivos MP4 ou WebM."
@@ -1074,6 +1069,9 @@ msgstr "Criar do zero usando sua descrição"
 
 msgid "Create session"
 msgstr "Create session"
+
+msgid "Created {createdLabel}"
+msgstr "Criado em {createdLabel}"
 
 msgid "Creating..."
 msgstr "Criando..."
@@ -1574,8 +1572,6 @@ msgstr "Preencher lacunas"
 #~ msgid "Filter"
 #~ msgstr "Filtrar"
 
-msgid "Filter books by completed stage"
-msgstr "Filtrar livros por etapa concluída"
 
 msgid "Filter by image ID..."
 msgstr "Filtrar por ID da imagem..."
@@ -1583,8 +1579,6 @@ msgstr "Filtrar por ID da imagem..."
 msgid "Filter by item ID..."
 msgstr "Filtrar por ID do item..."
 
-msgid "Filter stages"
-msgstr "Filtrar etapas"
 
 msgid "Filtered by:"
 msgstr "Filtered by:"
@@ -2253,6 +2247,9 @@ msgstr "moderate"
 msgid "Moderate"
 msgstr "Moderate"
 
+msgid "Modified {modifiedLabel}"
+msgstr "Modificado em {modifiedLabel}"
+
 msgid "Multi-format publications"
 msgstr "Publicações multi-formato"
 
@@ -2313,8 +2310,9 @@ msgstr "No accessibility findings were reported for this page."
 msgid "No assessment"
 msgstr "No assessment"
 
-msgid "No books match your filters"
-msgstr "Nenhum livro corresponde aos seus filtros"
+
+msgid "No books match your search"
+msgstr "Nenhum livro corresponde à sua busca"
 
 msgid "No captions for this page"
 msgstr "Sem legendas para esta página"
@@ -2444,9 +2442,6 @@ msgstr "No segmentation needed for this image"
 
 msgid "No sign language videos uploaded yet."
 msgstr "Nenhum vídeo de língua de sinais enviado ainda."
-
-msgid "No stages found."
-msgstr "Nenhuma etapa encontrada."
 
 msgid "No text extracted"
 msgstr "Nenhum texto extraído"
@@ -2935,8 +2930,6 @@ msgstr "Região"
 msgid "Remove"
 msgstr "Remover"
 
-msgid "Remove {label} filter"
-msgstr "Remover filtro {label}"
 
 msgid "Remove All"
 msgstr "Remover Todos"
@@ -3173,14 +3166,18 @@ msgstr "Exportação SCORM"
 msgid "SCORM Package"
 msgstr "Pacote SCORM"
 
+msgid "Search books"
+msgstr "Buscar livros"
+
+msgid "Search books..."
+msgstr "Buscar livros..."
+
 msgid "Search languages..."
 msgstr "Buscar idiomas..."
 
 msgid "Search sections..."
 msgstr "Buscar seções..."
 
-msgid "Search stages..."
-msgstr "Buscar etapas..."
 
 msgid "Search style guides..."
 msgstr "Buscar guias de estilo..."
@@ -3309,8 +3306,6 @@ msgstr "Select reviewer session"
 msgid "Select section mode"
 msgstr "Selecionar modo de seção"
 
-msgid "Select stages to filter"
-msgstr "Selecione etapas para filtrar"
 
 msgid "Select strategy..."
 msgstr "Selecionar estratégia..."
