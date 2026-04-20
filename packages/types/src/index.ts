@@ -43,7 +43,7 @@ export {
   TaskInfo,
 } from "./task.js"
 
-export { BookLabel, parseBookLabel } from "./book.js"
+export { BookLabel, BookSummary, BookDetail, parseBookLabel } from "./book.js"
 
 export {
   BookFormat,

@@ -1,11 +1,15 @@
 import type {
   AccessibilityAssessmentOutput,
+  BookDetail,
+  BookSummary,
   ReviewerPageValidationRecord,
   ReviewerValidationIdentificationField,
   ReviewerValidationInstruction,
   ReviewerValidationSection,
   ReviewerValidationSession,
 } from "@adt/types"
+
+export type { BookSummary, BookDetail }
 
 export function resolveBaseUrl(
   loc: Pick<Location, "protocol" | "hostname"> = window.location,
@@ -50,32 +54,6 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   }
 
   return res.json()
-}
-
-export interface BookSummary {
-  label: string
-  title: string | null
-  authors: string[]
-  publisher: string | null
-  languageCode: string | null
-  pageCount: number
-  hasSourcePdf: boolean
-  needsRebuild: boolean
-  rebuildReason: string | null
-}
-
-export interface BookDetail extends BookSummary {
-  metadata: {
-    title: string | null
-    authors: string[]
-    publisher: string | null
-    language_code: string | null
-    cover_page_number: number | null
-    reasoning: string
-  } | null
-  bookSummary: {
-    summary: string
-  } | null
 }
 
 export interface AzureCredentials {
