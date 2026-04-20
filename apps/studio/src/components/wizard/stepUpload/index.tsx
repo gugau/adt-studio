@@ -185,7 +185,6 @@ export function StepUpload() {
         setPreviewError(
           "Could not read this PDF. The file may be corrupted or password-protected.",
         )
-        form.setFieldValue("file", null)
       } finally {
         if (!cancelled) setPreviewLoading(false)
       }
