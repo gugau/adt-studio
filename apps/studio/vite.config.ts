@@ -1,14 +1,17 @@
-import { lingui } from "@lingui/vite-plugin"
-import { defineConfig } from "vite"
-import react from "@vitejs/plugin-react"
-import tailwindcss from "@tailwindcss/vite"
-import { tanstackRouter } from "@tanstack/router-plugin/vite"
-import { fileURLToPath, URL } from "node:url"
+import { lingui } from "@lingui/vite-plugin";
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import { tanstackRouter } from "@tanstack/router-plugin/vite";
+import { fileURLToPath, URL } from "node:url";
 
 export default defineConfig({
   plugins: [
     lingui(),
-    tanstackRouter({ quoteStyle: "double" }),
+    tanstackRouter({
+      quoteStyle: "double",
+      routeFileIgnorePattern: "\\.test\\.tsx?$",
+    }),
     react({
       babel: {
         plugins: ["@lingui/babel-plugin-lingui-macro"],
@@ -31,4 +34,4 @@ export default defineConfig({
       },
     },
   },
-})
+});

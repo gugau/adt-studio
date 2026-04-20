@@ -280,6 +280,9 @@ export function useBookRunStatus(label: string): BookRunContextValue {
           }
           if ((completedTask?.kind === "image-generate" || completedTask?.kind === "re-render" || completedTask?.kind === "ai-edit") && completedTask.pageId) {
             queryClient.invalidateQueries({ queryKey: ["books", label, "pages", completedTask.pageId] })
+            if (completedTask.kind === "ai-edit") {
+              queryClient.invalidateQueries({ queryKey: ["books", label, "pages", completedTask.pageId, "ai-edit-history"] })
+            }
           }
           if (completedTask?.kind === "re-render" || completedTask?.kind === "ai-edit" || completedTask?.kind === "image-generate") {
             invalidateStoryboardDependents(queryClient, label)

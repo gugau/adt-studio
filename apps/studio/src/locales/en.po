@@ -39,6 +39,9 @@ msgstr "(active)"
 msgid "(base)"
 msgstr "(base)"
 
+msgid "(no instruction text)"
+msgstr "(no instruction text)"
+
 msgid "(no target)"
 msgstr "(no target)"
 
@@ -505,6 +508,9 @@ msgstr "AI Edit"
 msgid "AI edit failed"
 msgstr "AI edit failed"
 
+msgid "AI edit history"
+msgstr "AI edit history"
+
 msgid "AI editing..."
 msgstr "AI editing..."
 
@@ -811,8 +817,14 @@ msgstr "Cache Hit Rate"
 msgid "Cache Hits"
 msgstr "Cache Hits"
 
+msgid "cached"
+msgstr "cached"
+
 msgid "Cached"
 msgstr "Cached"
+
+msgid "Cached response"
+msgstr "Cached response"
 
 msgid "Calculate word timestamps for all entries"
 msgstr "Calculate word timestamps for all entries"
@@ -1732,6 +1744,9 @@ msgstr "Header Text"
 msgid "Heading"
 msgstr "Heading"
 
+msgid "Hide AI edit history"
+msgstr "Hide AI edit history"
+
 msgid "Hide Pruned"
 msgstr "Hide Pruned"
 
@@ -2091,6 +2106,9 @@ msgstr "Loading voice mappings..."
 msgid "Loading..."
 msgstr "Loading..."
 
+msgid "Loading…"
+msgstr "Loading…"
+
 msgid "Lower values produce more consistent styling across pages."
 msgstr "Lower values produce more consistent styling across pages."
 
@@ -2276,6 +2294,9 @@ msgstr "No accessibility assessment has been generated yet. Package the ADT outp
 
 msgid "No accessibility findings were reported for this page."
 msgstr "No accessibility findings were reported for this page."
+
+msgid "No AI edits yet for this section."
+msgstr "No AI edits yet for this section."
 
 msgid "No assessment"
 msgstr "No assessment"
@@ -3315,6 +3336,9 @@ msgstr "Settings for this step are not yet available."
 msgid "Show accessibility summary"
 msgstr "Show accessibility summary"
 
+msgid "Show AI edit history"
+msgstr "Show AI edit history"
+
 msgid "Show all"
 msgstr "Show all"
 
@@ -3943,6 +3967,9 @@ msgstr "Variant:"
 
 msgid "Vector Extraction"
 msgstr "Vector Extraction"
+
+msgid "Verified applied"
+msgstr "Verified applied"
 
 #. placeholder {0}: String(version)
 msgid "Version {0}"

@@ -112,6 +112,7 @@ export {
   webRenderingLLMSchema,
   activityAnswersLLMSchema,
   visualReviewLLMSchema,
+  editVerifyLLMSchema,
 } from "./web-rendering.js"
 
 export {

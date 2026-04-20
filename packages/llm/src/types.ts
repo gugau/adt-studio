@@ -22,6 +22,8 @@ export interface GenerateObjectOptions {
     taskType: string
     pageId?: string
     promptName: string
+    sectionIndex?: number
+    correlationId?: string
   }
 }
 
