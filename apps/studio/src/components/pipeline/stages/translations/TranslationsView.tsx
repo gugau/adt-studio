@@ -11,6 +11,7 @@ import { useBookRun } from "@/hooks/use-book-run"
 import { useBookTasks } from "@/hooks/use-book-tasks"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
+import { TranslationsLandingPage } from "./TranslationsLandingPage"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import { cn } from "@/lib/utils"
 import { normalizeLocale } from "@/lib/languages"
@@ -171,7 +172,7 @@ function VersionPicker({
 export function TranslationsView({ bookLabel, stageSlug = "translate", selectedPageId, onSelectPage }: { bookLabel: string; stageSlug?: string; selectedPageId?: string; onSelectPage?: (pageId: string | null) => void }) {
   const isSpeechStage = stageSlug === "speech"
   const { t, i18n } = useLingui()
-  const { setExtra } = useStepHeader()
+  const { setExtra, setOnLabelClick } = useStepHeader()
   const { data: activeConfigData } = useActiveConfig(bookLabel)
   const { data: book, isLoading: isBookLoading } = useBook(bookLabel)
   const queryClient = useQueryClient()
@@ -184,6 +185,21 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
   const stageDone = activeState === "done"
   const hasStageError = activeState === "error"
   const isRunning = activeState === "running" || activeState === "queued"
+  const stageIdle = activeState === "idle"
+
+  const [showConfig, setShowConfig] = useState(false)
+
+  useEffect(() => {
+    if (selectedPageId) setShowConfig(false)
+  }, [selectedPageId])
+
+  useEffect(() => {
+    if (!stageIdle && !isSpeechStage) {
+      setOnLabelClick(() => setShowConfig((v) => !v))
+      return () => setOnLabelClick(null)
+    }
+    setOnLabelClick(null)
+  }, [stageIdle, isSpeechStage, setOnLabelClick])
 
   const handleRun = useCallback(() => {
     if (!hasApiKey || isRunning) return
@@ -547,6 +563,13 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
     return () => setExtra(null)
   }, [catalog, t, displayEntries.length, outputLanguages.length, selectedLang, translationVersion, saving, dirty, bookLabel, isSourceLang, totalAudioFiles, selectedPageId, currentLanguageUsesGemini, generatedAudioCount, missingAudioCount, hasApiKey, isRunning, apiKey, queueRun, stageSlug, isSpeechStage, handleDeleteTTS, audioLang, transcribeAllMutation, isTaskRunning])
 
+  const hasCatalogData = entries.length > 0
+
+  // Show translate landing page for idle state or config toggle
+  if (!isSpeechStage && ((stageIdle && (!hasCatalogData || isLoading)) || showConfig)) {
+    return <TranslationsLandingPage bookLabel={bookLabel} />
+  }
+
   if (!showRunCard && isLoading) {
     return (
       <div className="flex items-center justify-center py-12 text-muted-foreground">
@@ -571,50 +594,17 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
   }, [speechConfig])
 
   if (showRunCard || !catalog || entries.length === 0) {
-    return (
-      <div className="p-4">
-        <StageRunCard
-          stageSlug={stageSlug}
-          isRunning={isRunning}
-          completed={stageDone}
-          onRun={handleRun}
-          disabled={!hasApiKey || isRunning}
-        >
-          {!isSpeechStage ? (
-            <div className="space-y-3">
-              <div>
-                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t`Book Language`}</p>
-                <p className="text-sm mt-0.5">
-                  {bookLanguage ? (
-                    <>{displayLang(bookLanguage)} <span className="text-muted-foreground">({bookLanguage})</span></>
-                  ) : (
-                    <span className="text-muted-foreground italic">{t`Not detected`}</span>
-                  )}
-                </p>
-              </div>
-              {outputLanguages.length > 0 && (
-                <div>
-                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t`Output Languages`}</p>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {outputLanguages.map((lang) => (
-                      <span key={lang} className="inline-flex items-center text-xs bg-muted rounded-md px-2 py-0.5">
-                        {displayLang(lang)} <span className="text-muted-foreground ml-1">({lang})</span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <Link
-                to="/books/$label/$step/settings"
-                params={{ label: bookLabel, step: "translate" }}
-                search={{ tab: "general" }}
-                className="inline-flex items-center gap-1 text-xs font-medium text-pink-600 hover:text-pink-700 transition-colors"
-              >
-                <Settings className="w-3 h-3" />
-                {t`Add Translations`}
-              </Link>
-            </div>
-          ) : (
+    // Speech stage still uses StageRunCard
+    if (isSpeechStage) {
+      return (
+        <div className="p-4">
+          <StageRunCard
+            stageSlug={stageSlug}
+            isRunning={isRunning}
+            completed={stageDone}
+            onRun={handleRun}
+            disabled={!hasApiKey || isRunning}
+          >
             <div className="space-y-3">
               <div>
                 <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{t`Voice`}</p>
@@ -636,10 +626,12 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
                 {t`Choose Provider`}
               </Link>
             </div>
-          )}
-        </StageRunCard>
-      </div>
-    )
+          </StageRunCard>
+        </div>
+      )
+    }
+    // Translate stage — show landing page
+    return <TranslationsLandingPage bookLabel={bookLabel} />
   }
 
   const showAllButton = selectedPageId ? (

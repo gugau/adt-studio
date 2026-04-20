@@ -111,6 +111,7 @@ function getSettingsTabs(
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE["caption-prompt"]) },
     ],
     translate: [
+      { key: "config", label: i18n._(SETTINGS_TAB_MESSAGE.config) },
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.languages) },
       { key: "prompt", label: i18n._(SETTINGS_TAB_MESSAGE["translation-prompt"]) },
     ],
