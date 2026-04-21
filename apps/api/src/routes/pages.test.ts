@@ -190,8 +190,6 @@ describe("Page routes", () => {
 
   describe("PUT /api/books/:label/pages/:pageId/sectioning", () => {
     it("saves page sectioning and returns version", async () => {
-      // PUT accepts the flat parts shape from the UI; the server runs
-      // `partsToTree` before persisting.
       const data = {
         reasoning: "updated reasoning",
         sections: [
@@ -202,18 +200,17 @@ describe("Page routes", () => {
             textColor: "#000000",
             pageNumber: 1,
             isPruned: false,
-            parts: [
+            nodes: [
               {
-                type: "text_group",
-                groupId: `${label}_p1_g001`,
-                groupType: "paragraph",
+                nodeId: `${label}_p1_g001`,
                 isPruned: false,
-                texts: [
+                structure: "paragraph",
+                children: [
                   {
-                    textId: `${label}_p1_n001`,
-                    textType: "text",
-                    text: "Updated text",
+                    nodeId: `${label}_p1_n001`,
                     isPruned: false,
+                    role: "text",
+                    text: "Updated text",
                   },
                 ],
               },
@@ -664,18 +661,17 @@ describe("Page routes", () => {
           textColor: "#000000",
           pageNumber: 1,
           isPruned: false,
-          parts: [
+          nodes: [
             {
-              type: "text_group",
-              groupId: `${label}_p1_g001`,
-              groupType: "paragraph",
+              nodeId: `${label}_p1_g001`,
               isPruned: false,
-              texts: [
+              structure: "paragraph",
+              children: [
                 {
-                  textId: `${label}_p1_n002`,
-                  textType: "text",
-                  text: "Updated text",
+                  nodeId: `${label}_p1_n002`,
                   isPruned: false,
+                  role: "text",
+                  text: "Updated text",
                 },
               ],
             },
