@@ -338,7 +338,8 @@ async function runExtractStep(
     progress.emit({ type: "step-complete", step: "metadata" })
     console.log(`[stage-run] ${label}: metadata complete (lang=${metadataResult.language_code})`)
 
-    // Step 3: Per-page image classification + segmentation + cropping
+    // Step 3: Per-page image classification runs as four sequential passes,
+    // each with its own progress reporting so the UI reflects real timing.
     const imageClassifyConfig = buildStageRunnerImageClassifyConfig(config, storage)
     const meaningfulnessConfig = buildMeaningfulnessConfig(config)
     const segmentationConfig = buildSegmentationConfig(config)
@@ -377,81 +378,34 @@ async function runExtractStep(
     const effectiveConcurrency = config.concurrency ?? 32
     const totalPages = pages.length
     console.log(`[stage-run] ${label}: classifying images for ${totalPages} pages (concurrency=${effectiveConcurrency})`)
-    let completedClassifyImages = 0
-    let completedCropping = 0
+
+    const pageResults = new Map<string, ImageClassificationOutput>()
     const failedPages: string[] = []
 
-    await processWithConcurrency(
-      pages,
-      effectiveConcurrency,
-      async (page: PageData) => {
-        try {
-          await classifyPageImagesPipeline(
-            page,
-            storage,
-            { imageClassifyConfig, meaningfulnessConfig, segmentationConfig, croppingConfig },
-            {
-              onClassifyImages: () => {
-                completedClassifyImages++
-                progress.emit({
-                  type: "step-progress",
-                  step: "image-filtering",
-                  message: `${completedClassifyImages}/${totalPages}`,
-                  page: completedClassifyImages,
-                  totalPages,
-                })
-              },
-              onCrop: () => {
-                completedCropping++
-                progress.emit({
-                  type: "step-progress",
-                  step: "image-cropping",
-                  message: `${completedCropping}/${totalPages}`,
-                  page: completedCropping,
-                  totalPages,
-                })
-              },
-            },
-            meaningfulnessModel,
-            segmentationModel,
-            croppingModel
-          )
-        } catch (err) {
-          const msg = toErrorMessage(err)
-          const step =
-            err instanceof StepError ? err.step : "image-filtering"
-          console.error(`[stage-run] ${label}: ${page.pageId} failed at ${step}: ${msg}`)
-          failedPages.push(`${page.pageId} [${step}]: ${msg}`)
-          progress.emit({
-            type: "step-error",
-            step,
-            error: `${page.pageId} failed: ${msg}`,
-          })
-        }
-      }
+    await runFilterPass(
+      label, pages, storage, imageClassifyConfig,
+      effectiveConcurrency, pageResults, failedPages, progress
+    )
+
+    await runMeaningfulnessPass(
+      label, pages, storage, meaningfulnessConfig, meaningfulnessModel,
+      effectiveConcurrency, pageResults, failedPages, progress
+    )
+
+    await runSegmentationPass(
+      label, pages, storage, segmentationConfig, segmentationModel,
+      effectiveConcurrency, pageResults, progress
+    )
+
+    await runCroppingPass(
+      label, pages, storage, croppingConfig, croppingModel,
+      effectiveConcurrency, pageResults, progress
     )
 
     if (failedPages.length > 0) {
       throw new Error(
         `${failedPages.length} page(s) failed:\n${failedPages.join("\n")}`
       )
-    }
-
-    progress.emit({ type: "step-complete", step: "image-filtering" })
-    if (segmentationConfig) {
-      progress.emit({ type: "step-complete", step: "image-segmentation" })
-    } else {
-      progress.emit({ type: "step-skip", step: "image-segmentation" })
-    }
-    if (croppingConfig) {
-      progress.emit({ type: "step-complete", step: "image-cropping" })
-    } else {
-      progress.emit({ type: "step-skip", step: "image-cropping" })
-    }
-    if (meaningfulnessConfig) {
-      progress.emit({ type: "step-complete", step: "image-meaningfulness" })
-    } else {
-      progress.emit({ type: "step-skip", step: "image-meaningfulness" })
     }
   } finally {
     storage.close()
@@ -1809,48 +1763,84 @@ async function runSpeechStep(
   }
 }
 
-interface ClassifyConfigs {
-  imageClassifyConfig: ReturnType<typeof buildImageClassifyConfig>
-  meaningfulnessConfig: MeaningfulnessConfig | null
-  segmentationConfig: SegmentationConfig | null
-  croppingConfig: CroppingConfig | null
-}
-
-interface ClassifyCallbacks {
-  onClassifyImages: () => void
-  onCrop: () => void
-}
-
-async function classifyPageImagesPipeline(
-  page: PageData,
+async function runFilterPass(
+  label: string,
+  pages: PageData[],
   storage: Storage,
-  configs: ClassifyConfigs,
-  callbacks: ClassifyCallbacks,
-  meaningfulnessModel: ReturnType<typeof createLLMModel> | null,
-  segmentationModel: ReturnType<typeof createLLMModel> | null,
-  croppingModel: ReturnType<typeof createLLMModel> | null
+  config: ReturnType<typeof buildStageRunnerImageClassifyConfig>,
+  concurrency: number,
+  results: Map<string, ImageClassificationOutput>,
+  failedPages: string[],
+  progress: StageRunProgress,
 ): Promise<void> {
-  const { imageClassifyConfig, meaningfulnessConfig, segmentationConfig, croppingConfig } = configs
+  const total = pages.length
+  let completed = 0
+  progress.emit({ type: "step-start", step: "image-filtering" })
+  await processWithConcurrency(pages, concurrency, async (page) => {
+    try {
+      const images = storage.getPageImages(page.pageId)
+      const result = classifyPageImages(page.pageId, images, config)
+      results.set(page.pageId, result)
+      storage.putNodeData("image-filtering", page.pageId, result)
+    } catch (err) {
+      const msg = toErrorMessage(err)
+      console.error(`[stage-run] ${label}: ${page.pageId} failed at image-filtering: ${msg}`)
+      failedPages.push(`${page.pageId} [image-filtering]: ${msg}`)
+      progress.emit({
+        type: "step-error",
+        step: "image-filtering",
+        error: `${page.pageId} failed: ${msg}`,
+      })
+    } finally {
+      completed++
+      progress.emit({
+        type: "step-progress",
+        step: "image-filtering",
+        message: `${completed}/${total}`,
+        page: completed,
+        totalPages: total,
+      })
+    }
+  })
+  progress.emit({ type: "step-complete", step: "image-filtering" })
+}
 
-  const imageBase64 = storage.getPageImageBase64(page.pageId)
-  const images = storage.getPageImages(page.pageId)
-
-  let imageResult: ImageClassificationOutput
-  try {
-    imageResult = classifyPageImages(page.pageId, images, imageClassifyConfig)
-    callbacks.onClassifyImages()
-  } catch (err) {
-    wrapStepError("image-filtering", err)
-    return // unreachable but satisfies TS
+async function runMeaningfulnessPass(
+  label: string,
+  pages: PageData[],
+  storage: Storage,
+  config: MeaningfulnessConfig | null,
+  model: ReturnType<typeof createLLMModel> | null,
+  concurrency: number,
+  results: Map<string, ImageClassificationOutput>,
+  failedPages: string[],
+  progress: StageRunProgress,
+): Promise<void> {
+  if (!config || !model) {
+    progress.emit({ type: "step-skip", step: "image-meaningfulness" })
+    return
   }
 
-  // LLM meaningfulness filter (if enabled)
-  if (meaningfulnessConfig && meaningfulnessModel) {
+  const total = pages.length
+  let completed = 0
+  progress.emit({ type: "step-start", step: "image-meaningfulness" })
+  await processWithConcurrency(pages, concurrency, async (page) => {
+    const existing = results.get(page.pageId)
+    if (!existing) {
+      completed++
+      progress.emit({
+        type: "step-progress",
+        step: "image-meaningfulness",
+        message: `${completed}/${total}`,
+        page: completed,
+        totalPages: total,
+      })
+      return
+    }
     try {
+      const images = storage.getPageImages(page.pageId)
       const unprunedImageIds = new Set(
-        imageResult.images
-          .filter((img) => !img.isPruned)
-          .map((img) => img.imageId)
+        existing.images.filter((img) => !img.isPruned).map((img) => img.imageId)
       )
       const unprunedImages = images
         .filter((img) => unprunedImageIds.has(img.imageId))
@@ -1862,33 +1852,79 @@ async function classifyPageImagesPipeline(
         }))
 
       if (unprunedImages.length > 0) {
-        imageResult = await filterPageImageMeaningfulness(
+        const updated = await filterPageImageMeaningfulness(
           {
             pageId: page.pageId,
-            pageImageBase64: imageBase64,
+            pageImageBase64: storage.getPageImageBase64(page.pageId),
             images: unprunedImages,
           },
-          imageResult,
-          meaningfulnessConfig,
-          meaningfulnessModel
+          existing,
+          config,
+          model,
         )
+        results.set(page.pageId, updated)
+        storage.putNodeData("image-filtering", page.pageId, updated)
       }
     } catch (err) {
-      wrapStepError("image-filtering", err)
+      const msg = toErrorMessage(err)
+      console.error(`[stage-run] ${label}: ${page.pageId} failed at image-meaningfulness: ${msg}`)
+      failedPages.push(`${page.pageId} [image-meaningfulness]: ${msg}`)
+      progress.emit({
+        type: "step-error",
+        step: "image-meaningfulness",
+        error: `${page.pageId} failed: ${msg}`,
+      })
+    } finally {
+      completed++
+      progress.emit({
+        type: "step-progress",
+        step: "image-meaningfulness",
+        message: `${completed}/${total}`,
+        page: completed,
+        totalPages: total,
+      })
     }
+  })
+  progress.emit({ type: "step-complete", step: "image-meaningfulness" })
+}
+
+async function runSegmentationPass(
+  label: string,
+  pages: PageData[],
+  storage: Storage,
+  config: SegmentationConfig | null,
+  model: ReturnType<typeof createLLMModel> | null,
+  concurrency: number,
+  results: Map<string, ImageClassificationOutput>,
+  progress: StageRunProgress,
+): Promise<void> {
+  if (!config || !model) {
+    progress.emit({ type: "step-skip", step: "image-segmentation" })
+    return
   }
 
-  storage.putNodeData("image-filtering", page.pageId, imageResult)
-
-  // LLM segmentation (if enabled) — splits composited images into individual segments
-  if (segmentationConfig && segmentationModel) {
+  const total = pages.length
+  let completed = 0
+  progress.emit({ type: "step-start", step: "image-segmentation" })
+  await processWithConcurrency(pages, concurrency, async (page) => {
+    const existing = results.get(page.pageId)
+    if (!existing) {
+      completed++
+      progress.emit({
+        type: "step-progress",
+        step: "image-segmentation",
+        message: `${completed}/${total}`,
+        page: completed,
+        totalPages: total,
+      })
+      return
+    }
     try {
+      const images = storage.getPageImages(page.pageId)
       const unprunedIds = new Set(
-        imageResult.images
-          .filter((img) => !img.isPruned)
-          .map((img) => img.imageId)
+        existing.images.filter((img) => !img.isPruned).map((img) => img.imageId)
       )
-      const segMinSide = segmentationConfig.minSide
+      const segMinSide = config.minSide
       const unprunedImages = images
         .filter((img) => unprunedIds.has(img.imageId))
         .filter((img) => segMinSide === undefined || Math.min(img.width, img.height) >= segMinSide)
@@ -1903,11 +1939,11 @@ async function classifyPageImagesPipeline(
         const segmentationResult = await segmentPageImages(
           {
             pageId: page.pageId,
-            pageImageBase64: imageBase64,
+            pageImageBase64: storage.getPageImageBase64(page.pageId),
             images: unprunedImages,
           },
-          segmentationConfig,
-          segmentationModel
+          config,
+          model,
         )
         const segVersion = storage.putNodeData("image-segmentation", page.pageId, segmentationResult)
         const segDims = new Map(images.map((img) => [img.imageId, { width: img.width, height: img.height }]))
@@ -1926,37 +1962,74 @@ async function classifyPageImagesPipeline(
             width: seg.width,
             height: seg.height,
           })
-          imageResult.images.push({
+          existing.images.push({
             imageId: getSegmentedImageId(seg.sourceImageId, seg.segmentIndex, segVersion),
             isPruned: false,
           })
         }
-        // Mark segmented originals as pruned
         if (applied.length > 0) {
           const segmentedSourceIds = new Set(applied.map((s) => s.sourceImageId))
           for (const sourceId of segmentedSourceIds) {
-            const origEntry = imageResult.images.find((i) => i.imageId === sourceId)
+            const origEntry = existing.images.find((i) => i.imageId === sourceId)
             if (origEntry) {
               origEntry.isPruned = true
               origEntry.reason = "segmented"
             }
           }
-          storage.putNodeData("image-filtering", page.pageId, imageResult)
+          storage.putNodeData("image-filtering", page.pageId, existing)
         }
       }
     } catch (err) {
-      // Segmentation is non-fatal — log error but continue
-      console.error(`[stage-run] image segmentation failed for ${page.pageId}: ${toErrorMessage(err)}`)
+      console.error(`[stage-run] ${label}: image segmentation failed for ${page.pageId}: ${toErrorMessage(err)}`)
+    } finally {
+      completed++
+      progress.emit({
+        type: "step-progress",
+        step: "image-segmentation",
+        message: `${completed}/${total}`,
+        page: completed,
+        totalPages: total,
+      })
     }
+  })
+  progress.emit({ type: "step-complete", step: "image-segmentation" })
+}
+
+async function runCroppingPass(
+  label: string,
+  pages: PageData[],
+  storage: Storage,
+  config: CroppingConfig | null,
+  model: ReturnType<typeof createLLMModel> | null,
+  concurrency: number,
+  results: Map<string, ImageClassificationOutput>,
+  progress: StageRunProgress,
+): Promise<void> {
+  if (!config || !model) {
+    progress.emit({ type: "step-skip", step: "image-cropping" })
+    return
   }
 
-  // LLM cropping (if enabled)
-  if (croppingConfig && croppingModel) {
+  const total = pages.length
+  let completed = 0
+  progress.emit({ type: "step-start", step: "image-cropping" })
+  await processWithConcurrency(pages, concurrency, async (page) => {
+    const existing = results.get(page.pageId)
+    if (!existing) {
+      completed++
+      progress.emit({
+        type: "step-progress",
+        step: "image-cropping",
+        message: `${completed}/${total}`,
+        page: completed,
+        totalPages: total,
+      })
+      return
+    }
     try {
+      const images = storage.getPageImages(page.pageId)
       const prunedIds = new Set(
-        imageResult.images
-          .filter((img) => img.isPruned)
-          .map((img) => img.imageId)
+        existing.images.filter((img) => img.isPruned).map((img) => img.imageId)
       )
       const unprunedImages = images
         .filter((img) => !prunedIds.has(img.imageId))
@@ -1971,11 +2044,11 @@ async function classifyPageImagesPipeline(
         const croppingResult = await cropPageImages(
           {
             pageId: page.pageId,
-            pageImageBase64: imageBase64,
+            pageImageBase64: storage.getPageImageBase64(page.pageId),
             images: unprunedImages,
           },
-          croppingConfig,
-          croppingModel
+          config,
+          model,
         )
         const croppingVersion = storage.putNodeData("image-cropping", page.pageId, croppingResult)
         const applied = applyCrops(
@@ -1991,27 +2064,32 @@ async function classifyPageImagesPipeline(
             width: crop.width,
             height: crop.height,
           })
-          // Mark original as pruned in classification
-          const origEntry = imageResult.images.find((i) => i.imageId === crop.imageId)
+          const origEntry = existing.images.find((i) => i.imageId === crop.imageId)
           if (origEntry) {
             origEntry.isPruned = true
             origEntry.reason = "cropped"
           }
-          // Add crop as new unpruned image
-          imageResult.images.push({
+          existing.images.push({
             imageId: getCroppedImageId(crop.imageId, croppingVersion),
             isPruned: false,
           })
         }
         if (applied.length > 0) {
-          storage.putNodeData("image-filtering", page.pageId, imageResult)
+          storage.putNodeData("image-filtering", page.pageId, existing)
         }
       }
     } catch (err) {
-      // Cropping is non-fatal — log error but continue
-      console.error(`[stage-run] image cropping failed for ${page.pageId}: ${toErrorMessage(err)}`)
+      console.error(`[stage-run] ${label}: image cropping failed for ${page.pageId}: ${toErrorMessage(err)}`)
     } finally {
-      callbacks.onCrop()
+      completed++
+      progress.emit({
+        type: "step-progress",
+        step: "image-cropping",
+        message: `${completed}/${total}`,
+        page: completed,
+        totalPages: total,
+      })
     }
-  }
+  })
+  progress.emit({ type: "step-complete", step: "image-cropping" })
 }
