@@ -48,6 +48,7 @@ export const STRATEGY_CATEGORIES: Record<
 
 export interface RenderStrategyOption extends WizardOption {
   category: StrategyCategory;
+  hidden?: boolean;
 }
 
 // ─── Render Strategies (Step 2) ──────────────────────────────────────────────
@@ -80,6 +81,7 @@ export const RENDER_STRATEGIES = [
     title: msg`Two Columns`,
     description: msg`The ideal choice for novels, focused on a clean and continuous reading experience.`,
     category: "template",
+    hidden: true,
   },
   {
     id: "two_column_story",

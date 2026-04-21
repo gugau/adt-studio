@@ -110,9 +110,12 @@ export function RenderStrategyPicker() {
   const presetLabel = preset?.title
   const accent = getPresetAccent(selectedPresetId)
 
+  const visibleStrategies = RENDER_STRATEGIES.filter(
+    (s) => !("hidden" in s && s.hidden),
+  )
   const strategies = allowedIds
-    ? RENDER_STRATEGIES.filter((s) => allowedIds.includes(s.id))
-    : RENDER_STRATEGIES
+    ? visibleStrategies.filter((s) => allowedIds.includes(s.id))
+    : visibleStrategies
 
   const recommendedStrategies = recommended?.length
     ? strategies.filter((s) => recommended.includes(s.id))

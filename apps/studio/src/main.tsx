@@ -24,6 +24,11 @@ function detectLocale(): AppLocale {
 i18n.load({ en: enMessages, "pt-BR": ptBRMessages, es: esMessages, fr: frMessages })
 i18n.activate(detectLocale())
 
+if (import.meta.env.VITE_WORKSPACE_NAME) {
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- dev-only tab label; env var is unset in production builds
+  document.title = `ADT Studio — ${import.meta.env.VITE_WORKSPACE_NAME}`
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

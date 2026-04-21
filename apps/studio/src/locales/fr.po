@@ -40,6 +40,9 @@ msgstr "(actif)"
 msgid "(base)"
 msgstr "(base)"
 
+msgid "(no instruction text)"
+msgstr "(aucun texte d'instruction)"
+
 msgid "(no target)"
 msgstr "(non cible)"
 
@@ -311,6 +314,9 @@ msgstr "Une chaîne unique utilisée pour authentifier et autoriser les requête
 msgid "A video named \"{0}\" already exists. Do you want to replace it?"
 msgstr "Une vidéo nommée \"{0}\" existe déjà. Voulez-vous la remplacer ?"
 
+msgid "A–Z"
+msgstr "A–Z"
+
 msgid "ABC"
 msgstr "ABC"
 
@@ -511,6 +517,9 @@ msgstr "Modification IA"
 
 msgid "AI edit failed"
 msgstr "La modification IA a échoué"
+
+msgid "AI edit history"
+msgstr "Historique des modifications IA"
 
 msgid "AI editing..."
 msgstr "Modification par IA..."
@@ -818,8 +827,14 @@ msgstr "Taux de succès du cache"
 msgid "Cache Hits"
 msgstr "Succès du cache"
 
+msgid "cached"
+msgstr "en cache"
+
 msgid "Cached"
 msgstr "Cached"
+
+msgid "Cached response"
+msgstr "Réponse en cache"
 
 msgid "Calculate word timestamps for all entries"
 msgstr "Calculer les horodatages de mots pour toutes les entrées"
@@ -920,6 +935,9 @@ msgstr "Clear langue"
 msgid "Clear model"
 msgstr "Clear modèle"
 
+msgid "Clear search"
+msgstr "Effacer la recherche"
+
 msgid "Click \"Add Videos\" to upload MP4 or WebM files."
 msgstr "Cliquez sur \"Ajouter des vidéos\" pour téléverser des fichiers MP4 ou WebM."
 
@@ -970,6 +988,9 @@ msgstr "Commentaire"
 
 msgid "Comments"
 msgstr "Commentaires"
+
+#~ msgid "Completed stages"
+#~ msgstr "Étapes terminées"
 
 msgid "Completion across all pages in this book for the active reviewer session."
 msgstr "Progression sur toutes les pages de ce livre pour la session de révision active."
@@ -1069,6 +1090,9 @@ msgstr "Créer à partir de zéro en utilisant votre description"
 
 msgid "Create session"
 msgstr "Créer une session"
+
+msgid "Created {createdLabel}"
+msgstr "Créé le {createdLabel}"
 
 msgid "Creating..."
 msgstr "Création..."
@@ -1572,11 +1596,17 @@ msgstr "Extraction de figures"
 #~ msgid "Fill in the Blank"
 #~ msgstr "Fill dans le Blank"
 
+#~ msgid "Filter"
+#~ msgstr "Filtrer"
+
 msgid "Filter by image ID..."
 msgstr "Filtrer by image ID..."
 
 msgid "Filter by item ID..."
 msgstr "Filtrer by élément ID..."
+
+#~ msgid "Filter stages"
+#~ msgstr "Filtrer les étapes"
 
 msgid "Filtered by:"
 msgstr "Filtré par :"
@@ -1750,6 +1780,9 @@ msgstr "En-tête"
 
 #~ msgid "Heading"
 #~ msgstr "Titre"
+
+msgid "Hide AI edit history"
+msgstr "Masquer l'historique des modifications IA"
 
 msgid "Hide Pruned"
 msgstr "Masquer les élagués"
@@ -1963,6 +1996,9 @@ msgstr "Grandes images, flux narratif. Idéal pour les livres illustrés avec de
 msgid "Last"
 msgstr "Dernier"
 
+msgid "Last modified"
+msgstr "Dernière modification"
+
 msgid "Leaf node roles the LLM may assign to text and image leaves in the content tree. Each role has a description shown to the model."
 msgstr "Rôles de nœud feuille que le LLM peut attribuer aux feuilles de texte et d'image dans l'arbre de contenu. Chaque rôle a une description montrée au modèle."
 
@@ -2119,6 +2155,9 @@ msgstr "Chargement des correspondances de voix..."
 msgid "Loading..."
 msgstr "Chargement..."
 
+msgid "Loading…"
+msgstr "Chargement…"
+
 msgid "Lower values produce more consistent styling across pages."
 msgstr "Les valeurs plus basses produisent un style plus cohérent entre les pages."
 
@@ -2257,6 +2296,9 @@ msgstr "modéré"
 msgid "Moderate"
 msgstr "Modéré"
 
+msgid "Modified {modifiedLabel}"
+msgstr "Modifié le {modifiedLabel}"
+
 msgid "Multi-format publications"
 msgstr "Publications multi-format"
 
@@ -2302,6 +2344,9 @@ msgstr "Nouvelle session"
 msgid "new_type_key"
 msgstr "new_type_key"
 
+msgid "Newest first"
+msgstr "Plus récents d'abord"
+
 msgid "Next"
 msgstr "Suivant"
 
@@ -2317,8 +2362,14 @@ msgstr "Aucune évaluation d'accessibilité n'a encore été générée. Empaque
 msgid "No accessibility findings were reported for this page."
 msgstr "Aucun résultat d'accessibilité n'a été signalé pour cette page."
 
+msgid "No AI edits yet for this section."
+msgstr "Aucune modification IA pour cette section pour l'instant."
+
 msgid "No assessment"
 msgstr "Aucune évaluation"
+
+msgid "No books match your search"
+msgstr "Aucun livre ne correspond à votre recherche"
 
 msgid "No captions for this page"
 msgstr "Aucune légende pour cette page"
@@ -3186,6 +3237,12 @@ msgstr "Exportation SCORM"
 msgid "SCORM Package"
 msgstr "SCORM Package"
 
+msgid "Search books"
+msgstr "Rechercher des livres"
+
+msgid "Search books..."
+msgstr "Rechercher des livres..."
+
 msgid "Search languages..."
 msgstr "Rechercher langues..."
 
@@ -3382,6 +3439,9 @@ msgstr "Les paramètres pour cette étape ne sont pas encore disponibles."
 msgid "Show accessibility summary"
 msgstr "Afficher le résumé d'accessibilité"
 
+msgid "Show AI edit history"
+msgstr "Afficher l'historique des modifications IA"
+
 msgid "Show all"
 msgstr "Afficher tout"
 
@@ -3452,6 +3512,9 @@ msgstr "Diapositive {0}"
 
 msgid "Smart Cropping"
 msgstr "Recadrage intelligent"
+
+msgid "Sort books"
+msgstr "Trier les livres"
 
 msgid "Spanish"
 msgstr "Espagnol"
@@ -4034,6 +4097,9 @@ msgstr "Variant:"
 
 msgid "Vector Extraction"
 msgstr "Extraction vectorielle"
+
+msgid "Verified applied"
+msgstr "Application vérifiée"
 
 #. placeholder {0}: String(version)
 msgid "Version {0}"

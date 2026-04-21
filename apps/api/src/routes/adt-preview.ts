@@ -65,6 +65,28 @@ function getMimeType(filePath: string): string {
   return MIME_TYPES[path.extname(filePath).toLowerCase()] ?? "application/octet-stream"
 }
 
+/** Highest mtime across base.js + everything under modules/ — used to detect
+ *  when the pre-built bundle is out of date relative to its sources. */
+function maxSourceMtime(webAssetsDir: string): number {
+  let max = 0
+  const baseJs = path.join(webAssetsDir, "base.js")
+  if (fs.existsSync(baseJs)) max = Math.max(max, fs.statSync(baseJs).mtimeMs)
+  const modulesDir = path.join(webAssetsDir, "modules")
+  if (!fs.existsSync(modulesDir)) return max
+  const walk = (dir: string) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name)
+      if (entry.isDirectory()) walk(full)
+      else if (entry.isFile()) {
+        const m = fs.statSync(full).mtimeMs
+        if (m > max) max = m
+      }
+    }
+  }
+  walk(modulesDir)
+  return max
+}
+
 // ---------------------------------------------------------------------------
 // Caches (built lazily per book)
 // ---------------------------------------------------------------------------
@@ -443,21 +465,28 @@ export function createAdtPreviewRoutes(
       throw new HTTPException(403, { message: "Forbidden" })
     }
 
-    // Auto-build base.bundle.min.js on-the-fly if it doesn't exist (dev mode).
-    // The file is gitignored and normally pre-built by `pnpm --filter @adt/api bundle`.
-    if (!fs.existsSync(resolved) && assetPath === "base.bundle.min.js") {
+    // Auto-build base.bundle.min.js on-the-fly if it's missing OR stale relative
+    // to its source modules (dev mode). The file is gitignored and normally
+    // pre-built by `pnpm --filter @adt/api bundle`. Skip in packaged mode
+    // (ADT_RESOURCES_ZIP) where esbuild isn't available inside the pkg'd binary.
+    if (assetPath === "base.bundle.min.js" && !process.env.ADT_RESOURCES_ZIP) {
       const entryPoint = path.join(webAssetsDir, "base.js")
       if (fs.existsSync(entryPoint)) {
-        const esbuild = await import("esbuild")
-        await esbuild.build({
-          entryPoints: [entryPoint],
-          bundle: true,
-          minify: true,
-          sourcemap: true,
-          format: "esm",
-          target: "es2020",
-          outfile: resolved,
-        })
+        const bundleMtime = fs.existsSync(resolved) ? fs.statSync(resolved).mtimeMs : 0
+        const isStale =
+          bundleMtime === 0 || maxSourceMtime(webAssetsDir) > bundleMtime
+        if (isStale) {
+          const esbuild = await import("esbuild")
+          await esbuild.build({
+            entryPoints: [entryPoint],
+            bundle: true,
+            minify: true,
+            sourcemap: true,
+            format: "esm",
+            target: "es2020",
+            outfile: resolved,
+          })
+        }
       }
     }
 

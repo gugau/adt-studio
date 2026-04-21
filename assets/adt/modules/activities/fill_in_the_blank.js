@@ -37,7 +37,7 @@ export const hydrateFitbSentences = (container) => {
 
             const hydratedHtml = html.replace(
                 /\[\[blank:item-(\d+)(?::([^\]]+))?\]\]/g,
-                (_match, itemNum, hint) => {
+                (match, itemNum, hint, offset, source) => {
                     ariaCounter++;
                     const placeholderAttr = hint
                         ? ` placeholder="${hint.replace(/"/g, '&quot;')}"`
@@ -49,13 +49,49 @@ export const hydrateFitbSentences = (container) => {
                     const label = blankLabel.startsWith('fitb-')
                         ? (totalBlanks > 1 ? `Blank ${ariaCounter} of ${totalBlanks}` : 'Blank')
                         : blankLabel;
-                    // Size the input to roughly fit the expected answer.
-                    // Use the hint length when available, otherwise a sensible default.
-                    const charWidth = hint ? Math.max(hint.length + 2, 6) : 8;
+                    // Detect word-internal blanks — the marker sits INSIDE a word rather
+                    // than between words (e.g. "en[[blank:item-1]]ro" for a missing-letter
+                    // exercise). Used for tighter spacing, and as a fallback for sizing
+                    // when no answer is available yet (e.g. preview before answers gen).
+                    const WORD_CHAR = /\p{L}/u;
+                    const prevChar = source[offset - 1] || '';
+                    const nextChar = source[offset + match.length] || '';
+                    const isWordInternal =
+                        !hint && (WORD_CHAR.test(prevChar) || WORD_CHAR.test(nextChar));
+                    // Look up the correct answer for this blank (injected as a global by
+                    // package-web). Pipe-separated alternatives use the longest variant so
+                    // every acceptable answer fits. Size to answer length + 1 for safety.
+                    const answer = typeof window !== 'undefined'
+                        ? window.correctAnswers?.[`item-${itemNum}`]
+                        : undefined;
+                    const answerLength = typeof answer === 'string' && answer.length > 0
+                        ? answer.split('|').reduce((max, a) => Math.max(max, a.length), 0)
+                        : 0;
+                    // Size priority:
+                    //   1. Explicit hint in the marker (`[[blank:item-N:hint]]`) — hint IS the answer shape
+                    //   2. Known answer from window.correctAnswers — size to answer length + 1
+                    //   3. Word-internal heuristic — narrow single-letter slot
+                    //   4. Fallback — default word-sized slot
+                    let charWidth;
+                    let minWidth;
+                    if (hint) {
+                        charWidth = Math.max(hint.length + 2, 6);
+                        minWidth = '4ch';
+                    } else if (answerLength > 0) {
+                        charWidth = Math.max(answerLength + 1, 2);
+                        minWidth = answerLength <= 2 ? '1.5ch' : '4ch';
+                    } else if (isWordInternal) {
+                        charWidth = 2;
+                        minWidth = '1.5ch';
+                    } else {
+                        charWidth = 8;
+                        minWidth = '4ch';
+                    }
+                    const spacingClasses = isWordInternal ? 'mx-px' : 'mx-1';
                     return `<input type="text" `
                         + `id="fitb-input-${itemNum}" `
-                        + `class="fitb-inline-input inline-block mx-1 px-1 py-0.5 border-b-2 border-gray-400 bg-transparent text-center focus:border-blue-500 focus:outline-none" `
-                        + `style="width: ${charWidth}ch; min-width: 4ch; max-width: 100%;" `
+                        + `class="fitb-inline-input inline-block ${spacingClasses} px-1 py-0.5 border-b-2 border-gray-400 bg-transparent text-center focus:border-blue-500 focus:outline-none" `
+                        + `style="width: ${charWidth}ch; min-width: ${minWidth}; max-width: 100%;" `
                         + `aria-label="${label.replace(/"/g, '&quot;')}" `
                         + `aria-invalid="false" `
                         + `autocomplete="off" `

@@ -99,6 +99,17 @@ function createLegacySchemaDb(label: string): void {
   db.close()
 }
 
+function markStepsDone(label: string, steps: string[]): void {
+  const db = openBookDb(path.join(tmpDir, label, `${label}.db`))
+  for (const step of steps) {
+    db.run(
+      "INSERT INTO step_runs (step, status, completed_at) VALUES (?, 'done', ?)",
+      [step, new Date().toISOString()]
+    )
+  }
+  db.close()
+}
+
 describe("listBooks", () => {
   it("returns empty array for empty directory", () => {
     expect(listBooks(tmpDir)).toEqual([])
@@ -126,6 +137,9 @@ describe("listBooks", () => {
       hasSourcePdf: true,
       needsRebuild: false,
       rebuildReason: null,
+      completedStages: [],
+      createdAt: expect.any(String),
+      modifiedAt: expect.any(String),
     })
   })
 
@@ -144,6 +158,9 @@ describe("listBooks", () => {
       hasSourcePdf: false,
       needsRebuild: false,
       rebuildReason: null,
+      completedStages: [],
+      createdAt: expect.any(String),
+      modifiedAt: expect.any(String),
     })
   })
 
@@ -164,7 +181,21 @@ describe("listBooks", () => {
       hasSourcePdf: true,
       needsRebuild: false,
       rebuildReason: null,
+      completedStages: [],
+      createdAt: expect.any(String),
+      modifiedAt: expect.any(String),
     })
+  })
+
+  it("includes ISO timestamps for creation and last modification", () => {
+    createTestDb("timestamps")
+
+    const books = listBooks(tmpDir)
+    expect(books).toHaveLength(1)
+    expect(() => new Date(books[0].createdAt).toISOString()).not.toThrow()
+    expect(() => new Date(books[0].modifiedAt).toISOString()).not.toThrow()
+    expect(Date.parse(books[0].createdAt)).not.toBeNaN()
+    expect(Date.parse(books[0].modifiedAt)).not.toBeNaN()
   })
 
   it("lists multiple books sorted by label", () => {
@@ -185,6 +216,59 @@ describe("listBooks", () => {
     fs.mkdirSync(path.join(tmpDir, ".hidden"))
     fs.mkdirSync(path.join(tmpDir, "-invalid"))
     expect(listBooks(tmpDir)).toEqual([])
+  })
+
+  it("reports a stage as completed when all its steps are done", () => {
+    createTestDb("extract-done")
+    markStepsDone("extract-done", [
+      "extract",
+      "metadata",
+      "image-filtering",
+      "image-segmentation",
+      "image-cropping",
+      "image-meaningfulness",
+      "text-classification",
+      "book-summary",
+      "translation",
+    ])
+
+    const books = listBooks(tmpDir)
+    expect(books[0].completedStages).toEqual(["extract"])
+  })
+
+  it("does not report a stage as completed when a step is missing", () => {
+    createTestDb("extract-partial")
+    markStepsDone("extract-partial", ["extract", "metadata"])
+
+    const books = listBooks(tmpDir)
+    expect(books[0].completedStages).toEqual([])
+  })
+
+  it("includes preview when the adt directory exists", () => {
+    createTestDb("previewable")
+    fs.mkdirSync(path.join(tmpDir, "previewable", "adt"))
+
+    const books = listBooks(tmpDir)
+    expect(books[0].completedStages).toContain("preview")
+  })
+
+  it("treats skipped steps as completing the stage", () => {
+    createTestDb("mixed-statuses")
+    const db = openBookDb(path.join(tmpDir, "mixed-statuses", "mixed-statuses.db"))
+    db.run(
+      "INSERT INTO step_runs (step, status, completed_at) VALUES (?, 'done', ?)",
+      ["quiz-generation", new Date().toISOString()]
+    )
+    db.run(
+      "INSERT INTO step_runs (step, status, completed_at) VALUES (?, 'skipped', ?)",
+      ["image-captioning", new Date().toISOString()]
+    )
+    db.close()
+
+    const books = listBooks(tmpDir)
+    expect(books[0].completedStages).toEqual(
+      expect.arrayContaining(["quizzes", "captions"])
+    )
   })
 
   it("marks books with old schema as needing rebuild", () => {

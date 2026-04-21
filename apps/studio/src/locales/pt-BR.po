@@ -39,6 +39,9 @@ msgstr "(ativo)"
 msgid "(base)"
 msgstr "(base)"
 
+msgid "(no instruction text)"
+msgstr "(sem texto de instrução)"
+
 msgid "(no target)"
 msgstr "(no target)"
 
@@ -310,6 +313,9 @@ msgstr "Uma sequência única usada para autenticar e autorizar solicitações �
 msgid "A video named \"{0}\" already exists. Do you want to replace it?"
 msgstr "Já existe um vídeo chamado \"{0}\". Deseja substituí-lo?"
 
+msgid "A–Z"
+msgstr "A–Z"
+
 msgid "ABC"
 msgstr "ABC"
 
@@ -510,6 +516,9 @@ msgstr "Edição com IA"
 
 msgid "AI edit failed"
 msgstr "AI edit failed"
+
+msgid "AI edit history"
+msgstr "Histórico de edições com IA"
 
 msgid "AI editing..."
 msgstr "Edição por IA..."
@@ -817,8 +826,14 @@ msgstr "Taxa de acerto do cache"
 msgid "Cache Hits"
 msgstr "Acertos em cache"
 
+msgid "cached"
+msgstr "em cache"
+
 msgid "Cached"
 msgstr "Em cache"
+
+msgid "Cached response"
+msgstr "Resposta em cache"
 
 msgid "Calculate word timestamps for all entries"
 msgstr "Calcular marcações de tempo por palavra para todas as entradas"
@@ -919,6 +934,9 @@ msgstr "Limpar idioma"
 msgid "Clear model"
 msgstr "Limpar modelo"
 
+msgid "Clear search"
+msgstr "Limpar busca"
+
 msgid "Click \"Add Videos\" to upload MP4 or WebM files."
 msgstr "Clique em \"Adicionar Vídeos\" para enviar arquivos MP4 ou WebM."
 
@@ -969,6 +987,9 @@ msgstr "Comment"
 
 msgid "Comments"
 msgstr "Comments"
+
+#~ msgid "Completed stages"
+#~ msgstr "Etapas concluídas"
 
 msgid "Completion across all pages in this book for the active reviewer session."
 msgstr "Completion across all pages in this book for the active reviewer session."
@@ -1068,6 +1089,9 @@ msgstr "Criar do zero usando sua descrição"
 
 msgid "Create session"
 msgstr "Create session"
+
+msgid "Created {createdLabel}"
+msgstr "Criado em {createdLabel}"
 
 msgid "Creating..."
 msgstr "Criando..."
@@ -1571,6 +1595,9 @@ msgstr "Extração de Figuras"
 #~ msgid "Fill in the Blank"
 #~ msgstr "Preencher lacunas"
 
+#~ msgid "Filter"
+#~ msgstr "Filtrar"
+
 msgid "Filter by image ID..."
 msgstr "Filtrar por ID da imagem..."
 
@@ -1749,6 +1776,9 @@ msgstr "Cabeçalho"
 
 #~ msgid "Heading"
 #~ msgstr "Título"
+
+msgid "Hide AI edit history"
+msgstr "Ocultar histórico de edições com IA"
 
 msgid "Hide Pruned"
 msgstr "Ocultar removidas"
@@ -1962,6 +1992,9 @@ msgstr "Imagens grandes, fluxo narrativo. Melhor para livros ilustrados com voze
 msgid "Last"
 msgstr "Última"
 
+msgid "Last modified"
+msgstr "Última modificação"
+
 msgid "Leaf node roles the LLM may assign to text and image leaves in the content tree. Each role has a description shown to the model."
 msgstr "Papéis de nó folha que o LLM pode atribuir a folhas de texto e imagem na árvore de conteúdo. Cada papel tem uma descrição mostrada ao modelo."
 
@@ -2118,6 +2151,9 @@ msgstr "Carregando mapeamentos de voz..."
 msgid "Loading..."
 msgstr "Carregando..."
 
+msgid "Loading…"
+msgstr "Carregando…"
+
 msgid "Lower values produce more consistent styling across pages."
 msgstr "Valores mais baixos produzem estilização mais consistente entre as páginas."
 
@@ -2256,6 +2292,9 @@ msgstr "moderate"
 msgid "Moderate"
 msgstr "Moderate"
 
+msgid "Modified {modifiedLabel}"
+msgstr "Modificado em {modifiedLabel}"
+
 msgid "Multi-format publications"
 msgstr "Publicações multi-formato"
 
@@ -2301,6 +2340,9 @@ msgstr "New session"
 msgid "new_type_key"
 msgstr "novo_tipo"
 
+msgid "Newest first"
+msgstr "Mais recentes primeiro"
+
 msgid "Next"
 msgstr "Próximo"
 
@@ -2316,8 +2358,14 @@ msgstr "No accessibility assessment has been generated yet. Package the ADT outp
 msgid "No accessibility findings were reported for this page."
 msgstr "No accessibility findings were reported for this page."
 
+msgid "No AI edits yet for this section."
+msgstr "Ainda não há edições com IA para esta seção."
+
 msgid "No assessment"
 msgstr "No assessment"
+
+msgid "No books match your search"
+msgstr "Nenhum livro corresponde à sua busca"
 
 msgid "No captions for this page"
 msgstr "Sem legendas para esta página"
@@ -3185,6 +3233,12 @@ msgstr "Exportação SCORM"
 msgid "SCORM Package"
 msgstr "Pacote SCORM"
 
+msgid "Search books"
+msgstr "Buscar livros"
+
+msgid "Search books..."
+msgstr "Buscar livros..."
+
 msgid "Search languages..."
 msgstr "Buscar idiomas..."
 
@@ -3381,6 +3435,9 @@ msgstr "As configurações para esta etapa ainda não estão disponíveis."
 msgid "Show accessibility summary"
 msgstr "Show accessibility summary"
 
+msgid "Show AI edit history"
+msgstr "Mostrar histórico de edições com IA"
+
 msgid "Show all"
 msgstr "Mostrar todas"
 
@@ -3451,6 +3508,9 @@ msgstr "Slide {0}"
 
 msgid "Smart Cropping"
 msgstr "Corte Inteligente"
+
+msgid "Sort books"
+msgstr "Ordenar livros"
 
 msgid "Spanish"
 msgstr "Espanhol"
@@ -4033,6 +4093,9 @@ msgstr "Variante:"
 
 msgid "Vector Extraction"
 msgstr "Extração vetorial"
+
+msgid "Verified applied"
+msgstr "Aplicação verificada"
 
 #. placeholder {0}: String(version)
 msgid "Version {0}"
