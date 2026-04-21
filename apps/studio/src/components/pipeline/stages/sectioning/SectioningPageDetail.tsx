@@ -1,35 +1,69 @@
 import { useEffect, type ReactNode } from "react"
 import { Trans, useLingui } from "@lingui/react/macro"
-import type { PageDetail } from "@/api/client"
+import { BASE_URL, type ContentNode, type PageDetail } from "@/api/client"
 import { usePageImage } from "@/hooks/use-pages"
 import { useStepHeader } from "../../components/StepViewRouter"
 
-type SectionPart = NonNullable<PageDetail["sectioning"]>["sections"][number]["parts"][number]
+function NodeBlock({
+  node,
+  bookLabel,
+  inheritedPruned,
+}: {
+  node: ContentNode
+  bookLabel: string
+  inheritedPruned: boolean
+}) {
+  const pruned = node.isPruned || inheritedPruned
+  const mutedText = pruned ? "line-through text-muted-foreground/60" : "text-foreground"
 
-function PartBlock({ part }: { part: SectionPart }) {
-  const muted = part.isPruned
-  if (part.type === "image") {
+  if (node.role === "image") {
     return (
-      <div className={`py-0.5 text-sm font-mono ${muted ? "line-through text-muted-foreground/60" : "text-foreground"}`}>
-        <span className="text-xs uppercase tracking-wide text-muted-foreground mr-2">image</span>
-        <span>{`[${part.imageId}]`}</span>
+      <div className="py-1">
+        <div className="flex items-center gap-2">
+          <span className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">image</span>
+          <span className={`text-xs font-mono ${pruned ? "line-through text-muted-foreground/60" : "text-muted-foreground"}`}>
+            {node.nodeId}
+          </span>
+        </div>
+        <img
+          src={`${BASE_URL}/books/${bookLabel}/images/${node.nodeId}`}
+          alt={node.nodeId}
+          className={`mt-1 h-20 w-auto object-contain rounded border bg-white ${pruned ? "opacity-40" : ""}`}
+          onError={(e) => {
+            ;(e.target as HTMLImageElement).style.display = "none"
+          }}
+        />
       </div>
     )
   }
-  return (
-    <div className="py-0.5">
-      <div className={`text-xs font-semibold uppercase tracking-wide ${muted ? "text-muted-foreground/60 line-through" : "text-sky-700"}`}>
-        {part.groupType}
+
+  if (node.role) {
+    return (
+      <div className={`py-0.5 text-sm font-mono ${mutedText}`}>
+        <span className="text-xs uppercase tracking-wide text-muted-foreground mr-2">{node.role}</span>
+        <span className="whitespace-pre-wrap">{node.text ?? ""}</span>
       </div>
-      {part.texts.map((t) => (
-        <div
-          key={t.textId}
-          className={`py-0.5 pl-3 text-sm font-mono ${t.isPruned || muted ? "line-through text-muted-foreground/60" : "text-foreground"}`}
-        >
-          <span className="text-xs uppercase tracking-wide text-muted-foreground mr-2">{t.textType}</span>
-          <span className="whitespace-pre-wrap">{t.text}</span>
-        </div>
-      ))}
+    )
+  }
+
+  const children = node.children ?? []
+  return (
+    <div className="py-1">
+      <div className={`text-xs font-semibold uppercase tracking-wide ${pruned ? "text-muted-foreground/60 line-through" : "text-sky-700"}`}>
+        {node.structure ?? "container"}
+        <span className="ml-2 text-[10px] font-mono text-muted-foreground/70 normal-case">
+          {node.nodeId}
+        </span>
+      </div>
+      <div className="pl-3 border-l border-sky-200 ml-1 mt-1">
+        {children.length === 0 ? (
+          <div className="text-xs text-muted-foreground italic py-0.5"><Trans>Empty container</Trans></div>
+        ) : (
+          children.map((c) => (
+            <NodeBlock key={c.nodeId} node={c} bookLabel={bookLabel} inheritedPruned={pruned} />
+          ))
+        )}
+      </div>
     </div>
   )
 }
@@ -65,7 +99,7 @@ export function SectioningPageDetail({
     }
   }, [navigationExtra, navigationArrows, setExtra, setOnLabelClick])
 
-  const sections = page.sectioning?.sections ?? []
+  const sections = page.sectioningTree?.sections ?? []
 
   return (
     <div className="flex h-full min-h-0">
@@ -95,13 +129,15 @@ export function SectioningPageDetail({
                 ) : null}
               </div>
               <div className="border rounded bg-muted/20 p-3">
-                {section.parts.length === 0 ? (
+                {section.nodes.length === 0 ? (
                   <div className="text-sm text-muted-foreground italic"><Trans>Empty section</Trans></div>
                 ) : (
-                  section.parts.map((p, i) => (
-                    <PartBlock
-                      key={p.type === "image" ? p.imageId : `${p.groupId}_${i}`}
-                      part={p}
+                  section.nodes.map((node) => (
+                    <NodeBlock
+                      key={node.nodeId}
+                      node={node}
+                      bookLabel={bookLabel}
+                      inheritedPruned={section.isPruned}
                     />
                   ))
                 )}

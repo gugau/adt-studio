@@ -31,6 +31,7 @@ interface PageDetail {
   pageNumber: number
   text: string
   sectioning: unknown | null
+  sectioningTree: unknown | null
   imageClassification: unknown | null
   imageCropping: unknown | null
   rendering: unknown | null
@@ -504,10 +505,12 @@ export function createPageRoutes(
       // schema (older data or a failed run), return null so the editor can
       // offer a re-run instead of crashing.
       let sectioningForUI: unknown = null
+      let sectioningTreeForUI: unknown = null
       if (sectioningNode) {
         const parsed = PageSectioningOutput.safeParse(sectioningNode.data)
         if (parsed.success) {
           sectioningForUI = treeToPartsOutput(parsed.data)
+          sectioningTreeForUI = parsed.data
         }
       }
 
@@ -516,6 +519,7 @@ export function createPageRoutes(
         pageNumber: page.page_number,
         text: page.text,
         sectioning: sectioningForUI,
+        sectioningTree: sectioningTreeForUI,
         imageClassification: imageClassNode?.data ?? null,
         imageCropping: imageCroppingNode?.data ?? null,
         rendering: renderingNode?.data ?? null,

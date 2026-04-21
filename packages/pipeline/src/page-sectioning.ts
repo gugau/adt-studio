@@ -590,6 +590,6 @@ export function buildPageSectioningConfig(
     modelId: appConfig.page_sectioning?.model ?? "openai:gpt-5.4",
     maxRetries:
       appConfig.page_sectioning?.max_retries ?? DEFAULT_LLM_MAX_RETRIES,
-    maxRefinements: appConfig.page_sectioning?.max_refinements ?? 1,
+    maxRefinements: appConfig.page_sectioning?.max_refinements ?? 0,
   }
 }

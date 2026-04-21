@@ -161,6 +161,15 @@ export interface SectionRendering {
   activityAnswers?: Record<string, string | boolean | number>
 }
 
+export interface ContentNode {
+  nodeId: string
+  isPruned: boolean
+  structure?: string
+  children?: ContentNode[]
+  role?: string
+  text?: string
+}
+
 export interface PageDetail {
   pageId: string
   pageNumber: number
@@ -208,6 +217,18 @@ export interface PageDetail {
             reason?: string
           }
       >
+      backgroundColor: string
+      textColor: string
+      pageNumber: number | null
+      isPruned: boolean
+    }>
+  } | null
+  sectioningTree: {
+    reasoning: string
+    sections: Array<{
+      sectionId: string
+      sectionType: string
+      nodes: ContentNode[]
       backgroundColor: string
       textColor: string
       pageNumber: number | null

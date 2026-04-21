@@ -146,7 +146,7 @@ describe("buildPageSectioningConfig", () => {
     expect(config.promptName).toBe("page_sectioning")
     expect(config.modelId).toBe("openai:gpt-5.4")
     expect(config.maxRetries).toBe(5)
-    expect(config.maxRefinements).toBe(1)
+    expect(config.maxRefinements).toBe(0)
   })
 
   it("uses page_sectioning overrides when provided", () => {
@@ -353,6 +353,36 @@ describe("runValidator", () => {
     expect(result.valid).toBe(false)
     expect(result.errors.join("\n")).toMatch(
       /image_group must contain the image leaf plus at least one associated content leaf/
+    )
+  })
+
+  it("reports error when image_group's first child is not an image leaf", () => {
+    const result = runValidator(
+      {
+        reasoning: "",
+        sections: [
+          {
+            section_type: "text_only",
+            background_color: "#fff",
+            text_color: "#000",
+            page_number: 1,
+            nodes: [
+              {
+                structure: "image_group",
+                children: [
+                  { role: "caption", text: "A caption." },
+                  { role: "image", image_id: "pg001_im001" },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      makeCtx({ availableImageIds: ["pg001_im001"] })
+    )
+    expect(result.valid).toBe(false)
+    expect(result.errors.join("\n")).toMatch(
+      /image_group's first child must be a leaf with role "image"/
     )
   })
 

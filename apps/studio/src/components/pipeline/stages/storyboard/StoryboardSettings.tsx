@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo } from "react"
 import { createPortal } from "react-dom"
 import { useNavigate } from "@tanstack/react-router"
-import { Play, Plus, X, Eye, Wand2, Loader2, Check } from "lucide-react"
+import { Play, Eye, Wand2, Loader2, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { PruneToggle } from "@/components/pipeline/components/PruneToggle"
 import { Switch } from "@/components/ui/switch"
 import {
   Dialog,
@@ -31,7 +30,6 @@ import { api } from "@/api/client"
 import { PromptViewer } from "@/components/pipeline/components/PromptViewer"
 import { TemplateViewer } from "@/components/pipeline/components/TemplateViewer"
 import { useBookRun } from "@/hooks/use-book-run"
-import { useStepConfig } from "@/hooks/use-step-config"
 import { Trans } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
 import { useLingui } from "@lingui/react/macro"
@@ -41,7 +39,7 @@ import {
   normalizeDefaultRenderStrategy,
 } from "@/lib/render-strategy"
 import { getSectionTypeLabel } from "@/lib/section-constants"
-import { hasSectioningChanges, hasSectioningData } from "./lib/storyboard-rerun-policy"
+import { hasSectioningData } from "./lib/storyboard-rerun-policy"
 
 /** "two_column_story" → "Two Column Story" */
 function titleCase(slug: string): string {
@@ -57,11 +55,6 @@ function strategyDisplayName(slug: string): string {
   const descriptor = STRATEGY_LABEL_MSGS[slug]
   if (descriptor) return i18n._(descriptor)
   return titleCase(slug.replace(/_/g, " "))
-}
-
-function getSectionTypeDisplayLabel(value: string): string {
-  const label = getSectionTypeLabel(value)
-  return label || value.replace(/_/g, " ")
 }
 
 const STRATEGY_DESCRIPTION_MSGS: Record<string, ReturnType<typeof msg>> = {
@@ -148,16 +141,11 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
   const [savingImageGenPrompt, setSavingImageGenPrompt] = useState(false)
 
   // Form state
-  const [sectionTypes, setSectionTypes] = useState<Record<string, string>>({})
-  const [prunedSectionTypes, setPrunedSectionTypes] = useState<Set<string>>(new Set())
   const [disabledSectionTypes, setDisabledSectionTypes] = useState<Set<string>>(new Set())
-  const [sectionRenderStrategies, setSectionRenderStrategies] = useState<Record<string, string>>({})
   const [defaultRenderStrategy, setDefaultRenderStrategy] = useState("")
-  const [allStrategyNames, setAllStrategyNames] = useState<string[]>([])
   const [renderStrategyNames, setRenderStrategyNames] = useState<string[]>([])
   const [activityModel, setActivityModel] = useState("")
   const [activityRetries, setActivityRetries] = useState("")
-  const [sectioningMode, setSectioningMode] = useState("dynamic")
   const [renderingModel, setRenderingModel] = useState("")
   const [renderingRetries, setRenderingRetries] = useState("")
   const [renderingPromptName, setRenderingPromptName] = useState("web_generation_html")
@@ -166,7 +154,6 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
   const [renderingTemperature, setRenderingTemperature] = useState("")
   const [styleguide, setStyleguide] = useState("")
   const [applyBodyBackground, setApplyBodyBackground] = useState(true)
-  const [sectioningPromptDraft, setSectioningPromptDraft] = useState<string | null>(null)
   const [renderingPromptDraft, setRenderingPromptDraft] = useState<string | null>(null)
   const [renderingTemplateDraft, setRenderingTemplateDraft] = useState<string | null>(null)
   const [templateTabName, setTemplateTabName] = useState("")
@@ -266,33 +253,22 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
   const markDirty = (field: string) => setDirty((prev) => ({ ...prev, [field]: true }))
 
   const merged = activeConfigData?.merged as Record<string, unknown> | undefined
-  const sectioning = useStepConfig(merged, "page_sectioning", markDirty)
 
-  // Whether sectioning data already exists (storyboard has been run at least once)
+  // Whether sectioning data already exists (sectioning has been run at least once)
   const hasExistingSectioningData = hasSectioningData(stepState("page-sectioning"))
 
-  // Load section types, pruned types, render strategy, and models from active (merged) config
+  // Load render strategy, styleguide, and rendering config from active (merged) config
   useEffect(() => {
     if (!activeConfigData) return
     const merged = activeConfigData.merged as Record<string, unknown>
-    if (merged.section_types && typeof merged.section_types === "object") {
-      setSectionTypes(merged.section_types as Record<string, string>)
-    }
-    if (Array.isArray(merged.pruned_section_types)) {
-      setPrunedSectionTypes(new Set(merged.pruned_section_types as string[]))
-    }
     if (Array.isArray(merged.disabled_section_types)) {
       setDisabledSectionTypes(new Set(merged.disabled_section_types as string[]))
-    }
-    if (merged.section_render_strategies && typeof merged.section_render_strategies === "object") {
-      setSectionRenderStrategies(merged.section_render_strategies as Record<string, string>)
     }
     const strategies = (
       merged.render_strategies && typeof merged.render_strategies === "object"
         ? merged.render_strategies
         : {}
     ) as Record<string, { render_type?: string; config?: { prompt?: string; answer_prompt?: string; model?: string; template?: string; temperature?: number; max_retries?: number } }>
-    const strategyNames = Object.keys(strategies)
     const normalizedDefaultRenderStrategy = normalizeDefaultRenderStrategy(
       typeof merged.default_render_strategy === "string"
         ? String(merged.default_render_strategy)
@@ -301,13 +277,8 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
     )
     setDefaultRenderStrategy(normalizedDefaultRenderStrategy)
 
-    setAllStrategyNames(strategyNames)
     setRenderStrategyNames(listSelectableRenderStrategies(strategies))
 
-    if (merged.page_sectioning && typeof merged.page_sectioning === "object") {
-      const ps = merged.page_sectioning as Record<string, unknown>
-      if (ps.mode) setSectioningMode(String(ps.mode))
-    }
     // Styleguide
     setStyleguide(typeof merged.styleguide === "string" ? merged.styleguide : "")
     // Body background
@@ -333,55 +304,6 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
     setRenderingRetries(defaultStrategy?.config?.max_retries != null ? String(defaultStrategy.config.max_retries) : "")
   }, [activeConfigData])
 
-  const [newTypeKey, setNewTypeKey] = useState("")
-  const [newTypeDesc, setNewTypeDesc] = useState("")
-
-  const togglePruned = (key: string) => {
-    markDirty("pruned_section_types")
-    setPrunedSectionTypes((prev) => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      return next
-    })
-  }
-
-  const updateDescription = (key: string, description: string) => {
-    markDirty("section_types")
-    setSectionTypes((prev) => ({ ...prev, [key]: description }))
-  }
-
-  const updateRenderOverride = (key: string, strategy: string) => {
-    markDirty("section_render_strategies")
-    setSectionRenderStrategies((prev) => {
-      if (!strategy) {
-        const next = { ...prev }
-        delete next[key]
-        return next
-      }
-      return { ...prev, [key]: strategy }
-    })
-  }
-
-  const toggleDisabled = (key: string) => {
-    markDirty("disabled_section_types")
-    setDisabledSectionTypes((prev) => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      return next
-    })
-  }
-
-  const addSectionType = () => {
-    const key = newTypeKey.trim().toLowerCase().replace(/\s+/g, "_")
-    if (!key || key in sectionTypes) return
-    markDirty("section_types")
-    setSectionTypes((prev) => ({ ...prev, [key]: newTypeDesc.trim() }))
-    setNewTypeKey("")
-    setNewTypeDesc("")
-  }
-
   // Helper: only write a field if the user changed it or the book config already had it
   const shouldWrite = (field: string) =>
     dirty[field] || (bookConfigData?.config && field in bookConfigData.config)
@@ -395,19 +317,6 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
       Object.assign(overrides, bookConfigData.config)
     }
 
-    // Only write managed fields if touched or already in book config
-    if (shouldWrite("section_types")) {
-      // Explicitly null-out deleted keys so deepMerge removes them from base
-      const baseSectionTypes = (merged?.section_types ?? {}) as Record<string, string>
-      const withDeletions: Record<string, string | null> = { ...sectionTypes }
-      for (const key of Object.keys(baseSectionTypes)) {
-        if (!(key in sectionTypes)) withDeletions[key] = null
-      }
-      overrides.section_types = withDeletions
-    }
-    if (shouldWrite("pruned_section_types")) {
-      overrides.pruned_section_types = Array.from(prunedSectionTypes)
-    }
     if (shouldWrite("disabled_section_types")) {
       overrides.disabled_section_types = Array.from(disabledSectionTypes)
     }
@@ -421,20 +330,6 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
     )
     if (shouldWrite("default_render_strategy")) {
       overrides.default_render_strategy = normalizedDefaultRenderStrategy || undefined
-    }
-    if (shouldWrite("section_render_strategies")) {
-      const baseStrategies = (merged?.section_render_strategies ?? {}) as Record<string, string>
-      const stratWithDeletions: Record<string, string | null> = { ...sectionRenderStrategies }
-      for (const key of Object.keys(baseStrategies)) {
-        if (!(key in sectionRenderStrategies)) stratWithDeletions[key] = null
-      }
-      overrides.section_render_strategies = Object.keys(stratWithDeletions).length > 0
-        ? stratWithDeletions
-        : undefined
-    }
-    if (shouldWrite("page_sectioning")) {
-      const existing = (bookConfigData?.config?.page_sectioning ?? {}) as Record<string, unknown>
-      overrides.page_sectioning = { ...existing, ...sectioning.configOverrides, mode: sectioningMode }
     }
     if (shouldWrite("styleguide")) {
       overrides.styleguide = styleguide || undefined
@@ -471,12 +366,9 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
     return overrides
   }
 
-  const needsResectioning = hasSectioningChanges(dirty, sectioningPromptDraft)
-
   const confirmSaveAndRerun = async () => {
     // Save any edited prompts/templates first
     const contentSaves: Promise<unknown>[] = []
-    if (sectioningPromptDraft != null) contentSaves.push(api.updatePrompt("page_sectioning", sectioningPromptDraft, bookLabel))
     if (renderingPromptDraft != null) contentSaves.push(api.updatePrompt(renderingPromptName, renderingPromptDraft, bookLabel))
     if (renderingTemplateDraft != null) contentSaves.push(api.updateTemplate(renderingTemplateName, renderingTemplateDraft, bookLabel))
     if (templateTabDraft != null && templateTabName) contentSaves.push(api.updateTemplate(templateTabName, templateTabDraft, bookLabel))
@@ -486,9 +378,8 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
     if (imageEditPromptDraft != null) contentSaves.push(api.updatePrompt("ai_image_edit", imageEditPromptDraft, bookLabel))
     if (contentSaves.length > 0) await Promise.all(contentSaves)
 
-    // Only re-render (preserve sections) when sectioning data exists and
-    // no sectioning-related settings were changed.
-    const renderOnly = hasExistingSectioningData && !needsResectioning
+    // Storyboard settings don't touch sectioning — preserve sectioning when it exists.
+    const renderOnly = hasExistingSectioningData
 
     const overrides = buildOverrides()
     updateConfig.mutate(
@@ -496,7 +387,6 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
       {
         onSuccess: async () => {
           setDirty({})
-          setSectioningPromptDraft(null)
           setRenderingPromptDraft(null)
           setRenderingTemplateDraft(null)
           setTemplateTabDraft(null)
@@ -527,242 +417,77 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
   }
 
   return (
-    <div className={tab === "sectioning-prompt" || tab === "rendering-prompt" || tab === "rendering-template" || tab === "activity-prompts" || tab === "image-generation" ? "h-full" : "p-4 space-y-6"}>
+    <div className={tab === "rendering-prompt" || tab === "rendering-template" || tab === "activity-prompts" || tab === "image-generation" ? "h-full" : "p-4 space-y-6"}>
       {tab === "general" && (
-        <>
-          {/* Default Render Strategy */}
-          <div>
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-              {<Trans>Default Render Strategy</Trans>}
-            </h3>
-            <Select
-              value={defaultRenderStrategy}
-              onValueChange={(v) => {
-                setDefaultRenderStrategy(v)
-                markDirty("default_render_strategy")
-                // Update rendering config to match the newly selected strategy
-                const merged = activeConfigData?.merged as Record<string, unknown> | undefined
-                const strategies = (merged?.render_strategies ?? {}) as Record<string, { render_type?: string; config?: { model?: string; prompt?: string; template?: string } }>
-                const strat = strategies[v]
-                if (strat) {
-                  if (strat.render_type) setRenderingRenderType(strat.render_type)
-                  if (strat.config?.prompt) setRenderingPromptName(strat.config.prompt)
-                  if (strat.config?.model) setRenderingModel(strat.config.model)
-                  if (strat.config?.template) {
-                    setRenderingTemplateName(strat.config.template)
-                    setTemplateTabName(strat.config.template)
-                    setTemplateTabDraft(null)
-                  }
-                } else {
-                  // Strategy not in render_strategies — clear stale rendering config
-                  setRenderingRenderType("")
-                  setRenderingModel("")
-                  setRenderingPromptName("")
-                  setRenderingTemplateName("")
-                  setTemplateTabName("")
+        <div>
+          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+            {<Trans>Default Render Strategy</Trans>}
+          </h3>
+          <Select
+            value={defaultRenderStrategy}
+            onValueChange={(v) => {
+              setDefaultRenderStrategy(v)
+              markDirty("default_render_strategy")
+              // Update rendering config to match the newly selected strategy
+              const merged = activeConfigData?.merged as Record<string, unknown> | undefined
+              const strategies = (merged?.render_strategies ?? {}) as Record<string, { render_type?: string; config?: { model?: string; prompt?: string; template?: string } }>
+              const strat = strategies[v]
+              if (strat) {
+                if (strat.render_type) setRenderingRenderType(strat.render_type)
+                if (strat.config?.prompt) setRenderingPromptName(strat.config.prompt)
+                if (strat.config?.model) setRenderingModel(strat.config.model)
+                if (strat.config?.template) {
+                  setRenderingTemplateName(strat.config.template)
+                  setTemplateTabName(strat.config.template)
                   setTemplateTabDraft(null)
                 }
-              }}
-            >
-              <SelectTrigger className="w-72">
-                <SelectValue placeholder={t`Select strategy...`}>
-                  {defaultRenderStrategy && (
-                    <>
-                      {strategyDisplayName(defaultRenderStrategy)}
-                      {strategyRenderTypes[defaultRenderStrategy] === "template" && (
-                        <span className="text-muted-foreground ml-1">{<Trans>(template)</Trans>}</span>
-                      )}
-                    </>
-                  )}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent align="start">
-                {renderStrategyNames.map((name) => {
-                  const isTemplate = strategyRenderTypes[name] === "template"
-                  return (
-                    <SelectItem key={name} value={name}>
-                      <div className="flex flex-col items-start">
-                        <span>
-                          {strategyDisplayName(name)}
-                          {isTemplate && <span className="text-muted-foreground ml-1">{<Trans>(template)</Trans>}</span>}
-                        </span>
-                        {strategyDescription(name) && (
-                          <span className="text-xs text-muted-foreground">
-                            {strategyDescription(name)}
-                          </span>
-                        )}
-                      </div>
-                    </SelectItem>
-                  )
-                })}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground mt-1.5">
-              {<Trans>The rendering strategy used for sections without an explicit mapping.</Trans>}
-            </p>
-          </div>
-
-          {/* Section Types */}
-          <div>
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-              {<Trans>Section Types</Trans>}
-            </h3>
-            <p className="text-xs text-muted-foreground mb-3">
-              {<Trans>Types used during page sectioning. Pruned types are classified but excluded from rendering. Disabled types are hidden from the LLM entirely.</Trans>}
-            </p>
-            <div className="rounded-md border divide-y">
-              {/* Header */}
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50">
-                <span className="h-3.5 w-3.5 shrink-0" />
-                <span className="text-xs font-medium text-muted-foreground shrink-0 w-40">{<Trans>Type</Trans>}</span>
-                <span className="text-xs font-medium text-muted-foreground flex-1 min-w-0">{<Trans>Description</Trans>}</span>
-                <span className="text-xs font-medium text-muted-foreground shrink-0 w-48 text-left">{<Trans>Render Strategy</Trans>}</span>
-                <span className="shrink-0 w-5" />
-              </div>
-              {Object.entries(sectionTypes).map(([key, description]) => {
-                const pruned = prunedSectionTypes.has(key)
-                const disabled = disabledSectionTypes.has(key)
-                const renderOverride = sectionRenderStrategies[key] ?? ""
+              } else {
+                // Strategy not in render_strategies — clear stale rendering config
+                setRenderingRenderType("")
+                setRenderingModel("")
+                setRenderingPromptName("")
+                setRenderingTemplateName("")
+                setTemplateTabName("")
+                setTemplateTabDraft(null)
+              }
+            }}
+          >
+            <SelectTrigger className="w-72">
+              <SelectValue placeholder={t`Select strategy...`}>
+                {defaultRenderStrategy && (
+                  <>
+                    {strategyDisplayName(defaultRenderStrategy)}
+                    {strategyRenderTypes[defaultRenderStrategy] === "template" && (
+                      <span className="text-muted-foreground ml-1">{<Trans>(template)</Trans>}</span>
+                    )}
+                  </>
+                )}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent align="start">
+              {renderStrategyNames.map((name) => {
+                const isTemplate = strategyRenderTypes[name] === "template"
                 return (
-                  <div
-                    key={key}
-                    className={`flex items-center gap-2 px-3 py-1.5 group ${disabled ? "opacity-50" : pruned ? "bg-muted/30" : ""}`}
-                  >
-                    <PruneToggle pruned={pruned} onToggle={() => togglePruned(key)} />
-                    <span className={`text-xs shrink-0 w-40 truncate font-mono ${disabled ? "text-muted-foreground line-through" : pruned ? "text-muted-foreground line-through" : "font-medium"}`}>
-                      {getSectionTypeDisplayLabel(key)}
-                    </span>
-                    <Input
-                      value={description}
-                      onChange={(e) => updateDescription(key, e.target.value)}
-                      className="h-7 text-xs flex-1 min-w-0"
-                      placeholder={t`Description...`}
-                    />
-                    <Select
-                      value={renderOverride || "__default__"}
-                      onValueChange={(v) => updateRenderOverride(key, v === "__default__" ? "" : v)}
-                    >
-                      <SelectTrigger className="h-7 w-48 shrink-0 text-xs text-left">
-                        <SelectValue>
-                          {renderOverride ? strategyDisplayName(renderOverride) : <Trans>Default</Trans>}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent align="start">
-                        <SelectItem value="__default__">
-                          <span className="text-muted-foreground">{<Trans>Default</Trans>}</span>
-                        </SelectItem>
-                        {allStrategyNames.map((name) => (
-                          <SelectItem key={name} value={name}>
-                            {strategyDisplayName(name)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <button
-                      type="button"
-                      onClick={() => toggleDisabled(key)}
-                      className={`shrink-0 p-0.5 rounded transition-colors ${disabled ? "text-amber-500 hover:text-amber-600" : "text-muted-foreground/0 group-hover:text-muted-foreground hover:!text-destructive"}`}
-                      title={disabled ? t`Re-enable type` : t`Disable type`}
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+                  <SelectItem key={name} value={name}>
+                    <div className="flex flex-col items-start">
+                      <span>
+                        {strategyDisplayName(name)}
+                        {isTemplate && <span className="text-muted-foreground ml-1">{<Trans>(template)</Trans>}</span>}
+                      </span>
+                      {strategyDescription(name) && (
+                        <span className="text-xs text-muted-foreground">
+                          {strategyDescription(name)}
+                        </span>
+                      )}
+                    </div>
+                  </SelectItem>
                 )
               })}
-              {/* Add new type */}
-              <div className="flex items-center gap-2 px-3 py-1.5">
-                <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <Input
-                  value={newTypeKey}
-                  onChange={(e) => setNewTypeKey(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addSectionType()}
-                  className="h-7 text-xs w-40 shrink-0"
-                  placeholder={t`new_type_key`}
-                />
-                <Input
-                  value={newTypeDesc}
-                  onChange={(e) => setNewTypeDesc(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addSectionType()}
-                  className="h-7 text-xs flex-1 min-w-0"
-                  placeholder={t`Description...`}
-                />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs shrink-0"
-                  onClick={addSectionType}
-                  disabled={!newTypeKey.trim() || newTypeKey.trim().toLowerCase().replace(/\s+/g, "_") in sectionTypes}
-                >
-                  {<Trans>Add</Trans>}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {tab === "sectioning-prompt" && (
-        <div className="flex flex-col h-full">
-          <div className="shrink-0 p-4 pb-0 space-y-4">
-            <div>
-              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                {<Trans>Sectioning Mode</Trans>}
-              </h3>
-              <Select
-                value={sectioningMode}
-                onValueChange={(v) => {
-                  setSectioningMode(v)
-                  markDirty("page_sectioning")
-                }}
-              >
-                <SelectTrigger className="w-72 h-fit">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent align="start">
-                  <SelectItem value="dynamic">
-                    <div className="flex flex-col items-start">
-                      <span>{<Trans>Dynamic</Trans>}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {<Trans>Keeps pages whole unless mixed activity types require splitting</Trans>}
-                      </span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="section">
-                    <div className="flex flex-col items-start">
-                      <span>{<Trans>By Section</Trans>}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {<Trans>Groups content into logical sections</Trans>}
-                      </span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="page">
-                    <div className="flex flex-col items-start">
-                      <span>{<Trans>By Page</Trans>}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {<Trans>Treats each page as a single section</Trans>}
-                      </span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground mt-1.5">
-                {<Trans>Controls how page content is grouped during the sectioning step.</Trans>}
-              </p>
-            </div>
-          </div>
-          <div className="flex-1 min-h-0">
-            <PromptViewer
-              promptName="page_sectioning"
-              bookLabel={bookLabel}
-              title={t`Page Sectioning Prompt`}
-              description={t`The prompt template used to split each page into logical sections. This is a Liquid template processed with page context.`}
-              model={sectioning.model}
-              onModelChange={sectioning.onModelChange}
-              maxRetries={sectioning.maxRetries}
-              onMaxRetriesChange={sectioning.onMaxRetriesChange}
-              onContentChange={setSectioningPromptDraft}
-            />
-          </div>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground mt-1.5">
+            {<Trans>The rendering strategy used for sections without an explicit mapping.</Trans>}
+          </p>
         </div>
       )}
 
@@ -1237,9 +962,9 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
           <DialogHeader>
             <DialogTitle>{<Trans>Save & Rerun Storyboard</Trans>}</DialogTitle>
             <DialogDescription>
-              {hasExistingSectioningData && !needsResectioning
+              {hasExistingSectioningData
                 ? <Trans>This will save your settings and re-run the storyboard pipeline. Only rendering will be regenerated — your existing sections will be preserved.</Trans>
-                : <Trans>This will save your settings and re-run the storyboard pipeline. Sectioning and rendering will be regenerated for all pages.</Trans>}
+                : <Trans>This will save your settings and re-run the storyboard pipeline. Sectioning and rendering will be run for all pages.</Trans>}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

@@ -78,11 +78,15 @@ Sections PARTITION the top-level tree. They do NOT restructure it.
 
 DEFAULT: the entire page is ONE section. Keep it as one section unless the split condition below applies.
 
-SPLIT the page into multiple sections ONLY when the page contains TWO OR MORE activities of DIFFERENT types (e.g. one `activity_multiple_choice` and one `activity_fill_in_the_blank`, or an `activity_sorting` and an `activity_open_ended_answer`). In that case, each activity of a different type goes in its own section, with any surrounding non-activity content (headings, passages, instructions) attached to whichever section it visually belongs with.
+SPLIT the page into multiple sections when either of these applies:
+1. The page contains TWO OR MORE activities of DIFFERENT types (e.g. one `activity_multiple_choice` and one `activity_fill_in_the_blank`, or an `activity_sorting` and an `activity_open_ended_answer`). Each activity of a different type goes in its own section.
+2. The page contains TWO OR MORE activities and a fresh set of activity instructions (a new instructional prompt like "Agora responda…", "Now complete the following…", "Match the items below…") precedes one of them. A new instruction block is a strong signal that a new activity begins there, and it should start a new section — even if the activity type is the same as the previous one.
+
+In any split, attach surrounding non-activity content (headings, passages, instructions) to whichever section it visually belongs with — a new instruction block goes with the activity it introduces.
 
 Do NOT split in any of these cases:
 - A page with a single activity (of any type), regardless of how many questions it contains.
-- A page with multiple activities that all share the SAME type (e.g. several multiple-choice questions, or several fill-in-the-blank items) — keep them together in one section.
+- A page with multiple same-type activities sharing ONE instruction block (e.g. several multiple-choice items all governed by a single prompt) — keep them together in one section.
 - A page with no activities — always one section.
 - Separation by visual whitespace, headings, or topic alone — not a reason to split.
 

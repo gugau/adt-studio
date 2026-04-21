@@ -228,6 +228,9 @@ msgstr "="
 msgid "0 = deterministic, 2 = max creativity"
 msgstr "0 = deterministic, 2 = max creativity"
 
+msgid "0 = single pass, higher values allow iterative LLM refinement"
+msgstr "0 = single pass, higher values allow iterative LLM refinement"
+
 msgid "1 hour"
 msgstr "1 hour"
 
@@ -997,6 +1000,9 @@ msgstr "Confirm Rerun"
 msgid "Consulting the style council..."
 msgstr "Consulting the style council..."
 
+msgid "Container node types the LLM may produce in the content tree during sectioning. Each type has a description shown to the model."
+msgstr "Container node types the LLM may produce in the content tree during sectioning. Each type has a description shown to the model."
+
 #~ msgid "Container Types"
 #~ msgstr "Container Types"
 
@@ -1370,6 +1376,9 @@ msgstr "Editing is disabled while the storyboard is running"
 
 msgid "Editing Language"
 msgstr "Editing Language"
+
+msgid "Empty container"
+msgstr "Empty container"
 
 msgid "Empty group — drag text entries here"
 msgstr "Empty group — drag text entries here"
@@ -1953,6 +1962,9 @@ msgstr "Large images, narrative flow. Best for illustrated books with high-fidel
 msgid "Last"
 msgstr "Last"
 
+msgid "Leaf node roles the LLM may assign to text and image leaves in the content tree. Each role has a description shown to the model."
+msgstr "Leaf node roles the LLM may assign to text and image leaves in the content tree. Each role has a description shown to the model."
+
 #~ msgid "Leaf text roles the LLM can assign to each text element. Pruned roles are classified but excluded from rendering."
 #~ msgstr "Leaf text roles the LLM can assign to each text element. Pruned roles are classified but excluded from rendering."
 
@@ -2129,6 +2141,9 @@ msgstr "Match each stage of the water cycle to its definition:"
 
 #~ msgid "Math"
 #~ msgstr "Math"
+
+msgid "Max Refinements"
+msgstr "Max Refinements"
 
 msgid "Max Side"
 msgstr "Max Side"
@@ -2471,6 +2486,9 @@ msgstr "Note"
 
 msgid "Number of pages of content to include per quiz question."
 msgstr "Number of pages of content to include per quiz question."
+
+msgid "Number of refinement iterations performed after the initial sectioning pass."
+msgstr "Number of refinement iterations performed after the initial sectioning pass."
 
 msgid "OAuth 2.0"
 msgstr "OAuth 2.0"
@@ -2947,8 +2965,8 @@ msgstr "Remove section"
 msgid "Remove this block"
 msgstr "Remove this block"
 
-#~ msgid "Remove type"
-#~ msgstr "Remove type"
+msgid "Remove type"
+msgstr "Remove type"
 
 msgid "Render Reasoning"
 msgstr "Render Reasoning"
@@ -3116,8 +3134,8 @@ msgstr "Save & Rerun Glossary"
 msgid "Save & Rerun Quizzes"
 msgstr "Save & Rerun Quizzes"
 
-#~ msgid "Save & Rerun Sectioning"
-#~ msgstr "Save & Rerun Sectioning"
+msgid "Save & Rerun Sectioning"
+msgstr "Save & Rerun Sectioning"
 
 msgid "Save & Rerun Speech"
 msgstr "Save & Rerun Speech"
@@ -3637,8 +3655,8 @@ msgstr "Text Groups"
 msgid "Text Only"
 msgstr "Text Only"
 
-#~ msgid "Text Types"
-#~ msgstr "Text Types"
+msgid "Text Types"
+msgstr "Text Types"
 
 msgid "Textbooks & Activities"
 msgstr "Textbooks & Activities"
@@ -3772,6 +3790,9 @@ msgstr "This will save your settings and re-run image captioning."
 msgid "This will save your settings and re-run quiz generation."
 msgstr "This will save your settings and re-run quiz generation."
 
+msgid "This will save your settings and re-run sectioning and storyboard rendering for all pages."
+msgstr "This will save your settings and re-run sectioning and storyboard rendering for all pages."
+
 msgid "This will save your settings and re-run speech generation."
 msgstr "This will save your settings and re-run speech generation."
 
@@ -3784,8 +3805,11 @@ msgstr "This will save your settings and re-run the extraction pipeline. Any man
 msgid "This will save your settings and re-run the storyboard pipeline. Only rendering will be regenerated — your existing sections will be preserved."
 msgstr "This will save your settings and re-run the storyboard pipeline. Only rendering will be regenerated — your existing sections will be preserved."
 
-msgid "This will save your settings and re-run the storyboard pipeline. Sectioning and rendering will be regenerated for all pages."
-msgstr "This will save your settings and re-run the storyboard pipeline. Sectioning and rendering will be regenerated for all pages."
+#~ msgid "This will save your settings and re-run the storyboard pipeline. Sectioning and rendering will be regenerated for all pages."
+#~ msgstr "This will save your settings and re-run the storyboard pipeline. Sectioning and rendering will be regenerated for all pages."
+
+msgid "This will save your settings and re-run the storyboard pipeline. Sectioning and rendering will be run for all pages."
+msgstr "This will save your settings and re-run the storyboard pipeline. Sectioning and rendering will be run for all pages."
 
 msgid "This will save your settings and re-run translations, rebuilding the text catalog and translating to output languages."
 msgstr "This will save your settings and re-run translations, rebuilding the text catalog and translating to output languages."

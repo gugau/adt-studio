@@ -229,6 +229,9 @@ msgstr "="
 msgid "0 = deterministic, 2 = max creativity"
 msgstr "0 = déterministe, 2 = créativité maximale"
 
+msgid "0 = single pass, higher values allow iterative LLM refinement"
+msgstr "0 = passage unique, les valeurs plus élevées permettent un raffinement itératif du LLM"
+
 msgid "1 hour"
 msgstr "1 heure"
 
@@ -998,6 +1001,9 @@ msgstr "Confirmer Rerun"
 msgid "Consulting the style council..."
 msgstr "Consultation du conseil de style..."
 
+msgid "Container node types the LLM may produce in the content tree during sectioning. Each type has a description shown to the model."
+msgstr "Types de nœuds conteneurs que le LLM peut produire dans l'arborescence de contenu pendant le sectionnement. Chaque type a une description montrée au modèle."
+
 #~ msgid "Container Types"
 #~ msgstr "Types de conteneur"
 
@@ -1371,6 +1377,9 @@ msgstr "La modification est désactivée pendant l'exécution du scénarimage"
 
 msgid "Editing Language"
 msgstr "Langue d'édition"
+
+msgid "Empty container"
+msgstr "Conteneur vide"
 
 msgid "Empty group — drag text entries here"
 msgstr "Groupe vide — glissez des entrées de texte ici"
@@ -1954,6 +1963,9 @@ msgstr "Grandes images, flux narratif. Idéal pour les livres illustrés avec de
 msgid "Last"
 msgstr "Dernier"
 
+msgid "Leaf node roles the LLM may assign to text and image leaves in the content tree. Each role has a description shown to the model."
+msgstr "Rôles de nœud feuille que le LLM peut attribuer aux feuilles de texte et d'image dans l'arbre de contenu. Chaque rôle a une description montrée au modèle."
+
 #~ msgid "Leaf text roles the LLM can assign to each text element. Pruned roles are classified but excluded from rendering."
 #~ msgstr "Rôles de texte feuilles que le LLM peut attribuer à chaque élément de texte. Les rôles élagués sont classés mais exclus du rendu."
 
@@ -2130,6 +2142,9 @@ msgstr "Associez chaque étape du cycle de l'eau à sa définition :"
 
 #~ msgid "Math"
 #~ msgstr "Math"
+
+msgid "Max Refinements"
+msgstr "Raffinements max"
 
 msgid "Max Side"
 msgstr "Côté max."
@@ -2472,6 +2487,9 @@ msgstr "Note"
 
 msgid "Number of pages of content to include per quiz question."
 msgstr "Nombre de pages de contenu à inclure par question de quiz."
+
+msgid "Number of refinement iterations performed after the initial sectioning pass."
+msgstr "Nombre d'itérations de raffinement effectuées après la passe initiale de sectionnement."
 
 msgid "OAuth 2.0"
 msgstr "OAuth 2.0"
@@ -2948,8 +2966,8 @@ msgstr "Retirer section"
 msgid "Remove this block"
 msgstr "Retirer ce bloc"
 
-#~ msgid "Remove type"
-#~ msgstr "Retirer le type"
+msgid "Remove type"
+msgstr "Retirer le type"
 
 msgid "Render Reasoning"
 msgstr "Raisonnement de rendu"
@@ -3117,8 +3135,8 @@ msgstr "Enregistrer et relancer le glossaire"
 msgid "Save & Rerun Quizzes"
 msgstr "Enregistrer et relancer les quiz"
 
-#~ msgid "Save & Rerun Sectioning"
-#~ msgstr "Enregistrer et relancer le sectionnement"
+msgid "Save & Rerun Sectioning"
+msgstr "Enregistrer et relancer le sectionnement"
 
 msgid "Save & Rerun Speech"
 msgstr "Enregistrer et relancer la synthèse vocale"
@@ -3638,8 +3656,8 @@ msgstr "Groupes de texte"
 msgid "Text Only"
 msgstr "Texte uniquement"
 
-#~ msgid "Text Types"
-#~ msgstr "Types de texte"
+msgid "Text Types"
+msgstr "Types de texte"
 
 msgid "Textbooks & Activities"
 msgstr "Manuels et activités"
@@ -3773,6 +3791,9 @@ msgstr "Cela enregistrera vos paramètres et relancera la génération des lége
 msgid "This will save your settings and re-run quiz generation."
 msgstr "Cela enregistrera vos paramètres et relancera la génération des quiz."
 
+msgid "This will save your settings and re-run sectioning and storyboard rendering for all pages."
+msgstr "Ceci enregistrera vos paramètres et relancera le sectionnement et le rendu du storyboard pour toutes les pages."
+
 msgid "This will save your settings and re-run speech generation."
 msgstr "Cela enregistrera vos paramètres et relancera la génération de la synthèse vocale."
 
@@ -3785,8 +3806,11 @@ msgstr "Cela enregistrera vos paramètres et relancera le pipeline d'extraction.
 msgid "This will save your settings and re-run the storyboard pipeline. Only rendering will be regenerated — your existing sections will be preserved."
 msgstr "Cela enregistrera vos paramètres et relancera le pipeline du scénarimage. Seul le rendu sera régénéré — vos sections existantes seront conservées."
 
-msgid "This will save your settings and re-run the storyboard pipeline. Sectioning and rendering will be regenerated for all pages."
-msgstr "Cela enregistrera vos paramètres et relancera le pipeline du scénarimage. Le découpage et le rendu seront régénérés pour toutes les pages."
+#~ msgid "This will save your settings and re-run the storyboard pipeline. Sectioning and rendering will be regenerated for all pages."
+#~ msgstr "Cela enregistrera vos paramètres et relancera le pipeline du scénarimage. Le découpage et le rendu seront régénérés pour toutes les pages."
+
+msgid "This will save your settings and re-run the storyboard pipeline. Sectioning and rendering will be run for all pages."
+msgstr "Ceci enregistrera vos paramètres et relancera le pipeline du storyboard. Le sectionnement et le rendu seront exécutés pour toutes les pages."
 
 msgid "This will save your settings and re-run translations, rebuilding the text catalog and translating to output languages."
 msgstr "Cela enregistrera vos paramètres et relancera les traductions, en reconstruisant le catalogue de texte et en traduisant vers les langues de sortie."

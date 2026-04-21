@@ -30,7 +30,6 @@ import { ALL_STEP_NAMES, PAGE_PROGRESS_STEPS } from "@adt/types"
 
 const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   general: msg`General`,
-  "section-types": msg`Section Types`,
   "structure-types": msg`Structure Types`,
   "metadata-prompt": msg`Metadata Prompt`,
   prompt: msg`Extraction Prompt`,
@@ -78,7 +77,6 @@ function getSettingsTabs(
     sectioning: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.general) },
       { key: "section-refinement", label: i18n._(SETTINGS_TAB_MESSAGE["section-refinement"]) },
-      { key: "section-types", label: i18n._(SETTINGS_TAB_MESSAGE["section-types"]) },
       { key: "structure-types", label: i18n._(SETTINGS_TAB_MESSAGE["structure-types"]) },
     ],
     storyboard: [

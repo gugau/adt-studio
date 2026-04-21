@@ -7,8 +7,7 @@
   Lines:
     - image leaf            → `image id=...`
     - other leaves          → `<role> id=... "<text>"`
-    - group / activity      → `<structure> id=...`  (only kinds that carry data-id on wrapper)
-    - other containers      → `<structure>`         (no id — LLM must not emit data-id for these)
+    - containers            → `<structure>`           (no id — only leaves carry data-id in the rendered HTML)
 
   NOTE: we read the include parameter `depth` directly rather than copying
   it into a `_depth` variable. In LiquidJS `assign` writes to the shared
@@ -22,8 +21,6 @@
 image id={{ node.node_id }}
 {%- elsif node.role -%}
 {{ node.role }} id={{ node.node_id }} "{{ node.text }}"
-{%- elsif node.structure == "group" or node.structure == "activity" -%}
-{{ node.structure }} id={{ node.node_id }}
 {%- else -%}
 {{ node.structure }}
 {%- endif %}
