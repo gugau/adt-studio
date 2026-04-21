@@ -33,85 +33,77 @@ Use this exact outer shell:
 5. Every image ID used in HTML must be from the provided image list.
 6. Text for each text ID must match the provided text exactly (no paraphrasing, no punctuation/case changes).
 7. Do not output visible raw text outside an element that has a valid provided `data-id`. The only exception is single-digit numbers used as option markers.
-8. Use sequential numbers (1, 2, 3, …) as option markers inside the `.option-letter` element. Do not use letters (A, B, C) as they are not language-neutral.
-9. No markdown, no code fences in `content`, and no additional top-level fields.
+8. No markdown, no code fences in `content`, and no additional top-level fields.
 
-## Multiple Choice Structure
-- Render option rows with radio inputs (`type="radio"`), one shared `name` per question group.
-- Each radio input must include:
-  - `class="sr-only"`
-  - `tabindex="0"`
-  - unique `data-activity-item` value within the section (for answer checking)
-  - descriptive `aria-label`
-- Keep feedback containers present and hidden by default.
-- Image-based choices are valid and encouraged when provided images are the actual options.
-- For image choices, place the option image inside the clickable `<label>` and set `data-id` on `<img>` using a provided image ID.
-- If there are not enough text IDs for per-option visible labels, keep options image-only and use `aria-label` for accessibility.
-- IMPORTANT: Preserve relative image sizes for image-based choices. When pixel dimensions are provided, compute each option image's width as a **percentage of the widest option image** and set `style="width:X%"`. For example, if images are 400px and 200px wide, use `style="width:100%"` and `style="width:50%"`. Also add `class="h-auto rounded"`. Do NOT use `w-full` or fixed pixel widths. This ensures both images scale proportionally when the container shrinks.
+## Step 1: Determine Question Structure (CRITICAL — do this BEFORE writing any HTML)
 
-## Example Pattern (ID placeholders only - replace with provided IDs)
+Analyze the page image, the provided images, and the instruction text to determine how many **independent questions** this activity contains and how many **options per question**.
+
+### Counting rules
+1. Look at the **page image layout** — how are images and content visually grouped? Rows, columns, grids, pairs?
+2. Count the provided images. If there are N images and the activity involves **comparing or choosing between image pairs** (e.g., big vs small, correct vs incorrect, before vs after), then you have **N/2 questions with 2 options each**, not 1 question with N options.
+3. If images are arranged in **rows of 2** on the page (side by side), each row is almost certainly one question with 2 image options.
+4. If images are arranged in a **grid of 4+** and the student picks ONE, that is 1 question with multiple options.
+5. The instruction text describes the **task** (e.g., "circle the big picture"), NOT the question count. Do not let it mislead you — always verify against the visual layout.
+
+### Radio group assignment
+- Each independent question gets its own unique radio `name` (e.g., `question-1`, `question-2`, …).
+- Option numbering (inside `.option-letter`) restarts at 1 for each question group.
+- If the page has only one question, use a single `name` for all options.
+
+### State your analysis in `reasoning`
+Your `reasoning` field MUST include: how many questions you identified, how many options per question, and why (e.g., "8 images in 4 rows of 2 → 4 binary-choice questions, each comparing big vs small").
+
+## Step 2: Build the HTML
+
+### Multiple Choice — Required Interactive Elements
+
+Each answer option MUST use this exact interactive structure. You have full creative freedom on layout and styling for everything else (non-interactive content, images, question text, etc.), but every selectable option MUST contain these elements exactly:
+
 ```html
-<section class="section mb-8" data-section-type="SECTION_TYPE_FROM_INPUT" data-section-id="SECTION_ID_FROM_INPUT">
-  <div class="questions grow space-y-4" role="group">
-    <div class="mb-4 bg-green-100 rounded-lg p-4">
-      <p data-id="TEXT_ID_FROM_INPUT">EXACT_TEXT_FROM_INPUT</p>
-    </div>
-
-    <div class="option-container">
-      <label class="activity-option flex items-start gap-4 p-4 rounded-lg hover:bg-gray-50 cursor-pointer">
-        <div class="flex-shrink-0">
-          <div class="w-8 h-8 aspect-square rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-500 option-letter">
-            1
-          </div>
-        </div>
-        <div class="flex-grow">
-          <input type="radio" name="question-group-1" value="item-1" data-activity-item="item-1" class="sr-only" tabindex="0" aria-label="Option" />
-          <div class="text-gray-700" data-id="TEXT_ID_FROM_INPUT">EXACT_TEXT_FROM_INPUT</div>
-          <div class="feedback-container mt-2 hidden">
-            <div class="flex items-center gap-2">
-              <span class="feedback-icon w-5 h-5 rounded-full flex items-center justify-center text-sm"></span>
-              <span class="feedback-text text-sm font-medium"></span>
-            </div>
-          </div>
-        </div>
-      </label>
+<label class="activity-option ...YOUR_STYLING_CLASSES...">
+  <div class="...">
+    <div class="w-10 h-10 rounded-full border-2 border-gray-300 bg-white flex items-center justify-center text-gray-500 text-sm font-medium option-letter">NUMBER</div>
+  </div>
+  <div class="flex-grow min-w-0">
+    <input type="radio" name="QUESTION_GROUP" value="ITEM_ID" data-activity-item="ITEM_ID" class="sr-only" tabindex="0" aria-label="DESCRIPTION" />
+    <!-- Option content: text element with data-id, and/or image with data-id -->
+    <div class="feedback-container mt-2 hidden">
+      <div class="flex items-center gap-2">
+        <span class="feedback-icon w-5 h-5 rounded-full flex items-center justify-center text-sm"></span>
+        <span class="feedback-text text-sm font-medium"></span>
+      </div>
     </div>
   </div>
-</section>
+</label>
 ```
 
-## Example Pattern: Image-Based Choices (allowed)
-```html
-<section class="section mb-8" data-section-type="SECTION_TYPE_FROM_INPUT" data-section-id="SECTION_ID_FROM_INPUT">
-  <div class="questions grow space-y-4" role="group">
-    <p data-id="TEXT_ID_FROM_INPUT">EXACT_TEXT_FROM_INPUT</p>
+### Required attributes (do NOT change):
+- `class="activity-option"` on the `<label>` (you may add additional classes)
+- `class="option-letter"` on the number circle div (you may add additional classes)
+- `class="sr-only"` on the radio `<input>`
+- `data-activity-item="ITEM_ID"` on the radio `<input>` — unique per option
+- `class="feedback-container mt-2 hidden"` on the feedback wrapper
+- `class="feedback-icon ..."` and `class="feedback-text ..."` on the feedback children
+- Sequential numbers (1, 2, 3, …) inside `.option-letter` — not letters (A, B, C)
+- One shared `name` attribute per question group on all radio inputs
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <label class="activity-option flex items-start gap-4 p-4 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
-        <div class="flex-shrink-0">
-          <div class="w-8 h-8 aspect-square rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-500 option-letter">
-            1
-          </div>
-        </div>
-        <div class="flex-grow">
-          <input type="radio" name="question-group-1" value="item-1" data-activity-item="item-1" class="sr-only" tabindex="0" aria-label="Option 1" />
-          <img data-id="IMAGE_ID_FROM_INPUT" src="images/IMAGE_FILE.png" alt="Option image" style="width:100%" class="h-auto rounded" />
-          <div class="feedback-container mt-2 hidden">
-            <div class="flex items-center gap-2">
-              <span class="feedback-icon w-5 h-5 rounded-full flex items-center justify-center text-sm"></span>
-              <span class="feedback-text text-sm font-medium"></span>
-            </div>
-          </div>
-        </div>
-      </label>
-    </div>
-  </div>
-</section>
-```
+### You decide:
+- Overall page layout (single column, two column grid, etc.)
+- How to present question/instruction text and passage content
+- How to arrange images (inline, grid, etc.)
+- Styling, spacing, and typography for non-interactive elements
+- Whether option content is text, images, or both
+
+### Image card options
+When each option is primarily an image (image-based choices), present each option as a visual card — the image is the main content inside the `<label>`. For **binary image comparison** activities (2 options per question), display each question's options side by side (e.g., `grid grid-cols-2 gap-4`) so both images are visible simultaneously for comparison. Each card/label gets its own `<img>` with `data-id` — do NOT put multiple images inside the same option.
+
+### Image sizing rule
+For image-based choices, compute each option image's width as a **percentage of the widest option image** within that question group and set `style="width:X%"`. Do NOT use fixed pixel widths.
 {% endchat %}
 
 {% chat role: "user" %}
-This is the base64 image of the entire page from the textbook for context only.
+This is the base64 image of the entire page from the textbook for context.
 {% image page_image_base64 %}
 
 Section ID: {{ section_id }}
