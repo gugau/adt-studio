@@ -581,15 +581,44 @@ export function createPageRoutes(
     }
   })
 
-  // PUT /books/:label/pages/:pageId/sectioning — Update page sectioning tree + sections
+  // PUT /books/:label/pages/:pageId/sectioning — Update sectioning with canonical tree data
   app.put("/books/:label/pages/:pageId/sectioning", async (c) => {
     const { label, pageId } = c.req.param()
     const safeLabel = parseBookLabel(label)
 
     const body = await c.req.json()
-    // Parts → tree shim: the storyboard editor still posts the flat parts
-    // shape. Parse against the UI schema, then convert to the canonical
-    // tree before writing.
+    const parsed = PageSectioningOutput.safeParse(body)
+    if (!parsed.success) {
+      throw new HTTPException(400, {
+        message: `Invalid page-sectioning data: ${parsed.error.message}`,
+      })
+    }
+
+    const storage = createBookStorage(safeLabel, booksDir)
+    try {
+      const pages = storage.getPages()
+      const page = pages.find((p) => p.pageId === pageId)
+      if (!page) {
+        throw new HTTPException(404, { message: `Page not found: ${pageId}` })
+      }
+
+      const version = storage.putNodeData("page-sectioning", pageId, parsed.data)
+      // Sectioning change cascades to everything downstream
+      clearCaptionData(storage)
+      return c.json({ version })
+    } finally {
+      storage.close()
+    }
+  })
+
+  // PUT /books/:label/pages/:pageId/sectioning-legacy — Legacy endpoint that
+  // accepts the flat-parts shape; converted to tree via partsToTreeOutput
+  // before writing. Kept for callers that have not yet migrated.
+  app.put("/books/:label/pages/:pageId/sectioning-legacy", async (c) => {
+    const { label, pageId } = c.req.param()
+    const safeLabel = parseBookLabel(label)
+
+    const body = await c.req.json()
     const parsed = UIPageSectioningOutput.safeParse(body)
     if (!parsed.success) {
       throw new HTTPException(400, {
@@ -607,7 +636,6 @@ export function createPageRoutes(
       }
 
       const version = storage.putNodeData("page-sectioning", pageId, treeData)
-      // Sectioning change cascades to everything downstream
       clearCaptionData(storage)
       return c.json({ version })
     } finally {

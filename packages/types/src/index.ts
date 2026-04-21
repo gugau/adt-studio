@@ -76,6 +76,25 @@ export {
 } from "./page-sectioning.js"
 
 export {
+  findNode,
+  findNodePath,
+  editLeafText,
+  setLeafRole,
+  setContainerStructure,
+  toggleNodePruned,
+  deleteNode,
+  duplicateNode,
+  moveNode,
+  addLeaf,
+  addContainer,
+  nestNode,
+  unnestNode,
+  cloneNodeWithNewIds,
+  type IdFactory,
+  type NodeLocation,
+} from "./section-tree-ops.js"
+
+export {
   ImageFilters,
   ImageClassificationResult,
   ImageClassificationOutput,

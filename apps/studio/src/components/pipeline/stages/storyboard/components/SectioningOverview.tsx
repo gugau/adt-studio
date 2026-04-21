@@ -118,7 +118,7 @@ export function SectioningOverview({ bookLabel, pages, onNavigateToSection }: Se
           i === sectionIndex ? { ...s, isPruned: !s.isPruned } : s
         ),
       }
-      return api.updateSectioning(bookLabel, pageId, updated)
+      return api.updateSectioningLegacy(bookLabel, pageId, updated)
     },
     onSuccess: (_data, vars) => invalidatePages(vars.pageId),
   })
@@ -728,7 +728,7 @@ function SectionDetail({
           }
         }),
       }
-      await api.updateSectioning(bookLabel, pageId, updated)
+      await api.updateSectioningLegacy(bookLabel, pageId, updated)
     }
     setCropTarget(null)
     setRecropPageSrc(null)
@@ -773,7 +773,7 @@ function SectionDetail({
           }
         }),
       }
-      await api.updateSectioning(bookLabel, pageId, updated)
+      await api.updateSectioningLegacy(bookLabel, pageId, updated)
     }
     onInvalidatePages(pageId)
   }, [bookLabel, pageId, sectionIndex, queryClient, onInvalidatePages])
@@ -810,7 +810,7 @@ function SectionDetail({
           return { ...s, parts: s.parts.filter((p: SectionPart) => !(p.type === "image" && p.imageId === dataId)) }
         }),
       }
-      await api.updateSectioning(bookLabel, pageId, updated)
+      await api.updateSectioningLegacy(bookLabel, pageId, updated)
     }
     onInvalidatePages(pageId)
   }, [bookLabel, pageId, sectionIndex, queryClient, onInvalidatePages])
@@ -831,7 +831,7 @@ function SectionDetail({
           }
         }),
       }
-      await api.updateSectioning(bookLabel, pageId, updated)
+      await api.updateSectioningLegacy(bookLabel, pageId, updated)
     }
     onInvalidatePages(pageId)
   }, [bookLabel, pageId, sectionIndex, queryClient, onInvalidatePages])

@@ -676,7 +676,7 @@ export function StoryboardSectionDetail({
         }
       }
 
-      await api.updateSectioning(bookLabel, pageId, pendingSectioning)
+      await api.updateSectioningLegacy(bookLabel, pageId, pendingSectioning)
 
       // Save rendering if dirty (from delete/prune removing HTML elements).
       // Use renderingFromPrune if we just stripped pruned elements above,
@@ -730,7 +730,7 @@ export function StoryboardSectionDetail({
           sectionIndex,
           editedHtml
         )
-        await api.updateSectioning(bookLabel, pageId, updatedSectioning)
+        await api.updateSectioningLegacy(bookLabel, pageId, updatedSectioning)
       }
 
       setPendingRendering(null)

@@ -565,8 +565,18 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  // Writes canonical tree-shaped sectioning data (PageSectioningOutput).
   updateSectioning: (label: string, pageId: string, data: unknown) =>
     request<{ version: number }>(`/books/${label}/pages/${pageId}/sectioning`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  // Writes flat parts shape (UIPageSectioningOutput) via the legacy endpoint,
+  // which converts to tree before persisting. Still used by callers that
+  // have not yet migrated to tree-native editing.
+  updateSectioningLegacy: (label: string, pageId: string, data: unknown) =>
+    request<{ version: number }>(`/books/${label}/pages/${pageId}/sectioning-legacy`, {
       method: "PUT",
       body: JSON.stringify(data),
     }),

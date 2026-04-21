@@ -1,72 +1,13 @@
-import { useEffect, type ReactNode } from "react"
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
 import { Trans, useLingui } from "@lingui/react/macro"
-import { BASE_URL, type ContentNode, type PageDetail } from "@/api/client"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import type { PageSectioningOutput, PageSectioningSection } from "@adt/types"
+import { api, type PageDetail } from "@/api/client"
 import { usePageImage } from "@/hooks/use-pages"
+import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
+import { cn } from "@/lib/utils"
+import { SectionTreeEditor } from "@/components/section-tree-editor/SectionTreeEditor"
 import { useStepHeader } from "../../components/StepViewRouter"
-
-function NodeBlock({
-  node,
-  bookLabel,
-  inheritedPruned,
-}: {
-  node: ContentNode
-  bookLabel: string
-  inheritedPruned: boolean
-}) {
-  const pruned = node.isPruned || inheritedPruned
-  const mutedText = pruned ? "line-through text-muted-foreground/60" : "text-foreground"
-
-  if (node.role === "image") {
-    return (
-      <div className="py-1">
-        <div className="flex items-center gap-2">
-          <span className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">image</span>
-          <span className={`text-xs font-mono ${pruned ? "line-through text-muted-foreground/60" : "text-muted-foreground"}`}>
-            {node.nodeId}
-          </span>
-        </div>
-        <img
-          src={`${BASE_URL}/books/${bookLabel}/images/${node.nodeId}`}
-          alt={node.nodeId}
-          className={`mt-1 h-20 w-auto object-contain rounded border bg-white ${pruned ? "opacity-40" : ""}`}
-          onError={(e) => {
-            ;(e.target as HTMLImageElement).style.display = "none"
-          }}
-        />
-      </div>
-    )
-  }
-
-  if (node.role) {
-    return (
-      <div className={`py-0.5 text-sm font-mono ${mutedText}`}>
-        <span className="text-xs uppercase tracking-wide text-muted-foreground mr-2">{node.role}</span>
-        <span className="whitespace-pre-wrap">{node.text ?? ""}</span>
-      </div>
-    )
-  }
-
-  const children = node.children ?? []
-  return (
-    <div className="py-1">
-      <div className={`text-xs font-semibold uppercase tracking-wide ${pruned ? "text-muted-foreground/60 line-through" : "text-sky-700"}`}>
-        {node.structure ?? "container"}
-        <span className="ml-2 text-[10px] font-mono text-muted-foreground/70 normal-case">
-          {node.nodeId}
-        </span>
-      </div>
-      <div className="pl-3 border-l border-sky-200 ml-1 mt-1">
-        {children.length === 0 ? (
-          <div className="text-xs text-muted-foreground italic py-0.5"><Trans>Empty container</Trans></div>
-        ) : (
-          children.map((c) => (
-            <NodeBlock key={c.nodeId} node={c} bookLabel={bookLabel} inheritedPruned={pruned} />
-          ))
-        )}
-      </div>
-    </div>
-  )
-}
 
 export function SectioningPageDetail({
   bookLabel,
@@ -82,14 +23,128 @@ export function SectioningPageDetail({
   navigationArrows: ReactNode
 }) {
   const { t } = useLingui()
+  const queryClient = useQueryClient()
   const { setExtra, setOnLabelClick } = useStepHeader()
   const { data: imageData } = usePageImage(bookLabel, pageId)
+
+  const configQuery = useQuery({
+    queryKey: ["books", bookLabel, "config", "active"],
+    queryFn: () => api.getActiveConfig(bookLabel),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const textTypes = configQuery.data?.merged?.text_types as
+    | Record<string, string>
+    | undefined
+  const groupTypes = configQuery.data?.merged?.text_group_types as
+    | Record<string, string>
+    | undefined
+
+  // Keyed by sectionId — a section only appears here once the user has edited
+  // it, and the saved version replaces the original on `onChange`.
+  const [pendingBySectionId, setPendingBySectionId] = useState<
+    Record<string, PageSectioningSection>
+  >({})
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+
+  // Reset pending edits when navigating to a different page.
+  useEffect(() => {
+    setPendingBySectionId({})
+    setSaveError(null)
+  }, [pageId])
+
+  const sectionsFromServer = page.sectioningTree?.sections ?? []
+  const mergedSections: PageSectioningSection[] = useMemo(
+    () =>
+      sectionsFromServer.map(
+        (s) => pendingBySectionId[s.sectionId] ?? (s as PageSectioningSection)
+      ),
+    [sectionsFromServer, pendingBySectionId]
+  )
+  const dirty = Object.keys(pendingBySectionId).length > 0
+
+  const handleSectionChange = useCallback((next: PageSectioningSection) => {
+    setPendingBySectionId((prev) => ({ ...prev, [next.sectionId]: next }))
+  }, [])
+
+  const handleDiscard = useCallback(() => {
+    setPendingBySectionId({})
+    setSaveError(null)
+  }, [])
+
+  const handleSave = useCallback(async () => {
+    if (!dirty || saving) return
+    setSaving(true)
+    setSaveError(null)
+    try {
+      const payload: PageSectioningOutput = {
+        reasoning: page.sectioningTree?.reasoning ?? "",
+        sections: mergedSections,
+      }
+      await api.updateSectioning(bookLabel, pageId, payload)
+      setPendingBySectionId({})
+      await queryClient.invalidateQueries({
+        queryKey: ["books", bookLabel, "pages", pageId],
+      })
+      await queryClient.invalidateQueries({
+        queryKey: ["books", bookLabel, "pages"],
+      })
+      invalidateStoryboardDependents(queryClient, bookLabel)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : t`Save failed`)
+    } finally {
+      setSaving(false)
+    }
+  }, [
+    dirty,
+    saving,
+    page.sectioningTree?.reasoning,
+    mergedSections,
+    bookLabel,
+    pageId,
+    queryClient,
+    t,
+  ])
 
   useEffect(() => {
     setOnLabelClick(null)
     setExtra(
       <div className="flex-1 flex items-center gap-3">
         {navigationExtra}
+        {dirty ? (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleDiscard}
+              disabled={saving}
+              className={cn(
+                "text-xs px-2.5 py-1 rounded border transition-colors",
+                saving
+                  ? "border-muted-foreground/20 text-muted-foreground/50"
+                  : "border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/60 hover:text-foreground cursor-pointer"
+              )}
+            >
+              <Trans>Discard</Trans>
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className={cn(
+                "text-xs px-2.5 py-1 rounded transition-colors",
+                saving
+                  ? "bg-primary/60 text-primary-foreground/70 cursor-default"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+              )}
+            >
+              {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
+            </button>
+          </div>
+        ) : null}
+        {saveError ? (
+          <span className="text-xs text-destructive">{saveError}</span>
+        ) : null}
         <div className="ml-auto flex gap-1">{navigationArrows}</div>
       </div>
     )
@@ -97,9 +152,17 @@ export function SectioningPageDetail({
       setExtra(null)
       setOnLabelClick(null)
     }
-  }, [navigationExtra, navigationArrows, setExtra, setOnLabelClick])
-
-  const sections = page.sectioningTree?.sections ?? []
+  }, [
+    navigationExtra,
+    navigationArrows,
+    dirty,
+    saving,
+    saveError,
+    setExtra,
+    setOnLabelClick,
+    handleDiscard,
+    handleSave,
+  ])
 
   return (
     <div className="flex h-full min-h-0">
@@ -111,36 +174,47 @@ export function SectioningPageDetail({
             className="w-full h-auto rounded border bg-white shadow-sm"
           />
         ) : (
-          <div className="text-sm text-muted-foreground"><Trans>Loading image...</Trans></div>
+          <div className="text-sm text-muted-foreground">
+            <Trans>Loading image...</Trans>
+          </div>
         )}
       </div>
       <div className="w-1/2 min-w-0 overflow-auto p-4 space-y-4">
-        {sections.length === 0 ? (
-          <div className="text-sm text-muted-foreground italic"><Trans>No sections on this page</Trans></div>
+        {mergedSections.length === 0 ? (
+          <div className="text-sm text-muted-foreground italic">
+            <Trans>No sections on this page</Trans>
+          </div>
         ) : (
-          sections.map((section, idx) => (
+          mergedSections.map((section, idx) => (
             <div key={section.sectionId}>
               <div className="flex items-baseline gap-3 mb-2">
-                <div className="text-xs font-medium text-muted-foreground">{`#${idx + 1}`}</div>
+                <div className="text-xs font-medium text-muted-foreground">
+                  {`#${idx + 1}`}
+                </div>
                 <div className="text-sm font-semibold">{section.sectionId}</div>
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">{section.sectionType}</div>
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {section.sectionType}
+                </div>
                 {section.isPruned ? (
-                  <span className="text-xs text-amber-600"><Trans>pruned</Trans></span>
+                  <span className="text-xs text-amber-600">
+                    <Trans>pruned</Trans>
+                  </span>
+                ) : null}
+                {pendingBySectionId[section.sectionId] ? (
+                  <span className="text-xs text-amber-600">
+                    <Trans>edited</Trans>
+                  </span>
                 ) : null}
               </div>
               <div className="border rounded bg-muted/20 p-3">
-                {section.nodes.length === 0 ? (
-                  <div className="text-sm text-muted-foreground italic"><Trans>Empty section</Trans></div>
-                ) : (
-                  section.nodes.map((node) => (
-                    <NodeBlock
-                      key={node.nodeId}
-                      node={node}
-                      bookLabel={bookLabel}
-                      inheritedPruned={section.isPruned}
-                    />
-                  ))
-                )}
+                <SectionTreeEditor
+                  section={section}
+                  onChange={handleSectionChange}
+                  bookLabel={bookLabel}
+                  textRoles={textTypes}
+                  containerStructures={groupTypes}
+                  disabled={saving}
+                />
               </div>
             </div>
           ))

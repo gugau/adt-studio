@@ -39,6 +39,9 @@ msgstr "(active)"
 msgid "(base)"
 msgstr "(base)"
 
+msgid "(empty)"
+msgstr "(empty)"
+
 msgid "(no instruction text)"
 msgstr "(no instruction text)"
 
@@ -446,6 +449,9 @@ msgstr "Add checklist item to this section"
 msgid "Add class"
 msgstr "Add class"
 
+msgid "Add container"
+msgstr "Add container"
+
 msgid "Add entry below"
 msgstr "Add entry below"
 
@@ -469,6 +475,9 @@ msgstr "Add reviewer guidance."
 
 msgid "Add section"
 msgstr "Add section"
+
+msgid "Add text"
+msgstr "Add text"
 
 msgid "Add Translations"
 msgstr "Add Translations"
@@ -967,6 +976,9 @@ msgstr "Close edit panel"
 msgid "Clownfish, sea turtles, and parrotfish are just a few of the thousands of species that depend on reefs for food, shelter, and nursery grounds."
 msgstr "Clownfish, sea turtles, and parrotfish are just a few of the thousands of species that depend on reefs for food, shelter, and nursery grounds."
 
+msgid "Collapse"
+msgstr "Collapse"
+
 msgid "Collapse accessibility summary"
 msgstr "Collapse accessibility summary"
 
@@ -1305,6 +1317,9 @@ msgstr "Discard"
 msgid "Display"
 msgstr "Display"
 
+msgid "Drag to move"
+msgstr "Drag to move"
+
 msgid "Drag to move boxes, drag edges/corners to resize"
 msgstr "Drag to move boxes, drag edges/corners to resize"
 
@@ -1389,6 +1404,9 @@ msgstr "Edit this image"
 msgid "Edit this section"
 msgstr "Edit this section"
 
+msgid "edited"
+msgstr "edited"
+
 msgid "Edited in"
 msgstr "Edited in"
 
@@ -1409,6 +1427,9 @@ msgstr "Empty group — drag text entries here"
 
 msgid "Empty section"
 msgstr "Empty section"
+
+msgid "Empty section — add a container below to start"
+msgstr "Empty section — add a container below to start"
 
 msgid "en"
 msgstr "en"
@@ -1480,6 +1501,9 @@ msgstr "Exclude from render"
 
 msgid "Existing reviewer sessions keep their own checklist snapshot. New checklist changes apply to newly created sessions."
 msgstr "Existing reviewer sessions keep their own checklist snapshot. New checklist changes apply to newly created sessions."
+
+msgid "Expand"
+msgstr "Expand"
 
 msgid "Expand all sections"
 msgstr "Expand all sections"
@@ -1809,6 +1833,9 @@ msgstr "Illustrated children's books"
 
 msgid "Illustration"
 msgstr "Illustration"
+
+msgid "image"
+msgstr "image"
 
 #~ msgid "Image Associated Text"
 #~ msgstr "Image Associated Text"
@@ -2294,6 +2321,9 @@ msgstr "Moderate"
 
 msgid "Modified {modifiedLabel}"
 msgstr "Modified {modifiedLabel}"
+
+msgid "Move out of parent"
+msgstr "Move out of parent"
 
 msgid "Multi-format publications"
 msgstr "Multi-format publications"
@@ -3220,6 +3250,9 @@ msgstr "Saved. Re-package Preview to apply."
 
 msgid "Saving..."
 msgstr "Saving..."
+
+msgid "Saving…"
+msgstr "Saving…"
 
 msgid "School textbooks and workbooks"
 msgstr "School textbooks and workbooks"
@@ -4178,6 +4211,9 @@ msgstr "Within range"
 
 msgid "words"
 msgstr "words"
+
+msgid "Wrap in new container"
+msgstr "Wrap in new container"
 
 msgid "Wraps 'Edit this image' requests. The AI receives the original image alongside this prompt. Supports user_prompt and style variables."
 msgstr "Wraps 'Edit this image' requests. The AI receives the original image alongside this prompt. Supports user_prompt and style variables."

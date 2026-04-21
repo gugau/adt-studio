@@ -1,0 +1,335 @@
+import type { ContentNodeData } from "./page-sectioning.js"
+
+// Immutable operations on ContentNodeData[] trees used by the section editor.
+// Every op returns a new tree; unrelated branches are shared by reference.
+
+export type IdFactory = () => string
+
+export interface NodeLocation {
+  parent: ContentNodeData | null
+  parentChildren: ContentNodeData[]
+  index: number
+}
+
+export function findNodePath(
+  nodes: ContentNodeData[],
+  nodeId: string
+): ContentNodeData[] | null {
+  for (const node of nodes) {
+    if (node.nodeId === nodeId) return [node]
+    const children = node.children
+    if (children) {
+      const rest = findNodePath(children, nodeId)
+      if (rest) return [node, ...rest]
+    }
+  }
+  return null
+}
+
+export function findNode(
+  nodes: ContentNodeData[],
+  nodeId: string
+): ContentNodeData | null {
+  const path = findNodePath(nodes, nodeId)
+  return path ? path[path.length - 1] : null
+}
+
+function locate(
+  nodes: ContentNodeData[],
+  nodeId: string,
+  parent: ContentNodeData | null = null
+): NodeLocation | null {
+  for (let i = 0; i < nodes.length; i++) {
+    if (nodes[i].nodeId === nodeId) {
+      return { parent, parentChildren: nodes, index: i }
+    }
+    const children = nodes[i].children
+    if (children) {
+      const hit = locate(children, nodeId, nodes[i])
+      if (hit) return hit
+    }
+  }
+  return null
+}
+
+// Apply a transform to a node matched by id, walking the tree immutably.
+// Unmodified branches keep reference identity so React can short-circuit.
+function mapNode(
+  nodes: ContentNodeData[],
+  nodeId: string,
+  transform: (node: ContentNodeData) => ContentNodeData
+): ContentNodeData[] {
+  let changed = false
+  const next = nodes.map((node) => {
+    if (node.nodeId === nodeId) {
+      const transformed = transform(node)
+      if (transformed !== node) changed = true
+      return transformed
+    }
+    if (node.children) {
+      const nextChildren = mapNode(node.children, nodeId, transform)
+      if (nextChildren !== node.children) {
+        changed = true
+        return { ...node, children: nextChildren }
+      }
+    }
+    return node
+  })
+  return changed ? next : nodes
+}
+
+// Remove a node from wherever it lives; returns the new tree and the removed node.
+function removeNodeById(
+  nodes: ContentNodeData[],
+  nodeId: string
+): { tree: ContentNodeData[]; removed: ContentNodeData | null } {
+  let removed: ContentNodeData | null = null
+  const walk = (list: ContentNodeData[]): ContentNodeData[] => {
+    const filtered: ContentNodeData[] = []
+    for (const node of list) {
+      if (node.nodeId === nodeId) {
+        removed = node
+        continue
+      }
+      if (node.children) {
+        const nextChildren = walk(node.children)
+        if (nextChildren !== node.children) {
+          filtered.push({ ...node, children: nextChildren })
+          continue
+        }
+      }
+      filtered.push(node)
+    }
+    return removed ? filtered : list
+  }
+  const tree = walk(nodes)
+  return { tree, removed }
+}
+
+// Insert a node into a container's children at `index` (or at top-level when
+// parentNodeId is null).
+function insertNode(
+  nodes: ContentNodeData[],
+  parentNodeId: string | null,
+  index: number,
+  insert: ContentNodeData
+): ContentNodeData[] {
+  if (parentNodeId == null) {
+    const clamped = Math.max(0, Math.min(index, nodes.length))
+    const next = [...nodes]
+    next.splice(clamped, 0, insert)
+    return next
+  }
+  return mapNode(nodes, parentNodeId, (node) => {
+    const children = node.children ?? []
+    const clamped = Math.max(0, Math.min(index, children.length))
+    const next = [...children]
+    next.splice(clamped, 0, insert)
+    return { ...node, children: next }
+  })
+}
+
+// ── Operations ──────────────────────────────────────────────────
+
+export function editLeafText(
+  nodes: ContentNodeData[],
+  nodeId: string,
+  text: string
+): ContentNodeData[] {
+  return mapNode(nodes, nodeId, (node) => {
+    if (!node.role || node.role === "image") return node
+    return { ...node, text }
+  })
+}
+
+export function setLeafRole(
+  nodes: ContentNodeData[],
+  nodeId: string,
+  role: string
+): ContentNodeData[] {
+  return mapNode(nodes, nodeId, (node) => {
+    if (!node.role || node.role === "image") return node
+    return { ...node, role }
+  })
+}
+
+export function setContainerStructure(
+  nodes: ContentNodeData[],
+  nodeId: string,
+  structure: string
+): ContentNodeData[] {
+  return mapNode(nodes, nodeId, (node) => {
+    if (node.role) return node
+    return { ...node, structure }
+  })
+}
+
+export function toggleNodePruned(
+  nodes: ContentNodeData[],
+  nodeId: string
+): ContentNodeData[] {
+  return mapNode(nodes, nodeId, (node) => ({
+    ...node,
+    isPruned: !node.isPruned,
+  }))
+}
+
+export function deleteNode(
+  nodes: ContentNodeData[],
+  nodeId: string
+): ContentNodeData[] {
+  return removeNodeById(nodes, nodeId).tree
+}
+
+export function duplicateNode(
+  nodes: ContentNodeData[],
+  nodeId: string,
+  idFactory: IdFactory
+): ContentNodeData[] {
+  const loc = locate(nodes, nodeId)
+  if (!loc) return nodes
+  const original = loc.parentChildren[loc.index]
+  const clone = cloneNodeWithNewIds(original, idFactory)
+  return insertNode(
+    nodes,
+    loc.parent?.nodeId ?? null,
+    loc.index + 1,
+    clone
+  )
+}
+
+export function moveNode(
+  nodes: ContentNodeData[],
+  nodeId: string,
+  target: { parentNodeId: string | null; index: number }
+): ContentNodeData[] {
+  const loc = locate(nodes, nodeId)
+  if (!loc) return nodes
+
+  const samePar = (loc.parent?.nodeId ?? null) === target.parentNodeId
+  const { tree: without, removed } = removeNodeById(nodes, nodeId)
+  if (!removed) return nodes
+
+  // When moving within the same parent and the target index is after the
+  // original slot, shift the target to account for the removed item.
+  let insertIndex = target.index
+  if (samePar && target.index > loc.index) insertIndex -= 1
+  return insertNode(without, target.parentNodeId, insertIndex, removed)
+}
+
+export function addLeaf(
+  nodes: ContentNodeData[],
+  parentNodeId: string | null,
+  opts: { role: string; text?: string; index?: number; idFactory: IdFactory }
+): ContentNodeData[] {
+  const leaf: ContentNodeData = {
+    nodeId: opts.idFactory(),
+    isPruned: false,
+    role: opts.role,
+    text: opts.text ?? "",
+  }
+  const index =
+    opts.index ??
+    (parentNodeId == null
+      ? nodes.length
+      : (findNode(nodes, parentNodeId)?.children?.length ?? 0))
+  return insertNode(nodes, parentNodeId, index, leaf)
+}
+
+export function addContainer(
+  nodes: ContentNodeData[],
+  parentNodeId: string | null,
+  opts: {
+    structure: string
+    children?: ContentNodeData[]
+    index?: number
+    idFactory: IdFactory
+  }
+): ContentNodeData[] {
+  const container: ContentNodeData = {
+    nodeId: opts.idFactory(),
+    isPruned: false,
+    structure: opts.structure,
+    children: opts.children ?? [],
+  }
+  const index =
+    opts.index ??
+    (parentNodeId == null
+      ? nodes.length
+      : (findNode(nodes, parentNodeId)?.children?.length ?? 0))
+  return insertNode(nodes, parentNodeId, index, container)
+}
+
+// Wrap `nodeId` in a new container of the given structure, in place.
+export function nestNode(
+  nodes: ContentNodeData[],
+  nodeId: string,
+  structure: string,
+  idFactory: IdFactory
+): ContentNodeData[] {
+  const loc = locate(nodes, nodeId)
+  if (!loc) return nodes
+  const child = loc.parentChildren[loc.index]
+  const wrapper: ContentNodeData = {
+    nodeId: idFactory(),
+    isPruned: false,
+    structure,
+    children: [child],
+  }
+  // Replace the child with the wrapper at the same slot.
+  if (loc.parent == null) {
+    const next = [...nodes]
+    next[loc.index] = wrapper
+    return next
+  }
+  return mapNode(nodes, loc.parent.nodeId, (parent) => {
+    const children = parent.children ?? []
+    const next = [...children]
+    next[loc.index] = wrapper
+    return { ...parent, children: next }
+  })
+}
+
+// Move `nodeId` out of its parent into the grandparent, just after the parent.
+// If the parent becomes empty, it is removed.
+export function unnestNode(
+  nodes: ContentNodeData[],
+  nodeId: string
+): ContentNodeData[] {
+  const loc = locate(nodes, nodeId)
+  if (!loc || loc.parent == null) return nodes
+  const parentLoc = locate(nodes, loc.parent.nodeId)
+  if (!parentLoc) return nodes
+
+  const grandparentId = parentLoc.parent?.nodeId ?? null
+  const child = loc.parentChildren[loc.index]
+
+  // Remove the child from its parent.
+  const removed = mapNode(nodes, loc.parent.nodeId, (parent) => {
+    const children = (parent.children ?? []).filter((_, i) => i !== loc.index)
+    return { ...parent, children }
+  })
+
+  // Insert child into the grandparent immediately after the parent.
+  const inserted = insertNode(removed, grandparentId, parentLoc.index + 1, child)
+
+  // Collapse the parent if it's now empty.
+  const parentAfter = findNode(inserted, loc.parent.nodeId)
+  if (parentAfter && (parentAfter.children ?? []).length === 0) {
+    return removeNodeById(inserted, loc.parent.nodeId).tree
+  }
+  return inserted
+}
+
+// ── Helpers ─────────────────────────────────────────────────────
+
+export function cloneNodeWithNewIds(
+  node: ContentNodeData,
+  idFactory: IdFactory
+): ContentNodeData {
+  const base: ContentNodeData = { ...node, nodeId: idFactory() }
+  if (node.children) {
+    base.children = node.children.map((c) => cloneNodeWithNewIds(c, idFactory))
+  }
+  return base
+}

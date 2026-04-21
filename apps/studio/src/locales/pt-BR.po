@@ -39,6 +39,9 @@ msgstr "(ativo)"
 msgid "(base)"
 msgstr "(base)"
 
+msgid "(empty)"
+msgstr "(vazio)"
+
 msgid "(no instruction text)"
 msgstr "(sem texto de instrução)"
 
@@ -446,6 +449,9 @@ msgstr "Add checklist item to this section"
 msgid "Add class"
 msgstr "Adicionar classe"
 
+msgid "Add container"
+msgstr "Adicionar contêiner"
+
 msgid "Add entry below"
 msgstr "Adicionar entrada abaixo"
 
@@ -469,6 +475,9 @@ msgstr "Add reviewer guidance."
 
 msgid "Add section"
 msgstr "Add section"
+
+msgid "Add text"
+msgstr "Adicionar texto"
 
 msgid "Add Translations"
 msgstr "Adicionar traduções"
@@ -967,6 +976,9 @@ msgstr "Fechar painel de edição"
 msgid "Clownfish, sea turtles, and parrotfish are just a few of the thousands of species that depend on reefs for food, shelter, and nursery grounds."
 msgstr "Peixes-palhaço, tartarugas marinhas e peixes-papagaio são apenas algumas das milhares de espécies que dependem dos recifes para alimentação, abrigo e áreas de reprodução."
 
+msgid "Collapse"
+msgstr "Recolher"
+
 msgid "Collapse accessibility summary"
 msgstr "Collapse accessibility summary"
 
@@ -1305,6 +1317,9 @@ msgstr "Descartar"
 msgid "Display"
 msgstr "Exibição"
 
+msgid "Drag to move"
+msgstr "Arrastar para mover"
+
 msgid "Drag to move boxes, drag edges/corners to resize"
 msgstr "Drag to move boxes, drag edges/corners to resize"
 
@@ -1389,6 +1404,9 @@ msgstr "Editar esta imagem"
 msgid "Edit this section"
 msgstr "Editar esta seção"
 
+msgid "edited"
+msgstr "editado"
+
 msgid "Edited in"
 msgstr "Editado em"
 
@@ -1409,6 +1427,9 @@ msgstr "Grupo vazio — arraste entradas de texto aqui"
 
 msgid "Empty section"
 msgstr "Seção vazia"
+
+msgid "Empty section — add a container below to start"
+msgstr "Seção vazia — adicione um contêiner abaixo para começar"
 
 msgid "en"
 msgstr "en"
@@ -1480,6 +1501,9 @@ msgstr "Excluir da renderização"
 
 msgid "Existing reviewer sessions keep their own checklist snapshot. New checklist changes apply to newly created sessions."
 msgstr "Existing reviewer sessions keep their own checklist snapshot. New checklist changes apply to newly created sessions."
+
+msgid "Expand"
+msgstr "Expandir"
 
 msgid "Expand all sections"
 msgstr "Expandir todas as seções"
@@ -1809,6 +1833,9 @@ msgstr "Livros infantis ilustrados"
 
 msgid "Illustration"
 msgstr "Ilustração"
+
+msgid "image"
+msgstr "imagem"
 
 #~ msgid "Image Associated Text"
 #~ msgstr "Texto associado à imagem"
@@ -2294,6 +2321,9 @@ msgstr "Moderate"
 
 msgid "Modified {modifiedLabel}"
 msgstr "Modificado em {modifiedLabel}"
+
+msgid "Move out of parent"
+msgstr "Mover para fora do pai"
 
 msgid "Multi-format publications"
 msgstr "Publicações multi-formato"
@@ -3220,6 +3250,9 @@ msgstr "Saved. Re-package Preview to apply."
 
 msgid "Saving..."
 msgstr "Salvando..."
+
+msgid "Saving…"
+msgstr "Salvando…"
 
 msgid "School textbooks and workbooks"
 msgstr "Livros didáticos e cadernos escolares"
@@ -4180,6 +4213,9 @@ msgstr "Dentro do alcance"
 
 msgid "words"
 msgstr "palavras"
+
+msgid "Wrap in new container"
+msgstr "Envolver em novo contêiner"
 
 msgid "Wraps 'Edit this image' requests. The AI receives the original image alongside this prompt. Supports user_prompt and style variables."
 msgstr "Envolve solicitações de 'Editar esta imagem'. A IA recebe a imagem original junto com este prompt. Suporta variáveis user_prompt e style."
