@@ -459,6 +459,9 @@ msgstr "Ajouter un conteneur"
 msgid "Add entry below"
 msgstr "Ajouter une entrée ci-dessous"
 
+msgid "Add group"
+msgstr "Ajouter un groupe"
+
 #~ msgid "Add Group"
 #~ msgstr "Ajouter un groupe"
 
@@ -2329,8 +2332,8 @@ msgstr "Modéré"
 msgid "Modified {modifiedLabel}"
 msgstr "Modifié le {modifiedLabel}"
 
-msgid "Move out of parent"
-msgstr "Sortir du conteneur parent"
+#~ msgid "Move out of parent"
+#~ msgstr "Sortir du conteneur parent"
 
 msgid "Multi-format publications"
 msgstr "Publications multi-format"
@@ -3039,6 +3042,9 @@ msgstr "Retirer l'élément de liste de contrôle"
 
 msgid "Remove entry"
 msgstr "Retirer entrée"
+
+msgid "Remove from group"
+msgstr "Retirer du groupe"
 
 msgid "Remove PDF"
 msgstr "Retirer PDF"
@@ -4218,8 +4224,11 @@ msgstr "Dans la plage"
 msgid "words"
 msgstr "mots"
 
-msgid "Wrap in new container"
-msgstr "Envelopper dans un nouveau conteneur"
+msgid "Wrap in group"
+msgstr "Encapsuler dans un groupe"
+
+#~ msgid "Wrap in new container"
+#~ msgstr "Envelopper dans un nouveau conteneur"
 
 msgid "Wraps 'Edit this image' requests. The AI receives the original image alongside this prompt. Supports user_prompt and style variables."
 msgstr "Encapsule les requêtes « Modifier cette image ». L'IA reçoit l'image originale avec cette invite. Prend en charge les variables user_prompt et style."

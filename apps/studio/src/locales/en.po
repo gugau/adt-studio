@@ -458,6 +458,9 @@ msgstr "Add container"
 msgid "Add entry below"
 msgstr "Add entry below"
 
+msgid "Add group"
+msgstr "Add group"
+
 #~ msgid "Add Group"
 #~ msgstr "Add Group"
 
@@ -2325,8 +2328,8 @@ msgstr "Moderate"
 msgid "Modified {modifiedLabel}"
 msgstr "Modified {modifiedLabel}"
 
-msgid "Move out of parent"
-msgstr "Move out of parent"
+#~ msgid "Move out of parent"
+#~ msgstr "Move out of parent"
 
 msgid "Multi-format publications"
 msgstr "Multi-format publications"
@@ -3035,6 +3038,9 @@ msgstr "Remove checklist item"
 
 msgid "Remove entry"
 msgstr "Remove entry"
+
+msgid "Remove from group"
+msgstr "Remove from group"
 
 msgid "Remove PDF"
 msgstr "Remove PDF"
@@ -4214,8 +4220,11 @@ msgstr "Within range"
 msgid "words"
 msgstr "words"
 
-msgid "Wrap in new container"
-msgstr "Wrap in new container"
+msgid "Wrap in group"
+msgstr "Wrap in group"
+
+#~ msgid "Wrap in new container"
+#~ msgstr "Wrap in new container"
 
 msgid "Wraps 'Edit this image' requests. The AI receives the original image alongside this prompt. Supports user_prompt and style variables."
 msgstr "Wraps 'Edit this image' requests. The AI receives the original image alongside this prompt. Supports user_prompt and style variables."

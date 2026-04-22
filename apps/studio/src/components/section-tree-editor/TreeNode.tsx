@@ -1,4 +1,4 @@
-import { useState, type ComponentType } from "react"
+import { useEffect, useRef, useState, type ComponentType } from "react"
 import {
   ChevronDown,
   ChevronRight,
@@ -7,15 +7,17 @@ import {
   CornerRightDown,
   Eye,
   EyeOff,
+  FilePlus,
+  FolderPlus,
   GripVertical,
   Hash,
   Image as ImageIcon,
   Layers,
   Link2,
   MessageCircle,
+  MoreHorizontal,
   PanelTop,
   PenLine,
-  Plus,
   Puzzle,
   Quote,
   Sigma,
@@ -209,6 +211,71 @@ function DragHandle({
   )
 }
 
+// ── Kebab action menu ────────────────────────────────────────────
+
+type MenuItem = {
+  icon: ComponentType<{ className?: string }>
+  label: string
+  onClick: () => void
+  danger?: boolean
+  hidden?: boolean
+}
+
+function RowMenu({
+  items,
+  disabled,
+}: {
+  items: MenuItem[]
+  disabled?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", onDown)
+    return () => document.removeEventListener("mousedown", onDown)
+  }, [open])
+  const visibleItems = items.filter((it) => !it.hidden)
+  if (visibleItems.length === 0) return null
+  return (
+    <div className="relative" ref={ref} onClick={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        disabled={disabled}
+        className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30"
+      >
+        <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full z-50 mt-1 min-w-[160px] rounded-md border bg-popover py-1 text-xs shadow-md">
+          {visibleItems.map((item, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => {
+                setOpen(false)
+                item.onClick()
+              }}
+              disabled={disabled}
+              className={cn(
+                "flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-accent transition-colors disabled:opacity-30",
+                item.danger && "text-red-600 hover:bg-red-50"
+              )}
+            >
+              <item.icon className="h-3.5 w-3.5" />
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Drop zone slot (between siblings) ───────────────────────────
 
 function DropZone({
@@ -353,46 +420,6 @@ function ContainerNode(props: TreeNodeProps) {
           )}
         </button>
         <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover/head:opacity-100 transition-opacity">
-          {parentNodeId != null && (
-            <button
-              type="button"
-              onClick={() => onUnnest(node.nodeId)}
-              disabled={disabled}
-              className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30"
-              title={t`Move out of parent`}
-            >
-              <CornerLeftUp className="h-3 w-3 text-muted-foreground" />
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => onNest(node.nodeId, defaultStructure)}
-            disabled={disabled}
-            className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30"
-            title={t`Wrap in new container`}
-          >
-            <CornerRightDown className="h-3 w-3 text-muted-foreground" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onDuplicate(node.nodeId)}
-            disabled={disabled}
-            className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30"
-            title={t`Duplicate`}
-          >
-            <Copy className="h-3 w-3 text-muted-foreground" />
-          </button>
-          {node.isPruned && (
-            <button
-              type="button"
-              onClick={() => onDelete(node.nodeId)}
-              disabled={disabled}
-              className="p-0.5 rounded hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-30"
-              title={t`Delete`}
-            >
-              <Trash2 className="h-3 w-3 text-red-600" />
-            </button>
-          )}
           <button
             type="button"
             onClick={() => onTogglePruned(node.nodeId)}
@@ -406,6 +433,45 @@ function ContainerNode(props: TreeNodeProps) {
               <Eye className="h-3 w-3 text-muted-foreground" />
             )}
           </button>
+          <RowMenu
+            disabled={disabled}
+            items={[
+              {
+                icon: CornerLeftUp,
+                label: t`Remove from group`,
+                onClick: () => onUnnest(node.nodeId),
+                hidden: parentNodeId == null,
+              },
+              {
+                icon: CornerRightDown,
+                label: t`Wrap in group`,
+                onClick: () => onNest(node.nodeId, defaultStructure),
+              },
+              {
+                icon: FilePlus,
+                label: t`Add text`,
+                onClick: () => onAddChildLeaf(node.nodeId, defaultTextRole),
+              },
+              {
+                icon: FolderPlus,
+                label: t`Add group`,
+                onClick: () =>
+                  onAddChildContainer(node.nodeId, defaultStructure),
+              },
+              {
+                icon: Copy,
+                label: t`Duplicate`,
+                onClick: () => onDuplicate(node.nodeId),
+              },
+              {
+                icon: Trash2,
+                label: t`Delete`,
+                onClick: () => onDelete(node.nodeId),
+                danger: true,
+                hidden: !node.isPruned,
+              },
+            ]}
+          />
           <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
         </div>
       </div>
@@ -461,28 +527,6 @@ function ContainerNode(props: TreeNodeProps) {
               />
             </div>
           ))}
-          <div className="group/foot flex items-center gap-1 pt-1 opacity-40 hover:opacity-100 transition-opacity">
-            <button
-              type="button"
-              onClick={() => onAddChildLeaf(node.nodeId, defaultTextRole)}
-              disabled={disabled}
-              className="flex items-center gap-1 rounded border border-dashed border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground hover:border-muted-foreground/60 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
-            >
-              <Plus className="h-2.5 w-2.5" />
-              {t`Add text`}
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                onAddChildContainer(node.nodeId, defaultStructure)
-              }
-              disabled={disabled}
-              className="flex items-center gap-1 rounded border border-dashed border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground hover:border-muted-foreground/60 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
-            >
-              <Plus className="h-2.5 w-2.5" />
-              {t`Add container`}
-            </button>
-          </div>
         </div>
       )}
     </div>
@@ -579,46 +623,6 @@ function TextLeaf(props: TreeNodeProps) {
         disabled={disabled}
       />
       <div className="shrink-0 flex items-center gap-0.5 self-center ml-auto opacity-0 group-hover/row:opacity-100 transition-opacity">
-        {parentNodeId != null && (
-          <button
-            type="button"
-            onClick={() => onUnnest(node.nodeId)}
-            disabled={disabled}
-            className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30"
-            title={t`Move out of parent`}
-          >
-            <CornerLeftUp className="h-3 w-3 text-muted-foreground" />
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={() => onNest(node.nodeId, defaultStructure)}
-          disabled={disabled}
-          className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30"
-          title={t`Wrap in new container`}
-        >
-          <CornerRightDown className="h-3 w-3 text-muted-foreground" />
-        </button>
-        <button
-          type="button"
-          onClick={() => onDuplicate(node.nodeId)}
-          disabled={disabled}
-          className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30"
-          title={t`Duplicate`}
-        >
-          <Copy className="h-3 w-3 text-muted-foreground" />
-        </button>
-        {node.isPruned && (
-          <button
-            type="button"
-            onClick={() => onDelete(node.nodeId)}
-            disabled={disabled}
-            className="p-0.5 rounded hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-30"
-            title={t`Delete`}
-          >
-            <Trash2 className="h-3 w-3 text-red-600" />
-          </button>
-        )}
         <button
           type="button"
           onClick={() => onTogglePruned(node.nodeId)}
@@ -632,6 +636,34 @@ function TextLeaf(props: TreeNodeProps) {
             <Eye className="h-3 w-3 text-muted-foreground" />
           )}
         </button>
+        <RowMenu
+          disabled={disabled}
+          items={[
+            {
+              icon: CornerLeftUp,
+              label: t`Remove from group`,
+              onClick: () => onUnnest(node.nodeId),
+              hidden: parentNodeId == null,
+            },
+            {
+              icon: CornerRightDown,
+              label: t`Wrap in group`,
+              onClick: () => onNest(node.nodeId, defaultStructure),
+            },
+            {
+              icon: Copy,
+              label: t`Duplicate`,
+              onClick: () => onDuplicate(node.nodeId),
+            },
+            {
+              icon: Trash2,
+              label: t`Delete`,
+              onClick: () => onDelete(node.nodeId),
+              danger: true,
+              hidden: !node.isPruned,
+            },
+          ]}
+        />
         <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
       </div>
     </div>
@@ -690,26 +722,6 @@ function ImageLeaf(props: TreeNodeProps) {
       <div className="shrink-0 flex items-center gap-0.5 opacity-0 group-hover/row:opacity-100 transition-opacity">
         <button
           type="button"
-          onClick={() => onDuplicate(node.nodeId)}
-          disabled={disabled}
-          className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30"
-          title={t`Duplicate`}
-        >
-          <Copy className="h-3 w-3 text-muted-foreground" />
-        </button>
-        {node.isPruned && (
-          <button
-            type="button"
-            onClick={() => onDelete(node.nodeId)}
-            disabled={disabled}
-            className="p-0.5 rounded hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-30"
-            title={t`Delete`}
-          >
-            <Trash2 className="h-3 w-3 text-red-600" />
-          </button>
-        )}
-        <button
-          type="button"
           onClick={() => onTogglePruned(node.nodeId)}
           disabled={disabled}
           className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30"
@@ -721,6 +733,23 @@ function ImageLeaf(props: TreeNodeProps) {
             <Eye className="h-3 w-3 text-muted-foreground" />
           )}
         </button>
+        <RowMenu
+          disabled={disabled}
+          items={[
+            {
+              icon: Copy,
+              label: t`Duplicate`,
+              onClick: () => onDuplicate(node.nodeId),
+            },
+            {
+              icon: Trash2,
+              label: t`Delete`,
+              onClick: () => onDelete(node.nodeId),
+              danger: true,
+              hidden: !node.isPruned,
+            },
+          ]}
+        />
         <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
       </div>
     </div>

@@ -458,6 +458,9 @@ msgstr "Añadir contenedor"
 msgid "Add entry below"
 msgstr "Agregar entrada debajo"
 
+msgid "Add group"
+msgstr "Agregar grupo"
+
 #~ msgid "Add Group"
 #~ msgstr "Agregar grupo"
 
@@ -2325,8 +2328,8 @@ msgstr "Moderate"
 msgid "Modified {modifiedLabel}"
 msgstr "Modificado el {modifiedLabel}"
 
-msgid "Move out of parent"
-msgstr "Sacar del contenedor padre"
+#~ msgid "Move out of parent"
+#~ msgstr "Sacar del contenedor padre"
 
 msgid "Multi-format publications"
 msgstr "Publicaciones multiformato"
@@ -3035,6 +3038,9 @@ msgstr "Remove checklist item"
 
 msgid "Remove entry"
 msgstr "Eliminar entrada"
+
+msgid "Remove from group"
+msgstr "Quitar del grupo"
 
 msgid "Remove PDF"
 msgstr "Eliminar PDF"
@@ -4216,8 +4222,11 @@ msgstr "Dentro del rango"
 msgid "words"
 msgstr "palabras"
 
-msgid "Wrap in new container"
-msgstr "Envolver en un nuevo contenedor"
+msgid "Wrap in group"
+msgstr "Envolver en grupo"
+
+#~ msgid "Wrap in new container"
+#~ msgstr "Envolver en un nuevo contenedor"
 
 msgid "Wraps 'Edit this image' requests. The AI receives the original image alongside this prompt. Supports user_prompt and style variables."
 msgstr "Envuelve solicitudes de 'Editar esta imagen'. La IA recibe la imagen original junto con este prompt. Soporta variables user_prompt y style."
