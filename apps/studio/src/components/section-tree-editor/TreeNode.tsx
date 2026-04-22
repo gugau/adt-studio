@@ -498,6 +498,11 @@ function ContainerNode(props: TreeNodeProps) {
                 onClick: () => onAddChildLeaf(node.nodeId, defaultTextRole),
               },
               {
+                icon: ImageIcon,
+                label: t`Add image`,
+                onClick: () => onAddChildLeaf(node.nodeId, "image"),
+              },
+              {
                 icon: FolderPlus,
                 label: t`Add group`,
                 onClick: () =>

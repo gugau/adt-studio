@@ -464,6 +464,9 @@ msgstr "Add group"
 #~ msgid "Add Group"
 #~ msgstr "Add Group"
 
+msgid "Add image"
+msgstr "Add image"
+
 msgid "Add Image"
 msgstr "Add Image"
 
