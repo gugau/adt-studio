@@ -178,10 +178,12 @@ function DragHandle({
   nodeId,
   disabled,
   setDrag,
+  className,
 }: {
   nodeId: string
   disabled?: boolean
   setDrag: (drag: DragState | null) => void
+  className?: string
 }) {
   const { t } = useLingui()
   return (
@@ -204,7 +206,8 @@ function DragHandle({
         "shrink-0 p-1 rounded transition-opacity",
         disabled
           ? "cursor-default opacity-30"
-          : "cursor-grab active:cursor-grabbing hover:bg-accent opacity-60 hover:opacity-100"
+          : "cursor-grab active:cursor-grabbing hover:bg-accent opacity-0",
+        className
       )}
       title={disabled ? undefined : t`Drag to move`}
     >
@@ -515,7 +518,12 @@ function ContainerNode(props: TreeNodeProps) {
             ]}
           />
         </div>
-        <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
+        <DragHandle
+          nodeId={node.nodeId}
+          disabled={disabled}
+          setDrag={setDrag}
+          className="group-hover/head:opacity-100"
+        />
       </div>
 
       {!collapsed && (
@@ -707,7 +715,12 @@ function TextLeaf(props: TreeNodeProps) {
           ]}
         />
       </div>
-      <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
+      <DragHandle
+        nodeId={node.nodeId}
+        disabled={disabled}
+        setDrag={setDrag}
+        className="group-hover/row:opacity-100"
+      />
     </div>
   )
 }
@@ -793,7 +806,12 @@ function ImageLeaf(props: TreeNodeProps) {
           ]}
         />
       </div>
-      <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
+      <DragHandle
+        nodeId={node.nodeId}
+        disabled={disabled}
+        setDrag={setDrag}
+        className="group-hover/row:opacity-100"
+      />
     </div>
   )
 }
