@@ -200,7 +200,7 @@ function DragHandle({
         "shrink-0 p-0.5 rounded transition-colors",
         disabled
           ? "cursor-default opacity-30"
-          : "cursor-grab active:cursor-grabbing hover:bg-accent opacity-0 group-hover/row:opacity-100"
+          : "cursor-grab active:cursor-grabbing hover:bg-accent opacity-0 group-hover/row:opacity-100 group-hover/head:opacity-100"
       )}
       title={disabled ? undefined : t`Drag to move`}
     >
@@ -285,13 +285,13 @@ function ContainerNode(props: TreeNodeProps) {
   return (
     <div
       className={cn(
-        "group/row relative rounded-md border border-slate-200 border-l-2 bg-card/40 pl-2 pr-1 py-1.5",
+        "relative rounded-md border border-slate-200 border-l-2 bg-card/40 pl-2 pr-1 py-1.5",
         visual.border,
         node.isPruned && "opacity-40",
         isDragging && "opacity-30"
       )}
     >
-      <div className="flex items-center gap-1.5">
+      <div className="group/head flex items-center gap-1.5">
         <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
         {containerStructures ? (
           <Select
@@ -353,7 +353,7 @@ function ContainerNode(props: TreeNodeProps) {
             <ChevronDown className="h-3 w-3 text-muted-foreground" />
           )}
         </button>
-        <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover/row:opacity-100 transition-opacity">
+        <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover/head:opacity-100 transition-opacity">
           {parentNodeId != null && (
             <button
               type="button"
@@ -461,7 +461,7 @@ function ContainerNode(props: TreeNodeProps) {
               />
             </div>
           ))}
-          <div className="flex items-center gap-1 pt-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+          <div className="group/foot flex items-center gap-1 pt-1 opacity-40 hover:opacity-100 transition-opacity">
             <button
               type="button"
               onClick={() => onAddChildLeaf(node.nodeId, defaultTextRole)}
