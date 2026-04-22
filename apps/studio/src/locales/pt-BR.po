@@ -226,7 +226,7 @@ msgid "="
 msgstr "="
 
 msgid "🌿"
-msgstr ""
+msgstr "🌿"
 
 msgid "0 = deterministic, 2 = max creativity"
 msgstr "0 = determinístico, 2 = criatividade máxima"
@@ -250,7 +250,7 @@ msgid "A fill-in-the-blank activity."
 msgstr "Uma atividade de preencher lacunas."
 
 msgid "A glossary term with this word already exists."
-msgstr ""
+msgstr "Já existe um termo de glossário com esta palavra."
 
 msgid "A matching activity where students connect related items."
 msgstr "Uma atividade de correspondência onde os alunos conectam itens relacionados."
@@ -450,7 +450,7 @@ msgid "Add entry below"
 msgstr "Adicionar entrada abaixo"
 
 msgid "Add Glossary Term"
-msgstr ""
+msgstr "Adicionar termo do glossário"
 
 msgid "Add Group"
 msgstr "Adicionar grupo"
@@ -474,7 +474,7 @@ msgid "Add section"
 msgstr "Add section"
 
 msgid "Add Term"
-msgstr ""
+msgstr "Adicionar termo"
 
 msgid "Add Translations"
 msgstr "Adicionar traduções"
@@ -1073,7 +1073,7 @@ msgid "Cover of {title}"
 msgstr "Capa de {0}"
 
 msgid "Create a manual glossary entry that stays in the book even if AI glossary generation is rerun."
-msgstr ""
+msgstr "Crie uma entrada manual de glossário que permaneça no livro mesmo se a geração de glossário por IA for executada novamente."
 
 msgid "Create a new image from a text description"
 msgstr "Crie uma nova imagem a partir de uma descrição de texto"
@@ -1222,7 +1222,7 @@ msgid "Defaults"
 msgstr "Padrões"
 
 msgid "Definition"
-msgstr ""
+msgstr "Definição"
 
 msgid "Definitions and Terminology"
 msgstr "Definições e Terminologia"
@@ -1294,7 +1294,7 @@ msgid "Disable type"
 msgstr "Desativar tipo"
 
 msgid "Disable word-level highlighting and use sentence blocks"
-msgstr ""
+msgstr "Desativar o destaque por palavra e usar blocos de frases"
 
 msgid "Disabled"
 msgstr "Disabled"
@@ -1408,7 +1408,7 @@ msgid "Editing Language"
 msgstr "Idioma de edição"
 
 msgid "Emoji"
-msgstr ""
+msgstr "Emoji"
 
 msgid "Empty group — drag text entries here"
 msgstr "Grupo vazio — arraste entradas de texto aqui"
@@ -1434,7 +1434,7 @@ msgid "Enable reviewer validation"
 msgstr "Enable reviewer validation"
 
 msgid "Enable word-level highlighting with timestamps"
-msgstr ""
+msgstr "Ativar o destaque por palavra com marcações de tempo"
 
 msgid "Enabled"
 msgstr "Enabled"
@@ -1500,7 +1500,7 @@ msgid "Expiry"
 msgstr "Expiração"
 
 msgid "Explain the term in simple language."
-msgstr ""
+msgstr "Explique o termo em linguagem simples."
 
 msgid "Export"
 msgstr "Exportar"
@@ -2161,7 +2161,7 @@ msgid "Lower values produce more consistent styling across pages."
 msgstr "Valores mais baixos produzem estilização mais consistente entre as páginas."
 
 msgid "manual"
-msgstr ""
+msgstr "manual"
 
 msgid "Manual review"
 msgstr "Revisão manual"
@@ -2760,10 +2760,10 @@ msgid "Photograph"
 msgstr "Fotografia"
 
 msgid "Photosynthesis"
-msgstr ""
+msgstr "Fotossíntese"
 
 msgid "photosynthetic, photosynthesizing"
-msgstr ""
+msgstr "fotossintético, realizando fotossíntese"
 
 msgid "Pick from book"
 msgstr "Escolher do livro"
@@ -2993,7 +2993,7 @@ msgid "Remove entry"
 msgstr "Remover entrada"
 
 msgid "Remove manual glossary term"
-msgstr ""
+msgstr "Remover termo manual do glossário"
 
 msgid "Remove PDF"
 msgstr "Remover PDF"
@@ -3029,7 +3029,7 @@ msgid "Replace from Book"
 msgstr "Substituir do livro"
 
 msgid "Replace this audio file"
-msgstr ""
+msgstr "Substituir este arquivo de áudio"
 
 msgid "Replace Video?"
 msgstr "Substituir Vídeo?"
@@ -3977,7 +3977,7 @@ msgid "Untitled"
 msgstr "Sem título"
 
 msgid "Upload"
-msgstr ""
+msgstr "Enviar"
 
 msgid "Upload a new image file from your computer"
 msgstr "Envie um novo arquivo de imagem do seu computador"
@@ -4016,7 +4016,7 @@ msgid "Upload Style Guide"
 msgstr "Enviar Guia de Estilo"
 
 msgid "Upload your own audio file"
-msgstr ""
+msgstr "Envie seu próprio arquivo de áudio"
 
 msgid "Uploading..."
 msgstr "Enviando..."
@@ -4053,7 +4053,7 @@ msgid "Variant:"
 msgstr "Variante:"
 
 msgid "Variations"
-msgstr ""
+msgstr "Variações"
 
 msgid "Vector Extraction"
 msgstr "Extração vetorial"
@@ -4103,9 +4103,7 @@ msgid ""
 "wcag2aa\n"
 "best-practice"
 msgstr ""
-"\"\"wcag2a\n"
-"\"\"wcag2aa\n"
-"\"\"best-practicewcag2a\n"
+"wcag2a\n"
 "wcag2aa\n"
 "best-practice"
 
@@ -4143,13 +4141,13 @@ msgid "Within range"
 msgstr "Dentro do alcance"
 
 msgid "Word"
-msgstr ""
+msgstr "Palavra"
 
 msgid "Word and definition are required."
-msgstr ""
+msgstr "Palavra e definição são obrigatórias."
 
 msgid "Word Highlight"
-msgstr ""
+msgstr "Destaque por palavra"
 
 msgid "words"
 msgstr "palavras"
