@@ -8,14 +8,18 @@ import {
   Eye,
   EyeOff,
   GripVertical,
-  HelpCircle,
+  Hash,
   Image as ImageIcon,
   Layers,
-  LayoutGrid,
-  List,
+  Link2,
   MessageCircle,
+  PanelTop,
+  PenLine,
   Plus,
-  Sparkles,
+  Puzzle,
+  Quote,
+  Sigma,
+  Tag,
   Type as TypeIcon,
   Trash2,
 } from "lucide-react"
@@ -41,52 +45,87 @@ type Visual = {
   Icon: ComponentType<{ className?: string }>
   text: string // text color class
   bg: string // pill background class
-  ring: string // subtle ring/border class
+  border: string // left-accent border color class
 }
 
-const DEFAULT_CONTAINER_VISUAL: Visual = {
-  Icon: Layers,
-  text: "text-slate-600",
-  bg: "bg-slate-100",
-  ring: "ring-slate-200",
-}
-
-const DEFAULT_LEAF_VISUAL: Visual = {
+const SLATE: Visual = {
   Icon: TypeIcon,
   text: "text-slate-600",
   bg: "bg-slate-100",
-  ring: "ring-slate-200",
+  border: "border-slate-300",
 }
 
+const VIOLET = (Icon: Visual["Icon"]): Visual => ({
+  Icon,
+  text: "text-violet-700",
+  bg: "bg-violet-100",
+  border: "border-violet-300",
+})
+
+const BLUE = (Icon: Visual["Icon"]): Visual => ({
+  Icon,
+  text: "text-blue-700",
+  bg: "bg-blue-100",
+  border: "border-blue-300",
+})
+
+const AMBER = (Icon: Visual["Icon"]): Visual => ({
+  Icon,
+  text: "text-amber-700",
+  bg: "bg-amber-100",
+  border: "border-amber-300",
+})
+
+const EMERALD = (Icon: Visual["Icon"]): Visual => ({
+  Icon,
+  text: "text-emerald-700",
+  bg: "bg-emerald-100",
+  border: "border-emerald-300",
+})
+
+const SKY = (Icon: Visual["Icon"]): Visual => ({
+  Icon,
+  text: "text-sky-700",
+  bg: "bg-sky-100",
+  border: "border-sky-300",
+})
+
+const INDIGO = (Icon: Visual["Icon"]): Visual => ({
+  Icon,
+  text: "text-indigo-700",
+  bg: "bg-indigo-100",
+  border: "border-indigo-300",
+})
+
+// Structural containers — activities in violet, structural boxes in blue.
 function getStructureVisual(structure: string | undefined): Visual {
+  if (!structure) return BLUE(Layers)
+  if (structure.startsWith("activity")) return VIOLET(Puzzle)
   switch (structure) {
-    case "activity":
-      return { Icon: Sparkles, text: "text-cyan-700", bg: "bg-cyan-50", ring: "ring-cyan-200" }
     case "panel":
-      return { Icon: LayoutGrid, text: "text-violet-700", bg: "bg-violet-50", ring: "ring-violet-200" }
-    case "list":
-      return { Icon: List, text: "text-amber-700", bg: "bg-amber-50", ring: "ring-amber-200" }
-    case "group":
-      return DEFAULT_CONTAINER_VISUAL
+    case "sidebar":
+      return BLUE(PanelTop)
     default:
-      return DEFAULT_CONTAINER_VISUAL
+      return BLUE(Layers)
   }
 }
 
+// Leaf roles — heading amber, math indigo, activity-* violet, image emerald,
+// question sky, fill-in-the-blank violet, default text slate.
 function getRoleVisual(role: string | undefined): Visual {
-  switch (role) {
-    case "image":
-      return { Icon: ImageIcon, text: "text-emerald-700", bg: "bg-emerald-50", ring: "ring-emerald-200" }
-    case "question":
-    case "prompt":
-      return { Icon: MessageCircle, text: "text-sky-700", bg: "bg-sky-50", ring: "ring-sky-200" }
-    case "answer":
-    case "fill_in":
-    case "blank":
-      return { Icon: HelpCircle, text: "text-amber-700", bg: "bg-amber-50", ring: "ring-amber-200" }
-    default:
-      return DEFAULT_LEAF_VISUAL
-  }
+  if (!role) return SLATE
+  if (role === "image") return EMERALD(ImageIcon)
+  if (role === "heading") return AMBER(Hash)
+  if (role === "math") return INDIGO(Sigma)
+  if (role === "caption" || role === "label") return { ...SLATE, Icon: Tag }
+  if (role === "quote") return { ...SLATE, Icon: Quote }
+  if (role === "activity_fill_in_the_blank" || role === "fill_in" || role === "blank")
+    return VIOLET(Link2)
+  if (role === "activity_instruction") return VIOLET(PenLine)
+  if (role === "activity_question" || role === "question" || role === "prompt")
+    return SKY(MessageCircle)
+  if (role.startsWith("activity")) return VIOLET(Puzzle)
+  return { ...SLATE, Icon: TypeIcon }
 }
 
 export interface DragState {
@@ -246,31 +285,14 @@ function ContainerNode(props: TreeNodeProps) {
   return (
     <div
       className={cn(
-        "group/row rounded border bg-card/40",
+        "group/row relative rounded-md border border-slate-200 border-l-2 bg-card/40 pl-2 pr-1 py-1.5",
+        visual.border,
         node.isPruned && "opacity-40",
         isDragging && "opacity-30"
       )}
     >
-      <div
-        className={cn(
-          "px-2 py-1 border-b flex items-center gap-1.5",
-          visual.bg
-        )}
-      >
+      <div className="flex items-center gap-1.5">
         <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
-        <button
-          type="button"
-          onClick={() => setCollapsed((v) => !v)}
-          className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer"
-          title={collapsed ? t`Expand` : t`Collapse`}
-        >
-          {collapsed ? (
-            <ChevronRight className={cn("h-3 w-3", visual.text)} />
-          ) : (
-            <ChevronDown className={cn("h-3 w-3", visual.text)} />
-          )}
-        </button>
-        <visual.Icon className={cn("h-3.5 w-3.5 shrink-0", visual.text)} />
         {containerStructures ? (
           <Select
             value={node.structure ?? defaultStructure}
@@ -279,10 +301,12 @@ function ContainerNode(props: TreeNodeProps) {
           >
             <SelectTrigger
               className={cn(
-                "h-5 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0 w-auto min-w-[80px] border-0 bg-transparent",
+                "h-6 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0 w-auto border-0 rounded-md gap-1 [&>svg]:opacity-70",
+                visual.bg,
                 visual.text
               )}
             >
+              <visual.Icon className="h-3.5 w-3.5 shrink-0" />
               <SelectValue>{structureLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -296,16 +320,27 @@ function ContainerNode(props: TreeNodeProps) {
         ) : (
           <span
             className={cn(
-              "text-[10px] font-semibold uppercase tracking-wider",
+              "inline-flex items-center gap-1 h-6 rounded-md px-1.5 text-[10px] font-semibold uppercase tracking-wider",
+              visual.bg,
               visual.text
             )}
           >
+            <visual.Icon className="h-3.5 w-3.5 shrink-0" />
             {structureLabel}
           </span>
         )}
-        <span className="text-[10px] font-mono text-muted-foreground/50 truncate">
-          {node.nodeId}
-        </span>
+        <button
+          type="button"
+          onClick={() => setCollapsed((v) => !v)}
+          className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer"
+          title={collapsed ? t`Expand` : t`Collapse`}
+        >
+          {collapsed ? (
+            <ChevronRight className="h-3 w-3 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+          )}
+        </button>
         <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover/row:opacity-100 transition-opacity">
           {parentNodeId != null && (
             <button
@@ -473,7 +508,6 @@ function TextLeaf(props: TreeNodeProps) {
       )}
     >
       <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
-      <visual.Icon className={cn("h-3.5 w-3.5 shrink-0 mt-0.5", visual.text)} />
       {textRoles ? (
         <Select
           value={node.role ?? "text"}
@@ -482,12 +516,17 @@ function TextLeaf(props: TreeNodeProps) {
         >
           <SelectTrigger
             className={cn(
-              "shrink-0 h-5 text-[10px] font-medium px-1.5 py-0 w-auto min-w-[60px] border-0",
+              "shrink-0 h-5 text-[10px] font-medium px-1 py-0 w-auto border-0 rounded gap-0.5 [&>svg]:opacity-70",
               visual.bg,
               visual.text
             )}
           >
-            <SelectValue>{node.role}</SelectValue>
+            <visual.Icon className="h-3 w-3 shrink-0" />
+            <SelectValue asChild>
+              <span className="overflow-hidden whitespace-nowrap transition-all duration-150 max-w-0 group-hover/row:max-w-[140px] group-hover/row:ml-1 uppercase tracking-wider font-semibold">
+                {node.role}
+              </span>
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {Object.keys(textRoles).map((key) => (
@@ -500,12 +539,15 @@ function TextLeaf(props: TreeNodeProps) {
       ) : (
         <span
           className={cn(
-            "shrink-0 text-[10px] font-medium rounded px-1.5 py-0.5",
+            "shrink-0 inline-flex items-center gap-0.5 h-5 rounded px-1 text-[10px] font-medium",
             visual.bg,
             visual.text
           )}
         >
-          {node.role}
+          <visual.Icon className="h-3 w-3 shrink-0" />
+          <span className="overflow-hidden whitespace-nowrap transition-all duration-150 max-w-0 group-hover/row:max-w-[140px] group-hover/row:ml-1 uppercase tracking-wider font-semibold">
+            {node.role}
+          </span>
         </span>
       )}
       <EditableText
@@ -596,15 +638,17 @@ function ImageLeaf(props: TreeNodeProps) {
       )}
     >
       <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
-      <visual.Icon className={cn("h-3.5 w-3.5 shrink-0", visual.text)} />
       <span
         className={cn(
-          "shrink-0 text-[10px] font-medium uppercase tracking-wider rounded px-1.5 py-0.5",
+          "shrink-0 inline-flex items-center gap-0.5 h-5 rounded px-1 text-[10px] font-medium",
           visual.bg,
           visual.text
         )}
       >
-        {t`image`}
+        <visual.Icon className="h-3 w-3 shrink-0" />
+        <span className="overflow-hidden whitespace-nowrap transition-all duration-150 max-w-0 group-hover/row:max-w-[80px] group-hover/row:ml-1 uppercase tracking-wider font-semibold">
+          {t`image`}
+        </span>
       </span>
       <img
         src={`${BASE_URL}/books/${bookLabel}/images/${node.nodeId}`}
