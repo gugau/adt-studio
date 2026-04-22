@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { useQueries, useQueryClient, useMutation } from "@tanstack/react-query"
+import { useQueries, useQuery, useQueryClient, useMutation } from "@tanstack/react-query"
 import { api, BASE_URL, type PageSummaryItem, type PageDetail } from "@/api/client"
 import type { ContentNodeData, PageSectioningOutput, PageSectioningSection } from "@adt/types"
 import { collectLeafNodes, deleteNode, replaceNodeId, toggleNodePruned } from "@adt/types"
@@ -17,6 +17,7 @@ import { SectionActionsDropdown } from "./SectionActionsDropdown"
 import { SectionEditToolbar } from "./SectionEditToolbar"
 import { ImageCropDialog } from "./ImageCropDialog"
 import { AiImageDialog } from "./AiImageDialog"
+import { SectionTreeEditor } from "@/components/section-tree-editor/SectionTreeEditor"
 import { useApiKey } from "@/hooks/use-api-key"
 import { useBookRun } from "@/hooks/use-book-run"
 import { Trans } from "@lingui/react/macro"
@@ -58,6 +59,19 @@ export function SectioningOverview({ bookLabel, pages, onNavigateToSection }: Se
     images: t`Images`,
     prunedImages: t`Pruned Images`,
   }
+
+  // Active config drives the role/structure dropdowns in the tree editor.
+  const configQuery = useQuery({
+    queryKey: ["books", bookLabel, "config", "active"],
+    queryFn: () => api.getActiveConfig(bookLabel),
+    staleTime: 5 * 60 * 1000,
+  })
+  const textRoles = configQuery.data?.merged?.role_types as
+    | Record<string, string>
+    | undefined
+  const containerStructures = configQuery.data?.merged?.structure_types as
+    | Record<string, string>
+    | undefined
 
   // Fetch full page details for all pages that have sections
   const pagesWithSections = pages.filter((p) => p.sectionCount > 0)
@@ -241,6 +255,8 @@ export function SectioningOverview({ bookLabel, pages, onNavigateToSection }: Se
                     visiblePanels={visiblePanels}
                     expandSignal={expandSignal}
                     onInvalidatePages={invalidatePages}
+                    textRoles={textRoles}
+                    containerStructures={containerStructures}
                   />
                 )
               })}
@@ -324,6 +340,8 @@ function PageSectionRows({
   visiblePanels,
   expandSignal,
   onInvalidatePages,
+  textRoles,
+  containerStructures,
 }: {
   page: PageDetail
   bookLabel: string
@@ -340,6 +358,8 @@ function PageSectionRows({
   visiblePanels: Set<DetailPanel>
   expandSignal: { action: "expand" | "collapse"; tick: number }
   onInvalidatePages: (...pageIds: string[]) => void
+  textRoles?: Record<string, string>
+  containerStructures?: Record<string, string>
 }) {
   const { t } = useLingui()
   const [expanded, setExpanded] = useState<Set<number>>(new Set())
@@ -451,6 +471,8 @@ function PageSectionRows({
             visiblePanels={visiblePanels}
             renderingVersion={page.versions.rendering}
             onInvalidatePages={onInvalidatePages}
+            textRoles={textRoles}
+            containerStructures={containerStructures}
           />
         )
       })}
@@ -484,6 +506,8 @@ function SectionRow({
   visiblePanels,
   renderingVersion,
   onInvalidatePages,
+  textRoles,
+  containerStructures,
 }: {
   page: PageDetail
   section: PageSectioningSection
@@ -506,6 +530,8 @@ function SectionRow({
   visiblePanels: Set<DetailPanel>
   renderingVersion: number | null
   onInvalidatePages: (...pageIds: string[]) => void
+  textRoles?: Record<string, string>
+  containerStructures?: Record<string, string>
 }) {
   const { t } = useLingui()
   const leaves = collectLeafNodes(section.nodes)
@@ -637,6 +663,9 @@ function SectionRow({
               renderingVersion={renderingVersion}
               onNavigate={onNavigate}
               onInvalidatePages={onInvalidatePages}
+              textRoles={textRoles}
+              containerStructures={containerStructures}
+              isMutating={isMutating}
             />
           </td>
         </tr>
@@ -661,6 +690,9 @@ function SectionDetail({
   renderingVersion,
   onNavigate,
   onInvalidatePages,
+  textRoles,
+  containerStructures,
+  isMutating,
 }: {
   section: PageSectioningSection
   sectionIndex: number
@@ -673,6 +705,9 @@ function SectionDetail({
   renderingVersion: number | null
   onNavigate?: () => void
   onInvalidatePages: (...pageIds: string[]) => void
+  textRoles?: Record<string, string>
+  containerStructures?: Record<string, string>
+  isMutating: boolean
 }) {
   const { t } = useLingui()
   const { apiKey, hasApiKey } = useApiKey()
@@ -785,6 +820,19 @@ function SectionDetail({
     onInvalidatePages(pageId)
   }, [bookLabel, pageId, sectionIndex, queryClient, onInvalidatePages])
 
+  const handleSectionChange = useCallback(async (next: PageSectioningSection) => {
+    const pageData = queryClient.getQueryData<PageDetail>(["books", bookLabel, "pages", pageId])
+    if (!pageData?.sectioningTree) return
+    const updated: PageSectioningOutput = {
+      ...pageData.sectioningTree,
+      sections: pageData.sectioningTree.sections.map((s, i) =>
+        i === sectionIndex ? next : s
+      ),
+    }
+    await api.updateSectioning(bookLabel, pageId, updated)
+    onInvalidatePages(pageId)
+  }, [bookLabel, pageId, sectionIndex, queryClient, onInvalidatePages])
+
   const handleTogglePrune = useCallback(async (dataId: string) => {
     setSelectedImage(null)
     const pageData = queryClient.getQueryData<PageDetail>(["books", bookLabel, "pages", pageId])
@@ -873,7 +921,14 @@ function SectionDetail({
               <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
                 <Trans>Content</Trans>
               </h4>
-              <SectionTreeView nodes={section.nodes} />
+              <SectionTreeEditor
+                section={section}
+                onChange={handleSectionChange}
+                bookLabel={bookLabel}
+                textRoles={textRoles}
+                containerStructures={containerStructures}
+                disabled={isMutating || storyboardRunning}
+              />
             </div>
           )}
 
@@ -971,75 +1026,6 @@ function SectionDetail({
           onSubmit={handleAiImageSubmit}
           onClose={() => setAiImageTarget(null)}
         />
-      )}
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Read-only tree view — renders a section's content tree inline.
-// ---------------------------------------------------------------------------
-
-function SectionTreeView({ nodes }: { nodes: ContentNodeData[] }) {
-  return (
-    <div className="space-y-1">
-      {nodes.map((node) => (
-        <SectionTreeNode key={node.nodeId} node={node} />
-      ))}
-    </div>
-  )
-}
-
-function SectionTreeNode({ node }: { node: ContentNodeData }) {
-  const isImage = node.role === "image"
-  const isLeaf = !!node.role
-
-  if (isLeaf) {
-    return (
-      <div
-        className={cn(
-          "flex gap-2 text-xs",
-          node.isPruned && (isImage ? "opacity-40" : "opacity-40 line-through")
-        )}
-      >
-        <span className="shrink-0 text-[10px] font-mono text-muted-foreground w-24">
-          {node.role}
-        </span>
-        <span className="text-foreground">
-          {isImage ? (
-            <span className="font-mono text-[10px]">{node.nodeId}</span>
-          ) : (
-            node.text ?? ""
-          )}
-        </span>
-      </div>
-    )
-  }
-
-  return (
-    <div
-      className={cn(
-        "border rounded p-2",
-        node.isPruned && "opacity-50 border-dashed"
-      )}
-    >
-      <div className="flex items-center gap-2 mb-1">
-        <span className="font-mono text-[10px] text-muted-foreground">
-          {node.nodeId}
-        </span>
-        <span className="text-[10px] px-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
-          {node.structure ?? "container"}
-        </span>
-        {node.isPruned && (
-          <span className="text-[10px] px-1 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
-            <Trans>pruned</Trans>
-          </span>
-        )}
-      </div>
-      {node.children && node.children.length > 0 && (
-        <div className="pl-3 border-l-2 border-muted">
-          <SectionTreeView nodes={node.children} />
-        </div>
       )}
     </div>
   )
