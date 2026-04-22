@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, type ComponentType } from "react"
 import {
   ChevronDown,
   ChevronRight,
@@ -8,7 +8,15 @@ import {
   Eye,
   EyeOff,
   GripVertical,
+  HelpCircle,
+  Image as ImageIcon,
+  Layers,
+  LayoutGrid,
+  List,
+  MessageCircle,
   Plus,
+  Sparkles,
+  Type as TypeIcon,
   Trash2,
 } from "lucide-react"
 import { useLingui } from "@lingui/react/macro"
@@ -24,6 +32,62 @@ import {
 } from "@/components/ui/select"
 import { EditableText } from "./EditableText"
 import { TREE_DRAG_TYPE } from "./SectionTreeEditor"
+
+// ── Type-to-visual mapping ──────────────────────────────────────
+// Each role/structure gets a distinct icon + accent color so the tree
+// is scannable at a glance (activity vs panel vs text vs image, etc).
+
+type Visual = {
+  Icon: ComponentType<{ className?: string }>
+  text: string // text color class
+  bg: string // pill background class
+  ring: string // subtle ring/border class
+}
+
+const DEFAULT_CONTAINER_VISUAL: Visual = {
+  Icon: Layers,
+  text: "text-slate-600",
+  bg: "bg-slate-100",
+  ring: "ring-slate-200",
+}
+
+const DEFAULT_LEAF_VISUAL: Visual = {
+  Icon: TypeIcon,
+  text: "text-slate-600",
+  bg: "bg-slate-100",
+  ring: "ring-slate-200",
+}
+
+function getStructureVisual(structure: string | undefined): Visual {
+  switch (structure) {
+    case "activity":
+      return { Icon: Sparkles, text: "text-cyan-700", bg: "bg-cyan-50", ring: "ring-cyan-200" }
+    case "panel":
+      return { Icon: LayoutGrid, text: "text-violet-700", bg: "bg-violet-50", ring: "ring-violet-200" }
+    case "list":
+      return { Icon: List, text: "text-amber-700", bg: "bg-amber-50", ring: "ring-amber-200" }
+    case "group":
+      return DEFAULT_CONTAINER_VISUAL
+    default:
+      return DEFAULT_CONTAINER_VISUAL
+  }
+}
+
+function getRoleVisual(role: string | undefined): Visual {
+  switch (role) {
+    case "image":
+      return { Icon: ImageIcon, text: "text-emerald-700", bg: "bg-emerald-50", ring: "ring-emerald-200" }
+    case "question":
+    case "prompt":
+      return { Icon: MessageCircle, text: "text-sky-700", bg: "bg-sky-50", ring: "ring-sky-200" }
+    case "answer":
+    case "fill_in":
+    case "blank":
+      return { Icon: HelpCircle, text: "text-amber-700", bg: "bg-amber-50", ring: "ring-amber-200" }
+    default:
+      return DEFAULT_LEAF_VISUAL
+  }
+}
 
 export interface DragState {
   nodeId: string
@@ -177,6 +241,7 @@ function ContainerNode(props: TreeNodeProps) {
   const children = node.children ?? []
   const structureLabel = node.structure ?? "group"
   const isDragging = drag?.nodeId === node.nodeId
+  const visual = getStructureVisual(node.structure)
 
   return (
     <div
@@ -186,7 +251,12 @@ function ContainerNode(props: TreeNodeProps) {
         isDragging && "opacity-30"
       )}
     >
-      <div className="px-2 py-1 bg-muted/40 border-b flex items-center gap-1.5">
+      <div
+        className={cn(
+          "px-2 py-1 border-b flex items-center gap-1.5",
+          visual.bg
+        )}
+      >
         <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
         <button
           type="button"
@@ -195,18 +265,24 @@ function ContainerNode(props: TreeNodeProps) {
           title={collapsed ? t`Expand` : t`Collapse`}
         >
           {collapsed ? (
-            <ChevronRight className="h-3 w-3 text-muted-foreground" />
+            <ChevronRight className={cn("h-3 w-3", visual.text)} />
           ) : (
-            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+            <ChevronDown className={cn("h-3 w-3", visual.text)} />
           )}
         </button>
+        <visual.Icon className={cn("h-3.5 w-3.5 shrink-0", visual.text)} />
         {containerStructures ? (
           <Select
             value={node.structure ?? defaultStructure}
             onValueChange={(val) => onSetStructure(node.nodeId, val)}
             disabled={disabled}
           >
-            <SelectTrigger className="h-5 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0 w-auto min-w-[80px] border-0 bg-transparent text-muted-foreground">
+            <SelectTrigger
+              className={cn(
+                "h-5 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0 w-auto min-w-[80px] border-0 bg-transparent",
+                visual.text
+              )}
+            >
               <SelectValue>{structureLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -221,7 +297,12 @@ function ContainerNode(props: TreeNodeProps) {
             </SelectContent>
           </Select>
         ) : (
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <span
+            className={cn(
+              "text-[10px] font-semibold uppercase tracking-wider",
+              visual.text
+            )}
+          >
             {structureLabel}
           </span>
         )}
@@ -384,6 +465,7 @@ function TextLeaf(props: TreeNodeProps) {
   } = props
   const { t } = useLingui()
   const isDragging = props.drag?.nodeId === node.nodeId
+  const visual = getRoleVisual(node.role)
 
   return (
     <div
@@ -394,13 +476,20 @@ function TextLeaf(props: TreeNodeProps) {
       )}
     >
       <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
+      <visual.Icon className={cn("h-3.5 w-3.5 shrink-0 mt-0.5", visual.text)} />
       {textRoles ? (
         <Select
           value={node.role ?? "text"}
           onValueChange={(val) => onSetRole(node.nodeId, val)}
           disabled={disabled}
         >
-          <SelectTrigger className="shrink-0 h-5 text-[10px] font-medium px-1.5 py-0 w-auto min-w-[60px] border-0 bg-muted/50">
+          <SelectTrigger
+            className={cn(
+              "shrink-0 h-5 text-[10px] font-medium px-1.5 py-0 w-auto min-w-[60px] border-0",
+              visual.bg,
+              visual.text
+            )}
+          >
             <SelectValue>{node.role}</SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -415,7 +504,13 @@ function TextLeaf(props: TreeNodeProps) {
           </SelectContent>
         </Select>
       ) : (
-        <span className="shrink-0 text-[10px] font-medium text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5">
+        <span
+          className={cn(
+            "shrink-0 text-[10px] font-medium rounded px-1.5 py-0.5",
+            visual.bg,
+            visual.text
+          )}
+        >
           {node.role}
         </span>
       )}
@@ -497,6 +592,7 @@ function ImageLeaf(props: TreeNodeProps) {
   } = props
   const { t } = useLingui()
   const isDragging = props.drag?.nodeId === node.nodeId
+  const visual = getRoleVisual("image")
   return (
     <div
       className={cn(
@@ -506,7 +602,14 @@ function ImageLeaf(props: TreeNodeProps) {
       )}
     >
       <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
-      <span className="shrink-0 text-[10px] font-medium uppercase tracking-wider text-emerald-700">
+      <visual.Icon className={cn("h-3.5 w-3.5 shrink-0", visual.text)} />
+      <span
+        className={cn(
+          "shrink-0 text-[10px] font-medium uppercase tracking-wider rounded px-1.5 py-0.5",
+          visual.bg,
+          visual.text
+        )}
+      >
         {t`image`}
       </span>
       <img
