@@ -192,17 +192,19 @@ function DragHandle({
           e.preventDefault()
           return
         }
-        e.stopPropagation()
         e.dataTransfer.effectAllowed = "move"
         e.dataTransfer.setData(TREE_DRAG_TYPE, nodeId)
-        setDrag({ nodeId })
+        // Defer the state update so React does not re-render mid-dragstart —
+        // a synchronous re-render can replace the handle's DOM node and cause
+        // some browsers to abort the drag before the first dragover fires.
+        requestAnimationFrame(() => setDrag({ nodeId }))
       }}
       onDragEnd={() => setDrag(null)}
       className={cn(
         "shrink-0 p-1 rounded transition-opacity",
         disabled
           ? "cursor-default opacity-30"
-          : "cursor-grab active:cursor-grabbing hover:bg-accent opacity-40 group-hover/row:opacity-100 group-hover/head:opacity-100"
+          : "cursor-grab active:cursor-grabbing hover:bg-accent opacity-60 hover:opacity-100"
       )}
       title={disabled ? undefined : t`Drag to move`}
     >
@@ -512,8 +514,8 @@ function ContainerNode(props: TreeNodeProps) {
               },
             ]}
           />
-          <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
         </div>
+        <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
       </div>
 
       {!collapsed && (
@@ -704,8 +706,8 @@ function TextLeaf(props: TreeNodeProps) {
             },
           ]}
         />
-        <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
       </div>
+      <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
     </div>
   )
 }
@@ -790,8 +792,8 @@ function ImageLeaf(props: TreeNodeProps) {
             },
           ]}
         />
-        <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
       </div>
+      <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
     </div>
   )
 }
