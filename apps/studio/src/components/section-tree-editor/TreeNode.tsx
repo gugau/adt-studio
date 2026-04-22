@@ -286,12 +286,9 @@ function ContainerNode(props: TreeNodeProps) {
               <SelectValue>{structureLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {Object.entries(containerStructures).map(([key, desc]) => (
+              {Object.keys(containerStructures).map((key) => (
                 <SelectItem key={key} value={key} className="text-xs">
                   {key}
-                  <span className="ml-1 text-muted-foreground text-[10px]">
-                    {desc}
-                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -493,12 +490,9 @@ function TextLeaf(props: TreeNodeProps) {
             <SelectValue>{node.role}</SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {Object.entries(textRoles).map(([key, desc]) => (
+            {Object.keys(textRoles).map((key) => (
               <SelectItem key={key} value={key} className="text-xs">
                 {key}
-                <span className="ml-1 text-muted-foreground text-[10px]">
-                  {desc}
-                </span>
               </SelectItem>
             ))}
           </SelectContent>
