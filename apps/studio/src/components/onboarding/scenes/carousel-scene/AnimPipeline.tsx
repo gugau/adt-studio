@@ -1,4 +1,4 @@
-import { ArrowRight, Check, FileText, LayoutGrid } from "lucide-react";
+import { ArrowRight, Check, FileText, Layers, LayoutGrid, Sparkles } from "lucide-react";
 import { Trans } from "@lingui/react/macro";
 import { useLingui } from "@lingui/react/macro";
 
@@ -69,6 +69,13 @@ export function AnimPipeline({ progress }: { progress: number }) {
           done={extractDone}
           active={!extractDone}
           dimmed={false}
+          NoteIcon={Sparkles}
+          note={
+            <Trans>
+              Parsing pages into text, figures, and layout boxes — cached by
+              content hash.
+            </Trans>
+          }
         />
         <div
           className="flex items-center justify-center transition-colors duration-300"
@@ -85,6 +92,13 @@ export function AnimPipeline({ progress }: { progress: number }) {
           done={storyDone}
           active={storyActive && !storyDone}
           dimmed={!storyActive}
+          NoteIcon={Layers}
+          note={
+            <Trans>
+              Grouping content by purpose, then laying out every section as
+              reviewable HTML.
+            </Trans>
+          }
         />
       </div>
     </div>
@@ -100,6 +114,8 @@ function PipelineStage({
   done,
   active,
   dimmed,
+  note,
+  NoteIcon,
 }: {
   title: string;
   Icon: typeof FileText;
@@ -109,6 +125,8 @@ function PipelineStage({
   done: boolean;
   active: boolean;
   dimmed: boolean;
+  note: React.ReactNode;
+  NoteIcon: typeof FileText;
 }) {
   const n = subs.length;
   return (
@@ -256,6 +274,29 @@ function PipelineStage({
             </div>
           );
         })}
+      </div>
+
+      <div className="relative h-[64px] overflow-hidden">
+        <div
+          className="absolute inset-x-0 bottom-0 flex items-center gap-2 rounded-md border px-2.5 py-1.5"
+          style={{
+            background: `${color}10`,
+            borderColor: `${color}33`,
+          }}
+        >
+          <span
+            className="grid h-4 w-4 shrink-0 place-items-center rounded-full"
+            style={{ background: `${color}22`, color }}
+          >
+            <NoteIcon className="h-2.5 w-2.5" strokeWidth={2.5} />
+          </span>
+          <span
+            className="text-[10.5px] font-medium leading-snug"
+            style={{ color }}
+          >
+            {note}
+          </span>
+        </div>
       </div>
     </div>
   );

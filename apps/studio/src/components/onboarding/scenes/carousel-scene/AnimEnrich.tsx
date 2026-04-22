@@ -7,7 +7,7 @@ import { lerp, seg } from "./utils";
 
 export function AnimEnrich({ progress }: { progress: number }) {
   const p = progress;
-  const enriching = p >= 0.35;
+  const enriching = p >= 0.45;
 
   return (
     <div className="absolute inset-0">
@@ -33,7 +33,7 @@ export function AnimEnrich({ progress }: { progress: number }) {
         </div>
         <div className="grid flex-1 grid-cols-2 grid-rows-2 gap-2.5">
           <EnrichPane
-            active={p >= 0.35 && p < 0.51}
+            active={p >= 0.45 && p < 0.59}
             color="#db2777"
             bg="bg-pink-50"
             iconColor="text-pink-600"
@@ -43,7 +43,7 @@ export function AnimEnrich({ progress }: { progress: number }) {
             <TranslatePane t={p} />
           </EnrichPane>
           <EnrichPane
-            active={p >= 0.51 && p < 0.67}
+            active={p >= 0.59 && p < 0.72}
             color="#2563eb"
             bg="bg-blue-50"
             iconColor="text-blue-600"
@@ -53,7 +53,7 @@ export function AnimEnrich({ progress }: { progress: number }) {
             <GlobePane t={p} />
           </EnrichPane>
           <EnrichPane
-            active={p >= 0.67 && p < 0.83}
+            active={p >= 0.72 && p < 0.86}
             color="#e11d48"
             bg="bg-rose-50"
             iconColor="text-rose-600"
@@ -63,7 +63,7 @@ export function AnimEnrich({ progress }: { progress: number }) {
             <WaveformPane t={p} />
           </EnrichPane>
           <EnrichPane
-            active={p >= 0.83}
+            active={p >= 0.86}
             color="#65a30d"
             bg="bg-lime-50"
             iconColor="text-lime-600"
@@ -245,7 +245,7 @@ function EnrichPane({
 function TranslatePane({ t: tp }: { t: number }) {
   const { t } = useLingui();
   const dst = t`O ciclo da água descreve o movimento contínuo da água.`;
-  const localT = Math.max(0, Math.min(1, (tp - 0.35) / 0.16));
+  const localT = Math.max(0, Math.min(1, (tp - 0.45) / 0.14));
   const typed = Math.floor(localT * dst.length);
   return (
     <>
@@ -253,7 +253,8 @@ function TranslatePane({ t: tp }: { t: number }) {
         <span className="mr-1 font-mono text-[9px]">
           <Trans>EN</Trans>
         </span>
-        <Trans>The water cycle describes continuous movement of water.</Trans>
+        {/* eslint-disable lingui/no-unlocalized-strings -- in-book demo content is intentionally bilingual and not user-locale-driven */}
+        The water cycle describes continuous movement of water.
       </div>
       <div className="my-1 h-px bg-border" />
       <div className="text-[11px] font-medium leading-relaxed text-foreground">
@@ -269,7 +270,7 @@ function TranslatePane({ t: tp }: { t: number }) {
 
 function GlobePane({ t: tp }: { t: number }) {
   const { t } = useLingui();
-  const localT = Math.max(0, Math.min(1, (tp - 0.51) / 0.16));
+  const localT = Math.max(0, Math.min(1, (tp - 0.59) / 0.13));
   const angle = localT * 360;
   const langs = [t`EN`, t`PT`, t`ES`, t`FR`, t`SW`, t`AR`];
   return (
@@ -304,7 +305,7 @@ function GlobePane({ t: tp }: { t: number }) {
 }
 
 function WaveformPane({ t: tp }: { t: number }) {
-  const localT = Math.max(0, Math.min(1, (tp - 0.67) / 0.16));
+  const localT = Math.max(0, Math.min(1, (tp - 0.72) / 0.14));
   const bars = 36;
   return (
     <div className="flex flex-1 flex-col gap-1.5">
@@ -335,7 +336,7 @@ function WaveformPane({ t: tp }: { t: number }) {
 
 function GlossaryPane({ t: tp }: { t: number }) {
   const { t } = useLingui();
-  const localT = Math.max(0, Math.min(1, (tp - 0.83) / 0.17));
+  const localT = Math.max(0, Math.min(1, (tp - 0.86) / 0.14));
   const highlight = Math.min(2, Math.floor(localT * 3));
   const terms = [
     {

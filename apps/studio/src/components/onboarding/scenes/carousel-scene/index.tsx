@@ -3,23 +3,20 @@ import { Check, Pause, Play } from "lucide-react";
 import { Trans } from "@lingui/react/macro";
 import { useLingui } from "@lingui/react/macro";
 import { cn } from "@/lib/utils";
-import type { OnboardingStepProps } from "../../steps";
 import { DURATIONS, FEATURE_COUNT, HOLD_AFTER_MS } from "./utils";
 import { AnimPdfPreset } from "./AnimPdfPreset";
 import { AnimPresetPicker } from "./AnimPresetPicker";
 import { AnimPipeline } from "./AnimPipeline";
 import { AnimEnrich } from "./AnimEnrich";
+import { AnimExport } from "./AnimExport";
 
-export function CarouselScene({ onNext }: OnboardingStepProps) {
+export function CarouselScene() {
   const { t } = useLingui();
   const [idx, setIdx] = useState(0);
   const [progress, setProgress] = useState(0);
   const [holding, setHolding] = useState(false);
   const [playing, setPlaying] = useState(true);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const onNextRef = useRef(onNext);
-  const doneRef = useRef(false);
-  useEffect(() => { onNextRef.current = onNext; }, [onNext]);
 
   useEffect(() => {
     if (!playing || holding) return;
@@ -40,20 +37,14 @@ export function CarouselScene({ onNext }: OnboardingStepProps) {
                 setIdx((i) => i + 1);
                 setProgress(0);
                 setHolding(false);
-              }, HOLD_AFTER_MS);
+              }, HOLD_AFTER_MS[idx] ?? 1200);
             }
             return 1;
           }
-          doneRef.current = true;
           return 1;
         }
         return np;
       });
-      if (doneRef.current) {
-        doneRef.current = false;
-        onNextRef.current();
-        return;
-      }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -93,6 +84,12 @@ export function CarouselScene({ onNext }: OnboardingStepProps) {
       body: t`Layer on translations, text-to-speech, and a glossary — all inspectable, cacheable, reversible.`,
       Anim: AnimEnrich,
     },
+    {
+      num: "05",
+      title: t`Export to a reader`,
+      body: t`Package the finished book with every accessibility feature baked in — ready for a kid to open, listen, and read along.`,
+      Anim: AnimExport,
+    },
   ];
 
   const goTo = (i: number) => {
@@ -100,6 +97,7 @@ export function CarouselScene({ onNext }: OnboardingStepProps) {
     if (holdTimer.current) clearTimeout(holdTimer.current);
     setIdx(i);
     setProgress(0);
+    setPlaying(true);
   };
 
   return (
@@ -144,7 +142,7 @@ export function CarouselScene({ onNext }: OnboardingStepProps) {
                   type="button"
                   onClick={() => goTo(i)}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-all",
+                    "flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-all cursor-pointer",
                     active
                       ? "border-border bg-card shadow-sm"
                       : "border-transparent bg-transparent hover:bg-accent/60",

@@ -102,10 +102,10 @@ export function OnboardingFlow() {
         <div className="flex items-center justify-end gap-2 min-w-[230px]">
           <Button
             size="sm"
-            className={cn("rounded-lg", isFirst && "hidden")}
-            onClick={isLast ? onSkip : onNext}
+            className={cn("rounded-lg", (isFirst || isLast) && "hidden")}
+            onClick={onNext}
           >
-            {isLast ? <Trans>Get started</Trans> : <Trans>Continue</Trans>}
+            <Trans>Continue</Trans>
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
