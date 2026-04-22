@@ -28,8 +28,14 @@ export function getAdtUrl(label: string): string {
   return `${BASE_URL}/books/${label}/adt`
 }
 
-export function getAudioUrl(label: string, language: string, fileName: string): string {
-  return `${BASE_URL}/books/${label}/audio/${language}/${fileName}`
+export function getAudioUrl(
+  label: string,
+  language: string,
+  fileName: string,
+  cacheKey?: string,
+): string {
+  const base = `${BASE_URL}/books/${label}/audio/${language}/${fileName}`
+  return cacheKey ? `${base}?v=${encodeURIComponent(cacheKey)}` : base
 }
 
 export function getSignLanguageVideoUrl(label: string, videoId: string): string {
@@ -316,6 +322,7 @@ export interface TTSEntry {
   model: string
   cached: boolean
   provider?: string
+  cacheKey?: string
 }
 
 export interface TTSLanguageData {

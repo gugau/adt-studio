@@ -345,17 +345,17 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
   }
 
   // Build audio lookup — use selected language, or editing language when no output languages
-  const audioMap = new Map<string, { fileName: string; voice: string }>()
+  const audioMap = new Map<string, { fileName: string; voice: string; cacheKey?: string }>()
   if (ttsData && audioLang && ttsData.languages[audioLang]) {
     for (const e of ttsData.languages[audioLang].entries) {
-      audioMap.set(e.textId, { fileName: e.fileName, voice: e.voice })
+      audioMap.set(e.textId, { fileName: e.fileName, voice: e.voice, cacheKey: e.cacheKey })
     }
   }
   // Separate base-language audio map for the source column in translation view
-  const baseAudioMap = new Map<string, { fileName: string; voice: string }>()
+  const baseAudioMap = new Map<string, { fileName: string; voice: string; cacheKey?: string }>()
   if (ttsData && editingLanguage && ttsData.languages[editingLanguage] && audioLang !== editingLanguage) {
     for (const e of ttsData.languages[editingLanguage].entries) {
-      baseAudioMap.set(e.textId, { fileName: e.fileName, voice: e.voice })
+      baseAudioMap.set(e.textId, { fileName: e.fileName, voice: e.voice, cacheKey: e.cacheKey })
     }
   }
   // Build per-language model/voice summary from TTS data
@@ -979,8 +979,8 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
                           </div>
                           {isSpeechStage && !isAnswer && baseAudio && editingLanguage && (
                             <WaveformPlayer
-                              key={`base-${editingLanguage}:${baseAudio.fileName}`}
-                              audioUrl={getAudioUrl(bookLabel, editingLanguage, baseAudio.fileName)}
+                              key={`base-${editingLanguage}:${baseAudio.fileName}:${baseAudio.cacheKey ?? ""}`}
+                              audioUrl={getAudioUrl(bookLabel, editingLanguage, baseAudio.fileName, baseAudio.cacheKey)}
                             />
                           )}
                         </div>
@@ -1486,7 +1486,7 @@ function AudioAction({
   isSavingTimestamps,
   timestampColumns = 2,
 }: {
-  audio?: { fileName: string; voice: string }
+  audio?: { fileName: string; voice: string; cacheKey?: string }
   audioLang: string | null
   bookLabel: string
   textId: string
@@ -1554,8 +1554,8 @@ function AudioAction({
           </div>
         )}
         <WaveformPlayer
-          key={`${audioLang}:${audio.fileName}`}
-          audioUrl={getAudioUrl(bookLabel, audioLang, audio.fileName)}
+          key={`${audioLang}:${audio.fileName}:${audio.cacheKey ?? ""}`}
+          audioUrl={getAudioUrl(bookLabel, audioLang, audio.fileName, audio.cacheKey)}
           onTimeUpdate={onTimeUpdate}
           onPlayingChange={onPlayingChange}
         />

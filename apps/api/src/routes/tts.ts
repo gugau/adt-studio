@@ -365,21 +365,32 @@ export function createTTSRoutes(booksDir: string, configPath?: string, taskServi
         ["tts", "tts"]
       ) as Array<{ item_id: string; data: string; version: number }>
 
-      const languages: Record<string, { entries: Array<{ textId: string; fileName: string; voice: string; model: string; cached: boolean; provider?: string }>; generatedAt: string; version: number }> = {}
+      const languages: Record<string, { entries: Array<{ textId: string; fileName: string; voice: string; model: string; cached: boolean; provider?: string; cacheKey?: string }>; generatedAt: string; version: number }> = {}
+      const resolvedBooksDir = path.resolve(booksDir)
       for (const row of rows) {
         try {
           const parsed = JSON.parse(row.data)
           const validated = TTSOutput.safeParse(parsed)
           if (!validated.success) continue
+          const audioDir = path.join(resolvedBooksDir, safeLabel, "audio", row.item_id)
           languages[row.item_id] = {
-            entries: validated.data.entries.map((e) => ({
-              textId: e.textId,
-              fileName: e.fileName,
-              voice: e.voice,
-              model: e.model,
-              cached: e.cached,
-              provider: e.provider,
-            })),
+            entries: validated.data.entries.map((e) => {
+              let cacheKey: string | undefined
+              try {
+                cacheKey = fs.statSync(path.join(audioDir, e.fileName)).mtimeMs.toString(36)
+              } catch {
+                // file missing — leave cacheKey undefined
+              }
+              return {
+                textId: e.textId,
+                fileName: e.fileName,
+                voice: e.voice,
+                model: e.model,
+                cached: e.cached,
+                provider: e.provider,
+                cacheKey,
+              }
+            }),
             generatedAt: validated.data.generatedAt,
             version: row.version,
           }
@@ -572,9 +583,16 @@ export function createTTSRoutes(booksDir: string, configPath?: string, taskServi
         }
       }
 
+      let cacheKey: string | undefined
+      try {
+        cacheKey = fs.statSync(outputPath).mtimeMs.toString(36)
+      } catch {
+        // ignore — file was just written, this shouldn't happen
+      }
+
       return c.json(
         {
-          entry: nextEntry,
+          entry: { ...nextEntry, cacheKey },
           version,
           completed: completion.allComplete,
           remainingItems: completion.remainingItems,
