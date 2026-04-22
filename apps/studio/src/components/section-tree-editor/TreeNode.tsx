@@ -199,14 +199,14 @@ function DragHandle({
       }}
       onDragEnd={() => setDrag(null)}
       className={cn(
-        "shrink-0 p-0.5 rounded transition-colors",
+        "shrink-0 p-1 rounded transition-opacity",
         disabled
           ? "cursor-default opacity-30"
-          : "cursor-grab active:cursor-grabbing hover:bg-accent opacity-0 group-hover/row:opacity-100 group-hover/head:opacity-100"
+          : "cursor-grab active:cursor-grabbing hover:bg-accent opacity-40 group-hover/row:opacity-100 group-hover/head:opacity-100"
       )}
       title={disabled ? undefined : t`Drag to move`}
     >
-      <GripVertical className="h-3 w-3 text-muted-foreground/70" />
+      <GripVertical className="h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
     </div>
   )
 }
@@ -365,7 +365,7 @@ function ContainerNode(props: TreeNodeProps) {
   return (
     <div
       className={cn(
-        "relative rounded-md border border-slate-200 border-l-2 bg-card/40 pl-1 pr-1 py-1.5 transition-colors",
+        "relative border-l-2 pl-1.5 pr-1 py-1 transition-colors",
         visual.border,
         node.isPruned && "opacity-40",
         isDragging && "opacity-30",
