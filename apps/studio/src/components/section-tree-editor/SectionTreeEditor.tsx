@@ -324,25 +324,31 @@ function RootDropZone({
   if (!drag) return null
   return (
     <div
-      className={cn(
-        "h-1 rounded-full transition-colors",
-        over ? "bg-primary" : "bg-transparent"
-      )}
+      className="relative h-2 flex items-center"
       onDragOver={(e) => {
         if (!e.dataTransfer.types.includes(TREE_DRAG_TYPE)) return
         e.preventDefault()
+        e.stopPropagation()
         e.dataTransfer.dropEffect = "move"
         setOver(true)
       }}
       onDragLeave={() => setOver(false)}
       onDrop={(e) => {
         e.preventDefault()
+        e.stopPropagation()
         setOver(false)
         const sourceId = e.dataTransfer.getData(TREE_DRAG_TYPE)
         if (!sourceId) return
         onDrop(sourceId, { parentNodeId: null, index })
       }}
-    />
+    >
+      <div
+        className={cn(
+          "w-full h-0.5 rounded-full transition-colors pointer-events-none",
+          over ? "bg-primary h-1" : "bg-primary/20"
+        )}
+      />
+    </div>
   )
 }
 

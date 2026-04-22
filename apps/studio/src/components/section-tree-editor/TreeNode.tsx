@@ -291,27 +291,35 @@ function DropZone({
 }) {
   const [over, setOver] = useState(false)
   if (!drag) return null
+  // Tall transparent hit area with a thin centered line so targets are easy
+  // to aim at during a drag without visually dominating the tree.
   return (
     <div
-      className={cn(
-        "h-1 rounded-full my-0.5 transition-colors",
-        over ? "bg-primary" : "bg-transparent"
-      )}
+      className="relative h-2 -my-0.5 flex items-center"
       onDragOver={(e) => {
         if (!e.dataTransfer.types.includes(TREE_DRAG_TYPE)) return
         e.preventDefault()
+        e.stopPropagation()
         e.dataTransfer.dropEffect = "move"
         setOver(true)
       }}
       onDragLeave={() => setOver(false)}
       onDrop={(e) => {
         e.preventDefault()
+        e.stopPropagation()
         setOver(false)
         const sourceId = e.dataTransfer.getData(TREE_DRAG_TYPE)
         if (!sourceId) return
         onDrop(sourceId, { parentNodeId, index })
       }}
-    />
+    >
+      <div
+        className={cn(
+          "w-full h-0.5 rounded-full transition-colors pointer-events-none",
+          over ? "bg-primary h-1" : "bg-primary/20"
+        )}
+      />
+    </div>
   )
 }
 
@@ -344,21 +352,53 @@ function ContainerNode(props: TreeNodeProps) {
   } = props
   const { t } = useLingui()
   const [collapsed, setCollapsed] = useState(false)
+  const [dropOver, setDropOver] = useState(false)
   const children = node.children ?? []
   const structureLabel = node.structure ?? "group"
   const isDragging = drag?.nodeId === node.nodeId
   const visual = getStructureVisual(node.structure)
 
+  // Dropping directly onto a container (e.g. when it is collapsed or empty)
+  // appends the moved node as the container's last child.
+  const canAcceptDrop = !!drag && drag.nodeId !== node.nodeId
+
   return (
     <div
       className={cn(
-        "relative rounded-md border border-slate-200 border-l-2 bg-card/40 pl-1 pr-1 py-1.5",
+        "relative rounded-md border border-slate-200 border-l-2 bg-card/40 pl-1 pr-1 py-1.5 transition-colors",
         visual.border,
         node.isPruned && "opacity-40",
-        isDragging && "opacity-30"
+        isDragging && "opacity-30",
+        dropOver && "ring-2 ring-primary"
       )}
     >
-      <div className="group/head flex items-center gap-1.5">
+      <div
+        className={cn(
+          "group/head flex items-center gap-1.5 rounded",
+          dropOver && "bg-primary/5"
+        )}
+        onDragOver={(e) => {
+          if (!canAcceptDrop) return
+          if (!e.dataTransfer.types.includes(TREE_DRAG_TYPE)) return
+          e.preventDefault()
+          e.stopPropagation()
+          e.dataTransfer.dropEffect = "move"
+          setDropOver(true)
+        }}
+        onDragLeave={(e) => {
+          if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
+          setDropOver(false)
+        }}
+        onDrop={(e) => {
+          if (!canAcceptDrop) return
+          e.preventDefault()
+          e.stopPropagation()
+          setDropOver(false)
+          const sourceId = e.dataTransfer.getData(TREE_DRAG_TYPE)
+          if (!sourceId) return
+          onDrop(sourceId, { parentNodeId: node.nodeId, index: children.length })
+        }}
+      >
         {containerStructures ? (
           <Select
             value={node.structure ?? defaultStructure}
