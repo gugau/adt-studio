@@ -821,6 +821,9 @@ msgstr "Livre"
 msgid "Book Author"
 msgstr "Livre Author"
 
+msgid "Book creation stages"
+msgstr "Étapes de création du livre"
+
 msgid "Book data is outdated and must be rebuilt."
 msgstr "Les données du livre sont obsolètes et doivent être reconstruites."
 
@@ -1157,8 +1160,8 @@ msgstr "Créer à partir de zéro en utilisant votre description"
 msgid "Create session"
 msgstr "Créer une session"
 
-msgid "Create your first book"
-msgstr "Créez votre premier livre"
+#~ msgid "Create your first book"
+#~ msgstr "Créez votre premier livre"
 
 msgid "Creating..."
 msgstr "Création..."
@@ -1393,11 +1396,14 @@ msgstr "Glissez les sommets pour remodeler. Cliquez sur les points médians (+) 
 msgid "Drop a PDF to get started"
 msgstr "Déposez un PDF pour commencer"
 
+msgid "Drop in a PDF and watch it flow through every stage — from raw pages to an accessible reader."
+msgstr "Déposez un PDF et regardez-le traverser chaque étape — des pages brutes à un lecteur accessible."
+
 msgid "Drop in a PDF to kick things off. ADT Studio organizes it into a new book project so you don't start from zero."
 msgstr "Déposez un PDF pour commencer. ADT Studio l'organise dans un nouveau projet de livre pour que vous ne partiez pas de zéro."
 
-msgid "Drop in your first PDF and watch the pipeline do its thing. You can always come back to this tour."
-msgstr "Déposez votre premier PDF et regardez le pipeline faire son travail. Vous pouvez toujours revenir à cette visite."
+#~ msgid "Drop in your first PDF and watch the pipeline do its thing. You can always come back to this tour."
+#~ msgstr "Déposez votre premier PDF et regardez le pipeline faire son travail. Vous pouvez toujours revenir à cette visite."
 
 msgid "Drop PDF here"
 msgstr "Drop PDF ici"
@@ -1557,8 +1563,8 @@ msgstr "ES"
 msgid "Est. Cost"
 msgstr "Est. Coût"
 
-msgid "Eva"
-msgstr "Eva"
+#~ msgid "Eva"
+#~ msgstr "Eva"
 
 msgid "Evaporation"
 msgstr "Évaporation"
@@ -1913,6 +1919,9 @@ msgstr "Comment ça marche"
 msgid "HTML"
 msgstr "HTML"
 
+msgid "I'll start later"
+msgstr "Je commencerai plus tard"
+
 msgid "Illustrated children's books"
 msgstr "Livres illustrés pour enfants"
 
@@ -2131,8 +2140,8 @@ msgstr "Manuels juridiques et de conformité"
 msgid "Legal Compliance Guide"
 msgstr "Legal Compliance Guide"
 
-msgid "Let's build"
-msgstr "Créons"
+#~ msgid "Let's build"
+#~ msgstr "Créons"
 
 msgid "Life in the Coral Reef"
 msgstr "Life dans le Coral Reef"
@@ -2383,6 +2392,9 @@ msgstr "Échec"
 msgid "Misses"
 msgstr "Échecs"
 
+msgid "Mission 01"
+msgstr "Mission 01"
+
 msgid "mitosis"
 msgstr "mitose"
 
@@ -2401,8 +2413,8 @@ msgstr "Modéré"
 msgid "Multi-format publications"
 msgstr "Publications multi-format"
 
-msgid "My book"
-msgstr "Mon livre"
+#~ msgid "My book"
+#~ msgstr "Mon livre"
 
 msgid "my-book-slug"
 msgstr "my-livre-slug"
@@ -3082,8 +3094,8 @@ msgstr "Relancer la traduction"
 msgid "Readers see"
 msgstr "Les lecteurs voient"
 
-msgid "Ready when you are"
-msgstr "Prêt quand vous l'êtes"
+#~ msgid "Ready when you are"
+#~ msgstr "Prêt quand vous l'êtes"
 
 msgid "Real books processed with this preset — before and after."
 msgstr "De vrais livres traités avec ce préréglage — avant et après."
@@ -3645,8 +3657,8 @@ msgstr "Diapositive {0}"
 msgid "Smart Cropping"
 msgstr "Recadrage intelligent"
 
-msgid "something calm."
-msgstr "quelque chose de calme."
+#~ msgid "something calm."
+#~ msgstr "quelque chose de calme."
 
 msgid "Spanish"
 msgstr "Espagnol"
@@ -3698,6 +3710,9 @@ msgstr "Page de début"
 
 msgid "Start reviewer validation"
 msgstr "Démarrer la validation du réviseur"
+
+msgid "Start with a PDF"
+msgstr "Commencer avec un PDF"
 
 msgid "Step"
 msgstr "Étape"
@@ -3947,8 +3962,8 @@ msgstr "La table des matières."
 msgid "The Water Cycle"
 msgstr "Le cycle de l'eau"
 
-msgid "The water cycle describes continuous movement of water."
-msgstr "Le cycle de l'eau décrit le mouvement continu de l'eau."
+#~ msgid "The water cycle describes continuous movement of water."
+#~ msgstr "Le cycle de l'eau décrit le mouvement continu de l'eau."
 
 msgid "These values reflect either the saved book override or the latest packaged defaults."
 msgstr "Ces valeurs reflètent soit le remplacement enregistré du livre, soit les valeurs par défaut du dernier empaquetage."
@@ -4344,6 +4359,12 @@ msgstr "fiction jeune adulte"
 
 msgid "Your Books"
 msgstr "Vos livres"
+
+msgid "Your first ADT <0>starts here.</0>"
+msgstr "Votre premier ADT <0>commence ici.</0>"
+
+#~ msgid "Your first book <0>starts here.</0>"
+#~ msgstr "Votre premier livre <0>commence ici.</0>"
 
 msgid "ZIP Archive"
 msgstr "Archive ZIP"
