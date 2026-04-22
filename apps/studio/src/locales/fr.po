@@ -218,8 +218,11 @@ msgstr "{reviewCount} {0}"
 msgid "{reviewed}/{0} checked"
 msgstr "{reviewed}/{0} vérifié"
 
-msgid "{textCount} text groups"
-msgstr "{textCount} groupes de texte"
+#~ msgid "{textCount} text groups"
+#~ msgstr "{textCount} groupes de texte"
+
+msgid "{textCount} text leaves"
+msgstr "{textCount} feuilles de texte"
 
 #. placeholder {0}: index + 1
 msgid "{title} - page {0}"
@@ -456,8 +459,8 @@ msgstr "Ajouter un conteneur"
 msgid "Add entry below"
 msgstr "Ajouter une entrée ci-dessous"
 
-msgid "Add Group"
-msgstr "Ajouter un groupe"
+#~ msgid "Add Group"
+#~ msgstr "Ajouter un groupe"
 
 msgid "Add Image"
 msgstr "Ajouter une image"
@@ -1246,14 +1249,14 @@ msgstr "Supprimer livre"
 msgid "Delete failed"
 msgstr "Supprimer échoué"
 
-msgid "Delete group"
-msgstr "Supprimer group"
+#~ msgid "Delete group"
+#~ msgstr "Supprimer group"
 
 msgid "Delete section"
 msgstr "Supprimer section"
 
-msgid "Delete text entry"
-msgstr "Supprimer texte entrée"
+#~ msgid "Delete text entry"
+#~ msgstr "Supprimer texte entrée"
 
 #~ msgid "Delete type"
 #~ msgstr "Supprimer le type"
@@ -1324,11 +1327,11 @@ msgstr "Glisser pour déplacer"
 msgid "Drag to move boxes, drag edges/corners to resize"
 msgstr "Glissez pour déplacer les cadres, glissez les bords/coins pour redimensionner"
 
-msgid "Drag to reorder"
-msgstr "Glissez pour réordonner"
+#~ msgid "Drag to reorder"
+#~ msgstr "Glissez pour réordonner"
 
-msgid "Drag to reorder or move to another group"
-msgstr "Glissez pour réordonner ou déplacer vers un autre groupe"
+#~ msgid "Drag to reorder or move to another group"
+#~ msgstr "Glissez pour réordonner ou déplacer vers un autre groupe"
 
 msgid "Drag vertices to reshape. Click midpoints (+) to add points. Right-click a vertex to remove it."
 msgstr "Glissez les sommets pour remodeler. Cliquez sur les points médians (+) pour ajouter des points. Clic droit sur un sommet pour le supprimer."
@@ -1339,11 +1342,11 @@ msgstr "Drop PDF ici"
 msgid "Duplicate"
 msgstr "Dupliquer"
 
-msgid "Duplicate group"
-msgstr "Dupliquer le groupe"
+#~ msgid "Duplicate group"
+#~ msgstr "Dupliquer le groupe"
 
-msgid "Duplicate text entry"
-msgstr "Dupliquer l'entrée de texte"
+#~ msgid "Duplicate text entry"
+#~ msgstr "Dupliquer l'entrée de texte"
 
 msgid "Duration"
 msgstr "Durée"
@@ -1423,8 +1426,8 @@ msgstr "Langue d'édition"
 msgid "Empty container"
 msgstr "Conteneur vide"
 
-msgid "Empty group — drag text entries here"
-msgstr "Groupe vide — glissez des entrées de texte ici"
+#~ msgid "Empty group — drag text entries here"
+#~ msgstr "Groupe vide — glissez des entrées de texte ici"
 
 msgid "Empty section"
 msgstr "Section vide"
@@ -1808,11 +1811,11 @@ msgstr "En-tête"
 msgid "Hide AI edit history"
 msgstr "Masquer l'historique des modifications IA"
 
-msgid "Hide Pruned"
-msgstr "Masquer les élagués"
+#~ msgid "Hide Pruned"
+#~ msgstr "Masquer les élagués"
 
-msgid "Hide pruned images"
-msgstr "Masquer les images élaguées"
+#~ msgid "Hide pruned images"
+#~ msgstr "Masquer les images élaguées"
 
 msgid "Higher values filter out simple or blank images."
 msgstr "Les valeurs plus élevées filtrent les images simples ou vides."
@@ -2910,9 +2913,8 @@ msgstr "Élagué"
 msgid "Pruned Images"
 msgstr "Images élaguées"
 
-#. placeholder {0}: reason ?? ""
-msgid "Pruned: {0}"
-msgstr "Élagué : {0}"
+#~ msgid "Pruned: {0}"
+#~ msgstr "Élagué : {0}"
 
 msgid "Pruned: {reason}"
 msgstr "Élagué : {reason}"
@@ -3488,11 +3490,11 @@ msgstr "Afficher toutes les traductions"
 msgid "Show fewer"
 msgstr "Afficher moins"
 
-msgid "Show Pruned"
-msgstr "Afficher les élagués"
+#~ msgid "Show Pruned"
+#~ msgstr "Afficher les élagués"
 
-msgid "Show pruned images"
-msgstr "Afficher les images élaguées"
+#~ msgid "Show pruned images"
+#~ msgstr "Afficher les images élaguées"
 
 msgid "Show reviewer validation"
 msgstr "Afficher la validation du réviseur"
@@ -3746,8 +3748,8 @@ msgstr "Catalogue de texte"
 msgid "Text color: {0}"
 msgstr "Texte couleur: {0}"
 
-msgid "Text Groups"
-msgstr "Groupes de texte"
+#~ msgid "Text Groups"
+#~ msgstr "Groupes de texte"
 
 msgid "Text Only"
 msgstr "Texte uniquement"

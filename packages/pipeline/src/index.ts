@@ -17,12 +17,6 @@ export {
   type PageSectioningInput,
 } from "./page-sectioning.js"
 export {
-  treeToParts,
-  treeToPartsOutput,
-  partsToTree,
-  partsToTreeOutput,
-} from "./sectioning-shim.js"
-export {
   classifyPageImages,
   buildImageClassifyConfig,
   type ImageClassifyConfig,

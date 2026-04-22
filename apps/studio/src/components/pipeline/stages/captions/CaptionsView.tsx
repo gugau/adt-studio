@@ -3,6 +3,7 @@ import { Check, ChevronDown, Image as ImageIcon, Loader2 } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { api, BASE_URL } from "@/api/client"
 import type { PageDetail, VersionEntry } from "@/api/client"
+import type { ContentNodeData } from "@adt/types"
 import { usePages, usePage } from "@/hooks/use-pages"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
@@ -134,14 +135,18 @@ function VersionPicker({
   )
 }
 
-/** Build a map from imageId → sectionIndex by scanning each section's parts. */
+/** Build a map from imageId → sectionIndex by walking each section's tree. */
 function buildImageSectionMap(page: PageDetail | undefined): Map<string, number> {
   const map = new Map<string, number>()
-  if (!page?.sectioning) return map
-  page.sectioning.sections.forEach((section, idx) => {
-    for (const part of section.parts) {
-      if (part.type === "image") map.set(part.imageId, idx)
+  if (!page?.sectioningTree) return map
+  const walk = (nodes: ContentNodeData[], sectionIdx: number) => {
+    for (const node of nodes) {
+      if (node.role === "image") map.set(node.nodeId, sectionIdx)
+      else if (node.children) walk(node.children, sectionIdx)
     }
+  }
+  page.sectioningTree.sections.forEach((section, idx) => {
+    walk(section.nodes, idx)
   })
   return map
 }
@@ -184,11 +189,11 @@ function PageCaptions({
   const dirty = pending != null
 
   // Map imageId → sectionIndex
-  const imageSectionMap = useMemo(() => buildImageSectionMap(page), [page?.sectioning])
+  const imageSectionMap = useMemo(() => buildImageSectionMap(page), [page?.sectioningTree])
 
   // Group captions by section
   const groups = useMemo(() => {
-    const sections = page?.sectioning?.sections
+    const sections = page?.sectioningTree?.sections
     if (!sections || sections.length <= 1) {
       // No sectioning or single section — flat list, no grouping
       return null
@@ -218,7 +223,7 @@ function PageCaptions({
       result.push({ sectionIndex: -1, sectionType: undefined, captions: unsectioned })
     }
     return result
-  }, [captions, imageSectionMap, page?.sectioning?.sections])
+  }, [captions, imageSectionMap, page?.sectioningTree?.sections])
 
   if (!page?.imageCaptioning || captions.length === 0) return emptyState ?? null
 

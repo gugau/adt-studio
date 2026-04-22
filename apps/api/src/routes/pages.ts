@@ -4,13 +4,13 @@ import path from "node:path"
 import { z } from "zod"
 import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
-import { parseBookLabel, ImageClassificationOutput, PageSectioningOutput, UIPageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES } from "@adt/types"
+import { parseBookLabel, ImageClassificationOutput, PageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES } from "@adt/types"
 import { openBookDb } from "@adt/storage"
 import { createBookStorage } from "@adt/storage"
 import type { Storage } from "@adt/storage"
 import { reRenderPage, aiEditSection } from "../services/page-edit-service.js"
 import type { TaskService } from "../services/task-service.js"
-import { segmentPageImages, getSegmentedImageId, loadBookConfig, applyCrop, generateStyleguide, buildStyleguideGenerationConfig, treeToPartsOutput, partsToTreeOutput } from "@adt/pipeline"
+import { segmentPageImages, getSegmentedImageId, loadBookConfig, applyCrop, generateStyleguide, buildStyleguideGenerationConfig } from "@adt/pipeline"
 import { createLLMModel, createPromptEngine, renderLiquidTemplate, generateImageWithCache } from "@adt/llm"
 
 interface PageSummary {
@@ -30,7 +30,6 @@ interface PageDetail {
   pageId: string
   pageNumber: number
   text: string
-  sectioning: unknown | null
   sectioningTree: unknown | null
   imageClassification: unknown | null
   imageCropping: unknown | null
@@ -499,26 +498,19 @@ export function createPageRoutes(
       const renderingNode = getNodeData("web-rendering")
       const imageCaptioningNode = getNodeData("image-captioning")
 
-      // Tree → parts shim: the storyboard editor UI is still built against
-      // the flat `parts` shape. Keep canonical storage as the tree; convert
-      // at the API boundary. If the stored blob doesn't match the tree
-      // schema (older data or a failed run), return null so the editor can
-      // offer a re-run instead of crashing.
-      let sectioningForUI: unknown = null
+      // Validate the stored blob against the canonical tree schema; if it
+      // doesn't match (older data or a failed run), return null so the
+      // editor can offer a re-run instead of crashing.
       let sectioningTreeForUI: unknown = null
       if (sectioningNode) {
         const parsed = PageSectioningOutput.safeParse(sectioningNode.data)
-        if (parsed.success) {
-          sectioningForUI = treeToPartsOutput(parsed.data)
-          sectioningTreeForUI = parsed.data
-        }
+        if (parsed.success) sectioningTreeForUI = parsed.data
       }
 
       const result: PageDetail = {
         pageId: page.page_id,
         pageNumber: page.page_number,
         text: page.text,
-        sectioning: sectioningForUI,
         sectioningTree: sectioningTreeForUI,
         imageClassification: imageClassNode?.data ?? null,
         imageCropping: imageCroppingNode?.data ?? null,
@@ -604,38 +596,6 @@ export function createPageRoutes(
 
       const version = storage.putNodeData("page-sectioning", pageId, parsed.data)
       // Sectioning change cascades to everything downstream
-      clearCaptionData(storage)
-      return c.json({ version })
-    } finally {
-      storage.close()
-    }
-  })
-
-  // PUT /books/:label/pages/:pageId/sectioning-legacy — Legacy endpoint that
-  // accepts the flat-parts shape; converted to tree via partsToTreeOutput
-  // before writing. Kept for callers that have not yet migrated.
-  app.put("/books/:label/pages/:pageId/sectioning-legacy", async (c) => {
-    const { label, pageId } = c.req.param()
-    const safeLabel = parseBookLabel(label)
-
-    const body = await c.req.json()
-    const parsed = UIPageSectioningOutput.safeParse(body)
-    if (!parsed.success) {
-      throw new HTTPException(400, {
-        message: `Invalid page-sectioning data: ${parsed.error.message}`,
-      })
-    }
-    const treeData = partsToTreeOutput(parsed.data)
-
-    const storage = createBookStorage(safeLabel, booksDir)
-    try {
-      const pages = storage.getPages()
-      const page = pages.find((p) => p.pageId === pageId)
-      if (!page) {
-        throw new HTTPException(404, { message: `Page not found: ${pageId}` })
-      }
-
-      const version = storage.putNodeData("page-sectioning", pageId, treeData)
       clearCaptionData(storage)
       return c.json({ version })
     } finally {

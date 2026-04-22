@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useQueries, useQueryClient, useMutation } from "@tanstack/react-query"
 import { api, BASE_URL, type PageSummaryItem, type PageDetail } from "@/api/client"
-import type { SectionPart, PageSection } from "@adt/types"
+import type { ContentNodeData, PageSectioningOutput, PageSectioningSection } from "@adt/types"
+import { collectLeafNodes, deleteNode, replaceNodeId, toggleNodePruned } from "@adt/types"
 import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import {
   ChevronDown,
@@ -22,8 +23,8 @@ import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
 
-type DetailPanel = "preview" | "metadata" | "textGroups" | "images" | "prunedImages"
-const ALL_PANELS: DetailPanel[] = ["preview", "metadata", "textGroups", "images", "prunedImages"]
+type DetailPanel = "preview" | "metadata" | "content" | "images" | "prunedImages"
+const ALL_PANELS: DetailPanel[] = ["preview", "metadata", "content", "images", "prunedImages"]
 
 interface SectioningOverviewProps {
   bookLabel: string
@@ -53,7 +54,7 @@ export function SectioningOverview({ bookLabel, pages, onNavigateToSection }: Se
   const panelLabels: Record<DetailPanel, string> = {
     preview: t`Preview`,
     metadata: t`Metadata`,
-    textGroups: t`Text Groups`,
+    content: t`Content`,
     images: t`Images`,
     prunedImages: t`Pruned Images`,
   }
@@ -111,14 +112,14 @@ export function SectioningOverview({ bookLabel, pages, onNavigateToSection }: Se
   const togglePruneMutation = useMutation({
     mutationFn: ({ pageId, sectionIndex }: { pageId: string; sectionIndex: number }) => {
       const page = pageDetails.find((p) => p.pageId === pageId)
-      if (!page?.sectioning) throw new Error("No sectioning data")
-      const updated = {
-        ...page.sectioning,
-        sections: page.sectioning.sections.map((s, i) =>
+      if (!page?.sectioningTree) throw new Error("No sectioning data")
+      const updated: PageSectioningOutput = {
+        ...page.sectioningTree,
+        sections: page.sectioningTree.sections.map((s, i) =>
           i === sectionIndex ? { ...s, isPruned: !s.isPruned } : s
         ),
       }
-      return api.updateSectioningLegacy(bookLabel, pageId, updated)
+      return api.updateSectioning(bookLabel, pageId, updated)
     },
     onSuccess: (_data, vars) => invalidatePages(vars.pageId),
   })
@@ -348,18 +349,18 @@ function PageSectionRows({
   useEffect(() => {
     if (expandSignal.tick === lastTick.current) return
     lastTick.current = expandSignal.tick
-    if (!page.sectioning) return
+    if (!page.sectioningTree) return
     if (expandSignal.action === "expand") {
-      setExpanded(new Set(page.sectioning.sections.map((_, i) => i)))
+      setExpanded(new Set(page.sectioningTree.sections.map((_, i) => i)))
     } else {
       setExpanded(new Set())
     }
-  }, [expandSignal, page.sectioning])
+  }, [expandSignal, page.sectioningTree])
 
-  if (!page.sectioning) return null
+  if (!page.sectioningTree) return null
 
-  const sections = page.sectioning.sections
-  const reasoning = page.sectioning.reasoning
+  const sections = page.sectioningTree.sections
+  const reasoning = page.sectioningTree.reasoning
 
   const toggleSection = (idx: number) => {
     setExpanded((prev) => {
@@ -419,8 +420,6 @@ function PageSectionRows({
 
       {/* Section rows */}
       {sections.map((section, idx) => {
-        const textParts = section.parts.filter((p) => p.type === "text_group")
-        const imageParts = section.parts.filter((p) => p.type === "image")
         const isExpanded = expanded.has(idx)
 
         // Get rendering reasoning if available
@@ -437,8 +436,6 @@ function PageSectionRows({
             sectionCount={sections.length}
             hasPrevPage={hasPrevPage}
             hasNextPage={hasNextPage}
-            textParts={textParts}
-            imageParts={imageParts}
             isExpanded={isExpanded}
             onToggle={() => toggleSection(idx)}
             renderReasoning={renderSection?.reasoning}
@@ -472,8 +469,6 @@ function SectionRow({
   sectionCount,
   hasPrevPage,
   hasNextPage,
-  textParts,
-  imageParts,
   isExpanded,
   onToggle,
   renderReasoning,
@@ -491,13 +486,11 @@ function SectionRow({
   onInvalidatePages,
 }: {
   page: PageDetail
-  section: PageSection
+  section: PageSectioningSection
   sectionIndex: number
   sectionCount: number
   hasPrevPage: boolean
   hasNextPage: boolean
-  textParts: SectionPart[]
-  imageParts: SectionPart[]
   isExpanded: boolean
   onToggle: () => void
   renderReasoning?: string
@@ -515,14 +508,17 @@ function SectionRow({
   onInvalidatePages: (...pageIds: string[]) => void
 }) {
   const { t } = useLingui()
-  const textCount = textParts.length
-  const imageCount = imageParts.length
+  const leaves = collectLeafNodes(section.nodes)
+  const textLeaves = leaves.filter((n) => n.role !== "image")
+  const imageLeaves = leaves.filter((n) => n.role === "image")
+  const textCount = textLeaves.length
+  const imageCount = imageLeaves.length
 
-  // Build a content preview from the first text group
-  const firstText = textParts[0]
-  const preview = firstText?.type === "text_group"
-    ? firstText.texts.map((tx) => tx.text).join(" ").slice(0, 120)
-    : null
+  const preview = textLeaves
+    .map((n) => n.text ?? "")
+    .filter(Boolean)
+    .join(" ")
+    .slice(0, 120) || null
 
   return (
     <>
@@ -584,7 +580,7 @@ function SectionRow({
         <td className="px-3 py-2 text-center">
           <div className="flex items-center justify-center gap-2">
             {textCount > 0 && (
-              <span className="flex items-center gap-0.5" title={t`${textCount} text groups`}>
+              <span className="flex items-center gap-0.5" title={t`${textCount} text leaves`}>
                 <FileText className="h-3 w-3 text-blue-500" />
                 {textCount}
               </span>
@@ -632,8 +628,7 @@ function SectionRow({
             <SectionDetail
               section={section}
               sectionIndex={sectionIndex}
-              textParts={textParts as Extract<SectionPart, { type: "text_group" }>[]}
-              imageParts={imageParts as Extract<SectionPart, { type: "image" }>[]}
+              imageLeaves={imageLeaves}
               renderReasoning={renderReasoning}
               bookLabel={bookLabel}
               pageId={page.pageId}
@@ -657,8 +652,7 @@ function SectionRow({
 function SectionDetail({
   section,
   sectionIndex,
-  textParts,
-  imageParts,
+  imageLeaves,
   renderReasoning,
   bookLabel,
   pageId,
@@ -668,10 +662,9 @@ function SectionDetail({
   onNavigate,
   onInvalidatePages,
 }: {
-  section: { sectionId: string; sectionType: string; backgroundColor: string; textColor: string }
+  section: PageSectioningSection
   sectionIndex: number
-  textParts: Array<{ type: "text_group"; groupId: string; groupType: string; texts: Array<{ textId: string; textType: string; text: string; isPruned: boolean }>; isPruned: boolean }>
-  imageParts: Array<{ type: "image"; imageId: string; isPruned: boolean; reason?: string }>
+  imageLeaves: ContentNodeData[]
   renderReasoning?: string
   bookLabel: string
   pageId: string
@@ -713,22 +706,12 @@ function SectionDetail({
   const handleCropApply = useCallback(async (blob: Blob) => {
     if (!cropTarget) return
     const result = await api.uploadCroppedImage(bookLabel, pageId, cropTarget, blob)
-    // Swap the imageId in sectioning data
     const pageData = queryClient.getQueryData<PageDetail>(["books", bookLabel, "pages", pageId])
-    if (pageData?.sectioning) {
-      const updated = {
-        ...pageData.sectioning,
-        sections: pageData.sectioning.sections.map((s: PageSection, si: number) => {
-          if (si !== sectionIndex) return s
-          return {
-            ...s,
-            parts: s.parts.map((p: SectionPart) =>
-              p.type === "image" && p.imageId === cropTarget ? { ...p, imageId: result.imageId } : p
-            ),
-          }
-        }),
-      }
-      await api.updateSectioningLegacy(bookLabel, pageId, updated)
+    if (pageData?.sectioningTree) {
+      const updated = updateSectionNodes(pageData.sectioningTree, sectionIndex, (nodes) =>
+        replaceNodeId(nodes, cropTarget, result.imageId)
+      )
+      await api.updateSectioning(bookLabel, pageId, updated)
     }
     setCropTarget(null)
     setRecropPageSrc(null)
@@ -760,20 +743,11 @@ function SectionDetail({
     replaceTargetRef.current = null
     const result = await api.uploadCroppedImage(bookLabel, pageId, targetId, file)
     const pageData = queryClient.getQueryData<PageDetail>(["books", bookLabel, "pages", pageId])
-    if (pageData?.sectioning) {
-      const updated = {
-        ...pageData.sectioning,
-        sections: pageData.sectioning.sections.map((s: PageSection, si: number) => {
-          if (si !== sectionIndex) return s
-          return {
-            ...s,
-            parts: s.parts.map((p: SectionPart) =>
-              p.type === "image" && p.imageId === targetId ? { ...p, imageId: result.imageId } : p
-            ),
-          }
-        }),
-      }
-      await api.updateSectioningLegacy(bookLabel, pageId, updated)
+    if (pageData?.sectioningTree) {
+      const updated = updateSectionNodes(pageData.sectioningTree, sectionIndex, (nodes) =>
+        replaceNodeId(nodes, targetId, result.imageId)
+      )
+      await api.updateSectioning(bookLabel, pageId, updated)
     }
     onInvalidatePages(pageId)
   }, [bookLabel, pageId, sectionIndex, queryClient, onInvalidatePages])
@@ -802,15 +776,11 @@ function SectionDetail({
   const handleDelete = useCallback(async (dataId: string) => {
     setSelectedImage(null)
     const pageData = queryClient.getQueryData<PageDetail>(["books", bookLabel, "pages", pageId])
-    if (pageData?.sectioning) {
-      const updated = {
-        ...pageData.sectioning,
-        sections: pageData.sectioning.sections.map((s: PageSection, si: number) => {
-          if (si !== sectionIndex) return s
-          return { ...s, parts: s.parts.filter((p: SectionPart) => !(p.type === "image" && p.imageId === dataId)) }
-        }),
-      }
-      await api.updateSectioningLegacy(bookLabel, pageId, updated)
+    if (pageData?.sectioningTree) {
+      const updated = updateSectionNodes(pageData.sectioningTree, sectionIndex, (nodes) =>
+        deleteNode(nodes, dataId)
+      )
+      await api.updateSectioning(bookLabel, pageId, updated)
     }
     onInvalidatePages(pageId)
   }, [bookLabel, pageId, sectionIndex, queryClient, onInvalidatePages])
@@ -818,20 +788,11 @@ function SectionDetail({
   const handleTogglePrune = useCallback(async (dataId: string) => {
     setSelectedImage(null)
     const pageData = queryClient.getQueryData<PageDetail>(["books", bookLabel, "pages", pageId])
-    if (pageData?.sectioning) {
-      const updated = {
-        ...pageData.sectioning,
-        sections: pageData.sectioning.sections.map((s: PageSection, si: number) => {
-          if (si !== sectionIndex) return s
-          return {
-            ...s,
-            parts: s.parts.map((p: SectionPart) =>
-              p.type === "image" && p.imageId === dataId ? { ...p, isPruned: !p.isPruned } : p
-            ),
-          }
-        }),
-      }
-      await api.updateSectioningLegacy(bookLabel, pageId, updated)
+    if (pageData?.sectioningTree) {
+      const updated = updateSectionNodes(pageData.sectioningTree, sectionIndex, (nodes) =>
+        toggleNodePruned(nodes, dataId)
+      )
+      await api.updateSectioning(bookLabel, pageId, updated)
     }
     onInvalidatePages(pageId)
   }, [bookLabel, pageId, sectionIndex, queryClient, onInvalidatePages])
@@ -906,56 +867,22 @@ function SectionDetail({
             </>
           )}
 
-          {/* Text groups */}
-          {visiblePanels.has("textGroups") && textParts.length > 0 && (
+          {/* Content tree */}
+          {visiblePanels.has("content") && section.nodes.length > 0 && (
             <div>
               <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
-                <Trans>Text Groups</Trans>
+                <Trans>Content</Trans>
               </h4>
-              <div className="space-y-2">
-                {textParts.map((part) => (
-                  <div
-                    key={part.groupId}
-                    className={cn(
-                      "border rounded p-2",
-                      part.isPruned && "opacity-50 border-dashed"
-                    )}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-mono text-[10px] text-muted-foreground">{part.groupId}</span>
-                      <span className="text-[10px] px-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
-                        {part.groupType}
-                      </span>
-                      {part.isPruned && (
-                        <span className="text-[10px] px-1 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
-                          <Trans>pruned</Trans>
-                        </span>
-                      )}
-                    </div>
-                    <div className="space-y-0.5">
-                      {part.texts.map((text) => (
-                        <div
-                          key={text.textId}
-                          className={cn(
-                            "flex gap-2 text-xs",
-                            text.isPruned && "opacity-40 line-through"
-                          )}
-                        >
-                          <span className="shrink-0 text-[10px] font-mono text-muted-foreground w-24">{text.textType}</span>
-                          <span className="text-foreground">{text.text}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <SectionTreeView nodes={section.nodes} />
             </div>
           )}
 
           {/* Images */}
-          {visiblePanels.has("images") && imageParts.length > 0 && (() => {
+          {visiblePanels.has("images") && imageLeaves.length > 0 && (() => {
             const showPruned = visiblePanels.has("prunedImages")
-            const filteredImages = showPruned ? imageParts : imageParts.filter((img) => !img.isPruned)
+            const filteredImages = showPruned
+              ? imageLeaves
+              : imageLeaves.filter((img) => !img.isPruned)
             if (filteredImages.length === 0) return null
             return (
             <div>
@@ -965,20 +892,20 @@ function SectionDetail({
               <div className="flex flex-wrap gap-2">
                 {filteredImages.map((img) => (
                   <div
-                    key={img.imageId}
+                    key={img.nodeId}
                     className={cn(
                       "border rounded p-1.5 flex flex-col items-center gap-1 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-shadow",
                       img.isPruned && "opacity-50 border-dashed",
-                      selectedImage?.imageId === img.imageId && "ring-2 ring-primary"
+                      selectedImage?.imageId === img.nodeId && "ring-2 ring-primary"
                     )}
-                    onClick={(e) => handleImageClick(e, img)}
+                    onClick={(e) => handleImageClick(e, { imageId: img.nodeId, isPruned: img.isPruned })}
                   >
                     <img
-                      src={`${BASE_URL}/books/${bookLabel}/images/${img.imageId}`}
-                      alt={img.imageId}
+                      src={`${BASE_URL}/books/${bookLabel}/images/${img.nodeId}`}
+                      alt={img.nodeId}
                       className="h-16 w-auto object-contain rounded"
                     />
-                    <span className="text-[10px] font-mono text-muted-foreground">{img.imageId}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">{img.nodeId}</span>
                     {img.isPruned && (
                       <span className="text-[10px] text-amber-600"><Trans>pruned</Trans></span>
                     )}
@@ -1047,4 +974,88 @@ function SectionDetail({
       )}
     </div>
   )
+}
+
+// ---------------------------------------------------------------------------
+// Read-only tree view — renders a section's content tree inline.
+// ---------------------------------------------------------------------------
+
+function SectionTreeView({ nodes }: { nodes: ContentNodeData[] }) {
+  return (
+    <div className="space-y-1">
+      {nodes.map((node) => (
+        <SectionTreeNode key={node.nodeId} node={node} />
+      ))}
+    </div>
+  )
+}
+
+function SectionTreeNode({ node }: { node: ContentNodeData }) {
+  const isImage = node.role === "image"
+  const isLeaf = !!node.role
+
+  if (isLeaf) {
+    return (
+      <div
+        className={cn(
+          "flex gap-2 text-xs",
+          node.isPruned && (isImage ? "opacity-40" : "opacity-40 line-through")
+        )}
+      >
+        <span className="shrink-0 text-[10px] font-mono text-muted-foreground w-24">
+          {node.role}
+        </span>
+        <span className="text-foreground">
+          {isImage ? (
+            <span className="font-mono text-[10px]">{node.nodeId}</span>
+          ) : (
+            node.text ?? ""
+          )}
+        </span>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className={cn(
+        "border rounded p-2",
+        node.isPruned && "opacity-50 border-dashed"
+      )}
+    >
+      <div className="flex items-center gap-2 mb-1">
+        <span className="font-mono text-[10px] text-muted-foreground">
+          {node.nodeId}
+        </span>
+        <span className="text-[10px] px-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+          {node.structure ?? "container"}
+        </span>
+        {node.isPruned && (
+          <span className="text-[10px] px-1 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+            <Trans>pruned</Trans>
+          </span>
+        )}
+      </div>
+      {node.children && node.children.length > 0 && (
+        <div className="pl-3 border-l-2 border-muted">
+          <SectionTreeView nodes={node.children} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Apply a pure tree transform to a specific section inside a sectioningTree
+// payload and return the updated payload ready to send to the API.
+function updateSectionNodes(
+  tree: PageSectioningOutput,
+  sectionIndex: number,
+  transform: (nodes: ContentNodeData[]) => ContentNodeData[]
+): PageSectioningOutput {
+  return {
+    ...tree,
+    sections: tree.sections.map((s, i) =>
+      i === sectionIndex ? { ...s, nodes: transform(s.nodes) } : s
+    ),
+  }
 }

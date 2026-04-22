@@ -175,10 +175,7 @@ function ContainerNode(props: TreeNodeProps) {
   const { t } = useLingui()
   const [collapsed, setCollapsed] = useState(false)
   const children = node.children ?? []
-  const structureLabel =
-    (containerStructures && containerStructures[node.structure ?? ""]) ??
-    node.structure ??
-    "group"
+  const structureLabel = node.structure ?? "group"
   const isDragging = drag?.nodeId === node.nodeId
 
   return (

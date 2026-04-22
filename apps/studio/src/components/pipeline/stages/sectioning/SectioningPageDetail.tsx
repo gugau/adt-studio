@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
+import { createPortal } from "react-dom"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import type { PageSectioningOutput, PageSectioningSection } from "@adt/types"
@@ -7,6 +8,17 @@ import { usePageImage } from "@/hooks/use-pages"
 import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import { cn } from "@/lib/utils"
 import { SectionTreeEditor } from "@/components/section-tree-editor/SectionTreeEditor"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  getSectionTypeLabel,
+  getSectionTypeDescription,
+} from "@/lib/section-constants"
 import { useStepHeader } from "../../components/StepViewRouter"
 
 export function SectioningPageDetail({
@@ -24,7 +36,7 @@ export function SectioningPageDetail({
 }) {
   const { t } = useLingui()
   const queryClient = useQueryClient()
-  const { setExtra, setOnLabelClick } = useStepHeader()
+  const { headerSlotEl } = useStepHeader()
   const { data: imageData } = usePageImage(bookLabel, pageId)
 
   const configQuery = useQuery({
@@ -33,12 +45,25 @@ export function SectioningPageDetail({
     staleTime: 5 * 60 * 1000,
   })
 
-  const textTypes = configQuery.data?.merged?.text_types as
+  const textTypes = configQuery.data?.merged?.role_types as
     | Record<string, string>
     | undefined
-  const groupTypes = configQuery.data?.merged?.text_group_types as
+  const groupTypes = configQuery.data?.merged?.structure_types as
     | Record<string, string>
     | undefined
+  const allSectionTypes = configQuery.data?.merged?.section_types as
+    | Record<string, string>
+    | undefined
+  const disabledSectionTypes = new Set(
+    (configQuery.data?.merged?.disabled_section_types as string[]) ?? []
+  )
+  const sectionTypes = allSectionTypes
+    ? Object.fromEntries(
+        Object.entries(allSectionTypes).filter(
+          ([key]) => !disabledSectionTypes.has(key)
+        )
+      )
+    : undefined
 
   // Keyed by sectionId — a section only appears here once the user has edited
   // it, and the saved version replaces the original on `onChange`.
@@ -107,64 +132,49 @@ export function SectioningPageDetail({
     t,
   ])
 
-  useEffect(() => {
-    setOnLabelClick(null)
-    setExtra(
-      <div className="flex-1 flex items-center gap-3">
-        {navigationExtra}
-        {dirty ? (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleDiscard}
-              disabled={saving}
-              className={cn(
-                "text-xs px-2.5 py-1 rounded border transition-colors",
-                saving
-                  ? "border-muted-foreground/20 text-muted-foreground/50"
-                  : "border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/60 hover:text-foreground cursor-pointer"
-              )}
-            >
-              <Trans>Discard</Trans>
-            </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className={cn(
-                "text-xs px-2.5 py-1 rounded transition-colors",
-                saving
-                  ? "bg-primary/60 text-primary-foreground/70 cursor-default"
-                  : "bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
-              )}
-            >
-              {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
-            </button>
-          </div>
-        ) : null}
-        {saveError ? (
-          <span className="text-xs text-destructive">{saveError}</span>
-        ) : null}
-        <div className="ml-auto flex gap-1">{navigationArrows}</div>
-      </div>
-    )
-    return () => {
-      setExtra(null)
-      setOnLabelClick(null)
-    }
-  }, [
-    navigationExtra,
-    navigationArrows,
-    dirty,
-    saving,
-    saveError,
-    setExtra,
-    setOnLabelClick,
-    handleDiscard,
-    handleSave,
-  ])
+  const headerControls = (
+    <div className="flex-1 flex items-center gap-3">
+      {navigationExtra}
+      {dirty ? (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleDiscard}
+            disabled={saving}
+            className={cn(
+              "text-xs px-2.5 py-1 rounded border transition-colors",
+              saving
+                ? "border-muted-foreground/20 text-muted-foreground/50"
+                : "border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/60 hover:text-foreground cursor-pointer"
+            )}
+          >
+            <Trans>Discard</Trans>
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className={cn(
+              "text-xs px-2.5 py-1 rounded transition-colors",
+              saving
+                ? "bg-primary/60 text-primary-foreground/70 cursor-default"
+                : "bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+            )}
+          >
+            {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
+          </button>
+        </div>
+      ) : null}
+      {saveError ? (
+        <span className="text-xs text-destructive">{saveError}</span>
+      ) : null}
+      <div className="ml-auto flex gap-1">{navigationArrows}</div>
+    </div>
+  )
 
   return (
+    <>
+    {headerSlotEl && createPortal(headerControls, headerSlotEl)}
     <div className="flex h-full min-h-0">
       <div className="w-1/2 min-w-0 border-r overflow-auto bg-muted/10 p-4">
         {imageData ? (
@@ -187,14 +197,41 @@ export function SectioningPageDetail({
         ) : (
           mergedSections.map((section, idx) => (
             <div key={section.sectionId}>
-              <div className="flex items-baseline gap-3 mb-2">
+              <div className="flex items-center gap-3 mb-2">
                 <div className="text-xs font-medium text-muted-foreground">
                   {`#${idx + 1}`}
                 </div>
                 <div className="text-sm font-semibold">{section.sectionId}</div>
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                  {section.sectionType}
-                </div>
+                {sectionTypes ? (
+                  <Select
+                    value={section.sectionType}
+                    onValueChange={(value) =>
+                      handleSectionChange({ ...section, sectionType: value })
+                    }
+                    disabled={saving}
+                  >
+                    <SelectTrigger className="h-6 text-[10px] font-medium px-1.5 py-0 w-auto min-w-[80px] border-0 bg-muted/50">
+                      <SelectValue>
+                        {getSectionTypeLabel(section.sectionType) ||
+                          section.sectionType.replace(/_/g, " ")}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(sectionTypes).map(([key, desc]) => (
+                        <SelectItem key={key} value={key} className="text-xs">
+                          {getSectionTypeLabel(key) || key.replace(/_/g, " ")}
+                          <span className="ml-1 text-muted-foreground text-[10px]">
+                            {getSectionTypeDescription(key) ?? desc}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                    {section.sectionType}
+                  </span>
+                )}
                 {section.isPruned ? (
                   <span className="text-xs text-amber-600">
                     <Trans>pruned</Trans>
@@ -221,5 +258,6 @@ export function SectioningPageDetail({
         )}
       </div>
     </div>
+    </>
   )
 }

@@ -236,6 +236,27 @@ export function addLeaf(
   return insertNode(nodes, parentNodeId, index, leaf)
 }
 
+// Add an image leaf. Image leaves use their imageId as their nodeId (the
+// renderer emits `data-id="${nodeId}"` which downstream editors use as the
+// image id) so `imageId` is the authoritative identifier for both roles.
+export function addImageLeaf(
+  nodes: ContentNodeData[],
+  parentNodeId: string | null,
+  opts: { imageId: string; index?: number }
+): ContentNodeData[] {
+  const leaf: ContentNodeData = {
+    nodeId: opts.imageId,
+    isPruned: false,
+    role: "image",
+  }
+  const index =
+    opts.index ??
+    (parentNodeId == null
+      ? nodes.length
+      : (findNode(nodes, parentNodeId)?.children?.length ?? 0))
+  return insertNode(nodes, parentNodeId, index, leaf)
+}
+
 export function addContainer(
   nodes: ContentNodeData[],
   parentNodeId: string | null,
@@ -321,6 +342,18 @@ export function unnestNode(
   return inserted
 }
 
+// Change a single node's nodeId. Used to swap an image leaf's id when a new
+// file replaces the old one (crop, replace, AI generate), since an image
+// leaf's nodeId IS its imageId.
+export function replaceNodeId(
+  nodes: ContentNodeData[],
+  oldNodeId: string,
+  newNodeId: string
+): ContentNodeData[] {
+  if (oldNodeId === newNodeId) return nodes
+  return mapNode(nodes, oldNodeId, (node) => ({ ...node, nodeId: newNodeId }))
+}
+
 // ── Helpers ─────────────────────────────────────────────────────
 
 export function cloneNodeWithNewIds(
@@ -332,4 +365,53 @@ export function cloneNodeWithNewIds(
     base.children = node.children.map((c) => cloneNodeWithNewIds(c, idFactory))
   }
   return base
+}
+
+// Walk the tree and return nodeIds of all pruned leaves (text + image),
+// including leaves under a pruned container (inherited prune).
+export function collectPrunedLeafIds(nodes: ContentNodeData[]): string[] {
+  const ids: string[] = []
+  const walk = (list: ContentNodeData[], inherited: boolean) => {
+    for (const node of list) {
+      const effectivePruned = inherited || node.isPruned
+      if (node.role) {
+        if (effectivePruned) ids.push(node.nodeId)
+      } else if (node.children) {
+        walk(node.children, effectivePruned)
+      }
+    }
+  }
+  walk(nodes, false)
+  return ids
+}
+
+// Collect all leaf nodeIds (text + image) reachable from `root` — used when
+// deleting a container so the preview HTML can strip every data-id below it.
+export function collectLeafIdsInSubtree(root: ContentNodeData): string[] {
+  const ids: string[] = []
+  const walk = (node: ContentNodeData) => {
+    if (node.role) {
+      ids.push(node.nodeId)
+      return
+    }
+    for (const child of node.children ?? []) walk(child)
+  }
+  walk(root)
+  return ids
+}
+
+// Flat list of every leaf in the tree, in document order. Used by preview
+// back-propagation to rebuild text content from edited HTML.
+export function collectLeafNodes(
+  nodes: ContentNodeData[]
+): ContentNodeData[] {
+  const out: ContentNodeData[] = []
+  const walk = (list: ContentNodeData[]) => {
+    for (const node of list) {
+      if (node.role) out.push(node)
+      else if (node.children) walk(node.children)
+    }
+  }
+  walk(nodes)
+  return out
 }

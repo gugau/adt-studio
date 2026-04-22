@@ -217,8 +217,11 @@ msgstr "{reviewCount} {0}"
 msgid "{reviewed}/{0} checked"
 msgstr "{reviewed}/{0} checked"
 
-msgid "{textCount} text groups"
-msgstr "{textCount} grupos de texto"
+#~ msgid "{textCount} text groups"
+#~ msgstr "{textCount} grupos de texto"
+
+msgid "{textCount} text leaves"
+msgstr "{textCount} folhas de texto"
 
 #. placeholder {0}: index + 1
 msgid "{title} - page {0}"
@@ -455,8 +458,8 @@ msgstr "Adicionar contêiner"
 msgid "Add entry below"
 msgstr "Adicionar entrada abaixo"
 
-msgid "Add Group"
-msgstr "Adicionar grupo"
+#~ msgid "Add Group"
+#~ msgstr "Adicionar grupo"
 
 msgid "Add Image"
 msgstr "Adicionar imagem"
@@ -1245,14 +1248,14 @@ msgstr "Excluir livro"
 msgid "Delete failed"
 msgstr "Delete failed"
 
-msgid "Delete group"
-msgstr "Excluir grupo"
+#~ msgid "Delete group"
+#~ msgstr "Excluir grupo"
 
 msgid "Delete section"
 msgstr "Excluir seção"
 
-msgid "Delete text entry"
-msgstr "Excluir entrada de texto"
+#~ msgid "Delete text entry"
+#~ msgstr "Excluir entrada de texto"
 
 #~ msgid "Delete type"
 #~ msgstr "Excluir tipo"
@@ -1323,11 +1326,11 @@ msgstr "Arrastar para mover"
 msgid "Drag to move boxes, drag edges/corners to resize"
 msgstr "Drag to move boxes, drag edges/corners to resize"
 
-msgid "Drag to reorder"
-msgstr "Arraste para reordenar"
+#~ msgid "Drag to reorder"
+#~ msgstr "Arraste para reordenar"
 
-msgid "Drag to reorder or move to another group"
-msgstr "Arraste para reordenar ou mover para outro grupo"
+#~ msgid "Drag to reorder or move to another group"
+#~ msgstr "Arraste para reordenar ou mover para outro grupo"
 
 msgid "Drag vertices to reshape. Click midpoints (+) to add points. Right-click a vertex to remove it."
 msgstr "Arraste os vértices para remodelar. Clique nos pontos médios (+) para adicionar pontos. Clique com o botão direito em um vértice para removê-lo."
@@ -1338,11 +1341,11 @@ msgstr "Solte o PDF aqui"
 msgid "Duplicate"
 msgstr "Duplicar"
 
-msgid "Duplicate group"
-msgstr "Duplicar grupo"
+#~ msgid "Duplicate group"
+#~ msgstr "Duplicar grupo"
 
-msgid "Duplicate text entry"
-msgstr "Duplicar entrada de texto"
+#~ msgid "Duplicate text entry"
+#~ msgstr "Duplicar entrada de texto"
 
 msgid "Duration"
 msgstr "Duração"
@@ -1422,8 +1425,8 @@ msgstr "Idioma de edição"
 msgid "Empty container"
 msgstr "Contêiner vazio"
 
-msgid "Empty group — drag text entries here"
-msgstr "Grupo vazio — arraste entradas de texto aqui"
+#~ msgid "Empty group — drag text entries here"
+#~ msgstr "Grupo vazio — arraste entradas de texto aqui"
 
 msgid "Empty section"
 msgstr "Seção vazia"
@@ -1804,11 +1807,11 @@ msgstr "Cabeçalho"
 msgid "Hide AI edit history"
 msgstr "Ocultar histórico de edições com IA"
 
-msgid "Hide Pruned"
-msgstr "Ocultar removidas"
+#~ msgid "Hide Pruned"
+#~ msgstr "Ocultar removidas"
 
-msgid "Hide pruned images"
-msgstr "Ocultar imagens removidas"
+#~ msgid "Hide pruned images"
+#~ msgstr "Ocultar imagens removidas"
 
 msgid "Higher values filter out simple or blank images."
 msgstr "Valores mais altos filtram imagens simples ou em branco."
@@ -2906,9 +2909,8 @@ msgstr "Removido"
 msgid "Pruned Images"
 msgstr "Imagens removidas"
 
-#. placeholder {0}: reason ?? ""
-msgid "Pruned: {0}"
-msgstr "Removido: {0}"
+#~ msgid "Pruned: {0}"
+#~ msgstr "Removido: {0}"
 
 msgid "Pruned: {reason}"
 msgstr "Removido: {0}"
@@ -3484,11 +3486,11 @@ msgstr "Mostrar todas as traduções"
 msgid "Show fewer"
 msgstr "Show fewer"
 
-msgid "Show Pruned"
-msgstr "Mostrar removidas"
+#~ msgid "Show Pruned"
+#~ msgstr "Mostrar removidas"
 
-msgid "Show pruned images"
-msgstr "Mostrar imagens removidas"
+#~ msgid "Show pruned images"
+#~ msgstr "Mostrar imagens removidas"
 
 msgid "Show reviewer validation"
 msgstr "Show reviewer validation"
@@ -3742,8 +3744,8 @@ msgstr "Catálogo de texto"
 msgid "Text color: {0}"
 msgstr "Cor do texto: {0}"
 
-msgid "Text Groups"
-msgstr "Grupos de texto"
+#~ msgid "Text Groups"
+#~ msgstr "Grupos de texto"
 
 msgid "Text Only"
 msgstr "Só texto"
