@@ -111,8 +111,6 @@ export const gatherAudioElements = () => {
     // ensures we ignore UI chrome [data-id] labels from interface.html.
     const contentRoot = document.getElementById('content');
     if (!contentRoot) {
-        const strayDataIds = document.querySelectorAll('[data-id]').length;
-        console.warn(`[TTS-HL] gatherAudioElements: #content element not found. ${strayDataIds} [data-id] elements exist outside #content. Check renderPageHtml output.`);
         setState('audioElements', []);
         return [];
     }
@@ -181,14 +179,6 @@ export const gatherAudioElements = () => {
         .filter(item => item && item.audioSrc);
 
     setState('audioElements', elements);
-    if (elements.length === 0) {
-        const dataIdCountInContent = contentRoot.querySelectorAll('[data-id]').length;
-        const totalDataIdCount = document.querySelectorAll('[data-id]').length;
-        if (dataIdCountInContent === 0 && totalDataIdCount > 0) {
-            console.warn(`[TTS-HL] gatherAudioElements: 0 elements in #content but ${totalDataIdCount} [data-id] elements exist outside it — page content may be rendered in the wrong wrapper.`);
-        }
-    }
-    console.log(`[TTS-HL] gatherAudioElements: ${elements.length} elements; first ids:`, elements.slice(0, 5).map(e => e.id));
     return elements;
 };
 
@@ -215,7 +205,6 @@ export const stopAudio = () => {
  * Toggles play/pause for TTS audio.
  */
 export const togglePlayPause = () => {
-    console.log(`[TTS-HL] togglePlayPause: was isPlaying=${state.isPlaying}, currentIndex=${state.currentIndex}, audioElements=${state.audioElements?.length ?? 0}`);
     if (state.isPlaying) {
         stopAudio();
     } else {
@@ -276,10 +265,8 @@ export const playCurrentAudio = async () => {
  */
 const processAudioQueue = async () => {
     const { currentIndex, audioElements, audioSpeed, describeImagesMode, navigationDirection } = state;
-    console.log(`[TTS-HL] processAudioQueue: idx=${currentIndex}/${audioElements?.length ?? 0} dir=${navigationDirection}`);
 
     if (currentIndex < 0 || currentIndex >= audioElements.length) {
-        console.log(`[TTS-HL] processAudioQueue: idx out of range, stopping and resetting`);
         stopAudio();
         state.currentIndex = 0; // Reset index if out of bounds
         state.navigationDirection = 'forward'; // Reset navigation direction
@@ -351,7 +338,6 @@ const processAudioQueue = async () => {
 const playAudioWithPromise = (src, speed) => {
     return new Promise((resolve, reject) => {
         if (!state.isPlaying) {
-            console.log(`[TTS-HL] playAudioWithPromise: BAIL — isPlaying=false (src=${src})`);
             resolve();
             return;
         }
@@ -359,27 +345,18 @@ const playAudioWithPromise = (src, speed) => {
         const audio = new Audio(src);
         setState('currentAudio', audio);
         audio.playbackRate = parseFloat(speed);
-        console.log(`[TTS-HL] playAudioWithPromise: new Audio() src=${src} idx=${state.currentIndex} speed=${speed}`);
-
-        audio.addEventListener("loadedmetadata", () => {
-            console.log(`[TTS-HL] audio loadedmetadata: duration=${audio.duration} src=${src}`);
-        });
 
         audio.onended = () => {
-            console.log(`[TTS-HL] audio ended: src=${src} currentTime=${audio.currentTime.toFixed(3)}`);
             resolve();
         };
         audio.onerror = (e) => {
-            console.warn(`[TTS-HL] audio error: src=${src}`, e);
             reject(e);
         };
 
         updatePlayPauseIcon(true); // Update play button state
 
-        audio.play().then(() => {
-            console.log(`[TTS-HL] audio.play() resolved: src=${src} currentTime=${audio.currentTime.toFixed(3)}`);
-        }).catch((error) => {
-            console.warn('[TTS-HL] Audio playback failed:', error);
+        audio.play().catch((error) => {
+            console.warn('Audio playback failed:', error);
             resolve();
         });
     });
