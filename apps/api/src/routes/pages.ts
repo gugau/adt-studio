@@ -5,6 +5,7 @@ import { z } from "zod"
 import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
 import { parseBookLabel, ImageClassificationOutput, PageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES } from "@adt/types"
+import type { ContentNodeData } from "@adt/types"
 import { openBookDb } from "@adt/storage"
 import { createBookStorage } from "@adt/storage"
 import type { Storage } from "@adt/storage"
@@ -316,6 +317,68 @@ function saveStoryboardNode(
   const version = storage.putNodeData(node, itemId, data)
   clearCaptionData(storage)
   return version
+}
+
+function createNodeIdFactory(
+  pageId: string,
+  sections: Array<{ nodes: ContentNodeData[] }>
+): () => string {
+  const usedIds = new Set<string>()
+  const collect = (nodes: ContentNodeData[]): void => {
+    for (const node of nodes) {
+      usedIds.add(node.nodeId)
+      if (node.children) collect(node.children)
+    }
+  }
+  for (const section of sections) collect(section.nodes)
+
+  let counter = 1
+  return () => {
+    let nextId = `${pageId}_n${String(counter).padStart(4, "0")}`
+    while (usedIds.has(nextId)) {
+      counter += 1
+      nextId = `${pageId}_n${String(counter).padStart(4, "0")}`
+    }
+    usedIds.add(nextId)
+    counter += 1
+    return nextId
+  }
+}
+
+function cloneNodesWithFreshContainerIds(
+  nodes: ContentNodeData[],
+  createId: () => string,
+  containerIdMap: Map<string, string>
+): ContentNodeData[] {
+  return nodes.map((node) => {
+    if (node.role) {
+      return {
+        ...node,
+        ...(node.children
+          ? { children: cloneNodesWithFreshContainerIds(node.children, createId, containerIdMap) }
+          : {}),
+      }
+    }
+
+    const nextId = createId()
+    containerIdMap.set(node.nodeId, nextId)
+    return {
+      ...node,
+      nodeId: nextId,
+      children: cloneNodesWithFreshContainerIds(node.children ?? [], createId, containerIdMap),
+    }
+  })
+}
+
+function rewriteContainerIdsInHtml(
+  html: string,
+  containerIdMap: Map<string, string>
+): string {
+  let nextHtml = html
+  for (const [oldId, newId] of containerIdMap) {
+    nextHtml = nextHtml.split(`data-id="${oldId}"`).join(`data-id="${newId}"`)
+  }
+  return nextHtml
 }
 
 export function createPageRoutes(
@@ -1022,7 +1085,15 @@ export function createPageRoutes(
       }
 
       // Clone the section and insert after the original
-      const clonedSection = structuredClone(sectioning.sections[idx])
+      const containerIdMap = new Map<string, string>()
+      const clonedSection = {
+        ...sectioning.sections[idx],
+        nodes: cloneNodesWithFreshContainerIds(
+          sectioning.sections[idx].nodes,
+          createNodeIdFactory(pageId, sectioning.sections),
+          containerIdMap
+        ),
+      }
       const newSections = [...sectioning.sections]
       newSections.splice(idx + 1, 0, clonedSection)
 
@@ -1054,6 +1125,10 @@ export function createPageRoutes(
         if (sourceRendering) {
           const clonedRendering = structuredClone(sourceRendering)
           clonedRendering.sectionIndex = idx + 1
+          clonedRendering.html = rewriteContainerIdsInHtml(
+            clonedRendering.html,
+            containerIdMap
+          )
 
           // Insert clone after the source in the array
           const insertPos = shifted.indexOf(sourceRendering) + 1
@@ -2058,7 +2133,15 @@ export function createPageRoutes(
         throw new HTTPException(400, { message: `Section index ${idx} out of range (page has ${sectioning.sections.length} sections)` })
       }
 
-      const clonedSection = structuredClone(sectioning.sections[idx])
+      const containerIdMap = new Map<string, string>()
+      const clonedSection = {
+        ...sectioning.sections[idx],
+        nodes: cloneNodesWithFreshContainerIds(
+          sectioning.sections[idx].nodes,
+          createNodeIdFactory(pageId, sectioning.sections),
+          containerIdMap
+        ),
+      }
       const newSections = [...sectioning.sections]
       newSections.splice(idx + 1, 0, clonedSection)
 
@@ -2083,6 +2166,10 @@ export function createPageRoutes(
         if (sourceRendering) {
           const clonedRendering = structuredClone(sourceRendering)
           clonedRendering.sectionIndex = idx + 1
+          clonedRendering.html = rewriteContainerIdsInHtml(
+            clonedRendering.html,
+            containerIdMap
+          )
           const insertPos = shifted.indexOf(sourceRendering) + 1
           shifted.splice(insertPos, 0, clonedRendering)
         }

@@ -298,6 +298,101 @@ describe("Page routes", () => {
     })
   })
 
+  describe("POST /api/books/:label/pages/:pageId/sections/:sectionIndex/clone", () => {
+    it("assigns fresh ids to cloned containers but preserves leaf ids", async () => {
+      const sourceContainerId = `${label}_p1_n0001`
+      const sourceLeafId = `${label}_p1_n0002`
+
+      const storage = createBookStorage(label, tmpDir)
+      try {
+        storage.putNodeData("page-sectioning", `${label}_p1`, {
+          reasoning: "nested",
+          sections: [
+            {
+              sectionId: `${label}_p1_sec001`,
+              sectionType: "content",
+              backgroundColor: "#ffffff",
+              textColor: "#000000",
+              pageNumber: 1,
+              isPruned: false,
+              nodes: [
+                {
+                  nodeId: sourceContainerId,
+                  isPruned: false,
+                  structure: "group",
+                  children: [
+                    {
+                      nodeId: sourceLeafId,
+                      isPruned: false,
+                      role: "text",
+                      text: "Hello world",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        })
+        storage.putNodeData("web-rendering", `${label}_p1`, {
+          sections: [
+            {
+              sectionIndex: 0,
+              sectionType: "content",
+              reasoning: "rendered",
+              html:
+                `<section data-section-id="${label}_p1_sec001">` +
+                `<div data-id="${sourceContainerId}">` +
+                `<p data-id="${sourceLeafId}">Hello world</p>` +
+                "</div></section>",
+            },
+          ],
+        })
+      } finally {
+        storage.close()
+      }
+
+      const res = await app.request(
+        `/api/books/${label}/pages/${label}_p1/sections/0/clone`,
+        { method: "POST" }
+      )
+
+      expect(res.status).toBe(200)
+
+      const verify = createBookStorage(label, tmpDir)
+      try {
+        const sectioningRow = verify.getLatestNodeData("page-sectioning", `${label}_p1`)
+        const sectioning = sectioningRow?.data as {
+          sections: Array<{
+            sectionId: string
+            nodes: Array<{
+              nodeId: string
+              children?: Array<{ nodeId: string }>
+            }>
+          }>
+        }
+        expect(sectioning.sections).toHaveLength(2)
+
+        const original = sectioning.sections[0]
+        const cloned = sectioning.sections[1]
+        expect(cloned.sectionId).toBe(`${label}_p1_sec002`)
+        expect(cloned.nodes[0]?.nodeId).not.toBe(original.nodes[0]?.nodeId)
+        expect(cloned.nodes[0]?.children?.[0]?.nodeId).toBe(sourceLeafId)
+
+        const renderingRow = verify.getLatestNodeData("web-rendering", `${label}_p1`)
+        const rendering = renderingRow?.data as {
+          sections: Array<{ sectionIndex: number; html: string }>
+        }
+        const clonedRendering = rendering.sections.find((section) => section.sectionIndex === 1)
+        expect(clonedRendering?.html).toContain(`data-section-id="${label}_p1_sec002"`)
+        expect(clonedRendering?.html).toContain(`data-id="${cloned.nodes[0]?.nodeId}"`)
+        expect(clonedRendering?.html).toContain(`data-id="${sourceLeafId}"`)
+        expect(clonedRendering?.html).not.toContain(`data-id="${sourceContainerId}"`)
+      } finally {
+        verify.close()
+      }
+    })
+  })
+
   describe("POST /api/books/:label/pages/:pageId/re-render", () => {
     it("returns 400 when X-OpenAI-Key header is missing", async () => {
       const res = await app.request(
