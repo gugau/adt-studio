@@ -106,8 +106,18 @@ export const gatherAudioElements = () => {
 
     const audioBasePath = `content/i18n/${currentLanguage}/audio/`;
 
+    // TTS content lives under #content (an invariant of renderPageHtml in
+    // package-web.ts). Scoping by #content — not a Tailwind class like .container —
+    // ensures we ignore UI chrome [data-id] labels from interface.html.
+    const contentRoot = document.getElementById('content');
+    if (!contentRoot) {
+        const strayDataIds = document.querySelectorAll('[data-id]').length;
+        console.warn(`[TTS-HL] gatherAudioElements: #content element not found. ${strayDataIds} [data-id] elements exist outside #content. Check renderPageHtml output.`);
+        setState('audioElements', []);
+        return [];
+    }
     const elements = Array.from(
-        document.querySelectorAll('.container [data-id], .container textarea[data-placeholder-id], .container input[data-placeholder-id]')
+        contentRoot.querySelectorAll('[data-id], textarea[data-placeholder-id], input[data-placeholder-id]')
     )
         .filter(el => {
             const isNavElement = el.closest('.nav__list') !== null;
@@ -171,6 +181,14 @@ export const gatherAudioElements = () => {
         .filter(item => item && item.audioSrc);
 
     setState('audioElements', elements);
+    if (elements.length === 0) {
+        const dataIdCountInContent = contentRoot.querySelectorAll('[data-id]').length;
+        const totalDataIdCount = document.querySelectorAll('[data-id]').length;
+        if (dataIdCountInContent === 0 && totalDataIdCount > 0) {
+            console.warn(`[TTS-HL] gatherAudioElements: 0 elements in #content but ${totalDataIdCount} [data-id] elements exist outside it — page content may be rendered in the wrong wrapper.`);
+        }
+    }
+    console.log(`[TTS-HL] gatherAudioElements: ${elements.length} elements; first ids:`, elements.slice(0, 5).map(e => e.id));
     return elements;
 };
 
@@ -197,6 +215,7 @@ export const stopAudio = () => {
  * Toggles play/pause for TTS audio.
  */
 export const togglePlayPause = () => {
+    console.log(`[TTS-HL] togglePlayPause: was isPlaying=${state.isPlaying}, currentIndex=${state.currentIndex}, audioElements=${state.audioElements?.length ?? 0}`);
     if (state.isPlaying) {
         stopAudio();
     } else {
@@ -257,8 +276,10 @@ export const playCurrentAudio = async () => {
  */
 const processAudioQueue = async () => {
     const { currentIndex, audioElements, audioSpeed, describeImagesMode, navigationDirection } = state;
+    console.log(`[TTS-HL] processAudioQueue: idx=${currentIndex}/${audioElements?.length ?? 0} dir=${navigationDirection}`);
 
     if (currentIndex < 0 || currentIndex >= audioElements.length) {
+        console.log(`[TTS-HL] processAudioQueue: idx out of range, stopping and resetting`);
         stopAudio();
         state.currentIndex = 0; // Reset index if out of bounds
         state.navigationDirection = 'forward'; // Reset navigation direction
@@ -330,6 +351,7 @@ const processAudioQueue = async () => {
 const playAudioWithPromise = (src, speed) => {
     return new Promise((resolve, reject) => {
         if (!state.isPlaying) {
+            console.log(`[TTS-HL] playAudioWithPromise: BAIL — isPlaying=false (src=${src})`);
             resolve();
             return;
         }
@@ -337,14 +359,27 @@ const playAudioWithPromise = (src, speed) => {
         const audio = new Audio(src);
         setState('currentAudio', audio);
         audio.playbackRate = parseFloat(speed);
+        console.log(`[TTS-HL] playAudioWithPromise: new Audio() src=${src} idx=${state.currentIndex} speed=${speed}`);
 
-        audio.onended = resolve;
-        audio.onerror = reject;
+        audio.addEventListener("loadedmetadata", () => {
+            console.log(`[TTS-HL] audio loadedmetadata: duration=${audio.duration} src=${src}`);
+        });
+
+        audio.onended = () => {
+            console.log(`[TTS-HL] audio ended: src=${src} currentTime=${audio.currentTime.toFixed(3)}`);
+            resolve();
+        };
+        audio.onerror = (e) => {
+            console.warn(`[TTS-HL] audio error: src=${src}`, e);
+            reject(e);
+        };
 
         updatePlayPauseIcon(true); // Update play button state
 
-        audio.play().catch((error) => {
-            console.warn('Audio playback failed:', error);
+        audio.play().then(() => {
+            console.log(`[TTS-HL] audio.play() resolved: src=${src} currentTime=${audio.currentTime.toFixed(3)}`);
+        }).catch((error) => {
+            console.warn('[TTS-HL] Audio playback failed:', error);
             resolve();
         });
     });
@@ -483,15 +518,17 @@ export const toggleReadAloud = ({ stopCalls = false } = {}) => {
     const ttsOptionsContainer = document.getElementById("tts-options-container");
     const autoplayContainer = document.getElementById("autoplay-container");
     const describeImagesContainer = document.getElementById("describe-images-container");
+    const wordHighlightContainer = document.getElementById("word-highlight-container");
     const ttsQuickToggleButton = document.getElementById("tts-quick-toggle-button");
 
     if (newState) {
         if (playBar) playBar.classList.remove("hidden");
         if (ttsQuickToggleButton) ttsQuickToggleButton.classList.remove("hidden");
-        if ((isFeatureEnabled("autoplay") || isFeatureEnabled("describeImages")) && ttsOptionsContainer) {
+        if ((isFeatureEnabled("autoplay") || isFeatureEnabled("describeImages") || isFeatureEnabled("highlight")) && ttsOptionsContainer) {
             ttsOptionsContainer.classList.remove("hidden");
             if (isFeatureEnabled("autoplay")) autoplayContainer?.classList.remove("hidden");
             if (isFeatureEnabled("describeImages")) describeImagesContainer?.classList.remove("hidden");
+            if (isFeatureEnabled("highlight")) wordHighlightContainer?.classList.remove("hidden");
         }
     } else {
         if (playBar) playBar.classList.add("hidden");
@@ -500,6 +537,7 @@ export const toggleReadAloud = ({ stopCalls = false } = {}) => {
             ttsOptionsContainer.classList.add("hidden");
             if (isFeatureEnabled("autoplay")) autoplayContainer?.classList.add("hidden");
             if (isFeatureEnabled("describeImages")) describeImagesContainer?.classList.add("hidden");
+            if (isFeatureEnabled("highlight")) wordHighlightContainer?.classList.add("hidden");
         }
     }
 

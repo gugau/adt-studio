@@ -5,11 +5,10 @@
  */
 import { state } from "./state.js";
 import { stopAudio } from "./audio.js";
-import { unhighlightAllElements, unhighlightElement } from './ui_utils.js';
+import { unhighlightAllElements, unhighlightElement, highlightElement } from './ui_utils.js';
 import { showGlossaryDefinition } from './interface.js';
 import {
   buildWordRenderPlan,
-  createApproximateWordTimestamps,
   getHighlightDisplayText,
   normalizeGlossaryText,
 } from "./tts_highlighter_utils.js";
@@ -31,15 +30,19 @@ let lastHighlightedImage = null;
  */
 export async function initializeWordByWordHighlighter() {
   const timecodeJsonUrl = `./content/i18n/${state.currentLanguage}/timecode/timecode_output.json`;
+  const t0 = performance.now();
+  console.log(`[TTS-HL] init start lang=${state.currentLanguage} url=${timecodeJsonUrl}`);
   try {
     const response = await fetch(timecodeJsonUrl);
     if (!response.ok) {
       throw new Error(`Failed to load timecode JSON: ${response.statusText}`);
     }
     timecodeData = await response.json();
+    const keys = Object.keys(timecodeData || {});
+    console.log(`[TTS-HL] init fetched ${keys.length} timecode entries in ${Math.round(performance.now() - t0)}ms; first keys:`, keys.slice(0, 5));
   } catch (error) {
     timecodeData = {};
-    console.warn("Word timecodes unavailable, using runtime fallback highlighting.", error);
+    console.warn("[TTS-HL] init FAILED — timecodes unavailable, using runtime fallback highlighting.", error);
   }
   startMonitoring();
 }
@@ -56,6 +59,7 @@ function getStoredWordTimestamps(entry) {
  */
 function startMonitoring() {
   if (monitorInterval) return;
+  console.log(`[TTS-HL] startMonitoring (50ms poll) — timecodeData=${timecodeData ? "LOADED" : "NULL"}`);
   // Check the audio's currentTime every 50ms for more responsive updates
   monitorInterval = setInterval(checkCurrentAudio, 50);
 }
@@ -64,11 +68,17 @@ function startMonitoring() {
  * Checks the current audio and attaches or detaches the word highlighter as needed.
  * @private
  */
+let _lastAudioRef = null;
 function checkCurrentAudio() {
   const audio = state.currentAudio;
+  if (audio !== _lastAudioRef) {
+    console.log(`[TTS-HL] poll: currentAudio changed — ${_lastAudioRef ? "had prev" : "was null"} -> ${audio ? audio.src : "null"} (idx=${state.currentIndex}, wordHighlightMode=${state.wordHighlightMode}, timecodeData=${timecodeData ? Object.keys(timecodeData).length + " keys" : "NULL"})`);
+    _lastAudioRef = audio;
+  }
   if (audio && state.wordHighlightMode !== false && !audio._wordHighlighterAttached) {
     attachWordHighlighter(audio);
   } else if ((!audio || state.wordHighlightMode === false) && (currentListener || subtitlePopup)) {
+    console.log(`[TTS-HL] poll: detaching (audio=${!!audio}, mode=${state.wordHighlightMode})`);
     detachCurrentListener();
     clearHighlights();
     if (subtitlePopup) {
@@ -84,12 +94,14 @@ function checkCurrentAudio() {
  * @param {HTMLAudioElement} audio - The audio element to attach the highlighter to.
  */
 function attachWordHighlighter(audio) {
+  console.log(`[TTS-HL] attach: ENTER (audioElements=${state.audioElements?.length ?? 0}, currentIndex=${state.currentIndex}, src=${audio.src}, currentTime=${audio.currentTime.toFixed(3)})`);
   // Get the current text element (from state.audioElements and state.currentIndex).
   const audioElements = state.audioElements;
-  if (!audioElements || audioElements.length === 0) return;
+  if (!audioElements || audioElements.length === 0) { console.warn("[TTS-HL] attach: BAIL — audioElements empty"); return; }
   const currentIndex = state.currentIndex;
-  if (currentIndex < 0 || currentIndex >= audioElements.length) return;
+  if (currentIndex < 0 || currentIndex >= audioElements.length) { console.warn(`[TTS-HL] attach: BAIL — currentIndex ${currentIndex} out of range [0,${audioElements.length})`); return; }
   const { element, id: dataId } = audioElements[currentIndex];
+  console.log(`[TTS-HL] attach: dataId=${dataId}, element=<${element.tagName.toLowerCase()}>, text="${(element.textContent || "").slice(0, 60)}..."`);
 
   // Get the translation key with proper easy-read handling
   let translationKey = dataId;
@@ -125,12 +137,29 @@ function attachWordHighlighter(audio) {
     : element.textContent;
   const entry = timecodeData && timecodeData[timecodeKey] ? timecodeData[timecodeKey] : null;
   const storedWordTimestamps = getStoredWordTimestamps(entry);
-  let wordTimestamps = storedWordTimestamps.length > 0
-    ? storedWordTimestamps
-    : createApproximateWordTimestamps(translatedText, audio.duration);
-  const usesApproximateTimings = storedWordTimestamps.length === 0;
+  console.log(`[TTS-HL] attach: timecodeKey=${timecodeKey} -> ${entry ? "FOUND entry" : "MISSING entry"}; storedTimestamps=${storedWordTimestamps.length}; audio.duration=${audio.duration}`);
+  if (timecodeData && !entry) {
+    const available = Object.keys(timecodeData).slice(0, 10);
+    console.warn(`[TTS-HL] attach: timecodeKey "${timecodeKey}" not in timecodeData. First 10 available keys:`, available);
+  }
 
-  if (wordTimestamps.length === 0) return;
+  // Fall back to block (blue-box) highlight when timecodes are missing — more
+  // reliable than evenly-divided approximate timings that can drift from the
+  // actual word boundaries.
+  if (storedWordTimestamps.length === 0) {
+    const isImage = element.tagName.toLowerCase() === 'img';
+    if (!isImage) {
+      console.warn("[TTS-HL] attach: no stored timecodes — falling back to block highlight");
+      highlightElement(element);
+    }
+    // Mark as attached so the 50ms poll doesn't re-enter every tick.
+    // processAudioQueue's unhighlightElement after playback will clear the block highlight.
+    audio._wordHighlighterAttached = true;
+    attachedAudio = audio;
+    return;
+  }
+
+  const wordTimestamps = storedWordTimestamps;
 
   // Check if this is an image element - if so, create a subtitle popup
   const isImage = element.tagName.toLowerCase() === 'img';
@@ -153,8 +182,14 @@ function attachWordHighlighter(audio) {
 
   // Wrap the text in spans (if not already wrapped).
   if (!targetElement.dataset.wordsWrapped) {
+    console.log(`[TTS-HL] attach: wrapping text in spans for ${dataId} (${wordTimestamps.length} words)`);
     wrapTextInSpans(targetElement, wordTimestamps, translatedText);
     targetElement.dataset.wordsWrapped = "true";
+    const wrappedCount = targetElement.querySelectorAll("span[data-word-index]").length;
+    console.log(`[TTS-HL] attach: wrapped ${wrappedCount} spans (expected ${wordTimestamps.length})${wrappedCount !== wordTimestamps.length ? " — MISMATCH!" : ""}`);
+  } else {
+    const existingSpans = targetElement.querySelectorAll("span[data-word-index]").length;
+    console.log(`[TTS-HL] attach: already wrapped (${existingSpans} spans exist, timestamps has ${wordTimestamps.length})${existingSpans !== wordTimestamps.length ? " — MISMATCH! Old wrap likely used approximate timings." : ""}`);
   }
 
   // Clear highlights on other text elements.
@@ -183,16 +218,6 @@ function attachWordHighlighter(audio) {
 
   // Detach any existing listeners first to avoid duplicates
   detachCurrentListener();
-
-  if (usesApproximateTimings) {
-    metadataListener = () => {
-      const refreshed = createApproximateWordTimestamps(translatedText, audio.duration);
-      if (refreshed.length > 0) {
-        wordTimestamps = refreshed;
-      }
-    };
-    audio.addEventListener("loadedmetadata", metadataListener);
-  }
 
   // Attach a timeupdate listener
   currentListener = () => updateWordHighlighting(audio, targetElement, wordTimestamps);
@@ -227,6 +252,7 @@ function attachWordHighlighter(audio) {
 
   audio._wordHighlighterAttached = true;
   attachedAudio = audio;
+  console.log(`[TTS-HL] attach: DONE for ${dataId} — listeners attached, first word highlighted`);
 }
 
 /**
@@ -585,6 +611,8 @@ function wrapTextInSpans(element, wordTimestamps, translatedText) {
  * @param {HTMLElement} element - The element containing the word spans.
  * @param {Array} wordTimestamps - Array of word timestamp objects.
  */
+let _lastLoggedActiveIndex = -2;
+let _lastLoggedElement = null;
 function updateWordHighlighting(audio, element, wordTimestamps) {
   const currentTime = audio.currentTime;
   let activeIndex = -1;
@@ -650,6 +678,12 @@ function updateWordHighlighting(audio, element, wordTimestamps) {
 
   // Highlight the active word.
   const activeSpan = element.querySelector(`span[data-word-index="${activeIndex}"]`);
+  if (element !== _lastLoggedElement || activeIndex !== _lastLoggedActiveIndex) {
+    const ts = wordTimestamps[activeIndex];
+    console.log(`[TTS-HL] update: t=${currentTime.toFixed(3)} activeIndex=${activeIndex} (${wordTimestamps.length} words total) spanFound=${!!activeSpan} word="${ts?.text ?? "?"}" [${ts?.start?.toFixed(3)}-${ts?.end?.toFixed(3)}]`);
+    _lastLoggedActiveIndex = activeIndex;
+    _lastLoggedElement = element;
+  }
   if (activeSpan) {
     activeSpan.classList.add("bg-yellow-300");
     activeSpan.classList.add("rounded-lg");

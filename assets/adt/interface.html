@@ -270,6 +270,23 @@
                             </div>
                         </button>
                     </div>
+
+                    <div id="word-highlight-container"
+                        class="flex justify-between items-left border-t border-gray-300 hidden">
+                        <button
+                            class="pr-4 pl-4 flex items-center cursor-pointer mb-4 md:mb-0 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-lg p-0"
+                            id="toggle-highlight" type="button" aria-checked="false" role="switch"
+                            aria-labelledby="word-highlight-label">
+                            <span class="text-xl text-left m-4 ml-0 sidebar-item flex-grow" id="word-highlight-label"
+                                data-id="word-highlight-label">Word highlight</span>
+                            <div class="relative">
+                                <div class="block w-12 h-7 rounded-full transition-colors duration-200 ease-in-out bg-gray-400"
+                                    id="toggle-background"></div>
+                                <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform duration-200 ease-in-out transform"
+                                    id="toggle-dot"></div>
+                            </div>
+                        </button>
+                    </div>
                 </div>
                 <!--
                 <button id="play-button-shortcut" class="sr-only">Saltar al botón de reproducción</button>
@@ -344,22 +361,6 @@
                         </div>
                     </button>
                 </div>
-                <div class="hidden flex justify-between items-left border-t border-gray-300">
-                    <button
-                        class="flex items-center cursor-pointer mb-4 md:mb-0 w-full focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-opacity-50 rounded-lg p-0"
-                        id="toggle-highlight" type="button" aria-checked="false" role="switch"
-                        aria-labelledby="word-highlight-label">
-                        <span class="text-xl text-left m-4 ml-0 sidebar-item flex-grow" id="word-highlight-label"
-                            data-id="word-highlight-label">Word highlight</span>
-                        <div class="relative">
-                            <div class="block w-12 h-7 rounded-full transition-colors duration-200 ease-in-out bg-gray-400"
-                                id="toggle-background"></div>
-                            <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform duration-200 ease-in-out transform"
-                                id="toggle-dot"></div>
-                        </div>
-                    </button>
-                </div>
-
                 <div id="character-profile-row" class="flex justify-between items-center text-right hidden">
                     <div>
                         <h3 class="text-xl text-left m-4 ml-0 sidebar-item" id="username-label"
