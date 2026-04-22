@@ -1,38 +1,18 @@
 {%- comment -%}
-  Two-column layout. Counts top-level image_group nodes vs non-image nodes
-  to decide whether to split into two columns. The tree partial handles
-  all inner content rendering.
-{%- endcomment -%}
-{%- assign img_count = 0 -%}
-{%- assign text_count = 0 -%}
-{%- for node in nodes -%}
-  {%- if node.structure == "image_group" -%}
-    {%- assign img_count = img_count | plus: 1 -%}
-  {%- else -%}
-    {%- assign text_count = text_count | plus: 1 -%}
-  {%- endif -%}
-{%- endfor -%}
+  Two-column layout. `image_nodes` and `text_nodes` are precomputed in
+  render-template.ts — if both are non-empty, render side by side;
+  otherwise fall back to a single column of all nodes.
 
+  The tree partial `_render_node` handles all inner content rendering.
+{%- endcomment -%}
 <div id="content" class="container mx-auto w-full min-h-screen px-8 py-8 flex items-center justify-center" style="background-color: {{ background_color | escape }};">
     <section data-section-type="{{ section_type | escape }}" data-section-id="{{ section_id | escape }}">
         <div class="flex flex-col lg:flex-row px-8 items-start gap-8 max-w-none w-full">
-            {%- if img_count > 0 and text_count > 0 -%}
+            {%- if image_nodes.size > 0 and text_nodes.size > 0 -%}
                 <div class="basis-full lg:basis-1/2 p-4 flex flex-col items-center" style="color: {{ text_color | escape }};">
-                    {%- assign text_nodes = "" | split: "" -%}
-                    {%- for node in nodes -%}
-                        {%- unless node.structure == "image_group" -%}
-                            {%- assign text_nodes = text_nodes | push: node -%}
-                        {%- endunless -%}
-                    {%- endfor -%}
                     {% include "_render_node", nodes: text_nodes, depth: 0 %}
                 </div>
                 <div class="basis-full lg:basis-1/2 p-4 flex flex-col items-center lg:justify-center lg:min-h-screen" style="color: {{ text_color | escape }};">
-                    {%- assign image_nodes = "" | split: "" -%}
-                    {%- for node in nodes -%}
-                        {%- if node.structure == "image_group" -%}
-                            {%- assign image_nodes = image_nodes | push: node -%}
-                        {%- endif -%}
-                    {%- endfor -%}
                     {% include "_render_node", nodes: image_nodes, depth: 0 %}
                 </div>
             {%- else -%}

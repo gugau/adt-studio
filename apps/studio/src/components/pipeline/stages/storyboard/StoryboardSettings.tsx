@@ -141,7 +141,6 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
   const [savingImageGenPrompt, setSavingImageGenPrompt] = useState(false)
 
   // Form state
-  const [disabledSectionTypes, setDisabledSectionTypes] = useState<Set<string>>(new Set())
   const [defaultRenderStrategy, setDefaultRenderStrategy] = useState("")
   const [renderStrategyNames, setRenderStrategyNames] = useState<string[]>([])
   const [activityModel, setActivityModel] = useState("")
@@ -261,9 +260,6 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
   useEffect(() => {
     if (!activeConfigData) return
     const merged = activeConfigData.merged as Record<string, unknown>
-    if (Array.isArray(merged.disabled_section_types)) {
-      setDisabledSectionTypes(new Set(merged.disabled_section_types as string[]))
-    }
     const strategies = (
       merged.render_strategies && typeof merged.render_strategies === "object"
         ? merged.render_strategies
@@ -317,9 +313,6 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
       Object.assign(overrides, bookConfigData.config)
     }
 
-    if (shouldWrite("disabled_section_types")) {
-      overrides.disabled_section_types = Array.from(disabledSectionTypes)
-    }
     const mergedStrategies = (merged?.render_strategies ?? {}) as Record<
       string,
       { render_type?: string }
@@ -676,47 +669,9 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
         </div>
       )}
 
-      {tab === "activity-prompts" && (() => {
-        const activityNames = Object.keys(activityStrategies)
-        // Activities are enabled when their section types are NOT pruned and render strategies are mapped
-        const anyEnabled = activityNames.length > 0 &&
-          activityNames.some((name) => !disabledSectionTypes.has(name))
-        return (
+      {tab === "activity-prompts" && (
         <div className="flex flex-col h-full">
           <div className="shrink-0 p-4 pb-2">
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-              {<Trans>Activity Rendering</Trans>}
-            </h3>
-
-            {/* Universal enable/disable toggle */}
-            <div className="flex items-center gap-3 mb-4">
-              <Switch
-                checked={anyEnabled}
-                onCheckedChange={(checked) => {
-                  markDirty("disabled_section_types")
-                  setDisabledSectionTypes((prev) => {
-                    const next = new Set(prev)
-                    for (const name of activityNames) {
-                      if (checked) {
-                        next.delete(name)
-                      } else {
-                        next.add(name)
-                      }
-                    }
-                    return next
-                  })
-                }}
-              />
-              <Label className="text-xs">
-                {anyEnabled ? <Trans>Activities enabled</Trans> : <Trans>Activities disabled</Trans>}
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                {anyEnabled
-                  ? <Trans>Activity section types are available for classification and rendering.</Trans>
-                  : <Trans>Activity section types are hidden from the classifier and skipped during rendering.</Trans>}
-              </p>
-            </div>
-
             <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
               {<Trans>Edit Prompts</Trans>}
             </h3>
@@ -737,7 +692,7 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
                 </SelectValue>
               </SelectTrigger>
               <SelectContent align="start">
-                {activityNames.map((name) => (
+                {Object.keys(activityStrategies).map((name) => (
                   <SelectItem key={name} value={name}>
                     {getActivityLabel(name)}
                   </SelectItem>
@@ -780,8 +735,7 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
             </div>
           )}
         </div>
-        )
-      })()}
+      )}
 
       {tab === "image-generation" && (
         <div className="h-full flex flex-col">

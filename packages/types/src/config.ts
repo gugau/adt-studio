@@ -27,6 +27,7 @@ export type QuizGenerationConfig = z.infer<typeof QuizGenerationConfig>
 
 export const PageSectioningConfig = StepConfig.extend({
   max_refinements: z.number().int().min(0).optional(),
+  mode: z.enum(["page", "dynamic"]).catch("dynamic").optional(),
 })
 export type PageSectioningConfig = z.infer<typeof PageSectioningConfig>
 

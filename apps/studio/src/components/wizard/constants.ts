@@ -96,7 +96,7 @@ export type RenderStrategyId = (typeof RENDER_STRATEGIES)[number]["id"];
 
 // ─── Preset defaults — typed against the wizard form ────────────────────────
 
-export type SectioningModeId = "page" | "dynamic" | "section";
+export type SectioningModeId = "page" | "dynamic";
 
 export type WizardPageGrouping = "" | "spread" | "single";
 
@@ -551,7 +551,6 @@ const VALUE_LABELS: Record<string, MessageDescriptor> = {
   spread: msg`Spread`,
   page: msg`Per Page`,
   dynamic: msg`Dynamic`,
-  section: msg`By Section`,
 };
 
 function formatDefaultValue(

@@ -1,18 +1,9 @@
 {%- comment -%}
-  Two-column story layout. Renders images in a left column (or at top on
+  Two-column story layout. `image_nodes` and `text_nodes` are precomputed
+  in render-template.ts — images render in a left column (or at top on
   mobile) and text content in a right column. Inner content rendered via
   the recursive _render_node partial.
 {%- endcomment -%}
-{%- assign img_count = 0 -%}
-{%- assign text_count = 0 -%}
-{%- for node in nodes -%}
-  {%- if node.structure == "image_group" -%}
-    {%- assign img_count = img_count | plus: 1 -%}
-  {%- else -%}
-    {%- assign text_count = text_count | plus: 1 -%}
-  {%- endif -%}
-{%- endfor -%}
-
 {%- assign container_bg = "#FFFAF5" -%}
 {%- if background_color and background_color != "" and background_color != "#ffffff" and background_color != "#FFFFFF" -%}
     {%- assign container_bg = background_color -%}
@@ -26,27 +17,15 @@
 <div id="content" class="container mx-auto flex min-h-screen w-full items-center justify-center px-6 py-12" style="background-color: {{ container_bg | escape }};">
     <section data-section-type="{{ section_type | escape }}" data-section-id="{{ section_id | escape }}" style="color: {{ content_color | escape }};" class="w-full">
         <div class="mx-auto flex w-full max-w-6xl flex-col items-center gap-12 rounded-[32px] px-6 py-10 lg:flex-row lg:items-stretch lg:px-10 lg:py-16">
-            {%- if img_count > 0 -%}
+            {%- if image_nodes.size > 0 -%}
                 <div class="flex w-full max-w-xl flex-shrink-0 items-center justify-center">
-                    {%- assign image_nodes = "" | split: "" -%}
-                    {%- for node in nodes -%}
-                        {%- if node.structure == "image_group" -%}
-                            {%- assign image_nodes = image_nodes | push: node -%}
-                        {%- endif -%}
-                    {%- endfor -%}
                     {% include "_render_node", nodes: image_nodes, depth: 0 %}
                 </div>
             {%- endif -%}
 
-            {%- if text_count > 0 -%}
+            {%- if text_nodes.size > 0 -%}
                 <div class="flex w-full flex-col justify-center">
-                    <div class="space-y-8 text-center lg:text-left">
-                        {%- assign text_nodes = "" | split: "" -%}
-                        {%- for node in nodes -%}
-                            {%- unless node.structure == "image_group" -%}
-                                {%- assign text_nodes = text_nodes | push: node -%}
-                            {%- endunless -%}
-                        {%- endfor -%}
+                    <div class="space-y-8 text-center lg:text-left text-3xl leading-relaxed font-medium">
                         {% include "_render_node", nodes: text_nodes, depth: 0 %}
                     </div>
                 </div>

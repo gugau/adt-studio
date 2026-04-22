@@ -24,6 +24,7 @@ export interface PageSectioningConfig {
   modelId: string
   maxRetries: number
   maxRefinements: number
+  mode: "page" | "dynamic"
 }
 
 export interface PageSectioningInput {
@@ -146,6 +147,7 @@ async function generateInitial(
       structure_types: config.structureTypes,
       role_types: config.roleTypes,
       section_types: config.sectionTypes,
+      mode: config.mode,
     },
     validate: (raw) => runValidator(raw, validatorContext),
     maxRetries: config.maxRetries,
@@ -184,6 +186,7 @@ async function generateReview(
       structure_types: config.structureTypes,
       role_types: config.roleTypes,
       section_types: config.sectionTypes,
+      mode: config.mode,
       max_refinements: config.maxRefinements,
       iteration,
       prior_notes: priorNotes,
@@ -591,5 +594,6 @@ export function buildPageSectioningConfig(
     maxRetries:
       appConfig.page_sectioning?.max_retries ?? DEFAULT_LLM_MAX_RETRIES,
     maxRefinements: appConfig.page_sectioning?.max_refinements ?? 0,
+    mode: appConfig.page_sectioning?.mode ?? "dynamic",
   }
 }

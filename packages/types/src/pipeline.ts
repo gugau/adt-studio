@@ -71,8 +71,8 @@ export const PIPELINE: StageDef[] = [
       { name: "book-summary", label: "Book Summary", dependsOn: ["extract"] },
       { name: "image-filtering", label: "Image Filtering", dependsOn: ["extract"], pageProgress: true },
       { name: "image-segmentation", label: "Image Segmentation", dependsOn: ["image-filtering"], pageProgress: true },
-      { name: "image-cropping", label: "Image Cropping", dependsOn: ["image-segmentation"], pageProgress: true },
       { name: "image-meaningfulness", label: "Image Meaningfulness", dependsOn: ["image-segmentation"], pageProgress: true },
+      { name: "image-cropping", label: "Image Cropping", dependsOn: ["image-segmentation"], pageProgress: true },
     ],
   },
   {

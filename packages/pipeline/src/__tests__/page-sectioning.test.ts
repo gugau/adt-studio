@@ -70,6 +70,7 @@ function makeConfig(
     modelId: "openai:gpt-5.4",
     maxRetries: 5,
     maxRefinements: 0,
+    mode: "dynamic",
     ...overrides,
   }
 }
@@ -166,6 +167,23 @@ describe("buildPageSectioningConfig", () => {
     expect(config.modelId).toBe("openai:gpt-4.1-mini")
     expect(config.maxRetries).toBe(7)
     expect(config.maxRefinements).toBe(2)
+  })
+
+  it("defaults mode to dynamic when not set", () => {
+    const appConfig: AppConfig = {
+      role_types: { text: "Body" },
+      structure_types: { paragraph: "Paragraph" },
+    }
+    expect(buildPageSectioningConfig(appConfig).mode).toBe("dynamic")
+  })
+
+  it("propagates mode from page_sectioning.mode", () => {
+    const appConfig: AppConfig = {
+      role_types: { text: "Body" },
+      structure_types: { paragraph: "Paragraph" },
+      page_sectioning: { mode: "page" },
+    }
+    expect(buildPageSectioningConfig(appConfig).mode).toBe("page")
   })
 })
 

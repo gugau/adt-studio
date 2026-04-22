@@ -30,14 +30,16 @@ import { ALL_STEP_NAMES, PAGE_PROGRESS_STEPS } from "@adt/types"
 
 const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   general: msg`General`,
-  "structure-types": msg`Structure Types`,
+  "container-types": msg`Container Types`,
+  "text-types": msg`Text Types`,
   "metadata-prompt": msg`Metadata Prompt`,
   prompt: msg`Extraction Prompt`,
   "meaningfulness-prompt": msg`Meaningfulness Prompt`,
   "cropping-prompt": msg`Cropping Prompt`,
   "segmentation-prompt": msg`Segmentation Prompt`,
   "book-summary-prompt": msg`Summary Prompt`,
-  "section-refinement": msg`Section Refinement`,
+  "sectioning-prompt": msg`Sectioning Prompt`,
+  "refinement-prompt": msg`Refinement Prompt`,
   "rendering-prompt": msg`AI Rendering`,
   "rendering-template": msg`Template Rendering`,
   "activity-prompts": msg`Activity Rendering`,
@@ -76,8 +78,10 @@ function getSettingsTabs(
     ],
     sectioning: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.general) },
-      { key: "section-refinement", label: i18n._(SETTINGS_TAB_MESSAGE["section-refinement"]) },
-      { key: "structure-types", label: i18n._(SETTINGS_TAB_MESSAGE["structure-types"]) },
+      { key: "sectioning-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["sectioning-prompt"]) },
+      { key: "refinement-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["refinement-prompt"]) },
+      { key: "container-types", label: i18n._(SETTINGS_TAB_MESSAGE["container-types"]) },
+      { key: "text-types", label: i18n._(SETTINGS_TAB_MESSAGE["text-types"]) },
     ],
     storyboard: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.general) },

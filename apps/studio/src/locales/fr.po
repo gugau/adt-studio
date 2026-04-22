@@ -833,8 +833,8 @@ msgstr "Construction du scénarimage..."
 msgid "By Page"
 msgstr "Par page"
 
-msgid "By Section"
-msgstr "Par section"
+#~ msgid "By Section"
+#~ msgstr "Par section"
 
 msgid "Cache"
 msgstr "Cache"
@@ -1043,11 +1043,14 @@ msgstr "Confirmer Rerun"
 msgid "Consulting the style council..."
 msgstr "Consultation du conseil de style..."
 
-msgid "Container node types the LLM may produce in the content tree during sectioning. Each type has a description shown to the model."
-msgstr "Types de nœuds conteneurs que le LLM peut produire dans l'arborescence de contenu pendant le sectionnement. Chaque type a une description montrée au modèle."
+msgid "Container node types the LLM may produce in the content tree during sectioning."
+msgstr "Types de nœuds conteneurs que le LLM peut produire dans l'arborescence de contenu pendant le sectionnement."
 
-#~ msgid "Container Types"
-#~ msgstr "Types de conteneur"
+#~ msgid "Container node types the LLM may produce in the content tree during sectioning. Each type has a description shown to the model."
+#~ msgstr "Types de nœuds conteneurs que le LLM peut produire dans l'arborescence de contenu pendant le sectionnement. Chaque type a une description montrée au modèle."
+
+msgid "Container Types"
+msgstr "Types de conteneur"
 
 msgid "Content"
 msgstr "Contenu"
@@ -1799,11 +1802,11 @@ msgstr "Google"
 msgid "Google AI API Key"
 msgstr "Google AI Clé API"
 
-msgid "Groups content into logical sections"
-msgstr "Groups contenu into logical sections"
+#~ msgid "Groups content into logical sections"
+#~ msgstr "Groups contenu into logical sections"
 
-msgid "Groups content into multiple logical sections based on topic and structure. The AI identifies natural boundaries - headings, topic shifts, figures - and organizes content accordingly. Most granular option, ideal for dense or mixed-content pages."
-msgstr "Regroupe le contenu en plusieurs sections logiques en fonction du sujet et de la structure. L'IA identifie les limites naturelles — titres, changements de sujet, figures — et organise le contenu en conséquence. Option la plus détaillée, idéale pour les pages denses ou à contenu mixte."
+#~ msgid "Groups content into multiple logical sections based on topic and structure. The AI identifies natural boundaries - headings, topic shifts, figures - and organizes content accordingly. Most granular option, ideal for dense or mixed-content pages."
+#~ msgstr "Regroupe le contenu en plusieurs sections logiques en fonction du sujet et de la structure. L'IA identifie les limites naturelles — titres, changements de sujet, figures — et organise le contenu en conséquence. Option la plus détaillée, idéale pour les pages denses ou à contenu mixte."
 
 msgid "Header"
 msgstr "En-tête"
@@ -1995,8 +1998,11 @@ msgstr "Jane Reviewer"
 msgid "KB"
 msgstr "KB"
 
-msgid "Keeps pages whole unless mixed activity types require splitting"
-msgstr "Garde les pages entières sauf si des types d'activités mixtes nécessitent un découpage"
+#~ msgid "Keeps pages whole unless mixed activity types require splitting"
+#~ msgstr "Garde les pages entières sauf si des types d'activités mixtes nécessitent un découpage"
+
+msgid "Keeps pages whole unless mixed activity types require splitting."
+msgstr "Garde les pages entières sauf si des types d'activités mixtes nécessitent un découpage."
 
 msgid "Keeps the page as one section by default, but intelligently splits when it detects multiple distinct activities - such as a mix of multiple-choice, open-ended, and sorting exercises on the same page. Best for textbooks with varied exercises."
 msgstr "Garde la page comme une seule section par défaut, mais la divise intelligemment lorsqu'elle détecte plusieurs activités distinctes — comme un mélange de QCM, questions ouvertes et exercices de classement sur la même page. Idéal pour les manuels avec des exercices variés."
@@ -2035,8 +2041,11 @@ msgstr "Dernier"
 msgid "Last modified"
 msgstr "Dernière modification"
 
-msgid "Leaf node roles the LLM may assign to text and image leaves in the content tree. Each role has a description shown to the model."
-msgstr "Rôles de nœud feuille que le LLM peut attribuer aux feuilles de texte et d'image dans l'arbre de contenu. Chaque rôle a une description montrée au modèle."
+#~ msgid "Leaf node roles the LLM may assign to text and image leaves in the content tree."
+#~ msgstr "Rôles de nœud feuille que le LLM peut attribuer aux feuilles de texte et d'image dans l'arbre de contenu."
+
+#~ msgid "Leaf node roles the LLM may assign to text and image leaves in the content tree. Each role has a description shown to the model."
+#~ msgstr "Rôles de nœud feuille que le LLM peut attribuer aux feuilles de texte et d'image dans l'arbre de contenu. Chaque rôle a une description montrée au modèle."
 
 #~ msgid "Leaf text roles the LLM can assign to each text element. Pruned roles are classified but excluded from rendering."
 #~ msgstr "Rôles de texte feuilles que le LLM peut attribuer à chaque élément de texte. Les rôles élagués sont classés mais exclus du rendu."
@@ -2755,6 +2764,9 @@ msgstr "Sectionnement de page"
 msgid "Page Sectioning Prompt"
 msgstr "Page Sectioning Invite"
 
+msgid "Page Sectioning Refinement Prompt"
+msgstr "Prompt de raffinement du sectionnement"
+
 msgid "pages"
 msgstr "pages"
 
@@ -3024,6 +3036,9 @@ msgstr "Référence"
 
 #~ msgid "Refinement Passes"
 #~ msgstr "Passes de raffinement"
+
+msgid "Refinement Prompt"
+msgstr "Prompt de raffinement"
 
 msgid "Refresh validation"
 msgstr "Actualiser validation"
@@ -3342,8 +3357,8 @@ msgstr "Section aperçu"
 msgid "Section pruned from flow"
 msgstr "Section élaguée du flux"
 
-msgid "Section Refinement"
-msgstr "Raffinement des sections"
+#~ msgid "Section Refinement"
+#~ msgstr "Raffinement des sections"
 
 #~ msgid "Section Refinement Prompt"
 #~ msgstr "Prompt de raffinement des sections"
@@ -3357,11 +3372,17 @@ msgstr "Types de section"
 msgid "Sectioning"
 msgstr "Sectionnement"
 
+msgid "Sectioning mode"
+msgstr "Mode de sectionnement"
+
 msgid "Sectioning Mode"
 msgstr "Mode de sectionnement"
 
 msgid "Sectioning Pages..."
 msgstr "Sectionnement des pages..."
+
+msgid "Sectioning Prompt"
+msgstr "Prompt de sectionnement"
 
 msgid "Sectioning Reasoning"
 msgstr "Raisonnement du sectionnement"
@@ -3642,8 +3663,8 @@ msgstr "Structure et sémantique"
 msgid "Structure each page into a content tree of sections and nodes for downstream rendering."
 msgstr "Structurez chaque page en un arbre de contenu composé de sections et de nœuds pour le rendu ultérieur."
 
-msgid "Structure Types"
-msgstr "Types de structure"
+#~ msgid "Structure Types"
+#~ msgstr "Types de structure"
 
 msgid "Structured chapters, exercises. Best for educational content with complex layouts."
 msgstr "Chapitres structurés, exercices. Idéal pour le contenu éducatif avec des mises en page complexes."
@@ -3763,6 +3784,12 @@ msgstr "Texte couleur: {0}"
 msgid "Text Only"
 msgstr "Texte uniquement"
 
+#~ msgid "Text roles the LLM may assign to text in the content tree."
+#~ msgstr "Rôles de texte que le LLM peut attribuer au texte dans l'arbre de contenu."
+
+msgid "Text roles the LLM may assign to text in the content tree. Pruned roles are classified but excluded from rendering."
+msgstr "Rôles de texte que le LLM peut attribuer au texte dans l'arbre de contenu. Les rôles élagués sont classés mais exclus du rendu."
+
 msgid "Text Types"
 msgstr "Types de texte"
 
@@ -3844,6 +3871,9 @@ msgstr "Le modèle d'invite utilisé pour découper chaque page en sections logi
 msgid "The prompt template used to translate text catalog entries."
 msgstr "Le modèle d'invite utilisé pour traduire les entrées du catalogue de texte."
 
+msgid "The prompt used by the reviewer pass to inspect and correct a candidate sectioning tree. Shares the model and retry settings of the sectioning prompt."
+msgstr "Le prompt utilisé par la passe de revue pour inspecter et corriger un arbre de sectionnement candidat. Partage le modèle et les paramètres de réessai du prompt de sectionnement."
+
 msgid "The rendering strategy used for sections without an explicit mapping."
 msgstr "La stratégie de rendu utilisée pour les sections sans correspondance explicite."
 
@@ -3898,8 +3928,11 @@ msgstr "Cela enregistrera vos paramètres et relancera la génération des lége
 msgid "This will save your settings and re-run quiz generation."
 msgstr "Cela enregistrera vos paramètres et relancera la génération des quiz."
 
-msgid "This will save your settings and re-run sectioning and storyboard rendering for all pages."
-msgstr "Ceci enregistrera vos paramètres et relancera le sectionnement et le rendu du storyboard pour toutes les pages."
+#~ msgid "This will save your settings and re-run sectioning and storyboard rendering for all pages."
+#~ msgstr "Ceci enregistrera vos paramètres et relancera le sectionnement et le rendu du storyboard pour toutes les pages."
+
+msgid "This will save your settings and re-run sectioning for all pages."
+msgstr "Ceci enregistrera vos paramètres et relancera le sectionnement pour toutes les pages."
 
 msgid "This will save your settings and re-run speech generation."
 msgstr "Cela enregistrera vos paramètres et relancera la génération de la synthèse vocale."
@@ -3976,8 +4009,11 @@ msgstr "Traduction Invite"
 msgid "Transport"
 msgstr "Transport"
 
-msgid "Treats each page as a single section"
-msgstr "Traite chaque page comme une seule section"
+#~ msgid "Treats each page as a single section"
+#~ msgstr "Traite chaque page comme une seule section"
+
+msgid "Treats each page as a single section."
+msgstr "Traite chaque page comme une seule section."
 
 msgid "Try Activity"
 msgstr "Essayer l'activité"

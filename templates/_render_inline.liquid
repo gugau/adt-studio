@@ -9,6 +9,7 @@
     nodes  — RenderNode[]
 {%- endcomment -%}
 {%- for node in nodes -%}
+{%- unless forloop.first %} {% endunless -%}
 {%- if node.role == "image" -%}
 <img data-id="{{ node.node_id | escape }}" src="{{ node.image_url | escape }}">
 {%- elsif node.role == "math" -%}

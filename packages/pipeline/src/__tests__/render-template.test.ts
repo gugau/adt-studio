@@ -352,6 +352,71 @@ describe("two_column_render.liquid", () => {
     expect(result.html).not.toContain('role="article"')
     expect(result.html).toContain('<h2 data-id="pg001_gp001_tx001">Lesson heading</h2>')
   })
+
+  it("routes a non-image_group container holding an image leaf into the image column", async () => {
+    const engine = createTemplateEngine(templatesDir)
+    const input = makeInput({
+      nodes: [
+        groupNode("pg001_gp001", "paragraph", [
+          leafNode("pg001_gp001_tx001", "text", "Some text"),
+        ]),
+        groupNode("pg001_panel001", "panel", [
+          { nodeId: "pg001_im001", isPruned: false, role: "image" },
+        ]),
+      ],
+      images: new Map([["pg001_im001", { base64: "base64data" }]]),
+    })
+    const config = { ...templateConfig, templateName: "two_column_render" }
+    const result = await renderSectionTemplate(input, config, engine)
+
+    expect(result.html).toContain('data-id="pg001_gp001_tx001"')
+    expect(result.html).toContain('data-id="pg001_im001"')
+    expect(result.html).toContain("lg:basis-1/2")
+  })
+
+  it("routes a deeply nested image (3+ levels) into the image column", async () => {
+    const engine = createTemplateEngine(templatesDir)
+    const input = makeInput({
+      nodes: [
+        groupNode("pg001_gp001", "paragraph", [
+          leafNode("pg001_gp001_tx001", "text", "Some text"),
+        ]),
+        groupNode("pg001_panel001", "panel", [
+          groupNode("pg001_panel001_ig001", "image_group", [
+            { nodeId: "pg001_im001", isPruned: false, role: "image" },
+          ]),
+        ]),
+      ],
+      images: new Map([["pg001_im001", { base64: "base64data" }]]),
+    })
+    const config = { ...templateConfig, templateName: "two_column_render" }
+    const result = await renderSectionTemplate(input, config, engine)
+
+    expect(result.html).toContain('data-id="pg001_gp001_tx001"')
+    expect(result.html).toContain('data-id="pg001_im001"')
+    expect(result.html).toContain("lg:basis-1/2")
+  })
+
+  it("splits a mixed image_group (image + text leaves) into two columns", async () => {
+    const engine = createTemplateEngine(templatesDir)
+    const input = makeInput({
+      nodes: [
+        groupNode("pg001_gp001", "image_group", [
+          { nodeId: "pg001_im001", isPruned: false, role: "image" },
+          leafNode("pg001_gp001_tx001", "text", "Overlay line one"),
+          leafNode("pg001_gp001_tx002", "text", "Overlay line two"),
+        ]),
+      ],
+      images: new Map([["pg001_im001", { base64: "base64data" }]]),
+    })
+    const config = { ...templateConfig, templateName: "two_column_render" }
+    const result = await renderSectionTemplate(input, config, engine)
+
+    expect(result.html).toContain('data-id="pg001_im001"')
+    expect(result.html).toContain('data-id="pg001_gp001_tx001"')
+    expect(result.html).toContain('data-id="pg001_gp001_tx002"')
+    expect(result.html).toContain("lg:basis-1/2")
+  })
 })
 
 describe("two_column_story.liquid", () => {

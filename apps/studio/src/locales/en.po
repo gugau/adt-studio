@@ -832,8 +832,8 @@ msgstr "Building Storyboard..."
 msgid "By Page"
 msgstr "By Page"
 
-msgid "By Section"
-msgstr "By Section"
+#~ msgid "By Section"
+#~ msgstr "By Section"
 
 msgid "Cache"
 msgstr "Cache"
@@ -1042,11 +1042,14 @@ msgstr "Confirm Rerun"
 msgid "Consulting the style council..."
 msgstr "Consulting the style council..."
 
-msgid "Container node types the LLM may produce in the content tree during sectioning. Each type has a description shown to the model."
-msgstr "Container node types the LLM may produce in the content tree during sectioning. Each type has a description shown to the model."
+msgid "Container node types the LLM may produce in the content tree during sectioning."
+msgstr "Container node types the LLM may produce in the content tree during sectioning."
 
-#~ msgid "Container Types"
-#~ msgstr "Container Types"
+#~ msgid "Container node types the LLM may produce in the content tree during sectioning. Each type has a description shown to the model."
+#~ msgstr "Container node types the LLM may produce in the content tree during sectioning. Each type has a description shown to the model."
+
+msgid "Container Types"
+msgstr "Container Types"
 
 msgid "Content"
 msgstr "Content"
@@ -1795,11 +1798,11 @@ msgstr "Google"
 msgid "Google AI API Key"
 msgstr "Google AI API Key"
 
-msgid "Groups content into logical sections"
-msgstr "Groups content into logical sections"
+#~ msgid "Groups content into logical sections"
+#~ msgstr "Groups content into logical sections"
 
-msgid "Groups content into multiple logical sections based on topic and structure. The AI identifies natural boundaries - headings, topic shifts, figures - and organizes content accordingly. Most granular option, ideal for dense or mixed-content pages."
-msgstr "Groups content into multiple logical sections based on topic and structure. The AI identifies natural boundaries - headings, topic shifts, figures - and organizes content accordingly. Most granular option, ideal for dense or mixed-content pages."
+#~ msgid "Groups content into multiple logical sections based on topic and structure. The AI identifies natural boundaries - headings, topic shifts, figures - and organizes content accordingly. Most granular option, ideal for dense or mixed-content pages."
+#~ msgstr "Groups content into multiple logical sections based on topic and structure. The AI identifies natural boundaries - headings, topic shifts, figures - and organizes content accordingly. Most granular option, ideal for dense or mixed-content pages."
 
 msgid "Header"
 msgstr "Header"
@@ -1991,8 +1994,11 @@ msgstr "Jane Reviewer"
 msgid "KB"
 msgstr "KB"
 
-msgid "Keeps pages whole unless mixed activity types require splitting"
-msgstr "Keeps pages whole unless mixed activity types require splitting"
+#~ msgid "Keeps pages whole unless mixed activity types require splitting"
+#~ msgstr "Keeps pages whole unless mixed activity types require splitting"
+
+msgid "Keeps pages whole unless mixed activity types require splitting."
+msgstr "Keeps pages whole unless mixed activity types require splitting."
 
 msgid "Keeps the page as one section by default, but intelligently splits when it detects multiple distinct activities - such as a mix of multiple-choice, open-ended, and sorting exercises on the same page. Best for textbooks with varied exercises."
 msgstr "Keeps the page as one section by default, but intelligently splits when it detects multiple distinct activities - such as a mix of multiple-choice, open-ended, and sorting exercises on the same page. Best for textbooks with varied exercises."
@@ -2031,8 +2037,11 @@ msgstr "Last"
 msgid "Last modified"
 msgstr "Last modified"
 
-msgid "Leaf node roles the LLM may assign to text and image leaves in the content tree. Each role has a description shown to the model."
-msgstr "Leaf node roles the LLM may assign to text and image leaves in the content tree. Each role has a description shown to the model."
+#~ msgid "Leaf node roles the LLM may assign to text and image leaves in the content tree."
+#~ msgstr "Leaf node roles the LLM may assign to text and image leaves in the content tree."
+
+#~ msgid "Leaf node roles the LLM may assign to text and image leaves in the content tree. Each role has a description shown to the model."
+#~ msgstr "Leaf node roles the LLM may assign to text and image leaves in the content tree. Each role has a description shown to the model."
 
 #~ msgid "Leaf text roles the LLM can assign to each text element. Pruned roles are classified but excluded from rendering."
 #~ msgstr "Leaf text roles the LLM can assign to each text element. Pruned roles are classified but excluded from rendering."
@@ -2751,6 +2760,9 @@ msgstr "Page Sectioning"
 msgid "Page Sectioning Prompt"
 msgstr "Page Sectioning Prompt"
 
+msgid "Page Sectioning Refinement Prompt"
+msgstr "Page Sectioning Refinement Prompt"
+
 msgid "pages"
 msgstr "pages"
 
@@ -3020,6 +3032,9 @@ msgstr "Reference"
 
 #~ msgid "Refinement Passes"
 #~ msgstr "Refinement Passes"
+
+msgid "Refinement Prompt"
+msgstr "Refinement Prompt"
 
 msgid "Refresh validation"
 msgstr "Refresh validation"
@@ -3338,8 +3353,8 @@ msgstr "Section preview"
 msgid "Section pruned from flow"
 msgstr "Section pruned from flow"
 
-msgid "Section Refinement"
-msgstr "Section Refinement"
+#~ msgid "Section Refinement"
+#~ msgstr "Section Refinement"
 
 #~ msgid "Section Refinement Prompt"
 #~ msgstr "Section Refinement Prompt"
@@ -3353,11 +3368,17 @@ msgstr "Section Types"
 msgid "Sectioning"
 msgstr "Sectioning"
 
+msgid "Sectioning mode"
+msgstr "Sectioning mode"
+
 msgid "Sectioning Mode"
 msgstr "Sectioning Mode"
 
 msgid "Sectioning Pages..."
 msgstr "Sectioning Pages..."
+
+msgid "Sectioning Prompt"
+msgstr "Sectioning Prompt"
 
 msgid "Sectioning Reasoning"
 msgstr "Sectioning Reasoning"
@@ -3638,8 +3659,8 @@ msgstr "Structure & semantics"
 msgid "Structure each page into a content tree of sections and nodes for downstream rendering."
 msgstr "Structure each page into a content tree of sections and nodes for downstream rendering."
 
-msgid "Structure Types"
-msgstr "Structure Types"
+#~ msgid "Structure Types"
+#~ msgstr "Structure Types"
 
 msgid "Structured chapters, exercises. Best for educational content with complex layouts."
 msgstr "Structured chapters, exercises. Best for educational content with complex layouts."
@@ -3759,6 +3780,12 @@ msgstr "Text color: {0}"
 msgid "Text Only"
 msgstr "Text Only"
 
+#~ msgid "Text roles the LLM may assign to text in the content tree."
+#~ msgstr "Text roles the LLM may assign to text in the content tree."
+
+msgid "Text roles the LLM may assign to text in the content tree. Pruned roles are classified but excluded from rendering."
+msgstr "Text roles the LLM may assign to text in the content tree. Pruned roles are classified but excluded from rendering."
+
 msgid "Text Types"
 msgstr "Text Types"
 
@@ -3840,6 +3867,9 @@ msgstr "The prompt template used to split each page into logical sections. This 
 msgid "The prompt template used to translate text catalog entries."
 msgstr "The prompt template used to translate text catalog entries."
 
+msgid "The prompt used by the reviewer pass to inspect and correct a candidate sectioning tree. Shares the model and retry settings of the sectioning prompt."
+msgstr "The prompt used by the reviewer pass to inspect and correct a candidate sectioning tree. Shares the model and retry settings of the sectioning prompt."
+
 msgid "The rendering strategy used for sections without an explicit mapping."
 msgstr "The rendering strategy used for sections without an explicit mapping."
 
@@ -3894,8 +3924,11 @@ msgstr "This will save your settings and re-run image captioning."
 msgid "This will save your settings and re-run quiz generation."
 msgstr "This will save your settings and re-run quiz generation."
 
-msgid "This will save your settings and re-run sectioning and storyboard rendering for all pages."
-msgstr "This will save your settings and re-run sectioning and storyboard rendering for all pages."
+#~ msgid "This will save your settings and re-run sectioning and storyboard rendering for all pages."
+#~ msgstr "This will save your settings and re-run sectioning and storyboard rendering for all pages."
+
+msgid "This will save your settings and re-run sectioning for all pages."
+msgstr "This will save your settings and re-run sectioning for all pages."
 
 msgid "This will save your settings and re-run speech generation."
 msgstr "This will save your settings and re-run speech generation."
@@ -3972,8 +4005,11 @@ msgstr "Translation Prompt"
 msgid "Transport"
 msgstr "Transport"
 
-msgid "Treats each page as a single section"
-msgstr "Treats each page as a single section"
+#~ msgid "Treats each page as a single section"
+#~ msgstr "Treats each page as a single section"
+
+msgid "Treats each page as a single section."
+msgstr "Treats each page as a single section."
 
 msgid "Try Activity"
 msgstr "Try Activity"

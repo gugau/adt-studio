@@ -1,7 +1,53 @@
 import { Liquid } from "liquidjs"
 import type { SectionRendering } from "@adt/types"
 import { validateSectionHtml } from "./validate-html.js"
-import type { RenderConfig, RenderSectionInput } from "./web-rendering.js"
+import type {
+  RenderConfig,
+  RenderNode,
+  RenderSectionInput,
+} from "./web-rendering.js"
+
+function subtreeHasImage(node: RenderNode): boolean {
+  if (node.role === "image") return true
+  if (!node.children) return false
+  for (const child of node.children) {
+    if (subtreeHasImage(child)) return true
+  }
+  return false
+}
+
+/**
+ * Partition top-level nodes into image-bearing vs text-only lists for
+ * two-column layouts. A mixed `image_group` (image leaf + non-image
+ * children — text visually overlaid on the illustration) is split one
+ * level deep: image children go to `image_nodes`, non-image children go
+ * to `text_nodes`. All other nodes stay intact.
+ */
+function partitionNodes(nodes: RenderNode[]): {
+  image_nodes: RenderNode[]
+  text_nodes: RenderNode[]
+} {
+  const image_nodes: RenderNode[] = []
+  const text_nodes: RenderNode[] = []
+  for (const node of nodes) {
+    const children = node.children ?? []
+    const imageChildren = children.filter((c) => c.role === "image")
+    const nonImageChildren = children.filter((c) => c.role !== "image")
+    const isMixedImageGroup =
+      node.structure === "image_group" &&
+      imageChildren.length > 0 &&
+      nonImageChildren.length > 0
+    if (isMixedImageGroup) {
+      image_nodes.push(...imageChildren)
+      text_nodes.push(...nonImageChildren)
+    } else if (subtreeHasImage(node)) {
+      image_nodes.push(node)
+    } else {
+      text_nodes.push(node)
+    }
+  }
+  return { image_nodes, text_nodes }
+}
 
 export interface TemplateEngine {
   render(templateName: string, context: Record<string, unknown>): Promise<string>
@@ -40,6 +86,8 @@ export async function renderSectionTemplate(
   const imageUrlPrefix = `/api/books/${input.label}/images`
   const { section, context: renderContext } = input
 
+  const { image_nodes, text_nodes } = partitionNodes(renderContext.nodes)
+
   const templateContext: Record<string, unknown> = {
     section_id: section.sectionId,
     section_type: section.sectionType,
@@ -48,6 +96,8 @@ export async function renderSectionTemplate(
     label: input.label,
     image_url_prefix: imageUrlPrefix,
     nodes: renderContext.nodes,
+    image_nodes,
+    text_nodes,
     leaf_texts: renderContext.leaf_texts,
     image_refs: renderContext.image_refs,
     group_ids: renderContext.group_ids,

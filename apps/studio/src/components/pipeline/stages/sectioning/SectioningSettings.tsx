@@ -5,6 +5,7 @@ import { Play, Plus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
 import { PruneToggle } from "@/components/pipeline/components/PruneToggle"
 import {
   Dialog,
@@ -34,6 +35,29 @@ import { useLingui } from "@lingui/react/macro"
 import { i18n } from "@lingui/core"
 import { listSelectableRenderStrategies } from "@/lib/render-strategy"
 import { getSectionTypeLabel } from "@/lib/section-constants"
+import { cn } from "@/lib/utils"
+
+function PageModeIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden>
+      <rect x="3" y="2" width="18" height="20" rx="2" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="7" y1="7" x2="17" y2="7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <line x1="7" y1="10.5" x2="14" y2="10.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <rect x="7" y="13" width="10" height="5" rx="1" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+    </svg>
+  )
+}
+
+function DynamicModeIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden>
+      <rect x="3" y="2" width="18" height="7" rx="2" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="7" y1="5.5" x2="17" y2="5.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <rect x="3" y="11" width="18" height="5" rx="2" stroke="currentColor" strokeWidth="1.5" opacity="0.6" />
+      <rect x="3" y="18" width="18" height="4" rx="2" stroke="currentColor" strokeWidth="1.5" opacity="0.4" />
+    </svg>
+  )
+}
 
 const STRATEGY_LABEL_MSGS: Record<string, ReturnType<typeof msg>> = {
   llm: msg`AI Generated`,
@@ -76,11 +100,13 @@ export function SectioningSettings({ bookLabel, headerTarget, tab = "general" }:
   const [structureTypes, setStructureTypes] = useState<Record<string, string>>({})
   // Text (role) Types state
   const [roleTypes, setRoleTypes] = useState<Record<string, string>>({})
+  const [prunedRoleTypes, setPrunedRoleTypes] = useState<Set<string>>(new Set())
 
   // Sectioning state
   const [sectioningMode, setSectioningMode] = useState("dynamic")
   const [maxRefinements, setMaxRefinements] = useState("")
   const [sectioningPromptDraft, setSectioningPromptDraft] = useState<string | null>(null)
+  const [refinementPromptDraft, setRefinementPromptDraft] = useState<string | null>(null)
 
   // Track dirty state
   const [dirty, setDirty] = useState<Record<string, boolean>>({})
@@ -110,6 +136,9 @@ export function SectioningSettings({ bookLabel, headerTarget, tab = "general" }:
     }
     if (m.role_types && typeof m.role_types === "object") {
       setRoleTypes(m.role_types as Record<string, string>)
+    }
+    if (Array.isArray(m.pruned_role_types)) {
+      setPrunedRoleTypes(new Set(m.pruned_role_types as string[]))
     }
     const strategies = (
       m.render_strategies && typeof m.render_strategies === "object" ? m.render_strategies : {}
@@ -209,6 +238,16 @@ export function SectioningSettings({ bookLabel, headerTarget, tab = "general" }:
     setRoleTypes((prev) => ({ ...prev, [key]: description }))
   }
 
+  const togglePrunedRole = (key: string) => {
+    markDirty("pruned_role_types")
+    setPrunedRoleTypes((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
   const removeRoleType = (key: string) => {
     markDirty("role_types")
     setRoleTypes((prev) => {
@@ -278,6 +317,9 @@ export function SectioningSettings({ bookLabel, headerTarget, tab = "general" }:
       }
       overrides.role_types = withDeletions
     }
+    if (shouldWrite("pruned_role_types")) {
+      overrides.pruned_role_types = Array.from(prunedRoleTypes)
+    }
     if (shouldWrite("page_sectioning") || shouldWrite("max_refinements")) {
       const existing = (bookConfigData?.config?.page_sectioning ?? {}) as Record<string, unknown>
       const ps: Record<string, unknown> = { ...existing, ...sectioning.configOverrides, mode: sectioningMode }
@@ -294,6 +336,9 @@ export function SectioningSettings({ bookLabel, headerTarget, tab = "general" }:
     if (sectioningPromptDraft != null) {
       await api.updatePrompt("page_sectioning", sectioningPromptDraft, bookLabel)
     }
+    if (refinementPromptDraft != null) {
+      await api.updatePrompt("page_sectioning_refinement", refinementPromptDraft, bookLabel)
+    }
 
     const overrides = buildOverrides()
     updateConfig.mutate(
@@ -302,12 +347,40 @@ export function SectioningSettings({ bookLabel, headerTarget, tab = "general" }:
         onSuccess: () => {
           setDirty({})
           setSectioningPromptDraft(null)
+          setRefinementPromptDraft(null)
           setShowRerunDialog(false)
-          queueRun({ fromStage: "sectioning", toStage: "storyboard", apiKey })
+          queueRun({ fromStage: "sectioning", toStage: "sectioning", apiKey })
           navigate({ to: "/books/$label/$step", params: { label: bookLabel, step: "sectioning" } })
         },
       }
     )
+  }
+
+  const activityNames = useMemo(() => {
+    const strategies = (merged?.render_strategies ?? {}) as Record<string, { render_type?: string }>
+    const names = new Set<string>()
+    for (const key of Object.keys(sectionTypes)) {
+      if (key.startsWith("activity_")) names.add(key)
+    }
+    for (const [name, strat] of Object.entries(strategies)) {
+      if (strat?.render_type === "activity") names.add(name)
+    }
+    return Array.from(names)
+  }, [merged, sectionTypes])
+
+  const anyActivitiesEnabled = activityNames.length > 0 &&
+    activityNames.some((name) => !disabledSectionTypes.has(name))
+
+  const toggleAllActivities = (enabled: boolean) => {
+    markDirty("disabled_section_types")
+    setDisabledSectionTypes((prev) => {
+      const next = new Set(prev)
+      for (const name of activityNames) {
+        if (enabled) next.delete(name)
+        else next.add(name)
+      }
+      return next
+    })
   }
 
   const orderedStructureEntries = useMemo(
@@ -321,15 +394,96 @@ export function SectioningSettings({ bookLabel, headerTarget, tab = "general" }:
   )
 
   return (
-    <div className={tab === "section-refinement" ? "h-full" : "p-4 space-y-6"}>
+    <div className={tab === "sectioning-prompt" || tab === "refinement-prompt" ? "h-full" : "p-4 space-y-6"}>
       {tab === "general" && (
-        <div>
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              {<Trans>Sectioning Mode</Trans>}
+            </h3>
+            <div
+              role="radiogroup"
+              aria-label={t`Sectioning mode`}
+              className="grid grid-cols-2 gap-3 max-w-xl"
+            >
+              {[
+                {
+                  value: "dynamic",
+                  Icon: DynamicModeIcon,
+                  title: <Trans>Dynamic</Trans>,
+                  description: (
+                    <Trans>Keeps pages whole unless mixed activity types require splitting.</Trans>
+                  ),
+                },
+                {
+                  value: "page",
+                  Icon: PageModeIcon,
+                  title: <Trans>By Page</Trans>,
+                  description: <Trans>Treats each page as a single section.</Trans>,
+                },
+              ].map(({ value, Icon, title, description }) => {
+                const selected = sectioningMode === value
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => {
+                      setSectioningMode(value)
+                      markDirty("page_sectioning")
+                    }}
+                    className={cn(
+                      "flex items-start gap-3 rounded-md border p-3 text-left transition",
+                      selected
+                        ? "border-primary bg-primary/5 ring-1 ring-primary"
+                        : "border-border hover:border-primary/50 hover:bg-muted/40"
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        "size-6 shrink-0 mt-0.5",
+                        selected ? "text-primary" : "text-muted-foreground"
+                      )}
+                    />
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <span className="text-sm font-medium">{title}</span>
+                      <span className="text-xs text-muted-foreground leading-snug">
+                        {description}
+                      </span>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {<Trans>Controls how page content is grouped during the sectioning step.</Trans>}
+            </p>
+          </div>
+
+          <div>
           <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
             {<Trans>Section Types</Trans>}
           </h3>
           <p className="text-xs text-muted-foreground mb-3">
             {<Trans>Types used during page sectioning. Pruned types are classified but excluded from rendering. Disabled types are hidden from the LLM entirely.</Trans>}
           </p>
+          {activityNames.length > 0 && (
+            <div className="flex items-center gap-3 mb-3">
+              <Switch
+                checked={anyActivitiesEnabled}
+                onCheckedChange={toggleAllActivities}
+              />
+              <Label className="text-xs">
+                {anyActivitiesEnabled ? <Trans>Activities enabled</Trans> : <Trans>Activities disabled</Trans>}
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                {anyActivitiesEnabled
+                  ? <Trans>Activity section types are available for classification and rendering.</Trans>
+                  : <Trans>Activity section types are hidden from the classifier and skipped during rendering.</Trans>}
+              </p>
+            </div>
+          )}
           <div className="rounded-md border divide-y">
             <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50">
               <span className="h-3.5 w-3.5 shrink-0" />
@@ -415,58 +569,31 @@ export function SectioningSettings({ bookLabel, headerTarget, tab = "general" }:
               </Button>
             </div>
           </div>
+          </div>
         </div>
       )}
 
-      {tab === "section-refinement" && (
+      {tab === "sectioning-prompt" && (
+        <div className="flex flex-col h-full">
+          <div className="flex-1 min-h-0">
+            <PromptViewer
+              promptName="page_sectioning"
+              bookLabel={bookLabel}
+              title={t`Page Sectioning Prompt`}
+              description={t`The prompt template used to split each page into logical sections. This is a Liquid template processed with page context.`}
+              model={sectioning.model}
+              onModelChange={sectioning.onModelChange}
+              maxRetries={sectioning.maxRetries}
+              onMaxRetriesChange={sectioning.onMaxRetriesChange}
+              onContentChange={setSectioningPromptDraft}
+            />
+          </div>
+        </div>
+      )}
+
+      {tab === "refinement-prompt" && (
         <div className="flex flex-col h-full">
           <div className="shrink-0 p-4 pb-0 space-y-4">
-            <div>
-              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                {<Trans>Sectioning Mode</Trans>}
-              </h3>
-              <Select
-                value={sectioningMode}
-                onValueChange={(v) => {
-                  setSectioningMode(v)
-                  markDirty("page_sectioning")
-                }}
-              >
-                <SelectTrigger className="w-72 h-fit">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent align="start">
-                  <SelectItem value="dynamic">
-                    <div className="flex flex-col items-start">
-                      <span>{<Trans>Dynamic</Trans>}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {<Trans>Keeps pages whole unless mixed activity types require splitting</Trans>}
-                      </span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="section">
-                    <div className="flex flex-col items-start">
-                      <span>{<Trans>By Section</Trans>}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {<Trans>Groups content into logical sections</Trans>}
-                      </span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="page">
-                    <div className="flex flex-col items-start">
-                      <span>{<Trans>By Page</Trans>}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {<Trans>Treats each page as a single section</Trans>}
-                      </span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground mt-1.5">
-                {<Trans>Controls how page content is grouped during the sectioning step.</Trans>}
-              </p>
-            </div>
-
             <div>
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
                 {<Trans>Max Refinements</Trans>}
@@ -496,141 +623,143 @@ export function SectioningSettings({ bookLabel, headerTarget, tab = "general" }:
           </div>
           <div className="flex-1 min-h-0">
             <PromptViewer
-              promptName="page_sectioning"
+              promptName="page_sectioning_refinement"
               bookLabel={bookLabel}
-              title={t`Page Sectioning Prompt`}
-              description={t`The prompt template used to split each page into logical sections. This is a Liquid template processed with page context.`}
-              model={sectioning.model}
-              onModelChange={sectioning.onModelChange}
-              maxRetries={sectioning.maxRetries}
-              onMaxRetriesChange={sectioning.onMaxRetriesChange}
-              onContentChange={setSectioningPromptDraft}
+              title={t`Page Sectioning Refinement Prompt`}
+              description={t`The prompt used by the reviewer pass to inspect and correct a candidate sectioning tree. Shares the model and retry settings of the sectioning prompt.`}
+              hideModel
+              onContentChange={setRefinementPromptDraft}
             />
           </div>
         </div>
       )}
 
-      {tab === "structure-types" && (
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-              {<Trans>Structure Types</Trans>}
-            </h3>
-            <p className="text-xs text-muted-foreground mb-3">
-              {<Trans>Container node types the LLM may produce in the content tree during sectioning. Each type has a description shown to the model.</Trans>}
-            </p>
-            <div className="rounded-md border divide-y">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50">
-                <span className="text-xs font-medium text-muted-foreground shrink-0 w-40">{<Trans>Type</Trans>}</span>
-                <span className="text-xs font-medium text-muted-foreground flex-1 min-w-0">{<Trans>Description</Trans>}</span>
-                <span className="shrink-0 w-5" />
-              </div>
-              {orderedStructureEntries.map(([key, description]) => (
-                <div key={key} className="flex items-center gap-2 px-3 py-1.5 group">
-                  <span className="text-xs shrink-0 w-40 truncate font-mono font-medium">{key}</span>
-                  <Input
-                    value={description}
-                    onChange={(e) => updateStructureDescription(key, e.target.value)}
-                    className="h-7 text-xs flex-1 min-w-0"
-                    placeholder={t`Description...`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeStructureType(key)}
-                    className="shrink-0 p-0.5 rounded transition-colors text-muted-foreground/0 group-hover:text-muted-foreground hover:!text-destructive"
-                    title={t`Remove type`}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))}
-              <div className="flex items-center gap-2 px-3 py-1.5">
-                <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      {tab === "container-types" && (
+        <div>
+          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+            {<Trans>Container Types</Trans>}
+          </h3>
+          <p className="text-xs text-muted-foreground mb-3">
+            {<Trans>Container node types the LLM may produce in the content tree during sectioning.</Trans>}
+          </p>
+          <div className="rounded-md border divide-y">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50">
+              <span className="text-xs font-medium text-muted-foreground shrink-0 w-40">{<Trans>Type</Trans>}</span>
+              <span className="text-xs font-medium text-muted-foreground flex-1 min-w-0">{<Trans>Description</Trans>}</span>
+              <span className="shrink-0 w-5" />
+            </div>
+            {orderedStructureEntries.map(([key, description]) => (
+              <div key={key} className="flex items-center gap-2 px-3 py-1.5 group">
+                <span className="text-xs shrink-0 w-40 truncate font-mono font-medium">{key}</span>
                 <Input
-                  value={newStructKey}
-                  onChange={(e) => setNewStructKey(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addStructureType()}
-                  className="h-7 text-xs w-36 shrink-0"
-                  placeholder={t`new_type_key`}
-                />
-                <Input
-                  value={newStructDesc}
-                  onChange={(e) => setNewStructDesc(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addStructureType()}
+                  value={description}
+                  onChange={(e) => updateStructureDescription(key, e.target.value)}
                   className="h-7 text-xs flex-1 min-w-0"
                   placeholder={t`Description...`}
                 />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs shrink-0"
-                  onClick={addStructureType}
-                  disabled={!newStructKey.trim() || newStructKey.trim().toLowerCase().replace(/\s+/g, "_") in structureTypes}
+                <button
+                  type="button"
+                  onClick={() => removeStructureType(key)}
+                  className="shrink-0 p-0.5 rounded transition-colors text-muted-foreground/0 group-hover:text-muted-foreground hover:!text-destructive"
+                  title={t`Remove type`}
                 >
-                  {<Trans>Add</Trans>}
-                </Button>
+                  <X className="h-3.5 w-3.5" />
+                </button>
               </div>
+            ))}
+            <div className="flex items-center gap-2 px-3 py-1.5">
+              <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <Input
+                value={newStructKey}
+                onChange={(e) => setNewStructKey(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addStructureType()}
+                className="h-7 text-xs w-36 shrink-0"
+                placeholder={t`new_type_key`}
+              />
+              <Input
+                value={newStructDesc}
+                onChange={(e) => setNewStructDesc(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addStructureType()}
+                className="h-7 text-xs flex-1 min-w-0"
+                placeholder={t`Description...`}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs shrink-0"
+                onClick={addStructureType}
+                disabled={!newStructKey.trim() || newStructKey.trim().toLowerCase().replace(/\s+/g, "_") in structureTypes}
+              >
+                {<Trans>Add</Trans>}
+              </Button>
             </div>
           </div>
+        </div>
+      )}
 
-          <div>
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-              {<Trans>Text Types</Trans>}
-            </h3>
-            <p className="text-xs text-muted-foreground mb-3">
-              {<Trans>Leaf node roles the LLM may assign to text and image leaves in the content tree. Each role has a description shown to the model.</Trans>}
-            </p>
-            <div className="rounded-md border divide-y">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50">
-                <span className="text-xs font-medium text-muted-foreground shrink-0 w-40">{<Trans>Type</Trans>}</span>
-                <span className="text-xs font-medium text-muted-foreground flex-1 min-w-0">{<Trans>Description</Trans>}</span>
-                <span className="shrink-0 w-5" />
-              </div>
-              {orderedRoleEntries.map(([key, description]) => (
-                <div key={key} className="flex items-center gap-2 px-3 py-1.5 group">
-                  <span className="text-xs shrink-0 w-40 truncate font-mono font-medium">{key}</span>
-                  <Input
-                    value={description}
-                    onChange={(e) => updateRoleDescription(key, e.target.value)}
-                    className="h-7 text-xs flex-1 min-w-0"
-                    placeholder={t`Description...`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeRoleType(key)}
-                    className="shrink-0 p-0.5 rounded transition-colors text-muted-foreground/0 group-hover:text-muted-foreground hover:!text-destructive"
-                    title={t`Remove type`}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))}
-              <div className="flex items-center gap-2 px-3 py-1.5">
-                <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      {tab === "text-types" && (
+        <div>
+          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+            {<Trans>Text Types</Trans>}
+          </h3>
+          <p className="text-xs text-muted-foreground mb-3">
+            {<Trans>Text roles the LLM may assign to text in the content tree. Pruned roles are classified but excluded from rendering.</Trans>}
+          </p>
+          <div className="rounded-md border divide-y">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50">
+              <span className="h-3.5 w-3.5 shrink-0" />
+              <span className="text-xs font-medium text-muted-foreground shrink-0 w-40">{<Trans>Type</Trans>}</span>
+              <span className="text-xs font-medium text-muted-foreground flex-1 min-w-0">{<Trans>Description</Trans>}</span>
+              <span className="shrink-0 w-5" />
+            </div>
+            {orderedRoleEntries.map(([key, description]) => {
+              const pruned = prunedRoleTypes.has(key)
+              return (
+              <div key={key} className={`flex items-center gap-2 px-3 py-1.5 group ${pruned ? "bg-muted/30" : ""}`}>
+                <PruneToggle pruned={pruned} onToggle={() => togglePrunedRole(key)} />
+                <span className={`text-xs shrink-0 w-40 truncate font-mono ${pruned ? "text-muted-foreground line-through" : "font-medium"}`}>{key}</span>
                 <Input
-                  value={newRoleKey}
-                  onChange={(e) => setNewRoleKey(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addRoleType()}
-                  className="h-7 text-xs w-36 shrink-0"
-                  placeholder={t`new_type_key`}
-                />
-                <Input
-                  value={newRoleDesc}
-                  onChange={(e) => setNewRoleDesc(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addRoleType()}
+                  value={description}
+                  onChange={(e) => updateRoleDescription(key, e.target.value)}
                   className="h-7 text-xs flex-1 min-w-0"
                   placeholder={t`Description...`}
                 />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs shrink-0"
-                  onClick={addRoleType}
-                  disabled={!newRoleKey.trim() || newRoleKey.trim().toLowerCase().replace(/\s+/g, "_") in roleTypes}
+                <button
+                  type="button"
+                  onClick={() => removeRoleType(key)}
+                  className="shrink-0 p-0.5 rounded transition-colors text-muted-foreground/0 group-hover:text-muted-foreground hover:!text-destructive"
+                  title={t`Remove type`}
                 >
-                  {<Trans>Add</Trans>}
-                </Button>
+                  <X className="h-3.5 w-3.5" />
+                </button>
               </div>
+              )
+            })}
+            <div className="flex items-center gap-2 px-3 py-1.5">
+              <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <Input
+                value={newRoleKey}
+                onChange={(e) => setNewRoleKey(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addRoleType()}
+                className="h-7 text-xs w-36 shrink-0"
+                placeholder={t`new_type_key`}
+              />
+              <Input
+                value={newRoleDesc}
+                onChange={(e) => setNewRoleDesc(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addRoleType()}
+                className="h-7 text-xs flex-1 min-w-0"
+                placeholder={t`Description...`}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs shrink-0"
+                onClick={addRoleType}
+                disabled={!newRoleKey.trim() || newRoleKey.trim().toLowerCase().replace(/\s+/g, "_") in roleTypes}
+              >
+                {<Trans>Add</Trans>}
+              </Button>
             </div>
           </div>
         </div>
@@ -654,7 +783,7 @@ export function SectioningSettings({ bookLabel, headerTarget, tab = "general" }:
           <DialogHeader>
             <DialogTitle>{<Trans>Save & Rerun Sectioning</Trans>}</DialogTitle>
             <DialogDescription>
-              {<Trans>This will save your settings and re-run sectioning and storyboard rendering for all pages.</Trans>}
+              {<Trans>This will save your settings and re-run sectioning for all pages.</Trans>}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
