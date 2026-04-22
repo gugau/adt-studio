@@ -920,6 +920,12 @@ export function renderPageHtml(opts: RenderPageOptions): string {
 
   const normalizedContent = promoteFirstHeadingToH1(opts.content)
 
+  // INVARIANT: every page MUST render all TTS-scannable content inside
+  // <div id="content">. The reader's gatherAudioElements scans #content for
+  // [data-id] elements to build the TTS queue; anything outside #content is
+  // invisible to read-aloud. skipContentWrapper is only safe when the source
+  // content already provides its own <div id="content"> wrapper.
+  //
   // When content already has <div id="content"> (LLM-generated), use it directly to avoid
   // a duplicate #content element.
   // Inject opacity-0 into the existing wrapper for the fade-in animation (skip in embed mode).

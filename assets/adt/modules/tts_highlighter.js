@@ -5,11 +5,10 @@
  */
 import { state } from "./state.js";
 import { stopAudio } from "./audio.js";
-import { unhighlightAllElements, unhighlightElement } from './ui_utils.js';
+import { unhighlightAllElements, unhighlightElement, highlightElement } from './ui_utils.js';
 import { showGlossaryDefinition } from './interface.js';
 import {
   buildWordRenderPlan,
-  createApproximateWordTimestamps,
   getHighlightDisplayText,
   normalizeGlossaryText,
 } from "./tts_highlighter_utils.js";
@@ -39,7 +38,7 @@ export async function initializeWordByWordHighlighter() {
     timecodeData = await response.json();
   } catch (error) {
     timecodeData = {};
-    console.warn("Word timecodes unavailable, using runtime fallback highlighting.", error);
+    console.warn("Timecodes unavailable, using runtime fallback highlighting.", error);
   }
   startMonitoring();
 }
@@ -125,12 +124,23 @@ function attachWordHighlighter(audio) {
     : element.textContent;
   const entry = timecodeData && timecodeData[timecodeKey] ? timecodeData[timecodeKey] : null;
   const storedWordTimestamps = getStoredWordTimestamps(entry);
-  let wordTimestamps = storedWordTimestamps.length > 0
-    ? storedWordTimestamps
-    : createApproximateWordTimestamps(translatedText, audio.duration);
-  const usesApproximateTimings = storedWordTimestamps.length === 0;
 
-  if (wordTimestamps.length === 0) return;
+  // Fall back to block (blue-box) highlight when timecodes are missing — more
+  // reliable than evenly-divided approximate timings that can drift from the
+  // actual word boundaries.
+  if (storedWordTimestamps.length === 0) {
+    const isImage = element.tagName.toLowerCase() === 'img';
+    if (!isImage) {
+      highlightElement(element);
+    }
+    // Mark as attached so the 50ms poll doesn't re-enter every tick.
+    // processAudioQueue's unhighlightElement after playback will clear the block highlight.
+    audio._wordHighlighterAttached = true;
+    attachedAudio = audio;
+    return;
+  }
+
+  const wordTimestamps = storedWordTimestamps;
 
   // Check if this is an image element - if so, create a subtitle popup
   const isImage = element.tagName.toLowerCase() === 'img';
@@ -183,16 +193,6 @@ function attachWordHighlighter(audio) {
 
   // Detach any existing listeners first to avoid duplicates
   detachCurrentListener();
-
-  if (usesApproximateTimings) {
-    metadataListener = () => {
-      const refreshed = createApproximateWordTimestamps(translatedText, audio.duration);
-      if (refreshed.length > 0) {
-        wordTimestamps = refreshed;
-      }
-    };
-    audio.addEventListener("loadedmetadata", metadataListener);
-  }
 
   // Attach a timeupdate listener
   currentListener = () => updateWordHighlighting(audio, targetElement, wordTimestamps);

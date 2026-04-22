@@ -28,8 +28,16 @@ export function getAdtUrl(label: string): string {
   return `${BASE_URL}/books/${label}/adt`
 }
 
-export function getAudioUrl(label: string, language: string, fileName: string): string {
-  return `${BASE_URL}/books/${label}/audio/${language}/${fileName}`
+export function getAudioUrl(
+  label: string,
+  language: string,
+  fileName: string,
+  cacheKey?: string,
+): string {
+  const base = `${BASE_URL}/books/${label}/audio/${language}/${fileName}`
+  if (!cacheKey) return base
+  const params = new URLSearchParams({ v: cacheKey })
+  return `${base}?${params.toString()}`
 }
 
 export function getSignLanguageVideoUrl(label: string, videoId: string): string {
@@ -316,6 +324,7 @@ export interface TTSEntry {
   model: string
   cached: boolean
   provider?: string
+  cacheKey?: string
 }
 
 export interface TTSLanguageData {
@@ -837,6 +846,21 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(data),
     }),
+
+  generateGlossaryItem: (
+    label: string,
+    apiKey: string,
+    body: { word: string; context?: string; candidateVariations?: string[] }
+  ) =>
+    request<{ definition: string; variations: string[]; emojis: string[] }>(
+      `/books/${label}/glossary/generate-one`,
+      {
+        method: "POST",
+        headers: { "X-OpenAI-Key": apiKey },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(60_000),
+      }
+    ),
 
   getToc: (label: string) =>
     request<TocGenerationOutput | null>(`/books/${label}/toc`),

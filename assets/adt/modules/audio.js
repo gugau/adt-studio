@@ -106,8 +106,16 @@ export const gatherAudioElements = () => {
 
     const audioBasePath = `content/i18n/${currentLanguage}/audio/`;
 
+    // TTS content lives under #content (an invariant of renderPageHtml in
+    // package-web.ts). Scoping by #content — not a Tailwind class like .container —
+    // ensures we ignore UI chrome [data-id] labels from interface.html.
+    const contentRoot = document.getElementById('content');
+    if (!contentRoot) {
+        setState('audioElements', []);
+        return [];
+    }
     const elements = Array.from(
-        document.querySelectorAll('.container [data-id], .container textarea[data-placeholder-id], .container input[data-placeholder-id]')
+        contentRoot.querySelectorAll('[data-id], textarea[data-placeholder-id], input[data-placeholder-id]')
     )
         .filter(el => {
             const isNavElement = el.closest('.nav__list') !== null;
@@ -338,8 +346,12 @@ const playAudioWithPromise = (src, speed) => {
         setState('currentAudio', audio);
         audio.playbackRate = parseFloat(speed);
 
-        audio.onended = resolve;
-        audio.onerror = reject;
+        audio.onended = () => {
+            resolve();
+        };
+        audio.onerror = (e) => {
+            reject(e);
+        };
 
         updatePlayPauseIcon(true); // Update play button state
 
@@ -483,15 +495,17 @@ export const toggleReadAloud = ({ stopCalls = false } = {}) => {
     const ttsOptionsContainer = document.getElementById("tts-options-container");
     const autoplayContainer = document.getElementById("autoplay-container");
     const describeImagesContainer = document.getElementById("describe-images-container");
+    const wordHighlightContainer = document.getElementById("word-highlight-container");
     const ttsQuickToggleButton = document.getElementById("tts-quick-toggle-button");
 
     if (newState) {
         if (playBar) playBar.classList.remove("hidden");
         if (ttsQuickToggleButton) ttsQuickToggleButton.classList.remove("hidden");
-        if ((isFeatureEnabled("autoplay") || isFeatureEnabled("describeImages")) && ttsOptionsContainer) {
+        if ((isFeatureEnabled("autoplay") || isFeatureEnabled("describeImages") || isFeatureEnabled("highlight")) && ttsOptionsContainer) {
             ttsOptionsContainer.classList.remove("hidden");
             if (isFeatureEnabled("autoplay")) autoplayContainer?.classList.remove("hidden");
             if (isFeatureEnabled("describeImages")) describeImagesContainer?.classList.remove("hidden");
+            if (isFeatureEnabled("highlight")) wordHighlightContainer?.classList.remove("hidden");
         }
     } else {
         if (playBar) playBar.classList.add("hidden");
@@ -500,6 +514,7 @@ export const toggleReadAloud = ({ stopCalls = false } = {}) => {
             ttsOptionsContainer.classList.add("hidden");
             if (isFeatureEnabled("autoplay")) autoplayContainer?.classList.add("hidden");
             if (isFeatureEnabled("describeImages")) describeImagesContainer?.classList.add("hidden");
+            if (isFeatureEnabled("highlight")) wordHighlightContainer?.classList.add("hidden");
         }
     }
 
