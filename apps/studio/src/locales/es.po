@@ -610,6 +610,9 @@ msgstr "Configuración de clave API"
 msgid "API Keys"
 msgstr "Claves de API"
 
+msgid "API logs are only available in the desktop app."
+msgstr "Los registros de la API solo están disponibles en la aplicación de escritorio."
+
 msgid "Application Programming Interface — a set of rules that allows programs to communicate."
 msgstr "Interfaz de programación de aplicaciones (API): conjunto de reglas que permite que los programas se comuniquen."
 
@@ -670,6 +673,9 @@ msgstr "Autores"
 
 msgid "Auto"
 msgstr "Automático"
+
+msgid "Auto-scroll"
+msgstr "Desplazamiento automático"
 
 msgid "Automatically adapts the layout based on each page's content using AI."
 msgstr "Adapta automáticamente el diseño según el contenido de cada página usando IA."
@@ -838,6 +844,10 @@ msgstr "Llamadas"
 msgid "Cancel"
 msgstr "Cancelar"
 
+#. placeholder {0}: String(MAX_ENTRIES)
+msgid "capped at {0}"
+msgstr "limitado a {0}"
+
 msgid "Caption Prompt"
 msgstr "Prompt de leyenda"
 
@@ -919,6 +929,9 @@ msgstr "Clasificando texto…"
 msgid "Clean & focused"
 msgstr "Limpio y enfocado"
 
+msgid "Clear"
+msgstr "Limpiar"
+
 msgid "Clear all"
 msgstr "Clear all"
 
@@ -953,7 +966,7 @@ msgid "Clone failed"
 msgstr "Clone failed"
 
 msgid "Close"
-msgstr "Close"
+msgstr "Cerrar"
 
 msgid "Close edit panel"
 msgstr "Cerrar panel de edición"
@@ -1131,6 +1144,9 @@ msgstr "Custom section {index}"
 
 msgid "Custom:"
 msgstr "Personalizado:"
+
+msgid "Debug mode is not enabled."
+msgstr "El modo de depuración no está activado."
 
 msgid "Decrease indent"
 msgstr "Disminuir sangría"
@@ -1977,6 +1993,9 @@ msgstr "Última"
 msgid "Last modified"
 msgstr "Última modificación"
 
+msgid "Launch the app with"
+msgstr "Inicia la aplicación con"
+
 msgid "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 msgstr "Dejar en Ninguno para ejecutar segmentación en todas las imágenes calificadas (sujeto a reglas de la canalización)."
 
@@ -2000,6 +2019,9 @@ msgstr "Guía de Cumplimiento Legal"
 
 msgid "Life in the Coral Reef"
 msgstr "Vida en el Arrecife de Coral"
+
+msgid "lines"
+msgstr "líneas"
 
 msgid "Língua Portuguesa - 3° Ano"
 msgstr "Lengua Portuguesa - 3° Año"
@@ -2157,6 +2179,9 @@ msgstr "Lado Máximo"
 msgid "Max side (px)"
 msgstr "Lado máximo (px)"
 
+msgid "Maximize"
+msgstr "Maximizar"
+
 msgid "Meaningfulness Prompt"
 msgstr "Indicación de significado"
 
@@ -2228,6 +2253,9 @@ msgstr "Lado Mínimo"
 
 msgid "Min side (px)"
 msgstr "Lado mínimo (px)"
+
+msgid "Minimize"
+msgstr "Minimizar"
 
 msgid "Minimum image dimension"
 msgstr "Dimensión mínima de imagen"
@@ -3793,6 +3821,9 @@ msgstr "Marcas de tiempo"
 msgid "to"
 msgstr "hasta"
 
+msgid "to stream API logs here."
+msgstr "para transmitir los registros de la API aquí."
+
 msgid "TOC Generation Prompt"
 msgstr "Prompt de generación de la tabla de contenidos"
 
@@ -4031,6 +4062,9 @@ msgstr "Voces"
 
 msgid "Wait for storyboard to complete"
 msgstr "Espere a que el storyboard se complete"
+
+msgid "Waiting for API output…"
+msgstr "Esperando la salida de la API…"
 
 msgid "Waiting for page to be processed..."
 msgstr "Esperando a que la página sea procesada..."

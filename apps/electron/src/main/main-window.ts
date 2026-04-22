@@ -4,12 +4,32 @@ import { is } from "@electron-toolkit/utils";
 import icon from "../../resources/icon.png?asset";
 import { STUDIO_APP_ORIGIN } from "./protocols/studio-app.protocol";
 
+function platformWindowOptions(): Partial<Electron.BrowserWindowConstructorOptions> {
+  switch (process.platform) {
+    case "darwin":
+      return {
+        titleBarStyle: "hiddenInset",
+        trafficLightPosition: { x: 14, y: 14 },
+      };
+    case "win32":
+    case "linux":
+    default:
+      return {
+        frame: false,
+      };
+  }
+}
+
 export function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: 1400,
+    height: 900,
+    minWidth: 900,
+    minHeight: 600,
     show: false,
     autoHideMenuBar: true,
+    backgroundColor: "#374151", // match the gray-700 top bar to avoid a white flash
+    ...platformWindowOptions(),
     ...(process.platform === "linux" ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
@@ -43,6 +63,18 @@ export function createWindow(): BrowserWindow {
     shell.openExternal(details.url);
     return { action: "deny" };
   });
+
+  const broadcastMaximized = () => {
+    mainWindow.webContents.send("window:maximize-change", mainWindow.isMaximized());
+  };
+  mainWindow.on("maximize", broadcastMaximized);
+  mainWindow.on("unmaximize", broadcastMaximized);
+  mainWindow.on("enter-full-screen", () =>
+    mainWindow.webContents.send("window:fullscreen-change", true),
+  );
+  mainWindow.on("leave-full-screen", () =>
+    mainWindow.webContents.send("window:fullscreen-change", false),
+  );
 
   const STUDIO_DEV_URL = "http://localhost:5173";
 

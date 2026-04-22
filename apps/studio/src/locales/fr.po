@@ -611,6 +611,9 @@ msgstr "Clé API Paramètres"
 msgid "API Keys"
 msgstr "Clés API"
 
+msgid "API logs are only available in the desktop app."
+msgstr "Les journaux de l'API ne sont disponibles que dans l'application de bureau."
+
 msgid "Application Programming Interface — a set of rules that allows programs to communicate."
 msgstr "Interface de programmation d'applications — un ensemble de règles permettant aux programmes de communiquer."
 
@@ -671,6 +674,9 @@ msgstr "Auteurs"
 
 msgid "Auto"
 msgstr "Automatique"
+
+msgid "Auto-scroll"
+msgstr "Défilement automatique"
 
 msgid "Automatically adapts the layout based on each page's content using AI."
 msgstr "Adapte automatiquement la mise en page en fonction du contenu de chaque page grâce à l'IA."
@@ -839,6 +845,10 @@ msgstr "Appels"
 msgid "Cancel"
 msgstr "Annuler"
 
+#. placeholder {0}: String(MAX_ENTRIES)
+msgid "capped at {0}"
+msgstr "limité à {0}"
+
 msgid "Caption Prompt"
 msgstr "Légende Invite"
 
@@ -919,6 +929,9 @@ msgstr "Classification du texte…"
 
 msgid "Clean & focused"
 msgstr "Épuré et ciblé"
+
+msgid "Clear"
+msgstr "Effacer"
 
 msgid "Clear all"
 msgstr "Clear tout"
@@ -1132,6 +1145,9 @@ msgstr "Section personnalisée {index}"
 
 msgid "Custom:"
 msgstr "Personnalisé:"
+
+msgid "Debug mode is not enabled."
+msgstr "Le mode de débogage n'est pas activé."
 
 msgid "Decrease indent"
 msgstr "Diminuer l'indentation"
@@ -1981,6 +1997,9 @@ msgstr "Dernier"
 msgid "Last modified"
 msgstr "Dernière modification"
 
+msgid "Launch the app with"
+msgstr "Lancez l'application avec"
+
 msgid "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 msgstr "Laissez sur Aucun pour exécuter la segmentation sur toutes les images éligibles (selon les règles du pipeline)."
 
@@ -2004,6 +2023,9 @@ msgstr "Legal Compliance Guide"
 
 msgid "Life in the Coral Reef"
 msgstr "Life dans le Coral Reef"
+
+msgid "lines"
+msgstr "lignes"
 
 msgid "Língua Portuguesa - 3° Ano"
 msgstr "Língua Portuguesa - 3° Ano"
@@ -2161,6 +2183,9 @@ msgstr "Côté max."
 msgid "Max side (px)"
 msgstr "Côté max. (px)"
 
+msgid "Maximize"
+msgstr "Agrandir"
+
 msgid "Meaningfulness Prompt"
 msgstr "Meaningfulness Invite"
 
@@ -2232,6 +2257,9 @@ msgstr "Côté min."
 
 msgid "Min side (px)"
 msgstr "Côté min. (px)"
+
+msgid "Minimize"
+msgstr "Réduire"
 
 msgid "Minimum image dimension"
 msgstr "Dimension minimale d'image"
@@ -3797,6 +3825,9 @@ msgstr "Horodatages"
 msgid "to"
 msgstr "to"
 
+msgid "to stream API logs here."
+msgstr "pour diffuser les journaux de l'API ici."
+
 msgid "TOC Generation Prompt"
 msgstr "TOC Génération Invite"
 
@@ -4035,6 +4066,9 @@ msgstr "Voix"
 
 msgid "Wait for storyboard to complete"
 msgstr "Attendre la fin du scénarimage"
+
+msgid "Waiting for API output…"
+msgstr "En attente de la sortie de l'API…"
 
 msgid "Waiting for page to be processed..."
 msgstr "En attente du traitement de la page..."

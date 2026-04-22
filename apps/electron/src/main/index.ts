@@ -9,7 +9,11 @@ import {
   apiPort,
   isApiDebugMode,
 } from "./api";
-import { HTML_RENDER_SCHEME_PRIVILEGES, registerHtmlRenderProtocol } from "./protocols/html-render.protocol";
+import { setupTitleBar } from "./title-bar";
+import {
+  HTML_RENDER_SCHEME_PRIVILEGES,
+  registerHtmlRenderProtocol,
+} from "./protocols/html-render.protocol";
 import { handleScreenshotMessages } from "./screenshot.handler";
 import { join } from "node:path";
 import {
@@ -31,6 +35,7 @@ app.whenReady().then(async () => {
 
   registerStudioAppProtocol(join(__dirname, "../renderer"));
   registerHtmlRenderProtocol();
+  setupTitleBar();
 
   app.on("browser-window-created", (_, window) => {
     optimizer.watchWindowShortcuts(window);
@@ -56,6 +61,7 @@ app.whenReady().then(async () => {
   }
 
   const mainWindow = createWindow();
+
   mainWindow.once("ready-to-show", () => {
     if (!splashWindow.isDestroyed()) {
       splashWindow.destroy();

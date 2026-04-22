@@ -610,6 +610,9 @@ msgstr "API Key Settings"
 msgid "API Keys"
 msgstr "API Keys"
 
+msgid "API logs are only available in the desktop app."
+msgstr "API logs are only available in the desktop app."
+
 msgid "Application Programming Interface — a set of rules that allows programs to communicate."
 msgstr "Application Programming Interface — a set of rules that allows programs to communicate."
 
@@ -670,6 +673,9 @@ msgstr "Authors"
 
 msgid "Auto"
 msgstr "Auto"
+
+msgid "Auto-scroll"
+msgstr "Auto-scroll"
 
 msgid "Automatically adapts the layout based on each page's content using AI."
 msgstr "Automatically adapts the layout based on each page's content using AI."
@@ -838,6 +844,10 @@ msgstr "Calls"
 msgid "Cancel"
 msgstr "Cancel"
 
+#. placeholder {0}: String(MAX_ENTRIES)
+msgid "capped at {0}"
+msgstr "capped at {0}"
+
 msgid "Caption Prompt"
 msgstr "Caption Prompt"
 
@@ -918,6 +928,9 @@ msgstr "Classifying text…"
 
 msgid "Clean & focused"
 msgstr "Clean & focused"
+
+msgid "Clear"
+msgstr "Clear"
 
 msgid "Clear all"
 msgstr "Clear all"
@@ -1131,6 +1144,9 @@ msgstr "Custom section {index}"
 
 msgid "Custom:"
 msgstr "Custom:"
+
+msgid "Debug mode is not enabled."
+msgstr "Debug mode is not enabled."
 
 msgid "Decrease indent"
 msgstr "Decrease indent"
@@ -1977,6 +1993,9 @@ msgstr "Last"
 msgid "Last modified"
 msgstr "Last modified"
 
+msgid "Launch the app with"
+msgstr "Launch the app with"
+
 msgid "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 msgstr "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 
@@ -2000,6 +2019,9 @@ msgstr "Legal Compliance Guide"
 
 msgid "Life in the Coral Reef"
 msgstr "Life in the Coral Reef"
+
+msgid "lines"
+msgstr "lines"
 
 msgid "Língua Portuguesa - 3° Ano"
 msgstr "Língua Portuguesa - 3° Ano"
@@ -2157,6 +2179,9 @@ msgstr "Max Side"
 msgid "Max side (px)"
 msgstr "Max side (px)"
 
+msgid "Maximize"
+msgstr "Maximize"
+
 msgid "Meaningfulness Prompt"
 msgstr "Meaningfulness Prompt"
 
@@ -2228,6 +2253,9 @@ msgstr "Min Side"
 
 msgid "Min side (px)"
 msgstr "Min side (px)"
+
+msgid "Minimize"
+msgstr "Minimize"
 
 msgid "Minimum image dimension"
 msgstr "Minimum image dimension"
@@ -3793,6 +3821,9 @@ msgstr "Timestamps"
 msgid "to"
 msgstr "to"
 
+msgid "to stream API logs here."
+msgstr "to stream API logs here."
+
 msgid "TOC Generation Prompt"
 msgstr "TOC Generation Prompt"
 
@@ -4031,6 +4062,9 @@ msgstr "Voices"
 
 msgid "Wait for storyboard to complete"
 msgstr "Wait for storyboard to complete"
+
+msgid "Waiting for API output…"
+msgstr "Waiting for API output…"
 
 msgid "Waiting for page to be processed..."
 msgstr "Waiting for page to be processed..."

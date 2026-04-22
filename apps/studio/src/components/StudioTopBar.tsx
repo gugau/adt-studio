@@ -1,10 +1,18 @@
-import type { ReactNode } from "react"
+import type { CSSProperties, ReactNode } from "react"
 import { Link } from "@tanstack/react-router"
 import { Home, Settings } from "lucide-react"
 import { useLingui } from "@lingui/react/macro"
 import { Button } from "@/components/ui/button"
 import { LocaleSwitcher } from "@/components/LocaleSwitcher"
 import { useSettingsDialog } from "@/routes/__root"
+import { usePlatform } from "@/hooks/use-platform"
+import { useWindowControls } from "@/hooks/use-window-controls"
+import {
+  LinuxControls,
+  MacOSTrafficLightSpacer,
+  WindowsControls,
+} from "@/components/title-bar"
+import { cn } from "@/lib/utils"
 
 export type StudioTopBarProps = {
   /** When true, the brand row links to `/` with hover styles (e.g. add-book flow). */
@@ -13,9 +21,18 @@ export type StudioTopBarProps = {
   trailingTitle?: ReactNode
 }
 
+const DRAG_REGION: CSSProperties = { WebkitAppRegion: "drag" } as CSSProperties
+const NO_DRAG_REGION: CSSProperties = { WebkitAppRegion: "no-drag" } as CSSProperties
+
 export function StudioTopBar({ brandLinksHome = false, trailingTitle }: StudioTopBarProps) {
   const { t } = useLingui()
   const { openSettings } = useSettingsDialog()
+  const platform = usePlatform()
+  const { available: hasWindowControls } = useWindowControls()
+
+  const showWindowsControls = hasWindowControls && platform === "windows"
+  const showLinuxControls = hasWindowControls && platform === "linux"
+  const showMacOSSpacer = hasWindowControls && platform === "macos"
 
   const brandInner = (
     <>
@@ -27,7 +44,8 @@ export function StudioTopBar({ brandLinksHome = false, trailingTitle }: StudioTo
   const brandRow = brandLinksHome ? (
     <Link
       to="/"
-      className="flex items-center gap-2.5 hover:bg-gray-600 -ml-2 px-2 h-10 transition-colors"
+      className="flex items-center gap-2.5 hover:bg-gray-600 -ml-2 px-2 h-10 transition-colors no-drag"
+      style={NO_DRAG_REGION}
       title={t`Back to books`}
     >
       {brandInner}
@@ -37,8 +55,12 @@ export function StudioTopBar({ brandLinksHome = false, trailingTitle }: StudioTo
   )
 
   return (
-    <div className="shrink-0 min-h-11 py-1 flex items-center bg-gray-700 text-white px-4">
-      <div className="flex items-center min-w-0">
+    <div
+      className={cn("shrink-0 min-h-11 flex items-center bg-gray-700 text-white select-none", !hasWindowControls && "py-1" )}
+      style={DRAG_REGION}
+    >
+      {showMacOSSpacer && <MacOSTrafficLightSpacer />}
+      <div className={showMacOSSpacer ? "flex items-center min-w-0 pr-4" : "flex items-center min-w-0 px-4"}>
         {brandRow}
         {trailingTitle != null && (
           <>
@@ -47,7 +69,10 @@ export function StudioTopBar({ brandLinksHome = false, trailingTitle }: StudioTo
           </>
         )}
       </div>
-      <div className="ml-auto flex items-center gap-1.5">
+      <div
+        className="ml-auto flex items-center gap-1.5 pr-2 no-drag"
+        style={NO_DRAG_REGION}
+      >
         <LocaleSwitcher />
         <Button
           variant="ghost"
@@ -59,6 +84,8 @@ export function StudioTopBar({ brandLinksHome = false, trailingTitle }: StudioTo
           <Settings className="h-3.5 w-3.5" />
         </Button>
       </div>
+      {showLinuxControls && <LinuxControls className="self-stretch pr-3" />}
+      {showWindowsControls && <WindowsControls className="self-stretch" />}
     </div>
   )
 }
