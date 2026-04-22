@@ -285,14 +285,13 @@ function ContainerNode(props: TreeNodeProps) {
   return (
     <div
       className={cn(
-        "relative rounded-md border border-slate-200 border-l-2 bg-card/40 pl-2 pr-1 py-1.5",
+        "relative rounded-md border border-slate-200 border-l-2 bg-card/40 pl-1 pr-1 py-1.5",
         visual.border,
         node.isPruned && "opacity-40",
         isDragging && "opacity-30"
       )}
     >
       <div className="group/head flex items-center gap-1.5">
-        <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
         {containerStructures ? (
           <Select
             value={node.structure ?? defaultStructure}
@@ -407,6 +406,7 @@ function ContainerNode(props: TreeNodeProps) {
               <Eye className="h-3 w-3 text-muted-foreground" />
             )}
           </button>
+          <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
         </div>
       </div>
 
@@ -514,12 +514,11 @@ function TextLeaf(props: TreeNodeProps) {
   return (
     <div
       className={cn(
-        "group/row flex items-start gap-1.5 rounded px-1 py-0.5 transition-colors hover:bg-muted/40",
+        "group/row flex items-start gap-1.5 rounded pl-0.5 pr-1 py-0.5 transition-colors hover:bg-muted/40",
         node.isPruned && "opacity-40",
         isDragging && "opacity-30"
       )}
     >
-      <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
       {textRoles ? (
         <Select
           value={node.role ?? "text"}
@@ -528,14 +527,14 @@ function TextLeaf(props: TreeNodeProps) {
         >
           <SelectTrigger
             className={cn(
-              "shrink-0 h-5 text-[10px] font-medium px-1 py-0 w-auto border-0 rounded gap-0.5 [&>svg]:opacity-70",
+              "group/pill shrink-0 h-5 text-[10px] font-medium px-1 py-0 w-auto border-0 rounded gap-0.5 [&>svg]:opacity-70",
               visual.bg,
               visual.text
             )}
           >
             <visual.Icon className="h-3 w-3 shrink-0" />
             <SelectValue asChild>
-              <span className="overflow-hidden whitespace-nowrap transition-all duration-150 max-w-0 group-hover/row:max-w-[140px] group-hover/row:ml-1 uppercase tracking-wider font-semibold">
+              <span className="overflow-hidden whitespace-nowrap transition-all duration-150 max-w-0 group-hover/pill:max-w-[140px] group-hover/pill:ml-1 uppercase tracking-wider font-semibold">
                 {node.role}
               </span>
             </SelectValue>
@@ -563,13 +562,13 @@ function TextLeaf(props: TreeNodeProps) {
       ) : (
         <span
           className={cn(
-            "shrink-0 inline-flex items-center gap-0.5 h-5 rounded px-1 text-[10px] font-medium",
+            "group/pill shrink-0 inline-flex items-center gap-0.5 h-5 rounded px-1 text-[10px] font-medium",
             visual.bg,
             visual.text
           )}
         >
           <visual.Icon className="h-3 w-3 shrink-0" />
-          <span className="overflow-hidden whitespace-nowrap transition-all duration-150 max-w-0 group-hover/row:max-w-[140px] group-hover/row:ml-1 uppercase tracking-wider font-semibold">
+          <span className="overflow-hidden whitespace-nowrap transition-all duration-150 max-w-0 group-hover/pill:max-w-[140px] group-hover/pill:ml-1 uppercase tracking-wider font-semibold">
             {node.role}
           </span>
         </span>
@@ -579,7 +578,7 @@ function TextLeaf(props: TreeNodeProps) {
         onCommit={(next) => onEditText(node.nodeId, next)}
         disabled={disabled}
       />
-      <div className="shrink-0 flex items-center gap-0.5 self-center opacity-0 group-hover/row:opacity-100 transition-opacity">
+      <div className="shrink-0 flex items-center gap-0.5 self-center ml-auto opacity-0 group-hover/row:opacity-100 transition-opacity">
         {parentNodeId != null && (
           <button
             type="button"
@@ -633,6 +632,7 @@ function TextLeaf(props: TreeNodeProps) {
             <Eye className="h-3 w-3 text-muted-foreground" />
           )}
         </button>
+        <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
       </div>
     </div>
   )
@@ -656,21 +656,20 @@ function ImageLeaf(props: TreeNodeProps) {
   return (
     <div
       className={cn(
-        "group/row flex items-center gap-2 rounded px-2 py-1 transition-colors hover:bg-muted/40",
+        "group/row flex items-center gap-2 rounded pl-1 pr-2 py-1 transition-colors hover:bg-muted/40",
         node.isPruned && "opacity-40",
         isDragging && "opacity-30"
       )}
     >
-      <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
       <span
         className={cn(
-          "shrink-0 inline-flex items-center gap-0.5 h-5 rounded px-1 text-[10px] font-medium",
+          "group/pill shrink-0 inline-flex items-center gap-0.5 h-5 rounded px-1 text-[10px] font-medium",
           visual.bg,
           visual.text
         )}
       >
         <visual.Icon className="h-3 w-3 shrink-0" />
-        <span className="overflow-hidden whitespace-nowrap transition-all duration-150 max-w-0 group-hover/row:max-w-[80px] group-hover/row:ml-1 uppercase tracking-wider font-semibold">
+        <span className="overflow-hidden whitespace-nowrap transition-all duration-150 max-w-0 group-hover/pill:max-w-[80px] group-hover/pill:ml-1 uppercase tracking-wider font-semibold">
           {t`image`}
         </span>
       </span>
@@ -722,6 +721,7 @@ function ImageLeaf(props: TreeNodeProps) {
             <Eye className="h-3 w-3 text-muted-foreground" />
           )}
         </button>
+        <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
       </div>
     </div>
   )
