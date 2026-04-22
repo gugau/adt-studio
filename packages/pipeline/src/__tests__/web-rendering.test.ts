@@ -147,10 +147,9 @@ describe("buildRenderStrategyResolver", () => {
 })
 
 // ── Tree-node helpers ────────────────────────────────────────────
-// These build the new ContentNodeData tree shape. `expandParts` uses each
-// leaf's `nodeId` directly as the rendered `textId`, so leaf nodeIds in
-// these fixtures follow the `${groupId}_tx001` convention to match the
-// data-id values asserted on rendered HTML.
+// These build ContentNodeData tree fixtures. Each leaf's `nodeId` is emitted
+// directly as the rendered `data-id`, so leaf nodeIds here follow the
+// `${groupId}_tx001` convention to match the values asserted on rendered HTML.
 
 function leafNode(
   nodeId: string,

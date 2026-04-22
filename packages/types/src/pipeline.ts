@@ -68,6 +68,7 @@ export const PIPELINE: StageDef[] = [
     steps: [
       { name: "extract", label: "PDF Extraction", pageProgress: true },
       { name: "metadata", label: "Metadata", dependsOn: ["extract"] },
+      { name: "book-summary", label: "Book Summary", dependsOn: ["extract"] },
       { name: "image-filtering", label: "Image Filtering", dependsOn: ["extract"], pageProgress: true },
       { name: "image-segmentation", label: "Image Segmentation", dependsOn: ["image-filtering"], pageProgress: true },
       { name: "image-cropping", label: "Image Cropping", dependsOn: ["image-segmentation"], pageProgress: true },
@@ -80,7 +81,6 @@ export const PIPELINE: StageDef[] = [
     dependsOn: ["extract"],
     steps: [
       { name: "page-sectioning", label: "Page Structuring", pageProgress: true },
-      { name: "book-summary", label: "Book Summary", dependsOn: ["page-sectioning"] },
       { name: "translation", label: "Translation", dependsOn: ["page-sectioning"], pageProgress: true },
     ],
   },

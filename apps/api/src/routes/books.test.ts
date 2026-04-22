@@ -542,6 +542,7 @@ describe("GET /books/:label/step-status", () => {
   const extractStageSteps = [
     "extract",
     "metadata",
+    "book-summary",
     "image-filtering",
     "image-segmentation",
     "image-cropping",

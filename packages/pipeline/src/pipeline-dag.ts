@@ -29,7 +29,6 @@ import { generateBookSummary, buildBookSummaryConfig } from "./book-summary.js"
 import {
   sectionPage,
   buildPageSectioningConfig,
-  flattenTreeToText,
 } from "./page-sectioning.js"
 import { classifyPageImages, buildImageClassifyConfig } from "./image-filtering.js"
 import { filterPageImageMeaningfulness, buildMeaningfulnessConfig } from "./image-meaningfulness.js"
@@ -219,13 +218,10 @@ export async function runFullPipeline(
 
     executors.set("book-summary", async () => {
       const pages = storage.getPages()
-      const summaryPages = pages.map((page) => {
-        const row = storage.getLatestNodeData("page-sectioning", page.pageId)
-        const text = row
-          ? flattenTreeToText(row.data as PageSectioningOutput)
-          : page.text
-        return { pageNumber: page.pageNumber, text }
-      })
+      const summaryPages = pages.map((page) => ({
+        pageNumber: page.pageNumber,
+        text: page.text,
+      }))
       const model = getModel(bookSummaryConfig.modelId)
       const result = await generateBookSummary(summaryPages, bookSummaryConfig, model)
       storage.putNodeData("book-summary", "book", result)

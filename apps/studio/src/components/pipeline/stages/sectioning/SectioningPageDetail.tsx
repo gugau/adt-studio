@@ -135,17 +135,20 @@ export function SectioningPageDetail({
   const headerControls = (
     <div className="flex-1 flex items-center gap-3">
       {navigationExtra}
+      {saveError ? (
+        <span className="text-xs text-destructive">{saveError}</span>
+      ) : null}
       {dirty ? (
-        <div className="flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2">
           <button
             type="button"
             onClick={handleDiscard}
             disabled={saving}
             className={cn(
-              "text-xs px-2.5 py-1 rounded border transition-colors",
+              "text-xs px-2.5 py-1 rounded transition-colors",
               saving
-                ? "border-muted-foreground/20 text-muted-foreground/50"
-                : "border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/60 hover:text-foreground cursor-pointer"
+                ? "text-white/40 cursor-default"
+                : "text-white/70 hover:text-white hover:bg-white/10 cursor-pointer"
             )}
           >
             <Trans>Discard</Trans>
@@ -157,18 +160,15 @@ export function SectioningPageDetail({
             className={cn(
               "text-xs px-2.5 py-1 rounded transition-colors",
               saving
-                ? "bg-primary/60 text-primary-foreground/70 cursor-default"
-                : "bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+                ? "bg-secondary/60 text-secondary-foreground/70 cursor-default"
+                : "bg-secondary text-secondary-foreground hover:bg-secondary/80 cursor-pointer"
             )}
           >
             {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
           </button>
         </div>
       ) : null}
-      {saveError ? (
-        <span className="text-xs text-destructive">{saveError}</span>
-      ) : null}
-      <div className="ml-auto flex gap-1">{navigationArrows}</div>
+      <div className={cn("flex gap-1", dirty ? "" : "ml-auto")}>{navigationArrows}</div>
     </div>
   )
 

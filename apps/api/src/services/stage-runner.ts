@@ -12,7 +12,6 @@ import {
   buildImageClassifyConfig,
   sectionPage,
   buildPageSectioningConfig,
-  flattenTreeToText,
   translatePageTree,
   buildTranslationConfig,
   getBaseLanguage,
@@ -338,7 +337,33 @@ async function runExtractStep(
     progress.emit({ type: "step-complete", step: "metadata" })
     console.log(`[stage-run] ${label}: metadata complete (lang=${metadataResult.language_code})`)
 
-    // Step 3: Per-page image classification runs as four sequential passes,
+    // Step 3: Book summary from raw page text (no sectioning required).
+    progress.emit({ type: "step-start", step: "book-summary" })
+    try {
+      const bookSummaryConfig = buildBookSummaryConfig(config)
+      const summaryModel = createLLMModel({
+        modelId: bookSummaryConfig.modelId,
+        cacheDir,
+        promptEngine,
+        rateLimiter,
+        onLog: onLlmLog,
+      })
+      const summaryPages = pages.map((page) => ({
+        pageNumber: page.pageNumber,
+        text: page.text,
+      }))
+      const summaryResult = await generateBookSummary(summaryPages, bookSummaryConfig, summaryModel)
+      storage.putNodeData("book-summary", "book", summaryResult)
+      progress.emit({ type: "step-complete", step: "book-summary" })
+      console.log(`[stage-run] ${label}: book summary complete`)
+    } catch (err) {
+      const msg = toErrorMessage(err)
+      console.error(`[stage-run] ${label}: book summary failed: ${msg}`)
+      progress.emit({ type: "step-error", step: "book-summary", error: msg })
+      throw err
+    }
+
+    // Step 4: Per-page image classification runs as four sequential passes,
     // each with its own progress reporting so the UI reflects real timing.
     const imageClassifyConfig = buildStageRunnerImageClassifyConfig(config, storage)
     const meaningfulnessConfig = buildMeaningfulnessConfig(config)
@@ -414,7 +439,7 @@ async function runExtractStep(
 }
 
 // ---------------------------------------------------------------------------
-// Sectioning stage (page-sectioning → book-summary → translation)
+// Sectioning stage (page-sectioning → translation)
 // ---------------------------------------------------------------------------
 
 async function runSectioningStep(
@@ -568,33 +593,6 @@ async function runSectioningStep(
       progress.emit({ type: "step-complete", step: "translation" })
     } else {
       progress.emit({ type: "step-skip", step: "translation" })
-    }
-
-    // Step 2: book-summary from structured page text
-    progress.emit({ type: "step-start", step: "book-summary" })
-    try {
-      const bookSummaryConfig = buildBookSummaryConfig(config)
-      const summaryModel = createLLMModel({
-        modelId: bookSummaryConfig.modelId,
-        cacheDir,
-        promptEngine,
-        rateLimiter,
-        onLog: onLlmLog,
-      })
-      const summaryPages = pages.map((page) => {
-        const row = storage.getLatestNodeData("page-sectioning", page.pageId)
-        const text = row ? flattenTreeToText(row.data as PageSectioningOutput) : page.text
-        return { pageNumber: page.pageNumber, text }
-      })
-      const summaryResult = await generateBookSummary(summaryPages, bookSummaryConfig, summaryModel)
-      storage.putNodeData("book-summary", "book", summaryResult)
-      progress.emit({ type: "step-complete", step: "book-summary" })
-      console.log(`[stage-run] ${label}: book summary complete`)
-    } catch (err) {
-      const msg = toErrorMessage(err)
-      console.error(`[stage-run] ${label}: book summary failed: ${msg}`)
-      progress.emit({ type: "step-error", step: "book-summary", error: msg })
-      throw err
     }
   } finally {
     storage.close()
