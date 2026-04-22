@@ -9,7 +9,6 @@ export function Slider({ color, ...props }: SliderProps) {
   const isRange = Array.isArray(props.value) && props.value.length === 2
   const accentColor = color ?? "#2b7fff"
 
-  /* eslint-disable-next-line lingui/no-unlocalized-strings -- CSS transition value, not UI copy */
   const thumbStyle: CSSProperties = { borderColor: accentColor, transition: "border-color 0.4s ease" }
 
   return (

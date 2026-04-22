@@ -307,6 +307,9 @@ msgstr "A unique string used to authenticate and authorize API requests."
 msgid "A video named \"{0}\" already exists. Do you want to replace it?"
 msgstr "A video named \"{0}\" already exists. Do you want to replace it?"
 
+msgid "A–Z"
+msgstr "A–Z"
+
 msgid "ABC"
 msgstr "ABC"
 
@@ -925,6 +928,9 @@ msgstr "Clear language"
 msgid "Clear model"
 msgstr "Clear model"
 
+msgid "Clear search"
+msgstr "Clear search"
+
 msgid "Click \"Add Videos\" to upload MP4 or WebM files."
 msgstr "Click \"Add Videos\" to upload MP4 or WebM files."
 
@@ -975,6 +981,9 @@ msgstr "Comment"
 
 msgid "Comments"
 msgstr "Comments"
+
+#~ msgid "Completed stages"
+#~ msgstr "Completed stages"
 
 msgid "Completion across all pages in this book for the active reviewer session."
 msgstr "Completion across all pages in this book for the active reviewer session."
@@ -1068,6 +1077,9 @@ msgstr "Create from scratch using your description"
 
 msgid "Create session"
 msgstr "Create session"
+
+msgid "Created {createdLabel}"
+msgstr "Created {createdLabel}"
 
 msgid "Creating..."
 msgstr "Creating..."
@@ -1565,6 +1577,9 @@ msgstr "Figure Extraction"
 msgid "Fill in the Blank"
 msgstr "Fill in the Blank"
 
+#~ msgid "Filter"
+#~ msgstr "Filter"
+
 msgid "Filter by image ID..."
 msgstr "Filter by image ID..."
 
@@ -1959,6 +1974,9 @@ msgstr "Large images, narrative flow. Best for illustrated books with high-fidel
 msgid "Last"
 msgstr "Last"
 
+msgid "Last modified"
+msgstr "Last modified"
+
 msgid "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 msgstr "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 
@@ -2241,6 +2259,9 @@ msgstr "moderate"
 msgid "Moderate"
 msgstr "Moderate"
 
+msgid "Modified {modifiedLabel}"
+msgstr "Modified {modifiedLabel}"
+
 msgid "Multi-format publications"
 msgstr "Multi-format publications"
 
@@ -2280,6 +2301,9 @@ msgstr "New session"
 msgid "new_type_key"
 msgstr "new_type_key"
 
+msgid "Newest first"
+msgstr "Newest first"
+
 msgid "Next"
 msgstr "Next"
 
@@ -2300,6 +2324,9 @@ msgstr "No AI edits yet for this section."
 
 msgid "No assessment"
 msgstr "No assessment"
+
+msgid "No books match your search"
+msgstr "No books match your search"
 
 msgid "No captions for this page"
 msgstr "No captions for this page"
@@ -3152,6 +3179,12 @@ msgstr "SCORM Export"
 msgid "SCORM Package"
 msgstr "SCORM Package"
 
+msgid "Search books"
+msgstr "Search books"
+
+msgid "Search books..."
+msgstr "Search books..."
+
 msgid "Search languages..."
 msgstr "Search languages..."
 
@@ -3409,6 +3442,9 @@ msgstr "Slide {0}"
 
 msgid "Smart Cropping"
 msgstr "Smart Cropping"
+
+msgid "Sort books"
+msgstr "Sort books"
 
 msgid "Spanish"
 msgstr "Spanish"

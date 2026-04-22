@@ -307,6 +307,9 @@ msgstr "Uma sequência única usada para autenticar e autorizar solicitações �
 msgid "A video named \"{0}\" already exists. Do you want to replace it?"
 msgstr "Já existe um vídeo chamado \"{0}\". Deseja substituí-lo?"
 
+msgid "A–Z"
+msgstr "A–Z"
+
 msgid "ABC"
 msgstr "ABC"
 
@@ -925,6 +928,9 @@ msgstr "Limpar idioma"
 msgid "Clear model"
 msgstr "Limpar modelo"
 
+msgid "Clear search"
+msgstr "Limpar busca"
+
 msgid "Click \"Add Videos\" to upload MP4 or WebM files."
 msgstr "Clique em \"Adicionar Vídeos\" para enviar arquivos MP4 ou WebM."
 
@@ -975,6 +981,9 @@ msgstr "Comment"
 
 msgid "Comments"
 msgstr "Comments"
+
+#~ msgid "Completed stages"
+#~ msgstr "Etapas concluídas"
 
 msgid "Completion across all pages in this book for the active reviewer session."
 msgstr "Completion across all pages in this book for the active reviewer session."
@@ -1068,6 +1077,9 @@ msgstr "Criar do zero usando sua descrição"
 
 msgid "Create session"
 msgstr "Create session"
+
+msgid "Created {createdLabel}"
+msgstr "Criado em {createdLabel}"
 
 msgid "Creating..."
 msgstr "Criando..."
@@ -1565,6 +1577,9 @@ msgstr "Extração de Figuras"
 msgid "Fill in the Blank"
 msgstr "Preencher lacunas"
 
+#~ msgid "Filter"
+#~ msgstr "Filtrar"
+
 msgid "Filter by image ID..."
 msgstr "Filtrar por ID da imagem..."
 
@@ -1959,6 +1974,9 @@ msgstr "Imagens grandes, fluxo narrativo. Melhor para livros ilustrados com voze
 msgid "Last"
 msgstr "Última"
 
+msgid "Last modified"
+msgstr "Última modificação"
+
 msgid "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 msgstr "Deixe em Nenhum para executar segmentação em todas as imagens qualificadas (sujeito às regras do pipeline)."
 
@@ -2241,6 +2259,9 @@ msgstr "moderate"
 msgid "Moderate"
 msgstr "Moderate"
 
+msgid "Modified {modifiedLabel}"
+msgstr "Modificado em {modifiedLabel}"
+
 msgid "Multi-format publications"
 msgstr "Publicações multi-formato"
 
@@ -2280,6 +2301,9 @@ msgstr "New session"
 msgid "new_type_key"
 msgstr "novo_tipo"
 
+msgid "Newest first"
+msgstr "Mais recentes primeiro"
+
 msgid "Next"
 msgstr "Próximo"
 
@@ -2300,6 +2324,9 @@ msgstr "Ainda não há edições com IA para esta seção."
 
 msgid "No assessment"
 msgstr "No assessment"
+
+msgid "No books match your search"
+msgstr "Nenhum livro corresponde à sua busca"
 
 msgid "No captions for this page"
 msgstr "Sem legendas para esta página"
@@ -3152,6 +3179,12 @@ msgstr "Exportação SCORM"
 msgid "SCORM Package"
 msgstr "Pacote SCORM"
 
+msgid "Search books"
+msgstr "Buscar livros"
+
+msgid "Search books..."
+msgstr "Buscar livros..."
+
 msgid "Search languages..."
 msgstr "Buscar idiomas..."
 
@@ -3409,6 +3442,9 @@ msgstr "Slide {0}"
 
 msgid "Smart Cropping"
 msgstr "Corte Inteligente"
+
+msgid "Sort books"
+msgstr "Ordenar livros"
 
 msgid "Spanish"
 msgstr "Espanhol"

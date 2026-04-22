@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import {
   Plus,
@@ -10,20 +10,123 @@ import {
   User,
   Globe,
   Pencil,
+  Search,
+  CalendarPlus,
+  Clock,
 } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { StudioTopBar } from "@/components/StudioTopBar"
 import { Badge } from "@/components/ui/badge"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { DeleteBookDialog } from "@/components/books/DeleteBookDialog"
 import { useBooks, useDeleteBook } from "@/hooks/use-books"
-import { getPipelineStages } from "@/components/pipeline/stage-config"
+import {
+  getPipelineStages,
+  type PipelineStageDefinition,
+} from "@/components/pipeline/stage-config"
 import {
   getStageLabelI18n,
   getStageDescriptionI18n,
 } from "@/components/pipeline/pipeline-i18n"
 import type { BookSummary } from "@/api/client"
+
+type BookSortKey = "modified" | "created" | "alphabetical"
+
+const BOOK_SORT_STORAGE_KEY = "adt.books.sort"
+const VALID_SORT_KEYS: readonly BookSortKey[] = [
+  "modified",
+  "created",
+  "alphabetical",
+]
+
+function readStoredSort(): BookSortKey {
+  if (typeof window === "undefined") return "modified"
+  const stored = window.localStorage.getItem(BOOK_SORT_STORAGE_KEY)
+  return VALID_SORT_KEYS.includes(stored as BookSortKey)
+    ? (stored as BookSortKey)
+    : "modified"
+}
+
+function sortBooks(books: BookSummary[], key: BookSortKey): BookSummary[] {
+  const copy = [...books]
+  switch (key) {
+    case "modified":
+      return copy.sort(
+        (a, b) =>
+          new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime(),
+      )
+    case "created":
+      return copy.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
+    case "alphabetical":
+      return copy.sort((a, b) =>
+        (a.title ?? a.label).localeCompare(b.title ?? b.label, undefined, {
+          sensitivity: "base",
+        }),
+      )
+  }
+}
+
+function useFlipList<T>(
+  items: T[],
+  keyFn: (item: T) => string,
+): React.RefObject<HTMLDivElement | null> {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const prevRectsRef = useRef<Map<string, DOMRect>>(new Map())
+  const keys = items.map(keyFn).join("|")
+
+  useLayoutEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    const children = Array.from(
+      container.querySelectorAll<HTMLElement>("[data-flip-key]"),
+    )
+    const newRects = new Map<string, DOMRect>()
+    for (const el of children) {
+      const key = el.dataset.flipKey
+      if (!key) continue
+      newRects.set(key, el.getBoundingClientRect())
+    }
+
+    for (const el of children) {
+      const key = el.dataset.flipKey
+      if (!key) continue
+      const oldRect = prevRectsRef.current.get(key)
+      const newRect = newRects.get(key)
+      if (!oldRect || !newRect) continue
+      const dx = oldRect.left - newRect.left
+      const dy = oldRect.top - newRect.top
+      if (dx === 0 && dy === 0) continue
+      el.style.transition = "transform 0s"
+      el.style.transform = `translate(${dx}px, ${dy}px)`
+      requestAnimationFrame(() => {
+        el.style.transition = "transform 420ms cubic-bezier(0.22, 1, 0.36, 1)"
+        el.style.transform = ""
+        const onEnd = (event: TransitionEvent) => {
+          if (event.propertyName !== "transform") return
+          el.style.transition = ""
+          el.removeEventListener("transitionend", onEnd)
+        }
+        el.addEventListener("transitionend", onEnd)
+      })
+    }
+
+    prevRectsRef.current = newRects
+  }, [keys])
+
+  return containerRef
+}
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -31,6 +134,34 @@ export const Route = createFileRoute("/")({
 
 /** Pipeline stages shown in the sidebar (skip the "book" overview entry) */
 const PIPELINE_STEPS = getPipelineStages()
+
+function CompletedStageBadges({
+  completedSet,
+  pipelineStages,
+}: {
+  completedSet: Set<string>
+  pipelineStages: readonly PipelineStageDefinition[]
+}) {
+  const visibleStages = pipelineStages.filter((s) => completedSet.has(s.slug))
+  if (visibleStages.length === 0) return null
+
+  return (
+    <div className="mt-3 flex flex-wrap gap-1.5">
+      {visibleStages.map((stage) => {
+        const Icon = stage.icon
+        return (
+          <span
+            key={stage.slug}
+            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors ${stage.bgLight} ${stage.textColor} ${stage.borderColor}`}
+          >
+            <Icon className="h-3 w-3" />
+            {getStageLabelI18n(stage.slug)}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
 
 function DetailRow({
   icon: Icon,
@@ -53,12 +184,27 @@ function DetailRow({
 function BookRow({
   book,
   onDelete,
+  pipelineStages,
 }: {
   book: BookSummary
   onDelete: (label: string) => void
+  pipelineStages: readonly PipelineStageDefinition[]
 }) {
-  const { t } = useLingui()
+  const { t, i18n } = useLingui()
   const hasMetadata = book.title || book.authors.length > 0
+  const completedSet = useMemo(
+    () => new Set(book.completedStages),
+    [book.completedStages],
+  )
+  const dateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(i18n.locale, {
+        dateStyle: "medium",
+      }),
+    [i18n.locale],
+  )
+  const createdLabel = dateFormatter.format(new Date(book.createdAt))
+  const modifiedLabel = dateFormatter.format(new Date(book.modifiedAt))
   return (
     <div className="group rounded-xl border bg-card transition-all duration-200 hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5">
       <div className="flex items-stretch">
@@ -149,6 +295,22 @@ function BookRow({
               <Trans>No metadata yet — run the pipeline to extract book details</Trans>
             </p>
           )}
+
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <CalendarPlus className="h-3 w-3" />
+              <Trans>Created {createdLabel}</Trans>
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              <Trans>Modified {modifiedLabel}</Trans>
+            </span>
+          </div>
+
+          <CompletedStageBadges
+            completedSet={completedSet}
+            pipelineStages={pipelineStages}
+          />
         </Link>
 
         {/* Actions — always visible */}
@@ -182,6 +344,31 @@ function HomePage() {
   const { data: books, isLoading, error } = useBooks()
   const deleteMutation = useDeleteBook()
   const [deleteLabel, setDeleteLabel] = useState<string | null>(null)
+  const [sortKey, setSortKey] = useState<BookSortKey>(() => readStoredSort())
+  const [search, setSearch] = useState("")
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    window.localStorage.setItem(BOOK_SORT_STORAGE_KEY, sortKey)
+  }, [sortKey])
+
+  const filteredBooks = useMemo(() => {
+    const list = books ?? []
+    const query = search.trim().toLowerCase()
+    if (!query) return list
+    return list.filter((book) => {
+      const title = book.title?.toLowerCase() ?? ""
+      const label = book.label.toLowerCase()
+      return title.includes(query) || label.includes(query)
+    })
+  }, [books, search])
+
+  const visibleBooks = useMemo(
+    () => sortBooks(filteredBooks, sortKey),
+    [filteredBooks, sortKey],
+  )
+
+  const listRef = useFlipList(visibleBooks, (book) => book.label)
 
   if (isLoading) {
     return (
@@ -199,7 +386,9 @@ function HomePage() {
     )
   }
 
-  const bookList = books ?? []
+  const totalBooks = books?.length ?? 0
+  const hasActiveSearch = search.trim().length > 0
+  const hiddenByFilter = hasActiveSearch && totalBooks > 0 && visibleBooks.length === 0
 
   return (
     <div className="flex flex-1 min-h-0 flex-col">
@@ -255,28 +444,103 @@ function HomePage() {
 
       {/* Right — books list (70%) */}
       <div className="flex-1 min-w-0 overflow-auto p-5">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 gap-3">
           <h2 className="text-sm font-medium text-muted-foreground">
             <Trans>Your Books</Trans>
-            {bookList.length > 0 && ` (${bookList.length})`}
+            {totalBooks > 0 && (
+              <span
+                key={hasActiveSearch ? `${visibleBooks.length}/${totalBooks}` : `${totalBooks}`}
+                className="ml-1 inline-block animate-count-pulse"
+              >
+                {hasActiveSearch
+                  ? `(${visibleBooks.length}/${totalBooks})`
+                  : `(${totalBooks})`}
+              </span>
+            )}
           </h2>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/books/new" className="gap-1.5">
-              <Plus className="h-3.5 w-3.5" />
-              <Trans>Add Book</Trans>
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            {totalBooks > 1 && (
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t`Search books...`}
+                  aria-label={t`Search books`}
+                  className="h-8 w-[200px] pl-8 text-xs"
+                />
+              </div>
+            )}
+            {totalBooks > 1 && (
+              <Select
+                value={sortKey}
+                onValueChange={(value) => setSortKey(value as BookSortKey)}
+              >
+                <SelectTrigger
+                  aria-label={t`Sort books`}
+                  className="h-8 w-[160px] text-xs transition-colors"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  <SelectItem value="modified">
+                    <Trans>Last modified</Trans>
+                  </SelectItem>
+                  <SelectItem value="created">
+                    <Trans>Newest first</Trans>
+                  </SelectItem>
+                  <SelectItem value="alphabetical">
+                    <Trans>A–Z</Trans>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/books/new" className="gap-1.5">
+                <Plus className="h-3.5 w-3.5" />
+                <Trans>Add Book</Trans>
+              </Link>
+            </Button>
+          </div>
         </div>
-        <div className="space-y-3">
-          {bookList.map((book) => (
-            <BookRow
+        <div ref={listRef} className="space-y-3">
+          {visibleBooks.map((book, index) => (
+            <div
               key={book.label}
-              book={book}
-              onDelete={setDeleteLabel}
-            />
+              data-flip-key={book.label}
+              className="animate-wizard-enter will-change-transform"
+              style={{
+                animationDelay: `${Math.min(index, 8) * 40}ms`,
+                animationFillMode: "both",
+              }}
+            >
+              <BookRow
+                book={book}
+                onDelete={setDeleteLabel}
+                pipelineStages={PIPELINE_STEPS}
+              />
+            </div>
           ))}
-          {bookList.length === 0 && (
-            <Link to="/books/new" className="block">
+          {hiddenByFilter && (
+            <div className="flex animate-wizard-enter flex-col items-center justify-center rounded-xl border-2 border-dashed bg-muted/30 py-16">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
+                <Search className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <span className="text-sm font-medium">
+                <Trans>No books match your search</Trans>
+              </span>
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="mt-2 text-xs text-primary transition-colors hover:underline"
+              >
+                <Trans>Clear search</Trans>
+              </button>
+            </div>
+          )}
+          {!hiddenByFilter && visibleBooks.length === 0 && (
+            <Link to="/books/new" className="block animate-wizard-enter">
               <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed bg-muted/30 py-16 transition-all hover:border-primary/40 hover:bg-primary/5 cursor-pointer">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-3">
                   <Plus className="h-6 w-6 text-primary" />
