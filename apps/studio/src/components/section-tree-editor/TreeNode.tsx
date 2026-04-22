@@ -365,7 +365,7 @@ function ContainerNode(props: TreeNodeProps) {
   return (
     <div
       className={cn(
-        "relative border-l-2 pl-1.5 pr-1 py-1 transition-colors",
+        "relative rounded-md border border-slate-200 border-l-[3px] pl-1.5 pr-1 py-1 transition-colors",
         visual.border,
         node.isPruned && "opacity-40",
         isDragging && "opacity-30",
