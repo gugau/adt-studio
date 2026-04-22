@@ -225,6 +225,9 @@ msgstr "/ Section {0}"
 msgid "="
 msgstr "="
 
+msgid "🌿"
+msgstr "🌿"
+
 msgid "0 = deterministic, 2 = max creativity"
 msgstr "0 = deterministic, 2 = max creativity"
 
@@ -245,6 +248,9 @@ msgstr "A book with this name already exists."
 
 msgid "A fill-in-the-blank activity."
 msgstr "A fill-in-the-blank activity."
+
+msgid "A glossary term with this word already exists."
+msgstr "A glossary term with this word already exists."
 
 msgid "A matching activity where students connect related items."
 msgstr "A matching activity where students connect related items."
@@ -443,6 +449,9 @@ msgstr "Add class"
 msgid "Add entry below"
 msgstr "Add entry below"
 
+msgid "Add Glossary Term"
+msgstr "Add Glossary Term"
+
 msgid "Add Group"
 msgstr "Add Group"
 
@@ -463,6 +472,9 @@ msgstr "Add reviewer guidance."
 
 msgid "Add section"
 msgstr "Add section"
+
+msgid "Add Term"
+msgstr "Add Term"
 
 msgid "Add Translations"
 msgstr "Add Translations"
@@ -1060,6 +1072,9 @@ msgstr "Cover"
 msgid "Cover of {title}"
 msgstr "Cover of {title}"
 
+msgid "Create a manual glossary entry that stays in the book even if AI glossary generation is rerun."
+msgstr "Create a manual glossary entry that stays in the book even if AI glossary generation is rerun."
+
 msgid "Create a new image from a text description"
 msgstr "Create a new image from a text description"
 
@@ -1206,6 +1221,9 @@ msgstr "Defaulted to N/A until this reviewer session has a language selected."
 msgid "Defaults"
 msgstr "Defaults"
 
+msgid "Definition"
+msgstr "Definition"
+
 msgid "Definitions and Terminology"
 msgstr "Definitions and Terminology"
 
@@ -1274,6 +1292,9 @@ msgstr "Disable reviewer validation"
 
 msgid "Disable type"
 msgstr "Disable type"
+
+msgid "Disable word-level highlighting and use sentence blocks"
+msgstr "Disable word-level highlighting and use sentence blocks"
 
 msgid "Disabled"
 msgstr "Disabled"
@@ -1386,6 +1407,9 @@ msgstr "Editing is disabled while the storyboard is running"
 msgid "Editing Language"
 msgstr "Editing Language"
 
+msgid "Emoji"
+msgstr "Emoji"
+
 msgid "Empty group — drag text entries here"
 msgstr "Empty group — drag text entries here"
 
@@ -1408,6 +1432,9 @@ msgstr "Enable or disable reviewer-authored checklist reviews for this book. Aut
 
 msgid "Enable reviewer validation"
 msgstr "Enable reviewer validation"
+
+msgid "Enable word-level highlighting with timestamps"
+msgstr "Enable word-level highlighting with timestamps"
 
 msgid "Enabled"
 msgstr "Enabled"
@@ -1471,6 +1498,9 @@ msgstr "Experimental configurations"
 
 msgid "Expiry"
 msgstr "Expiry"
+
+msgid "Explain the term in simple language."
+msgstr "Explain the term in simple language."
 
 msgid "Export"
 msgstr "Export"
@@ -2130,6 +2160,9 @@ msgstr "Loading…"
 msgid "Lower values produce more consistent styling across pages."
 msgstr "Lower values produce more consistent styling across pages."
 
+msgid "manual"
+msgstr "manual"
+
 msgid "Manual review"
 msgstr "Manual review"
 
@@ -2726,6 +2759,12 @@ msgstr "Perfect for children's books, pairing large images with minimal text."
 msgid "Photograph"
 msgstr "Photograph"
 
+msgid "Photosynthesis"
+msgstr "Photosynthesis"
+
+msgid "photosynthetic, photosynthesizing"
+msgstr "photosynthetic, photosynthesizing"
+
 msgid "Pick from book"
 msgstr "Pick from book"
 
@@ -2953,6 +2992,9 @@ msgstr "Remove checklist item"
 msgid "Remove entry"
 msgstr "Remove entry"
 
+msgid "Remove manual glossary term"
+msgstr "Remove manual glossary term"
+
 msgid "Remove PDF"
 msgstr "Remove PDF"
 
@@ -2985,6 +3027,9 @@ msgstr "Replace"
 
 msgid "Replace from Book"
 msgstr "Replace from Book"
+
+msgid "Replace this audio file"
+msgstr "Replace this audio file"
 
 msgid "Replace Video?"
 msgstr "Replace Video?"
@@ -3931,6 +3976,9 @@ msgstr "Untangling nested divs with care..."
 msgid "Untitled"
 msgstr "Untitled"
 
+msgid "Upload"
+msgstr "Upload"
+
 msgid "Upload a new image file from your computer"
 msgstr "Upload a new image file from your computer"
 
@@ -3967,6 +4015,9 @@ msgstr "Upload sign language videos and assign them to sections."
 msgid "Upload Style Guide"
 msgstr "Upload Style Guide"
 
+msgid "Upload your own audio file"
+msgstr "Upload your own audio file"
+
 msgid "Uploading..."
 msgstr "Uploading..."
 
@@ -4000,6 +4051,9 @@ msgstr "Validation Errors ({0})"
 
 msgid "Variant:"
 msgstr "Variant:"
+
+msgid "Variations"
+msgstr "Variations"
 
 msgid "Vector Extraction"
 msgstr "Vector Extraction"
@@ -4085,6 +4139,15 @@ msgstr "Whole-book checks for packaged ADT output, plus reviewer findings captur
 
 msgid "Within range"
 msgstr "Within range"
+
+msgid "Word"
+msgstr "Word"
+
+msgid "Word and definition are required."
+msgstr "Word and definition are required."
+
+msgid "Word Highlight"
+msgstr "Word Highlight"
 
 msgid "words"
 msgstr "words"

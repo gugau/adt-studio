@@ -225,6 +225,9 @@ msgstr "/ Sección {0}"
 msgid "="
 msgstr "="
 
+msgid "🌿"
+msgstr ""
+
 msgid "0 = deterministic, 2 = max creativity"
 msgstr "0 = determinístico, 2 = creatividad máxima"
 
@@ -245,6 +248,9 @@ msgstr "Ya existe un libro con este nombre."
 
 msgid "A fill-in-the-blank activity."
 msgstr "Una actividad de completar espacios en blanco."
+
+msgid "A glossary term with this word already exists."
+msgstr ""
 
 msgid "A matching activity where students connect related items."
 msgstr "Una actividad de emparejamiento donde los estudiantes conectan elementos relacionados."
@@ -443,6 +449,9 @@ msgstr "Agregar clase"
 msgid "Add entry below"
 msgstr "Agregar entrada debajo"
 
+msgid "Add Glossary Term"
+msgstr ""
+
 msgid "Add Group"
 msgstr "Agregar grupo"
 
@@ -463,6 +472,9 @@ msgstr "Add reviewer guidance."
 
 msgid "Add section"
 msgstr "Add section"
+
+msgid "Add Term"
+msgstr ""
 
 msgid "Add Translations"
 msgstr "Agregar traducciones"
@@ -1060,6 +1072,9 @@ msgstr "Portada"
 msgid "Cover of {title}"
 msgstr "Portada de {0}"
 
+msgid "Create a manual glossary entry that stays in the book even if AI glossary generation is rerun."
+msgstr ""
+
 msgid "Create a new image from a text description"
 msgstr "Crea una nueva imagen a partir de una descripción de texto"
 
@@ -1206,6 +1221,9 @@ msgstr "Defaulted to N/A until this reviewer session has a language selected."
 msgid "Defaults"
 msgstr "Valores predeterminados"
 
+msgid "Definition"
+msgstr ""
+
 msgid "Definitions and Terminology"
 msgstr "Definiciones y Terminología"
 
@@ -1274,6 +1292,9 @@ msgstr "Disable reviewer validation"
 
 msgid "Disable type"
 msgstr "Desactivar tipo"
+
+msgid "Disable word-level highlighting and use sentence blocks"
+msgstr ""
 
 msgid "Disabled"
 msgstr "Disabled"
@@ -1386,6 +1407,9 @@ msgstr "La edición está deshabilitada mientras el storyboard se está ejecutan
 msgid "Editing Language"
 msgstr "Idioma de edición"
 
+msgid "Emoji"
+msgstr ""
+
 msgid "Empty group — drag text entries here"
 msgstr "Grupo vacío — arrastra entradas de texto aquí"
 
@@ -1408,6 +1432,9 @@ msgstr "Enable or disable reviewer-authored checklist reviews for this book. Aut
 
 msgid "Enable reviewer validation"
 msgstr "Enable reviewer validation"
+
+msgid "Enable word-level highlighting with timestamps"
+msgstr ""
 
 msgid "Enabled"
 msgstr "Enabled"
@@ -1471,6 +1498,9 @@ msgstr "Configuraciones experimentales"
 
 msgid "Expiry"
 msgstr "Vencimiento"
+
+msgid "Explain the term in simple language."
+msgstr ""
 
 msgid "Export"
 msgstr "Exportar"
@@ -2130,6 +2160,9 @@ msgstr "Cargando…"
 msgid "Lower values produce more consistent styling across pages."
 msgstr "Valores más bajos producen estilos más consistentes entre páginas."
 
+msgid "manual"
+msgstr ""
+
 msgid "Manual review"
 msgstr "Revisión manual"
 
@@ -2726,6 +2759,12 @@ msgstr "Perfecto para libros infantiles, combinando imágenes grandes con texto 
 msgid "Photograph"
 msgstr "Fotografía"
 
+msgid "Photosynthesis"
+msgstr ""
+
+msgid "photosynthetic, photosynthesizing"
+msgstr ""
+
 msgid "Pick from book"
 msgstr "Elegir del libro"
 
@@ -2953,6 +2992,9 @@ msgstr "Remove checklist item"
 msgid "Remove entry"
 msgstr "Eliminar entrada"
 
+msgid "Remove manual glossary term"
+msgstr ""
+
 msgid "Remove PDF"
 msgstr "Eliminar PDF"
 
@@ -2985,6 +3027,9 @@ msgstr "Reemplazar"
 
 msgid "Replace from Book"
 msgstr "Reemplazar del libro"
+
+msgid "Replace this audio file"
+msgstr ""
 
 msgid "Replace Video?"
 msgstr "¿Reemplazar Video?"
@@ -3931,6 +3976,9 @@ msgstr "Desenredando divs anidados con cuidado..."
 msgid "Untitled"
 msgstr "Sin título"
 
+msgid "Upload"
+msgstr ""
+
 msgid "Upload a new image file from your computer"
 msgstr "Sube un nuevo archivo de imagen desde tu computadora"
 
@@ -3967,6 +4015,9 @@ msgstr "Sube videos de lengua de señas y asígnalos a secciones."
 msgid "Upload Style Guide"
 msgstr "Subir Guía de Estilo"
 
+msgid "Upload your own audio file"
+msgstr ""
+
 msgid "Uploading..."
 msgstr "Subiendo..."
 
@@ -4000,6 +4051,9 @@ msgstr "Errores de validación ({0})"
 
 msgid "Variant:"
 msgstr "Variante:"
+
+msgid "Variations"
+msgstr ""
 
 msgid "Vector Extraction"
 msgstr "Extracción vectorial"
@@ -4087,6 +4141,15 @@ msgstr "Whole-book checks for packaged ADT output, plus reviewer findings captur
 
 msgid "Within range"
 msgstr "Dentro del rango"
+
+msgid "Word"
+msgstr ""
+
+msgid "Word and definition are required."
+msgstr ""
+
+msgid "Word Highlight"
+msgstr ""
 
 msgid "words"
 msgstr "palabras"
