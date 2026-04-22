@@ -54,49 +54,49 @@ const SLATE: Visual = {
   Icon: TypeIcon,
   text: "text-slate-600",
   bg: "bg-slate-100",
-  border: "border-l-slate-400",
+  border: "hover:border-l-slate-400",
 }
 
 const VIOLET = (Icon: Visual["Icon"]): Visual => ({
   Icon,
   text: "text-violet-700",
   bg: "bg-violet-100",
-  border: "border-l-violet-400",
+  border: "hover:border-l-violet-400",
 })
 
 const BLUE = (Icon: Visual["Icon"]): Visual => ({
   Icon,
   text: "text-blue-700",
   bg: "bg-blue-100",
-  border: "border-l-blue-400",
+  border: "hover:border-l-blue-400",
 })
 
 const AMBER = (Icon: Visual["Icon"]): Visual => ({
   Icon,
   text: "text-amber-700",
   bg: "bg-amber-100",
-  border: "border-l-amber-400",
+  border: "hover:border-l-amber-400",
 })
 
 const EMERALD = (Icon: Visual["Icon"]): Visual => ({
   Icon,
   text: "text-emerald-700",
   bg: "bg-emerald-100",
-  border: "border-l-emerald-400",
+  border: "hover:border-l-emerald-400",
 })
 
 const SKY = (Icon: Visual["Icon"]): Visual => ({
   Icon,
   text: "text-sky-700",
   bg: "bg-sky-100",
-  border: "border-l-sky-400",
+  border: "hover:border-l-sky-400",
 })
 
 const INDIGO = (Icon: Visual["Icon"]): Visual => ({
   Icon,
   text: "text-indigo-700",
   bg: "bg-indigo-100",
-  border: "border-l-indigo-400",
+  border: "hover:border-l-indigo-400",
 })
 
 // Structural containers — activities in violet, structural boxes in blue.
@@ -365,7 +365,7 @@ function ContainerNode(props: TreeNodeProps) {
   return (
     <div
       className={cn(
-        "relative rounded-md border border-slate-200 border-l-[3px] pl-1.5 pr-1 py-1 transition-colors",
+        "relative rounded-md border border-transparent border-l-2 border-l-slate-300 pl-1.5 pr-1 py-1 transition-colors hover:border-slate-200",
         visual.border,
         node.isPruned && "opacity-40",
         isDragging && "opacity-30",
