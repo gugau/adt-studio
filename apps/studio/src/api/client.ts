@@ -35,7 +35,9 @@ export function getAudioUrl(
   cacheKey?: string,
 ): string {
   const base = `${BASE_URL}/books/${label}/audio/${language}/${fileName}`
-  return cacheKey ? `${base}?v=${encodeURIComponent(cacheKey)}` : base
+  if (!cacheKey) return base
+  const params = new URLSearchParams({ v: cacheKey })
+  return `${base}?${params.toString()}`
 }
 
 export function getSignLanguageVideoUrl(label: string, videoId: string): string {
