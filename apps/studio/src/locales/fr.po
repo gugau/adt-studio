@@ -453,8 +453,8 @@ msgstr "Ajouter un élément de liste de contrôle à cette section"
 msgid "Add class"
 msgstr "Ajouter une classe"
 
-msgid "Add container"
-msgstr "Ajouter un conteneur"
+#~ msgid "Add container"
+#~ msgstr "Ajouter un conteneur"
 
 msgid "Add entry below"
 msgstr "Ajouter une entrée ci-dessous"

@@ -302,7 +302,7 @@ export function SectionTreeEditor({
           )}
         >
           <Plus className="h-3.5 w-3.5" />
-          {t`Add container`}
+          {t`Add group`}
         </button>
       </div>
     </div>

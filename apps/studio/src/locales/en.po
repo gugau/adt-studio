@@ -452,8 +452,8 @@ msgstr "Add checklist item to this section"
 msgid "Add class"
 msgstr "Add class"
 
-msgid "Add container"
-msgstr "Add container"
+#~ msgid "Add container"
+#~ msgstr "Add container"
 
 msgid "Add entry below"
 msgstr "Add entry below"
