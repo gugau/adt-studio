@@ -208,3 +208,63 @@ export async function generateGlossary(
     generatedAt: new Date().toISOString(),
   }
 }
+
+export interface GenerateGlossaryItemOptions {
+  word: string
+  context?: string
+  candidateVariations?: string[]
+  config: GlossaryConfig
+  llmModel: LLMModel
+  /** Prompt name for the single-term prompt. Defaults to `glossary_one`. */
+  promptName?: string
+}
+
+export interface GeneratedGlossaryItemFields {
+  definition: string
+  variations: string[]
+  emojis: string[]
+}
+
+export async function generateGlossaryItem(
+  options: GenerateGlossaryItemOptions
+): Promise<GeneratedGlossaryItemFields> {
+  const { word, context, candidateVariations = [], config, llmModel } = options
+  const promptName = options.promptName ?? "glossary_one"
+  const languageContext = buildLanguageContext(config.language)
+
+  const result = await llmModel.generateObject<{
+    reasoning: string
+    items: GlossaryItem[]
+  }>({
+    schema: glossaryLLMSchema,
+    prompt: promptName,
+    context: {
+      ...languageContext,
+      word,
+      context: context ?? "",
+      candidate_variations: candidateVariations,
+    },
+    maxRetries: config.maxRetries,
+    maxTokens: 2048,
+    log: {
+      taskType: "glossary",
+      promptName,
+    },
+  })
+
+  const item = result.object.items[0]
+  if (!item) {
+    throw new Error(`LLM returned no glossary item for word: ${word}`)
+  }
+
+  const allowedVariations = new Set(
+    candidateVariations.map((v) => v.toLocaleLowerCase())
+  )
+  return {
+    definition: item.definition,
+    variations: item.variations.filter((v) =>
+      allowedVariations.has(v.toLocaleLowerCase())
+    ),
+    emojis: item.emojis,
+  }
+}

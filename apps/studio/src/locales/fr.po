@@ -1561,6 +1561,9 @@ msgstr "Échec de la création du livre."
 msgid "Failed to create reviewer session"
 msgstr "Échec de la création de la session de révision"
 
+msgid "Failed to generate glossary entry."
+msgstr "Échec de la génération de l'entrée du glossaire."
+
 #. placeholder {0}: error.message
 msgid "Failed to load accessibility results: {0}"
 msgstr "Échec du chargement des résultats d'accessibilité : {0}"
@@ -1706,6 +1709,9 @@ msgstr "Générez la narration audio pour le contenu du livre."
 msgid "Generate comprehension quizzes and activities based on the book content."
 msgstr "Générez des quiz de compréhension et des activités basés sur le contenu du livre."
 
+msgid "Generate definition, variations, and emoji"
+msgstr "Générer la définition, les variantes et l'emoji"
+
 msgid "Generate from pages"
 msgstr "Générer à partir des pages"
 
@@ -1747,6 +1753,9 @@ msgstr "Génération de la TdM..."
 
 msgid "Generating..."
 msgstr "Génération..."
+
+msgid "Generating…"
+msgstr "Génération…"
 
 msgid "Generation failed"
 msgstr "La génération a échoué"
@@ -1909,6 +1918,9 @@ msgstr "Les images plus petites que votre dimension minimale ne passent pas par 
 
 msgid "Images with shortest side below min or longest side above max are pruned."
 msgstr "Les images dont le côté le plus court est inférieur au minimum ou le côté le plus long supérieur au maximum sont élaguées."
+
+msgid "In book:"
+msgstr "Dans le livre :"
 
 msgid "In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
 msgstr "Si vous ne souhaitez pas convertir le livre entier, ajustez les curseurs pour définir quelles pages seront numérisées."
@@ -2763,8 +2775,8 @@ msgstr "Parfait pour les livres pour enfants, associant de grandes images avec u
 msgid "Photograph"
 msgstr "Photographie"
 
-msgid "Photosynthesis"
-msgstr "Photosynthèse"
+#~ msgid "Photosynthesis"
+#~ msgstr "Photosynthèse"
 
 msgid "photosynthetic, photosynthesizing"
 msgstr "photosynthétique, en train de faire la photosynthèse"
@@ -3409,6 +3421,9 @@ msgstr "Définissez une clé API Gemini pour générer l'audio"
 msgid "Set the editing language and choose output languages for the book."
 msgstr "Définissez la langue d'édition et choisissez les langues de sortie pour le livre."
 
+msgid "Set your API key to auto-generate"
+msgstr "Définissez votre clé API pour générer automatiquement"
+
 msgid "Settings"
 msgstr "Paramètres"
 
@@ -3542,6 +3557,9 @@ msgstr "Page de début"
 
 msgid "Start reviewer validation"
 msgstr "Démarrer la validation du réviseur"
+
+msgid "Start typing to see words from the book…"
+msgstr "Commencez à taper pour voir les mots du livre…"
 
 msgid "Step"
 msgstr "Étape"

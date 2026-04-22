@@ -3,16 +3,6 @@ import { Check, ChevronDown, Loader2, Plus, Trash2 } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { api } from "@/api/client"
 import type { GlossaryItem, GlossaryOutput, VersionEntry } from "@/api/client"
@@ -22,6 +12,7 @@ import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
 import { useLingui } from "@lingui/react/macro"
+import { AddGlossaryDialog } from "./AddGlossaryDialog"
 
 
 type GlossaryData = Omit<GlossaryOutput, "version">
@@ -32,21 +23,6 @@ function createEmptyGlossary(): GlossaryData {
     pageCount: 0,
     generatedAt: new Date().toISOString(),
   }
-}
-
-function normalizeGlossaryWord(word: string): string {
-  return word.trim().toLocaleLowerCase()
-}
-
-function createManualGlossaryId(): string {
-  return `gl_manual_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
-}
-
-function parseGlossaryList(value: string): string[] {
-  return value
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean)
 }
 
 function VersionPicker({
@@ -184,11 +160,6 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
   const [pending, setPending] = useState<GlossaryData | null>(null)
   const [saving, setSaving] = useState(false)
   const [showAddDialog, setShowAddDialog] = useState(false)
-  const [newWord, setNewWord] = useState("")
-  const [newDefinition, setNewDefinition] = useState("")
-  const [newVariations, setNewVariations] = useState("")
-  const [newEmojis, setNewEmojis] = useState("")
-  const [addError, setAddError] = useState<string | null>(null)
 
   // Reset pending when data changes
   useEffect(() => {
@@ -201,11 +172,6 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
   const currentVersion = data?.version ?? null
 
   const openAddDialog = useCallback(() => {
-    setNewWord("")
-    setNewDefinition("")
-    setNewVariations("")
-    setNewEmojis("")
-    setAddError(null)
     setShowAddDialog(true)
   }, [])
 
@@ -274,35 +240,13 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
     })
   }
 
-  const addManualItem = () => {
-    const word = newWord.trim()
-    const definition = newDefinition.trim()
-    if (!word || !definition) {
-      setAddError(t`Word and definition are required.`)
-      return
-    }
-
+  const addManualItem = (manualItem: GlossaryItem) => {
     const base = pending ?? data ?? createEmptyGlossary()
-    if (base.items.some((item) => normalizeGlossaryWord(item.word) === normalizeGlossaryWord(word))) {
-      setAddError(t`A glossary term with this word already exists.`)
-      return
-    }
-
-    const manualItem: GlossaryItem = {
-      id: createManualGlossaryId(),
-      source: "manual",
-      word,
-      definition,
-      variations: parseGlossaryList(newVariations),
-      emojis: parseGlossaryList(newEmojis),
-    }
-
     setPending({
       ...base,
       generatedAt: base.generatedAt || new Date().toISOString(),
       items: [...base.items, manualItem],
     })
-    setShowAddDialog(false)
   }
 
   if (isLoading && !effective) {
@@ -324,66 +268,13 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
           onRun={handleRunGlossary}
           disabled={!hasApiKey || glossaryRunning}
         />
-        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t`Add Glossary Term`}</DialogTitle>
-              <DialogDescription>
-                {t`Create a manual glossary entry that stays in the book even if AI glossary generation is rerun.`}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="glossary-word">{t`Word`}</Label>
-                <Input
-                  id="glossary-word"
-                  value={newWord}
-                  onChange={(e) => { setNewWord(e.target.value); setAddError(null) }}
-                  placeholder={t`Photosynthesis`}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="glossary-definition">{t`Definition`}</Label>
-                <Textarea
-                  id="glossary-definition"
-                  value={newDefinition}
-                  onChange={(e) => { setNewDefinition(e.target.value); setAddError(null) }}
-                  rows={4}
-                  placeholder={t`Explain the term in simple language.`}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="glossary-variations">{t`Variations`}</Label>
-                <Input
-                  id="glossary-variations"
-                  value={newVariations}
-                  onChange={(e) => setNewVariations(e.target.value)}
-                  placeholder={t`photosynthetic, photosynthesizing`}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="glossary-emojis">{t`Emoji`}</Label>
-                <Input
-                  id="glossary-emojis"
-                  value={newEmojis}
-                  onChange={(e) => setNewEmojis(e.target.value)}
-                  placeholder={t`🌿`}
-                />
-              </div>
-              {addError && (
-                <p className="text-sm text-destructive">{addError}</p>
-              )}
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                {t`Cancel`}
-              </Button>
-              <Button onClick={addManualItem}>
-                {t`Add Term`}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <AddGlossaryDialog
+          open={showAddDialog}
+          onOpenChange={setShowAddDialog}
+          bookLabel={bookLabel}
+          existingItems={items}
+          onAdd={addManualItem}
+        />
       </div>
     )
   }
@@ -433,66 +324,13 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
           )}
         </div>
       ))}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t`Add Glossary Term`}</DialogTitle>
-            <DialogDescription>
-              {t`Create a manual glossary entry that stays in the book even if AI glossary generation is rerun.`}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="glossary-word">{t`Word`}</Label>
-              <Input
-                id="glossary-word"
-                value={newWord}
-                onChange={(e) => { setNewWord(e.target.value); setAddError(null) }}
-                placeholder={t`Photosynthesis`}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="glossary-definition">{t`Definition`}</Label>
-              <Textarea
-                id="glossary-definition"
-                value={newDefinition}
-                onChange={(e) => { setNewDefinition(e.target.value); setAddError(null) }}
-                rows={4}
-                placeholder={t`Explain the term in simple language.`}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="glossary-variations">{t`Variations`}</Label>
-              <Input
-                id="glossary-variations"
-                value={newVariations}
-                onChange={(e) => setNewVariations(e.target.value)}
-                placeholder={t`photosynthetic, photosynthesizing`}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="glossary-emojis">{t`Emoji`}</Label>
-              <Input
-                id="glossary-emojis"
-                value={newEmojis}
-                onChange={(e) => setNewEmojis(e.target.value)}
-                placeholder={t`🌿`}
-              />
-            </div>
-            {addError && (
-              <p className="text-sm text-destructive">{addError}</p>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-              {t`Cancel`}
-            </Button>
-            <Button onClick={addManualItem}>
-              {t`Add Term`}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AddGlossaryDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        bookLabel={bookLabel}
+        existingItems={items}
+        onAdd={addManualItem}
+      />
     </div>
   )
 }

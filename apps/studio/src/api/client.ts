@@ -838,6 +838,21 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  generateGlossaryItem: (
+    label: string,
+    apiKey: string,
+    body: { word: string; context?: string; candidateVariations?: string[] }
+  ) =>
+    request<{ definition: string; variations: string[]; emojis: string[] }>(
+      `/books/${label}/glossary/generate-one`,
+      {
+        method: "POST",
+        headers: { "X-OpenAI-Key": apiKey },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(60_000),
+      }
+    ),
+
   getToc: (label: string) =>
     request<TocGenerationOutput | null>(`/books/${label}/toc`),
 

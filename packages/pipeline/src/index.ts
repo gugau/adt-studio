@@ -115,6 +115,7 @@ export {
 } from "./image-captioning.js"
 export {
   generateGlossary,
+  generateGlossaryItem,
   buildGlossaryConfig,
   stripHtml,
   collectPageTexts,
@@ -123,6 +124,8 @@ export {
   mergeGeneratedGlossaryWithManualItems,
   type GlossaryConfig,
   type GenerateGlossaryOptions,
+  type GenerateGlossaryItemOptions,
+  type GeneratedGlossaryItemFields,
 } from "./glossary.js"
 export {
   generateToc,
