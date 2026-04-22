@@ -310,11 +310,23 @@ function ContainerNode(props: TreeNodeProps) {
               <SelectValue>{structureLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {Object.keys(containerStructures).map((key) => (
-                <SelectItem key={key} value={key} className="text-xs">
-                  {key}
-                </SelectItem>
-              ))}
+              {Object.keys(containerStructures).map((key) => {
+                const v = getStructureVisual(key)
+                return (
+                  <SelectItem key={key} value={key} className="text-xs">
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+                        v.bg,
+                        v.text
+                      )}
+                    >
+                      <v.Icon className="h-3 w-3 shrink-0" />
+                      {key}
+                    </span>
+                  </SelectItem>
+                )
+              })}
             </SelectContent>
           </Select>
         ) : (
@@ -529,11 +541,23 @@ function TextLeaf(props: TreeNodeProps) {
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {Object.keys(textRoles).map((key) => (
-              <SelectItem key={key} value={key} className="text-xs">
-                {key}
-              </SelectItem>
-            ))}
+            {Object.keys(textRoles).map((key) => {
+              const v = getRoleVisual(key)
+              return (
+                <SelectItem key={key} value={key} className="text-xs">
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+                      v.bg,
+                      v.text
+                    )}
+                  >
+                    <v.Icon className="h-3 w-3 shrink-0" />
+                    {key}
+                  </span>
+                </SelectItem>
+              )
+            })}
           </SelectContent>
         </Select>
       ) : (
