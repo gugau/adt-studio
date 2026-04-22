@@ -131,7 +131,7 @@ export function SectioningView({ bookLabel, selectedPageId: selectedPageIdProp, 
     }
 
     // The SectioningPageDetail component owns the header when a page is loaded.
-    if (page?.sectioning) return
+    if (page?.sectioningTree) return
 
     if (selectedPageSummary) {
       setOnLabelClick(null)
@@ -152,7 +152,7 @@ export function SectioningView({ bookLabel, selectedPageId: selectedPageIdProp, 
       setExtra(null)
       setOnLabelClick(null)
     }
-  }, [selectedPageId, selectedPageSummary?.pageNumber, canGoPrev, canGoNext, prevPageId, nextPageId, setExtra, setOnLabelClick, page?.sectioning, showRunCard, overviewMode])
+  }, [selectedPageId, selectedPageSummary?.pageNumber, canGoPrev, canGoNext, prevPageId, nextPageId, setExtra, setOnLabelClick, page?.sectioningTree, showRunCard, overviewMode])
 
   useEffect(() => {
     if (!selectedPageId || showRunCard) return
@@ -224,7 +224,7 @@ export function SectioningView({ bookLabel, selectedPageId: selectedPageIdProp, 
     )
   }
 
-  if (!page.sectioning) {
+  if (!page.sectioningTree) {
     if (sectioningRunning) {
       return (
         <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
@@ -246,7 +246,7 @@ export function SectioningView({ bookLabel, selectedPageId: selectedPageIdProp, 
     )
   }
 
-  if (page.sectioning.sections.length === 0) {
+  if (page.sectioningTree.sections.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
         <div className="w-12 h-12 rounded-full bg-sky-50 flex items-center justify-center mb-3">

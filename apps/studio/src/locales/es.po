@@ -217,8 +217,11 @@ msgstr "{reviewCount} {0}"
 msgid "{reviewed}/{0} checked"
 msgstr "{reviewed}/{0} checked"
 
-msgid "{textCount} text groups"
-msgstr "{textCount} grupos de texto"
+#~ msgid "{textCount} text groups"
+#~ msgstr "{textCount} grupos de texto"
+
+msgid "{textCount} text leaves"
+msgstr "{textCount} hojas de texto"
 
 #. placeholder {0}: index + 1
 msgid "{title} - page {0}"
@@ -449,14 +452,20 @@ msgstr "Add checklist item to this section"
 msgid "Add class"
 msgstr "Agregar clase"
 
-msgid "Add container"
-msgstr "Añadir contenedor"
+#~ msgid "Add container"
+#~ msgstr "Añadir contenedor"
 
 msgid "Add entry below"
 msgstr "Agregar entrada debajo"
 
-msgid "Add Group"
+msgid "Add group"
 msgstr "Agregar grupo"
+
+#~ msgid "Add Group"
+#~ msgstr "Agregar grupo"
+
+msgid "Add image"
+msgstr "Añadir imagen"
 
 msgid "Add Image"
 msgstr "Agregar imagen"
@@ -1245,14 +1254,14 @@ msgstr "Eliminar libro"
 msgid "Delete failed"
 msgstr "Delete failed"
 
-msgid "Delete group"
-msgstr "Eliminar grupo"
+#~ msgid "Delete group"
+#~ msgstr "Eliminar grupo"
 
 msgid "Delete section"
 msgstr "Eliminar sección"
 
-msgid "Delete text entry"
-msgstr "Eliminar entrada de texto"
+#~ msgid "Delete text entry"
+#~ msgstr "Eliminar entrada de texto"
 
 #~ msgid "Delete type"
 #~ msgstr "Eliminar tipo"
@@ -1323,11 +1332,11 @@ msgstr "Arrastrar para mover"
 msgid "Drag to move boxes, drag edges/corners to resize"
 msgstr "Drag to move boxes, drag edges/corners to resize"
 
-msgid "Drag to reorder"
-msgstr "Arrastra para reordenar"
+#~ msgid "Drag to reorder"
+#~ msgstr "Arrastra para reordenar"
 
-msgid "Drag to reorder or move to another group"
-msgstr "Arrastra para reordenar o mover a otro grupo"
+#~ msgid "Drag to reorder or move to another group"
+#~ msgstr "Arrastra para reordenar o mover a otro grupo"
 
 msgid "Drag vertices to reshape. Click midpoints (+) to add points. Right-click a vertex to remove it."
 msgstr "Arrastra los vértices para cambiar la forma. Haz clic en los puntos medios (+) para agregar puntos. Haz clic derecho en un vértice para eliminarlo."
@@ -1338,11 +1347,11 @@ msgstr "Suelta el PDF aquí"
 msgid "Duplicate"
 msgstr "Duplicar"
 
-msgid "Duplicate group"
-msgstr "Duplicar grupo"
+#~ msgid "Duplicate group"
+#~ msgstr "Duplicar grupo"
 
-msgid "Duplicate text entry"
-msgstr "Duplicar entrada de texto"
+#~ msgid "Duplicate text entry"
+#~ msgstr "Duplicar entrada de texto"
 
 msgid "Duration"
 msgstr "Duración"
@@ -1422,8 +1431,8 @@ msgstr "Idioma de edición"
 msgid "Empty container"
 msgstr "Contenedor vacío"
 
-msgid "Empty group — drag text entries here"
-msgstr "Grupo vacío — arrastra entradas de texto aquí"
+#~ msgid "Empty group — drag text entries here"
+#~ msgstr "Grupo vacío — arrastra entradas de texto aquí"
 
 msgid "Empty section"
 msgstr "Sección vacía"
@@ -1804,11 +1813,11 @@ msgstr "Encabezado"
 msgid "Hide AI edit history"
 msgstr "Ocultar historial de edición con IA"
 
-msgid "Hide Pruned"
-msgstr "Ocultar eliminadas"
+#~ msgid "Hide Pruned"
+#~ msgstr "Ocultar eliminadas"
 
-msgid "Hide pruned images"
-msgstr "Ocultar imágenes eliminadas"
+#~ msgid "Hide pruned images"
+#~ msgstr "Ocultar imágenes eliminadas"
 
 msgid "Higher values filter out simple or blank images."
 msgstr "Valores más altos filtran imágenes simples o en blanco."
@@ -2322,8 +2331,8 @@ msgstr "Moderate"
 msgid "Modified {modifiedLabel}"
 msgstr "Modificado el {modifiedLabel}"
 
-msgid "Move out of parent"
-msgstr "Sacar del contenedor padre"
+#~ msgid "Move out of parent"
+#~ msgstr "Sacar del contenedor padre"
 
 msgid "Multi-format publications"
 msgstr "Publicaciones multiformato"
@@ -2906,9 +2915,8 @@ msgstr "Eliminado"
 msgid "Pruned Images"
 msgstr "Imágenes eliminadas"
 
-#. placeholder {0}: reason ?? ""
-msgid "Pruned: {0}"
-msgstr "Eliminado: {0}"
+#~ msgid "Pruned: {0}"
+#~ msgstr "Eliminado: {0}"
 
 msgid "Pruned: {reason}"
 msgstr "Eliminado: {0}"
@@ -3033,6 +3041,9 @@ msgstr "Remove checklist item"
 
 msgid "Remove entry"
 msgstr "Eliminar entrada"
+
+msgid "Remove from group"
+msgstr "Quitar del grupo"
 
 msgid "Remove PDF"
 msgstr "Eliminar PDF"
@@ -3484,11 +3495,11 @@ msgstr "Mostrar todas las traducciones"
 msgid "Show fewer"
 msgstr "Show fewer"
 
-msgid "Show Pruned"
-msgstr "Mostrar eliminadas"
+#~ msgid "Show Pruned"
+#~ msgstr "Mostrar eliminadas"
 
-msgid "Show pruned images"
-msgstr "Mostrar imágenes eliminadas"
+#~ msgid "Show pruned images"
+#~ msgstr "Mostrar imágenes eliminadas"
 
 msgid "Show reviewer validation"
 msgstr "Show reviewer validation"
@@ -3742,8 +3753,8 @@ msgstr "Catálogo de texto"
 msgid "Text color: {0}"
 msgstr "Color del texto: {0}"
 
-msgid "Text Groups"
-msgstr "Grupos de texto"
+#~ msgid "Text Groups"
+#~ msgstr "Grupos de texto"
 
 msgid "Text Only"
 msgstr "Solo texto"
@@ -4214,8 +4225,11 @@ msgstr "Dentro del rango"
 msgid "words"
 msgstr "palabras"
 
-msgid "Wrap in new container"
-msgstr "Envolver en un nuevo contenedor"
+msgid "Wrap in group"
+msgstr "Envolver en grupo"
+
+#~ msgid "Wrap in new container"
+#~ msgstr "Envolver en un nuevo contenedor"
 
 msgid "Wraps 'Edit this image' requests. The AI receives the original image alongside this prompt. Supports user_prompt and style variables."
 msgstr "Envuelve solicitudes de 'Editar esta imagen'. La IA recibe la imagen original junto con este prompt. Soporta variables user_prompt y style."

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState, type ComponentType } from "react"
 import {
   ChevronDown,
   ChevronRight,
@@ -7,8 +7,22 @@ import {
   CornerRightDown,
   Eye,
   EyeOff,
+  FilePlus,
+  FolderPlus,
   GripVertical,
-  Plus,
+  Hash,
+  Image as ImageIcon,
+  Layers,
+  Link2,
+  MessageCircle,
+  MoreHorizontal,
+  PanelTop,
+  PenLine,
+  Puzzle,
+  Quote,
+  Sigma,
+  Tag,
+  Type as TypeIcon,
   Trash2,
 } from "lucide-react"
 import { useLingui } from "@lingui/react/macro"
@@ -24,6 +38,97 @@ import {
 } from "@/components/ui/select"
 import { EditableText } from "./EditableText"
 import { TREE_DRAG_TYPE } from "./SectionTreeEditor"
+
+// ── Type-to-visual mapping ──────────────────────────────────────
+// Each role/structure gets a distinct icon + accent color so the tree
+// is scannable at a glance (activity vs panel vs text vs image, etc).
+
+type Visual = {
+  Icon: ComponentType<{ className?: string }>
+  text: string // text color class
+  bg: string // pill background class
+  border: string // left-accent border color class
+}
+
+const SLATE: Visual = {
+  Icon: TypeIcon,
+  text: "text-slate-600",
+  bg: "bg-slate-100",
+  border: "hover:border-l-slate-400",
+}
+
+const VIOLET = (Icon: Visual["Icon"]): Visual => ({
+  Icon,
+  text: "text-violet-700",
+  bg: "bg-violet-100",
+  border: "hover:border-l-violet-400",
+})
+
+const BLUE = (Icon: Visual["Icon"]): Visual => ({
+  Icon,
+  text: "text-blue-700",
+  bg: "bg-blue-100",
+  border: "hover:border-l-blue-400",
+})
+
+const AMBER = (Icon: Visual["Icon"]): Visual => ({
+  Icon,
+  text: "text-amber-700",
+  bg: "bg-amber-100",
+  border: "hover:border-l-amber-400",
+})
+
+const EMERALD = (Icon: Visual["Icon"]): Visual => ({
+  Icon,
+  text: "text-emerald-700",
+  bg: "bg-emerald-100",
+  border: "hover:border-l-emerald-400",
+})
+
+const SKY = (Icon: Visual["Icon"]): Visual => ({
+  Icon,
+  text: "text-sky-700",
+  bg: "bg-sky-100",
+  border: "hover:border-l-sky-400",
+})
+
+const INDIGO = (Icon: Visual["Icon"]): Visual => ({
+  Icon,
+  text: "text-indigo-700",
+  bg: "bg-indigo-100",
+  border: "hover:border-l-indigo-400",
+})
+
+// Structural containers — activities in violet, structural boxes in blue.
+function getStructureVisual(structure: string | undefined): Visual {
+  if (!structure) return BLUE(Layers)
+  if (structure.startsWith("activity")) return VIOLET(Puzzle)
+  switch (structure) {
+    case "panel":
+    case "sidebar":
+      return BLUE(PanelTop)
+    default:
+      return BLUE(Layers)
+  }
+}
+
+// Leaf roles — heading amber, math indigo, activity-* violet, image emerald,
+// question sky, fill-in-the-blank violet, default text slate.
+function getRoleVisual(role: string | undefined): Visual {
+  if (!role) return SLATE
+  if (role === "image") return EMERALD(ImageIcon)
+  if (role === "heading") return AMBER(Hash)
+  if (role === "math") return INDIGO(Sigma)
+  if (role === "caption" || role === "label") return { ...SLATE, Icon: Tag }
+  if (role === "quote") return { ...SLATE, Icon: Quote }
+  if (role === "activity_fill_in_the_blank" || role === "fill_in" || role === "blank")
+    return VIOLET(Link2)
+  if (role === "activity_instruction") return VIOLET(PenLine)
+  if (role === "activity_question" || role === "question" || role === "prompt")
+    return SKY(MessageCircle)
+  if (role.startsWith("activity")) return VIOLET(Puzzle)
+  return { ...SLATE, Icon: TypeIcon }
+}
 
 export interface DragState {
   nodeId: string
@@ -73,10 +178,12 @@ function DragHandle({
   nodeId,
   disabled,
   setDrag,
+  className,
 }: {
   nodeId: string
   disabled?: boolean
   setDrag: (drag: DragState | null) => void
+  className?: string
 }) {
   const { t } = useLingui()
   return (
@@ -87,21 +194,89 @@ function DragHandle({
           e.preventDefault()
           return
         }
-        e.stopPropagation()
         e.dataTransfer.effectAllowed = "move"
         e.dataTransfer.setData(TREE_DRAG_TYPE, nodeId)
-        setDrag({ nodeId })
+        // Defer the state update so React does not re-render mid-dragstart —
+        // a synchronous re-render can replace the handle's DOM node and cause
+        // some browsers to abort the drag before the first dragover fires.
+        requestAnimationFrame(() => setDrag({ nodeId }))
       }}
       onDragEnd={() => setDrag(null)}
       className={cn(
-        "shrink-0 p-0.5 rounded transition-colors",
+        "shrink-0 p-1 rounded transition-opacity",
         disabled
           ? "cursor-default opacity-30"
-          : "cursor-grab active:cursor-grabbing hover:bg-accent opacity-0 group-hover/row:opacity-100"
+          : "cursor-grab active:cursor-grabbing hover:bg-accent opacity-0",
+        className
       )}
       title={disabled ? undefined : t`Drag to move`}
     >
-      <GripVertical className="h-3 w-3 text-muted-foreground/70" />
+      <GripVertical className="h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+    </div>
+  )
+}
+
+// ── Kebab action menu ────────────────────────────────────────────
+
+type MenuItem = {
+  icon: ComponentType<{ className?: string }>
+  label: string
+  onClick: () => void
+  danger?: boolean
+  hidden?: boolean
+}
+
+function RowMenu({
+  items,
+  disabled,
+}: {
+  items: MenuItem[]
+  disabled?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", onDown)
+    return () => document.removeEventListener("mousedown", onDown)
+  }, [open])
+  const visibleItems = items.filter((it) => !it.hidden)
+  if (visibleItems.length === 0) return null
+  return (
+    <div className="relative" ref={ref} onClick={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        disabled={disabled}
+        className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30"
+      >
+        <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full z-50 mt-1 min-w-[160px] rounded-md border bg-popover py-1 text-xs shadow-md">
+          {visibleItems.map((item, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => {
+                setOpen(false)
+                item.onClick()
+              }}
+              disabled={disabled}
+              className={cn(
+                "flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-accent transition-colors disabled:opacity-30",
+                item.danger && "text-red-600 hover:bg-red-50"
+              )}
+            >
+              <item.icon className="h-3.5 w-3.5" />
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -121,27 +296,35 @@ function DropZone({
 }) {
   const [over, setOver] = useState(false)
   if (!drag) return null
+  // Tall transparent hit area with a thin centered line so targets are easy
+  // to aim at during a drag without visually dominating the tree.
   return (
     <div
-      className={cn(
-        "h-1 rounded-full my-0.5 transition-colors",
-        over ? "bg-primary" : "bg-transparent"
-      )}
+      className="relative h-2 -my-0.5 flex items-center"
       onDragOver={(e) => {
         if (!e.dataTransfer.types.includes(TREE_DRAG_TYPE)) return
         e.preventDefault()
+        e.stopPropagation()
         e.dataTransfer.dropEffect = "move"
         setOver(true)
       }}
       onDragLeave={() => setOver(false)}
       onDrop={(e) => {
         e.preventDefault()
+        e.stopPropagation()
         setOver(false)
         const sourceId = e.dataTransfer.getData(TREE_DRAG_TYPE)
         if (!sourceId) return
         onDrop(sourceId, { parentNodeId, index })
       }}
-    />
+    >
+      <div
+        className={cn(
+          "w-full h-0.5 rounded-full transition-colors pointer-events-none",
+          over ? "bg-primary h-1" : "bg-primary/20"
+        )}
+      />
+    </div>
   )
 }
 
@@ -174,23 +357,101 @@ function ContainerNode(props: TreeNodeProps) {
   } = props
   const { t } = useLingui()
   const [collapsed, setCollapsed] = useState(false)
+  const [dropOver, setDropOver] = useState(false)
   const children = node.children ?? []
-  const structureLabel =
-    (containerStructures && containerStructures[node.structure ?? ""]) ??
-    node.structure ??
-    "group"
+  const structureLabel = node.structure ?? "group"
   const isDragging = drag?.nodeId === node.nodeId
+  const visual = getStructureVisual(node.structure)
+
+  // Dropping directly onto a container (e.g. when it is collapsed or empty)
+  // appends the moved node as the container's last child.
+  const canAcceptDrop = !!drag && drag.nodeId !== node.nodeId
 
   return (
     <div
       className={cn(
-        "group/row rounded border bg-card/40",
+        "relative rounded-md border border-transparent border-l-2 border-l-slate-300 pl-1.5 pr-1 py-1 transition-colors hover:border-slate-200",
+        visual.border,
         node.isPruned && "opacity-40",
-        isDragging && "opacity-30"
+        isDragging && "opacity-30",
+        dropOver && "ring-2 ring-primary"
       )}
     >
-      <div className="px-2 py-1 bg-muted/40 border-b flex items-center gap-1.5">
-        <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
+      <div
+        className={cn(
+          "group/head flex items-center gap-1.5 rounded",
+          dropOver && "bg-primary/5"
+        )}
+        onDragOver={(e) => {
+          if (!canAcceptDrop) return
+          if (!e.dataTransfer.types.includes(TREE_DRAG_TYPE)) return
+          e.preventDefault()
+          e.stopPropagation()
+          e.dataTransfer.dropEffect = "move"
+          setDropOver(true)
+        }}
+        onDragLeave={(e) => {
+          if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
+          setDropOver(false)
+        }}
+        onDrop={(e) => {
+          if (!canAcceptDrop) return
+          e.preventDefault()
+          e.stopPropagation()
+          setDropOver(false)
+          const sourceId = e.dataTransfer.getData(TREE_DRAG_TYPE)
+          if (!sourceId) return
+          onDrop(sourceId, { parentNodeId: node.nodeId, index: children.length })
+        }}
+      >
+        {containerStructures ? (
+          <Select
+            value={node.structure ?? defaultStructure}
+            onValueChange={(val) => onSetStructure(node.nodeId, val)}
+            disabled={disabled}
+          >
+            <SelectTrigger
+              className={cn(
+                "h-6 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0 w-auto border-0 rounded-md gap-1 [&>svg]:opacity-70",
+                visual.bg,
+                visual.text
+              )}
+            >
+              <visual.Icon className="h-3.5 w-3.5 shrink-0" />
+              <SelectValue>{structureLabel}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {Object.keys(containerStructures).map((key) => {
+                const v = getStructureVisual(key)
+                return (
+                  <SelectItem key={key} value={key} className="text-xs">
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+                        v.bg,
+                        v.text
+                      )}
+                    >
+                      <v.Icon className="h-3 w-3 shrink-0" />
+                      {key}
+                    </span>
+                  </SelectItem>
+                )
+              })}
+            </SelectContent>
+          </Select>
+        ) : (
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 h-6 rounded-md px-1.5 text-[10px] font-semibold uppercase tracking-wider",
+              visual.bg,
+              visual.text
+            )}
+          >
+            <visual.Icon className="h-3.5 w-3.5 shrink-0" />
+            {structureLabel}
+          </span>
+        )}
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
@@ -203,75 +464,7 @@ function ContainerNode(props: TreeNodeProps) {
             <ChevronDown className="h-3 w-3 text-muted-foreground" />
           )}
         </button>
-        {containerStructures ? (
-          <Select
-            value={node.structure ?? defaultStructure}
-            onValueChange={(val) => onSetStructure(node.nodeId, val)}
-            disabled={disabled}
-          >
-            <SelectTrigger className="h-5 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0 w-auto min-w-[80px] border-0 bg-transparent text-muted-foreground">
-              <SelectValue>{structureLabel}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(containerStructures).map(([key, desc]) => (
-                <SelectItem key={key} value={key} className="text-xs">
-                  {key}
-                  <span className="ml-1 text-muted-foreground text-[10px]">
-                    {desc}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            {structureLabel}
-          </span>
-        )}
-        <span className="text-[10px] font-mono text-muted-foreground/50 truncate">
-          {node.nodeId}
-        </span>
-        <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover/row:opacity-100 transition-opacity">
-          {parentNodeId != null && (
-            <button
-              type="button"
-              onClick={() => onUnnest(node.nodeId)}
-              disabled={disabled}
-              className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30"
-              title={t`Move out of parent`}
-            >
-              <CornerLeftUp className="h-3 w-3 text-muted-foreground" />
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => onNest(node.nodeId, defaultStructure)}
-            disabled={disabled}
-            className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30"
-            title={t`Wrap in new container`}
-          >
-            <CornerRightDown className="h-3 w-3 text-muted-foreground" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onDuplicate(node.nodeId)}
-            disabled={disabled}
-            className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30"
-            title={t`Duplicate`}
-          >
-            <Copy className="h-3 w-3 text-muted-foreground" />
-          </button>
-          {node.isPruned && (
-            <button
-              type="button"
-              onClick={() => onDelete(node.nodeId)}
-              disabled={disabled}
-              className="p-0.5 rounded hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-30"
-              title={t`Delete`}
-            >
-              <Trash2 className="h-3 w-3 text-red-600" />
-            </button>
-          )}
+        <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover/head:opacity-100 transition-opacity">
           <button
             type="button"
             onClick={() => onTogglePruned(node.nodeId)}
@@ -285,7 +478,57 @@ function ContainerNode(props: TreeNodeProps) {
               <Eye className="h-3 w-3 text-muted-foreground" />
             )}
           </button>
+          <RowMenu
+            disabled={disabled}
+            items={[
+              {
+                icon: CornerLeftUp,
+                label: t`Remove from group`,
+                onClick: () => onUnnest(node.nodeId),
+                hidden: parentNodeId == null,
+              },
+              {
+                icon: CornerRightDown,
+                label: t`Wrap in group`,
+                onClick: () => onNest(node.nodeId, defaultStructure),
+              },
+              {
+                icon: FilePlus,
+                label: t`Add text`,
+                onClick: () => onAddChildLeaf(node.nodeId, defaultTextRole),
+              },
+              {
+                icon: ImageIcon,
+                label: t`Add image`,
+                onClick: () => onAddChildLeaf(node.nodeId, "image"),
+              },
+              {
+                icon: FolderPlus,
+                label: t`Add group`,
+                onClick: () =>
+                  onAddChildContainer(node.nodeId, defaultStructure),
+              },
+              {
+                icon: Copy,
+                label: t`Duplicate`,
+                onClick: () => onDuplicate(node.nodeId),
+              },
+              {
+                icon: Trash2,
+                label: t`Delete`,
+                onClick: () => onDelete(node.nodeId),
+                danger: true,
+                hidden: !node.isPruned,
+              },
+            ]}
+          />
         </div>
+        <DragHandle
+          nodeId={node.nodeId}
+          disabled={disabled}
+          setDrag={setDrag}
+          className="group-hover/head:opacity-100"
+        />
       </div>
 
       {!collapsed && (
@@ -339,28 +582,6 @@ function ContainerNode(props: TreeNodeProps) {
               />
             </div>
           ))}
-          <div className="flex items-center gap-1 pt-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
-            <button
-              type="button"
-              onClick={() => onAddChildLeaf(node.nodeId, defaultTextRole)}
-              disabled={disabled}
-              className="flex items-center gap-1 rounded border border-dashed border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground hover:border-muted-foreground/60 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
-            >
-              <Plus className="h-2.5 w-2.5" />
-              {t`Add text`}
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                onAddChildContainer(node.nodeId, defaultStructure)
-              }
-              disabled={disabled}
-              className="flex items-center gap-1 rounded border border-dashed border-muted-foreground/30 px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground hover:border-muted-foreground/60 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
-            >
-              <Plus className="h-2.5 w-2.5" />
-              {t`Add container`}
-            </button>
-          </div>
         </div>
       )}
     </div>
@@ -387,39 +608,68 @@ function TextLeaf(props: TreeNodeProps) {
   } = props
   const { t } = useLingui()
   const isDragging = props.drag?.nodeId === node.nodeId
+  const visual = getRoleVisual(node.role)
 
   return (
     <div
       className={cn(
-        "group/row flex items-start gap-1.5 rounded px-1 py-0.5 transition-colors hover:bg-muted/40",
+        "group/row flex items-start gap-1.5 rounded pl-0.5 pr-1 py-0.5 transition-colors hover:bg-muted/40",
         node.isPruned && "opacity-40",
         isDragging && "opacity-30"
       )}
     >
-      <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
       {textRoles ? (
         <Select
           value={node.role ?? "text"}
           onValueChange={(val) => onSetRole(node.nodeId, val)}
           disabled={disabled}
         >
-          <SelectTrigger className="shrink-0 h-5 text-[10px] font-medium px-1.5 py-0 w-auto min-w-[60px] border-0 bg-muted/50">
-            <SelectValue>{node.role}</SelectValue>
+          <SelectTrigger
+            className={cn(
+              "group/pill shrink-0 h-5 text-[10px] font-medium px-1 py-0 w-auto border-0 rounded gap-0.5 [&>svg]:opacity-70",
+              visual.bg,
+              visual.text
+            )}
+          >
+            <visual.Icon className="h-3 w-3 shrink-0" />
+            <SelectValue asChild>
+              <span className="overflow-hidden whitespace-nowrap transition-all duration-150 max-w-0 group-hover/pill:max-w-[140px] group-hover/pill:ml-1 uppercase tracking-wider font-semibold">
+                {node.role}
+              </span>
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {Object.entries(textRoles).map(([key, desc]) => (
-              <SelectItem key={key} value={key} className="text-xs">
-                {key}
-                <span className="ml-1 text-muted-foreground text-[10px]">
-                  {desc}
-                </span>
-              </SelectItem>
-            ))}
+            {Object.keys(textRoles).map((key) => {
+              const v = getRoleVisual(key)
+              return (
+                <SelectItem key={key} value={key} className="text-xs">
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+                      v.bg,
+                      v.text
+                    )}
+                  >
+                    <v.Icon className="h-3 w-3 shrink-0" />
+                    {key}
+                  </span>
+                </SelectItem>
+              )
+            })}
           </SelectContent>
         </Select>
       ) : (
-        <span className="shrink-0 text-[10px] font-medium text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5">
-          {node.role}
+        <span
+          className={cn(
+            "group/pill shrink-0 inline-flex items-center gap-0.5 h-5 rounded px-1 text-[10px] font-medium",
+            visual.bg,
+            visual.text
+          )}
+        >
+          <visual.Icon className="h-3 w-3 shrink-0" />
+          <span className="overflow-hidden whitespace-nowrap transition-all duration-150 max-w-0 group-hover/pill:max-w-[140px] group-hover/pill:ml-1 uppercase tracking-wider font-semibold">
+            {node.role}
+          </span>
         </span>
       )}
       <EditableText
@@ -427,47 +677,7 @@ function TextLeaf(props: TreeNodeProps) {
         onCommit={(next) => onEditText(node.nodeId, next)}
         disabled={disabled}
       />
-      <div className="shrink-0 flex items-center gap-0.5 self-center opacity-0 group-hover/row:opacity-100 transition-opacity">
-        {parentNodeId != null && (
-          <button
-            type="button"
-            onClick={() => onUnnest(node.nodeId)}
-            disabled={disabled}
-            className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30"
-            title={t`Move out of parent`}
-          >
-            <CornerLeftUp className="h-3 w-3 text-muted-foreground" />
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={() => onNest(node.nodeId, defaultStructure)}
-          disabled={disabled}
-          className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30"
-          title={t`Wrap in new container`}
-        >
-          <CornerRightDown className="h-3 w-3 text-muted-foreground" />
-        </button>
-        <button
-          type="button"
-          onClick={() => onDuplicate(node.nodeId)}
-          disabled={disabled}
-          className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30"
-          title={t`Duplicate`}
-        >
-          <Copy className="h-3 w-3 text-muted-foreground" />
-        </button>
-        {node.isPruned && (
-          <button
-            type="button"
-            onClick={() => onDelete(node.nodeId)}
-            disabled={disabled}
-            className="p-0.5 rounded hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-30"
-            title={t`Delete`}
-          >
-            <Trash2 className="h-3 w-3 text-red-600" />
-          </button>
-        )}
+      <div className="shrink-0 flex items-center gap-0.5 self-center ml-auto opacity-0 group-hover/row:opacity-100 transition-opacity">
         <button
           type="button"
           onClick={() => onTogglePruned(node.nodeId)}
@@ -481,7 +691,41 @@ function TextLeaf(props: TreeNodeProps) {
             <Eye className="h-3 w-3 text-muted-foreground" />
           )}
         </button>
+        <RowMenu
+          disabled={disabled}
+          items={[
+            {
+              icon: CornerLeftUp,
+              label: t`Remove from group`,
+              onClick: () => onUnnest(node.nodeId),
+              hidden: parentNodeId == null,
+            },
+            {
+              icon: CornerRightDown,
+              label: t`Wrap in group`,
+              onClick: () => onNest(node.nodeId, defaultStructure),
+            },
+            {
+              icon: Copy,
+              label: t`Duplicate`,
+              onClick: () => onDuplicate(node.nodeId),
+            },
+            {
+              icon: Trash2,
+              label: t`Delete`,
+              onClick: () => onDelete(node.nodeId),
+              danger: true,
+              hidden: !node.isPruned,
+            },
+          ]}
+        />
       </div>
+      <DragHandle
+        nodeId={node.nodeId}
+        disabled={disabled}
+        setDrag={setDrag}
+        className="group-hover/row:opacity-100"
+      />
     </div>
   )
 }
@@ -500,17 +744,26 @@ function ImageLeaf(props: TreeNodeProps) {
   } = props
   const { t } = useLingui()
   const isDragging = props.drag?.nodeId === node.nodeId
+  const visual = getRoleVisual("image")
   return (
     <div
       className={cn(
-        "group/row flex items-center gap-2 rounded px-2 py-1 transition-colors hover:bg-muted/40",
+        "group/row flex items-center gap-2 rounded pl-1 pr-2 py-1 transition-colors hover:bg-muted/40",
         node.isPruned && "opacity-40",
         isDragging && "opacity-30"
       )}
     >
-      <DragHandle nodeId={node.nodeId} disabled={disabled} setDrag={setDrag} />
-      <span className="shrink-0 text-[10px] font-medium uppercase tracking-wider text-emerald-700">
-        {t`image`}
+      <span
+        className={cn(
+          "group/pill shrink-0 inline-flex items-center gap-0.5 h-5 rounded px-1 text-[10px] font-medium",
+          visual.bg,
+          visual.text
+        )}
+      >
+        <visual.Icon className="h-3 w-3 shrink-0" />
+        <span className="overflow-hidden whitespace-nowrap transition-all duration-150 max-w-0 group-hover/pill:max-w-[80px] group-hover/pill:ml-1 uppercase tracking-wider font-semibold">
+          {t`image`}
+        </span>
       </span>
       <img
         src={`${BASE_URL}/books/${bookLabel}/images/${node.nodeId}`}
@@ -529,26 +782,6 @@ function ImageLeaf(props: TreeNodeProps) {
       <div className="shrink-0 flex items-center gap-0.5 opacity-0 group-hover/row:opacity-100 transition-opacity">
         <button
           type="button"
-          onClick={() => onDuplicate(node.nodeId)}
-          disabled={disabled}
-          className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30"
-          title={t`Duplicate`}
-        >
-          <Copy className="h-3 w-3 text-muted-foreground" />
-        </button>
-        {node.isPruned && (
-          <button
-            type="button"
-            onClick={() => onDelete(node.nodeId)}
-            disabled={disabled}
-            className="p-0.5 rounded hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-30"
-            title={t`Delete`}
-          >
-            <Trash2 className="h-3 w-3 text-red-600" />
-          </button>
-        )}
-        <button
-          type="button"
           onClick={() => onTogglePruned(node.nodeId)}
           disabled={disabled}
           className="p-0.5 rounded hover:bg-accent transition-colors cursor-pointer disabled:opacity-30"
@@ -560,7 +793,30 @@ function ImageLeaf(props: TreeNodeProps) {
             <Eye className="h-3 w-3 text-muted-foreground" />
           )}
         </button>
+        <RowMenu
+          disabled={disabled}
+          items={[
+            {
+              icon: Copy,
+              label: t`Duplicate`,
+              onClick: () => onDuplicate(node.nodeId),
+            },
+            {
+              icon: Trash2,
+              label: t`Delete`,
+              onClick: () => onDelete(node.nodeId),
+              danger: true,
+              hidden: !node.isPruned,
+            },
+          ]}
+        />
       </div>
+      <DragHandle
+        nodeId={node.nodeId}
+        disabled={disabled}
+        setDrag={setDrag}
+        className="group-hover/row:opacity-100"
+      />
     </div>
   )
 }

@@ -178,37 +178,6 @@ export interface PageDetail {
       cropBottom?: number
     }>
   } | null
-  sectioning: {
-    reasoning: string
-    sections: Array<{
-      sectionId: string
-      sectionType: string
-      parts: Array<
-        | {
-            type: "text_group"
-            groupId: string
-            groupType: string
-            texts: Array<{
-              textId: string
-              textType: string
-              text: string
-              isPruned: boolean
-            }>
-            isPruned: boolean
-          }
-        | {
-            type: "image"
-            imageId: string
-            isPruned: boolean
-            reason?: string
-          }
-      >
-      backgroundColor: string
-      textColor: string
-      pageNumber: number | null
-      isPruned: boolean
-    }>
-  } | null
   sectioningTree: {
     reasoning: string
     sections: Array<{
@@ -565,18 +534,8 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-  // Writes canonical tree-shaped sectioning data (PageSectioningOutput).
   updateSectioning: (label: string, pageId: string, data: unknown) =>
     request<{ version: number }>(`/books/${label}/pages/${pageId}/sectioning`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    }),
-
-  // Writes flat parts shape (UIPageSectioningOutput) via the legacy endpoint,
-  // which converts to tree before persisting. Still used by callers that
-  // have not yet migrated to tree-native editing.
-  updateSectioningLegacy: (label: string, pageId: string, data: unknown) =>
-    request<{ version: number }>(`/books/${label}/pages/${pageId}/sectioning-legacy`, {
       method: "PUT",
       body: JSON.stringify(data),
     }),

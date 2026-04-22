@@ -217,8 +217,11 @@ msgstr "{reviewCount} {0}"
 msgid "{reviewed}/{0} checked"
 msgstr "{reviewed}/{0} checked"
 
-msgid "{textCount} text groups"
-msgstr "{textCount} text groups"
+#~ msgid "{textCount} text groups"
+#~ msgstr "{textCount} text groups"
+
+msgid "{textCount} text leaves"
+msgstr "{textCount} text leaves"
 
 #. placeholder {0}: index + 1
 msgid "{title} - page {0}"
@@ -449,14 +452,20 @@ msgstr "Add checklist item to this section"
 msgid "Add class"
 msgstr "Add class"
 
-msgid "Add container"
-msgstr "Add container"
+#~ msgid "Add container"
+#~ msgstr "Add container"
 
 msgid "Add entry below"
 msgstr "Add entry below"
 
-msgid "Add Group"
-msgstr "Add Group"
+msgid "Add group"
+msgstr "Add group"
+
+#~ msgid "Add Group"
+#~ msgstr "Add Group"
+
+msgid "Add image"
+msgstr "Add image"
 
 msgid "Add Image"
 msgstr "Add Image"
@@ -1245,14 +1254,14 @@ msgstr "Delete book"
 msgid "Delete failed"
 msgstr "Delete failed"
 
-msgid "Delete group"
-msgstr "Delete group"
+#~ msgid "Delete group"
+#~ msgstr "Delete group"
 
 msgid "Delete section"
 msgstr "Delete section"
 
-msgid "Delete text entry"
-msgstr "Delete text entry"
+#~ msgid "Delete text entry"
+#~ msgstr "Delete text entry"
 
 #~ msgid "Delete type"
 #~ msgstr "Delete type"
@@ -1323,11 +1332,11 @@ msgstr "Drag to move"
 msgid "Drag to move boxes, drag edges/corners to resize"
 msgstr "Drag to move boxes, drag edges/corners to resize"
 
-msgid "Drag to reorder"
-msgstr "Drag to reorder"
+#~ msgid "Drag to reorder"
+#~ msgstr "Drag to reorder"
 
-msgid "Drag to reorder or move to another group"
-msgstr "Drag to reorder or move to another group"
+#~ msgid "Drag to reorder or move to another group"
+#~ msgstr "Drag to reorder or move to another group"
 
 msgid "Drag vertices to reshape. Click midpoints (+) to add points. Right-click a vertex to remove it."
 msgstr "Drag vertices to reshape. Click midpoints (+) to add points. Right-click a vertex to remove it."
@@ -1338,11 +1347,11 @@ msgstr "Drop PDF here"
 msgid "Duplicate"
 msgstr "Duplicate"
 
-msgid "Duplicate group"
-msgstr "Duplicate group"
+#~ msgid "Duplicate group"
+#~ msgstr "Duplicate group"
 
-msgid "Duplicate text entry"
-msgstr "Duplicate text entry"
+#~ msgid "Duplicate text entry"
+#~ msgstr "Duplicate text entry"
 
 msgid "Duration"
 msgstr "Duration"
@@ -1422,8 +1431,8 @@ msgstr "Editing Language"
 msgid "Empty container"
 msgstr "Empty container"
 
-msgid "Empty group — drag text entries here"
-msgstr "Empty group — drag text entries here"
+#~ msgid "Empty group — drag text entries here"
+#~ msgstr "Empty group — drag text entries here"
 
 msgid "Empty section"
 msgstr "Empty section"
@@ -1804,11 +1813,11 @@ msgstr "Header"
 msgid "Hide AI edit history"
 msgstr "Hide AI edit history"
 
-msgid "Hide Pruned"
-msgstr "Hide Pruned"
+#~ msgid "Hide Pruned"
+#~ msgstr "Hide Pruned"
 
-msgid "Hide pruned images"
-msgstr "Hide pruned images"
+#~ msgid "Hide pruned images"
+#~ msgstr "Hide pruned images"
 
 msgid "Higher values filter out simple or blank images."
 msgstr "Higher values filter out simple or blank images."
@@ -2322,8 +2331,8 @@ msgstr "Moderate"
 msgid "Modified {modifiedLabel}"
 msgstr "Modified {modifiedLabel}"
 
-msgid "Move out of parent"
-msgstr "Move out of parent"
+#~ msgid "Move out of parent"
+#~ msgstr "Move out of parent"
 
 msgid "Multi-format publications"
 msgstr "Multi-format publications"
@@ -2906,9 +2915,8 @@ msgstr "Pruned"
 msgid "Pruned Images"
 msgstr "Pruned Images"
 
-#. placeholder {0}: reason ?? ""
-msgid "Pruned: {0}"
-msgstr "Pruned: {0}"
+#~ msgid "Pruned: {0}"
+#~ msgstr "Pruned: {0}"
 
 msgid "Pruned: {reason}"
 msgstr "Pruned: {reason}"
@@ -3033,6 +3041,9 @@ msgstr "Remove checklist item"
 
 msgid "Remove entry"
 msgstr "Remove entry"
+
+msgid "Remove from group"
+msgstr "Remove from group"
 
 msgid "Remove PDF"
 msgstr "Remove PDF"
@@ -3484,11 +3495,11 @@ msgstr "Show all translations"
 msgid "Show fewer"
 msgstr "Show fewer"
 
-msgid "Show Pruned"
-msgstr "Show Pruned"
+#~ msgid "Show Pruned"
+#~ msgstr "Show Pruned"
 
-msgid "Show pruned images"
-msgstr "Show pruned images"
+#~ msgid "Show pruned images"
+#~ msgstr "Show pruned images"
 
 msgid "Show reviewer validation"
 msgstr "Show reviewer validation"
@@ -3742,8 +3753,8 @@ msgstr "Text Catalog"
 msgid "Text color: {0}"
 msgstr "Text color: {0}"
 
-msgid "Text Groups"
-msgstr "Text Groups"
+#~ msgid "Text Groups"
+#~ msgstr "Text Groups"
 
 msgid "Text Only"
 msgstr "Text Only"
@@ -4212,8 +4223,11 @@ msgstr "Within range"
 msgid "words"
 msgstr "words"
 
-msgid "Wrap in new container"
-msgstr "Wrap in new container"
+msgid "Wrap in group"
+msgstr "Wrap in group"
+
+#~ msgid "Wrap in new container"
+#~ msgstr "Wrap in new container"
 
 msgid "Wraps 'Edit this image' requests. The AI receives the original image alongside this prompt. Supports user_prompt and style variables."
 msgstr "Wraps 'Edit this image' requests. The AI receives the original image alongside this prompt. Supports user_prompt and style variables."

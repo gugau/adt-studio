@@ -134,14 +134,11 @@ describe("Page routes", () => {
       expect(body.pageNumber).toBe(1)
       expect(body.text).toBe("Page one text content")
       expect(body.imageClassification).toBeTruthy()
-      expect(body.sectioning).toBeTruthy()
-      expect(body.sectioning.sections).toHaveLength(1)
-      // GET shims the canonical tree through to the flat parts shape for
-      // the legacy storyboard UI. A top-level text leaf becomes a synthetic
-      // text_group containing the text.
-      expect(body.sectioning.sections[0].parts).toHaveLength(1)
-      expect(body.sectioning.sections[0].parts[0].type).toBe("text_group")
-      expect(body.sectioning.sections[0].parts[0].texts[0].text).toBe("Hello world")
+      expect(body.sectioningTree).toBeTruthy()
+      expect(body.sectioningTree.sections).toHaveLength(1)
+      expect(body.sectioningTree.sections[0].nodes).toHaveLength(1)
+      expect(body.sectioningTree.sections[0].nodes[0].role).toBe("text")
+      expect(body.sectioningTree.sections[0].nodes[0].text).toBe("Hello world")
       expect(body.rendering).toBeTruthy()
       expect(body.rendering.sections[0].html).toBe(
         "<div>Hello world</div>"
@@ -156,7 +153,7 @@ describe("Page routes", () => {
       expect(res.status).toBe(200)
       const body = await res.json()
       expect(body.pageId).toBe(`${label}_p2`)
-      expect(body.sectioning).toBeNull()
+      expect(body.sectioningTree).toBeNull()
       expect(body.rendering).toBeNull()
     })
 
