@@ -4,6 +4,7 @@ import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
 import { GlossaryOutput, parseBookLabel } from "@adt/types"
 import { openBookDb, createBookStorage } from "@adt/storage"
+import { buildTextCatalog } from "@adt/pipeline"
 
 function safeParseLabel(label: string): string {
   try {
@@ -83,6 +84,9 @@ export function createGlossaryRoutes(booksDir: string): Hono {
     const storage = createBookStorage(safeLabel, booksDir)
     try {
       const version = storage.putNodeData("glossary", "book", parsed.data)
+      const pages = storage.getPages()
+      const catalog = await buildTextCatalog(storage, pages)
+      storage.putNodeData("text-catalog", "book", catalog)
       return c.json({ version })
     } finally {
       storage.close()

@@ -1,8 +1,9 @@
 import crypto from "node:crypto"
+import fs from "node:fs"
 import path from "node:path"
 import { createBookStorage } from "@adt/storage"
 import type { Storage } from "@adt/storage"
-import { createLLMModel, createPromptEngine, createRateLimiter } from "@adt/llm"
+import { createLLMModel, createPromptEngine, createRateLimiter, transcribeWithWhisper } from "@adt/llm"
 import type { LlmLogEntry } from "@adt/llm"
 import {
   extractPDF,
@@ -28,6 +29,7 @@ import {
   extractImageIds,
   generateGlossary,
   buildGlossaryConfig,
+  mergeGeneratedGlossaryWithManualItems,
   generateToc,
   buildTocGenerationConfig,
   generateAllQuizzes,
@@ -71,10 +73,13 @@ import type {
   ImageClassificationOutput,
   PageSectioningOutput,
   WebRenderingOutput,
+  GlossaryOutput,
   TextCatalogOutput,
   TextCatalogEntry,
   SpeechFileEntry,
   TTSOutput,
+  WordTimestampEntry,
+  WordTimestampOutput,
   StepName,
   StageName,
   BookSummaryOutput,
@@ -158,6 +163,191 @@ async function processWithConcurrency<T>(
     }
   }
   await Promise.all(executing)
+}
+
+function buildSpeechProgressMessage(
+  audioCompleted: number,
+  audioTotal: number,
+  audioFailures: number,
+  timingCompleted = 0,
+  timingTotal = 0,
+  timingFailures = 0,
+): string {
+  const parts = [
+    `${audioCompleted}/${audioTotal} audio entries${audioFailures > 0 ? ` (${audioFailures} failed)` : ""}`,
+  ]
+
+  if (timingTotal > 0) {
+    parts.push(
+      `word timings ${timingCompleted}/${timingTotal}${timingFailures > 0 ? ` (${timingFailures} failed)` : ""}`,
+    )
+  }
+
+  return parts.join(" · ")
+}
+
+function emitSpeechStepProgress(
+  progress: StageRunProgress,
+  audioCompleted: number,
+  audioTotal: number,
+  audioFailures: number,
+  timingCompleted = 0,
+  timingTotal = 0,
+  timingFailures = 0,
+): void {
+  progress.emit({
+    type: "step-progress",
+    step: "tts",
+    message: buildSpeechProgressMessage(
+      audioCompleted,
+      audioTotal,
+      audioFailures,
+      timingCompleted,
+      timingTotal,
+      timingFailures,
+    ),
+    page: audioCompleted,
+    totalPages: audioTotal,
+  })
+}
+
+function resolveSpeechAudioPath(
+  bookDir: string,
+  language: string,
+  fileName: string,
+): string | null {
+  const audioRoot = path.resolve(bookDir, "audio")
+  const normalizedLanguage = normalizeLocale(language)
+  const candidateDirs = [
+    path.resolve(audioRoot, normalizedLanguage),
+    path.resolve(audioRoot, normalizedLanguage.replace("-", "_")),
+  ]
+
+  for (const dir of candidateDirs) {
+    const resolved = path.resolve(dir, fileName)
+    if (!resolved.startsWith(dir + path.sep)) continue
+    if (fs.existsSync(resolved)) return resolved
+  }
+
+  return null
+}
+
+interface GenerateSpeechWordTimestampsOptions {
+  label: string
+  bookDir: string
+  apiKey?: string
+  outputLanguages: string[]
+  ttsResultsByLang: Map<string, SpeechFileEntry[]>
+  textByLanguage: Map<string, Map<string, string>>
+  concurrency: number
+  progress: StageRunProgress
+  audioCompleted: number
+  audioTotal: number
+  audioFailures: number
+}
+
+async function generateSpeechWordTimestamps(
+  options: GenerateSpeechWordTimestampsOptions,
+): Promise<{
+  entriesByLanguage: Map<string, Record<string, WordTimestampEntry>>
+  failedItems: string[]
+}> {
+  const {
+    label,
+    bookDir,
+    apiKey,
+    outputLanguages,
+    ttsResultsByLang,
+    textByLanguage,
+    concurrency,
+    progress,
+    audioCompleted,
+    audioTotal,
+    audioFailures,
+  } = options
+
+  const entriesByLanguage = new Map<string, Record<string, WordTimestampEntry>>()
+  for (const language of outputLanguages) {
+    entriesByLanguage.set(language, {})
+  }
+
+  if (!apiKey?.trim()) {
+    console.warn(`[stage-run] ${label}: skipping word timestamp generation because no OpenAI key was provided`)
+    return { entriesByLanguage, failedItems: [] }
+  }
+
+  const workItems = outputLanguages.flatMap((language) =>
+    (ttsResultsByLang.get(language) ?? []).map((entry) => ({
+      language,
+      entry,
+      prompt: textByLanguage.get(language)?.get(entry.textId),
+    }))
+  )
+
+  if (workItems.length === 0) {
+    return { entriesByLanguage, failedItems: [] }
+  }
+
+  const failedItems: string[] = []
+  let completed = 0
+
+  emitSpeechStepProgress(
+    progress,
+    audioCompleted,
+    audioTotal,
+    audioFailures,
+    0,
+    workItems.length,
+    0,
+  )
+
+  await processWithConcurrency(
+    workItems,
+    Math.max(1, Math.min(concurrency, 4)),
+    async ({ language, entry, prompt }) => {
+      try {
+        const audioPath = resolveSpeechAudioPath(bookDir, language, entry.fileName)
+        if (!audioPath) {
+          throw new Error(`Audio file not found: ${entry.fileName}`)
+        }
+
+        const audioBuffer = Buffer.from(fs.readFileSync(audioPath))
+        const result = await transcribeWithWhisper(
+          audioBuffer,
+          entry.fileName,
+          apiKey,
+          getBaseLanguage(language),
+          prompt,
+        )
+
+        entriesByLanguage.get(language)![entry.textId] = {
+          textId: entry.textId,
+          language,
+          words: result.words,
+          duration: result.duration,
+        }
+      } catch (err) {
+        const message = toErrorMessage(err)
+        failedItems.push(`${language}/${entry.textId}: ${message}`)
+        console.warn(
+          `[stage-run] ${label}: word timestamp generation failed for ${entry.textId} (${language}): ${message}`,
+        )
+      } finally {
+        completed++
+        emitSpeechStepProgress(
+          progress,
+          audioCompleted,
+          audioTotal,
+          audioFailures,
+          completed,
+          workItems.length,
+          failedItems.length,
+        )
+      }
+    },
+  )
+
+  return { entriesByLanguage, failedItems }
 }
 
 type RunFn = (label: string, options: StageRunOptions, progress: StageRunProgress) => Promise<void>
@@ -1231,7 +1421,10 @@ async function runGlossaryStep(
 
     console.log(`[stage-run] ${label}: generating glossary from ${pages.length} pages`)
 
-    const glossary = await generateGlossary({
+    const existingGlossaryRow = storage.getLatestNodeData("glossary", "book")
+    const existingGlossary = existingGlossaryRow?.data as GlossaryOutput | undefined
+
+    const generatedGlossary = await generateGlossary({
       storage,
       pages,
       config: glossaryConfig,
@@ -1247,6 +1440,10 @@ async function runGlossaryStep(
         })
       },
     })
+    const glossary = mergeGeneratedGlossaryWithManualItems(
+      generatedGlossary,
+      existingGlossary?.items ?? [],
+    )
     storage.putNodeData("glossary", "book", glossary)
 
     progress.emit({
@@ -1614,6 +1811,7 @@ async function runSpeechStep(
       language: string
     }
     const ttsWorkItems: TTSWorkItem[] = []
+    const textByLanguage = new Map<string, Map<string, string>>()
 
     for (const lang of outputLanguages) {
       const baseSource = getBaseLanguage(sourceLanguage)
@@ -1635,21 +1833,18 @@ async function runSpeechStep(
         }
       }
 
+      const languageTextMap = new Map<string, string>()
       for (const entry of entries) {
         ttsWorkItems.push({ textId: entry.id, text: entry.text, language: lang })
+        languageTextMap.set(entry.id, entry.text)
       }
+      textByLanguage.set(lang, languageTextMap)
     }
 
     const totalItems = ttsWorkItems.length
     let completedItems = 0
 
-    progress.emit({
-      type: "step-progress",
-      step: "tts",
-      message: `0/${totalItems} entries`,
-      page: 0,
-      totalPages: totalItems,
-    })
+    emitSpeechStepProgress(progress, 0, totalItems, 0)
 
     console.log(`[stage-run] ${label}: generating TTS for ${totalItems} entries across ${outputLanguages.length} languages (${outputLanguages.join(", ")})`)
     console.log(`[stage-run] ${label}: TTS routing — for each language: ${outputLanguages.map((l) => `${l}→${resolveProviderForLanguage(l, routing)}`).join(", ")}`)
@@ -1819,13 +2014,7 @@ async function runSpeechStep(
         }
 
         completedItems++
-        progress.emit({
-          type: "step-progress",
-          step: "tts",
-          message: `${completedItems}/${totalItems} entries${failedItems.length > 0 ? ` (${failedItems.length} failed)` : ""}`,
-          page: completedItems,
-          totalPages: totalItems,
-        })
+        emitSpeechStepProgress(progress, completedItems, totalItems, failedItems.length)
       }
     )
 
@@ -1841,6 +2030,44 @@ async function runSpeechStep(
         generatedAt: new Date().toISOString(),
       }
       storage.putNodeData("tts", lang, output)
+    }
+
+    const wordHighlightingEnabled = config.speech?.word_highlighting !== false
+    let wordTimestampsByLang = new Map<string, Record<string, WordTimestampEntry>>()
+    let timestampFailedItems: string[] = []
+    if (wordHighlightingEnabled) {
+      const generatedWordTimestamps = await generateSpeechWordTimestamps({
+        label,
+        bookDir,
+        apiKey: options.apiKey,
+        outputLanguages,
+        ttsResultsByLang,
+        textByLanguage,
+        concurrency: effectiveConcurrency,
+        progress,
+        audioCompleted: completedItems,
+        audioTotal: totalItems,
+        audioFailures: failedItems.length,
+      })
+      wordTimestampsByLang = generatedWordTimestamps.entriesByLanguage
+      timestampFailedItems = generatedWordTimestamps.failedItems
+    }
+
+    const timestampsGeneratedAt = new Date().toISOString()
+    for (const lang of outputLanguages) {
+      const entries = wordTimestampsByLang.get(lang) ?? {}
+      storage.putNodeData("tts-timestamps", lang, {
+        entries,
+        generatedAt: timestampsGeneratedAt,
+      } satisfies WordTimestampOutput)
+    }
+
+    if (timestampFailedItems.length > 0) {
+      console.warn(
+        `[stage-run] ${label}: ${timestampFailedItems.length} word timestamp item(s) failed:\n${timestampFailedItems.join("\n")}`,
+      )
+    } else if (!wordHighlightingEnabled) {
+      console.log(`[stage-run] ${label}: word-level highlighting disabled; skipping timestamp generation`)
     }
 
     if (geminiFailedItems.length > 0) {

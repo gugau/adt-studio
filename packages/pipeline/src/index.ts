@@ -118,6 +118,9 @@ export {
   buildGlossaryConfig,
   stripHtml,
   collectPageTexts,
+  getGlossaryItemTextId,
+  isManualGlossaryItem,
+  mergeGeneratedGlossaryWithManualItems,
   type GlossaryConfig,
   type GenerateGlossaryOptions,
 } from "./glossary.js"

@@ -133,3 +133,62 @@ describe("GET /books/:label/glossary", () => {
     expect(res.status).toBe(400)
   })
 })
+
+describe("PUT /books/:label/glossary", () => {
+  it("stores manual glossary items and rebuilds text catalog", async () => {
+    createTestBook("save-glossary")
+    const app = createGlossaryRoutes(tmpDir)
+
+    const res = await app.request("/books/save-glossary/glossary", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        items: [
+          {
+            id: "gl_manual_soil",
+            source: "manual",
+            word: "Soil",
+            definition: "The top layer of earth",
+            variations: ["soils"],
+            emojis: ["🪨"],
+          },
+        ],
+        pageCount: 0,
+        generatedAt: "2026-01-01T00:00:00.000Z",
+      }),
+    })
+
+    expect(res.status).toBe(200)
+
+    const glossaryRes = await app.request("/books/save-glossary/glossary")
+    expect(glossaryRes.status).toBe(200)
+    expect(await glossaryRes.json()).toMatchObject({
+      items: [
+        {
+          id: "gl_manual_soil",
+          source: "manual",
+          word: "Soil",
+        },
+      ],
+    })
+
+    const db = openBookDb(path.join(tmpDir, "save-glossary", "save-glossary.db"))
+    try {
+      const rows = db.all(
+        "SELECT data FROM node_data WHERE node = ? AND item_id = ? ORDER BY version DESC LIMIT 1",
+        ["text-catalog", "book"],
+      ) as Array<{ data: string }>
+      expect(rows).toHaveLength(1)
+      expect(JSON.parse(rows[0].data)).toMatchObject({
+        entries: [
+          { id: "gl_manual_soil", text: "Soil" },
+          { id: "gl_manual_soil_def", text: "The top layer of earth" },
+        ],
+      })
+    } finally {
+      db.close()
+    }
+  })
+})

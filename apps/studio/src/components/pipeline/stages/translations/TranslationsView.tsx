@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo, type ChangeEvent } from "react"
 import { Link } from "@tanstack/react-router"
-import { Check, ChevronDown, ChevronRight, ChevronUp, Languages, Loader2, Play, Pause, Plus, RotateCcw, Save, Settings, Trash2, Type, WandSparkles, X } from "lucide-react"
+import { Check, ChevronDown, ChevronRight, ChevronUp, Languages, Loader2, Play, Pause, Plus, RotateCcw, Save, Settings, Trash2, Type, Upload, WandSparkles, X } from "lucide-react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { api, getAudioUrl, BASE_URL } from "@/api/client"
 import type { TextCatalogEntry, VersionEntry, WordTimestamp, WordTimestampEntry } from "@/api/client"
+import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useBook } from "@/hooks/use-books"
 import { useStepHeader } from "../../components/StepViewRouter"
@@ -31,7 +32,7 @@ function isAnswerEntry(id: string): boolean {
   return ANSWER_ID_RE.test(id)
 }
 
-const GLOSSARY_ID_RE = /^gl\d{3}/
+const GLOSSARY_ID_RE = /^gl(?:\d{3}|_manual_)/
 function isGlossaryEntry(id: string): boolean {
   return GLOSSARY_ID_RE.test(id)
 }
@@ -172,6 +173,8 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
   const isSpeechStage = stageSlug === "speech"
   const { t, i18n } = useLingui()
   const { setExtra } = useStepHeader()
+  const { data: bookConfigData } = useBookConfig(bookLabel)
+  const updateConfig = useUpdateBookConfig()
   const { data: activeConfigData } = useActiveConfig(bookLabel)
   const { data: book, isLoading: isBookLoading } = useBook(bookLabel)
   const queryClient = useQueryClient()
@@ -214,6 +217,10 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
 
   const merged = activeConfigData?.merged as Record<string, unknown> | undefined
   const speechConfig = merged?.speech
+  const speechConfigRecord = speechConfig && typeof speechConfig === "object"
+    ? speechConfig as Record<string, unknown>
+    : null
+  const wordHighlightingEnabled = speechConfigRecord?.word_highlighting !== false
   const outputLanguages = Array.from(
     new Set(((merged?.output_languages as string[] | undefined) ?? []).map((code) => normalizeLocale(code)))
   )
@@ -269,6 +276,18 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
     geminiRoutedLanguages.length > 0
   const showRunCard = (!stageDone || isRunning) && !allowGeminiPartialView
 
+  const toggleWordHighlighting = useCallback(() => {
+    const currentConfig = { ...(bookConfigData?.config ?? {}) } as Record<string, unknown>
+    const existingSpeech = currentConfig.speech && typeof currentConfig.speech === "object"
+      ? { ...(currentConfig.speech as Record<string, unknown>) }
+      : {}
+    currentConfig.speech = {
+      ...existingSpeech,
+      word_highlighting: !wordHighlightingEnabled,
+    }
+    updateConfig.mutate({ label: bookLabel, config: currentConfig })
+  }, [bookConfigData?.config, bookLabel, updateConfig, wordHighlightingEnabled])
+
   // Fetch word timestamps for the active language on the speech page
   const { data: timestampData } = useQuery({
     queryKey: ["books", bookLabel, "tts-timestamps", audioLang],
@@ -281,6 +300,7 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
   const [pendingEntries, setPendingEntries] = useState<TextCatalogEntry[] | null>(null)
   const [saving, setSaving] = useState(false)
   const [generateErrorById, setGenerateErrorById] = useState<Record<string, string>>({})
+  const [uploadErrorById, setUploadErrorById] = useState<Record<string, string>>({})
 
   // Get translated entries for selected language
   const translationData = selectedLang ? catalog?.translations?.[selectedLang] : undefined
@@ -419,6 +439,47 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
     [audioLang, currentLanguageUsesGemini, generateAudioMutation]
   )
 
+  const uploadAudioMutation = useMutation({
+    mutationFn: async (variables: { textId: string; language: string; file: File }) =>
+      api.uploadTTSForItem(bookLabel, variables.textId, variables.language, variables.file),
+    onMutate: (variables) => {
+      setUploadErrorById((prev) => {
+        if (!(variables.textId in prev)) return prev
+        const next = { ...prev }
+        delete next[variables.textId]
+        return next
+      })
+      setGenerateErrorById((prev) => {
+        if (!(variables.textId in prev)) return prev
+        const next = { ...prev }
+        delete next[variables.textId]
+        return next
+      })
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "tts"] }),
+        queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "tts-timestamps", audioLang] }),
+        queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "step-status"] }),
+      ])
+    },
+    onError: (error, variables) => {
+      setUploadErrorById((prev) => ({
+        ...prev,
+        [variables.textId]:
+          error instanceof Error ? error.message : String(error),
+      }))
+    },
+  })
+
+  const handleUploadAudio = useCallback(
+    (textId: string, file: File) => {
+      if (!audioLang) return
+      uploadAudioMutation.mutate({ textId, language: audioLang, file })
+    },
+    [audioLang, uploadAudioMutation]
+  )
+
   const transcribeMutation = useMutation({
     mutationFn: async (variables: { textId: string; language: string }) => {
       if (!apiKey) throw new Error("OpenAI API key required for transcription")
@@ -478,6 +539,31 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
           </span>
         ) : totalAudioFiles > 0 && (
           <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{t`${String(totalAudioFiles)} audio`}</span>
+        )}
+        {isSpeechStage && (
+          <button
+            type="button"
+            onClick={toggleWordHighlighting}
+            disabled={updateConfig.isPending}
+            aria-pressed={wordHighlightingEnabled}
+            title={wordHighlightingEnabled
+              ? t`Disable word-level highlighting and use sentence blocks`
+              : t`Enable word-level highlighting with timestamps`}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors",
+              wordHighlightingEnabled
+                ? "bg-white text-pink-700 hover:bg-white/90"
+                : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white",
+              updateConfig.isPending && "cursor-default opacity-70",
+            )}
+          >
+            {updateConfig.isPending ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Type className="h-3 w-3" />
+            )}
+            {t`Word Highlight`}
+          </button>
         )}
         {currentLanguageUsesGemini && missingAudioCount > 0 && (
           <span className="text-[10px] bg-amber-100 text-amber-900 rounded-full px-2 py-0.5">
@@ -545,7 +631,7 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
       </div>
     )
     return () => setExtra(null)
-  }, [catalog, t, displayEntries.length, outputLanguages.length, selectedLang, translationVersion, saving, dirty, bookLabel, isSourceLang, totalAudioFiles, selectedPageId, currentLanguageUsesGemini, generatedAudioCount, missingAudioCount, hasApiKey, isRunning, apiKey, queueRun, stageSlug, isSpeechStage, handleDeleteTTS, audioLang, transcribeAllMutation, isTaskRunning])
+  }, [catalog, t, displayEntries.length, outputLanguages.length, selectedLang, translationVersion, saving, dirty, bookLabel, isSourceLang, totalAudioFiles, selectedPageId, currentLanguageUsesGemini, generatedAudioCount, missingAudioCount, hasApiKey, isRunning, apiKey, queueRun, stageSlug, isSpeechStage, handleDeleteTTS, audioLang, transcribeAllMutation, isTaskRunning, toggleWordHighlighting, updateConfig.isPending, wordHighlightingEnabled])
 
   if (!showRunCard && isLoading) {
     return (
@@ -846,7 +932,13 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
                           generateAudioMutation.variables?.textId === entry.id &&
                           generateAudioMutation.variables?.language === audioLang
                         }
-                        errorMessage={generateErrorById[entry.id]}
+                        onUpload={handleUploadAudio}
+                        isUploading={
+                          uploadAudioMutation.isPending &&
+                          uploadAudioMutation.variables?.textId === entry.id &&
+                          uploadAudioMutation.variables?.language === audioLang
+                        }
+                        errorMessage={uploadErrorById[entry.id] ?? generateErrorById[entry.id]}
                         timestamps={timestampMap[entry.id]}
                         onTranscribe={handleTranscribe}
                         isTranscribing={
@@ -887,7 +979,7 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
                           </div>
                           {isSpeechStage && !isAnswer && baseAudio && editingLanguage && (
                             <WaveformPlayer
-                              key={`base-${editingLanguage}`}
+                              key={`base-${editingLanguage}:${baseAudio.fileName}`}
                               audioUrl={getAudioUrl(bookLabel, editingLanguage, baseAudio.fileName)}
                             />
                           )}
@@ -929,7 +1021,13 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
                               generateAudioMutation.variables?.textId === entry.id &&
                               generateAudioMutation.variables?.language === audioLang
                             }
-                            errorMessage={generateErrorById[entry.id]}
+                            onUpload={handleUploadAudio}
+                            isUploading={
+                              uploadAudioMutation.isPending &&
+                              uploadAudioMutation.variables?.textId === entry.id &&
+                              uploadAudioMutation.variables?.language === audioLang
+                            }
+                            errorMessage={uploadErrorById[entry.id] ?? generateErrorById[entry.id]}
                             timestamps={timestampMap[entry.id]}
                             onTranscribe={handleTranscribe}
                             isTranscribing={
@@ -1375,6 +1473,8 @@ function AudioAction({
   hasGeminiKey,
   onGenerate,
   isGenerating,
+  onUpload,
+  isUploading,
   errorMessage,
   timestamps,
   onTranscribe,
@@ -1394,6 +1494,8 @@ function AudioAction({
   hasGeminiKey: boolean
   onGenerate: (textId: string) => void
   isGenerating: boolean
+  onUpload?: (textId: string, file: File) => void
+  isUploading?: boolean
   errorMessage?: string
   timestamps?: WordTimestampEntry
   onTranscribe?: (textId: string) => void
@@ -1406,12 +1508,53 @@ function AudioAction({
   timestampColumns?: number
 }) {
   const { t } = useLingui()
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.currentTarget.value = ""
+    if (!file || !onUpload) return
+    onUpload(textId, file)
+  }
+
+  const uploadButton = onUpload && audioLang ? (
+    <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".mp3,.wav,.ogg,audio/mpeg,audio/wav,audio/ogg"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+      <Button
+        type="button"
+        variant={audio ? "ghost" : "outline"}
+        size="sm"
+        className="h-7 px-2 text-[10px]"
+        disabled={isUploading}
+        onClick={() => fileInputRef.current?.click()}
+        title={audio ? t`Replace this audio file` : t`Upload your own audio file`}
+      >
+        {isUploading ? (
+          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+        ) : (
+          <Upload className="mr-1 h-3 w-3" />
+        )}
+        {audio ? t`Replace` : t`Upload`}
+      </Button>
+    </>
+  ) : null
 
   if (audio && audioLang) {
     return (
       <div>
+        {uploadButton && (
+          <div className="mb-1 flex justify-end">
+            {uploadButton}
+          </div>
+        )}
         <WaveformPlayer
-          key={audioLang}
+          key={`${audioLang}:${audio.fileName}`}
           audioUrl={getAudioUrl(bookLabel, audioLang, audio.fileName)}
           onTimeUpdate={onTimeUpdate}
           onPlayingChange={onPlayingChange}
@@ -1439,36 +1582,46 @@ function AudioAction({
             {t`Timestamps`}
           </button>
         )}
+        {errorMessage && (
+          <p className="mt-1 max-w-52 text-[10px] leading-tight text-red-500 text-right ml-auto">
+            {errorMessage}
+          </p>
+        )}
       </div>
     )
   }
 
-  if (!canGenerate) {
+  if (!canGenerate && !uploadButton) {
     return null
   }
 
   return (
     <div className="flex flex-col items-end gap-1 shrink-0">
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="h-7 px-2 text-[10px]"
-        disabled={isGenerating || !hasGeminiKey}
-        onClick={() => onGenerate(textId)}
-        title={
-          hasGeminiKey
-            ? t`Generate missing Gemini audio`
-            : t`Set a Gemini API key to generate audio`
-        }
-      >
-        {isGenerating ? (
-          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-        ) : (
-          <WandSparkles className="mr-1 h-3 w-3" />
+      <div className="flex flex-wrap items-center justify-end gap-1.5">
+        {canGenerate && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-[10px]"
+            disabled={isGenerating || !hasGeminiKey}
+            onClick={() => onGenerate(textId)}
+            title={
+              hasGeminiKey
+                ? t`Generate missing Gemini audio`
+                : t`Set a Gemini API key to generate audio`
+            }
+          >
+            {isGenerating ? (
+              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+            ) : (
+              <WandSparkles className="mr-1 h-3 w-3" />
+            )}
+            {t`Generate`}
+          </Button>
         )}
-        {t`Generate`}
-      </Button>
+        {uploadButton}
+      </div>
       {errorMessage && (
         <p className="max-w-44 text-[10px] leading-tight text-red-500 text-right">
           {errorMessage}

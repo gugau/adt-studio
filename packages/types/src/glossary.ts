@@ -1,6 +1,8 @@
 import { z } from "zod"
 
 export const GlossaryItem = z.object({
+  id: z.string().optional(),
+  source: z.enum(["ai", "manual"]).optional(),
   word: z.string(),
   definition: z.string(),
   variations: z.array(z.string()),

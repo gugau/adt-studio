@@ -233,6 +233,176 @@ describe("ADT preview routes", () => {
     expect(pages.at(-1)).toEqual({ section_id: "qz001", href: "qz001.html" })
   })
 
+  it("serves runtime timecodes and enables highlight when word timestamps exist", async () => {
+    const storage = createBookStorage(label, tmpDir)
+    try {
+      storage.putNodeData("tts", "en", {
+        entries: [
+          {
+            textId: "pg001_t001",
+            language: "en",
+            fileName: "pg001_t001.mp3",
+            voice: "alloy",
+            model: "gpt-4o-mini-tts",
+            cached: false,
+          },
+        ],
+        generatedAt: "2026-01-01T00:00:00.000Z",
+      })
+      storage.putNodeData("tts-timestamps", "en", {
+        entries: {
+          pg001_t001: {
+            textId: "pg001_t001",
+            language: "en",
+            duration: 0.9,
+            words: [
+              { word: "Hello", start: 0, end: 0.45 },
+              { word: "world", start: 0.45, end: 0.9 },
+            ],
+          },
+        },
+        generatedAt: "2026-01-01T00:00:00.000Z",
+      })
+    } finally {
+      storage.close()
+    }
+
+    const app = createAdtPreviewRoutes(tmpDir, webAssetsDir, path.resolve(process.cwd(), "config.yaml"))
+
+    const timecodeRes = await app.request(
+      `/books/${label}/adt-preview/content/i18n/en/timecode/timecode_output.json`,
+    )
+    expect(timecodeRes.status).toBe(200)
+    expect(await timecodeRes.json()).toEqual({
+      pg001_t001: {
+        timecodes: [
+          null,
+          {
+            word_timestamps: [
+              { text: "Hello", start: 0, end: 0.45 },
+              { text: "world", start: 0.45, end: 0.9 },
+            ],
+          },
+        ],
+      },
+    })
+
+    const configRes = await app.request(`/books/${label}/adt-preview/assets/config.json`)
+    expect(configRes.status).toBe(200)
+    const config = await configRes.json() as { bundleVersion: string; features: { highlight: boolean } }
+    expect(config.features.highlight).toBe(true)
+    expect(config.bundleVersion).not.toBe("1")
+  })
+
+  it("enables highlight fallback when TTS exists without stored word timestamps", async () => {
+    const storage = createBookStorage(label, tmpDir)
+    try {
+      storage.putNodeData("tts", "en", {
+        entries: [
+          {
+            textId: "pg001_t001",
+            language: "en",
+            fileName: "pg001_t001.mp3",
+            voice: "alloy",
+            model: "gpt-4o-mini-tts",
+            cached: false,
+          },
+        ],
+        generatedAt: "2026-01-01T00:00:00.000Z",
+      })
+    } finally {
+      storage.close()
+    }
+
+    const app = createAdtPreviewRoutes(tmpDir, webAssetsDir, path.resolve(process.cwd(), "config.yaml"))
+
+    const timecodeRes = await app.request(
+      `/books/${label}/adt-preview/content/i18n/en/timecode/timecode_output.json`,
+    )
+    expect(timecodeRes.status).toBe(200)
+    expect(await timecodeRes.json()).toEqual({})
+
+    const configRes = await app.request(`/books/${label}/adt-preview/assets/config.json`)
+    expect(configRes.status).toBe(200)
+    const config = await configRes.json() as { features: { readAloud: boolean; highlight: boolean } }
+    expect(config.features.readAloud).toBe(true)
+    expect(config.features.highlight).toBe(true)
+  })
+
+  it("disables word-level highlight when speech.word_highlighting is false", async () => {
+    const storage = createBookStorage(label, tmpDir)
+    try {
+      storage.putNodeData("tts", "en", {
+        entries: [
+          {
+            textId: "pg001_t001",
+            language: "en",
+            fileName: "pg001_t001.mp3",
+            voice: "alloy",
+            model: "gpt-4o-mini-tts",
+            cached: false,
+          },
+        ],
+        generatedAt: "2026-01-01T00:00:00.000Z",
+      })
+      storage.putNodeData("tts-timestamps", "en", {
+        entries: {
+          pg001_t001: {
+            textId: "pg001_t001",
+            language: "en",
+            duration: 0.9,
+            words: [
+              { word: "Hello", start: 0, end: 0.45 },
+              { word: "world", start: 0.45, end: 0.9 },
+            ],
+          },
+        },
+        generatedAt: "2026-01-01T00:00:00.000Z",
+      })
+    } finally {
+      storage.close()
+    }
+
+    fs.writeFileSync(
+      path.join(tmpDir, label, "config.yaml"),
+      "speech:\n  word_highlighting: false\n",
+    )
+
+    const app = createAdtPreviewRoutes(tmpDir, webAssetsDir, path.resolve(process.cwd(), "config.yaml"))
+
+    const configRes = await app.request(`/books/${label}/adt-preview/assets/config.json`)
+    expect(configRes.status).toBe(200)
+    const config = await configRes.json() as { features: { readAloud: boolean; highlight: boolean } }
+    expect(config.features.readAloud).toBe(true)
+    expect(config.features.highlight).toBe(false)
+
+    const timecodeRes = await app.request(
+      `/books/${label}/adt-preview/content/i18n/en/timecode/timecode_output.json`,
+    )
+    expect(timecodeRes.status).toBe(200)
+    expect(await timecodeRes.json()).toEqual({})
+  })
+
+  it("cache-busts embedded preview assets with the latest bundle source version", async () => {
+    const baseJsPath = path.join(webAssetsDir, "base.js")
+    fs.writeFileSync(baseJsPath, "export const previewVersion = true;\n")
+    const expectedVersion = new Date("2030-01-01T00:00:00.000Z")
+    fs.utimesSync(baseJsPath, expectedVersion, expectedVersion)
+
+    const app = createAdtPreviewRoutes(tmpDir, webAssetsDir, path.resolve(process.cwd(), "config.yaml"))
+
+    const configRes = await app.request(`/books/${label}/adt-preview/assets/config.json`)
+    expect(configRes.status).toBe(200)
+    const config = await configRes.json() as { bundleVersion: string }
+
+    const htmlRes = await app.request(`/books/${label}/adt-preview/${label}_p1_sec001.html?embed=1`)
+    expect(htmlRes.status).toBe(200)
+    const html = await htmlRes.text()
+
+    expect(config.bundleVersion).toBe(String(Math.trunc(expectedVersion.getTime())))
+    expect(html).toContain(`./assets/base.bundle.min.js?v=${config.bundleVersion}`)
+  })
+
   it("orders pages.json sections by sectionIndex when rendering rows are out of order", async () => {
     const storage = createBookStorage(label, tmpDir)
     try {

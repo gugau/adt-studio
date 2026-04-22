@@ -223,6 +223,8 @@ export interface PageDetail {
 // --- Glossary types ---
 
 export interface GlossaryItem {
+  id?: string
+  source?: "ai" | "manual"
   word: string
   definition: string
   variations: string[]
@@ -886,6 +888,22 @@ export const api = {
       },
       body: JSON.stringify({ textId, language }),
     }),
+
+  uploadTTSForItem: (
+    label: string,
+    textId: string,
+    language: string,
+    file: File,
+  ) => {
+    const formData = new FormData()
+    formData.append("audio", file)
+    formData.append("textId", textId)
+    formData.append("language", language)
+    return request<GenerateSingleTTSResponse>(`/books/${label}/tts/upload-one`, {
+      method: "POST",
+      body: formData,
+    })
+  },
 
   getWordTimestamps: (label: string, language: string) =>
     request<WordTimestampResponse>(`/books/${label}/tts/timestamps/${language}`),

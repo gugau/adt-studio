@@ -68,6 +68,7 @@ export async function prepareExport(
       title,
       webAssetsDir,
       applyBodyBackground: config.apply_body_background,
+      speechConfig: config.speech,
     }
 
     await packageAdtWeb(storage, opts)

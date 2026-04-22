@@ -883,6 +883,7 @@ export async function runFullPipeline(
         title: bookTitle,
         webAssetsDir: options.webAssetsDir,
         applyBodyBackground: config.apply_body_background,
+        speechConfig: config.speech,
       }, progressOnly(p))
     })
 

@@ -15,6 +15,7 @@ const {
   generateSpeechFileMock,
   renderPageMock,
   sectionPageMock,
+  transcribeWithWhisperMock,
 } = vi.hoisted(() => {
   const capturedCaptionInputs: unknown[] = []
   return {
@@ -26,6 +27,7 @@ const {
     generateSpeechFileMock: vi.fn(),
     renderPageMock: vi.fn(async () => ({ sections: [] })),
     sectionPageMock: vi.fn(async () => ({ reasoning: "", sections: [] })),
+    transcribeWithWhisperMock: vi.fn(),
   }
 })
 
@@ -39,6 +41,14 @@ vi.mock("@adt/pipeline", async () => {
     generateSpeechFile: generateSpeechFileMock,
     renderPage: renderPageMock,
     sectionPage: sectionPageMock,
+  }
+})
+
+vi.mock("@adt/llm", async () => {
+  const actual = await vi.importActual<typeof import("@adt/llm")>("@adt/llm")
+  return {
+    ...actual,
+    transcribeWithWhisper: transcribeWithWhisperMock,
   }
 })
 
@@ -218,6 +228,15 @@ describe("createStageRunner captions step", () => {
     captionPageImagesMock.mockClear()
     generateSpeechFileMock.mockReset()
     generateSpeechFileMock.mockResolvedValue(undefined)
+    transcribeWithWhisperMock.mockReset()
+    transcribeWithWhisperMock.mockResolvedValue({
+      text: "Hello world",
+      duration: 1,
+      words: [
+        { word: "Hello", start: 0, end: 0.45 },
+        { word: "world", start: 0.45, end: 0.9 },
+      ],
+    })
     renderPageMock.mockClear()
     sectionPageMock.mockClear()
   })
@@ -357,6 +376,15 @@ describe("createStageRunner speech Gemini partial failures", () => {
   beforeEach(() => {
     generateSpeechFileMock.mockReset()
     generateSpeechFileMock.mockResolvedValue(undefined)
+    transcribeWithWhisperMock.mockReset()
+    transcribeWithWhisperMock.mockResolvedValue({
+      text: "Hello world",
+      duration: 1,
+      words: [
+        { word: "Hello", start: 0, end: 0.45 },
+        { word: "world", start: 0.45, end: 0.9 },
+      ],
+    })
   })
 
   afterEach(() => {
@@ -497,6 +525,168 @@ speech:
     try {
       const ttsStep = storage.getStepRuns().find((step) => step.step === "tts")
       expect(ttsStep?.status).toBe("done")
+    } finally {
+      storage.close()
+    }
+  })
+
+  it("stores word timestamps for generated speech files", async () => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "stage-runner-tts-"))
+    const booksDir = path.join(tmpDir, "books")
+    const promptsDir = path.join(tmpDir, "prompts")
+    const configPath = path.join(tmpDir, "config.yaml")
+    fs.mkdirSync(promptsDir, { recursive: true })
+    writeBaseConfig(configPath)
+    seedTextAndSpeechBook(booksDir, "speech-word-timestamps")
+
+    generateSpeechFileMock.mockImplementation(async (options: {
+      bookDir: string
+      textId: string
+      language: string
+      voice: string
+      model: string
+      provider?: string
+    }) => {
+      const audioDir = path.join(options.bookDir, "audio", options.language)
+      fs.mkdirSync(audioDir, { recursive: true })
+      const fileName = `${options.textId}.mp3`
+      fs.writeFileSync(path.join(audioDir, fileName), Buffer.from("fake-audio"))
+      return {
+        textId: options.textId,
+        language: options.language,
+        fileName,
+        voice: options.voice,
+        model: options.model,
+        cached: false,
+        provider: options.provider ?? "openai",
+      }
+    })
+
+    const events: ProgressEvent[] = []
+    const runner = createStageRunner()
+    await runner.run(
+      "speech-word-timestamps",
+      {
+        booksDir,
+        apiKey: "sk-test",
+        promptsDir,
+        configPath,
+        fromStage: "translate",
+        toStage: "speech",
+      },
+      { emit: (event) => events.push(event) }
+    )
+
+    expect(
+      events.some(
+        (event) => event.type === "step-complete" && event.step === "tts"
+      )
+    ).toBe(true)
+    expect(transcribeWithWhisperMock).toHaveBeenCalledTimes(1)
+    expect(transcribeWithWhisperMock).toHaveBeenCalledWith(
+      expect.any(Buffer),
+      "pg001_t001.mp3",
+      "sk-test",
+      "en",
+      "Hello world",
+    )
+
+    const storage = createBookStorage("speech-word-timestamps", booksDir)
+    try {
+      const row = storage.getLatestNodeData("tts-timestamps", "en")
+      expect(row).not.toBeNull()
+      expect(
+        (row?.data as {
+          entries: Record<string, { words: Array<{ word: string; start: number; end: number }> }>
+        }).entries.pg001_t001.words
+      ).toEqual([
+        { word: "Hello", start: 0, end: 0.45 },
+        { word: "world", start: 0.45, end: 0.9 },
+      ])
+    } finally {
+      storage.close()
+    }
+  })
+
+  it("skips word timestamp generation when speech.word_highlighting is false", async () => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "stage-runner-tts-"))
+    const booksDir = path.join(tmpDir, "books")
+    const promptsDir = path.join(tmpDir, "prompts")
+    const configPath = path.join(tmpDir, "config.yaml")
+    fs.mkdirSync(promptsDir, { recursive: true })
+    writeBaseConfig(configPath)
+    seedTextAndSpeechBook(booksDir, "speech-word-highlight-disabled")
+    fs.writeFileSync(
+      path.join(booksDir, "speech-word-highlight-disabled", "config.yaml"),
+      "speech:\n  word_highlighting: false\n",
+    )
+    const seededStorage = createBookStorage("speech-word-highlight-disabled", booksDir)
+    try {
+      seededStorage.putNodeData("tts-timestamps", "en", {
+        entries: {
+          pg001_t001: {
+            textId: "pg001_t001",
+            language: "en",
+            duration: 0.9,
+            words: [
+              { word: "stale", start: 0, end: 0.9 },
+            ],
+          },
+        },
+        generatedAt: "2026-01-01T00:00:00.000Z",
+      })
+    } finally {
+      seededStorage.close()
+    }
+
+    generateSpeechFileMock.mockImplementation(async (options: {
+      bookDir: string
+      textId: string
+      language: string
+      voice: string
+      model: string
+      provider?: string
+    }) => {
+      const audioDir = path.join(options.bookDir, "audio", options.language)
+      fs.mkdirSync(audioDir, { recursive: true })
+      const fileName = `${options.textId}.mp3`
+      fs.writeFileSync(path.join(audioDir, fileName), Buffer.from("fake-audio"))
+      return {
+        textId: options.textId,
+        language: options.language,
+        fileName,
+        voice: options.voice,
+        model: options.model,
+        cached: false,
+        provider: options.provider ?? "openai",
+      }
+    })
+
+    const runner = createStageRunner()
+    await runner.run(
+      "speech-word-highlight-disabled",
+      {
+        booksDir,
+        apiKey: "sk-test",
+        promptsDir,
+        configPath,
+        fromStage: "translate",
+        toStage: "speech",
+      },
+      { emit: () => {} }
+    )
+
+    expect(transcribeWithWhisperMock).not.toHaveBeenCalled()
+
+    const storage = createBookStorage("speech-word-highlight-disabled", booksDir)
+    try {
+      const row = storage.getLatestNodeData("tts-timestamps", "en")
+      expect(row).not.toBeNull()
+      expect(
+        (row?.data as {
+          entries: Record<string, { words: Array<{ word: string; start: number; end: number }> }>
+        }).entries
+      ).toEqual({})
     } finally {
       storage.close()
     }

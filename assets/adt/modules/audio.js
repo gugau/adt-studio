@@ -19,6 +19,7 @@ import { toggleButtonColor, toggleButtonState } from './utils.js';
 import { togglePlayBarSettings, toggleSignLanguageMode } from './interface.js';
 import { trackToggleEvent } from './analytics.js';
 import { isFeatureEnabled } from '../base.js';
+import { shouldUseBlockPlaybackHighlight } from './tts_highlighter_utils.js';
 
 /**
  * Maps speed class names to playback rates.
@@ -35,6 +36,13 @@ const SPEED_MAPPING = {
 let hasUserInteracted = true;
 let activityAudio = null;
 let isProcessingAudio = false;
+
+const useBlockPlaybackHighlight = (element) =>
+    shouldUseBlockPlaybackHighlight(
+        element,
+        isFeatureEnabled('highlight'),
+        state.wordHighlightMode,
+    );
 
 /**
  * Initializes activity audio elements for sound effects.
@@ -227,8 +235,13 @@ export const playCurrentAudio = async () => {
     }
 
     const { element, audioSrc } = audioElements[currentIndex];
+    const shouldUseBlockHighlight = useBlockPlaybackHighlight(element);
     try {
-        highlightElement(element);
+        if (shouldUseBlockHighlight) {
+            highlightElement(element);
+        } else {
+            unhighlightElement(element);
+        }
         await playAudioWithPromise(audioSrc, audioSpeed);
         unhighlightElement(element);
         stopAudio();
@@ -256,6 +269,7 @@ const processAudioQueue = async () => {
     unhighlightAllElements();
 
     const { element, audioSrc } = audioElements[currentIndex];
+    const shouldUseBlockHighlight = useBlockPlaybackHighlight(element);
 
     // Check if current element is an image and should be skipped
     const isImage = element.tagName.toLowerCase() === 'img';
@@ -278,7 +292,11 @@ const processAudioQueue = async () => {
     }
 
     try {
-        highlightElement(element);
+        if (shouldUseBlockHighlight) {
+            highlightElement(element);
+        } else {
+            unhighlightElement(element);
+        }
         await playAudioWithPromise(audioSrc, audioSpeed);
         unhighlightElement(element);
 
@@ -488,6 +506,39 @@ export const toggleReadAloud = ({ stopCalls = false } = {}) => {
     toggleButtonState("toggle-read-aloud", newState);
     if (!stopCalls && state.signLanguageMode) {
         toggleSignLanguageMode({ stopCalls: true });
+    }
+};
+
+/**
+ * Toggles reader-controlled word highlighting for read aloud playback.
+ */
+export const toggleWordHighlightMode = () => {
+    if (!isFeatureEnabled("highlight")) {
+        return;
+    }
+
+    const newState = !state.wordHighlightMode;
+    setState("wordHighlightMode", newState);
+    setCookie("wordHighlightMode", newState.toString(), 7);
+    toggleButtonState("toggle-highlight", newState);
+
+    trackToggleEvent("WordHighlightMode", newState);
+
+    if (!state.currentAudio) {
+        return;
+    }
+
+    unhighlightAllElements();
+
+    const currentElement = state.audioElements?.[state.currentIndex]?.element;
+    if (!currentElement) {
+        return;
+    }
+
+    if (shouldUseBlockPlaybackHighlight(currentElement, isFeatureEnabled("highlight"), newState)) {
+        highlightElement(currentElement);
+    } else {
+        unhighlightElement(currentElement);
     }
 };
 

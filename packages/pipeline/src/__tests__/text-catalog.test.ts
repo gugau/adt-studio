@@ -144,6 +144,34 @@ describe("buildTextCatalog", () => {
     ])
   })
 
+  it("preserves explicit glossary ids for manual entries", async () => {
+    const storage = createMockStorage({
+      glossary: {
+        book: {
+          items: [
+            {
+              id: "gl_manual_soil",
+              source: "manual",
+              word: "Soil",
+              definition: "The top layer of earth",
+              variations: ["soils"],
+              emojis: ["🪨"],
+            },
+          ],
+          pageCount: 1,
+          generatedAt: "2024-01-01T00:00:00.000Z",
+        },
+      },
+    })
+
+    const result = await buildTextCatalog(storage, [])
+
+    expect(result.entries).toEqual([
+      { id: "gl_manual_soil", text: "Soil" },
+      { id: "gl_manual_soil_def", text: "The top layer of earth" },
+    ])
+  })
+
   it("builds quiz entries with qz prefix", async () => {
     const storage = createMockStorage({
       "quiz-generation": {

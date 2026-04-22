@@ -12,12 +12,19 @@ export const SpeechConfig = z.object({
   voice: z.string().optional(),
   voices_config: z.string().optional(),
   instructions_config: z.string().optional(),
+  word_highlighting: z.boolean().optional(),
   default_provider: z.string().optional(),
   providers: z.record(z.string(), TTSProviderConfig).optional(),
   bit_rate: z.string().optional(),
   sample_rate: z.number().optional(),
 })
 export type SpeechConfig = z.infer<typeof SpeechConfig>
+
+export function isSpeechWordHighlightingEnabled(
+  config?: Pick<SpeechConfig, "word_highlighting"> | null,
+): boolean {
+  return config?.word_highlighting !== false
+}
 
 export const SpeechFileEntry = z.object({
   textId: z.string(),

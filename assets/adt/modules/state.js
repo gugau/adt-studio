@@ -28,6 +28,7 @@ const initialState = {
     describeImagesMode: false,
     syllablesMode: false,
     glossaryMode: false,
+    wordHighlightMode: true,
     audioSpeed: 1,
     selectedOption: null,
     selectedWord: null,
@@ -111,6 +112,7 @@ export const initializeStateFromCookies = () => {
         autoplayMode: false,
         describeImagesMode: false,
         syllablesMode: false,
+        wordHighlightMode: true,
         audioSpeed: 1,
         currentLanguage: document.documentElement.lang || 'en'
     };
