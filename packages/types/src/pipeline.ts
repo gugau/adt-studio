@@ -10,9 +10,8 @@ export const StepName = z.enum([
   "image-segmentation",
   "image-cropping",
   "image-meaningfulness",
-  "text-classification",
-  "translation",
   "page-sectioning",
+  "translation",
   "web-rendering",
   "quiz-generation",
   "image-captioning",
@@ -30,6 +29,7 @@ export type StepName = z.infer<typeof StepName>
 
 export const StageName = z.enum([
   "extract",
+  "sectioning",
   "storyboard",
   "quizzes",
   "captions",
@@ -68,22 +68,28 @@ export const PIPELINE: StageDef[] = [
     steps: [
       { name: "extract", label: "PDF Extraction", pageProgress: true },
       { name: "metadata", label: "Metadata", dependsOn: ["extract"] },
+      { name: "book-summary", label: "Book Summary", dependsOn: ["extract"] },
       { name: "image-filtering", label: "Image Filtering", dependsOn: ["extract"], pageProgress: true },
-      { name: "image-segmentation", label: "Image Segmentation", dependsOn: ["image-filtering"] },
+      { name: "image-segmentation", label: "Image Segmentation", dependsOn: ["image-filtering"], pageProgress: true },
+      { name: "image-meaningfulness", label: "Image Meaningfulness", dependsOn: ["image-segmentation"], pageProgress: true },
       { name: "image-cropping", label: "Image Cropping", dependsOn: ["image-segmentation"], pageProgress: true },
-      { name: "image-meaningfulness", label: "Image Meaningfulness", dependsOn: ["image-segmentation"] },
-      { name: "text-classification", label: "Text Classification", dependsOn: ["extract"], pageProgress: true },
-      { name: "book-summary", label: "Book Summary", dependsOn: ["text-classification"] },
-      { name: "translation", label: "Translation", dependsOn: ["text-classification"], pageProgress: true },
+    ],
+  },
+  {
+    name: "sectioning",
+    label: "Sectioning",
+    dependsOn: ["extract"],
+    steps: [
+      { name: "page-sectioning", label: "Page Structuring", pageProgress: true },
+      { name: "translation", label: "Translation", dependsOn: ["page-sectioning"], pageProgress: true },
     ],
   },
   {
     name: "storyboard",
     label: "Storyboard",
-    dependsOn: ["extract"],
+    dependsOn: ["sectioning"],
     steps: [
-      { name: "page-sectioning", label: "Page Sectioning", pageProgress: true },
-      { name: "web-rendering", label: "Web Rendering", dependsOn: ["page-sectioning"], pageProgress: true },
+      { name: "web-rendering", label: "Web Rendering", pageProgress: true },
     ],
   },
   {

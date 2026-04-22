@@ -9,7 +9,10 @@ import type {
   TextCatalogOutput,
   PageSectioningOutput as PageSectioningOutputType,
 } from "@adt/types"
-import { WebRenderingOutput as WebRenderingOutputSchema, PageSectioningOutput } from "@adt/types"
+import {
+  WebRenderingOutput as WebRenderingOutputSchema,
+  PageSectioningOutput,
+} from "@adt/types"
 import type { Storage, PageData } from "@adt/storage"
 
 /** Zero-padded 3-digit number */
@@ -185,11 +188,15 @@ export async function buildTextCatalog(
     if (!parsed.success) continue
 
     // Determine which sections are pruned
-    const sectioningRow = storage.getLatestNodeData("page-sectioning", page.pageId)
-    const sectioningParsed = sectioningRow ? PageSectioningOutput.safeParse(sectioningRow.data) : null
+    const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+    const structuringParsed = structuringRow
+      ? PageSectioningOutput.safeParse(structuringRow.data)
+      : null
     const prunedIndices = new Set<number>()
-    if (sectioningParsed?.success) {
-      sectioningParsed.data.sections.forEach((s, i) => { if (s.isPruned) prunedIndices.add(i) })
+    if (structuringParsed?.success) {
+      structuringParsed.data.sections.forEach((s: { isPruned: boolean }, i: number) => {
+        if (s.isPruned) prunedIndices.add(i)
+      })
     }
 
     const captionMap = loadCaptionMap(storage, page.pageId)
@@ -198,7 +205,7 @@ export async function buildTextCatalog(
       parsed.data,
       captionMap,
       prunedIndices,
-      sectioningParsed?.success ? sectioningParsed.data : undefined
+      structuringParsed?.success ? structuringParsed.data : undefined
     ))
 
     // Yield to event loop so the server stays responsive during large books

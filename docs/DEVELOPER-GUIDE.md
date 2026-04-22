@@ -233,14 +233,14 @@ Key sections:
 
 | Section | Purpose |
 |---------|---------|
-| `text_types` | Named categories for extracted text (e.g., `section_heading`, `math`, `activity_option`) |
-| `text_group_types` | Named groupings of text entries (e.g., `paragraph`, `list`, `stanza`) |
+| `structure_types` | Named container kinds for the content tree (e.g., `paragraph`, `list`, `activity`, `image_group`) |
+| `role_types` | Named leaf kinds for text leaves (e.g., `heading`, `text`, `caption`, `page_number`) |
 | `section_types` | Named categories for page sections (e.g., `text_only`, `activity_multiple_choice`) |
-| `metadata`, `text_classification`, etc. | Per-step LLM model and prompt override |
+| `metadata`, `page_sectioning`, etc. | Per-step LLM model and prompt override |
 | `render_strategies` | Named strategies for web rendering (template-based or LLM-based) |
 | `image_filters` | Min/max pixel dimensions; meaningfulness and cropping toggles |
 | `concurrency` | Max parallel LLM calls |
-| `pruned_text_types` | Text types excluded from processing (e.g., headers, footers, page numbers) |
+| `pruned_role_types` | Leaf role types excluded from rendering (e.g., headers, footers, page numbers) |
 | `pruned_section_types` | Section types excluded from rendering (e.g., back cover, credits) |
 
 ### Per-Book Config (`books/{label}/config.yaml`)
@@ -251,7 +251,7 @@ Example — override the LLM model for a single book:
 ```yaml
 metadata:
   model: openai:gpt-4o
-text_classification:
+page_sectioning:
   model: openai:gpt-4o
 ```
 

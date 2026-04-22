@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import type { AppConfig, TextClassificationOutput } from "@adt/types"
+import type { AppConfig, PageSectioningOutput } from "@adt/types"
 import type {
   GenerateObjectOptions,
   GenerateObjectResult,
@@ -10,20 +10,40 @@ import {
   getBaseLanguage,
   shouldTranslate,
   buildTranslationConfig,
-  translatePageText,
+  translatePageTree,
 } from "../translation.js"
 
-const sampleClassification: TextClassificationOutput = {
+const sampleStructuring: PageSectioningOutput = {
   reasoning: "Detected grouped text.",
-  groups: [
+  sections: [
     {
-      groupId: "pg001_gp001",
-      groupType: "paragraph",
-      texts: [
-        { textType: "section_text", text: "Hello world", isPruned: false },
-        { textType: "instruction_text", text: "Read this aloud.", isPruned: false },
-      ],
+      sectionId: "pg001_sec001",
+      sectionType: "text_only",
+      backgroundColor: "#ffffff",
+      textColor: "#000000",
+      pageNumber: 1,
       isPruned: false,
+      nodes: [
+        {
+          nodeId: "pg001_n001",
+          isPruned: false,
+          structure: "paragraph",
+          children: [
+            {
+              nodeId: "pg001_n002",
+              isPruned: false,
+              role: "text",
+              text: "Hello world",
+            },
+            {
+              nodeId: "pg001_n003",
+              isPruned: false,
+              role: "text",
+              text: "Read this aloud.",
+            },
+          ],
+        },
+      ],
     },
   ],
 }
@@ -68,10 +88,9 @@ describe("translation", () => {
 
   it("builds translation config from app config", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
       editing_language: "fr",
-      text_classification: { model: "openai:gpt-4.1-mini" },
       translation: { prompt: "custom_translation", model: "openai:gpt-5.4" },
     }
 
@@ -87,8 +106,8 @@ describe("translation", () => {
 
   it("builds translation config for Urdu locales", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
       editing_language: "ur_pk",
     }
 
@@ -104,18 +123,18 @@ describe("translation", () => {
 
   it("returns null translation config when source and target base languages match", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
       editing_language: "en-GB",
     }
 
     expect(buildTranslationConfig(appConfig, "en_US")).toBeNull()
   })
 
-  it("translates all text entries and preserves structure", async () => {
+  it("translates all leaf text and preserves tree structure", async () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
       editing_language: "fr",
     }
     const config = buildTranslationConfig(appConfig, "en")
@@ -129,30 +148,41 @@ describe("translation", () => {
       }
     )
 
-    const translated = await translatePageText(
+    const translated = await translatePageTree(
       "pg001",
-      sampleClassification,
+      sampleStructuring,
       config!,
       llmModel
     )
 
     expect(capturedOptions?.prompt).toBe("translation")
-    expect((capturedOptions?.context?.texts as Array<{ text: string }>).map((t) => t.text)).toEqual([
-      "Hello world",
-      "Read this aloud.",
-    ])
-    expect(translated.groups[0].texts[0].text).toBe("Bonjour le monde")
-    expect(translated.groups[0].texts[1].text).toBe("Lisez ceci a voix haute.")
-    expect(translated.groups[0].groupId).toBe("pg001_gp001")
-    expect(translated.groups[0].texts[0].isPruned).toBe(false)
+    expect(
+      (capturedOptions?.context?.texts as Array<{ text: string }>).map((t) => t.text)
+    ).toEqual(["Hello world", "Read this aloud."])
+
+    // Tree shape preserved: section and container node IDs unchanged.
+    expect(translated.sections).toHaveLength(1)
+    expect(translated.sections[0].sectionId).toBe("pg001_sec001")
+    expect(translated.sections[0].nodes[0].nodeId).toBe("pg001_n001")
+    expect(translated.sections[0].nodes[0].structure).toBe("paragraph")
+
+    // Leaf texts replaced in reading order.
+    const children = translated.sections[0].nodes[0].children!
+    expect(children[0].text).toBe("Bonjour le monde")
+    expect(children[0].role).toBe("text")
+    expect(children[0].isPruned).toBe(false)
+    expect(children[1].text).toBe("Lisez ceci a voix haute.")
+
     expect(translated.reasoning).toContain("Translated from en to fr.")
-    expect(translated.reasoning).toContain("Original reasoning: Detected grouped text.")
+    expect(translated.reasoning).toContain(
+      "Original reasoning: Detected grouped text."
+    )
   })
 
   it("enforces translation count validation", async () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
       editing_language: "fr",
     }
     const config = buildTranslationConfig(appConfig, "en")
@@ -163,7 +193,7 @@ describe("translation", () => {
       capturedOptions = options
     })
 
-    await translatePageText("pg001", sampleClassification, config!, llmModel)
+    await translatePageTree("pg001", sampleStructuring, config!, llmModel)
 
     const validation = capturedOptions?.validate?.(
       { translations: ["Only one"] },
@@ -173,15 +203,18 @@ describe("translation", () => {
     expect(validation?.errors[0]).toContain("Expected 2 translations but got 1")
   })
 
-  it("returns original data when there are no text entries", async () => {
-    const emptyClassification: TextClassificationOutput = {
+  it("returns original data when there are no leaf texts", async () => {
+    const emptyStructuring: PageSectioningOutput = {
       reasoning: "No text found.",
-      groups: [
+      sections: [
         {
-          groupId: "pg001_gp001",
-          groupType: "paragraph",
-          texts: [],
+          sectionId: "pg001_sec001",
+          sectionType: "text_only",
+          backgroundColor: "#ffffff",
+          textColor: "#000000",
+          pageNumber: 1,
           isPruned: false,
+          nodes: [],
         },
       ],
     }
@@ -201,14 +234,14 @@ describe("translation", () => {
       },
     }
 
-    const result = await translatePageText(
+    const result = await translatePageTree(
       "pg001",
-      emptyClassification,
+      emptyStructuring,
       config,
       llmModel
     )
 
-    expect(result).toBe(emptyClassification)
+    expect(result).toBe(emptyStructuring)
     expect(called).toBe(false)
   })
 })

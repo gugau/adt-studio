@@ -59,7 +59,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
 
   const { data: page, isLoading: pageLoading } = usePage(bookLabel, selectedPageId ?? "")
 
-  const sectionCount = page?.sectioning?.sections.length ?? 0
+  const sectionCount = page?.sectioningTree?.sections.length ?? 0
 
   // Resolve pending "last section" once page data loads
   useEffect(() => {
@@ -103,7 +103,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
 
   // Navigation elements for the purple header — passed to StoryboardSectionDetail
   // which controls the full header content (nav + version + AI + panel toggle)
-  const currentSection = page?.sectioning?.sections[sectionIndex]
+  const currentSection = page?.sectioningTree?.sections[sectionIndex]
   const navigationExtra = selectedPageSummary && sectionCount > 0 ? (
     <>
       <span className="text-white/40 text-sm">/</span>
@@ -113,7 +113,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
       <span className="text-white/40 text-sm">/</span>
       <div className="flex items-center gap-0.5">
         {Array.from({ length: sectionCount }, (_, i) => {
-          const section = page?.sectioning?.sections[i]
+          const section = page?.sectioningTree?.sections[i]
           const pruned = section?.isPruned
           return (
             <button
@@ -204,7 +204,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
     }
 
     // When StoryboardSectionDetail is rendered, it manages the header itself
-    if (page?.sectioning && sectionCount > 0) return
+    if (page?.sectioningTree && sectionCount > 0) return
 
     if (selectedPageSummary) {
       setOnLabelClick(null)
@@ -241,7 +241,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
       setExtra(null)
       setOnLabelClick(null)
     }
-  }, [selectedPageId, selectedPageSummary?.pageNumber, sectionIndex, sectionCount, canGoPrev, canGoNext, prevPageId, nextPageId, setExtra, setOnLabelClick, page?.sectioning, showRunCard, overviewMode])
+  }, [selectedPageId, selectedPageSummary?.pageNumber, sectionIndex, sectionCount, canGoPrev, canGoNext, prevPageId, nextPageId, setExtra, setOnLabelClick, page?.sectioningTree, showRunCard, overviewMode])
 
   // Keyboard arrow navigation
   useEffect(() => {
@@ -317,7 +317,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
     )
   }
 
-  if (!page.sectioning) {
+  if (!page.sectioningTree) {
     if (storyboardRunning) {
       return (
         <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">

@@ -1,5 +1,5 @@
 import { z } from "zod"
-import type { TextClassificationOutput, AppConfig } from "@adt/types"
+import type { AppConfig, PageSectioningOutput } from "@adt/types"
 import { DEFAULT_LLM_MAX_RETRIES } from "@adt/types"
 import type { LLMModel, ValidationResult } from "@adt/llm"
 import {
@@ -7,6 +7,7 @@ import {
   getBaseLanguage,
   normalizeLocale,
 } from "./language-context.js"
+import { countLeafTexts, mapLeafTexts } from "./page-sectioning.js"
 
 export interface TranslationConfig {
   sourceLanguage: string
@@ -18,10 +19,6 @@ export interface TranslationConfig {
 
 export { normalizeLocale, getBaseLanguage } from "./language-context.js"
 
-/**
- * Determine whether translation is needed based on source and editing languages.
- * Returns false if either is missing or if the base languages match.
- */
 export function shouldTranslate(
   sourceLanguage: string | null,
   editingLanguage?: string
@@ -30,10 +27,6 @@ export function shouldTranslate(
   return getBaseLanguage(sourceLanguage) !== getBaseLanguage(editingLanguage)
 }
 
-/**
- * Build translation config from AppConfig and detected source language.
- * Returns null if no translation is needed.
- */
 export function buildTranslationConfig(
   appConfig: AppConfig,
   sourceLanguage: string | null
@@ -45,7 +38,7 @@ export function buildTranslationConfig(
     promptName: appConfig.translation?.prompt ?? "translation",
     modelId:
       appConfig.translation?.model ??
-      appConfig.text_classification?.model ??
+      appConfig.page_sectioning?.model ??
       "openai:gpt-4.1",
     maxRetries: appConfig.translation?.max_retries ?? DEFAULT_LLM_MAX_RETRIES,
   }
@@ -56,29 +49,27 @@ const translationSchema = z.object({
 })
 
 /**
- * Translate all text entries in a TextClassificationOutput.
- * Preserves structure (groupId, groupType, textType, isPruned) — only text content changes.
- * Returns a new TextClassificationOutput suitable for saving as a new version.
+ * Translate all leaf text in a PageSectioningOutput. Preserves tree
+ * structure (nodeId, sectionId, structure, role, isPruned, imageId) —
+ * only leaf `text` values are replaced. Returns a new output suitable
+ * for storing as a new version under the `page-sectioning` node.
  */
-export async function translatePageText(
+export async function translatePageTree(
   pageId: string,
-  textClassification: TextClassificationOutput,
+  sectioning: PageSectioningOutput,
   config: TranslationConfig,
   llmModel: LLMModel
-): Promise<TextClassificationOutput> {
-  // Collect all texts in order
+): Promise<PageSectioningOutput> {
+  const totalTexts = countLeafTexts(sectioning)
+  if (totalTexts === 0) return sectioning
+
   const texts: Array<{ index: number; text: string }> = []
-  for (const group of textClassification.groups) {
-    for (const entry of group.texts) {
-      texts.push({ index: texts.length, text: entry.text })
-    }
-  }
+  mapLeafTexts(sectioning, (text, index) => {
+    texts.push({ index, text })
+    return text
+  })
 
-  if (texts.length === 0) return textClassification
-
-  const result = await llmModel.generateObject<{
-    translations: string[]
-  }>({
+  const result = await llmModel.generateObject<{ translations: string[] }>({
     schema: translationSchema,
     prompt: config.promptName,
     context: {
@@ -106,18 +97,13 @@ export async function translatePageText(
     },
   })
 
-  // Reconstruct with translated texts
-  let textIndex = 0
-  const translatedGroups = textClassification.groups.map((group) => ({
-    ...group,
-    texts: group.texts.map((entry) => ({
-      ...entry,
-      text: result.object.translations[textIndex++],
-    })),
-  }))
+  const translated = mapLeafTexts(
+    sectioning,
+    (_text, index) => result.object.translations[index] ?? ""
+  )
 
   return {
-    reasoning: `Translated from ${config.sourceLanguage} to ${config.targetLanguage}. Original reasoning: ${textClassification.reasoning}`,
-    groups: translatedGroups,
+    reasoning: `Translated from ${config.sourceLanguage} to ${config.targetLanguage}. Original reasoning: ${sectioning.reasoning}`,
+    sections: translated.sections,
   }
 }

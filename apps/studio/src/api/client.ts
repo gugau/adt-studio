@@ -139,6 +139,15 @@ export interface SectionRendering {
   activityAnswers?: Record<string, string | boolean | number>
 }
 
+export interface ContentNode {
+  nodeId: string
+  isPruned: boolean
+  structure?: string
+  children?: ContentNode[]
+  role?: string
+  text?: string
+}
+
 export interface AiEditHistoryTurn {
   correlationId: string
   timestamp: string
@@ -151,15 +160,6 @@ export interface PageDetail {
   pageId: string
   pageNumber: number
   text: string
-  textClassification: {
-    reasoning: string
-    groups: Array<{
-      groupId: string
-      groupType: string
-      texts: Array<{ textType: string; text: string; isPruned: boolean }>
-      isPruned: boolean
-    }>
-  } | null
   imageClassification: {
     images: Array<{
       imageId: string
@@ -178,26 +178,12 @@ export interface PageDetail {
       cropBottom?: number
     }>
   } | null
-  sectioning: {
+  sectioningTree: {
     reasoning: string
     sections: Array<{
       sectionId: string
       sectionType: string
-      parts: Array<
-        | {
-            type: "text_group"
-            groupId: string
-            groupType: string
-            texts: Array<{ textId: string; textType: string; text: string; isPruned: boolean }>
-            isPruned: boolean
-          }
-        | {
-            type: "image"
-            imageId: string
-            isPruned: boolean
-            reason?: string
-          }
-      >
+      nodes: ContentNode[]
       backgroundColor: string
       textColor: string
       pageNumber: number | null
@@ -211,7 +197,6 @@ export interface PageDetail {
     captions: Array<{ imageId: string; reasoning: string; caption: string }>
   } | null
   versions: {
-    textClassification: number | null
     imageClassification: number | null
     imageCropping: number | null
     sectioning: number | null
@@ -543,12 +528,6 @@ export const api = {
   getPageImage: (label: string, pageId: string) =>
     request<{ imageBase64: string }>(`/books/${label}/pages/${pageId}/image`),
 
-  updateTextClassification: (label: string, pageId: string, data: unknown) =>
-    request<{ version: number }>(`/books/${label}/pages/${pageId}/text-classification`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    }),
-
   updateImageClassification: (label: string, pageId: string, data: unknown) =>
     request<{ version: number }>(`/books/${label}/pages/${pageId}/image-filtering`, {
       method: "PUT",
@@ -571,6 +550,58 @@ export const api = {
     request<{ version: number }>(`/books/${label}/pages/${pageId}/image-captioning`, {
       method: "PUT",
       body: JSON.stringify(data),
+    }),
+
+  cloneSection: (label: string, pageId: string, sectionIndex: number) =>
+    request<{
+      clonedSectionIndex: number
+      sectioningVersion: number
+      renderingVersion: number | null
+    }>(`/books/${label}/pages/${pageId}/sections/${sectionIndex}/clone`, {
+      method: "POST",
+    }),
+
+  mergeSection: (
+    label: string,
+    pageId: string,
+    sectionIndex: number,
+    direction: "next" | "prev" = "next"
+  ) =>
+    request<{
+      mergedSectionIndex: number
+      sectioningVersion: number
+      renderingVersion: number | null
+    }>(
+      `/books/${label}/pages/${pageId}/sections/${sectionIndex}/merge?direction=${direction}`,
+      { method: "POST" }
+    ),
+
+  mergeSectionCrossPage: (
+    label: string,
+    pageId: string,
+    sectionIndex: number,
+    direction: "next" | "prev"
+  ) =>
+    request<{
+      sourcePageId: string
+      targetPageId: string
+      targetSectionIndex: number
+      sourceSectioningVersion: number
+      targetSectioningVersion: number
+      sourceRenderingVersion: number | null
+      targetRenderingVersion: number | null
+    }>(
+      `/books/${label}/pages/${pageId}/sections/${sectionIndex}/merge-cross-page?direction=${direction}`,
+      { method: "POST" }
+    ),
+
+  deleteSection: (label: string, pageId: string, sectionIndex: number) =>
+    request<{
+      sectioningVersion: number
+      renderingVersion: number | null
+      remainingSections: number
+    }>(`/books/${label}/pages/${pageId}/sections/${sectionIndex}`, {
+      method: "DELETE",
     }),
 
   reRenderPage: (label: string, pageId: string, apiKey: string, sectionIndex?: number, prompt?: string) =>
@@ -605,30 +636,6 @@ export const api = {
   aiEditHistory: (label: string, pageId: string, sectionIndex: number) =>
     request<{ history: AiEditHistoryTurn[] }>(
       `/books/${label}/pages/${pageId}/sections/${sectionIndex}/ai-edit-history`,
-    ),
-
-  cloneSection: (label: string, pageId: string, sectionIndex: number) =>
-    request<{ clonedSectionIndex: number; sectioningVersion: number; renderingVersion: number | null }>(
-      `/books/${label}/pages/${pageId}/sections/${sectionIndex}/clone`,
-      { method: "POST" }
-    ),
-
-  mergeSection: (label: string, pageId: string, sectionIndex: number, direction: "next" | "prev" = "next") =>
-    request<{ mergedSectionIndex: number; sectioningVersion: number; renderingVersion: number | null }>(
-      `/books/${label}/pages/${pageId}/sections/${sectionIndex}/merge?direction=${direction}`,
-      { method: "POST" }
-    ),
-
-  mergeSectionCrossPage: (label: string, pageId: string, sectionIndex: number, direction: "next" | "prev") =>
-    request<{ sourcePageId: string; targetPageId: string; targetSectionIndex: number; sourceSectioningVersion: number; targetSectioningVersion: number; sourceRenderingVersion: number | null; targetRenderingVersion: number | null }>(
-      `/books/${label}/pages/${pageId}/sections/${sectionIndex}/merge-cross-page?direction=${direction}`,
-      { method: "POST" }
-    ),
-
-  deleteSection: (label: string, pageId: string, sectionIndex: number) =>
-    request<{ sectioningVersion: number; renderingVersion: number | null; remainingSections: number }>(
-      `/books/${label}/pages/${pageId}/sections/${sectionIndex}`,
-      { method: "DELETE" }
     ),
 
   listBookImages: (label: string) =>

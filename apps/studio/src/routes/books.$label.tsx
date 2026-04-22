@@ -139,7 +139,14 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
                 </div>
 
                 <div className="flex min-h-0 flex-1 flex-col border-r border-gray-300">
-                  <StageSidebar bookLabel={label} activeStep={activeStep} selectedPageId={pageId} onSelectPage={onSelectPage} sectionIndex={sectionIndex} onSelectSection={setSectionIndex} />
+                  <StageSidebar
+                    bookLabel={label}
+                    activeStep={activeStep}
+                    selectedPageId={pageId}
+                    onSelectPage={onSelectPage}
+                    sectionIndex={activeStep === "sectioning" ? undefined : sectionIndex}
+                    onSelectSection={activeStep === "sectioning" ? undefined : setSectionIndex}
+                  />
                 </div>
               </div>
             </div>

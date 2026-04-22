@@ -28,6 +28,7 @@ const EXTRA_STAGE_OUTPUT_NODES: Partial<Record<StageName, readonly PipelineNodeN
 /** All node_data node names written by each stage. */
 export const STAGE_OUTPUT_NODES: Record<StageName, readonly PipelineNodeName[]> = {
   "extract": [],
+  "sectioning": [],
   "storyboard": [],
   "quizzes": [],
   "captions": [],
@@ -40,6 +41,7 @@ export const STAGE_OUTPUT_NODES: Record<StageName, readonly PipelineNodeName[]> 
 
 const STAGE_DIRECT_DEPENDENTS: Record<StageName, StageName[]> = {
   "extract": [],
+  "sectioning": [],
   "storyboard": [],
   "quizzes": [],
   "captions": [],
@@ -70,9 +72,8 @@ const NODE_CACHE_RESOURCES: Record<PipelineNodeName, readonly PipelineCacheResou
   "image-segmentation": ["pages"],
   "image-cropping": ["pages"],
   "image-meaningfulness": ["pages"],
-  "text-classification": ["pages"],
-  "translation": ["pages"],
   "page-sectioning": ["pages"],
+  "translation": ["pages"],
   "web-rendering": ["pages"],
   "quiz-generation": ["quizzes"],
   "image-captioning": ["pages"],

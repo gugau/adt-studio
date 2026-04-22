@@ -12,12 +12,14 @@ import {
   ShieldCheck,
   FileDown,
   Hand,
+  Network,
   type LucideIcon,
 } from "lucide-react"
 
 export const STAGES = [
   { slug: "book", label: "Book", runningLabel: "Loading Book", icon: BookMarked, color: "bg-gray-600", hex: "#4b5563", textColor: "text-gray-600", bgLight: "bg-gray-50", borderColor: "border-gray-200", borderDark: "border-gray-600" },
   { slug: "extract", label: "Extract", runningLabel: "Extracting", icon: FileText, color: "bg-blue-600", hex: "#2563eb", textColor: "text-blue-600", bgLight: "bg-blue-50", borderColor: "border-blue-200", borderDark: "border-blue-600" },
+  { slug: "sectioning", label: "Sectioning", runningLabel: "Sectioning Pages", icon: Network, color: "bg-sky-600", hex: "#0284c7", textColor: "text-sky-600", bgLight: "bg-sky-50", borderColor: "border-sky-200", borderDark: "border-sky-600" },
   { slug: "storyboard", label: "Storyboard", runningLabel: "Building Storyboard", icon: LayoutGrid, color: "bg-violet-600", hex: "#7c3aed", textColor: "text-violet-600", bgLight: "bg-violet-50", borderColor: "border-violet-200", borderDark: "border-violet-600" },
   { slug: "quizzes", label: "Quizzes", runningLabel: "Generating Quizzes", icon: HelpCircle, color: "bg-orange-600", hex: "#ea580c", textColor: "text-orange-600", bgLight: "bg-orange-50", borderColor: "border-orange-200", borderDark: "border-orange-600" },
   { slug: "captions", label: "Image Captions", runningLabel: "Captioning Images", icon: Image, color: "bg-teal-600", hex: "#0d9488", textColor: "text-teal-600", bgLight: "bg-teal-50", borderColor: "border-teal-200", borderDark: "border-teal-600" },
@@ -51,6 +53,7 @@ export type PipelineStageDefinition = Extract<StageDefinition, { slug: PipelineS
 
 export const STAGE_DESCRIPTIONS: Record<NonBookStageSlug, string> = {
   extract: "Extract text and images from each page of the PDF using AI-powered analysis.",
+  sectioning: "Structure each page into a content tree of sections and nodes for downstream rendering.",
   storyboard: "Arrange extracted content into a structured storyboard with pages, sections, and layouts.",
   quizzes: "Generate comprehension quizzes and activities based on the book content.",
   captions: "Create descriptive captions for images to improve accessibility.",
@@ -66,6 +69,7 @@ export const STAGE_DESCRIPTIONS: Record<NonBookStageSlug, string> = {
 
 /** Stages that have a per-page navigation panel. */
 export const STAGES_WITH_PAGES = new Set<StageSlug>([
+  "sectioning",
   "storyboard",
   "quizzes",
   "captions",

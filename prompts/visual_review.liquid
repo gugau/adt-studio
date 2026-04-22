@@ -43,7 +43,8 @@ On mobile only (no prefix), favor a single-column stacked layout (images and tex
 
 ## RULES
 - Preserve ALL data-id attributes exactly as they are
-- Elements with `data-id` attributes are TEXT-ONLY containers — their inner content is replaced with literal text at render time. Do NOT nest any HTML tags (like `<span>`, `<strong>`, `<em>`, etc.) inside them. Any styling must be applied to the element itself via Tailwind classes, not to nested child elements.
+- The only data-id rule is that an element WITH a `data-id` attribute must contain only literal text as its children — no nested HTML tags directly inside that data-id element. Its text content is replaced at render time.
+- A plain wrapper element WITHOUT its own `data-id` (e.g. a `<p>`, `<div>`, `<li>`, or `<section>`) MAY contain multiple data-id-bearing children (typically `<span data-id="...">…</span>` fragments flowing inline). That is the intended shape for a paragraph or list item whose text is split across several leaves — do NOT flag or rewrite it. Only flag cases where an element that itself has a `data-id` also has child tags inside it.
 - Preserve ALL text content exactly — do not change, add, or remove any words
 - Preserve ALL image tags and their data-id attributes
 - Only change layout and styling: Tailwind CSS classes, inline styles, spacing, positioning

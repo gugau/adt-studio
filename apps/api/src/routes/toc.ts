@@ -3,6 +3,7 @@ import path from "node:path"
 import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
 import { TocGenerationOutput, PageSectioningOutput, WebRenderingOutput, parseBookLabel } from "@adt/types"
+import type { ContentNodeData } from "@adt/types"
 import { openBookDb, createBookStorage } from "@adt/storage"
 
 function safeParseLabel(label: string): string {
@@ -110,29 +111,27 @@ export function createTocRoutes(booksDir: string): Hono {
         const renderParsed = WebRenderingOutput.safeParse(renderRow.data)
         if (!renderParsed.success) continue
 
-        const sectioningRow = storage.getLatestNodeData("page-sectioning", page.pageId)
-        const sectioningParsed = sectioningRow ? PageSectioningOutput.safeParse(sectioningRow.data) : null
-        const sectioning = sectioningParsed?.success ? sectioningParsed.data : undefined
+        const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+        const structuringParsed = structuringRow ? PageSectioningOutput.safeParse(structuringRow.data) : null
+        const sectioning = structuringParsed?.success ? structuringParsed.data : undefined
+
+        const findFirstHeadingText = (nodes: ContentNodeData[]): string | null => {
+          const stack: ContentNodeData[] = [...nodes]
+          while (stack.length > 0) {
+            const node = stack.shift()!
+            if (node.isPruned) continue
+            if (node.role === "heading" && node.text) return node.text
+            if (node.children) stack.unshift(...node.children)
+          }
+          return null
+        }
 
         for (const rs of renderParsed.data.sections) {
           const meta = sectioning?.sections?.[rs.sectionIndex]
           if (meta?.isPruned) continue
 
           const sectionId = meta?.sectionId ?? `${page.pageId}_sec${String(rs.sectionIndex + 1).padStart(3, "0")}`
-
-          // Extract a title from the first heading-like text in the section
-          let title = sectionId
-          if (meta) {
-            for (const part of meta.parts) {
-              if (part.type !== "text_group" || part.isPruned) continue
-              for (const t of part.texts) {
-                if (t.isPruned) continue
-                title = t.text
-                break
-              }
-              if (title !== sectionId) break
-            }
-          }
+          const title = meta ? (findFirstHeadingText(meta.nodes) ?? sectionId) : sectionId
 
           sections.push({
             sectionId,

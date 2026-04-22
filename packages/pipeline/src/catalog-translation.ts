@@ -25,7 +25,7 @@ export function buildCatalogTranslationConfig(
     promptName: appConfig.translation?.prompt ?? "translation",
     modelId:
       appConfig.translation?.model ??
-      appConfig.text_classification?.model ??
+      appConfig.page_sectioning?.model ??
       "openai:gpt-4.1",
     maxRetries: appConfig.translation?.max_retries ?? DEFAULT_LLM_MAX_RETRIES,
     batchSize: 50,

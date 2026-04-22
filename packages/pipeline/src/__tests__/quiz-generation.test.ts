@@ -63,7 +63,7 @@ function makePageInput(
         {
           sectionId: `${pageId}_sec001`,
           sectionType: sectionType ?? (isPruned ? "front_cover" : "text_only"),
-          parts: [],
+          nodes: [],
           backgroundColor: "#ffffff",
           textColor: "#000000",
           pageNumber: null,
@@ -106,8 +106,8 @@ describe("isContentPage", () => {
     const sectioning: PageSectioningOutput = {
       reasoning: "",
       sections: [
-        { sectionId: "pg_sec001", sectionType: "front_cover", parts: [], backgroundColor: "#fff", textColor: "#000", pageNumber: null, isPruned: true },
-        { sectionId: "pg_sec002", sectionType: "text_only", parts: [], backgroundColor: "#fff", textColor: "#000", pageNumber: null, isPruned: false },
+        { sectionId: "pg_sec001", sectionType: "front_cover", nodes: [], backgroundColor: "#fff", textColor: "#000", pageNumber: null, isPruned: true },
+        { sectionId: "pg_sec002", sectionType: "text_only", nodes: [], backgroundColor: "#fff", textColor: "#000", pageNumber: null, isPruned: false },
       ],
     }
     expect(isContentPage(sectioning)).toBe(true)
@@ -117,7 +117,7 @@ describe("isContentPage", () => {
     const sectioning: PageSectioningOutput = {
       reasoning: "",
       sections: [
-        { sectionId: "pg_sec001", sectionType: "front_cover", parts: [], backgroundColor: "#fff", textColor: "#000", pageNumber: null, isPruned: true },
+        { sectionId: "pg_sec001", sectionType: "front_cover", nodes: [], backgroundColor: "#fff", textColor: "#000", pageNumber: null, isPruned: true },
       ],
     }
     expect(isContentPage(sectioning)).toBe(false)
@@ -127,7 +127,7 @@ describe("isContentPage", () => {
     const sectioning: PageSectioningOutput = {
       reasoning: "",
       sections: [
-        { sectionId: "pg_sec001", sectionType: "activity_multiple_choice", parts: [], backgroundColor: "#fff", textColor: "#000", pageNumber: null, isPruned: false },
+        { sectionId: "pg_sec001", sectionType: "activity_multiple_choice", nodes: [], backgroundColor: "#fff", textColor: "#000", pageNumber: null, isPruned: false },
       ],
     }
     expect(isContentPage(sectioning, ["text_only", "text_and_images"])).toBe(false)
@@ -138,7 +138,7 @@ describe("isContentPage", () => {
     const sectioning: PageSectioningOutput = {
       reasoning: "",
       sections: [
-        { sectionId: "pg_sec001", sectionType: "activity_multiple_choice", parts: [], backgroundColor: "#fff", textColor: "#000", pageNumber: null, isPruned: false },
+        { sectionId: "pg_sec001", sectionType: "activity_multiple_choice", nodes: [], backgroundColor: "#fff", textColor: "#000", pageNumber: null, isPruned: false },
       ],
     }
     expect(isContentPage(sectioning, undefined)).toBe(true)
@@ -148,7 +148,7 @@ describe("isContentPage", () => {
     const sectioning: PageSectioningOutput = {
       reasoning: "",
       sections: [
-        { sectionId: "pg_sec001", sectionType: "activity_multiple_choice", parts: [], backgroundColor: "#fff", textColor: "#000", pageNumber: null, isPruned: false },
+        { sectionId: "pg_sec001", sectionType: "activity_multiple_choice", nodes: [], backgroundColor: "#fff", textColor: "#000", pageNumber: null, isPruned: false },
       ],
     }
     expect(isContentPage(sectioning, [])).toBe(false)
@@ -158,7 +158,7 @@ describe("isContentPage", () => {
     const sectioning: PageSectioningOutput = {
       reasoning: "",
       sections: [
-        { sectionId: "pg_sec001", sectionType: "text_only", parts: [], backgroundColor: "#fff", textColor: "#000", pageNumber: null, isPruned: true },
+        { sectionId: "pg_sec001", sectionType: "text_only", nodes: [], backgroundColor: "#fff", textColor: "#000", pageNumber: null, isPruned: true },
       ],
     }
     expect(isContentPage(sectioning, ["text_only"])).toBe(false)
@@ -238,8 +238,8 @@ describe("batchPages", () => {
 describe("buildQuizGenerationConfig", () => {
   it("builds config with defaults", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { section_text: "Body text" },
+      structure_types: { paragraph: "Paragraph" },
     }
     const config = buildQuizGenerationConfig(appConfig, "en")
     expect(config).toEqual({
@@ -255,8 +255,8 @@ describe("buildQuizGenerationConfig", () => {
 
   it("uses editing_language over detected language", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { section_text: "Body text" },
+      structure_types: { paragraph: "Paragraph" },
       editing_language: "fr",
     }
     const config = buildQuizGenerationConfig(appConfig, "en")
@@ -265,8 +265,8 @@ describe("buildQuizGenerationConfig", () => {
 
   it("uses quiz_generation config overrides", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { section_text: "Body text" },
+      structure_types: { paragraph: "Paragraph" },
       quiz_generation: {
         pages_per_quiz: 5,
         model: "openai:gpt-4.1",
@@ -290,8 +290,8 @@ describe("buildQuizGenerationConfig", () => {
 
   it("returns null when no language available", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { section_text: "Body text" },
+      structure_types: { paragraph: "Paragraph" },
     }
     expect(buildQuizGenerationConfig(appConfig, null)).toBeNull()
   })

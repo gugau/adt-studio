@@ -40,6 +40,9 @@ msgstr "(actif)"
 msgid "(base)"
 msgstr "(base)"
 
+msgid "(empty)"
+msgstr "(vide)"
+
 msgid "(no instruction text)"
 msgstr "(aucun texte d'instruction)"
 
@@ -145,6 +148,9 @@ msgstr "{0} questions"
 msgid "{0} terms"
 msgstr "{0} termes"
 
+#~ msgid "{0} text leaves"
+#~ msgstr "{0} hojas de texto"
+
 #. placeholder {0}: String(displayEntries.length)
 msgid "{0} texts"
 msgstr "{0} textes"
@@ -212,8 +218,11 @@ msgstr "{reviewCount} {0}"
 msgid "{reviewed}/{0} checked"
 msgstr "{reviewed}/{0} vérifié"
 
-msgid "{textCount} text groups"
-msgstr "{textCount} groupes de texte"
+#~ msgid "{textCount} text groups"
+#~ msgstr "{textCount} groupes de texte"
+
+msgid "{textCount} text leaves"
+msgstr "{textCount} feuilles de texte"
 
 #. placeholder {0}: index + 1
 msgid "{title} - page {0}"
@@ -228,6 +237,9 @@ msgstr "="
 
 msgid "0 = deterministic, 2 = max creativity"
 msgstr "0 = déterministe, 2 = créativité maximale"
+
+msgid "0 = single pass, higher values allow iterative LLM refinement"
+msgstr "0 = passage unique, les valeurs plus élevées permettent un raffinement itératif du LLM"
 
 msgid "1 hour"
 msgstr "1 heure"
@@ -377,14 +389,14 @@ msgstr "Générateur d'activités"
 msgid "Activity 5.1"
 msgstr "Activité 5.1"
 
-msgid "Activity Input Placeholder"
-msgstr "Espace réservé de saisie d'activité"
+#~ msgid "Activity Input Placeholder"
+#~ msgstr "Espace réservé de saisie d'activité"
 
-msgid "Activity Number"
-msgstr "Numéro d'activité"
+#~ msgid "Activity Number"
+#~ msgstr "Numéro d'activité"
 
-msgid "Activity Option"
-msgstr "Option d'activité"
+#~ msgid "Activity Option"
+#~ msgstr "Option d'activité"
 
 msgid "Activity Rendering"
 msgstr "Rendu d'activité"
@@ -395,8 +407,8 @@ msgstr "Les types de section d'activité sont disponibles pour la classification
 msgid "Activity section types are hidden from the classifier and skipped during rendering."
 msgstr "Les types de section d'activité sont masqués du classifieur et ignorés pendant le rendu."
 
-msgid "Activity Title"
-msgstr "Titre de l'activité"
+#~ msgid "Activity Title"
+#~ msgstr "Titre de l'activité"
 
 msgid "Activity: Fill in a Table"
 msgstr "Activité : Remplir un tableau"
@@ -441,11 +453,20 @@ msgstr "Ajouter un élément de liste de contrôle à cette section"
 msgid "Add class"
 msgstr "Ajouter une classe"
 
+#~ msgid "Add container"
+#~ msgstr "Ajouter un conteneur"
+
 msgid "Add entry below"
 msgstr "Ajouter une entrée ci-dessous"
 
-msgid "Add Group"
+msgid "Add group"
 msgstr "Ajouter un groupe"
+
+#~ msgid "Add Group"
+#~ msgstr "Ajouter un groupe"
+
+msgid "Add image"
+msgstr "Ajouter une image"
 
 msgid "Add Image"
 msgstr "Ajouter une image"
@@ -464,6 +485,9 @@ msgstr "Ajouter des consignes pour le réviseur."
 
 msgid "Add section"
 msgstr "Ajouter une section"
+
+msgid "Add text"
+msgstr "Ajouter du texte"
 
 msgid "Add Translations"
 msgstr "Ajouter des traductions"
@@ -758,8 +782,8 @@ msgstr "Débit binaire"
 msgid "Book"
 msgstr "Livre"
 
-msgid "Book Author"
-msgstr "Livre Author"
+#~ msgid "Book Author"
+#~ msgstr "Livre Author"
 
 msgid "Book data is outdated and must be rebuilt."
 msgstr "Les données du livre sont obsolètes et doivent être reconstruites."
@@ -767,8 +791,8 @@ msgstr "Les données du livre sont obsolètes et doivent être reconstruites."
 msgid "Book Language"
 msgstr "Livre Langue"
 
-msgid "Book Metadata"
-msgstr "Livre Métadonnées"
+#~ msgid "Book Metadata"
+#~ msgstr "Livre Métadonnées"
 
 msgid "Book preview"
 msgstr "Livre aperçu"
@@ -776,17 +800,17 @@ msgstr "Livre aperçu"
 msgid "Book Preview"
 msgstr "Livre Aperçu"
 
-msgid "Book Subtitle"
-msgstr "Livre Subtitle"
+#~ msgid "Book Subtitle"
+#~ msgstr "Livre Subtitle"
 
 msgid "Book Summary"
 msgstr "Livre Résumé"
 
-msgid "Book Summary Prompt"
-msgstr "Livre Résumé Invite"
+#~ msgid "Book Summary Prompt"
+#~ msgstr "Livre Résumé Invite"
 
-msgid "Book Title"
-msgstr "Titre du livre"
+#~ msgid "Book Title"
+#~ msgstr "Titre du livre"
 
 msgid "Boxed Text"
 msgstr "Boxed Texte"
@@ -809,8 +833,8 @@ msgstr "Construction du scénarimage..."
 msgid "By Page"
 msgstr "Par page"
 
-msgid "By Section"
-msgstr "Par section"
+#~ msgid "By Section"
+#~ msgstr "Par section"
 
 msgid "Cache"
 msgstr "Cache"
@@ -908,14 +932,14 @@ msgstr "Ciências da Natureza - Ensino Fundamental"
 msgid "Classic Storybook"
 msgstr "Classic Storybook"
 
-msgid "Classified Text"
-msgstr "Texte classifié"
+#~ msgid "Classified Text"
+#~ msgstr "Texte classifié"
 
 msgid "Classifying images…"
 msgstr "Classification des images…"
 
-msgid "Classifying text…"
-msgstr "Classification du texte…"
+#~ msgid "Classifying text…"
+#~ msgstr "Classification du texte…"
 
 msgid "Clean & focused"
 msgstr "Épuré et ciblé"
@@ -961,6 +985,9 @@ msgstr "Fermer le panneau de modification"
 
 msgid "Clownfish, sea turtles, and parrotfish are just a few of the thousands of species that depend on reefs for food, shelter, and nursery grounds."
 msgstr "Les poissons-clowns, les tortues de mer et les poissons-perroquets ne sont que quelques-unes des milliers d'espèces qui dépendent des récifs pour se nourrir, s'abriter et se reproduire."
+
+msgid "Collapse"
+msgstr "Réduire"
 
 msgid "Collapse accessibility summary"
 msgstr "Réduire le résumé d'accessibilité"
@@ -1015,6 +1042,15 @@ msgstr "Confirmer Rerun"
 
 msgid "Consulting the style council..."
 msgstr "Consultation du conseil de style..."
+
+msgid "Container node types the LLM may produce in the content tree during sectioning."
+msgstr "Types de nœuds conteneurs que le LLM peut produire dans l'arborescence de contenu pendant le sectionnement."
+
+#~ msgid "Container node types the LLM may produce in the content tree during sectioning. Each type has a description shown to the model."
+#~ msgstr "Types de nœuds conteneurs que le LLM peut produire dans l'arborescence de contenu pendant le sectionnement. Chaque type a une description montrée au modèle."
+
+msgid "Container Types"
+msgstr "Types de conteneur"
 
 msgid "Content"
 msgstr "Contenu"
@@ -1222,14 +1258,17 @@ msgstr "Supprimer livre"
 msgid "Delete failed"
 msgstr "Supprimer échoué"
 
-msgid "Delete group"
-msgstr "Supprimer group"
+#~ msgid "Delete group"
+#~ msgstr "Supprimer group"
 
 msgid "Delete section"
 msgstr "Supprimer section"
 
-msgid "Delete text entry"
-msgstr "Supprimer texte entrée"
+#~ msgid "Delete text entry"
+#~ msgstr "Supprimer texte entrée"
+
+#~ msgid "Delete type"
+#~ msgstr "Supprimer le type"
 
 msgid "Delete video"
 msgstr "Supprimer video"
@@ -1291,14 +1330,17 @@ msgstr "Abandonner"
 msgid "Display"
 msgstr "Affichage"
 
+msgid "Drag to move"
+msgstr "Glisser pour déplacer"
+
 msgid "Drag to move boxes, drag edges/corners to resize"
 msgstr "Glissez pour déplacer les cadres, glissez les bords/coins pour redimensionner"
 
-msgid "Drag to reorder"
-msgstr "Glissez pour réordonner"
+#~ msgid "Drag to reorder"
+#~ msgstr "Glissez pour réordonner"
 
-msgid "Drag to reorder or move to another group"
-msgstr "Glissez pour réordonner ou déplacer vers un autre groupe"
+#~ msgid "Drag to reorder or move to another group"
+#~ msgstr "Glissez pour réordonner ou déplacer vers un autre groupe"
 
 msgid "Drag vertices to reshape. Click midpoints (+) to add points. Right-click a vertex to remove it."
 msgstr "Glissez les sommets pour remodeler. Cliquez sur les points médians (+) pour ajouter des points. Clic droit sur un sommet pour le supprimer."
@@ -1309,11 +1351,11 @@ msgstr "Drop PDF ici"
 msgid "Duplicate"
 msgstr "Dupliquer"
 
-msgid "Duplicate group"
-msgstr "Dupliquer le groupe"
+#~ msgid "Duplicate group"
+#~ msgstr "Dupliquer le groupe"
 
-msgid "Duplicate text entry"
-msgstr "Dupliquer l'entrée de texte"
+#~ msgid "Duplicate text entry"
+#~ msgstr "Dupliquer l'entrée de texte"
 
 msgid "Duration"
 msgstr "Durée"
@@ -1375,6 +1417,9 @@ msgstr "Modifier cette image"
 msgid "Edit this section"
 msgstr "Modifier cette section"
 
+msgid "edited"
+msgstr "modifié"
+
 msgid "Edited in"
 msgstr "Modifié dans"
 
@@ -1387,11 +1432,17 @@ msgstr "La modification est désactivée pendant l'exécution du scénarimage"
 msgid "Editing Language"
 msgstr "Langue d'édition"
 
-msgid "Empty group — drag text entries here"
-msgstr "Groupe vide — glissez des entrées de texte ici"
+msgid "Empty container"
+msgstr "Conteneur vide"
+
+#~ msgid "Empty group — drag text entries here"
+#~ msgstr "Groupe vide — glissez des entrées de texte ici"
 
 msgid "Empty section"
 msgstr "Section vide"
+
+msgid "Empty section — add a container below to start"
+msgstr "Section vide — ajouter un conteneur ci-dessous pour commencer"
 
 msgid "en"
 msgstr "en"
@@ -1463,6 +1514,9 @@ msgstr "Exclure du rendu"
 
 msgid "Existing reviewer sessions keep their own checklist snapshot. New checklist changes apply to newly created sessions."
 msgstr "Les sessions de révision existantes conservent leur propre instantané de liste de contrôle. Les modifications de liste de contrôle s'appliquent aux sessions nouvellement créées."
+
+msgid "Expand"
+msgstr "Développer"
 
 msgid "Expand all sections"
 msgstr "Développer toutes les sections"
@@ -1575,8 +1629,8 @@ msgstr "Figure 5.1 - Le cycle de l'eau : évaporation depuis les océans, conden
 msgid "Figure Extraction"
 msgstr "Extraction de figures"
 
-msgid "Fill in the Blank"
-msgstr "Fill dans le Blank"
+#~ msgid "Fill in the Blank"
+#~ msgstr "Fill dans le Blank"
 
 #~ msgid "Filter"
 #~ msgstr "Filtrer"
@@ -1614,8 +1668,8 @@ msgstr "Résultats signalés"
 msgid "Flat Vector"
 msgstr "Vecteur plat"
 
-msgid "Footer Text"
-msgstr "Pied de page Texte"
+#~ msgid "Footer Text"
+#~ msgstr "Pied de page Texte"
 
 #. placeholder {0}: i18n._(preset.title)
 #. placeholder {1}: recommendedOption.label
@@ -1748,29 +1802,29 @@ msgstr "Google"
 msgid "Google AI API Key"
 msgstr "Google AI Clé API"
 
-msgid "Groups content into logical sections"
-msgstr "Groups contenu into logical sections"
+#~ msgid "Groups content into logical sections"
+#~ msgstr "Groups contenu into logical sections"
 
-msgid "Groups content into multiple logical sections based on topic and structure. The AI identifies natural boundaries - headings, topic shifts, figures - and organizes content accordingly. Most granular option, ideal for dense or mixed-content pages."
-msgstr "Regroupe le contenu en plusieurs sections logiques en fonction du sujet et de la structure. L'IA identifie les limites naturelles — titres, changements de sujet, figures — et organise le contenu en conséquence. Option la plus détaillée, idéale pour les pages denses ou à contenu mixte."
+#~ msgid "Groups content into multiple logical sections based on topic and structure. The AI identifies natural boundaries - headings, topic shifts, figures - and organizes content accordingly. Most granular option, ideal for dense or mixed-content pages."
+#~ msgstr "Regroupe le contenu en plusieurs sections logiques en fonction du sujet et de la structure. L'IA identifie les limites naturelles — titres, changements de sujet, figures — et organise le contenu en conséquence. Option la plus détaillée, idéale pour les pages denses ou à contenu mixte."
 
 msgid "Header"
 msgstr "En-tête"
 
-msgid "Header Text"
-msgstr "En-tête Texte"
+#~ msgid "Header Text"
+#~ msgstr "En-tête Texte"
 
-msgid "Heading"
-msgstr "Titre"
+#~ msgid "Heading"
+#~ msgstr "Titre"
 
 msgid "Hide AI edit history"
 msgstr "Masquer l'historique des modifications IA"
 
-msgid "Hide Pruned"
-msgstr "Masquer les élagués"
+#~ msgid "Hide Pruned"
+#~ msgstr "Masquer les élagués"
 
-msgid "Hide pruned images"
-msgstr "Masquer les images élaguées"
+#~ msgid "Hide pruned images"
+#~ msgstr "Masquer les images élaguées"
 
 msgid "Higher values filter out simple or blank images."
 msgstr "Les valeurs plus élevées filtrent les images simples ou vides."
@@ -1796,8 +1850,11 @@ msgstr "Livres illustrés pour enfants"
 msgid "Illustration"
 msgstr "Illustration"
 
-msgid "Image Associated Text"
-msgstr "Image Associated Texte"
+msgid "image"
+msgstr "image"
+
+#~ msgid "Image Associated Text"
+#~ msgstr "Image Associated Texte"
 
 msgid "Image Captioning"
 msgstr "Légendes d'images"
@@ -1841,8 +1898,8 @@ msgstr "Pertinence d'image"
 msgid "Image Meaningfulness Prompt"
 msgstr "Image Meaningfulness Invite"
 
-msgid "Image Overlay"
-msgstr "Superposition d'image"
+#~ msgid "Image Overlay"
+#~ msgstr "Superposition d'image"
 
 msgid "Image processing"
 msgstr "Traitement d'images"
@@ -1907,8 +1964,8 @@ msgstr "Page de garde"
 msgid "Institution"
 msgstr "Institution"
 
-msgid "Instruction Text"
-msgstr "Texte d'instruction"
+#~ msgid "Instruction Text"
+#~ msgstr "Texte d'instruction"
 
 msgid "Interactive"
 msgstr "Interactif"
@@ -1941,8 +1998,11 @@ msgstr "Jane Reviewer"
 msgid "KB"
 msgstr "KB"
 
-msgid "Keeps pages whole unless mixed activity types require splitting"
-msgstr "Garde les pages entières sauf si des types d'activités mixtes nécessitent un découpage"
+#~ msgid "Keeps pages whole unless mixed activity types require splitting"
+#~ msgstr "Garde les pages entières sauf si des types d'activités mixtes nécessitent un découpage"
+
+msgid "Keeps pages whole unless mixed activity types require splitting."
+msgstr "Garde les pages entières sauf si des types d'activités mixtes nécessitent un découpage."
 
 msgid "Keeps the page as one section by default, but intelligently splits when it detects multiple distinct activities - such as a mix of multiple-choice, open-ended, and sorting exercises on the same page. Best for textbooks with varied exercises."
 msgstr "Garde la page comme une seule section par défaut, mais la divise intelligemment lorsqu'elle détecte plusieurs activités distinctes — comme un mélange de QCM, questions ouvertes et exercices de classement sur la même page. Idéal pour les manuels avec des exercices variés."
@@ -1981,6 +2041,15 @@ msgstr "Dernier"
 msgid "Last modified"
 msgstr "Dernière modification"
 
+#~ msgid "Leaf node roles the LLM may assign to text and image leaves in the content tree."
+#~ msgstr "Rôles de nœud feuille que le LLM peut attribuer aux feuilles de texte et d'image dans l'arbre de contenu."
+
+#~ msgid "Leaf node roles the LLM may assign to text and image leaves in the content tree. Each role has a description shown to the model."
+#~ msgstr "Rôles de nœud feuille que le LLM peut attribuer aux feuilles de texte et d'image dans l'arbre de contenu. Chaque rôle a une description montrée au modèle."
+
+#~ msgid "Leaf text roles the LLM can assign to each text element. Pruned roles are classified but excluded from rendering."
+#~ msgstr "Rôles de texte feuilles que le LLM peut attribuer à chaque élément de texte. Les rôles élagués sont classés mais exclus du rendu."
+
 msgid "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 msgstr "Laissez sur Aucun pour exécuter la segmentation sur toutes les images éligibles (selon les règles du pipeline)."
 
@@ -2011,8 +2080,8 @@ msgstr "Língua Portuguesa - 3° Ano"
 msgid "Linked to: {value}"
 msgstr "Linked to: {value}"
 
-msgid "List"
-msgstr "Liste"
+#~ msgid "List"
+#~ msgstr "Liste"
 
 msgid "Live"
 msgstr "Live"
@@ -2104,6 +2173,9 @@ msgstr "Chargement de la validation du réviseur…"
 msgid "Loading sectioning data..."
 msgstr "Chargement des données de sectionnement..."
 
+#~ msgid "Loading sections..."
+#~ msgstr "Cargando secciones..."
+
 msgid "Loading speech instructions..."
 msgstr "Chargement des instructions de synthèse vocale..."
 
@@ -2152,14 +2224,20 @@ msgstr "marge"
 msgid "Match each stage of the water cycle to its definition:"
 msgstr "Associez chaque étape du cycle de l'eau à sa définition :"
 
-msgid "Math"
-msgstr "Math"
+#~ msgid "Math"
+#~ msgstr "Math"
+
+msgid "Max Refinements"
+msgstr "Raffinements max"
 
 msgid "Max Side"
 msgstr "Côté max."
 
 msgid "Max side (px)"
 msgstr "Côté max. (px)"
+
+#~ msgid "Maximum number of reviewer passes after the initial sectioning. Set to 0 to disable refinement."
+#~ msgstr "Nombre maximum de passes du réviseur après le sectionnement initial. Mettre à 0 pour désactiver le raffinement."
 
 msgid "Meaningfulness Prompt"
 msgstr "Meaningfulness Invite"
@@ -2266,6 +2344,9 @@ msgstr "Modéré"
 msgid "Modified {modifiedLabel}"
 msgstr "Modifié le {modifiedLabel}"
 
+#~ msgid "Move out of parent"
+#~ msgstr "Sortir du conteneur parent"
+
 msgid "Multi-format publications"
 msgstr "Publications multi-format"
 
@@ -2301,6 +2382,12 @@ msgstr "Nouvelle entrée"
 
 msgid "New session"
 msgstr "Nouvelle session"
+
+#~ msgid "new_container_key"
+#~ msgstr "nouvelle_cle_conteneur"
+
+#~ msgid "new_text_key"
+#~ msgstr "nouvelle_cle_texte"
 
 msgid "new_type_key"
 msgstr "new_type_key"
@@ -2449,6 +2536,9 @@ msgstr "Aucune session de validation du réviseur n'a encore été démarrée. O
 msgid "No sectioning data available."
 msgstr "Aucune donnée de sectionnement disponible."
 
+#~ msgid "No sections"
+#~ msgstr "Sin secciones"
+
 msgid "No sections for this page"
 msgstr "Aucune section pour cette page"
 
@@ -2496,6 +2586,9 @@ msgstr "Note"
 
 msgid "Number of pages of content to include per quiz question."
 msgstr "Nombre de pages de contenu à inclure par question de quiz."
+
+msgid "Number of refinement iterations performed after the initial sectioning pass."
+msgstr "Nombre d'itérations de raffinement effectuées après la passe initiale de sectionnement."
 
 msgid "OAuth 2.0"
 msgstr "OAuth 2.0"
@@ -2650,11 +2743,14 @@ msgstr "Regroupement de pages"
 msgid "Page Grouping Mode"
 msgstr "Mode de regroupement de pages"
 
+msgid "Page image"
+msgstr "Image de la page"
+
 msgid "Page Mode"
 msgstr "Mode de page"
 
-msgid "Page Number"
-msgstr "Numéro de page"
+#~ msgid "Page Number"
+#~ msgstr "Numéro de page"
 
 msgid "Page preview {pageId}"
 msgstr "Page aperçu {pageId}"
@@ -2667,6 +2763,9 @@ msgstr "Sectionnement de page"
 
 msgid "Page Sectioning Prompt"
 msgstr "Page Sectioning Invite"
+
+msgid "Page Sectioning Refinement Prompt"
+msgstr "Prompt de raffinement du sectionnement"
 
 msgid "pages"
 msgstr "pages"
@@ -2685,8 +2784,8 @@ msgstr "Pages révisées"
 msgid "Paper Collage"
 msgstr "Collage papier"
 
-msgid "Paragraph"
-msgstr "Paragraphe"
+#~ msgid "Paragraph"
+#~ msgstr "Paragraphe"
 
 msgid "Parts"
 msgstr "Parties"
@@ -2811,8 +2910,8 @@ msgstr "Prune"
 msgid "Prune element"
 msgstr "Élaguer l'élément"
 
-msgid "Prune group"
-msgstr "Élaguer le groupe"
+#~ msgid "Prune group"
+#~ msgstr "Élaguer le groupe"
 
 msgid "Prune image"
 msgstr "Élaguer l'image"
@@ -2820,8 +2919,8 @@ msgstr "Élaguer l'image"
 msgid "Prune section from flow"
 msgstr "Élaguer la section du flux"
 
-msgid "Prune text"
-msgstr "Élaguer le texte"
+#~ msgid "Prune text"
+#~ msgstr "Élaguer le texte"
 
 msgid "pruned"
 msgstr "élagué"
@@ -2832,9 +2931,8 @@ msgstr "Élagué"
 msgid "Pruned Images"
 msgstr "Images élaguées"
 
-#. placeholder {0}: reason ?? ""
-msgid "Pruned: {0}"
-msgstr "Élagué : {0}"
+#~ msgid "Pruned: {0}"
+#~ msgstr "Élagué : {0}"
 
 msgid "Pruned: {reason}"
 msgstr "Élagué : {reason}"
@@ -2936,6 +3034,12 @@ msgstr "Recadrer depuis la page"
 msgid "Reference"
 msgstr "Référence"
 
+#~ msgid "Refinement Passes"
+#~ msgstr "Passes de raffinement"
+
+msgid "Refinement Prompt"
+msgstr "Prompt de raffinement"
+
 msgid "Refresh validation"
 msgstr "Actualiser validation"
 
@@ -2956,6 +3060,9 @@ msgstr "Retirer l'élément de liste de contrôle"
 
 msgid "Remove entry"
 msgstr "Retirer entrée"
+
+msgid "Remove from group"
+msgstr "Retirer du groupe"
 
 msgid "Remove PDF"
 msgstr "Retirer PDF"
@@ -3135,6 +3242,9 @@ msgstr "Enregistrer et relancer le glossaire"
 msgid "Save & Rerun Quizzes"
 msgstr "Enregistrer et relancer les quiz"
 
+msgid "Save & Rerun Sectioning"
+msgstr "Enregistrer et relancer le sectionnement"
+
 msgid "Save & Rerun Speech"
 msgstr "Enregistrer et relancer la synthèse vocale"
 
@@ -3170,6 +3280,9 @@ msgstr "Enregistré. Ré-empaquetez l'aperçu pour appliquer."
 
 msgid "Saving..."
 msgstr "Enregistrement..."
+
+msgid "Saving…"
+msgstr "Enregistrement…"
 
 msgid "School textbooks and workbooks"
 msgstr "Manuels scolaires et cahiers d'exercices"
@@ -3223,14 +3336,17 @@ msgstr "Section {0} (élagué)"
 msgid "Section 3.2"
 msgstr "Section 3.2"
 
-msgid "Section Heading"
-msgstr "Titre de section"
+#~ msgid "Section Heading"
+#~ msgstr "Titre de section"
 
 msgid "Section label"
 msgstr "Libellé de section"
 
 msgid "Section Mode"
 msgstr "Mode de section"
+
+#~ msgid "Section not found"
+#~ msgstr "Sección no encontrada"
 
 msgid "Section not found."
 msgstr "Section non trouvée."
@@ -3241,8 +3357,14 @@ msgstr "Section aperçu"
 msgid "Section pruned from flow"
 msgstr "Section élaguée du flux"
 
-msgid "Section Text"
-msgstr "Texte de section"
+#~ msgid "Section Refinement"
+#~ msgstr "Raffinement des sections"
+
+#~ msgid "Section Refinement Prompt"
+#~ msgstr "Prompt de raffinement des sections"
+
+#~ msgid "Section Text"
+#~ msgstr "Texte de section"
 
 msgid "Section Types"
 msgstr "Types de section"
@@ -3250,8 +3372,17 @@ msgstr "Types de section"
 msgid "Sectioning"
 msgstr "Sectionnement"
 
+msgid "Sectioning mode"
+msgstr "Mode de sectionnement"
+
 msgid "Sectioning Mode"
 msgstr "Mode de sectionnement"
+
+msgid "Sectioning Pages..."
+msgstr "Sectionnement des pages..."
+
+msgid "Sectioning Prompt"
+msgstr "Prompt de sectionnement"
 
 msgid "Sectioning Reasoning"
 msgstr "Raisonnement du sectionnement"
@@ -3389,11 +3520,11 @@ msgstr "Afficher toutes les traductions"
 msgid "Show fewer"
 msgstr "Afficher moins"
 
-msgid "Show Pruned"
-msgstr "Afficher les élagués"
+#~ msgid "Show Pruned"
+#~ msgstr "Afficher les élagués"
 
-msgid "Show pruned images"
-msgstr "Afficher les images élaguées"
+#~ msgid "Show pruned images"
+#~ msgstr "Afficher les images élaguées"
 
 msgid "Show reviewer validation"
 msgstr "Afficher la validation du réviseur"
@@ -3480,11 +3611,11 @@ msgstr "Saupoudrage de poussière de fée numérique..."
 msgid "stage first."
 msgstr "étape premier."
 
-msgid "Standalone Text"
-msgstr "Texte autonome"
+#~ msgid "Standalone Text"
+#~ msgstr "Texte autonome"
 
-msgid "Stanza"
-msgstr "Stanza"
+#~ msgid "Stanza"
+#~ msgstr "Stanza"
 
 msgid "Start"
 msgstr "Démarrer"
@@ -3520,11 +3651,20 @@ msgstr "Le scénarimage a déjà été exécuté. Les modifications effectuées 
 msgid "Storybook"
 msgstr "Livre d'histoires"
 
+#~ msgid "Structural containers the LLM can use when building the page tree (paragraphs, lists, tables, activities, etc.)."
+#~ msgstr "Conteneurs structurels que le LLM peut utiliser pour construire l'arborescence de la page (paragraphes, listes, tableaux, activités, etc.)."
+
 msgid "Structure"
 msgstr "Structure"
 
 msgid "Structure & semantics"
 msgstr "Structure et sémantique"
+
+msgid "Structure each page into a content tree of sections and nodes for downstream rendering."
+msgstr "Structurez chaque page en un arbre de contenu composé de sections et de nœuds pour le rendu ultérieur."
+
+#~ msgid "Structure Types"
+#~ msgstr "Types de structure"
 
 msgid "Structured chapters, exercises. Best for educational content with complex layouts."
 msgstr "Chapitres structurés, exercices. Idéal pour le contenu éducatif avec des mises en page complexes."
@@ -3571,8 +3711,8 @@ msgstr "Sun"
 msgid "System Prompt"
 msgstr "System Invite"
 
-msgid "Table"
-msgstr "Tableau"
+#~ msgid "Table"
+#~ msgstr "Tableau"
 
 msgid "Table of Contents"
 msgstr "tableau des matières"
@@ -3628,21 +3768,27 @@ msgstr "Alternatives textuelles"
 msgid "Text Catalog"
 msgstr "Catalogue de texte"
 
-msgid "Text Classification"
-msgstr "Classification de texte"
+#~ msgid "Text Classification"
+#~ msgstr "Classification de texte"
 
-msgid "Text Classification Prompt"
-msgstr "Invite de classification de texte"
+#~ msgid "Text Classification Prompt"
+#~ msgstr "Invite de classification de texte"
 
 #. placeholder {0}: section.textColor
 msgid "Text color: {0}"
 msgstr "Texte couleur: {0}"
 
-msgid "Text Groups"
-msgstr "Groupes de texte"
+#~ msgid "Text Groups"
+#~ msgstr "Groupes de texte"
 
 msgid "Text Only"
 msgstr "Texte uniquement"
+
+#~ msgid "Text roles the LLM may assign to text in the content tree."
+#~ msgstr "Rôles de texte que le LLM peut attribuer au texte dans l'arbre de contenu."
+
+msgid "Text roles the LLM may assign to text in the content tree. Pruned roles are classified but excluded from rendering."
+msgstr "Rôles de texte que le LLM peut attribuer au texte dans l'arbre de contenu. Les rôles élagués sont classés mais exclus du rendu."
 
 msgid "Text Types"
 msgstr "Types de texte"
@@ -3692,14 +3838,17 @@ msgstr "La forêt perdue"
 msgid "The model detects bounding boxes so each visual element can be stored and laid out separately."
 msgstr "Le modèle détecte les zones de délimitation afin que chaque élément visuel puisse être stocké et disposé séparément."
 
-msgid "The prompt template used for text classification. This is a Liquid template processed with page context."
-msgstr "Le modèle d'invite utilisé pour la classification de texte. C'est un modèle Liquid traité avec le contexte de la page."
+#~ msgid "The prompt template used by the reviewer pass to critique and improve a candidate sectioning. Runs up to the configured number of passes or until the reviewer approves."
+#~ msgstr "Le modèle de prompt utilisé par la passe du réviseur pour critiquer et améliorer un sectionnement candidat. S'exécute jusqu'au nombre de passes configuré ou jusqu'à ce que le réviseur approuve."
+
+#~ msgid "The prompt template used for text classification. This is a Liquid template processed with page context."
+#~ msgstr "Le modèle d'invite utilisé pour la classification de texte. C'est un modèle Liquid traité avec le contexte de la page."
 
 msgid "The prompt template used to extract book metadata (title, author, etc.) from the first few pages. This is a Liquid template processed with page context."
 msgstr "Le modèle d'invite utilisé pour extraire les métadonnées du livre (titre, auteur, etc.) des premières pages. C'est un modèle Liquid traité avec le contexte de la page."
 
-msgid "The prompt template used to generate a short book summary at the end of extract. The summary is generated in the configured editing language."
-msgstr "Le modèle d'invite utilisé pour générer un court résumé du livre à la fin de l'extraction. Le résumé est généré dans la langue d'édition configurée."
+#~ msgid "The prompt template used to generate a short book summary at the end of extract. The summary is generated in the configured editing language."
+#~ msgstr "Le modèle d'invite utilisé pour générer un court résumé du livre à la fin de l'extraction. Le résumé est généré dans la langue d'édition configurée."
 
 msgid "The prompt template used to generate captions for images in the book."
 msgstr "Le modèle d'invite utilisé pour générer des légendes pour les images du livre."
@@ -3721,6 +3870,9 @@ msgstr "Le modèle d'invite utilisé pour découper chaque page en sections logi
 
 msgid "The prompt template used to translate text catalog entries."
 msgstr "Le modèle d'invite utilisé pour traduire les entrées du catalogue de texte."
+
+msgid "The prompt used by the reviewer pass to inspect and correct a candidate sectioning tree. Shares the model and retry settings of the sectioning prompt."
+msgstr "Le prompt utilisé par la passe de revue pour inspecter et corriger un arbre de sectionnement candidat. Partage le modèle et les paramètres de réessai du prompt de sectionnement."
 
 msgid "The rendering strategy used for sections without an explicit mapping."
 msgstr "La stratégie de rendu utilisée pour les sections sans correspondance explicite."
@@ -3745,6 +3897,9 @@ msgstr "Voici Pip ! C'est un joyeux chien caramel avec une queue très remuante.
 
 msgid "This page has no captioned images"
 msgstr "Cette page n'a pas d'images légendées"
+
+msgid "This page has no sectioning output"
+msgstr "Cette page n'a pas de sortie de sectionnement"
 
 msgid "This page has no storyboard sections"
 msgstr "Cette page n'a pas de sections de scénarimage"
@@ -3773,17 +3928,29 @@ msgstr "Cela enregistrera vos paramètres et relancera la génération des lége
 msgid "This will save your settings and re-run quiz generation."
 msgstr "Cela enregistrera vos paramètres et relancera la génération des quiz."
 
+#~ msgid "This will save your settings and re-run sectioning and storyboard rendering for all pages."
+#~ msgstr "Ceci enregistrera vos paramètres et relancera le sectionnement et le rendu du storyboard pour toutes les pages."
+
+msgid "This will save your settings and re-run sectioning for all pages."
+msgstr "Ceci enregistrera vos paramètres et relancera le sectionnement pour toutes les pages."
+
 msgid "This will save your settings and re-run speech generation."
 msgstr "Cela enregistrera vos paramètres et relancera la génération de la synthèse vocale."
 
 msgid "This will save your settings and re-run the extraction pipeline. Any manual edits to extracted text will be overwritten for affected pages."
 msgstr "Cela enregistrera vos paramètres et relancera le pipeline d'extraction. Les modifications manuelles du texte extrait seront écrasées pour les pages concernées."
 
+#~ msgid "This will save your settings and re-run the sectioning stage for all pages."
+#~ msgstr "Cela enregistrera vos paramètres et relancera l'étape de sectionnement pour toutes les pages."
+
 msgid "This will save your settings and re-run the storyboard pipeline. Only rendering will be regenerated — your existing sections will be preserved."
 msgstr "Cela enregistrera vos paramètres et relancera le pipeline du scénarimage. Seul le rendu sera régénéré — vos sections existantes seront conservées."
 
-msgid "This will save your settings and re-run the storyboard pipeline. Sectioning and rendering will be regenerated for all pages."
-msgstr "Cela enregistrera vos paramètres et relancera le pipeline du scénarimage. Le découpage et le rendu seront régénérés pour toutes les pages."
+#~ msgid "This will save your settings and re-run the storyboard pipeline. Sectioning and rendering will be regenerated for all pages."
+#~ msgstr "Cela enregistrera vos paramètres et relancera le pipeline du scénarimage. Le découpage et le rendu seront régénérés pour toutes les pages."
+
+msgid "This will save your settings and re-run the storyboard pipeline. Sectioning and rendering will be run for all pages."
+msgstr "Ceci enregistrera vos paramètres et relancera le pipeline du storyboard. Le sectionnement et le rendu seront exécutés pour toutes les pages."
 
 msgid "This will save your settings and re-run translations, rebuilding the text catalog and translating to output languages."
 msgstr "Cela enregistrera vos paramètres et relancera les traductions, en reconstruisant le catalogue de texte et en traduisant vers les langues de sortie."
@@ -3842,8 +4009,11 @@ msgstr "Traduction Invite"
 msgid "Transport"
 msgstr "Transport"
 
-msgid "Treats each page as a single section"
-msgstr "Traite chaque page comme une seule section"
+#~ msgid "Treats each page as a single section"
+#~ msgstr "Traite chaque page comme une seule section"
+
+msgid "Treats each page as a single section."
+msgstr "Traite chaque page comme une seule section."
 
 msgid "Try Activity"
 msgstr "Essayer l'activité"
@@ -3872,8 +4042,8 @@ msgstr "Tapez un nom de classe ou recherchez..."
 msgid "Types used during page sectioning. Pruned types are classified but excluded from rendering. Disabled types are hidden from the LLM entirely."
 msgstr "Types utilisés lors du découpage des pages en sections. Les types élagués sont classés mais exclus du rendu. Les types désactivés sont masqués du LLM."
 
-msgid "Types used during text classification. Pruned types are excluded from rendering."
-msgstr "Types utilisés lors de la classification du texte. Les types élagués sont exclus du rendu."
+#~ msgid "Types used during text classification. Pruned types are excluded from rendering."
+#~ msgstr "Types utilisés lors de la classification du texte. Les types élagués sont exclus du rendu."
 
 msgid "Unable to load reviewer checklist settings."
 msgstr "Impossible de charger les paramètres de la liste de contrôle du réviseur."
@@ -3914,14 +4084,14 @@ msgstr "Identifiant d'étape inconnu : {step}"
 msgid "Unknown step: {step}"
 msgstr "Étape inconnue : {step}"
 
-msgid "Unprune group"
-msgstr "Restaurer le groupe"
+#~ msgid "Unprune group"
+#~ msgstr "Restaurer le groupe"
 
 msgid "Unprune image"
 msgstr "Restaurer l'image"
 
-msgid "Unprune text"
-msgstr "Restaurer le texte"
+#~ msgid "Unprune text"
+#~ msgstr "Restaurer le texte"
 
 msgid "Unsaved changes"
 msgstr "Modifications non enregistrées"
@@ -4092,6 +4262,12 @@ msgstr "Dans la plage"
 
 msgid "words"
 msgstr "mots"
+
+msgid "Wrap in group"
+msgstr "Encapsuler dans un groupe"
+
+#~ msgid "Wrap in new container"
+#~ msgstr "Envelopper dans un nouveau conteneur"
 
 msgid "Wraps 'Edit this image' requests. The AI receives the original image alongside this prompt. Supports user_prompt and style variables."
 msgstr "Encapsule les requêtes « Modifier cette image ». L'IA reçoit l'image originale avec cette invite. Prend en charge les variables user_prompt et style."
