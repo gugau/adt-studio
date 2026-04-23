@@ -112,7 +112,7 @@ async function assessBook(label: string): Promise<BookSummary> {
       const language = normalizeLocale(config.editing_language ?? metadata?.language_code ?? 'en')
       const outputLanguages = Array.from(
         new Set(
-          (config.output_languages?.length ? config.output_languages : [language]).map((code) => normalizeLocale(code))
+          [language, ...(config.output_languages ?? [])].map((code) => normalizeLocale(code))
         )
       )
       const title = metadata?.title ?? label
