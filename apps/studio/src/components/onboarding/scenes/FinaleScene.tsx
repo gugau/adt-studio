@@ -3,10 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  getPipelineStages,
-  type PipelineStageDefinition,
-} from "@/components/pipeline/stage-config";
+import { getPipelineStages } from "@/components/pipeline/stage-config";
 import type { OnboardingStepProps } from "../steps";
 
 const STAGES = getPipelineStages();
@@ -132,13 +129,11 @@ function StageNode({
   index,
   mounted,
 }: {
-  stage: PipelineStageDefinition;
+  stage: (typeof STAGES)[number];
   index: number;
   mounted: boolean;
 }) {
-  const { t } = useLingui();
   const Icon = stage.icon;
-  const label = getStageLabel(stage.slug, t) ?? stage.label;
   return (
     <li className="relative flex flex-col items-center gap-2.5">
       <span
@@ -155,43 +150,6 @@ function StageNode({
       >
         <Icon className="h-3.5 w-3.5" strokeWidth={2.2} />
       </span>
-      <span
-        className={cn(
-          "whitespace-nowrap text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
-          mounted ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
-        )}
-        style={{ transitionDelay: `${700 + index * 70}ms` }}
-      >
-        {label}
-      </span>
     </li>
   );
-}
-
-function getStageLabel(
-  slug: PipelineStageDefinition["slug"],
-  t: ReturnType<typeof useLingui>["t"],
-): string | undefined {
-  switch (slug) {
-    case "extract":
-      return t`Extract`;
-    case "storyboard":
-      return t`Storyboard`;
-    case "quizzes":
-      return t`Quizzes`;
-    case "captions":
-      return t`Captions`;
-    case "glossary":
-      return t`Glossary`;
-    case "toc":
-      return t`Contents`;
-    case "translate":
-      return t`Language`;
-    case "speech":
-      return t`Speech`;
-    case "preview":
-      return t`Preview`;
-    default:
-      return undefined;
-  }
 }
