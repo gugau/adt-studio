@@ -10,6 +10,7 @@ import {
   isApiDebugMode,
 } from "./api";
 import { setupTitleBar } from "./title-bar";
+import { setupFileDialog } from "./file-dialog";
 import {
   HTML_RENDER_SCHEME_PRIVILEGES,
   registerHtmlRenderProtocol,
@@ -36,6 +37,7 @@ app.whenReady().then(async () => {
   registerStudioAppProtocol(join(__dirname, "../renderer"));
   registerHtmlRenderProtocol();
   setupTitleBar();
+  setupFileDialog();
 
   app.on("browser-window-created", (_, window) => {
     optimizer.watchWindowShortcuts(window);

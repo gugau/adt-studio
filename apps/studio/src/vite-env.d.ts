@@ -47,10 +47,23 @@ interface ElectronWindowControls {
   onFullscreenChange: (cb: (isFullscreen: boolean) => void) => () => void
 }
 
+interface ElectronSaveFileDialogOptions {
+  defaultPath?: string
+  filters?: Array<{ name: string; extensions: string[] }>
+}
+
 interface Window {
   api: {
     onApiLog: (callback: (entry: ElectronApiLogEntry) => void) => () => void
     isApiDebugMode: () => Promise<boolean>
+    /**
+     * Show a native save-file dialog and write `data` to the chosen path.
+     * Resolves to the saved path, or `null` if the user canceled.
+     */
+    saveFile?: (
+      options: ElectronSaveFileDialogOptions,
+      data: Uint8Array,
+    ) => Promise<string | null>
     apiPort: number
     /** `process.platform` of the Electron main process. Undefined in the web build. */
     platform?: ElectronPlatform

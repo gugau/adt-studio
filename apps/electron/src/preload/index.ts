@@ -30,6 +30,11 @@ const windowControls = {
   },
 }
 
+interface SaveFileDialogOptions {
+  defaultPath?: string
+  filters?: Array<{ name: string; extensions: string[] }>
+}
+
 const api = {
   onApiLog: (callback: ApiLogCallback): (() => void) => {
     const handler = (_: Electron.IpcRendererEvent, entry: ApiLogEntry) => callback(entry)
@@ -37,6 +42,10 @@ const api = {
     return () => ipcRenderer.off('api-log', handler)
   },
   isApiDebugMode: (): Promise<boolean> => ipcRenderer.invoke('api-debug-mode'),
+  saveFile: (
+    options: SaveFileDialogOptions,
+    data: Uint8Array,
+  ): Promise<string | null> => ipcRenderer.invoke('file:save', options, data),
   get apiPort(): number {
     return ipcRenderer.sendSync('api-port')
   },

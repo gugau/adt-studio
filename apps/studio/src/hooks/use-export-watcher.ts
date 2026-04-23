@@ -4,6 +4,7 @@ import { msg } from "@lingui/core/macro"
 import { useLingui } from "@lingui/react"
 import { useMutation } from "@tanstack/react-query"
 import { api } from "@/api/client"
+import { isElectron } from "@/lib/utils"
 import { useBookTasks } from "./use-book-tasks"
 import type { ExportFeatureToggles } from "./use-export-features"
 
@@ -111,10 +112,6 @@ async function triggerExportDownload(
 
   if (!blob) return // Browser mode — direct download already triggered
 
-  // Tauri mode: save via native OS dialog
-  const { save } = await import("@tauri-apps/plugin-dialog")
-  const { writeFile } = await import("@tauri-apps/plugin-fs")
-
   const formatMeta: Record<ExportFormat, { ext: string; suffix: string; filterName: string }> = {
     project: { ext: "zip", suffix: "-project", filterName: i18n._(msg`Project Archive`) },
     webpub: { ext: "webpub", suffix: "", filterName: i18n._(msg`WebPub`) },
@@ -123,12 +120,19 @@ async function triggerExportDownload(
   }
   const meta = formatMeta[format]
   const defaultPath = `${label}${meta.suffix}.${meta.ext}`
-  const filterName = meta.filterName
+  const filters = [{ name: meta.filterName, extensions: [meta.ext] }]
 
-  const savePath = await save({
-    defaultPath,
-    filters: [{ name: filterName, extensions: [meta.ext] }],
-  })
+  if (isElectron() && window.api?.saveFile) {
+    const buf = await blob.arrayBuffer()
+    await window.api.saveFile({ defaultPath, filters }, new Uint8Array(buf))
+    return
+  }
+
+  // Tauri mode: save via native OS dialog
+  const { save } = await import("@tauri-apps/plugin-dialog")
+  const { writeFile } = await import("@tauri-apps/plugin-fs")
+
+  const savePath = await save({ defaultPath, filters })
 
   if (savePath) {
     const buf = await blob.arrayBuffer()
