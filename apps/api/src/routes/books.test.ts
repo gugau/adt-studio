@@ -436,7 +436,6 @@ function addExtractNodes(label: string, count: number, includeSummary = true): v
   try {
     for (let i = 1; i <= count; i++) {
       const pageId = `${label}_p${i}`
-      storage.putNodeData("text-classification", pageId, { groups: [] })
       storage.putNodeData("image-filtering", pageId, { images: [] })
     }
     if (includeSummary) {
@@ -544,13 +543,11 @@ describe("GET /books/:label/step-status", () => {
   const extractStageSteps = [
     "extract",
     "metadata",
+    "book-summary",
     "image-filtering",
     "image-segmentation",
     "image-cropping",
     "image-meaningfulness",
-    "text-classification",
-    "book-summary",
-    "translation",
   ] as const
 
   function markExtractStageComplete(label: string): void {

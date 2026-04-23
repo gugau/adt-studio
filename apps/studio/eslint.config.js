@@ -82,6 +82,8 @@ export default [
 
             // --- CSS class & color props (never user-visible) ---
             "rootMargin",
+            "transition",
+            "transform",
             "color",
             "hex",
             "textColor",
@@ -249,6 +251,8 @@ export default [
             "^<[a-z]",
             // Closing HTML tags used in string operations (e.g. "</section>")
             "^</[a-z]",
+            // CSS transform function values (e.g. "translate(5px, 10px)", "rotate(45deg)")
+            "^(translate|translate3d|rotate|rotate3d|scale|scale3d|skew|matrix)\\(",
             // CSS selectors and rule blocks (e.g. `[data-id="..."]`, `body[data-editable=...] {...}`)
             "^[\\[.]?[a-z].*\\{",
             "^\\[data-",

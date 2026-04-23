@@ -88,7 +88,7 @@ export async function filterPageImageMeaningfulness(
     maxRetries: config.maxRetries,
     maxTokens: 4096,
     log: {
-      taskType: "image-filtering",
+      taskType: "image-meaningfulness",
       pageId: input.pageId,
       promptName: config.promptName,
     },

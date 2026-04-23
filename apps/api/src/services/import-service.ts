@@ -6,7 +6,7 @@ import { HTTPException } from "hono/http-exception"
 import { parseBookLabel, BookMetadata, PIPELINE } from "@adt/types"
 import { renderPdfCover } from "@adt/pdf"
 import { openBookDb } from "@adt/storage"
-import type { BookSummary } from "./book-service.js"
+import { getBook, type BookSummary } from "./book-service.js"
 
 export interface ImportResult extends BookSummary {}
 
@@ -238,17 +238,7 @@ export async function importProject(
       throwInvalidArchive(meta.validationError)
     }
 
-    return {
-      label: targetLabel,
-      title: meta.title,
-      authors: meta.authors,
-      publisher: meta.publisher,
-      languageCode: meta.languageCode,
-      pageCount: meta.pageCount,
-      hasSourcePdf: fs.existsSync(path.join(bookDir, `${targetLabel}.pdf`)),
-      needsRebuild: false,
-      rebuildReason: null,
-    }
+    return getBook(targetLabel, booksDir)
   } catch (err) {
     try {
       fs.rmSync(bookDir, { recursive: true, force: true })

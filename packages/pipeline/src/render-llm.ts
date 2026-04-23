@@ -3,7 +3,7 @@ import { webRenderingLLMSchema, activityAnswersLLMSchema } from "@adt/types"
 import type { LLMModel, ValidationResult } from "@adt/llm"
 import { validateSectionHtml } from "./validate-html.js"
 import { getViewportBreakpoints, type ScreenshotRenderer } from "./screenshot.js"
-import type { RenderConfig, RenderSectionInput, TextInput, ImageInput } from "./web-rendering.js"
+import type { RenderConfig, RenderSectionInput } from "./web-rendering.js"
 import { runVisualReviewLoop } from "./visual-review.js"
 
 /** Dependencies for the optional visual refinement loop. */
@@ -30,84 +30,19 @@ export async function renderSectionLlm(
   llmModel: LLMModel,
   visualRefinement?: VisualRefinementDeps,
 ): Promise<SectionRendering> {
-  const texts: TextInput[] = []
-  const images: ImageInput[] = []
-
-  for (const part of input.parts) {
-    if (part.type === "group") {
-      texts.push(...part.texts)
-    } else {
-      images.push({ imageId: part.imageId, imageBase64: part.imageBase64, width: part.width, height: part.height })
-    }
-  }
-
   const isActivity = config.renderType === "activity"
   const taskType = isActivity ? "activity-rendering" : "web-rendering"
+  const { section, context: renderContext } = input
 
-  // Build structured groups (preserves groupId/groupType for prompts that need it)
-  const groups: Array<{
-    group_id: string
-    group_type: string
-    texts: Array<{ text_id: string; text_type: string; text: string }>
-  }> = []
-  for (const part of input.parts) {
-    if (part.type === "group") {
-      groups.push({
-        group_id: part.groupId,
-        group_type: part.groupType,
-        texts: part.texts.map((t) => ({
-          text_id: t.textId,
-          text_type: t.textType,
-          text: t.text,
-        })),
-      })
-    }
-  }
-
-  // Build ordered parts list preserving document flow (text groups + images interleaved).
-  // This helps overlay prompts understand spatial relationships between content.
-  const orderedParts: Array<
-    | { part_type: "text_group"; group_id: string; group_type: string; texts: Array<{ text_id: string; text_type: string; text: string }> }
-    | { part_type: "image"; image_id: string }
-  > = []
-  for (const part of input.parts) {
-    if (part.type === "group") {
-      orderedParts.push({
-        part_type: "text_group",
-        group_id: part.groupId,
-        group_type: part.groupType,
-        texts: part.texts.map((t) => ({
-          text_id: t.textId,
-          text_type: t.textType,
-          text: t.text,
-        })),
-      })
-    } else {
-      orderedParts.push({
-        part_type: "image",
-        image_id: part.imageId,
-      })
-    }
-  }
-
-  const context = {
+  const promptContext = {
     label: input.label,
     page_image_base64: input.pageImageBase64,
-    section_id: input.sectionId,
-    section_type: input.sectionType,
-    texts: texts.map((t) => ({
-      text_id: t.textId,
-      text_type: t.textType,
-      text: t.text,
-    })),
-    groups,
-    ordered_parts: orderedParts,
-    images: images.map((img) => ({
-      image_id: img.imageId,
-      image_base64: img.imageBase64,
-      ...(img.width != null && { width: img.width }),
-      ...(img.height != null && { height: img.height }),
-    })),
+    section_id: section.sectionId,
+    section_type: section.sectionType,
+    nodes: renderContext.nodes,
+    leaf_texts: renderContext.leaf_texts,
+    images: renderContext.image_refs,
+    group_ids: renderContext.group_ids,
     styleguide: input.styleguide ?? "",
     viewports: getViewportBreakpoints(),
     _isActivity: isActivity,
@@ -120,7 +55,7 @@ export async function renderSectionLlm(
   }>({
     schema: webRenderingLLMSchema,
     prompt: config.promptName,
-    context,
+    context: promptContext,
     validate: validateWebRendering,
     maxRetries: config.maxRetries,
     maxTokens: 16384,
@@ -139,8 +74,10 @@ export async function renderSectionLlm(
   if (visualRefinement && config.visualRefinement?.enabled) {
     const vr = config.visualRefinement
     const imagesForScreenshot = new Map<string, { base64: string }>()
-    for (const img of images) {
-      imagesForScreenshot.set(img.imageId, { base64: img.imageBase64 })
+    for (const img of renderContext.image_refs) {
+      if (img.image_base64) {
+        imagesForScreenshot.set(img.image_id, { base64: img.image_base64 })
+      }
     }
 
     const review = await runVisualReviewLoop({
@@ -161,17 +98,19 @@ export async function renderSectionLlm(
       pageImageBase64: input.pageImageBase64,
       promptContext: {
         page_image_base64: input.pageImageBase64,
-        section_type: input.sectionType,
+        section_type: section.sectionType,
         current_html: generatedHtml,
+        nodes: renderContext.nodes,
+        leaf_texts: renderContext.leaf_texts,
       },
       originalImageIntroText: "Here is the original page image (this is what the rendered page should resemble):",
       firstIterationScreenshotsText: "\nHere are screenshots of the current rendered HTML at three viewport sizes:\n",
       nextIterationScreenshotsText: "Here are the updated screenshots after your revision:\n",
-      trailingContextText: `Section type: ${input.sectionType}`,
+      trailingContextText: `Section type: ${section.sectionType}`,
       validateHtml: (candidateHtml) => {
         const check = validateWebRendering(
           { reasoning: "visual-review", content: candidateHtml },
-          context
+          promptContext
         )
         if (!check.valid) return { valid: false, errors: check.errors }
         const cleaned = check.cleaned as { reasoning: string; content: string } | undefined
@@ -193,7 +132,7 @@ export async function renderSectionLlm(
       schema: activityAnswersLLMSchema,
       prompt: config.answerPromptName,
       context: {
-        ...context,
+        ...promptContext,
         activity_html: generatedHtml,
       },
       maxRetries: config.maxRetries,
@@ -215,7 +154,7 @@ export async function renderSectionLlm(
 
   return {
     sectionIndex: input.sectionIndex,
-    sectionType: input.sectionType,
+    sectionType: section.sectionType,
     reasoning: result.object.reasoning,
     html: generatedHtml,
     ...(activityReasoning !== undefined && { activityReasoning }),
@@ -229,15 +168,16 @@ function validateWebRendering(
 ): ValidationResult {
   const r = result as { reasoning: string; content: string }
   const label = context.label as string
-  const texts = context.texts as Array<{ text_id: string; text: string }>
+  const leaf_texts = context.leaf_texts as Array<{ text_id: string; text: string }>
   const images = context.images as Array<{ image_id: string }>
+  const group_ids = context.group_ids as string[]
   const isActivity = context._isActivity as boolean | undefined
   const sectionId = context.section_id as string
   const sectionType = context.section_type as string
-  const allowedTextIds = texts.map((t) => t.text_id)
+  const allowedTextIds = leaf_texts.map((t) => t.text_id)
   const allowedImageIds = images.map((img) => img.image_id)
   const imageUrlPrefix = `/api/books/${label}/images`
-  const expectedTexts = new Map(texts.map((t) => [t.text_id, t.text]))
+  const expectedTexts = new Map(leaf_texts.map((t) => [t.text_id, t.text]))
 
   const check = validateSectionHtml(
     r.content,
@@ -246,6 +186,7 @@ function validateWebRendering(
     imageUrlPrefix,
     {
       ...(isActivity && { allowActivityGeneratedIds: true }),
+      allowedContainerIds: group_ids,
       expectedTexts,
       expectedSectionType: sectionType,
       expectedSectionId: sectionId,

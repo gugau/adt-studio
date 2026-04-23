@@ -11,9 +11,9 @@ let configPath = ""
 function writeConfig(defaultProvider = "gemini"): void {
   fs.writeFileSync(
     configPath,
-    `text_types:
+    `role_types:
   section_text: Main body text
-text_group_types:
+structure_types:
   paragraph: Paragraph
 speech:
   default_provider: ${defaultProvider}

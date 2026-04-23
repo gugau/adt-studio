@@ -1,5 +1,6 @@
 export { BookView } from "./BookView"
 export { ExtractView } from "./extract/ExtractView"
+export { SectioningView } from "./sectioning/SectioningView"
 export { StoryboardView } from "./storyboard/StoryboardView"
 export { QuizzesView } from "./quizzes/QuizzesView"
 export { CaptionsView } from "./captions/CaptionsView"

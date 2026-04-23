@@ -1,0 +1,56 @@
+{%- comment -%}
+  Recursive block-level render partial for a RenderNode[] tree.
+  Parameters:
+    nodes  — RenderNode[]
+    depth  — recursion depth (default 0). Safety cap at 8.
+
+  Leaves render as block elements with data-id. Containers wrap their
+  children. Only containers with structure "group" or "activity" carry a
+  data-id on the wrapper — all other containers are bare.
+
+  NOTE: we read `depth` directly from the include parameter rather than
+  copying it into a shared `_depth`. In LiquidJS `assign` writes to the
+  root scope, so a recursive include would clobber the parent's copy;
+  include parameters stay scoped per call.
+{%- endcomment -%}
+{%- for node in nodes -%}
+{%- if node.role == "image" -%}
+<img data-id="{{ node.node_id | escape }}" src="{{ node.image_url | escape }}">
+{%- elsif node.role == "heading" -%}
+<h2 data-id="{{ node.node_id | escape }}">{{ node.text | escape }}</h2>
+{%- elsif node.role == "caption" -%}
+<figcaption data-id="{{ node.node_id | escape }}">{{ node.text | escape }}</figcaption>
+{%- elsif node.role == "math" -%}
+<p class="font-mono" data-id="{{ node.node_id | escape }}">{{ node.text | escape }}</p>
+{%- elsif node.role -%}
+<p data-id="{{ node.node_id | escape }}">{{ node.text | escape }}</p>
+{%- elsif node.structure == "image_group" -%}
+<figure>{% if node.children and node.children.size > 0 and depth < 8 %}{%- assign _child_depth = depth | plus: 1 -%}{% include "_render_node", nodes: node.children, depth: _child_depth %}{% endif %}</figure>
+{%- elsif node.structure == "group" or node.structure == "activity" -%}
+<div data-id="{{ node.node_id | escape }}">{% if node.children and node.children.size > 0 and depth < 8 %}{%- assign _child_depth = depth | plus: 1 -%}{% include "_render_node", nodes: node.children, depth: _child_depth %}{% endif %}</div>
+{%- elsif node.structure == "paragraph" -%}
+<p>{% if node.children and node.children.size > 0 and depth < 8 %}{% include "_render_inline", nodes: node.children %}{% endif %}</p>
+{%- elsif node.structure == "heading" -%}
+<h2>{% if node.children and node.children.size > 0 and depth < 8 %}{% include "_render_inline", nodes: node.children %}{% endif %}</h2>
+{%- elsif node.structure == "list" -%}
+<ul class="list-disc list-inside space-y-1 pl-4">{% if node.children and node.children.size > 0 and depth < 8 %}{%- assign _child_depth = depth | plus: 1 -%}{% include "_render_node", nodes: node.children, depth: _child_depth %}{% endif %}</ul>
+{%- elsif node.structure == "list_item" -%}
+<li>{% if node.children and node.children.size > 0 and depth < 8 %}{% include "_render_inline", nodes: node.children %}{% endif %}</li>
+{%- elsif node.structure == "activity_option" -%}
+<li>{% if node.children and node.children.size > 0 and depth < 8 %}{% include "_render_inline", nodes: node.children %}{% endif %}</li>
+{%- elsif node.structure == "table" -%}
+<table class="w-full border-collapse"><tbody>{% if node.children and node.children.size > 0 and depth < 8 %}{%- assign _child_depth = depth | plus: 1 -%}{% include "_render_node", nodes: node.children, depth: _child_depth %}{% endif %}</tbody></table>
+{%- elsif node.structure == "table_row" -%}
+<tr>{% if node.children and node.children.size > 0 and depth < 8 %}{%- assign _child_depth = depth | plus: 1 -%}{% include "_render_node", nodes: node.children, depth: _child_depth %}{% endif %}</tr>
+{%- elsif node.structure == "table_cell" -%}
+<td class="border border-gray-300 px-3 py-2">{% if node.children and node.children.size > 0 and depth < 8 %}{% include "_render_inline", nodes: node.children %}{% endif %}</td>
+{%- elsif node.structure == "sidebar" -%}
+<aside class="border-l-4 border-gray-300 pl-4 my-4">{% if node.children and node.children.size > 0 and depth < 8 %}{%- assign _child_depth = depth | plus: 1 -%}{% include "_render_node", nodes: node.children, depth: _child_depth %}{% endif %}</aside>
+{%- elsif node.structure == "panel" -%}
+<div class="border rounded p-4 my-4">{% if node.children and node.children.size > 0 and depth < 8 %}{%- assign _child_depth = depth | plus: 1 -%}{% include "_render_node", nodes: node.children, depth: _child_depth %}{% endif %}</div>
+{%- elsif node.structure == "preformatted" -%}
+<pre class="whitespace-pre-wrap">{% if node.children and node.children.size > 0 and depth < 8 %}{% include "_render_inline", nodes: node.children %}{% endif %}</pre>
+{%- else -%}
+<div>{% if node.children and node.children.size > 0 and depth < 8 %}{%- assign _child_depth = depth | plus: 1 -%}{% include "_render_node", nodes: node.children, depth: _child_depth %}{% endif %}</div>
+{%- endif -%}
+{%- endfor -%}

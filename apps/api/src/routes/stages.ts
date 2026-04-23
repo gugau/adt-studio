@@ -18,10 +18,8 @@ const StageRunBody = z
   .strict()
 
 /** Build a beforeRun callback that clears downstream data for a stage.
- *  The returned function is idempotent — only runs once even if called multiple times.
- *  When renderOnly is true and fromStage is "storyboard", page-sectioning data
- *  and step_run records are preserved so only rendering is regenerated. */
-function makeBeforeRun(label: string, fromStage: StageName, booksDir: string, renderOnly?: boolean): () => void {
+ *  The returned function is idempotent — only runs once even if called multiple times. */
+function makeBeforeRun(label: string, fromStage: StageName, booksDir: string): () => void {
   let ran = false
   return () => {
     if (ran) return
@@ -32,11 +30,7 @@ function makeBeforeRun(label: string, fromStage: StageName, booksDir: string, re
         // clearExtractedData also clears step_runs
         storage.clearExtractedData()
       } else {
-        let nodes = getStageClearNodes(fromStage)
-        // Render-only: keep page-sectioning data, only clear rendering + downstream
-        if (renderOnly && fromStage === "storyboard") {
-          nodes = nodes.filter((n) => n !== "page-sectioning")
-        }
+        const nodes = getStageClearNodes(fromStage)
         if (nodes.length > 0) {
           storage.clearNodesByType(nodes)
         }
@@ -45,12 +39,9 @@ function makeBeforeRun(label: string, fromStage: StageName, booksDir: string, re
         }
         // Clear step run records for all downstream stages
         const stagesToClear = getStageClearOrder(fromStage)
-        let stepsToClear = PIPELINE
+        const stepsToClear = PIPELINE
           .filter((s) => stagesToClear.includes(s.name))
           .flatMap((s) => s.steps.map((step) => step.name))
-        if (renderOnly && fromStage === "storyboard") {
-          stepsToClear = stepsToClear.filter((s) => s !== "page-sectioning")
-        }
         storage.clearStepRuns(stepsToClear)
       }
     } finally {
@@ -112,7 +103,7 @@ export function createStageRoutes(
 
     console.log(`[stages] ${label}: ${fromStage}→${toStage}${renderOnly ? " (render-only)" : ""} azureKey=${azureSpeechKey ? "set" : "NOT SET"} azureRegion=${azureSpeechRegion ?? "NOT SET"} geminiKey=${geminiApiKey ? "set" : "NOT SET"}`)
 
-    const clearData = makeBeforeRun(label, fromStage, booksDir, renderOnly)
+    const clearData = makeBeforeRun(label, fromStage, booksDir)
 
     const result = stageService.startStageRun(label, {
       booksDir,

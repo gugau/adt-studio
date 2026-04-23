@@ -269,7 +269,7 @@ export function BookCreationWizard() {
           await api.runStages(
             book.label,
             apiKey,
-            { fromStage: "extract", toStage: "storyboard" },
+            { fromStage: "extract", toStage: "sectioning" },
             { azure: { key: azureKey, region: azureRegion }, geminiApiKey: geminiKey },
           )
         } catch (pipelineError) {

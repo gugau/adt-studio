@@ -1,7 +1,53 @@
 import { Liquid } from "liquidjs"
 import type { SectionRendering } from "@adt/types"
 import { validateSectionHtml } from "./validate-html.js"
-import type { RenderConfig, RenderSectionInput } from "./web-rendering.js"
+import type {
+  RenderConfig,
+  RenderNode,
+  RenderSectionInput,
+} from "./web-rendering.js"
+
+function subtreeHasImage(node: RenderNode): boolean {
+  if (node.role === "image") return true
+  if (!node.children) return false
+  for (const child of node.children) {
+    if (subtreeHasImage(child)) return true
+  }
+  return false
+}
+
+/**
+ * Partition top-level nodes into image-bearing vs text-only lists for
+ * two-column layouts. A mixed `image_group` (image leaf + non-image
+ * children — text visually overlaid on the illustration) is split one
+ * level deep: image children go to `image_nodes`, non-image children go
+ * to `text_nodes`. All other nodes stay intact.
+ */
+function partitionNodes(nodes: RenderNode[]): {
+  image_nodes: RenderNode[]
+  text_nodes: RenderNode[]
+} {
+  const image_nodes: RenderNode[] = []
+  const text_nodes: RenderNode[] = []
+  for (const node of nodes) {
+    const children = node.children ?? []
+    const imageChildren = children.filter((c) => c.role === "image")
+    const nonImageChildren = children.filter((c) => c.role !== "image")
+    const isMixedImageGroup =
+      node.structure === "image_group" &&
+      imageChildren.length > 0 &&
+      nonImageChildren.length > 0
+    if (isMixedImageGroup) {
+      image_nodes.push(...imageChildren)
+      text_nodes.push(...nonImageChildren)
+    } else if (subtreeHasImage(node)) {
+      image_nodes.push(node)
+    } else {
+      text_nodes.push(node)
+    }
+  }
+  return { image_nodes, text_nodes }
+}
 
 export interface TemplateEngine {
   render(templateName: string, context: Record<string, unknown>): Promise<string>
@@ -38,54 +84,33 @@ export async function renderSectionTemplate(
   templateEngine: TemplateEngine
 ): Promise<SectionRendering> {
   const imageUrlPrefix = `/api/books/${input.label}/images`
+  const { section, context: renderContext } = input
 
-  const context: Record<string, unknown> = {
-    section_id: input.sectionId,
-    section_type: input.sectionType,
-    background_color: input.backgroundColor,
-    text_color: input.textColor,
+  const { image_nodes, text_nodes } = partitionNodes(renderContext.nodes)
+
+  const templateContext: Record<string, unknown> = {
+    section_id: section.sectionId,
+    section_type: section.sectionType,
+    background_color: section.backgroundColor,
+    text_color: section.textColor,
     label: input.label,
     image_url_prefix: imageUrlPrefix,
-    parts: input.parts.map((part) => {
-      if (part.type === "group") {
-        return {
-          type: "group",
-          group_id: part.groupId,
-          group_type: part.groupType,
-          texts: part.texts.map((t) => ({
-            text_id: t.textId,
-            text_type: t.textType,
-            text: t.text,
-          })),
-        }
-      }
-      const segMatch = part.imageId.match(/^(.+)_seg\d{3}_v\d+$/)
-      return {
-        type: "image",
-        image_id: part.imageId,
-        image_url: `${imageUrlPrefix}/${part.imageId}`,
-        is_segment: !!segMatch,
-        source_image_id: segMatch ? segMatch[1] : null,
-      }
-    }),
+    nodes: renderContext.nodes,
+    image_nodes,
+    text_nodes,
+    leaf_texts: renderContext.leaf_texts,
+    image_refs: renderContext.image_refs,
+    group_ids: renderContext.group_ids,
   }
 
-  const html = await templateEngine.render(config.templateName, context)
+  const html = await templateEngine.render(config.templateName, templateContext)
 
   // Validate the template output using the same validator as LLM output
-  const allowedTextIds: string[] = []
-  const allowedImageIds: string[] = []
-  const expectedTexts = new Map<string, string>()
-  for (const part of input.parts) {
-    if (part.type === "group") {
-      for (const t of part.texts) {
-        allowedTextIds.push(t.textId)
-        expectedTexts.set(t.textId, t.text)
-      }
-    } else {
-      allowedImageIds.push(part.imageId)
-    }
-  }
+  const allowedTextIds = renderContext.leaf_texts.map((t) => t.text_id)
+  const allowedImageIds = renderContext.image_refs.map((i) => i.image_id)
+  const expectedTexts = new Map(
+    renderContext.leaf_texts.map((t) => [t.text_id, t.text])
+  )
 
   const check = validateSectionHtml(
     html,
@@ -93,9 +118,10 @@ export async function renderSectionTemplate(
     allowedImageIds,
     imageUrlPrefix,
     {
+      allowedContainerIds: renderContext.group_ids,
       expectedTexts,
-      expectedSectionType: input.sectionType,
-      expectedSectionId: input.sectionId,
+      expectedSectionType: section.sectionType,
+      expectedSectionId: section.sectionId,
     }
   )
   if (!check.valid) {
@@ -106,7 +132,7 @@ export async function renderSectionTemplate(
 
   return {
     sectionIndex: input.sectionIndex,
-    sectionType: input.sectionType,
+    sectionType: section.sectionType,
     reasoning: "template-based rendering",
     html: check.sectionHtml ?? html,
   }

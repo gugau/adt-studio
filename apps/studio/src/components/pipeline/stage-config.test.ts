@@ -15,6 +15,7 @@ describe("stage-config", () => {
     const pipelineSlugs = getPipelineStages().map((stage) => stage.slug)
     expect(pipelineSlugs).toEqual([
       "extract",
+      "sectioning",
       "storyboard",
       "quizzes",
       "captions",
@@ -30,6 +31,7 @@ describe("stage-config", () => {
     const overviewSlugs = getBookOverviewStages().map((stage) => stage.slug)
     expect(overviewSlugs).toEqual([
       "extract",
+      "sectioning",
       "storyboard",
       "quizzes",
       "captions",

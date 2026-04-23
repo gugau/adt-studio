@@ -51,7 +51,7 @@
   --animate-btn-final-enter: btn-final-enter 0.38s cubic-bezier(0.22, 1, 0.36, 1);
   --animate-btn-label-enter: btn-label-enter 0.22s cubic-bezier(0.22, 1, 0.36, 1);
   --animate-btn-final-enter: btn-final-enter 0.38s cubic-bezier(0.22, 1, 0.36, 1);
-  --animate-chip-enter: chip-enter 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-count-pulse: count-pulse 0.3s ease-out;
   --animate-sentence-enter: sentence-enter 0.25s cubic-bezier(0.22, 1, 0.36, 1);
   --animate-step-enter-forward: step-enter-forward 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   --animate-step-enter-back: step-enter-back 0.3s cubic-bezier(0.22, 1, 0.36, 1);
@@ -146,13 +146,14 @@
   }
 }
 
-@keyframes chip-enter {
-  from {
-    opacity: 0;
-    transform: scale(0.88);
+@keyframes count-pulse {
+  0% {
+    transform: scale(1);
   }
-  to {
-    opacity: 1;
+  40% {
+    transform: scale(1.15);
+  }
+  100% {
     transform: scale(1);
   }
 }

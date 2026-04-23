@@ -271,8 +271,8 @@ describe("classifyPageImages", () => {
 describe("buildImageClassifyConfig", () => {
   it("extracts image_filters from AppConfig", () => {
     const appConfig: AppConfig = {
-      text_types: { heading: "Heading" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { heading: "Heading" },
+      structure_types: { paragraph: "Paragraph" },
       image_filters: { min_side: 50, max_side: 3000 },
     }
 
@@ -282,8 +282,8 @@ describe("buildImageClassifyConfig", () => {
 
   it("defaults to empty filters when image_filters not set", () => {
     const appConfig: AppConfig = {
-      text_types: { heading: "Heading" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { heading: "Heading" },
+      structure_types: { paragraph: "Paragraph" },
     }
 
     const config = buildImageClassifyConfig(appConfig)
