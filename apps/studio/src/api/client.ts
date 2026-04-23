@@ -49,11 +49,32 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   })
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({ error: res.statusText }))
-    throw new Error(body.error ?? `Request failed: ${res.status}`)
+    const text = await res.text().catch(() => "")
+    let message: string | undefined
+    try {
+      message = (JSON.parse(text) as { error?: string }).error
+    } catch {
+      message = text || undefined
+    }
+    throw new Error(message ?? `Request failed: ${res.status}`)
   }
 
   return res.json()
+}
+
+export interface ImportPreview {
+  label: string
+  title: string | null
+  authors: string[]
+  publisher: string | null
+  languageCode: string | null
+  pageCount: number
+  hasSourcePdf: boolean
+  imageCount: number
+  videoCount: number
+  coverBase64: string | null
+  stages: Record<string, { status: string; stepCount: number; doneCount: number }>
+  validationError: string | null
 }
 
 export interface AzureCredentials {
@@ -500,6 +521,24 @@ export const api = {
 
   deleteBook: (label: string) =>
     request<{ ok: boolean }>(`/books/${label}`, { method: "DELETE" }),
+
+  previewImport: (zip: File) => {
+    const formData = new FormData()
+    formData.append("zip", zip)
+    return request<ImportPreview>("/books/preview-import", {
+      method: "POST",
+      body: formData,
+    })
+  },
+
+  importBook: (zip: File) => {
+    const formData = new FormData()
+    formData.append("zip", zip)
+    return request<BookSummary>("/books/import", {
+      method: "POST",
+      body: formData,
+    })
+  },
 
   runStages: (
     label: string,
@@ -1013,18 +1052,26 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-  prepareExport: (label: string, format: "book" | "webpub" | "scorm" = "book") =>
-    request<{ taskId?: string; status: string; label: string }>(
+  prepareExport: (
+    label: string,
+    format: "project" | "webpub" | "scorm" | "adt" = "project",
+    features?: { glossary?: boolean; readAloud?: boolean; quizzes?: boolean; signLanguage?: boolean; languages?: string[] }
+  ) => {
+    return request<{ taskId?: string; status: string; label: string }>(
       `/books/${label}/prepare-export?format=${format}`,
-      { method: "POST" }
-    ),
+      {
+        method: "POST",
+        body: features ? JSON.stringify({ features }) : undefined,
+      }
+    )
+  },
 
-  exportBook: async (label: string): Promise<Blob | null> => {
+  exportProject: async (label: string): Promise<Blob | null> => {
     if (!isTauri()) {
-      triggerDirectDownload(`${BASE_URL}/books/${label}/export`)
+      triggerDirectDownload(`${BASE_URL}/books/${label}/export-project`)
       return null
     }
-    const url = `${BASE_URL}/books/${label}/export`
+    const url = `${BASE_URL}/books/${label}/export-project`
     const res = await fetch(url, {
       method: "GET",
       headers: { Accept: "application/zip" },
@@ -1074,6 +1121,26 @@ export const api = {
     if (!res.ok) {
       const body = await res.json().catch(() => ({ error: res.statusText }))
       throw new Error(body.error ?? `SCORM export failed: ${res.status}`)
+    }
+    const buf = await res.arrayBuffer()
+    return new Blob([buf], { type: "application/zip" })
+  },
+
+  exportAdt: async (label: string): Promise<Blob | null> => {
+    if (!isTauri()) {
+      triggerDirectDownload(`${BASE_URL}/books/${label}/export-adt`)
+      return null
+    }
+    const url = `${BASE_URL}/books/${label}/export-adt`
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/zip" },
+      mode: "cors",
+      signal: AbortSignal.timeout(1_800_000),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ error: res.statusText }))
+      throw new Error(body.error ?? `ADT export failed: ${res.status}`)
     }
     const buf = await res.arrayBuffer()
     return new Blob([buf], { type: "application/zip" })

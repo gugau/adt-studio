@@ -10,6 +10,7 @@ import {
   User,
   Globe,
   Pencil,
+  Upload,
   Search,
   CalendarPlus,
   Clock,
@@ -459,6 +460,12 @@ function HomePage() {
             )}
           </h2>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/books/import" className="gap-1.5 text-muted-foreground">
+                <Upload className="h-3.5 w-3.5" />
+                <Trans>Import project</Trans>
+              </Link>
+            </Button>
             {totalBooks > 1 && (
               <div className="relative">
                 <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />

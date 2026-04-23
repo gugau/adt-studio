@@ -4,3 +4,10 @@ import { twMerge } from "tailwind-merge"
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+export function formatBytes(bytes: number): string {
+  /* eslint-disable-next-line lingui/no-unlocalized-strings */
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+  /* eslint-disable-next-line lingui/no-unlocalized-strings */
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}

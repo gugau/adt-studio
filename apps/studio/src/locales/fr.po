@@ -188,11 +188,17 @@ msgstr "il y a {0} s"
 msgid "{bytes} B"
 msgstr "{bytes} B"
 
+msgid "{count} translations"
+msgstr "{count} traductions"
+
 msgid "{countSummary} this page"
 msgstr "{countSummary} cette page"
 
 msgid "{elapsed}s"
 msgstr "{elapsed}s"
+
+msgid "{generatedFeatureCount} of 6 features generated"
+msgstr "{generatedFeatureCount} sur 6 fonctionnalités générées"
 
 msgid "{imageCount} images"
 msgstr "{imageCount} images"
@@ -206,6 +212,9 @@ msgstr "{issuesLabel}, {reviewLabel}"
 
 msgid "{missingAudioCount} missing"
 msgstr "{missingAudioCount} manquant"
+
+msgid "{pageCount} pages"
+msgstr "{pageCount} pages"
 
 msgid "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
 msgstr "{regionCount} {regionCount, plural, one {region} other {regions}} détectée(s)"
@@ -300,6 +309,9 @@ msgstr "Un scénarimage doit être construit avant l'exportation."
 
 msgid "A storyboard must be built before running validation."
 msgstr "Un scénarimage doit être construit avant d'exécuter la validation."
+
+msgid "A structured table of contents lets readers jump directly to any section, which is especially important for keyboard and assistive technology users."
+msgstr "Un sommaire structuré permet aux lecteurs d'accéder directement à n'importe quelle section, ce qui est particulièrement important pour les utilisateurs de claviers et de technologies d'assistance."
 
 msgid "A style guide provides consistent HTML and CSS patterns that the LLM uses when generating pages. It controls typography, colors, spacing, and component styles so every page in your book has a unified look."
 msgstr "Un guide de style fournit des modèles HTML et CSS cohérents que le LLM utilise lors de la génération des pages. Il contrôle la typographie, les couleurs, l'espacement et les styles de composants afin que chaque page de votre livre ait un aspect unifié."
@@ -511,8 +523,8 @@ msgstr "ADT Livre"
 msgid "ADT Book - {0}"
 msgstr "ADT Livre - {0}"
 
-msgid "ADT Export"
-msgstr "ADT Exporter"
+msgid "ADT Package"
+msgstr "Paquet ADT"
 
 msgid "Adventure Tales - Vol. 1"
 msgstr "Adventure Tales - Vol. 1"
@@ -647,6 +659,9 @@ msgstr "Appliquer page background colors"
 msgid "Apply Segmentation"
 msgstr "Appliquer Segmentation"
 
+msgid "Archive contents"
+msgstr "Contenu de l'archive"
+
 #. placeholder {0}: confirmMerge?.label ?? ""
 msgid "Are you sure you want to {0}? This action cannot be undone."
 msgstr "Êtes-vous sûr de vouloir {0} ? Cette action est irréversible."
@@ -686,6 +701,9 @@ msgstr "Ressource"
 
 msgid "Assign to section..."
 msgstr "Assigner à une section..."
+
+msgid "Audio narration (largest impact on file size)"
+msgstr "Narration audio (impact majeur sur la taille du fichier)"
 
 msgid "Author"
 msgstr "Auteur"
@@ -731,6 +749,9 @@ msgstr "Retour à l'éditeur"
 
 msgid "Back to preview"
 msgstr "Retour à l'aperçu"
+
+msgid "Back up or transfer the full project including the database, PDF, and all pipeline outputs."
+msgstr "Sauvegardez ou transférez le projet complet, y compris la base de données, le PDF et tous les résultats du pipeline."
 
 msgid "Background"
 msgstr "Arrière-plan"
@@ -787,6 +808,9 @@ msgstr "Livre"
 
 msgid "Book data is outdated and must be rebuilt."
 msgstr "Les données du livre sont obsolètes et doivent être reconstruites."
+
+msgid "Book info"
+msgstr "Infos du livre"
 
 msgid "Book Language"
 msgstr "Livre Langue"
@@ -917,6 +941,9 @@ msgstr "Choisir a Preset"
 msgid "Choose an existing image from this project"
 msgstr "Choisissez une image existante de ce projet"
 
+msgid "Choose features to include in this export"
+msgstr "Choisissez les fonctionnalités à inclure dans cette exportation"
+
 msgid "Choose how the content should be formatted."
 msgstr "Choisissez comment le contenu doit être formaté."
 
@@ -1034,6 +1061,9 @@ msgstr "Configurez les clés API pour les fonctionnalités du pipeline IA."
 msgid "Configure basic document information and file paths"
 msgstr "Configurez les informations de base du document et les chemins de fichiers"
 
+msgid "Configure features to include in the export"
+msgstr "Configurer les fonctionnalités à inclure dans l'exportation"
+
 msgid "Confirm merge"
 msgstr "Confirmer la fusion"
 
@@ -1097,6 +1127,9 @@ msgstr "Couverture"
 msgid "Cover of {title}"
 msgstr "Couverture de {title}"
 
+msgid "Create a new book from a PDF"
+msgstr "Créer un nouveau livre à partir d'un PDF"
+
 msgid "Create a new image from a text description"
 msgstr "Créer une nouvelle image à partir d'une description textuelle"
 
@@ -1117,6 +1150,9 @@ msgstr "Créer une session"
 
 msgid "Created {createdLabel}"
 msgstr "Créé le {createdLabel}"
+
+msgid "Creates a ZIP archive of the full project — database, source PDF, and all pipeline outputs. Use it to back up or transfer the project to another machine."
+msgstr "Crée une archive ZIP du projet complet — base de données, PDF source et tous les résultats du pipeline. Utilisez-le pour sauvegarder ou transférer le projet vers une autre machine."
 
 msgid "Creating..."
 msgstr "Création..."
@@ -1330,6 +1366,12 @@ msgstr "Abandonner"
 msgid "Display"
 msgstr "Affichage"
 
+msgid "Don't have a project yet?"
+msgstr "Vous n'avez pas encore de projet ?"
+
+msgid "Download a full backup of this project"
+msgstr "Télécharger une sauvegarde complète de ce projet"
+
 msgid "Drag to move"
 msgstr "Glisser pour déplacer"
 
@@ -1347,6 +1389,9 @@ msgstr "Glissez les sommets pour remodeler. Cliquez sur les points médians (+) 
 
 msgid "Drop PDF here"
 msgstr "Drop PDF ici"
+
+msgid "Drop ZIP here"
+msgstr "Déposez le ZIP ici"
 
 msgid "Duplicate"
 msgstr "Dupliquer"
@@ -1530,26 +1575,11 @@ msgstr "Expiration"
 msgid "Export"
 msgstr "Exporter"
 
-msgid "Export ADT"
-msgstr "Exporter ADT"
-
-msgid "Export as a SCORM 1.2 package for upload to a Learning Management System (LMS). Includes activity completion tracking and offline support."
-msgstr "Exporter en tant que package SCORM 1.2 pour le téléversement vers un système de gestion de l'apprentissage (LMS). Inclut le suivi de complétion des activités et le support hors ligne."
+msgid "Export Options"
+msgstr "Options d'exportation"
 
 msgid "Export preparation failed"
 msgstr "La préparation de l'exportation a échoué"
-
-msgid "Export SCORM"
-msgstr "Exporter SCORM"
-
-msgid "Export the book as a Readium WebPub package — a standards-based format for distributing digital publications on the web. Suitable for reading systems that support the Readium Web Publication Manifest specification."
-msgstr "Exportez le livre sous forme de package Readium WebPub — un format standardisé pour la distribution de publications numériques sur le web. Adapté aux systèmes de lecture prenant en charge la spécification Readium Web Publication Manifest."
-
-msgid "Export the complete Accessible Digital Textbook as a ZIP archive. Includes all HTML pages, images, audio files, quizzes, and the compiled web application — ready to upload to a distribution platform or open locally."
-msgstr "Exportez le manuel numérique accessible complet sous forme d'archive ZIP. Inclut toutes les pages HTML, images, fichiers audio, quiz et l'application web compilée — prêt à être téléversé sur une plateforme de distribution ou ouvert localement."
-
-msgid "Export WebPub"
-msgstr "Exporter WebPub"
 
 msgid "Exporting..."
 msgstr "Exportation..."
@@ -1614,6 +1644,9 @@ msgstr "Échec du chargement des statistiques :"
 msgid "Failed to load validation checklist:"
 msgstr "Échec du chargement de la liste de contrôle de validation :"
 
+msgid "Failed to read archive"
+msgstr "Échec de la lecture de l'archive"
+
 msgid "Failed:"
 msgstr "Échoué :"
 
@@ -1628,6 +1661,9 @@ msgstr "Figure 5.1 - Le cycle de l'eau : évaporation depuis les océans, conden
 
 msgid "Figure Extraction"
 msgstr "Extraction de figures"
+
+msgid "File accepted"
+msgstr "Fichier accepté"
 
 #~ msgid "Fill in the Blank"
 #~ msgstr "Fill dans le Blank"
@@ -1652,6 +1688,9 @@ msgstr "Page finale"
 
 msgid "First"
 msgstr "Premier"
+
+msgid "First language is the default"
+msgstr "La première langue est la langue par défaut"
 
 msgid "Fixed two-column template layout"
 msgstr "Mise en page fixe à deux colonnes"
@@ -1693,6 +1732,9 @@ msgstr "À partir de l'image de référence..."
 
 msgid "Front Cover"
 msgstr "Première de couverture"
+
+msgid "Full ADT bundle — HTML pages, images, audio, quizzes, and the compiled web app."
+msgstr "Pack complet ADT — pages HTML, images, audio, quiz et application web compilée."
 
 msgid "Full control over render strategies, pruning, and filters."
 msgstr "Contrôle total sur les stratégies de rendu, l'élagage et les filtres."
@@ -1919,6 +1961,9 @@ msgstr "Image indisponible"
 msgid "Image upload failed"
 msgstr "Le téléversement de l'image a échoué"
 
+msgid "images"
+msgstr "images"
+
 msgid "Images"
 msgstr "Images"
 
@@ -1936,6 +1981,21 @@ msgstr "Les images plus petites que votre dimension minimale ne passent pas par 
 
 msgid "Images with shortest side below min or longest side above max are pruned."
 msgstr "Les images dont le côté le plus court est inférieur au minimum ou le côté le plus long supérieur au maximum sont élaguées."
+
+msgid "Import"
+msgstr "Importer"
+
+msgid "Import a Project"
+msgstr "Importer un projet"
+
+msgid "Import project"
+msgstr "Importer le projet"
+
+msgid "Import Project"
+msgstr "Importer le projet"
+
+msgid "Importing..."
+msgstr "Importation..."
 
 msgid "In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
 msgstr "Si vous ne souhaitez pas convertir le livre entier, ajustez les curseurs pour définir quelles pages seront numérisées."
@@ -1969,6 +2029,12 @@ msgstr "Institution"
 
 msgid "Interactive"
 msgstr "Interactif"
+
+msgid "Interactive assessment questions"
+msgstr "Questions d'évaluation interactives"
+
+msgid "Invalid project archive"
+msgstr "Archive de projet invalide"
 
 msgid "Isolated asset"
 msgstr "Ressource isolée"
@@ -2028,6 +2094,9 @@ msgstr "Langue-Specific Invites"
 
 msgid "Languages"
 msgstr "Langues"
+
+msgid "Large"
+msgstr "Grand"
 
 msgid "Large enough"
 msgstr "Assez grand"
@@ -2203,8 +2272,14 @@ msgstr "Chargement..."
 msgid "Loading…"
 msgstr "Chargement…"
 
+msgid "Lookup definitions for key terms"
+msgstr "Rechercher les définitions des termes clés"
+
 msgid "Lower values produce more consistent styling across pages."
 msgstr "Les valeurs plus basses produisent un style plus cohérent entre les pages."
+
+msgid "Make sure you're uploading a .zip file exported from ADT Studio."
+msgstr "Assurez-vous de télécharger un fichier .zip exporté depuis ADT Studio."
 
 msgid "Manual review"
 msgstr "Révision manuelle"
@@ -2425,6 +2500,9 @@ msgstr "Aucune légende pour cette page"
 msgid "No changes flagged on this page"
 msgstr "Aucune modification signalée sur cette page"
 
+msgid "No cover available"
+msgstr "Pas de couverture disponible"
+
 msgid "No data"
 msgstr "Aucune donnée"
 
@@ -2578,6 +2656,9 @@ msgstr "Aucun"
 msgid "Not detected"
 msgstr "Non détecté"
 
+msgid "Not generated"
+msgstr "Non généré"
+
 msgid "Not reviewed"
 msgstr "Non révisé"
 
@@ -2613,6 +2694,9 @@ msgstr "Seules les pages contenant ces types de sections sont comptabilisées lo
 
 msgid "Only PDF files are supported"
 msgstr "Seuls les fichiers PDF sont pris en charge"
+
+msgid "Only ZIP files are supported"
+msgstr "Seuls les fichiers ZIP sont pris en charge"
 
 msgid "Open a page in Preview to show its page-specific accessibility findings here."
 msgstr "Ouvrez une page dans l'aperçu pour afficher les résultats d'accessibilité spécifiques à la page ici."
@@ -2650,6 +2734,9 @@ msgstr "Clé OpenAI requise"
 msgid "OpenAI Voice"
 msgstr "OpenAI Voix"
 
+msgid "Optional Features"
+msgstr "Fonctionnalités optionnelles"
+
 msgid "Optional instructions for the LLM..."
 msgstr "Instructions facultatives pour le LLM..."
 
@@ -2686,6 +2773,9 @@ msgstr "Autres images"
 
 msgid "Other options"
 msgstr "Autres options"
+
+msgid "Output languages"
+msgstr "Langues de sortie"
 
 msgid "Output Languages"
 msgstr "Langues de sortie"
@@ -2841,6 +2931,9 @@ msgstr "Choisissez une approche de mise en page."
 msgid "Picture books and early readers"
 msgstr "Albums illustrés et premières lectures"
 
+msgid "Pipeline features"
+msgstr "Fonctionnalités du pipeline"
+
 msgid "Pipeline Stages"
 msgstr "Étapes du pipeline"
 
@@ -2888,6 +2981,9 @@ msgstr "Diapositive précédente"
 
 msgid "Processing metadata…"
 msgstr "Traitement des métadonnées…"
+
+msgid "Project Archive"
+msgstr "Archive du projet"
 
 msgid "Project Name"
 msgstr "Nom du projet"
@@ -3003,6 +3099,12 @@ msgstr "Relancer la traduction"
 msgid "Readers see"
 msgstr "Les lecteurs voient"
 
+msgid "Reading archive..."
+msgstr "Lecture de l'archive..."
+
+msgid "Readium Web Publication format for standards-based digital distribution platforms."
+msgstr "Format de publication Web Readium pour les plateformes de distribution numérique basées sur des normes."
+
 msgid "Real books processed with this preset — before and after."
 msgstr "De vrais livres traités avec ce préréglage — avant et après."
 
@@ -3060,6 +3162,9 @@ msgstr "Retirer l'élément de liste de contrôle"
 
 msgid "Remove entry"
 msgstr "Retirer entrée"
+
+msgid "Remove file"
+msgstr "Supprimer le fichier"
 
 msgid "Remove from group"
 msgstr "Retirer du groupe"
@@ -3157,6 +3262,9 @@ msgstr "Révisez une session à la fois pour inspecter la couverture des pages e
 
 msgid "Review progress"
 msgstr "Progression de la révision"
+
+msgid "Review the project details below and confirm the import."
+msgstr "Vérifiez les détails du projet ci-dessous et confirmez l'importation."
 
 msgid "Reviewer checklist"
 msgstr "Liste de contrôle du réviseur"
@@ -3295,6 +3403,9 @@ msgstr "Exportation SCORM"
 
 msgid "SCORM Package"
 msgstr "SCORM Package"
+
+msgid "Screen readers cannot interpret images without text alternatives. Adding captions ensures blind and low-vision readers understand every illustration."
+msgstr "Les lecteurs d'écran ne peuvent pas interpréter les images sans alternatives textuelles. Ajouter des légendes garantit que les lecteurs aveugles et malvoyants comprennent chaque illustration."
 
 msgid "Search books"
 msgstr "Rechercher des livres"
@@ -3534,6 +3645,12 @@ msgstr "Afficher:"
 
 msgid "Sign Language"
 msgstr "Langue des signes"
+
+msgid "Sign language video overlays for each page"
+msgstr "Superpositions vidéo en langue des signes pour chaque page"
+
+msgid "Sign language videos provide access for deaf and hard of hearing readers who may not be fluent in written language."
+msgstr "Les vidéos en langue des signes offrent un accès aux lecteurs sourds et malentendants qui peuvent ne pas être à l'aise avec la langue écrite."
 
 msgid "Single"
 msgstr "Simple"
@@ -3817,6 +3934,9 @@ msgstr "L'instruction TTS par défaut envoyée à OpenAI pour toutes les langues
 msgid "The entire page is treated as a single section - all text and images stay together as one unit. Best for storybooks, reference books, and any content where each page is self-contained."
 msgstr "La page entière est traitée comme une seule section — tout le texte et les images restent ensemble en une seule unité. Idéal pour les livres d'histoires, les ouvrages de référence et tout contenu où chaque page est autonome."
 
+msgid "The file may be damaged or incomplete. Try downloading it again from the source."
+msgstr "Le fichier peut être endommagé ou incomplet. Essayez de le télécharger à nouveau depuis la source."
+
 msgid "The following terms are used throughout this manual. Familiarity with these definitions is required before proceeding to the implementation chapters."
 msgstr "Les termes suivants sont utilisés tout au long de ce manuel. La connaissance de ces définitions est requise avant de passer aux chapitres de mise en œuvre."
 
@@ -3886,8 +4006,14 @@ msgstr "La table des matières."
 msgid "The Water Cycle"
 msgstr "Le cycle de l'eau"
 
+msgid "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."
+msgstr "Ces fonctionnalités améliorent l'accès pour les personnes handicapées. Les exécuter avant l'exportation aide votre livre à respecter les normes d'accessibilité ADT."
+
 msgid "These values reflect either the saved book override or the latest packaged defaults."
 msgstr "Ces valeurs reflètent soit le remplacement enregistré du livre, soit les valeurs par défaut du dernier empaquetage."
+
+msgid "This file couldn't be read as a ZIP archive"
+msgstr "Ce fichier n'a pas pu être lu comme une archive ZIP"
 
 msgid "This is a preview of the options you have selected for your book, each option affects the preview in a different way."
 msgstr "Ceci est un aperçu des options que vous avez sélectionnées pour votre livre. Chaque option affecte l'aperçu de manière différente."
@@ -3994,6 +4120,9 @@ msgstr "Jetons totaux"
 msgid "Track reviewer progress and review findings captured from Preview."
 msgstr "Suivez la progression du réviseur et les résultats de révision capturés depuis l'aperçu."
 
+msgid "Translate"
+msgstr "Traduire"
+
 msgid "Translate the book content to output languages."
 msgstr "Traduisez le contenu du livre vers les langues de sortie."
 
@@ -4017,6 +4146,9 @@ msgstr "Traite chaque page comme une seule section."
 
 msgid "Try Activity"
 msgstr "Essayer l'activité"
+
+msgid "Try another file"
+msgstr "Essayez un autre fichier"
 
 msgid "Turn this on to show the Validation review card in Preview and the Reviewer Validation tab in the Validation step."
 msgstr "Activez cette option pour afficher la carte de révision Validation dans l'Aperçu et l'onglet Validation du réviseur dans l'étape Validation."
@@ -4117,6 +4249,9 @@ msgstr "Téléversez un PDF pour commencer"
 msgid "Upload a PDF to preview its pages here."
 msgstr "Téléversez un PDF pour prévisualiser ses pages ici."
 
+msgid "Upload an ADT Studio project archive (.zip) exported by you or shared by a colleague."
+msgstr "Téléchargez une archive de projet ADT Studio (.zip) exportée par vous ou partagée par un collègue."
+
 msgid "Upload and assign sign language videos to book pages."
 msgstr "Téléversez et assignez des vidéos en langue des signes aux pages du livre."
 
@@ -4140,6 +4275,12 @@ msgstr "Téléversez des vidéos en langue des signes et assignez-les aux sectio
 
 msgid "Upload Style Guide"
 msgstr "Téléverser un guide de style"
+
+msgid "Upload to an LMS as a SCORM 1.2 package with completion tracking and offline support."
+msgstr "Téléchargez vers un LMS en tant que package SCORM 1.2 avec suivi de l'achèvement et support hors ligne."
+
+msgid "Upload ZIP or drag and drop"
+msgstr "Téléchargez le ZIP ou glissez-déposez"
 
 msgid "Uploading..."
 msgstr "Téléversement..."
@@ -4185,6 +4326,12 @@ msgstr "Application vérifiée"
 msgid "Version {0}"
 msgstr "Version {0}"
 
+msgid "video"
+msgstr "vidéo"
+
+msgid "videos"
+msgstr "vidéos"
+
 msgid "View HTML source"
 msgstr "Voir le code source HTML"
 
@@ -4226,6 +4373,9 @@ msgstr ""
 "wcag2a\n"
 "wcag2aa\n"
 "best-practice"
+
+msgid "Web Export"
+msgstr "Exportation Web"
 
 msgid "Web Package"
 msgstr "Package web"
@@ -4280,6 +4430,3 @@ msgstr "fiction jeune adulte"
 
 msgid "Your Books"
 msgstr "Vos livres"
-
-msgid "ZIP Archive"
-msgstr "Archive ZIP"

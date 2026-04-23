@@ -34,6 +34,12 @@ export interface PackageAdtWebOptions {
   webAssetsDir: string
   bundleVersion?: string
   applyBodyBackground?: boolean
+  features?: {
+    glossary?: boolean
+    readAloud?: boolean
+    quizzes?: boolean
+    signLanguage?: boolean
+  }
 }
 
 interface PageEntry {
@@ -134,6 +140,7 @@ export async function packageAdtWeb(
     webAssetsDir,
     bundleVersion = "1",
     applyBodyBackground,
+    features,
   } = options
   const language = normalizeLocale(rawLanguage)
   const outputLanguages = Array.from(new Set(rawOutputLanguages.map((code) => normalizeLocale(code))))
@@ -196,7 +203,7 @@ export async function packageAdtWeb(
 
   // Build a map from afterPageId -> quizzes for interleaving
   const quizzesByAfterPageId = new Map<string, Quiz[]>()
-  if (quizData?.quizzes) {
+  if ((features?.quizzes !== false) && quizData?.quizzes) {
     for (const quiz of quizData.quizzes) {
       const existing = quizzesByAfterPageId.get(quiz.afterPageId) ?? []
       existing.push(quiz)
@@ -418,25 +425,28 @@ export async function packageAdtWeb(
     writeJson(path.join(localeDir, "texts.json"), textsMap)
 
     // audios.json + copy audio files
-    const audioDir = path.join(localeDir, "audio")
-    fs.mkdirSync(audioDir, { recursive: true })
-
-    const legacyLang = lang.replace("-", "_")
-    const ttsRow =
-      storage.getLatestNodeData("tts", lang) ??
-      storage.getLatestNodeData("tts", legacyLang)
-    const ttsData = ttsRow?.data as TTSOutput | undefined
     const audioMap: Record<string, string> = {}
 
-    if (ttsData?.entries) {
-      for (const entry of ttsData.entries) {
-        const srcFile = path.join(bookDir, "audio", lang, entry.fileName)
-        const legacySrcFile = path.join(bookDir, "audio", legacyLang, entry.fileName)
-        const resolvedSrcFile = fs.existsSync(srcFile) ? srcFile : legacySrcFile
-        if (fs.existsSync(resolvedSrcFile)) {
-          const destFile = path.join(audioDir, entry.fileName)
-          fs.copyFileSync(resolvedSrcFile, destFile)
-          audioMap[entry.textId] = entry.fileName
+    if (features?.readAloud !== false) {
+      const audioDir = path.join(localeDir, "audio")
+      fs.mkdirSync(audioDir, { recursive: true })
+
+      const legacyLang = lang.replace("-", "_")
+      const ttsRow =
+        storage.getLatestNodeData("tts", lang) ??
+        storage.getLatestNodeData("tts", legacyLang)
+      const ttsData = ttsRow?.data as TTSOutput | undefined
+
+      if (ttsData?.entries) {
+        for (const entry of ttsData.entries) {
+          const srcFile = path.join(bookDir, "audio", lang, entry.fileName)
+          const legacySrcFile = path.join(bookDir, "audio", legacyLang, entry.fileName)
+          const resolvedSrcFile = fs.existsSync(srcFile) ? srcFile : legacySrcFile
+          if (fs.existsSync(resolvedSrcFile)) {
+            const destFile = path.join(audioDir, entry.fileName)
+            fs.copyFileSync(resolvedSrcFile, destFile)
+            audioMap[entry.textId] = entry.fileName
+          }
         }
       }
     }
@@ -445,39 +455,42 @@ export async function packageAdtWeb(
     // videos.json — map "video-{pageIndex}" → video filename for assigned sign language videos
     // The ADT JS runtime expects keys prefixed with "video-" and files in a "video/" directory.
     // Each video is assigned to a sectionId which maps 1:1 to a pageIndex.
-    const allVideos = storage.getSignLanguageVideos()
     const videosMap: Record<string, string> = {}
-    const videoDir = path.join(localeDir, "video")
-    if (allVideos.some((v) => v.sectionId)) {
-      fs.mkdirSync(videoDir, { recursive: true })
-      for (const video of allVideos) {
-        if (!video.sectionId) continue
-        const ext = video.mimeType === "video/webm" ? ".webm" : ".mp4"
-        // Use section-based naming (e.g. sl_pg001_sec001.mp4) matching audio file conventions
-        const filename = `sl_${video.sectionId}${ext}`
-        const srcPath = storage.getSignLanguageVideoPath(video.videoId)
-        if (srcPath && fs.existsSync(srcPath)) {
-          fs.copyFileSync(srcPath, path.join(videoDir, filename))
-          const idx = sectionIdToPageIndex.get(video.sectionId)
-          if (idx !== undefined) {
-            videosMap[`video-${idx}`] = filename
+    if (features?.signLanguage !== false) {
+      const allVideos = storage.getSignLanguageVideos()
+      const videoDir = path.join(localeDir, "video")
+      if (allVideos.some((v) => v.sectionId)) {
+        fs.mkdirSync(videoDir, { recursive: true })
+        for (const video of allVideos) {
+          if (!video.sectionId) continue
+          const ext = video.mimeType === "video/webm" ? ".webm" : ".mp4"
+          // Use section-based naming (e.g. sl_pg001_sec001.mp4) matching audio file conventions
+          const filename = `sl_${video.sectionId}${ext}`
+          const srcPath = storage.getSignLanguageVideoPath(video.videoId)
+          if (srcPath && fs.existsSync(srcPath)) {
+            fs.copyFileSync(srcPath, path.join(videoDir, filename))
+            const idx = sectionIdToPageIndex.get(video.sectionId)
+            if (idx !== undefined) {
+              videosMap[`video-${idx}`] = filename
+            }
           }
         }
       }
     }
     writeJson(path.join(localeDir, "videos.json"), videosMap)
 
-    // glossary.json
-    const glossaryJson = buildGlossaryJson(glossary, catalog, textsMap, baseLang === sourceLanguage)
-    writeJson(path.join(localeDir, "glossary.json"), glossaryJson)
+    if (features?.glossary !== false) {
+      const glossaryJson = buildGlossaryJson(glossary, catalog, textsMap, baseLang === sourceLanguage)
+      writeJson(path.join(localeDir, "glossary.json"), glossaryJson)
+    }
   }
 
   // ------------------------------------------------------------------
   // config.json
   // ------------------------------------------------------------------
-  const hasGlossary = glossary !== undefined && glossary.items.length > 0
-  const hasQuiz = quizData !== undefined && quizData.quizzes.length > 0
-  const hasTTS = outputLanguages.some(
+  const hasGlossary = (features?.glossary !== false) && (glossary !== undefined && glossary.items.length > 0)
+  const hasQuiz = (features?.quizzes !== false) && (quizData !== undefined && quizData.quizzes.length > 0)
+  const hasTTS = (features?.readAloud !== false) && outputLanguages.some(
     (lang) => {
       const legacyLang = lang.replace("-", "_")
       return (
@@ -487,7 +500,7 @@ export async function packageAdtWeb(
     },
   )
 
-  const hasSignLanguageVideos = storage.getSignLanguageVideos().some((v) => v.sectionId !== null)
+  const hasSignLanguageVideos = (features?.signLanguage !== false) && storage.getSignLanguageVideos().some((v) => v.sectionId !== null)
 
   const configJson = {
     title,
