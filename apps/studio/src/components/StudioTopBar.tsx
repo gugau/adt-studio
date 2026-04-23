@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react"
 import { Link } from "@tanstack/react-router"
-import { Home, Settings } from "lucide-react"
+import { Home, HelpCircle, Settings } from "lucide-react"
 import { useLingui } from "@lingui/react/macro"
 import { Button } from "@/components/ui/button"
 import { LocaleSwitcher } from "@/components/LocaleSwitcher"
@@ -73,6 +73,17 @@ export function StudioTopBar({ brandLinksHome = false, trailingTitle }: StudioTo
         className="ml-auto flex items-center gap-1.5 pr-2 no-drag"
         style={NO_DRAG_REGION}
       >
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-10 w-10 shrink-0 text-white/70 hover:text-white hover:bg-gray-600"
+          title={t`How it works`}
+          asChild
+        >
+          <Link to="/onboarding">
+            <HelpCircle className="h-3.5 w-3.5" />
+          </Link>
+        </Button>
         <LocaleSwitcher />
         <Button
           variant="ghost"

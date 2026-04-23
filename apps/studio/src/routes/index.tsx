@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { createFileRoute, Link, redirect } from "@tanstack/react-router"
+import { hasCompletedOnboarding } from "@/hooks/use-onboarding"
 import {
   Plus,
   ArrowRight,
@@ -130,6 +131,11 @@ function useFlipList<T>(
 }
 
 export const Route = createFileRoute("/")({
+  beforeLoad: () => {
+    if (typeof window !== "undefined" && !hasCompletedOnboarding()) {
+      throw redirect({ to: "/onboarding" })
+    }
+  },
   component: HomePage,
 })
 

@@ -243,6 +243,9 @@ msgstr "/ Seção {0}"
 msgid "="
 msgstr "="
 
+msgid "● LIVE"
+msgstr "● AO VIVO"
+
 msgid "0 = deterministic, 2 = max creativity"
 msgstr "0 = determinístico, 2 = criatividade máxima"
 
@@ -258,8 +261,32 @@ msgstr "1 imagem selecionada"
 msgid "1 item needs changes on this page"
 msgstr "1 item needs changes on this page"
 
+msgid "14.2 kB"
+msgstr "14,2 kB"
+
+msgid "14.2 MB"
+msgstr "14,2 MB"
+
+msgid "18 scenes"
+msgstr "18 cenas"
+
+msgid "238 pages · 14.2 MB"
+msgstr "238 páginas · 14,2 MB"
+
+msgid "238 pp"
+msgstr "238 pp"
+
 msgid "3.2.1 — Authentication Methods"
 msgstr "3.2.1 — Métodos de Autenticação"
+
+msgid "36 spreads"
+msgstr "36 páginas duplas"
+
+msgid "42 figs"
+msgstr "42 figs"
+
+msgid "72 panels"
+msgstr "72 painéis"
 
 msgid "A book with this name already exists."
 msgstr "Um livro com este nome já existe."
@@ -272,6 +299,9 @@ msgstr "Uma atividade de correspondência onde os alunos conectam itens relacion
 
 msgid "A multiple choice activity."
 msgstr "Uma atividade de múltipla escolha."
+
+msgid "A scenic view at dusk."
+msgstr "Uma vista cênica ao entardecer."
 
 msgid "A section containing only images."
 msgstr "Uma seção contendo apenas imagens."
@@ -363,6 +393,12 @@ msgstr "Accessibility results are temporarily unavailable."
 
 msgid "Accessibility Summary"
 msgstr "Accessibility Summary"
+
+msgid "Accessibility, from the first <0>page.</0>"
+msgstr "Acessibilidade, desde a primeira <0>página.</0>"
+
+msgid "Accessible book"
+msgstr "Livro acessível"
 
 msgid "Actions disabled while storyboard is running"
 msgstr "Ações desabilitadas enquanto o storyboard está em execução"
@@ -515,6 +551,9 @@ msgstr "Idiomas adicionais"
 msgid "Additional terminology may be introduced in later sections. All terms are listed in the glossary appendix at the end of this document for quick reference."
 msgstr "Terminologia adicional pode ser introduzida em seções posteriores. Todos os termos estão listados no apêndice do glossário no final deste documento para referência rápida."
 
+msgid "ADT"
+msgstr "ADT"
+
 msgid "ADT Book"
 msgstr "Livro ADT"
 
@@ -524,6 +563,9 @@ msgstr "Livro ADT - {0}"
 
 msgid "ADT Package"
 msgstr "Pacote ADT"
+
+msgid "ADT Studio uses your own API keys to run the pipeline. Keys are stored locally on this device and never sent anywhere else."
+msgstr "O ADT Studio usa suas próprias chaves de API para executar o pipeline. As chaves são armazenadas localmente neste dispositivo e nunca são enviadas para outro lugar."
 
 msgid "Adventure Tales - Vol. 1"
 msgstr "Contos de Aventura - Vol. 1"
@@ -537,6 +579,9 @@ msgstr "Depois"
 #. placeholder {0}: quiz.afterPageId
 msgid "After {0}"
 msgstr "Após {0}"
+
+msgid "age 8"
+msgstr "8 anos"
 
 msgid "AI"
 msgstr "IA"
@@ -594,6 +639,9 @@ msgstr "All Severities"
 
 msgid "All steps"
 msgstr "Todas as etapas"
+
+msgid "Alt"
+msgstr "Alt"
 
 msgid "An activity that does not fit the standard categories."
 msgstr "Uma atividade que não se enquadra nas categorias padrão."
@@ -661,6 +709,9 @@ msgstr "Aplicar cores de fundo da página"
 msgid "Apply Segmentation"
 msgstr "Apply Segmentation"
 
+msgid "AR"
+msgstr "AR"
+
 msgid "Archive contents"
 msgstr "Conteúdo do arquivo"
 
@@ -698,11 +749,23 @@ msgstr "Peça para a IA editar..."
 msgid "Asking the AI to put on its creative hat..."
 msgstr "Pedindo para a IA colocar o chapéu criativo..."
 
+msgid "ASL"
+msgstr "ASL"
+
 msgid "Asset"
 msgstr "Recurso"
 
 msgid "Assign to section..."
 msgstr "Atribuir à seção..."
+
+msgid "At the river's edge"
+msgstr "Na beira do rio"
+
+msgid "Audio"
+msgstr "Áudio"
+
+msgid "Audio narration"
+msgstr "Narração de áudio"
 
 msgid "Audio narration (largest impact on file size)"
 msgstr "Narração de áudio (maior impacto no tamanho do arquivo)"
@@ -811,6 +874,9 @@ msgstr "Livro"
 #~ msgid "Book Author"
 #~ msgstr "Autor"
 
+msgid "Book creation stages"
+msgstr "Etapas de criação do livro"
+
 msgid "Book data is outdated and must be rebuilt."
 msgstr "Os dados do livro estão desatualizados e precisam ser reconstruídos."
 
@@ -895,6 +961,8 @@ msgstr "Cancelar"
 #. placeholder {0}: String(MAX_ENTRIES)
 msgid "capped at {0}"
 msgstr "limitado a {0}"
+msgid "Caption"
+msgstr "Legenda"
 
 msgid "Caption Prompt"
 msgstr "Prompt de legenda"
@@ -914,6 +982,9 @@ msgstr "Cartum"
 msgid "Catalog Translation"
 msgstr "Tradução do catálogo"
 
+msgid "Cell division producing two identical cells."
+msgstr "Divisão celular que produz duas células idênticas."
+
 msgid "Change"
 msgstr "Alterar"
 
@@ -922,6 +993,9 @@ msgstr "Mudar idioma"
 
 msgid "Change Preset"
 msgstr "Alterar Predefinição"
+
+msgid "Chapter 3"
+msgstr "Capítulo 3"
 
 msgid "Chapter 7 - Marine Biology"
 msgstr "Capítulo 7 - Biologia Marinha"
@@ -946,6 +1020,9 @@ msgstr "Checklist item"
 
 msgid "Choose a Preset"
 msgstr "Escolha uma Predefinição"
+
+msgid "Choose a preset that matches your content — textbook, storyboard, reference, or custom — and ADT Studio tailors the pipeline accordingly."
+msgstr "Escolha um preset que combine com seu conteúdo — livro didático, storyboard, referência ou personalizado — e o ADT Studio adapta o pipeline conforme necessário."
 
 msgid "Choose an existing image from this project"
 msgstr "Escolha uma imagem existente deste projeto"
@@ -1076,6 +1153,9 @@ msgstr "Configure as chaves de API para os recursos de IA."
 msgid "Configure basic document information and file paths"
 msgstr "Configurar informações básicas do documento e caminhos de arquivos"
 
+msgid "Configure each stage — extract, storyboard, layout — then let ADT Studio build the book. Review the output, correct anything that needs a human touch."
+msgstr "Configure cada etapa — extração, storyboard, layout — e deixe o ADT Studio construir o livro. Revise a saída, corrija o que precisar de um toque humano."
+
 msgid "Configure features to include in the export"
 msgstr "Configure as funcionalidades a incluir na exportação"
 
@@ -1084,6 +1164,9 @@ msgstr "Confirmar mesclagem"
 
 msgid "Confirm Rerun"
 msgstr "Confirmar reexecução"
+
+msgid "Connect an AI provider"
+msgstr "Conecte um provedor de IA"
 
 msgid "Consulting the style council..."
 msgstr "Consultando o conselho de estilo..."
@@ -1127,6 +1210,12 @@ msgstr "Control which axe checks run during packaging for this document. Changes
 msgid "Controls how page content is grouped during the sectioning step."
 msgstr "Controla como o conteúdo da página é agrupado durante a etapa de secionamento."
 
+msgid "Conversion of light into chemical energy."
+msgstr "Conversão de luz em energia química."
+
+msgid "Convert any textbook into an accessible digital edition — audio, structured layouts, translations, and sign-language, built in from the very first page."
+msgstr "Converta qualquer livro em uma edição digital acessível — áudio, layouts estruturados, traduções e língua de sinais, integrados desde a primeira página."
+
 msgid "Converted"
 msgstr "Convertido"
 
@@ -1162,6 +1251,9 @@ msgstr "Criar do zero usando sua descrição"
 
 msgid "Create session"
 msgstr "Create session"
+
+#~ msgid "Create your first book"
+#~ msgstr "Crie seu primeiro livro"
 
 msgid "Created {createdLabel}"
 msgstr "Criado em {createdLabel}"
@@ -1330,6 +1422,9 @@ msgstr "Excluir vídeo"
 msgid "Deleting..."
 msgstr "Excluindo..."
 
+msgid "Delivered"
+msgstr "Entregue"
+
 msgid "Dense text, tables, glossaries. Best for technical material and documentation."
 msgstr "Texto denso, tabelas, glossários. Melhor para material técnico e documentação."
 
@@ -1347,6 +1442,9 @@ msgstr "Descrição"
 
 msgid "Description..."
 msgstr "Descrição..."
+
+msgid "Detecting figures"
+msgstr "Detectando figuras"
 
 msgid "Detects activities already present in the book and transforms them into interactive HTML elements like radio buttons and text inputs."
 msgstr "Detecta atividades já presentes no livro e as transforma em elementos HTML interativos, como botões de rádio e campos de texto."
@@ -1387,6 +1485,9 @@ msgstr "Exibição"
 msgid "Don't have a project yet?"
 msgstr "Ainda não tem um projeto?"
 
+msgid "DONE"
+msgstr "CONCLUÍDO"
+
 msgid "Download a full backup of this project"
 msgstr "Baixar um backup completo deste projeto"
 
@@ -1404,6 +1505,18 @@ msgstr "Drag to move boxes, drag edges/corners to resize"
 
 msgid "Drag vertices to reshape. Click midpoints (+) to add points. Right-click a vertex to remove it."
 msgstr "Arraste os vértices para remodelar. Clique nos pontos médios (+) para adicionar pontos. Clique com o botão direito em um vértice para removê-lo."
+
+msgid "Drop a PDF to get started"
+msgstr "Solte um PDF para começar"
+
+msgid "Drop in a PDF and watch it flow through every stage — from raw pages to an accessible reader."
+msgstr "Selecione um PDF e veja-o passar por cada etapa — das páginas brutas a um leitor acessível."
+
+msgid "Drop in a PDF to kick things off. ADT Studio organizes it into a new book project so you don't start from zero."
+msgstr "Selecione um PDF para começar. O ADT Studio o organiza em um novo projeto de livro para que você não comece do zero."
+
+#~ msgid "Drop in your first PDF and watch the pipeline do its thing. You can always come back to this tour."
+#~ msgstr "Solte seu primeiro PDF e veja o pipeline em ação. Você pode voltar a este tour a qualquer momento."
 
 msgid "Drop PDF here"
 msgstr "Solte o PDF aqui"
@@ -1465,6 +1578,9 @@ msgstr "Cada pólipo secreta um esqueleto duro de carbonato de cálcio. Ao longo
 msgid "Edit"
 msgstr "Editar"
 
+msgid "Edit & enrich"
+msgstr "Editar e aprimorar"
+
 msgid "Edit Prompt"
 msgstr "Prompt de edição"
 
@@ -1509,6 +1625,9 @@ msgstr "Seção vazia — adicione um contêiner abaixo para começar"
 
 msgid "en"
 msgstr "en"
+
+msgid "EN"
+msgstr "EN"
 
 #. placeholder {0}: criterion.label
 #. placeholder {0}: section.label
@@ -1563,11 +1682,20 @@ msgstr "Erro"
 msgid "Errors"
 msgstr "Erros"
 
+msgid "ES"
+msgstr "ES"
+
 msgid "Est. Cost"
 msgstr "Custo estimado"
 
+#~ msgid "Eva"
+#~ msgstr "Eva"
+
 msgid "Evaporation"
 msgstr "Evaporação"
+
+msgid "Every reader opens the same book, with the features they need on tap."
+msgstr "Todo leitor abre o mesmo livro, com os recursos que precisa ao toque."
 
 msgid "Example Books"
 msgstr "Livros de Exemplo"
@@ -1598,6 +1726,21 @@ msgstr "Opções de Exportação"
 
 msgid "Export preparation failed"
 msgstr "Falha ao preparar a exportação"
+
+#~ msgid "Export SCORM"
+#~ msgstr "Exportar SCORM"
+
+#~ msgid "Export the book as a Readium WebPub package — a standards-based format for distributing digital publications on the web. Suitable for reading systems that support the Readium Web Publication Manifest specification."
+#~ msgstr "Exporte o livro como um pacote Readium WebPub — um formato baseado em padrões para distribuir publicações digitais na web. Adequado para sistemas de leitura que suportam a especificação Readium Web Publication Manifest."
+
+#~ msgid "Export the complete Accessible Digital Textbook as a ZIP archive. Includes all HTML pages, images, audio files, quizzes, and the compiled web application — ready to upload to a distribution platform or open locally."
+#~ msgstr "Exporte o Accessible Digital Textbook completo como um arquivo ZIP. Inclui todas as páginas HTML, imagens, arquivos de áudio, questionários e a aplicação web compilada — pronto para enviar para uma plataforma de distribuição ou abrir localmente."
+
+msgid "Export to a reader"
+msgstr "Exportar para um leitor"
+
+#~ msgid "Export WebPub"
+#~ msgstr "Exportar WebPub"
 
 msgid "Exporting..."
 msgstr "Exportando..."
@@ -1671,6 +1814,9 @@ msgstr "Falhou:"
 msgid "Fast, consistent results with no AI cost"
 msgstr "Resultados rápidos e consistentes sem custo de IA"
 
+msgid "Fig 3.1 — The water cycle: evaporation, condensation, precipitation."
+msgstr "Fig 3.1 — O ciclo da água: evaporação, condensação, precipitação."
+
 msgid "figure"
 msgstr "figura"
 
@@ -1738,6 +1884,9 @@ msgstr "Formato"
 
 msgid "Forms & controls"
 msgstr "Forms & controls"
+
+msgid "FR"
+msgstr "FR"
 
 msgid "French"
 msgstr "Francês"
@@ -1817,6 +1966,9 @@ msgstr "Gerando glossário..."
 msgid "Generating image..."
 msgstr "Gerando imagem..."
 
+msgid "Generating panels"
+msgstr "Gerando painéis"
+
 msgid "Generating Quizzes..."
 msgstr "Gerando questionários..."
 
@@ -1859,6 +2011,9 @@ msgstr "Google"
 msgid "Google AI API Key"
 msgstr "Chave de API do Google AI"
 
+msgid "Grouping content by purpose, then laying out every section as reviewable HTML."
+msgstr "Agrupando o conteúdo por propósito e montando cada seção como HTML revisável."
+
 #~ msgid "Groups content into logical sections"
 #~ msgstr "Agrupa conteúdo em seções lógicas"
 
@@ -1898,8 +2053,14 @@ msgstr "Hit"
 msgid "Hover a setting to see how LLM cropping, segmentation, or the size threshold changes extracted images."
 msgstr "Passe o mouse sobre uma configuração para ver como o corte, segmentação ou o limite de tamanho do LLM altera as imagens extraídas."
 
+msgid "How it works"
+msgstr "Como funciona"
+
 msgid "HTML"
 msgstr "HTML"
+
+msgid "I'll start later"
+msgstr "Começarei mais tarde"
 
 msgid "Illustrated children's books"
 msgstr "Livros infantis ilustrados"
@@ -2091,6 +2252,9 @@ msgstr "Mantém a página como uma seção por padrão, mas divide inteligenteme
 msgid "Key must start with \"sk-\""
 msgstr "A chave deve começar com \"sk-\""
 
+msgid "Key must start with sk-"
+msgstr "A chave deve começar com sk-"
+
 msgid "Keyboard & navigation"
 msgstr "Keyboard & navigation"
 
@@ -2127,6 +2291,12 @@ msgstr "Última modificação"
 
 msgid "Launch the app with"
 msgstr "Inicie o aplicativo com"
+msgid "Layer on translations, text-to-speech, and a glossary — all inspectable, cacheable, reversible."
+msgstr "Acrescente traduções, conversão de texto em fala e um glossário — tudo inspecionável, armazenável em cache, reversível."
+
+msgid "Laying out spreads"
+msgstr "Diagramando páginas duplas"
+
 #~ msgid "Leaf node roles the LLM may assign to text and image leaves in the content tree."
 #~ msgstr "Papéis de nó folha que o LLM pode atribuir a folhas de texto e imagem na árvore de conteúdo."
 
@@ -2156,6 +2326,9 @@ msgstr "Manuais legais e de conformidade"
 
 msgid "Legal Compliance Guide"
 msgstr "Guia de Conformidade Legal"
+
+#~ msgid "Let's build"
+#~ msgstr "Vamos criar"
 
 msgid "Life in the Coral Reef"
 msgstr "Vida no Recife de Coral"
@@ -2434,6 +2607,12 @@ msgstr "Miss"
 msgid "Misses"
 msgstr "Perdas"
 
+msgid "Mission 01"
+msgstr "Passo 01"
+
+msgid "mitosis"
+msgstr "mitose"
+
 msgid "Mixed Content Project"
 msgstr "Projeto de Conteúdo Misto"
 
@@ -2454,6 +2633,9 @@ msgstr "Modificado em {modifiedLabel}"
 
 msgid "Multi-format publications"
 msgstr "Publicações multi-formato"
+
+#~ msgid "My book"
+#~ msgstr "Meu livro"
 
 msgid "my-book-slug"
 msgstr "meu-livro-slug"
@@ -2701,8 +2883,14 @@ msgstr "Número de páginas de conteúdo a incluir por questão de quiz."
 msgid "Number of refinement iterations performed after the initial sectioning pass."
 msgstr "Número de iterações de refinamento realizadas após a passagem inicial de seccionamento."
 
+msgid "O ciclo da água descreve o movimento contínuo da água."
+msgstr "O ciclo da água descreve o movimento contínuo da água."
+
 msgid "OAuth 2.0"
 msgstr "OAuth 2.0"
+
+msgid "OCR & cleanup"
+msgstr "OCR e limpeza"
 
 msgid "of"
 msgstr "of"
@@ -2795,6 +2983,9 @@ msgstr "PDF Original"
 msgid "Original PDF - {0}"
 msgstr "PDF Original - {0}"
 
+msgid "osmosis"
+msgstr "osmose"
+
 msgid "Other"
 msgstr "Outro"
 
@@ -2819,11 +3010,20 @@ msgstr "Overall page note"
 msgid "Overview"
 msgstr "Visão geral"
 
+msgid "p. 14"
+msgstr "p. 14"
+
+msgid "p. 15"
+msgstr "p. 15"
+
 msgid "Package and preview the final ADT web application."
 msgstr "Empacota e pré-visualiza a aplicação web ADT final."
 
 msgid "Package preview to generate results"
 msgstr "Package preview to generate results"
+
+msgid "Package the finished book with every accessibility feature baked in — ready for a kid to open, listen, and read along."
+msgstr "Empacote o livro pronto com todos os recursos de acessibilidade integrados — pronto para uma criança abrir, ouvir e acompanhar a leitura."
 
 msgid "Packaging"
 msgstr "Empacotando"
@@ -2907,6 +3107,12 @@ msgstr "Colagem em papel"
 #~ msgid "Paragraph"
 #~ msgstr "Parágrafo"
 
+msgid "Parsing pages"
+msgstr "Analisando páginas"
+
+msgid "Parsing pages into text, figures, and layout boxes — cached by content hash."
+msgstr "Analisando páginas em texto, figuras e caixas de layout — com cache por hash do conteúdo."
+
 msgid "Parts"
 msgstr "Partes"
 
@@ -2915,6 +3121,9 @@ msgstr "Pass"
 
 msgid "Passed"
 msgstr "Passed"
+
+msgid "Pause"
+msgstr "Pausar"
 
 msgid "Payload"
 msgstr "Payload"
@@ -2949,6 +3158,12 @@ msgstr "Perfeito para livros infantis, combinando imagens grandes com texto mín
 msgid "Photograph"
 msgstr "Fotografia"
 
+msgid "photosynthesis"
+msgstr "fotossíntese"
+
+msgid "Pick a preset"
+msgstr "Escolha um preset"
+
 msgid "Pick from book"
 msgstr "Escolher do livro"
 
@@ -2961,6 +3176,12 @@ msgstr "Escolha uma abordagem de layout."
 msgid "Picture books and early readers"
 msgstr "Livros ilustrados e leitores iniciantes"
 
+msgid "Pipeline · extract"
+msgstr "Pipeline · extração"
+
+msgid "Pipeline · storyboard"
+msgstr "Pipeline · storyboard"
+
 msgid "Pipeline features"
 msgstr "Recursos do pipeline"
 
@@ -2969,6 +3190,12 @@ msgstr "Etapas do pipeline"
 
 msgid "Pixel Art"
 msgstr "Pixel Art"
+
+msgid "Plants create sugar via <0>photosynthesis</0>, divide by <1>mitosis</1>, and absorb water by <2>osmosis</2>."
+msgstr "As plantas criam açúcar pela <0>fotossíntese</0>, dividem-se por <1>mitose</1>, e absorvem água por <2>osmose</2>."
+
+msgid "Play"
+msgstr "Reproduzir"
 
 msgid "Play video"
 msgstr "Reproduzir vídeo"
@@ -3063,6 +3290,9 @@ msgstr "Imagens removidas"
 msgid "Pruned: {reason}"
 msgstr "Removido: {0}"
 
+msgid "PT"
+msgstr "PT"
+
 msgid "published in"
 msgstr "publicado em"
 
@@ -3135,6 +3365,9 @@ msgstr "Lendo arquivo..."
 msgid "Readium Web Publication format for standards-based digital distribution platforms."
 msgstr "Formato Readium Web Publication para plataformas de distribuição digital baseadas em padrões."
 
+#~ msgid "Ready when you are"
+#~ msgstr "Quando você estiver pronto"
+
 msgid "Real books processed with this preset — before and after."
 msgstr "Livros reais processados com este predefinido — antes e depois."
 
@@ -3180,6 +3413,9 @@ msgstr "Refreshing results for this packaged preview."
 
 msgid "Region"
 msgstr "Região"
+
+msgid "Release to upload"
+msgstr "Solte para enviar"
 
 msgid "Remove"
 msgstr "Remover"
@@ -3338,6 +3574,9 @@ msgstr "O aumento das temperaturas dos oceanos causa o branqueamento dos corais 
 msgid "Run {stageLabel}"
 msgstr "Executar {0}"
 
+msgid "Run the pipeline"
+msgstr "Executar o pipeline"
+
 msgid "Run the pipeline through at least the"
 msgstr "Execute o pipeline pelo menos até a etapa"
 
@@ -3349,6 +3588,9 @@ msgstr "Run whole-book validation checks and configure accessibility assessment 
 
 msgid "Run-only tags"
 msgstr "Run-only tags"
+
+msgid "RUNNING"
+msgstr "EM EXECUÇÃO"
 
 msgid "Running Validation..."
 msgstr "Running Validation..."
@@ -3424,6 +3666,9 @@ msgstr "Salvando..."
 
 msgid "Saving…"
 msgstr "Salvando…"
+
+msgid "Scene 04"
+msgstr "Cena 04"
 
 msgid "School textbooks and workbooks"
 msgstr "Livros didáticos e cadernos escolares"
@@ -3561,6 +3806,9 @@ msgstr "Prompt de segmentação"
 msgid "Segmentation runs"
 msgstr "Execuções de segmentação"
 
+msgid "Segmenting scenes"
+msgstr "Segmentando cenas"
+
 msgid "Segmenting..."
 msgstr "Segmentando..."
 
@@ -3676,6 +3924,12 @@ msgstr "Show reviewer validation"
 msgid "Show:"
 msgstr "Mostrar:"
 
+msgid "Sign"
+msgstr "Sinais"
+
+msgid "Sign language"
+msgstr "Língua de sinais"
+
 msgid "Sign Language"
 msgstr "Língua de Sinais"
 
@@ -3709,6 +3963,9 @@ msgstr "sk-..."
 msgid "sk-ant-..."
 msgstr "sk-ant-..."
 
+msgid "Skip intro"
+msgstr "Pular intro"
+
 msgid "Skip segmentation for images whose shortest side is below this threshold."
 msgstr "Pular segmentação para imagens cujo lado menor está abaixo deste limite."
 
@@ -3727,6 +3984,9 @@ msgstr "Slide {0}"
 
 msgid "Smart Cropping"
 msgstr "Corte Inteligente"
+
+#~ msgid "something calm."
+#~ msgstr "algo tranquilo."
 
 msgid "Sort books"
 msgstr "Ordenar livros"
@@ -3773,11 +4033,17 @@ msgstr "Início"
 msgid "Start a reviewer session"
 msgstr "Start a reviewer session"
 
+msgid "Start from a PDF"
+msgstr "Comece com um PDF"
+
 msgid "Start page"
 msgstr "Start page"
 
 msgid "Start reviewer validation"
 msgstr "Start reviewer validation"
+
+msgid "Start with a PDF"
+msgstr "Selecione um PDF"
 
 msgid "Step"
 msgstr "Etapa"
@@ -3819,6 +4085,9 @@ msgstr "Estruture cada página em uma árvore de conteúdo de seções e nós pa
 msgid "Structured chapters, exercises. Best for educational content with complex layouts."
 msgstr "Capítulos estruturados, exercícios. Melhor para conteúdo educacional com layouts complexos."
 
+msgid "Structured HTML"
+msgstr "HTML estruturado"
+
 msgid "Style"
 msgstr "Estilo"
 
@@ -3846,6 +4115,9 @@ msgstr "Pré-visualização do guia de estilo — {0}"
 msgid "Success"
 msgstr "Sucesso"
 
+msgid "Successfully uploaded"
+msgstr "Enviado com sucesso"
+
 msgid "Suggested modification"
 msgstr "Suggested modification"
 
@@ -3857,6 +4129,9 @@ msgstr "Prompt de resumo"
 
 msgid "Sun"
 msgstr "Sol"
+
+msgid "SW"
+msgstr "SW"
 
 msgid "System Prompt"
 msgstr "Prompt do sistema"
@@ -4030,6 +4305,9 @@ msgstr "O prompt usado pela passagem de revisão para inspecionar e corrigir uma
 msgid "The rendering strategy used for sections without an explicit mapping."
 msgstr "A estratégia de renderização usada para seções sem um mapeamento explícito."
 
+msgid "The river meets the sea"
+msgstr "O rio encontra o mar"
+
 msgid "The sun heats water in oceans, lakes, and rivers, turning it into vapor that rises into the atmosphere. As the vapor cools at higher altitudes, it condenses into tiny droplets that form clouds."
 msgstr "O sol aquece a água nos oceanos, lagos e rios, transformando-a em vapor que sobe para a atmosfera. À medida que o vapor esfria em altitudes mais altas, ele se condensa em pequenas gotas que formam nuvens."
 
@@ -4039,6 +4317,9 @@ msgstr "O índice."
 msgid "The Water Cycle"
 msgstr "O Ciclo da Água"
 
+#~ msgid "The water cycle describes continuous movement of water."
+#~ msgstr "O ciclo da água descreve o movimento contínuo da água."
+
 msgid "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."
 msgstr "Esses recursos melhoram o acesso para pessoas com deficiência. Executá-los antes de exportar ajuda seu livro a atender aos padrões de acessibilidade ADT."
 
@@ -4047,6 +4328,9 @@ msgstr "These values reflect either the saved book override or the latest packag
 
 msgid "This file couldn't be read as a ZIP archive"
 msgstr "Este arquivo não pôde ser lido como um arquivo ZIP"
+
+msgid "This is <0>ADT Studio</0>."
+msgstr "Isto é o <0>ADT Studio</0>."
 
 msgid "This is a preview of the options you have selected for your book, each option affects the preview in a different way."
 msgstr "Esta é uma pré-visualização das opções que você selecionou para o seu livro, cada opção afeta a pré-visualização de uma maneira diferente."
@@ -4171,6 +4455,9 @@ msgstr "Tradução"
 msgid "Translation Prompt"
 msgstr "Prompt de tradução"
 
+msgid "Translations"
+msgstr "Traduções"
+
 msgid "Transport"
 msgstr "Transporte"
 
@@ -4185,6 +4472,9 @@ msgstr "Testar atividade"
 
 msgid "Try another file"
 msgstr "Tentar outro arquivo"
+
+msgid "Turn any PDF into a fully accessible book — audio, translations, structured HTML layouts — all generated from your source file, <0>all editable</0>, <1>all yours</1>."
+msgstr "Transforme qualquer PDF em um livro totalmente acessível — áudio, traduções, layouts HTML estruturados — tudo gerado a partir do seu arquivo fonte, <0>tudo editável</0>, <1>tudo seu</1>."
 
 msgid "Turn this on to show the Validation review card in Preview and the Reviewer Validation tab in the Validation step."
 msgstr "Turn this on to show the Validation review card in Preview and the Reviewer Validation tab in the Validation step."
@@ -4391,6 +4681,8 @@ msgstr "Aguarde a conclusão do storyboard"
 
 msgid "Waiting for API output…"
 msgstr "Aguardando a saída da API…"
+msgid "WAITING"
+msgstr "AGUARDANDO"
 
 msgid "Waiting for page to be processed..."
 msgstr "Aguardando a página ser processada..."
@@ -4400,6 +4692,9 @@ msgstr "Tempo decorrido"
 
 msgid "Water is always moving. It travels from the oceans into the sky, falls as rain or snow, flows through rivers, and eventually returns to the sea. This continuous journey is called the water cycle."
 msgstr "A água está sempre em movimento. Ela viaja dos oceanos para o céu, cai como chuva ou neve, flui através dos rios e eventualmente retorna ao mar. Esta jornada contínua é chamada de ciclo da água."
+
+msgid "Water moving through a membrane."
+msgstr "Água movendo-se através de uma membrana."
 
 msgid "Watercolor"
 msgstr "Aquarela"
@@ -4429,6 +4724,12 @@ msgstr "WebPub"
 
 msgid "WebPub Export"
 msgstr "Exportação WebPub"
+
+msgid "Welcome to ADT Studio"
+msgstr "Bem-vindo ao ADT Studio"
+
+msgid "What it does"
+msgstr "O que faz"
 
 msgid "What should the AI change?"
 msgstr "O que a IA deve alterar?"
@@ -4471,3 +4772,12 @@ msgstr "Ficção para jovens adultos"
 
 msgid "Your Books"
 msgstr "Seus livros"
+
+msgid "Your first ADT <0>starts here.</0>"
+msgstr "Seu primeiro ADT <0>começa aqui.</0>"
+
+#~ msgid "Your first book <0>starts here.</0>"
+#~ msgstr "Seu primeiro livro <0>começa aqui.</0>"
+
+#~ msgid "ZIP Archive"
+#~ msgstr "Arquivo ZIP"
