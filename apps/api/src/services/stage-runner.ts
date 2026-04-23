@@ -1392,12 +1392,10 @@ async function runTranslateStep(
     const pages = storage.getPages()
     const effectiveConcurrency = config.concurrency ?? 32
 
-    // Output languages default to editing language if not set
+    // Output languages — always include the base language so it's treated as a first-class output
     const outputLanguages = Array.from(
       new Set(
-        (config.output_languages && config.output_languages.length > 0
-          ? config.output_languages
-          : [language]).map((code) => normalizeLocale(code))
+        [language, ...(config.output_languages ?? [])].map((code) => normalizeLocale(code))
       )
     )
 

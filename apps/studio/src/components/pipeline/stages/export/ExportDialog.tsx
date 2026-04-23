@@ -569,12 +569,22 @@ export function ExportDialog({
   const formatConfigByType = buildExportFormatConfig(t);
 
   const { data: configData } = useBookConfig(bookLabel);
+  const { data: book } = useBook(bookLabel);
   const config = configData?.config as Record<string, unknown> | undefined;
+  const baseLanguage = normalizeLocale(
+    (config?.editing_language as string | undefined) ??
+      book?.languageCode ??
+      book?.metadata?.language_code ??
+      "en",
+  );
   const configLanguages = Array.from(
     new Set(
-      ((config?.output_languages as string[] | undefined) ?? []).map((code) =>
-        normalizeLocale(code),
-      ),
+      [
+        baseLanguage,
+        ...((config?.output_languages as string[] | undefined) ?? []).map(
+          (code) => normalizeLocale(code),
+        ),
+      ],
     ),
   );
 

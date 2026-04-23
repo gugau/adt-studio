@@ -91,9 +91,7 @@ export async function prepareExport(
     const language = normalizeLocale(config.editing_language ?? metadata?.language_code ?? "en")
     const outputLanguages = Array.from(
       new Set(
-        (config.output_languages && config.output_languages.length > 0
-          ? config.output_languages
-          : [language]).map((code) => normalizeLocale(code))
+        [language, ...(config.output_languages ?? [])].map((code) => normalizeLocale(code))
       )
     )
     const title = metadata?.title ?? safeLabel
