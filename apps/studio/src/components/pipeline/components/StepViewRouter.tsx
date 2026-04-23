@@ -21,6 +21,8 @@ import {
 import { cn } from "@/lib/utils"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
+import { TitleBarControls } from "@/components/title-bar"
+import { useWindowControls } from "@/hooks/use-window-controls"
 
 // Context for views to inject content into the step header
 interface StepHeaderControls {
@@ -68,6 +70,7 @@ const VIEW_MAP: Record<string, ViewEntry> = {
 
 export function StepViewRouter({ step, bookLabel, selectedPageId, onSelectPage }: { step: string; bookLabel: string; selectedPageId?: string; onSelectPage?: (pageId: string | null) => void }) {
   const { t } = useLingui()
+  const { available: hasWindows } = useWindowControls()
   const entry = VIEW_MAP[step]
   const stepConfig = STAGES.find((s) => s.slug === step)
   const [headerExtra, setHeaderExtra] = useState<ReactNode>(null)
@@ -79,6 +82,7 @@ export function StepViewRouter({ step, bookLabel, selectedPageId, onSelectPage }
   }, [])
 
   const controls: StepHeaderControls = { setExtra: setHeaderExtra, setOnLabelClick, headerSlotEl }
+
 
   if (!entry || !stepConfig) {
     return (
@@ -96,7 +100,7 @@ export function StepViewRouter({ step, bookLabel, selectedPageId, onSelectPage }
     <StepHeaderContext.Provider value={controls}>
       <div className="flex flex-col h-full">
         {/* Step header */}
-        <div className={cn("shrink-0 h-10 px-4 flex items-center gap-3 text-white", stepConfig.color)}>
+        <div className={cn("shrink-0 h-10 px-4 flex items-center gap-3 text-white", stepConfig.color, hasWindows && "pr-0")}>
           <div className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20">
             <Icon className="w-3 h-3" />
           </div>
@@ -109,7 +113,7 @@ export function StepViewRouter({ step, bookLabel, selectedPageId, onSelectPage }
              {stepLabel}
             </button>
           ) : (
-            <h2 className="text-sm font-semibold">{stepLabel}</h2>
+              <h2 className={cn("text-sm font-semibold", !headerExtra && "mr-auto")}>{stepLabel}</h2>
           )}
           <div ref={setHeaderSlotEl} className="contents" />
           {headerExtra}
@@ -123,6 +127,8 @@ export function StepViewRouter({ step, bookLabel, selectedPageId, onSelectPage }
               <Settings className="w-3.5 h-3.5" />
             </Link>
           )}
+
+          <TitleBarControls />
         </div>
 
         {/* Step content */}
