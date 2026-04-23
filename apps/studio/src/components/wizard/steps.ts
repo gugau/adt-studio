@@ -65,7 +65,7 @@ export const STEPS: StepDef[] = [
   },
   {
     title: msg`Content Processing`,
-    description: msg`Configure activity detection and image processing options for extracted content.`,
+    description: msg`Configure activity detection and image processing options for extracted content. Hover any setting to see how it affects the preview.`,
     component: Step3,
     isValid: (v) => {
       if (!v.imageSegmentation) return true

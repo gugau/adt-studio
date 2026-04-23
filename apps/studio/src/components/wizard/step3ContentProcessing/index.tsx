@@ -34,8 +34,8 @@ const TITLE_SEGMENTATION = msg`Image Segmentation`
 const SUBTITLE_SEGMENTATION = msg`Detects and splits composited illustrations into separate regions so each asset can be placed and refined on its own.`
 
 const FILTER_LABEL = msg`Image Filter Size`
-const FILTER_MIN_LABEL = msg`Min Side`
-const FILTER_MAX_LABEL = msg`Max Side`
+const FILTER_MIN_LABEL = msg`Min Size (px)`
+const FILTER_MAX_LABEL = msg`Max Size (px)`
 
 function SegmentationThresholdPanel({
   segmentationMinSide,

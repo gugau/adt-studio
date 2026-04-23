@@ -1052,8 +1052,11 @@ msgstr "Progression sur la plage de pages assignée pour cette session de révis
 msgid "Condensation"
 msgstr "Condensation"
 
-msgid "Configure activity detection and image processing options for extracted content."
-msgstr "Configurez les options de détection d'activité et de traitement d'image pour le contenu extrait."
+#~ msgid "Configure activity detection and image processing options for extracted content."
+#~ msgstr "Configurez les options de détection d'activité et de traitement d'image pour le contenu extrait."
+
+msgid "Configure activity detection and image processing options for extracted content. Hover any setting to see how it affects the preview."
+msgstr "Configurer les options de détection d'activité et de traitement d'image pour le contenu extrait. Survolez un paramètre pour voir comment il affecte l'aperçu."
 
 msgid "Configure API keys for AI pipeline features."
 msgstr "Configurez les clés API pour les fonctionnalités du pipeline IA."
@@ -2305,11 +2308,14 @@ msgstr "Associez chaque étape du cycle de l'eau à sa définition :"
 msgid "Max Refinements"
 msgstr "Raffinements max"
 
-msgid "Max Side"
-msgstr "Côté max."
+#~ msgid "Max Side"
+#~ msgstr "Côté max."
 
 msgid "Max side (px)"
 msgstr "Côté max. (px)"
+
+msgid "Max Size (px)"
+msgstr "Taille max (px)"
 
 #~ msgid "Maximum number of reviewer passes after the initial sectioning. Set to 0 to disable refinement."
 #~ msgstr "Nombre maximum de passes du réviseur après le sectionnement initial. Mettre à 0 pour désactiver le raffinement."
@@ -2380,11 +2386,14 @@ msgstr "Min complexité"
 msgid "Min image dimension (px)"
 msgstr "Dimension min. d'image (px)"
 
-msgid "Min Side"
-msgstr "Côté min."
+#~ msgid "Min Side"
+#~ msgstr "Côté min."
 
 msgid "Min side (px)"
 msgstr "Côté min. (px)"
+
+msgid "Min Size (px)"
+msgstr "Taille min (px)"
 
 msgid "Minimum image dimension"
 msgstr "Dimension minimale d'image"
@@ -3169,8 +3178,8 @@ msgstr "Supprimer le fichier"
 msgid "Remove from group"
 msgstr "Retirer du groupe"
 
-msgid "Remove PDF"
-msgstr "Retirer PDF"
+#~ msgid "Remove PDF"
+#~ msgstr "Retirer PDF"
 
 msgid "Remove section"
 msgstr "Retirer section"
@@ -3201,6 +3210,9 @@ msgstr "Remplacer"
 
 msgid "Replace from Book"
 msgstr "Remplacer depuis le livre"
+
+msgid "Replace PDF"
+msgstr "Remplacer le PDF"
 
 msgid "Replace Video?"
 msgstr "Remplacer la vidéo ?"

@@ -1,7 +1,7 @@
 import { useBooks } from "@/hooks/use-books"
 import { useWizardForm } from "../wizardForm"
 import { PresetViewer } from "./PresetViewer"
-import { PdfUpload } from "./PdfUpload"
+import { PdfField } from "./PdfField"
 import { PageRange } from "./PageRange"
 import { ProjectNameField } from "./ProjectNameField"
 import { createProjectLabelSchema } from "./projectLabelSchema"
@@ -14,7 +14,7 @@ export function Step1() {
   return (
     <div className="flex flex-col gap-6 p-8">
       <PresetViewer />
-      <PdfUpload />
+      <PdfField />
 
       <form.Field
         name="label"
