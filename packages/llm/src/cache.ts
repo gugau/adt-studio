@@ -15,6 +15,7 @@ function stableReplacer(key: string, value: unknown): unknown {
 
 export function computeHash(data: {
   modelId: string
+  mode?: string
   system?: string
   messages: Message[]
   schema: unknown

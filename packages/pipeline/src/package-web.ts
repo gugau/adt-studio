@@ -5,8 +5,9 @@ import { parseDocument, DomUtils } from "htmlparser2"
 import temml from "temml"
 import type { Storage } from "@adt/storage"
 import type {
+  ContentNodeData,
   PageSectioningOutput,
-  PageSection,
+  PageSectioningSection,
   TextCatalogOutput,
   GlossaryOutput,
   QuizGenerationOutput,
@@ -33,6 +34,12 @@ export interface PackageAdtWebOptions {
   webAssetsDir: string
   bundleVersion?: string
   applyBodyBackground?: boolean
+  features?: {
+    glossary?: boolean
+    readAloud?: boolean
+    quizzes?: boolean
+    signLanguage?: boolean
+  }
 }
 
 interface PageEntry {
@@ -133,6 +140,7 @@ export async function packageAdtWeb(
     webAssetsDir,
     bundleVersion = "1",
     applyBodyBackground,
+    features,
   } = options
   const language = normalizeLocale(rawLanguage)
   const outputLanguages = Array.from(new Set(rawOutputLanguages.map((code) => normalizeLocale(code))))
@@ -195,7 +203,7 @@ export async function packageAdtWeb(
 
   // Build a map from afterPageId -> quizzes for interleaving
   const quizzesByAfterPageId = new Map<string, Quiz[]>()
-  if (quizData?.quizzes) {
+  if ((features?.quizzes !== false) && quizData?.quizzes) {
     for (const quiz of quizData.quizzes) {
       const existing = quizzesByAfterPageId.get(quiz.afterPageId) ?? []
       existing.push(quiz)
@@ -206,8 +214,8 @@ export async function packageAdtWeb(
   for (const page of pages) {
     const quizzes = quizzesByAfterPageId.get(page.pageId) ?? []
 
-    const sectioningRow = storage.getLatestNodeData("page-sectioning", page.pageId)
-    const sectioning = sectioningRow?.data as PageSectioningOutput | undefined
+    const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+    const sectioning = structuringRow?.data as PageSectioningOutput | undefined
     const imageCaptionMap = loadImageCaptionMap(storage, page.pageId)
 
     const renderRow = storage.getLatestNodeData("web-rendering", page.pageId)
@@ -417,25 +425,28 @@ export async function packageAdtWeb(
     writeJson(path.join(localeDir, "texts.json"), textsMap)
 
     // audios.json + copy audio files
-    const audioDir = path.join(localeDir, "audio")
-    fs.mkdirSync(audioDir, { recursive: true })
-
-    const legacyLang = lang.replace("-", "_")
-    const ttsRow =
-      storage.getLatestNodeData("tts", lang) ??
-      storage.getLatestNodeData("tts", legacyLang)
-    const ttsData = ttsRow?.data as TTSOutput | undefined
     const audioMap: Record<string, string> = {}
 
-    if (ttsData?.entries) {
-      for (const entry of ttsData.entries) {
-        const srcFile = path.join(bookDir, "audio", lang, entry.fileName)
-        const legacySrcFile = path.join(bookDir, "audio", legacyLang, entry.fileName)
-        const resolvedSrcFile = fs.existsSync(srcFile) ? srcFile : legacySrcFile
-        if (fs.existsSync(resolvedSrcFile)) {
-          const destFile = path.join(audioDir, entry.fileName)
-          fs.copyFileSync(resolvedSrcFile, destFile)
-          audioMap[entry.textId] = entry.fileName
+    if (features?.readAloud !== false) {
+      const audioDir = path.join(localeDir, "audio")
+      fs.mkdirSync(audioDir, { recursive: true })
+
+      const legacyLang = lang.replace("-", "_")
+      const ttsRow =
+        storage.getLatestNodeData("tts", lang) ??
+        storage.getLatestNodeData("tts", legacyLang)
+      const ttsData = ttsRow?.data as TTSOutput | undefined
+
+      if (ttsData?.entries) {
+        for (const entry of ttsData.entries) {
+          const srcFile = path.join(bookDir, "audio", lang, entry.fileName)
+          const legacySrcFile = path.join(bookDir, "audio", legacyLang, entry.fileName)
+          const resolvedSrcFile = fs.existsSync(srcFile) ? srcFile : legacySrcFile
+          if (fs.existsSync(resolvedSrcFile)) {
+            const destFile = path.join(audioDir, entry.fileName)
+            fs.copyFileSync(resolvedSrcFile, destFile)
+            audioMap[entry.textId] = entry.fileName
+          }
         }
       }
     }
@@ -444,39 +455,42 @@ export async function packageAdtWeb(
     // videos.json — map "video-{pageIndex}" → video filename for assigned sign language videos
     // The ADT JS runtime expects keys prefixed with "video-" and files in a "video/" directory.
     // Each video is assigned to a sectionId which maps 1:1 to a pageIndex.
-    const allVideos = storage.getSignLanguageVideos()
     const videosMap: Record<string, string> = {}
-    const videoDir = path.join(localeDir, "video")
-    if (allVideos.some((v) => v.sectionId)) {
-      fs.mkdirSync(videoDir, { recursive: true })
-      for (const video of allVideos) {
-        if (!video.sectionId) continue
-        const ext = video.mimeType === "video/webm" ? ".webm" : ".mp4"
-        // Use section-based naming (e.g. sl_pg001_sec001.mp4) matching audio file conventions
-        const filename = `sl_${video.sectionId}${ext}`
-        const srcPath = storage.getSignLanguageVideoPath(video.videoId)
-        if (srcPath && fs.existsSync(srcPath)) {
-          fs.copyFileSync(srcPath, path.join(videoDir, filename))
-          const idx = sectionIdToPageIndex.get(video.sectionId)
-          if (idx !== undefined) {
-            videosMap[`video-${idx}`] = filename
+    if (features?.signLanguage !== false) {
+      const allVideos = storage.getSignLanguageVideos()
+      const videoDir = path.join(localeDir, "video")
+      if (allVideos.some((v) => v.sectionId)) {
+        fs.mkdirSync(videoDir, { recursive: true })
+        for (const video of allVideos) {
+          if (!video.sectionId) continue
+          const ext = video.mimeType === "video/webm" ? ".webm" : ".mp4"
+          // Use section-based naming (e.g. sl_pg001_sec001.mp4) matching audio file conventions
+          const filename = `sl_${video.sectionId}${ext}`
+          const srcPath = storage.getSignLanguageVideoPath(video.videoId)
+          if (srcPath && fs.existsSync(srcPath)) {
+            fs.copyFileSync(srcPath, path.join(videoDir, filename))
+            const idx = sectionIdToPageIndex.get(video.sectionId)
+            if (idx !== undefined) {
+              videosMap[`video-${idx}`] = filename
+            }
           }
         }
       }
     }
     writeJson(path.join(localeDir, "videos.json"), videosMap)
 
-    // glossary.json
-    const glossaryJson = buildGlossaryJson(glossary, catalog, textsMap, baseLang === sourceLanguage)
-    writeJson(path.join(localeDir, "glossary.json"), glossaryJson)
+    if (features?.glossary !== false) {
+      const glossaryJson = buildGlossaryJson(glossary, catalog, textsMap, baseLang === sourceLanguage)
+      writeJson(path.join(localeDir, "glossary.json"), glossaryJson)
+    }
   }
 
   // ------------------------------------------------------------------
   // config.json
   // ------------------------------------------------------------------
-  const hasGlossary = glossary !== undefined && glossary.items.length > 0
-  const hasQuiz = quizData !== undefined && quizData.quizzes.length > 0
-  const hasTTS = outputLanguages.some(
+  const hasGlossary = (features?.glossary !== false) && (glossary !== undefined && glossary.items.length > 0)
+  const hasQuiz = (features?.quizzes !== false) && (quizData !== undefined && quizData.quizzes.length > 0)
+  const hasTTS = (features?.readAloud !== false) && outputLanguages.some(
     (lang) => {
       const legacyLang = lang.replace("-", "_")
       return (
@@ -486,7 +500,7 @@ export async function packageAdtWeb(
     },
   )
 
-  const hasSignLanguageVideos = storage.getSignLanguageVideos().some((v) => v.sectionId !== null)
+  const hasSignLanguageVideos = (features?.signLanguage !== false) && storage.getSignLanguageVideos().some((v) => v.sectionId !== null)
 
   const configJson = {
     title,
@@ -1116,54 +1130,72 @@ function loadImageCaptionMap(storage: Storage, pageId: string): Map<string, stri
   return map
 }
 
-function buildSectionImageAltMap(section: PageSection): Map<string, string> {
-  const imageParts = section.parts.filter(
-    (part): part is Extract<PageSection["parts"][number], { type: "image" }> =>
-      part.type === "image" && !part.isPruned,
-  )
-  if (imageParts.length !== 1) {
-    return new Map<string, string>()
+/** Collect every non-pruned image_group node in a section along with its image id. */
+function collectImageGroups(section: PageSectioningSection): Array<{ group: ContentNodeData; imageId: string }> {
+  const out: Array<{ group: ContentNodeData; imageId: string }> = []
+  const walk = (node: ContentNodeData): void => {
+    if (node.isPruned) return
+    if (node.structure === "image_group") {
+      const imageLeaf = node.children?.find((c) => c.role === "image" && !c.isPruned)
+      if (imageLeaf) out.push({ group: node, imageId: imageLeaf.nodeId })
+    }
+    if (node.children) {
+      for (const c of node.children) walk(c)
+    }
   }
+  for (const n of section.nodes) walk(n)
+  return out
+}
 
-  const textParts = section.parts.filter(
-    (part): part is Extract<PageSection["parts"][number], { type: "text_group" }> =>
-      part.type === "text_group" && !part.isPruned,
-  )
-
-  const associatedTexts = textParts
-    .flatMap((part) => part.texts)
-    .filter((text) => !text.isPruned && text.textType === "image_associated_text")
-    .map((text) => text.text.replace(/\s+/g, " ").trim())
-    .filter((text) => text.length > 0)
-
-  if (associatedTexts.length === 0) {
-    return new Map<string, string>()
+/** Collect all non-pruned leaf texts matching a role within a subtree. */
+function collectLeafTextsByRole(node: ContentNodeData, role: string): string[] {
+  const out: string[] = []
+  const walk = (n: ContentNodeData): void => {
+    if (n.isPruned) return
+    if (n.role === role && n.text) {
+      const trimmed = n.text.replace(/\s+/g, " ").trim()
+      if (trimmed.length > 0) out.push(trimmed)
+    }
+    if (n.children) {
+      for (const c of n.children) walk(c)
+    }
   }
+  walk(node)
+  return out
+}
 
-  return new Map([[imageParts[0].imageId, associatedTexts.join(" ")]])
+function buildSectionImageAltMap(section: PageSectioningSection): Map<string, string> {
+  const imageGroups = collectImageGroups(section)
+  const map = new Map<string, string>()
+  if (imageGroups.length !== 1) return map
+
+  const captions = collectLeafTextsByRole(imageGroups[0].group, "caption")
+  if (captions.length === 0) return map
+
+  map.set(imageGroups[0].imageId, captions.join(" "))
+  return map
 }
 
 function applyDuplicateImageAltPolicy(
-  section: PageSection,
+  section: PageSectioningSection,
   altTextByImageId: Map<string, string>,
 ): Map<string, string> {
   const normalizedAltToFirstImageId = new Map<string, string>()
   const normalizedAltMap = new Map(altTextByImageId)
 
-  for (const part of section.parts) {
-    if (part.type !== "image" || part.isPruned) continue
-    const altText = normalizedAltMap.get(part.imageId)?.trim()
+  for (const { imageId } of collectImageGroups(section)) {
+    const altText = normalizedAltMap.get(imageId)?.trim()
     if (!altText) continue
 
     const dedupeKey = altText.replace(/\s+/g, " ").trim().toLowerCase()
     if (!dedupeKey) continue
 
     if (normalizedAltToFirstImageId.has(dedupeKey)) {
-      normalizedAltMap.set(part.imageId, "")
+      normalizedAltMap.set(imageId, "")
       continue
     }
 
-    normalizedAltToFirstImageId.set(dedupeKey, part.imageId)
+    normalizedAltToFirstImageId.set(dedupeKey, imageId)
   }
 
   return normalizedAltMap
@@ -1172,7 +1204,7 @@ function applyDuplicateImageAltPolicy(
 export function buildPreferredImageAltMap(
   storage: Storage,
   pageId: string,
-  section?: PageSection,
+  section?: PageSectioningSection,
 ): Map<string, string> {
   const imageCaptionMap = loadImageCaptionMap(storage, pageId)
   const sectionImageAltMap = section ? buildSectionImageAltMap(section) : new Map<string, string>()
@@ -2138,30 +2170,29 @@ function collectActivityIds(adtDir: string, pageList: PageEntry[]): string[] {
 // File utilities
 // ---------------------------------------------------------------------------
 
-/** Heading-level text types that should appear in the table of contents */
-const HEADING_TEXT_TYPES = new Set([
-  "section_heading",
-  "chapter_title",
-  "book_title",
-  "activity_title",
-])
-
 /**
- * Find the first heading text entry in a section's parts.
- * Returns the textId and text of the first heading-type text found, or null.
+ * Find the first heading-role leaf anywhere in a section's tree.
+ * Returns the nodeId and text of the first heading leaf found, or null.
  */
 function findHeadingText(
-  section: import("@adt/types").PageSection,
+  section: import("@adt/types").PageSectioningSection,
 ): { textId: string; text: string } | null {
-  for (const part of section.parts) {
-    if (part.type !== "text_group" || part.isPruned) continue
-    // Check if this is a heading group type OR contains heading text types
-    for (const t of part.texts) {
-      if (t.isPruned) continue
-      if (HEADING_TEXT_TYPES.has(t.textType)) {
-        return { textId: t.textId, text: t.text }
+  const walk = (node: ContentNodeData): { textId: string; text: string } | null => {
+    if (node.isPruned) return null
+    if (node.role === "heading" && node.text) {
+      return { textId: node.nodeId, text: node.text }
+    }
+    if (node.children) {
+      for (const c of node.children) {
+        const hit = walk(c)
+        if (hit) return hit
       }
     }
+    return null
+  }
+  for (const n of section.nodes) {
+    const hit = walk(n)
+    if (hit) return hit
   }
   return null
 }

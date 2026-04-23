@@ -93,6 +93,14 @@ export interface HtmlValidationOptions {
   expectedSectionType?: string
   /** Expected value for the section's data-section-id attribute. */
   expectedSectionId?: string
+  /**
+   * data-ids permitted on wrapper elements that carry nested HTML children.
+   * The "string children only" rule (implicit via the expectedTexts check)
+   * does NOT apply to these IDs. Used for `group` / `activity` container
+   * node_ids. Each must still appear at most once in the document and is
+   * not required to be present.
+   */
+  allowedContainerIds?: string[]
 }
 
 export function validateSectionHtml(
@@ -102,7 +110,8 @@ export function validateSectionHtml(
   imageUrlPrefix?: string,
   options?: HtmlValidationOptions
 ): HtmlValidationResult {
-  const allowedIds = new Set([...allowedTextIds, ...allowedImageIds])
+  const containerIds = options?.allowedContainerIds ?? []
+  const allowedIds = new Set([...allowedTextIds, ...allowedImageIds, ...containerIds])
   const imageIdSet = new Set(allowedImageIds)
   const errors: string[] = []
   const doc = parseDocument(repairMalformedHtmlEntities(html))

@@ -367,16 +367,15 @@ describe("runPipelineDAG", () => {
     const t = orderTracker()
     const executors = new Map<StepName, StepExecutor>([
       ["extract", t.execute("extract", 5)],
-      // metadata and text-classification both depend only on extract
+      // metadata and image-filtering both depend only on extract
       ["metadata", t.execute("metadata", 20)],
-      ["text-classification", t.execute("text-classification", 20)],
       ["image-filtering", t.execute("image-filtering", 20)],
     ])
     const { progress } = collectingProgress()
     await runPipelineDAG(executors, progress)
 
-    // All three should start before any of them finishes
-    const parallelSteps = ["metadata", "text-classification", "image-filtering"]
+    // Both should start before either finishes
+    const parallelSteps = ["metadata", "image-filtering"]
     const starts = parallelSteps.map((id) => t.events.indexOf(`${id}:start`))
     const firstEnd = Math.min(
       ...parallelSteps.map((id) => t.events.indexOf(`${id}:end`))
@@ -443,19 +442,19 @@ describe("runPipelineDAG", () => {
   })
 
   it("mid-stage failure skips remaining steps but not already-complete ones", async () => {
-    // In the extract stage: extract succeeds, then text-classification fails
-    // metadata (parallel to text-classification) should still complete
-    // translation (depends on text-classification) should be skipped
+    // In the extract stage: extract succeeds, then image-filtering fails
+    // metadata (parallel to image-filtering) should still complete
+    // image-segmentation (depends on image-filtering) should be skipped
     const executors = new Map<StepName, StepExecutor>([
-      ["text-classification", async () => { throw new Error("classify fail") }],
+      ["image-filtering", async () => { throw new Error("filter fail") }],
     ])
     const { progress } = collectingProgress()
     const result = await runPipelineDAG(executors, progress)
 
     expect(result.steps.statuses.get("extract")).toBe("complete")
     expect(result.steps.statuses.get("metadata")).toBe("complete")
-    expect(result.steps.statuses.get("text-classification")).toBe("failed")
-    expect(result.steps.statuses.get("translation")).toBe("skipped")
+    expect(result.steps.statuses.get("image-filtering")).toBe("failed")
+    expect(result.steps.statuses.get("image-segmentation")).toBe("skipped")
   })
 
   it("pipeline definition covers all step names in StepName enum", () => {

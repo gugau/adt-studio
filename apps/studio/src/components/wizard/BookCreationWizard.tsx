@@ -14,6 +14,7 @@ import { STEPS } from "./steps"
 import { buildConfigOverrides } from "./bookCreationConfig"
 import { getPresetAccent, type PresetAccent } from "./constants"
 import { Step0Preset } from "./step0preset"
+import { StepUpload } from "./stepUpload"
 import { StudioTopBar } from "@/components/StudioTopBar"
 import { PdfCoverPreview } from "./shared/PdfCoverPreview"
 import { LayoutPreview, getPreviewWidth } from "./step2LayoutOptions/LayoutPreview"
@@ -193,7 +194,7 @@ function PreviewContainer({
 export function BookCreationWizard() {
   const { t, i18n } = useLingui()
   const navigate = useNavigate()
-  const { currentStep, setCurrentStep, stepDirection, previewFocus } = useWizard()
+  const { phase, currentStep, setCurrentStep, stepDirection, previewFocus } = useWizard()
   const form = useWizardForm()
   const createMutation = useCreateBook()
   const { data: books, isPending: booksLoading } = useBooks()
@@ -231,11 +232,15 @@ export function BookCreationWizard() {
     if (focusable) setTimeout(() => focusable.focus({ preventScroll: true }), 300)
   }
 
+  if (phase === "upload") {
+    return <StepUpload />
+  }
+
   if (currentStep === 0) {
     return (
       <div className="flex flex-1 min-h-0 flex-col h-full bg-white">
         <StudioTopBar brandLinksHome trailingTitle={<Trans>Add Book</Trans>} />
-        <div className="flex flex-1 min-h-0 flex-col overflow-auto">
+        <div className="flex flex-1 min-h-0 flex-col overflow-y-auto overflow-x-hidden">
           <Step0Preset />
         </div>
       </div>
@@ -269,7 +274,7 @@ export function BookCreationWizard() {
           await api.runStages(
             book.label,
             apiKey,
-            { fromStage: "extract", toStage: "storyboard" },
+            { fromStage: "extract", toStage: "sectioning" },
             { azure: { key: azureKey, region: azureRegion }, geminiApiKey: geminiKey },
           )
         } catch (pipelineError) {

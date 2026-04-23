@@ -331,7 +331,7 @@ describe("buildTextCatalog", () => {
             {
               sectionId: "pg001_section_0",
               sectionType: "activity_fill_in_the_blank",
-              parts: [],
+              nodes: [],
               backgroundColor: "#ffffff",
               textColor: "#000000",
               pageNumber: 1,
@@ -422,7 +422,7 @@ describe("buildTextCatalog", () => {
             {
               sectionId: "pg001_section_0",
               sectionType: "activity_fill_in_the_blank",
-              parts: [],
+              nodes: [],
               backgroundColor: "#ffffff",
               textColor: "#000000",
               pageNumber: 1,
@@ -431,7 +431,7 @@ describe("buildTextCatalog", () => {
             {
               sectionId: "pg001_section_1",
               sectionType: "activity_fill_in_the_blank",
-              parts: [],
+              nodes: [],
               backgroundColor: "#ffffff",
               textColor: "#000000",
               pageNumber: 1,

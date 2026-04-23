@@ -27,7 +27,7 @@ export interface SectionActionsDropdownProps {
 
 /**
  * Reusable three-dot dropdown menu for section actions (merge, clone, delete, prune).
- * Used by both SectioningOverview and SectionDataPanel.
+ * Used by both SectioningOverview and SectionEditPanel.
  */
 export function SectionActionsDropdown({
   sectionIndex,

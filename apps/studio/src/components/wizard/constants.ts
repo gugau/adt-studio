@@ -96,7 +96,7 @@ export type RenderStrategyId = (typeof RENDER_STRATEGIES)[number]["id"];
 
 // ─── Preset defaults — typed against the wizard form ────────────────────────
 
-export type SectioningModeId = "page" | "dynamic" | "section";
+export type SectioningModeId = "page" | "dynamic";
 
 export type WizardPageGrouping = "" | "spread" | "single";
 
@@ -190,7 +190,7 @@ export const PRESETS: PresetConfig[] = [
           render_type: "llm",
           config: {
             prompt: "web_generation_html",
-            model: "openai:gpt-5.2",
+            model: "openai:gpt-5.4",
             max_retries: 5,
             timeout: 180,
             temperature: 0.3,
@@ -201,7 +201,7 @@ export const PRESETS: PresetConfig[] = [
           render_type: "llm",
           config: {
             prompt: "web_generation_html_overlay",
-            model: "openai:gpt-5.2",
+            model: "openai:gpt-5.4",
             max_retries: 25,
             timeout: 180,
             temperature: 0.3,
@@ -217,7 +217,7 @@ export const PRESETS: PresetConfig[] = [
           config: {
             prompt: "activity_multiple_choice",
             answer_prompt: "activity_multiple_choice_answers",
-            model: "openai:gpt-5.2",
+            model: "openai:gpt-5.4",
             max_retries: 5,
             timeout: 180,
             temperature: 0.3,
@@ -229,7 +229,7 @@ export const PRESETS: PresetConfig[] = [
           config: {
             prompt: "activity_true_false",
             answer_prompt: "activity_true_false_answers",
-            model: "openai:gpt-5.2",
+            model: "openai:gpt-5.4",
             max_retries: 5,
             timeout: 180,
             temperature: 0.3,
@@ -241,7 +241,7 @@ export const PRESETS: PresetConfig[] = [
           config: {
             prompt: "activity_fill_in_the_blank",
             answer_prompt: "activity_fill_in_the_blank_answers",
-            model: "openai:gpt-5.2",
+            model: "openai:gpt-5.4",
             max_retries: 5,
             timeout: 180,
             temperature: 0.3,
@@ -253,7 +253,7 @@ export const PRESETS: PresetConfig[] = [
           config: {
             prompt: "activity_fill_in_a_table",
             answer_prompt: "activity_fill_in_a_table_answers",
-            model: "openai:gpt-5.2",
+            model: "openai:gpt-5.4",
             max_retries: 5,
             timeout: 180,
             temperature: 0.3,
@@ -265,7 +265,7 @@ export const PRESETS: PresetConfig[] = [
           config: {
             prompt: "activity_matching",
             answer_prompt: "activity_matching_answers",
-            model: "openai:gpt-5.2",
+            model: "openai:gpt-5.4",
             max_retries: 5,
             timeout: 180,
             temperature: 0.3,
@@ -277,7 +277,7 @@ export const PRESETS: PresetConfig[] = [
           config: {
             prompt: "activity_sorting",
             answer_prompt: "activity_sorting_answers",
-            model: "openai:gpt-5.2",
+            model: "openai:gpt-5.4",
             max_retries: 5,
             timeout: 180,
             temperature: 0.3,
@@ -288,7 +288,7 @@ export const PRESETS: PresetConfig[] = [
           render_type: "activity",
           config: {
             prompt: "activity_open_ended_answer",
-            model: "openai:gpt-5.2",
+            model: "openai:gpt-5.4",
             max_retries: 5,
             timeout: 180,
             temperature: 0.3,
@@ -305,7 +305,7 @@ export const PRESETS: PresetConfig[] = [
         activity_sorting: "activity_sorting",
         activity_open_ended_answer: "activity_open_ended_answer",
       },
-      pruned_text_types: ["header_text", "footer_text", "page_number"],
+      pruned_role_types: ["header_text", "footer_text", "page_number"],
       pruned_section_types: ["back_cover", "credits", "inside_cover"],
       image_filters: { min_stddev: 2 },
     },
@@ -360,7 +360,7 @@ export const PRESETS: PresetConfig[] = [
           render_type: "llm",
           config: {
             prompt: "web_generation_html",
-            model: "openai:gpt-5.2",
+            model: "openai:gpt-5.4",
             max_retries: 5,
             timeout: 180,
           },
@@ -369,14 +369,14 @@ export const PRESETS: PresetConfig[] = [
           render_type: "llm",
           config: {
             prompt: "web_generation_html_overlay",
-            model: "openai:gpt-5.2",
+            model: "openai:gpt-5.4",
             max_retries: 25,
             timeout: 180,
           },
         },
       },
       section_render_strategies: {},
-      pruned_text_types: ["header_text", "footer_text", "page_number"],
+      pruned_role_types: ["header_text", "footer_text", "page_number"],
       pruned_section_types: [
         "back_cover",
         "credits",
@@ -444,7 +444,7 @@ export const PRESETS: PresetConfig[] = [
           render_type: "llm",
           config: {
             prompt: "web_generation_html",
-            model: "openai:gpt-5.2",
+            model: "openai:gpt-5.4",
             max_retries: 5,
             timeout: 180,
             visual_refinement: { enabled: true, max_iterations: 20 },
@@ -454,7 +454,7 @@ export const PRESETS: PresetConfig[] = [
           render_type: "llm",
           config: {
             prompt: "web_generation_html_overlay",
-            model: "openai:gpt-5.2",
+            model: "openai:gpt-5.4",
             max_retries: 25,
             timeout: 180,
             visual_refinement: { enabled: true, max_iterations: 5 },
@@ -462,7 +462,7 @@ export const PRESETS: PresetConfig[] = [
         },
       },
       section_render_strategies: {},
-      pruned_text_types: ["header_text", "footer_text", "page_number"],
+      pruned_role_types: ["header_text", "footer_text", "page_number"],
       pruned_section_types: [
         "back_cover",
         "credits",
@@ -551,7 +551,6 @@ const VALUE_LABELS: Record<string, MessageDescriptor> = {
   spread: msg`Spread`,
   page: msg`Per Page`,
   dynamic: msg`Dynamic`,
-  section: msg`By Section`,
 };
 
 function formatDefaultValue(
