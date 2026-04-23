@@ -58,11 +58,11 @@ describe("Package routes", () => {
         {
           sectionId: "pg001_sec001",
           sectionType: "content",
-          parts: [],
           backgroundColor: "#ffffff",
           textColor: "#000000",
           pageNumber: 1,
           isPruned: false,
+          nodes: [],
         },
       ],
     })

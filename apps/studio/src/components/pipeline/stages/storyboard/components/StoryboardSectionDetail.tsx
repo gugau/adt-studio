@@ -1,10 +1,45 @@
 import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from "react"
 import { createPortal } from "react-dom"
-import { Check, Eye, EyeOff, LayoutGrid, Loader2, ChevronDown, Sparkles, PanelRightOpen, PanelRightClose, Play, PenLine, Save, Merge, X, Code, GripHorizontal, MessageSquare } from "lucide-react"
-import { SectionDataPanel } from "./SectionDataPanel"
+import {
+  Check,
+  ChevronDown,
+  Code,
+  Eye,
+  EyeOff,
+  GripHorizontal,
+  ImagePlus,
+  LayoutGrid,
+  Loader2,
+  MessageSquare,
+  PanelRightClose,
+  PanelRightOpen,
+  PenLine,
+  Play,
+  RefreshCw,
+  Save,
+  Sparkles,
+  X,
+} from "lucide-react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { api, BASE_URL } from "@/api/client"
 import type { PageDetail, VersionEntry } from "@/api/client"
+import type {
+  ContentNodeData,
+  PageSectioningOutput,
+  PageSectioningSection,
+} from "@adt/types"
+import {
+  addImageLeaf,
+  collectLeafNodes,
+  collectPrunedLeafIds,
+  deleteNode,
+  editLeafText,
+  findNode,
+  replaceNodeId,
+  setLeafRole,
+  toggleNodePruned,
+  type IdFactory,
+} from "@adt/types"
 import { useApiKey } from "@/hooks/use-api-key"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useBookTasks } from "@/hooks/use-book-tasks"
@@ -13,6 +48,7 @@ import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import { useStepHeader } from "../../../components/StepViewRouter"
 import { BookPreviewFrame, type BookPreviewFrameHandle } from "./BookPreviewFrame"
 import { SectionEditToolbar } from "./SectionEditToolbar"
+import { SectionEditPanel } from "./SectionEditPanel"
 import { ImageCropDialog } from "./ImageCropDialog"
 import { AiImageDialog } from "./AiImageDialog"
 import { AddImageDialog } from "./AddImageDialog"
@@ -20,9 +56,18 @@ import { ReplaceFromBookDialog } from "./ReplaceFromBookDialog"
 import { SegmentPreviewDialog, type SegmentRegion } from "./SegmentPreviewDialog"
 import { AiEditHistoryDrawer } from "./AiEditHistoryDrawer"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useLingui } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
 import { i18n } from "@lingui/core"
+import { cn } from "@/lib/utils"
+import { getSectionTypeLabel, getSectionTypeDescription } from "@/lib/section-constants"
 import {
   Dialog,
   DialogContent,
@@ -188,8 +233,65 @@ function VersionPicker({
 
 // -- Types --
 
-type SectioningData = NonNullable<PageDetail["sectioning"]>
+type SectioningData = PageSectioningOutput
 type RenderingData = NonNullable<PageDetail["rendering"]>
+
+// Replace the section at index `sectionIndex` with the given section, producing
+// a new PageSectioningOutput.
+function replaceSection(
+  sectioning: SectioningData,
+  sectionIndex: number,
+  next: PageSectioningSection
+): SectioningData {
+  return {
+    ...sectioning,
+    sections: sectioning.sections.map((s, i) => (i === sectionIndex ? next : s)),
+  }
+}
+
+// Replace the tree of the section at `sectionIndex` with `nextNodes`.
+function withSectionNodes(
+  sectioning: SectioningData,
+  sectionIndex: number,
+  nextNodes: ContentNodeData[]
+): SectioningData {
+  return {
+    ...sectioning,
+    sections: sectioning.sections.map((s, i) =>
+      i === sectionIndex ? { ...s, nodes: nextNodes } : s
+    ),
+  }
+}
+
+// Replace a single node (matched by id, anywhere in the tree) with `siblings`
+// at the same slot. Used when segmentation produces multiple images from one.
+function replaceNodeWithSiblings(
+  nodes: ContentNodeData[],
+  targetNodeId: string,
+  siblings: ContentNodeData[]
+): ContentNodeData[] {
+  let replaced = false
+  const walk = (list: ContentNodeData[]): ContentNodeData[] => {
+    for (let i = 0; i < list.length; i++) {
+      if (list[i].nodeId === targetNodeId) {
+        replaced = true
+        return [...list.slice(0, i), ...siblings, ...list.slice(i + 1)]
+      }
+      const children = list[i].children
+      if (children) {
+        const nextChildren = walk(children)
+        if (nextChildren !== children) {
+          return list.map((n, j) =>
+            j === i ? { ...n, children: nextChildren } : n
+          )
+        }
+      }
+    }
+    return list
+  }
+  const next = walk(nodes)
+  return replaced ? next : nodes
+}
 
 function getRenderedSectionByIndex(
   rendering: RenderingData | null | undefined,
@@ -299,46 +401,19 @@ function escapeRegex(s: string) {
 }
 
 /**
- * Parse a data-id like "pg001_gp001_tx001" to find the matching text entry
- * in the sectioning data. Returns { groupIndex, textIndex } within the section's parts.
- */
-function findTextByDataId(
-  parts: SectioningData["sections"][0]["parts"],
-  dataId: string
-): { partIndex: number; textIndex: number } | null {
-  // data-id format: {pageId}_gp{NNN}_tx{NNN}
-  const match = dataId.match(/^(.+_gp\d+)_tx(\d+)$/)
-  if (!match) return null
-  const groupId = match[1]
-  const textIdx = parseInt(match[2], 10) - 1 // tx001 → index 0
-
-  for (let pi = 0; pi < parts.length; pi++) {
-    const p = parts[pi]
-    if (p.type === "text_group" && p.groupId === groupId) {
-      if (textIdx >= 0 && textIdx < p.texts.length) {
-        return { partIndex: pi, textIndex: textIdx }
-      }
-    }
-  }
-  return null
-}
-
-/**
  * Back-propagate text changes from edited HTML into sectioning data.
- * Parses data-id elements from HTML and updates matching text entries.
+ * Tree leaves have nodeId === data-id, so we walk every leaf and update its
+ * text if the corresponding element in the HTML has changed.
  */
 function backPropagateTextChanges(
   sectioning: SectioningData,
   sectionIndex: number,
   fullHtml: string
 ): SectioningData {
-  // Parse text content from data-id elements in the HTML
   const parser = new DOMParser()
   const doc = parser.parseFromString(fullHtml, "text/html")
-  const dataIdElements = doc.querySelectorAll("[data-id]")
-
   const textMap = new Map<string, string>()
-  dataIdElements.forEach((el) => {
+  doc.querySelectorAll("[data-id]").forEach((el) => {
     const id = el.getAttribute("data-id")
     if (id && el.tagName !== "IMG") {
       textMap.set(id, el.textContent?.trim() ?? "")
@@ -347,29 +422,19 @@ function backPropagateTextChanges(
 
   if (textMap.size === 0) return sectioning
 
-  return {
-    ...sectioning,
-    sections: sectioning.sections.map((s, si) => {
-      if (si !== sectionIndex) return s
-      return {
-        ...s,
-        parts: s.parts.map((p) => {
-          if (p.type !== "text_group") return p
-          return {
-            ...p,
-            texts: p.texts.map((t, ti) => {
-              const textId = `${p.groupId}_tx${String(ti + 1).padStart(3, "0")}`
-              const newText = textMap.get(textId)
-              if (newText !== undefined && newText !== t.text) {
-                return { ...t, text: newText }
-              }
-              return t
-            }),
-          }
-        }),
-      }
-    }),
+  const section = sectioning.sections[sectionIndex]
+  if (!section) return sectioning
+
+  let nextNodes = section.nodes
+  for (const leaf of collectLeafNodes(section.nodes)) {
+    if (leaf.role === "image") continue
+    const nextText = textMap.get(leaf.nodeId)
+    if (nextText !== undefined && nextText !== (leaf.text ?? "")) {
+      nextNodes = editLeafText(nextNodes, leaf.nodeId, nextText)
+    }
   }
+  if (nextNodes === section.nodes) return sectioning
+  return withSectionNodes(sectioning, sectionIndex, nextNodes)
 }
 
 // -- Main component --
@@ -524,7 +589,6 @@ export function StoryboardSectionDetail({
 
   // Add image dialog state
   const [addImageDialogOpen, setAddImageDialogOpen] = useState(false)
-  const [showPrunedImages, setShowPrunedImages] = useState(true)
 
   // Notify parent when AI image generation starts/stops
   useEffect(() => {
@@ -570,8 +634,8 @@ export function StoryboardSectionDetail({
     staleTime: 5 * 60 * 1000,
   })
 
-  const textTypes = configQuery.data?.merged?.text_types as Record<string, string> | undefined
-  const groupTypes = configQuery.data?.merged?.text_group_types as Record<string, string> | undefined
+  const textTypes = configQuery.data?.merged?.role_types as Record<string, string> | undefined
+  const groupTypes = configQuery.data?.merged?.structure_types as Record<string, string> | undefined
   const allSectionTypes = configQuery.data?.merged?.section_types as Record<string, string> | undefined
   const disabledSectionTypes = new Set(configQuery.data?.merged?.disabled_section_types as string[] ?? [])
   const sectionTypes = allSectionTypes
@@ -612,7 +676,7 @@ export function StoryboardSectionDetail({
   }, [])
 
   // Effective data
-  const sectioningData = pendingSectioning ?? page.sectioning
+  const sectioningData = pendingSectioning ?? (page.sectioningTree as SectioningData | null)
   const dirty = pendingSectioning != null
 
   // Current section data
@@ -637,8 +701,8 @@ export function StoryboardSectionDetail({
     }
   }, [page.rendering, sectionIndex])
 
-  // Parts are inline in the section data (empty if section missing — hooks still run)
-  const parts = section?.parts ?? []
+  // Tree nodes for the current section (empty if section missing — hooks still run)
+  const nodes = section?.nodes ?? []
 
   // Save / discard sectioning
   const saveSectioning = async () => {
@@ -649,28 +713,12 @@ export function StoryboardSectionDetail({
     try {
       const minDelay = new Promise((r) => setTimeout(r, 400))
 
-      // Before saving, strip pruned elements from the rendered HTML so they
+      // Before saving, strip pruned leaves from the rendered HTML so they
       // disappear from the preview without needing an LLM re-render.
       let renderingFromPrune: RenderingData | null = null
       const sectionToSave = pendingSectioning.sections[sectionIndex]
       if (sectionToSave) {
-        const prunedIds: string[] = []
-        for (const p of sectionToSave.parts ?? []) {
-          if (p.type === "image" && p.isPruned) {
-            prunedIds.push(p.imageId)
-          } else if (p.type === "text_group") {
-            const actualIds = resolveGroupDataIds(p.groupId)
-            if (p.isPruned) {
-              prunedIds.push(...actualIds)
-            } else {
-              p.texts.forEach((t, ti) => {
-                if (t.isPruned && actualIds[ti]) {
-                  prunedIds.push(actualIds[ti])
-                }
-              })
-            }
-          }
-        }
+        const prunedIds = collectPrunedLeafIds(sectionToSave.nodes)
         if (prunedIds.length > 0) {
           renderingFromPrune = removeElementsFromRendering(prunedIds)
         }
@@ -724,13 +772,16 @@ export function StoryboardSectionDetail({
 
       // Back-propagate: if we have sectioning data and edited HTML, update sectioning too
       const editedHtml = getRenderedSectionByIndex(pendingRendering, sectionIndex)?.html
-      if (editedHtml && page.sectioning) {
+      const sBase = pendingSectioning ?? (page.sectioningTree as SectioningData | null)
+      if (editedHtml && sBase) {
         const updatedSectioning = backPropagateTextChanges(
-          pendingSectioning ?? page.sectioning,
+          sBase,
           sectionIndex,
           editedHtml
         )
-        await api.updateSectioning(bookLabel, pageId, updatedSectioning)
+        if (updatedSectioning !== sBase) {
+          await api.updateSectioning(bookLabel, pageId, updatedSectioning)
+        }
       }
 
       setPendingRendering(null)
@@ -871,23 +922,6 @@ export function StoryboardSectionDetail({
       })
   }
 
-  // Resolve the actual data-ids for a text group's elements from the current rendering HTML.
-  // Returns data-ids in document order, which stays in sync with the sectioning texts array
-  // even after local edits (delete/duplicate) that shift positional indices.
-  const resolveGroupDataIds = useCallback(
-    (groupId: string): string[] => {
-      const rBase = pendingRendering ?? page.rendering
-      if (!rBase) return []
-      const currentSection = getRenderedSectionByIndex(rBase, sectionIndex)
-      if (!currentSection?.html) return []
-      const parser = new DOMParser()
-      const doc = parser.parseFromString(currentSection.html, "text/html")
-      const elements = doc.querySelectorAll(`[data-id^="${groupId}_tx"]`)
-      return Array.from(elements).map(el => el.getAttribute("data-id")!).filter(Boolean)
-    },
-    [pendingRendering, page.rendering, sectionIndex]
-  )
-
   // Remove one or more data-id elements from the rendered HTML and update pendingRendering.
   // Returns the updated rendering, or null if nothing changed.
   const removeElementsFromRendering = useCallback(
@@ -1002,6 +1036,35 @@ export function StoryboardSectionDetail({
     [pendingRendering, page.rendering, sectionIndex]
   )
 
+  // Replace textContent of a single [data-id="..."] element in the rendered HTML.
+  const updateElementTextInRendering = useCallback(
+    (dataId: string, newText: string) => {
+      const rBase = pendingRendering ?? page.rendering
+      if (!rBase) return
+      const currentSection = getRenderedSectionByIndex(rBase, sectionIndex)
+      if (!currentSection?.html) return
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(currentSection.html, "text/html")
+      const el = doc.querySelector(`[data-id="${dataId}"]`)
+      if (!el) {
+        // Element not in HTML — re-render needed to sync
+        needsRerenderRef.current = true
+        return
+      }
+      el.textContent = newText
+      const newHtml = doc.body.innerHTML
+      const updated: RenderingData = {
+        ...rBase,
+        sections: rBase.sections.map((s) => {
+          if (s.sectionIndex !== sectionIndex) return s
+          return { ...s, html: newHtml }
+        }),
+      }
+      setPendingRendering(updated)
+    },
+    [pendingRendering, page.rendering, sectionIndex]
+  )
+
   // Update a single activity answer value in the rendering
   const updateAnswer = useCallback(
     (itemKey: string, value: string) => {
@@ -1022,86 +1085,53 @@ export function StoryboardSectionDetail({
     [pendingRendering, page.rendering, sectionIndex]
   )
 
-  // Delete selected block from rendered HTML
+  // Delete selected block from rendered HTML and remove the matching leaf from sectioning.
   const handleDeleteBlock = useCallback(
     (dataId: string) => {
       removeElementsFromRendering([dataId])
-
-      // Also delete matching part from sectioning (not just prune)
-      const sBase = pendingSectioning ?? page.sectioning
-      if (sBase) {
-        const loc = findTextByDataId(parts, dataId)
-        if (loc) {
-          const updatedSectioning: SectioningData = {
-            ...sBase,
-            sections: sBase.sections.map((s, si) => {
-              if (si !== sectionIndex) return s
-              return {
-                ...s,
-                parts: s.parts.map((p, pi) => {
-                  if (pi !== loc.partIndex || p.type !== "text_group") return p
-                  return {
-                    ...p,
-                    texts: p.texts.filter((_, ti) => ti !== loc.textIndex),
-                  }
-                }),
-              }
-            }),
-          }
-          setPendingSectioning(updatedSectioning)
-        } else {
-          // Image — filter out entirely
-          const imgIdx = parts.findIndex((p) => p.type === "image" && p.imageId === dataId)
-          if (imgIdx >= 0) {
-            const updatedSectioning: SectioningData = {
-              ...sBase,
-              sections: sBase.sections.map((s, si) => {
-                if (si !== sectionIndex) return s
-                return {
-                  ...s,
-                  parts: s.parts.filter((_, pi) => pi !== imgIdx),
-                }
-              }),
-            }
-            setPendingSectioning(updatedSectioning)
-          }
+      const sBase = pendingSectioning ?? (page.sectioningTree as SectioningData | null)
+      if (sBase && section) {
+        const nextNodes = deleteNode(section.nodes, dataId)
+        if (nextNodes !== section.nodes) {
+          setPendingSectioning(withSectionNodes(sBase, sectionIndex, nextNodes))
         }
       }
-
       setSelectedElement(null)
     },
-    [removeElementsFromRendering, pendingSectioning, page.sectioning, sectionIndex, parts]
+    [removeElementsFromRendering, pendingSectioning, page.sectioningTree, sectionIndex, section]
   )
 
-  // Toggle isPruned on a part within the current section
-  const togglePartPruned = (partIndex: number) => {
-    const base = pendingSectioning ?? page.sectioning
-    if (!base) return
-    // Unpruning requires re-render to add the element back to HTML
-    const currentPart = base.sections[sectionIndex]?.parts[partIndex]
-    if (currentPart?.isPruned) needsRerenderRef.current = true
-    const updated: SectioningData = {
-      ...base,
-      sections: base.sections.map((s, si) => {
-        if (si !== sectionIndex) return s
-        return {
-          ...s,
-          parts: s.parts.map((p, pi) => {
-            if (pi !== partIndex) return p
-            return { ...p, isPruned: !p.isPruned }
-          }),
-        }
-      }),
-    }
-    setPendingSectioning(updated)
-  }
+  // Replace the current section with an updated copy (from SectionTreeEditor).
+  const handleSectionChange = useCallback(
+    (next: PageSectioningSection) => {
+      const base = pendingSectioning ?? (page.sectioningTree as SectioningData | null)
+      if (!base) return
+      setPendingSectioning(replaceSection(base, sectionIndex, next))
+    },
+    [pendingSectioning, page.sectioningTree, sectionIndex]
+  )
+
+  // Toggle isPruned on a leaf or container in the current section (by nodeId).
+  const toggleLeafPrunedById = useCallback(
+    (nodeId: string) => {
+      const base = pendingSectioning ?? (page.sectioningTree as SectioningData | null)
+      if (!base || !section) return
+      const target = findNode(section.nodes, nodeId)
+      const wasPruned = target?.isPruned ?? false
+      const nextNodes = toggleNodePruned(section.nodes, nodeId)
+      if (nextNodes === section.nodes) return
+      setPendingSectioning(withSectionNodes(base, sectionIndex, nextNodes))
+      // Unpruning restores the element to the render — LLM re-render required.
+      if (wasPruned) needsRerenderRef.current = true
+    },
+    [pendingSectioning, page.sectioningTree, sectionIndex, section]
+  )
 
   // Toggle isPruned on the current section
   const toggleSectionPruned = () => {
     if (storyboardRunning) return
-    const base = pendingSectioning ?? page.sectioning
+    const base = pendingSectioning ?? (page.sectioningTree as SectioningData | null)
     if (!base) return
-    // Unpruning requires re-render
     if (base.sections[sectionIndex]?.isPruned) needsRerenderRef.current = true
     const updated: SectioningData = {
       ...base,
@@ -1116,7 +1146,7 @@ export function StoryboardSectionDetail({
   // Change section type
   const changeSectionType = (newType: string) => {
     needsRerenderRef.current = true
-    const base = pendingSectioning ?? page.sectioning
+    const base = pendingSectioning ?? (page.sectioningTree as SectioningData | null)
     if (!base) return
     const updated: SectioningData = {
       ...base,
@@ -1128,365 +1158,44 @@ export function StoryboardSectionDetail({
     setPendingSectioning(updated)
   }
 
-  // Change text type for a specific text entry
-  const changeTextType = (partIndex: number, textIndex: number, newType: string) => {
-    needsRerenderRef.current = true
-    const base = pendingSectioning ?? page.sectioning
-    if (!base) return
-    const updated: SectioningData = {
-      ...base,
-      sections: base.sections.map((s, si) => {
-        if (si !== sectionIndex) return s
-        return {
-          ...s,
-          parts: s.parts.map((p, pi) => {
-            if (pi !== partIndex || p.type !== "text_group") return p
-            return {
-              ...p,
-              texts: p.texts.map((t, ti) => {
-                if (ti !== textIndex) return t
-                return { ...t, textType: newType }
-              }),
-            }
-          }),
-        }
-      }),
-    }
-    setPendingSectioning(updated)
-  }
-
-  // Edit text content for a specific text entry (from sidebar)
-  const editText = (partIndex: number, textIndex: number, newText: string) => {
-    // 1. Update sectioning data
-    const sBase = pendingSectioning ?? page.sectioning
-    if (!sBase) return
-    const updatedSectioning: SectioningData = {
-      ...sBase,
-      sections: sBase.sections.map((s, si) => {
-        if (si !== sectionIndex) return s
-        return {
-          ...s,
-          parts: s.parts.map((p, pi) => {
-            if (pi !== partIndex || p.type !== "text_group") return p
-            return {
-              ...p,
-              texts: p.texts.map((t, ti) => {
-                if (ti !== textIndex) return t
-                return { ...t, text: newText }
-              }),
-            }
-          }),
-        }
-      }),
-    }
-    setPendingSectioning(updatedSectioning)
-
-    // 2. Forward-propagate to rendering HTML if available
-    const rBase = pendingRendering ?? page.rendering
-    if (rBase) {
-      const currentSection = getRenderedSectionByIndex(rBase, sectionIndex)
-      if (currentSection?.html) {
-        // Resolve the actual data-id from the HTML (may differ from positional
-        // index after delete/duplicate operations that shift the texts array).
-        const part = sBase.sections[sectionIndex]?.parts[partIndex]
-        if (part?.type === "text_group") {
-          const actualIds = resolveGroupDataIds(part.groupId)
-          const textId = actualIds[textIndex]
-          if (!textId) {
-            needsRerenderRef.current = true
-            return
-          }
-          const parser = new DOMParser()
-          const doc = parser.parseFromString(currentSection.html, "text/html")
-          const el = doc.querySelector(`[data-id="${textId}"]`)
-          if (el) {
-            el.textContent = newText
-            const updatedHtml = doc.body.innerHTML
-            const updatedRendering: RenderingData = {
-              ...rBase,
-              sections: rBase.sections.map((s) => {
-                if (s.sectionIndex !== sectionIndex) return s
-                return { ...s, html: updatedHtml }
-              }),
-            }
-            setPendingRendering(updatedRendering)
-          } else {
-            // Element not found in HTML — need re-render to sync
-            needsRerenderRef.current = true
-          }
-        }
-      }
-    } else {
-      // No rendering data — need re-render to sync
+  // Change text role for a leaf (by nodeId)
+  const setLeafRoleById = useCallback(
+    (nodeId: string, role: string) => {
+      const base = pendingSectioning ?? (page.sectioningTree as SectioningData | null)
+      if (!base || !section) return
+      const nextNodes = setLeafRole(section.nodes, nodeId, role)
+      if (nextNodes === section.nodes) return
+      setPendingSectioning(withSectionNodes(base, sectionIndex, nextNodes))
       needsRerenderRef.current = true
-    }
-  }
+    },
+    [pendingSectioning, page.sectioningTree, sectionIndex, section]
+  )
 
-  // Change group type for a specific text group
-  const changeGroupType = (partIndex: number, newType: string) => {
+  // SectionTreeEditor callbacks — mirror tree changes into the preview HTML.
+  const handleLeafTextEdited = useCallback(
+    (nodeId: string, newText: string) => {
+      updateElementTextInRendering(nodeId, newText)
+    },
+    [updateElementTextInRendering]
+  )
+
+  const handleLeafDuplicated = useCallback(
+    (sourceNodeId: string, newNodeId: string) => {
+      duplicateElementsInRendering([{ sourceDataId: sourceNodeId, newDataId: newNodeId }])
+    },
+    [duplicateElementsInRendering]
+  )
+
+  const handleLeafDeleted = useCallback(
+    (nodeId: string) => {
+      removeElementsFromRendering([nodeId])
+    },
+    [removeElementsFromRendering]
+  )
+
+  const handleStructuralChange = useCallback(() => {
     needsRerenderRef.current = true
-    const base = pendingSectioning ?? page.sectioning
-    if (!base) return
-    const updated: SectioningData = {
-      ...base,
-      sections: base.sections.map((s, si) => {
-        if (si !== sectionIndex) return s
-        return {
-          ...s,
-          parts: s.parts.map((p, pi) => {
-            if (pi !== partIndex || p.type !== "text_group") return p
-            return { ...p, groupType: newType }
-          }),
-        }
-      }),
-    }
-    setPendingSectioning(updated)
-  }
-
-  // Toggle isPruned on a specific text entry
-  const toggleTextPruned = (partIndex: number, textIndex: number) => {
-    const base = pendingSectioning ?? page.sectioning
-    if (!base) return
-    // Unpruning requires re-render to add the element back
-    const part = base.sections[sectionIndex]?.parts[partIndex]
-    if (part?.type === "text_group" && part.texts[textIndex]?.isPruned) {
-      needsRerenderRef.current = true
-    }
-    const updated: SectioningData = {
-      ...base,
-      sections: base.sections.map((s, si) => {
-        if (si !== sectionIndex) return s
-        return {
-          ...s,
-          parts: s.parts.map((p, pi) => {
-            if (pi !== partIndex || p.type !== "text_group") return p
-            return {
-              ...p,
-              texts: p.texts.map((t, ti) => {
-                if (ti !== textIndex) return t
-                return { ...t, isPruned: !t.isPruned }
-              }),
-            }
-          }),
-        }
-      }),
-    }
-    setPendingSectioning(updated)
-  }
-
-  // Delete a specific text entry from a group (removes from sectioning + preview HTML)
-  const deleteTextEntry = (partIndex: number, textIndex: number) => {
-    const base = pendingSectioning ?? page.sectioning
-    if (!base) return
-    // Resolve the actual data-id from the HTML before removing from sectioning
-    const part = parts[partIndex]
-    if (part?.type === "text_group") {
-      const actualIds = resolveGroupDataIds(part.groupId)
-      const dataId = actualIds[textIndex]
-      if (dataId) removeElementsFromRendering([dataId])
-    }
-    const updated: SectioningData = {
-      ...base,
-      sections: base.sections.map((s, si) => {
-        if (si !== sectionIndex) return s
-        return {
-          ...s,
-          parts: s.parts.map((p, pi) => {
-            if (pi !== partIndex || p.type !== "text_group") return p
-            return {
-              ...p,
-              texts: p.texts.filter((_, ti) => ti !== textIndex),
-            }
-          }),
-        }
-      }),
-    }
-    setPendingSectioning(updated)
-  }
-
-  // Duplicate a specific text entry within a group
-  const duplicateTextEntry = (partIndex: number, textIndex: number) => {
-    const base = pendingSectioning ?? page.sectioning
-    if (!base) return
-    const part = parts[partIndex]
-    if (!part || part.type !== "text_group") return
-    const newTextId = `user_txt_${crypto.randomUUID().slice(0, 8)}`
-    const actualIds = resolveGroupDataIds(part.groupId)
-    const sourceDataId = actualIds[textIndex]
-    const newDataId = `${part.groupId}_tx_${crypto.randomUUID().slice(0, 8)}`
-    const updated: SectioningData = {
-      ...base,
-      sections: base.sections.map((s, si) => {
-        if (si !== sectionIndex) return s
-        return {
-          ...s,
-          parts: s.parts.map((p, pi) => {
-            if (pi !== partIndex || p.type !== "text_group") return p
-            const newTexts = [...p.texts]
-            const cloned = { ...p.texts[textIndex], textId: newTextId }
-            newTexts.splice(textIndex + 1, 0, cloned)
-            return { ...p, texts: newTexts }
-          }),
-        }
-      }),
-    }
-    setPendingSectioning(updated)
-    // Clone the element in the preview HTML
-    if (sourceDataId) {
-      duplicateElementsInRendering([{ sourceDataId, newDataId }])
-    }
-  }
-
-  // Add a new empty text group
-  const addGroup = () => {
-    needsRerenderRef.current = true
-    const base = pendingSectioning ?? page.sectioning
-    if (!base) return
-    const newGroup = {
-      type: "text_group" as const,
-      groupId: `user_grp_${crypto.randomUUID().slice(0, 8)}`,
-      groupType: "body",
-      texts: [] as { textId: string; textType: string; text: string; isPruned: boolean }[],
-
-      isPruned: false,
-    }
-    const updated: SectioningData = {
-      ...base,
-      sections: base.sections.map((s, si) => {
-        if (si !== sectionIndex) return s
-        return { ...s, parts: [...s.parts, newGroup] }
-      }),
-    }
-    setPendingSectioning(updated)
-  }
-
-  // Duplicate a text group
-  const duplicateGroup = (partIndex: number) => {
-    const base = pendingSectioning ?? page.sectioning
-    if (!base) return
-    const srcPart = parts[partIndex]
-    if (!srcPart || srcPart.type !== "text_group") return
-    const newGroupId = `user_grp_${crypto.randomUUID().slice(0, 8)}`
-    // Build mappings from actual HTML data-ids to new data-ids for the preview clone
-    const actualSourceIds = resolveGroupDataIds(srcPart.groupId)
-    const mappings = actualSourceIds.map((sourceDataId, ti) => ({
-      sourceDataId,
-      newDataId: `${newGroupId}_tx${String(ti + 1).padStart(3, "0")}`,
-    }))
-    const updated: SectioningData = {
-      ...base,
-      sections: base.sections.map((s, si) => {
-        if (si !== sectionIndex) return s
-        const cloned = structuredClone(srcPart)
-        const clone = {
-          ...cloned,
-          groupId: newGroupId,
-          texts: cloned.texts.map((t: { textId: string; textType: string; text: string; isPruned: boolean }) => ({
-            ...t,
-            textId: `user_txt_${crypto.randomUUID().slice(0, 8)}`,
-          })),
-        }
-        const newParts = [...s.parts]
-        newParts.splice(partIndex + 1, 0, clone)
-        return { ...s, parts: newParts }
-      }),
-    }
-    setPendingSectioning(updated)
-    // Clone the elements in the preview HTML
-    duplicateElementsInRendering(mappings)
-  }
-
-  // Delete a text group (removes from sectioning + preview HTML)
-  const deleteGroup = (partIndex: number) => {
-    const base = pendingSectioning ?? page.sectioning
-    if (!base) return
-    // Remove all text elements belonging to this group from the preview
-    const part = parts[partIndex]
-    if (part?.type === "text_group") {
-      const dataIds = resolveGroupDataIds(part.groupId)
-      if (dataIds.length > 0) removeElementsFromRendering(dataIds)
-    }
-    const updated: SectioningData = {
-      ...base,
-      sections: base.sections.map((s, si) => {
-        if (si !== sectionIndex) return s
-        return { ...s, parts: s.parts.filter((_, pi) => pi !== partIndex) }
-      }),
-    }
-    setPendingSectioning(updated)
-  }
-
-  // Reorder parts within the section
-  const reorderParts = (fromIndex: number, toIndex: number) => {
-    needsRerenderRef.current = true
-    const base = pendingSectioning ?? page.sectioning
-    if (!base) return
-    const updated: SectioningData = {
-      ...base,
-      sections: base.sections.map((s, si) => {
-        if (si !== sectionIndex) return s
-        const newParts = [...s.parts]
-        const [moved] = newParts.splice(fromIndex, 1)
-        newParts.splice(toIndex, 0, moved)
-        return { ...s, parts: newParts }
-      }),
-    }
-    setPendingSectioning(updated)
-  }
-
-  // Move a text entry between groups (or reorder within a group)
-  const moveText = (
-    fromPartIndex: number,
-    fromTextIndex: number,
-    toPartIndex: number,
-    toTextIndex: number
-  ) => {
-    needsRerenderRef.current = true
-    const base = pendingSectioning ?? page.sectioning
-    if (!base) return
-    const updated: SectioningData = {
-      ...base,
-      sections: base.sections.map((s, si) => {
-        if (si !== sectionIndex) return s
-        const fromGroup = s.parts[fromPartIndex]
-        const toGroup = s.parts[toPartIndex]
-        if (fromGroup?.type !== "text_group" || toGroup?.type !== "text_group") return s
-
-        if (fromPartIndex === toPartIndex) {
-          // Reorder within the same group
-          const texts = [...fromGroup.texts]
-          const [moved] = texts.splice(fromTextIndex, 1)
-          texts.splice(toTextIndex > fromTextIndex ? toTextIndex - 1 : toTextIndex, 0, moved)
-          return {
-            ...s,
-            parts: s.parts.map((p, pi) => {
-              if (pi !== fromPartIndex) return p
-              return { ...p, texts }
-            }),
-          }
-        }
-
-        // Move between different groups
-        const movedText = fromGroup.texts[fromTextIndex]
-        return {
-          ...s,
-          parts: s.parts.map((p, pi) => {
-            if (p.type !== "text_group") return p
-            if (pi === fromPartIndex) {
-              return { ...p, texts: p.texts.filter((_, ti) => ti !== fromTextIndex) }
-            }
-            if (pi === toPartIndex) {
-              const newTexts = [...p.texts]
-              newTexts.splice(toTextIndex, 0, movedText)
-              return { ...p, texts: newTexts }
-            }
-            return p
-          }),
-        }
-      }),
-    }
-    setPendingSectioning(updated)
-  }
+  }, [])
 
   // Handle inline text edit from BookPreviewFrame
   const handleTextChanged = useCallback(
@@ -1549,56 +1258,21 @@ export function StoryboardSectionDetail({
     [page.rendering, pendingRendering, sectionIndex]
   )
 
-  // Handle toolbar prune toggle
+  // Handle toolbar prune toggle (nodeId === data-id in tree shape)
   const handleToolbarPrune = useCallback(
     (dataId: string) => {
-      if (!sectioningData) return
-      const loc = findTextByDataId(parts, dataId)
-      if (loc) {
-        // Toggle prune on a text within a text_group
-        const base = pendingSectioning ?? page.sectioning
-        if (!base) return
-        const updated: SectioningData = {
-          ...base,
-          sections: base.sections.map((s, si) => {
-            if (si !== sectionIndex) return s
-            return {
-              ...s,
-              parts: s.parts.map((p, pi) => {
-                if (pi !== loc.partIndex || p.type !== "text_group") return p
-                return {
-                  ...p,
-                  texts: p.texts.map((t, ti) => {
-                    if (ti !== loc.textIndex) return t
-                    return { ...t, isPruned: !t.isPruned }
-                  }),
-                }
-              }),
-            }
-          }),
-        }
-        setPendingSectioning(updated)
-      } else {
-        // Could be an image — find by imageId
-        const imgIdx = parts.findIndex(
-          (p) => p.type === "image" && p.imageId === dataId
-        )
-        if (imgIdx >= 0) togglePartPruned(imgIdx)
-      }
+      toggleLeafPrunedById(dataId)
       setSelectedElement(null)
     },
-    [parts, sectioningData, pendingSectioning, page.sectioning, sectionIndex]
+    [toggleLeafPrunedById]
   )
 
-  // Handle toolbar text type change
+  // Handle toolbar text role change
   const handleToolbarChangeTextType = useCallback(
     (dataId: string, newType: string) => {
-      const loc = findTextByDataId(parts, dataId)
-      if (loc) {
-        changeTextType(loc.partIndex, loc.textIndex, newType)
-      }
+      setLeafRoleById(dataId, newType)
     },
-    [parts, pendingSectioning, page.sectioning, sectionIndex]
+    [setLeafRoleById]
   )
 
   // Handle crop apply: upload cropped image, update sectioning + rendering HTML
@@ -1607,25 +1281,13 @@ export function StoryboardSectionDetail({
       if (!cropTarget) return
       const result = await api.uploadCroppedImage(bookLabel, pageId, cropTarget, blob)
 
-      // 1. Update sectioning to replace old imageId with new one
-      const sBase = pendingSectioning ?? page.sectioning
-      if (sBase) {
-        const updatedSectioning: SectioningData = {
-          ...sBase,
-          sections: sBase.sections.map((s, si) => {
-            if (si !== sectionIndex) return s
-            return {
-              ...s,
-              parts: s.parts.map((p) => {
-                if (p.type === "image" && p.imageId === cropTarget) {
-                  return { ...p, imageId: result.imageId }
-                }
-                return p
-              }),
-            }
-          }),
+      // 1. Update sectioning: swap the image leaf's nodeId (which IS the imageId)
+      const sBase = pendingSectioning ?? (page.sectioningTree as SectioningData | null)
+      if (sBase && section) {
+        const nextNodes = replaceNodeId(section.nodes, cropTarget, result.imageId)
+        if (nextNodes !== section.nodes) {
+          setPendingSectioning(withSectionNodes(sBase, sectionIndex, nextNodes))
         }
-        setPendingSectioning(updatedSectioning)
       }
 
       // 2. Update rendered HTML to swap image references so preview reflects the crop
@@ -1637,7 +1299,6 @@ export function StoryboardSectionDetail({
           ...rBase,
           sections: rBase.sections.map((s) => {
             if (s.sectionIndex !== sectionIndex) return s
-            // Replace data-id and src references to the old imageId
             let html = s.html
             html = html.replace(new RegExp(`data-id="${escapeRegex(cropTarget)}"`, "g"), `data-id="${result.imageId}"`)
             html = html.replace(new RegExp(escapeRegex(oldSrc), "g"), newSrc)
@@ -1651,7 +1312,7 @@ export function StoryboardSectionDetail({
       setRecropPageSrc(null)
       setSelectedElement(null)
     },
-    [cropTarget, bookLabel, pageId, pendingSectioning, page.sectioning, pendingRendering, page.rendering, sectionIndex]
+    [cropTarget, bookLabel, pageId, pendingSectioning, page.sectioningTree, pendingRendering, page.rendering, sectionIndex, section]
   )
 
   // Recrop from page: fetch the full page image and open crop dialog with it
@@ -1690,28 +1351,14 @@ export function StoryboardSectionDetail({
         return
       }
 
-      // Update sectioning
-      const sBase = pendingSectioning ?? page.sectioning
-      if (sBase) {
-        const updatedSectioning: SectioningData = {
-          ...sBase,
-          sections: sBase.sections.map((s, si) => {
-            if (si !== sectionIndex) return s
-            return {
-              ...s,
-              parts: s.parts.map((p) => {
-                if (p.type === "image" && p.imageId === targetId) {
-                  return { ...p, imageId: result.imageId }
-                }
-                return p
-              }),
-            }
-          }),
+      const sBase = pendingSectioning ?? (page.sectioningTree as SectioningData | null)
+      if (sBase && section) {
+        const nextNodes = replaceNodeId(section.nodes, targetId, result.imageId)
+        if (nextNodes !== section.nodes) {
+          setPendingSectioning(withSectionNodes(sBase, sectionIndex, nextNodes))
         }
-        setPendingSectioning(updatedSectioning)
       }
 
-      // Update rendering HTML
       const rBase = pendingRendering ?? page.rendering
       if (rBase) {
         const oldSrc = `${BASE_URL}/books/${bookLabel}/images/${targetId}`
@@ -1729,7 +1376,7 @@ export function StoryboardSectionDetail({
         setPendingRendering(updatedRendering)
       }
     },
-    [bookLabel, pageId, pendingSectioning, page.sectioning, pendingRendering, page.rendering, sectionIndex]
+    [bookLabel, pageId, pendingSectioning, page.sectioningTree, pendingRendering, page.rendering, sectionIndex, section, t]
   )
 
   // Replace from book: open picker dialog
@@ -1745,28 +1392,14 @@ export function StoryboardSectionDetail({
       if (!targetId) return
       setReplaceFromBookTarget(null)
 
-      // Update sectioning
-      const sBase = pendingSectioning ?? page.sectioning
-      if (sBase) {
-        const updatedSectioning: SectioningData = {
-          ...sBase,
-          sections: sBase.sections.map((s, si) => {
-            if (si !== sectionIndex) return s
-            return {
-              ...s,
-              parts: s.parts.map((p) => {
-                if (p.type === "image" && p.imageId === targetId) {
-                  return { ...p, imageId: newImageId }
-                }
-                return p
-              }),
-            }
-          }),
+      const sBase = pendingSectioning ?? (page.sectioningTree as SectioningData | null)
+      if (sBase && section) {
+        const nextNodes = replaceNodeId(section.nodes, targetId, newImageId)
+        if (nextNodes !== section.nodes) {
+          setPendingSectioning(withSectionNodes(sBase, sectionIndex, nextNodes))
         }
-        setPendingSectioning(updatedSectioning)
       }
 
-      // Update rendering HTML
       const rBase = pendingRendering ?? page.rendering
       if (rBase) {
         const oldSrc = `${BASE_URL}/books/${bookLabel}/images/${targetId}`
@@ -1784,7 +1417,7 @@ export function StoryboardSectionDetail({
         setPendingRendering(updatedRendering)
       }
     },
-    [bookLabel, replaceFromBookTarget, pendingSectioning, page.sectioning, pendingRendering, page.rendering, sectionIndex]
+    [bookLabel, replaceFromBookTarget, pendingSectioning, page.sectioningTree, pendingRendering, page.rendering, sectionIndex, section]
   )
 
   // Open AI image dialog for a specific image
@@ -1848,25 +1481,22 @@ export function StoryboardSectionDetail({
 
         // Replace the original image with segment images in sectioning
         setPendingSectioning((prev) => {
-          const sBase = prev ?? page.sectioning
+          const sBase = prev ?? (page.sectioningTree as SectioningData | null)
           if (!sBase) return prev
-          return {
-            ...sBase,
-            sections: sBase.sections.map((s, si) => {
-              if (si !== sectionIndex) return s
-              const newParts: typeof s.parts = []
-              for (const p of s.parts) {
-                if (p.type === "image" && p.imageId === imageId) {
-                  for (const seg of result.segments) {
-                    newParts.push({ type: "image", imageId: seg.imageId, isPruned: false })
-                  }
-                } else {
-                  newParts.push(p)
-                }
-              }
-              return { ...s, parts: newParts }
-            }),
-          }
+          const targetSection = sBase.sections[sectionIndex]
+          if (!targetSection) return prev
+          const segmentLeaves: ContentNodeData[] = result.segments.map((seg) => ({
+            nodeId: seg.imageId,
+            role: "image",
+            isPruned: false,
+          }))
+          const nextNodes = replaceNodeWithSiblings(
+            targetSection.nodes,
+            imageId,
+            segmentLeaves
+          )
+          if (nextNodes === targetSection.nodes) return prev
+          return withSectionNodes(sBase, sectionIndex, nextNodes)
         })
 
         // Replace the original <img> tag with segment <img> tags in rendering HTML
@@ -1897,38 +1527,32 @@ export function StoryboardSectionDetail({
         setAiError(err instanceof Error ? err.message : t`Segmentation apply failed`)
       }
     },
-    [segmentPreview, bookLabel, pageId, page.sectioning, page.rendering, sectionIndex]
+    [segmentPreview, bookLabel, pageId, page.sectioningTree, page.rendering, sectionIndex, t]
   )
 
   // Swap a generated/edited image into pending sectioning + rendering.
   // Uses functional setState to avoid stale closures from async callers (e.g. AI generation).
-  const pageDataRef = useRef({ sectioning: page.sectioning, rendering: page.rendering })
-  pageDataRef.current = { sectioning: page.sectioning, rendering: page.rendering }
+  const pageDataRef = useRef({
+    sectioningTree: page.sectioningTree as SectioningData | null,
+    rendering: page.rendering,
+  })
+  pageDataRef.current = {
+    sectioningTree: page.sectioningTree as SectioningData | null,
+    rendering: page.rendering,
+  }
 
   const swapImage = useCallback(
     (targetId: string, newImageId: string, originalDims?: { w: number; h: number }) => {
-      // Update sectioning using functional form to read latest state
       setPendingSectioning((prev) => {
-        const sBase = prev ?? pageDataRef.current.sectioning
+        const sBase = prev ?? pageDataRef.current.sectioningTree
         if (!sBase) return prev
-        return {
-          ...sBase,
-          sections: sBase.sections.map((s, si) => {
-            if (si !== sectionIndex) return s
-            return {
-              ...s,
-              parts: s.parts.map((p) => {
-                if (p.type === "image" && p.imageId === targetId) {
-                  return { ...p, imageId: newImageId }
-                }
-                return p
-              }),
-            }
-          }),
-        }
+        const target = sBase.sections[sectionIndex]
+        if (!target) return prev
+        const nextNodes = replaceNodeId(target.nodes, targetId, newImageId)
+        if (nextNodes === target.nodes) return prev
+        return withSectionNodes(sBase, sectionIndex, nextNodes)
       })
 
-      // Update rendering HTML using functional form
       setPendingRendering((prev) => {
         const rBase = prev ?? pageDataRef.current.rendering
         if (!rBase) return prev
@@ -1941,7 +1565,6 @@ export function StoryboardSectionDetail({
             let html = s.html
             html = html.replace(new RegExp(`data-id="${escapeRegex(targetId)}"`, "g"), `data-id="${newImageId}"`)
             html = html.replace(new RegExp(escapeRegex(oldSrc), "g"), newSrc)
-            // Set width/height to match original so the display size is preserved
             if (originalDims) {
               const escaped = escapeRegex(newImageId)
               html = html.replace(
@@ -1962,28 +1585,19 @@ export function StoryboardSectionDetail({
     [bookLabel, sectionIndex]
   )
 
-  // Add a new image to the current section (append to parts + inject into HTML)
+  // Add a new image leaf to the current section (at root) and inject into HTML.
   const addImageToSection = useCallback(
     (newImageId: string, dims?: { w: number; h: number }) => {
-      // Update sectioning
       setPendingSectioning((prev) => {
-        const sBase = prev ?? pageDataRef.current.sectioning
+        const sBase = prev ?? pageDataRef.current.sectioningTree
         if (!sBase) return prev
-        return {
-          ...sBase,
-          sections: sBase.sections.map((s, si) => {
-            if (si !== sectionIndex) return s
-            // Skip if image already exists in this section
-            if (s.parts.some((p) => p.type === "image" && p.imageId === newImageId)) return s
-            return {
-              ...s,
-              parts: [...s.parts, { type: "image" as const, imageId: newImageId, isPruned: false }],
-            }
-          }),
-        }
+        const target = sBase.sections[sectionIndex]
+        if (!target) return prev
+        if (findNode(target.nodes, newImageId)) return prev
+        const nextNodes = addImageLeaf(target.nodes, null, { imageId: newImageId })
+        return withSectionNodes(sBase, sectionIndex, nextNodes)
       })
 
-      // Update rendering HTML — append img tag at end of section content
       setPendingRendering((prev) => {
         const rBase = prev ?? pageDataRef.current.rendering
         if (!rBase) return prev
@@ -1993,7 +1607,6 @@ export function StoryboardSectionDetail({
           ...rBase,
           sections: rBase.sections.map((s) => {
             if (s.sectionIndex !== sectionIndex) return s
-            // Try to insert before closing </section>, otherwise append
             const closingIdx = s.html.lastIndexOf("</section>")
             const html = closingIdx >= 0
               ? s.html.slice(0, closingIdx) + imgTag + s.html.slice(closingIdx)
@@ -2131,23 +1744,15 @@ export function StoryboardSectionDetail({
       return { isImage: false, isContainer: true, tagName, textType: undefined, isPruned: false, imageSrc: undefined }
     }
 
-    const isImage = dataId.includes("_im")
-    const loc = !isImage ? findTextByDataId(parts, dataId) : null
-    const textEntry = loc
-      ? (parts[loc.partIndex] as Extract<typeof parts[0], { type: "text_group" }>).texts[loc.textIndex]
-      : null
-
-    // For images, find matching part
-    const imagePart = isImage
-      ? (parts.find((p) => p.type === "image" && p.imageId === dataId) as Extract<typeof parts[0], { type: "image" }> | undefined)
-      : null
+    const leaf = section ? findNode(section.nodes, dataId) : null
+    const isImage = leaf?.role === "image" || (!leaf && dataId.includes("_im"))
 
     return {
       isImage,
       isContainer: false,
       tagName: undefined,
-      textType: textEntry?.textType,
-      isPruned: isImage ? imagePart?.isPruned ?? false : textEntry?.isPruned ?? false,
+      textType: leaf && !isImage ? leaf.role : undefined,
+      isPruned: leaf?.isPruned ?? false,
       imageSrc: isImage ? `${BASE_URL}/books/${bookLabel}/images/${dataId}` : undefined,
     }
   }
@@ -2155,29 +1760,7 @@ export function StoryboardSectionDetail({
   const selectedInfo = selectedElement ? getSelectedElementInfo() : null
 
   // Compute pruned data-ids for optimistic preview feedback
-  const prunedDataIds = useMemo(() => {
-    const ids: string[] = []
-    for (const p of parts) {
-      if (p.type === "image" && p.isPruned) {
-        ids.push(p.imageId)
-      } else if (p.type === "text_group") {
-        // If the whole group is pruned, mark all its text entries
-        if (p.isPruned) {
-          p.texts.forEach((_, ti) => {
-            ids.push(`${p.groupId}_tx${String(ti + 1).padStart(3, "0")}`)
-          })
-        } else {
-          // Individual text entries
-          p.texts.forEach((t, ti) => {
-            if (t.isPruned) {
-              ids.push(`${p.groupId}_tx${String(ti + 1).padStart(3, "0")}`)
-            }
-          })
-        }
-      }
-    }
-    return ids
-  }, [parts])
+  const prunedDataIds = useMemo(() => collectPrunedLeafIds(nodes), [nodes])
 
   // Compute changed elements by diffing pending vs saved state
   const changedElements = useMemo(() => {
@@ -2213,29 +1796,34 @@ export function StoryboardSectionDetail({
       }
     }
 
-    // Diff sectioning for image swaps (imageId changed)
-    if (pendingSectioning && page.sectioning) {
-      const savedParts = page.sectioning.sections[sectionIndex]?.parts ?? []
-      const pendingParts = pendingSectioning.sections[sectionIndex]?.parts ?? []
-      for (let i = 0; i < Math.min(savedParts.length, pendingParts.length); i++) {
-        const saved = savedParts[i]
-        const pending = pendingParts[i]
-        if (saved.type === "image" && pending.type === "image" && saved.imageId !== pending.imageId) {
-          if (!seen.has(pending.imageId)) {
-            seen.add(pending.imageId)
-            // eslint-disable-next-line lingui/no-unlocalized-strings
-            changes.push({ dataId: pending.imageId, originalText: `Was: ${saved.imageId}` })
+    // Diff sectioning for image leaf id changes (segmentation / AI generation).
+    // The tree form doesn't carry the old id forward, so we compare the leaf
+    // id sets of the saved and pending sections — ids in pending but not saved
+    // are the "new" leaves to highlight.
+    if (pendingSectioning && page.sectioningTree) {
+      const savedSection = page.sectioningTree.sections[sectionIndex]
+      const pendingSection = pendingSectioning.sections[sectionIndex]
+      if (savedSection && pendingSection) {
+        const savedImageIds = new Set<string>()
+        for (const leaf of collectLeafNodes(savedSection.nodes)) {
+          if (leaf.role === "image") savedImageIds.add(leaf.nodeId)
+        }
+        for (const leaf of collectLeafNodes(pendingSection.nodes)) {
+          if (leaf.role === "image" && !savedImageIds.has(leaf.nodeId) && !seen.has(leaf.nodeId)) {
+            seen.add(leaf.nodeId)
+            changes.push({ dataId: leaf.nodeId })
           }
         }
       }
     }
 
     return changes
-  }, [pendingRendering, pendingSectioning, page.rendering, page.sectioning, sectionIndex])
+  }, [pendingRendering, pendingSectioning, page.rendering, page.sectioningTree, sectionIndex])
 
-  // Check if this section has any text groups or images
-  const hasTextParts = parts.some((p) => p.type === "text_group")
-  const hasImageParts = parts.some((p) => p.type === "image")
+  // Are there any text leaves or image leaves in the section tree?
+  const leafNodes = useMemo(() => collectLeafNodes(nodes), [nodes])
+  const hasTextParts = leafNodes.some((l) => l.role && l.role !== "image")
+  const hasImageParts = leafNodes.some((l) => l.role === "image")
 
   // Header controls rendered via portal into the purple step header
   const headerControls = (
@@ -2666,7 +2254,7 @@ export function StoryboardSectionDetail({
 
       {/* Slide-out section data panel */}
       {section && (
-      <SectionDataPanel
+      <SectionEditPanel
         open={panelOpen}
         onClose={() => setPanelOpen(false)}
         section={section}
@@ -2679,18 +2267,11 @@ export function StoryboardSectionDetail({
         activityAnswers={renderedSection?.activityAnswers}
         onChangeSectionType={changeSectionType}
         onToggleSectionPruned={toggleSectionPruned}
-        onTogglePartPruned={togglePartPruned}
-        onChangeGroupType={changeGroupType}
-        onChangeTextType={changeTextType}
-        onToggleTextPruned={toggleTextPruned}
-        onDeleteTextEntry={deleteTextEntry}
-        onDuplicateTextEntry={duplicateTextEntry}
-        onEditText={editText}
-        onAddGroup={addGroup}
-        onDuplicateGroup={duplicateGroup}
-        onDeleteGroup={deleteGroup}
-        onReorderParts={reorderParts}
-        onMoveText={moveText}
+        onSectionChange={handleSectionChange}
+        onLeafTextEdited={handleLeafTextEdited}
+        onLeafDuplicated={handleLeafDuplicated}
+        onLeafDeleted={handleLeafDeleted}
+        onStructuralChange={handleStructuralChange}
         onMergeSection={handleMergeSection}
         onMergeCrossPage={handleMergeCrossPage}
         hasPrevPage={hasPrevPage}
@@ -2728,8 +2309,6 @@ export function StoryboardSectionDetail({
         dirty={dirty}
         renderingDirty={renderingDirty}
         hasApiKey={hasApiKey}
-        showPrunedImages={showPrunedImages}
-        onToggleShowPrunedImages={() => setShowPrunedImages((v) => !v)}
       />
       )}
 

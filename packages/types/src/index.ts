@@ -52,7 +52,6 @@ export {
   DEFAULT_LLM_MAX_RETRIES,
   StepConfig,
   QuizGenerationConfig,
-  SectioningMode,
   PageSectioningConfig,
   RenderType,
   VisualRefinementStrategyConfig,
@@ -63,11 +62,36 @@ export {
 } from "./config.js"
 
 export {
-  TextEntry,
-  TextGroup,
-  TextClassificationOutput,
-  buildTextClassificationLLMSchema,
-} from "./text-classification.js"
+  ContentNodeData,
+  PageSectioningSection,
+  PageSectioningOutput,
+  buildPageSectioningLLMSchema,
+  buildPageSectioningRefinementLLMSchema,
+} from "./page-sectioning.js"
+
+export {
+  findNode,
+  findNodePath,
+  editLeafText,
+  setLeafRole,
+  setContainerStructure,
+  toggleNodePruned,
+  deleteNode,
+  duplicateNode,
+  moveNode,
+  addLeaf,
+  addImageLeaf,
+  addContainer,
+  nestNode,
+  unnestNode,
+  replaceNodeId,
+  cloneNodeWithNewIds,
+  collectPrunedLeafIds,
+  collectLeafIdsInSubtree,
+  collectLeafNodes,
+  type IdFactory,
+  type NodeLocation,
+} from "./section-tree-ops.js"
 
 export {
   ImageFilters,
@@ -95,16 +119,6 @@ export {
 export { BookMetadata } from "./metadata.js"
 
 export { BookSummaryOutput } from "./book-summary.js"
-
-export {
-  SectionTextEntry,
-  SectionTextPart,
-  SectionImagePart,
-  SectionPart,
-  PageSection,
-  PageSectioningOutput,
-  buildPageSectioningLLMSchema,
-} from "./page-sectioning.js"
 
 export {
   SectionRendering,

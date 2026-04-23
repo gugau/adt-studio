@@ -27,7 +27,7 @@ export function buildGlossaryConfig(
     promptName: appConfig.glossary?.prompt ?? "glossary",
     modelId:
       appConfig.glossary?.model ??
-      appConfig.text_classification?.model ??
+      appConfig.page_sectioning?.model ??
       "openai:gpt-4.1",
     maxRetries: appConfig.glossary?.max_retries ?? DEFAULT_LLM_MAX_RETRIES,
     language,
@@ -114,10 +114,14 @@ export function collectPageTexts(
     }
     const rendering = parsed.data
     // Filter out pruned sections
-    const sectioningRow = storage.getLatestNodeData("page-sectioning", page.pageId)
-    const sectioning = sectioningRow ? PageSectioningOutput.safeParse(sectioningRow.data) : null
+    const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+    const sectioning = structuringRow
+      ? PageSectioningOutput.safeParse(structuringRow.data)
+      : null
     const htmlParts = rendering.sections
-      .filter((s) => !sectioning?.success || !sectioning.data.sections[s.sectionIndex]?.isPruned)
+      .filter(
+        (s) => !sectioning?.success || !sectioning.data.sections[s.sectionIndex]?.isPruned
+      )
       .map((s) => s.html)
     const text = stripHtml(htmlParts.join(" "))
     if (text.length > 0) {

@@ -238,7 +238,7 @@ function addPagesAndRenderings(label: string, count: number): void {
           {
             sectionId,
             sectionType: "content",
-            parts: [],
+            nodes: [],
             backgroundColor: "#fff",
             textColor: "#000",
             pageNumber: i,

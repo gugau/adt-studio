@@ -8,7 +8,6 @@ import { useActiveConfig } from "@/hooks/use-debug"
 import { useBookRun } from "@/hooks/use-book-run"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
-import { getTextGroupLabel, getTextTypeLabel } from "@/lib/text-type-labels"
 import { ImageCropDialog } from "@/components/pipeline/stages/storyboard/components/ImageCropDialog"
 
 function VersionPicker({
@@ -198,7 +197,6 @@ function ImageCard({ imageId, bookLabel, isPruned, reason, onTogglePrune, onRecr
   )
 }
 
-type TextClassData = NonNullable<import("@/api/client").PageDetail["textClassification"]>
 type ImageClassData = NonNullable<import("@/api/client").PageDetail["imageClassification"]>
 
 export function ExtractPageDetail({
@@ -212,19 +210,13 @@ export function ExtractPageDetail({
   const { data: page, isLoading } = usePage(bookLabel, pageId)
   const { data: imageData } = usePageImage(bookLabel, pageId)
   const { data: activeConfigData } = useActiveConfig(bookLabel)
-  const configuredTextTypes = activeConfigData?.merged
-    ? Object.keys((activeConfigData.merged as Record<string, unknown>).text_types as Record<string, string> ?? {})
-    : []
   const [pageImageDims, setPageImageDims] = useState<{ w: number; h: number } | null>(null)
   const { stageState, stepState } = useBookRun()
   const storyboardRunning = stageState("storyboard") === "running" || stageState("storyboard") === "queued"
   const storyboardDone = stageState("storyboard") === "done"
   const metadataRunning = stepState("metadata") === "running"
-  const textClassRunning = stepState("text-classification") === "running"
   const imageFilterRunning = stepState("image-filtering") === "running"
-  const [savingText, setSavingText] = useState(false)
   const [savingImages, setSavingImages] = useState(false)
-  const [pendingTextData, setPendingTextData] = useState<TextClassData | null>(null)
   const [pendingImageData, setPendingImageData] = useState<ImageClassData | null>(null)
   const [cropTarget, setCropTarget] = useState<string | null>(null)
   const [cropPageSrc, setCropPageSrc] = useState<string | null>(null)
@@ -233,7 +225,6 @@ export function ExtractPageDetail({
 
   // Clear pending state when page changes
   useEffect(() => {
-    setPendingTextData(null)
     setPendingImageData(null)
     setCropTarget(null)
     setCropPageSrc(null)
@@ -274,47 +265,8 @@ export function ExtractPageDetail({
   }, [cropTarget, bookLabel, pageId, queryClient, pendingImageData, page?.imageClassification])
 
   // Effective data: pending if dirty, otherwise server
-  const textClassData = pendingTextData ?? page?.textClassification ?? null
   const imageClassData = pendingImageData ?? page?.imageClassification ?? null
-  const textDirty = pendingTextData != null
   const imageDirty = pendingImageData != null
-
-  const updateTextField = (groupId: string, textIndex: number, field: "text" | "textType", value: string) => {
-    const base = pendingTextData ?? page?.textClassification
-    if (!base) return
-    setPendingTextData({
-      ...base,
-      groups: base.groups.map((g) =>
-        g.groupId === groupId
-          ? { ...g, texts: g.texts.map((tx, i) => (i === textIndex ? { ...tx, [field]: value } : tx)) }
-          : g
-      ),
-    })
-  }
-
-  const toggleTextPrune = (groupId: string, textIndex: number) => {
-    const base = pendingTextData ?? page?.textClassification
-    if (!base) return
-    setPendingTextData({
-      ...base,
-      groups: base.groups.map((g) =>
-        g.groupId === groupId
-          ? { ...g, texts: g.texts.map((tx, i) => (i === textIndex ? { ...tx, isPruned: !tx.isPruned } : tx)) }
-          : g
-      ),
-    })
-  }
-
-  const toggleGroupPrune = (groupId: string) => {
-    const base = pendingTextData ?? page?.textClassification
-    if (!base) return
-    setPendingTextData({
-      ...base,
-      groups: base.groups.map((g) =>
-        g.groupId === groupId ? { ...g, isPruned: !g.isPruned } : g
-      ),
-    })
-  }
 
   const toggleImagePrune = (imageId: string) => {
     const base = pendingImageData ?? page?.imageClassification
@@ -326,17 +278,6 @@ export function ExtractPageDetail({
           : img
       ),
     })
-  }
-
-  const saveTextChanges = async () => {
-    if (!pendingTextData || storyboardRunning) return
-    setSavingText(true)
-    const minDelay = new Promise((r) => setTimeout(r, 400))
-    await api.updateTextClassification(bookLabel, pageId, pendingTextData)
-    setPendingTextData(null)
-    await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
-    await minDelay
-    setSavingText(false)
   }
 
   const saveImageChanges = async () => {
@@ -490,117 +431,6 @@ export function ExtractPageDetail({
           </div>
         )}
 
-        {/* Classified text — processing indicator */}
-        {!textClassData && textClassRunning && (
-          <div className="mt-4 flex items-center gap-2 rounded border border-dashed p-3 text-xs text-muted-foreground">
-            <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-            <Trans>Classifying text…</Trans>
-          </div>
-        )}
-
-        {/* Classified text */}
-        {textClassData && textClassData.groups.length > 0 && (
-          <div className="mt-4">
-            <h3 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-              <Layers className="h-3 w-3" />
-              <Trans>Classified Text</Trans>
-              <VersionPicker
-                currentVersion={page.versions.textClassification}
-                saving={savingText}
-                dirty={textDirty}
-                bookLabel={bookLabel}
-                node="text-classification"
-                itemId={pageId}
-                onPreview={(data) => setPendingTextData(data as TextClassData)}
-                onSave={saveTextChanges}
-                onDiscard={() => setPendingTextData(null)}
-              />
-            </h3>
-            <div className="space-y-3">
-              {textClassData.groups.map((group) => {
-                const maxTypeLen = Math.max(...group.texts.map((tx) => tx.textType.length), 0)
-                const colWidth = `${Math.max(maxTypeLen * 0.65 + 1.5, 4)}em`
-                return (
-                  <div key={group.groupId} className={`rounded border overflow-hidden ${group.isPruned ? "opacity-40" : ""}`}>
-                    <div className="px-3 py-1.5 bg-muted/50 border-b flex items-center gap-1.5 group/grp">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        {getTextGroupLabel(group.groupType)}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => toggleGroupPrune(group.groupId)}
-                        className={`shrink-0 flex items-center justify-center w-5 h-5 rounded-full cursor-pointer transition-colors ${
-                          group.isPruned
-                            ? "bg-destructive hover:bg-destructive/80"
-                            : "opacity-0 group-hover/grp:opacity-100 bg-black/30 hover:bg-black/50"
-                        }`}
-                        title={group.isPruned ? t`Unprune group` : t`Prune group`}
-                      >
-                        {group.isPruned
-                          ? <EyeOff className="h-3 w-3 text-white" />
-                          : <Eye className="h-3 w-3 text-white" />
-                        }
-                      </button>
-                    </div>
-                    <div className="divide-y">
-                      {group.texts.map((tx, i) => (
-                        <div key={i} className={`group/text px-3 py-1.5 flex items-start gap-2 text-sm ${tx.isPruned ? "opacity-40" : ""}`}>
-                          <select
-                            value={tx.textType}
-                            onChange={(e) => updateTextField(group.groupId, i, "textType", e.target.value)}
-                            className="shrink-0 text-xs font-medium text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5 text-center border-0 outline-none focus:ring-1 focus:ring-ring cursor-pointer appearance-none"
-                            style={{ width: colWidth }}
-                          >
-                            {configuredTextTypes.includes(tx.textType) ? null : (
-                              <option value={tx.textType}>{getTextTypeLabel(tx.textType)}</option>
-                            )}
-                            {configuredTextTypes.map((tt) => (
-                              <option key={tt} value={tt}>
-                                {getTextTypeLabel(tt)}
-                              </option>
-                            ))}
-                          </select>
-                          <textarea
-                            value={tx.text}
-                            onChange={(e) => updateTextField(group.groupId, i, "text", e.target.value)}
-                            rows={1}
-                            className="leading-relaxed flex-1 min-w-0 bg-transparent border-0 outline-none resize-none p-0 focus:ring-1 focus:ring-ring focus:rounded"
-                            onInput={(e) => {
-                              const el = e.target as HTMLTextAreaElement
-                              el.style.height = "auto"
-                              el.style.height = el.scrollHeight + "px"
-                            }}
-                            ref={(el) => {
-                              if (el) {
-                                el.style.height = "auto"
-                                el.style.height = el.scrollHeight + "px"
-                              }
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => toggleTextPrune(group.groupId, i)}
-                            className={`shrink-0 self-center flex items-center justify-center w-5 h-5 rounded-full cursor-pointer transition-colors ${
-                              tx.isPruned
-                                ? "bg-destructive hover:bg-destructive/80"
-                                : "opacity-0 group-hover/text:opacity-100 bg-black/30 hover:bg-black/50"
-                            }`}
-                            title={tx.isPruned ? t`Unprune text` : t`Prune text`}
-                          >
-                            {tx.isPruned
-                              ? <EyeOff className="h-3 w-3 text-white" />
-                              : <Eye className="h-3 w-3 text-white" />
-                            }
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
       </div>
       </div>
       {cropTarget && cropPageSrc && (

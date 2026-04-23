@@ -108,8 +108,8 @@ describe("extractMetadata", () => {
 describe("buildMetadataConfig", () => {
   it("extracts prompt name from AppConfig", () => {
     const appConfig: AppConfig = {
-      text_types: { heading: "Heading" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { heading: "Heading" },
+      structure_types: { paragraph: "Paragraph" },
       metadata: {
         prompt: "custom_metadata",
         model: "openai:gpt-4.1-mini",
@@ -125,8 +125,8 @@ describe("buildMetadataConfig", () => {
 
   it("defaults metadata prompt and model", () => {
     const appConfig: AppConfig = {
-      text_types: { heading: "Heading" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { heading: "Heading" },
+      structure_types: { paragraph: "Paragraph" },
     }
 
     const config = buildMetadataConfig(appConfig)

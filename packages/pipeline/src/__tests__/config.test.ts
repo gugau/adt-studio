@@ -23,18 +23,18 @@ describe("deepMerge", () => {
   it("deep-merges plain objects and overrides arrays", () => {
     const merged = deepMerge(
       {
-        text_classification: { prompt: "base", max_retries: 2 },
-        pruned_text_types: ["header_text"],
+        page_sectioning: { prompt: "base", max_retries: 2 },
+        pruned_role_types: ["header"],
       },
       {
-        text_classification: { max_retries: 5 },
-        pruned_text_types: ["footer_text"],
+        page_sectioning: { max_retries: 5 },
+        pruned_role_types: ["footer"],
       }
     )
 
     expect(merged).toEqual({
-      text_classification: { prompt: "base", max_retries: 5 },
-      pruned_text_types: ["footer_text"],
+      page_sectioning: { prompt: "base", max_retries: 5 },
+      pruned_role_types: ["footer"],
     })
   })
 
@@ -73,18 +73,18 @@ describe("loadBookConfig", () => {
 
     fs.writeFileSync(
       baseConfigPath,
-      `text_types:
-  heading: Heading
-text_group_types:
+      `structure_types:
   paragraph: Paragraph
-text_classification:
-  prompt: text_classification
+role_types:
+  heading: Heading
+page_sectioning:
+  prompt: page_sectioning
   model: openai:gpt-4o
 concurrency: 2
 start_page: 1
 end_page: 20
-pruned_text_types:
-  - header_text
+pruned_role_types:
+  - header
 `
     )
 
@@ -93,19 +93,19 @@ pruned_text_types:
       `concurrency: 7
 start_page: 3
 end_page: 8
-pruned_text_types:
-  - footer_text
+pruned_role_types:
+  - footer
 `
     )
 
     const config = loadBookConfig(label, booksRoot, baseConfigPath)
 
-    expect(config.text_classification?.prompt).toBe("text_classification")
-    expect(config.text_classification?.model).toBe("openai:gpt-4o")
+    expect(config.page_sectioning?.prompt).toBe("page_sectioning")
+    expect(config.page_sectioning?.model).toBe("openai:gpt-4o")
     expect(config.concurrency).toBe(7)
     expect(config.start_page).toBe(3)
     expect(config.end_page).toBe(8)
-    expect(config.pruned_text_types).toEqual(["footer_text"])
+    expect(config.pruned_role_types).toEqual(["footer"])
   })
 
   it("rejects invalid persisted page ranges", () => {
@@ -117,10 +117,10 @@ pruned_text_types:
 
     fs.writeFileSync(
       baseConfigPath,
-      `text_types:
-  heading: Heading
-text_group_types:
+      `structure_types:
   paragraph: Paragraph
+role_types:
+  heading: Heading
 `
     )
 
@@ -146,10 +146,10 @@ end_page: 2
 
     fs.writeFileSync(
       baseConfigPath,
-      `text_types:
-  heading: Heading
-text_group_types:
+      `structure_types:
   paragraph: Paragraph
+role_types:
+  heading: Heading
 accessibility_assessment:
   run_only_tags:
     - wcag2a
@@ -180,10 +180,10 @@ accessibility_assessment:
     const baseConfigPath = path.join(booksRoot, "config.yaml")
     fs.writeFileSync(
       baseConfigPath,
-      `text_types:
-  heading: Heading
-text_group_types:
+      `structure_types:
   paragraph: Paragraph
+role_types:
+  heading: Heading
 `
     )
 

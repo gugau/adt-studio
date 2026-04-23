@@ -30,6 +30,7 @@ import { ALL_STEP_NAMES, PAGE_PROGRESS_STEPS } from "@adt/types"
 
 const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   general: msg`General`,
+  "container-types": msg`Container Types`,
   "text-types": msg`Text Types`,
   "metadata-prompt": msg`Metadata Prompt`,
   prompt: msg`Extraction Prompt`,
@@ -37,7 +38,8 @@ const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   "cropping-prompt": msg`Cropping Prompt`,
   "segmentation-prompt": msg`Segmentation Prompt`,
   "book-summary-prompt": msg`Summary Prompt`,
-  "sectioning-prompt": msg`Sectioning Mode`,
+  "sectioning-prompt": msg`Sectioning Prompt`,
+  "refinement-prompt": msg`Refinement Prompt`,
   "rendering-prompt": msg`AI Rendering`,
   "rendering-template": msg`Template Rendering`,
   "activity-prompts": msg`Activity Rendering`,
@@ -69,17 +71,20 @@ function getSettingsTabs(
   const tabs: Record<string, { key: string; label: string }[]> = {
     extract: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.general) },
-      { key: "text-types", label: i18n._(SETTINGS_TAB_MESSAGE["text-types"]) },
       { key: "metadata-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["metadata-prompt"]) },
-      { key: "prompt", label: i18n._(SETTINGS_TAB_MESSAGE.prompt) },
       { key: "meaningfulness-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["meaningfulness-prompt"]) },
       { key: "cropping-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["cropping-prompt"]) },
       { key: "segmentation-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["segmentation-prompt"]) },
-      { key: "book-summary-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["book-summary-prompt"]) },
+    ],
+    sectioning: [
+      { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.general) },
+      { key: "sectioning-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["sectioning-prompt"]) },
+      { key: "refinement-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["refinement-prompt"]) },
+      { key: "container-types", label: i18n._(SETTINGS_TAB_MESSAGE["container-types"]) },
+      { key: "text-types", label: i18n._(SETTINGS_TAB_MESSAGE["text-types"]) },
     ],
     storyboard: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.general) },
-      { key: "sectioning-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["sectioning-prompt"]) },
       { key: "rendering-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["rendering-prompt"]) },
       { key: "rendering-template", label: i18n._(SETTINGS_TAB_MESSAGE["rendering-template"]) },
       { key: "activity-prompts", label: i18n._(SETTINGS_TAB_MESSAGE["activity-prompts"]) },
@@ -233,7 +238,7 @@ export function StageSidebar({
             <Link
               to="/books/$label/$step/settings"
               params={{ label: bookLabel, step: step.slug }}
-              search={{ tab: "general" }}
+              search={{ tab: settingsTabs[0].key }}
               title={`${stepLabel} ${i18n._(msg`Settings`)}`}
               className={cn(
                 "shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full transition-colors ",

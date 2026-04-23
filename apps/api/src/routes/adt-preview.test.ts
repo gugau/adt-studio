@@ -44,37 +44,37 @@ describe("ADT preview routes", () => {
           {
             sectionId: `${label}_p1_sec001`,
             sectionType: "content",
-            parts: [],
             backgroundColor: "#fff",
             textColor: "#000",
             pageNumber: 1,
             isPruned: false,
+            nodes: [],
           },
           {
             sectionId: `${label}_p1_sec002`,
             sectionType: "content",
-            parts: [
-              {
-                type: "image",
-                imageId: "hero-image",
-                pageImageId: "hero-image",
-                areaId: "hero-image",
-                order: 0,
-                isPruned: false,
-              },
-              {
-                type: "image",
-                imageId: "hero-image-duplicate",
-                pageImageId: "hero-image-duplicate",
-                areaId: "hero-image-duplicate",
-                order: 1,
-                isPruned: false,
-              },
-            ],
             backgroundColor: "#fff",
             textColor: "#000",
             pageNumber: 1,
             isPruned: false,
+            nodes: [
+              {
+                nodeId: `${label}_p1_n001`,
+                isPruned: false,
+                structure: "image_group",
+                children: [
+                  { nodeId: "hero-image", isPruned: false, role: "image" },
+                ],
+              },
+              {
+                nodeId: `${label}_p1_n002`,
+                isPruned: false,
+                structure: "image_group",
+                children: [
+                  { nodeId: "hero-image-duplicate", isPruned: false, role: "image" },
+                ],
+              },
+            ],
           },
         ],
       })

@@ -46,8 +46,8 @@ describe("stripHtml", () => {
 describe("buildGlossaryConfig", () => {
   it("uses defaults when no config specified", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main" },
-      text_group_types: { paragraph: "Para" },
+      role_types: { section_text: "Main" },
+      structure_types: { paragraph: "Para" },
     }
     const config = buildGlossaryConfig(appConfig, "English")
     expect(config.promptName).toBe("glossary")
@@ -59,8 +59,8 @@ describe("buildGlossaryConfig", () => {
 
   it("uses glossary config overrides", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main" },
-      text_group_types: { paragraph: "Para" },
+      role_types: { section_text: "Main" },
+      structure_types: { paragraph: "Para" },
       glossary: {
         prompt: "custom_glossary",
         model: "openai:gpt-5.4",
@@ -74,11 +74,11 @@ describe("buildGlossaryConfig", () => {
     expect(config.language).toBe("French")
   })
 
-  it("falls back to text_classification model when glossary model not set", () => {
+  it("falls back to page_sectioning model when glossary model not set", () => {
     const appConfig: AppConfig = {
-      text_types: { section_text: "Main" },
-      text_group_types: { paragraph: "Para" },
-      text_classification: { model: "openai:gpt-4.1-mini" },
+      structure_types: { paragraph: "Para" },
+      role_types: { text: "Main" },
+      page_sectioning: { model: "openai:gpt-4.1-mini" },
     }
     const config = buildGlossaryConfig(appConfig, "en")
     expect(config.modelId).toBe("openai:gpt-4.1-mini")
@@ -172,7 +172,7 @@ describe("generateGlossary", () => {
       storage,
       pages,
       config: buildGlossaryConfig(
-        { text_types: {}, text_group_types: {} },
+        { role_types: {}, structure_types: {} },
         "English"
       ),
       llmModel,
@@ -221,7 +221,7 @@ describe("generateGlossary", () => {
     ])
 
     const config = buildGlossaryConfig(
-      { text_types: {}, text_group_types: {} },
+      { role_types: {}, structure_types: {} },
       "English"
     )
     // Force batch size of 1 to test batching
@@ -262,7 +262,7 @@ describe("generateGlossary", () => {
       storage,
       pages,
       config: buildGlossaryConfig(
-        { text_types: {}, text_group_types: {} },
+        { role_types: {}, structure_types: {} },
         "English"
       ),
       llmModel,
@@ -294,7 +294,7 @@ describe("generateGlossary", () => {
         storage,
         pages,
         config: buildGlossaryConfig(
-          { text_types: {}, text_group_types: {} },
+          { role_types: {}, structure_types: {} },
           "English"
         ),
         llmModel,
@@ -335,7 +335,7 @@ describe("generateGlossary", () => {
     }
 
     const config = buildGlossaryConfig(
-      { text_types: {}, text_group_types: {} },
+      { role_types: {}, structure_types: {} },
       "English"
     )
 

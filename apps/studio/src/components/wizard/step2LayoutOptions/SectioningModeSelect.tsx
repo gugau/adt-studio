@@ -33,25 +33,11 @@ function DynamicIcon({ className }: { className?: string }) {
   )
 }
 
-function SectionIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none">
-      <rect x="3" y="2" width="18" height="5" rx="2" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="3" y="9" width="18" height="5" rx="2" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="3" y="16" width="18" height="6" rx="2" stroke="currentColor" strokeWidth="1.5" />
-      <line x1="7" y1="4.5" x2="13" y2="4.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-      <line x1="7" y1="11.5" x2="15" y2="11.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-      <line x1="7" y1="19" x2="11" y2="19" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-    </svg>
-  )
-}
-
 const SECTIONING_SELECT_PLACEHOLDER = msg`Select section mode`
 
 const SECTIONING_OPTIONS_META = [
   { value: "page" as const, labelMsg: msg`Page`, Icon: PageIcon },
   { value: "dynamic" as const, labelMsg: msg`Dynamic`, Icon: DynamicIcon },
-  { value: "section" as const, labelMsg: msg`Section`, Icon: SectionIcon },
 ] as const
 
 export type SectioningModeSelectProps = {

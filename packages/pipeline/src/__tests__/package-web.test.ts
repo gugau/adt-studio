@@ -70,7 +70,7 @@ function createMinimalStorage(): Storage {
             {
               sectionId: "pg001_sec001",
               sectionType: "content",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 1,
@@ -288,7 +288,7 @@ describe("packageAdtWeb", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "content",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 10,
@@ -302,7 +302,7 @@ describe("packageAdtWeb", () => {
             {
               sectionId: "pg002_sec001",
               sectionType: "content",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: null,
@@ -410,7 +410,7 @@ describe("packageAdtWeb", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "content",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 10,
@@ -503,7 +503,7 @@ describe("packageAdtWeb", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "content",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 1,
@@ -619,7 +619,7 @@ describe("packageAdtWeb", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "content",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 1,
@@ -736,7 +736,7 @@ describe("packageAdtWeb", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "content",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 1,
@@ -834,7 +834,7 @@ describe("packageAdtWeb", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "activity_multiple_choice",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 1,
@@ -896,20 +896,24 @@ describe("packageAdtWeb", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "content",
-              parts: [
+              nodes: [
                 {
-                  type: "image",
-                  imageId: "pg001_im001",
+                  nodeId: "pg001_sec001_ig001",
                   isPruned: false,
-                },
-                {
-                  type: "text_group",
-                  groupId: "pg001_gp001",
-                  groupType: "paragraph",
-                  texts: [
-                    { textId: "tx001", textType: "image_associated_text", text: "A lifecycle diagram with six stages", isPruned: false },
+                  structure: "image_group",
+                  children: [
+                    {
+                      nodeId: "pg001_im001",
+                      isPruned: false,
+                      role: "image",
+                    },
+                    {
+                      nodeId: "pg001_gp001_tx001",
+                      isPruned: false,
+                      role: "caption",
+                      text: "A lifecycle diagram with six stages",
+                    },
                   ],
-                  isPruned: false,
                 },
               ],
               backgroundColor: "#fff",
@@ -1006,7 +1010,7 @@ describe("packageAdtWeb", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "content",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 1,
@@ -1071,7 +1075,7 @@ describe("packageAdtWeb", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "content",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 1,
@@ -1080,7 +1084,7 @@ describe("packageAdtWeb", () => {
             {
               sectionId: "pg001_sec002",
               sectionType: "content",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 1,
@@ -1532,7 +1536,7 @@ describe("packageWebpub", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "content",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 1,
