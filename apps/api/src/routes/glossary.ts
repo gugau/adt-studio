@@ -136,9 +136,6 @@ export function createGlossaryRoutes(
     }
     const { word, context, candidateVariations } = parsed.data
 
-    const previousKey = process.env.OPENAI_API_KEY
-    process.env.OPENAI_API_KEY = apiKey
-
     const storage = createBookStorage(safeLabel, booksDir)
     try {
       const appConfig = loadBookConfig(safeLabel, booksDir, configPath)
@@ -158,6 +155,9 @@ export function createGlossaryRoutes(
         cacheDir,
         promptEngine,
         onLog: (entry) => storage.appendLlmLog(entry),
+        credentials: {
+          openaiApiKey: apiKey,
+        },
       })
 
       const result = await generateGlossaryItem({
@@ -171,11 +171,6 @@ export function createGlossaryRoutes(
       return c.json(result)
     } finally {
       storage.close()
-      if (previousKey === undefined) {
-        delete process.env.OPENAI_API_KEY
-      } else {
-        process.env.OPENAI_API_KEY = previousKey
-      }
     }
   })
 

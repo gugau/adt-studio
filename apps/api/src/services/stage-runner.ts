@@ -420,27 +420,15 @@ export function createStageRunner(): StageRunner {
 }
 
 /**
- * Set all LLM provider API keys as env vars, returning a restore function.
+ * Build request-scoped provider credentials for LLM calls.
  */
-function setProviderEnvKeys(options: StageRunOptions): () => void {
-  const envKeys: Array<{ envVar: string; previous: string | undefined; value: string | undefined }> = [
-    { envVar: "OPENAI_API_KEY", previous: process.env.OPENAI_API_KEY, value: options.apiKey },
-    { envVar: "ANTHROPIC_API_KEY", previous: process.env.ANTHROPIC_API_KEY, value: options.anthropicApiKey },
-    { envVar: "GOOGLE_GENERATIVE_AI_API_KEY", previous: process.env.GOOGLE_GENERATIVE_AI_API_KEY, value: options.googleApiKey },
-    { envVar: "CUSTOM_OPENAI_BASE_URL", previous: process.env.CUSTOM_OPENAI_BASE_URL, value: options.customBaseUrl },
-    { envVar: "CUSTOM_OPENAI_API_KEY", previous: process.env.CUSTOM_OPENAI_API_KEY, value: options.customApiKey },
-  ]
-  for (const { envVar, value } of envKeys) {
-    if (value) process.env[envVar] = value
-  }
-  return () => {
-    for (const { envVar, previous } of envKeys) {
-      if (previous !== undefined) {
-        process.env[envVar] = previous
-      } else {
-        delete process.env[envVar]
-      }
-    }
+function buildLLMCredentials(options: StageRunOptions) {
+  return {
+    openaiApiKey: options.apiKey,
+    anthropicApiKey: options.anthropicApiKey,
+    googleApiKey: options.googleApiKey,
+    customBaseUrl: options.customBaseUrl,
+    customApiKey: options.customApiKey,
   }
 }
 
@@ -449,9 +437,7 @@ async function runExtractStep(
   options: StageRunOptions,
   progress: StageRunProgress
 ): Promise<void> {
-  const { booksDir, apiKey, promptsDir, configPath } = options
-
-  const restoreEnvKeys = setProviderEnvKeys(options)
+  const { booksDir, promptsDir, configPath } = options
 
   const storage = createBookStorage(label, booksDir)
 
@@ -482,6 +468,7 @@ async function runExtractStep(
     const rateLimiter = config.rate_limit
       ? createRateLimiter(config.rate_limit.requests_per_minute)
       : undefined
+    const llmCredentials = buildLLMCredentials(options)
 
     const onLlmLog = (entry: LlmLogEntry) => {
       storage.appendLlmLog(entry)
@@ -506,6 +493,7 @@ async function runExtractStep(
       promptEngine,
       rateLimiter,
       onLog: onLlmLog,
+      credentials: llmCredentials,
     })
 
     const pages = storage.getPages()
@@ -537,6 +525,7 @@ async function runExtractStep(
         promptEngine,
         rateLimiter,
         onLog: onLlmLog,
+        credentials: llmCredentials,
       })
       const summaryPages = pages.map((page) => ({
         pageNumber: page.pageNumber,
@@ -567,6 +556,7 @@ async function runExtractStep(
           promptEngine,
           rateLimiter,
           onLog: onLlmLog,
+          credentials: llmCredentials,
         })
       : null
 
@@ -577,6 +567,7 @@ async function runExtractStep(
           promptEngine,
           rateLimiter,
           onLog: onLlmLog,
+          credentials: llmCredentials,
         })
       : null
 
@@ -587,6 +578,7 @@ async function runExtractStep(
           promptEngine,
           rateLimiter,
           onLog: onLlmLog,
+          credentials: llmCredentials,
         })
       : null
 
@@ -624,7 +616,6 @@ async function runExtractStep(
     }
   } finally {
     storage.close()
-    restoreEnvKeys()
   }
 }
 
@@ -639,8 +630,6 @@ async function runSectioningStep(
 ): Promise<void> {
   const { booksDir, promptsDir, configPath } = options
 
-  const restoreEnvKeys = setProviderEnvKeys(options)
-
   const storage = createBookStorage(label, booksDir)
 
   try {
@@ -651,6 +640,7 @@ async function runSectioningStep(
     const rateLimiter = config.rate_limit
       ? createRateLimiter(config.rate_limit.requests_per_minute)
       : undefined
+    const llmCredentials = buildLLMCredentials(options)
 
     const onLlmLog = (entry: LlmLogEntry) => {
       storage.appendLlmLog(entry)
@@ -682,6 +672,7 @@ async function runSectioningStep(
       promptEngine,
       rateLimiter,
       onLog: onLlmLog,
+      credentials: llmCredentials,
     })
 
     const translationModel = translationConfig
@@ -691,6 +682,7 @@ async function runSectioningStep(
           promptEngine,
           rateLimiter,
           onLog: onLlmLog,
+          credentials: llmCredentials,
         })
       : null
 
@@ -786,7 +778,6 @@ async function runSectioningStep(
     }
   } finally {
     storage.close()
-    restoreEnvKeys()
   }
 }
 
@@ -796,8 +787,6 @@ async function runStoryboardStep(
   progress: StageRunProgress
 ): Promise<void> {
   const { booksDir, promptsDir, webAssetsDir, configPath } = options
-
-  const restoreEnvKeys = setProviderEnvKeys(options)
 
   const storage = createBookStorage(label, booksDir)
   let visualRefinement: VisualRefinementDeps | undefined
@@ -817,6 +806,7 @@ async function runStoryboardStep(
     const rateLimiter = config.rate_limit
       ? createRateLimiter(config.rate_limit.requests_per_minute)
       : undefined
+    const llmCredentials = buildLLMCredentials(options)
 
     const onLlmLog = (entry: LlmLogEntry) => {
       storage.appendLlmLog(entry)
@@ -850,6 +840,7 @@ async function runStoryboardStep(
         promptEngine,
         rateLimiter,
         onLog: onLlmLog,
+        credentials: llmCredentials,
       })
       renderModels.set(modelId, model)
       return model
@@ -980,7 +971,6 @@ async function runStoryboardStep(
       await visualRefinement.screenshotRenderer.close()
     }
     storage.close()
-    restoreEnvKeys()
   }
 }
 
@@ -993,9 +983,7 @@ async function runQuizzesStep(
   options: StageRunOptions,
   progress: StageRunProgress
 ): Promise<void> {
-  const { booksDir, apiKey, promptsDir, configPath } = options
-
-  const restoreEnvKeys = setProviderEnvKeys(options)
+  const { booksDir, promptsDir, configPath } = options
 
   const storage = createBookStorage(label, booksDir)
 
@@ -1007,6 +995,7 @@ async function runQuizzesStep(
     const rateLimiter = config.rate_limit
       ? createRateLimiter(config.rate_limit.requests_per_minute)
       : undefined
+    const llmCredentials = buildLLMCredentials(options)
 
     // Get book language from metadata
     const metadataRow = storage.getLatestNodeData("metadata", "book")
@@ -1043,6 +1032,7 @@ async function runQuizzesStep(
       promptEngine,
       rateLimiter,
       onLog: onLlmLog,
+      credentials: llmCredentials,
     })
 
     const effectiveConcurrency = config.concurrency ?? 32
@@ -1088,7 +1078,6 @@ async function runQuizzesStep(
     console.log(`[stage-run] ${label}: quizzes complete`)
   } finally {
     storage.close()
-    restoreEnvKeys()
   }
 }
 
@@ -1101,9 +1090,7 @@ async function runCaptionsStep(
   options: StageRunOptions,
   progress: StageRunProgress
 ): Promise<void> {
-  const { booksDir, apiKey, promptsDir, configPath } = options
-
-  const restoreEnvKeys = setProviderEnvKeys(options)
+  const { booksDir, promptsDir, configPath } = options
 
   const storage = createBookStorage(label, booksDir)
 
@@ -1115,6 +1102,7 @@ async function runCaptionsStep(
     const rateLimiter = config.rate_limit
       ? createRateLimiter(config.rate_limit.requests_per_minute)
       : undefined
+    const llmCredentials = buildLLMCredentials(options)
 
     // Get book language from metadata
     const metadataRow = storage.getLatestNodeData("metadata", "book")
@@ -1149,6 +1137,7 @@ async function runCaptionsStep(
       promptEngine,
       rateLimiter,
       onLog: onLlmLog,
+      credentials: llmCredentials,
     })
 
     const pages = storage.getPages()
@@ -1254,7 +1243,6 @@ async function runCaptionsStep(
     console.log(`[stage-run] ${label}: captions complete`)
   } finally {
     storage.close()
-    restoreEnvKeys()
   }
 }
 
@@ -1267,9 +1255,7 @@ async function runGlossaryStep(
   options: StageRunOptions,
   progress: StageRunProgress
 ): Promise<void> {
-  const { booksDir, apiKey, promptsDir, configPath } = options
-
-  const restoreEnvKeys = setProviderEnvKeys(options)
+  const { booksDir, promptsDir, configPath } = options
 
   const storage = createBookStorage(label, booksDir)
 
@@ -1281,6 +1267,7 @@ async function runGlossaryStep(
     const rateLimiter = config.rate_limit
       ? createRateLimiter(config.rate_limit.requests_per_minute)
       : undefined
+    const llmCredentials = buildLLMCredentials(options)
 
     // Get book language from metadata
     const metadataRow = storage.getLatestNodeData("metadata", "book")
@@ -1311,6 +1298,7 @@ async function runGlossaryStep(
       promptEngine,
       rateLimiter,
       onLog: onLlmLog,
+      credentials: llmCredentials,
     })
 
     const pages = storage.getPages()
@@ -1354,7 +1342,6 @@ async function runGlossaryStep(
     console.log(`[stage-run] ${label}: glossary complete (${glossary.items.length} terms)`)
   } finally {
     storage.close()
-    restoreEnvKeys()
   }
 }
 
@@ -1367,9 +1354,7 @@ async function runTocStep(
   options: StageRunOptions,
   progress: StageRunProgress
 ): Promise<void> {
-  const { booksDir, apiKey, promptsDir, configPath } = options
-
-  const restoreEnvKeys = setProviderEnvKeys(options)
+  const { booksDir, promptsDir, configPath } = options
 
   const storage = createBookStorage(label, booksDir)
 
@@ -1381,6 +1366,7 @@ async function runTocStep(
     const rateLimiter = config.rate_limit
       ? createRateLimiter(config.rate_limit.requests_per_minute)
       : undefined
+    const llmCredentials = buildLLMCredentials(options)
 
     const metadataRow = storage.getLatestNodeData("metadata", "book")
     const metadata = metadataRow?.data as { language_code?: string | null } | null
@@ -1410,6 +1396,7 @@ async function runTocStep(
       promptEngine,
       rateLimiter,
       onLog: onLlmLog,
+      credentials: llmCredentials,
     })
 
     const pages = storage.getPages()
@@ -1435,7 +1422,6 @@ async function runTocStep(
     console.log(`[stage-run] ${label}: TOC complete (${toc.entries.length} entries)`)
   } finally {
     storage.close()
-    restoreEnvKeys()
   }
 }
 
@@ -1448,9 +1434,7 @@ async function runTranslateStep(
   options: StageRunOptions,
   progress: StageRunProgress
 ): Promise<void> {
-  const { booksDir, apiKey, promptsDir, configPath } = options
-
-  const restoreEnvKeys = setProviderEnvKeys(options)
+  const { booksDir, promptsDir, configPath } = options
 
   const storage = createBookStorage(label, booksDir)
 
@@ -1462,6 +1446,7 @@ async function runTranslateStep(
     const rateLimiter = config.rate_limit
       ? createRateLimiter(config.rate_limit.requests_per_minute)
       : undefined
+    const llmCredentials = buildLLMCredentials(options)
 
     // Get book language from metadata
     const metadataRow = storage.getLatestNodeData("metadata", "book")
@@ -1528,6 +1513,7 @@ async function runTranslateStep(
         promptEngine,
         rateLimiter,
         onLog: onLlmLog,
+        credentials: llmCredentials,
       })
 
       const batchSize = translationConfig.batchSize
@@ -1606,7 +1592,6 @@ async function runTranslateStep(
     console.log(`[stage-run] ${label}: translate stage complete`)
   } finally {
     storage.close()
-    restoreEnvKeys()
   }
 }
 
@@ -1620,8 +1605,6 @@ async function runSpeechStep(
   progress: StageRunProgress
 ): Promise<void> {
   const { booksDir, configPath } = options
-
-  const restoreEnvKeys = setProviderEnvKeys(options)
 
   const storage = createBookStorage(label, booksDir)
 
@@ -1697,7 +1680,7 @@ async function runSpeechStep(
         synthesizers.set("gemini", synth)
         return synth
       }
-      const synth = createTTSSynthesizer()
+      const synth = createTTSSynthesizer(options.apiKey)
       synthesizers.set(providerName, synth)
       return synth
     }
@@ -1984,7 +1967,6 @@ async function runSpeechStep(
     console.log(`[stage-run] ${label}: speech complete`)
   } finally {
     storage.close()
-    restoreEnvKeys()
   }
 }
 
