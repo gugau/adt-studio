@@ -4,6 +4,7 @@ import { X } from "lucide-react"
 import { STAGES, isStageSlug } from "@/components/pipeline/stage-config"
 import { resolveSettingsStageSlug } from "@/components/pipeline/settings-routing"
 import { ExtractSettings } from "@/components/pipeline/stages/extract/ExtractSettings"
+import { SectioningSettings } from "@/components/pipeline/stages/sectioning/SectioningSettings"
 import { StoryboardSettings } from "@/components/pipeline/stages/storyboard/StoryboardSettings"
 import { QuizzesSettings } from "@/components/pipeline/stages/quizzes/QuizzesSettings"
 import { GlossarySettings } from "@/components/pipeline/stages/glossary/GlossarySettings"
@@ -87,6 +88,8 @@ export function StepSettingsPage() {
           switch (settingsStage) {
             case "extract":
               return <ExtractSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
+            case "sectioning":
+              return <SectioningSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             case "storyboard":
               return <StoryboardSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             case "quizzes":

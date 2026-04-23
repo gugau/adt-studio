@@ -12,6 +12,7 @@ import {
   type TTSOutput,
   type TocGenerationOutput,
   type Quiz,
+  type ContentNodeData,
 } from "@adt/types"
 import { createBookStorage, type Storage } from "@adt/storage"
 import {
@@ -170,9 +171,9 @@ function buildSectionIdToPageIndex(storage: Storage): Map<string, number> {
     if (renderRow) {
       const parsed = WebRenderingOutput.safeParse(renderRow.data)
       if (parsed.success && parsed.data.sections.length > 0) {
-        const sectioningRow = storage.getLatestNodeData("page-sectioning", page.pageId)
-        const sectioningParsed = sectioningRow ? PageSectioningOutput.safeParse(sectioningRow.data) : null
-        const sectioning = sectioningParsed?.success ? sectioningParsed.data : undefined
+        const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+        const structuringParsed = structuringRow ? PageSectioningOutput.safeParse(structuringRow.data) : null
+        const sectioning = structuringParsed?.success ? structuringParsed.data : undefined
         const sections = [...parsed.data.sections].sort((a, b) => a.sectionIndex - b.sectionIndex)
         for (const rs of sections) {
           const sectionMeta = sectioning?.sections?.[rs.sectionIndex]
@@ -214,11 +215,11 @@ function buildPagesManifest(storage: Storage): Array<{ section_id: string; href:
       const parsed = WebRenderingOutput.safeParse(renderRow.data)
       if (parsed.success && parsed.data.sections.length > 0) {
         // Get sectioning data for sectionIds and page numbers
-        const sectioningRow = storage.getLatestNodeData("page-sectioning", page.pageId)
-        const sectioningParsed = sectioningRow
-          ? PageSectioningOutput.safeParse(sectioningRow.data)
+        const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+        const structuringParsed = structuringRow
+          ? PageSectioningOutput.safeParse(structuringRow.data)
           : null
-        const sectioning = sectioningParsed?.success ? sectioningParsed.data : undefined
+        const sectioning = structuringParsed?.success ? structuringParsed.data : undefined
 
         // One entry per rendered section (stable by sectionIndex), skip pruned
         const sections = [...parsed.data.sections].sort((a, b) => a.sectionIndex - b.sectionIndex)
@@ -252,13 +253,22 @@ function buildPagesManifest(storage: Storage): Array<{ section_id: string; href:
   return list
 }
 
-/** Heading-level text types that should appear in the table of contents */
-const HEADING_TEXT_TYPES = new Set([
-  "section_heading",
-  "chapter_title",
-  "book_title",
-  "activity_title",
-])
+/** DFS-find the first non-pruned heading leaf in a content-node tree. */
+function findFirstHeadingLeaf(
+  nodes: ContentNodeData[],
+): { text: string; nodeId: string } | null {
+  for (const n of nodes) {
+    if (n.isPruned) continue
+    if (n.role === "heading" && typeof n.text === "string" && n.text.length > 0) {
+      return { text: n.text, nodeId: n.nodeId }
+    }
+    if (n.children && n.children.length > 0) {
+      const found = findFirstHeadingLeaf(n.children)
+      if (found) return found
+    }
+  }
+  return null
+}
 
 /** Build toc.json — prefer LLM-generated TOC, fallback to heading-based */
 function buildTocManifest(storage: Storage): Array<{ section_id: string; href: string; title: string; chapter_id: string; level?: number }> {
@@ -306,24 +316,14 @@ function buildHeadingBasedToc(storage: Storage): Array<{ section_id: string; hre
 
       const sectionId = sectionMeta.sectionId ?? `${page.pageId}_sec${String(rs.sectionIndex + 1).padStart(3, "0")}`
 
-      // Find first heading text in section parts
-      for (const part of sectionMeta.parts) {
-        if (part.type !== "text_group" || part.isPruned) continue
-        let found = false
-        for (const t of part.texts) {
-          if (t.isPruned) continue
-          if (HEADING_TEXT_TYPES.has(t.textType)) {
-            toc.push({
-              section_id: sectionId,
-              href: `${sectionId}.html`,
-              title: t.text,
-              chapter_id: t.textId,
-            })
-            found = true
-            break
-          }
-        }
-        if (found) break
+      const heading = findFirstHeadingLeaf(sectionMeta.nodes)
+      if (heading) {
+        toc.push({
+          section_id: sectionId,
+          href: `${sectionId}.html`,
+          title: heading.text,
+          chapter_id: heading.nodeId,
+        })
       }
     }
   }

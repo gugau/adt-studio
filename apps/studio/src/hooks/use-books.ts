@@ -44,6 +44,16 @@ export function useDeleteBook() {
   })
 }
 
+export function useImportBook() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (zip: File) => api.importBook(zip),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["books"] })
+    },
+  })
+}
+
 export function usePackageAdt() {
   const queryClient = useQueryClient()
   return useMutation({

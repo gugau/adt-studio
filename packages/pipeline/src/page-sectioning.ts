@@ -1,125 +1,155 @@
-import type {
-  TextClassificationOutput,
-  ImageClassificationOutput,
-  PageSectioningOutput,
-  SectionPart,
-  AppConfig,
-  TypeDef,
-  SectioningMode,
-} from "@adt/types"
 import {
-  buildPageSectioningLLMSchema,
+  type AppConfig,
+  type ContentNodeData,
+  type PageSectioningOutput,
+  type PageSectioningSection,
+  type TypeDef,
   DEFAULT_LLM_MAX_RETRIES,
+  buildPageSectioningLLMSchema,
+  buildPageSectioningRefinementLLMSchema,
 } from "@adt/types"
 import type { LLMModel, ValidationResult } from "@adt/llm"
 
-export interface SectioningConfig {
+// ── Types ───────────────────────────────────────────────────────
+
+export interface PageSectioningConfig {
+  structureTypes: TypeDef[]
+  roleTypes: TypeDef[]
   sectionTypes: TypeDef[]
+  prunedRoleTypes: string[]
   prunedSectionTypes: string[]
+  disabledSectionTypes: string[]
   promptName: string
+  refinementPromptName: string
   modelId: string
   maxRetries: number
-  mode: SectioningMode
+  maxRefinements: number
+  mode: "page" | "dynamic"
 }
 
-export interface SectionPageInput {
+export interface PageSectioningInput {
   pageId: string
   pageNumber: number
-  pageImageBase64: string
-  textClassification: TextClassificationOutput
-  imageClassification: ImageClassificationOutput
-  images: Array<{ imageId: string; imageBase64: string }>
+  text: string
+  imageBase64: string
+  /** All images available to place in the tree. Callers filter pruned images out. */
+  availableImages: Array<{ imageId: string; imageBase64: string }>
 }
 
-/**
- * Build concise group summaries from text classification, excluding pruned text entries.
- * Groups with no unpruned texts are omitted entirely.
- */
-export function buildGroupSummaries(
-  textClassification: TextClassificationOutput
-): Array<{ groupId: string; groupType: string; text: string }> {
-  return textClassification.groups
-    .map((g) => {
-      if (g.isPruned) return null
-      const unprunedTexts = g.texts.filter((t) => !t.isPruned)
-      if (unprunedTexts.length === 0) return null
+// ── LLM-facing shape (snake_case matching the prompt + schema) ──
 
-      return {
-        groupId: g.groupId,
-        groupType: g.groupType,
-        text: unprunedTexts.map((t) => t.text).join(" "),
-      }
-    })
-    .filter((g): g is NonNullable<typeof g> => g !== null)
+interface LLMNode {
+  structure?: string | null
+  role?: string | null
+  text?: string | null
+  image_id?: string | null
+  children?: LLMNode[] | null
 }
 
+interface LLMSection {
+  section_type: string
+  background_color: string
+  text_color: string
+  page_number: number | null
+  nodes: LLMNode[]
+}
+
+interface LLMStructuringResult {
+  reasoning: string
+  sections: LLMSection[]
+}
+
+interface LLMRefinementResult {
+  approved: boolean
+  reasoning: string
+  nodes_and_sections: LLMStructuringResult | null
+}
+
+// ── Entry point ─────────────────────────────────────────────────
+
 /**
- * Section a page into semantic groups. Pure function — no side effects.
+ * Structure and section a page in a single LLM call, with up to
+ * `maxRefinements` self-review passes. Pure function — no side effects.
  * The caller handles concurrency, storage writes, and progress.
  */
 export async function sectionPage(
-  input: SectionPageInput,
-  config: SectioningConfig,
+  input: PageSectioningInput,
+  config: PageSectioningConfig,
   llmModel: LLMModel
 ): Promise<PageSectioningOutput> {
-  // Build group summaries (excludes pruned text entries)
-  const groupSummaries = buildGroupSummaries(input.textClassification)
-
-  // Filter to un-pruned images
-  const prunedImageIds = new Set(
-    input.imageClassification.images
-      .filter((img) => img.isPruned)
-      .map((img) => img.imageId)
-  )
-  const unprunedImages = input.images.filter(
-    (img) => !prunedImageIds.has(img.imageId)
-  )
-
-  // Build valid part IDs for the schema
-  const validPartIds = [
-    ...groupSummaries.map((g) => g.groupId),
-    ...unprunedImages.map((img) => img.imageId),
-  ]
-
-  // If no parts to section, return empty result
-  if (validPartIds.length === 0) {
-    return { reasoning: "No content to section", sections: [] }
+  if (config.structureTypes.length === 0) {
+    throw new Error("No structure types configured")
   }
-
-  const sectionTypeKeys = config.sectionTypes.map((s) => s.key)
-  if (sectionTypeKeys.length === 0) {
+  if (config.roleTypes.length === 0) {
+    throw new Error("No role types configured")
+  }
+  if (config.sectionTypes.length === 0) {
     throw new Error("No section types configured")
   }
 
-  const schema = buildPageSectioningLLMSchema()
+  const validatorContext: ValidatorContext = {
+    structureKeys: new Set(config.structureTypes.map((t) => t.key)),
+    roleKeys: new Set(config.roleTypes.map((t) => t.key)),
+    sectionTypeKeys: new Set(config.sectionTypes.map((t) => t.key)),
+    availableImageIds: new Set(input.availableImages.map((i) => i.imageId)),
+  }
 
-  const result = await llmModel.generateObject<{
-    reasoning: string
-    sections: Array<{
-      section_type: string
-      part_ids: string[]
-      background_color: string
-      text_color: string
-      page_number: number | null
-    }>
-  }>({
-    schema,
+  // Initial generation (with built-in validation retry).
+  const initial = await generateInitial(input, config, validatorContext, llmModel)
+  let candidate = initial
+
+  // Refinement loop — up to maxRefinements reviewer passes.
+  const priorNotes: string[] = []
+  for (let iteration = 1; iteration <= config.maxRefinements; iteration++) {
+    const review = await generateReview(
+      input,
+      config,
+      candidate,
+      iteration,
+      priorNotes,
+      llmModel
+    )
+    if (review.approved) break
+
+    // The reviewer proposed a replacement. Validate it before adopting.
+    if (review.nodes_and_sections) {
+      const err = runValidator(review.nodes_and_sections, validatorContext)
+      if (err.valid) {
+        candidate = review.nodes_and_sections
+      }
+    }
+    if (review.reasoning) priorNotes.push(review.reasoning)
+  }
+
+  return finalizePageSectioning(candidate, input, config)
+}
+
+async function generateInitial(
+  input: PageSectioningInput,
+  config: PageSectioningConfig,
+  validatorContext: ValidatorContext,
+  llmModel: LLMModel
+): Promise<LLMStructuringResult> {
+  const result = await llmModel.generateObject<LLMStructuringResult>({
+    schema: buildPageSectioningLLMSchema(),
+    mode: "json",
     prompt: config.promptName,
     context: {
-      sectioning_mode: config.mode,
-      page: { imageBase64: input.pageImageBase64 },
-      images: unprunedImages.map((img) => ({
+      page: {
+        pageNumber: input.pageNumber,
+        text: input.text,
+        imageBase64: input.imageBase64,
+      },
+      images: input.availableImages.map((img) => ({
         image_id: img.imageId,
         imageBase64: img.imageBase64,
       })),
-      groups: groupSummaries.map((g) => ({
-        group_id: g.groupId,
-        group_type: g.groupType,
-        text: g.text,
-      })),
+      structure_types: config.structureTypes,
+      role_types: config.roleTypes,
       section_types: config.sectionTypes,
+      mode: config.mode,
     },
-    validate: validatePageSectioning,
+    validate: (raw) => runValidator(raw, validatorContext),
     maxRetries: config.maxRetries,
     maxTokens: 16384,
     log: {
@@ -128,210 +158,442 @@ export async function sectionPage(
       promptName: config.promptName,
     },
   })
-
-  // Build lookup maps for expanding part_ids into inline parts
-  const groupMap = new Map(
-    input.textClassification.groups.map((g) => [g.groupId, g])
-  )
-  const imageClassMap = new Map(
-    input.imageClassification.images.map((img) => [img.imageId, img])
-  )
-
-  // Track which parts get assigned to a section
-  const assignedPartIds = new Set<string>()
-
-  // Post-process: mark pruned sections, expand part_ids to inline parts
-  const prunedSet = new Set(config.prunedSectionTypes)
-
-  const sections = result.object.sections.map((s, idx) => {
-    const sectionId = `${input.pageId}_sec${String(idx + 1).padStart(3, "0")}`
-    // Expand part_ids to full SectionPart objects
-    const parts: SectionPart[] = s.part_ids.map((partId) => {
-      assignedPartIds.add(partId)
-
-      const group = groupMap.get(partId)
-      if (group) {
-        return {
-          type: "text_group" as const,
-          groupId: group.groupId,
-          groupType: group.groupType,
-          texts: group.texts.map((t, tIdx) => ({
-            textId: `${group.groupId}_tx${String(tIdx + 1).padStart(3, "0")}`,
-            textType: t.textType,
-            text: t.text,
-            isPruned: t.isPruned,
-          })),
-          isPruned: group.isPruned,
-        }
-      }
-
-      const imgClass = imageClassMap.get(partId)
-      return {
-        type: "image" as const,
-        imageId: partId,
-        isPruned: false,
-        ...(imgClass?.reason ? { reason: imgClass.reason } : {}),
-      }
-    })
-
-    return {
-      sectionId,
-      sectionType: s.section_type,
-      parts,
-      backgroundColor: s.background_color,
-      textColor: s.text_color,
-      pageNumber: s.page_number,
-      isPruned: prunedSet.has(s.section_type),
-    }
-  })
-
-  // Build a map from segmented source image → ordered segment image IDs.
-  // Segmented images have IDs like "{sourceId}_seg{NNN}_v{N}".
-  const segmentsBySource = new Map<string, string[]>()
-  for (const img of input.imageClassification.images) {
-    const segMatch = img.imageId.match(/^(.+)_seg\d{3}_v\d+$/)
-    if (segMatch) {
-      const sourceId = segMatch[1]
-      if (!segmentsBySource.has(sourceId)) segmentsBySource.set(sourceId, [])
-      segmentsBySource.get(sourceId)!.push(img.imageId)
-    }
-  }
-
-  // Replace segmented originals in-place with their segments.
-  // This keeps segments in the same position as the original image
-  // instead of appending them to the end of the section.
-  for (const section of sections) {
-    const expandedParts: SectionPart[] = []
-    for (const part of section.parts) {
-      if (part.type === "image" && segmentsBySource.has(part.imageId)) {
-        // Replace the original (now pruned) with its segments in-place
-        const segIds = segmentsBySource.get(part.imageId)!
-        for (const segId of segIds) {
-          const segClass = imageClassMap.get(segId)
-          expandedParts.push({
-            type: "image",
-            imageId: segId,
-            isPruned: segClass?.isPruned ?? false,
-            ...(segClass?.reason ? { reason: segClass.reason } : {}),
-          })
-          assignedPartIds.add(segId)
-        }
-        // Keep the original as pruned
-        expandedParts.push({ ...part, isPruned: true, reason: "segmented" })
-      } else {
-        expandedParts.push(part)
-      }
-    }
-    section.parts = expandedParts
-  }
-
-  // Collect unassigned parts and add them to the last non-pruned section
-  const unassignedParts: SectionPart[] = []
-
-  for (const group of input.textClassification.groups) {
-    if (!assignedPartIds.has(group.groupId)) {
-      unassignedParts.push({
-        type: "text_group",
-        groupId: group.groupId,
-        groupType: group.groupType,
-        texts: group.texts.map((t, tIdx) => ({
-          textId: `${group.groupId}_tx${String(tIdx + 1).padStart(3, "0")}`,
-          textType: t.textType,
-          text: t.text,
-          isPruned: t.isPruned,
-        })),
-        isPruned: true,
-      })
-    }
-  }
-
-  for (const img of input.imageClassification.images) {
-    if (!assignedPartIds.has(img.imageId)) {
-      unassignedParts.push({
-        type: "image",
-        imageId: img.imageId,
-        isPruned: img.isPruned,
-        ...(img.reason ? { reason: img.reason } : {}),
-      })
-    }
-  }
-
-  if (unassignedParts.length > 0 && sections.length > 0) {
-    const targetSection =
-      [...sections].reverse().find((s) => !s.isPruned) ?? sections[0]
-    targetSection.parts.push(...unassignedParts)
-  }
-
-  return {
-    reasoning: result.object.reasoning,
-    sections,
-  }
+  return result.object
 }
 
-function validatePageSectioning(
-  result: unknown,
-  context: Record<string, unknown>
+async function generateReview(
+  input: PageSectioningInput,
+  config: PageSectioningConfig,
+  candidate: LLMStructuringResult,
+  iteration: number,
+  priorNotes: string[],
+  llmModel: LLMModel
+): Promise<LLMRefinementResult> {
+  const result = await llmModel.generateObject<LLMRefinementResult>({
+    schema: buildPageSectioningRefinementLLMSchema(),
+    mode: "json",
+    prompt: config.refinementPromptName,
+    context: {
+      page: {
+        pageNumber: input.pageNumber,
+        text: input.text,
+        imageBase64: input.imageBase64,
+      },
+      images: input.availableImages.map((img) => ({
+        image_id: img.imageId,
+        imageBase64: img.imageBase64,
+      })),
+      structure_types: config.structureTypes,
+      role_types: config.roleTypes,
+      section_types: config.sectionTypes,
+      mode: config.mode,
+      max_refinements: config.maxRefinements,
+      iteration,
+      prior_notes: priorNotes,
+      candidate: {
+        reasoning: candidate.reasoning,
+        sections_json: JSON.stringify(candidate.sections, null, 2),
+      },
+    },
+    maxRetries: config.maxRetries,
+    maxTokens: 16384,
+    log: {
+      taskType: "page-sectioning-refinement",
+      pageId: input.pageId,
+      promptName: config.refinementPromptName,
+    },
+  })
+  return result.object
+}
+
+// ── Validator ───────────────────────────────────────────────────
+
+interface ValidatorContext {
+  structureKeys: Set<string>
+  roleKeys: Set<string>
+  sectionTypeKeys: Set<string>
+  availableImageIds: Set<string>
+}
+
+/**
+ * Runtime validator for the LLM-shape tree. Enforces every invariant
+ * the Zod schema cannot: container vs leaf exclusivity, empty-container
+ * rules, image uniqueness, enum validity.
+ */
+export function runValidator(
+  raw: unknown,
+  ctx: ValidatorContext
 ): ValidationResult {
-  const r = result as {
-    sections: Array<{ section_type: string; part_ids: string[] }>
-  }
-  const sectionTypes = context.section_types as TypeDef[]
-  const groups = context.groups as Array<{ group_id: string }>
-  const images = context.images as Array<{ image_id: string }>
-
-  const sectionTypeKeys = new Set(sectionTypes.map((s) => s.key))
-  const validPartIds = new Set([
-    ...groups.map((g) => g.group_id),
-    ...images.map((img) => img.image_id),
-  ])
-
   const errors: string[] = []
-  const assignedIds = new Set<string>()
-  for (const section of r.sections) {
-    if (!sectionTypeKeys.has(section.section_type)) {
+  const result = raw as LLMStructuringResult | null
+  if (!result || !Array.isArray(result.sections)) {
+    return { valid: false, errors: ["Response is missing a `sections` array."] }
+  }
+
+  const usedImageIds = new Set<string>()
+  for (let sIdx = 0; sIdx < result.sections.length; sIdx++) {
+    const section = result.sections[sIdx]
+    const path = `sections[${sIdx}]`
+
+    if (!ctx.sectionTypeKeys.has(section.section_type)) {
       errors.push(
-        `Invalid section_type "${section.section_type}". Must be one of: ${sectionTypes.map((s) => s.key).join(", ")}`
+        `${path}: invalid section_type "${section.section_type}". ` +
+          `Must be one of: ${[...ctx.sectionTypeKeys].join(", ")}`
       )
     }
-    for (const partId of section.part_ids) {
-      if (!validPartIds.has(partId)) {
-        errors.push(
-          `Invalid part_id "${partId}". Must be one of: ${[...validPartIds].join(", ")}`
-        )
-      }
-      assignedIds.add(partId)
+
+    if (!Array.isArray(section.nodes)) {
+      errors.push(`${path}.nodes: expected an array of top-level nodes`)
+      continue
+    }
+
+    for (let nIdx = 0; nIdx < section.nodes.length; nIdx++) {
+      validateNode(section.nodes[nIdx], `${path}.nodes[${nIdx}]`, ctx, usedImageIds, errors)
     }
   }
 
-  // Ensure all parts are assigned to at least one section
-  const unassigned = [...validPartIds].filter((id) => !assignedIds.has(id))
-  if (unassigned.length > 0) {
-    errors.push(
-      `Every part must be assigned to a section. Unassigned part_ids: ${unassigned.join(", ")}`
-    )
-  }
+  // Available images may be omitted from the tree (e.g. when not visible or
+  // not relevant to the page content). Any image placed in the tree must be
+  // one of the available ones, and each placed image must appear exactly
+  // once — both enforced in validateNode.
 
   return { valid: errors.length === 0, errors }
 }
 
+function validateNode(
+  node: LLMNode | undefined | null,
+  path: string,
+  ctx: ValidatorContext,
+  usedImageIds: Set<string>,
+  errors: string[]
+): void {
+  if (!node || typeof node !== "object") {
+    errors.push(`${path}: expected a node object`)
+    return
+  }
+
+  const hasStructure =
+    typeof node.structure === "string" && node.structure.length > 0
+  const hasRole = typeof node.role === "string" && node.role.length > 0
+  const hasText = typeof node.text === "string" && node.text.length > 0
+  const hasImageId =
+    typeof node.image_id === "string" && node.image_id.length > 0
+  const children = Array.isArray(node.children) ? node.children : null
+  const hasChildren = children !== null && children.length > 0
+
+  if (hasStructure && hasRole) {
+    errors.push(
+      `${path}: a node cannot set both "structure" and "role". Use a container OR a leaf.`
+    )
+  }
+  if (!hasStructure && !hasRole) {
+    errors.push(
+      `${path}: every node must have either "structure" (container) or "role" (leaf).`
+    )
+    return
+  }
+
+  if (hasStructure) {
+    // Container node.
+    if (!ctx.structureKeys.has(node.structure!)) {
+      errors.push(
+        `${path}.structure: invalid value "${node.structure}". ` +
+          `Must be one of: ${[...ctx.structureKeys].join(", ")}`
+      )
+    }
+
+    if (hasText) {
+      errors.push(
+        `${path}: a container node must not carry "text". Move the text into a child leaf.`
+      )
+    }
+
+    if (hasImageId) {
+      errors.push(
+        `${path}: "image_id" is only valid on role:"image" leaves, not on containers.`
+      )
+    }
+
+    const allowsEmpty = node.structure === "table_cell"
+    if (!hasChildren && !allowsEmpty) {
+      errors.push(
+        `${path}: container "${node.structure}" must have children. ` +
+          `Only "table_cell" may be empty.`
+      )
+    }
+
+    if (node.structure === "image_group") {
+      const firstChild = children && children.length > 0 ? children[0] : null
+      const firstIsImage = firstChild && firstChild.role === "image"
+      if (!firstIsImage) {
+        errors.push(
+          `${path}: image_group's first child must be a leaf with role "image".`
+        )
+      }
+      if (children && children.length < 2) {
+        errors.push(
+          `${path}: image_group must contain the image leaf plus at least one associated content leaf (caption/label/overlay). A standalone image with no associated content should be emitted as a bare \`role: "image"\` leaf, not wrapped in image_group.`
+        )
+      }
+    }
+
+    if (children) {
+      for (let cIdx = 0; cIdx < children.length; cIdx++) {
+        validateNode(children[cIdx], `${path}.children[${cIdx}]`, ctx, usedImageIds, errors)
+      }
+    }
+    return
+  }
+
+  // Leaf node.
+  if (!ctx.roleKeys.has(node.role!)) {
+    errors.push(
+      `${path}.role: invalid value "${node.role}". ` +
+        `Must be one of: ${[...ctx.roleKeys].join(", ")}`
+    )
+  }
+
+  if (node.role === "image") {
+    if (hasText) {
+      errors.push(`${path}: image leaves must not carry "text".`)
+    }
+    if (!hasImageId) {
+      errors.push(`${path}: image leaf must carry "image_id".`)
+    } else {
+      if (!ctx.availableImageIds.has(node.image_id!)) {
+        errors.push(
+          `${path}.image_id: "${node.image_id}" is not one of the available image IDs (${[...ctx.availableImageIds].join(", ") || "none"}).`
+        )
+      }
+      if (usedImageIds.has(node.image_id!)) {
+        errors.push(
+          `${path}.image_id: image "${node.image_id}" is already placed elsewhere. Every image must appear exactly once.`
+        )
+      }
+      usedImageIds.add(node.image_id!)
+    }
+  } else {
+    if (!hasText) {
+      errors.push(`${path}: leaf node with role "${node.role}" must have "text".`)
+    }
+    if (hasImageId) {
+      errors.push(
+        `${path}: "image_id" is only valid on role:"image" leaves.`
+      )
+    }
+  }
+
+  if (hasChildren) {
+    errors.push(
+      `${path}: a leaf node must not have "children". Use a container (structure) instead.`
+    )
+  }
+}
+
+// ── Finalization ────────────────────────────────────────────────
+
 /**
- * Build SectioningConfig from AppConfig.
+ * Convert an LLM-shape result into the final PageSectioningOutput,
+ * assigning nodeId, sectionId, and isPruned flags.
  */
-export function buildSectioningConfig(appConfig: AppConfig): SectioningConfig {
-  const disabledSet = new Set(appConfig.disabled_section_types ?? [])
-  const sectionTypes: TypeDef[] = Object.entries(
-    appConfig.section_types ?? {}
+export function finalizePageSectioning(
+  raw: LLMStructuringResult,
+  input: PageSectioningInput,
+  config: PageSectioningConfig
+): PageSectioningOutput {
+  const prunedRoles = new Set(config.prunedRoleTypes)
+  const prunedSectionTypes = new Set(config.prunedSectionTypes)
+  const counter = { n: 0 }
+
+  const sections: PageSectioningSection[] = raw.sections.map((section, sIdx) => {
+    const sectionId = `${input.pageId}_sec${String(sIdx + 1).padStart(3, "0")}`
+    const nodes = section.nodes.map((node) =>
+      toContentNode(node, input.pageId, counter, prunedRoles)
+    )
+    return {
+      sectionId,
+      sectionType: section.section_type,
+      backgroundColor: section.background_color,
+      textColor: section.text_color,
+      pageNumber: section.page_number,
+      isPruned: prunedSectionTypes.has(section.section_type),
+      nodes,
+    }
+  })
+
+  return {
+    reasoning: raw.reasoning,
+    sections,
+  }
+}
+
+function toContentNode(
+  node: LLMNode,
+  pageId: string,
+  counter: { n: number },
+  prunedRoles: Set<string>
+): ContentNodeData {
+  const hasStructure =
+    typeof node.structure === "string" && node.structure.length > 0
+
+  if (hasStructure) {
+    counter.n += 1
+    const nodeId = `${pageId}_n${String(counter.n).padStart(4, "0")}`
+    const out: ContentNodeData = {
+      nodeId,
+      isPruned: false,
+      structure: node.structure!,
+    }
+    const children = Array.isArray(node.children) ? node.children : null
+    if (children && children.length > 0) {
+      out.children = children.map((c) =>
+        toContentNode(c, pageId, counter, prunedRoles)
+      )
+    }
+    return out
+  }
+
+  const role = typeof node.role === "string" ? node.role : ""
+
+  // Image leaves carry image_id from the LLM — use it as the nodeId so the
+  // leaf's data-id equals the image file's id.
+  if (role === "image" && typeof node.image_id === "string" && node.image_id.length > 0) {
+    return {
+      nodeId: node.image_id,
+      isPruned: prunedRoles.has(role),
+      role,
+    }
+  }
+
+  counter.n += 1
+  const nodeId = `${pageId}_n${String(counter.n).padStart(4, "0")}`
+  return {
+    nodeId,
+    isPruned: prunedRoles.has(role),
+    role,
+    text: typeof node.text === "string" ? node.text : "",
+  }
+}
+
+// ── Helpers ─────────────────────────────────────────────────────
+
+/**
+ * Walk the finalized tree and concatenate all non-pruned leaf text
+ * in reading order. Used by book-summary to turn the tree back into
+ * a page-level text representation.
+ */
+export function flattenTreeToText(output: PageSectioningOutput): string {
+  const parts: string[] = []
+  for (const section of output.sections) {
+    if (section.isPruned) continue
+    for (const node of section.nodes) {
+      collectNodeText(node, parts)
+    }
+  }
+  return parts.join(" ").replace(/\s+/g, " ").trim()
+}
+
+function collectNodeText(node: ContentNodeData, out: string[]): void {
+  if (node.isPruned) return
+  if (node.text && node.text.length > 0) {
+    out.push(node.text)
+  }
+  if (node.children) {
+    for (const child of node.children) {
+      collectNodeText(child, out)
+    }
+  }
+}
+
+/**
+ * Map each leaf's text across a finalized output in reading order.
+ * The callback receives the current text; the returned string replaces it.
+ * Preserves all other node fields (nodeId, sectionId, structure, role,
+ * isPruned, children). Image leaves (role="image") have no text and are
+ * skipped. Used by translation.
+ */
+export function mapLeafTexts(
+  output: PageSectioningOutput,
+  mapText: (text: string, index: number) => string
+): PageSectioningOutput {
+  const counter = { n: 0 }
+  return {
+    reasoning: output.reasoning,
+    sections: output.sections.map((section) => ({
+      ...section,
+      nodes: section.nodes.map((node) => mapNode(node, counter, mapText)),
+    })),
+  }
+}
+
+function mapNode(
+  node: ContentNodeData,
+  counter: { n: number },
+  mapText: (text: string, index: number) => string
+): ContentNodeData {
+  const out: ContentNodeData = { ...node }
+  if (typeof node.text === "string") {
+    out.text = mapText(node.text, counter.n)
+    counter.n += 1
+  }
+  if (node.children) {
+    out.children = node.children.map((c) => mapNode(c, counter, mapText))
+  }
+  return out
+}
+
+/**
+ * Count leaves with text across the output, in the same reading order
+ * as mapLeafTexts walks.
+ */
+export function countLeafTexts(output: PageSectioningOutput): number {
+  let n = 0
+  for (const section of output.sections) {
+    for (const node of section.nodes) {
+      n += countNode(node)
+    }
+  }
+  return n
+}
+
+function countNode(node: ContentNodeData): number {
+  let n = 0
+  if (typeof node.text === "string") n += 1
+  if (node.children) {
+    for (const c of node.children) n += countNode(c)
+  }
+  return n
+}
+
+// ── Config ──────────────────────────────────────────────────────
+
+export function buildPageSectioningConfig(
+  appConfig: AppConfig
+): PageSectioningConfig {
+  const structureTypes: TypeDef[] = Object.entries(appConfig.structure_types).map(
+    ([key, description]) => ({ key, description })
   )
+  const roleTypes: TypeDef[] = Object.entries(appConfig.role_types).map(
+    ([key, description]) => ({ key, description })
+  )
+  const disabledSet = new Set(appConfig.disabled_section_types ?? [])
+  const sectionTypes: TypeDef[] = Object.entries(appConfig.section_types ?? {})
     .filter(([key]) => !disabledSet.has(key))
     .map(([key, description]) => ({ key, description }))
 
   return {
+    structureTypes,
+    roleTypes,
     sectionTypes,
-    prunedSectionTypes: [...(appConfig.pruned_section_types ?? [])],
+    prunedRoleTypes: appConfig.pruned_role_types ?? [],
+    prunedSectionTypes: appConfig.pruned_section_types ?? [],
+    disabledSectionTypes: [...disabledSet],
     promptName: appConfig.page_sectioning?.prompt ?? "page_sectioning",
+    refinementPromptName: "page_sectioning_refinement",
     modelId: appConfig.page_sectioning?.model ?? "openai:gpt-5.4",
     maxRetries:
       appConfig.page_sectioning?.max_retries ?? DEFAULT_LLM_MAX_RETRIES,
+    maxRefinements: appConfig.page_sectioning?.max_refinements ?? 0,
     mode: appConfig.page_sectioning?.mode ?? "dynamic",
   }
 }

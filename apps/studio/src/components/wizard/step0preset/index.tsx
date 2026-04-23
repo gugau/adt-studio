@@ -1,4 +1,3 @@
-import { useNavigate } from "@tanstack/react-router"
 import { ArrowLeft, ArrowRight, RotateCcw } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { useStore } from "@tanstack/react-form"
@@ -27,8 +26,13 @@ function applyPreset(form: ReturnType<typeof useWizardForm>, id: PresetId) {
 }
 
 export function Step0Preset() {
-  const navigate = useNavigate()
-  const { setCurrentStep, committedStep0Preset, setCommittedStep0Preset } = useWizard()
+  const {
+    setCurrentStep,
+    setPhase,
+    stepDirection,
+    committedStep0Preset,
+    setCommittedStep0Preset,
+  } = useWizard()
   const form = useWizardForm()
   const selected = useStore(form.store, (s) => s.values.selectedPreset) as PresetId | null
   const accent = getPresetAccent(selected)
@@ -52,8 +56,15 @@ export function Step0Preset() {
   }
 
   return (
-    <div className="flex flex-1 min-h-0 w-full bg-white flex-col items-center justify-center gap-6 sm:gap-8 px-4 py-10">
-      <div className="flex flex-col items-center gap-1">
+    <div
+      className={cn(
+        "flex flex-1 min-h-0 w-full bg-white flex-col items-center justify-center gap-6 sm:gap-8 px-4 py-10",
+        stepDirection === "forward"
+          ? "animate-step-enter-forward"
+          : "animate-step-enter-back",
+      )}
+    >
+      <div className="relative flex flex-col items-center gap-1">
         <h1
           id="preset-step-heading"
           className="text-2xl sm:text-[30px] font-semibold leading-tight sm:leading-9 tracking-[-0.75px] text-[#030303] text-center"
@@ -68,7 +79,7 @@ export function Step0Preset() {
           </Trans>
         </p>
         <div
-          className="flex min-h-[2.75rem] w-full max-w-lg items-center justify-center px-2"
+          className="pointer-events-none absolute left-1/2 top-full mt-2 flex w-full max-w-lg -translate-x-1/2 items-center justify-center px-2"
           aria-live="polite"
         >
           <p
@@ -76,7 +87,7 @@ export function Step0Preset() {
               "flex items-center justify-center gap-1.5 text-center text-sm text-red-600 transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none motion-reduce:transform-none",
               presetChanged
                 ? "opacity-100 translate-y-0"
-                : "pointer-events-none select-none opacity-0 translate-y-1",
+                : "select-none opacity-0 translate-y-1",
             )}
             aria-hidden={!presetChanged}
           >
@@ -97,7 +108,7 @@ export function Step0Preset() {
       <div className="flex items-center gap-3">
         <Button
           variant="secondary"
-          onClick={() => navigate({ to: "/" })}
+          onClick={() => setPhase("upload")}
           className="h-9 px-3 py-2 bg-[#f5f5f5] text-[#262626] hover:bg-[#e5e5e5] border-0"
         >
           <ArrowLeft className="h-4 w-4 mr-1.5" />

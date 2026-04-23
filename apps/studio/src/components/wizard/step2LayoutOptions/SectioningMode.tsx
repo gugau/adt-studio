@@ -17,9 +17,6 @@ const CAROUSEL_PAGE_DESCRIPTION = msg`The entire page is treated as a single sec
 const CAROUSEL_DYNAMIC_TITLE = msg`Dynamic Mode`
 const CAROUSEL_DYNAMIC_DESCRIPTION = msg`Keeps the page as one section by default, but intelligently splits when it detects multiple distinct activities - such as a mix of multiple-choice, open-ended, and sorting exercises on the same page. Best for textbooks with varied exercises.`
 
-const CAROUSEL_SECTION_TITLE = msg`Section Mode`
-const CAROUSEL_SECTION_DESCRIPTION = msg`Groups content into multiple logical sections based on topic and structure. The AI identifies natural boundaries - headings, topic shifts, figures - and organizes content accordingly. Most granular option, ideal for dense or mixed-content pages.`
-
 function PageDiagram() {
   return (
     <div className="flex items-center justify-center gap-3 py-2">
@@ -97,40 +94,6 @@ function DynamicDiagram() {
   )
 }
 
-function SectionDiagram() {
-  return (
-    <div className="flex items-center justify-center gap-4 py-2">
-      <div className="flex h-[72px] w-[52px] flex-col rounded border border-primary/30 bg-primary/5 p-1.5">
-        <div className="flex flex-1 flex-col gap-0.5">
-          <div className="h-1 w-2/3 rounded-full bg-primary/50" />
-          <div className="h-0.5 w-full rounded-full bg-primary/20" />
-          <div className="h-0.5 w-3/4 rounded-full bg-primary/20" />
-          <div className="my-0.5 h-3 w-full rounded bg-emerald-400/20 ring-1 ring-inset ring-emerald-400/30" />
-          <div className="h-1 w-1/2 rounded-full bg-amber-500/50" />
-          <div className="h-0.5 w-full rounded-full bg-amber-400/20" />
-          <div className="h-0.5 w-2/3 rounded-full bg-amber-400/20" />
-        </div>
-      </div>
-      <div className="flex flex-col items-center gap-0.5">
-        <svg className="h-3 w-3 text-muted-foreground" viewBox="0 0 12 12" fill="none" aria-hidden>
-          <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </div>
-      <div className="flex flex-col gap-1">
-        <div className="flex h-[14px] w-[52px] items-center rounded border-2 border-primary/40 bg-primary/5 px-1">
-          <div className="h-0.5 w-3/4 rounded-full bg-primary/40" />
-        </div>
-        <div className="flex h-[14px] w-[52px] items-center justify-center rounded border-2 border-emerald-400/40 bg-emerald-50 px-1">
-          <div className="h-2 w-full rounded bg-emerald-400/25" />
-        </div>
-        <div className="flex h-[14px] w-[52px] items-center rounded border-2 border-amber-400/40 bg-amber-50 px-1">
-          <div className="h-0.5 w-2/3 rounded-full bg-amber-400/50" />
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export function SectioningMode() {
   const form = useWizardForm()
   const sectioningMode = useStore(form.store, (s) => s.values.sectioningMode)
@@ -152,11 +115,6 @@ export function SectioningMode() {
         title: i18n._(CAROUSEL_DYNAMIC_TITLE),
         description: i18n._(CAROUSEL_DYNAMIC_DESCRIPTION),
         Diagram: DynamicDiagram,
-      },
-      {
-        title: i18n._(CAROUSEL_SECTION_TITLE),
-        description: i18n._(CAROUSEL_SECTION_DESCRIPTION),
-        Diagram: SectionDiagram,
       },
     ],
     [i18n, i18n.locale],

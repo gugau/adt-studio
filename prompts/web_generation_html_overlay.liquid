@@ -6,7 +6,7 @@ Recreate the original textbook page as closely as possible by using the page ima
 
 ## INPUTS
 1. Original textbook page image (layout reference — use to determine exact text positions)
-2. Text groups — each group contains related text elements (e.g. a paragraph, a heading block, a stanza)
+2. A content tree for the section (indentation shows hierarchy) — containers (paragraph, group, list, activity, image_group, …) wrap leaves in reading order
 3. Images with their IDs
 4. Section type
 
@@ -275,17 +275,10 @@ Image ID: {{ image.image_id }}
 {% endfor %}
 
 Page content in DOCUMENT FLOW ORDER (top-to-bottom as they appear on the page).
-Use this ordering plus the page image to determine the vertical position of each group:
-{% for part in ordered_parts %}
-{% if part.part_type == "image" %}
-[IMAGE: {{ part.image_id }}]
-{% else %}
-[TEXT GROUP: {{ part.group_id }} ({{ part.group_type }})]
-{% for text in part.texts %}
-  - id: {{ text.text_id }} | type: {{ text.text_type }} | text: "{{ text.text }}"
-{% endfor %}
-{% endif %}
-{% endfor %}
+Use this ordering plus the page image to determine the vertical position of each group.
+
+Content tree (indentation shows hierarchy):
+{% include "_render_node", nodes: nodes, depth: 0 %}
 {% if user_instructions != "" %}
 
 ## ADDITIONAL INSTRUCTIONS FROM USER

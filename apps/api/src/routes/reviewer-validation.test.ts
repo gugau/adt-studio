@@ -13,9 +13,9 @@ const label = "validation-book"
 
 function enableReviewerValidation(configPath: string) {
   fs.writeFileSync(configPath, [
-    "text_types:",
+    "role_types:",
     "  heading: Heading",
-    "text_group_types:",
+    "structure_types:",
     "  paragraph: Paragraph",
     "reviewer_validation:",
     "  enabled: true",
@@ -60,9 +60,9 @@ describe("Reviewer validation routes", () => {
 
     configPath = path.join(tmpDir, "config.yaml")
     fs.writeFileSync(configPath, [
-      "text_types:",
+      "role_types:",
       "  heading: Heading",
-      "text_group_types:",
+      "structure_types:",
       "  paragraph: Paragraph",
     ].join("\n"))
 
@@ -226,9 +226,9 @@ describe("Reviewer validation routes", () => {
 
   it("returns config-defined reviewer validation catalog overrides", async () => {
     fs.writeFileSync(configPath, [
-      "text_types:",
+      "role_types:",
       "  heading: Heading",
-      "text_group_types:",
+      "structure_types:",
       "  paragraph: Paragraph",
       "reviewer_validation:",
       "  enabled: true",

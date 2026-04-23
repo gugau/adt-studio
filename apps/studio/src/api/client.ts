@@ -1,11 +1,15 @@
 import type {
   AccessibilityAssessmentOutput,
+  BookDetail,
+  BookSummary,
   ReviewerPageValidationRecord,
   ReviewerValidationIdentificationField,
   ReviewerValidationInstruction,
   ReviewerValidationSection,
   ReviewerValidationSession,
 } from "@adt/types"
+
+export type { BookSummary, BookDetail }
 
 export function resolveBaseUrl(
   loc: Pick<Location, "protocol" | "hostname"> = window.location,
@@ -45,14 +49,20 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   })
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({ error: res.statusText }))
-    throw new Error(body.error ?? `Request failed: ${res.status}`)
+    const text = await res.text().catch(() => "")
+    let message: string | undefined
+    try {
+      message = (JSON.parse(text) as { error?: string }).error
+    } catch {
+      message = text || undefined
+    }
+    throw new Error(message ?? `Request failed: ${res.status}`)
   }
 
   return res.json()
 }
 
-export interface BookSummary {
+export interface ImportPreview {
   label: string
   title: string | null
   authors: string[]
@@ -60,22 +70,11 @@ export interface BookSummary {
   languageCode: string | null
   pageCount: number
   hasSourcePdf: boolean
-  needsRebuild: boolean
-  rebuildReason: string | null
-}
-
-export interface BookDetail extends BookSummary {
-  metadata: {
-    title: string | null
-    authors: string[]
-    publisher: string | null
-    language_code: string | null
-    cover_page_number: number | null
-    reasoning: string
-  } | null
-  bookSummary: {
-    summary: string
-  } | null
+  imageCount: number
+  videoCount: number
+  coverBase64: string | null
+  stages: Record<string, { status: string; stepCount: number; doneCount: number }>
+  validationError: string | null
 }
 
 export interface AzureCredentials {
@@ -161,6 +160,15 @@ export interface SectionRendering {
   activityAnswers?: Record<string, string | boolean | number>
 }
 
+export interface ContentNode {
+  nodeId: string
+  isPruned: boolean
+  structure?: string
+  children?: ContentNode[]
+  role?: string
+  text?: string
+}
+
 export interface AiEditHistoryTurn {
   correlationId: string
   timestamp: string
@@ -173,15 +181,6 @@ export interface PageDetail {
   pageId: string
   pageNumber: number
   text: string
-  textClassification: {
-    reasoning: string
-    groups: Array<{
-      groupId: string
-      groupType: string
-      texts: Array<{ textType: string; text: string; isPruned: boolean }>
-      isPruned: boolean
-    }>
-  } | null
   imageClassification: {
     images: Array<{
       imageId: string
@@ -200,26 +199,12 @@ export interface PageDetail {
       cropBottom?: number
     }>
   } | null
-  sectioning: {
+  sectioningTree: {
     reasoning: string
     sections: Array<{
       sectionId: string
       sectionType: string
-      parts: Array<
-        | {
-            type: "text_group"
-            groupId: string
-            groupType: string
-            texts: Array<{ textId: string; textType: string; text: string; isPruned: boolean }>
-            isPruned: boolean
-          }
-        | {
-            type: "image"
-            imageId: string
-            isPruned: boolean
-            reason?: string
-          }
-      >
+      nodes: ContentNode[]
       backgroundColor: string
       textColor: string
       pageNumber: number | null
@@ -233,7 +218,6 @@ export interface PageDetail {
     captions: Array<{ imageId: string; reasoning: string; caption: string }>
   } | null
   versions: {
-    textClassification: number | null
     imageClassification: number | null
     imageCropping: number | null
     sectioning: number | null
@@ -538,6 +522,24 @@ export const api = {
   deleteBook: (label: string) =>
     request<{ ok: boolean }>(`/books/${label}`, { method: "DELETE" }),
 
+  previewImport: (zip: File) => {
+    const formData = new FormData()
+    formData.append("zip", zip)
+    return request<ImportPreview>("/books/preview-import", {
+      method: "POST",
+      body: formData,
+    })
+  },
+
+  importBook: (zip: File) => {
+    const formData = new FormData()
+    formData.append("zip", zip)
+    return request<BookSummary>("/books/import", {
+      method: "POST",
+      body: formData,
+    })
+  },
+
   runStages: (
     label: string,
     apiKey: string,
@@ -565,12 +567,6 @@ export const api = {
   getPageImage: (label: string, pageId: string) =>
     request<{ imageBase64: string }>(`/books/${label}/pages/${pageId}/image`),
 
-  updateTextClassification: (label: string, pageId: string, data: unknown) =>
-    request<{ version: number }>(`/books/${label}/pages/${pageId}/text-classification`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    }),
-
   updateImageClassification: (label: string, pageId: string, data: unknown) =>
     request<{ version: number }>(`/books/${label}/pages/${pageId}/image-filtering`, {
       method: "PUT",
@@ -593,6 +589,58 @@ export const api = {
     request<{ version: number }>(`/books/${label}/pages/${pageId}/image-captioning`, {
       method: "PUT",
       body: JSON.stringify(data),
+    }),
+
+  cloneSection: (label: string, pageId: string, sectionIndex: number) =>
+    request<{
+      clonedSectionIndex: number
+      sectioningVersion: number
+      renderingVersion: number | null
+    }>(`/books/${label}/pages/${pageId}/sections/${sectionIndex}/clone`, {
+      method: "POST",
+    }),
+
+  mergeSection: (
+    label: string,
+    pageId: string,
+    sectionIndex: number,
+    direction: "next" | "prev" = "next"
+  ) =>
+    request<{
+      mergedSectionIndex: number
+      sectioningVersion: number
+      renderingVersion: number | null
+    }>(
+      `/books/${label}/pages/${pageId}/sections/${sectionIndex}/merge?direction=${direction}`,
+      { method: "POST" }
+    ),
+
+  mergeSectionCrossPage: (
+    label: string,
+    pageId: string,
+    sectionIndex: number,
+    direction: "next" | "prev"
+  ) =>
+    request<{
+      sourcePageId: string
+      targetPageId: string
+      targetSectionIndex: number
+      sourceSectioningVersion: number
+      targetSectioningVersion: number
+      sourceRenderingVersion: number | null
+      targetRenderingVersion: number | null
+    }>(
+      `/books/${label}/pages/${pageId}/sections/${sectionIndex}/merge-cross-page?direction=${direction}`,
+      { method: "POST" }
+    ),
+
+  deleteSection: (label: string, pageId: string, sectionIndex: number) =>
+    request<{
+      sectioningVersion: number
+      renderingVersion: number | null
+      remainingSections: number
+    }>(`/books/${label}/pages/${pageId}/sections/${sectionIndex}`, {
+      method: "DELETE",
     }),
 
   reRenderPage: (label: string, pageId: string, apiKey: string, sectionIndex?: number, prompt?: string) =>
@@ -627,30 +675,6 @@ export const api = {
   aiEditHistory: (label: string, pageId: string, sectionIndex: number) =>
     request<{ history: AiEditHistoryTurn[] }>(
       `/books/${label}/pages/${pageId}/sections/${sectionIndex}/ai-edit-history`,
-    ),
-
-  cloneSection: (label: string, pageId: string, sectionIndex: number) =>
-    request<{ clonedSectionIndex: number; sectioningVersion: number; renderingVersion: number | null }>(
-      `/books/${label}/pages/${pageId}/sections/${sectionIndex}/clone`,
-      { method: "POST" }
-    ),
-
-  mergeSection: (label: string, pageId: string, sectionIndex: number, direction: "next" | "prev" = "next") =>
-    request<{ mergedSectionIndex: number; sectioningVersion: number; renderingVersion: number | null }>(
-      `/books/${label}/pages/${pageId}/sections/${sectionIndex}/merge?direction=${direction}`,
-      { method: "POST" }
-    ),
-
-  mergeSectionCrossPage: (label: string, pageId: string, sectionIndex: number, direction: "next" | "prev") =>
-    request<{ sourcePageId: string; targetPageId: string; targetSectionIndex: number; sourceSectioningVersion: number; targetSectioningVersion: number; sourceRenderingVersion: number | null; targetRenderingVersion: number | null }>(
-      `/books/${label}/pages/${pageId}/sections/${sectionIndex}/merge-cross-page?direction=${direction}`,
-      { method: "POST" }
-    ),
-
-  deleteSection: (label: string, pageId: string, sectionIndex: number) =>
-    request<{ sectioningVersion: number; renderingVersion: number | null; remainingSections: number }>(
-      `/books/${label}/pages/${pageId}/sections/${sectionIndex}`,
-      { method: "DELETE" }
     ),
 
   listBookImages: (label: string) =>
@@ -1028,18 +1052,26 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-  prepareExport: (label: string, format: "book" | "webpub" | "scorm" = "book") =>
-    request<{ taskId?: string; status: string; label: string }>(
+  prepareExport: (
+    label: string,
+    format: "project" | "webpub" | "scorm" | "adt" = "project",
+    features?: { glossary?: boolean; readAloud?: boolean; quizzes?: boolean; signLanguage?: boolean; languages?: string[] }
+  ) => {
+    return request<{ taskId?: string; status: string; label: string }>(
       `/books/${label}/prepare-export?format=${format}`,
-      { method: "POST" }
-    ),
+      {
+        method: "POST",
+        body: features ? JSON.stringify({ features }) : undefined,
+      }
+    )
+  },
 
-  exportBook: async (label: string): Promise<Blob | null> => {
+  exportProject: async (label: string): Promise<Blob | null> => {
     if (!isTauri()) {
-      triggerDirectDownload(`${BASE_URL}/books/${label}/export`)
+      triggerDirectDownload(`${BASE_URL}/books/${label}/export-project`)
       return null
     }
-    const url = `${BASE_URL}/books/${label}/export`
+    const url = `${BASE_URL}/books/${label}/export-project`
     const res = await fetch(url, {
       method: "GET",
       headers: { Accept: "application/zip" },
@@ -1089,6 +1121,26 @@ export const api = {
     if (!res.ok) {
       const body = await res.json().catch(() => ({ error: res.statusText }))
       throw new Error(body.error ?? `SCORM export failed: ${res.status}`)
+    }
+    const buf = await res.arrayBuffer()
+    return new Blob([buf], { type: "application/zip" })
+  },
+
+  exportAdt: async (label: string): Promise<Blob | null> => {
+    if (!isTauri()) {
+      triggerDirectDownload(`${BASE_URL}/books/${label}/export-adt`)
+      return null
+    }
+    const url = `${BASE_URL}/books/${label}/export-adt`
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/zip" },
+      mode: "cors",
+      signal: AbortSignal.timeout(1_800_000),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ error: res.statusText }))
+      throw new Error(body.error ?? `ADT export failed: ${res.status}`)
     }
     const buf = await res.arrayBuffer()
     return new Blob([buf], { type: "application/zip" })

@@ -1,5 +1,6 @@
 export const SETTINGS_STAGE_SLUGS = [
   "extract",
+  "sectioning",
   "storyboard",
   "quizzes",
   "glossary",
