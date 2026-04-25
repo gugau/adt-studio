@@ -1,14 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { AlignLeft, ArrowLeft, ArrowRight, BookOpen, Building2, FileText, Globe, Image, Loader2, User } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
 import { useBook } from "@/hooks/use-books"
 import { usePages, usePageImage } from "@/hooks/use-pages"
 import { useBookRun } from "@/hooks/use-book-run"
-import { useApiKey } from "@/hooks/use-api-key"
 import { ExtractPageDetail } from "./components/ExtractPageDetail"
 import { useStepHeader } from "../../components/StepViewRouter"
-import { StageRunCard } from "../../components/StageRunCard"
+import { ExtractLandingPage } from "./ExtractLandingPage"
 import type { PageSummaryItem } from "@/api/client"
 
 /** Returns true once the element has scrolled into view. */
@@ -184,8 +183,7 @@ function BookBanner({ bookLabel, pages, metadataRunning }: { bookLabel: string; 
 export function ExtractView({ bookLabel, selectedPageId: selectedPageIdProp, onSelectPage }: { bookLabel: string; selectedPageId?: string; onSelectPage?: (pageId: string | null) => void }) {
   const { t } = useLingui()
   const { data: pages, isLoading } = usePages(bookLabel)
-  const { stageState, stepState, queueRun } = useBookRun()
-  const { apiKey, hasApiKey } = useApiKey()
+  const { stageState, stepState } = useBookRun()
   const selectedPageId = selectedPageIdProp ?? null
   const setSelectedPageId = onSelectPage ?? (() => {})
   const { setExtra, setOnLabelClick } = useStepHeader()
@@ -194,20 +192,12 @@ export function ExtractView({ bookLabel, selectedPageId: selectedPageIdProp, onS
   const extractRunning = extractState === "running" || extractState === "queued"
   const extractError = extractState === "error"
   const metadataRunning = stepState("metadata") === "running"
-  // Show pages progressively: once pages appear in the DB (during or after
-  // the PDF extraction step), display the grid. Only show the run card when
-  // no pages exist yet — remaining steps run in the background TaskIndicator.
   const hasPages = (pages ?? []).length > 0
   const showRunCard = extractError
     ? true
     : extractRunning
       ? !hasPages
       : !extractDone
-
-  const handleRetryExtract = useCallback(() => {
-    if (!hasApiKey || extractRunning) return
-    queueRun({ fromStage: "extract", toStage: "extract", apiKey })
-  }, [hasApiKey, extractRunning, apiKey, queueRun])
 
   const pageList = pages ?? []
   const currentIndex = selectedPageId ? pageList.findIndex((p) => p.pageId === selectedPageId) : -1
@@ -302,20 +292,16 @@ export function ExtractView({ bookLabel, selectedPageId: selectedPageIdProp, onS
     )
   }
 
+  if (showRunCard) {
+    return <ExtractLandingPage bookLabel={bookLabel} />
+  }
+
   // Page grid view
   return (
     <div>
-      {!showRunCard && pageList.length > 0 && <BookBanner bookLabel={bookLabel} pages={pages} metadataRunning={metadataRunning} />}
+      {pageList.length > 0 && <BookBanner bookLabel={bookLabel} pages={pages} metadataRunning={metadataRunning} />}
       <div className="p-4">
-      {showRunCard ? (
-        <StageRunCard
-          stageSlug="extract"
-          isRunning={extractRunning}
-          completed={extractDone}
-          onRun={handleRetryExtract}
-          disabled={!extractError || !hasApiKey || extractRunning}
-        />
-      ) : pageList.length === 0 ? (
+      {pageList.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           <Trans>No pages extracted yet. Run the pipeline to extract content.</Trans>
         </p>

@@ -4,6 +4,12 @@ import { Play, Loader2, Settings } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { PreviewShell } from "@/components/wizard/shared/PreviewShell"
 
 export function LandingPageShell({
@@ -16,6 +22,7 @@ export function LandingPageShell({
   hasError,
   canRun,
   extraDisabled = false,
+  disabledReason,
   runLabel,
   rerunLabel,
   previewLabel,
@@ -33,6 +40,7 @@ export function LandingPageShell({
   hasError: boolean
   canRun: boolean
   extraDisabled?: boolean
+  disabledReason?: ReactNode
   runLabel: ReactNode
   rerunLabel: ReactNode
   previewLabel: string
@@ -41,6 +49,33 @@ export function LandingPageShell({
   preview: ReactNode
   children: ReactNode
 }) {
+  const isDisabled = isRunning || !canRun || extraDisabled
+  const showTooltip = isDisabled && !isRunning && !!disabledReason
+
+  const runButton = (
+    <Button
+      onClick={onRun}
+      disabled={isDisabled}
+      className={cn(
+        "h-10 px-5 font-medium text-white transition-[background-color,opacity] border-0",
+        "disabled:opacity-50 disabled:cursor-default",
+        hasError ? errorColorClass : colorClass
+      )}
+    >
+      {isRunning ? (
+        <>
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          <Trans>Running...</Trans>
+        </>
+      ) : (
+        <>
+          <Play className="w-4 h-4 mr-2" />
+          {isCompleted || hasError ? rerunLabel : runLabel}
+        </>
+      )}
+    </Button>
+  )
+
   return (
     <div className="flex h-full overflow-hidden gap-[10px]">
 
@@ -62,27 +97,22 @@ export function LandingPageShell({
             <Trans>Settings</Trans>
           </Link>
 
-          <Button
-            onClick={onRun}
-            disabled={isRunning || !canRun || extraDisabled}
-            className={cn(
-              "h-10 px-5 font-medium text-white transition-[background-color,opacity] border-0",
-              "disabled:opacity-50 disabled:cursor-default",
-              hasError ? errorColorClass : colorClass
-            )}
-          >
-            {isRunning ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                <Trans>Running...</Trans>
-              </>
-            ) : (
-              <>
-                <Play className="w-4 h-4 mr-2" />
-                {isCompleted || hasError ? rerunLabel : runLabel}
-              </>
-            )}
-          </Button>
+          {showTooltip ? (
+            <TooltipProvider delayDuration={150}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span tabIndex={0} className="inline-flex cursor-help">
+                    <span className="pointer-events-none">{runButton}</span>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" align="end" className="max-w-[260px] text-center">
+                  {disabledReason}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            runButton
+          )}
         </div>
       </aside>
 
