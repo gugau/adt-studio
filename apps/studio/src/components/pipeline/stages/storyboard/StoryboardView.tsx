@@ -5,6 +5,7 @@ import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
+import { StoryboardLandingPage } from "./StoryboardLandingPage"
 import { StoryboardSectionDetail } from "./components/StoryboardSectionDetail"
 import { SectioningOverview } from "./components/SectioningOverview"
 import { useSectionNav } from "@/routes/books.$label"
@@ -261,17 +262,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
   }, [selectedPageId, sectionIndex, sectionCount, canGoPrev, canGoNext, prevPageId, nextPageId, showRunCard])
 
   if (showRunCard) {
-    return (
-      <div className="p-4">
-        <StageRunCard
-          stageSlug="storyboard"
-          isRunning={storyboardRunning}
-          completed={storyboardDone}
-          onRun={handleRunStoryboard}
-          disabled={!hasApiKey || storyboardRunning}
-        />
-      </div>
-    )
+    return <StoryboardLandingPage bookLabel={bookLabel} />
   }
 
   if (pagesLoading) {
