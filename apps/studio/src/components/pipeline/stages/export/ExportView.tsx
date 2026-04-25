@@ -1,6 +1,6 @@
 import { useState } from "react"
 import {
-  Loader2, AlertCircle,
+  Loader2,
 } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { Button } from "@/components/ui/button"
@@ -9,6 +9,7 @@ import { useExportWatcher } from "@/hooks/use-export-watcher"
 import { type ExportFeatureToggles, useAvailableExportFeatures } from "@/hooks/use-export-features"
 import { buildExportFormatConfig, type ExportFormat } from "./export-formats"
 import { ExportDialog } from "./ExportDialog"
+import { ExportLandingPage } from "./ExportLandingPage"
 
 export function ExportView({ bookLabel }: { bookLabel: string }) {
   const { t } = useLingui()
@@ -52,19 +53,7 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
   const formatError = (fmt: ExportFormat) => error?.format === fmt ? error.message : null
 
   if (!storyboardDone) {
-    return (
-      <div className="p-6 max-w-xl flex flex-col items-center gap-3 text-center">
-        <AlertCircle className="w-8 h-8 text-muted-foreground/50" />
-        <p className="text-sm text-muted-foreground">
-          <Trans>A storyboard must be built before exporting.</Trans>
-        </p>
-        <p className="text-sm text-muted-foreground">
-          <Trans>Run the pipeline through at least the</Trans>{" "}
-          <span className="font-medium text-foreground"><Trans>Storyboard</Trans></span>{" "}
-          <Trans>stage first.</Trans>
-        </p>
-      </div>
-    )
+    return <ExportLandingPage bookLabel={bookLabel} />
   }
 
   const formatCards: ExportFormat[] = ["project", "adt", "scorm", "webpub"]
