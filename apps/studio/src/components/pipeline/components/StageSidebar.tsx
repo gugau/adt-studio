@@ -55,7 +55,7 @@ const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   "speech-prompts": msg`Speech Prompts`,
   voices: msg`Voices`,
   "toc-prompt": msg`Generation Prompt`,
-  config: msg`Configuration`,
+  config: msg`Overview`,
 }
 
 const TASK_KIND_LABELS: Record<string, MessageDescriptor> = {
