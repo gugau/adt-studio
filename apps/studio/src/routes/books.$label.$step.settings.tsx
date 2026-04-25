@@ -4,8 +4,10 @@ import { X } from "lucide-react"
 import { STAGES, isStageSlug } from "@/components/pipeline/stage-config"
 import { resolveSettingsStageSlug } from "@/components/pipeline/settings-routing"
 import { ExtractSettings } from "@/components/pipeline/stages/extract/ExtractSettings"
+import { ExtractLandingPage } from "@/components/pipeline/stages/extract/ExtractLandingPage"
 import { SectioningSettings } from "@/components/pipeline/stages/sectioning/SectioningSettings"
 import { StoryboardSettings } from "@/components/pipeline/stages/storyboard/StoryboardSettings"
+import { StoryboardLandingPage } from "@/components/pipeline/stages/storyboard/StoryboardLandingPage"
 import { QuizzesSettings } from "@/components/pipeline/stages/quizzes/QuizzesSettings"
 import { QuizzesLandingPage } from "@/components/pipeline/stages/quizzes/QuizzesLandingPage"
 import { GlossarySettings } from "@/components/pipeline/stages/glossary/GlossarySettings"
@@ -17,7 +19,11 @@ import { CaptionsLandingPage } from "@/components/pipeline/stages/captions/Capti
 import { TranslationsSettings } from "@/components/pipeline/stages/translations/TranslationsSettings"
 import { TranslationsLandingPage } from "@/components/pipeline/stages/translations/TranslationsLandingPage"
 import { SpeechLandingPage } from "@/components/pipeline/stages/speech/SpeechLandingPage"
+import { SignLanguageLandingPage } from "@/components/pipeline/stages/sign-language/SignLanguageLandingPage"
 import { ValidationSettings } from "@/components/pipeline/stages/ValidationSettings"
+import { ValidationLandingPage } from "@/components/pipeline/stages/ValidationLandingPage"
+import { PreviewLandingPage } from "@/components/pipeline/stages/PreviewLandingPage"
+import { ExportLandingPage } from "@/components/pipeline/stages/export/ExportLandingPage"
 import { getStageLabelI18n } from "@/components/pipeline/pipeline-i18n"
 import { cn } from "@/lib/utils"
 import { Trans } from "@lingui/react/macro"
@@ -93,6 +99,10 @@ export function StepSettingsPage() {
 
           if (tab === "config") {
             switch (settingsStage) {
+              case "extract":
+                return <ExtractLandingPage bookLabel={label} />
+              case "storyboard":
+                return <StoryboardLandingPage bookLabel={label} />
               case "quizzes":
                 return <QuizzesLandingPage bookLabel={label} />
               case "captions":
@@ -105,6 +115,14 @@ export function StepSettingsPage() {
                 return <TranslationsLandingPage bookLabel={label} />
               case "speech":
                 return <SpeechLandingPage bookLabel={label} />
+              case "sign-language":
+                return <SignLanguageLandingPage bookLabel={label} />
+              case "validation":
+                return <ValidationLandingPage bookLabel={label} />
+              case "preview":
+                return <PreviewLandingPage bookLabel={label} />
+              case "export":
+                return <ExportLandingPage bookLabel={label} />
             }
           }
 

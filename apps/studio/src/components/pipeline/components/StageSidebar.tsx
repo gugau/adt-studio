@@ -74,6 +74,7 @@ function getSettingsTabs(
 ): { key: string; label: string }[] | undefined {
   const tabs: Record<string, { key: string; label: string }[]> = {
     extract: [
+      { key: "config", label: i18n._(SETTINGS_TAB_MESSAGE.config) },
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.general) },
       { key: "metadata-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["metadata-prompt"]) },
       { key: "meaningfulness-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["meaningfulness-prompt"]) },
@@ -88,6 +89,7 @@ function getSettingsTabs(
       { key: "text-types", label: i18n._(SETTINGS_TAB_MESSAGE["text-types"]) },
     ],
     storyboard: [
+      { key: "config", label: i18n._(SETTINGS_TAB_MESSAGE.config) },
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.general) },
       { key: "rendering-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["rendering-prompt"]) },
       { key: "rendering-template", label: i18n._(SETTINGS_TAB_MESSAGE["rendering-template"]) },
@@ -123,8 +125,18 @@ function getSettingsTabs(
       { key: "voices", label: i18n._(SETTINGS_TAB_MESSAGE.voices) },
     ],
     validation: [
+      { key: "config", label: i18n._(SETTINGS_TAB_MESSAGE.config) },
       { key: "general", label: i18n._(msg`Accessibility`) },
       { key: "reviewer-checklist", label: i18n._(msg`Reviewer Checklist`) },
+    ],
+    "sign-language": [
+      { key: "config", label: i18n._(SETTINGS_TAB_MESSAGE.config) },
+    ],
+    preview: [
+      { key: "config", label: i18n._(SETTINGS_TAB_MESSAGE.config) },
+    ],
+    export: [
+      { key: "config", label: i18n._(SETTINGS_TAB_MESSAGE.config) },
     ],
   }
   const stageTabs = tabs[slug]

@@ -8,7 +8,10 @@ export const SETTINGS_STAGE_SLUGS = [
   "captions",
   "translate",
   "speech",
+  "sign-language",
   "validation",
+  "preview",
+  "export",
 ] as const
 
 export type SettingsStageSlug = (typeof SETTINGS_STAGE_SLUGS)[number]

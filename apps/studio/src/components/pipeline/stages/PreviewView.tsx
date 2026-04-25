@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import type { AccessibilityFinding } from "@adt/types"
-import { Loader2, AlertCircle } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate, useSearch } from "@tanstack/react-router"
 import { api, getAdtUrl } from "@/api/client"
@@ -16,6 +16,7 @@ import {
 } from "@/lib/accessibility-summary"
 import { PreviewAccessibilityCard } from "./PreviewAccessibilityCard"
 import { PreviewValidationCard } from "./PreviewValidationCard"
+import { PreviewLandingPage } from "./PreviewLandingPage"
 
 const HIGHLIGHT_STYLE_ID = "adt-preview-a11y-highlights"
 const HIGHLIGHT_ATTR = "data-adt-a11y-hover"
@@ -224,18 +225,7 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
   }, [bookLabel, currentPreviewPage.href, navigate, navigatePreviewToHref, ready, search.previewHref])
 
   if (!storyboardDone) {
-    return (
-      <div className="p-6 max-w-xl flex flex-col items-center gap-3 text-center">
-        <AlertCircle className="w-8 h-8 text-muted-foreground/50" />
-        <p className="text-sm text-muted-foreground">
-          A storyboard must be built before previewing.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Run the pipeline through
-          at least the <span className="font-medium text-foreground">Storyboard</span> stage first.
-        </p>
-      </div>
-    )
+    return <PreviewLandingPage bookLabel={bookLabel} />
   }
 
   if (packaging) {
