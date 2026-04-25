@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
-import { Upload, Trash2, Video, AlertCircle, Loader2, ArrowUp, ArrowDown, X } from "lucide-react"
+import { Upload, Trash2, Video, Loader2, ArrowUp, ArrowDown, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -26,6 +26,7 @@ import {
   useDeleteAllSignLanguageVideos,
 } from "@/hooks/use-sign-language-videos"
 import { getSignLanguageVideoUrl } from "@/api/client"
+import { SignLanguageLandingPage } from "./SignLanguageLandingPage"
 import type { SignLanguageVideo } from "@/api/client"
 
 type SortField = "name" | "size" | "date"
@@ -72,19 +73,7 @@ export function SignLanguageView({ bookLabel }: { bookLabel: string }) {
   }, [sortField])
 
   if (!storyboardDone) {
-    return (
-      <div className="p-6 max-w-xl flex flex-col items-center gap-3 text-center">
-        <AlertCircle className="w-8 h-8 text-muted-foreground/50" />
-        <p className="text-sm text-muted-foreground">
-          <Trans>A storyboard must be built before adding sign language videos.</Trans>
-        </p>
-        <p className="text-sm text-muted-foreground">
-          <Trans>Run the pipeline through at least the</Trans>{" "}
-          <span className="font-medium text-foreground"><Trans>Storyboard</Trans></span>{" "}
-          <Trans>stage first.</Trans>
-        </p>
-      </div>
-    )
+    return <SignLanguageLandingPage bookLabel={bookLabel} />
   }
 
   function handleUpload() {
