@@ -203,6 +203,15 @@ msgstr "{issuesLabel}, {reviewLabel}"
 msgid "{missingAudioCount} missing"
 msgstr "{missingAudioCount} faltantes"
 
+msgid "{missingForCurrentStage} entry/entries are missing audio. Re-run to generate the missing items."
+msgstr "{missingForCurrentStage} entrada(s) sin audio. Vuelve a ejecutar para generar los elementos faltantes."
+
+msgid "{missingForCurrentStage} entry/entries are missing translations. Re-run to fill the missing items."
+msgstr "{missingForCurrentStage} entrada(s) sin traducción. Vuelve a ejecutar para completar los elementos faltantes."
+
+#~ msgid "{missingForStage} item(s) missing — re-run to fill"
+#~ msgstr "{missingForStage} elemento(s) faltante(s) — vuelve a ejecutar para completar"
+
 msgid "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
 msgstr "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
 
@@ -454,6 +463,9 @@ msgstr "Add checklist item to this section"
 
 msgid "Add class"
 msgstr "Agregar clase"
+
+msgid "Add emojis"
+msgstr "Añadir emojis"
 
 msgid "Add entry below"
 msgstr "Agregar entrada debajo"
@@ -861,6 +873,9 @@ msgstr "Respuesta en caché"
 
 msgid "Calculate word timestamps for all entries"
 msgstr "Calcular marcas de tiempo por palabra para todas las entradas"
+
+#~ msgid "Calculates word-level timestamps so the reader can highlight words as they're spoken. Adds noticeable time to speech generation."
+#~ msgstr "Calcula marcas de tiempo por palabra para que el lector pueda resaltar las palabras a medida que se pronuncian. Añade un tiempo considerable a la generación de voz."
 
 msgid "Calls"
 msgstr "Llamadas"
@@ -1320,8 +1335,8 @@ msgstr "Disable reviewer validation"
 msgid "Disable type"
 msgstr "Desactivar tipo"
 
-msgid "Disable word-level highlighting and use sentence blocks"
-msgstr "Desactivar el resaltado por palabra y usar bloques de oración"
+#~ msgid "Disable word-level highlighting and use sentence blocks"
+#~ msgstr "Desactivar el resaltado por palabra y usar bloques de oración"
 
 msgid "Disabled"
 msgstr "Disabled"
@@ -1472,8 +1487,8 @@ msgstr "Enable or disable reviewer-authored checklist reviews for this book. Aut
 msgid "Enable reviewer validation"
 msgstr "Enable reviewer validation"
 
-msgid "Enable word-level highlighting with timestamps"
-msgstr "Activar el resaltado por palabra con marcas de tiempo"
+#~ msgid "Enable word-level highlighting with timestamps"
+#~ msgstr "Activar el resaltado por palabra con marcas de tiempo"
 
 msgid "Enabled"
 msgstr "Enabled"
@@ -1851,6 +1866,9 @@ msgstr "Ocultar historial de edición con IA"
 
 msgid "Higher values filter out simple or blank images."
 msgstr "Valores más altos filtran imágenes simples o en blanco."
+
+msgid "Highlights words in sync with the audio. Adds noticeable time to speech generation."
+msgstr "Resalta palabras en sincronía con el audio. Añade un tiempo considerable a la generación de voz."
 
 msgid "Hill"
 msgstr "Colina"
@@ -2891,6 +2909,15 @@ msgstr "Vista previa de la página vinculada"
 msgid "Preview of the HTML/CSS patterns used for LLM-generated pages."
 msgstr "Vista previa de los patrones HTML/CSS usados para páginas generadas por LLM."
 
+#~ msgid "Preview: no highlighting"
+#~ msgstr "Vista previa: sin resaltado"
+
+msgid "Preview: per-sentence"
+msgstr "Vista previa: por oración"
+
+msgid "Preview: word-by-word"
+msgstr "Vista previa: palabra por palabra"
+
 msgid "Previous slide"
 msgstr "Diapositiva anterior"
 
@@ -3870,6 +3897,9 @@ msgstr "La plantilla de prompt usada para traducir entradas del catálogo de tex
 msgid "The prompt used by the reviewer pass to inspect and correct a candidate sectioning tree. Shares the model and retry settings of the sectioning prompt."
 msgstr "El prompt utilizado por la pasada de revisión para inspeccionar y corregir un árbol de sección candidato. Comparte el modelo y la configuración de reintentos del prompt de sección."
 
+msgid "The quick brown fox jumps over the lazy dog."
+msgstr "El veloz zorro marrón salta sobre el perro perezoso."
+
 msgid "The rendering strategy used for sections without an explicit mapping."
 msgstr "La estrategia de renderización usada para secciones sin un mapeo explícito."
 
@@ -4247,6 +4277,9 @@ msgstr "Cuando está activado, los colores de fondo de la guía de estilo se apl
 msgid "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."
 msgstr "Cuando está activado, las etiquetas de texto cercanas a imágenes vectoriales (p. ej. dimensiones de gráficos, globos de diálogo) se agrupan y extraen como recortes rasterizados. Desactive para extraer solo las formas vectoriales sin texto."
 
+msgid "When enabled, word-level timestamps are calculated automatically during speech generation so the reader can highlight words as they're spoken. When disabled, you can still calculate timestamps manually from the speech view."
+msgstr "Cuando está activado, las marcas de tiempo por palabra se calculan automáticamente durante la generación de voz para que el lector pueda resaltar las palabras a medida que se pronuncian. Cuando está desactivado, todavía puedes calcular las marcas de tiempo manualmente desde la vista de voz."
+
 msgid "When your PDF isn't built around facing pages, single mode keeps every page separate: nothing is merged across a spread. That matches how most textbooks, novels, and reference books are read - one page at a time."
 msgstr "Cuando tu PDF no está construido alrededor de páginas enfrentadas, el modo único mantiene cada página separada: nada se fusiona a través de una extensión. Eso coincide con cómo se leen la mayoría de los libros de texto, novelas y libros de referencia - una página a la vez."
 
@@ -4265,7 +4298,13 @@ msgstr "Palabra"
 msgid "Word and definition are required."
 msgstr "La palabra y la definición son obligatorias."
 
-msgid "Word Highlight"
+#~ msgid "Word Highlight"
+#~ msgstr "Resaltado por palabra"
+
+msgid "Word Highlighting"
+msgstr "Resaltado de palabras"
+
+msgid "Word-level highlighting"
 msgstr "Resaltado por palabra"
 
 msgid "words"

@@ -203,6 +203,15 @@ msgstr "{issuesLabel}, {reviewLabel}"
 msgid "{missingAudioCount} missing"
 msgstr "{missingAudioCount} missing"
 
+msgid "{missingForCurrentStage} entry/entries are missing audio. Re-run to generate the missing items."
+msgstr "{missingForCurrentStage} entry/entries are missing audio. Re-run to generate the missing items."
+
+msgid "{missingForCurrentStage} entry/entries are missing translations. Re-run to fill the missing items."
+msgstr "{missingForCurrentStage} entry/entries are missing translations. Re-run to fill the missing items."
+
+#~ msgid "{missingForStage} item(s) missing — re-run to fill"
+#~ msgstr "{missingForStage} item(s) missing — re-run to fill"
+
 msgid "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
 msgstr "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
 
@@ -454,6 +463,9 @@ msgstr "Add checklist item to this section"
 
 msgid "Add class"
 msgstr "Add class"
+
+msgid "Add emojis"
+msgstr "Add emojis"
 
 msgid "Add entry below"
 msgstr "Add entry below"
@@ -861,6 +873,9 @@ msgstr "Cached response"
 
 msgid "Calculate word timestamps for all entries"
 msgstr "Calculate word timestamps for all entries"
+
+#~ msgid "Calculates word-level timestamps so the reader can highlight words as they're spoken. Adds noticeable time to speech generation."
+#~ msgstr "Calculates word-level timestamps so the reader can highlight words as they're spoken. Adds noticeable time to speech generation."
 
 msgid "Calls"
 msgstr "Calls"
@@ -1320,8 +1335,8 @@ msgstr "Disable reviewer validation"
 msgid "Disable type"
 msgstr "Disable type"
 
-msgid "Disable word-level highlighting and use sentence blocks"
-msgstr "Disable word-level highlighting and use sentence blocks"
+#~ msgid "Disable word-level highlighting and use sentence blocks"
+#~ msgstr "Disable word-level highlighting and use sentence blocks"
 
 msgid "Disabled"
 msgstr "Disabled"
@@ -1472,8 +1487,8 @@ msgstr "Enable or disable reviewer-authored checklist reviews for this book. Aut
 msgid "Enable reviewer validation"
 msgstr "Enable reviewer validation"
 
-msgid "Enable word-level highlighting with timestamps"
-msgstr "Enable word-level highlighting with timestamps"
+#~ msgid "Enable word-level highlighting with timestamps"
+#~ msgstr "Enable word-level highlighting with timestamps"
 
 msgid "Enabled"
 msgstr "Enabled"
@@ -1851,6 +1866,9 @@ msgstr "Hide AI edit history"
 
 msgid "Higher values filter out simple or blank images."
 msgstr "Higher values filter out simple or blank images."
+
+msgid "Highlights words in sync with the audio. Adds noticeable time to speech generation."
+msgstr "Highlights words in sync with the audio. Adds noticeable time to speech generation."
 
 msgid "Hill"
 msgstr "Hill"
@@ -2891,6 +2909,15 @@ msgstr "Preview linked page"
 msgid "Preview of the HTML/CSS patterns used for LLM-generated pages."
 msgstr "Preview of the HTML/CSS patterns used for LLM-generated pages."
 
+#~ msgid "Preview: no highlighting"
+#~ msgstr "Preview: no highlighting"
+
+msgid "Preview: per-sentence"
+msgstr "Preview: per-sentence"
+
+msgid "Preview: word-by-word"
+msgstr "Preview: word-by-word"
+
 msgid "Previous slide"
 msgstr "Previous slide"
 
@@ -3870,6 +3897,9 @@ msgstr "The prompt template used to translate text catalog entries."
 msgid "The prompt used by the reviewer pass to inspect and correct a candidate sectioning tree. Shares the model and retry settings of the sectioning prompt."
 msgstr "The prompt used by the reviewer pass to inspect and correct a candidate sectioning tree. Shares the model and retry settings of the sectioning prompt."
 
+msgid "The quick brown fox jumps over the lazy dog."
+msgstr "The quick brown fox jumps over the lazy dog."
+
 msgid "The rendering strategy used for sections without an explicit mapping."
 msgstr "The rendering strategy used for sections without an explicit mapping."
 
@@ -4247,6 +4277,9 @@ msgstr "When enabled, background colors from the styleguide are applied to the f
 msgid "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."
 msgstr "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."
 
+msgid "When enabled, word-level timestamps are calculated automatically during speech generation so the reader can highlight words as they're spoken. When disabled, you can still calculate timestamps manually from the speech view."
+msgstr "When enabled, word-level timestamps are calculated automatically during speech generation so the reader can highlight words as they're spoken. When disabled, you can still calculate timestamps manually from the speech view."
+
 msgid "When your PDF isn't built around facing pages, single mode keeps every page separate: nothing is merged across a spread. That matches how most textbooks, novels, and reference books are read - one page at a time."
 msgstr "When your PDF isn't built around facing pages, single mode keeps every page separate: nothing is merged across a spread. That matches how most textbooks, novels, and reference books are read - one page at a time."
 
@@ -4265,8 +4298,14 @@ msgstr "Word"
 msgid "Word and definition are required."
 msgstr "Word and definition are required."
 
-msgid "Word Highlight"
-msgstr "Word Highlight"
+#~ msgid "Word Highlight"
+#~ msgstr "Word Highlight"
+
+msgid "Word Highlighting"
+msgstr "Word Highlighting"
+
+msgid "Word-level highlighting"
+msgstr "Word-level highlighting"
 
 msgid "words"
 msgstr "words"

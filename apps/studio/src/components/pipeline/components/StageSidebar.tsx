@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useAccessibilityAssessment } from "@/hooks/use-debug"
 import { useBookTasks } from "@/hooks/use-book-tasks"
+import { useStageMissingCounts } from "@/hooks/use-stage-missing-counts"
 import { StepProgressRing } from "./StepProgressRing"
 import { usePages, usePageImage } from "@/hooks/use-pages"
 import {
@@ -141,6 +142,9 @@ export function StageSidebar({
   const { stageState } = useBookRun()
   const { data: accessibilityAssessment } = useAccessibilityAssessment(bookLabel)
   const { openSettings } = useSettingsDialog()
+  const stageMissing = useStageMissingCounts(bookLabel)
+  const translateNeedsRerun = stageMissing.translate > 0
+  const speechNeedsRerun = stageMissing.speech > 0
 
   const currentState = stageState(activeStep)
   const effectivePagesOpen =
@@ -176,7 +180,14 @@ export function StageSidebar({
     const showSubTabs = isActive && isSettings && !!settingsTabs
     const state = step.slug === "validation" && validationCompleted ? "done" : stageState(step.slug)
     const stageCompleted = state === "done"
-    const ringState = state
+
+    // Translate/Speech revert to needs-rerun look when their downstream output
+    // has gaps (e.g. after a glossary addition). The in-view banner gives the
+    // user the actionable details and Re-run button.
+    const stageNeedsRerun =
+      (step.slug === "translate" && translateNeedsRerun) ||
+      (step.slug === "speech" && speechNeedsRerun)
+    const ringState = stageNeedsRerun ? "idle" : state
 
     // "book" is always filled; "validation", "preview" and "export" fill once storyboard is done;
     // pipeline stages fill when their own stage is completed.
@@ -185,7 +196,7 @@ export function StageSidebar({
         ? true
         : step.slug === "sign-language" || step.slug === "validation" || step.slug === "preview" || step.slug === "export"
           ? storyboardDone
-          : stageCompleted
+          : stageCompleted && !stageNeedsRerun
 
     const stepLabel = step.slug === "book" ? toCamelLabel(bookLabel) : getStageLabelI18n(step.slug)
 

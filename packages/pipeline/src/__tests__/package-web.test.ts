@@ -552,6 +552,7 @@ describe("packageAdtWeb", () => {
       outputLanguages: ["en"],
       title: "Book Title",
       webAssetsDir,
+      speechConfig: { word_highlighting: true },
     })
 
     const timecodes = JSON.parse(
@@ -652,6 +653,7 @@ describe("packageAdtWeb", () => {
       outputLanguages: ["en"],
       title: "Book Title",
       webAssetsDir,
+      speechConfig: { word_highlighting: true },
     })
 
     const timecodes = JSON.parse(

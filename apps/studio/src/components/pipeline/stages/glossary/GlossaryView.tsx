@@ -231,6 +231,18 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
     })
   }
 
+  const updateEmojis = (itemId: string, newEmojis: string[]) => {
+    const base = pending ?? data ?? createEmptyGlossary()
+    if (!base) return
+    setPending({
+      ...base,
+      generatedAt: base.generatedAt || new Date().toISOString(),
+      items: base.items.map((item) =>
+        (item.id ?? item.word) === itemId ? { ...item, emojis: newEmojis } : item
+      ),
+    })
+  }
+
   const removeManualItem = (itemId: string) => {
     const base = pending ?? data ?? createEmptyGlossary()
     setPending({
@@ -293,10 +305,12 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
                 {t`manual`}
               </Badge>
             )}
-            {item.emojis.length > 0 && (
-              <span className="ml-1.5">{item.emojis.join(" ")}</span>
-            )}
           </div>
+          <EmojiInput
+            value={item.emojis}
+            onChange={(next) => updateEmojis(item.id ?? item.word, next)}
+            placeholder={t`Add emojis`}
+          />
           <Textarea
             value={item.definition}
             onChange={(e) => updateDefinition(item.id ?? item.word, e.target.value)}
@@ -332,5 +346,51 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
         onAdd={addManualItem}
       />
     </div>
+  )
+}
+
+/** Inline editor for an emoji list. Stores a draft string while the field is
+ * focused so spaces can be typed naturally; commits to a deduped, whitespace-
+ * split array on blur or Enter. */
+function EmojiInput({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string[]
+  onChange: (v: string[]) => void
+  placeholder?: string
+}) {
+  const [draft, setDraft] = useState<string | null>(null)
+  const display = draft ?? value.join(" ")
+
+  const commit = () => {
+    if (draft === null) return
+    const parsed = Array.from(new Set(draft.split(/\s+/).filter(Boolean)))
+    if (parsed.length !== value.length || parsed.some((e, i) => e !== value[i])) {
+      onChange(parsed)
+    }
+    setDraft(null)
+  }
+
+  return (
+    <input
+      type="text"
+      value={display}
+      placeholder={placeholder}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault()
+          e.currentTarget.blur()
+        } else if (e.key === "Escape") {
+          e.preventDefault()
+          setDraft(null)
+          e.currentTarget.blur()
+        }
+      }}
+      className="shrink-0 w-24 text-sm rounded border border-transparent bg-transparent p-1.5 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+    />
   )
 }

@@ -19,7 +19,6 @@ import {
   createAzureTTSSynthesizer,
   createGeminiTTSSynthesizer,
   createTTSSynthesizer,
-  transcribeWithWhisper,
   type LlmLogEntry,
 } from "@adt/llm"
 import {
@@ -32,6 +31,7 @@ import {
   resolveSpeechModel,
   resolveVoice,
   generateSpeechFile,
+  generateWordTimestamps,
   type ProviderRouting,
 } from "@adt/pipeline"
 
@@ -1084,13 +1084,14 @@ export function createTTSRoutes(booksDir: string, configPath?: string, taskServi
         // Non-critical — proceed without prompt
       }
 
-      const result = await transcribeWithWhisper(
+      const result = await generateWordTimestamps({
         audioBuffer,
-        ttsEntry.fileName,
-        openaiApiKey,
-        baseLanguage,
-        textPrompt,
-      )
+        fileName: ttsEntry.fileName,
+        apiKey: openaiApiKey,
+        language: baseLanguage,
+        prompt: textPrompt,
+        cacheDir: path.join(bookDir, ".cache"),
+      })
 
       const timestampEntry: WordTimestampEntry = {
         textId: parsed.data.textId,
@@ -1216,13 +1217,14 @@ export function createTTSRoutes(booksDir: string, configPath?: string, taskServi
 
             const audioBuffer = Buffer.from(fs.readFileSync(audioPath))
             const textPrompt = textMap.get(ttsEntry.textId)
-            const result = await transcribeWithWhisper(
+            const result = await generateWordTimestamps({
               audioBuffer,
-              ttsEntry.fileName,
-              openaiApiKey,
-              baseLanguage,
-              textPrompt,
-            )
+              fileName: ttsEntry.fileName,
+              apiKey: openaiApiKey,
+              language: baseLanguage,
+              prompt: textPrompt,
+              cacheDir: path.join(bookDir, ".cache"),
+            })
 
             const entry: WordTimestampEntry = {
               textId: ttsEntry.textId,

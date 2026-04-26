@@ -543,6 +543,10 @@ speech:
     fs.mkdirSync(promptsDir, { recursive: true })
     writeBaseConfig(configPath)
     seedTextAndSpeechBook(booksDir, "speech-word-timestamps")
+    fs.writeFileSync(
+      path.join(booksDir, "speech-word-timestamps", "config.yaml"),
+      "speech:\n  word_highlighting: true\n",
+    )
 
     generateSpeechFileMock.mockImplementation(async (options: {
       bookDir: string
@@ -687,11 +691,12 @@ speech:
     try {
       const row = storage.getLatestNodeData("tts-timestamps", "en")
       expect(row).not.toBeNull()
-      expect(
-        (row?.data as {
-          entries: Record<string, { words: Array<{ word: string; start: number; end: number }> }>
-        }).entries
-      ).toEqual({})
+      // With highlighting disabled, the seeded timestamps are preserved so that
+      // manually-calculated entries (via the speech view) survive a speech re-run.
+      const entries = (row?.data as {
+        entries: Record<string, { words: Array<{ word: string; start: number; end: number }> }>
+      }).entries
+      expect(entries.pg001_t001?.words).toEqual([{ word: "stale", start: 0, end: 0.9 }])
     } finally {
       storage.close()
     }

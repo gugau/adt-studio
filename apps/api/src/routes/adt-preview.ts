@@ -408,7 +408,7 @@ function buildPreviewConfig(
     storage.getLatestNodeData("tts", language) ??
     storage.getLatestNodeData("tts", legacyLanguage)
   const hasTTS = ttsRow !== null
-  const highlightEnabled = hasTTS && speechConfig?.word_highlighting !== false
+  const highlightEnabled = hasTTS && speechConfig?.word_highlighting === true
 
   const quizRow = storage.getLatestNodeData("quiz-generation", "book")
   const quizData = quizRow?.data as { quizzes?: unknown[] } | undefined
@@ -709,7 +709,7 @@ export function createAdtPreviewRoutes(
     const lang = normalizeLocale(c.req.param("lang"))
     const safeLabel = parseBookLabel(c.req.param("label"))
     const bookConfig = loadBookConfig(safeLabel, booksDir, configPath)
-    const timecodes = bookConfig.speech?.word_highlighting !== false
+    const timecodes = bookConfig.speech?.word_highlighting === true
       ? withStorage(c.req.param("label"), (storage) =>
           buildRuntimeTimecodeMap(getWordTimestamps(storage, lang))
         )
