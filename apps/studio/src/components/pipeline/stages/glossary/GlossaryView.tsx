@@ -30,6 +30,7 @@ function VersionPicker({
   saving,
   dirty,
   bookLabel,
+  disableSave = false,
   onPreview,
   onSave,
   onDiscard,
@@ -38,6 +39,7 @@ function VersionPicker({
   saving: boolean
   dirty: boolean
   bookLabel: string
+  disableSave?: boolean
   onPreview: (data: unknown) => void
   onSave: () => void
   onDiscard: () => void
@@ -92,7 +94,9 @@ function VersionPicker({
         <button
           type="button"
           onClick={onSave}
-          className="flex items-center gap-1 text-[10px] font-medium rounded px-2 py-0.5 bg-white text-green-800 hover:bg-white/80 cursor-pointer transition-colors"
+          disabled={disableSave}
+          title={disableSave ? t`Wait for glossary generation to finish` : undefined}
+          className="flex items-center gap-1 text-[10px] font-medium rounded px-2 py-0.5 bg-white text-green-800 hover:bg-white/80 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Check className="h-3 w-3" />
           {t`Save`}
@@ -201,6 +205,8 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
           size="sm"
           className="h-6 px-2 text-[10px] bg-white/10 text-white hover:bg-white/20"
           onClick={openAddDialog}
+          disabled={glossaryRunning}
+          title={glossaryRunning ? t`Wait for glossary generation to finish` : undefined}
         >
           <Plus className="mr-1 h-3 w-3" />
           {t`Add Term`}
@@ -210,6 +216,7 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
           saving={saving}
           dirty={dirty}
           bookLabel={bookLabel}
+          disableSave={glossaryRunning}
           onPreview={(d) => setPending(d as GlossaryData)}
           onSave={() => saveRef.current()}
           onDiscard={() => setPending(null)}
@@ -217,7 +224,7 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
       </div>
     )
     return () => setExtra(null)
-  }, [items.length, saving, dirty, bookLabel, currentVersion, openAddDialog, t, setExtra])
+  }, [items.length, saving, dirty, bookLabel, currentVersion, openAddDialog, glossaryRunning, t, setExtra])
 
   const updateDefinition = (itemId: string, newDefinition: string) => {
     const base = pending ?? data ?? createEmptyGlossary()

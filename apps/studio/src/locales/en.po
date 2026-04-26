@@ -4232,6 +4232,9 @@ msgstr "Voice Mappings"
 msgid "Voices"
 msgstr "Voices"
 
+msgid "Wait for glossary generation to finish"
+msgstr "Wait for glossary generation to finish"
+
 msgid "Wait for storyboard to complete"
 msgstr "Wait for storyboard to complete"
 

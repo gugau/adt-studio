@@ -4236,6 +4236,9 @@ msgstr "Correspondances de voix"
 msgid "Voices"
 msgstr "Voix"
 
+msgid "Wait for glossary generation to finish"
+msgstr "Attendre la fin de la génération du glossaire"
+
 msgid "Wait for storyboard to complete"
 msgstr "Attendre la fin du scénarimage"
 

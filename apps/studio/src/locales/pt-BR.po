@@ -4232,6 +4232,9 @@ msgstr "Mapeamentos de voz"
 msgid "Voices"
 msgstr "Vozes"
 
+msgid "Wait for glossary generation to finish"
+msgstr "Aguarde o término da geração do glossário"
+
 msgid "Wait for storyboard to complete"
 msgstr "Aguarde a conclusão do storyboard"
 
