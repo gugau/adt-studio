@@ -427,11 +427,8 @@ msgstr "Atividades desativadas"
 msgid "Activities enabled"
 msgstr "Atividades ativadas"
 
-msgid "Activities generator"
-msgstr "Gerador de atividades"
-
-msgid "Activities Generator"
-msgstr "Gerador de Atividades"
+msgid "Activity Converter"
+msgstr "Conversão de atividades"
 
 msgid "Activity 5.1"
 msgstr "Atividade 5.1"

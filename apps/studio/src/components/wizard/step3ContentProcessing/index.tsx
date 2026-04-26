@@ -21,7 +21,7 @@ const MIN_DIM_NONE = msg`None`
 const MIN_DIM_HELP = msg`Leave at None to run segmentation on all qualifying images (subject to pipeline rules).`
 const VALUE_UNIT_PX = msg`px`
 
-const TITLE_ACTIVITIES = msg`Activities Generator`
+const TITLE_ACTIVITIES = msg`Activity Converter`
 const SUBTITLE_ACTIVITIES = msg`Detects activities already present in the book and transforms them into interactive HTML elements like radio buttons and text inputs.`
 
 const TITLE_FIGURE_EXTRACTION = msg`Figure Extraction`
