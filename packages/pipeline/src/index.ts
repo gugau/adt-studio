@@ -158,9 +158,12 @@ export {
   loadVoicesConfig,
   loadSpeechInstructions,
   generateSpeechFile,
+  generateWordTimestamps,
   type VoiceMaps,
   type InstructionsMap,
   type GenerateSpeechFileOptions,
+  type GenerateWordTimestampsOptions,
+  type GenerateWordTimestampsResult,
   type ProviderRouting,
 } from "./speech.js"
 export {

@@ -3,7 +3,7 @@ import fs from "node:fs"
 import path from "node:path"
 import { createBookStorage } from "@adt/storage"
 import type { Storage } from "@adt/storage"
-import { createLLMModel, createPromptEngine, createRateLimiter, transcribeWithWhisper } from "@adt/llm"
+import { createLLMModel, createPromptEngine, createRateLimiter } from "@adt/llm"
 import type { LlmLogEntry } from "@adt/llm"
 import {
   extractPDF,
@@ -45,6 +45,7 @@ import {
   resolveSpeechModel,
   resolveSpeechFormat,
   generateSpeechFile,
+  generateWordTimestamps,
   generateBookSummary,
   buildBookSummaryConfig,
   filterPageImageMeaningfulness,
@@ -162,49 +163,33 @@ async function processWithConcurrency<T>(
   await Promise.all(executing)
 }
 
-function buildSpeechProgressMessage(
-  audioCompleted: number,
-  audioTotal: number,
-  audioFailures: number,
-  timingCompleted = 0,
-  timingTotal = 0,
-  timingFailures = 0,
-): string {
-  const parts = [
-    `${audioCompleted}/${audioTotal} audio entries${audioFailures > 0 ? ` (${audioFailures} failed)` : ""}`,
-  ]
-
-  if (timingTotal > 0) {
-    parts.push(
-      `word timings ${timingCompleted}/${timingTotal}${timingFailures > 0 ? ` (${timingFailures} failed)` : ""}`,
-    )
-  }
-
-  return parts.join(" · ")
-}
-
 function emitSpeechStepProgress(
   progress: StageRunProgress,
   audioCompleted: number,
   audioTotal: number,
   audioFailures: number,
-  timingCompleted = 0,
-  timingTotal = 0,
-  timingFailures = 0,
 ): void {
   progress.emit({
     type: "step-progress",
     step: "tts",
-    message: buildSpeechProgressMessage(
-      audioCompleted,
-      audioTotal,
-      audioFailures,
-      timingCompleted,
-      timingTotal,
-      timingFailures,
-    ),
+    message: `${audioCompleted}/${audioTotal} audio entries${audioFailures > 0 ? ` (${audioFailures} failed)` : ""}`,
     page: audioCompleted,
     totalPages: audioTotal,
+  })
+}
+
+function emitWordTimestampStepProgress(
+  progress: StageRunProgress,
+  completed: number,
+  total: number,
+  failures: number,
+): void {
+  progress.emit({
+    type: "step-progress",
+    step: "word-timestamps",
+    message: `${completed}/${total} entries${failures > 0 ? ` (${failures} failed)` : ""}`,
+    page: completed,
+    totalPages: total,
   })
 }
 
@@ -232,15 +217,13 @@ function resolveSpeechAudioPath(
 interface GenerateSpeechWordTimestampsOptions {
   label: string
   bookDir: string
+  cacheDir: string
   apiKey?: string
   outputLanguages: string[]
   ttsResultsByLang: Map<string, SpeechFileEntry[]>
   textByLanguage: Map<string, Map<string, string>>
   concurrency: number
   progress: StageRunProgress
-  audioCompleted: number
-  audioTotal: number
-  audioFailures: number
 }
 
 async function generateSpeechWordTimestamps(
@@ -252,15 +235,13 @@ async function generateSpeechWordTimestamps(
   const {
     label,
     bookDir,
+    cacheDir,
     apiKey,
     outputLanguages,
     ttsResultsByLang,
     textByLanguage,
     concurrency,
     progress,
-    audioCompleted,
-    audioTotal,
-    audioFailures,
   } = options
 
   const entriesByLanguage = new Map<string, Record<string, WordTimestampEntry>>()
@@ -288,15 +269,7 @@ async function generateSpeechWordTimestamps(
   const failedItems: string[] = []
   let completed = 0
 
-  emitSpeechStepProgress(
-    progress,
-    audioCompleted,
-    audioTotal,
-    audioFailures,
-    0,
-    workItems.length,
-    0,
-  )
+  emitWordTimestampStepProgress(progress, 0, workItems.length, 0)
 
   await processWithConcurrency(
     workItems,
@@ -309,13 +282,17 @@ async function generateSpeechWordTimestamps(
         }
 
         const audioBuffer = Buffer.from(fs.readFileSync(audioPath))
-        const result = await transcribeWithWhisper(
+        const result = await generateWordTimestamps({
           audioBuffer,
-          entry.fileName,
+          fileName: entry.fileName,
           apiKey,
-          getBaseLanguage(language),
+          language: getBaseLanguage(language),
           prompt,
-        )
+          cacheDir,
+        })
+        if (result.cached) {
+          console.log(`[stage-run] ${label}: word timestamps cache hit for ${entry.textId} (${language})`)
+        }
 
         entriesByLanguage.get(language)![entry.textId] = {
           textId: entry.textId,
@@ -331,15 +308,7 @@ async function generateSpeechWordTimestamps(
         )
       } finally {
         completed++
-        emitSpeechStepProgress(
-          progress,
-          audioCompleted,
-          audioTotal,
-          audioFailures,
-          completed,
-          workItems.length,
-          failedItems.length,
-        )
+        emitWordTimestampStepProgress(progress, completed, workItems.length, failedItems.length)
       }
     },
   )
@@ -1636,6 +1605,7 @@ async function runSpeechStep(
 
     if (!catalog || catalog.entries.length === 0) {
       progress.emit({ type: "step-skip", step: "tts" })
+      progress.emit({ type: "step-skip", step: "word-timestamps" })
       console.log(`[stage-run] ${label}: TTS skipped (empty catalog)`)
       return
     }
@@ -1914,44 +1884,6 @@ async function runSpeechStep(
       storage.putNodeData("tts", lang, output)
     }
 
-    const wordHighlightingEnabled = config.speech?.word_highlighting !== false
-    let wordTimestampsByLang = new Map<string, Record<string, WordTimestampEntry>>()
-    let timestampFailedItems: string[] = []
-    if (wordHighlightingEnabled) {
-      const generatedWordTimestamps = await generateSpeechWordTimestamps({
-        label,
-        bookDir,
-        apiKey: options.apiKey,
-        outputLanguages,
-        ttsResultsByLang,
-        textByLanguage,
-        concurrency: effectiveConcurrency,
-        progress,
-        audioCompleted: completedItems,
-        audioTotal: totalItems,
-        audioFailures: failedItems.length,
-      })
-      wordTimestampsByLang = generatedWordTimestamps.entriesByLanguage
-      timestampFailedItems = generatedWordTimestamps.failedItems
-    }
-
-    const timestampsGeneratedAt = new Date().toISOString()
-    for (const lang of outputLanguages) {
-      const entries = wordTimestampsByLang.get(lang) ?? {}
-      storage.putNodeData("tts-timestamps", lang, {
-        entries,
-        generatedAt: timestampsGeneratedAt,
-      } satisfies WordTimestampOutput)
-    }
-
-    if (timestampFailedItems.length > 0) {
-      console.warn(
-        `[stage-run] ${label}: ${timestampFailedItems.length} word timestamp item(s) failed:\n${timestampFailedItems.join("\n")}`,
-      )
-    } else if (!wordHighlightingEnabled) {
-      console.log(`[stage-run] ${label}: word-level highlighting disabled; skipping timestamp generation`)
-    }
-
     if (geminiFailedItems.length > 0) {
       const summary = `${geminiFailedItems.length} Gemini TTS item(s) failed. Missing Gemini audio can be generated one by one from the Speech view.`
       progress.emit({
@@ -1959,11 +1891,62 @@ async function runSpeechStep(
         step: "tts",
         error: summary,
       })
+      progress.emit({ type: "step-skip", step: "word-timestamps" })
       console.log(`[stage-run] ${label}: speech completed with Gemini TTS gaps`)
       return
     }
 
     progress.emit({ type: "step-complete", step: "tts" })
+
+    const wordHighlightingEnabled = config.speech?.word_highlighting === true
+    let wordTimestampsByLang = new Map<string, Record<string, WordTimestampEntry>>()
+    let timestampFailedItems: string[] = []
+    if (wordHighlightingEnabled) {
+      progress.emit({ type: "step-start", step: "word-timestamps" })
+      const generatedWordTimestamps = await generateSpeechWordTimestamps({
+        label,
+        bookDir,
+        cacheDir,
+        apiKey: options.apiKey,
+        outputLanguages,
+        ttsResultsByLang,
+        textByLanguage,
+        concurrency: effectiveConcurrency,
+        progress,
+      })
+      wordTimestampsByLang = generatedWordTimestamps.entriesByLanguage
+      timestampFailedItems = generatedWordTimestamps.failedItems
+
+      // Only persist tts-timestamps when we actually generated them. When
+      // highlighting is disabled, leave existing rows untouched so that
+      // manually-calculated timestamps (via the speech view) are preserved
+      // across speech re-runs.
+      const timestampsGeneratedAt = new Date().toISOString()
+      for (const lang of outputLanguages) {
+        const entries = wordTimestampsByLang.get(lang) ?? {}
+        storage.putNodeData("tts-timestamps", lang, {
+          entries,
+          generatedAt: timestampsGeneratedAt,
+        } satisfies WordTimestampOutput)
+      }
+    }
+
+    if (!wordHighlightingEnabled) {
+      progress.emit({ type: "step-skip", step: "word-timestamps" })
+      console.log(`[stage-run] ${label}: word-level highlighting disabled; skipping timestamp generation`)
+    } else if (timestampFailedItems.length > 0) {
+      console.warn(
+        `[stage-run] ${label}: ${timestampFailedItems.length} word timestamp item(s) failed:\n${timestampFailedItems.join("\n")}`,
+      )
+      progress.emit({
+        type: "step-error",
+        step: "word-timestamps",
+        error: `${timestampFailedItems.length} word timestamp item(s) failed`,
+      })
+    } else {
+      progress.emit({ type: "step-complete", step: "word-timestamps" })
+    }
+
     console.log(`[stage-run] ${label}: speech complete`)
   } finally {
     storage.close()

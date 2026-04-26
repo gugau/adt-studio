@@ -14,6 +14,7 @@ describe("pipeline effects", () => {
       "catalog-translation",
       "text-catalog-translation",
       "tts",
+      "word-timestamps",
       "package-web",
       "accessibility-assessment",
     ])
@@ -38,6 +39,7 @@ describe("pipeline effects", () => {
       "tts",
       "step-status",
     ])
+    expect(getCacheResourcesForNode("word-timestamps")).toEqual(["tts"])
   })
 
   it("maps metadata node to book/list resources", () => {

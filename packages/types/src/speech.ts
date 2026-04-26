@@ -23,7 +23,7 @@ export type SpeechConfig = z.infer<typeof SpeechConfig>
 export function isSpeechWordHighlightingEnabled(
   config?: Pick<SpeechConfig, "word_highlighting"> | null,
 ): boolean {
-  return config?.word_highlighting !== false
+  return config?.word_highlighting === true
 }
 
 export const SpeechFileEntry = z.object({

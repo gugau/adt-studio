@@ -234,6 +234,10 @@ describe("ADT preview routes", () => {
   })
 
   it("serves runtime timecodes and enables highlight when word timestamps exist", async () => {
+    fs.writeFileSync(
+      path.join(tmpDir, label, "config.yaml"),
+      "speech:\n  word_highlighting: true\n",
+    )
     const storage = createBookStorage(label, tmpDir)
     try {
       storage.putNodeData("tts", "en", {
@@ -295,6 +299,10 @@ describe("ADT preview routes", () => {
   })
 
   it("enables highlight fallback when TTS exists without stored word timestamps", async () => {
+    fs.writeFileSync(
+      path.join(tmpDir, label, "config.yaml"),
+      "speech:\n  word_highlighting: true\n",
+    )
     const storage = createBookStorage(label, tmpDir)
     try {
       storage.putNodeData("tts", "en", {

@@ -571,8 +571,11 @@ export const initializeTtsQuickToggle = () => {
         ttsQuickToggleButton.addEventListener("click", (e) => {
             e.preventDefault();
 
-            // Toggle read aloud mode
+            // Toggle read aloud mode and start playback immediately when enabling
             toggleReadAloud();
+            if (state.readAloudMode) {
+                playAudioSequentially();
+            }
         });
     }
 };

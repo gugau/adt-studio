@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo, type ChangeEvent } from "react"
+import { createPortal } from "react-dom"
 import { Link } from "@tanstack/react-router"
 import { Check, ChevronDown, ChevronRight, ChevronUp, Languages, Loader2, Play, Pause, Plus, RotateCcw, Save, Settings, Trash2, Type, Upload, WandSparkles, X } from "lucide-react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -10,6 +11,7 @@ import { useBook } from "@/hooks/use-books"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useBookTasks } from "@/hooks/use-book-tasks"
+import { useStageMissingCounts } from "@/hooks/use-stage-missing-counts"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
 import { useVirtualizer } from "@tanstack/react-virtual"
@@ -18,7 +20,10 @@ import { normalizeLocale } from "@/lib/languages"
 import { languageUsesSpeechProvider, resolveSpeechProviderForLanguage } from "@/lib/speech-routing"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
 import { resolveTranslationLanguageState } from "./lib/translations-view-state"
+import { WordHighlightPreview } from "./components/WordHighlightPreview"
 import { msg } from "@lingui/core/macro"
 import { useLingui } from "@lingui/react/macro"
 
@@ -172,7 +177,7 @@ function VersionPicker({
 export function TranslationsView({ bookLabel, stageSlug = "translate", selectedPageId, onSelectPage }: { bookLabel: string; stageSlug?: string; selectedPageId?: string; onSelectPage?: (pageId: string | null) => void }) {
   const isSpeechStage = stageSlug === "speech"
   const { t, i18n } = useLingui()
-  const { setExtra } = useStepHeader()
+  const { headerSlotEl } = useStepHeader()
   const { data: bookConfigData } = useBookConfig(bookLabel)
   const updateConfig = useUpdateBookConfig()
   const { data: activeConfigData } = useActiveConfig(bookLabel)
@@ -190,12 +195,21 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
 
   const handleRun = useCallback(() => {
     if (!hasApiKey || isRunning) return
+    // Speech depends on translate, so always start from translate when running
+    // speech — new catalog entries (e.g. from a glossary addition) need their
+    // translations populated before TTS can synthesize them. The per-item cache
+    // makes already-translated entries near-instant.
     queueRun({
-      fromStage: stageSlug as "translate" | "speech",
+      fromStage: "translate",
       toStage: stageSlug as "translate" | "speech",
       apiKey,
     })
   }, [hasApiKey, isRunning, apiKey, queueRun, stageSlug])
+
+  const stageMissing = useStageMissingCounts(bookLabel)
+  const missingForCurrentStage =
+    isSpeechStage ? stageMissing.speech : stageMissing.translate
+  const showMissingBanner = stageDone && !isRunning && missingForCurrentStage > 0
 
   const handleDeleteTTS = useCallback(async () => {
     await api.deleteTTS(bookLabel)
@@ -220,7 +234,7 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
   const speechConfigRecord = speechConfig && typeof speechConfig === "object"
     ? speechConfig as Record<string, unknown>
     : null
-  const wordHighlightingEnabled = speechConfigRecord?.word_highlighting !== false
+  const wordHighlightingEnabled = speechConfigRecord?.word_highlighting === true
   const outputLanguages = Array.from(
     new Set(((merged?.output_languages as string[] | undefined) ?? []).map((code) => normalizeLocale(code)))
   )
@@ -525,113 +539,84 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
     [audioLang, apiKey, transcribeMutation]
   )
 
-  useEffect(() => {
-    if (!catalog) return
-    setExtra(
-      <div className="flex items-center gap-1.5 ml-auto">
-        <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{t`${String(displayEntries.length)} texts`}</span>
-        {outputLanguages.length > 1 && (
-          <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{t`${String(outputLanguages.length)} languages`}</span>
-        )}
-        {currentLanguageUsesGemini ? (
-          <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">
-            {t`${String(generatedAudioCount)}/${String(displayEntries.length)} audio`}
-          </span>
-        ) : totalAudioFiles > 0 && (
-          <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{t`${String(totalAudioFiles)} audio`}</span>
-        )}
-        {isSpeechStage && (
+  const headerControls = catalog ? (
+    <div className="flex items-center gap-1.5 ml-auto">
+      <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{t`${String(displayEntries.length)} texts`}</span>
+      {outputLanguages.length > 1 && (
+        <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{t`${String(outputLanguages.length)} languages`}</span>
+      )}
+      {currentLanguageUsesGemini ? (
+        <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">
+          {t`${String(generatedAudioCount)}/${String(displayEntries.length)} audio`}
+        </span>
+      ) : totalAudioFiles > 0 && (
+        <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{t`${String(totalAudioFiles)} audio`}</span>
+      )}
+      {currentLanguageUsesGemini && missingAudioCount > 0 && (
+        <span className="text-[10px] bg-amber-100 text-amber-900 rounded-full px-2 py-0.5">
+          {t`${missingAudioCount} missing`}
+        </span>
+      )}
+      {selectedLang && translationVersion != null && !isSourceLang && !isSpeechStage && (
+        <VersionPicker
+          currentVersion={translationVersion}
+          saving={saving}
+          dirty={dirty}
+          bookLabel={bookLabel}
+          language={selectedLang}
+          onPreview={(d) => {
+            const data = d as { entries?: TextCatalogEntry[] }
+            setPendingEntries(data?.entries ?? [])
+          }}
+          onSave={() => saveRef.current()}
+          onDiscard={() => setPendingEntries(null)}
+        />
+      )}
+      <div className="w-px h-4 bg-white/20" />
+      <button
+        type="button"
+        onClick={() => {
+          if (!hasApiKey || isRunning) return
+          queueRun({ fromStage: "translate", toStage: stageSlug as "translate" | "speech", apiKey })
+        }}
+        disabled={!hasApiKey || isRunning}
+        title={isSpeechStage ? t`Re-run speech` : t`Re-run translation`}
+        className="text-white/60 hover:text-white transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-default"
+      >
+        <RotateCcw className="w-3.5 h-3.5" />
+      </button>
+      {isSpeechStage && (
+        <>
           <button
             type="button"
-            onClick={toggleWordHighlighting}
-            disabled={updateConfig.isPending}
-            aria-pressed={wordHighlightingEnabled}
-            title={wordHighlightingEnabled
-              ? t`Disable word-level highlighting and use sentence blocks`
-              : t`Enable word-level highlighting with timestamps`}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors",
-              wordHighlightingEnabled
-                ? "bg-white text-pink-700 hover:bg-white/90"
-                : "bg-white/10 text-white/80 hover:bg-white/20 hover:text-white",
-              updateConfig.isPending && "cursor-default opacity-70",
-            )}
-          >
-            {updateConfig.isPending ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <Type className="h-3 w-3" />
-            )}
-            {t`Word Highlight`}
-          </button>
-        )}
-        {currentLanguageUsesGemini && missingAudioCount > 0 && (
-          <span className="text-[10px] bg-amber-100 text-amber-900 rounded-full px-2 py-0.5">
-            {t`${missingAudioCount} missing`}
-          </span>
-        )}
-        {selectedLang && translationVersion != null && !isSourceLang && !isSpeechStage && (
-          <VersionPicker
-            currentVersion={translationVersion}
-            saving={saving}
-            dirty={dirty}
-            bookLabel={bookLabel}
-            language={selectedLang}
-            onPreview={(d) => {
-              const data = d as { entries?: TextCatalogEntry[] }
-              setPendingEntries(data?.entries ?? [])
+            onClick={() => {
+              if (!audioLang) return
+              const langDisplay = langNames.of(audioLang) ?? audioLang
+              if (!window.confirm(t`Are you sure you want to generate word-level timestamps for ${langDisplay}?`)) return
+              transcribeAllMutation.mutate(audioLang)
             }}
-            onSave={() => saveRef.current()}
-            onDiscard={() => setPendingEntries(null)}
-          />
-        )}
-        <div className="w-px h-4 bg-white/20" />
-        <button
-          type="button"
-          onClick={() => {
-            if (!hasApiKey || isRunning) return
-            queueRun({ fromStage: stageSlug as "translate" | "speech", toStage: stageSlug as "translate" | "speech", apiKey })
-          }}
-          disabled={!hasApiKey || isRunning}
-          title={isSpeechStage ? t`Re-run speech` : t`Re-run translation`}
-          className="text-white/60 hover:text-white transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-default"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-        </button>
-        {isSpeechStage && (
-          <>
-            <button
-              type="button"
-              onClick={() => {
-                if (!audioLang) return
-                const langDisplay = langNames.of(audioLang) ?? audioLang
-                if (!window.confirm(t`Are you sure you want to generate word-level timestamps for ${langDisplay}?`)) return
-                transcribeAllMutation.mutate(audioLang)
-              }}
-              disabled={!apiKey || totalAudioFiles === 0 || transcribeAllMutation.isPending || isTaskRunning("transcribe-timestamps")}
-              title={apiKey ? t`Calculate word timestamps for all entries` : t`OpenAI key required`}
-              className="text-white/60 hover:text-white transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-default"
-            >
-              <Type className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (!window.confirm(t`Are you sure you want to delete generated speech?`)) return
-                handleDeleteTTS()
-              }}
-              disabled={totalAudioFiles === 0}
-              title={t`Delete all speech`}
-              className="text-white/60 hover:text-white transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-default"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          </>
-        )}
-      </div>
-    )
-    return () => setExtra(null)
-  }, [catalog, t, displayEntries.length, outputLanguages.length, selectedLang, translationVersion, saving, dirty, bookLabel, isSourceLang, totalAudioFiles, selectedPageId, currentLanguageUsesGemini, generatedAudioCount, missingAudioCount, hasApiKey, isRunning, apiKey, queueRun, stageSlug, isSpeechStage, handleDeleteTTS, audioLang, transcribeAllMutation, isTaskRunning, toggleWordHighlighting, updateConfig.isPending, wordHighlightingEnabled])
+            disabled={!apiKey || totalAudioFiles === 0 || transcribeAllMutation.isPending || isTaskRunning("transcribe-timestamps")}
+            title={apiKey ? t`Calculate word timestamps for all entries` : t`OpenAI key required`}
+            className="text-white/60 hover:text-white transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-default"
+          >
+            <Type className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (!window.confirm(t`Are you sure you want to delete generated speech?`)) return
+              handleDeleteTTS()
+            }}
+            disabled={totalAudioFiles === 0}
+            title={t`Delete all speech`}
+            className="text-white/60 hover:text-white transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-default"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </>
+      )}
+    </div>
+  ) : null
 
   if (!showRunCard && isLoading) {
     return (
@@ -658,6 +643,8 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
 
   if (showRunCard || !catalog || entries.length === 0) {
     return (
+      <>
+      {headerSlotEl && headerControls && createPortal(headerControls, headerSlotEl)}
       <div className="p-4">
         <StageRunCard
           stageSlug={stageSlug}
@@ -712,6 +699,25 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
                   <span className="text-muted-foreground">{speechSummary.model}</span>
                 </p>
               </div>
+              <div className="space-y-2">
+                <div className="flex flex-row items-center justify-between rounded-lg border bg-background p-3">
+                  <div className="space-y-0.5 pr-3">
+                    <Label htmlFor="word-highlight-landing" className="text-sm font-medium cursor-pointer">
+                      {t`Word-level highlighting`}
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      {t`Highlights words in sync with the audio. Adds noticeable time to speech generation.`}
+                    </p>
+                  </div>
+                  <Switch
+                    id="word-highlight-landing"
+                    checked={wordHighlightingEnabled}
+                    onCheckedChange={toggleWordHighlighting}
+                    disabled={updateConfig.isPending || isRunning}
+                  />
+                </div>
+                <WordHighlightPreview enabled={wordHighlightingEnabled} />
+              </div>
               <Link
                 to="/books/$label/$step/settings"
                 params={{ label: bookLabel, step: "speech" }}
@@ -725,6 +731,7 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
           )}
         </StageRunCard>
       </div>
+      </>
     )
   }
 
@@ -742,6 +749,8 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
 
   // Language tabs + entries
   return (
+    <>
+    {headerSlotEl && headerControls && createPortal(headerControls, headerSlotEl)}
     <div className="flex flex-col h-full">
       {/* Fixed header: alerts, language tabs, column headers */}
       <div className="shrink-0 px-4 pt-4 space-y-3">
@@ -751,6 +760,26 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
               {runError}
             </AlertDescription>
           </Alert>
+        )}
+
+        {showMissingBanner && (
+          <div className="flex items-center justify-between gap-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
+            <div className="text-xs text-amber-900">
+              {isSpeechStage
+                ? t`${missingForCurrentStage} entry/entries are missing audio. Re-run to generate the missing items.`
+                : t`${missingForCurrentStage} entry/entries are missing translations. Re-run to fill the missing items.`}
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 px-3 text-xs border-amber-300 bg-white text-amber-900 hover:bg-amber-100"
+              onClick={handleRun}
+              disabled={!hasApiKey || isRunning}
+            >
+              <RotateCcw className="mr-1 h-3 w-3" />
+              {isSpeechStage ? t`Re-run speech` : t`Re-run translation`}
+            </Button>
+          </div>
         )}
 
         {/* Language filter pills — always shown, base language first */}
@@ -1056,6 +1085,7 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
       </div>
       )}
     </div>
+    </>
   )
 }
 
@@ -1295,19 +1325,41 @@ function HighlightedText({ text, timestamps, currentTime, isPlaying }: {
   )
 }
 
-/** Editable timecode field with visible up/down clicker arrows, increments by 0.1. */
-function TimecodeInput({ value, onChange, title, className }: {
+/** Editable timecode field with visible up/down clicker arrows, increments by 0.1.
+ * Clamps to [min, max]. Flashes red briefly when the user attempts to push past
+ * a bound. */
+function TimecodeInput({ value, onChange, min = 0, max = Number.POSITIVE_INFINITY, title, className }: {
   value: number
   onChange: (v: number) => void
+  min?: number
+  max?: number
   title?: string
   className?: string
 }) {
   const [draft, setDraft] = useState<string | null>(null)
+  const [flash, setFlash] = useState(false)
+  const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const display = draft ?? value.toFixed(3)
 
+  useEffect(() => () => {
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+  }, [])
+
+  const triggerFlash = () => {
+    setFlash(true)
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+    flashTimerRef.current = setTimeout(() => setFlash(false), 400)
+  }
+
+  const tryChange = (requested: number) => {
+    const clamped = Math.max(min, Math.min(max, requested))
+    if (clamped !== value) onChange(clamped)
+    if (Math.abs(clamped - requested) > 1e-6) triggerFlash()
+  }
+
   const nudge = (direction: 1 | -1) => {
-    const next = Math.max(0, Math.round((value + direction * 0.1) * 1000) / 1000)
-    onChange(next)
+    const next = Math.round((value + direction * 0.1) * 1000) / 1000
+    tryChange(next)
     setDraft(null)
   }
 
@@ -1321,7 +1373,7 @@ function TimecodeInput({ value, onChange, title, className }: {
         onBlur={() => {
           if (draft != null) {
             const v = parseFloat(draft)
-            if (!isNaN(v) && v !== value) onChange(v)
+            if (!isNaN(v)) tryChange(v)
             setDraft(null)
           }
         }}
@@ -1337,7 +1389,7 @@ function TimecodeInput({ value, onChange, title, className }: {
           }
         }}
         title={title}
-        className={className}
+        className={cn(className, flash && "!text-red-500 !border-red-500/60")}
       />
       <span className="inline-flex flex-col -ml-0.5 shrink-0">
         <button
@@ -1382,7 +1434,19 @@ function WordTimestampViewer({ timestamps, onSave, isSaving, columns = 2 }: {
 
   const updateWord = (index: number, field: "start" | "end", value: number) => {
     const base = editWords ?? [...timestamps.words]
-    const updated = base.map((w, i) => i === index ? { ...w, [field]: value } : w)
+    const current = base[index]
+    // Clamp to keep boundaries non-overlapping: start ≥ prev.end and ≤ own end;
+    // end ≥ own start and ≤ next.start. First word's lower bound is 0; last
+    // word's upper bound is unbounded.
+    let clamped = Math.max(0, value)
+    if (field === "start") {
+      const lower = index > 0 ? base[index - 1].end : 0
+      clamped = Math.max(lower, Math.min(clamped, current.end))
+    } else {
+      const upper = index < base.length - 1 ? base[index + 1].start : Number.POSITIVE_INFINITY
+      clamped = Math.min(upper, Math.max(clamped, current.start))
+    }
+    const updated = base.map((w, i) => i === index ? { ...w, [field]: clamped } : w)
     setEditWords(updated)
   }
 
@@ -1424,11 +1488,13 @@ function WordTimestampViewer({ timestamps, onSave, isSaving, columns = 2 }: {
                 <div key={colIdx} className={cn(colIdx > 0 && "border-l")}>
                   {chunk.map((w, rowIdx) => {
                     const globalIdx = colIdx * rowCount + rowIdx
+                    const prevEnd = globalIdx > 0 ? words[globalIdx - 1].end : 0
+                    const nextStart = globalIdx < words.length - 1 ? words[globalIdx + 1].start : Number.POSITIVE_INFINITY
                     return (
                       <div key={globalIdx} className={cn("flex items-center gap-1 px-1.5 py-0.5 text-xs", rowIdx > 0 && "border-t")}>
                         <span className="flex-1 min-w-0 truncate">{w.word}</span>
-                        <TimecodeInput value={w.start} onChange={(v) => updateWord(globalIdx, "start", v)} title={t`Start`} className={inputClass} />
-                        <TimecodeInput value={w.end} onChange={(v) => updateWord(globalIdx, "end", v)} title={t`End`} className={inputClass} />
+                        <TimecodeInput value={w.start} onChange={(v) => updateWord(globalIdx, "start", v)} min={prevEnd} max={w.end} title={t`Start`} className={inputClass} />
+                        <TimecodeInput value={w.end} onChange={(v) => updateWord(globalIdx, "end", v)} min={w.start} max={nextStart} title={t`End`} className={inputClass} />
                       </div>
                     )
                   })}
@@ -1536,11 +1602,11 @@ function AudioAction({
         title={audio ? t`Replace this audio file` : t`Upload your own audio file`}
       >
         {isUploading ? (
-          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+          <Loader2 className={cn("h-3 w-3 animate-spin", !audio && "mr-1")} />
         ) : (
-          <Upload className="mr-1 h-3 w-3" />
+          <Upload className={cn("h-3 w-3", !audio && "mr-1")} />
         )}
-        {audio ? t`Replace` : t`Upload`}
+        {!audio && t`Upload`}
       </Button>
     </>
   ) : null

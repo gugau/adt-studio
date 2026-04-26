@@ -20,6 +20,7 @@ export const StepName = z.enum([
   "text-catalog",
   "catalog-translation",
   "tts",
+  "word-timestamps",
   "package-web",
   "accessibility-assessment",
 ])
@@ -139,6 +140,7 @@ export const PIPELINE: StageDef[] = [
     dependsOn: ["translate"],
     steps: [
       { name: "tts", label: "Speech Generation" },
+      { name: "word-timestamps", label: "Word Highlighting", dependsOn: ["tts"] },
     ],
   },
   {

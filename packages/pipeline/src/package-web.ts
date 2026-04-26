@@ -441,7 +441,7 @@ export async function packageAdtWeb(
       )
     },
   )
-  const highlightEnabled = hasTTS && speechConfig?.word_highlighting !== false
+  const highlightEnabled = hasTTS && speechConfig?.word_highlighting === true
 
   for (const lang of outputLanguages) {
     const localeDir = path.join(contentDir, "i18n", lang)
