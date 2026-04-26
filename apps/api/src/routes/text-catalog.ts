@@ -5,6 +5,7 @@ import { HTTPException } from "hono/http-exception"
 import { z } from "zod"
 import { parseBookLabel } from "@adt/types"
 import { openBookDb, createBookStorage } from "@adt/storage"
+import { buildTextCatalog } from "@adt/pipeline"
 
 const TranslationBody = z
   .object({
@@ -18,13 +19,30 @@ export function createTextCatalogRoutes(booksDir: string): Hono {
   const app = new Hono()
 
   // GET /books/:label/text-catalog — Get text catalog with optional translations
-  app.get("/books/:label/text-catalog", (c) => {
+  app.get("/books/:label/text-catalog", async (c) => {
     const { label } = c.req.param()
     const safeLabel = parseBookLabel(label)
     const dbPath = path.join(path.resolve(booksDir), safeLabel, `${safeLabel}.db`)
 
     if (!fs.existsSync(dbPath)) {
       throw new HTTPException(404, { message: `Book not found: ${safeLabel}` })
+    }
+
+    // If no catalog exists yet (translate stage hasn't run), build one on demand
+    // from existing pipeline outputs so consumers like the glossary autofill have
+    // source-language text available before translation.
+    {
+      const storage = createBookStorage(safeLabel, booksDir)
+      try {
+        const existing = storage.getLatestNodeData("text-catalog", "book")
+        if (!existing) {
+          const pages = storage.getPages()
+          const catalog = await buildTextCatalog(storage, pages)
+          storage.putNodeData("text-catalog", "book", catalog)
+        }
+      } finally {
+        storage.close()
+      }
     }
 
     const db = openBookDb(dbPath)

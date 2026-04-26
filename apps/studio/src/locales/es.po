@@ -4202,6 +4202,9 @@ msgstr "Asignaciones de voz"
 msgid "Voices"
 msgstr "Voces"
 
+msgid "Wait for glossary generation to finish"
+msgstr "Espera a que termine la generación del glosario"
+
 msgid "Wait for storyboard to complete"
 msgstr "Espere a que el storyboard se complete"
 
