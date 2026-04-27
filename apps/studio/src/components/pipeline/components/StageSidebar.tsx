@@ -16,6 +16,8 @@ import { Button } from "@/components/ui/button"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useAccessibilityAssessment } from "@/hooks/use-debug"
 import { useBookTasks } from "@/hooks/use-book-tasks"
+import { usePackageAdtStatus } from "@/hooks/use-books"
+import { useSignLanguageVideos } from "@/hooks/use-sign-language-videos"
 import { StepProgressRing } from "./StepProgressRing"
 import { usePages, usePageImage } from "@/hooks/use-pages"
 import {
@@ -140,6 +142,9 @@ export function StageSidebar({
   const search = useSearch({ strict: false }) as { tab?: string }
   const { stageState } = useBookRun()
   const { data: accessibilityAssessment } = useAccessibilityAssessment(bookLabel)
+  const { data: signLanguageData } = useSignLanguageVideos(bookLabel)
+  const { data: packageStatus } = usePackageAdtStatus(bookLabel)
+  const { tasks } = useBookTasks(bookLabel)
   const { openSettings } = useSettingsDialog()
 
   const currentState = stageState(activeStep)
@@ -166,26 +171,29 @@ export function StageSidebar({
     flex1:     "flex-1",
   }
 
-  const storyboardDone = stageState("storyboard") === "done"
   const validationCompleted = Boolean(accessibilityAssessment?.assessment)
+  const signLanguageCompleted = signLanguageData?.videos?.some((v) => v.sectionId !== null) ?? false
+  const previewCompleted = packageStatus?.hasAdt ?? false
+  const exportCompleted = tasks.some((t) => t.kind === "prepare-export" && t.status === "completed")
+
+  const completionOverrides: Record<string, boolean> = {
+    "sign-language": signLanguageCompleted,
+    validation: validationCompleted,
+    preview: previewCompleted,
+    export: exportCompleted,
+  }
 
   const stageItems = STAGES.map((step, index) => {
     const isActive = step.slug === activeStep
     const Icon = step.icon
     const settingsTabs = getSettingsTabs(step.slug, i18n)
     const showSubTabs = isActive && isSettings && !!settingsTabs
-    const state = step.slug === "validation" && validationCompleted ? "done" : stageState(step.slug)
+    const state = completionOverrides[step.slug] ? "done" : stageState(step.slug)
     const stageCompleted = state === "done"
     const ringState = state
 
-    // "book" is always filled; "validation", "preview" and "export" fill once storyboard is done;
-    // pipeline stages fill when their own stage is completed.
-    const iconFilled =
-      step.slug === "book"
-        ? true
-        : step.slug === "sign-language" || step.slug === "validation" || step.slug === "preview" || step.slug === "export"
-          ? storyboardDone
-          : stageCompleted
+    // "book" is always filled; all other stages fill when their own completion signal is met.
+    const iconFilled = step.slug === "book" ? true : stageCompleted
 
     const stepLabel = step.slug === "book" ? toCamelLabel(bookLabel) : getStageLabelI18n(step.slug)
 
