@@ -1,7 +1,8 @@
-import { useState } from "react"
+import { useState, type FocusEventHandler, type SVGProps } from "react"
 import { LayoutGrid, Square } from "lucide-react"
 import { useLingui } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
 export interface BoxValue {
   /** top — or top-left when `variant="corners"` */
@@ -52,6 +53,7 @@ export function BoxInput({
   const [mode, setMode] = useState<"single" | "split">(
     allEqual ? "single" : "split"
   )
+  const [focusedSide, setFocusedSide] = useState<keyof BoxValue | null>(null)
 
   const setAll = (raw: string) => {
     const v = clamp(parseNumber(raw), min, max)
@@ -62,13 +64,17 @@ export function BoxInput({
     onChange({ ...value, [k]: v })
   }
 
-  const goSingle = () => {
-    if (!allEqual) {
-      onChange({ t: value.t, r: value.t, b: value.t, l: value.t })
-    }
-    setMode("single")
-  }
-  const goSplit = () => setMode("split")
+  // Choose the split-mode icon: when a cell is focused, render a square with
+  // that specific side (or corner) highlighted so the toggle visually echoes
+  // which input is being edited. Falls back to a generic split icon when
+  // nothing is focused.
+  const splitIcon = !focusedSide ? (
+    <LayoutGrid className="h-3.5 w-3.5" />
+  ) : variant === "sides" ? (
+    <SideEmphasisIcon side={focusedSide} className="h-3.5 w-3.5" />
+  ) : (
+    <CornerEmphasisIcon corner={focusedSide} className="h-3.5 w-3.5" />
+  )
 
   return (
     <div className="w-full min-w-0">
@@ -95,20 +101,21 @@ export function BoxInput({
             </span>
           ) : null}
         </div>
-        <div className="inline-flex items-center border border-input rounded-md overflow-hidden shrink-0">
-          <ModeButton
-            active={mode === "single"}
-            onClick={goSingle}
-            title={t`Single value`}
-            icon={Square}
-          />
-          <ModeButton
-            active={mode === "split"}
-            onClick={goSplit}
-            title={t`Individual sides`}
-            icon={LayoutGrid}
-          />
-        </div>
+        <ToggleGroup
+          type="single"
+          size="xs"
+          sliding
+          value={mode}
+          onValueChange={(v) => v && setMode(v as "single" | "split")}
+          className="w-auto shrink-0"
+        >
+          <ToggleGroupItem value="single" title={t`Single value`}>
+            <Square className="h-3.5 w-3.5" />
+          </ToggleGroupItem>
+          <ToggleGroupItem value="split" title={t`Individual sides`}>
+            {splitIcon}
+          </ToggleGroupItem>
+        </ToggleGroup>
       </div>
 
       <div
@@ -119,10 +126,42 @@ export function BoxInput({
             : "opacity-0 max-h-0 mt-0 mb-0 pointer-events-none"
         )}
       >
-        <SideField label={SIDE_LABELS[variant][0]} value={value.t} onChange={(v) => setSide("t", v)} min={min} max={max} />
-        <SideField label={SIDE_LABELS[variant][1]} value={value.r} onChange={(v) => setSide("r", v)} min={min} max={max} />
-        <SideField label={SIDE_LABELS[variant][2]} value={value.b} onChange={(v) => setSide("b", v)} min={min} max={max} />
-        <SideField label={SIDE_LABELS[variant][3]} value={value.l} onChange={(v) => setSide("l", v)} min={min} max={max} />
+        <SideField
+          label={SIDE_LABELS[variant][0]}
+          value={value.t}
+          onChange={(v) => setSide("t", v)}
+          onFocus={() => setFocusedSide("t")}
+          onBlur={() => setFocusedSide(null)}
+          min={min}
+          max={max}
+        />
+        <SideField
+          label={SIDE_LABELS[variant][1]}
+          value={value.r}
+          onChange={(v) => setSide("r", v)}
+          onFocus={() => setFocusedSide("r")}
+          onBlur={() => setFocusedSide(null)}
+          min={min}
+          max={max}
+        />
+        <SideField
+          label={SIDE_LABELS[variant][2]}
+          value={value.b}
+          onChange={(v) => setSide("b", v)}
+          onFocus={() => setFocusedSide("b")}
+          onBlur={() => setFocusedSide(null)}
+          min={min}
+          max={max}
+        />
+        <SideField
+          label={SIDE_LABELS[variant][3]}
+          value={value.l}
+          onChange={(v) => setSide("l", v)}
+          onFocus={() => setFocusedSide("l")}
+          onBlur={() => setFocusedSide(null)}
+          min={min}
+          max={max}
+        />
       </div>
     </div>
   )
@@ -132,12 +171,16 @@ function SideField({
   label,
   value,
   onChange,
+  onFocus,
+  onBlur,
   min,
   max,
 }: {
   label: string
   value: number
   onChange: (raw: string) => void
+  onFocus?: FocusEventHandler<HTMLInputElement>
+  onBlur?: FocusEventHandler<HTMLInputElement>
   min: number
   max: number
 }) {
@@ -148,11 +191,15 @@ function SideField({
         inputMode="numeric"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onFocus={onFocus}
+        onBlur={onBlur}
         min={min}
         max={max}
         className={cn(
           "h-7 w-full bg-background border border-input rounded-md px-1.5 text-[11px] tabular-nums text-center outline-none",
-          "focus-visible:ring-2 focus-visible:ring-ring",
+          // Inset focus ring so it stays clipped to the input bounds —
+          // edge inputs (T, L) don't bleed past the BoxInput container.
+          "focus-visible:border-violet-500 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-violet-500",
           "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         )}
       />
@@ -163,36 +210,6 @@ function SideField({
   )
 }
 
-function ModeButton({
-  active,
-  onClick,
-  title,
-  icon: Icon,
-}: {
-  active: boolean
-  onClick: () => void
-  title: string
-  icon: typeof Square
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={title}
-      aria-label={title}
-      aria-pressed={active}
-      className={cn(
-        "h-8 w-8 flex items-center justify-center transition-colors cursor-pointer",
-        active
-          ? " text-violet-600"
-          : "text-muted-foreground hover:bg-accent hover:text-foreground"
-      )}
-    >
-      <Icon className="h-3.5 w-3.5" />
-    </button>
-  )
-}
-
 function parseNumber(raw: string): number {
   const n = parseFloat(raw)
   return Number.isFinite(n) ? n : 0
@@ -200,4 +217,76 @@ function parseNumber(raw: string): number {
 
 function clamp(v: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, v))
+}
+
+// Faint outline rect drawn by both side- and corner-emphasis icons.
+function FaintOutline(props: SVGProps<SVGRectElement>) {
+  return (
+    <rect
+      x="4"
+      y="4"
+      width="16"
+      height="16"
+      rx="2"
+      strokeWidth="1.5"
+      opacity="0.35"
+      {...props}
+    />
+  )
+}
+
+const SVG_BASE: SVGProps<SVGSVGElement> = {
+  viewBox: "0 0 24 24",
+  fill: "none",
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- SVG attribute keyword
+  stroke: "currentColor",
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+}
+
+/** A square with one side emphasized (used in `variant="sides"`). */
+function SideEmphasisIcon({
+  side,
+  className,
+}: {
+  side: keyof BoxValue
+  className?: string
+}) {
+  return (
+    <svg {...SVG_BASE} className={className}>
+      <FaintOutline />
+      {side === "t" && <line x1="4" y1="4" x2="20" y2="4" strokeWidth="3" />}
+      {side === "r" && <line x1="20" y1="4" x2="20" y2="20" strokeWidth="3" />}
+      {side === "b" && <line x1="4" y1="20" x2="20" y2="20" strokeWidth="3" />}
+      {side === "l" && <line x1="4" y1="4" x2="4" y2="20" strokeWidth="3" />}
+    </svg>
+  )
+}
+
+/** A square with one corner emphasized (used in `variant="corners"`).
+ *  The `corner` prop reuses the BoxValue keys (t→TL, r→TR, b→BR, l→BL). */
+function CornerEmphasisIcon({
+  corner,
+  className,
+}: {
+  corner: keyof BoxValue
+  className?: string
+}) {
+  return (
+    <svg {...SVG_BASE} className={className}>
+      <FaintOutline />
+      {corner === "t" && (
+        <path d="M4 10c0-3.3 2.7-6 6-6" strokeWidth="3" />
+      )}
+      {corner === "r" && (
+        <path d="M14 4c3.3 0 6 2.7 6 6" strokeWidth="3" />
+      )}
+      {corner === "b" && (
+        <path d="M20 14c0 3.3-2.7 6-6 6" strokeWidth="3" />
+      )}
+      {corner === "l" && (
+        <path d="M10 20c-3.3 0-6-2.7-6-6" strokeWidth="3" />
+      )}
+    </svg>
+  )
 }
