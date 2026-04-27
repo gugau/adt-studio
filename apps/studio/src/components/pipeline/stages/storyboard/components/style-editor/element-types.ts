@@ -116,3 +116,17 @@ export function isSectionVisible(
 export function getVisibleSections(type: ElementType): SectionKey[] {
   return ALL_SECTION_KEYS.filter((s) => isSectionVisible(type, s))
 }
+
+const DEFAULT_OPEN_SECTIONS: Record<ElementType, ReadonlyArray<SectionKey>> = {
+  text: ["typography"],
+  image: ["imageFit", "sizing"],
+  container: ["layout", "spacing"],
+  interactive: ["typography", "layout"],
+  list: ["typography", "layout"],
+  media: ["sizing"],
+}
+
+export function getDefaultOpenSections(type: ElementType): SectionKey[] {
+  const visible = new Set(getVisibleSections(type))
+  return DEFAULT_OPEN_SECTIONS[type].filter((k) => visible.has(k))
+}

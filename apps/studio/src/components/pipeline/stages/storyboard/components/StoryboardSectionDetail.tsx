@@ -11,7 +11,6 @@ import {
   LayoutGrid,
   Loader2,
   MessageSquare,
-  Palette,
   PanelRightClose,
   PanelRightOpen,
   PenLine,
@@ -511,14 +510,8 @@ export function StoryboardSectionDetail({
 
   // Section data panel state
   const [panelOpen, setPanelOpen] = useState(false)
-  const [styleEditorOpen, setStyleEditorOpen] = useState(false)
   const openSectionPanel = useCallback(() => {
-    setStyleEditorOpen(false)
     setPanelOpen((v) => !v)
-  }, [])
-  const openStyleEditor = useCallback(() => {
-    setPanelOpen(false)
-    setStyleEditorOpen((v) => !v)
   }, [])
   const [htmlPreview, setHtmlPreview] = useState(false)
   const [htmlPanelHeight, setHtmlPanelHeight] = useState(() => Math.floor(window.innerHeight * 0.35))
@@ -675,15 +668,6 @@ export function StoryboardSectionDetail({
   useEffect(() => {
     scrollContainerRef.current?.scrollTo(0, 0)
   }, [pageId, sectionIndex])
-
-  // Dismiss toolbar on scroll (position would be stale)
-  useEffect(() => {
-    const container = scrollContainerRef.current
-    if (!container) return
-    const onScroll = () => setSelectedElement(null)
-    container.addEventListener("scroll", onScroll, { passive: true })
-    return () => container.removeEventListener("scroll", onScroll)
-  }, [])
 
   // Effective data
   const sectioningData = pendingSectioning ?? (page.sectioningTree as SectioningData | null)
@@ -1916,17 +1900,6 @@ export function StoryboardSectionDetail({
       )}
       <button
         type="button"
-        onClick={openStyleEditor}
-        className={`flex items-center gap-1 px-2 py-1 rounded transition-colors cursor-pointer shrink-0 ${
-          styleEditorOpen ? "bg-white/25 hover:bg-white/30" : "bg-white/10 hover:bg-white/20"
-        }`}
-        title={styleEditorOpen ? t`Close style editor` : t`Open style editor`}
-      >
-        <Palette className="h-3.5 w-3.5" />
-        <span className="text-[10px]">{t`Style`}</span>
-      </button>
-      <button
-        type="button"
         onClick={openSectionPanel}
         className="flex items-center gap-1 px-2 py-1 rounded bg-white/10 hover:bg-white/20 transition-colors cursor-pointer shrink-0"
         title={panelOpen ? t`Close edit panel` : t`Open edit panel`}
@@ -1954,7 +1927,8 @@ export function StoryboardSectionDetail({
   return (
     <>
     {headerSlotEl && createPortal(headerControls, headerSlotEl)}
-    <div className="h-full flex flex-col relative overflow-hidden">
+    <div className="h-full flex overflow-hidden">
+    <div className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
       {/* Error bar below header */}
       {aiError && (
         <div className="px-4 py-1.5 border-b shrink-0 text-xs bg-muted/30">
@@ -2305,16 +2279,22 @@ export function StoryboardSectionDetail({
       />
       )}
 
-      {/* Slide-out element style editor */}
-      <StyleEditorPanel
-        open={styleEditorOpen}
-        onClose={() => setStyleEditorOpen(false)}
-        selectedDataId={selectedElement?.dataId ?? null}
-        selectedTagName={selectedElement?.tagName ?? null}
-        elementClasses={selectedElementClasses}
-        elementProps={
-          selectedElement && selectedInfo
-            ? {
+      {/* Transparent overlay during drag to prevent iframe from stealing mouse events */}
+      {htmlDraggingActive && (
+        <div className="absolute inset-0 z-50 cursor-row-resize" />
+      )}
+    </div>
+
+    {/* Inline element style editor — opens automatically on selection */}
+    <StyleEditorPanel
+      open={!!selectedElement}
+      onClose={() => setSelectedElement(null)}
+      selectedDataId={selectedElement?.dataId ?? null}
+      selectedTagName={selectedElement?.tagName ?? null}
+      elementClasses={selectedElementClasses}
+      elementProps={
+        selectedElement && selectedInfo
+          ? {
                 isImage: selectedInfo.isImage,
                 isContainer: selectedInfo.isContainer,
                 textType: selectedInfo.textType,
@@ -2360,11 +2340,6 @@ export function StoryboardSectionDetail({
         }
         onClassesChange={handleClassesChange}
       />
-
-      {/* Transparent overlay during drag to prevent iframe from stealing mouse events */}
-      {htmlDraggingActive && (
-        <div className="absolute inset-0 z-50 cursor-row-resize" />
-      )}
     </div>
 
     {/* Hidden file input for image replace */}
