@@ -1204,7 +1204,6 @@ export function StoryboardSectionDetail({
         }),
       }
       setPendingRendering(updated)
-      setSelectedElement(null)
     },
     [page.rendering, pendingRendering, sectionIndex]
   )
@@ -1256,7 +1255,6 @@ export function StoryboardSectionDetail({
   const handleToolbarPrune = useCallback(
     (dataId: string) => {
       toggleLeafPrunedById(dataId)
-      setSelectedElement(null)
     },
     [toggleLeafPrunedById]
   )
@@ -1311,7 +1309,6 @@ export function StoryboardSectionDetail({
 
   // Recrop from page: fetch the full page image and open crop dialog with it
   const handleRecropFromPage = useCallback(async (dataId: string) => {
-    setSelectedElement(null)
     try {
       const { imageBase64 } = await api.getPageImage(bookLabel, pageId)
       setCropTarget(dataId)
@@ -1325,7 +1322,6 @@ export function StoryboardSectionDetail({
   const handleImageReplace = useCallback((dataId: string) => {
     replaceTargetRef.current = dataId
     fileInputRef.current?.click()
-    setSelectedElement(null)
   }, [])
 
   // Process uploaded file: upload to API, swap image in sectioning + rendering
@@ -1376,7 +1372,6 @@ export function StoryboardSectionDetail({
   // Replace from book: open picker dialog
   const handleReplaceFromBook = useCallback((dataId: string) => {
     setReplaceFromBookTarget(dataId)
-    setSelectedElement(null)
   }, [])
 
   // Process replace-from-book selection: swap image in sectioning + rendering
@@ -1417,7 +1412,6 @@ export function StoryboardSectionDetail({
   // Open AI image dialog for a specific image
   const handleAiImage = useCallback((dataId: string) => {
     setAiImageDialogTarget(dataId)
-    setSelectedElement(null)
   }, [])
 
   // Run LLM segmentation analysis on a single image (phase 1: get bounding boxes)
@@ -1425,7 +1419,6 @@ export function StoryboardSectionDetail({
     async (dataId: string) => {
       if (!hasApiKey) return
       setSegmenting(true)
-      setSelectedElement(null)
 
       try {
         const result = await api.segmentImage(bookLabel, dataId, pageId, apiKey)

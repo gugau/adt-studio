@@ -30,6 +30,12 @@ import { SECTION_COMPONENTS } from "./sections"
 import { Section } from "./controls/Section"
 import { ElementProvider } from "./element-context"
 import { Accordion } from "@/components/ui/accordion"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 type StyleEditorElementProps = Omit<ElementActionsProps, "dataId">
 
@@ -296,106 +302,114 @@ function ImageActionsSection({
     segmenting,
   } = elementProps
 
-  const hasAnyAction = onCrop || onReplace || onAiImage || onSegment
+  if (!imageSrc) return null
+
+  const hasAnyAction =
+    onCrop ||
+    onRecropFromPage ||
+    onReplace ||
+    onReplaceFromBook ||
+    onAiImage ||
+    onSegment
 
   return (
-    <section className="border-b">
-      <div className="px-3 pt-3 pb-2 space-y-2">
-        {imageSrc ? (
-          <img
-            src={imageSrc}
-            alt={dataId}
-            className="w-full max-h-32 object-cover rounded border bg-muted/30"
-          />
-        ) : null}
+    <section className="border-b px-3 pt-3 pb-3">
+      <div className="relative rounded-md overflow-hidden border bg-muted/30 group">
+        <img src={imageSrc} alt={dataId} className="w-full h-32 object-cover" />
         {hasAnyAction ? (
-          <div className="flex flex-wrap items-center gap-1">
-            {onCrop ? (
-              <ActionButton
-                icon={Crop}
-                label={t`Crop`}
-                onClick={() => onCrop(dataId)}
-              />
-            ) : null}
-            {onRecropFromPage ? (
-              <ActionButton
-                icon={Crop}
-                label={t`Recrop from page`}
-                onClick={() => onRecropFromPage(dataId)}
-                variant="muted"
-              />
-            ) : null}
-            {onReplace ? (
-              <ActionButton
-                icon={Upload}
-                label={t`Replace`}
-                onClick={() => onReplace(dataId)}
-              />
-            ) : null}
-            {onReplaceFromBook ? (
-              <ActionButton
-                icon={ImageIcon}
-                label={t`From book`}
-                onClick={() => onReplaceFromBook(dataId)}
-                variant="muted"
-              />
-            ) : null}
-            {onAiImage ? (
-              <ActionButton
-                icon={Sparkles}
-                label={t`AI`}
-                onClick={() => onAiImage(dataId)}
-                variant="purple"
-              />
-            ) : null}
-            {onSegment ? (
-              <ActionButton
-                icon={Scissors}
-                label={segmenting ? t`Segmenting…` : t`Segment`}
-                onClick={() => onSegment(dataId)}
-                disabled={segmenting}
-                variant="orange"
-              />
-            ) : null}
-          </div>
+          <TooltipProvider delayDuration={0}>
+            <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-0.5 p-1.5 bg-gradient-to-t from-black/70 via-black/40 to-transparent">
+              {onCrop ? (
+                <OverlayIconButton
+                  icon={Crop}
+                  label={t`Crop`}
+                  onClick={() => onCrop(dataId)}
+                />
+              ) : null}
+              {onRecropFromPage ? (
+                <OverlayIconButton
+                  icon={ImageIcon}
+                  label={t`Recrop from page`}
+                  onClick={() => onRecropFromPage(dataId)}
+                />
+              ) : null}
+              {onReplace ? (
+                <OverlayIconButton
+                  icon={Upload}
+                  label={t`Replace`}
+                  onClick={() => onReplace(dataId)}
+                />
+              ) : null}
+              {onReplaceFromBook ? (
+                <OverlayIconButton
+                  icon={ImageIcon}
+                  label={t`Replace from book`}
+                  onClick={() => onReplaceFromBook(dataId)}
+                />
+              ) : null}
+              {onAiImage ? (
+                <OverlayIconButton
+                  icon={Sparkles}
+                  label={t`AI`}
+                  onClick={() => onAiImage(dataId)}
+                  accent="purple"
+                />
+              ) : null}
+              {onSegment ? (
+                <OverlayIconButton
+                  icon={Scissors}
+                  label={segmenting ? t`Segmenting…` : t`Segment`}
+                  onClick={() => onSegment(dataId)}
+                  disabled={segmenting}
+                  accent="orange"
+                />
+              ) : null}
+            </div>
+          </TooltipProvider>
         ) : null}
       </div>
     </section>
   )
 }
 
-function ActionButton({
+function OverlayIconButton({
   icon: Icon,
   label,
   onClick,
   disabled,
-  variant = "default",
+  accent = "default",
 }: {
   icon: LucideIcon
   label: string
   onClick: () => void
   disabled?: boolean
-  variant?: "default" | "muted" | "purple" | "orange"
+  accent?: "default" | "purple" | "orange"
 }) {
-  const palette: Record<typeof variant, string> = {
-    default: "bg-muted hover:bg-accent text-foreground",
-    muted: "bg-muted/60 hover:bg-accent text-muted-foreground",
-    purple: "bg-purple-100 hover:bg-purple-200 text-purple-700",
-    orange: "bg-orange-100 hover:bg-orange-200 text-orange-700",
+  const palette: Record<typeof accent, string> = {
+    default: "text-white hover:bg-white/20",
+    purple: "text-purple-200 hover:bg-purple-400/30",
+    orange: "text-orange-200 hover:bg-orange-400/30",
   }
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        "inline-flex items-center gap-1 h-7 px-2 rounded text-[11px] font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
-        palette[variant]
-      )}
-    >
-      <Icon className="h-3 w-3" />
-      {label}
-    </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={onClick}
+          disabled={disabled}
+          aria-label={label}
+          className={cn(
+            "h-7 w-7 rounded flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
+            palette[accent]
+          )}
+        >
+          <Icon className="h-3.5 w-3.5" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top" sideOffset={6} variant="light">
+        {label}
+      </TooltipContent>
+    </Tooltip>
   )
 }
 

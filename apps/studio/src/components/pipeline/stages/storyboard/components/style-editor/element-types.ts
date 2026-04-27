@@ -60,61 +60,43 @@ export const ALL_SECTION_KEYS: ReadonlyArray<SectionKey> = [
   "imageFit",
 ]
 
-const SECTION_VISIBILITY: Record<ElementType, ReadonlySet<SectionKey>> = {
-  text: new Set<SectionKey>([
-    "typography",
-    "appearance",
+/**
+ * The ordered list of sections shown for each element type.
+ * Order matters — sections render in this exact order in the sidebar.
+ * Presence in the list means visible; absence means hidden.
+ */
+const SECTION_ORDER: Record<ElementType, ReadonlyArray<SectionKey>> = {
+  text: ["typography", "appearance", "spacing", "sizing"],
+  image: ["imageFit", "sizing", "spacing", "borders", "appearance"],
+  container: [
+    "layout",
     "spacing",
     "sizing",
-  ]),
-  image: new Set<SectionKey>([
     "appearance",
-    "spacing",
-    "sizing",
     "borders",
-    "imageFit",
-  ]),
-  container: new Set<SectionKey>([
+    "typography",
+  ],
+  interactive: [
     "typography",
     "appearance",
     "spacing",
     "sizing",
     "layout",
     "borders",
-  ]),
-  interactive: new Set<SectionKey>([
-    "typography",
-    "appearance",
-    "spacing",
-    "sizing",
-    "layout",
-    "borders",
-  ]),
-  list: new Set<SectionKey>([
-    "typography",
-    "appearance",
-    "spacing",
-    "sizing",
-    "layout",
-  ]),
-  media: new Set<SectionKey>([
-    "appearance",
-    "spacing",
-    "sizing",
-    "borders",
-    "imageFit",
-  ]),
+  ],
+  list: ["typography", "spacing", "layout", "sizing", "appearance"],
+  media: ["imageFit", "sizing", "spacing", "borders", "appearance"],
 }
 
 export function isSectionVisible(
   type: ElementType,
   section: SectionKey
 ): boolean {
-  return SECTION_VISIBILITY[type].has(section)
+  return SECTION_ORDER[type].includes(section)
 }
 
 export function getVisibleSections(type: ElementType): SectionKey[] {
-  return ALL_SECTION_KEYS.filter((s) => isSectionVisible(type, s))
+  return [...SECTION_ORDER[type]]
 }
 
 const DEFAULT_OPEN_SECTIONS: Record<ElementType, ReadonlyArray<SectionKey>> = {
