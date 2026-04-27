@@ -28,6 +28,8 @@ import {
 } from "./element-types"
 import { SECTION_COMPONENTS } from "./sections"
 import { Section } from "./controls/Section"
+import { Select, type SelectOption } from "./controls/Select"
+import { StyleLabel } from "./controls/StyleLabel"
 import { ElementProvider } from "./element-context"
 import { Accordion } from "@/components/ui/accordion"
 import {
@@ -266,6 +268,9 @@ function StyleEditorBody({
         {elementProps?.isImage ? (
           <ImageActionsSection dataId={dataId} elementProps={elementProps} />
         ) : null}
+        {elementType === "text" ? (
+          <TextRoleSection dataId={dataId} elementProps={elementProps} />
+        ) : null}
 
         <Accordion type="multiple" value={openKeys} onValueChange={setOpenKeys}>
           {visibleSections.map((key) => {
@@ -281,6 +286,41 @@ function StyleEditorBody({
       </div>
     </ElementProvider>
   )
+}
+
+function TextRoleSection({
+  dataId,
+  elementProps,
+}: {
+  dataId: string
+  elementProps: StyleEditorElementProps | null
+}) {
+  if (!elementProps) return null
+  const { textType, textTypes, onChangeTextType } = elementProps
+  if (!textTypes || !onChangeTextType) return null
+
+  const options: ReadonlyArray<SelectOption<string>> = Object.keys(textTypes).map(
+    (key) => ({ value: key, label: humanizeRole(key) })
+  )
+
+  return (
+    <section className="border-b px-3 py-3">
+      <StyleLabel label={<Trans>Role</Trans>}>
+        <Select
+          value={textType ?? ""}
+          onChange={(v) => onChangeTextType(dataId, v)}
+          options={options}
+        />
+      </StyleLabel>
+    </section>
+  )
+}
+
+function humanizeRole(key: string): string {
+  return key
+    .replace(/_/g, " ")
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 function ImageActionsSection({
