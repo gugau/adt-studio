@@ -3,7 +3,7 @@ import path from "node:path"
 import { createBookStorage } from "@adt/storage"
 import { createLLMModel, createPromptEngine } from "@adt/llm"
 import type { LLMModel } from "@adt/llm"
-import { renderPage, buildRenderStrategyResolver, createTemplateEngine, loadBookConfig, createScreenshotRenderer, runVisualReviewLoop, DEFAULT_VISUAL_REVIEW_MODEL_ID, buildScreenshotHtml, SCREENSHOT_VIEWPORTS } from "@adt/pipeline"
+import { renderPage, buildRenderStrategyResolver, createTemplateEngine, loadBookConfig, createScreenshotRenderer, runVisualReviewLoop, DEFAULT_VISUAL_REVIEW_MODEL_ID, buildScreenshotHtml, SCREENSHOT_VIEWPORTS, generateSectionThumbnails } from "@adt/pipeline"
 import type { VisualRefinementDeps } from "@adt/pipeline"
 import { PageSectioningOutput, WebRenderingOutput, webRenderingLLMSchema, editVerifyLLMSchema } from "@adt/types"
 import { loadStyleguideContent } from "./styleguide.js"
@@ -56,6 +56,7 @@ export async function reRenderPage(
 
   const storage = createBookStorage(label, booksDir)
   let visualRefinement: VisualRefinementDeps | undefined
+  let screenshotRenderer: Awaited<ReturnType<typeof createScreenshotRenderer>> | undefined
 
   try {
     const structuringRow = storage.getLatestNodeData("page-sectioning", pageId)
@@ -135,13 +136,22 @@ export async function reRenderPage(
       throw new Error(`Section index ${sectionIndex} out of range`)
     }
 
-    // Set up visual refinement if any render strategy enables it
+    // Lazily create the screenshot renderer once — used by both visual_refinement
+    // (when enabled) and the section-thumbnails step (always, when web assets exist).
     if (webAssetsDir) {
+      try {
+        screenshotRenderer = await createScreenshotRenderer()
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        console.warn(
+          `[re-render] ${label}: skipping visual_refinement and section thumbnails — Playwright unavailable: ${msg}`
+        )
+      }
+
       const hasVisualRefinement = Object.values(config.render_strategies ?? {}).some(
         (s) => s.config?.visual_refinement?.enabled
       )
-      if (hasVisualRefinement) {
-        const screenshotRenderer = await createScreenshotRenderer()
+      if (hasVisualRefinement && screenshotRenderer) {
         visualRefinement = {
           screenshotRenderer,
           webAssetsDir,
@@ -184,6 +194,16 @@ export async function reRenderPage(
 
     if (sectionIndex === undefined) {
       const version = storage.putNodeData("web-rendering", pageId, renderResult)
+      await regenerateThumbnailsForPage({
+        pageId,
+        rendering: renderResult,
+        sectioning,
+        renderImages,
+        label,
+        webAssetsDir,
+        screenshotRenderer,
+        storage,
+      })
       return { version, rendering: renderResult }
     }
 
@@ -207,10 +227,21 @@ export async function reRenderPage(
     const mergedRendering = { sections: mergedSections }
 
     const version = storage.putNodeData("web-rendering", pageId, mergedRendering)
+    await regenerateThumbnailsForPage({
+      pageId,
+      rendering: mergedRendering,
+      sectioning,
+      renderImages,
+      label,
+      webAssetsDir,
+      screenshotRenderer,
+      storage,
+      onlySectionIndex: sectionIndex,
+    })
     return { version, rendering: mergedRendering }
   } finally {
-    if (visualRefinement) {
-      await visualRefinement.screenshotRenderer.close()
+    if (screenshotRenderer) {
+      await screenshotRenderer.close()
     }
     storage.clearNodesByType(["image-captioning", "text-catalog", "text-catalog-translation", "tts", "tts-timestamps"])
     storage.clearStepRuns(["image-captioning", "text-catalog", "catalog-translation", "tts"])
@@ -467,5 +498,52 @@ export async function aiEditSection(
     } else {
       delete process.env.OPENAI_API_KEY
     }
+  }
+}
+
+interface RegenerateThumbnailsOptions {
+  pageId: string
+  rendering: WebRenderingOutput
+  sectioning: PageSectioningOutput
+  renderImages: Map<string, { base64: string; width?: number; height?: number }>
+  label: string
+  webAssetsDir?: string
+  screenshotRenderer?: Awaited<ReturnType<typeof createScreenshotRenderer>>
+  storage: ReturnType<typeof createBookStorage>
+  /** When set, only regenerate this single section's thumbnail. */
+  onlySectionIndex?: number
+}
+
+async function regenerateThumbnailsForPage(opts: RegenerateThumbnailsOptions): Promise<void> {
+  const { pageId, rendering, sectioning, renderImages, label, webAssetsDir, screenshotRenderer, storage, onlySectionIndex } = opts
+  if (!screenshotRenderer || !webAssetsDir) return
+  try {
+    const sectionIds = sectioning.sections.map((s) => s.sectionId)
+    const filteredRendering: WebRenderingOutput =
+      onlySectionIndex === undefined
+        ? rendering
+        : { sections: rendering.sections.filter((s) => s.sectionIndex === onlySectionIndex) }
+
+    // Clear stale thumbnails before regenerating. putSectionThumbnail overwrites
+    // by sectionId, but a single-section regen only writes one file — clearing
+    // ensures we don't keep an old thumbnail under a renumbered sectionId.
+    if (onlySectionIndex === undefined) {
+      storage.clearSectionThumbnailsForPage(pageId)
+    }
+
+    const thumbs = await generateSectionThumbnails({
+      rendering: filteredRendering,
+      sectionIds,
+      label,
+      images: renderImages,
+      webAssetsDir,
+      screenshotRenderer,
+    })
+    for (const t of thumbs) {
+      storage.putSectionThumbnail(t.sectionId, Buffer.from(t.base64, "base64"))
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.warn(`[re-render] ${label}: thumbnail regen failed: ${msg}`)
   }
 }

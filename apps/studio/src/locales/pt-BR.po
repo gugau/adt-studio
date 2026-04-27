@@ -2784,6 +2784,9 @@ msgstr "Ainda não há dados do pipeline. Execute o pipeline para ver as estatí
 msgid "No preset defaults — all options start empty."
 msgstr "Sem predefinições padrão — todas as opções começam vazias."
 
+msgid "No preview"
+msgstr "Sem prévia"
+
 msgid "No preview available."
 msgstr "Nenhuma pré-visualização disponível."
 
@@ -2810,6 +2813,9 @@ msgstr "Sem seções para esta página"
 
 msgid "No sections on this page"
 msgstr "Sem seções nesta página"
+
+msgid "No sections yet"
+msgstr "Ainda não há seções"
 
 msgid "No segmentation needed for this image"
 msgstr "No segmentation needed for this image"
@@ -3027,6 +3033,16 @@ msgstr "Página {0}"
 msgid "Page {0} — Section {1}"
 msgstr "Página {0} — Seção {1}"
 
+#. placeholder {0}: entry.pageNumber
+#. placeholder {1}: entry.sectionType
+msgid "Page {0} · {1}"
+msgstr "Página {0} · {1}"
+
+#. placeholder {0}: entry.pageNumber
+#. placeholder {1}: entry.sectionIndex + 1
+msgid "Page {0} · Section {1}"
+msgstr "Página {0} · Seção {1}"
+
 msgid "Page {pageId}"
 msgstr "Página {0}"
 
@@ -3065,6 +3081,9 @@ msgstr "Prompt de refinamento de seção"
 
 msgid "pages"
 msgstr "páginas"
+
+msgid "Pages"
+msgstr "Páginas"
 
 #. placeholder {0}: activeSession.session.start_page ?? "?"
 #. placeholder {1}: activeSession.session.end_page ?? "?"
@@ -3130,6 +3149,13 @@ msgstr "Detalhamento por etapa"
 
 msgid "Perfect for children's books, pairing large images with minimal text."
 msgstr "Perfeito para livros infantis, combinando imagens grandes com texto mínimo."
+
+#. placeholder {0}: entry.pageNumber
+msgid "pg {0}"
+msgstr "pg {0}"
+
+#~ msgid "pg {0} · §{1}"
+#~ msgstr "pg {0} · §{1}"
 
 msgid "Photograph"
 msgstr "Fotografia"
@@ -3754,6 +3780,9 @@ msgstr "Raciocínio de seção"
 
 msgid "sections"
 msgstr "seções"
+
+msgid "Sections"
+msgstr "Seções"
 
 msgid "See examples"
 msgstr "Ver exemplos"

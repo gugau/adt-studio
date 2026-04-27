@@ -12,6 +12,7 @@ export interface BookPaths {
   dbPath: string
   imagesDir: string
   debugImagesDir: string
+  thumbnailsDir: string
   videosDir: string
 }
 
@@ -27,6 +28,7 @@ export function resolveBookPaths(label: string, booksRoot: string): BookPaths {
     dbPath: path.join(bookDir, `${safeLabel}.db`),
     imagesDir: path.join(bookDir, "images"),
     debugImagesDir: path.join(bookDir, ".debug-images"),
+    thumbnailsDir: path.join(bookDir, ".thumbnails"),
     videosDir: path.join(bookDir, "videos"),
   }
 }
@@ -37,6 +39,7 @@ export function createBookStorage(label: string, booksRoot: string): Storage {
   fs.mkdirSync(paths.bookDir, { recursive: true })
   fs.mkdirSync(paths.imagesDir, { recursive: true })
   fs.mkdirSync(paths.debugImagesDir, { recursive: true })
+  fs.mkdirSync(paths.thumbnailsDir, { recursive: true })
   fs.mkdirSync(paths.videosDir, { recursive: true })
 
   const db = openBookDb(paths.dbPath)
@@ -45,6 +48,7 @@ export function createBookStorage(label: string, booksRoot: string): Storage {
     clearExtractedData(): void {
       clearImageFiles(paths.imagesDir)
       clearImageFiles(paths.debugImagesDir)
+      clearImageFiles(paths.thumbnailsDir)
       clearExtractedRows(db)
     },
 
@@ -311,6 +315,43 @@ export function createBookStorage(label: string, booksRoot: string): Storage {
       clearImageFiles(paths.debugImagesDir)
     },
 
+    putSectionThumbnail(sectionId: string, data: Buffer): void {
+      assertSafeSectionId(sectionId)
+      const filePath = path.join(paths.thumbnailsDir, `${sectionId}.png`)
+      fs.writeFileSync(filePath, data)
+    },
+
+    getSectionThumbnailPath(sectionId: string): string | null {
+      try {
+        assertSafeSectionId(sectionId)
+      } catch {
+        return null
+      }
+      const filePath = path.join(paths.thumbnailsDir, `${sectionId}.png`)
+      if (!fs.existsSync(filePath)) return null
+      return filePath
+    },
+
+    clearSectionThumbnailsForPage(pageId: string): void {
+      assertSafeSectionId(pageId)
+      const prefix = `${pageId}_sec`
+      let entries: string[]
+      try {
+        entries = fs.readdirSync(paths.thumbnailsDir)
+      } catch {
+        return
+      }
+      for (const file of entries) {
+        if (file.startsWith(prefix) && file.endsWith(".png")) {
+          try { fs.unlinkSync(path.join(paths.thumbnailsDir, file)) } catch { /* ignore */ }
+        }
+      }
+    },
+
+    clearSectionThumbnails(): void {
+      clearImageFiles(paths.thumbnailsDir)
+    },
+
     putSignLanguageVideo(videoId: string, buffer: Buffer, originalName: string, mimeType: string): void {
       const ext = mimeType === "video/webm" ? ".webm" : ".mp4"
       const filename = `${videoId}${ext}`
@@ -380,6 +421,12 @@ export function createBookStorage(label: string, booksRoot: string): Storage {
     close(): void {
       db.close()
     },
+  }
+}
+
+function assertSafeSectionId(id: string): void {
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(id)) {
+    throw new Error(`Invalid section/page id: ${id}`)
   }
 }
 

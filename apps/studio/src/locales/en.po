@@ -2784,6 +2784,9 @@ msgstr "No pipeline data yet. Run the pipeline to see stats."
 msgid "No preset defaults — all options start empty."
 msgstr "No preset defaults — all options start empty."
 
+msgid "No preview"
+msgstr "No preview"
+
 msgid "No preview available."
 msgstr "No preview available."
 
@@ -2810,6 +2813,9 @@ msgstr "No sections for this page"
 
 msgid "No sections on this page"
 msgstr "No sections on this page"
+
+msgid "No sections yet"
+msgstr "No sections yet"
 
 msgid "No segmentation needed for this image"
 msgstr "No segmentation needed for this image"
@@ -3027,6 +3033,16 @@ msgstr "Page {0}"
 msgid "Page {0} — Section {1}"
 msgstr "Page {0} — Section {1}"
 
+#. placeholder {0}: entry.pageNumber
+#. placeholder {1}: entry.sectionType
+msgid "Page {0} · {1}"
+msgstr "Page {0} · {1}"
+
+#. placeholder {0}: entry.pageNumber
+#. placeholder {1}: entry.sectionIndex + 1
+msgid "Page {0} · Section {1}"
+msgstr "Page {0} · Section {1}"
+
 msgid "Page {pageId}"
 msgstr "Page {pageId}"
 
@@ -3065,6 +3081,9 @@ msgstr "Page Sectioning Refinement Prompt"
 
 msgid "pages"
 msgstr "pages"
+
+msgid "Pages"
+msgstr "Pages"
 
 #. placeholder {0}: activeSession.session.start_page ?? "?"
 #. placeholder {1}: activeSession.session.end_page ?? "?"
@@ -3130,6 +3149,13 @@ msgstr "Per-Step Breakdown"
 
 msgid "Perfect for children's books, pairing large images with minimal text."
 msgstr "Perfect for children's books, pairing large images with minimal text."
+
+#. placeholder {0}: entry.pageNumber
+msgid "pg {0}"
+msgstr "pg {0}"
+
+#~ msgid "pg {0} · §{1}"
+#~ msgstr "pg {0} · §{1}"
 
 msgid "Photograph"
 msgstr "Photograph"
@@ -3754,6 +3780,9 @@ msgstr "Sectioning Reasoning"
 
 msgid "sections"
 msgstr "sections"
+
+msgid "Sections"
+msgstr "Sections"
 
 msgid "See examples"
 msgstr "See examples"
