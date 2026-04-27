@@ -34,24 +34,23 @@ export function StyleLabel({
   className,
 }: StyleLabelProps) {
   return (
-    <div
-      className={cn(
-        "grid grid-cols-5 items-center gap-2 min-h-8",
-        className
-      )}
-    >
+    <div className={cn("grid grid-cols-5 gap-2", className)}>
+      {/*
+        `self-start h-8` pins the label to a fixed first-row slot at the top of
+        its grid column, so multi-row controls (e.g. BoxInput in split mode)
+        keep the label aligned with the FIRST input row instead of letting it
+        drift to the vertical center of the whole control.
+      */}
       <label
         htmlFor={htmlFor}
         className={cn(
-          "col-span-2 text-[12px] font-medium px-0.5 select-none truncate",
-          overridden
-            ? "text-blue-600"
-            : "text-muted-foreground/90"
+          "col-span-2 h-8 self-start flex items-center text-[12px] font-medium px-0.5 select-none truncate",
+          overridden ? "text-blue-600" : "text-muted-foreground/90"
         )}
       >
         {label}
       </label>
-      <div className="col-span-3 flex items-center gap-1.5 min-w-0">
+      <div className="col-span-3 min-w-0 min-h-8 flex items-center gap-1.5">
         {children}
       </div>
     </div>
