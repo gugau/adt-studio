@@ -1,0 +1,152 @@
+import { useState } from "react"
+import {
+  AlignHorizontalJustifyCenter,
+  AlignHorizontalJustifyEnd,
+  AlignHorizontalJustifyStart,
+  AlignHorizontalSpaceAround,
+  AlignHorizontalSpaceBetween,
+  AlignVerticalJustifyCenter,
+  AlignVerticalJustifyEnd,
+  AlignVerticalJustifyStart,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  LayoutGrid,
+  StretchHorizontal,
+} from "lucide-react"
+import { Trans, useLingui } from "@lingui/react/macro"
+import { StyleLabel } from "../controls/StyleLabel"
+import { Section } from "../controls/Section"
+import { Select, type SelectOption } from "../controls/Select"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+
+const DISPLAY_OPTIONS: ReadonlyArray<SelectOption<string>> = [
+  "block",
+  "inline-block",
+  "inline",
+  "flex",
+  "grid",
+  "hidden",
+].map((v) => ({ value: v, label: v }))
+
+export function LayoutSection() {
+  const { t } = useLingui()
+  const [display, setDisplay] = useState("block")
+  const [flexDir, setFlexDir] = useState("row")
+  const [justify, setJustify] = useState("start")
+  const [align, setAlign] = useState("start")
+  const [gap, setGap] = useState(0)
+
+  const isFlex = display === "flex" || display === "grid"
+
+  const directionItems = [
+    { value: "row", icon: ArrowRight, label: t`Row` },
+    { value: "row-reverse", icon: ArrowLeft, label: t`Row reverse` },
+    { value: "col", icon: ArrowDown, label: t`Column` },
+    { value: "col-reverse", icon: ArrowUp, label: t`Column reverse` },
+  ]
+
+  const isColumn = flexDir === "col" || flexDir === "col-reverse"
+
+  // Justify icons depend on flex-direction (main axis): horizontal icons for
+  // row, vertical icons for column.
+  const justifyItems = isColumn
+    ? [
+        { value: "start", icon: AlignVerticalJustifyStart, label: t`Start` },
+        { value: "center", icon: AlignVerticalJustifyCenter, label: t`Center` },
+        { value: "end", icon: AlignVerticalJustifyEnd, label: t`End` },
+        { value: "between", icon: AlignHorizontalSpaceBetween, label: t`Space between` },
+        { value: "around", icon: AlignHorizontalSpaceAround, label: t`Space around` },
+      ]
+    : [
+        { value: "start", icon: AlignHorizontalJustifyStart, label: t`Start` },
+        { value: "center", icon: AlignHorizontalJustifyCenter, label: t`Center` },
+        { value: "end", icon: AlignHorizontalJustifyEnd, label: t`End` },
+        { value: "between", icon: AlignHorizontalSpaceBetween, label: t`Space between` },
+        { value: "around", icon: AlignHorizontalSpaceAround, label: t`Space around` },
+      ]
+
+  // Align icons are perpendicular to justify: vertical icons for row,
+  // horizontal icons for column.
+  const alignItems = isColumn
+    ? [
+        { value: "start", icon: AlignHorizontalJustifyStart, label: t`Start` },
+        { value: "center", icon: AlignHorizontalJustifyCenter, label: t`Center` },
+        { value: "end", icon: AlignHorizontalJustifyEnd, label: t`End` },
+        { value: "stretch", icon: StretchHorizontal, label: t`Stretch` },
+      ]
+    : [
+        { value: "start", icon: AlignVerticalJustifyStart, label: t`Start` },
+        { value: "center", icon: AlignVerticalJustifyCenter, label: t`Center` },
+        { value: "end", icon: AlignVerticalJustifyEnd, label: t`End` },
+        { value: "stretch", icon: StretchHorizontal, label: t`Stretch` },
+      ]
+
+  return (
+    <Section value="layout" title={<Trans>Layout</Trans>} icon={LayoutGrid}>
+      <StyleLabel label={<Trans>Display</Trans>}>
+        <Select value={display} onChange={setDisplay} options={DISPLAY_OPTIONS} />
+      </StyleLabel>
+      {isFlex && (
+        <>
+          <StyleLabel label={<Trans>Direction</Trans>}>
+            <ToggleGroup
+              type="single"
+              size="xs"
+              sliding
+              value={flexDir}
+              onValueChange={(v) => v && setFlexDir(v)}
+            >
+              {directionItems.map(({ value, icon: Icon, label }) => (
+                <ToggleGroupItem key={value} value={value} aria-label={label} title={label}>
+                  <Icon className="h-3.5 w-3.5" />
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </StyleLabel>
+          <StyleLabel label={<Trans>Justify</Trans>}>
+            <ToggleGroup
+              type="single"
+              size="xs"
+              sliding
+              value={justify}
+              onValueChange={(v) => v && setJustify(v)}
+            >
+              {justifyItems.map(({ value, icon: Icon, label }) => (
+                <ToggleGroupItem key={value} value={value} aria-label={label} title={label}>
+                  <Icon className="h-3.5 w-3.5" />
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </StyleLabel>
+          <StyleLabel label={<Trans>Align</Trans>}>
+            <ToggleGroup
+              type="single"
+              size="xs"
+              sliding
+              value={align}
+              onValueChange={(v) => v && setAlign(v)}
+            >
+              {alignItems.map(({ value, icon: Icon, label }) => (
+                <ToggleGroupItem key={value} value={value} aria-label={label} title={label}>
+                  <Icon className="h-3.5 w-3.5" />
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </StyleLabel>
+          <StyleLabel label={<Trans>Gap</Trans>}>
+            <input
+              type="number"
+              value={gap}
+              onChange={(e) => setGap(Number(e.target.value) || 0)}
+              min={0}
+              max={32}
+              className="w-full text-[11px]"
+            />
+          </StyleLabel>
+        </>
+      )}
+    </Section>
+  )
+}

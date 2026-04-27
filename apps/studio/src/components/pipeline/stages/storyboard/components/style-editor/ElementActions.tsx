@@ -41,6 +41,13 @@ export interface ElementActionsProps {
   onDelete?: (dataId: string) => void
 }
 
+/**
+ * Per-element configuration the StyleEditorPanel passes to its sub-sections
+ * (image actions, text role, etc.). The `dataId` is provided separately by
+ * each section since it's the identity, not part of the action set.
+ */
+export type StyleEditorElementProps = Omit<ElementActionsProps, "dataId">
+
 export function ElementActions({
   dataId,
   isImage,

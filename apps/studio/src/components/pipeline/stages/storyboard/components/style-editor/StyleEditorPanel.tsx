@@ -1,25 +1,20 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
 import {
   Box,
-  Crop,
   Eye,
   EyeOff,
   Film,
   Image as ImageIcon,
   List,
   MousePointerClick,
-  Scissors,
-  Sparkles,
   Trash2,
   Type,
-  Upload,
-  Wrench,
   X,
   type LucideIcon,
 } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
-import type { ElementActionsProps } from "./ElementActions"
+import type { StyleEditorElementProps } from "./ElementActions"
 import {
   type ElementType,
   getDefaultOpenSections,
@@ -27,19 +22,11 @@ import {
   inferElementType,
 } from "./element-types"
 import { SECTION_COMPONENTS } from "./sections"
-import { Section } from "./controls/Section"
-import { Select, type SelectOption } from "./controls/Select"
-import { StyleLabel } from "./controls/StyleLabel"
+import { AdvancedSection } from "./sections/Advanced"
+import { ImageActionsSection } from "./sections/ImageActions"
+import { TextRoleSection } from "./sections/TextRole"
 import { ElementProvider } from "./element-context"
 import { Accordion } from "@/components/ui/accordion"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-
-type StyleEditorElementProps = Omit<ElementActionsProps, "dataId">
 
 // eslint-disable-next-line lingui/no-unlocalized-strings -- HTML attribute identifier shown verbatim
 const DATA_ID_PREFIX = `data-id="`
@@ -106,10 +93,10 @@ export function StyleEditorPanel({
       aria-hidden={!open}
       className={cn(
         "h-full shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out",
-        open ? "w-[360px]" : "w-0"
+        open ? "w-[300px]" : "w-0"
       )}
     >
-      <div className="w-[360px] h-full flex flex-col bg-background border-l">
+      <div className="w-[300px] h-full flex flex-col bg-background border-l">
       <header className="flex items-center gap-3 px-3 py-3 border-b">
         <ElementIconBadge elementType={elementType} />
         <div className="flex-1 min-w-0">
@@ -263,7 +250,7 @@ function StyleEditorBody({
   }, [elementType])
 
   return (
-    <ElementProvider value={{ dataId, classes }}>
+    <ElementProvider value={{ dataId, classes, onClassesChange }}>
       <div className="flex flex-col">
         {elementProps?.isImage ? (
           <ImageActionsSection dataId={dataId} elementProps={elementProps} />
@@ -277,219 +264,10 @@ function StyleEditorBody({
             const SectionComponent = SECTION_COMPONENTS[key]
             return <SectionComponent key={key} />
           })}
-          <AdvancedSection
-            dataId={dataId}
-            classes={classes}
-            onClassesChange={onClassesChange}
-          />
+          <AdvancedSection />
         </Accordion>
       </div>
     </ElementProvider>
   )
 }
 
-function TextRoleSection({
-  dataId,
-  elementProps,
-}: {
-  dataId: string
-  elementProps: StyleEditorElementProps | null
-}) {
-  if (!elementProps) return null
-  const { textType, textTypes, onChangeTextType } = elementProps
-  if (!textTypes || !onChangeTextType) return null
-
-  const options: ReadonlyArray<SelectOption<string>> = Object.keys(textTypes).map(
-    (key) => ({ value: key, label: humanizeRole(key) })
-  )
-
-  return (
-    <section className="border-b px-3 py-3">
-      <StyleLabel label={<Trans>Role</Trans>}>
-        <Select
-          value={textType ?? ""}
-          onChange={(v) => onChangeTextType(dataId, v)}
-          options={options}
-        />
-      </StyleLabel>
-    </section>
-  )
-}
-
-function humanizeRole(key: string): string {
-  return key
-    .replace(/_/g, " ")
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase())
-}
-
-function ImageActionsSection({
-  dataId,
-  elementProps,
-}: {
-  dataId: string
-  elementProps: StyleEditorElementProps
-}) {
-  const { t } = useLingui()
-  const {
-    imageSrc,
-    onCrop,
-    onRecropFromPage,
-    onReplace,
-    onReplaceFromBook,
-    onAiImage,
-    onSegment,
-    segmenting,
-  } = elementProps
-
-  if (!imageSrc) return null
-
-  const hasAnyAction =
-    onCrop ||
-    onRecropFromPage ||
-    onReplace ||
-    onReplaceFromBook ||
-    onAiImage ||
-    onSegment
-
-  return (
-    <section className="border-b px-3 pt-3 pb-3">
-      <div className="relative rounded-md overflow-hidden border bg-muted/30 group">
-        <img src={imageSrc} alt={dataId} className="w-full h-32 object-cover" />
-        {hasAnyAction ? (
-          <TooltipProvider delayDuration={0}>
-            <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-0.5 p-1.5 bg-gradient-to-t from-black/70 via-black/40 to-transparent">
-              {onCrop ? (
-                <OverlayIconButton
-                  icon={Crop}
-                  label={t`Crop`}
-                  onClick={() => onCrop(dataId)}
-                />
-              ) : null}
-              {onRecropFromPage ? (
-                <OverlayIconButton
-                  icon={ImageIcon}
-                  label={t`Recrop from page`}
-                  onClick={() => onRecropFromPage(dataId)}
-                />
-              ) : null}
-              {onReplace ? (
-                <OverlayIconButton
-                  icon={Upload}
-                  label={t`Replace`}
-                  onClick={() => onReplace(dataId)}
-                />
-              ) : null}
-              {onReplaceFromBook ? (
-                <OverlayIconButton
-                  icon={ImageIcon}
-                  label={t`Replace from book`}
-                  onClick={() => onReplaceFromBook(dataId)}
-                />
-              ) : null}
-              {onAiImage ? (
-                <OverlayIconButton
-                  icon={Sparkles}
-                  label={t`AI`}
-                  onClick={() => onAiImage(dataId)}
-                  accent="purple"
-                />
-              ) : null}
-              {onSegment ? (
-                <OverlayIconButton
-                  icon={Scissors}
-                  label={segmenting ? t`Segmenting…` : t`Segment`}
-                  onClick={() => onSegment(dataId)}
-                  disabled={segmenting}
-                  accent="orange"
-                />
-              ) : null}
-            </div>
-          </TooltipProvider>
-        ) : null}
-      </div>
-    </section>
-  )
-}
-
-function OverlayIconButton({
-  icon: Icon,
-  label,
-  onClick,
-  disabled,
-  accent = "default",
-}: {
-  icon: LucideIcon
-  label: string
-  onClick: () => void
-  disabled?: boolean
-  accent?: "default" | "purple" | "orange"
-}) {
-  const palette: Record<typeof accent, string> = {
-    default: "text-white hover:bg-white/20",
-    purple: "text-purple-200 hover:bg-purple-400/30",
-    orange: "text-orange-200 hover:bg-orange-400/30",
-  }
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          onClick={onClick}
-          disabled={disabled}
-          aria-label={label}
-          className={cn(
-            "h-7 w-7 rounded flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
-            palette[accent]
-          )}
-        >
-          <Icon className="h-3.5 w-3.5" />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent side="top" sideOffset={6} variant="light">
-        {label}
-      </TooltipContent>
-    </Tooltip>
-  )
-}
-
-function AdvancedSection({
-  dataId,
-  classes,
-  onClassesChange,
-}: {
-  dataId: string
-  classes: string[]
-  onClassesChange: (dataId: string, classes: string[]) => void
-}) {
-  const [draft, setDraft] = useState(classes.join(" "))
-
-  useEffect(() => {
-    setDraft(classes.join(" "))
-  }, [classes])
-
-  const commit = useCallback(() => {
-    const parsed = draft.split(/\s+/).filter(Boolean)
-    if (parsed.length === classes.length && parsed.every((c, i) => c === classes[i])) return
-    onClassesChange(dataId, parsed)
-  }, [draft, classes, dataId, onClassesChange])
-
-  return (
-    <Section value="advanced" title={<Trans>Advanced</Trans>} icon={Wrench}>
-      <label className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-        <Trans>Tailwind classes</Trans>
-      </label>
-      <textarea
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        spellCheck={false}
-        rows={4}
-        className="w-full bg-muted/30 border border-input rounded-md px-2 py-1.5 text-[11px] font-mono leading-relaxed resize-y outline-none focus:ring-2 focus:ring-ring focus:border-ring"
-      />
-      <p className="text-[10px] text-muted-foreground/70">
-        <Trans>Space-separated. Saves on blur.</Trans>
-      </p>
-    </Section>
-  )
-}

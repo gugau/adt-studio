@@ -5,6 +5,8 @@ interface ElementCtx {
   dataId: string
   /** Tailwind class list, in source order */
   classes: string[]
+  /** Persists a new class list back to the element. */
+  onClassesChange: (dataId: string, classes: string[]) => void
 }
 
 const ElementContext = createContext<ElementCtx | null>(null)
