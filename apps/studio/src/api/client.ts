@@ -688,6 +688,30 @@ export const api = {
       }>
     }>(`/books/${label}/images`),
 
+  listCaptionedImages: (label: string) =>
+    request<{
+      images: Array<{
+        imageId: string
+        pageId: string
+        width: number
+        height: number
+        source: string
+        caption: string
+      }>
+    }>(`/books/${label}/captioned-images`),
+
+  listTranslatedImages: (label: string) =>
+    request<{
+      images: Array<{
+        imageId: string
+        sourceImageId: string
+        language: string
+        pageId: string
+        width: number
+        height: number
+      }>
+    }>(`/books/${label}/translated-images`),
+
   uploadNewImage: (label: string, pageId: string, imageBlob: Blob) => {
     const formData = new FormData()
     formData.append("image", imageBlob, "upload.png")

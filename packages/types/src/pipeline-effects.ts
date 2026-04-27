@@ -81,6 +81,7 @@ const NODE_CACHE_RESOURCES: Record<PipelineNodeName, readonly PipelineCacheResou
   "toc-generation": ["toc"],
   "text-catalog": ["text-catalog"],
   "catalog-translation": ["text-catalog"],
+  "image-translation": ["pages"],
   "tts": ["tts"],
   "package-web": [],
   "accessibility-assessment": ["debug"],

@@ -4,7 +4,7 @@ import type sqlite from "node-sqlite3-wasm"
 import type { ExtractedPage, ExtractedImage } from "@adt/pdf"
 import type { LlmLogEntry } from "@adt/llm"
 import { parseBookLabel } from "@adt/types"
-import type { Storage, PageData, ImageData, NodeDataRow, CroppedImageInput, SegmentedImageInput, SignLanguageVideoData } from "./storage.js"
+import type { Storage, PageData, ImageData, NodeDataRow, CroppedImageInput, SegmentedImageInput, SignLanguageVideoData, TranslatedImageInput } from "./storage.js"
 import { openBookDb } from "./db.js"
 
 export interface BookPaths {
@@ -124,6 +124,15 @@ export function createBookStorage(label: string, booksRoot: string): Storage {
       return { width: rows[0].width, height: rows[0].height }
     },
 
+    getImageMeta(imageId: string): { pageId: string; relativePath: string } | null {
+      const rows = db.all(
+        "SELECT page_id, path FROM images WHERE image_id = ?",
+        [imageId]
+      ) as Array<{ page_id: string; path: string }>
+      if (rows.length === 0) return null
+      return { pageId: rows[0].page_id, relativePath: rows[0].path }
+    },
+
     getPageImages(pageId: string): ImageData[] {
       const rows = db.all(
         "SELECT image_id, width, height, render_method FROM images WHERE page_id = ? ORDER BY image_id",
@@ -192,6 +201,36 @@ export function createBookStorage(label: string, booksRoot: string): Storage {
           "segment",
         ]
       )
+    },
+
+    putTranslatedImage(input: TranslatedImageInput): string {
+      const safeLang = input.languageCode.replace(/[^a-zA-Z0-9-]/g, "_")
+      const newImageId = `${input.sourceImageId}_tr_${safeLang}`
+      const filename = `${newImageId}.png`
+      fs.writeFileSync(path.join(paths.imagesDir, filename), input.buffer)
+
+      db.run(
+        `INSERT INTO images
+           (image_id, page_id, path, hash, width, height, source)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT (image_id) DO UPDATE SET
+           page_id = excluded.page_id,
+           path = excluded.path,
+           hash = excluded.hash,
+           width = excluded.width,
+           height = excluded.height,
+           source = excluded.source`,
+        [
+          newImageId,
+          input.pageId,
+          `images/${filename}`,
+          "",
+          input.width,
+          input.height,
+          "translate",
+        ]
+      )
+      return newImageId
     },
 
     putNodeData(node: string, itemId: string, data: unknown): number {

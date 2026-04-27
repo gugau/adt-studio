@@ -40,6 +40,15 @@ export interface SegmentedImageInput {
   height: number
 }
 
+export interface TranslatedImageInput {
+  sourceImageId: string
+  pageId: string
+  languageCode: string
+  buffer: Buffer
+  width: number
+  height: number
+}
+
 export interface SignLanguageVideoData {
   videoId: string
   sectionId: string | null
@@ -58,6 +67,8 @@ export interface Storage {
   getPageImageBase64(pageId: string): string
   getImageBase64(imageId: string): string
   getImageDimensions(imageId: string): { width: number; height: number } | null
+  /** Look up basic metadata for an image: its page id and book-relative path on disk. */
+  getImageMeta(imageId: string): { pageId: string; relativePath: string } | null
   getPageImages(pageId: string): ImageData[]
 
   /** Write a cropped image to disk as {imageId}_crop_v{version}.png and register it in the DB with source="crop". */
@@ -65,6 +76,9 @@ export interface Storage {
 
   /** Write a segmented image to disk as {sourceImageId}_seg{NNN}_v{version}.png and register it in the DB with source="segment". */
   putSegmentedImage(input: SegmentedImageInput): void
+
+  /** Write a localized image variant to disk as {sourceImageId}_tr_{langCode}.png and register it in the DB with source="translate". Returns the new image id. */
+  putTranslatedImage(input: TranslatedImageInput): string
 
   putNodeData(node: string, itemId: string, data: unknown): number
   getLatestNodeData(node: string, itemId: string): NodeDataRow | null

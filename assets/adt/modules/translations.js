@@ -147,6 +147,11 @@ export const applyTranslations = async () => {
         applyTranslationToPlaceholders(key, translationKey);
 
     }
+    // Swap localized image variants for the current language. Each <img data-id="...">
+    // remembers its original src in data-original-src on first apply, so switching to a
+    // language without a variant restores the source image.
+    applyImageVariants();
+
     // Adding to gather the correct audio elements
     gatherAudioElements();
     loadCurrentSLVideo();
@@ -244,6 +249,31 @@ const applyTranslationToElements = (key, translationKey) => {
                 // Set the content with proper line breaks
                 element.innerHTML = translatedText;
             }
+        }
+    });
+};
+
+/**
+ * Swap <img> sources to localized variants for the current language.
+ * Each <img data-id="..."> stores its original src in data-original-src on first
+ * apply so we can restore it when the variant is missing for a given language.
+ * @private
+ */
+const applyImageVariants = () => {
+    const variants = state.imageFiles || {};
+    const imgs = document.querySelectorAll('img[data-id]');
+    imgs.forEach((img) => {
+        const id = img.getAttribute('data-id');
+        if (!id) return;
+        if (!img.dataset.originalSrc) {
+            img.dataset.originalSrc = img.getAttribute('src') || '';
+        }
+        const variantFilename = variants[id];
+        if (variantFilename) {
+            const next = `images/${variantFilename}`;
+            if (img.getAttribute('src') !== next) img.setAttribute('src', next);
+        } else if (img.dataset.originalSrc && img.getAttribute('src') !== img.dataset.originalSrc) {
+            img.setAttribute('src', img.dataset.originalSrc);
         }
     });
 };
@@ -416,11 +446,12 @@ export const fetchContentFiles = async (basePath) => {
         const version = window.appConfig?.bundleVersion || '';
         const versionParam = version ? `?v=${version}` : '';
         
-        // Fetch all three files in parallel
-        const [textsResponse, audiosResponse, videosResponse] = await Promise.allSettled([
+        // Fetch all four files in parallel
+        const [textsResponse, audiosResponse, videosResponse, imagesResponse] = await Promise.allSettled([
             fetch(`${basePath}/texts.json${versionParam}`),
             fetch(`${basePath}/audios.json${versionParam}`),
-            fetch(`${basePath}/videos.json${versionParam}`)
+            fetch(`${basePath}/videos.json${versionParam}`),
+            fetch(`${basePath}/images.json${versionParam}`)
         ]);
 
         // Process texts.json
@@ -445,6 +476,17 @@ export const fetchContentFiles = async (basePath) => {
             setState('videoFiles', { ...state.videoFiles, ...videosData });
         } else {
             console.warn(`Could not load videos.json from ${basePath}`);
+        }
+
+        // Process images.json — image variants for the current language.
+        // Replace (don't merge) so switching to a language without a variant
+        // for some image falls back to the original.
+        if (imagesResponse.status === 'fulfilled' && imagesResponse.value.ok) {
+            const imagesData = await safeJsonParse(imagesResponse.value, 'images.json');
+            setState('imageFiles', imagesData || {});
+        } else {
+            // Missing images.json is normal for source language / books without image translation.
+            setState('imageFiles', {});
         }
 
     } catch (error) {

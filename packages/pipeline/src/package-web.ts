@@ -479,6 +479,26 @@ export async function packageAdtWeb(
     }
     writeJson(path.join(localeDir, "videos.json"), videosMap)
 
+    // images.json — map original imageId → localized variant filename for this language.
+    // Variants are produced by the image-translation step and stored as
+    // `${sourceImageId}_tr_${languageCode}` in the book images directory.
+    const imagesMap: Record<string, string> = {}
+    const variantSuffix = `_tr_${lang.replace(/[^a-zA-Z0-9-]/g, "_")}`
+    for (const originalImageId of copiedImages) {
+      const variantId = `${originalImageId}${variantSuffix}`
+      const variantFilename = imageMap.get(variantId)
+      if (!variantFilename) continue
+      const destPath = path.join(imageDir, variantFilename)
+      if (!fs.existsSync(destPath)) {
+        fs.copyFileSync(
+          path.join(bookDir, "images", variantFilename),
+          destPath,
+        )
+      }
+      imagesMap[originalImageId] = variantFilename
+    }
+    writeJson(path.join(localeDir, "images.json"), imagesMap)
+
     if (features?.glossary !== false) {
       const glossaryJson = buildGlossaryJson(glossary, catalog, textsMap, baseLang === sourceLanguage)
       writeJson(path.join(localeDir, "glossary.json"), glossaryJson)

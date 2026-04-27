@@ -164,6 +164,12 @@ export {
   type CatalogTranslationConfig,
 } from "./catalog-translation.js"
 export {
+  translateImage,
+  buildImageTranslationConfig,
+  type TranslateImageOptions,
+  type TranslatedImageResult,
+} from "./image-translation.js"
+export {
   generateStyleguide,
   buildStyleguideGenerationConfig,
   type StyleguideGenerationConfig,

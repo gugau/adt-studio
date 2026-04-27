@@ -97,6 +97,7 @@ msgid "{0} images"
 msgstr "{0} images"
 
 #. placeholder {0}: String(selected.size)
+#. placeholder {0}: String(selectedImageIds.length)
 msgid "{0} images selected"
 msgstr "{0} images selected"
 
@@ -1021,6 +1022,9 @@ msgstr "Choose features to include in this export"
 msgid "Choose how the content should be formatted."
 msgstr "Choose how the content should be formatted."
 
+msgid "Choose images..."
+msgstr "Choose images..."
+
 msgid "Choose Provider"
 msgstr "Choose Provider"
 
@@ -1044,6 +1048,9 @@ msgstr "Classifying images…"
 
 msgid "Clean & focused"
 msgstr "Clean & focused"
+
+msgid "Clear"
+msgstr "Clear"
 
 msgid "Clear all"
 msgstr "Clear all"
@@ -1425,6 +1432,9 @@ msgstr "Description"
 msgid "Description..."
 msgstr "Description..."
 
+msgid "Deselect all"
+msgstr "Deselect all"
+
 msgid "Detecting figures"
 msgstr "Detecting figures"
 
@@ -1766,6 +1776,9 @@ msgstr "Failed to load accessibility results: {0}"
 msgid "Failed to load books: {0}"
 msgstr "Failed to load books: {0}"
 
+msgid "Failed to load images."
+msgstr "Failed to load images."
+
 msgid "Failed to load page image"
 msgstr "Failed to load page image"
 
@@ -1816,6 +1829,9 @@ msgstr "File accepted"
 
 #~ msgid "Filter"
 #~ msgstr "Filter"
+
+msgid "Filter by image ID or caption..."
+msgstr "Filter by image ID or caption..."
 
 msgid "Filter by image ID..."
 msgstr "Filter by image ID..."
@@ -2098,6 +2114,12 @@ msgstr "Image Meaningfulness"
 msgid "Image Meaningfulness Prompt"
 msgstr "Image Meaningfulness Prompt"
 
+msgid "Image model"
+msgstr "Image model"
+
+msgid "Image not translated for this language"
+msgstr "Image not translated for this language"
+
 #~ msgid "Image Overlay"
 #~ msgstr "Image Overlay"
 
@@ -2109,6 +2131,18 @@ msgstr "Image Segmentation"
 
 msgid "Image Segmentation Prompt"
 msgstr "Image Segmentation Prompt"
+
+msgid "Image translation"
+msgstr "Image translation"
+
+#~ msgid "Image Translation"
+#~ msgstr "Image Translation"
+
+msgid "Image translation prompt"
+msgstr "Image translation prompt"
+
+#~ msgid "Image Translation Prompt"
+#~ msgstr "Image Translation Prompt"
 
 msgid "Image Type"
 msgstr "Image Type"
@@ -2679,6 +2713,9 @@ msgstr "No assessment"
 msgid "No books match your search"
 msgstr "No books match your search"
 
+msgid "No captioned images yet. Run the image-captioning step first."
+msgstr "No captioned images yet. Run the image-captioning step first."
+
 msgid "No captions for this page"
 msgstr "No captions for this page"
 
@@ -2723,6 +2760,9 @@ msgstr "No images in this section"
 
 msgid "No images match your filter"
 msgstr "No images match your filter"
+
+msgid "No images match your filter."
+msgstr "No images match your filter."
 
 msgid "No images on this page"
 msgstr "No images on this page"
@@ -2877,6 +2917,12 @@ msgstr "On"
 msgid "One tag per line or comma-separated. Leave as-is to keep the current package defaults."
 msgstr "One tag per line or comma-separated. Leave as-is to keep the current package defaults."
 
+msgid "Only images that appear in the storyboard (have captions) can be selected."
+msgstr "Only images that appear in the storyboard (have captions) can be selected."
+
+msgid "Only images that appear in the storyboard are listed. The selected images will be regenerated for each output language with their text translated."
+msgstr "Only images that appear in the storyboard are listed. The selected images will be regenerated for each output language with their text translated."
+
 msgid "Only letters, numbers, dots, dashes, underscores. Must start with a letter or number."
 msgstr "Only letters, numbers, dots, dashes, underscores. Must start with a letter or number."
 
@@ -2918,6 +2964,9 @@ msgstr "OpenAI"
 
 msgid "OpenAI API Key"
 msgstr "OpenAI API Key"
+
+msgid "OpenAI image-edit model used to regenerate each image with translated text."
+msgstr "OpenAI image-edit model used to regenerate each image with translated text."
 
 msgid "OpenAI key required"
 msgstr "OpenAI key required"
@@ -3384,6 +3433,9 @@ msgstr "Refresh validation"
 msgid "Refreshing results for this packaged preview."
 msgstr "Refreshing results for this packaged preview."
 
+msgid "Regenerate selected images for each output language so that any text burned into them is shown in the target language."
+msgstr "Regenerate selected images for each output language so that any text burned into them is shown in the target language."
+
 msgid "Region"
 msgstr "Region"
 
@@ -3628,6 +3680,9 @@ msgstr "Save failed"
 msgid "Save page review"
 msgstr "Save page review"
 
+msgid "Save selection"
+msgstr "Save selection"
+
 msgid "Save settings"
 msgstr "Save settings"
 
@@ -3809,6 +3864,12 @@ msgstr "Select a style guide to preview how it styles the generated pages - typo
 msgid "Select activity type..."
 msgstr "Select activity type..."
 
+msgid "Select all"
+msgstr "Select all"
+
+msgid "Select images to translate"
+msgstr "Select images to translate"
+
 msgid "Select node type..."
 msgstr "Select node type..."
 
@@ -3829,6 +3890,9 @@ msgstr "Select template..."
 
 msgid "Select up to 5 pages to use as visual references. The LLM will analyze them and generate a styleguide."
 msgstr "Select up to 5 pages to use as visual references. The LLM will analyze them and generate a styleguide."
+
+msgid "Selected images"
+msgstr "Selected images"
 
 msgid "Selected: {styleImageId}"
 msgstr "Selected: {styleImageId}"
@@ -4239,6 +4303,9 @@ msgstr "The Lost Forest"
 msgid "The model detects bounding boxes so each visual element can be stored and laid out separately."
 msgstr "The model detects bounding boxes so each visual element can be stored and laid out separately."
 
+msgid "The prompt sent to the image model alongside each selected image."
+msgstr "The prompt sent to the image model alongside each selected image."
+
 #~ msgid "The prompt template used by the reviewer pass to critique and improve a candidate sectioning. Runs up to the configured number of passes or until the reviewer approves."
 #~ msgstr "The prompt template used by the reviewer pass to critique and improve a candidate sectioning. Runs up to the configured number of passes or until the reviewer approves."
 
@@ -4412,6 +4479,9 @@ msgstr "Track reviewer progress and review findings captured from Preview."
 
 msgid "Translate"
 msgstr "Translate"
+
+msgid "Translate text in images"
+msgstr "Translate text in images"
 
 msgid "Translate the book content to output languages."
 msgstr "Translate the book content to output languages."
@@ -4705,6 +4775,9 @@ msgstr "When enabled, background colors from the styleguide are applied to the f
 
 msgid "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."
 msgstr "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."
+
+msgid "When enabled, the selected images below are regenerated for every output language during the translate stage."
+msgstr "When enabled, the selected images below are regenerated for every output language during the translate stage."
 
 msgid "When your PDF isn't built around facing pages, single mode keeps every page separate: nothing is merged across a spread. That matches how most textbooks, novels, and reference books are read - one page at a time."
 msgstr "When your PDF isn't built around facing pages, single mode keeps every page separate: nothing is merged across a spread. That matches how most textbooks, novels, and reference books are read - one page at a time."

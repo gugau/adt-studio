@@ -97,6 +97,7 @@ msgid "{0} images"
 msgstr "{0} imagens"
 
 #. placeholder {0}: String(selected.size)
+#. placeholder {0}: String(selectedImageIds.length)
 msgid "{0} images selected"
 msgstr "{0} imagens selecionadas"
 
@@ -1021,6 +1022,9 @@ msgstr "Escolha as características para incluir nesta exportação"
 msgid "Choose how the content should be formatted."
 msgstr "Escolha como o conteúdo deve ser formatado."
 
+msgid "Choose images..."
+msgstr "Escolher imagens..."
+
 msgid "Choose Provider"
 msgstr "Escolher provedor"
 
@@ -1044,6 +1048,9 @@ msgstr "Classificando imagens…"
 
 msgid "Clean & focused"
 msgstr "Limpo e focado"
+
+msgid "Clear"
+msgstr "Limpar"
 
 msgid "Clear all"
 msgstr "Clear all"
@@ -1425,6 +1432,9 @@ msgstr "Descrição"
 msgid "Description..."
 msgstr "Descrição..."
 
+msgid "Deselect all"
+msgstr "Desmarcar tudo"
+
 msgid "Detecting figures"
 msgstr "Detectando figuras"
 
@@ -1766,6 +1776,9 @@ msgstr "Failed to load accessibility results: {0}"
 msgid "Failed to load books: {0}"
 msgstr "Falha ao carregar livros: {0}"
 
+msgid "Failed to load images."
+msgstr "Falha ao carregar imagens."
+
 msgid "Failed to load page image"
 msgstr "Falha ao carregar imagem da página"
 
@@ -1816,6 +1829,9 @@ msgstr "Arquivo aceito"
 
 #~ msgid "Filter"
 #~ msgstr "Filtrar"
+
+msgid "Filter by image ID or caption..."
+msgstr "Filtrar por ID da imagem ou legenda..."
 
 msgid "Filter by image ID..."
 msgstr "Filtrar por ID da imagem..."
@@ -2098,6 +2114,12 @@ msgstr "Relevância de imagens"
 msgid "Image Meaningfulness Prompt"
 msgstr "Prompt de relevância de imagem"
 
+msgid "Image model"
+msgstr "Modelo de imagem"
+
+msgid "Image not translated for this language"
+msgstr "Imagem não traduzida para este idioma"
+
 #~ msgid "Image Overlay"
 #~ msgstr "Texto sobreposto à imagem"
 
@@ -2109,6 +2131,18 @@ msgstr "Segmentação de imagens"
 
 msgid "Image Segmentation Prompt"
 msgstr "Prompt de segmentação de imagem"
+
+msgid "Image translation"
+msgstr "Tradução de imagens"
+
+#~ msgid "Image Translation"
+#~ msgstr "Tradução de imagens"
+
+msgid "Image translation prompt"
+msgstr "Prompt de tradução de imagens"
+
+#~ msgid "Image Translation Prompt"
+#~ msgstr "Prompt de tradução de imagens"
 
 msgid "Image Type"
 msgstr "Tipo de imagem"
@@ -2679,6 +2713,9 @@ msgstr "No assessment"
 msgid "No books match your search"
 msgstr "Nenhum livro corresponde à sua busca"
 
+msgid "No captioned images yet. Run the image-captioning step first."
+msgstr "Ainda não há imagens com legenda. Execute primeiro a etapa de geração de legendas."
+
 msgid "No captions for this page"
 msgstr "Sem legendas para esta página"
 
@@ -2723,6 +2760,9 @@ msgstr "Nenhuma imagem nesta seção"
 
 msgid "No images match your filter"
 msgstr "Nenhuma imagem corresponde ao filtro"
+
+msgid "No images match your filter."
+msgstr "Nenhuma imagem corresponde ao filtro."
 
 msgid "No images on this page"
 msgstr "Nenhuma imagem nesta página"
@@ -2877,6 +2917,12 @@ msgstr "Ligado"
 msgid "One tag per line or comma-separated. Leave as-is to keep the current package defaults."
 msgstr "One tag per line or comma-separated. Leave as-is to keep the current package defaults."
 
+msgid "Only images that appear in the storyboard (have captions) can be selected."
+msgstr "Só é possível selecionar imagens que aparecem no storyboard (com legendas)."
+
+msgid "Only images that appear in the storyboard are listed. The selected images will be regenerated for each output language with their text translated."
+msgstr "Apenas as imagens que aparecem no storyboard são listadas. As imagens selecionadas serão regeneradas para cada idioma de saída com seu texto traduzido."
+
 msgid "Only letters, numbers, dots, dashes, underscores. Must start with a letter or number."
 msgstr "Apenas letras, números, pontos, traços, sublinhados. Deve começar com uma letra ou número."
 
@@ -2918,6 +2964,9 @@ msgstr "OpenAI"
 
 msgid "OpenAI API Key"
 msgstr "Chave de API da OpenAI"
+
+msgid "OpenAI image-edit model used to regenerate each image with translated text."
+msgstr "Modelo de edição de imagens da OpenAI usado para regenerar cada imagem com o texto traduzido."
 
 msgid "OpenAI key required"
 msgstr "Chave da OpenAI necessária"
@@ -3384,6 +3433,9 @@ msgstr "Refresh validation"
 msgid "Refreshing results for this packaged preview."
 msgstr "Refreshing results for this packaged preview."
 
+msgid "Regenerate selected images for each output language so that any text burned into them is shown in the target language."
+msgstr "Regenera as imagens selecionadas para cada idioma de saída para que qualquer texto fixo nelas seja exibido no idioma de destino."
+
 msgid "Region"
 msgstr "Região"
 
@@ -3628,6 +3680,9 @@ msgstr "Save failed"
 msgid "Save page review"
 msgstr "Save page review"
 
+msgid "Save selection"
+msgstr "Salvar seleção"
+
 msgid "Save settings"
 msgstr "Save settings"
 
@@ -3809,6 +3864,12 @@ msgstr "Selecione um guia de estilo para pré-visualizar como ele estiliza as p�
 msgid "Select activity type..."
 msgstr "Selecionar tipo de atividade..."
 
+msgid "Select all"
+msgstr "Selecionar tudo"
+
+msgid "Select images to translate"
+msgstr "Selecionar imagens para traduzir"
+
 msgid "Select node type..."
 msgstr "Selecionar tipo de nó..."
 
@@ -3829,6 +3890,9 @@ msgstr "Selecionar template..."
 
 msgid "Select up to 5 pages to use as visual references. The LLM will analyze them and generate a styleguide."
 msgstr "Selecione até 5 páginas para usar como referências visuais. O LLM irá analisá-las e gerar um guia de estilo."
+
+msgid "Selected images"
+msgstr "Imagens selecionadas"
 
 msgid "Selected: {styleImageId}"
 msgstr "Selecionada: {0}"
@@ -4239,6 +4303,9 @@ msgstr "A Floresta Perdida"
 msgid "The model detects bounding boxes so each visual element can be stored and laid out separately."
 msgstr "O modelo detecta caixas delimitadoras para que cada elemento visual possa ser armazenado e disposto separadamente."
 
+msgid "The prompt sent to the image model alongside each selected image."
+msgstr "O prompt enviado ao modelo de imagem junto com cada imagem selecionada."
+
 #~ msgid "The prompt template used by the reviewer pass to critique and improve a candidate sectioning. Runs up to the configured number of passes or until the reviewer approves."
 #~ msgstr "O modelo de prompt usado pela passagem do revisor para criticar e melhorar um seccionamento candidato. Executa até o número configurado de passagens ou até que o revisor aprove."
 
@@ -4412,6 +4479,9 @@ msgstr "Track reviewer progress and review findings captured from Preview."
 
 msgid "Translate"
 msgstr "Traduzir"
+
+msgid "Translate text in images"
+msgstr "Traduzir texto em imagens"
 
 msgid "Translate the book content to output languages."
 msgstr "Traduzir o conteúdo do livro para os idiomas de saída."
@@ -4707,6 +4777,9 @@ msgstr "Quando ativado, as cores de fundo do guia de estilo são aplicadas ao co
 
 msgid "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."
 msgstr "Quando ativado, rótulos de texto próximos a imagens vetoriais (ex.: dimensões de gráficos, balões de fala) são agrupados e extraídos como recortes rasterizados. Desative para extrair apenas as formas vetoriais sem texto."
+
+msgid "When enabled, the selected images below are regenerated for every output language during the translate stage."
+msgstr "Quando ativado, as imagens selecionadas abaixo são regeneradas para cada idioma de saída durante a etapa de tradução."
 
 msgid "When your PDF isn't built around facing pages, single mode keeps every page separate: nothing is merged across a spread. That matches how most textbooks, novels, and reference books are read - one page at a time."
 msgstr "Quando o PDF não foi feito em torno de páginas opostas, o modo individual mantém cada página separada: nada é unido como numa dupla. É o jeito usual de ler livros didáticos, romances e obras de referência — uma página por vez."
