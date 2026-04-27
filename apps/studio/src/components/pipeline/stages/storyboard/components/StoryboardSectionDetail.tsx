@@ -11,6 +11,7 @@ import {
   LayoutGrid,
   Loader2,
   MessageSquare,
+  Palette,
   PanelRightClose,
   PanelRightOpen,
   PenLine,
@@ -49,6 +50,7 @@ import { useStepHeader } from "../../../components/StepViewRouter"
 import { BookPreviewFrame, type BookPreviewFrameHandle } from "./BookPreviewFrame"
 import { SectionEditToolbar } from "./SectionEditToolbar"
 import { SectionEditPanel } from "./SectionEditPanel"
+import { StyleEditorPanel } from "./style-editor"
 import { ImageCropDialog } from "./ImageCropDialog"
 import { AiImageDialog } from "./AiImageDialog"
 import { AddImageDialog } from "./AddImageDialog"
@@ -510,6 +512,15 @@ export function StoryboardSectionDetail({
 
   // Section data panel state
   const [panelOpen, setPanelOpen] = useState(false)
+  const [styleEditorOpen, setStyleEditorOpen] = useState(false)
+  const openSectionPanel = useCallback(() => {
+    setStyleEditorOpen(false)
+    setPanelOpen((v) => !v)
+  }, [])
+  const openStyleEditor = useCallback(() => {
+    setPanelOpen(false)
+    setStyleEditorOpen((v) => !v)
+  }, [])
   const [htmlPreview, setHtmlPreview] = useState(false)
   const [htmlPanelHeight, setHtmlPanelHeight] = useState(() => Math.floor(window.innerHeight * 0.35))
   const htmlPanelRef = useRef<HTMLDivElement>(null)
@@ -1906,7 +1917,18 @@ export function StoryboardSectionDetail({
       )}
       <button
         type="button"
-        onClick={() => setPanelOpen((v) => !v)}
+        onClick={openStyleEditor}
+        className={`flex items-center gap-1 px-2 py-1 rounded transition-colors cursor-pointer shrink-0 ${
+          styleEditorOpen ? "bg-white/25 hover:bg-white/30" : "bg-white/10 hover:bg-white/20"
+        }`}
+        title={styleEditorOpen ? t`Close style editor` : t`Open style editor`}
+      >
+        <Palette className="h-3.5 w-3.5" />
+        <span className="text-[10px]">{t`Style`}</span>
+      </button>
+      <button
+        type="button"
+        onClick={openSectionPanel}
         className="flex items-center gap-1 px-2 py-1 rounded bg-white/10 hover:bg-white/20 transition-colors cursor-pointer shrink-0"
         title={panelOpen ? t`Close edit panel` : t`Open edit panel`}
       >
@@ -2311,6 +2333,16 @@ export function StoryboardSectionDetail({
         hasApiKey={hasApiKey}
       />
       )}
+
+      {/* Slide-out element style editor */}
+      <StyleEditorPanel
+        open={styleEditorOpen}
+        onClose={() => setStyleEditorOpen(false)}
+        selectedDataId={selectedElement?.dataId ?? null}
+        selectedTagName={selectedElement?.tagName ?? null}
+        elementClasses={selectedElementClasses}
+        onClassesChange={handleClassesChange}
+      />
 
       {/* Transparent overlay during drag to prevent iframe from stealing mouse events */}
       {htmlDraggingActive && (
