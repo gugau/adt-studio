@@ -1,6 +1,17 @@
+import { useCallback, useMemo } from "react"
 import { X } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
+import { RawClassChips } from "./RawClassChips"
+import { ElementActions, type ElementActionsProps } from "./ElementActions"
+import {
+  type ElementType,
+  type SectionKey,
+  getVisibleSections,
+  inferElementType,
+} from "./element-types"
+
+type StyleEditorElementProps = Omit<ElementActionsProps, "dataId">
 
 interface StyleEditorPanelProps {
   open: boolean
@@ -8,6 +19,7 @@ interface StyleEditorPanelProps {
   selectedDataId: string | null
   selectedTagName: string | null
   elementClasses: string[] | null
+  elementProps: StyleEditorElementProps | null
   onClassesChange: (dataId: string, classes: string[]) => void
 }
 
@@ -17,10 +29,20 @@ export function StyleEditorPanel({
   selectedDataId,
   selectedTagName,
   elementClasses,
-  onClassesChange: _onClassesChange,
+  elementProps,
+  onClassesChange,
 }: StyleEditorPanelProps) {
   const { t } = useLingui()
-  void _onClassesChange
+
+  const elementType = useMemo<ElementType | null>(() => {
+    if (!elementProps) return null
+    return inferElementType({
+      isImage: elementProps.isImage,
+      isContainer: elementProps.isContainer,
+      tagName: selectedTagName ?? undefined,
+    })
+  }, [elementProps, selectedTagName])
+
   return (
     <aside
       aria-label={t`Element style editor`}
@@ -35,6 +57,7 @@ export function StyleEditorPanel({
           <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             <Trans>Styles</Trans>
           </span>
+          {elementType ? <ElementTypeBadge type={elementType} /> : null}
           {selectedTagName ? (
             <span className="text-[10px] font-mono text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5 shrink-0">
               &lt;{selectedTagName}&gt;
@@ -58,12 +81,35 @@ export function StyleEditorPanel({
 
       <div className="flex-1 overflow-y-auto">
         {selectedDataId ? (
-          <StyleEditorBody classes={elementClasses ?? []} />
+          <StyleEditorBody
+            dataId={selectedDataId}
+            classes={elementClasses ?? []}
+            elementProps={elementProps}
+            elementType={elementType}
+            onClassesChange={onClassesChange}
+          />
         ) : (
           <EmptyState />
         )}
       </div>
     </aside>
+  )
+}
+
+function ElementTypeBadge({ type }: { type: ElementType }) {
+  const { t } = useLingui()
+  const labels: Record<ElementType, string> = {
+    text: t`text`,
+    image: t`image`,
+    container: t`container`,
+    interactive: t`interactive`,
+    list: t`list`,
+    media: t`media`,
+  }
+  return (
+    <span className="text-[9px] font-semibold uppercase tracking-wider text-blue-700 bg-blue-50 rounded px-1.5 py-0.5 shrink-0">
+      {labels[type]}
+    </span>
   )
 }
 
@@ -77,32 +123,108 @@ function EmptyState() {
   )
 }
 
-function StyleEditorBody({ classes }: { classes: string[] }) {
+interface StyleEditorBodyProps {
+  dataId: string
+  classes: string[]
+  elementProps: StyleEditorElementProps | null
+  elementType: ElementType | null
+  onClassesChange: (dataId: string, classes: string[]) => void
+}
+
+function StyleEditorBody({
+  dataId,
+  classes,
+  elementProps,
+  elementType,
+  onClassesChange,
+}: StyleEditorBodyProps) {
+  const handleAdd = useCallback(
+    (cls: string) => {
+      if (classes.includes(cls)) return
+      onClassesChange(dataId, [...classes, cls])
+    },
+    [dataId, classes, onClassesChange]
+  )
+
+  const handleRemove = useCallback(
+    (cls: string) => {
+      onClassesChange(dataId, classes.filter((c) => c !== cls))
+    },
+    [dataId, classes, onClassesChange]
+  )
+
+  const handleSwap = useCallback(
+    (oldCls: string, newCls: string) => {
+      if (oldCls === newCls) return
+      onClassesChange(dataId, classes.map((c) => (c === oldCls ? newCls : c)))
+    },
+    [dataId, classes, onClassesChange]
+  )
+
+  const visibleSections = useMemo(
+    () => (elementType ? getVisibleSections(elementType) : []),
+    [elementType]
+  )
+
   return (
     <div className="p-4 space-y-4">
+      {elementProps && !elementProps.isContainer && (
+        <section className="space-y-2">
+          <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <Trans>Element</Trans>
+          </h3>
+          <ElementActions dataId={dataId} {...elementProps} />
+        </section>
+      )}
+
       <section className="space-y-2">
         <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           <Trans>Classes</Trans>
         </h3>
-        <div className="rounded border bg-muted/30 px-2 py-1.5 text-[11px] font-mono break-all min-h-[28px]">
-          {classes.length > 0 ? (
-            classes.join(" ")
-          ) : (
-            <span className="text-muted-foreground/60">
-              <Trans>No classes</Trans>
-            </span>
-          )}
-        </div>
+        <RawClassChips
+          classes={classes}
+          onAdd={handleAdd}
+          onRemove={handleRemove}
+          onSwap={handleSwap}
+        />
       </section>
 
-      <section className="space-y-2">
-        <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          <Trans>Property groups</Trans>
-        </h3>
-        <p className="text-[11px] text-muted-foreground/70">
-          <Trans>Layout, spacing, sizing, typography, colors — coming next.</Trans>
-        </p>
-      </section>
+      {visibleSections.length > 0 && (
+        <section className="space-y-2">
+          <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <Trans>Properties</Trans>
+          </h3>
+          <div className="rounded border divide-y bg-muted/10">
+            {visibleSections.map((key) => (
+              <SectionPlaceholder key={key} sectionKey={key} />
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  )
+}
+
+function SectionPlaceholder({ sectionKey }: { sectionKey: SectionKey }) {
+  const { t } = useLingui()
+  const labels: Record<SectionKey, string> = {
+    typography: t`Typography`,
+    color: t`Color`,
+    spacing: t`Spacing`,
+    sizing: t`Sizing`,
+    layout: t`Layout`,
+    borders: t`Borders`,
+    imageFit: t`Image fit`,
+    effects: t`Effects`,
+  }
+  return (
+    <div className="px-3 py-2 flex items-center justify-between">
+      <span className="text-[11px] font-medium text-foreground/80">
+        {labels[sectionKey]}
+      </span>
+      <span className="text-[9px] uppercase tracking-wider text-muted-foreground/60">
+        <Trans>coming next</Trans>
+      </span>
     </div>
   )
 }

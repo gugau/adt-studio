@@ -48,7 +48,6 @@ import { useBookRun } from "@/hooks/use-book-run"
 import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import { useStepHeader } from "../../../components/StepViewRouter"
 import { BookPreviewFrame, type BookPreviewFrameHandle } from "./BookPreviewFrame"
-import { SectionEditToolbar } from "./SectionEditToolbar"
 import { SectionEditPanel } from "./SectionEditPanel"
 import { StyleEditorPanel } from "./style-editor"
 import { ImageCropDialog } from "./ImageCropDialog"
@@ -2246,34 +2245,6 @@ export function StoryboardSectionDetail({
       )}
 
 
-      {/* Floating popover for selected element */}
-      {selectedElement && selectedInfo && (
-        <SectionEditToolbar
-          dataId={selectedElement.dataId}
-          rect={selectedElement.rect}
-          containerOffset={{ top: selectedElement.iframeTop, left: selectedElement.iframeLeft }}
-          isImage={selectedInfo.isImage}
-          isContainer={selectedInfo.isContainer}
-          containerTagName={selectedInfo.tagName}
-          textType={selectedInfo.textType}
-          isPruned={selectedInfo.isPruned}
-          textTypes={textTypes}
-          imageSrc={selectedInfo.imageSrc}
-          onChangeTextType={storyboardRunning || selectedInfo.isContainer ? undefined : handleToolbarChangeTextType}
-          onTogglePrune={storyboardRunning || selectedInfo.isContainer ? undefined : handleToolbarPrune}
-          onCrop={selectedInfo.isImage && !storyboardRunning ? (dataId) => setCropTarget(dataId) : undefined}
-          onRecropFromPage={selectedInfo.isImage && !storyboardRunning ? handleRecropFromPage : undefined}
-          onReplace={selectedInfo.isImage && !storyboardRunning ? handleImageReplace : undefined}
-          onReplaceFromBook={selectedInfo.isImage && !storyboardRunning ? handleReplaceFromBook : undefined}
-          onAiImage={selectedInfo.isImage && hasApiKey && !storyboardRunning ? handleAiImage : undefined}
-          onSegment={selectedInfo.isImage && hasApiKey && !storyboardRunning ? handleSegment : undefined}
-          segmenting={segmenting}
-          onDelete={!storyboardRunning ? handleDeleteBlock : undefined}
-          elementClasses={selectedElementClasses ?? undefined}
-          onClassesChange={handleClassesChange}
-        />
-      )}
-
       {/* Slide-out section data panel */}
       {section && (
       <SectionEditPanel
@@ -2341,6 +2312,52 @@ export function StoryboardSectionDetail({
         selectedDataId={selectedElement?.dataId ?? null}
         selectedTagName={selectedElement?.tagName ?? null}
         elementClasses={selectedElementClasses}
+        elementProps={
+          selectedElement && selectedInfo
+            ? {
+                isImage: selectedInfo.isImage,
+                isContainer: selectedInfo.isContainer,
+                textType: selectedInfo.textType,
+                isPruned: selectedInfo.isPruned,
+                textTypes,
+                imageSrc: selectedInfo.imageSrc,
+                segmenting,
+                onChangeTextType:
+                  storyboardRunning || selectedInfo.isContainer
+                    ? undefined
+                    : handleToolbarChangeTextType,
+                onTogglePrune:
+                  storyboardRunning || selectedInfo.isContainer
+                    ? undefined
+                    : handleToolbarPrune,
+                onCrop:
+                  selectedInfo.isImage && !storyboardRunning
+                    ? (dataId) => setCropTarget(dataId)
+                    : undefined,
+                onRecropFromPage:
+                  selectedInfo.isImage && !storyboardRunning
+                    ? handleRecropFromPage
+                    : undefined,
+                onReplace:
+                  selectedInfo.isImage && !storyboardRunning
+                    ? handleImageReplace
+                    : undefined,
+                onReplaceFromBook:
+                  selectedInfo.isImage && !storyboardRunning
+                    ? handleReplaceFromBook
+                    : undefined,
+                onAiImage:
+                  selectedInfo.isImage && hasApiKey && !storyboardRunning
+                    ? handleAiImage
+                    : undefined,
+                onSegment:
+                  selectedInfo.isImage && hasApiKey && !storyboardRunning
+                    ? handleSegment
+                    : undefined,
+                onDelete: !storyboardRunning ? handleDeleteBlock : undefined,
+              }
+            : null
+        }
         onClassesChange={handleClassesChange}
       />
 
