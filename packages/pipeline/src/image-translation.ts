@@ -69,13 +69,16 @@ export async function translateImage(
 
   const buffer = Buffer.from(result.base64, "base64")
   const dims = pngDimensions(result.base64)
-  const width = dims.width || 1024
-  const height = dims.height || 1024
+  if (!dims.width || !dims.height) {
+    throw new Error(
+      "Image translation: could not read PNG dimensions from model output"
+    )
+  }
 
   return {
     buffer,
-    width,
-    height,
+    width: dims.width,
+    height: dims.height,
     cached: result.cached,
   }
 }

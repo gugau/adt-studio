@@ -132,7 +132,7 @@ export const PIPELINE: StageDef[] = [
     steps: [
       { name: "text-catalog", label: "Text Catalog" },
       { name: "catalog-translation", label: "Catalog Translation", dependsOn: ["text-catalog"] },
-      { name: "image-translation", label: "Image translation", dependsOn: ["catalog-translation"] },
+      { name: "image-translation", label: "Image Translation", dependsOn: ["catalog-translation"] },
     ],
   },
   {

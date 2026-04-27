@@ -390,7 +390,7 @@ export function createBookRoutes(
 
       // image_id format: `${sourceImageId}_tr_${language}`
       const images = rows.flatMap((r) => {
-        const match = r.image_id.match(/^(.+)_tr_([a-zA-Z0-9-]+)$/)
+        const match = r.image_id.match(/^(.+)_tr_([a-zA-Z0-9_-]+)$/)
         if (!match) return []
         return [{
           imageId: r.image_id,

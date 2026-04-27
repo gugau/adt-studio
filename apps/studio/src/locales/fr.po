@@ -2133,11 +2133,11 @@ msgstr "Segmentation d'images"
 msgid "Image Segmentation Prompt"
 msgstr "Image Segmentation Invite"
 
-msgid "Image translation"
-msgstr "Traduction d'images"
-
-#~ msgid "Image Translation"
+#~ msgid "Image translation"
 #~ msgstr "Traduction d'images"
+
+msgid "Image Translation"
+msgstr "Traduction d'images"
 
 msgid "Image translation prompt"
 msgstr "Invite de traduction d'images"

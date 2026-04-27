@@ -291,7 +291,7 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general",
       {tab === "image-translation" && !isSpeechStage && (
         <div className="space-y-5">
           <div>
-            <h3 className="text-sm font-semibold">{t`Image translation`}</h3>
+            <h3 className="text-sm font-semibold">{t`Image Translation`}</h3>
             <p className="text-xs text-muted-foreground mt-1">
               {t`Regenerate selected images for each output language so that any text burned into them is shown in the target language.`}
             </p>
