@@ -427,14 +427,11 @@ msgstr "Activities disabled"
 msgid "Activities enabled"
 msgstr "Activities enabled"
 
-msgid "Activities generator"
-msgstr "Activities generator"
-
-msgid "Activities Generator"
-msgstr "Activities Generator"
-
 msgid "Activity 5.1"
 msgstr "Activity 5.1"
+
+msgid "Activity Converter"
+msgstr "Activity Converter"
 
 #~ msgid "Activity Input Placeholder"
 #~ msgstr "Activity Input Placeholder"
