@@ -427,11 +427,11 @@ msgstr "Atividades desativadas"
 msgid "Activities enabled"
 msgstr "Atividades ativadas"
 
-msgid "Activity Converter"
-msgstr "Conversão de atividades"
-
 msgid "Activity 5.1"
 msgstr "Atividade 5.1"
+
+msgid "Activity Converter"
+msgstr "Conversão de atividades"
 
 #~ msgid "Activity Input Placeholder"
 #~ msgstr "Texto de sugestão (Placeholder)"
