@@ -28,6 +28,7 @@ import {
 } from "./element-types"
 import { SECTION_COMPONENTS } from "./sections"
 import { Section } from "./controls/Section"
+import { ElementProvider } from "./element-context"
 import { Accordion } from "@/components/ui/accordion"
 
 type StyleEditorElementProps = Omit<ElementActionsProps, "dataId">
@@ -254,23 +255,25 @@ function StyleEditorBody({
   }, [elementType])
 
   return (
-    <div className="flex flex-col">
-      {elementProps?.isImage ? (
-        <ImageActionsSection dataId={dataId} elementProps={elementProps} />
-      ) : null}
+    <ElementProvider value={{ dataId, classes }}>
+      <div className="flex flex-col">
+        {elementProps?.isImage ? (
+          <ImageActionsSection dataId={dataId} elementProps={elementProps} />
+        ) : null}
 
-      <Accordion type="multiple" value={openKeys} onValueChange={setOpenKeys}>
-        {visibleSections.map((key) => {
-          const SectionComponent = SECTION_COMPONENTS[key]
-          return <SectionComponent key={key} />
-        })}
-        <AdvancedSection
-          dataId={dataId}
-          classes={classes}
-          onClassesChange={onClassesChange}
-        />
-      </Accordion>
-    </div>
+        <Accordion type="multiple" value={openKeys} onValueChange={setOpenKeys}>
+          {visibleSections.map((key) => {
+            const SectionComponent = SECTION_COMPONENTS[key]
+            return <SectionComponent key={key} />
+          })}
+          <AdvancedSection
+            dataId={dataId}
+            classes={classes}
+            onClassesChange={onClassesChange}
+          />
+        </Accordion>
+      </div>
+    </ElementProvider>
   )
 }
 

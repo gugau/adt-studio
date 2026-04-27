@@ -43,66 +43,66 @@ export function inferElementType({
 
 export type SectionKey =
   | "typography"
-  | "color"
+  | "appearance"
   | "spacing"
   | "sizing"
   | "layout"
   | "borders"
   | "imageFit"
-  | "effects"
 
 export const ALL_SECTION_KEYS: ReadonlyArray<SectionKey> = [
   "typography",
-  "color",
+  "appearance",
   "spacing",
   "sizing",
   "layout",
   "borders",
   "imageFit",
-  "effects",
 ]
 
 const SECTION_VISIBILITY: Record<ElementType, ReadonlySet<SectionKey>> = {
-  text: new Set<SectionKey>(["typography", "color", "spacing", "sizing"]),
+  text: new Set<SectionKey>([
+    "typography",
+    "appearance",
+    "spacing",
+    "sizing",
+  ]),
   image: new Set<SectionKey>([
-    "color",
+    "appearance",
     "spacing",
     "sizing",
     "borders",
     "imageFit",
-    "effects",
   ]),
   container: new Set<SectionKey>([
     "typography",
-    "color",
+    "appearance",
     "spacing",
     "sizing",
     "layout",
     "borders",
-    "effects",
   ]),
   interactive: new Set<SectionKey>([
     "typography",
-    "color",
+    "appearance",
     "spacing",
     "sizing",
     "layout",
     "borders",
-    "effects",
   ]),
   list: new Set<SectionKey>([
     "typography",
-    "color",
+    "appearance",
     "spacing",
     "sizing",
     "layout",
   ]),
   media: new Set<SectionKey>([
+    "appearance",
     "spacing",
     "sizing",
     "borders",
     "imageFit",
-    "effects",
   ]),
 }
 

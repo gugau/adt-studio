@@ -1,0 +1,131 @@
+import { useEffect, useState } from "react"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
+
+/**
+ * Numeric value paired with a unit token.
+ * - For numeric units (`px`, `%`, etc.): `value` is the digits, `unit` is the token.
+ * - For keyword units (`auto`, `none`, etc.): `value` mirrors the unit and the
+ *   input is disabled. Mirrors lowcode-studio's UnitInput shape.
+ */
+export interface UnitValue {
+  value: string
+  unit: string
+}
+
+const KEYWORD_UNITS = new Set(["auto", "none", "min-content", "max-content", "fit"])
+
+interface UnitInputProps {
+  value: UnitValue
+  onChange: (next: UnitValue) => void
+  /** Available units. Defaults to ["px", "%"]. Keywords like "auto"/"none" are also supported. */
+  units?: ReadonlyArray<string>
+  placeholder?: string
+}
+
+export function UnitInput({
+  value,
+  onChange,
+  units = ["px", "%"],
+  placeholder = "0",
+}: UnitInputProps) {
+  const [draft, setDraft] = useState(value.value)
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    setDraft(value.value)
+  }, [value.value])
+
+  const isKeyword = KEYWORD_UNITS.has(value.unit)
+
+  const handleInput = (raw: string) => {
+    if (isKeyword) return
+    if (raw !== "" && !/^\d*\.?\d*$/.test(raw)) return
+    let next = raw
+    if (raw !== "" && value.unit === "%") {
+      const n = parseFloat(raw)
+      if (!Number.isNaN(n)) {
+        if (n < 0) next = "0"
+        else if (n > 100) next = "100"
+      }
+    }
+    setDraft(next)
+    onChange({ value: next, unit: value.unit })
+  }
+
+  const handleUnitChange = (newUnit: string) => {
+    setOpen(false)
+    if (newUnit === value.unit) return
+    if (KEYWORD_UNITS.has(newUnit)) {
+      onChange({ value: newUnit, unit: newUnit })
+    } else {
+      const carryValue = isKeyword ? "" : draft
+      onChange({ value: carryValue, unit: newUnit })
+    }
+  }
+
+  const displayValue = isKeyword ? value.unit : draft
+
+  return (
+    <div className="relative w-full min-w-0">
+      <input
+        type="text"
+        inputMode="decimal"
+        value={displayValue}
+        onChange={(e) => handleInput(e.target.value)}
+        disabled={isKeyword}
+        placeholder={placeholder}
+        className={cn(
+          "h-8 w-full bg-background border border-input rounded-md pl-2 pr-10 text-[12px] tabular-nums outline-none",
+          "focus-visible:ring-2 focus-visible:ring-ring",
+          isKeyword && "italic text-muted-foreground"
+        )}
+      />
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            aria-label={value.unit}
+            className={cn(
+              "absolute top-0 right-0 h-8 w-9 flex items-center justify-center text-[11px] font-medium rounded-r-md cursor-pointer",
+              "border-l border-input transition-colors",
+              "text-muted-foreground hover:bg-accent hover:text-foreground"
+            )}
+          >
+            {isKeyword ? "—" : value.unit}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-auto min-w-16 p-1 rounded-md"
+          align="end"
+          sideOffset={4}
+        >
+          <div className="flex flex-col">
+            {units.map((u) => {
+              const active = u === value.unit
+              return (
+                <button
+                  key={u}
+                  type="button"
+                  onClick={() => handleUnitChange(u)}
+                  className={cn(
+                    "h-7 px-2 rounded text-[11px] text-center transition-colors cursor-pointer",
+                    active
+                      ? "bg-violet-50 text-violet-600 font-semibold"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  )}
+                >
+                  {u}
+                </button>
+              )
+            })}
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  )
+}

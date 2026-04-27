@@ -184,7 +184,7 @@ function ModeButton({
       className={cn(
         "h-8 w-8 flex items-center justify-center transition-colors cursor-pointer",
         active
-          ? "bg-violet-50 text-violet-600"
+          ? " text-violet-600"
           : "text-muted-foreground hover:bg-accent hover:text-foreground"
       )}
     >
