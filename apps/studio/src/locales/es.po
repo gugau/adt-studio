@@ -376,6 +376,9 @@ msgstr "Acerca del modo de sección"
 msgid "Accent Prompt"
 msgstr "Prompt de acento"
 
+msgid "Acceptable"
+msgstr "Acceptable"
+
 msgid "Accessibility"
 msgstr "Accessibility"
 
@@ -542,6 +545,9 @@ msgstr "Agregar Videos"
 msgid "Add your first book"
 msgstr "Agrega tu primer libro"
 
+msgid "Additional guidance"
+msgstr "Additional guidance"
+
 msgid "Additional Languages"
 msgstr "Idiomas adicionales"
 
@@ -624,6 +630,9 @@ msgstr "Todo"
 
 msgid "All Categories"
 msgstr "All Categories"
+
+msgid "All entries"
+msgstr "All entries"
 
 msgid "All issues and manual review items"
 msgstr "Todos los problemas y elementos de revisión manual"
@@ -831,6 +840,12 @@ msgstr "URL base"
 msgid "Basic Information"
 msgstr "Información Básica"
 
+msgid "Batch size"
+msgstr "Batch size"
+
+msgid "Batch size must be an integer greater than or equal to 1."
+msgstr "Batch size must be an integer greater than or equal to 1."
+
 msgid "Be descriptive — include style, colors, mood, and composition."
 msgstr "Sé descriptivo — incluye estilo, colores, estado de ánimo y composición."
 
@@ -879,6 +894,9 @@ msgstr "Idioma del libro"
 
 #~ msgid "Book Metadata"
 #~ msgstr "Metadatos del libro"
+
+msgid "Book override"
+msgstr "Book override"
 
 msgid "Book preview"
 msgstr "Vista previa del libro"
@@ -1096,6 +1114,9 @@ msgstr "Collapse accessibility summary"
 msgid "Collapse all sections"
 msgstr "Contraer todas las secciones"
 
+msgid "Collapse details"
+msgstr "Collapse details"
+
 msgid "Collapse validation"
 msgstr "Collapse validation"
 
@@ -1110,6 +1131,9 @@ msgstr "Comment"
 
 msgid "Comments"
 msgstr "Comments"
+
+msgid "Common issue types"
+msgstr "Common issue types"
 
 #~ msgid "Completed stages"
 #~ msgstr "Etapas completadas"
@@ -1143,6 +1167,9 @@ msgstr "Configura cada etapa — extraer, guión gráfico, diseño — luego dej
 
 msgid "Configure features to include in the export"
 msgstr "Configura las características a incluir en la exportación"
+
+msgid "Configure LLM-based translation evaluation for this book, including evaluation scope, execution controls, and judge instructions."
+msgstr "Configure LLM-based translation evaluation for this book, including evaluation scope, execution controls, and judge instructions."
 
 msgid "Confirm merge"
 msgstr "Confirmar fusión"
@@ -1188,6 +1215,9 @@ msgstr "Continue reviewer validation on page {0}"
 
 msgid "Continuing will reset your current configuration."
 msgstr "Continuar restablecerá su configuración actual."
+
+msgid "Control how many entries are evaluated in one run and how sampled entries are selected."
+msgstr "Control how many entries are evaluated in one run and how sampled entries are selected."
 
 msgid "Control which axe checks run during packaging for this document. Changes apply on the next package run."
 msgstr "Control which axe checks run during packaging for this document. Changes apply on the next package run."
@@ -1296,6 +1326,9 @@ msgstr "Custom section {index}"
 
 msgid "Custom:"
 msgstr "Personalizado:"
+
+msgid "Customize the instructions sent to the translation judge. The API supplies the source text, translated text, and language context for each entry."
+msgstr "Customize the instructions sent to the translation judge. The API supplies the source text, translated text, and language context for each entry."
 
 msgid "Decrease indent"
 msgstr "Disminuir sangría"
@@ -1445,6 +1478,9 @@ msgstr "¿Sabías que?"
 
 msgid "Disable reviewer validation"
 msgstr "Disable reviewer validation"
+
+msgid "Disable translation evaluation"
+msgstr "Disable translation evaluation"
 
 msgid "Disable type"
 msgstr "Desactivar tipo"
@@ -1625,6 +1661,9 @@ msgstr "Enable or disable reviewer-authored checklist reviews for this book. Aut
 msgid "Enable reviewer validation"
 msgstr "Enable reviewer validation"
 
+msgid "Enable translation evaluation"
+msgstr "Enable translation evaluation"
+
 msgid "Enabled"
 msgstr "Enabled"
 
@@ -1658,6 +1697,12 @@ msgstr "Introduce un nombre de proyecto válido"
 msgid "Enter hex color and press Enter"
 msgstr "Ingresa un color hex y presiona Enter"
 
+msgid "Entries"
+msgstr "Entries"
+
+msgid "Entries are selected first using the scope settings, then processed in batches of this size."
+msgstr "Entries are selected first using the scope settings, then processed in batches of this size."
+
 msgid "Error"
 msgstr "Error"
 
@@ -1673,6 +1718,19 @@ msgstr "Costo estimado"
 #~ msgid "Eva"
 #~ msgstr "Eva"
 
+#. placeholder {0}: selectedEvaluation.evaluationVersion
+msgid "Eval v{0}"
+msgstr "Eval v{0}"
+
+msgid "Evaluation Scope"
+msgstr "Evaluation Scope"
+
+msgid "Evaluation scope count"
+msgstr "Evaluation scope count"
+
+msgid "Evaluation scope count must be an integer greater than or equal to 1 when sampling is enabled."
+msgstr "Evaluation scope count must be an integer greater than or equal to 1 when sampling is enabled."
+
 msgid "Evaporation"
 msgstr "Evaporación"
 
@@ -1685,6 +1743,12 @@ msgstr "Libros de Ejemplo"
 msgid "Exclude from render"
 msgstr "Excluir de la renderización"
 
+msgid "Execution"
+msgstr "Execution"
+
+msgid "Existing evaluation history remains stored even if you disable new runs."
+msgstr "Existing evaluation history remains stored even if you disable new runs."
+
 msgid "Existing reviewer sessions keep their own checklist snapshot. New checklist changes apply to newly created sessions."
 msgstr "Existing reviewer sessions keep their own checklist snapshot. New checklist changes apply to newly created sessions."
 
@@ -1693,6 +1757,9 @@ msgstr "Expandir"
 
 msgid "Expand all sections"
 msgstr "Expandir todas las secciones"
+
+msgid "Expand details"
+msgstr "Expand details"
 
 msgid "Experimental configurations"
 msgstr "Configuraciones experimentales"
@@ -1783,6 +1850,10 @@ msgstr "Failed to load reviewer validation sessions: {0}"
 
 msgid "Failed to load stats:"
 msgstr "Error al cargar estadísticas:"
+
+#. placeholder {0}: evaluations.error.message
+msgid "Failed to load translation evaluations: {0}"
+msgstr "Failed to load translation evaluations: {0}"
 
 msgid "Failed to load validation checklist:"
 msgstr "Failed to load validation checklist:"
@@ -2170,6 +2241,9 @@ msgstr "Aumentar sangría"
 msgid "Infographic"
 msgstr "Infografía"
 
+msgid "Inherited defaults"
+msgstr "Inherited defaults"
+
 msgid "Initial Page"
 msgstr "Página Inicial"
 
@@ -2218,6 +2292,18 @@ msgstr "su idioma original"
 
 msgid "Jane Reviewer"
 msgstr "Jane Reviewer"
+
+msgid "Judge Configuration"
+msgstr "Judge Configuration"
+
+msgid "Judge instructions"
+msgstr "Judge instructions"
+
+msgid "Judge instructions cannot be empty."
+msgstr "Judge instructions cannot be empty."
+
+msgid "Judge model"
+msgstr "Judge model"
 
 msgid "KB"
 msgstr "KB"
@@ -2433,6 +2519,12 @@ msgstr "Loading template..."
 msgid "Loading text catalog..."
 msgstr "Cargando catálogo de textos..."
 
+msgid "Loading translation evaluation settings…"
+msgstr "Loading translation evaluation settings…"
+
+msgid "Loading translation evaluations..."
+msgstr "Loading translation evaluations..."
+
 msgid "Loading voice mappings..."
 msgstr "Cargando asignaciones de voz..."
 
@@ -2474,6 +2566,12 @@ msgstr "Asocia cada etapa del ciclo del agua con su definición:"
 
 msgid "Max Refinements"
 msgstr "Refinamientos máximos"
+
+msgid "Max retries"
+msgstr "Max retries"
+
+msgid "Max retries must be an integer greater than or equal to 0."
+msgstr "Max retries must be an integer greater than or equal to 0."
 
 #~ msgid "Max Side"
 #~ msgstr "Lado Máximo"
@@ -2592,6 +2690,9 @@ msgstr "Proyecto de Contenido Mixto"
 msgid "Model"
 msgstr "Modelo"
 
+msgid "Model identifier used by the API when asking the judge to review translations."
+msgstr "Model identifier used by the API when asking the judge to review translations."
+
 msgid "moderate"
 msgstr "moderate"
 
@@ -2627,6 +2728,9 @@ msgstr "Needs changes"
 
 msgid "Needs rebuild"
 msgstr "Requiere reconstrucción"
+
+msgid "Needs review"
+msgstr "Needs review"
 
 msgid "Never"
 msgstr "Nunca"
@@ -2664,6 +2768,9 @@ msgstr "Siguiente diapositiva"
 msgid "Next Step"
 msgstr "Siguiente Paso"
 
+msgid "No"
+msgstr "No"
+
 msgid "No accessibility assessment has been generated yet. Package the ADT output to create one."
 msgstr "No accessibility assessment has been generated yet. Package the ADT output to create one."
 
@@ -2693,6 +2800,9 @@ msgstr "Sin datos"
 
 msgid "No disabled rules"
 msgstr "No disabled rules"
+
+msgid "No evaluation has been stored for this language yet. Run an evaluation to generate verdicts."
+msgstr "No evaluation has been stored for this language yet. Run an evaluation to generate verdicts."
 
 msgid "No extracted text yet. Run the pipeline first."
 msgstr "Aún no se extrajo texto. Ejecuta el pipeline primero."
@@ -2817,6 +2927,9 @@ msgstr "Aún no se han cargado videos de lengua de señas."
 msgid "No text extracted"
 msgstr "No se extrajo texto"
 
+msgid "No translated languages are available yet. Generate translations in Text & Speech first."
+msgstr "No translated languages are available yet. Generate translations in Text & Speech first."
+
 msgid "No translations for this page"
 msgstr "Sin traducciones para esta página"
 
@@ -2841,11 +2954,17 @@ msgstr "Ninguno"
 msgid "Not detected"
 msgstr "No detectado"
 
+msgid "Not evaluated"
+msgstr "Not evaluated"
+
 msgid "Not generated"
 msgstr "No generado"
 
 msgid "Not reviewed"
 msgstr "Not reviewed"
+
+msgid "Not stored in this evaluation version."
+msgstr "Not stored in this evaluation version."
 
 msgid "Note"
 msgstr "Nota"
@@ -2904,6 +3023,9 @@ msgstr "Open a page to see page-level findings"
 msgid "Open edit panel"
 msgstr "Abrir panel de edición"
 
+msgid "Open legacy run"
+msgstr "Open legacy run"
+
 msgid "Open page preview for {pageId}"
 msgstr "Abrir vista previa de la página {0}"
 
@@ -2919,17 +3041,26 @@ msgstr "OpenAI"
 msgid "OpenAI API Key"
 msgstr "Clave de API de OpenAI"
 
+msgid "OpenAI API key required for translation evaluation."
+msgstr "OpenAI API key required for translation evaluation."
+
 msgid "OpenAI key required"
 msgstr "Se requiere clave de OpenAI"
 
 msgid "OpenAI Voice"
 msgstr "Voz OpenAI"
 
+msgid "Optional extra context appended to the judge prompt, such as terminology reminders or audience-specific guidance."
+msgstr "Optional extra context appended to the judge prompt, such as terminology reminders or audience-specific guidance."
+
 msgid "Optional Features"
 msgstr "Características opcionales"
 
 msgid "Optional instructions for the LLM..."
 msgstr "Instrucciones opcionales para el LLM..."
+
+msgid "Optional integer seed for reproducible random sampling."
+msgstr "Optional integer seed for reproducible random sampling."
 
 msgid "Optional notes about the review scope or assignments"
 msgstr "Optional notes about the review scope or assignments"
@@ -2945,6 +3076,9 @@ msgstr "las opciones son deterministas;"
 
 msgid "options generate a fresh layout per page."
 msgstr "las opciones generan un diseño nuevo por página."
+
+msgid "Original"
+msgstr "Original"
 
 msgid "Original language"
 msgstr "Idioma original"
@@ -3296,6 +3430,12 @@ msgstr "Cuestionarios"
 msgid "Quizzes are linked to other pages in this book"
 msgstr "Los quizzes están vinculados a otras páginas de este libro"
 
+msgid "Random"
+msgstr "Random"
+
+msgid "Rationale"
+msgstr "Rationale"
+
 msgid "Re-enable type"
 msgstr "Reactivar tipo"
 
@@ -3459,6 +3599,12 @@ msgstr "Requerido"
 msgid "Required Fields"
 msgstr "Campos Requeridos"
 
+msgid "Reset"
+msgstr "Reset"
+
+msgid "Reset to default"
+msgstr "Reset to default"
+
 msgid "Reset to defaults"
 msgstr "Reset to defaults"
 
@@ -3492,6 +3638,9 @@ msgstr "Retries"
 
 msgid "Retry"
 msgstr "Reintentar"
+
+msgid "Retry budget for temporary judge or provider failures."
+msgstr "Retry budget for temporary judge or provider failures."
 
 msgid "Retry Export"
 msgstr "Reintentar exportación"
@@ -3547,6 +3696,12 @@ msgstr "El aumento de las temperaturas oceánicas causa el blanqueamiento de cor
 msgid "Run {stageLabel}"
 msgstr "Ejecutar {0}"
 
+msgid "Run evaluation"
+msgstr "Run evaluation"
+
+msgid "Run LLM review on translated catalog entries and inspect acceptable versus needs-review verdicts by language."
+msgstr "Run LLM review on translated catalog entries and inspect acceptable versus needs-review verdicts by language."
+
 msgid "Run the pipeline"
 msgstr "Ejecutar el pipeline"
 
@@ -3571,6 +3726,9 @@ msgstr "Running Validation..."
 msgid "Runs in background — you can keep editing"
 msgstr "Se ejecuta en segundo plano — puedes seguir editando"
 
+msgid "Sample entries"
+msgstr "Sample entries"
+
 msgid "Sample Illustrated Story"
 msgstr "Ejemplo de Historia Ilustrada"
 
@@ -3579,6 +3737,15 @@ msgstr "Tasa de muestreo"
 
 msgid "Sample Reference Manual"
 msgstr "Ejemplo de Manual de Referencia"
+
+msgid "Sampling method"
+msgstr "Sampling method"
+
+msgid "Sampling seed"
+msgstr "Sampling seed"
+
+msgid "Sampling seed must be an integer."
+msgstr "Sampling seed must be an integer."
 
 msgid "Save"
 msgstr "Guardar"
@@ -3612,6 +3779,9 @@ msgstr "Guardar y volver a ejecutar la generación de la tabla de contenidos"
 
 msgid "Save & Rerun Translations"
 msgstr "Guardar y reejecutar traducciones"
+
+msgid "Save changes"
+msgstr "Save changes"
 
 msgid "Save changes before re-rendering"
 msgstr "Guarda los cambios antes de re-renderizar"
@@ -3648,6 +3818,9 @@ msgstr "Libros de texto y cuadernos escolares"
 
 msgid "Scientific papers and journals"
 msgstr "Artículos científicos y revistas"
+
+msgid "Scope mode"
+msgstr "Scope mode"
 
 msgid "SCORM Export"
 msgstr "Exportación SCORM"
@@ -3809,11 +3982,20 @@ msgstr "Selecciona una guía de estilo para previsualizar cómo estiliza las pá
 msgid "Select activity type..."
 msgstr "Seleccionar tipo de actividad..."
 
+msgid "Select language"
+msgstr "Select language"
+
 msgid "Select node type..."
 msgstr "Seleccionar tipo de nodo..."
 
 msgid "Select reviewer session"
 msgstr "Select reviewer session"
+
+msgid "Select sampling method"
+msgstr "Select sampling method"
+
+msgid "Select scope mode"
+msgstr "Select scope mode"
 
 msgid "Select section mode"
 msgstr "Seleccionar modo de sección"
@@ -3838,6 +4020,12 @@ msgstr "Seleccionar \\\"Ninguno\\\" permite al LLM elegir su propio estilo para 
 
 msgid "Separator"
 msgstr "Separador"
+
+msgid "Sequential"
+msgstr "Sequential"
+
+msgid "Sequential takes entries in catalog order. Random shuffles the available entries first."
+msgstr "Sequential takes entries in catalog order. Random shuffles the available entries first."
 
 msgid "serious"
 msgstr "serious"
@@ -3993,6 +4181,9 @@ msgstr "Espolvoreando un poco de polvo mágico digital..."
 
 msgid "stage first."
 msgstr "primero."
+
+msgid "Stale"
+msgstr "Stale"
 
 #~ msgid "Standalone Text"
 #~ msgstr "Texto independiente"
@@ -4203,6 +4394,9 @@ msgstr "La IA preservará el estilo original al aplicar tus cambios."
 msgid "The back cover of the book."
 msgstr "La contraportada del libro."
 
+msgid "The cards below continue to show the last saved evaluation until this task finishes."
+msgstr "The cards below continue to show the last saved evaluation until this task finishes."
+
 msgid "The credits page."
 msgstr "La página de créditos."
 
@@ -4332,6 +4526,9 @@ msgstr "Esta sección aún no tiene renderización de storyboard"
 msgid "This session is using an older reviewer checklist snapshot. Newer checklist settings will apply only to newly created reviewer sessions."
 msgstr "This session is using an older reviewer checklist snapshot. Newer checklist settings will apply only to newly created reviewer sessions."
 
+msgid "This text is used as the base instruction for the judge. Existing configs with old input/output placeholders remain valid."
+msgstr "This text is used as the base instruction for the judge. Existing configs with old input/output placeholders remain valid."
+
 msgid "This will save your settings and re-generate the table of contents."
 msgstr "Esto guardará tu configuración y volverá a generar la tabla de contenidos."
 
@@ -4404,6 +4601,9 @@ msgstr "Demasiado grande"
 msgid "Too small"
 msgstr "Demasiado pequeño"
 
+msgid "Total number of entries to evaluate when scope mode is set to sample."
+msgstr "Total number of entries to evaluate when scope mode is set to sample."
+
 msgid "Total Tokens"
 msgstr "Tokens totales"
 
@@ -4422,8 +4622,27 @@ msgstr "Traduciendo idiomas..."
 msgid "Translation"
 msgstr "Traducción"
 
+msgid "Translation evaluation"
+msgstr "Translation evaluation"
+
+msgid "Translation Evaluation"
+msgstr "Translation Evaluation"
+
+msgid "Translation evaluation is disabled in book settings. Enable it before running a new evaluation."
+msgstr "Translation evaluation is disabled in book settings. Enable it before running a new evaluation."
+
+msgid "Translation evaluation is running"
+msgstr "Translation evaluation is running"
+
+msgid "Translation evaluation settings"
+msgstr "Translation evaluation settings"
+
 msgid "Translation Prompt"
 msgstr "Prompt de traducción"
+
+#. placeholder {0}: selectedEvaluation.currentTranslationVersion
+msgid "Translation v{0}"
+msgstr "Translation v{0}"
 
 msgid "Translations"
 msgstr "Traducciones"
@@ -4443,11 +4662,17 @@ msgstr "Probar actividad"
 msgid "Try another file"
 msgstr "Probar otro archivo"
 
+msgid "Tune retry behavior and batch processing. Scope count controls the total entries selected; batch size controls how many selected entries are processed per chunk."
+msgstr "Tune retry behavior and batch processing. Scope count controls the total entries selected; batch size controls how many selected entries are processed per chunk."
+
 msgid "Turn any PDF into a fully accessible book — audio, translations, structured HTML layouts — all generated from your source file, <0>all editable</0>, <1>all yours</1>."
 msgstr "Convierte cualquier PDF en un libro totalmente accesible — audio, traducciones, diseños HTML estructurados — todo generado a partir de tu archivo fuente, <0>todo editable</0>, <1>todo tuyo</1>."
 
 msgid "Turn this on to show the Validation review card in Preview and the Reviewer Validation tab in the Validation step."
 msgstr "Turn this on to show the Validation review card in Preview and the Reviewer Validation tab in the Validation step."
+
+msgid "Turn translation evaluation on or off for this book and choose the judge model used to review translations."
+msgstr "Turn translation evaluation on or off for this book and choose the judge model used to review translations."
 
 msgid "Two authentication methods are supported: Bearer tokens passed in the Authorization header, and API keys passed as a query parameter. Bearer tokens are preferred for server-to-server requests due to their short expiry window."
 msgstr "Se admiten dos métodos de autenticación: tokens Bearer pasados en el encabezado de Autorización y claves de API pasadas como un parámetro de consulta. Se prefieren los tokens Bearer para solicitudes de servidor a servidor debido a su corta ventana de expiración."
@@ -4475,6 +4700,9 @@ msgstr "Tipos usados durante el seccionamiento de páginas. Los tipos eliminados
 
 msgid "Unable to load reviewer checklist settings."
 msgstr "Unable to load reviewer checklist settings."
+
+msgid "Unable to load translation evaluation settings."
+msgstr "Unable to load translation evaluation settings."
 
 msgid "Unable to render PDF preview."
 msgstr "No se puede renderizar la vista previa del PDF."
@@ -4589,6 +4817,9 @@ msgstr "Usa un LLM para detectar y dividir imágenes compuestas (ej.: múltiples
 
 msgid "Use an LLM to filter out decorative or non-educational images."
 msgstr "Usa un LLM para filtrar imágenes decorativas o no educativas."
+
+msgid "Use scope mode to choose whether the evaluation should inspect the full translation catalog or only a subset."
+msgstr "Use scope mode to choose whether the evaluation should inspect the full translation catalog or only a subset."
 
 msgid "Use this for checks you intentionally want to suppress, such as known false positives."
 msgstr "Use this for checks you intentionally want to suppress, such as known false positives."
@@ -4734,6 +4965,9 @@ msgstr "Envuelve solicitudes de 'Editar esta imagen'. La IA recibe la imagen ori
 
 msgid "Wraps 'Generate new' requests. Supports user_prompt, style, and image_type variables. Uses Liquid syntax for conditionals."
 msgstr "Envuelve solicitudes de 'Generar nueva'. Soporta variables user_prompt, style e image_type. Usa sintaxis Liquid para condicionales."
+
+msgid "Yes"
+msgstr "Yes"
 
 msgid "Young adult fiction"
 msgstr "Ficción para jóvenes adultos"
