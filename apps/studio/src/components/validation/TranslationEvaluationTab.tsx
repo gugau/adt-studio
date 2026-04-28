@@ -292,7 +292,7 @@ export function TranslationEvaluationTab({ label }: { label: string }) {
               <h3 className="text-sm font-semibold"><Trans>Translation evaluation</Trans></h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              <Trans>Run MLflow-backed LLM review on translated catalog entries and inspect acceptable versus needs-review verdicts by language.</Trans>
+              <Trans>Run LLM review on translated catalog entries and inspect acceptable versus needs-review verdicts by language.</Trans>
             </p>
           </div>
 
@@ -435,7 +435,7 @@ export function TranslationEvaluationTab({ label }: { label: string }) {
                 target="_blank"
                 rel="noreferrer"
               >
-                <Trans>Open MLflow run</Trans>
+                <Trans>Open legacy run</Trans>
               </a>
             </div>
           ) : null}

@@ -322,7 +322,7 @@ describe("Translation evaluation routes", () => {
     )
   })
 
-  it("forwards the redesigned translation evaluation settings to the eval service", async () => {
+  it("forwards the redesigned translation evaluation settings to the evaluator", async () => {
     enableTranslationEvaluationWithNewScopeConfig()
 
     const res = await app.request(`/api/books/${label}/evaluations/translations/fr/run`, {

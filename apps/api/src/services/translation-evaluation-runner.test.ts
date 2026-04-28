@@ -128,7 +128,7 @@ describe("translation-evaluation-runner", () => {
     })).rejects.toThrow("OpenAI API key required")
   })
 
-  it("normalizes legacy MLflow-style OpenAI model URIs", () => {
+  it("normalizes legacy slash-prefixed OpenAI model URIs", () => {
     expect(translationEvaluationRunnerInternals.normalizeJudgeModel("openai:/gpt-4.1-mini"))
       .toBe("openai:gpt-4.1-mini")
   })

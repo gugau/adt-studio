@@ -213,7 +213,7 @@ export function TranslationEvaluationSettingsTab({ label }: { label: string }) {
             <FlaskConical className="h-4 w-4 text-muted-foreground" />
             <SectionHeader
               title={t`Translation evaluation settings`}
-              description={t`Configure MLflow-backed translation evaluation for this book, including evaluation scope, execution controls, and judge instructions.`}
+              description={t`Configure LLM-based translation evaluation for this book, including evaluation scope, execution controls, and judge instructions.`}
             />
           </div>
         </div>
@@ -253,7 +253,7 @@ export function TranslationEvaluationSettingsTab({ label }: { label: string }) {
 
       <SettingsSection
         title={t`General`}
-        description={t`Turn translation evaluation on or off for this book and choose the judge model used by MLflow make_judge.`}
+        description={t`Turn translation evaluation on or off for this book and choose the judge model used to review translations.`}
       >
         <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_auto]">
           <div className="space-y-2">
@@ -266,7 +266,7 @@ export function TranslationEvaluationSettingsTab({ label }: { label: string }) {
               disabled={updateConfig.isPending}
             />
             <p className="text-xs text-muted-foreground">
-              <Trans>Model URI used by the evaluation service when creating the MLflow judge.</Trans>
+              <Trans>Model identifier used by the API when asking the judge to review translations.</Trans>
             </p>
           </div>
 
@@ -412,7 +412,7 @@ export function TranslationEvaluationSettingsTab({ label }: { label: string }) {
 
       <SettingsSection
         title={t`Judge Configuration`}
-        description={t`Customize the instructions sent into MLflow make_judge. The main template should reference only the standard input and output placeholders.`}
+        description={t`Customize the instructions sent to the translation judge. The API supplies the source text, translated text, and language context for each entry.`}
         collapsible
         defaultOpen={false}
       >
@@ -438,11 +438,7 @@ export function TranslationEvaluationSettingsTab({ label }: { label: string }) {
               disabled={updateConfig.isPending}
             />
             <p className="text-xs text-muted-foreground">
-              <span><Trans>This template is used as the base prompt for the judge. It must include</Trans>{" "}</span>
-              <code>{"{{ inputs }}"}</code>
-              <span>{" "}<Trans>and</Trans>{" "}</span>
-              <code>{"{{ outputs }}"}</code>
-              <span>{" "}<Trans>placeholders for MLflow.</Trans></span>
+              <Trans>This text is used as the base instruction for the judge. Existing configs with old input/output placeholders remain valid.</Trans>
             </p>
           </div>
 

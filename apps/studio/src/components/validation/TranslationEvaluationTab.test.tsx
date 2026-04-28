@@ -156,7 +156,7 @@ describe("TranslationEvaluationTab", () => {
     fireEvent.click(screen.getByRole("button", { name: "Expand details" }))
     expect(screen.getByText("Hello world")).toBeTruthy()
     expect(screen.getByText("Bonjour le monde")).toBeTruthy()
-    const mlflowLink = screen.getByRole("link", { name: "Open MLflow run" })
+    const mlflowLink = screen.getByRole("link", { name: "Open legacy run" })
     expect(mlflowLink.getAttribute("href")).toBe("https://mlflow.example/runs/run-123")
   })
 
@@ -177,7 +177,7 @@ describe("TranslationEvaluationTab", () => {
       {
         kind: "translation-evaluation",
         status: "failed",
-        error: "MLflow judge timed out",
+        error: "Translation judge timed out",
         completedAt: 100,
       },
     ]
@@ -193,7 +193,7 @@ describe("TranslationEvaluationTab", () => {
     fireEvent.click(screen.getByRole("button", { name: "Run evaluation" }))
 
     expect(runEvaluationState.mutate).toHaveBeenCalledWith("sw")
-    expect(screen.getByText("MLflow judge timed out")).toBeTruthy()
+    expect(screen.getByText("Translation judge timed out")).toBeTruthy()
     expect(
       screen.getByText("No evaluation has been stored for this language yet. Run an evaluation to generate verdicts."),
     ).toBeTruthy()
