@@ -1,6 +1,6 @@
 <div align="center">
   <h1>ADT Studio</h1>
-  <p>Turn any PDF into a **fully accessible web publication** — audio, translations, structured HTML layouts — all generated from your source file, all editable, all yours.</p>
+  <p>Turn any PDF into a — audio, translations, structured HTML layouts — all generated from your source file, all editable, all yours.</p>
   <img width="563" height="426" alt="Screenshot 2026-04-28 at 10 39 23 AM" src="https://github.com/user-attachments/assets/2df657a0-6023-48ae-acd8-3f7a86f1a1b4" />
 </div>
 
