@@ -236,6 +236,18 @@ function VersionPicker({
 type SectioningData = PageSectioningOutput
 type RenderingData = NonNullable<PageDetail["rendering"]>
 
+// `_el#` data-ids are assigned by the iframe at runtime to give the inspector
+// a stable handle on container elements; they must not be persisted.
+function stripTransientIds(rendering: RenderingData): RenderingData {
+  return {
+    ...rendering,
+    sections: rendering.sections.map((s) => ({
+      ...s,
+      html: s.html.replace(/\s+data-id="_el\d+"/g, ""),
+    })),
+  }
+}
+
 // Replace the section at index `sectionIndex` with the given section, producing
 // a new PageSectioningOutput.
 function replaceSection(
@@ -723,9 +735,10 @@ export function StoryboardSectionDetail({
       // Save rendering if dirty (from delete/prune removing HTML elements).
       // Use renderingFromPrune if we just stripped pruned elements above,
       // since React state won't have updated yet within this async call.
-      const renderingToSave = renderingFromPrune ?? pendingRendering
+      const flushed = flushPendingHtml()
+      const renderingToSave = renderingFromPrune ?? flushed ?? pendingRendering
       if (renderingToSave) {
-        await api.updateRendering(bookLabel, pageId, renderingToSave)
+        await api.updateRendering(bookLabel, pageId, stripTransientIds(renderingToSave))
       }
 
       setPendingSectioning(null)
@@ -755,17 +768,20 @@ export function StoryboardSectionDetail({
 
   // Save rendering (including back-propagation to sectioning)
   const saveRendering = async () => {
-    if (!pendingRendering || storyboardRunning) return
+    const flushed = flushPendingHtml()
+    const renderingToSave = flushed ?? pendingRendering
+    if (!renderingToSave || storyboardRunning) return
     setSaving(true)
     setPanelOpen(false)
     try {
       const minDelay = new Promise((r) => setTimeout(r, 400))
 
-      // Save the rendering
-      await api.updateRendering(bookLabel, pageId, pendingRendering)
+      await api.updateRendering(bookLabel, pageId, stripTransientIds(renderingToSave))
 
-      // Back-propagate: if we have sectioning data and edited HTML, update sectioning too
-      const editedHtml = getRenderedSectionByIndex(pendingRendering, sectionIndex)?.html
+      // Back-propagate text changes into sectioning. `renderingToSave` already
+      // includes the flushed inspector edit; the closure `pendingRendering`
+      // is stale until React re-renders.
+      const editedHtml = getRenderedSectionByIndex(renderingToSave, sectionIndex)?.html
       const sBase = pendingSectioning ?? (page.sectioningTree as SectioningData | null)
       if (editedHtml && sBase) {
         const updatedSectioning = backPropagateTextChanges(
@@ -1228,28 +1244,45 @@ export function StoryboardSectionDetail({
     setSelectedElementClasses(previewFrameRef.current?.getElementClasses(dataId) ?? null)
   }, [])
 
-  // Handle Tailwind class changes from the toolbar
+  // Inspector edits mutate the iframe DOM directly; this ref stashes the
+  // resulting HTML and is committed to React state only at boundaries
+  // (selection change, save, unmount) so per-keystroke changes don't
+  // re-render BookPreviewFrame and rebuild its body.
+  const pendingHtmlRef = useRef<{ html: string; sectionIndex: number } | null>(null)
+
   const handleClassesChange = useCallback(
     (dataId: string, classes: string[]) => {
       if (!page.rendering) return
       const fullHtml = previewFrameRef.current?.setElementClasses(dataId, classes)
       if (!fullHtml) return
-      // Optimistically update stored classes
       setSelectedElementClasses(classes)
-      const base = pendingRendering ?? page.rendering
-      const updated = {
-        ...base,
-        sections: base.sections.map((s) => {
-          if (s.sectionIndex !== sectionIndex) return s
-          return { ...s, html: fullHtml }
-        }),
-      }
-      setPendingRendering(updated)
-      // Refresh Tailwind CSS so newly added classes render correctly
       previewFrameRef.current?.refreshCss(fullHtml)
+      pendingHtmlRef.current = { html: fullHtml, sectionIndex }
     },
-    [page.rendering, pendingRendering, sectionIndex]
+    [page.rendering, sectionIndex]
   )
+
+  const flushPendingHtml = useCallback((): RenderingData | null => {
+    const queued = pendingHtmlRef.current
+    if (!queued) return pendingRendering
+    if (!page.rendering) return pendingRendering
+    pendingHtmlRef.current = null
+    const base = pendingRendering ?? page.rendering
+    const merged: RenderingData = {
+      ...base,
+      sections: base.sections.map((s) =>
+        s.sectionIndex !== queued.sectionIndex ? s : { ...s, html: queued.html }
+      ),
+    }
+    setPendingRendering(merged)
+    return merged
+  }, [page.rendering, pendingRendering])
+
+  useEffect(() => {
+    return () => {
+      flushPendingHtml()
+    }
+  }, [selectedElement?.dataId, flushPendingHtml])
 
   // Handle toolbar prune toggle (nodeId === data-id in tree shape)
   const handleToolbarPrune = useCallback(
@@ -1970,6 +2003,7 @@ export function StoryboardSectionDetail({
                   onSelectElement={handleSelectElement}
                   onTextChanged={handleTextChanged}
                   applyBodyBackground={applyBodyBackground}
+                  selectedDataId={selectedElement?.dataId ?? null}
                 />
             )}
           </>

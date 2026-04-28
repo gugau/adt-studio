@@ -72,6 +72,8 @@ export interface BookPreviewFrameProps {
   onTextChanged?: (dataId: string, newText: string, fullHtml: string) => void
   /** When true (default), applies data-background-color to the iframe body */
   applyBodyBackground?: boolean
+  /** data-id of the currently selected element; re-applied after each body rebuild. */
+  selectedDataId?: string | null
 }
 
 /**
@@ -95,37 +97,46 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   onSelectElement,
   onTextChanged,
   applyBodyBackground,
+  selectedDataId,
 }, ref) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
+  const refreshIdRef = useRef(0)
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const assetsPrefix = previewAssetsUrl(bookLabel)
 
   useImperativeHandle(ref, () => ({
     getIframeRect: () => iframeRef.current?.getBoundingClientRect() ?? null,
     refreshCss: async (extraHtml: string) => {
-      const doc = iframeRef.current?.contentDocument
-      if (!doc?.head) return
-      const res = await fetch(`${assetsPrefix}/content/tailwind_output.css`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ extraHtml }),
-      })
-      if (!res.ok) return
-      const css = await res.text()
-      const styleId = "adt-dynamic-css"
-      let styleEl = doc.getElementById(styleId) as HTMLStyleElement | null
-      if (!styleEl) {
-        styleEl = doc.createElement("style")
-        styleEl.id = styleId
-        doc.head.appendChild(styleEl)
-      }
-      styleEl.textContent = css
-      // Re-measure height since new styles may change layout
-      requestAnimationFrame(() => {
-        const h = doc.body?.scrollHeight
-        if (h && h > 0) setContentHeight(h)
-      })
+      // Debounce keystroke bursts; bail if a newer call superseded us mid-fetch.
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
+      refreshTimerRef.current = setTimeout(async () => {
+        refreshTimerRef.current = null
+        const id = ++refreshIdRef.current
+        const doc = iframeRef.current?.contentDocument
+        if (!doc?.head) return
+        const res = await fetch(`${assetsPrefix}/content/tailwind_output.css`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ extraHtml }),
+        })
+        if (id !== refreshIdRef.current || !res.ok) return
+        const css = await res.text()
+        if (id !== refreshIdRef.current) return
+        const styleId = "adt-dynamic-css"
+        let styleEl = doc.getElementById(styleId) as HTMLStyleElement | null
+        if (!styleEl) {
+          styleEl = doc.createElement("style")
+          styleEl.id = styleId
+          doc.head.appendChild(styleEl)
+        }
+        styleEl.textContent = css
+        requestAnimationFrame(() => {
+          const h = doc.body?.scrollHeight
+          if (h && h > 0) setContentHeight(h)
+        })
+      }, 150)
     },
     getElementClasses: (dataId: string): string[] => {
       const doc = iframeRef.current?.contentDocument
@@ -140,15 +151,13 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
       const el = doc.querySelector(`[data-id="${CSS.escape(dataId)}"]`) as HTMLElement | null
       if (!el) return null
       el.className = classes.join(" ")
-      // Strip transient selection/editing attributes before extracting HTML
+      // Don't strip `_el#` data-ids here — the inspector relies on them across
+      // edits in a session. They're stripped only at API persist time.
       const transientEls = doc.querySelectorAll("[data-adt-selected], [data-adt-editing]")
       transientEls.forEach((te) => {
         te.removeAttribute("data-adt-selected")
         te.removeAttribute("data-adt-editing")
       })
-      // Also strip dynamically-assigned container data-ids (prefixed _el)
-      doc.querySelectorAll('[data-id^="_el"]').forEach((te) => te.removeAttribute("data-id"))
-      // Extract the full HTML to persist into rendering
       const wrapper = doc.getElementById("content")
       let html: string
       if (wrapper) {
@@ -157,10 +166,7 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
       } else {
         html = doc.body.innerHTML
       }
-      // Restore the selected attribute on the current element
       el.setAttribute("data-adt-selected", "true")
-      // Restore the dynamic data-id if it was stripped
-      if (dataId.startsWith("_el")) el.setAttribute("data-id", dataId)
       return html
     },
   }))
@@ -539,11 +545,26 @@ ${interactiveScript}
     measureTimerRef.current = setTimeout(measureHeight, 500)
   }
 
-  // When html prop changes, reset height and update the body directly (no iframe reload)
+  // injectContent re-measures synchronously, so don't reset contentHeight
+  // here — collapsing to 800 first causes a layout jump on every commit.
   useEffect(() => {
-    setContentHeight(800)
     if (readyRef.current) injectContent(displayHtml)
   }, [displayHtml, applyBodyBackground])
+
+  // Re-stamp the selection attribute after every body rebuild. Must run
+  // after the inject effect above (declaration order matters).
+  useEffect(() => {
+    const doc = iframeRef.current?.contentDocument
+    if (!doc) return
+    doc.querySelectorAll("[data-adt-selected]").forEach((el) => {
+      if (el.getAttribute("data-id") !== selectedDataId) {
+        el.removeAttribute("data-adt-selected")
+      }
+    })
+    if (!selectedDataId) return
+    const el = doc.querySelector(`[data-id="${CSS.escape(selectedDataId)}"]`)
+    if (el) el.setAttribute("data-adt-selected", "true")
+  }, [selectedDataId, displayHtml, iframeReady])
 
   // Toggle editability dynamically via data attribute (no iframe reload needed)
   useEffect(() => {
