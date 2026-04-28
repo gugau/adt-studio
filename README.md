@@ -21,27 +21,36 @@
 [![NEES](https://img.shields.io/badge/NEES-UFAL-E63946)](https://nees.ufal.br/)
 [![Ceibal](https://img.shields.io/badge/Ceibal-009639)](https://www.ceibal.edu.uy/)
 
-## Key Features
+## Key features
 
-- Downloadable desktop application.
-- Support for major models.
-- PDF extraction.
-- AI Pedagogic asset filtering.
-- Sectioning, labeling structuring book content.
-- Complex figure detection and extraction (with multi-lingual support).
-- Structured WCAG validated accessible web output (with multiple render modes).
-- AI generated rich design matching the original book.
-- Conversion of static pages to interactive activities
-- Visual editor for modifying design and content.
-- Context aware image caption generation.
-- Generated accessible comprehension quizzes.
-- Generated pedagogically aligned glossary.
-- Generated table of contents.
-- Multi-lingual translation.
-- Locally appropriate text to speech.
-- Accessibility evaluation.
-- User friendly navigation for education.
-- Export to web, webpub, epub3, SCORM.
+### From PDF to structured content
+- **Extracts everything** — text, figures, layout structure from any PDF.
+- **AI sectioning** — labels chapters, headings, and pedagogic content automatically.
+- **Smart filtering** — keeps what matters, drops what doesn't.
+- **Complex figure handling** — detects and extracts multi-part figures, with multilingual support.
+
+### Built for accessibility
+- **WCAG-validated output** — accessibility checked, not just claimed.
+- **Multiple render modes** — readers choose how content is displayed.
+- **Context-aware alt text** — image descriptions that actually describe the image.
+- **Localized text-to-speech** — natural narration in the right voice for each language.
+- **Multilingual translation** — one source, many languages.
+
+### Generated learning material
+- **Comprehension quizzes** — accessible, auto-generated from chapter content.
+- **Pedagogically aligned glossary** — key terms surfaced and defined.
+- **Table of contents** — navigable, structured, automatic.
+- **Interactive activities** — static exercises converted into web-native interactions.
+- **Original-matching design** — AI rebuilds the book's visual identity, accessibly.
+
+### Author-friendly tooling
+- **Visual editor** — tweak design and content without touching code.
+- **Accessibility evaluator** — flags issues before you publish.
+- **Major model support** — works with the LLMs your team already uses.
+- **Desktop app** — download, install, run locally. Windows and macOS.
+
+### Ships everywhere
+Export to **Web · WebPub · EPUB 3 · SCORM** — drop into any LMS, library platform, or website.
 
 ## See ADTs in action
 
