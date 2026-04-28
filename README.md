@@ -21,6 +21,67 @@
 [![NEES](https://img.shields.io/badge/NEES-UFAL-E63946)](https://nees.ufal.br/)
 [![Ceibal](https://img.shields.io/badge/Ceibal-009639)](https://www.ceibal.edu.uy/)
 
+## Key Features
+
+- Downloadable desktop application.
+- Support for major models.
+- PDF extraction.
+- AI Pedagogic asset filtering.
+- Sectioning, labeling structuring book content.
+- Complex figure detection and extraction (with multi-lingual support).
+- Structured WCAG validated accessible web output (with multiple render modes).
+- AI generated rich design matching the original book.
+- Conversion of static pages to interactive activities
+- Visual editor for modifying design and content.
+- Context aware image caption generation.
+- Generated accessible comprehension quizzes.
+- Generated pedagogically aligned glossary.
+- Generated table of contents.
+- Multi-lingual translation.
+- Locally appropriate text to speech.
+- Accessibility evaluation.
+- User friendly navigation for education.
+- Export to web, webpub, epub3, SCORM.
+
+## See ADTs in action
+
+These are live ADTs generated from real PDF source files. They span the spectrum from **fully unedited AI output** to **textbook content with hands-on curation** — pick one to get a feel for what the pipeline produces at each level of human involvement.
+
+<table>
+<tr>
+<td align="center" valign="top" width="33%">
+
+### 🇧🇹 Momo and the Leopards
+Multilingual reader from Bhutan
+
+![AI output: pure](https://img.shields.io/badge/AI_output-pure_%28no_edits%29-1CABE2)
+
+**[Open demo →](https://unicef.github.io/adt-momo-storybook/)**
+
+</td>
+<td align="center" valign="top" width="33%">
+
+### 🇺🇾 Queremos Participar
+Informative reader from Uruguay
+
+![AI output: lightly edited](https://img.shields.io/badge/AI_output-lightly_edited-yellowgreen)
+
+**[Open demo →](https://unicef.github.io/adt-queremos-participar/)**
+
+</td>
+<td align="center" valign="top" width="33%">
+
+### 🇺🇾 Cuaderno 5, Ch. 1
+Grade 5 textbook with activities, Uruguay
+
+![AI output: extensively edited](https://img.shields.io/badge/AI_output-extensively_edited-orange)
+
+**[Open demo →](https://unicef.github.io/ADT-cuaderno5-chapter1/)**
+
+</td>
+</tr>
+</table>
+
 ## About
 
 Desktop-first application for automated book production — extract content from PDFs, process through LLM pipelines, and generate formatted output bundles.
