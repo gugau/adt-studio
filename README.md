@@ -12,9 +12,7 @@
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPL--3.0-green)](../LICENSE)
 [![ADT Initiative](https://img.shields.io/badge/ADT_Initiative-accessibletextbooksforall.org-1CABE2)](https://www.accessibletextbooksforall.org/)
 
-## Partners
-
-<h2>Partners</h2>
+## Supported by
 
 <p align="center">
   <a href="https://www.unicef.org/" title="UNICEF">
@@ -23,10 +21,6 @@
   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="https://openai.com/" title="OpenAI">
     <img src="https://upload.wikimedia.org/wikipedia/commons/4/4d/OpenAI_Logo.svg" alt="OpenAI" height="36">
-  </a>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <a href="https://nees.ufal.br/" title="NEES — UFAL">
-    <img src="https://www.nees.ufal.br/app/uploads/2026/01/cropped-MarcaHead-1.png" alt="NEES (UFAL)" height="48">
   </a>
   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 </p>
