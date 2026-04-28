@@ -8,22 +8,6 @@ services:
     ports:
       - "${PORT:-8080}:80"
     environment:
-      # Optional translation-evaluation service. Leave unset to disable
-      # evaluation runs from the Validation UI.
-      - EVAL_SERVICE_URL=${EVAL_SERVICE_URL:-}
-      - EVAL_SERVICE_TOKEN=${EVAL_SERVICE_TOKEN:-}
     volumes:
       - ./books:/app/books
     restart: unless-stopped
-
-  # Optional MLflow-backed evaluation worker. Uncomment and replace the image
-  # with your deployed eval service once available.
-  #
-  # eval-service:
-  #   image: ghcr.io/unicef/adt-eval-service:__TAG__
-  #   environment:
-  #     - PORT=8081
-  #     - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI:-}
-  #     - MLFLOW_TRACKING_TOKEN=${MLFLOW_TRACKING_TOKEN:-}
-  #     - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-  #   restart: unless-stopped
