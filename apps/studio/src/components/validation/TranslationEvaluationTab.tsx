@@ -25,6 +25,10 @@ function truncatePreview(text: string, maxLength = 220) {
   return `${normalized.slice(0, maxLength - 1).trimEnd()}…`
 }
 
+function clampProgressPercent(value: number): number {
+  return Math.min(100, Math.max(0, Math.round(value)))
+}
+
 function SummaryCard({
   label,
   value,
@@ -217,8 +221,10 @@ export function TranslationEvaluationTab({ label }: { label: string }) {
   const runEvaluation = useRunTranslationEvaluation(label)
   const bookConfig = useBookConfig(label)
   const { isTaskRunning, tasks } = useBookTasks(label)
-  const { hasApiKey } = useApiKey()
+  const { apiKey } = useApiKey()
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null)
+  const openaiApiKey = apiKey.trim()
+  const hasOpenaiApiKey = openaiApiKey.length > 0
 
   const items = evaluations.data?.evaluations ?? []
   const translationEvaluationConfig = (bookConfig.data?.config?.translation_evaluation ?? null) as
@@ -255,6 +261,7 @@ export function TranslationEvaluationTab({ label }: { label: string }) {
     () => items.find((item) => item.language === selectedLanguage) ?? null,
     [items, selectedLanguage],
   )
+  const selectedEvaluationIsCurrent = Boolean(selectedEvaluation?.evaluation && !selectedEvaluation.isStale)
 
   const summary = selectedEvaluation?.evaluation?.summary ?? null
   const acceptable = summary ? summary.acceptable : null
@@ -269,6 +276,10 @@ export function TranslationEvaluationTab({ label }: { label: string }) {
     }
     return [...counts.entries()].sort((left, right) => right[1] - left[1])
   }, [selectedEvaluation?.evaluation?.items])
+  const activeEvaluationProgressPercent =
+    typeof activeEvaluationTask?.progressPercent === "number"
+      ? clampProgressPercent(activeEvaluationTask.progressPercent)
+      : null
 
   if (evaluations.isLoading) {
     return <LoadingState message={t`Loading translation evaluations...`} />
@@ -316,14 +327,20 @@ export function TranslationEvaluationTab({ label }: { label: string }) {
             <Button
               variant="outline"
               size="sm"
-              disabled={!selectedLanguage || evaluationRunning || runEvaluation.isPending || !translationEvaluationEnabled || !hasApiKey}
+              disabled={
+                !selectedLanguage
+                || evaluationRunning
+                || runEvaluation.isPending
+                || !translationEvaluationEnabled
+                || selectedEvaluationIsCurrent
+              }
               onClick={() => {
                 if (!selectedLanguage) return
-                runEvaluation.mutate(selectedLanguage)
+                runEvaluation.mutate({ language: selectedLanguage, apiKey: openaiApiKey })
               }}
             >
               {evaluationRunning || runEvaluation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-              <Trans>Run evaluation</Trans>
+              {selectedEvaluationIsCurrent ? <Trans>Evaluation current</Trans> : <Trans>Run evaluation</Trans>}
             </Button>
           </div>
         </div>
@@ -334,19 +351,19 @@ export function TranslationEvaluationTab({ label }: { label: string }) {
           </div>
         ) : null}
 
-        {translationEvaluationEnabled && !hasApiKey ? (
+        {translationEvaluationEnabled && !hasOpenaiApiKey ? (
           <div className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-700">
-            <Trans>OpenAI API key required for translation evaluation.</Trans>
+            <Trans>No browser OpenAI key is saved. The API will use the server OPENAI_API_KEY if configured.</Trans>
           </div>
         ) : null}
 
         {activeEvaluationTask ? (
           <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-3 text-sm text-sky-800">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3">
               <div className="flex items-start gap-2">
                 <Loader2 className="mt-0.5 h-4 w-4 animate-spin" />
                 <div className="space-y-1">
-                  <div className="font-medium">
+                  <div id="translation-evaluation-progress-title" className="font-medium">
                     <Trans>Translation evaluation is running</Trans>
                   </div>
                   <div>{activeEvaluationTask.progressMessage ?? activeEvaluationTask.description}</div>
@@ -355,11 +372,33 @@ export function TranslationEvaluationTab({ label }: { label: string }) {
                   </div>
                 </div>
               </div>
-              {typeof activeEvaluationTask.progressPercent === "number" ? (
-                <Badge variant="outline" className="border-sky-300 bg-white text-sky-800 tabular-nums">
-                  {Math.round(activeEvaluationTask.progressPercent)}%
-                </Badge>
-              ) : null}
+              <div className="flex items-center gap-3 pl-6">
+                <div
+                  role="progressbar"
+                  aria-labelledby="translation-evaluation-progress-title"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={activeEvaluationProgressPercent ?? undefined}
+                  className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-sky-100"
+                >
+                  <div
+                    className={cn(
+                      "h-full rounded-full bg-sky-600 transition-all",
+                      activeEvaluationProgressPercent === null ? "w-1/3 animate-pulse" : "",
+                    )}
+                    style={
+                      activeEvaluationProgressPercent === null
+                        ? undefined
+                        : { width: `${activeEvaluationProgressPercent}%` }
+                    }
+                  />
+                </div>
+                {activeEvaluationProgressPercent !== null ? (
+                  <span className="w-10 shrink-0 text-right text-xs font-medium tabular-nums text-sky-800">
+                    {activeEvaluationProgressPercent}%
+                  </span>
+                ) : null}
+              </div>
             </div>
           </div>
         ) : null}

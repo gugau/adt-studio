@@ -1,6 +1,6 @@
 import { useCallback, useSyncExternalStore } from "react"
+import { STORAGE_KEY_OPENAI } from "@/lib/openai-api-key-storage"
 
-const STORAGE_KEY_OPENAI = "adt-studio-openai-key"
 const STORAGE_KEY_ANTHROPIC = "adt-studio-anthropic-key"
 const STORAGE_KEY_GOOGLE = "adt-studio-google-key"
 const STORAGE_KEY_CUSTOM_BASE_URL = "adt-studio-custom-base-url"

@@ -44,6 +44,7 @@ const bookTasksState = {
 }
 
 const apiKeyState = {
+  apiKey: "sk-test",
   hasApiKey: true,
 }
 
@@ -84,6 +85,7 @@ afterEach(() => {
   bookConfigState.data = { config: { translation_evaluation: { enabled: true } } }
   bookTasksState.isTaskRunning.mockReturnValue(false)
   bookTasksState.tasks = []
+  apiKeyState.apiKey = "sk-test"
   apiKeyState.hasApiKey = true
 })
 
@@ -192,11 +194,75 @@ describe("TranslationEvaluationTab", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Run evaluation" }))
 
-    expect(runEvaluationState.mutate).toHaveBeenCalledWith("sw")
+    expect(runEvaluationState.mutate).toHaveBeenCalledWith({ language: "sw", apiKey: "sk-test" })
     expect(screen.getByText("Translation judge timed out")).toBeTruthy()
     expect(
       screen.getByText("No evaluation has been stored for this language yet. Run an evaluation to generate verdicts."),
     ).toBeTruthy()
+  })
+
+  it("allows a run without a browser key so the API server can use its configured key", async () => {
+    apiKeyState.apiKey = ""
+    apiKeyState.hasApiKey = false
+    evaluationsState.data = {
+      evaluations: [
+        {
+          language: "es-ES",
+          currentSourceCatalogVersion: 2,
+          currentTranslationVersion: 5,
+          evaluationVersion: null,
+          isStale: false,
+          evaluation: null,
+        },
+      ],
+    }
+
+    const { TranslationEvaluationTab } = await import("./TranslationEvaluationTab")
+    render(<TranslationEvaluationTab label="demo-book" />)
+
+    const runButton = await screen.findByRole("button", { name: "Run evaluation" }) as HTMLButtonElement
+    expect(runButton.disabled).toBe(false)
+    expect(screen.getByText("No browser OpenAI key is saved. The API will use the server OPENAI_API_KEY if configured.")).toBeTruthy()
+
+    fireEvent.click(runButton)
+
+    expect(runEvaluationState.mutate).toHaveBeenCalledWith({ language: "es-ES", apiKey: "" })
+  })
+
+  it("does not allow a rerun when the selected evaluation is already current", async () => {
+    evaluationsState.data = {
+      evaluations: [
+        {
+          language: "es-ES",
+          currentSourceCatalogVersion: 3,
+          currentTranslationVersion: 4,
+          evaluationVersion: 2,
+          isStale: false,
+          evaluation: {
+            generated_at: "2026-04-06T10:00:00.000Z",
+            provider: "adt-llm",
+            language: "es-ES",
+            source_catalog_version: 3,
+            translation_version: 4,
+            eval_config_hash: "cfg-123",
+            summary: {
+              total: 1,
+              acceptable: 1,
+              unacceptable: 0,
+            },
+            items: [],
+          },
+        },
+      ],
+    }
+
+    const { TranslationEvaluationTab } = await import("./TranslationEvaluationTab")
+    render(<TranslationEvaluationTab label="demo-book" />)
+
+    const currentButton = await screen.findByRole("button", { name: "Evaluation current" }) as HTMLButtonElement
+    expect(currentButton.disabled).toBe(true)
+    fireEvent.click(currentButton)
+    expect(runEvaluationState.mutate).not.toHaveBeenCalled()
   })
 
   it("shows active translation-evaluation task progress while the rerun is still in flight", async () => {
@@ -247,5 +313,9 @@ describe("TranslationEvaluationTab", () => {
       screen.getByText("The cards below continue to show the last saved evaluation until this task finishes."),
     ).toBeTruthy()
     expect(screen.getByText("40%")).toBeTruthy()
+    const progressBar = screen.getByRole("progressbar", { name: "Translation evaluation is running" })
+    expect(progressBar.getAttribute("aria-valuenow")).toBe("40")
+    expect(progressBar.getAttribute("aria-valuemin")).toBe("0")
+    expect(progressBar.getAttribute("aria-valuemax")).toBe("100")
   })
 })

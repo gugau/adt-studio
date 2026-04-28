@@ -48,6 +48,19 @@ function parseLanguage(language: string): string {
   return parsed.data
 }
 
+function getBearerToken(authorizationHeader: string | undefined): string {
+  const match = authorizationHeader?.match(/^Bearer\s+(.+)$/i)
+  return match?.[1]?.trim() ?? ""
+}
+
+function getOpenAIApiKeyFromRequest(c: { req: { header: (name: string) => string | undefined } }): string {
+  return c.req.header("X-OpenAI-Key")?.trim()
+    || c.req.header("X-ADT-OpenAI-Key")?.trim()
+    || getBearerToken(c.req.header("Authorization"))
+    || process.env.OPENAI_API_KEY?.trim()
+    || ""
+}
+
 function buildEvalConfigHash(config: {
   evaluation_scope_mode?: string
   evaluation_scope_count?: number | null
@@ -73,6 +86,36 @@ function buildEvalConfigHash(config: {
       additional_guidance: config.additional_guidance ?? null,
     }))
     .digest("hex")
+}
+
+function getCurrentEvalConfigHash(booksDir: string, configPath: string | undefined, label: string): string | null {
+  if (!configPath) return null
+  const config = loadBookConfig(label, booksDir, configPath)
+  const resolvedConfig = resolveTranslationEvaluationConfig(config.translation_evaluation)
+  return buildEvalConfigHash({
+    evaluation_scope_mode: resolvedConfig.evaluation_scope_mode,
+    evaluation_scope_count: resolvedConfig.evaluation_scope_count,
+    sampling_method: resolvedConfig.sampling_method,
+    sampling_seed: resolvedConfig.sampling_seed,
+    judge_model: resolvedConfig.judge_model,
+    max_retries: resolvedConfig.max_retries,
+    batch_size: resolvedConfig.batch_size,
+    judge_instructions: resolvedConfig.judge_instructions,
+    additional_guidance: resolvedConfig.additional_guidance,
+  })
+}
+
+function withCurrentConfigStaleness<T extends { evaluation: { eval_config_hash: string } | null; isStale: boolean }>(
+  status: T,
+  currentEvalConfigHash: string | null,
+): T {
+  if (!status.evaluation || currentEvalConfigHash === null) {
+    return status
+  }
+  return {
+    ...status,
+    isStale: status.isStale || status.evaluation.eval_config_hash !== currentEvalConfigHash,
+  }
 }
 
 function seededRandom(seed: number) {
@@ -247,7 +290,9 @@ export function createTranslationEvaluationRoutes(
   app.get("/books/:label/evaluations/translations", (c) => {
     const { label } = c.req.param()
     const safeLabel = safeParseLabel(label)
+    const currentEvalConfigHash = getCurrentEvalConfigHash(booksDir, configPath, safeLabel)
     const evaluations = listTranslationEvaluationStatuses(safeLabel, booksDir)
+      .map((status) => withCurrentConfigStaleness(status, currentEvalConfigHash))
     return c.json({ evaluations })
   })
 
@@ -255,20 +300,21 @@ export function createTranslationEvaluationRoutes(
     const { label, language } = c.req.param()
     const safeLabel = safeParseLabel(label)
     const safeLanguage = parseLanguage(language)
+    const currentEvalConfigHash = getCurrentEvalConfigHash(booksDir, configPath, safeLabel)
     const evaluation = getTranslationEvaluationStatus(safeLabel, booksDir, safeLanguage)
     if (!evaluation) {
       throw new HTTPException(404, {
         message: `Translation evaluation not found for language: ${safeLanguage}`,
       })
     }
-    return c.json(evaluation)
+    return c.json(withCurrentConfigStaleness(evaluation, currentEvalConfigHash))
   })
 
   app.post("/books/:label/evaluations/translations/:language/run", (c) => {
     const { label, language } = c.req.param()
     const safeLabel = safeParseLabel(label)
     const safeLanguage = parseLanguage(language)
-    const apiKey = c.req.header("X-OpenAI-Key")?.trim()
+    const apiKey = getOpenAIApiKeyFromRequest(c)
 
     if (!isTranslationEvaluationEnabled(booksDir, configPath, safeLabel)) {
       throw new HTTPException(409, {
@@ -290,7 +336,7 @@ export function createTranslationEvaluationRoutes(
 
     if (!apiKey) {
       throw new HTTPException(400, {
-        message: "OpenAI API key required for translation evaluation. Set X-OpenAI-Key header.",
+        message: "OpenAI API key required for translation evaluation. Set X-OpenAI-Key header or OPENAI_API_KEY on the API server.",
       })
     }
 
@@ -300,18 +346,34 @@ export function createTranslationEvaluationRoutes(
       })
     }
 
+    const request = buildTranslationEvaluationRunRequest({
+      booksDir,
+      configPath,
+      label: safeLabel,
+      language: safeLanguage,
+    })
+
+    if (
+      evaluation.evaluation &&
+      evaluation.evaluation.source_catalog_version === request.source_catalog_version &&
+      evaluation.evaluation.translation_version === request.translation_version &&
+      evaluation.evaluation.eval_config_hash === request.eval_config_hash
+    ) {
+      return c.json({
+        status: "current",
+        taskId: null,
+        label: safeLabel,
+        language: safeLanguage,
+        version: evaluation.evaluationVersion,
+      })
+    }
+
     const { taskId } = taskService.submitTask(
       safeLabel,
       "translation-evaluation",
       `Running translation evaluation for ${safeLanguage}`,
       async (emitProgress) => {
         emitProgress("Preparing translation evaluation payload", 10)
-        const request = buildTranslationEvaluationRunRequest({
-          booksDir,
-          configPath,
-          label: safeLabel,
-          language: safeLanguage,
-        })
 
         emitProgress("Evaluating translations", 40)
         const result = await evaluateTranslation(request, { booksDir, apiKey }, emitProgress)

@@ -321,10 +321,6 @@ export function useBookRunStatus(label: string): BookRunContextValue {
               progressPercent: d.percent,
             }
           }
-        } else if (d.type === "task-progress") {
-          if (idx !== -1) {
-            tasks[idx] = { ...tasks[idx], progressMessage: d.message, progressPercent: d.percent }
-          }
         }
 
         return { tasks }

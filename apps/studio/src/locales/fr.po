@@ -1723,6 +1723,9 @@ msgstr "Est. Coût"
 msgid "Eval v{0}"
 msgstr "Eval v{0}"
 
+msgid "Evaluation current"
+msgstr "Évaluation actuelle"
+
 msgid "Evaluation Scope"
 msgstr "Evaluation Scope"
 
@@ -2787,6 +2790,9 @@ msgstr "Aucune évaluation"
 msgid "No books match your search"
 msgstr "Aucun livre ne correspond à votre recherche"
 
+msgid "No browser OpenAI key is saved. The API will use the server OPENAI_API_KEY if configured."
+msgstr "Aucune clé OpenAI n'est enregistrée dans le navigateur. L'API utilisera OPENAI_API_KEY côté serveur si elle est configurée."
+
 msgid "No captions for this page"
 msgstr "Aucune légende pour cette page"
 
@@ -3042,8 +3048,8 @@ msgstr "OpenAI"
 msgid "OpenAI API Key"
 msgstr "OpenAI Clé API"
 
-msgid "OpenAI API key required for translation evaluation."
-msgstr "OpenAI API key required for translation evaluation."
+#~ msgid "OpenAI API key required for translation evaluation."
+#~ msgstr "OpenAI API key required for translation evaluation."
 
 msgid "OpenAI key required"
 msgstr "Clé OpenAI requise"

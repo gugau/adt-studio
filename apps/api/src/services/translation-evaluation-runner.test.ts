@@ -134,6 +134,46 @@ describe("translation-evaluation-runner", () => {
     expect(result.metadata?.failed_items).toBe(1)
   })
 
+  it("emits entry-level evaluation progress", async () => {
+    const request = buildRequest()
+    request.entries.push({
+      entry_id: "pg002:body",
+      source_text: "Goodbye world",
+      translated_text: "Au revoir le monde",
+    })
+    request.batch_size = 2
+    const generateObject = vi.fn(async () => ({
+      object: {
+        acceptable: true,
+        rationale: "The translation preserves the meaning.",
+        issue_types: [],
+      },
+      usage: { inputTokens: 10, outputTokens: 6 },
+      cached: false,
+    }))
+    const createModel = vi.fn(() => ({
+      generateObject,
+      renderPrompt: vi.fn(),
+    }) as unknown as LLMModel)
+    const progress: Array<{ message: string; percent?: number }> = []
+
+    const result = await evaluateTranslationInApi(
+      request,
+      {
+        booksDir: tmpDir,
+        apiKey: "sk-test",
+        createModel,
+      },
+      (message, percent) => progress.push({ message, percent }),
+    )
+
+    expect(result.summary).toEqual({ total: 2, acceptable: 2, unacceptable: 0 })
+    expect(progress).toEqual(expect.arrayContaining([
+      { message: "Evaluated 1 of 2 entries", percent: 60 },
+      { message: "Evaluated 2 of 2 entries", percent: 80 },
+    ]))
+  })
+
   it("requires a user-provided OpenAI API key", async () => {
     await expect(evaluateTranslationInApi(buildRequest(), {
       booksDir: tmpDir,

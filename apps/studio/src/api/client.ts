@@ -9,6 +9,7 @@ import type {
   ReviewerValidationSession,
   TranslationEvaluationResult,
 } from "@adt/types"
+import { getStoredOpenAIApiKey } from "@/lib/openai-api-key-storage"
 
 export type { BookSummary, BookDetail }
 
@@ -481,10 +482,11 @@ export interface TranslationEvaluationStatusesResponse {
 }
 
 export interface TranslationEvaluationRunResponse {
-  status: string
-  taskId: string
+  status: "submitted" | "current"
+  taskId: string | null
   label: string
   language: string
+  version?: number | null
 }
 
 export interface LlmLogsParams {
@@ -850,11 +852,19 @@ export const api = {
   getTranslationEvaluation: (label: string, language: string) =>
     request<TranslationEvaluationStatusResponse>(`/books/${label}/evaluations/translations/${language}`),
 
-  runTranslationEvaluation: (label: string, language: string, apiKey: string) =>
-    request<TranslationEvaluationRunResponse>(`/books/${label}/evaluations/translations/${language}/run`, {
+  runTranslationEvaluation: (label: string, language: string, apiKey: string) => {
+    const openaiApiKey = apiKey.trim() || getStoredOpenAIApiKey()
+    return request<TranslationEvaluationRunResponse>(`/books/${label}/evaluations/translations/${language}/run`, {
       method: "POST",
-      headers: { "X-OpenAI-Key": apiKey },
-    }),
+      headers: openaiApiKey
+        ? {
+            "X-OpenAI-Key": openaiApiKey,
+            "X-ADT-OpenAI-Key": openaiApiKey,
+            Authorization: `Bearer ${openaiApiKey}`,
+          }
+        : {},
+    })
+  },
 
   getVersionHistory: (
     label: string,

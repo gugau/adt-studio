@@ -171,6 +171,8 @@ export async function evaluateTranslationInApi(
     const batches = chunkEntries(parsedRequest.entries, batchSize)
     const items: TranslationEvaluationResultData["items"] = []
     let failedItems = 0
+    let completedEntries = 0
+    const totalEntries = parsedRequest.entries.length
 
     for (let batchIndex = 0; batchIndex < batches.length; batchIndex += 1) {
       emitProgress?.(
@@ -202,6 +204,11 @@ export async function evaluateTranslationInApi(
           failedItems += 1
           items.push(buildFailedEvaluationItem(entry, err))
         }
+        completedEntries += 1
+        emitProgress?.(
+          `Evaluated ${completedEntries} of ${totalEntries} entries`,
+          40 + Math.round((completedEntries / Math.max(1, totalEntries)) * 40),
+        )
       }
     }
 

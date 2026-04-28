@@ -37,9 +37,13 @@ describe("Translation evaluation routes", () => {
   let configPath: string
   let app: Hono
   let evaluateTranslation: TranslationEvaluationRunner
+  let previousOpenAIKey: string | undefined
   const label = "translation-eval-book"
 
   beforeEach(() => {
+    previousOpenAIKey = process.env.OPENAI_API_KEY
+    delete process.env.OPENAI_API_KEY
+
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "translation-evaluations-routes-"))
 
     const storage = createBookStorage(label, tmpDir)
@@ -99,6 +103,11 @@ describe("Translation evaluation routes", () => {
 
   afterEach(() => {
     fs.rmSync(tmpDir, { recursive: true, force: true })
+    if (previousOpenAIKey !== undefined) {
+      process.env.OPENAI_API_KEY = previousOpenAIKey
+    } else {
+      delete process.env.OPENAI_API_KEY
+    }
   })
 
   function enableTranslationEvaluation() {
@@ -264,6 +273,119 @@ describe("Translation evaluation routes", () => {
     expect(saved?.evaluationVersion).toBe(1)
     expect(saved?.evaluation?.summary.acceptable).toBe(1)
     expect(saved?.isStale).toBe(false)
+  })
+
+  it("uses OPENAI_API_KEY from the API environment when the request header is absent", async () => {
+    enableTranslationEvaluation()
+    process.env.OPENAI_API_KEY = "sk-env-test"
+
+    const res = await app.request(`/api/books/${label}/evaluations/translations/fr/run`, {
+      method: "POST",
+    })
+
+    expect(res.status).toBe(200)
+    await flushTasks()
+
+    expect(evaluateTranslation).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        booksDir: tmpDir,
+        apiKey: "sk-env-test",
+      }),
+      expect.any(Function),
+    )
+  })
+
+  it("accepts the fallback ADT OpenAI key header", async () => {
+    enableTranslationEvaluation()
+
+    const res = await app.request(`/api/books/${label}/evaluations/translations/fr/run`, {
+      method: "POST",
+      headers: { "X-ADT-OpenAI-Key": "sk-adt-header-test" },
+    })
+
+    expect(res.status).toBe(200)
+    await flushTasks()
+
+    expect(evaluateTranslation).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        booksDir: tmpDir,
+        apiKey: "sk-adt-header-test",
+      }),
+      expect.any(Function),
+    )
+  })
+
+  it("accepts the OpenAI key from the Authorization bearer header", async () => {
+    enableTranslationEvaluation()
+
+    const res = await app.request(`/api/books/${label}/evaluations/translations/fr/run`, {
+      method: "POST",
+      headers: { Authorization: "Bearer sk-bearer-test" },
+    })
+
+    expect(res.status).toBe(200)
+    await flushTasks()
+
+    expect(evaluateTranslation).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        booksDir: tmpDir,
+        apiKey: "sk-bearer-test",
+      }),
+      expect.any(Function),
+    )
+  })
+
+  it("does not create a duplicate evaluation version when the current result already matches", async () => {
+    enableTranslationEvaluation()
+
+    const firstRes = await app.request(`/api/books/${label}/evaluations/translations/fr/run`, {
+      method: "POST",
+      headers: { "X-OpenAI-Key": "sk-test" },
+    })
+    expect(firstRes.status).toBe(200)
+    await flushTasks()
+
+    const secondRes = await app.request(`/api/books/${label}/evaluations/translations/fr/run`, {
+      method: "POST",
+      headers: { "X-OpenAI-Key": "sk-test" },
+    })
+
+    expect(secondRes.status).toBe(200)
+    const body = await secondRes.json()
+    expect(body).toEqual({
+      status: "current",
+      taskId: null,
+      label,
+      language: "fr",
+      version: 1,
+    })
+    await flushTasks()
+
+    expect(evaluateTranslation).toHaveBeenCalledTimes(1)
+    const saved = getTranslationEvaluationStatus(label, tmpDir, "fr")
+    expect(saved?.evaluationVersion).toBe(1)
+  })
+
+  it("marks an evaluation stale when the evaluation settings change", async () => {
+    enableTranslationEvaluation()
+
+    const runRes = await app.request(`/api/books/${label}/evaluations/translations/fr/run`, {
+      method: "POST",
+      headers: { "X-OpenAI-Key": "sk-test" },
+    })
+    expect(runRes.status).toBe(200)
+    await flushTasks()
+
+    enableTranslationEvaluationWithNewScopeConfig()
+
+    const statusRes = await app.request(`/api/books/${label}/evaluations/translations/fr`)
+    expect(statusRes.status).toBe(200)
+    const status = await statusRes.json()
+    expect(status.evaluationVersion).toBe(1)
+    expect(status.isStale).toBe(true)
   })
 
   it("limits the submitted evaluation payload to the configured sample size", async () => {

@@ -77,6 +77,8 @@ export function createTaskService(eventBus: BookEventBus): TaskService {
       })
 
       executor((message, percent) => {
+        info.progressMessage = message
+        info.progressPercent = percent
         eventBus.emit(label, {
           type: "task",
           data: { type: "task-progress", taskId, message, percent },
