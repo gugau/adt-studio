@@ -29,7 +29,7 @@ const ISSUE_TYPES: TranslationEvaluationIssueTypeData[] = [
 const TranslationEvaluationJudgeOutput = z.object({
   acceptable: z.boolean(),
   rationale: z.string().min(1),
-  issue_types: z.array(TranslationEvaluationIssueType).optional(),
+  issue_types: z.array(TranslationEvaluationIssueType),
 })
 type TranslationEvaluationJudgeOutput = z.infer<typeof TranslationEvaluationJudgeOutput>
 
@@ -70,6 +70,7 @@ Return structured JSON only.
 Decision rules:
 - acceptable=true means the translation is acceptable overall.
 - acceptable=false means the translation needs review.
+- Always include issue_types. Use [] when acceptable=true.
 - If acceptable=false, include one or more issue_types from: ${ISSUE_TYPES.join(", ")}.
 - If no issue type clearly applies, use "other".
 - Keep the rationale concise and specific.

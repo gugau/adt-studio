@@ -81,6 +81,20 @@ describe("translation-evaluation-runner", () => {
         pageId: "pg001:body",
       }),
     }))
+    const generateOptions = generateObject.mock.calls[0]?.[0] as {
+      schema: { safeParse: (input: unknown) => { success: boolean } }
+      system: string
+    }
+    expect(generateOptions.system).toContain("Always include issue_types")
+    expect(generateOptions.schema.safeParse({
+      acceptable: true,
+      rationale: "Acceptable translation.",
+    }).success).toBe(false)
+    expect(generateOptions.schema.safeParse({
+      acceptable: true,
+      rationale: "Acceptable translation.",
+      issue_types: [],
+    }).success).toBe(true)
     expect(result.provider).toBe("adt-llm")
     expect(result.summary).toEqual({ total: 1, acceptable: 1, unacceptable: 0 })
     expect(result.items[0]).toEqual({
