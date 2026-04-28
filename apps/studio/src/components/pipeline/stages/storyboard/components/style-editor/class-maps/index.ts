@@ -8,3 +8,10 @@ export {
   maxWidthClassMap,
   maxHeightClassMap,
 } from "./sizing"
+export {
+  displayClassMap,
+  flexDirectionClassMap,
+  justifyContentClassMap,
+  alignItemsClassMap,
+  gapClassMap,
+} from "./layout"

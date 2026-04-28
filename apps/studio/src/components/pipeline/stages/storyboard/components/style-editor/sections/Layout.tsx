@@ -1,4 +1,3 @@
-import { useState } from "react"
 import {
   AlignHorizontalJustifyCenter,
   AlignHorizontalJustifyEnd,
@@ -20,6 +19,14 @@ import { StyleLabel } from "../controls/StyleLabel"
 import { Section } from "../controls/Section"
 import { Select, type SelectOption } from "../controls/Select"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import {
+  displayClassMap,
+  flexDirectionClassMap,
+  justifyContentClassMap,
+  alignItemsClassMap,
+  gapClassMap,
+} from "../class-maps"
+import { useElementStyles } from "../use-element-styles"
 
 const DISPLAY_OPTIONS: ReadonlyArray<SelectOption<string>> = [
   "block",
@@ -32,11 +39,23 @@ const DISPLAY_OPTIONS: ReadonlyArray<SelectOption<string>> = [
 
 export function LayoutSection() {
   const { t } = useLingui()
-  const [display, setDisplay] = useState("block")
-  const [flexDir, setFlexDir] = useState("row")
-  const [justify, setJustify] = useState("start")
-  const [align, setAlign] = useState("start")
-  const [gap, setGap] = useState(0)
+  const { value: display, setValue: setDisplay } = useElementStyles(
+    displayClassMap,
+    "block"
+  )
+  const { value: flexDir, setValue: setFlexDir } = useElementStyles(
+    flexDirectionClassMap,
+    "row"
+  )
+  const { value: justify, setValue: setJustify } = useElementStyles(
+    justifyContentClassMap,
+    "start"
+  )
+  const { value: align, setValue: setAlign } = useElementStyles(
+    alignItemsClassMap,
+    "start"
+  )
+  const { value: gap, setValue: setGap } = useElementStyles(gapClassMap, 0)
 
   const isFlex = display === "flex" || display === "grid"
 
@@ -49,8 +68,6 @@ export function LayoutSection() {
 
   const isColumn = flexDir === "col" || flexDir === "col-reverse"
 
-  // Justify icons depend on flex-direction (main axis): horizontal icons for
-  // row, vertical icons for column.
   const justifyItems = isColumn
     ? [
         { value: "start", icon: AlignVerticalJustifyStart, label: t`Start` },
@@ -67,8 +84,6 @@ export function LayoutSection() {
         { value: "around", icon: AlignHorizontalSpaceAround, label: t`Space around` },
       ]
 
-  // Align icons are perpendicular to justify: vertical icons for row,
-  // horizontal icons for column.
   const alignItems = isColumn
     ? [
         { value: "start", icon: AlignHorizontalJustifyStart, label: t`Start` },
@@ -141,7 +156,6 @@ export function LayoutSection() {
               value={gap}
               onChange={(e) => setGap(Number(e.target.value) || 0)}
               min={0}
-              max={32}
               className={cn(
                 "h-8 w-full bg-muted/60 rounded-md px-2 text-[12px] tabular-nums outline-none",
                 "focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-violet-500",
