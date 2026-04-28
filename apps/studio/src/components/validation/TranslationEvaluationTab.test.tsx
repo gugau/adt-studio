@@ -43,6 +43,10 @@ const bookTasksState = {
   }>,
 }
 
+const apiKeyState = {
+  hasApiKey: true,
+}
+
 vi.mock("@lingui/react/macro", () => ({
   Trans: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useLingui: () => ({
@@ -65,6 +69,10 @@ vi.mock("@/hooks/use-book-tasks", () => ({
   useBookTasks: () => bookTasksState,
 }))
 
+vi.mock("@/hooks/use-api-key", () => ({
+  useApiKey: () => apiKeyState,
+}))
+
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
@@ -76,6 +84,7 @@ afterEach(() => {
   bookConfigState.data = { config: { translation_evaluation: { enabled: true } } }
   bookTasksState.isTaskRunning.mockReturnValue(false)
   bookTasksState.tasks = []
+  apiKeyState.hasApiKey = true
 })
 
 describe("TranslationEvaluationTab", () => {

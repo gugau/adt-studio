@@ -8,15 +8,17 @@ import {
   resolveTranslationEvaluationConfig,
   parseBookLabel,
   TextCatalogOutput,
+  type TranslationEvaluationResult,
   type TranslationEvaluationRunRequest,
 } from "@adt/types"
-import type { EvalServiceClient } from "../services/eval-service-client.js"
 import { saveTranslationEvaluationResult } from "../services/translation-evaluation-service.js"
 import type { TaskService } from "../services/task-service.js"
 import {
   getTranslationEvaluationStatus,
   listTranslationEvaluationStatuses,
 } from "../services/translation-evaluation-service.js"
+import { evaluateTranslationInApi } from "../services/translation-evaluation-runner.js"
+import type { TaskProgressEmitter } from "../services/task-service.js"
 
 const TranslationEvaluationLanguageParam = z.string().min(1)
 
@@ -215,24 +217,30 @@ function assertMatchingEvaluationResult(
   },
 ): void {
   if (result.language !== request.language) {
-    throw new Error("Eval service returned a mismatched language")
+    throw new Error("Translation evaluator returned a mismatched language")
   }
   if (result.source_catalog_version !== request.source_catalog_version) {
-    throw new Error("Eval service returned a mismatched source catalog version")
+    throw new Error("Translation evaluator returned a mismatched source catalog version")
   }
   if (result.translation_version !== request.translation_version) {
-    throw new Error("Eval service returned a mismatched translation version")
+    throw new Error("Translation evaluator returned a mismatched translation version")
   }
   if (result.eval_config_hash !== request.eval_config_hash) {
-    throw new Error("Eval service returned a mismatched evaluation config hash")
+    throw new Error("Translation evaluator returned a mismatched evaluation config hash")
   }
 }
+
+export type TranslationEvaluationRunner = (
+  request: TranslationEvaluationRunRequest,
+  options: { booksDir: string; apiKey: string },
+  emitProgress?: TaskProgressEmitter,
+) => Promise<TranslationEvaluationResult>
 
 export function createTranslationEvaluationRoutes(
   booksDir: string,
   configPath?: string,
   taskService?: TaskService,
-  evalServiceClient?: EvalServiceClient,
+  evaluateTranslation: TranslationEvaluationRunner = evaluateTranslationInApi,
 ): Hono {
   const app = new Hono()
 
@@ -260,6 +268,7 @@ export function createTranslationEvaluationRoutes(
     const { label, language } = c.req.param()
     const safeLabel = safeParseLabel(label)
     const safeLanguage = parseLanguage(language)
+    const apiKey = c.req.header("X-OpenAI-Key")?.trim()
 
     if (!isTranslationEvaluationEnabled(booksDir, configPath, safeLabel)) {
       throw new HTTPException(409, {
@@ -279,9 +288,9 @@ export function createTranslationEvaluationRoutes(
       })
     }
 
-    if (!evalServiceClient) {
-      throw new HTTPException(503, {
-        message: "Translation evaluation service is not configured",
+    if (!apiKey) {
+      throw new HTTPException(400, {
+        message: "OpenAI API key required for translation evaluation. Set X-OpenAI-Key header.",
       })
     }
 
@@ -304,11 +313,11 @@ export function createTranslationEvaluationRoutes(
           language: safeLanguage,
         })
 
-        emitProgress("Submitting translation evaluation", 40)
-        const result = await evalServiceClient.evaluateTranslation(request)
+        emitProgress("Evaluating translations", 40)
+        const result = await evaluateTranslation(request, { booksDir, apiKey }, emitProgress)
         assertMatchingEvaluationResult(request, result)
 
-        emitProgress("Saving translation evaluation result", 80)
+        emitProgress("Saving translation evaluation result", 85)
         const saved = saveTranslationEvaluationResult(safeLabel, booksDir, result)
 
         emitProgress("Translation evaluation completed", 100)

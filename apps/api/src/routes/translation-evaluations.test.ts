@@ -6,10 +6,9 @@ import { Hono } from "hono"
 import { createBookStorage } from "@adt/storage"
 import { errorHandler } from "../middleware/error-handler.js"
 import { createBookEventBus } from "../services/book-event-bus.js"
-import type { EvalServiceClient } from "../services/eval-service-client.js"
 import { createTaskService } from "../services/task-service.js"
 import { createTaskRoutes } from "./tasks.js"
-import { createTranslationEvaluationRoutes } from "./translation-evaluations.js"
+import { createTranslationEvaluationRoutes, type TranslationEvaluationRunner } from "./translation-evaluations.js"
 import {
   getTranslationEvaluationStatus,
   saveTranslationEvaluationResult,
@@ -37,7 +36,7 @@ describe("Translation evaluation routes", () => {
   let tmpDir: string
   let configPath: string
   let app: Hono
-  let evalServiceClient: EvalServiceClient
+  let evaluateTranslation: TranslationEvaluationRunner
   const label = "translation-eval-book"
 
   beforeEach(() => {
@@ -63,37 +62,38 @@ describe("Translation evaluation routes", () => {
 
     configPath = path.join(tmpDir, "config.yaml")
     fs.writeFileSync(configPath, [
-      "text_types:",
-      "  heading: Heading",
-      "text_group_types:",
+      "structure_types:",
       "  paragraph: Paragraph",
+      "role_types:",
+      "  heading: Heading",
     ].join("\n"))
 
     app = new Hono()
     app.onError(errorHandler)
     const eventBus = createBookEventBus()
     const taskService = createTaskService(eventBus)
-    evalServiceClient = {
-      evaluateTranslation: vi.fn(async (request) => ({
-        generated_at: "2026-04-06T12:02:00.000Z",
-        provider: "mlflow",
-        language: request.language,
-        source_catalog_version: request.source_catalog_version,
-        translation_version: request.translation_version,
-        eval_config_hash: request.eval_config_hash,
-        summary: {
-          total: request.entries.length,
-          acceptable: request.entries.length,
-          unacceptable: 0,
-        },
-        items: request.entries.map((entry) => ({
-          entry_id: entry.entry_id,
-          acceptable: true,
-          rationale: "Meaning is preserved.",
-        })),
+    evaluateTranslation = vi.fn(async (request) => ({
+      generated_at: "2026-04-06T12:02:00.000Z",
+      provider: "adt-llm",
+      language: request.language,
+      source_catalog_version: request.source_catalog_version,
+      translation_version: request.translation_version,
+      eval_config_hash: request.eval_config_hash,
+      summary: {
+        total: request.entries.length,
+        acceptable: request.entries.length,
+        unacceptable: 0,
+      },
+      items: request.entries.map((entry) => ({
+        entry_id: entry.entry_id,
+        acceptable: true,
+        source_text: entry.source_text,
+        translated_text: entry.translated_text,
+        rationale: "Meaning is preserved.",
+        issue_types: [],
       })),
-    }
-    app.route("/api", createTranslationEvaluationRoutes(tmpDir, configPath, taskService, evalServiceClient))
+    }))
+    app.route("/api", createTranslationEvaluationRoutes(tmpDir, configPath, taskService, evaluateTranslation))
     app.route("/api", createTaskRoutes(taskService))
   })
 
@@ -103,10 +103,10 @@ describe("Translation evaluation routes", () => {
 
   function enableTranslationEvaluation() {
     fs.writeFileSync(configPath, [
-      "text_types:",
-      "  heading: Heading",
-      "text_group_types:",
+      "structure_types:",
       "  paragraph: Paragraph",
+      "role_types:",
+      "  heading: Heading",
       "translation_evaluation:",
       "  enable_translation_evaluation: true",
       "  judge_model: openai:/gpt-4.1-mini",
@@ -119,10 +119,10 @@ describe("Translation evaluation routes", () => {
 
   function enableTranslationEvaluationWithSampleSize(sampleSize: number) {
     fs.writeFileSync(configPath, [
-      "text_types:",
-      "  heading: Heading",
-      "text_group_types:",
+      "structure_types:",
       "  paragraph: Paragraph",
+      "role_types:",
+      "  heading: Heading",
       "translation_evaluation:",
       "  enabled: true",
       "  judge_model: openai:/gpt-4.1-mini",
@@ -132,10 +132,10 @@ describe("Translation evaluation routes", () => {
 
   function enableTranslationEvaluationWithNewScopeConfig() {
     fs.writeFileSync(configPath, [
-      "text_types:",
-      "  heading: Heading",
-      "text_group_types:",
+      "structure_types:",
       "  paragraph: Paragraph",
+      "role_types:",
+      "  heading: Heading",
       "translation_evaluation:",
       "  enable_translation_evaluation: true",
       "  judge_model: openai:/gpt-4.1-mini",
@@ -212,21 +212,15 @@ describe("Translation evaluation routes", () => {
     expect(await res.text()).toContain("Translation evaluation is disabled")
   })
 
-  it("returns 503 when the eval service client is not configured", async () => {
+  it("requires an OpenAI API key for run submission", async () => {
     enableTranslationEvaluation()
 
-    const appWithoutEvalService = new Hono()
-    appWithoutEvalService.onError(errorHandler)
-    const eventBus = createBookEventBus()
-    const taskService = createTaskService(eventBus)
-    appWithoutEvalService.route("/api", createTranslationEvaluationRoutes(tmpDir, configPath, taskService))
-
-    const res = await appWithoutEvalService.request(`/api/books/${label}/evaluations/translations/fr/run`, {
+    const res = await app.request(`/api/books/${label}/evaluations/translations/fr/run`, {
       method: "POST",
     })
 
-    expect(res.status).toBe(503)
-    expect(await res.text()).toContain("service is not configured")
+    expect(res.status).toBe(400)
+    expect(await res.text()).toContain("OpenAI API key required")
   })
 
   it("blocks run submission when the translation does not exist", async () => {
@@ -234,6 +228,7 @@ describe("Translation evaluation routes", () => {
 
     const res = await app.request(`/api/books/${label}/evaluations/translations/sw/run`, {
       method: "POST",
+      headers: { "X-OpenAI-Key": "sk-test" },
     })
 
     expect(res.status).toBe(404)
@@ -245,6 +240,7 @@ describe("Translation evaluation routes", () => {
 
     const res = await app.request(`/api/books/${label}/evaluations/translations/fr/run`, {
       method: "POST",
+      headers: { "X-OpenAI-Key": "sk-test" },
     })
 
     expect(res.status).toBe(200)
@@ -263,7 +259,7 @@ describe("Translation evaluation routes", () => {
     expect(tasksBody.tasks[0].kind).toBe("translation-evaluation")
     expect(tasksBody.tasks[0].description).toContain("fr")
 
-    expect(evalServiceClient.evaluateTranslation).toHaveBeenCalledTimes(1)
+    expect(evaluateTranslation).toHaveBeenCalledTimes(1)
     const saved = getTranslationEvaluationStatus(label, tmpDir, "fr")
     expect(saved?.evaluationVersion).toBe(1)
     expect(saved?.evaluation?.summary.acceptable).toBe(1)
@@ -295,13 +291,14 @@ describe("Translation evaluation routes", () => {
 
     const res = await app.request(`/api/books/${label}/evaluations/translations/fr/run`, {
       method: "POST",
+      headers: { "X-OpenAI-Key": "sk-test" },
     })
 
     expect(res.status).toBe(200)
     await flushTasks()
 
-    expect(evalServiceClient.evaluateTranslation).toHaveBeenCalledTimes(1)
-    expect(evalServiceClient.evaluateTranslation).toHaveBeenCalledWith(
+    expect(evaluateTranslation).toHaveBeenCalledTimes(1)
+    expect(evaluateTranslation).toHaveBeenCalledWith(
       expect.objectContaining({
         evaluation_scope_mode: "sample",
         evaluation_scope_count: 1,
@@ -317,6 +314,11 @@ describe("Translation evaluation routes", () => {
           },
         ],
       }),
+      expect.objectContaining({
+        booksDir: tmpDir,
+        apiKey: "sk-test",
+      }),
+      expect.any(Function),
     )
   })
 
@@ -325,12 +327,13 @@ describe("Translation evaluation routes", () => {
 
     const res = await app.request(`/api/books/${label}/evaluations/translations/fr/run`, {
       method: "POST",
+      headers: { "X-OpenAI-Key": "sk-test" },
     })
 
     expect(res.status).toBe(200)
     await flushTasks()
 
-    expect(evalServiceClient.evaluateTranslation).toHaveBeenCalledWith(
+    expect(evaluateTranslation).toHaveBeenCalledWith(
       expect.objectContaining({
         judge_model: "openai:/gpt-4.1-mini",
         max_retries: 4,
@@ -341,6 +344,11 @@ describe("Translation evaluation routes", () => {
         judge_instructions: "Review {{ inputs }} against {{ outputs }}.",
         additional_guidance: "Prefer classroom-friendly terminology.",
       }),
+      expect.objectContaining({
+        booksDir: tmpDir,
+        apiKey: "sk-test",
+      }),
+      expect.any(Function),
     )
   })
 })

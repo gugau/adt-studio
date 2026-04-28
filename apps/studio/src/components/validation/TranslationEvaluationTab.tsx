@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select"
 import { useBookConfig } from "@/hooks/use-book-config"
 import { useBookTasks } from "@/hooks/use-book-tasks"
+import { useApiKey } from "@/hooks/use-api-key"
 import {
   useRunTranslationEvaluation,
   useTranslationEvaluations,
@@ -216,6 +217,7 @@ export function TranslationEvaluationTab({ label }: { label: string }) {
   const runEvaluation = useRunTranslationEvaluation(label)
   const bookConfig = useBookConfig(label)
   const { isTaskRunning, tasks } = useBookTasks(label)
+  const { hasApiKey } = useApiKey()
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null)
 
   const items = evaluations.data?.evaluations ?? []
@@ -314,7 +316,7 @@ export function TranslationEvaluationTab({ label }: { label: string }) {
             <Button
               variant="outline"
               size="sm"
-              disabled={!selectedLanguage || evaluationRunning || runEvaluation.isPending || !translationEvaluationEnabled}
+              disabled={!selectedLanguage || evaluationRunning || runEvaluation.isPending || !translationEvaluationEnabled || !hasApiKey}
               onClick={() => {
                 if (!selectedLanguage) return
                 runEvaluation.mutate(selectedLanguage)
@@ -329,6 +331,12 @@ export function TranslationEvaluationTab({ label }: { label: string }) {
         {!translationEvaluationEnabled ? (
           <div className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-700">
             <Trans>Translation evaluation is disabled in book settings. Enable it before running a new evaluation.</Trans>
+          </div>
+        ) : null}
+
+        {translationEvaluationEnabled && !hasApiKey ? (
+          <div className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-700">
+            <Trans>OpenAI API key required for translation evaluation.</Trans>
           </div>
         ) : null}
 

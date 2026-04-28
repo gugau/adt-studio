@@ -852,9 +852,10 @@ export const api = {
   getTranslationEvaluation: (label: string, language: string) =>
     request<TranslationEvaluationStatusResponse>(`/books/${label}/evaluations/translations/${language}`),
 
-  runTranslationEvaluation: (label: string, language: string) =>
+  runTranslationEvaluation: (label: string, language: string, apiKey: string) =>
     request<TranslationEvaluationRunResponse>(`/books/${label}/evaluations/translations/${language}/run`, {
       method: "POST",
+      headers: { "X-OpenAI-Key": apiKey },
     }),
 
   getVersionHistory: (
