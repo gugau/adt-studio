@@ -1,2 +1,2 @@
 export type { ClassMap } from "./types"
-export { paddingClassMap, marginClassMap } from "./spacing"
+export { paddingClassMap, marginClassMap, SPACING_SCALE_PX } from "./spacing"

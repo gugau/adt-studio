@@ -1,4 +1,10 @@
-import { useState, type FocusEventHandler, type SVGProps } from "react"
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FocusEventHandler,
+  type SVGProps,
+} from "react"
 import { LayoutGrid, Square } from "lucide-react"
 import { useLingui } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
@@ -20,16 +26,8 @@ export type BoxInputVariant = "sides" | "corners"
 interface BoxInputProps {
   value: BoxValue
   onChange: (next: BoxValue) => void
-  /**
-   * Per-cell labelling for split mode.
-   * - `sides` (default): T / R / B / L
-   * - `corners`: TL / TR / BR / BL (clockwise from top-left, mapped onto t/r/b/l)
-   */
   variant?: BoxInputVariant
-  /** Static unit suffix shown after the number (e.g. "px"). Defaults to "px". */
   unit?: string
-  min?: number
-  max?: number
 }
 
 const SIDE_LABELS: Record<BoxInputVariant, [string, string, string, string]> = {
@@ -44,8 +42,6 @@ export function BoxInput({
   onChange,
   variant = "sides",
   unit = "px",
-  min = 0,
-  max = 999,
 }: BoxInputProps) {
   const { t } = useLingui()
   const allEqual =
@@ -55,19 +51,6 @@ export function BoxInput({
   )
   const [focusedSide, setFocusedSide] = useState<keyof BoxValue | null>(null)
 
-  const setAll = (raw: string) => {
-    const v = clamp(parseNumber(raw), min, max)
-    onChange({ t: v, r: v, b: v, l: v })
-  }
-  const setSide = (k: keyof BoxValue, raw: string) => {
-    const v = clamp(parseNumber(raw), min, max)
-    onChange({ ...value, [k]: v })
-  }
-
-  // Choose the split-mode icon: when a cell is focused, render a square with
-  // that specific side (or corner) highlighted so the toggle visually echoes
-  // which input is being edited. Falls back to a generic split icon when
-  // nothing is focused.
   const splitIcon = !focusedSide ? (
     <LayoutGrid className="h-3.5 w-3.5" />
   ) : variant === "sides" ? (
@@ -80,19 +63,14 @@ export function BoxInput({
     <div className="w-full min-w-0">
       <div className="flex items-center gap-1">
         <div className="relative flex-1 min-w-0">
-          <input
-            type="number"
-            inputMode="numeric"
+          <NumericInput
             value={value.t}
-            onChange={(e) => setAll(e.target.value)}
+            onCommit={(n) => onChange({ t: n, r: n, b: n, l: n })}
             disabled={mode === "split"}
-            min={min}
-            max={max}
             className={cn(
               "h-8 w-full bg-muted/60 rounded-md px-2 pr-8 text-[12px] tabular-nums outline-none",
               "focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-violet-500",
-              "disabled:opacity-50 disabled:cursor-not-allowed",
-              "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              "disabled:opacity-50 disabled:cursor-not-allowed"
             )}
           />
           {unit ? (
@@ -126,42 +104,16 @@ export function BoxInput({
             : "opacity-0 max-h-0 mt-0 mb-0 pointer-events-none"
         )}
       >
-        <SideField
-          label={SIDE_LABELS[variant][0]}
-          value={value.t}
-          onChange={(v) => setSide("t", v)}
-          onFocus={() => setFocusedSide("t")}
-          onBlur={() => setFocusedSide(null)}
-          min={min}
-          max={max}
-        />
-        <SideField
-          label={SIDE_LABELS[variant][1]}
-          value={value.r}
-          onChange={(v) => setSide("r", v)}
-          onFocus={() => setFocusedSide("r")}
-          onBlur={() => setFocusedSide(null)}
-          min={min}
-          max={max}
-        />
-        <SideField
-          label={SIDE_LABELS[variant][2]}
-          value={value.b}
-          onChange={(v) => setSide("b", v)}
-          onFocus={() => setFocusedSide("b")}
-          onBlur={() => setFocusedSide(null)}
-          min={min}
-          max={max}
-        />
-        <SideField
-          label={SIDE_LABELS[variant][3]}
-          value={value.l}
-          onChange={(v) => setSide("l", v)}
-          onFocus={() => setFocusedSide("l")}
-          onBlur={() => setFocusedSide(null)}
-          min={min}
-          max={max}
-        />
+        {(["t", "r", "b", "l"] as const).map((side, i) => (
+          <SideField
+            key={side}
+            label={SIDE_LABELS[variant][i]}
+            value={value[side]}
+            onCommit={(n) => onChange({ ...value, [side]: n })}
+            onFocus={() => setFocusedSide(side)}
+            onBlur={() => setFocusedSide(null)}
+          />
+        ))}
       </div>
     </div>
   )
@@ -170,35 +122,26 @@ export function BoxInput({
 function SideField({
   label,
   value,
-  onChange,
+  onCommit,
   onFocus,
   onBlur,
-  min,
-  max,
 }: {
   label: string
   value: number
-  onChange: (raw: string) => void
+  onCommit: (n: number) => void
   onFocus?: FocusEventHandler<HTMLInputElement>
   onBlur?: FocusEventHandler<HTMLInputElement>
-  min: number
-  max: number
 }) {
   return (
     <div className="flex flex-col items-stretch gap-0.5 min-w-0">
-      <input
-        type="number"
-        inputMode="numeric"
+      <NumericInput
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onCommit={onCommit}
         onFocus={onFocus}
         onBlur={onBlur}
-        min={min}
-        max={max}
         className={cn(
           "h-7 w-full bg-muted/60 rounded-md px-1.5 text-[11px] tabular-nums text-center outline-none",
-          "focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-violet-500",
-          "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          "focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-violet-500"
         )}
       />
       <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/60 text-center select-none">
@@ -208,16 +151,88 @@ function SideField({
   )
 }
 
-function parseNumber(raw: string): number {
-  const n = parseFloat(raw)
-  return Number.isFinite(n) ? n : 0
+const COMMIT_DEBOUNCE_MS = 200
+
+// Empty draft commits as 0; commits debounce while typing, blur/Enter flush.
+function NumericInput({
+  value,
+  onCommit,
+  disabled,
+  className,
+  onFocus,
+  onBlur,
+}: {
+  value: number
+  onCommit: (n: number) => void
+  disabled?: boolean
+  className?: string
+  onFocus?: FocusEventHandler<HTMLInputElement>
+  onBlur?: FocusEventHandler<HTMLInputElement>
+}) {
+  const [draft, setDraft] = useState(String(value))
+  const [focused, setFocused] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Sync from parent only while idle so it can't clobber typing in progress.
+  useEffect(() => {
+    if (!focused) setDraft(String(value))
+  }, [value, focused])
+
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    },
+    []
+  )
+
+  const flush = (raw: string) => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+    const n = raw.trim() === "" ? 0 : parseFloat(raw)
+    if (Number.isFinite(n) && n !== value) {
+      onCommit(n)
+    }
+  }
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      value={draft}
+      placeholder="0"
+      disabled={disabled}
+      onFocus={(e) => {
+        setFocused(true)
+        onFocus?.(e)
+      }}
+      onBlur={(e) => {
+        setFocused(false)
+        flush(draft)
+        onBlur?.(e)
+      }}
+      onChange={(e) => {
+        const next = e.target.value
+        setDraft(next)
+        if (timerRef.current) clearTimeout(timerRef.current)
+        timerRef.current = setTimeout(() => {
+          timerRef.current = null
+          flush(next)
+        }, COMMIT_DEBOUNCE_MS)
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur()
+        else if (e.key === "Escape") {
+          setDraft(String(value))
+          ;(e.currentTarget as HTMLInputElement).blur()
+        }
+      }}
+      className={className}
+    />
+  )
 }
 
-function clamp(v: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, v))
-}
-
-// Faint outline rect drawn by both side- and corner-emphasis icons.
 function FaintOutline(props: SVGProps<SVGRectElement>) {
   return (
     <rect
@@ -242,7 +257,6 @@ const SVG_BASE: SVGProps<SVGSVGElement> = {
   strokeLinejoin: "round",
 }
 
-/** A square with one side emphasized (used in `variant="sides"`). */
 function SideEmphasisIcon({
   side,
   className,
@@ -261,8 +275,7 @@ function SideEmphasisIcon({
   )
 }
 
-/** A square with one corner emphasized (used in `variant="corners"`).
- *  The `corner` prop reuses the BoxValue keys (t→TL, r→TR, b→BR, l→BL). */
+// `corner` reuses BoxValue keys: t→TL, r→TR, b→BR, l→BL.
 function CornerEmphasisIcon({
   corner,
   className,

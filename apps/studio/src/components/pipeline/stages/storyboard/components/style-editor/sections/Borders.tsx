@@ -15,10 +15,10 @@ export function BordersSection() {
   return (
     <Section title={<Trans>Borders</Trans>}>
       <StyleLabel label={<Trans>Width</Trans>}>
-        <BoxInput value={width} onChange={setWidth} max={8} />
+        <BoxInput value={width} onChange={setWidth} />
       </StyleLabel>
       <StyleLabel label={<Trans>Radius</Trans>}>
-        <BoxInput value={radius} onChange={setRadius} variant="corners" max={64} />
+        <BoxInput value={radius} onChange={setRadius} variant="corners" />
       </StyleLabel>
       <StyleLabel label={<Trans>Color</Trans>}>
         <ColorInput value={color} onChange={setColor} />
