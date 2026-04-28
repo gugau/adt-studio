@@ -52,7 +52,7 @@ export function ImageActionsSection({
     onSegment
 
   return (
-    <section className="border-b px-3 pt-3 pb-3">
+    <section className="border-b pt-3 pb-3">
       <div className="relative rounded-md overflow-hidden border bg-muted/30 group">
         <img src={imageSrc} alt={dataId} className="w-full h-32 object-cover" />
         {hasAnyAction ? (

@@ -80,8 +80,8 @@ export function UnitInput({
         disabled={isKeyword}
         placeholder={placeholder}
         className={cn(
-          "h-8 w-full bg-background border border-input rounded-md pl-2 pr-10 text-[12px] tabular-nums outline-none",
-          "focus-visible:ring-2 focus-visible:ring-ring",
+          "h-8 w-full bg-muted/60 rounded-md pl-2 pr-10 text-[12px] tabular-nums outline-none",
+          "focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-violet-500",
           isKeyword && "italic text-muted-foreground"
         )}
       />
@@ -92,8 +92,7 @@ export function UnitInput({
             aria-label={value.unit}
             className={cn(
               "absolute top-0 right-0 h-8 w-9 flex items-center justify-center text-[11px] font-medium rounded-r-md cursor-pointer",
-              "border-l border-input transition-colors",
-              "text-muted-foreground hover:bg-accent hover:text-foreground"
+              "transition-colors text-muted-foreground hover:text-foreground"
             )}
           >
             {isKeyword ? "—" : value.unit}

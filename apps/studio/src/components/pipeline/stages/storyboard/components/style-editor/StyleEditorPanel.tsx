@@ -17,7 +17,6 @@ import { cn } from "@/lib/utils"
 import type { StyleEditorElementProps } from "./ElementActions"
 import {
   type ElementType,
-  getDefaultOpenSections,
   getVisibleSections,
   inferElementType,
 } from "./element-types"
@@ -26,7 +25,6 @@ import { AdvancedSection } from "./sections/Advanced"
 import { ImageActionsSection } from "./sections/ImageActions"
 import { TextRoleSection } from "./sections/TextRole"
 import { ElementProvider } from "./element-context"
-import { Accordion } from "@/components/ui/accordion"
 
 // eslint-disable-next-line lingui/no-unlocalized-strings -- HTML attribute identifier shown verbatim
 const DATA_ID_PREFIX = `data-id="`
@@ -97,7 +95,7 @@ export function StyleEditorPanel({
       )}
     >
       <div className="w-[300px] h-full flex flex-col bg-background border-l">
-      <header className="flex items-center gap-3 px-3 py-3 border-b">
+      <header className="flex items-center gap-3 px-4 py-3 border-b">
         <ElementIconBadge elementType={elementType} />
         <div className="flex-1 min-w-0">
           <div className="text-sm font-semibold text-foreground truncate leading-tight">
@@ -152,7 +150,7 @@ export function StyleEditorPanel({
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto [scrollbar-gutter:stable]">
+      <div className="flex-1 overflow-y-auto px-4 pb-4 scrollbar-hide">
         {displayDataId ? (
           <StyleEditorBody
             dataId={displayDataId}
@@ -239,16 +237,6 @@ function StyleEditorBody({
     [elementType]
   )
 
-  // Open keys for the Accordion. Reset to element-type-specific defaults
-  // whenever the element type changes (so e.g. selecting an image opens "Image
-  // fit" without affecting toggles made while editing a text element).
-  const [openKeys, setOpenKeys] = useState<string[]>(() =>
-    elementType ? getDefaultOpenSections(elementType) : []
-  )
-  useEffect(() => {
-    if (elementType) setOpenKeys(getDefaultOpenSections(elementType))
-  }, [elementType])
-
   return (
     <ElementProvider value={{ dataId, classes, onClassesChange }}>
       <div className="flex flex-col">
@@ -258,14 +246,11 @@ function StyleEditorBody({
         {elementType === "text" ? (
           <TextRoleSection dataId={dataId} elementProps={elementProps} />
         ) : null}
-
-        <Accordion type="multiple" value={openKeys} onValueChange={setOpenKeys}>
-          {visibleSections.map((key) => {
-            const SectionComponent = SECTION_COMPONENTS[key]
-            return <SectionComponent key={key} />
-          })}
-          <AdvancedSection />
-        </Accordion>
+        {visibleSections.map((key) => {
+          const SectionComponent = SECTION_COMPONENTS[key]
+          return <SectionComponent key={key} />
+        })}
+        <AdvancedSection />
       </div>
     </ElementProvider>
   )

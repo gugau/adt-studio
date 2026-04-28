@@ -1,9 +1,9 @@
 import { useState } from "react"
-import { Square } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { StyleLabel } from "../controls/StyleLabel"
 import { Section } from "../controls/Section"
 import { BoxInput, type BoxValue } from "../controls/BoxInput"
+import { ColorInput } from "../controls/ColorInput"
 
 const ZERO: BoxValue = { t: 0, r: 0, b: 0, l: 0 }
 
@@ -13,7 +13,7 @@ export function BordersSection() {
   const [radius, setRadius] = useState<BoxValue>(ZERO)
 
   return (
-    <Section value="borders" title={<Trans>Borders</Trans>} icon={Square}>
+    <Section title={<Trans>Borders</Trans>}>
       <StyleLabel label={<Trans>Width</Trans>}>
         <BoxInput value={width} onChange={setWidth} max={8} />
       </StyleLabel>
@@ -21,8 +21,7 @@ export function BordersSection() {
         <BoxInput value={radius} onChange={setRadius} variant="corners" max={64} />
       </StyleLabel>
       <StyleLabel label={<Trans>Color</Trans>}>
-        <input type="color" value={color} onChange={(e) => setColor(e.target.value)} />
-        <input type="text" value={color} onChange={(e) => setColor(e.target.value)} className="text-[11px] flex-1" />
+        <ColorInput value={color} onChange={setColor} />
       </StyleLabel>
     </Section>
   )

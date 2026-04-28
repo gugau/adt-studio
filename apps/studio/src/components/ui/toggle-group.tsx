@@ -113,7 +113,7 @@ const ToggleGroup = React.forwardRef<
     <ToggleGroupPrimitive.Root
       ref={ref}
       className={cn(
-        "relative inline-flex items-center rounded-md border border-input bg-background overflow-hidden",
+        "relative inline-flex items-center rounded-md bg-muted/60 overflow-hidden",
         sliding && "w-full",
         className
       )}
@@ -123,17 +123,11 @@ const ToggleGroup = React.forwardRef<
         <div
           aria-hidden
           className={cn(
-            "absolute top-0 bottom-0 bg-violet-50 transition-all duration-200 ease-out pointer-events-none",
-            // Base radius for middle positions
-            "rounded-sm",
-            // Edge-adaptive: match the outer container rounding on the side
-            // that touches the container border
-            activeIndex === 0 && "rounded-l-md",
-            activeIndex === itemCount - 1 && "rounded-r-md"
+            "absolute top-0.5 bottom-0.5 bg-background shadow-sm transition-all duration-200 ease-out pointer-events-none rounded-md"
           )}
           style={{
-            width: `calc(100% / ${itemCount})`,
-            left: `calc(${activeIndex} * (100% / ${itemCount}))`,
+            width: `calc(100% / ${itemCount} - 4px)`,
+            left: `calc(${activeIndex} * (100% / ${itemCount}) + 2px)`,
           }}
         />
       ) : null}
@@ -167,8 +161,9 @@ const ToggleGroupItem = React.forwardRef<
           size: context.size ?? size,
         }),
         // In sliding mode, items sit above the indicator (which provides the
-        // bg-violet-50 active mask) and only contribute the violet text color.
-        context.sliding && "data-[state=on]:bg-transparent relative z-10",
+        // white active mask + shadow). Items only contribute the violet text
+        // color; their own bg/shadow is suppressed so the indicator owns it.
+        context.sliding && "data-[state=on]:bg-transparent data-[state=on]:text-violet-600 data-[state=on]:shadow-none relative z-10",
         // In sliding mode the item must fill its flex cell (either directly as
         // the flex child, or via w-full when a tooltip span wraps it).
         context.sliding && !hasTooltip && "flex-1",

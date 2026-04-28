@@ -6,13 +6,13 @@ import {
   AlignRight,
   Italic,
   Strikethrough,
-  Type,
   Underline,
 } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { StyleLabel } from "../controls/StyleLabel"
 import { Section } from "../controls/Section"
 import { Select, type SelectOption } from "../controls/Select"
+import { ColorInput } from "../controls/ColorInput"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
 const FAMILY_OPTIONS: ReadonlyArray<SelectOption<string>> = [
@@ -82,7 +82,7 @@ export function TypographySection() {
   ]
 
   return (
-    <Section value="typography" title={<Trans>Typography</Trans>} icon={Type}>
+    <Section title={<Trans>Typography</Trans>}>
       <StyleLabel label={<Trans>Family</Trans>}>
         <Select value={fontFamily} onChange={setFontFamily} options={FAMILY_OPTIONS} />
       </StyleLabel>
@@ -125,13 +125,7 @@ export function TypographySection() {
         <Select value={leading} onChange={setLeading} options={LEADING_OPTIONS} />
       </StyleLabel>
       <StyleLabel label={<Trans>Text</Trans>}>
-        <input type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} />
-        <input
-          type="text"
-          value={textColor}
-          onChange={(e) => setTextColor(e.target.value)}
-          className="text-[11px] flex-1"
-        />
+        <ColorInput value={textColor} onChange={setTextColor} />
       </StyleLabel>
     </Section>
   )

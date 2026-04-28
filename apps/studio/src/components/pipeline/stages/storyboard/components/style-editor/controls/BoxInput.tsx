@@ -89,8 +89,8 @@ export function BoxInput({
             min={min}
             max={max}
             className={cn(
-              "h-8 w-full bg-background border border-input rounded-md px-2 pr-8 text-[12px] tabular-nums outline-none",
-              "focus-visible:ring-2 focus-visible:ring-ring",
+              "h-8 w-full bg-muted/60 rounded-md px-2 pr-8 text-[12px] tabular-nums outline-none",
+              "focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-violet-500",
               "disabled:opacity-50 disabled:cursor-not-allowed",
               "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             )}
@@ -196,10 +196,8 @@ function SideField({
         min={min}
         max={max}
         className={cn(
-          "h-7 w-full bg-background border border-input rounded-md px-1.5 text-[11px] tabular-nums text-center outline-none",
-          // Inset focus ring so it stays clipped to the input bounds —
-          // edge inputs (T, L) don't bleed past the BoxInput container.
-          "focus-visible:border-violet-500 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-violet-500",
+          "h-7 w-full bg-muted/60 rounded-md px-1.5 text-[11px] tabular-nums text-center outline-none",
+          "focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-violet-500",
           "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         )}
       />

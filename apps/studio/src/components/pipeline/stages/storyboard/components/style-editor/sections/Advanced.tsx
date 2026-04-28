@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react"
-import { Wrench } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { Section } from "../controls/Section"
 import { useElementContext } from "../element-context"
@@ -29,7 +28,7 @@ export function AdvancedSection() {
   }, [draft, classes, dataId, onClassesChange])
 
   return (
-    <Section value="advanced" title={<Trans>Advanced</Trans>} icon={Wrench}>
+    <Section title={<Trans>Advanced</Trans>}>
       <label className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
         <Trans>Tailwind classes</Trans>
       </label>

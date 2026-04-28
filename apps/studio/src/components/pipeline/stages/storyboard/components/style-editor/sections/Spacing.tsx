@@ -1,5 +1,4 @@
 import { useState } from "react"
-import { Box } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { StyleLabel } from "../controls/StyleLabel"
 import { Section } from "../controls/Section"
@@ -12,7 +11,7 @@ export function SpacingSection() {
   const [margin, setMargin] = useState<BoxValue>(ZERO)
 
   return (
-    <Section value="spacing" title={<Trans>Spacing</Trans>} icon={Box}>
+    <Section title={<Trans>Spacing</Trans>}>
       <StyleLabel label={<Trans>Padding</Trans>}>
         <BoxInput value={padding} onChange={setPadding} max={64} />
       </StyleLabel>

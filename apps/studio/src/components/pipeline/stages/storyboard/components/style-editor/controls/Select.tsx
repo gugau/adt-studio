@@ -42,7 +42,7 @@ export function Select<T extends string>({
     >
       <SelectTrigger
         className={cn(
-          "h-8 w-full text-[12px] px-2 py-0 focus:ring-offset-0",
+          "h-8 w-full text-[12px] px-2 py-0 border-0 bg-muted/60 ring-offset-0 focus:ring-1 focus:ring-inset focus:ring-violet-500 focus:ring-offset-0 data-[state=open]:bg-background data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-violet-500",
           className
         )}
       >

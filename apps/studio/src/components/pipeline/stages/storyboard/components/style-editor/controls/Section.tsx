@@ -1,29 +1,24 @@
 import type { ReactNode } from "react"
-import type { LucideIcon } from "lucide-react"
-import {
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
 
 interface SectionProps {
-  /** Identifier used by the parent <Accordion> to track open state */
-  value: string
   title: ReactNode
-  icon?: LucideIcon
+  /** Optional trailing-slot actions (add-field, copy styles, more menu). */
+  actions?: ReactNode
   children: ReactNode
 }
 
-export function Section({ value, title, icon: Icon, children }: SectionProps) {
+export function Section({ title, actions, children }: SectionProps) {
   return (
-    <AccordionItem value={value}>
-      <AccordionTrigger>
-        {Icon ? (
-          <Icon className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
+    <section className="border-b last:border-b-0 py-2">
+      <header className="flex items-stretch">
+        <div className="flex flex-1 items-center text-left h-8 text-[11px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
+          {title}
+        </div>
+        {actions ? (
+          <div className="flex items-center pl-2">{actions}</div>
         ) : null}
-        <span className="flex-1 text-left">{title}</span>
-      </AccordionTrigger>
-      <AccordionContent className="space-y-2.5">{children}</AccordionContent>
-    </AccordionItem>
+      </header>
+      <div className="space-y-3 pt-1 pb-2">{children}</div>
+    </section>
   )
 }

@@ -1,5 +1,4 @@
 import { useState } from "react"
-import { Image as ImageIcon } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { StyleLabel } from "../controls/StyleLabel"
 import { Section } from "../controls/Section"
@@ -26,7 +25,7 @@ export function ImageFitSection() {
   const [position, setPosition] = useState("center")
 
   return (
-    <Section value="imageFit" title={<Trans>Image fit</Trans>} icon={ImageIcon}>
+    <Section title={<Trans>Image fit</Trans>}>
       <StyleLabel label={<Trans>Fit</Trans>}>
         <Select value={fit} onChange={setFit} options={FIT_OPTIONS} />
       </StyleLabel>

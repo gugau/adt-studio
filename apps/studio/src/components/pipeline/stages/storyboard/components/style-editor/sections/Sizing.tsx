@@ -1,12 +1,11 @@
 /* eslint-disable lingui/no-unlocalized-strings -- option-key strings are internal field discriminants */
 
 import { useState } from "react"
-import { ArrowLeftRight, Maximize2 } from "lucide-react"
-import { Trans } from "@lingui/react/macro"
+import { Trans, useLingui } from "@lingui/react/macro"
 import { StyleLabel } from "../controls/StyleLabel"
 import { Section } from "../controls/Section"
 import { UnitInput, type UnitValue } from "../controls/UnitInput"
-import { AddFieldRow } from "../controls/AddFieldRow"
+import { AddFieldButton } from "../controls/AddFieldButton"
 import { useElementContext } from "../element-context"
 import {
   useDynamicFields,
@@ -31,6 +30,7 @@ const OPTIONALS: ReadonlyArray<OptionalFieldDef<SizingOptional>> = [
 ]
 
 export function SizingSection() {
+  const { t } = useLingui()
   const { classes, dataId } = useElementContext()
   const { has, enable } = useDynamicFields(OPTIONALS, classes, dataId)
 
@@ -49,7 +49,16 @@ export function SizingSection() {
   ].filter((o) => !has(o.value))
 
   return (
-    <Section value="sizing" title={<Trans>Sizing</Trans>} icon={Maximize2}>
+    <Section
+      title={<Trans>Sizing</Trans>}
+      actions={
+        <AddFieldButton
+          options={addFieldOptions}
+          onSelect={enable}
+          ariaLabel={t`Add sizing field`}
+        />
+      }
+    >
       <StyleLabel label={<Trans>Width</Trans>}>
         <UnitInput value={width} onChange={setWidth} units={DIM_UNITS} />
       </StyleLabel>
@@ -76,12 +85,6 @@ export function SizingSection() {
           <UnitInput value={maxHeight} onChange={setMaxHeight} units={MAX_UNITS} />
         </StyleLabel>
       ) : null}
-      <AddFieldRow
-        label={<Trans>Min Max</Trans>}
-        icon={ArrowLeftRight}
-        options={addFieldOptions}
-        onSelect={enable}
-      />
     </Section>
   )
 }

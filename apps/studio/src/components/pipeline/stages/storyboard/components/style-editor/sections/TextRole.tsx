@@ -23,7 +23,7 @@ export function TextRoleSection({ dataId, elementProps }: TextRoleSectionProps) 
   )
 
   return (
-    <section className="border-b px-3 py-3">
+    <section className="border-b py-3">
       <StyleLabel label={<Trans>Role</Trans>}>
         <Select
           value={textType ?? ""}

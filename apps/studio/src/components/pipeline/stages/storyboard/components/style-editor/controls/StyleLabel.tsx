@@ -34,7 +34,7 @@ export function StyleLabel({
   className,
 }: StyleLabelProps) {
   return (
-    <div className={cn("grid grid-cols-5 gap-2", className)}>
+    <div className={cn("grid grid-cols-[5.5rem_1fr] gap-2", className)}>
       {/*
         `self-start h-8` pins the label to a fixed first-row slot at the top of
         its grid column, so multi-row controls (e.g. BoxInput in split mode)
@@ -44,13 +44,13 @@ export function StyleLabel({
       <label
         htmlFor={htmlFor}
         className={cn(
-          "col-span-2 h-8 self-start flex items-center text-[12px] font-medium px-0.5 select-none truncate",
-          overridden ? "text-blue-600" : "text-muted-foreground/90"
+          "h-8 self-start flex items-center pl-3 text-[11px] font-normal select-none truncate",
+          overridden ? "text-blue-600" : "text-muted-foreground/80"
         )}
       >
         {label}
       </label>
-      <div className="col-span-3 min-w-0 min-h-8 flex items-center gap-1.5">
+      <div className="min-w-0 min-h-8 flex items-center gap-1.5">
         {children}
       </div>
     </div>

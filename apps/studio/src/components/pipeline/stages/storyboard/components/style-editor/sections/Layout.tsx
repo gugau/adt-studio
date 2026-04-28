@@ -12,10 +12,10 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
-  LayoutGrid,
   StretchHorizontal,
 } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
+import { cn } from "@/lib/utils"
 import { StyleLabel } from "../controls/StyleLabel"
 import { Section } from "../controls/Section"
 import { Select, type SelectOption } from "../controls/Select"
@@ -84,7 +84,7 @@ export function LayoutSection() {
       ]
 
   return (
-    <Section value="layout" title={<Trans>Layout</Trans>} icon={LayoutGrid}>
+    <Section title={<Trans>Layout</Trans>}>
       <StyleLabel label={<Trans>Display</Trans>}>
         <Select value={display} onChange={setDisplay} options={DISPLAY_OPTIONS} />
       </StyleLabel>
@@ -142,7 +142,11 @@ export function LayoutSection() {
               onChange={(e) => setGap(Number(e.target.value) || 0)}
               min={0}
               max={32}
-              className="w-full text-[11px]"
+              className={cn(
+                "h-8 w-full bg-muted/60 rounded-md px-2 text-[12px] tabular-nums outline-none",
+                "focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-violet-500",
+                "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              )}
             />
           </StyleLabel>
         </>
