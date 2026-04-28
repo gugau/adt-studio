@@ -16,6 +16,10 @@ export interface LlmLogEntry {
   usage?: TokenUsage
   validationErrors?: string[]
   messages: LlmLogMessage[]
+  /** Groups related LLM calls (e.g. an AI edit, its verify, and its retry). */
+  correlationId?: string
+  /** Section index when the call is scoped to a single section (e.g. AI edits). */
+  sectionIndex?: number
 }
 
 export interface LlmLogMessage {

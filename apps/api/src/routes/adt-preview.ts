@@ -12,6 +12,7 @@ import {
   type TTSOutput,
   type TocGenerationOutput,
   type Quiz,
+  type ContentNodeData,
 } from "@adt/types"
 import { createBookStorage, type Storage } from "@adt/storage"
 import {
@@ -62,6 +63,28 @@ const MIME_TYPES: Record<string, string> = {
 
 function getMimeType(filePath: string): string {
   return MIME_TYPES[path.extname(filePath).toLowerCase()] ?? "application/octet-stream"
+}
+
+/** Highest mtime across base.js + everything under modules/ — used to detect
+ *  when the pre-built bundle is out of date relative to its sources. */
+function maxSourceMtime(webAssetsDir: string): number {
+  let max = 0
+  const baseJs = path.join(webAssetsDir, "base.js")
+  if (fs.existsSync(baseJs)) max = Math.max(max, fs.statSync(baseJs).mtimeMs)
+  const modulesDir = path.join(webAssetsDir, "modules")
+  if (!fs.existsSync(modulesDir)) return max
+  const walk = (dir: string) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name)
+      if (entry.isDirectory()) walk(full)
+      else if (entry.isFile()) {
+        const m = fs.statSync(full).mtimeMs
+        if (m > max) max = m
+      }
+    }
+  }
+  walk(modulesDir)
+  return max
 }
 
 // ---------------------------------------------------------------------------
@@ -148,9 +171,9 @@ function buildSectionIdToPageIndex(storage: Storage): Map<string, number> {
     if (renderRow) {
       const parsed = WebRenderingOutput.safeParse(renderRow.data)
       if (parsed.success && parsed.data.sections.length > 0) {
-        const sectioningRow = storage.getLatestNodeData("page-sectioning", page.pageId)
-        const sectioningParsed = sectioningRow ? PageSectioningOutput.safeParse(sectioningRow.data) : null
-        const sectioning = sectioningParsed?.success ? sectioningParsed.data : undefined
+        const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+        const structuringParsed = structuringRow ? PageSectioningOutput.safeParse(structuringRow.data) : null
+        const sectioning = structuringParsed?.success ? structuringParsed.data : undefined
         const sections = [...parsed.data.sections].sort((a, b) => a.sectionIndex - b.sectionIndex)
         for (const rs of sections) {
           const sectionMeta = sectioning?.sections?.[rs.sectionIndex]
@@ -192,11 +215,11 @@ function buildPagesManifest(storage: Storage): Array<{ section_id: string; href:
       const parsed = WebRenderingOutput.safeParse(renderRow.data)
       if (parsed.success && parsed.data.sections.length > 0) {
         // Get sectioning data for sectionIds and page numbers
-        const sectioningRow = storage.getLatestNodeData("page-sectioning", page.pageId)
-        const sectioningParsed = sectioningRow
-          ? PageSectioningOutput.safeParse(sectioningRow.data)
+        const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+        const structuringParsed = structuringRow
+          ? PageSectioningOutput.safeParse(structuringRow.data)
           : null
-        const sectioning = sectioningParsed?.success ? sectioningParsed.data : undefined
+        const sectioning = structuringParsed?.success ? structuringParsed.data : undefined
 
         // One entry per rendered section (stable by sectionIndex), skip pruned
         const sections = [...parsed.data.sections].sort((a, b) => a.sectionIndex - b.sectionIndex)
@@ -230,13 +253,22 @@ function buildPagesManifest(storage: Storage): Array<{ section_id: string; href:
   return list
 }
 
-/** Heading-level text types that should appear in the table of contents */
-const HEADING_TEXT_TYPES = new Set([
-  "section_heading",
-  "chapter_title",
-  "book_title",
-  "activity_title",
-])
+/** DFS-find the first non-pruned heading leaf in a content-node tree. */
+function findFirstHeadingLeaf(
+  nodes: ContentNodeData[],
+): { text: string; nodeId: string } | null {
+  for (const n of nodes) {
+    if (n.isPruned) continue
+    if (n.role === "heading" && typeof n.text === "string" && n.text.length > 0) {
+      return { text: n.text, nodeId: n.nodeId }
+    }
+    if (n.children && n.children.length > 0) {
+      const found = findFirstHeadingLeaf(n.children)
+      if (found) return found
+    }
+  }
+  return null
+}
 
 /** Build toc.json — prefer LLM-generated TOC, fallback to heading-based */
 function buildTocManifest(storage: Storage): Array<{ section_id: string; href: string; title: string; chapter_id: string; level?: number }> {
@@ -284,24 +316,14 @@ function buildHeadingBasedToc(storage: Storage): Array<{ section_id: string; hre
 
       const sectionId = sectionMeta.sectionId ?? `${page.pageId}_sec${String(rs.sectionIndex + 1).padStart(3, "0")}`
 
-      // Find first heading text in section parts
-      for (const part of sectionMeta.parts) {
-        if (part.type !== "text_group" || part.isPruned) continue
-        let found = false
-        for (const t of part.texts) {
-          if (t.isPruned) continue
-          if (HEADING_TEXT_TYPES.has(t.textType)) {
-            toc.push({
-              section_id: sectionId,
-              href: `${sectionId}.html`,
-              title: t.text,
-              chapter_id: t.textId,
-            })
-            found = true
-            break
-          }
-        }
-        if (found) break
+      const heading = findFirstHeadingLeaf(sectionMeta.nodes)
+      if (heading) {
+        toc.push({
+          section_id: sectionId,
+          href: `${sectionId}.html`,
+          title: heading.text,
+          chapter_id: heading.nodeId,
+        })
       }
     }
   }
@@ -443,21 +465,28 @@ export function createAdtPreviewRoutes(
       throw new HTTPException(403, { message: "Forbidden" })
     }
 
-    // Auto-build base.bundle.min.js on-the-fly if it doesn't exist (dev mode).
-    // The file is gitignored and normally pre-built by `pnpm --filter @adt/api bundle`.
-    if (!fs.existsSync(resolved) && assetPath === "base.bundle.min.js") {
+    // Auto-build base.bundle.min.js on-the-fly if it's missing OR stale relative
+    // to its source modules (dev mode). The file is gitignored and normally
+    // pre-built by `pnpm --filter @adt/api bundle`. Skip in packaged mode
+    // (ADT_RESOURCES_ZIP) where esbuild isn't available inside the pkg'd binary.
+    if (assetPath === "base.bundle.min.js" && !process.env.ADT_RESOURCES_ZIP) {
       const entryPoint = path.join(webAssetsDir, "base.js")
       if (fs.existsSync(entryPoint)) {
-        const esbuild = await import("esbuild")
-        await esbuild.build({
-          entryPoints: [entryPoint],
-          bundle: true,
-          minify: true,
-          sourcemap: true,
-          format: "esm",
-          target: "es2020",
-          outfile: resolved,
-        })
+        const bundleMtime = fs.existsSync(resolved) ? fs.statSync(resolved).mtimeMs : 0
+        const isStale =
+          bundleMtime === 0 || maxSourceMtime(webAssetsDir) > bundleMtime
+        if (isStale) {
+          const esbuild = await import("esbuild")
+          await esbuild.build({
+            entryPoints: [entryPoint],
+            bundle: true,
+            minify: true,
+            sourcemap: true,
+            format: "esm",
+            target: "es2020",
+            outfile: resolved,
+          })
+        }
       }
     }
 

@@ -33,8 +33,8 @@ describe("RenderStrategyConfig", () => {
 describe("AppConfig", () => {
   it("fails when a non-activity render strategy includes answer_prompt", () => {
     const result = AppConfig.safeParse({
-      text_types: { heading: "Heading" },
-      text_group_types: { paragraph: "Paragraph" },
+      structure_types: { paragraph: "Paragraph" },
+      role_types: { heading: "Heading" },
       render_strategies: {
         bad_strategy: {
           render_type: "template",
@@ -51,8 +51,8 @@ describe("AppConfig", () => {
 
   it("accepts reviewer_validation catalog overrides", () => {
     const result = AppConfig.safeParse({
-      text_types: { heading: "Heading" },
-      text_group_types: { paragraph: "Paragraph" },
+      structure_types: { paragraph: "Paragraph" },
+      role_types: { heading: "Heading" },
       reviewer_validation: {
         enabled: true,
         identification_fields: [

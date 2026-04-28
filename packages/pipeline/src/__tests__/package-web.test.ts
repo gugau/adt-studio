@@ -67,7 +67,7 @@ function createMinimalStorage(): Storage {
             {
               sectionId: "pg001_sec001",
               sectionType: "content",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 1,
@@ -285,7 +285,7 @@ describe("packageAdtWeb", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "content",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 10,
@@ -299,7 +299,7 @@ describe("packageAdtWeb", () => {
             {
               sectionId: "pg002_sec001",
               sectionType: "content",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: null,
@@ -407,7 +407,7 @@ describe("packageAdtWeb", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "content",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 10,
@@ -498,7 +498,7 @@ describe("packageAdtWeb", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "activity_multiple_choice",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 1,
@@ -560,20 +560,24 @@ describe("packageAdtWeb", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "content",
-              parts: [
+              nodes: [
                 {
-                  type: "image",
-                  imageId: "pg001_im001",
+                  nodeId: "pg001_sec001_ig001",
                   isPruned: false,
-                },
-                {
-                  type: "text_group",
-                  groupId: "pg001_gp001",
-                  groupType: "paragraph",
-                  texts: [
-                    { textId: "tx001", textType: "image_associated_text", text: "A lifecycle diagram with six stages", isPruned: false },
+                  structure: "image_group",
+                  children: [
+                    {
+                      nodeId: "pg001_im001",
+                      isPruned: false,
+                      role: "image",
+                    },
+                    {
+                      nodeId: "pg001_gp001_tx001",
+                      isPruned: false,
+                      role: "caption",
+                      text: "A lifecycle diagram with six stages",
+                    },
                   ],
-                  isPruned: false,
                 },
               ],
               backgroundColor: "#fff",
@@ -670,7 +674,7 @@ describe("packageAdtWeb", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "content",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 1,
@@ -735,7 +739,7 @@ describe("packageAdtWeb", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "content",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 1,
@@ -744,7 +748,7 @@ describe("packageAdtWeb", () => {
             {
               sectionId: "pg001_sec002",
               sectionType: "content",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 1,
@@ -1121,6 +1125,22 @@ describe("convertLatexToMathml (HTML)", () => {
     const result = convertLatexToMathml(html)
     expect(result).toContain("<math")
   })
+
+  it("does not convert snake_case identifiers in prose as math", () => {
+    const html = '<p>Set the variable_name to the desired value and review snake_case style.</p>'
+    const result = convertLatexToMathml(html)
+    expect(result).toBe(html)
+    expect(result).not.toContain("<math")
+  })
+
+  it("does not mangle snake_case words embedded in math-containing prose", () => {
+    const html = '<p>Please configure the variable_name setting before running any experiments where X_i represents each independent measurement taken during the trial.</p>'
+    const result = convertLatexToMathml(html)
+    // snake_case word must be preserved verbatim
+    expect(result).toContain("variable_name")
+    // X_i should be converted to math
+    expect(result).toContain("<math")
+  })
 })
 
 describe("packageWebpub", () => {
@@ -1180,7 +1200,7 @@ describe("packageWebpub", () => {
             {
               sectionId: "pg001_sec001",
               sectionType: "content",
-              parts: [],
+              nodes: [],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 1,

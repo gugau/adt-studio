@@ -10,9 +10,8 @@ export const StepName = z.enum([
   "image-segmentation",
   "image-cropping",
   "image-meaningfulness",
-  "text-classification",
-  "translation",
   "page-sectioning",
+  "translation",
   "web-rendering",
   "quiz-generation",
   "image-captioning",
@@ -30,12 +29,14 @@ export type StepName = z.infer<typeof StepName>
 
 export const StageName = z.enum([
   "extract",
+  "sectioning",
   "storyboard",
   "quizzes",
   "captions",
   "glossary",
   "toc",
-  "text-and-speech",
+  "translate",
+  "speech",
   "package",
 ])
 export type StageName = z.infer<typeof StageName>
@@ -65,24 +66,30 @@ export const PIPELINE: StageDef[] = [
     label: "Extract",
     dependsOn: [],
     steps: [
-      { name: "extract", label: "PDF Extraction" },
+      { name: "extract", label: "PDF Extraction", pageProgress: true },
       { name: "metadata", label: "Metadata", dependsOn: ["extract"] },
-      { name: "image-filtering", label: "Image Filtering", dependsOn: ["extract"] },
-      { name: "image-segmentation", label: "Image Segmentation", dependsOn: ["image-filtering"] },
-      { name: "image-cropping", label: "Image Cropping", dependsOn: ["image-segmentation"] },
-      { name: "image-meaningfulness", label: "Image Meaningfulness", dependsOn: ["image-segmentation"] },
-      { name: "text-classification", label: "Text Classification", dependsOn: ["extract"] },
-      { name: "book-summary", label: "Book Summary", dependsOn: ["text-classification"] },
-      { name: "translation", label: "Translation", dependsOn: ["text-classification"] },
+      { name: "book-summary", label: "Book Summary", dependsOn: ["extract"] },
+      { name: "image-filtering", label: "Image Filtering", dependsOn: ["extract"], pageProgress: true },
+      { name: "image-segmentation", label: "Image Segmentation", dependsOn: ["image-filtering"], pageProgress: true },
+      { name: "image-meaningfulness", label: "Image Meaningfulness", dependsOn: ["image-segmentation"], pageProgress: true },
+      { name: "image-cropping", label: "Image Cropping", dependsOn: ["image-segmentation"], pageProgress: true },
+    ],
+  },
+  {
+    name: "sectioning",
+    label: "Sectioning",
+    dependsOn: ["extract"],
+    steps: [
+      { name: "page-sectioning", label: "Page Structuring", pageProgress: true },
+      { name: "translation", label: "Translation", dependsOn: ["page-sectioning"], pageProgress: true },
     ],
   },
   {
     name: "storyboard",
     label: "Storyboard",
-    dependsOn: ["extract"],
+    dependsOn: ["sectioning"],
     steps: [
-      { name: "page-sectioning", label: "Page Sectioning", pageProgress: true },
-      { name: "web-rendering", label: "Web Rendering", dependsOn: ["page-sectioning"], pageProgress: true },
+      { name: "web-rendering", label: "Web Rendering", pageProgress: true },
     ],
   },
   {
@@ -95,7 +102,7 @@ export const PIPELINE: StageDef[] = [
   },
   {
     name: "captions",
-    label: "Captions",
+    label: "Image Captions",
     dependsOn: ["storyboard"],
     steps: [
       { name: "image-captioning", label: "Image Captioning" },
@@ -118,19 +125,26 @@ export const PIPELINE: StageDef[] = [
     ],
   },
   {
-    name: "text-and-speech",
-    label: "Text & Speech",
+    name: "translate",
+    label: "Translate",
     dependsOn: ["quizzes", "captions", "glossary", "toc"],
     steps: [
       { name: "text-catalog", label: "Text Catalog" },
       { name: "catalog-translation", label: "Catalog Translation", dependsOn: ["text-catalog"] },
-      { name: "tts", label: "Speech Generation", dependsOn: ["catalog-translation"] },
+    ],
+  },
+  {
+    name: "speech",
+    label: "Speech",
+    dependsOn: ["translate"],
+    steps: [
+      { name: "tts", label: "Speech Generation" },
     ],
   },
   {
     name: "package",
     label: "Package",
-    dependsOn: ["text-and-speech"],
+    dependsOn: ["speech"],
     steps: [
       { name: "package-web", label: "Web Package" },
       {

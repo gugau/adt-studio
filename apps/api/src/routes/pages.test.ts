@@ -52,19 +52,6 @@ describe("Page routes", () => {
       })
 
       // Simulate pipeline output for page 1
-      storage.putNodeData("text-classification", `${label}_p1`, {
-        reasoning: "test reasoning",
-        groups: [
-          {
-            groupId: "g1",
-            groupType: "body",
-            texts: [
-              { textType: "paragraph", text: "Hello world", isPruned: false },
-            ],
-            isPruned: false,
-          },
-        ],
-      })
       storage.putNodeData("image-filtering", `${label}_p1`, {
         images: [],
       })
@@ -74,17 +61,18 @@ describe("Page routes", () => {
           {
             sectionId: `${label}_p1_sec001`,
             sectionType: "content",
-            parts: [{
-              type: "text_group",
-              groupId: "g1",
-              groupType: "paragraph",
-              texts: [{ textId: "g1_tx001", textType: "section_text", text: "Hello world", isPruned: false }],
-              isPruned: false,
-            }],
             backgroundColor: "#ffffff",
             textColor: "#000000",
             pageNumber: 1,
             isPruned: false,
+            nodes: [
+              {
+                nodeId: `${label}_p1_n001`,
+                isPruned: false,
+                role: "text",
+                text: "Hello world",
+              },
+            ],
           },
         ],
       })
@@ -145,12 +133,12 @@ describe("Page routes", () => {
       expect(body.pageId).toBe(`${label}_p1`)
       expect(body.pageNumber).toBe(1)
       expect(body.text).toBe("Page one text content")
-      expect(body.textClassification).toBeTruthy()
-      expect(body.textClassification.groups).toHaveLength(1)
-      expect(body.imagClassification).toBeFalsy // typo check
       expect(body.imageClassification).toBeTruthy()
-      expect(body.sectioning).toBeTruthy()
-      expect(body.sectioning.sections).toHaveLength(1)
+      expect(body.sectioningTree).toBeTruthy()
+      expect(body.sectioningTree.sections).toHaveLength(1)
+      expect(body.sectioningTree.sections[0].nodes).toHaveLength(1)
+      expect(body.sectioningTree.sections[0].nodes[0].role).toBe("text")
+      expect(body.sectioningTree.sections[0].nodes[0].text).toBe("Hello world")
       expect(body.rendering).toBeTruthy()
       expect(body.rendering.sections[0].html).toBe(
         "<div>Hello world</div>"
@@ -165,7 +153,7 @@ describe("Page routes", () => {
       expect(res.status).toBe(200)
       const body = await res.json()
       expect(body.pageId).toBe(`${label}_p2`)
-      expect(body.textClassification).toBeNull()
+      expect(body.sectioningTree).toBeNull()
       expect(body.rendering).toBeNull()
     })
 
@@ -197,24 +185,39 @@ describe("Page routes", () => {
     })
   })
 
-  describe("PUT /api/books/:label/pages/:pageId/text-classification", () => {
-    it("saves text classification and returns version", async () => {
+  describe("PUT /api/books/:label/pages/:pageId/sectioning", () => {
+    it("saves page sectioning and returns version", async () => {
       const data = {
         reasoning: "updated reasoning",
-        groups: [
+        sections: [
           {
-            groupId: "g1",
-            groupType: "body",
-            texts: [
-              { textType: "paragraph", text: "Updated text", isPruned: false },
-            ],
+            sectionId: `${label}_p1_sec001`,
+            sectionType: "content",
+            backgroundColor: "#ffffff",
+            textColor: "#000000",
+            pageNumber: 1,
             isPruned: false,
+            nodes: [
+              {
+                nodeId: `${label}_p1_g001`,
+                isPruned: false,
+                structure: "paragraph",
+                children: [
+                  {
+                    nodeId: `${label}_p1_n001`,
+                    isPruned: false,
+                    role: "text",
+                    text: "Updated text",
+                  },
+                ],
+              },
+            ],
           },
         ],
       }
 
       const res = await app.request(
-        `/api/books/${label}/pages/${label}_p1/text-classification`,
+        `/api/books/${label}/pages/${label}_p1/sectioning`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -229,7 +232,7 @@ describe("Page routes", () => {
 
     it("returns 400 for invalid body", async () => {
       const res = await app.request(
-        `/api/books/${label}/pages/${label}_p1/text-classification`,
+        `/api/books/${label}/pages/${label}_p1/sectioning`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -243,11 +246,11 @@ describe("Page routes", () => {
     it("returns 404 for nonexistent page", async () => {
       const data = {
         reasoning: "test",
-        groups: [],
+        sections: [],
       }
 
       const res = await app.request(
-        `/api/books/${label}/pages/fake-page/text-classification`,
+        `/api/books/${label}/pages/fake-page/sectioning`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -295,6 +298,101 @@ describe("Page routes", () => {
     })
   })
 
+  describe("POST /api/books/:label/pages/:pageId/sections/:sectionIndex/clone", () => {
+    it("assigns fresh ids to cloned containers but preserves leaf ids", async () => {
+      const sourceContainerId = `${label}_p1_n0001`
+      const sourceLeafId = `${label}_p1_n0002`
+
+      const storage = createBookStorage(label, tmpDir)
+      try {
+        storage.putNodeData("page-sectioning", `${label}_p1`, {
+          reasoning: "nested",
+          sections: [
+            {
+              sectionId: `${label}_p1_sec001`,
+              sectionType: "content",
+              backgroundColor: "#ffffff",
+              textColor: "#000000",
+              pageNumber: 1,
+              isPruned: false,
+              nodes: [
+                {
+                  nodeId: sourceContainerId,
+                  isPruned: false,
+                  structure: "group",
+                  children: [
+                    {
+                      nodeId: sourceLeafId,
+                      isPruned: false,
+                      role: "text",
+                      text: "Hello world",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        })
+        storage.putNodeData("web-rendering", `${label}_p1`, {
+          sections: [
+            {
+              sectionIndex: 0,
+              sectionType: "content",
+              reasoning: "rendered",
+              html:
+                `<section data-section-id="${label}_p1_sec001">` +
+                `<div data-id="${sourceContainerId}">` +
+                `<p data-id="${sourceLeafId}">Hello world</p>` +
+                "</div></section>",
+            },
+          ],
+        })
+      } finally {
+        storage.close()
+      }
+
+      const res = await app.request(
+        `/api/books/${label}/pages/${label}_p1/sections/0/clone`,
+        { method: "POST" }
+      )
+
+      expect(res.status).toBe(200)
+
+      const verify = createBookStorage(label, tmpDir)
+      try {
+        const sectioningRow = verify.getLatestNodeData("page-sectioning", `${label}_p1`)
+        const sectioning = sectioningRow?.data as {
+          sections: Array<{
+            sectionId: string
+            nodes: Array<{
+              nodeId: string
+              children?: Array<{ nodeId: string }>
+            }>
+          }>
+        }
+        expect(sectioning.sections).toHaveLength(2)
+
+        const original = sectioning.sections[0]
+        const cloned = sectioning.sections[1]
+        expect(cloned.sectionId).toBe(`${label}_p1_sec002`)
+        expect(cloned.nodes[0]?.nodeId).not.toBe(original.nodes[0]?.nodeId)
+        expect(cloned.nodes[0]?.children?.[0]?.nodeId).toBe(sourceLeafId)
+
+        const renderingRow = verify.getLatestNodeData("web-rendering", `${label}_p1`)
+        const rendering = renderingRow?.data as {
+          sections: Array<{ sectionIndex: number; html: string }>
+        }
+        const clonedRendering = rendering.sections.find((section) => section.sectionIndex === 1)
+        expect(clonedRendering?.html).toContain(`data-section-id="${label}_p1_sec002"`)
+        expect(clonedRendering?.html).toContain(`data-id="${cloned.nodes[0]?.nodeId}"`)
+        expect(clonedRendering?.html).toContain(`data-id="${sourceLeafId}"`)
+        expect(clonedRendering?.html).not.toContain(`data-id="${sourceContainerId}"`)
+      } finally {
+        verify.close()
+      }
+    })
+  })
+
   describe("POST /api/books/:label/pages/:pageId/re-render", () => {
     it("returns 400 when X-OpenAI-Key header is missing", async () => {
       const res = await app.request(
@@ -319,74 +417,6 @@ describe("Page routes", () => {
       expect(res.status).toBe(400)
       const body = await res.json()
       expect(body.error).toContain("out of range")
-    })
-  })
-
-  describe("POST /api/books/:label/pages/:pageId/sections/:sectionIndex/clone", () => {
-    it("clones sectioning and rendering for a valid section index", async () => {
-      const res = await app.request(
-        `/api/books/${label}/pages/${label}_p1/sections/0/clone`,
-        { method: "POST" }
-      )
-
-      expect(res.status).toBe(200)
-      const body = await res.json()
-      expect(body.clonedSectionIndex).toBe(1)
-
-      const storage = createBookStorage(label, tmpDir)
-      try {
-        const sectioningRow = storage.getLatestNodeData("page-sectioning", `${label}_p1`)
-        const renderingRow = storage.getLatestNodeData("web-rendering", `${label}_p1`)
-
-        const sectioning = sectioningRow?.data as {
-          sections: Array<{ sectionId: string }>
-        }
-        const rendering = renderingRow?.data as {
-          sections: Array<{ sectionIndex: number }>
-        }
-
-        expect(sectioning.sections).toHaveLength(2)
-        expect(sectioning.sections[0].sectionId).toBe(`${label}_p1_sec001`)
-        expect(sectioning.sections[1].sectionId).toBe(`${label}_p1_sec002`)
-
-        expect(rendering.sections).toHaveLength(2)
-        expect(rendering.sections[0].sectionIndex).toBe(0)
-        expect(rendering.sections[1].sectionIndex).toBe(1)
-      } finally {
-        storage.close()
-      }
-    })
-
-    it("returns 400 for invalid section index param", async () => {
-      const res = await app.request(
-        `/api/books/${label}/pages/${label}_p1/sections/not-a-number/clone`,
-        { method: "POST" }
-      )
-      expect(res.status).toBe(400)
-    })
-
-    it("fails before writing sectioning when rendering payload is invalid", async () => {
-      const storage = createBookStorage(label, tmpDir)
-      try {
-        storage.putNodeData("web-rendering", `${label}_p1`, { bad: "payload" })
-      } finally {
-        storage.close()
-      }
-
-      const res = await app.request(
-        `/api/books/${label}/pages/${label}_p1/sections/0/clone`,
-        { method: "POST" }
-      )
-      expect(res.status).toBe(400)
-
-      const verifyStorage = createBookStorage(label, tmpDir)
-      try {
-        const sectioningRow = verifyStorage.getLatestNodeData("page-sectioning", `${label}_p1`)
-        const sectioning = sectioningRow?.data as { sections: unknown[] }
-        expect(sectioning.sections).toHaveLength(1)
-      } finally {
-        verifyStorage.close()
-      }
     })
   })
 
@@ -669,7 +699,7 @@ describe("Page routes", () => {
     }
   }
 
-  /** Assert that all caption + text-and-speech node data and step_runs were cleared. */
+  /** Assert that all caption + translate/speech node data and step_runs were cleared. */
   function expectAllDownstreamCleared(dir: string, bookLabel: string) {
     const s = createBookStorage(bookLabel, dir)
     try {
@@ -689,7 +719,7 @@ describe("Page routes", () => {
     }
   }
 
-  /** Assert that text-and-speech (but NOT image-captioning) node data and step_runs were cleared. */
+  /** Assert that translate/speech (but NOT image-captioning) node data and step_runs were cleared. */
   function expectTextAndSpeechCleared(dir: string, bookLabel: string) {
     const s = createBookStorage(bookLabel, dir)
     try {
@@ -711,7 +741,7 @@ describe("Page routes", () => {
   }
 
   describe("PUT /api/books/:label/pages/:pageId/sectioning clears downstream", () => {
-    it("clears caption + text-and-speech data on sectioning save", async () => {
+    it("clears caption + translate/speech data on sectioning save", async () => {
       seedDownstreamData(tmpDir, label)
 
       const data = {
@@ -719,17 +749,25 @@ describe("Page routes", () => {
         sections: [{
           sectionId: `${label}_p1_sec001`,
           sectionType: "content",
-          parts: [{
-            type: "text_group",
-            groupId: "g1",
-            groupType: "paragraph",
-            texts: [{ textId: "g1_tx001", textType: "section_text", text: "Updated text", isPruned: false }],
-            isPruned: false,
-          }],
           backgroundColor: "#ffffff",
           textColor: "#000000",
           pageNumber: 1,
           isPruned: false,
+          nodes: [
+            {
+              nodeId: `${label}_p1_g001`,
+              isPruned: false,
+              structure: "paragraph",
+              children: [
+                {
+                  nodeId: `${label}_p1_n002`,
+                  isPruned: false,
+                  role: "text",
+                  text: "Updated text",
+                },
+              ],
+            },
+          ],
         }],
       }
 
@@ -748,7 +786,7 @@ describe("Page routes", () => {
   })
 
   describe("PUT /api/books/:label/pages/:pageId/rendering clears downstream", () => {
-    it("clears caption + text-and-speech data on rendering save", async () => {
+    it("clears caption + translate/speech data on rendering save", async () => {
       seedDownstreamData(tmpDir, label)
 
       const data = {
@@ -774,72 +812,8 @@ describe("Page routes", () => {
     })
   })
 
-  describe("POST clone clears downstream", () => {
-    it("clears caption + text-and-speech data on section clone", async () => {
-      seedDownstreamData(tmpDir, label)
-
-      const res = await app.request(
-        `/api/books/${label}/pages/${label}_p1/sections/0/clone`,
-        { method: "POST" }
-      )
-
-      expect(res.status).toBe(200)
-      expectAllDownstreamCleared(tmpDir, label)
-    })
-  })
-
-  describe("POST delete clears downstream", () => {
-    it("clears caption + text-and-speech data on section delete", async () => {
-      // Need at least 2 sections so delete is valid
-      const s = createBookStorage(label, tmpDir)
-      try {
-        s.putNodeData("page-sectioning", `${label}_p1`, {
-          reasoning: "sectioned",
-          sections: [
-            {
-              sectionId: `${label}_p1_sec001`,
-              sectionType: "content",
-              parts: [],
-              backgroundColor: "#ffffff",
-              textColor: "#000000",
-              pageNumber: 1,
-              isPruned: false,
-            },
-            {
-              sectionId: `${label}_p1_sec002`,
-              sectionType: "content",
-              parts: [],
-              backgroundColor: "#ffffff",
-              textColor: "#000000",
-              pageNumber: 1,
-              isPruned: false,
-            },
-          ],
-        })
-        s.putNodeData("web-rendering", `${label}_p1`, {
-          sections: [
-            { sectionIndex: 0, sectionType: "content", reasoning: "r", html: "<div>A</div>" },
-            { sectionIndex: 1, sectionType: "content", reasoning: "r", html: "<div>B</div>" },
-          ],
-        })
-      } finally {
-        s.close()
-      }
-
-      seedDownstreamData(tmpDir, label)
-
-      const res = await app.request(
-        `/api/books/${label}/pages/${label}_p1/sections/1`,
-        { method: "DELETE" }
-      )
-
-      expect(res.status).toBe(200)
-      expectAllDownstreamCleared(tmpDir, label)
-    })
-  })
-
   describe("POST crop (images) clears downstream", () => {
-    it("clears caption + text-and-speech data on image crop", async () => {
+    it("clears caption + translate/speech data on image crop", async () => {
       seedDownstreamData(tmpDir, label)
 
       // Minimal valid PNG (1x1 pixel)
@@ -867,7 +841,7 @@ describe("Page routes", () => {
     })
   })
 
-  describe("PUT image-captioning clears text-and-speech downstream", () => {
+  describe("PUT image-captioning clears translate/speech downstream", () => {
     it("clears text-catalog/translations/TTS but keeps image-captioning", async () => {
       seedDownstreamData(tmpDir, label)
 

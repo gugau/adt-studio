@@ -19,7 +19,6 @@ import { BASE_URL, type LlmLogEntry } from "@/api/client"
 const STEPS = [
   "extract",
   "metadata",
-  "text-classification",
   "translation",
   "image-filtering",
   "image-cropping",

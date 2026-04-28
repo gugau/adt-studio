@@ -1,11 +1,13 @@
 export const SETTINGS_STAGE_SLUGS = [
   "extract",
+  "sectioning",
   "storyboard",
   "quizzes",
   "glossary",
   "toc",
   "captions",
-  "text-and-speech",
+  "translate",
+  "speech",
   "validation",
 ] as const
 

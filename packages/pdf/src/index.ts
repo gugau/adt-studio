@@ -1,4 +1,4 @@
-export { extractPdf, extractPdfStream } from "./extract.js";
+export { extractPdf, extractPdfStream, renderPdfCover } from "./extract.js";
 export type {
   ExtractInput,
   ExtractedPage,

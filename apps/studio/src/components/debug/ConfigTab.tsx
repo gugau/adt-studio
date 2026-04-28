@@ -41,11 +41,10 @@ export function ConfigTab({ label }: ConfigTabProps) {
   const config = merged as Record<string, unknown>
 
   const sections = [
-    { key: "text_types", title: "Text Types" },
-    { key: "group_types", title: "Group Types" },
+    { key: "structure_types", title: "Structure Types" },
+    { key: "role_types", title: "Role Types" },
     { key: "section_types", title: "Section Types" },
     { key: "metadata_extraction", title: "Metadata Extraction" },
-    { key: "text_classification", title: "Text Classification" },
     { key: "image_filters", title: "Image Filtering" },
     { key: "page_sectioning", title: "Page Sectioning" },
     { key: "default_render_strategy", title: "Default Render Strategy" },

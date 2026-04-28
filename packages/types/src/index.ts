@@ -43,17 +43,15 @@ export {
   TaskInfo,
 } from "./task.js"
 
-export { BookLabel, parseBookLabel } from "./book.js"
+export { BookLabel, BookSummary, BookDetail, parseBookLabel } from "./book.js"
 
 export {
   BookFormat,
   LayoutType,
-  PresetName,
   StyleguideName,
   DEFAULT_LLM_MAX_RETRIES,
   StepConfig,
   QuizGenerationConfig,
-  SectioningMode,
   PageSectioningConfig,
   RenderType,
   VisualRefinementStrategyConfig,
@@ -64,11 +62,36 @@ export {
 } from "./config.js"
 
 export {
-  TextEntry,
-  TextGroup,
-  TextClassificationOutput,
-  buildTextClassificationLLMSchema,
-} from "./text-classification.js"
+  ContentNodeData,
+  PageSectioningSection,
+  PageSectioningOutput,
+  buildPageSectioningLLMSchema,
+  buildPageSectioningRefinementLLMSchema,
+} from "./page-sectioning.js"
+
+export {
+  findNode,
+  findNodePath,
+  editLeafText,
+  setLeafRole,
+  setContainerStructure,
+  toggleNodePruned,
+  deleteNode,
+  duplicateNode,
+  moveNode,
+  addLeaf,
+  addImageLeaf,
+  addContainer,
+  nestNode,
+  unnestNode,
+  replaceNodeId,
+  cloneNodeWithNewIds,
+  collectPrunedLeafIds,
+  collectLeafIdsInSubtree,
+  collectLeafNodes,
+  type IdFactory,
+  type NodeLocation,
+} from "./section-tree-ops.js"
 
 export {
   ImageFilters,
@@ -98,21 +121,12 @@ export { BookMetadata } from "./metadata.js"
 export { BookSummaryOutput } from "./book-summary.js"
 
 export {
-  SectionTextEntry,
-  SectionTextPart,
-  SectionImagePart,
-  SectionPart,
-  PageSection,
-  PageSectioningOutput,
-  buildPageSectioningLLMSchema,
-} from "./page-sectioning.js"
-
-export {
   SectionRendering,
   WebRenderingOutput,
   webRenderingLLMSchema,
   activityAnswersLLMSchema,
   visualReviewLLMSchema,
+  editVerifyLLMSchema,
 } from "./web-rendering.js"
 
 export {
@@ -144,6 +158,9 @@ export {
   SpeechConfig,
   SpeechFileEntry,
   TTSOutput,
+  WordTimestamp,
+  WordTimestampEntry,
+  WordTimestampOutput,
 } from "./speech.js"
 
 export {

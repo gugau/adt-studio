@@ -7,6 +7,20 @@ export interface LLMModel {
 export interface GenerateObjectOptions {
   schema: unknown
 
+  /**
+   * Structured-output mode passed to the AI SDK's generateObject.
+   * - "auto" (default): SDK picks — typically maps to OpenAI structured outputs,
+   *   which enforce the JSON schema server-side. Does NOT work for recursive
+   *   schemas (OpenAI rejects $refs at `items` positions under strict mode).
+   * - "json": JSON mode; schema is described in the prompt and parsed, but NOT
+   *   enforced server-side. For OpenAI this is achieved by disabling the
+   *   provider's `structuredOutputs` flag — otherwise reasoning models
+   *   (gpt-5.x, o-series) still emit `response_format: json_schema, strict: true`
+   *   and reject recursive schemas. Use this whenever the schema contains
+   *   z.lazy() recursion or z.any() arms.
+   */
+  mode?: "auto" | "json" | "tool"
+
   /** Provide either prompt (rendered via prompt engine) or system + messages directly */
   prompt?: string
   context?: Record<string, unknown>
@@ -22,6 +36,8 @@ export interface GenerateObjectOptions {
     taskType: string
     pageId?: string
     promptName: string
+    sectionIndex?: number
+    correlationId?: string
   }
 }
 

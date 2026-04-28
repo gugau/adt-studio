@@ -13,77 +13,313 @@ export const SUPPORTED_LANGUAGES: Language[] = [
   { code: "ar", name: "Arabic", countries: [
     { code: "eg", name: "Egypt" },
     { code: "sa", name: "Saudi Arabia" },
+    { code: "ae", name: "United Arab Emirates" },
     { code: "ma", name: "Morocco" },
+    { code: "iq", name: "Iraq" },
+    { code: "jo", name: "Jordan" },
+    { code: "lb", name: "Lebanon" },
+    { code: "sy", name: "Syria" },
+    { code: "tn", name: "Tunisia" },
+    { code: "dz", name: "Algeria" },
+    { code: "ly", name: "Libya" },
+    { code: "sd", name: "Sudan" },
+    { code: "ye", name: "Yemen" },
+    { code: "kw", name: "Kuwait" },
+    { code: "qa", name: "Qatar" },
+    { code: "om", name: "Oman" },
+  ]},
+  { code: "hy", name: "Armenian", countries: [
+    { code: "am", name: "Armenia" },
+  ]},
+  { code: "az", name: "Azerbaijani", countries: [
+    { code: "az", name: "Azerbaijan" },
   ]},
   { code: "bn", name: "Bengali", countries: [
     { code: "bd", name: "Bangladesh" },
     { code: "in", name: "India" },
   ]},
+  { code: "bs", name: "Bosnian", countries: [
+    { code: "ba", name: "Bosnia and Herzegovina" },
+  ]},
+  { code: "bg", name: "Bulgarian", countries: [
+    { code: "bg", name: "Bulgaria" },
+  ]},
+  { code: "my", name: "Burmese", countries: [
+    { code: "mm", name: "Myanmar" },
+  ]},
   { code: "zh", name: "Chinese", countries: [
     { code: "cn", name: "China" },
     { code: "tw", name: "Taiwan" },
     { code: "hk", name: "Hong Kong" },
+    { code: "sg", name: "Singapore" },
+    { code: "my", name: "Malaysia" },
+  ]},
+  { code: "hr", name: "Croatian", countries: [
+    { code: "hr", name: "Croatia" },
+  ]},
+  { code: "cs", name: "Czech", countries: [
+    { code: "cz", name: "Czech Republic" },
+  ]},
+  { code: "da", name: "Danish", countries: [
+    { code: "dk", name: "Denmark" },
   ]},
   { code: "nl", name: "Dutch", countries: [
     { code: "nl", name: "Netherlands" },
     { code: "be", name: "Belgium" },
+  ]},
+  { code: "dz", name: "Dzongkha", countries: [
+    { code: "bt", name: "Bhutan" },
   ]},
   { code: "en", name: "English", countries: [
     { code: "us", name: "United States" },
     { code: "gb", name: "United Kingdom" },
     { code: "au", name: "Australia" },
     { code: "ca", name: "Canada" },
+    { code: "nz", name: "New Zealand" },
+    { code: "ie", name: "Ireland" },
     { code: "in", name: "India" },
     { code: "za", name: "South Africa" },
+    { code: "sg", name: "Singapore" },
+    { code: "ph", name: "Philippines" },
+    { code: "ng", name: "Nigeria" },
+    { code: "ke", name: "Kenya" },
+    { code: "gh", name: "Ghana" },
+    { code: "jm", name: "Jamaica" },
+  ]},
+  { code: "et", name: "Estonian", countries: [
+    { code: "ee", name: "Estonia" },
+  ]},
+  { code: "fil", name: "Filipino", countries: [
+    { code: "ph", name: "Philippines" },
+  ]},
+  { code: "fi", name: "Finnish", countries: [
+    { code: "fi", name: "Finland" },
   ]},
   { code: "fr", name: "French", countries: [
     { code: "fr", name: "France" },
     { code: "ca", name: "Canada" },
     { code: "be", name: "Belgium" },
     { code: "ch", name: "Switzerland" },
+    { code: "sn", name: "Senegal" },
+    { code: "ci", name: "Côte d'Ivoire" },
+    { code: "cm", name: "Cameroon" },
+    { code: "cd", name: "Congo (DRC)" },
+    { code: "mg", name: "Madagascar" },
+    { code: "ml", name: "Mali" },
+    { code: "ht", name: "Haiti" },
+    { code: "lu", name: "Luxembourg" },
+  ]},
+  { code: "ka", name: "Georgian", countries: [
+    { code: "ge", name: "Georgia" },
   ]},
   { code: "de", name: "German", countries: [
     { code: "de", name: "Germany" },
     { code: "at", name: "Austria" },
     { code: "ch", name: "Switzerland" },
+    { code: "lu", name: "Luxembourg" },
   ]},
-  { code: "hi", name: "Hindi" },
-  { code: "id", name: "Indonesian" },
-  { code: "it", name: "Italian" },
-  { code: "ja", name: "Japanese" },
-  { code: "ko", name: "Korean" },
+  { code: "el", name: "Greek", countries: [
+    { code: "gr", name: "Greece" },
+    { code: "cy", name: "Cyprus" },
+  ]},
+  { code: "gu", name: "Gujarati", countries: [
+    { code: "in", name: "India" },
+  ]},
+  { code: "ha", name: "Hausa", countries: [
+    { code: "ng", name: "Nigeria" },
+    { code: "ne", name: "Niger" },
+  ]},
+  { code: "he", name: "Hebrew", countries: [
+    { code: "il", name: "Israel" },
+  ]},
+  { code: "hi", name: "Hindi", countries: [
+    { code: "in", name: "India" },
+  ]},
+  { code: "hu", name: "Hungarian", countries: [
+    { code: "hu", name: "Hungary" },
+  ]},
+  { code: "is", name: "Icelandic", countries: [
+    { code: "is", name: "Iceland" },
+  ]},
+  { code: "id", name: "Indonesian", countries: [
+    { code: "id", name: "Indonesia" },
+  ]},
+  { code: "it", name: "Italian", countries: [
+    { code: "it", name: "Italy" },
+    { code: "ch", name: "Switzerland" },
+  ]},
+  { code: "ja", name: "Japanese", countries: [
+    { code: "jp", name: "Japan" },
+  ]},
+  { code: "kk", name: "Kazakh", countries: [
+    { code: "kz", name: "Kazakhstan" },
+  ]},
+  { code: "km", name: "Khmer", countries: [
+    { code: "kh", name: "Cambodia" },
+  ]},
+  { code: "rw", name: "Kinyarwanda", countries: [
+    { code: "rw", name: "Rwanda" },
+  ]},
+  { code: "ko", name: "Korean", countries: [
+    { code: "kr", name: "South Korea" },
+    { code: "kp", name: "North Korea" },
+  ]},
+  { code: "ky", name: "Kyrgyz", countries: [
+    { code: "kg", name: "Kyrgyzstan" },
+  ]},
+  { code: "lo", name: "Lao", countries: [
+    { code: "la", name: "Laos" },
+  ]},
+  { code: "lv", name: "Latvian", countries: [
+    { code: "lv", name: "Latvia" },
+  ]},
+  { code: "lt", name: "Lithuanian", countries: [
+    { code: "lt", name: "Lithuania" },
+  ]},
+  { code: "mg", name: "Malagasy", countries: [
+    { code: "mg", name: "Madagascar" },
+  ]},
+  { code: "ms", name: "Malay", countries: [
+    { code: "my", name: "Malaysia" },
+    { code: "bn", name: "Brunei" },
+  ]},
+  { code: "ml", name: "Malayalam", countries: [
+    { code: "in", name: "India" },
+  ]},
+  { code: "mr", name: "Marathi", countries: [
+    { code: "in", name: "India" },
+  ]},
+  { code: "mn", name: "Mongolian", countries: [
+    { code: "mn", name: "Mongolia" },
+  ]},
   { code: "ne", name: "Nepali", countries: [
     { code: "np", name: "Nepal" },
     { code: "in", name: "India" },
   ]},
-  { code: "pl", name: "Polish" },
+  { code: "no", name: "Norwegian", countries: [
+    { code: "no", name: "Norway" },
+  ]},
+  { code: "or", name: "Odia", countries: [
+    { code: "in", name: "India" },
+  ]},
+  { code: "ps", name: "Pashto", countries: [
+    { code: "af", name: "Afghanistan" },
+    { code: "pk", name: "Pakistan" },
+  ]},
+  { code: "fa", name: "Persian", countries: [
+    { code: "ir", name: "Iran" },
+    { code: "af", name: "Afghanistan" },
+    { code: "tj", name: "Tajikistan" },
+  ]},
+  { code: "pl", name: "Polish", countries: [
+    { code: "pl", name: "Poland" },
+  ]},
   { code: "pt", name: "Portuguese", countries: [
     { code: "br", name: "Brazil" },
     { code: "pt", name: "Portugal" },
+    { code: "mz", name: "Mozambique" },
   ]},
-  { code: "ru", name: "Russian" },
-  { code: "si", name: "Sinhala" },
+  { code: "pa", name: "Punjabi", countries: [
+    { code: "in", name: "India" },
+    { code: "pk", name: "Pakistan" },
+  ]},
+  { code: "ro", name: "Romanian", countries: [
+    { code: "ro", name: "Romania" },
+    { code: "md", name: "Moldova" },
+  ]},
+  { code: "ru", name: "Russian", countries: [
+    { code: "ru", name: "Russia" },
+    { code: "by", name: "Belarus" },
+    { code: "kz", name: "Kazakhstan" },
+    { code: "kg", name: "Kyrgyzstan" },
+  ]},
+  { code: "sr", name: "Serbian", countries: [
+    { code: "rs", name: "Serbia" },
+    { code: "ba", name: "Bosnia and Herzegovina" },
+  ]},
+  { code: "si", name: "Sinhala", countries: [
+    { code: "lk", name: "Sri Lanka" },
+  ]},
+  { code: "sk", name: "Slovak", countries: [
+    { code: "sk", name: "Slovakia" },
+  ]},
+  { code: "sl", name: "Slovenian", countries: [
+    { code: "si", name: "Slovenia" },
+  ]},
+  { code: "so", name: "Somali", countries: [
+    { code: "so", name: "Somalia" },
+  ]},
   { code: "es", name: "Spanish", countries: [
     { code: "es", name: "Spain" },
     { code: "mx", name: "Mexico" },
     { code: "ar", name: "Argentina" },
     { code: "co", name: "Colombia" },
+    { code: "pe", name: "Peru" },
+    { code: "cl", name: "Chile" },
+    { code: "ve", name: "Venezuela" },
+    { code: "ec", name: "Ecuador" },
+    { code: "gt", name: "Guatemala" },
+    { code: "cu", name: "Cuba" },
+    { code: "do", name: "Dominican Republic" },
+    { code: "hn", name: "Honduras" },
+    { code: "sv", name: "El Salvador" },
+    { code: "ni", name: "Nicaragua" },
+    { code: "cr", name: "Costa Rica" },
+    { code: "pa", name: "Panama" },
+    { code: "py", name: "Paraguay" },
+    { code: "uy", name: "Uruguay" },
+    { code: "bo", name: "Bolivia" },
   ]},
   { code: "sw", name: "Swahili", countries: [
     { code: "ke", name: "Kenya" },
     { code: "tz", name: "Tanzania" },
+    { code: "ug", name: "Uganda" },
+    { code: "cd", name: "Congo (DRC)" },
+    { code: "rw", name: "Rwanda" },
+  ]},
+  { code: "sv", name: "Swedish", countries: [
+    { code: "se", name: "Sweden" },
+    { code: "fi", name: "Finland" },
   ]},
   { code: "ta", name: "Tamil", countries: [
     { code: "in", name: "India" },
     { code: "lk", name: "Sri Lanka" },
+    { code: "sg", name: "Singapore" },
+    { code: "my", name: "Malaysia" },
   ]},
-  { code: "th", name: "Thai" },
-  { code: "tr", name: "Turkish" },
+  { code: "te", name: "Telugu", countries: [
+    { code: "in", name: "India" },
+  ]},
+  { code: "th", name: "Thai", countries: [
+    { code: "th", name: "Thailand" },
+  ]},
+  { code: "ti", name: "Tigrinya", countries: [
+    { code: "er", name: "Eritrea" },
+    { code: "et", name: "Ethiopia" },
+  ]},
+  { code: "tr", name: "Turkish", countries: [
+    { code: "tr", name: "Turkey" },
+  ]},
+  { code: "uk", name: "Ukrainian", countries: [
+    { code: "ua", name: "Ukraine" },
+  ]},
   { code: "ur", name: "Urdu", countries: [
     { code: "pk", name: "Pakistan" },
     { code: "in", name: "India" },
   ]},
-  { code: "vi", name: "Vietnamese" },
+  { code: "uz", name: "Uzbek", countries: [
+    { code: "uz", name: "Uzbekistan" },
+  ]},
+  { code: "vi", name: "Vietnamese", countries: [
+    { code: "vn", name: "Vietnam" },
+  ]},
+  { code: "yo", name: "Yoruba", countries: [
+    { code: "ng", name: "Nigeria" },
+    { code: "bj", name: "Benin" },
+  ]},
+  { code: "zu", name: "Zulu", countries: [
+    { code: "za", name: "South Africa" },
+  ]},
 ]
 
 /** All countries — used as the full suggestion pool in phase 2 of the picker. */
@@ -100,10 +336,12 @@ export const ALL_COUNTRIES: Country[] = [
   { code: "by", name: "Belarus" },
   { code: "be", name: "Belgium" },
   { code: "bj", name: "Benin" },
+  { code: "bt", name: "Bhutan" },
   { code: "bo", name: "Bolivia" },
   { code: "ba", name: "Bosnia and Herzegovina" },
   { code: "bw", name: "Botswana" },
   { code: "br", name: "Brazil" },
+  { code: "bn", name: "Brunei" },
   { code: "bg", name: "Bulgaria" },
   { code: "bf", name: "Burkina Faso" },
   { code: "bi", name: "Burundi" },
@@ -121,6 +359,7 @@ export const ALL_COUNTRIES: Country[] = [
   { code: "ci", name: "Côte d'Ivoire" },
   { code: "hr", name: "Croatia" },
   { code: "cu", name: "Cuba" },
+  { code: "cy", name: "Cyprus" },
   { code: "cz", name: "Czech Republic" },
   { code: "dk", name: "Denmark" },
   { code: "do", name: "Dominican Republic" },

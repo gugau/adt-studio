@@ -4,9 +4,11 @@ import { RouterProvider, createRouter } from "@tanstack/react-router"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { I18nProvider } from "@lingui/react"
 import { i18n } from "@lingui/core"
+import { TooltipProvider } from "@/components/ui/tooltip"
 import { messages as enMessages } from "./locales/en.po"
 import { messages as ptBRMessages } from "./locales/pt-BR.po"
 import { messages as esMessages } from "./locales/es.po"
+import { messages as frMessages } from "./locales/fr.po"
 import { routeTree } from "./routeTree.gen"
 import "./styles/globals.css"
 import { LOCALES } from "./i18n/locales"
@@ -19,8 +21,13 @@ function detectLocale(): AppLocale {
   return "en"
 }
 
-i18n.load({ en: enMessages, "pt-BR": ptBRMessages, es: esMessages })
+i18n.load({ en: enMessages, "pt-BR": ptBRMessages, es: esMessages, fr: frMessages })
 i18n.activate(detectLocale())
+
+if (import.meta.env.VITE_WORKSPACE_NAME) {
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- dev-only tab label; env var is unset in production builds
+  document.title = `ADT Studio — ${import.meta.env.VITE_WORKSPACE_NAME}`
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -59,7 +66,9 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <I18nProvider i18n={i18n}>
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
+        <TooltipProvider delayDuration={300}>
+          <RouterProvider router={router} />
+        </TooltipProvider>
       </QueryClientProvider>
     </I18nProvider>
   </StrictMode>,

@@ -100,20 +100,38 @@ describe("page-edit-service", () => {
             {
               sectionId: `${pageId}_sec001`,
               sectionType: "content",
-              parts: [{ type: "image", imageId: `${pageId}_im001`, isPruned: false }],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 1,
               isPruned: false,
+              nodes: [
+                {
+                  nodeId: `${pageId}_n001`,
+                  isPruned: false,
+                  structure: "image_group",
+                  children: [
+                    { nodeId: `${pageId}_im001`, isPruned: false, role: "image" },
+                  ],
+                },
+              ],
             },
             {
               sectionId: `${pageId}_sec002`,
               sectionType: "content",
-              parts: [{ type: "image", imageId: `${pageId}_im002`, isPruned: false }],
               backgroundColor: "#fff",
               textColor: "#000",
               pageNumber: 1,
               isPruned: false,
+              nodes: [
+                {
+                  nodeId: `${pageId}_n002`,
+                  isPruned: false,
+                  structure: "image_group",
+                  children: [
+                    { nodeId: `${pageId}_im002`, isPruned: false, role: "image" },
+                  ],
+                },
+              ],
             },
           ],
         })

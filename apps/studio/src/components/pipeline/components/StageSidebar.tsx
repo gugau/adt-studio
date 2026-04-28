@@ -16,6 +16,8 @@ import { Button } from "@/components/ui/button"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useAccessibilityAssessment } from "@/hooks/use-debug"
 import { useBookTasks } from "@/hooks/use-book-tasks"
+import { usePackageAdtStatus } from "@/hooks/use-books"
+import { useSignLanguageVideos } from "@/hooks/use-sign-language-videos"
 import { StepProgressRing } from "./StepProgressRing"
 import { usePages, usePageImage } from "@/hooks/use-pages"
 import {
@@ -26,10 +28,11 @@ import {
 import { useSettingsDialog } from "@/routes/__root"
 import type { TaskInfoResponse } from "@/api/client"
 import { getStageLabelI18n, getStepLabelI18n } from "../pipeline-i18n"
-import { PAGE_PROGRESS_STEPS } from "@adt/types"
+import { ALL_STEP_NAMES, PAGE_PROGRESS_STEPS } from "@adt/types"
 
 const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   general: msg`General`,
+  "container-types": msg`Container Types`,
   "text-types": msg`Text Types`,
   "metadata-prompt": msg`Metadata Prompt`,
   prompt: msg`Extraction Prompt`,
@@ -37,7 +40,8 @@ const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   "cropping-prompt": msg`Cropping Prompt`,
   "segmentation-prompt": msg`Segmentation Prompt`,
   "book-summary-prompt": msg`Summary Prompt`,
-  "sectioning-prompt": msg`Sectioning Mode`,
+  "sectioning-prompt": msg`Sectioning Prompt`,
+  "refinement-prompt": msg`Refinement Prompt`,
   "rendering-prompt": msg`AI Rendering`,
   "rendering-template": msg`Template Rendering`,
   "activity-prompts": msg`Activity Rendering`,
@@ -60,6 +64,7 @@ const TASK_KIND_LABELS: Record<string, MessageDescriptor> = {
   "re-render": msg`Re-render`,
   "ai-edit": msg`AI Edit`,
   "prepare-export": msg`Export`,
+  "transcribe-timestamps": msg`Timestamps`,
 }
 
 function getSettingsTabs(
@@ -69,17 +74,20 @@ function getSettingsTabs(
   const tabs: Record<string, { key: string; label: string }[]> = {
     extract: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.general) },
-      { key: "text-types", label: i18n._(SETTINGS_TAB_MESSAGE["text-types"]) },
       { key: "metadata-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["metadata-prompt"]) },
-      { key: "prompt", label: i18n._(SETTINGS_TAB_MESSAGE.prompt) },
       { key: "meaningfulness-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["meaningfulness-prompt"]) },
       { key: "cropping-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["cropping-prompt"]) },
       { key: "segmentation-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["segmentation-prompt"]) },
-      { key: "book-summary-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["book-summary-prompt"]) },
+    ],
+    sectioning: [
+      { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.general) },
+      { key: "sectioning-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["sectioning-prompt"]) },
+      { key: "refinement-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["refinement-prompt"]) },
+      { key: "container-types", label: i18n._(SETTINGS_TAB_MESSAGE["container-types"]) },
+      { key: "text-types", label: i18n._(SETTINGS_TAB_MESSAGE["text-types"]) },
     ],
     storyboard: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.general) },
-      { key: "sectioning-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["sectioning-prompt"]) },
       { key: "rendering-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["rendering-prompt"]) },
       { key: "rendering-template", label: i18n._(SETTINGS_TAB_MESSAGE["rendering-template"]) },
       { key: "activity-prompts", label: i18n._(SETTINGS_TAB_MESSAGE["activity-prompts"]) },
@@ -98,10 +106,12 @@ function getSettingsTabs(
     captions: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE["caption-prompt"]) },
     ],
-    "text-and-speech": [
+    translate: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.languages) },
       { key: "prompt", label: i18n._(SETTINGS_TAB_MESSAGE["translation-prompt"]) },
-      { key: "speech", label: i18n._(SETTINGS_TAB_MESSAGE.speech) },
+    ],
+    speech: [
+      { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.speech) },
       { key: "speech-prompts", label: i18n._(SETTINGS_TAB_MESSAGE["speech-prompts"]) },
       { key: "voices", label: i18n._(SETTINGS_TAB_MESSAGE.voices) },
     ],
@@ -134,6 +144,9 @@ export function StageSidebar({
   const search = useSearch({ strict: false }) as { tab?: string }
   const { stageState } = useBookRun()
   const { data: accessibilityAssessment } = useAccessibilityAssessment(bookLabel)
+  const { data: signLanguageData } = useSignLanguageVideos(bookLabel)
+  const { data: packageStatus } = usePackageAdtStatus(bookLabel)
+  const { tasks } = useBookTasks(bookLabel)
   const { openSettings } = useSettingsDialog()
 
   const currentState = stageState(activeStep)
@@ -160,26 +173,29 @@ export function StageSidebar({
     flex1:     "flex-1",
   }
 
-  const storyboardDone = stageState("storyboard") === "done"
   const validationCompleted = Boolean(accessibilityAssessment?.assessment)
+  const signLanguageCompleted = signLanguageData?.videos?.some((v) => v.sectionId !== null) ?? false
+  const previewCompleted = packageStatus?.hasAdt ?? false
+  const exportCompleted = tasks.some((t) => t.kind === "prepare-export" && t.status === "completed")
+
+  const completionOverrides: Record<string, boolean> = {
+    "sign-language": signLanguageCompleted,
+    validation: validationCompleted,
+    preview: previewCompleted,
+    export: exportCompleted,
+  }
 
   const stageItems = STAGES.map((step, index) => {
     const isActive = step.slug === activeStep
     const Icon = step.icon
     const settingsTabs = getSettingsTabs(step.slug, i18n)
     const showSubTabs = isActive && isSettings && !!settingsTabs
-    const state = step.slug === "validation" && validationCompleted ? "done" : stageState(step.slug)
+    const state = completionOverrides[step.slug] ? "done" : stageState(step.slug)
     const stageCompleted = state === "done"
     const ringState = state
 
-    // "book" is always filled; "validation", "preview" and "export" fill once storyboard is done;
-    // pipeline stages fill when their own stage is completed.
-    const iconFilled =
-      step.slug === "book"
-        ? true
-        : step.slug === "sign-language" || step.slug === "validation" || step.slug === "preview" || step.slug === "export"
-          ? storyboardDone
-          : stageCompleted
+    // "book" is always filled; all other stages fill when their own completion signal is met.
+    const iconFilled = step.slug === "book" ? true : stageCompleted
 
     const stepLabel = step.slug === "book" ? toCamelLabel(bookLabel) : getStageLabelI18n(step.slug)
 
@@ -232,7 +248,7 @@ export function StageSidebar({
             <Link
               to="/books/$label/$step/settings"
               params={{ label: bookLabel, step: step.slug }}
-              search={{ tab: "general" }}
+              search={{ tab: settingsTabs[0].key }}
               title={`${stepLabel} ${i18n._(msg`Settings`)}`}
               className={cn(
                 "shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full transition-colors ",
@@ -372,7 +388,15 @@ function TaskIndicator({ bookLabel }: { bookLabel: string }) {
     }
   }
 
-  const totalCount = runningCount + stageProgressRows.length
+  // Non-page-progress steps that are currently running (e.g. metadata, book-summary)
+  const activeSteps: { step: string; label: string }[] = []
+  for (const step of ALL_STEP_NAMES) {
+    if (!PAGE_PROGRESS_STEPS.has(step) && stepState(step) === "running") {
+      activeSteps.push({ step, label: getStepLabelI18n(step) })
+    }
+  }
+
+  const totalCount = runningCount + stageProgressRows.length + activeSteps.length
 
   if (totalCount === 0) return null
 
@@ -389,6 +413,14 @@ function TaskIndicator({ bookLabel }: { bookLabel: string }) {
             <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
               {row.page}/{row.totalPages}
             </span>
+          </div>
+        ))}
+        {activeSteps.map((row) => (
+          <div key={row.step} className="flex items-center gap-2 px-1 py-1">
+            <Loader2 className="w-3 h-3 animate-spin text-violet-500 shrink-0" />
+            <p className="flex-1 min-w-0 text-xs font-medium truncate">
+              {row.label}
+            </p>
           </div>
         ))}
         {runningTasks.map((task) => (
@@ -433,6 +465,9 @@ function TaskRow({ task }: { task: TaskInfoResponse }) {
       <p className="flex-1 min-w-0 text-xs font-medium truncate">
         {kindLabel ? i18n._(kindLabel) : task.kind}
       </p>
+      {task.progressMessage && (
+        <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">{task.progressMessage}</span>
+      )}
       <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">{elapsedStr}</span>
     </>
   )

@@ -3,9 +3,9 @@ import path from "node:path"
 import { createBookStorage } from "@adt/storage"
 import { createLLMModel, createPromptEngine } from "@adt/llm"
 import type { LLMModel } from "@adt/llm"
-import { renderPage, buildRenderStrategyResolver, createTemplateEngine, loadBookConfig, createScreenshotRenderer, runVisualReviewLoop, DEFAULT_VISUAL_REVIEW_MODEL_ID } from "@adt/pipeline"
+import { renderPage, buildRenderStrategyResolver, createTemplateEngine, loadBookConfig, createScreenshotRenderer, runVisualReviewLoop, DEFAULT_VISUAL_REVIEW_MODEL_ID, buildScreenshotHtml, SCREENSHOT_VIEWPORTS } from "@adt/pipeline"
 import type { VisualRefinementDeps } from "@adt/pipeline"
-import { PageSectioningOutput, WebRenderingOutput, webRenderingLLMSchema } from "@adt/types"
+import { PageSectioningOutput, WebRenderingOutput, webRenderingLLMSchema, editVerifyLLMSchema } from "@adt/types"
 import { loadStyleguideContent } from "./styleguide.js"
 
 export interface ReRenderOptions {
@@ -58,35 +58,47 @@ export async function reRenderPage(
   let visualRefinement: VisualRefinementDeps | undefined
 
   try {
-    // Read latest pipeline data
-    const sectionRow = storage.getLatestNodeData("page-sectioning", pageId)
+    const structuringRow = storage.getLatestNodeData("page-sectioning", pageId)
 
-    if (!sectionRow) {
+    if (!structuringRow) {
       throw new Error(
         "Page must have page-sectioning data before re-rendering"
       )
     }
 
-    const sectioningParsed = PageSectioningOutput.safeParse(sectionRow.data)
-    if (!sectioningParsed.success) {
+    const structuringParsed = PageSectioningOutput.safeParse(structuringRow.data)
+    if (!structuringParsed.success) {
       throw new Error("Invalid page-sectioning data")
     }
-    const sectioning = sectioningParsed.data
+    const sectioning = structuringParsed.data
 
     // Build image map: start with all page images, then add any additional images
-    // referenced in section parts (e.g. from cross-page merges).
+    // referenced by image_group nodes (e.g. from cross-page merges).
     const allImages = storage.getPageImages(pageId)
     const renderImages = new Map<string, { base64: string; width?: number; height?: number }>()
     for (const img of allImages) {
       renderImages.set(img.imageId, { base64: storage.getImageBase64(img.imageId), width: img.width, height: img.height })
     }
-    // Add any images referenced in sections but not found on this page
+    // Walk the tree to find any image leaf nodeIds not already covered
+    const collectImageIds = (
+      node: { role?: string; nodeId?: string; isPruned?: boolean; children?: unknown[] },
+      out: Set<string>,
+    ): void => {
+      if (node.isPruned) return
+      if (node.role === "image" && node.nodeId) out.add(node.nodeId)
+      if (Array.isArray(node.children)) {
+        for (const c of node.children) collectImageIds(c as Parameters<typeof collectImageIds>[0], out)
+      }
+    }
+    const referencedIds = new Set<string>()
     for (const section of sectioning.sections) {
-      for (const part of section.parts) {
-        if (part.type === "image" && !part.isPruned && !renderImages.has(part.imageId)) {
-          const dims = storage.getImageDimensions(part.imageId)
-          renderImages.set(part.imageId, { base64: storage.getImageBase64(part.imageId), width: dims?.width, height: dims?.height })
-        }
+      if (section.isPruned) continue
+      for (const n of section.nodes) collectImageIds(n, referencedIds)
+    }
+    for (const imageId of referencedIds) {
+      if (!renderImages.has(imageId)) {
+        const dims = storage.getImageDimensions(imageId)
+        renderImages.set(imageId, { base64: storage.getImageBase64(imageId), width: dims?.width, height: dims?.height })
       }
     }
 
@@ -145,7 +157,7 @@ export async function reRenderPage(
     // Render either a single section (preferred) or the full page.
     // For section re-render we force all other sections to pruned in-memory so
     // renderPage preserves the original sectionIndex while skipping extra LLM calls.
-    const sectioningForRender = sectionIndex === undefined
+    const structuringForRender = sectionIndex === undefined
       ? sectioning
       : {
           ...sectioning,
@@ -159,7 +171,7 @@ export async function reRenderPage(
         label,
         pageId,
         pageImageBase64,
-        sectioning: sectioningForRender,
+        sectioning: structuringForRender,
         images: renderImages,
         styleguide: styleguideContent,
         userPrompt: prompt,
@@ -200,7 +212,7 @@ export async function reRenderPage(
     if (visualRefinement) {
       await visualRefinement.screenshotRenderer.close()
     }
-    storage.clearNodesByType(["image-captioning", "text-catalog", "text-catalog-translation", "tts"])
+    storage.clearNodesByType(["image-captioning", "text-catalog", "text-catalog-translation", "tts", "tts-timestamps"])
     storage.clearStepRuns(["image-captioning", "text-catalog", "catalog-translation", "tts"])
     storage.close()
     // Restore previous key
@@ -264,149 +276,190 @@ export async function aiEditSection(
       onLog: (entry) => storage.appendLlmLog(entry),
     })
 
-    // Extract existing data-ids and img tags for validation
-    const dataIdRegex = /data-id="([^"]+)"/g
-    const existingIds = new Set<string>()
-    let match
-    while ((match = dataIdRegex.exec(currentHtml)) !== null) {
-      existingIds.add(match[1])
+    // Gather the imageIds referenced in the HTML so screenshots render their
+    // actual pixels instead of broken tags.
+    const referencedImageIds = new Set<string>()
+    const imgDataIdRegex = /<img\s[^>]*data-id="([^"]+)"/g
+    let m: RegExpExecArray | null
+    while ((m = imgDataIdRegex.exec(currentHtml)) !== null) {
+      referencedImageIds.add(m[1])
     }
-
-    // Extract img tags with their data-ids and srcs
-    const imgTagRegex = /<img\s[^>]*data-id="([^"]+)"[^>]*src="([^"]+)"[^>]*>/g
-    const existingImgs = new Map<string, string>() // data-id → src
-    while ((match = imgTagRegex.exec(currentHtml)) !== null) {
-      existingImgs.set(match[1], match[2])
-    }
-    // Also catch imgs where src comes before data-id
-    const imgTagRegex2 = /<img\s[^>]*src="([^"]+)"[^>]*data-id="([^"]+)"[^>]*>/g
-    while ((match = imgTagRegex2.exec(currentHtml)) !== null) {
-      if (!existingImgs.has(match[2])) {
-        existingImgs.set(match[2], match[1])
+    const imagesForScreenshot = new Map<string, { base64: string }>()
+    for (const id of referencedImageIds) {
+      try {
+        imagesForScreenshot.set(id, { base64: storage.getImageBase64(id) })
+      } catch {
+        // image not in storage — screenshot will show a broken image but that's fine
       }
     }
 
-    // Load the original page image so the LLM can see the intended layout
-    let pageImageBase64: string | undefined
-    try {
-      pageImageBase64 = storage.getPageImageBase64(pageId)
-    } catch {
-      // Page image not available — proceed without it
+    // Screenshot the CURRENT HTML at all three viewports so the LLM sees what the
+    // user sees in the preview — not the original PDF page (which would anchor
+    // edits toward the book's layout and fight the user's instruction).
+    // We deliberately do NOT run the visual-review loop on the edit output: that
+    // reviewer compares against the original page and would revert user-requested
+    // changes. AI edits are final — users can roll back via entity versioning.
+    const screenshots: { label: string; width: number; base64: string }[] = []
+    if (webAssetsDir) {
+      const screenshotHtml = await buildScreenshotHtml({
+        sectionHtml: currentHtml,
+        label,
+        images: imagesForScreenshot,
+        webAssetsDir,
+      })
+      const renderer = await createScreenshotRenderer()
+      try {
+        for (const vp of SCREENSHOT_VIEWPORTS) {
+          const base64 = await renderer.screenshot(screenshotHtml, {
+            width: vp.width,
+            height: vp.height,
+          })
+          const hash = crypto.createHash("sha256").update(base64).digest("hex").slice(0, 16)
+          storage.putDebugImage(hash, Buffer.from(base64, "base64"))
+          screenshots.push({ label: vp.label, width: vp.width, base64 })
+        }
+      } finally {
+        await renderer.close()
+      }
     }
 
+    // Structural check only. We deliberately do NOT enforce data-id / image
+    // preservation here: the instruction may legitimately ask the LLM to remove
+    // or replace elements, and silently retrying three times hides that intent.
     const validateEditedHtml = (rawHtml: string) => {
       const cleanedHtml = rawHtml
         .replace(/^```(?:html)?\s*\n?/i, "")
         .replace(/\n?```\s*$/, "")
       const errors: string[] = []
-
       if (!cleanedHtml.includes("<section")) {
         errors.push("Result must contain a <section> element")
       }
-
-      for (const id of existingIds) {
-        if (!cleanedHtml.includes(`data-id="${id}"`)) {
-          errors.push(`Missing data-id="${id}" in result`)
-        }
-      }
-
-      for (const [imgDataId, imgSrc] of existingImgs) {
-        const escaped = imgDataId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-        const imgCheck = new RegExp(`<img\\s[^>]*data-id="${escaped}"[^>]*>`)
-        if (!imgCheck.test(cleanedHtml)) {
-          const imgCheck2 = new RegExp(`<img\\s[^>]*src="[^"]*"[^>]*data-id="${escaped}"[^>]*>`)
-          if (!imgCheck2.test(cleanedHtml)) {
-            errors.push(`Image data-id="${imgDataId}" must remain an <img> tag`)
-          }
-        }
-        if (!cleanedHtml.includes(imgSrc)) {
-          errors.push(`Image src="${imgSrc}" was removed or changed`)
-        }
-      }
-
       return { valid: errors.length === 0, errors, cleanedHtml }
     }
 
-    const result = await model.generateObject<{ reasoning: string; content: string }>({
-      schema: webRenderingLLMSchema,
-      prompt: "html_edit",
-      context: { current_html: currentHtml, instruction, page_image_base64: pageImageBase64 },
-      validate: (obj) => {
-        const r = obj as { content: string }
-        const check = validateEditedHtml(r.content)
-        return { valid: check.valid, errors: check.errors }
-      },
-      maxRetries: 3,
-      log: { taskType: "web-rendering", pageId, promptName: "html_edit" },
-    })
+    // One correlationId groups every LLM call produced by this single user
+    // edit (first edit + verify + optional retry) so the history UI can show
+    // them as a single conversation turn.
+    const correlationId = crypto.randomUUID()
 
-    let html = validateEditedHtml(result.object.content).cleanedHtml
-
-    // Visual refinement loop — screenshot the edited HTML and verify
-    if (webAssetsDir) {
-      // Find first render strategy with visual refinement enabled
-      const vrStrategyConfig = Object.values(config.render_strategies ?? {})
-        .find((s) => s.config?.visual_refinement?.enabled)?.config?.visual_refinement
-      if (vrStrategyConfig?.enabled) {
-        const maxIterations = vrStrategyConfig.max_iterations ?? 3
-        const vrTimeout = vrStrategyConfig.timeout ?? 120
-        const vrTemperature = vrStrategyConfig.temperature
-
-        const reviewModel = createLLMModel({
-          modelId: DEFAULT_VISUAL_REVIEW_MODEL_ID,
-          cacheDir,
-          promptEngine,
-          onLog: (entry) => storage.appendLlmLog(entry),
-        })
-
-        // Build image map from data-ids in the HTML for screenshot rendering
-        const imagesForScreenshot = new Map<string, { base64: string }>()
-        for (const [imgDataId] of existingImgs) {
-          try {
-            imagesForScreenshot.set(imgDataId, { base64: storage.getImageBase64(imgDataId) })
-          } catch {
-            // Image not found in storage — skip (will show broken in screenshot)
-          }
-        }
-
-        const screenshotRenderer = await createScreenshotRenderer()
-        try {
-          const review = await runVisualReviewLoop({
-            initialHtml: html,
-            label,
-            pageId,
-            images: imagesForScreenshot,
-            deps: {
-              llmModel: reviewModel,
-              screenshotRenderer,
-              webAssetsDir,
-              storeScreenshot: (base64) => {
-                const hash = crypto.createHash("sha256").update(base64).digest("hex").slice(0, 16)
-                storage.putDebugImage(hash, Buffer.from(base64, "base64"))
-              },
-            },
-            promptName: "visual_review_edit",
-            maxIterations,
-            timeoutMs: vrTimeout * 1000,
-            temperature: vrTemperature,
-            pageImageBase64,
-            promptContext: { instruction },
-            firstIterationScreenshotsText: "\nHere are screenshots of the edited HTML at three viewport sizes:\n",
-            nextIterationScreenshotsText: "Here are the updated screenshots after your revision:\n",
-            trailingContextText: `Edit instruction: ${instruction}`,
-            validateHtml: (candidateHtml) => {
-              const check = validateEditedHtml(candidateHtml)
-              return { valid: check.valid, errors: check.errors, cleanedHtml: check.cleanedHtml }
-            },
-          })
-          html = review.html
-        } finally {
-          await screenshotRenderer.close()
-        }
+    const runEditPass = async (previousAttemptFailure?: string) => {
+      const r = await model.generateObject<{ reasoning: string; content: string }>({
+        schema: webRenderingLLMSchema,
+        prompt: "html_edit",
+        context: {
+          current_html: currentHtml,
+          instruction,
+          screenshots,
+          previous_attempt_failure: previousAttemptFailure,
+        },
+        validate: (obj) => {
+          const resp = obj as { content: string }
+          const check = validateEditedHtml(resp.content)
+          return { valid: check.valid, errors: check.errors }
+        },
+        maxRetries: 3,
+        log: {
+          taskType: "web-rendering",
+          pageId,
+          promptName: "html_edit",
+          sectionIndex,
+          correlationId,
+        },
+      })
+      return {
+        html: validateEditedHtml(r.object.content).cleanedHtml,
+        reasoning: r.object.reasoning,
       }
     }
 
-    return { html, reasoning: result.object.reasoning }
+    let { html, reasoning } = await runEditPass()
+
+    // Lightweight verification: screenshot the edited HTML at desktop width and
+    // ask a small vision model whether the instruction was actually applied.
+    // If not, retry the edit once, then re-verify so the history UI reflects
+    // the retry's real outcome (turn.verify is last-write-wins in the history
+    // endpoint). Skipped when webAssetsDir isn't available.
+    const desktopBefore = screenshots.find((s) => s.label === "desktop")?.base64
+    if (webAssetsDir && desktopBefore) {
+      const assetsDir = webAssetsDir
+      const desktopVp = SCREENSHOT_VIEWPORTS.find((v) => v.label === "desktop")!
+      const verifyModel = createLLMModel({
+        modelId: DEFAULT_VISUAL_REVIEW_MODEL_ID,
+        cacheDir,
+        promptEngine,
+        onLog: (entry) => storage.appendLlmLog(entry),
+      })
+
+      const runVerify = async (candidateHtml: string) => {
+        const afterImageIds = new Set<string>()
+        let am: RegExpExecArray | null
+        imgDataIdRegex.lastIndex = 0
+        while ((am = imgDataIdRegex.exec(candidateHtml)) !== null) {
+          afterImageIds.add(am[1])
+        }
+        const afterImages = new Map<string, { base64: string }>()
+        for (const id of afterImageIds) {
+          const existing = imagesForScreenshot.get(id)
+          if (existing) {
+            afterImages.set(id, existing)
+            continue
+          }
+          try {
+            afterImages.set(id, { base64: storage.getImageBase64(id) })
+          } catch {
+            // image not in storage — will show broken in screenshot
+          }
+        }
+
+        const afterHtmlDoc = await buildScreenshotHtml({
+          sectionHtml: candidateHtml,
+          label,
+          images: afterImages,
+          webAssetsDir: assetsDir,
+        })
+        const renderer = await createScreenshotRenderer()
+        let desktopAfter: string
+        try {
+          desktopAfter = await renderer.screenshot(afterHtmlDoc, {
+            width: desktopVp.width,
+            height: desktopVp.height,
+          })
+        } finally {
+          await renderer.close()
+        }
+        const hash = crypto.createHash("sha256").update(desktopAfter).digest("hex").slice(0, 16)
+        storage.putDebugImage(hash, Buffer.from(desktopAfter, "base64"))
+
+        return verifyModel.generateObject<{ applied: boolean; reason: string }>({
+          schema: editVerifyLLMSchema,
+          prompt: "html_edit_verify",
+          context: {
+            instruction,
+            before_base64: desktopBefore,
+            after_base64: desktopAfter,
+          },
+          maxRetries: 1,
+          log: {
+            taskType: "web-rendering",
+            pageId,
+            promptName: "html_edit_verify",
+            sectionIndex,
+            correlationId,
+          },
+        })
+      }
+
+      const verify = await runVerify(html)
+
+      if (!verify.object.applied) {
+        const retry = await runEditPass(verify.object.reason)
+        html = retry.html
+        reasoning = retry.reasoning
+        await runVerify(html)
+      }
+    }
+
+    return { html, reasoning }
   } finally {
     storage.close()
     if (previousKey !== undefined) {

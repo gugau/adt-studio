@@ -272,6 +272,7 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   }
 
   function startEditing(el) {
+    if (editing === el) return;
     if (el.tagName === 'IMG') return;
     editing = el;
     // Save the current MathML display before swapping to LaTeX
@@ -299,15 +300,17 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
     savedOriginalText = null;
     el.contentEditable = 'false';
     el.removeAttribute('data-adt-editing');
-    // Capture the edited text before restoring MathML display
     var newText = el.textContent || '';
     var dataId = el.getAttribute('data-id');
-    // Restore MathML display immediately so the preview looks correct
-    if (restoreHtml != null) {
-      el.innerHTML = restoreHtml;
+    // If nothing changed, restore the saved MathML display so math content
+    // re-renders (startEditing had swapped it to LaTeX source).
+    if (newText === origText) {
+      if (restoreHtml != null) el.innerHTML = restoreHtml;
+      return;
     }
-    // Only notify parent if text actually changed
-    if (newText === origText) return;
+    // Text was edited: leave the new content in place and let the parent's
+    // re-render replace it. Restoring the pre-edit HTML here would cause a
+    // visible flash of the old text before the parent's update propagates.
     var wrapper = document.getElementById('content');
     var fullHtml;
     if (wrapper) {
@@ -323,6 +326,21 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
       fullHtml: fullHtml
     }, '*');
   }
+
+  // Enter edit mode on mousedown (before the browser's default selection
+  // behavior) so native drag-to-select works within the contentEditable
+  // element. Handling this on 'click' was too late: the selection created
+  // during mousedown/drag was wiped when startEditing swapped innerHTML.
+  document.addEventListener('mousedown', function(e) {
+    if (!isEditable()) return;
+    var el = e.target.closest('[data-id]');
+    if (!el) return;
+    if (el.tagName === 'IMG') return;
+    if (editing === el) return;
+    if (editing && editing !== el) finishEditing();
+    selectElement(el);
+    startEditing(el);
+  });
 
   document.addEventListener('click', function(e) {
     if (!isEditable()) return;
@@ -354,6 +372,7 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
       parent.postMessage({ type: 'deselect' }, '*');
       return;
     }
+    if (editing === el) return;
     if (editing && editing !== el) finishEditing();
     selectElement(el);
     if (el.tagName !== 'IMG') startEditing(el);

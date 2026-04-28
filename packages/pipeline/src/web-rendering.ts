@@ -1,6 +1,8 @@
 import {
-  type PageSectioningOutput,
   type AppConfig,
+  type ContentNodeData,
+  type PageSectioningOutput,
+  type PageSectioningSection,
   type SectionRendering,
   type WebRenderingOutput,
   DEFAULT_LLM_MAX_RETRIES,
@@ -8,23 +10,6 @@ import {
 import type { LLMModel } from "@adt/llm"
 import { renderSectionLlm, type VisualRefinementDeps } from "./render-llm.js"
 import { renderSectionTemplate, type TemplateEngine } from "./render-template.js"
-
-export interface TextInput {
-  textId: string
-  textType: string
-  text: string
-}
-
-export interface ImageInput {
-  imageId: string
-  imageBase64: string
-  width?: number
-  height?: number
-}
-
-export type SectionPart =
-  | { type: "group"; groupId: string; groupType: string; texts: TextInput[] }
-  | { type: "image"; imageId: string; imageBase64: string; width?: number; height?: number }
 
 export interface VisualRefinementConfig {
   enabled: boolean
@@ -50,16 +35,54 @@ export interface RenderConfig {
   visualRefinement?: VisualRefinementConfig
 }
 
+/**
+ * Liquid-friendly render tree node. Produced by `buildRenderContext` from
+ * `ContentNodeData`; pruned nodes are filtered out upstream. Either
+ * `structure` (container) or `role` (leaf) is set.
+ */
+export interface RenderNode {
+  node_id: string
+  structure?: string
+  role?: string
+  text?: string
+  image_id?: string
+  image_url?: string
+  children?: RenderNode[]
+}
+
+export interface LeafText {
+  text_id: string
+  text_type: string
+  text: string
+}
+
+export interface ImageRef {
+  image_id: string
+  image_url: string
+  image_base64?: string
+  width?: number
+  height?: number
+}
+
+/**
+ * Context derived from a section's tree. `nodes` is passed to Liquid for
+ * tree-aware rendering; `leaf_texts`/`image_refs`/`group_ids` drive the
+ * validator and prompt image-listing.
+ */
+export interface RenderContext {
+  nodes: RenderNode[]
+  leaf_texts: LeafText[]
+  image_refs: ImageRef[]
+  group_ids: string[]
+}
+
 export interface RenderSectionInput {
   label: string
   pageId: string
   pageImageBase64: string
   sectionIndex: number
-  sectionId: string
-  sectionType: string
-  backgroundColor: string
-  textColor: string
-  parts: SectionPart[]
+  section: PageSectioningSection
+  context: RenderContext
   styleguide?: string
   /** Optional user instructions appended to the LLM prompt during re-render */
   userPrompt?: string
@@ -88,43 +111,100 @@ function getLLMModel(
 }
 
 /**
- * Expand inline section parts into the render-ready SectionPart format.
- * Filters to non-pruned parts, expands text groups to TextInput while preserving text IDs,
- * and resolves image base64 from the images map.
+ * Container `structure` kinds whose node_id may carry `data-id` on the
+ * rendered wrapper element. All other container kinds must render as bare
+ * wrappers (no data-id) so the validator's "element with data-id has string
+ * children only" rule holds. Templates and prompts must stay in sync with
+ * this set.
  */
-function expandParts(
-  sectionParts: import("@adt/types").SectionPart[],
-  images: Map<string, { base64: string; width?: number; height?: number }>
-): SectionPart[] {
-  const parts: SectionPart[] = []
+export const GROUP_CONTAINER_STRUCTURES: ReadonlySet<string> = new Set([
+  "group",
+  "activity",
+])
 
-  for (const part of sectionParts) {
-    if (part.isPruned) continue
+function imageUrlFor(label: string, imageId: string): string {
+  return `/api/books/${label}/images/${imageId}`
+}
 
-    if (part.type === "text_group") {
-      const nonPruned = part.texts.filter((t) => !t.isPruned)
-      const texts = nonPruned.map((t) => ({
-        textId: t.textId,
-        textType: t.textType,
-        text: t.text,
-      }))
-      if (texts.length > 0) {
-        parts.push({
-          type: "group",
-          groupId: part.groupId,
-          groupType: part.groupType,
-          texts,
-        })
-      }
-    } else if (part.type === "image") {
-      const imgData = images.get(part.imageId)
-      if (imgData) {
-        parts.push({ type: "image", imageId: part.imageId, imageBase64: imgData.base64, width: imgData.width, height: imgData.height })
+/**
+ * Walk a section's content tree once and produce the Liquid-friendly render
+ * context. Pruned nodes are dropped. Leaves, image references, and
+ * group/activity container node_ids are collected in DFS order so the
+ * validator can build its allow-list.
+ */
+export function buildRenderContext(
+  section: PageSectioningSection,
+  images: Map<string, { base64: string; width?: number; height?: number }>,
+  label: string
+): RenderContext {
+  const leaf_texts: LeafText[] = []
+  const image_refs: ImageRef[] = []
+  const group_ids: string[] = []
+
+  function walk(node: ContentNodeData): RenderNode | null {
+    if (node.isPruned) return null
+
+    if (node.role === "image") {
+      const imageId = node.nodeId
+      const url = imageUrlFor(label, imageId)
+      const img = images.get(imageId)
+      image_refs.push({
+        image_id: imageId,
+        image_url: url,
+        ...(img?.base64 && { image_base64: img.base64 }),
+        ...(img?.width != null && { width: img.width }),
+        ...(img?.height != null && { height: img.height }),
+      })
+      return {
+        node_id: imageId,
+        role: "image",
+        image_id: imageId,
+        image_url: url,
       }
     }
+
+    if (node.role) {
+      leaf_texts.push({
+        text_id: node.nodeId,
+        text_type: node.role,
+        text: node.text ?? "",
+      })
+      return {
+        node_id: node.nodeId,
+        role: node.role,
+        text: node.text ?? "",
+      }
+    }
+
+    if (node.structure) {
+      const out: RenderNode = {
+        node_id: node.nodeId,
+        structure: node.structure,
+      }
+      if (GROUP_CONTAINER_STRUCTURES.has(node.structure)) {
+        group_ids.push(node.nodeId)
+      }
+      if (node.children) {
+        const kids: RenderNode[] = []
+        for (const c of node.children) {
+          const rendered = walk(c)
+          if (rendered) kids.push(rendered)
+        }
+        if (kids.length > 0) out.children = kids
+      }
+      return out
+    }
+
+    return null
   }
 
-  return parts
+  const nodes: RenderNode[] = []
+  for (const top of section.nodes) {
+    const rendered = walk(top)
+    if (rendered) nodes.push(rendered)
+  }
+
+  return { nodes, leaf_texts, image_refs, group_ids }
 }
 
 /**
@@ -148,11 +228,10 @@ export async function renderPage(
     // Skip pruned sections
     if (section.isPruned) continue
 
-    // Expand inline parts to render-ready format
-    const parts = expandParts(section.parts, input.images)
+    const context = buildRenderContext(section, input.images, input.label)
 
-    // Skip sections with no content
-    if (parts.length === 0) continue
+    // Skip sections with no renderable content
+    if (context.leaf_texts.length === 0 && context.image_refs.length === 0) continue
 
     const config = resolveConfig(section.sectionType)
 
@@ -161,11 +240,8 @@ export async function renderPage(
       pageId: input.pageId,
       pageImageBase64: input.pageImageBase64,
       sectionIndex: i,
-      sectionId: section.sectionId,
-      sectionType: section.sectionType,
-      backgroundColor: section.backgroundColor,
-      textColor: section.textColor,
-      parts,
+      section,
+      context,
       styleguide: input.styleguide,
       userPrompt: input.userPrompt,
     }
@@ -219,9 +295,10 @@ const DEFAULT_VISUAL_REFINEMENT = {
  * Build a resolver that returns a RenderConfig for a given section type.
  *
  * Resolution order:
- *   1. section_render_strategies[sectionType] → named strategy
- *   2. default_render_strategy → named strategy
+ *   1. section_render_strategies[sectionType] → named strategy in render_strategies
+ *   2. default_render_strategy → named strategy in render_strategies
  *   3. Hard-coded defaults
+ *
  */
 export function buildRenderStrategyResolver(
   appConfig: AppConfig

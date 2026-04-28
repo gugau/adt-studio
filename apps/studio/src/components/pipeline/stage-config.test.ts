@@ -15,12 +15,14 @@ describe("stage-config", () => {
     const pipelineSlugs = getPipelineStages().map((stage) => stage.slug)
     expect(pipelineSlugs).toEqual([
       "extract",
+      "sectioning",
       "storyboard",
       "quizzes",
       "captions",
       "glossary",
       "toc",
-      "text-and-speech",
+      "translate",
+      "speech",
       "preview",
     ])
   })
@@ -29,12 +31,14 @@ describe("stage-config", () => {
     const overviewSlugs = getBookOverviewStages().map((stage) => stage.slug)
     expect(overviewSlugs).toEqual([
       "extract",
+      "sectioning",
       "storyboard",
       "quizzes",
       "captions",
       "glossary",
       "toc",
-      "text-and-speech",
+      "translate",
+      "speech",
       "sign-language",
       "validation",
       "preview",

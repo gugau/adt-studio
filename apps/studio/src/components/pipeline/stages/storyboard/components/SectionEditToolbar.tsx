@@ -4,6 +4,7 @@ import {
   Crop,
   Eye,
   EyeOff,
+  ImagePlus,
   Pencil,
   Plus,
   Scissors,
@@ -977,7 +978,9 @@ export interface SectionEditToolbarProps {
   onChangeTextType?: (dataId: string, newType: string) => void
   onTogglePrune?: (dataId: string) => void
   onCrop?: (dataId: string) => void
+  onRecropFromPage?: (dataId: string) => void
   onReplace?: (dataId: string) => void
+  onReplaceFromBook?: (dataId: string) => void
   onAiImage?: (dataId: string) => void
   onSegment?: (dataId: string) => void
   segmenting?: boolean
@@ -1000,7 +1003,9 @@ export function SectionEditToolbar({
   onChangeTextType,
   onTogglePrune,
   onCrop,
+  onRecropFromPage,
   onReplace,
+  onReplaceFromBook,
   onAiImage,
   onSegment,
   segmenting,
@@ -1008,6 +1013,35 @@ export function SectionEditToolbar({
   onClassesChange,
 }: SectionEditToolbarProps) {
   const { t } = useLingui()
+  const [cropMenuOpen, setCropMenuOpen] = useState(false)
+  const [replaceMenuOpen, setReplaceMenuOpen] = useState(false)
+  const cropMenuRef = useRef<HTMLDivElement>(null)
+  const replaceMenuRef = useRef<HTMLDivElement>(null)
+
+  // Close crop dropdown on outside click
+  useEffect(() => {
+    if (!cropMenuOpen) return
+    const handler = (e: MouseEvent) => {
+      if (cropMenuRef.current && !cropMenuRef.current.contains(e.target as Node)) {
+        setCropMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [cropMenuOpen])
+
+  // Close replace dropdown on outside click
+  useEffect(() => {
+    if (!replaceMenuOpen) return
+    const handler = (e: MouseEvent) => {
+      if (replaceMenuRef.current && !replaceMenuRef.current.contains(e.target as Node)) {
+        setReplaceMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [replaceMenuOpen])
+
   if (!dataId) return null
 
   const handleRemoveClass = (cls: string) => {
@@ -1085,14 +1119,71 @@ export function SectionEditToolbar({
           )}
           <div className="flex items-center gap-1 border-t pt-2 flex-wrap">
             {onCrop && (
-              <button type="button" onClick={() => onCrop(dataId)} className="flex items-center gap-1 text-[10px] font-medium rounded px-2 py-1 bg-muted hover:bg-accent transition-colors cursor-pointer">
-                <Crop className="h-3 w-3" /><Trans>Crop</Trans>
-              </button>
+              <div className="relative inline-flex" ref={cropMenuRef}>
+                <button type="button" onClick={() => onCrop(dataId)} className={`flex items-center gap-1 text-[10px] font-medium px-2 py-1 bg-muted hover:bg-accent transition-colors cursor-pointer ${onRecropFromPage ? "rounded-l" : "rounded"}`}>
+                  <Crop className="h-3 w-3" /><Trans>Crop</Trans>
+                </button>
+                {onRecropFromPage && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setCropMenuOpen(!cropMenuOpen)}
+                      className="flex items-center text-[10px] font-medium rounded-r px-1 py-1 bg-muted hover:bg-accent transition-colors cursor-pointer border-l border-border"
+                    >
+                      <ChevronDown className="h-3 w-3" />
+                    </button>
+                    {cropMenuOpen && (
+                      <div className="absolute top-full left-0 mt-1 z-50 bg-popover border rounded shadow-md py-1 min-w-[150px]">
+                        <button
+                          type="button"
+                          onClick={() => { setCropMenuOpen(false); onRecropFromPage(dataId) }}
+                          className="w-full text-left px-3 py-1.5 text-[10px] hover:bg-accent transition-colors cursor-pointer"
+                        >
+                          <Trans>Recrop from Page</Trans>
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             )}
             {onReplace && (
-              <button type="button" onClick={() => onReplace(dataId)} className="flex items-center gap-1 text-[10px] font-medium rounded px-2 py-1 bg-muted hover:bg-accent transition-colors cursor-pointer">
-                <Upload className="h-3 w-3" /><Trans>Replace</Trans>
-              </button>
+              <div className="relative inline-flex" ref={replaceMenuRef}>
+                <button type="button" onClick={() => onReplace(dataId)} className={`flex items-center gap-1 text-[10px] font-medium px-2 py-1 bg-muted hover:bg-accent transition-colors cursor-pointer ${onReplaceFromBook ? "rounded-l" : "rounded"}`}>
+                  <Upload className="h-3 w-3" /><Trans>Replace</Trans>
+                </button>
+                {onReplaceFromBook && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setReplaceMenuOpen(!replaceMenuOpen)}
+                      className="flex items-center text-[10px] font-medium rounded-r px-1 py-1 bg-muted hover:bg-accent transition-colors cursor-pointer border-l border-border"
+                    >
+                      <ChevronDown className="h-3 w-3" />
+                    </button>
+                    {replaceMenuOpen && (
+                      <div className="absolute top-full left-0 mt-1 z-50 bg-popover border rounded shadow-md py-1 min-w-[150px]">
+                        <button
+                          type="button"
+                          onClick={() => { setReplaceMenuOpen(false); onReplace(dataId) }}
+                          className="w-full text-left px-3 py-1.5 text-[10px] hover:bg-accent transition-colors cursor-pointer flex items-center gap-1.5"
+                        >
+                          <Upload className="h-3 w-3" />
+                          <Trans>Upload from Disk</Trans>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setReplaceMenuOpen(false); onReplaceFromBook(dataId) }}
+                          className="w-full text-left px-3 py-1.5 text-[10px] hover:bg-accent transition-colors cursor-pointer flex items-center gap-1.5"
+                        >
+                          <ImagePlus className="h-3 w-3" />
+                          <Trans>Pick from Book</Trans>
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             )}
             {onAiImage && (
               <button type="button" onClick={() => onAiImage(dataId)} className="flex items-center gap-1 text-[10px] font-medium rounded px-2 py-1 bg-purple-100 hover:bg-purple-200 text-purple-700 transition-colors cursor-pointer">

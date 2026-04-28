@@ -45,9 +45,9 @@ vi.mock("@adt/pipeline", async () => {
 function writeBaseConfig(configPath: string): void {
   fs.writeFileSync(
     configPath,
-    `text_types:
+    `role_types:
   section_text: Main body text
-text_group_types:
+structure_types:
   paragraph: Paragraph
 `
   )
@@ -136,11 +136,18 @@ function seedStoryboardBook(booksDir: string, label: string): void {
         {
           sectionId: "pg001_sec001",
           sectionType: "content",
-          parts: [],
           backgroundColor: "#ffffff",
           textColor: "#000000",
           pageNumber: 1,
           isPruned: false,
+          nodes: [
+            {
+              nodeId: "pg001_n001",
+              isPruned: false,
+              role: "text",
+              text: "Hello",
+            },
+          ],
         },
       ],
     })
@@ -185,8 +192,8 @@ function seedTextAndSpeechBook(booksDir: string, label: string): void {
 describe("buildStageRunnerImageClassifyConfig", () => {
   it("injects getImageBytes so min_stddev filtering can decode image bytes", () => {
     const config: AppConfig = {
-      text_types: { section_text: "Main body text" },
-      text_group_types: { paragraph: "Paragraph" },
+      role_types: { section_text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
       image_filters: {
         min_side: 100,
         min_stddev: 2,
@@ -333,15 +340,13 @@ describe("createStageRunner storyboard render-only", () => {
     expect(renderPageMock).toHaveBeenCalledTimes(1)
     expect(
       events.some(
-        (event) => event.type === "step-skip" && event.step === "page-sectioning"
-      )
-    ).toBe(true)
-    expect(
-      events.some(
         (event) =>
           event.type === "step-complete" && event.step === "web-rendering"
       )
     ).toBe(true)
+    // page-sectioning is not part of the storyboard stage (it lives in the
+    // sectioning stage), so running storyboard in render-only mode should
+    // neither complete nor emit any events for page-sectioning.
     expect(
       events.some(
         (event) =>
@@ -351,7 +356,7 @@ describe("createStageRunner storyboard render-only", () => {
   })
 })
 
-describe("createStageRunner text-and-speech Gemini partial failures", () => {
+describe("createStageRunner speech Gemini partial failures", () => {
   let tmpDir = ""
 
   beforeEach(() => {
@@ -374,9 +379,9 @@ describe("createStageRunner text-and-speech Gemini partial failures", () => {
     fs.mkdirSync(promptsDir, { recursive: true })
     fs.writeFileSync(
       configPath,
-      `text_types:
+      `role_types:
   section_text: Main body text
-text_group_types:
+structure_types:
   paragraph: Paragraph
 speech:
   default_provider: gemini
@@ -402,8 +407,8 @@ speech:
         geminiApiKey: "gm-test",
         promptsDir,
         configPath,
-        fromStage: "text-and-speech",
-        toStage: "text-and-speech",
+        fromStage: "translate",
+        toStage: "speech",
       },
       { emit: (event) => events.push(event) }
     )
@@ -440,9 +445,9 @@ speech:
     fs.mkdirSync(promptsDir, { recursive: true })
     fs.writeFileSync(
       configPath,
-      `text_types:
+      `role_types:
   section_text: Main body text
-text_group_types:
+structure_types:
   paragraph: Paragraph
 speech:
   default_provider: gemini
@@ -472,8 +477,8 @@ speech:
         geminiApiKey: "gm-test",
         promptsDir,
         configPath,
-        fromStage: "text-and-speech",
-        toStage: "text-and-speech",
+        fromStage: "translate",
+        toStage: "speech",
       },
       { emit: (event) => events.push(event) }
     )

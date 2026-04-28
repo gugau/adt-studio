@@ -290,9 +290,15 @@ export function useBookRunStatus(label: string): BookRunContextValue {
           }
           if ((completedTask?.kind === "image-generate" || completedTask?.kind === "re-render" || completedTask?.kind === "ai-edit") && completedTask.pageId) {
             queryClient.invalidateQueries({ queryKey: ["books", label, "pages", completedTask.pageId] })
+            if (completedTask.kind === "ai-edit") {
+              queryClient.invalidateQueries({ queryKey: ["books", label, "pages", completedTask.pageId, "ai-edit-history"] })
+            }
           }
           if (completedTask?.kind === "re-render" || completedTask?.kind === "ai-edit" || completedTask?.kind === "image-generate") {
             invalidateStoryboardDependents(queryClient, label)
+          }
+          if (completedTask?.kind === "transcribe-timestamps") {
+            queryClient.invalidateQueries({ queryKey: ["books", label, "tts-timestamps"] })
           }
           // Always refetch tasks so we pick up the final state even if we missed start
           queryClient.invalidateQueries({ queryKey: bookTasksKey(label) })
@@ -314,6 +320,10 @@ export function useBookRunStatus(label: string): BookRunContextValue {
               progressMessage: d.message,
               progressPercent: d.percent,
             }
+          }
+        } else if (d.type === "task-progress") {
+          if (idx !== -1) {
+            tasks[idx] = { ...tasks[idx], progressMessage: d.message, progressPercent: d.percent }
           }
         }
 
@@ -476,8 +486,10 @@ function invalidateStageData(qc: ReturnType<typeof useQueryClient>, label: strin
     case "glossary":
       qc.invalidateQueries({ queryKey: ["books", label, "glossary"] })
       break
-    case "text-and-speech":
+    case "translate":
       qc.invalidateQueries({ queryKey: ["books", label, "text-catalog"] })
+      break
+    case "speech":
       qc.invalidateQueries({ queryKey: ["books", label, "tts"] })
       break
   }

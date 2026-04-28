@@ -3,6 +3,7 @@ import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import { openBookDb, createBookStorage } from "@adt/storage"
+import { zipSync } from "fflate"
 import { SCHEMA_VERSION } from "@adt/types"
 import type { StageName } from "@adt/types"
 import type {
@@ -435,7 +436,6 @@ function addExtractNodes(label: string, count: number, includeSummary = true): v
   try {
     for (let i = 1; i <= count; i++) {
       const pageId = `${label}_p${i}`
-      storage.putNodeData("text-classification", pageId, { groups: [] })
       storage.putNodeData("image-filtering", pageId, { images: [] })
     }
     if (includeSummary) {
@@ -529,8 +529,8 @@ describe("POST /books/:label/stages/run", () => {
         "X-Gemini-API-Key": "gm-test",
       },
       body: JSON.stringify({
-        fromStage: "text-and-speech",
-        toStage: "text-and-speech",
+        fromStage: "translate",
+        toStage: "speech",
       }),
     })
 
@@ -543,13 +543,11 @@ describe("GET /books/:label/step-status", () => {
   const extractStageSteps = [
     "extract",
     "metadata",
+    "book-summary",
     "image-filtering",
     "image-segmentation",
     "image-cropping",
     "image-meaningfulness",
-    "text-classification",
-    "book-summary",
-    "translation",
   ] as const
 
   function markExtractStageComplete(label: string): void {
@@ -844,17 +842,17 @@ describe("GET /books/:label/step-status", () => {
   })
 })
 
-describe("GET /books/:label/export", () => {
+describe("GET /books/:label/export-project", () => {
   const webAssetsDir = path.resolve(process.cwd(), "assets", "adt")
 
   it("returns ZIP for valid book", async () => {
     createTestBook("export-book")
     addPagesAndRenderings("export-book", 2)
     const app = createBookRoutes(tmpDir, webAssetsDir)
-    const res = await app.request("/books/export-book/export")
+    const res = await app.request("/books/export-book/export-project")
     expect(res.status).toBe(200)
     expect(res.headers.get("Content-Type")).toBe("application/zip")
-    expect(res.headers.get("Content-Disposition")).toContain("export-book.zip")
+    expect(res.headers.get("Content-Disposition")).toContain('filename="export-book-project.zip"')
     const buf = await res.arrayBuffer()
     expect(buf.byteLength).toBeGreaterThan(0)
   })
@@ -863,13 +861,13 @@ describe("GET /books/:label/export", () => {
     createTestBook("not-accepted-export")
     addPagesAndRenderings("not-accepted-export", 1)
     const app = createBookRoutes(tmpDir, webAssetsDir)
-    const res = await app.request("/books/not-accepted-export/export")
+    const res = await app.request("/books/not-accepted-export/export-project")
     expect(res.status).toBe(200)
   })
 
   it("returns 404 for missing book", async () => {
     const app = createBookRoutes(tmpDir, webAssetsDir)
-    const res = await app.request("/books/ghost/export")
+    const res = await app.request("/books/ghost/export-project")
     expect(res.status).toBe(404)
   })
 
@@ -952,6 +950,190 @@ describe("GET /books/:label/export-webpub", () => {
     const app = createBookRoutes(tmpDir, path.join(tmpDir, "no-web-assets"))
     const res = await app.request("/books/missing-assets-wp/prepare-export?format=webpub", { method: "POST" })
     expect(res.status).toBe(500)
+  })
+})
+
+function createProjectZip(label: string, options?: { omitPdf?: boolean; omitDb?: boolean; corruptDb?: boolean }): Buffer {
+  const files: Record<string, Uint8Array> = {}
+
+  if (!options?.omitDb) {
+    if (options?.corruptDb) {
+      files[`${label}.db`] = new TextEncoder().encode("not a database")
+    } else {
+      const tmpZipDir = fs.mkdtempSync(path.join(os.tmpdir(), "adt-zip-"))
+      const dbPath = path.join(tmpZipDir, `${label}.db`)
+      const db = openBookDb(dbPath)
+      db.run(
+        "INSERT INTO pages (page_id, page_number, text) VALUES (?, ?, ?)",
+        [`${label}_p1`, 1, "Page 1"],
+      )
+      db.run(
+        "INSERT INTO node_data (node, item_id, version, data) VALUES (?, ?, ?, ?)",
+        ["metadata", "book", 1, JSON.stringify({
+          title: "Test Import",
+          authors: ["Author A"],
+          publisher: "Pub",
+          language_code: "en",
+          cover_page_number: 1,
+          reasoning: "test",
+        })],
+      )
+      db.close()
+      files[`${label}.db`] = new Uint8Array(fs.readFileSync(dbPath))
+      fs.rmSync(tmpZipDir, { recursive: true, force: true })
+    }
+  }
+
+  if (!options?.omitPdf) {
+    files[`${label}.pdf`] = new TextEncoder().encode("%PDF-1.0 fake")
+  }
+
+  files["images/img1.png"] = new Uint8Array([0x89, 0x50, 0x4e, 0x47])
+
+  return Buffer.from(zipSync(files))
+}
+
+describe("POST /books/preview-import", () => {
+  it("returns preview for a valid project ZIP", async () => {
+    const zip = createProjectZip("preview-test")
+    const app = createBookRoutes(tmpDir)
+    const formData = new FormData()
+    formData.append("zip", new Blob([zip], { type: "application/zip" }), "preview-test.zip")
+    const res = await app.request("/books/preview-import", { method: "POST", body: formData })
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.label).toBe("preview-test")
+    expect(body.title).toBe("Test Import")
+    expect(body.authors).toEqual(["Author A"])
+    expect(body.pageCount).toBe(1)
+    expect(body.hasSourcePdf).toBe(true)
+    expect(body.imageCount).toBe(1)
+    expect(body.validationError).toBeNull()
+  })
+
+  it("returns 400 for non-ZIP data", async () => {
+    const app = createBookRoutes(tmpDir)
+    const formData = new FormData()
+    formData.append("zip", new Blob(["not a zip"], { type: "application/zip" }), "bad.zip")
+    const res = await app.request("/books/preview-import", { method: "POST", body: formData })
+    expect(res.status).toBe(400)
+  })
+
+  it("returns 400 when .db file is missing", async () => {
+    const zip = createProjectZip("no-db", { omitDb: true })
+    const app = createBookRoutes(tmpDir)
+    const formData = new FormData()
+    formData.append("zip", new Blob([zip], { type: "application/zip" }), "no-db.zip")
+    const res = await app.request("/books/preview-import", { method: "POST", body: formData })
+    expect(res.status).toBe(400)
+    const text = await res.text()
+    expect(text).toContain("Invalid project archive")
+  })
+
+  it("returns validationError for corrupt database", async () => {
+    const zip = createProjectZip("corrupt-db", { corruptDb: true })
+    const app = createBookRoutes(tmpDir)
+    const formData = new FormData()
+    formData.append("zip", new Blob([zip], { type: "application/zip" }), "corrupt-db.zip")
+    const res = await app.request("/books/preview-import", { method: "POST", body: formData })
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.validationError).toBeTruthy()
+  })
+
+  it("returns 400 when zip field is missing", async () => {
+    const app = createBookRoutes(tmpDir)
+    const formData = new FormData()
+    const res = await app.request("/books/preview-import", { method: "POST", body: formData })
+    expect(res.status).toBe(400)
+  })
+})
+
+describe("POST /books/import", () => {
+  it("imports a valid project ZIP", async () => {
+    const zip = createProjectZip("import-test")
+    const app = createBookRoutes(tmpDir)
+    const formData = new FormData()
+    formData.append("zip", new Blob([zip], { type: "application/zip" }), "import-test.zip")
+    const res = await app.request("/books/import", { method: "POST", body: formData })
+    expect(res.status).toBe(201)
+    const body = await res.json()
+    expect(body.label).toBe("import-test")
+    expect(body.title).toBe("Test Import")
+    expect(body.hasSourcePdf).toBe(true)
+    expect(fs.existsSync(path.join(tmpDir, "import-test", "import-test.db"))).toBe(true)
+    expect(fs.existsSync(path.join(tmpDir, "import-test", "import-test.pdf"))).toBe(true)
+  })
+
+  it("auto-resolves label when book already exists", async () => {
+    createTestBook("dupe-import")
+    const zip = createProjectZip("dupe-import")
+    const app = createBookRoutes(tmpDir)
+    const formData = new FormData()
+    formData.append("zip", new Blob([zip], { type: "application/zip" }), "dupe-import.zip")
+    const res = await app.request("/books/import", { method: "POST", body: formData })
+    expect(res.status).toBe(201)
+    const body = await res.json()
+    expect(body.label).toBe("dupe-import-2")
+  })
+
+  it("returns 400 when PDF is missing", async () => {
+    const zip = createProjectZip("no-pdf-import", { omitPdf: true })
+    const app = createBookRoutes(tmpDir)
+    const formData = new FormData()
+    formData.append("zip", new Blob([zip], { type: "application/zip" }), "no-pdf.zip")
+    const res = await app.request("/books/import", { method: "POST", body: formData })
+    expect(res.status).toBe(400)
+    const text = await res.text()
+    expect(text).toContain("Invalid project archive")
+  })
+
+  it("returns 400 for non-ZIP data", async () => {
+    const app = createBookRoutes(tmpDir)
+    const formData = new FormData()
+    formData.append("zip", new Blob(["not a zip"], { type: "application/zip" }), "bad.zip")
+    const res = await app.request("/books/import", { method: "POST", body: formData })
+    expect(res.status).toBe(400)
+  })
+
+  it("cleans up on failure", async () => {
+    const zip = createProjectZip("cleanup-test", { corruptDb: true })
+    const app = createBookRoutes(tmpDir)
+    const formData = new FormData()
+    formData.append("zip", new Blob([zip], { type: "application/zip" }), "cleanup-test.zip")
+    const res = await app.request("/books/import", { method: "POST", body: formData })
+    expect(res.status).toBe(500)
+    expect(fs.existsSync(path.join(tmpDir, "cleanup-test"))).toBe(false)
+  })
+})
+
+describe("GET /books/:label/export-adt", () => {
+  it("returns ZIP of the adt/ directory", async () => {
+    createTestBook("adt-export")
+    addPagesAndRenderings("adt-export", 1)
+    const adtDir = path.join(tmpDir, "adt-export", "adt")
+    fs.mkdirSync(adtDir, { recursive: true })
+    fs.writeFileSync(path.join(adtDir, "index.html"), "<html></html>")
+    const app = createBookRoutes(tmpDir)
+    const res = await app.request("/books/adt-export/export-adt")
+    expect(res.status).toBe(200)
+    expect(res.headers.get("Content-Type")).toBe("application/zip")
+    const disposition = res.headers.get("Content-Disposition") ?? ""
+    expect(disposition).toContain('filename="adt-export-adt.zip"')
+    expect(disposition).toContain("filename*=UTF-8''")
+  })
+
+  it("returns 404 for missing book", async () => {
+    const app = createBookRoutes(tmpDir)
+    const res = await app.request("/books/ghost/export-adt")
+    expect(res.status).toBe(404)
+  })
+
+  it("returns 400 when adt/ directory is missing", async () => {
+    createTestBook("no-adt-dir")
+    const app = createBookRoutes(tmpDir)
+    const res = await app.request("/books/no-adt-dir/export-adt")
+    expect(res.status).toBe(400)
   })
 })
 

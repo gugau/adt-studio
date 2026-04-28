@@ -16,6 +16,29 @@ const EXEMPT_TAGS = new Set(["style", "script"])
 const BLANK_MARKER_RE = /\[\[blank:item-\d+(?::[^\]]+)?\]\]/g
 /** Non-global version for .test() checks (avoids stateful lastIndex issues) */
 const BLANK_MARKER_TEST_RE = /\[\[blank:item-\d+(?::[^\]]+)?\]\]/
+/** Section types whose rendered HTML must contain at least one editable element. */
+const WRITABLE_SECTION_TYPES = new Set([
+  "activity_open_ended_answer",
+  "activity_fill_in_the_blank",
+  "activity_fill_in_a_table",
+])
+/**
+ * Input `type` values that are NOT writable (radio/checkbox/submit/etc.).
+ * An <input> is only counted as an editable element if its type is absent or
+ * is not in this set. A missing type defaults to "text" per the HTML spec.
+ */
+const NON_WRITABLE_INPUT_TYPES = new Set([
+  "radio",
+  "checkbox",
+  "hidden",
+  "submit",
+  "button",
+  "reset",
+  "image",
+  "file",
+  "range",
+  "color",
+])
 /** Matches placeholder sequences used in textbooks for blanks (3+ underscores or 3+ dots) */
 const TEXTBOOK_BLANK_RE = /_{3,}|\.{3,}/g
 /** Matches [placeholder:word] markers added during text classification */
@@ -70,6 +93,14 @@ export interface HtmlValidationOptions {
   expectedSectionType?: string
   /** Expected value for the section's data-section-id attribute. */
   expectedSectionId?: string
+  /**
+   * data-ids permitted on wrapper elements that carry nested HTML children.
+   * The "string children only" rule (implicit via the expectedTexts check)
+   * does NOT apply to these IDs. Used for `group` / `activity` container
+   * node_ids. Each must still appear at most once in the document and is
+   * not required to be present.
+   */
+  allowedContainerIds?: string[]
 }
 
 export function validateSectionHtml(
@@ -79,7 +110,8 @@ export function validateSectionHtml(
   imageUrlPrefix?: string,
   options?: HtmlValidationOptions
 ): HtmlValidationResult {
-  const allowedIds = new Set([...allowedTextIds, ...allowedImageIds])
+  const containerIds = options?.allowedContainerIds ?? []
+  const allowedIds = new Set([...allowedTextIds, ...allowedImageIds, ...containerIds])
   const imageIdSet = new Set(allowedImageIds)
   const errors: string[] = []
   const doc = parseDocument(repairMalformedHtmlEntities(html))
@@ -97,6 +129,21 @@ export function validateSectionHtml(
   validateRequiredSectionAttributes(section, options, errors)
 
   walkNode(section, allowedIds, imageIdSet, errors, options)
+
+  // Sections whose whole purpose is for the learner to write must contain
+  // at least one editable element. If the LLM emits only static underlines
+  // (decorative borders, <hr>s, runs of underscores), the page looks right
+  // but is unusable — fail loudly so the renderer retries.
+  const sectionType = section.attribs?.["data-section-type"]
+  if (
+    typeof sectionType === "string" &&
+    WRITABLE_SECTION_TYPES.has(sectionType) &&
+    !hasEditableElement(section)
+  ) {
+    errors.push(
+      `Section type "${sectionType}" requires at least one editable element (<textarea>, <input>, or [[blank:item-N]] marker), but none were found. The learner cannot type into this page.`
+    )
+  }
 
   // Verify all expected text IDs are present in the generated HTML.
   // This ensures the LLM doesn't silently drop entries (e.g. duplicated texts).
@@ -160,6 +207,48 @@ function validateRequiredSectionAttributes(
   }
 }
 
+/**
+ * True if the node is a writable input element: a <textarea>, or an <input>
+ * whose type is absent or is a text-accepting type (not radio/checkbox/etc.).
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isWritableInput(node: any): boolean {
+  if (node.type !== "tag") return false
+  const tagName = (node.name ?? "").toLowerCase()
+  if (tagName === "textarea") return true
+  if (tagName !== "input") return false
+  const inputType = (node.attribs?.type ?? "text").toLowerCase()
+  return !NON_WRITABLE_INPUT_TYPES.has(inputType)
+}
+
+/**
+ * Walk the subtree and report whether any editable element is present: a
+ * writable <input>/<textarea>, or text containing a [[blank:item-N]] marker
+ * (which gets hydrated into an <input> at runtime). Skips <script>/<style>
+ * subtrees so markers appearing inside them don't falsely satisfy the check.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function hasEditableElement(node: any): boolean {
+  // htmlparser2 uses dedicated node types for <script>/<style>; these are
+  // never writable and their text content is not rendered as HTML, so any
+  // marker inside them must be ignored.
+  if (node.type === "script" || node.type === "style") return false
+  if (node.type === "tag") {
+    const tagName = (node.name ?? "").toLowerCase()
+    if (tagName === "script" || tagName === "style") return false
+    if (isWritableInput(node)) return true
+  }
+  if (node.type === "text" && typeof node.data === "string") {
+    if (BLANK_MARKER_TEST_RE.test(node.data)) return true
+  }
+  if (node.children) {
+    for (const child of node.children) {
+      if (hasEditableElement(child)) return true
+    }
+  }
+  return false
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function hasFitbSentenceClass(node: any): boolean {
   let current = node
@@ -187,6 +276,7 @@ function walkNode(
     if (node.data.trim().length > 0) {
       if (isInsideExemptTag(node)) return
       if (hasGeneratedA11yLabelAncestor(node)) return
+      if (hasAriaHiddenAncestor(node)) return
       // Allow single-digit numbers as bare text (used as option markers in activities)
       if (/^\d$/.test(node.data.trim())) return
       if (!hasAncestorWithDataId(node)) {
@@ -266,9 +356,16 @@ function walkNode(
             `Element with data-id "${dataId}" contains [[blank:item-N]] markers but is missing the "fitb-sentence" class (required on the element or an ancestor for runtime hydration)`
           )
         }
-        // Compare without the blank markers in actual and underscore/dot/placeholder markers in expected
+        // Compare without the blank markers in actual and underscore/dot/placeholder markers in expected.
+        // Also strip single `_` chars from the expected so inline letter blanks (e.g. source text `"en_ro"`
+        // rendered as `"en[[blank:item-1]]ro"`) match without the underscore throwing off similarity.
         const strippedActual = normalizeText(actualText.replace(BLANK_MARKER_RE, ""))
-        const strippedExpected = normalizeText(expectedText.replace(TEXTBOOK_BLANK_RE, "").replace(PLACEHOLDER_MARKER_RE, ""))
+        const strippedExpected = normalizeText(
+          expectedText
+            .replace(TEXTBOOK_BLANK_RE, "")
+            .replace(PLACEHOLDER_MARKER_RE, "")
+            .replace(/_/g, "")
+        )
         if (strippedActual !== strippedExpected) {
           const similarity = textSimilarity(strippedActual, strippedExpected)
           if (similarity < TEXT_SIMILARITY_THRESHOLD) {
@@ -279,12 +376,30 @@ function walkNode(
         }
         // Do NOT set replacementText — preserve the blank markers in the HTML
       } else {
-        replacementText = options.expectedTexts.get(dataId)!
-        if (actualText !== expectedText) {
-          const similarity = textSimilarity(actualText, expectedText)
+        // The LLM is expected to replace textbook-style blank placeholders
+        // (___ or ...) with a separate editable element. If the raw expected
+        // text contains such a placeholder, we always strip it from the
+        // rendered text — never let the underscores/dots appear visibly
+        // next to the input, even if the LLM kept them in its output.
+        // Compute both full and placeholder-stripped variants; pick the
+        // stripped version whenever the expected text has a placeholder,
+        // otherwise fall back to whichever is closer to the LLM's output.
+        const rawExpected = options.expectedTexts.get(dataId)!
+        const strippedRaw = stripBlankPlaceholders(rawExpected)
+        const strippedExpected = normalizeText(strippedRaw)
+        const hasTextbookPlaceholder =
+          /_{3,}|\.{3,}/.test(rawExpected) ||
+          /\[placeholder:[^\]]+\]/.test(rawExpected)
+        const fullSim = textSimilarity(actualText, expectedText)
+        const strippedSim = textSimilarity(actualText, strippedExpected)
+        const preferStripped = hasTextbookPlaceholder || strippedSim > fullSim
+        const targetExpected = preferStripped ? strippedExpected : expectedText
+        replacementText = preferStripped ? strippedRaw : rawExpected
+        if (actualText !== targetExpected) {
+          const similarity = Math.max(fullSim, strippedSim)
           if (similarity < TEXT_SIMILARITY_THRESHOLD) {
             errors.push(
-              `Text mismatch for data-id "${dataId}": expected "${expectedText.slice(0, 80)}" but got "${actualText.slice(0, 80)}"`
+              `Text mismatch for data-id "${dataId}": expected "${targetExpected.slice(0, 80)}" but got "${actualText.slice(0, 80)}"`
             )
           }
         }
@@ -298,7 +413,7 @@ function walkNode(
     }
   }
 
-  if (replacementText !== undefined) {
+  if (replacementText !== undefined && !hasEditableElement(node)) {
     replaceChildrenWithText(node, replacementText)
   }
 }
@@ -309,6 +424,25 @@ function hasGeneratedA11yLabelAncestor(node: any): boolean {
   let current = node.parent
   while (current) {
     if (current.attribs?.["data-generated-a11y-label"] === "true") {
+      return true
+    }
+    current = current.parent
+  }
+  return false
+}
+
+/**
+ * True if the node sits inside an element marked aria-hidden="true". Such
+ * content is purely decorative (screen readers skip it), so short visual
+ * characters like "→", "/", "•" used as separators or icons don't need a
+ * data-id. Relaxing this keeps the validator consistent with prompt
+ * guidance that already uses aria-hidden spans for decorative glyphs.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function hasAriaHiddenAncestor(node: any): boolean {
+  let current = node.parent
+  while (current) {
+    if (current.attribs?.["aria-hidden"] === "true") {
       return true
     }
     current = current.parent
@@ -384,6 +518,32 @@ function normalizeText(text: string): string {
     .replace(/\s+/g, " ")
     .trim()
 }
+
+/**
+ * Remove textbook-style blank placeholders (___ or ...) and inline
+ * [placeholder:word] markers from text, then collapse the whitespace gaps
+ * left behind. Used when the LLM has correctly replaced a visual blank with
+ * an editable element (textarea or input) and the surrounding label text
+ * therefore omits the placeholder.
+ *
+ * Also collapses orphan separator runs left behind when a split field like
+ * `___/___/___` (date) or `___-___-___` (phone) is stripped — those slashes
+ * and dashes belong between inputs, not in the label text.
+ */
+function stripBlankPlaceholders(text: string): string {
+  return text
+    .replace(TEXTBOOK_BLANK_RE, "")
+    .replace(PLACEHOLDER_MARKER_RE, "")
+    .replace(ORPHAN_SEPARATOR_RUN_RE, "")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+// Matches 2+ separator characters (/ or -) separated only by whitespace —
+// the kind of leftover you get after stripping placeholder runs from
+// "___/___/___". Real data like "2024/01/15" has alphanumerics between the
+// separators, so it won't match.
+const ORPHAN_SEPARATOR_RUN_RE = /([/\-])(\s*[/\-])+/g
 
 function repairMalformedHtmlEntities(html: string): string {
   let repaired = html

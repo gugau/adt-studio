@@ -24,29 +24,33 @@ export type PipelineCacheResource =
   | "debug"
 
 const EXTRA_STAGE_OUTPUT_NODES: Partial<Record<StageName, readonly PipelineNodeName[]>> = {
-  "text-and-speech": ["text-catalog-translation"],
+  "translate": ["text-catalog-translation"],
 }
 
 /** All node_data node names written by each stage. */
 export const STAGE_OUTPUT_NODES: Record<StageName, readonly PipelineNodeName[]> = {
   "extract": [],
+  "sectioning": [],
   "storyboard": [],
   "quizzes": [],
   "captions": [],
   "glossary": [],
   "toc": [],
-  "text-and-speech": [],
+  "translate": [],
+  "speech": [],
   "package": [],
 }
 
 const STAGE_DIRECT_DEPENDENTS: Record<StageName, StageName[]> = {
   "extract": [],
+  "sectioning": [],
   "storyboard": [],
   "quizzes": [],
   "captions": [],
   "glossary": [],
   "toc": [],
-  "text-and-speech": [],
+  "translate": [],
+  "speech": [],
   "package": [],
 }
 
@@ -70,9 +74,8 @@ const NODE_CACHE_RESOURCES: Record<PipelineNodeName, readonly PipelineCacheResou
   "image-segmentation": ["pages"],
   "image-cropping": ["pages"],
   "image-meaningfulness": ["pages"],
-  "text-classification": ["pages"],
-  "translation": ["pages"],
   "page-sectioning": ["pages"],
+  "translation": ["pages"],
   "web-rendering": ["pages"],
   "quiz-generation": ["quizzes"],
   "image-captioning": ["pages"],

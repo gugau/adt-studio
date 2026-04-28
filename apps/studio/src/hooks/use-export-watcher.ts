@@ -1,15 +1,18 @@
-import { useState, useEffect, useCallback, createContext, useContext } from "react"
+import { useState, useEffect, createContext, useContext } from "react"
 import type { I18n } from "@lingui/core"
 import { msg } from "@lingui/core/macro"
 import { useLingui } from "@lingui/react"
+import { useMutation } from "@tanstack/react-query"
 import { api } from "@/api/client"
 import { useBookTasks } from "./use-book-tasks"
+import type { ExportFeatureToggles } from "./use-export-features"
 
-type ExportFormat = "book" | "webpub" | "scorm"
+type ExportFormat = "project" | "webpub" | "scorm" | "adt"
 
 interface PendingExport {
   taskId: string
   format: ExportFormat
+  features?: ExportFeatureToggles
 }
 
 interface ExportError {
@@ -18,7 +21,7 @@ interface ExportError {
 }
 
 export interface ExportWatcherValue {
-  startExport: (format: ExportFormat) => void
+  startExport: (format: ExportFormat, features?: ExportFeatureToggles) => void
   isPreparing: boolean
   preparingFormat: ExportFormat | null
   error: ExportError | null
@@ -59,32 +62,33 @@ export function useExportWatcherSetup(label: string): ExportWatcherValue {
     }
   }, [pendingExport, getTask, i18n, label])
 
-  const startExport = useCallback(
-    (format: ExportFormat) => {
-      setError(null)
-      api.prepareExport(label, format).then(
-        (result) => {
-          if (result.taskId) {
-            setPendingExport({ taskId: result.taskId, format })
-          } else {
-            // Sync fallback (no task system) — download immediately
-            triggerExportDownload(label, format, i18n).catch((err) => {
-              setError({ format, message: err instanceof Error ? err.message : String(err) })
-            })
-          }
-        },
-        (err) => {
+  const prepareMutation = useMutation({
+    mutationFn: ({ format, features }: { format: ExportFormat; features?: ExportFeatureToggles }) =>
+      api.prepareExport(label, format, features),
+    onMutate: () => setError(null),
+    onSuccess: (result, { format, features }) => {
+      if (result.taskId) {
+        setPendingExport({ taskId: result.taskId, format, features })
+      } else {
+        triggerExportDownload(label, format, i18n).catch((err) => {
           setError({ format, message: err instanceof Error ? err.message : String(err) })
-        }
-      )
+        })
+      }
     },
-    [i18n, label]
-  )
+    onError: (err, { format }) => {
+      setError({ format, message: err instanceof Error ? err.message : String(err) })
+    },
+  })
+
+  const preparingFormat: ExportFormat | null =
+    pendingExport?.format
+    ?? (prepareMutation.isPending ? prepareMutation.variables?.format ?? null : null)
 
   return {
-    startExport,
-    isPreparing: pendingExport !== null,
-    preparingFormat: pendingExport?.format ?? null,
+    startExport: (format: ExportFormat, features?: ExportFeatureToggles) =>
+      prepareMutation.mutate({ format, features }),
+    isPreparing: prepareMutation.isPending || pendingExport !== null,
+    preparingFormat,
     error,
   }
 }
@@ -95,12 +99,14 @@ async function triggerExportDownload(
   i18n: I18n,
 ): Promise<void> {
   let blob: Blob | null
-  if (format === "book") {
-    blob = await api.exportBook(label)
+  if (format === "project") {
+    blob = await api.exportProject(label)
   } else if (format === "webpub") {
     blob = await api.exportWebpub(label)
-  } else {
+  } else if (format === "scorm") {
     blob = await api.exportScorm(label)
+  } else {
+    blob = await api.exportAdt(label)
   }
 
   if (!blob) return // Browser mode — direct download already triggered
@@ -109,18 +115,19 @@ async function triggerExportDownload(
   const { save } = await import("@tauri-apps/plugin-dialog")
   const { writeFile } = await import("@tauri-apps/plugin-fs")
 
-  const ext = format === "webpub" ? "webpub" : "zip"
-  const defaultPath = format === "scorm" ? `${label}-scorm.zip` : `${label}.${ext}`
-  const filterName =
-    format === "webpub"
-      ? i18n._(msg`WebPub`)
-      : format === "scorm"
-        ? i18n._(msg`SCORM Package`)
-        : i18n._(msg`ZIP Archive`)
+  const formatMeta: Record<ExportFormat, { ext: string; suffix: string; filterName: string }> = {
+    project: { ext: "zip", suffix: "-project", filterName: i18n._(msg`Project Archive`) },
+    webpub: { ext: "webpub", suffix: "", filterName: i18n._(msg`WebPub`) },
+    scorm: { ext: "zip", suffix: "-scorm", filterName: i18n._(msg`SCORM Package`) },
+    adt: { ext: "zip", suffix: "-adt", filterName: i18n._(msg`ADT Package`) },
+  }
+  const meta = formatMeta[format]
+  const defaultPath = `${label}${meta.suffix}.${meta.ext}`
+  const filterName = meta.filterName
 
   const savePath = await save({
     defaultPath,
-    filters: [{ name: filterName, extensions: [ext] }],
+    filters: [{ name: filterName, extensions: [meta.ext] }],
   })
 
   if (savePath) {

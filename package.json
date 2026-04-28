@@ -12,7 +12,7 @@
     "typecheck": "tsc --build",
     "lint": "eslint",
     "build": "tsc --build",
-    "dev": "pnpm --parallel --filter @adt/api --filter @adt/studio dev",
+    "dev": "node scripts/dev.mjs",
     "dev:api": "pnpm --filter @adt/api dev",
     "dev:studio": "pnpm --filter @adt/studio dev",
     "dev:desktop": "pnpm --filter @adt/desktop dev",
