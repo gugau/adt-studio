@@ -24,6 +24,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface ColorPickerContextValue {
@@ -37,6 +42,7 @@ interface ColorPickerContextValue {
   setLightness: (lightness: number) => void;
   setAlpha: (alpha: number) => void;
   setMode: (mode: string) => void;
+  commit: () => void;
 }
 
 const ColorPickerContext = createContext<ColorPickerContextValue | undefined>(
@@ -79,49 +85,67 @@ export const ColorPicker = ({
 }: ColorPickerProps) => {
   const initial = safeColor(value ?? defaultValue, "#000000");
 
-  const [hue, setHue] = useState(initial.hue() || 0);
-  const [saturation, setSaturation] = useState(initial.saturationl());
-  const [lightness, setLightness] = useState(initial.lightness());
-  const [alpha, setAlpha] = useState(initial.alpha() * 100);
+  const [hue, setHueState] = useState(initial.hue() || 0);
+  const [saturation, setSaturationState] = useState(initial.saturationl());
+  const [lightness, setLightnessState] = useState(initial.lightness());
+  const [alpha, setAlphaState] = useState(initial.alpha() * 100);
   const [mode, setMode] = useState("hex");
 
-  // Track the latest `onChange` without retriggering the emission effect when
-  // the parent re-renders with a fresh function identity. Combined with the
-  // `skipEmitRef` below, this prevents the value→state→onChange→value loop
-  // (which would silently overwrite Tailwind tokens with their resolved hex).
   const onChangeRef = useRef(onChange);
   useEffect(() => {
     onChangeRef.current = onChange;
   });
 
-  // True whenever the next state change is driven by something other than a
-  // user interaction (initial mount, controlled `value` syncing). The
-  // emission effect skips one tick after each true.
-  const skipEmitRef = useRef(true);
+  // Wrapped setters mirror state into a ref so commit() can fire synchronously
+  // after a setter without waiting for React to re-render.
+  const stateRef = useRef({
+    hue: initial.hue() || 0,
+    saturation: initial.saturationl(),
+    lightness: initial.lightness(),
+    alpha: initial.alpha() * 100,
+  });
+  const setHue = useCallback((h: number) => {
+    stateRef.current.hue = h;
+    setHueState(h);
+  }, []);
+  const setSaturation = useCallback((s: number) => {
+    stateRef.current.saturation = s;
+    setSaturationState(s);
+  }, []);
+  const setLightness = useCallback((l: number) => {
+    stateRef.current.lightness = l;
+    setLightnessState(l);
+  }, []);
+  const setAlpha = useCallback((a: number) => {
+    stateRef.current.alpha = a;
+    setAlphaState(a);
+  }, []);
 
-  // Sync from controlled `value` whenever it changes externally.
+  // Sync internal state from controlled `value` (no commit — external change).
   useEffect(() => {
     if (!value) return;
     const c = safeColor(value, "#000000");
-    skipEmitRef.current = true;
-    setHue(c.hue() || 0);
-    setSaturation(c.saturationl());
-    setLightness(c.lightness());
-    setAlpha(c.alpha() * 100);
+    const next = {
+      hue: c.hue() || 0,
+      saturation: c.saturationl(),
+      lightness: c.lightness(),
+      alpha: c.alpha() * 100,
+    };
+    stateRef.current = next;
+    setHueState(next.hue);
+    setSaturationState(next.saturation);
+    setLightnessState(next.lightness);
+    setAlphaState(next.alpha);
   }, [value]);
 
-  // Notify parent of user-driven changes only.
-  useEffect(() => {
-    if (skipEmitRef.current) {
-      skipEmitRef.current = false;
-      return;
-    }
+  const commit = useCallback(() => {
     const fn = onChangeRef.current;
     if (!fn) return;
-    const c = Color.hsl(hue, saturation, lightness).alpha(alpha / 100);
+    const s = stateRef.current;
+    const c = Color.hsl(s.hue, s.saturation, s.lightness).alpha(s.alpha / 100);
     const [r, g, b] = c.rgb().array();
-    fn([r, g, b, alpha / 100]);
-  }, [hue, saturation, lightness, alpha]);
+    fn([r, g, b, s.alpha / 100]);
+  }, []);
 
   return (
     <ColorPickerContext.Provider
@@ -136,6 +160,7 @@ export const ColorPicker = ({
         setLightness,
         setAlpha,
         setMode,
+        commit,
       }}
     >
       <div
@@ -152,9 +177,11 @@ export const ColorPickerSelection = memo(
   ({ className, ...props }: ColorPickerSelectionProps) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
-    const [positionX, setPositionX] = useState(0);
-    const [positionY, setPositionY] = useState(0);
-    const { hue, setSaturation, setLightness } = useColorPicker();
+    const { hue, saturation, lightness, setSaturation, setLightness, commit } =
+      useColorPicker();
+    const positionX = saturation / 100;
+    const topLightness = positionX < 0.01 ? 100 : 50 + 50 * (1 - positionX);
+    const positionY = topLightness === 0 ? 0 : 1 - lightness / topLightness;
 
     const backgroundGradient = useMemo(
       () =>
@@ -164,9 +191,9 @@ export const ColorPickerSelection = memo(
       [hue],
     );
 
-    const handlePointerMove = useCallback(
-      (event: PointerEvent) => {
-        if (!(isDragging && containerRef.current)) return;
+    const updatePosition = useCallback(
+      (event: { clientX: number; clientY: number }) => {
+        if (!containerRef.current) return;
         const rect = containerRef.current.getBoundingClientRect();
         const x = Math.max(
           0,
@@ -176,27 +203,28 @@ export const ColorPickerSelection = memo(
           0,
           Math.min(1, (event.clientY - rect.top) / rect.height),
         );
-        setPositionX(x);
-        setPositionY(y);
         setSaturation(x * 100);
-        const topLightness = x < 0.01 ? 100 : 50 + 50 * (1 - x);
-        const lightnessVal = topLightness * (1 - y);
-        setLightness(lightnessVal);
+        const topL = x < 0.01 ? 100 : 50 + 50 * (1 - x);
+        setLightness(topL * (1 - y));
       },
-      [isDragging, setSaturation, setLightness],
+      [setSaturation, setLightness],
     );
 
     useEffect(() => {
-      const handlePointerUp = () => setIsDragging(false);
+      const handleMove = (e: PointerEvent) => updatePosition(e);
+      const handleUp = () => {
+        setIsDragging(false);
+        commit();
+      };
       if (isDragging) {
-        window.addEventListener("pointermove", handlePointerMove);
-        window.addEventListener("pointerup", handlePointerUp);
+        window.addEventListener("pointermove", handleMove);
+        window.addEventListener("pointerup", handleUp);
       }
       return () => {
-        window.removeEventListener("pointermove", handlePointerMove);
-        window.removeEventListener("pointerup", handlePointerUp);
+        window.removeEventListener("pointermove", handleMove);
+        window.removeEventListener("pointerup", handleUp);
       };
-    }, [isDragging, handlePointerMove]);
+    }, [isDragging, updatePosition, commit]);
 
     return (
       <div
@@ -204,7 +232,7 @@ export const ColorPickerSelection = memo(
         onPointerDown={(e) => {
           e.preventDefault();
           setIsDragging(true);
-          handlePointerMove(e.nativeEvent);
+          updatePosition(e);
         }}
         ref={containerRef}
         style={{ background: backgroundGradient }}
@@ -231,13 +259,14 @@ export const ColorPickerHue = ({
   className,
   ...props
 }: ColorPickerHueProps) => {
-  const { hue, setHue } = useColorPicker();
+  const { hue, setHue, commit } = useColorPicker();
 
   return (
     <SliderPrimitive.Root
       className={cn("relative flex h-3.5 w-full touch-none", className)}
       max={360}
       onValueChange={([h]) => setHue(h)}
+      onValueCommit={() => commit()}
       step={1}
       value={[hue]}
       {...props}
@@ -256,13 +285,14 @@ export const ColorPickerAlpha = ({
   className,
   ...props
 }: ColorPickerAlphaProps) => {
-  const { alpha, setAlpha } = useColorPicker();
+  const { alpha, setAlpha, commit } = useColorPicker();
 
   return (
     <SliderPrimitive.Root
       className={cn("relative flex h-3.5 w-full touch-none", className)}
       max={100}
       onValueChange={([a]) => setAlpha(a)}
+      onValueCommit={() => commit()}
       step={1}
       value={[alpha]}
       {...props}
@@ -284,11 +314,14 @@ export const ColorPickerAlpha = ({
 
 export type ColorPickerEyeDropperProps = ComponentProps<typeof Button>;
 
+const isEyeDropperSupported =
+  typeof window !== "undefined" && "EyeDropper" in window;
+
 export const ColorPickerEyeDropper = ({
   className,
   ...props
 }: ColorPickerEyeDropperProps) => {
-  const { setHue, setSaturation, setLightness, setAlpha } = useColorPicker();
+  const { setHue, setSaturation, setLightness, setAlpha, commit } = useColorPicker();
 
   const handleEyeDropper = async () => {
     try {
@@ -301,28 +334,42 @@ export const ColorPickerEyeDropper = ({
       setSaturation(s);
       setLightness(l);
       setAlpha(100);
+      commit();
     } catch (error) {
-      // User dismissed the eyedropper (Esc / clicked away) — that's not a
-      // failure mode worth logging.
       if (error instanceof Error && error.name === "AbortError") return;
       console.error("EyeDropper failed:", error);
     }
   };
 
-  return (
+  const button = (
     <Button
       className={cn(
         "h-7 w-7 shrink-0 text-muted-foreground border-0 bg-muted/60 hover:bg-muted hover:text-foreground shadow-none",
+        !isEyeDropperSupported && "opacity-50 cursor-not-allowed",
         className,
       )}
-      onClick={handleEyeDropper}
+      onClick={isEyeDropperSupported ? handleEyeDropper : undefined}
       size="icon"
       type="button"
       variant="outline"
+      aria-disabled={!isEyeDropperSupported}
       {...props}
     >
       <PipetteIcon size={14} />
     </Button>
+  );
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex">{button}</span>
+      </TooltipTrigger>
+      <TooltipContent side="left" sideOffset={4} variant="light">
+        {isEyeDropperSupported
+          ? "Pick a color from the screen"
+          : "Eyedropper isn't supported in this browser. Try Chrome or Edge."}
+      </TooltipContent>
+    </Tooltip>
   );
 };
 
@@ -367,11 +414,9 @@ const FORMAT_INPUT_CLASS =
   "h-7 px-2 py-0 text-[11px] font-mono shadow-none border-0 bg-muted/60 ring-offset-0 focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-violet-500 focus-visible:ring-offset-0";
 
 const PercentageInput = ({ className }: { className?: string }) => {
-  const { alpha, setAlpha } = useColorPicker();
+  const { alpha, setAlpha, commit: pickerCommit } = useColorPicker();
   const [draft, setDraft] = useState(String(Math.round(alpha)));
 
-  // Re-sync the draft whenever alpha changes externally (slider drag, value
-  // sync from props, etc.). The local draft only buffers user typing.
   useEffect(() => {
     setDraft(String(Math.round(alpha)));
   }, [alpha]);
@@ -385,6 +430,7 @@ const PercentageInput = ({ className }: { className?: string }) => {
     const clamped = Math.max(0, Math.min(100, n));
     setAlpha(clamped);
     setDraft(String(clamped));
+    pickerCommit();
   };
 
   return (

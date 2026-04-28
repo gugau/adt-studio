@@ -1,16 +1,30 @@
-import { useState } from "react"
 import { Trans } from "@lingui/react/macro"
 import { StyleLabel } from "../controls/StyleLabel"
 import { Section } from "../controls/Section"
 import { BoxInput, type BoxValue } from "../controls/BoxInput"
 import { ColorInput } from "../controls/ColorInput"
+import {
+  borderWidthClassMap,
+  borderRadiusClassMap,
+  borderColorClassMap,
+} from "../class-maps"
+import { useElementStyles } from "../use-element-styles"
 
 const ZERO: BoxValue = { t: 0, r: 0, b: 0, l: 0 }
 
 export function BordersSection() {
-  const [width, setWidth] = useState<BoxValue>(ZERO)
-  const [color, setColor] = useState("#000000")
-  const [radius, setRadius] = useState<BoxValue>(ZERO)
+  const { value: width, setValue: setWidth } = useElementStyles(
+    borderWidthClassMap,
+    ZERO
+  )
+  const { value: radius, setValue: setRadius } = useElementStyles(
+    borderRadiusClassMap,
+    ZERO
+  )
+  const { value: color, setValue: setColor } = useElementStyles(
+    borderColorClassMap,
+    ""
+  )
 
   return (
     <Section title={<Trans>Borders</Trans>}>

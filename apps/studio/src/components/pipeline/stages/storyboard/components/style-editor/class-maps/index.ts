@@ -15,3 +15,8 @@ export {
   alignItemsClassMap,
   gapClassMap,
 } from "./layout"
+export {
+  borderWidthClassMap,
+  borderRadiusClassMap,
+  borderColorClassMap,
+} from "./borders"

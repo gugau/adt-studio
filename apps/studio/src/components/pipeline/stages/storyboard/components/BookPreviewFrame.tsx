@@ -102,41 +102,35 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const refreshIdRef = useRef(0)
-  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const assetsPrefix = previewAssetsUrl(bookLabel)
 
   useImperativeHandle(ref, () => ({
     getIframeRect: () => iframeRef.current?.getBoundingClientRect() ?? null,
     refreshCss: async (extraHtml: string) => {
-      // Debounce keystroke bursts; bail if a newer call superseded us mid-fetch.
-      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
-      refreshTimerRef.current = setTimeout(async () => {
-        refreshTimerRef.current = null
-        const id = ++refreshIdRef.current
-        const doc = iframeRef.current?.contentDocument
-        if (!doc?.head) return
-        const res = await fetch(`${assetsPrefix}/content/tailwind_output.css`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ extraHtml }),
-        })
-        if (id !== refreshIdRef.current || !res.ok) return
-        const css = await res.text()
-        if (id !== refreshIdRef.current) return
-        const styleId = "adt-dynamic-css"
-        let styleEl = doc.getElementById(styleId) as HTMLStyleElement | null
-        if (!styleEl) {
-          styleEl = doc.createElement("style")
-          styleEl.id = styleId
-          doc.head.appendChild(styleEl)
-        }
-        styleEl.textContent = css
-        requestAnimationFrame(() => {
-          const h = doc.body?.scrollHeight
-          if (h && h > 0) setContentHeight(h)
-        })
-      }, 150)
+      const id = ++refreshIdRef.current
+      const doc = iframeRef.current?.contentDocument
+      if (!doc?.head) return
+      const res = await fetch(`${assetsPrefix}/content/tailwind_output.css`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ extraHtml }),
+      })
+      if (id !== refreshIdRef.current || !res.ok) return
+      const css = await res.text()
+      if (id !== refreshIdRef.current) return
+      const styleId = "adt-dynamic-css"
+      let styleEl = doc.getElementById(styleId) as HTMLStyleElement | null
+      if (!styleEl) {
+        styleEl = doc.createElement("style")
+        styleEl.id = styleId
+        doc.head.appendChild(styleEl)
+      }
+      styleEl.textContent = css
+      requestAnimationFrame(() => {
+        const h = doc.body?.scrollHeight
+        if (h && h > 0) setContentHeight(h)
+      })
     },
     getElementClasses: (dataId: string): string[] => {
       const doc = iframeRef.current?.contentDocument
