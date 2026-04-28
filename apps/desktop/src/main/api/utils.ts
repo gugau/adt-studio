@@ -56,7 +56,7 @@ function resolvePaths() {
   }
 
   return {
-    serverPath: join(root, "apps", "electron", "out", "main", "api-server.mjs"),
+    serverPath: join(root, "apps", "desktop", "out", "main", "api-server.mjs"),
     root,
     booksDir,
     promptsDir: join(root, "prompts"),
@@ -79,6 +79,6 @@ async function waitForApi(apiUrl: string, timeoutMs = 30_000, intervalMs = 200):
     }
     throw new Error(`API server did not start within ${timeoutMs}ms`);
   }
-  
+
 
 export { resolvePaths, waitForApi };

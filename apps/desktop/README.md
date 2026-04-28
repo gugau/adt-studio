@@ -1,4 +1,4 @@
-# ADT Electron App
+# ADT Desktop App (Electron)
 
 Electron desktop wrapper for ADT Studio.
 
@@ -38,7 +38,7 @@ pnpm build
 Run a local production-like preview (build first, then launch):
 
 ```bash
-pnpm --filter @adt/electron start
+pnpm --filter @adt/desktop start
 ```
 
 ## Build
@@ -47,22 +47,22 @@ From repository root:
 
 ```bash
 # Build unpacked app (no installer)
-pnpm --filter @adt/electron build:unpack
+pnpm --filter @adt/desktop build:unpack
 
 # Build Windows installer (NSIS)
-pnpm --filter @adt/electron build:win
+pnpm --filter @adt/desktop build:win
 
 # Build macOS package (DMG)
-pnpm --filter @adt/electron build:mac
+pnpm --filter @adt/desktop build:mac
 
 # Build Linux package (AppImage)
-pnpm --filter @adt/electron build:linux
+pnpm --filter @adt/desktop build:linux
 ```
 
 All generated artifacts are written to:
 
 ```text
-apps/electron/release/
+apps/desktop/release/
 ```
 
 ## Signing And Notarization
@@ -80,20 +80,20 @@ apps/electron/release/
 To skip signing/notarization in CI or local tests:
 
 ```bash
-SKIP_NOTARIZE=true pnpm --filter @adt/electron build:win
+SKIP_NOTARIZE=true pnpm --filter @adt/desktop build:win
 ```
 
 ### Sign and release mac version
 
-1. Enter on electron folder
-```bash
-cd apps/electron
-```
-2. Maybe you will need add a permission to run the script (optional)
-3. Run mac-sign-release
-```bash
-./scripts/mac-sign-release.sh
-```
+1. Enter the desktop app folder:
+   ```bash
+   cd apps/desktop
+   ```
+2. You may need to grant execute permission to the script (optional).
+3. Run `mac-sign-release`:
+   ```bash
+   ./scripts/mac-sign-release.sh
+   ```
 
 ## Useful Notes
 

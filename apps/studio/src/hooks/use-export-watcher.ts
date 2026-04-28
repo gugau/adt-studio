@@ -109,6 +109,7 @@ async function triggerExportDownload(
   onBeforeSaveDialog?: () => void,
 ): Promise<void> {
   let blob: Blob | null
+
   if (format === "project") {
     blob = await api.exportProject(label)
   } else if (format === "webpub") {
@@ -140,17 +141,5 @@ async function triggerExportDownload(
     onBeforeSaveDialog?.()
     await window.api.saveFile({ defaultPath, filters }, new Uint8Array(buf))
     return
-  }
-
-  // Tauri mode: save via native OS dialog
-  const { save } = await import("@tauri-apps/plugin-dialog")
-  const { writeFile } = await import("@tauri-apps/plugin-fs")
-
-  onBeforeSaveDialog?.()
-  const savePath = await save({ defaultPath, filters })
-
-  if (savePath) {
-    const buf = await blob.arrayBuffer()
-    await writeFile(savePath, new Uint8Array(buf))
   }
 }

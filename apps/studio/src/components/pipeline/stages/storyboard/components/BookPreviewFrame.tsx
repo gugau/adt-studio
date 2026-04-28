@@ -2,7 +2,7 @@ import { useRef, useMemo, useEffect, useState, useCallback, forwardRef, useImper
 import DOMPurify from "dompurify"
 import { BASE_URL } from "@/api/client"
 
-// In Tauri, BASE_URL is "http://localhost:3001/api"; extract the origin so the iframe
+// In Desktop version, BASE_URL is "http://localhost:3001/api"; extract the origin so the iframe
 // can resolve relative image URLs (stored in the DB) via a <base> tag (see Lesson #2).
 // Use new URL().origin instead of string slicing — immune to path changes (Lesson #11).
 const IFRAME_BASE = BASE_URL.startsWith("http") ? new URL(BASE_URL).origin : ""

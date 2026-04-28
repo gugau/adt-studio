@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "bundle": "node scripts/bundle.mjs",
-    "compile": "node scripts/pkg.mjs",
     "build:sidecar": "pnpm bundle && pnpm compile",
     "build:server": "node scripts/bundle-server.mjs",
     "build:electron-server": "node scripts/bundle-electron-server.mjs && node scripts/install-server-runtime.mjs"
@@ -18,14 +17,13 @@
     "@adt/storage": "workspace:*",
     "@adt/types": "workspace:*",
     "@hono/node-server": "^1.14.0",
-    "hono": "^4.7.0",
     "fflate": "^0.8.2",
+    "hono": "^4.7.0",
     "js-yaml": "^4.1.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {
     "esbuild": "^0.25.0",
-    "@yao-pkg/pkg": "^6.0.0",
     "postcss": "^8.5.0",
     "tailwindcss": "^3.4.0"
   }

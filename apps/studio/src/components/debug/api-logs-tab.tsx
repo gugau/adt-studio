@@ -19,11 +19,6 @@ export function ApiLogsTab({ label: _label }: ApiLogsTabProps) {
   const isElectronApp = isElectron()
   const debugMode = true;
 
-  console.log({
-    isElectronApp,
-    debugMode,
-  })
-
   useEffect(() => {
     if (!isElectronApp || debugMode !== true) return
     const unsubscribe = window.api.onApiLog((entry: ElectronApiLogEntry) => {
