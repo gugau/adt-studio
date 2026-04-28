@@ -1,4 +1,6 @@
+<div style=align:center">
 <h1>ADT Studio</h1>
+</div>
 
 <img width="563" height="426" alt="Screenshot 2026-04-28 at 10 39 23 AM" src="https://github.com/user-attachments/assets/2df657a0-6023-48ae-acd8-3f7a86f1a1b4" />
 
