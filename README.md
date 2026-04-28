@@ -1,25 +1,40 @@
 <div align="center">
   <h1>ADT Studio</h1>
-  <p>Turn any PDF into an <em>accessible web publication</em> — audio, translations, structured HTML layouts — all generated from your source file, all editable, all yours.</p>
-  <figure>
-    <img width="563" height="426" alt="Diagram showing a 238-page PDF being transformed by ADT into an accessible digital book with audio narration in English, Portuguese and Spanish, sign language in ASL and LIBRAS, image alt text, a glossary, and translation features." src="https://github.com/user-attachments/assets/2df657a0-6023-48ae-acd8-3f7a86f1a1b4" />
-    <figcaption><em>From a static PDF to an accessible digital book — with audio, sign language, alt text, glossary, and translations.</em></figcaption>
-  </figure>
-</div>
-
+  <p>Turn any PDF into an accessible web publication — audio, translations, structured HTML layouts — all generated from your source file, all editable, all yours.</p>
+   <p><img width="563" height="426" alt="Diagram showing a 238-page PDF being transformed by ADT into an accessible digital book with audio narration in English, Portuguese and Spanish, sign language in ASL and LIBRAS, image alt text, a glossary, and translation features." src="https://github.com/user-attachments/assets/2df657a0-6023-48ae-acd8-3f7a86f1a1b4" />
+  </p> 
 [![Download for Windows](https://img.shields.io/badge/Download-Windows-0078D6?logo=windows&logoColor=white)](https://github.com/unicef/adt-studio/releases/download/v0.3.0-electron/adt-studio.exe)
 [![Download for macOS](https://img.shields.io/badge/Download-macOS-000000?logo=apple&logoColor=white)](https://github.com/unicef/adt-studio/releases/download/v0.3.0-electron/adt-studio.dmg)
 ![Platform](https://img.shields.io/badge/platform-desktop-5E3370?logo=electron&logoColor=white)
 ![OS](https://img.shields.io/badge/os-windows%2C%20macos-pink)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPL--3.0-green)](../LICENSE)
 [![ADT Initiative](https://img.shields.io/badge/ADT_Initiative-accessibletextbooksforall.org-1CABE2)](https://www.accessibletextbooksforall.org/)
+</div>
 
 ## Partners
 
-[![UNICEF](https://img.shields.io/badge/UNICEF-1CABE2?logo=unicef&logoColor=white)](https://www.unicef.org/)
-[![OpenAI](https://img.shields.io/badge/OpenAI-412991?logo=openai&logoColor=white)](https://openai.com/)
-[![NEES](https://img.shields.io/badge/NEES-UFAL-E63946)](https://nees.ufal.br/)
-[![Ceibal](https://img.shields.io/badge/Ceibal-009639)](https://www.ceibal.edu.uy/)
+<h2>Partners</h2>
+
+<p align="center">
+  <a href="https://www.unicef.org/" title="UNICEF">
+    <img src="docs/assets/partners/unicef.svg" alt="UNICEF" height="44">
+  </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="https://openai.com/" title="OpenAI">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/partners/openai-light.svg">
+      <img src="docs/assets/partners/openai.svg" alt="OpenAI" height="36">
+    </picture>
+  </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="https://nees.ufal.br/" title="NEES — UFAL">
+    <img src="docs/assets/partners/nees.svg" alt="NEES (UFAL)" height="48">
+  </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="https://www.ceibal.edu.uy/" title="Plan Ceibal">
+    <img src="docs/assets/partners/ceibal.svg" alt="Ceibal" height="40">
+  </a>
+</p>
 
 ## Key features
 
