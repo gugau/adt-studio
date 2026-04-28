@@ -18,7 +18,7 @@
 
 <p align="center">
   <a href="https://www.unicef.org/" title="UNICEF">
-    <img src="https://www.unicef.org/sites/default/files/styles/logo_desktop_1x/public/UNICEF_ForEveryChild_White_Vertical_RGB_ENG.png" alt="UNICEF" height="56">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/e/ed/Logo_of_UNICEF.svg" alt="UNICEF" height="56">
   </a>
   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="https://openai.com/" title="OpenAI">
@@ -26,12 +26,9 @@
   </a>
   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="https://nees.ufal.br/" title="NEES — UFAL">
-    <img src="https://nees.ufal.br/storage/site/logo.png" alt="NEES (UFAL)" height="48">
+    <img src="https://www.nees.ufal.br/app/uploads/2026/01/cropped-MarcaHead-1.png" alt="NEES (UFAL)" height="48">
   </a>
   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <a href="https://www.ceibal.edu.uy/" title="Plan Ceibal">
-    <img src="https://www.ceibal.edu.uy/static/img/logo-ceibal.svg" alt="Ceibal" height="40">
-  </a>
 </p>
 
 ## Key features
