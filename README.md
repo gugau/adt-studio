@@ -1,7 +1,10 @@
 <div align="center">
   <h1>ADT Studio</h1>
-  <p>Turn any PDF into a — audio, translations, structured HTML layouts — all generated from your source file, all editable, all yours.</p>
-  <img width="563" height="426" alt="Screenshot 2026-04-28 at 10 39 23 AM" src="https://github.com/user-attachments/assets/2df657a0-6023-48ae-acd8-3f7a86f1a1b4" />
+  <p>Turn any PDF into an <em>accessible web publication</em> — audio, translations, structured HTML layouts — all generated from your source file, all editable, all yours.</p>
+  <figure>
+    <img width="563" height="426" alt="Diagram showing a 238-page PDF being transformed by ADT into an accessible digital book with audio narration in English, Portuguese and Spanish, sign language in ASL and LIBRAS, image alt text, a glossary, and translation features." src="https://github.com/user-attachments/assets/2df657a0-6023-48ae-acd8-3f7a86f1a1b4" />
+    <figcaption><em>From a static PDF to an accessible digital book — with audio, sign language, alt text, glossary, and translations.</em></figcaption>
+  </figure>
 </div>
 
 [![Download for Windows](https://img.shields.io/badge/Download-Windows-0078D6?logo=windows&logoColor=white)](https://github.com/unicef/adt-studio/releases/download/v0.3.0-electron/adt-studio.exe)
@@ -10,6 +13,13 @@
 ![OS](https://img.shields.io/badge/os-windows%2C%20macos-pink)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPL--3.0-green)](../LICENSE)
 [![ADT Initiative](https://img.shields.io/badge/ADT_Initiative-accessibletextbooksforall.org-1CABE2)](https://www.accessibletextbooksforall.org/)
+
+## Partners
+
+[![UNICEF](https://img.shields.io/badge/UNICEF-1CABE2?logo=unicef&logoColor=white)](https://www.unicef.org/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-412991?logo=openai&logoColor=white)](https://openai.com/)
+[![NEES](https://img.shields.io/badge/NEES-UFAL-E63946)](https://nees.ufal.br/)
+[![Ceibal](https://img.shields.io/badge/Ceibal-009639)](https://www.ceibal.edu.uy/)
 
 ## About
 
