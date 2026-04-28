@@ -71,6 +71,7 @@ describe("translation-evaluation-runner", () => {
     expect(createModel).toHaveBeenCalledWith(expect.objectContaining({
       modelId: "openai:gpt-4.1-mini",
       cacheDir: path.join(tmpDir, label, ".cache"),
+      openaiApiKey: "sk-test",
     }))
     expect(generateObject).toHaveBeenCalledWith(expect.objectContaining({
       maxRetries: 2,
@@ -180,6 +181,43 @@ describe("translation-evaluation-runner", () => {
       apiKey: "",
       createModel: vi.fn(),
     })).rejects.toThrow("OpenAI API key required")
+  })
+
+  it("does not mutate the process OpenAI API key while evaluating", async () => {
+    const previousOpenAIKey = process.env.OPENAI_API_KEY
+    process.env.OPENAI_API_KEY = "sk-existing-env"
+    const generateObject = vi.fn(async () => ({
+      object: {
+        acceptable: true,
+        rationale: "The translation preserves the meaning.",
+        issue_types: [],
+      },
+      usage: { inputTokens: 10, outputTokens: 6 },
+      cached: false,
+    }))
+    const createModel = vi.fn(() => ({
+      generateObject,
+      renderPrompt: vi.fn(),
+    }) as unknown as LLMModel)
+
+    try {
+      await evaluateTranslationInApi(buildRequest(), {
+        booksDir: tmpDir,
+        apiKey: "sk-request-key",
+        createModel,
+      })
+
+      expect(createModel).toHaveBeenCalledWith(expect.objectContaining({
+        openaiApiKey: "sk-request-key",
+      }))
+      expect(process.env.OPENAI_API_KEY).toBe("sk-existing-env")
+    } finally {
+      if (previousOpenAIKey !== undefined) {
+        process.env.OPENAI_API_KEY = previousOpenAIKey
+      } else {
+        delete process.env.OPENAI_API_KEY
+      }
+    }
   })
 
   it("normalizes legacy slash-prefixed OpenAI model URIs", () => {

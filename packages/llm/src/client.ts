@@ -22,6 +22,12 @@ export interface CreateLLMModelOptions {
   promptEngine?: PromptEngine
   onLog?: (entry: LlmLogEntry) => void
   rateLimiter?: RateLimiter
+  /** Optional request-scoped OpenAI API key. Falls back to the provider env var when omitted. */
+  openaiApiKey?: string
+  /** Optional request-scoped custom OpenAI-compatible provider URL. Falls back to CUSTOM_OPENAI_BASE_URL. */
+  customBaseUrl?: string
+  /** Optional request-scoped custom OpenAI-compatible provider key. Falls back to CUSTOM_OPENAI_API_KEY. */
+  customApiKey?: string
   /** Console log level. Defaults to "info" (show all). Use "silent" to suppress. */
   logLevel?: LogLevel
 }
@@ -36,8 +42,14 @@ export interface CreateLLMModelOptions {
  * - Optional prompt rendering (pass promptEngine + use prompt option)
  */
 export function createLLMModel(options: CreateLLMModelOptions): LLMModel {
-  const { modelId, cacheDir, promptEngine, onLog, rateLimiter, logLevel } = options
+  const { modelId, cacheDir, promptEngine, onLog, rateLimiter, logLevel, openaiApiKey, customBaseUrl, customApiKey } = options
   const log = createLogger(logLevel)
+  const resolveProviderModel = (structuredOutputs?: boolean) => resolveModel(modelId, {
+    structuredOutputs,
+    openaiApiKey,
+    customBaseUrl,
+    customApiKey,
+  })
 
   return {
     async renderPrompt(name: string, context: Record<string, unknown>): Promise<Message[]> {
@@ -107,7 +119,7 @@ export function createLLMModel(options: CreateLLMModelOptions): LLMModel {
             } else {
               if (rateLimiter) await rateLimiter.acquire()
               const generated = await callLLM<T>(
-                resolveModel(modelId, { structuredOutputs: opts.mode === "json" ? false : undefined }),
+                resolveProviderModel(opts.mode === "json" ? false : undefined),
                 opts,
                 system,
                 currentMessages
@@ -121,7 +133,7 @@ export function createLLMModel(options: CreateLLMModelOptions): LLMModel {
           } else {
             if (rateLimiter) await rateLimiter.acquire()
             const generated = await callLLM<T>(
-              resolveModel(modelId, { structuredOutputs: opts.mode === "json" ? false : undefined }),
+              resolveProviderModel(opts.mode === "json" ? false : undefined),
               opts,
               system,
               currentMessages
@@ -301,7 +313,12 @@ export function createLLMModel(options: CreateLLMModelOptions): LLMModel {
 
 function resolveModel(
   modelId: string,
-  options: { structuredOutputs?: boolean } = {}
+  options: {
+    structuredOutputs?: boolean
+    openaiApiKey?: string
+    customBaseUrl?: string
+    customApiKey?: string
+  } = {}
 ): LanguageModel {
   const colonIdx = modelId.indexOf(":")
   const provider = colonIdx >= 0 ? modelId.slice(0, colonIdx) : "openai"
@@ -309,14 +326,18 @@ function resolveModel(
 
   switch (provider) {
     case "openai":
+      if (options.openaiApiKey?.trim()) {
+        const scopedOpenAI = createOpenAI({ apiKey: options.openaiApiKey.trim() })
+        return scopedOpenAI(model, options.structuredOutputs !== undefined ? { structuredOutputs: options.structuredOutputs } : undefined)
+      }
       return openai(model, options.structuredOutputs !== undefined ? { structuredOutputs: options.structuredOutputs } : undefined)
     case "anthropic":
       return anthropic(model)
     case "google":
       return google(model)
     case "custom": {
-      const baseURL = process.env.CUSTOM_OPENAI_BASE_URL
-      const apiKey = process.env.CUSTOM_OPENAI_API_KEY
+      const baseURL = options.customBaseUrl?.trim() || process.env.CUSTOM_OPENAI_BASE_URL
+      const apiKey = options.customApiKey?.trim() || process.env.CUSTOM_OPENAI_API_KEY
       if (!baseURL) throw new Error("Custom provider requires CUSTOM_OPENAI_BASE_URL to be set (configure in Settings → Custom)")
       const custom = createOpenAI({ baseURL, apiKey: apiKey || "dummy" })
       return custom(model, options.structuredOutputs !== undefined ? { structuredOutputs: options.structuredOutputs } : undefined)

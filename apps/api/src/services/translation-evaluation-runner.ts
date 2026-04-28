@@ -40,6 +40,7 @@ export interface TranslationEvaluationRunnerOptions {
     modelId: string
     cacheDir: string
     onLog: (entry: LlmLogEntry) => void
+    openaiApiKey: string
   }) => LLMModel
 }
 
@@ -123,18 +124,6 @@ function buildFailedEvaluationItem(entry: TranslationEvaluationRunEntry, err: un
   }
 }
 
-function setOpenAIKey(apiKey: string): () => void {
-  const previous = process.env.OPENAI_API_KEY
-  process.env.OPENAI_API_KEY = apiKey
-  return () => {
-    if (previous !== undefined) {
-      process.env.OPENAI_API_KEY = previous
-    } else {
-      delete process.env.OPENAI_API_KEY
-    }
-  }
-}
-
 function chunkEntries<T>(entries: T[], batchSize: number): T[][] {
   const chunks: T[][] = []
   for (let index = 0; index < entries.length; index += batchSize) {
@@ -161,13 +150,12 @@ export async function evaluateTranslationInApi(
   const maxRetries = parsedRequest.max_retries ?? DEFAULT_TRANSLATION_EVALUATION_MAX_RETRIES
   const cacheDir = path.join(path.resolve(options.booksDir), parsedRequest.book_label, ".cache")
   const storage = createBookStorage(parsedRequest.book_label, options.booksDir)
-  const restoreOpenAIKey = setOpenAIKey(apiKey)
 
   try {
     const onLog = (entry: LlmLogEntry) => storage.appendLlmLog(entry)
     const llmModel = options.createModel
-      ? options.createModel({ modelId, cacheDir, onLog })
-      : createLLMModel({ modelId, cacheDir, onLog })
+      ? options.createModel({ modelId, cacheDir, onLog, openaiApiKey: apiKey })
+      : createLLMModel({ modelId, cacheDir, onLog, openaiApiKey: apiKey })
     const batches = chunkEntries(parsedRequest.entries, batchSize)
     const items: TranslationEvaluationResultData["items"] = []
     let failedItems = 0
@@ -243,7 +231,6 @@ export async function evaluateTranslationInApi(
     emitProgress?.("Translation evaluation completed", 80)
     return result
   } finally {
-    restoreOpenAIKey()
     storage.close()
   }
 }
