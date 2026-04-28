@@ -124,7 +124,7 @@ describe("TranslationEvaluationResult", () => {
   it("accepts acceptable and unacceptable counts that match total", () => {
     const result = TranslationEvaluationResult.safeParse({
       generated_at: "2026-04-06T12:00:00.000Z",
-      provider: "mlflow",
+      provider: "adt-llm",
       language: "fr",
       source_catalog_version: 4,
       translation_version: 3,
@@ -195,7 +195,7 @@ describe("TranslationEvaluationResult", () => {
   it("rejects summaries whose totals do not match", () => {
     const result = TranslationEvaluationResult.safeParse({
       generated_at: "2026-04-06T12:00:00.000Z",
-      provider: "mlflow",
+      provider: "adt-llm",
       language: "fr",
       source_catalog_version: 4,
       translation_version: 3,

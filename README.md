@@ -154,7 +154,7 @@ At a high level:
 
 Important:
 
-- Translation evaluation does not require a separate Python service or MLflow container.
+- Translation evaluation runs in the API process and stores versioned results in each book database.
 - LLM calls are logged through the existing ADT Studio LLM log path for transparency.
 - ADT Studio remains the source of truth for stored user-visible evaluation results.
 

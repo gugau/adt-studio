@@ -202,7 +202,6 @@ export {
   TranslationEvaluationIssueType,
   TranslationEvaluationSummary,
   TranslationEvaluationItem,
-  TranslationEvaluationMlflowMetadata,
   TranslationEvaluationProvider,
   TranslationEvaluationJudgeMetadata,
   TranslationEvaluationMetadata,

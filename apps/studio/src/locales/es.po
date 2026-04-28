@@ -3029,9 +3029,6 @@ msgstr "Open a page to see page-level findings"
 msgid "Open edit panel"
 msgstr "Abrir panel de edición"
 
-msgid "Open legacy run"
-msgstr "Open legacy run"
-
 msgid "Open page preview for {pageId}"
 msgstr "Abrir vista previa de la página {0}"
 
@@ -3255,6 +3252,9 @@ msgstr "Vista previa de la página PDF {pageLabel}"
 
 msgid "Pencil Sketch"
 msgstr "Dibujo a lápiz"
+
+msgid "Pending"
+msgstr "Pendiente"
 
 msgid "Pending..."
 msgstr "Pendiente..."

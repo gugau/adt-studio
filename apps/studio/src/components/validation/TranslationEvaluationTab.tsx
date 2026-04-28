@@ -266,7 +266,7 @@ export function TranslationEvaluationTab({ label }: { label: string }) {
   const summary = selectedEvaluation?.evaluation?.summary ?? null
   const acceptable = summary ? summary.acceptable : null
   const unacceptable = summary ? summary.unacceptable : null
-  const total = summary ? summary.total : selectedEvaluation?.currentTranslationVersion ? "Pending" : 0
+  const total = summary ? summary.total : selectedEvaluation?.currentTranslationVersion ? t`Pending` : 0
   const issueTypeCounts = useMemo(() => {
     const counts = new Map<string, number>()
     for (const item of selectedEvaluation?.evaluation?.items ?? []) {
@@ -466,18 +466,6 @@ export function TranslationEvaluationTab({ label }: { label: string }) {
             <EmptyState message={t`No evaluation has been stored for this language yet. Run an evaluation to generate verdicts.`} />
           )}
 
-          {selectedEvaluation.evaluation?.mlflow?.url ? (
-            <div className="flex justify-end">
-              <a
-                className="text-sm text-primary underline-offset-4 hover:underline"
-                href={selectedEvaluation.evaluation.mlflow.url}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <Trans>Open legacy run</Trans>
-              </a>
-            </div>
-          ) : null}
         </>
       ) : null}
     </div>

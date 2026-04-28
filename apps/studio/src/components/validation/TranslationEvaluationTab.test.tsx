@@ -101,7 +101,7 @@ describe("TranslationEvaluationTab", () => {
           isStale: false,
           evaluation: {
             generated_at: "2026-04-06T10:00:00.000Z",
-            provider: "mlflow",
+            provider: "adt-llm",
             language: "fr",
             source_catalog_version: 4,
             translation_version: 3,
@@ -129,10 +129,6 @@ describe("TranslationEvaluationTab", () => {
                 issue_types: ["meaning", "terminology"],
               },
             ],
-            mlflow: {
-              run_id: "run-123",
-              url: "https://mlflow.example/runs/run-123",
-            },
           },
         },
       ],
@@ -158,8 +154,6 @@ describe("TranslationEvaluationTab", () => {
     fireEvent.click(screen.getByRole("button", { name: "Expand details" }))
     expect(screen.getByText("Hello world")).toBeTruthy()
     expect(screen.getByText("Bonjour le monde")).toBeTruthy()
-    const mlflowLink = screen.getByRole("link", { name: "Open legacy run" })
-    expect(mlflowLink.getAttribute("href")).toBe("https://mlflow.example/runs/run-123")
   })
 
   it("submits a run for the selected language and shows task errors", async () => {
@@ -276,7 +270,7 @@ describe("TranslationEvaluationTab", () => {
           isStale: false,
           evaluation: {
             generated_at: "2026-04-06T10:00:00.000Z",
-            provider: "mlflow",
+            provider: "adt-llm",
             language: "es-ES",
             source_catalog_version: 3,
             translation_version: 4,

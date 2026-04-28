@@ -117,14 +117,7 @@ export const TranslationEvaluationItem = z.object({
 })
 export type TranslationEvaluationItem = z.infer<typeof TranslationEvaluationItem>
 
-export const TranslationEvaluationMlflowMetadata = z.object({
-  run_id: z.string().min(1).optional(),
-  experiment_id: z.string().min(1).optional(),
-  url: z.string().min(1).optional(),
-})
-export type TranslationEvaluationMlflowMetadata = z.infer<typeof TranslationEvaluationMlflowMetadata>
-
-export const TranslationEvaluationProvider = z.enum(["adt-llm", "mlflow"])
+export const TranslationEvaluationProvider = z.literal("adt-llm")
 export type TranslationEvaluationProvider = z.infer<typeof TranslationEvaluationProvider>
 
 export const TranslationEvaluationJudgeMetadata = z.object({
@@ -182,6 +175,5 @@ export const TranslationEvaluationResult = z.object({
   summary: TranslationEvaluationSummary,
   items: z.array(TranslationEvaluationItem),
   metadata: TranslationEvaluationMetadata.optional(),
-  mlflow: TranslationEvaluationMlflowMetadata.optional(),
 })
 export type TranslationEvaluationResult = z.infer<typeof TranslationEvaluationResult>

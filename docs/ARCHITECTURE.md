@@ -91,7 +91,7 @@ Responsibilities:
 - book SQLite
   - stores normalized evaluation results as versioned `node_data`
 
-ADT Studio stores the normalized result locally after each successful run. No external worker or MLflow server is required.
+ADT Studio stores the normalized result locally after each successful run.
 
 **Rule**: Frontend apps communicate with the API over HTTP only. They never import from `packages/` directly.
 

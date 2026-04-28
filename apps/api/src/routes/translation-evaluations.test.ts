@@ -178,7 +178,7 @@ describe("Translation evaluation routes", () => {
   it("returns a single translation evaluation status", async () => {
     saveTranslationEvaluationResult(label, tmpDir, {
       generated_at: "2026-04-06T12:02:00.000Z",
-      provider: "mlflow",
+      provider: "adt-llm",
       language: "fr",
       source_catalog_version: 1,
       translation_version: 1,

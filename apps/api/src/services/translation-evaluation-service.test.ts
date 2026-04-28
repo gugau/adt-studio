@@ -50,7 +50,7 @@ describe("translation-evaluation-service", () => {
 
     const saved = saveTranslationEvaluationResult(label, tmpDir, {
       generated_at: "2026-04-06T12:02:00.000Z",
-      provider: "mlflow",
+      provider: "adt-llm",
       language: "fr",
       source_catalog_version: 1,
       translation_version: 1,
@@ -73,11 +73,6 @@ describe("translation-evaluation-service", () => {
           issue_types: ["meaning"],
         },
       ],
-      mlflow: {
-        run_id: "run-1",
-        experiment_id: "exp-1",
-        url: "https://mlflow.example/runs/run-1",
-      },
     })
 
     expect(saved.version).toBe(1)
@@ -120,7 +115,7 @@ describe("translation-evaluation-service", () => {
     seedCatalogAndTranslation()
     saveTranslationEvaluationResult(label, tmpDir, {
       generated_at: "2026-04-06T12:02:00.000Z",
-      provider: "mlflow",
+      provider: "adt-llm",
       language: "fr",
       source_catalog_version: 1,
       translation_version: 1,
@@ -159,7 +154,7 @@ describe("translation-evaluation-service", () => {
     seedCatalogAndTranslation()
     saveTranslationEvaluationResult(label, tmpDir, {
       generated_at: "2026-04-06T12:02:00.000Z",
-      provider: "mlflow",
+      provider: "adt-llm",
       language: "fr",
       source_catalog_version: 1,
       translation_version: 1,

@@ -18,7 +18,7 @@ The implementation uses:
 - the cached/logged `@adt/llm` client for LLM-as-judge calls
 - each book's SQLite database for versioned evaluation results
 
-No Python evaluation worker or MLflow tracking server is required.
+Evaluation runs in the API process and stores results in each book database.
 
 ## Deployment Topology
 
@@ -140,7 +140,6 @@ Each stored translation evaluation result includes:
 - `summary`
 - `items[]`
 - optional `metadata`
-- optional legacy `mlflow` metadata for old stored results
 
 Each item includes:
 
@@ -229,8 +228,6 @@ This implementation does not:
 
 - block packaging
 - replace reviewer validation
-- require a Python worker
-- require MLflow
 - implement a generic multi-provider evaluation framework
 
 The current implementation is translation-focused, TypeScript-native, and stores user-visible results in ADT Studio book storage.
