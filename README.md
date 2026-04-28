@@ -4,6 +4,7 @@ Turn any PDF into a **fully accessible web publication** — audio, translations
 
 <img width="563" height="426" alt="Screenshot 2026-04-28 at 10 39 23 AM" src="https://github.com/user-attachments/assets/2df657a0-6023-48ae-acd8-3f7a86f1a1b4" />
 
+## About
 
 Desktop-first application for automated book production — extract content from PDFs, process through LLM pipelines, and generate formatted output bundles.
 
