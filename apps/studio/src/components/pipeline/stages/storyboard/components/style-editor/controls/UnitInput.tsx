@@ -95,7 +95,11 @@ export function UnitInput({
               "transition-colors text-muted-foreground hover:text-foreground"
             )}
           >
-            {isKeyword ? "—" : value.unit}
+            {isKeyword ? (
+              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+            ) : (
+              value.unit
+            )}
           </button>
         </PopoverTrigger>
         <PopoverContent

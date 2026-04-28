@@ -113,7 +113,7 @@ const ToggleGroup = React.forwardRef<
     <ToggleGroupPrimitive.Root
       ref={ref}
       className={cn(
-        "relative inline-flex items-center rounded-md bg-muted/60 overflow-hidden",
+        "relative inline-flex items-center rounded-md bg-muted/60",
         sliding && "w-full",
         className
       )}
