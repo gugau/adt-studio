@@ -61,8 +61,6 @@ docker compose down        # stop
 
 Set `PORT=9000` in a `.env` file next to `docker-compose.yml` to change the port.
 
-Translation evaluation runs are disabled by default in Docker until you point the API at an external eval service with `EVAL_SERVICE_URL`.
-
 **Option 2 — single command:**
 
 ```bash
@@ -71,36 +69,9 @@ docker run -p 8080:80 -v ./books:/app/books ghcr.io/unicef/adt-studio:latest
 
 Open `http://localhost:8080`. Book data persists in the local `./books/` directory.
 
-To enable translation evaluation in container deployments:
-
-```bash
-cat >> .env <<'EOF'
-EVAL_SERVICE_URL=http://eval-service:8081
-EVAL_SERVICE_TOKEN=
-MLFLOW_TRACKING_URI=http://mlflow:5000
-MLFLOW_TRACKING_TOKEN=
-MLFLOW_EXPERIMENT_NAME=adt-translation-evaluation
-MLFLOW_PORT=5001
-OPENAI_API_KEY=
-EOF
-```
-
-This repo now includes a local `eval-service` built via `docker build` and an MLflow service in `docker-compose.yml`. The eval service uses MLflow `make_judge` for translation evaluation runs.
-
-Additional Compose infrastructure for translation evaluation:
-
-- `eval-service`
-  - FastAPI worker in `services/eval-service`
-  - receives normalized translation-evaluation requests from `apps/api`
-  - runs MLflow `make_judge`
-- `mlflow`
-  - MLflow tracking server for run metadata and artifacts
-
 Relevant persistent volumes:
 
 - `./books`
-- `./eval-data`
-- `./mlflow`
 
 <details>
 <summary>Build from source</summary>
@@ -116,8 +87,6 @@ docker compose up --build
 ```
 
 To change the port, copy `.env.example` to `.env` and set `PORT=<your port>`.
-
-If you are developing the translation evaluation flow, also set `EVAL_SERVICE_URL=<your eval service base URL>` in `.env` so the API can submit evaluation jobs.
 
 ```bash
 docker compose up --build -d   # background
@@ -167,26 +136,9 @@ pnpm exec playwright install --with-deps chromium
 The browser opens automatically at `http://localhost:5173`. The API runs at `http://localhost:3001`.
 On first run, `pnpm dev` compiles all packages (~1 min). Subsequent runs are fast (incremental build).
 
-### Optional translation evaluation service
+### Translation evaluation
 
-Translation evaluation runs depend on an eval service. ADT Studio now reads:
-
-- `EVAL_SERVICE_URL`
-- `EVAL_SERVICE_TOKEN`
-
-When `EVAL_SERVICE_URL` is unset, the Translation Evaluation UI remains visible, but starting a new evaluation run will fail with a service-not-configured error.
-
-For compose-based deployments, `.env.example` also includes placeholders commonly needed by the external worker and MLflow server:
-
-- `MLFLOW_TRACKING_URI`
-- `MLFLOW_TRACKING_TOKEN`
-- `MLFLOW_EXPERIMENT_NAME`
-- `MLFLOW_PORT`
-- `OPENAI_API_KEY`
-
-### How translation evaluation works
-
-Translation evaluation is an optional validation workflow for translated `text-catalog` entries.
+Translation evaluation is an optional validation workflow for translated `text-catalog` entries. It runs inside the existing TypeScript API service and uses the OpenAI API key provided by the user in Studio.
 
 At a high level:
 
@@ -194,18 +146,16 @@ At a high level:
 2. A user enables translation evaluation in `Validation Settings`.
 3. A user runs an evaluation from `Validation -> Translation Evaluation`.
 4. The API loads the source and translated catalogs, applies scope/sampling settings, and submits a `translation-evaluation` task.
-5. The task sends a normalized request to `eval-service`.
-6. `eval-service` uses MLflow `make_judge` to evaluate the selected entries and logs the run to MLflow.
-7. The eval service returns a normalized result payload to the API.
-8. The API stores that payload locally as a versioned `translation-evaluation` artifact.
-9. Studio reads the stored result and shows:
+5. The task evaluates the selected entries with the cached `@adt/llm` client.
+6. The API stores the normalized payload locally as a versioned `translation-evaluation` artifact.
+7. Studio reads the stored result and shows:
    - detailed results in `Validation`
    - lightweight status badges in `Text & Speech`
 
 Important:
 
-- Studio does not read results back from MLflow directly.
-- MLflow is used for evaluation execution and tracking.
+- Translation evaluation does not require a separate Python service or MLflow container.
+- LLM calls are logged through the existing ADT Studio LLM log path for transparency.
 - ADT Studio remains the source of truth for stored user-visible evaluation results.
 
 For the detailed design and request flow, see:

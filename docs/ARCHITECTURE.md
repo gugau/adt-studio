@@ -66,9 +66,9 @@ Data and dependencies flow in one direction only:
 └─────────────────────────────────────────────────────┘
 ```
 
-### Optional Translation Evaluation Runtime
+### Translation Evaluation Runtime
 
-Translation evaluation adds an optional runtime boundary alongside the main ADT Studio stack:
+Translation evaluation runs inside the existing TypeScript API service:
 
 ```text
 apps/studio
@@ -76,22 +76,22 @@ apps/studio
    v
 apps/api
    |
-   +--> eval-service
-           |
-           v
-         mlflow
+   +--> @adt/llm cached judge calls
+   |
+   v
+book SQLite
 ```
 
 Responsibilities:
 
 - `apps/api`
-  - owns books, config, tasks, versioned results, and UI-facing APIs
-- `eval-service`
-  - executes translation evaluations with MLflow `make_judge`
-- `mlflow`
-  - stores run metadata and artifacts
+  - owns books, config, tasks, judge execution, versioned results, and UI-facing APIs
+- `@adt/llm`
+  - provides cached, logged LLM calls for translation judging
+- book SQLite
+  - stores normalized evaluation results as versioned `node_data`
 
-This is intentionally separate from the main Node/TypeScript runtime. ADT Studio stores the normalized result locally after each successful run; it does not depend on MLflow as the system of record.
+ADT Studio stores the normalized result locally after each successful run. No external worker or MLflow server is required.
 
 **Rule**: Frontend apps communicate with the API over HTTP only. They never import from `packages/` directly.
 
@@ -203,7 +203,7 @@ PDF file
                      │
               [text-catalog]    ─── collects all translatable text
               [catalog-translation]  ─── translates per language
-              [translation-evaluation] ─── optional MLflow-backed quality review
+              [translation-evaluation] ─── optional LLM-based quality review
               [tts]             ─── generates audio
                      │
               [package-web]     ─── bundles HTML + assets + audio → export
@@ -220,15 +220,14 @@ Request path:
 3. API loads the latest source `text-catalog` and target `text-catalog-translation`.
 4. API resolves translation-evaluation config from the book config.
 5. API applies scope/sampling rules and submits a `translation-evaluation` background task.
-6. API sends a normalized request to `eval-service`.
-7. `eval-service` uses MLflow `make_judge`.
-8. `eval-service` logs the run to MLflow and returns a normalized result.
-9. API stores the returned result as a versioned `translation-evaluation` node.
-10. Studio refreshes and shows the stored result.
+6. API evaluates selected entries with the cached `@adt/llm` judge.
+7. Per-entry judge failures are saved as needs-review items with an error rationale.
+8. API stores the returned result as a versioned `translation-evaluation` node.
+9. Studio refreshes and shows the stored result.
 
-This separation keeps:
+This keeps:
 
-- evaluation execution in the Python/MLflow runtime
+- evaluation execution in the TypeScript API runtime
 - user-visible state and history in ADT Studio storage
 
 ---
@@ -317,7 +316,7 @@ API ──── step-start ────► mark step + stage as "running"
 | Stage queue + SSE service | `apps/api/src/services/stage-service.ts` |
 | Translation evaluation route | `apps/api/src/routes/translation-evaluations.ts` |
 | Translation evaluation storage service | `apps/api/src/services/translation-evaluation-service.ts` |
-| Eval service client | `apps/api/src/services/eval-service-client.ts` |
+| Translation evaluation runner | `apps/api/src/services/translation-evaluation-runner.ts` |
 | API client (frontend) | `apps/studio/src/api/client.ts` |
 | Book layout + run context | `apps/studio/src/routes/books.$label.tsx` |
 | Unified stage/step status hook | `apps/studio/src/hooks/use-book-run.ts` |
@@ -329,7 +328,6 @@ API ──── step-start ────► mark step + stage as "running"
 | Global pipeline config | `config.yaml` |
 | LLM prompt templates | `prompts/*.liquid` |
 | HTML rendering templates | `templates/` |
-| Translation evaluation worker | `services/eval-service/app/main.py` |
 | Coding standards | `docs/GUIDELINES.md` |
 | Architecture decision records | `docs/DECISIONS.md` |
 | Translation evaluation details | `docs/TRANSLATION-EVALUATION.md` |
