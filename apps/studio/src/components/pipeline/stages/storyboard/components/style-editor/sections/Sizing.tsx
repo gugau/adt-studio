@@ -1,6 +1,5 @@
 /* eslint-disable lingui/no-unlocalized-strings -- option-key strings are internal field discriminants */
 
-import { useState } from "react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { StyleLabel } from "../controls/StyleLabel"
 import { Section } from "../controls/Section"
@@ -11,6 +10,15 @@ import {
   useDynamicFields,
   type OptionalFieldDef,
 } from "../use-dynamic-fields"
+import {
+  widthClassMap,
+  heightClassMap,
+  minWidthClassMap,
+  minHeightClassMap,
+  maxWidthClassMap,
+  maxHeightClassMap,
+} from "../class-maps"
+import { useElementStyles } from "../use-element-styles"
 
 const AUTO: UnitValue = { value: "auto", unit: "auto" }
 const NONE: UnitValue = { value: "none", unit: "none" }
@@ -21,8 +29,6 @@ const MAX_UNITS = ["px", "%", "none"] as const
 type SizingOptional = "minWidth" | "minHeight" | "maxWidth" | "maxHeight"
 
 const OPTIONALS: ReadonlyArray<OptionalFieldDef<SizingOptional>> = [
-  // Tailwind: min-w-*, min-h-*, max-w-*, max-h-*
-  // (with optional breakpoint prefix like `max-md:` / `max-sm:`)
   { key: "minWidth", classMatch: /(?:^|:)min-w-/ },
   { key: "minHeight", classMatch: /(?:^|:)min-h-/ },
   { key: "maxWidth", classMatch: /(?:^|:)max-w-/ },
@@ -34,12 +40,30 @@ export function SizingSection() {
   const { classes, dataId } = useElementContext()
   const { has, enable } = useDynamicFields(OPTIONALS, classes, dataId)
 
-  const [width, setWidth] = useState<UnitValue>(AUTO)
-  const [height, setHeight] = useState<UnitValue>(AUTO)
-  const [minWidth, setMinWidth] = useState<UnitValue>(AUTO)
-  const [minHeight, setMinHeight] = useState<UnitValue>(AUTO)
-  const [maxWidth, setMaxWidth] = useState<UnitValue>(NONE)
-  const [maxHeight, setMaxHeight] = useState<UnitValue>(NONE)
+  const { value: width, setValue: setWidth } = useElementStyles(
+    widthClassMap,
+    AUTO
+  )
+  const { value: height, setValue: setHeight } = useElementStyles(
+    heightClassMap,
+    AUTO
+  )
+  const { value: minWidth, setValue: setMinWidth } = useElementStyles(
+    minWidthClassMap,
+    AUTO
+  )
+  const { value: minHeight, setValue: setMinHeight } = useElementStyles(
+    minHeightClassMap,
+    AUTO
+  )
+  const { value: maxWidth, setValue: setMaxWidth } = useElementStyles(
+    maxWidthClassMap,
+    NONE
+  )
+  const { value: maxHeight, setValue: setMaxHeight } = useElementStyles(
+    maxHeightClassMap,
+    NONE
+  )
 
   const addFieldOptions = [
     { value: "minWidth" as const, label: <Trans>Min width</Trans> },
