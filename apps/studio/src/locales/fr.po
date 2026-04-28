@@ -428,14 +428,11 @@ msgstr "Activités désactivées"
 msgid "Activities enabled"
 msgstr "Activités activées"
 
-msgid "Activities generator"
-msgstr "Générateur d'activités"
-
-msgid "Activities Generator"
-msgstr "Générateur d'activités"
-
 msgid "Activity 5.1"
 msgstr "Activité 5.1"
+
+msgid "Activity Converter"
+msgstr "Convertisseur d'activités"
 
 #~ msgid "Activity Input Placeholder"
 #~ msgstr "Espace réservé de saisie d'activité"
@@ -1841,9 +1838,6 @@ msgstr "Filtrer by image ID..."
 
 msgid "Filter by item ID..."
 msgstr "Filtrer by élément ID..."
-
-#~ msgid "Filter stages"
-#~ msgstr "Filtrer les étapes"
 
 msgid "Filtered by:"
 msgstr "Filtré par :"
