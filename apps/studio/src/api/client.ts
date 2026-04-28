@@ -520,8 +520,6 @@ export interface TaskInfoResponse {
   progressPercent?: number
   startedAt?: number
   completedAt?: number
-  progressMessage?: string
-  progressPercent?: number
 }
 
 export const api = {
