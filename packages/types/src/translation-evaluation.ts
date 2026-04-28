@@ -124,6 +124,24 @@ export const TranslationEvaluationMlflowMetadata = z.object({
 })
 export type TranslationEvaluationMlflowMetadata = z.infer<typeof TranslationEvaluationMlflowMetadata>
 
+export const TranslationEvaluationProvider = z.enum(["adt-llm", "mlflow"])
+export type TranslationEvaluationProvider = z.infer<typeof TranslationEvaluationProvider>
+
+export const TranslationEvaluationJudgeMetadata = z.object({
+  model: z.string().min(1),
+  instructions: z.string().min(1),
+  additional_guidance: z.string().min(1).nullable().optional(),
+  max_retries: z.number().int().min(0).optional(),
+  batch_size: z.number().int().min(1).optional(),
+})
+export type TranslationEvaluationJudgeMetadata = z.infer<typeof TranslationEvaluationJudgeMetadata>
+
+export const TranslationEvaluationMetadata = z.object({
+  failed_items: z.number().int().min(0).optional(),
+  selected_entry_count: z.number().int().min(0).optional(),
+})
+export type TranslationEvaluationMetadata = z.infer<typeof TranslationEvaluationMetadata>
+
 export const TranslationEvaluationRunEntry = z.object({
   entry_id: z.string().min(1),
   source_text: z.string(),
@@ -154,13 +172,16 @@ export type TranslationEvaluationRunRequest = z.infer<typeof TranslationEvaluati
 
 export const TranslationEvaluationResult = z.object({
   generated_at: z.string().datetime(),
-  provider: z.literal("mlflow"),
+  provider: TranslationEvaluationProvider,
   language: z.string().min(1),
+  source_language: z.string().min(1).optional(),
   source_catalog_version: z.number().int().min(1),
   translation_version: z.number().int().min(1),
   eval_config_hash: z.string().min(1),
+  judge: TranslationEvaluationJudgeMetadata.optional(),
   summary: TranslationEvaluationSummary,
   items: z.array(TranslationEvaluationItem),
+  metadata: TranslationEvaluationMetadata.optional(),
   mlflow: TranslationEvaluationMlflowMetadata.optional(),
 })
 export type TranslationEvaluationResult = z.infer<typeof TranslationEvaluationResult>

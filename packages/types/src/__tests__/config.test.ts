@@ -95,8 +95,8 @@ describe("AppConfig", () => {
 
   it("accepts translation_evaluation config", () => {
     const result = AppConfig.safeParse({
-      text_types: { heading: "Heading" },
-      text_group_types: { paragraph: "Paragraph" },
+      structure_types: { paragraph: "Paragraph" },
+      role_types: { heading: "Heading" },
       translation_evaluation: {
         enable_translation_evaluation: true,
         judge_model: "openai:/gpt-4.1-mini",
@@ -147,6 +147,46 @@ describe("TranslationEvaluationResult", () => {
           issue_types: ["omission-or-addition"],
         },
       ],
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  it("accepts TypeScript LLM evaluation metadata", () => {
+    const result = TranslationEvaluationResult.safeParse({
+      generated_at: "2026-04-06T12:00:00.000Z",
+      provider: "adt-llm",
+      language: "fr",
+      source_language: "en",
+      source_catalog_version: 4,
+      translation_version: 3,
+      eval_config_hash: "cfg-123",
+      judge: {
+        model: "openai:gpt-4.1-mini",
+        instructions: "Review source and translation.",
+        additional_guidance: "Prefer classroom-friendly terminology.",
+        max_retries: 3,
+        batch_size: 10,
+      },
+      summary: {
+        total: 1,
+        acceptable: 1,
+        unacceptable: 0,
+      },
+      items: [
+        {
+          entry_id: "pg001:body",
+          acceptable: true,
+          source_text: "Hello world",
+          translated_text: "Bonjour le monde",
+          rationale: "The translation preserves the meaning.",
+          issue_types: [],
+        },
+      ],
+      metadata: {
+        failed_items: 0,
+        selected_entry_count: 1,
+      },
     })
 
     expect(result.success).toBe(true)
