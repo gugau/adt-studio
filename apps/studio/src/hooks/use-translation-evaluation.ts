@@ -20,10 +20,11 @@ export function useRunTranslationEvaluation(label: string) {
 
   return useMutation({
     mutationFn: (language: string) => {
-      if (!apiKey) {
+      const openaiApiKey = apiKey.trim()
+      if (!openaiApiKey) {
         throw new Error("OpenAI API key required for translation evaluation.")
       }
-      return api.runTranslationEvaluation(label, language, apiKey)
+      return api.runTranslationEvaluation(label, language, openaiApiKey)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookTasksKey(label) })
