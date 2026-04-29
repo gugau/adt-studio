@@ -1,13 +1,17 @@
 import { useLingui } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
 import { useWindowControls } from "@/hooks/use-window-controls"
+import { usePlatform } from "@/hooks/use-platform"
 
 export function LinuxControls({ className }: { className?: string }) {
   const { t } = useLingui()
   const { isMaximized, minimize, toggleMaximize, close } = useWindowControls()
+  const platform = usePlatform()
 
   const btnBase =
     "flex items-center justify-center h-6 w-6 rounded-full bg-white/15 hover:bg-white/25 active:bg-white/10 text-white/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+
+  if (platform !== "linux") return null
 
   return (
     <div

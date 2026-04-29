@@ -1,6 +1,8 @@
 import { useLingui } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
 import { useWindowControls } from "@/hooks/use-window-controls"
+import { usePlatform } from "@/hooks/use-platform"
+
 
 export function WindowsControls({
   className,
@@ -10,6 +12,7 @@ export function WindowsControls({
   variant?: "dark" | "light"
 }) {
   const { t } = useLingui()
+  const platform = usePlatform()
   const { isMaximized, minimize, toggleMaximize, close } = useWindowControls()
 
   const tone =
@@ -21,6 +24,8 @@ export function WindowsControls({
 
   const baseButton =
     "flex items-center justify-center w-[46px] h-full transition-colors focus:outline-none"
+
+  if (platform !== "windows") return null
 
   return (
     <div

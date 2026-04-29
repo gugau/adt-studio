@@ -141,15 +141,13 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
             <div className="relative w-[220px] shrink-0">
               <div className="absolute inset-y-0 left-0 z-30 flex w-full flex-col overflow-hidden bg-background">
                 <div
-                  className="flex h-10 shrink-0 items-center border-r border-gray-700 bg-gray-700 text-white"
-                  style={DRAG_REGION}
+                  className="flex h-10 shrink-0 items-center border-r border-gray-700 bg-gray-700 text-white drag-region"
                 >
                   {showMacOSSpacer && <MacOSTrafficLightSpacer />}
                   <Link
                     to="/"
-                    className="flex h-full min-w-0 items-center gap-2.5 px-4 transition-colors hover:bg-gray-800"
+                    className="w-full flex h-full min-w-0 items-center gap-2.5 px-4 transition-colors hover:bg-gray-800"
                     title="Back to books"
-                    style={NO_DRAG_REGION}
                   >
                     <Home className="h-4 w-4 shrink-0" />
                     <span className="truncate text-sm font-semibold">

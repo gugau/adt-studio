@@ -67,7 +67,11 @@ export function OnboardingFlow() {
   return (
     <OnboardingLayout>
       <div
-        className="absolute inset-x-0 top-0 z-20 flex min-h-11 items-center px-6 animate-onboarding-fade-in [animation-delay:200ms]"
+        className={cn(
+          "absolute inset-x-0 top-0 z-20 flex min-h-11 items-center px-6 animate-onboarding-fade-in [animation-delay:200ms]",
+          animationClass,
+          showWindowsControls && "pr-0 pl-2",
+        )}
         style={DRAG_REGION}
       >
         {showMacOSSpacer && <MacOSTrafficLightSpacer />}
@@ -87,7 +91,7 @@ export function OnboardingFlow() {
         )}
         {showLinuxControls && <LinuxControls className="self-stretch ml-3" />}
         {showWindowsControls && (
-          <WindowsControls className="self-stretch ml-3" />
+          <WindowsControls className="self-stretch ml-2 h-auto" />
         )}
       </div>
 
