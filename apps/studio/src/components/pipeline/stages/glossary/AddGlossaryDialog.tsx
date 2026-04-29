@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useLingui } from "@lingui/react/macro"
-import { Loader2, Sparkles } from "lucide-react"
+import { Loader2, RotateCw } from "lucide-react"
 import { api } from "@/api/client"
 import type { GlossaryItem } from "@/api/client"
 import { Button } from "@/components/ui/button"
@@ -139,6 +139,7 @@ export function AddGlossaryDialog({
   const [generating, setGenerating] = useState(false)
   const generateReqId = useRef(0)
   const suggestionsRef = useRef<HTMLDivElement>(null)
+  const regenerateButtonRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     if (open) {
@@ -270,9 +271,21 @@ export function AddGlossaryDialog({
                   setHighlight(0)
                 }}
                 onFocus={() => setShowSuggestions(true)}
-                onBlur={() => {
+                onBlur={(e) => {
                   // Delay so an onMouseDown on a suggestion item can register before we hide the list.
                   setTimeout(() => setShowSuggestions(false), 120)
+                  // Skip auto-generate when focus moves to the regenerate button — it will fire its own onClick.
+                  if (e.relatedTarget === regenerateButtonRef.current) return
+                  const trimmed = word.trim()
+                  if (
+                    hasApiKey &&
+                    trimmed &&
+                    !definition.trim() &&
+                    !generating
+                  ) {
+                    const sample = wordIndex.get(normalize(trimmed))?.sample ?? ""
+                    void autoGenerate(trimmed, sample)
+                  }
                 }}
                 onKeyDown={handleKeyDown}
                 placeholder={t`Start typing to see words from the book…`}
@@ -280,23 +293,23 @@ export function AddGlossaryDialog({
                 disabled={generating}
               />
               <Button
+                ref={regenerateButtonRef}
                 type="button"
-                variant="outline"
-                size="sm"
+                variant="ghost"
+                size="icon"
                 disabled={!hasApiKey || !word.trim() || generating}
                 onClick={() => {
                   const sample = wordIndex.get(normalize(word))?.sample ?? ""
                   void autoGenerate(word.trim(), sample)
                 }}
-                title={hasApiKey ? t`Generate definition, variations, and emoji` : t`Set your API key to auto-generate`}
-                className="shrink-0"
+                title={hasApiKey ? t`Regenerate definition, variations, and emoji` : t`Set your API key to auto-generate`}
+                className="shrink-0 text-muted-foreground"
               >
                 {generating ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Sparkles className="h-3.5 w-3.5" />
+                  <RotateCw className="h-4 w-4" />
                 )}
-                <span className="ml-1 text-xs">{t`Generate`}</span>
               </Button>
             </div>
             {showSuggestions && suggestions.length > 0 && (
