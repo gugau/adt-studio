@@ -101,8 +101,8 @@ export function ShowcaseScene() {
 
 function BookMockup({ mounted }: { mounted: boolean }) {
   return (
-    <div className="mx-auto h-[364px] w-[364px] sm:h-[520px] sm:w-full sm:max-w-[520px]">
-      <div className="relative h-[520px] w-[520px] origin-top-left scale-[0.7] sm:scale-100">
+    <div className="mx-auto h-[338px] w-full max-w-[338px] overflow-hidden sm:h-[520px] sm:max-w-[520px]">
+      <div className="relative h-[520px] w-[520px] origin-top-left scale-[0.65] sm:scale-100">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-8 inset-y-4 blur-[2px]"

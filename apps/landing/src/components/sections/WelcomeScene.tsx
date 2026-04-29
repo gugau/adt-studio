@@ -148,7 +148,7 @@ export function WelcomeScene() {
           )}
           style={{ transitionDelay: "400ms" }}
         >
-          <div className="relative h-[294px] w-[336px] sm:h-[420px] sm:w-[480px]">
+          <div className="relative h-[294px] w-full max-w-[336px] sm:h-[420px] sm:max-w-[480px]">
             <div className="absolute inset-0 origin-top-left scale-[0.7] sm:scale-100">
               <PdfToBookDiagram mounted={mounted} />
             </div>
