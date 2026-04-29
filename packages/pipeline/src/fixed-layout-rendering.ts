@@ -387,22 +387,80 @@ function appendContinuationLine(
 
 /**
  * Build the inner HTML for a paragraph `<p>` from structured segments.
- * Emits one `<span>` per styled run (bare text for runs without styling
- * to keep markup compact). Later slices will swap these spans for
- * per-word spans with SMIL-referenceable IDs.
+ *
+ * Per-word `<span id="{paragraphId}_w{NNN}">` wrappers let SMIL
+ * media-overlay `<text src="…#…"/>` reference individual words for
+ * read-aloud sync (absent without `paragraphId`). Crucially, words are
+ * tokenised against the *concatenated* segment text — not each segment in
+ * isolation — so a word split across style runs (e.g. a single coloured
+ * letter mid-word) becomes ONE word span wrapping the per-run
+ * `<span style="…">` fragments, rather than one id per fragment. Reusing
+ * an id across fragments would be invalid (epubcheck duplicate-id), and
+ * the extra ids break the viewer/SMIL word-count guard (commit
+ * `ee752ded`). The boundary signal is free: whitespace lives *between*
+ * segments, so a segment whose first token follows a previous segment's
+ * last token with no whitespace between them continues the same word.
+ *
+ * Whitespace stays outside the word span so word measurement / contrast
+ * checks aren't affected by surrounding spaces.
+ *
+ * Note: this is whitespace tokenisation. Scripts that don't separate words
+ * by whitespace (Chinese, Japanese, Thai) won't get word-level granularity
+ * here — Whisper alignment is unreliable for those anyway.
+ *
+ * Mirror any change here in `assets/adt/modules/translations.js`
+ * (`rebuildSegmentedInnerHtml`), which re-emits this structure on language
+ * swap.
  */
-function renderSegmentsToHtml(segments: SectionTextSegment[] | undefined): string {
+function renderSegmentsToHtml(
+  segments: SectionTextSegment[] | undefined,
+  paragraphId?: string,
+): string {
   if (!segments || segments.length === 0) return ""
+
+  // Without per-word ids each segment is just one styled run — no need to
+  // track word boundaries across segments.
+  if (!paragraphId) {
+    return segments
+      .map((seg) => {
+        const content = escapeHtml(seg.text)
+        const styleStr = seg.style ? styleMapToInline(seg.style) : ""
+        return styleStr ? `<span style="${styleStr}">${content}</span>` : content
+      })
+      .join("")
+  }
+
   const parts: string[] = []
+  let wordIdx = 0
+  // Pieces of the word currently being assembled, each from one style run.
+  let wordPieces: { style?: Record<string, string>; text: string }[] = []
+  const flushWord = (): void => {
+    if (wordPieces.length === 0) return
+    wordIdx += 1
+    const wordId = `${paragraphId}_w${String(wordIdx).padStart(3, "0")}`
+    const inner = wordPieces
+      .map((pc) => {
+        const content = escapeHtml(pc.text)
+        const styleStr = pc.style ? styleMapToInline(pc.style) : ""
+        return styleStr ? `<span style="${styleStr}">${content}</span>` : content
+      })
+      .join("")
+    parts.push(`<span id="${wordId}">${inner}</span>`)
+    wordPieces = []
+  }
+
   for (const seg of segments) {
-    const styleStr = seg.style ? styleMapToInline(seg.style) : ""
-    const text = escapeHtml(seg.text)
-    if (styleStr) {
-      parts.push(`<span style="${styleStr}">${text}</span>`)
-    } else {
-      parts.push(text)
+    for (const tok of seg.text.split(/(\s+)/)) {
+      if (tok.length === 0) continue
+      if (/^\s+$/.test(tok)) {
+        flushWord()
+        parts.push(escapeHtml(tok))
+      } else {
+        wordPieces.push({ style: seg.style, text: tok })
+      }
     }
   }
+  flushWord()
   return parts.join("")
 }
 
@@ -556,7 +614,7 @@ export function renderFixedLayoutPage(
         )
         segments = applyContrastStrokesToSegments(segments, bgColor, lineHeight)
       }
-      const content = renderSegmentsToHtml(segments) || escapeHtml(node.text ?? "")
+      const content = renderSegmentsToHtml(segments, node.nodeId) || escapeHtml(node.text ?? "")
 
       // `data-segments` carries the structured styling inline so the viewer
       // can rebuild the styled span structure after any text swap (language
