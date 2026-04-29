@@ -83,7 +83,19 @@ vi.mock("@/hooks/use-debug", () => ({
 }))
 
 vi.mock("@/hooks/use-book-tasks", () => ({
-  useBookTasks: () => ({ runningTasks: [], runningCount: 0 }),
+  useBookTasks: () => ({ runningTasks: [], runningCount: 0, tasks: [] }),
+}))
+
+vi.mock("@/hooks/use-books", () => ({
+  usePackageAdtStatus: () => ({ data: { hasAdt: false } }),
+}))
+
+vi.mock("@/hooks/use-sign-language-videos", () => ({
+  useSignLanguageVideos: () => ({ data: { videos: [] } }),
+}))
+
+vi.mock("@/hooks/use-stage-missing-counts", () => ({
+  useStageMissingCounts: () => ({ translate: 0, speech: 0 }),
 }))
 
 vi.mock("@/hooks/use-pages", () => ({

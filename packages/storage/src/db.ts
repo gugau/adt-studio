@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS images (
   hash TEXT NOT NULL DEFAULT '',
   width INTEGER NOT NULL,
   height INTEGER NOT NULL,
-  source TEXT NOT NULL CHECK (source IN ('page', 'extract', 'crop', 'segment', 'upload')),
+  source TEXT NOT NULL CHECK (source IN ('page', 'extract', 'crop', 'segment', 'upload', 'translate')),
   render_method TEXT CHECK (render_method IN ('vector', 'page-crop', 'raster') OR render_method IS NULL)
 );
 
@@ -141,6 +141,12 @@ function initSchema(db: sqlite.Database): void {
   if (version === 10) {
     migrateV10toV11(db)
     version = 11
+  }
+
+  // Migrate v11 → v12: add 'translate' to images.source CHECK constraint
+  if (version === 11) {
+    migrateV11toV12(db)
+    version = 12
   }
 
   if (version === SCHEMA_VERSION) {
@@ -343,6 +349,35 @@ function migrateV10toV11(db: sqlite.Database): void {
         size_bytes INTEGER NOT NULL,
         created_at TEXT NOT NULL
       )
+    `)
+    db.exec("COMMIT")
+  } catch (err) {
+    db.exec("ROLLBACK")
+    throw err
+  }
+}
+
+/**
+ * Migrate v11 → v12: widen images.source CHECK to include 'translate'.
+ * SQLite doesn't support ALTER CHECK, so we recreate the table.
+ */
+function migrateV11toV12(db: sqlite.Database): void {
+  db.exec("BEGIN IMMEDIATE")
+  try {
+    db.exec(`
+      CREATE TABLE images_new (
+        image_id TEXT PRIMARY KEY,
+        page_id TEXT NOT NULL REFERENCES pages(page_id),
+        path TEXT NOT NULL,
+        hash TEXT NOT NULL DEFAULT '',
+        width INTEGER NOT NULL,
+        height INTEGER NOT NULL,
+        source TEXT NOT NULL CHECK (source IN ('page', 'extract', 'crop', 'segment', 'upload', 'translate')),
+        render_method TEXT CHECK (render_method IN ('vector', 'page-crop', 'raster') OR render_method IS NULL)
+      );
+      INSERT INTO images_new SELECT * FROM images;
+      DROP TABLE images;
+      ALTER TABLE images_new RENAME TO images;
     `)
     db.exec("COMMIT")
   } catch (err) {

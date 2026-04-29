@@ -1,8 +1,8 @@
 import { z } from "zod"
 
-export const SCHEMA_VERSION = 11
+export const SCHEMA_VERSION = 12
 
-export const ImageSource = z.enum(["page", "extract", "crop", "segment", "upload"])
+export const ImageSource = z.enum(["page", "extract", "crop", "segment", "upload", "translate"])
 export type ImageSource = z.infer<typeof ImageSource>
 
 export const RenderMethodEnum = z.enum(["vector", "page-crop", "raster"])

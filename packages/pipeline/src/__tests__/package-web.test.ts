@@ -4,6 +4,8 @@ import os from "node:os"
 import path from "node:path"
 import type { Storage, PageData } from "@adt/storage"
 import {
+  computePackagingInputHash,
+  buildGlossaryJson,
   packageAdtWeb,
   packageWebpub,
   renderPageHtml,
@@ -32,6 +34,7 @@ function createMockStorage(
     appendLlmLog: () => {},
     getSignLanguageVideos: () => [],
     getSignLanguageVideoPath: () => null,
+    getNodeVersionFingerprint: () => ({}),
     close: () => {},
   }
 }
@@ -465,6 +468,341 @@ describe("packageAdtWeb", () => {
     // SCORM adapter should include the quiz activity ID
     const scorm = fs.readFileSync(path.join(bookDir, "adt", "assets", "scorm.js"), "utf-8")
     expect(scorm).toContain('"qz001"')
+  })
+
+  it("packages reader timecodes and enables word highlighting when timestamps exist", async () => {
+    const bookDir = path.join(tmpDir, "book")
+    const webAssetsDir = path.join(tmpDir, "assets-web")
+    const audioDir = path.join(bookDir, "audio", "en")
+    fs.mkdirSync(bookDir, { recursive: true })
+    fs.mkdirSync(audioDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+    fs.writeFileSync(path.join(audioDir, "pg001_t001.mp3"), "audio")
+
+    const pages: PageData[] = [
+      { pageId: "pg001", pageNumber: 1, text: "Page one" },
+    ]
+
+    const storage = createMockStorage(pages, {
+      "web-rendering": {
+        pg001: {
+          sections: [
+            {
+              sectionIndex: 0,
+              sectionType: "content",
+              reasoning: "ok",
+              html: '<p data-id="pg001_t001">Hello world</p>',
+            },
+          ],
+        },
+      },
+      "page-sectioning": {
+        pg001: {
+          reasoning: "ok",
+          sections: [
+            {
+              sectionId: "pg001_sec001",
+              sectionType: "content",
+              nodes: [],
+              backgroundColor: "#fff",
+              textColor: "#000",
+              pageNumber: 1,
+              isPruned: false,
+            },
+          ],
+        },
+      },
+      "tts": {
+        en: {
+          entries: [
+            {
+              textId: "pg001_t001",
+              language: "en",
+              fileName: "pg001_t001.mp3",
+              voice: "alloy",
+              model: "gpt-4o-mini-tts",
+              cached: false,
+            },
+          ],
+          generatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      },
+      "tts-timestamps": {
+        en: {
+          entries: {
+            pg001_t001: {
+              textId: "pg001_t001",
+              language: "en",
+              duration: 0.9,
+              words: [
+                { word: "Hello", start: 0, end: 0.45 },
+                { word: "world", start: 0.45, end: 0.9 },
+              ],
+            },
+          },
+          generatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      },
+    })
+
+    await packageAdtWeb(storage, {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Book Title",
+      webAssetsDir,
+      speechConfig: { word_highlighting: true },
+    })
+
+    const timecodes = JSON.parse(
+      fs.readFileSync(
+        path.join(bookDir, "adt", "content", "i18n", "en", "timecode", "timecode_output.json"),
+        "utf-8",
+      ),
+    ) as Record<string, unknown>
+    expect(timecodes).toEqual({
+      pg001_t001: {
+        timecodes: [
+          null,
+          {
+            word_timestamps: [
+              { text: "Hello", start: 0, end: 0.45 },
+              { text: "world", start: 0.45, end: 0.9 },
+            ],
+          },
+        ],
+      },
+    })
+
+    const configJson = JSON.parse(
+      fs.readFileSync(path.join(bookDir, "adt", "assets", "config.json"), "utf-8"),
+    ) as { features: { highlight: boolean } }
+    expect(configJson.features.highlight).toBe(true)
+
+    const preloader = fs.readFileSync(
+      path.join(bookDir, "adt", "assets", "offline-preloader.js"),
+      "utf-8",
+    )
+    expect(preloader).toContain("timecode/timecode_output.json")
+  })
+
+  it("enables highlight fallback when TTS exists without stored word timestamps", async () => {
+    const bookDir = path.join(tmpDir, "book")
+    const webAssetsDir = path.join(tmpDir, "assets-web")
+    const audioDir = path.join(bookDir, "audio", "en")
+    fs.mkdirSync(bookDir, { recursive: true })
+    fs.mkdirSync(audioDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+    fs.writeFileSync(path.join(audioDir, "pg001_t001.mp3"), "audio")
+
+    const pages: PageData[] = [
+      { pageId: "pg001", pageNumber: 1, text: "Page one" },
+    ]
+
+    const storage = createMockStorage(pages, {
+      "web-rendering": {
+        pg001: {
+          sections: [
+            {
+              sectionIndex: 0,
+              sectionType: "content",
+              reasoning: "ok",
+              html: '<p data-id="pg001_t001">Hello, world.</p>',
+            },
+          ],
+        },
+      },
+      "page-sectioning": {
+        pg001: {
+          reasoning: "ok",
+          sections: [
+            {
+              sectionId: "pg001_sec001",
+              sectionType: "content",
+              nodes: [],
+              backgroundColor: "#fff",
+              textColor: "#000",
+              pageNumber: 1,
+              isPruned: false,
+            },
+          ],
+        },
+      },
+      "tts": {
+        en: {
+          entries: [
+            {
+              textId: "pg001_t001",
+              language: "en",
+              fileName: "pg001_t001.mp3",
+              voice: "alloy",
+              model: "gpt-4o-mini-tts",
+              cached: false,
+            },
+          ],
+          generatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      },
+    })
+
+    await packageAdtWeb(storage, {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Book Title",
+      webAssetsDir,
+      speechConfig: { word_highlighting: true },
+    })
+
+    const timecodes = JSON.parse(
+      fs.readFileSync(
+        path.join(bookDir, "adt", "content", "i18n", "en", "timecode", "timecode_output.json"),
+        "utf-8",
+      ),
+    ) as Record<string, unknown>
+    expect(timecodes).toEqual({})
+
+    const configJson = JSON.parse(
+      fs.readFileSync(path.join(bookDir, "adt", "assets", "config.json"), "utf-8"),
+    ) as { features: { readAloud: boolean; highlight: boolean } }
+    expect(configJson.features.readAloud).toBe(true)
+    expect(configJson.features.highlight).toBe(true)
+  })
+
+  it("uses explicit glossary ids when building translated glossary json", () => {
+    const glossaryJson = buildGlossaryJson(
+      {
+        items: [
+          {
+            id: "gl_manual_soil",
+            source: "manual",
+            word: "Soil",
+            definition: "The top layer of earth",
+            variations: ["soils"],
+            emojis: ["🪨"],
+          },
+        ],
+        pageCount: 1,
+        generatedAt: "2026-01-01T00:00:00.000Z",
+      },
+      undefined,
+      {
+        gl_manual_soil: "Sol",
+        gl_manual_soil_def: "La couche superieure de la terre",
+      },
+      false,
+    )
+
+    expect(glossaryJson).toEqual({
+      Sol: {
+        word: "Sol",
+        definition: "La couche superieure de la terre",
+        variations: ["soils"],
+        emoji: "🪨",
+      },
+    })
+  })
+
+  it("disables word-level highlight when speech.word_highlighting is false", async () => {
+    const bookDir = path.join(tmpDir, "book")
+    const webAssetsDir = path.join(tmpDir, "assets-web")
+    const audioDir = path.join(bookDir, "audio", "en")
+    fs.mkdirSync(bookDir, { recursive: true })
+    fs.mkdirSync(audioDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+    fs.writeFileSync(path.join(audioDir, "pg001_t001.mp3"), "audio")
+
+    const pages: PageData[] = [
+      { pageId: "pg001", pageNumber: 1, text: "Page one" },
+    ]
+
+    const storage = createMockStorage(pages, {
+      "web-rendering": {
+        pg001: {
+          sections: [
+            {
+              sectionIndex: 0,
+              sectionType: "content",
+              reasoning: "ok",
+              html: '<p data-id="pg001_t001">Hello, world.</p>',
+            },
+          ],
+        },
+      },
+      "page-sectioning": {
+        pg001: {
+          reasoning: "ok",
+          sections: [
+            {
+              sectionId: "pg001_sec001",
+              sectionType: "content",
+              nodes: [],
+              backgroundColor: "#fff",
+              textColor: "#000",
+              pageNumber: 1,
+              isPruned: false,
+            },
+          ],
+        },
+      },
+      "tts": {
+        en: {
+          entries: [
+            {
+              textId: "pg001_t001",
+              language: "en",
+              fileName: "pg001_t001.mp3",
+              voice: "alloy",
+              model: "gpt-4o-mini-tts",
+              cached: false,
+            },
+          ],
+          generatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      },
+      "tts-timestamps": {
+        en: {
+          entries: {
+            pg001_t001: {
+              textId: "pg001_t001",
+              language: "en",
+              duration: 0.9,
+              words: [
+                { word: "Hello", start: 0, end: 0.45 },
+                { word: "world", start: 0.45, end: 0.9 },
+              ],
+            },
+          },
+          generatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      },
+    })
+
+    await packageAdtWeb(storage, {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Book Title",
+      webAssetsDir,
+      speechConfig: { word_highlighting: false },
+    })
+
+    const configJson = JSON.parse(
+      fs.readFileSync(path.join(bookDir, "adt", "assets", "config.json"), "utf-8"),
+    ) as { features: { readAloud: boolean; highlight: boolean } }
+    expect(configJson.features.readAloud).toBe(true)
+    expect(configJson.features.highlight).toBe(false)
+
+    const timecodes = JSON.parse(
+      fs.readFileSync(
+        path.join(bookDir, "adt", "content", "i18n", "en", "timecode", "timecode_output.json"),
+        "utf-8",
+      ),
+    ) as Record<string, unknown>
+    expect(timecodes).toEqual({})
   })
 
   it("sets activities true in config.json when a section has an activity type", async () => {
@@ -1307,5 +1645,38 @@ describe("packageWebpub", () => {
         webAssetsDir: tmpDir,
       })
     ).toThrow("ADT package not found")
+  })
+
+  it("changes the packaging hash when a web asset changes without changing size", () => {
+    const bookDir = path.join(tmpDir, "hash-book")
+    const webAssetsDir = path.join(tmpDir, "hash-assets")
+    fs.mkdirSync(bookDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+
+    const assetPath = path.join(webAssetsDir, "base.js")
+    fs.writeFileSync(assetPath, 'console.log("alpha")\n')
+    fs.utimesSync(assetPath, new Date("2026-01-01T00:00:00.000Z"), new Date("2026-01-01T00:00:00.000Z"))
+
+    const storage = createMockStorage([], {})
+    const baseOptions = {
+      storage,
+      bookDir,
+      label: "hash-book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Hash Book",
+      webAssetsDir,
+      config: {},
+    }
+
+    const firstHash = computePackagingInputHash(baseOptions)
+
+    fs.writeFileSync(assetPath, 'console.log("omega")\n')
+    fs.utimesSync(assetPath, new Date("2026-01-02T00:00:00.000Z"), new Date("2026-01-02T00:00:00.000Z"))
+
+    const secondHash = computePackagingInputHash(baseOptions)
+
+    expect('console.log("alpha")\n'.length).toBe('console.log("omega")\n'.length)
+    expect(firstHash).not.toBe(secondHash)
   })
 })

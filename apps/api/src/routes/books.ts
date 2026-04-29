@@ -280,6 +280,134 @@ export function createBookRoutes(
     }
   })
 
+  // GET /books/:label/captioned-images — List images that have a caption
+  // (i.e. are used in the storyboard and survived pruning). Used by the
+  // image-translation picker so users only choose from images that will
+  // actually appear in the rendered book.
+  app.get("/books/:label/captioned-images", (c) => {
+    const { label } = c.req.param()
+    let safeLabel: string
+    try {
+      safeLabel = parseBookLabel(label)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      throw new HTTPException(400, { message })
+    }
+    const resolvedDir = path.resolve(booksDir)
+    const bookDir = path.join(resolvedDir, safeLabel)
+    const dbPath = path.join(bookDir, `${safeLabel}.db`)
+
+    if (!fs.existsSync(dbPath)) {
+      throw new HTTPException(404, { message: `Book not found: ${safeLabel}` })
+    }
+
+    const db = openBookDb(dbPath)
+    try {
+      // Pull every image-captioning row (one per page) and union the
+      // imageIds referenced inside their captions[] arrays.
+      const captionRows = db.all(
+        `SELECT data FROM node_data
+         WHERE node = 'image-captioning'
+         AND (node, item_id, version) IN (
+           SELECT node, item_id, MAX(version) FROM node_data
+           WHERE node = 'image-captioning'
+           GROUP BY node, item_id
+         )`
+      ) as Array<{ data: string }>
+
+      const captionedIds = new Map<string, string>()
+      for (const row of captionRows) {
+        try {
+          const parsed = JSON.parse(row.data) as {
+            captions?: Array<{ imageId?: string; caption?: string }>
+          }
+          for (const cap of parsed.captions ?? []) {
+            if (cap.imageId && !captionedIds.has(cap.imageId)) {
+              captionedIds.set(cap.imageId, cap.caption ?? "")
+            }
+          }
+        } catch { /* ignore malformed rows */ }
+      }
+
+      if (captionedIds.size === 0) {
+        return c.json({ images: [] })
+      }
+
+      const placeholders = Array.from(captionedIds.keys()).map(() => "?").join(", ")
+      const imageRows = db.all(
+        `SELECT image_id, page_id, width, height, source FROM images
+         WHERE image_id IN (${placeholders}) AND source != 'translate'
+         ORDER BY page_id, image_id`,
+        Array.from(captionedIds.keys())
+      ) as Array<{
+        image_id: string
+        page_id: string
+        width: number
+        height: number
+        source: string
+      }>
+
+      return c.json({
+        images: imageRows.map((r) => ({
+          imageId: r.image_id,
+          pageId: r.page_id,
+          width: r.width,
+          height: r.height,
+          source: r.source,
+          caption: captionedIds.get(r.image_id) ?? "",
+        })),
+      })
+    } finally {
+      db.close()
+    }
+  })
+
+  // GET /books/:label/translated-images — List localized image variants
+  // produced by the image-translation step. Each row maps a source image
+  // (the original) to its translated variant for a specific language.
+  app.get("/books/:label/translated-images", (c) => {
+    const { label } = c.req.param()
+    let safeLabel: string
+    try {
+      safeLabel = parseBookLabel(label)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      throw new HTTPException(400, { message })
+    }
+    const resolvedDir = path.resolve(booksDir)
+    const bookDir = path.join(resolvedDir, safeLabel)
+    const dbPath = path.join(bookDir, `${safeLabel}.db`)
+
+    if (!fs.existsSync(dbPath)) {
+      throw new HTTPException(404, { message: `Book not found: ${safeLabel}` })
+    }
+
+    const db = openBookDb(dbPath)
+    try {
+      const rows = db.all(
+        "SELECT image_id, page_id, width, height FROM images WHERE source = 'translate' ORDER BY image_id"
+      ) as Array<{ image_id: string; page_id: string; width: number; height: number }>
+
+      // image_id format: `${sourceImageId}_tr_${language}`
+      const images = rows.flatMap((r) => {
+        const match = r.image_id.match(/^(.+)_tr_([a-zA-Z0-9_-]+)$/)
+        if (!match) return []
+        return [{
+          imageId: r.image_id,
+          sourceImageId: match[1],
+          language: match[2],
+          pageId: r.page_id,
+          width: r.width,
+          height: r.height,
+        }]
+      })
+
+      return c.json({ images })
+    } finally {
+      db.close()
+    }
+  })
+
   // GET /books/:label/images/:imageId — Serve extracted image binary
   app.get("/books/:label/images/:imageId", (c) => {
     const { label, imageId } = c.req.param()
