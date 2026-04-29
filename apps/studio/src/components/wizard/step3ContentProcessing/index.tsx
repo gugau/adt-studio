@@ -89,6 +89,7 @@ export function Step3() {
   const { i18n } = useLingui()
   const recommendations = usePresetRecommendations()
   const selectedPresetId = useStore(form.store, (s) => s.values.selectedPreset)
+  const renderStrategy = useStore(form.store, (s) => s.values.renderStrategy)
   const preset = PRESETS.find((p) => p.id === selectedPresetId)
   const accent = getPresetAccent(selectedPresetId)
   // eslint-disable-next-line lingui/no-unlocalized-strings -- ImageProcessingPreviewFocus key
@@ -101,6 +102,29 @@ export function Step3() {
   const segmentationMinSide = useStore(form.store, (s) => s.values.segmentationMinSide)
   const imageFilterMinSide = useStore(form.store, (s) => s.values.imageFilterMinSide)
   const imageFilterMaxSide = useStore(form.store, (s) => s.values.imageFilterMaxSide)
+
+  if (renderStrategy === "fixed_layout") {
+    return (
+      <div className="flex w-full flex-col gap-4 p-8">
+        <div
+          className="rounded-lg border border-dashed px-5 py-6"
+          style={{ borderColor: accent.bg, backgroundColor: `${accent.bg}0d` }}
+        >
+          <h3 className="text-sm font-semibold text-[#0a0a0a]">
+            <Trans>No content processing needed</Trans>
+          </h3>
+          <p className="mt-2 text-sm text-[#525252]">
+            <Trans>
+              Fixed-layout books use the original page images as backgrounds with positioned text extracted from the PDF. Activities detection, figure extraction, and image cropping or segmentation don't apply to this layout.
+            </Trans>
+          </p>
+          <p className="mt-2 text-sm text-[#525252]">
+            <Trans>Click Next to continue to language settings.</Trans>
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex w-full flex-col gap-8 p-8">

@@ -1354,6 +1354,9 @@ msgstr "Cliquez sur une image pour la sélectionner"
 msgid "Click images to select"
 msgstr "Cliquez sur les images pour les sélectionner"
 
+msgid "Click Next to continue to language settings."
+msgstr "Cliquez sur Suivant pour passer aux paramètres de langue."
+
 msgid "Click to edit"
 msgstr "Cliquer pour modifier"
 
@@ -2062,6 +2065,15 @@ msgstr "Saisissez un nom de projet valide"
 #~ msgid "Enter hex color and press Enter"
 #~ msgstr "Saisissez une couleur hexadécimale et appuyez sur Entrée"
 
+msgid "EPUB"
+msgstr "EPUB"
+
+msgid "EPUB 3"
+msgstr "EPUB 3"
+
+msgid "EPUB Export"
+msgstr "Export EPUB"
+
 msgid "Error"
 msgstr "Erreur"
 
@@ -2278,6 +2290,9 @@ msgstr "Mise en page fixe"
 
 msgid "Fixed two-column template layout"
 msgstr "Mise en page fixe à deux colonnes"
+
+msgid "Fixed-layout books use the original page images as backgrounds with positioned text extracted from the PDF. Activities detection, figure extraction, and image cropping or segmentation don't apply to this layout."
+msgstr "Les livres à mise en page fixe utilisent les images de page d'origine comme arrière-plans avec le texte positionné extrait du PDF. La détection d'activités, l'extraction de figures et le rognage ou la segmentation d'images ne s'appliquent pas à cette mise en page."
 
 msgid "flagged"
 msgstr "signalé"
@@ -3334,6 +3349,9 @@ msgstr "Aucune modification signalée sur cette page"
 msgid "No colors found"
 msgstr "Aucune couleur trouvée"
 
+msgid "No content processing needed"
+msgstr "Aucun traitement de contenu nécessaire"
+
 msgid "No cover available"
 msgstr "Pas de couverture disponible"
 
@@ -3598,6 +3616,9 @@ msgstr "Ouvrir une page pour voir les résultats au niveau de la page"
 msgid "Open edit panel"
 msgstr "Ouvrir le panneau de modification"
 
+msgid "Open in any EPUB 3 reader, e-reader, or accessibility tool."
+msgstr "Ouvrez-le dans n'importe quelle liseuse EPUB 3 ou outil d'accessibilité."
+
 msgid "Open page preview for {pageId}"
 msgstr "Ouvrir l'aperçu de la page {pageId}"
 
@@ -3784,6 +3805,9 @@ msgstr "Mode de regroupement de pages"
 msgid "Page image"
 msgstr "Image de la page"
 
+msgid "Page image as background with positioned text overlay. Preserves the original page composition; ideal for illustrated storybooks."
+msgstr "Image de page en arrière-plan avec texte positionné en superposition. Préserve la composition originale de la page ; idéal pour les livres illustrés."
+
 msgid "Page Mode"
 msgstr "Mode de page"
 
@@ -3956,6 +3980,13 @@ msgstr "Portugais (BR)"
 
 msgid "Position"
 msgstr "Position"
+
+#. placeholder {0}: Math.round(bounds.x)
+#. placeholder {1}: Math.round(bounds.y)
+#. placeholder {2}: Math.round(bounds.width)
+#. placeholder {3}: Math.round(bounds.height)
+msgid "Position {0}, {1} → {2}×{3} pt"
+msgstr "Position {0}, {1} → {2}×{3} pt"
 
 msgid "Práticas de Alfabetização e de Matemática"
 msgstr "Práticas de Alfabetização e de Matemática"
@@ -5055,6 +5086,12 @@ msgstr "Saupoudrage de poussière de fée numérique..."
 msgid "Standard"
 msgstr "Standard"
 
+msgid "Standard e-book for readers & libraries"
+msgstr "Livre électronique standard pour liseuses et bibliothèques"
+
+msgid "Standard EPUB 3 file for e-readers, reading apps, and accessibility tools. Interactive features (quizzes, TTS) work in readers that support JavaScript."
+msgstr "Fichier EPUB 3 standard pour liseuses, applications de lecture et outils d'accessibilité. Les fonctions interactives (quiz, TTS) fonctionnent dans les lecteurs qui prennent en charge JavaScript."
+
 msgid "Start"
 msgstr "Démarrer"
 
@@ -5423,6 +5460,9 @@ msgstr "Voici <0>ADT Studio</0>."
 
 msgid "This is a preview of the options you have selected for your book, each option affects the preview in a different way."
 msgstr "Ceci est un aperçu des options que vous avez sélectionnées pour votre livre. Chaque option affecte l'aperçu de manière différente."
+
+msgid "This is Pip! He has a wiggly tail."
+msgstr "Voici Pip ! Il a une queue frétillante."
 
 msgid "This is Pip! He is a happy caramel dog with a very wiggly tail. Pip loves the green grass, the bright yellow sun, and making new friends in his garden."
 msgstr "Voici Pip ! C'est un joyeux chien caramel avec une queue très remuante. Pip adore l'herbe verte, le soleil jaune éclatant et se faire de nouveaux amis dans son jardin."

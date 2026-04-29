@@ -5,16 +5,36 @@
  */
 
 import { createHash } from "crypto";
+import { PNG } from "pngjs";
 import mupdf, {
   type Document as MupdfDocument,
   type PDFDocument,
   type PDFPage,
   type PDFObject,
+  type Pixmap,
 } from "mupdf";
 import { cropPng, decodePng, stitchPngsHorizontally } from "./png-utils.js";
 import { extractTextFromStructuredText } from "./fm-sinhala.js";
 import type { RenderMethodValue } from "@adt/types";
 import { renderSvgToPng } from "./svg-render.js";
+import {
+  parsePageParagraphs,
+  parsePageParagraphsSpread,
+  type AsHtmlParagraph,
+  type ImageBounds,
+  type PageGeometry,
+} from "./positioned-text.js";
+import {
+  recordPageStream,
+  type StreamOp,
+  type ImageStreamOp,
+  type PathStreamOp,
+  type TextStreamOp,
+  type BBox as StreamBBox,
+  type ClipPath,
+  type PathCommand,
+} from "./page-stream-recorder.js";
+import type { DrawItem, PositionedTextOutput } from "@adt/types";
 
 // ============================================================================
 // Types
@@ -30,6 +50,14 @@ export interface ExtractInput {
   spreadMode?: boolean;
   /** When true, include text shapes in vector grouping to produce raster crops of vectors with text overlays. Defaults to true. */
   vectorTextGrouping?: boolean;
+  /**
+   * When true, run the metric-based positioned-text spacing cleanup
+   * (`cleanParagraphSpacing`) on extracted paragraphs. The pass strips
+   * letter-tracking artefacts ("V O L C A N O E S" → "VOLCANOES") that only
+   * matter for fixed-layout rendering — reflowable text comes from a
+   * separate path. Default false.
+   */
+  fixedLayout?: boolean;
 }
 
 export interface ExtractedPage {
@@ -38,6 +66,12 @@ export interface ExtractedPage {
   text: string;
   pageImage: ExtractedImage;
   images: ExtractedImage[];
+  /**
+   * Positioned text paragraphs and viewport dimensions, extracted from the
+   * PDF's structured text layer. Always populated so fixed-layout rendering
+   * has the data available regardless of when the strategy is configured.
+   */
+  positionedText: PositionedTextOutput;
   /** Debug info about figure grouping and render decisions */
   extractionDebug?: ExtractionDebugOutput;
 }
@@ -56,6 +90,52 @@ export interface ExtractedImage {
   hash: string;
   /** How this image was produced during extraction */
   renderMethod?: RenderMethod;
+  /**
+   * Placement on the page in PDF points (top-left origin). Populated for
+   * raster images that can be matched to a placement in the PDF's structured
+   * text. Undefined for vector figures and when no match is found.
+   */
+  bounds?: { x: number; y: number; width: number; height: number };
+  /**
+   * Zero-based draw order from the PDF's structured-text walker, shared with
+   * text paragraphs on the same page so fixed-layout rendering can restore
+   * z-stacking. Later items draw on top. Undefined for vector figures
+   * (which aren't visible to the walker).
+   */
+  drawOrder?: number;
+  /**
+   * Position of this image in the PDF content stream (painter's algorithm).
+   * Used by fixed-layout rendering to emit items in true draw order — later
+   * seqno renders on top. Transient: not persisted to the images table.
+   *   - Raster images: assigned by matching mupdf Device callbacks
+   *     (`fillImage` / `fillImageMask`) to extracted XObjects by native
+   *     dimensions, in stream order.
+   *   - Vector figures: assigned to the minimum seqno of `fillPath` /
+   *     `strokePath` ops that fall inside the figure's bounds.
+   */
+  streamSeqno?: number;
+  /**
+   * SVG path `d` attribute representing the active PDF clip applied to this
+   * image at draw time, in absolute viewport coordinates (PDF points,
+   * top-left origin — same space as `bounds`). Set only when the active
+   * clip meaningfully reduces the visible area of the image (≤95% overlap
+   * with the image's CTM bounds). The renderer translates these coords to
+   * the image's local origin when emitting `<clipPath>` markup.
+   */
+  clipPath?: string;
+  /**
+   * CSS `mix-blend-mode` value (e.g. "multiply") when the image was drawn
+   * under a non-Normal PDF blend mode at composite time. Common in
+   * watercolor storybooks: white backgrounds drawn under `/Multiply`
+   * effectively become transparent. Undefined when no special blending
+   * applies.
+   */
+  blendMode?: string;
+  /**
+   * Composed opacity (0..1) when the image's draw-time alpha or any
+   * enclosing transparency-group alpha is < 1. Undefined for fully opaque.
+   */
+  opacity?: number;
 }
 
 export interface PdfMetadata {
@@ -139,7 +219,7 @@ export async function extractPdf(
   input: ExtractInput,
   onProgress?: (progress: ExtractProgress) => void
 ): Promise<ExtractResult> {
-  const { pdfBuffer, startPage = 1, endPage, spreadMode = false, vectorTextGrouping = true } = input;
+  const { pdfBuffer, startPage = 1, endPage, spreadMode = false, vectorTextGrouping = true, fixedLayout = false } = input;
   validatePageRange(startPage, endPage);
 
   // Open PDF (suppressing mupdf stderr spam)
@@ -165,8 +245,8 @@ export async function extractPdf(
       const group = logicalGroups[g];
       const page =
         group.length === 2
-          ? await extractSpreadPage(doc, group[0], group[1], vectorTextGrouping)
-          : await extractPage(doc, group[0], vectorTextGrouping);
+          ? await extractSpreadPage(doc, group[0], group[1], vectorTextGrouping, fixedLayout)
+          : await extractPage(doc, group[0], vectorTextGrouping, fixedLayout);
       pages.push(page);
 
       onProgress?.({ page: g + 1, totalPages: totalLogical });
@@ -175,7 +255,7 @@ export async function extractPdf(
   } else {
     const rangeSize = end - start;
     for (let i = start; i < end; i++) {
-      const page = await extractPage(doc, i, vectorTextGrouping);
+      const page = await extractPage(doc, i, vectorTextGrouping, fixedLayout);
       pages.push(page);
 
       onProgress?.({ page: i - start + 1, totalPages: rangeSize });
@@ -200,7 +280,7 @@ export function extractPdfStream(
   input: ExtractInput,
   onProgress?: (progress: ExtractProgress) => void
 ): ExtractStreamResult {
-  const { pdfBuffer, startPage = 1, endPage, spreadMode = false, vectorTextGrouping = true } = input;
+  const { pdfBuffer, startPage = 1, endPage, spreadMode = false, vectorTextGrouping = true, fixedLayout = false } = input;
   validatePageRange(startPage, endPage);
 
   const doc = openPdfFromBuffer(pdfBuffer);
@@ -220,8 +300,8 @@ export function extractPdfStream(
           const group = logicalGroups[g];
           const page =
             group.length === 2
-              ? await extractSpreadPage(doc, group[0], group[1], vectorTextGrouping)
-              : await extractPage(doc, group[0], vectorTextGrouping);
+              ? await extractSpreadPage(doc, group[0], group[1], vectorTextGrouping, fixedLayout)
+              : await extractPage(doc, group[0], vectorTextGrouping, fixedLayout);
 
           onProgress?.({ page: g + 1, totalPages: totalLogical });
           yield page;
@@ -231,7 +311,7 @@ export function extractPdfStream(
       } else {
         const rangeSize = end - start;
         for (let i = start; i < end; i++) {
-          const page = await extractPage(doc, i, vectorTextGrouping);
+          const page = await extractPage(doc, i, vectorTextGrouping, fixedLayout);
 
           onProgress?.({ page: i - start + 1, totalPages: rangeSize });
           yield page;
@@ -320,6 +400,58 @@ function jpegDimensions(buf: Buffer): { width: number; height: number } {
 
 function pngDimensions(buf: Buffer): { width: number; height: number } {
   return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+}
+
+/**
+ * Combine a color pixmap with a grayscale alpha mask (from an image's SMask)
+ * into an RGBA PNG. PDF SMasks provide the transparency that
+ * `mupdf.Pixmap.toPixmap()` doesn't composite by itself, so without this step
+ * transparent regions come out as opaque black.
+ *
+ * If color and mask dimensions differ we fall back to sampling the mask at
+ * the matching position (nearest-neighbour), which handles the common case
+ * of a lower-resolution SMask.
+ */
+function compositeColorAndMask(color: Pixmap, mask: Pixmap): Buffer {
+  const width = color.getWidth();
+  const height = color.getHeight();
+  const colorComponents = color.getNumberOfComponents();
+  const colorAlpha = color.getAlpha();
+  const colorStride = colorComponents + (colorAlpha ? 1 : 0);
+  const colorPixels = color.getPixels();
+
+  const mWidth = mask.getWidth();
+  const mHeight = mask.getHeight();
+  const maskComponents = mask.getNumberOfComponents();
+  const maskAlpha = mask.getAlpha();
+  const maskStride = maskComponents + (maskAlpha ? 1 : 0);
+  const maskPixels = mask.getPixels();
+
+  const png = new PNG({ width, height });
+  for (let y = 0; y < height; y++) {
+    const my = mHeight === height ? y : Math.min(mHeight - 1, Math.round((y * mHeight) / height));
+    for (let x = 0; x < width; x++) {
+      const mx = mWidth === width ? x : Math.min(mWidth - 1, Math.round((x * mWidth) / width));
+      const srcIdx = (y * width + x) * colorStride;
+      const maskIdx = (my * mWidth + mx) * maskStride;
+      const dstIdx = (y * width + x) * 4;
+      // Color channels: grayscale → replicate, RGB → copy direct.
+      if (colorComponents === 1) {
+        const g = colorPixels[srcIdx];
+        png.data[dstIdx] = g;
+        png.data[dstIdx + 1] = g;
+        png.data[dstIdx + 2] = g;
+      } else {
+        png.data[dstIdx] = colorPixels[srcIdx];
+        png.data[dstIdx + 1] = colorPixels[srcIdx + 1];
+        png.data[dstIdx + 2] = colorPixels[srcIdx + 2];
+      }
+      // Alpha from mask: mupdf SMask pixmaps are typically grayscale with the
+      // value itself representing alpha (higher = more opaque).
+      png.data[dstIdx + 3] = maskPixels[maskIdx];
+    }
+  }
+  return PNG.sync.write(png);
 }
 
 /** Returns true if every pixel in the RGBA PNG is fully transparent (alpha === 0). */
@@ -424,7 +556,7 @@ function extractPdfMetadata(doc: MupdfDocument): PdfMetadata {
   return metadata;
 }
 
-async function extractPage(doc: MupdfDocument, pageIndex: number, vectorTextGrouping: boolean = true): Promise<ExtractedPage> {
+async function extractPage(doc: MupdfDocument, pageIndex: number, vectorTextGrouping: boolean = true, fixedLayout: boolean = false): Promise<ExtractedPage> {
   const pageNum = pageIndex + 1;
   const pageId = "pg" + String(pageNum).padStart(3, "0");
 
@@ -467,13 +599,445 @@ async function extractPage(doc: MupdfDocument, pageIndex: number, vectorTextGrou
     ? allRasterImages.filter(img => !coveredRasterHashes.has(img.hash))
     : allRasterImages;
 
+  // Stream-order assignment: run the page through a recording device so
+  // every draw op gets a true PDF content-stream seqno. mupdf's
+  // StructuredText walker is a layout reconstruction (reading flow, not
+  // stream order) so we cannot use it for z-order — but the device
+  // callbacks fire once per content-stream operator, in stream order, with
+  // fully-resolved CTMs. This is the canonical mupdf z-order primitive.
+  const recorder = runRecorderInViewport(page, pageBounds, 0, 0);
+  stampRasterPlacementsFromOps(rasterImages, recorder.ops);
+  stampFigureSeqnosFromOps(figureImages, recorder.ops);
+
+  const paragraphData = parsePageParagraphs(doc, pageIndex, 2, fixedLayout);
+  const positionedText = buildPositionedTextOutput(
+    pageId,
+    paragraphData,
+    rasterImages,
+    figureImages,
+    recorder.ops,
+  );
+
   return {
     pageId,
     pageNumber: pageNum,
     text,
     pageImage,
     images: [...rasterImages, ...figureImages],
+    positionedText,
     extractionDebug,
+  };
+}
+
+// ── Stream-order recorder integration ─────────────────────────────────
+
+/**
+ * Run the device recorder and translate every op's geometry into viewport
+ * space — i.e. the page's mupdf-normalized y-down coordinates with the
+ * page origin subtracted out and an optional `xShift` for spread
+ * right-pages. The recorder already returns y-down coords (mupdf flips PDF
+ * user-space internally before invoking device callbacks), so this is just
+ * an origin shift, not a coordinate-system flip.
+ *
+ * `seqnoShift` lets callers offset the spread's right-page seqnos past the
+ * left page so cross-page sort puts left-before-right.
+ */
+function runRecorderInViewport(
+  page: AnyPage,
+  pageBounds: number[],
+  xShift: number,
+  seqnoShift: number,
+): { ops: StreamOp[] } {
+  const pageOriginX = pageBounds[0];
+  const pageOriginY = pageBounds[1];
+  const rawOps = recordPageStream(page);
+  const dx = -pageOriginX + xShift;
+  const dy = -pageOriginY;
+  const shiftBBox = (b: StreamBBox): StreamBBox => ({
+    x0: b.x0 + dx,
+    y0: b.y0 + dy,
+    x1: b.x1 + dx,
+    y1: b.y1 + dy,
+  });
+  const shiftClipPaths = (clips: ClipPath[]): ClipPath[] =>
+    clips.map((c) => ({
+      evenOdd: c.evenOdd,
+      bbox: shiftBBox(c.bbox),
+      commands: c.commands.map((cmd): PathCommand => {
+        switch (cmd.op) {
+          case "M":
+          case "L":
+            return { op: cmd.op, x: cmd.x + dx, y: cmd.y + dy };
+          case "C":
+            return {
+              op: "C",
+              x1: cmd.x1 + dx,
+              y1: cmd.y1 + dy,
+              x2: cmd.x2 + dx,
+              y2: cmd.y2 + dy,
+              x3: cmd.x3 + dx,
+              y3: cmd.y3 + dy,
+            };
+          case "Z":
+            return cmd;
+        }
+      }),
+    }));
+  const ops: StreamOp[] = rawOps.map((op): StreamOp => {
+    const seqno = op.seqno + seqnoShift;
+    const activeClipBbox = op.activeClipBbox ? shiftBBox(op.activeClipBbox) : null;
+    if (op.kind === "image" || op.kind === "imageMask") {
+      return {
+        ...op,
+        seqno,
+        bbox: shiftBBox(op.bbox),
+        activeClipBbox,
+        activeClipPaths: shiftClipPaths(op.activeClipPaths),
+      };
+    }
+    if (op.kind === "fillText" || op.kind === "strokeText") {
+      return {
+        ...op,
+        seqno,
+        bbox: shiftBBox(op.bbox),
+        glyphs: op.glyphs.map((g) => ({
+          rune: g.rune,
+          x: g.x - pageOriginX + xShift,
+          y: g.y - pageOriginY,
+        })),
+        activeClipBbox,
+      };
+    }
+    // fillPath / strokePath / shade
+    return { ...op, seqno, bbox: shiftBBox(op.bbox), activeClipBbox };
+  });
+  return { ops };
+}
+
+type AnyPage = ReturnType<MupdfDocument["loadPage"]>;
+
+function bboxToImageBounds(b: StreamBBox): ImageBounds {
+  return { x: b.x0, y: b.y0, width: b.x1 - b.x0, height: b.y1 - b.y0 };
+}
+
+/** Serialize PathCommand[] to an SVG `d` attribute string in absolute coords. */
+function pathCommandsToSvgD(cmds: PathCommand[]): string {
+  const fmt = (n: number): string => {
+    // Round to 2 decimal places; strip trailing zeros / dot.
+    const s = n.toFixed(2);
+    return s.replace(/\.?0+$/, "");
+  };
+  const parts: string[] = [];
+  for (const c of cmds) {
+    switch (c.op) {
+      case "M":
+        parts.push(`M${fmt(c.x)} ${fmt(c.y)}`);
+        break;
+      case "L":
+        parts.push(`L${fmt(c.x)} ${fmt(c.y)}`);
+        break;
+      case "C":
+        parts.push(
+          `C${fmt(c.x1)} ${fmt(c.y1)} ${fmt(c.x2)} ${fmt(c.y2)} ${fmt(c.x3)} ${fmt(c.y3)}`,
+        );
+        break;
+      case "Z":
+        parts.push("Z");
+        break;
+    }
+  }
+  return parts.join("");
+}
+
+/** Pick the most-restrictive active clip for an image op, returning its SVG
+ *  `d` string in viewport coords — or undefined if no clip meaningfully
+ *  reduces the visible area. PDF semantics intersect the full clip stack;
+ *  the innermost is typically the binding constraint for storybook PDFs
+ *  (one clip-and-paint per image). If multiple clips are active, we score
+ *  each by how much it cuts into the image and pick the most restrictive. */
+function selectImageClipPath(op: ImageStreamOp): string | undefined {
+  if (op.activeClipPaths.length === 0) return undefined;
+  const imgArea =
+    Math.max(0, op.bbox.x1 - op.bbox.x0) *
+    Math.max(0, op.bbox.y1 - op.bbox.y0);
+  if (imgArea <= 0) return undefined;
+
+  let best: ClipPath | undefined;
+  let bestOverlap = Infinity;
+  for (const clip of op.activeClipPaths) {
+    if (clip.commands.length === 0) continue;
+    const ix0 = Math.max(clip.bbox.x0, op.bbox.x0);
+    const iy0 = Math.max(clip.bbox.y0, op.bbox.y0);
+    const ix1 = Math.min(clip.bbox.x1, op.bbox.x1);
+    const iy1 = Math.min(clip.bbox.y1, op.bbox.y1);
+    const interArea = Math.max(0, ix1 - ix0) * Math.max(0, iy1 - iy0);
+    const overlapRatio = interArea / imgArea;
+    if (overlapRatio < bestOverlap) {
+      bestOverlap = overlapRatio;
+      best = clip;
+    }
+  }
+  // Skip when the clip barely reduces the visible area (≥95% overlap means
+  // the clip is just the page or a containing region, not a meaningful crop).
+  if (!best || bestOverlap >= 0.95) return undefined;
+  return pathCommandsToSvgD(best.commands);
+}
+
+/**
+ * Match each `fillImage` / `fillImageMask` op to an extracted raster XObject
+ * by native pixel dimensions, consuming candidates in stream order. The
+ * matched raster gets its `streamSeqno` and its `bounds` (from the op's CTM)
+ * stamped on it.
+ *
+ * Multiple instances of the same image dimensions are paired in stream
+ * order — first op with WxH matches first remaining ExtractedImage with
+ * WxH. This is how mupdf placement order maps to XObject extraction order.
+ */
+function stampRasterPlacementsFromOps(
+  rasters: ExtractedImage[],
+  ops: StreamOp[],
+): void {
+  const byDim = new Map<string, ExtractedImage[]>();
+  for (const img of rasters) {
+    const key = `${img.width}x${img.height}`;
+    const arr = byDim.get(key) ?? [];
+    arr.push(img);
+    byDim.set(key, arr);
+  }
+  for (const op of ops) {
+    if (op.kind !== "image" && op.kind !== "imageMask") continue;
+    const candidates = byDim.get(`${op.nativeWidth}x${op.nativeHeight}`);
+    const matched = candidates?.shift();
+    if (!matched) continue;
+    matched.streamSeqno = op.seqno;
+    matched.bounds = bboxToImageBounds(op.bbox);
+    const clipD = selectImageClipPath(op);
+    if (clipD) matched.clipPath = clipD;
+    if (op.blendMode && op.blendMode !== "Normal") {
+      matched.blendMode = pdfBlendModeToCss(op.blendMode);
+    }
+    if (typeof op.alpha === "number" && op.alpha < 1) {
+      // Round to 3 decimal places — finer than display can reliably reproduce.
+      matched.opacity = Math.max(0, Math.round(op.alpha * 1000) / 1000);
+    }
+  }
+}
+
+/** Map mupdf's PDF BlendMode string to a CSS `mix-blend-mode` keyword.
+ *  PDF blend mode names are CamelCase ("ColorDodge"); CSS keywords are
+ *  kebab-case lowercase ("color-dodge"). Returns the input lowercased
+ *  with a hyphen between word boundaries. */
+function pdfBlendModeToCss(mode: string): string {
+  return mode
+    .replace(/([a-z])([A-Z])/g, "$1-$2")
+    .toLowerCase();
+}
+
+/**
+ * Stamp `streamSeqno` on each vector figure by finding the device path ops
+ * whose bounds fall inside the figure's overall bounds. The figure's seqno
+ * is the minimum of the matched ops' seqnos — the moment that figure
+ * begins drawing in the content stream.
+ *
+ * Why min, not e.g. mean: a figure is composed of several path ops drawn
+ * sequentially; seqno = first op preserves correct ordering relative to
+ * later ops that could draw on top of the figure (text, other figures).
+ */
+function stampFigureSeqnosFromOps(
+  figures: ExtractedImage[],
+  ops: StreamOp[],
+): void {
+  const pathOps: PathStreamOp[] = ops.filter(
+    (o): o is PathStreamOp => o.kind === "fillPath" || o.kind === "strokePath",
+  );
+  for (const fig of figures) {
+    if (!fig.bounds) continue;
+    const figBox: StreamBBox = {
+      x0: fig.bounds.x,
+      y0: fig.bounds.y,
+      x1: fig.bounds.x + fig.bounds.width,
+      y1: fig.bounds.y + fig.bounds.height,
+    };
+    let minSeqno = Infinity;
+    for (const op of pathOps) {
+      if (bboxContainedIn(op.bbox, figBox, /* tol */ 1)) {
+        if (op.seqno < minSeqno) minSeqno = op.seqno;
+      }
+    }
+    if (Number.isFinite(minSeqno)) fig.streamSeqno = minSeqno;
+  }
+}
+
+function bboxContainedIn(inner: StreamBBox, outer: StreamBBox, tol: number): boolean {
+  return (
+    inner.x0 >= outer.x0 - tol &&
+    inner.y0 >= outer.y0 - tol &&
+    inner.x1 <= outer.x1 + tol &&
+    inner.y1 <= outer.y1 + tol
+  );
+}
+
+/**
+ * For each asHTML paragraph, find the `fillText` op whose first glyph sits
+ * at the paragraph's anchor (left, top + lineHeight ≈ baseline). Returns
+ * the matched op's seqno, or null if no match.
+ *
+ * mupdf coalesces multiple asHTML paragraphs into a single `fillText` op
+ * when they share font/style — that's fine, all those paragraphs simply
+ * share the same stream seqno.
+ */
+function matchParagraphSeqno(
+  p: AsHtmlParagraph,
+  textOps: TextStreamOp[],
+): number | null {
+  // Both glyph and asHTML coords are in the page's y-down viewport. asHTML
+  // `top` is the top of the line box; the glyph baseline sits one
+  // line-height below.
+  const expectedX = p.left;
+  const expectedY = p.top + p.lineHeight;
+  let bestSeqno: number | null = null;
+  let bestDist = Infinity;
+  for (const op of textOps) {
+    for (const g of op.glyphs) {
+      const dx = Math.abs(g.x - expectedX);
+      const dy = Math.abs(g.y - expectedY);
+      if (dy < Math.max(p.lineHeight, 4) && dx < 4) {
+        const d = dx + dy * 2;
+        if (d < bestDist) {
+          bestDist = d;
+          bestSeqno = op.seqno;
+        }
+      }
+    }
+  }
+  return bestSeqno;
+}
+
+/**
+ * Assemble the final `PositionedTextOutput` from extracted images + vector
+ * figures + asHTML paragraphs, sorting everything by its true PDF
+ * content-stream seqno.
+ *
+ * - Each raster has its `streamSeqno` and `bounds` already stamped by
+ *   `stampRasterPlacementsFromOps`.
+ * - Each vector figure has its `streamSeqno` stamped by
+ *   `stampFigureSeqnosFromOps`.
+ * - Each paragraph gets its seqno here by matching its anchor to a
+ *   `fillText` op's first matching glyph. Paragraphs that share a fillText
+ *   op (mupdf coalesces same-font runs) get the same seqno; we add a tiny
+ *   index-based offset so they sort stably amongst themselves.
+ */
+function buildPositionedTextOutput(
+  pageId: string,
+  paragraphData: { paragraphs: AsHtmlParagraph[] } & PageGeometry,
+  rasterImages: ExtractedImage[],
+  vectorImages: ExtractedImage[],
+  ops: StreamOp[],
+): PositionedTextOutput {
+  type Item =
+    | {
+        seqno: number;
+        kind: "image";
+        imageId: string;
+        bounds: ImageBounds;
+        clipPath?: string;
+        blendMode?: string;
+        opacity?: number;
+      }
+    | {
+        seqno: number;
+        kind: "paragraph";
+        textId: string;
+        top: number;
+        left: number;
+        lineHeight: number;
+        segments: AsHtmlParagraph["segments"];
+        text: string;
+        blockId?: string;
+        blockBounds?: AsHtmlParagraph["blockBounds"];
+        mergedParagraphId?: string;
+        textAlign?: AsHtmlParagraph["textAlign"];
+      };
+  const items: Item[] = [];
+
+  for (const img of [...rasterImages, ...vectorImages]) {
+    if (!img.bounds || img.streamSeqno === undefined) continue;
+    items.push({
+      seqno: img.streamSeqno,
+      kind: "image",
+      imageId: img.imageId,
+      bounds: img.bounds,
+      clipPath: img.clipPath,
+      blendMode: img.blendMode,
+      opacity: img.opacity,
+    });
+  }
+
+  const textOps: TextStreamOp[] = ops.filter(
+    (o): o is TextStreamOp => o.kind === "fillText" || o.kind === "strokeText",
+  );
+  // Paragraphs not matched to a fillText op are pinned just past the last
+  // recorded op so they still sort above visual content. This is a safety
+  // net — when we can't unicode-decode glyphs (rare fonts/encodings the
+  // /ToUnicode CMap omits), we keep the paragraph but let it draw last.
+  const lastOpSeqno = ops.reduce((m, o) => Math.max(m, o.seqno), 0);
+
+  paragraphData.paragraphs.forEach((p, idx) => {
+    const matched = matchParagraphSeqno(p, textOps);
+    // Tiny per-paragraph offset breaks ties when multiple paragraphs share
+    // a fillText op (mupdf coalesces same-font runs); preserves asHTML
+    // emission order within a single op.
+    const seqno = (matched ?? lastOpSeqno + 1) + (idx + 1) * 1e-6;
+    items.push({
+      seqno,
+      kind: "paragraph",
+      textId: `${pageId}_p${String(idx).padStart(3, "0")}`,
+      top: p.top,
+      left: p.left,
+      lineHeight: p.lineHeight,
+      segments: p.segments,
+      text: p.text,
+      blockId: p.blockId,
+      blockBounds: p.blockBounds,
+      mergedParagraphId: p.mergedParagraphId,
+      textAlign: p.textAlign,
+    });
+  });
+
+  items.sort((a, b) => a.seqno - b.seqno);
+
+  const drawItems: DrawItem[] = items.map((i) => {
+    if (i.kind === "image") {
+      return {
+        kind: "image",
+        imageId: i.imageId,
+        bounds: i.bounds,
+        ...(i.clipPath ? { clipPath: i.clipPath } : {}),
+        ...(i.blendMode ? { blendMode: i.blendMode } : {}),
+        ...(typeof i.opacity === "number" ? { opacity: i.opacity } : {}),
+      };
+    }
+    return {
+      kind: "paragraph",
+      textId: i.textId,
+      top: i.top,
+      left: i.left,
+      lineHeight: i.lineHeight,
+      segments: i.segments,
+      text: i.text,
+      ...(i.blockId !== undefined ? { blockId: i.blockId } : {}),
+      ...(i.blockBounds !== undefined ? { blockBounds: i.blockBounds } : {}),
+      ...(i.mergedParagraphId !== undefined ? { mergedParagraphId: i.mergedParagraphId } : {}),
+      ...(i.textAlign !== undefined ? { textAlign: i.textAlign } : {}),
+    };
+  });
+
+  return {
+    drawItems,
+    pageWidth: paragraphData.pageWidth,
+    pageHeight: paragraphData.pageHeight,
+    renderWidth: paragraphData.renderWidth,
+    renderHeight: paragraphData.renderHeight,
   };
 }
 
@@ -486,6 +1050,7 @@ async function extractSpreadPage(
   leftIndex: number,
   rightIndex: number,
   vectorTextGrouping: boolean = true,
+  fixedLayout: boolean = false,
 ): Promise<ExtractedPage> {
   const leftNum = leftIndex + 1;
   const rightNum = rightIndex + 1;
@@ -539,6 +1104,7 @@ async function extractSpreadPage(
   const leftSvg = getPageSvg(leftPage);
   const rightSvg = getPageSvg(rightPage);
   const rasterCount = allLeftRaster.length + allRightRaster.length;
+  const leftPageWidthPt = leftBounds[2] - leftBounds[0];
   const leftResult = await extractVectorImagesFromSvg(leftSvg, pageId, rasterCount, leftPng, vectorTextGrouping ? leftTextShapes : undefined);
   const rightResult = await extractVectorImagesFromSvg(
     rightSvg,
@@ -546,6 +1112,7 @@ async function extractSpreadPage(
     rasterCount + leftResult.images.length,
     rightPng,
     vectorTextGrouping ? rightTextShapes : undefined,
+    leftPageWidthPt,
   );
 
   // Merge covered hashes from both pages and filter raster images
@@ -575,12 +1142,54 @@ async function extractSpreadPage(
     groups: [...leftResult.debug.groups, ...rightResult.debug.groups],
   };
 
+  // Fixed-layout places individual halves at their original positions, so no
+  // spread-level image stitching is needed — the two halves, each with their
+  // own PDF-point bounds, compose correctly on the rendered spread viewport.
+  const rasterImages = [...leftRaster, ...rightRaster];
+  const figureImages = [...leftResult.images, ...rightResult.images];
+
+  // Run the recorder on both pages, in viewport coords; right-page x is
+  // shifted by left page width so positions address the stitched spread,
+  // and right-page seqnos shift past left so cross-page sort puts left
+  // ahead of right (matches PDF reading order).
+  const leftRecorder = runRecorderInViewport(leftPage, leftBounds, 0, 0);
+  const leftMaxSeqno = leftRecorder.ops.reduce(
+    (m, o) => Math.max(m, o.seqno),
+    -1,
+  );
+  const rightRecorder = runRecorderInViewport(
+    rightPage,
+    rightBounds,
+    leftPageWidthPt,
+    leftMaxSeqno + 1,
+  );
+  const ops: StreamOp[] = [...leftRecorder.ops, ...rightRecorder.ops];
+  // Stamp seqnos on rasters/figures using the unified op list. We split by
+  // page when matching rasters so dim-tied images on different pages don't
+  // accidentally pair across the spread boundary.
+  stampRasterPlacementsFromOps(leftRaster, leftRecorder.ops);
+  stampRasterPlacementsFromOps(rightRaster, rightRecorder.ops);
+  stampFigureSeqnosFromOps(leftResult.images, leftRecorder.ops);
+  stampFigureSeqnosFromOps(rightResult.images, rightRecorder.ops);
+
+  const paragraphData = parsePageParagraphsSpread(doc, leftIndex, rightIndex, 2, fixedLayout);
+  const positionedText = buildPositionedTextOutput(
+    pageId,
+    paragraphData,
+    rasterImages,
+    figureImages,
+    ops,
+  );
+
+  const images: ExtractedImage[] = [...rasterImages, ...figureImages];
+
   return {
     pageId,
     pageNumber: leftNum,
     text,
     pageImage,
-    images: [...leftRaster, ...rightRaster, ...leftResult.images, ...rightResult.images],
+    images,
+    positionedText,
     extractionDebug,
   };
 }
@@ -668,7 +1277,16 @@ function extractRasterImagesFromPdf(
         // filter decoding, so we must not treat those as raw JPEG bytes.
         const isSingleFilter = filterNames.length === 1;
 
-        if (filterName === "DCTDecode" && isSingleFilter) {
+        // Soft-mask (SMask): the image dict points to a separate image that
+        // provides the alpha channel. mupdf's toPixmap() does NOT composite
+        // with the SMask, so any fast-path that bypasses mupdf (raw JPEG) or
+        // just reads the color channels will leave previously-transparent
+        // regions opaque black. Detect this up front so both branches handle
+        // it correctly.
+        const smaskObj = resolved.get("SMask");
+        const hasSMask = !smaskObj.isNull();
+
+        if (filterName === "DCTDecode" && isSingleFilter && !hasSMask) {
           // Check colorspace — CMYK JPEGs need conversion (browsers can't display them)
           const cs = resolved.get("ColorSpace");
           const isCmyk =
@@ -683,12 +1301,19 @@ function extractRasterImagesFromPdf(
             buf = Buffer.from(pixmap.asJPEG(90, true));
             format = "jpeg";
           } else {
-            // RGB/Gray JPEG: extract raw bytes directly
+            // RGB/Gray JPEG (no SMask): extract raw bytes directly
             buf = Buffer.from(streamObj.readRawStream().asUint8Array());
             format = "jpeg";
           }
+        } else if (hasSMask) {
+          // Composite color + soft-mask into an RGBA PNG.
+          const colorPixmap = doc.loadImage(streamObj).toPixmap();
+          const smaskStream = smaskObj.isIndirect() ? smaskObj : resolved.get("SMask");
+          const maskPixmap = doc.loadImage(smaskStream).toPixmap();
+          buf = compositeColorAndMask(colorPixmap, maskPixmap);
+          format = "png";
         } else {
-          // Multi-filter chains or non-JPEG: decode through mupdf → PNG
+          // Multi-filter chains or non-JPEG without SMask: decode through mupdf → PNG
           const image = doc.loadImage(streamObj);
           const pixmap = image.toPixmap();
           buf = Buffer.from(pixmap.asPNG());
@@ -1702,9 +2327,18 @@ function getPageSvg(
 
     const mediabox = page.getBounds();
     const device = writer.beginPage(mediabox);
-    page.run(device, mupdf.Matrix.identity);
+    try {
+      page.run(device, mupdf.Matrix.identity);
+    } finally {
+      // mupdf C requires close + drop on the per-page device before
+      // ending the page; otherwise it logs "dropping unclosed device"
+      // when the FinalizationRegistry eventually drops the WASM pointer.
+      device.close();
+      device.destroy();
+    }
     writer.endPage();
     writer.close();
+    writer.destroy();
 
     const svgContent = buf.asString();
     const pageWidth = mediabox[2] - mediabox[0];
@@ -1974,6 +2608,13 @@ interface FigureExtractionResult {
   images: ExtractedImage[];
   /** Hashes of raster images that are part of figure groups (for dedup with XObject extraction) */
   coveredRasterHashes: Set<string>;
+  /**
+   * Map from the hash of each SVG `<image>` element's decoded bytes to its
+   * SVG source-order seqno. Used by callers to assign `streamSeqno` on
+   * XObject-extracted rasters (matched by hash), yielding unified PDF
+   * content-stream order across rasters + vectors.
+   */
+  imageHashToSeqno: Map<string, number>;
   /** Debug info about grouping and render decisions */
   debug: ExtractionDebugOutput;
 }
@@ -1984,6 +2625,9 @@ async function extractVectorImagesFromSvg(
   startIndex: number,
   pagePngBuffer: Buffer,
   textShapes?: ShapeInfo[],
+  /** Added to every produced image's `bounds.x` so right-page figures in a
+   *  spread address the stitched viewport. Defaults to 0 (single page). */
+  xOffset: number = 0,
 ): Promise<FigureExtractionResult> {
   const images: ExtractedImage[] = [];
   const coveredRasterHashes = new Set<string>();
@@ -2024,13 +2668,27 @@ async function extractVectorImagesFromSvg(
   debug.totalShapes = allShapes.length;
   debug.totalTextShapes = textShapesIncluded;
 
-  if (allShapes.length === 0) return { images, coveredRasterHashes, debug };
+  // Map each SVG image shape's hash to its seqno so callers can stamp
+  // `streamSeqno` on the matching XObject-extracted rasters.
+  const imageHashToSeqno = new Map<string, number>();
+  for (const shape of allShapes) {
+    if (shape.isImage && shape.imageDataHash) {
+      imageHashToSeqno.set(shape.imageDataHash, shape.seqno);
+    }
+  }
 
-  // Filter out background shapes — large in either dimension (>75% of page).
-  // These are page-level fills/decorations that would merge unrelated groups.
+  if (allShapes.length === 0) return { images, coveredRasterHashes, imageHashToSeqno, debug };
+
+  // Split shapes into "normal" (participate in foreground grouping) and
+  // "background" (large page-fill shapes >75% of page in either dim).
+  // Backgrounds are kept aside because they'd merge unrelated foreground
+  // groups during spatial grouping; they're emitted as standalone figures
+  // at the end of this pass so fixed-layout rendering can render them below
+  // the foreground.
   const bgWidthThreshold = pageWidth * BACKGROUND_THRESHOLD;
   const bgHeightThreshold = pageHeight * BACKGROUND_THRESHOLD;
   const normalShapes: ShapeInfo[] = [];
+  const backgroundShapes: ShapeInfo[] = [];
 
   for (const shape of allShapes) {
     const [minX, minY, maxX, maxY] = shape.bbox;
@@ -2039,6 +2697,9 @@ async function extractVectorImagesFromSvg(
     if (w <= 0 || h <= 0) continue;
     if (w >= bgWidthThreshold || h >= bgHeightThreshold) {
       debug.backgroundsFiltered++;
+      // Non-text backgrounds become their own figures; text blocks that
+      // happen to be huge are discarded (would just be noise).
+      if (!shape.isText) backgroundShapes.push(shape);
       continue;
     }
     normalShapes.push(shape);
@@ -2157,10 +2818,45 @@ async function extractVectorImagesFromSvg(
       if (img) img.renderMethod = "vector";
     }
 
-    if (img) images.push(img);
+    if (img) {
+      // Record the figure's page placement in PDF points (top-left origin).
+      // Fixed-layout rendering reads these to position the figure on the page.
+      img.bounds = {
+        x: cropBbox[0] + xOffset,
+        y: cropBbox[1],
+        width: cropW,
+        height: cropH,
+      };
+      // Stream seqno = earliest-drawn shape in the group. Used by fixed-layout
+      // rendering to restore PDF content-stream order across all draw items.
+      img.streamSeqno = Math.min(...group.map((s) => s.seqno));
+      images.push(img);
+    }
   }
 
-  return { images, coveredRasterHashes, debug };
+  // Emit each background shape as its own figure — they're large page-fill
+  // shapes (purple sky, color-block strips) that got excluded from the
+  // foreground grouping but still need to render.
+  backgroundShapes.sort((a, b) => a.seqno - b.seqno);
+  for (const shape of backgroundShapes) {
+    imgIndex++;
+    const bgBbox = shape.bbox;
+    const bgW = bgBbox[2] - bgBbox[0];
+    const bgH = bgBbox[3] - bgBbox[1];
+    const img = await renderShapeGroup([shape], pageId, imgIndex, svgDefs, pageWidth, pageHeight, bgBbox);
+    if (!img) continue;
+    img.renderMethod = "vector";
+    img.bounds = {
+      x: bgBbox[0] + xOffset,
+      y: bgBbox[1],
+      width: bgW,
+      height: bgH,
+    };
+    img.streamSeqno = shape.seqno;
+    images.push(img);
+  }
+
+  return { images, coveredRasterHashes, imageHashToSeqno, debug };
 }
 
 // ============================================================================

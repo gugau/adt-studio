@@ -20,7 +20,7 @@ export interface VisualRefinementConfig {
 }
 
 export interface RenderConfig {
-  renderType: "llm" | "template" | "activity"
+  renderType: "llm" | "template" | "activity" | "fixed_layout"
   // llm / activity fields
   promptName: string
   modelId: string

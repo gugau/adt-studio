@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react"
-import { AlertTriangle, Check, Crop, Eye, EyeOff, FileText, Image, ImageOff, Layers, Loader2, ChevronDown, X } from "lucide-react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { AlertTriangle, Check, Crop, Eye, EyeOff, FileText, Image, ImageOff, Layers, Loader2, ChevronDown, Square, X } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { usePage, usePageImage } from "@/hooks/use-pages"
 import { api, BASE_URL } from "@/api/client"
@@ -129,7 +129,7 @@ function VersionPicker({
   )
 }
 
-function ImageCard({ imageId, bookLabel, isPruned, reason, onTogglePrune, onRecrop, cacheBust }: { imageId: string; bookLabel: string; isPruned?: boolean; reason?: string; onTogglePrune?: () => void; onRecrop?: () => void; cacheBust?: number }) {
+function ImageCard({ imageId, bookLabel, isPruned, reason, bounds, onTogglePrune, onRecrop, cacheBust }: { imageId: string; bookLabel: string; isPruned?: boolean; reason?: string; bounds?: { x: number; y: number; width: number; height: number }; onTogglePrune?: () => void; onRecrop?: () => void; cacheBust?: number }) {
   const { t } = useLingui()
   const [dimensions, setDimensions] = useState<{ w: number; h: number } | null>(null)
   // eslint-disable-next-line lingui/no-unlocalized-strings
@@ -140,6 +140,14 @@ function ImageCard({ imageId, bookLabel, isPruned, reason, onTogglePrune, onRecr
       className={`relative rounded border overflow-hidden bg-card flex flex-col items-center min-h-[80px] ${isPruned ? "opacity-40" : ""}`}
       title={isPruned && reason ? t`Pruned: ${reason}` : undefined}
     >
+      {bounds && (
+        <div
+          className="absolute top-1 left-1 z-10 flex items-center justify-center w-5 h-5 rounded-full bg-black/30 text-white"
+          title={t`Position ${Math.round(bounds.x)}, ${Math.round(bounds.y)} → ${Math.round(bounds.width)}×${Math.round(bounds.height)} pt`}
+        >
+          <Square className="h-3 w-3" />
+        </div>
+      )}
       <div className="absolute top-1 right-1 z-10 flex items-center gap-1">
         {onRecrop && (
           <button
@@ -268,6 +276,15 @@ export function ExtractPageDetail({
   const imageClassData = pendingImageData ?? page?.imageClassification ?? null
   const imageDirty = pendingImageData != null
 
+  // Lookup for per-image page-placement bounds (when available from extract)
+  const boundsByImageId = useMemo(() => {
+    const map = new Map<string, { x: number; y: number; width: number; height: number }>()
+    for (const meta of page?.imagesMeta ?? []) {
+      if (meta.bounds) map.set(meta.imageId, meta.bounds)
+    }
+    return map
+  }, [page?.imagesMeta])
+
   const toggleImagePrune = (imageId: string) => {
     const base = pendingImageData ?? page?.imageClassification
     if (!base) return
@@ -394,6 +411,7 @@ export function ExtractPageDetail({
                     bookLabel={bookLabel}
                     isPruned={img.isPruned}
                     reason={img.reason}
+                    bounds={boundsByImageId.get(img.imageId)}
                     onTogglePrune={() => toggleImagePrune(img.imageId)}
                     onRecrop={!storyboardRunning ? () => handleRecropFromPage(img.imageId) : undefined}
                     cacheBust={cacheBust}

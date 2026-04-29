@@ -33,6 +33,7 @@ import {
   buildPreferredImageAltMap,
   rewriteImageUrls,
   convertLatexToMathml,
+  isFixedLayoutBook,
 } from "@adt/pipeline"
 
 // ---------------------------------------------------------------------------
@@ -401,6 +402,7 @@ function buildPreviewConfig(
   webAssetsDir: string,
   speechConfig?: SpeechConfig,
   configuredOutputLanguages?: string[],
+  fixedLayout?: boolean,
 ) {
   const glossary = getGlossary(storage)
   const hasGlossary = glossary !== undefined && glossary.items.length > 0
@@ -485,6 +487,7 @@ function buildPreviewConfig(
       trackerUrl: "",
       srcUrl: "",
     },
+    ...(fixedLayout ? { fixedLayout: true } : {}),
   }
 }
 
@@ -545,6 +548,7 @@ export function createAdtPreviewRoutes(
         webAssetsDir,
         bookConfig.speech,
         bookConfig.output_languages,
+        isFixedLayoutBook(bookConfig),
       )
     })
     c.header("Content-Type", "application/json")
