@@ -28,6 +28,10 @@ export function startServer(options: StartServerOptions = {}): unknown {
   // Startup-only cleanup: run once before the server accepts requests.
   cleanupFn(booksDirPath)
 
+  console.log({
+    ADT_ENVIRONMENT: process.env.ADT_ENVIRONMENT
+  })
+
   return serveFn({ fetch: fetchHandler, port }, (info) => {
     log(`API server running on http://localhost:${info.port}`)
   })

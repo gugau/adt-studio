@@ -41,7 +41,6 @@ async function startApiServer(): Promise<{
     env: {
       ...process.env,
       NODE_ENV: process.env.NODE_ENV ?? "production",
-      // External bundle deps are installed next to api-server.mjs (dist/ or out/main/).
       NODE_PATH: join(dirname(paths.serverPath), "node_modules"),
       PORT: apiPort.toString(),
       BOOKS_DIR: paths.booksDir,

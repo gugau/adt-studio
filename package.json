@@ -16,7 +16,7 @@
     "dev": "node scripts/dev.mjs",
     "dev:api": "pnpm --filter @adt/api dev",
     "dev:studio": "pnpm --filter @adt/studio dev",
-    "dev:desktop": "pnpm --filter @adt/desktop dev",
+    "dev:desktop": "pnpm --parallel --filter @adt/desktop --filter @adt/studio dev --mode desktop",
     "build:desktop": "pnpm build && pnpm --filter @adt/desktop build",
     "pdf-extract": "tsx packages/pdf/src/cli.ts",
     "pipeline": "tsx packages/pipeline/src/cli.ts",

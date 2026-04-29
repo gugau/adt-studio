@@ -2,23 +2,6 @@ import { existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import { app } from "electron";
 
-/**
- * api-server.mjs, WASM, and node_modules are asar-unpacked (native deps). They live under
- * resources/app.asar.unpacked/out/main/, not inside app.asar next to this file.
- */
-function resolvePackagedApiMainDir(): string {
-  const unpacked = join(
-    process.resourcesPath,
-    "app.asar.unpacked",
-    "out",
-    "main",
-  );
-  if (existsSync(join(unpacked, "api-server.mjs"))) {
-    return unpacked;
-  }
-  return __dirname;
-}
-
 function resolveAppResourcesRoot(): string {
   if (app.isPackaged) {
     return process.resourcesPath;
@@ -43,9 +26,8 @@ function resolvePaths() {
   });
 
   if (app.isPackaged) {
-    const apiMainDir = resolvePackagedApiMainDir();
     return {
-      serverPath: join(apiMainDir, "api-server.mjs"),
+      serverPath: join(root, "api/api-server.mjs"),
       root,
       booksDir,
       promptsDir: join(root, "prompts"),
@@ -56,7 +38,7 @@ function resolvePaths() {
   }
 
   return {
-    serverPath: join(root, "apps", "desktop", "out", "main", "api-server.mjs"),
+    serverPath: join(root, "apps", "api", "dist-electron", "api-server.mjs"),
     root,
     booksDir,
     promptsDir: join(root, "prompts"),

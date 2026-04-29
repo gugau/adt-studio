@@ -2,7 +2,7 @@
  * Install packages that must stay external to the esbuild bundle (see bundle-server.mjs)
  * into apps/api/dist-electron/node_modules/. Same versions as @adt/pipeline so tooling stays aligned.
  *
- * Used by Electron (copy-builds → out/main) and by the Docker image after build:server.
+ * Used by Electron (extraResources → resources/) and by the Docker image after build:server.
  * Uses npm in dist-electron/ (not pnpm) so installs are not treated as workspace packages.
  */
 import { spawnSync } from "node:child_process"

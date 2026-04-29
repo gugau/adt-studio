@@ -5,6 +5,8 @@ require("dotenv").config({
 });
 
 const extraResources = [
+  { from: "../api/dist-electron/node_modules", to: "./api/node_modules" },
+  { from: "../api/dist-electron", to: "./api" },
   {
     from: "../../prompts",
     to: "prompts",
@@ -45,11 +47,6 @@ const config = {
     version,
   },
   extraResources,
-  asarUnpack: [
-    "out/main/api-server.mjs",
-    "out/main/*.wasm",
-    "out/main/node_modules/**",
-  ],
   files: ["out/**/*", "!out/renderer/placeholder-*"],
   win: {
     target: ["nsis"],
