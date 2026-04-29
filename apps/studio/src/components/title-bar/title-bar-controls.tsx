@@ -9,10 +9,9 @@ interface TitleBarControls {
 export function TitleBarControls(props: TitleBarControls) {
   return (
     <>
-      <MacOSTrafficLightSpacer />
       <LinuxControls className={cn("self-stretch", props.className)} />
       <WindowsControls
-        variant="dark"
+        variant="light"
         className={cn("self-stretch", props.className)}
       />
     </>
