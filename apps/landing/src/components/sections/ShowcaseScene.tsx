@@ -101,7 +101,8 @@ export function ShowcaseScene() {
 
 function BookMockup({ mounted }: { mounted: boolean }) {
   return (
-    <div className="relative mx-auto h-[520px] w-full max-w-[520px]">
+    <div className="mx-auto h-[364px] w-[364px] sm:h-[520px] sm:w-full sm:max-w-[520px]">
+      <div className="relative h-[520px] w-[520px] origin-top-left scale-[0.7] sm:scale-100">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-8 inset-y-4 blur-[2px]"
@@ -236,6 +237,7 @@ function BookMockup({ mounted }: { mounted: boolean }) {
             </Pill>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

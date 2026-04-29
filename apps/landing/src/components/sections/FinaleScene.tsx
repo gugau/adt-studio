@@ -36,7 +36,7 @@ export function FinaleScene() {
           />
           <h2
             className={cn(
-              "max-w-3xl text-balance text-5xl font-semibold leading-[1.02] tracking-tight text-[color:var(--color-foreground)] transition-all duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] md:text-[72px]",
+              "max-w-3xl text-balance text-4xl font-semibold leading-[1.05] tracking-tight text-[color:var(--color-foreground)] transition-all duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] sm:text-5xl md:text-[72px]",
               mounted
                 ? "translate-y-0 opacity-100"
                 : "translate-y-3 opacity-0",
@@ -158,7 +158,7 @@ function StageNode({
       </span>
       <span
         className={cn(
-          "whitespace-nowrap text-[10px] font-medium uppercase tracking-[0.08em] text-[color:var(--color-muted-foreground)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          "hidden whitespace-nowrap text-[10px] font-medium uppercase tracking-[0.08em] text-[color:var(--color-muted-foreground)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] sm:inline-block",
           mounted ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
         )}
         style={{ transitionDelay: `${900 + index * 60}ms` }}

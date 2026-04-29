@@ -50,25 +50,37 @@ export function WelcomeScene() {
             target="_blank"
             rel="noreferrer noopener"
             className={cn(
-              "group relative inline-flex items-center gap-2 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-card)]/70 px-3 py-1 text-xs font-semibold text-[color:var(--color-muted-foreground)] shadow-sm backdrop-blur-sm transition-all duration-500 hover:border-[color:var(--color-primary)]/30 hover:text-[color:var(--color-foreground)]",
+              "group relative inline-flex max-w-full items-center gap-2 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-card)]/70 px-3 py-1 text-xs font-semibold text-[color:var(--color-muted-foreground)] shadow-sm backdrop-blur-sm transition-all duration-500 hover:border-[color:var(--color-primary)]/30 hover:text-[color:var(--color-foreground)]",
               mounted ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
             )}
           >
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--color-primary)]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--color-primary)]">
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[color:var(--color-primary)]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--color-primary)]">
               <Sparkles className="h-3 w-3" />
               {latest?.prerelease ? "Beta" : "New"}
             </span>
-            <span>
-              {latest
-                ? `ADT Studio ${latest.tag_name} — released ${formatRelativeDate(latest.published_at)}`
-                : "ADT Studio — now on Windows, macOS, Linux"}
-            </span>
-            <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+            {latest ? (
+              <span className="min-w-0 truncate">
+                <span className="font-mono">{latest.tag_name}</span>
+                <span className="text-[color:var(--color-muted-foreground)]/80">
+                  {" · "}
+                  {formatRelativeDate(latest.published_at)}
+                </span>
+                <span className="hidden sm:inline">{" · ADT Studio"}</span>
+              </span>
+            ) : (
+              <span className="min-w-0 truncate">
+                <span className="sm:hidden">Now on macOS, Windows, Linux</span>
+                <span className="hidden sm:inline">
+                  ADT Studio — now on macOS, Windows, Linux
+                </span>
+              </span>
+            )}
+            <ArrowRight className="h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
           </a>
 
           <h1
             className={cn(
-              "text-balance text-[56px] font-bold leading-[0.88] tracking-tight transition-all duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] md:text-[88px] lg:text-[104px]",
+              "text-balance text-[48px] font-bold leading-[0.88] tracking-tight transition-all duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] sm:text-[56px] md:text-[88px] lg:text-[104px]",
               mounted ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
             )}
             style={{ transitionDelay: "150ms" }}
@@ -136,8 +148,10 @@ export function WelcomeScene() {
           )}
           style={{ transitionDelay: "400ms" }}
         >
-          <div className="origin-center scale-90 sm:scale-100">
-            <PdfToBookDiagram mounted={mounted} />
+          <div className="relative h-[294px] w-[336px] sm:h-[420px] sm:w-[480px]">
+            <div className="absolute inset-0 origin-top-left scale-[0.7] sm:scale-100">
+              <PdfToBookDiagram mounted={mounted} />
+            </div>
           </div>
         </div>
       </div>

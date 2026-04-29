@@ -60,7 +60,11 @@
   html {
     scroll-behavior: smooth;
     scroll-padding-top: 3rem;
-    scroll-snap-type: y proximity;
+  }
+  @media (min-width: 768px) {
+    html {
+      scroll-snap-type: y proximity;
+    }
   }
   html.no-snap {
     scroll-snap-type: none;
