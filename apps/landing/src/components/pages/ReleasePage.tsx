@@ -1,5 +1,4 @@
 import {
-  ArrowLeft,
   ArrowUpRight,
   Calendar,
   Download,
@@ -44,11 +43,13 @@ export function ReleasePage({ tag }: { tag: string }) {
           )}
         >
           <a
-            href="#releases"
+            href="https://github.com/unicef/adt-studio/releases"
+            target="_blank"
+            rel="noreferrer noopener"
             className="group inline-flex items-center gap-1.5 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-card)]/70 px-3 py-1 text-xs font-semibold text-[color:var(--color-muted-foreground)] shadow-sm backdrop-blur-sm transition-all hover:border-[color:var(--color-primary)]/30 hover:text-[color:var(--color-foreground)]"
           >
-            <ArrowLeft className="h-3.5 w-3.5 transition-transform duration-200 group-hover:-translate-x-0.5" />
-            All releases
+            See all releases on GitHub
+            <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </a>
         </div>
 

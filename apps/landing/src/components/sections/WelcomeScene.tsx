@@ -21,7 +21,7 @@ export function WelcomeScene() {
   return (
     <section
       id="top"
-      className="snap-section relative flex min-h-screen w-full items-center overflow-hidden px-6 pb-24 pt-32 lg:pb-32"
+      className="snap-section relative flex min-h-screen w-full items-center overflow-hidden px-4 pb-24 pt-32 lg:pb-32"
     >
       <div
         aria-hidden
@@ -68,20 +68,14 @@ export function WelcomeScene() {
 
           <h1
             className={cn(
-              "max-w-3xl text-balance text-[44px] font-bold leading-[1.04] tracking-tight transition-all duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] md:text-[64px] lg:text-[68px]",
+              "text-balance text-[56px] font-bold leading-[0.88] tracking-tight transition-all duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] md:text-[88px] lg:text-[104px]",
               mounted ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
             )}
             style={{ transitionDelay: "150ms" }}
           >
-            Accessibility, from the first{" "}
-            <span className="relative inline-block">
-              <span className="relative z-10 bg-gradient-to-r from-[color:var(--color-primary)] to-violet-500 bg-clip-text text-transparent">
-                page.
-              </span>
-              <span
-                aria-hidden
-                className="absolute inset-x-0 bottom-1.5 -z-0 h-3 rounded-full bg-[color:var(--color-primary)]/15"
-              />
+            <span className="block">Born</span>
+            <span className="block bg-gradient-to-r from-[color:var(--color-primary)] to-violet-500 bg-clip-text text-transparent">
+              accessible.
             </span>
           </h1>
 
@@ -92,9 +86,9 @@ export function WelcomeScene() {
             )}
             style={{ transitionDelay: "350ms" }}
           >
-            Turn any textbook into an accessible digital edition — audio,
-            structured layouts, translations and sign-language, built in from
-            the very first page.
+            Turn any textbook into something every student can read, hear,
+            see, and understand — audio, structured layouts, translations, and
+            sign language, all built in.
           </p>
 
           <div

@@ -114,7 +114,7 @@ export function CarouselScene() {
       id="carousel"
       className="snap-section relative flex min-h-screen items-center border-y border-[color:var(--color-border)] bg-[color:var(--color-muted)]/30 py-24 lg:py-32"
     >
-      <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-14 px-6 md:grid-cols-[1fr_1.35fr] md:px-10">
+      <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-14 px-4 md:grid-cols-[1fr_1.35fr]">
         <div className="flex flex-col">
           <SectionEyebrow label="How it works" className="mb-5" />
 

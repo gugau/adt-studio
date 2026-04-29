@@ -46,7 +46,7 @@ export function Nav() {
     >
       <div
         className={cn(
-          "mx-auto flex w-full max-w-6xl items-center gap-6 px-4 transition-all duration-300 sm:px-6",
+          "mx-auto flex w-full max-w-6xl items-center gap-6 px-4 transition-all duration-300",
           scrolled ? "h-14" : "h-16",
         )}
       >
@@ -61,7 +61,7 @@ export function Nav() {
               className="absolute inset-0 rounded-md bg-[color:var(--color-primary)]/30 opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-100"
             />
             <img
-              src="/favicon.svg"
+              src={`${import.meta.env.BASE_URL}favicon.svg`}
               alt=""
               width={26}
               height={26}

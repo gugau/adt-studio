@@ -15,7 +15,7 @@ export function TrustStrip() {
       aria-label="Trust"
       className="relative border-y border-[color:var(--color-border)] bg-[color:var(--color-muted)]/40"
     >
-      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-center gap-x-10 gap-y-3 px-6 py-5">
+      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-center gap-x-10 gap-y-3 px-4 py-5">
         <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--color-muted-foreground)]">
           Built with UNICEF
         </span>

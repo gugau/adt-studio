@@ -40,8 +40,15 @@ export function App() {
     if (isStaticPage) {
       window.scrollTo({ top: 0, behavior: "auto" });
       document.documentElement.classList.add("no-snap");
-    } else {
-      document.documentElement.classList.remove("no-snap");
+      return;
+    }
+    document.documentElement.classList.remove("no-snap");
+    const raw = window.location.hash.replace(/^#/, "");
+    if (raw && !raw.startsWith("/")) {
+      requestAnimationFrame(() => {
+        const el = document.getElementById(raw);
+        if (el) el.scrollIntoView({ behavior: "auto", block: "start" });
+      });
     }
   }, [isStaticPage, route.kind]);
 

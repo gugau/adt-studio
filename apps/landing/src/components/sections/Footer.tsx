@@ -65,7 +65,7 @@ export function Footer() {
           <div className="flex flex-col gap-4">
             <a href="#top" className="flex items-center gap-2.5">
               <img
-                src="/favicon.svg"
+                src={`${import.meta.env.BASE_URL}favicon.svg`}
                 alt=""
                 width={28}
                 height={28}
@@ -118,8 +118,8 @@ export function Footer() {
             &copy; {new Date().getFullYear()} ADT Studio — MIT licensed.
           </div>
           <div className="flex items-center gap-2 font-mono">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            All systems operational
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--color-primary)]" />
+            Every book, every learner.
           </div>
         </div>
       </div>

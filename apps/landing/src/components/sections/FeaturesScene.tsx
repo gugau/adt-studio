@@ -62,7 +62,7 @@ export function FeaturesScene() {
     >
       <div
         ref={ref}
-        className="mx-auto w-full max-w-6xl px-6 md:px-10"
+        className="mx-auto w-full max-w-6xl px-4"
       >
         <div className="mx-auto max-w-2xl text-center">
           <SectionEyebrow label="What it does" />

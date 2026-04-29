@@ -50,7 +50,7 @@ export function PrinciplesScene() {
       id="principles"
       className="snap-section relative flex min-h-screen items-center border-y border-[color:var(--color-border)] bg-[color:var(--color-muted)]/30 py-24 lg:py-32"
     >
-      <div ref={ref} className="mx-auto w-full max-w-6xl px-6 md:px-10">
+      <div ref={ref} className="mx-auto w-full max-w-6xl px-4">
         <div className="grid grid-cols-1 items-start gap-14 lg:grid-cols-[1fr_1.3fr] lg:gap-20">
           <div className="lg:sticky lg:top-28">
             <SectionEyebrow label="How we build it" />
