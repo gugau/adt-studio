@@ -56,8 +56,8 @@ export function LocaleSwitcher({
         aria-label={lingui._(msg`Change language`)}
         className={cn(
           variant === "topbar"
-            ? "border-none! bg-transparent! cursor-pointer text-white/70 hover:text-white hover:bg-gray-600! outline-none focus-visible:ring-2! focus-visible:ring-ring! focus-visible:ring-offset-2!"
-            : "h-9 w-auto gap-2 rounded-lg border-border bg-card/80 px-3 backdrop-blur hover:bg-accent cursor-pointer",
+            ? "h-8 border-none! bg-transparent! cursor-pointer text-white/70 hover:text-white hover:bg-gray-600! outline-none focus-visible:ring-2! focus-visible:ring-ring! focus-visible:ring-offset-2!"
+            : "h-8 w-auto gap-2 rounded-lg border-border bg-card/80 px-3 backdrop-blur hover:bg-accent cursor-pointer",
           className,
         )}
       >

@@ -27,10 +27,8 @@ import {
 } from "../stages";
 import { cn } from "@/lib/utils";
 import { Trans } from "@lingui/react/macro";
-import { useLingui } from "@lingui/react/macro";
-import { TitleBarControls } from "@/components/title-bar";
 import { useWindowControls } from "@/hooks/use-window-controls";
-import { DRAG_REGION } from "@/constants";
+import { usePlatform } from "@/hooks/use-platform";
 
 // Context for views to inject content into the step header
 interface StepHeaderControls {
@@ -88,7 +86,6 @@ export function StepViewRouter({
   selectedPageId?: string;
   onSelectPage?: (pageId: string | null) => void;
 }) {
-  const { t } = useLingui();
   const { available: hasWindows } = useWindowControls();
   const entry = VIEW_MAP[step];
   const stepConfig = STAGES.find((s) => s.slug === step);
@@ -97,6 +94,8 @@ export function StepViewRouter({
     fn: () => void;
   } | null>(null);
   const [headerSlotEl, setHeaderSlotEl] = useState<HTMLElement | null>(null);
+
+  const platform = usePlatform();
 
   const setOnLabelClick = useCallback((handler: (() => void) | null) => {
     setLabelClickHandler(handler ? { fn: handler } : null);
@@ -129,7 +128,7 @@ export function StepViewRouter({
           className={cn(
             "shrink-0 h-10 px-4 flex items-center gap-3 text-white drag-region",
             stepConfig.color,
-            hasWindows && "pr-0",
+            (hasWindows && platform) !== "macos" && "pr-0",
           )}
         >
           <div className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20">
@@ -162,8 +161,6 @@ export function StepViewRouter({
               <Settings className="w-3.5 h-3.5" />
             </Link>
           )}
-
-          <TitleBarControls />
         </div>
 
         {/* Step content */}
