@@ -82,6 +82,7 @@ const NODE_CACHE_RESOURCES: Record<PipelineNodeName, readonly PipelineCacheResou
   "text-catalog": ["text-catalog"],
   "catalog-translation": ["text-catalog"],
   "tts": ["tts"],
+  "word-timestamps": ["tts"],
   "package-web": [],
   "accessibility-assessment": ["debug"],
   "text-catalog-translation": ["text-catalog"],

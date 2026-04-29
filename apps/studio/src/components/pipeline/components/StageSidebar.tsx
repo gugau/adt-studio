@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useAccessibilityAssessment } from "@/hooks/use-debug"
 import { useBookTasks } from "@/hooks/use-book-tasks"
+import { useStageMissingCounts } from "@/hooks/use-stage-missing-counts"
 import { usePackageAdtStatus } from "@/hooks/use-books"
 import { useSignLanguageVideos } from "@/hooks/use-sign-language-videos"
 import { StepProgressRing } from "./StepProgressRing"
@@ -146,6 +147,9 @@ export function StageSidebar({
   const { data: packageStatus } = usePackageAdtStatus(bookLabel)
   const { tasks } = useBookTasks(bookLabel)
   const { openSettings } = useSettingsDialog()
+  const stageMissing = useStageMissingCounts(bookLabel)
+  const translateNeedsRerun = stageMissing.translate > 0
+  const speechNeedsRerun = stageMissing.speech > 0
 
   const currentState = stageState(activeStep)
   const effectivePagesOpen =
@@ -190,7 +194,14 @@ export function StageSidebar({
     const showSubTabs = isActive && isSettings && !!settingsTabs
     const state = completionOverrides[step.slug] ? "done" : stageState(step.slug)
     const stageCompleted = state === "done"
-    const ringState = state
+
+    // Translate/Speech revert to needs-rerun look when their downstream output
+    // has gaps (e.g. after a glossary addition). The in-view banner gives the
+    // user the actionable details and Re-run button.
+    const stageNeedsRerun =
+      (step.slug === "translate" && translateNeedsRerun) ||
+      (step.slug === "speech" && speechNeedsRerun)
+    const ringState = stageNeedsRerun ? "idle" : state
 
     // "book" is always filled; all other stages fill when their own completion signal is met.
     const iconFilled = step.slug === "book" ? true : stageCompleted

@@ -41,6 +41,58 @@ export function stripHtml(html: string): string {
   return text.replace(/\s+/g, " ").trim()
 }
 
+function normalizeGlossaryWord(word: string): string {
+  return word.trim().toLocaleLowerCase()
+}
+
+export function getGlossaryItemTextId(item: Pick<GlossaryItem, "id">, index: number): string {
+  return item.id?.trim() || `gl${String(index + 1).padStart(3, "0")}`
+}
+
+export function isManualGlossaryItem(item: Pick<GlossaryItem, "source">): boolean {
+  return item.source === "manual"
+}
+
+export function mergeGeneratedGlossaryWithManualItems(
+  generated: GlossaryOutput,
+  existingItems: GlossaryItem[],
+): GlossaryOutput {
+  const manualItems = existingItems.filter(isManualGlossaryItem)
+  if (manualItems.length === 0) {
+    return generated
+  }
+
+  const mergedItems = [...generated.items]
+  const existingIndexByWord = new Map(
+    mergedItems.map((item, index) => [normalizeGlossaryWord(item.word), index]),
+  )
+
+  for (const manualItem of manualItems) {
+    const normalizedWord = normalizeGlossaryWord(manualItem.word)
+    const existingIndex = existingIndexByWord.get(normalizedWord)
+    if (existingIndex !== undefined) {
+      const generatedItem = mergedItems[existingIndex]
+      mergedItems[existingIndex] = {
+        ...generatedItem,
+        ...manualItem,
+        id: getGlossaryItemTextId(generatedItem, existingIndex),
+        source: "manual",
+      }
+      continue
+    }
+
+    mergedItems.push({
+      ...manualItem,
+      source: "manual",
+    })
+  }
+
+  return {
+    ...generated,
+    items: mergedItems,
+  }
+}
+
 interface PageText {
   pageNumber: number
   text: string
@@ -152,8 +204,71 @@ export async function generateGlossary(
   )
 
   return {
-    items,
+    items: items.map((item) => ({
+      ...item,
+      source: item.source ?? "ai",
+    })),
     pageCount: pageTexts.length,
     generatedAt: new Date().toISOString(),
+  }
+}
+
+export interface GenerateGlossaryItemOptions {
+  word: string
+  context?: string
+  candidateVariations?: string[]
+  config: GlossaryConfig
+  llmModel: LLMModel
+  /** Prompt name for the single-term prompt. Defaults to `glossary_one`. */
+  promptName?: string
+}
+
+export interface GeneratedGlossaryItemFields {
+  definition: string
+  variations: string[]
+  emojis: string[]
+}
+
+export async function generateGlossaryItem(
+  options: GenerateGlossaryItemOptions
+): Promise<GeneratedGlossaryItemFields> {
+  const { word, context, candidateVariations = [], config, llmModel } = options
+  const promptName = options.promptName ?? "glossary_one"
+  const languageContext = buildLanguageContext(config.language)
+
+  const result = await llmModel.generateObject<{
+    reasoning: string
+    items: GlossaryItem[]
+  }>({
+    schema: glossaryLLMSchema,
+    prompt: promptName,
+    context: {
+      ...languageContext,
+      word,
+      context: context ?? "",
+      candidate_variations: candidateVariations,
+    },
+    maxRetries: config.maxRetries,
+    maxTokens: 2048,
+    log: {
+      taskType: "glossary",
+      promptName,
+    },
+  })
+
+  const item = result.object.items[0]
+  if (!item) {
+    throw new Error(`LLM returned no glossary item for word: ${word}`)
+  }
+
+  const allowedVariations = new Set(
+    candidateVariations.map((v) => v.toLocaleLowerCase())
+  )
+  return {
+    definition: item.definition,
+    variations: item.variations.filter((v) =>
+      allowedVariations.has(v.toLocaleLowerCase())
+    ),
+    emojis: item.emojis,
   }
 }

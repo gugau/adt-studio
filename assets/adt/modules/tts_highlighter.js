@@ -5,13 +5,20 @@
  */
 import { state } from "./state.js";
 import { stopAudio } from "./audio.js";
-import { unhighlightAllElements } from './ui_utils.js';
+import { unhighlightAllElements, unhighlightElement, highlightElement } from './ui_utils.js';
 import { showGlossaryDefinition } from './interface.js';
+import {
+  buildWordRenderPlan,
+  getHighlightDisplayText,
+  normalizeGlossaryText,
+} from "./tts_highlighter_utils.js";
 
 let timecodeData = null;
 let monitorInterval = null;
 let currentListener = null;
 let endedListener = null;
+let metadataListener = null;
+let attachedAudio = null;
 const TOLERANCE = 0.2; // 200ms tolerance
 
 let subtitlePopup = null;
@@ -29,10 +36,16 @@ export async function initializeWordByWordHighlighter() {
       throw new Error(`Failed to load timecode JSON: ${response.statusText}`);
     }
     timecodeData = await response.json();
-    startMonitoring();
   } catch (error) {
-    console.error("Error initializing word-by-word highlighter:", error);
+    timecodeData = {};
+    console.warn("Timecodes unavailable, using runtime fallback highlighting.", error);
   }
+  startMonitoring();
+}
+
+function getStoredWordTimestamps(entry) {
+  const timestamps = (entry?.timecodes && entry.timecodes[1] && entry.timecodes[1].word_timestamps) || [];
+  return timestamps.filter((timestamp) => normalizeGlossaryText(timestamp?.text).length > 0);
 }
 
 /**
@@ -52,11 +65,14 @@ function startMonitoring() {
  */
 function checkCurrentAudio() {
   const audio = state.currentAudio;
-  if (audio && !audio._wordHighlighterAttached) {
+  if (audio && state.wordHighlightMode !== false && !audio._wordHighlighterAttached) {
     attachWordHighlighter(audio);
-  } else if (!audio && currentListener) {
+  } else if ((!audio || state.wordHighlightMode === false) && (currentListener || subtitlePopup)) {
     detachCurrentListener();
     clearHighlights();
+    if (subtitlePopup) {
+      hideSubtitlePopup();
+    }
   }
 }
 
@@ -103,15 +119,28 @@ function attachWordHighlighter(audio) {
     }
   }
 
-  if (!timecodeData || !timecodeData[timecodeKey]) return;
-  const entry = timecodeData[timecodeKey];
-
-  const wordTimestamps = (entry.timecodes && entry.timecodes[1] && entry.timecodes[1].word_timestamps) || [];
-  if (wordTimestamps.length === 0) return;
-
   const translatedText = state.translations && state.translations[translationKey]
     ? state.translations[translationKey]
     : element.textContent;
+  const entry = timecodeData && timecodeData[timecodeKey] ? timecodeData[timecodeKey] : null;
+  const storedWordTimestamps = getStoredWordTimestamps(entry);
+
+  // Fall back to block (blue-box) highlight when timecodes are missing — more
+  // reliable than evenly-divided approximate timings that can drift from the
+  // actual word boundaries.
+  if (storedWordTimestamps.length === 0) {
+    const isImage = element.tagName.toLowerCase() === 'img';
+    if (!isImage) {
+      highlightElement(element);
+    }
+    // Mark as attached so the 50ms poll doesn't re-enter every tick.
+    // processAudioQueue's unhighlightElement after playback will clear the block highlight.
+    audio._wordHighlighterAttached = true;
+    attachedAudio = audio;
+    return;
+  }
+
+  const wordTimestamps = storedWordTimestamps;
 
   // Check if this is an image element - if so, create a subtitle popup
   const isImage = element.tagName.toLowerCase() === 'img';
@@ -128,6 +157,10 @@ function attachWordHighlighter(audio) {
   // Get the target element for highlighting (either the original element or the subtitle popup content)
   const targetElement = isImage ? subtitlePopup.querySelector('.subtitle-content') : element;
 
+  // Once word timings are available, drop the coarse block highlight so only
+  // the active word is emphasized.
+  unhighlightElement(element);
+
   // Wrap the text in spans (if not already wrapped).
   if (!targetElement.dataset.wordsWrapped) {
     wrapTextInSpans(targetElement, wordTimestamps, translatedText);
@@ -136,7 +169,7 @@ function attachWordHighlighter(audio) {
 
   // Clear highlights on other text elements.
   document.querySelectorAll('[data-words-wrapped="true"]').forEach(el => {
-    if (el !== element) {
+    if (el !== targetElement) {
       el.querySelectorAll("span[data-word-index]").forEach(span => {
         span.classList.remove("bg-yellow-300");
         span.classList.remove("rounded-lg");
@@ -146,9 +179,9 @@ function attachWordHighlighter(audio) {
   });
 
   // Highlight the first word when we start
-  const firstSpan = element.querySelector('span[data-word-index="0"]');
+  const firstSpan = targetElement.querySelector('span[data-word-index="0"]');
   if (firstSpan) {
-    element.querySelectorAll("span[data-word-index]").forEach(span => {
+    targetElement.querySelectorAll("span[data-word-index]").forEach(span => {
       span.classList.remove("bg-yellow-300");
       span.classList.remove("rounded-lg");
       span.classList.remove("text-black");
@@ -176,9 +209,9 @@ function attachWordHighlighter(audio) {
 
   // Also listen for play event to ensure first word gets highlighted
   audio.addEventListener("play", () => {
-    const firstSpan = element.querySelector('span[data-word-index="0"]');
+    const firstSpan = targetElement.querySelector('span[data-word-index="0"]');
     if (firstSpan && audio.currentTime < wordTimestamps[0].end + TOLERANCE) {
-      element.querySelectorAll("span[data-word-index]").forEach(span => {
+      targetElement.querySelectorAll("span[data-word-index]").forEach(span => {
         span.classList.remove("bg-yellow-300");
         span.classList.remove("rounded-lg");
         span.classList.remove("text-black");
@@ -193,6 +226,7 @@ function attachWordHighlighter(audio) {
   document.addEventListener("audioIndexChanged", clearHighlights);
 
   audio._wordHighlighterAttached = true;
+  attachedAudio = audio;
 }
 
 /**
@@ -345,21 +379,94 @@ function clearHighlights() {
  * @private
  */
 function detachCurrentListener() {
-  const audio = state.currentAudio;
-  if (audio) {
-    if (currentListener) {
+  const audio = attachedAudio || state.currentAudio;
+  if (audio && currentListener) {
       audio.removeEventListener("timeupdate", currentListener);
-      currentListener = null;
-    }
-    if (endedListener) {
+  }
+  if (audio && endedListener) {
       audio.removeEventListener("ended", endedListener);
-      endedListener = null;
-    }
+  }
+  if (audio && metadataListener) {
+      audio.removeEventListener("loadedmetadata", metadataListener);
+  }
+  currentListener = null;
+  endedListener = null;
+  metadataListener = null;
+
+  if (audio) {
     audio._wordHighlighterAttached = false;
   }
+  attachedAudio = null;
 
   // Remove the index change listener
   document.removeEventListener("audioIndexChanged", clearHighlights);
+}
+
+function createWordSpan(documentRef, wordIndex, text, termAttr = null) {
+  const span = documentRef.createElement("span");
+  span.setAttribute("data-word-index", String(wordIndex));
+  span.textContent = text;
+
+  if (termAttr) {
+    span.className = termAttr.classes.join(" ");
+    span.setAttribute("role", termAttr.role || "button");
+    span.setAttribute("tabindex", termAttr.tabindex || "0");
+    span.setAttribute("data-glossary-term", "true");
+  }
+
+  return span;
+}
+
+function renderAlignedWordNodes(documentRef, renderPlan, modifiedTimestamps, glossaryMapping) {
+  const fragment = documentRef.createDocumentFragment();
+  let segmentIndex = 0;
+
+  while (segmentIndex < renderPlan.length) {
+    const segment = renderPlan[segmentIndex];
+    if (segment.type === "separator") {
+      fragment.appendChild(documentRef.createTextNode(segment.text));
+      segmentIndex += 1;
+      continue;
+    }
+
+    const ts = modifiedTimestamps[segment.wordIndex];
+    if (!ts) {
+      fragment.appendChild(documentRef.createTextNode(segment.text));
+      segmentIndex += 1;
+      continue;
+    }
+
+    if (ts.isPartOfGlossaryTerm && ts.glossaryTermIndex === segment.wordIndex) {
+      const endWordIndex = segment.wordIndex + ts.glossaryTermLength - 1;
+      let termText = "";
+
+      while (segmentIndex < renderPlan.length) {
+        const nextSegment = renderPlan[segmentIndex];
+        termText += nextSegment.text;
+        segmentIndex += 1;
+
+        if (nextSegment.type === "word" && nextSegment.wordIndex === endWordIndex) {
+          break;
+        }
+      }
+
+      fragment.appendChild(
+        createWordSpan(documentRef, ts.glossaryTermIndex, termText, glossaryMapping[ts.glossaryTerm]),
+      );
+      continue;
+    }
+
+    if (!ts.isPartOfGlossaryTerm) {
+      const glossaryEntry = glossaryMapping[ts.normalizedText] || null;
+      fragment.appendChild(
+        createWordSpan(documentRef, segment.wordIndex, segment.text, glossaryEntry),
+      );
+    }
+
+    segmentIndex += 1;
+  }
+
+  return fragment;
 }
 
 /**
@@ -374,30 +481,32 @@ function wrapTextInSpans(element, wordTimestamps, translatedText) {
   const glossaryMapping = {};
   const glossaryElements = element.querySelectorAll('.glossary-term');
 
-  // Use the provided translated text instead of element.textContent
-  const originalText = translatedText || element.textContent;
-
-  // Helper function to normalize text by removing punctuation
-  const normalizeText = (text) => {
-    return text.toLowerCase().trim().replace(/[.,;:!?()]/g, '');
-  };
+  // Preserve the text already rendered in the DOM so playback does not
+  // rewrite punctuation or spacing from a catalog entry that differs slightly.
+  const originalText = getHighlightDisplayText(element, translatedText);
 
   // Build a map of all glossary terms
   glossaryElements.forEach(termElement => {
     const termText = termElement.textContent.trim();
-    const normalizedText = normalizeText(termText);
+    const normalizedText = normalizeGlossaryText(termText);
+    if (!normalizedText) return;
 
     glossaryMapping[normalizedText] = {
       classes: Array.from(termElement.classList),
       role: termElement.getAttribute('role'),
       tabindex: termElement.getAttribute('tabindex'),
-      text: termText, // Preserve original casing
-      originalText: termText // Keep the original text with punctuation
     };
   });
 
+  const renderPlan = buildWordRenderPlan(originalText);
+  const renderWords = renderPlan.filter(segment => segment.type === "word");
+
   // Create a working copy of timestamps that we can modify
-  const modifiedTimestamps = [...wordTimestamps];
+  const modifiedTimestamps = wordTimestamps.map((timestamp, index) => ({
+    ...timestamp,
+    displayText: renderWords?.[index]?.text || timestamp.text,
+    normalizedText: renderWords?.[index]?.normalizedText || normalizeGlossaryText(timestamp.text),
+  }));
 
   // Step 1: Sort glossary terms by length (longest first) to handle overlapping terms
   // This ensures "bosque tropical" is processed before "bosque"
@@ -415,7 +524,7 @@ function wrapTextInSpans(element, wordTimestamps, translatedText) {
 
       // Get the sequence of words at this position and normalize for comparison
       const sequence = modifiedTimestamps.slice(i, i + words.length)
-        .map(ts => normalizeText(ts.text))
+        .map(ts => ts.normalizedText)
         .join(' ');
 
       // If we found a match
@@ -431,62 +540,16 @@ function wrapTextInSpans(element, wordTimestamps, translatedText) {
     }
   });
 
-  // Step 3: Generate HTML with special handling for glossary terms
-  let html = [];
-  let i = 0;
-  while (i < modifiedTimestamps.length) {
-    const ts = modifiedTimestamps[i];
+  // Step 3: Render word spans while preserving the original punctuation and spacing.
+  const fragment = renderAlignedWordNodes(
+    element.ownerDocument,
+    renderPlan,
+    modifiedTimestamps,
+    glossaryMapping,
+  );
 
-    // If this is the start of a multi-word glossary term
-    if (ts.isPartOfGlossaryTerm && ts.glossaryTermIndex === i) {
-      // Get the full text of the multi-word term with original punctuation
-      const termText = modifiedTimestamps
-        .slice(i, i + ts.glossaryTermLength)
-        .map(w => w.text)
-        .join(' ');
-
-      const termAttr = glossaryMapping[ts.glossaryTerm];
-      const classList = termAttr.classes.join(' ');
-
-      // Create a single span for the entire term
-      html.push(`<span 
-        data-word-index="${i}" 
-        class="${classList}" 
-        role="${termAttr.role || 'button'}" 
-        tabindex="${termAttr.tabindex || '0'}"
-        data-glossary-term="true"
-      >${termText}</span>`);
-
-      // Skip ahead past all words in this term
-      i += ts.glossaryTermLength;
-    }
-    // Single word glossary term - check with normalized text
-    else {
-      // Check if this word (without punctuation) is a glossary term
-      const normalizedWord = normalizeText(ts.text);
-
-      if (glossaryMapping[normalizedWord]) {
-        const termAttr = glossaryMapping[normalizedWord];
-        const classList = termAttr.classes.join(' ');
-
-        html.push(`<span 
-          data-word-index="${i}" 
-          class="${classList}" 
-          role="${termAttr.role || 'button'}" 
-          tabindex="${termAttr.tabindex || '0'}"
-          data-glossary-term="true"
-        >${ts.text}</span>`);
-      }
-      // Regular word
-      else if (!ts.isPartOfGlossaryTerm) {
-        html.push(`<span data-word-index="${i}">${ts.text}</span>`);
-      }
-      // Skip words that are part of a multi-word term but not the start
-      i++;
-    }
-  }
-
-  element.innerHTML = html.join(' ');
+  element.textContent = "";
+  element.appendChild(fragment);
 
   // Add event parameter to the click handler
   element.querySelectorAll('[data-glossary-term="true"]').forEach(term => {
@@ -593,4 +656,3 @@ function updateWordHighlighting(audio, element, wordTimestamps) {
     activeSpan.classList.add("text-black");
   }
 }
-

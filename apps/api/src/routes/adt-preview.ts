@@ -6,10 +6,12 @@ import { parseBookLabel } from "@adt/types"
 import {
   WebRenderingOutput,
   PageSectioningOutput,
+  type SpeechConfig,
   type TextCatalogOutput,
   type GlossaryOutput,
   type QuizGenerationOutput,
   type TTSOutput,
+  type WordTimestampOutput,
   type TocGenerationOutput,
   type Quiz,
   type ContentNodeData,
@@ -87,6 +89,22 @@ function maxSourceMtime(webAssetsDir: string): number {
   return max
 }
 
+function getPreviewBundleVersion(webAssetsDir: string): string {
+  const candidates = [
+    maxSourceMtime(webAssetsDir),
+  ]
+
+  for (const fileName of ["base.bundle.min.js", "base.bundle.local.js"]) {
+    const bundlePath = path.join(webAssetsDir, fileName)
+    if (fs.existsSync(bundlePath)) {
+      candidates.push(fs.statSync(bundlePath).mtimeMs)
+    }
+  }
+
+  const latest = Math.max(...candidates, 1)
+  return String(Math.trunc(latest))
+}
+
 // ---------------------------------------------------------------------------
 // Caches (built lazily per book)
 // ---------------------------------------------------------------------------
@@ -149,6 +167,50 @@ function buildTextsMap(
     }
   }
   return textsMap
+}
+
+function getWordTimestamps(
+  storage: Storage,
+  language: string,
+): WordTimestampOutput | undefined {
+  const normalizedLanguage = normalizeLocale(language)
+  const legacyLanguage = normalizedLanguage.replace("-", "_")
+  const row =
+    storage.getLatestNodeData("tts-timestamps", normalizedLanguage) ??
+    storage.getLatestNodeData("tts-timestamps", legacyLanguage)
+  return row?.data as WordTimestampOutput | undefined
+}
+
+function buildRuntimeTimecodeMap(
+  timestamps: WordTimestampOutput | undefined,
+): Record<string, {
+  timecodes: [null, {
+    word_timestamps: Array<{ text: string; start: number; end: number }>
+  }]
+}> {
+  const map: Record<string, {
+    timecodes: [null, {
+      word_timestamps: Array<{ text: string; start: number; end: number }>
+    }]
+  }> = {}
+
+  for (const [textId, entry] of Object.entries(timestamps?.entries ?? {})) {
+    if (entry.words.length === 0) continue
+    map[textId] = {
+      timecodes: [
+        null,
+        {
+          word_timestamps: entry.words.map((word) => ({
+            text: word.word,
+            start: word.start,
+            end: word.end,
+          })),
+        },
+      ],
+    }
+  }
+
+  return map
 }
 
 /** Build a map from sectionId → 1-based pageIndex matching the manifest order */
@@ -332,7 +394,12 @@ function buildHeadingBasedToc(storage: Storage): Array<{ section_id: string; hre
 }
 
 /** Build config.json that reflects actual book capabilities */
-function buildPreviewConfig(storage: Storage, language: string) {
+function buildPreviewConfig(
+  storage: Storage,
+  language: string,
+  webAssetsDir: string,
+  speechConfig?: SpeechConfig,
+) {
   const glossary = getGlossary(storage)
   const hasGlossary = glossary !== undefined && glossary.items.length > 0
 
@@ -341,6 +408,7 @@ function buildPreviewConfig(storage: Storage, language: string) {
     storage.getLatestNodeData("tts", language) ??
     storage.getLatestNodeData("tts", legacyLanguage)
   const hasTTS = ttsRow !== null
+  const highlightEnabled = hasTTS && speechConfig?.word_highlighting === true
 
   const quizRow = storage.getLatestNodeData("quiz-generation", "book")
   const quizData = quizRow?.data as { quizzes?: unknown[] } | undefined
@@ -368,7 +436,7 @@ function buildPreviewConfig(storage: Storage, language: string) {
 
   return {
     title: getBookTitle(storage),
-    bundleVersion: "1",
+    bundleVersion: getPreviewBundleVersion(webAssetsDir),
     languages: {
       available: [language],
       default: language,
@@ -386,7 +454,7 @@ function buildPreviewConfig(storage: Storage, language: string) {
       notepad: false,
       state: false,
       characterDisplay: false,
-      highlight: false,
+      highlight: highlightEnabled,
       activities: hasQuiz || hasActivitySections,
     },
     analytics: {
@@ -445,12 +513,14 @@ export function createAdtPreviewRoutes(
 
   // /assets/config.json — Dynamic config reflecting book capabilities
   app.get("/books/:label/adt-preview/assets/config.json", (c) => {
-    const config = withStorage(c.req.param("label"), (storage) => {
+    const safeLabel = parseBookLabel(c.req.param("label"))
+    const bookConfig = loadBookConfig(safeLabel, booksDir, configPath)
+    const previewConfig = withStorage(c.req.param("label"), (storage) => {
       const language = getBookLanguage(storage)
-      return buildPreviewConfig(storage, language)
+      return buildPreviewConfig(storage, language, webAssetsDir, bookConfig.speech)
     })
     c.header("Content-Type", "application/json")
-    return c.body(JSON.stringify(config))
+    return c.body(JSON.stringify(previewConfig))
   })
 
   // /assets/* — Static files from webAssetsDir
@@ -634,6 +704,20 @@ export function createAdtPreviewRoutes(
     return c.body(JSON.stringify(audioMap))
   })
 
+  // /content/i18n/:lang/timecode/timecode_output.json — word-level read-aloud timings
+  app.get("/books/:label/adt-preview/content/i18n/:lang/timecode/timecode_output.json", (c) => {
+    const lang = normalizeLocale(c.req.param("lang"))
+    const safeLabel = parseBookLabel(c.req.param("label"))
+    const bookConfig = loadBookConfig(safeLabel, booksDir, configPath)
+    const timecodes = bookConfig.speech?.word_highlighting === true
+      ? withStorage(c.req.param("label"), (storage) =>
+          buildRuntimeTimecodeMap(getWordTimestamps(storage, lang))
+        )
+      : {}
+    c.header("Content-Type", "application/json")
+    return c.body(JSON.stringify(timecodes))
+  })
+
   // /content/i18n/:lang/videos.json — Sign language video mapping
   // The ADT JS runtime expects keys like "video-{pageIndex}" and files served from "video/" path.
   // Each video is assigned to a sectionId which maps 1:1 to a pageIndex.
@@ -764,22 +848,23 @@ export function createAdtPreviewRoutes(
 
         const quizHtmlContent = renderQuizHtml(quiz, pageId, catalog)
         // Determine page index from the manifest
-        const manifest = buildPagesManifest(storage)
-        const manifestIndex = manifest.findIndex((e) => e.section_id === pageId)
+      const manifest = buildPagesManifest(storage)
+      const manifestIndex = manifest.findIndex((e) => e.section_id === pageId)
+      const previewBundleVersion = getPreviewBundleVersion(webAssetsDir)
 
-        const html = renderPageHtml({
-          content: quizHtmlContent,
-          language,
-          sectionId: pageId,
-          pageTitle: title,
-          pageIndex: manifestIndex >= 0 ? manifestIndex + 1 : 1,
-          activityAnswers: buildQuizAnswers(quiz, pageId),
-          hasMath: false,
-          bundleVersion: "1",
-          skipContentWrapper: true,
-          applyBodyBackground,
-          embed,
-        })
+      const html = renderPageHtml({
+        content: quizHtmlContent,
+        language,
+        sectionId: pageId,
+        pageTitle: title,
+        pageIndex: manifestIndex >= 0 ? manifestIndex + 1 : 1,
+        activityAnswers: buildQuizAnswers(quiz, pageId),
+        hasMath: false,
+        bundleVersion: previewBundleVersion,
+        skipContentWrapper: true,
+        applyBodyBackground,
+        embed,
+      })
 
         c.header("Content-Type", "text/html; charset=utf-8")
         return c.body(html)
@@ -822,6 +907,7 @@ export function createAdtPreviewRoutes(
       // Determine page index from manifest (includes quiz pages)
       const manifest = buildPagesManifest(storage)
       const manifestIndex = manifest.findIndex((e) => e.section_id === pageId)
+      const previewBundleVersion = getPreviewBundleVersion(webAssetsDir)
 
       const sectionMeta = sectioningParsed?.success
         ? sectioningParsed.data.sections[targetSectionIndex]
@@ -844,7 +930,7 @@ export function createAdtPreviewRoutes(
         pageIndex: manifestIndex >= 0 ? manifestIndex + 1 : 1,
         activityAnswers: renderedSection.activityAnswers,
         hasMath: previewHasMath,
-        bundleVersion: "1",
+        bundleVersion: previewBundleVersion,
         applyBodyBackground,
         embed,
       })

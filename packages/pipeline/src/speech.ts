@@ -3,7 +3,8 @@ import path from "node:path"
 import crypto from "node:crypto"
 import yaml from "js-yaml"
 import type { SpeechFileEntry, TTSProviderConfig } from "@adt/types"
-import type { RateLimiter, TTSSynthesizer } from "@adt/llm"
+import type { RateLimiter, TTSSynthesizer, WhisperTranscriptionResult } from "@adt/llm"
+import { transcribeWithWhisper } from "@adt/llm"
 import { getBaseLanguage, normalizeLocale } from "./language-context.js"
 
 // ---------------------------------------------------------------------------
@@ -325,4 +326,57 @@ export async function generateSpeechFile(
     cached: false,
     provider,
   }
+}
+
+// ---------------------------------------------------------------------------
+// Word timestamp generation (Whisper) with cache
+// ---------------------------------------------------------------------------
+
+export interface GenerateWordTimestampsOptions {
+  audioBuffer: Buffer
+  fileName: string
+  apiKey: string
+  language?: string
+  prompt?: string
+  cacheDir: string
+}
+
+export interface GenerateWordTimestampsResult extends WhisperTranscriptionResult {
+  cached: boolean
+}
+
+/**
+ * Transcribe an audio file with Whisper word-level timestamps, cached on
+ * audio content + language + prompt so re-runs after a TTS cache hit are instant.
+ */
+export async function generateWordTimestamps(
+  options: GenerateWordTimestampsOptions,
+): Promise<GenerateWordTimestampsResult> {
+  const { audioBuffer, fileName, apiKey, language, prompt, cacheDir } = options
+
+  const audioHash = crypto.createHash("sha256").update(audioBuffer).digest("hex")
+  const hash = crypto
+    .createHash("sha256")
+    .update(JSON.stringify({ audioHash, language: language ?? "", prompt: prompt ?? "", model: "whisper-1" }))
+    .digest("hex")
+
+  const cacheRoot = path.resolve(cacheDir, "word-timestamps")
+  const cachePath = path.resolve(cacheRoot, `${hash}.json`)
+  assertWithinBase(cacheRoot, cachePath, "cache file")
+
+  if (fs.existsSync(cachePath)) {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(cachePath, "utf-8")) as WhisperTranscriptionResult
+      return { ...parsed, cached: true }
+    } catch {
+      // Fall through to regenerate on parse failure
+    }
+  }
+
+  const result = await transcribeWithWhisper(audioBuffer, fileName, apiKey, language, prompt)
+
+  fs.mkdirSync(cacheRoot, { recursive: true })
+  fs.writeFileSync(cachePath, JSON.stringify(result, null, 2) + "\n")
+
+  return { ...result, cached: false }
 }

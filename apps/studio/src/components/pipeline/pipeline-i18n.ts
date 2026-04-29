@@ -73,6 +73,7 @@ export const STEP_LABEL_MESSAGES: Record<string, MessageDescriptor> = {
   "text-catalog": msg`Text Catalog`,
   "catalog-translation": msg`Catalog Translation`,
   tts: msg`Speech Generation`,
+  "word-timestamps": msg`Word Highlighting`,
   "package-web": msg`Web Package`,
 }
 
