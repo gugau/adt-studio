@@ -186,7 +186,6 @@ export function StepViewRouter({
             />
           </div>
         )}
-        <TitleBarControls className="" />
       </div>
     </StepHeaderContext.Provider>
   );
