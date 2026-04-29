@@ -100,7 +100,7 @@ function collectDirectoryFingerprint(dirPath: string, prefix = ""): Array<[strin
   return entries
 }
 
-function getWordTimestamps(
+export function getWordTimestamps(
   storage: Storage,
   language: string,
 ): WordTimestampOutput | undefined {
@@ -948,6 +948,14 @@ body {
 }
 .text-overlay p {
   position: absolute !important;
+}
+
+/* SMIL media-overlay active class — declared in the OPF as
+   media:active-class. EPUB readers toggle this on the active text
+   element during read-aloud playback. */
+.-epub-media-overlay-active {
+  background: rgba(255, 235, 59, 0.4);
+  border-radius: 0.15em;
 }
 </style>`
 

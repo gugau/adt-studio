@@ -1,8 +1,10 @@
 import fs from "node:fs"
 import path from "node:path"
+import { JSDOM } from "jsdom"
 import type { Storage } from "@adt/storage"
-import type { BookMetadata, TocGenerationOutput } from "@adt/types"
-import { type PackageAdtWebOptions, copyDirRecursive, injectWebpubStyles, htmlToXhtml } from "./package-web.js"
+import type { BookMetadata, TocGenerationOutput, WordTimestampOutput } from "@adt/types"
+import { type PackageAdtWebOptions, copyDirRecursive, injectWebpubStyles, htmlToXhtml, getWordTimestamps } from "./package-web.js"
+import { buildSmil, formatMediaDuration, type SmilParagraph } from "./smil.js"
 
 export type PackageEpubOptions = PackageAdtWebOptions
 
@@ -86,6 +88,25 @@ export function packageEpub(
   fs.writeFileSync(pagesJsonPath, JSON.stringify(rawPages, null, 2))
 
   // ------------------------------------------------------------------
+  // SMIL media overlays (fixed-layout only)
+  // ------------------------------------------------------------------
+  // Word-level read-aloud sync. Per-page .smil files reference the word
+  // <span id> elements emitted by the renderer + whisper word timestamps.
+  // Generated before file enumeration so collectFiles picks them up into
+  // the OPF manifest automatically.
+  //
+  // Gated on the export dialog's read-aloud toggle (`features.readAloud`)
+  // — disabling audio also disables SMIL, since SMIL is just sync metadata
+  // for the audio. Word-level vs paragraph-level fallback inside the SMIL
+  // builder is gated by whether tts-timestamps exist in storage (which is
+  // in turn gated by `speech.word_highlighting` at speech-generation time)
+  // and by whether the page has per-word `<span id>` (only fixed-layout
+  // emits these; reflowable falls back to paragraph-level highlights).
+  const smilEntries = options.features?.readAloud !== false
+    ? generateSmilFiles(storage, oebpsDir, rawPages, language)
+    : []
+
+  // ------------------------------------------------------------------
   // Load metadata
   // ------------------------------------------------------------------
   const metadataRow = storage.getLatestNodeData("metadata", "book")
@@ -141,7 +162,17 @@ export function packageEpub(
   // OEBPS/content.opf
   fs.writeFileSync(
     path.join(oebpsDir, "content.opf"),
-    buildOpf({ title, authors, publisher, language, pageList, allFiles, coverHref, fixedLayout: options.fixedLayout }),
+    buildOpf({
+      title,
+      authors,
+      publisher,
+      language,
+      pageList,
+      allFiles,
+      coverHref,
+      fixedLayout: options.fixedLayout,
+      smilEntries,
+    }),
   )
 
   // OEBPS/toc.xhtml (EPUB 3 navigation document)
@@ -182,6 +213,7 @@ const EPUB_MIME_TYPES: Record<string, string> = {
   ".ttf": "font/ttf",
   ".otf": "font/otf",
   ".dic": "application/octet-stream",
+  ".smil": "application/smil+xml",
 }
 
 function collectFiles(
@@ -224,6 +256,108 @@ const CONTAINER_XML = `<?xml version="1.0" encoding="UTF-8"?>
   </rootfiles>
 </container>`
 
+interface SmilEntry {
+  /** Page href the SMIL file is bound to (e.g. `pg001_sec001.xhtml`). */
+  pageHref: string
+  /** Path to the SMIL inside OEBPS (e.g. `smil/pg001_sec001.smil`). */
+  smilHref: string
+  /** Sum of audio durations covered by the SMIL, in seconds. */
+  durationSeconds: number
+}
+
+/**
+ * Walk page XHTML files and emit per-page `.smil` documents. Mirrors the
+ * viewer's count-guard: word-level when source span count matches whisper
+ * word count, paragraph-level fallback otherwise.
+ */
+function generateSmilFiles(
+  storage: Storage,
+  oebpsDir: string,
+  pages: PageEntry[],
+  language: string,
+): SmilEntry[] {
+  const wts: WordTimestampOutput | undefined = getWordTimestamps(storage, language)
+  if (!wts || Object.keys(wts.entries ?? {}).length === 0) return []
+
+  const audiosJsonPath = path.join(oebpsDir, "content", "i18n", language, "audios.json")
+  if (!fs.existsSync(audiosJsonPath)) return []
+  const audiosMap = JSON.parse(fs.readFileSync(audiosJsonPath, "utf-8")) as Record<string, string>
+
+  const smilDir = path.join(oebpsDir, "smil")
+  fs.mkdirSync(smilDir, { recursive: true })
+
+  const entries: SmilEntry[] = []
+  for (const page of pages) {
+    if (!page.href.endsWith(".xhtml")) continue
+    const xhtmlPath = path.join(oebpsDir, page.href)
+    if (!fs.existsSync(xhtmlPath)) continue
+    const xhtml = fs.readFileSync(xhtmlPath, "utf-8")
+
+    const paragraphs: SmilParagraph[] = []
+    for (const p of parseParagraphs(xhtml)) {
+      const audioFile = audiosMap[p.paragraphId]
+      const tsEntry = wts.entries[p.paragraphId]
+      if (!audioFile || !tsEntry || tsEntry.words.length === 0) continue
+      paragraphs.push({
+        paragraphId: p.paragraphId,
+        // SMIL lives at OEBPS/smil/{file}; audio at OEBPS/content/i18n/{lang}/audio/{file}.
+        audioPath: `../content/i18n/${language}/audio/${audioFile}`,
+        audioDuration: tsEntry.duration,
+        wordIds: p.wordIds,
+        whisperWords: tsEntry.words.map((w) => ({ word: w.word, start: w.start, end: w.end })),
+      })
+    }
+    if (paragraphs.length === 0) continue
+
+    const smilFileName = `${page.section_id}.smil`
+    const result = buildSmil({
+      // SMIL is in `smil/`; pages are at OEBPS root.
+      pageHref: `../${page.href}`,
+      paragraphs,
+    })
+    if (!result) continue
+
+    fs.writeFileSync(path.join(smilDir, smilFileName), result.xml)
+    entries.push({
+      pageHref: page.href,
+      smilHref: `smil/${smilFileName}`,
+      durationSeconds: result.durationSeconds,
+    })
+  }
+  return entries
+}
+
+/**
+ * Walk the page DOM for any element with `data-id` (the same convention the
+ * text-catalog uses to find audio-bearing elements) and capture the word
+ * `<span id>` children inside. Reflowable pages typically use `<h1>`,
+ * `<p>`, `<li>`, `<td>` etc. — fixed-layout uses `<p>` exclusively. Both
+ * flow through the same SMIL builder; reflowable always lands on
+ * paragraph-level fallback because no word ids are emitted there.
+ *
+ * `<img>` elements are excluded — image audio (alt-text descriptions)
+ * doesn't currently flow through the EPUB media overlay pipeline. The
+ * paragraph-level fallback for reflowable highlights the whole text
+ * element, which is what readers expect for non-fixed content.
+ */
+function parseParagraphs(xhtml: string): Array<{ paragraphId: string; wordIds: string[] }> {
+  const dom = new JSDOM(xhtml, { contentType: "application/xhtml+xml" })
+  const doc = dom.window.document
+  const out: Array<{ paragraphId: string; wordIds: string[] }> = []
+  for (const el of doc.querySelectorAll("[data-id]")) {
+    if (el.tagName.toLowerCase() === "img") continue
+    const paragraphId = el.getAttribute("data-id")
+    if (!paragraphId) continue
+    const wordIds: string[] = []
+    for (const wordEl of el.querySelectorAll("span[id]")) {
+      const id = wordEl.getAttribute("id")
+      if (id && /_w\d+$/.test(id)) wordIds.push(id)
+    }
+    out.push({ paragraphId, wordIds })
+  }
+  return out
+}
+
 function buildOpf(opts: {
   title: string
   authors: string[]
@@ -233,8 +367,11 @@ function buildOpf(opts: {
   allFiles: Array<{ href: string; mediaType: string }>
   coverHref?: string
   fixedLayout?: boolean
+  smilEntries?: SmilEntry[]
 }): string {
-  const { title, authors, publisher, language, pageList, allFiles, coverHref, fixedLayout } = opts
+  const { title, authors, publisher, language, pageList, allFiles, coverHref, fixedLayout, smilEntries } = opts
+  const smilByPage = new Map<string, SmilEntry>()
+  for (const e of smilEntries ?? []) smilByPage.set(e.pageHref, e)
   const now = new Date().toISOString().replace(/\.\d{3}Z$/, "Z")
 
   // Metadata
@@ -258,6 +395,32 @@ function buildOpf(opts: {
     metaLines.push(`    <meta property="rendition:spread">none</meta>`)
   }
 
+  // SMIL manifest items get stable, predictable ids so spine itemrefs can
+  // reference them via `media-overlay`. Derived from the SMIL filename
+  // (which uses section_id) — using page href would collapse the cover /
+  // first-page case where href is `index.xhtml` rather than the section id.
+  const smilHrefToOverlayId = new Map<string, string>()
+  for (const e of smilEntries ?? []) {
+    const sectionId = e.smilHref.replace(/^smil\//, "").replace(/\.smil$/, "")
+    smilHrefToOverlayId.set(e.smilHref, `overlay-${sectionId}`)
+  }
+
+  // SMIL media overlay metadata. Per-overlay duration goes alongside the
+  // page metadata via `refines`; the total runs as a top-level
+  // `media:duration`. media:active-class names the CSS class an EPUB
+  // reader toggles on the active text element during playback.
+  if (smilEntries && smilEntries.length > 0) {
+    const totalDuration = smilEntries.reduce((s, e) => s + e.durationSeconds, 0)
+    metaLines.push(`    <meta property="media:duration">${formatMediaDuration(totalDuration)}</meta>`)
+    metaLines.push(`    <meta property="media:active-class">-epub-media-overlay-active</meta>`)
+    for (const e of smilEntries) {
+      const overlayId = smilHrefToOverlayId.get(e.smilHref)!
+      metaLines.push(
+        `    <meta property="media:duration" refines="#${escapeXml(overlayId)}">${formatMediaDuration(e.durationSeconds)}</meta>`,
+      )
+    }
+  }
+
   // Manifest — enumerate all files in OEBPS
   const manifestLines: string[] = [
     `    <item id="nav" href="toc.xhtml" media-type="application/xhtml+xml" properties="nav"/>`,
@@ -268,6 +431,13 @@ function buildOpf(opts: {
   const skipHrefs = new Set(["toc.xhtml", "toc.ncx", "content.opf"])
   const pageHrefs = new Set(pageList.map(p => p.href))
   const hrefToItemId = new Map<string, string>()
+  // Page href → SMIL overlay item id (for the `media-overlay` attribute on
+  // the content document's manifest item). EPUB 3 Media Overlays spec puts
+  // this association on the manifest, not the spine.
+  const pageHrefToOverlayId = new Map<string, string>()
+  for (const e of smilEntries ?? []) {
+    pageHrefToOverlayId.set(e.pageHref, smilHrefToOverlayId.get(e.smilHref)!)
+  }
   let itemIndex = 0
 
   for (const file of allFiles) {
@@ -275,20 +445,23 @@ function buildOpf(opts: {
 
     const itemId = file.href === coverHref
       ? "cover-image"
-      : `item-${++itemIndex}`
+      : smilHrefToOverlayId.get(file.href) ?? `item-${++itemIndex}`
     hrefToItemId.set(file.href, itemId)
 
     const props: string[] = []
     if (file.href === coverHref) props.push("cover-image")
     if (!fixedLayout && pageHrefs.has(file.href)) props.push("scripted")
     const propsAttr = props.length > 0 ? ` properties="${props.join(" ")}"` : ""
+    const overlayId = pageHrefToOverlayId.get(file.href)
+    const overlayAttr = overlayId ? ` media-overlay="${escapeXml(overlayId)}"` : ""
 
     manifestLines.push(
-      `    <item id="${escapeXml(itemId)}" href="${escapeXml(file.href)}" media-type="${file.mediaType}"${propsAttr}/>`,
+      `    <item id="${escapeXml(itemId)}" href="${escapeXml(file.href)}" media-type="${file.mediaType}"${propsAttr}${overlayAttr}/>`,
     )
   }
 
-  // Spine — reading order from pages.json
+  // Spine — reading order from pages.json. The media-overlay association
+  // lives on the manifest item (above), not on the spine itemref.
   const spineLines = pageList.map((page) => {
     const itemId = hrefToItemId.get(page.href) ?? escapeXml(page.section_id)
     return `    <itemref idref="${escapeXml(itemId)}"/>`
