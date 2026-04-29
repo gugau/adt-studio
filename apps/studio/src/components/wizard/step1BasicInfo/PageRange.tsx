@@ -2,7 +2,7 @@ import { useStore } from "@tanstack/react-form"
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import { RangeSlider } from "@/components/wizard/shared/RangeSlider"
 import { getPresetAccent } from "@/components/wizard/constants"
-import { usePdfUpload } from "./PdfUpload"
+import { usePdfField } from "./PdfField"
 import { t } from "@lingui/core/macro"
 
 export function PageRange() {
@@ -11,7 +11,7 @@ export function PageRange() {
   const startPage = useStore(form.store, (s) => s.values.startPage)
   const endPage = useStore(form.store, (s) => s.values.endPage)
   const selectedPreset = useStore(form.store, (s) => s.values.selectedPreset)
-  const { totalPages } = usePdfUpload()
+  const { totalPages } = usePdfField()
   const accent = getPresetAccent(selectedPreset)
 
   const disabled = !file || totalPages === 0

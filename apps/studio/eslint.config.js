@@ -76,6 +76,10 @@ export default [
             // Image processing preview pane focus key (ImageProcessingPreviewFocus — not user-visible)
             "previewFocus",
 
+            // --- CSS inline style properties (el.style.* assignments) ---
+            "transition",
+            "transform",
+
             // --- CSS class & color props (never user-visible) ---
             "rootMargin",
             "transition",
@@ -125,12 +129,16 @@ export default [
 
             // --- File dialog / download props (Tauri + browser) ---
             "defaultPath",
+            "suffix",
             "download",
             "filters",
             "extensions",
 
             // --- React internals ---
             "displayName",
+
+            // --- Accessibility metadata (standardized WCAG codes, not translatable) ---
+            "wcagCode",
 
             // --- i18n locale metadata (intentionally not translated — must stay in native script) ---
             "LOCALE_LABEL_MESSAGES",
@@ -201,6 +209,9 @@ export default [
 
             // --- Math / formatting (unit suffixes in template literals) ---
             "*.toFixed",
+
+            // --- Feature toggle callbacks (toggle key arguments are identifiers, not user-visible) ---
+            "onFeatureToggleChange",
           ],
           ignore: [
             // project brand name (intentional non-translatable literal)
@@ -224,6 +235,10 @@ export default [
             "^#[0-9a-fA-F]+$",
             // CSS dimension values (e.g. "10px", "1.5rem", "48px")
             "^[0-9]",
+            // CSS transform function template literals — lingui joins quasis without expressions,
+            // so `translateY(${dy}px)` becomes "translateY(px)". ignoreNames["transform"] doesn't
+            // fire for MemberExpression LHS (plugin gap), so we match the value directly.
+            "^(translate[XYZ3d]*|rotate[XYZ3d]*|scale[XYZ]?|skew[XY]?|matrix3?d?|perspective)\\(",
             // React Server Components directives (shadcn boilerplate)
             "^use (client|server)$",
             // Brand name (never translated)

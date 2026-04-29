@@ -21,7 +21,7 @@ const MIN_DIM_NONE = msg`None`
 const MIN_DIM_HELP = msg`Leave at None to run segmentation on all qualifying images (subject to pipeline rules).`
 const VALUE_UNIT_PX = msg`px`
 
-const TITLE_ACTIVITIES = msg`Activities Generator`
+const TITLE_ACTIVITIES = msg`Activity Converter`
 const SUBTITLE_ACTIVITIES = msg`Detects activities already present in the book and transforms them into interactive HTML elements like radio buttons and text inputs.`
 
 const TITLE_FIGURE_EXTRACTION = msg`Figure Extraction`
@@ -34,8 +34,8 @@ const TITLE_SEGMENTATION = msg`Image Segmentation`
 const SUBTITLE_SEGMENTATION = msg`Detects and splits composited illustrations into separate regions so each asset can be placed and refined on its own.`
 
 const FILTER_LABEL = msg`Image Filter Size`
-const FILTER_MIN_LABEL = msg`Min Side`
-const FILTER_MAX_LABEL = msg`Max Side`
+const FILTER_MIN_LABEL = msg`Min Size (px)`
+const FILTER_MAX_LABEL = msg`Max Size (px)`
 
 function SegmentationThresholdPanel({
   segmentationMinSide,

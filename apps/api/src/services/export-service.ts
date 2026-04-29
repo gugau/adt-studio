@@ -1,6 +1,7 @@
 import fs from "node:fs"
 import path from "node:path"
 import { Zip, ZipDeflate, ZipPassThrough } from "fflate"
+import { HTTPException } from "hono/http-exception"
 import { parseBookLabel } from "@adt/types"
 import { createBookStorage } from "@adt/storage"
 import { packageAdtWeb, packageWebpub, loadBookConfig, normalizeLocale } from "@adt/pipeline"
@@ -17,6 +18,42 @@ const COMPRESSED_EXTS = new Set([
 export interface ExportResult {
   stream: ReadableStream<Uint8Array>
   filename: string
+  safeFilename: string
+}
+
+function throwBookNotFound(label: string): never {
+  throw new HTTPException(404, { message: `Book not found: ${label}` })
+}
+
+function throwWebAssetsMissing(): never {
+  throw new HTTPException(500, { message: "Web assets directory not found" })
+}
+
+function throwAdtDirMissing(): never {
+  throw new HTTPException(400, { message: "ADT directory not found — run the pipeline first" })
+}
+
+/**
+ * Read book title from metadata for use in export filenames.
+ * Falls back to the safe label if metadata is not available.
+ */
+function readBookTitle(label: string, resolvedDir: string): string {
+  const storage = createBookStorage(label, resolvedDir)
+  try {
+    const metadataRow = storage.getLatestNodeData("metadata", "book")
+    const metadata = metadataRow?.data as { title?: string | null } | null
+    return metadata?.title ?? label
+  } finally {
+    storage.close()
+  }
+}
+
+export interface ExportFeatures {
+  glossary?: boolean
+  readAloud?: boolean
+  quizzes?: boolean
+  signLanguage?: boolean
+  languages?: string[]
 }
 
 /**
@@ -26,20 +63,21 @@ export interface ExportResult {
  */
 export async function prepareExport(
   label: string,
-  format: "book" | "webpub" | "scorm",
+  format: "project" | "webpub" | "scorm" | "adt",
   booksDir: string,
   webAssetsDir: string,
   configPath?: string,
+  features?: ExportFeatures,
 ): Promise<void> {
   const safeLabel = parseBookLabel(label)
   const resolvedDir = path.resolve(booksDir)
   const bookDir = path.join(resolvedDir, safeLabel)
 
   if (!fs.existsSync(bookDir)) {
-    throw new Error(`Book not found: ${safeLabel}`)
+    throwBookNotFound(safeLabel)
   }
   if (!webAssetsDir || !fs.existsSync(webAssetsDir)) {
-    throw new Error("Web assets directory not found")
+    throwWebAssetsMissing()
   }
 
   const storage = createBookStorage(safeLabel, resolvedDir)
@@ -53,22 +91,26 @@ export async function prepareExport(
     const language = normalizeLocale(config.editing_language ?? metadata?.language_code ?? "en")
     const outputLanguages = Array.from(
       new Set(
-        (config.output_languages && config.output_languages.length > 0
-          ? config.output_languages
-          : [language]).map((code) => normalizeLocale(code))
+        [language, ...(config.output_languages ?? [])].map((code) => normalizeLocale(code))
       )
     )
     const title = metadata?.title ?? safeLabel
+
+    const normalizedRequested = features?.languages?.map(normalizeLocale) ?? []
+    const finalLanguages = normalizedRequested.length > 0
+      ? normalizedRequested.filter((lang) => outputLanguages.includes(lang))
+      : outputLanguages
 
     const opts = {
       bookDir,
       label: safeLabel,
       language,
-      outputLanguages,
+      outputLanguages: finalLanguages.length > 0 ? finalLanguages : outputLanguages,
       title,
       webAssetsDir,
       applyBodyBackground: config.apply_body_background,
       speechConfig: config.speech,
+      features,
     }
 
     await packageAdtWeb(storage, opts)
@@ -81,7 +123,7 @@ export async function prepareExport(
   }
 }
 
-export async function exportBook(
+export async function exportProject(
   label: string,
   booksDir: string,
 ): Promise<ExportResult> {
@@ -90,44 +132,31 @@ export async function exportBook(
   const bookDir = path.join(resolvedDir, safeLabel)
 
   if (!fs.existsSync(bookDir)) {
-    throw new Error(`Book not found: ${safeLabel}`)
+    throwBookNotFound(safeLabel)
   }
+
+  const title = readBookTitle(safeLabel, resolvedDir)
 
   return {
-    stream: createZipStream(bookDir),
-    filename: `${safeLabel}.zip`,
+    stream: createZipStream(bookDir, new Set(["adt", "webpub"])),
+    filename: `${title}-project.zip`,
+    safeFilename: `${safeLabel}-project.zip`,
   }
-}
-
-export interface WebpubExportResult {
-  stream: ReadableStream<Uint8Array>
-  filename: string
-  safeFilename: string
 }
 
 export async function exportWebpub(
   label: string,
   booksDir: string,
-): Promise<WebpubExportResult> {
+): Promise<ExportResult> {
   const safeLabel = parseBookLabel(label)
   const resolvedDir = path.resolve(booksDir)
   const bookDir = path.join(resolvedDir, safeLabel)
 
   if (!fs.existsSync(bookDir)) {
-    throw new Error(`Book not found: ${safeLabel}`)
+    throwBookNotFound(safeLabel)
   }
 
-  // Read title from metadata for the filename
-  let title = safeLabel
-  const storage = createBookStorage(safeLabel, resolvedDir)
-  try {
-    const metadataRow = storage.getLatestNodeData("metadata", "book")
-    const metadata = metadataRow?.data as { title?: string | null } | null
-    title = metadata?.title ?? safeLabel
-  } finally {
-    storage.close()
-  }
-
+  const title = readBookTitle(safeLabel, resolvedDir)
   const webpubDir = path.join(bookDir, "webpub")
 
   return {
@@ -137,57 +166,67 @@ export async function exportWebpub(
   }
 }
 
-export interface ScormExportResult {
-  stream: ReadableStream<Uint8Array>
-  filename: string
-  safeFilename: string
-}
-
 export async function exportScorm(
   label: string,
   booksDir: string,
-): Promise<ScormExportResult> {
+): Promise<ExportResult> {
   const safeLabel = parseBookLabel(label)
   const resolvedDir = path.resolve(booksDir)
   const bookDir = path.join(resolvedDir, safeLabel)
 
   if (!fs.existsSync(bookDir)) {
-    throw new Error(`Book not found: ${safeLabel}`)
+    throwBookNotFound(safeLabel)
   }
 
-  // Read title from metadata for the filename
-  let title = safeLabel
-  const storage = createBookStorage(safeLabel, resolvedDir)
-  try {
-    const metadataRow = storage.getLatestNodeData("metadata", "book")
-    const metadata = metadataRow?.data as { title?: string | null } | null
-    title = metadata?.title ?? safeLabel
-  } finally {
-    storage.close()
-  }
-
+  const title = readBookTitle(safeLabel, resolvedDir)
   const adtDir = path.join(bookDir, "adt")
   if (!fs.existsSync(adtDir)) {
-    throw new Error("ADT directory not found — run the pipeline first")
+    throwAdtDirMissing()
   }
 
   return {
     stream: createZipStream(adtDir),
-    filename: `${title}.zip`,
-    safeFilename: `${safeLabel}.zip`,
+    filename: `${title}-scorm.zip`,
+    safeFilename: `${safeLabel}-scorm.zip`,
+  }
+}
+
+export async function exportAdt(
+  label: string,
+  booksDir: string,
+): Promise<ExportResult> {
+  const safeLabel = parseBookLabel(label)
+  const resolvedDir = path.resolve(booksDir)
+  const bookDir = path.join(resolvedDir, safeLabel)
+
+  if (!fs.existsSync(bookDir)) {
+    throwBookNotFound(safeLabel)
+  }
+
+  const title = readBookTitle(safeLabel, resolvedDir)
+  const adtDir = path.join(bookDir, "adt")
+  if (!fs.existsSync(adtDir)) {
+    throwAdtDirMissing()
+  }
+
+  return {
+    stream: createZipStream(adtDir),
+    filename: `${title}-adt.zip`,
+    safeFilename: `${safeLabel}-adt.zip`,
   }
 }
 
 /**
  * Collect relative file paths under a directory (lightweight — no file content read).
  */
-function collectFilePaths(dir: string, prefix = ""): string[] {
+function collectFilePaths(dir: string, prefix = "", excludeDirs?: Set<string>): string[] {
   const result: string[] = []
   const entries = fs.readdirSync(dir, { withFileTypes: true })
   for (const entry of entries) {
     const zipPath = prefix ? `${prefix}/${entry.name}` : entry.name
     if (entry.isDirectory()) {
-      result.push(...collectFilePaths(path.join(dir, entry.name), zipPath))
+      if (excludeDirs && !prefix && excludeDirs.has(entry.name)) continue
+      result.push(...collectFilePaths(path.join(dir, entry.name), zipPath, excludeDirs))
     } else if (entry.isFile()) {
       result.push(zipPath)
     }
@@ -199,8 +238,8 @@ function collectFilePaths(dir: string, prefix = ""): string[] {
  * Create a streaming ZIP of a directory. Files are read and compressed one at a
  * time so memory stays bounded regardless of total directory size.
  */
-function createZipStream(sourceDir: string): ReadableStream<Uint8Array> {
-  const filePaths = collectFilePaths(sourceDir)
+function createZipStream(sourceDir: string, excludeDirs?: Set<string>): ReadableStream<Uint8Array> {
+  const filePaths = collectFilePaths(sourceDir, "", excludeDirs)
 
   return new ReadableStream({
     async start(controller) {

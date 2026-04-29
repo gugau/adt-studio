@@ -114,9 +114,9 @@ function getOutputLanguages(
 ): string[] {
   return Array.from(
     new Set(
-      (config.output_languages && config.output_languages.length > 0
-        ? config.output_languages
-        : [sourceLanguage]).map((code) => normalizeLocale(code))
+      [sourceLanguage, ...(config.output_languages ?? [])].map((code) =>
+        normalizeLocale(code)
+      )
     )
   )
 }
