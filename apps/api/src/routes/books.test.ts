@@ -1242,3 +1242,124 @@ describe("GET /books/:label/images/:imageId", () => {
     expect(res.status).toBe(400)
   })
 })
+
+describe("GET /books/:label/captioned-images", () => {
+  function setupBook(label: string): void {
+    const storage = createBookStorage(label, tmpDir)
+    try {
+      storage.putExtractedPage({
+        pageId: "pg001",
+        pageNumber: 1,
+        text: "p1",
+        pageImage: {
+          imageId: "pg001_page",
+          buffer: Buffer.from("page"),
+          format: "png" as const,
+          hash: "h",
+          width: 800,
+          height: 600,
+        },
+        images: [
+          { imageId: "pg001_im001", buffer: Buffer.from("a"), format: "png" as const, hash: "h1", width: 100, height: 100 },
+          { imageId: "pg001_im002", buffer: Buffer.from("b"), format: "png" as const, hash: "h2", width: 100, height: 100 },
+        ],
+      })
+      storage.putNodeData("image-captioning", "pg001", {
+        captions: [
+          { imageId: "pg001_im001", caption: "First caption" },
+          { imageId: "pg001_im002", caption: "Second caption" },
+        ],
+      })
+      storage.putTranslatedImage({
+        sourceImageId: "pg001_im001",
+        pageId: "pg001",
+        languageCode: "es",
+        buffer: Buffer.from("var"),
+        width: 100,
+        height: 100,
+      })
+    } finally {
+      storage.close()
+    }
+  }
+
+  it("lists images that have captions and excludes translate variants", async () => {
+    setupBook("cap-book")
+    const app = createBookRoutes(tmpDir)
+    const res = await app.request("/books/cap-book/captioned-images")
+    expect(res.status).toBe(200)
+    const body = await res.json() as { images: Array<{ imageId: string; caption: string }> }
+    const ids = body.images.map((i) => i.imageId).sort()
+    expect(ids).toEqual(["pg001_im001", "pg001_im002"])
+    expect(body.images.find((i) => i.imageId === "pg001_im001")?.caption).toBe("First caption")
+  })
+
+  it("returns 404 for missing book", async () => {
+    const app = createBookRoutes(tmpDir)
+    const res = await app.request("/books/no-such/captioned-images")
+    expect(res.status).toBe(404)
+  })
+
+  it("returns empty list when no image-captioning data exists", async () => {
+    const storage = createBookStorage("nocaps", tmpDir)
+    storage.close()
+    const app = createBookRoutes(tmpDir)
+    const res = await app.request("/books/nocaps/captioned-images")
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ images: [] })
+  })
+})
+
+describe("GET /books/:label/translated-images", () => {
+  it("parses sourceImageId and language from translated image ids", async () => {
+    const storage = createBookStorage("tr-book", tmpDir)
+    try {
+      storage.putExtractedPage({
+        pageId: "pg001",
+        pageNumber: 1,
+        text: "p1",
+        pageImage: {
+          imageId: "pg001_page",
+          buffer: Buffer.from("p"),
+          format: "png" as const,
+          hash: "h",
+          width: 800,
+          height: 600,
+        },
+        images: [
+          { imageId: "pg001_im001", buffer: Buffer.from("a"), format: "png" as const, hash: "h1", width: 100, height: 100 },
+        ],
+      })
+      for (const lang of ["es", "fr", "pt-BR"]) {
+        storage.putTranslatedImage({
+          sourceImageId: "pg001_im001",
+          pageId: "pg001",
+          languageCode: lang,
+          buffer: Buffer.from(`v-${lang}`),
+          width: 100,
+          height: 100,
+        })
+      }
+    } finally {
+      storage.close()
+    }
+
+    const app = createBookRoutes(tmpDir)
+    const res = await app.request("/books/tr-book/translated-images")
+    expect(res.status).toBe(200)
+    const body = await res.json() as {
+      images: Array<{ imageId: string; sourceImageId: string; language: string }>
+    }
+    const byLang = Object.fromEntries(body.images.map((i) => [i.language, i.sourceImageId]))
+    expect(byLang).toEqual({ es: "pg001_im001", fr: "pg001_im001", "pt-BR": "pg001_im001" })
+  })
+
+  it("returns empty list when no translated images exist", async () => {
+    const storage = createBookStorage("empty-tr", tmpDir)
+    storage.close()
+    const app = createBookRoutes(tmpDir)
+    const res = await app.request("/books/empty-tr/translated-images")
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ images: [] })
+  })
+})

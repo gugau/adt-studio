@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { resolveTranslationLanguageState } from "./lib/translations-view-state"
+import { ImageLightbox } from "./components/ImageLightbox"
 import { WordHighlightPreview } from "./components/WordHighlightPreview"
 import { msg } from "@lingui/core/macro"
 import { useLingui } from "@lingui/react/macro"
@@ -245,6 +246,22 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
 
   const [selectedLang, setSelectedLang] = useState<string | null>(null)
   const [categoryFilter, setCategoryFilter] = useState<CatalogCategory>("all")
+  const [lightbox, setLightbox] = useState<{ src: string; caption?: string } | null>(null)
+
+  // Map of `${sourceImageId}::${language}` → translated image id, used to
+  // render the localized variant alongside captions in the translation view.
+  const { data: translatedImagesData } = useQuery({
+    queryKey: ["books", bookLabel, "translated-images"],
+    queryFn: () => api.listTranslatedImages(bookLabel),
+    enabled: !!bookLabel,
+  })
+  const translatedImageMap = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const row of translatedImagesData?.images ?? []) {
+      map.set(`${row.sourceImageId}::${normalizeLocale(row.language)}`, row.imageId)
+    }
+    return map
+  }, [translatedImagesData])
 
   // Default to first output language when available
   useEffect(() => {
@@ -931,7 +948,11 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
                           <img
                             src={`${BASE_URL}/books/${bookLabel}/images/${entry.id}`}
                             alt=""
-                            className="shrink-0 w-16 h-12 rounded object-cover ring-1 ring-border"
+                            className="shrink-0 w-16 h-12 rounded object-cover ring-1 ring-border cursor-zoom-in hover:ring-blue-500"
+                            onClick={() => setLightbox({
+                              src: `${BASE_URL}/books/${bookLabel}/images/${entry.id}`,
+                              caption: entry.text,
+                            })}
                           />
                         )}
                         <div className="flex-1 min-w-0">
@@ -994,7 +1015,11 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
                               <img
                                 src={`${BASE_URL}/books/${bookLabel}/images/${entry.id}`}
                                 alt=""
-                                className="shrink-0 w-16 h-12 rounded object-cover ring-1 ring-border"
+                                className="shrink-0 w-16 h-12 rounded object-cover ring-1 ring-border cursor-zoom-in hover:ring-blue-500"
+                                onClick={() => setLightbox({
+                                  src: `${BASE_URL}/books/${bookLabel}/images/${entry.id}`,
+                                  caption: entry.text,
+                                })}
                               />
                             )}
                             <div className="min-w-0">
@@ -1014,7 +1039,32 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
                           )}
                         </div>
                         <div>
-                          <div className="min-w-0">
+                          <div className="flex items-start gap-3">
+                            {isImg && (() => {
+                              const translatedId = selectedLang
+                                ? translatedImageMap.get(`${entry.id}::${selectedLang}`)
+                                : undefined
+                              if (translatedId) {
+                                const url = `${BASE_URL}/books/${bookLabel}/images/${translatedId}`
+                                return (
+                                  <img
+                                    src={url}
+                                    alt=""
+                                    className="shrink-0 w-16 h-12 rounded object-cover ring-1 ring-border cursor-zoom-in hover:ring-blue-500"
+                                    onClick={() => setLightbox({ src: url, caption: translated || entry.text })}
+                                  />
+                                )
+                              }
+                              return (
+                                <div
+                                  className="shrink-0 w-16 h-12 rounded ring-1 ring-dashed ring-border bg-muted/30 flex items-center justify-center"
+                                  title={t`Image not translated for this language`}
+                                >
+                                  <span className="text-[8px] text-muted-foreground uppercase tracking-wide">{t`No image`}</span>
+                                </div>
+                              )
+                            })()}
+                            <div className="min-w-0 flex-1">
                             <span className="text-[10px] text-muted-foreground">
                               &nbsp;
                               {isSpeechStage && audio && <span className="text-[9px] text-muted-foreground/60">{audio.fileName}</span>}
@@ -1036,6 +1086,7 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
                                 rows={1}
                               />
                             )}
+                            </div>
                           </div>
                           {isSpeechStage && !isAnswer && <AudioAction
                             audio={audio}
@@ -1083,6 +1134,13 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
         </div>
         {showAllButton}
       </div>
+      )}
+      {lightbox && (
+        <ImageLightbox
+          src={lightbox.src}
+          caption={lightbox.caption}
+          onClose={() => setLightbox(null)}
+        />
       )}
     </div>
     </>

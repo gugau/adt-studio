@@ -47,6 +47,7 @@ const initialState = {
     originatingPage: null,
     stateMode: true,
     videoFiles: {},
+    imageFiles: {},
     videoPlaying: false,
     videoElement: null,
     videoSource: "",

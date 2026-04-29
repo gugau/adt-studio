@@ -52,6 +52,7 @@ const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   "caption-prompt": msg`Caption Prompt`,
   languages: msg`Languages`,
   "translation-prompt": msg`Translation Prompt`,
+  "image-translation": msg`Image Translation`,
   speech: msg`Speech`,
   "speech-prompts": msg`Speech Prompts`,
   voices: msg`Voices`,
@@ -109,6 +110,7 @@ function getSettingsTabs(
     translate: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.languages) },
       { key: "prompt", label: i18n._(SETTINGS_TAB_MESSAGE["translation-prompt"]) },
+      { key: "image-translation", label: i18n._(SETTINGS_TAB_MESSAGE["image-translation"]) },
     ],
     speech: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.speech) },

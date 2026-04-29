@@ -97,6 +97,7 @@ msgid "{0} images"
 msgstr "{0} imágenes"
 
 #. placeholder {0}: String(selected.size)
+#. placeholder {0}: String(selectedImageIds.length)
 msgid "{0} images selected"
 msgstr "{0} imágenes seleccionadas"
 
@@ -142,6 +143,10 @@ msgstr "{0} páginas"
 #. placeholder {0}: String(displayQuizzes.length)
 msgid "{0} questions"
 msgstr "{0} preguntas"
+
+#. placeholder {0}: String(stale.length)
+msgid "{0} selected images are no longer in the storyboard."
+msgstr "{0} imágenes seleccionadas ya no están en el guion gráfico."
 
 #. placeholder {0}: String(items.length)
 msgid "{0} terms"
@@ -269,6 +274,9 @@ msgstr "1 imagen seleccionada"
 
 msgid "1 item needs changes on this page"
 msgstr "1 item needs changes on this page"
+
+msgid "1 selected image is no longer in the storyboard."
+msgstr "1 imagen seleccionada ya no está en el guion gráfico."
 
 msgid "14.2 kB"
 msgstr "14,2 kB"
@@ -1042,6 +1050,9 @@ msgstr "Elige características para incluir en esta exportación"
 msgid "Choose how the content should be formatted."
 msgstr "Elige cómo debe formatearse el contenido."
 
+msgid "Choose images..."
+msgstr "Elegir imágenes..."
+
 msgid "Choose Provider"
 msgstr "Elegir proveedor"
 
@@ -1065,6 +1076,9 @@ msgstr "Clasificando imágenes…"
 
 msgid "Clean & focused"
 msgstr "Limpio y enfocado"
+
+msgid "Clear"
+msgstr "Borrar"
 
 msgid "Clear all"
 msgstr "Clear all"
@@ -1446,6 +1460,9 @@ msgstr "Descripción"
 msgid "Description..."
 msgstr "Descripción..."
 
+msgid "Deselect all"
+msgstr "Deseleccionar todo"
+
 msgid "Detecting figures"
 msgstr "Detectando figuras"
 
@@ -1802,6 +1819,9 @@ msgstr "Failed to load accessibility results: {0}"
 msgid "Failed to load books: {0}"
 msgstr "Error al cargar libros: {0}"
 
+msgid "Failed to load images."
+msgstr "Error al cargar imágenes."
+
 msgid "Failed to load page image"
 msgstr "Error al cargar la imagen de la página"
 
@@ -1852,6 +1872,9 @@ msgstr "Archivo aceptado"
 
 #~ msgid "Filter"
 #~ msgstr "Filtrar"
+
+msgid "Filter by image ID or caption..."
+msgstr "Filtrar por ID de imagen o subtítulo..."
 
 msgid "Filter by image ID..."
 msgstr "Filtrar por ID de imagen..."
@@ -2143,6 +2166,12 @@ msgstr "Relevancia de imágenes"
 msgid "Image Meaningfulness Prompt"
 msgstr "Prompt de relevancia de imagen"
 
+msgid "Image model"
+msgstr "Modelo de imagen"
+
+msgid "Image not translated for this language"
+msgstr "Imagen no traducida para este idioma"
+
 #~ msgid "Image Overlay"
 #~ msgstr "Texto sobre la imagen"
 
@@ -2154,6 +2183,18 @@ msgstr "Segmentación de imágenes"
 
 msgid "Image Segmentation Prompt"
 msgstr "Prompt de segmentación de imagen"
+
+#~ msgid "Image translation"
+#~ msgstr "Traducción de imágenes"
+
+msgid "Image Translation"
+msgstr "Traducción de imágenes"
+
+msgid "Image translation prompt"
+msgstr "Indicación para traducción de imágenes"
+
+#~ msgid "Image Translation Prompt"
+#~ msgstr "Indicación para traducción de imágenes"
 
 msgid "Image Type"
 msgstr "Tipo de imagen"
@@ -2718,6 +2759,9 @@ msgstr "No assessment"
 msgid "No books match your search"
 msgstr "Ningún libro coincide con tu búsqueda"
 
+msgid "No captioned images yet. Run the image-captioning step first."
+msgstr "Aún no hay imágenes con subtítulo. Ejecuta primero el paso de generación de subtítulos."
+
 msgid "No captions for this page"
 msgstr "Sin leyendas para esta página"
 
@@ -2762,6 +2806,9 @@ msgstr "No hay imágenes en esta sección"
 
 msgid "No images match your filter"
 msgstr "Ninguna imagen coincide con tu filtro"
+
+msgid "No images match your filter."
+msgstr "Ninguna imagen coincide con el filtro."
 
 msgid "No images on this page"
 msgstr "No hay imágenes en esta página"
@@ -2913,6 +2960,12 @@ msgstr "Encendido"
 msgid "One tag per line or comma-separated. Leave as-is to keep the current package defaults."
 msgstr "One tag per line or comma-separated. Leave as-is to keep the current package defaults."
 
+msgid "Only images that appear in the storyboard (have captions) can be selected."
+msgstr "Solo se pueden seleccionar imágenes que aparezcan en el storyboard (con subtítulos)."
+
+msgid "Only images that appear in the storyboard are listed. The selected images will be regenerated for each output language with their text translated."
+msgstr "Solo se muestran las imágenes que aparecen en el storyboard. Las imágenes seleccionadas se regenerarán para cada idioma de salida con su texto traducido."
+
 msgid "Only letters, numbers, dots, dashes, underscores. Must start with a letter or number."
 msgstr "Solo letras, números, puntos, guiones, guiones bajos. Debe comenzar con una letra o número."
 
@@ -2954,6 +3007,9 @@ msgstr "OpenAI"
 
 msgid "OpenAI API Key"
 msgstr "Clave de API de OpenAI"
+
+msgid "OpenAI image-edit model used to regenerate each image with translated text."
+msgstr "Modelo de edición de imágenes de OpenAI utilizado para regenerar cada imagen con el texto traducido."
 
 msgid "OpenAI key required"
 msgstr "Se requiere clave de OpenAI"
@@ -3435,6 +3491,9 @@ msgstr "Refreshing results for this packaged preview."
 msgid "Regenerate definition, variations, and emoji"
 msgstr "Regenerar definición, variaciones y emoji"
 
+msgid "Regenerate selected images for each output language so that any text burned into them is shown in the target language."
+msgstr "Regenera las imágenes seleccionadas para cada idioma de salida de modo que el texto incrustado en ellas aparezca en el idioma de destino."
+
 msgid "Region"
 msgstr "Región"
 
@@ -3685,6 +3744,9 @@ msgstr "Save failed"
 msgid "Save page review"
 msgstr "Save page review"
 
+msgid "Save selection"
+msgstr "Guardar selección"
+
 msgid "Save settings"
 msgstr "Save settings"
 
@@ -3857,6 +3919,12 @@ msgstr "Selecciona una guía de estilo para previsualizar cómo estiliza las pá
 msgid "Select activity type..."
 msgstr "Seleccionar tipo de actividad..."
 
+msgid "Select all"
+msgstr "Seleccionar todo"
+
+msgid "Select images to translate"
+msgstr "Seleccionar imágenes para traducir"
+
 msgid "Select node type..."
 msgstr "Seleccionar tipo de nodo..."
 
@@ -3877,6 +3945,9 @@ msgstr "Seleccionar plantilla..."
 
 msgid "Select up to 5 pages to use as visual references. The LLM will analyze them and generate a styleguide."
 msgstr "Selecciona hasta 5 páginas para usar como referencias visuales. El LLM las analizará y generará una guía de estilo."
+
+msgid "Selected images"
+msgstr "Imágenes seleccionadas"
 
 msgid "Selected: {styleImageId}"
 msgstr "Seleccionada: {0}"
@@ -4284,6 +4355,12 @@ msgstr "El Bosque Perdido"
 msgid "The model detects bounding boxes so each visual element can be stored and laid out separately."
 msgstr "El modelo detecta cajas delimitadoras para que cada elemento visual pueda almacenarse y disponerse por separado."
 
+msgid "The prompt sent to the image model alongside each selected image."
+msgstr "La indicación enviada al modelo de imagen junto con cada imagen seleccionada."
+
+#~ msgid "The prompt template used by the reviewer pass to critique and improve a candidate sectioning. Runs up to the configured number of passes or until the reviewer approves."
+#~ msgstr "La plantilla de prompt utilizada por la pasada del revisor para criticar y mejorar una sección candidata. Se ejecuta hasta el número configurado de pasadas o hasta que el revisor apruebe."
+
 #~ msgid "The prompt template used for text classification. This is a Liquid template processed with page context."
 #~ msgstr "La plantilla de prompt usada para la clasificación de texto. Es una plantilla Liquid procesada con contexto de página."
 
@@ -4451,6 +4528,9 @@ msgstr "Track reviewer progress and review findings captured from Preview."
 
 msgid "Translate"
 msgstr "Traducir"
+
+msgid "Translate text in images"
+msgstr "Traducir texto en imágenes"
 
 msgid "Translate the book content to output languages."
 msgstr "Traducir el contenido del libro a los idiomas de salida."
@@ -4756,6 +4836,9 @@ msgstr "Cuando está activado, los colores de fondo de la guía de estilo se apl
 
 msgid "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."
 msgstr "Cuando está activado, las etiquetas de texto cercanas a imágenes vectoriales (p. ej. dimensiones de gráficos, globos de diálogo) se agrupan y extraen como recortes rasterizados. Desactive para extraer solo las formas vectoriales sin texto."
+
+msgid "When enabled, the selected images below are regenerated for every output language during the translate stage."
+msgstr "Cuando está activado, las imágenes seleccionadas a continuación se regeneran para cada idioma de salida durante la etapa de traducción."
 
 msgid "When enabled, word-level timestamps are calculated automatically during speech generation so the reader can highlight words as they're spoken. When disabled, you can still calculate timestamps manually from the speech view."
 msgstr "Cuando está activado, las marcas de tiempo por palabra se calculan automáticamente durante la generación de voz para que el lector pueda resaltar las palabras a medida que se pronuncian. Cuando está desactivado, todavía puedes calcular las marcas de tiempo manualmente desde la vista de voz."

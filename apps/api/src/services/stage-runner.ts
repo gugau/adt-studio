@@ -3,7 +3,7 @@ import fs from "node:fs"
 import path from "node:path"
 import { createBookStorage } from "@adt/storage"
 import type { Storage } from "@adt/storage"
-import { createLLMModel, createPromptEngine, createRateLimiter } from "@adt/llm"
+import { createLLMModel, createPromptEngine, createRateLimiter, renderLiquidTemplate } from "@adt/llm"
 import type { LlmLogEntry } from "@adt/llm"
 import {
   extractPDF,
@@ -37,6 +37,8 @@ import {
   translateCatalogBatch,
   buildCatalogTranslationConfig,
   getTargetLanguages,
+  translateImage,
+  buildImageTranslationConfig,
   loadVoicesConfig,
   loadSpeechInstructions,
   resolveVoice,
@@ -1554,6 +1556,161 @@ async function runTranslateStep(
 
       progress.emit({ type: "step-complete", step: "catalog-translation" })
       console.log(`[stage-run] ${label}: catalog translation complete`)
+    }
+
+    // ── Step 3: Translate burned-in text in user-selected images ────
+    const imageTranslation = buildImageTranslationConfig(config)
+    const imageTargetLanguages = getTargetLanguages(outputLanguages, language)
+    if (
+      !imageTranslation.enabled ||
+      imageTranslation.selectedImageIds.length === 0 ||
+      imageTargetLanguages.length === 0
+    ) {
+      // Disabling the step or shrinking the selection should remove stale
+      // variants from disk and DB.
+      storage.clearTranslatedImages()
+      progress.emit({ type: "step-skip", step: "image-translation" })
+      console.log(
+        `[stage-run] ${label}: image translation skipped ` +
+        `(enabled=${imageTranslation.enabled}, selected=${imageTranslation.selectedImageIds.length}, targets=${imageTargetLanguages.length})`
+      )
+    } else {
+      progress.emit({ type: "step-start", step: "image-translation" })
+
+      // Validate prerequisites BEFORE clearing existing variants — a missing
+      // API key shouldn't wipe prior work.
+      if (!options.apiKey) {
+        throw new StepError(
+          "image-translation",
+          "Image translation requires an OpenAI API key"
+        )
+      }
+
+      const promptName = config.image_translation?.prompt ?? "image_translation"
+      const bookPromptPath = path.join(
+        path.resolve(booksDir),
+        label,
+        "prompts",
+        `${promptName}.liquid`
+      )
+      const globalPromptPath = path.join(
+        path.resolve(promptsDir),
+        `${promptName}.liquid`
+      )
+      let templateContent: string | null = null
+      if (fs.existsSync(bookPromptPath)) {
+        templateContent = fs.readFileSync(bookPromptPath, "utf-8")
+      } else if (fs.existsSync(globalPromptPath)) {
+        templateContent = fs.readFileSync(globalPromptPath, "utf-8")
+      }
+      if (!templateContent) {
+        throw new StepError(
+          "image-translation",
+          `Image translation prompt not found: ${promptName}.liquid`
+        )
+      }
+      const promptText = await renderLiquidTemplate(templateContent.trim(), {})
+
+      // Prerequisites validated — safe to clear previously-generated variants so
+      // shrinking the selection or changing languages drops stale ones. Cached
+      // regeneration is fast for variants we still want.
+      storage.clearTranslatedImages()
+
+      // Resolve which selected images actually exist + grab their on-disk paths
+      type ImageWork = {
+        imageId: string
+        pageId: string
+        targetLanguage: string
+        diskPath: string
+      }
+      const bookDir = path.join(path.resolve(booksDir), label)
+      const items: ImageWork[] = []
+      for (const imageId of imageTranslation.selectedImageIds) {
+        const meta = storage.getImageMeta(imageId)
+        if (!meta) {
+          console.warn(`[stage-run] ${label}: image-translation skipping unknown image ${imageId}`)
+          continue
+        }
+        const diskPath = path.resolve(bookDir, meta.relativePath)
+        if (!fs.existsSync(diskPath)) {
+          console.warn(`[stage-run] ${label}: image-translation skipping missing-on-disk image ${imageId}`)
+          continue
+        }
+        for (const targetLang of imageTargetLanguages) {
+          items.push({
+            imageId,
+            pageId: meta.pageId,
+            targetLanguage: targetLang,
+            diskPath,
+          })
+        }
+      }
+
+      if (items.length === 0) {
+        progress.emit({ type: "step-skip", step: "image-translation" })
+        console.log(`[stage-run] ${label}: image translation skipped (no resolvable images)`)
+      } else {
+        const total = items.length
+        let completed = 0
+        progress.emit({
+          type: "step-progress",
+          step: "image-translation",
+          message: `0/${total}`,
+          page: 0,
+          totalPages: total,
+        })
+
+        const imageModelId = imageTranslation.modelId
+        // Run with low concurrency — image edits are heavy & rate-limited.
+        const imageConcurrency = Math.min(effectiveConcurrency, 4)
+        await processWithConcurrency(items, imageConcurrency, async (item) => {
+          try {
+            const buffer = fs.readFileSync(item.diskPath)
+            const result = await translateImage({
+              apiKey: options.apiKey,
+              modelId: imageModelId,
+              prompt: promptText,
+              sourceLanguage: language,
+              targetLanguage: item.targetLanguage,
+              imageBuffer: buffer,
+              imageName: `${item.imageId}.png`,
+              cacheDir,
+              log: {
+                taskType: "image-translation",
+                pageId: item.pageId,
+                promptName,
+              },
+              onLog: onLlmLog,
+            })
+
+            storage.putTranslatedImage({
+              sourceImageId: item.imageId,
+              pageId: item.pageId,
+              languageCode: item.targetLanguage,
+              buffer: result.buffer,
+              width: result.width,
+              height: result.height,
+            })
+          } catch (err) {
+            const message = toErrorMessage(err)
+            console.warn(
+              `[stage-run] ${label}: image-translation failed for ${item.imageId} → ${item.targetLanguage}: ${message}`
+            )
+          } finally {
+            completed++
+            progress.emit({
+              type: "step-progress",
+              step: "image-translation",
+              message: `${completed}/${total}`,
+              page: completed,
+              totalPages: total,
+            })
+          }
+        })
+
+        progress.emit({ type: "step-complete", step: "image-translation" })
+        console.log(`[stage-run] ${label}: image translation complete (${completed}/${total})`)
+      }
     }
 
     console.log(`[stage-run] ${label}: translate stage complete`)
