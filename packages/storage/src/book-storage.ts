@@ -352,6 +352,20 @@ export function createBookStorage(label: string, booksRoot: string): Storage {
       clearImageFiles(paths.thumbnailsDir)
     },
 
+    clearQuizThumbnails(): void {
+      let entries: string[]
+      try {
+        entries = fs.readdirSync(paths.thumbnailsDir)
+      } catch {
+        return
+      }
+      for (const file of entries) {
+        if (/^qz\d+\.png$/.test(file)) {
+          try { fs.unlinkSync(path.join(paths.thumbnailsDir, file)) } catch { /* ignore */ }
+        }
+      }
+    },
+
     putSignLanguageVideo(videoId: string, buffer: Buffer, originalName: string, mimeType: string): void {
       const ext = mimeType === "video/webm" ? ".webm" : ".mp4"
       const filename = `${videoId}${ext}`

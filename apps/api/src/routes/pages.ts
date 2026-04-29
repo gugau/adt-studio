@@ -27,6 +27,17 @@ interface PageSummary {
   sectionCount: number
   prunedSections: number[]
   sections: Array<{ sectionId: string; sectionIndex: number; sectionType: string }>
+  /** Quizzes that should be displayed immediately after this page (ordered). */
+  quizzesAfter: Array<{
+    quizId: string
+    quizIndex: number
+    afterPageId: string
+    question: string
+    /** True when quiz-generation node exists; thumbnail availability tracks the same version. */
+    hasRendering: boolean
+    /** Latest version of the book's quiz-generation node, used as a thumbnail cache-buster. */
+    renderingVersion: number | null
+  }>
 }
 
 interface PageDetail {
@@ -513,6 +524,39 @@ export function createPageRoutes(
         }
       }
 
+      // Load quiz-generation output (book-level) to interleave quizzes after their afterPageId page.
+      const quizzesByAfterPageId = new Map<string, PageSummary["quizzesAfter"]>()
+      let quizGenerationVersion: number | null = null
+      const quizRow = db.all(
+        "SELECT data, MAX(version) AS max_version FROM node_data WHERE node = ? AND item_id = ? GROUP BY item_id",
+        ["quiz-generation", "book"]
+      ) as Array<{ data: string; max_version: number }>
+      if (quizRow.length > 0) {
+        try {
+          const parsed = JSON.parse(quizRow[0].data) as {
+            quizzes?: Array<{ afterPageId?: string; question?: string }>
+          }
+          quizGenerationVersion = quizRow[0].max_version
+          for (let i = 0; i < (parsed.quizzes ?? []).length; i++) {
+            const quiz = parsed.quizzes![i]
+            const afterPageId = quiz.afterPageId ?? ""
+            if (!afterPageId) continue
+            const list = quizzesByAfterPageId.get(afterPageId) ?? []
+            list.push({
+              quizId: `qz${String(i + 1).padStart(3, "0")}`,
+              quizIndex: i,
+              afterPageId,
+              question: quiz.question ?? "",
+              hasRendering: true,
+              renderingVersion: quizGenerationVersion,
+            })
+            quizzesByAfterPageId.set(afterPageId, list)
+          }
+        } catch {
+          // ignore malformed quiz data
+        }
+      }
+
       const result: PageSummary[] = pages.map((p) => ({
         pageId: p.page_id,
         pageNumber: p.page_number,
@@ -525,6 +569,7 @@ export function createPageRoutes(
         sectionCount: sectionCounts.get(p.page_id) ?? 0,
         prunedSections: prunedSections.get(p.page_id) ?? [],
         sections: sectionIdsByPage.get(p.page_id) ?? [],
+        quizzesAfter: quizzesByAfterPageId.get(p.page_id) ?? [],
       }))
 
       return c.json(result)

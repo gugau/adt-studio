@@ -15,6 +15,7 @@ import {
   PanelRightOpen,
   PenLine,
   Play,
+  Puzzle,
   RefreshCw,
   Save,
   Sparkles,
@@ -63,7 +64,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useLingui } from "@lingui/react/macro"
+import { Trans, useLingui } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
 import { i18n } from "@lingui/core"
 import { cn } from "@/lib/utils"
@@ -1949,6 +1950,24 @@ export function StoryboardSectionDetail({
             pageId={pageId}
             sectionIndex={sectionIndex}
           />
+        </div>
+      )}
+
+      {/* Activity header — mirrors the Quiz header so activity slides
+          surface their type at a glance. Edits still happen below. */}
+      {section?.sectionType.startsWith("activity_") && (
+        <div className="px-4 pt-3 shrink-0 flex items-center gap-2">
+          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-violet-600 text-white">
+            <Puzzle className="w-4 h-4" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-sm font-semibold text-violet-700">
+              {getSectionTypeLabel(section.sectionType)}
+            </h2>
+            <p className="text-xs text-muted-foreground line-clamp-1">
+              <Trans>Interactive page: AI conversion from the original PDF.</Trans>
+            </p>
+          </div>
         </div>
       )}
 

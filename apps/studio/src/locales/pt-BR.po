@@ -613,6 +613,9 @@ msgstr "Renderização com IA"
 msgid "AI sees the current image and modifies it"
 msgstr "A IA vê a imagem atual e a modifica"
 
+#~ msgid "AI-generated activity. Editable below."
+#~ msgstr "Atividade gerada por IA. Editável abaixo."
+
 msgid "AI-powered"
 msgstr "IA"
 
@@ -1566,6 +1569,9 @@ msgstr "Editar"
 msgid "Edit & enrich"
 msgstr "Editar e aprimorar"
 
+msgid "Edit in Quizzes stage"
+msgstr "Editar na etapa de Quizzes"
+
 msgid "Edit Prompt"
 msgstr "Prompt de edição"
 
@@ -2194,6 +2200,9 @@ msgstr "Interativo"
 msgid "Interactive assessment questions"
 msgstr "Questões de avaliação interativas"
 
+msgid "Interactive page: AI conversion from the original PDF."
+msgstr "Página interativa: conversão por IA do PDF original."
+
 msgid "Invalid project archive"
 msgstr "Arquivo de projeto inválido"
 
@@ -2399,6 +2408,9 @@ msgstr "Carregando pré-visualização..."
 
 msgid "Loading prompt..."
 msgstr "Loading prompt..."
+
+msgid "Loading quiz..."
+msgstr "Carregando quiz..."
 
 msgid "Loading quizzes..."
 msgstr "Carregando quizzes..."
@@ -2919,6 +2931,9 @@ msgstr "Abrir pré-visualização da página {0}"
 msgid "Open Preview"
 msgstr "Open Preview"
 
+msgid "Open quiz preview"
+msgstr "Abrir prévia do quiz"
+
 msgid "Open Validation"
 msgstr "Open Validation"
 
@@ -3307,11 +3322,30 @@ msgstr "px"
 msgid "Query param"
 msgstr "Parâmetro de consulta"
 
+msgid "Quiz"
+msgstr "Quiz"
+
+#. placeholder {0}: quiz.quizIndex + 1
+msgid "quiz {0}"
+msgstr "quiz {0}"
+
+#. placeholder {0}: quiz.quizIndex + 1
+msgid "Quiz {0}"
+msgstr "Quiz {0}"
+
+#. placeholder {0}: quiz.quizIndex + 1
+#. placeholder {1}: quiz.question
+msgid "Quiz {0}: {1}"
+msgstr "Quiz {0}: {1}"
+
 msgid "Quiz Generation"
 msgstr "Geração de questionários"
 
 msgid "Quiz Generation Prompt"
 msgstr "Prompt de geração de quiz"
+
+msgid "Quiz preview"
+msgstr "Prévia do quiz"
 
 msgid "Quiz Prompt"
 msgstr "Prompt de questionário"
@@ -3357,6 +3391,9 @@ msgstr "Reexecutar áudio"
 
 msgid "Re-run translation"
 msgstr "Reexecutar tradução"
+
+msgid "Read-only preview. Edit quiz content in the Quizzes stage."
+msgstr "Prévia somente leitura. Edite o conteúdo do quiz na etapa Quizzes."
 
 msgid "Readers see"
 msgstr "Leitores veem"

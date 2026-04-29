@@ -145,6 +145,15 @@ export interface StageRunStatus {
   queue?: Array<{ id: string; fromStage: string; toStage: string }>
 }
 
+export interface PageQuizItem {
+  quizId: string
+  quizIndex: number
+  afterPageId: string
+  question: string
+  hasRendering: boolean
+  renderingVersion: number | null
+}
+
 export interface PageSummaryItem {
   pageId: string
   pageNumber: number
@@ -157,6 +166,7 @@ export interface PageSummaryItem {
   sectionCount: number
   prunedSections: number[]
   sections: Array<{ sectionId: string; sectionIndex: number; sectionType: string }>
+  quizzesAfter: PageQuizItem[]
 }
 
 export interface SectionRendering {

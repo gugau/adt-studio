@@ -3,6 +3,7 @@ import { createPortal } from "react-dom"
 import { Link, useMatchRoute, useSearch } from "@tanstack/react-router"
 import { Trans } from "@lingui/react/macro"
 import {
+  HelpCircle,
   Loader2,
   Puzzle,
   RotateCcw,
@@ -28,7 +29,29 @@ import { useSettingsDialog } from "@/routes/__root"
 import type { TaskInfoResponse } from "@/api/client"
 import { getStageLabelI18n, getStepLabelI18n } from "../pipeline-i18n"
 import { ALL_STEP_NAMES, PAGE_PROGRESS_STEPS } from "@adt/types"
-import { getSectionThumbnailUrl, type PageSummaryItem } from "@/api/client"
+import { getSectionThumbnailUrl, type PageQuizItem, type PageSummaryItem } from "@/api/client"
+
+/** Build the flat ordered list of pages + quizzes (interleaved by afterPageId).
+ *  Used by both the Pages and Sections lists when quizzes should be shown. */
+type PageListEntry =
+  | { kind: "page"; page: PageSummaryItem }
+  | { kind: "quiz"; quiz: PageQuizItem }
+
+function interleavePagesAndQuizzes(
+  pages: PageSummaryItem[],
+  includeQuizzes: boolean,
+): PageListEntry[] {
+  const out: PageListEntry[] = []
+  for (const page of pages) {
+    out.push({ kind: "page", page })
+    if (includeQuizzes) {
+      for (const quiz of page.quizzesAfter) {
+        out.push({ kind: "quiz", quiz })
+      }
+    }
+  }
+  return out
+}
 
 const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   general: msg`General`,
@@ -546,6 +569,7 @@ function PageIndex({
       {tab === "pages" ? (
         <PagesList
           bookLabel={bookLabel}
+          activeStep={activeStep}
           pages={pages}
           activeStepDef={activeStepDef}
           selectedPageId={selectedPageId}
@@ -557,6 +581,7 @@ function PageIndex({
       ) : (
         <SectionsList
           bookLabel={bookLabel}
+          activeStep={activeStep}
           pages={pages}
           activeStepDef={activeStepDef}
           selectedPageId={selectedPageId}
@@ -732,10 +757,82 @@ function PageRow({
   )
 }
 
+/* ---------- QuizRow ---------- */
+
+function QuizRow({
+  bookLabel,
+  quiz,
+  isActive,
+  onSelect,
+}: {
+  bookLabel: string
+  quiz: PageQuizItem
+  isActive: boolean
+  onSelect: () => void
+}) {
+  const { i18n } = useLingui()
+  const [imgLoaded, setImgLoaded] = useState(false)
+  const [imgFailed, setImgFailed] = useState(false)
+  const imgSrc = quiz.hasRendering
+    ? getSectionThumbnailUrl(bookLabel, quiz.quizId, quiz.renderingVersion)
+    : null
+
+  useEffect(() => {
+    setImgLoaded(false)
+    setImgFailed(false)
+  }, [imgSrc])
+
+  const showImg = imgSrc !== null && !imgFailed
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      title={i18n._(msg`Quiz ${quiz.quizIndex + 1}: ${quiz.question}`)}
+      className={cn(
+        "flex items-start gap-2 px-2 py-1.5 text-left transition-colors w-full",
+        isActive
+          ? "bg-orange-50 text-orange-600 font-medium"
+          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+      )}
+    >
+      <div className="relative shrink-0 w-16 h-12 rounded ring-1 ring-border overflow-hidden bg-white">
+        {showImg && imgSrc ? (
+          <img
+            src={imgSrc}
+            alt=""
+            loading="lazy"
+            onLoad={() => setImgLoaded(true)}
+            onError={() => setImgFailed(true)}
+            className={cn(
+              "absolute inset-0 w-full h-full object-cover object-top transition-opacity",
+              imgLoaded ? "opacity-100" : "opacity-0"
+            )}
+          />
+        ) : null}
+        {(!showImg || !imgLoaded) && (
+          <div className="absolute inset-0 flex items-center justify-center bg-orange-50">
+            <HelpCircle className="w-4 h-4 text-orange-500" />
+          </div>
+        )}
+      </div>
+      <div className="flex flex-col gap-0.5 min-w-0 flex-1 pt-0.5">
+        <span className="text-[11px] leading-snug line-clamp-2">
+          {quiz.question || i18n._(msg`Quiz`)}
+        </span>
+        <span className="text-[9px] font-mono opacity-50 leading-none">
+          <Trans>quiz {quiz.quizIndex + 1}</Trans>
+        </span>
+      </div>
+    </button>
+  )
+}
+
 /* ---------- PagesList ---------- */
 
 function PagesList({
   bookLabel,
+  activeStep,
   pages,
   activeStepDef,
   selectedPageId,
@@ -745,6 +842,7 @@ function PagesList({
   stageRunning,
 }: {
   bookLabel: string
+  activeStep: string
   pages: PageSummaryItem[]
   activeStepDef?: (typeof STAGES)[number]
   selectedPageId?: string
@@ -754,12 +852,23 @@ function PagesList({
   stageRunning?: boolean
 }) {
   const parentRef = useRef<HTMLDivElement>(null)
+  // Quizzes are only navigable from the storyboard stage (where StoryboardView
+  // knows how to render them). Other stages render the Pages list as-is.
+  const showQuizzes = activeStep === "storyboard"
+  const entries = useMemo(
+    () => interleavePagesAndQuizzes(pages, showQuizzes),
+    [pages, showQuizzes],
+  )
   const selectedIndex = useMemo(
-    () => pages.findIndex((p) => p.pageId === selectedPageId),
-    [pages, selectedPageId],
+    () => entries.findIndex((e) =>
+      e.kind === "page"
+        ? e.page.pageId === selectedPageId
+        : e.quiz.quizId === selectedPageId,
+    ),
+    [entries, selectedPageId],
   )
   const virtualizer = useVirtualizer({
-    count: pages.length,
+    count: entries.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 52,
     overscan: 5,
@@ -780,11 +889,12 @@ function PagesList({
         }}
       >
         {virtualizer.getVirtualItems().map((virtualRow) => {
-          const page = pages[virtualRow.index]
-          const isActive = page.pageId === selectedPageId
+          const entry = entries[virtualRow.index]
+          const key = entry.kind === "page" ? entry.page.pageId : entry.quiz.quizId
+          const isActive = key === selectedPageId
           return (
             <div
-              key={page.pageId}
+              key={key}
               data-index={virtualRow.index}
               ref={virtualizer.measureElement}
               style={{
@@ -795,16 +905,25 @@ function PagesList({
                 transform: `translateY(${virtualRow.start}px)`,
               }}
             >
-              <PageRow
-                bookLabel={bookLabel}
-                page={page}
-                isActive={isActive}
-                activeStepDef={activeStepDef}
-                onSelect={() => onSelectPage?.(page.pageId)}
-                sectionIndex={isActive ? sectionIndex : undefined}
-                onSelectSection={isActive ? onSelectSection : undefined}
-                stageRunning={stageRunning}
-              />
+              {entry.kind === "page" ? (
+                <PageRow
+                  bookLabel={bookLabel}
+                  page={entry.page}
+                  isActive={isActive}
+                  activeStepDef={activeStepDef}
+                  onSelect={() => onSelectPage?.(entry.page.pageId)}
+                  sectionIndex={isActive ? sectionIndex : undefined}
+                  onSelectSection={isActive ? onSelectSection : undefined}
+                  stageRunning={stageRunning}
+                />
+              ) : (
+                <QuizRow
+                  bookLabel={bookLabel}
+                  quiz={entry.quiz}
+                  isActive={isActive}
+                  onSelect={() => onSelectPage?.(entry.quiz.quizId)}
+                />
+              )}
             </div>
           )
         })}
@@ -826,8 +945,13 @@ interface SectionEntry {
   renderingVersion: number | null
 }
 
+type SectionListEntry =
+  | { kind: "section"; section: SectionEntry }
+  | { kind: "quiz"; quiz: PageQuizItem }
+
 function SectionsList({
   bookLabel,
+  activeStep,
   pages,
   activeStepDef,
   selectedPageId,
@@ -837,6 +961,7 @@ function SectionsList({
   stageRunning,
 }: {
   bookLabel: string
+  activeStep: string
   pages: PageSummaryItem[]
   activeStepDef?: (typeof STAGES)[number]
   selectedPageId?: string
@@ -845,32 +970,43 @@ function SectionsList({
   onSelectSection?: (index: number) => void
   stageRunning?: boolean
 }) {
-  const { i18n } = useLingui()
   const parentRef = useRef<HTMLDivElement>(null)
+  const showQuizzes = activeStep === "storyboard"
 
-  const entries = useMemo<SectionEntry[]>(() => {
-    const list: SectionEntry[] = []
+  const entries = useMemo<SectionListEntry[]>(() => {
+    const list: SectionListEntry[] = []
     for (const page of pages) {
       for (const s of page.sections) {
         list.push({
-          pageId: page.pageId,
-          pageNumber: page.pageNumber,
-          sectionId: s.sectionId,
-          sectionIndex: s.sectionIndex,
-          sectionType: s.sectionType,
-          pageSectionCount: page.sectionCount,
-          hasRendering: page.hasRendering,
-          renderingVersion: page.renderingVersion,
+          kind: "section",
+          section: {
+            pageId: page.pageId,
+            pageNumber: page.pageNumber,
+            sectionId: s.sectionId,
+            sectionIndex: s.sectionIndex,
+            sectionType: s.sectionType,
+            pageSectionCount: page.sectionCount,
+            hasRendering: page.hasRendering,
+            renderingVersion: page.renderingVersion,
+          },
         })
+      }
+      if (showQuizzes) {
+        for (const quiz of page.quizzesAfter) {
+          list.push({ kind: "quiz", quiz })
+        }
       }
     }
     return list
-  }, [pages])
+  }, [pages, showQuizzes])
 
   const selectedEntryIndex = useMemo(
     () =>
-      entries.findIndex(
-        (e) => e.pageId === selectedPageId && e.sectionIndex === (sectionIndex ?? 0),
+      entries.findIndex((e) =>
+        e.kind === "section"
+          ? e.section.pageId === selectedPageId &&
+            e.section.sectionIndex === (sectionIndex ?? 0)
+          : e.quiz.quizId === selectedPageId,
       ),
     [entries, selectedPageId, sectionIndex],
   )
@@ -907,12 +1043,38 @@ function SectionsList({
       >
         {virtualizer.getVirtualItems().map((virtualRow) => {
           const entry = entries[virtualRow.index]
+          if (entry.kind === "quiz") {
+            const isActive = entry.quiz.quizId === selectedPageId
+            return (
+              <div
+                key={`quiz-${entry.quiz.quizId}`}
+                data-index={virtualRow.index}
+                ref={virtualizer.measureElement}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
+                <SectionQuizRow
+                  bookLabel={bookLabel}
+                  quiz={entry.quiz}
+                  index={virtualRow.index}
+                  isActive={isActive}
+                  onSelect={() => onSelectPage?.(entry.quiz.quizId)}
+                />
+              </div>
+            )
+          }
+          const section = entry.section
           const isActive =
-            entry.pageId === selectedPageId &&
-            entry.sectionIndex === (sectionIndex ?? 0)
+            section.pageId === selectedPageId &&
+            section.sectionIndex === (sectionIndex ?? 0)
           return (
             <div
-              key={`${entry.pageId}-${entry.sectionIndex}`}
+              key={`${section.pageId}-${section.sectionIndex}`}
               data-index={virtualRow.index}
               ref={virtualizer.measureElement}
               style={{
@@ -925,7 +1087,7 @@ function SectionsList({
             >
               <SectionRow
                 bookLabel={bookLabel}
-                entry={entry}
+                entry={section}
                 index={virtualRow.index}
                 isActive={isActive}
                 activeStepDef={activeStepDef}
@@ -1065,6 +1227,88 @@ function SectionRow({
               {entry.sectionIndex + 1}
             </span>
           )}
+        </span>
+      </div>
+    </button>
+  )
+}
+
+/* ---------- SectionQuizRow ---------- */
+
+function SectionQuizRow({
+  bookLabel,
+  quiz,
+  index,
+  isActive,
+  onSelect,
+}: {
+  bookLabel: string
+  quiz: PageQuizItem
+  index: number
+  isActive: boolean
+  onSelect: () => void
+}) {
+  const { i18n } = useLingui()
+  const [imgLoaded, setImgLoaded] = useState(false)
+  const [imgFailed, setImgFailed] = useState(false)
+  const imgSrc = quiz.hasRendering
+    ? getSectionThumbnailUrl(bookLabel, quiz.quizId, quiz.renderingVersion)
+    : null
+
+  useEffect(() => {
+    setImgLoaded(false)
+    setImgFailed(false)
+  }, [imgSrc])
+
+  const showImg = imgSrc !== null && !imgFailed
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      title={i18n._(msg`Quiz ${quiz.quizIndex + 1}: ${quiz.question}`)}
+      className={cn(
+        "flex items-start gap-2 w-full px-2 py-1.5 text-left transition-colors",
+        isActive
+          ? "bg-orange-50 text-orange-600 font-medium"
+          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+      )}
+    >
+      <span className="shrink-0 mt-1 w-4 text-[10px] font-mono tabular-nums opacity-60 text-right leading-none">
+        {index + 1}
+      </span>
+      <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+        <div
+          className={cn(
+            "relative w-full overflow-hidden rounded bg-white border-2",
+            isActive ? "border-orange-600" : "border-transparent ring-1 ring-border"
+          )}
+          style={{ aspectRatio: "1280 / 800" }}
+        >
+          {showImg && imgSrc && (
+            <img
+              src={imgSrc}
+              alt=""
+              loading="lazy"
+              onLoad={() => setImgLoaded(true)}
+              onError={() => setImgFailed(true)}
+              className={cn(
+                "absolute inset-0 w-full h-full object-cover object-top transition-opacity",
+                imgLoaded ? "opacity-100" : "opacity-0"
+              )}
+            />
+          )}
+          {(!showImg || !imgLoaded) && (
+            <div className="absolute inset-0 flex items-center justify-center bg-orange-50">
+              <HelpCircle className="w-5 h-5 text-orange-500" />
+            </div>
+          )}
+          <div className="absolute top-1 left-1 flex items-center justify-center w-4 h-4 rounded-full bg-orange-600 text-white shadow ring-1 ring-white/40">
+            <HelpCircle className="w-2.5 h-2.5" />
+          </div>
+        </div>
+        <span className="text-[9px] font-mono opacity-60 leading-none">
+          <Trans>quiz {quiz.quizIndex + 1}</Trans>
         </span>
       </div>
     </button>

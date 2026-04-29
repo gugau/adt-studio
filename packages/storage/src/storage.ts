@@ -102,6 +102,8 @@ export interface Storage {
   clearSectionThumbnailsForPage(pageId: string): void
   /** Remove all section thumbnails. */
   clearSectionThumbnails(): void
+  /** Remove all quiz thumbnails (filenames matching qzNNN.png). */
+  clearQuizThumbnails(): void
 
   /** Add a sign language video to the book. */
   putSignLanguageVideo(videoId: string, buffer: Buffer, originalName: string, mimeType: string): void
