@@ -249,11 +249,11 @@ msgstr "/ Section {0}"
 msgid "="
 msgstr "="
 
-msgid "🌿"
-msgstr "🌿"
-
 msgid "● LIVE"
 msgstr "● LIVE"
+
+msgid "🌿"
+msgstr "🌿"
 
 msgid "0 = deterministic, 2 = max creativity"
 msgstr "0 = deterministic, 2 = max creativity"
@@ -2185,9 +2185,6 @@ msgstr "Images smaller than your minimum dimension skip segmentation - saving co
 msgid "Images with shortest side below min or longest side above max are pruned."
 msgstr "Images with shortest side below min or longest side above max are pruned."
 
-msgid "In book:"
-msgstr "In book:"
-
 msgid "Import"
 msgstr "Import"
 
@@ -2202,6 +2199,9 @@ msgstr "Import Project"
 
 msgid "Importing..."
 msgstr "Importing..."
+
+msgid "In book:"
+msgstr "In book:"
 
 msgid "In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
 msgstr "In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
@@ -2333,6 +2333,7 @@ msgstr "Laying out spreads"
 
 #~ msgid "Leaf text roles the LLM can assign to each text element. Pruned roles are classified but excluded from rendering."
 #~ msgstr "Leaf text roles the LLM can assign to each text element. Pruned roles are classified but excluded from rendering."
+
 msgid "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 msgstr "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 
@@ -2492,11 +2493,11 @@ msgstr "Lookup definitions for key terms"
 msgid "Lower values produce more consistent styling across pages."
 msgstr "Lower values produce more consistent styling across pages."
 
-msgid "manual"
-msgstr "manual"
-
 msgid "Make sure you're uploading a .zip file exported from ADT Studio."
 msgstr "Make sure you're uploading a .zip file exported from ADT Studio."
+
+msgid "manual"
+msgstr "manual"
 
 msgid "Manual review"
 msgstr "Manual review"
@@ -2533,6 +2534,7 @@ msgstr "Max Size (px)"
 
 #~ msgid "Maximum number of reviewer passes after the initial sectioning. Set to 0 to disable refinement."
 #~ msgstr "Maximum number of reviewer passes after the initial sectioning. Set to 0 to disable refinement."
+
 msgid "Meaningfulness Prompt"
 msgstr "Meaningfulness Prompt"
 
@@ -3165,14 +3167,14 @@ msgstr "Perfect for children's books, pairing large images with minimal text."
 msgid "Photograph"
 msgstr "Photograph"
 
+msgid "photosynthesis"
+msgstr "photosynthesis"
+
 #~ msgid "Photosynthesis"
 #~ msgstr "Photosynthesis"
 
 msgid "photosynthetic, photosynthesizing"
 msgstr "photosynthetic, photosynthesizing"
-
-msgid "photosynthesis"
-msgstr "photosynthesis"
 
 msgid "Pick a preset"
 msgstr "Pick a preset"
@@ -3460,9 +3462,6 @@ msgstr "Remove from group"
 msgid "Remove manual glossary term"
 msgstr "Remove manual glossary term"
 
-msgid "Remove PDF"
-msgstr "Remove PDF"
-
 #~ msgid "Remove PDF"
 #~ msgstr "Remove PDF"
 
@@ -3496,11 +3495,11 @@ msgstr "Replace"
 msgid "Replace from Book"
 msgstr "Replace from Book"
 
-msgid "Replace this audio file"
-msgstr "Replace this audio file"
-
 msgid "Replace PDF"
 msgstr "Replace PDF"
+
+msgid "Replace this audio file"
+msgstr "Replace this audio file"
 
 msgid "Replace Video?"
 msgstr "Replace Video?"
@@ -4615,11 +4614,11 @@ msgstr "Upload sign language videos and assign them to sections."
 msgid "Upload Style Guide"
 msgstr "Upload Style Guide"
 
-msgid "Upload your own audio file"
-msgstr "Upload your own audio file"
-
 msgid "Upload to an LMS as a SCORM 1.2 package with completion tracking and offline support."
 msgstr "Upload to an LMS as a SCORM 1.2 package with completion tracking and offline support."
+
+msgid "Upload your own audio file"
+msgstr "Upload your own audio file"
 
 msgid "Upload ZIP or drag and drop"
 msgstr "Upload ZIP or drag and drop"

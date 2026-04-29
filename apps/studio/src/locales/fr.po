@@ -250,11 +250,11 @@ msgstr "/ Section {0}"
 msgid "="
 msgstr "="
 
-msgid "🌿"
-msgstr "🌿"
-
 msgid "● LIVE"
 msgstr "● EN DIRECT"
+
+msgid "🌿"
+msgstr "🌿"
 
 msgid "0 = deterministic, 2 = max creativity"
 msgstr "0 = déterministe, 2 = créativité maximale"
@@ -2186,9 +2186,6 @@ msgstr "Les images plus petites que votre dimension minimale ne passent pas par 
 msgid "Images with shortest side below min or longest side above max are pruned."
 msgstr "Les images dont le côté le plus court est inférieur au minimum ou le côté le plus long supérieur au maximum sont élaguées."
 
-msgid "In book:"
-msgstr "Dans le livre :"
-
 msgid "Import"
 msgstr "Importer"
 
@@ -2203,6 +2200,9 @@ msgstr "Importer le projet"
 
 msgid "Importing..."
 msgstr "Importation..."
+
+msgid "In book:"
+msgstr "Dans le livre :"
 
 msgid "In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
 msgstr "Si vous ne souhaitez pas convertir le livre entier, ajustez les curseurs pour définir quelles pages seront numérisées."
@@ -2334,6 +2334,7 @@ msgstr "Mise en page des doubles pages"
 
 #~ msgid "Leaf text roles the LLM can assign to each text element. Pruned roles are classified but excluded from rendering."
 #~ msgstr "Rôles de texte feuilles que le LLM peut attribuer à chaque élément de texte. Les rôles élagués sont classés mais exclus du rendu."
+
 msgid "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 msgstr "Laissez sur Aucun pour exécuter la segmentation sur toutes les images éligibles (selon les règles du pipeline)."
 
@@ -2493,11 +2494,11 @@ msgstr "Rechercher les définitions des termes clés"
 msgid "Lower values produce more consistent styling across pages."
 msgstr "Les valeurs plus basses produisent un style plus cohérent entre les pages."
 
-msgid "manual"
-msgstr "manuel"
-
 msgid "Make sure you're uploading a .zip file exported from ADT Studio."
 msgstr "Assurez-vous de télécharger un fichier .zip exporté depuis ADT Studio."
+
+msgid "manual"
+msgstr "manuel"
 
 msgid "Manual review"
 msgstr "Révision manuelle"
@@ -2534,6 +2535,7 @@ msgstr "Taille max (px)"
 
 #~ msgid "Maximum number of reviewer passes after the initial sectioning. Set to 0 to disable refinement."
 #~ msgstr "Nombre maximum de passes du réviseur après le sectionnement initial. Mettre à 0 pour désactiver le raffinement."
+
 msgid "Meaningfulness Prompt"
 msgstr "Meaningfulness Invite"
 
@@ -3166,14 +3168,14 @@ msgstr "Parfait pour les livres pour enfants, associant de grandes images avec u
 msgid "Photograph"
 msgstr "Photographie"
 
+msgid "photosynthesis"
+msgstr "photosynthèse"
+
 #~ msgid "Photosynthesis"
 #~ msgstr "Photosynthèse"
 
 msgid "photosynthetic, photosynthesizing"
 msgstr "photosynthétique, en train de faire la photosynthèse"
-
-msgid "photosynthesis"
-msgstr "photosynthèse"
 
 msgid "Pick a preset"
 msgstr "Choisissez un préréglage"
@@ -3461,9 +3463,6 @@ msgstr "Retirer du groupe"
 msgid "Remove manual glossary term"
 msgstr "Supprimer le terme manuel du glossaire"
 
-msgid "Remove PDF"
-msgstr "Retirer PDF"
-
 #~ msgid "Remove PDF"
 #~ msgstr "Retirer PDF"
 
@@ -3497,11 +3496,11 @@ msgstr "Remplacer"
 msgid "Replace from Book"
 msgstr "Remplacer depuis le livre"
 
-msgid "Replace this audio file"
-msgstr "Remplacer ce fichier audio"
-
 msgid "Replace PDF"
 msgstr "Remplacer le PDF"
+
+msgid "Replace this audio file"
+msgstr "Remplacer ce fichier audio"
 
 msgid "Replace Video?"
 msgstr "Remplacer la vidéo ?"
@@ -4616,11 +4615,11 @@ msgstr "Téléversez des vidéos en langue des signes et assignez-les aux sectio
 msgid "Upload Style Guide"
 msgstr "Téléverser un guide de style"
 
-msgid "Upload your own audio file"
-msgstr "Téléversez votre propre fichier audio"
-
 msgid "Upload to an LMS as a SCORM 1.2 package with completion tracking and offline support."
 msgstr "Téléchargez vers un LMS en tant que package SCORM 1.2 avec suivi de l'achèvement et support hors ligne."
+
+msgid "Upload your own audio file"
+msgstr "Téléversez votre propre fichier audio"
 
 msgid "Upload ZIP or drag and drop"
 msgstr "Téléchargez le ZIP ou glissez-déposez"
