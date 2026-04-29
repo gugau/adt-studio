@@ -262,7 +262,8 @@ export function createBookStorage(label: string, booksRoot: string): Storage {
 
       for (const row of rows) {
         const filePath = path.resolve(paths.bookDir, row.path)
-        if (!filePath.startsWith(paths.bookDir)) continue
+        const rel = path.relative(paths.bookDir, filePath)
+        if (rel.startsWith("..") || path.isAbsolute(rel)) continue
         try {
           fs.rmSync(filePath, { force: true })
         } catch {

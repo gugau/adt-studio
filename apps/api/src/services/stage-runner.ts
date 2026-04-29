@@ -1559,11 +1559,6 @@ async function runTranslateStep(
     }
 
     // ── Step 3: Translate burned-in text in user-selected images ────
-    // Always clear previously-generated variants first, so that disabling the
-    // step or shrinking the selection actually removes them from disk and DB.
-    // Cached regeneration is fast for variants we still want.
-    storage.clearTranslatedImages()
-
     const imageTranslation = buildImageTranslationConfig(config)
     const imageTargetLanguages = getTargetLanguages(outputLanguages, language)
     if (
@@ -1571,6 +1566,9 @@ async function runTranslateStep(
       imageTranslation.selectedImageIds.length === 0 ||
       imageTargetLanguages.length === 0
     ) {
+      // Disabling the step or shrinking the selection should remove stale
+      // variants from disk and DB.
+      storage.clearTranslatedImages()
       progress.emit({ type: "step-skip", step: "image-translation" })
       console.log(
         `[stage-run] ${label}: image translation skipped ` +
@@ -1579,6 +1577,8 @@ async function runTranslateStep(
     } else {
       progress.emit({ type: "step-start", step: "image-translation" })
 
+      // Validate prerequisites BEFORE clearing existing variants — a missing
+      // API key shouldn't wipe prior work.
       if (!options.apiKey) {
         throw new StepError(
           "image-translation",
@@ -1610,6 +1610,11 @@ async function runTranslateStep(
         )
       }
       const promptText = await renderLiquidTemplate(templateContent.trim(), {})
+
+      // Prerequisites validated — safe to clear previously-generated variants so
+      // shrinking the selection or changing languages drops stale ones. Cached
+      // regeneration is fast for variants we still want.
+      storage.clearTranslatedImages()
 
       // Resolve which selected images actually exist + grab their on-disk paths
       type ImageWork = {
