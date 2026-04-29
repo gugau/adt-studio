@@ -1762,8 +1762,8 @@ msgstr "Generar narración de audio para el contenido del libro."
 msgid "Generate comprehension quizzes and activities based on the book content."
 msgstr "Genera cuestionarios y actividades de comprensión basados en el contenido del libro."
 
-msgid "Generate definition, variations, and emoji"
-msgstr "Generar definición, variaciones y emoji"
+#~ msgid "Generate definition, variations, and emoji"
+#~ msgstr "Generar definición, variaciones y emoji"
 
 msgid "Generate from pages"
 msgstr "Generar desde páginas"
@@ -3077,6 +3077,9 @@ msgstr "Refresh validation"
 
 msgid "Refreshing results for this packaged preview."
 msgstr "Refreshing results for this packaged preview."
+
+msgid "Regenerate definition, variations, and emoji"
+msgstr "Regenerar definición, variaciones y emoji"
 
 msgid "Region"
 msgstr "Región"
