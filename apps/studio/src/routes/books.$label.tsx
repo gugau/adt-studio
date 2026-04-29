@@ -18,7 +18,6 @@ import { useExportWatcherSetup, ExportWatcherProvider } from "@/hooks/use-export
 import { usePlatform } from "@/hooks/use-platform"
 import { useWindowControls } from "@/hooks/use-window-controls"
 import { MacOSTrafficLightSpacer } from "@/components/title-bar"
-import { DRAG_REGION, NO_DRAG_REGION } from "@/constants"
 
 interface SectionNavContext {
   sectionIndex: number

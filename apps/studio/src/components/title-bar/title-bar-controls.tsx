@@ -1,4 +1,3 @@
-import { MacOSTrafficLightSpacer } from "./MacOSTrafficLightSpacer";
 import { LinuxControls } from "./LinuxControls";
 import { WindowsControls } from "./WindowsControls";
 import { cn } from "@/lib/utils";

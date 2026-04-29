@@ -382,6 +382,6 @@
   -webkit-app-region: drag;
 }
 
-.drag-region > * {
+.drag-region * {
   -webkit-app-region: no-drag;
 }
