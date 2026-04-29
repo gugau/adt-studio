@@ -13,10 +13,7 @@ export function handleScreenshotMessages(apiProcess: Electron.UtilityProcess) {
   return async (msg: unknown) => {
     const parsed = screenshotIpcUtilityToMainSchema.safeParse(msg);
     if (!parsed.success) {
-      console.warn(
-        "[screenshot-ipc] invalid utility message:",
-        parsed.error.flatten(),
-      );
+      // Not a screenshot message — let other handlers process it.
       return;
     }
 

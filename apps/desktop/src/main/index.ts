@@ -16,6 +16,7 @@ import {
   registerHtmlRenderProtocol,
 } from "./protocols/html-render.protocol";
 import { handleScreenshotMessages } from "./screenshot.handler";
+import { handleAccessibilityAuditMessages } from "./accessibility-audit.handler";
 import { join } from "node:path";
 import {
   registerStudioAppProtocol,
@@ -44,6 +45,7 @@ app.whenReady().then(async () => {
   });
 
   apiProcess.on("message", handleScreenshotMessages(apiProcess));
+  apiProcess.on("message", handleAccessibilityAuditMessages(apiProcess));
 
   app.on("activate", function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
