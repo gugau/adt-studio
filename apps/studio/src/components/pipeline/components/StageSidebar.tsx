@@ -16,6 +16,9 @@ import { Button } from "@/components/ui/button"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useAccessibilityAssessment } from "@/hooks/use-debug"
 import { useBookTasks } from "@/hooks/use-book-tasks"
+import { useStageMissingCounts } from "@/hooks/use-stage-missing-counts"
+import { usePackageAdtStatus } from "@/hooks/use-books"
+import { useSignLanguageVideos } from "@/hooks/use-sign-language-videos"
 import { StepProgressRing } from "./StepProgressRing"
 import { usePages, usePageImage } from "@/hooks/use-pages"
 import {
@@ -142,7 +145,13 @@ export function StageSidebar({
   const search = useSearch({ strict: false }) as { tab?: string }
   const { stageState } = useBookRun()
   const { data: accessibilityAssessment } = useAccessibilityAssessment(bookLabel)
+  const { data: signLanguageData } = useSignLanguageVideos(bookLabel)
+  const { data: packageStatus } = usePackageAdtStatus(bookLabel)
+  const { tasks } = useBookTasks(bookLabel)
   const { openSettings } = useSettingsDialog()
+  const stageMissing = useStageMissingCounts(bookLabel)
+  const translateNeedsRerun = stageMissing.translate > 0
+  const speechNeedsRerun = stageMissing.speech > 0
 
   const currentState = stageState(activeStep)
   const effectivePagesOpen =
@@ -168,26 +177,36 @@ export function StageSidebar({
     flex1:     "flex-1",
   }
 
-  const storyboardDone = stageState("storyboard") === "done"
   const validationCompleted = Boolean(accessibilityAssessment?.assessment)
+  const signLanguageCompleted = signLanguageData?.videos?.some((v) => v.sectionId !== null) ?? false
+  const previewCompleted = packageStatus?.hasAdt ?? false
+  const exportCompleted = tasks.some((t) => t.kind === "prepare-export" && t.status === "completed")
+
+  const completionOverrides: Record<string, boolean> = {
+    "sign-language": signLanguageCompleted,
+    validation: validationCompleted,
+    preview: previewCompleted,
+    export: exportCompleted,
+  }
 
   const stageItems = STAGES.map((step, index) => {
     const isActive = step.slug === activeStep
     const Icon = step.icon
     const settingsTabs = getSettingsTabs(step.slug, i18n)
     const showSubTabs = isActive && isSettings && !!settingsTabs
-    const state = step.slug === "validation" && validationCompleted ? "done" : stageState(step.slug)
+    const state = completionOverrides[step.slug] ? "done" : stageState(step.slug)
     const stageCompleted = state === "done"
-    const ringState = state
 
-    // "book" is always filled; "validation", "preview" and "export" fill once storyboard is done;
-    // pipeline stages fill when their own stage is completed.
-    const iconFilled =
-      step.slug === "book"
-        ? true
-        : step.slug === "sign-language" || step.slug === "validation" || step.slug === "preview" || step.slug === "export"
-          ? storyboardDone
-          : stageCompleted
+    // Translate/Speech revert to needs-rerun look when their downstream output
+    // has gaps (e.g. after a glossary addition). The in-view banner gives the
+    // user the actionable details and Re-run button.
+    const stageNeedsRerun =
+      (step.slug === "translate" && translateNeedsRerun) ||
+      (step.slug === "speech" && speechNeedsRerun)
+    const ringState = stageNeedsRerun ? "idle" : state
+
+    // "book" is always filled; all other stages fill when their own completion signal is met.
+    const iconFilled = step.slug === "book" ? true : stageCompleted
 
     const stepLabel = step.slug === "book" ? toCamelLabel(bookLabel) : getStageLabelI18n(step.slug)
 

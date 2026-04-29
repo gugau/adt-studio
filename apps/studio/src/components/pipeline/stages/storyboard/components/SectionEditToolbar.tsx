@@ -1149,8 +1149,8 @@ export function SectionEditToolbar({
             )}
             {onReplace && (
               <div className="relative inline-flex" ref={replaceMenuRef}>
-                <button type="button" onClick={() => onReplace(dataId)} className={`flex items-center gap-1 text-[10px] font-medium px-2 py-1 bg-muted hover:bg-accent transition-colors cursor-pointer ${onReplaceFromBook ? "rounded-l" : "rounded"}`}>
-                  <Upload className="h-3 w-3" /><Trans>Replace</Trans>
+                <button type="button" onClick={() => onReplace(dataId)} title={t`Replace`} className={`flex items-center gap-1 text-[10px] font-medium px-2 py-1 bg-muted hover:bg-accent transition-colors cursor-pointer ${onReplaceFromBook ? "rounded-l" : "rounded"}`}>
+                  <Upload className="h-3 w-3" />
                 </button>
                 {onReplaceFromBook && (
                   <>

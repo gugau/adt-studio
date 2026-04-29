@@ -17,7 +17,7 @@ export function useTTS(label: string) {
     if (!data?.languages) return map
     for (const [language, langData] of Object.entries(data.languages)) {
       for (const entry of langData.entries) {
-        map.set(entry.textId, getAudioUrl(label, language, entry.fileName))
+        map.set(entry.textId, getAudioUrl(label, language, entry.fileName, entry.cacheKey))
       }
     }
     return map

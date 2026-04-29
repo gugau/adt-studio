@@ -9,6 +9,7 @@ export default defineConfig({
   },
   test: {
     include: [
+      "assets/adt/modules/**/*.test.js",
       "packages/*/src/**/__tests__/**/*.test.ts",
       "apps/*/src/**/*.test.ts",
       "apps/*/src/**/*.test.tsx",

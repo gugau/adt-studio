@@ -154,6 +154,21 @@ export const toggleDescribeImages = () => {
 };
 
 /**
+ * Loads the word highlight state from cookies and updates UI.
+ */
+export const loadWordHighlightState = () => {
+    const wordHighlightModeCookie = getCookie("wordHighlightMode");
+    if (wordHighlightModeCookie !== null) {
+        setState('wordHighlightMode', wordHighlightModeCookie === "true");
+    } else {
+        setState('wordHighlightMode', true);
+        setCookie("wordHighlightMode", "true", 7);
+    }
+
+    toggleButtonState("toggle-highlight", state.wordHighlightMode);
+};
+
+/**
  * Initializes autoplay if both read aloud and autoplay are enabled.
  */
 export const initializeAutoplay = () => {
@@ -195,6 +210,7 @@ export const loadToggleButtonState = () => {
     // Optionally, update button states/colors as before
     toggleButtonState("toggle-read-aloud", state.readAloudMode);
     toggleButtonColor("tts-quick-toggle-button", state.readAloudMode);
+    toggleButtonState("toggle-highlight", state.wordHighlightMode);
     toggleButtonState("toggle-eli5", state.eli5Mode);
     toggleButtonState("toggle-easy-read", state.easyReadMode);
     handleEli5State();
@@ -1514,4 +1530,3 @@ export const unhighlightElement = (element) => {
 export const unhighlightAllElements = () => {
     document.querySelectorAll('.bg-blue-100').forEach(unhighlightElement);
 };
-

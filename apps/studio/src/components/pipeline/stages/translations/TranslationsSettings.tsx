@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
 import { ModelSelect, OPENAI_TTS_MODELS, AZURE_TTS_MODELS, GEMINI_TTS_MODELS, IMAGE_MODEL_GROUPS } from "@/components/pipeline/components/ModelSelect"
 import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
 import { useActiveConfig } from "@/hooks/use-debug"
@@ -30,6 +31,7 @@ import { resolveSpeechProviderForLanguage } from "@/lib/speech-routing"
 import { SpeechPromptsEditor } from "./components/SpeechPromptsEditor"
 import { VoiceMappingsEditor } from "./components/VoiceMappingsEditor"
 import { SelectImagesDialog } from "./components/SelectImagesDialog"
+import { WordHighlightPreview } from "./components/WordHighlightPreview"
 import { useLingui } from "@lingui/react/macro"
 
 const langNames = new Intl.DisplayNames(["en"], { type: "language" })
@@ -71,6 +73,7 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general",
   const [geminiLanguages, setGeminiLanguages] = useState("")
   const [bitRate, setBitRate] = useState("")
   const [sampleRate, setSampleRate] = useState("")
+  const [wordHighlighting, setWordHighlighting] = useState(false)
 
   const [dirty, setDirty] = useState<Record<string, boolean>>({})
   const markDirty = (field: string) => setDirty((prev) => ({ ...prev, [field]: true }))
@@ -107,6 +110,7 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general",
       if (s.default_provider) setDefaultProvider(String(s.default_provider))
       if (s.bit_rate) setBitRate(String(s.bit_rate))
       if (s.sample_rate) setSampleRate(String(s.sample_rate))
+      setWordHighlighting(s.word_highlighting === true)
       if (s.providers && typeof s.providers === "object") {
         const providers = s.providers as Record<string, Record<string, unknown>>
         if (providers.openai) {
@@ -182,6 +186,7 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general",
         providers: Object.keys(providers).length > 0 ? providers : undefined,
         bit_rate: bitRate.trim() || undefined,
         sample_rate: sampleRate.trim() ? Number(sampleRate.trim()) : undefined,
+        word_highlighting: wordHighlighting,
       }
     }
     return overrides
@@ -284,6 +289,7 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general",
           geminiLanguages={geminiLanguages} setGeminiLanguages={setGeminiLanguages}
           bitRate={bitRate} setBitRate={setBitRate}
           sampleRate={sampleRate} setSampleRate={setSampleRate}
+          wordHighlighting={wordHighlighting} setWordHighlighting={setWordHighlighting}
           markDirty={markDirty}
         />
       )}
@@ -471,6 +477,7 @@ function SpeechLanguageCards({
   geminiLanguages, setGeminiLanguages,
   bitRate, setBitRate,
   sampleRate, setSampleRate,
+  wordHighlighting, setWordHighlighting,
   markDirty,
 }: {
   bookLabel: string
@@ -487,6 +494,7 @@ function SpeechLanguageCards({
   geminiLanguages: string; setGeminiLanguages: (v: string) => void
   bitRate: string; setBitRate: (v: string) => void
   sampleRate: string; setSampleRate: (v: string) => void
+  wordHighlighting: boolean; setWordHighlighting: (v: boolean) => void
   markDirty: (field: string) => void
 }) {
   const { t } = useLingui()
@@ -637,6 +645,20 @@ function SpeechLanguageCards({
             />
           </div>
         </div>
+        <div className="flex items-start gap-3 pt-2">
+          <Switch
+            id="word-highlighting"
+            checked={wordHighlighting}
+            onCheckedChange={(v) => { setWordHighlighting(v); markDirty("speech") }}
+          />
+          <div className="space-y-2 flex-1">
+            <Label htmlFor="word-highlighting" className="text-xs">{t`Word-level highlighting`}</Label>
+            <p className="text-[11px] text-muted-foreground">
+              {t`When enabled, word-level timestamps are calculated automatically during speech generation so the reader can highlight words as they're spoken. When disabled, you can still calculate timestamps manually from the speech view.`}
+            </p>
+            <WordHighlightPreview enabled={wordHighlighting} />
+          </div>
+        </div>
       </div>
 
       {/* Per-language cards */}
@@ -722,3 +744,4 @@ function SpeechLanguageCards({
     </div>
   )
 }
+

@@ -27,6 +27,7 @@ import {
   extractImageIds,
   generateGlossary,
   buildGlossaryConfig,
+  mergeGeneratedGlossaryWithManualItems,
   generateToc,
   buildTocGenerationConfig,
   generateAllQuizzes,
@@ -46,6 +47,7 @@ import {
   resolveSpeechModel,
   resolveSpeechFormat,
   generateSpeechFile,
+  generateWordTimestamps,
   generateBookSummary,
   buildBookSummaryConfig,
   filterPageImageMeaningfulness,
@@ -71,10 +73,13 @@ import type {
   ImageClassificationOutput,
   PageSectioningOutput,
   WebRenderingOutput,
+  GlossaryOutput,
   TextCatalogOutput,
   TextCatalogEntry,
   SpeechFileEntry,
   TTSOutput,
+  WordTimestampEntry,
+  WordTimestampOutput,
   StepName,
   StageName,
   BookSummaryOutput,
@@ -160,6 +165,159 @@ async function processWithConcurrency<T>(
   await Promise.all(executing)
 }
 
+function emitSpeechStepProgress(
+  progress: StageRunProgress,
+  audioCompleted: number,
+  audioTotal: number,
+  audioFailures: number,
+): void {
+  progress.emit({
+    type: "step-progress",
+    step: "tts",
+    message: `${audioCompleted}/${audioTotal} audio entries${audioFailures > 0 ? ` (${audioFailures} failed)` : ""}`,
+    page: audioCompleted,
+    totalPages: audioTotal,
+  })
+}
+
+function emitWordTimestampStepProgress(
+  progress: StageRunProgress,
+  completed: number,
+  total: number,
+  failures: number,
+): void {
+  progress.emit({
+    type: "step-progress",
+    step: "word-timestamps",
+    message: `${completed}/${total} entries${failures > 0 ? ` (${failures} failed)` : ""}`,
+    page: completed,
+    totalPages: total,
+  })
+}
+
+function resolveSpeechAudioPath(
+  bookDir: string,
+  language: string,
+  fileName: string,
+): string | null {
+  const audioRoot = path.resolve(bookDir, "audio")
+  const normalizedLanguage = normalizeLocale(language)
+  const candidateDirs = [
+    path.resolve(audioRoot, normalizedLanguage),
+    path.resolve(audioRoot, normalizedLanguage.replace("-", "_")),
+  ]
+
+  for (const dir of candidateDirs) {
+    const resolved = path.resolve(dir, fileName)
+    if (!resolved.startsWith(dir + path.sep)) continue
+    if (fs.existsSync(resolved)) return resolved
+  }
+
+  return null
+}
+
+interface GenerateSpeechWordTimestampsOptions {
+  label: string
+  bookDir: string
+  cacheDir: string
+  apiKey?: string
+  outputLanguages: string[]
+  ttsResultsByLang: Map<string, SpeechFileEntry[]>
+  textByLanguage: Map<string, Map<string, string>>
+  concurrency: number
+  progress: StageRunProgress
+}
+
+async function generateSpeechWordTimestamps(
+  options: GenerateSpeechWordTimestampsOptions,
+): Promise<{
+  entriesByLanguage: Map<string, Record<string, WordTimestampEntry>>
+  failedItems: string[]
+}> {
+  const {
+    label,
+    bookDir,
+    cacheDir,
+    apiKey,
+    outputLanguages,
+    ttsResultsByLang,
+    textByLanguage,
+    concurrency,
+    progress,
+  } = options
+
+  const entriesByLanguage = new Map<string, Record<string, WordTimestampEntry>>()
+  for (const language of outputLanguages) {
+    entriesByLanguage.set(language, {})
+  }
+
+  if (!apiKey?.trim()) {
+    console.warn(`[stage-run] ${label}: skipping word timestamp generation because no OpenAI key was provided`)
+    return { entriesByLanguage, failedItems: [] }
+  }
+
+  const workItems = outputLanguages.flatMap((language) =>
+    (ttsResultsByLang.get(language) ?? []).map((entry) => ({
+      language,
+      entry,
+      prompt: textByLanguage.get(language)?.get(entry.textId),
+    }))
+  )
+
+  if (workItems.length === 0) {
+    return { entriesByLanguage, failedItems: [] }
+  }
+
+  const failedItems: string[] = []
+  let completed = 0
+
+  emitWordTimestampStepProgress(progress, 0, workItems.length, 0)
+
+  await processWithConcurrency(
+    workItems,
+    Math.max(1, Math.min(concurrency, 4)),
+    async ({ language, entry, prompt }) => {
+      try {
+        const audioPath = resolveSpeechAudioPath(bookDir, language, entry.fileName)
+        if (!audioPath) {
+          throw new Error(`Audio file not found: ${entry.fileName}`)
+        }
+
+        const audioBuffer = Buffer.from(fs.readFileSync(audioPath))
+        const result = await generateWordTimestamps({
+          audioBuffer,
+          fileName: entry.fileName,
+          apiKey,
+          language: getBaseLanguage(language),
+          prompt,
+          cacheDir,
+        })
+        if (result.cached) {
+          console.log(`[stage-run] ${label}: word timestamps cache hit for ${entry.textId} (${language})`)
+        }
+
+        entriesByLanguage.get(language)![entry.textId] = {
+          textId: entry.textId,
+          language,
+          words: result.words,
+          duration: result.duration,
+        }
+      } catch (err) {
+        const message = toErrorMessage(err)
+        failedItems.push(`${language}/${entry.textId}: ${message}`)
+        console.warn(
+          `[stage-run] ${label}: word timestamp generation failed for ${entry.textId} (${language}): ${message}`,
+        )
+      } finally {
+        completed++
+        emitWordTimestampStepProgress(progress, completed, workItems.length, failedItems.length)
+      }
+    },
+  )
+
+  return { entriesByLanguage, failedItems }
+}
+
 type RunFn = (label: string, options: StageRunOptions, progress: StageRunProgress) => Promise<void>
 
 const STAGE_RUNNERS: Record<StageName, RunFn> = {
@@ -233,27 +391,15 @@ export function createStageRunner(): StageRunner {
 }
 
 /**
- * Set all LLM provider API keys as env vars, returning a restore function.
+ * Build request-scoped provider credentials for LLM calls.
  */
-function setProviderEnvKeys(options: StageRunOptions): () => void {
-  const envKeys: Array<{ envVar: string; previous: string | undefined; value: string | undefined }> = [
-    { envVar: "OPENAI_API_KEY", previous: process.env.OPENAI_API_KEY, value: options.apiKey },
-    { envVar: "ANTHROPIC_API_KEY", previous: process.env.ANTHROPIC_API_KEY, value: options.anthropicApiKey },
-    { envVar: "GOOGLE_GENERATIVE_AI_API_KEY", previous: process.env.GOOGLE_GENERATIVE_AI_API_KEY, value: options.googleApiKey },
-    { envVar: "CUSTOM_OPENAI_BASE_URL", previous: process.env.CUSTOM_OPENAI_BASE_URL, value: options.customBaseUrl },
-    { envVar: "CUSTOM_OPENAI_API_KEY", previous: process.env.CUSTOM_OPENAI_API_KEY, value: options.customApiKey },
-  ]
-  for (const { envVar, value } of envKeys) {
-    if (value) process.env[envVar] = value
-  }
-  return () => {
-    for (const { envVar, previous } of envKeys) {
-      if (previous !== undefined) {
-        process.env[envVar] = previous
-      } else {
-        delete process.env[envVar]
-      }
-    }
+function buildLLMCredentials(options: StageRunOptions) {
+  return {
+    openaiApiKey: options.apiKey,
+    anthropicApiKey: options.anthropicApiKey,
+    googleApiKey: options.googleApiKey,
+    customBaseUrl: options.customBaseUrl,
+    customApiKey: options.customApiKey,
   }
 }
 
@@ -262,9 +408,7 @@ async function runExtractStep(
   options: StageRunOptions,
   progress: StageRunProgress
 ): Promise<void> {
-  const { booksDir, apiKey, promptsDir, configPath } = options
-
-  const restoreEnvKeys = setProviderEnvKeys(options)
+  const { booksDir, promptsDir, configPath } = options
 
   const storage = createBookStorage(label, booksDir)
 
@@ -295,6 +439,7 @@ async function runExtractStep(
     const rateLimiter = config.rate_limit
       ? createRateLimiter(config.rate_limit.requests_per_minute)
       : undefined
+    const llmCredentials = buildLLMCredentials(options)
 
     const onLlmLog = (entry: LlmLogEntry) => {
       storage.appendLlmLog(entry)
@@ -319,6 +464,7 @@ async function runExtractStep(
       promptEngine,
       rateLimiter,
       onLog: onLlmLog,
+      credentials: llmCredentials,
     })
 
     const pages = storage.getPages()
@@ -350,6 +496,7 @@ async function runExtractStep(
         promptEngine,
         rateLimiter,
         onLog: onLlmLog,
+        credentials: llmCredentials,
       })
       const summaryPages = pages.map((page) => ({
         pageNumber: page.pageNumber,
@@ -380,6 +527,7 @@ async function runExtractStep(
           promptEngine,
           rateLimiter,
           onLog: onLlmLog,
+          credentials: llmCredentials,
         })
       : null
 
@@ -390,6 +538,7 @@ async function runExtractStep(
           promptEngine,
           rateLimiter,
           onLog: onLlmLog,
+          credentials: llmCredentials,
         })
       : null
 
@@ -400,6 +549,7 @@ async function runExtractStep(
           promptEngine,
           rateLimiter,
           onLog: onLlmLog,
+          credentials: llmCredentials,
         })
       : null
 
@@ -437,7 +587,6 @@ async function runExtractStep(
     }
   } finally {
     storage.close()
-    restoreEnvKeys()
   }
 }
 
@@ -452,8 +601,6 @@ async function runSectioningStep(
 ): Promise<void> {
   const { booksDir, promptsDir, configPath } = options
 
-  const restoreEnvKeys = setProviderEnvKeys(options)
-
   const storage = createBookStorage(label, booksDir)
 
   try {
@@ -464,6 +611,7 @@ async function runSectioningStep(
     const rateLimiter = config.rate_limit
       ? createRateLimiter(config.rate_limit.requests_per_minute)
       : undefined
+    const llmCredentials = buildLLMCredentials(options)
 
     const onLlmLog = (entry: LlmLogEntry) => {
       storage.appendLlmLog(entry)
@@ -495,6 +643,7 @@ async function runSectioningStep(
       promptEngine,
       rateLimiter,
       onLog: onLlmLog,
+      credentials: llmCredentials,
     })
 
     const translationModel = translationConfig
@@ -504,6 +653,7 @@ async function runSectioningStep(
           promptEngine,
           rateLimiter,
           onLog: onLlmLog,
+          credentials: llmCredentials,
         })
       : null
 
@@ -599,7 +749,6 @@ async function runSectioningStep(
     }
   } finally {
     storage.close()
-    restoreEnvKeys()
   }
 }
 
@@ -609,8 +758,6 @@ async function runStoryboardStep(
   progress: StageRunProgress
 ): Promise<void> {
   const { booksDir, promptsDir, webAssetsDir, configPath } = options
-
-  const restoreEnvKeys = setProviderEnvKeys(options)
 
   const storage = createBookStorage(label, booksDir)
   let visualRefinement: VisualRefinementDeps | undefined
@@ -630,6 +777,7 @@ async function runStoryboardStep(
     const rateLimiter = config.rate_limit
       ? createRateLimiter(config.rate_limit.requests_per_minute)
       : undefined
+    const llmCredentials = buildLLMCredentials(options)
 
     const onLlmLog = (entry: LlmLogEntry) => {
       storage.appendLlmLog(entry)
@@ -663,6 +811,7 @@ async function runStoryboardStep(
         promptEngine,
         rateLimiter,
         onLog: onLlmLog,
+        credentials: llmCredentials,
       })
       renderModels.set(modelId, model)
       return model
@@ -793,7 +942,6 @@ async function runStoryboardStep(
       await visualRefinement.screenshotRenderer.close()
     }
     storage.close()
-    restoreEnvKeys()
   }
 }
 
@@ -806,9 +954,7 @@ async function runQuizzesStep(
   options: StageRunOptions,
   progress: StageRunProgress
 ): Promise<void> {
-  const { booksDir, apiKey, promptsDir, configPath } = options
-
-  const restoreEnvKeys = setProviderEnvKeys(options)
+  const { booksDir, promptsDir, configPath } = options
 
   const storage = createBookStorage(label, booksDir)
 
@@ -820,6 +966,7 @@ async function runQuizzesStep(
     const rateLimiter = config.rate_limit
       ? createRateLimiter(config.rate_limit.requests_per_minute)
       : undefined
+    const llmCredentials = buildLLMCredentials(options)
 
     // Get book language from metadata
     const metadataRow = storage.getLatestNodeData("metadata", "book")
@@ -856,6 +1003,7 @@ async function runQuizzesStep(
       promptEngine,
       rateLimiter,
       onLog: onLlmLog,
+      credentials: llmCredentials,
     })
 
     const effectiveConcurrency = config.concurrency ?? 32
@@ -901,7 +1049,6 @@ async function runQuizzesStep(
     console.log(`[stage-run] ${label}: quizzes complete`)
   } finally {
     storage.close()
-    restoreEnvKeys()
   }
 }
 
@@ -914,9 +1061,7 @@ async function runCaptionsStep(
   options: StageRunOptions,
   progress: StageRunProgress
 ): Promise<void> {
-  const { booksDir, apiKey, promptsDir, configPath } = options
-
-  const restoreEnvKeys = setProviderEnvKeys(options)
+  const { booksDir, promptsDir, configPath } = options
 
   const storage = createBookStorage(label, booksDir)
 
@@ -928,6 +1073,7 @@ async function runCaptionsStep(
     const rateLimiter = config.rate_limit
       ? createRateLimiter(config.rate_limit.requests_per_minute)
       : undefined
+    const llmCredentials = buildLLMCredentials(options)
 
     // Get book language from metadata
     const metadataRow = storage.getLatestNodeData("metadata", "book")
@@ -962,6 +1108,7 @@ async function runCaptionsStep(
       promptEngine,
       rateLimiter,
       onLog: onLlmLog,
+      credentials: llmCredentials,
     })
 
     const pages = storage.getPages()
@@ -1067,7 +1214,6 @@ async function runCaptionsStep(
     console.log(`[stage-run] ${label}: captions complete`)
   } finally {
     storage.close()
-    restoreEnvKeys()
   }
 }
 
@@ -1080,9 +1226,7 @@ async function runGlossaryStep(
   options: StageRunOptions,
   progress: StageRunProgress
 ): Promise<void> {
-  const { booksDir, apiKey, promptsDir, configPath } = options
-
-  const restoreEnvKeys = setProviderEnvKeys(options)
+  const { booksDir, promptsDir, configPath } = options
 
   const storage = createBookStorage(label, booksDir)
 
@@ -1094,6 +1238,7 @@ async function runGlossaryStep(
     const rateLimiter = config.rate_limit
       ? createRateLimiter(config.rate_limit.requests_per_minute)
       : undefined
+    const llmCredentials = buildLLMCredentials(options)
 
     // Get book language from metadata
     const metadataRow = storage.getLatestNodeData("metadata", "book")
@@ -1124,6 +1269,7 @@ async function runGlossaryStep(
       promptEngine,
       rateLimiter,
       onLog: onLlmLog,
+      credentials: llmCredentials,
     })
 
     const pages = storage.getPages()
@@ -1133,7 +1279,10 @@ async function runGlossaryStep(
 
     console.log(`[stage-run] ${label}: generating glossary from ${pages.length} pages`)
 
-    const glossary = await generateGlossary({
+    const existingGlossaryRow = storage.getLatestNodeData("glossary", "book")
+    const existingGlossary = existingGlossaryRow?.data as GlossaryOutput | undefined
+
+    const generatedGlossary = await generateGlossary({
       storage,
       pages,
       config: glossaryConfig,
@@ -1149,6 +1298,10 @@ async function runGlossaryStep(
         })
       },
     })
+    const glossary = mergeGeneratedGlossaryWithManualItems(
+      generatedGlossary,
+      existingGlossary?.items ?? [],
+    )
     storage.putNodeData("glossary", "book", glossary)
 
     progress.emit({
@@ -1160,7 +1313,6 @@ async function runGlossaryStep(
     console.log(`[stage-run] ${label}: glossary complete (${glossary.items.length} terms)`)
   } finally {
     storage.close()
-    restoreEnvKeys()
   }
 }
 
@@ -1173,9 +1325,7 @@ async function runTocStep(
   options: StageRunOptions,
   progress: StageRunProgress
 ): Promise<void> {
-  const { booksDir, apiKey, promptsDir, configPath } = options
-
-  const restoreEnvKeys = setProviderEnvKeys(options)
+  const { booksDir, promptsDir, configPath } = options
 
   const storage = createBookStorage(label, booksDir)
 
@@ -1187,6 +1337,7 @@ async function runTocStep(
     const rateLimiter = config.rate_limit
       ? createRateLimiter(config.rate_limit.requests_per_minute)
       : undefined
+    const llmCredentials = buildLLMCredentials(options)
 
     const metadataRow = storage.getLatestNodeData("metadata", "book")
     const metadata = metadataRow?.data as { language_code?: string | null } | null
@@ -1216,6 +1367,7 @@ async function runTocStep(
       promptEngine,
       rateLimiter,
       onLog: onLlmLog,
+      credentials: llmCredentials,
     })
 
     const pages = storage.getPages()
@@ -1241,7 +1393,6 @@ async function runTocStep(
     console.log(`[stage-run] ${label}: TOC complete (${toc.entries.length} entries)`)
   } finally {
     storage.close()
-    restoreEnvKeys()
   }
 }
 
@@ -1254,9 +1405,7 @@ async function runTranslateStep(
   options: StageRunOptions,
   progress: StageRunProgress
 ): Promise<void> {
-  const { booksDir, apiKey, promptsDir, configPath } = options
-
-  const restoreEnvKeys = setProviderEnvKeys(options)
+  const { booksDir, promptsDir, configPath } = options
 
   const storage = createBookStorage(label, booksDir)
 
@@ -1268,6 +1417,7 @@ async function runTranslateStep(
     const rateLimiter = config.rate_limit
       ? createRateLimiter(config.rate_limit.requests_per_minute)
       : undefined
+    const llmCredentials = buildLLMCredentials(options)
 
     // Get book language from metadata
     const metadataRow = storage.getLatestNodeData("metadata", "book")
@@ -1332,6 +1482,7 @@ async function runTranslateStep(
         promptEngine,
         rateLimiter,
         onLog: onLlmLog,
+        credentials: llmCredentials,
       })
 
       const batchSize = translationConfig.batchSize
@@ -1423,7 +1574,7 @@ async function runTranslateStep(
     } else {
       progress.emit({ type: "step-start", step: "image-translation" })
 
-      if (!apiKey) {
+      if (!options.apiKey) {
         throw new StepError(
           "image-translation",
           "Image translation requires an OpenAI API key"
@@ -1506,7 +1657,7 @@ async function runTranslateStep(
           try {
             const buffer = fs.readFileSync(item.diskPath)
             const result = await translateImage({
-              apiKey,
+              apiKey: options.apiKey,
               modelId: imageModelId,
               prompt: promptText,
               sourceLanguage: language,
@@ -1555,7 +1706,6 @@ async function runTranslateStep(
     console.log(`[stage-run] ${label}: translate stage complete`)
   } finally {
     storage.close()
-    restoreEnvKeys()
   }
 }
 
@@ -1569,8 +1719,6 @@ async function runSpeechStep(
   progress: StageRunProgress
 ): Promise<void> {
   const { booksDir, configPath } = options
-
-  const restoreEnvKeys = setProviderEnvKeys(options)
 
   const storage = createBookStorage(label, booksDir)
 
@@ -1602,6 +1750,7 @@ async function runSpeechStep(
 
     if (!catalog || catalog.entries.length === 0) {
       progress.emit({ type: "step-skip", step: "tts" })
+      progress.emit({ type: "step-skip", step: "word-timestamps" })
       console.log(`[stage-run] ${label}: TTS skipped (empty catalog)`)
       return
     }
@@ -1646,7 +1795,7 @@ async function runSpeechStep(
         synthesizers.set("gemini", synth)
         return synth
       }
-      const synth = createTTSSynthesizer()
+      const synth = createTTSSynthesizer(options.apiKey)
       synthesizers.set(providerName, synth)
       return synth
     }
@@ -1659,6 +1808,7 @@ async function runSpeechStep(
       language: string
     }
     const ttsWorkItems: TTSWorkItem[] = []
+    const textByLanguage = new Map<string, Map<string, string>>()
 
     for (const lang of outputLanguages) {
       const baseSource = getBaseLanguage(sourceLanguage)
@@ -1680,21 +1830,18 @@ async function runSpeechStep(
         }
       }
 
+      const languageTextMap = new Map<string, string>()
       for (const entry of entries) {
         ttsWorkItems.push({ textId: entry.id, text: entry.text, language: lang })
+        languageTextMap.set(entry.id, entry.text)
       }
+      textByLanguage.set(lang, languageTextMap)
     }
 
     const totalItems = ttsWorkItems.length
     let completedItems = 0
 
-    progress.emit({
-      type: "step-progress",
-      step: "tts",
-      message: `0/${totalItems} entries`,
-      page: 0,
-      totalPages: totalItems,
-    })
+    emitSpeechStepProgress(progress, 0, totalItems, 0)
 
     console.log(`[stage-run] ${label}: generating TTS for ${totalItems} entries across ${outputLanguages.length} languages (${outputLanguages.join(", ")})`)
     console.log(`[stage-run] ${label}: TTS routing — for each language: ${outputLanguages.map((l) => `${l}→${resolveProviderForLanguage(l, routing)}`).join(", ")}`)
@@ -1864,13 +2011,7 @@ async function runSpeechStep(
         }
 
         completedItems++
-        progress.emit({
-          type: "step-progress",
-          step: "tts",
-          message: `${completedItems}/${totalItems} entries${failedItems.length > 0 ? ` (${failedItems.length} failed)` : ""}`,
-          page: completedItems,
-          totalPages: totalItems,
-        })
+        emitSpeechStepProgress(progress, completedItems, totalItems, failedItems.length)
       }
     )
 
@@ -1895,15 +2036,65 @@ async function runSpeechStep(
         step: "tts",
         error: summary,
       })
+      progress.emit({ type: "step-skip", step: "word-timestamps" })
       console.log(`[stage-run] ${label}: speech completed with Gemini TTS gaps`)
       return
     }
 
     progress.emit({ type: "step-complete", step: "tts" })
+
+    const wordHighlightingEnabled = config.speech?.word_highlighting === true
+    let wordTimestampsByLang = new Map<string, Record<string, WordTimestampEntry>>()
+    let timestampFailedItems: string[] = []
+    if (wordHighlightingEnabled) {
+      progress.emit({ type: "step-start", step: "word-timestamps" })
+      const generatedWordTimestamps = await generateSpeechWordTimestamps({
+        label,
+        bookDir,
+        cacheDir,
+        apiKey: options.apiKey,
+        outputLanguages,
+        ttsResultsByLang,
+        textByLanguage,
+        concurrency: effectiveConcurrency,
+        progress,
+      })
+      wordTimestampsByLang = generatedWordTimestamps.entriesByLanguage
+      timestampFailedItems = generatedWordTimestamps.failedItems
+
+      // Only persist tts-timestamps when we actually generated them. When
+      // highlighting is disabled, leave existing rows untouched so that
+      // manually-calculated timestamps (via the speech view) are preserved
+      // across speech re-runs.
+      const timestampsGeneratedAt = new Date().toISOString()
+      for (const lang of outputLanguages) {
+        const entries = wordTimestampsByLang.get(lang) ?? {}
+        storage.putNodeData("tts-timestamps", lang, {
+          entries,
+          generatedAt: timestampsGeneratedAt,
+        } satisfies WordTimestampOutput)
+      }
+    }
+
+    if (!wordHighlightingEnabled) {
+      progress.emit({ type: "step-skip", step: "word-timestamps" })
+      console.log(`[stage-run] ${label}: word-level highlighting disabled; skipping timestamp generation`)
+    } else if (timestampFailedItems.length > 0) {
+      console.warn(
+        `[stage-run] ${label}: ${timestampFailedItems.length} word timestamp item(s) failed:\n${timestampFailedItems.join("\n")}`,
+      )
+      progress.emit({
+        type: "step-error",
+        step: "word-timestamps",
+        error: `${timestampFailedItems.length} word timestamp item(s) failed`,
+      })
+    } else {
+      progress.emit({ type: "step-complete", step: "word-timestamps" })
+    }
+
     console.log(`[stage-run] ${label}: speech complete`)
   } finally {
     storage.close()
-    restoreEnvKeys()
   }
 }
 
