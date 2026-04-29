@@ -133,7 +133,7 @@ export function SectioningPageDetail({
   ])
 
   const headerControls = (
-    <div className="flex-1 flex items-center gap-3">
+    <div className="flex-1 flex items-center gap-3 drag-region">
       {navigationExtra}
       {saveError ? (
         <span className="text-xs text-destructive">{saveError}</span>

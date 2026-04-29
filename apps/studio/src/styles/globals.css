@@ -379,7 +379,7 @@
 }
 
 .drag-region {
-  -webkit-app-region: drag;
+  -webkit-app-region: drag !important;
 }
 
 .drag-region * {
