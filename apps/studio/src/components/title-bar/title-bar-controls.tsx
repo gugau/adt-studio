@@ -5,7 +5,6 @@ import { LinuxControls } from "./LinuxControls";
 import { WindowsControls } from "./WindowsControls";
 import { cn } from "@/lib/utils";
 
-
 interface TitleBarControls {
   className?: string
 }
@@ -24,7 +23,7 @@ export function TitleBarControls(props: TitleBarControls) {
       </>
     );
   if (platform === "windows")
-    return <WindowsControls className={cn("self-stretch", props.className)} />;
+    return <WindowsControls variant="dark" className={cn("self-stretch", props.className)} />;
 
   return null;
 }

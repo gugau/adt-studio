@@ -958,6 +958,7 @@ msgstr "Cancel"
 #. placeholder {0}: String(MAX_ENTRIES)
 msgid "capped at {0}"
 msgstr "capped at {0}"
+
 msgid "Caption"
 msgstr "Caption"
 
@@ -1215,6 +1216,15 @@ msgstr "Convert any textbook into an accessible digital edition — audio, struc
 
 msgid "Converted"
 msgstr "Converted"
+
+msgid "Copied"
+msgstr "Copied"
+
+msgid "Copy"
+msgstr "Copy"
+
+msgid "Copy error details"
+msgstr "Copy error details"
 
 msgid "Coral reefs cover less than 1% of the ocean floor, yet they support roughly 25% of all marine species. Often called the 'rainforests of the sea,' these underwater ecosystems are built by tiny animals called coral polyps."
 msgstr "Coral reefs cover less than 1% of the ocean floor, yet they support roughly 25% of all marine species. Often called the 'rainforests of the sea,' these underwater ecosystems are built by tiny animals called coral polyps."
@@ -2002,6 +2012,9 @@ msgstr "Glossary Prompt"
 msgid "Go to book"
 msgstr "Go to book"
 
+msgid "Go to home"
+msgstr "Go to home"
+
 msgid "Google"
 msgstr "Google"
 
@@ -2028,6 +2041,9 @@ msgstr "Header"
 
 msgid "Hide AI edit history"
 msgstr "Hide AI edit history"
+
+msgid "Hide error details"
+msgstr "Hide error details"
 
 #~ msgid "Hide Pruned"
 #~ msgstr "Hide Pruned"
@@ -2288,6 +2304,7 @@ msgstr "Last modified"
 
 msgid "Launch the app with"
 msgstr "Launch the app with"
+
 msgid "Layer on translations, text-to-speech, and a glossary — all inspectable, cacheable, reversible."
 msgstr "Layer on translations, text-to-speech, and a glossary — all inspectable, cacheable, reversible."
 
@@ -2501,10 +2518,11 @@ msgstr "Max Refinements"
 msgid "Max side (px)"
 msgstr "Max side (px)"
 
-msgid "Maximize"
-msgstr "Maximize"
 msgid "Max Size (px)"
 msgstr "Max Size (px)"
+
+msgid "Maximize"
+msgstr "Maximize"
 
 #~ msgid "Maximum number of reviewer passes after the initial sectioning. Set to 0 to disable refinement."
 #~ msgstr "Maximum number of reviewer passes after the initial sectioning. Set to 0 to disable refinement."
@@ -2581,10 +2599,11 @@ msgstr "Min image dimension (px)"
 msgid "Min side (px)"
 msgstr "Min side (px)"
 
-msgid "Minimize"
-msgstr "Minimize"
 msgid "Min Size (px)"
 msgstr "Min Size (px)"
+
+msgid "Minimize"
+msgstr "Minimize"
 
 msgid "Minimum image dimension"
 msgstr "Minimum image dimension"
@@ -3414,6 +3433,9 @@ msgstr "Region"
 msgid "Release to upload"
 msgstr "Release to upload"
 
+msgid "Reload app"
+msgstr "Reload app"
+
 msgid "Remove"
 msgstr "Remove"
 
@@ -3906,6 +3928,9 @@ msgstr "Show all {0}"
 msgid "Show all translations"
 msgstr "Show all translations"
 
+msgid "Show error details"
+msgstr "Show error details"
+
 msgid "Show fewer"
 msgstr "Show fewer"
 
@@ -3984,6 +4009,9 @@ msgstr "Smart Cropping"
 
 #~ msgid "something calm."
 #~ msgstr "something calm."
+
+msgid "Something went wrong"
+msgstr "Something went wrong"
 
 msgid "Sort books"
 msgstr "Sort books"
@@ -4224,6 +4252,9 @@ msgstr "The AI is having a think..."
 msgid "The AI will preserve the original style while applying your changes."
 msgstr "The AI will preserve the original style while applying your changes."
 
+msgid "The application ran into an unexpected error. You can try reloading — your work in progress is saved on disk."
+msgstr "The application ran into an unexpected error. You can try reloading — your work in progress is saved on disk."
+
 msgid "The back cover of the book."
 msgstr "The back cover of the book."
 
@@ -4350,6 +4381,9 @@ msgstr "This page has no translatable text entries"
 msgid "This page has not been reviewed yet"
 msgstr "This page has not been reviewed yet"
 
+msgid "This screen couldn’t load"
+msgstr "This screen couldn’t load"
+
 msgid "This section has no storyboard rendering yet"
 msgstr "This section has no storyboard rendering yet"
 
@@ -4469,6 +4503,9 @@ msgstr "Try Activity"
 
 msgid "Try another file"
 msgstr "Try another file"
+
+msgid "Try this screen again"
+msgstr "Try this screen again"
 
 msgid "Turn any PDF into a fully accessible book — audio, translations, structured HTML layouts — all generated from your source file, <0>all editable</0>, <1>all yours</1>."
 msgstr "Turn any PDF into a fully accessible book — audio, translations, structured HTML layouts — all generated from your source file, <0>all editable</0>, <1>all yours</1>."
@@ -4676,10 +4713,11 @@ msgstr "Voices"
 msgid "Wait for storyboard to complete"
 msgstr "Wait for storyboard to complete"
 
-msgid "Waiting for API output…"
-msgstr "Waiting for API output…"
 msgid "WAITING"
 msgstr "WAITING"
+
+msgid "Waiting for API output…"
+msgstr "Waiting for API output…"
 
 msgid "Waiting for page to be processed..."
 msgstr "Waiting for page to be processed..."
@@ -4704,6 +4742,9 @@ msgstr ""
 "wcag2a\n"
 "wcag2aa\n"
 "best-practice"
+
+msgid "We hit a snag while loading this view. You can try this screen again or reload the whole app."
+msgstr "We hit a snag while loading this view. You can try this screen again or reload the whole app."
 
 msgid "Web Export"
 msgstr "Web Export"

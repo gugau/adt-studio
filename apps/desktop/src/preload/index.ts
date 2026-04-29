@@ -30,6 +30,11 @@ const windowControls = {
   },
 }
 
+const splashControls = {
+  relaunch: (): Promise<void> => ipcRenderer.invoke('splash:relaunch'),
+  quit: (): Promise<void> => ipcRenderer.invoke('splash:quit'),
+}
+
 interface SaveFileDialogOptions {
   defaultPath?: string
   filters?: Array<{ name: string; extensions: string[] }>
@@ -59,6 +64,7 @@ if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('api', api)
+    contextBridge.exposeInMainWorld('splashControls', splashControls)
   } catch (error) {
     console.error(error)
   }
@@ -67,4 +73,6 @@ if (process.contextIsolated) {
   window.electron = electronAPI
   // @ts-ignore (define in dts)
   window.api = api
+  // @ts-ignore (define in dts)
+  window.splashControls = splashControls
 }

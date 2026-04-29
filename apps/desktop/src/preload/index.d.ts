@@ -18,6 +18,11 @@ export interface SaveFileDialogOptions {
   filters?: Array<{ name: string; extensions: string[] }>
 }
 
+export interface SplashControlsApi {
+  relaunch: () => Promise<void>
+  quit: () => Promise<void>
+}
+
 declare global {
   interface Window {
     electron: ElectronAPI
@@ -29,5 +34,6 @@ declare global {
       platform: ElectronPlatform
       windowControls: WindowControlsApi
     }
+    splashControls?: SplashControlsApi
   }
 }

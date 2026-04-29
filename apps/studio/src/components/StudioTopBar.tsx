@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react"
+import type { ReactNode } from "react"
 import { Link } from "@tanstack/react-router"
 import { Home, HelpCircle, Settings } from "lucide-react"
 import { useLingui } from "@lingui/react/macro"
@@ -7,6 +7,7 @@ import { LocaleSwitcher } from "@/components/LocaleSwitcher"
 import { useSettingsDialog } from "@/routes/__root"
 import { usePlatform } from "@/hooks/use-platform"
 import { useWindowControls } from "@/hooks/use-window-controls"
+import { DRAG_REGION, NO_DRAG_REGION } from "@/constants"
 import {
   LinuxControls,
   MacOSTrafficLightSpacer,
@@ -20,9 +21,6 @@ export type StudioTopBarProps = {
   /** Optional title after `/` (e.g. translated “Add Book”). */
   trailingTitle?: ReactNode
 }
-
-const DRAG_REGION: CSSProperties = { WebkitAppRegion: "drag" } as CSSProperties
-const NO_DRAG_REGION: CSSProperties = { WebkitAppRegion: "no-drag" } as CSSProperties
 
 export function StudioTopBar({ brandLinksHome = false, trailingTitle }: StudioTopBarProps) {
   const { t } = useLingui()
@@ -96,7 +94,7 @@ export function StudioTopBar({ brandLinksHome = false, trailingTitle }: StudioTo
         </Button>
       </div>
       {showLinuxControls && <LinuxControls className="self-stretch pr-3" />}
-      {showWindowsControls && <WindowsControls className="self-stretch" />}
+      {showWindowsControls && <WindowsControls className="self-stretch" variant="dark" />}
     </div>
   )
 }

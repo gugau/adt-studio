@@ -2,6 +2,7 @@ import { resolve } from 'path'
 import { defineConfig } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { lingui } from '@lingui/vite-plugin'
 
 export default defineConfig({
   main: {
@@ -15,7 +16,15 @@ export default defineConfig({
     }
   },
   renderer: {
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      lingui(),
+      react({
+        babel: {
+          plugins: ['@lingui/babel-plugin-lingui-macro']
+        }
+      }),
+      tailwindcss()
+    ],
     build: {
       rollupOptions: {
         input: resolve(__dirname, 'src/renderer/splashscreen.html')

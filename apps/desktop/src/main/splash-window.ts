@@ -5,18 +5,19 @@ import { is } from "@electron-toolkit/utils";
 
 function createSplashWindow(): BrowserWindow {
   const splashWindow = new BrowserWindow({
-    width: 420,
-    height: 420,
+    width: 460,
+    height: 460,
     frame: false,
     transparent: false,
     resizable: false,
     movable: true,
     minimizable: false,
     maximizable: false,
-    closable: false,
+    closable: true,
     show: false,
     autoHideMenuBar: true,
     webPreferences: {
+      preload: join(__dirname, "../preload/preload-splash.js"),
       sandbox: false,
     },
   });

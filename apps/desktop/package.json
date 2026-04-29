@@ -16,12 +16,16 @@
     "build:unpack": "pnpm build && pnpm electron-builder --dir",
     "build:win": "pnpm build && pnpm electron-builder --win",
     "build:mac": "pnpm build && pnpm electron-builder --mac",
-    "build:linux": "pnpm build && pnpm electron-builder --linux"
+    "build:linux": "pnpm build && pnpm electron-builder --linux",
+    "extract": "lingui extract",
+    "compile": "lingui compile"
   },
   "dependencies": {
     "@adt/types": "workspace:*",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
+    "@lingui/core": "^5.9.3",
+    "@lingui/react": "^5.9.3",
     "electron-updater": "^6.3.9"
   },
   "devDependencies": {
@@ -29,11 +33,17 @@
     "@electron-toolkit/eslint-config-ts": "^3.1.0",
     "@electron-toolkit/tsconfig": "^2.0.0",
     "@electron/notarize": "^3.1.1",
+    "@lingui/babel-plugin-lingui-macro": "^5.9.3",
+    "@lingui/cli": "^5.9.3",
+    "@lingui/conf": "^5.9.3",
+    "@lingui/macro": "^5.9.3",
+    "@lingui/vite-plugin": "^5.9.3",
     "@tailwindcss/vite": "^4.1.18",
     "@types/node": "^22.19.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "babel-plugin-macros": "^3.1.0",
     "dotenv": "^17.3.1",
     "electron": "^41.1.1",
     "electron-builder": "^26.0.12",

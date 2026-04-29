@@ -958,6 +958,7 @@ msgstr "Cancelar"
 #. placeholder {0}: String(MAX_ENTRIES)
 msgid "capped at {0}"
 msgstr "limitado a {0}"
+
 msgid "Caption"
 msgstr "Pie de foto"
 
@@ -1215,6 +1216,15 @@ msgstr "Convierte cualquier libro en una edición digital accesible — audio, d
 
 msgid "Converted"
 msgstr "Convertido"
+
+msgid "Copied"
+msgstr "Copiado"
+
+msgid "Copy"
+msgstr "Copiar"
+
+msgid "Copy error details"
+msgstr "Copiar detalles del error"
 
 msgid "Coral reefs cover less than 1% of the ocean floor, yet they support roughly 25% of all marine species. Often called the 'rainforests of the sea,' these underwater ecosystems are built by tiny animals called coral polyps."
 msgstr "Los arrecifes de coral cubren menos del 1% del fondo oceánico, pero sostienen aproximadamente el 25% de todas las especies marinas. A menudo llamados 'los bosques lluviosos del mar', estos ecosistemas submarinos son construidos por pequeños animales llamados pólipos de coral."
@@ -2002,6 +2012,9 @@ msgstr "Prompt de glosario"
 msgid "Go to book"
 msgstr "Ir al libro"
 
+msgid "Go to home"
+msgstr "Ir al inicio"
+
 msgid "Google"
 msgstr "Google"
 
@@ -2028,6 +2041,9 @@ msgstr "Encabezado"
 
 msgid "Hide AI edit history"
 msgstr "Ocultar historial de edición con IA"
+
+msgid "Hide error details"
+msgstr "Ocultar detalles del error"
 
 #~ msgid "Hide Pruned"
 #~ msgstr "Ocultar eliminadas"
@@ -2288,6 +2304,7 @@ msgstr "Última modificación"
 
 msgid "Launch the app with"
 msgstr "Inicia la aplicación con"
+
 msgid "Layer on translations, text-to-speech, and a glossary — all inspectable, cacheable, reversible."
 msgstr "Añade traducciones, conversión de texto a voz y un glosario — todo inspeccionable, almacenable en caché, reversible."
 
@@ -2501,10 +2518,11 @@ msgstr "Refinamientos máximos"
 msgid "Max side (px)"
 msgstr "Lado máximo (px)"
 
-msgid "Maximize"
-msgstr "Maximizar"
 msgid "Max Size (px)"
 msgstr "Tamaño Máx (px)"
+
+msgid "Maximize"
+msgstr "Maximizar"
 
 #~ msgid "Maximum number of reviewer passes after the initial sectioning. Set to 0 to disable refinement."
 #~ msgstr "Número máximo de pasadas del revisor después de la sección inicial. Establece en 0 para desactivar el refinamiento."
@@ -2581,10 +2599,11 @@ msgstr "Dimensión mínima de imagen (px)"
 msgid "Min side (px)"
 msgstr "Lado mínimo (px)"
 
-msgid "Minimize"
-msgstr "Minimizar"
 msgid "Min Size (px)"
 msgstr "Tamaño Mín (px)"
+
+msgid "Minimize"
+msgstr "Minimizar"
 
 msgid "Minimum image dimension"
 msgstr "Dimensión mínima de imagen"
@@ -3414,6 +3433,9 @@ msgstr "Región"
 msgid "Release to upload"
 msgstr "Suelta para subir"
 
+msgid "Reload app"
+msgstr "Recargar aplicación"
+
 msgid "Remove"
 msgstr "Quitar"
 
@@ -3906,6 +3928,9 @@ msgstr "Show all {0}"
 msgid "Show all translations"
 msgstr "Mostrar todas las traducciones"
 
+msgid "Show error details"
+msgstr "Mostrar detalles del error"
+
 msgid "Show fewer"
 msgstr "Show fewer"
 
@@ -3984,6 +4009,9 @@ msgstr "Recorte Inteligente"
 
 #~ msgid "something calm."
 #~ msgstr "algo sereno."
+
+msgid "Something went wrong"
+msgstr "Algo salió mal"
 
 msgid "Sort books"
 msgstr "Ordenar libros"
@@ -4224,6 +4252,9 @@ msgstr "La IA está pensando..."
 msgid "The AI will preserve the original style while applying your changes."
 msgstr "La IA preservará el estilo original al aplicar tus cambios."
 
+msgid "The application ran into an unexpected error. You can try reloading — your work in progress is saved on disk."
+msgstr "La aplicación encontró un error inesperado. Puedes intentar recargar — tu trabajo en curso está guardado en disco."
+
 msgid "The back cover of the book."
 msgstr "La contraportada del libro."
 
@@ -4350,6 +4381,9 @@ msgstr "Esta página no tiene entradas de texto traducibles"
 msgid "This page has not been reviewed yet"
 msgstr "This page has not been reviewed yet"
 
+msgid "This screen couldn’t load"
+msgstr "Esta pantalla no pudo cargarse"
+
 msgid "This section has no storyboard rendering yet"
 msgstr "Esta sección aún no tiene renderización de storyboard"
 
@@ -4469,6 +4503,9 @@ msgstr "Probar actividad"
 
 msgid "Try another file"
 msgstr "Probar otro archivo"
+
+msgid "Try this screen again"
+msgstr "Intentar esta pantalla de nuevo"
 
 msgid "Turn any PDF into a fully accessible book — audio, translations, structured HTML layouts — all generated from your source file, <0>all editable</0>, <1>all yours</1>."
 msgstr "Convierte cualquier PDF en un libro totalmente accesible — audio, traducciones, diseños HTML estructurados — todo generado a partir de tu archivo fuente, <0>todo editable</0>, <1>todo tuyo</1>."
@@ -4676,10 +4713,11 @@ msgstr "Voces"
 msgid "Wait for storyboard to complete"
 msgstr "Espere a que el storyboard se complete"
 
-msgid "Waiting for API output…"
-msgstr "Esperando la salida de la API…"
 msgid "WAITING"
 msgstr "EN ESPERA"
+
+msgid "Waiting for API output…"
+msgstr "Esperando la salida de la API…"
 
 msgid "Waiting for page to be processed..."
 msgstr "Esperando a que la página sea procesada..."
@@ -4706,6 +4744,9 @@ msgstr ""
 "\"\"best-practicewcag2a\n"
 "wcag2aa\n"
 "best-practice"
+
+msgid "We hit a snag while loading this view. You can try this screen again or reload the whole app."
+msgstr "Tuvimos un problema al cargar esta vista. Puedes intentar esta pantalla de nuevo o recargar toda la aplicación."
 
 msgid "Web Export"
 msgstr "Exportación Web"

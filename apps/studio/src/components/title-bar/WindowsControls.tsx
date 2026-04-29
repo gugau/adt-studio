@@ -2,9 +2,25 @@ import { useLingui } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
 import { useWindowControls } from "@/hooks/use-window-controls"
 
-export function WindowsControls({ className }: { className?: string }) {
+export function WindowsControls({
+  className,
+  variant,
+}: {
+  className?: string
+  variant?: "dark" | "light"
+}) {
   const { t } = useLingui()
   const { isMaximized, minimize, toggleMaximize, close } = useWindowControls()
+
+  const tone =
+    variant === "dark"
+      ? "text-white/90 hover:bg-white/10 active:bg-white/5"
+      : variant === "light"
+        ? "text-black/80 hover:bg-black/10 active:bg-black/5"
+        : "text-foreground/80 hover:bg-foreground/10 active:bg-foreground/5"
+
+  const baseButton =
+    "flex items-center justify-center w-[46px] h-full transition-colors focus:outline-none"
 
   return (
     <div
@@ -16,7 +32,7 @@ export function WindowsControls({ className }: { className?: string }) {
         onClick={minimize}
         aria-label={t`Minimize`}
         title={t`Minimize`}
-        className="flex items-center justify-center w-[46px] h-full text-white/90 hover:bg-white/10 active:bg-white/5 transition-colors focus:outline-none"
+        className={cn(baseButton, tone)}
       >
         <MinimizeIcon />
       </button>
@@ -25,7 +41,7 @@ export function WindowsControls({ className }: { className?: string }) {
         onClick={toggleMaximize}
         aria-label={isMaximized ? t`Restore` : t`Maximize`}
         title={isMaximized ? t`Restore` : t`Maximize`}
-        className="flex items-center justify-center w-[46px] h-full text-white/90 hover:bg-white/10 active:bg-white/5 transition-colors focus:outline-none"
+        className={cn(baseButton, tone)}
       >
         {isMaximized ? <RestoreIcon /> : <MaximizeIcon />}
       </button>
@@ -34,7 +50,11 @@ export function WindowsControls({ className }: { className?: string }) {
         onClick={close}
         aria-label={t`Close`}
         title={t`Close`}
-        className="flex items-center justify-center w-[46px] h-full text-white/90 hover:bg-[#c42b1c] hover:text-white active:bg-[#b1271a] transition-colors focus:outline-none"
+        className={cn(
+          baseButton,
+          tone,
+          "hover:bg-[#c42b1c] hover:text-white active:bg-[#b1271a] active:text-white",
+        )}
       >
         <CloseIcon />
       </button>

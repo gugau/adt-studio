@@ -1,5 +1,13 @@
 import { useState, useEffect, useCallback, useRef, useMemo, createContext, useContext } from "react"
-import { createFileRoute, Outlet, useParams, useNavigate, Link, useMatchRoute } from "@tanstack/react-router"
+import {
+  createFileRoute,
+  Outlet,
+  useParams,
+  useNavigate,
+  Link,
+  useMatchRoute,
+  type ErrorComponentProps,
+} from "@tanstack/react-router"
 import { Home, Terminal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DebugPanel } from "@/components/debug/DebugPanel"

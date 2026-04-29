@@ -23,6 +23,7 @@ import {
   STUDIO_APP_SCHEME_PRIVILEGES,
 } from "./protocols/studio-app.protocol";
 import { createSplashWindow } from "./splash-window";
+import { setupSplashControls } from "./splash-controls";
 
 protocol.registerSchemesAsPrivileged([
   STUDIO_APP_SCHEME_PRIVILEGES,
@@ -30,15 +31,17 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 app.whenReady().then(async () => {
-  const splashWindow = createSplashWindow();
-  const { apiProcess } = await startApiServer();
-
   electronApp.setAppUserModelId("com.electron");
+
+  setupSplashControls();
+  const splashWindow = createSplashWindow();
 
   registerStudioAppProtocol(join(__dirname, "../renderer"));
   registerHtmlRenderProtocol();
   setupTitleBar();
   setupFileDialog();
+
+  const { apiProcess } = await startApiServer();
 
   app.on("browser-window-created", (_, window) => {
     optimizer.watchWindowShortcuts(window);
@@ -80,5 +83,6 @@ app.on("before-quit", () => {
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
+    stopApiServer();
   }
 });
