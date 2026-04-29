@@ -20,3 +20,18 @@ export {
   borderRadiusClassMap,
   borderColorClassMap,
 } from "./borders"
+export {
+  fontFamilyClassMap,
+  fontWeightClassMap,
+  fontSizeClassMap,
+  textAlignClassMap,
+  lineHeightClassMap,
+  textDecorationClassMap,
+  textColorClassMap,
+} from "./typography"
+export {
+  backgroundColorClassMap,
+  opacityClassMap,
+  shadowClassMap,
+} from "./appearance"
+export { objectFitClassMap, objectPositionClassMap } from "./image-fit"

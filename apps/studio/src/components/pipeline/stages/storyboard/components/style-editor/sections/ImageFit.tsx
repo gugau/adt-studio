@@ -1,8 +1,9 @@
-import { useState } from "react"
 import { Trans } from "@lingui/react/macro"
 import { StyleLabel } from "../controls/StyleLabel"
 import { Section } from "../controls/Section"
 import { Select, type SelectOption } from "../controls/Select"
+import { objectFitClassMap, objectPositionClassMap } from "../class-maps"
+import { useElementStyles } from "../use-element-styles"
 
 const FIT_OPTIONS: ReadonlyArray<SelectOption<string>> = [
   { value: "cover", label: "Cover" },
@@ -21,8 +22,14 @@ const POSITION_OPTIONS: ReadonlyArray<SelectOption<string>> = [
 ]
 
 export function ImageFitSection() {
-  const [fit, setFit] = useState("cover")
-  const [position, setPosition] = useState("center")
+  const { value: fit, setValue: setFit } = useElementStyles(
+    objectFitClassMap,
+    "cover"
+  )
+  const { value: position, setValue: setPosition } = useElementStyles(
+    objectPositionClassMap,
+    "center"
+  )
 
   return (
     <Section title={<Trans>Image fit</Trans>}>

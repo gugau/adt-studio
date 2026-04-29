@@ -1,4 +1,3 @@
-import { useState } from "react"
 import {
   AlignCenter,
   AlignJustify,
@@ -14,6 +13,16 @@ import { Section } from "../controls/Section"
 import { Select, type SelectOption } from "../controls/Select"
 import { ColorInput } from "../controls/ColorInput"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import {
+  fontFamilyClassMap,
+  fontSizeClassMap,
+  fontWeightClassMap,
+  textAlignClassMap,
+  lineHeightClassMap,
+  textDecorationClassMap,
+  textColorClassMap,
+} from "../class-maps"
+import { useElementStyles } from "../use-element-styles"
 
 const FAMILY_OPTIONS: ReadonlyArray<SelectOption<string>> = [
   { value: "sans", label: "Sans" },
@@ -58,15 +67,38 @@ const LEADING_OPTIONS: ReadonlyArray<SelectOption<string>> = [
   "loose",
 ].map((v) => ({ value: v, label: v }))
 
+const EMPTY_DECOR: string[] = []
+
 export function TypographySection() {
   const { t } = useLingui()
-  const [fontFamily, setFontFamily] = useState("sans")
-  const [fontSize, setFontSize] = useState("base")
-  const [weight, setWeight] = useState("normal")
-  const [decor, setDecor] = useState<string[]>([])
-  const [align, setAlign] = useState("left")
-  const [leading, setLeading] = useState("normal")
-  const [textColor, setTextColor] = useState("#000000")
+  const { value: fontFamily, setValue: setFontFamily } = useElementStyles(
+    fontFamilyClassMap,
+    "sans"
+  )
+  const { value: fontSize, setValue: setFontSize } = useElementStyles(
+    fontSizeClassMap,
+    "base"
+  )
+  const { value: weight, setValue: setWeight } = useElementStyles(
+    fontWeightClassMap,
+    "normal"
+  )
+  const { value: decor, setValue: setDecor } = useElementStyles(
+    textDecorationClassMap,
+    EMPTY_DECOR
+  )
+  const { value: align, setValue: setAlign } = useElementStyles(
+    textAlignClassMap,
+    "left"
+  )
+  const { value: leading, setValue: setLeading } = useElementStyles(
+    lineHeightClassMap,
+    "normal"
+  )
+  const { value: textColor, setValue: setTextColor } = useElementStyles(
+    textColorClassMap,
+    ""
+  )
 
   const decorItems = [
     { value: "italic", icon: Italic, label: t`Italic` },

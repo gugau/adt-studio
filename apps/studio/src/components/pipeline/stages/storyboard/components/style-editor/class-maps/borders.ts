@@ -2,6 +2,7 @@
 
 import type { BoxValue } from "../controls/BoxInput"
 import type { ClassMap } from "./types"
+import { makeColorClassMap } from "./_color"
 
 // border-width: bare `border` is 1px, plus `border-{0,2,4,8}` and arbitrary.
 // Side variants are `border-{t,r,b,l}` and axis pairs are `border-{x,y}`.
@@ -201,28 +202,4 @@ export const borderRadiusClassMap: ClassMap<BoxValue> = {
   },
 }
 
-// border-color: `border-{family}-{shade}`, `border-{keyword}` (white/black/
-// transparent/current/inherit), or arbitrary `border-[#hex]`.
-const BORDER_COLOR_REGEX =
-  /^border-(white|black|transparent|current|inherit|[a-z]+-\d+|\[#[0-9a-fA-F]{3,8}\])$/
-
-export const borderColorClassMap: ClassMap<string> = {
-  matches: (cls) => BORDER_COLOR_REGEX.test(cls),
-  fromClasses(classes) {
-    let last: string | null = null
-    for (const cls of classes) {
-      const m = cls.match(BORDER_COLOR_REGEX)
-      if (!m) continue
-      const captured = m[1]
-      // Arbitrary hex: strip the brackets so the value is a plain hex.
-      const hex = captured.match(/^\[(#[0-9a-fA-F]{3,8})\]$/)
-      last = hex ? hex[1] : captured
-    }
-    return last
-  },
-  toClasses(value) {
-    if (!value) return []
-    if (/^#[0-9a-fA-F]{3,8}$/.test(value)) return [`border-[${value}]`]
-    return [`border-${value}`]
-  },
-}
+export const borderColorClassMap = makeColorClassMap("border")
