@@ -233,6 +233,48 @@ export function createBookStorage(label: string, booksRoot: string): Storage {
       return newImageId
     },
 
+    clearTranslatedImages(filter?: { sourceImageIds?: string[]; languageCodes?: string[] }): void {
+      const conditions: string[] = ["source = 'translate'"]
+      const params: string[] = []
+
+      if (filter?.sourceImageIds && filter.sourceImageIds.length > 0) {
+        const likeClauses = filter.sourceImageIds.map(() => "image_id LIKE ?").join(" OR ")
+        conditions.push(`(${likeClauses})`)
+        for (const id of filter.sourceImageIds) {
+          params.push(`${id}_tr_%`)
+        }
+      }
+
+      if (filter?.languageCodes && filter.languageCodes.length > 0) {
+        const langLikes = filter.languageCodes.map(() => "image_id LIKE ?").join(" OR ")
+        conditions.push(`(${langLikes})`)
+        for (const lang of filter.languageCodes) {
+          const safeLang = lang.replace(/[^a-zA-Z0-9-]/g, "_")
+          params.push(`%_tr_${safeLang}`)
+        }
+      }
+
+      const where = conditions.join(" AND ")
+      const rows = db.all(
+        `SELECT image_id, path FROM images WHERE ${where}`,
+        params
+      ) as Array<{ image_id: string; path: string }>
+
+      for (const row of rows) {
+        const filePath = path.resolve(paths.bookDir, row.path)
+        if (!filePath.startsWith(paths.bookDir)) continue
+        try {
+          fs.rmSync(filePath, { force: true })
+        } catch {
+          // Best effort — DB row is removed below either way
+        }
+      }
+
+      if (rows.length > 0) {
+        db.run(`DELETE FROM images WHERE ${where}`, params)
+      }
+    },
+
     putNodeData(node: string, itemId: string, data: unknown): number {
       const rows = db.all(
         "SELECT MAX(version) as max_version FROM node_data WHERE node = ? AND item_id = ?",

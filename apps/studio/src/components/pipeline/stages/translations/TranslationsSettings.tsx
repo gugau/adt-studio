@@ -41,6 +41,11 @@ function displayLang(code: string): string {
 
 export function TranslationsSettings({ bookLabel, headerTarget, tab = "general", stageSlug = "translate" }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string; stageSlug?: string }) {
   const isSpeechStage = stageSlug === "speech"
+  const captionedImagesQuery = useQuery({
+    queryKey: ["books", bookLabel, "captioned-images"],
+    queryFn: () => api.listCaptionedImages(bookLabel),
+    enabled: !isSpeechStage,
+  })
   const { t } = useLingui()
   const { data: book } = useBook(bookLabel)
   const { data: bookConfigData } = useBookConfig(bookLabel)
@@ -370,6 +375,33 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general",
                 </Button>
               )}
             </div>
+            {(() => {
+              const available = captionedImagesQuery.data?.images
+              if (!available || selectedImageIds.length === 0) return null
+              const availableIds = new Set(available.map((img) => img.imageId))
+              const stale = selectedImageIds.filter((id) => !availableIds.has(id))
+              if (stale.length === 0) return null
+              return (
+                <div className="flex items-center gap-3 text-[11px] text-amber-600 dark:text-amber-400">
+                  <span>
+                    {stale.length === 1
+                      ? t`1 selected image is no longer in the storyboard.`
+                      : t`${String(stale.length)} selected images are no longer in the storyboard.`}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 text-[11px] underline"
+                    onClick={() => {
+                      setSelectedImageIds((prev) => prev.filter((id) => availableIds.has(id)))
+                      markDirty("image_translation")
+                    }}
+                  >
+                    {t`Remove`}
+                  </Button>
+                </div>
+              )
+            })()}
             <p className="text-[11px] text-muted-foreground">
               {t`Only images that appear in the storyboard (have captions) can be selected.`}
             </p>

@@ -145,6 +145,10 @@ msgstr "{0} pages"
 msgid "{0} questions"
 msgstr "{0} questions"
 
+#. placeholder {0}: String(stale.length)
+msgid "{0} selected images are no longer in the storyboard."
+msgstr "{0} images sélectionnées ne figurent plus dans le storyboard."
+
 #. placeholder {0}: String(items.length)
 msgid "{0} terms"
 msgstr "{0} termes"
@@ -271,6 +275,9 @@ msgstr "1 image sélectionnée"
 
 msgid "1 item needs changes on this page"
 msgstr "1 élément nécessite des modifications sur cette page"
+
+msgid "1 selected image is no longer in the storyboard."
+msgstr "1 image sélectionnée ne figure plus dans le storyboard."
 
 msgid "14.2 kB"
 msgstr "14,2 ko"

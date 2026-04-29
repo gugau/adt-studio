@@ -80,6 +80,9 @@ export interface Storage {
   /** Write a localized image variant to disk as {sourceImageId}_tr_{langCode}.png and register it in the DB with source="translate". Returns the new image id. */
   putTranslatedImage(input: TranslatedImageInput): string
 
+  /** Delete all translated image rows and their on-disk files. Optionally restrict to a set of source image ids and/or languages. */
+  clearTranslatedImages(filter?: { sourceImageIds?: string[]; languageCodes?: string[] }): void
+
   putNodeData(node: string, itemId: string, data: unknown): number
   getLatestNodeData(node: string, itemId: string): NodeDataRow | null
 

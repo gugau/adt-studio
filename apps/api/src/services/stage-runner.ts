@@ -1559,6 +1559,11 @@ async function runTranslateStep(
     }
 
     // ── Step 3: Translate burned-in text in user-selected images ────
+    // Always clear previously-generated variants first, so that disabling the
+    // step or shrinking the selection actually removes them from disk and DB.
+    // Cached regeneration is fast for variants we still want.
+    storage.clearTranslatedImages()
+
     const imageTranslation = buildImageTranslationConfig(config)
     const imageTargetLanguages = getTargetLanguages(outputLanguages, language)
     if (
