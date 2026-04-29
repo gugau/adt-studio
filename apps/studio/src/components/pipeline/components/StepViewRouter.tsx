@@ -29,8 +29,8 @@ import { cn } from "@/lib/utils";
 import { Trans } from "@lingui/react/macro";
 import { useWindowControls } from "@/hooks/use-window-controls";
 import { usePlatform } from "@/hooks/use-platform";
-import { TitleBarControls } from "@/components/title-bar/title-bar-controls";
-
+import { LinuxControls } from "@/components/title-bar/LinuxControls";
+import { WindowsControls } from "@/components/title-bar/WindowsControls";
 
 // Context for views to inject content into the step header
 interface StepHeaderControls {
@@ -130,7 +130,7 @@ export function StepViewRouter({
           className={cn(
             "shrink-0 h-10 px-4 flex items-center gap-3 text-white drag-region",
             stepConfig.color,
-            (hasWindows && platform !== "macos") && "pr-0",
+            hasWindows && platform !== "macos" && "pr-0",
           )}
         >
           <div className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20">
@@ -163,7 +163,8 @@ export function StepViewRouter({
               <Settings className="w-3.5 h-3.5" />
             </Link>
           )}
-          <TitleBarControls />
+          <LinuxControls className="self-stretch" />
+          <WindowsControls variant="dark" className="self-stretch" />
         </div>
 
         {/* Step content */}
