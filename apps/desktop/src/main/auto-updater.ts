@@ -43,7 +43,7 @@ function configure(): void {
 
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = false;
-  autoUpdater.allowPrerelease = false;
+  autoUpdater.allowPrerelease = true;
   autoUpdater.logger = console;
 
   autoUpdater.on("checking-for-update", () => {
