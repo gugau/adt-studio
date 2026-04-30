@@ -19,6 +19,7 @@ import { toggleButtonColor, toggleButtonState } from './utils.js';
 import { togglePlayBarSettings, toggleSignLanguageMode } from './interface.js';
 import { trackToggleEvent } from './analytics.js';
 import { isFeatureEnabled } from '../base.js';
+import { shouldUseBlockPlaybackHighlight } from './tts_highlighter_utils.js';
 
 /**
  * Maps speed class names to playback rates.
@@ -35,6 +36,13 @@ const SPEED_MAPPING = {
 let hasUserInteracted = true;
 let activityAudio = null;
 let isProcessingAudio = false;
+
+const useBlockPlaybackHighlight = (element) =>
+    shouldUseBlockPlaybackHighlight(
+        element,
+        isFeatureEnabled('highlight'),
+        state.wordHighlightMode,
+    );
 
 /**
  * Initializes activity audio elements for sound effects.
@@ -98,8 +106,16 @@ export const gatherAudioElements = () => {
 
     const audioBasePath = `content/i18n/${currentLanguage}/audio/`;
 
+    // TTS content lives under #content (an invariant of renderPageHtml in
+    // package-web.ts). Scoping by #content — not a Tailwind class like .container —
+    // ensures we ignore UI chrome [data-id] labels from interface.html.
+    const contentRoot = document.getElementById('content');
+    if (!contentRoot) {
+        setState('audioElements', []);
+        return [];
+    }
     const elements = Array.from(
-        document.querySelectorAll('.container [data-id], .container textarea[data-placeholder-id], .container input[data-placeholder-id]')
+        contentRoot.querySelectorAll('[data-id], textarea[data-placeholder-id], input[data-placeholder-id]')
     )
         .filter(el => {
             const isNavElement = el.closest('.nav__list') !== null;
@@ -227,8 +243,13 @@ export const playCurrentAudio = async () => {
     }
 
     const { element, audioSrc } = audioElements[currentIndex];
+    const shouldUseBlockHighlight = useBlockPlaybackHighlight(element);
     try {
-        highlightElement(element);
+        if (shouldUseBlockHighlight) {
+            highlightElement(element);
+        } else {
+            unhighlightElement(element);
+        }
         await playAudioWithPromise(audioSrc, audioSpeed);
         unhighlightElement(element);
         stopAudio();
@@ -256,6 +277,7 @@ const processAudioQueue = async () => {
     unhighlightAllElements();
 
     const { element, audioSrc } = audioElements[currentIndex];
+    const shouldUseBlockHighlight = useBlockPlaybackHighlight(element);
 
     // Check if current element is an image and should be skipped
     const isImage = element.tagName.toLowerCase() === 'img';
@@ -278,7 +300,11 @@ const processAudioQueue = async () => {
     }
 
     try {
-        highlightElement(element);
+        if (shouldUseBlockHighlight) {
+            highlightElement(element);
+        } else {
+            unhighlightElement(element);
+        }
         await playAudioWithPromise(audioSrc, audioSpeed);
         unhighlightElement(element);
 
@@ -320,8 +346,12 @@ const playAudioWithPromise = (src, speed) => {
         setState('currentAudio', audio);
         audio.playbackRate = parseFloat(speed);
 
-        audio.onended = resolve;
-        audio.onerror = reject;
+        audio.onended = () => {
+            resolve();
+        };
+        audio.onerror = (e) => {
+            reject(e);
+        };
 
         updatePlayPauseIcon(true); // Update play button state
 
@@ -465,15 +495,17 @@ export const toggleReadAloud = ({ stopCalls = false } = {}) => {
     const ttsOptionsContainer = document.getElementById("tts-options-container");
     const autoplayContainer = document.getElementById("autoplay-container");
     const describeImagesContainer = document.getElementById("describe-images-container");
+    const wordHighlightContainer = document.getElementById("word-highlight-container");
     const ttsQuickToggleButton = document.getElementById("tts-quick-toggle-button");
 
     if (newState) {
         if (playBar) playBar.classList.remove("hidden");
         if (ttsQuickToggleButton) ttsQuickToggleButton.classList.remove("hidden");
-        if ((isFeatureEnabled("autoplay") || isFeatureEnabled("describeImages")) && ttsOptionsContainer) {
+        if ((isFeatureEnabled("autoplay") || isFeatureEnabled("describeImages") || isFeatureEnabled("highlight")) && ttsOptionsContainer) {
             ttsOptionsContainer.classList.remove("hidden");
             if (isFeatureEnabled("autoplay")) autoplayContainer?.classList.remove("hidden");
             if (isFeatureEnabled("describeImages")) describeImagesContainer?.classList.remove("hidden");
+            if (isFeatureEnabled("highlight")) wordHighlightContainer?.classList.remove("hidden");
         }
     } else {
         if (playBar) playBar.classList.add("hidden");
@@ -482,12 +514,46 @@ export const toggleReadAloud = ({ stopCalls = false } = {}) => {
             ttsOptionsContainer.classList.add("hidden");
             if (isFeatureEnabled("autoplay")) autoplayContainer?.classList.add("hidden");
             if (isFeatureEnabled("describeImages")) describeImagesContainer?.classList.add("hidden");
+            if (isFeatureEnabled("highlight")) wordHighlightContainer?.classList.add("hidden");
         }
     }
 
     toggleButtonState("toggle-read-aloud", newState);
     if (!stopCalls && state.signLanguageMode) {
         toggleSignLanguageMode({ stopCalls: true });
+    }
+};
+
+/**
+ * Toggles reader-controlled word highlighting for read aloud playback.
+ */
+export const toggleWordHighlightMode = () => {
+    if (!isFeatureEnabled("highlight")) {
+        return;
+    }
+
+    const newState = !state.wordHighlightMode;
+    setState("wordHighlightMode", newState);
+    setCookie("wordHighlightMode", newState.toString(), 7);
+    toggleButtonState("toggle-highlight", newState);
+
+    trackToggleEvent("WordHighlightMode", newState);
+
+    if (!state.currentAudio) {
+        return;
+    }
+
+    unhighlightAllElements();
+
+    const currentElement = state.audioElements?.[state.currentIndex]?.element;
+    if (!currentElement) {
+        return;
+    }
+
+    if (shouldUseBlockPlaybackHighlight(currentElement, isFeatureEnabled("highlight"), newState)) {
+        highlightElement(currentElement);
+    } else {
+        unhighlightElement(currentElement);
     }
 };
 
@@ -505,8 +571,11 @@ export const initializeTtsQuickToggle = () => {
         ttsQuickToggleButton.addEventListener("click", (e) => {
             e.preventDefault();
 
-            // Toggle read aloud mode
+            // Toggle read aloud mode and start playback immediately when enabling
             toggleReadAloud();
+            if (state.readAloudMode) {
+                playAudioSequentially();
+            }
         });
     }
 };

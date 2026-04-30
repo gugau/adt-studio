@@ -117,11 +117,17 @@ export {
 } from "./image-captioning.js"
 export {
   generateGlossary,
+  generateGlossaryItem,
   buildGlossaryConfig,
   stripHtml,
   collectPageTexts,
+  getGlossaryItemTextId,
+  isManualGlossaryItem,
+  mergeGeneratedGlossaryWithManualItems,
   type GlossaryConfig,
   type GenerateGlossaryOptions,
+  type GenerateGlossaryItemOptions,
+  type GeneratedGlossaryItemFields,
 } from "./glossary.js"
 export {
   generateToc,
@@ -152,9 +158,12 @@ export {
   loadVoicesConfig,
   loadSpeechInstructions,
   generateSpeechFile,
+  generateWordTimestamps,
   type VoiceMaps,
   type InstructionsMap,
   type GenerateSpeechFileOptions,
+  type GenerateWordTimestampsOptions,
+  type GenerateWordTimestampsResult,
   type ProviderRouting,
 } from "./speech.js"
 export {
@@ -163,6 +172,12 @@ export {
   getTargetLanguages,
   type CatalogTranslationConfig,
 } from "./catalog-translation.js"
+export {
+  translateImage,
+  buildImageTranslationConfig,
+  type TranslateImageOptions,
+  type TranslatedImageResult,
+} from "./image-translation.js"
 export {
   generateStyleguide,
   buildStyleguideGenerationConfig,

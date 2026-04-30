@@ -3,6 +3,16 @@ import os from "node:os"
 import path from "node:path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { createBookStorage } from "@adt/storage"
+const { transcribeWithWhisperMock } = vi.hoisted(() => ({
+  transcribeWithWhisperMock: vi.fn(),
+}))
+vi.mock("@adt/llm", async () => {
+  const actual = await vi.importActual<typeof import("@adt/llm")>("@adt/llm")
+  return {
+    ...actual,
+    transcribeWithWhisper: transcribeWithWhisperMock,
+  }
+})
 import { createTTSRoutes } from "./tts.js"
 
 let tmpDir = ""
@@ -53,6 +63,7 @@ describe("POST /books/:label/tts/generate-one", () => {
     configPath = path.join(tmpDir, "config.yaml")
     writeConfig()
     fetchMock.mockReset()
+    transcribeWithWhisperMock.mockReset()
     vi.stubGlobal("fetch", fetchMock)
   })
 
@@ -342,6 +353,196 @@ describe("POST /books/:label/tts/generate-one", () => {
     await expect(res.text()).resolves.toContain(
       "Single-item audio generation is only available when Gemini is selected for that language."
     )
+  })
+})
+
+describe("POST /books/:label/tts/upload-one", () => {
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "adt-tts-route-"))
+    configPath = path.join(tmpDir, "config.yaml")
+    writeConfig()
+    transcribeWithWhisperMock.mockReset()
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true })
+    tmpDir = ""
+    configPath = ""
+  })
+
+  it("stores uploaded audio as a TTS entry and clears stale timestamps for that text", async () => {
+    const label = "manual-audio"
+    seedBook(label)
+
+    const originalAudioDir = path.join(tmpDir, label, "audio", "en")
+    fs.mkdirSync(originalAudioDir, { recursive: true })
+    fs.writeFileSync(path.join(originalAudioDir, "pg001_t001.mp3"), Buffer.from([1, 2, 3]))
+
+    const storage = createBookStorage(label, tmpDir)
+    try {
+      storage.putNodeData("tts", "en", {
+        entries: [{
+          textId: "pg001_t001",
+          language: "en",
+          fileName: "pg001_t001.mp3",
+          voice: "alloy",
+          model: "gpt-4o-mini-tts",
+          cached: false,
+          provider: "openai",
+        }],
+        generatedAt: new Date().toISOString(),
+      })
+      storage.putNodeData("tts-timestamps", "en", {
+        entries: {
+          pg001_t001: {
+            textId: "pg001_t001",
+            language: "en",
+            words: [{ word: "Hello", start: 0, end: 0.5 }],
+            duration: 0.5,
+          },
+        },
+        generatedAt: new Date().toISOString(),
+      })
+    } finally {
+      storage.close()
+    }
+
+    const formData = new FormData()
+    formData.append("textId", "pg001_t001")
+    formData.append("language", "en")
+    formData.append(
+      "audio",
+      new File([new Uint8Array([9, 8, 7, 6])], "custom.wav", {
+        type: "audio/wav",
+      })
+    )
+
+    const app = createTTSRoutes(tmpDir, configPath)
+    const res = await app.request(`/books/${label}/tts/upload-one`, {
+      method: "POST",
+      body: formData,
+    })
+
+    expect(res.status).toBe(201)
+    const body = await res.json()
+    expect(body.entry).toMatchObject({
+      textId: "pg001_t001",
+      fileName: "pg001_t001.wav",
+      voice: "uploaded",
+      model: "uploaded",
+      provider: "manual",
+      cached: false,
+    })
+
+    const after = createBookStorage(label, tmpDir)
+    try {
+      const ttsRow = after.getLatestNodeData("tts", "en")
+      expect(ttsRow?.version).toBe(2)
+      expect(
+        (ttsRow?.data as {
+          entries: Array<{
+            textId: string
+            language: string
+            fileName: string
+            voice: string
+            model: string
+            cached: boolean
+            provider?: string
+          }>
+        }).entries
+      ).toEqual([
+        {
+          textId: "pg001_t001",
+          language: "en",
+          fileName: "pg001_t001.wav",
+          voice: "uploaded",
+          model: "uploaded",
+          cached: false,
+          provider: "manual",
+        },
+      ])
+
+      const timestampsRow = after.getLatestNodeData("tts-timestamps", "en")
+      expect(
+        (timestampsRow?.data as { entries: Record<string, unknown> }).entries
+      ).toEqual({})
+    } finally {
+      after.close()
+    }
+
+    expect(
+      fs.existsSync(path.join(tmpDir, label, "audio", "en", "pg001_t001.wav"))
+    ).toBe(true)
+    expect(
+      fs.existsSync(path.join(tmpDir, label, "audio", "en", "pg001_t001.mp3"))
+    ).toBe(false)
+  })
+
+  it("supports AI timestamp transcription for uploaded manual audio", async () => {
+    const label = "manual-audio-transcribe"
+    seedBook(label)
+
+    transcribeWithWhisperMock.mockResolvedValue({
+      words: [{ word: "Hello", start: 0, end: 0.5 }],
+      duration: 0.5,
+    })
+
+    const formData = new FormData()
+    formData.append("textId", "pg001_t001")
+    formData.append("language", "en")
+    formData.append(
+      "audio",
+      new File([new Uint8Array([4, 3, 2, 1])], "reader.wav", {
+        type: "audio/wav",
+      })
+    )
+
+    const app = createTTSRoutes(tmpDir, configPath)
+    const uploadRes = await app.request(`/books/${label}/tts/upload-one`, {
+      method: "POST",
+      body: formData,
+    })
+    expect(uploadRes.status).toBe(201)
+
+    const transcribeRes = await app.request(`/books/${label}/tts/transcribe-one`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-OpenAI-Key": "sk-test",
+      },
+      body: JSON.stringify({ textId: "pg001_t001", language: "en" }),
+    })
+
+    expect(transcribeRes.status).toBe(200)
+    const body = await transcribeRes.json()
+    expect(body.entry).toEqual({
+      textId: "pg001_t001",
+      language: "en",
+      words: [{ word: "Hello", start: 0, end: 0.5 }],
+      duration: 0.5,
+    })
+    expect(transcribeWithWhisperMock).toHaveBeenCalledWith(
+      expect.any(Buffer),
+      "pg001_t001.wav",
+      "sk-test",
+      "en",
+      "Hello world",
+    )
+
+    const after = createBookStorage(label, tmpDir)
+    try {
+      const timestampsRow = after.getLatestNodeData("tts-timestamps", "en")
+      expect((timestampsRow?.data as {
+        entries: Record<string, unknown>
+      }).entries.pg001_t001).toEqual({
+        textId: "pg001_t001",
+        language: "en",
+        words: [{ word: "Hello", start: 0, end: 0.5 }],
+        duration: 0.5,
+      })
+    } finally {
+      after.close()
+    }
   })
 })
 

@@ -156,6 +156,7 @@ export {
 export {
   TTSProviderConfig,
   SpeechConfig,
+  isSpeechWordHighlightingEnabled,
   SpeechFileEntry,
   TTSOutput,
   WordTimestamp,

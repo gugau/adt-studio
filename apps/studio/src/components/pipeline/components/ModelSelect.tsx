@@ -250,6 +250,19 @@ export const LLM_MODEL_GROUPS: ModelGroup[] = [
   },
 ]
 
+/** Image generation / image-edit models */
+export const IMAGE_MODEL_GROUPS: ModelGroup[] = [
+  {
+    provider: "openai",
+    models: [
+      "gpt-image-2",
+      "gpt-image-1.5",
+      "gpt-image-1",
+      "dall-e-3",
+    ],
+  },
+]
+
 /** TTS models for speech generation — OpenAI provider */
 export const OPENAI_TTS_MODELS: ModelGroup[] = [
   {

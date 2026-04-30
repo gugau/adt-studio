@@ -28,6 +28,7 @@ const initialState = {
     describeImagesMode: false,
     syllablesMode: false,
     glossaryMode: false,
+    wordHighlightMode: true,
     audioSpeed: 1,
     selectedOption: null,
     selectedWord: null,
@@ -46,6 +47,7 @@ const initialState = {
     originatingPage: null,
     stateMode: true,
     videoFiles: {},
+    imageFiles: {},
     videoPlaying: false,
     videoElement: null,
     videoSource: "",
@@ -111,6 +113,7 @@ export const initializeStateFromCookies = () => {
         autoplayMode: false,
         describeImagesMode: false,
         syllablesMode: false,
+        wordHighlightMode: true,
         audioSpeed: 1,
         currentLanguage: document.documentElement.lang || 'en'
     };

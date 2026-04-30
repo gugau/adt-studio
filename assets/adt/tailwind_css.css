@@ -15,3 +15,12 @@ section[data-section-type="activity_open_ended_answer"] textarea {
     background-repeat: repeat;
     background-attachment: local;
 }
+
+/*
+ * Word-by-word TTS highlight must use a fixed yellow/black scheme regardless
+ * of the surrounding text color (content may render in white, orange, etc.).
+ */
+span[data-word-index].bg-yellow-300 {
+    background-color: #fde047 !important;
+    color: #000 !important;
+}
