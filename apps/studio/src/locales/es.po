@@ -590,6 +590,9 @@ msgstr "Paquete ADT"
 msgid "ADT Studio uses your own API keys to run the pipeline. Keys are stored locally on this device and never sent anywhere else."
 msgstr "ADT Studio usa tus propias claves de API para ejecutar el pipeline. Las claves se almacenan localmente en este dispositivo y nunca se envían a otro lugar."
 
+msgid "ADT_DEBUG=1"
+msgstr "ADT_DEBUG=1"
+
 msgid "Adventure Tales - Vol. 1"
 msgstr "Cuentos de Aventura - Vol. 1"
 
@@ -716,6 +719,9 @@ msgstr "Configuración de clave API"
 
 msgid "API Keys"
 msgstr "Claves de API"
+
+msgid "API Logs"
+msgstr "Registros de API"
 
 msgid "API logs are only available in the desktop app."
 msgstr "Los registros de la API solo están disponibles en la aplicación de escritorio."
@@ -1170,6 +1176,9 @@ msgstr "Completion across the assigned page range for this reviewer session."
 
 msgid "Condensation"
 msgstr "Condensación"
+
+msgid "Config"
+msgstr "Configuración"
 
 #~ msgid "Configure activity detection and image processing options for extracted content."
 #~ msgstr "Configura las opciones de detección de actividades y procesamiento de imágenes para el contenido extraído."
@@ -2561,6 +2570,9 @@ msgstr "Cargando..."
 
 msgid "Loading…"
 msgstr "Cargando…"
+
+msgid "Logs"
+msgstr "Registros"
 
 msgid "Lookup definitions for key terms"
 msgstr "Buscar definiciones de términos clave"
@@ -4192,6 +4204,9 @@ msgstr "Empieza a escribir para ver palabras del libro…"
 msgid "Start with a PDF"
 msgstr "Empezar con un PDF"
 
+msgid "Stats"
+msgstr "Estadísticas"
+
 msgid "Step"
 msgstr "Etapa"
 
@@ -4810,6 +4825,9 @@ msgstr "Aplicación verificada"
 #. placeholder {0}: String(version)
 msgid "Version {0}"
 msgstr "Versión {0}"
+
+msgid "Versions"
+msgstr "Versiones"
 
 msgid "video"
 msgstr "video"

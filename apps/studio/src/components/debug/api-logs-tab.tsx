@@ -52,7 +52,7 @@ export function ApiLogsTab({ label: _label }: ApiLogsTabProps) {
         </p>
         <p className="text-xs">
           <Trans>Launch the app with</Trans>{" "}
-          <code className="font-mono bg-muted px-1 py-0.5 rounded">ADT_DEBUG=1</code>{" "}
+          <code className="font-mono bg-muted px-1 py-0.5 rounded"><Trans>ADT_DEBUG=1</Trans></code>{" "}
           <Trans>to stream API logs here.</Trans>
         </p>
       </div>
