@@ -12,7 +12,13 @@ export default defineConfig({
   },
   preload: {
     build: {
-      externalizeDeps: true
+      externalizeDeps: true,
+      rollupOptions: {
+        input: {
+          index: resolve(__dirname, 'src/preload/index.ts'),
+          "preload-splash": resolve(__dirname, 'src/preload/preload-splash.ts'),
+        },
+      }
     }
   },
   renderer: {

@@ -6,11 +6,20 @@ declare module "*.po" {
   export { messages }
 }
 
+type UpdateStatus =
+  | { phase: "checking" }
+  | { phase: "available"; version: string }
+  | { phase: "not-available" }
+  | { phase: "downloading"; percent: number; bytesPerSecond: number; transferred: number; total: number }
+  | { phase: "downloaded"; version: string }
+  | { phase: "error"; message: string }
+
 interface SplashControlsApi {
-  /** Relaunch the application: schedules a relaunch and quits. */
   relaunch: () => Promise<void>
-  /** Quit the application immediately. */
   quit: () => Promise<void>
+  getUpdateStatus: () => Promise<UpdateStatus | null>
+  onUpdateStatus: (cb: (status: UpdateStatus) => void) => () => void
+  readonly version: string
 }
 
 interface Window {

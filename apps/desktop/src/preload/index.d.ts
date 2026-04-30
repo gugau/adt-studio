@@ -32,6 +32,7 @@ declare global {
       saveFile: (options: SaveFileDialogOptions, data: Uint8Array) => Promise<string | null>
       apiPort: number
       platform: ElectronPlatform
+      version: string
       windowControls: WindowControlsApi
     }
     splashControls?: SplashControlsApi

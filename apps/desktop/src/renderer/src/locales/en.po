@@ -19,8 +19,17 @@ msgstr "Accessible Digital Textbooks"
 msgid "Almost there"
 msgstr "Almost there"
 
+msgid "Checking for updates"
+msgstr "Checking for updates"
+
+msgid "Downloading update {0}%"
+msgstr "Downloading update {0}%"
+
 msgid "Elapsed: {elapsed}s"
 msgstr "Elapsed: {elapsed}s"
+
+msgid "Installing update"
+msgstr "Installing update"
 
 msgid "Quit"
 msgstr "Quit"
@@ -45,3 +54,6 @@ msgstr "Stuck on this screen? You can restart or quit safely."
 
 msgid "Taking longer than usual"
 msgstr "Taking longer than usual"
+
+msgid "Update available"
+msgstr "Update available"

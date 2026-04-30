@@ -30,8 +30,4 @@ export function setupTitleBar() {
   ipcMain.handle("window:is-fullscreen", (event) => {
     return senderWindow(event)?.isFullScreen() ?? false;
   });
-
-  ipcMain.on("app:platform", (event) => {
-    event.returnValue = process.platform;
-  });
 }

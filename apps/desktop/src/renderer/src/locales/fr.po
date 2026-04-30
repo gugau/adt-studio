@@ -19,8 +19,17 @@ msgstr "Manuels Numériques Accessibles"
 msgid "Almost there"
 msgstr "Presque prêt"
 
+msgid "Checking for updates"
+msgstr "Recherche de mises à jour"
+
+msgid "Downloading update {0}%"
+msgstr "Téléchargement de la mise à jour {0} %"
+
 msgid "Elapsed: {elapsed}s"
 msgstr "Écoulé : {elapsed} s"
+
+msgid "Installing update"
+msgstr "Installation de la mise à jour"
 
 msgid "Quit"
 msgstr "Quitter"
@@ -45,3 +54,6 @@ msgstr "Bloqué sur cet écran ? Vous pouvez redémarrer ou quitter en toute sé
 
 msgid "Taking longer than usual"
 msgstr "Plus long que d’habitude"
+
+msgid "Update available"
+msgstr "Mise à jour disponible"

@@ -10,6 +10,7 @@ import {
   isApiDebugMode,
 } from "./api";
 import { setupTitleBar } from "./title-bar";
+import { setupAppInfo } from "./app-info";
 import { setupFileDialog } from "./file-dialog";
 import {
   HTML_RENDER_SCHEME_PRIVILEGES,
@@ -24,6 +25,7 @@ import {
 } from "./protocols/studio-app.protocol";
 import { createSplashWindow } from "./splash-window";
 import { setupSplashControls } from "./splash-controls";
+import { onUpdateStatus, runStartupUpdateCheck } from "./auto-updater";
 
 protocol.registerSchemesAsPrivileged([
   STUDIO_APP_SCHEME_PRIVILEGES,
@@ -33,8 +35,24 @@ protocol.registerSchemesAsPrivileged([
 app.whenReady().then(async () => {
   electronApp.setAppUserModelId("com.electron");
 
+  setupAppInfo();
   setupSplashControls();
+
   const splashWindow = createSplashWindow();
+
+  const unsubscribeUpdateStatus = onUpdateStatus((status) => {
+    if (!splashWindow.isDestroyed()) {
+      splashWindow.webContents.send("splash:update-status", status);
+    }
+  });
+
+  const updateResult = await runStartupUpdateCheck();
+  if (updateResult === "updating") {
+    // App is about to relaunch from quitAndInstall — stop bootstrapping.
+    return;
+  }
+
+  unsubscribeUpdateStatus();
 
   registerStudioAppProtocol(join(__dirname, "../renderer"));
   registerHtmlRenderProtocol();
