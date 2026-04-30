@@ -2,8 +2,10 @@ import { ArrowRight, ArrowUpRight, Download, Tag } from "lucide-react";
 import { SectionEyebrow } from "@/components/SectionEyebrow";
 import { cn } from "@/lib/cn";
 import {
+  formatDownloads,
   formatRelativeDate,
   stripMarkdown,
+  sumReleaseDownloads,
   useGithubReleases,
   type GithubRelease,
 } from "@/lib/useGithubReleases";
@@ -140,8 +142,19 @@ function ReleaseCard({
       <h3 className="pointer-events-none relative z-[1] mt-4 line-clamp-2 text-base font-semibold tracking-tight text-[color:var(--color-foreground)]">
         {title}
       </h3>
-      <div className="pointer-events-none relative z-[1] mt-1 font-mono text-[11px] text-[color:var(--color-muted-foreground)]">
-        {formatRelativeDate(release.published_at)}
+      <div className="pointer-events-none relative z-[1] mt-1 flex items-center gap-1.5 font-mono text-[11px] text-[color:var(--color-muted-foreground)]">
+        <span>{formatRelativeDate(release.published_at)}</span>
+        {sumReleaseDownloads(release) > 0 && (
+          <>
+            <span aria-hidden className="opacity-50">
+              ·
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Download className="h-3 w-3" />
+              {formatDownloads(sumReleaseDownloads(release))}
+            </span>
+          </>
+        )}
       </div>
 
       <p className="pointer-events-none relative z-[1] mt-3 line-clamp-3 text-sm leading-relaxed text-[color:var(--color-muted-foreground)]">

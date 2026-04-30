@@ -12,6 +12,7 @@ import { Button } from "@/components/Button";
 import { cn } from "@/lib/cn";
 import {
   formatAbsoluteDate,
+  formatDownloads,
   formatRelativeDate,
   useGithubRelease,
   type GithubAsset,
@@ -187,7 +188,7 @@ function AssetList({
               <div className="mt-0.5 text-[11px] text-[color:var(--color-muted-foreground)]">
                 {formatSize(a.size)}
                 {typeof a.download_count === "number"
-                  ? ` · ${a.download_count.toLocaleString()} downloads`
+                  ? ` · ${formatDownloads(a.download_count)} downloads`
                   : ""}
               </div>
             </div>

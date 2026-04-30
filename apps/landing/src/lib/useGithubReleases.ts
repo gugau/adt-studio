@@ -166,6 +166,29 @@ export function formatRelativeDate(iso: string): string {
   return "just now";
 }
 
+export function formatDownloads(n: number): string {
+  if (n < 1000) return n.toLocaleString();
+  if (n < 10000) {
+    const v = (n / 1000).toFixed(1).replace(/\.0$/, "");
+    return `${v}k`;
+  }
+  if (n < 1_000_000) return `${Math.round(n / 1000)}k`;
+  const v = (n / 1_000_000).toFixed(1).replace(/\.0$/, "");
+  return `${v}M`;
+}
+
+export function sumReleaseDownloads(release: GithubRelease): number {
+  return (release.assets ?? []).reduce(
+    (acc, a) => acc + (a.download_count ?? 0),
+    0,
+  );
+}
+
+export function sumAllDownloads(releases: GithubRelease[] | null): number {
+  if (!releases) return 0;
+  return releases.reduce((acc, r) => acc + sumReleaseDownloads(r), 0);
+}
+
 export function formatAbsoluteDate(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleDateString(undefined, {

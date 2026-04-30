@@ -3,7 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Button";
 import { cn } from "@/lib/cn";
 import {
+  formatDownloads,
   formatRelativeDate,
+  sumAllDownloads,
   useGithubReleases,
   type GithubAsset,
   type GithubRelease,
@@ -35,6 +37,10 @@ export function DownloadPage() {
   const grouped = useMemo(
     () => (latest ? groupAssets(latest.assets) : null),
     [latest],
+  );
+  const totalDownloads = useMemo(
+    () => sumAllDownloads(releases),
+    [releases],
   );
 
   const isMobile = userPlatform === "mobile";
@@ -174,6 +180,22 @@ export function DownloadPage() {
             ))}
           </div>
         </div>
+
+        {totalDownloads > 0 && (
+          <div
+            className={cn(
+              "mt-8 inline-flex items-center gap-1.5 font-mono text-[11px] text-[color:var(--color-muted-foreground)] transition-opacity duration-500",
+              mounted ? "opacity-100" : "opacity-0",
+            )}
+            style={{ transitionDelay: "600ms" }}
+          >
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--color-primary)]" />
+            <span className="font-semibold text-[color:var(--color-foreground)]">
+              {formatDownloads(totalDownloads)}
+            </span>
+            <span>downloads to date</span>
+          </div>
+        )}
 
         <div
           className={cn(
