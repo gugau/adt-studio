@@ -102,7 +102,7 @@ export async function runStartupUpdateCheck(): Promise<"updating" | "no-update" 
 
     await result.downloadPromise;
 
-    autoUpdater.quitAndInstall(false, true);
+    autoUpdater.quitAndInstall(true, true);
     return "updating";
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
