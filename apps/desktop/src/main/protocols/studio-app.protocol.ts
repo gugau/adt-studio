@@ -1,7 +1,6 @@
-import { stat } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import * as path from "node:path";
-import { pathToFileURL } from "node:url";
-import { net, protocol } from "electron";
+import { protocol } from "electron";
 
 export const STUDIO_APP_HOST = "adt.studio";
 export const STUDIO_APP_ORIGIN = `app://${STUDIO_APP_HOST}`;
@@ -16,6 +15,32 @@ export const STUDIO_APP_SCHEME_PRIVILEGES = {
   },
 } as Electron.CustomScheme;
 
+const MIME_TYPES: Record<string, string> = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "application/javascript; charset=utf-8",
+  ".mjs": "application/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".svg": "image/svg+xml",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+  ".ico": "image/x-icon",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+  ".ttf": "font/ttf",
+  ".otf": "font/otf",
+  ".wasm": "application/wasm",
+  ".map": "application/json; charset=utf-8",
+  ".txt": "text/plain; charset=utf-8",
+};
+
+function contentTypeFor(filePath: string): string {
+  return MIME_TYPES[path.extname(filePath).toLowerCase()] ?? "application/octet-stream";
+}
+
 function isPathInsideRoot(filePath: string, rootDir: string): boolean {
   const resolvedFile = path.resolve(filePath);
   const resolvedRoot = path.resolve(rootDir);
@@ -28,6 +53,14 @@ function isPathInsideRoot(filePath: string, rootDir: string): boolean {
     resolvedFile === resolvedRoot ||
     resolvedFile.startsWith(resolvedRoot + path.sep)
   );
+}
+
+async function serveFile(filePath: string): Promise<Response> {
+  const data = await readFile(filePath);
+  return new Response(data, {
+    status: 200,
+    headers: { "Content-Type": contentTypeFor(filePath) },
+  });
 }
 
 export function registerStudioAppProtocol(rendererDistDir: string): void {
@@ -53,15 +86,15 @@ export function registerStudioAppProtocol(rendererDistDir: string): void {
 
     try {
       const st = await stat(candidate);
-      
+
       if (st.isFile()) {
-        return net.fetch(pathToFileURL(candidate).href);
+        return await serveFile(candidate);
       }
 
       if (st.isDirectory()) {
         const indexInDir = path.join(candidate, "index.html");
         if (isPathInsideRoot(indexInDir, root)) {
-          return net.fetch(pathToFileURL(indexInDir).href);
+          return await serveFile(indexInDir);
         }
       }
     } catch {}
@@ -72,6 +105,6 @@ export function registerStudioAppProtocol(rendererDistDir: string): void {
       return new Response("Forbidden", { status: 403 });
     }
 
-    return net.fetch(pathToFileURL(indexHtml).href);
+    return await serveFile(indexHtml);
   });
 }

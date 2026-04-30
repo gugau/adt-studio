@@ -40,4 +40,4 @@ security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PWD" "$KEYCH
 security find-identity -v -p codesigning "$KEYCHAIN" || true
 
 
-APPLEID="$APPLEID" APPLEIDPASS="$APPLEIDPASS" APPLEIDTEAM="$APPLEIDTEAM" APP_PLATFORM="darwin" pnpm --filter @adt/electron build:mac
+APPLEID="$APPLEID" APPLEIDPASS="$APPLEIDPASS" APPLEIDTEAM="$APPLEIDTEAM" APP_PLATFORM="darwin" pnpm --filter @adt/desktop build:mac

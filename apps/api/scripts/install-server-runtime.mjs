@@ -6,7 +6,7 @@
  * Uses npm in dist-electron/ (not pnpm) so installs are not treated as workspace packages.
  */
 import { spawnSync } from "node:child_process"
-import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -52,6 +52,15 @@ unlinkSync(pkgJsonPath)
 const lockPath = path.join(dist, "package-lock.json")
 if (existsSync(lockPath)) {
   unlinkSync(lockPath)
+}
+
+// Remove node_modules/.bin — electron-builder's packaging walker re-creates these
+// .bin symlinks at the destination and crashes with EEXIST when they already exist.
+// The bundled API server doesn't shell out to any of these CLIs at runtime, so the
+// .bin directory is dead weight inside the packaged app.
+const binDir = path.join(dist, "node_modules", ".bin")
+if (existsSync(binDir)) {
+  rmSync(binDir, { recursive: true, force: true })
 }
 
 console.log("✓ api-runtime deps → dist/node_modules/")
