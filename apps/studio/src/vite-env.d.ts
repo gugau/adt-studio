@@ -67,6 +67,8 @@ interface Window {
     apiPort: number
     /** `process.platform` of the Electron main process. Undefined in the web build. */
     platform?: ElectronPlatform
+    /** Application version from the Electron main process. Undefined in the web build. */
+    version?: string
     /** IPC bridge for custom title bar controls. Undefined in the web build. */
     windowControls?: ElectronWindowControls
   }

@@ -1,7 +1,26 @@
 import { Trans } from "@lingui/react/macro"
 import { STUCK_THRESHOLD_SECONDS } from "../constants"
 
-function StatusMessage({ elapsed }: { elapsed: number }) {
+function StatusMessage({
+  elapsed,
+  update,
+}: {
+  elapsed: number
+  update: UpdateStatus | null
+}) {
+  if (update?.phase === "checking") {
+    return <Trans>Checking for updates</Trans>
+  }
+  if (update?.phase === "available") {
+    return <Trans>Update available</Trans>
+  }
+  if (update?.phase === "downloading") {
+    return <Trans>Downloading update {Math.round(update.percent)}%</Trans>
+  }
+  if (update?.phase === "downloaded") {
+    return <Trans>Installing update</Trans>
+  }
+
   if (elapsed < 4) {
     return <Trans>Starting</Trans>
   }

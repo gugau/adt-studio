@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useSettingsDialog } from "@/routes/__root";
 import { usePlatform } from "@/hooks/use-platform";
+import { useAppVersion } from "@/hooks/use-app-version";
 import { useWindowControls } from "@/hooks/use-window-controls";
 import { DRAG_REGION, NO_DRAG_REGION } from "@/constants";
 import {
@@ -29,6 +30,7 @@ export function StudioTopBar({
   const { t } = useLingui();
   const { openSettings } = useSettingsDialog();
   const platform = usePlatform();
+  const version = useAppVersion();
   const { available: hasWindowControls } = useWindowControls();
 
   const showWindowsControls = hasWindowControls && platform === "windows";
@@ -39,6 +41,11 @@ export function StudioTopBar({
     <>
       <Home className="w-4 h-4 shrink-0" />
       <span className="text-sm font-semibold">ADT Studio</span>
+      {version && (
+        <span className="text-[10px] font-normal tabular-nums text-white/50">
+          v{version}
+        </span>
+      )}
     </>
   );
 
