@@ -41,7 +41,7 @@ function configure(): void {
   if (configured) return;
   configured = true;
 
-  autoUpdater.autoDownload = false;
+  autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = false;
   autoUpdater.allowPrerelease = true;
   autoUpdater.logger = console;
@@ -95,7 +95,7 @@ export async function runStartupUpdateCheck(): Promise<"updating" | "no-update" 
 
   try {
     const result = await autoUpdater.checkForUpdates();
-    if (!result?.updateInfo || result.updateInfo.version === app.getVersion()) {
+    if (!result?.downloadPromise) {
       emit({ phase: "not-available" });
       return "no-update";
     }
