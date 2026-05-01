@@ -71,34 +71,13 @@ const EMPTY_DECOR: string[] = []
 
 export function TypographySection() {
   const { t } = useLingui()
-  const { value: fontFamily, setValue: setFontFamily } = useElementStyles(
-    fontFamilyClassMap,
-    "sans"
-  )
-  const { value: fontSize, setValue: setFontSize } = useElementStyles(
-    fontSizeClassMap,
-    "base"
-  )
-  const { value: weight, setValue: setWeight } = useElementStyles(
-    fontWeightClassMap,
-    "normal"
-  )
-  const { value: decor, setValue: setDecor } = useElementStyles(
-    textDecorationClassMap,
-    EMPTY_DECOR
-  )
-  const { value: align, setValue: setAlign } = useElementStyles(
-    textAlignClassMap,
-    "left"
-  )
-  const { value: leading, setValue: setLeading } = useElementStyles(
-    lineHeightClassMap,
-    "normal"
-  )
-  const { value: textColor, setValue: setTextColor } = useElementStyles(
-    textColorClassMap,
-    ""
-  )
+  const fontFamily = useElementStyles(fontFamilyClassMap, "sans")
+  const fontSize = useElementStyles(fontSizeClassMap, "base")
+  const weight = useElementStyles(fontWeightClassMap, "normal")
+  const decor = useElementStyles(textDecorationClassMap, EMPTY_DECOR)
+  const align = useElementStyles(textAlignClassMap, "left")
+  const leading = useElementStyles(lineHeightClassMap, "normal")
+  const textColor = useElementStyles(textColorClassMap, "")
 
   const decorItems = [
     { value: "italic", icon: Italic, label: t`Italic` },
@@ -115,21 +94,21 @@ export function TypographySection() {
 
   return (
     <Section title={<Trans>Typography</Trans>}>
-      <StyleLabel label={<Trans>Family</Trans>}>
-        <Select value={fontFamily} onChange={setFontFamily} options={FAMILY_OPTIONS} />
+      <StyleLabel label={<Trans>Family</Trans>} override={fontFamily.override}>
+        <Select value={fontFamily.value} onChange={fontFamily.setValue} options={FAMILY_OPTIONS} />
       </StyleLabel>
-      <StyleLabel label={<Trans>Size</Trans>}>
-        <Select value={fontSize} onChange={setFontSize} options={SIZE_OPTIONS} />
+      <StyleLabel label={<Trans>Size</Trans>} override={fontSize.override}>
+        <Select value={fontSize.value} onChange={fontSize.setValue} options={SIZE_OPTIONS} />
       </StyleLabel>
-      <StyleLabel label={<Trans>Weight</Trans>}>
-        <Select value={weight} onChange={setWeight} options={WEIGHT_OPTIONS} />
+      <StyleLabel label={<Trans>Weight</Trans>} override={weight.override}>
+        <Select value={weight.value} onChange={weight.setValue} options={WEIGHT_OPTIONS} />
       </StyleLabel>
-      <StyleLabel label={<Trans>Style</Trans>}>
+      <StyleLabel label={<Trans>Style</Trans>} override={decor.override}>
         <ToggleGroup
           type="multiple"
           size="xs"
-          value={decor}
-          onValueChange={setDecor}
+          value={decor.value}
+          onValueChange={decor.setValue}
         >
           {decorItems.map(({ value, icon: Icon, label }) => (
             <ToggleGroupItem key={value} value={value} aria-label={label} title={label}>
@@ -138,13 +117,13 @@ export function TypographySection() {
           ))}
         </ToggleGroup>
       </StyleLabel>
-      <StyleLabel label={<Trans>Align</Trans>}>
+      <StyleLabel label={<Trans>Align</Trans>} override={align.override}>
         <ToggleGroup
           type="single"
           size="xs"
           sliding
-          value={align}
-          onValueChange={(v) => v && setAlign(v)}
+          value={align.value}
+          onValueChange={(v) => v && align.setValue(v)}
         >
           {alignItems.map(({ value, icon: Icon, label }) => (
             <ToggleGroupItem key={value} value={value} aria-label={label} title={label}>
@@ -153,11 +132,11 @@ export function TypographySection() {
           ))}
         </ToggleGroup>
       </StyleLabel>
-      <StyleLabel label={<Trans>Leading</Trans>}>
-        <Select value={leading} onChange={setLeading} options={LEADING_OPTIONS} />
+      <StyleLabel label={<Trans>Leading</Trans>} override={leading.override}>
+        <Select value={leading.value} onChange={leading.setValue} options={LEADING_OPTIONS} />
       </StyleLabel>
-      <StyleLabel label={<Trans>Text</Trans>}>
-        <ColorInput value={textColor} onChange={setTextColor} />
+      <StyleLabel label={<Trans>Text</Trans>} override={textColor.override}>
+        <ColorInput value={textColor.value} onChange={textColor.setValue} />
       </StyleLabel>
     </Section>
   )

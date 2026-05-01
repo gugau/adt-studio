@@ -1,55 +1,164 @@
-import type { ReactNode } from "react"
+import { useState, type MouseEvent, type ReactNode } from "react"
+import { Trans } from "@lingui/react/macro"
+import { Monitor, RotateCcw, Smartphone, Tablet } from "lucide-react"
 import { cn } from "@/lib/utils"
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from "@/components/ui/popover"
+import type { DeviceView } from "../device-breakpoint"
+import type { OverrideInfo } from "../use-element-styles"
 
 interface StyleLabelProps {
-  /** Label text shown on the left column */
   label: ReactNode
-  /** Optional id of the input on the right column (for label/htmlFor association) */
   htmlFor?: string
-  /** The control(s) rendered on the right column */
   children: ReactNode
-  /**
-   * True when the value rendered by `children` comes from an override at the
-   * current breakpoint. The label gets an "active" treatment so the user can
-   * tell it's not just inheriting from a wider breakpoint.
-   *
-   * (Step 7 will wire this up + an Alt+Click reset popover — see lowcode's
-   * StyleLabel for the reference behavior.)
-   */
-  overridden?: boolean
-  /** Optional class on the row wrapper */
+  override?: OverrideInfo | null
   className?: string
 }
 
-/**
- * Field row primitive for the style editor. Owns the label/control grid so
- * every section's fields line up identically. The label area is also the hook
- * for breakpoint-override indication and reset (added in a later step).
- */
+const DEVICE_ICONS: Record<DeviceView, typeof Monitor> = {
+  desktop: Monitor,
+  tablet: Tablet,
+  mobile: Smartphone,
+}
+
+const DEVICE_LABELS: Record<DeviceView, ReactNode> = {
+  desktop: <Trans>Desktop</Trans>,
+  tablet: <Trans>Tablet</Trans>,
+  mobile: <Trans>Mobile</Trans>,
+}
+
+function isResetShortcut(e: MouseEvent): boolean {
+  return e.metaKey || e.ctrlKey || e.altKey
+}
+
+/* eslint-disable lingui/no-unlocalized-strings -- platform key glyphs/abbreviations, not translatable copy */
+const MODIFIER_LABEL = (() => {
+  if (typeof navigator === "undefined") return "Ctrl"
+  return /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl"
+})()
+/* eslint-enable lingui/no-unlocalized-strings */
+
+interface BreakpointRowProps {
+  device: DeviceView
+  classes: string[]
+  muted?: boolean
+}
+
+function BreakpointRow({ device, classes, muted }: BreakpointRowProps) {
+  const Icon = DEVICE_ICONS[device]
+  return (
+    <div
+      className={cn(
+        "flex items-start gap-2",
+        muted ? "text-muted-foreground" : "text-foreground"
+      )}
+    >
+      <Icon className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+      <div className="min-w-0 flex-1">
+        <div className="text-[11px] font-medium leading-tight">
+          {DEVICE_LABELS[device]}
+        </div>
+        <div className="text-[10.5px] font-mono break-all leading-snug mt-0.5">
+          {classes.length > 0 ? classes.join(" ") : <Trans>(default)</Trans>}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function StyleLabel({
   label,
   htmlFor,
   children,
-  overridden,
+  override,
   className,
 }: StyleLabelProps) {
+  const [resetOpen, setResetOpen] = useState(false)
+
+  const handleLabelClick = (e: MouseEvent<HTMLLabelElement>) => {
+    if (!override) return
+    if (isResetShortcut(e)) {
+      e.preventDefault()
+      e.stopPropagation()
+      override.reset()
+      setResetOpen(false)
+      return
+    }
+    e.preventDefault()
+    setResetOpen(true)
+  }
+
+  const labelEl = (
+    <label
+      htmlFor={override ? undefined : htmlFor}
+      onClick={handleLabelClick}
+      className={cn(
+        "h-8 self-start flex items-center pl-3 text-[11px] font-normal select-none truncate",
+        override
+          ? "rounded text-violet-700 bg-violet-100/70 hover:bg-violet-100 cursor-pointer"
+          : "text-muted-foreground/80"
+      )}
+    >
+      {label}
+    </label>
+  )
+
   return (
     <div className={cn("grid grid-cols-[5.5rem_1fr] gap-2", className)}>
-      {/*
-        `self-start h-8` pins the label to a fixed first-row slot at the top of
-        its grid column, so multi-row controls (e.g. BoxInput in split mode)
-        keep the label aligned with the FIRST input row instead of letting it
-        drift to the vertical center of the whole control.
-      */}
-      <label
-        htmlFor={htmlFor}
-        className={cn(
-          "h-8 self-start flex items-center pl-3 text-[11px] font-normal select-none truncate",
-          overridden ? "text-blue-600" : "text-muted-foreground/80"
-        )}
-      >
-        {label}
-      </label>
+      {override ? (
+        <Popover open={resetOpen} onOpenChange={setResetOpen}>
+          <PopoverAnchor asChild>{labelEl}</PopoverAnchor>
+          <PopoverContent
+            side="bottom"
+            align="start"
+            sideOffset={6}
+            className="w-72 p-0 overflow-hidden"
+          >
+            <div className="px-3 pt-3 pb-2.5 border-b">
+              <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-violet-700/80 font-medium">
+                <Trans>Breakpoint override</Trans>
+              </div>
+              <div className="mt-2.5">
+                <BreakpointRow
+                  device={override.currentDevice}
+                  classes={override.currentClasses}
+                />
+              </div>
+              <div className="mt-2.5 pl-[18px] text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium">
+                <Trans>Falls back to</Trans>
+              </div>
+              <div className="mt-1.5">
+                <BreakpointRow
+                  device={override.inheritedDevice}
+                  classes={override.inheritedClasses}
+                  muted
+                />
+              </div>
+            </div>
+            <div className="p-2">
+              <button
+                type="button"
+                className="w-full inline-flex items-center justify-center gap-1.5 rounded bg-violet-600 hover:bg-violet-700 text-white text-[11px] font-medium px-2 py-1.5 transition-colors"
+                onClick={() => {
+                  override.reset()
+                  setResetOpen(false)
+                }}
+              >
+                <RotateCcw className="h-3 w-3" />
+                <Trans>Reset to inherited</Trans>
+              </button>
+              <p className="mt-2 text-[10px] text-muted-foreground/70 text-center">
+                <Trans>Tip: {MODIFIER_LABEL}+Click the label to reset.</Trans>
+              </p>
+            </div>
+          </PopoverContent>
+        </Popover>
+      ) : (
+        labelEl
+      )}
       <div className="min-w-0 min-h-8 flex items-center gap-1.5">
         {children}
       </div>

@@ -1,4 +1,5 @@
 import { createContext, useContext, type ReactNode } from "react"
+import type { DeviceView } from "./device-breakpoint"
 
 interface ElementCtx {
   /** data-id of the currently-selected element */
@@ -7,6 +8,7 @@ interface ElementCtx {
   classes: string[]
   /** Persists a new class list back to the element. */
   onClassesChange: (dataId: string, classes: string[]) => void
+  deviceView: DeviceView
 }
 
 const ElementContext = createContext<ElementCtx | null>(null)

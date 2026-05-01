@@ -22,22 +22,16 @@ const POSITION_OPTIONS: ReadonlyArray<SelectOption<string>> = [
 ]
 
 export function ImageFitSection() {
-  const { value: fit, setValue: setFit } = useElementStyles(
-    objectFitClassMap,
-    "cover"
-  )
-  const { value: position, setValue: setPosition } = useElementStyles(
-    objectPositionClassMap,
-    "center"
-  )
+  const fit = useElementStyles(objectFitClassMap, "cover")
+  const position = useElementStyles(objectPositionClassMap, "center")
 
   return (
     <Section title={<Trans>Image fit</Trans>}>
-      <StyleLabel label={<Trans>Fit</Trans>}>
-        <Select value={fit} onChange={setFit} options={FIT_OPTIONS} />
+      <StyleLabel label={<Trans>Fit</Trans>} override={fit.override}>
+        <Select value={fit.value} onChange={fit.setValue} options={FIT_OPTIONS} />
       </StyleLabel>
-      <StyleLabel label={<Trans>Position</Trans>}>
-        <Select value={position} onChange={setPosition} options={POSITION_OPTIONS} />
+      <StyleLabel label={<Trans>Position</Trans>} override={position.override}>
+        <Select value={position.value} onChange={position.setValue} options={POSITION_OPTIONS} />
       </StyleLabel>
     </Section>
   )

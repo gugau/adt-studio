@@ -39,25 +39,13 @@ const DISPLAY_OPTIONS: ReadonlyArray<SelectOption<string>> = [
 
 export function LayoutSection() {
   const { t } = useLingui()
-  const { value: display, setValue: setDisplay } = useElementStyles(
-    displayClassMap,
-    "block"
-  )
-  const { value: flexDir, setValue: setFlexDir } = useElementStyles(
-    flexDirectionClassMap,
-    "row"
-  )
-  const { value: justify, setValue: setJustify } = useElementStyles(
-    justifyContentClassMap,
-    "start"
-  )
-  const { value: align, setValue: setAlign } = useElementStyles(
-    alignItemsClassMap,
-    "start"
-  )
-  const { value: gap, setValue: setGap } = useElementStyles(gapClassMap, 0)
+  const display = useElementStyles(displayClassMap, "block")
+  const flexDir = useElementStyles(flexDirectionClassMap, "row")
+  const justify = useElementStyles(justifyContentClassMap, "start")
+  const align = useElementStyles(alignItemsClassMap, "start")
+  const gap = useElementStyles(gapClassMap, 0)
 
-  const isFlex = display === "flex" || display === "grid"
+  const isFlex = display.value === "flex" || display.value === "grid"
 
   const directionItems = [
     { value: "row", icon: ArrowRight, label: t`Row` },
@@ -66,7 +54,7 @@ export function LayoutSection() {
     { value: "col-reverse", icon: ArrowUp, label: t`Column reverse` },
   ]
 
-  const isColumn = flexDir === "col" || flexDir === "col-reverse"
+  const isColumn = flexDir.value === "col" || flexDir.value === "col-reverse"
 
   const justifyItems = isColumn
     ? [
@@ -100,18 +88,18 @@ export function LayoutSection() {
 
   return (
     <Section title={<Trans>Layout</Trans>}>
-      <StyleLabel label={<Trans>Display</Trans>}>
-        <Select value={display} onChange={setDisplay} options={DISPLAY_OPTIONS} />
+      <StyleLabel label={<Trans>Display</Trans>} override={display.override}>
+        <Select value={display.value} onChange={display.setValue} options={DISPLAY_OPTIONS} />
       </StyleLabel>
       {isFlex && (
         <>
-          <StyleLabel label={<Trans>Direction</Trans>}>
+          <StyleLabel label={<Trans>Direction</Trans>} override={flexDir.override}>
             <ToggleGroup
               type="single"
               size="xs"
               sliding
-              value={flexDir}
-              onValueChange={(v) => v && setFlexDir(v)}
+              value={flexDir.value}
+              onValueChange={(v) => v && flexDir.setValue(v)}
             >
               {directionItems.map(({ value, icon: Icon, label }) => (
                 <ToggleGroupItem key={value} value={value} aria-label={label} title={label}>
@@ -120,13 +108,13 @@ export function LayoutSection() {
               ))}
             </ToggleGroup>
           </StyleLabel>
-          <StyleLabel label={<Trans>Justify</Trans>}>
+          <StyleLabel label={<Trans>Justify</Trans>} override={justify.override}>
             <ToggleGroup
               type="single"
               size="xs"
               sliding
-              value={justify}
-              onValueChange={(v) => v && setJustify(v)}
+              value={justify.value}
+              onValueChange={(v) => v && justify.setValue(v)}
             >
               {justifyItems.map(({ value, icon: Icon, label }) => (
                 <ToggleGroupItem key={value} value={value} aria-label={label} title={label}>
@@ -135,13 +123,13 @@ export function LayoutSection() {
               ))}
             </ToggleGroup>
           </StyleLabel>
-          <StyleLabel label={<Trans>Align</Trans>}>
+          <StyleLabel label={<Trans>Align</Trans>} override={align.override}>
             <ToggleGroup
               type="single"
               size="xs"
               sliding
-              value={align}
-              onValueChange={(v) => v && setAlign(v)}
+              value={align.value}
+              onValueChange={(v) => v && align.setValue(v)}
             >
               {alignItems.map(({ value, icon: Icon, label }) => (
                 <ToggleGroupItem key={value} value={value} aria-label={label} title={label}>
@@ -150,11 +138,11 @@ export function LayoutSection() {
               ))}
             </ToggleGroup>
           </StyleLabel>
-          <StyleLabel label={<Trans>Gap</Trans>}>
+          <StyleLabel label={<Trans>Gap</Trans>} override={gap.override}>
             <input
               type="number"
-              value={gap}
-              onChange={(e) => setGap(Number(e.target.value) || 0)}
+              value={gap.value}
+              onChange={(e) => gap.setValue(Number(e.target.value) || 0)}
               min={0}
               className={cn(
                 "h-8 w-full bg-muted/60 rounded-md px-2 text-[12px] tabular-nums outline-none",

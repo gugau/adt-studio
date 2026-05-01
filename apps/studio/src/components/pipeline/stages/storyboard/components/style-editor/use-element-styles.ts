@@ -1,38 +1,168 @@
 import { useCallback, useMemo } from "react"
 import { useElementContext } from "./element-context"
+import {
+  deviceToPrefix,
+  getCascadePrefixes,
+  getWiderPrefixes,
+  prefixToBreakpointLabel,
+  type DeviceView,
+} from "./device-breakpoint"
 import type { ClassMap } from "./class-maps/types"
+
+export interface OverrideInfo {
+  currentPrefix: string
+  currentDevice: DeviceView
+  currentClasses: string[]
+  inheritedPrefix: string
+  inheritedDevice: DeviceView
+  inheritedClasses: string[]
+  reset: () => void
+}
 
 interface UseElementStylesResult<TValue> {
   value: TValue
   setValue: (next: TValue) => void
+  override: OverrideInfo | null
 }
 
-/**
- * Bridges a section's controls to the selected element's class list. Reads
- * via `classMap.fromClasses` on every render — the source of truth is the
- * element. `setValue` strips classes matching `classMap.matches` and appends
- * the new output, then persists via `useElementContext().onClassesChange`.
- */
+function classesAtPrefix(classes: string[], prefix: string): string[] {
+  if (prefix === "") {
+    return classes.filter((c) => !c.includes(":"))
+  }
+  const out: string[] = []
+  for (const c of classes) {
+    if (c.startsWith(prefix)) out.push(c.slice(prefix.length))
+  }
+  return out
+}
+
+function fullClassesAtPrefix(
+  classes: string[],
+  prefix: string,
+  matches: (cls: string) => boolean
+): string[] {
+  return classes.filter((c) => {
+    if (prefix === "") {
+      if (c.includes(":")) return false
+      return matches(c)
+    }
+    if (!c.startsWith(prefix)) return false
+    return matches(c.slice(prefix.length))
+  })
+}
+
+function arraysEqual(a: readonly string[], b: readonly string[]): boolean {
+  if (a.length !== b.length) return false
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false
+  return true
+}
+
 export function useElementStyles<TValue>(
   classMap: ClassMap<TValue>,
   defaultValue: TValue
 ): UseElementStylesResult<TValue> {
-  const { dataId, classes, onClassesChange } = useElementContext()
+  const { dataId, classes, onClassesChange, deviceView } = useElementContext()
+
+  const cascade = useMemo(() => getCascadePrefixes(deviceView), [deviceView])
+  const widerPrefixes = useMemo(() => getWiderPrefixes(deviceView), [deviceView])
+  const currentPrefix = deviceToPrefix(deviceView)
+
+  const resolveAt = useCallback(
+    (prefixes: readonly string[]): TValue | null => {
+      for (const prefix of prefixes) {
+        const stripped = classesAtPrefix(classes, prefix).filter((c) =>
+          classMap.matches(c)
+        )
+        if (stripped.length === 0) continue
+        const v = classMap.fromClasses(stripped)
+        if (v !== null) return v
+      }
+      return null
+    },
+    [classes, classMap]
+  )
 
   const value = useMemo<TValue>(
-    () => classMap.fromClasses(classes) ?? defaultValue,
-    [classMap, classes, defaultValue]
+    () => resolveAt(cascade) ?? defaultValue,
+    [resolveAt, cascade, defaultValue]
   )
 
   const setValue = useCallback(
     (next: TValue) => {
-      const stripped = classes.filter((c) => !classMap.matches(c))
-      const additions = classMap.toClasses(next)
-      const merged = additions.length > 0 ? [...stripped, ...additions] : stripped
+      const stripped = classes.filter((c) => {
+        if (currentPrefix === "") {
+          if (c.includes(":")) return true
+          return !classMap.matches(c)
+        }
+        if (!c.startsWith(currentPrefix)) return true
+        return !classMap.matches(c.slice(currentPrefix.length))
+      })
+
+      const widerResolved = resolveAt(widerPrefixes) ?? defaultValue
+      const widerClasses = classMap.toClasses(widerResolved)
+      const newClasses = classMap.toClasses(next)
+      const isRedundant = arraysEqual(widerClasses, newClasses)
+
+      let merged = stripped
+      if (!isRedundant && newClasses.length > 0) {
+        const additions = newClasses.map((c) => `${currentPrefix}${c}`)
+        merged = [...stripped, ...additions]
+      }
+
       onClassesChange(dataId, merged)
     },
-    [classMap, classes, dataId, onClassesChange]
+    [
+      classes,
+      classMap,
+      currentPrefix,
+      dataId,
+      defaultValue,
+      onClassesChange,
+      resolveAt,
+      widerPrefixes,
+    ]
   )
 
-  return { value, setValue }
+  const reset = useCallback(() => {
+    if (currentPrefix === "") return
+    const stripped = classes.filter((c) => {
+      if (!c.startsWith(currentPrefix)) return true
+      return !classMap.matches(c.slice(currentPrefix.length))
+    })
+    onClassesChange(dataId, stripped)
+  }, [classes, classMap, currentPrefix, dataId, onClassesChange])
+
+  const override = useMemo<OverrideInfo | null>(() => {
+    if (currentPrefix === "") return null
+    const currentClasses = fullClassesAtPrefix(
+      classes,
+      currentPrefix,
+      classMap.matches
+    )
+    if (currentClasses.length === 0) return null
+
+    let inheritedPrefix: string | null = null
+    let inheritedClasses: string[] = []
+    for (const prefix of widerPrefixes) {
+      const matched = fullClassesAtPrefix(classes, prefix, classMap.matches)
+      if (matched.length > 0) {
+        inheritedPrefix = prefix
+        inheritedClasses = matched
+        break
+      }
+    }
+    if (inheritedPrefix === null) inheritedPrefix = ""
+
+    return {
+      currentPrefix,
+      currentDevice: prefixToBreakpointLabel(currentPrefix),
+      currentClasses,
+      inheritedPrefix,
+      inheritedDevice: prefixToBreakpointLabel(inheritedPrefix),
+      inheritedClasses,
+      reset,
+    }
+  }, [classes, classMap, currentPrefix, widerPrefixes, reset])
+
+  return { value, setValue, override }
 }

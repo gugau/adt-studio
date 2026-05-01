@@ -40,30 +40,12 @@ export function SizingSection() {
   const { classes, dataId } = useElementContext()
   const { has, enable } = useDynamicFields(OPTIONALS, classes, dataId)
 
-  const { value: width, setValue: setWidth } = useElementStyles(
-    widthClassMap,
-    AUTO
-  )
-  const { value: height, setValue: setHeight } = useElementStyles(
-    heightClassMap,
-    AUTO
-  )
-  const { value: minWidth, setValue: setMinWidth } = useElementStyles(
-    minWidthClassMap,
-    AUTO
-  )
-  const { value: minHeight, setValue: setMinHeight } = useElementStyles(
-    minHeightClassMap,
-    AUTO
-  )
-  const { value: maxWidth, setValue: setMaxWidth } = useElementStyles(
-    maxWidthClassMap,
-    NONE
-  )
-  const { value: maxHeight, setValue: setMaxHeight } = useElementStyles(
-    maxHeightClassMap,
-    NONE
-  )
+  const width = useElementStyles(widthClassMap, AUTO)
+  const height = useElementStyles(heightClassMap, AUTO)
+  const minWidth = useElementStyles(minWidthClassMap, AUTO)
+  const minHeight = useElementStyles(minHeightClassMap, AUTO)
+  const maxWidth = useElementStyles(maxWidthClassMap, NONE)
+  const maxHeight = useElementStyles(maxHeightClassMap, NONE)
 
   const addFieldOptions = [
     { value: "minWidth" as const, label: <Trans>Min width</Trans> },
@@ -83,30 +65,30 @@ export function SizingSection() {
         />
       }
     >
-      <StyleLabel label={<Trans>Width</Trans>}>
-        <UnitInput value={width} onChange={setWidth} units={DIM_UNITS} />
+      <StyleLabel label={<Trans>Width</Trans>} override={width.override}>
+        <UnitInput value={width.value} onChange={width.setValue} units={DIM_UNITS} />
       </StyleLabel>
-      <StyleLabel label={<Trans>Height</Trans>}>
-        <UnitInput value={height} onChange={setHeight} units={DIM_UNITS} />
+      <StyleLabel label={<Trans>Height</Trans>} override={height.override}>
+        <UnitInput value={height.value} onChange={height.setValue} units={DIM_UNITS} />
       </StyleLabel>
       {has("minWidth") ? (
-        <StyleLabel label={<Trans>Min width</Trans>}>
-          <UnitInput value={minWidth} onChange={setMinWidth} units={DIM_UNITS} />
+        <StyleLabel label={<Trans>Min width</Trans>} override={minWidth.override}>
+          <UnitInput value={minWidth.value} onChange={minWidth.setValue} units={DIM_UNITS} />
         </StyleLabel>
       ) : null}
       {has("minHeight") ? (
-        <StyleLabel label={<Trans>Min height</Trans>}>
-          <UnitInput value={minHeight} onChange={setMinHeight} units={DIM_UNITS} />
+        <StyleLabel label={<Trans>Min height</Trans>} override={minHeight.override}>
+          <UnitInput value={minHeight.value} onChange={minHeight.setValue} units={DIM_UNITS} />
         </StyleLabel>
       ) : null}
       {has("maxWidth") ? (
-        <StyleLabel label={<Trans>Max width</Trans>}>
-          <UnitInput value={maxWidth} onChange={setMaxWidth} units={MAX_UNITS} />
+        <StyleLabel label={<Trans>Max width</Trans>} override={maxWidth.override}>
+          <UnitInput value={maxWidth.value} onChange={maxWidth.setValue} units={MAX_UNITS} />
         </StyleLabel>
       ) : null}
       {has("maxHeight") ? (
-        <StyleLabel label={<Trans>Max height</Trans>}>
-          <UnitInput value={maxHeight} onChange={setMaxHeight} units={MAX_UNITS} />
+        <StyleLabel label={<Trans>Max height</Trans>} override={maxHeight.override}>
+          <UnitInput value={maxHeight.value} onChange={maxHeight.setValue} units={MAX_UNITS} />
         </StyleLabel>
       ) : null}
     </Section>

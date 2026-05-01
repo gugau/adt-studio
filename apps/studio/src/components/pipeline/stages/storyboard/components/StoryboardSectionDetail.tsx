@@ -775,6 +775,10 @@ export function StoryboardSectionDetail({
 
   // Save rendering (including back-propagation to sectioning)
   const saveRendering = async () => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current)
+      autoSaveTimerRef.current = null
+    }
     const flushed = flushPendingHtml()
     const renderingToSave = flushed ?? pendingRendering
     if (!renderingToSave || storyboardRunning) return
@@ -1257,6 +1261,13 @@ export function StoryboardSectionDetail({
   // re-render BookPreviewFrame and rebuild its body.
   const pendingHtmlRef = useRef<{ html: string; sectionIndex: number } | null>(null)
 
+  // Auto-save debounce. Each style edit resets the timer; ~1.5s after the
+  // last edit, the latest pending HTML is flushed and pushed to the API.
+  // Uses a ref to the latest auto-save function so the timer always runs
+  // against fresh state without re-creating timers on every render.
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const autoSaveRef = useRef<() => Promise<void>>(async () => {})
+
   const handleClassesChange = useCallback(
     (dataId: string, classes: string[]) => {
       if (!page.rendering) return
@@ -1265,6 +1276,11 @@ export function StoryboardSectionDetail({
       setSelectedElementClasses(classes)
       previewFrameRef.current?.refreshCss(fullHtml)
       pendingHtmlRef.current = { html: fullHtml, sectionIndex }
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+      autoSaveTimerRef.current = setTimeout(() => {
+        autoSaveTimerRef.current = null
+        autoSaveRef.current().catch(() => {})
+      }, 1500)
     },
     [page.rendering, sectionIndex]
   )
@@ -1290,6 +1306,66 @@ export function StoryboardSectionDetail({
       flushPendingHtml()
     }
   }, [selectedElement?.dataId, flushPendingHtml])
+
+  // Keep autoSaveRef pointing at the latest closure so the debounce timer
+  // (set in handleClassesChange) sees current state and effects.
+  useEffect(() => {
+    autoSaveRef.current = async () => {
+      const flushed = flushPendingHtml()
+      const renderingToSave = flushed ?? pendingRendering
+      if (!renderingToSave || storyboardRunning || saving) return
+      setSaving(true)
+      try {
+        await api.updateRendering(
+          bookLabel,
+          pageId,
+          stripTransientIds(renderingToSave)
+        )
+        const editedHtml = getRenderedSectionByIndex(
+          renderingToSave,
+          sectionIndex
+        )?.html
+        const sBase =
+          pendingSectioning ?? (page.sectioningTree as SectioningData | null)
+        let savedSectioning: SectioningData | null = null
+        if (editedHtml && sBase) {
+          const updatedSectioning = backPropagateTextChanges(
+            sBase,
+            sectionIndex,
+            editedHtml
+          )
+          if (updatedSectioning !== sBase) {
+            await api.updateSectioning(bookLabel, pageId, updatedSectioning)
+            savedSectioning = updatedSectioning
+          }
+        }
+        queryClient.setQueryData<PageDetail>(
+          ["books", bookLabel, "pages", pageId],
+          (old) => {
+            if (!old) return old
+            return {
+              ...old,
+              rendering: renderingToSave,
+              sectioningTree: savedSectioning ?? old.sectioningTree,
+            }
+          }
+        )
+        setPendingRendering(null)
+        setPendingSectioning(null)
+      } catch {
+        // Silent failure for auto-save; the manual Save bar still surfaces
+        // the dirty state and the user can retry there.
+      } finally {
+        setSaving(false)
+      }
+    }
+  })
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+    }
+  }, [])
 
   // Handle toolbar prune toggle (nodeId === data-id in tree shape)
   const handleToolbarPrune = useCallback(
@@ -2384,6 +2460,7 @@ export function StoryboardSectionDetail({
             : null
         }
         onClassesChange={handleClassesChange}
+        deviceView={deviceView}
       />
     </div>
 

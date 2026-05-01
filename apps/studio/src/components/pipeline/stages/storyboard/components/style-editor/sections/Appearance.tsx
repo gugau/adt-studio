@@ -22,18 +22,12 @@ const SHADOW_OPTIONS: ReadonlyArray<SelectOption<string>> = [
 ]
 
 export function AppearanceSection() {
-  const { value: bgColor, setValue: setBgColor } = useElementStyles(
-    backgroundColorClassMap,
-    ""
-  )
-  const { value: opacity, setValue: setOpacity } = useElementStyles(
-    opacityClassMap,
-    100
-  )
+  const bgColor = useElementStyles(backgroundColorClassMap, "")
+  const opacity = useElementStyles(opacityClassMap, 100)
   // Local draft so dragging the slider doesn't fire a class update / refreshCss
   // per tick. Commits 200ms after the user stops moving (or on release).
-  const [opacityDraft, setOpacityDraft] = useState(opacity)
-  useEffect(() => setOpacityDraft(opacity), [opacity])
+  const [opacityDraft, setOpacityDraft] = useState(opacity.value)
+  useEffect(() => setOpacityDraft(opacity.value), [opacity.value])
   const opacityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(
     () => () => {
@@ -46,27 +40,24 @@ export function AppearanceSection() {
     if (opacityTimerRef.current) clearTimeout(opacityTimerRef.current)
     opacityTimerRef.current = setTimeout(() => {
       opacityTimerRef.current = null
-      setOpacity(next)
+      opacity.setValue(next)
     }, 200)
   }
   const flushOpacity = () => {
     if (opacityTimerRef.current) {
       clearTimeout(opacityTimerRef.current)
       opacityTimerRef.current = null
-      if (opacityDraft !== opacity) setOpacity(opacityDraft)
+      if (opacityDraft !== opacity.value) opacity.setValue(opacityDraft)
     }
   }
-  const { value: shadow, setValue: setShadow } = useElementStyles(
-    shadowClassMap,
-    "none"
-  )
+  const shadow = useElementStyles(shadowClassMap, "none")
 
   return (
     <Section title={<Trans>Appearance</Trans>}>
-      <StyleLabel label={<Trans>Background</Trans>}>
-        <ColorInput value={bgColor} onChange={setBgColor} />
+      <StyleLabel label={<Trans>Background</Trans>} override={bgColor.override}>
+        <ColorInput value={bgColor.value} onChange={bgColor.setValue} />
       </StyleLabel>
-      <StyleLabel label={<Trans>Opacity</Trans>}>
+      <StyleLabel label={<Trans>Opacity</Trans>} override={opacity.override}>
         <input
           type="range"
           min={0}
@@ -82,8 +73,8 @@ export function AppearanceSection() {
           {opacityDraft}%
         </span>
       </StyleLabel>
-      <StyleLabel label={<Trans>Shadow</Trans>}>
-        <Select value={shadow} onChange={setShadow} options={SHADOW_OPTIONS} />
+      <StyleLabel label={<Trans>Shadow</Trans>} override={shadow.override}>
+        <Select value={shadow.value} onChange={shadow.setValue} options={SHADOW_OPTIONS} />
       </StyleLabel>
     </Section>
   )

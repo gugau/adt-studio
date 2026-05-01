@@ -25,6 +25,7 @@ import { AdvancedSection } from "./sections/Advanced"
 import { ImageActionsSection } from "./sections/ImageActions"
 import { TextRoleSection } from "./sections/TextRole"
 import { ElementProvider } from "./element-context"
+import type { DeviceView } from "./device-breakpoint"
 
 // eslint-disable-next-line lingui/no-unlocalized-strings -- HTML attribute identifier shown verbatim
 const DATA_ID_PREFIX = `data-id="`
@@ -38,6 +39,7 @@ interface StyleEditorPanelProps {
   elementClasses: string[] | null
   elementProps: StyleEditorElementProps | null
   onClassesChange: (dataId: string, classes: string[]) => void
+  deviceView: DeviceView
 }
 
 export function StyleEditorPanel({
@@ -48,6 +50,7 @@ export function StyleEditorPanel({
   elementClasses,
   elementProps,
   onClassesChange,
+  deviceView,
 }: StyleEditorPanelProps) {
   const { t } = useLingui()
 
@@ -102,10 +105,20 @@ export function StyleEditorPanel({
             <ElementLabel elementType={elementType} tagName={displayTagName} />
           </div>
           {displayDataId ? (
-            <div className="text-[11px] font-mono text-muted-foreground/80 truncate leading-tight mt-0.5">
-              {DATA_ID_PREFIX}
-              {displayDataId}
-              {DATA_ID_SUFFIX}
+            <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+              <span className="text-[11px] font-mono text-muted-foreground/80 truncate leading-tight">
+                {DATA_ID_PREFIX}
+                {displayDataId}
+                {DATA_ID_SUFFIX}
+              </span>
+              {deviceView !== "desktop" ? (
+                <span
+                  className="shrink-0 inline-flex items-center rounded bg-violet-100/70 px-1 py-0 text-[9px] font-mono font-medium text-violet-700 leading-[14px]"
+                  title={t`Edits go to this Tailwind variant prefix`}
+                >
+                  {deviceView === "tablet" ? "max-lg:" : "max-sm:"}
+                </span>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -158,6 +171,7 @@ export function StyleEditorPanel({
             elementType={elementType}
             elementProps={displayElementProps}
             onClassesChange={onClassesChange}
+            deviceView={deviceView}
           />
         ) : null}
       </div>
@@ -223,6 +237,7 @@ interface StyleEditorBodyProps {
   elementType: ElementType | null
   elementProps: StyleEditorElementProps | null
   onClassesChange: (dataId: string, classes: string[]) => void
+  deviceView: DeviceView
 }
 
 function StyleEditorBody({
@@ -231,6 +246,7 @@ function StyleEditorBody({
   elementType,
   elementProps,
   onClassesChange,
+  deviceView,
 }: StyleEditorBodyProps) {
   const visibleSections = useMemo(
     () => (elementType ? getVisibleSections(elementType) : []),
@@ -238,7 +254,7 @@ function StyleEditorBody({
   )
 
   return (
-    <ElementProvider value={{ dataId, classes, onClassesChange }}>
+    <ElementProvider value={{ dataId, classes, onClassesChange, deviceView }}>
       <div className="flex flex-col">
         {elementProps?.isImage ? (
           <ImageActionsSection dataId={dataId} elementProps={elementProps} />

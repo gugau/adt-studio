@@ -8,22 +8,16 @@ import { useElementStyles } from "../use-element-styles"
 const ZERO: BoxValue = { t: 0, r: 0, b: 0, l: 0 }
 
 export function SpacingSection() {
-  const { value: padding, setValue: setPadding } = useElementStyles(
-    paddingClassMap,
-    ZERO
-  )
-  const { value: margin, setValue: setMargin } = useElementStyles(
-    marginClassMap,
-    ZERO
-  )
+  const padding = useElementStyles(paddingClassMap, ZERO)
+  const margin = useElementStyles(marginClassMap, ZERO)
 
   return (
     <Section title={<Trans>Spacing</Trans>}>
-      <StyleLabel label={<Trans>Padding</Trans>}>
-        <BoxInput value={padding} onChange={setPadding} />
+      <StyleLabel label={<Trans>Padding</Trans>} override={padding.override}>
+        <BoxInput value={padding.value} onChange={padding.setValue} />
       </StyleLabel>
-      <StyleLabel label={<Trans>Margin</Trans>}>
-        <BoxInput value={margin} onChange={setMargin} />
+      <StyleLabel label={<Trans>Margin</Trans>} override={margin.override}>
+        <BoxInput value={margin.value} onChange={margin.setValue} />
       </StyleLabel>
     </Section>
   )
