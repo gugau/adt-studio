@@ -49,6 +49,11 @@ import { useStepHeader } from "../../../components/StepViewRouter"
 import { BookPreviewFrame, type BookPreviewFrameHandle } from "./BookPreviewFrame"
 import { SectionEditPanel } from "./SectionEditPanel"
 import { StyleEditorPanel } from "./style-editor"
+import { ViewportToggle } from "./style-editor/ViewportToggle"
+import {
+  DEVICE_WIDTHS,
+  useDeviceView,
+} from "./style-editor/device-breakpoint"
 import { ImageCropDialog } from "./ImageCropDialog"
 import { AiImageDialog } from "./AiImageDialog"
 import { AddImageDialog } from "./AddImageDialog"
@@ -510,6 +515,8 @@ export function StoryboardSectionDetail({
     tagName?: string
   } | null>(null)
   const [selectedElementClasses, setSelectedElementClasses] = useState<string[] | null>(null)
+  const [deviceView, setDeviceView] = useDeviceView("desktop")
+  const [previewVisibleWidth, setPreviewVisibleWidth] = useState(0)
   const previewFrameRef = useRef<BookPreviewFrameHandle>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
@@ -1879,6 +1886,11 @@ export function StoryboardSectionDetail({
           setPendingRendering(null)
         }}
       />
+      <ViewportToggle
+        value={deviceView}
+        onChange={setDeviceView}
+        currentWidth={previewVisibleWidth}
+      />
       {renderedSection?.html && hasApiKey ? (
         <div className="relative flex-1 min-w-[100px]">
           <Sparkles className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-400" />
@@ -1974,7 +1986,10 @@ export function StoryboardSectionDetail({
       )}
 
       {/* Preview — fills remaining space, scrolls independently */}
-      <div className="flex-1 overflow-auto px-4 py-4 relative" ref={scrollContainerRef}>
+      <div
+        className="flex-1 overflow-auto px-4 py-4 relative [scrollbar-gutter:stable]"
+        ref={scrollContainerRef}
+      >
         {!section ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
@@ -1988,7 +2003,7 @@ export function StoryboardSectionDetail({
             {activityPreviewMode ? (
               <iframe
                 src={`${BASE_URL}/books/${bookLabel}/adt-preview/${pageId}_sec${String(sectionIndex + 1).padStart(3, "0")}.html?embed=1&v=${page.versions.rendering ?? 0}`}
-                className="w-full rounded border"
+                className="w-full rounded border bg-red-500"
                 style={{ height: "80vh" }}
               />
             ) : (
@@ -1996,7 +2011,7 @@ export function StoryboardSectionDetail({
                   ref={previewFrameRef}
                   html={renderedSection.html}
                   bookLabel={bookLabel}
-                  className="w-full rounded border"
+                  className="w-full rounded borde"
                   editable={!hasActiveTask && !storyboardRunning}
                   prunedDataIds={prunedDataIds}
                   changedElements={changedElements}
@@ -2004,6 +2019,9 @@ export function StoryboardSectionDetail({
                   onTextChanged={handleTextChanged}
                   applyBodyBackground={applyBodyBackground}
                   selectedDataId={selectedElement?.dataId ?? null}
+                  renderWidth={DEVICE_WIDTHS[deviceView]}
+                  deviceView={deviceView}
+                  onVisibleWidthChange={setPreviewVisibleWidth}
                 />
             )}
           </>
