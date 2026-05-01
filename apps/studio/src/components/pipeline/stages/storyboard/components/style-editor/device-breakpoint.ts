@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 export type DeviceView = "desktop" | "tablet" | "mobile"
 
 export const DEVICE_WIDTHS: Record<DeviceView, number> = {
-  desktop: 1280,
+  desktop: 1440,
   tablet: 768,
   mobile: 375,
 }

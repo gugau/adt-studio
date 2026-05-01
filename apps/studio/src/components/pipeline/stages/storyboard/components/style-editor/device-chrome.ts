@@ -24,7 +24,7 @@ const IPAD_SCREEN_RATIO = 1366 / 1024 // iPad Pro: screenHeight = screenWidth ×
 const IPAD_FRAME_W_RATIO = 0.904 // screenWidth / chromeWidth
 const IPAD_FRAME_H_RATIO = 0.931 // screenHeight / chromeHeight
 
-const DESKTOP_SCREEN_HEIGHT = 800
+const DESKTOP_SCREEN_HEIGHT = 900
 
 export function getDeviceFrame(
   view: DeviceView | undefined,
