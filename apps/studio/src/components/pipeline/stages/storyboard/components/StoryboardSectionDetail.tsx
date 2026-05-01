@@ -515,7 +515,7 @@ export function StoryboardSectionDetail({
     tagName?: string
   } | null>(null)
   const [selectedElementClasses, setSelectedElementClasses] = useState<string[] | null>(null)
-  const [deviceView, setDeviceView] = useDeviceView("desktop")
+  const [deviceView, setDeviceView] = useDeviceView(bookLabel, "desktop")
   const [previewVisibleWidth, setPreviewVisibleWidth] = useState(0)
   const previewFrameRef = useRef<BookPreviewFrameHandle>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -1261,10 +1261,6 @@ export function StoryboardSectionDetail({
   // re-render BookPreviewFrame and rebuild its body.
   const pendingHtmlRef = useRef<{ html: string; sectionIndex: number } | null>(null)
 
-  // Auto-save debounce. Each style edit resets the timer; ~1.5s after the
-  // last edit, the latest pending HTML is flushed and pushed to the API.
-  // Uses a ref to the latest auto-save function so the timer always runs
-  // against fresh state without re-creating timers on every render.
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const autoSaveRef = useRef<() => Promise<void>>(async () => {})
 
@@ -1307,8 +1303,6 @@ export function StoryboardSectionDetail({
     }
   }, [selectedElement?.dataId, flushPendingHtml])
 
-  // Keep autoSaveRef pointing at the latest closure so the debounce timer
-  // (set in handleClassesChange) sees current state and effects.
   useEffect(() => {
     autoSaveRef.current = async () => {
       const flushed = flushPendingHtml()

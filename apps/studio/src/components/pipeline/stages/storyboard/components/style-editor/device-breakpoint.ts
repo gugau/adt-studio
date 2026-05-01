@@ -8,10 +8,8 @@ export const DEVICE_WIDTHS: Record<DeviceView, number> = {
   mobile: 375,
 }
 
-// Tailwind variant prefix used when writing classes for the active device.
-// Desktop writes base classes; tablet/mobile write `max-*:` variants per the
-// desktop-first cascade. Tablet uses `max-lg:` (fires below 1024px) so it
-// applies at the 768px iframe — `max-md:` would not.
+// Tablet uses `max-lg:` (fires below 1024px) so it applies at the 768px
+// iframe — `max-md:` would not.
 export function deviceToPrefix(view: DeviceView): string {
   switch (view) {
     case "desktop":
@@ -44,30 +42,46 @@ export function prefixToBreakpointLabel(prefix: string): DeviceView {
   return "desktop"
 }
 
-const STORAGE_KEY = "adt-storyboard-device-view"
+const STORAGE_KEY_PREFIX = "adt-storyboard-device-view"
 
 function isDeviceView(v: unknown): v is DeviceView {
   return v === "desktop" || v === "tablet" || v === "mobile"
 }
 
 export function useDeviceView(
+  scope: string,
   initial: DeviceView = "desktop"
 ): [DeviceView, (next: DeviceView) => void] {
+  const storageKey = `${STORAGE_KEY_PREFIX}:${scope}`
+
   const [view, setView] = useState<DeviceView>(() => {
     if (typeof window === "undefined") return initial
     try {
-      const stored = window.sessionStorage.getItem(STORAGE_KEY)
+      const stored = window.localStorage.getItem(storageKey)
       return isDeviceView(stored) ? stored : initial
     } catch {
+      // localStorage can throw in private mode / disabled storage — fall back to default.
       return initial
     }
   })
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      const stored = window.localStorage.getItem(storageKey)
+      setView(isDeviceView(stored) ? stored : initial)
+    } catch {
+      // localStorage can throw in private mode / disabled storage — keep current view.
+    }
+  }, [storageKey, initial])
+
   useEffect(() => {
     try {
-      window.sessionStorage.setItem(STORAGE_KEY, view)
+      window.localStorage.setItem(storageKey, view)
     } catch {
-      // sessionStorage unavailable (private mode, etc.) — ignore
+      // localStorage can throw on quota / private mode — persistence is best-effort.
     }
-  }, [view])
+  }, [storageKey, view])
+
   return [view, setView]
 }
