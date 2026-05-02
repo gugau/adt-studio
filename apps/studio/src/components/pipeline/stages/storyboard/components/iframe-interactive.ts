@@ -12,17 +12,26 @@ export const INTERACTIVE_SCRIPT = `<script>
 
   function isEditable() { return document.body.dataset.editable === 'true'; }
 
-  /** Structural tags eligible for container selection (when no data-id ancestor). */
-  var CONTAINER_TAGS = { DIV:1, SECTION:1, ARTICLE:1, MAIN:1, NAV:1, ASIDE:1, HEADER:1, FOOTER:1,
-    BUTTON:1, A:1, UL:1, OL:1, LI:1, FIGURE:1, FIGCAPTION:1, BLOCKQUOTE:1, TABLE:1,
-    THEAD:1, TBODY:1, TR:1, TD:1, TH:1, FORM:1, FIELDSET:1, DETAILS:1, SUMMARY:1, SPAN:1,
-    INPUT:1, SELECT:1, TEXTAREA:1, LABEL:1 };
+  // Walk up from target; preventDefault if any ancestor is a tag whose default
+  // action would steal the click (navigate the iframe, submit a form, focus
+  // an input, etc.) so the editor can always select the element instead.
+  function suppressNativeAction(e) {
+    var el = e.target;
+    while (el && el !== document.body) {
+      var t = el.tagName;
+      if (t === 'A' || t === 'BUTTON' || t === 'INPUT' || t === 'SELECT' ||
+          t === 'TEXTAREA' || t === 'LABEL' || t === 'FORM' || t === 'SUMMARY') {
+        e.preventDefault();
+        return;
+      }
+      el = el.parentElement;
+    }
+  }
 
-  /** Walk up from target to find the nearest meaningful container element. */
   function findContainer(target) {
     var el = target;
     while (el && el !== document.body && el.id !== 'content') {
-      if (el.nodeType === 1 && CONTAINER_TAGS[el.tagName]) return el;
+      if (el.nodeType === 1) return el;
       el = el.parentElement;
     }
     return null;
@@ -57,6 +66,7 @@ export const INTERACTIVE_SCRIPT = `<script>
     parent.postMessage({
       type: isImg ? 'select-image' : 'select',
       dataId: el.getAttribute('data-id'),
+      tagName: el.tagName.toLowerCase(),
       rect: getRect(el)
     }, '*');
   }
@@ -123,9 +133,11 @@ export const INTERACTIVE_SCRIPT = `<script>
   // during mousedown/drag was wiped when startEditing swapped innerHTML.
   document.addEventListener('mousedown', function(e) {
     if (!isEditable()) return;
-    var el = e.target.closest('[data-id]');
+    suppressNativeAction(e);
+    var el = findContainer(e.target);
     if (!el) return;
     if (el.tagName === 'IMG') return;
+    if (!el.hasAttribute('data-id')) return;
     if (editing === el) return;
     if (editing && editing !== el) finishEditing();
     selectElement(el);
@@ -134,29 +146,9 @@ export const INTERACTIVE_SCRIPT = `<script>
 
   document.addEventListener('click', function(e) {
     if (!isEditable()) return;
-    var el = e.target.closest('[data-id]');
+    suppressNativeAction(e);
+    var el = findContainer(e.target);
     if (!el) {
-      // No data-id ancestor — try selecting a container element
-      var container = findContainer(e.target);
-      if (container) {
-        // Prevent native focus/interaction on form elements so the click selects for editing
-        var tag = container.tagName;
-        if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON') {
-          e.preventDefault();
-        }
-        if (editing) finishEditing();
-        var cId = ensureDataId(container);
-        clearSelection();
-        selected = container;
-        container.setAttribute('data-adt-selected', 'true');
-        parent.postMessage({
-          type: 'select-container',
-          dataId: cId,
-          tagName: container.tagName.toLowerCase(),
-          rect: getRect(container)
-        }, '*');
-        return;
-      }
       if (editing) finishEditing();
       clearSelection();
       parent.postMessage({ type: 'deselect' }, '*');
@@ -164,8 +156,22 @@ export const INTERACTIVE_SCRIPT = `<script>
     }
     if (editing === el) return;
     if (editing && editing !== el) finishEditing();
-    selectElement(el);
-    if (el.tagName !== 'IMG') startEditing(el);
+    var hadDataId = el.hasAttribute('data-id');
+    if (hadDataId) {
+      selectElement(el);
+      if (el.tagName !== 'IMG') startEditing(el);
+    } else {
+      var cId = ensureDataId(el);
+      clearSelection();
+      selected = el;
+      el.setAttribute('data-adt-selected', 'true');
+      parent.postMessage({
+        type: 'select-container',
+        dataId: cId,
+        tagName: el.tagName.toLowerCase(),
+        rect: getRect(el)
+      }, '*');
+    }
   });
 
   document.addEventListener('keydown', function(e) {
@@ -200,16 +206,11 @@ export const INTERACTIVE_SCRIPT = `<script>
 })();
 <\/script>`
 
-export const INTERACTIVE_STYLES = `body[data-editable="true"] [data-id] { cursor: pointer; transition: outline 0.1s; }
-    body[data-editable="true"] [data-id]:hover { outline: 2px solid rgba(59,130,246,0.3); outline-offset: 2px; }
-    body[data-editable="true"] img[data-id] { position: relative; z-index: 1; }
-    body[data-editable="true"] div:hover, body[data-editable="true"] section:hover,
-    body[data-editable="true"] button:hover, body[data-editable="true"] nav:hover,
-    body[data-editable="true"] article:hover, body[data-editable="true"] aside:hover,
-    body[data-editable="true"] figure:hover, body[data-editable="true"] li:hover,
-    body[data-editable="true"] input:hover, body[data-editable="true"] select:hover,
-    body[data-editable="true"] textarea:hover, body[data-editable="true"] label:hover {
-      outline: 1px dashed rgba(59,130,246,0.25); outline-offset: 1px;
+export const INTERACTIVE_STYLES = `body[data-editable="true"] *:hover:not(:has(*:hover)) {
+      outline: 1px dashed rgb(124, 58, 237);
+      outline-offset: 2px;
+      cursor: pointer;
     }
-    [data-adt-selected] { outline: 2px solid rgba(59,130,246,0.8) !important; outline-offset: 2px !important; }
-    [data-adt-editing] { outline: 2px solid rgba(59,130,246,1) !important; outline-offset: 2px !important; }`
+    body[data-editable="true"] img[data-id] { position: relative; z-index: 1; }
+    [data-adt-selected] { outline: 2px solid rgb(124, 58, 237) !important; outline-offset: 2px !important; }
+    [data-adt-editing] { outline: 2px solid rgb(91, 33, 182) !important; outline-offset: 2px !important; }`

@@ -7,7 +7,6 @@ import {
   Eye,
   EyeOff,
   GripHorizontal,
-  ImagePlus,
   LayoutGrid,
   Loader2,
   MessageSquare,
@@ -15,7 +14,6 @@ import {
   PanelRightOpen,
   PenLine,
   Play,
-  RefreshCw,
   Save,
   Sparkles,
   X,
@@ -61,17 +59,9 @@ import { ReplaceFromBookDialog } from "./ReplaceFromBookDialog"
 import { SegmentPreviewDialog, type SegmentRegion } from "./SegmentPreviewDialog"
 import { AiEditHistoryDrawer } from "./AiEditHistoryDrawer"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { useLingui } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
 import { i18n } from "@lingui/core"
-import { cn } from "@/lib/utils"
 import { getSectionTypeLabel, getSectionTypeDescription } from "@/lib/section-constants"
 import {
   Dialog,
@@ -81,6 +71,13 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
+
+const TEXT_LIKE_TAGS = new Set([
+  "p", "h1", "h2", "h3", "h4", "h5", "h6",
+  "span", "em", "strong", "i", "b", "u", "s",
+  "code", "kbd", "samp", "sub", "sup",
+  "blockquote", "figcaption", "small", "mark", "cite",
+])
 
 // -- AI loading messages --
 
@@ -1831,23 +1828,23 @@ export function StoryboardSectionDetail({
     })
   }
 
-  // Compute toolbar info for selected element
   const getSelectedElementInfo = () => {
     if (!selectedElement || !sectioningData) return null
     const { dataId, tagName } = selectedElement
-
-    // Container elements (div, section, button, etc.) — class editing only
-    if (tagName) {
-      return { isImage: false, isContainer: true, tagName, textType: undefined, isPruned: false, imageSrc: undefined }
-    }
+    const tag = tagName?.toLowerCase()
 
     const leaf = section ? findNode(section.nodes, dataId) : null
-    const isImage = leaf?.role === "image" || (!leaf && dataId.includes("_im"))
+    const isImage =
+      tag === "img" ||
+      leaf?.role === "image" ||
+      (!leaf && !tag && dataId.includes("_im"))
+
+    const isContainer = !isImage && (!tag || !TEXT_LIKE_TAGS.has(tag))
 
     return {
       isImage,
-      isContainer: false,
-      tagName: undefined,
+      isContainer,
+      tagName: tag,
       textType: leaf && !isImage ? leaf.role : undefined,
       isPruned: leaf?.isPruned ?? false,
       imageSrc: isImage ? `${BASE_URL}/books/${bookLabel}/images/${dataId}` : undefined,
