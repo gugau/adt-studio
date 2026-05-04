@@ -168,7 +168,7 @@ function validateWebRendering(
 ): ValidationResult {
   const r = result as { reasoning: string; content: string }
   const label = context.label as string
-  const leaf_texts = context.leaf_texts as Array<{ text_id: string; text: string }>
+  const leaf_texts = context.leaf_texts as Array<{ text_id: string; text_type: string; text: string }>
   const images = context.images as Array<{ image_id: string }>
   const group_ids = context.group_ids as string[]
   const isActivity = context._isActivity as boolean | undefined
@@ -178,6 +178,7 @@ function validateWebRendering(
   const allowedImageIds = images.map((img) => img.image_id)
   const imageUrlPrefix = `/api/books/${label}/images`
   const expectedTexts = new Map(leaf_texts.map((t) => [t.text_id, t.text]))
+  const optionalTextIds = collectOptionalTextIds(leaf_texts)
 
   const check = validateSectionHtml(
     r.content,
@@ -190,6 +191,7 @@ function validateWebRendering(
       expectedTexts,
       expectedSectionType: sectionType,
       expectedSectionId: sectionId,
+      optionalTextIds,
     }
   )
   if (check.valid && check.sectionHtml) {
@@ -200,4 +202,43 @@ function validateWebRendering(
     }
   }
   return { valid: check.valid, errors: check.errors }
+}
+
+const TEXTBOOK_BLANK_RE = /_{3,}|\.{3,}/g
+const PLACEHOLDER_MARKER_RE = /\[placeholder:[^\]]+\]/g
+const OPTIONAL_TEXT_ROLES = new Set(["footer", "header", "page_number"])
+
+/** True if the leaf's text is nothing but textbook blank placeholders
+ * (`___`, `...`, `[placeholder:...]`) and inert separators (whitespace,
+ * `/`, `-`). Such a leaf carries no content the learner needs to see, so
+ * the LLM may legitimately replace it with an editable field and drop
+ * the source span. */
+function isPlaceholderOnlyText(text: string): boolean {
+  if (!TEXTBOOK_BLANK_RE.test(text) && !PLACEHOLDER_MARKER_RE.test(text)) {
+    return false
+  }
+  // Reset regex lastIndex (the .test() call above advances stateful global regexes).
+  TEXTBOOK_BLANK_RE.lastIndex = 0
+  PLACEHOLDER_MARKER_RE.lastIndex = 0
+  const stripped = text
+    .replace(TEXTBOOK_BLANK_RE, "")
+    .replace(PLACEHOLDER_MARKER_RE, "")
+    .replace(/[\s/\-]/g, "")
+  return stripped.length === 0
+}
+
+function collectOptionalTextIds(
+  leafTexts: Array<{ text_id: string; text_type: string; text: string }>
+): Set<string> {
+  const optional = new Set<string>()
+  for (const leaf of leafTexts) {
+    if (OPTIONAL_TEXT_ROLES.has(leaf.text_type)) {
+      optional.add(leaf.text_id)
+      continue
+    }
+    if (isPlaceholderOnlyText(leaf.text ?? "")) {
+      optional.add(leaf.text_id)
+    }
+  }
+  return optional
 }

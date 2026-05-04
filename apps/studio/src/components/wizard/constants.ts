@@ -194,7 +194,7 @@ export const PRESETS: PresetConfig[] = [
             max_retries: 5,
             timeout: 180,
             temperature: 0.3,
-            visual_refinement: { enabled: true, max_iterations: 20 },
+            visual_refinement: { enabled: true, max_iterations: 3 },
           },
         },
         "llm-overlay": {
@@ -205,7 +205,7 @@ export const PRESETS: PresetConfig[] = [
             max_retries: 25,
             timeout: 180,
             temperature: 0.3,
-            visual_refinement: { enabled: true, max_iterations: 5 },
+            visual_refinement: { enabled: true, max_iterations: 3 },
           },
         },
         two_column: {
@@ -221,7 +221,7 @@ export const PRESETS: PresetConfig[] = [
             max_retries: 5,
             timeout: 180,
             temperature: 0.3,
-            visual_refinement: { enabled: true, max_iterations: 5 },
+            visual_refinement: { enabled: true, max_iterations: 3 },
           },
         },
         activity_true_false: {
@@ -233,7 +233,7 @@ export const PRESETS: PresetConfig[] = [
             max_retries: 5,
             timeout: 180,
             temperature: 0.3,
-            visual_refinement: { enabled: true, max_iterations: 5 },
+            visual_refinement: { enabled: true, max_iterations: 3 },
           },
         },
         activity_fill_in_the_blank: {
@@ -245,7 +245,7 @@ export const PRESETS: PresetConfig[] = [
             max_retries: 5,
             timeout: 180,
             temperature: 0.3,
-            visual_refinement: { enabled: true, max_iterations: 5 },
+            visual_refinement: { enabled: true, max_iterations: 3 },
           },
         },
         activity_fill_in_a_table: {
@@ -257,7 +257,7 @@ export const PRESETS: PresetConfig[] = [
             max_retries: 5,
             timeout: 180,
             temperature: 0.3,
-            visual_refinement: { enabled: true, max_iterations: 5 },
+            visual_refinement: { enabled: true, max_iterations: 3 },
           },
         },
         activity_matching: {
@@ -269,7 +269,7 @@ export const PRESETS: PresetConfig[] = [
             max_retries: 5,
             timeout: 180,
             temperature: 0.3,
-            visual_refinement: { enabled: true, max_iterations: 5 },
+            visual_refinement: { enabled: true, max_iterations: 3 },
           },
         },
         activity_sorting: {
@@ -281,7 +281,7 @@ export const PRESETS: PresetConfig[] = [
             max_retries: 5,
             timeout: 180,
             temperature: 0.3,
-            visual_refinement: { enabled: true, max_iterations: 5 },
+            visual_refinement: { enabled: true, max_iterations: 3 },
           },
         },
         activity_open_ended_answer: {
@@ -292,7 +292,7 @@ export const PRESETS: PresetConfig[] = [
             max_retries: 5,
             timeout: 180,
             temperature: 0.3,
-            visual_refinement: { enabled: true, max_iterations: 5 },
+            visual_refinement: { enabled: true, max_iterations: 3 },
           },
         },
       },
@@ -447,7 +447,7 @@ export const PRESETS: PresetConfig[] = [
             model: "openai:gpt-5.4",
             max_retries: 5,
             timeout: 180,
-            visual_refinement: { enabled: true, max_iterations: 20 },
+            visual_refinement: { enabled: true, max_iterations: 3 },
           },
         },
         "llm-overlay": {
@@ -457,7 +457,7 @@ export const PRESETS: PresetConfig[] = [
             model: "openai:gpt-5.4",
             max_retries: 25,
             timeout: 180,
-            visual_refinement: { enabled: true, max_iterations: 5 },
+            visual_refinement: { enabled: true, max_iterations: 3 },
           },
         },
       },
