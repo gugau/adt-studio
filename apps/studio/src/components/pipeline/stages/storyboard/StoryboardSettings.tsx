@@ -164,7 +164,7 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
   const [imageGenPromptDraft, setImageGenPromptDraft] = useState<string | null>(null)
   const [imageEditPromptDraft, setImageEditPromptDraft] = useState<string | null>(null)
   const [imagePromptSubTab, setImagePromptSubTab] = useState<"generate" | "edit">("generate")
-  const [visualReviewPrompt, setVisualReviewPrompt] = useState<"visual_review" | "visual_review_flexible">("visual_review_flexible")
+  const [visualReviewPrompt, setVisualReviewPrompt] = useState<"visual_review" | "visual_review_flexible">("visual_review")
   const [visualReviewMaxIterations, setVisualReviewMaxIterations] = useState("")
 
   // Derive activity strategies directly from merged config (synchronous)
@@ -302,9 +302,9 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
     setRenderingTemperature(defaultStrategy?.config?.temperature != null ? String(defaultStrategy.config.temperature) : "")
     setRenderingRetries(defaultStrategy?.config?.max_retries != null ? String(defaultStrategy.config.max_retries) : "")
 
-    // Visual review prompt — top-level override; defaults to flexible when unset
+    // Visual review prompt — top-level override; defaults to strict when unset
     const vrPrompt = typeof merged.visual_review_prompt === "string" ? merged.visual_review_prompt : ""
-    setVisualReviewPrompt(vrPrompt === "visual_review" ? "visual_review" : "visual_review_flexible")
+    setVisualReviewPrompt(vrPrompt === "visual_review_flexible" ? "visual_review_flexible" : "visual_review")
     setVisualReviewMaxIterations(
       typeof merged.visual_review_max_iterations === "number" ? String(merged.visual_review_max_iterations) : ""
     )

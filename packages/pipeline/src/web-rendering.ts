@@ -285,7 +285,7 @@ const DEFAULT_RENDER_CONFIG = {
 }
 
 const DEFAULT_VISUAL_REFINEMENT = {
-  prompt: "visual_review_flexible",
+  prompt: "visual_review",
   max_iterations: 3,
   timeout: 180,
   temperature: 0.3,
