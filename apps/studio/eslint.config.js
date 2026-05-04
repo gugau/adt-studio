@@ -127,13 +127,6 @@ export default [
             // --- TanStack Query cache keys ---
             "queryKey",
 
-            // --- File dialog / download props (Tauri + browser) ---
-            "defaultPath",
-            "suffix",
-            "download",
-            "filters",
-            "extensions",
-
             // --- React internals ---
             "displayName",
 
