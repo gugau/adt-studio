@@ -489,12 +489,16 @@ ${selectors}:hover {
     onVisibleWidthChange?.(visibleWidth)
   }, [visibleWidth, onVisibleWidthChange])
 
-  const visibleHeight = frame.chromeHeight * scale
+  // Mobile/tablet keep their fixed device-screen height (the chrome is meant
+  // to look like a real phone/tablet). Desktop has no chrome — making the
+  // iframe content-tall avoids the dead space `min-h-screen flex items-center`
+  // produces when a section is shorter than the canvas.
+  const isDesktop = !deviceView || deviceView === "desktop"
+  const iframeHeight = isDesktop ? contentHeight : frame.screenHeight
+  const visibleHeight = isDesktop
+    ? contentHeight * scale
+    : frame.chromeHeight * scale
 
-  // The iframe always fills its surrounding screen container (mobile/tablet
-  // device chrome, or a plain fixed-size box for desktop). Content taller than
-  // the screen scrolls inside the iframe, so the wrapper height is stable
-  // across pages and devices.
   const iframeNode = (
     <iframe
       ref={initIframe}
@@ -503,7 +507,7 @@ ${selectors}:hover {
       className="block"
       style={{
         width: frame.screenWidth,
-        height: frame.screenHeight,
+        height: iframeHeight,
         border: "none",
       }}
     />
@@ -536,7 +540,7 @@ ${selectors}:hover {
           <div
             style={{
               width: frame.screenWidth,
-              height: frame.screenHeight,
+              height: iframeHeight,
               overflow: "hidden",
             }}
           >
