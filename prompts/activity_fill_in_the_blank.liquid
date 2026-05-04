@@ -35,7 +35,9 @@ Wrong (digit not wrapped — fails validation, the activity number's data-id goe
 ```
 
 **1c. Single-letter cells (crosswords, letter-by-letter blanks)**
-Some inputs provide one leaf per cell whose text is a single letter (e.g. several consecutive `activity_fill_in_the_blank` leaves with text `"R"`, `"E"`, `"C"`, `"E"`, `"T"`, `"A"`, `"S"` — a crossword's prefilled letters or letter-by-letter answer row). Each letter MUST be wrapped in its own `<span data-id="...">` inside its grid cell. The same applies when a leaf's text is a string like `"__ __ R __ __ __ __"` representing one row of a letter grid: keep the entire string inside one `data-id` span — do not split it across multiple cells with bare letters.
+Some inputs provide one leaf per cell whose text is a single letter (e.g. several consecutive `activity_fill_in_the_blank` leaves with text `"R"`, `"E"`, `"C"`, `"E"`, `"T"`, `"A"`, `"S"` — a crossword's prefilled letters or letter-by-letter answer row). Each letter MUST be wrapped in its own `<span data-id="...">` inside its grid cell — do not render the letters as bare text in styled boxes.
+
+A different shape: when a leaf's text is a single multi-cell row string like `"__ __ R __ __ __ __"`, keep that entire string inside ONE `<span data-id>` (it's one leaf, one data-id). Do not split the row's underscores and the visible letter across multiple data-id spans — the validator's text-similarity check will fail.
 
 Correct (one letter per cell, each wrapped):
 ```html
