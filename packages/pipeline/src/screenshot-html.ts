@@ -152,27 +152,48 @@ function buildInlineFontCss(webAssetsDir: string): string {
  */
 const FITB_HYDRATION_SCRIPT = `<script>
 (function() {
-  var sentences = document.querySelectorAll('.fitb-sentence');
-  sentences.forEach(function(sentence) {
-    var targets = sentence.querySelectorAll('[data-id]');
-    var elements = targets.length > 0 ? targets : [sentence];
-    elements.forEach(function(el) {
-      var html = el.innerHTML;
-      if (html.indexOf('[[blank:') === -1) return;
-      el.innerHTML = html.replace(
-        /\\[\\[blank:item-(\\d+)(?::([^\\]]+))?\\]\\]/g,
-        function(_, itemNum, hint) {
-          var charWidth = hint ? Math.max(hint.length + 2, 6) : 8;
-          var valueAttr = hint ? ' placeholder="' + hint.replace(/"/g, '&quot;') + '"' : '';
-          return '<input type="text"'
-            + ' class="fitb-inline-input inline-block mx-1 px-1 py-0.5 border-b-2 border-gray-400 bg-transparent text-center"'
-            + ' style="width: ' + charWidth + 'ch; min-width: 4ch; max-width: 100%;"'
-            + ' data-activity-item="item-' + itemNum + '"'
-            + valueAttr + ' />';
-        }
-      );
-    });
+  function replaceBlanks(html) {
+    return html.replace(
+      /\\[\\[blank:item-(\\d+)(?::([^\\]]+))?\\]\\]/g,
+      function(_, itemNum, hint) {
+        var charWidth = hint ? Math.max(hint.length + 2, 6) : 8;
+        var valueAttr = hint ? ' placeholder="' + hint.replace(/"/g, '&quot;') + '"' : '';
+        return '<input type="text"'
+          + ' class="fitb-inline-input inline-block mx-1 px-1 py-0.5 border-b-2 border-gray-400 bg-transparent text-center"'
+          + ' style="width: ' + charWidth + 'ch; min-width: 4ch; max-width: 100%;"'
+          + ' data-activity-item="item-' + itemNum + '"'
+          + valueAttr + ' />';
+      }
+    );
+  }
+
+  // Pass 1: replace inside [data-id] elements (the canonical text containers).
+  var dataIdEls = document.querySelectorAll('[data-id]');
+  dataIdEls.forEach(function(el) {
+    if (el.innerHTML.indexOf('[[blank:') === -1) return;
+    el.innerHTML = replaceBlanks(el.innerHTML);
   });
+
+  // Pass 2: catch any remaining markers that appeared in plain wrapper elements
+  // without their own data-id (text nodes directly inside <p>/<div>/<li>/<span>).
+  // Walk all leaf-ish elements and only touch those still containing markers.
+  var all = document.querySelectorAll('*');
+  for (var i = 0; i < all.length; i++) {
+    var el = all[i];
+    if (el.tagName === 'SCRIPT' || el.tagName === 'STYLE') continue;
+    if (el.innerHTML.indexOf('[[blank:') === -1) continue;
+    // Only rewrite if no descendant still contains the marker — process leaves only.
+    var hasDescendantMarker = false;
+    var children = el.children;
+    for (var j = 0; j < children.length; j++) {
+      if (children[j].innerHTML && children[j].innerHTML.indexOf('[[blank:') !== -1) {
+        hasDescendantMarker = true;
+        break;
+      }
+    }
+    if (hasDescendantMarker) continue;
+    el.innerHTML = replaceBlanks(el.innerHTML);
+  }
 })();
 </script>`
 

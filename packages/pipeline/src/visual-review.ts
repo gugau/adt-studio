@@ -55,10 +55,11 @@ function stripMarkdownFence(content: string): string {
 }
 
 function buildConversationWindow(turns: ConversationTurn[]): Message[] {
-  // Keep the first (original) turn and the most recent two turns.
-  const selectedTurns = turns.length <= 3
-    ? turns
-    : [turns[0], ...turns.slice(-2)]
+  // Keep only the most recent turn (carries the latest screenshots and HTML).
+  // Earlier turns add tokens (especially base64 screenshots) without helping the
+  // model evaluate the current state — the system prompt + the current screenshots
+  // are sufficient.
+  const selectedTurns = turns.slice(-1)
 
   const messages: Message[] = []
   for (const turn of selectedTurns) {
@@ -67,6 +68,10 @@ function buildConversationWindow(turns: ConversationTurn[]): Message[] {
     if (turn.feedback) messages.push(turn.feedback)
   }
   return messages
+}
+
+function normalizeForCompare(s: string): string {
+  return s.replace(/\s+/g, " ").trim()
 }
 
 export async function runVisualReviewLoop(
@@ -101,6 +106,11 @@ export async function runVisualReviewLoop(
   let html = initialHtml
   const turns: ConversationTurn[] = []
   let approved = false
+  const seenRevisions = new Set<string>([normalizeForCompare(initialHtml)])
+  // Validation feedback carried forward when the previous revision failed
+  // structural checks. Surfaced into the next user message so the model can fix
+  // it. Cleared after each emit.
+  let pendingValidationFeedback: string | null = null
 
   for (let iteration = 0; iteration < maxIterations; iteration++) {
     const screenshotHtml = await buildScreenshotHtml({
@@ -123,24 +133,30 @@ export async function runVisualReviewLoop(
       )
     }
 
+    // Each iteration's user message is self-contained: original page image (if any)
+    // + current screenshots + current HTML. The conversation window keeps only the
+    // most recent turn, so prior screenshots aren't carried forward.
     const userParts: ContentPart[] = []
-    if (iteration === 0) {
-      if (pageImageBase64) {
-        userParts.push(
-          { type: "text", text: originalImageIntroText },
-          { type: "image", image: pageImageBase64 },
-        )
-      }
-      userParts.push({ type: "text", text: firstIterationScreenshotsText })
-    } else {
-      userParts.push({ type: "text", text: nextIterationScreenshotsText })
+    if (pageImageBase64) {
+      userParts.push(
+        { type: "text", text: originalImageIntroText },
+        { type: "image", image: pageImageBase64 },
+      )
     }
+    userParts.push({
+      type: "text",
+      text: iteration === 0 ? firstIterationScreenshotsText : nextIterationScreenshotsText,
+    })
 
     userParts.push(...screenshotParts)
     userParts.push({
       type: "text",
       text: `\n${trailingContextText}\n\nCurrent HTML:\n\`\`\`html\n${html}\n\`\`\``,
     })
+    if (pendingValidationFeedback) {
+      userParts.push({ type: "text", text: pendingValidationFeedback })
+      pendingValidationFeedback = null
+    }
 
     const userMessage: Message = { role: "user", content: userParts }
     turns.push({ user: userMessage })
@@ -180,14 +196,18 @@ export async function runVisualReviewLoop(
     const check = validateHtml(revised)
 
     if (check.valid) {
-      html = check.cleanedHtml ?? revised
+      const cleaned = check.cleanedHtml ?? revised
+      const fingerprint = normalizeForCompare(cleaned)
+      // Stop if the model produced a revision we've already seen (no progress).
+      if (seenRevisions.has(fingerprint)) break
+      seenRevisions.add(fingerprint)
+      html = cleaned
     } else {
-      turns[turns.length - 1].feedback = {
-        role: "user",
-        content: "Your revision failed structural validation with these errors:\n" +
-          check.errors.map((e) => `- ${e}`).join("\n") +
-          "\n\nPlease fix these issues in your next revision.",
-      }
+      pendingValidationFeedback =
+        "Your previous revision failed structural validation with these errors:\n" +
+        check.errors.map((e) => `- ${e}`).join("\n") +
+        "\n\nThe revision you produced was:\n```html\n" + revised + "\n```\n\n" +
+        "Please fix these issues in your next revision."
     }
   }
 

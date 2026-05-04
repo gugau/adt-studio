@@ -396,6 +396,9 @@ msgstr "About section mode"
 msgid "Accent Prompt"
 msgstr "Accent Prompt"
 
+msgid "Accept reasonable web redesigns. Reject only for functional defects (visible placeholder tokens, missing content, overlap, overflow). Fewest rejections."
+msgstr "Accept reasonable web redesigns. Reject only for functional defects (visible placeholder tokens, missing content, overlap, overflow). Fewest rejections."
+
 msgid "Accessibility"
 msgstr "Accessibility"
 
@@ -1595,6 +1598,9 @@ msgstr "e.g., A cheerful leopard family in a green forest..."
 msgid "e.g., Make the background brighter, add more trees..."
 msgstr "e.g., Make the background brighter, add more trees..."
 
+msgid "Each iteration is one LLM call. Lower values are faster and cheaper; higher values give the reviewer more chances to fix problems."
+msgstr "Each iteration is one LLM call. Lower values are faster and cheaper; higher values give the reviewer more chances to fix problems."
+
 msgid "Each polyp secretes a hard calcium carbonate skeleton. Over hundreds of years, millions of these skeletons build up into the massive reef structures we see today."
 msgstr "Each polyp secretes a hard calcium carbonate skeleton. Over hundreds of years, millions of these skeletons build up into the massive reef structures we see today."
 
@@ -1909,6 +1915,9 @@ msgstr "Flagged findings"
 msgid "Flat Vector"
 msgstr "Flat Vector"
 
+msgid "Flexible"
+msgstr "Flexible"
+
 #~ msgid "Footer Text"
 #~ msgstr "Footer Text"
 
@@ -2102,6 +2111,9 @@ msgstr "Hit"
 
 msgid "Hover a setting to see how LLM cropping, segmentation, or the size threshold changes extracted images."
 msgstr "Hover a setting to see how LLM cropping, segmentation, or the size threshold changes extracted images."
+
+msgid "How closely should the visual review match the original page? The reviewer rejects renderings that don't pass — stricter settings cause more rejections and rerenders."
+msgstr "How closely should the visual review match the original page? The reviewer rejects renderings that don't pass — stricter settings cause more rejections and rerenders."
 
 msgid "How it works"
 msgstr "How it works"
@@ -2555,14 +2567,23 @@ msgstr "Map language codes to voice names for each TTS provider."
 msgid "margin"
 msgstr "margin"
 
+msgid "Match Design"
+msgstr "Match Design"
+
 msgid "Match each stage of the water cycle to its definition:"
 msgstr "Match each stage of the water cycle to its definition:"
 
 #~ msgid "Math"
 #~ msgstr "Math"
 
+msgid "Max Iterations"
+msgstr "Max Iterations"
+
 msgid "Max Refinements"
 msgstr "Max Refinements"
+
+msgid "Max review/revise rounds per section before accepting the current rendering"
+msgstr "Max review/revise rounds per section before accepting the current rendering"
 
 #~ msgid "Max Side"
 #~ msgstr "Max Side"
@@ -3497,6 +3518,9 @@ msgstr "Regenerate selected images for each output language so that any text bur
 msgid "Region"
 msgstr "Region"
 
+msgid "Reject renderings that diverge stylistically from the original. More rejections and rerenders, closer match to the source."
+msgstr "Reject renderings that diverge stylistically from the original. More rejections and rerenders, closer match to the source."
+
 msgid "Release to upload"
 msgstr "Release to upload"
 
@@ -4165,6 +4189,9 @@ msgstr "Storyboard has already been run. Changes made here will not take effect 
 msgid "Storybook"
 msgstr "Storybook"
 
+msgid "Strict"
+msgstr "Strict"
+
 msgid "Structure"
 msgstr "Structure"
 
@@ -4447,6 +4474,9 @@ msgstr "This page has no translatable text entries"
 
 msgid "This page has not been reviewed yet"
 msgstr "This page has not been reviewed yet"
+
+msgid "This prompt instructs the LLM how to evaluate the rendered HTML against the original page. Selection above controls which template is used."
+msgstr "This prompt instructs the LLM how to evaluate the rendered HTML against the original page. Selection above controls which template is used."
 
 msgid "This section has no storyboard rendering yet"
 msgstr "This section has no storyboard rendering yet"
@@ -4764,6 +4794,12 @@ msgstr "Visual & sensory cues"
 
 msgid "Visual Layout"
 msgstr "Visual Layout"
+
+msgid "Visual Review"
+msgstr "Visual Review"
+
+msgid "Visual Review Prompt (read-only)"
+msgstr "Visual Review Prompt (read-only)"
 
 msgid "Voice"
 msgstr "Voice"
