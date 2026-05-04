@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from "react"
 import { createPortal } from "react-dom"
 import { Link, useMatchRoute, useSearch } from "@tanstack/react-router"
 import { Trans } from "@lingui/react/macro"
@@ -25,6 +25,7 @@ import {
   STAGES,
   hasStagePages,
   toCamelLabel,
+  type StageGroup,
 } from "../stage-config"
 import { useSettingsDialog } from "@/routes/__root"
 import type { TaskInfoResponse } from "@/api/client"
@@ -57,6 +58,12 @@ const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   "speech-prompts": msg`Speech Prompts`,
   voices: msg`Voices`,
   "toc-prompt": msg`Generation Prompt`,
+}
+
+const STAGE_GROUP_LABELS: Record<StageGroup, MessageDescriptor> = {
+  convert: msg`Convert: PDF to Web`,
+  enhancements: msg`Enhancements`,
+  packaging: msg`Packaging`,
 }
 
 const TASK_KIND_LABELS: Record<string, MessageDescriptor> = {
@@ -189,7 +196,25 @@ export function StageSidebar({
     export: exportCompleted,
   }
 
-  const stageItems = STAGES.map((step, index) => {
+  const stageItems: ReactNode[] = []
+  let prevGroup: StageGroup | undefined
+  STAGES.forEach((step, index) => {
+    const stepGroup = "group" in step ? (step as { group?: StageGroup }).group : undefined
+    if (stepGroup && stepGroup !== prevGroup) {
+      stageItems.push(
+        <div
+          key={`group-${stepGroup}`}
+          className={cn(
+            "px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 truncate hidden",
+            x.showLabel,
+          )}
+        >
+          {i18n._(STAGE_GROUP_LABELS[stepGroup])}
+        </div>,
+      )
+      prevGroup = stepGroup
+    }
+
     const isActive = step.slug === activeStep
     const Icon = step.icon
     const settingsTabs = getSettingsTabs(step.slug, i18n)
@@ -210,10 +235,13 @@ export function StageSidebar({
 
     const stepLabel = step.slug === "book" ? toCamelLabel(bookLabel) : getStageLabelI18n(step.slug)
 
-    return (
+    const nextStep = STAGES[index + 1]
+    const nextGroup = nextStep && "group" in nextStep ? (nextStep as { group?: StageGroup }).group : undefined
+    const showConnector = index < STAGES.length - 1 && nextGroup === stepGroup
+
+    stageItems.push(
       <div key={step.slug} className="relative">
-        {/* Connector line */}
-        {index < STAGES.length - 1 && (
+        {showConnector && (
           <div className="absolute left-[24px] top-[36px] bottom-[-10px] w-0.5 bg-border z-10" />
         )}
 
