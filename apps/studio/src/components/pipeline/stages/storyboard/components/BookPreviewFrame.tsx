@@ -219,8 +219,6 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   <link href="${assetsPrefix}/assets/fonts.css" rel="stylesheet">
   <link href="${assetsPrefix}/assets/libs/fontawesome/css/all.min.css" rel="stylesheet">
   <style>
-    .min-h-screen { min-height: 0 !important; }
-    .h-screen { height: auto !important; }
     ${INTERACTIVE_STYLES}
   </style>
 </head>
