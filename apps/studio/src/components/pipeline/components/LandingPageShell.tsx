@@ -93,7 +93,7 @@ export function LandingPageShell({
             className="flex items-center gap-1.5 text-sm font-medium text-[#737373] hover:text-[#0a0a0a] transition-colors"
           >
             <Settings className="w-3.5 h-3.5" />
-            <Trans>Settings</Trans>
+            <Trans>Advanced Settings</Trans>
           </Link>
 
           {showTooltip ? (
