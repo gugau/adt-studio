@@ -63,7 +63,7 @@ const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
 }
 
 const STAGE_GROUP_LABELS: Record<StageGroup, MessageDescriptor> = {
-  convert: msg`Convert: PDF to Web`,
+  convert: msg`Core Pipeline`,
   enhancements: msg`Enhancements`,
   packaging: msg`Packaging`,
 }
@@ -84,7 +84,7 @@ function getSettingsTabs(
 ): { key: string; label: string }[] | undefined {
   const tabs: Record<string, { key: string; label: string }[]> = {
     extract: [
-      { key: "image-processing", label: i18n._(SETTINGS_TAB_MESSAGE["image-processing"]) },
+      { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.general) },
       { key: "metadata-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["metadata-prompt"]) },
       { key: "meaningfulness-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["meaningfulness-prompt"]) },
       { key: "cropping-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["cropping-prompt"]) },

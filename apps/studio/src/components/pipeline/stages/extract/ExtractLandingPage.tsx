@@ -82,7 +82,7 @@ export function ExtractLandingPage({ bookLabel }: { bookLabel: string }) {
     <LandingPageShell
       bookLabel={bookLabel}
       stageSlug="extract"
-      settingsTab="image-processing"
+      settingsTab="general"
       colorClass="bg-blue-600 hover:bg-blue-700"
       isRunning={status.isRunning}
       isCompleted={status.isCompleted}
