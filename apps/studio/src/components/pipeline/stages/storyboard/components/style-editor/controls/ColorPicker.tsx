@@ -35,10 +35,10 @@ interface ColorPickerProps {
   align?: "start" | "center" | "end";
 }
 
-/* eslint-disable lingui/no-unlocalized-strings -- CSS gradient definition, not user-facing copy */
 const TRANSPARENT_PATTERN =
+/* eslint-disable-next-line lingui/no-unlocalized-strings -- CSS gradient definition, not user-facing copy */
   "linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc), linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc)";
-/* eslint-enable lingui/no-unlocalized-strings */
+
 
 /**
  * Two-tab color picker (Custom / Variables). The Custom tab composes the
