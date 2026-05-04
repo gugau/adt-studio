@@ -6,7 +6,7 @@ import { getStageLabelI18n } from "../pipeline-i18n"
 import { SETTINGS_STAGE_SLUGS } from "../settings-routing"
 import {
   BookView,
-  ExtractView,
+  ExtractIndex,
   SectioningView,
   StoryboardView,
   QuizzesView,
@@ -53,7 +53,7 @@ interface ViewEntry {
 
 const VIEW_MAP: Record<string, ViewEntry> = {
   book: { component: BookView },
-  extract: { component: ExtractView, fullHeight: true },
+  extract: { component: ExtractIndex, fullHeight: true },
   sectioning: { component: SectioningView, fullHeight: true },
   storyboard: { component: StoryboardView, fullHeight: true },
   quizzes: { component: QuizzesView },
