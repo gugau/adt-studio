@@ -120,12 +120,20 @@ export async function runVisualReviewLoop(
       webAssetsDir: deps.webAssetsDir,
     })
 
-    const screenshotParts: ContentPart[] = []
-    for (const vp of SCREENSHOT_VIEWPORTS) {
-      const base64 = await deps.screenshotRenderer.screenshot(
-        screenshotHtml,
-        { width: vp.width, height: vp.height }
+    // Render all viewport screenshots in parallel — they're independent and
+    // each takes ~1-2s, so serialising them was a 3-6s tax per iteration.
+    const screenshots = await Promise.all(
+      SCREENSHOT_VIEWPORTS.map((vp) =>
+        deps.screenshotRenderer.screenshot(
+          screenshotHtml,
+          { width: vp.width, height: vp.height }
+        )
       )
+    )
+    const screenshotParts: ContentPart[] = []
+    for (let i = 0; i < SCREENSHOT_VIEWPORTS.length; i++) {
+      const vp = SCREENSHOT_VIEWPORTS[i]
+      const base64 = screenshots[i]
       deps.storeScreenshot?.(base64)
       screenshotParts.push(
         { type: "text", text: `${vp.label} screenshot (${vp.width}px wide):` },

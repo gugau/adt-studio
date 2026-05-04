@@ -101,6 +101,16 @@ export interface HtmlValidationOptions {
    * not required to be present.
    */
   allowedContainerIds?: string[]
+  /**
+   * Subset of text data-ids that may legitimately be omitted from the
+   * rendered HTML. Used for nodes whose source text carries no content
+   * the learner needs to see — e.g. an `activity_fill_in_the_blank`
+   * leaf whose entire text is a textbook blank placeholder ("___"),
+   * or a `footer` leaf that survived pruning. The LLM is still allowed
+   * to include them, but the "Missing required text data-id" check is
+   * suppressed if it doesn't.
+   */
+  optionalTextIds?: Set<string>
 }
 
 export function validateSectionHtml(
@@ -147,11 +157,14 @@ export function validateSectionHtml(
 
   // Verify all expected text IDs are present in the generated HTML.
   // This ensures the LLM doesn't silently drop entries (e.g. duplicated texts).
+  // IDs in `optionalTextIds` may be absent (placeholder-only blanks, leaked
+  // footers, etc.) — they're still allowed if the LLM chooses to include them.
   if (allowedTextIds.length > 0) {
+    const optional = options?.optionalTextIds
     const renderedDataIds = new Set<string>()
     collectDataIds(section, renderedDataIds)
     for (const textId of allowedTextIds) {
-      if (!renderedDataIds.has(textId)) {
+      if (!renderedDataIds.has(textId) && !optional?.has(textId)) {
         errors.push(`Missing required text data-id: "${textId}"`)
       }
     }
