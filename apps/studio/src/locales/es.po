@@ -396,6 +396,9 @@ msgstr "Acerca del modo de sección"
 msgid "Accent Prompt"
 msgstr "Prompt de acento"
 
+msgid "Accept reasonable web redesigns. Reject only for functional defects (visible placeholder tokens, missing content, overlap, overflow). Fewest rejections."
+msgstr "Acepta rediseños web razonables. Rechaza solo por defectos funcionales (tokens de marcador visibles, contenido faltante, superposición, desbordamiento). Menos rechazos."
+
 msgid "Accessibility"
 msgstr "Accessibility"
 
@@ -1595,6 +1598,9 @@ msgstr "ej., Una familia de leopardos alegres en un bosque verde..."
 msgid "e.g., Make the background brighter, add more trees..."
 msgstr "ej., Haz el fondo más brillante, añade más árboles..."
 
+msgid "Each iteration is one LLM call. Lower values are faster and cheaper; higher values give the reviewer more chances to fix problems."
+msgstr "Cada iteración es una llamada al LLM. Valores más bajos son más rápidos y económicos; valores más altos dan al revisor más oportunidades de corregir problemas."
+
 msgid "Each polyp secretes a hard calcium carbonate skeleton. Over hundreds of years, millions of these skeletons build up into the massive reef structures we see today."
 msgstr "Cada pólipo secreta un esqueleto duro de carbonato de calcio. Durante cientos de años, millones de estos esqueletos se acumulan en las estructuras masivas de arrecifes que vemos hoy."
 
@@ -1909,6 +1915,9 @@ msgstr "Flagged findings"
 msgid "Flat Vector"
 msgstr "Vector plano"
 
+msgid "Flexible"
+msgstr "Flexible"
+
 #~ msgid "Footer Text"
 #~ msgstr "Texto de pie de página"
 
@@ -2102,6 +2111,9 @@ msgstr "Hit"
 
 msgid "Hover a setting to see how LLM cropping, segmentation, or the size threshold changes extracted images."
 msgstr "Pasa el cursor sobre una configuración para ver cómo el recorte, segmentación o el umbral de tamaño del LLM cambian las imágenes extraídas."
+
+msgid "How closely should the visual review match the original page? The reviewer rejects renderings that don't pass — stricter settings cause more rejections and rerenders."
+msgstr "¿Qué tan fielmente debe coincidir la revisión visual con la página original? El revisor rechaza los renderizados que no pasan — los ajustes más estrictos causan más rechazos y nuevas renderizaciones."
 
 msgid "How it works"
 msgstr "Cómo funciona"
@@ -2555,14 +2567,23 @@ msgstr "Asigna códigos de idioma a nombres de voz para cada proveedor de TTS."
 msgid "margin"
 msgstr "margen"
 
+msgid "Match Design"
+msgstr "Coincidir con el diseño"
+
 msgid "Match each stage of the water cycle to its definition:"
 msgstr "Asocia cada etapa del ciclo del agua con su definición:"
 
 #~ msgid "Math"
 #~ msgstr "Matemáticas"
 
+msgid "Max Iterations"
+msgstr "Iteraciones máximas"
+
 msgid "Max Refinements"
 msgstr "Refinamientos máximos"
+
+msgid "Max review/revise rounds per section before accepting the current rendering"
+msgstr "Máximo de rondas de revisión/corrección por sección antes de aceptar el renderizado actual"
 
 #~ msgid "Max Side"
 #~ msgstr "Lado Máximo"
@@ -3497,6 +3518,9 @@ msgstr "Regenera las imágenes seleccionadas para cada idioma de salida de modo 
 msgid "Region"
 msgstr "Región"
 
+msgid "Reject renderings that diverge stylistically from the original. More rejections and rerenders, closer match to the source."
+msgstr "Rechaza los renderizados que difieran estilísticamente del original. Más rechazos y re-renderizados, mayor coincidencia con la fuente."
+
 msgid "Release to upload"
 msgstr "Suelta para subir"
 
@@ -4165,6 +4189,9 @@ msgstr "El storyboard ya se ejecutó. Los cambios realizados aquí no tendrán e
 msgid "Storybook"
 msgstr "Libro de cuentos"
 
+msgid "Strict"
+msgstr "Estricto"
+
 msgid "Structure"
 msgstr "Estructura"
 
@@ -4447,6 +4474,9 @@ msgstr "Esta página no tiene entradas de texto traducibles"
 
 msgid "This page has not been reviewed yet"
 msgstr "This page has not been reviewed yet"
+
+msgid "This prompt instructs the LLM how to evaluate the rendered HTML against the original page. Selection above controls which template is used."
+msgstr "Este prompt indica al LLM cómo evaluar el HTML renderizado frente a la página original. La selección de arriba controla qué plantilla se utiliza."
 
 msgid "This section has no storyboard rendering yet"
 msgstr "Esta sección aún no tiene renderización de storyboard"
@@ -4764,6 +4794,12 @@ msgstr "Visual & sensory cues"
 
 msgid "Visual Layout"
 msgstr "Diseño Visual"
+
+msgid "Visual Review"
+msgstr "Revisión visual"
+
+msgid "Visual Review Prompt (read-only)"
+msgstr "Prompt de revisión visual (solo lectura)"
 
 msgid "Voice"
 msgstr "Voz"

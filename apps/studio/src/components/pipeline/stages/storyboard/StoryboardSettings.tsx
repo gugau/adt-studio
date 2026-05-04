@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useApiKey } from "@/hooks/use-api-key"
@@ -163,6 +164,8 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
   const [imageGenPromptDraft, setImageGenPromptDraft] = useState<string | null>(null)
   const [imageEditPromptDraft, setImageEditPromptDraft] = useState<string | null>(null)
   const [imagePromptSubTab, setImagePromptSubTab] = useState<"generate" | "edit">("generate")
+  const [visualReviewPrompt, setVisualReviewPrompt] = useState<"visual_review" | "visual_review_flexible">("visual_review_flexible")
+  const [visualReviewMaxIterations, setVisualReviewMaxIterations] = useState("")
 
   // Derive activity strategies directly from merged config (synchronous)
   const activityStrategies = useMemo(() => {
@@ -298,6 +301,13 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
     }
     setRenderingTemperature(defaultStrategy?.config?.temperature != null ? String(defaultStrategy.config.temperature) : "")
     setRenderingRetries(defaultStrategy?.config?.max_retries != null ? String(defaultStrategy.config.max_retries) : "")
+
+    // Visual review prompt — top-level override; defaults to flexible when unset
+    const vrPrompt = typeof merged.visual_review_prompt === "string" ? merged.visual_review_prompt : ""
+    setVisualReviewPrompt(vrPrompt === "visual_review" ? "visual_review" : "visual_review_flexible")
+    setVisualReviewMaxIterations(
+      typeof merged.visual_review_max_iterations === "number" ? String(merged.visual_review_max_iterations) : ""
+    )
   }, [activeConfigData])
 
   // Helper: only write a field if the user changed it or the book config already had it
@@ -329,6 +339,14 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
     }
     if (shouldWrite("apply_body_background")) {
       overrides.apply_body_background = applyBodyBackground
+    }
+    if (shouldWrite("visual_review_prompt")) {
+      overrides.visual_review_prompt = visualReviewPrompt
+    }
+    if (shouldWrite("visual_review_max_iterations")) {
+      overrides.visual_review_max_iterations = visualReviewMaxIterations.trim()
+        ? Number(visualReviewMaxIterations)
+        : undefined
     }
     // Write rendering temperature / retries into the default render strategy config
     if ((shouldWrite("rendering_temperature") || shouldWrite("rendering_retries")) && defaultRenderStrategy) {
@@ -410,7 +428,7 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
   }
 
   return (
-    <div className={tab === "rendering-prompt" || tab === "rendering-template" || tab === "activity-prompts" || tab === "image-generation" ? "h-full" : "p-4 space-y-6"}>
+    <div className={tab === "rendering-prompt" || tab === "rendering-template" || tab === "activity-prompts" || tab === "image-generation" || tab === "visual-review-prompt" ? "h-full" : "p-4 space-y-6"}>
       {tab === "general" && (
         <div>
           <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
@@ -786,6 +804,85 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
                 onContentChange={setImageEditPromptDraft}
               />
             )}
+          </div>
+        </div>
+      )}
+
+      {tab === "visual-review-prompt" && (
+        <div className="flex flex-col h-full">
+          <div className="shrink-0 p-4 pb-0 space-y-4">
+            <div>
+              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                {<Trans>Match Design</Trans>}
+              </h3>
+              <p className="text-xs text-muted-foreground mb-3">
+                {<Trans>How closely should the visual review match the original page? The reviewer rejects renderings that don't pass — stricter settings cause more rejections and rerenders.</Trans>}
+              </p>
+              <RadioGroup
+                value={visualReviewPrompt}
+                onValueChange={(v) => {
+                  setVisualReviewPrompt(v as "visual_review" | "visual_review_flexible")
+                  markDirty("visual_review_prompt")
+                }}
+                className="gap-3"
+              >
+                <div className="flex items-start gap-2">
+                  <RadioGroupItem value="visual_review_flexible" id="vr-flexible" className="mt-0.5" />
+                  <Label htmlFor="vr-flexible" className="cursor-pointer font-normal">
+                    <span className="text-sm font-medium">{<Trans>Flexible</Trans>}</span>
+                    <span className="block text-xs text-muted-foreground mt-0.5">
+                      {<Trans>Accept reasonable web redesigns. Reject only for functional defects (visible placeholder tokens, missing content, overlap, overflow). Fewest rejections.</Trans>}
+                    </span>
+                  </Label>
+                </div>
+                <div className="flex items-start gap-2">
+                  <RadioGroupItem value="visual_review" id="vr-strict" className="mt-0.5" />
+                  <Label htmlFor="vr-strict" className="cursor-pointer font-normal">
+                    <span className="text-sm font-medium">{<Trans>Strict</Trans>}</span>
+                    <span className="block text-xs text-muted-foreground mt-0.5">
+                      {<Trans>Reject renderings that diverge stylistically from the original. More rejections and rerenders, closer match to the source.</Trans>}
+                    </span>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+            <div>
+              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                {<Trans>Max Iterations</Trans>}
+              </h3>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={1}
+                  max={50}
+                  step={1}
+                  value={visualReviewMaxIterations}
+                  onChange={(e) => {
+                    setVisualReviewMaxIterations(e.target.value)
+                    markDirty("visual_review_max_iterations")
+                  }}
+                  placeholder="5"
+                  className="h-9 w-24 text-sm"
+                />
+                <Label className="text-xs text-muted-foreground">
+                  {<Trans>Max review/revise rounds per section before accepting the current rendering</Trans>}
+                </Label>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                {<Trans>Each iteration is one LLM call. Lower values are faster and cheaper; higher values give the reviewer more chances to fix problems.</Trans>}
+              </p>
+            </div>
+          </div>
+          <div className="flex-1 min-h-0 mt-2">
+            <PromptViewer
+              key={visualReviewPrompt}
+              promptName={visualReviewPrompt}
+              bookLabel={bookLabel}
+              title={t`Visual Review Prompt (read-only)`}
+              description={t`This prompt instructs the LLM how to evaluate the rendered HTML against the original page. Selection above controls which template is used.`}
+              hideModel
+              readOnly
+            />
           </div>
         </div>
       )}
