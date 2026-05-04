@@ -97,6 +97,7 @@ export async function sectionPage(
   // Initial generation (with built-in validation retry).
   const initial = await generateInitial(input, config, validatorContext, llmModel)
   let candidate = initial
+  applyAutoRepairs(candidate)
 
   // Refinement loop — up to maxRefinements reviewer passes.
   const priorNotes: string[] = []
@@ -113,6 +114,7 @@ export async function sectionPage(
 
     // The reviewer proposed a replacement. Validate it before adopting.
     if (review.nodes_and_sections) {
+      applyAutoRepairs(review.nodes_and_sections)
       const err = runValidator(review.nodes_and_sections, validatorContext)
       if (err.valid) {
         candidate = review.nodes_and_sections
@@ -149,7 +151,10 @@ async function generateInitial(
       section_types: config.sectionTypes,
       mode: config.mode,
     },
-    validate: (raw) => runValidator(raw, validatorContext),
+    validate: (raw) => {
+      applyAutoRepairs(raw as LLMStructuringResult | null)
+      return runValidator(raw, validatorContext)
+    },
     maxRetries: config.maxRetries,
     maxTokens: 16384,
     log: {
@@ -204,6 +209,108 @@ async function generateReview(
     },
   })
   return result.object
+}
+
+// ── Auto-repair ─────────────────────────────────────────────────
+
+/**
+ * Mutate an LLM structuring result in place to fix mechanically-fixable shape
+ * issues that the validator would otherwise reject. Runs before validation so
+ * the LLM doesn't burn retries on cheap repairs. Conservative — only the
+ * unambiguous transformations listed; never invents missing content.
+ *
+ * Repairs:
+ *  1. `image_group` with only the image as a child → unwrap to a bare
+ *     `role: "image"` leaf.
+ *  2. `image_group` with the image not first (and exactly one image child) →
+ *     reorder so the image is the first child.
+ *  3. Container that carries both `text` and `children` → move `text` into a
+ *     synthetic leading `role: "text"` leaf.
+ *  4. A leaf whose text is a row of single-letter tokens separated by spaces
+ *     (crossword/letter-grid pattern) → split into one leaf per letter.
+ */
+export function applyAutoRepairs(raw: LLMStructuringResult | null | undefined): void {
+  if (!raw || !Array.isArray(raw.sections)) return
+  for (const section of raw.sections) {
+    if (Array.isArray(section.nodes)) {
+      section.nodes = repairChildren(section.nodes)
+    }
+  }
+}
+
+const SINGLE_LETTER_ROW = /^[A-Za-zÀ-ÿ](\s+[A-Za-zÀ-ÿ])+$/
+
+function repairChildren(children: LLMNode[]): LLMNode[] {
+  const out: LLMNode[] = []
+  for (const original of children) {
+    if (!original || typeof original !== "object") {
+      out.push(original)
+      continue
+    }
+    let child = original
+
+    // Recurse first so deeper repairs propagate up.
+    if (Array.isArray(child.children)) {
+      child.children = repairChildren(child.children)
+    }
+
+    // Repair (3) — run before image_group repairs so reordering can still
+    // place the image first if a text leaf gets prepended here.
+    const isContainer =
+      typeof child.structure === "string" && child.structure.length > 0
+    if (
+      isContainer &&
+      typeof child.text === "string" &&
+      child.text.length > 0 &&
+      Array.isArray(child.children) &&
+      child.children.length > 0
+    ) {
+      const textLeaf: LLMNode = { role: "text", text: child.text }
+      child.children = [textLeaf, ...child.children]
+      child.text = null
+    }
+
+    // Repair (1) + (2): image_group child arrangement.
+    if (
+      child.structure === "image_group" &&
+      Array.isArray(child.children) &&
+      child.children.length > 0
+    ) {
+      const imageChildren = child.children.filter(
+        (c): c is LLMNode => !!c && c.role === "image"
+      )
+      if (child.children.length === 1 && imageChildren.length === 1) {
+        // Unwrap: lone image inside image_group → bare image leaf.
+        out.push(imageChildren[0])
+        continue
+      }
+      if (
+        imageChildren.length === 1 &&
+        child.children[0]?.role !== "image"
+      ) {
+        const image = imageChildren[0]
+        const rest = child.children.filter((c) => c !== image)
+        child.children = [image, ...rest]
+      }
+    }
+
+    // Repair (4): split single-letter-row leaves into one leaf per letter.
+    const isLeaf = typeof child.role === "string" && child.role.length > 0
+    if (
+      isLeaf &&
+      typeof child.text === "string" &&
+      SINGLE_LETTER_ROW.test(child.text.trim())
+    ) {
+      const letters = child.text.trim().split(/\s+/)
+      for (const letter of letters) {
+        out.push({ ...child, text: letter })
+      }
+      continue
+    }
+
+    out.push(child)
+  }
+  return out
 }
 
 // ── Validator ───────────────────────────────────────────────────

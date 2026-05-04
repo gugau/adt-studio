@@ -6,6 +6,7 @@ import type {
   LLMModel,
 } from "@adt/llm"
 import {
+  applyAutoRepairs,
   buildPageSectioningConfig,
   finalizePageSectioning,
   flattenTreeToText,
@@ -860,6 +861,292 @@ describe("sectionPage", () => {
     expect(refinementCallCount).toBe(2)
     expect(output.reasoning).toBe("Reviewer rewrote it")
     expect(output.sections[0].nodes[0].text).toBe("Refined")
+  })
+})
+
+// ── applyAutoRepairs ────────────────────────────────────────────
+
+describe("applyAutoRepairs", () => {
+  it("unwraps an image_group containing only an image leaf into a bare image leaf", () => {
+    const raw = {
+      reasoning: "",
+      sections: [
+        {
+          section_type: "text_only",
+          background_color: "#fff",
+          text_color: "#000",
+          page_number: 1,
+          nodes: [
+            {
+              structure: "image_group",
+              children: [{ role: "image", image_id: "pg001_im001" }],
+            },
+          ],
+        },
+      ],
+    }
+    applyAutoRepairs(raw)
+    expect(raw.sections[0].nodes).toEqual([
+      { role: "image", image_id: "pg001_im001" },
+    ])
+  })
+
+  it("reorders an image_group so the image leaf is the first child", () => {
+    const raw = {
+      reasoning: "",
+      sections: [
+        {
+          section_type: "text_only",
+          background_color: "#fff",
+          text_color: "#000",
+          page_number: 1,
+          nodes: [
+            {
+              structure: "image_group",
+              children: [
+                { role: "caption", text: "Figure 1." },
+                { role: "image", image_id: "pg001_im001" },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+    applyAutoRepairs(raw)
+    const ig = raw.sections[0].nodes[0] as {
+      children: Array<{ role: string; text?: string; image_id?: string }>
+    }
+    expect(ig.children[0].role).toBe("image")
+    expect(ig.children[1].role).toBe("caption")
+  })
+
+  it("moves a container's text into a leading text leaf when both text and children are present", () => {
+    const raw = {
+      reasoning: "",
+      sections: [
+        {
+          section_type: "text_only",
+          background_color: "#fff",
+          text_color: "#000",
+          page_number: 1,
+          nodes: [
+            {
+              structure: "paragraph",
+              text: "Title text",
+              children: [{ role: "text", text: "Body" }],
+            },
+          ],
+        },
+      ],
+    }
+    applyAutoRepairs(raw)
+    const para = raw.sections[0].nodes[0] as {
+      structure: string
+      text: string | null
+      children: Array<{ role: string; text: string }>
+    }
+    expect(para.text).toBeNull()
+    expect(para.children[0]).toEqual({ role: "text", text: "Title text" })
+    expect(para.children[1]).toEqual({ role: "text", text: "Body" })
+  })
+
+  it("splits a single-letter-row leaf into one leaf per letter (crossword cells)", () => {
+    const raw = {
+      reasoning: "",
+      sections: [
+        {
+          section_type: "text_only",
+          background_color: "#fff",
+          text_color: "#000",
+          page_number: 1,
+          nodes: [
+            {
+              structure: "activity",
+              children: [
+                { role: "activity_fill_in_the_blank", text: "R E C E T A S" },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+    applyAutoRepairs(raw)
+    const activity = raw.sections[0].nodes[0] as {
+      children: Array<{ role: string; text: string }>
+    }
+    expect(activity.children).toHaveLength(7)
+    expect(activity.children.map((c) => c.text)).toEqual([
+      "R",
+      "E",
+      "C",
+      "E",
+      "T",
+      "A",
+      "S",
+    ])
+    expect(activity.children.every((c) => c.role === "activity_fill_in_the_blank")).toBe(true)
+  })
+
+  it("does not split a single-leaf single-blank line like 'Nombre: ___'", () => {
+    const raw = {
+      reasoning: "",
+      sections: [
+        {
+          section_type: "text_only",
+          background_color: "#fff",
+          text_color: "#000",
+          page_number: 1,
+          nodes: [
+            { role: "activity_fill_in_the_blank", text: "Nombre: ___" },
+          ],
+        },
+      ],
+    }
+    applyAutoRepairs(raw)
+    expect(raw.sections[0].nodes).toHaveLength(1)
+    expect(
+      (raw.sections[0].nodes[0] as { text: string }).text
+    ).toBe("Nombre: ___")
+  })
+
+  it("does not split a normal multi-word sentence", () => {
+    const raw = {
+      reasoning: "",
+      sections: [
+        {
+          section_type: "text_only",
+          background_color: "#fff",
+          text_color: "#000",
+          page_number: 1,
+          nodes: [{ role: "text", text: "Hola mundo" }],
+        },
+      ],
+    }
+    applyAutoRepairs(raw)
+    expect(raw.sections[0].nodes).toHaveLength(1)
+  })
+
+  it("repaired tree passes the validator (image_group unwrap)", () => {
+    const raw = {
+      reasoning: "",
+      sections: [
+        {
+          section_type: "text_only",
+          background_color: "#fff",
+          text_color: "#000",
+          page_number: 1,
+          nodes: [
+            {
+              structure: "image_group",
+              children: [{ role: "image", image_id: "pg001_im001" }],
+            },
+          ],
+        },
+      ],
+    }
+    applyAutoRepairs(raw)
+    const result = runValidator(
+      raw,
+      makeCtx({ availableImageIds: ["pg001_im001"] })
+    )
+    expect(result.valid).toBe(true)
+  })
+
+  it("repaired tree passes the validator (image_group reorder)", () => {
+    const raw = {
+      reasoning: "",
+      sections: [
+        {
+          section_type: "text_only",
+          background_color: "#fff",
+          text_color: "#000",
+          page_number: 1,
+          nodes: [
+            {
+              structure: "image_group",
+              children: [
+                { role: "caption", text: "Figure 1." },
+                { role: "image", image_id: "pg001_im001" },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+    applyAutoRepairs(raw)
+    const result = runValidator(
+      raw,
+      makeCtx({ availableImageIds: ["pg001_im001"] })
+    )
+    expect(result.valid).toBe(true)
+  })
+
+  it("keeps image first when image_group has both text and children (repair ordering)", () => {
+    const raw = {
+      reasoning: "",
+      sections: [
+        {
+          section_type: "text_only",
+          background_color: "#fff",
+          text_color: "#000",
+          page_number: 1,
+          nodes: [
+            {
+              structure: "image_group",
+              text: "Title overlay",
+              children: [
+                { role: "image", image_id: "pg001_im001" },
+                { role: "caption", text: "A caption." },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+    applyAutoRepairs(raw)
+    const ig = raw.sections[0].nodes[0] as {
+      structure: string
+      text: string | null
+      children: Array<{ role: string; text?: string; image_id?: string }>
+    }
+    expect(ig.text).toBeNull()
+    expect(ig.children[0].role).toBe("image")
+    const result = runValidator(
+      raw,
+      makeCtx({ availableImageIds: ["pg001_im001"] })
+    )
+    expect(result.valid).toBe(true)
+  })
+
+  it("recurses into nested children (image_group inside a paragraph)", () => {
+    const raw = {
+      reasoning: "",
+      sections: [
+        {
+          section_type: "text_only",
+          background_color: "#fff",
+          text_color: "#000",
+          page_number: 1,
+          nodes: [
+            {
+              structure: "paragraph",
+              children: [
+                {
+                  structure: "image_group",
+                  children: [{ role: "image", image_id: "pg001_im001" }],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+    applyAutoRepairs(raw)
+    const para = raw.sections[0].nodes[0] as {
+      children: Array<{ role?: string; image_id?: string; structure?: string }>
+    }
+    expect(para.children).toHaveLength(1)
+    expect(para.children[0]).toEqual({ role: "image", image_id: "pg001_im001" })
   })
 })
 
