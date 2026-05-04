@@ -31,7 +31,8 @@ export function useUpdateStatus(): UseUpdateStatus {
 
   const check = useCallback(async () => {
     if (!isElectron() || !window.api?.updates) return
-    await window.api.updates.check()
+    const result = await window.api.updates.check()
+    setStatus(result)
   }, [])
 
   const download = useCallback(async () => {
