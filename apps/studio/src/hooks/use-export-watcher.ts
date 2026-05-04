@@ -126,12 +126,14 @@ async function triggerExportDownload(
     return
   }
 
+  /* eslint-disable lingui/no-unlocalized-strings */
   const formatMeta: Record<ExportFormat, { ext: string; suffix: string; filterName: string }> = {
     project: { ext: "zip", suffix: "-project", filterName: i18n._(msg`Project Archive`) },
     webpub: { ext: "webpub", suffix: "", filterName: i18n._(msg`WebPub`) },
     scorm: { ext: "zip", suffix: "-scorm", filterName: i18n._(msg`SCORM Package`) },
     adt: { ext: "zip", suffix: "-adt", filterName: i18n._(msg`ADT Package`) },
   }
+  /* eslint-enable lingui/no-unlocalized-strings */
   const meta = formatMeta[format]
   const defaultPath = `${label}${meta.suffix}.${meta.ext}`
   const filters = [{ name: meta.filterName, extensions: [meta.ext] }]
