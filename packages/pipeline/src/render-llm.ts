@@ -204,7 +204,10 @@ function validateWebRendering(
   return { valid: check.valid, errors: check.errors }
 }
 
-const TEXTBOOK_BLANK_RE = /_{3,}|\.{3,}/g
+// Recognize underscore runs of any length (single-cell crossword blanks emit
+// just `"_"`, inline-sentence blanks emit `___`) and dot runs of 3+
+// (single dots are normal punctuation).
+const TEXTBOOK_BLANK_RE = /_+|\.{3,}/g
 const PLACEHOLDER_MARKER_RE = /\[placeholder:[^\]]+\]/g
 const OPTIONAL_TEXT_ROLES = new Set(["footer", "header", "page_number"])
 
@@ -227,7 +230,7 @@ function isPlaceholderOnlyText(text: string): boolean {
   return stripped.length === 0
 }
 
-function collectOptionalTextIds(
+export function collectOptionalTextIds(
   leafTexts: Array<{ text_id: string; text_type: string; text: string }>
 ): Set<string> {
   const optional = new Set<string>()
