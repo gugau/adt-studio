@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { api } from "@/api/client"
+import { SettingsActionBar, SettingsActionButton } from "@/components/pipeline/components/SettingsActionBar"
 import { useLingui } from "@lingui/react/macro"
 
 interface SpeechPromptsEditorProps {
@@ -75,15 +76,16 @@ export function SpeechPromptsEditor({ bookLabel, headerTarget }: SpeechPromptsEd
   return (
     <div className="p-4 max-w-2xl space-y-6">
       {headerTarget && createPortal(
-        <Button
-          size="sm"
-          className="h-7 px-2.5 text-xs bg-black/15 text-white hover:bg-black/25"
-          onClick={handleSave}
-          disabled={saving || !dirty}
-        >
-          <Save className="mr-1.5 h-3.5 w-3.5" />
-          {saving ? t`Saving...` : t`Save`}
-        </Button>,
+        <SettingsActionBar dirty={dirty}>
+          <SettingsActionButton
+            dirty={dirty}
+            onClick={handleSave}
+            disabled={saving || !dirty}
+          >
+            <Save className="mr-1.5 h-3.5 w-3.5" />
+            {saving ? t`Saving...` : t`Save`}
+          </SettingsActionButton>
+        </SettingsActionBar>,
         headerTarget
       )}
 

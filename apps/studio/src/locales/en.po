@@ -2936,6 +2936,9 @@ msgstr "No text extracted"
 msgid "No translations for this page"
 msgstr "No translations for this page"
 
+msgid "No unsaved changes"
+msgstr "No unsaved changes"
+
 msgid "No versions"
 msgstr "No versions"
 
@@ -4697,6 +4700,9 @@ msgstr "Unprune image"
 
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
+
+msgid "Unsaved changes — rerun to apply"
+msgstr "Unsaved changes — rerun to apply"
 
 msgid "Unsaved:"
 msgstr "Unsaved:"

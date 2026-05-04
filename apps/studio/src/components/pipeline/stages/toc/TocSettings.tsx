@@ -16,6 +16,7 @@ import { useActiveConfig } from "@/hooks/use-debug"
 import { useApiKey } from "@/hooks/use-api-key"
 import { api } from "@/api/client"
 import { PromptViewer } from "@/components/pipeline/components/PromptViewer"
+import { SettingsActionBar, SettingsActionButton } from "@/components/pipeline/components/SettingsActionBar"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useStepConfig } from "@/hooks/use-step-config"
 import { useLingui } from "@lingui/react/macro"
@@ -86,15 +87,21 @@ export function TocSettings({ bookLabel, headerTarget }: { bookLabel: string; he
       />
 
       {headerTarget && createPortal(
-        <Button
-          size="sm"
-          className="h-7 px-2.5 text-xs bg-black/15 text-white hover:bg-black/25"
-          onClick={() => setShowRerunDialog(true)}
-          disabled={updateConfig.isPending || !hasApiKey}
-        >
-          <Play className="mr-1.5 h-3.5 w-3.5" />
-          {t`Save & Rerun`}
-        </Button>,
+        (() => {
+          const isDirty = Object.values(dirty).some(Boolean) || generationPromptDraft != null
+          return (
+            <SettingsActionBar dirty={isDirty}>
+              <SettingsActionButton
+                dirty={isDirty}
+                onClick={() => setShowRerunDialog(true)}
+                disabled={updateConfig.isPending || !hasApiKey}
+              >
+                <Play className="mr-1.5 h-3.5 w-3.5" />
+                {t`Save & Rerun`}
+              </SettingsActionButton>
+            </SettingsActionBar>
+          )
+        })(),
         headerTarget,
       )}
 

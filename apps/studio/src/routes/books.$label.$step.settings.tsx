@@ -70,15 +70,17 @@ export function StepSettingsPage() {
         </Link>
         <span className="text-white/40 text-sm">/</span>
         <span className="text-sm font-medium"><Trans>Settings</Trans></span>
-        <div ref={setHeaderTarget} className="ml-auto" />
         <Link
           to="/books/$label/$step"
           params={{ label, step }}
-          className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-black/15 text-white/80 hover:bg-black/25 hover:text-white transition-colors"
+          className="ml-auto inline-flex items-center justify-center h-7 w-7 rounded-full bg-black/15 text-white/80 hover:bg-black/25 hover:text-white transition-colors"
         >
           <X className="w-4 h-4" />
         </Link>
       </div>
+
+      {/* Persistent action bar (Save & Rerun) — settings components portal into this */}
+      <div ref={setHeaderTarget} className="shrink-0" />
 
       {/* Settings content */}
       <div className="flex-1 min-h-0 overflow-auto">
