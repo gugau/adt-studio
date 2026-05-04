@@ -1,10 +1,12 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import type { ApiLogEntry } from '../main/api/types'
+import type { UpdateStatus } from '../main/auto-updater'
 
 type ApiLogCallback = (entry: ApiLogEntry) => void
 type MaximizeChangeCallback = (isMaximized: boolean) => void
 type FullscreenChangeCallback = (isFullscreen: boolean) => void
+type UpdateStatusCallback = (status: UpdateStatus) => void
 
 export type ElectronPlatform = NodeJS.Platform
 
@@ -27,6 +29,20 @@ const windowControls = {
       cb(isFullscreen)
     ipcRenderer.on('window:fullscreen-change', handler)
     return () => ipcRenderer.off('window:fullscreen-change', handler)
+  },
+}
+
+const updates = {
+  check: (): Promise<UpdateStatus> => ipcRenderer.invoke('updates:check'),
+  download: (): Promise<UpdateStatus> => ipcRenderer.invoke('updates:download'),
+  install: (): Promise<void> => ipcRenderer.invoke('updates:install'),
+  installOnQuit: (): Promise<void> => ipcRenderer.invoke('updates:install-on-quit'),
+  getStatus: (): Promise<UpdateStatus> => ipcRenderer.invoke('updates:get-status'),
+  onStatus: (cb: UpdateStatusCallback): (() => void) => {
+    const handler = (_: Electron.IpcRendererEvent, status: UpdateStatus) =>
+      cb(status)
+    ipcRenderer.on('updates:status', handler)
+    return () => ipcRenderer.off('updates:status', handler)
   },
 }
 
@@ -56,6 +72,7 @@ const api = {
     return ipcRenderer.sendSync('app:version') as string
   },
   windowControls,
+  updates,
 }
 
 if (process.contextIsolated) {
@@ -70,6 +87,4 @@ if (process.contextIsolated) {
   window.electron = electronAPI
   // @ts-ignore (define in dts)
   window.api = api
-  // @ts-ignore (define in dts)
-  window.splashControls = splashControls
 }

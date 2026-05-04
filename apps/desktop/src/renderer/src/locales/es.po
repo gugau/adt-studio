@@ -19,17 +19,8 @@ msgstr "Libros de Texto Digitales Accesibles"
 msgid "Almost there"
 msgstr "Casi listo"
 
-msgid "Checking for updates"
-msgstr "Buscando actualizaciones"
-
-msgid "Downloading update {0}%"
-msgstr "Descargando actualización {0}%"
-
 msgid "Elapsed: {elapsed}s"
 msgstr "Tiempo: {elapsed}s"
-
-msgid "Installing update"
-msgstr "Instalando actualización"
 
 msgid "Quit"
 msgstr "Salir"
@@ -54,6 +45,3 @@ msgstr "¿Atascado en esta pantalla? Puedes reiniciar o salir con seguridad."
 
 msgid "Taking longer than usual"
 msgstr "Tardando más de lo habitual"
-
-msgid "Update available"
-msgstr "Actualización disponible"

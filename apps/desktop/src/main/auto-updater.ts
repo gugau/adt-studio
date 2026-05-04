@@ -2,17 +2,41 @@ import { app, BrowserWindow } from "electron";
 import { autoUpdater, type ProgressInfo, type UpdateInfo } from "electron-updater";
 
 export type UpdateStatus =
+  | { phase: "idle" }
   | { phase: "checking" }
-  | { phase: "available"; version: string }
+  | {
+      phase: "available";
+      version: string;
+      releaseDate?: string;
+      releaseNotes?: string;
+      totalBytes?: number;
+    }
   | { phase: "not-available" }
-  | { phase: "downloading"; percent: number; bytesPerSecond: number; transferred: number; total: number }
-  | { phase: "downloaded"; version: string }
+  | {
+      phase: "downloading";
+      version: string;
+      percent: number;
+      bytesPerSecond: number;
+      transferred: number;
+      total: number;
+    }
+  | { phase: "downloaded"; version: string; releaseNotes?: string }
   | { phase: "error"; message: string };
 
 type StatusListener = (status: UpdateStatus) => void;
 
 const listeners = new Set<StatusListener>();
-let lastStatus: UpdateStatus | null = null;
+let lastStatus: UpdateStatus = { phase: "idle" };
+let lastInfo: UpdateInfo | null = null;
+
+function normalizeReleaseNotes(notes: UpdateInfo["releaseNotes"]): string | undefined {
+  if (!notes) return undefined;
+  if (typeof notes === "string") return notes;
+  return notes
+    .map((entry) => (typeof entry === "string" ? entry : entry.note ?? ""))
+    .filter(Boolean)
+    .join("\n\n");
+}
 
 function emit(status: UpdateStatus): void {
   lastStatus = status;
@@ -21,11 +45,11 @@ function emit(status: UpdateStatus): void {
 
 export function onUpdateStatus(fn: StatusListener): () => void {
   listeners.add(fn);
-  if (lastStatus) fn(lastStatus);
+  fn(lastStatus);
   return () => listeners.delete(fn);
 }
 
-export function getLastUpdateStatus(): UpdateStatus | null {
+export function getLastUpdateStatus(): UpdateStatus {
   return lastStatus;
 }
 
@@ -51,7 +75,15 @@ function configure(): void {
   });
 
   autoUpdater.on("update-available", (info: UpdateInfo) => {
-    emit({ phase: "available", version: info.version });
+    lastInfo = info;
+    const totalBytes = info.files?.[0]?.size;
+    emit({
+      phase: "available",
+      version: info.version,
+      releaseDate: info.releaseDate,
+      releaseNotes: normalizeReleaseNotes(info.releaseNotes),
+      totalBytes,
+    });
   });
 
   autoUpdater.on("update-not-available", () => {
@@ -61,6 +93,7 @@ function configure(): void {
   autoUpdater.on("download-progress", (progress: ProgressInfo) => {
     emit({
       phase: "downloading",
+      version: lastInfo?.version ?? "",
       percent: progress.percent,
       bytesPerSecond: progress.bytesPerSecond,
       transferred: progress.transferred,
@@ -69,7 +102,12 @@ function configure(): void {
   });
 
   autoUpdater.on("update-downloaded", (info: UpdateInfo) => {
-    emit({ phase: "downloaded", version: info.version });
+    lastInfo = info;
+    emit({
+      phase: "downloaded",
+      version: info.version,
+      releaseNotes: normalizeReleaseNotes(info.releaseNotes),
+    });
   });
 
   autoUpdater.on("error", (err: Error) => {
@@ -78,35 +116,68 @@ function configure(): void {
 }
 
 /**
- * Check for updates and, if found, download and install them before the app finishes launching.
+ * Check for updates without blocking startup. Does not download — the renderer
+ * decides whether to download via {@link downloadUpdate}.
  *
- * Returns:
- *   - "updating": an update was downloaded and the app is about to relaunch — caller MUST stop bootstrapping
- *   - "no-update": no update available, or running unpacked / dev — caller should continue normal startup
- *   - "error": update flow failed; caller should continue normal startup
+ * Skipped silently when running unpacked / in dev (no installer to update).
  */
-export async function runStartupUpdateCheck(): Promise<"updating" | "no-update" | "error"> {
+export async function checkForUpdates(): Promise<UpdateStatus> {
   if (!app.isPackaged) {
     emit({ phase: "not-available" });
-    return "no-update";
+    return lastStatus;
   }
 
   configure();
 
   try {
-    const result = await autoUpdater.checkForUpdates();
-    if (!result?.updateInfo || result.updateInfo.version === app.getVersion()) {
-      emit({ phase: "not-available" });
-      return "no-update";
-    }
-
-    await result.downloadPromise;
-
-    autoUpdater.quitAndInstall(true, true);
-    return "updating";
+    await autoUpdater.checkForUpdates();
+    return lastStatus;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     emit({ phase: "error", message });
-    return "error";
+    return lastStatus;
   }
+}
+
+/**
+ * Begin downloading the update. Progress is reported via {@link onUpdateStatus}.
+ * No-op if no update is currently available.
+ */
+export async function downloadUpdate(): Promise<UpdateStatus> {
+  if (!app.isPackaged) {
+    return lastStatus;
+  }
+
+  configure();
+
+  if (lastStatus.phase !== "available") {
+    return lastStatus;
+  }
+
+  try {
+    await autoUpdater.downloadUpdate();
+    return lastStatus;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    emit({ phase: "error", message });
+    return lastStatus;
+  }
+}
+
+/**
+ * Quit and install the downloaded update. Caller must ensure the update was
+ * actually downloaded (status `downloaded`) before invoking.
+ */
+export function quitAndInstall(): void {
+  if (lastStatus.phase !== "downloaded") return;
+  autoUpdater.quitAndInstall(true, true);
+}
+
+/**
+ * Defer install: keep the downloaded update on disk and let electron-updater
+ * apply it the next time the user quits the app normally.
+ */
+export function deferInstallUntilQuit(): void {
+  if (lastStatus.phase !== "downloaded") return;
+  autoUpdater.autoInstallOnAppQuit = true;
 }

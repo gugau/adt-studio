@@ -2,13 +2,13 @@ import { Trans } from "@lingui/react/macro";
 import { SplashLogo } from "./components/SplashLogo";
 import { RecoveryPanel } from "./components/RecoveryPanel";
 import { useElapsedSeconds } from "./hooks/use-elapsed-seconds";
-import { useUpdateStatus } from "./hooks/use-update-status";
 import { StatusMessage } from "./components/StatusMessage";
 import { Progress } from "./components/Progress";
+import { STUCK_THRESHOLD_SECONDS } from "./constants";
 
 export function Splashscreen() {
   const elapsed = useElapsedSeconds();
-  const { isStuck, downloadPercent, status } = useUpdateStatus(elapsed);
+  const isStuck = elapsed >= STUCK_THRESHOLD_SECONDS;
   const version = window.splashControls?.version;
 
   return (
@@ -34,9 +34,9 @@ export function Splashscreen() {
           aria-live="polite"
           className="text-[11px] font-normal uppercase tracking-widest text-slate-500 animate-[splash-status-pulse_1.8s_ease-in-out_infinite]"
         >
-          <StatusMessage elapsed={elapsed} update={status} />
+          <StatusMessage elapsed={elapsed} />
         </div>
-        <Progress downloadPercent={downloadPercent} />
+        <Progress />
         {isStuck && <RecoveryPanel elapsed={elapsed} />}
       </div>
 

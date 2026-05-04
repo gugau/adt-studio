@@ -25,7 +25,8 @@ import {
 } from "./protocols/studio-app.protocol";
 import { createSplashWindow } from "./splash-window";
 import { setupSplashControls } from "./splash-controls";
-import { onUpdateStatus, runStartupUpdateCheck } from "./auto-updater";
+import { setupUpdateControls } from "./update-controls";
+import { checkForUpdates } from "./auto-updater";
 
 protocol.registerSchemesAsPrivileged([
   STUDIO_APP_SCHEME_PRIVILEGES,
@@ -37,22 +38,9 @@ app.whenReady().then(async () => {
 
   setupAppInfo();
   setupSplashControls();
+  setupUpdateControls();
 
   const splashWindow = createSplashWindow();
-
-  const unsubscribeUpdateStatus = onUpdateStatus((status) => {
-    if (!splashWindow.isDestroyed()) {
-      splashWindow.webContents.send("splash:update-status", status);
-    }
-  });
-
-  const updateResult = await runStartupUpdateCheck();
-  if (updateResult === "updating") {
-    // App is about to relaunch from quitAndInstall — stop bootstrapping.
-    return;
-  }
-
-  unsubscribeUpdateStatus();
 
   registerStudioAppProtocol(join(__dirname, "../renderer"));
   registerHtmlRenderProtocol();
@@ -91,6 +79,8 @@ app.whenReady().then(async () => {
     if (!splashWindow.isDestroyed()) {
       splashWindow.destroy();
     }
+
+    checkForUpdates().catch(() => {});
   });
 });
 

@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { Home, HelpCircle, Settings } from "lucide-react";
+import { Home, HelpCircle, Settings, Download } from "lucide-react";
 import { useLingui } from "@lingui/react/macro";
 import { Button } from "@/components/ui/button";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useSettingsDialog } from "@/routes/__root";
+import { useUpdateDialog } from "@/components/updates";
 import { usePlatform } from "@/hooks/use-platform";
 import { useAppVersion } from "@/hooks/use-app-version";
 import { useWindowControls } from "@/hooks/use-window-controls";
@@ -29,6 +30,7 @@ export function StudioTopBar({
 }: StudioTopBarProps) {
   const { t } = useLingui();
   const { openSettings } = useSettingsDialog();
+  const { openUpdateDialog, hasPendingUpdate } = useUpdateDialog();
   const platform = usePlatform();
   const version = useAppVersion();
   const { available: hasWindowControls } = useWindowControls();
@@ -87,6 +89,7 @@ export function StudioTopBar({
         className="ml-auto flex items-center gap-1.5 pr-2 no-drag"
         style={NO_DRAG_REGION}
       >
+        <LocaleSwitcher />
         <Button
           variant="ghost"
           size="icon"
@@ -98,7 +101,21 @@ export function StudioTopBar({
             <HelpCircle className="h-3.5 w-3.5" />
           </Link>
         </Button>
-        <LocaleSwitcher />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative size-8 shrink-0 text-white/70 hover:text-white hover:bg-gray-600"
+          onClick={openUpdateDialog}
+          title={hasPendingUpdate ? t`Update available` : t`Software update`}
+        >
+          <Download className="h-3.5 w-3.5" />
+          {hasPendingUpdate && (
+            <span
+              aria-hidden
+              className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-blue-400"
+            />
+          )}
+        </Button>
         <Button
           variant="ghost"
           size="icon"
