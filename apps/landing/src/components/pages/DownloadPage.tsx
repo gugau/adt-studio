@@ -1,4 +1,4 @@
-import { ArrowUpRight, Construction, Monitor } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, Construction, Monitor } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Button";
 import { cn } from "@/lib/cn";
@@ -7,17 +7,17 @@ import {
   formatRelativeDate,
   sumAllDownloads,
   useGithubReleases,
-  type GithubAsset,
   type GithubRelease,
 } from "@/lib/useGithubReleases";
 import {
   detectUserPlatform,
+  findLatestForPlatform,
   formatSize,
-  groupAssets,
-  pickPreferred,
   PLATFORMS,
   type DetectedPlatform,
+  type PlatformKey,
   type PlatformMeta,
+  type PlatformResolution,
 } from "./download/shared";
 
 export function DownloadPage() {
@@ -34,14 +34,20 @@ export function DownloadPage() {
     return () => cancelAnimationFrame(id);
   }, []);
 
-  const grouped = useMemo(
-    () => (latest ? groupAssets(latest.assets) : null),
-    [latest],
-  );
   const totalDownloads = useMemo(
     () => sumAllDownloads(releases),
     [releases],
   );
+
+  /** Per-platform "latest release that actually ships this OS". */
+  const platformResolutions = useMemo(() => {
+    const out: Partial<Record<PlatformKey, PlatformResolution>> = {};
+    for (const p of PLATFORMS) {
+      const r = findLatestForPlatform(releases, p.key);
+      if (r) out[p.key] = r;
+    }
+    return out;
+  }, [releases]);
 
   const isMobile = userPlatform === "mobile";
   const detected: PlatformMeta = isMobile
@@ -51,10 +57,15 @@ export function DownloadPage() {
     ? PLATFORMS
     : PLATFORMS.filter((p) => p.key !== detected.key);
 
-  const detectedAsset =
-    !isMobile && grouped ? pickPreferred(grouped[detected.key]) : null;
+  const detectedResolution = !isMobile
+    ? platformResolutions[detected.key] ?? null
+    : null;
+  const detectedAsset = detectedResolution?.asset ?? null;
+  const detectedReleaseForCta = detectedResolution?.release ?? latest;
   const fallbackHref =
-    latest?.html_url ?? "https://github.com/unicef/adt-studio/releases/latest";
+    detectedReleaseForCta?.html_url ??
+    latest?.html_url ??
+    "https://github.com/unicef/adt-studio/releases/latest";
   const PrimaryIcon = detected.icon;
   const hasDetectedBuild = !isMobile && !!detectedAsset;
 
@@ -141,7 +152,7 @@ export function DownloadPage() {
           )}
         </div>
 
-        {hasDetectedBuild && (
+        {hasDetectedBuild && detectedAsset && detectedResolution && (
           <div
             className={cn(
               "mt-4 font-mono text-[11px] text-[color:var(--color-muted-foreground)] transition-opacity duration-500",
@@ -151,12 +162,17 @@ export function DownloadPage() {
           >
             {loading
               ? "Resolving latest release…"
-              : detectedAsset && latest
-                ? `${detectedAsset.name} · ${formatSize(detectedAsset.size)} · ${latest.tag_name}`
-                : error
-                  ? "Couldn't reach GitHub — try the release page."
-                  : null}
+              : `${detectedAsset.name} · ${formatSize(detectedAsset.size)} · ${detectedResolution.release.tag_name}`}
           </div>
+        )}
+
+        {detectedResolution?.outdated && latest && (
+          <OutdatedNotice
+            platform={detected}
+            platformResolution={detectedResolution}
+            overallLatest={latest}
+            mounted={mounted}
+          />
         )}
 
         <div
@@ -174,8 +190,8 @@ export function DownloadPage() {
               <PlatformChip
                 key={p.key}
                 meta={p}
-                asset={grouped ? pickPreferred(grouped[p.key]) : null}
-                release={latest}
+                resolution={platformResolutions[p.key] ?? null}
+                fallbackRelease={latest}
               />
             ))}
           </div>
@@ -339,29 +355,33 @@ function EmptyPlatformState({
 
 function PlatformChip({
   meta,
-  asset,
-  release,
+  resolution,
+  fallbackRelease,
 }: {
   meta: PlatformMeta;
-  asset: GithubAsset | null;
-  release: GithubRelease | undefined;
+  resolution: PlatformResolution | null;
+  fallbackRelease: GithubRelease | undefined;
 }) {
   const Icon = meta.icon;
   const fallbackHref =
-    release?.html_url ?? "https://github.com/unicef/adt-studio/releases/latest";
-  const hasBuild = !!asset;
-  const href = hasBuild ? asset.browser_download_url : fallbackHref;
+    fallbackRelease?.html_url ??
+    "https://github.com/unicef/adt-studio/releases/latest";
+  const hasBuild = !!resolution;
+  const href = hasBuild ? resolution.asset.browser_download_url : fallbackHref;
+  const isOutdated = hasBuild && resolution.outdated;
+
+  const title = hasBuild
+    ? isOutdated
+      ? `Download for ${meta.label} — ${resolution.release.tag_name} (a newer release exists for other platforms)`
+      : `Download for ${meta.label} ${resolution.release.tag_name}`
+    : `${meta.label} build is coming — track on GitHub`;
 
   return (
     <a
       href={href}
       target={hasBuild ? undefined : "_blank"}
       rel={hasBuild ? undefined : "noreferrer noopener"}
-      title={
-        hasBuild
-          ? `Download for ${meta.label}`
-          : `${meta.label} build is coming — track on GitHub`
-      }
+      title={title}
       className={cn(
         "group inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all hover:-translate-y-0.5",
         hasBuild
@@ -371,11 +391,64 @@ function PlatformChip({
     >
       <Icon className="h-3.5 w-3.5" strokeWidth={1.8} />
       {meta.label}
+      {hasBuild && (
+        <span
+          className={cn(
+            "ml-0.5 rounded-full px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider",
+            isOutdated
+              ? "bg-amber-50 text-amber-700"
+              : "bg-[color:var(--color-muted)] text-[color:var(--color-muted-foreground)]",
+          )}
+        >
+          {resolution.release.tag_name}
+        </span>
+      )}
       {!hasBuild && (
         <span className="ml-0.5 rounded-full bg-[color:var(--color-muted)] px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-[color:var(--color-muted-foreground)]">
           Soon
         </span>
       )}
     </a>
+  );
+}
+
+function OutdatedNotice({
+  platform,
+  platformResolution,
+  overallLatest,
+  mounted,
+}: {
+  platform: PlatformMeta;
+  platformResolution: PlatformResolution;
+  overallLatest: GithubRelease;
+  mounted: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "mx-auto mt-4 inline-flex max-w-md items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2 text-left text-[12px] text-amber-900 shadow-sm transition-all duration-500",
+        mounted ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
+      )}
+      style={{ transitionDelay: "500ms" }}
+      role="status"
+    >
+      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+      <span>
+        {platform.label} latest is{" "}
+        <span className="font-mono font-semibold">
+          {platformResolution.release.tag_name}
+        </span>{" "}
+        — the project is on{" "}
+        <a
+          href={overallLatest.html_url}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="font-mono font-semibold underline-offset-2 hover:underline"
+        >
+          {overallLatest.tag_name}
+        </a>
+        . A {platform.label} build for the newer tag isn&rsquo;t available yet.
+      </span>
+    </div>
   );
 }

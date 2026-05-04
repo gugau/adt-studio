@@ -1,5 +1,5 @@
 import { Apple, Laptop, MonitorPlay, type LucideIcon } from "lucide-react";
-import type { GithubAsset } from "@/lib/useGithubReleases";
+import type { GithubAsset, GithubRelease } from "@/lib/useGithubReleases";
 
 export type PlatformKey = "windows" | "macos" | "linux";
 
@@ -102,6 +102,45 @@ export function pickPreferred(assets: GithubAsset[]): GithubAsset | null {
     if (hit) return hit;
   }
   return assets[0];
+}
+
+export type PlatformResolution = {
+  /** First release (newest first) that ships an asset matching this platform. */
+  release: GithubRelease;
+  /** Preferred asset for the platform from that release. */
+  asset: GithubAsset;
+  /**
+   * True when the platform's latest release isn't the same as the overall
+   * newest release — i.e. the platform is shipping behind.
+   */
+  outdated: boolean;
+};
+
+/**
+ * Walks releases newest-first and returns the first release that ships an
+ * asset for `platform`. If the matching release isn't the newest release in
+ * the list, `outdated` is true so the caller can surface a "behind" warning.
+ *
+ * Returns null if no release in the cache has a matching asset.
+ */
+export function findLatestForPlatform(
+  releases: GithubRelease[] | null | undefined,
+  platform: PlatformKey,
+): PlatformResolution | null {
+  if (!releases || releases.length === 0) return null;
+  const newest = releases[0];
+  for (const release of releases) {
+    const grouped = groupAssets(release.assets);
+    const asset = pickPreferred(grouped[platform]);
+    if (asset) {
+      return {
+        release,
+        asset,
+        outdated: release.tag_name !== newest.tag_name,
+      };
+    }
+  }
+  return null;
 }
 
 export function detectArch(name: string): string | null {

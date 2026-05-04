@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { DownloadPage } from "@/components/pages/DownloadPage";
 import { ReleasePage } from "@/components/pages/ReleasePage";
+import { ReleasesPage } from "@/components/pages/ReleasesPage";
 import { CarouselScene } from "@/components/sections/CarouselScene";
 import { FeaturesScene } from "@/components/sections/FeaturesScene";
 import { FinaleScene } from "@/components/sections/FinaleScene";
@@ -16,6 +17,7 @@ import { useHashRoute } from "@/lib/useHashRoute";
 type Route =
   | { kind: "home" }
   | { kind: "download" }
+  | { kind: "releases" }
   | { kind: "release"; tag: string };
 
 function resolveRoute(hashRoute: string): Route {
@@ -27,6 +29,9 @@ function resolveRoute(hashRoute: string): Route {
     } catch {
       return { kind: "release", tag: m[1] };
     }
+  }
+  if (hashRoute === "/releases" || hashRoute === "/releases/") {
+    return { kind: "releases" };
   }
   return { kind: "home" };
 }
@@ -58,6 +63,8 @@ export function App() {
       <main>
         {route.kind === "download" ? (
           <DownloadPage />
+        ) : route.kind === "releases" ? (
+          <ReleasesPage />
         ) : route.kind === "release" ? (
           <ReleasePage tag={route.tag} />
         ) : (

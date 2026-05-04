@@ -72,19 +72,26 @@ export function ReleasesScene() {
 
         <div
           className={cn(
-            "mt-10 flex justify-center transition-opacity duration-500",
+            "mt-10 flex flex-wrap items-center justify-center gap-2 transition-opacity duration-500",
             mounted ? "opacity-100" : "opacity-0",
           )}
           style={{ transitionDelay: "640ms" }}
         >
           <a
+            href="#/releases"
+            className="group inline-flex items-center gap-1.5 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-card)] px-4 py-2 text-sm font-semibold text-[color:var(--color-foreground)] shadow-sm transition-all hover:-translate-y-0.5 hover:border-[color:var(--color-primary)]/30 hover:shadow-md"
+          >
+            See every release
+            <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+          </a>
+          <a
             href="https://github.com/unicef/adt-studio/releases"
             target="_blank"
             rel="noreferrer noopener"
-            className="group inline-flex items-center gap-1.5 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-card)] px-4 py-2 text-sm font-semibold text-[color:var(--color-foreground)] shadow-sm transition-all hover:-translate-y-0.5 hover:border-[color:var(--color-primary)]/30 hover:shadow-md"
+            className="group inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-[color:var(--color-muted-foreground)] transition-colors hover:text-[color:var(--color-foreground)]"
           >
-            View all releases on GitHub
-            <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            On GitHub
+            <ArrowUpRight className="h-3 w-3" />
           </a>
         </div>
       </div>
