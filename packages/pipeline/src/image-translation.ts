@@ -17,7 +17,7 @@ export function buildImageTranslationConfig(appConfig: AppConfig): {
   const cfg = appConfig.image_translation
   return {
     enabled: cfg?.enabled === true,
-    modelId: cfg?.image_model ?? "openai:gpt-image-1.5",
+    modelId: cfg?.image_model ?? "openai:gpt-image-2",
     selectedImageIds: cfg?.selected_image_ids ?? [],
   }
 }
