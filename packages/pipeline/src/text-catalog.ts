@@ -137,6 +137,7 @@ function buildGlossaryEntries(storage: Storage): TextCatalogEntry[] {
   const entries: TextCatalogEntry[] = []
   for (let i = 0; i < data.items.length; i++) {
     const item = data.items[i]
+    if (item.pruned) continue
     const id = getGlossaryItemTextId(item, i)
     entries.push({ id, text: item.word })
     entries.push({ id: `${id}_def`, text: item.definition })

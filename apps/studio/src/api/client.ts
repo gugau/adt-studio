@@ -246,6 +246,7 @@ export interface GlossaryItem {
   definition: string
   variations: string[]
   emojis: string[]
+  pruned?: boolean
 }
 
 export interface GlossaryOutput {

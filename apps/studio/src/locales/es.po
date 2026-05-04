@@ -148,7 +148,7 @@ msgstr "{0} preguntas"
 msgid "{0} selected images are no longer in the storyboard."
 msgstr "{0} imágenes seleccionadas ya no están en el guion gráfico."
 
-#. placeholder {0}: String(items.length)
+#. placeholder {0}: String(visibleCount)
 msgid "{0} terms"
 msgstr "{0} términos"
 
@@ -395,6 +395,9 @@ msgstr "Acerca del modo de sección"
 
 msgid "Accent Prompt"
 msgstr "Prompt de acento"
+
+msgid "Accept reasonable web redesigns. Reject only for functional defects (visible placeholder tokens, missing content, overlap, overflow). Fewest rejections."
+msgstr "Acepta rediseños web razonables. Rechaza solo por defectos funcionales (tokens de marcador visibles, contenido faltante, superposición, desbordamiento). Menos rechazos."
 
 msgid "Accessibility"
 msgstr "Accessibility"
@@ -1626,6 +1629,9 @@ msgstr "ej., Una familia de leopardos alegres en un bosque verde..."
 msgid "e.g., Make the background brighter, add more trees..."
 msgstr "ej., Haz el fondo más brillante, añade más árboles..."
 
+msgid "Each iteration is one LLM call. Lower values are faster and cheaper; higher values give the reviewer more chances to fix problems."
+msgstr "Cada iteración es una llamada al LLM. Valores más bajos son más rápidos y económicos; valores más altos dan al revisor más oportunidades de corregir problemas."
+
 msgid "Each polyp secretes a hard calcium carbonate skeleton. Over hundreds of years, millions of these skeletons build up into the massive reef structures we see today."
 msgstr "Cada pólipo secreta un esqueleto duro de carbonato de calcio. Durante cientos de años, millones de estos esqueletos se acumulan en las estructuras masivas de arrecifes que vemos hoy."
 
@@ -1913,6 +1919,9 @@ msgstr "Filtrar por ID de imagen..."
 msgid "Filter by item ID..."
 msgstr "Filtrar por ID de ítem..."
 
+msgid "Filter terms…"
+msgstr "Filtrar términos…"
+
 msgid "Filtered by:"
 msgstr "Filtered by:"
 
@@ -1939,6 +1948,9 @@ msgstr "Flagged findings"
 
 msgid "Flat Vector"
 msgstr "Vector plano"
+
+msgid "Flexible"
+msgstr "Flexible"
 
 #~ msgid "Footer Text"
 #~ msgstr "Texto de pie de página"
@@ -2122,6 +2134,9 @@ msgstr "Ocultar detalles del error"
 #~ msgid "Hide pruned images"
 #~ msgstr "Ocultar imágenes eliminadas"
 
+msgid "Hide pruned terms"
+msgstr "Ocultar términos podados"
+
 msgid "Higher values filter out simple or blank images."
 msgstr "Valores más altos filtran imágenes simples o en blanco."
 
@@ -2139,6 +2154,9 @@ msgstr "Hit"
 
 msgid "Hover a setting to see how LLM cropping, segmentation, or the size threshold changes extracted images."
 msgstr "Pasa el cursor sobre una configuración para ver cómo el recorte, segmentación o el umbral de tamaño del LLM cambian las imágenes extraídas."
+
+msgid "How closely should the visual review match the original page? The reviewer rejects renderings that don't pass — stricter settings cause more rejections and rerenders."
+msgstr "¿Qué tan fielmente debe coincidir la revisión visual con la página original? El revisor rechaza los renderizados que no pasan — los ajustes más estrictos causan más rechazos y nuevas renderizaciones."
 
 msgid "How it works"
 msgstr "Cómo funciona"
@@ -2601,14 +2619,23 @@ msgstr "Asigna códigos de idioma a nombres de voz para cada proveedor de TTS."
 msgid "margin"
 msgstr "margen"
 
+msgid "Match Design"
+msgstr "Coincidir con el diseño"
+
 msgid "Match each stage of the water cycle to its definition:"
 msgstr "Asocia cada etapa del ciclo del agua con su definición:"
 
 #~ msgid "Math"
 #~ msgstr "Matemáticas"
 
+msgid "Max Iterations"
+msgstr "Iteraciones máximas"
+
 msgid "Max Refinements"
 msgstr "Refinamientos máximos"
+
+msgid "Max review/revise rounds per section before accepting the current rendering"
+msgstr "Máximo de rondas de revisión/corrección por sección antes de aceptar el renderizado actual"
 
 #~ msgid "Max Side"
 #~ msgstr "Lado Máximo"
@@ -2948,6 +2975,12 @@ msgstr "No segmentation needed for this image"
 
 msgid "No sign language videos uploaded yet."
 msgstr "Aún no se han cargado videos de lengua de señas."
+
+msgid "No terms match your filter."
+msgstr "Ningún término coincide con tu filtro."
+
+msgid "No terms to show."
+msgstr "Ningún término para mostrar."
 
 msgid "No text extracted"
 msgstr "No se extrajo texto"
@@ -3407,11 +3440,18 @@ msgstr "Eliminar sección del flujo"
 #~ msgid "Prune text"
 #~ msgstr "Eliminar texto"
 
+msgid "Prune this term — it will be hidden from output and excluded from future regenerations."
+msgstr "Podar este término — se ocultará de la salida y se excluirá de futuras regeneraciones."
+
 msgid "pruned"
 msgstr "eliminado"
 
 msgid "Pruned"
 msgstr "Eliminado"
+
+#. placeholder {0}: String(prunedCount)
+msgid "Pruned ({0})"
+msgstr "Podados ({0})"
 
 msgid "Pruned Images"
 msgstr "Imágenes eliminadas"
@@ -3549,6 +3589,9 @@ msgstr "Regenera las imágenes seleccionadas para cada idioma de salida de modo 
 msgid "Region"
 msgstr "Región"
 
+msgid "Reject renderings that diverge stylistically from the original. More rejections and rerenders, closer match to the source."
+msgstr "Rechaza los renderizados que difieran estilísticamente del original. Más rechazos y re-renderizados, mayor coincidencia con la fuente."
+
 msgid "Release to upload"
 msgstr "Suelta para subir"
 
@@ -3650,6 +3693,9 @@ msgstr "Restaurar elemento"
 
 msgid "Restore section to flow"
 msgstr "Restaurar sección al flujo"
+
+msgid "Restore this term — it will be eligible again on the next regeneration."
+msgstr "Restaurar este término — volverá a ser elegible en la próxima regeneración."
 
 msgid "Resume target"
 msgstr "Resume target"
@@ -4071,6 +4117,9 @@ msgstr "Show fewer"
 #~ msgid "Show pruned images"
 #~ msgstr "Mostrar imágenes eliminadas"
 
+msgid "Show pruned terms"
+msgstr "Mostrar términos podados"
+
 msgid "Show reviewer validation"
 msgstr "Show reviewer validation"
 
@@ -4228,6 +4277,9 @@ msgstr "El storyboard ya se ejecutó. Los cambios realizados aquí no tendrán e
 
 msgid "Storybook"
 msgstr "Libro de cuentos"
+
+msgid "Strict"
+msgstr "Estricto"
 
 msgid "Structure"
 msgstr "Estructura"
@@ -4517,6 +4569,8 @@ msgstr "This page has not been reviewed yet"
 
 msgid "This screen couldn’t load"
 msgstr "Esta pantalla no pudo cargarse"
+msgid "This prompt instructs the LLM how to evaluate the rendered HTML against the original page. Selection above controls which template is used."
+msgstr "Este prompt indica al LLM cómo evaluar el HTML renderizado frente a la página original. La selección de arriba controla qué plantilla se utiliza."
 
 msgid "This section has no storyboard rendering yet"
 msgstr "Esta sección aún no tiene renderización de storyboard"
@@ -4843,6 +4897,12 @@ msgstr "Visual & sensory cues"
 
 msgid "Visual Layout"
 msgstr "Diseño Visual"
+
+msgid "Visual Review"
+msgstr "Revisión visual"
+
+msgid "Visual Review Prompt (read-only)"
+msgstr "Prompt de revisión visual (solo lectura)"
 
 msgid "Voice"
 msgstr "Voz"

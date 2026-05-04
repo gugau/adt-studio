@@ -123,6 +123,8 @@ export {
   collectPageTexts,
   getGlossaryItemTextId,
   isManualGlossaryItem,
+  isPrunedGlossaryItem,
+  getPrunedGlossaryWords,
   mergeGeneratedGlossaryWithManualItems,
   type GlossaryConfig,
   type GenerateGlossaryOptions,

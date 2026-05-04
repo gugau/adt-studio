@@ -286,7 +286,7 @@ const DEFAULT_RENDER_CONFIG = {
 
 const DEFAULT_VISUAL_REFINEMENT = {
   prompt: "visual_review",
-  max_iterations: 5,
+  max_iterations: 3,
   timeout: 180,
   temperature: 0.3,
 }
@@ -336,8 +336,11 @@ export function buildRenderStrategyResolver(
       ...(vr?.enabled && {
         visualRefinement: {
           enabled: true,
-          maxIterations: vr.max_iterations ?? DEFAULT_VISUAL_REFINEMENT.max_iterations,
-          promptName: vr.prompt ?? DEFAULT_VISUAL_REFINEMENT.prompt,
+          // Top-level overrides apply globally so users can tune visual review
+          // without editing every render strategy.
+          maxIterations:
+            appConfig.visual_review_max_iterations ?? vr.max_iterations ?? DEFAULT_VISUAL_REFINEMENT.max_iterations,
+          promptName: appConfig.visual_review_prompt ?? vr.prompt ?? DEFAULT_VISUAL_REFINEMENT.prompt,
           timeoutMs: (vr.timeout ?? DEFAULT_VISUAL_REFINEMENT.timeout) * 1000,
           temperature: vr.temperature ?? DEFAULT_VISUAL_REFINEMENT.temperature,
         },

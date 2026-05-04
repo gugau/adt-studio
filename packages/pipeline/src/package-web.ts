@@ -575,7 +575,7 @@ export async function packageAdtWeb(
   // ------------------------------------------------------------------
   // config.json
   // ------------------------------------------------------------------
-  const hasGlossary = (features?.glossary !== false) && (glossary !== undefined && glossary.items.length > 0)
+  const hasGlossary = (features?.glossary !== false) && (glossary !== undefined && glossary.items.some((item) => !item.pruned))
   const hasQuiz = (features?.quizzes !== false) && (quizData !== undefined && quizData.quizzes.length > 0)
 
   const hasSignLanguageVideos = (features?.signLanguage !== false) && storage.getSignLanguageVideos().some((v) => v.sectionId !== null)
@@ -1410,6 +1410,7 @@ export function buildGlossaryJson(
 
   for (let i = 0; i < glossary.items.length; i++) {
     const item = glossary.items[i]
+    if (item.pruned) continue
     const glId = getGlossaryItemTextId(item, i)
     const defId = `${glId}_def`
 

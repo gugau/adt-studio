@@ -113,6 +113,8 @@ export const AppConfig = z
     quiz_generation: QuizGenerationConfig.optional(),
     default_render_strategy: z.string().optional(),
     render_strategies: z.record(z.string(), RenderStrategyConfig).optional(),
+    visual_review_prompt: z.string().optional(),
+    visual_review_max_iterations: z.number().int().min(1).max(50).optional(),
     section_render_strategies: z.record(z.string(), z.string()).optional(),
     image_filters: ImageFilters.optional(),
     image_meaningfulness: StepConfig.optional(),

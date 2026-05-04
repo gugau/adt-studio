@@ -47,6 +47,7 @@ const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   "rendering-template": msg`Template Rendering`,
   "activity-prompts": msg`Activity Rendering`,
   "image-generation": msg`Image Generation`,
+  "visual-review-prompt": msg`Visual Review`,
   "quiz-prompt": msg`Quiz Prompt`,
   "glossary-prompt": msg`Glossary Prompt`,
   "caption-prompt": msg`Caption Prompt`,
@@ -93,6 +94,7 @@ function getSettingsTabs(
       { key: "rendering-template", label: i18n._(SETTINGS_TAB_MESSAGE["rendering-template"]) },
       { key: "activity-prompts", label: i18n._(SETTINGS_TAB_MESSAGE["activity-prompts"]) },
       { key: "image-generation", label: i18n._(SETTINGS_TAB_MESSAGE["image-generation"]) },
+      { key: "visual-review-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["visual-review-prompt"]) },
     ],
     quizzes: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.general) },
