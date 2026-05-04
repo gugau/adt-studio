@@ -1,7 +1,13 @@
 import { useState, createContext, useContext, useCallback, useMemo } from "react"
-import { createRootRoute, Outlet, useRouterState } from "@tanstack/react-router"
+import {
+  createRootRoute,
+  Outlet,
+  useRouterState,
+  type ErrorComponentProps,
+} from "@tanstack/react-router"
 import { ApiKeyDialog } from "@/components/settings/ApiKeyDialog"
 import { useApiKey } from "@/hooks/use-api-key"
+import { ErrorScreen } from "@/components/ErrorScreen"
 
 const SettingsContext = createContext<{ openSettings: () => void }>({
   openSettings: () => {},
@@ -11,8 +17,13 @@ export function useSettingsDialog() {
   return useContext(SettingsContext)
 }
 
+function RootErrorComponent({ error, reset }: ErrorComponentProps) {
+  return <ErrorScreen variant="app" error={error} reset={reset} />
+}
+
 export const Route = createRootRoute({
   component: RootLayout,
+  errorComponent: RootErrorComponent,
 })
 
 function RootLayout() {

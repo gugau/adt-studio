@@ -57,7 +57,7 @@ adt/
 ├── apps/              # Application tier
 │   ├── api/           # Hono HTTP server
 │   ├── studio/        # React SPA (Vite)
-│   └── desktop/       # Tauri v2 desktop wrapper (sidecar architecture)
+│   └── desktop/       # Electron desktop wrapper (electron-vite + electron-builder)
 │
 ├── templates/         # Layout templates
 ├── config/            # Global configuration
@@ -69,7 +69,7 @@ adt/
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    apps/studio (React)                   │
-│                    apps/desktop (TBD)                    │
+│                    apps/desktop (Electron)               │
 └─────────────────────────┬───────────────────────────────┘
                           │ HTTP only
                           ▼
@@ -157,7 +157,7 @@ import { localHelper } from "./helpers.js"
 // Correct: Header-based authentication
 const key = c.req.header("X-OpenAI-Key")
 
-// Correct: Environment variable (desktop sidecar)
+// Correct: Environment variable (e.g. when the API runs alongside the Electron main process)
 const key = process.env["OPENAI_API_KEY"]
 
 // Correct: Validate before use
@@ -1020,17 +1020,14 @@ Key rules:
 ### Platform Detection
 
 ```typescript
-// Detect desktop vs Web environment
+// Detect desktop (Electron) vs Web environment
 export function isDesktop(): boolean {
-  // Tauri
-  if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) return true
-  // Electron
-  if (typeof window !== "undefined" && "electronAPI" in window) return true
-  return false
+  return typeof window !== "undefined" && "electronAPI" in window
 }
 
-// Use for platform-specific behavior
-const apiBase = isDesktop() ? "http://localhost:3000/api" : "/api"
+// Use for platform-specific behavior — in Electron, the main process picks a free port
+// and exposes it to the renderer via the preload bridge (window.electronAPI).
+const apiBase = isDesktop() ? window.electronAPI.apiBaseUrl : "/api"
 ```
 
 ---

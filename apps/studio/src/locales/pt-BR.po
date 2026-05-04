@@ -593,6 +593,9 @@ msgstr "Pacote ADT"
 msgid "ADT Studio uses your own API keys to run the pipeline. Keys are stored locally on this device and never sent anywhere else."
 msgstr "O ADT Studio usa suas próprias chaves de API para executar o pipeline. As chaves são armazenadas localmente neste dispositivo e nunca são enviadas para outro lugar."
 
+msgid "ADT_DEBUG=1"
+msgstr "ADT_DEBUG=1"
+
 msgid "Adventure Tales - Vol. 1"
 msgstr "Contos de Aventura - Vol. 1"
 
@@ -720,6 +723,12 @@ msgstr "Configurações da chave de API"
 msgid "API Keys"
 msgstr "Chaves de API"
 
+msgid "API Logs"
+msgstr "Logs da API"
+
+msgid "API logs are only available in the desktop app."
+msgstr "Os logs da API estão disponíveis apenas no aplicativo para desktop."
+
 msgid "Application Programming Interface — a set of rules that allows programs to communicate."
 msgstr "Interface de programação de aplicativos (API) — conjunto de regras que permite que programas se comuniquem."
 
@@ -801,6 +810,9 @@ msgstr "Autores"
 
 msgid "Auto"
 msgstr "Automático"
+
+msgid "Auto-scroll"
+msgstr "Rolagem automática"
 
 msgid "Automatically adapts the layout based on each page's content using AI."
 msgstr "Adapta automaticamente o layout com base no conteúdo de cada página usando IA."
@@ -981,6 +993,10 @@ msgstr "Chamadas"
 msgid "Cancel"
 msgstr "Cancelar"
 
+#. placeholder {0}: String(MAX_ENTRIES)
+msgid "capped at {0}"
+msgstr "limitado a {0}"
+
 msgid "Caption"
 msgstr "Legenda"
 
@@ -1117,7 +1133,7 @@ msgid "Clone failed"
 msgstr "Clone failed"
 
 msgid "Close"
-msgstr "Close"
+msgstr "Fechar"
 
 msgid "Close edit panel"
 msgstr "Fechar painel de edição"
@@ -1163,6 +1179,9 @@ msgstr "Completion across the assigned page range for this reviewer session."
 
 msgid "Condensation"
 msgstr "Condensação"
+
+msgid "Config"
+msgstr "Configurações"
 
 #~ msgid "Configure activity detection and image processing options for extracted content."
 #~ msgstr "Configurar opções de detecção de atividades e processamento de imagens para conteúdo extraído."
@@ -1238,6 +1257,15 @@ msgstr "Converta qualquer livro em uma edição digital acessível — áudio, l
 
 msgid "Converted"
 msgstr "Convertido"
+
+msgid "Copied"
+msgstr "Copiado"
+
+msgid "Copy"
+msgstr "Copiar"
+
+msgid "Copy error details"
+msgstr "Copiar detalhes do erro"
 
 msgid "Coral reefs cover less than 1% of the ocean floor, yet they support roughly 25% of all marine species. Often called the 'rainforests of the sea,' these underwater ecosystems are built by tiny animals called coral polyps."
 msgstr "Os recifes de coral cobrem menos de 1% do fundo do oceano, mas sustentam cerca de 25% de todas as espécies marinhas. Frequentemente chamados de 'florestas tropicais do mar', esses ecossistemas subaquáticos são construídos por pequenos animais chamados pólipos de coral."
@@ -1334,6 +1362,9 @@ msgstr "Custom section {index}"
 
 msgid "Custom:"
 msgstr "Personalizado:"
+
+msgid "Debug mode is not enabled."
+msgstr "O modo de depuração não está ativado."
 
 msgid "Decrease indent"
 msgstr "Diminuir recuo"
@@ -2064,6 +2095,9 @@ msgstr "Prompt de glossário"
 msgid "Go to book"
 msgstr "Ir para o livro"
 
+msgid "Go to home"
+msgstr "Ir para o início"
+
 msgid "Google"
 msgstr "Google"
 
@@ -2090,6 +2124,9 @@ msgstr "Cabeçalho"
 
 msgid "Hide AI edit history"
 msgstr "Ocultar histórico de edições com IA"
+
+msgid "Hide error details"
+msgstr "Ocultar detalhes do erro"
 
 #~ msgid "Hide Pruned"
 #~ msgstr "Ocultar removidas"
@@ -2378,6 +2415,9 @@ msgstr "Última"
 msgid "Last modified"
 msgstr "Última modificação"
 
+msgid "Launch the app with"
+msgstr "Inicie o aplicativo com"
+
 msgid "Layer on translations, text-to-speech, and a glossary — all inspectable, cacheable, reversible."
 msgstr "Acrescente traduções, conversão de texto em fala e um glossário — tudo inspecionável, armazenável em cache, reversível."
 
@@ -2419,6 +2459,9 @@ msgstr "Guia de Conformidade Legal"
 
 msgid "Life in the Coral Reef"
 msgstr "Vida no Recife de Coral"
+
+msgid "lines"
+msgstr "linhas"
 
 msgid "Língua Portuguesa - 3° Ano"
 msgstr "Língua Portuguesa - 3° Ano"
@@ -2546,6 +2589,9 @@ msgstr "Carregando..."
 msgid "Loading…"
 msgstr "Carregando…"
 
+msgid "Logs"
+msgstr "Logs"
+
 msgid "Lookup definitions for key terms"
 msgstr "Procurar definições de termos-chave"
 
@@ -2599,6 +2645,9 @@ msgstr "Lado máximo (px)"
 
 msgid "Max Size (px)"
 msgstr "Tamanho Máx (px)"
+
+msgid "Maximize"
+msgstr "Maximizar"
 
 #~ msgid "Maximum number of reviewer passes after the initial sectioning. Set to 0 to disable refinement."
 #~ msgstr "Número máximo de passagens do revisor após o seccionamento inicial. Defina como 0 para desativar o refinamento."
@@ -2677,6 +2726,9 @@ msgstr "Lado mínimo (px)"
 
 msgid "Min Size (px)"
 msgstr "Tamanho Mín (px)"
+
+msgid "Minimize"
+msgstr "Minimizar"
 
 msgid "Minimum image dimension"
 msgstr "Dimensão mínima da imagem"
@@ -3543,6 +3595,9 @@ msgstr "Rejeita renderizações que divergem estilisticamente do original. Mais 
 msgid "Release to upload"
 msgstr "Solte para enviar"
 
+msgid "Reload app"
+msgstr "Recarregar aplicativo"
+
 msgid "Remove"
 msgstr "Remover"
 
@@ -4050,6 +4105,9 @@ msgstr "Show all {0}"
 msgid "Show all translations"
 msgstr "Mostrar todas as traduções"
 
+msgid "Show error details"
+msgstr "Mostrar detalhes do erro"
+
 msgid "Show fewer"
 msgstr "Show fewer"
 
@@ -4132,6 +4190,9 @@ msgstr "Corte Inteligente"
 #~ msgid "something calm."
 #~ msgstr "algo tranquilo."
 
+msgid "Something went wrong"
+msgstr "Algo deu errado"
+
 msgid "Sort books"
 msgstr "Ordenar livros"
 
@@ -4191,6 +4252,9 @@ msgstr "Comece a digitar para ver palavras do livro…"
 
 msgid "Start with a PDF"
 msgstr "Selecione um PDF"
+
+msgid "Stats"
+msgstr "Estatísticas"
 
 msgid "Step"
 msgstr "Etapa"
@@ -4368,6 +4432,9 @@ msgstr "A IA está pensando..."
 msgid "The AI will preserve the original style while applying your changes."
 msgstr "A IA preservará o estilo original ao aplicar suas alterações."
 
+msgid "The application ran into an unexpected error. You can try reloading — your work in progress is saved on disk."
+msgstr "O aplicativo encontrou um erro inesperado. Você pode tentar recarregar — seu trabalho em andamento está salvo no disco."
+
 msgid "The back cover of the book."
 msgstr "A contracapa do livro."
 
@@ -4503,6 +4570,9 @@ msgstr "This page has not been reviewed yet"
 msgid "This prompt instructs the LLM how to evaluate the rendered HTML against the original page. Selection above controls which template is used."
 msgstr "Este prompt instrui o LLM sobre como avaliar o HTML renderizado em relação à página original. A seleção acima controla qual modelo é usado."
 
+msgid "This screen couldn’t load"
+msgstr "Esta tela não pôde ser carregada"
+
 msgid "This section has no storyboard rendering yet"
 msgstr "Esta seção ainda não tem renderização de storyboard"
 
@@ -4550,6 +4620,9 @@ msgstr "Marcações de tempo"
 
 msgid "to"
 msgstr "até"
+
+msgid "to stream API logs here."
+msgstr "para transmitir os logs da API aqui."
 
 msgid "TOC Generation Prompt"
 msgstr "Prompt de geração de sumário"
@@ -4616,6 +4689,9 @@ msgstr "Testar atividade"
 
 msgid "Try another file"
 msgstr "Tentar outro arquivo"
+
+msgid "Try this screen again"
+msgstr "Tentar esta tela novamente"
 
 msgid "Turn any PDF into a fully accessible book — audio, translations, structured HTML layouts — all generated from your source file, <0>all editable</0>, <1>all yours</1>."
 msgstr "Transforme qualquer PDF em um livro totalmente acessível — áudio, traduções, layouts HTML estruturados — tudo gerado a partir do seu arquivo fonte, <0>tudo editável</0>, <1>tudo seu</1>."
@@ -4805,6 +4881,9 @@ msgstr "Aplicação verificada"
 msgid "Version {0}"
 msgstr "Versão {0}"
 
+msgid "Versions"
+msgstr "Versões"
+
 msgid "video"
 msgstr "vídeo"
 
@@ -4844,6 +4923,9 @@ msgstr "Aguarde a conclusão do storyboard"
 msgid "WAITING"
 msgstr "AGUARDANDO"
 
+msgid "Waiting for API output…"
+msgstr "Aguardando a saída da API…"
+
 msgid "Waiting for page to be processed..."
 msgstr "Aguardando a página ser processada..."
 
@@ -4867,6 +4949,9 @@ msgstr ""
 "wcag2a\n"
 "wcag2aa\n"
 "best-practice"
+
+msgid "We hit a snag while loading this view. You can try this screen again or reload the whole app."
+msgstr "Tivemos um problema ao carregar esta visualização. Você pode tentar esta tela novamente ou recarregar o aplicativo inteiro."
 
 msgid "Web Export"
 msgstr "Exportação Web"

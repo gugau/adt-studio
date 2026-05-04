@@ -304,7 +304,11 @@ export function buildRenderStrategyResolver(
   appConfig: AppConfig
 ): (sectionType: string) => RenderConfig {
   const strategies = appConfig.render_strategies ?? {}
-  const sectionMapping = appConfig.section_render_strategies ?? {}
+  const rawSectionMapping = appConfig.section_render_strategies ?? {}
+  const sectionMapping =
+    appConfig.generate_activities === false
+      ? Object.fromEntries(Object.entries(rawSectionMapping).filter(([k]) => !k.startsWith("activity_")))
+      : rawSectionMapping
   const defaultName = appConfig.default_render_strategy
 
   return (sectionType: string): RenderConfig => {

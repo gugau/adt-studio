@@ -4,6 +4,7 @@ import { msg } from "@lingui/core/macro"
 import { useLingui } from "@lingui/react"
 import { useMutation } from "@tanstack/react-query"
 import { api } from "@/api/client"
+import { isElectron } from "@/lib/utils"
 import { useBookTasks } from "./use-book-tasks"
 import type { ExportFeatureToggles } from "./use-export-features"
 
@@ -39,8 +40,18 @@ export function useExportWatcher(): ExportWatcherValue {
 export function useExportWatcherSetup(label: string): ExportWatcherValue {
   const { i18n } = useLingui()
   const [pendingExport, setPendingExport] = useState<PendingExport | null>(null)
+  const [downloadingFormat, setDownloadingFormat] = useState<ExportFormat | null>(null)
   const [error, setError] = useState<ExportError | null>(null)
   const { getTask } = useBookTasks(label)
+
+  const runDownload = (format: ExportFormat) => {
+    setDownloadingFormat(format)
+    triggerExportDownload(label, format, i18n, () => setDownloadingFormat(null))
+      .catch((err) => {
+        setError({ format, message: err instanceof Error ? err.message : String(err) })
+      })
+      .finally(() => setDownloadingFormat((current) => (current === format ? null : current)))
+  }
 
   // Watch for task completion via the tasks cache (updated by SSE)
   useEffect(() => {
@@ -50,9 +61,7 @@ export function useExportWatcherSetup(label: string): ExportWatcherValue {
     if (task.status === "completed") {
       const format = pendingExport.format
       setPendingExport(null)
-      triggerExportDownload(label, format, i18n).catch((err) => {
-        setError({ format, message: err instanceof Error ? err.message : String(err) })
-      })
+      runDownload(format)
     } else if (task.status === "failed") {
       setError({
         format: pendingExport.format,
@@ -70,9 +79,7 @@ export function useExportWatcherSetup(label: string): ExportWatcherValue {
       if (result.taskId) {
         setPendingExport({ taskId: result.taskId, format, features })
       } else {
-        triggerExportDownload(label, format, i18n).catch((err) => {
-          setError({ format, message: err instanceof Error ? err.message : String(err) })
-        })
+        runDownload(format)
       }
     },
     onError: (err, { format }) => {
@@ -82,12 +89,14 @@ export function useExportWatcherSetup(label: string): ExportWatcherValue {
 
   const preparingFormat: ExportFormat | null =
     pendingExport?.format
+    ?? downloadingFormat
     ?? (prepareMutation.isPending ? prepareMutation.variables?.format ?? null : null)
 
   return {
     startExport: (format: ExportFormat, features?: ExportFeatureToggles) =>
       prepareMutation.mutate({ format, features }),
-    isPreparing: prepareMutation.isPending || pendingExport !== null,
+    isPreparing:
+      prepareMutation.isPending || pendingExport !== null || downloadingFormat !== null,
     preparingFormat,
     error,
   }
@@ -97,8 +106,10 @@ async function triggerExportDownload(
   label: string,
   format: ExportFormat,
   i18n: I18n,
+  onBeforeSaveDialog?: () => void,
 ): Promise<void> {
   let blob: Blob | null
+
   if (format === "project") {
     blob = await api.exportProject(label)
   } else if (format === "webpub") {
@@ -109,11 +120,11 @@ async function triggerExportDownload(
     blob = await api.exportAdt(label)
   }
 
-  if (!blob) return // Browser mode — direct download already triggered
-
-  // Tauri mode: save via native OS dialog
-  const { save } = await import("@tauri-apps/plugin-dialog")
-  const { writeFile } = await import("@tauri-apps/plugin-fs")
+  if (!blob) {
+    // Browser mode — direct download already triggered
+    onBeforeSaveDialog?.()
+    return
+  }
 
   const formatMeta: Record<ExportFormat, { ext: string; suffix: string; filterName: string }> = {
     project: { ext: "zip", suffix: "-project", filterName: i18n._(msg`Project Archive`) },
@@ -123,15 +134,12 @@ async function triggerExportDownload(
   }
   const meta = formatMeta[format]
   const defaultPath = `${label}${meta.suffix}.${meta.ext}`
-  const filterName = meta.filterName
+  const filters = [{ name: meta.filterName, extensions: [meta.ext] }]
 
-  const savePath = await save({
-    defaultPath,
-    filters: [{ name: filterName, extensions: [meta.ext] }],
-  })
-
-  if (savePath) {
+  if (isElectron() && window.api?.saveFile) {
     const buf = await blob.arrayBuffer()
-    await writeFile(savePath, new Uint8Array(buf))
+    onBeforeSaveDialog?.()
+    await window.api.saveFile({ defaultPath, filters }, new Uint8Array(buf))
+    return
   }
 }

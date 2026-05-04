@@ -1,9 +1,15 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute, useNavigate, ErrorComponentProps } from "@tanstack/react-router"
 import { useCallback } from "react"
 import { StepViewRouter } from "@/components/pipeline/components/StepViewRouter"
+import { ErrorScreen } from "@/components/ErrorScreen"
+
+function BookErrorComponent({ error, reset }: ErrorComponentProps) {
+  return <ErrorScreen variant="route" error={error} reset={reset} />
+}
 
 export const Route = createFileRoute("/books/$label/$step/")({
   component: StepIndexPage,
+  errorComponent: BookErrorComponent,
 })
 
 function StepIndexPage() {
@@ -21,6 +27,7 @@ function StepIndexPage() {
     },
     [navigate, label, step]
   )
+
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">

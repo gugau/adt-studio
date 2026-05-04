@@ -7,7 +7,7 @@ ADT Studio is a desktop-first application for automated book production — extr
 - **Monorepo**: pnpm workspaces
 - **Backend**: Hono (HTTP server), node-sqlite3-wasm (pure WASM SQLite), Zod
 - **Frontend**: React + Vite SPA, TanStack (Router, Query, Table, Form), Tailwind CSS
-- **Desktop**: Tauri v2 (sidecar-based — API server compiled to standalone binary)
+- **Desktop**: Electron (electron-vite + electron-builder; API server bundled into the main process)
 - **Language**: TypeScript (strict mode)
 - **Testing**: Vitest
 
@@ -33,7 +33,7 @@ packages/          # Shared libraries (@adt/* workspace packages)
 apps/              # Application tier
   api/             # Hono HTTP server
   studio/          # React SPA (Vite)
-  desktop/         # Tauri v2 desktop wrapper
+  desktop/         # Electron desktop wrapper
 
 templates/         # Layout templates
 config/            # Global configuration
@@ -120,29 +120,33 @@ pnpm build         # Build all packages
 
 ### Desktop Development
 
-Prerequisites: [Rust toolchain](https://rustup.rs/) (Tauri CLI is already a local devDependency).
+Prerequisites: Node.js 20+ and pnpm. No Rust, no platform native toolchains required for app code (electron-builder pulls platform-specific signing/packaging tools as needed).
 
 ```bash
-# Dev mode
-pnpm --filter @adt/api build:sidecar   # Build sidecar binary + generate adt-resources.zip
-pnpm dev                                # Start API + Studio dev servers (terminal 1)
-pnpm dev:desktop                        # Start Tauri dev window (terminal 2)
-# Note: run build:sidecar again whenever API code or assets/adt/ change
+# Dev mode — electron-vite drives main/preload/renderer with HMR
+pnpm dev:desktop
 
-# Production build — self-contained, runs build:sidecar automatically via beforeBuildCommand
-pnpm build:desktop
+# Production build — bundles API server, Studio SPA, and Electron app, then packages with electron-builder
+pnpm build:desktop                       # all-in-one
+pnpm --filter @adt/desktop build:unpack  # unpacked dir, no installer
+pnpm --filter @adt/desktop build:win     # Windows NSIS installer
+pnpm --filter @adt/desktop build:mac     # macOS DMG
+pnpm --filter @adt/desktop build:linux   # Linux AppImage
 ```
 
-#### How the sidecar works
+#### How the desktop app runs the API
 
-The API server is compiled into a standalone Node.js binary (`@yao-pkg/pkg`) and bundled inside the Tauri app as a **sidecar**. On launch, `lib.rs` spawns the sidecar, passing resource paths (prompts, config) via environment variables. The frontend detects the Tauri environment and routes API calls to `localhost:3001`.
+The API server is bundled by esbuild into a single ESM file (`apps/api/dist-electron/api-server.mjs`, plus required WASM assets) and copied into the Electron output. The Electron **main process** boots the API in-process on a free local port and the **renderer process** loads the Studio SPA. The frontend detects the Electron environment via the preload-injected `window.electronAPI` and points its API calls at the local API port.
 
 Key files:
-- `apps/api/scripts/bundle.mjs` — esbuild bundle (JS + WASM assets) + pre-builds web assets (`assets/adt/base.bundle.min.js`, `assets/adt/tailwind_output.css`) and creates `assets/adt-resources.zip` for Tauri resource bundling
-- `apps/api/scripts/pkg.mjs` — Compile bundle → standalone binary, copy to `desktop/src-tauri/binaries/`
-- `apps/desktop/src-tauri/src/lib.rs` — Sidecar spawn, env vars, lifecycle
-- `apps/desktop/src-tauri/tauri.conf.json` — `externalBin`, `resources` mapping
-- `apps/studio/src/api/client.ts` — Tauri base URL detection
+- `apps/api/scripts/bundle-electron-server.mjs` — esbuild bundle of the API + WASM copy
+- `apps/api/scripts/install-server-runtime.mjs` — installs runtime-only deps (jsdom, playwright, etc.) next to the bundle so esbuild externals resolve at runtime
+- `apps/desktop/electron.vite.config.ts` — electron-vite config (main / preload / renderer)
+- `apps/desktop/electron-builder.js` — packaging config (appId, targets, signing, `extraResources`)
+- `apps/desktop/src/main/index.ts` — main process entry; spawns the API and creates windows
+- `apps/desktop/src/main/api/index.ts` — API lifecycle (port selection, startup, shutdown)
+- `apps/desktop/src/preload/index.ts` — exposes `window.electronAPI` to the renderer
+- `apps/studio/src/api/client.ts` — Electron base URL detection
 
 ### Releasing
 

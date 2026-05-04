@@ -11,7 +11,7 @@ This document records all significant technology and architecture decisions made
 3. [HTTP Server: Hono](#003-hono-over-express-and-fastify)
 4. [Frontend Framework: React + Vite (not Next.js)](#004-react--vite-over-nextjs)
 5. [Frontend Ecosystem: TanStack (Router, Query, Table, Form)](#005-tanstack-ecosystem-over-mixed-libraries)
-6. [Desktop Runtime: Tauri v2](#006-desktop-runtime-tauri-v2)
+6. [Desktop Runtime: Electron](#006-desktop-runtime-electron)
 7. [Styling: Tailwind CSS](#007-tailwind-css-over-css-modules-and-css-in-js)
 8. [Validation: Zod](#008-zod-over-io-ts-yup-and-joi)
 9. [Database: node-sqlite3-wasm](#009-node-sqlite3-wasm-over-better-sqlite3)
@@ -46,7 +46,7 @@ Always prefer pure JavaScript/TypeScript or WASM-compiled libraries over native 
 ADT Studio is a desktop app that needs to run on Windows, macOS, and Linux. Native Node.js bindings (packages using `node-gyp`, `prebuild`, or N-API with compiled C/C++) create significant problems:
 
 - **Cross-platform build failures**: Native modules must be compiled per-platform and per-Node-version. `node-gyp` requires Python, C++ compilers, and platform-specific toolchains — a constant source of CI/CD failures.
-- **Desktop packaging**: Whether using Tauri or Electron, native bindings add complexity to the build pipeline and increase binary size.
+- **Desktop packaging**: In Electron (and any desktop wrapper), native bindings add complexity to the build pipeline and increase binary size.
 - **Contributor friction**: New developers must install platform-specific build tools before they can `pnpm install`.
 - **WASM has matured**: WebAssembly alternatives for performance-critical libraries (SQLite, image processing) now match or exceed the DX of native bindings, with zero compilation step.
 
@@ -97,7 +97,7 @@ Use Hono as the HTTP server framework for the API.
 
 ### Reasoning
 
-- **Tiny footprint (~14KB)**: Critical for desktop sidecar — we want the API process to be lightweight.
+- **Tiny footprint (~14KB)**: Critical for desktop builds — we want the API to add minimal overhead when bundled into the Electron main process.
 - **TypeScript-first**: Typed routes, typed middleware, typed context — no `@types/express` needed.
 - **Faster benchmarks**: Outperforms Express on request throughput.
 - **Edge-portable**: Runs on Node.js, Deno, Bun, Cloudflare Workers — future-proof if we ever move the API.
@@ -124,7 +124,7 @@ Use React with Vite as a pure SPA, not Next.js.
 
 ### Reasoning
 
-ADT Studio is a **desktop-first application** embedded in a desktop webview (Tauri or Electron). This changes the entire calculus:
+ADT Studio is a **desktop-first application** embedded in an Electron renderer. This changes the entire calculus:
 
 1. **No server needed in the frontend**: Next.js brings SSR, server components, API routes, and a Node.js server — none of which apply. The desktop shell serves static HTML/JS/CSS, not from a Next.js server.
 2. **SPA is the right model**: The app runs locally, talks to a local Hono API via HTTP. There's no SEO, no initial page load from a remote server, no need for streaming SSR.
@@ -148,7 +148,7 @@ ADT Studio is a **desktop-first application** embedded in a desktop webview (Tau
 
 | Framework | Why Not |
 |-----------|---------|
-| Next.js | Overkill — SSR/SSG/server components not needed, adds complexity to desktop embedding |
+| Next.js | Overkill — SSR/SSG/server components not needed, adds complexity to Electron embedding |
 | Create React App | Deprecated, slow, ejection required for customization |
 | Remix | Server-focused like Next.js, same issues for a desktop SPA |
 | SvelteKit | Would require the team to learn Svelte, React ecosystem is more mature |
@@ -208,7 +208,7 @@ TanStack eliminates this by providing a unified ecosystem where type safety flow
 
 | Library | Why Not |
 |---------|---------|
-| React Router | Type safety only in framework mode; we need SPA mode for desktop embedding |
+| React Router | Type safety only in framework mode; we need SPA mode for the Electron renderer |
 | SWR | Less features than TanStack Query, no mutation support built-in |
 | react-hook-form | Good library but separate ecosystem, TanStack Form integrates better with our Zod-first approach |
 | AG Grid / DataGrid | Heavy, opinionated UI — we want headless + Tailwind |
@@ -216,40 +216,53 @@ TanStack eliminates this by providing a unified ecosystem where type safety flow
 
 ---
 
-## 006: Desktop Runtime — Tauri v2
+## 006: Desktop Runtime — Electron
 
-**Status**: Decided
-**Date**: 2026-02-09
+**Status**: Decided (supersedes the earlier Tauri v2 selection)
+**Date**: 2026-04-28
 
 ### Decision
 
-Use Tauri v2 with a sidecar architecture — the API server is compiled into a standalone Node.js binary and bundled inside the Tauri app.
+Use Electron (driven by [electron-vite](https://electron-vite.org/) for development and [electron-builder](https://www.electron.build/) for packaging) as the desktop runtime. The API server is bundled by esbuild and started in-process by the Electron main process, which then loads the Studio SPA in the renderer.
 
-### Candidates
+### Context
 
-#### Tauri
+The project initially adopted Tauri v2 with a Node.js sidecar binary compiled via `@yao-pkg/pkg` and spawned from a Rust `lib.rs`. In practice, this stack hit several friction points that mattered more than Tauri's bundle-size advantage:
 
-| Aspect | Details |
+- **Rust toolchain dependency**: Every contributor (and every CI job) had to install `rustup`, plus per-OS native build tools (Visual Studio C++ on Windows, Xcode CLT on macOS, `libwebkit2gtk` and friends on Linux). This conflicted with the project principle of minimizing contributor friction.
+- **Webview inconsistencies**: Tauri uses the host OS's system webview (WebView2 on Windows, WKWebView on macOS, WebKitGTK on Linux). Behavior diverged enough — especially around large iframes used by the storyboard preview, screenshot capture, and PDF rendering — that platform-specific workarounds began to creep into the SPA.
+- **Sidecar packaging complexity**: Compiling the Node.js API into a standalone binary, copying it plus WASM assets into a Tauri-recognized sidecar slot, and invoking it from Rust added build steps that were brittle and slow to iterate on.
+- **Same-language backend**: The Electron main process runs Node.js, the same runtime as the rest of the stack. This eliminates the Rust glue and lets the API run as an in-process import rather than a spawned binary.
+- **Mature ecosystem**: Electron's tooling (electron-vite, electron-builder, code signing for Windows/macOS, auto-update, native dialogs) is well-trodden and matches existing patterns in the codebase.
+
+### Trade-offs Accepted
+
+| Aspect | Tauri (previous) | Electron (chosen) |
+|--------|------------------|-------------------|
+| Bundle size | ~10× smaller (system webview) | Larger (~150 MB, bundles Chromium) |
+| Memory | Lower | Higher (separate Chromium process) |
+| Backend language | Rust | Node.js (same as the rest of the stack) |
+| Webview consistency | Varies per OS | Identical Chromium on every platform |
+| Build prerequisites | Rust + per-OS native toolchains | Node.js + pnpm only |
+| Security model | Allowlist-based permissions | Chromium sandbox + contextIsolation/preload |
+
+The Chromium-bundled binary size is acceptable for an installable desktop app, and consistent rendering across platforms is worth the cost given how visually rich the storyboard/preview surfaces are.
+
+### Architecture
+
+- **Renderer** — the Studio SPA, served by Vite in dev and from `out/renderer/` in production via electron-vite.
+- **Preload** — exposes a narrow `window.electronAPI` bridge with `contextIsolation` enabled. The renderer reads the API base URL and platform helpers from this bridge.
+- **Main** — boots the API server in-process by importing the bundled `api-server.mjs`, picks a free local port, then opens windows pointing at the appropriate URLs.
+- **API bundle** — produced by `apps/api/scripts/bundle-electron-server.mjs` (esbuild) plus `install-server-runtime.mjs` for runtime-only deps that can't be statically bundled (jsdom, playwright, tailwindcss, postcss, esbuild).
+- **Packaging** — handled by `apps/desktop/electron-builder.js`, with NSIS (Windows), DMG (macOS), and AppImage (Linux) targets and `extraResources` for `prompts/`, `templates/`, `config.yaml`, `config/`, and `assets/`.
+
+### Alternatives Considered
+
+| Option | Why Not |
 |--------|---------|
-| Bundle size | ~10x smaller (uses system webview) |
-| Memory | Lower footprint, no bundled Chromium |
-| Backend | Rust — performance for file I/O, process management |
-| Security | Allowlist-based permissions |
-| Trade-off | Requires Rust toolchain, webview inconsistencies across platforms |
-
-#### Electron
-
-| Aspect | Details |
-|--------|---------|
-| Bundle size | Larger (~150MB, bundles Chromium) |
-| Memory | Higher (separate Chromium process) |
-| Backend | Node.js — same language as the rest of the stack |
-| Security | Full Chromium sandboxing, well-understood model |
-| Trade-off | Heavier, but consistent rendering across platforms, mature ecosystem |
-
-### Architecture Note
-
-The `apps/desktop/` wrapper is designed to be runtime-agnostic. The Studio SPA communicates with the API over HTTP regardless of which desktop shell is used. This means the choice can be deferred without blocking other work.
+| Stay on Tauri v2 + Node sidecar | Rust toolchain requirement and per-OS webview drift outweighed the bundle-size win |
+| Plain web app (no desktop wrapper) | Loses native file dialogs, OS integration, and offline-friendly install model |
+| Neutralino / NW.js | Smaller communities, less mature signing/notarization tooling than Electron |
 
 ---
 
@@ -860,7 +873,7 @@ The first implementation stored screenshots in a SQLite `debug_images` table. Th
 | 003 | HTTP server | Hono | Express, Fastify |
 | 004 | Frontend build | React + Vite (SPA) | Next.js, CRA |
 | 005 | Frontend ecosystem | TanStack (Router, Query, Table, Form) | React Router, SWR, react-hook-form |
-| 006 | Desktop runtime | Tauri v2 (sidecar) | Electron |
+| 006 | Desktop runtime | Electron (electron-vite + electron-builder) | Tauri v2 sidecar |
 | 007 | Styling | Tailwind CSS | CSS Modules, styled-components |
 | 008 | Validation | Zod | io-ts, Yup, Joi |
 | 009 | Database | node-sqlite3-wasm | better-sqlite3, sql.js |

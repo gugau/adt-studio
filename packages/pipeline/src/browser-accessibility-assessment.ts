@@ -1,11 +1,15 @@
 import fs from "node:fs"
 import path from "node:path"
+import { randomUUID } from "node:crypto"
 import { pathToFileURL } from "node:url"
 import {
   BrowserAccessibilityAssessmentOutput,
   type AccessibilityAssessmentOutput as AccessibilityAssessmentOutputType,
   type BrowserAccessibilityAssessmentOutput as BrowserAccessibilityAssessmentOutputType,
   type BrowserAccessibilityPageResult,
+  accessibilityAuditIpcCloseSchema,
+  accessibilityAuditIpcReplySchema,
+  accessibilityAuditIpcRequestSchema,
 } from "@adt/types"
 import type { Progress } from "./progress.js"
 import { nullProgress } from "./progress.js"
@@ -37,8 +41,29 @@ export interface RunBrowserAccessibilityAssessmentOptions extends BuildBrowserAc
   baseAssessment?: AccessibilityAssessmentOutputType
 }
 
+interface AuditPageRequest {
+  filePath: string
+  ruleIds: string[]
+  axeSource: string
+  viewport?: { width: number; height: number }
+}
+
+interface AuditPageRawResult {
+  title: string | null
+  violations: unknown[]
+  incomplete: unknown[]
+  passCount: number
+  inapplicableCount: number
+}
+
+interface AccessibilityAuditor {
+  audit(request: AuditPageRequest): Promise<AuditPageRawResult>
+  close(): Promise<void>
+}
+
 const STEP = "accessibility-assessment" as const
 const DEFAULT_FULL_PAGE_RULE_IDS = ["color-contrast"] as const
+const DEFAULT_VIEWPORT = { width: 1280, height: 900 } as const
 
 function uniqueStrings(values: string[]): string[] {
   return Array.from(new Set(values.filter((value) => value.length > 0)))
@@ -77,8 +102,165 @@ export function buildBrowserAccessibilityRecheckPlan(
     .filter((entry): entry is BrowserAccessibilityRecheckTarget => entry !== null)
 }
 
-async function auditBrowserPage(
-  browser: PlaywrightBrowser,
+async function _createPlaywrightAccessibilityAuditor(): Promise<AccessibilityAuditor> {
+  const pw = await import("playwright" as string) as {
+    chromium: {
+      launch(opts: { headless: boolean }): Promise<PlaywrightBrowser>
+    }
+  }
+  const browser = await pw.chromium.launch({ headless: true })
+
+  return {
+    async audit({ filePath, ruleIds, axeSource, viewport = DEFAULT_VIEWPORT }) {
+      const context = await browser.newContext({ viewport })
+      try {
+        const page = await context.newPage()
+        await page.goto(pathToFileURL(filePath).href, { waitUntil: "load" })
+        await page.evaluate(async () => {
+          const fonts = (document as Document & { fonts?: { ready?: Promise<unknown> } }).fonts
+          if (fonts?.ready) {
+            await fonts.ready
+          }
+        })
+        // Force #content to full opacity before axe-core runs.  The page ships
+        // with opacity-0 and its own JS adds transition-opacity + removes the
+        // class on load — if that transition is in-flight when axe reads
+        // computed styles, intermediate opacity values cause spurious
+        // color-contrast violations.  Inline styles + transition:none
+        // guarantee the element is fully opaque regardless of timing.
+        await page.evaluate(() => {
+          const el = document.getElementById("content")
+          if (el) {
+            el.classList.remove("opacity-0")
+            el.style.opacity = "1"
+            el.style.transition = "none"
+            void el.offsetHeight
+          }
+        })
+        await page.addScriptTag({ content: axeSource })
+        const title = (await page.title()) || null
+        const result = await page.evaluate(async (ruleIdValues) => {
+          const axe = (window as typeof window & {
+            axe?: {
+              run: (context: unknown, options: unknown) => Promise<{
+                violations?: unknown[]
+                incomplete?: unknown[]
+                passes?: unknown[]
+                inapplicable?: unknown[]
+              }>
+            }
+          }).axe
+
+          if (!axe) {
+            throw new Error("axe was not initialized in the page context")
+          }
+
+          return await axe.run(document, {
+            runOnly: {
+              type: "rule",
+              values: ruleIdValues,
+            },
+          })
+        }, ruleIds)
+
+        return {
+          title,
+          violations: Array.isArray(result.violations) ? result.violations : [],
+          incomplete: Array.isArray(result.incomplete) ? result.incomplete : [],
+          passCount: Array.isArray(result.passes) ? result.passes.length : 0,
+          inapplicableCount: Array.isArray(result.inapplicable) ? result.inapplicable.length : 0,
+        }
+      } finally {
+        await context.close()
+      }
+    },
+
+    async close() {
+      await browser.close()
+    },
+  }
+}
+
+type ParentPortLike = {
+  postMessage: (message: unknown) => void
+  on: (event: "message", listener: (ev: { data: unknown }) => void) => void
+  off: (event: "message", listener: (ev: { data: unknown }) => void) => void
+}
+
+function utilityParentPort(): ParentPortLike | null {
+  const proc = process as NodeJS.Process & { type?: string; parentPort?: ParentPortLike }
+  if (proc.type !== "utility" || !process.versions.electron) return null
+  const p = proc.parentPort
+  if (!p || typeof p.postMessage !== "function") return null
+  if (typeof p.on !== "function" || typeof p.off !== "function") return null
+  return p
+}
+
+/**
+ * Electron `utilityProcess.fork` child: talk to main via `process.parentPort`.
+ * `process.send` / `process.on("message")` are for Node `child_process.fork` only — they do not wire to main here.
+ */
+async function _createElectronAccessibilityAuditor(): Promise<AccessibilityAuditor> {
+  const parentPort = utilityParentPort()
+  if (!parentPort) {
+    throw new Error(
+      "Electron accessibility audits require a utility process (process.parentPort). Use utilityProcess.fork for the API, not child_process.fork."
+    )
+  }
+
+  return {
+    async audit({ filePath, ruleIds, axeSource, viewport = DEFAULT_VIEWPORT }) {
+      const id = randomUUID()
+      return new Promise<AuditPageRawResult>((resolve, reject) => {
+        const onMessage = (ev: { data: unknown }) => {
+          const parsed = accessibilityAuditIpcReplySchema.safeParse(ev.data)
+          if (!parsed.success) return
+          const msg = parsed.data
+          if (msg.id !== id) return
+          parentPort.off("message", onMessage)
+          if ("error" in msg) {
+            reject(new Error(msg.error))
+            return
+          }
+          resolve({
+            title: msg.title,
+            violations: msg.violations,
+            incomplete: msg.incomplete,
+            passCount: msg.passCount,
+            inapplicableCount: msg.inapplicableCount,
+          })
+        }
+        parentPort.on("message", onMessage)
+        const payload = accessibilityAuditIpcRequestSchema.parse({
+          type: "axe-audit",
+          id,
+          filePath,
+          ruleIds,
+          axeSource,
+          viewport,
+        })
+        parentPort.postMessage(payload)
+      })
+    },
+
+    async close() {
+      parentPort.postMessage(accessibilityAuditIpcCloseSchema.parse({ type: "axe-audit-close" }))
+    },
+  }
+}
+
+async function createAccessibilityAuditor(): Promise<{
+  auditor: AccessibilityAuditor
+  tool: "axe-core-electron" | "axe-core-playwright"
+}> {
+  if (process.env?.ADT_ENVIRONMENT === "electron") {
+    return { auditor: await _createElectronAccessibilityAuditor(), tool: "axe-core-electron" }
+  }
+  return { auditor: await _createPlaywrightAccessibilityAuditor(), tool: "axe-core-playwright" }
+}
+
+async function auditPageWithAuditor(
+  auditor: AccessibilityAuditor,
   adtDir: string,
   target: BrowserAccessibilityRecheckTarget,
   axeSource: string,
@@ -121,79 +303,27 @@ async function auditBrowserPage(
     }
   }
 
-  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } })
   try {
-    const page = await context.newPage()
-    await page.goto(pathToFileURL(filePath).href, { waitUntil: "load" })
-    await page.evaluate(async () => {
-      const fonts = (document as Document & { fonts?: { ready?: Promise<unknown> } }).fonts
-      if (fonts?.ready) {
-        await fonts.ready
-      }
+    const raw = await auditor.audit({
+      filePath,
+      ruleIds: target.ruleIds,
+      axeSource,
     })
-    // Force #content to full opacity before axe-core runs.  The page ships
-    // with opacity-0 and its own JS adds transition-opacity + removes the
-    // class on load — if that transition is in-flight when axe reads
-    // computed styles, intermediate opacity values cause spurious
-    // color-contrast violations.  Inline styles + transition:none
-    // guarantee the element is fully opaque regardless of timing.
-    await page.evaluate(() => {
-      const el = document.getElementById("content")
-      if (el) {
-        el.classList.remove("opacity-0")
-        el.style.opacity = "1"
-        el.style.transition = "none"
-        void el.offsetHeight
-      }
-    })
-    await page.addScriptTag({ content: axeSource })
-    const title = (await page.title()) || null
-    const result = await page.evaluate(async (ruleIds) => {
-      const axe = (window as typeof window & {
-        axe?: {
-          run: (context: unknown, options: unknown) => Promise<{
-            violations?: unknown[]
-            incomplete?: unknown[]
-            passes?: unknown[]
-            inapplicable?: unknown[]
-          }>
-        }
-      }).axe
 
-      if (!axe) {
-        throw new Error("axe was not initialized in the page context")
-      }
-
-      return await axe.run(document, {
-        runOnly: {
-          type: "rule",
-          values: ruleIds,
-        },
-      })
-    }, target.ruleIds)
-
-    const violations = Array.isArray(result.violations)
-      ? result.violations.map(normalizeFinding)
-      : []
-    const incomplete = Array.isArray(result.incomplete)
-      ? result.incomplete.map(normalizeFinding)
-      : []
-    const passCount = Array.isArray(result.passes) ? result.passes.length : 0
-    const inapplicableCount = Array.isArray(result.inapplicable)
-      ? result.inapplicable.length
-      : 0
+    const violations = raw.violations.map(normalizeFinding)
+    const incomplete = raw.incomplete.map(normalizeFinding)
 
     return {
       pageId: target.pageId,
       sectionId: target.sectionId,
       href: target.href,
       pageNumber: target.pageNumber,
-      title,
+      title: raw.title,
       recheckedRuleIds: target.ruleIds,
       violationCount: violations.length,
       incompleteCount: incomplete.length,
-      passCount,
-      inapplicableCount,
+      passCount: raw.passCount,
+      inapplicableCount: raw.inapplicableCount,
       violations,
       incomplete,
     }
@@ -213,8 +343,6 @@ async function auditBrowserPage(
       violations: [],
       incomplete: [],
     }
-  } finally {
-    await context.close()
   }
 }
 
@@ -235,12 +363,7 @@ export async function runBrowserAccessibilityAssessment(
   const allRuleIds = uniqueStrings(targets.flatMap((target) => target.ruleIds))
 
   const axeSource = getAxeSource(await import("axe-core"))
-  const pw = await import("playwright" as string) as {
-    chromium: {
-      launch(opts: { headless: boolean }): Promise<PlaywrightBrowser>
-    }
-  }
-  const browser = await pw.chromium.launch({ headless: true })
+  const { auditor, tool } = await createAccessibilityAuditor()
   const adtDir = path.join(bookDir, "adt")
   const pages: BrowserAccessibilityPageResult[] = []
 
@@ -254,15 +377,15 @@ export async function runBrowserAccessibilityAssessment(
         page: index + 1,
         totalPages: targets.length,
       })
-      pages.push(await auditBrowserPage(browser, adtDir, target, axeSource))
+      pages.push(await auditPageWithAuditor(auditor, adtDir, target, axeSource))
     }
   } finally {
-    await browser.close()
+    await auditor.close()
   }
 
   const output: BrowserAccessibilityAssessmentOutputType = {
     generatedAt: new Date().toISOString(),
-    tool: "axe-core-playwright",
+    tool,
     baseGeneratedAt: baseAssessment.generatedAt,
     ruleIds: allRuleIds,
     pages,
