@@ -7,6 +7,7 @@ export const GlossaryItem = z.object({
   definition: z.string(),
   variations: z.array(z.string()),
   emojis: z.array(z.string()),
+  pruned: z.boolean().optional(),
 })
 export type GlossaryItem = z.infer<typeof GlossaryItem>
 

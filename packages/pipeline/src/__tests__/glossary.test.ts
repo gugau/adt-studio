@@ -403,6 +403,47 @@ describe("mergeGeneratedGlossaryWithManualItems", () => {
     })
   })
 
+  it("preserves pruned AI items and drops re-generated ones that match", () => {
+    const merged = mergeGeneratedGlossaryWithManualItems(
+      {
+        items: [
+          {
+            word: "Forest",
+            definition: "Trees",
+            variations: [],
+            emojis: ["🌲"],
+            source: "ai",
+          },
+          {
+            word: "River",
+            definition: "Water flow",
+            variations: [],
+            emojis: ["🏞️"],
+            source: "ai",
+          },
+        ],
+        pageCount: 1,
+        generatedAt: "2026-01-01T00:00:00.000Z",
+      },
+      [
+        {
+          word: "River",
+          definition: "Old definition",
+          variations: [],
+          emojis: ["🏞️"],
+          source: "ai",
+          pruned: true,
+        },
+      ],
+    )
+
+    const words = merged.items.map((item) => ({ word: item.word, pruned: item.pruned }))
+    expect(words).toEqual([
+      { word: "Forest", pruned: undefined },
+      { word: "River", pruned: true },
+    ])
+  })
+
   it("lets manual glossary entries override generated ones while preserving generated ids", () => {
     const merged = mergeGeneratedGlossaryWithManualItems(
       {
