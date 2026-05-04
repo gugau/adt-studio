@@ -149,7 +149,7 @@ msgstr "{0} questions"
 msgid "{0} selected images are no longer in the storyboard."
 msgstr "{0} images sélectionnées ne figurent plus dans le storyboard."
 
-#. placeholder {0}: String(items.length)
+#. placeholder {0}: String(visibleCount)
 msgid "{0} terms"
 msgstr "{0} termes"
 
@@ -1889,6 +1889,9 @@ msgstr "Filtrer by image ID..."
 msgid "Filter by item ID..."
 msgstr "Filtrer by élément ID..."
 
+msgid "Filter terms…"
+msgstr "Filtrer les termes…"
+
 msgid "Filtered by:"
 msgstr "Filtré par :"
 
@@ -2094,6 +2097,9 @@ msgstr "Masquer l'historique des modifications IA"
 
 #~ msgid "Hide pruned images"
 #~ msgstr "Masquer les images élaguées"
+
+msgid "Hide pruned terms"
+msgstr "Masquer les termes élagués"
 
 msgid "Higher values filter out simple or blank images."
 msgstr "Les valeurs plus élevées filtrent les images simples ou vides."
@@ -2919,6 +2925,12 @@ msgstr "Aucune segmentation nécessaire pour cette image"
 msgid "No sign language videos uploaded yet."
 msgstr "Aucune vidéo en langue des signes téléversée."
 
+msgid "No terms match your filter."
+msgstr "Aucun terme ne correspond à votre filtre."
+
+msgid "No terms to show."
+msgstr "Aucun terme à afficher."
+
 msgid "No text extracted"
 msgstr "Aucun texte extrait"
 
@@ -3377,11 +3389,18 @@ msgstr "Élaguer la section du flux"
 #~ msgid "Prune text"
 #~ msgstr "Élaguer le texte"
 
+msgid "Prune this term — it will be hidden from output and excluded from future regenerations."
+msgstr "Élaguer ce terme — il sera masqué de la sortie et exclu des régénérations futures."
+
 msgid "pruned"
 msgstr "élagué"
 
 msgid "Pruned"
 msgstr "Élagué"
+
+#. placeholder {0}: String(prunedCount)
+msgid "Pruned ({0})"
+msgstr "Élagués ({0})"
 
 msgid "Pruned Images"
 msgstr "Images élaguées"
@@ -3620,6 +3639,9 @@ msgstr "Restaurer l'élément"
 
 msgid "Restore section to flow"
 msgstr "Restaurer la section dans le flux"
+
+msgid "Restore this term — it will be eligible again on the next regeneration."
+msgstr "Restaurer ce terme — il sera de nouveau éligible à la prochaine régénération."
 
 msgid "Resume target"
 msgstr "Cible de reprise"
@@ -4037,6 +4059,9 @@ msgstr "Afficher moins"
 
 #~ msgid "Show pruned images"
 #~ msgstr "Afficher les images élaguées"
+
+msgid "Show pruned terms"
+msgstr "Afficher les termes élagués"
 
 msgid "Show reviewer validation"
 msgstr "Afficher la validation du réviseur"

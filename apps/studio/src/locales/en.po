@@ -148,7 +148,7 @@ msgstr "{0} questions"
 msgid "{0} selected images are no longer in the storyboard."
 msgstr "{0} selected images are no longer in the storyboard."
 
-#. placeholder {0}: String(items.length)
+#. placeholder {0}: String(visibleCount)
 msgid "{0} terms"
 msgstr "{0} terms"
 
@@ -1888,6 +1888,9 @@ msgstr "Filter by image ID..."
 msgid "Filter by item ID..."
 msgstr "Filter by item ID..."
 
+msgid "Filter terms…"
+msgstr "Filter terms…"
+
 msgid "Filtered by:"
 msgstr "Filtered by:"
 
@@ -2093,6 +2096,9 @@ msgstr "Hide AI edit history"
 
 #~ msgid "Hide pruned images"
 #~ msgstr "Hide pruned images"
+
+msgid "Hide pruned terms"
+msgstr "Hide pruned terms"
 
 msgid "Higher values filter out simple or blank images."
 msgstr "Higher values filter out simple or blank images."
@@ -2918,6 +2924,12 @@ msgstr "No segmentation needed for this image"
 msgid "No sign language videos uploaded yet."
 msgstr "No sign language videos uploaded yet."
 
+msgid "No terms match your filter."
+msgstr "No terms match your filter."
+
+msgid "No terms to show."
+msgstr "No terms to show."
+
 msgid "No text extracted"
 msgstr "No text extracted"
 
@@ -3376,11 +3388,18 @@ msgstr "Prune section from flow"
 #~ msgid "Prune text"
 #~ msgstr "Prune text"
 
+msgid "Prune this term — it will be hidden from output and excluded from future regenerations."
+msgstr "Prune this term — it will be hidden from output and excluded from future regenerations."
+
 msgid "pruned"
 msgstr "pruned"
 
 msgid "Pruned"
 msgstr "Pruned"
+
+#. placeholder {0}: String(prunedCount)
+msgid "Pruned ({0})"
+msgstr "Pruned ({0})"
 
 msgid "Pruned Images"
 msgstr "Pruned Images"
@@ -3619,6 +3638,9 @@ msgstr "Restore element"
 
 msgid "Restore section to flow"
 msgstr "Restore section to flow"
+
+msgid "Restore this term — it will be eligible again on the next regeneration."
+msgstr "Restore this term — it will be eligible again on the next regeneration."
 
 msgid "Resume target"
 msgstr "Resume target"
@@ -4036,6 +4058,9 @@ msgstr "Show fewer"
 
 #~ msgid "Show pruned images"
 #~ msgstr "Show pruned images"
+
+msgid "Show pruned terms"
+msgstr "Show pruned terms"
 
 msgid "Show reviewer validation"
 msgstr "Show reviewer validation"

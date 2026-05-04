@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react"
-import { Check, ChevronDown, Loader2, Plus, Trash2 } from "lucide-react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { Check, ChevronDown, EyeOff, Loader2, Plus, RotateCcw, Search, Trash2 } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -164,6 +164,8 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
   const [pending, setPending] = useState<GlossaryData | null>(null)
   const [saving, setSaving] = useState(false)
   const [showAddDialog, setShowAddDialog] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [showPruned, setShowPruned] = useState(false)
 
   // Reset pending when data changes
   useEffect(() => {
@@ -174,6 +176,20 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
   const items = effective?.items ?? []
   const dirty = pending != null
   const currentVersion = data?.version ?? null
+  const prunedCount = useMemo(() => items.filter((item) => item.pruned).length, [items])
+  const visibleCount = items.length - prunedCount
+
+  const filteredItems = useMemo(() => {
+    const q = searchQuery.trim().toLocaleLowerCase()
+    return items.filter((item) => {
+      if (!showPruned && item.pruned) return false
+      if (!q) return true
+      const haystack = [item.word, item.definition, ...item.variations]
+        .join(" ")
+        .toLocaleLowerCase()
+      return haystack.includes(q)
+    })
+  }, [items, searchQuery, showPruned])
 
   const openAddDialog = useCallback(() => {
     setShowAddDialog(true)
@@ -200,7 +216,7 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
   useEffect(() => {
     setExtra(
       <div className="flex items-center gap-1.5 ml-auto">
-        <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{t`${String(items.length)} terms`}</span>
+        <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{t`${String(visibleCount)} terms`}</span>
         <Button
           size="sm"
           className="h-6 px-2 text-[10px] bg-white/10 text-white hover:bg-white/20"
@@ -224,7 +240,7 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
       </div>
     )
     return () => setExtra(null)
-  }, [items.length, saving, dirty, bookLabel, currentVersion, openAddDialog, glossaryRunning, t, setExtra])
+  }, [visibleCount, saving, dirty, bookLabel, currentVersion, openAddDialog, glossaryRunning, t, setExtra])
 
   const updateDefinition = (itemId: string, newDefinition: string) => {
     const base = pending ?? data ?? createEmptyGlossary()
@@ -256,6 +272,17 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
       ...base,
       generatedAt: base.generatedAt || new Date().toISOString(),
       items: base.items.filter((item) => (item.id ?? item.word) !== itemId),
+    })
+  }
+
+  const togglePruned = (itemId: string, pruned: boolean) => {
+    const base = pending ?? data ?? createEmptyGlossary()
+    setPending({
+      ...base,
+      generatedAt: base.generatedAt || new Date().toISOString(),
+      items: base.items.map((item) =>
+        (item.id ?? item.word) === itemId ? { ...item, pruned } : item
+      ),
     })
   }
 
@@ -299,52 +326,119 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
   }
 
   return (
-    <div className="space-y-1">
-      {items.map((item) => (
-        <div
-          key={item.id ?? item.word}
-          className="flex items-start gap-3 px-3 py-2.5 rounded-md border bg-card"
-        >
-          <div className="shrink-0 w-32">
-            <span className="text-sm font-medium">{item.word}</span>
-            {item.source === "manual" && (
-              <Badge variant="secondary" className="ml-2 text-[10px] h-4 px-1.5">
-                {t`manual`}
-              </Badge>
-            )}
-          </div>
-          <EmojiInput
-            value={item.emojis}
-            onChange={(next) => updateEmojis(item.id ?? item.word, next)}
-            placeholder={t`Add emojis`}
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 px-1">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t`Filter terms…`}
+            className="w-full text-sm rounded border border-input bg-background pl-7 pr-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring"
           />
-          <Textarea
-            value={item.definition}
-            onChange={(e) => updateDefinition(item.id ?? item.word, e.target.value)}
-            className="flex-1 min-w-0 text-sm text-foreground leading-relaxed resize-none rounded border border-transparent bg-transparent p-1.5 -ml-1.5 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-            rows={1}
-          />
-          {item.variations.length > 0 && (
-            <div className="flex gap-1 shrink-0 flex-wrap">
-              {item.variations.map((v) => (
-                <Badge key={v} variant="outline" className="text-[10px] h-4 px-1.5">
-                  {v}
-                </Badge>
-              ))}
-            </div>
-          )}
-          {item.source === "manual" && (
-            <button
-              type="button"
-              onClick={() => removeManualItem(item.id ?? item.word)}
-              className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"
-              title={t`Remove manual glossary term`}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          )}
         </div>
-      ))}
+        {prunedCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowPruned((v) => !v)}
+            className={`shrink-0 flex items-center gap-1 text-xs rounded border px-2 py-1 transition-colors ${
+              showPruned
+                ? "bg-accent text-accent-foreground border-accent"
+                : "bg-background text-muted-foreground hover:bg-muted"
+            }`}
+            title={showPruned ? t`Hide pruned terms` : t`Show pruned terms`}
+          >
+            <EyeOff className="h-3.5 w-3.5" />
+            {t`Pruned (${String(prunedCount)})`}
+          </button>
+        )}
+      </div>
+      <div className="space-y-1">
+        {filteredItems.length === 0 ? (
+          <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+            {searchQuery
+              ? t`No terms match your filter.`
+              : t`No terms to show.`}
+          </div>
+        ) : (
+          filteredItems.map((item) => {
+            const itemId = item.id ?? item.word
+            const isPruned = item.pruned === true
+            const isManual = item.source === "manual"
+            return (
+              <div
+                key={itemId}
+                className={`flex items-start gap-3 px-3 py-2.5 rounded-md border bg-card transition-opacity ${
+                  isPruned ? "opacity-50" : ""
+                }`}
+              >
+                <div className="shrink-0 w-32">
+                  <span className={`text-sm font-medium ${isPruned ? "line-through" : ""}`}>{item.word}</span>
+                  {isManual && (
+                    <Badge variant="secondary" className="ml-2 text-[10px] h-4 px-1.5">
+                      {t`manual`}
+                    </Badge>
+                  )}
+                  {isPruned && (
+                    <Badge variant="outline" className="ml-2 text-[10px] h-4 px-1.5">
+                      {t`pruned`}
+                    </Badge>
+                  )}
+                </div>
+                <EmojiInput
+                  value={item.emojis}
+                  onChange={(next) => updateEmojis(itemId, next)}
+                  placeholder={t`Add emojis`}
+                />
+                <Textarea
+                  value={item.definition}
+                  onChange={(e) => updateDefinition(itemId, e.target.value)}
+                  className="flex-1 min-w-0 text-sm text-foreground leading-relaxed resize-none rounded border border-transparent bg-transparent p-1.5 -ml-1.5 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+                  rows={1}
+                />
+                {item.variations.length > 0 && (
+                  <div className="flex gap-1 shrink-0 flex-wrap">
+                    {item.variations.map((v) => (
+                      <Badge key={v} variant="outline" className="text-[10px] h-4 px-1.5">
+                        {v}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                {isManual ? (
+                  <button
+                    type="button"
+                    onClick={() => removeManualItem(itemId)}
+                    className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"
+                    title={t`Remove manual glossary term`}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                ) : isPruned ? (
+                  <button
+                    type="button"
+                    onClick={() => togglePruned(itemId, false)}
+                    className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                    title={t`Restore this term — it will be eligible again on the next regeneration.`}
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => togglePruned(itemId, true)}
+                    className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"
+                    title={t`Prune this term — it will be hidden from output and excluded from future regenerations.`}
+                  >
+                    <EyeOff className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            )
+          })
+        )}
+      </div>
       <AddGlossaryDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
