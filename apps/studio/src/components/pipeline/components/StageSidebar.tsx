@@ -34,8 +34,9 @@ import { ALL_STEP_NAMES, PAGE_PROGRESS_STEPS } from "@adt/types"
 
 const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   general: msg`General`,
-  config: msg`Overview`,
+  overview: msg`Overview`,
   "image-processing": msg`Image Processing`,
+  "section-types": msg`Section Types`,
   "container-types": msg`Container Types`,
   "text-types": msg`Text Types`,
   "metadata-prompt": msg`Metadata Prompt`,
@@ -91,7 +92,7 @@ function getSettingsTabs(
       { key: "segmentation-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["segmentation-prompt"]) },
     ],
     sectioning: [
-      { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.general) },
+      { key: "section-types", label: i18n._(SETTINGS_TAB_MESSAGE["section-types"]) },
       { key: "sectioning-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["sectioning-prompt"]) },
       { key: "refinement-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["refinement-prompt"]) },
       { key: "container-types", label: i18n._(SETTINGS_TAB_MESSAGE["container-types"]) },
@@ -136,7 +137,7 @@ function getSettingsTabs(
   if (!stageTabs) return undefined
   if (!showOverviewTab) return stageTabs
   return [
-    { key: "config", label: i18n._(SETTINGS_TAB_MESSAGE.config) },
+    { key: "overview", label: i18n._(SETTINGS_TAB_MESSAGE.overview) },
     ...stageTabs,
   ]
 }

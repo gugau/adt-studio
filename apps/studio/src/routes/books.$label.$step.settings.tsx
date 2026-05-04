@@ -6,6 +6,7 @@ import { resolveSettingsStageSlug } from "@/components/pipeline/settings-routing
 import { ExtractSettings } from "@/components/pipeline/stages/extract/ExtractSettings"
 import { ExtractLandingPage } from "@/components/pipeline/stages/extract/ExtractLandingPage"
 import { SectioningSettings } from "@/components/pipeline/stages/sectioning/SectioningSettings"
+import { SectioningLandingPage } from "@/components/pipeline/stages/sectioning/SectioningLandingPage"
 import { StoryboardSettings } from "@/components/pipeline/stages/storyboard/StoryboardSettings"
 import { QuizzesSettings } from "@/components/pipeline/stages/quizzes/QuizzesSettings"
 import { GlossarySettings } from "@/components/pipeline/stages/glossary/GlossarySettings"
@@ -86,10 +87,12 @@ export function StepSettingsPage() {
         {(() => {
           const settingsStage = resolveSettingsStageSlug(step)
 
-          if (tab === "config") {
+          if (tab === "overview") {
             switch (settingsStage) {
               case "extract":
                 return <ExtractLandingPage bookLabel={label} />
+              case "sectioning":
+                return <SectioningLandingPage bookLabel={label} />
             }
           }
 
