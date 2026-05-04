@@ -1,3 +1,4 @@
+/* eslint-disable lingui/no-unlocalized-strings -- "Aa" typographic samples + tailwind size/weight tokens, not UI copy */
 import {
   AlignCenter,
   AlignJustify,
@@ -12,9 +13,9 @@ import { StyleLabel } from "../controls/StyleLabel"
 import { Section } from "../controls/Section"
 import { Select, type SelectOption } from "../controls/Select"
 import { ColorInput } from "../controls/ColorInput"
+import { NumericInput } from "../controls/NumericInput"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import {
-  fontFamilyClassMap,
   fontSizeClassMap,
   fontWeightClassMap,
   textAlignClassMap,
@@ -24,59 +25,27 @@ import {
 } from "../class-maps"
 import { useElementStyles } from "../use-element-styles"
 
-const FAMILY_OPTIONS: ReadonlyArray<SelectOption<string>> = [
-  { value: "sans", label: "Sans" },
-  { value: "serif", label: "Serif" },
-  { value: "mono", label: "Mono" },
-]
-
-const SIZE_OPTIONS: ReadonlyArray<SelectOption<string>> = [
-  "xs",
-  "sm",
-  "base",
-  "lg",
-  "xl",
-  "2xl",
-  "3xl",
-  "4xl",
-  "5xl",
-  "6xl",
-  "7xl",
-  "8xl",
-  "9xl",
-].map((v) => ({ value: v, label: v }))
-
 const WEIGHT_OPTIONS: ReadonlyArray<SelectOption<string>> = [
-  "thin",
-  "extralight",
-  "light",
-  "normal",
-  "medium",
-  "semibold",
-  "bold",
-  "extrabold",
-  "black",
-].map((v) => ({ value: v, label: v }))
-
-const LEADING_OPTIONS: ReadonlyArray<SelectOption<string>> = [
-  "none",
-  "tight",
-  "snug",
-  "normal",
-  "relaxed",
-  "loose",
-].map((v) => ({ value: v, label: v }))
+  { value: "thin", label: "thin", preview: <span className="font-thin">Aa</span> },
+  { value: "extralight", label: "extralight", preview: <span className="font-extralight">Aa</span> },
+  { value: "light", label: "light", preview: <span className="font-light">Aa</span> },
+  { value: "normal", label: "normal", preview: <span className="font-normal">Aa</span> },
+  { value: "medium", label: "medium", preview: <span className="font-medium">Aa</span> },
+  { value: "semibold", label: "semibold", preview: <span className="font-semibold">Aa</span> },
+  { value: "bold", label: "bold", preview: <span className="font-bold">Aa</span> },
+  { value: "extrabold", label: "extrabold", preview: <span className="font-extrabold">Aa</span> },
+  { value: "black", label: "black", preview: <span className="font-black">Aa</span> },
+]
 
 const EMPTY_DECOR: string[] = []
 
 export function TypographySection() {
   const { t } = useLingui()
-  const fontFamily = useElementStyles(fontFamilyClassMap, "sans")
-  const fontSize = useElementStyles(fontSizeClassMap, "base")
+  const fontSize = useElementStyles(fontSizeClassMap, 16)
   const weight = useElementStyles(fontWeightClassMap, "normal")
   const decor = useElementStyles(textDecorationClassMap, EMPTY_DECOR)
   const align = useElementStyles(textAlignClassMap, "left")
-  const leading = useElementStyles(lineHeightClassMap, "normal")
+  const leading = useElementStyles(lineHeightClassMap, 1.5)
   const textColor = useElementStyles(textColorClassMap, "")
 
   const decorItems = [
@@ -94,11 +63,13 @@ export function TypographySection() {
 
   return (
     <Section title={<Trans>Typography</Trans>}>
-      <StyleLabel label={<Trans>Family</Trans>} override={fontFamily.override}>
-        <Select value={fontFamily.value} onChange={fontFamily.setValue} options={FAMILY_OPTIONS} />
-      </StyleLabel>
       <StyleLabel label={<Trans>Size</Trans>} override={fontSize.override}>
-        <Select value={fontSize.value} onChange={fontSize.setValue} options={SIZE_OPTIONS} />
+        <NumericInput
+          value={fontSize.value}
+          onCommit={fontSize.setValue}
+          inputMode="numeric"
+          suffix="px"
+        />
       </StyleLabel>
       <StyleLabel label={<Trans>Weight</Trans>} override={weight.override}>
         <Select value={weight.value} onChange={weight.setValue} options={WEIGHT_OPTIONS} />
@@ -133,7 +104,11 @@ export function TypographySection() {
         </ToggleGroup>
       </StyleLabel>
       <StyleLabel label={<Trans>Leading</Trans>} override={leading.override}>
-        <Select value={leading.value} onChange={leading.setValue} options={LEADING_OPTIONS} />
+        <NumericInput
+          value={leading.value}
+          onCommit={leading.setValue}
+          suffix="×"
+        />
       </StyleLabel>
       <StyleLabel label={<Trans>Text</Trans>} override={textColor.override}>
         <ColorInput value={textColor.value} onChange={textColor.setValue} />

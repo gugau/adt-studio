@@ -1,3 +1,5 @@
+/* eslint-disable lingui/no-unlocalized-strings -- Tailwind class identifiers, not user copy */
+
 import type { ClassMap } from "./types"
 import { makeColorClassMap } from "./_color"
 
@@ -50,39 +52,56 @@ export const fontWeightClassMap: ClassMap<string> = {
   },
 }
 
-const FONT_SIZE_VALUES = [
-  "xs",
-  "sm",
-  "base",
-  "lg",
-  "xl",
-  "2xl",
-  "3xl",
-  "4xl",
-  "5xl",
-  "6xl",
-  "7xl",
-  "8xl",
-  "9xl",
+// Tailwind's default text-size scale, in px (1rem = 16px).
+const FONT_SIZE_TOKENS: ReadonlyArray<readonly [string, number]> = [
+  ["xs", 12],
+  ["sm", 14],
+  ["base", 16],
+  ["lg", 18],
+  ["xl", 20],
+  ["2xl", 24],
+  ["3xl", 30],
+  ["4xl", 36],
+  ["5xl", 48],
+  ["6xl", 60],
+  ["7xl", 72],
+  ["8xl", 96],
+  ["9xl", 128],
 ]
+const FONT_SIZE_TOKEN_TO_PX = new Map<string, number>(FONT_SIZE_TOKENS)
+const FONT_SIZE_PX_TO_TOKEN = new Map<number, string>(
+  FONT_SIZE_TOKENS.map(([t, px]) => [px, t])
+)
 
-export const fontSizeClassMap: ClassMap<string> = {
-  // `text-` with a known size token, or an arbitrary px/rem/em value. Stays
-  // disjoint from text-color (`text-[#hex]`) and text-align (`text-left`).
+export const fontSizeClassMap: ClassMap<number> = {
   matches: (cls) =>
     /^text-(xs|sm|base|lg|xl|[2-9]xl|\[[\d.]+(?:px|rem|em)\])$/.test(cls),
   fromClasses(classes) {
-    let last: string | null = null
+    let last: number | null = null
     for (const cls of classes) {
       const m = cls.match(/^text-(.+)$/)
       if (!m) continue
-      if (FONT_SIZE_VALUES.includes(m[1])) last = m[1]
+      const token = m[1]
+      const namedPx = FONT_SIZE_TOKEN_TO_PX.get(token)
+      if (namedPx !== undefined) {
+        last = namedPx
+        continue
+      }
+      const arb = token.match(/^\[([\d.]+)(px|rem|em)\]$/)
+      if (arb) {
+        const n = Number(arb[1])
+        if (Number.isFinite(n)) {
+          last = arb[2] === "px" ? n : n * 16
+        }
+      }
     }
     return last
   },
   toClasses(value) {
-    if (!FONT_SIZE_VALUES.includes(value)) return []
-    return [`text-${value}`]
+    if (!Number.isFinite(value) || value <= 0) return []
+    const namedToken = FONT_SIZE_PX_TO_TOKEN.get(value)
+    if (namedToken) return [`text-${namedToken}`]
+    return [`text-[${value}px]`]
   },
 }
 
@@ -105,23 +124,46 @@ export const textAlignClassMap: ClassMap<string> = {
   },
 }
 
-const LEADING_VALUES = ["none", "tight", "snug", "normal", "relaxed", "loose"]
+const LEADING_TOKENS: ReadonlyArray<readonly [string, number]> = [
+  ["none", 1],
+  ["tight", 1.25],
+  ["snug", 1.375],
+  ["normal", 1.5],
+  ["relaxed", 1.625],
+  ["loose", 2],
+]
+const LEADING_TOKEN_TO_VALUE = new Map<string, number>(LEADING_TOKENS)
+const LEADING_VALUE_TO_TOKEN = new Map<number, string>(
+  LEADING_TOKENS.map(([t, v]) => [v, t])
+)
 
-export const lineHeightClassMap: ClassMap<string> = {
+export const lineHeightClassMap: ClassMap<number> = {
   matches: (cls) =>
     /^leading-(none|tight|snug|normal|relaxed|loose|\[[\d.]+\])$/.test(cls),
   fromClasses(classes) {
-    let last: string | null = null
+    let last: number | null = null
     for (const cls of classes) {
       const m = cls.match(/^leading-(.+)$/)
       if (!m) continue
-      if (LEADING_VALUES.includes(m[1])) last = m[1]
+      const token = m[1]
+      const named = LEADING_TOKEN_TO_VALUE.get(token)
+      if (named !== undefined) {
+        last = named
+        continue
+      }
+      const arb = token.match(/^\[([\d.]+)\]$/)
+      if (arb) {
+        const n = Number(arb[1])
+        if (Number.isFinite(n)) last = n
+      }
     }
     return last
   },
   toClasses(value) {
-    if (!LEADING_VALUES.includes(value)) return []
-    return [`leading-${value}`]
+    if (!Number.isFinite(value) || value <= 0) return []
+    const namedToken = LEADING_VALUE_TO_TOKEN.get(value)
+    if (namedToken) return [`leading-${namedToken}`]
+    return [`leading-[${value}]`]
   },
 }
 

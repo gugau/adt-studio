@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import {
   Select as RadixSelect,
   SelectContent,
@@ -10,6 +11,8 @@ import { cn } from "@/lib/utils"
 export interface SelectOption<T extends string> {
   value: T
   label: string
+  /** Optional rich preview shown inside the dropdown row (not in the trigger). */
+  preview?: ReactNode
 }
 
 interface SelectProps<T extends string> {
@@ -34,6 +37,7 @@ export function Select<T extends string>({
   disabled,
   className,
 }: SelectProps<T>) {
+  const selectedLabel = options.find((o) => o.value === value)?.label
   return (
     <RadixSelect
       value={value}
@@ -46,12 +50,23 @@ export function Select<T extends string>({
           className
         )}
       >
-        <SelectValue placeholder={placeholder} />
+        <SelectValue placeholder={placeholder}>
+          {selectedLabel}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
         {options.map((o) => (
           <SelectItem key={o.value} value={o.value} className="text-[12px]">
-            {o.label}
+            {o.preview ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="inline-flex w-8 shrink-0 items-center justify-center text-foreground">
+                  {o.preview}
+                </span>
+                <span className="text-muted-foreground">{o.label}</span>
+              </span>
+            ) : (
+              o.label
+            )}
           </SelectItem>
         ))}
       </SelectContent>
