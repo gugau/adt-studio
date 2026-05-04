@@ -111,6 +111,17 @@ export interface Storage {
   /** Clear all debug images (used when regenerating storyboard outputs). */
   clearDebugImages(): void
 
+  /** Store the desktop thumbnail for a section as {sectionId}.png. */
+  putSectionThumbnail(sectionId: string, data: Buffer): void
+  /** Resolve the file path for a section thumbnail (for serving). Returns null if not on disk. */
+  getSectionThumbnailPath(sectionId: string): string | null
+  /** Remove all thumbnails belonging to a page (sectionIds prefixed with pageId_sec). */
+  clearSectionThumbnailsForPage(pageId: string): void
+  /** Remove all section thumbnails. */
+  clearSectionThumbnails(): void
+  /** Remove all quiz thumbnails (filenames matching qzNNN.png). */
+  clearQuizThumbnails(): void
+
   /** Add a sign language video to the book. */
   putSignLanguageVideo(videoId: string, buffer: Buffer, originalName: string, mimeType: string): void
   /** List all sign language videos. */

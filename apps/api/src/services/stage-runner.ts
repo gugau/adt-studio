@@ -63,6 +63,9 @@ import {
   getSegmentedImageId,
   createScreenshotRenderer,
   DEFAULT_VISUAL_REVIEW_MODEL_ID,
+  generateSectionThumbnails,
+  generateQuizThumbnails,
+  pad3,
 } from "@adt/pipeline"
 import type { PageSectioningConfig, TranslationConfig, QuizPageInput, ProviderRouting, MeaningfulnessConfig, CroppingConfig, SegmentationConfig, VisualRefinementDeps } from "@adt/pipeline"
 import { loadStyleguideContent } from "./styleguide.js"
@@ -762,6 +765,7 @@ async function runStoryboardStep(
 
   const storage = createBookStorage(label, booksDir)
   let visualRefinement: VisualRefinementDeps | undefined
+  let screenshotRenderer: Awaited<ReturnType<typeof createScreenshotRenderer>> | undefined
 
   try {
     const config = loadBookConfig(label, booksDir, configPath)
@@ -818,13 +822,21 @@ async function runStoryboardStep(
       return model
     }
 
-    // Set up visual refinement if any render strategy enables it
+    // Lazily create the screenshot renderer once — used by both visual_refinement
+    // (when enabled) and the section-thumbnails step (always, when web assets exist).
     if (webAssetsDir) {
+      try {
+        screenshotRenderer = await createScreenshotRenderer()
+      } catch (err) {
+        console.warn(
+          `[stage-run] ${label}: skipping visual_refinement and section thumbnails — Playwright unavailable: ${toErrorMessage(err)}`
+        )
+      }
+
       const hasVisualRefinement = Object.values(config.render_strategies ?? {}).some(
         (s) => s.config?.visual_refinement?.enabled
       )
-      if (hasVisualRefinement) {
-        const screenshotRenderer = await createScreenshotRenderer()
+      if (hasVisualRefinement && screenshotRenderer) {
         visualRefinement = {
           screenshotRenderer,
           webAssetsDir,
@@ -907,6 +919,35 @@ async function runStoryboardStep(
             visualRefinement,
           )
           storage.putNodeData("web-rendering", page.pageId, renderResult)
+
+          // Generate desktop thumbnails for the sidebar/app-nav/quiz cards.
+          // Best-effort: failures here do not block rendering.
+          if (screenshotRenderer && webAssetsDir) {
+            try {
+              storage.clearSectionThumbnailsForPage(page.pageId)
+              const sectionIds = sectioning.sections.map((s) => s.sectionId)
+              const thumbImages = new Map<string, { base64: string }>()
+              for (const [id, img] of renderImages) {
+                thumbImages.set(id, { base64: img.base64 })
+              }
+              const thumbs = await generateSectionThumbnails({
+                rendering: renderResult,
+                sectionIds,
+                label,
+                images: thumbImages,
+                webAssetsDir,
+                screenshotRenderer,
+              })
+              for (const t of thumbs) {
+                storage.putSectionThumbnail(t.sectionId, Buffer.from(t.base64, "base64"))
+              }
+            } catch (err) {
+              console.warn(
+                `[stage-run] ${label}: thumbnails for ${page.pageId} failed: ${toErrorMessage(err)}`
+              )
+            }
+          }
+
           completedRendering++
           progress.emit({
             type: "step-progress",
@@ -939,8 +980,8 @@ async function runStoryboardStep(
     progress.emit({ type: "step-complete", step: "web-rendering" })
     console.log(`[stage-run] ${label}: storyboard complete`)
   } finally {
-    if (visualRefinement) {
-      await visualRefinement.screenshotRenderer.close()
+    if (screenshotRenderer) {
+      await screenshotRenderer.close()
     }
     storage.close()
   }
@@ -955,9 +996,10 @@ async function runQuizzesStep(
   options: StageRunOptions,
   progress: StageRunProgress
 ): Promise<void> {
-  const { booksDir, promptsDir, configPath } = options
+  const { booksDir, promptsDir, webAssetsDir, configPath } = options
 
   const storage = createBookStorage(label, booksDir)
+  let screenshotRenderer: Awaited<ReturnType<typeof createScreenshotRenderer>> | undefined
 
   try {
     const config = loadBookConfig(label, booksDir, configPath)
@@ -1044,11 +1086,49 @@ async function runQuizzesStep(
         step: "quiz-generation",
         message: `${quizResult.quizzes.length} quizzes from ${quizPages.length} pages`,
       })
+
+      // Generate quiz thumbnails using the same .thumbnails/ path as section
+      // thumbnails. Best-effort: failures here do not block the stage.
+      if (webAssetsDir) {
+        try {
+          screenshotRenderer = await createScreenshotRenderer()
+        } catch (err) {
+          console.warn(
+            `[stage-run] ${label}: skipping quiz thumbnails — Playwright unavailable: ${toErrorMessage(err)}`
+          )
+        }
+        if (screenshotRenderer) {
+          try {
+            storage.clearQuizThumbnails()
+            const catalogRow = storage.getLatestNodeData("text-catalog", "book")
+            const catalog = (catalogRow?.data as TextCatalogOutput | undefined) ?? undefined
+            const pairs = quizResult.quizzes.map((quiz, i) => ({
+              quiz,
+              quizId: `qz${pad3(i + 1)}`,
+            }))
+            const thumbs = await generateQuizThumbnails({
+              quizzes: pairs,
+              label,
+              catalog,
+              webAssetsDir,
+              screenshotRenderer,
+            })
+            for (const t of thumbs) {
+              storage.putSectionThumbnail(t.quizId, Buffer.from(t.base64, "base64"))
+            }
+          } catch (err) {
+            console.warn(`[stage-run] ${label}: quiz thumbnails failed: ${toErrorMessage(err)}`)
+          }
+        }
+      }
     }
 
     progress.emit({ type: "step-complete", step: "quiz-generation" })
     console.log(`[stage-run] ${label}: quizzes complete`)
   } finally {
+    if (screenshotRenderer) {
+      await screenshotRenderer.close()
+    }
     storage.close()
   }
 }

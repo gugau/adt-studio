@@ -639,6 +639,9 @@ msgstr "Renderizado con IA"
 msgid "AI sees the current image and modifies it"
 msgstr "La IA ve la imagen actual y la modifica"
 
+#~ msgid "AI-generated activity. Editable below."
+#~ msgstr "Actividad generada por IA. Editable a continuación."
+
 msgid "AI-powered"
 msgstr "Impulsado por IA"
 
@@ -1610,6 +1613,9 @@ msgstr "Editar"
 msgid "Edit & enrich"
 msgstr "Edita y enriquece"
 
+msgid "Edit in Quizzes stage"
+msgstr "Editar en la etapa de Cuestionarios"
+
 msgid "Edit Prompt"
 msgstr "Prompt de edición"
 
@@ -2298,6 +2304,9 @@ msgstr "Interactivo"
 msgid "Interactive assessment questions"
 msgstr "Preguntas de evaluación interactivas"
 
+msgid "Interactive page: AI conversion from the original PDF."
+msgstr "Página interactiva: conversión por IA del PDF original."
+
 msgid "Invalid project archive"
 msgstr "Archivo de proyecto no válido"
 
@@ -2503,6 +2512,9 @@ msgstr "Cargando vista previa..."
 
 msgid "Loading prompt..."
 msgstr "Loading prompt..."
+
+msgid "Loading quiz..."
+msgstr "Cargando cuestionario..."
 
 msgid "Loading quizzes..."
 msgstr "Cargando quizzes..."
@@ -2894,6 +2906,9 @@ msgstr "Aún no hay datos del pipeline. Ejecuta el pipeline para ver estadístic
 msgid "No preset defaults — all options start empty."
 msgstr "Sin valores predeterminados — todas las opciones comienzan vacías."
 
+msgid "No preview"
+msgstr "Sin vista previa"
+
 msgid "No preview available."
 msgstr "No hay vista previa disponible."
 
@@ -2917,6 +2932,9 @@ msgstr "Sin secciones para esta página"
 
 msgid "No sections on this page"
 msgstr "Sin secciones en esta página"
+
+msgid "No sections yet"
+msgstr "Aún no hay secciones"
 
 msgid "No segmentation needed for this image"
 msgstr "No segmentation needed for this image"
@@ -3031,6 +3049,9 @@ msgstr "Abrir vista previa de la página {0}"
 
 msgid "Open Preview"
 msgstr "Open Preview"
+
+msgid "Open quiz preview"
+msgstr "Abrir vista previa del cuestionario"
 
 msgid "Open Validation"
 msgstr "Open Validation"
@@ -3149,6 +3170,16 @@ msgstr "Página {0}"
 msgid "Page {0} — Section {1}"
 msgstr "Página {0} — Sección {1}"
 
+#. placeholder {0}: entry.pageNumber
+#. placeholder {1}: entry.sectionType
+msgid "Page {0} · {1}"
+msgstr "Página {0} · {1}"
+
+#. placeholder {0}: entry.pageNumber
+#. placeholder {1}: entry.sectionIndex + 1
+msgid "Page {0} · Section {1}"
+msgstr "Página {0} · Sección {1}"
+
 msgid "Page {pageId}"
 msgstr "Página {0}"
 
@@ -3187,6 +3218,9 @@ msgstr "Prompt de refinamiento de sección"
 
 msgid "pages"
 msgstr "páginas"
+
+msgid "Pages"
+msgstr "Páginas"
 
 #. placeholder {0}: activeSession.session.start_page ?? "?"
 #. placeholder {1}: activeSession.session.end_page ?? "?"
@@ -3252,6 +3286,13 @@ msgstr "Desglose por etapa"
 
 msgid "Perfect for children's books, pairing large images with minimal text."
 msgstr "Perfecto para libros infantiles, combinando imágenes grandes con texto mínimo."
+
+#. placeholder {0}: entry.pageNumber
+msgid "pg {0}"
+msgstr "pg {0}"
+
+#~ msgid "pg {0} · §{1}"
+#~ msgstr "pg {0} · §{1}"
 
 msgid "Photograph"
 msgstr "Fotografía"
@@ -3425,11 +3466,30 @@ msgstr "px"
 msgid "Query param"
 msgstr "Parámetro de consulta"
 
+msgid "Quiz"
+msgstr "Cuestionario"
+
+#. placeholder {0}: quiz.quizIndex + 1
+msgid "quiz {0}"
+msgstr "cuestionario {0}"
+
+#. placeholder {0}: quiz.quizIndex + 1
+msgid "Quiz {0}"
+msgstr "Cuestionario {0}"
+
+#. placeholder {0}: quiz.quizIndex + 1
+#. placeholder {1}: quiz.question
+msgid "Quiz {0}: {1}"
+msgstr "Cuestionario {0}: {1}"
+
 msgid "Quiz Generation"
 msgstr "Generación de cuestionarios"
 
 msgid "Quiz Generation Prompt"
 msgstr "Prompt de generación de quiz"
+
+msgid "Quiz preview"
+msgstr "Vista previa del cuestionario"
 
 msgid "Quiz Prompt"
 msgstr "Indicación de cuestionario"
@@ -3475,6 +3535,9 @@ msgstr "Reejecutar audio"
 
 msgid "Re-run translation"
 msgstr "Reejecutar traducción"
+
+msgid "Read-only preview. Edit quiz content in the Quizzes stage."
+msgstr "Vista previa de solo lectura. Edita el contenido del cuestionario en la etapa Cuestionarios."
 
 msgid "Readers see"
 msgstr "Los lectores ven"
@@ -3907,6 +3970,9 @@ msgstr "Razonamiento de sección"
 
 msgid "sections"
 msgstr "secciones"
+
+msgid "Sections"
+msgstr "Secciones"
 
 msgid "See examples"
 msgstr "Ver ejemplos"

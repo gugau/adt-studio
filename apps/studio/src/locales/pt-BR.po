@@ -639,6 +639,9 @@ msgstr "Renderização com IA"
 msgid "AI sees the current image and modifies it"
 msgstr "A IA vê a imagem atual e a modifica"
 
+#~ msgid "AI-generated activity. Editable below."
+#~ msgstr "Atividade gerada por IA. Editável abaixo."
+
 msgid "AI-powered"
 msgstr "IA"
 
@@ -1610,6 +1613,9 @@ msgstr "Editar"
 msgid "Edit & enrich"
 msgstr "Editar e aprimorar"
 
+msgid "Edit in Quizzes stage"
+msgstr "Editar na etapa de Quizzes"
+
 msgid "Edit Prompt"
 msgstr "Prompt de edição"
 
@@ -2298,6 +2304,9 @@ msgstr "Interativo"
 msgid "Interactive assessment questions"
 msgstr "Questões de avaliação interativas"
 
+msgid "Interactive page: AI conversion from the original PDF."
+msgstr "Página interativa: conversão por IA do PDF original."
+
 msgid "Invalid project archive"
 msgstr "Arquivo de projeto inválido"
 
@@ -2503,6 +2512,9 @@ msgstr "Carregando pré-visualização..."
 
 msgid "Loading prompt..."
 msgstr "Loading prompt..."
+
+msgid "Loading quiz..."
+msgstr "Carregando quiz..."
 
 msgid "Loading quizzes..."
 msgstr "Carregando quizzes..."
@@ -2894,6 +2906,9 @@ msgstr "Ainda não há dados do pipeline. Execute o pipeline para ver as estatí
 msgid "No preset defaults — all options start empty."
 msgstr "Sem predefinições padrão — todas as opções começam vazias."
 
+msgid "No preview"
+msgstr "Sem prévia"
+
 msgid "No preview available."
 msgstr "Nenhuma pré-visualização disponível."
 
@@ -2917,6 +2932,9 @@ msgstr "Sem seções para esta página"
 
 msgid "No sections on this page"
 msgstr "Sem seções nesta página"
+
+msgid "No sections yet"
+msgstr "Ainda não há seções"
 
 msgid "No segmentation needed for this image"
 msgstr "No segmentation needed for this image"
@@ -3031,6 +3049,9 @@ msgstr "Abrir pré-visualização da página {0}"
 
 msgid "Open Preview"
 msgstr "Open Preview"
+
+msgid "Open quiz preview"
+msgstr "Abrir prévia do quiz"
 
 msgid "Open Validation"
 msgstr "Open Validation"
@@ -3149,6 +3170,16 @@ msgstr "Página {0}"
 msgid "Page {0} — Section {1}"
 msgstr "Página {0} — Seção {1}"
 
+#. placeholder {0}: entry.pageNumber
+#. placeholder {1}: entry.sectionType
+msgid "Page {0} · {1}"
+msgstr "Página {0} · {1}"
+
+#. placeholder {0}: entry.pageNumber
+#. placeholder {1}: entry.sectionIndex + 1
+msgid "Page {0} · Section {1}"
+msgstr "Página {0} · Seção {1}"
+
 msgid "Page {pageId}"
 msgstr "Página {0}"
 
@@ -3187,6 +3218,9 @@ msgstr "Prompt de refinamento de seção"
 
 msgid "pages"
 msgstr "páginas"
+
+msgid "Pages"
+msgstr "Páginas"
 
 #. placeholder {0}: activeSession.session.start_page ?? "?"
 #. placeholder {1}: activeSession.session.end_page ?? "?"
@@ -3252,6 +3286,13 @@ msgstr "Detalhamento por etapa"
 
 msgid "Perfect for children's books, pairing large images with minimal text."
 msgstr "Perfeito para livros infantis, combinando imagens grandes com texto mínimo."
+
+#. placeholder {0}: entry.pageNumber
+msgid "pg {0}"
+msgstr "pg {0}"
+
+#~ msgid "pg {0} · §{1}"
+#~ msgstr "pg {0} · §{1}"
 
 msgid "Photograph"
 msgstr "Fotografia"
@@ -3425,11 +3466,30 @@ msgstr "px"
 msgid "Query param"
 msgstr "Parâmetro de consulta"
 
+msgid "Quiz"
+msgstr "Quiz"
+
+#. placeholder {0}: quiz.quizIndex + 1
+msgid "quiz {0}"
+msgstr "quiz {0}"
+
+#. placeholder {0}: quiz.quizIndex + 1
+msgid "Quiz {0}"
+msgstr "Quiz {0}"
+
+#. placeholder {0}: quiz.quizIndex + 1
+#. placeholder {1}: quiz.question
+msgid "Quiz {0}: {1}"
+msgstr "Quiz {0}: {1}"
+
 msgid "Quiz Generation"
 msgstr "Geração de questionários"
 
 msgid "Quiz Generation Prompt"
 msgstr "Prompt de geração de quiz"
+
+msgid "Quiz preview"
+msgstr "Prévia do quiz"
 
 msgid "Quiz Prompt"
 msgstr "Prompt de questionário"
@@ -3475,6 +3535,9 @@ msgstr "Reexecutar áudio"
 
 msgid "Re-run translation"
 msgstr "Reexecutar tradução"
+
+msgid "Read-only preview. Edit quiz content in the Quizzes stage."
+msgstr "Prévia somente leitura. Edite o conteúdo do quiz na etapa Quizzes."
 
 msgid "Readers see"
 msgstr "Leitores veem"
@@ -3907,6 +3970,9 @@ msgstr "Raciocínio de seção"
 
 msgid "sections"
 msgstr "seções"
+
+msgid "Sections"
+msgstr "Seções"
 
 msgid "See examples"
 msgstr "Ver exemplos"

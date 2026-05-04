@@ -3,7 +3,9 @@ import { createPortal } from "react-dom"
 import { Link, useMatchRoute, useSearch } from "@tanstack/react-router"
 import { Trans } from "@lingui/react/macro"
 import {
+  HelpCircle,
   Loader2,
+  Puzzle,
   RotateCcw,
   Settings,
 } from "lucide-react"
@@ -30,6 +32,29 @@ import { useSettingsDialog } from "@/routes/__root"
 import type { TaskInfoResponse } from "@/api/client"
 import { getStageLabelI18n, getStepLabelI18n } from "../pipeline-i18n"
 import { ALL_STEP_NAMES, PAGE_PROGRESS_STEPS } from "@adt/types"
+import { getSectionThumbnailUrl, type PageQuizItem, type PageSummaryItem } from "@/api/client"
+
+/** Build the flat ordered list of pages + quizzes (interleaved by afterPageId).
+ *  Used by both the Pages and Sections lists when quizzes should be shown. */
+type PageListEntry =
+  | { kind: "page"; page: PageSummaryItem }
+  | { kind: "quiz"; quiz: PageQuizItem }
+
+function interleavePagesAndQuizzes(
+  pages: PageSummaryItem[],
+  includeQuizzes: boolean,
+): PageListEntry[] {
+  const out: PageListEntry[] = []
+  for (const page of pages) {
+    out.push({ kind: "page", page })
+    if (includeQuizzes) {
+      for (const quiz of page.quizzesAfter) {
+        out.push({ kind: "quiz", quiz })
+      }
+    }
+  }
+  return out
+}
 
 const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   general: msg`General`,
@@ -502,6 +527,8 @@ function TaskRow({ task }: { task: TaskInfoResponse }) {
 
 /* ---------- PageIndex ---------- */
 
+type IndexTab = "pages" | "sections"
+
 function PageIndex({
   bookLabel,
   activeStep,
@@ -519,75 +546,74 @@ function PageIndex({
   onSelectSection?: (index: number) => void
   stageRunning?: boolean
 }) {
+  const { i18n } = useLingui()
   const { data: pages } = usePages(bookLabel)
   const activeStepDef = STAGES.find((s) => s.slug === activeStep)
-  const parentRef = useRef<HTMLDivElement>(null)
+  const [tab, setTab] = useState<IndexTab>("pages")
 
-  const selectedIndex = useMemo(
-    () => pages?.findIndex((p) => p.pageId === selectedPageId) ?? -1,
-    [pages, selectedPageId],
+  const tabsHeader = (
+    <div className="shrink-0 flex border-b bg-background">
+      {(["pages", "sections"] as const).map((value) => {
+        const isActive = tab === value
+        const label = value === "pages" ? i18n._(msg`Pages`) : i18n._(msg`Sections`)
+        return (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setTab(value)}
+            className={cn(
+              "flex-1 px-2 py-1.5 text-[11px] font-medium uppercase tracking-wider transition-colors",
+              isActive
+                ? cn(activeStepDef?.textColor ?? "text-violet-600", "border-b-2", activeStepDef?.borderDark ?? "border-violet-600")
+                : "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
+            )}
+          >
+            {label}
+          </button>
+        )
+      })}
+    </div>
   )
-
-  const virtualizer = useVirtualizer({
-    count: pages?.length ?? 0,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 52,
-    overscan: 5,
-  })
-
-  useEffect(() => {
-    if (selectedIndex >= 0) {
-      virtualizer.scrollToIndex(selectedIndex, { align: "auto" })
-    }
-  }, [selectedIndex, virtualizer])
 
   if (!pages?.length) {
     return (
-      <div className="flex-1 overflow-y-auto px-3 py-4 text-xs text-muted-foreground text-center">
-        <Trans>No pages extracted yet</Trans>
+      <div className="flex flex-col flex-1 min-h-0">
+        {tabsHeader}
+        <div className="flex-1 overflow-y-auto px-3 py-4 text-xs text-muted-foreground text-center">
+          <Trans>No pages extracted yet</Trans>
+        </div>
       </div>
     )
   }
 
   return (
-    <div ref={parentRef} className="flex-1 overflow-y-auto">
-      <div
-        style={{
-          height: virtualizer.getTotalSize(),
-          width: "100%",
-          position: "relative",
-        }}
-      >
-        {virtualizer.getVirtualItems().map((virtualRow) => {
-          const page = pages[virtualRow.index]
-          const isActive = page.pageId === selectedPageId
-          return (
-            <div
-              key={page.pageId}
-              data-index={virtualRow.index}
-              ref={virtualizer.measureElement}
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                transform: `translateY(${virtualRow.start}px)`,
-              }}
-            >
-              <PageRow
-                bookLabel={bookLabel}
-                page={page}
-                isActive={isActive}
-                activeStepDef={activeStepDef}
-                onSelect={() => onSelectPage?.(page.pageId)}
-                sectionIndex={isActive ? sectionIndex : undefined}
-                onSelectSection={isActive ? onSelectSection : undefined}
-                stageRunning={stageRunning}
-              />
-            </div>
-          )
-        })}
-      </div>
+    <div className="flex flex-col flex-1 min-h-0">
+      {tabsHeader}
+      {tab === "pages" ? (
+        <PagesList
+          bookLabel={bookLabel}
+          activeStep={activeStep}
+          pages={pages}
+          activeStepDef={activeStepDef}
+          selectedPageId={selectedPageId}
+          onSelectPage={onSelectPage}
+          sectionIndex={sectionIndex}
+          onSelectSection={onSelectSection}
+          stageRunning={stageRunning}
+        />
+      ) : (
+        <SectionsList
+          bookLabel={bookLabel}
+          activeStep={activeStep}
+          pages={pages}
+          activeStepDef={activeStepDef}
+          selectedPageId={selectedPageId}
+          sectionIndex={sectionIndex}
+          onSelectPage={onSelectPage}
+          onSelectSection={onSelectSection}
+          stageRunning={stageRunning}
+        />
+      )}
     </div>
   )
 }
@@ -751,5 +777,563 @@ function PageRow({
         </div>
       )}
     </div>
+  )
+}
+
+/* ---------- QuizRow ---------- */
+
+function QuizRow({
+  bookLabel,
+  quiz,
+  isActive,
+  onSelect,
+}: {
+  bookLabel: string
+  quiz: PageQuizItem
+  isActive: boolean
+  onSelect: () => void
+}) {
+  const { i18n } = useLingui()
+  const [imgLoaded, setImgLoaded] = useState(false)
+  const [imgFailed, setImgFailed] = useState(false)
+  const imgSrc = quiz.hasRendering
+    ? getSectionThumbnailUrl(bookLabel, quiz.quizId, quiz.renderingVersion)
+    : null
+
+  useEffect(() => {
+    setImgLoaded(false)
+    setImgFailed(false)
+  }, [imgSrc])
+
+  const showImg = imgSrc !== null && !imgFailed
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      title={i18n._(msg`Quiz ${quiz.quizIndex + 1}: ${quiz.question}`)}
+      className={cn(
+        "flex items-start gap-2 px-2 py-1.5 text-left transition-colors w-full",
+        isActive
+          ? "bg-orange-50 text-orange-600 font-medium"
+          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+      )}
+    >
+      <div className="relative shrink-0 w-16 h-12 rounded ring-1 ring-border overflow-hidden bg-white">
+        {showImg && imgSrc ? (
+          <img
+            src={imgSrc}
+            alt=""
+            loading="lazy"
+            onLoad={() => setImgLoaded(true)}
+            onError={() => setImgFailed(true)}
+            className={cn(
+              "absolute inset-0 w-full h-full object-cover object-top transition-opacity",
+              imgLoaded ? "opacity-100" : "opacity-0"
+            )}
+          />
+        ) : null}
+        {(!showImg || !imgLoaded) && (
+          <div className="absolute inset-0 flex items-center justify-center bg-orange-50">
+            <HelpCircle className="w-4 h-4 text-orange-500" />
+          </div>
+        )}
+      </div>
+      <div className="flex flex-col gap-0.5 min-w-0 flex-1 pt-0.5">
+        <span className="text-[11px] leading-snug line-clamp-2">
+          {quiz.question || i18n._(msg`Quiz`)}
+        </span>
+        <span className="text-[9px] font-mono opacity-50 leading-none">
+          <Trans>quiz {quiz.quizIndex + 1}</Trans>
+        </span>
+      </div>
+    </button>
+  )
+}
+
+/* ---------- PagesList ---------- */
+
+function PagesList({
+  bookLabel,
+  activeStep,
+  pages,
+  activeStepDef,
+  selectedPageId,
+  onSelectPage,
+  sectionIndex,
+  onSelectSection,
+  stageRunning,
+}: {
+  bookLabel: string
+  activeStep: string
+  pages: PageSummaryItem[]
+  activeStepDef?: (typeof STAGES)[number]
+  selectedPageId?: string
+  onSelectPage?: (pageId: string) => void
+  sectionIndex?: number
+  onSelectSection?: (index: number) => void
+  stageRunning?: boolean
+}) {
+  const parentRef = useRef<HTMLDivElement>(null)
+  // Quizzes are only navigable from the storyboard stage (where StoryboardView
+  // knows how to render them). Other stages render the Pages list as-is.
+  const showQuizzes = activeStep === "storyboard"
+  const entries = useMemo(
+    () => interleavePagesAndQuizzes(pages, showQuizzes),
+    [pages, showQuizzes],
+  )
+  const selectedIndex = useMemo(
+    () => entries.findIndex((e) =>
+      e.kind === "page"
+        ? e.page.pageId === selectedPageId
+        : e.quiz.quizId === selectedPageId,
+    ),
+    [entries, selectedPageId],
+  )
+  const virtualizer = useVirtualizer({
+    count: entries.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 52,
+    overscan: 5,
+  })
+  useEffect(() => {
+    if (selectedIndex >= 0) {
+      virtualizer.scrollToIndex(selectedIndex, { align: "auto" })
+    }
+  }, [selectedIndex, virtualizer])
+
+  return (
+    <div ref={parentRef} className="flex-1 overflow-y-auto">
+      <div
+        style={{
+          height: virtualizer.getTotalSize(),
+          width: "100%",
+          position: "relative",
+        }}
+      >
+        {virtualizer.getVirtualItems().map((virtualRow) => {
+          const entry = entries[virtualRow.index]
+          const key = entry.kind === "page" ? entry.page.pageId : entry.quiz.quizId
+          const isActive = key === selectedPageId
+          return (
+            <div
+              key={key}
+              data-index={virtualRow.index}
+              ref={virtualizer.measureElement}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              {entry.kind === "page" ? (
+                <PageRow
+                  bookLabel={bookLabel}
+                  page={entry.page}
+                  isActive={isActive}
+                  activeStepDef={activeStepDef}
+                  onSelect={() => onSelectPage?.(entry.page.pageId)}
+                  sectionIndex={isActive ? sectionIndex : undefined}
+                  onSelectSection={isActive ? onSelectSection : undefined}
+                  stageRunning={stageRunning}
+                />
+              ) : (
+                <QuizRow
+                  bookLabel={bookLabel}
+                  quiz={entry.quiz}
+                  isActive={isActive}
+                  onSelect={() => onSelectPage?.(entry.quiz.quizId)}
+                />
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/* ---------- SectionsList ---------- */
+
+interface SectionEntry {
+  pageId: string
+  pageNumber: number
+  sectionId: string
+  sectionIndex: number
+  sectionType: string
+  pageSectionCount: number
+  hasRendering: boolean
+  renderingVersion: number | null
+}
+
+type SectionListEntry =
+  | { kind: "section"; section: SectionEntry }
+  | { kind: "quiz"; quiz: PageQuizItem }
+
+function SectionsList({
+  bookLabel,
+  activeStep,
+  pages,
+  activeStepDef,
+  selectedPageId,
+  sectionIndex,
+  onSelectPage,
+  onSelectSection,
+  stageRunning,
+}: {
+  bookLabel: string
+  activeStep: string
+  pages: PageSummaryItem[]
+  activeStepDef?: (typeof STAGES)[number]
+  selectedPageId?: string
+  sectionIndex?: number
+  onSelectPage?: (pageId: string) => void
+  onSelectSection?: (index: number) => void
+  stageRunning?: boolean
+}) {
+  const parentRef = useRef<HTMLDivElement>(null)
+  const showQuizzes = activeStep === "storyboard"
+
+  const entries = useMemo<SectionListEntry[]>(() => {
+    const list: SectionListEntry[] = []
+    for (const page of pages) {
+      for (const s of page.sections) {
+        list.push({
+          kind: "section",
+          section: {
+            pageId: page.pageId,
+            pageNumber: page.pageNumber,
+            sectionId: s.sectionId,
+            sectionIndex: s.sectionIndex,
+            sectionType: s.sectionType,
+            pageSectionCount: page.sectionCount,
+            hasRendering: page.hasRendering,
+            renderingVersion: page.renderingVersion,
+          },
+        })
+      }
+      if (showQuizzes) {
+        for (const quiz of page.quizzesAfter) {
+          list.push({ kind: "quiz", quiz })
+        }
+      }
+    }
+    return list
+  }, [pages, showQuizzes])
+
+  const selectedEntryIndex = useMemo(
+    () =>
+      entries.findIndex((e) =>
+        e.kind === "section"
+          ? e.section.pageId === selectedPageId &&
+            e.section.sectionIndex === (sectionIndex ?? 0)
+          : e.quiz.quizId === selectedPageId,
+      ),
+    [entries, selectedPageId, sectionIndex],
+  )
+
+  const virtualizer = useVirtualizer({
+    count: entries.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 100,
+    overscan: 2,
+  })
+
+  useEffect(() => {
+    if (selectedEntryIndex >= 0) {
+      virtualizer.scrollToIndex(selectedEntryIndex, { align: "auto" })
+    }
+  }, [selectedEntryIndex, virtualizer])
+
+  if (entries.length === 0) {
+    return (
+      <div className="flex-1 overflow-y-auto px-3 py-4 text-xs text-muted-foreground text-center">
+        <Trans>No sections yet</Trans>
+      </div>
+    )
+  }
+
+  return (
+    <div ref={parentRef} className="flex-1 overflow-y-auto">
+      <div
+        style={{
+          height: virtualizer.getTotalSize(),
+          width: "100%",
+          position: "relative",
+        }}
+      >
+        {virtualizer.getVirtualItems().map((virtualRow) => {
+          const entry = entries[virtualRow.index]
+          if (entry.kind === "quiz") {
+            const isActive = entry.quiz.quizId === selectedPageId
+            return (
+              <div
+                key={`quiz-${entry.quiz.quizId}`}
+                data-index={virtualRow.index}
+                ref={virtualizer.measureElement}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
+                <SectionQuizRow
+                  bookLabel={bookLabel}
+                  quiz={entry.quiz}
+                  index={virtualRow.index}
+                  isActive={isActive}
+                  onSelect={() => onSelectPage?.(entry.quiz.quizId)}
+                />
+              </div>
+            )
+          }
+          const section = entry.section
+          const isActive =
+            section.pageId === selectedPageId &&
+            section.sectionIndex === (sectionIndex ?? 0)
+          return (
+            <div
+              key={`${section.pageId}-${section.sectionIndex}`}
+              data-index={virtualRow.index}
+              ref={virtualizer.measureElement}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              <SectionRow
+                bookLabel={bookLabel}
+                entry={section}
+                index={virtualRow.index}
+                isActive={isActive}
+                activeStepDef={activeStepDef}
+                onSelectPage={onSelectPage}
+                onSelectSection={onSelectSection}
+                stageRunning={stageRunning}
+              />
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/* ---------- SectionRow ---------- */
+
+function SectionRow({
+  bookLabel,
+  entry,
+  index,
+  isActive,
+  activeStepDef,
+  onSelectPage,
+  onSelectSection,
+  stageRunning,
+}: {
+  bookLabel: string
+  entry: SectionEntry
+  index: number
+  isActive: boolean
+  activeStepDef?: (typeof STAGES)[number]
+  onSelectPage?: (pageId: string) => void
+  onSelectSection?: (index: number) => void
+  stageRunning?: boolean
+}) {
+  const { i18n } = useLingui()
+  const [imgLoaded, setImgLoaded] = useState(false)
+  const [imgFailed, setImgFailed] = useState(false)
+  const isActivity = entry.sectionType.startsWith("activity")
+  const imgSrc = entry.hasRendering
+    ? getSectionThumbnailUrl(bookLabel, entry.sectionId, entry.renderingVersion)
+    : null
+
+  // Reset load/error state when the underlying source changes (re-render bumps version).
+  useEffect(() => {
+    setImgLoaded(false)
+    setImgFailed(false)
+  }, [imgSrc])
+
+  const handleClick = () => {
+    onSelectPage?.(entry.pageId)
+    onSelectSection?.(entry.sectionIndex)
+  }
+
+  const sectionProcessing = stageRunning && !entry.hasRendering
+  const showImg = imgSrc !== null && !imgFailed
+  const showFallback = !showImg || !imgLoaded
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      title={
+        isActivity
+          ? i18n._(msg`Page ${entry.pageNumber} · ${entry.sectionType}`)
+          : i18n._(msg`Page ${entry.pageNumber} · Section ${entry.sectionIndex + 1}`)
+      }
+      className={cn(
+        "flex items-start gap-2 w-full px-2 py-1.5 text-left transition-colors",
+        isActive
+          ? cn(activeStepDef?.bgLight ?? "bg-violet-50", activeStepDef?.textColor ?? "text-violet-600", "font-medium")
+          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+      )}
+    >
+      <span className="shrink-0 mt-1 w-4 text-[10px] font-mono tabular-nums opacity-60 text-right leading-none">
+        {index + 1}
+      </span>
+      <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+        <div
+          className={cn(
+            "relative w-full overflow-hidden rounded bg-white border-2",
+            isActive
+              ? activeStepDef?.borderDark ?? "border-violet-600"
+              : "border-transparent ring-1 ring-border"
+          )}
+          style={{ aspectRatio: "1280 / 800" }}
+        >
+          {showImg && imgSrc && (
+            <img
+              src={imgSrc}
+              alt=""
+              loading="lazy"
+              onLoad={() => setImgLoaded(true)}
+              onError={() => setImgFailed(true)}
+              className={cn(
+                "absolute inset-0 w-full h-full object-cover object-top transition-opacity",
+                imgLoaded ? "opacity-100" : "opacity-0"
+              )}
+            />
+          )}
+          {showFallback && (
+            <div className="absolute inset-0 flex items-center justify-center bg-muted">
+              {sectionProcessing ? (
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+              ) : isActivity ? (
+                <Puzzle className="w-5 h-5 text-violet-500" />
+              ) : showImg ? null : (
+                <span className="text-[10px] text-muted-foreground">
+                  <Trans>No preview</Trans>
+                </span>
+              )}
+            </div>
+          )}
+          {sectionProcessing && showImg && imgLoaded && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+              <Loader2 className="w-4 h-4 animate-spin text-white" />
+            </div>
+          )}
+          {isActivity && showImg && imgLoaded && !sectionProcessing && (
+            <div className="absolute top-1 left-1 flex items-center justify-center w-4 h-4 rounded-full bg-violet-600 text-white shadow ring-1 ring-white/40">
+              <Puzzle className="w-2.5 h-2.5" />
+            </div>
+          )}
+        </div>
+        <span className="flex items-center gap-1 text-[9px] font-mono opacity-60 leading-none">
+          <Trans>pg {entry.pageNumber}</Trans>
+          {entry.pageSectionCount > 1 && (
+            <span
+              className={cn(
+                "inline-flex items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded text-[9px] font-medium not-italic leading-none",
+                isActive
+                  ? cn(activeStepDef?.color ?? "bg-violet-600", "text-white")
+                  : "bg-black/10 text-black/50"
+              )}
+            >
+              {entry.sectionIndex + 1}
+            </span>
+          )}
+        </span>
+      </div>
+    </button>
+  )
+}
+
+/* ---------- SectionQuizRow ---------- */
+
+function SectionQuizRow({
+  bookLabel,
+  quiz,
+  index,
+  isActive,
+  onSelect,
+}: {
+  bookLabel: string
+  quiz: PageQuizItem
+  index: number
+  isActive: boolean
+  onSelect: () => void
+}) {
+  const { i18n } = useLingui()
+  const [imgLoaded, setImgLoaded] = useState(false)
+  const [imgFailed, setImgFailed] = useState(false)
+  const imgSrc = quiz.hasRendering
+    ? getSectionThumbnailUrl(bookLabel, quiz.quizId, quiz.renderingVersion)
+    : null
+
+  useEffect(() => {
+    setImgLoaded(false)
+    setImgFailed(false)
+  }, [imgSrc])
+
+  const showImg = imgSrc !== null && !imgFailed
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      title={i18n._(msg`Quiz ${quiz.quizIndex + 1}: ${quiz.question}`)}
+      className={cn(
+        "flex items-start gap-2 w-full px-2 py-1.5 text-left transition-colors",
+        isActive
+          ? "bg-orange-50 text-orange-600 font-medium"
+          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+      )}
+    >
+      <span className="shrink-0 mt-1 w-4 text-[10px] font-mono tabular-nums opacity-60 text-right leading-none">
+        {index + 1}
+      </span>
+      <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+        <div
+          className={cn(
+            "relative w-full overflow-hidden rounded bg-white border-2",
+            isActive ? "border-orange-600" : "border-transparent ring-1 ring-border"
+          )}
+          style={{ aspectRatio: "1280 / 800" }}
+        >
+          {showImg && imgSrc && (
+            <img
+              src={imgSrc}
+              alt=""
+              loading="lazy"
+              onLoad={() => setImgLoaded(true)}
+              onError={() => setImgFailed(true)}
+              className={cn(
+                "absolute inset-0 w-full h-full object-cover object-top transition-opacity",
+                imgLoaded ? "opacity-100" : "opacity-0"
+              )}
+            />
+          )}
+          {(!showImg || !imgLoaded) && (
+            <div className="absolute inset-0 flex items-center justify-center bg-orange-50">
+              <HelpCircle className="w-5 h-5 text-orange-500" />
+            </div>
+          )}
+          <div className="absolute top-1 left-1 flex items-center justify-center w-4 h-4 rounded-full bg-orange-600 text-white shadow ring-1 ring-white/40">
+            <HelpCircle className="w-2.5 h-2.5" />
+          </div>
+        </div>
+        <span className="text-[9px] font-mono opacity-60 leading-none">
+          <Trans>quiz {quiz.quizIndex + 1}</Trans>
+        </span>
+      </div>
+    </button>
   )
 }

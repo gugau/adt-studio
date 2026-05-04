@@ -6,6 +6,7 @@ import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
 import { StoryboardSectionDetail } from "./components/StoryboardSectionDetail"
+import { StoryboardQuizDetail } from "./components/StoryboardQuizDetail"
 import { SectioningOverview } from "./components/SectioningOverview"
 import { useSectionNav } from "@/routes/books.$label"
 import { Trans } from "@lingui/react/macro"
@@ -52,12 +53,22 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
   }, [selectedPageIdProp, pageList.length, showRunCard, setSelectedPageId])
 
   const selectedPageId = selectedPageIdProp ?? null
-  const currentPageIndex = selectedPageId ? pageList.findIndex((p) => p.pageId === selectedPageId) : -1
+  const isQuizSelected = selectedPageId?.startsWith("qz") ?? false
+  const selectedQuiz = isQuizSelected
+    ? pageList.flatMap((p) => p.quizzesAfter).find((q) => q.quizId === selectedPageId) ?? null
+    : null
+  const currentPageIndex = !isQuizSelected && selectedPageId
+    ? pageList.findIndex((p) => p.pageId === selectedPageId)
+    : -1
   const selectedPageSummary = currentPageIndex >= 0 ? pageList[currentPageIndex] : null
   const prevPageId = currentPageIndex > 0 ? pageList[currentPageIndex - 1].pageId : null
   const nextPageId = currentPageIndex < pageList.length - 1 ? pageList[currentPageIndex + 1].pageId : null
 
-  const { data: page, isLoading: pageLoading } = usePage(bookLabel, selectedPageId ?? "")
+  // Don't query the page detail endpoint for quiz IDs — it would 404.
+  const { data: page, isLoading: pageLoading } = usePage(
+    bookLabel,
+    isQuizSelected ? "" : selectedPageId ?? "",
+  )
 
   const sectionCount = page?.sectioningTree?.sections.length ?? 0
 
@@ -293,6 +304,25 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
     )
   }
 
+  // Quiz preview mode: clicked a quiz row in the sidebar.
+  if (isQuizSelected && selectedQuiz) {
+    return (
+      <StoryboardQuizDetail
+        bookLabel={bookLabel}
+        quiz={selectedQuiz}
+      />
+    )
+  }
+  // Quiz selected but quizzes haven't loaded — show a brief loader.
+  if (isQuizSelected && !selectedQuiz) {
+    return (
+      <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <Trans>Loading quiz...</Trans>
+      </div>
+    )
+  }
+
   // Overview mode: show sectioning table for all pages
   if (overviewMode) {
     return (
@@ -303,6 +333,10 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
           setOverviewMode(false)
           setSelectedPageId(pageId)
           setSectionIndex(sectionIdx)
+        }}
+        onNavigateToQuiz={(quizId) => {
+          setOverviewMode(false)
+          setSelectedPageId(quizId)
         }}
       />
     )

@@ -1,12 +1,13 @@
-import { useState, useEffect, useRef, useCallback } from "react"
+import { Fragment, useState, useEffect, useRef, useCallback } from "react"
 import { useQueries, useQuery, useQueryClient, useMutation } from "@tanstack/react-query"
-import { api, BASE_URL, type PageSummaryItem, type PageDetail } from "@/api/client"
+import { api, BASE_URL, type PageQuizItem, type PageSummaryItem, type PageDetail } from "@/api/client"
 import type { ContentNodeData, PageSectioningOutput, PageSectioningSection } from "@adt/types"
 import { collectLeafNodes, deleteNode, replaceNodeId, toggleNodePruned } from "@adt/types"
 import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import {
   ChevronDown,
   ChevronRight,
+  HelpCircle,
   Layers,
   Image,
   FileText,
@@ -31,9 +32,10 @@ interface SectioningOverviewProps {
   bookLabel: string
   pages: PageSummaryItem[]
   onNavigateToSection?: (pageId: string, sectionIndex: number) => void
+  onNavigateToQuiz?: (quizId: string) => void
 }
 
-export function SectioningOverview({ bookLabel, pages, onNavigateToSection }: SectioningOverviewProps) {
+export function SectioningOverview({ bookLabel, pages, onNavigateToSection, onNavigateToQuiz }: SectioningOverviewProps) {
   const { t } = useLingui()
   const queryClient = useQueryClient()
   const { stageState } = useBookRun()
@@ -226,38 +228,48 @@ export function SectioningOverview({ bookLabel, pages, onNavigateToSection }: Se
                 const pageIdx = allPageIds.indexOf(page.pageId)
                 const hasPrevPage = pageIdx > 0
                 const hasNextPage = pageIdx < allPageIds.length - 1
+                const summary = pages.find((p) => p.pageId === page.pageId)
+                const quizzesAfter = summary?.quizzesAfter ?? []
 
                 return (
-                  <PageSectionRows
-                    key={page.pageId}
-                    page={page}
-                    bookLabel={bookLabel}
-                    hasPrevPage={hasPrevPage}
-                    hasNextPage={hasNextPage}
-                    onNavigateToSection={onNavigateToSection}
-                    onMerge={(sectionIndex, direction) =>
-                      mergeMutation.mutate({ pageId: page.pageId, sectionIndex, direction })
-                    }
-                    onMergeCrossPage={(sectionIndex, direction) =>
-                      mergeCrossPageMutation.mutate({ pageId: page.pageId, sectionIndex, direction })
-                    }
-                    onClone={(sectionIndex) =>
-                      cloneMutation.mutate({ pageId: page.pageId, sectionIndex })
-                    }
-                    onDelete={(sectionIndex) =>
-                      deleteMutation.mutate({ pageId: page.pageId, sectionIndex })
-                    }
-                    onTogglePrune={(sectionIndex) =>
-                      togglePruneMutation.mutate({ pageId: page.pageId, sectionIndex })
-                    }
-                    onConfirmAction={setConfirmDialog}
-                    isMutating={isMutating}
-                    visiblePanels={visiblePanels}
-                    expandSignal={expandSignal}
-                    onInvalidatePages={invalidatePages}
-                    textRoles={textRoles}
-                    containerStructures={containerStructures}
-                  />
+                  <Fragment key={page.pageId}>
+                    <PageSectionRows
+                      page={page}
+                      bookLabel={bookLabel}
+                      hasPrevPage={hasPrevPage}
+                      hasNextPage={hasNextPage}
+                      onNavigateToSection={onNavigateToSection}
+                      onMerge={(sectionIndex, direction) =>
+                        mergeMutation.mutate({ pageId: page.pageId, sectionIndex, direction })
+                      }
+                      onMergeCrossPage={(sectionIndex, direction) =>
+                        mergeCrossPageMutation.mutate({ pageId: page.pageId, sectionIndex, direction })
+                      }
+                      onClone={(sectionIndex) =>
+                        cloneMutation.mutate({ pageId: page.pageId, sectionIndex })
+                      }
+                      onDelete={(sectionIndex) =>
+                        deleteMutation.mutate({ pageId: page.pageId, sectionIndex })
+                      }
+                      onTogglePrune={(sectionIndex) =>
+                        togglePruneMutation.mutate({ pageId: page.pageId, sectionIndex })
+                      }
+                      onConfirmAction={setConfirmDialog}
+                      isMutating={isMutating}
+                      visiblePanels={visiblePanels}
+                      expandSignal={expandSignal}
+                      onInvalidatePages={invalidatePages}
+                      textRoles={textRoles}
+                      containerStructures={containerStructures}
+                    />
+                    {quizzesAfter.map((quiz) => (
+                      <QuizOverviewRow
+                        key={`quiz-${quiz.quizId}`}
+                        quiz={quiz}
+                        onNavigate={() => onNavigateToQuiz?.(quiz.quizId)}
+                      />
+                    ))}
+                  </Fragment>
                 )
               })}
             </tbody>
@@ -1044,4 +1056,59 @@ function updateSectionNodes(
       i === sectionIndex ? { ...s, nodes: transform(s.nodes) } : s
     ),
   }
+}
+
+// ---------------------------------------------------------------------------
+// Quiz row (interleaved between page rows)
+// ---------------------------------------------------------------------------
+
+function QuizOverviewRow({
+  quiz,
+  onNavigate,
+}: {
+  quiz: PageQuizItem
+  onNavigate: () => void
+}) {
+  const { t } = useLingui()
+  const preview = quiz.question?.trim() || null
+
+  return (
+    <tr
+      className="border-b hover:bg-muted/30 cursor-pointer transition-colors"
+      onClick={onNavigate}
+    >
+      <td className="px-3 py-2" />
+      <td className="px-3 py-2">
+        <span className="font-mono text-muted-foreground">—</span>
+      </td>
+      <td className="px-3 py-2">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onNavigate()
+          }}
+          className="font-mono text-orange-600 dark:text-orange-400 hover:underline"
+          title={t`Open quiz preview`}
+        >
+          {quiz.quizId}
+        </button>
+      </td>
+      <td className="px-3 py-2">
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
+          <HelpCircle className="h-3 w-3" />
+          <Trans>Quiz</Trans>
+        </span>
+      </td>
+      <td className="px-3 py-2 text-muted-foreground truncate max-w-xs">
+        {preview ? (
+          <span title={preview}>{preview}</span>
+        ) : (
+          <span className="italic"><Trans>Quiz</Trans></span>
+        )}
+      </td>
+      <td className="px-3 py-2 text-center text-muted-foreground">—</td>
+      <td className="px-3 py-2" />
+    </tr>
+  )
 }

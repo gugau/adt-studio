@@ -44,6 +44,13 @@ export function getSignLanguageVideoUrl(label: string, videoId: string): string 
   return `${BASE_URL}/books/${label}/sign-language-videos/${videoId}`
 }
 
+export function getSectionThumbnailUrl(label: string, sectionId: string, version?: number | null): string {
+  const base = `${BASE_URL}/books/${label}/sections/${sectionId}/thumbnail.png`
+  if (version == null) return base
+  // eslint-disable-next-line lingui/no-unlocalized-strings -- URL query string, not user-visible
+  return `${base}?v=${String(version)}`
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${BASE_URL}${path}`
   const res = await fetch(url, {
@@ -146,17 +153,28 @@ export interface StageRunStatus {
   queue?: Array<{ id: string; fromStage: string; toStage: string }>
 }
 
+export interface PageQuizItem {
+  quizId: string
+  quizIndex: number
+  afterPageId: string
+  question: string
+  hasRendering: boolean
+  renderingVersion: number | null
+}
+
 export interface PageSummaryItem {
   pageId: string
   pageNumber: number
   hasRendering: boolean
+  renderingVersion: number | null
   hasCaptioning: boolean
   textPreview: string
   imageCount: number
   wordCount: number
   sectionCount: number
   prunedSections: number[]
-  sections: Array<{ sectionId: string; sectionIndex: number }>
+  sections: Array<{ sectionId: string; sectionIndex: number; sectionType: string }>
+  quizzesAfter: PageQuizItem[]
 }
 
 export interface SectionRendering {

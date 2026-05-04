@@ -90,6 +90,15 @@ export {
 } from "./screenshot.js"
 export { buildScreenshotHtml } from "./screenshot-html.js"
 export {
+  generateSectionThumbnails,
+  generateQuizThumbnails,
+  THUMBNAIL_VIEWPORT,
+  type SectionThumbnail,
+  type QuizThumbnail,
+  type GenerateSectionThumbnailsOptions,
+  type GenerateQuizThumbnailsOptions,
+} from "./section-thumbnails.js"
+export {
   createTemplateEngine,
   renderSectionTemplate,
   type TemplateEngine,

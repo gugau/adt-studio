@@ -640,6 +640,9 @@ msgstr "Rendu IA"
 msgid "AI sees the current image and modifies it"
 msgstr "L'IA voit l'image actuelle et la modifie"
 
+#~ msgid "AI-generated activity. Editable below."
+#~ msgstr "Activité générée par IA. Modifiable ci-dessous."
+
 msgid "AI-powered"
 msgstr "Assisté par IA"
 
@@ -1611,6 +1614,9 @@ msgstr "Modifier"
 msgid "Edit & enrich"
 msgstr "Éditer et enrichir"
 
+msgid "Edit in Quizzes stage"
+msgstr "Modifier dans l'étape Quiz"
+
 msgid "Edit Prompt"
 msgstr "Modifier Invite"
 
@@ -2299,6 +2305,9 @@ msgstr "Interactif"
 msgid "Interactive assessment questions"
 msgstr "Questions d'évaluation interactives"
 
+msgid "Interactive page: AI conversion from the original PDF."
+msgstr "Page interactive : conversion par IA du PDF d'origine."
+
 msgid "Invalid project archive"
 msgstr "Archive de projet invalide"
 
@@ -2504,6 +2513,9 @@ msgstr "Chargement de l'aperçu..."
 
 msgid "Loading prompt..."
 msgstr "Chargement de l'invite..."
+
+msgid "Loading quiz..."
+msgstr "Chargement du quiz..."
 
 msgid "Loading quizzes..."
 msgstr "Chargement des quiz..."
@@ -2895,6 +2907,9 @@ msgstr "Aucune donnée de pipeline. Exécutez le pipeline pour voir les statisti
 msgid "No preset defaults — all options start empty."
 msgstr "Aucune valeur par défaut de préréglage — toutes les options démarrent vides."
 
+msgid "No preview"
+msgstr "Aucun aperçu"
+
 msgid "No preview available."
 msgstr "Aucun aperçu disponible."
 
@@ -2918,6 +2933,9 @@ msgstr "Aucune section pour cette page"
 
 msgid "No sections on this page"
 msgstr "Aucune section sur cette page"
+
+msgid "No sections yet"
+msgstr "Aucune section pour l'instant"
 
 msgid "No segmentation needed for this image"
 msgstr "Aucune segmentation nécessaire pour cette image"
@@ -3032,6 +3050,9 @@ msgstr "Ouvrir l'aperçu de la page {pageId}"
 
 msgid "Open Preview"
 msgstr "Ouvrir l'aperçu"
+
+msgid "Open quiz preview"
+msgstr "Ouvrir l'aperçu du quiz"
 
 msgid "Open Validation"
 msgstr "Ouvrir la validation"
@@ -3150,6 +3171,16 @@ msgstr "Page {0}"
 msgid "Page {0} — Section {1}"
 msgstr "Page {0} — Section {1}"
 
+#. placeholder {0}: entry.pageNumber
+#. placeholder {1}: entry.sectionType
+msgid "Page {0} · {1}"
+msgstr "Page {0} · {1}"
+
+#. placeholder {0}: entry.pageNumber
+#. placeholder {1}: entry.sectionIndex + 1
+msgid "Page {0} · Section {1}"
+msgstr "Page {0} · Section {1}"
+
 msgid "Page {pageId}"
 msgstr "Page {pageId}"
 
@@ -3188,6 +3219,9 @@ msgstr "Prompt de raffinement du sectionnement"
 
 msgid "pages"
 msgstr "pages"
+
+msgid "Pages"
+msgstr "Pages"
 
 #. placeholder {0}: activeSession.session.start_page ?? "?"
 #. placeholder {1}: activeSession.session.end_page ?? "?"
@@ -3253,6 +3287,13 @@ msgstr "Détail par étape"
 
 msgid "Perfect for children's books, pairing large images with minimal text."
 msgstr "Parfait pour les livres pour enfants, associant de grandes images avec un minimum de texte."
+
+#. placeholder {0}: entry.pageNumber
+msgid "pg {0}"
+msgstr "pg {0}"
+
+#~ msgid "pg {0} · §{1}"
+#~ msgstr "pg {0} · §{1}"
 
 msgid "Photograph"
 msgstr "Photographie"
@@ -3426,11 +3467,30 @@ msgstr "px"
 msgid "Query param"
 msgstr "Paramètre de requête"
 
+msgid "Quiz"
+msgstr "Quiz"
+
+#. placeholder {0}: quiz.quizIndex + 1
+msgid "quiz {0}"
+msgstr "quiz {0}"
+
+#. placeholder {0}: quiz.quizIndex + 1
+msgid "Quiz {0}"
+msgstr "Quiz {0}"
+
+#. placeholder {0}: quiz.quizIndex + 1
+#. placeholder {1}: quiz.question
+msgid "Quiz {0}: {1}"
+msgstr "Quiz {0} : {1}"
+
 msgid "Quiz Generation"
 msgstr "Génération de quiz"
 
 msgid "Quiz Generation Prompt"
 msgstr "Quiz Génération Invite"
+
+msgid "Quiz preview"
+msgstr "Aperçu du quiz"
 
 msgid "Quiz Prompt"
 msgstr "Quiz Invite"
@@ -3476,6 +3536,9 @@ msgstr "Relancer la synthèse vocale"
 
 msgid "Re-run translation"
 msgstr "Relancer la traduction"
+
+msgid "Read-only preview. Edit quiz content in the Quizzes stage."
+msgstr "Aperçu en lecture seule. Modifiez le contenu du quiz à l'étape Quiz."
 
 msgid "Readers see"
 msgstr "Les lecteurs voient"
@@ -3908,6 +3971,9 @@ msgstr "Raisonnement du sectionnement"
 
 msgid "sections"
 msgstr "sections"
+
+msgid "Sections"
+msgstr "Sections"
 
 msgid "See examples"
 msgstr "Voir les exemples"

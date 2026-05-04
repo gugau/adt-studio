@@ -18,13 +18,26 @@ interface PageSummary {
   pageId: string
   pageNumber: number
   hasRendering: boolean
+  /** Latest version of the page's web-rendering node, or null when not yet rendered. */
+  renderingVersion: number | null
   hasCaptioning: boolean
   textPreview: string
   imageCount: number
   wordCount: number
   sectionCount: number
   prunedSections: number[]
-  sections: Array<{ sectionId: string; sectionIndex: number }>
+  sections: Array<{ sectionId: string; sectionIndex: number; sectionType: string }>
+  /** Quizzes that should be displayed immediately after this page (ordered). */
+  quizzesAfter: Array<{
+    quizId: string
+    quizIndex: number
+    afterPageId: string
+    question: string
+    /** True when quiz-generation node exists; thumbnail availability tracks the same version. */
+    hasRendering: boolean
+    /** Latest version of the book's quiz-generation node, used as a thumbnail cache-buster. */
+    renderingVersion: number | null
+  }>
 }
 
 interface PageDetail {
@@ -316,6 +329,10 @@ function saveStoryboardNode(
 ): number {
   const version = storage.putNodeData(node, itemId, data)
   clearCaptionData(storage)
+  // Section thumbnails are tied to the rendered HTML and the section id layout.
+  // Clear them on any sectioning/rendering save so the UI doesn't show stale
+  // images; the next storyboard run (or single-section re-render) regenerates.
+  storage.clearSectionThumbnailsForPage(itemId)
   return version
 }
 
@@ -408,14 +425,17 @@ export function createPageRoutes(
         "SELECT page_id, page_number, text FROM pages ORDER BY page_number"
       ) as Array<{ page_id: string; page_number: number; text: string }>
 
-      // Check which pages have web-rendering output
+      // Check which pages have web-rendering output and grab the latest version
+      // (used as a cache-buster on section thumbnail URLs).
       const rendered = new Set<string>()
+      const renderingVersionByPage = new Map<string, number>()
       const renderRows = db.all(
-        "SELECT DISTINCT item_id FROM node_data WHERE node = ?",
+        "SELECT item_id, MAX(version) AS max_version FROM node_data WHERE node = ? GROUP BY item_id",
         ["web-rendering"]
-      ) as Array<{ item_id: string }>
+      ) as Array<{ item_id: string; max_version: number }>
       for (const row of renderRows) {
         rendered.add(row.item_id)
+        renderingVersionByPage.set(row.item_id, row.max_version)
       }
 
       // Check which pages have image-captioning output
@@ -451,7 +471,7 @@ export function createPageRoutes(
       // Get section counts, pruned indices, sectionIds, and flattened text per page from page-sectioning node data
       const sectionCounts = new Map<string, number>()
       const prunedSections = new Map<string, number[]>()
-      const sectionIdsByPage = new Map<string, Array<{ sectionId: string; sectionIndex: number }>>()
+      const sectionIdsByPage = new Map<string, Array<{ sectionId: string; sectionIndex: number; sectionType: string }>>()
       const structuredText = new Map<string, string>()
       const structuringRows = db.all(
         "SELECT item_id, data FROM node_data WHERE node = ? ORDER BY version DESC",
@@ -463,6 +483,7 @@ export function createPageRoutes(
             const parsed = JSON.parse(row.data)
             const sections = parsed.sections as Array<{
               sectionId?: string
+              sectionType?: string
               isPruned?: boolean
               nodes?: unknown[]
             }>
@@ -473,9 +494,14 @@ export function createPageRoutes(
             }, [])
             if (pruned.length > 0) prunedSections.set(row.item_id, pruned)
             const sectionIds = (sections ?? [])
-              .map((s, i) => ({ sectionId: s.sectionId ?? `${row.item_id}_sec${String(i + 1).padStart(3, "0")}`, sectionIndex: i, isPruned: s.isPruned }))
+              .map((s, i) => ({
+                sectionId: s.sectionId ?? `${row.item_id}_sec${String(i + 1).padStart(3, "0")}`,
+                sectionIndex: i,
+                sectionType: s.sectionType ?? "content",
+                isPruned: s.isPruned,
+              }))
               .filter((s) => !s.isPruned)
-              .map(({ sectionId, sectionIndex }) => ({ sectionId, sectionIndex }))
+              .map(({ sectionId, sectionIndex, sectionType }) => ({ sectionId, sectionIndex, sectionType }))
             sectionIdsByPage.set(row.item_id, sectionIds)
 
             // Flatten tree to plain-text preview (skip pruned sections + pruned leaves)
@@ -498,10 +524,44 @@ export function createPageRoutes(
         }
       }
 
+      // Load quiz-generation output (book-level) to interleave quizzes after their afterPageId page.
+      const quizzesByAfterPageId = new Map<string, PageSummary["quizzesAfter"]>()
+      let quizGenerationVersion: number | null = null
+      const quizRow = db.all(
+        "SELECT data, MAX(version) AS max_version FROM node_data WHERE node = ? AND item_id = ? GROUP BY item_id",
+        ["quiz-generation", "book"]
+      ) as Array<{ data: string; max_version: number }>
+      if (quizRow.length > 0) {
+        try {
+          const parsed = JSON.parse(quizRow[0].data) as {
+            quizzes?: Array<{ afterPageId?: string; question?: string }>
+          }
+          quizGenerationVersion = quizRow[0].max_version
+          for (let i = 0; i < (parsed.quizzes ?? []).length; i++) {
+            const quiz = parsed.quizzes![i]
+            const afterPageId = quiz.afterPageId ?? ""
+            if (!afterPageId) continue
+            const list = quizzesByAfterPageId.get(afterPageId) ?? []
+            list.push({
+              quizId: `qz${String(i + 1).padStart(3, "0")}`,
+              quizIndex: i,
+              afterPageId,
+              question: quiz.question ?? "",
+              hasRendering: true,
+              renderingVersion: quizGenerationVersion,
+            })
+            quizzesByAfterPageId.set(afterPageId, list)
+          }
+        } catch {
+          // ignore malformed quiz data
+        }
+      }
+
       const result: PageSummary[] = pages.map((p) => ({
         pageId: p.page_id,
         pageNumber: p.page_number,
         hasRendering: rendered.has(p.page_id),
+        renderingVersion: renderingVersionByPage.get(p.page_id) ?? null,
         hasCaptioning: captioned.has(p.page_id),
         textPreview: structuredText.get(p.page_id) ?? p.text.slice(0, 150),
         imageCount: imageCounts.get(p.page_id) ?? 0,
@@ -509,6 +569,7 @@ export function createPageRoutes(
         sectionCount: sectionCounts.get(p.page_id) ?? 0,
         prunedSections: prunedSections.get(p.page_id) ?? [],
         sections: sectionIdsByPage.get(p.page_id) ?? [],
+        quizzesAfter: quizzesByAfterPageId.get(p.page_id) ?? [],
       }))
 
       return c.json(result)
@@ -633,6 +694,30 @@ export function createPageRoutes(
       return c.json({ imageBase64 })
     } finally {
       db.close()
+    }
+  })
+
+  // GET /books/:label/sections/:sectionId/thumbnail.png — Desktop thumbnail PNG.
+  // Generated post-render and re-generated whenever rendering for that page changes.
+  app.get("/books/:label/sections/:sectionId/thumbnail.png", (c) => {
+    const { label, sectionId } = c.req.param()
+    const safeLabel = parseBookLabel(label)
+    const storage = createBookStorage(safeLabel, booksDir)
+    try {
+      const filePath = storage.getSectionThumbnailPath(sectionId)
+      if (!filePath) {
+        throw new HTTPException(404, { message: `Thumbnail not found: ${sectionId}` })
+      }
+      const data = fs.readFileSync(filePath)
+      return new Response(data, {
+        status: 200,
+        headers: {
+          "Content-Type": "image/png",
+          "Cache-Control": "no-cache",
+        },
+      })
+    } finally {
+      storage.close()
     }
   })
 
