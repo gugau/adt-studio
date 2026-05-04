@@ -25,8 +25,9 @@ import { useStepConfig } from "@/hooks/use-step-config"
 import { normalizeLocale } from "@/lib/languages"
 import { useLingui } from "@lingui/react/macro"
 
-export function ExtractSettings({ bookLabel, headerTarget, tab = "general" }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string }) {
+export function ExtractSettings({ bookLabel, headerTarget, tab = "image-processing" }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string }) {
   const { t } = useLingui()
+  const isImageProcessingTab = tab === "image-processing" || tab === "general"
   const { data: bookConfigData } = useBookConfig(bookLabel)
   const { data: activeConfigData } = useActiveConfig(bookLabel)
   const updateConfig = useUpdateBookConfig()
@@ -185,7 +186,7 @@ export function ExtractSettings({ bookLabel, headerTarget, tab = "general" }: { 
 
   return (
     <div className={tab === "metadata-prompt" || tab === "meaningfulness-prompt" || tab === "cropping-prompt" || tab === "segmentation-prompt" ? "h-full max-w-4xl" : "p-4 space-y-6"}>
-      {tab === "general" && (
+      {isImageProcessingTab && (
         <>
           {/* Page Range */}
           <div>

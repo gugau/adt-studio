@@ -34,6 +34,7 @@ import { ALL_STEP_NAMES, PAGE_PROGRESS_STEPS } from "@adt/types"
 
 const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   general: msg`General`,
+  "image-processing": msg`Image Processing`,
   "container-types": msg`Container Types`,
   "text-types": msg`Text Types`,
   "metadata-prompt": msg`Metadata Prompt`,
@@ -81,7 +82,7 @@ function getSettingsTabs(
 ): { key: string; label: string }[] | undefined {
   const tabs: Record<string, { key: string; label: string }[]> = {
     extract: [
-      { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.general) },
+      { key: "image-processing", label: i18n._(SETTINGS_TAB_MESSAGE["image-processing"]) },
       { key: "metadata-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["metadata-prompt"]) },
       { key: "meaningfulness-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["meaningfulness-prompt"]) },
       { key: "cropping-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["cropping-prompt"]) },
