@@ -4,6 +4,7 @@ import { X } from "lucide-react"
 import { STAGES, isStageSlug } from "@/components/pipeline/stage-config"
 import { resolveSettingsStageSlug } from "@/components/pipeline/settings-routing"
 import { ExtractSettings } from "@/components/pipeline/stages/extract/ExtractSettings"
+import { ExtractLandingPage } from "@/components/pipeline/stages/extract/ExtractLandingPage"
 import { SectioningSettings } from "@/components/pipeline/stages/sectioning/SectioningSettings"
 import { StoryboardSettings } from "@/components/pipeline/stages/storyboard/StoryboardSettings"
 import { QuizzesSettings } from "@/components/pipeline/stages/quizzes/QuizzesSettings"
@@ -84,6 +85,13 @@ export function StepSettingsPage() {
       <div className="flex-1 min-h-0 overflow-auto">
         {(() => {
           const settingsStage = resolveSettingsStageSlug(step)
+
+          if (tab === "config") {
+            switch (settingsStage) {
+              case "extract":
+                return <ExtractLandingPage bookLabel={label} />
+            }
+          }
 
           switch (settingsStage) {
             case "extract":

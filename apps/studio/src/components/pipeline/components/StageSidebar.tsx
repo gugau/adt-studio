@@ -34,6 +34,7 @@ import { ALL_STEP_NAMES, PAGE_PROGRESS_STEPS } from "@adt/types"
 
 const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   general: msg`General`,
+  config: msg`Overview`,
   "image-processing": msg`Image Processing`,
   "container-types": msg`Container Types`,
   "text-types": msg`Text Types`,
@@ -79,6 +80,7 @@ const TASK_KIND_LABELS: Record<string, MessageDescriptor> = {
 function getSettingsTabs(
   slug: string,
   i18n: ReturnType<typeof useLingui>["i18n"],
+  showOverviewTab: boolean,
 ): { key: string; label: string }[] | undefined {
   const tabs: Record<string, { key: string; label: string }[]> = {
     extract: [
@@ -130,7 +132,13 @@ function getSettingsTabs(
       { key: "reviewer-checklist", label: i18n._(msg`Reviewer Checklist`) },
     ],
   }
-  return tabs[slug]
+  const stageTabs = tabs[slug]
+  if (!stageTabs) return undefined
+  if (!showOverviewTab) return stageTabs
+  return [
+    { key: "config", label: i18n._(SETTINGS_TAB_MESSAGE.config) },
+    ...stageTabs,
+  ]
 }
 
 export function StageSidebar({
@@ -218,10 +226,11 @@ export function StageSidebar({
 
     const isActive = step.slug === activeStep
     const Icon = step.icon
-    const settingsTabs = getSettingsTabs(step.slug, i18n)
-    const showSubTabs = isActive && isSettings && !!settingsTabs
     const state = completionOverrides[step.slug] ? "done" : stageState(step.slug)
     const stageCompleted = state === "done"
+    const showOverviewTab = state === "done" || state === "running" || state === "queued"
+    const settingsTabs = getSettingsTabs(step.slug, i18n, showOverviewTab)
+    const showSubTabs = isActive && isSettings && !!settingsTabs
 
     // Translate/Speech revert to needs-rerun look when their downstream output
     // has gaps (e.g. after a glossary addition). The in-view banner gives the
