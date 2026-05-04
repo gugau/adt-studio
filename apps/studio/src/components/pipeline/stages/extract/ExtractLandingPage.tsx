@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
+import { ArrowDown, BookOpen, FileText, Image as ImageIcon, List, Type } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { useBook } from "@/hooks/use-books"
 import { useSourcePdfInfo } from "@/hooks/use-source-pdf-info"
@@ -221,273 +222,172 @@ function FigureExtractionToggle({
 }
 
 function ExtractPreview({
+  bookTitle,
   pageCount,
 }: {
   bookTitle: string
   pageCount: number | null
 }) {
-  const totalPages = pageCount ?? 47
+  const totalPages = pageCount ?? 0
+  const truncatedTitle =
+    bookTitle.length > 32 ? `${bookTitle.slice(0, 32)}…` : bookTitle
   return (
-    <div
-      className="relative flex flex-1 min-h-0 overflow-hidden"
-      style={{
-        backgroundColor: "#f5f5f4",
-        backgroundImage:
-          "linear-gradient(to right, rgba(15,23,42,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(15,23,42,0.05) 1px, transparent 1px)",
-        backgroundSize: "14px 14px",
-      }}
-    >
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          inset: 0,
-          backgroundImage:
-            "radial-gradient(circle at 50% 30%, rgba(255,255,255,0.85), transparent 60%)",
-        }}
-      />
+    <div className="relative flex flex-1 min-h-0 overflow-hidden bg-gradient-to-b from-blue-50/40 via-white to-white">
+      <div className="flex flex-col items-center w-full px-5 py-4 gap-3">
+        {/* SOURCE PDF */}
+        <div className="flex flex-col items-center gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <FileText className="w-3.5 h-3.5 text-blue-600" strokeWidth={2} />
+            <span className="font-semibold text-[10px] tracking-[0.18em] uppercase text-blue-700">
+              <Trans>Source PDF</Trans>
+            </span>
+          </div>
+          <div className="w-[88px] aspect-[3/4] rounded-md bg-blue-50/80 ring-1 ring-blue-200 flex items-center justify-center">
+            <BookOpen className="w-7 h-7 text-blue-300" strokeWidth={1.5} />
+          </div>
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="text-[11px] font-medium text-blue-700/90 truncate max-w-[200px]">
+              {truncatedTitle}
+            </span>
+            {totalPages > 0 && (
+              <span className="font-mono text-[9px] tabular-nums text-blue-500/70">
+                <Trans>{totalPages} pages</Trans>
+              </span>
+            )}
+          </div>
+        </div>
 
-      <div className="relative flex flex-1 items-stretch justify-center px-4 py-4">
-        {/* Page sheet */}
-        <div
-          className="relative w-full max-w-[460px] bg-[#fdfdfb]"
-          style={{
-            boxShadow:
-              "0 1px 0 rgba(15,23,42,0.04), 0 12px 28px -8px rgba(15,23,42,0.18)",
-          }}
-        >
-          <CornerTick className="absolute -top-px -left-px" />
-          <CornerTick className="absolute -top-px -right-px rotate-90" />
-          <CornerTick className="absolute -bottom-px -left-px -rotate-90" />
-          <CornerTick className="absolute -bottom-px -right-px rotate-180" />
+        {/* CONNECTOR */}
+        <div className="flex flex-col items-center" aria-hidden>
+          <div className="w-px h-2 bg-blue-200" />
+          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white shadow-sm">
+            <ArrowDown className="w-3 h-3" strokeWidth={2.5} />
+          </div>
+          <div className="w-px h-2 bg-blue-200" />
+        </div>
 
-          <div
-            className="absolute top-2 right-3 font-mono text-[8px] tracking-[0.18em] text-neutral-400 uppercase"
-            aria-hidden
+        {/* EXTRACTED BLOCKS */}
+        <div className="flex flex-col items-stretch w-full gap-1.5">
+          <span className="font-semibold text-[10px] tracking-[0.18em] uppercase text-blue-700">
+            <Trans>Extracted Blocks</Trans>
+          </span>
+
+          <BlockCard
+            icon={<Type className="w-3 h-3" strokeWidth={2.25} />}
+            label={<Trans>Heading</Trans>}
+            highlighted
           >
-            <Trans>Page</Trans> 01 / {String(totalPages).padStart(2, "0")}
-          </div>
+            <p className="text-[12px] font-bold text-foreground leading-tight">
+              <Trans>Section 3 · Overview</Trans>
+            </p>
+          </BlockCard>
 
-          {/* Page body — 5/8 content column, 3/8 inspector margin */}
-          <div className="grid h-full grid-cols-[1fr_120px] gap-3 px-5 pt-9 pb-6">
-            <div className="flex flex-col gap-3 min-w-0">
-              {/* Title — annotated as METADATA */}
-              <div className="relative">
-                <div className="absolute -inset-x-1 -inset-y-1 border border-blue-500/40 pointer-events-none" />
-                <div className="absolute -top-2 left-1 px-1 bg-[#fdfdfb] font-mono text-[7.5px] tracking-[0.18em] text-blue-600 uppercase">
-                  <Trans>Metadata</Trans>
-                </div>
-                <h2 className="text-[15px] font-semibold leading-tight tracking-tight text-[#0a0a0a] pt-0.5">
-                  <Trans>Photosynthesis 101</Trans>
-                </h2>
-                <p className="text-[9px] text-[#525252] mt-1 font-medium">
-                  <Trans>J. Olsen · M. Bose · 2021</Trans>
-                </p>
-              </div>
+          <BlockCard
+            icon={<Type className="w-3 h-3" strokeWidth={2.25} />}
+            label={<Trans>Paragraph</Trans>}
+            meta={<Trans>22 words</Trans>}
+          >
+            <p className="text-[10px] text-muted-foreground leading-snug">
+              <Trans>
+                Each section introduces a new theme with worked examples,
+                followed by short practice activities at the end of the page.
+              </Trans>
+            </p>
+          </BlockCard>
 
-              <BodyText widths={["100%", "94%", "88%"]} />
+          <BlockCard
+            icon={<List className="w-3 h-3" strokeWidth={2.25} />}
+            label={<Trans>List</Trans>}
+            meta={<Trans>3 items</Trans>}
+          >
+            <ul className="text-[10px] text-muted-foreground leading-snug list-disc pl-3.5 space-y-[1px]">
+              <li>
+                <Trans>Read the prompt aloud</Trans>
+              </li>
+              <li>
+                <Trans>Identify the key idea</Trans>
+              </li>
+              <li>
+                <Trans>Try the practice problem</Trans>
+              </li>
+            </ul>
+          </BlockCard>
 
-              {/* KEPT image */}
-              <div className="relative">
-                <div
-                  className="aspect-[16/8] rounded-[2px] ring-1 ring-emerald-500/70"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #d1fae5 0%, #ccfbf1 45%, #dbeafe 100%)",
-                  }}
-                />
-                <CropTicks className="absolute -inset-1.5 text-emerald-500/60" />
-              </div>
+          <BlockCard
+            icon={<ImageIcon className="w-3 h-3" strokeWidth={2} />}
+            label={<Trans>Image</Trans>}
+            meta="842×320"
+          >
+            <div className="w-full h-9 rounded-[3px] bg-gradient-to-br from-blue-100 via-sky-100 to-indigo-100" />
+          </BlockCard>
 
-              <BodyText widths={["96%", "90%", "70%"]} />
-
-              {/* SEGMENTED image */}
-              <div className="relative">
-                <div
-                  className="aspect-[16/10] rounded-[2px] ring-1 ring-dashed ring-violet-500/70 relative overflow-hidden"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #ede9fe 0%, #f5f3ff 60%, #fef3c7 100%)",
-                  }}
-                >
-                  <div className="absolute inset-0 flex">
-                    <div className="flex-[3] border-r border-dashed border-violet-500/40" />
-                    <div className="flex-[2]" />
-                  </div>
-                </div>
-              </div>
-
-              <BodyText widths={["88%", "60%"]} />
-
-              {/* PRUNED decoration */}
-              <div className="flex items-center gap-2">
-                <div className="relative inline-flex items-center justify-center w-5 h-5 opacity-40 line-through">
-                  <span className="text-neutral-400 text-base leading-none">✦</span>
-                  <span className="absolute inset-0 ring-1 ring-dashed ring-neutral-400/60 rounded-[2px]" />
-                </div>
-              </div>
+          <BlockCard
+            icon={<Type className="w-3 h-3" strokeWidth={2.25} />}
+            label={<Trans>Paragraph</Trans>}
+            faded
+          >
+            <div className="flex flex-col gap-[3px]">
+              <div className="h-[3px] w-full rounded-[1px] bg-blue-200/60" />
+              <div className="h-[3px] w-[80%] rounded-[1px] bg-blue-200/60" />
             </div>
+          </BlockCard>
+        </div>
 
-            {/* Inspector margin — connectors + labels */}
-            <div className="relative flex flex-col gap-3 min-w-0">
-              <div className="absolute left-0 top-0 bottom-0 w-px bg-neutral-200" aria-hidden />
-
-              <Finding
-                color="blue"
-                tag={<Trans>Title</Trans>}
-                value={<Trans>Photosynthesis 101</Trans>}
-                offsetTop={0}
-              />
-
-              <Finding
-                color="blue"
-                tag={<Trans>Authors</Trans>}
-                value={<Trans>J. Olsen + 1</Trans>}
-                offsetTop={36}
-              />
-
-              <Finding
-                color="blue"
-                tag={<Trans>Lang</Trans>}
-                value="EN"
-                offsetTop={72}
-              />
-
-              <Finding
-                color="emerald"
-                tag={<Trans>Kept</Trans>}
-                value={<Trans>chart_02.png</Trans>}
-                offsetTop={144}
-              />
-
-              <Finding
-                color="violet"
-                tag={<Trans>Segmented → 2</Trans>}
-                offsetTop={236}
-                splits={[<Trans key="a">chart</Trans>, <Trans key="b">legend</Trans>]}
-              />
-
-              <Finding
-                color="neutral"
-                tag={<Trans>Pruned</Trans>}
-                value={<Trans>low complexity</Trans>}
-                offsetTop={360}
-              />
-            </div>
-          </div>
-
-          {/* Footer — book ribbon */}
-          <div className="absolute bottom-2 left-5 right-5 flex items-center gap-2 font-mono text-[8px] tracking-[0.16em] uppercase text-neutral-400">
-            <span className="h-px flex-1 bg-neutral-200" />
-            <span className="text-blue-600/80">
-              <Trans>Extract</Trans>
-            </span>
-            <span>·</span>
-            <span>{totalPages} <Trans>pages</Trans></span>
-            <span className="h-px flex-1 bg-neutral-200" />
-          </div>
+        {/* FOOTER */}
+        <div className="flex items-center justify-center gap-2 mt-auto pt-1">
+          <span className="tracking-[0.3em] text-[10px] font-bold text-blue-400">···</span>
+          <span className="text-[10px] font-medium text-blue-600/70">
+            <Trans>and many more blocks across the entire book</Trans>
+          </span>
         </div>
       </div>
     </div>
   )
 }
 
-function BodyText({ widths }: { widths: string[] }) {
-  return (
-    <div className="flex flex-col gap-[5px]">
-      {widths.map((w, i) => (
-        <div
-          key={i}
-          className="h-[3px] rounded-[1px] bg-neutral-200/80"
-          style={{ width: w }}
-        />
-      ))}
-    </div>
-  )
-}
-
-function CornerTick({ className }: { className?: string }) {
-  return (
-    <div className={className} aria-hidden>
-      <svg width="10" height="10" viewBox="0 0 10 10" className="text-blue-600/40">
-        <path
-          d="M0 1 L0 0 L1 0"
-          stroke="currentColor"
-          strokeWidth="1"
-          fill="none"
-        />
-      </svg>
-    </div>
-  )
-}
-
-function CropTicks({ className }: { className?: string }) {
-  return (
-    <div className={className} aria-hidden>
-      <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <line x1="0" y1="0" x2="6" y2="0" stroke="currentColor" />
-        <line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" />
-        <line x1="100" y1="0" x2="94" y2="0" stroke="currentColor" />
-        <line x1="100" y1="0" x2="100" y2="6" stroke="currentColor" />
-        <line x1="0" y1="100" x2="6" y2="100" stroke="currentColor" />
-        <line x1="0" y1="100" x2="0" y2="94" stroke="currentColor" />
-        <line x1="100" y1="100" x2="94" y2="100" stroke="currentColor" />
-        <line x1="100" y1="100" x2="100" y2="94" stroke="currentColor" />
-      </svg>
-    </div>
-  )
-}
-
-function Finding({
-  color,
-  tag,
-  value,
-  offsetTop,
-  splits,
+function BlockCard({
+  icon,
+  label,
+  meta,
+  highlighted = false,
+  faded = false,
+  children,
 }: {
-  color: "blue" | "emerald" | "violet" | "neutral"
-  tag: React.ReactNode
-  value?: React.ReactNode
-  offsetTop: number
-  splits?: React.ReactNode[]
+  icon: React.ReactNode
+  label: React.ReactNode
+  meta?: React.ReactNode
+  highlighted?: boolean
+  faded?: boolean
+  children: React.ReactNode
 }) {
-  const colorMap = {
-    blue: { dot: "bg-blue-500", text: "text-blue-600", chip: "bg-blue-50 ring-blue-200" },
-    emerald: { dot: "bg-emerald-500", text: "text-emerald-600", chip: "bg-emerald-50 ring-emerald-200" },
-    violet: { dot: "bg-violet-500", text: "text-violet-600", chip: "bg-violet-50 ring-violet-200" },
-    neutral: { dot: "bg-neutral-400", text: "text-neutral-500", chip: "bg-neutral-50 ring-neutral-200" },
-  }
-  const c = colorMap[color]
   return (
     <div
-      className="absolute flex flex-col gap-1 pl-3"
-      style={{ top: `${offsetTop}px`, left: 0, right: 0 }}
+      className={cn(
+        "rounded-md border px-3 py-2 flex flex-col gap-1.5 transition-colors",
+        highlighted
+          ? "border-blue-400/60 bg-blue-50/70"
+          : faded
+          ? "border-dashed border-blue-200/70 bg-white/60"
+          : "border-blue-200 bg-white",
+      )}
     >
-      <div className="absolute left-0 top-[7px] w-2 h-px bg-neutral-300" aria-hidden />
-      <div className={`absolute -left-[2px] top-[5px] w-[5px] h-[5px] rounded-full ${c.dot}`} aria-hidden />
       <div className="flex items-center gap-1.5">
+        <span className={cn(faded ? "text-blue-400" : "text-blue-500")}>{icon}</span>
         <span
-          className={`font-mono text-[7.5px] tracking-[0.18em] uppercase ${c.text}`}
+          className={cn(
+            "font-semibold text-[8.5px] tracking-[0.16em] uppercase",
+            faded ? "text-blue-500/70" : "text-blue-700",
+          )}
         >
-          {tag}
+          {label}
         </span>
+        {meta && (
+          <span className="ml-auto font-mono text-[8.5px] text-blue-500/70 tabular-nums">
+            {meta}
+          </span>
+        )}
       </div>
-      {value && (
-        <span className="font-mono text-[8.5px] text-neutral-700 truncate">
-          {value}
-        </span>
-      )}
-      {splits && (
-        <div className="flex flex-wrap gap-1">
-          {splits.map((s, i) => (
-            <span
-              key={i}
-              className={`inline-flex items-center font-mono text-[7.5px] px-1 py-px rounded-sm ring-1 ${c.chip} ${c.text}`}
-            >
-              {s}
-            </span>
-          ))}
-        </div>
-      )}
+      {children}
     </div>
   )
 }
