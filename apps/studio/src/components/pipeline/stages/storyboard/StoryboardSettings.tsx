@@ -861,7 +861,7 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
                     setVisualReviewMaxIterations(e.target.value)
                     markDirty("visual_review_max_iterations")
                   }}
-                  placeholder="5"
+                  placeholder="3"
                   className="h-9 w-24 text-sm"
                 />
                 <Label className="text-xs text-muted-foreground">

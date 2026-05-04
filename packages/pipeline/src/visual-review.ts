@@ -206,7 +206,8 @@ export async function runVisualReviewLoop(
       pendingValidationFeedback =
         "Your previous revision failed structural validation with these errors:\n" +
         check.errors.map((e) => `- ${e}`).join("\n") +
-        "\n\nPlease fix these issues in your next revision."
+        "\n\nThe revision you produced was:\n```html\n" + revised + "\n```\n\n" +
+        "Please fix these issues in your next revision."
     }
   }
 
