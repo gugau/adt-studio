@@ -7,7 +7,7 @@ import { SETTINGS_STAGE_SLUGS } from "../settings-routing"
 import {
   BookView,
   ExtractIndex,
-  SectioningView,
+  SectioningIndex,
   StoryboardView,
   QuizzesView,
   CaptionsView,
@@ -51,10 +51,12 @@ interface ViewEntry {
   fullHeight?: boolean
 }
 
+
+// TODO: Remove the fullHeight flag once we have a landing page for sectioning
 const VIEW_MAP: Record<string, ViewEntry> = {
   book: { component: BookView },
   extract: { component: ExtractIndex, fullHeight: true },
-  sectioning: { component: SectioningView, fullHeight: true },
+  sectioning: { component: SectioningIndex, fullHeight: true },
   storyboard: { component: StoryboardView, fullHeight: true },
   quizzes: { component: QuizzesView },
   captions: { component: CaptionsView },
