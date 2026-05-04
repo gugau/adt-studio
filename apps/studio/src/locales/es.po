@@ -4567,10 +4567,11 @@ msgstr "Esta página no tiene entradas de texto traducibles"
 msgid "This page has not been reviewed yet"
 msgstr "This page has not been reviewed yet"
 
-msgid "This screen couldn’t load"
-msgstr "Esta pantalla no pudo cargarse"
 msgid "This prompt instructs the LLM how to evaluate the rendered HTML against the original page. Selection above controls which template is used."
 msgstr "Este prompt indica al LLM cómo evaluar el HTML renderizado frente a la página original. La selección de arriba controla qué plantilla se utiliza."
+
+msgid "This screen couldn’t load"
+msgstr "Esta pantalla no pudo cargarse"
 
 msgid "This section has no storyboard rendering yet"
 msgstr "Esta sección aún no tiene renderización de storyboard"

@@ -4568,10 +4568,11 @@ msgstr "Cette page n'a pas d'entrées de texte traduisibles"
 msgid "This page has not been reviewed yet"
 msgstr "Cette page n'a pas encore été révisée"
 
-msgid "This screen couldn’t load"
-msgstr "Cet écran n’a pas pu se charger"
 msgid "This prompt instructs the LLM how to evaluate the rendered HTML against the original page. Selection above controls which template is used."
 msgstr "Ce prompt indique au LLM comment évaluer le HTML rendu par rapport à la page originale. La sélection ci-dessus contrôle quel modèle est utilisé."
+
+msgid "This screen couldn’t load"
+msgstr "Cet écran n’a pas pu se charger"
 
 msgid "This section has no storyboard rendering yet"
 msgstr "Cette section n'a pas encore de rendu de scénarimage"
