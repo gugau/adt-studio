@@ -3,14 +3,14 @@ import type { CSSProperties } from "react"
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 
-export type WizardSwitchProps = React.ComponentPropsWithoutRef<typeof Switch> & {
+export type BrandedSwitchProps = React.ComponentPropsWithoutRef<typeof Switch> & {
   decorative?: boolean
   color?: string
 }
 
-export const WizardSwitch = React.forwardRef<
+export const BrandedSwitch = React.forwardRef<
   React.ElementRef<typeof Switch>,
-  WizardSwitchProps
+  BrandedSwitchProps
 >(({ className, disabled, decorative, onCheckedChange, color, style, ...props }, ref) => (
   <Switch
     ref={ref}
@@ -36,4 +36,4 @@ export const WizardSwitch = React.forwardRef<
     {...props}
   />
 ))
-WizardSwitch.displayName = "WizardSwitch"
+BrandedSwitch.displayName = "BrandedSwitch"

@@ -7,7 +7,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control"
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import { usePresetRecommendations } from "@/components/wizard/usePresetRecommendations"
 import { PRESETS, getPresetAccent } from "@/components/wizard/constants"
-import { InfoCarousel, type CarouselSlide } from "@/components/wizard/shared/InfoCarousel"
+import { InfoCarousel, type CarouselSlide } from "@/components/ui/info-carousel"
 
 const GROUPING_OPTION_SPREAD_LABEL = msg`Spread`
 const GROUPING_OPTION_SINGLE_LABEL = msg`Single`
