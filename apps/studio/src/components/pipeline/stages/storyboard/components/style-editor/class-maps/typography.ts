@@ -175,23 +175,40 @@ const DECOR_TOKENS = new Set([
   "no-underline",
 ])
 
+const COMBINED_DECOR_CLASS = "[text-decoration-line:underline_line-through]"
+
 // Multi-select: any subset of {"italic","underline","strike"}.
+// Note: `underline` and `line-through` both set `text-decoration-line`, so the
+// browser only honors one when both classes are present. To render both at
+// once we emit a single arbitrary-value class that sets the property to
+// `underline line-through`.
 export const textDecorationClassMap: ClassMap<string[]> = {
-  matches: (cls) => DECOR_TOKENS.has(cls),
+  matches: (cls) => DECOR_TOKENS.has(cls) || cls === COMBINED_DECOR_CLASS,
   fromClasses(classes) {
     const out: string[] = []
+    let hasUnderline = false
+    let hasStrike = false
     for (const cls of classes) {
       if (cls === "italic") out.push("italic")
-      else if (cls === "underline") out.push("underline")
-      else if (cls === "line-through") out.push("strike")
+      else if (cls === "underline") hasUnderline = true
+      else if (cls === "line-through") hasStrike = true
+      else if (cls === COMBINED_DECOR_CLASS) {
+        hasUnderline = true
+        hasStrike = true
+      }
     }
+    if (hasUnderline) out.push("underline")
+    if (hasStrike) out.push("strike")
     return out.length > 0 ? out : null
   },
   toClasses(value) {
     const out: string[] = []
     if (value.includes("italic")) out.push("italic")
-    if (value.includes("underline")) out.push("underline")
-    if (value.includes("strike")) out.push("line-through")
+    const hasUnderline = value.includes("underline")
+    const hasStrike = value.includes("strike")
+    if (hasUnderline && hasStrike) out.push(COMBINED_DECOR_CLASS)
+    else if (hasUnderline) out.push("underline")
+    else if (hasStrike) out.push("line-through")
     return out
   },
 }

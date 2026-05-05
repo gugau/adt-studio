@@ -25,9 +25,20 @@ interface UseElementStylesResult<TValue> {
   override: OverrideInfo | null
 }
 
+// Tailwind variant prefixes (md:, xl:, hover:, …) always sit before any
+// arbitrary-value bracket. So a class has a responsive/variant prefix iff its
+// first ":" occurs before any "[". Bare arbitrary classes like
+// `[text-decoration-line:underline_line-through]` have no variant prefix.
+function hasVariantPrefix(cls: string): boolean {
+  const colon = cls.indexOf(":")
+  if (colon === -1) return false
+  const bracket = cls.indexOf("[")
+  return bracket === -1 || colon < bracket
+}
+
 function classesAtPrefix(classes: string[], prefix: string): string[] {
   if (prefix === "") {
-    return classes.filter((c) => !c.includes(":"))
+    return classes.filter((c) => !hasVariantPrefix(c))
   }
   const out: string[] = []
   for (const c of classes) {
@@ -43,7 +54,7 @@ function fullClassesAtPrefix(
 ): string[] {
   return classes.filter((c) => {
     if (prefix === "") {
-      if (c.includes(":")) return false
+      if (hasVariantPrefix(c)) return false
       return matches(c)
     }
     if (!c.startsWith(prefix)) return false
@@ -91,7 +102,7 @@ export function useElementStyles<TValue>(
     (next: TValue) => {
       const stripped = classes.filter((c) => {
         if (currentPrefix === "") {
-          if (c.includes(":")) return true
+          if (hasVariantPrefix(c)) return true
           return !classMap.matches(c)
         }
         if (!c.startsWith(currentPrefix)) return true
