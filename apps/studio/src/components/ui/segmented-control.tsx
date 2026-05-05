@@ -1,8 +1,10 @@
+import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
 
 export interface SegmentedControlOption<T extends string = string> {
   value: T
   label: string
+  icon?: ReactNode
 }
 
 interface SegmentedControlProps<T extends string = string> {
@@ -55,11 +57,23 @@ export function SegmentedControl<T extends string = string>({
           )}
           style={
             value === option.value
-              ? { color: color ?? "#2b7fff", transition: "color 0.4s ease" }
+              ? {
+                  color: color ?? "var(--accent-color, #2b7fff)",
+                  transition: "color 0.4s ease",
+                }
               : { transition: "color 0.4s ease" }
           }
         >
-          {option.label}
+          {option.icon ? (
+            <span className="inline-flex items-center gap-1.5">
+              <span className="inline-flex shrink-0 items-center" aria-hidden>
+                {option.icon}
+              </span>
+              {option.label}
+            </span>
+          ) : (
+            option.label
+          )}
         </button>
       ))}
     </div>

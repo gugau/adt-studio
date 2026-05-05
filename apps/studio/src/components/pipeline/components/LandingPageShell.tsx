@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+import type { CSSProperties, ReactNode } from "react"
 import { Link } from "@tanstack/react-router"
 import { Play, Loader2, Settings } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
@@ -17,6 +17,8 @@ export function LandingPageShell({
   stageSlug,
   settingsTab = "general",
   colorClass,
+  accentColor,
+  accentColorSoft,
   errorColorClass = "bg-red-600 hover:bg-red-700",
   isRunning,
   isCompleted,
@@ -36,6 +38,8 @@ export function LandingPageShell({
   stageSlug: string
   settingsTab?: string
   colorClass: string
+  accentColor?: string
+  accentColorSoft?: string
   errorColorClass?: string
   isRunning: boolean
   isCompleted: boolean
@@ -51,6 +55,15 @@ export function LandingPageShell({
   preview: ReactNode
   children: ReactNode
 }) {
+  const accentStyle: CSSProperties = {}
+  if (accentColor) {
+    ;(accentStyle as Record<string, string>)["--accent-color"] = accentColor
+    ;(accentStyle as Record<string, string>)["--ring"] = accentColor
+  }
+  if (accentColorSoft) {
+    ;(accentStyle as Record<string, string>)["--accent-color-soft"] =
+      accentColorSoft
+  }
   const isDisabled = isRunning || !canRun || extraDisabled
   const showTooltip = isDisabled && !isRunning && !!disabledReason
 
@@ -80,7 +93,10 @@ export function LandingPageShell({
 
   return (
     <div className="flex h-full overflow-hidden gap-[10px]">
-      <aside className="flex flex-col w-[480px] shrink-0 overflow-hidden border-r border-gray-200">
+      <aside
+        className="flex flex-col w-[480px] shrink-0 overflow-hidden border-r border-gray-200"
+        style={accentStyle}
+      >
         <div className="flex flex-col gap-6 px-8 pt-8 pb-4 flex-1 overflow-y-auto">
           {children}
         </div>
