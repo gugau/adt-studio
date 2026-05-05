@@ -8,6 +8,7 @@ import { ExtractLandingPage } from "@/components/pipeline/stages/extract/Extract
 import { SectioningSettings } from "@/components/pipeline/stages/sectioning/SectioningSettings"
 import { SectioningLandingPage } from "@/components/pipeline/stages/sectioning/SectioningLandingPage"
 import { StoryboardSettings } from "@/components/pipeline/stages/storyboard/StoryboardSettings"
+import { StoryboardLandingPage } from "@/components/pipeline/stages/storyboard/StoryboardLandingPage"
 import { QuizzesSettings } from "@/components/pipeline/stages/quizzes/QuizzesSettings"
 import { GlossarySettings } from "@/components/pipeline/stages/glossary/GlossarySettings"
 import { TocSettings } from "@/components/pipeline/stages/toc/TocSettings"
@@ -93,6 +94,8 @@ export function StepSettingsPage() {
                 return <ExtractLandingPage bookLabel={label} />
               case "sectioning":
                 return <SectioningLandingPage bookLabel={label} />
+              case "storyboard":
+                return <StoryboardLandingPage bookLabel={label} />
             }
           }
 

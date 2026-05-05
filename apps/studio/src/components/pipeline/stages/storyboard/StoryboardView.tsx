@@ -23,6 +23,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
   const storyboardState = stageState("storyboard")
   const storyboardDone = storyboardState === "done"
   const storyboardRunning = storyboardState === "running" || storyboardState === "queued"
+  const sectioningReady = stageState("sectioning") === "done"
   // Show page content during a run (or after an error) once pages have data.
   // Only show the run card when idle or no data exists yet.
   const hasPageData = (pages ?? []).some((p) => p.sectionCount > 0)
@@ -31,9 +32,9 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
     : !storyboardDone
 
   const handleRunStoryboard = useCallback(() => {
-    if (!hasApiKey || storyboardRunning) return
+    if (!hasApiKey || !sectioningReady || storyboardRunning) return
     queueRun({ fromStage: "storyboard", toStage: "storyboard", apiKey })
-  }, [hasApiKey, storyboardRunning, apiKey, queueRun])
+  }, [hasApiKey, sectioningReady, storyboardRunning, apiKey, queueRun])
 
   const pageList = pages ?? []
   const { sectionIndex, setSectionIndex, skipNextResetRef } = useSectionNav()
@@ -268,7 +269,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
           isRunning={storyboardRunning}
           completed={storyboardDone}
           onRun={handleRunStoryboard}
-          disabled={!hasApiKey || storyboardRunning}
+          disabled={!hasApiKey || !sectioningReady || storyboardRunning}
         />
       </div>
     )
@@ -333,7 +334,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
           isRunning={storyboardRunning}
           completed={storyboardDone}
           onRun={handleRunStoryboard}
-          disabled={!hasApiKey || storyboardRunning}
+          disabled={!hasApiKey || !sectioningReady || storyboardRunning}
         />
       </div>
     )
