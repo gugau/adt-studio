@@ -350,6 +350,19 @@ ${INTERACTIVE_SCRIPT}
     doc.body.dataset.editable = editable ? "true" : "false"
   }, [editable, iframeReady])
 
+  // Suppress the iframe's own scrollbar in desktop view (where the iframe is
+  // sized to its content and the host container provides the scroll). Phone
+  // and tablet frames keep the default since their fixed-height chrome relies
+  // on internal scrolling.
+  useEffect(() => {
+    const doc = iframeRef.current?.contentDocument
+    if (!doc) return
+    const desktop = !deviceView || deviceView === "desktop"
+    const value = desktop ? "hidden" : ""
+    if (doc.documentElement) doc.documentElement.style.overflow = value
+    if (doc.body) doc.body.style.overflow = value
+  }, [deviceView, iframeReady])
+
   // Inject/update pruned element styles into the iframe
   useEffect(() => {
     const doc = iframeRef.current?.contentDocument
@@ -503,7 +516,6 @@ ${selectors}:hover {
     <iframe
       ref={initIframe}
       srcDoc={srcdoc}
-      scrolling="auto"
       className="block"
       style={{
         width: frame.screenWidth,
