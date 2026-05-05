@@ -5,6 +5,7 @@ import { cn } from "@/lib/cn";
 import { useHashRoute } from "@/lib/useHashRoute";
 import { useScrolled } from "@/lib/useScrolled";
 import { useSectionNav } from "@/lib/useSectionNav";
+import { trackEvent } from "@/lib/matomo";
 
 const LINKS = [
   { href: "#top", id: "top", label: "Home" },
@@ -121,6 +122,7 @@ export function Nav() {
             variant="primary"
             size="md"
             className="hidden h-9 px-4 text-[13px] sm:inline-flex"
+            onClick={() => trackEvent("cta", "download_click", "nav")}
           >
             Download
           </Button>
@@ -182,7 +184,7 @@ export function Nav() {
               variant="primary"
               size="md"
               className="flex-1"
-              onClick={() => setOpen(false)}
+              onClick={() => { setOpen(false); trackEvent("cta", "download_click", "nav"); }}
             >
               Download
             </Button>

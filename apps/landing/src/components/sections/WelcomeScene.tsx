@@ -7,6 +7,7 @@ import {
   formatRelativeDate,
   useGithubReleases,
 } from "@/lib/useGithubReleases";
+import { trackEvent } from "@/lib/matomo";
 
 export function WelcomeScene() {
   const [mounted, setMounted] = useState(false);
@@ -110,7 +111,12 @@ export function WelcomeScene() {
             )}
             style={{ transitionDelay: "500ms" }}
           >
-            <Button href="#/download" size="lg" variant="primary">
+            <Button
+              href="#/download"
+              size="lg"
+              variant="primary"
+              onClick={() => trackEvent("cta", "download_click", "hero")}
+            >
               Download for free
               <ArrowRight className="h-4 w-4" />
             </Button>
@@ -120,6 +126,7 @@ export function WelcomeScene() {
               rel="noreferrer noopener"
               size="lg"
               variant="secondary"
+              onClick={() => trackEvent("outbound", "github_star", "hero")}
             >
               <Github className="h-4 w-4" />
               Star on GitHub

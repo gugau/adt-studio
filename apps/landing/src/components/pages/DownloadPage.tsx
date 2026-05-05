@@ -2,6 +2,7 @@ import { AlertTriangle, ArrowUpRight, Construction, Monitor } from "lucide-react
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Button";
 import { cn } from "@/lib/cn";
+import { trackDownload } from "@/lib/matomo";
 import {
   formatDownloads,
   formatRelativeDate,
@@ -138,6 +139,7 @@ export function DownloadPage() {
               variant="primary"
               size="lg"
               className="min-w-[260px] justify-center px-8 text-[15px]"
+              onClick={() => trackDownload(detected.key, detectedAsset.name)}
             >
               <PrimaryIcon className="h-4 w-4" strokeWidth={1.8} />
               Download for {detected.label}
@@ -382,6 +384,7 @@ function PlatformChip({
       target={hasBuild ? undefined : "_blank"}
       rel={hasBuild ? undefined : "noreferrer noopener"}
       title={title}
+      onClick={hasBuild && resolution ? () => trackDownload(meta.key, resolution.asset.name) : undefined}
       className={cn(
         "group inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all hover:-translate-y-0.5",
         hasBuild

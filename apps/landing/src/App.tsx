@@ -13,6 +13,7 @@ import { ShowcaseScene } from "@/components/sections/ShowcaseScene";
 import { TrustStrip } from "@/components/sections/TrustStrip";
 import { WelcomeScene } from "@/components/sections/WelcomeScene";
 import { useHashRoute } from "@/lib/useHashRoute";
+import { trackPageView } from "@/lib/matomo";
 
 type Route =
   | { kind: "home" }
@@ -36,10 +37,27 @@ function resolveRoute(hashRoute: string): Route {
   return { kind: "home" };
 }
 
+function getRouteTitle(route: Route): string {
+  switch (route.kind) {
+    case "home":
+      return "ADT Studio — Turn any PDF into an accessible book";
+    case "download":
+      return "Download — ADT Studio";
+    case "releases":
+      return "Releases — ADT Studio";
+    case "release":
+      return `Release ${route.tag} — ADT Studio`;
+  }
+}
+
 export function App() {
   const hashRoute = useHashRoute();
   const route = useMemo(() => resolveRoute(hashRoute), [hashRoute]);
   const isStaticPage = route.kind !== "home";
+
+  useEffect(() => {
+    trackPageView(getRouteTitle(route), window.location.href);
+  }, [route]);
 
   useEffect(() => {
     if (isStaticPage) {

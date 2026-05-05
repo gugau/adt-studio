@@ -1,6 +1,7 @@
 import { ArrowRight, Github } from "lucide-react";
 import { Button } from "@/components/Button";
 import { SectionEyebrow } from "@/components/SectionEyebrow";
+import { trackEvent } from "@/lib/matomo";
 import { STAGES, type Stage } from "@/data/stages";
 import { cn } from "@/lib/cn";
 import { useInView } from "@/lib/useScrollProgress";
@@ -68,7 +69,12 @@ export function FinaleScene() {
           )}
           style={{ transitionDelay: "420ms" }}
         >
-          <Button href="#/download" size="lg" variant="primary">
+          <Button
+            href="#/download"
+            size="lg"
+            variant="primary"
+            onClick={() => trackEvent("cta", "download_click", "finale")}
+          >
             Download ADT Studio
             <ArrowRight className="h-4 w-4" />
           </Button>
@@ -78,6 +84,7 @@ export function FinaleScene() {
             rel="noreferrer noopener"
             size="lg"
             variant="secondary"
+            onClick={() => trackEvent("outbound", "github_source", "finale")}
           >
             <Github className="h-4 w-4" />
             View source
