@@ -113,6 +113,8 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
       stageSlug="sectioning"
       settingsTab="section-types"
       colorClass="bg-sky-600 hover:bg-sky-700"
+      accentColor="#0284c7"
+      accentColorSoft="#e0f2fe"
       isRunning={status.isRunning}
       isCompleted={status.isCompleted}
       hasError={status.hasError}

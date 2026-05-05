@@ -98,6 +98,8 @@ export function ExtractLandingPage({ bookLabel }: { bookLabel: string }) {
       stageSlug="extract"
       settingsTab="general"
       colorClass="bg-blue-600 hover:bg-blue-700"
+      accentColor="#2563eb"
+      accentColorSoft="#dbeafe"
       isRunning={status.isRunning}
       isCompleted={status.isCompleted}
       hasError={status.hasError}
