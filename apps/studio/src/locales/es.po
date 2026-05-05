@@ -1231,11 +1231,8 @@ msgstr "No se pudo leer este PDF. El archivo puede estar dañado o protegido con
 msgid "Cover"
 msgstr "Portada"
 
-#~ msgid "Cover of {0}"
-#~ msgstr ""
-
 msgid "Cover of {title}"
-msgstr "Portada de {0}"
+msgstr "Portada de {title}"
 
 msgid "Create a manual glossary entry that stays in the book even if AI glossary generation is rerun."
 msgstr "Crea una entrada manual del glosario que permanezca en el libro aunque se vuelva a ejecutar la generación del glosario con IA."
@@ -1870,9 +1867,6 @@ msgstr "Vector plano"
 msgid "Flexible"
 msgstr "Flexible"
 
-#~ msgid "Footer Text"
-#~ msgstr "Texto de pie de página"
-
 #. placeholder {0}: i18n._(preset.title)
 #. placeholder {1}: recommendedOption.label
 msgid "For {0}, we recommend {1}."
@@ -2033,12 +2027,6 @@ msgstr "Ocultar historial de edición con IA"
 
 msgid "Hide error details"
 msgstr "Ocultar detalles del error"
-
-#~ msgid "Hide Pruned"
-#~ msgstr "Ocultar eliminadas"
-
-#~ msgid "Hide pruned images"
-#~ msgstr "Ocultar imágenes eliminadas"
 
 msgid "Hide pruned terms"
 msgstr "Ocultar términos podados"
@@ -2501,9 +2489,6 @@ msgstr "Coincidir con el diseño"
 msgid "Match each stage of the water cycle to its definition:"
 msgstr "Asocia cada etapa del ciclo del agua con su definición:"
 
-#~ msgid "Math"
-#~ msgstr "Matemáticas"
-
 msgid "Max Iterations"
 msgstr "Iteraciones máximas"
 
@@ -2512,9 +2497,6 @@ msgstr "Refinamientos máximos"
 
 msgid "Max review/revise rounds per section before accepting the current rendering"
 msgstr "Máximo de rondas de revisión/corrección por sección antes de aceptar el renderizado actual"
-
-#~ msgid "Max Side"
-#~ msgstr "Lado Máximo"
 
 msgid "Max side (px)"
 msgstr "Lado máximo (px)"
@@ -3292,9 +3274,6 @@ msgstr "Eliminar imagen"
 msgid "Prune section from flow"
 msgstr "Eliminar sección del flujo"
 
-#~ msgid "Prune text"
-#~ msgstr "Eliminar texto"
-
 msgid "Prune this term — it will be hidden from output and excluded from future regenerations."
 msgstr "Podar este término — se ocultará de la salida y se excluirá de futuras regeneraciones."
 
@@ -3953,12 +3932,6 @@ msgstr "Mostrar detalles del error"
 
 msgid "Show fewer"
 msgstr "Show fewer"
-
-#~ msgid "Show Pruned"
-#~ msgstr "Mostrar eliminadas"
-
-#~ msgid "Show pruned images"
-#~ msgstr "Mostrar imágenes eliminadas"
 
 msgid "Show pruned terms"
 msgstr "Mostrar términos podados"

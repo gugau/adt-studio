@@ -1232,9 +1232,6 @@ msgstr "Impossible de lire ce PDF. Le fichier est peut-être corrompu ou protég
 msgid "Cover"
 msgstr "Couverture"
 
-#~ msgid "Cover of {0}"
-#~ msgstr ""
-
 msgid "Cover of {title}"
 msgstr "Couverture de {title}"
 
@@ -1871,9 +1868,6 @@ msgstr "Vecteur plat"
 msgid "Flexible"
 msgstr "Flexible"
 
-#~ msgid "Footer Text"
-#~ msgstr "Pied de page Texte"
-
 #. placeholder {0}: i18n._(preset.title)
 #. placeholder {1}: recommendedOption.label
 msgid "For {0}, we recommend {1}."
@@ -2034,12 +2028,6 @@ msgstr "Masquer l'historique des modifications IA"
 
 msgid "Hide error details"
 msgstr "Masquer les détails de l’erreur"
-
-#~ msgid "Hide Pruned"
-#~ msgstr "Masquer les élagués"
-
-#~ msgid "Hide pruned images"
-#~ msgstr "Masquer les images élaguées"
 
 msgid "Hide pruned terms"
 msgstr "Masquer les termes élagués"
@@ -2502,9 +2490,6 @@ msgstr "Correspondance avec le design"
 msgid "Match each stage of the water cycle to its definition:"
 msgstr "Associez chaque étape du cycle de l'eau à sa définition :"
 
-#~ msgid "Math"
-#~ msgstr "Math"
-
 msgid "Max Iterations"
 msgstr "Itérations max"
 
@@ -2513,9 +2498,6 @@ msgstr "Raffinements max"
 
 msgid "Max review/revise rounds per section before accepting the current rendering"
 msgstr "Nombre maximum de tours de revue/correction par section avant d'accepter le rendu actuel"
-
-#~ msgid "Max Side"
-#~ msgstr "Côté max."
 
 msgid "Max side (px)"
 msgstr "Côté max. (px)"
@@ -3293,9 +3275,6 @@ msgstr "Élaguer l'image"
 msgid "Prune section from flow"
 msgstr "Élaguer la section du flux"
 
-#~ msgid "Prune text"
-#~ msgstr "Élaguer le texte"
-
 msgid "Prune this term — it will be hidden from output and excluded from future regenerations."
 msgstr "Élaguer ce terme — il sera masqué de la sortie et exclu des régénérations futures."
 
@@ -3954,12 +3933,6 @@ msgstr "Afficher les détails de l’erreur"
 
 msgid "Show fewer"
 msgstr "Afficher moins"
-
-#~ msgid "Show Pruned"
-#~ msgstr "Afficher les élagués"
-
-#~ msgid "Show pruned images"
-#~ msgstr "Afficher les images élaguées"
 
 msgid "Show pruned terms"
 msgstr "Afficher les termes élagués"

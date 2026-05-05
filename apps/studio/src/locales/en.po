@@ -1231,9 +1231,6 @@ msgstr "Could not read this PDF. The file may be corrupted or password-protected
 msgid "Cover"
 msgstr "Cover"
 
-#~ msgid "Cover of {0}"
-#~ msgstr "Cover of {0}"
-
 msgid "Cover of {title}"
 msgstr "Cover of {title}"
 
@@ -1870,9 +1867,6 @@ msgstr "Flat Vector"
 msgid "Flexible"
 msgstr "Flexible"
 
-#~ msgid "Footer Text"
-#~ msgstr "Footer Text"
-
 #. placeholder {0}: i18n._(preset.title)
 #. placeholder {1}: recommendedOption.label
 msgid "For {0}, we recommend {1}."
@@ -2033,12 +2027,6 @@ msgstr "Hide AI edit history"
 
 msgid "Hide error details"
 msgstr "Hide error details"
-
-#~ msgid "Hide Pruned"
-#~ msgstr "Hide Pruned"
-
-#~ msgid "Hide pruned images"
-#~ msgstr "Hide pruned images"
 
 msgid "Hide pruned terms"
 msgstr "Hide pruned terms"
@@ -2501,9 +2489,6 @@ msgstr "Match Design"
 msgid "Match each stage of the water cycle to its definition:"
 msgstr "Match each stage of the water cycle to its definition:"
 
-#~ msgid "Math"
-#~ msgstr "Math"
-
 msgid "Max Iterations"
 msgstr "Max Iterations"
 
@@ -2512,9 +2497,6 @@ msgstr "Max Refinements"
 
 msgid "Max review/revise rounds per section before accepting the current rendering"
 msgstr "Max review/revise rounds per section before accepting the current rendering"
-
-#~ msgid "Max Side"
-#~ msgstr "Max Side"
 
 msgid "Max side (px)"
 msgstr "Max side (px)"
@@ -3292,9 +3274,6 @@ msgstr "Prune image"
 msgid "Prune section from flow"
 msgstr "Prune section from flow"
 
-#~ msgid "Prune text"
-#~ msgstr "Prune text"
-
 msgid "Prune this term — it will be hidden from output and excluded from future regenerations."
 msgstr "Prune this term — it will be hidden from output and excluded from future regenerations."
 
@@ -3953,12 +3932,6 @@ msgstr "Show error details"
 
 msgid "Show fewer"
 msgstr "Show fewer"
-
-#~ msgid "Show Pruned"
-#~ msgstr "Show Pruned"
-
-#~ msgid "Show pruned images"
-#~ msgstr "Show pruned images"
 
 msgid "Show pruned terms"
 msgstr "Show pruned terms"
