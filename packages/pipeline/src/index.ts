@@ -142,11 +142,12 @@ export {
   generateQuiz,
   generateAllQuizzes,
   buildQuizGenerationConfig,
+  buildQuizBatches,
   extractTextFromHtml,
   isContentPage,
-  batchPages,
   type QuizConfig,
   type QuizPageInput,
+  type QuizBatch,
 } from "./quiz-generation.js"
 export { buildTextCatalog } from "./text-catalog.js"
 export {

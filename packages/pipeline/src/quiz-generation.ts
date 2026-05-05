@@ -6,6 +6,7 @@ import type {
   PageSectioningOutput,
   QuizGenerationOutput,
   Quiz,
+  QuizGroup,
 } from "@adt/types"
 import { quizLLMSchema, DEFAULT_LLM_MAX_RETRIES } from "@adt/types"
 import type { LLMModel, ValidationResult } from "@adt/llm"
@@ -16,10 +17,18 @@ export interface QuizConfig {
   language: string
   pagesPerQuiz: number
   quizSectionTypes?: string[]
+  /** When non-empty, replaces auto-batching: one quiz per group with explicit placement. */
+  quizGroups?: QuizGroup[]
   promptName: string
   modelId: string
   maxRetries: number
   timeoutMs: number
+}
+
+/** A resolved batch ready to feed into the LLM, with explicit placement. */
+export interface QuizBatch {
+  pages: QuizPageInput[]
+  afterPageId: string
 }
 
 export interface QuizPageInput {
@@ -74,6 +83,7 @@ export function buildQuizGenerationConfig(
     language: normalizeLocale(language),
     pagesPerQuiz: appConfig.quiz_generation?.pages_per_quiz ?? 3,
     quizSectionTypes: appConfig.quiz_generation?.quiz_section_types,
+    quizGroups: appConfig.quiz_generation?.quiz_groups,
     promptName: appConfig.quiz_generation?.prompt ?? "quiz_generation",
     modelId:
       appConfig.quiz_generation?.model ??
@@ -112,33 +122,83 @@ export function isContentPage(
 }
 
 /**
- * Batch content pages into groups of N for quiz generation.
- * Non-content pages (all sections pruned) are skipped.
- * When quizSectionTypes is provided, only pages with matching section types count.
+ * Resolve the user-defined quiz groups against the available pages, producing
+ * one batch per group with an explicit `afterPageId` for placement.
+ *
+ * Pages whose IDs aren't found in the available pages are silently dropped.
+ * Groups that resolve to zero available pages are skipped entirely.
  */
-export function batchPages(
+function buildBatchesFromGroups(
+  pages: QuizPageInput[],
+  quizGroups: QuizGroup[]
+): QuizBatch[] {
+  const pageById = new Map(pages.map((p) => [p.pageId, p]))
+  const lastBookPageId = pages.length > 0 ? pages[pages.length - 1].pageId : ""
+  const batches: QuizBatch[] = []
+  for (const group of quizGroups) {
+    const groupPages: QuizPageInput[] = []
+    for (const id of group.source_page_ids) {
+      const page = pageById.get(id)
+      if (page) groupPages.push(page)
+    }
+    if (groupPages.length === 0) continue
+
+    let afterPageId: string
+    if (group.insert_after === "end") {
+      afterPageId = lastBookPageId
+    } else if (group.insert_after) {
+      afterPageId = group.insert_after
+    } else {
+      afterPageId = groupPages[groupPages.length - 1].pageId
+    }
+    batches.push({ pages: groupPages, afterPageId })
+  }
+  return batches
+}
+
+/**
+ * Auto-batch eligible content pages into groups of N. Used when no
+ * user-defined quiz groups are provided. Each batch's afterPageId is the
+ * last page in the batch.
+ */
+function buildBatchesAuto(
   pages: QuizPageInput[],
   pagesPerQuiz: number,
   quizSectionTypes?: string[]
-): QuizPageInput[][] {
+): QuizBatch[] {
   const contentPages = pages.filter((p) => isContentPage(p.sectioning, quizSectionTypes))
-  const batches: QuizPageInput[][] = []
+  const batches: QuizBatch[] = []
   for (let i = 0; i < contentPages.length; i += pagesPerQuiz) {
-    batches.push(contentPages.slice(i, i + pagesPerQuiz))
+    const slice = contentPages.slice(i, i + pagesPerQuiz)
+    batches.push({ pages: slice, afterPageId: slice[slice.length - 1].pageId })
   }
   return batches
+}
+
+/**
+ * Build the list of quiz batches to generate. Custom groups take priority
+ * over auto-batching when provided.
+ */
+export function buildQuizBatches(
+  pages: QuizPageInput[],
+  config: QuizConfig
+): QuizBatch[] {
+  if (config.quizGroups && config.quizGroups.length > 0) {
+    return buildBatchesFromGroups(pages, config.quizGroups)
+  }
+  return buildBatchesAuto(pages, config.pagesPerQuiz, config.quizSectionTypes)
 }
 
 /**
  * Generate a single quiz for a batch of pages.
  */
 export async function generateQuiz(
-  batch: QuizPageInput[],
+  batch: QuizBatch,
   quizIndex: number,
   config: QuizConfig,
   llmModel: LLMModel
 ): Promise<Quiz> {
-  const pageTexts = batch.map((page) => {
+  const pageTexts = batch.pages.map((page) => {
     const combinedHtml = page.rendering.sections.map((s) => s.html).join("\n")
     return {
       pageId: page.pageId,
@@ -203,8 +263,8 @@ export async function generateQuiz(
 
   return {
     quizIndex,
-    afterPageId: batch[batch.length - 1].pageId,
-    pageIds: batch.map((p) => p.pageId),
+    afterPageId: batch.afterPageId,
+    pageIds: batch.pages.map((p) => p.pageId),
     question: result.object.question,
     options: shuffled.options,
     answerIndex: shuffled.answerIndex,
@@ -225,7 +285,7 @@ export async function generateAllQuizzes(
     onQuizComplete?: (completed: number, total: number) => void
   }
 ): Promise<QuizGenerationOutput> {
-  const batches = batchPages(pages, config.pagesPerQuiz, config.quizSectionTypes)
+  const batches = buildQuizBatches(pages, config)
   const quizzes: Quiz[] = []
   const concurrency = options?.concurrency ?? 1
   let completed = 0

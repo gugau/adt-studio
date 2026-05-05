@@ -11,6 +11,7 @@ import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
 import { getRequestedPageId, getQuizImageRenderState } from "./lib/quizzes-image-state"
+import { QuizzesLandingConfig } from "./components/QuizzesLandingConfig"
 import { useLingui } from "@lingui/react/macro"
 
 
@@ -392,7 +393,9 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
           completed={quizzesDone}
           onRun={handleRunQuizzes}
           disabled={!hasApiKey || quizzesRunning}
-        />
+        >
+          <QuizzesLandingConfig bookLabel={bookLabel} />
+        </StageRunCard>
       </div>
     )
   }

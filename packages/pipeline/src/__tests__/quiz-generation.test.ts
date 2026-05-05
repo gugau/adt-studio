@@ -8,12 +8,12 @@ import type {
 import {
   extractTextFromHtml,
   isContentPage,
-  batchPages,
+  buildQuizBatches,
   buildQuizGenerationConfig,
   generateQuiz,
   generateAllQuizzes,
 } from "../quiz-generation.js"
-import type { QuizPageInput } from "../quiz-generation.js"
+import type { QuizPageInput, QuizConfig, QuizBatch } from "../quiz-generation.js"
 
 function makeFakeLLMModel(
   response: {
@@ -165,8 +165,20 @@ describe("isContentPage", () => {
   })
 })
 
-describe("batchPages", () => {
-  it("groups content pages into batches", () => {
+function autoConfig(overrides: Partial<QuizConfig> = {}): QuizConfig {
+  return {
+    language: "en",
+    pagesPerQuiz: 3,
+    promptName: "quiz_generation",
+    modelId: "openai:gpt-5.4",
+    maxRetries: 0,
+    timeoutMs: 90_000,
+    ...overrides,
+  }
+}
+
+describe("buildQuizBatches (auto mode)", () => {
+  it("groups content pages into batches and uses last page as afterPageId", () => {
     const pages = [
       makePageInput("pg001", "<p>Page 1</p>"),
       makePageInput("pg002", "<p>Page 2</p>"),
@@ -175,11 +187,12 @@ describe("batchPages", () => {
       makePageInput("pg005", "<p>Page 5</p>"),
     ]
 
-    const batches = batchPages(pages, 2)
+    const batches = buildQuizBatches(pages, autoConfig({ pagesPerQuiz: 2 }))
     expect(batches).toHaveLength(3)
-    expect(batches[0]).toHaveLength(2)
-    expect(batches[1]).toHaveLength(2)
-    expect(batches[2]).toHaveLength(1)
+    expect(batches[0].pages.map((p) => p.pageId)).toEqual(["pg001", "pg002"])
+    expect(batches[0].afterPageId).toBe("pg002")
+    expect(batches[2].pages.map((p) => p.pageId)).toEqual(["pg005"])
+    expect(batches[2].afterPageId).toBe("pg005")
   })
 
   it("skips non-content pages", () => {
@@ -191,14 +204,14 @@ describe("batchPages", () => {
       makePageInput("pg005", "<p>Content 3</p>"),
     ]
 
-    const batches = batchPages(pages, 3)
+    const batches = buildQuizBatches(pages, autoConfig({ pagesPerQuiz: 3 }))
     expect(batches).toHaveLength(1)
-    expect(batches[0].map((p) => p.pageId)).toEqual(["pg002", "pg004", "pg005"])
+    expect(batches[0].pages.map((p) => p.pageId)).toEqual(["pg002", "pg004", "pg005"])
   })
 
   it("returns empty array when no content pages", () => {
     const pages = [makePageInput("pg001", "<p>Cover</p>", true)]
-    expect(batchPages(pages, 3)).toEqual([])
+    expect(buildQuizBatches(pages, autoConfig())).toEqual([])
   })
 
   it("filters pages by quiz section types", () => {
@@ -206,32 +219,146 @@ describe("batchPages", () => {
       makePageInput("pg001", "<p>Text</p>", false, "text_only"),
       makePageInput("pg002", "<p>Activity</p>", false, "activity_multiple_choice"),
       makePageInput("pg003", "<p>More text</p>", false, "text_and_images"),
-      makePageInput("pg004", "<p>Another activity</p>", false, "activity_true_false"),
     ]
 
-    const batches = batchPages(pages, 2, ["text_only", "text_and_images"])
+    const batches = buildQuizBatches(
+      pages,
+      autoConfig({ pagesPerQuiz: 2, quizSectionTypes: ["text_only", "text_and_images"] })
+    )
     expect(batches).toHaveLength(1)
-    expect(batches[0].map((p) => p.pageId)).toEqual(["pg001", "pg003"])
+    expect(batches[0].pages.map((p) => p.pageId)).toEqual(["pg001", "pg003"])
+  })
+})
+
+describe("buildQuizBatches (custom groups mode)", () => {
+  it("creates one batch per group with all selected pages in a single quiz", () => {
+    const pages = [
+      makePageInput("pg001", "<p>Page 1</p>"),
+      makePageInput("pg002", "<p>Page 2</p>"),
+      makePageInput("pg003", "<p>Page 3</p>"),
+      makePageInput("pg004", "<p>Page 4</p>"),
+      makePageInput("pg005", "<p>Page 5</p>"),
+      makePageInput("pg006", "<p>Page 6</p>"),
+      makePageInput("pg007", "<p>Page 7</p>"),
+    ]
+
+    const batches = buildQuizBatches(
+      pages,
+      autoConfig({
+        quizGroups: [
+          { source_page_ids: ["pg001", "pg002", "pg003", "pg004", "pg005", "pg006", "pg007"] },
+        ],
+      })
+    )
+    expect(batches).toHaveLength(1)
+    expect(batches[0].pages).toHaveLength(7)
+    // afterPageId defaults to the last source page
+    expect(batches[0].afterPageId).toBe("pg007")
   })
 
-  it("includes all non-pruned pages when quizSectionTypes is undefined", () => {
+  it("creates a separate batch for each group", () => {
     const pages = [
-      makePageInput("pg001", "<p>Text</p>", false, "text_only"),
+      makePageInput("pg001", "<p>Page 1</p>"),
+      makePageInput("pg002", "<p>Page 2</p>"),
+      makePageInput("pg003", "<p>Page 3</p>"),
+      makePageInput("pg004", "<p>Page 4</p>"),
+    ]
+
+    const batches = buildQuizBatches(
+      pages,
+      autoConfig({
+        quizGroups: [
+          { source_page_ids: ["pg001", "pg002"] },
+          { source_page_ids: ["pg003", "pg004"] },
+        ],
+      })
+    )
+    expect(batches).toHaveLength(2)
+    expect(batches[0].afterPageId).toBe("pg002")
+    expect(batches[1].afterPageId).toBe("pg004")
+  })
+
+  it("resolves insert_after: 'end' to the last page in the book", () => {
+    const pages = [
+      makePageInput("pg001", "<p>Page 1</p>"),
+      makePageInput("pg002", "<p>Page 2</p>"),
+      makePageInput("pg003", "<p>Page 3</p>"),
+      makePageInput("pg099", "<p>Last</p>"),
+    ]
+
+    const batches = buildQuizBatches(
+      pages,
+      autoConfig({
+        quizGroups: [
+          { source_page_ids: ["pg001", "pg002"], insert_after: "end" },
+          { source_page_ids: ["pg003"], insert_after: "end" },
+        ],
+      })
+    )
+    expect(batches).toHaveLength(2)
+    expect(batches[0].afterPageId).toBe("pg099")
+    expect(batches[1].afterPageId).toBe("pg099")
+  })
+
+  it("uses an explicit page id for insert_after when provided", () => {
+    const pages = [
+      makePageInput("pg001", "<p>Page 1</p>"),
+      makePageInput("pg002", "<p>Page 2</p>"),
+      makePageInput("pg003", "<p>Page 3</p>"),
+    ]
+
+    const batches = buildQuizBatches(
+      pages,
+      autoConfig({
+        quizGroups: [
+          { source_page_ids: ["pg001"], insert_after: "pg003" },
+        ],
+      })
+    )
+    expect(batches[0].afterPageId).toBe("pg003")
+  })
+
+  it("drops unknown page ids and skips groups that resolve to nothing", () => {
+    const pages = [makePageInput("pg001", "<p>Page 1</p>")]
+
+    const batches = buildQuizBatches(
+      pages,
+      autoConfig({
+        quizGroups: [
+          { source_page_ids: ["pg001", "ghost"] },
+          { source_page_ids: ["only-ghost"] },
+        ],
+      })
+    )
+    expect(batches).toHaveLength(1)
+    expect(batches[0].pages.map((p) => p.pageId)).toEqual(["pg001"])
+  })
+
+  it("does not apply section-type or pruned filters to user-picked pages", () => {
+    const pages = [
+      makePageInput("pg001", "<p>Cover</p>", true),
       makePageInput("pg002", "<p>Activity</p>", false, "activity_multiple_choice"),
     ]
 
-    const batches = batchPages(pages, 2, undefined)
+    const batches = buildQuizBatches(
+      pages,
+      autoConfig({
+        quizSectionTypes: ["text_only"],
+        quizGroups: [{ source_page_ids: ["pg001", "pg002"] }],
+      })
+    )
     expect(batches).toHaveLength(1)
-    expect(batches[0].map((p) => p.pageId)).toEqual(["pg001", "pg002"])
+    expect(batches[0].pages.map((p) => p.pageId)).toEqual(["pg001", "pg002"])
   })
 
-  it("returns no batches when quizSectionTypes is empty", () => {
+  it("falls back to auto mode when quizGroups is empty", () => {
     const pages = [
-      makePageInput("pg001", "<p>Text</p>", false, "text_only"),
-      makePageInput("pg002", "<p>Activity</p>", false, "activity_multiple_choice"),
+      makePageInput("pg001", "<p>Page 1</p>"),
+      makePageInput("pg002", "<p>Page 2</p>"),
     ]
-
-    expect(batchPages(pages, 2, [])).toEqual([])
+    const batches = buildQuizBatches(pages, autoConfig({ pagesPerQuiz: 2, quizGroups: [] }))
+    expect(batches).toHaveLength(1)
+    expect(batches[0].pages.map((p) => p.pageId)).toEqual(["pg001", "pg002"])
   })
 })
 
@@ -246,6 +373,7 @@ describe("buildQuizGenerationConfig", () => {
       language: "en",
       pagesPerQuiz: 3,
       quizSectionTypes: FALLBACK_QUIZ_SECTION_TYPES,
+      quizGroups: undefined,
       promptName: "quiz_generation",
       modelId: "openai:gpt-5.4",
       maxRetries: 5,
@@ -281,11 +409,28 @@ describe("buildQuizGenerationConfig", () => {
       language: "en",
       pagesPerQuiz: 5,
       quizSectionTypes: ["text_only"],
+      quizGroups: undefined,
       promptName: "custom_quiz",
       modelId: "openai:gpt-4.1",
       maxRetries: 4,
       timeoutMs: 120_000,
     })
+  })
+
+  it("threads quiz_groups into config", () => {
+    const appConfig: AppConfig = {
+      role_types: { section_text: "Body text" },
+      structure_types: { paragraph: "Paragraph" },
+      quiz_generation: {
+        quiz_groups: [
+          { source_page_ids: ["pg002", "pg007"], insert_after: "end" },
+        ],
+      },
+    }
+    const config = buildQuizGenerationConfig(appConfig, "en")
+    expect(config?.quizGroups).toEqual([
+      { source_page_ids: ["pg002", "pg007"], insert_after: "end" },
+    ])
   })
 
   it("returns null when no language available", () => {
@@ -304,10 +449,13 @@ describe("generateQuiz", () => {
       capturedOptions = options
     })
 
-    const batch = [
-      makePageInput("pg001", "<p>Photosynthesis is the process...</p>"),
-      makePageInput("pg002", "<p>Plants use sunlight...</p>"),
-    ]
+    const batch: QuizBatch = {
+      pages: [
+        makePageInput("pg001", "<p>Photosynthesis is the process...</p>"),
+        makePageInput("pg002", "<p>Plants use sunlight...</p>"),
+      ],
+      afterPageId: "pg002",
+    }
 
     const config = {
       language: "en",
@@ -348,7 +496,10 @@ describe("generateQuiz", () => {
   it("shuffles options and renumbers answer labels", async () => {
     const llmModel = makeFakeLLMModel(validQuizResponse)
 
-    const batch = [makePageInput("pg001", "<p>Content</p>")]
+    const batch: QuizBatch = {
+      pages: [makePageInput("pg001", "<p>Content</p>")],
+      afterPageId: "pg001",
+    }
     const config = {
       language: "en",
       pagesPerQuiz: 1,
@@ -387,7 +538,10 @@ describe("generateQuiz", () => {
       capturedOptions = options
     })
 
-    const batch = [makePageInput("pg001", "<p>Content</p>")]
+    const batch: QuizBatch = {
+      pages: [makePageInput("pg001", "<p>Content</p>")],
+      afterPageId: "pg001",
+    }
     const config = {
       language: "en",
       pagesPerQuiz: 1,
@@ -442,5 +596,31 @@ describe("generateAllQuizzes", () => {
     expect(result.quizzes[0].quizIndex).toBe(0)
     expect(result.quizzes[1].quizIndex).toBe(1)
     expect(result.quizzes[2].quizIndex).toBe(2)
+  })
+
+  it("emits one quiz per group with explicit afterPageId", async () => {
+    const llmModel = makeFakeLLMModel(validQuizResponse)
+    const pages = [
+      makePageInput("pg001", "<p>Page 1</p>"),
+      makePageInput("pg002", "<p>Page 2</p>"),
+      makePageInput("pg003", "<p>Page 3</p>"),
+      makePageInput("pg004", "<p>Page 4</p>"),
+      makePageInput("pg099", "<p>Last</p>"),
+    ]
+
+    const config: QuizConfig = autoConfig({
+      quizGroups: [
+        { source_page_ids: ["pg001", "pg002", "pg003"] },
+        { source_page_ids: ["pg004"], insert_after: "end" },
+      ],
+    })
+
+    const result = await generateAllQuizzes(pages, config, llmModel)
+
+    expect(result.quizzes).toHaveLength(2)
+    expect(result.quizzes[0].pageIds).toEqual(["pg001", "pg002", "pg003"])
+    expect(result.quizzes[0].afterPageId).toBe("pg003")
+    expect(result.quizzes[1].pageIds).toEqual(["pg004"])
+    expect(result.quizzes[1].afterPageId).toBe("pg099")
   })
 })

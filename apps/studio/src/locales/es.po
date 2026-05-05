@@ -48,6 +48,9 @@ msgstr "(sin texto de instrucción)"
 msgid "(no target)"
 msgstr "(no target)"
 
+msgid "(non-content)"
+msgstr "(sin contenido)"
+
 #. placeholder {0}: sections[0].pageNumber
 msgid "(p.{0})"
 msgstr "(p.{0})"
@@ -139,6 +142,11 @@ msgstr "{0} de {1} elementos"
 #. placeholder {0}: String(displayPages.length)
 msgid "{0} pages"
 msgstr "{0} páginas"
+
+#. placeholder {0}: String(group.source_page_ids.length)
+#. placeholder {0}: String(selected.size)
+msgid "{0} pages selected"
+msgstr "{0} páginas seleccionadas"
 
 #. placeholder {0}: String(displayQuizzes.length)
 msgid "{0} questions"
@@ -274,6 +282,9 @@ msgstr "1 imagen seleccionada"
 
 msgid "1 item needs changes on this page"
 msgstr "1 item needs changes on this page"
+
+msgid "1 page selected"
+msgstr "1 página seleccionada"
 
 msgid "1 selected image is no longer in the storyboard."
 msgstr "1 imagen seleccionada ya no está en el guion gráfico."
@@ -511,6 +522,12 @@ msgstr "Agregar"
 msgid "Add {0} Images"
 msgstr "Agregar {0} imágenes"
 
+msgid "Add another quiz"
+msgstr "Añadir otro cuestionario"
+
+msgid "Add at least one quiz to run."
+msgstr "Añade al menos un cuestionario para ejecutar."
+
 msgid "Add Book"
 msgstr "Agregar libro"
 
@@ -593,6 +610,9 @@ msgstr "Paquete ADT"
 msgid "ADT Studio uses your own API keys to run the pipeline. Keys are stored locally on this device and never sent anywhere else."
 msgstr "ADT Studio usa tus propias claves de API para ejecutar el pipeline. Las claves se almacenan localmente en este dispositivo y nunca se envían a otro lugar."
 
+msgid "Advanced settings"
+msgstr "Configuración avanzada"
+
 msgid "Adventure Tales - Vol. 1"
 msgstr "Cuentos de Aventura - Vol. 1"
 
@@ -605,6 +625,9 @@ msgstr "Después"
 #. placeholder {0}: quiz.afterPageId
 msgid "After {0}"
 msgstr "Después de {0}"
+
+msgid "After the last selected page"
+msgstr "Después de la última página seleccionada"
 
 msgid "age 8"
 msgstr "8 años"
@@ -653,6 +676,9 @@ msgstr "Todo"
 
 msgid "All Categories"
 msgstr "All Categories"
+
+#~ msgid "All eligible pages"
+#~ msgstr "Todas las páginas elegibles"
 
 msgid "All issues and manual review items"
 msgstr "Todos los problemas y elementos de revisión manual"
@@ -780,6 +806,9 @@ msgstr "Recurso"
 
 msgid "Assign to section..."
 msgstr "Asignar a sección..."
+
+msgid "At the end of the book"
+msgstr "Al final del libro"
 
 msgid "At the river's edge"
 msgstr "A la orilla del río"
@@ -1056,6 +1085,9 @@ msgstr "Elige cómo debe formatearse el contenido."
 msgid "Choose images..."
 msgstr "Elegir imágenes..."
 
+msgid "Choose pages..."
+msgstr "Elegir páginas..."
+
 msgid "Choose Provider"
 msgstr "Elegir proveedor"
 
@@ -1326,8 +1358,17 @@ msgstr "Current Preview Page"
 msgid "Custom"
 msgstr "Personalizado"
 
+msgid "Custom — define each quiz yourself"
+msgstr "Personalizado — define cada cuestionario tú mismo"
+
+#~ msgid "Custom — pick the pages"
+#~ msgstr "Personalizado — elige las páginas"
+
 msgid "Custom Layout Demo"
 msgstr "Demostración de Diseño Personalizado"
+
+#~ msgid "Custom pages"
+#~ msgstr "Páginas personalizadas"
 
 msgid "Custom section {index}"
 msgstr "Custom section {index}"
@@ -1610,11 +1651,17 @@ msgstr "Editar"
 msgid "Edit & enrich"
 msgstr "Edita y enriquece"
 
+msgid "Edit pages..."
+msgstr "Editar páginas..."
+
 msgid "Edit Prompt"
 msgstr "Prompt de edición"
 
 msgid "Edit Prompts"
 msgstr "Editar prompts"
+
+#~ msgid "Edit selection..."
+#~ msgstr "Editar selección..."
 
 msgid "Edit the Liquid/HTML template below. Changes are saved when you click Save & Rerun."
 msgstr "Edita la plantilla Liquid/HTML a continuación. Los cambios se guardan cuando haces clic en Guardar y reejecutar."
@@ -1729,6 +1776,9 @@ msgstr "Costo estimado"
 msgid "Evaporation"
 msgstr "Evaporación"
 
+msgid "Every"
+msgstr "Cada"
+
 msgid "Every reader opens the same book, with the features they need on tap."
 msgstr "Cada lector abre el mismo libro, con las funciones que necesita al tocar."
 
@@ -1831,6 +1881,9 @@ msgstr "Error al cargar imágenes."
 msgid "Failed to load page image"
 msgstr "Error al cargar la imagen de la página"
 
+msgid "Failed to load pages."
+msgstr "Error al cargar las páginas."
+
 #. placeholder {0}: anyRecordQueryError.message
 msgid "Failed to load reviewer page results: {0}"
 msgstr "Failed to load reviewer page results: {0}"
@@ -1887,6 +1940,9 @@ msgstr "Filtrar por ID de imagen..."
 
 msgid "Filter by item ID..."
 msgstr "Filtrar por ID de ítem..."
+
+msgid "Filter by page number, ID, or text..."
+msgstr "Filtrar por número de página, ID o texto..."
 
 msgid "Filter terms…"
 msgstr "Filtrar términos…"
@@ -2070,6 +2126,9 @@ msgstr "Google"
 msgid "Google AI API Key"
 msgstr "Clave de API de Google AI"
 
+msgid "Group every N eligible pages in order into one quiz."
+msgstr "Agrupa cada N páginas elegibles en orden en un cuestionario."
+
 msgid "Grouping content by purpose, then laying out every section as reviewable HTML."
 msgstr "Agrupando el contenido por propósito y maquetando cada sección como HTML revisable."
 
@@ -2123,6 +2182,9 @@ msgstr "¿Qué tan fielmente debe coincidir la revisión visual con la página o
 
 msgid "How it works"
 msgstr "Cómo funciona"
+
+msgid "How should quiz pages be chosen?"
+msgstr "¿Cómo se deben elegir las páginas del cuestionario?"
 
 msgid "HTML"
 msgstr "HTML"
@@ -2879,11 +2941,17 @@ msgstr "No hay otras imágenes en este libro"
 msgid "No page linked"
 msgstr "No hay página vinculada"
 
+msgid "No pages available."
+msgstr "No hay páginas disponibles."
+
 msgid "No pages extracted yet"
 msgstr "Ninguna página extraída aún"
 
 msgid "No pages extracted yet. Run the pipeline to extract content."
 msgstr "Aún no se extrajeron páginas. Ejecuta el pipeline para extraer el contenido."
+
+msgid "No pages match your filter."
+msgstr "Ninguna página coincide con el filtro."
 
 msgid "No PDF"
 msgstr "Sin PDF"
@@ -3007,6 +3075,9 @@ msgstr "Solo las páginas que contienen estos tipos de sección se cuentan al ag
 
 msgid "Only PDF files are supported"
 msgstr "Solo se admiten archivos PDF"
+
+#~ msgid "Only the pages you select are batched into quizzes. Section-type filters below still apply."
+#~ msgstr "Solo las páginas seleccionadas se agrupan en cuestionarios. Los filtros de tipo de sección a continuación siguen aplicándose."
 
 msgid "Only ZIP files are supported"
 msgstr "Solo se admiten archivos ZIP"
@@ -3185,6 +3256,9 @@ msgstr "Prompt de seccionamiento de página"
 msgid "Page Sectioning Refinement Prompt"
 msgstr "Prompt de refinamiento de sección"
 
+#~ msgid "Page Selection"
+#~ msgstr "Selección de páginas"
+
 msgid "pages"
 msgstr "páginas"
 
@@ -3277,6 +3351,12 @@ msgstr "Elegir del libro"
 msgid "Pick one layout approach."
 msgstr "Elige un enfoque de diseño."
 
+msgid "Pick the pages you want to base quiz questions on. Selected pages are still grouped according to \"Pages per quiz\"."
+msgstr "Elige las páginas en las que quieres basar las preguntas del cuestionario. Las páginas seleccionadas se siguen agrupando según \"Páginas por cuestionario\"."
+
+msgid "Pick the source pages for each quiz and where it should appear in the book."
+msgstr "Elige las páginas de origen de cada cuestionario y dónde debe aparecer en el libro."
+
 msgid "Picture books and early readers"
 msgstr "Libros ilustrados y primeros lectores"
 
@@ -3294,6 +3374,9 @@ msgstr "Etapas del pipeline"
 
 msgid "Pixel Art"
 msgstr "Pixel Art"
+
+msgid "Place quiz:"
+msgstr "Ubicar cuestionario:"
 
 msgid "Plants create sugar via <0>photosynthesis</0>, divide by <1>mitosis</1>, and absorb water by <2>osmosis</2>."
 msgstr "Las plantas crean azúcar mediante <0>fotosíntesis</0>, se dividen por <1>mitosis</1>, y absorben agua por <2>ósmosis</2>."
@@ -3425,6 +3508,10 @@ msgstr "px"
 msgid "Query param"
 msgstr "Parámetro de consulta"
 
+#. placeholder {0}: String(index + 1)
+msgid "Quiz {0}"
+msgstr "Cuestionario {0}"
+
 msgid "Quiz Generation"
 msgstr "Generación de cuestionarios"
 
@@ -3439,6 +3526,9 @@ msgstr "Tipos de sección del quiz"
 
 msgid "Quizzes"
 msgstr "Cuestionarios"
+
+#~ msgid "Quizzes are generated from every eligible page in order, batched by the value above."
+#~ msgstr "Los cuestionarios se generan a partir de cada página elegible en orden, agrupadas según el valor anterior."
 
 msgid "Quizzes are linked to other pages in this book"
 msgstr "Los quizzes están vinculados a otras páginas de este libro"
@@ -3566,6 +3656,9 @@ msgstr "Eliminar término manual del glosario"
 
 #~ msgid "Remove PDF"
 #~ msgstr "Eliminar PDF"
+
+msgid "Remove quiz"
+msgstr "Quitar cuestionario"
 
 msgid "Remove section"
 msgstr "Remove section"
@@ -3968,11 +4061,17 @@ msgstr "Seleccionar tipo de actividad..."
 msgid "Select all"
 msgstr "Seleccionar todo"
 
+#~ msgid "Select at least one page to run."
+#~ msgstr "Selecciona al menos una página para ejecutar."
+
 msgid "Select images to translate"
 msgstr "Seleccionar imágenes para traducir"
 
 msgid "Select node type..."
 msgstr "Seleccionar tipo de nodo..."
+
+msgid "Select pages for quizzes"
+msgstr "Seleccionar páginas para cuestionarios"
 
 msgid "Select reviewer session"
 msgstr "Select reviewer session"

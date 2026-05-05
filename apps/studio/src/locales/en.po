@@ -48,6 +48,9 @@ msgstr "(no instruction text)"
 msgid "(no target)"
 msgstr "(no target)"
 
+msgid "(non-content)"
+msgstr "(non-content)"
+
 #. placeholder {0}: sections[0].pageNumber
 msgid "(p.{0})"
 msgstr "(p.{0})"
@@ -139,6 +142,11 @@ msgstr "{0} of {1} items"
 #. placeholder {0}: String(displayPages.length)
 msgid "{0} pages"
 msgstr "{0} pages"
+
+#. placeholder {0}: String(group.source_page_ids.length)
+#. placeholder {0}: String(selected.size)
+msgid "{0} pages selected"
+msgstr "{0} pages selected"
 
 #. placeholder {0}: String(displayQuizzes.length)
 msgid "{0} questions"
@@ -274,6 +282,9 @@ msgstr "1 image selected"
 
 msgid "1 item needs changes on this page"
 msgstr "1 item needs changes on this page"
+
+msgid "1 page selected"
+msgstr "1 page selected"
 
 msgid "1 selected image is no longer in the storyboard."
 msgstr "1 selected image is no longer in the storyboard."
@@ -511,6 +522,12 @@ msgstr "Add"
 msgid "Add {0} Images"
 msgstr "Add {0} Images"
 
+msgid "Add another quiz"
+msgstr "Add another quiz"
+
+msgid "Add at least one quiz to run."
+msgstr "Add at least one quiz to run."
+
 msgid "Add Book"
 msgstr "Add Book"
 
@@ -593,6 +610,9 @@ msgstr "ADT Package"
 msgid "ADT Studio uses your own API keys to run the pipeline. Keys are stored locally on this device and never sent anywhere else."
 msgstr "ADT Studio uses your own API keys to run the pipeline. Keys are stored locally on this device and never sent anywhere else."
 
+msgid "Advanced settings"
+msgstr "Advanced settings"
+
 msgid "Adventure Tales - Vol. 1"
 msgstr "Adventure Tales - Vol. 1"
 
@@ -605,6 +625,9 @@ msgstr "After"
 #. placeholder {0}: quiz.afterPageId
 msgid "After {0}"
 msgstr "After {0}"
+
+msgid "After the last selected page"
+msgstr "After the last selected page"
 
 msgid "age 8"
 msgstr "age 8"
@@ -653,6 +676,9 @@ msgstr "All"
 
 msgid "All Categories"
 msgstr "All Categories"
+
+#~ msgid "All eligible pages"
+#~ msgstr "All eligible pages"
 
 msgid "All issues and manual review items"
 msgstr "All issues and manual review items"
@@ -780,6 +806,9 @@ msgstr "Asset"
 
 msgid "Assign to section..."
 msgstr "Assign to section..."
+
+msgid "At the end of the book"
+msgstr "At the end of the book"
 
 msgid "At the river's edge"
 msgstr "At the river's edge"
@@ -1056,6 +1085,9 @@ msgstr "Choose how the content should be formatted."
 msgid "Choose images..."
 msgstr "Choose images..."
 
+msgid "Choose pages..."
+msgstr "Choose pages..."
+
 msgid "Choose Provider"
 msgstr "Choose Provider"
 
@@ -1326,8 +1358,17 @@ msgstr "Current Preview Page"
 msgid "Custom"
 msgstr "Custom"
 
+msgid "Custom — define each quiz yourself"
+msgstr "Custom — define each quiz yourself"
+
+#~ msgid "Custom — pick the pages"
+#~ msgstr "Custom — pick the pages"
+
 msgid "Custom Layout Demo"
 msgstr "Custom Layout Demo"
+
+#~ msgid "Custom pages"
+#~ msgstr "Custom pages"
 
 msgid "Custom section {index}"
 msgstr "Custom section {index}"
@@ -1610,11 +1651,17 @@ msgstr "Edit"
 msgid "Edit & enrich"
 msgstr "Edit & enrich"
 
+msgid "Edit pages..."
+msgstr "Edit pages..."
+
 msgid "Edit Prompt"
 msgstr "Edit Prompt"
 
 msgid "Edit Prompts"
 msgstr "Edit Prompts"
+
+#~ msgid "Edit selection..."
+#~ msgstr "Edit selection..."
 
 msgid "Edit the Liquid/HTML template below. Changes are saved when you click Save & Rerun."
 msgstr "Edit the Liquid/HTML template below. Changes are saved when you click Save & Rerun."
@@ -1729,6 +1776,9 @@ msgstr "Est. Cost"
 msgid "Evaporation"
 msgstr "Evaporation"
 
+msgid "Every"
+msgstr "Every"
+
 msgid "Every reader opens the same book, with the features they need on tap."
 msgstr "Every reader opens the same book, with the features they need on tap."
 
@@ -1831,6 +1881,9 @@ msgstr "Failed to load images."
 msgid "Failed to load page image"
 msgstr "Failed to load page image"
 
+msgid "Failed to load pages."
+msgstr "Failed to load pages."
+
 #. placeholder {0}: anyRecordQueryError.message
 msgid "Failed to load reviewer page results: {0}"
 msgstr "Failed to load reviewer page results: {0}"
@@ -1887,6 +1940,9 @@ msgstr "Filter by image ID..."
 
 msgid "Filter by item ID..."
 msgstr "Filter by item ID..."
+
+msgid "Filter by page number, ID, or text..."
+msgstr "Filter by page number, ID, or text..."
 
 msgid "Filter terms…"
 msgstr "Filter terms…"
@@ -2070,6 +2126,9 @@ msgstr "Google"
 msgid "Google AI API Key"
 msgstr "Google AI API Key"
 
+msgid "Group every N eligible pages in order into one quiz."
+msgstr "Group every N eligible pages in order into one quiz."
+
 msgid "Grouping content by purpose, then laying out every section as reviewable HTML."
 msgstr "Grouping content by purpose, then laying out every section as reviewable HTML."
 
@@ -2123,6 +2182,9 @@ msgstr "How closely should the visual review match the original page? The review
 
 msgid "How it works"
 msgstr "How it works"
+
+msgid "How should quiz pages be chosen?"
+msgstr "How should quiz pages be chosen?"
 
 msgid "HTML"
 msgstr "HTML"
@@ -2879,11 +2941,17 @@ msgstr "No other images in this book"
 msgid "No page linked"
 msgstr "No page linked"
 
+msgid "No pages available."
+msgstr "No pages available."
+
 msgid "No pages extracted yet"
 msgstr "No pages extracted yet"
 
 msgid "No pages extracted yet. Run the pipeline to extract content."
 msgstr "No pages extracted yet. Run the pipeline to extract content."
+
+msgid "No pages match your filter."
+msgstr "No pages match your filter."
 
 msgid "No PDF"
 msgstr "No PDF"
@@ -3007,6 +3075,9 @@ msgstr "Only pages containing these section types are counted when grouping page
 
 msgid "Only PDF files are supported"
 msgstr "Only PDF files are supported"
+
+#~ msgid "Only the pages you select are batched into quizzes. Section-type filters below still apply."
+#~ msgstr "Only the pages you select are batched into quizzes. Section-type filters below still apply."
 
 msgid "Only ZIP files are supported"
 msgstr "Only ZIP files are supported"
@@ -3185,6 +3256,9 @@ msgstr "Page Sectioning Prompt"
 msgid "Page Sectioning Refinement Prompt"
 msgstr "Page Sectioning Refinement Prompt"
 
+#~ msgid "Page Selection"
+#~ msgstr "Page Selection"
+
 msgid "pages"
 msgstr "pages"
 
@@ -3277,6 +3351,12 @@ msgstr "Pick from Book"
 msgid "Pick one layout approach."
 msgstr "Pick one layout approach."
 
+msgid "Pick the pages you want to base quiz questions on. Selected pages are still grouped according to \"Pages per quiz\"."
+msgstr "Pick the pages you want to base quiz questions on. Selected pages are still grouped according to \"Pages per quiz\"."
+
+msgid "Pick the source pages for each quiz and where it should appear in the book."
+msgstr "Pick the source pages for each quiz and where it should appear in the book."
+
 msgid "Picture books and early readers"
 msgstr "Picture books and early readers"
 
@@ -3294,6 +3374,9 @@ msgstr "Pipeline Stages"
 
 msgid "Pixel Art"
 msgstr "Pixel Art"
+
+msgid "Place quiz:"
+msgstr "Place quiz:"
 
 msgid "Plants create sugar via <0>photosynthesis</0>, divide by <1>mitosis</1>, and absorb water by <2>osmosis</2>."
 msgstr "Plants create sugar via <0>photosynthesis</0>, divide by <1>mitosis</1>, and absorb water by <2>osmosis</2>."
@@ -3425,6 +3508,10 @@ msgstr "px"
 msgid "Query param"
 msgstr "Query param"
 
+#. placeholder {0}: String(index + 1)
+msgid "Quiz {0}"
+msgstr "Quiz {0}"
+
 msgid "Quiz Generation"
 msgstr "Quiz Generation"
 
@@ -3439,6 +3526,9 @@ msgstr "Quiz Section Types"
 
 msgid "Quizzes"
 msgstr "Quizzes"
+
+#~ msgid "Quizzes are generated from every eligible page in order, batched by the value above."
+#~ msgstr "Quizzes are generated from every eligible page in order, batched by the value above."
 
 msgid "Quizzes are linked to other pages in this book"
 msgstr "Quizzes are linked to other pages in this book"
@@ -3566,6 +3656,9 @@ msgstr "Remove manual glossary term"
 
 #~ msgid "Remove PDF"
 #~ msgstr "Remove PDF"
+
+msgid "Remove quiz"
+msgstr "Remove quiz"
 
 msgid "Remove section"
 msgstr "Remove section"
@@ -3968,11 +4061,17 @@ msgstr "Select activity type..."
 msgid "Select all"
 msgstr "Select all"
 
+#~ msgid "Select at least one page to run."
+#~ msgstr "Select at least one page to run."
+
 msgid "Select images to translate"
 msgstr "Select images to translate"
 
 msgid "Select node type..."
 msgstr "Select node type..."
+
+msgid "Select pages for quizzes"
+msgstr "Select pages for quizzes"
 
 msgid "Select reviewer session"
 msgstr "Select reviewer session"
