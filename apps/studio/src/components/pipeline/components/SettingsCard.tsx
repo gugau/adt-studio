@@ -39,23 +39,28 @@ export function SettingsCard({
 
 export function SettingsField({
   label,
+  labelAction,
   hint,
   htmlFor,
   children,
 }: {
   label: ReactNode
+  labelAction?: ReactNode
   hint?: ReactNode
   htmlFor?: string
   children: ReactNode
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label
-        htmlFor={htmlFor}
-        className="text-[11px] font-medium uppercase tracking-wider text-[#737373]"
-      >
-        {label}
-      </label>
+      <div className="flex items-center gap-1">
+        <label
+          htmlFor={htmlFor}
+          className="text-[11px] font-medium uppercase tracking-wider text-[#737373]"
+        >
+          {label}
+        </label>
+        {labelAction}
+      </div>
       {children}
       {hint && <p className="text-xs text-[#737373] leading-relaxed">{hint}</p>}
     </div>
