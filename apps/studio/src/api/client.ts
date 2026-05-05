@@ -47,6 +47,13 @@ export function getSignLanguageVideoUrl(label: string, videoId: string): string 
   return `${BASE_URL}/books/${label}/sign-language-videos/${videoId}`
 }
 
+export function getBookCoverUrl(label: string, cacheKey?: string): string {
+  const base = `${BASE_URL}/books/${label}/cover`
+  if (!cacheKey) return base
+  const params = new URLSearchParams({ v: cacheKey })
+  return `${base}?${params.toString()}`
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${BASE_URL}${path}`
   const res = await fetch(url, {

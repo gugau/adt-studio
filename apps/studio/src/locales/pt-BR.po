@@ -1231,6 +1231,9 @@ msgstr "Não foi possível ler este PDF. O arquivo pode estar corrompido ou prot
 msgid "Cover"
 msgstr "Capa"
 
+#~ msgid "Cover of {0}"
+#~ msgstr ""
+
 msgid "Cover of {title}"
 msgstr "Capa de {0}"
 

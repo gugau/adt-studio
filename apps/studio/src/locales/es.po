@@ -1231,6 +1231,9 @@ msgstr "No se pudo leer este PDF. El archivo puede estar dañado o protegido con
 msgid "Cover"
 msgstr "Portada"
 
+#~ msgid "Cover of {0}"
+#~ msgstr ""
+
 msgid "Cover of {title}"
 msgstr "Portada de {0}"
 

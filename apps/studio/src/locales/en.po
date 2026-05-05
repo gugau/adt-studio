@@ -1231,6 +1231,9 @@ msgstr "Could not read this PDF. The file may be corrupted or password-protected
 msgid "Cover"
 msgstr "Cover"
 
+#~ msgid "Cover of {0}"
+#~ msgstr "Cover of {0}"
+
 msgid "Cover of {title}"
 msgstr "Cover of {title}"
 
