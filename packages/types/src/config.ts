@@ -114,6 +114,10 @@ export const AppConfig = z
     default_render_strategy: z.string().optional(),
     render_strategies: z.record(z.string(), RenderStrategyConfig).optional(),
     section_render_strategies: z.record(z.string(), z.string()).optional(),
+    storyboard_effort: z.enum(["high", "medium", "relaxed"]).optional(),
+    storyboard_activity_mode: z
+      .enum(["dynamic", "match_source", "template"])
+      .optional(),
     image_filters: ImageFilters.optional(),
     image_meaningfulness: StepConfig.optional(),
     glossary: StepConfig.optional(),
