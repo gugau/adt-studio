@@ -1,13 +1,15 @@
-import { Trans } from "@lingui/react/macro"
-import { SplashLogo } from "./components/SplashLogo"
-import { RecoveryPanel } from "./components/RecoveryPanel"
-import { useElapsedSeconds } from "./hooks/useElapsedSeconds"
-import { StatusMessage } from "./components/StatusMessage"
-import { STUCK_THRESHOLD_SECONDS } from "./constants"
+import { Trans } from "@lingui/react/macro";
+import { SplashLogo } from "./components/SplashLogo";
+import { RecoveryPanel } from "./components/RecoveryPanel";
+import { useElapsedSeconds } from "./hooks/use-elapsed-seconds";
+import { StatusMessage } from "./components/StatusMessage";
+import { Progress } from "./components/Progress";
+import { STUCK_THRESHOLD_SECONDS } from "./constants";
 
 export function Splashscreen() {
-  const elapsed = useElapsedSeconds()
-  const isStuck = elapsed >= STUCK_THRESHOLD_SECONDS
+  const elapsed = useElapsedSeconds();
+  const isStuck = elapsed >= STUCK_THRESHOLD_SECONDS;
+  const version = window.splashControls?.version;
 
   return (
     <div
@@ -34,21 +36,14 @@ export function Splashscreen() {
         >
           <StatusMessage elapsed={elapsed} />
         </div>
-        <div
-          className="relative h-0.5 w-40 overflow-hidden rounded-sm bg-slate-200"
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={100}
-        >
-          <div
-            className="absolute inset-y-0 left-0 w-1/3 rounded-sm bg-blue-500"
-            style={{
-              animation: "splash-indeterminate-bar 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite",
-            }}
-          />
-        </div>
+        <Progress />
         {isStuck && <RecoveryPanel elapsed={elapsed} />}
       </div>
+
+      <div className="absolute bottom-2 right-3 text-sm tabular-nums text-slate-400">
+        v{version}
+      </div>
+
     </div>
-  )
+  );
 }

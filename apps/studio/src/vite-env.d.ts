@@ -52,6 +52,37 @@ interface ElectronSaveFileDialogOptions {
   filters?: Array<{ name: string; extensions: string[] }>
 }
 
+type ElectronUpdateStatus =
+  | { phase: "idle" }
+  | { phase: "checking" }
+  | {
+      phase: "available"
+      version: string
+      releaseDate?: string
+      releaseNotes?: string
+      totalBytes?: number
+    }
+  | { phase: "not-available" }
+  | {
+      phase: "downloading"
+      version: string
+      percent: number
+      bytesPerSecond: number
+      transferred: number
+      total: number
+    }
+  | { phase: "downloaded"; version: string; releaseNotes?: string }
+  | { phase: "error"; message: string }
+
+interface ElectronUpdatesApi {
+  check: () => Promise<ElectronUpdateStatus>
+  download: () => Promise<ElectronUpdateStatus>
+  install: () => Promise<void>
+  installOnQuit: () => Promise<void>
+  getStatus: () => Promise<ElectronUpdateStatus>
+  onStatus: (cb: (status: ElectronUpdateStatus) => void) => () => void
+}
+
 interface Window {
   api: {
     onApiLog: (callback: (entry: ElectronApiLogEntry) => void) => () => void
@@ -67,7 +98,11 @@ interface Window {
     apiPort: number
     /** `process.platform` of the Electron main process. Undefined in the web build. */
     platform?: ElectronPlatform
+    /** Application version from the Electron main process. Undefined in the web build. */
+    version?: string
     /** IPC bridge for custom title bar controls. Undefined in the web build. */
     windowControls?: ElectronWindowControls
+    /** IPC bridge for desktop auto-updater. Undefined in the web build. */
+    updates?: ElectronUpdatesApi
   }
 }

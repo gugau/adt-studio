@@ -90,6 +90,11 @@ const config = {
     target: ["AppImage"],
     icon: "build",
   },
+  publish: {
+    provider: "github",
+    owner: "unicef",
+    repo: "adt-studio",
+  }
 };
 
 module.exports = config;

@@ -6,6 +6,7 @@ import {
   type ErrorComponentProps,
 } from "@tanstack/react-router"
 import { ApiKeyDialog } from "@/components/settings/ApiKeyDialog"
+import { UpdateDialogProvider } from "@/components/updates"
 import { useApiKey } from "@/hooks/use-api-key"
 import { ErrorScreen } from "@/components/ErrorScreen"
 
@@ -54,30 +55,32 @@ function RootLayout() {
 
   return (
     <SettingsContext value={{ openSettings }}>
-      <div className="flex flex-col h-screen bg-background text-foreground">
-        <main className="flex-1 min-h-0 flex flex-col overflow-hidden">
-          <Outlet />
-        </main>
+      <UpdateDialogProvider>
+        <div className="flex flex-col h-screen bg-background text-foreground">
+          <main className="flex-1 min-h-0 flex flex-col overflow-hidden">
+            <Outlet />
+          </main>
 
-        <ApiKeyDialog
-          open={showKeyDialog}
-          onOpenChange={setShowKeyDialog}
-          apiKey={apiKey}
-          onSaveApiKey={setApiKey}
-          anthropicKey={anthropicKey}
-          onSaveAnthropicKey={setAnthropicKey}
-          googleKey={googleKey}
-          onSaveGoogleKey={saveGoogleKey}
-          customBaseUrl={customBaseUrl}
-          onSaveCustomBaseUrl={setCustomBaseUrl}
-          customApiKey={customApiKey}
-          onSaveCustomApiKey={setCustomApiKey}
-          azureKey={azureKey}
-          onSaveAzureKey={setAzureKey}
-          azureRegion={azureRegion}
-          onSaveAzureRegion={setAzureRegion}
-        />
-      </div>
+          <ApiKeyDialog
+            open={showKeyDialog}
+            onOpenChange={setShowKeyDialog}
+            apiKey={apiKey}
+            onSaveApiKey={setApiKey}
+            anthropicKey={anthropicKey}
+            onSaveAnthropicKey={setAnthropicKey}
+            googleKey={googleKey}
+            onSaveGoogleKey={saveGoogleKey}
+            customBaseUrl={customBaseUrl}
+            onSaveCustomBaseUrl={setCustomBaseUrl}
+            customApiKey={customApiKey}
+            onSaveCustomApiKey={setCustomApiKey}
+            azureKey={azureKey}
+            onSaveAzureKey={setAzureKey}
+            azureRegion={azureRegion}
+            onSaveAzureRegion={setAzureRegion}
+          />
+        </div>
+      </UpdateDialogProvider>
     </SettingsContext>
   )
 }

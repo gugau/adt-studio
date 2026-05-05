@@ -7,10 +7,9 @@ declare module "*.po" {
 }
 
 interface SplashControlsApi {
-  /** Relaunch the application: schedules a relaunch and quits. */
   relaunch: () => Promise<void>
-  /** Quit the application immediately. */
   quit: () => Promise<void>
+  readonly version: string
 }
 
 interface Window {

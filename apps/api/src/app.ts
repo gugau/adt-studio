@@ -70,9 +70,6 @@ const app = new Hono()
 app.use("*", logger())
 const ALLOWED_ORIGINS = [
   "http://localhost:5173",
-  "tauri://localhost",
-  "https://tauri.localhost",
-  "http://tauri.localhost",
   "app://adt.studio",
 ]
 

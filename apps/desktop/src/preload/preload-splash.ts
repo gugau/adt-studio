@@ -3,6 +3,9 @@ import { contextBridge, ipcRenderer } from 'electron'
 const splashControls = {
   relaunch: (): Promise<void> => ipcRenderer.invoke('splash:relaunch'),
   quit: (): Promise<void> => ipcRenderer.invoke('splash:quit'),
+  get version(): string {
+    return ipcRenderer.sendSync('app:version') as string
+  },
 }
 
 if (process.contextIsolated) {

@@ -1,5 +1,6 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
 import type { ApiLogEntry } from '../main/api'
+import type { UpdateStatus } from '../main/auto-updater'
 
 export type ElectronPlatform = NodeJS.Platform
 
@@ -18,6 +19,15 @@ export interface SaveFileDialogOptions {
   filters?: Array<{ name: string; extensions: string[] }>
 }
 
+export interface UpdatesApi {
+  check: () => Promise<UpdateStatus>
+  download: () => Promise<UpdateStatus>
+  install: () => Promise<void>
+  installOnQuit: () => Promise<void>
+  getStatus: () => Promise<UpdateStatus>
+  onStatus: (cb: (status: UpdateStatus) => void) => () => void
+}
+
 export interface SplashControlsApi {
   relaunch: () => Promise<void>
   quit: () => Promise<void>
@@ -32,7 +42,9 @@ declare global {
       saveFile: (options: SaveFileDialogOptions, data: Uint8Array) => Promise<string | null>
       apiPort: number
       platform: ElectronPlatform
+      version: string
       windowControls: WindowControlsApi
+      updates: UpdatesApi
     }
     splashControls?: SplashControlsApi
   }

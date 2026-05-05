@@ -10,6 +10,7 @@ import {
   isApiDebugMode,
 } from "./api";
 import { setupTitleBar } from "./title-bar";
+import { setupAppInfo } from "./app-info";
 import { setupFileDialog } from "./file-dialog";
 import {
   HTML_RENDER_SCHEME_PRIVILEGES,
@@ -24,6 +25,8 @@ import {
 } from "./protocols/studio-app.protocol";
 import { createSplashWindow } from "./splash-window";
 import { setupSplashControls } from "./splash-controls";
+import { setupUpdateControls } from "./update-controls";
+import { checkForUpdates } from "./auto-updater";
 
 protocol.registerSchemesAsPrivileged([
   STUDIO_APP_SCHEME_PRIVILEGES,
@@ -33,7 +36,10 @@ protocol.registerSchemesAsPrivileged([
 app.whenReady().then(async () => {
   electronApp.setAppUserModelId("com.electron");
 
+  setupAppInfo();
   setupSplashControls();
+  setupUpdateControls();
+
   const splashWindow = createSplashWindow();
 
   registerStudioAppProtocol(join(__dirname, "../renderer"));
@@ -73,6 +79,8 @@ app.whenReady().then(async () => {
     if (!splashWindow.isDestroyed()) {
       splashWindow.destroy();
     }
+
+    checkForUpdates().catch(() => {});
   });
 });
 

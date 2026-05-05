@@ -1,6 +1,6 @@
 {
   "name": "@adt/desktop",
-  "version": "0.3.0",
+  "version": "0.7.0-rc.5",
   "description": "An Electron Version of ADT STUDIO",
   "main": "./out/main/index.js",
   "private": true,
@@ -8,7 +8,7 @@
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
-    "dev": "pnpm --filter @adt/api build:electron-server && electron-vite dev",
+    "dev": "pnpm --filter @adt/api build:electron-server && electron-vite dev --watch",
     "start": "pnpm run build && electron-vite preview --skipBuild",
     "build:dependencies": "pnpm --filter @adt/api build:electron-server && pnpm --filter @adt/studio build",
     "build": "pnpm build:dependencies && electron-vite build && node scripts/copy-studio.mjs",
@@ -25,8 +25,7 @@
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@lingui/core": "^5.9.3",
-    "@lingui/react": "^5.9.3",
-    "electron-updater": "^6.3.9"
+    "@lingui/react": "^5.9.3"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",
@@ -47,6 +46,7 @@
     "dotenv": "^17.3.1",
     "electron": "^41.1.1",
     "electron-builder": "^26.0.12",
+    "electron-updater": "^6.3.9",
     "electron-vite": "^5.0.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react": "^7.37.5",
