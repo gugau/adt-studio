@@ -498,6 +498,15 @@ export function StoryboardSectionDetail({
   const [confirmMerge, setConfirmMerge] = useState<{ action: () => Promise<void>; label: string } | null>(null)
   const [pendingSectioning, setPendingSectioning] = useState<SectioningData | null>(null)
   const [pendingRendering, setPendingRendering] = useState<RenderingData | null>(null)
+  // Inspector edits mutate the iframe DOM directly; this ref stashes the
+  // resulting HTML and is committed to React state only at boundaries
+  // (selection change, save, unmount) so per-keystroke changes don't
+  // re-render BookPreviewFrame and rebuild its body.
+  const pendingHtmlRef = useRef<{ html: string; sectionIndex: number } | null>(null)
+  // Tracks whether iframe-DOM edits exist that haven't been flushed into
+  // pendingRendering yet. Lights up the Save/Discard bar on every change
+  // without forcing a per-keystroke iframe rebuild.
+  const [hasUnflushedEdits, setHasUnflushedEdits] = useState(false)
   // Tracks whether pending sectioning changes require LLM re-render on save.
   // Pure prune/delete can be resolved locally; unprune/type change/reorder need LLM.
   const needsRerenderRef = useRef(false)
@@ -693,7 +702,7 @@ export function StoryboardSectionDetail({
   const section = sectioningData?.sections[sectionIndex]
   const renderingData = pendingRendering ?? page.rendering
   const renderedSection = getRenderedSectionByIndex(renderingData, sectionIndex)
-  const renderingDirty = pendingRendering != null
+  const renderingDirty = pendingRendering != null || hasUnflushedEdits
 
   // When server-delivered HTML for the current section changes to something we
   // haven't rendered before, refresh the iframe's Tailwind CSS so new classes
@@ -772,10 +781,6 @@ export function StoryboardSectionDetail({
 
   // Save rendering (including back-propagation to sectioning)
   const saveRendering = async () => {
-    if (autoSaveTimerRef.current) {
-      clearTimeout(autoSaveTimerRef.current)
-      autoSaveTimerRef.current = null
-    }
     const flushed = flushPendingHtml()
     const renderingToSave = flushed ?? pendingRendering
     if (!renderingToSave || storyboardRunning) return
@@ -1252,15 +1257,6 @@ export function StoryboardSectionDetail({
     setSelectedElementClasses(previewFrameRef.current?.getElementClasses(dataId) ?? null)
   }, [])
 
-  // Inspector edits mutate the iframe DOM directly; this ref stashes the
-  // resulting HTML and is committed to React state only at boundaries
-  // (selection change, save, unmount) so per-keystroke changes don't
-  // re-render BookPreviewFrame and rebuild its body.
-  const pendingHtmlRef = useRef<{ html: string; sectionIndex: number } | null>(null)
-
-  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const autoSaveRef = useRef<() => Promise<void>>(async () => {})
-
   const handleClassesChange = useCallback(
     (dataId: string, classes: string[]) => {
       if (!page.rendering) return
@@ -1269,11 +1265,7 @@ export function StoryboardSectionDetail({
       setSelectedElementClasses(classes)
       previewFrameRef.current?.refreshCss(fullHtml)
       pendingHtmlRef.current = { html: fullHtml, sectionIndex }
-      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
-      autoSaveTimerRef.current = setTimeout(() => {
-        autoSaveTimerRef.current = null
-        autoSaveRef.current().catch(() => {})
-      }, 1500)
+      setHasUnflushedEdits(true)
     },
     [page.rendering, sectionIndex]
   )
@@ -1283,6 +1275,7 @@ export function StoryboardSectionDetail({
     if (!queued) return pendingRendering
     if (!page.rendering) return pendingRendering
     pendingHtmlRef.current = null
+    setHasUnflushedEdits(false)
     const base = pendingRendering ?? page.rendering
     const merged: RenderingData = {
       ...base,
@@ -1299,64 +1292,6 @@ export function StoryboardSectionDetail({
       flushPendingHtml()
     }
   }, [selectedElement?.dataId, flushPendingHtml])
-
-  useEffect(() => {
-    autoSaveRef.current = async () => {
-      const flushed = flushPendingHtml()
-      const renderingToSave = flushed ?? pendingRendering
-      if (!renderingToSave || storyboardRunning || saving) return
-      setSaving(true)
-      try {
-        await api.updateRendering(
-          bookLabel,
-          pageId,
-          stripTransientIds(renderingToSave)
-        )
-        const editedHtml = getRenderedSectionByIndex(
-          renderingToSave,
-          sectionIndex
-        )?.html
-        const sBase =
-          pendingSectioning ?? (page.sectioningTree as SectioningData | null)
-        let savedSectioning: SectioningData | null = null
-        if (editedHtml && sBase) {
-          const updatedSectioning = backPropagateTextChanges(
-            sBase,
-            sectionIndex,
-            editedHtml
-          )
-          if (updatedSectioning !== sBase) {
-            await api.updateSectioning(bookLabel, pageId, updatedSectioning)
-            savedSectioning = updatedSectioning
-          }
-        }
-        queryClient.setQueryData<PageDetail>(
-          ["books", bookLabel, "pages", pageId],
-          (old) => {
-            if (!old) return old
-            return {
-              ...old,
-              rendering: renderingToSave,
-              sectioningTree: savedSectioning ?? old.sectioningTree,
-            }
-          }
-        )
-        setPendingRendering(null)
-        setPendingSectioning(null)
-      } catch {
-        // Silent failure for auto-save; the manual Save bar still surfaces
-        // the dirty state and the user can retry there.
-      } finally {
-        setSaving(false)
-      }
-    }
-  })
-
-  useEffect(() => {
-    return () => {
-      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
-    }
-  }, [])
 
   // Handle toolbar prune toggle (nodeId === data-id in tree shape)
   const handleToolbarPrune = useCallback(
@@ -1950,6 +1885,8 @@ export function StoryboardSectionDetail({
         onPreview={(data) => setPendingRendering(data as RenderingData)}
         onSave={saveRendering}
         onDiscard={() => {
+          pendingHtmlRef.current = null
+          setHasUnflushedEdits(false)
           setPendingRendering(null)
         }}
       />
