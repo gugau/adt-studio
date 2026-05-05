@@ -1888,6 +1888,7 @@ export function StoryboardSectionDetail({
           pendingHtmlRef.current = null
           setHasUnflushedEdits(false)
           setPendingRendering(null)
+          previewFrameRef.current?.resetContent()
         }}
       />
       <ViewportToggle
@@ -2243,7 +2244,7 @@ export function StoryboardSectionDetail({
               <button
                 type="button"
                 onClick={async () => {
-                  if (pendingRendering) await saveRendering()
+                  if (renderingDirty) await saveRendering()
                   else if (pendingSectioning) await saveSectioning()
                 }}
                 className="flex items-center gap-1 text-xs font-medium rounded px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white cursor-pointer transition-colors"
@@ -2256,6 +2257,9 @@ export function StoryboardSectionDetail({
                 onClick={() => {
                   setPendingSectioning(null)
                   setPendingRendering(null)
+                  pendingHtmlRef.current = null
+                  setHasUnflushedEdits(false)
+                  previewFrameRef.current?.resetContent()
                 }}
                 className="flex items-center gap-1 text-xs font-medium rounded px-3 py-1.5 bg-muted hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors"
               >

@@ -36,6 +36,10 @@ export interface BookPreviewFrameHandle {
   getElementClasses: (dataId: string) => string[]
   /** Set the full class list on an element by data-id. Returns updated full HTML, or null. */
   setElementClasses: (dataId: string, classes: string[]) => string | null
+  /** Re-inject the current `html` prop into the iframe, discarding any in-iframe
+   *  DOM mutations (e.g. live `setElementClasses` edits). Used when the parent
+   *  wants to revert to the saved state without changing the html prop. */
+  resetContent: () => void
 }
 
 export interface BookPreviewFrameProps {
@@ -157,6 +161,9 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
       }
       el.setAttribute("data-adt-selected", "true")
       return html
+    },
+    resetContent: () => {
+      if (readyRef.current) injectContent(latestHtmlRef.current)
     },
   }))
   const [iframeReady, setIframeReady] = useState(false)
