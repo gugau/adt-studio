@@ -430,9 +430,33 @@ export function createBookRoutes(
 
     const db = openBookDb(dbPath)
     try {
-      const pageRows = db.all(
-        "SELECT page_id FROM pages ORDER BY page_number ASC LIMIT 1"
-      ) as Array<{ page_id: string }>
+      const metadataRow = db.all(
+        `SELECT data FROM node_data
+         WHERE node = 'metadata' AND item_id = 'book'
+         ORDER BY version DESC LIMIT 1`
+      ) as Array<{ data: string }>
+
+      let coverPageNumber: number | null = null
+      if (metadataRow.length > 0) {
+        try {
+          const parsed = JSON.parse(metadataRow[0].data) as {
+            cover_page_number?: number | null
+          }
+          if (typeof parsed.cover_page_number === "number") {
+            coverPageNumber = parsed.cover_page_number
+          }
+        } catch { /* ignore malformed metadata */ }
+      }
+
+      const pageRows =
+        coverPageNumber !== null
+          ? (db.all(
+              "SELECT page_id FROM pages WHERE page_number = ? LIMIT 1",
+              [coverPageNumber]
+            ) as Array<{ page_id: string }>)
+          : (db.all(
+              "SELECT page_id FROM pages ORDER BY page_number ASC LIMIT 1"
+            ) as Array<{ page_id: string }>)
 
       if (pageRows.length === 0) {
         throw new HTTPException(404, { message: "No pages extracted yet" })
