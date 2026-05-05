@@ -57,11 +57,11 @@ const SLATE: Visual = {
   border: "hover:border-l-slate-400",
 }
 
-const VIOLET = (Icon: Visual["Icon"]): Visual => ({
+const ORANGE = (Icon: Visual["Icon"]): Visual => ({
   Icon,
-  text: "text-violet-700",
-  bg: "bg-violet-100",
-  border: "hover:border-l-violet-400",
+  text: "text-orange-700",
+  bg: "bg-orange-100",
+  border: "hover:border-l-orange-400",
 })
 
 const BLUE = (Icon: Visual["Icon"]): Visual => ({
@@ -99,10 +99,10 @@ const INDIGO = (Icon: Visual["Icon"]): Visual => ({
   border: "hover:border-l-indigo-400",
 })
 
-// Structural containers — activities in violet, structural boxes in blue.
+// Structural containers — activities in orange, structural boxes in blue.
 function getStructureVisual(structure: string | undefined): Visual {
   if (!structure) return BLUE(Layers)
-  if (structure.startsWith("activity")) return VIOLET(Puzzle)
+  if (structure.startsWith("activity")) return ORANGE(Puzzle)
   switch (structure) {
     case "panel":
     case "sidebar":
@@ -112,8 +112,8 @@ function getStructureVisual(structure: string | undefined): Visual {
   }
 }
 
-// Leaf roles — heading amber, math indigo, activity-* violet, image emerald,
-// question sky, fill-in-the-blank violet, default text slate.
+// Leaf roles — heading amber, math indigo, activity-* orange, image emerald,
+// question sky, fill-in-the-blank orange, default text slate.
 function getRoleVisual(role: string | undefined): Visual {
   if (!role) return SLATE
   if (role === "image") return EMERALD(ImageIcon)
@@ -122,11 +122,11 @@ function getRoleVisual(role: string | undefined): Visual {
   if (role === "caption" || role === "label") return { ...SLATE, Icon: Tag }
   if (role === "quote") return { ...SLATE, Icon: Quote }
   if (role === "activity_fill_in_the_blank" || role === "fill_in" || role === "blank")
-    return VIOLET(Link2)
-  if (role === "activity_instruction") return VIOLET(PenLine)
+    return ORANGE(Link2)
+  if (role === "activity_instruction") return ORANGE(PenLine)
   if (role === "activity_question" || role === "question" || role === "prompt")
     return SKY(MessageCircle)
-  if (role.startsWith("activity")) return VIOLET(Puzzle)
+  if (role.startsWith("activity")) return ORANGE(Puzzle)
   return { ...SLATE, Icon: TypeIcon }
 }
 

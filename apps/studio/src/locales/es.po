@@ -1607,8 +1607,11 @@ msgstr "Editar"
 msgid "Edit & enrich"
 msgstr "Edita y enriquece"
 
-msgid "Edit in Quizzes stage"
-msgstr "Editar en la etapa de Cuestionarios"
+msgid "Edit in Activities stage"
+msgstr "Editar en la etapa de Actividades"
+
+#~ msgid "Edit in Quizzes stage"
+#~ msgstr "Editar en la etapa de Cuestionarios"
 
 msgid "Edit Prompt"
 msgstr "Prompt de edición"
@@ -1980,8 +1983,11 @@ msgstr "Genera y personaliza la tabla de contenidos para la navegación del libr
 msgid "Generate audio narration for the book content."
 msgstr "Generar narración de audio para el contenido del libro."
 
-msgid "Generate comprehension quizzes and activities based on the book content."
-msgstr "Genera cuestionarios y actividades de comprensión basados en el contenido del libro."
+msgid "Generate comprehension activities based on the book content."
+msgstr "Generar actividades de comprensión basadas en el contenido del libro."
+
+#~ msgid "Generate comprehension quizzes and activities based on the book content."
+#~ msgstr "Genera cuestionarios y actividades de comprensión basados en el contenido del libro."
 
 #~ msgid "Generate definition, variations, and emoji"
 #~ msgstr "Generar definición, variaciones y emoji"
@@ -2010,6 +2016,9 @@ msgstr "Generar marcas de tiempo por palabra"
 msgid "Generates the interactive HTML for this activity type."
 msgstr "Genera el HTML interactivo para este tipo de actividad."
 
+msgid "Generating Activities..."
+msgstr "Generando Actividades..."
+
 msgid "Generating Glossary..."
 msgstr "Generando glosario..."
 
@@ -2019,8 +2028,8 @@ msgstr "Generando imagen..."
 msgid "Generating panels"
 msgstr "Generando paneles"
 
-msgid "Generating Quizzes..."
-msgstr "Generando cuestionarios..."
+#~ msgid "Generating Quizzes..."
+#~ msgstr "Generando cuestionarios..."
 
 msgid "Generating Speech..."
 msgstr "Generando voz..."
@@ -3496,8 +3505,11 @@ msgstr "Reejecutar audio"
 msgid "Re-run translation"
 msgstr "Reejecutar traducción"
 
-msgid "Read-only preview. Edit quiz content in the Quizzes stage."
-msgstr "Vista previa de solo lectura. Edita el contenido del cuestionario en la etapa Cuestionarios."
+msgid "Read-only preview. Edit quiz content in the Activities stage."
+msgstr "Vista previa de solo lectura. Edita el contenido del cuestionario en la etapa de Actividades."
+
+#~ msgid "Read-only preview. Edit quiz content in the Quizzes stage."
+#~ msgstr "Vista previa de solo lectura. Edita el contenido del cuestionario en la etapa Cuestionarios."
 
 msgid "Readers see"
 msgstr "Los lectores ven"

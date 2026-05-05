@@ -1215,7 +1215,7 @@ function SectionRow({
               {sectionProcessing ? (
                 <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
               ) : isActivity ? (
-                <Puzzle className="w-5 h-5 text-violet-500" />
+                <Puzzle className="w-5 h-5 text-orange-500" />
               ) : showImg ? null : (
                 <span className="text-[10px] text-muted-foreground">
                   <Trans>No preview</Trans>
@@ -1229,7 +1229,7 @@ function SectionRow({
             </div>
           )}
           {isActivity && showImg && imgLoaded && !sectionProcessing && (
-            <div className="absolute top-1 left-1 flex items-center justify-center w-4 h-4 rounded-full bg-violet-600 text-white shadow ring-1 ring-white/40">
+            <div className="absolute top-1 left-1 flex items-center justify-center w-4 h-4 rounded-full bg-orange-600 text-white shadow ring-1 ring-white/40">
               <Puzzle className="w-2.5 h-2.5" />
             </div>
           )}

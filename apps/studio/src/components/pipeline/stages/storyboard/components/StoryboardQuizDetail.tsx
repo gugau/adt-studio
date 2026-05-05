@@ -5,7 +5,7 @@ import { BASE_URL, type PageQuizItem } from "@/api/client"
 
 /**
  * Read-only preview for a generated quiz inside the Storyboard stage. Editing
- * still happens in the Quizzes stage; we only surface the rendered quiz HTML
+ * still happens in the Activities stage; we only surface the rendered quiz HTML
  * here so the storyboard sidebar can show every item in the book.
  */
 export function StoryboardQuizDetail({
@@ -36,7 +36,7 @@ export function StoryboardQuizDetail({
           to="/books/$label/$step"
           params={{ label: bookLabel, step: "quizzes" }}
           className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded border border-orange-200 text-orange-700 bg-white hover:bg-orange-50 transition-colors"
-          title={t`Edit in Quizzes stage`}
+          title={t`Edit in Activities stage`}
         >
           <PenLine className="w-3.5 h-3.5" />
           <Trans>Edit</Trans>
@@ -54,7 +54,7 @@ export function StoryboardQuizDetail({
 
       <p className="shrink-0 text-[11px] text-muted-foreground">
         <Trans>
-          Read-only preview. Edit quiz content in the Quizzes stage.
+          Read-only preview. Edit quiz content in the Activities stage.
         </Trans>
       </p>
     </div>

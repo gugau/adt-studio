@@ -12,6 +12,7 @@ import {
   Image,
   FileText,
   Loader2,
+  Puzzle,
   SlidersHorizontal,
 } from "lucide-react"
 import { SectionActionsDropdown } from "./SectionActionsDropdown"
@@ -601,10 +602,17 @@ function SectionRow({
           )}
         </td>
         <td className="px-3 py-2">
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-            <Layers className="h-3 w-3" />
-            {section.sectionType}
-          </span>
+          {section.sectionType.startsWith("activity") ? (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
+              <Puzzle className="h-3 w-3" />
+              {section.sectionType}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+              <Layers className="h-3 w-3" />
+              {section.sectionType}
+            </span>
+          )}
         </td>
         <td className="px-3 py-2 text-muted-foreground truncate max-w-xs">
           {preview ? (
