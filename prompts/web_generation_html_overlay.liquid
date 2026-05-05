@@ -237,13 +237,13 @@ When multiple images are provided, lay them out side by side or stacked dependin
 - Images constrained with `style="max-height: var(--page-height, 100vh)"` — NO raw vh/vw units
 - Text is readable
 - Consistent and clean visual presentation
-## RESPONSIVE DESIGN
+## RESPONSIVE DESIGN (DESKTOP-FIRST)
 Your HTML will be tested at these viewport widths. Use ONLY these Tailwind responsive prefixes:
-{% for vp in viewports %}- **{{ vp.label }}** ({{ vp.width }}px){% if vp.tailwind_prefix != "" %}: `{{ vp.tailwind_prefix }}` prefix{% else %}: default (no prefix — mobile-first base styles){% endif %}
+{% for vp in viewports %}- **{{ vp.label }}** ({{ vp.width }}px){% if vp.tailwind_prefix != "" %}: `{{ vp.tailwind_prefix }}` prefix{% else %}: default (no prefix — base/desktop styles){% endif %}
 {% endfor %}
-Do NOT use `sm:`, `2xl:`, or other breakpoint prefixes not listed above.
-On mobile only (default / no prefix), use a single-column stacked layout with images above and text below rather than overlapping. At tablet (`md:`) and above, keep the overlay layout with positioned text on top of images.
-Example: `class="relative md:absolute"` to stack on mobile but overlay on tablet and desktop.
+Do NOT use `sm:`, `md:`, `lg:`, `xl:`, `2xl:`, or any other prefixes not listed above.
+The base (no-prefix) classes are the DESKTOP overlay layout with positioned text on top of images. At mobile (`max-sm:`), override to a single-column stacked layout with images above and text below rather than overlapping. Tablet (`max-lg:`) is typically the same as desktop unless the layout would break.
+Example: `class="absolute max-sm:relative"` to overlay on desktop/tablet but stack on mobile.
 {% if styleguide != "" %}
 
 ## STYLEGUIDE (FOLLOW EXACTLY)
