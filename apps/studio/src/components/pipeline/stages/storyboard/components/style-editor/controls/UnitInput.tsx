@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
+
+const COMMIT_DEBOUNCE_MS = 200
 
 /**
  * Numeric value paired with a unit token.
@@ -35,12 +37,33 @@ export function UnitInput({
 }: UnitInputProps) {
   const [draft, setDraft] = useState(value.value)
   const [open, setOpen] = useState(false)
+  const [focused, setFocused] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    setDraft(value.value)
-  }, [value.value])
+    if (!focused) setDraft(value.value)
+  }, [value.value, focused])
+
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    },
+    []
+  )
 
   const isKeyword = KEYWORD_UNITS.has(value.unit)
+
+  const clearTimer = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+  }
+
+  const commit = (next: string) => {
+    if (next === value.value) return
+    onChange({ value: next, unit: value.unit })
+  }
 
   const handleInput = (raw: string) => {
     if (isKeyword) return
@@ -54,12 +77,17 @@ export function UnitInput({
       }
     }
     setDraft(next)
-    onChange({ value: next, unit: value.unit })
+    clearTimer()
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null
+      commit(next)
+    }, COMMIT_DEBOUNCE_MS)
   }
 
   const handleUnitChange = (newUnit: string) => {
     setOpen(false)
     if (newUnit === value.unit) return
+    clearTimer()
     if (KEYWORD_UNITS.has(newUnit)) {
       onChange({ value: newUnit, unit: newUnit })
     } else {
@@ -77,6 +105,21 @@ export function UnitInput({
         inputMode="decimal"
         value={displayValue}
         onChange={(e) => handleInput(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => {
+          setFocused(false)
+          clearTimer()
+          commit(draft)
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            ;(e.currentTarget as HTMLInputElement).blur()
+          } else if (e.key === "Escape") {
+            clearTimer()
+            setDraft(value.value)
+            ;(e.currentTarget as HTMLInputElement).blur()
+          }
+        }}
         disabled={isKeyword}
         placeholder={placeholder}
         className={cn(
