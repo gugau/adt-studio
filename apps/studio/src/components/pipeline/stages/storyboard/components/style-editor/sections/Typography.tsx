@@ -110,7 +110,7 @@ export function TypographySection() {
           suffix="×"
         />
       </StyleLabel>
-      <StyleLabel label={<Trans>Text</Trans>} override={textColor.override}>
+      <StyleLabel label={<Trans>Text color</Trans>} override={textColor.override}>
         <ColorInput value={textColor.value} onChange={textColor.setValue} />
       </StyleLabel>
     </Section>
