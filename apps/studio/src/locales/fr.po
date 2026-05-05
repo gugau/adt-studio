@@ -3589,6 +3589,15 @@ msgstr "Stratégie de rendu"
 msgid "rendering"
 msgstr "rendu"
 
+msgid "elements"
+msgstr "éléments"
+
+msgid "style"
+msgstr "style"
+
+msgid "text"
+msgstr "texte"
+
 msgid "Rendering Prompt"
 msgstr "Rendering Invite"
 
@@ -3856,6 +3865,12 @@ msgstr "section"
 
 msgid "Section"
 msgstr "Section"
+
+msgid "Sections"
+msgstr "Sections"
+
+msgid "Elements"
+msgstr "Éléments"
 
 #. placeholder {0}: String(group.sectionIndex + 1)
 #. placeholder {0}: String(i + 1)

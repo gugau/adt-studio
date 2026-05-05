@@ -1,21 +1,26 @@
 import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from "react"
 import { createPortal } from "react-dom"
 import {
+  Boxes,
   Check,
   ChevronDown,
   Code,
   Eye,
   EyeOff,
   GripHorizontal,
+  Image as ImageIcon,
+  Layers,
   LayoutGrid,
   Loader2,
   MessageSquare,
+  Palette,
   PanelRightClose,
   PanelRightOpen,
   PenLine,
   Play,
   Save,
   Sparkles,
+  Type,
   X,
 } from "lucide-react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
@@ -507,6 +512,21 @@ export function StoryboardSectionDetail({
   // pendingRendering yet. Lights up the Save/Discard bar on every change
   // without forcing a per-keystroke iframe rebuild.
   const [hasUnflushedEdits, setHasUnflushedEdits] = useState(false)
+  // Tags describing what kind of unsaved edits exist, surfaced in the floating
+  // save bar so the user can see what they're about to discard or commit.
+  // Cleared on save success and on discard.
+  type PendingCategory = "sections" | "style" | "text" | "images" | "elements"
+  const [pendingCategories, setPendingCategories] = useState<Set<PendingCategory>>(
+    () => new Set()
+  )
+  const markPending = useCallback((category: PendingCategory) => {
+    setPendingCategories((prev) => {
+      if (prev.has(category)) return prev
+      const next = new Set(prev)
+      next.add(category)
+      return next
+    })
+  }, [])
   // Tracks whether pending sectioning changes require LLM re-render on save.
   // Pure prune/delete can be resolved locally; unprune/type change/reorder need LLM.
   const needsRerenderRef = useRef(false)
@@ -756,6 +776,7 @@ export function StoryboardSectionDetail({
 
       setPendingSectioning(null)
       setPendingRendering(null)
+      setPendingCategories(new Set())
       needsRerenderRef.current = false
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
       invalidateStoryboardDependents(queryClient, bookLabel)
@@ -773,10 +794,18 @@ export function StoryboardSectionDetail({
     }
   }
 
-  const discardSectioning = () => {
+  // Wipe every pending change (sectioning, rendering, in-flight class edits)
+  // and re-inject the saved HTML into the iframe so live DOM mutations are
+  // dropped. All Discard entry points route through here so the semantics stay
+  // identical regardless of which control the user clicked.
+  const discardAll = () => {
     setPendingSectioning(null)
     setPendingRendering(null)
+    setPendingCategories(new Set())
+    pendingHtmlRef.current = null
+    setHasUnflushedEdits(false)
     needsRerenderRef.current = false
+    previewFrameRef.current?.resetContent()
   }
 
   // Save rendering (including back-propagation to sectioning)
@@ -809,6 +838,7 @@ export function StoryboardSectionDetail({
 
       setPendingRendering(null)
       setPendingSectioning(null)
+      setPendingCategories(new Set())
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
       invalidateStoryboardDependents(queryClient, bookLabel)
       await minDelay
@@ -988,9 +1018,10 @@ export function StoryboardSectionDetail({
         }),
       }
       setPendingRendering(updated)
+      markPending("elements")
       return updated
     },
-    [pendingRendering, page.rendering, sectionIndex]
+    [pendingRendering, page.rendering, sectionIndex, markPending]
   )
 
   // Clone data-id elements in the rendered HTML and insert after the originals.
@@ -1055,8 +1086,9 @@ export function StoryboardSectionDetail({
         }),
       }
       setPendingRendering(updated)
+      markPending("elements")
     },
-    [pendingRendering, page.rendering, sectionIndex]
+    [pendingRendering, page.rendering, sectionIndex, markPending]
   )
 
   // Replace textContent of a single [data-id="..."] element in the rendered HTML.
@@ -1084,8 +1116,9 @@ export function StoryboardSectionDetail({
         }),
       }
       setPendingRendering(updated)
+      markPending("text")
     },
-    [pendingRendering, page.rendering, sectionIndex]
+    [pendingRendering, page.rendering, sectionIndex, markPending]
   )
 
   // Update a single activity answer value in the rendering
@@ -1104,8 +1137,9 @@ export function StoryboardSectionDetail({
         }),
       }
       setPendingRendering(updated)
+      markPending("text")
     },
-    [pendingRendering, page.rendering, sectionIndex]
+    [pendingRendering, page.rendering, sectionIndex, markPending]
   )
 
   // Delete selected block from rendered HTML and remove the matching leaf from sectioning.
@@ -1233,8 +1267,9 @@ export function StoryboardSectionDetail({
         }),
       }
       setPendingRendering(updated)
+      markPending("text")
     },
-    [page.rendering, pendingRendering, sectionIndex]
+    [page.rendering, pendingRendering, sectionIndex, markPending]
   )
 
   // Handle element selection from BookPreviewFrame
@@ -1266,8 +1301,9 @@ export function StoryboardSectionDetail({
       previewFrameRef.current?.refreshCss(fullHtml)
       pendingHtmlRef.current = { html: fullHtml, sectionIndex }
       setHasUnflushedEdits(true)
+      markPending("style")
     },
-    [page.rendering, sectionIndex]
+    [page.rendering, sectionIndex, markPending]
   )
 
   const flushPendingHtml = useCallback((): RenderingData | null => {
@@ -1340,6 +1376,7 @@ export function StoryboardSectionDetail({
           }),
         }
         setPendingRendering(updatedRendering)
+        markPending("images")
       }
 
       setCropTarget(null)
@@ -1406,6 +1443,7 @@ export function StoryboardSectionDetail({
           }),
         }
         setPendingRendering(updatedRendering)
+        markPending("images")
       }
     },
     [bookLabel, pageId, pendingSectioning, page.sectioningTree, pendingRendering, page.rendering, sectionIndex, section, t]
@@ -1446,6 +1484,7 @@ export function StoryboardSectionDetail({
           }),
         }
         setPendingRendering(updatedRendering)
+        markPending("images")
       }
     },
     [bookLabel, replaceFromBookTarget, pendingSectioning, page.sectioningTree, pendingRendering, page.rendering, sectionIndex, section]
@@ -1884,12 +1923,7 @@ export function StoryboardSectionDetail({
         inline
         onPreview={(data) => setPendingRendering(data as RenderingData)}
         onSave={saveRendering}
-        onDiscard={() => {
-          pendingHtmlRef.current = null
-          setHasUnflushedEdits(false)
-          setPendingRendering(null)
-          previewFrameRef.current?.resetContent()
-        }}
+        onDiscard={discardAll}
       />
       <ViewportToggle
         value={deviceView}
@@ -2231,45 +2265,86 @@ export function StoryboardSectionDetail({
       )}
 
       {/* Floating save/discard bar */}
-      {(dirty || renderingDirty) && !saving && (
-        <div className="absolute bottom-4 left-1/2 z-40 -translate-x-1/2 animate-in slide-in-from-bottom-4 fade-in duration-200">
-          <div className="flex items-center gap-3 rounded-lg border bg-background px-4 py-2.5 shadow-lg">
-            <span className="text-sm text-muted-foreground">
-              {t`Unsaved:`}{" "}
-              <span className="font-medium text-foreground">
-                {[dirty && t`sections`, renderingDirty && t`rendering`].filter(Boolean).join(", ")}
-              </span>
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={async () => {
-                  if (renderingDirty) await saveRendering()
-                  else if (pendingSectioning) await saveSectioning()
-                }}
-                className="flex items-center gap-1 text-xs font-medium rounded px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white cursor-pointer transition-colors"
-              >
-                <Save className="h-3 w-3" />
-                {t`Save`}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setPendingSectioning(null)
-                  setPendingRendering(null)
-                  pendingHtmlRef.current = null
-                  setHasUnflushedEdits(false)
-                  previewFrameRef.current?.resetContent()
-                }}
-                className="flex items-center gap-1 text-xs font-medium rounded px-3 py-1.5 bg-muted hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors"
-              >
-                <X className="h-3 w-3" />
-                {t`Discard`}
-              </button>
+      {(dirty || renderingDirty) && !saving && (() => {
+        const labels: Record<PendingCategory, string> = {
+          sections: t`Sections`,
+          style: t`Style`,
+          text: t`Text`,
+          images: t`Images`,
+          elements: t`Elements`,
+        }
+        const icons: Record<PendingCategory, typeof Layers> = {
+          sections: Layers,
+          style: Palette,
+          text: Type,
+          images: ImageIcon,
+          elements: Boxes,
+        }
+        const active = new Set(pendingCategories)
+        if (dirty) active.add("sections")
+        const orderedCategories: PendingCategory[] = ["sections", "style", "text", "images", "elements"]
+        const visible = orderedCategories.filter((c) => active.has(c))
+
+        return (
+          <div className="absolute bottom-4 left-1/2 z-40 -translate-x-1/2 animate-in slide-in-from-bottom-4 fade-in zoom-in-95 duration-300 ease-out">
+            <div className="flex items-center gap-3 rounded-md border border-border/60 bg-background/95 backdrop-blur px-2 py-1.5 shadow-xl shadow-black/5 transition-all duration-200">
+              {/* Status indicator + chips */}
+              <div className="flex items-center gap-2 pl-2">
+                <span className="relative inline-flex h-2 w-2 shrink-0" aria-hidden>
+                  <span className="absolute inset-0 rounded-full bg-amber-500/40 animate-ping" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                </span>
+                {visible.length > 0 ? (
+                  <div className="flex items-center gap-1">
+                    {visible.map((cat) => {
+                      const Icon = icons[cat]
+                      return (
+                        <span
+                          key={cat}
+                          className="adt-pill-chip inline-flex items-center gap-1 rounded bg-muted/70 px-2 py-0.5 text-[11px] font-medium text-foreground overflow-hidden whitespace-nowrap"
+                        >
+                          <Icon className="h-3 w-3 text-muted-foreground" />
+                          {labels[cat]}
+                        </span>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <span className="text-[11px] font-medium text-foreground">
+                    {t`Unsaved changes`}
+                  </span>
+                )}
+              </div>
+
+              {/* Divider */}
+              <div className="h-5 w-px bg-border/80" aria-hidden />
+
+              {/* Actions */}
+              <div className="flex items-center gap-1 pr-1">
+                <button
+                  type="button"
+                  onClick={discardAll}
+                  className="inline-flex items-center gap-1.5 rounded px-3 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                >
+                  <X className="h-3 w-3" />
+                  {t`Discard`}
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (renderingDirty) await saveRendering()
+                    else if (pendingSectioning) await saveSectioning()
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded px-3 py-1 text-[11px] font-medium bg-green-600 hover:bg-green-500 text-white shadow-sm shadow-green-600/20 transition-colors cursor-pointer"
+                >
+                  <Save className="h-3 w-3" />
+                  {t`Save`}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
 
       {/* Slide-out section data panel */}
@@ -2317,7 +2392,7 @@ export function StoryboardSectionDetail({
               }
             }}
             onSave={saveSectioning}
-            onDiscard={discardSectioning}
+            onDiscard={discardAll}
           />
         }
         merging={merging}
