@@ -554,8 +554,8 @@ function SingleColumnThumb() {
       <p className="text-[5.5px] uppercase tracking-wider leading-none text-neutral-400">
         <Trans>Chapter 3</Trans>
       </p>
-      <div className="mt-[2px] flex h-7 w-full items-center justify-center overflow-hidden rounded-[1px] bg-gradient-to-br from-sky-200 via-sky-100 to-white">
-        <div className="h-2 w-2 rounded-full bg-sky-300/70" />
+      <div className="mt-[2px] flex h-7 w-full items-center justify-center overflow-hidden rounded-[1px] bg-gradient-to-br from-violet-200 via-violet-100 to-white">
+        <div className="h-2 w-2 rounded-full bg-violet-300/70" />
       </div>
       <p className="mt-[1px] text-justify text-[5.5px] leading-[1.4] text-neutral-500">
         <Trans>
@@ -581,7 +581,7 @@ function AiGeneratedThumb() {
             millennia until it finds a path to the surface.
           </Trans>
         </p>
-        <div className="relative h-9 overflow-hidden rounded-[1px] bg-gradient-to-br from-orange-300 via-rose-300 to-violet-300">
+        <div className="relative h-9 overflow-hidden rounded-[1px] bg-gradient-to-br from-violet-300 via-violet-400 to-violet-600">
           <div className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-white/70" />
           <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/20 to-transparent" />
         </div>
@@ -601,7 +601,7 @@ function AiGeneratedThumb() {
 function DynamicOverlayThumb() {
   return (
     <div className="relative h-full w-full overflow-hidden rounded-[1px]">
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-violet-400 to-fuchsia-300" />
+      <div className="absolute inset-0 bg-gradient-to-br from-violet-700 via-violet-500 to-violet-300" />
       <div className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-white/60 blur-[1px]" />
       <div className="absolute left-2 top-3 h-[1px] w-[1px] rounded-full bg-white" />
       <div className="absolute right-3 top-2 h-[1px] w-[1px] rounded-full bg-white/80" />
@@ -622,12 +622,12 @@ function DynamicOverlayThumb() {
 function TwoColumnStoryThumb() {
   return (
     <div className="grid h-full w-full grid-cols-[1.05fr_1fr] gap-1">
-      <div className="relative overflow-hidden rounded-[1px] bg-gradient-to-b from-sky-200 via-rose-100 to-amber-100">
-        <div className="absolute right-1 top-1 h-2 w-2 rounded-full bg-amber-300/90" />
-        <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-emerald-400/60 via-emerald-200/40 to-transparent" />
-        <div className="absolute bottom-1 left-1 h-1.5 w-1.5 rounded-full bg-violet-300/70" />
-        <div className="absolute bottom-1.5 left-2.5 h-2 w-1 rounded-full bg-violet-400/60" />
-        <div className="absolute bottom-[3px] right-2 h-1.5 w-[3px] rounded-full bg-emerald-600/60" />
+      <div className="relative overflow-hidden rounded-[1px] bg-gradient-to-b from-violet-200 via-violet-100 to-violet-50">
+        <div className="absolute right-1 top-1 h-2 w-2 rounded-full bg-violet-400/80" />
+        <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-violet-500/40 via-violet-300/25 to-transparent" />
+        <div className="absolute bottom-1 left-1 h-1.5 w-1.5 rounded-full bg-violet-500/70" />
+        <div className="absolute bottom-1.5 left-2.5 h-2 w-1 rounded-full bg-violet-600/55" />
+        <div className="absolute bottom-[3px] right-2 h-1.5 w-[3px] rounded-full bg-violet-700/55" />
       </div>
       <div className="flex flex-col gap-[3px] pt-[2px]">
         <p className="text-[7.5px] font-semibold leading-tight text-neutral-800">
@@ -918,7 +918,7 @@ function PageBody({
       )
     case "image-overlay-top":
       return (
-        <div className="relative flex-1 min-h-0 overflow-hidden rounded-md bg-gradient-to-tr from-rose-200/70 via-violet-200/60 to-amber-100/60 ring-1 ring-violet-200/60">
+        <div className="relative flex-1 min-h-0 overflow-hidden rounded-md bg-gradient-to-tr from-violet-300/70 via-violet-200/60 to-violet-100/60 ring-1 ring-violet-200/60">
           <ImageIcon
             className="absolute left-1/2 top-[58%] -translate-x-1/2 h-3.5 w-3.5 text-violet-400/70"
             strokeWidth={1.5}
@@ -932,7 +932,7 @@ function PageBody({
       )
     case "image-overlay-corner":
       return (
-        <div className="relative flex-1 min-h-0 overflow-hidden rounded-md bg-gradient-to-bl from-indigo-200/70 via-violet-200/60 to-sky-200/60 ring-1 ring-violet-200/60">
+        <div className="relative flex-1 min-h-0 overflow-hidden rounded-md bg-gradient-to-bl from-violet-400/55 via-violet-200/55 to-violet-50/70 ring-1 ring-violet-200/60">
           <ImageIcon
             className="absolute left-[35%] top-[40%] -translate-x-1/2 h-3.5 w-3.5 text-violet-400/70"
             strokeWidth={1.5}

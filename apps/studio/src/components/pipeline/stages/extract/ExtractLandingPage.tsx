@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
+import type { ReactNode } from "react"
 import { ArrowDown, BookOpen, FileText, Image as ImageIcon, List, Type } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { useBook } from "@/hooks/use-books"
@@ -6,6 +7,7 @@ import { useSourcePdfInfo } from "@/hooks/use-source-pdf-info"
 import { LandingPageShell } from "@/components/pipeline/components/LandingPageShell"
 import { LandingPageWarning } from "@/components/pipeline/components/LandingPageWarning"
 import { SettingsCard } from "@/components/pipeline/components/SettingsCard"
+import { SettingExplainer } from "@/components/pipeline/components/SettingExplainer"
 import { RangeSlider } from "@/components/ui/range-slider"
 import { BrandedSwitch } from "@/components/ui/branded-switch"
 import { SegmentedControl } from "@/components/ui/segmented-control"
@@ -16,6 +18,11 @@ import { useApiKey } from "@/hooks/use-api-key"
 import { cn } from "@/lib/utils"
 
 type SpreadModeKey = "single" | "spread"
+
+// eslint-disable-next-line lingui/no-unlocalized-strings -- CSS var, not user-visible
+const ACCENT_VAR = `var(--accent-color, #525252)`
+// eslint-disable-next-line lingui/no-unlocalized-strings -- pagination labels, identical across locales
+const PAGE_LABELS = ["P1", "P2", "P3", "P4", "P5"] as const
 
 export function ExtractLandingPage({ bookLabel }: { bookLabel: string }) {
   const { t } = useLingui()
@@ -158,9 +165,12 @@ export function ExtractLandingPage({ bookLabel }: { bookLabel: string }) {
 
       <SettingsCard>
         <div className="flex flex-col gap-3">
-          <span className="text-sm font-medium text-foreground">
-            <Trans>Page Grouping Mode</Trans>
-          </span>
+          <div className="flex items-center gap-1">
+            <span className="text-sm font-medium text-foreground">
+              <Trans>Page Grouping Mode</Trans>
+            </span>
+            <SettingExplainer visual={<PageGroupingVisual />} />
+          </div>
           <SegmentedControl
             options={spreadOptions}
             value={spreadMode}
@@ -181,6 +191,99 @@ export function ExtractLandingPage({ bookLabel }: { bookLabel: string }) {
         onCheckedChange={handleVectorTextChange}
       />
     </LandingPageShell>
+  )
+}
+
+function NeutralPage({ label }: { label: ReactNode }) {
+  return (
+    <div className="flex h-[60px] w-7 items-center justify-center rounded border border-[#e5e5e5] bg-white text-[8px] font-medium text-[#a3a3a3]">
+      {label}
+    </div>
+  )
+}
+
+function SpreadPair({ left, right }: { left: ReactNode; right: ReactNode }) {
+  return (
+    <div
+      className="relative flex h-[60px] w-[56px] overflow-hidden rounded border-2"
+      style={{ borderColor: ACCENT_VAR }}
+    >
+      <div
+        className="absolute inset-0"
+        style={{ background: ACCENT_VAR, opacity: 0.1 }}
+        aria-hidden
+      />
+      <div
+        className="relative flex flex-1 items-center justify-center border-r border-dashed text-[8px] font-semibold"
+        style={{ color: ACCENT_VAR, borderColor: ACCENT_VAR }}
+      >
+        {left}
+      </div>
+      <div
+        className="relative flex flex-1 items-center justify-center text-[8px] font-semibold"
+        style={{ color: ACCENT_VAR }}
+      >
+        {right}
+      </div>
+    </div>
+  )
+}
+
+function SpreadPagesDiagram() {
+  return (
+    <div className="flex items-end justify-center gap-1.5">
+      <NeutralPage label={<Trans>Cover</Trans>} />
+      <SpreadPair left={PAGE_LABELS[1]} right={PAGE_LABELS[2]} />
+      <SpreadPair left={PAGE_LABELS[3]} right={PAGE_LABELS[4]} />
+    </div>
+  )
+}
+
+function SinglePagesDiagram() {
+  return (
+    <div className="flex items-end justify-center gap-1.5">
+      {PAGE_LABELS.map((label, i) => (
+        <NeutralPage key={i} label={label} />
+      ))}
+    </div>
+  )
+}
+
+function PageGroupingVisual() {
+  return (
+    <div className="flex flex-col gap-3 py-1">
+      <DiagramWithLabel label={<Trans>Spread</Trans>}>
+        <SpreadPagesDiagram />
+      </DiagramWithLabel>
+      <div
+        className="mx-auto h-px w-16"
+        style={{ background: ACCENT_VAR, opacity: 0.18 }}
+        aria-hidden
+      />
+      <DiagramWithLabel label={<Trans>Single</Trans>}>
+        <SinglePagesDiagram />
+      </DiagramWithLabel>
+    </div>
+  )
+}
+
+function DiagramWithLabel({
+  label,
+  children,
+}: {
+  label: ReactNode
+  children: ReactNode
+}) {
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      {children}
+      <span
+        className="text-[10px] font-semibold uppercase tracking-[0.14em]"
+        style={{ color: ACCENT_VAR }}
+      >
+        {label}
+      </span>
+    </div>
   )
 }
 
