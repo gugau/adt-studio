@@ -1232,7 +1232,7 @@ msgid "Cover"
 msgstr "Capa"
 
 msgid "Cover of {title}"
-msgstr "Capa de {0}"
+msgstr "Capa de {title}"
 
 msgid "Create a manual glossary entry that stays in the book even if AI glossary generation is rerun."
 msgstr "Crie uma entrada manual de glossário que permaneça no livro mesmo se a geração de glossário por IA for executada novamente."
@@ -1867,9 +1867,6 @@ msgstr "Vetor plano"
 msgid "Flexible"
 msgstr "Flexível"
 
-#~ msgid "Footer Text"
-#~ msgstr "Texto de rodapé"
-
 #. placeholder {0}: i18n._(preset.title)
 #. placeholder {1}: recommendedOption.label
 msgid "For {0}, we recommend {1}."
@@ -2030,12 +2027,6 @@ msgstr "Ocultar histórico de edições com IA"
 
 msgid "Hide error details"
 msgstr "Ocultar detalhes do erro"
-
-#~ msgid "Hide Pruned"
-#~ msgstr "Ocultar removidas"
-
-#~ msgid "Hide pruned images"
-#~ msgstr "Ocultar imagens removidas"
 
 msgid "Hide pruned terms"
 msgstr "Ocultar termos podados"
@@ -2498,9 +2489,6 @@ msgstr "Combinar com o design"
 msgid "Match each stage of the water cycle to its definition:"
 msgstr "Associe cada estágio do ciclo da água à sua definição:"
 
-#~ msgid "Math"
-#~ msgstr "Matemática"
-
 msgid "Max Iterations"
 msgstr "Iterações máximas"
 
@@ -2509,9 +2497,6 @@ msgstr "Refinamentos máximos"
 
 msgid "Max review/revise rounds per section before accepting the current rendering"
 msgstr "Máximo de rodadas de revisão/correção por seção antes de aceitar a renderização atual"
-
-#~ msgid "Max Side"
-#~ msgstr "Lado Máximo"
 
 msgid "Max side (px)"
 msgstr "Lado máximo (px)"
@@ -3289,9 +3274,6 @@ msgstr "Remover imagem"
 msgid "Prune section from flow"
 msgstr "Remover seção do fluxo"
 
-#~ msgid "Prune text"
-#~ msgstr "Remover texto"
-
 msgid "Prune this term — it will be hidden from output and excluded from future regenerations."
 msgstr "Podar este termo — ele será ocultado da saída e excluído de regenerações futuras."
 
@@ -3950,12 +3932,6 @@ msgstr "Mostrar detalhes do erro"
 
 msgid "Show fewer"
 msgstr "Show fewer"
-
-#~ msgid "Show Pruned"
-#~ msgstr "Mostrar removidas"
-
-#~ msgid "Show pruned images"
-#~ msgstr "Mostrar imagens removidas"
 
 msgid "Show pruned terms"
 msgstr "Mostrar termos podados"
