@@ -3,29 +3,6 @@ import os from "node:os"
 import path from "node:path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-const {
-  experimentalGenerateImage,
-  openaiImage,
-  createOpenAI,
-} = vi.hoisted(() => {
-  const experimentalGenerateImage = vi.fn()
-  const openaiImage = vi.fn((modelId: string) => ({ modelId }))
-  const createOpenAI = vi.fn(() => ({ image: openaiImage }))
-  return {
-    experimentalGenerateImage,
-    openaiImage,
-    createOpenAI,
-  }
-})
-
-vi.mock("ai", () => ({
-  experimental_generateImage: experimentalGenerateImage,
-}))
-
-vi.mock("@ai-sdk/openai", () => ({
-  createOpenAI,
-}))
-
 import { generateImageWithCache } from "../image.js"
 
 describe("generateImageWithCache", () => {
@@ -34,9 +11,6 @@ describe("generateImageWithCache", () => {
 
   beforeEach(() => {
     cacheDir = fs.mkdtempSync(path.join(os.tmpdir(), "adt-image-cache-"))
-    experimentalGenerateImage.mockReset()
-    openaiImage.mockClear()
-    createOpenAI.mockClear()
     fetchMock.mockReset()
     vi.stubGlobal("fetch", fetchMock)
   })
@@ -47,12 +21,14 @@ describe("generateImageWithCache", () => {
   })
 
   it("caches generation results for identical prompts", async () => {
-    experimentalGenerateImage.mockResolvedValue({
-      image: {
-        base64: Buffer.from("generated").toString("base64"),
-        mimeType: "image/png",
-      },
-    })
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: [{ b64_json: Buffer.from("generated").toString("base64") }],
+        }),
+        { status: 200 }
+      )
+    )
 
     const first = await generateImageWithCache({
       apiKey: "sk-test",
@@ -73,8 +49,32 @@ describe("generateImageWithCache", () => {
     expect(first.cached).toBe(false)
     expect(second.cached).toBe(true)
     expect(second.base64).toBe(first.base64)
-    expect(experimentalGenerateImage).toHaveBeenCalledTimes(1)
-    expect(openaiImage).toHaveBeenCalledWith("gpt-image-1.5")
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.openai.com/v1/images/generations")
+  })
+
+  it("does not send response_format to /images/generations", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: [{ b64_json: Buffer.from("generated").toString("base64") }],
+        }),
+        { status: 200 }
+      )
+    )
+
+    await generateImageWithCache({
+      apiKey: "sk-test",
+      modelId: "openai:gpt-image-2",
+      prompt: "a bright diagram",
+      size: "1024x1024",
+    })
+
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit
+    const body = JSON.parse(init.body as string) as Record<string, unknown>
+    expect(body).not.toHaveProperty("response_format")
+    expect(body.model).toBe("gpt-image-2")
+    expect(body.output_format).toBe("png")
   })
 
   it("uses the image edits endpoint when reference images are provided", async () => {
@@ -103,6 +103,5 @@ describe("generateImageWithCache", () => {
     expect(result.mimeType).toBe("image/png")
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.openai.com/v1/images/edits")
-    expect(experimentalGenerateImage).not.toHaveBeenCalled()
   })
 })
