@@ -2051,7 +2051,7 @@ export function StoryboardSectionDetail({
             {activityPreviewMode ? (
               <iframe
                 src={`${BASE_URL}/books/${bookLabel}/adt-preview/${pageId}_sec${String(sectionIndex + 1).padStart(3, "0")}.html?embed=1&v=${page.versions.rendering ?? 0}`}
-                className="w-full rounded border bg-red-500"
+                className="w-full rounded border"
                 style={{ height: "80vh" }}
               />
             ) : (
