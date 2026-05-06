@@ -2582,6 +2582,9 @@ msgstr "Min Size (px)"
 msgid "Minimize"
 msgstr "Minimize"
 
+msgid "Minimize accessibility summary"
+msgstr "Minimize accessibility summary"
+
 msgid "Minimum image dimension"
 msgstr "Minimum image dimension"
 
