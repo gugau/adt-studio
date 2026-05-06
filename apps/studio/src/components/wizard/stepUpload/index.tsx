@@ -57,8 +57,8 @@ function PdfPreviewCard({
   const displayTitle = suggestLabel(file) || file.name
 
   return (
-    <div className={cn("w-full max-w-2xl border border-slate-200 rounded-lg overflow-hidden grid grid-cols-[2fr_1fr] bg-white", CARD_HEIGHT)}>
-      <div className="flex flex-col">
+    <div className={cn("w-full max-w-2xl border border-slate-200 rounded-lg overflow-hidden grid grid-cols-3 bg-white", CARD_HEIGHT)}>
+      <div className="flex flex-col col-span-2">
         <div className="px-5 pt-5 pb-3 space-y-1">
           <p className="font-semibold text-lg leading-snug line-clamp-2 text-slate-900">
             {displayTitle}
