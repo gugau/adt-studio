@@ -1,21 +1,81 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Check, CheckCircle2, XCircle, ChevronDown, HelpCircle, Loader2, ImageOff } from "lucide-react"
+import { Check, CheckCircle2, XCircle, ChevronDown, HelpCircle, Loader2, ImageOff, Eye, Scissors, Trash2 } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { api } from "@/api/client"
-import type { QuizGenerationOutput, VersionEntry } from "@/api/client"
+import type {
+  QuizActivityType,
+  QuizGenerationOutput,
+  QuizItem,
+  QuizQuestion,
+  StageRunProviderCredentials,
+  VersionEntry,
+} from "@/api/client"
 import { useQuizzes } from "@/hooks/use-quizzes"
 import { usePageImage } from "@/hooks/use-pages"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { useStepHeader } from "../../components/StepViewRouter"
-import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
-import { StageRunCard } from "../../components/StageRunCard"
 import { getRequestedPageId, getQuizImageRenderState } from "./lib/quizzes-image-state"
 import { QuizzesLandingConfig } from "./components/QuizzesLandingConfig"
 import { useLingui } from "@lingui/react/macro"
 
 
 type QuizData = QuizGenerationOutput
+
+function getQuizQuestions(quiz: QuizItem): QuizQuestion[] {
+  if (quiz.questions && quiz.questions.length > 0) return quiz.questions
+  return [{
+    activityType: quiz.activityType ?? "multiple_choice",
+    question: quiz.question,
+    options: quiz.options,
+    answerIndex: quiz.answerIndex,
+    statements: quiz.statements,
+    blanks: quiz.blanks,
+    pairs: quiz.pairs,
+    reasoning: quiz.reasoning,
+  }]
+}
+
+function syncQuizFromQuestions(quiz: QuizItem, questions: QuizQuestion[]): QuizItem {
+  const first = questions[0] ?? getQuizQuestions(quiz)[0]
+  return {
+    ...quiz,
+    activityType: first.activityType,
+    question: first.question,
+    options: first.options,
+    answerIndex: first.answerIndex,
+    statements: first.statements,
+    blanks: first.blanks,
+    pairs: first.pairs,
+    reasoning: first.reasoning,
+    questions,
+  }
+}
+
+function getSharedQuestionTitle(questions: QuizQuestion[]): string | null {
+  if (questions.length === 0) return null
+  const first = questions[0].question.trim()
+  if (!first) return null
+  return questions.every((q) => q.question.trim() === first) ? first : null
+}
+
+function pad3(n: number): string {
+  return String(n).padStart(3, "0")
+}
+
+function activityBadgeClass(activityType: QuizActivityType): string {
+  switch (activityType) {
+    case "true_false":
+      return "bg-blue-50 text-blue-700 border-blue-200"
+    case "fill_in_the_blank":
+      return "bg-emerald-50 text-emerald-700 border-emerald-200"
+    case "drag_and_drop":
+      return "bg-sky-50 text-sky-700 border-sky-200"
+    case "multiple_choice":
+    default:
+      return "bg-orange-50 text-orange-700 border-orange-200"
+  }
+}
 
 function VersionPicker({
   currentVersion,
@@ -276,21 +336,45 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
   const queryClient = useQueryClient()
   const { data, isLoading } = useQuizzes(bookLabel)
   const { setExtra } = useStepHeader()
-  const { stageState, queueRun } = useBookRun()
-  const { apiKey, hasApiKey } = useApiKey()
-  const quizzesState = stageState("quizzes")
-  const quizzesDone = quizzesState === "done"
-  const quizzesRunning = quizzesState === "running" || quizzesState === "queued"
-  const showRunCard = !quizzesDone || quizzesRunning
+  const {
+    apiKey,
+    hasApiKey,
+    anthropicKey,
+    googleKey,
+    customBaseUrl,
+    customApiKey,
+    azureKey,
+    azureRegion,
+    geminiKey,
+  } = useApiKey()
+  const providerCredentials: StageRunProviderCredentials = {
+    anthropicApiKey: anthropicKey || undefined,
+    googleApiKey: googleKey || undefined,
+    customBaseUrl: customBaseUrl || undefined,
+    customApiKey: customApiKey || undefined,
+    azure: { key: azureKey, region: azureRegion },
+    geminiApiKey: geminiKey || undefined,
+  }
 
-  const handleRunQuizzes = useCallback(() => {
-    if (!hasApiKey || quizzesRunning) return
-    queueRun({ fromStage: "quizzes", toStage: "quizzes", apiKey })
-  }, [hasApiKey, quizzesRunning, apiKey, queueRun])
+  const getActivityLabel = (activityType: QuizActivityType) => {
+    switch (activityType) {
+      case "true_false":
+        return t`True/False`
+      case "fill_in_the_blank":
+        return t`Fill in the blanks`
+      case "drag_and_drop":
+        return t`Drag & Drop`
+      case "multiple_choice":
+      default:
+        return t`Multiple choice`
+    }
+  }
 
   const [pending, setPending] = useState<QuizData | null>(null)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [lightboxPageId, setLightboxPageId] = useState<string | null>(null)
+  const [tryQuizIndex, setTryQuizIndex] = useState<number | null>(null)
 
   // Reset pending when data changes
   useEffect(() => {
@@ -304,16 +388,26 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
   const displayQuizzes = selectedPageId
     ? quizzes.filter((q) => q.pageIds.includes(selectedPageId))
     : quizzes
+  const displayQuestionCount = displayQuizzes.reduce(
+    (count, quiz) => count + getQuizQuestions(quiz).length,
+    0
+  )
 
   const saveQuizzes = useCallback(async () => {
     if (!pending) return
     setSaving(true)
+    setSaveError(null)
     const minDelay = new Promise((r) => setTimeout(r, 400))
-    await api.updateQuizzes(bookLabel, pending)
-    setPending(null)
-    await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "quizzes"] })
-    await minDelay
-    setSaving(false)
+    try {
+      await api.updateQuizzes(bookLabel, pending)
+      await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "quizzes"] })
+      setPending(null)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : String(err))
+    } finally {
+      await minDelay
+      setSaving(false)
+    }
   }, [pending, bookLabel, queryClient])
 
   const saveRef = useRef(saveQuizzes)
@@ -323,7 +417,7 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
     if (!data?.quizzes) return
     setExtra(
       <div className="flex items-center gap-1.5 ml-auto">
-        <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{t`${String(displayQuizzes.length)} questions`}</span>
+        <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{t`${String(displayQuestionCount)} questions`}</span>
         <VersionPicker
           currentVersion={data.version}
           saving={saving}
@@ -336,89 +430,358 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
       </div>
     )
     return () => setExtra(null)
-  }, [data, displayQuizzes.length, saving, dirty, bookLabel, selectedPageId])
+  }, [data, displayQuestionCount, saving, dirty, bookLabel, selectedPageId])
 
-  const updateQuestion = (idx: number, question: string) => {
+  const updateQuizQuestions = (
+    quizIdx: number,
+    updater: (questions: QuizQuestion[]) => QuizQuestion[]
+  ) => {
     const base = pending ?? data?.quizzes
     if (!base) return
     setPending({
       ...base,
-      quizzes: base.quizzes.map((q, i) =>
-        i === idx ? { ...q, question } : q
-      ),
+      quizzes: base.quizzes.map((quiz, i) => {
+        if (i !== quizIdx) return quiz
+        return syncQuizFromQuestions(quiz, updater(getQuizQuestions(quiz)))
+      }),
     })
   }
 
-  const updateOptionText = (quizIdx: number, optIdx: number, text: string) => {
-    const base = pending ?? data?.quizzes
-    if (!base) return
-    setPending({
-      ...base,
-      quizzes: base.quizzes.map((q, i) =>
-        i === quizIdx
-          ? { ...q, options: q.options.map((o, j) => (j === optIdx ? { ...o, text } : o)) }
-          : q
-      ),
-    })
+  const updateSharedTitle = (quizIdx: number, title: string) => {
+    updateQuizQuestions(quizIdx, (questions) => questions.map((q) => ({ ...q, question: title })))
   }
 
-  const updateOptionExplanation = (quizIdx: number, optIdx: number, explanation: string) => {
-    const base = pending ?? data?.quizzes
-    if (!base) return
-    setPending({
-      ...base,
-      quizzes: base.quizzes.map((q, i) =>
-        i === quizIdx
-          ? { ...q, options: q.options.map((o, j) => (j === optIdx ? { ...o, explanation } : o)) }
-          : q
-      ),
-    })
-  }
-
-  if (!showRunCard && isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">{t`Loading quizzes...`}</span>
-      </div>
+  const updateQuestionAt = (
+    quizIdx: number,
+    questionIdx: number,
+    patch: Partial<QuizQuestion>
+  ) => {
+    updateQuizQuestions(quizIdx, (questions) =>
+      questions.map((question, index) =>
+        index === questionIdx ? { ...question, ...patch } : question
+      )
     )
   }
 
-  if (showRunCard || quizzes.length === 0) {
-    return (
-      <div className="p-4">
-        <StageRunCard
-          stageSlug="quizzes"
-          isRunning={quizzesRunning}
-          completed={quizzesDone}
-          onRun={handleRunQuizzes}
-          disabled={!hasApiKey || quizzesRunning}
-        >
-          <QuizzesLandingConfig bookLabel={bookLabel} />
-        </StageRunCard>
-      </div>
-    )
+  const updateQuizAt = (quizIdx: number, patch: Partial<QuizItem>) => {
+    const base = pending ?? data?.quizzes
+    if (!base) return
+    setPending({
+      ...base,
+      quizzes: base.quizzes.map((quiz, index) =>
+        index === quizIdx ? { ...quiz, ...patch } : quiz
+      ),
+    })
   }
 
-  if (selectedPageId && displayQuizzes.length === 0 && quizzes.length > 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-        <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center mb-3">
-          <HelpCircle className="w-6 h-6 text-orange-300" />
+  const deleteQuizAt = async (quizIdx: number) => {
+    const base = pending ?? data?.quizzes
+    if (!base || saving) return
+    const next = {
+      ...base,
+      quizzes: base.quizzes
+        .filter((_, index) => index !== quizIdx)
+        .map((quiz, index) => ({ ...quiz, quizIndex: index })),
+    }
+    setPending(next)
+    setSaving(true)
+    setSaveError(null)
+    const minDelay = new Promise((r) => setTimeout(r, 400))
+    try {
+      await api.updateQuizzes(bookLabel, next)
+      await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "quizzes"] })
+      setPending(null)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : String(err))
+    } finally {
+      await minDelay
+      setSaving(false)
+    }
+  }
+
+  const renderQuestionEditor = (
+    quizIdx: number,
+    question: QuizQuestion,
+    questionIdx: number,
+    options: { showTitle?: boolean } = {}
+  ) => {
+    if (question.activityType === "multiple_choice") {
+      return (
+        <div className="space-y-2">
+          <textarea
+            value={question.question}
+            onChange={(e) => updateQuestionAt(quizIdx, questionIdx, { question: e.target.value })}
+            className="w-full text-sm font-medium resize-none rounded border border-transparent bg-transparent p-1 -m-1 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+            rows={1}
+          />
+          {(question.options ?? []).map((option, optionIdx) => (
+            <div
+              key={optionIdx}
+              className={`flex items-start gap-2.5 px-3 py-2 rounded-md ${
+                optionIdx === question.answerIndex
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  : "bg-muted/50 text-muted-foreground"
+              }`}
+            >
+              {optionIdx === question.answerIndex ? (
+                <CheckCircle2 className="w-4 h-4 shrink-0 mt-1.5" />
+              ) : (
+                <XCircle className="w-4 h-4 shrink-0 opacity-30 mt-1.5" />
+              )}
+              <div className="flex-1 min-w-0">
+                <textarea
+                  value={option.text}
+                  onChange={(e) => {
+                    const options = (question.options ?? []).map((o, i) =>
+                      i === optionIdx ? { ...o, text: e.target.value } : o
+                    )
+                    updateQuestionAt(quizIdx, questionIdx, { options })
+                  }}
+                  className="w-full text-sm resize-none rounded border border-transparent bg-transparent p-1 -m-1 hover:border-border hover:bg-white/50 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+                  rows={1}
+                />
+                <textarea
+                  value={option.explanation}
+                  onChange={(e) => {
+                    const options = (question.options ?? []).map((o, i) =>
+                      i === optionIdx ? { ...o, explanation: e.target.value } : o
+                    )
+                    updateQuestionAt(quizIdx, questionIdx, { options })
+                  }}
+                  className="w-full text-xs opacity-70 resize-none rounded border border-transparent bg-transparent p-1 -m-1 mt-0.5 hover:border-border hover:bg-white/50 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring focus:opacity-100 transition-colors"
+                  rows={1}
+                />
+              </div>
+            </div>
+          ))}
         </div>
-        <p className="text-sm font-medium">{t`No quizzes for this page`}</p>
-        <p className="text-xs mt-1">{t`Quizzes are linked to other pages in this book`}</p>
+      )
+    }
+
+    if (question.activityType === "true_false") {
+      const statements = question.statements && question.statements.length > 0
+        ? question.statements
+        : [{ text: "", answer: true }]
+      return (
+        <div className="space-y-2">
+          {options.showTitle && (
+            <textarea
+              value={question.question}
+              onChange={(e) => updateQuestionAt(quizIdx, questionIdx, { question: e.target.value })}
+              className="w-full text-sm font-medium resize-none rounded border border-transparent bg-transparent p-1 -m-1 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+              rows={1}
+            />
+          )}
+          {statements.map((statement, statementIdx) => (
+            <div key={statementIdx} className="space-y-2">
+              <textarea
+                value={statement.text}
+                onChange={(e) => {
+                  const nextStatements = statements.map((s, i) =>
+                    i === statementIdx ? { ...s, text: e.target.value } : s
+                  )
+                  updateQuestionAt(quizIdx, questionIdx, { statements: nextStatements })
+                }}
+                className="w-full text-sm resize-none rounded border bg-muted/40 p-2 focus:outline-none focus:ring-1 focus:ring-ring"
+                rows={2}
+              />
+              <div className="inline-flex overflow-hidden rounded-md border bg-background p-0.5">
+                {[true, false].map((value) => (
+                  <button
+                    key={String(value)}
+                    type="button"
+                    onClick={() => {
+                      const nextStatements = statements.map((s, i) =>
+                        i === statementIdx ? { ...s, answer: value } : s
+                      )
+                      updateQuestionAt(quizIdx, questionIdx, { statements: nextStatements })
+                    }}
+                    className={`h-7 px-3 text-xs font-medium transition-colors ${
+                      statement.answer === value ? "bg-blue-600 text-white" : "text-muted-foreground hover:bg-muted/60"
+                    }`}
+                  >
+                    {value ? t`True` : t`False`}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+    }
+
+    if (question.activityType === "fill_in_the_blank") {
+      return (
+        <div className="space-y-2">
+          {options.showTitle && (
+            <textarea
+              value={question.question}
+              onChange={(e) => updateQuestionAt(quizIdx, questionIdx, { question: e.target.value })}
+              className="w-full text-sm font-medium resize-none rounded border border-transparent bg-transparent p-1 -m-1 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+              rows={1}
+            />
+          )}
+          {(question.blanks ?? []).map((blank, blankIdx) => (
+            <div key={blankIdx} className="grid gap-2 sm:grid-cols-[1fr_180px]">
+              <textarea
+                value={blank.prompt}
+                onChange={(e) => {
+                  const blanks = (question.blanks ?? []).map((b, i) =>
+                    i === blankIdx ? { ...b, prompt: e.target.value } : b
+                  )
+                  updateQuestionAt(quizIdx, questionIdx, { blanks })
+                }}
+                className="min-h-10 text-sm resize-none rounded border bg-muted/40 p-2 focus:outline-none focus:ring-1 focus:ring-ring"
+                rows={2}
+              />
+              <input
+                value={blank.answer}
+                onChange={(e) => {
+                  const blanks = (question.blanks ?? []).map((b, i) =>
+                    i === blankIdx ? { ...b, answer: e.target.value } : b
+                  )
+                  updateQuestionAt(quizIdx, questionIdx, { blanks })
+                }}
+                className="h-9 rounded border bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+              <textarea
+                value={blank.explanation ?? ""}
+                onChange={(e) => {
+                  const blanks = (question.blanks ?? []).map((b, i) =>
+                    i === blankIdx ? { ...b, explanation: e.target.value } : b
+                  )
+                  updateQuestionAt(quizIdx, questionIdx, { blanks })
+                }}
+                className="min-h-9 text-xs resize-none rounded border bg-background p-2 focus:outline-none focus:ring-1 focus:ring-ring sm:col-span-2"
+                rows={1}
+                placeholder={t`Explanation`}
+              />
+            </div>
+          ))}
+        </div>
+      )
+    }
+
+    return (
+      <div className="space-y-2">
+        {options.showTitle && (
+          <textarea
+            value={question.question}
+            onChange={(e) => updateQuestionAt(quizIdx, questionIdx, { question: e.target.value })}
+            className="w-full text-sm font-medium resize-none rounded border border-transparent bg-transparent p-1 -m-1 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+            rows={1}
+          />
+        )}
+        {(question.pairs ?? []).map((pair, pairIdx) => (
+          <div key={pairIdx} className="grid gap-2 sm:grid-cols-2">
+            <textarea
+              value={pair.item}
+              onChange={(e) => {
+                const pairs = (question.pairs ?? []).map((p, i) =>
+                  i === pairIdx ? { ...p, item: e.target.value } : p
+                )
+                updateQuestionAt(quizIdx, questionIdx, { pairs })
+              }}
+              className="min-h-9 resize-none rounded border bg-background p-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              rows={1}
+            />
+            <textarea
+              value={pair.match}
+              onChange={(e) => {
+                const pairs = (question.pairs ?? []).map((p, i) =>
+                  i === pairIdx ? { ...p, match: e.target.value } : p
+                )
+                updateQuestionAt(quizIdx, questionIdx, { pairs })
+              }}
+              className="min-h-9 resize-none rounded border bg-background p-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              rows={1}
+            />
+            <textarea
+              value={pair.explanation ?? ""}
+              onChange={(e) => {
+                const pairs = (question.pairs ?? []).map((p, i) =>
+                  i === pairIdx ? { ...p, explanation: e.target.value } : p
+                )
+                updateQuestionAt(quizIdx, questionIdx, { pairs })
+              }}
+              className="min-h-9 resize-none rounded border bg-background p-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring sm:col-span-2"
+              rows={1}
+              placeholder={t`Explanation`}
+            />
+          </div>
+        ))}
       </div>
     )
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3 p-4">
+      <QuizzesLandingConfig
+        bookLabel={bookLabel}
+        apiKey={apiKey}
+        hasApiKey={hasApiKey}
+        providerCredentials={providerCredentials}
+        initialSelectedPageId={selectedPageId}
+      />
+      {saveError && <p className="text-xs text-red-500">{saveError}</p>}
+      {selectedPageId && displayQuizzes.length === 0 && quizzes.length > 0 && (
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+          <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center mb-3">
+            <HelpCircle className="w-6 h-6 text-orange-300" />
+          </div>
+          <p className="text-sm font-medium">{t`No quizzes for this page`}</p>
+          <p className="text-xs mt-1">{t`Quizzes are linked to other pages in this book`}</p>
+        </div>
+      )}
+      {isLoading && quizzes.length === 0 && (
+        <div className="flex items-center justify-center py-12 text-muted-foreground">
+          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+          <span className="text-sm">{t`Loading quizzes...`}</span>
+        </div>
+      )}
       {displayQuizzes.map((quiz) => {
         const idx = quizzes.indexOf(quiz)
+        const questions = getQuizQuestions(quiz)
+        const activityType = questions[0]?.activityType ?? "multiple_choice"
+        const sharedTitle = activityType === "multiple_choice" ? null : getSharedQuestionTitle(questions)
         return (
-        <div key={idx} className="rounded-md border bg-card overflow-hidden">
-          <div className="flex flex-wrap items-center gap-1.5 px-4 py-2 bg-muted/20 border-b">
+        <div key={idx} className={`rounded-md border bg-card overflow-hidden ${quiz.isPruned ? "opacity-55" : ""}`}>
+          <div className="flex flex-wrap items-center gap-2 px-4 py-2 bg-muted/20 border-b">
+            <span className={`rounded border px-2 py-0.5 text-[10px] font-medium ${activityBadgeClass(activityType)}`}>
+              {getActivityLabel(activityType)}
+            </span>
+            <span className="text-[10px] text-muted-foreground">{t`After ${quiz.afterPageId}`}</span>
+            <button
+              type="button"
+              onClick={() => setTryQuizIndex(quizzes.filter((q) => !q.isPruned).indexOf(quiz))}
+              disabled={quiz.isPruned}
+              className="ml-auto inline-flex h-7 items-center gap-1 rounded border bg-background px-2 text-[10px] font-medium transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Eye className="h-3 w-3" />
+              {t`Try`}
+            </button>
+            <button
+              type="button"
+              onClick={() => updateQuizAt(idx, { isPruned: !quiz.isPruned })}
+              className="inline-flex h-7 items-center gap-1 rounded border bg-background px-2 text-[10px] font-medium transition-colors hover:bg-muted/60"
+            >
+              <Scissors className="h-3 w-3" />
+              {quiz.isPruned ? t`Unprune` : t`Prune`}
+            </button>
+            {quiz.isPruned && (
+              <button
+                type="button"
+                onClick={() => void deleteQuizAt(idx)}
+                disabled={saving}
+                className="inline-flex h-7 items-center gap-1 rounded border border-red-200 bg-red-50 px-2 text-[10px] font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                title={t`Delete pruned quiz`}
+              >
+                <Trash2 className="h-3 w-3" />
+                {t`Delete`}
+              </button>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5 px-4 py-2 bg-muted/10 border-b">
             {quiz.pageIds.length > 0 ? (
               quiz.pageIds.map((pageId) => (
                 <PageThumb key={pageId} bookLabel={bookLabel} pageId={pageId} onClick={() => setLightboxPageId(pageId)} />
@@ -427,46 +790,30 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
               <span className="text-xs text-muted-foreground">{t`After ${quiz.afterPageId}`}</span>
             )}
           </div>
-          <div className="px-4 py-3">
-            <textarea
-              value={quiz.question}
-              onChange={(e) => updateQuestion(idx, e.target.value)}
-              className="w-full text-sm font-medium resize-none rounded border border-transparent bg-transparent p-1 -m-1 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-              rows={1}
-            />
+          <div className="px-4 py-3 space-y-4">
+            {sharedTitle && (
+              <textarea
+                value={sharedTitle}
+                onChange={(e) => updateSharedTitle(idx, e.target.value)}
+                className="w-full text-sm font-semibold resize-none rounded border border-transparent bg-transparent p-1 -m-1 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+                rows={1}
+              />
+            )}
             <span className="text-[10px] text-muted-foreground mt-1 inline-block">
               {t`After ${quiz.afterPageId}`}
             </span>
           </div>
-          <div className="px-4 pb-3 space-y-1.5">
-            {quiz.options.map((option, i) => (
-              <div
-                key={i}
-                className={`flex items-start gap-2.5 px-3 py-2 rounded-md ${
-                  i === quiz.answerIndex
-                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                    : "bg-muted/50 text-muted-foreground"
-                }`}
-              >
-                {i === quiz.answerIndex ? (
-                  <CheckCircle2 className="w-4 h-4 shrink-0 mt-1.5" />
-                ) : (
-                  <XCircle className="w-4 h-4 shrink-0 opacity-30 mt-1.5" />
+          <div className="px-4 pb-3 space-y-4">
+            {questions.map((question, questionIdx) => (
+              <div key={questionIdx} className="rounded-md border bg-muted/20 p-3 space-y-2">
+                {questions.length > 1 && (
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t`Q${String(questionIdx + 1)}`}
+                  </p>
                 )}
-                <div className="flex-1 min-w-0">
-                  <textarea
-                    value={option.text}
-                    onChange={(e) => updateOptionText(idx, i, e.target.value)}
-                    className="w-full text-sm resize-none rounded border border-transparent bg-transparent p-1 -m-1 hover:border-border hover:bg-white/50 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-                    rows={1}
-                  />
-                  <textarea
-                    value={option.explanation}
-                    onChange={(e) => updateOptionExplanation(idx, i, e.target.value)}
-                    className="w-full text-xs opacity-70 resize-none rounded border border-transparent bg-transparent p-1 -m-1 mt-0.5 hover:border-border hover:bg-white/50 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring focus:opacity-100 transition-colors"
-                    rows={1}
-                  />
-                </div>
+                {renderQuestionEditor(idx, question, questionIdx, {
+                  showTitle: activityType !== "multiple_choice" && !sharedTitle,
+                })}
               </div>
             ))}
             {quiz.reasoning && (
@@ -484,6 +831,22 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
           if (!open) setLightboxPageId(null)
         }}
       />
+      <Dialog open={tryQuizIndex != null} onOpenChange={(open) => { if (!open) setTryQuizIndex(null) }}>
+        <DialogContent className="h-[85vh] w-[min(1100px,96vw)] max-w-[96vw] gap-0 overflow-hidden p-0 bg-white">
+          <DialogTitle className="sr-only">{t`Try quiz`}</DialogTitle>
+          <DialogDescription className="sr-only">{t`Interactive preview for the selected quiz.`}</DialogDescription>
+          <div className="flex h-11 items-center border-b px-3 pr-12">
+            <span className="text-xs font-medium text-muted-foreground">{t`Try`}</span>
+          </div>
+          {tryQuizIndex != null && (
+            <iframe
+              title={t`Quiz preview`}
+              className="h-[calc(85vh-44px)] w-full bg-white"
+              src={`/api/books/${bookLabel}/adt-preview/qz${pad3(tryQuizIndex + 1)}.html?embed=1&v=${data?.version ?? 0}`}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

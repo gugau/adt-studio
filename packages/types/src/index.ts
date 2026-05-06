@@ -143,10 +143,17 @@ export {
 } from "./glossary.js"
 
 export {
+  QuizActivityType,
   QuizOption,
+  QuizStatement,
+  QuizBlank,
+  QuizMatchPair,
+  QuizQuestion,
   Quiz,
   QuizGenerationOutput,
+  QuizGenerationRequest,
   quizLLMSchema,
+  getQuizLLMSchema,
 } from "./quiz.js"
 
 export {

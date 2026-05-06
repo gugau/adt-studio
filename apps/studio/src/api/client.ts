@@ -285,14 +285,46 @@ export interface QuizOption {
   explanation: string
 }
 
-export interface QuizItem {
+export type QuizActivityType =
+  | "multiple_choice"
+  | "true_false"
+  | "fill_in_the_blank"
+  | "drag_and_drop"
+
+export interface QuizStatement {
+  text: string
+  answer: boolean
+}
+
+export interface QuizBlank {
+  prompt: string
+  answer: string
+  explanation?: string
+}
+
+export interface QuizMatchPair {
+  item: string
+  match: string
+  explanation?: string
+}
+
+export interface QuizQuestion {
+  activityType: QuizActivityType
+  question: string
+  options?: QuizOption[]
+  answerIndex?: number
+  statements?: QuizStatement[]
+  blanks?: QuizBlank[]
+  pairs?: QuizMatchPair[]
+  reasoning: string
+}
+
+export interface QuizItem extends QuizQuestion {
   quizIndex: number
   afterPageId: string
   pageIds: string[]
-  question: string
-  options: QuizOption[]
-  answerIndex: number
-  reasoning: string
+  isPruned?: boolean
+  questions?: QuizQuestion[]
 }
 
 export interface QuizGenerationOutput {
@@ -305,6 +337,14 @@ export interface QuizGenerationOutput {
 export interface QuizzesResponse {
   quizzes: QuizGenerationOutput | null
   version: number | null
+}
+
+export interface GenerateQuizzesRequest {
+  pageIds: string[]
+  activityType: QuizActivityType
+  /** 1-20 questions inside the generated quiz activity. */
+  questionsPerQuiz?: number
+  replaceExistingForPages?: boolean
 }
 
 // --- Text Catalog types ---
@@ -908,6 +948,22 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(data),
     }),
+
+  generateQuizzes: (
+    label: string,
+    apiKey: string,
+    data: GenerateQuizzesRequest,
+    providerCredentials?: StageRunProviderCredentials
+  ) =>
+    request<{ quizzes: QuizGenerationOutput; version: number }>(
+      `/books/${label}/quizzes/generate`,
+      {
+        method: "POST",
+        headers: buildApiHeaders(apiKey, providerCredentials),
+        body: JSON.stringify(data),
+        signal: AbortSignal.timeout(180_000),
+      }
+    ),
 
   getGlossary: (label: string) =>
     request<GlossaryOutput | null>(`/books/${label}/glossary`),

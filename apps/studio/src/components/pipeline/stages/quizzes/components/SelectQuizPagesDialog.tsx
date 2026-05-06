@@ -89,7 +89,7 @@ export function SelectQuizPagesDialog({
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           <p className="text-xs text-muted-foreground">
-            {t`Pick the pages you want to base quiz questions on. Selected pages are still grouped according to "Pages per quiz".`}
+            {t`Pick the pages you want to base this quiz on. All selected pages stay together in one custom quiz.`}
           </p>
 
           <div className="flex items-center gap-2">

@@ -140,6 +140,7 @@ export {
 export { validateSectionHtml } from "./validate-html.js"
 export {
   generateQuiz,
+  generateQuizForSelection,
   generateAllQuizzes,
   buildQuizGenerationConfig,
   buildQuizBatches,

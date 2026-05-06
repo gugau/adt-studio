@@ -3352,8 +3352,8 @@ msgstr "Choisir dans le livre"
 msgid "Pick one layout approach."
 msgstr "Choisissez une approche de mise en page."
 
-msgid "Pick the pages you want to base quiz questions on. Selected pages are still grouped according to \"Pages per quiz\"."
-msgstr "Choisissez les pages sur lesquelles baser les questions du quiz. Les pages sélectionnées sont toujours regroupées selon « Pages par quiz »."
+msgid "Pick the pages you want to base this quiz on. All selected pages stay together in one custom quiz."
+msgstr "Choisissez les pages sur lesquelles baser ce quiz. Toutes les pages sélectionnées restent ensemble dans un quiz personnalisé."
 
 msgid "Pick the source pages for each quiz and where it should appear in the book."
 msgstr "Choisissez les pages source de chaque quiz et l'endroit où il doit apparaître dans le livre."

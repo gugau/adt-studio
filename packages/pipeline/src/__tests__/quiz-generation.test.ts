@@ -11,22 +11,46 @@ import {
   buildQuizBatches,
   buildQuizGenerationConfig,
   generateQuiz,
+  generateQuizForSelection,
   generateAllQuizzes,
 } from "../quiz-generation.js"
 import type { QuizPageInput, QuizConfig, QuizBatch } from "../quiz-generation.js"
 
+type FakeQuizResponse = {
+  activity_type?: string
+  reasoning: string
+  question: string
+  options?: Array<{ text: string; explanation: string }>
+  answer_index?: number
+  statements?: Array<{ text: string; answer: boolean }>
+  blanks?: Array<{ prompt: string; answer: string }>
+  pairs?: Array<{ item: string; match: string }>
+}
+
 function makeFakeLLMModel(
-  response: {
-    reasoning: string
-    question: string
-    options: Array<{ text: string; explanation: string }>
-    answer_index: number
-  },
+  response: FakeQuizResponse,
   onCall?: (options: GenerateObjectOptions) => void
 ): LLMModel {
   return {
     generateObject: async <T>(options: GenerateObjectOptions) => {
       onCall?.(options)
+      return {
+        object: response as T,
+        usage: { inputTokens: 10, outputTokens: 10 },
+      } as GenerateObjectResult<T>
+    },
+  }
+}
+
+function makeFakeLLMSequence(
+  responses: FakeQuizResponse[],
+  onCall?: (options: GenerateObjectOptions) => void
+): LLMModel {
+  let index = 0
+  return {
+    generateObject: async <T>(options: GenerateObjectOptions) => {
+      onCall?.(options)
+      const response = responses[index++] ?? responses[responses.length - 1]
       return {
         object: response as T,
         usage: { inputTokens: 10, outputTokens: 10 },
@@ -351,14 +375,13 @@ describe("buildQuizBatches (custom groups mode)", () => {
     expect(batches[0].pages.map((p) => p.pageId)).toEqual(["pg001", "pg002"])
   })
 
-  it("falls back to auto mode when quizGroups is empty", () => {
+  it("uses custom mode and returns no batches when quizGroups is explicitly empty", () => {
     const pages = [
       makePageInput("pg001", "<p>Page 1</p>"),
       makePageInput("pg002", "<p>Page 2</p>"),
     ]
     const batches = buildQuizBatches(pages, autoConfig({ pagesPerQuiz: 2, quizGroups: [] }))
-    expect(batches).toHaveLength(1)
-    expect(batches[0].pages.map((p) => p.pageId)).toEqual(["pg001", "pg002"])
+    expect(batches).toEqual([])
   })
 })
 
@@ -374,6 +397,7 @@ describe("buildQuizGenerationConfig", () => {
       pagesPerQuiz: 3,
       quizSectionTypes: FALLBACK_QUIZ_SECTION_TYPES,
       quizGroups: undefined,
+      activityType: "multiple_choice",
       promptName: "quiz_generation",
       modelId: "openai:gpt-5.4",
       maxRetries: 5,
@@ -410,6 +434,7 @@ describe("buildQuizGenerationConfig", () => {
       pagesPerQuiz: 5,
       quizSectionTypes: ["text_only"],
       quizGroups: undefined,
+      activityType: "multiple_choice",
       promptName: "custom_quiz",
       modelId: "openai:gpt-4.1",
       maxRetries: 4,
@@ -484,6 +509,7 @@ describe("generateQuiz", () => {
     expect(pageTexts).toHaveLength(2)
     expect(pageTexts[0].pageId).toBe("pg001")
     expect(pageTexts[0].text).toContain("Photosynthesis")
+    expect(capturedOptions?.context?.individual_pages).toEqual(pageTexts)
 
     expect(quiz.quizIndex).toBe(0)
     expect(quiz.afterPageId).toBe("pg002")
@@ -491,6 +517,9 @@ describe("generateQuiz", () => {
     expect(quiz.question).toBe(validQuizResponse.question)
     expect(quiz.options).toEqual(validQuizResponse.options)
     expect(quiz.answerIndex).toBe(0)
+    expect(capturedOptions?.context?.activity_type).toBe("multiple_choice")
+    expect(capturedOptions?.context?.question_number).toBe(1)
+    expect(capturedOptions?.context?.questions_per_quiz).toBe(1)
   })
 
   it("shuffles options and renumbers answer labels", async () => {
@@ -531,7 +560,7 @@ describe("generateQuiz", () => {
   it("validation catches wrong option count", async () => {
     const badResponse = {
       ...validQuizResponse,
-      options: [validQuizResponse.options[0], validQuizResponse.options[1]],
+      options: [validQuizResponse.options[0]],
     }
     let capturedOptions: GenerateObjectOptions | null = null
     const llmModel = makeFakeLLMModel(badResponse, (options) => {
@@ -556,7 +585,118 @@ describe("generateQuiz", () => {
 
     const validation = capturedOptions?.validate?.(badResponse, {})
     expect(validation?.valid).toBe(false)
-    expect(validation?.errors[0]).toContain("exactly 3 options")
+    expect(validation?.errors[0]).toContain("at least 2 options")
+  })
+})
+
+describe("generateQuizForSelection", () => {
+  it("calls the LLM once per requested question and returns one parent quiz", async () => {
+    const contexts: Array<Record<string, unknown>> = []
+    let callCount = 0
+    const llmModel = makeFakeLLMSequence(
+      [
+        {
+          ...validQuizResponse,
+          activity_type: "multiple_choice",
+          question: "Which process helps plants make food?",
+        },
+        {
+          ...validQuizResponse,
+          activity_type: "multiple_choice",
+          question: "Which energy source supports photosynthesis?",
+        },
+        {
+          ...validQuizResponse,
+          activity_type: "multiple_choice",
+          question: "What do roots usually absorb from soil?",
+        },
+      ],
+      (options) => {
+        callCount++
+        contexts.push(options.context as Record<string, unknown>)
+      }
+    )
+
+    const batch: QuizBatch = {
+      pages: [
+        makePageInput("pg001", "<p>Plants make food through photosynthesis.</p>"),
+        makePageInput("pg002", "<p>Roots absorb water from the soil.</p>"),
+      ],
+      afterPageId: "pg002",
+    }
+    const config = autoConfig({ pagesPerQuiz: 2 })
+
+    const quiz = await generateQuizForSelection(batch, 0, config, llmModel, {
+      activityType: "multiple_choice",
+      questionsPerQuiz: 3,
+    })
+
+    expect(callCount).toBe(3)
+    expect(quiz.quizIndex).toBe(0)
+    expect(quiz.pageIds).toEqual(["pg001", "pg002"])
+    expect(quiz.afterPageId).toBe("pg002")
+    expect(quiz.questions).toHaveLength(3)
+    expect(quiz.question).toBe("Which process helps plants make food?")
+    expect(quiz.questions?.map((q) => q.question)).toEqual([
+      "Which process helps plants make food?",
+      "Which energy source supports photosynthesis?",
+      "What do roots usually absorb from soil?",
+    ])
+  })
+
+  it("passes question numbering and previous question text into prompt context", async () => {
+    const contexts: Array<Record<string, unknown>> = []
+    const llmModel = makeFakeLLMSequence(
+      [
+        {
+          ...validQuizResponse,
+          activity_type: "multiple_choice",
+          question: "Which part of a plant takes in water?",
+        },
+        {
+          ...validQuizResponse,
+          activity_type: "multiple_choice",
+          question: "Which part of a plant makes seeds?",
+        },
+        {
+          ...validQuizResponse,
+          activity_type: "multiple_choice",
+          question: "Which part of a plant holds it upright?",
+        },
+      ],
+      (options) => {
+        contexts.push(options.context as Record<string, unknown>)
+      }
+    )
+
+    const batch: QuizBatch = {
+      pages: [makePageInput("pg001", "<p>Roots, flowers, and stems are plant parts.</p>")],
+      afterPageId: "pg001",
+    }
+
+    await generateQuizForSelection(batch, 0, autoConfig({ pagesPerQuiz: 1 }), llmModel, {
+      activityType: "multiple_choice",
+      questionsPerQuiz: 3,
+    })
+
+    expect(contexts.map((context) => context.question_number)).toEqual([1, 2, 3])
+    expect(contexts.map((context) => context.questions_per_quiz)).toEqual([3, 3, 3])
+    expect(contexts[0].previous_questions).toEqual([])
+    expect(contexts[1].previous_questions).toEqual([
+      {
+        activity_type: "multiple_choice",
+        duplicate_keys: ["which part of a plant takes in water?"],
+        question: "Which part of a plant takes in water?",
+        question_number: 1,
+      },
+    ])
+    expect(contexts[2].previous_questions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          question: "Which part of a plant makes seeds?",
+        }),
+      ])
+    )
   })
 })
 

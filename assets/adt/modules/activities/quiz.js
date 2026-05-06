@@ -138,6 +138,30 @@ const getQuizActivityId = () =>
 const getAreaId = (element) =>
   element.closest('[data-area-id]')?.getAttribute('data-area-id') || 'default';
 
+export const getQuizQuestionGroups = (section) => {
+  const groups = [...section.querySelectorAll('[data-quiz-question-group]')].filter((group) =>
+    group.classList.contains('quiz-question-group') ||
+    group.getAttribute('role') === 'group' ||
+    group.getAttribute('role') === 'radiogroup'
+  );
+  if (groups.length > 0) return groups;
+  const legacyGroup = section.querySelector('[role="radiogroup"], [role="group"]');
+  return legacyGroup ? [legacyGroup] : [section];
+};
+
+export const getOptionQuestionGroup = (option) =>
+  option.closest('[data-quiz-question-group].quiz-question-group') ||
+  option.closest('[data-quiz-question-group][role="radiogroup"]') ||
+  option.closest('[data-quiz-question-group][role="group"]') ||
+  option.closest('[role="radiogroup"], [role="group"]') ||
+  option.closest(QUIZ_SECTION_SELECTOR);
+
+export const getQuestionGroupId = (group, index = 0) =>
+  group?.getAttribute('data-quiz-question-group') || `legacy-${index}`;
+
+export const getQuizSelectionStorageKey = (activityId, areaId, groupId) =>
+  `${activityId}_${areaId}_${groupId}_quiz`;
+
 const restoreQuizSubmitButtonToValidate = () => {
   const submitButton = document.getElementById('submit-button');
   if (!submitButton || submitButton.dataset.submitState !== 'retry') {
@@ -162,7 +186,11 @@ const restoreQuizSubmitButtonToValidate = () => {
 const saveQuizSelectionState = (option) => {
   const activityId = getQuizActivityId();
   const areaId = getAreaId(option);
-  const storageKey = `${activityId}_${areaId}_quiz`;
+  const section = option.closest(QUIZ_SECTION_SELECTOR);
+  const groups = section ? getQuizQuestionGroups(section) : [];
+  const group = getOptionQuestionGroup(option);
+  const groupId = getQuestionGroupId(group, Math.max(0, groups.indexOf(group)));
+  const storageKey = getQuizSelectionStorageKey(activityId, areaId, groupId);
 
   const selectedData = {
     question: option.getAttribute('data-activity-item'),
@@ -175,22 +203,42 @@ const saveQuizSelectionState = (option) => {
 
 const restoreQuizSelection = (section) => {
   const activityId = getQuizActivityId();
-  const areaId = section.querySelector('[data-area-id]')?.getAttribute('data-area-id') || 'default';
-  const storageKey = `${activityId}_${areaId}_quiz`;
+  const areaId =
+    section.getAttribute('data-area-id') ||
+    section.querySelector('[data-area-id]')?.getAttribute('data-area-id') ||
+    'default';
+  const selections = {};
+  const groups = getQuizQuestionGroups(section);
 
-  const savedSelection = localStorage.getItem(storageKey);
-  if (savedSelection) {
-    const { value } = JSON.parse(savedSelection);
-    const selectedOption = [...section.querySelectorAll('.activity-option')].find((option) =>
-      option.querySelector('input[type="radio"]').value === value
-    );
+  groups.forEach((group, index) => {
+    const groupId = getQuestionGroupId(group, index);
+    const storageKey = getQuizSelectionStorageKey(activityId, areaId, groupId);
+    const savedSelection = localStorage.getItem(storageKey);
+    if (savedSelection) {
+      const { value } = JSON.parse(savedSelection);
+      const selectedOption = [...group.querySelectorAll('.activity-option')].find((option) =>
+        option.querySelector('input[type="radio"]').value === value
+      );
 
-    if (selectedOption) {
-      markQuizSelection(selectedOption);
-      setState('quizSelectedOption', selectedOption);
-      enableQuizSubmitButton();
-      return;
+      if (selectedOption) {
+        markQuizSelection(selectedOption);
+        selections[groupId] = selectedOption;
+      }
     }
+  });
+
+  setState('quizSelectedOptions', selections);
+  if (groups.length === 1) {
+    const groupId = getQuestionGroupId(groups[0], 0);
+    setState('quizSelectedOption', selections[groupId] || null);
+  }
+  const complete = groups.every((group, index) => {
+    const groupId = getQuestionGroupId(group, index);
+    return Boolean(selections[groupId]);
+  });
+  if (complete) {
+    enableQuizSubmitButton();
+    return;
   }
 
   disableQuizSubmitButton();
@@ -248,10 +296,6 @@ const clearQuizValidationStyling = () => {
       const feedbackText = feedback.querySelector('.feedback-text');
 
       if (feedbackIcon) {
-    const shadowInput = option.querySelector('input[type="radio"]');
-    if (shadowInput) {
-      shadowInput.setAttribute('tabindex', '-1');
-    }
         feedbackIcon.className = 'feedback-icon';
         feedbackIcon.textContent = '';
       }
@@ -264,6 +308,11 @@ const clearQuizValidationStyling = () => {
           audioBindingsCleared = true;
         }
       }
+    }
+
+    const shadowInput = option.querySelector('input[type="radio"]');
+    if (shadowInput) {
+      shadowInput.setAttribute('tabindex', '-1');
     }
 
     setLetterAppearance(
@@ -569,14 +618,25 @@ const announceQuizSelection = (option) => {
 const handleQuizOptionSelection = (option) => {
   clearQuizValidationStyling();
 
-  const radioGroup = option.closest('[role="radiogroup"]') || option.closest('[role="group"]');
+  const quizSection = option.closest(QUIZ_SECTION_SELECTOR);
+  const groups = quizSection ? getQuizQuestionGroups(quizSection) : [];
+  const radioGroup = getOptionQuestionGroup(option);
   if (!radioGroup) {
     return;
   }
+  const groupId = getQuestionGroupId(radioGroup, Math.max(0, groups.indexOf(radioGroup)));
 
   resetQuizOptions(radioGroup);
   markQuizSelection(option);
+  quizSection?.querySelectorAll('input[type="radio"]:checked').forEach((input) => {
+    const selected = input.closest('.activity-option');
+    if (selected) markQuizSelection(selected);
+  });
   setState('quizSelectedOption', option);
+  setState('quizSelectedOptions', {
+    ...(state.quizSelectedOptions || {}),
+    [groupId]: option
+  });
   playActivitySound('drop');
 
   radioGroup.querySelectorAll('.activity-option').forEach((opt) => opt.setAttribute('aria-checked', 'false'));
@@ -584,7 +644,13 @@ const handleQuizOptionSelection = (option) => {
 
   announceQuizSelection(option);
   saveQuizSelectionState(option);
-  enableQuizSubmitButton();
+  const allGroupsSelected = groups.length <= 1 || groups.every((group, index) => {
+    const id = getQuestionGroupId(group, index);
+    if (id === groupId) return true;
+    return Boolean((state.quizSelectedOptions || {})[id] || group.querySelector('input[type="radio"]:checked'));
+  });
+  if (allGroupsSelected) enableQuizSubmitButton();
+  else disableQuizSubmitButton();
   focusQuizSubmitButton();
   restoreQuizSubmitButtonToValidate();
 };
@@ -654,6 +720,7 @@ export const resetQuizActivity = (activityId) => {
 
   clearQuizValidationStyling();
   setState('quizSelectedOption', null);
+  setState('quizSelectedOptions', {});
   disableQuizSubmitButton();
 
   Object.keys(localStorage)
@@ -685,7 +752,7 @@ const attachQuizRetryHandler = () => {
 
 export const prepareQuiz = (section) => {
   setState('quizSelectedOption', null);
-  restoreQuizSelection(section);
+  setState('quizSelectedOptions', {});
 
   const activityOptions = section.querySelectorAll('.activity-option');
   activityOptions.forEach((option) => {
@@ -739,10 +806,13 @@ export const prepareQuiz = (section) => {
     }
   });
 
-  const radioGroup = section.querySelector('[role="group"]');
-  if (radioGroup) {
+  getQuizQuestionGroups(section).forEach((radioGroup, index) => {
     radioGroup.setAttribute('role', 'radiogroup');
-    radioGroup.setAttribute('aria-labelledby', 'question-label');
+    const labelledBy =
+      radioGroup.getAttribute('aria-labelledby') ||
+      radioGroup.querySelector('[id$="-question-label"]')?.id ||
+      'question-label';
+    radioGroup.setAttribute('aria-labelledby', labelledBy);
 
     let shortcutHint = radioGroup.querySelector('.quiz-shortcut-hint');
     if (!shortcutHint) {
@@ -752,13 +822,20 @@ export const prepareQuiz = (section) => {
       radioGroup.prepend(shortcutHint);
     }
 
-    shortcutHint.textContent = translateText('quiz-shortcut-hint');
-  }
+    shortcutHint.textContent = index === 0 ? translateText('quiz-shortcut-hint') : '';
+  });
 
+  restoreQuizSelection(section);
   registerQuizShortcutHandler();
 };
 
 export const checkQuiz = () => {
+  const section = document.querySelector(QUIZ_SECTION_SELECTOR);
+  if (section && getQuizQuestionGroups(section).length > 1) {
+    checkMultiQuestionQuiz(section);
+    return;
+  }
+
   if (!state.quizSelectedOption) {
     const announcement = document.getElementById('validation-results-announcement');
     if (announcement) {
@@ -784,6 +861,46 @@ export const checkQuiz = () => {
   updateSubmitButtonAndToast(isCorrect, translateText('next-activity'), ActivityTypes.QUIZ);
 
   if (!isCorrect) {
+    attachQuizRetryHandler();
+  }
+};
+
+export const checkMultiQuestionQuiz = (section) => {
+  const groups = getQuizQuestionGroups(section);
+  const selectedOptions = [];
+  const missingGroup = groups.find((group) => {
+    const selected = group.querySelector('input[type="radio"]:checked')?.closest('.activity-option');
+    if (selected) selectedOptions.push(selected);
+    return !selected;
+  });
+
+  if (missingGroup) {
+    const announcement = document.getElementById('validation-results-announcement');
+    if (announcement) {
+      announcement.setAttribute('aria-live', 'assertive');
+      announcement.textContent = translateText('select-option-first');
+      setTimeout(() => {
+        announcement.textContent = '';
+      }, 3000);
+    }
+    return;
+  }
+
+  let allCorrect = true;
+  selectedOptions.forEach((option) => {
+    const dataActivityItem = getQuizActivityItem(option);
+    const isCorrect = correctAnswers[dataActivityItem];
+    allCorrect = allCorrect && Boolean(isCorrect);
+    styleQuizOption(option, isCorrect);
+    showQuizFeedback(option, isCorrect, { recordCompletion: false, playAudio: false });
+  });
+
+  playActivitySound(allCorrect ? 'success' : 'error');
+  if (typeof updateResetButtonVisibility === 'function') {
+    updateResetButtonVisibility();
+  }
+  updateSubmitButtonAndToast(allCorrect, translateText('next-activity'), ActivityTypes.QUIZ);
+  if (!allCorrect) {
     attachQuizRetryHandler();
   }
 };
@@ -822,7 +939,8 @@ const playQuizFeedbackAudioSequence = (isCorrect, feedbackText, explanationId) =
   }
 };
 
-const showQuizFeedback = (option, isCorrect) => {
+const showQuizFeedback = (option, isCorrect, options = {}) => {
+  const { recordCompletion = true, playAudio = true } = options;
   const feedbackContainer = option.querySelector('.feedback-container');
   if (!feedbackContainer) {
     return;
@@ -839,8 +957,10 @@ const showQuizFeedback = (option, isCorrect) => {
   const activityId = getQuizActivityId();
   const attemptKey = `${activityId}-intentos`;
   let attemptCount = parseInt(localStorage.getItem(attemptKey) || '0', 10);
-  attemptCount += 1;
-  localStorage.setItem(attemptKey, attemptCount.toString());
+  if (recordCompletion) {
+    attemptCount += 1;
+    localStorage.setItem(attemptKey, attemptCount.toString());
+  }
 
   const { text: explanation, id: explanationId } = resolveQuizExplanation(option);
   let bindingsChanged = false;
@@ -855,22 +975,24 @@ const showQuizFeedback = (option, isCorrect) => {
     feedbackContainer.setAttribute('role', 'status');
     feedbackContainer.setAttribute('aria-live', 'polite');
 
-    const storedActivities = localStorage.getItem('completedActivities');
-    let completedActivities = storedActivities ? JSON.parse(storedActivities) : [];
-    const namePage = localStorage.getItem('namePage');
-    const timeDone = new Date().toLocaleString('es-ES');
-    const newActivityId = `${activityId}-${namePage}-${attemptCount}-${timeDone}`;
+    if (recordCompletion) {
+      const storedActivities = localStorage.getItem('completedActivities');
+      let completedActivities = storedActivities ? JSON.parse(storedActivities) : [];
+      const namePage = localStorage.getItem('namePage');
+      const timeDone = new Date().toLocaleString('es-ES');
+      const newActivityId = `${activityId}-${namePage}-${attemptCount}-${timeDone}`;
 
-    completedActivities = completedActivities.filter((id) => !id.startsWith(`${activityId}-`));
-    completedActivities.push(newActivityId);
-    localStorage.setItem('completedActivities', JSON.stringify(completedActivities));
+      completedActivities = completedActivities.filter((id) => !id.startsWith(`${activityId}-`));
+      completedActivities.push(newActivityId);
+      localStorage.setItem('completedActivities', JSON.stringify(completedActivities));
 
-    const heading = document.querySelector('h1');
-    if (heading) {
-      localStorage.setItem('namePage', heading.innerText);
+      const heading = document.querySelector('h1');
+      if (heading) {
+        localStorage.setItem('namePage', heading.innerText);
+      }
+
+      executeMail(ActivityTypes.QUIZ);
     }
-
-    executeMail(ActivityTypes.QUIZ);
   } else {
     feedbackIcon.className = 'feedback-icon hidden';
     feedbackIcon.textContent = '';
@@ -885,7 +1007,9 @@ const showQuizFeedback = (option, isCorrect) => {
     gatherAudioElements();
   }
 
-  playQuizFeedbackAudioSequence(isCorrect, feedbackText, explanationId);
+  if (playAudio) {
+    playQuizFeedbackAudioSequence(isCorrect, feedbackText, explanationId);
+  }
 };
 
 export const initializeQuizActivity = () => {

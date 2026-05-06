@@ -1,300 +1,339 @@
-import { useState, useEffect } from "react"
-import { Link } from "@tanstack/react-router"
-import { Plus, Settings2, Trash2 } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
-import { useActiveConfig } from "@/hooks/use-debug"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { Loader2, Sparkles } from "lucide-react"
+import { useQueryClient } from "@tanstack/react-query"
+import { api, type QuizActivityType, type StageRunProviderCredentials } from "@/api/client"
+import { usePages } from "@/hooks/use-pages"
 import { useLingui } from "@lingui/react/macro"
-import { SelectQuizPagesDialog } from "./SelectQuizPagesDialog"
 
-type Mode = "auto" | "custom"
+const ACTIVITY_OPTIONS: QuizActivityType[] = [
+  "multiple_choice",
+  "true_false",
+  "fill_in_the_blank",
+  "drag_and_drop",
+]
 
-/** Local editor state for one quiz group. */
-interface QuizGroupDraft {
-  source_page_ids: string[]
-  insert_after?: string | "end"
-}
+const PAGE_PICKER_WINDOW_SIZE = 40
 
-// eslint-disable-next-line lingui/no-unlocalized-strings -- internal sentinel value, not user-visible
-const PLACEMENT_AFTER_LAST = "__after_last__"
-const PLACEMENT_END = "end"
+function parsePageRange(
+  range: string,
+  pageIdsByNumber: Map<number, string>,
+  pageIdsByLowerId: Map<string, string>
+): string[] {
+  const ids: string[] = []
+  const seen = new Set<string>()
+  for (const rawPart of range.split(",")) {
+    const part = rawPart.trim()
+    if (!part) continue
 
-function placementValue(group: QuizGroupDraft): string {
-  if (group.insert_after === "end") return PLACEMENT_END
-  return PLACEMENT_AFTER_LAST
-}
+    const directPageId = pageIdsByLowerId.get(part.toLowerCase())
+    if (directPageId && !seen.has(directPageId)) {
+      ids.push(directPageId)
+      seen.add(directPageId)
+      continue
+    }
 
-/**
- * Compact configuration block shown on the quizzes landing page (inside the
- * StageRunCard). Lets the user pick auto-batching or define a list of custom
- * quizzes (source pages + placement) before running quiz generation.
- */
-export function QuizzesLandingConfig({ bookLabel }: { bookLabel: string }) {
-  const { t } = useLingui()
-  const { data: bookConfigData } = useBookConfig(bookLabel)
-  const { data: activeConfigData } = useActiveConfig(bookLabel)
-  const updateConfig = useUpdateBookConfig()
-
-  const [mode, setMode] = useState<Mode>("auto")
-  const [pagesPerQuiz, setPagesPerQuiz] = useState("3")
-  const [groups, setGroups] = useState<QuizGroupDraft[]>([])
-  const [pickerForIndex, setPickerForIndex] = useState<number | null>(null)
-
-  useEffect(() => {
-    if (!activeConfigData) return
-    const m = activeConfigData.merged as Record<string, unknown>
-    if (m.quiz_generation && typeof m.quiz_generation === "object") {
-      const qg = m.quiz_generation as Record<string, unknown>
-      if (qg.pages_per_quiz != null) setPagesPerQuiz(String(qg.pages_per_quiz))
-      if (Array.isArray(qg.quiz_groups)) {
-        const parsed = (qg.quiz_groups as Array<Record<string, unknown>>)
-          .map((g): QuizGroupDraft | null => {
-            if (!Array.isArray(g.source_page_ids)) return null
-            return {
-              source_page_ids: g.source_page_ids as string[],
-              insert_after: g.insert_after as string | "end" | undefined,
-            }
-          })
-          .filter((g): g is QuizGroupDraft => g !== null)
-        setGroups(parsed)
-        if (parsed.length > 0) setMode("custom")
+    const match = part.match(/^(\d+)(?:\s*-\s*(\d+))?$/)
+    if (!match) continue
+    const start = Number(match[1])
+    const end = Number(match[2] ?? match[1])
+    const min = Math.min(start, end)
+    const max = Math.max(start, end)
+    for (let pageNumber = min; pageNumber <= max; pageNumber++) {
+      const pageId = pageIdsByNumber.get(pageNumber)
+      if (pageId && !seen.has(pageId)) {
+        ids.push(pageId)
+        seen.add(pageId)
       }
     }
-  }, [activeConfigData])
+  }
+  return ids
+}
 
-  const persist = (next: { mode?: Mode; pagesPerQuiz?: string; groups?: QuizGroupDraft[] }) => {
-    const effectiveMode = next.mode ?? mode
-    const effectivePages = next.pagesPerQuiz ?? pagesPerQuiz
-    const effectiveGroups = next.groups ?? groups
-    const existing = (bookConfigData?.config?.quiz_generation ?? {}) as Record<string, unknown>
-    const cleanGroups = effectiveGroups
-      .filter((g) => g.source_page_ids.length > 0)
-      .map((g) => ({
-        source_page_ids: g.source_page_ids,
-        insert_after: g.insert_after,
-      }))
-    const overrides: Record<string, unknown> = {
-      ...(bookConfigData?.config ?? {}),
-      quiz_generation: {
-        ...existing,
-        pages_per_quiz: effectivePages ? Number(effectivePages) : undefined,
-        quiz_groups:
-          effectiveMode === "custom" && cleanGroups.length > 0 ? cleanGroups : undefined,
-      },
+function formatPageRange(pageIds: string[], pageNumberById: Map<string, number>): string {
+  const parts: string[] = []
+  let runStart: number | null = null
+  let runEnd: number | null = null
+
+  const flushRun = () => {
+    if (runStart == null || runEnd == null) return
+    parts.push(runStart === runEnd ? String(runStart) : `${runStart}-${runEnd}`)
+    runStart = null
+    runEnd = null
+  }
+
+  for (const pageId of pageIds) {
+    const pageNumber = pageNumberById.get(pageId)
+    if (pageNumber == null) {
+      flushRun()
+      parts.push(pageId)
+      continue
     }
-    updateConfig.mutate({ label: bookLabel, config: overrides })
-  }
 
-  const handleModeChange = (next: Mode) => {
-    setMode(next)
-    persist({ mode: next })
-  }
-
-  const updateGroup = (index: number, patch: Partial<QuizGroupDraft>) => {
-    const next = groups.map((g, i) => (i === index ? { ...g, ...patch } : g))
-    setGroups(next)
-    persist({ groups: next })
-  }
-
-  const addGroup = () => {
-    const next = [...groups, { source_page_ids: [] }]
-    setGroups(next)
-    // Open picker immediately for the new group
-    setPickerForIndex(next.length - 1)
-  }
-
-  const removeGroup = (index: number) => {
-    const next = groups.filter((_, i) => i !== index)
-    setGroups(next)
-    persist({ groups: next })
-  }
-
-  const handlePagesConfirmed = (ids: string[]) => {
-    if (pickerForIndex == null) return
-    const idx = pickerForIndex
-    const exists = groups[idx] !== undefined
-    let next: QuizGroupDraft[]
-    if (exists) {
-      next = groups.map((g, i) => (i === idx ? { ...g, source_page_ids: ids } : g))
+    if (runStart == null || runEnd == null) {
+      runStart = pageNumber
+      runEnd = pageNumber
+    } else if (pageNumber === runEnd + 1) {
+      runEnd = pageNumber
     } else {
-      next = [...groups, { source_page_ids: ids }]
+      flushRun()
+      runStart = pageNumber
+      runEnd = pageNumber
     }
-    // Drop empty groups (cancelled new entries)
-    next = next.filter((g, i) => i === idx || g.source_page_ids.length > 0)
-    setGroups(next)
-    setPickerForIndex(null)
-    persist({ groups: next })
   }
 
-  const closePicker = () => {
-    // If the open picker was for a freshly-added empty group, drop it.
-    if (pickerForIndex != null && groups[pickerForIndex]?.source_page_ids.length === 0) {
-      const next = groups.filter((_, i) => i !== pickerForIndex)
-      setGroups(next)
+  flushRun()
+  return parts.join(", ")
+}
+
+export function QuizzesLandingConfig({
+  bookLabel,
+  apiKey,
+  hasApiKey,
+  providerCredentials,
+  initialSelectedPageId,
+}: {
+  bookLabel: string
+  apiKey: string
+  hasApiKey: boolean
+  providerCredentials?: StageRunProviderCredentials
+  initialSelectedPageId?: string
+}) {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  const pagesQuery = usePages(bookLabel)
+  const [activityType, setActivityType] = useState<QuizActivityType>("multiple_choice")
+  const [questionsPerQuiz, setQuestionsPerQuiz] = useState("1")
+  const [pageRange, setPageRange] = useState("")
+  const [selectedPageIds, setSelectedPageIds] = useState<string[]>(
+    initialSelectedPageId ? [initialSelectedPageId] : []
+  )
+  const [replaceExisting, setReplaceExisting] = useState(true)
+  const [pickerOffset, setPickerOffset] = useState(0)
+  const [generating, setGenerating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const appliedInitialPageIdRef = useRef<string | null>(null)
+
+  const pages = pagesQuery.data ?? []
+  const pageIdsByNumber = useMemo(() => {
+    const map = new Map<number, string>()
+    for (const page of pages) map.set(page.pageNumber, page.pageId)
+    return map
+  }, [pages])
+  const pageIdsByLowerId = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const page of pages) map.set(page.pageId.toLowerCase(), page.pageId)
+    return map
+  }, [pages])
+  const pageNumberById = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const page of pages) map.set(page.pageId, page.pageNumber)
+    return map
+  }, [pages])
+  const pageOrder = useMemo(() => new Map(pages.map((page, index) => [page.pageId, index])), [pages])
+  const visiblePages = pages.slice(pickerOffset, pickerOffset + PAGE_PICKER_WINDOW_SIZE)
+  const canPageBack = pickerOffset > 0
+  const canPageForward = pickerOffset + PAGE_PICKER_WINDOW_SIZE < pages.length
+
+  const orderedSelectedPageIds = (ids: string[]) =>
+    ids.slice().sort((a, b) => (pageOrder.get(a) ?? Number.MAX_SAFE_INTEGER) - (pageOrder.get(b) ?? Number.MAX_SAFE_INTEGER))
+
+  useEffect(() => {
+    if (!initialSelectedPageId) return
+    const formattedRange = formatPageRange([initialSelectedPageId], pageNumberById) || initialSelectedPageId
+    if (appliedInitialPageIdRef.current !== initialSelectedPageId) {
+      appliedInitialPageIdRef.current = initialSelectedPageId
+      setSelectedPageIds([initialSelectedPageId])
+      setPageRange(formattedRange)
+    } else if (pageRange === initialSelectedPageId && formattedRange !== initialSelectedPageId) {
+      setPageRange(formattedRange)
     }
-    setPickerForIndex(null)
+  }, [initialSelectedPageId, pageNumberById, pageRange])
+
+  const activityTypeLabel = (value: QuizActivityType) => {
+    switch (value) {
+      case "true_false":
+        return t`True/False`
+      case "fill_in_the_blank":
+        return t`Fill Blanks`
+      case "drag_and_drop":
+        return t`Drag & Drop`
+      case "multiple_choice":
+      default:
+        return t`MCQ`
+    }
   }
 
-  const initialPickerSelection =
-    pickerForIndex != null ? groups[pickerForIndex]?.source_page_ids ?? [] : []
+  const applyRange = () => {
+    const ids = parsePageRange(pageRange, pageIdsByNumber, pageIdsByLowerId)
+    const orderedIds = orderedSelectedPageIds(ids)
+    setSelectedPageIds(orderedIds)
+    setPageRange(formatPageRange(orderedIds, pageNumberById))
+  }
+
+  const togglePage = (pageId: string, enabled: boolean) => {
+    if (!enabled) return
+    const next = selectedPageIds.includes(pageId)
+      ? selectedPageIds.filter((id) => id !== pageId)
+      : [...selectedPageIds, pageId]
+    const orderedIds = orderedSelectedPageIds(next)
+    setSelectedPageIds(orderedIds)
+    setPageRange(formatPageRange(orderedIds, pageNumberById))
+  }
+
+  const handleGenerate = async () => {
+    if (!hasApiKey || selectedPageIds.length === 0 || generating) return
+    setGenerating(true)
+    setError(null)
+    try {
+      await api.generateQuizzes(
+        bookLabel,
+        apiKey,
+        {
+          pageIds: selectedPageIds,
+          activityType,
+          questionsPerQuiz: Math.min(20, Math.max(1, Number(questionsPerQuiz) || 1)),
+          replaceExistingForPages: replaceExisting,
+        },
+        providerCredentials
+      )
+      await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "quizzes"] })
+      await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "debug"] })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   return (
-    <div className="space-y-3">
-      <div className="space-y-2">
-        <Label className="text-xs font-semibold">{t`How should quiz pages be chosen?`}</Label>
-
-        <label className="flex items-start gap-2.5 cursor-pointer">
-          <input
-            type="radio"
-            name="quiz-page-mode"
-            checked={mode === "auto"}
-            onChange={() => handleModeChange("auto")}
-            className="mt-0.5 h-3.5 w-3.5 accent-primary cursor-pointer"
-          />
-          <div className="flex-1 space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium">{t`Every`}</span>
-              <Input
-                type="number"
-                min={1}
-                value={pagesPerQuiz}
-                onChange={(e) => setPagesPerQuiz(e.target.value)}
-                onBlur={() => persist({ pagesPerQuiz })}
-                onClick={(e) => e.stopPropagation()}
-                disabled={mode !== "auto"}
-                className="w-16 h-7 text-xs"
-              />
-              <span className="text-xs font-medium">{t`pages`}</span>
-            </div>
-            <p className="text-[11px] text-muted-foreground">
-              {t`Group every N eligible pages in order into one quiz.`}
-            </p>
-          </div>
-        </label>
-
-        <label className="flex items-start gap-2.5 cursor-pointer">
-          <input
-            type="radio"
-            name="quiz-page-mode"
-            checked={mode === "custom"}
-            onChange={() => handleModeChange("custom")}
-            className="mt-0.5 h-3.5 w-3.5 accent-primary cursor-pointer"
-          />
-          <div className="flex-1 space-y-1">
-            <span className="text-xs font-medium">{t`Custom — define each quiz yourself`}</span>
-            <p className="text-[11px] text-muted-foreground">
-              {t`Pick the source pages for each quiz and where it should appear in the book.`}
-            </p>
-          </div>
-        </label>
-      </div>
-
-      {mode === "custom" && (
-        <div className="space-y-2 pl-6">
-          {groups.length === 0 && (
-            <p className="text-[11px] text-amber-600 dark:text-amber-400">
-              {t`Add at least one quiz to run.`}
-            </p>
-          )}
-          {groups.map((group, index) => (
-            <div
-              key={index}
-              className="rounded-md border bg-background p-2.5 space-y-2"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  {t`Quiz ${String(index + 1)}`}
-                </span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  type="button"
-                  className="h-6 w-6 p-0 text-muted-foreground hover:text-red-600"
-                  onClick={() => removeGroup(index)}
-                  title={t`Remove quiz`}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-
-              <div className="flex items-center gap-2 flex-wrap">
-                <Badge variant="secondary" className="text-[11px] font-normal">
-                  {group.source_page_ids.length === 1
-                    ? t`1 page selected`
-                    : t`${String(group.source_page_ids.length)} pages selected`}
-                </Badge>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  type="button"
-                  className="h-7 text-xs"
-                  onClick={() => setPickerForIndex(index)}
-                >
-                  {group.source_page_ids.length > 0 ? t`Edit pages...` : t`Choose pages...`}
-                </Button>
-              </div>
-
-              <div className="flex items-center gap-2 flex-wrap">
-                <Label className="text-[11px] text-muted-foreground">{t`Place quiz:`}</Label>
-                <select
-                  value={placementValue(group)}
-                  onChange={(e) => {
-                    const v = e.target.value
-                    updateGroup(index, {
-                      insert_after: v === PLACEMENT_END ? "end" : undefined,
-                    })
-                  }}
-                  className="h-7 rounded border border-input bg-background px-2 text-xs"
-                >
-                  <option value={PLACEMENT_AFTER_LAST}>{t`After the last selected page`}</option>
-                  <option value={PLACEMENT_END}>{t`At the end of the book`}</option>
-                </select>
-              </div>
-            </div>
-          ))}
-
-          <Button
-            size="sm"
-            variant="outline"
-            type="button"
-            className="h-7 text-xs"
-            onClick={addGroup}
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            {t`Add another quiz`}
-          </Button>
+    <div className="rounded-md border bg-card">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-muted/20 px-4 py-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Sparkles className="h-4 w-4 text-orange-600" />
+          <h2 className="text-sm font-semibold">{t`Generate Activities`}</h2>
+          <span className="rounded border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-medium text-orange-700">
+            {selectedPageIds.length === 1 ? t`1 page` : t`${String(selectedPageIds.length)} pages`}
+          </span>
+          <span className="rounded border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-medium text-sky-700">
+            {t`${String(Math.min(20, Math.max(1, Number(questionsPerQuiz) || 1)))} questions`}
+          </span>
         </div>
-      )}
-
-      <div className="pt-2 border-t border-border/40 flex justify-end">
-        <Button
-          asChild
-          variant="ghost"
-          size="sm"
-          className="h-7 text-[11px] text-muted-foreground hover:text-foreground"
-        >
-          <Link
-            to="/books/$label/$step/settings"
-            params={{ label: bookLabel, step: "quizzes" }}
-            search={{ tab: "general" }}
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={activityType}
+            onChange={(e) => setActivityType(e.target.value as QuizActivityType)}
+            className="h-8 rounded border border-input bg-background px-2 text-xs"
           >
-            <Settings2 className="h-3 w-3 mr-1" />
-            {t`Advanced settings`}
-          </Link>
-        </Button>
+            {ACTIVITY_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {activityTypeLabel(option)}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={!hasApiKey || selectedPageIds.length === 0 || generating}
+            className="inline-flex h-8 items-center gap-1.5 rounded bg-orange-600 px-3 text-xs font-medium text-white transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            {t`Generate`}
+          </button>
+        </div>
       </div>
 
-      {pickerForIndex != null && (
-        <SelectQuizPagesDialog
-          bookLabel={bookLabel}
-          initialSelected={initialPickerSelection}
-          onConfirm={handlePagesConfirmed}
-          onClose={closePicker}
-        />
-      )}
+      <div className="space-y-3 px-4 py-3">
+        <div className="grid gap-2 lg:grid-cols-[minmax(260px,1fr)_auto_auto]">
+          <input
+            value={pageRange}
+            onChange={(e) => setPageRange(e.target.value)}
+            onBlur={applyRange}
+            placeholder={t`1-12, 20, pg045`}
+            className="h-8 rounded border border-input bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+          <label className="flex h-8 items-center gap-2 rounded border border-input bg-background px-2 text-xs">
+            <span className="whitespace-nowrap text-[10px] font-medium text-muted-foreground">
+              {t`Questions/quiz`}
+            </span>
+            <input
+              type="number"
+              min={1}
+              max={20}
+              value={questionsPerQuiz}
+              onChange={(e) => setQuestionsPerQuiz(e.target.value)}
+              className="h-7 w-14 bg-transparent text-xs focus:outline-none"
+              aria-label={t`Questions per quiz`}
+            />
+          </label>
+          <button
+            type="button"
+            onClick={applyRange}
+            className="h-8 rounded border border-input bg-background px-3 text-xs font-medium transition-colors hover:bg-muted/60"
+          >
+            {t`Apply range`}
+          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={replaceExisting}
+              onChange={(e) => setReplaceExisting(e.target.checked)}
+              className="h-3.5 w-3.5 accent-orange-600"
+            />
+            {t`Replace existing quizzes for selected pages`}
+          </label>
+          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+            <button
+              type="button"
+              onClick={() => setPickerOffset(Math.max(0, pickerOffset - PAGE_PICKER_WINDOW_SIZE))}
+              disabled={!canPageBack}
+              className="rounded border px-2 py-1 transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              {t`Previous`}
+            </button>
+            <span>
+              {pages.length === 0
+                ? t`No pages`
+                : t`${String(pickerOffset + 1)}-${String(Math.min(pickerOffset + PAGE_PICKER_WINDOW_SIZE, pages.length))} of ${String(pages.length)}`}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPickerOffset(pickerOffset + PAGE_PICKER_WINDOW_SIZE)}
+              disabled={!canPageForward}
+              className="rounded border px-2 py-1 transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              {t`Next`}
+            </button>
+          </div>
+        </div>
+
+        <div className="grid max-h-44 grid-cols-2 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-3 lg:grid-cols-4">
+          {visiblePages.map((page) => {
+            const isSelected = selectedPageIds.includes(page.pageId)
+            const isContent = page.sectionCount > page.prunedSections.length
+            return (
+              <button
+                key={page.pageId}
+                type="button"
+                disabled={!isContent}
+                onClick={() => togglePage(page.pageId, isContent)}
+                className={`rounded-md border px-2 py-1.5 text-left text-xs transition-colors ${
+                  isSelected
+                    ? "border-orange-500 bg-orange-50 text-orange-800"
+                    : "border-border bg-background hover:bg-muted/60"
+                } ${!isContent ? "cursor-not-allowed opacity-45" : "cursor-pointer"}`}
+              >
+                <span className="block font-medium">{t`Page ${String(page.pageNumber)}`}</span>
+                <span className="block truncate font-mono text-[10px] opacity-70">{page.pageId}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        {error && <p className="text-xs text-red-500">{error}</p>}
+      </div>
     </div>
   )
 }

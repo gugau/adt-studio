@@ -218,8 +218,10 @@ function buildSectionIdToPageIndex(storage: Storage): Map<string, number> {
   const pages = storage.getPages()
   const quizData = getQuizData(storage)
   const quizzesByAfterPageId = new Map<string, Quiz[]>()
+  const visibleQuizIndex = new Map<Quiz, number>()
   if (quizData?.quizzes) {
-    for (const quiz of quizData.quizzes) {
+    for (const quiz of quizData.quizzes.filter((q) => !q.isPruned)) {
+      visibleQuizIndex.set(quiz, visibleQuizIndex.size)
       const existing = quizzesByAfterPageId.get(quiz.afterPageId) ?? []
       existing.push(quiz)
       quizzesByAfterPageId.set(quiz.afterPageId, existing)
@@ -262,8 +264,10 @@ function buildPagesManifest(storage: Storage): Array<{ section_id: string; href:
 
   // Build a map from afterPageId -> quizzes for interleaving
   const quizzesByAfterPageId = new Map<string, Quiz[]>()
+  const visibleQuizIndex = new Map<Quiz, number>()
   if (quizData?.quizzes) {
-    for (const quiz of quizData.quizzes) {
+    for (const quiz of quizData.quizzes.filter((q) => !q.isPruned)) {
+      visibleQuizIndex.set(quiz, visibleQuizIndex.size)
       const existing = quizzesByAfterPageId.get(quiz.afterPageId) ?? []
       existing.push(quiz)
       quizzesByAfterPageId.set(quiz.afterPageId, existing)
@@ -306,7 +310,7 @@ function buildPagesManifest(storage: Storage): Array<{ section_id: string; href:
     const quizzes = quizzesByAfterPageId.get(page.pageId)
     if (quizzes) {
       for (const quiz of quizzes) {
-        const quizIndex = quizData!.quizzes.indexOf(quiz)
+        const quizIndex = visibleQuizIndex.get(quiz) ?? 0
         const quizId = `qz${pad3(quizIndex + 1)}`
         list.push({ section_id: quizId, href: `${quizId}.html` })
       }
@@ -840,10 +844,11 @@ export function createAdtPreviewRoutes(
       if (quizMatch) {
         const quizIndex = parseInt(quizMatch[1], 10) - 1
         const quizData = getQuizData(storage)
-        if (!quizData?.quizzes || quizIndex < 0 || quizIndex >= quizData.quizzes.length) {
+        const visibleQuizzes = quizData?.quizzes?.filter((quiz) => !quiz.isPruned) ?? []
+        if (quizIndex < 0 || quizIndex >= visibleQuizzes.length) {
           throw new HTTPException(404, { message: `No quiz data for: ${pageId}` })
         }
-        const quiz = quizData.quizzes[quizIndex]
+        const quiz = visibleQuizzes[quizIndex]
         const catalog = await getTextCatalog(storage)
 
         const quizHtmlContent = renderQuizHtml(quiz, pageId, catalog)
