@@ -1542,6 +1542,9 @@ msgstr "Disabled rules"
 msgid "Discard"
 msgstr "Descartar"
 
+msgid "Dismiss"
+msgstr "Dispensar"
+
 msgid "Display"
 msgstr "Exibição"
 
@@ -1832,8 +1835,8 @@ msgstr "Exportando..."
 msgid "Extract"
 msgstr "Extração"
 
-msgid "Extract a multiple-choice activity from the selected page"
-msgstr "Extrair uma atividade de múltipla escolha da página selecionada"
+#~ msgid "Extract a multiple-choice activity from the selected page"
+#~ msgstr "Extrair uma atividade de múltipla escolha da página selecionada"
 
 msgid "Extract from page"
 msgstr "Extrair da página"
@@ -1851,8 +1854,14 @@ msgstr "Imagens extraídas ({0})"
 msgid "Extracted Text"
 msgstr "Texto extraído"
 
+msgid "Extracting activity from page — this can take a minute…"
+msgstr "Extraindo atividade da página — isso pode levar um minuto…"
+
 msgid "Extracting..."
 msgstr "Extraindo..."
+
+msgid "Extraction failed"
+msgstr "A extração falhou"
 
 msgid "Extraction Prompt"
 msgstr "Prompt de extração"
@@ -3378,6 +3387,12 @@ msgstr "fotossíntese"
 msgid "photosynthetic, photosynthesizing"
 msgstr "fotossintético, realizando fotossíntese"
 
+msgid "Pick a page"
+msgstr "Escolha uma página"
+
+msgid "Pick a page and extract its activity into a multiple-choice template"
+msgstr "Escolha uma página e extraia sua atividade para um modelo de múltipla escolha"
+
 msgid "Pick a preset"
 msgstr "Escolha um preset"
 
@@ -3852,6 +3867,9 @@ msgstr "O aumento das temperaturas dos oceanos causa o branqueamento dos corais 
 msgid "Run {stageLabel}"
 msgstr "Executar {0}"
 
+msgid "Run Storyboard first so pages have rendered content to extract from"
+msgstr "Execute primeiro o Storyboard para que as páginas tenham conteúdo renderizado para extrair"
+
 msgid "Run the pipeline"
 msgstr "Executar o pipeline"
 
@@ -4090,8 +4108,8 @@ msgstr "Segmentando..."
 msgid "Select a node type and enter an item ID to view versions."
 msgstr "Selecione um tipo de nó e insira um ID de item para ver as versões."
 
-msgid "Select a page first"
-msgstr "Selecione uma página primeiro"
+#~ msgid "Select a page first"
+#~ msgstr "Selecione uma página primeiro"
 
 msgid "Select a page grouping to continue"
 msgstr "Selecione um agrupamento de páginas para continuar"

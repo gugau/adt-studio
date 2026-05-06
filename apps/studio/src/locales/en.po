@@ -1542,6 +1542,9 @@ msgstr "Disabled rules"
 msgid "Discard"
 msgstr "Discard"
 
+msgid "Dismiss"
+msgstr "Dismiss"
+
 msgid "Display"
 msgstr "Display"
 
@@ -1832,8 +1835,8 @@ msgstr "Exporting..."
 msgid "Extract"
 msgstr "Extract"
 
-msgid "Extract a multiple-choice activity from the selected page"
-msgstr "Extract a multiple-choice activity from the selected page"
+#~ msgid "Extract a multiple-choice activity from the selected page"
+#~ msgstr "Extract a multiple-choice activity from the selected page"
 
 msgid "Extract from page"
 msgstr "Extract from page"
@@ -1851,8 +1854,14 @@ msgstr "Extracted Images ({0})"
 msgid "Extracted Text"
 msgstr "Extracted Text"
 
+msgid "Extracting activity from page — this can take a minute…"
+msgstr "Extracting activity from page — this can take a minute…"
+
 msgid "Extracting..."
 msgstr "Extracting..."
+
+msgid "Extraction failed"
+msgstr "Extraction failed"
 
 msgid "Extraction Prompt"
 msgstr "Extraction Prompt"
@@ -3378,6 +3387,12 @@ msgstr "photosynthesis"
 msgid "photosynthetic, photosynthesizing"
 msgstr "photosynthetic, photosynthesizing"
 
+msgid "Pick a page"
+msgstr "Pick a page"
+
+msgid "Pick a page and extract its activity into a multiple-choice template"
+msgstr "Pick a page and extract its activity into a multiple-choice template"
+
 msgid "Pick a preset"
 msgstr "Pick a preset"
 
@@ -3852,6 +3867,9 @@ msgstr "Rising ocean temperatures cause coral bleaching - when stressed corals e
 msgid "Run {stageLabel}"
 msgstr "Run {stageLabel}"
 
+msgid "Run Storyboard first so pages have rendered content to extract from"
+msgstr "Run Storyboard first so pages have rendered content to extract from"
+
 msgid "Run the pipeline"
 msgstr "Run the pipeline"
 
@@ -4090,8 +4108,8 @@ msgstr "Segmenting..."
 msgid "Select a node type and enter an item ID to view versions."
 msgstr "Select a node type and enter an item ID to view versions."
 
-msgid "Select a page first"
-msgstr "Select a page first"
+#~ msgid "Select a page first"
+#~ msgstr "Select a page first"
 
 msgid "Select a page grouping to continue"
 msgstr "Select a page grouping to continue"
