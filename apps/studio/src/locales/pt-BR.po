@@ -45,6 +45,9 @@ msgstr "(vazio)"
 msgid "(no instruction text)"
 msgstr "(sem texto de instrução)"
 
+msgid "(no preview)"
+msgstr "(sem visualização)"
+
 msgid "(no target)"
 msgstr "(no target)"
 
@@ -75,6 +78,10 @@ msgstr "{0} {1} reviewed so far"
 #. placeholder {2}: points.length
 msgid "{0} × {1}px · {2} points"
 msgstr "{0} × {1}px · {2} pontos"
+
+#. placeholder {0}: String(entries.length)
+msgid "{0} activities"
+msgstr "{0} atividades"
 
 #. placeholder {0}: String(totalAudioFiles)
 msgid "{0} audio"
@@ -140,9 +147,8 @@ msgstr "{0} de {1} itens"
 msgid "{0} pages"
 msgstr "{0} páginas"
 
-#. placeholder {0}: String(displayQuizzes.length)
-msgid "{0} questions"
-msgstr "{0} questões"
+#~ msgid "{0} questions"
+#~ msgstr "{0} questões"
 
 #. placeholder {0}: String(stale.length)
 msgid "{0} selected images are no longer in the storyboard."
@@ -547,11 +553,20 @@ msgstr "Adicionar idioma"
 msgid "Add languages to translate the book content into."
 msgstr "Adicione idiomas para traduzir o conteúdo do livro."
 
+msgid "Add option"
+msgstr "Adicionar opção"
+
 msgid "Add reviewer guidance."
 msgstr "Add reviewer guidance."
 
 msgid "Add section"
 msgstr "Add section"
+
+msgid "Add sentence"
+msgstr "Adicionar frase"
+
+msgid "Add statement"
+msgstr "Adicionar afirmação"
 
 msgid "Add Term"
 msgstr "Adicionar termo"
@@ -599,9 +614,13 @@ msgstr "Affected pages"
 msgid "After"
 msgstr "Depois"
 
-#. placeholder {0}: quiz.afterPageId
-msgid "After {0}"
-msgstr "Após {0}"
+#. placeholder {0}: a.afterPageId
+#. placeholder {0}: activity.afterPageId
+msgid "after {0}"
+msgstr "após {0}"
+
+#~ msgid "After {0}"
+#~ msgstr "Após {0}"
 
 msgid "age 8"
 msgstr "8 anos"
@@ -626,6 +645,9 @@ msgstr "Gerado por IA"
 
 msgid "AI Image"
 msgstr "Imagem com IA"
+
+msgid "AI layout · Storyboard"
+msgstr "Layout por IA · Storyboard"
 
 msgid "AI Overlay"
 msgstr "Sobreposição por IA"
@@ -710,6 +732,9 @@ msgstr "Chave de API"
 
 msgid "API Key (optional)"
 msgstr "Chave de API (opcional)"
+
+msgid "API key required"
+msgstr "Chave de API necessária"
 
 msgid "API key required to re-render"
 msgstr "Chave de API necessária para rerenderizar"
@@ -1122,6 +1147,12 @@ msgstr "Close"
 msgid "Close edit panel"
 msgstr "Fechar painel de edição"
 
+msgid "Close editor"
+msgstr "Fechar editor"
+
+msgid "Close menu"
+msgstr "Fechar menu"
+
 msgid "Clownfish, sea turtles, and parrotfish are just a few of the thousands of species that depend on reefs for food, shelter, and nursery grounds."
 msgstr "Peixes-palhaço, tartarugas marinhas e peixes-papagaio são apenas algumas das milhares de espécies que dependem dos recifes para alimentação, abrigo e áreas de reprodução."
 
@@ -1335,6 +1366,9 @@ msgstr "Custom section {index}"
 msgid "Custom:"
 msgstr "Personalizado:"
 
+msgid "Decide whether each statement is true or false."
+msgstr "Decida se cada afirmação é verdadeira ou falsa."
+
 msgid "Decrease indent"
 msgstr "Diminuir recuo"
 
@@ -1417,6 +1451,9 @@ msgstr "Definições e Terminologia"
 
 msgid "Delete"
 msgstr "Excluir"
+
+msgid "Delete activity"
+msgstr "Excluir atividade"
 
 msgid "Delete all speech"
 msgstr "Excluir todo o áudio"
@@ -1759,6 +1796,12 @@ msgstr "Expiração"
 msgid "Explain the term in simple language."
 msgstr "Explique o termo em linguagem simples."
 
+msgid "Explanation (shown after the learner answers)"
+msgstr "Explicação (exibida após o aluno responder)"
+
+msgid "Explanation (shown after the learner picks this option)"
+msgstr "Explicação (exibida após o aluno escolher esta opção)"
+
 msgid "Export"
 msgstr "Exportar"
 
@@ -1788,6 +1831,12 @@ msgstr "Exportando..."
 
 msgid "Extract"
 msgstr "Extração"
+
+msgid "Extract a multiple-choice activity from the selected page"
+msgstr "Extrair uma atividade de múltipla escolha da página selecionada"
+
+msgid "Extract from page"
+msgstr "Extrair da página"
 
 msgid "Extract text and images from each page of the PDF using AI-powered analysis."
 msgstr "Extrai texto e imagens de cada página do PDF usando análise com IA."
@@ -1858,6 +1907,9 @@ msgstr "Falha ao ler o arquivo"
 msgid "Failed:"
 msgstr "Falhou:"
 
+msgid "False"
+msgstr "Falso"
+
 msgid "Fast, consistent results with no AI cost"
 msgstr "Resultados rápidos e consistentes sem custo de IA"
 
@@ -1876,8 +1928,14 @@ msgstr "Extração de Figuras"
 msgid "File accepted"
 msgstr "Arquivo aceito"
 
+msgid "Fill in the blank"
+msgstr "Complete a lacuna"
+
 #~ msgid "Fill in the Blank"
 #~ msgstr "Preencher lacunas"
+
+msgid "Fill in the missing word in each sentence."
+msgstr "Complete a palavra que falta em cada frase."
 
 #~ msgid "Filter"
 #~ msgstr "Filtrar"
@@ -1891,6 +1949,9 @@ msgstr "Filtrar por ID da imagem..."
 msgid "Filter by item ID..."
 msgstr "Filtrar por ID do item..."
 
+msgid "Filter to selected page"
+msgstr "Filtrar pela página selecionada"
+
 msgid "Filtered by:"
 msgstr "Filtered by:"
 
@@ -1902,6 +1963,9 @@ msgstr "Primeira"
 
 msgid "First language is the default"
 msgstr "O primeiro idioma é o padrão"
+
+msgid "FITB"
+msgstr "FITB"
 
 msgid "Fixed two-column template layout"
 msgstr "Layout fixo de duas colunas (template)"
@@ -1953,8 +2017,8 @@ msgstr "Pacote ADT completo — páginas HTML, imagens, áudio, questionários e
 msgid "Full control over render strategies, pruning, and filters."
 msgstr "Controle total sobre estratégias de renderização, poda e filtros."
 
-msgid "Full-size source page preview for the selected quiz."
-msgstr "Pré-visualização em tamanho real da página de origem do quiz selecionado."
+#~ msgid "Full-size source page preview for the selected quiz."
+#~ msgstr "Pré-visualização em tamanho real da página de origem do quiz selecionado."
 
 msgid "Full-width single column layout. Ideal for reference material, documentation, and dense technical content."
 msgstr "Layout de coluna única em largura total. Ideal para material de referência, documentação e conteúdo técnico denso."
@@ -2109,6 +2173,9 @@ msgstr "Destaca palavras em sincronia com o áudio. Adiciona tempo considerável
 msgid "Hill"
 msgstr "Colina"
 
+msgid "Hint (optional)"
+msgstr "Dica (opcional)"
+
 msgid "História e Sociedade - Vol. 1"
 msgstr "História e Sociedade - Vol. 1"
 
@@ -2214,8 +2281,8 @@ msgstr "Prompt de tradução de imagens"
 msgid "Image Type"
 msgstr "Tipo de imagem"
 
-msgid "Image unavailable"
-msgstr "Imagem indisponível"
+#~ msgid "Image unavailable"
+#~ msgstr "Imagem indisponível"
 
 msgid "Image upload failed"
 msgstr "Image upload failed"
@@ -2471,6 +2538,9 @@ msgstr "Segmentação baseada em LLM para detectar e dividir imagens compostas e
 msgid "Loading accessibility summary..."
 msgstr "Loading accessibility summary..."
 
+msgid "Loading activities…"
+msgstr "Carregando atividades…"
+
 msgid "Loading Book..."
 msgstr "Carregando livro..."
 
@@ -2507,8 +2577,8 @@ msgstr "Loading prompt..."
 msgid "Loading quiz..."
 msgstr "Carregando quiz..."
 
-msgid "Loading quizzes..."
-msgstr "Carregando quizzes..."
+#~ msgid "Loading quizzes..."
+#~ msgstr "Carregando quizzes..."
 
 msgid "Loading reviewer checklist…"
 msgstr "Loading reviewer checklist…"
@@ -2576,6 +2646,10 @@ msgstr "Mapeie códigos de idioma para nomes de voz de cada provedor de TTS."
 msgid "margin"
 msgstr "margem"
 
+#. placeholder {0}: i + 1
+msgid "Mark option {0} as correct"
+msgstr "Marcar a opção {0} como correta"
+
 msgid "Match each stage of the water cycle to its definition:"
 msgstr "Associe cada estágio do ciclo da água à sua definição:"
 
@@ -2596,6 +2670,9 @@ msgstr "Tamanho Máx (px)"
 
 #~ msgid "Maximum number of reviewer passes after the initial sectioning. Set to 0 to disable refinement."
 #~ msgstr "Número máximo de passagens do revisor após o seccionamento inicial. Defina como 0 para desativar o refinamento."
+
+msgid "MC"
+msgstr "ME"
 
 msgid "Meaningfulness Prompt"
 msgstr "Prompt de relevância"
@@ -2714,6 +2791,9 @@ msgstr "Modificado em {modifiedLabel}"
 msgid "Multi-format publications"
 msgstr "Publicações multi-formato"
 
+msgid "Multiple choice"
+msgstr "Múltipla escolha"
+
 #~ msgid "My book"
 #~ msgstr "Meu livro"
 
@@ -2740,6 +2820,9 @@ msgstr "Nunca"
 
 msgid "New"
 msgstr "Novo"
+
+msgid "New activity"
+msgstr "Nova atividade"
 
 msgid "New checklist item"
 msgstr "New checklist item"
@@ -2770,6 +2853,12 @@ msgstr "No accessibility assessment has been generated yet. Package the ADT outp
 
 msgid "No accessibility findings were reported for this page."
 msgstr "No accessibility findings were reported for this page."
+
+msgid "No activities for this page yet"
+msgstr "Ainda não há atividades para esta página"
+
+msgid "No activities yet"
+msgstr "Ainda não há atividades"
 
 msgid "No AI edits yet for this section."
 msgstr "Ainda não há edições com IA para esta seção."
@@ -2894,8 +2983,8 @@ msgstr "Sem prévia"
 msgid "No preview available."
 msgstr "Nenhuma pré-visualização disponível."
 
-msgid "No quizzes for this page"
-msgstr "Nenhum quiz para esta página"
+#~ msgid "No quizzes for this page"
+#~ msgstr "Nenhum quiz para esta página"
 
 msgid "No rendered content for this section"
 msgstr "Sem conteúdo renderizado para esta seção"
@@ -3020,8 +3109,8 @@ msgstr "Open a page to see page-level findings"
 msgid "Open edit panel"
 msgstr "Abrir painel de edição"
 
-msgid "Open page preview for {pageId}"
-msgstr "Abrir pré-visualização da página {0}"
+#~ msgid "Open page preview for {pageId}"
+#~ msgstr "Abrir pré-visualização da página {0}"
 
 msgid "Open Preview"
 msgstr "Open Preview"
@@ -3047,6 +3136,10 @@ msgstr "Chave da OpenAI necessária"
 msgid "OpenAI Voice"
 msgstr "Voz OpenAI"
 
+#. placeholder {0}: i + 1
+msgid "Option {0}"
+msgstr "Opção {0}"
+
 msgid "Optional Features"
 msgstr "Funcionalidades opcionais"
 
@@ -3061,6 +3154,9 @@ msgstr "Optional page-level summary or handoff note"
 
 msgid "Optional suggestion for fixing or improving this item"
 msgstr "Optional suggestion for fixing or improving this item"
+
+msgid "Options · click circle to mark correct"
+msgstr "Opções · clique no círculo para marcar a correta"
 
 msgid "options are deterministic;"
 msgstr "entrega resultados previsíveis;"
@@ -3156,8 +3252,8 @@ msgstr "Página {0} · {1}"
 msgid "Page {0} · Section {1}"
 msgstr "Página {0} · Seção {1}"
 
-msgid "Page {pageId}"
-msgstr "Página {0}"
+#~ msgid "Page {pageId}"
+#~ msgstr "Página {0}"
 
 msgid "Page coverage"
 msgstr "Page coverage"
@@ -3177,8 +3273,8 @@ msgstr "Modo de Página"
 #~ msgid "Page Number"
 #~ msgstr "Número de página"
 
-msgid "Page preview {pageId}"
-msgstr "Pré-visualização da página {0}"
+#~ msgid "Page preview {pageId}"
+#~ msgstr "Pré-visualização da página {0}"
 
 msgid "Page Range"
 msgstr "Intervalo de páginas"
@@ -3378,6 +3474,9 @@ msgstr "Nome do Projeto"
 msgid "Prompt"
 msgstr "Prompt"
 
+msgid "Prompt (optional)"
+msgstr "Instrução (opcional)"
+
 msgid "Prompt template not found."
 msgstr "Prompt template not found."
 
@@ -3435,6 +3534,9 @@ msgstr "px"
 msgid "Query param"
 msgstr "Parâmetro de consulta"
 
+msgid "Question"
+msgstr "Pergunta"
+
 msgid "Quiz"
 msgstr "Quiz"
 
@@ -3469,8 +3571,8 @@ msgstr "Tipos de seção do quiz"
 msgid "Quizzes"
 msgstr "Questionários"
 
-msgid "Quizzes are linked to other pages in this book"
-msgstr "Os quizzes estão vinculados a outras páginas deste livro"
+#~ msgid "Quizzes are linked to other pages in this book"
+#~ msgstr "Os quizzes estão vinculados a outras páginas deste livro"
 
 msgid "Re-enable type"
 msgstr "Reativar tipo"
@@ -3596,11 +3698,23 @@ msgstr "Remover do grupo"
 msgid "Remove manual glossary term"
 msgstr "Remover termo manual do glossário"
 
+#. placeholder {0}: i + 1
+msgid "Remove option {0}"
+msgstr "Remover opção {0}"
+
 #~ msgid "Remove PDF"
 #~ msgstr "Remover PDF"
 
 msgid "Remove section"
 msgstr "Remove section"
+
+#. placeholder {0}: i + 1
+msgid "Remove sentence {0}"
+msgstr "Remover frase {0}"
+
+#. placeholder {0}: i + 1
+msgid "Remove statement {0}"
+msgstr "Remover afirmação {0}"
 
 msgid "Remove this block"
 msgstr "Remover este bloco"
@@ -3976,6 +4090,9 @@ msgstr "Segmentando..."
 msgid "Select a node type and enter an item ID to view versions."
 msgstr "Selecione um tipo de nó e insira um ID de item para ver as versões."
 
+msgid "Select a page first"
+msgstr "Selecione uma página primeiro"
+
 msgid "Select a page grouping to continue"
 msgstr "Selecione um agrupamento de páginas para continuar"
 
@@ -4033,6 +4150,12 @@ msgstr "Selecionada: {0}"
 msgid "Selecting \"None\" lets the LLM choose its own styling for each page."
 msgstr "Selecionar \\\"Nenhum\\\" permite que o LLM escolha seu próprio estilo para cada página."
 
+msgid "Sentence with [answers] in brackets"
+msgstr "Frase com [respostas] entre colchetes"
+
+msgid "Sentences"
+msgstr "Frases"
+
 msgid "Separator"
 msgstr "Separador"
 
@@ -4078,6 +4201,9 @@ msgstr "Mostrar todas"
 #. placeholder {0}: pages.length
 msgid "Show all {0}"
 msgstr "Show all {0}"
+
+msgid "Show all activities"
+msgstr "Mostrar todas as atividades"
 
 msgid "Show all translations"
 msgstr "Mostrar todas as traduções"
@@ -4221,6 +4347,13 @@ msgstr "Comece a digitar para ver palavras do livro…"
 msgid "Start with a PDF"
 msgstr "Selecione um PDF"
 
+#. placeholder {0}: i + 1
+msgid "Statement {0}"
+msgstr "Afirmação {0}"
+
+msgid "Statements"
+msgstr "Afirmações"
+
 msgid "Step"
 msgstr "Etapa"
 
@@ -4306,6 +4439,9 @@ msgstr "SW"
 msgid "System Prompt"
 msgstr "Prompt do sistema"
 
+msgid "T/F"
+msgstr "V/F"
+
 #~ msgid "Table"
 #~ msgstr "Tabela"
 
@@ -4335,6 +4471,9 @@ msgstr "Manuais técnicos com diagramas"
 
 msgid "Temperature"
 msgstr "Temperatura"
+
+msgid "Template · {templateLabel}"
+msgstr "Modelo · {templateLabel}"
 
 msgid "Template not found."
 msgstr "Template not found."
@@ -4634,6 +4773,12 @@ msgstr "Transporte"
 msgid "Treats each page as a single section."
 msgstr "Trata cada página como uma única seção."
 
+msgid "True"
+msgstr "Verdadeiro"
+
+msgid "True / false"
+msgstr "Verdadeiro / falso"
+
 msgid "Try Activity"
 msgstr "Testar atividade"
 
@@ -4793,6 +4938,9 @@ msgstr "Usa um LLM para detectar e dividir imagens compostas (ex.: múltiplas fo
 msgid "Use an LLM to filter out decorative or non-educational images."
 msgstr "Usa um LLM para filtrar imagens decorativas ou não educativas."
 
+msgid "Use New activity, Extract from page, or run a batch from the Generate tab."
+msgstr "Use Nova atividade, Extrair da página ou execute um lote na aba Gerar."
+
 msgid "Use this for checks you intentionally want to suppress, such as known false positives."
 msgstr "Use this for checks you intentionally want to suppress, such as known false positives."
 
@@ -4903,6 +5051,9 @@ msgstr "Exportação WebPub"
 msgid "Welcome to ADT Studio"
 msgstr "Bem-vindo ao ADT Studio"
 
+msgid "What does the page tell us about…?"
+msgstr "O que a página nos diz sobre…?"
+
 msgid "What it does"
 msgstr "O que faz"
 
@@ -4950,6 +5101,9 @@ msgstr "Destaque por palavra"
 
 msgid "words"
 msgstr "palavras"
+
+msgid "Wrap each blank in square brackets — alternate spellings can be separated with `|`. Example: <0>The capital is [Paris|paris].</0>"
+msgstr "Coloque cada lacuna entre colchetes — grafias alternativas podem ser separadas por `|`. Exemplo: <0>A capital é [Paris|paris].</0>"
 
 msgid "Wrap in group"
 msgstr "Envolver em grupo"

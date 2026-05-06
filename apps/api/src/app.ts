@@ -12,6 +12,7 @@ import { createPageRoutes } from "./routes/pages.js"
 import { createDebugRoutes } from "./routes/debug.js"
 import { createGlossaryRoutes } from "./routes/glossary.js"
 import { createQuizRoutes } from "./routes/quizzes.js"
+import { createActivityRoutes } from "./routes/activities.js"
 import { createPackageRoutes } from "./routes/package.js"
 import { createPromptRoutes } from "./routes/prompts.js"
 import { createTextCatalogRoutes } from "./routes/text-catalog.js"
@@ -90,6 +91,7 @@ app.route("/api", createGlossaryRoutes(booksDir, promptsDir, configPath))
 app.route("/api", createTocRoutes(booksDir))
 app.route("/api", createDebugRoutes(booksDir, promptsDir, configPath))
 app.route("/api", createQuizRoutes(booksDir))
+app.route("/api", createActivityRoutes({ booksDir, promptsDir, configPath, taskService }))
 app.route("/api", createPackageRoutes(booksDir, webAssetsDir, configPath, taskService))
 app.route("/api", createPromptRoutes(promptsDir, booksDir))
 app.route("/api", createTextCatalogRoutes(booksDir))

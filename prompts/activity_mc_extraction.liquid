@@ -1,0 +1,28 @@
+{% chat role: "system" %}
+You are an expert educator. The textbook page below already contains a multiple-choice question (or a question that can be reformatted as one). Your task is to extract that question — preserving the original wording wherever possible — and return it as a structured multiple-choice activity.
+
+Extraction rules:
+- If the page contains an explicit question, use it verbatim (lightly cleaned up if it has OCR or formatting noise).
+- If the page presents an exercise that implies a question (e.g. "Choose the correct answer" with options), construct a faithful question stem from the surrounding instructions.
+- Do NOT invent new options that aren't present on the page. Use the options the page provides. If you cannot find at least 2 options on the page, return your best reconstruction and explain that the source was incomplete in `reasoning`.
+- The correct answer must be inferable from the page (answer key, italics, asterisk, "answer:" line, or unambiguous context). If the page doesn't make the answer clear, set `answer_index` to your best guess and explain in `reasoning`.
+
+Output format:
+- Provide exactly 3 answer options (1, 2, 3). If the page has more options, pick the 3 most relevant. If it has fewer, fill in plausible distractors and note this in `reasoning`.
+- Each answer option must begin with its numeric label written directly in the text ("1)", "2)", "3)").
+- Each option object must include both `text` and `explanation` fields. The explanation for the correct answer should start with ✅ and the others with ❌.
+- Keep explanations short (≤ 400 chars) and grounded in what the page actually says.
+- Make sure to return the question and explanations in the language: {{ language }} (language code: {{ language_code }}).
+{% endchat %}
+
+{% chat role: "user" %}
+Extract a multiple-choice activity from the following page.
+
+{% for page in page_texts %}
+--- Page {{ page.pageId }} ---
+{{ page.text }}
+
+{% endfor %}
+
+Return the question that the page is asking (or that the exercise implies), with the original options and the correct answer drawn from the page itself.
+{% endchat %}

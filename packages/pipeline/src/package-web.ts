@@ -18,9 +18,10 @@ import type {
   WordTimestampOutput,
   TocGenerationOutput,
   Quiz,
+  Activity,
   ImageCaptioningOutput,
 } from "@adt/types"
-import { WebRenderingOutput as WebRenderingOutputSchema } from "@adt/types"
+import { WebRenderingOutput as WebRenderingOutputSchema, readActivitiesFromNode } from "@adt/types"
 import type { Progress } from "./progress.js"
 import { nullProgress } from "./progress.js"
 import { getGlossaryItemTextId } from "./glossary.js"
@@ -226,6 +227,9 @@ export async function packageAdtWeb(
 
   const quizRow = storage.getLatestNodeData("quiz-generation", "book")
   const quizData = quizRow?.data as QuizGenerationOutput | undefined
+  // Activities are stored under the same node; readActivitiesFromNode upgrades
+  // legacy quiz data to ActivitiesOutput and validates new data.
+  const activitiesData = quizRow ? readActivitiesFromNode(quizRow.data) : null
 
   const metadataRow = storage.getLatestNodeData("metadata", "book")
   const metadata = metadataRow?.data as { title?: string | null; cover_page_number?: number | null } | undefined
@@ -248,18 +252,26 @@ export async function packageAdtWeb(
   const copiedImages = new Set<string>()
   const sectionIdToPageIndex = new Map<string, number>()
 
-  // Build a map from afterPageId -> quizzes for interleaving
-  const quizzesByAfterPageId = new Map<string, Quiz[]>()
-  if ((features?.quizzes !== false) && quizData?.quizzes) {
-    for (const quiz of quizData.quizzes) {
-      const existing = quizzesByAfterPageId.get(quiz.afterPageId) ?? []
-      existing.push(quiz)
-      quizzesByAfterPageId.set(quiz.afterPageId, existing)
+  // Build a map from afterPageId -> activities for interleaving. Only render
+  // activity templateTypes the runtime can handle; skip the rest with a
+  // warning so the package doesn't include broken pages.
+  const activitiesByAfterPageId = new Map<string, Activity[]>()
+  if (features?.quizzes !== false && activitiesData?.activities) {
+    for (const activity of activitiesData.activities) {
+      if (activity.templateType !== "multiple_choice") {
+        console.warn(
+          `[package-web] Skipping activity ${activity.activityId}: templateType "${activity.templateType}" is not yet rendered.`,
+        )
+        continue
+      }
+      const existing = activitiesByAfterPageId.get(activity.afterPageId) ?? []
+      existing.push(activity)
+      activitiesByAfterPageId.set(activity.afterPageId, existing)
     }
   }
 
   for (const page of pages) {
-    const quizzes = quizzesByAfterPageId.get(page.pageId) ?? []
+    const activitiesAfter = activitiesByAfterPageId.get(page.pageId) ?? []
 
     const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
     const sectioning = structuringRow?.data as PageSectioningOutput | undefined
@@ -355,31 +367,32 @@ export async function packageAdtWeb(
       }
     }
 
-    // Insert quiz pages after this page (even if page content was skipped)
-    for (const quiz of quizzes) {
-      const quizIndex = quizData!.quizzes.indexOf(quiz)
-      const quizId = `qz${pad3(quizIndex + 1)}`
-
+    // Insert activity pages after this page (even if page content was skipped).
+    // The activityId acts as the page slug (qzNNN for legacy, actNNN for new)
+    // so we keep using the existing id from storage rather than reindexing.
+    for (const activity of activitiesAfter) {
+      const activityId = activity.activityId
       const isFirstPage = pageList.length === 0
-      const quizFilename = isFirstPage ? "index.html" : `${quizId}.html`
+      const activityFilename = isFirstPage ? "index.html" : `${activityId}.html`
 
-      const quizHtmlContent = renderQuizHtml(quiz, quizId, catalog)
-      const quizPageHtml = renderPageHtml({
-        content: quizHtmlContent,
+      const html = renderActivityHtml(activity, activityId, catalog)
+      const heading = activityHeading(activity)
+      const activityPageHtml = renderPageHtml({
+        content: html,
         language,
-        sectionId: quizId,
+        sectionId: activityId,
         pageTitle: title,
-        pageHeading: quiz.question,
+        pageHeading: heading,
         pageIndex: pageList.length + 1,
-        activityAnswers: buildQuizAnswers(quiz, quizId),
+        activityAnswers: buildActivityAnswers(activity, activityId),
         hasMath: false,
         bundleVersion,
         skipContentWrapper: true,
         applyBodyBackground,
       })
-      fs.writeFileSync(path.join(adtDir, quizFilename), quizPageHtml)
+      fs.writeFileSync(path.join(adtDir, activityFilename), activityPageHtml)
 
-      pageList.push({ section_id: quizId, href: quizFilename })
+      pageList.push({ section_id: activityId, href: activityFilename })
     }
   }
 
@@ -1038,11 +1051,89 @@ ${opts.embed
 }
 
 // ---------------------------------------------------------------------------
-// Quiz HTML generation
+// Activity / quiz HTML generation
 // ---------------------------------------------------------------------------
 
 export function pad3(n: number): string {
   return String(n).padStart(3, "0")
+}
+
+/**
+ * Render an activity to standalone-page HTML, dispatched by templateType.
+ * Currently only `multiple_choice` is wired through; TF/FITB callers should
+ * filter those out beforehand (we throw here as a guardrail).
+ */
+export function renderActivityHtml(
+  activity: Activity,
+  activityId: string,
+  catalog: TextCatalogOutput | undefined,
+): string {
+  if (activity.templateType === "multiple_choice") {
+    return renderQuizHtml(
+      {
+        quizIndex: 0,
+        afterPageId: activity.afterPageId,
+        pageIds: activity.pageIds,
+        question: activity.question,
+        // renderQuizHtml expects exactly 3 options today. Pad / truncate
+        // defensively so a misshapen activity doesn't crash packaging.
+        options: padOptions(activity.options),
+        answerIndex: Math.min(activity.answerIndex, 2),
+        reasoning: activity.reasoning,
+      },
+      activityId,
+      catalog,
+    )
+  }
+  throw new Error(
+    `renderActivityHtml: templateType "${activity.templateType}" is not yet rendered. Filter these activities out before calling.`,
+  )
+}
+
+/** Build the answer map (`{itemId: isCorrect}`) for an activity's runtime check. */
+export function buildActivityAnswers(activity: Activity, activityId: string): Record<string, boolean> {
+  if (activity.templateType === "multiple_choice") {
+    return buildQuizAnswers(
+      {
+        quizIndex: 0,
+        afterPageId: activity.afterPageId,
+        pageIds: activity.pageIds,
+        question: activity.question,
+        options: padOptions(activity.options),
+        answerIndex: Math.min(activity.answerIndex, 2),
+        reasoning: activity.reasoning,
+      },
+      activityId,
+    )
+  }
+  return {}
+}
+
+function padOptions(
+  options: Array<{ text: string; explanation: string }>,
+): [
+  { text: string; explanation: string },
+  { text: string; explanation: string },
+  { text: string; explanation: string },
+] {
+  const padded = options.slice(0, 3)
+  while (padded.length < 3) padded.push({ text: "", explanation: "" })
+  return padded as [
+    { text: string; explanation: string },
+    { text: string; explanation: string },
+    { text: string; explanation: string },
+  ]
+}
+
+function activityHeading(activity: Activity): string {
+  switch (activity.templateType) {
+    case "multiple_choice":
+      return activity.question
+    case "true_false":
+      return activity.prompt || "True or false"
+    case "fill_in_the_blank":
+      return activity.prompt || "Fill in the blank"
+  }
 }
 
 export function renderQuizHtml(

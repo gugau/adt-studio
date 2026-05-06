@@ -12,8 +12,8 @@ import {
   buildQuizGenerationConfig,
   generateQuiz,
   generateAllQuizzes,
-} from "../quiz-generation.js"
-import type { QuizPageInput } from "../quiz-generation.js"
+} from "../activity-generation.js"
+import type { QuizPageInput } from "../activity-generation.js"
 
 function makeFakeLLMModel(
   response: {

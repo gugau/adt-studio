@@ -146,7 +146,23 @@ export {
   Quiz,
   QuizGenerationOutput,
   quizLLMSchema,
+  readActivitiesFromNode,
 } from "./quiz.js"
+
+export {
+  ActivityTemplateType,
+  MultipleChoiceOption,
+  MultipleChoiceData,
+  TrueFalseStatement,
+  TrueFalseData,
+  FillInTheBlankSentence,
+  FillInTheBlankData,
+  ActivityData,
+  Activity,
+  ActivitiesOutput,
+  multipleChoiceLLMSchema,
+  type MultipleChoiceLLMOutput,
+} from "./activity.js"
 
 export {
   TextCatalogEntry,

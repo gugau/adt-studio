@@ -6,7 +6,7 @@ import { resolveSettingsStageSlug } from "@/components/pipeline/settings-routing
 import { ExtractSettings } from "@/components/pipeline/stages/extract/ExtractSettings"
 import { SectioningSettings } from "@/components/pipeline/stages/sectioning/SectioningSettings"
 import { StoryboardSettings } from "@/components/pipeline/stages/storyboard/StoryboardSettings"
-import { QuizzesSettings } from "@/components/pipeline/stages/quizzes/QuizzesSettings"
+import { QuizzesSettings } from "@/components/pipeline/stages/activities/QuizzesSettings"
 import { GlossarySettings } from "@/components/pipeline/stages/glossary/GlossarySettings"
 import { TocSettings } from "@/components/pipeline/stages/toc/TocSettings"
 import { CaptionsSettings } from "@/components/pipeline/stages/captions/CaptionsSettings"

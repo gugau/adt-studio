@@ -154,7 +154,7 @@ export {
   batchPages,
   type QuizConfig,
   type QuizPageInput,
-} from "./quiz-generation.js"
+} from "./activity-generation.js"
 export { buildTextCatalog } from "./text-catalog.js"
 export {
   resolveVoice,

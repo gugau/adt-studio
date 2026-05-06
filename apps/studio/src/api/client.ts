@@ -295,7 +295,7 @@ export interface TocSection {
   pageNumber: number
 }
 
-// --- Quiz types ---
+// --- Quiz types (legacy; activities replaces) ---
 
 export interface QuizOption {
   text: string
@@ -322,6 +322,68 @@ export interface QuizGenerationOutput {
 export interface QuizzesResponse {
   quizzes: QuizGenerationOutput | null
   version: number | null
+}
+
+// --- Activity types ---
+
+export type ActivityTemplateType = "multiple_choice" | "true_false" | "fill_in_the_blank"
+
+interface ActivityCommon {
+  activityId: string
+  afterPageId: string
+  pageIds: string[]
+  generatedAt: string
+}
+
+export interface MultipleChoiceActivity extends ActivityCommon {
+  templateType: "multiple_choice"
+  question: string
+  options: Array<{ text: string; explanation: string }>
+  answerIndex: number
+  reasoning: string
+}
+
+export interface TrueFalseStatementItem {
+  text: string
+  isTrue: boolean
+  explanation: string
+}
+
+export interface TrueFalseActivity extends ActivityCommon {
+  templateType: "true_false"
+  prompt: string
+  statements: TrueFalseStatementItem[]
+}
+
+export interface FillInTheBlankSentenceItem {
+  text: string
+  hint: string
+}
+
+export interface FillInTheBlankActivity extends ActivityCommon {
+  templateType: "fill_in_the_blank"
+  prompt: string
+  sentences: FillInTheBlankSentenceItem[]
+}
+
+export type Activity = MultipleChoiceActivity | TrueFalseActivity | FillInTheBlankActivity
+
+export interface ActivitiesOutput {
+  generatedAt: string
+  language: string
+  activities: Activity[]
+}
+
+export interface ActivitiesResponse {
+  activities: ActivitiesOutput | null
+  version: number | null
+}
+
+export interface ActivityGenerateRequest {
+  source: "page" | "pages"
+  pageIds: string[]
+  templateType: ActivityTemplateType
+  count?: number
 }
 
 // --- Text Catalog types ---
@@ -925,6 +987,31 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(data),
     }),
+
+  getActivities: (label: string) =>
+    request<ActivitiesResponse>(`/books/${label}/activities`),
+
+  updateActivities: (label: string, data: ActivitiesOutput) =>
+    request<{ version: number }>(`/books/${label}/activities`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  newActivity: (label: string, templateType: ActivityTemplateType, afterPageId: string) =>
+    request<{ version: number; activity: Activity }>(`/books/${label}/activities/new`, {
+      method: "POST",
+      body: JSON.stringify({ templateType, afterPageId }),
+    }),
+
+  generateActivity: (label: string, body: ActivityGenerateRequest, apiKey: string) =>
+    request<{ taskId: string; status: "submitted" } | { version: number; activities: Activity[] }>(
+      `/books/${label}/activities/generate`,
+      {
+        method: "POST",
+        headers: { "X-OpenAI-Key": apiKey },
+        body: JSON.stringify(body),
+      },
+    ),
 
   getGlossary: (label: string) =>
     request<GlossaryOutput | null>(`/books/${label}/glossary`),

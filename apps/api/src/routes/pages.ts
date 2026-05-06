@@ -4,7 +4,7 @@ import path from "node:path"
 import { z } from "zod"
 import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
-import { parseBookLabel, ImageClassificationOutput, PageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES } from "@adt/types"
+import { parseBookLabel, ImageClassificationOutput, PageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES, readActivitiesFromNode } from "@adt/types"
 import type { ContentNodeData } from "@adt/types"
 import { openBookDb } from "@adt/storage"
 import { createBookStorage } from "@adt/storage"
@@ -524,7 +524,9 @@ export function createPageRoutes(
         }
       }
 
-      // Load quiz-generation output (book-level) to interleave quizzes after their afterPageId page.
+      // Load activity / legacy quiz output (book-level) to interleave items after their afterPageId page.
+      // The storyboard sidebar still expects MC activities (its preview render path is MC-only),
+      // so we filter by templateType here and surface only those.
       const quizzesByAfterPageId = new Map<string, PageSummary["quizzesAfter"]>()
       let quizGenerationVersion: number | null = null
       const quizRow = db.all(
@@ -533,27 +535,32 @@ export function createPageRoutes(
       ) as Array<{ data: string; max_version: number }>
       if (quizRow.length > 0) {
         try {
-          const parsed = JSON.parse(quizRow[0].data) as {
-            quizzes?: Array<{ afterPageId?: string; question?: string }>
-          }
+          const parsed = JSON.parse(quizRow[0].data)
+          const activitiesData = readActivitiesFromNode(parsed)
           quizGenerationVersion = quizRow[0].max_version
-          for (let i = 0; i < (parsed.quizzes ?? []).length; i++) {
-            const quiz = parsed.quizzes![i]
-            const afterPageId = quiz.afterPageId ?? ""
-            if (!afterPageId) continue
-            const list = quizzesByAfterPageId.get(afterPageId) ?? []
-            list.push({
-              quizId: `qz${String(i + 1).padStart(3, "0")}`,
-              quizIndex: i,
-              afterPageId,
-              question: quiz.question ?? "",
-              hasRendering: true,
-              renderingVersion: quizGenerationVersion,
-            })
-            quizzesByAfterPageId.set(afterPageId, list)
+          if (activitiesData) {
+            const mcActivities = activitiesData.activities.filter(
+              (a) => a.templateType === "multiple_choice",
+            )
+            for (let i = 0; i < mcActivities.length; i++) {
+              const activity = mcActivities[i]
+              if (activity.templateType !== "multiple_choice") continue
+              const afterPageId = activity.afterPageId
+              if (!afterPageId) continue
+              const list = quizzesByAfterPageId.get(afterPageId) ?? []
+              list.push({
+                quizId: activity.activityId,
+                quizIndex: i,
+                afterPageId,
+                question: activity.question,
+                hasRendering: true,
+                renderingVersion: quizGenerationVersion,
+              })
+              quizzesByAfterPageId.set(afterPageId, list)
+            }
           }
         } catch {
-          // ignore malformed quiz data
+          // ignore malformed activity data
         }
       }
 

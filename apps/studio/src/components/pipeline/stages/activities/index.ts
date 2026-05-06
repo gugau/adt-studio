@@ -1,2 +1,2 @@
-export { QuizzesView } from "./QuizzesView"
+export { ActivitiesView } from "./ActivitiesView"
 export { QuizzesSettings } from "./QuizzesSettings"
