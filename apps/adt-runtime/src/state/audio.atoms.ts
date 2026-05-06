@@ -14,6 +14,7 @@ export const autoplayModeAtom = persistedBoolAtom("autoplayMode", false)
 export const wordHighlightModeAtom = persistedBoolAtom("wordHighlightMode", true)
 export const describeImagesModeAtom = persistedBoolAtom("describeImagesMode", false)
 export const audioSpeedAtom = persistedNumberAtom("audioSpeed", 1)
+export const audioVolumeAtom = persistedNumberAtom("audioVolume", 1)
 
 // Live playback state.
 //

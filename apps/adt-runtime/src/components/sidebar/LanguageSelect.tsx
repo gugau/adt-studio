@@ -60,21 +60,31 @@ export function LanguageSelect() {
 
   return (
     <div className="flex items-center justify-between py-3">
-      <span className="text-base font-medium">{t("language-label") || "Language"}</span>
-      <div className="min-w-[10rem]">
-        <Select value={currentLanguage} onValueChange={setCurrentLanguage}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {available.map((lang) => (
-              <SelectItem key={lang} value={lang}>
-                {names[lang] ?? lang}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <span className="text-sm font-medium">
+        {t("language-label") || "Language"}
+      </span>
+      <Select
+        value={currentLanguage}
+        onValueChange={(v) => {
+          if (typeof v === "string") setCurrentLanguage(v)
+        }}
+      >
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder={t("language-label") || "Language"}>
+            {(value) => {
+              const code = typeof value === "string" ? value : ""
+              return names[code] ?? code
+            }}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {available.map((lang) => (
+            <SelectItem key={lang} value={lang}>
+              {names[lang] ?? lang}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   )
 }

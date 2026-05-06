@@ -7,6 +7,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { cn } from "@/lib/utils"
 import { audioSpeedAtom } from "@/state/audio.atoms"
 import { useTranslation } from "@/hooks/useTranslation"
 
@@ -29,20 +30,20 @@ export function SpeedMenu() {
   const activeLabel = t(active.labelKey) || active.fallback
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger
-        className={[
-          "h-8 px-3 rounded-full",
+        className={cn(
+          "min-w-30 h-8 px-3 rounded-lg",
           "flex items-center gap-1",
-          "text-xs font-medium text-gray-700",
-          "hover:bg-gray-100 hover:text-gray-900",
+          "text-xs font-medium text-foreground",
+          "hover:bg-accent hover:text-accent-foreground",
           "transition-colors duration-150",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
-          "data-[state=open]:bg-gray-100 data-[state=open]:text-gray-900",
-        ].join(" ")}
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+          "data-[state=open]:bg-accent data-[state=open]:text-accent-foreground",
+        )}
         aria-label={`${t("read-aloud-speed-label") || "Playback speed"}: ${activeLabel}`}
       >
-        <span>{activeLabel}</span>
+        <span className="flex-1 text-start">{activeLabel}</span>
         <ChevronDown className="w-3 h-3 opacity-60" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8} className="min-w-[8rem]">

@@ -12,7 +12,7 @@ import {
 } from "@/state/glossary.atoms"
 import {
   activeGlossaryTabAtom,
-  glossaryListOpenAtom,
+  dockMenuValueAtom,
   glossaryModeAtom,
   selectedGlossaryTermAtom,
 } from "@/state/ui.atoms"
@@ -35,7 +35,7 @@ import { trackToggleEvent } from "@/lib/analytics"
 export function GlossaryPanel() {
   const { t } = useTranslation()
   const data = useAtomValue(glossaryDataAtom)
-  const setGlossaryListOpen = useSetAtom(glossaryListOpenAtom)
+  const setDockMenuValue = useSetAtom(dockMenuValueAtom)
   const [glossaryMode, setGlossaryMode] = useAtom(glossaryModeAtom)
   const [tab, setTab] = useAtom(activeGlossaryTabAtom)
   const [filter, setFilter] = useAtom(glossaryFilterAtom)
@@ -114,7 +114,7 @@ export function GlossaryPanel() {
           variant="ghost"
           size="icon"
           onClick={() => {
-            setGlossaryListOpen(false)
+            setDockMenuValue(null)
             setSelected(null)
           }}
           aria-label={t("glossary-back-label") || "Back"}
@@ -137,10 +137,12 @@ export function GlossaryPanel() {
 
       <Tabs
         value={tab}
-        onValueChange={(v) => setTab(v as "page" | "book")}
-        className="flex-1 flex flex-col"
+        onValueChange={(v) => {
+          if (typeof v === "string") setTab(v as "page" | "book")
+        }}
+        className="flex-1 min-h-0 flex flex-col"
       >
-        <TabsList className="grid grid-cols-2 mx-4 mt-3">
+        <TabsList className="grid grid-cols-2 mx-4 mt-3 shrink-0">
           <TabsTrigger value="page">
             {t("glossary-page-label") || "On this page"}
           </TabsTrigger>
@@ -149,11 +151,17 @@ export function GlossaryPanel() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="page" className="flex-1 overflow-y-auto mt-3">
+        <TabsContent
+          value="page"
+          className="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable] mt-3"
+        >
           {renderList(pageTerms)}
         </TabsContent>
 
-        <TabsContent value="book" className="flex-1 flex flex-col overflow-hidden mt-3">
+        <TabsContent
+          value="book"
+          className="flex-1 min-h-0 flex flex-col overflow-hidden mt-3"
+        >
           <div className="px-4 pb-3 shrink-0">
             <Input
               type="text"
@@ -163,7 +171,9 @@ export function GlossaryPanel() {
               autoComplete="off"
             />
           </div>
-          <div className="flex-1 overflow-y-auto">{renderList(filteredBookTerms)}</div>
+          <div className="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable]">
+            {renderList(filteredBookTerms)}
+          </div>
         </TabsContent>
       </Tabs>
     </div>

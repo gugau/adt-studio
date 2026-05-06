@@ -36,6 +36,9 @@ export interface AppAnalytics {
 
 export interface AppConfig {
   title?: string
+  shortTitle?: string
+  author?: string
+  cover?: string
   bundleVersion?: string
   languages: AppLanguages
   features: AppFeatures

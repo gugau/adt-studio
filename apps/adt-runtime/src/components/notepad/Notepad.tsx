@@ -36,15 +36,17 @@ export function Notepad() {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label={t("notepad-open-label") || "Open notepad"}
-          className="fixed bottom-52 right-4 w-12 h-12 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-blue-500 shadow-lg transition-all duration-200 z-[55]"
-        >
-          <Pencil className="w-5 h-5 text-gray-700" />
-        </button>
-      </PopoverTrigger>
+      <PopoverTrigger
+        render={
+          <button
+            type="button"
+            aria-label={t("notepad-open-label") || "Open notepad"}
+            className="fixed bottom-52 right-4 w-12 h-12 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-blue-500 shadow-lg transition-all duration-200 z-[55]"
+          >
+            <Pencil className="w-5 h-5 text-gray-700" />
+          </button>
+        }
+      />
       <PopoverContent side="left" className="w-96">
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-lg font-bold flex items-center gap-2">

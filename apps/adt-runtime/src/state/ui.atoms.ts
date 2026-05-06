@@ -24,5 +24,19 @@ export const glossaryListOpenAtom = ephemeralAtom(false)
 export const activeSidebarTabAtom = ephemeralAtom<"assistant" | "settings">("assistant")
 export const activeGlossaryTabAtom = ephemeralAtom<"page" | "book">("page")
 
+/**
+ * Which dock NavigationMenu panel is currently open. `null` = closed.
+ * External components (e.g. GlossaryTermPopover) write here to open a
+ * specific panel programmatically.
+ */
+export type DockMenuValue =
+  | "toc"
+  | "glossary"
+  | "audio"
+  | "language"
+  | "settings"
+  | null
+export const dockMenuValueAtom = ephemeralAtom<DockMenuValue>(null)
+
 // Selected glossary term currently shown in the details pane (null = list view).
 export const selectedGlossaryTermAtom = ephemeralAtom<string | null>(null)

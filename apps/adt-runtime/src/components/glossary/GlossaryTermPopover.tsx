@@ -12,18 +12,13 @@
 import { useAtomValue, useSetAtom } from "jotai"
 import { BookOpen } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
-import {
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-} from "@/components/ui/popover"
+import { Popover, PopoverContent } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { glossaryDataAtom } from "@/state/glossary.atoms"
 import {
-  glossaryListOpenAtom,
+  dockMenuValueAtom,
   glossaryModeAtom,
   selectedGlossaryTermAtom,
-  sidebarOpenAtom,
 } from "@/state/ui.atoms"
 import { useTranslation } from "@/hooks/useTranslation"
 
@@ -47,8 +42,7 @@ export function GlossaryTermPopover() {
   const { t } = useTranslation()
   const data = useAtomValue(glossaryDataAtom)
   const enabled = useAtomValue(glossaryModeAtom) as boolean
-  const setSidebarOpen = useSetAtom(sidebarOpenAtom)
-  const setGlossaryListOpen = useSetAtom(glossaryListOpenAtom)
+  const setDockMenuValue = useSetAtom(dockMenuValueAtom)
   const setSelected = useSetAtom(selectedGlossaryTermAtom)
 
   // The currently-shown term + the rect to anchor against. Local state so
@@ -120,18 +114,17 @@ export function GlossaryTermPopover() {
   const handleViewInGlossary = () => {
     if (!entry) return
     setSelected(entry.word)
-    setGlossaryListOpen(true)
-    setSidebarOpen(true)
+    setDockMenuValue("glossary")
     closePopover()
   }
 
   return (
     <Popover open={open} onOpenChange={(o) => !o && closePopover()}>
-      <PopoverAnchor virtualRef={virtualRef as React.RefObject<VirtualAnchor>} />
       {entry ? (
         <PopoverContent
           side="top"
           align="center"
+          anchor={() => virtualRef.current}
           className="w-80"
           role="dialog"
           aria-label={`Definition for ${entry.word}`}

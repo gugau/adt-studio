@@ -36,15 +36,17 @@ export function Eli5Popup() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button
-          type="button"
-          aria-label={t("eli5-aria-label") || "Explain to me"}
-          className="fixed bottom-[18rem] right-4 w-12 h-12 flex items-center justify-center rounded-full bg-yellow-100 hover:bg-yellow-200 focus:outline-none focus:ring-4 focus:ring-blue-500 shadow-lg z-[55]"
-        >
-          <Sparkles className="w-6 h-6 text-yellow-600" />
-        </button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <button
+            type="button"
+            aria-label={t("eli5-aria-label") || "Explain to me"}
+            className="fixed bottom-[18rem] right-4 w-12 h-12 flex items-center justify-center rounded-full bg-yellow-100 hover:bg-yellow-200 focus:outline-none focus:ring-4 focus:ring-blue-500 shadow-lg z-[55]"
+          >
+            <Sparkles className="w-6 h-6 text-yellow-600" />
+          </button>
+        }
+      />
       <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

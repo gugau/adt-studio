@@ -20,10 +20,11 @@
  *     the previous item's wrapped DOM is restored byte-for-byte before the
  *     next one is set up.
  */
-import { useAtom, useAtomValue } from "jotai"
+import { useAtom, useAtomValue, useSetAtom } from "jotai"
 import { useCallback, useEffect, useMemo, useRef } from "react"
 import {
   audioSpeedAtom,
+  audioVolumeAtom,
   autoplayModeAtom,
   currentAudioIndexAtom,
   isPlayingAtom,
@@ -79,6 +80,8 @@ export interface UseAudioPlayer {
   togglePlayPause: () => void
   playNext: () => void
   playPrevious: () => void
+  /** Fully stop playback, tear down highlights, reset to first track. */
+  stop: () => void
 }
 
 export function useAudioPlayer(): UseAudioPlayer {
@@ -90,8 +93,10 @@ export function useAudioPlayer(): UseAudioPlayer {
   const audioFiles = useAtomValue(audioFilesAtom)
   const language = useAtomValue(currentLanguageAtom) as string
   const speed = useAtomValue(audioSpeedAtom) as number
+  const volume = useAtomValue(audioVolumeAtom) as number
   const autoplayMode = useAtomValue(autoplayModeAtom) as boolean
   const readAloudMode = useAtomValue(readAloudModeAtom) as boolean
+  const setReadAloudMode = useSetAtom(readAloudModeAtom)
   const wordHighlightMode = useAtomValue(wordHighlightModeAtom) as boolean
   const timecodeMap = useAtomValue(timecodeMapAtom)
 
@@ -183,6 +188,7 @@ export function useAudioPlayer(): UseAudioPlayer {
 
       audio.src = url
       audio.playbackRate = speed
+      audio.volume = Math.max(0, Math.min(1, volume))
 
       audio.onloadedmetadata = () => {
         // Once we know the real duration, swap the approximate timestamps
@@ -247,6 +253,7 @@ export function useAudioPlayer(): UseAudioPlayer {
       items,
       language,
       speed,
+      volume,
       setIsPlaying,
       setCurrentIndex,
       stopAndClear,
@@ -266,6 +273,10 @@ export function useAudioPlayer(): UseAudioPlayer {
       // analogue of "you're paused mid-word".
       return
     }
+    // Starting playback: mark read-aloud as active so (a) the dock's
+    // volume icon flips to the active state and (b) on page navigation
+    // the next page's auto-resume effect picks back up where we left off.
+    setReadAloudMode(true)
     if (
       audio &&
       audio.src &&
@@ -279,7 +290,7 @@ export function useAudioPlayer(): UseAudioPlayer {
       return
     }
     playAtIndex(currentIndex || 0)
-  }, [items.length, currentIndex, playAtIndex, setIsPlaying])
+  }, [items.length, currentIndex, playAtIndex, setIsPlaying, setReadAloudMode])
 
   const playNext = useCallback(() => {
     if (items.length === 0) return
@@ -292,6 +303,12 @@ export function useAudioPlayer(): UseAudioPlayer {
     const prev = Math.max(currentIndex - 1, 0)
     playAtIndex(prev)
   }, [currentIndex, items.length, playAtIndex])
+
+  const stop = useCallback(() => {
+    stopAndClear()
+    setIsPlaying(false)
+    setCurrentIndex(0)
+  }, [stopAndClear, setIsPlaying, setCurrentIndex])
 
   // Auto-resume on page boot.
   useEffect(() => {
@@ -307,6 +324,11 @@ export function useAudioPlayer(): UseAudioPlayer {
   useEffect(() => {
     if (audioRef.current) audioRef.current.playbackRate = speed
   }, [speed])
+
+  // Keep the live `<audio>` volume in sync with the volume atom.
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = Math.max(0, Math.min(1, volume))
+  }, [volume])
 
   // Restart from the same index when the language changes mid-playback so
   // the user hears the new locale and the new timecode/text are picked up.
@@ -341,5 +363,6 @@ export function useAudioPlayer(): UseAudioPlayer {
     togglePlayPause,
     playNext,
     playPrevious,
+    stop,
   }
 }
