@@ -544,6 +544,7 @@ msgstr "Ajouter une section"
 
 msgid "Add sizing field"
 msgstr "Ajouter un champ de dimensionnement"
+
 msgid "Add Term"
 msgstr "Ajouter un terme"
 
@@ -581,10 +582,11 @@ msgstr "Paquet ADT"
 msgid "ADT Studio uses your own API keys to run the pipeline. Keys are stored locally on this device and never sent anywhere else."
 msgstr "ADT Studio utilise vos propres clés API pour exécuter le pipeline. Les clés sont stockées localement sur cet appareil et ne sont jamais envoyées ailleurs."
 
-msgid "Advanced"
-msgstr "Avancé"
 msgid "ADT_DEBUG=1"
 msgstr "ADT_DEBUG=1"
+
+msgid "Advanced"
+msgstr "Avancé"
 
 msgid "Adventure Tales - Vol. 1"
 msgstr "Adventure Tales - Vol. 1"
@@ -725,13 +727,14 @@ msgstr "Clé API Paramètres"
 msgid "API Keys"
 msgstr "Clés API"
 
-msgid "Appearance"
-msgstr "Apparence"
 msgid "API Logs"
 msgstr "Journaux API"
 
 msgid "API logs are only available in the desktop app."
 msgstr "Les journaux de l'API ne sont disponibles que dans l'application de bureau."
+
+msgid "Appearance"
+msgstr "Apparence"
 
 msgid "Application Programming Interface — a set of rules that allows programs to communicate."
 msgstr "Interface de programmation d'applications — un ensemble de règles permettant aux programmes de communiquer."
@@ -1507,10 +1510,11 @@ msgstr "Description"
 msgid "Description..."
 msgstr "Description..."
 
-msgid "Desktop"
-msgstr "Bureau"
 msgid "Deselect all"
 msgstr "Tout désélectionner"
+
+msgid "Desktop"
+msgstr "Bureau"
 
 msgid "Detecting figures"
 msgstr "Détection des figures"
@@ -1687,6 +1691,13 @@ msgstr "Les modifications vont à ce préfixe de variante Tailwind"
 
 msgid "Element style editor"
 msgstr "Éditeur de style d'élément"
+
+#~ msgid "elements"
+#~ msgstr "éléments"
+
+msgid "Elements"
+msgstr "Éléments"
+
 msgid "Emoji"
 msgstr "Emoji"
 
@@ -2110,6 +2121,7 @@ msgstr "Titre"
 
 msgid "Height"
 msgstr "Hauteur"
+
 msgid "Hide"
 msgstr "Masquer"
 
@@ -2618,17 +2630,18 @@ msgstr "marge"
 
 msgid "Margin"
 msgstr "Marge"
+
 msgid "Match Design"
 msgstr "Correspondance avec le design"
 
 msgid "Match each stage of the water cycle to its definition:"
 msgstr "Associez chaque étape du cycle de l'eau à sa définition :"
 
-msgid "Max Iterations"
-msgstr "Itérations max"
-
 msgid "Max height"
 msgstr "Hauteur max"
+
+msgid "Max Iterations"
+msgstr "Itérations max"
 
 msgid "Max Refinements"
 msgstr "Raffinements max"
@@ -2645,10 +2658,11 @@ msgstr "Taille max (px)"
 msgid "Max width"
 msgstr "Largeur max"
 
-#~ msgid "Maximum number of reviewer passes after the initial sectioning. Set to 0 to disable refinement."
-#~ msgstr "Nombre maximum de passes du réviseur après le sectionnement initial. Mettre à 0 pour désactiver le raffinement."
 msgid "Maximize"
 msgstr "Agrandir"
+
+#~ msgid "Maximum number of reviewer passes after the initial sectioning. Set to 0 to disable refinement."
+#~ msgstr "Nombre maximum de passes du réviseur après le sectionnement initial. Mettre à 0 pour désactiver le raffinement."
 
 msgid "Meaningfulness Prompt"
 msgstr "Meaningfulness Invite"
@@ -2730,6 +2744,7 @@ msgstr "Taille min (px)"
 
 msgid "Min width"
 msgstr "Largeur min"
+
 msgid "Minimize"
 msgstr "Réduire"
 
@@ -3643,17 +3658,8 @@ msgstr "Raisonnement de rendu"
 msgid "Render Strategy"
 msgstr "Stratégie de rendu"
 
-msgid "rendering"
-msgstr "rendu"
-
-msgid "elements"
-msgstr "éléments"
-
-msgid "style"
-msgstr "style"
-
-msgid "text"
-msgstr "texte"
+#~ msgid "rendering"
+#~ msgstr "rendu"
 
 msgid "Rendering Prompt"
 msgstr "Rendering Invite"
@@ -3935,12 +3941,6 @@ msgstr "section"
 msgid "Section"
 msgstr "Section"
 
-msgid "Sections"
-msgstr "Sections"
-
-msgid "Elements"
-msgstr "Éléments"
-
 #. placeholder {0}: String(group.sectionIndex + 1)
 #. placeholder {0}: String(i + 1)
 #. placeholder {0}: i + 1
@@ -3998,6 +3998,9 @@ msgstr "Raisonnement du sectionnement"
 
 msgid "sections"
 msgstr "sections"
+
+msgid "Sections"
+msgstr "Sections"
 
 msgid "See examples"
 msgstr "Voir les exemples"
@@ -4338,13 +4341,14 @@ msgstr "Livre d'histoires"
 msgid "Stretch"
 msgstr "Étirer"
 
+msgid "Strict"
+msgstr "Strict"
+
 msgid "Strikethrough"
 msgstr "Barré"
 
 #~ msgid "Structural containers the LLM can use when building the page tree (paragraphs, lists, tables, activities, etc.)."
 #~ msgstr "Conteneurs structurels que le LLM peut utiliser pour construire l'arborescence de la page (paragraphes, listes, tableaux, activités, etc.)."
-msgid "Strict"
-msgstr "Strict"
 
 msgid "Structure"
 msgstr "Structure"
@@ -4360,6 +4364,9 @@ msgstr "Chapitres structurés, exercices. Idéal pour le contenu éducatif avec 
 
 msgid "Structured HTML"
 msgstr "HTML structuré"
+
+#~ msgid "style"
+#~ msgstr "style"
 
 msgid "Style"
 msgstr "Style"
@@ -4453,6 +4460,9 @@ msgstr "Basé sur un modèle"
 
 msgid "Terms marked with an asterisk (*) are defined by the ISO standard and may differ from colloquial usage in other fields."
 msgstr "Les termes marqués d'un astérisque (*) sont définis par la norme ISO et peuvent différer de l'usage courant dans d'autres domaines."
+
+#~ msgid "text"
+#~ msgstr "texte"
 
 msgid "Text"
 msgstr "Texte"
@@ -4839,8 +4849,8 @@ msgstr "Restaurer l'image"
 msgid "Unsaved changes"
 msgstr "Modifications non enregistrées"
 
-msgid "Unsaved:"
-msgstr "Non enregistré :"
+#~ msgid "Unsaved:"
+#~ msgstr "Non enregistré :"
 
 msgid "Untangling nested divs with care..."
 msgstr "Démêlage des divs imbriqués avec soin..."

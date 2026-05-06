@@ -543,6 +543,7 @@ msgstr "Add section"
 
 msgid "Add sizing field"
 msgstr "Add sizing field"
+
 msgid "Add Term"
 msgstr "Add Term"
 
@@ -580,10 +581,11 @@ msgstr "ADT Package"
 msgid "ADT Studio uses your own API keys to run the pipeline. Keys are stored locally on this device and never sent anywhere else."
 msgstr "ADT Studio uses your own API keys to run the pipeline. Keys are stored locally on this device and never sent anywhere else."
 
-msgid "Advanced"
-msgstr "Advanced"
 msgid "ADT_DEBUG=1"
 msgstr "ADT_DEBUG=1"
+
+msgid "Advanced"
+msgstr "Advanced"
 
 msgid "Adventure Tales - Vol. 1"
 msgstr "Adventure Tales - Vol. 1"
@@ -724,13 +726,14 @@ msgstr "API Key Settings"
 msgid "API Keys"
 msgstr "API Keys"
 
-msgid "Appearance"
-msgstr "Appearance"
 msgid "API Logs"
 msgstr "API Logs"
 
 msgid "API logs are only available in the desktop app."
 msgstr "API logs are only available in the desktop app."
+
+msgid "Appearance"
+msgstr "Appearance"
 
 msgid "Application Programming Interface — a set of rules that allows programs to communicate."
 msgstr "Application Programming Interface — a set of rules that allows programs to communicate."
@@ -1506,10 +1509,11 @@ msgstr "Description"
 msgid "Description..."
 msgstr "Description..."
 
-msgid "Desktop"
-msgstr "Desktop"
 msgid "Deselect all"
 msgstr "Deselect all"
+
+msgid "Desktop"
+msgstr "Desktop"
 
 msgid "Detecting figures"
 msgstr "Detecting figures"
@@ -1686,6 +1690,13 @@ msgstr "Edits go to this Tailwind variant prefix"
 
 msgid "Element style editor"
 msgstr "Element style editor"
+
+#~ msgid "elements"
+#~ msgstr "elements"
+
+msgid "Elements"
+msgstr "Elements"
+
 msgid "Emoji"
 msgstr "Emoji"
 
@@ -2109,6 +2120,7 @@ msgstr "Heading"
 
 msgid "Height"
 msgstr "Height"
+
 msgid "Hide"
 msgstr "Hide"
 
@@ -2617,17 +2629,18 @@ msgstr "margin"
 
 msgid "Margin"
 msgstr "Margin"
+
 msgid "Match Design"
 msgstr "Match Design"
 
 msgid "Match each stage of the water cycle to its definition:"
 msgstr "Match each stage of the water cycle to its definition:"
 
-msgid "Max Iterations"
-msgstr "Max Iterations"
-
 msgid "Max height"
 msgstr "Max height"
+
+msgid "Max Iterations"
+msgstr "Max Iterations"
 
 msgid "Max Refinements"
 msgstr "Max Refinements"
@@ -2644,10 +2657,11 @@ msgstr "Max Size (px)"
 msgid "Max width"
 msgstr "Max width"
 
-#~ msgid "Maximum number of reviewer passes after the initial sectioning. Set to 0 to disable refinement."
-#~ msgstr "Maximum number of reviewer passes after the initial sectioning. Set to 0 to disable refinement."
 msgid "Maximize"
 msgstr "Maximize"
+
+#~ msgid "Maximum number of reviewer passes after the initial sectioning. Set to 0 to disable refinement."
+#~ msgstr "Maximum number of reviewer passes after the initial sectioning. Set to 0 to disable refinement."
 
 msgid "Meaningfulness Prompt"
 msgstr "Meaningfulness Prompt"
@@ -2729,6 +2743,7 @@ msgstr "Min Size (px)"
 
 msgid "Min width"
 msgstr "Min width"
+
 msgid "Minimize"
 msgstr "Minimize"
 
@@ -3642,17 +3657,8 @@ msgstr "Render Reasoning"
 msgid "Render Strategy"
 msgstr "Render Strategy"
 
-msgid "rendering"
-msgstr "rendering"
-
-msgid "elements"
-msgstr "elements"
-
-msgid "style"
-msgstr "style"
-
-msgid "text"
-msgstr "text"
+#~ msgid "rendering"
+#~ msgstr "rendering"
 
 msgid "Rendering Prompt"
 msgstr "Rendering Prompt"
@@ -3934,12 +3940,6 @@ msgstr "section"
 msgid "Section"
 msgstr "Section"
 
-msgid "Sections"
-msgstr "Sections"
-
-msgid "Elements"
-msgstr "Elements"
-
 #. placeholder {0}: String(group.sectionIndex + 1)
 #. placeholder {0}: String(i + 1)
 #. placeholder {0}: i + 1
@@ -3997,6 +3997,9 @@ msgstr "Sectioning Reasoning"
 
 msgid "sections"
 msgstr "sections"
+
+msgid "Sections"
+msgstr "Sections"
 
 msgid "See examples"
 msgstr "See examples"
@@ -4337,13 +4340,14 @@ msgstr "Storybook"
 msgid "Stretch"
 msgstr "Stretch"
 
+msgid "Strict"
+msgstr "Strict"
+
 msgid "Strikethrough"
 msgstr "Strikethrough"
 
 #~ msgid "Structural containers the LLM can use when building the page tree (paragraphs, lists, tables, activities, etc.)."
 #~ msgstr "Structural containers the LLM can use when building the page tree (paragraphs, lists, tables, activities, etc.)."
-msgid "Strict"
-msgstr "Strict"
 
 msgid "Structure"
 msgstr "Structure"
@@ -4359,6 +4363,9 @@ msgstr "Structured chapters, exercises. Best for educational content with comple
 
 msgid "Structured HTML"
 msgstr "Structured HTML"
+
+#~ msgid "style"
+#~ msgstr "style"
 
 msgid "Style"
 msgstr "Style"
@@ -4452,6 +4459,9 @@ msgstr "Template-based"
 
 msgid "Terms marked with an asterisk (*) are defined by the ISO standard and may differ from colloquial usage in other fields."
 msgstr "Terms marked with an asterisk (*) are defined by the ISO standard and may differ from colloquial usage in other fields."
+
+#~ msgid "text"
+#~ msgstr "text"
 
 msgid "Text"
 msgstr "Text"
@@ -4838,8 +4848,8 @@ msgstr "Unprune image"
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
 
-msgid "Unsaved:"
-msgstr "Unsaved:"
+#~ msgid "Unsaved:"
+#~ msgstr "Unsaved:"
 
 msgid "Untangling nested divs with care..."
 msgstr "Untangling nested divs with care..."
