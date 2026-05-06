@@ -1,6 +1,17 @@
 import { createHash } from "node:crypto"
 import fs from "node:fs"
+import os from "node:os"
 import path from "node:path"
+import { fileURLToPath } from "node:url"
+
+/**
+ * Tailwind v4 resolves `@import "tailwindcss"` relative to the postcss `from`
+ * path. webAssetsDir / book directories don't have their own node_modules,
+ * so we route the postcss invocation through this package's own directory
+ * where tailwindcss + @tailwindcss/postcss are installed.
+ */
+const PIPELINE_PACKAGE_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
+const TAILWIND_VIRTUAL_FROM = path.join(PIPELINE_PACKAGE_DIR, "_tailwind_input.css")
 import { parseDocument, DomUtils } from "htmlparser2"
 import temml from "temml"
 import type { Storage } from "@adt/storage"
@@ -1668,48 +1679,35 @@ async function buildTailwindCss(
 
   // Dynamic imports to avoid issues if not installed
   const postcss = (await import("postcss")).default
-  const tailwindcss = (await import("tailwindcss")).default
+  // @tailwindcss/postcss is the Tailwind v4 plugin. Theme/colors live in CSS
+  // (tailwind_css.css → globals.css) via the @theme inline directive, so the
+  // plugin needs no JS-side config.
+  const tailwindcss = (await import("@tailwindcss/postcss")).default
 
   const inputCssPath = path.join(webAssetsDir, "tailwind_css.css")
   const inputCss = fs.existsSync(inputCssPath)
     ? fs.readFileSync(inputCssPath, "utf-8")
-    : "@tailwind base;\n@tailwind components;\n@tailwind utilities;"
+    : '@import "tailwindcss";'
 
-  const tailwindConfig = {
-    content: [
-      path.join(adtDir, "**/*.html"),
-      path.join(adtDir, "**/*.js"),
-    ],
-    theme: {
-      extend: {
-        keyframes: {
-          tutorialPopIn: {
-            "0%": { opacity: "0", transform: "scale(0.9)" },
-            "100%": { opacity: "1", transform: "scale(1)" },
-          },
-          pulseBorder: {
-            "0%": { boxShadow: "0 0 0 0 rgba(49,130,206,0.7)" },
-            "70%": { boxShadow: "0 0 0 10px rgba(49,130,206,0)" },
-            "100%": { boxShadow: "0 0 0 0 rgba(49,130,206,0)" },
-          },
-        },
-        animation: {
-          tutorialPopIn: "tutorialPopIn 0.3s ease-out forwards",
-          pulseBorder: "pulseBorder 2s infinite",
-        },
-        boxShadow: {
-          tutorial: "0 0 0 4px rgba(49,130,206,0.3)",
-        },
-      },
-    },
-    plugins: [],
-  }
+  // Inject content sources via @source directives. Tailwind v4 scans only
+  // files on disk, so compiled chrome bundles + book HTML files are
+  // referenced by absolute path.
+  const sourceDirectives = [
+    `@source "${toPosix(path.join(adtDir, "**/*.html"))}";`,
+    `@source "${toPosix(path.join(adtDir, "**/*.js"))}";`,
+  ].join("\n")
 
-  const result = await postcss([tailwindcss(tailwindConfig)]).process(inputCss, {
-    from: undefined,
-  })
+  const result = await postcss([tailwindcss({ base: adtDir })]).process(
+    `${sourceDirectives}\n${inputCss}`,
+    { from: TAILWIND_VIRTUAL_FROM },
+  )
 
   fs.writeFileSync(outputPath, result.css)
+}
+
+/** Convert Windows backslashes to forward slashes for `@source` paths. */
+function toPosix(p: string): string {
+  return p.replace(/\\/g, "/")
 }
 
 /**
@@ -1721,59 +1719,37 @@ export async function buildPreviewTailwindCss(
   webAssetsDir: string,
 ): Promise<string> {
   const postcss = (await import("postcss")).default
-  const tailwindcss = (await import("tailwindcss")).default
+  const tailwindcss = (await import("@tailwindcss/postcss")).default
 
   const inputCssPath = path.join(webAssetsDir, "tailwind_css.css")
   const inputCss = fs.existsSync(inputCssPath)
     ? fs.readFileSync(inputCssPath, "utf-8")
-    : "@tailwind base;\n@tailwind components;\n@tailwind utilities;"
+    : '@import "tailwindcss";'
 
-  // Also scan the ADT bundle assets for Tailwind classes used by the interface
-  const contentSources: Array<{ raw: string; extension: string }> = [
-    { raw: contentHtml, extension: "html" },
-  ]
-  for (const file of ["interface.html", "base.bundle.min.js"]) {
-    const filePath = path.join(webAssetsDir, file)
-    if (fs.existsSync(filePath)) {
-      contentSources.push({
-        raw: fs.readFileSync(filePath, "utf-8"),
-        extension: path.extname(file).slice(1),
-      })
-    }
+  // Tailwind v4 scans files on disk only — there's no equivalent to v3's
+  // `content: [{ raw, extension }]`. For dynamic content (HTML built from
+  // the DB rows), write to a temp file and reference it via @source.
+  // For chrome classes, scan apps/adt-runtime/src directly so JSX class
+  // strings are picked up before they get minified into the bundle.
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "adt-twv4-"))
+  const tempHtml = path.join(tempDir, "preview-content.html")
+  fs.writeFileSync(tempHtml, contentHtml)
+
+  const sourceDirectives = [
+    `@source "${toPosix(tempHtml)}";`,
+    `@source "${toPosix(path.resolve(webAssetsDir, "../../apps/adt-runtime/src"))}";`,
+    `@source "${toPosix(path.join(webAssetsDir, "base.bundle.min.js"))}";`,
+  ].join("\n")
+
+  try {
+    const result = await postcss([tailwindcss({ base: webAssetsDir })]).process(
+      `${sourceDirectives}\n${inputCss}`,
+      { from: TAILWIND_VIRTUAL_FROM },
+    )
+    return result.css
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true })
   }
-
-  const tailwindConfig = {
-    content: contentSources,
-    theme: {
-      extend: {
-        keyframes: {
-          tutorialPopIn: {
-            "0%": { opacity: "0", transform: "scale(0.9)" },
-            "100%": { opacity: "1", transform: "scale(1)" },
-          },
-          pulseBorder: {
-            "0%": { boxShadow: "0 0 0 0 rgba(49,130,206,0.7)" },
-            "70%": { boxShadow: "0 0 0 10px rgba(49,130,206,0)" },
-            "100%": { boxShadow: "0 0 0 0 rgba(49,130,206,0)" },
-          },
-        },
-        animation: {
-          tutorialPopIn: "tutorialPopIn 0.3s ease-out forwards",
-          pulseBorder: "pulseBorder 2s infinite",
-        },
-        boxShadow: {
-          tutorial: "0 0 0 4px rgba(49,130,206,0.3)",
-        },
-      },
-    },
-    plugins: [],
-  }
-
-  const result = await postcss([tailwindcss(tailwindConfig)]).process(inputCss, {
-    from: undefined,
-  })
-
-  return result.css
 }
 
 // ---------------------------------------------------------------------------
@@ -1784,54 +1760,32 @@ async function buildJsBundle(
   webAssetsDir: string,
   outputAssetsDir: string,
 ): Promise<void> {
-  // In Tauri sidecar mode, esbuild cannot run inside the pkg binary.
-  // bundle.mjs pre-builds base.bundle.min.js + base.bundle.local.js into
-  // webAssetsDir before zipping.  Copy whichever pre-built files exist,
-  // then fall through to esbuild for any that are missing (common in dev mode
-  // where bundle.mjs hasn't been run).
+  // The runtime bundle is produced by apps/adt-runtime/build.config.mjs and
+  // emitted into webAssetsDir as base.bundle.min.js (ESM) +
+  // base.bundle.local.js (IIFE). bundle.mjs pre-builds these for sidecar
+  // mode (esbuild can't run inside the pkg binary). In dev mode we trigger
+  // the build script on-demand if the pre-built files are missing.
   const preBuiltEsm = path.join(webAssetsDir, "base.bundle.min.js")
   const preBuiltIife = path.join(webAssetsDir, "base.bundle.local.js")
 
-  const hasPreBuiltEsm = fs.existsSync(preBuiltEsm)
-  const hasPreBuiltIife = fs.existsSync(preBuiltIife)
+  if (!fs.existsSync(preBuiltEsm) || !fs.existsSync(preBuiltIife)) {
+    // Resolve apps/adt-runtime/build.config.mjs relative to webAssetsDir
+    // (which is typically <monorepo>/assets/adt). The script writes the
+    // bundles back into webAssetsDir.
+    const buildScript = path.resolve(
+      webAssetsDir,
+      "../../apps/adt-runtime/build.config.mjs",
+    )
+    if (fs.existsSync(buildScript)) {
+      await import(`${buildScript}?t=${Date.now()}`)
+    }
+  }
 
-  if (hasPreBuiltEsm) {
+  if (fs.existsSync(preBuiltEsm)) {
     fs.copyFileSync(preBuiltEsm, path.join(outputAssetsDir, "base.bundle.min.js"))
   }
-  if (hasPreBuiltIife) {
+  if (fs.existsSync(preBuiltIife)) {
     fs.copyFileSync(preBuiltIife, path.join(outputAssetsDir, "base.bundle.local.js"))
-  }
-
-  // Both pre-built — nothing left to do
-  if (hasPreBuiltEsm && hasPreBuiltIife) return
-
-  // Build any missing bundles with esbuild
-  const esbuild = await import("esbuild")
-  const entryPoint = path.join(webAssetsDir, "base.js")
-  if (!fs.existsSync(entryPoint)) return // skip if no source
-
-  if (!hasPreBuiltEsm) {
-    await esbuild.build({
-      entryPoints: [entryPoint],
-      bundle: true,
-      minify: true,
-      sourcemap: true,
-      format: "esm",
-      target: "es2020",
-      outfile: path.join(outputAssetsDir, "base.bundle.min.js"),
-    })
-  }
-
-  if (!hasPreBuiltIife) {
-    // IIFE version for file:// offline use (no ES module export)
-    await esbuild.build({
-      entryPoints: [entryPoint],
-      bundle: true,
-      minify: true,
-      format: "iife",
-      target: "es2020",
-      outfile: path.join(outputAssetsDir, "base.bundle.local.js"),
-    })
   }
 }
 
@@ -1974,8 +1928,10 @@ function generateOfflinePreloader(
   }
 
   // Shared files
-  const interfaceHtml = readTextSafe("assets/interface.html")
-  if (interfaceHtml !== null) inline["./assets/interface.html"] = interfaceHtml
+  // Note: interface.html is no longer emitted — the React runtime mounts
+  // the chrome imperatively into <div id="interface-container">, so there's
+  // nothing to inline. The legacy fragment was inlined here to avoid an
+  // extra round-trip on page load; that round-trip no longer exists.
 
   for (const rel of [
     "assets/config.json",

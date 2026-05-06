@@ -3,8 +3,10 @@ import { isElectron } from "@/lib/utils"
 
 export type DesktopOS = "windows" | "macos" | "linux"
 
-function resolveDesktopOS(): DesktopOS {
-  if (isElectron() && typeof window !== "undefined" && window.api?.platform) {
+function resolveDesktopOS(): DesktopOS | 'Browser' {
+  if (!isElectron()) return "Browser"
+
+  if (typeof window !== "undefined" && window.api?.platform) {
     switch (window.api.platform) {
       case "darwin":
         return "macos"
@@ -25,6 +27,6 @@ function resolveDesktopOS(): DesktopOS {
 /**
  * Detected desktop OS. Stable across renders — platform can't change at runtime.
  */
-export function usePlatform(): DesktopOS {
+export function usePlatform(): DesktopOS | 'Browser' {
   return useMemo(() => resolveDesktopOS(), [])
 }

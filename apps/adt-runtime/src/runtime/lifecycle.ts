@@ -1,0 +1,188 @@
+/**
+ * Boot lifecycle — orchestrates the same sequence base.js used to run on
+ * `DOMContentLoaded`, but expressed as a single async function that yields
+ * back to React for rendering.
+ *
+ * Sequence:
+ *   1. addFavicons()
+ *   2. loadAppConfig() → window.appConfig + appConfigAtom
+ *   3. setStorageMode() — picks cookie vs localStorage based on the config
+ *   4. Resolve current language against config + persisted preference
+ *   5. loadTranslations() — interface + content catalogs
+ *   6. loadPagesManifest(), loadTocManifest()
+ *   7. resolveCurrentSection() from <meta name="title-id">
+ *   8. initAnalytics() — fire and forget
+ *   9. installShowContentFallback() — safety net
+ */
+import { getDefaultStore } from "jotai"
+import { addFavicons } from "./favicon"
+import { loadAppConfig, pickLanguage, pickStorageMode } from "./config"
+import { applyImageVariants, applyTranslationsToDOM, loadTranslations } from "./i18n"
+import { loadPagesManifest, loadTocManifest } from "./manifest-loader"
+import { loadGlossary } from "./glossary-loader"
+import { loadTimecodes } from "./tts-loader"
+import { setStorageMode } from "@/state/persist"
+import { appConfigAtom } from "@/state/config.atoms"
+import {
+  currentLanguageAtom,
+  imageFilesAtom,
+  translationsAtom,
+} from "@/state/language.atoms"
+import { easyReadModeAtom, glossaryModeAtom } from "@/state/ui.atoms"
+import { glossaryDataAtom } from "@/state/glossary.atoms"
+import {
+  currentPageNumberAtom,
+  currentSectionIdAtom,
+  pagesAtom,
+  tocAtom,
+} from "@/state/nav.atoms"
+import {
+  applyGlossaryHighlights,
+  removeGlossaryHighlights,
+} from "@/lib/glossary/highlight"
+import { initAnalytics } from "@/lib/analytics"
+import { installShowContentFallback, showMainContent } from "@/lib/errors"
+
+function readCurrentSectionId(): string | null {
+  if (typeof document === "undefined") return null
+  return (
+    document.querySelector('meta[name="title-id"]')?.getAttribute("content") ?? null
+  )
+}
+
+function readCurrentPageNumber(): number | null {
+  const meta = document
+    .querySelector('meta[name="page-section-id"]')
+    ?.getAttribute("content")
+  const num = meta ? Number.parseInt(meta, 10) : Number.NaN
+  return Number.isFinite(num) ? num : null
+}
+
+function readPersistedLanguage(): string | null {
+  // Cookie/localStorage are both checked by the persist adapter once the
+  // mode is set; here we just want a best-effort hint pre-mode.
+  if (typeof document === "undefined") return null
+  const fromLs =
+    typeof localStorage !== "undefined" ? localStorage.getItem("currentLanguage") : null
+  const fromCookie = (() => {
+    const match = document.cookie.match(/(?:^|;\s*)currentLanguage=([^;]+)/)
+    return match ? decodeURIComponent(match[1]) : null
+  })()
+  const raw = fromLs ?? fromCookie
+  if (!raw) return null
+  // atomWithStorage persists via createJSONStorage, so a plain string like
+  // `pt-BR` gets stored as the literal `"pt-BR"` (JSON-encoded with quotes).
+  // Decode here so the value matches the unquoted entries in
+  // config.languages.available — otherwise pickLanguage falls back to the
+  // default on every navigation.
+  try {
+    const parsed = JSON.parse(raw)
+    return typeof parsed === "string" ? parsed : raw
+  } catch {
+    return raw
+  }
+}
+
+export async function bootRuntime(): Promise<void> {
+  installShowContentFallback()
+  addFavicons()
+
+  const config = await loadAppConfig()
+  const store = getDefaultStore()
+  store.set(appConfigAtom, config)
+  setStorageMode(pickStorageMode(config))
+
+  const htmlLang = document.documentElement.getAttribute("lang")
+  const persisted = readPersistedLanguage()
+  const language = pickLanguage(config, persisted, htmlLang)
+  store.set(currentLanguageAtom, language)
+
+  const [, pages, toc] = await Promise.all([
+    loadTranslations(language, config.bundleVersion),
+    loadPagesManifest(config.bundleVersion),
+    loadTocManifest(config.bundleVersion),
+    // Both fire-and-forget: missing glossary / timecode files are non-fatal.
+    // Atoms default to {} so consumers degrade gracefully (empty glossary
+    // panel, approximate word timings via the tokenizer).
+    loadGlossary(language, config.bundleVersion),
+    loadTimecodes(language, config.bundleVersion),
+  ])
+  store.set(pagesAtom, pages)
+  store.set(tocAtom, toc)
+  store.set(currentSectionIdAtom, readCurrentSectionId())
+  store.set(currentPageNumberAtom, readCurrentPageNumber())
+
+  // Apply translations to the static `#content` DOM. Chrome (React) reads
+  // from atoms via t(), but the page's content HTML uses `data-id` markers
+  // that the legacy runtime mutated in place. Mirror that here so swapping
+  // languages updates the page text without a full reload.
+  applyDOMTranslations()
+
+  initAnalytics(config.analytics)
+  showMainContent()
+}
+
+/**
+ * Apply the latest translations + image variants to the static content DOM,
+ * then re-apply glossary highlights when the toggle is on.
+ *
+ * Order matters: `applyTranslationsToDOM` rewrites `innerHTML` of every
+ * `[data-id]` element, which would otherwise destroy any glossary highlight
+ * spans nested inside them. Running the highlighter as the final step makes
+ * sure the visible state is "translated text + highlighted terms" regardless
+ * of the order in which the translation / glossary fetches resolve.
+ *
+ * Reads atom state at call time so it can be triggered both on boot and
+ * whenever the language / easy-read toggle changes.
+ */
+function applyDOMTranslations(): void {
+  const store = getDefaultStore()
+  const translations = store.get(translationsAtom)
+  const images = store.get(imageFilesAtom)
+  const easyReadMode = store.get(easyReadModeAtom) as boolean
+  applyTranslationsToDOM(translations, { easyReadMode })
+  applyImageVariants(images)
+
+  const glossaryEnabled = store.get(glossaryModeAtom) as boolean
+  if (glossaryEnabled) {
+    const glossaryData = store.get(glossaryDataAtom)
+    // Always wipe stale spans first so a re-apply (e.g. on language change)
+    // doesn't compound or skip already-marked base forms.
+    removeGlossaryHighlights()
+    if (Object.keys(glossaryData).length > 0) {
+      applyGlossaryHighlights(glossaryData)
+    }
+  }
+}
+
+/**
+ * Subscribe to language and easy-read changes after boot. When the user picks
+ * a new language from the sidebar, reload translations and re-apply them to
+ * the static content DOM without a full page navigation. Easy-read toggling
+ * just re-applies (no re-fetch needed — both variants live in the same dict).
+ */
+export function subscribeLanguageChanges(): () => void {
+  const store = getDefaultStore()
+  // currentLanguageAtom is sync (atomWithStorage with getOnInit), but the
+  // Jotai type still includes Promise<T> in its read signature; cast away.
+  let lastLanguage = store.get(currentLanguageAtom) as string
+
+  const unsubLanguage = store.sub(currentLanguageAtom, () => {
+    const next = store.get(currentLanguageAtom) as string
+    if (next === lastLanguage) return
+    lastLanguage = next
+    const config = store.get(appConfigAtom)
+    void Promise.all([
+      loadTranslations(next, config.bundleVersion),
+      loadGlossary(next, config.bundleVersion),
+      loadTimecodes(next, config.bundleVersion),
+    ]).then(() => applyDOMTranslations())
+  })
+
+  const unsubEasyRead = store.sub(easyReadModeAtom, () => applyDOMTranslations())
+
+  return () => {
+    unsubLanguage()
+    unsubEasyRead()
+  }
+}
