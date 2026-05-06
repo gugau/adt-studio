@@ -13,7 +13,7 @@ export function WindowsControls({
 }) {
   const { t } = useLingui()
   const platform = usePlatform()
-  const { isMaximized, minimize, toggleMaximize, close } = useWindowControls()
+  const { available ,isMaximized, minimize, toggleMaximize, close } = useWindowControls()
 
   const tone =
     variant === "dark"
@@ -25,7 +25,7 @@ export function WindowsControls({
   const baseButton =
     "flex items-center justify-center w-[46px] h-full transition-colors focus:outline-none"
 
-  if (platform !== "windows") return null
+  if (platform !== "windows" || !available) return null
 
   return (
     <div

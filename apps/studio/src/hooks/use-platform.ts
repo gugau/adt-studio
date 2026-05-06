@@ -1,11 +1,8 @@
 import { useMemo } from "react"
-import { isElectron } from "@/lib/utils"
 
 export type DesktopOS = "windows" | "macos" | "linux"
 
-function resolveDesktopOS(): DesktopOS | 'Browser' {
-  if (!isElectron()) return "Browser"
-
+function resolveDesktopOS(): DesktopOS {
   if (typeof window !== "undefined" && window.api?.platform) {
     switch (window.api.platform) {
       case "darwin":
@@ -27,6 +24,6 @@ function resolveDesktopOS(): DesktopOS | 'Browser' {
 /**
  * Detected desktop OS. Stable across renders — platform can't change at runtime.
  */
-export function usePlatform(): DesktopOS | 'Browser' {
+export function usePlatform(): DesktopOS {
   return useMemo(() => resolveDesktopOS(), [])
 }
