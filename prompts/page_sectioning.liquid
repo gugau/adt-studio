@@ -97,6 +97,7 @@ Use these to disambiguate activity types:
 6. Tables: use `table` → `table_row` → `table_cell`. Cells in left-to-right order within each row; rows in top-to-bottom order.
 7. Lists: use `list` → `list_item`. A list_item's children are the leaves or containers inside the item.
 8. Poetry / preformatted: use `preformatted` where line breaks matter; each line is a text leaf child.
+9. Letter-by-letter cells / crossword grids: when a row or column shows visually distinct boxes (or crossword-style cells) where each box contains a single character (or is meant to hold one), emit ONE leaf PER CELL — never a single merged leaf containing the whole word. The natural reading order across cells determines node ordering. Example: a 7-cell row visibly showing "R E C E T A S" must produce 7 sibling leaves, one per letter, NOT one leaf with text `"R E C E T A S"`. Empty cells (visually blank boxes) emit a leaf with text `"_"`. Exception: a single full-width writable line beside a prompt (e.g. `"Nombre: ___"`) is ONE leaf — the multi-cell rule only applies when there are visually distinct per-character boxes.
 
 ## Text extraction rules
 
@@ -182,6 +183,56 @@ Do NOT split in any of these cases:
     { "role": "caption", "text": "Figure 3. The water cycle." }
   ]
 }
+```
+
+### image_group — WRONG vs RIGHT
+
+WRONG (image alone in image_group — should be a bare image leaf):
+```json
+{ "structure": "image_group", "children": [
+  { "role": "image", "image_id": "p3_img002" }
+]}
+```
+
+RIGHT (no caption/label/overlay → bare image):
+```json
+{ "role": "image", "image_id": "p3_img002" }
+```
+
+WRONG (caption first, image second):
+```json
+{ "structure": "image_group", "children": [
+  { "role": "caption", "text": "Figure 3." },
+  { "role": "image", "image_id": "p3_img002" }
+]}
+```
+
+RIGHT (image first, then caption):
+```json
+{ "structure": "image_group", "children": [
+  { "role": "image", "image_id": "p3_img002" },
+  { "role": "caption", "text": "Figure 3." }
+]}
+```
+
+### Letter-by-letter cells (crossword / per-character grid)
+
+WRONG (one merged leaf for the whole row):
+```json
+{ "role": "activity_fill_in_the_blank", "text": "R E C E T A S" }
+```
+
+RIGHT (one leaf per cell, in reading order):
+```json
+{ "structure": "activity", "children": [
+  { "role": "activity_fill_in_the_blank", "text": "R" },
+  { "role": "activity_fill_in_the_blank", "text": "E" },
+  { "role": "activity_fill_in_the_blank", "text": "C" },
+  { "role": "activity_fill_in_the_blank", "text": "E" },
+  { "role": "activity_fill_in_the_blank", "text": "T" },
+  { "role": "activity_fill_in_the_blank", "text": "A" },
+  { "role": "activity_fill_in_the_blank", "text": "S" }
+]}
 ```
 
 ### Image as background with text overlaid on top

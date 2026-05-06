@@ -9,6 +9,7 @@ import { ConfigTab } from "@/components/debug/ConfigTab"
 import { VersionsTab } from "@/components/debug/VersionsTab"
 import { DebugTabsNav } from "@/components/debug/DebugTabsNav"
 import { normalizeDebugTabValue, type DebugTabValue } from "@/components/debug/debug-panel-state"
+import { ApiLogsTab } from "@/components/debug/api-logs-tab"
 
 export const Route = createFileRoute("/books/$label/debug")({
   component: DebugPage,
@@ -67,6 +68,9 @@ function DebugPage() {
           </TabsContent>
           <TabsContent value="versions" className="m-0">
             <VersionsTab label={label} />
+          </TabsContent>
+          <TabsContent value="api-logs" className="m-0">
+            <ApiLogsTab label={label} />
           </TabsContent>
         </div>
       </Tabs>

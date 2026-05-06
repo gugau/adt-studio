@@ -14,6 +14,7 @@ import {
   PageSectioningOutput,
 } from "@adt/types"
 import type { Storage, PageData } from "@adt/storage"
+import { getGlossaryItemTextId } from "./glossary.js"
 
 /** Zero-padded 3-digit number */
 function pad3(n: number): string {
@@ -136,7 +137,8 @@ function buildGlossaryEntries(storage: Storage): TextCatalogEntry[] {
   const entries: TextCatalogEntry[] = []
   for (let i = 0; i < data.items.length; i++) {
     const item = data.items[i]
-    const id = `gl${pad3(i + 1)}`
+    if (item.pruned) continue
+    const id = getGlossaryItemTextId(item, i)
     entries.push({ id, text: item.word })
     entries.push({ id: `${id}_def`, text: item.definition })
   }

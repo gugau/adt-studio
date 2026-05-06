@@ -41,6 +41,83 @@ export function stripHtml(html: string): string {
   return text.replace(/\s+/g, " ").trim()
 }
 
+function normalizeGlossaryWord(word: string): string {
+  return word.trim().toLocaleLowerCase()
+}
+
+export function getGlossaryItemTextId(item: Pick<GlossaryItem, "id">, index: number): string {
+  return item.id?.trim() || `gl${String(index + 1).padStart(3, "0")}`
+}
+
+export function isManualGlossaryItem(item: Pick<GlossaryItem, "source">): boolean {
+  return item.source === "manual"
+}
+
+export function isPrunedGlossaryItem(item: Pick<GlossaryItem, "pruned">): boolean {
+  return item.pruned === true
+}
+
+export function getPrunedGlossaryWords(items: GlossaryItem[]): string[] {
+  return items.filter(isPrunedGlossaryItem).map((item) => item.word)
+}
+
+export function mergeGeneratedGlossaryWithManualItems(
+  generated: GlossaryOutput,
+  existingItems: GlossaryItem[],
+): GlossaryOutput {
+  const manualItems = existingItems.filter(isManualGlossaryItem)
+  const prunedItems = existingItems.filter(
+    (item) => isPrunedGlossaryItem(item) && !isManualGlossaryItem(item),
+  )
+  const prunedWords = new Set(prunedItems.map((item) => normalizeGlossaryWord(item.word)))
+
+  // Drop any generated item that matches a pruned word (server-side backstop
+  // in case the LLM ignores the excluded-words instruction).
+  const filteredGenerated = prunedWords.size > 0
+    ? generated.items.filter((item) => !prunedWords.has(normalizeGlossaryWord(item.word)))
+    : generated.items
+
+  const mergedItems = [...filteredGenerated]
+  const existingIndexByWord = new Map(
+    mergedItems.map((item, index) => [normalizeGlossaryWord(item.word), index]),
+  )
+
+  for (const manualItem of manualItems) {
+    const normalizedWord = normalizeGlossaryWord(manualItem.word)
+    const existingIndex = existingIndexByWord.get(normalizedWord)
+    if (existingIndex !== undefined) {
+      const generatedItem = mergedItems[existingIndex]
+      mergedItems[existingIndex] = {
+        ...generatedItem,
+        ...manualItem,
+        id: getGlossaryItemTextId(generatedItem, existingIndex),
+        source: "manual",
+      }
+      continue
+    }
+
+    mergedItems.push({
+      ...manualItem,
+      source: "manual",
+    })
+  }
+
+  // Re-add pruned AI items so the user can still see / unprune them.
+  const wordsInMerged = new Set(mergedItems.map((item) => normalizeGlossaryWord(item.word)))
+  for (const prunedItem of prunedItems) {
+    const normalizedWord = normalizeGlossaryWord(prunedItem.word)
+    if (!wordsInMerged.has(normalizedWord)) {
+      mergedItems.push({ ...prunedItem, source: prunedItem.source ?? "ai", pruned: true })
+      wordsInMerged.add(normalizedWord)
+    }
+  }
+
+  return {
+    ...generated,
+    items: mergedItems,
+  }
+}
+
 interface PageText {
   pageNumber: number
   text: string
@@ -86,13 +163,17 @@ export interface GenerateGlossaryOptions {
   llmModel: LLMModel
   concurrency?: number
   onBatchComplete?: (completed: number, total: number) => void
+  /** Words the LLM should not re-suggest. Items returned matching one of these
+   * are also dropped server-side as a backstop. */
+  excludedWords?: string[]
 }
 
 export async function generateGlossary(
   options: GenerateGlossaryOptions
 ): Promise<GlossaryOutput> {
-  const { storage, pages, config, llmModel, concurrency = 1, onBatchComplete } = options
+  const { storage, pages, config, llmModel, concurrency = 1, onBatchComplete, excludedWords = [] } = options
   const languageContext = buildLanguageContext(config.language)
+  const excludedWordsNormalized = new Set(excludedWords.map(normalizeGlossaryWord))
 
   const pageTexts = collectPageTexts(storage, pages)
   if (pageTexts.length === 0) {
@@ -123,6 +204,7 @@ export async function generateGlossary(
       context: {
         ...languageContext,
         pages: batch,
+        excluded_words: excludedWords,
       },
       maxRetries: config.maxRetries,
       maxTokens: 16384,
@@ -137,10 +219,13 @@ export async function generateGlossary(
     onBatchComplete?.(completed, batches.length)
   })
 
-  // Deduplicate: first definition wins, case-insensitive
+  // Deduplicate: first definition wins, case-insensitive. Drop any item whose
+  // word matches the caller-supplied exclusion list (backstop in case the LLM
+  // ignores the prompt instruction).
   const seen = new Map<string, GlossaryItem>()
   for (const item of allItems) {
     const key = item.word.toLowerCase()
+    if (excludedWordsNormalized.has(normalizeGlossaryWord(item.word))) continue
     if (!seen.has(key)) {
       seen.set(key, item)
     }
@@ -152,8 +237,71 @@ export async function generateGlossary(
   )
 
   return {
-    items,
+    items: items.map((item) => ({
+      ...item,
+      source: item.source ?? "ai",
+    })),
     pageCount: pageTexts.length,
     generatedAt: new Date().toISOString(),
+  }
+}
+
+export interface GenerateGlossaryItemOptions {
+  word: string
+  context?: string
+  candidateVariations?: string[]
+  config: GlossaryConfig
+  llmModel: LLMModel
+  /** Prompt name for the single-term prompt. Defaults to `glossary_one`. */
+  promptName?: string
+}
+
+export interface GeneratedGlossaryItemFields {
+  definition: string
+  variations: string[]
+  emojis: string[]
+}
+
+export async function generateGlossaryItem(
+  options: GenerateGlossaryItemOptions
+): Promise<GeneratedGlossaryItemFields> {
+  const { word, context, candidateVariations = [], config, llmModel } = options
+  const promptName = options.promptName ?? "glossary_one"
+  const languageContext = buildLanguageContext(config.language)
+
+  const result = await llmModel.generateObject<{
+    reasoning: string
+    items: GlossaryItem[]
+  }>({
+    schema: glossaryLLMSchema,
+    prompt: promptName,
+    context: {
+      ...languageContext,
+      word,
+      context: context ?? "",
+      candidate_variations: candidateVariations,
+    },
+    maxRetries: config.maxRetries,
+    maxTokens: 2048,
+    log: {
+      taskType: "glossary",
+      promptName,
+    },
+  })
+
+  const item = result.object.items[0]
+  if (!item) {
+    throw new Error(`LLM returned no glossary item for word: ${word}`)
+  }
+
+  const allowedVariations = new Set(
+    candidateVariations.map((v) => v.toLocaleLowerCase())
+  )
+  return {
+    definition: item.definition,
+    variations: item.variations.filter((v) =>
+      allowedVariations.has(v.toLocaleLowerCase())
+    ),
+    emojis: item.emojis,
   }
 }

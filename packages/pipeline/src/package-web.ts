@@ -13,7 +13,9 @@ import type {
   QuizGenerationOutput,
   BookSummaryOutput,
   BookMetadata,
+  SpeechConfig,
   TTSOutput,
+  WordTimestampOutput,
   TocGenerationOutput,
   Quiz,
   ImageCaptioningOutput,
@@ -21,6 +23,7 @@ import type {
 import { WebRenderingOutput as WebRenderingOutputSchema } from "@adt/types"
 import type { Progress } from "./progress.js"
 import { nullProgress } from "./progress.js"
+import { getGlossaryItemTextId } from "./glossary.js"
 import { getBaseLanguage, normalizeLocale } from "./language-context.js"
 import { buildTextCatalog } from "./text-catalog.js"
 import { normalizeHtmlSectionSemantics } from "./html-semantics.js"
@@ -34,6 +37,7 @@ export interface PackageAdtWebOptions {
   webAssetsDir: string
   bundleVersion?: string
   applyBodyBackground?: boolean
+  speechConfig?: SpeechConfig
   features?: {
     glossary?: boolean
     readAloud?: boolean
@@ -48,23 +52,65 @@ interface PageEntry {
   page_number?: number
 }
 
+interface RuntimeTimecodeEntry {
+  timecodes: [null, {
+    word_timestamps: Array<{ text: string; start: number; end: number }>
+  }]
+}
+
 // ---------------------------------------------------------------------------
 // Build-cache helpers
 // ---------------------------------------------------------------------------
 
-function collectDirectoryFingerprint(dirPath: string, prefix = ""): Array<[string, number]> {
+function collectDirectoryFingerprint(dirPath: string, prefix = ""): Array<[string, number, number]> {
   if (!fs.existsSync(dirPath)) return []
-  const entries: Array<[string, number]> = []
+  const entries: Array<[string, number, number]> = []
   for (const entry of fs.readdirSync(dirPath, { withFileTypes: true })) {
     const rel = prefix ? `${prefix}/${entry.name}` : entry.name
     if (entry.isDirectory()) {
       entries.push(...collectDirectoryFingerprint(path.join(dirPath, entry.name), rel))
     } else {
       const stat = fs.statSync(path.join(dirPath, entry.name))
-      entries.push([rel, stat.size])
+      entries.push([rel, stat.size, Math.trunc(stat.mtimeMs)])
     }
   }
   return entries
+}
+
+function getWordTimestamps(
+  storage: Storage,
+  language: string,
+): WordTimestampOutput | undefined {
+  const normalizedLanguage = normalizeLocale(language)
+  const legacyLanguage = normalizedLanguage.replace("-", "_")
+  const row =
+    storage.getLatestNodeData("tts-timestamps", normalizedLanguage) ??
+    storage.getLatestNodeData("tts-timestamps", legacyLanguage)
+  return row?.data as WordTimestampOutput | undefined
+}
+
+function buildRuntimeTimecodeMap(
+  timestamps: WordTimestampOutput | undefined,
+): Record<string, RuntimeTimecodeEntry> {
+  const map: Record<string, RuntimeTimecodeEntry> = {}
+
+  for (const [textId, entry] of Object.entries(timestamps?.entries ?? {})) {
+    if (entry.words.length === 0) continue
+    map[textId] = {
+      timecodes: [
+        null,
+        {
+          word_timestamps: entry.words.map((word) => ({
+            text: word.word,
+            start: word.start,
+            end: word.end,
+          })),
+        },
+      ],
+    }
+  }
+
+  return map
 }
 
 export interface ComputePackagingInputHashOptions {
@@ -100,7 +146,7 @@ export function computePackagingInputHash(options: ComputePackagingInputHashOpti
   // 3. Book config (affects rendering, accessibility, etc.)
   hash.update(JSON.stringify(options.config))
 
-  // 4. Web assets directory fingerprint (file names + sizes)
+  // 4. Web assets directory fingerprint (file names + sizes + mtimes)
   const assetEntries = collectDirectoryFingerprint(options.webAssetsDir).sort((a, b) => a[0].localeCompare(b[0]))
   hash.update(JSON.stringify(assetEntries))
 
@@ -140,6 +186,7 @@ export async function packageAdtWeb(
     webAssetsDir,
     bundleVersion = "1",
     applyBodyBackground,
+    speechConfig,
     features,
   } = options
   const language = normalizeLocale(rawLanguage)
@@ -392,6 +439,16 @@ export async function packageAdtWeb(
   progress.emit({ type: "step-progress", step, message: "Packaging translations and audio..." })
 
   const sourceLanguage = getBaseLanguage(language)
+  const hasTTS = (features?.readAloud !== false) && outputLanguages.some(
+    (lang) => {
+      const legacyLang = lang.replace("-", "_")
+      return (
+        storage.getLatestNodeData("tts", lang) !== null ||
+        storage.getLatestNodeData("tts", legacyLang) !== null
+      )
+    },
+  )
+  const highlightEnabled = hasTTS && speechConfig?.word_highlighting === true
 
   for (const lang of outputLanguages) {
     const localeDir = path.join(contentDir, "i18n", lang)
@@ -452,6 +509,16 @@ export async function packageAdtWeb(
     }
     writeJson(path.join(localeDir, "audios.json"), audioMap)
 
+    // timecode/timecode_output.json — word timings consumed by the reader runtime
+    const timecodeDir = path.join(localeDir, "timecode")
+    fs.mkdirSync(timecodeDir, { recursive: true })
+    writeJson(
+      path.join(timecodeDir, "timecode_output.json"),
+      highlightEnabled
+        ? buildRuntimeTimecodeMap(getWordTimestamps(storage, lang))
+        : {},
+    )
+
     // videos.json — map "video-{pageIndex}" → video filename for assigned sign language videos
     // The ADT JS runtime expects keys prefixed with "video-" and files in a "video/" directory.
     // Each video is assigned to a sectionId which maps 1:1 to a pageIndex.
@@ -479,6 +546,26 @@ export async function packageAdtWeb(
     }
     writeJson(path.join(localeDir, "videos.json"), videosMap)
 
+    // images.json — map original imageId → localized variant filename for this language.
+    // Variants are produced by the image-translation step and stored as
+    // `${sourceImageId}_tr_${languageCode}` in the book images directory.
+    const imagesMap: Record<string, string> = {}
+    const variantSuffix = `_tr_${lang.replace(/[^a-zA-Z0-9-]/g, "_")}`
+    for (const originalImageId of copiedImages) {
+      const variantId = `${originalImageId}${variantSuffix}`
+      const variantFilename = imageMap.get(variantId)
+      if (!variantFilename) continue
+      const destPath = path.join(imageDir, variantFilename)
+      if (!fs.existsSync(destPath)) {
+        fs.copyFileSync(
+          path.join(bookDir, "images", variantFilename),
+          destPath,
+        )
+      }
+      imagesMap[originalImageId] = variantFilename
+    }
+    writeJson(path.join(localeDir, "images.json"), imagesMap)
+
     if (features?.glossary !== false) {
       const glossaryJson = buildGlossaryJson(glossary, catalog, textsMap, baseLang === sourceLanguage)
       writeJson(path.join(localeDir, "glossary.json"), glossaryJson)
@@ -488,17 +575,8 @@ export async function packageAdtWeb(
   // ------------------------------------------------------------------
   // config.json
   // ------------------------------------------------------------------
-  const hasGlossary = (features?.glossary !== false) && (glossary !== undefined && glossary.items.length > 0)
+  const hasGlossary = (features?.glossary !== false) && (glossary !== undefined && glossary.items.some((item) => !item.pruned))
   const hasQuiz = (features?.quizzes !== false) && (quizData !== undefined && quizData.quizzes.length > 0)
-  const hasTTS = (features?.readAloud !== false) && outputLanguages.some(
-    (lang) => {
-      const legacyLang = lang.replace("-", "_")
-      return (
-        storage.getLatestNodeData("tts", lang) !== null ||
-        storage.getLatestNodeData("tts", legacyLang) !== null
-      )
-    },
-  )
 
   const hasSignLanguageVideos = (features?.signLanguage !== false) && storage.getSignLanguageVideos().some((v) => v.sectionId !== null)
 
@@ -522,7 +600,7 @@ export async function packageAdtWeb(
       notepad: false,
       state: true,
       characterDisplay: false,
-      highlight: false,
+      highlight: highlightEnabled,
       activities: hasQuiz || hasActivitySections,
     },
     analytics: {
@@ -876,6 +954,12 @@ export function renderPageHtml(opts: RenderPageOptions): string {
 
   const normalizedContent = promoteFirstHeadingToH1(opts.content)
 
+  // INVARIANT: every page MUST render all TTS-scannable content inside
+  // <div id="content">. The reader's gatherAudioElements scans #content for
+  // [data-id] elements to build the TTS queue; anything outside #content is
+  // invisible to read-aloud. skipContentWrapper is only safe when the source
+  // content already provides its own <div id="content"> wrapper.
+  //
   // When content already has <div id="content"> (LLM-generated), use it directly to avoid
   // a duplicate #content element.
   // Inject opacity-0 into the existing wrapper for the fade-in animation (skip in embed mode).
@@ -1326,7 +1410,8 @@ export function buildGlossaryJson(
 
   for (let i = 0; i < glossary.items.length; i++) {
     const item = glossary.items[i]
-    const glId = `gl${pad3(i + 1)}`
+    if (item.pruned) continue
+    const glId = getGlossaryItemTextId(item, i)
     const defId = `${glId}_def`
 
     // Use translated text if available, otherwise fall back to source
@@ -1792,7 +1877,7 @@ async function renderAgentsMd(
   let sampleGlossary: Record<string, unknown> | undefined
   if (ctx.glossary?.items?.length) {
     const item = ctx.glossary.items[0]
-    const glId = "gl001"
+    const glId = getGlossaryItemTextId(item, 0)
     sampleGlossary = {
       id: glId,
       defId: `${glId}_def`,
@@ -1910,7 +1995,13 @@ function generateOfflinePreloader(
     const itData = readJsonSafe(itPath)
     if (itData !== null) inline[`./${itPath}`] = itData
 
-    for (const file of ["texts.json", "audios.json", "videos.json", "glossary.json"]) {
+    for (const file of [
+      "texts.json",
+      "audios.json",
+      "videos.json",
+      "glossary.json",
+      "timecode/timecode_output.json",
+    ]) {
       const rel = `content/i18n/${lang}/${file}`
       const data = readJsonSafe(rel)
       if (data !== null) inline[`./${rel}`] = data

@@ -6,6 +6,13 @@
  *   try { ... } finally { await renderer.close() }
  */
 
+import { randomUUID } from "node:crypto"
+import {
+  screenshotIpcCloseSchema,
+  screenshotIpcReplySchema,
+  screenshotIpcRequestSchema,
+} from "@adt/types"
+
 export const SCREENSHOT_VIEWPORTS = [
   { label: "desktop", width: 1280, height: 800 },
   { label: "tablet",  width: 768,  height: 1024 },
@@ -42,7 +49,7 @@ export interface ScreenshotRenderer {
  *
  * Playwright is dynamically imported so startup does not eagerly load Chromium.
  */
-export async function createScreenshotRenderer(): Promise<ScreenshotRenderer> {
+export async function _createScreenshotRenderer(): Promise<ScreenshotRenderer> {
   // Dynamic import keeps this path lazy.
   const pw = await import("playwright" as string) as {
     chromium: {
@@ -55,7 +62,7 @@ export async function createScreenshotRenderer(): Promise<ScreenshotRenderer> {
     async screenshot(
       html: string,
       viewport = { width: 1024, height: 768 }
-    ): Promise<string> {
+    ): Promise<string> {  
       const context = await browser.newContext({ viewport })
       try {
         const page = await context.newPage()
@@ -71,6 +78,83 @@ export async function createScreenshotRenderer(): Promise<ScreenshotRenderer> {
 
     async close(): Promise<void> {
       await browser.close()
+    },
+  }
+}
+
+
+export async function createScreenshotRenderer(): Promise<ScreenshotRenderer> {
+  if (process.env?.ADT_ENVIRONMENT === 'electron') {
+    return _createElectronScreenshotRenderer()
+  }
+  return _createScreenshotRenderer()
+}
+
+type ParentPortLike = {
+  postMessage: (message: unknown) => void
+  on: (
+    event: "message",
+    listener: (ev: { data: unknown }) => void
+  ) => void
+  off: (
+    event: "message",
+    listener: (ev: { data: unknown }) => void
+  ) => void
+}
+
+function utilityParentPort(): ParentPortLike | null {
+  const proc = process as NodeJS.Process & { type?: string; parentPort?: ParentPortLike }
+  if (proc.type !== "utility" || !process.versions.electron) return null
+  const p = proc.parentPort
+  if (!p || typeof p.postMessage !== "function") return null
+  if (typeof p.on !== "function" || typeof p.off !== "function") return null
+  return p
+}
+
+/**
+ * Electron `utilityProcess.fork` child: talk to main via `process.parentPort`.
+ * `process.send` / `process.on("message")` are for Node `child_process.fork` only — they do not wire to main here.
+ */
+export async function _createElectronScreenshotRenderer(): Promise<ScreenshotRenderer> {
+  const parentPort = utilityParentPort()
+  if (!parentPort) {
+    throw new Error(
+      "Electron screenshots require a utility process (process.parentPort). Use utilityProcess.fork for the API, not child_process.fork."
+    )
+  }
+
+  return {
+    async screenshot(
+      html: string,
+      viewport = { width: 1024, height: 768 }
+    ): Promise<string> {
+      const id = randomUUID()
+      return new Promise((resolve, reject) => {
+        const onMessage = (ev: { data: unknown }) => {
+          const parsed = screenshotIpcReplySchema.safeParse(ev.data)
+          if (!parsed.success) return
+          const msg = parsed.data
+          if (msg.id !== id) return
+          parentPort.off("message", onMessage)
+          if ("error" in msg) {
+            reject(new Error(msg.error))
+            return
+          }
+          resolve(msg.base64)
+        }
+        parentPort.on("message", onMessage)
+        const payload = screenshotIpcRequestSchema.parse({
+          type: "screenshot-base64",
+          id,
+          html,
+          viewport,
+        })
+        parentPort.postMessage(payload)
+      })
+    },
+
+    async close(): Promise<void> {
+      parentPort.postMessage(screenshotIpcCloseSchema.parse({ type: "screenshot-close" }))
     },
   }
 }

@@ -31,6 +31,15 @@ export const PageSectioningConfig = StepConfig.extend({
 })
 export type PageSectioningConfig = z.infer<typeof PageSectioningConfig>
 
+export const ImageTranslationConfig = StepConfig.extend({
+  enabled: z.boolean().optional(),
+  /** Image model id (e.g. "openai:gpt-image-1.5"). When unset, the step is a no-op. */
+  image_model: z.string().optional(),
+  /** Image IDs the user has chosen to translate. Empty = no images regenerated. */
+  selected_image_ids: z.array(z.string()).optional(),
+})
+export type ImageTranslationConfig = z.infer<typeof ImageTranslationConfig>
+
 export const BookFormat = z.enum(["web", "webpub"])
 export type BookFormat = z.infer<typeof BookFormat>
 
@@ -104,6 +113,8 @@ export const AppConfig = z
     quiz_generation: QuizGenerationConfig.optional(),
     default_render_strategy: z.string().optional(),
     render_strategies: z.record(z.string(), RenderStrategyConfig).optional(),
+    visual_review_prompt: z.string().optional(),
+    visual_review_max_iterations: z.number().int().min(1).max(50).optional(),
     section_render_strategies: z.record(z.string(), z.string()).optional(),
     image_filters: ImageFilters.optional(),
     image_meaningfulness: StepConfig.optional(),
@@ -115,6 +126,7 @@ export const AppConfig = z
     output_languages: z.array(z.string()).optional(),
     book_format: z.array(BookFormat).optional(),
     image_captioning: StepConfig.optional(),
+    image_translation: ImageTranslationConfig.optional(),
     image_segmentation: StepConfig.extend({
       min_side: z.number().int().min(0).optional(),
     }).optional(),
@@ -123,6 +135,7 @@ export const AppConfig = z
     spread_mode: z.boolean().optional(),
     vector_text_grouping: z.boolean().optional(),
     apply_body_background: z.boolean().optional(),
+    generate_activities: z.boolean().optional(),
     start_page: z.number().int().min(1).optional(),
     end_page: z.number().int().min(1).optional(),
     speech: SpeechConfig.optional(),

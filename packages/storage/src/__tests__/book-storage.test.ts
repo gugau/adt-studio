@@ -155,6 +155,137 @@ describe("createBookStorage", () => {
     storage.close()
   })
 
+  it("writes translated image variants and looks them up by source id", () => {
+    const { storage, paths } = createTempStorage()
+    storage.putExtractedPage(makePage(1))
+
+    const newId = storage.putTranslatedImage({
+      sourceImageId: "pg001_im001",
+      pageId: "pg001",
+      languageCode: "es",
+      buffer: fakePng(200, 150),
+      width: 200,
+      height: 150,
+    })
+    expect(newId).toBe("pg001_im001_tr_es")
+    expect(fs.existsSync(path.join(paths.imagesDir, "pg001_im001_tr_es.png"))).toBe(true)
+
+    const db = openBookDb(paths.dbPath)
+    const rows = db.all(
+      "SELECT image_id, source, page_id FROM images WHERE source = 'translate'"
+    ) as Array<{ image_id: string; source: string; page_id: string }>
+    expect(rows).toEqual([
+      { image_id: "pg001_im001_tr_es", source: "translate", page_id: "pg001" },
+    ])
+    db.close()
+    storage.close()
+  })
+
+  it("clearTranslatedImages removes translate rows and files but leaves originals", () => {
+    const { storage, paths } = createTempStorage()
+    storage.putExtractedPage(makePage(1))
+
+    storage.putTranslatedImage({
+      sourceImageId: "pg001_im001",
+      pageId: "pg001",
+      languageCode: "es",
+      buffer: fakePng(200, 150),
+      width: 200,
+      height: 150,
+    })
+    storage.putTranslatedImage({
+      sourceImageId: "pg001_im001",
+      pageId: "pg001",
+      languageCode: "fr",
+      buffer: fakePng(200, 150),
+      width: 200,
+      height: 150,
+    })
+    expect(fs.existsSync(path.join(paths.imagesDir, "pg001_im001_tr_es.png"))).toBe(true)
+    expect(fs.existsSync(path.join(paths.imagesDir, "pg001_im001_tr_fr.png"))).toBe(true)
+
+    storage.clearTranslatedImages()
+
+    expect(fs.existsSync(path.join(paths.imagesDir, "pg001_im001_tr_es.png"))).toBe(false)
+    expect(fs.existsSync(path.join(paths.imagesDir, "pg001_im001_tr_fr.png"))).toBe(false)
+    // Original extracted image is untouched
+    expect(fs.existsSync(path.join(paths.imagesDir, "pg001_im001.png"))).toBe(true)
+
+    const db = openBookDb(paths.dbPath)
+    const remaining = db.all("SELECT image_id FROM images ORDER BY image_id") as Array<{
+      image_id: string
+    }>
+    expect(remaining.map((r) => r.image_id)).toEqual(["pg001_im001", "pg001_page"])
+    db.close()
+    storage.close()
+  })
+
+  it("clearTranslatedImages with languageCodes filter only removes matching variants", () => {
+    const { storage, paths } = createTempStorage()
+    storage.putExtractedPage(makePage(1))
+    for (const lang of ["es", "fr", "pt-BR"]) {
+      storage.putTranslatedImage({
+        sourceImageId: "pg001_im001",
+        pageId: "pg001",
+        languageCode: lang,
+        buffer: fakePng(200, 150),
+        width: 200,
+        height: 150,
+      })
+    }
+
+    storage.clearTranslatedImages({ languageCodes: ["fr"] })
+
+    expect(fs.existsSync(path.join(paths.imagesDir, "pg001_im001_tr_es.png"))).toBe(true)
+    expect(fs.existsSync(path.join(paths.imagesDir, "pg001_im001_tr_fr.png"))).toBe(false)
+    expect(fs.existsSync(path.join(paths.imagesDir, "pg001_im001_tr_pt-BR.png"))).toBe(true)
+    storage.close()
+  })
+
+  it("putTranslatedImage upsert overwrites the file and row for the same language", () => {
+    const { storage, paths } = createTempStorage()
+    storage.putExtractedPage(makePage(1))
+
+    storage.putTranslatedImage({
+      sourceImageId: "pg001_im001",
+      pageId: "pg001",
+      languageCode: "es",
+      buffer: Buffer.from("first"),
+      width: 100,
+      height: 100,
+    })
+    storage.putTranslatedImage({
+      sourceImageId: "pg001_im001",
+      pageId: "pg001",
+      languageCode: "es",
+      buffer: Buffer.from("second"),
+      width: 200,
+      height: 150,
+    })
+
+    const onDisk = fs.readFileSync(path.join(paths.imagesDir, "pg001_im001_tr_es.png"))
+    expect(onDisk.toString()).toBe("second")
+
+    const db = openBookDb(paths.dbPath)
+    const rows = db.all(
+      "SELECT width, height FROM images WHERE image_id = ?",
+      ["pg001_im001_tr_es"]
+    ) as Array<{ width: number; height: number }>
+    expect(rows).toEqual([{ width: 200, height: 150 }])
+    db.close()
+    storage.close()
+  })
+
+  it("getImageMeta returns page id and relative path", () => {
+    const { storage } = createTempStorage()
+    storage.putExtractedPage(makePage(1))
+
+    const meta = storage.getImageMeta("pg001_im001")
+    expect(meta).toEqual({ pageId: "pg001", relativePath: "images/pg001_im001.png" })
+    expect(storage.getImageMeta("nonexistent")).toBeNull()
+    storage.close()
+  })
+
   it("handles multiple pages", () => {
     const { storage, paths } = createTempStorage()
 

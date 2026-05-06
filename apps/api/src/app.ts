@@ -70,9 +70,7 @@ const app = new Hono()
 app.use("*", logger())
 const ALLOWED_ORIGINS = [
   "http://localhost:5173",
-  "tauri://localhost",
-  "https://tauri.localhost",
-  "http://tauri.localhost",
+  "app://adt.studio",
 ]
 
 app.use(
@@ -86,7 +84,7 @@ app.onError(errorHandler)
 app.route("/api", healthRoutes)
 app.route("/api", createBookRoutes(booksDir, webAssetsDir, configPath, taskService))
 app.route("/api", createPageRoutes(booksDir, promptsDir, webAssetsDir, configPath, taskService))
-app.route("/api", createGlossaryRoutes(booksDir))
+app.route("/api", createGlossaryRoutes(booksDir, promptsDir, configPath))
 app.route("/api", createTocRoutes(booksDir))
 app.route("/api", createDebugRoutes(booksDir, promptsDir, configPath))
 app.route("/api", createQuizRoutes(booksDir))
