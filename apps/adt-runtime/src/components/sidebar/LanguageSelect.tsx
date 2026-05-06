@@ -1,6 +1,4 @@
-import { useAtom, useAtomValue } from "jotai"
-import { useEffect, useMemo, useState } from "react"
-import { appConfigAtom } from "@/state/config.atoms"
+import { useAtom } from "jotai"
 import { currentLanguageAtom } from "@/state/language.atoms"
 import {
   Select,
@@ -9,54 +7,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useAvailableLanguages } from "@/hooks/useAvailableLanguages"
 import { useTranslation } from "@/hooks/useTranslation"
 
 /**
- * Replacement for `#language-dropdown`. Reads `config.languages.available`
- * from `appConfigAtom` and writes the user's selection back to
- * `currentLanguageAtom` (which is persisted via the legacy cookie/localStorage
- * adapter). The boot lifecycle observes the atom and re-loads translations
- * when it changes, so we don't need to fire a custom event from here.
- *
- * Each language's display name is read from its own
- * `interface_translations.json` `language-name` key — fetched lazily here
- * so we don't block the sidebar render on 69 catalogs.
+ * Replacement for `#language-dropdown`. Lists only languages with actual
+ * content translations (filtered via `useAvailableLanguages` — the export
+ * wizard may declare languages that haven't been generated yet, and showing
+ * those would mislead the user since picking them is a no-op for content).
+ * Selecting a language writes to `currentLanguageAtom`; the boot lifecycle
+ * subscriber re-loads translations and re-applies them to the DOM.
  */
 export function LanguageSelect() {
-  const config = useAtomValue(appConfigAtom)
   const [currentLanguage, setCurrentLanguage] = useAtom(currentLanguageAtom)
+  const { languages, names } = useAvailableLanguages()
   const { t } = useTranslation()
-  const [names, setNames] = useState<Record<string, string>>({})
 
-  const available = useMemo(
-    () => config.languages.available ?? [],
-    [config.languages.available],
-  )
-
-  useEffect(() => {
-    let cancelled = false
-    Promise.all(
-      available.map(async (lang) => {
-        try {
-          const res = await fetch(
-            `./assets/interface_translations/${lang}/interface_translations.json`,
-          )
-          if (!res.ok) return [lang, lang] as const
-          const data = (await res.json()) as Record<string, string>
-          return [lang, data["language-name"] ?? lang] as const
-        } catch {
-          return [lang, lang] as const
-        }
-      }),
-    ).then((entries) => {
-      if (!cancelled) setNames(Object.fromEntries(entries))
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [available])
-
-  if (available.length === 0) return null
+  if (languages.length === 0) return null
 
   return (
     <div className="flex items-center justify-between py-3">
@@ -78,7 +45,7 @@ export function LanguageSelect() {
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
-          {available.map((lang) => (
+          {languages.map((lang) => (
             <SelectItem key={lang} value={lang}>
               {names[lang] ?? lang}
             </SelectItem>

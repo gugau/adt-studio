@@ -1,8 +1,8 @@
-import { useAtom, useAtomValue } from "jotai"
+import { useAtom } from "jotai"
 import { Search } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
-import { appConfigAtom } from "@/state/config.atoms"
+import { useMemo, useState } from "react"
 import { currentLanguageAtom } from "@/state/language.atoms"
+import { useAvailableLanguages } from "@/hooks/useAvailableLanguages"
 import { useTranslation } from "@/hooks/useTranslation"
 import { cn } from "@/lib/utils"
 
@@ -12,50 +12,21 @@ interface LanguageContentProps {
 }
 
 export function LanguageContent({ onSelect }: LanguageContentProps) {
-  const config = useAtomValue(appConfigAtom)
   const [currentLanguage, setCurrentLanguage] = useAtom(currentLanguageAtom)
+  const { languages, names } = useAvailableLanguages()
   const { t } = useTranslation()
   const [query, setQuery] = useState("")
-  const [names, setNames] = useState<Record<string, string>>({})
-
-  const available = useMemo(
-    () => config.languages.available ?? [],
-    [config.languages.available],
-  )
-
-  useEffect(() => {
-    let cancelled = false
-    Promise.all(
-      available.map(async (lang) => {
-        try {
-          const res = await fetch(
-            `./assets/interface_translations/${lang}/interface_translations.json`,
-          )
-          if (!res.ok) return [lang, lang] as const
-          const data = (await res.json()) as Record<string, string>
-          return [lang, data["language-name"] ?? lang] as const
-        } catch {
-          return [lang, lang] as const
-        }
-      }),
-    ).then((entries) => {
-      if (!cancelled) setNames(Object.fromEntries(entries))
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [available])
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return available
+    if (!query.trim()) return languages
     const q = query.trim().toLowerCase()
-    return available.filter((lang) => {
+    return languages.filter((lang) => {
       const name = names[lang] ?? lang
       return name.toLowerCase().includes(q) || lang.toLowerCase().includes(q)
     })
-  }, [available, names, query])
+  }, [languages, names, query])
 
-  if (available.length === 0) return null
+  if (languages.length === 0) return null
 
   return (
     <div className="w-[var(--dock-width,32rem)] max-w-[calc(100vw-2rem)] p-2">
