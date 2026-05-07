@@ -5,6 +5,7 @@ import type {
   ImageCaptioningOutput,
   GlossaryOutput,
   QuizGenerationOutput,
+  QuizQuestion,
   TextCatalogEntry,
   TextCatalogOutput,
   PageSectioningOutput as PageSectioningOutputType,
@@ -19,6 +20,11 @@ import { getGlossaryItemTextId } from "./glossary.js"
 /** Zero-padded 3-digit number */
 function pad3(n: number): string {
   return String(n).padStart(3, "0")
+}
+
+function withBlankMarker(prompt: string, itemId: string): string {
+  if (prompt.includes("[[blank:")) return prompt
+  return prompt.replace("____", `[[blank:${itemId}]]`)
 }
 
 /**
@@ -156,16 +162,70 @@ function buildQuizEntries(storage: Storage): TextCatalogEntry[] {
   if (!data.quizzes) return []
 
   const entries: TextCatalogEntry[] = []
-  for (let i = 0; i < data.quizzes.length; i++) {
-    const quiz = data.quizzes[i]
+  const quizzes = data.quizzes.filter((quiz) => !quiz.isPruned)
+  for (let i = 0; i < quizzes.length; i++) {
+    const quiz = quizzes[i]
     const qid = `qz${pad3(i + 1)}`
-    entries.push({ id: `${qid}_que`, text: quiz.question })
+    const questions: QuizQuestion[] = quiz.questions && quiz.questions.length > 0
+      ? quiz.questions
+      : [{
+          activityType: quiz.activityType ?? "multiple_choice",
+          question: quiz.question,
+          options: quiz.options,
+          answerIndex: quiz.answerIndex,
+          statements: quiz.statements,
+          blanks: quiz.blanks,
+          pairs: quiz.pairs,
+          reasoning: quiz.reasoning,
+        }]
+    const multiQuestion = questions.length > 1
+    const firstQuestionTitle = (questions[0]?.question ?? quiz.question).trim()
+    const sharedQuestionTitle = questions.every((q) => q.question.trim() === firstQuestionTitle)
+      ? firstQuestionTitle
+      : null
+    const firstTitle = sharedQuestionTitle
+      ? sharedQuestionTitle
+      : questions[0]?.activityType === "fill_in_the_blank"
+        ? "Fill in the blanks."
+        : questions[0]?.activityType === "true_false"
+          ? "True or false."
+          : questions[0]?.activityType === "drag_and_drop"
+            ? "Match the pairs."
+            : "Quiz."
+    let blankItemIndex = 1
+    entries.push({ id: `${qid}_que`, text: firstTitle })
 
-    for (let j = 0; j < quiz.options.length; j++) {
-      const option = quiz.options[j]
-      entries.push({ id: `${qid}_o${j}`, text: option.text })
-      entries.push({ id: `${qid}_o${j}_exp`, text: option.explanation })
-    }
+    questions.forEach((question, questionIndex) => {
+      const prefix = multiQuestion ? `${qid}_q${questionIndex + 1}` : qid
+      if (multiQuestion && (question.activityType === "multiple_choice" || sharedQuestionTitle === null)) {
+        entries.push({ id: `${prefix}_que`, text: question.question })
+      }
+
+      if (question.activityType === "multiple_choice") {
+        for (let j = 0; j < (question.options ?? []).length; j++) {
+          const option = question.options![j]
+          entries.push({ id: `${prefix}_o${j}`, text: option.text })
+          entries.push({ id: `${prefix}_o${j}_exp`, text: option.explanation })
+        }
+      } else if (question.activityType === "fill_in_the_blank") {
+        for (let j = 0; j < (question.blanks ?? []).length; j++) {
+          const itemId = `item-${blankItemIndex++}`
+          entries.push({
+            id: `${prefix}_blank${j}`,
+            text: withBlankMarker(question.blanks![j].prompt, itemId),
+          })
+        }
+      } else if (question.activityType === "true_false") {
+        for (let j = 0; j < (question.statements ?? []).length; j++) {
+          entries.push({ id: `${prefix}_tf${j}`, text: question.statements![j].text })
+        }
+      } else if (question.activityType === "drag_and_drop") {
+        for (let j = 0; j < (question.pairs ?? []).length; j++) {
+          entries.push({ id: `${prefix}_pair${j}`, text: question.pairs![j].item })
+          entries.push({ id: `${prefix}_match${j}`, text: question.pairs![j].match })
+        }
+      }
+    })
   }
   return entries
 }

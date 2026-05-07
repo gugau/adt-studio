@@ -337,6 +337,49 @@ describe("buildTextCatalog", () => {
     expect(new Date(result.generatedAt).getTime()).not.toBeNaN()
   })
 
+  it("emits nested non-MCQ question titles when they differ", async () => {
+    const storage = createMockStorage({
+      "quiz-generation": {
+        book: {
+          generatedAt: "2024-01-01T00:00:00.000Z",
+          language: "en",
+          pagesPerQuiz: 1,
+          quizzes: [
+            {
+              activityType: "fill_in_the_blank",
+              quizIndex: 0,
+              afterPageId: "pg001",
+              pageIds: ["pg001"],
+              question: "Complete the plant sentence.",
+              blanks: [{ prompt: "Plants need ____ to grow.", answer: "water" }],
+              reasoning: "...",
+              questions: [
+                {
+                  activityType: "fill_in_the_blank",
+                  question: "Complete the plant sentence.",
+                  blanks: [{ prompt: "Plants need ____ to grow.", answer: "water" }],
+                  reasoning: "...",
+                },
+                {
+                  activityType: "fill_in_the_blank",
+                  question: "Complete the sun sentence.",
+                  blanks: [{ prompt: "Leaves use ____ from the sun.", answer: "light" }],
+                  reasoning: "...",
+                },
+              ],
+            },
+          ],
+        },
+      },
+    })
+
+    const result = await buildTextCatalog(storage, [])
+
+    expect(result.entries).toContainEqual({ id: "qz001_que", text: "Fill in the blanks." })
+    expect(result.entries).toContainEqual({ id: "qz001_q1_que", text: "Complete the plant sentence." })
+    expect(result.entries).toContainEqual({ id: "qz001_q2_que", text: "Complete the sun sentence." })
+  })
+
   it("emits activity answer entries with _ans_ IDs", async () => {
     const storage = createMockStorage({
       "web-rendering": {

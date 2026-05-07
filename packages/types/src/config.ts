@@ -19,9 +19,26 @@ export const StepConfig = z.object({
 })
 export type StepConfig = z.infer<typeof StepConfig>
 
+/**
+ * One user-defined quiz: the source pages it draws from and where the
+ * generated quiz page is inserted in the book.
+ *
+ * `insert_after`:
+ *   - omitted   → place after the last source page
+ *   - "end"     → place at the very end of the book
+ *   - other id  → place after that specific page
+ */
+export const QuizGroup = z.object({
+  source_page_ids: z.array(z.string()).min(1),
+  insert_after: z.union([z.string(), z.literal("end")]).optional(),
+})
+export type QuizGroup = z.infer<typeof QuizGroup>
+
 export const QuizGenerationConfig = StepConfig.extend({
   pages_per_quiz: z.number().int().min(1).optional(),
   quiz_section_types: z.array(z.string()).optional(),
+  /** When set, replaces auto-batching: one quiz per group. */
+  quiz_groups: z.array(QuizGroup).optional(),
 })
 export type QuizGenerationConfig = z.infer<typeof QuizGenerationConfig>
 

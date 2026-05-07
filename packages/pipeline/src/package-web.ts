@@ -18,6 +18,8 @@ import type {
   WordTimestampOutput,
   TocGenerationOutput,
   Quiz,
+  QuizActivityType,
+  QuizQuestion,
   ImageCaptioningOutput,
 } from "@adt/types"
 import { WebRenderingOutput as WebRenderingOutputSchema } from "@adt/types"
@@ -250,8 +252,10 @@ export async function packageAdtWeb(
 
   // Build a map from afterPageId -> quizzes for interleaving
   const quizzesByAfterPageId = new Map<string, Quiz[]>()
+  const visibleQuizIndex = new Map<Quiz, number>()
   if ((features?.quizzes !== false) && quizData?.quizzes) {
-    for (const quiz of quizData.quizzes) {
+    for (const quiz of quizData.quizzes.filter((q) => !q.isPruned)) {
+      visibleQuizIndex.set(quiz, visibleQuizIndex.size)
       const existing = quizzesByAfterPageId.get(quiz.afterPageId) ?? []
       existing.push(quiz)
       quizzesByAfterPageId.set(quiz.afterPageId, existing)
@@ -357,7 +361,7 @@ export async function packageAdtWeb(
 
     // Insert quiz pages after this page (even if page content was skipped)
     for (const quiz of quizzes) {
-      const quizIndex = quizData!.quizzes.indexOf(quiz)
+      const quizIndex = visibleQuizIndex.get(quiz) ?? 0
       const quizId = `qz${pad3(quizIndex + 1)}`
 
       const isFirstPage = pageList.length === 0
@@ -1045,50 +1049,167 @@ export function pad3(n: number): string {
   return String(n).padStart(3, "0")
 }
 
+export function getQuizQuestions(quiz: Quiz): QuizQuestion[] {
+  if (quiz.questions && quiz.questions.length > 0) return quiz.questions
+  return [{
+    activityType: quiz.activityType ?? "multiple_choice",
+    question: quiz.question,
+    options: quiz.options,
+    answerIndex: quiz.answerIndex,
+    statements: quiz.statements,
+    blanks: quiz.blanks,
+    pairs: quiz.pairs,
+    reasoning: quiz.reasoning,
+  }]
+}
+
+export function getDefaultQuizTitle(activityType: QuizActivityType): string {
+  switch (activityType) {
+    case "true_false":
+      return "True or false."
+    case "fill_in_the_blank":
+      return "Fill in the blanks."
+    case "drag_and_drop":
+      return "Match the pairs."
+    case "multiple_choice":
+    default:
+      return "Quiz."
+  }
+}
+
+export function getSharedQuizTitle(
+  questions: QuizQuestion[],
+  activityType: QuizActivityType
+): string {
+  const first = questions[0]?.question?.trim()
+  if (first && questions.every((q) => q.question.trim() === first)) return first
+  return getDefaultQuizTitle(activityType)
+}
+
+function getExactSharedQuizTitle(questions: QuizQuestion[]): string | null {
+  const first = questions[0]?.question?.trim()
+  if (!first) return null
+  return questions.every((q) => q.question.trim() === first) ? first : null
+}
+
+function renderNestedQuestionHeading(
+  quizId: string,
+  question: QuizQuestion,
+  questionIndex: number,
+  questions: QuizQuestion[],
+  texts: Map<string, string>
+): string {
+  if (questions.length <= 1) return ""
+  const titleId = `${quizId}_q${questionIndex + 1}_que`
+  const title = texts.get(titleId) ?? question.question.trim()
+  const showTitle = getExactSharedQuizTitle(questions) === null && title.length > 0
+  return `
+                    <div class="space-y-1">
+                        <p class="text-sm font-semibold uppercase tracking-wide text-gray-500">Q${questionIndex + 1}</p>
+                        ${showTitle ? `<p class="text-base font-semibold text-gray-900" data-id="${escapeAttr(titleId)}">${escapeHtml(title)}</p>` : ""}
+                    </div>`
+}
+
+export function getQuestionPrefix(
+  quizId: string,
+  questionIndex: number,
+  multiQuestion: boolean,
+): string {
+  return multiQuestion ? `${quizId}_q${questionIndex + 1}` : quizId
+}
+
+function textById(catalog: TextCatalogOutput | undefined): Map<string, string> {
+  const texts = new Map<string, string>()
+  if (catalog?.entries) {
+    for (const e of catalog.entries) texts.set(e.id, e.text)
+  }
+  return texts
+}
+
+function blankPromptHtml(prompt: string, itemId: string): string {
+  if (prompt.includes("[[blank:")) return escapeHtml(prompt)
+  return escapeHtml(prompt).replace("____", `[[blank:${itemId}]]`)
+}
+
 export function renderQuizHtml(
   quiz: Quiz,
   quizId: string,
   catalog: TextCatalogOutput | undefined,
 ): string {
-  const questionId = `${quizId}_que`
-  const texts = new Map<string, string>()
-  if (catalog?.entries) {
-    for (const e of catalog.entries) texts.set(e.id, e.text)
+  const questions = getQuizQuestions(quiz)
+  const activityType = questions[0]?.activityType ?? "multiple_choice"
+  if (activityType === "fill_in_the_blank") {
+    return renderFillBlankQuizHtml(quiz, quizId, catalog)
   }
+  if (activityType === "true_false") {
+    return renderTrueFalseQuizHtml(quiz, quizId, catalog)
+  }
+  if (activityType === "drag_and_drop") {
+    return renderMatchingQuizHtml(quiz, quizId, catalog)
+  }
+  return renderMultipleChoiceQuizHtml(quiz, quizId, catalog)
+}
+
+function renderMultipleChoiceQuizHtml(
+  quiz: Quiz,
+  quizId: string,
+  catalog: TextCatalogOutput | undefined,
+): string {
+  const questions = getQuizQuestions(quiz)
+  const multiQuestion = questions.length > 1
+  const questionId = `${quizId}_que`
+  const texts = textById(catalog)
+  const titleText = texts.get(questionId) ?? getSharedQuizTitle(questions, "multiple_choice")
 
   const correctAnswers: Record<string, boolean> = {}
   const explanationMapping: Record<string, string> = {}
+  let groupsHtml = ""
 
-  for (let i = 0; i < quiz.options.length; i++) {
-    const optionId = `${quizId}_o${i}`
-    correctAnswers[optionId] = i === quiz.answerIndex
+  questions.forEach((question, questionIndex) => {
+    const prefix = getQuestionPrefix(quizId, questionIndex, multiQuestion)
+    const promptId = multiQuestion ? `${prefix}_que` : questionId
+    const promptText = texts.get(promptId) ?? question.question
+    const promptLabelId = multiQuestion ? `${promptId}-question-label` : `${quizId}-question-label`
+    const promptHtml = multiQuestion
+      ? `<p class="text-sm font-semibold uppercase tracking-wide text-gray-500">Q${questionIndex + 1}</p>
+                    <p
+                        id="${escapeAttr(promptId)}-question-label"
+                        class="text-xl font-semibold text-gray-900"
+                        data-id="${escapeAttr(promptId)}"
+                    >
+                        ${escapeHtml(promptText)}
+                    </p>`
+      : ""
+    let optionsHtml = ""
+    const options = question.options ?? []
+    for (let i = 0; i < options.length; i++) {
+      const optionId = `${prefix}_o${i}`
+      correctAnswers[optionId] = i === question.answerIndex
 
-    const expId = `${quizId}_o${i}_exp`
-    if (texts.has(expId)) {
-      explanationMapping[optionId] = expId
-    }
-  }
+      const expId = `${optionId}_exp`
+      if (texts.has(expId)) {
+        explanationMapping[optionId] = expId
+      }
 
-  let optionsHtml = ""
-  for (let i = 0; i < quiz.options.length; i++) {
-    const optionId = `${quizId}_o${i}`
-    const optionText = texts.get(optionId) ?? quiz.options[i].text
-    const expId = explanationMapping[optionId]
-    const expText = expId ? (texts.get(expId) ?? quiz.options[i].explanation) : ""
-    const expIdAttr = expId ? ` data-explanation-id="${escapeAttr(expId)}"` : ""
+      const optionText = texts.get(optionId) ?? options[i].text
+      const expIdMapped = explanationMapping[optionId]
+      const expText = expIdMapped ? (texts.get(expIdMapped) ?? options[i].explanation) : ""
+      const expIdAttr = expIdMapped ? ` data-explanation-id="${escapeAttr(expIdMapped)}"` : ""
 
-    optionsHtml += `
+      optionsHtml += `
                     <label
                         class="activity-option w-full max-w-xl cursor-pointer rounded-2xl border-2 border-gray-900 bg-[#FFFAF5] px-8 py-6 text-center text-xl font-medium text-gray-900 shadow-[0_6px_0_0_rgba(0,0,0,0.65)] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-green-300 hover:translate-y-[-2px] hover:shadow-[0_8px_0_0_rgba(0,0,0,0.55)]"
                         data-activity-item="${escapeAttr(optionId)}"
+                        data-quiz-question-group="${escapeAttr(prefix)}"
                         data-explanation="${escapeAttr(expText)}"${expIdAttr}
                         tabindex="0"
                     >
                         <input
                             type="radio"
-                            name="${escapeAttr(quizId)}"
+                            name="${escapeAttr(prefix)}"
                             value="${escapeAttr(optionId)}"
                             data-activity-item="${escapeAttr(optionId)}"
+                            data-quiz-question-group="${escapeAttr(prefix)}"
                             class="sr-only"
                             aria-labelledby="${escapeAttr(optionId)}-option-label"
                         />
@@ -1107,9 +1228,18 @@ export function renderQuizHtml(
 
                         <span class="validation-mark hidden"></span>
                     </label>`
-  }
-
-  const questionText = texts.get(questionId) ?? quiz.question
+    }
+    groupsHtml += `
+                <div
+                    class="quiz-question-group mt-8 flex flex-col items-center gap-5"
+                    role="group"
+                    data-quiz-question-group="${escapeAttr(prefix)}"
+                    aria-labelledby="${escapeAttr(promptLabelId)}"
+                >
+                    ${promptHtml}
+${optionsHtml}
+                </div>`
+  })
 
   return `<style>
     .activity-option.selected-option {
@@ -1138,22 +1268,15 @@ export function renderQuizHtml(
         <div class="flex w-full flex-col items-center gap-10 px-6 py-10">
             <div class="w-full max-w-3xl rounded-3xl p-10">
                 <header class="text-center">
-                    <p
+                    <h1
                         id="${escapeAttr(quizId)}-question-label"
                         class="text-3xl font-bold text-gray-900 tracking-tight"
                         data-id="${escapeAttr(questionId)}"
                     >
-                        ${escapeHtml(questionText)}
-                    </p>
+                        ${escapeHtml(titleText)}
+                    </h1>
                 </header>
-
-                <div
-                    class="mt-8 flex flex-col items-center gap-6"
-                    role="group"
-                    aria-labelledby="${escapeAttr(quizId)}-question-label"
-                >
-${optionsHtml}
-                </div>
+${groupsHtml}
 
                 <div class="mt-10 flex flex-col items-center gap-4">
                     <div data-submit-target class="flex flex-wrap items-center justify-center gap-4"></div>
@@ -1172,10 +1295,208 @@ ${JSON.stringify(explanationMapping)}
 </script>`
 }
 
-export function buildQuizAnswers(quiz: Quiz, quizId: string): Record<string, boolean> {
-  const answers: Record<string, boolean> = {}
-  for (let i = 0; i < quiz.options.length; i++) {
-    answers[`${quizId}_o${i}`] = i === quiz.answerIndex
+function renderFillBlankQuizHtml(
+  quiz: Quiz,
+  quizId: string,
+  catalog: TextCatalogOutput | undefined,
+): string {
+  const texts = textById(catalog)
+  const questions = getQuizQuestions(quiz)
+  const titleId = `${quizId}_que`
+  const title = texts.get(titleId) ?? getSharedQuizTitle(questions, "fill_in_the_blank")
+  let itemIndex = 1
+  const questionsHtml = questions.map((question, questionIndex) => {
+    const headingHtml = renderNestedQuestionHeading(
+      quizId,
+      question,
+      questionIndex,
+      questions,
+      texts
+    )
+    const blanksHtml = (question.blanks ?? []).map((blank, blankIndex) => {
+      const textId = questions.length > 1
+        ? `${quizId}_q${questionIndex + 1}_blank${blankIndex}`
+        : `${quizId}_blank${blankIndex}`
+      const itemId = `item-${itemIndex++}`
+      const prompt = texts.get(textId) ?? blank.prompt
+      return `<p class="fitb-sentence text-lg leading-relaxed" data-id="${escapeAttr(textId)}">${blankPromptHtml(prompt, itemId)}</p>`
+    }).join("\n")
+    return `
+                <div class="space-y-3 rounded-2xl bg-white p-5 shadow-sm">
+${headingHtml}
+${blanksHtml}
+                </div>`
+  }).join("\n")
+
+  return `<div id="content" class="container content mx-auto w-full min-h-screen px-8 py-8 flex items-center justify-center opacity-0">
+    <section id="simple-main" data-section-type="activity_fill_in_the_blank" data-id="${escapeAttr(quizId)}" data-area-id="${escapeAttr(quizId)}">
+        <div class="mx-auto flex w-full max-w-3xl flex-col gap-8 rounded-3xl bg-emerald-50 p-10 shadow-sm">
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight" data-id="${escapeAttr(titleId)}">${escapeHtml(title)}</h1>
+${questionsHtml}
+            <div data-submit-target class="flex flex-wrap items-center justify-center gap-4"></div>
+        </div>
+    </section>
+</div>`
+}
+
+function renderTrueFalseQuizHtml(
+  quiz: Quiz,
+  quizId: string,
+  catalog: TextCatalogOutput | undefined,
+): string {
+  const texts = textById(catalog)
+  const questions = getQuizQuestions(quiz)
+  const titleId = `${quizId}_que`
+  const title = texts.get(titleId) ?? getSharedQuizTitle(questions, "true_false")
+  let itemIndex = 1
+  const questionsHtml = questions.map((question, questionIndex) => {
+    const headingHtml = renderNestedQuestionHeading(
+      quizId,
+      question,
+      questionIndex,
+      questions,
+      texts
+    )
+    const rowsHtml = (question.statements ?? []).map((statement, statementIndex) => {
+      const itemId = `item-${itemIndex}`
+      const textId = questions.length > 1
+        ? `${quizId}_q${questionIndex + 1}_tf${statementIndex}`
+        : `${quizId}_tf${statementIndex}`
+      const text = texts.get(textId) ?? statement.text
+      const name = `question${itemIndex}`
+      itemIndex++
+      return `
+                    <fieldset class="space-y-3 rounded-2xl bg-white p-5 shadow-sm">
+                        <legend class="text-base font-semibold text-gray-900">
+                            <span data-id="${escapeAttr(textId)}">${escapeHtml(text)}</span>
+                        </legend>
+                        <div class="flex flex-wrap gap-3">
+                            <label class="cursor-pointer">
+                                <input class="sr-only peer" type="radio" name="${escapeAttr(name)}" value="true" data-activity-item="${escapeAttr(itemId)}" aria-label="True" />
+                                <div class="choice-chip rounded-full bg-orange-100 px-5 py-2 text-sm font-bold text-orange-900 peer-checked:bg-orange-600 peer-checked:text-white">T<span class="validation-mark hidden"></span></div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input class="sr-only peer" type="radio" name="${escapeAttr(name)}" value="false" data-activity-item="${escapeAttr(itemId)}" aria-label="False" />
+                                <div class="choice-chip rounded-full bg-orange-100 px-5 py-2 text-sm font-bold text-orange-900 peer-checked:bg-orange-600 peer-checked:text-white">F<span class="validation-mark hidden"></span></div>
+                            </label>
+                        </div>
+                    </fieldset>`
+    }).join("\n")
+    return `
+                <div class="space-y-3">
+${headingHtml}
+${rowsHtml}
+                </div>`
+  }).join("\n")
+
+  return `<div id="content" class="container content mx-auto w-full min-h-screen px-8 py-8 flex items-center justify-center opacity-0">
+    <section id="simple-main" data-section-type="activity_true_false" data-id="${escapeAttr(quizId)}" data-area-id="${escapeAttr(quizId)}">
+        <div class="mx-auto flex w-full max-w-3xl flex-col gap-8 rounded-3xl bg-orange-50 p-10 shadow-sm">
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight" data-id="${escapeAttr(titleId)}">${escapeHtml(title)}</h1>
+${questionsHtml}
+            <div data-submit-target class="flex flex-wrap items-center justify-center gap-4"></div>
+        </div>
+    </section>
+</div>`
+}
+
+function renderMatchingQuizHtml(
+  quiz: Quiz,
+  quizId: string,
+  catalog: TextCatalogOutput | undefined,
+): string {
+  const texts = textById(catalog)
+  const questions = getQuizQuestions(quiz)
+  const titleId = `${quizId}_que`
+  const title = texts.get(titleId) ?? getSharedQuizTitle(questions, "drag_and_drop")
+  let itemIndex = 1
+  let itemsHtml = ""
+  let groupsHtml = ""
+
+  questions.forEach((question, questionIndex) => {
+    const headingHtml = renderNestedQuestionHeading(
+      quizId,
+      question,
+      questionIndex,
+      questions,
+      texts
+    )
+    let groupDropzones = ""
+    ;(question.pairs ?? []).forEach((pair, pairIndex) => {
+      const itemId = `item-${itemIndex}`
+      const dropzoneId = `dropzone-${itemIndex}`
+      const itemTextId = questions.length > 1
+        ? `${quizId}_q${questionIndex + 1}_pair${pairIndex}`
+        : `${quizId}_pair${pairIndex}`
+      const matchTextId = questions.length > 1
+        ? `${quizId}_q${questionIndex + 1}_match${pairIndex}`
+        : `${quizId}_match${pairIndex}`
+      itemsHtml += `<button type="button" class="activity-item rounded-xl border border-sky-200 bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm" data-activity-item="${escapeAttr(itemId)}" data-id="${escapeAttr(itemTextId)}">${escapeHtml(texts.get(itemTextId) ?? pair.item)}</button>\n`
+      groupDropzones += `
+                    <div class="dropzone rounded-xl border-2 border-dashed border-sky-200 bg-white p-3" id="${escapeAttr(`zone-${itemIndex}`)}" aria-label="${escapeAttr(texts.get(matchTextId) ?? pair.match)}">
+                        <p class="mb-2 text-sm font-medium text-gray-700" data-id="${escapeAttr(matchTextId)}">${escapeHtml(texts.get(matchTextId) ?? pair.match)}</p>
+                        <div id="${escapeAttr(dropzoneId)}" class="dropzone-slot min-h-12 rounded-lg bg-white/60"></div>
+                    </div>`
+      itemIndex++
+    })
+    groupsHtml += `
+                <div class="space-y-3">
+${headingHtml}
+                    <div class="grid gap-3 sm:grid-cols-2">
+${groupDropzones}
+                    </div>
+                </div>`
+  })
+
+  return `<div id="content" class="container content mx-auto w-full min-h-screen px-8 py-8 flex items-center justify-center opacity-0">
+    <section id="simple-main" data-section-type="activity_matching" data-id="${escapeAttr(quizId)}" data-area-id="${escapeAttr(quizId)}" data-aria-id="${escapeAttr(quizId)}">
+        <div class="mx-auto flex w-full max-w-4xl flex-col gap-8 rounded-3xl bg-sky-50 p-10 shadow-sm">
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight" data-id="${escapeAttr(titleId)}">${escapeHtml(title)}</h1>
+            <div class="original-word-list flex flex-wrap gap-3">
+${itemsHtml}
+            </div>
+${groupsHtml}
+            <div id="feedback" class="text-sm font-medium"></div>
+            <div data-submit-target class="flex flex-wrap items-center justify-center gap-4"></div>
+        </div>
+    </section>
+</div>`
+}
+
+export function buildQuizAnswers(quiz: Quiz, quizId: string): Record<string, string | boolean> {
+  const answers: Record<string, string | boolean> = {}
+  const questions = getQuizQuestions(quiz)
+  const multiQuestion = questions.length > 1
+  const activityType = questions[0]?.activityType ?? "multiple_choice"
+  if (activityType === "multiple_choice") {
+    questions.forEach((question, questionIndex) => {
+      const prefix = getQuestionPrefix(quizId, questionIndex, multiQuestion)
+      for (let i = 0; i < (question.options ?? []).length; i++) {
+        answers[`${prefix}_o${i}`] = i === question.answerIndex
+      }
+    })
+  } else if (activityType === "fill_in_the_blank") {
+    let itemIndex = 1
+    for (const question of questions) {
+      for (const blank of question.blanks ?? []) {
+        answers[`item-${itemIndex++}`] = blank.answer
+      }
+    }
+  } else if (activityType === "true_false") {
+    let itemIndex = 1
+    for (const question of questions) {
+      for (const statement of question.statements ?? []) {
+        answers[`item-${itemIndex++}`] = statement.answer ? "true" : "false"
+      }
+    }
+  } else if (activityType === "drag_and_drop") {
+    let itemIndex = 1
+    for (const question of questions) {
+      for (const _pair of question.pairs ?? []) {
+        answers[`item-${itemIndex}`] = `dropzone-${itemIndex}`
+        itemIndex++
+      }
+    }
   }
   return answers
 }
@@ -1791,9 +2112,10 @@ async function buildJsBundle(
   // where bundle.mjs hasn't been run).
   const preBuiltEsm = path.join(webAssetsDir, "base.bundle.min.js")
   const preBuiltIife = path.join(webAssetsDir, "base.bundle.local.js")
+  const sourceMtime = maxJsSourceMtime(webAssetsDir)
 
-  const hasPreBuiltEsm = fs.existsSync(preBuiltEsm)
-  const hasPreBuiltIife = fs.existsSync(preBuiltIife)
+  const hasPreBuiltEsm = isFreshPrebuiltBundle(preBuiltEsm, sourceMtime)
+  const hasPreBuiltIife = isFreshPrebuiltBundle(preBuiltIife, sourceMtime)
 
   if (hasPreBuiltEsm) {
     fs.copyFileSync(preBuiltEsm, path.join(outputAssetsDir, "base.bundle.min.js"))
@@ -1833,6 +2155,27 @@ async function buildJsBundle(
       outfile: path.join(outputAssetsDir, "base.bundle.local.js"),
     })
   }
+}
+
+function isFreshPrebuiltBundle(bundlePath: string, sourceMtime: number): boolean {
+  if (!fs.existsSync(bundlePath)) return false
+  return fs.statSync(bundlePath).mtimeMs >= sourceMtime
+}
+
+function maxJsSourceMtime(webAssetsDir: string): number {
+  let max = 0
+  const visit = (filePath: string) => {
+    if (!fs.existsSync(filePath)) return
+    const stat = fs.statSync(filePath)
+    if (stat.isDirectory()) {
+      for (const entry of fs.readdirSync(filePath)) visit(path.join(filePath, entry))
+      return
+    }
+    if (filePath.endsWith(".js")) max = Math.max(max, stat.mtimeMs)
+  }
+  visit(path.join(webAssetsDir, "base.js"))
+  visit(path.join(webAssetsDir, "modules"))
+  return max
 }
 
 // ---------------------------------------------------------------------------
@@ -1896,10 +2239,11 @@ async function renderAgentsMd(
     const quizId = "qz001"
     const correctAnswers: Record<string, boolean> = {}
     const explanations: Record<string, string> = {}
-    const options = quiz.options.map((opt, i) => {
+    const firstQuestion = getQuizQuestions(quiz)[0]
+    const options = (firstQuestion.options ?? []).map((opt, i) => {
       const optId = `${quizId}_o${i}`
       const expId = `${optId}_exp`
-      correctAnswers[optId] = i === quiz.answerIndex
+      correctAnswers[optId] = i === firstQuestion.answerIndex
       explanations[optId] = expId
       return {
         id: optId,
@@ -1910,7 +2254,7 @@ async function renderAgentsMd(
     })
     sampleQuiz = {
       id: quizId,
-      question: quiz.question,
+      question: firstQuestion.question,
       options,
       correctAnswersJson: JSON.stringify(correctAnswers),
       explanationsJson: JSON.stringify(explanations),

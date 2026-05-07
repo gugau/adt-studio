@@ -87,7 +87,7 @@ app.route("/api", createPageRoutes(booksDir, promptsDir, webAssetsDir, configPat
 app.route("/api", createGlossaryRoutes(booksDir, promptsDir, configPath))
 app.route("/api", createTocRoutes(booksDir))
 app.route("/api", createDebugRoutes(booksDir, promptsDir, configPath))
-app.route("/api", createQuizRoutes(booksDir))
+app.route("/api", createQuizRoutes(booksDir, promptsDir, configPath))
 app.route("/api", createPackageRoutes(booksDir, webAssetsDir, configPath, taskService))
 app.route("/api", createPromptRoutes(promptsDir, booksDir))
 app.route("/api", createTextCatalogRoutes(booksDir))

@@ -284,7 +284,14 @@ const clearFeedbackForQuestion = (questionName) => {
 
 export const checkTrueFalse = () => {
     clearPreviousFeedback();
-    const allQuestions = [1, 2, 3, 4, 5];
+    const section = document.querySelector('section[data-section-type="activity_true_false"]') || document;
+    const allQuestions = Array.from(
+        new Set(
+            [...section.querySelectorAll('input[type="radio"][name^="question"]')]
+                .map(input => Number(String(input.name).replace('question', '')))
+                .filter(num => Number.isFinite(num) && num > 0)
+        )
+    ).sort((a, b) => a - b);
     const validationResults = validateAllQuestions(allQuestions);
 
     playAppropriateSound(validationResults.allCorrect);

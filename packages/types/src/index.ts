@@ -52,6 +52,7 @@ export {
   DEFAULT_LLM_MAX_RETRIES,
   StepConfig,
   QuizGenerationConfig,
+  QuizGroup,
   PageSectioningConfig,
   RenderType,
   VisualRefinementStrategyConfig,
@@ -142,10 +143,17 @@ export {
 } from "./glossary.js"
 
 export {
+  QuizActivityType,
   QuizOption,
+  QuizStatement,
+  QuizBlank,
+  QuizMatchPair,
+  QuizQuestion,
   Quiz,
   QuizGenerationOutput,
+  QuizGenerationRequest,
   quizLLMSchema,
+  getQuizLLMSchema,
 } from "./quiz.js"
 
 export {

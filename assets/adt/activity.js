@@ -115,6 +115,9 @@ export const updateResetButtonVisibility = () => {
     const resetSupportedTypes = new Set([
         ActivityTypes.OPEN_ENDED_ANSWER,
         ActivityTypes.FILL_IN_THE_BLANK,
+        ActivityTypes.MULTIPLE_CHOICE,
+        ActivityTypes.QUIZ,
+        ActivityTypes.TRUE_FALSE,
         ActivityTypes.SORTING,
         ActivityTypes.FILL_IN_A_TABLE,
         ActivityTypes.MATCHING

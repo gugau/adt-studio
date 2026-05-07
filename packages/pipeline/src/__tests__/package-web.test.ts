@@ -3,6 +3,7 @@ import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import type { Storage, PageData } from "@adt/storage"
+import type { Quiz } from "@adt/types"
 import {
   computePackagingInputHash,
   buildGlossaryJson,
@@ -10,6 +11,7 @@ import {
   packageWebpub,
   renderPageHtml,
   renderQuizHtml,
+  buildQuizAnswers,
   rewriteImageUrls,
   convertLatexToMathml,
   convertLatexString,
@@ -230,6 +232,228 @@ describe("renderQuizHtml", () => {
 
     expect(html).toContain('<section')
     expect(html).not.toContain('role="activity"')
+    expect((html.match(/data-id="qz001_que"/g) ?? [])).toHaveLength(1)
+    expect((html.match(/What is 2\+2\?/g) ?? [])).toHaveLength(1)
+  })
+
+  it("renders nested fill-in-the-blank questions as one activity with sequential answer ids", () => {
+    const quiz: Quiz = {
+      activityType: "fill_in_the_blank",
+      quizIndex: 0,
+      afterPageId: "pg002",
+      pageIds: ["pg001", "pg002"],
+      question: "Fill in the blanks.",
+      blanks: [{ prompt: "Plants need ____ to grow.", answer: "water" }],
+      reasoning: "...",
+      questions: [
+        {
+          activityType: "fill_in_the_blank",
+          question: "Fill in the blanks.",
+          blanks: [{ prompt: "Plants need ____ to grow.", answer: "water" }],
+          reasoning: "...",
+        },
+        {
+          activityType: "fill_in_the_blank",
+          question: "Fill in the blanks.",
+          blanks: [{ prompt: "Leaves use ____ from the sun.", answer: "light" }],
+          reasoning: "...",
+        },
+        {
+          activityType: "fill_in_the_blank",
+          question: "Fill in the blanks.",
+          blanks: [{ prompt: "Roots take in ____ from soil.", answer: "minerals" }],
+          reasoning: "...",
+        },
+      ],
+    }
+
+    const html = renderQuizHtml(quiz, "qz001", undefined)
+    const answers = buildQuizAnswers(quiz, "qz001")
+
+    expect((html.match(/data-section-type="activity_fill_in_the_blank"/g) ?? [])).toHaveLength(1)
+    expect((html.match(/data-submit-target/g) ?? [])).toHaveLength(1)
+    expect((html.match(/<h1\b/g) ?? [])).toHaveLength(1)
+    expect(html).toContain("[[blank:item-1]]")
+    expect(html).toContain("[[blank:item-2]]")
+    expect(html).toContain("[[blank:item-3]]")
+    expect(answers).toEqual({
+      "item-1": "water",
+      "item-2": "light",
+      "item-3": "minerals",
+    })
+  })
+
+  it("renders differing nested non-MCQ titles instead of dropping them", () => {
+    const quiz: Quiz = {
+      activityType: "fill_in_the_blank",
+      quizIndex: 0,
+      afterPageId: "pg002",
+      pageIds: ["pg001", "pg002"],
+      question: "Complete the plant sentence.",
+      blanks: [{ prompt: "Plants need ____ to grow.", answer: "water" }],
+      reasoning: "...",
+      questions: [
+        {
+          activityType: "fill_in_the_blank",
+          question: "Complete the plant sentence.",
+          blanks: [{ prompt: "Plants need ____ to grow.", answer: "water" }],
+          reasoning: "...",
+        },
+        {
+          activityType: "fill_in_the_blank",
+          question: "Complete the sun sentence.",
+          blanks: [{ prompt: "Leaves use ____ from the sun.", answer: "light" }],
+          reasoning: "...",
+        },
+      ],
+    }
+
+    const html = renderQuizHtml(quiz, "qz001", undefined)
+
+    expect(html).toContain('data-id="qz001_q1_que"')
+    expect(html).toContain('data-id="qz001_q2_que"')
+    expect(html).toContain("Complete the plant sentence.")
+    expect(html).toContain("Complete the sun sentence.")
+  })
+
+  it("renders nested MCQ groups with scoped option answer ids", () => {
+    const quiz: Quiz = {
+      activityType: "multiple_choice",
+      quizIndex: 0,
+      afterPageId: "pg001",
+      pageIds: ["pg001"],
+      question: "Quiz.",
+      options: [
+        { text: "Water", explanation: "Correct." },
+        { text: "Stone", explanation: "No." },
+        { text: "Smoke", explanation: "No." },
+      ],
+      answerIndex: 0,
+      reasoning: "...",
+      questions: [
+        {
+          activityType: "multiple_choice",
+          question: "What do roots absorb?",
+          options: [
+            { text: "Water", explanation: "Correct." },
+            { text: "Stone", explanation: "No." },
+            { text: "Smoke", explanation: "No." },
+          ],
+          answerIndex: 0,
+          reasoning: "...",
+        },
+        {
+          activityType: "multiple_choice",
+          question: "What gives plants energy?",
+          options: [
+            { text: "Moonlight", explanation: "No." },
+            { text: "Sunlight", explanation: "Correct." },
+            { text: "Sand", explanation: "No." },
+          ],
+          answerIndex: 1,
+          reasoning: "...",
+        },
+      ],
+    }
+
+    const html = renderQuizHtml(quiz, "qz001", undefined)
+    const answers = buildQuizAnswers(quiz, "qz001")
+
+    expect((html.match(/data-section-type="activity_quiz"/g) ?? [])).toHaveLength(1)
+    expect((html.match(/data-submit-target/g) ?? [])).toHaveLength(1)
+    expect(html).toContain('data-quiz-question-group="qz001_q1"')
+    expect(html).toContain('data-quiz-question-group="qz001_q2"')
+    expect(answers).toEqual({
+      qz001_q1_o0: true,
+      qz001_q1_o1: false,
+      qz001_q1_o2: false,
+      qz001_q2_o0: false,
+      qz001_q2_o1: true,
+      qz001_q2_o2: false,
+    })
+  })
+
+  it("renders nested true/false as one flat answer map and one submit target", () => {
+    const quiz: Quiz = {
+      activityType: "true_false",
+      quizIndex: 0,
+      afterPageId: "pg001",
+      pageIds: ["pg001"],
+      question: "True or false.",
+      statements: [{ text: "Plants need water.", answer: true }],
+      reasoning: "...",
+      questions: [
+        {
+          activityType: "true_false",
+          question: "True or false.",
+          statements: [{ text: "Plants need water.", answer: true }],
+          reasoning: "...",
+        },
+        {
+          activityType: "true_false",
+          question: "True or false.",
+          statements: [{ text: "Plants grow without light.", answer: false }],
+          reasoning: "...",
+        },
+      ],
+    }
+
+    const html = renderQuizHtml(quiz, "qz001", undefined)
+    const answers = buildQuizAnswers(quiz, "qz001")
+
+    expect((html.match(/data-section-type="activity_true_false"/g) ?? [])).toHaveLength(1)
+    expect((html.match(/data-submit-target/g) ?? [])).toHaveLength(1)
+    expect(answers).toEqual({
+      "item-1": "true",
+      "item-2": "false",
+    })
+  })
+
+  it("renders nested matching as one flat answer map and one submit target", () => {
+    const quiz: Quiz = {
+      activityType: "drag_and_drop",
+      quizIndex: 0,
+      afterPageId: "pg001",
+      pageIds: ["pg001"],
+      question: "Match the pairs.",
+      pairs: [
+        { item: "Root", match: "Absorbs water" },
+        { item: "Leaf", match: "Makes food" },
+      ],
+      reasoning: "...",
+      questions: [
+        {
+          activityType: "drag_and_drop",
+          question: "Match the pairs.",
+          pairs: [
+            { item: "Root", match: "Absorbs water" },
+            { item: "Leaf", match: "Makes food" },
+          ],
+          reasoning: "...",
+        },
+        {
+          activityType: "drag_and_drop",
+          question: "Match the pairs.",
+          pairs: [
+            { item: "Stem", match: "Supports the plant" },
+            { item: "Flower", match: "Makes seeds" },
+          ],
+          reasoning: "...",
+        },
+      ],
+    }
+
+    const html = renderQuizHtml(quiz, "qz001", undefined)
+    const answers = buildQuizAnswers(quiz, "qz001")
+
+    expect((html.match(/data-section-type="activity_matching"/g) ?? [])).toHaveLength(1)
+    expect((html.match(/data-submit-target/g) ?? [])).toHaveLength(1)
+    expect(answers).toEqual({
+      "item-1": "dropzone-1",
+      "item-2": "dropzone-2",
+      "item-3": "dropzone-3",
+      "item-4": "dropzone-4",
+    })
   })
 })
 
@@ -468,6 +692,100 @@ describe("packageAdtWeb", () => {
     // SCORM adapter should include the quiz activity ID
     const scorm = fs.readFileSync(path.join(bookDir, "adt", "assets", "scorm.js"), "utf-8")
     expect(scorm).toContain('"qz001"')
+  })
+
+  it("skips pruned quizzes and renumbers exported quiz page ids", async () => {
+    const bookDir = path.join(tmpDir, "book")
+    const webAssetsDir = path.join(tmpDir, "assets-web")
+    fs.mkdirSync(bookDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+
+    const pages: PageData[] = [
+      { pageId: "pg001", pageNumber: 1, text: "Page one" },
+    ]
+
+    const storage = createMockStorage(pages, {
+      "web-rendering": {
+        pg001: {
+          sections: [
+            {
+              sectionIndex: 0,
+              sectionType: "content",
+              reasoning: "ok",
+              html: "<div>Page one</div>",
+            },
+          ],
+        },
+      },
+      "page-sectioning": {
+        pg001: {
+          reasoning: "ok",
+          sections: [
+            {
+              sectionId: "pg001_sec001",
+              sectionType: "content",
+              nodes: [],
+              backgroundColor: "#fff",
+              textColor: "#000",
+              pageNumber: 1,
+              isPruned: false,
+            },
+          ],
+        },
+      },
+      "quiz-generation": {
+        book: {
+          generatedAt: "2026-01-01T00:00:00.000Z",
+          language: "en",
+          pagesPerQuiz: 3,
+          quizzes: [
+            {
+              quizIndex: 0,
+              afterPageId: "pg001",
+              pageIds: ["pg001"],
+              isPruned: true,
+              question: "Pruned?",
+              options: [
+                { text: "1) Yes", explanation: "Yes" },
+                { text: "2) No", explanation: "No" },
+              ],
+              answerIndex: 0,
+              reasoning: "...",
+            },
+            {
+              quizIndex: 1,
+              afterPageId: "pg001",
+              pageIds: ["pg001"],
+              isPruned: false,
+              question: "Kept?",
+              options: [
+                { text: "1) Yes", explanation: "Yes" },
+                { text: "2) No", explanation: "No" },
+              ],
+              answerIndex: 0,
+              reasoning: "...",
+            },
+          ],
+        },
+      },
+    })
+
+    await packageAdtWeb(storage, {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Book Title",
+      webAssetsDir,
+    })
+
+    const pagesJson = JSON.parse(
+      fs.readFileSync(path.join(bookDir, "adt", "content", "pages.json"), "utf-8"),
+    ) as Array<{ section_id: string; href: string }>
+
+    expect(pagesJson.map((entry) => entry.section_id)).toEqual(["pg001_sec001", "qz001"])
+    expect(fs.existsSync(path.join(bookDir, "adt", "qz001.html"))).toBe(true)
+    expect(fs.readFileSync(path.join(bookDir, "adt", "qz001.html"), "utf-8")).toContain("Kept?")
   })
 
   it("packages reader timecodes and enables word highlighting when timestamps exist", async () => {

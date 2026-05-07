@@ -127,6 +127,9 @@ export const updateSubmitButtonAndToast = (
         // Only show reset button for activities where it makes sense
         if (activityType === ActivityTypes.OPEN_ENDED_ANSWER ||
             activityType === ActivityTypes.FILL_IN_THE_BLANK ||
+            activityType === ActivityTypes.MULTIPLE_CHOICE ||
+            activityType === ActivityTypes.QUIZ ||
+            activityType === ActivityTypes.TRUE_FALSE ||
             activityType === ActivityTypes.SORTING ||
             activityType === ActivityTypes.FILL_IN_A_TABLE ||
             activityType === ActivityTypes.MATCHING) {
@@ -775,4 +778,3 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation();
     });
 });
-
