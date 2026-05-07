@@ -1,7 +1,13 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router"
+import { createFileRoute, Outlet, ErrorComponentProps } from "@tanstack/react-router"
+import { ErrorScreen } from "@/components/ErrorScreen"
+
+function BookErrorComponent({ error, reset }: ErrorComponentProps) {
+  return <ErrorScreen variant="route" error={error} reset={reset} />
+}
 
 export const Route = createFileRoute("/books/$label/$step")({
   component: StepLayout,
+  errorComponent: BookErrorComponent,
 })
 
 function StepLayout() {

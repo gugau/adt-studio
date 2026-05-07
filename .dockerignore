@@ -34,8 +34,11 @@ AGENTS.md
 # Logs
 *.log
 
-# Tauri build output
-**/src-tauri/target/
+# Electron build output
+apps/desktop/out/
+apps/desktop/release/
+apps/desktop/dist/
+apps/api/dist-electron/
 
 # Documentation (not needed in build)
 docs/

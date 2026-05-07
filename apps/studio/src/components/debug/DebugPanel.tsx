@@ -8,6 +8,7 @@ import { ConfigTab } from "./ConfigTab"
 import { VersionsTab } from "./VersionsTab"
 import { DebugTabsNav } from "./DebugTabsNav"
 import type { DebugTabValue } from "./debug-panel-state"
+import { ApiLogsTab } from "./api-logs-tab"
 
 const MIN_HEIGHT = 200
 const MAX_HEIGHT_VH = 0.8
@@ -130,6 +131,9 @@ export function DebugPanel({
           </TabsContent>
           <TabsContent value="versions" className="m-0 h-full">
             <VersionsTab label={label} />
+          </TabsContent>
+          <TabsContent value="api-logs" className="m-0 h-full">
+            <ApiLogsTab label={label} />
           </TabsContent>
         </div>
       </Tabs>

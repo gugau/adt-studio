@@ -186,7 +186,7 @@ All API inputs are validated with Zod at the route level. Book labels are restri
 
 ### CORS
 
-CORS is configured to allow `http://localhost:5173` (Vite dev server) and `tauri://localhost` (desktop app) by default. For hosted deployments, update the allowed origins in `apps/api/src/app.ts`.
+CORS is configured to allow `http://localhost:5173` (Vite dev server) and the local Electron renderer origin by default. For hosted deployments, update the allowed origins in `apps/api/src/app.ts`.
 
 ---
 
@@ -349,12 +349,14 @@ pnpm a11y:browser-recheck  # Playwright recheck for manual-review items + contra
 pnpm a11y:browser-recheck:json  # Same browser recheck as machine-readable JSON
 ```
 
-**Desktop app** (optional — requires [Rust](https://rustup.rs/)):
+**Desktop app** (optional — Electron):
 ```bash
-pnpm --filter @adt/api build:sidecar  # Required once before first run (and after API changes)
-pnpm dev                               # Terminal 1: start API + Studio dev servers
-pnpm dev:desktop                       # Terminal 2: opens Tauri window
+pnpm dev:desktop   # Launches the Electron app via electron-vite (renderer HMR + main/preload reloads)
 ```
+
+The Electron main process boots the API server in-process on a free local port — there is no separate `pnpm dev` to run for the desktop app.
+
+To produce installers, see the build targets in [apps/desktop/README.md](../apps/desktop/README.md).
 
 ### Platform-specific notes
 
@@ -364,18 +366,14 @@ pnpm dev:desktop                       # Terminal 2: opens Tauri window
 - Use [nvm-windows](https://github.com/coreybutler/nvm-windows) or [fnm](https://github.com/Schniz/fnm) (`winget install Schniz.fnm`) to manage Node.js versions. Note: `nvm-windows` is a different project from the Unix `nvm`.
 - For Docker: install [Docker Desktop](https://docs.docker.com/desktop/install/windows-install/) with WSL2 backend. Use `${PWD}/books` (PowerShell) instead of `./books` for volume mounts.
 - For long path issues: `git config --system core.longpaths true` (as Administrator).
-- For Tauri desktop builds: install [Visual Studio C++ Build Tools 2022](https://visualstudio.microsoft.com/visual-cpp-build-tools/) with the "Desktop development with C++" workload. WebView2 is preinstalled on Windows 10/11.
+- For signed Electron installers: a code-signing token is required (see [apps/desktop/README.md](../apps/desktop/README.md) for `AZ_TOKEN` / `jsign.jar`). Java is required to run `jsign.jar`. Unsigned dev builds need no extra tooling.
 
 **macOS:**
-- For Tauri desktop builds: install Xcode Command Line Tools: `xcode-select --install`.
+- For notarized Electron installers: Apple Developer credentials (`APPLEID`, `APPLEIDPASS`, `APPLEIDTEAM`). Unsigned local builds need no extra tooling.
 - Node.js can also be installed via Homebrew: `brew install node@22`.
 
 **Linux:**
-- For Tauri desktop builds (Debian/Ubuntu):
-  ```bash
-  sudo apt install libwebkit2gtk-4.1-dev build-essential libssl-dev \
-    libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
-  ```
+- The Electron desktop app builds without extra system packages on most distros.
 - To run Docker without `sudo`:
   ```bash
   sudo usermod -aG docker $USER

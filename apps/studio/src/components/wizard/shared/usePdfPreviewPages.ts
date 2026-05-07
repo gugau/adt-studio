@@ -134,7 +134,10 @@ export function usePdfPreviewPages(params: UsePdfPreviewPagesParams) {
           }
 
           rememberInCache(cacheKey, { dataUrls: result, pageLabels: labelSlice })
-        } finally {
+        } catch (error) {
+          throw error
+        }
+        finally {
           await pdf.destroy().catch(() => {})
         }
       } catch {

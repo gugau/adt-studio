@@ -10,7 +10,7 @@ ADT Studio es una aplicación de escritorio para la producción automatizada de 
   - [Requisitos Previos](#requisitos-previos)
   - [Pasos de Instalación](#pasos-de-instalación)
   - [Comandos Útiles](#comandos-útiles)
-  - [Desarrollo de Escritorio (Tauri) — Opcional](#desarrollo-de-escritorio-tauri--opcional)
+  - [Desarrollo de Escritorio (Electron) — Opcional](#desarrollo-de-escritorio-electron--opcional)
 - [Sección 2: Docker](#sección-2-docker)
   - [Requisitos Previos (Docker)](#requisitos-previos-docker)
   - [Opción A: Imagen Combinada (Recomendado)](#opción-a-imagen-combinada-recomendado)
@@ -179,44 +179,42 @@ Abrir el navegador en **http://localhost:5173**
 | `pnpm pipeline` | CLI: ejecuta el pipeline completo sobre un libro |
 | `pnpm pdf-extract` | CLI: extrae páginas de un PDF y genera un visor HTML |
 
-### Desarrollo de Escritorio (Tauri) — Opcional
+### Desarrollo de Escritorio (Electron) — Opcional
 
-Para compilar la versión de escritorio (Windows/macOS/Linux), se necesitan requisitos adicionales según el sistema operativo:
+La aplicación de escritorio usa Electron, manejada por [electron-vite](https://electron-vite.org/) en desarrollo y [electron-builder](https://www.electron.build/) para empaquetado. **No** se requiere Rust ni cadenas de herramientas nativas por sistema operativo para el código de la aplicación; basta con Node.js y pnpm.
 
-| Software | Versión | Instalación | Plataforma |
-|----------|---------|-------------|------------|
-| **Rust toolchain** | Última estable | [rustup.rs](https://rustup.rs/) | Todas |
-| **Visual Studio C++ Build Tools** | 2022+ | [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) | Windows |
-| **WebView2** | Última | Preinstalado en Windows 10/11 | Windows |
-| **Xcode Command Line Tools** | Última | `xcode-select --install` | macOS |
-| **Dependencias de sistema** | — | `sudo apt install libwebkit2gtk-4.1-dev build-essential libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev` | Linux (Debian/Ubuntu) |
+| Software | Versión | Necesario para | Plataforma |
+|----------|---------|---------------|------------|
+| **Node.js** | 20+ | Desarrollo y empaquetado | Todas |
+| **pnpm** | 10.32.1 | Desarrollo y empaquetado | Todas |
+| **Java** | JDK 11+ | Solo para firmar instaladores Windows con `jsign.jar` | Windows (firmado) |
+| **Apple Developer ID** | — | Solo para notarizar instaladores macOS | macOS (firmado) |
 
-> **Nota:** La CLI de Tauri ya está incluida como dependencia de desarrollo del proyecto. No es necesario instalarla por separado.
->
-> **Windows:** Al instalar Visual Studio Build Tools, asegurarse de seleccionar el componente "Desarrollo de escritorio con C++". Esto es necesario para compilar las dependencias nativas de Tauri/Rust.
+> **Nota:** El binding nativo de Electron lo gestiona pnpm automáticamente al instalar dependencias (`electron-builder install-app-deps` se ejecuta como `postinstall`).
 
 #### Pasos para desarrollo de escritorio
 
 ```bash
-# 1. Compilar el sidecar (binario del API server + recursos)
-#    Solo es necesario ejecutarlo una vez, o cuando cambien los archivos del API
-pnpm --filter @adt/api build:sidecar
-
-# 2. En una terminal: iniciar los servidores de desarrollo
-pnpm dev
-
-# 3. En otra terminal: iniciar la ventana de escritorio de Tauri
+# Inicia la app de escritorio con HMR para el renderer y recargas para main/preload.
+# El servidor API se ejecuta dentro del proceso main de Electron — no es necesario
+# correr `pnpm dev` por separado.
 pnpm dev:desktop
 ```
 
 #### Compilar el instalador de producción
 
 ```bash
-# Genera el instalador completo (ejecuta build:sidecar automáticamente)
-pnpm build:desktop
+# Empaqueta la aplicación completa (API + Studio + Electron)
+pnpm build:desktop                       # todo en uno
+
+# O por plataforma:
+pnpm --filter @adt/desktop build:unpack  # carpeta sin instalador
+pnpm --filter @adt/desktop build:win     # instalador NSIS para Windows
+pnpm --filter @adt/desktop build:mac     # paquete DMG para macOS
+pnpm --filter @adt/desktop build:linux   # AppImage para Linux
 ```
 
-El instalador se genera en `apps/desktop/src-tauri/target/release/`.
+Los artefactos se generan en `apps/desktop/release/`.
 
 ---
 
@@ -501,23 +499,19 @@ New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name
 - **Docker:** Requiere [Docker Desktop](https://docs.docker.com/desktop/install/windows-install/) con backend WSL2.
 - **Rutas de volúmenes Docker:** Usar `${PWD}/books` (PowerShell) o `%cd%/books` (CMD) en lugar de `./books`.
 - **Continuación de línea:** En PowerShell usar `` ` `` en lugar de `\` para comandos multilínea.
-- **Tauri (escritorio):** Requiere [Visual Studio C++ Build Tools 2022](https://visualstudio.microsoft.com/visual-cpp-build-tools/) con el componente "Desarrollo de escritorio con C++".
+- **Instaladores Electron firmados:** Requiere un token de firma (ver [`apps/desktop/README.md`](../apps/desktop/README.md) para `AZ_TOKEN` / `jsign.jar`). Java es necesario para ejecutar `jsign.jar`. Las compilaciones locales sin firma no requieren herramientas adicionales.
 - **Permisos de corepack:** Puede requerir ejecutar PowerShell como Administrador para `corepack enable`.
 
 ### macOS
 
 - **Docker:** Instalar [Docker Desktop para Mac](https://docs.docker.com/desktop/install/mac-install/) (disponible para Apple Silicon y Intel).
-- **Tauri (escritorio):** Requiere Xcode Command Line Tools: `xcode-select --install`.
+- **Instaladores Electron notarizados:** Requiere credenciales de Apple Developer (`APPLEID`, `APPLEIDPASS`, `APPLEIDTEAM`). Las compilaciones locales sin firma no requieren herramientas adicionales.
 - **Gestor de versiones de Node:** `nvm` o `fnm` funcionan nativamente. También se puede usar `brew install node@22`.
 
 ### Linux
 
 - **Docker:** Instalar [Docker Engine](https://docs.docker.com/engine/install/) + [Docker Compose plugin](https://docs.docker.com/compose/install/linux/). Docker Desktop también está disponible pero no es obligatorio.
-- **Tauri (escritorio — Debian/Ubuntu):**
-  ```bash
-  sudo apt install libwebkit2gtk-4.1-dev build-essential libssl-dev \
-    libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
-  ```
+- **App de escritorio Electron:** No requiere paquetes del sistema adicionales en la mayoría de las distribuciones — solo Node.js y pnpm.
 - **Permisos de Docker sin root:**
   ```bash
   sudo usermod -aG docker $USER

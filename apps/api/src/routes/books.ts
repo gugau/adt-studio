@@ -408,6 +408,97 @@ export function createBookRoutes(
     }
   })
 
+  // GET /books/:label/cover — Serve the first extracted page image (book cover)
+  app.get("/books/:label/cover", (c) => {
+    const { label } = c.req.param()
+    let safeLabel: string
+    try {
+      safeLabel = parseBookLabel(label)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      throw new HTTPException(400, { message })
+    }
+    const resolvedDir = path.resolve(booksDir)
+    const bookDir = path.join(resolvedDir, safeLabel)
+    const dbPath = path.join(bookDir, `${safeLabel}.db`)
+
+    if (!fs.existsSync(dbPath)) {
+      throw new HTTPException(404, {
+        message: `Book not found: ${safeLabel}`,
+      })
+    }
+
+    const db = openBookDb(dbPath)
+    try {
+      const metadataRow = db.all(
+        `SELECT data FROM node_data
+         WHERE node = 'metadata' AND item_id = 'book'
+         ORDER BY version DESC LIMIT 1`
+      ) as Array<{ data: string }>
+
+      let coverPageNumber: number | null = null
+      if (metadataRow.length > 0) {
+        try {
+          const parsed = JSON.parse(metadataRow[0].data) as {
+            cover_page_number?: number | null
+          }
+          if (typeof parsed.cover_page_number === "number") {
+            coverPageNumber = parsed.cover_page_number
+          }
+        } catch { /* ignore malformed metadata */ }
+      }
+
+      const pageRows =
+        coverPageNumber !== null
+          ? (db.all(
+              "SELECT page_id FROM pages WHERE page_number = ? LIMIT 1",
+              [coverPageNumber]
+            ) as Array<{ page_id: string }>)
+          : (db.all(
+              "SELECT page_id FROM pages ORDER BY page_number ASC LIMIT 1"
+            ) as Array<{ page_id: string }>)
+
+      if (pageRows.length === 0) {
+        throw new HTTPException(404, { message: "No pages extracted yet" })
+      }
+
+      const imageId = `${pageRows[0].page_id}_page`
+      const imageRows = db.all(
+        "SELECT path FROM images WHERE image_id = ?",
+        [imageId]
+      ) as Array<{ path: string }>
+
+      if (imageRows.length === 0) {
+        throw new HTTPException(404, { message: "Cover image not found" })
+      }
+
+      const imagePath = path.resolve(bookDir, imageRows[0].path)
+      if (!imagePath.startsWith(bookDir + path.sep)) {
+        throw new HTTPException(400, { message: "Invalid image path" })
+      }
+
+      let stat: fs.Stats
+      try {
+        stat = fs.statSync(imagePath)
+      } catch {
+        throw new HTTPException(404, { message: "Cover image file not found" })
+      }
+      if (!stat.isFile()) {
+        throw new HTTPException(404, { message: "Cover image file not found" })
+      }
+
+      const imageBuffer = fs.readFileSync(imagePath)
+      const ext = path.extname(imagePath).toLowerCase()
+      const contentType =
+        ext === ".jpg" || ext === ".jpeg" ? "image/jpeg" : "image/png"
+      c.header("Content-Type", contentType)
+      c.header("Cache-Control", "public, max-age=86400")
+      return c.body(imageBuffer)
+    } finally {
+      db.close()
+    }
+  })
+
   // GET /books/:label/images/:imageId — Serve extracted image binary
   app.get("/books/:label/images/:imageId", (c) => {
     const { label, imageId } = c.req.param()
