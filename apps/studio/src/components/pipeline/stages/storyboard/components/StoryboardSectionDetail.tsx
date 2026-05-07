@@ -509,10 +509,23 @@ export function StoryboardSectionDetail({
   const [selectedElementClasses, setSelectedElementClasses] = useState<string[] | null>(null)
   const previewFrameRef = useRef<BookPreviewFrameHandle>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const toolbarRef = useRef<HTMLDivElement>(null)
 
   // Clear cached classes when element is deselected
   useEffect(() => {
     if (!selectedElement) setSelectedElementClasses(null)
+  }, [selectedElement])
+
+  // Close toolbar when clicking outside of it
+  useEffect(() => {
+    if (!selectedElement) return
+    const handler = (e: MouseEvent) => {
+      if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
+        setSelectedElement(null)
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
   }, [selectedElement])
 
   // Track current pageId so async callbacks can detect stale closures
@@ -2235,6 +2248,7 @@ export function StoryboardSectionDetail({
 
       {/* Floating popover for selected element */}
       {selectedElement && selectedInfo && (
+        <div ref={toolbarRef}>
         <SectionEditToolbar
           dataId={selectedElement.dataId}
           rect={selectedElement.rect}
@@ -2259,6 +2273,7 @@ export function StoryboardSectionDetail({
           elementClasses={selectedElementClasses ?? undefined}
           onClassesChange={handleClassesChange}
         />
+        </div>
       )}
 
       {/* Slide-out section data panel */}
