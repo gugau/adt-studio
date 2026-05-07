@@ -9,7 +9,17 @@ function resolveAppResourcesRoot(): string {
   return join(app.getAppPath(), "..", "..");
 }
 
-function resolvePaths() {
+export interface ApiServerPaths {
+  serverPath: string;
+  root: string;
+  booksDir: string;
+  promptsDir: string;
+  configPath: string;
+  adtResourcesZip: string;
+  webAssetsDir: string;
+}
+
+export function resolvePaths(): ApiServerPaths {
   const appDataDir = app.getPath("userData");
   const booksDir = join(appDataDir, "books");
 
@@ -47,20 +57,3 @@ function resolvePaths() {
     webAssetsDir: join(root, "assets", "adt"),
   };
 }
-
-async function waitForApi(apiUrl: string, timeoutMs = 30_000, intervalMs = 200): Promise<void> {
-    const deadline = Date.now() + timeoutMs;
-    while (Date.now() < deadline) {
-      try {
-        const res = await fetch(apiUrl);
-        if (res.ok) return;
-      } catch {
-        // not up yet
-      }
-      await new Promise((r) => setTimeout(r, intervalMs));
-    }
-    throw new Error(`API server did not start within ${timeoutMs}ms`);
-  }
-
-
-export { resolvePaths, waitForApi };

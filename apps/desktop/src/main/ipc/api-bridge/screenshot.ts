@@ -3,7 +3,10 @@ import {
   screenshotIpcReplySuccessSchema,
   screenshotIpcUtilityToMainSchema,
 } from "@adt/types";
-import { screenshot, close as closeScreenshotWindows } from "./screenshot";
+import {
+  screenshot,
+  close as closeScreenshotWindows,
+} from "../../services/screenshot";
 
 /*
     The child (API) process cannot access Electron APIs directly, 

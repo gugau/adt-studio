@@ -1,6 +1,7 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
-import type { ApiLogEntry } from '../main/api'
-import type { UpdateStatus } from '../main/auto-updater'
+import type { ApiLogEntry } from '../main/api-server/types'
+import type { UpdateStatus } from '../main/services/auto-updater'
+import type { DebugSnapshot } from '../main/services/debug-info'
 
 export type ElectronPlatform = NodeJS.Platform
 
@@ -31,6 +32,10 @@ export interface UpdatesApi {
 export interface SplashControlsApi {
   relaunch: () => Promise<void>
   quit: () => Promise<void>
+  getDebugInfo: () => Promise<DebugSnapshot>
+  copyDebugInfo: () => Promise<string>
+  saveDebugInfo: () => Promise<string | null>
+  readonly version: string
 }
 
 declare global {

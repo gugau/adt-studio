@@ -7,11 +7,11 @@ import {
   onUpdateStatus,
   quitAndInstall,
   type UpdateStatus,
-} from "./auto-updater";
+} from "../services/auto-updater";
 
 const UPDATE_STATUS_CHANNEL = "updates:status";
 
-export function setupUpdateControls(): () => void {
+export function registerUpdatesIpc(): () => void {
   ipcMain.handle("updates:check", () => checkForUpdates());
   ipcMain.handle("updates:download", () => downloadUpdate());
   ipcMain.handle("updates:install", () => {

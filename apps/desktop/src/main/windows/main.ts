@@ -1,8 +1,8 @@
 import { shell, BrowserWindow, dialog } from "electron";
 import { join } from "path";
 import { is } from "@electron-toolkit/utils";
-import icon from "../../resources/icon.png?asset";
-import { STUDIO_APP_ORIGIN } from "./protocols/studio-app.protocol";
+import icon from "../../../resources/icon.png?asset";
+import { STUDIO_APP_ORIGIN } from "../protocols/studio-app";
 
 function platformWindowOptions(): Partial<Electron.BrowserWindowConstructorOptions> {
   switch (process.platform) {
@@ -20,7 +20,7 @@ function platformWindowOptions(): Partial<Electron.BrowserWindowConstructorOptio
   }
 }
 
-export function createWindow(): BrowserWindow {
+export function createMainWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,

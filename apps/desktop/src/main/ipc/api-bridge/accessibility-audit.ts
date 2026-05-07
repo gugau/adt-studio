@@ -6,7 +6,7 @@ import {
 import {
   audit,
   close as closeAccessibilityAuditWindows,
-} from "./accessibility-audit";
+} from "../../services/accessibility-audit";
 
 /*
     The child (API) process cannot access Electron APIs directly,
