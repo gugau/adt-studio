@@ -1,4 +1,11 @@
 import { ArrowRight, ArrowUpRight, Download, Tag } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  detectUserPlatform,
+  groupAssets,
+  pickPreferred,
+  type DetectedPlatform,
+} from "@/components/pages/download/shared";
 import { SectionEyebrow } from "@/components/SectionEyebrow";
 import { cn } from "@/lib/cn";
 import {
@@ -14,6 +21,12 @@ import { useInView } from "@/lib/useScrollProgress";
 export function ReleasesScene() {
   const { releases, loading, error } = useGithubReleases();
   const { ref, inView: mounted } = useInView<HTMLDivElement>({ threshold: 0.2 });
+  const [userPlatform, setUserPlatform] = useState<DetectedPlatform | null>(
+    null,
+  );
+  useEffect(() => {
+    setUserPlatform(detectUserPlatform());
+  }, []);
   const items = releases ?? [];
 
   return (
@@ -66,6 +79,7 @@ export function ReleasesScene() {
                   index={i}
                   mounted={mounted}
                   isLatest={i === 0}
+                  userPlatform={userPlatform}
                 />
               ))}
         </div>
@@ -104,15 +118,20 @@ function ReleaseCard({
   index,
   mounted,
   isLatest,
+  userPlatform,
 }: {
   release: GithubRelease;
   index: number;
   mounted: boolean;
   isLatest: boolean;
+  userPlatform: DetectedPlatform | null;
 }) {
   const title = release.name?.trim() || release.tag_name;
   const body = stripMarkdown(release.body).split("\n").slice(0, 3).join(" · ");
-  const primaryAsset = pickPrimaryAsset(release.assets);
+  const isUnsupported = userPlatform === "mobile";
+  const primaryAsset = isUnsupported
+    ? null
+    : pickPrimaryAsset(release.assets, userPlatform);
   const detailHref = `#/releases/${encodeURIComponent(release.tag_name)}`;
 
   return (
@@ -173,7 +192,7 @@ function ReleaseCard({
           View details
           <ArrowRight className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5" />
         </span>
-        {primaryAsset && (
+        {primaryAsset ? (
           <a
             href={primaryAsset.browser_download_url}
             onClick={(e) => e.stopPropagation()}
@@ -182,7 +201,17 @@ function ReleaseCard({
             <Download className="h-3 w-3" />
             Download
           </a>
-        )}
+        ) : isUnsupported ? (
+          <span
+            aria-disabled="true"
+            title="ADT Studio is desktop only"
+            onClick={(e) => e.stopPropagation()}
+            className="pointer-events-none relative z-[2] inline-flex cursor-not-allowed items-center gap-1 text-xs font-semibold text-[color:var(--color-muted-foreground)]/50"
+          >
+            <Download className="h-3 w-3" />
+            Download
+          </span>
+        ) : null}
       </div>
     </article>
   );
@@ -225,8 +254,14 @@ function SkeletonCard({
   );
 }
 
-function pickPrimaryAsset(assets: GithubRelease["assets"]) {
+function pickPrimaryAsset(
+  assets: GithubRelease["assets"],
+  platform: DetectedPlatform | null,
+) {
   if (!assets || assets.length === 0) return null;
-  const prefer = assets.find((a) => /\.(exe|dmg|AppImage)$/i.test(a.name));
-  return prefer ?? assets[0];
+  if (platform && platform !== "mobile") {
+    const match = pickPreferred(groupAssets(assets)[platform]);
+    if (match) return match;
+  }
+  return pickPreferred(assets);
 }

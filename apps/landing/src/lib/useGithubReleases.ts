@@ -20,7 +20,7 @@ export type GithubRelease = {
 
 const OWNER = "unicef";
 const REPO = "adt-studio";
-const CACHE_KEY = "adt:gh:releases:v2";
+const CACHE_KEY = "adt:gh:releases:v3";
 const FETCH_LIMIT = 20;
 const TTL_MS = 60 * 60 * 1000;
 
@@ -58,7 +58,7 @@ export function useGithubReleases(): {
   const [error, setError] = useState<boolean>(false);
 
   useEffect(() => {
-    if (readCache()) return;
+    const hadCache = readCache() !== null;
     const ctrl = new AbortController();
     (async () => {
       try {
@@ -66,6 +66,7 @@ export function useGithubReleases(): {
           `https://api.github.com/repos/${OWNER}/${REPO}/releases?per_page=${FETCH_LIMIT}`,
           {
             headers: { Accept: "application/vnd.github+json" },
+            cache: "no-store",
             signal: ctrl.signal,
           },
         );
@@ -74,8 +75,10 @@ export function useGithubReleases(): {
         const filtered = data.filter((r) => !r.draft);
         writeCache(filtered);
         setReleases(filtered);
+        setError(false);
       } catch (e) {
-        if ((e as Error).name !== "AbortError") setError(true);
+        if ((e as Error).name === "AbortError") return;
+        if (!hadCache) setError(true);
       } finally {
         setLoading(false);
       }
