@@ -1,25 +1,3 @@
-/**
- * Audio playback for read-aloud — Phase C: chained playback + word-by-word
- * highlighting that follows the spoken text.
- *
- * Replaces the imperative parts of the legacy `audio.js` (queue, play/pause,
- * next/previous, speed) and `tts_highlighter.js` (per-word DOM mutation
- * synced to `audio.timeupdate`).
- *
- * Architecture:
- *   - One `HTMLAudioElement` lives in a ref for the chrome's lifetime.
- *   - Items derive lazily from `#content` — every `[data-id]` whose audio
- *     file exists in `audios.json` for the current language.
- *   - Per item, the player wraps the element's text in `<span data-word-index>`
- *     spans (or applies a block highlight for img/textarea/select), then
- *     advances the highlight on each `timeupdate` using either precise
- *     timestamps from `timecode_output.json` or weight-based estimates from
- *     the tokenizer.
- *   - Atoms (`isPlaying`, `currentAudioIndex`) keep the PlayBar UI in sync.
- *   - On every transition (next/prev, ended, pause, language switch, unmount)
- *     the previous item's wrapped DOM is restored byte-for-byte before the
- *     next one is set up.
- */
 import { useAtom, useAtomValue, useSetAtom } from "jotai"
 import { useCallback, useEffect, useMemo, useRef } from "react"
 import {
@@ -27,6 +5,7 @@ import {
   audioVolumeAtom,
   autoplayModeAtom,
   currentAudioIndexAtom,
+  describeImagesModeAtom,
   isPlayingAtom,
   readAloudModeAtom,
   timecodeMapAtom,
@@ -80,13 +59,14 @@ export interface UseAudioPlayer {
   togglePlayPause: () => void
   playNext: () => void
   playPrevious: () => void
-  /** Fully stop playback, tear down highlights, reset to first track. */
   stop: () => void
 }
 
 export function useAudioPlayer(): UseAudioPlayer {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const activeRef = useRef<ActiveHighlight | null>(null)
+  const hasAutoStartedRef = useRef<boolean>(false)
+
 
   const [isPlaying, setIsPlaying] = useAtom(isPlayingAtom)
   const [currentIndex, setCurrentIndex] = useAtom(currentAudioIndexAtom)
@@ -98,25 +78,18 @@ export function useAudioPlayer(): UseAudioPlayer {
   const readAloudMode = useAtomValue(readAloudModeAtom) as boolean
   const setReadAloudMode = useSetAtom(readAloudModeAtom)
   const wordHighlightMode = useAtomValue(wordHighlightModeAtom) as boolean
+  const describeImagesMode = useAtomValue(describeImagesModeAtom) as boolean
   const timecodeMap = useAtomValue(timecodeMapAtom)
-
-  // Mirror the user's word-highlight preference into a ref so the audio
-  // element's `ontimeupdate` callback (which is captured at play time) can
-  // read the current value without re-binding.
   const wordHighlightModeRef = useRef(wordHighlightMode)
   wordHighlightModeRef.current = wordHighlightMode
-
-  // Snapshot the persisted resume state at mount time. Subsequent toggles
-  // of read-aloud / autoplay mid-page must not re-trigger auto-start.
   const initialResumeRef = useRef<boolean>(isPlaying || autoplayMode)
-  const hasAutoStartedRef = useRef<boolean>(false)
 
-  // Re-derive the play list whenever the audio map changes (typically on
-  // language switch). Using DOM data ensures we don't drift from the static
-  // `#content` markup the page ships with.
-  const items = useMemo(() => gatherPlayableItems(audioFiles), [audioFiles])
+  const items = useMemo(() => {
+    const all = gatherPlayableItems(audioFiles)
+    if (describeImagesMode) return all
+    return all.filter((item) => item.el.tagName.toLowerCase() !== "img")
+  }, [audioFiles, describeImagesMode])
 
-  /** Restore the previously-active item's DOM and drop the active marker. */
   const teardownActive = useCallback(() => {
     const active = activeRef.current
     if (!active) return
@@ -129,7 +102,6 @@ export function useAudioPlayer(): UseAudioPlayer {
     activeRef.current = null
   }, [])
 
-  /** Set up word/block highlight scaffolding for the item at `index`. */
   const setupHighlight = useCallback(
     (item: PlayableItem, audio: HTMLAudioElement) => {
       teardownActive()
@@ -191,9 +163,6 @@ export function useAudioPlayer(): UseAudioPlayer {
       audio.volume = Math.max(0, Math.min(1, volume))
 
       audio.onloadedmetadata = () => {
-        // Once we know the real duration, swap the approximate timestamps
-        // for ones scaled to the actual track length. (Skipped if the API
-        // already gave us precise timings.)
         if (
           activeRef.current &&
           activeRef.current.mode === "word" &&
@@ -233,8 +202,6 @@ export function useAudioPlayer(): UseAudioPlayer {
         setIsPlaying(false)
       }
 
-      // Prepare the highlight scaffolding *before* play() so the first
-      // `timeupdate` already has spans to mark.
       setupHighlight(item, audio)
 
       setCurrentIndex(index)
@@ -242,8 +209,6 @@ export function useAudioPlayer(): UseAudioPlayer {
         .play()
         .then(() => setIsPlaying(true))
         .catch((err) => {
-          // Browser autoplay policy may reject until the user interacts with
-          // the page; log and revert to the paused state.
           console.warn("[adt-runtime] audio.play() rejected", err)
           teardownActive()
           setIsPlaying(false)
@@ -269,13 +234,8 @@ export function useAudioPlayer(): UseAudioPlayer {
     if (audio && !audio.paused) {
       audio.pause()
       setIsPlaying(false)
-      // Leave the current word highlighted while paused — it's the visual
-      // analogue of "you're paused mid-word".
       return
     }
-    // Starting playback: mark read-aloud as active so (a) the dock's
-    // volume icon flips to the active state and (b) on page navigation
-    // the next page's auto-resume effect picks back up where we left off.
     setReadAloudMode(true)
     if (
       audio &&
@@ -310,7 +270,6 @@ export function useAudioPlayer(): UseAudioPlayer {
     setCurrentIndex(0)
   }, [stopAndClear, setIsPlaying, setCurrentIndex])
 
-  // Auto-resume on page boot.
   useEffect(() => {
     if (hasAutoStartedRef.current) return
     if (items.length === 0) return
@@ -320,27 +279,26 @@ export function useAudioPlayer(): UseAudioPlayer {
     playAtIndex(0)
   }, [items.length, readAloudMode, playAtIndex])
 
-  // Keep the live `<audio>` rate in sync with the speed atom.
+  useEffect(() => {
+    if (readAloudMode) return
+    stopAndClear()
+    setIsPlaying(false)
+    setCurrentIndex(0)
+    hasAutoStartedRef.current = false
+  }, [readAloudMode, stopAndClear, setIsPlaying, setCurrentIndex])
+
   useEffect(() => {
     if (audioRef.current) audioRef.current.playbackRate = speed
   }, [speed])
 
-  // Keep the live `<audio>` volume in sync with the volume atom.
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = Math.max(0, Math.min(1, volume))
   }, [volume])
 
-  // Restart from the same index when the language changes mid-playback so
-  // the user hears the new locale and the new timecode/text are picked up.
   useEffect(() => {
     if (isPlaying && audioRef.current) playAtIndex(currentIndex)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language])
 
-  // Switching word ↔ block mode while a track is loaded: rebuild the
-  // highlight scaffolding so the change is visible immediately. Runs even
-  // while paused — the user otherwise sees the old mode persist until the
-  // next track starts.
   useEffect(() => {
     const audio = audioRef.current
     if (!audio || !audio.src) return
@@ -349,7 +307,6 @@ export function useAudioPlayer(): UseAudioPlayer {
     setupHighlight(item, audio)
   }, [wordHighlightMode, currentIndex, items, setupHighlight])
 
-  // Tear down on unmount (page navigation / runtime teardown).
   useEffect(() => {
     return () => {
       stopAndClear()

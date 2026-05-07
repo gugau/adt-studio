@@ -3,7 +3,7 @@
  * (state.js). Toggles that the user expects to persist across page reloads
  * use `persistedBoolAtom`; transient view state uses `ephemeralAtom`.
  */
-import { ephemeralAtom, persistedBoolAtom } from "./persist"
+import { ephemeralAtom, persistedBoolAtom, persistedStringAtom } from "./persist"
 
 // Persistent toggles — driven by sidebar switches and survive navigation.
 export const easyReadModeAtom = persistedBoolAtom("easyReadMode", false)
@@ -23,6 +23,7 @@ export const adminPopupOpenAtom = ephemeralAtom(false)
 export const glossaryListOpenAtom = ephemeralAtom(false)
 export const activeSidebarTabAtom = ephemeralAtom<"assistant" | "settings">("assistant")
 export const activeGlossaryTabAtom = ephemeralAtom<"page" | "book">("page")
+export const activeNavTabAtom = persistedStringAtom("navActiveTab", "toc")
 
 /**
  * Which dock NavigationMenu panel is currently open. `null` = closed.

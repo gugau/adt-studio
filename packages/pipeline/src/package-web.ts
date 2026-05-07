@@ -2,7 +2,7 @@ import { createHash } from "node:crypto"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
-import { fileURLToPath } from "node:url"
+import { fileURLToPath, pathToFileURL } from "node:url"
 
 /**
  * Tailwind v4 resolves `@import "tailwindcss"` relative to the postcss `from`
@@ -1777,7 +1777,11 @@ async function buildJsBundle(
       "../../apps/adt-runtime/build.config.mjs",
     )
     if (fs.existsSync(buildScript)) {
-      await import(`${buildScript}?t=${Date.now()}`)
+      // Convert to a file:// URL so Node's ESM loader doesn't read the
+      // Windows drive letter as a URL scheme.
+      const buildScriptUrl = pathToFileURL(buildScript)
+      buildScriptUrl.searchParams.set("t", String(Date.now()))
+      await import(buildScriptUrl.href)
     }
   }
 

@@ -1,5 +1,6 @@
 import fs from "node:fs"
 import path from "node:path"
+import { pathToFileURL } from "node:url"
 import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
 import { parseBookLabel } from "@adt/types"
@@ -576,8 +577,12 @@ export function createAdtPreviewRoutes(
         const isStale = bundleMtime === 0 || maxSourceMtime(webAssetsDir) > bundleMtime
         if (isStale) {
           // Re-import with a cache-busting URL so repeated invocations pick
-          // up source changes when using watch mode.
-          await import(`${buildScript}?t=${Date.now()}`)
+          // up source changes when using watch mode. Convert to a file:// URL
+          // so Node's ESM loader doesn't read the Windows drive letter as a
+          // URL scheme.
+          const buildScriptUrl = pathToFileURL(buildScript)
+          buildScriptUrl.searchParams.set("t", String(Date.now()))
+          await import(buildScriptUrl.href)
         }
       }
     }

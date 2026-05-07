@@ -1,6 +1,7 @@
 import { useAtom, useAtomValue } from "jotai"
 import {
   BookOpen,
+  Hand,
   Languages,
   List,
   Settings,
@@ -10,9 +11,14 @@ import {
 import { Popover, PopoverContent } from "@/components/ui/popover"
 import { appConfigAtom } from "@/state/config.atoms"
 import { playBarVisibleAtom, readAloudModeAtom } from "@/state/audio.atoms"
-import { dockMenuValueAtom, type DockMenuValue } from "@/state/ui.atoms"
+import {
+  dockMenuValueAtom,
+  signLanguageModeAtom,
+  type DockMenuValue,
+} from "@/state/ui.atoms"
 import { useAudioPlayerContext } from "@/hooks/AudioPlayerContext"
 import { useTranslation } from "@/hooks/useTranslation"
+import { trackToggleEvent } from "@/lib/analytics"
 import { cn } from "@/lib/utils"
 import { DockIconButton } from "./DockIconButton"
 import { TocContent } from "./content/TocContent"
@@ -26,19 +32,12 @@ interface DockMenuProps {
   anchor?: React.RefObject<HTMLElement | null>
 }
 
-/**
- * Dock's icon row. Each icon is a plain button that toggles
- * `dockMenuValueAtom`; the corresponding `<Popover>` reads the atom and
- * opens its content panel anchored to the dock. Five Popovers — only one
- * is open at a time. External surfaces (e.g. the glossary term popover's
- * "View in glossary" button) can write to the atom to open a panel
- * programmatically.
- */
 export function DockMenu({ anchor }: DockMenuProps) {
   const features = useAtomValue(appConfigAtom).features
   const [value, setValue] = useAtom(dockMenuValueAtom)
   const [readAloud, setReadAloud] = useAtom(readAloudModeAtom)
   const [, setPlayBarVisible] = useAtom(playBarVisibleAtom)
+  const [signLanguage, setSignLanguage] = useAtom(signLanguageModeAtom)
   const { isPlaying } = useAudioPlayerContext()
   const { t } = useTranslation()
 
@@ -88,6 +87,20 @@ export function DockMenu({ anchor }: DockMenuProps) {
             ) : (
               <VolumeX className="w-5 h-5" />
             )}
+          </DockIconButton>
+        ) : null}
+
+        {features.signLanguage ? (
+          <DockIconButton
+            ariaLabel={t("sign-language-label") || "Sign language"}
+            pressed={signLanguage}
+            onClick={() => {
+              const next = !signLanguage
+              trackToggleEvent("SignLanguage", next)
+              setSignLanguage(next)
+            }}
+          >
+            <Hand className="w-5 h-5" />
           </DockIconButton>
         ) : null}
 
