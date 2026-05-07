@@ -36,12 +36,7 @@ export function WelcomeScene() {
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-[6%] h-[260px] w-[520px] -translate-x-1/2 rounded-full blur-2xl [background:radial-gradient(closest-side,color-mix(in_oklch,var(--color-primary)_14%,transparent),transparent_70%)]"
       />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-[color:var(--color-background)]"
-      />
-
-      <div className="relative mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-14 lg:grid-cols-[1.05fr_1fr] lg:gap-10">
+      <div className="relative mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-14 lg:grid-cols-[1.3fr_1fr] lg:gap-10">
         <div className="flex flex-col items-center gap-6 text-center lg:items-start lg:text-left">
           <a
             href={
@@ -81,14 +76,14 @@ export function WelcomeScene() {
 
           <h1
             className={cn(
-              "text-balance text-[48px] font-bold leading-[0.88] tracking-tight transition-all duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] sm:text-[56px] md:text-[88px] lg:text-[104px]",
+              "text-balance text-[44px] font-bold leading-[0.92] tracking-tight transition-all duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] sm:text-[52px] md:text-[72px] lg:text-[88px]",
               mounted ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
             )}
             style={{ transitionDelay: "150ms" }}
           >
-            <span className="block">Born</span>
+            <span className="block">From PDF to</span>
             <span className="block bg-gradient-to-r from-[color:var(--color-primary)] to-violet-500 bg-clip-text text-transparent">
-              accessible.
+              accessible books.
             </span>
           </h1>
 
