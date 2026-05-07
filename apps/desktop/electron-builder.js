@@ -88,7 +88,7 @@ const config = {
   },
   linux: {
     target: ["AppImage"],
-    icon: "build",
+    icon: "build/icons",
   },
   publish: {
     provider: "github",
