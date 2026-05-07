@@ -2,7 +2,6 @@ require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
-const { notarize } = require("@electron/notarize");
 
 function findExeFile(dir) {
   // Look for *.exe files in the output directory
@@ -17,7 +16,7 @@ function findExeFile(dir) {
 exports.default = async function (context) {
   const { electronPlatformName, appOutDir } = context;
   console.log(
-    `Notarization context: platform=${electronPlatformName}, appOutDir=${appOutDir}`,
+    `Sign context: platform=${electronPlatformName}, appOutDir=${appOutDir}`,
   );
 
   if (process.env.SKIP_NOTARIZE === "true") {
@@ -25,28 +24,12 @@ exports.default = async function (context) {
     return;
   }
 
+  // macOS signing + notarization is handled by electron-builder's built-in
+  // `mac.notarize` config, which signs and notarizes BOTH the .app and the
+  // .dmg (the manual flow only handled the .app, leaving the .dmg unsigned
+  // and rejected by Gatekeeper on quarantined downloads).
   if (electronPlatformName === "darwin") {
-    const { APPLEID, APPLEIDPASS, APPLEIDTEAM } = process.env;
-
-    if (!APPLEID || !APPLEIDPASS || !APPLEIDTEAM) {
-      console.warn("Skipping macOS notarization: missing Apple credentials");
-      return;
-    }
-
-    const appName = context.packager.appInfo.productFilename;
-    const appPath = path.join(appOutDir, `${appName}.app`);
-
-    console.log("Starting macOS notarization...");
-
-    return notarize({
-      tool: "notarytool",
-      appBundleId: "com.nees.adt-studio",
-      appPath,
-      appleId: APPLEID,
-      appleIdPassword: APPLEIDPASS,
-      ascProvider: APPLEIDTEAM,
-      teamId: APPLEIDTEAM,
-    });
+    return;
   }
 
   if (electronPlatformName?.includes("win")) {

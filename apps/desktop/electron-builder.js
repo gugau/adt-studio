@@ -4,6 +4,16 @@ require("dotenv").config({
   path: path.resolve(__dirname, ".env"),
 });
 
+if (process.env.APPLEID && !process.env.APPLE_ID) {
+  process.env.APPLE_ID = process.env.APPLEID;
+}
+if (process.env.APPLEIDPASS && !process.env.APPLE_APP_SPECIFIC_PASSWORD) {
+  process.env.APPLE_APP_SPECIFIC_PASSWORD = process.env.APPLEIDPASS;
+}
+if (process.env.APPLEIDTEAM && !process.env.APPLE_TEAM_ID) {
+  process.env.APPLE_TEAM_ID = process.env.APPLEIDTEAM;
+}
+
 const extraResources = [
   { from: "../api/dist-electron/node_modules", to: "./api/node_modules" },
   { from: "../api/dist-electron/api-server.mjs", to: "./api/api-server.mjs" },
@@ -71,6 +81,9 @@ const config = {
     entitlements: "build/entitlements.mac.plist",
     entitlementsInherit: "build/entitlements.mac.plist",
     identity: "Developer ID Application",
+    notarize: process.env.APPLE_TEAM_ID
+      ? { teamId: process.env.APPLE_TEAM_ID }
+      : false,
     extraResources,
     extendInfo: {
       NSCameraUsageDescription:
