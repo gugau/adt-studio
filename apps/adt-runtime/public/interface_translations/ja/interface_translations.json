@@ -91,5 +91,6 @@
     "validation-check-spelling": "スペルを確認してください",
     "validation-write-appropriate": "適切な言葉で書いてください",
     "validation-error": "検証エラー",
-    "nav-page-tab-label": "ページリスト"
+    "nav-page-tab-label": "ページリスト",
+    "search-placeholder": "検索"
 }

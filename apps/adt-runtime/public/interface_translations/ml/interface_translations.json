@@ -91,5 +91,6 @@
     "validation-check-spelling": "നിങ്ങളുടെ ഉച്ചാരണം പരിശോധിക്കുക",
     "validation-write-appropriate": "ദയവായി അനുചിതമായ ഭാഷയിൽ എഴുതുക",
     "validation-error": "വാലിഡേഷൻ പിശക്",
-    "nav-page-tab-label": "പേജ് പട്ടിക"
+    "nav-page-tab-label": "പേജ് പട്ടിക",
+    "search-placeholder": "തിരയുക"
 }

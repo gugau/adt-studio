@@ -91,5 +91,6 @@
     "validation-check-spelling": "Überprüfen Sie Ihre Rechtschreibung",
     "validation-write-appropriate": "Bitte verwenden Sie die angemessene Sprache",
     "validation-error": "Validierungsfehler",
-    "nav-page-tab-label": "Seitenliste"
+    "nav-page-tab-label": "Seitenliste",
+    "search-placeholder": "Suchen"
 }

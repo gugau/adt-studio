@@ -91,5 +91,6 @@
     "validation-check-spelling": "Kiểm tra chính tả của bạn",
     "validation-write-appropriate": "Vui lòng viết bằng ngôn ngữ phù hợp và sử dụng ngôn ngữ thích hợp",
     "validation-error": "Lỗi xác thực",
-    "nav-page-tab-label": "Danh sách trang"
+    "nav-page-tab-label": "Danh sách trang",
+    "search-placeholder": "Tìm kiếm"
 }

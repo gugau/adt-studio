@@ -35,7 +35,7 @@ interface DockMenuProps {
 export function DockMenu({ anchor }: DockMenuProps) {
   const features = useAtomValue(appConfigAtom).features
   const [value, setValue] = useAtom(dockMenuValueAtom)
-  const [readAloud, setReadAloud] = useAtom(readAloudModeAtom)
+  const readAloud = useAtomValue(readAloudModeAtom)
   const [, setPlayBarVisible] = useAtom(playBarVisibleAtom)
   const [signLanguage, setSignLanguage] = useAtom(signLanguageModeAtom)
   const { isPlaying } = useAudioPlayerContext()
@@ -74,7 +74,6 @@ export function DockMenu({ anchor }: DockMenuProps) {
                 ? t("deactivate-tts-label") || "Deactivate text to speech"
                 : t("activate-tts-label") || "Activate text to speech"
             }
-            pressed={readAloud}
             onClick={() => {
               setPlayBarVisible(true)
               toggle("audio")
@@ -190,6 +189,18 @@ function DockPanel({
       open={open}
       onOpenChange={(next, eventDetails) => {
         if (next) return
+        if (
+          eventDetails.reason === "outside-press" &&
+          eventDetails.event &&
+          (eventDetails.event.target as HTMLElement | null)?.closest(
+            "[data-dock-trigger]",
+          )
+        ) {
+          // Click landed on a dock icon button. Let the button's onClick
+          // handle the open/close toggle — otherwise the outside-press
+          // closes here, the click reopens, and the popover never closes.
+          return
+        }
         if (
           staysOpen &&
           (eventDetails.reason === "outside-press" ||

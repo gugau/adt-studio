@@ -91,5 +91,6 @@
     "validation-check-spelling": "Yazımınızı kontrol edin",
     "validation-write-appropriate": "Lütfen uygun dilde yazın ve uygun dil kullanın",
     "validation-error": "Doğrulama hatası",
-    "nav-page-tab-label": "Sayfa listesi"
+    "nav-page-tab-label": "Sayfa listesi",
+    "search-placeholder": "Ara"
 }

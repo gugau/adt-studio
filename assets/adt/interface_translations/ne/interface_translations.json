@@ -91,5 +91,6 @@
     "validation-check-spelling": "तपाईंको हिज्जे जाँच गर्नुहोस्",
     "validation-write-appropriate": "कृपया उपयुक्त भाषा लेख्नुहोस् र उपयुक्त भाषा प्रयोग गर्नुहोस्",
     "validation-error": "मान्यता त्रुटि",
-    "nav-page-tab-label": "पृष्ठ सूची"
+    "nav-page-tab-label": "पृष्ठ सूची",
+    "search-placeholder": "खोज्नुहोस्"
 }

@@ -91,5 +91,6 @@
     "validation-check-spelling": "Athugaðu stafsetningu",
     "validation-write-appropriate": "Vinsamlegast skrifaðu á viðeigandi tungumáli og notaðu viðeigandi tungumál",
     "validation-error": "Staðfestingarvilla",
-    "nav-page-tab-label": "Síðulisti"
+    "nav-page-tab-label": "Síðulisti",
+    "search-placeholder": "Leita"
 }

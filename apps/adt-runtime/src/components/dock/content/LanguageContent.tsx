@@ -1,10 +1,10 @@
 import { useAtom } from "jotai"
-import { Search } from "lucide-react"
 import { useMemo, useState } from "react"
 import { currentLanguageAtom } from "@/state/language.atoms"
 import { useAvailableLanguages } from "@/hooks/useAvailableLanguages"
 import { useTranslation } from "@/hooks/useTranslation"
 import { cn } from "@/lib/utils"
+import { DockContent } from "./DockLayout"
 
 interface LanguageContentProps {
   /** Called after the user picks a language so the parent can close the menu. */
@@ -29,19 +29,12 @@ export function LanguageContent({ onSelect }: LanguageContentProps) {
   if (languages.length === 0) return null
 
   return (
-    <div className="w-[var(--dock-width,32rem)] max-w-[calc(100vw-2rem)] p-2">
-      <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={t("language-label") || "Language"}
-          aria-label={t("language-label") || "Language"}
-          className="w-full h-9 pl-8 pr-2 text-sm rounded-lg bg-muted/50 border border-input outline-none focus:ring-2 focus:ring-ring"
-        />
-      </div>
-      <ul className="mt-2 max-h-64 overflow-y-auto [scrollbar-gutter:stable]">
+    <DockContent className="h-auto">
+      <DockContent.Search
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+      <ul className="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable]">
         {filtered.map((lang) => {
           const active = lang === currentLanguage
           return (
@@ -71,6 +64,6 @@ export function LanguageContent({ onSelect }: LanguageContentProps) {
           </li>
         ) : null}
       </ul>
-    </div>
+    </DockContent>
   )
 }

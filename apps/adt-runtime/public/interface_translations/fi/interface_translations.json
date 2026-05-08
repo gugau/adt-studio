@@ -91,5 +91,6 @@
     "validation-check-spelling": "Tarkista oikeinkirjoitus",
     "validation-write-appropriate": "Kirjoita sopivalla kielellä ja käytä sopivaa kieltä",
     "validation-error": "Vahvistusvirhe",
-    "nav-page-tab-label": "Sivuluettelo"
+    "nav-page-tab-label": "Sivuluettelo",
+    "search-placeholder": "Hae"
 }

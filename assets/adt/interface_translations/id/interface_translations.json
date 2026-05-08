@@ -91,5 +91,6 @@
     "validation-check-spelling": "Periksa ejaan Anda",
     "validation-write-appropriate": "Silakan tulis dalam bahasa yang sesuai dan gunakan bahasa yang pantas",
     "validation-error": "Kesalahan validasi",
-    "nav-page-tab-label": "Daftar halaman"
+    "nav-page-tab-label": "Daftar halaman",
+    "search-placeholder": "Cari"
 }

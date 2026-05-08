@@ -91,5 +91,6 @@
     "validation-check-spelling": "உங்கள் எழுத்துப்பிழைகளை சரிபார்க்கவும்",
     "validation-write-appropriate": "சரியான மொழியில் எழுதவும் மற்றும் சரியான மொழியைப் பயன்படுத்தவும்",
     "validation-error": "சரிபார்ப்பு பிழை",
-    "nav-page-tab-label": "பக்கம் பட்டியல்"
+    "nav-page-tab-label": "பக்கம் பட்டியல்",
+    "search-placeholder": "தேடு"
 }

@@ -89,5 +89,6 @@
     "validation-check-spelling": "Revisa las palabras",
     "validation-write-appropriate": "Por favor, escribe en español y usa lenguaje apropiado",
     "validation-error": "Error de validación",
-    "nav-page-tab-label": "Lista de páginas"
+    "nav-page-tab-label": "Lista de páginas",
+    "search-placeholder": "Buscar"
 }

@@ -91,5 +91,6 @@
     "validation-check-spelling": "בדוק את האיות שלך",
     "validation-write-appropriate": "אנא כתוב בשפה הולמת והשתמש בשפה מתאימה",
     "validation-error": "שגיאת אימות",
-    "nav-page-tab-label": "רשימת עמודים"
+    "nav-page-tab-label": "רשימת עמודים",
+    "search-placeholder": "חיפוש"
 }

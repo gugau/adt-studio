@@ -91,5 +91,6 @@
     "validation-check-spelling": "Перевірте орфографію",
     "validation-write-appropriate": "Будь ласка, пишіть відповідною мовою та використовуйте належну лексику",
     "validation-error": "Помилка валідації",
-    "nav-page-tab-label": "Список сторінок"
+    "nav-page-tab-label": "Список сторінок",
+    "search-placeholder": "Пошук"
 }

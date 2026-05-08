@@ -91,5 +91,6 @@
     "validation-check-spelling": "আপনার বানান পরীক্ষা করুন",
     "validation-write-appropriate": "দয়া করে উপযুক্ত ভাষায় লিখুন এবং উপযুক্ত ভাষা ব্যবহার করুন",
     "validation-error": "যাচাইকরণ ত্রুটি",
-    "nav-page-tab-label": "পৃষ্ঠার তালিকা"
+    "nav-page-tab-label": "পৃষ্ঠার তালিকা",
+    "search-placeholder": "অনুসন্ধান"
 }

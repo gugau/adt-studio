@@ -91,5 +91,6 @@
     "validation-check-spelling": "Проверьте орфографию",
     "validation-write-appropriate": "Пожалуйста, пишите на соответствующем языке и используйте корректные выражения",
     "validation-error": "Ошибка валидации",
-    "nav-page-tab-label": "Список страниц"
+    "nav-page-tab-label": "Список страниц",
+    "search-placeholder": "Поиск"
 }

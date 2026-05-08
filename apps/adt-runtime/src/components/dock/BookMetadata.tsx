@@ -27,7 +27,7 @@ export function BookMetadata() {
         />
       ) : null}
       <div className="min-w-0 hidden sm:flex flex-col leading-tight">
-        <span className="text-sm font-semibold truncate max-w-[12rem]">
+        <span className="text-sm font-semibold truncate w-[12rem]">
           {displayTitle}
         </span>
         {author ? (

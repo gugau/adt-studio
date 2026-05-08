@@ -91,5 +91,6 @@
     "validation-check-spelling": "Preverite črkovanje",
     "validation-write-appropriate": "Prosimo, pišite v ustreznem jeziku in uporabljajte primeren jezik",
     "validation-error": "Napaka pri validaciji",
-    "nav-page-tab-label": "Seznam strani"
+    "nav-page-tab-label": "Seznam strani",
+    "search-placeholder": "Iskanje"
 }

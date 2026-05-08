@@ -91,5 +91,6 @@
     "validation-check-spelling": "Kontrollera din stavning",
     "validation-write-appropriate": "Vänligen skriv på lämpligt språk och använd korrekt språk",
     "validation-error": "Valideringsfel",
-    "nav-page-tab-label": "Sidliste"
+    "nav-page-tab-label": "Sidliste",
+    "search-placeholder": "Sök"
 }

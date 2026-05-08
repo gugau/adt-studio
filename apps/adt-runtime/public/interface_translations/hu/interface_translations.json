@@ -91,5 +91,6 @@
     "validation-check-spelling": "Ellenőrizze a helyesírást",
     "validation-write-appropriate": "Kérjük, megfelelő nyelven írjon és használjon megfelelő kifejezéseket",
     "validation-error": "Érvényesítési hiba",
-    "nav-page-tab-label": "Oldal lista"
+    "nav-page-tab-label": "Oldal lista",
+    "search-placeholder": "Keresés"
 }

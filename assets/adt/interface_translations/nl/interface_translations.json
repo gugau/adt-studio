@@ -91,5 +91,6 @@
     "validation-check-spelling": "Controleer je spelling",
     "validation-write-appropriate": "Schrijf in de juiste taal en gebruik gepaste taal",
     "validation-error": "Validatiefout",
-    "nav-page-tab-label": "Paginalijst"
+    "nav-page-tab-label": "Paginalijst",
+    "search-placeholder": "Zoeken"
 }

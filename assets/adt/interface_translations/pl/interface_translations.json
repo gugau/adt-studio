@@ -91,5 +91,6 @@
     "validation-check-spelling": "Sprawdź pisownię",
     "validation-write-appropriate": "Proszę pisać w odpowiednim języku i używać odpowiedniego języka",
     "validation-error": "Błąd walidacji",
-    "nav-page-tab-label": "Lista stron"
+    "nav-page-tab-label": "Lista stron",
+    "search-placeholder": "Szukaj"
 }

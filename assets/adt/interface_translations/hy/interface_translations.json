@@ -91,5 +91,6 @@
     "validation-check-spelling": "Ստուգեք ձեր գրությունը",
     "validation-write-appropriate": "Խնդրում ենք գրել համապատասխան լեզվով և օգտագործել համապատասխան լեզու",
     "validation-error": "Վավերացման սխալ",
-    "nav-page-tab-label": "Էջերի ցանկ"
+    "nav-page-tab-label": "Էջերի ցանկ",
+    "search-placeholder": "Որոնել"
 }

@@ -1,13 +1,11 @@
 import { GlossaryPanel } from "@/components/glossary/GlossaryPanel"
 
 /**
- * Wraps the existing `GlossaryPanel` so it sits inside a NavigationMenu
- * Content slot with a constrained box.
+ * Slot for the glossary popover. `GlossaryPanel` already wraps itself in
+ * `DockContent`, which sets the dock-aligned width and a fixed height —
+ * adding another sized wrapper here just fights with that and clips the
+ * tab list at the bottom.
  */
 export function GlossaryContent() {
-  return (
-    <div className="flex flex-col w-[var(--dock-width,32rem)] max-w-[calc(100vw-2rem)] h-[28rem]">
-      <GlossaryPanel />
-    </div>
-  )
+  return <GlossaryPanel />
 }

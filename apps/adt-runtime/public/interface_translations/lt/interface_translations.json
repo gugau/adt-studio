@@ -91,5 +91,6 @@
     "validation-check-spelling": "Patikrinkite rašybą",
     "validation-write-appropriate": "Prašome rašyti tinkama kalba ir naudoti tinkamą kalbą",
     "validation-error": "Validacijos klaida",
-    "nav-page-tab-label": "Puslapių sąrašas"
+    "nav-page-tab-label": "Puslapių sąrašas",
+    "search-placeholder": "Ieškoti"
 }

@@ -91,5 +91,6 @@
     "validation-check-spelling": "మీ ఉచ్చారణను తనిఖీ చేయండి",
     "validation-write-appropriate": "దయచేసి సరైన భాషలో రాయండి మరియు అనుచిత భాషను ఉపయోగించవద్దు",
     "validation-error": "తనిఖీ లోపం",
-    "nav-page-tab-label": "పేజీ జాబితా"
+    "nav-page-tab-label": "పేజీ జాబితా",
+    "search-placeholder": "వెతకండి"
 }

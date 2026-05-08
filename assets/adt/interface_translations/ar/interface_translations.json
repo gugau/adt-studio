@@ -91,5 +91,6 @@
     "validation-check-spelling": "تحقق من تهجئة الكلمات",
     "validation-write-appropriate": "يرجى الكتابة بلغة مناسبة واستخدام لغة ملائمة",
     "validation-error": "خطأ في التحقق",
-    "nav-page-tab-label": "قائمة الصفحات"
+    "nav-page-tab-label": "قائمة الصفحات",
+    "search-placeholder": "بحث"
 }

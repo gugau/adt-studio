@@ -91,5 +91,6 @@
     "validation-check-spelling": "བརྗེ་བ་བརྒྱབ་པ་རེད",
     "validation-write-appropriate": "བདེན་འབྱོར་འབྱོར་ནི་དགོས་ཡོད།",
     "validation-error": "བརྗེ་བ་འབྱོར་མེད་པ",
-    "nav-page-tab-label": "འབྲེལ་སྟོན་ཚིག་མཛད"
+    "nav-page-tab-label": "འབྲེལ་སྟོན་ཚིག་མཛད",
+    "search-placeholder": "འཚོལ་ཞིབ།"
 }

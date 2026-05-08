@@ -91,5 +91,6 @@
     "validation-check-spelling": "Zkontrolujte pravopis",
     "validation-write-appropriate": "Prosím, pište v odpovídajícím jazyce a používejte vhodný jazyk",
     "validation-error": "Chyba validace",
-    "nav-page-tab-label": "Seznam stránek"
+    "nav-page-tab-label": "Seznam stránek",
+    "search-placeholder": "Hledat"
 }

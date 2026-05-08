@@ -58,10 +58,7 @@ export function PageNav() {
   const currentRange = currentEntry ? pageRangeForEntry(currentEntry) : null;
   const pageNumber = currentPageFromMeta ?? currentRange?.[0] ?? null;
 
-  const totalPages = pages.reduce((max, entry) => {
-    const range = pageRangeForEntry(entry);
-    return range ? Math.max(max, range[1]) : max;
-  }, 0);
+  const totalPages = pages.length
 
   const go = (href: string | undefined) => {
     if (!href) return;
@@ -78,7 +75,7 @@ export function PageNav() {
       >
         <ChevronLeft className="w-4 h-4" />
       </DockIconButton>
-      <div className="flex text-xs tabular-nums px-2 text-foreground/80 select-none">
+      <div className="min-w-12 flex text-xs tabular-nums px-2 text-foreground/80 select-none">
         <span className="font-medium text-foreground">{pageNumber ?? ""}</span>
         <span className="text-muted-foreground"> /</span>
         {totalPages > 0 && (

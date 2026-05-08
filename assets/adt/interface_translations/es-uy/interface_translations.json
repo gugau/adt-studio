@@ -87,5 +87,6 @@
     "validation-check-spelling": "Verifica tu ortografía",
     "validation-write-appropriate": "Por favor, escribe en el idioma adecuado y utiliza un lenguaje apropiado",
     "validation-error": "Error de validación",
-    "nav-page-tab-label": "Lista de páginas"
+    "nav-page-tab-label": "Lista de páginas",
+    "search-placeholder": "Buscar"
 }

@@ -91,5 +91,6 @@
     "validation-check-spelling": "Pārbaudiet pareizrakstību",
     "validation-write-appropriate": "Lūdzu, rakstiet piemērotā valodā un izmantojiet atbilstošu valodu",
     "validation-error": "Validācijas kļūda",
-    "nav-page-tab-label": "Lapu saraksts"
+    "nav-page-tab-label": "Lapu saraksts",
+    "search-placeholder": "Meklēt"
 }

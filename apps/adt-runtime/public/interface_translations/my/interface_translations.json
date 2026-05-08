@@ -91,5 +91,6 @@
     "validation-check-spelling": "သင်၏စာလုံးပေါင်းကိုစစ်ဆေးပါ",
     "validation-write-appropriate": "သင့်လျော်သောဘာသာစကားဖြင့်ရေးပါ",
     "validation-error": "အတည်ပြုချက်အမှား",
-    "nav-page-tab-label": "စာမျက်နှာစာရင်း"
+    "nav-page-tab-label": "စာမျက်နှာစာရင်း",
+    "search-placeholder": "ရှာရန်"
 }

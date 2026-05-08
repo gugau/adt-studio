@@ -91,5 +91,6 @@
     "validation-check-spelling": "Controlla l'ortografia",
     "validation-write-appropriate": "Si prega di scrivere in lingua appropriata e utilizzare un linguaggio adeguato",
     "validation-error": "Errore di convalida",
-    "nav-page-tab-label": "Elenco delle pagine"
+    "nav-page-tab-label": "Elenco delle pagine",
+    "search-placeholder": "Cerca"
 }

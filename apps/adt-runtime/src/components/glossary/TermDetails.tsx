@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button"
 import { glossaryDataAtom } from "@/state/glossary.atoms"
 import { selectedGlossaryTermAtom } from "@/state/ui.atoms"
 import { useTranslation } from "@/hooks/useTranslation"
+import { DockContent } from "@/components/dock/content/DockLayout"
+
 
 /**
  * Detail view for a single glossary entry — emoji, term, definition, and
@@ -20,7 +22,7 @@ export function TermDetails() {
   if (!entry) return null
 
   return (
-    <div
+    <DockContent
       className="flex flex-col gap-4 p-4"
       role="region"
       aria-label={t("glossary-term-details") || "Glossary term details"}
@@ -60,6 +62,6 @@ export function TermDetails() {
           <p className="italic">{entry.variations.join(", ")}</p>
         </div>
       ) : null}
-    </div>
+    </DockContent>
   )
 }

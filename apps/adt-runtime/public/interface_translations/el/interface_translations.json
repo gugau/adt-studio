@@ -91,5 +91,6 @@
     "validation-check-spelling": "Ελέγξτε την ορθογραφία σας",
     "validation-write-appropriate": "Παρακαλώ γράψτε στη σωστή γλώσσα και χρησιμοποιήστε κατάλληλη γλώσσα",
     "validation-error": "Σφάλμα επικύρωσης",
-    "nav-page-tab-label": "Λίστα σελίδων"
+    "nav-page-tab-label": "Λίστα σελίδων",
+    "search-placeholder": "Αναζήτηση"
 }

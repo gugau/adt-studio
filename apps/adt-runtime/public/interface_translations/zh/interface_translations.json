@@ -91,5 +91,6 @@
     "validation-check-spelling": "检查拼写",
     "validation-write-appropriate": "请使用适当的语言",
     "validation-error": "验证错误",
-    "nav-page-tab-label": "页面列表"
+    "nav-page-tab-label": "页面列表",
+    "search-placeholder": "搜索"
 }

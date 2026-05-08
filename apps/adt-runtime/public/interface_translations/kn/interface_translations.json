@@ -91,5 +91,6 @@
     "validation-check-spelling": "ನಿಮ್ಮ ಉಲ್ಲೇಖವನ್ನು ಪರಿಶೀಲಿಸಿ",
     "validation-write-appropriate": "ದಯವಿಟ್ಟು ಸೂಕ್ತ ಭಾಷೆಯಲ್ಲಿ ಬರೆಯಿರಿ ಮತ್ತು ಸೂಕ್ತ ಭಾಷೆ ಬಳಸಿರಿ",
     "validation-error": "ಮಾನ್ಯತೆ ದೋಷ",
-    "nav-page-tab-label": "ಪುಟಗಳ ಪಟ್ಟಿ"
+    "nav-page-tab-label": "ಪುಟಗಳ ಪಟ್ಟಿ",
+    "search-placeholder": "ಹುಡುಕಿ"
 }

@@ -91,5 +91,6 @@
     "validation-check-spelling": "Емлеңізді тексеріңіз",
     "validation-write-appropriate": "Сәйкес тілде жазыңыз және дұрыс тіл қолданыңыз",
     "validation-error": "Тексеру қатесі",
-    "nav-page-tab-label": "Беттер тізімі"
+    "nav-page-tab-label": "Беттер тізімі",
+    "search-placeholder": "Іздеу"
 }

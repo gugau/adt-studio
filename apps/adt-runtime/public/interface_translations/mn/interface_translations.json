@@ -91,5 +91,6 @@
     "validation-check-spelling": "Тэмдэглэлийн алдааг шалгана уу",
     "validation-write-appropriate": "Тохиромжтой хэлээр бичиж, тохиромжтой хэллэг ашиглана уу",
     "validation-error": "Баталгаажуулалтын алдаа",
-    "nav-page-tab-label": "Хуудасны жагсаалт"
+    "nav-page-tab-label": "Хуудасны жагсаалт",
+    "search-placeholder": "Хайх"
 }

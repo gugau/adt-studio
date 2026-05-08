@@ -91,5 +91,6 @@
     "validation-check-spelling": "Kontrolli oma õigekirja",
     "validation-write-appropriate": "Palun kirjuta sobivas keeles ja kasuta sobivat keelt",
     "validation-error": "Kehtivuse viga",
-    "nav-page-tab-label": "Lehekülgede loend"
+    "nav-page-tab-label": "Lehekülgede loend",
+    "search-placeholder": "Otsi"
 }

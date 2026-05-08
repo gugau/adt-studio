@@ -20,6 +20,7 @@ export function DockIconButton({
       type="button"
       aria-label={ariaLabel}
       aria-pressed={pressed}
+      data-dock-trigger=""
       className={cn(
         "rounded-lg flex items-center justify-center shrink-0",
         "text-foreground/80 hover:bg-accent hover:text-accent-foreground",

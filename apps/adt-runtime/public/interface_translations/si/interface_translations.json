@@ -91,5 +91,6 @@
     "validation-check-spelling": "ඔබගේ අක්ෂර වින්‍යාසය පරීක්ෂා කරන්න",
     "validation-write-appropriate": "කරුණාකර සුදුසු භාෂාවෙන් ලියන්න සහ නිසි භාෂාව භාවිතා කරන්න",
     "validation-error": "වලංගු කිරීමේ දෝෂයක්",
-    "nav-page-tab-label": "පිටු ලැයිස්තුව"
+    "nav-page-tab-label": "පිටු ලැයිස්තුව",
+    "search-placeholder": "සොයන්න"
 }

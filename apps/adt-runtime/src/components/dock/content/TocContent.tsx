@@ -1,24 +1,25 @@
-import { useAtom, useAtomValue } from "jotai"
-import { Fragment, useMemo } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useAtom, useAtomValue } from "jotai";
+import { Fragment, useMemo, useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   currentSectionIdAtom,
   pagesAtom,
   tocAtom,
   type PageEntry,
   type TocEntry,
-} from "@/state/nav.atoms"
-import { activeNavTabAtom } from "@/state/ui.atoms"
-import { useTranslation } from "@/hooks/useTranslation"
-import { cn } from "@/lib/utils"
-
+} from "@/state/nav.atoms";
+import { activeNavTabAtom } from "@/state/ui.atoms";
+import { useTranslation } from "@/hooks/useTranslation";
+import { cn } from "@/lib/utils";
+import { DockContent } from "./DockLayout";
 
 export function TocContent() {
-  const toc = useAtomValue(tocAtom)
-  const pages = useAtomValue(pagesAtom)
-  const currentSectionId = useAtomValue(currentSectionIdAtom)
-  const [tab, setTab] = useAtom(activeNavTabAtom)
-  const { t } = useTranslation()
+  const [searchTerm, setSearchTerm] = useState("");
+  const toc = useAtomValue(tocAtom);
+  const pages = useAtomValue(pagesAtom);
+  const currentSectionId = useAtomValue(currentSectionIdAtom);
+  const [tab, setTab] = useAtom(activeNavTabAtom);
+  const { t } = useTranslation();
 
   const tocEntries: TocEntry[] = useMemo(
     () =>
@@ -32,35 +33,39 @@ export function TocContent() {
             level: undefined,
           })),
     [toc, pages],
-  )
+  );
+
+  const filteredTocEntries = useMemo(
+    () =>
+      tocEntries.filter((entry) =>
+        entry.title.toLowerCase().includes(searchTerm.toLowerCase()),
+      ),
+    [tocEntries, searchTerm],
+  );
 
   return (
-    <div className="flex flex-col w-[var(--dock-width,32rem)] max-w-[calc(100vw-2rem)]">
-      <div className="px-3 py-2 border-b border-border">
-        <h3 className="text-sm font-semibold">{t("toc-title") || "Contents"}</h3>
-      </div>
-
+    <DockContent className="gap-3">
+      <DockContent.Title>{t("toc-title") || "Contents"}</DockContent.Title>
+      <DockContent.Search className="w-full" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
       <Tabs
         value={tab}
         onValueChange={(v) => {
-          if (typeof v === "string") setTab(v)
+          if (typeof v === "string") setTab(v);
         }}
-        className="flex flex-col"
+        className="flex-1 min-h-0 flex flex-col"
       >
-        <TabsList className="grid grid-cols-2 mx-3 mt-2 shrink-0">
-          <TabsTrigger value="toc">
-            {t("toc-title") || "Contents"}
-          </TabsTrigger>
+        <TabsList className="w-full grid grid-cols-2 shrink-0 h-10">
+          <TabsTrigger value="toc">{t("toc-title") || "Contents"}</TabsTrigger>
           <TabsTrigger value="pages">
             {t("nav-page-tab-label") || "Page list"}
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="toc" className="mt-1">
-          <TocList entries={tocEntries} currentSectionId={currentSectionId} />
+        <TabsContent value="toc" className="min-h-0 overflow-y-auto">
+          <TocList entries={filteredTocEntries} currentSectionId={currentSectionId} />
         </TabsContent>
 
-        <TabsContent value="pages" className="mt-1">
+        <TabsContent value="pages">
           <PageList
             pages={pages}
             toc={toc}
@@ -70,27 +75,27 @@ export function TocContent() {
           />
         </TabsContent>
       </Tabs>
-    </div>
-  )
+    </DockContent>
+  );
 }
 
 function TocList({
   entries,
   currentSectionId,
 }: {
-  entries: TocEntry[]
-  currentSectionId: string | null
+  entries: TocEntry[];
+  currentSectionId: string | null;
 }) {
   return (
-    <ul className="py-1 max-h-[28rem] overflow-y-auto [scrollbar-gutter:stable]">
+    <ul className="py-1 overflow-y-auto [scrollbar-gutter:stable]">
       {entries.map((entry) => {
-        const active = entry.section_id === currentSectionId
+        const active = entry.section_id === currentSectionId;
         return (
           <li key={entry.section_id}>
             <button
               type="button"
               onClick={() => {
-                window.location.href = entry.href
+                window.location.href = entry.href;
               }}
               className={cn(
                 "w-full text-left rounded-md mx-1 px-2.5 py-1.5 text-sm",
@@ -105,17 +110,17 @@ function TocList({
               {entry.title}
             </button>
           </li>
-        )
+        );
       })}
     </ul>
-  )
+  );
 }
 
 interface PageListItem {
-  page: PageEntry
-  displayLabel: string
-  pdfPageLabel: string | null
-  chapterHeading: TocEntry | null
+  page: PageEntry;
+  displayLabel: string;
+  pdfPageLabel: string | null;
+  chapterHeading: TocEntry | null;
 }
 
 function PageList({
@@ -125,52 +130,52 @@ function PageList({
   printPageLabel,
   coverLabel,
 }: {
-  pages: PageEntry[]
-  toc: TocEntry[]
-  currentSectionId: string | null
-  printPageLabel: string
-  coverLabel: string
+  pages: PageEntry[];
+  toc: TocEntry[];
+  currentSectionId: string | null;
+  printPageLabel: string;
+  coverLabel: string;
 }) {
   const items = useMemo<PageListItem[]>(() => {
-    const chapterLookup = new Map<string, TocEntry>()
+    const chapterLookup = new Map<string, TocEntry>();
     for (const chapter of toc) {
-      if (chapter.section_id) chapterLookup.set(chapter.section_id, chapter)
+      if (chapter.section_id) chapterLookup.set(chapter.section_id, chapter);
     }
-    const seen = new Set<string>()
+    const seen = new Set<string>();
     return pages.map((page, index) => {
-      const sequential = index + 1
+      const sequential = index + 1;
       const displayLabel =
-        sequential === 1 ? `${sequential} (${coverLabel})` : String(sequential)
+        sequential === 1 ? `${sequential} (${coverLabel})` : String(sequential);
       const pdfPageLabel =
         page.page_number !== undefined && page.page_number !== null
           ? String(page.page_number)
-          : null
+          : null;
 
-      let chapterHeading: TocEntry | null = null
-      const chapter = chapterLookup.get(page.section_id)
+      let chapterHeading: TocEntry | null = null;
+      const chapter = chapterLookup.get(page.section_id);
       if (chapter && !seen.has(chapter.section_id)) {
-        chapterHeading = chapter
-        seen.add(chapter.section_id)
+        chapterHeading = chapter;
+        seen.add(chapter.section_id);
       }
 
-      return { page, displayLabel, pdfPageLabel, chapterHeading }
-    })
-  }, [pages, toc, coverLabel])
+      return { page, displayLabel, pdfPageLabel, chapterHeading };
+    });
+  }, [pages, toc, coverLabel]);
 
-  if (pages.length === 0) return null
+  if (pages.length === 0) return null;
 
   return (
-    <ol className="py-1 max-h-[28rem] overflow-y-auto [scrollbar-gutter:stable]">
+    <ol className="flex-1 py-1 overflow-y-auto [scrollbar-gutter:stable]">
       {items.map(({ page, displayLabel, pdfPageLabel, chapterHeading }) => {
-        const active = page.section_id === currentSectionId
+        const active = page.section_id === currentSectionId;
         const ariaLabel = pdfPageLabel
           ? `Page ${displayLabel}, ${printPageLabel} ${pdfPageLabel}`
-          : `Page ${displayLabel}`
+          : `Page ${displayLabel}`;
         return (
           <Fragment key={page.section_id}>
             {chapterHeading ? (
               <li
-                className="mx-1 px-2.5 pt-3 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                className="mx-1 pt-3 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                 data-chapter-id={chapterHeading.chapter_id || undefined}
               >
                 {chapterHeading.title}
@@ -180,7 +185,7 @@ function PageList({
               <button
                 type="button"
                 onClick={() => {
-                  window.location.href = page.href
+                  window.location.href = page.href;
                 }}
                 aria-label={ariaLabel}
                 aria-current={active ? "page" : undefined}
@@ -200,8 +205,8 @@ function PageList({
               </button>
             </li>
           </Fragment>
-        )
+        );
       })}
     </ol>
-  )
+  );
 }

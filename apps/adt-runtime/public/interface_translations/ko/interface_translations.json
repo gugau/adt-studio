@@ -91,5 +91,6 @@
     "validation-check-spelling": "철자를 확인하세요",
     "validation-write-appropriate": "적절한 언어로 작성하고 적절한 언어를 사용하세요",
     "validation-error": "검증 오류",
-    "nav-page-tab-label": "페이지 목록"
+    "nav-page-tab-label": "페이지 목록",
+    "search-placeholder": "검색"
 }

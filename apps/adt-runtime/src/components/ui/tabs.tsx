@@ -28,7 +28,7 @@ const tabsListVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-muted",
+        default: "bg-muted h-10",
         line: "gap-1 bg-transparent",
       },
     },
@@ -73,7 +73,10 @@ function TabsContent({ className, ...props }: TabsPrimitive.Panel.Props) {
   return (
     <TabsPrimitive.Panel
       data-slot="tabs-content"
-      className={cn("flex-1 text-sm outline-none", className)}
+      className={cn(
+        "flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable] text-sm outline-none",
+        className,
+      )}
       {...props}
     />
   )

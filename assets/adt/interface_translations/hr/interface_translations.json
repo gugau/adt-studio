@@ -91,5 +91,6 @@
     "validation-check-spelling": "Provjerite pravopis",
     "validation-write-appropriate": "Molimo pišite na odgovarajućem jeziku i koristite primjeren jezik",
     "validation-error": "Greška u validaciji",
-    "nav-page-tab-label": "Popis stranica"
+    "nav-page-tab-label": "Popis stranica",
+    "search-placeholder": "Pretraži"
 }

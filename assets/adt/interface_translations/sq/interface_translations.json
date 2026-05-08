@@ -91,5 +91,6 @@
     "validation-check-spelling": "Kontrolloni shkrimin",
     "validation-write-appropriate": "Ju lutem shkruani në gjuhën e përshtatshme dhe përdorni gjuhë të përshtatshme",
     "validation-error": "Gabim validimi",
-    "nav-page-tab-label": "Lista e faqeve"
+    "nav-page-tab-label": "Lista e faqeve",
+    "search-placeholder": "Kërko"
 }

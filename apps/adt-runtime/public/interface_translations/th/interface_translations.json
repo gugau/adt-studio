@@ -91,5 +91,6 @@
     "validation-check-spelling": "ตรวจสอบการสะกด",
     "validation-write-appropriate": "กรุณาเขียนด้วยภาษาที่เหมาะสม",
     "validation-error": "ข้อผิดพลาดในการตรวจสอบ",
-    "nav-page-tab-label": "รายการหน้า"
+    "nav-page-tab-label": "รายการหน้า",
+    "search-placeholder": "ค้นหา"
 }

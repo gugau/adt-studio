@@ -7,6 +7,7 @@ import { useTranslation } from "@/hooks/useTranslation"
 import { SpeedMenu } from "@/components/playbar/SpeedMenu"
 import { VolumeMenu } from "@/components/playbar/VolumeMenu"
 import { cn } from "@/lib/utils"
+import { DockContent } from "./DockLayout"
 
 /**
  * Audio controls panel — prev / play-pause / next / stop / speed / volume.
@@ -30,10 +31,10 @@ export function AudioContent() {
   }
 
   return (
-    <div
+    <DockContent
       role="toolbar"
       aria-label={t("read-aloud-toolbar-label") || "Read aloud controls"}
-      className="flex items-center justify-center gap-1 p-1.5 w-[var(--dock-width,32rem)] max-w-[calc(100vw-2rem)]"
+      className="h-auto flex-row items-center justify-center gap-1 p-1.5"
     >
       <RoundButton
         label={t("previous-audio") || "Previous audio"}
@@ -87,7 +88,7 @@ export function AudioContent() {
 
       <SpeedMenu />
       <VolumeMenu />
-    </div>
+    </DockContent>
   )
 }
 

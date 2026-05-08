@@ -42,7 +42,7 @@ export function VolumeMenu() {
         align="center"
         sideOffset={8}
         className={cn(
-          "p-1 border-0",
+          "p-2 px-3 border-0",
           "bg-popover/95 text-popover-foreground backdrop-blur-md",
           "shadow-lg ring-1 ring-border",
           "flex flex-row items-center gap-2",
