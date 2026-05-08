@@ -5,14 +5,10 @@
  *   assets/adt/base.bundle.local.js   (IIFE — for `<script src="...">`)
  *   assets/adt/base.bundle.min.js     (ESM — minified, with sourcemap)
  *
- * Also copies src/styles/globals.css → assets/adt/tailwind_css.css so the
- * per-book Tailwind v4 build (in package-web.ts) sees the canonical theme +
- * utilities source.
- *
- * Static runtime assets (interface_translations, fonts, sounds, symbols,
- * favicon_io, libs, config.json, fonts.css) are checked in directly under
- * `assets/adt/` — that directory is the canonical source the pipeline
- * copies into each packaged book. Nothing to mirror here.
+ * Also:
+ *   - Copies src/styles/globals.css → assets/adt/tailwind_css.css so the
+ *     per-book Tailwind v4 build (in package-web.ts) sees the canonical
+ *     theme + utilities source.
  *
  * CSS handling: esbuild uses `loader: { ".css": "empty" }` — boot.tsx imports
  * globals.css for Vite dev, but in production CSS comes exclusively from the

@@ -92,5 +92,7 @@
     "validation-write-appropriate": "Te rugăm să scrii în limba corespunzătoare și să folosești un limbaj adecvat",
     "validation-error": "Eroare de validare",
     "nav-page-tab-label": "Lista paginilor",
-    "search-placeholder": "Caută"
+    "search-placeholder": "Caută",
+    "glossary-locate-on-page": "Afișează pe pagină",
+    "glossary-variations-label": "Variații"
 }

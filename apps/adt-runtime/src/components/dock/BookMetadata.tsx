@@ -1,11 +1,6 @@
 import { useAtomValue } from "jotai"
 import { appConfigAtom } from "@/state/config.atoms"
 
-/**
- * Cover + title + author block on the left side of the dock. Rendered only
- * when at least one of title/author is present; cover image self-hides on
- * load error so a missing `cover.png` doesn't leave a broken thumbnail.
- */
 export function BookMetadata() {
   const config = useAtomValue(appConfigAtom)
   const displayTitle = config.shortTitle ?? config.title ?? ""

@@ -92,5 +92,7 @@
     "validation-write-appropriate": "Сәйкес тілде жазыңыз және дұрыс тіл қолданыңыз",
     "validation-error": "Тексеру қатесі",
     "nav-page-tab-label": "Беттер тізімі",
-    "search-placeholder": "Іздеу"
+    "search-placeholder": "Іздеу",
+    "glossary-locate-on-page": "Бетте көрсету",
+    "glossary-variations-label": "Нұсқалар"
 }

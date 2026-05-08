@@ -92,5 +92,7 @@
     "validation-write-appropriate": "Lütfen uygun dilde yazın ve uygun dil kullanın",
     "validation-error": "Doğrulama hatası",
     "nav-page-tab-label": "Sayfa listesi",
-    "search-placeholder": "Ara"
+    "search-placeholder": "Ara",
+    "glossary-locate-on-page": "Sayfada göster",
+    "glossary-variations-label": "Çeşitler"
 }

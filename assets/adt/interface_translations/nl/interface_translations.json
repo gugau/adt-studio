@@ -92,5 +92,7 @@
     "validation-write-appropriate": "Schrijf in de juiste taal en gebruik gepaste taal",
     "validation-error": "Validatiefout",
     "nav-page-tab-label": "Paginalijst",
-    "search-placeholder": "Zoeken"
+    "search-placeholder": "Zoeken",
+    "glossary-locate-on-page": "Toon op pagina",
+    "glossary-variations-label": "Variaties"
 }

@@ -92,5 +92,7 @@
     "validation-write-appropriate": "कृपया उपयुक्त भाषा लेख्नुहोस् र उपयुक्त भाषा प्रयोग गर्नुहोस्",
     "validation-error": "मान्यता त्रुटि",
     "nav-page-tab-label": "पृष्ठ सूची",
-    "search-placeholder": "खोज्नुहोस्"
+    "search-placeholder": "खोज्नुहोस्",
+    "glossary-locate-on-page": "पृष्ठमा देखाउनुहोस्",
+    "glossary-variations-label": "भिन्नताहरू"
 }

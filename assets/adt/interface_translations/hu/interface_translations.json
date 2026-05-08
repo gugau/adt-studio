@@ -92,5 +92,7 @@
     "validation-write-appropriate": "Kérjük, megfelelő nyelven írjon és használjon megfelelő kifejezéseket",
     "validation-error": "Érvényesítési hiba",
     "nav-page-tab-label": "Oldal lista",
-    "search-placeholder": "Keresés"
+    "search-placeholder": "Keresés",
+    "glossary-locate-on-page": "Megjelenítés az oldalon",
+    "glossary-variations-label": "Változatok"
 }

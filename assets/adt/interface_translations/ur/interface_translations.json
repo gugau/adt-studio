@@ -92,5 +92,7 @@
     "validation-write-appropriate": "براہ کرم مناسب زبان میں لکھیں اور مناسب زبان استعمال کریں",
     "validation-error": "توثیق کی غلطی",
     "nav-page-tab-label": "صفحے کی فہرست",
-    "search-placeholder": "تلاش"
+    "search-placeholder": "تلاش",
+    "glossary-locate-on-page": "صفحہ پر دکھائیں",
+    "glossary-variations-label": "مختلف اقسام"
 }

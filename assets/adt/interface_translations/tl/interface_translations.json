@@ -92,5 +92,7 @@
     "validation-write-appropriate": "Mangyaring sumulat sa wastong wika at gumamit ng angkop na wika",
     "validation-error": "Maling pag-validate",
     "nav-page-tab-label": "Listahan ng mga pahina",
-    "search-placeholder": "Maghanap"
+    "search-placeholder": "Maghanap",
+    "glossary-locate-on-page": "Ipakita sa pahina",
+    "glossary-variations-label": "Mga variation"
 }

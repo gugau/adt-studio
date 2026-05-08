@@ -36,8 +36,8 @@ export type DockMenuValue =
   | "audio"
   | "language"
   | "settings"
-  | null
-export const dockMenuValueAtom = ephemeralAtom<DockMenuValue>(null)
+  | ""
+export const dockMenuValueAtom = persistedStringAtom("dockMenuValue", "")
 
 // Selected glossary term currently shown in the details pane (null = list view).
 export const selectedGlossaryTermAtom = ephemeralAtom<string | null>(null)

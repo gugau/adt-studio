@@ -95,5 +95,7 @@
     "validation-write-appropriate": "Please write in English and use appropriate language",
     "validation-error": "Validation error",
     "nav-page-tab-label": "Page list",
-    "search-placeholder": "Search"
+    "search-placeholder": "Search",
+    "glossary-locate-on-page": "Show on page",
+    "glossary-variations-label": "Variations"
 }

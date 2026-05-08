@@ -66,8 +66,6 @@ export function useAudioPlayer(): UseAudioPlayer {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const activeRef = useRef<ActiveHighlight | null>(null)
   const hasAutoStartedRef = useRef<boolean>(false)
-
-
   const [isPlaying, setIsPlaying] = useAtom(isPlayingAtom)
   const [currentIndex, setCurrentIndex] = useAtom(currentAudioIndexAtom)
   const audioFiles = useAtomValue(audioFilesAtom)
@@ -284,7 +282,6 @@ export function useAudioPlayer(): UseAudioPlayer {
     stopAndClear()
     setIsPlaying(false)
     setCurrentIndex(0)
-    hasAutoStartedRef.current = false
   }, [readAloudMode, stopAndClear, setIsPlaying, setCurrentIndex])
 
   useEffect(() => {

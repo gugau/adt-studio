@@ -92,5 +92,7 @@
     "validation-write-appropriate": "ദയവായി അനുചിതമായ ഭാഷയിൽ എഴുതുക",
     "validation-error": "വാലിഡേഷൻ പിശക്",
     "nav-page-tab-label": "പേജ് പട്ടിക",
-    "search-placeholder": "തിരയുക"
+    "search-placeholder": "തിരയുക",
+    "glossary-locate-on-page": "പേജിൽ കാണിക്കുക",
+    "glossary-variations-label": "വകഭേദങ്ങൾ"
 }

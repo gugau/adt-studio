@@ -92,5 +92,7 @@
     "validation-write-appropriate": "Si us plau, escriu en la llengua adequada i utilitza un llenguatge apropiat",
     "validation-error": "Error de validació",
     "nav-page-tab-label": "Llista de pàgines",
-    "search-placeholder": "Cercar"
+    "search-placeholder": "Cercar",
+    "glossary-locate-on-page": "Mostra a la pàgina",
+    "glossary-variations-label": "Variacions"
 }

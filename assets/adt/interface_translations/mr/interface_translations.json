@@ -92,5 +92,7 @@
     "validation-write-appropriate": "कृपया योग्य भाषेत आणि योग्य भाषेचा वापर करा",
     "validation-error": "मान्यता त्रुटी",
     "nav-page-tab-label": "पृष्ठ सूची",
-    "search-placeholder": "शोधा"
+    "search-placeholder": "शोधा",
+    "glossary-locate-on-page": "पानावर दाखवा",
+    "glossary-variations-label": "भिन्नता"
 }

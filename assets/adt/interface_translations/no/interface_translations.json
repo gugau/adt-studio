@@ -92,5 +92,7 @@
     "validation-write-appropriate": "Vennligst skriv på passende språk og bruk passende språk",
     "validation-error": "Valideringsfeil",
     "nav-page-tab-label": "Side liste",
-    "search-placeholder": "Søk"
+    "search-placeholder": "Søk",
+    "glossary-locate-on-page": "Vis på siden",
+    "glossary-variations-label": "Variasjoner"
 }

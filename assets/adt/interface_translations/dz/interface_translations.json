@@ -92,5 +92,7 @@
     "validation-write-appropriate": "བདེན་འབྱོར་འབྱོར་ནི་དགོས་ཡོད།",
     "validation-error": "བརྗེ་བ་འབྱོར་མེད་པ",
     "nav-page-tab-label": "འབྲེལ་སྟོན་ཚིག་མཛད",
-    "search-placeholder": "འཚོལ་ཞིབ།"
+    "search-placeholder": "འཚོལ་ཞིབ།",
+    "glossary-locate-on-page": "ཤོག་ལེབ་ནང་སྟོན།",
+    "glossary-variations-label": "གྱུར་བ་ཚུ།"
 }

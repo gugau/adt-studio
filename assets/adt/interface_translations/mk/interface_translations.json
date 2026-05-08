@@ -92,5 +92,7 @@
     "validation-write-appropriate": "Ве молиме пишувајте на соодветен јазик и користете соодветен јазик",
     "validation-error": "Грешка при валидација",
     "nav-page-tab-label": "Листа на страници",
-    "search-placeholder": "Пребарај"
+    "search-placeholder": "Пребарај",
+    "glossary-locate-on-page": "Прикажи на страницата",
+    "glossary-variations-label": "Варијации"
 }

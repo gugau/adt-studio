@@ -92,5 +92,7 @@
     "validation-write-appropriate": "Խնդրում ենք գրել համապատասխան լեզվով և օգտագործել համապատասխան լեզու",
     "validation-error": "Վավերացման սխալ",
     "nav-page-tab-label": "Էջերի ցանկ",
-    "search-placeholder": "Որոնել"
+    "search-placeholder": "Որոնել",
+    "glossary-locate-on-page": "Ցույց տալ էջում",
+    "glossary-variations-label": "Տարբերակներ"
 }

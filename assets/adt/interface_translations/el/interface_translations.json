@@ -92,5 +92,7 @@
     "validation-write-appropriate": "Παρακαλώ γράψτε στη σωστή γλώσσα και χρησιμοποιήστε κατάλληλη γλώσσα",
     "validation-error": "Σφάλμα επικύρωσης",
     "nav-page-tab-label": "Λίστα σελίδων",
-    "search-placeholder": "Αναζήτηση"
+    "search-placeholder": "Αναζήτηση",
+    "glossary-locate-on-page": "Εμφάνιση στη σελίδα",
+    "glossary-variations-label": "Παραλλαγές"
 }

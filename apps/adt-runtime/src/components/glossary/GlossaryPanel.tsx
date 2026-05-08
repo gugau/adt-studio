@@ -15,19 +15,6 @@ import { trackToggleEvent } from "@/lib/analytics";
 import { DockContent } from "../dock/content/DockLayout";
 import { GlossaryEntry } from "@/state/glossary.atoms";
 
-/**
- * Glossary panel — the alternate view of the accessibility sidebar.
- * Replaces the legacy `#glossary-content` block from interface.html.
- *
- * Top-level structure:
- *   - Back button (returns to Assistant/Settings tabs)
- *   - "Highlight words" toggle (drives `glossaryModeAtom` → DOM mutation)
- *   - Tabs:
- *       page  — only terms found in `#content`
- *       book  — every term in the glossary, with a free-text filter
- *
- * When a term is selected, the entire panel swaps to the TermDetails view.
- */
 export function GlossaryPanel() {
   const { t } = useTranslation();
   const data = useAtomValue(glossaryDataAtom);

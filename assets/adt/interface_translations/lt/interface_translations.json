@@ -92,5 +92,7 @@
     "validation-write-appropriate": "Prašome rašyti tinkama kalba ir naudoti tinkamą kalbą",
     "validation-error": "Validacijos klaida",
     "nav-page-tab-label": "Puslapių sąrašas",
-    "search-placeholder": "Ieškoti"
+    "search-placeholder": "Ieškoti",
+    "glossary-locate-on-page": "Rodyti puslapyje",
+    "glossary-variations-label": "Variantai"
 }

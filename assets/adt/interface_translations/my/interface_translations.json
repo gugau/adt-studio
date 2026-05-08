@@ -92,5 +92,7 @@
     "validation-write-appropriate": "သင့်လျော်သောဘာသာစကားဖြင့်ရေးပါ",
     "validation-error": "အတည်ပြုချက်အမှား",
     "nav-page-tab-label": "စာမျက်နှာစာရင်း",
-    "search-placeholder": "ရှာရန်"
+    "search-placeholder": "ရှာရန်",
+    "glossary-locate-on-page": "စာမျက်နှာတွင် ပြရန်",
+    "glossary-variations-label": "ကွဲပြားမှုများ"
 }

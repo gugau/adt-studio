@@ -92,5 +92,7 @@
     "validation-write-appropriate": "Будь ласка, пишіть відповідною мовою та використовуйте належну лексику",
     "validation-error": "Помилка валідації",
     "nav-page-tab-label": "Список сторінок",
-    "search-placeholder": "Пошук"
+    "search-placeholder": "Пошук",
+    "glossary-locate-on-page": "Показати на сторінці",
+    "glossary-variations-label": "Варіанти"
 }

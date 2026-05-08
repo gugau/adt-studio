@@ -92,5 +92,7 @@
     "validation-write-appropriate": "Prosím, píšte v vhodnom jazyku a používajte vhodný jazyk",
     "validation-error": "Chyba validácie",
     "nav-page-tab-label": "Zoznam stránok",
-    "search-placeholder": "Hľadať"
+    "search-placeholder": "Hľadať",
+    "glossary-locate-on-page": "Zobraziť na stránke",
+    "glossary-variations-label": "Varianty"
 }

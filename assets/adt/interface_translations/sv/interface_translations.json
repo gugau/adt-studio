@@ -92,5 +92,7 @@
     "validation-write-appropriate": "Vänligen skriv på lämpligt språk och använd korrekt språk",
     "validation-error": "Valideringsfel",
     "nav-page-tab-label": "Sidliste",
-    "search-placeholder": "Sök"
+    "search-placeholder": "Sök",
+    "glossary-locate-on-page": "Visa på sidan",
+    "glossary-variations-label": "Variationer"
 }

@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils"
 import { DockContent } from "./DockLayout"
 
 interface LanguageContentProps {
-  /** Called after the user picks a language so the parent can close the menu. */
   onSelect?: () => void
 }
 

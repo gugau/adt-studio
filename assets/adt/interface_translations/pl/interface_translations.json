@@ -92,5 +92,7 @@
     "validation-write-appropriate": "Proszę pisać w odpowiednim języku i używać odpowiedniego języka",
     "validation-error": "Błąd walidacji",
     "nav-page-tab-label": "Lista stron",
-    "search-placeholder": "Szukaj"
+    "search-placeholder": "Szukaj",
+    "glossary-locate-on-page": "Pokaż na stronie",
+    "glossary-variations-label": "Warianty"
 }

@@ -92,5 +92,7 @@
     "validation-write-appropriate": "Пожалуйста, пишите на соответствующем языке и используйте корректные выражения",
     "validation-error": "Ошибка валидации",
     "nav-page-tab-label": "Список страниц",
-    "search-placeholder": "Поиск"
+    "search-placeholder": "Поиск",
+    "glossary-locate-on-page": "Показать на странице",
+    "glossary-variations-label": "Варианты"
 }

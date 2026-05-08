@@ -42,7 +42,7 @@ export function DockMenu({ anchor }: DockMenuProps) {
   const { t } = useTranslation()
 
   const toggle = (next: DockMenuValue) =>
-    setValue((prev) => (prev === next ? null : next))
+    setValue((prev) => (prev === next ? "" : next))
 
   return (
     <>
@@ -122,7 +122,7 @@ export function DockMenu({ anchor }: DockMenuProps) {
 
       <DockPanel
         open={value === "toc"}
-        onClose={() => setValue(null)}
+        onClose={() => setValue("")}
         anchor={anchor}
       >
         <TocContent />
@@ -130,7 +130,7 @@ export function DockMenu({ anchor }: DockMenuProps) {
 
       <DockPanel
         open={value === "glossary"}
-        onClose={() => setValue(null)}
+        onClose={() => setValue("")}
         anchor={anchor}
       >
         <GlossaryContent />
@@ -138,7 +138,7 @@ export function DockMenu({ anchor }: DockMenuProps) {
 
       <DockPanel
         open={value === "audio"}
-        onClose={() => setValue(null)}
+        onClose={() => setValue("")}
         anchor={anchor}
         staysOpen
       >
@@ -147,15 +147,15 @@ export function DockMenu({ anchor }: DockMenuProps) {
 
       <DockPanel
         open={value === "language"}
-        onClose={() => setValue(null)}
+        onClose={() => setValue("")}
         anchor={anchor}
       >
-        <LanguageContent onSelect={() => setValue(null)} />
+        <LanguageContent onSelect={() => setValue("")} />
       </DockPanel>
 
       <DockPanel
         open={value === "settings"}
-        onClose={() => setValue(null)}
+        onClose={() => setValue("")}
         anchor={anchor}
       >
         <SettingsContent />
@@ -196,9 +196,6 @@ function DockPanel({
             "[data-dock-trigger]",
           )
         ) {
-          // Click landed on a dock icon button. Let the button's onClick
-          // handle the open/close toggle — otherwise the outside-press
-          // closes here, the click reopens, and the popover never closes.
           return
         }
         if (

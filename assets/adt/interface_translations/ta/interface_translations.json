@@ -92,5 +92,7 @@
     "validation-write-appropriate": "சரியான மொழியில் எழுதவும் மற்றும் சரியான மொழியைப் பயன்படுத்தவும்",
     "validation-error": "சரிபார்ப்பு பிழை",
     "nav-page-tab-label": "பக்கம் பட்டியல்",
-    "search-placeholder": "தேடு"
+    "search-placeholder": "தேடு",
+    "glossary-locate-on-page": "பக்கத்தில் காட்டு",
+    "glossary-variations-label": "மாறுபாடுகள்"
 }

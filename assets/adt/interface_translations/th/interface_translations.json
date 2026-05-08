@@ -92,5 +92,7 @@
     "validation-write-appropriate": "กรุณาเขียนด้วยภาษาที่เหมาะสม",
     "validation-error": "ข้อผิดพลาดในการตรวจสอบ",
     "nav-page-tab-label": "รายการหน้า",
-    "search-placeholder": "ค้นหา"
+    "search-placeholder": "ค้นหา",
+    "glossary-locate-on-page": "แสดงในหน้า",
+    "glossary-variations-label": "รูปแบบต่างๆ"
 }

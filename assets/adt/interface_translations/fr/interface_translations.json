@@ -92,5 +92,7 @@
     "validation-write-appropriate": "Veuillez écrire dans la langue appropriée et utiliser un langage approprié",
     "validation-error": "Erreur de validation",
     "nav-page-tab-label": "Liste des pages",
-    "search-placeholder": "Rechercher"
+    "search-placeholder": "Rechercher",
+    "glossary-locate-on-page": "Afficher dans la page",
+    "glossary-variations-label": "Variantes"
 }

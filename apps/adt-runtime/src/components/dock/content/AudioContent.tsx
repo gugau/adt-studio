@@ -27,7 +27,7 @@ export function AudioContent() {
     stop()
     setReadAloud(false)
     setPlayBarVisible(false)
-    setDockMenuValue(null)
+    setDockMenuValue("")
   }
 
   return (

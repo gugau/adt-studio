@@ -92,5 +92,7 @@
     "validation-write-appropriate": "Lūdzu, rakstiet piemērotā valodā un izmantojiet atbilstošu valodu",
     "validation-error": "Validācijas kļūda",
     "nav-page-tab-label": "Lapu saraksts",
-    "search-placeholder": "Meklēt"
+    "search-placeholder": "Meklēt",
+    "glossary-locate-on-page": "Rādīt lapā",
+    "glossary-variations-label": "Variācijas"
 }

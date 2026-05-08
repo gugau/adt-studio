@@ -92,5 +92,7 @@
     "validation-write-appropriate": "Silakan tulis dalam bahasa yang sesuai dan gunakan bahasa yang pantas",
     "validation-error": "Kesalahan validasi",
     "nav-page-tab-label": "Daftar halaman",
-    "search-placeholder": "Cari"
+    "search-placeholder": "Cari",
+    "glossary-locate-on-page": "Tampilkan di halaman",
+    "glossary-variations-label": "Variasi"
 }

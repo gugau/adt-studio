@@ -22,7 +22,7 @@ import { getBasePath } from "@/lib/utils"
 
 export type StorageMode = "cookie" | "localStorage"
 
-let storageMode: StorageMode = "cookie"
+let storageMode: StorageMode = "localStorage"
 
 export function setStorageMode(mode: StorageMode) {
   storageMode = mode

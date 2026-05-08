@@ -92,5 +92,7 @@
     "validation-write-appropriate": "適切な言葉で書いてください",
     "validation-error": "検証エラー",
     "nav-page-tab-label": "ページリスト",
-    "search-placeholder": "検索"
+    "search-placeholder": "検索",
+    "glossary-locate-on-page": "ページに表示",
+    "glossary-variations-label": "バリエーション"
 }

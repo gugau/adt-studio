@@ -92,5 +92,7 @@
     "validation-write-appropriate": "ದಯವಿಟ್ಟು ಸೂಕ್ತ ಭಾಷೆಯಲ್ಲಿ ಬರೆಯಿರಿ ಮತ್ತು ಸೂಕ್ತ ಭಾಷೆ ಬಳಸಿರಿ",
     "validation-error": "ಮಾನ್ಯತೆ ದೋಷ",
     "nav-page-tab-label": "ಪುಟಗಳ ಪಟ್ಟಿ",
-    "search-placeholder": "ಹುಡುಕಿ"
+    "search-placeholder": "ಹುಡುಕಿ",
+    "glossary-locate-on-page": "ಪುಟದಲ್ಲಿ ತೋರಿಸಿ",
+    "glossary-variations-label": "ವ್ಯತ್ಯಾಸಗಳು"
 }

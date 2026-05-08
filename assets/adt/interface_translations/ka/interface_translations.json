@@ -92,5 +92,7 @@
     "validation-write-appropriate": "გთხოვთ დაწეროთ შესაბამის ენაზე და გამოიყენოთ შესაბამისი ენა",
     "validation-error": "ვალიდაციის შეცდომა",
     "nav-page-tab-label": "გვერდების სია",
-    "search-placeholder": "ძიება"
+    "search-placeholder": "ძიება",
+    "glossary-locate-on-page": "გვერდზე ჩვენება",
+    "glossary-variations-label": "ვარიაციები"
 }

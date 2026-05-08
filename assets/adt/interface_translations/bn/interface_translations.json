@@ -92,5 +92,7 @@
     "validation-write-appropriate": "দয়া করে উপযুক্ত ভাষায় লিখুন এবং উপযুক্ত ভাষা ব্যবহার করুন",
     "validation-error": "যাচাইকরণ ত্রুটি",
     "nav-page-tab-label": "পৃষ্ঠার তালিকা",
-    "search-placeholder": "অনুসন্ধান"
+    "search-placeholder": "অনুসন্ধান",
+    "glossary-locate-on-page": "পৃষ্ঠায় দেখান",
+    "glossary-variations-label": "বিভিন্ন রূপ"
 }

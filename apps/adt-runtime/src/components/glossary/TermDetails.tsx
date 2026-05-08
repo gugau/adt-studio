@@ -1,25 +1,28 @@
-import { useAtom, useAtomValue } from "jotai"
-import { ChevronLeft } from "lucide-react"
+import { useAtom, useAtomValue, useSetAtom } from "jotai"
+import { ChevronLeft, Locate } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { glossaryDataAtom } from "@/state/glossary.atoms"
-import { selectedGlossaryTermAtom } from "@/state/ui.atoms"
+import { dockMenuValueAtom, selectedGlossaryTermAtom } from "@/state/ui.atoms"
 import { useTranslation } from "@/hooks/useTranslation"
 import { DockContent } from "@/components/dock/content/DockLayout"
+import { locateGlossaryTerm } from "@/lib/glossary/locate"
 
 
-/**
- * Detail view for a single glossary entry — emoji, term, definition, and
- * any variations. Reached by clicking a term in the list (GlossaryPanel)
- * or the "View in glossary" button on an in-page popover.
- */
 export function TermDetails() {
   const { t } = useTranslation()
   const data = useAtomValue(glossaryDataAtom)
   const [selected, setSelected] = useAtom(selectedGlossaryTermAtom)
+  const setDockMenuValue = useSetAtom(dockMenuValueAtom)
 
   if (!selected) return null
   const entry = data[selected]
   if (!entry) return null
+
+  const handleLocate = () => {
+    setDockMenuValue("")
+    setSelected(null)
+    requestAnimationFrame(() => locateGlossaryTerm(entry))
+  }
 
   return (
     <DockContent
@@ -62,6 +65,16 @@ export function TermDetails() {
           <p className="italic">{entry.variations.join(", ")}</p>
         </div>
       ) : null}
+
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleLocate}
+        className="self-start"
+      >
+        <Locate className="w-4 h-4 mr-1.5" />
+        {t("glossary-locate-on-page") || "Show on page"}
+      </Button>
     </DockContent>
   )
 }

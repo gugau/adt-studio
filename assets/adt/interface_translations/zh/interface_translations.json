@@ -92,5 +92,7 @@
     "validation-write-appropriate": "请使用适当的语言",
     "validation-error": "验证错误",
     "nav-page-tab-label": "页面列表",
-    "search-placeholder": "搜索"
+    "search-placeholder": "搜索",
+    "glossary-locate-on-page": "在页面上显示",
+    "glossary-variations-label": "变体"
 }
