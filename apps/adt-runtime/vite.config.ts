@@ -7,6 +7,7 @@ import { bookDevServerPlugin, booksRoot } from "./book-html.plugin"
 
 export default defineConfig({
   plugins: [react(), tailwindcss(), bookDevServerPlugin()],
+  publicDir: path.resolve(__dirname, "../../assets/adt"),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

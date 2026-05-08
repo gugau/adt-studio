@@ -5,12 +5,14 @@
  *   assets/adt/base.bundle.local.js   (IIFE — for `<script src="...">`)
  *   assets/adt/base.bundle.min.js     (ESM — minified, with sourcemap)
  *
- * Also:
- *   - Copies static public assets into assets/adt/ so packages/pipeline's
- *     `copyDirRecursive(webAssetsDir, ...)` keeps working unchanged.
- *   - Copies src/styles/globals.css → assets/adt/tailwind_css.css so the
- *     per-book Tailwind v4 build (in package-web.ts) sees the canonical
- *     theme + utilities source.
+ * Also copies src/styles/globals.css → assets/adt/tailwind_css.css so the
+ * per-book Tailwind v4 build (in package-web.ts) sees the canonical theme +
+ * utilities source.
+ *
+ * Static runtime assets (interface_translations, fonts, sounds, symbols,
+ * favicon_io, libs, config.json, fonts.css) are checked in directly under
+ * `assets/adt/` — that directory is the canonical source the pipeline
+ * copies into each packaged book. Nothing to mirror here.
  *
  * CSS handling: esbuild uses `loader: { ".css": "empty" }` — boot.tsx imports
  * globals.css for Vite dev, but in production CSS comes exclusively from the
@@ -26,7 +28,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const monorepoRoot = path.resolve(__dirname, "../..")
 const entry = path.join(__dirname, "src/boot.tsx")
 const outDir = path.resolve(monorepoRoot, "assets/adt")
-const publicDir = path.join(__dirname, "public")
 const globalsCss = path.join(__dirname, "src/styles/globals.css")
 
 const watch = process.argv.includes("--watch")
@@ -70,20 +71,6 @@ const iifeOptions = {
   sourcemap: dev ? "inline" : false,
 }
 
-function copyPublicAssets() {
-  if (!fs.existsSync(publicDir)) return
-  const walk = (src, dest) => {
-    fs.mkdirSync(dest, { recursive: true })
-    for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
-      const srcPath = path.join(src, entry.name)
-      const destPath = path.join(dest, entry.name)
-      if (entry.isDirectory()) walk(srcPath, destPath)
-      else fs.copyFileSync(srcPath, destPath)
-    }
-  }
-  walk(publicDir, outDir)
-}
-
 /**
  * Mirror src/styles/globals.css → assets/adt/tailwind_css.css. This file is
  * the input for the per-book Tailwind v4 build run by packages/pipeline.
@@ -96,7 +83,6 @@ function copyTailwindEntry() {
 }
 
 if (watch) {
-  copyPublicAssets()
   copyTailwindEntry()
   const [esmCtx, iifeCtx] = await Promise.all([
     context(esmOptions),
@@ -105,7 +91,6 @@ if (watch) {
   await Promise.all([esmCtx.watch(), iifeCtx.watch()])
   console.log("✓ adt-runtime: watching for changes")
 } else {
-  copyPublicAssets()
   copyTailwindEntry()
   await Promise.all([build(esmOptions), build(iifeOptions)])
   console.log(`✓ adt-runtime: built → ${path.relative(monorepoRoot, outDir)}/base.bundle.{min,local}.js`)
