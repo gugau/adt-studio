@@ -152,8 +152,13 @@ span[data-word-index].bg-yellow-300 {
     100% { box-shadow: 0 0 0 0 rgba(49, 130, 206, 0); }
   }
   @keyframes glossaryFlash {
-    0%   { outline-color: rgba(37, 99, 235, 0.9); outline-offset: 4px; }
-    100% { outline-color: rgba(37, 99, 235, 0);   outline-offset: 4px; }
+    0%   { outline-color: rgba(37, 99, 235, 0.95); outline-offset: 4px; }
+    15%  { outline-color: rgba(37, 99, 235, 0.4);  outline-offset: 6px; }
+    30%  { outline-color: rgba(37, 99, 235, 0.95); outline-offset: 4px; }
+    45%  { outline-color: rgba(37, 99, 235, 0.4);  outline-offset: 6px; }
+    60%  { outline-color: rgba(37, 99, 235, 0.95); outline-offset: 4px; }
+    85%  { outline-color: rgba(37, 99, 235, 0.95); outline-offset: 4px; }
+    100% { outline-color: rgba(37, 99, 235, 0);    outline-offset: 4px; }
   }
   .animate-tutorialPopIn {
     animation: tutorialPopIn 0.3s ease-out forwards;
@@ -168,6 +173,6 @@ span[data-word-index].bg-yellow-300 {
     outline: 2px solid rgba(37, 99, 235, 0.9);
     outline-offset: 4px;
     border-radius: 4px;
-    animation: glossaryFlash 2.4s ease-out forwards;
+    animation: glossaryFlash 3.5s ease-out forwards;
   }
 }

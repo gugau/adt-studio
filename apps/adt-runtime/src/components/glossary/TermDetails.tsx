@@ -1,11 +1,17 @@
 import { useAtom, useAtomValue, useSetAtom } from "jotai"
-import { ChevronLeft, Locate } from "lucide-react"
+import { ChevronLeft, Loader2, Locate } from "lucide-react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { glossaryDataAtom } from "@/state/glossary.atoms"
+import { currentSectionIdAtom, pagesAtom } from "@/state/nav.atoms"
 import { dockMenuValueAtom, selectedGlossaryTermAtom } from "@/state/ui.atoms"
 import { useTranslation } from "@/hooks/useTranslation"
 import { DockContent } from "@/components/dock/content/DockLayout"
-import { locateGlossaryTerm } from "@/lib/glossary/locate"
+import {
+  findPageWithGlossaryTerm,
+  isGlossaryTermOnPage,
+  locateGlossaryTerm,
+} from "@/lib/glossary/locate"
 
 
 export function TermDetails() {
@@ -13,15 +19,34 @@ export function TermDetails() {
   const data = useAtomValue(glossaryDataAtom)
   const [selected, setSelected] = useAtom(selectedGlossaryTermAtom)
   const setDockMenuValue = useSetAtom(dockMenuValueAtom)
+  const pages = useAtomValue(pagesAtom)
+  const currentSectionId = useAtomValue(currentSectionIdAtom)
+  const [locating, setLocating] = useState(false)
 
   if (!selected) return null
   const entry = data[selected]
   if (!entry) return null
 
-  const handleLocate = () => {
-    setDockMenuValue("")
-    setSelected(null)
-    requestAnimationFrame(() => locateGlossaryTerm(entry))
+  const handleLocate = async () => {
+    if (locating) return
+
+    if (isGlossaryTermOnPage(entry)) {
+      setDockMenuValue("")
+      setSelected(null)
+      requestAnimationFrame(() => locateGlossaryTerm(entry))
+      return
+    }
+
+    setLocating(true)
+    const otherPages = pages.filter((p) => p.section_id !== currentSectionId)
+    const target = await findPageWithGlossaryTerm(entry, otherPages).catch(
+      () => null,
+    )
+    if (!target) {
+      setLocating(false)
+      return
+    }
+    window.location.href = `${target.href}#glossary=${encodeURIComponent(entry.word)}`
   }
 
   return (
@@ -70,10 +95,17 @@ export function TermDetails() {
         variant="outline"
         size="sm"
         onClick={handleLocate}
+        disabled={locating}
         className="self-start"
       >
-        <Locate className="w-4 h-4 mr-1.5" />
-        {t("glossary-locate-on-page") || "Show on page"}
+        {locating ? (
+          <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+        ) : (
+          <Locate className="w-4 h-4 mr-1.5" />
+        )}
+        {locating
+          ? t("glossary-locating") || "Locating…"
+          : t("glossary-locate-on-page") || "Show on page"}
       </Button>
     </DockContent>
   )

@@ -1,8 +1,7 @@
 import type { GlossaryEntry } from "@/state/glossary.atoms"
 
 const FLASH_CLASS = "glossary-flash"
-const FLASH_DURATION_MS = 2400
-
+const FLASH_DURATION_MS = 3500
 const SKIP_PARENT_SELECTOR =
   "script, style, .glossary-flash, .glossary-popup"
 
@@ -19,18 +18,55 @@ export function locateGlossaryTerm(entry: GlossaryEntry): boolean {
     return true
   }
 
-  const candidates = [entry.word, ...(entry.variations ?? [])].sort(
-    (a, b) => b.length - a.length,
-  )
+  const candidates = sortedCandidates(entry)
   const wrapped = wrapFirstMatch(content, candidates)
   if (!wrapped) return false
   flash(wrapped, true)
   return true
 }
 
+export function isGlossaryTermOnPage(entry: GlossaryEntry): boolean {
+  if (typeof document === "undefined") return false
+  const content = document.getElementById("content")
+  if (!content) return false
+
+  if (
+    content.querySelector(
+      `.glossary-term[data-glossary-key="${cssEscape(entry.word)}"]`,
+    )
+  ) {
+    return true
+  }
+
+  return matchesAny(content.textContent ?? "", entry)
+}
+
+export async function findPageWithGlossaryTerm(
+  entry: GlossaryEntry,
+  pages: { href: string }[],
+): Promise<{ href: string } | null> {
+  const candidates = sortedCandidates(entry)
+  if (candidates.length === 0 || pages.length === 0) return null
+  const re = buildBoundaryRegExp(candidates)
+
+  const results = await Promise.all(
+    pages.map<Promise<{ href: string } | null>>(async (p) => {
+      try {
+        const res = await fetch(p.href)
+        if (!res.ok) return null
+        const html = await res.text()
+        return re.test(html) ? p : null
+      } catch {
+        return null
+      }
+    }),
+  )
+  return results.find((r) => r !== null) ?? null
+}
+
 function flash(el: HTMLElement, unwrap: boolean) {
   el.classList.add(FLASH_CLASS)
-  el.scrollIntoView({ behavior: "smooth", block: "center" })
+  scrollIntoViewWithRetry(el)
 
   window.setTimeout(() => {
     el.classList.remove(FLASH_CLASS)
@@ -41,6 +77,18 @@ function flash(el: HTMLElement, unwrap: boolean) {
       parent.normalize?.()
     }
   }, FLASH_DURATION_MS)
+}
+
+function scrollIntoViewWithRetry(el: HTMLElement) {
+  const opts: ScrollIntoViewOptions = { behavior: "smooth", block: "center" }
+  el.scrollIntoView(opts)
+  // Late layout shifts (image loads, font swaps) can cancel or
+  // mis-target the smooth scroll. Re-issue once the page has settled.
+  window.setTimeout(() => {
+    const rect = el.getBoundingClientRect()
+    const fullyVisible = rect.top >= 0 && rect.bottom <= window.innerHeight
+    if (!fullyVisible) el.scrollIntoView(opts)
+  }, 500)
 }
 
 function wrapFirstMatch(root: HTMLElement, terms: string[]): HTMLElement | null {
@@ -84,6 +132,23 @@ function walkAndWrap(root: HTMLElement, re: RegExp): HTMLElement | null {
   parent.removeChild(node)
 
   return span
+}
+
+function sortedCandidates(entry: GlossaryEntry): string[] {
+  return [entry.word, ...(entry.variations ?? [])].sort(
+    (a, b) => b.length - a.length,
+  )
+}
+
+function buildBoundaryRegExp(candidates: string[]): RegExp {
+  const escaped = candidates.map(escapeRegExp).join("|")
+  return new RegExp(`\\b(?:${escaped})\\b`, "i")
+}
+
+function matchesAny(haystack: string, entry: GlossaryEntry): boolean {
+  const candidates = sortedCandidates(entry)
+  if (candidates.length === 0) return false
+  return buildBoundaryRegExp(candidates).test(haystack)
 }
 
 function escapeRegExp(s: string): string {

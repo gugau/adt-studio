@@ -40,6 +40,7 @@ import {
   applyGlossaryHighlights,
   removeGlossaryHighlights,
 } from "@/lib/glossary/highlight"
+import { locateGlossaryTerm } from "@/lib/glossary/locate"
 import { initAnalytics } from "@/lib/analytics"
 import { installShowContentFallback, showMainContent } from "@/lib/errors"
 
@@ -120,6 +121,37 @@ export async function bootRuntime(): Promise<void> {
 
   initAnalytics(config.analytics)
   showMainContent()
+  processGlossaryLocateHint()
+}
+
+function processGlossaryLocateHint(): void {
+  if (typeof window === "undefined") return
+  const match = window.location.hash.match(/^#glossary=(.+)$/)
+  if (!match) return
+  const word = decodeURIComponent(match[1])
+  history.replaceState(
+    null,
+    "",
+    window.location.pathname + window.location.search,
+  )
+
+  const store = getDefaultStore()
+  const entry = store.get(glossaryDataAtom)[word]
+  if (!entry) return
+
+  // The browser's default scroll restoration competes with our
+  // scrollIntoView at load time; opt out for this navigation.
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual"
+
+  // Wait until the page has finished loading (images, fonts) so the
+  // term's final layout position is stable before we scroll/flash.
+  const run = () => {
+    const fonts = (document as Document & { fonts?: { ready?: Promise<unknown> } }).fonts
+    const ready = fonts?.ready ?? Promise.resolve()
+    ready.then(() => requestAnimationFrame(() => locateGlossaryTerm(entry)))
+  }
+  if (document.readyState === "complete") run()
+  else window.addEventListener("load", run, { once: true })
 }
 
 /**
