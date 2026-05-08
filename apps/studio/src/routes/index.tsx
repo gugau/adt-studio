@@ -40,6 +40,7 @@ import {
   getStageDescriptionI18n,
 } from "@/components/pipeline/pipeline-i18n"
 import type { BookSummary } from "@/api/client"
+import { getBookCoverUrl } from "@/api/client"
 
 type BookSortKey = "modified" | "created" | "alphabetical"
 
@@ -203,6 +204,12 @@ function BookRow({
     () => new Set(book.completedStages),
     [book.completedStages],
   )
+  const [coverFailed, setCoverFailed] = useState(false)
+  const showCover = book.pageCount > 0 && !coverFailed
+  const coverUrl = useMemo(
+    () => getBookCoverUrl(book.label, book.modifiedAt),
+    [book.label, book.modifiedAt],
+  )
   const dateFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(i18n.locale, {
@@ -219,12 +226,32 @@ function BookRow({
         <Link
           to="/books/$label/$step"
           params={{ label: book.label, step: "extract" }}
-          className="flex-1 min-w-0 p-5"
+          className="flex flex-1 min-w-0 gap-4 p-5"
         >
+          {/* Cover thumbnail */}
+          <div className="flex h-24 w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted">
+            {showCover ? (
+              (() => {
+                const title = book.title ?? book.label
+                return (
+                  <img
+                    src={coverUrl}
+                    alt={t`Cover of ${title}`}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                    onError={() => setCoverFailed(true)}
+                  />
+                )
+              })()
+            ) : (
+              <BookOpen className="h-7 w-7 text-muted-foreground" />
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
           {/* Top: title + badges */}
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className="flex items-center gap-2.5 min-w-0">
-              <BookOpen className="h-5 w-5 text-muted-foreground shrink-0" />
               <h3 className="font-semibold text-base truncate">
                 {book.title ?? book.label}
               </h3>
@@ -318,6 +345,7 @@ function BookRow({
             completedSet={completedSet}
             pipelineStages={pipelineStages}
           />
+          </div>
         </Link>
 
         {/* Actions — always visible */}

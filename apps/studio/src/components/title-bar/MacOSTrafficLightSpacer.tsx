@@ -4,6 +4,7 @@ import { useWindowControls } from "@/hooks/use-window-controls";
 export function MacOSTrafficLightSpacer() {
   const { available } = useWindowControls()
   const platform = usePlatform()
+  const { available } = useWindowControls()
 
   if (platform !== "macos" || !available) return null
 

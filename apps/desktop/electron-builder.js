@@ -62,7 +62,7 @@ const config = {
     allowToChangeInstallationDirectory: true,
   },
   mac: {
-    target: ["dmg"],
+    target: ["dmg", "zip"],
     icon: "build/icon.icns",
     category: "public.app-category.developer-tools",
     type: "distribution",
@@ -88,7 +88,7 @@ const config = {
   },
   linux: {
     target: ["AppImage"],
-    icon: "build",
+    icon: "build/icons",
   },
   publish: {
     provider: "github",

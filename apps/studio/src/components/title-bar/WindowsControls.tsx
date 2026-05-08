@@ -13,7 +13,7 @@ export function WindowsControls({
 }) {
   const { t } = useLingui()
   const platform = usePlatform()
-  const { available ,isMaximized, minimize, toggleMaximize, close } = useWindowControls()
+  const { isMaximized, minimize, toggleMaximize, close, available } = useWindowControls()
 
   const tone =
     variant === "dark"
