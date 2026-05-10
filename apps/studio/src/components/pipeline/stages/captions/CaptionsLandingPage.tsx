@@ -351,10 +351,7 @@ function CaptionsPreview({ grade }: { grade: GradeLevelKey }) {
 
 function AltTextCard({ grade }: { grade: GradeLevelKey }) {
   return (
-    <div
-      key={grade}
-      className="flex shrink-0 flex-col gap-1 rounded-md border border-[#e5e5e5] bg-white p-2.5 shadow-[0px_4px_10px_0px_rgba(0,0,0,0.08)] motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300 motion-safe:ease-out"
-    >
+    <div className="flex shrink-0 flex-col gap-1 rounded-md border border-[#e5e5e5] bg-white p-2.5 shadow-[0px_4px_10px_0px_rgba(0,0,0,0.08)] transition-[height] duration-300 ease-out">
       <div className="flex items-center gap-1.5">
         <div
           className="shrink-0 rounded-full p-1"
@@ -371,7 +368,10 @@ function AltTextCard({ grade }: { grade: GradeLevelKey }) {
           <Trans>Image Alt-Text</Trans>
         </span>
       </div>
-      <p className="text-[10px] font-medium leading-[13px] text-black text-justify">
+      <p
+        key={grade}
+        className="text-[10px] font-medium leading-[13px] text-black text-justify motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-1 motion-safe:duration-200 motion-safe:ease-out"
+      >
         &ldquo;{linguiI18n._(CAPTION_SAMPLES[grade])}&rdquo;
       </p>
       <p className="text-[9px] font-medium text-[#99a1af]">
