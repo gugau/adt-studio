@@ -140,11 +140,13 @@ export function ExtractLandingPage({ bookLabel }: { bookLabel: string }) {
       <LandingPageWarning
         show={downstreamHasOutput}
         variant="cascade"
-        title={<Trans>Re-running clears downstream stages</Trans>}
+        title={<Trans>Re-running clears every later stage</Trans>}
         description={
           <Trans>
-            Sectioning and Storyboard outputs will be reset and need to run
-            again before they're available.
+            Sectioning, Storyboard, and every Enhancement that has run
+            (Captions, Quizzes, Glossary, TOC, Translation, Speech) plus
+            Packaging will all be reset and need to run again before final
+            outputs are available.
           </Trans>
         }
       />
