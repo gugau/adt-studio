@@ -13,6 +13,7 @@ import { QuizzesSettings } from "@/components/pipeline/stages/quizzes/QuizzesSet
 import { GlossarySettings } from "@/components/pipeline/stages/glossary/GlossarySettings"
 import { TocSettings } from "@/components/pipeline/stages/toc/TocSettings"
 import { CaptionsSettings } from "@/components/pipeline/stages/captions/CaptionsSettings"
+import { CaptionsLandingPage } from "@/components/pipeline/stages/captions/CaptionsLandingPage"
 import { TranslationsSettings } from "@/components/pipeline/stages/translations/TranslationsSettings"
 import { ValidationSettings } from "@/components/pipeline/stages/ValidationSettings"
 import { getStageLabelI18n } from "@/components/pipeline/pipeline-i18n"
@@ -96,6 +97,8 @@ export function StepSettingsPage() {
                 return <SectioningLandingPage bookLabel={label} />
               case "storyboard":
                 return <StoryboardLandingPage bookLabel={label} />
+              case "captions":
+                return <CaptionsLandingPage bookLabel={label} />
             }
           }
 

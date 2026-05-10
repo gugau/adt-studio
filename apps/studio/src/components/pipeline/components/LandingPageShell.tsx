@@ -92,11 +92,11 @@ export function LandingPageShell({
   )
 
   return (
-    <div className="flex h-full overflow-hidden gap-[10px]">
-      <aside
-        className="flex flex-col w-[480px] shrink-0 overflow-hidden border-r border-gray-200"
-        style={accentStyle}
-      >
+    <div
+      className="flex h-full overflow-hidden gap-[10px]"
+      style={accentStyle}
+    >
+      <aside className="flex flex-col w-[480px] shrink-0 overflow-hidden border-r border-gray-200">
         <div className="flex flex-col gap-6 px-8 pt-8 pb-4 flex-1 overflow-y-auto">
           {children}
         </div>

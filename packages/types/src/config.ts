@@ -128,6 +128,10 @@ export const AppConfig = z
     output_languages: z.array(z.string()).optional(),
     book_format: z.array(BookFormat).optional(),
     image_captioning: StepConfig.optional(),
+    image_captioning_grade_level: z
+      .enum(["early", "middle", "advanced"])
+      .optional(),
+    image_captioning_user_prompt: z.string().optional(),
     image_translation: ImageTranslationConfig.optional(),
     image_segmentation: StepConfig.extend({
       min_side: z.number().int().min(0).optional(),
