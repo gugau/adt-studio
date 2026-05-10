@@ -132,6 +132,21 @@ export const AppConfig = z
       .enum(["early", "middle", "advanced"])
       .optional(),
     image_captioning_user_prompt: z.string().optional(),
+    glossary_amount: z
+      .enum(["concise", "standard", "comprehensive"])
+      .optional(),
+    glossary_user_prompt: z.string().optional(),
+    glossary_seed_terms: z
+      .array(
+        z.object({
+          id: z.string(),
+          word: z.string(),
+          definition: z.string(),
+          variations: z.array(z.string()).default([]),
+          emojis: z.array(z.string()).default([]),
+        }),
+      )
+      .optional(),
     image_translation: ImageTranslationConfig.optional(),
     image_segmentation: StepConfig.extend({
       min_side: z.number().int().min(0).optional(),

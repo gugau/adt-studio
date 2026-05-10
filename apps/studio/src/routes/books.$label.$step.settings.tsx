@@ -11,6 +11,7 @@ import { StoryboardSettings } from "@/components/pipeline/stages/storyboard/Stor
 import { StoryboardLandingPage } from "@/components/pipeline/stages/storyboard/StoryboardLandingPage"
 import { QuizzesSettings } from "@/components/pipeline/stages/quizzes/QuizzesSettings"
 import { GlossarySettings } from "@/components/pipeline/stages/glossary/GlossarySettings"
+import { GlossaryLandingPage } from "@/components/pipeline/stages/glossary/GlossaryLandingPage"
 import { TocSettings } from "@/components/pipeline/stages/toc/TocSettings"
 import { CaptionsSettings } from "@/components/pipeline/stages/captions/CaptionsSettings"
 import { CaptionsLandingPage } from "@/components/pipeline/stages/captions/CaptionsLandingPage"
@@ -99,6 +100,8 @@ export function StepSettingsPage() {
                 return <StoryboardLandingPage bookLabel={label} />
               case "captions":
                 return <CaptionsLandingPage bookLabel={label} />
+              case "glossary":
+                return <GlossaryLandingPage bookLabel={label} />
             }
           }
 

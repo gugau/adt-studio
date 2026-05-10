@@ -51,6 +51,7 @@ export function SegmentedControl<T extends string = string>({
           onClick={() => onValueChange(option.value)}
           className={cn(
             "relative z-10 flex h-7 flex-1 cursor-pointer items-center justify-center rounded-md text-sm",
+            "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-ring/40",
             value === option.value
               ? "font-bold"
               : "font-normal text-[#737373] hover:text-[#525252]",
