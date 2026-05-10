@@ -146,6 +146,29 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
   const [activityMode, setActivityMode] = useState<ActivityModeKey>("dynamic")
   const [hoveredStrategy, setHoveredStrategy] = useState<string | null>(null)
 
+  const hasActiveActivities = useMemo(() => {
+    if (!activeConfigData) return false
+    const m = activeConfigData.merged as Record<string, unknown>
+    const sectionTypes = (m.section_types ?? {}) as Record<string, unknown>
+    const strategies = (m.render_strategies ?? {}) as Record<
+      string,
+      { render_type?: string }
+    >
+    const disabled = new Set(
+      Array.isArray(m.disabled_section_types)
+        ? (m.disabled_section_types as string[])
+        : [],
+    )
+    const names = new Set<string>()
+    for (const key of Object.keys(sectionTypes)) {
+      if (key.startsWith("activity_")) names.add(key)
+    }
+    for (const [name, strat] of Object.entries(strategies)) {
+      if (strat?.render_type === "activity") names.add(name)
+    }
+    return Array.from(names).some((name) => !disabled.has(name))
+  }, [activeConfigData])
+
   useEffect(() => {
     if (!activeConfigData) return
     const m = activeConfigData.merged as Record<string, unknown>
@@ -374,50 +397,52 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
         </CollapsibleField>
       </SettingsCard>
 
-      <SettingsCard>
-        <SettingsField
-          label={<Trans>Activity Types</Trans>}
-          hint={<Trans>How activities are rendered in each section.</Trans>}
-          htmlFor="storyboard-activity-mode"
-        >
-          <Select
-            value={activityMode}
-            onValueChange={handleActivityModeChange}
+      {hasActiveActivities && (
+        <SettingsCard>
+          <SettingsField
+            label={<Trans>Activity Types</Trans>}
+            hint={<Trans>How activities are rendered in each section.</Trans>}
+            htmlFor="storyboard-activity-mode"
           >
-            <SelectTrigger
-              id="storyboard-activity-mode"
-              className="h-10 w-full"
+            <Select
+              value={activityMode}
+              onValueChange={handleActivityModeChange}
             >
-              <SelectValue placeholder={t`Select activity mode...`}>
-                {activeActivityMode ? (
-                  <span className="flex items-center gap-2">
-                    <activeActivityMode.Icon
-                      className="h-4 w-4 shrink-0 text-[#525252]"
-                      strokeWidth={1.75}
-                      aria-hidden
-                    />
-                    {linguiI18n._(activeActivityMode.label)}
-                  </span>
-                ) : null}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent
-              align="start"
-              className="w-[var(--radix-select-trigger-width)] min-w-[320px]"
-            >
-              {ACTIVITY_MODE_OPTIONS.map((option) => (
-                <RichSelectItem
-                  key={option.id}
-                  value={option.id}
-                  Icon={option.Icon}
-                  label={linguiI18n._(option.label)}
-                  description={linguiI18n._(option.description)}
-                />
-              ))}
-            </SelectContent>
-          </Select>
-        </SettingsField>
-      </SettingsCard>
+              <SelectTrigger
+                id="storyboard-activity-mode"
+                className="h-10 w-full"
+              >
+                <SelectValue placeholder={t`Select activity mode...`}>
+                  {activeActivityMode ? (
+                    <span className="flex items-center gap-2">
+                      <activeActivityMode.Icon
+                        className="h-4 w-4 shrink-0 text-[#525252]"
+                        strokeWidth={1.75}
+                        aria-hidden
+                      />
+                      {linguiI18n._(activeActivityMode.label)}
+                    </span>
+                  ) : null}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent
+                align="start"
+                className="w-[var(--radix-select-trigger-width)] min-w-[320px]"
+              >
+                {ACTIVITY_MODE_OPTIONS.map((option) => (
+                  <RichSelectItem
+                    key={option.id}
+                    value={option.id}
+                    Icon={option.Icon}
+                    label={linguiI18n._(option.label)}
+                    description={linguiI18n._(option.description)}
+                  />
+                ))}
+              </SelectContent>
+            </Select>
+          </SettingsField>
+        </SettingsCard>
+      )}
     </LandingPageShell>
   )
 }
