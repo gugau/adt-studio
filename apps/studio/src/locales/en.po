@@ -220,6 +220,9 @@ msgstr "{missingForCurrentStage} entry/entries are missing audio. Re-run to gene
 msgid "{missingForCurrentStage} entry/entries are missing translations. Re-run to fill the missing items."
 msgstr "{missingForCurrentStage} entry/entries are missing translations. Re-run to fill the missing items."
 
+msgid "{pageCount} {pageCount, plural, one {page} other {pages}}"
+msgstr "{pageCount} {pageCount, plural, one {page} other {pages}}"
+
 msgid "{pageCount} pages"
 msgstr "{pageCount} pages"
 
@@ -1207,6 +1210,9 @@ msgstr "Controls how page content is grouped during the sectioning step."
 msgid "Conversion of light into chemical energy."
 msgstr "Conversion of light into chemical energy."
 
+msgid "Convert a PDF"
+msgstr "Convert a PDF"
+
 msgid "Convert any textbook into an accessible digital edition — audio, structured layouts, translations, and sign-language, built in from the very first page."
 msgstr "Convert any textbook into an accessible digital edition — audio, structured layouts, translations, and sign-language, built in from the very first page."
 
@@ -1227,6 +1233,9 @@ msgstr "Coral reefs cover less than 1% of the ocean floor, yet they support roug
 
 msgid "Could not read this PDF. The file may be corrupted or password-protected."
 msgstr "Could not read this PDF. The file may be corrupted or password-protected."
+
+msgid "Couldn't read this PDF"
+msgstr "Couldn't read this PDF"
 
 msgid "Cover"
 msgstr "Cover"
@@ -3130,11 +3139,17 @@ msgstr "Payload"
 msgid "PDF"
 msgstr "PDF"
 
+msgid "PDF accepted"
+msgstr "PDF accepted"
+
 msgid "PDF Extraction"
 msgstr "PDF Extraction"
 
 msgid "PDF File"
 msgstr "PDF File"
+
+msgid "PDF info"
+msgstr "PDF info"
 
 msgid "PDF page {pageLabel} preview"
 msgstr "PDF page {pageLabel} preview"
@@ -3368,6 +3383,9 @@ msgstr "Readers see"
 msgid "Reading archive..."
 msgstr "Reading archive..."
 
+msgid "Reading PDF..."
+msgstr "Reading PDF..."
+
 msgid "Readium Web Publication format for standards-based digital distribution platforms."
 msgstr "Readium Web Publication format for standards-based digital distribution platforms."
 
@@ -3449,6 +3467,9 @@ msgstr "Remove from group"
 
 msgid "Remove manual glossary term"
 msgstr "Remove manual glossary term"
+
+msgid "Remove PDF"
+msgstr "Remove PDF"
 
 msgid "Remove section"
 msgstr "Remove section"
@@ -3555,6 +3576,9 @@ msgstr "Review progress"
 
 msgid "Review the project details below and confirm the import."
 msgstr "Review the project details below and confirm the import."
+
+msgid "Review the source PDF details below and continue to configure how your book will be converted into an Accessible Digital Textbook."
+msgstr "Review the source PDF details below and continue to configure how your book will be converted into an Accessible Digital Textbook."
 
 msgid "Reviewer checklist"
 msgstr "Reviewer checklist"
@@ -4616,6 +4640,9 @@ msgstr "Upload sign language videos and assign them to sections."
 
 msgid "Upload Style Guide"
 msgstr "Upload Style Guide"
+
+msgid "Upload the source PDF of your book and we'll turn it into an Accessible Digital Textbook with interactive activities and adaptive layouts."
+msgstr "Upload the source PDF of your book and we'll turn it into an Accessible Digital Textbook with interactive activities and adaptive layouts."
 
 msgid "Upload to an LMS as a SCORM 1.2 package with completion tracking and offline support."
 msgstr "Upload to an LMS as a SCORM 1.2 package with completion tracking and offline support."
