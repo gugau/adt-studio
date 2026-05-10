@@ -22,6 +22,7 @@ import { i18n as linguiI18n } from "@lingui/core"
 import type { MessageDescriptor } from "@lingui/core"
 import { LandingPageShell } from "@/components/pipeline/components/LandingPageShell"
 import { LandingPageWarning } from "@/components/pipeline/components/LandingPageWarning"
+import { CascadeWarning } from "@/components/pipeline/components/CascadeWarning"
 import { SettingExplainer } from "@/components/pipeline/components/SettingExplainer"
 import { SettingsCard, SettingsField } from "@/components/pipeline/components/SettingsCard"
 import { SegmentedControl } from "@/components/ui/segmented-control"
@@ -272,6 +273,8 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
           </Trans>
         }
       />
+
+      {sectioningReady && <CascadeWarning stageSlug="storyboard" />}
 
       <SettingsCard>
         <SettingsField

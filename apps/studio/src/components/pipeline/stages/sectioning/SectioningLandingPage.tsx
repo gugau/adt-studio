@@ -4,6 +4,7 @@ import { ArrowDown, FileText, Image as ImageIcon, Layers, List, Type } from "luc
 import { Trans, useLingui } from "@lingui/react/macro"
 import { LandingPageShell } from "@/components/pipeline/components/LandingPageShell"
 import { LandingPageWarning } from "@/components/pipeline/components/LandingPageWarning"
+import { CascadeWarning } from "@/components/pipeline/components/CascadeWarning"
 import { SettingsCard } from "@/components/pipeline/components/SettingsCard"
 import { SettingExplainer } from "@/components/pipeline/components/SettingExplainer"
 import { SegmentedControl } from "@/components/ui/segmented-control"
@@ -31,9 +32,7 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
   const { queueRun } = useBookRun()
   const status = useStageStatus("sectioning")
   const extractStatus = useStageStatus("extract")
-  const storyboardStatus = useStageStatus("storyboard")
   const extractReady = extractStatus.isCompleted
-  const downstreamHasOutput = storyboardStatus.isCompleted || storyboardStatus.isRunning
 
   const [sectioningMode, setSectioningMode] = useState<SectioningModeKey>("dynamic")
   const [disabledSectionTypes, setDisabledSectionTypes] = useState<Set<string>>(new Set())
@@ -158,17 +157,7 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
         }
       />
 
-      <LandingPageWarning
-        show={extractReady && downstreamHasOutput}
-        variant="cascade"
-        title={<Trans>Re-running clears Storyboard</Trans>}
-        description={
-          <Trans>
-            Storyboard outputs will be reset and need to run again before
-            they're available.
-          </Trans>
-        }
-      />
+      {extractReady && <CascadeWarning stageSlug="sectioning" />}
 
       <SettingsCard>
         <div className="flex flex-col gap-3">

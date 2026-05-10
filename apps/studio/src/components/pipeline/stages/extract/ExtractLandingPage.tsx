@@ -5,7 +5,7 @@ import { Trans, useLingui } from "@lingui/react/macro"
 import { useBook } from "@/hooks/use-books"
 import { useSourcePdfInfo } from "@/hooks/use-source-pdf-info"
 import { LandingPageShell } from "@/components/pipeline/components/LandingPageShell"
-import { LandingPageWarning } from "@/components/pipeline/components/LandingPageWarning"
+import { CascadeWarning } from "@/components/pipeline/components/CascadeWarning"
 import { SettingsCard } from "@/components/pipeline/components/SettingsCard"
 import { SettingExplainer } from "@/components/pipeline/components/SettingExplainer"
 import { RangeSlider } from "@/components/ui/range-slider"
@@ -31,13 +31,6 @@ export function ExtractLandingPage({ bookLabel }: { bookLabel: string }) {
   const { apiKey, hasApiKey } = useApiKey()
   const { queueRun } = useBookRun()
   const status = useStageStatus("extract")
-  const sectioningStatus = useStageStatus("sectioning")
-  const storyboardStatus = useStageStatus("storyboard")
-  const downstreamHasOutput =
-    sectioningStatus.isCompleted ||
-    sectioningStatus.isRunning ||
-    storyboardStatus.isCompleted ||
-    storyboardStatus.isRunning
   const { data: book } = useBook(bookLabel)
   const { data: sourcePdfInfo, isPending: sourcePdfPending } = useSourcePdfInfo(bookLabel)
 
@@ -137,19 +130,7 @@ export function ExtractLandingPage({ bookLabel }: { bookLabel: string }) {
         </p>
       </div>
 
-      <LandingPageWarning
-        show={downstreamHasOutput}
-        variant="cascade"
-        title={<Trans>Re-running clears every later stage</Trans>}
-        description={
-          <Trans>
-            Sectioning, Storyboard, and every Enhancement that has run
-            (Captions, Quizzes, Glossary, TOC, Translation, Speech) plus
-            Packaging will all be reset and need to run again before final
-            outputs are available.
-          </Trans>
-        }
-      />
+      <CascadeWarning stageSlug="extract" />
 
       <SettingsCard>
         <RangeSlider
