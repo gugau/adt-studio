@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react"
-import { Languages, ArrowRight, X } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { flushSync } from "react-dom"
+import { AlertCircle, ArrowRight, Images, Languages, Pencil, X } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { LandingPageShell } from "@/components/pipeline/components/LandingPageShell"
 import { PrereqGuard } from "@/components/pipeline/components/PrereqGuard"
@@ -7,7 +8,6 @@ import {
   SettingsCard,
   SettingsField,
 } from "@/components/pipeline/components/SettingsCard"
-import { BrandedSwitch } from "@/components/ui/branded-switch"
 import { LanguagePicker } from "@/components/LanguagePicker"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useStageStatus } from "@/hooks/use-stage-status"
@@ -17,7 +17,10 @@ import { useBookConfig } from "@/hooks/use-book-config"
 import { usePersistConfig } from "@/hooks/use-persist-config"
 import { useBook } from "@/hooks/use-books"
 import { displayLang } from "./lib/display-lang"
+import { SelectImagesDialog } from "./components/SelectImagesDialog"
 import { cn } from "@/lib/utils"
+
+const viewTransitionNameFor = (code: string) => `lang-chip-${code.replace(/[^a-zA-Z0-9_-]/g, "_")}`
 
 export function LanguageLandingPage({ bookLabel }: { bookLabel: string }) {
   const { t } = useLingui()
@@ -30,49 +33,96 @@ export function LanguageLandingPage({ bookLabel }: { bookLabel: string }) {
   const status = useStageStatus("translate")
   const storyboardStatus = useStageStatus("storyboard")
   const storyboardReady = storyboardStatus.isCompleted
+  const captionsStatus = useStageStatus("captions")
+  const captionsReady = captionsStatus.isCompleted
 
   const [outputLanguages, setOutputLanguages] = useState<Set<string>>(new Set())
-  const [imageTranslationEnabled, setImageTranslationEnabled] = useState(false)
-
-  useEffect(() => {
-    if (!activeConfigData) return
-    const m = activeConfigData.merged as Record<string, unknown>
-    if (Array.isArray(m.output_languages)) {
-      setOutputLanguages(new Set(m.output_languages as string[]))
-    }
-    if (m.image_translation && typeof m.image_translation === "object") {
-      const it = m.image_translation as Record<string, unknown>
-      setImageTranslationEnabled(it.enabled === true)
-    }
-  }, [activeConfigData])
+  const [selectedImageIds, setSelectedImageIds] = useState<string[]>([])
+  const [imageDialogOpen, setImageDialogOpen] = useState(false)
+  const seededRef = useRef(false)
 
   const baseLanguage =
     typeof activeConfigData?.merged?.editing_language === "string"
       ? (activeConfigData.merged.editing_language as string)
       : book?.languageCode ?? "en"
 
+  useEffect(() => {
+    if (!activeConfigData || !book) return
+    const m = activeConfigData.merged as Record<string, unknown>
+    const existing = Array.isArray(m.output_languages)
+      ? (m.output_languages as string[])
+      : []
+
+    if (!seededRef.current && existing.length === 0 && baseLanguage) {
+      seededRef.current = true
+      const seeded = [baseLanguage]
+      setOutputLanguages(new Set(seeded))
+      persist({ output_languages: seeded })
+    } else {
+      seededRef.current = true
+      setOutputLanguages(new Set(existing))
+    }
+
+    if (m.image_translation && typeof m.image_translation === "object") {
+      const it = m.image_translation as Record<string, unknown>
+      if (Array.isArray(it.selected_image_ids)) {
+        setSelectedImageIds(it.selected_image_ids as string[])
+      }
+    }
+  }, [activeConfigData, book, baseLanguage])
+
+  const withChipTransition = (update: () => void) => {
+    const reduceMotion =
+      typeof window !== "undefined" &&
+      // eslint-disable-next-line lingui/no-unlocalized-strings -- CSS media query, not user-visible
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    const doc = typeof document !== "undefined" ? document : null
+    if (!doc || typeof doc.startViewTransition !== "function" || reduceMotion) {
+      update()
+      return
+    }
+    doc.startViewTransition(() => {
+      flushSync(update)
+    })
+  }
+
   const handleLanguageToggle = (code: string) => {
-    const next = new Set(outputLanguages)
-    if (next.has(code)) next.delete(code)
-    else next.add(code)
-    setOutputLanguages(next)
-    persist({ output_languages: Array.from(next) })
+    withChipTransition(() => {
+      const next = new Set(outputLanguages)
+      if (next.has(code)) next.delete(code)
+      else next.add(code)
+      setOutputLanguages(next)
+      persist({ output_languages: Array.from(next) })
+    })
   }
 
   const handleLanguageRemove = (code: string) => {
-    const next = new Set(outputLanguages)
-    next.delete(code)
-    setOutputLanguages(next)
-    persist({ output_languages: Array.from(next) })
+    withChipTransition(() => {
+      const next = new Set(outputLanguages)
+      next.delete(code)
+      setOutputLanguages(next)
+      persist({ output_languages: Array.from(next) })
+    })
   }
 
-  const handleImageTranslationToggle = (next: boolean) => {
-    setImageTranslationEnabled(next)
+  const persistImageTranslation = (patch: Record<string, unknown>) => {
     const existing = (bookConfigData?.config?.image_translation ?? {}) as Record<
       string,
       unknown
     >
-    persist({ image_translation: { ...existing, enabled: next } })
+    persist({ image_translation: { ...existing, ...patch } })
+  }
+
+  const handleImagesConfirm = (ids: string[]) => {
+    setSelectedImageIds(ids)
+    // Image translations are "enabled" iff at least one image is selected —
+    // the selection itself is the on/off signal. Still persist both fields so
+    // the pipeline's existing `enabled` check keeps working.
+    persistImageTranslation({
+      enabled: ids.length > 0,
+      selected_image_ids: ids.length > 0 ? ids : undefined,
+    })
+    setImageDialogOpen(false)
   }
 
   const handleRun = () => {
@@ -112,7 +162,7 @@ export function LanguageLandingPage({ bookLabel }: { bookLabel: string }) {
         <LanguagePreview
           baseLanguage={baseLanguage}
           outputLanguages={Array.from(outputLanguages)}
-          imageTranslationEnabled={imageTranslationEnabled}
+          imageCount={selectedImageIds.length}
         />
       }
     >
@@ -154,8 +204,11 @@ export function LanguageLandingPage({ bookLabel }: { bookLabel: string }) {
             {outputLanguages.size > 0 && (
               <ul className="flex flex-wrap gap-1.5">
                 {Array.from(outputLanguages).map((code) => (
-                  <li key={code}>
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-200 bg-pink-50 px-2.5 py-1 text-[12px] font-medium text-pink-700">
+                  <li
+                    key={code}
+                    style={{ viewTransitionName: viewTransitionNameFor(code) }}
+                  >
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-200 bg-pink-50 px-2.5 py-1 text-[12px] font-medium text-pink-700 transition-colors">
                       {displayLang(code)}
                       <button
                         type="button"
@@ -174,84 +227,104 @@ export function LanguageLandingPage({ bookLabel }: { bookLabel: string }) {
               selected={outputLanguages}
               onSelect={handleLanguageToggle}
               multiple
+              renderBadges={false}
               label={t`Add language`}
             />
           </div>
         </SettingsField>
       </SettingsCard>
 
-      <ImageTranslationToggle
-        checked={imageTranslationEnabled}
-        onCheckedChange={handleImageTranslationToggle}
-      />
-    </LandingPageShell>
-  )
-}
+      <SettingsCard>
+        <SettingsField
+          label={<Trans>Image Translations</Trans>}
+          hint={
+            <Trans>
+              Optionally translate burned-in text inside images (signs, labels,
+              callouts). Select the images to localize — leaving the list
+              empty keeps images in the source language.
+            </Trans>
+          }
+        >
+            <div className="flex flex-col gap-2">
+              {selectedImageIds.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setImageDialogOpen(true)}
+                  disabled={!captionsReady}
+                  className="group flex w-full items-center gap-3 rounded-md border border-[#e5e5e5] bg-white px-3 py-2.5 text-left transition-colors hover:border-[#d4d4d4] hover:bg-[#fafafa] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-pink-100 text-pink-700">
+                    <Images className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                  </span>
+                  <span className="flex-1 text-[13px] font-medium text-[#0a0a0a]">
+                    <Trans>
+                      {selectedImageIds.length} image
+                      {selectedImageIds.length === 1 ? "" : "s"} selected
+                    </Trans>
+                  </span>
+                  <Pencil
+                    className="h-3.5 w-3.5 text-[#a3a3a3] transition-colors group-hover:text-[#525252]"
+                    strokeWidth={2}
+                    aria-hidden
+                  />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setImageDialogOpen(true)}
+                  disabled={!captionsReady}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-[#e5e5e5] bg-[#fafafa] px-3 py-3 text-[12px] font-medium text-[#737373] transition-colors hover:border-[#d4d4d4] hover:bg-[#f5f5f5] hover:text-[#525252] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Images
+                    className="h-3.5 w-3.5"
+                    strokeWidth={2.25}
+                    aria-hidden
+                  />
+                  <Trans>Choose images...</Trans>
+                </button>
+              )}
 
-function ImageTranslationToggle({
-  checked,
-  onCheckedChange,
-}: {
-  checked: boolean
-  onCheckedChange: (next: boolean) => void
-}) {
-  const toggle = () => onCheckedChange(!checked)
-  return (
-    <div
-      role="switch"
-      id="language-image-translation"
-      aria-checked={checked}
-      aria-labelledby="language-image-translation-title"
-      aria-describedby="language-image-translation-subtitle"
-      tabIndex={0}
-      className={cn(
-        "flex w-full cursor-pointer select-none items-center justify-center gap-2.5 rounded-lg border px-4 py-3 shadow-sm transition-colors",
-        "bg-white border-border hover:bg-muted hover:border-input",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              {!captionsReady && (
+                <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[11.5px] text-amber-800">
+                  <AlertCircle
+                    className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600"
+                    strokeWidth={2}
+                    aria-hidden
+                  />
+                  <span>
+                    <Trans>
+                      Run Image Captions first — only captioned images appear
+                      in this list.
+                    </Trans>
+                  </span>
+                </div>
+              )}
+            </div>
+          </SettingsField>
+        </SettingsCard>
+
+      {imageDialogOpen && (
+        <SelectImagesDialog
+          bookLabel={bookLabel}
+          initialSelected={selectedImageIds}
+          onConfirm={handleImagesConfirm}
+          onClose={() => setImageDialogOpen(false)}
+        />
       )}
-      onClick={toggle}
-      onKeyDown={(e) => {
-        if (e.key === " " || e.key === "Enter") {
-          e.preventDefault()
-          toggle()
-        }
-      }}
-    >
-      <div className="flex min-w-0 flex-1 flex-col items-start justify-center gap-0.5">
-        <p
-          id="language-image-translation-title"
-          className="select-none text-sm font-semibold leading-5 text-foreground"
-        >
-          <Trans>Image Translations</Trans>
-        </p>
-        <p
-          id="language-image-translation-subtitle"
-          className="w-full select-none text-xs font-normal leading-4 text-muted-foreground"
-        >
-          <Trans>
-            Translate text rendered inside images (signs, labels, callouts) so
-            readers see the localized version.
-          </Trans>
-        </p>
-      </div>
-      <BrandedSwitch
-        id="language-image-translation-switch"
-        checked={checked}
-        decorative
-      />
-    </div>
+    </LandingPageShell>
   )
 }
 
 function LanguagePreview({
   baseLanguage,
   outputLanguages,
-  imageTranslationEnabled,
+  imageCount,
 }: {
   baseLanguage: string
   outputLanguages: string[]
-  imageTranslationEnabled: boolean
+  imageCount: number
 }) {
+  const imagesEnabled = imageCount > 0
   return (
     <div className="relative flex flex-1 min-h-0 overflow-hidden bg-gradient-to-b from-pink-50/40 via-white to-white">
       <div className="flex w-full h-full flex-col gap-4 px-5 py-5 min-h-0">
@@ -315,7 +388,7 @@ function LanguagePreview({
         <div
           className={cn(
             "flex shrink-0 items-center gap-2 rounded-md px-2.5 py-1.5 text-[10.5px] transition-colors",
-            imageTranslationEnabled
+            imagesEnabled
               ? "bg-pink-50 text-pink-700"
               : "bg-[#f5f5f5] text-[#737373]",
           )}
@@ -323,12 +396,15 @@ function LanguagePreview({
           <span
             className={cn(
               "inline-block h-1.5 w-1.5 rounded-full",
-              imageTranslationEnabled ? "bg-pink-500" : "bg-[#a3a3a3]",
+              imagesEnabled ? "bg-pink-500" : "bg-[#a3a3a3]",
             )}
             aria-hidden
           />
-          {imageTranslationEnabled ? (
-            <Trans>Images will be translated</Trans>
+          {imagesEnabled ? (
+            <Trans>
+              {imageCount} image{imageCount === 1 ? "" : "s"} will be
+              translated
+            </Trans>
           ) : (
             <Trans>Images stay in the source language</Trans>
           )}
