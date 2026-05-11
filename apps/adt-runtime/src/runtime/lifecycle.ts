@@ -43,6 +43,7 @@ import {
 import { locateGlossaryTerm } from "@/lib/glossary/locate"
 import { initAnalytics } from "@/lib/analytics"
 import { installShowContentFallback, showMainContent } from "@/lib/errors"
+import { initializeQuizActivity } from "./activity-quiz"
 
 function readCurrentSectionId(): string | null {
   if (typeof document === "undefined") return null
@@ -122,6 +123,7 @@ export async function bootRuntime(): Promise<void> {
   initAnalytics(config.analytics)
   showMainContent()
   processGlossaryLocateHint()
+  initializeQuizActivity()
 }
 
 function processGlossaryLocateHint(): void {

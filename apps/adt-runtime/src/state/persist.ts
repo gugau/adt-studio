@@ -94,6 +94,11 @@ export function persistedStringAtom(key: string, defaultValue: string) {
   return atomWithStorage<string>(key, defaultValue, jsonStorage as never, STORAGE_OPTS)
 }
 
+/** Object (JSON-serializable) value that survives page navigation. */
+export function persistedJsonAtom<T>(key: string, defaultValue: T) {
+  return atomWithStorage<T>(key, defaultValue, jsonStorage as never, STORAGE_OPTS)
+}
+
 /** In-memory atom — resets every page load. */
 export function ephemeralAtom<T>(initial: T) {
   return atom(initial)

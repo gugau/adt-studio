@@ -66,7 +66,7 @@ export function PageNav() {
   };
 
   return (
-    <div className="flex items-center gap-0.5 px-1 border-l border-border">
+    <div className="flex items-center gap-0.5 px-1">
       <DockIconButton
         ariaLabel={t("previous-page") || "Previous page"}
         disabled={!prev}

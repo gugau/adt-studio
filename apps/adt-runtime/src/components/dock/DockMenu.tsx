@@ -30,9 +30,11 @@ import { SettingsContent } from "./content/SettingsContent"
 interface DockMenuProps {
   /** Element each popover positions itself against (the dock as a whole). */
   anchor?: React.RefObject<HTMLElement | null>
+  /** Side the popover opens toward relative to the dock. */
+  side?: "top" | "bottom"
 }
 
-export function DockMenu({ anchor }: DockMenuProps) {
+export function DockMenu({ anchor, side = "top" }: DockMenuProps) {
   const features = useAtomValue(appConfigAtom).features
   const [value, setValue] = useAtom(dockMenuValueAtom)
   const readAloud = useAtomValue(readAloudModeAtom)
@@ -124,6 +126,7 @@ export function DockMenu({ anchor }: DockMenuProps) {
         open={value === "toc"}
         onClose={() => setValue("")}
         anchor={anchor}
+        side={side}
       >
         <TocContent />
       </DockPanel>
@@ -132,6 +135,7 @@ export function DockMenu({ anchor }: DockMenuProps) {
         open={value === "glossary"}
         onClose={() => setValue("")}
         anchor={anchor}
+        side={side}
       >
         <GlossaryContent />
       </DockPanel>
@@ -140,6 +144,7 @@ export function DockMenu({ anchor }: DockMenuProps) {
         open={value === "audio"}
         onClose={() => setValue("")}
         anchor={anchor}
+        side={side}
         staysOpen
       >
         <AudioContent />
@@ -149,6 +154,7 @@ export function DockMenu({ anchor }: DockMenuProps) {
         open={value === "language"}
         onClose={() => setValue("")}
         anchor={anchor}
+        side={side}
       >
         <LanguageContent onSelect={() => setValue("")} />
       </DockPanel>
@@ -157,6 +163,7 @@ export function DockMenu({ anchor }: DockMenuProps) {
         open={value === "settings"}
         onClose={() => setValue("")}
         anchor={anchor}
+        side={side}
       >
         <SettingsContent />
       </DockPanel>
@@ -168,6 +175,7 @@ interface DockPanelProps {
   open: boolean
   onClose: () => void
   anchor?: React.RefObject<HTMLElement | null>
+  side?: "top" | "bottom"
   /**
    * When true, the popover ignores outside-click and escape dismissal. The
    * only ways to close it are programmatic (e.g. clicking Stop in the
@@ -181,6 +189,7 @@ function DockPanel({
   open,
   onClose,
   anchor,
+  side = "top",
   staysOpen,
   children,
 }: DockPanelProps) {
@@ -209,7 +218,7 @@ function DockPanel({
       }}
     >
       <PopoverContent
-        side="top"
+        side={side}
         align="center"
         sideOffset={12}
         anchor={anchor}

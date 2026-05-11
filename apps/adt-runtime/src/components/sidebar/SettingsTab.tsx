@@ -1,5 +1,6 @@
 import { useAtom, useAtomValue } from "jotai"
 import { ToggleRow } from "./ToggleRow"
+import { SegmentedRow } from "./SegmentedRow"
 import { LanguageSelect } from "./LanguageSelect"
 import { appConfigAtom } from "@/state/config.atoms"
 import {
@@ -7,7 +8,15 @@ import {
   describeImagesModeAtom,
   readAloudModeAtom,
 } from "@/state/audio.atoms"
-import { stateModeAtom } from "@/state/ui.atoms"
+import {
+  dockAlignAtom,
+  dockPositionAtom,
+  dockWidthAtom,
+  stateModeAtom,
+  type DockAlign,
+  type DockPosition,
+  type DockWidth,
+} from "@/state/ui.atoms"
 import { useTranslation } from "@/hooks/useTranslation"
 import { trackToggleEvent } from "@/lib/analytics"
 
@@ -19,6 +28,9 @@ export function SettingsTab() {
   const [readAloud, setReadAloud] = useAtom(readAloudModeAtom)
   const [autoplay, setAutoplay] = useAtom(autoplayModeAtom)
   const [describeImages, setDescribeImages] = useAtom(describeImagesModeAtom)
+  const [dockWidth, setDockWidth] = useAtom(dockWidthAtom)
+  const [dockPosition, setDockPosition] = useAtom(dockPositionAtom)
+  const [dockAlign, setDockAlign] = useAtom(dockAlignAtom)
 
   const wrap = (name: string, setter: (v: boolean) => void) => (next: boolean) => {
     trackToggleEvent(name, next)
@@ -62,14 +74,57 @@ export function SettingsTab() {
         </>
       ) : null}
 
+      <SegmentedRow<DockWidth>
+        label={t("dock-width-label") || "Width"}
+        value={dockWidth as DockWidth}
+        onChange={(v) => {
+          trackToggleEvent(`DockWidth:${v}`, true)
+          setDockWidth(v)
+        }}
+        options={[
+          { value: "full", label: t("dock-width-full") || "Full" },
+          { value: "compact", label: t("dock-width-compact") || "Compact" },
+        ]}
+        borderTop
+      />
+
+      <SegmentedRow<DockPosition>
+        label={t("dock-position-label") || "Dock position"}
+        value={dockPosition as DockPosition}
+        onChange={(v) => {
+          trackToggleEvent(`DockPosition:${v}`, true)
+          setDockPosition(v)
+        }}
+        options={[
+          { value: "top", label: t("dock-position-top") || "Top" },
+          { value: "bottom", label: t("dock-position-bottom") || "Bottom" },
+        ]}
+        borderTop
+      />
+
+      <SegmentedRow<DockAlign>
+        label={t("dock-align-label") || "Alignment"}
+        value={dockAlign as DockAlign}
+        onChange={(v) => {
+          trackToggleEvent(`DockAlign:${v}`, true)
+          setDockAlign(v)
+        }}
+        options={[
+          { value: "left", label: t("dock-align-left") || "Left" },
+          { value: "center", label: t("dock-align-center") || "Center" },
+        ]}
+        borderTop
+      />
+
       {features.showAutoHideButton !== false ? (
         <ToggleRow
-          label={t("state-label") || "Hide menus"}
+          label={t("state-label") || "Auto-hide menus"}
           checked={stateMode}
           onChange={(v) => {
             trackToggleEvent("HideMenus", v)
             setStateMode(v)
           }}
+          borderTop
         />
       ) : null}
     </div>

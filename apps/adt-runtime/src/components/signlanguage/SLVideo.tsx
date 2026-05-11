@@ -1,10 +1,10 @@
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter"
 import { disableNativeDragPreview } from "@atlaskit/pragmatic-drag-and-drop/element/disable-native-drag-preview"
-import { useAtomValue } from "jotai"
-import { GripHorizontal } from "lucide-react"
+import { useAtom, useAtomValue } from "jotai"
+import { GripHorizontal, VideoOff } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { appConfigAtom } from "@/state/config.atoms"
-import { signLanguageModeAtom } from "@/state/ui.atoms"
+import { signLanguageModeAtom, slVideoPositionAtom } from "@/state/ui.atoms"
 import {
   currentLanguageAtom,
   videoFilesAtom,
@@ -34,23 +34,25 @@ export function SLVideo() {
 
   const containerRef = useRef<HTMLDivElement>(null)
   const handleRef = useRef<HTMLDivElement>(null)
-  const [position, setPosition] = useState<Position | null>(null)
+  const [position, setPosition] = useAtom(slVideoPositionAtom)
   const [isDragging, setIsDragging] = useState(false)
 
+  const visible = features.signLanguage && slMode
+
   const src = useMemo(() => {
-    if (!features.signLanguage || !slMode) return null
+    if (!visible) return null
     const idx =
       pageNumber ??
       (sectionId ? pages.findIndex((p) => p.section_id === sectionId) + 1 : 0)
     const filename = videoFiles[`video-${idx}`]
     if (!filename) return null
     return `./content/i18n/${lang}/video/${filename}`
-  }, [features.signLanguage, slMode, videoFiles, sectionId, pageNumber, pages, lang])
+  }, [visible, videoFiles, sectionId, pageNumber, pages, lang])
 
   useEffect(() => {
     const el = containerRef.current
     const handle = handleRef.current
-    if (!el || !handle || !src) return
+    if (!el || !handle || !visible) return
 
     let cursorOffset: Position = { x: 0, y: 0 }
 
@@ -96,9 +98,9 @@ export function SLVideo() {
         setIsDragging(false)
       },
     })
-  }, [src])
+  }, [visible])
 
-  if (!src) return null
+  if (!visible) return null
 
   const positioned = position !== null
   const style = positioned
@@ -130,15 +132,32 @@ export function SLVideo() {
       >
         <GripHorizontal className="w-4 h-4" aria-hidden />
       </div>
-      <video
-        key={src}
-        src={src}
-        autoPlay
-        loop
-        playsInline
-        controls
-        className="w-full h-[calc(100%-1.5rem)] object-cover"
-      />
+      {src ? (
+        <video
+          key={src}
+          src={src}
+          autoPlay
+          loop
+          playsInline
+          controls
+          className="w-full h-[calc(100%-1.5rem)] object-cover"
+        />
+      ) : (
+        <div
+          role="status"
+          className={cn(
+            "w-full h-[calc(100%-1.5rem)]",
+            "flex flex-col items-center justify-center gap-2 px-4 text-center",
+            "bg-black/90 text-white/70",
+          )}
+        >
+          <VideoOff className="w-8 h-8 text-white/50" aria-hidden />
+          <p className="text-sm font-medium text-white/80">
+            {t("sign-language-no-video") ||
+              "No sign language video for this page"}
+          </p>
+        </div>
+      )}
     </div>
   )
 }
