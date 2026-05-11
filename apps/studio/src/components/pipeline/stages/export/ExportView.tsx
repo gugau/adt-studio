@@ -1,7 +1,7 @@
 import { useState } from "react"
-import {
-  Loader2, AlertCircle,
-} from "lucide-react"
+import { Loader2 } from "lucide-react"
+import { StageBlockedState } from "@/components/pipeline/components/StageBlockedState"
+import { useAllPagesPruned } from "@/hooks/use-all-pages-pruned"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { Button } from "@/components/ui/button"
 import { useBookRun } from "@/hooks/use-book-run"
@@ -15,6 +15,7 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
   const { startExport, isPreparing, preparingFormat, error } = useExportWatcher()
   const { stageState } = useBookRun()
   const storyboardDone = stageState("storyboard") === "done"
+  const { allPruned } = useAllPagesPruned(bookLabel)
   const availableFeatures = useAvailableExportFeatures(bookLabel)
   const formats = buildExportFormatConfig(t)
 
@@ -53,17 +54,21 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
 
   if (!storyboardDone) {
     return (
-      <div className="p-6 max-w-xl flex flex-col items-center gap-3 text-center">
-        <AlertCircle className="w-8 h-8 text-muted-foreground/50" />
-        <p className="text-sm text-muted-foreground">
-          <Trans>A storyboard must be built before exporting.</Trans>
-        </p>
-        <p className="text-sm text-muted-foreground">
-          <Trans>Run the pipeline through at least the</Trans>{" "}
-          <span className="font-medium text-foreground"><Trans>Storyboard</Trans></span>{" "}
-          <Trans>stage first.</Trans>
-        </p>
-      </div>
+      <StageBlockedState
+        bookLabel={bookLabel}
+        reason="storyboard-missing"
+        stageLabel={<Trans>Export</Trans>}
+      />
+    )
+  }
+
+  if (allPruned) {
+    return (
+      <StageBlockedState
+        bookLabel={bookLabel}
+        reason="all-pruned"
+        stageLabel={<Trans>Export</Trans>}
+      />
     )
   }
 
