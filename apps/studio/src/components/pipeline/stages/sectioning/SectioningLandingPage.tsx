@@ -14,7 +14,7 @@ import { useStageStatus } from "@/hooks/use-stage-status"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { usePersistConfig } from "@/hooks/use-persist-config"
-import { ACCENT_VAR, ACCENT_VAR_LIGHT } from "@/lib/accent-var"
+import { ACCENT_VAR, ACCENT_VAR_LIGHT } from "@/components/pipeline/lib/accent-var"
 import { cn } from "@/lib/utils"
 
 type SectioningModeKey = "dynamic" | "page"

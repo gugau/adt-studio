@@ -18,7 +18,7 @@ import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { usePersistConfig } from "@/hooks/use-persist-config"
 import { useComposeBookContext } from "@/hooks/use-compose-book-context"
-import { ACCENT_VAR, ACCENT_VAR_SOFT } from "@/lib/accent-var"
+import { ACCENT_VAR, ACCENT_VAR_SOFT } from "@/components/pipeline/lib/accent-var"
 
 type GradeLevelKey = "early" | "middle" | "advanced"
 
