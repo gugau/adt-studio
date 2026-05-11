@@ -4,9 +4,11 @@ import { ArrowDown, BookOpen, FileText, Image as ImageIcon, List, Type } from "l
 import { Trans, useLingui } from "@lingui/react/macro"
 import { useBook } from "@/hooks/use-books"
 import { useSourcePdfInfo } from "@/hooks/use-source-pdf-info"
+import { CircleHelp } from "lucide-react"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { LandingPageShell } from "@/components/pipeline/components/LandingPageShell"
 import { CascadeWarning } from "@/components/pipeline/components/CascadeWarning"
-import { SettingsCard } from "@/components/pipeline/components/SettingsCard"
+import { SettingsCard, SettingsField } from "@/components/pipeline/components/SettingsCard"
 import { SettingExplainer } from "@/components/pipeline/components/SettingExplainer"
 import { RangeSlider } from "@/components/ui/range-slider"
 import { BrandedSwitch } from "@/components/ui/branded-switch"
@@ -125,40 +127,57 @@ export function ExtractLandingPage({ bookLabel }: { bookLabel: string }) {
       <CascadeWarning stageSlug="extract" />
 
       <SettingsCard>
-        <RangeSlider
-          label={t`Page Range`}
-          tooltip={t`In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized.`}
-          min={1}
-          max={totalPages || 1}
-          startLabel={t`Initial Page`}
-          endLabel={t`Final Page`}
-          value={pageRange}
-          onChange={handlePageRangeChange}
-          disabled={pageRangeDisabled}
-        />
+        <SettingsField
+          label={<Trans>Page Range</Trans>}
+          labelAction={
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="text-[#a3a3a3] transition-colors duration-150 hover:text-[#737373]"
+                  aria-label={t`Page range help`}
+                >
+                  <CircleHelp className="h-3 w-3" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                {t`In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized.`}
+              </TooltipContent>
+            </Tooltip>
+          }
+        >
+          <RangeSlider
+            label={t`Page Range`}
+            hideLabel
+            min={1}
+            max={totalPages || 1}
+            startLabel={t`Initial Page`}
+            endLabel={t`Final Page`}
+            value={pageRange}
+            onChange={handlePageRangeChange}
+            disabled={pageRangeDisabled}
+          />
+        </SettingsField>
       </SettingsCard>
 
       <SettingsCard>
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-1">
-            <span className="text-sm font-medium text-foreground">
-              <Trans>Page Grouping Mode</Trans>
-            </span>
-            <SettingExplainer visual={<PageGroupingVisual />} />
-          </div>
-          <SegmentedControl
-            options={spreadOptions}
-            value={spreadMode}
-            onValueChange={handleSpreadModeChange}
-          />
-          <p className="text-xs text-muted-foreground leading-relaxed">
+        <SettingsField
+          label={<Trans>Page Grouping Mode</Trans>}
+          labelAction={<SettingExplainer visual={<PageGroupingVisual />} />}
+          hint={
             <Trans>
               Use Spread for printed books with facing-page layouts (covers
               stay solo, then 2+3, 4+5, …). Use Single when each PDF page
               should be processed on its own.
             </Trans>
-          </p>
-        </div>
+          }
+        >
+          <SegmentedControl
+            options={spreadOptions}
+            value={spreadMode}
+            onValueChange={handleSpreadModeChange}
+          />
+        </SettingsField>
       </SettingsCard>
 
       <FigureExtractionToggle

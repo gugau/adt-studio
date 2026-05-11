@@ -55,7 +55,7 @@ export function SettingsField({
       <div className="flex items-center gap-1">
         <label
           htmlFor={htmlFor}
-          className="text-[11px] font-medium uppercase tracking-wider text-[#737373]"
+          className="text-sm font-semibold leading-5 text-foreground"
         >
           {label}
         </label>

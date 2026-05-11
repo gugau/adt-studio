@@ -4,7 +4,7 @@ import { ArrowDown, FileText, Image as ImageIcon, Layers, List, Type } from "luc
 import { Trans, useLingui } from "@lingui/react/macro"
 import { LandingPageShell } from "@/components/pipeline/components/LandingPageShell"
 import { PrereqGuard } from "@/components/pipeline/components/PrereqGuard"
-import { SettingsCard } from "@/components/pipeline/components/SettingsCard"
+import { SettingsCard, SettingsField } from "@/components/pipeline/components/SettingsCard"
 import { SettingExplainer } from "@/components/pipeline/components/SettingExplainer"
 import { SegmentedControl } from "@/components/ui/segmented-control"
 import { BrandedSwitch } from "@/components/ui/branded-switch"
@@ -145,20 +145,11 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
       />
 
       <SettingsCard>
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-1">
-            <span className="text-sm font-medium text-foreground">
-              <Trans>Sectioning Mode</Trans>
-            </span>
-            <SettingExplainer visual={<SectioningModeVisual />} />
-          </div>
-          <SegmentedControl
-            options={modeOptions}
-            value={sectioningMode}
-            onValueChange={handleModeChange}
-          />
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            {sectioningMode === "page" ? (
+        <SettingsField
+          label={<Trans>Sectioning Mode</Trans>}
+          labelAction={<SettingExplainer visual={<SectioningModeVisual />} />}
+          hint={
+            sectioningMode === "page" ? (
               <Trans>
                 Treat each page as a single section. Best for storybooks and
                 self-contained pages.
@@ -168,9 +159,15 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
                 Keep pages whole by default, but split when distinct activity
                 types are detected on the same page.
               </Trans>
-            )}
-          </p>
-        </div>
+            )
+          }
+        >
+          <SegmentedControl
+            options={modeOptions}
+            value={sectioningMode}
+            onValueChange={handleModeChange}
+          />
+        </SettingsField>
       </SettingsCard>
 
       <ActivityDetectionToggle
