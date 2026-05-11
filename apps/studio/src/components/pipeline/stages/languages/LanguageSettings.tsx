@@ -33,13 +33,9 @@ import { VoiceMappingsEditor } from "./components/VoiceMappingsEditor"
 import { SelectImagesDialog } from "./components/SelectImagesDialog"
 import { WordHighlightPreview } from "./components/WordHighlightPreview"
 import { useLingui } from "@lingui/react/macro"
+import { displayLang } from "./lib/display-lang"
 
-const langNames = new Intl.DisplayNames(["en"], { type: "language" })
-function displayLang(code: string): string {
-  try { return langNames.of(code) ?? code } catch { return code }
-}
-
-export function TranslationsSettings({ bookLabel, headerTarget, tab = "general", stageSlug = "translate" }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string; stageSlug?: string }) {
+export function LanguageSettings({ bookLabel, headerTarget, tab = "general", stageSlug = "translate" }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string; stageSlug?: string }) {
   const isSpeechStage = stageSlug === "speech"
   const captionedImagesQuery = useQuery({
     queryKey: ["books", bookLabel, "captioned-images"],

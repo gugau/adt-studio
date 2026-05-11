@@ -23,39 +23,18 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { resolveTranslationLanguageState } from "./lib/translations-view-state"
+import {
+  type CatalogCategory,
+  getEntryCategory,
+  isAnswerEntry,
+  isGlossaryEntry,
+  isImageEntry,
+} from "./lib/catalog-entries"
+import { displayLang } from "./lib/display-lang"
 import { ImageLightbox } from "./components/ImageLightbox"
 import { WordHighlightPreview } from "./components/WordHighlightPreview"
 import { msg } from "@lingui/core/macro"
 import { useLingui } from "@lingui/react/macro"
-
-const IMAGE_ID_RE = /_im\d{3}/
-function isImageEntry(id: string): boolean {
-  return IMAGE_ID_RE.test(id)
-}
-
-const ANSWER_ID_RE = /_ans_/
-function isAnswerEntry(id: string): boolean {
-  return ANSWER_ID_RE.test(id)
-}
-
-const GLOSSARY_ID_RE = /^gl(?:\d{3}|_manual_)/
-function isGlossaryEntry(id: string): boolean {
-  return GLOSSARY_ID_RE.test(id)
-}
-
-type CatalogCategory = "all" | "text" | "captions" | "answers" | "glossary"
-
-function getEntryCategory(id: string): CatalogCategory {
-  if (isImageEntry(id)) return "captions"
-  if (isAnswerEntry(id)) return "answers"
-  if (isGlossaryEntry(id)) return "glossary"
-  return "text"
-}
-
-const langNames = new Intl.DisplayNames(["en"], { type: "language" })
-function displayLang(code: string): string {
-  try { return langNames.of(code) ?? code } catch { return code }
-}
 
 function VersionPicker({
   currentVersion,
@@ -175,7 +154,7 @@ function VersionPicker({
   )
 }
 
-export function TranslationsView({ bookLabel, stageSlug = "translate", selectedPageId, onSelectPage }: { bookLabel: string; stageSlug?: string; selectedPageId?: string; onSelectPage?: (pageId: string | null) => void }) {
+export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageId, onSelectPage }: { bookLabel: string; stageSlug?: string; selectedPageId?: string; onSelectPage?: (pageId: string | null) => void }) {
   const isSpeechStage = stageSlug === "speech"
   const { t, i18n } = useLingui()
   const { headerSlotEl } = useStepHeader()
@@ -608,7 +587,7 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
             type="button"
             onClick={() => {
               if (!audioLang) return
-              const langDisplay = langNames.of(audioLang) ?? audioLang
+              const langDisplay = displayLang(audioLang)
               if (!window.confirm(t`Are you sure you want to generate word-level timestamps for ${langDisplay}?`)) return
               transcribeAllMutation.mutate(audioLang)
             }}

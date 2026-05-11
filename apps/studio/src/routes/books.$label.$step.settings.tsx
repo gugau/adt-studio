@@ -15,7 +15,10 @@ import { GlossaryLandingPage } from "@/components/pipeline/stages/glossary/Gloss
 import { TocSettings } from "@/components/pipeline/stages/toc/TocSettings"
 import { CaptionsSettings } from "@/components/pipeline/stages/captions/CaptionsSettings"
 import { CaptionsLandingPage } from "@/components/pipeline/stages/captions/CaptionsLandingPage"
-import { TranslationsSettings } from "@/components/pipeline/stages/translations/TranslationsSettings"
+import { LanguageSettings } from "@/components/pipeline/stages/languages/LanguageSettings"
+import { LanguageLandingPage } from "@/components/pipeline/stages/languages/LanguageLandingPage"
+import { SpeechSettings } from "@/components/pipeline/stages/speech/SpeechSettings"
+import { SpeechLandingPage } from "@/components/pipeline/stages/speech/SpeechLandingPage"
 import { ValidationSettings } from "@/components/pipeline/stages/ValidationSettings"
 import { getStageLabelI18n } from "@/components/pipeline/pipeline-i18n"
 import { cn } from "@/lib/utils"
@@ -102,6 +105,10 @@ export function StepSettingsPage() {
                 return <CaptionsLandingPage bookLabel={label} />
               case "glossary":
                 return <GlossaryLandingPage bookLabel={label} />
+              case "translate":
+                return <LanguageLandingPage bookLabel={label} />
+              case "speech":
+                return <SpeechLandingPage bookLabel={label} />
             }
           }
 
@@ -121,9 +128,9 @@ export function StepSettingsPage() {
             case "captions":
               return <CaptionsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             case "translate":
-              return <TranslationsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} stageSlug="translate" />
+              return <LanguageSettings bookLabel={label} headerTarget={headerTarget} tab={tab} stageSlug="translate" />
             case "speech":
-              return <TranslationsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} stageSlug="speech" />
+              return <SpeechSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             case "validation":
               return <ValidationSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             default:
