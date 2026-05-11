@@ -1,33 +1,29 @@
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import type { ReactNode } from "react"
 import { ArrowDown, FileText, Image as ImageIcon, Layers, List, Type } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { LandingPageShell } from "@/components/pipeline/components/LandingPageShell"
-import { LandingPageWarning } from "@/components/pipeline/components/LandingPageWarning"
-import { CascadeWarning } from "@/components/pipeline/components/CascadeWarning"
+import { PrereqGuard } from "@/components/pipeline/components/PrereqGuard"
 import { SettingsCard } from "@/components/pipeline/components/SettingsCard"
 import { SettingExplainer } from "@/components/pipeline/components/SettingExplainer"
 import { SegmentedControl } from "@/components/ui/segmented-control"
 import { BrandedSwitch } from "@/components/ui/branded-switch"
-import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
+import { useBookConfig } from "@/hooks/use-book-config"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useStageStatus } from "@/hooks/use-stage-status"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
+import { usePersistConfig } from "@/hooks/use-persist-config"
+import { ACCENT_VAR, ACCENT_VAR_LIGHT } from "@/lib/accent-var"
 import { cn } from "@/lib/utils"
 
 type SectioningModeKey = "dynamic" | "page"
-
-/* eslint-disable lingui/no-unlocalized-strings -- CSS var tokens, not user-visible */
-const ACCENT_VAR = `var(--accent-color, #525252)`
-const ACCENT_VAR_LIGHT = `var(--accent-color, #a3a3a3)`
-/* eslint-enable lingui/no-unlocalized-strings */
 
 export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
   const { t } = useLingui()
   const { data: bookConfigData } = useBookConfig(bookLabel)
   const { data: activeConfigData } = useActiveConfig(bookLabel)
-  const updateConfig = useUpdateBookConfig()
+  const persist = usePersistConfig(bookLabel)
   const { apiKey, hasApiKey } = useApiKey()
   const { queueRun } = useBookRun()
   const status = useStageStatus("sectioning")
@@ -67,14 +63,6 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
       setDisabledSectionTypes(new Set(m.disabled_section_types as string[]))
     }
   }, [activeConfigData])
-
-  const persist = useCallback(
-    (patch: Record<string, unknown>) => {
-      const base = bookConfigData?.config ?? {}
-      updateConfig.mutate({ label: bookLabel, config: { ...base, ...patch } })
-    },
-    [bookConfigData, bookLabel, updateConfig]
-  )
 
   const handleModeChange = (value: SectioningModeKey) => {
     setSectioningMode(value)
@@ -145,10 +133,9 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
         </p>
       </div>
 
-      <LandingPageWarning
-        show={!extractReady}
-        variant="prereq"
-        title={<Trans>Run Extract first</Trans>}
+      <PrereqGuard
+        upstreamSlug="extract"
+        stageSlug="sectioning"
         description={
           <Trans>
             Sectioning needs the page text and images that Extract produces.
@@ -156,8 +143,6 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
           </Trans>
         }
       />
-
-      {extractReady && <CascadeWarning stageSlug="sectioning" />}
 
       <SettingsCard>
         <div className="flex flex-col gap-3">

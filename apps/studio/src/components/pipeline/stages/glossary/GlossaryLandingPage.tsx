@@ -1,50 +1,36 @@
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import type { ComponentType, SVGProps } from "react"
 import {
   BookOpen,
   Check,
   Layers,
   Library,
-  Pencil,
   Plus,
   Search,
-  Sparkles,
   X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { AddGlossaryDialog } from "./AddGlossaryDialog"
 import type { GlossaryItem } from "@/api/client"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
 import { i18n as linguiI18n } from "@lingui/core"
 import type { MessageDescriptor } from "@lingui/core"
+import { CustomInstructionsField } from "@/components/pipeline/components/CustomInstructionsField"
 import { LandingPageShell } from "@/components/pipeline/components/LandingPageShell"
-import { LandingPageWarning } from "@/components/pipeline/components/LandingPageWarning"
+import { PrereqGuard } from "@/components/pipeline/components/PrereqGuard"
 import {
   SettingsCard,
   SettingsField,
 } from "@/components/pipeline/components/SettingsCard"
-import { Textarea } from "@/components/ui/textarea"
-import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useStageStatus } from "@/hooks/use-stage-status"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
-import { useBook } from "@/hooks/use-books"
+import { usePersistConfig } from "@/hooks/use-persist-config"
+import { useComposeBookContext } from "@/hooks/use-compose-book-context"
+import { ACCENT_VAR, ACCENT_VAR_SOFT } from "@/lib/accent-var"
 import { cn } from "@/lib/utils"
-
-// eslint-disable-next-line lingui/no-unlocalized-strings -- CSS var, not user-visible
-const ACCENT_VAR = `var(--accent-color, #65a30d)`
-// eslint-disable-next-line lingui/no-unlocalized-strings -- CSS var, not user-visible
-const ACCENT_VAR_SOFT = `var(--accent-color-soft, #ecfccb)`
 
 type AmountKey = "concise" | "standard" | "comprehensive"
 
@@ -119,23 +105,23 @@ const AMOUNT_VISIBLE: Record<AmountKey, number> = {
 }
 
 export function GlossaryLandingPage({ bookLabel }: { bookLabel: string }) {
-  const { t, i18n } = useLingui()
-  const { data: bookConfigData } = useBookConfig(bookLabel)
+  const { t } = useLingui()
   const { data: activeConfigData } = useActiveConfig(bookLabel)
-  const { data: book } = useBook(bookLabel)
-  const updateConfig = useUpdateBookConfig()
+  const persist = usePersistConfig(bookLabel)
   const { apiKey, hasApiKey } = useApiKey()
   const { queueRun } = useBookRun()
   const status = useStageStatus("glossary")
   const storyboardStatus = useStageStatus("storyboard")
   const storyboardReady = storyboardStatus.isCompleted
+  const { compose: composeBookContext, canAutoFill } = useComposeBookContext(
+    bookLabel,
+    t`Prefer terms central to the book's subject matter. Skip generic vocabulary and proper nouns that don't carry meaning beyond the page.`,
+  )
 
   const [amount, setAmount] = useState<AmountKey>("standard")
   const [userPrompt, setUserPrompt] = useState("")
   const [seedTerms, setSeedTerms] = useState<GlossaryItem[]>([])
   const [showAddDialog, setShowAddDialog] = useState(false)
-  const [editorOpen, setEditorOpen] = useState(false)
-  const [editorDraft, setEditorDraft] = useState("")
 
   useEffect(() => {
     if (!activeConfigData) return
@@ -155,14 +141,6 @@ export function GlossaryLandingPage({ bookLabel }: { bookLabel: string }) {
     }
   }, [activeConfigData])
 
-  const persist = useCallback(
-    (patch: Record<string, unknown>) => {
-      const base = bookConfigData?.config ?? {}
-      updateConfig.mutate({ label: bookLabel, config: { ...base, ...patch } })
-    },
-    [bookConfigData, bookLabel, updateConfig],
-  )
-
   const handleAmountChange = (value: AmountKey) => {
     setAmount(value)
     persist({ glossary_amount: value })
@@ -180,53 +158,10 @@ export function GlossaryLandingPage({ bookLabel }: { bookLabel: string }) {
     persist({ glossary_seed_terms: next })
   }
 
-  const composeBookContext = useCallback((): string => {
-    if (!book) return ""
-    const parts: string[] = []
-    const summary = book.bookSummary?.summary?.trim()
-    if (summary) {
-      parts.push(summary)
-    } else if (book.title) {
-      parts.push(t`This book is titled "${book.title}".`)
-    }
-    if (book.languageCode) {
-      try {
-        const langName = new Intl.DisplayNames([i18n.locale], {
-          type: "language",
-        }).of(book.languageCode)
-        if (langName) parts.push(t`The book is written in ${langName}.`)
-      } catch {
-        // ignore invalid locale codes
-      }
-    }
-    parts.push(
-      t`Prefer terms central to the book's subject matter. Skip generic vocabulary and proper nouns that don't carry meaning beyond the page.`,
-    )
-    return parts.join(" ")
-  }, [book, i18n, t])
-
-  const handleEditorAutoFill = () => {
-    const composed = composeBookContext()
-    if (!composed) return
-    setEditorDraft(composed)
+  const handleUserPromptChange = (value: string) => {
+    setUserPrompt(value)
+    persist({ glossary_user_prompt: value })
   }
-
-  const openEditor = () => {
-    setEditorDraft(userPrompt)
-    setEditorOpen(true)
-  }
-
-  const cancelEditor = () => {
-    setEditorOpen(false)
-  }
-
-  const saveEditor = () => {
-    setUserPrompt(editorDraft)
-    persist({ glossary_user_prompt: editorDraft })
-    setEditorOpen(false)
-  }
-
-  const canAutoFill = Boolean(book)
 
   const handleRun = () => {
     if (!hasApiKey || !storyboardReady || status.isRunning) return
@@ -272,10 +207,9 @@ export function GlossaryLandingPage({ bookLabel }: { bookLabel: string }) {
         </p>
       </div>
 
-      <LandingPageWarning
-        show={!storyboardReady}
-        variant="prereq"
-        title={<Trans>Run Storyboard first</Trans>}
+      <PrereqGuard
+        upstreamSlug="storyboard"
+        stageSlug="glossary"
         description={
           <Trans>
             The glossary scans the typed sections that Storyboard places into
@@ -354,31 +288,15 @@ export function GlossaryLandingPage({ bookLabel }: { bookLabel: string }) {
             </Trans>
           }
         >
-          {userPrompt.trim() ? (
-            <button
-              type="button"
-              onClick={openEditor}
-              className="group flex w-full items-start gap-3 rounded-md border border-[#e5e5e5] bg-white px-3 py-2.5 text-left transition-colors hover:border-[#d4d4d4] hover:bg-[#fafafa] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-ring/40"
-            >
-              <p className="line-clamp-3 flex-1 text-[12.5px] leading-relaxed text-[#525252]">
-                {userPrompt}
-              </p>
-              <Pencil
-                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#a3a3a3] transition-colors group-hover:text-[#525252]"
-                strokeWidth={2}
-                aria-hidden
-              />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={openEditor}
-              className="flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-[#e5e5e5] bg-[#fafafa] px-3 py-3 text-[12px] font-medium text-[#737373] transition-colors hover:border-[#d4d4d4] hover:bg-[#f5f5f5] hover:text-[#525252] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-ring/40"
-            >
-              <Plus className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden />
-              <Trans>Add custom instructions</Trans>
-            </button>
-          )}
+          <CustomInstructionsField
+            value={userPrompt}
+            onChange={handleUserPromptChange}
+            compose={composeBookContext}
+            canAutoFill={canAutoFill}
+            accentHex="#65a30d"
+            dialogDescription={t`Optional notes to steer how the glossary is generated. Use Auto-fill to start from the book's title, language, and summary.`}
+            placeholder={t`e.g. focus on scientific vocabulary, skip place names, define every italicized word…`}
+          />
         </SettingsField>
       </SettingsCard>
 
@@ -389,57 +307,6 @@ export function GlossaryLandingPage({ bookLabel }: { bookLabel: string }) {
         existingItems={seedTerms}
         onAdd={handleSeedTermAdd}
       />
-
-      <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
-        <DialogContent
-          style={
-            {
-              "--accent-color": "#65a30d",
-              "--ring": "#65a30d",
-            } as React.CSSProperties
-          }
-        >
-          <DialogHeader>
-            <DialogTitle>{t`Custom Instructions`}</DialogTitle>
-            <DialogDescription>
-              {t`Optional notes to steer how the glossary is generated. Use Auto-fill to start from the book's title, language, and summary.`}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex items-start gap-2">
-            <Textarea
-              value={editorDraft}
-              onChange={(e) => setEditorDraft(e.target.value)}
-              rows={12}
-              placeholder={t`e.g. focus on scientific vocabulary, skip place names, define every italicized word…`}
-              className="flex-1 resize-none text-[13px] leading-relaxed"
-              autoFocus
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              disabled={!canAutoFill}
-              onClick={handleEditorAutoFill}
-              title={t`Auto-fill from book context`}
-              aria-label={t`Auto-fill from book context`}
-              className="shrink-0 text-muted-foreground hover:text-[var(--accent-color,#525252)]"
-            >
-              <Sparkles className="h-4 w-4" strokeWidth={2} aria-hidden />
-            </Button>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={cancelEditor}>
-              {t`Cancel`}
-            </Button>
-            <Button
-              onClick={saveEditor}
-              className="bg-lime-600 text-white hover:bg-lime-700 border-0"
-            >
-              {t`Save`}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </LandingPageShell>
   )
 }

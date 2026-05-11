@@ -1,28 +1,24 @@
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { BookOpen, GraduationCap, Sparkles, Sprout } from "lucide-react"
+import { CustomInstructionsField } from "@/components/pipeline/components/CustomInstructionsField"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
 import { i18n as linguiI18n } from "@lingui/core"
 import type { MessageDescriptor } from "@lingui/core"
 import { LandingPageShell } from "@/components/pipeline/components/LandingPageShell"
-import { LandingPageWarning } from "@/components/pipeline/components/LandingPageWarning"
+import { PrereqGuard } from "@/components/pipeline/components/PrereqGuard"
 import {
   SettingsCard,
   SettingsField,
 } from "@/components/pipeline/components/SettingsCard"
 import { SegmentedControl } from "@/components/ui/segmented-control"
-import { Textarea } from "@/components/ui/textarea"
-import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useStageStatus } from "@/hooks/use-stage-status"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
-import { useBook } from "@/hooks/use-books"
-
-// eslint-disable-next-line lingui/no-unlocalized-strings -- CSS var, not user-visible
-const ACCENT_VAR = `var(--accent-color, #0d9488)`
-// eslint-disable-next-line lingui/no-unlocalized-strings -- CSS var, not user-visible
-const ACCENT_VAR_SOFT = `var(--accent-color-soft, #ccfbf1)`
+import { usePersistConfig } from "@/hooks/use-persist-config"
+import { useComposeBookContext } from "@/hooks/use-compose-book-context"
+import { ACCENT_VAR, ACCENT_VAR_SOFT } from "@/lib/accent-var"
 
 type GradeLevelKey = "early" | "middle" | "advanced"
 
@@ -39,16 +35,18 @@ const CAPTION_SAMPLES: Record<GradeLevelKey, MessageDescriptor> = {
 }
 
 export function CaptionsLandingPage({ bookLabel }: { bookLabel: string }) {
-  const { t, i18n } = useLingui()
-  const { data: bookConfigData } = useBookConfig(bookLabel)
+  const { t } = useLingui()
   const { data: activeConfigData } = useActiveConfig(bookLabel)
-  const { data: book } = useBook(bookLabel)
-  const updateConfig = useUpdateBookConfig()
+  const persist = usePersistConfig(bookLabel)
   const { apiKey, hasApiKey } = useApiKey()
   const { queueRun } = useBookRun()
   const status = useStageStatus("captions")
   const storyboardStatus = useStageStatus("storyboard")
   const storyboardReady = storyboardStatus.isCompleted
+  const { compose: composeBookContext, canAutoFill } = useComposeBookContext(
+    bookLabel,
+    t`When describing images, mention any culturally specific objects, locations, or recurring characters by name.`,
+  )
 
   const [gradeLevel, setGradeLevel] = useState<GradeLevelKey>("middle")
   const [userPrompt, setUserPrompt] = useState("")
@@ -68,60 +66,15 @@ export function CaptionsLandingPage({ bookLabel }: { bookLabel: string }) {
     }
   }, [activeConfigData])
 
-  const persist = useCallback(
-    (patch: Record<string, unknown>) => {
-      const base = bookConfigData?.config ?? {}
-      updateConfig.mutate({ label: bookLabel, config: { ...base, ...patch } })
-    },
-    [bookConfigData, bookLabel, updateConfig],
-  )
-
   const handleGradeChange = (value: GradeLevelKey) => {
     setGradeLevel(value)
     persist({ image_captioning_grade_level: value })
   }
 
-  const handleUserPromptBlur = () => {
-    persist({ image_captioning_user_prompt: userPrompt })
+  const handleUserPromptChange = (value: string) => {
+    setUserPrompt(value)
+    persist({ image_captioning_user_prompt: value })
   }
-
-  const composeBookContext = useCallback((): string => {
-    if (!book) return ""
-    const parts: string[] = []
-    const summary = book.bookSummary?.summary?.trim()
-    if (summary) {
-      parts.push(summary)
-    } else if (book.title) {
-      parts.push(t`This book is titled "${book.title}".`)
-    }
-    if (book.languageCode) {
-      try {
-        const langName = new Intl.DisplayNames([i18n.locale], {
-          type: "language",
-        }).of(book.languageCode)
-        if (langName) parts.push(t`The book is written in ${langName}.`)
-      } catch {
-        // ignore invalid locale codes
-      }
-    }
-    if (book.authors && book.authors.length > 0) {
-      const authorsList = book.authors.join(", ")
-      parts.push(t`Authored by ${authorsList}.`)
-    }
-    parts.push(
-      t`When describing images, mention any culturally specific objects, locations, or recurring characters by name.`,
-    )
-    return parts.join(" ")
-  }, [book, i18n, t])
-
-  const handleAutoFill = () => {
-    const composed = composeBookContext()
-    if (!composed) return
-    setUserPrompt(composed)
-    persist({ image_captioning_user_prompt: composed })
-  }
-
-  const canAutoFill = Boolean(book)
 
   const handleRun = () => {
     if (!hasApiKey || !storyboardReady || status.isRunning) return
@@ -190,10 +143,9 @@ export function CaptionsLandingPage({ bookLabel }: { bookLabel: string }) {
         </p>
       </div>
 
-      <LandingPageWarning
-        show={!storyboardReady}
-        variant="prereq"
-        title={<Trans>Run Storyboard first</Trans>}
+      <PrereqGuard
+        upstreamSlug="storyboard"
+        stageSlug="captions"
         description={
           <Trans>
             Captions describe the images that Storyboard places into pages.
@@ -218,36 +170,21 @@ export function CaptionsLandingPage({ bookLabel }: { bookLabel: string }) {
       <SettingsCard>
         <SettingsField
           label={<Trans>Custom Instructions</Trans>}
-          labelAction={
-            <button
-              type="button"
-              onClick={handleAutoFill}
-              disabled={!canAutoFill}
-              className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#737373] transition-colors duration-150 hover:text-[var(--accent-color,#525252)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <Sparkles
-                className="h-3 w-3"
-                strokeWidth={2}
-                aria-hidden
-              />
-              <Trans>Auto-fill</Trans>
-            </button>
-          }
           hint={
             <Trans>
               Optional. Add notes about tone, focus, or vocabulary. Use
               Auto-fill to start from the book's title, language, and summary.
             </Trans>
           }
-          htmlFor="captions-user-prompt"
         >
-          <Textarea
-            id="captions-user-prompt"
+          <CustomInstructionsField
             value={userPrompt}
-            onChange={(e) => setUserPrompt(e.target.value)}
-            onBlur={handleUserPromptBlur}
+            onChange={handleUserPromptChange}
+            compose={composeBookContext}
+            canAutoFill={canAutoFill}
+            accentHex="#0d9488"
+            dialogDescription={t`Optional notes to steer how captions are generated. Use Auto-fill to start from the book's title, language, and summary.`}
             placeholder={t`e.g. emphasize cultural context, avoid technical jargon, mention colors when relevant…`}
-            className="min-h-[96px] resize-none text-[13px] leading-relaxed"
           />
         </SettingsField>
       </SettingsCard>

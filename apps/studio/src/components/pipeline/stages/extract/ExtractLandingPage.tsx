@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import type { ReactNode } from "react"
 import { ArrowDown, BookOpen, FileText, Image as ImageIcon, List, Type } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
@@ -11,23 +11,23 @@ import { SettingExplainer } from "@/components/pipeline/components/SettingExplai
 import { RangeSlider } from "@/components/ui/range-slider"
 import { BrandedSwitch } from "@/components/ui/branded-switch"
 import { SegmentedControl } from "@/components/ui/segmented-control"
-import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
+import { useBookConfig } from "@/hooks/use-book-config"
 import { useStageStatus } from "@/hooks/use-stage-status"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
+import { usePersistConfig } from "@/hooks/use-persist-config"
+import { ACCENT_VAR } from "@/lib/accent-var"
 import { cn } from "@/lib/utils"
 
 type SpreadModeKey = "single" | "spread"
 
-// eslint-disable-next-line lingui/no-unlocalized-strings -- CSS var, not user-visible
-const ACCENT_VAR = `var(--accent-color, #525252)`
 // eslint-disable-next-line lingui/no-unlocalized-strings -- pagination labels, identical across locales
 const PAGE_LABELS = ["P1", "P2", "P3", "P4", "P5"] as const
 
 export function ExtractLandingPage({ bookLabel }: { bookLabel: string }) {
   const { t } = useLingui()
   const { data: bookConfigData } = useBookConfig(bookLabel)
-  const updateConfig = useUpdateBookConfig()
+  const persist = usePersistConfig(bookLabel)
   const { apiKey, hasApiKey } = useApiKey()
   const { queueRun } = useBookRun()
   const status = useStageStatus("extract")
@@ -49,14 +49,6 @@ export function ExtractLandingPage({ bookLabel }: { bookLabel: string }) {
     const end = c.end_page != null ? Number(c.end_page) : Math.max(start, totalPages || 1)
     setPageRange([start, end])
   }, [bookConfigData, totalPages])
-
-  const persist = useCallback(
-    (patch: Record<string, unknown>) => {
-      const base = bookConfigData?.config ?? {}
-      updateConfig.mutate({ label: bookLabel, config: { ...base, ...patch } })
-    },
-    [bookConfigData, bookLabel, updateConfig]
-  )
 
   const handlePageRangeChange = ([start, end]: [number, number]) => {
     setPageRange([start, end])

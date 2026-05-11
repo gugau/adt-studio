@@ -21,8 +21,7 @@ import { msg } from "@lingui/core/macro"
 import { i18n as linguiI18n } from "@lingui/core"
 import type { MessageDescriptor } from "@lingui/core"
 import { LandingPageShell } from "@/components/pipeline/components/LandingPageShell"
-import { LandingPageWarning } from "@/components/pipeline/components/LandingPageWarning"
-import { CascadeWarning } from "@/components/pipeline/components/CascadeWarning"
+import { PrereqGuard } from "@/components/pipeline/components/PrereqGuard"
 import { SettingExplainer } from "@/components/pipeline/components/SettingExplainer"
 import { SettingsCard, SettingsField } from "@/components/pipeline/components/SettingsCard"
 import { SegmentedControl } from "@/components/ui/segmented-control"
@@ -32,7 +31,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
+import { useBookConfig } from "@/hooks/use-book-config"
+import { usePersistConfig } from "@/hooks/use-persist-config"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useStageStatus } from "@/hooks/use-stage-status"
 import { useBookRun } from "@/hooks/use-book-run"
@@ -133,7 +133,7 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
   const { t } = useLingui()
   const { data: bookConfigData } = useBookConfig(bookLabel)
   const { data: activeConfigData } = useActiveConfig(bookLabel)
-  const updateConfig = useUpdateBookConfig()
+  const persist = usePersistConfig(bookLabel)
   const { apiKey, hasApiKey } = useApiKey()
   const { queueRun } = useBookRun()
   const status = useStageStatus("storyboard")
@@ -199,14 +199,6 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
       setActivityMode(m.storyboard_activity_mode)
     }
   }, [activeConfigData])
-
-  const persist = useCallback(
-    (patch: Record<string, unknown>) => {
-      const base = bookConfigData?.config ?? {}
-      updateConfig.mutate({ label: bookLabel, config: { ...base, ...patch } })
-    },
-    [bookConfigData, bookLabel, updateConfig],
-  )
 
   const handleStrategyChange = (value: string) => {
     setDefaultRenderStrategy(value)
@@ -285,10 +277,9 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
         </p>
       </div>
 
-      <LandingPageWarning
-        show={!sectioningReady}
-        variant="prereq"
-        title={<Trans>Run Sectioning first</Trans>}
+      <PrereqGuard
+        upstreamSlug="sectioning"
+        stageSlug="storyboard"
         description={
           <Trans>
             Storyboard renders the typed sections produced by Sectioning.
@@ -296,8 +287,6 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
           </Trans>
         }
       />
-
-      {sectioningReady && <CascadeWarning stageSlug="storyboard" />}
 
       <SettingsCard>
         <SettingsField
