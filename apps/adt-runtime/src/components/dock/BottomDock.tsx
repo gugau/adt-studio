@@ -21,7 +21,7 @@ import { useToolbarKeyboardNav } from "@/hooks/useToolbarKeyboardNav";
 import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
 import { BookMetadata } from "./BookMetadata";
-import { DockActivityActions } from "./DockActivityActions";
+// import { DockActivityActions } from "./DockActivityActions";
 import { PageNav } from "./PageNav";
 import { DockMenu } from "./DockMenu";
 
@@ -90,35 +90,21 @@ export function BottomDock() {
     <AudioPlayerProvider>
       <div
         ref={dockRef}
-        data-hidden={shouldHide}
         className={cn(
           isSpread ? "justify-between" : "justify-center",
-          isTop
-            ? "data-[hidden=true]:-translate-y-24"
-            : "data-[hidden=true]:translate-y-24",
-          "flex items-center gap-1 p-1 h-full duration-200 ease-out",
-          "data-[hidden=true]:opacity-0 data-[hidden=true]:pointer-events-none data-[hidden=false]:translate-y-0",
-          "data-[hidden=true]:duration-300 data-[hidden=true]:ease-in",
+          "flex items-center gap-1 p-1 h-full w-full",
           "bg-popover/95 text-popover-foreground backdrop-blur-md",
           "shadow-lg ring-1 ring-border",
-          isCompact && "rounded-2xl",
-          // Only animate transform + opacity (the show/hide motion). Width,
-          // position, and border-radius switch instantly when the user
-          // toggles compact ↔ full — otherwise interpolating those at once
-          // produces a visible flicker.
-          "transition-[transform,opacity] will-change-transform",
+          "transition-all duration-200 ease-out will-change-transform",
+          isCompact ? "rounded-2xl max-w-3xl" : "rounded-none",
+          shouldHide && "opacity-0 pointer-events-none",
+          shouldHide &&
+            (isTop ? "-translate-y-[150%]" : "translate-y-[150%]"),
           cn(
-            "fixed z-[55] h-14",
-            // Compact uses margin-auto for centering (instead of a transform)
-            // so toggling to full doesn't yank a translate off the element
-            // mid-transition. Full goes edge-to-edge.
+            "fixed z-[55] h-14 left-0 right-0 mx-auto",
             isCompact
-              ? cn(
-                  "left-0 right-0 mx-auto w-fit",
-                  "max-w-[100vw]",
-                  isTop ? "top-3" : "bottom-3",
-                )
-              : cn("left-0 right-0 w-full", isTop ? "top-0" : "bottom-0"),
+              ? (isTop ? "top-3" : "bottom-3")
+              : (isTop ? "top-0" : "bottom-0"),
           ),
         )}
         role="toolbar"

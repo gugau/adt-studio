@@ -71,7 +71,6 @@ export function PageNav() {
         ariaLabel={t("previous-page") || "Previous page"}
         disabled={!prev}
         onClick={() => go(prev?.href)}
-        size="sm"
       >
         <ChevronLeft className="w-4 h-4" />
       </DockIconButton>
@@ -86,7 +85,6 @@ export function PageNav() {
         ariaLabel={t("next-page") || "Next page"}
         disabled={!next}
         onClick={() => go(next?.href)}
-        size="sm"
       >
         <ChevronRight className="w-4 h-4" />
       </DockIconButton>

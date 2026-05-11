@@ -1,41 +1,42 @@
-import { useAtom, useAtomValue } from "jotai"
-import { ToggleRow } from "./ToggleRow"
-import { SegmentedRow } from "./SegmentedRow"
-import { SettingsSection } from "./SettingsSection"
-import { DockLayoutPicker } from "./DockLayoutPicker"
-import { appConfigAtom } from "@/state/config.atoms"
+import { useAtom, useAtomValue } from "jotai";
+import { ToggleRow } from "./ToggleRow";
+import { SegmentedRow } from "./SegmentedRow";
+import { SettingsSection } from "./SettingsSection";
+import { DockLayoutPicker } from "./DockLayoutPicker";
+import { appConfigAtom } from "@/state/config.atoms";
 import {
   autoplayModeAtom,
   describeImagesModeAtom,
   readAloudModeAtom,
-} from "@/state/audio.atoms"
+} from "@/state/audio.atoms";
 import {
   iconSizeAtom,
   reduceMotionAtom,
   stateModeAtom,
   type IconSize,
-} from "@/state/ui.atoms"
-import { useTranslation } from "@/hooks/useTranslation"
-import { trackToggleEvent } from "@/lib/analytics"
+} from "@/state/ui.atoms";
+import { useTranslation } from "@/hooks/useTranslation";
+import { trackToggleEvent } from "@/lib/analytics";
 
 export function SettingsTab() {
-  const { t } = useTranslation()
-  const features = useAtomValue(appConfigAtom).features
-  const [stateMode, setStateMode] = useAtom(stateModeAtom)
-  const [readAloud, setReadAloud] = useAtom(readAloudModeAtom)
-  const [autoplay, setAutoplay] = useAtom(autoplayModeAtom)
-  const [describeImages, setDescribeImages] = useAtom(describeImagesModeAtom)
-  const [iconSize, setIconSize] = useAtom(iconSizeAtom)
-  const [reduceMotion, setReduceMotion] = useAtom(reduceMotionAtom)
+  const { t } = useTranslation();
+  const features = useAtomValue(appConfigAtom).features;
+  const [stateMode, setStateMode] = useAtom(stateModeAtom);
+  const [readAloud, setReadAloud] = useAtom(readAloudModeAtom);
+  const [autoplay, setAutoplay] = useAtom(autoplayModeAtom);
+  const [describeImages, setDescribeImages] = useAtom(describeImagesModeAtom);
+  const [iconSize, setIconSize] = useAtom(iconSizeAtom);
+  const [reduceMotion, setReduceMotion] = useAtom(reduceMotionAtom);
 
-  const wrap = (name: string, setter: (v: boolean) => void) => (next: boolean) => {
-    trackToggleEvent(name, next)
-    setter(next)
-  }
+  const wrap =
+    (name: string, setter: (v: boolean) => void) => (next: boolean) => {
+      trackToggleEvent(name, next);
+      setter(next);
+    };
 
-  const showReadingSection = features.readAloud
+  const showReadingSection = features.readAloud;
   const showTtsSubsettings =
-    readAloud && (features.autoplay || features.describeImages)
+    readAloud && (features.autoplay || features.describeImages);
 
   return (
     <div className="flex flex-col gap-1 px-4 pb-6">
@@ -67,25 +68,21 @@ export function SettingsTab() {
         </SettingsSection>
       ) : null}
 
-      <SettingsSection
-        title={t("settings-section-toolbar") || "Toolbar"}
-        description={
-          t("settings-section-toolbar-hint") ||
-          "Click the preview to choose where the toolbar sits."
-        }
-      >
+      <SettingsSection title={t("settings-section-toolbar") || "Toolbar"}>
         <div className="py-3">
           <DockLayoutPicker />
         </div>
       </SettingsSection>
 
-      <SettingsSection title={t("settings-section-accessibility") || "Accessibility"}>
+      <SettingsSection
+        title={t("settings-section-accessibility") || "Accessibility"}
+      >
         <SegmentedRow<IconSize>
           label={t("icon-size-label") || "Icon size"}
           value={iconSize as IconSize}
           onChange={(v) => {
-            trackToggleEvent(`IconSize:${v}`, true)
-            setIconSize(v)
+            trackToggleEvent(`IconSize:${v}`, true);
+            setIconSize(v);
           }}
           options={[
             { value: "sm", label: t("icon-size-sm") || "Small" },
@@ -101,8 +98,8 @@ export function SettingsTab() {
           }
           checked={reduceMotion}
           onChange={(v) => {
-            trackToggleEvent("ReduceMotion", v)
-            setReduceMotion(v)
+            trackToggleEvent("ReduceMotion", v);
+            setReduceMotion(v);
           }}
         />
       </SettingsSection>
@@ -113,12 +110,12 @@ export function SettingsTab() {
             label={t("state-label") || "Auto-hide menus"}
             checked={stateMode}
             onChange={(v) => {
-              trackToggleEvent("HideMenus", v)
-              setStateMode(v)
+              trackToggleEvent("HideMenus", v);
+              setStateMode(v);
             }}
           />
         </SettingsSection>
       ) : null}
     </div>
-  )
+  );
 }
