@@ -57,7 +57,7 @@ const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   languages: msg`Languages`,
   "translation-prompt": msg`Translation Prompt`,
   "image-translation": msg`Image Translation`,
-  speech: msg`Speech`,
+  speech: msg`Speech Settings`,
   "speech-prompts": msg`Speech Prompts`,
   voices: msg`Voices`,
   "toc-prompt": msg`Generation Prompt`,

@@ -247,37 +247,6 @@ export function SpeechLandingPage({ bookLabel }: { bookLabel: string }) {
 
       <SettingsCard>
         <SettingsField
-          label={<Trans>Voices &amp; Accents</Trans>}
-          hint={
-            <Trans>
-              Pick which voice each language uses for narration, including
-              regional accents.
-            </Trans>
-          }
-        >
-          <Link
-            to="/books/$label/$step/settings"
-            params={{ label: bookLabel, step: "speech" }}
-            search={{ tab: "voices" }}
-            className="group flex w-full items-center gap-3 rounded-md border border-[#e5e5e5] bg-white px-3 py-2.5 text-left transition-colors hover:border-[#d4d4d4] hover:bg-[#fafafa] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-ring/40"
-          >
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-rose-100 text-rose-700">
-              <Settings2 className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
-            </span>
-            <span className="flex-1 text-[13px] font-medium text-[#0a0a0a]">
-              <Trans>Configure voices and accents</Trans>
-            </span>
-            <Pencil
-              className="h-3.5 w-3.5 text-[#a3a3a3] transition-colors group-hover:text-[#525252]"
-              strokeWidth={2}
-              aria-hidden
-            />
-          </Link>
-        </SettingsField>
-      </SettingsCard>
-
-      <SettingsCard>
-        <SettingsField
           label={<Trans>Reader Highlighting</Trans>}
           hint={
             wordHighlighting ? (
@@ -300,6 +269,37 @@ export function SpeechLandingPage({ bookLabel }: { bookLabel: string }) {
               handleHighlightingToggle(value === "word")
             }
           />
+        </SettingsField>
+      </SettingsCard>
+
+      <SettingsCard>
+        <SettingsField
+          label={<Trans>Voices &amp; Accents</Trans>}
+          hint={
+            <Trans>
+              Pick which voice each language uses for narration, including
+              regional accents.
+            </Trans>
+          }
+        >
+          <Link
+            to="/books/$label/$step/settings"
+            params={{ label: bookLabel, step: "speech" }}
+            search={{ tab: "general" }}
+            className="group flex w-full items-center gap-3 rounded-md border border-[#e5e5e5] bg-white px-3 py-2.5 text-left transition-colors hover:border-[#d4d4d4] hover:bg-[#fafafa] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-ring/40"
+          >
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-rose-100 text-rose-700">
+              <Settings2 className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+            </span>
+            <span className="flex-1 text-[13px] font-medium text-[#0a0a0a]">
+              <Trans>Configure voices and accents</Trans>
+            </span>
+            <Pencil
+              className="h-3.5 w-3.5 text-[#a3a3a3] transition-colors group-hover:text-[#525252]"
+              strokeWidth={2}
+              aria-hidden
+            />
+          </Link>
         </SettingsField>
       </SettingsCard>
     </LandingPageShell>
