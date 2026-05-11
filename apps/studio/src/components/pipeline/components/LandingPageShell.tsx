@@ -46,6 +46,7 @@ export function LandingPageShell({
   previewBodyClassName,
   onRun,
   preview,
+  hideRunButton = false,
   children,
 }: {
   bookLabel: string
@@ -67,6 +68,7 @@ export function LandingPageShell({
   previewBodyClassName?: string
   onRun: () => void
   preview: ReactNode
+  hideRunButton?: boolean
   children: ReactNode
 }) {
   const { i18n } = useLingui()
@@ -151,7 +153,7 @@ export function LandingPageShell({
             <Trans>Advanced Settings</Trans>
           </Link>
 
-          {showTooltip ? (
+          {!hideRunButton && (showTooltip ? (
             <TooltipProvider delayDuration={150}>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -166,7 +168,7 @@ export function LandingPageShell({
             </TooltipProvider>
           ) : (
             runButton
-          )}
+          ))}
         </div>
       </aside>
 
