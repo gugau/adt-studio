@@ -5,6 +5,8 @@ export interface SegmentedControlOption<T extends string = string> {
   value: T
   label: string
   icon?: ReactNode
+  disabled?: boolean
+  disabledHint?: string
 }
 
 interface SegmentedControlProps<T extends string = string> {
@@ -48,16 +50,24 @@ export function SegmentedControl<T extends string = string>({
           type="button"
           role="radio"
           aria-checked={value === option.value}
-          onClick={() => onValueChange(option.value)}
+          aria-disabled={option.disabled || undefined}
+          disabled={option.disabled}
+          title={option.disabled ? option.disabledHint : undefined}
+          onClick={() => {
+            if (option.disabled) return
+            onValueChange(option.value)
+          }}
           className={cn(
-            "relative z-10 flex h-7 flex-1 cursor-pointer items-center justify-center rounded-md text-sm",
+            "relative z-10 flex h-7 flex-1 items-center justify-center rounded-md text-sm",
             "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-ring/40",
-            value === option.value
-              ? "font-bold"
-              : "font-normal text-[#737373] hover:text-[#525252]",
+            option.disabled
+              ? "cursor-not-allowed font-normal text-[#a3a3a3]"
+              : value === option.value
+                ? "cursor-pointer font-bold"
+                : "cursor-pointer font-normal text-[#737373] hover:text-[#525252]",
           )}
           style={
-            value === option.value
+            !option.disabled && value === option.value
               ? {
                   color: color ?? "var(--accent-color, #2b7fff)",
                   transition: "color 0.4s ease",

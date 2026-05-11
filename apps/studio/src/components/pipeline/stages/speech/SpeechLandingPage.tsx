@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react"
-import { AudioLines, Mic2, Play, Sparkles } from "lucide-react"
+import { AlertCircle, AudioLines, Mic2, Pencil, Play, Settings2, Sparkles } from "lucide-react"
+import { Link } from "@tanstack/react-router"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
 import { i18n as linguiI18n } from "@lingui/core"
@@ -39,7 +40,7 @@ export function SpeechLandingPage({ bookLabel }: { bookLabel: string }) {
   const { data: bookConfigData } = useBookConfig(bookLabel)
   const { data: activeConfigData } = useActiveConfig(bookLabel)
   const persist = usePersistConfig(bookLabel)
-  const { apiKey, hasApiKey } = useApiKey()
+  const { apiKey, hasApiKey, hasAzureKey, hasGeminiKey } = useApiKey()
   const { queueRun } = useBookRun()
   const status = useStageStatus("speech")
   const translateStatus = useStageStatus("translate")
@@ -87,26 +88,62 @@ export function SpeechLandingPage({ bookLabel }: { bookLabel: string }) {
     queueRun({ fromStage: "speech", toStage: "speech", apiKey })
   }
 
+  const providerKeyAvailable: Record<ProviderKey, boolean> = {
+    openai: hasApiKey,
+    azure: hasAzureKey,
+    gemini: hasGeminiKey,
+  }
+
   const providerOptions = useMemo(
-    () => [
-      {
-        value: "openai" as const,
-        label: linguiI18n._(PROVIDER_LABELS.openai),
-      },
-      {
-        value: "azure" as const,
-        label: linguiI18n._(PROVIDER_LABELS.azure),
-      },
-      {
-        value: "gemini" as const,
-        label: linguiI18n._(PROVIDER_LABELS.gemini),
-      },
-    ],
-    [],
+    () => {
+      const disabledHint = t`Add this provider's API key in Book settings.`
+      return [
+        {
+          value: "openai" as const,
+          label: linguiI18n._(PROVIDER_LABELS.openai),
+          disabled: !hasApiKey,
+          disabledHint,
+        },
+        {
+          value: "azure" as const,
+          label: linguiI18n._(PROVIDER_LABELS.azure),
+          disabled: !hasAzureKey,
+          disabledHint,
+        },
+        {
+          value: "gemini" as const,
+          label: linguiI18n._(PROVIDER_LABELS.gemini),
+          disabled: !hasGeminiKey,
+          disabledHint,
+        },
+      ]
+    },
+    [t, hasApiKey, hasAzureKey, hasGeminiKey],
   )
+
+  const selectedProviderKeyMissing = !providerKeyAvailable[provider]
+
+  const disabledProviderLabels = useMemo(
+    () =>
+      providerOptions
+        .filter((o) => o.disabled)
+        .map((o) => o.label),
+    [providerOptions],
+  )
+
+  const disabledProvidersText = useMemo(() => {
+    if (disabledProviderLabels.length === 0) return ""
+    const formatter = new Intl.ListFormat(linguiI18n.locale ?? "en", {
+      style: "long",
+      type: "conjunction",
+    })
+    return formatter.format(disabledProviderLabels)
+  }, [disabledProviderLabels])
 
   const disabledReason = !hasApiKey ? (
     <Trans>Add an API key in Book settings to run speech.</Trans>
+  ) : selectedProviderKeyMissing ? (
+    <Trans>Add the selected provider's API key in Book settings to run speech.</Trans>
   ) : !translateReady ? (
     <Trans>Run Language first — speech narrates the translated text.</Trans>
   ) : undefined
@@ -123,7 +160,7 @@ export function SpeechLandingPage({ bookLabel }: { bookLabel: string }) {
       isCompleted={status.isCompleted}
       hasError={status.hasError}
       canRun={true}
-      extraDisabled={!hasApiKey || !translateReady}
+      extraDisabled={!hasApiKey || selectedProviderKeyMissing || !translateReady}
       disabledReason={disabledReason}
       runLabel={<Trans>Run Speech</Trans>}
       rerunLabel={<Trans>Re-run</Trans>}
@@ -158,13 +195,77 @@ export function SpeechLandingPage({ bookLabel }: { bookLabel: string }) {
       <SettingsCard>
         <SettingsField
           label={<Trans>Provider</Trans>}
-          hint={linguiI18n._(PROVIDER_HINTS[provider])}
+          hint={
+            selectedProviderKeyMissing ? (
+              <Trans>
+                No API key for {linguiI18n._(PROVIDER_LABELS[provider])} yet.
+                Add one in Book settings to enable this provider.
+              </Trans>
+            ) : (
+              linguiI18n._(PROVIDER_HINTS[provider])
+            )
+          }
         >
-          <SegmentedControl
-            options={providerOptions}
-            value={provider}
-            onValueChange={handleProviderChange}
-          />
+          <div className="flex flex-col gap-2">
+            <SegmentedControl
+              options={providerOptions}
+              value={provider}
+              onValueChange={handleProviderChange}
+            />
+            {disabledProviderLabels.length > 0 && (
+              <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[11.5px] text-amber-800">
+                <AlertCircle
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600"
+                  strokeWidth={2}
+                  aria-hidden
+                />
+                <span>
+                  {disabledProviderLabels.length === 1 ? (
+                    <Trans>
+                      {disabledProvidersText} is disabled — add its API key in
+                      Book settings to enable it.
+                    </Trans>
+                  ) : (
+                    <Trans>
+                      {disabledProvidersText} are disabled — add their API keys
+                      in Book settings to enable them.
+                    </Trans>
+                  )}
+                </span>
+              </div>
+            )}
+          </div>
+        </SettingsField>
+      </SettingsCard>
+
+      <SettingsCard>
+        <SettingsField
+          label={<Trans>Voices &amp; Accents</Trans>}
+          hint={
+            <Trans>
+              Pick which voice each language uses for narration, including
+              regional accents.
+            </Trans>
+          }
+        >
+          <Link
+            to="/books/$label/$step/settings"
+            params={{ label: bookLabel, step: "speech" }}
+            search={{ tab: "voices" }}
+            className="group flex w-full items-center gap-3 rounded-md border border-[#e5e5e5] bg-white px-3 py-2.5 text-left transition-colors hover:border-[#d4d4d4] hover:bg-[#fafafa] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-ring/40"
+          >
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-rose-100 text-rose-700">
+              <Settings2 className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+            </span>
+            <span className="flex-1 text-[13px] font-medium text-[#0a0a0a]">
+              <Trans>Configure voices and accents</Trans>
+            </span>
+            <Pencil
+              className="h-3.5 w-3.5 text-[#a3a3a3] transition-colors group-hover:text-[#525252]"
+              strokeWidth={2}
+              aria-hidden
+            />
+          </Link>
         </SettingsField>
       </SettingsCard>
 
