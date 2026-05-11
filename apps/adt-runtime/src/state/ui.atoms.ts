@@ -10,7 +10,6 @@ import {
   persistedStringAtom,
 } from "./persist"
 
-// Persistent toggles — driven by sidebar switches and survive navigation.
 export const easyReadModeAtom = persistedBoolAtom("easyReadMode", false)
 export const eli5ModeAtom = persistedBoolAtom("eli5Mode", false)
 export const signLanguageModeAtom = persistedBoolAtom("signLanguageMode", false)
@@ -21,11 +20,17 @@ export const stateModeAtom = persistedBoolAtom("stateMode", true) // "Auto-hide 
 // Dock interface preferences.
 export type DockWidth = "full" | "compact"
 export type DockPosition = "top" | "bottom"
-export type DockAlign = "left" | "center"
+export type DockAlign = "spread" | "center"
 
-export const dockWidthAtom = persistedStringAtom("dockWidth", "full")
+export const dockWidthAtom = persistedStringAtom("dockWidth", "compact")
 export const dockPositionAtom = persistedStringAtom("dockPosition", "bottom")
 export const dockAlignAtom = persistedStringAtom("dockAlign", "center")
+
+// Accessibility preferences. Synced to `<body>` attributes by BottomDock
+// (`icon-size`, `reduce-motion`) and styled via globals.css.
+export type IconSize = "sm" | "md" | "lg"
+export const iconSizeAtom = persistedStringAtom("iconSize", "md")
+export const reduceMotionAtom = persistedBoolAtom("reduceMotion", false)
 
 // Ephemeral view state — resets per page load.
 export const dockHiddenAtom = ephemeralAtom(false)

@@ -1,7 +1,8 @@
 import { useAtom, useAtomValue } from "jotai"
 import { ToggleRow } from "./ToggleRow"
 import { SegmentedRow } from "./SegmentedRow"
-import { LanguageSelect } from "./LanguageSelect"
+import { SettingsSection } from "./SettingsSection"
+import { DockLayoutPicker } from "./DockLayoutPicker"
 import { appConfigAtom } from "@/state/config.atoms"
 import {
   autoplayModeAtom,
@@ -9,17 +10,13 @@ import {
   readAloudModeAtom,
 } from "@/state/audio.atoms"
 import {
-  dockAlignAtom,
-  dockPositionAtom,
-  dockWidthAtom,
+  iconSizeAtom,
+  reduceMotionAtom,
   stateModeAtom,
-  type DockAlign,
-  type DockPosition,
-  type DockWidth,
+  type IconSize,
 } from "@/state/ui.atoms"
 import { useTranslation } from "@/hooks/useTranslation"
 import { trackToggleEvent } from "@/lib/analytics"
-
 
 export function SettingsTab() {
   const { t } = useTranslation()
@@ -28,32 +25,29 @@ export function SettingsTab() {
   const [readAloud, setReadAloud] = useAtom(readAloudModeAtom)
   const [autoplay, setAutoplay] = useAtom(autoplayModeAtom)
   const [describeImages, setDescribeImages] = useAtom(describeImagesModeAtom)
-  const [dockWidth, setDockWidth] = useAtom(dockWidthAtom)
-  const [dockPosition, setDockPosition] = useAtom(dockPositionAtom)
-  const [dockAlign, setDockAlign] = useAtom(dockAlignAtom)
+  const [iconSize, setIconSize] = useAtom(iconSizeAtom)
+  const [reduceMotion, setReduceMotion] = useAtom(reduceMotionAtom)
 
   const wrap = (name: string, setter: (v: boolean) => void) => (next: boolean) => {
     trackToggleEvent(name, next)
     setter(next)
   }
 
+  const showReadingSection = features.readAloud
   const showTtsSubsettings =
     readAloud && (features.autoplay || features.describeImages)
 
   return (
-    <div className="flex flex-col">
-      <LanguageSelect />
-
-      {features.readAloud ? (
-        <>
+    <div className="flex flex-col gap-1 px-4 pb-6">
+      {showReadingSection ? (
+        <SettingsSection title={t("settings-section-reading") || "Reading"}>
           <ToggleRow
             label={t("tts-label") || "Text to speech"}
             checked={readAloud}
             onChange={wrap("ReadAloud", setReadAloud)}
-            borderTop
           />
           {showTtsSubsettings ? (
-            <div className="bg-gray-50 rounded-lg border border-gray-200 mt-2 px-3">
+            <>
               {features.autoplay ? (
                 <ToggleRow
                   label={t("autoplay-label") || "Autoplay"}
@@ -66,66 +60,64 @@ export function SettingsTab() {
                   label={t("describe-images-label") || "Describe images"}
                   checked={describeImages}
                   onChange={wrap("DescribeImages", setDescribeImages)}
-                  borderTop={Boolean(features.autoplay)}
                 />
               ) : null}
-            </div>
+            </>
           ) : null}
-        </>
+        </SettingsSection>
       ) : null}
 
-      <SegmentedRow<DockWidth>
-        label={t("dock-width-label") || "Width"}
-        value={dockWidth as DockWidth}
-        onChange={(v) => {
-          trackToggleEvent(`DockWidth:${v}`, true)
-          setDockWidth(v)
-        }}
-        options={[
-          { value: "full", label: t("dock-width-full") || "Full" },
-          { value: "compact", label: t("dock-width-compact") || "Compact" },
-        ]}
-        borderTop
-      />
+      <SettingsSection
+        title={t("settings-section-toolbar") || "Toolbar"}
+        description={
+          t("settings-section-toolbar-hint") ||
+          "Click the preview to choose where the toolbar sits."
+        }
+      >
+        <div className="py-3">
+          <DockLayoutPicker />
+        </div>
+      </SettingsSection>
 
-      <SegmentedRow<DockPosition>
-        label={t("dock-position-label") || "Dock position"}
-        value={dockPosition as DockPosition}
-        onChange={(v) => {
-          trackToggleEvent(`DockPosition:${v}`, true)
-          setDockPosition(v)
-        }}
-        options={[
-          { value: "top", label: t("dock-position-top") || "Top" },
-          { value: "bottom", label: t("dock-position-bottom") || "Bottom" },
-        ]}
-        borderTop
-      />
-
-      <SegmentedRow<DockAlign>
-        label={t("dock-align-label") || "Alignment"}
-        value={dockAlign as DockAlign}
-        onChange={(v) => {
-          trackToggleEvent(`DockAlign:${v}`, true)
-          setDockAlign(v)
-        }}
-        options={[
-          { value: "left", label: t("dock-align-left") || "Left" },
-          { value: "center", label: t("dock-align-center") || "Center" },
-        ]}
-        borderTop
-      />
+      <SettingsSection title={t("settings-section-accessibility") || "Accessibility"}>
+        <SegmentedRow<IconSize>
+          label={t("icon-size-label") || "Icon size"}
+          value={iconSize as IconSize}
+          onChange={(v) => {
+            trackToggleEvent(`IconSize:${v}`, true)
+            setIconSize(v)
+          }}
+          options={[
+            { value: "sm", label: t("icon-size-sm") || "Small" },
+            { value: "md", label: t("icon-size-md") || "Medium" },
+            { value: "lg", label: t("icon-size-lg") || "Large" },
+          ]}
+        />
+        <ToggleRow
+          label={t("reduce-motion-label") || "Reduce motion"}
+          description={
+            t("reduce-motion-description") ||
+            "Disable animations and transitions across the reader."
+          }
+          checked={reduceMotion}
+          onChange={(v) => {
+            trackToggleEvent("ReduceMotion", v)
+            setReduceMotion(v)
+          }}
+        />
+      </SettingsSection>
 
       {features.showAutoHideButton !== false ? (
-        <ToggleRow
-          label={t("state-label") || "Auto-hide menus"}
-          checked={stateMode}
-          onChange={(v) => {
-            trackToggleEvent("HideMenus", v)
-            setStateMode(v)
-          }}
-          borderTop
-        />
+        <SettingsSection title={t("settings-section-behavior") || "Behavior"}>
+          <ToggleRow
+            label={t("state-label") || "Auto-hide menus"}
+            checked={stateMode}
+            onChange={(v) => {
+              trackToggleEvent("HideMenus", v)
+              setStateMode(v)
+            }}
+          />
+        </SettingsSection>
       ) : null}
     </div>
   )

@@ -7,9 +7,12 @@ import {
   dockMenuValueAtom,
   dockPositionAtom,
   dockWidthAtom,
+  iconSizeAtom,
+  reduceMotionAtom,
   type DockAlign,
   type DockPosition,
   type DockWidth,
+  type IconSize,
 } from "@/state/ui.atoms";
 import { AudioPlayerProvider } from "@/hooks/AudioPlayerContext";
 import { useAutoHideDock } from "@/hooks/useAutoHideDock";
@@ -32,14 +35,16 @@ export function BottomDock() {
   const align = useAtomValue(dockAlignAtom) as DockAlign;
   const hidden = useAtomValue(dockHiddenAtom);
   const menuValue = useAtomValue(dockMenuValueAtom);
+  const iconSize = useAtomValue(iconSizeAtom) as IconSize;
+  const reduceMotion = useAtomValue(reduceMotionAtom);
 
-  useAutoHideDock();
+  useAutoHideDock(dockRef);
   useKeyboardPageNav();
   useToolbarKeyboardNav(dockRef);
 
   const isTop = position === "top";
   const isCompact = width === "compact";
-  const isLeft = align === "left";
+  const isSpread = align === "spread";
   const shouldHide = hidden && menuValue === "";
 
   useLayoutEffect(() => {
@@ -58,42 +63,73 @@ export function BottomDock() {
     };
   }, []);
 
+  useLayoutEffect(() => {
+    document.body.setAttribute("nav-position", isTop ? "top" : "bottom");
+    if (!isCompact) {
+      document.body.setAttribute("nav-size", "full");
+    } else {
+      document.body.removeAttribute("nav-size");
+    }
+    return () => {
+      document.body.removeAttribute("nav-position");
+      document.body.removeAttribute("nav-size");
+    };
+  }, [isCompact, isTop]);
+
+  useLayoutEffect(() => {
+    document.body.setAttribute("icon-size", iconSize);
+    if (reduceMotion) document.body.setAttribute("reduce-motion", "true");
+    else document.body.removeAttribute("reduce-motion");
+    return () => {
+      document.body.removeAttribute("icon-size");
+      document.body.removeAttribute("reduce-motion");
+    };
+  }, [iconSize, reduceMotion]);
+
   return (
     <AudioPlayerProvider>
       <div
+        ref={dockRef}
+        data-hidden={shouldHide}
         className={cn(
-          "fixed z-[55] h-14",
-          isLeft ? "left-3" : "left-1/2 -translate-x-1/2",
-          isCompact ? "max-w-[100vw]" : isLeft ? "pr-2 right-3" : "px-2 w-full",
-          isTop ? "top-3" : "bottom-3",
+          isSpread ? "justify-between" : "justify-center",
+          isTop
+            ? "data-[hidden=true]:-translate-y-24"
+            : "data-[hidden=true]:translate-y-24",
+          "flex items-center gap-1 p-1 h-full duration-200 ease-out",
+          "data-[hidden=true]:opacity-0 data-[hidden=true]:pointer-events-none data-[hidden=false]:translate-y-0",
+          "data-[hidden=true]:duration-300 data-[hidden=true]:ease-in",
+          "bg-popover/95 text-popover-foreground backdrop-blur-md",
+          "shadow-lg ring-1 ring-border",
+          isCompact && "rounded-2xl",
+          // Only animate transform + opacity (the show/hide motion). Width,
+          // position, and border-radius switch instantly when the user
+          // toggles compact ↔ full — otherwise interpolating those at once
+          // produces a visible flicker.
+          "transition-[transform,opacity] will-change-transform",
+          cn(
+            "fixed z-[55] h-14",
+            // Compact uses margin-auto for centering (instead of a transform)
+            // so toggling to full doesn't yank a translate off the element
+            // mid-transition. Full goes edge-to-edge.
+            isCompact
+              ? cn(
+                  "left-0 right-0 mx-auto w-fit",
+                  "max-w-[100vw]",
+                  isTop ? "top-3" : "bottom-3",
+                )
+              : cn("left-0 right-0 w-full", isTop ? "top-0" : "bottom-0"),
+          ),
         )}
+        role="toolbar"
+        aria-label={t("dock-label") || "Reader controls"}
+        aria-hidden={shouldHide || undefined}
       >
-        <div
-          ref={dockRef}
-          className={cn(
-            "flex items-center gap-1 p-1 h-full",
-            isLeft ? "justify-start" : "justify-center",
-            "rounded-2xl bg-popover/95 text-popover-foreground backdrop-blur-md",
-            "shadow-lg ring-1 ring-border",
-            "transition-[transform,opacity,box-shadow] duration-300 ease-out will-change-transform",
-            shouldHide &&
-              (isTop ? "-translate-y-[150%]" : "translate-y-[150%]"),
-            shouldHide && "opacity-0 pointer-events-none",
-          )}
-          role="toolbar"
-          aria-label={t("dock-label") || "Reader controls"}
-          aria-hidden={shouldHide || undefined}
-        >
-          <DockActivityActions />
-          <BookMetadata />
-          {features.showNavigationControls && <PageNav />}
-          <DockMenu anchor={dockRef} side={isTop ? "bottom" : "top"} />
-        </div>
+        <BookMetadata />
+        {/*<DockActivityActions />*/}
+        {features.showNavigationControls && <PageNav />}
+        <DockMenu anchor={dockRef} side={isTop ? "bottom" : "top"} />
       </div>
     </AudioPlayerProvider>
   );
-}
-
-function Divider() {
-  return <div className="w-px h-2/3 bg-border" />;
 }

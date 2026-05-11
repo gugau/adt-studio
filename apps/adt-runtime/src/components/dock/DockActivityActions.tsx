@@ -26,8 +26,6 @@ export function DockActivityActions() {
   const retry = useAtomValue(retryHandlerAtom)
   const submitState = useAtomValue(submitStateAtom)
   const submitLabelOverride = useAtomValue(submitLabelAtom)
-  const setSubmitVisible = useSetAtom(submitVisibleAtom)
-  const setResetVisible = useSetAtom(resetVisibleAtom)
   const { t } = useTranslation()
 
   if (!submitVisible && !resetVisible) return null
@@ -41,23 +39,8 @@ export function DockActivityActions() {
 
   const submitLabel = submitLabelOverride ?? defaultLabel
 
-  const exitActivityMode = () => {
-    // First clear the underlying activity state, then drop the visibility
-    // flags so the dock returns to the normal (non-activity) layout.
-    retry?.()
-    setSubmitVisible(false)
-    setResetVisible(false)
-  }
-
   return (
     <div className="flex items-center gap-1 pl-1">
-      <DockIconButton
-        ariaLabel={t("exit-activity-mode") || "Exit activity mode"}
-        onClick={exitActivityMode}
-        size="sm"
-      >
-        <X className="w-4 h-4" />
-      </DockIconButton>
       {resetVisible && retry ? (
         <DockIconButton
           ariaLabel={t("reset-text") || "Reset"}

@@ -105,5 +105,22 @@
     "search-placeholder": "Pesquisar",
     "glossary-locate-on-page": "Mostrar na página",
     "glossary-variations-label": "Variações",
-    "glossary-locating": "Localizando…"
+    "glossary-locating": "Localizando…",
+    "dock-label": "Controles do leitor",
+    "dock-align-spread": "Espalhado",
+    "dock-layout-preview": "Pré-visualização da barra de ferramentas",
+    "exit-activity-mode": "Sair do modo atividade",
+    "settings-section-reading": "Leitura",
+    "settings-section-toolbar": "Barra de ferramentas",
+    "settings-section-toolbar-hint": "Clique na visualização para escolher onde a barra fica.",
+    "settings-section-behavior": "Comportamento",
+    "settings-section-accessibility": "Acessibilidade",
+    "icon-size-label": "Tamanho do ícone",
+    "icon-size-sm": "Pequeno",
+    "icon-size-md": "Médio",
+    "icon-size-lg": "Grande",
+    "reduce-motion-label": "Reduzir movimento",
+    "reduce-motion-description": "Desativar animações e transições no leitor.",
+    "sign-language-no-video": "Não há vídeo em libras para esta página",
+    "sign-language-drag-handle": "Arrastar vídeo em libras"
 }

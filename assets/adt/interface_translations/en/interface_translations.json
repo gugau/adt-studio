@@ -108,5 +108,22 @@
     "search-placeholder": "Search",
     "glossary-locate-on-page": "Show on page",
     "glossary-variations-label": "Variations",
-    "glossary-locating": "Locating…"
+    "glossary-locating": "Locating…",
+    "dock-label": "Reader controls",
+    "dock-align-spread": "Spread",
+    "dock-layout-preview": "Toolbar layout preview",
+    "exit-activity-mode": "Exit activity mode",
+    "settings-section-reading": "Reading",
+    "settings-section-toolbar": "Toolbar",
+    "settings-section-toolbar-hint": "Click the preview to choose where the toolbar sits.",
+    "settings-section-behavior": "Behavior",
+    "settings-section-accessibility": "Accessibility",
+    "icon-size-label": "Icon size",
+    "icon-size-sm": "Small",
+    "icon-size-md": "Medium",
+    "icon-size-lg": "Large",
+    "reduce-motion-label": "Reduce motion",
+    "reduce-motion-description": "Disable animations and transitions across the reader.",
+    "sign-language-no-video": "No sign language video for this page",
+    "sign-language-drag-handle": "Drag sign language video"
 }

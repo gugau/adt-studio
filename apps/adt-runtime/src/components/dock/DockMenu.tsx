@@ -48,14 +48,14 @@ export function DockMenu({ anchor, side = "top" }: DockMenuProps) {
 
   return (
     <>
-      <div className="flex items-center gap-0.5 pl-1 border-l border-border">
+      <div className="flex items-center gap-0.5 pl-1">
         {features.showNavigationControls ? (
           <DockIconButton
             ariaLabel={t("nav-label") || "Contents"}
             pressed={value === "toc"}
             onClick={() => toggle("toc")}
           >
-            <List className="w-5 h-5" />
+            <List className="size-6" />
           </DockIconButton>
         ) : null}
 
@@ -65,7 +65,7 @@ export function DockMenu({ anchor, side = "top" }: DockMenuProps) {
             pressed={value === "glossary"}
             onClick={() => toggle("glossary")}
           >
-            <BookOpen className="w-5 h-5" />
+            <BookOpen className="size-6" />
           </DockIconButton>
         ) : null}
 
@@ -83,10 +83,10 @@ export function DockMenu({ anchor, side = "top" }: DockMenuProps) {
           >
             {readAloud ? (
               <Volume2
-                className={cn("w-5 h-5", isPlaying && "animate-pulse")}
+                className={cn("size-6", isPlaying && "animate-pulse")}
               />
             ) : (
-              <VolumeX className="w-5 h-5" />
+              <VolumeX className="size-6" />
             )}
           </DockIconButton>
         ) : null}
@@ -101,7 +101,7 @@ export function DockMenu({ anchor, side = "top" }: DockMenuProps) {
               setSignLanguage(next)
             }}
           >
-            <Hand className="w-5 h-5" />
+            <Hand className="size-6" />
           </DockIconButton>
         ) : null}
 
@@ -110,7 +110,7 @@ export function DockMenu({ anchor, side = "top" }: DockMenuProps) {
           pressed={value === "language"}
           onClick={() => toggle("language")}
         >
-          <Languages className="w-5 h-5" />
+          <Languages className="size-6" />
         </DockIconButton>
 
         <DockIconButton
@@ -118,7 +118,7 @@ export function DockMenu({ anchor, side = "top" }: DockMenuProps) {
           pressed={value === "settings"}
           onClick={() => toggle("settings")}
         >
-          <Settings className="w-5 h-5" />
+          <Settings className="size-6" />
         </DockIconButton>
       </div>
 
