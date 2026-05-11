@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react"
-import { AlertCircle, AudioLines, Mic2, Pencil, Play, Settings2, Sparkles } from "lucide-react"
+import { AlertCircle, AudioLines, Mic2, Pencil, Play, Settings2 } from "lucide-react"
 import { Link } from "@tanstack/react-router"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
@@ -11,7 +11,6 @@ import {
   SettingsCard,
   SettingsField,
 } from "@/components/pipeline/components/SettingsCard"
-import { BrandedSwitch } from "@/components/ui/branded-switch"
 import { SegmentedControl } from "@/components/ui/segmented-control"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useStageStatus } from "@/hooks/use-stage-status"
@@ -139,6 +138,14 @@ export function SpeechLandingPage({ bookLabel }: { bookLabel: string }) {
     })
     return formatter.format(disabledProviderLabels)
   }, [disabledProviderLabels])
+
+  const highlightingOptions = useMemo(
+    () => [
+      { value: "sentence" as const, label: t`Per-Sentence` },
+      { value: "word" as const, label: t`Per-Word` },
+    ],
+    [t],
+  )
 
   const disabledReason = !hasApiKey ? (
     <Trans>Add an API key in Book settings to run speech.</Trans>
@@ -269,88 +276,45 @@ export function SpeechLandingPage({ bookLabel }: { bookLabel: string }) {
         </SettingsField>
       </SettingsCard>
 
-      <WordHighlightingToggle
-        checked={wordHighlighting}
-        onCheckedChange={handleHighlightingToggle}
-      />
+      <SettingsCard>
+        <SettingsField
+          label={<Trans>Reader Highlighting</Trans>}
+          hint={
+            wordHighlighting ? (
+              <Trans>
+                Highlights each word as it's narrated. Adds a transcription
+                step so audio aligns with text on the page.
+              </Trans>
+            ) : (
+              <Trans>
+                Highlights the active sentence while audio plays. Skips the
+                per-word transcription step.
+              </Trans>
+            )
+          }
+        >
+          <SegmentedControl
+            options={highlightingOptions}
+            value={wordHighlighting ? "word" : "sentence"}
+            onValueChange={(value) =>
+              handleHighlightingToggle(value === "word")
+            }
+          />
+        </SettingsField>
+      </SettingsCard>
     </LandingPageShell>
-  )
-}
-
-function WordHighlightingToggle({
-  checked,
-  onCheckedChange,
-}: {
-  checked: boolean
-  onCheckedChange: (next: boolean) => void
-}) {
-  const toggle = () => onCheckedChange(!checked)
-  return (
-    <div
-      role="switch"
-      id="speech-word-highlighting"
-      aria-checked={checked}
-      aria-labelledby="speech-word-highlighting-title"
-      aria-describedby="speech-word-highlighting-subtitle"
-      tabIndex={0}
-      className={cn(
-        "flex w-full cursor-pointer select-none items-center justify-center gap-2.5 rounded-lg border px-4 py-3 shadow-sm transition-colors",
-        "bg-white border-border hover:bg-muted hover:border-input",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-      )}
-      onClick={toggle}
-      onKeyDown={(e) => {
-        if (e.key === " " || e.key === "Enter") {
-          e.preventDefault()
-          toggle()
-        }
-      }}
-    >
-      <div className="flex min-w-0 flex-1 flex-col items-start justify-center gap-0.5">
-        <p
-          id="speech-word-highlighting-title"
-          className="select-none text-sm font-semibold leading-5 text-foreground"
-        >
-          <Trans>Word-Level Highlighting</Trans>
-        </p>
-        <p
-          id="speech-word-highlighting-subtitle"
-          className="w-full select-none text-xs font-normal leading-4 text-muted-foreground"
-        >
-          <Trans>
-            Highlight each word as it's narrated. Adds a transcription step so
-            audio aligns with text on the page.
-          </Trans>
-        </p>
-      </div>
-      <BrandedSwitch
-        id="speech-word-highlighting-switch"
-        checked={checked}
-        decorative
-      />
-    </div>
   )
 }
 
 function SpeechPreview({ wordHighlighting }: { wordHighlighting: boolean }) {
   /* eslint-disable lingui/no-unlocalized-strings -- sample preview text, illustrative only */
-  const words = [
-    "Lorem",
-    "ipsum",
-    "dolor",
-    "sit",
-    "amet,",
-    "consectetur",
-    "adipiscing",
-    "elit",
-    "sed",
-    "do",
-    "eiusmod",
-    "tempor",
-    "incididunt.",
+  const sentences: string[][] = [
+    ["Lorem", "ipsum", "dolor", "sit", "amet,", "consectetur", "adipiscing", "elit."],
+    ["Sed", "do", "eiusmod", "tempor", "incididunt", "ut", "labore."],
   ]
   /* eslint-enable lingui/no-unlocalized-strings */
-  const activeIndex = 3
+  const activeSentence = 0
+  const activeWord = 3
 
   return (
     <div className="relative flex flex-1 min-h-0 overflow-hidden bg-gradient-to-b from-rose-50/40 via-white to-white">
@@ -369,24 +333,61 @@ function SpeechPreview({ wordHighlighting }: { wordHighlighting: boolean }) {
         </div>
 
         {/* Narrated text */}
-        <div className="flex-1 min-h-0 overflow-hidden rounded-lg border border-rose-100 bg-white p-4 shadow-sm">
-          <p className="text-[13px] leading-[1.7] text-[#525252]">
-            {words.map((w, i) => {
-              const isActive = wordHighlighting && i === activeIndex
-              const isPast = wordHighlighting && i < activeIndex
+        <div className="flex-1 min-h-0 overflow-hidden rounded-lg border border-rose-100 bg-white p-4 shadow-sm flex flex-col gap-2">
+          <div className="flex items-center gap-1.5">
+            <Play
+              className="h-2.5 w-2.5 text-rose-500"
+              strokeWidth={2}
+              fill="none"
+              aria-hidden
+            />
+            <span className="text-[9px] font-semibold tracking-[0.18em] uppercase text-rose-600 leading-none">
+              {wordHighlighting ? (
+                <Trans>Preview: Per-Word</Trans>
+              ) : (
+                <Trans>Preview: Per-Sentence</Trans>
+              )}
+            </span>
+          </div>
+          <p className="text-[13px] leading-[1.9] text-[#525252]">
+            {sentences.map((sentenceWords, sIdx) => {
+              const sentenceIsActive = sIdx === activeSentence
+              const sentenceIsPast = sIdx < activeSentence
               return (
-                <span key={i}>
+                <span key={sIdx}>
                   <span
                     className={cn(
                       "transition-colors duration-200",
-                      isActive &&
-                        "rounded-sm bg-rose-200/70 px-0.5 font-semibold text-rose-900",
-                      isPast && "text-[#0a0a0a]",
+                      !wordHighlighting && sentenceIsActive &&
+                        "rounded-md px-1.5 py-0.5 ring-1 ring-rose-400 text-[#0a0a0a]",
+                      !wordHighlighting && sentenceIsPast && "text-[#0a0a0a]",
                     )}
                   >
-                    {w}
+                    {sentenceWords.map((w, wIdx) => {
+                      const wordIsActive =
+                        wordHighlighting && sentenceIsActive && wIdx === activeWord
+                      const wordIsPast =
+                        wordHighlighting &&
+                        (sentenceIsPast ||
+                          (sentenceIsActive && wIdx < activeWord))
+                      return (
+                        <span key={wIdx}>
+                          <span
+                            className={cn(
+                              "transition-colors duration-200",
+                              wordIsActive &&
+                                "rounded-sm bg-rose-200/70 px-0.5 font-semibold text-rose-900",
+                              wordIsPast && "text-[#0a0a0a]",
+                            )}
+                          >
+                            {w}
+                          </span>
+                          {wIdx < sentenceWords.length - 1 && " "}
+                        </span>
+                      )
+                    })}
                   </span>
-                  {i < words.length - 1 && " "}
+                  {sIdx < sentences.length - 1 && " "}
                 </span>
               )
             })}
@@ -415,27 +416,6 @@ function SpeechPreview({ wordHighlighting }: { wordHighlighting: boolean }) {
             strokeWidth={2}
             aria-hidden
           />
-        </div>
-
-        {/* Word-highlight indicator */}
-        <div
-          className={cn(
-            "flex shrink-0 items-center gap-2 rounded-md px-2.5 py-1.5 text-[10.5px] transition-colors",
-            wordHighlighting
-              ? "bg-rose-50 text-rose-700"
-              : "bg-[#f5f5f5] text-[#737373]",
-          )}
-        >
-          <Sparkles
-            className="h-3 w-3"
-            strokeWidth={2}
-            aria-hidden
-          />
-          {wordHighlighting ? (
-            <Trans>Word-level highlighting is on</Trans>
-          ) : (
-            <Trans>Word-level highlighting is off</Trans>
-          )}
         </div>
 
       </div>
