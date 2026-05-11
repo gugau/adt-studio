@@ -122,6 +122,7 @@ export const AppConfig = z
     image_meaningfulness: StepConfig.optional(),
     glossary: StepConfig.optional(),
     toc_generation: StepConfig.optional(),
+    toc_mode: z.enum(["extract", "dynamic"]).optional(),
     concurrency: z.number().int().min(1).optional(),
     rate_limit: RateLimitConfig.optional(),
     editing_language: z.string().optional(),
