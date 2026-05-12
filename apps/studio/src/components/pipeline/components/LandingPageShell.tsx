@@ -47,6 +47,8 @@ export function LandingPageShell({
   onRun,
   preview,
   hideRunButton = false,
+  hideAdvancedSettings = false,
+  hideFooter = false,
   children,
 }: {
   bookLabel: string
@@ -69,6 +71,8 @@ export function LandingPageShell({
   onRun: () => void
   preview: ReactNode
   hideRunButton?: boolean
+  hideAdvancedSettings?: boolean
+  hideFooter?: boolean
   children: ReactNode
 }) {
   const { i18n } = useLingui()
@@ -142,34 +146,40 @@ export function LandingPageShell({
           {children}
         </div>
 
-        <div className="shrink-0 border-t border-[#e5e5e5] px-6 py-4 flex items-center justify-between">
-          <Link
-            to="/books/$label/$step/settings"
-            params={{ label: bookLabel, step: stageSlug }}
-            search={{ tab: settingsTab }}
-            className="flex items-center gap-1.5 text-sm font-medium text-[#737373] hover:text-[#0a0a0a] transition-colors"
-          >
-            <Settings className="w-3.5 h-3.5" />
-            <Trans>Advanced Settings</Trans>
-          </Link>
+        {!hideFooter && (
+          <div className="shrink-0 border-t border-[#e5e5e5] px-6 py-4 flex items-center justify-between">
+            {!hideAdvancedSettings ? (
+              <Link
+                to="/books/$label/$step/settings"
+                params={{ label: bookLabel, step: stageSlug }}
+                search={{ tab: settingsTab }}
+                className="flex items-center gap-1.5 text-sm font-medium text-[#737373] hover:text-[#0a0a0a] transition-colors"
+              >
+                <Settings className="w-3.5 h-3.5" />
+                <Trans>Advanced Settings</Trans>
+              </Link>
+            ) : (
+              <span />
+            )}
 
-          {!hideRunButton && (showTooltip ? (
-            <TooltipProvider delayDuration={150}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span tabIndex={0} className="inline-flex cursor-help">
-                    <span className="pointer-events-none">{runButton}</span>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="top" align="end" className="max-w-[260px] text-center">
-                  {disabledReason}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : (
-            runButton
-          ))}
-        </div>
+            {!hideRunButton && (showTooltip ? (
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span tabIndex={0} className="inline-flex cursor-help">
+                      <span className="pointer-events-none">{runButton}</span>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" align="end" className="max-w-[260px] text-center">
+                    {disabledReason}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              runButton
+            ))}
+          </div>
+        )}
       </aside>
 
       <main className="flex-1 flex items-center justify-center overflow-auto p-8">

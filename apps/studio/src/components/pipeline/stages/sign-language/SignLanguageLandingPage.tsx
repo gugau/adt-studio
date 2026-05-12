@@ -179,6 +179,7 @@ export function SignLanguageLandingPage({ bookLabel }: { bookLabel: string }) {
       hasError={false}
       canRun={false}
       hideRunButton
+      hideFooter
       runLabel={null}
       rerunLabel={null}
       previewLabel={t`Sign Language Preview`}

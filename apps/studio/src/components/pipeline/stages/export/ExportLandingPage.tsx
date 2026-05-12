@@ -105,6 +105,7 @@ export function ExportLandingPage({ bookLabel }: { bookLabel: string }) {
       }
       rerunLabel={<Trans>Retry Export</Trans>}
       previewLabel={t`Export Preview`}
+      hideAdvancedSettings
       onRun={handleOpenDialog}
       preview={<ExportPreview format={selectedFormat} />}
     >
