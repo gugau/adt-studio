@@ -1,0 +1,116 @@
+name: Bug Report
+description: File a bug report for ADT Studio
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        <p align="center">
+          <a href="https://github.com/unicef/adt-studio">
+            <img src="https://raw.githubusercontent.com/unicef/adt-studio/main/apps/studio/public/adt-studio-v05-monospaced.svg" alt="ADT Studio" height="64">
+          </a>
+        </p>
+
+        <p align="center"><em>Thank you for taking the time to file a bug report!</em></p>
+
+        > [!IMPORTANT]
+        > - Please provide a descriptive title. Bad titles do more harm than good.
+        > - Please search existing issues to avoid creating duplicates.
+        > - Please fill out the template below to the best of your ability.
+        > - Describe the issue as much as possible and provide steps to reproduce it along with screenshots or recordings if available.
+  - type: checkboxes
+    id: preliminary
+    attributes:
+      label: Preliminary Checks
+      description: Please confirm the following before submitting. This helps us triage and resolve issues more efficiently.
+      options:
+        - label: I have read and understood the important section above.
+          required: true
+        - label: I have searched existing issues and avoided creating duplicates.
+          required: true
+        - label: I am filing a bug report, not a feature request.
+          required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the bug clearly and concisely.
+      placeholder: Tell us what you see.
+    validations:
+      required: true
+  - type: input
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: Please write a description of what was supposed to happen.
+    validations:
+      required: true
+  - type: input
+    id: actual-behavior
+    attributes:
+      label: Actual behavior
+      description: Please write a description of what actually happened.
+    validations:
+      required: true
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Provide numbered steps to reproduce this issue so developers can replicate it easily.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots and videos
+      description: If applicable, add screenshots or videos to help explain your problem.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: What version of ADT Studio are you running? Please do not use "latest" or "newest" as version numbers.
+      placeholder: e.g. 0.2.0
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: What platform are you seeing the problem on?
+      description: Select all that apply.
+      multiple: true
+      options:
+        - Windows
+        - macOS - Apple Silicon
+        - macOS - Intel
+        - Linux
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: What area is this issue related to?
+      options:
+        - PDF Import / Extraction
+        - Storyboard
+        - Quizzes
+        - LLM / Prompts
+        - Output / Export
+        - Studio UI
+        - Desktop App
+        - API / Backend
+        - Internationalization (i18n)
+        - Settings / Configuration
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
