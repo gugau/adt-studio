@@ -18,7 +18,7 @@ import {
   SignLanguageLandingPage,
   PreviewView,
   ValidationView,
-  ExportView,
+  ExportLandingPage,
 } from "../stages"
 import { cn } from "@/lib/utils"
 import { Trans } from "@lingui/react/macro"
@@ -68,7 +68,7 @@ const VIEW_MAP: Record<string, ViewEntry> = {
   "sign-language": { component: SignLanguageLandingPage, fullHeight: true },
   validation: { component: ValidationView, fullHeight: true },
   preview: { component: PreviewView, fullHeight: true },
-  export: { component: ExportView, fullHeight: true },
+  export: { component: ExportLandingPage, fullHeight: true },
 }
 
 export function StepViewRouter({ step, bookLabel, selectedPageId, onSelectPage }: { step: string; bookLabel: string; selectedPageId?: string; onSelectPage?: (pageId: string | null) => void }) {
