@@ -1,0 +1,44 @@
+name: Documentation Issue
+description: Report a problem with ADT Studio's documentation
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        <p align="center">
+          <a href="https://github.com/unicef/adt-studio">
+            <img src="https://raw.githubusercontent.com/unicef/adt-studio/main/apps/studio/public/adt-studio-v05-monospaced.svg" alt="ADT Studio" height="64">
+          </a>
+        </p>
+
+        <p align="center"><em>Thanks for helping us improve the docs!</em></p>
+
+        > [!IMPORTANT]
+        > - Please provide a descriptive title.
+        > - Please search existing issues to avoid creating duplicates.
+  - type: checkboxes
+    id: preliminary
+    attributes:
+      label: Preliminary Checks
+      options:
+        - label: I have searched existing issues and avoided creating duplicates.
+          required: true
+  - type: input
+    id: location
+    attributes:
+      label: Location
+      description: Where is the issue? Provide a URL, file path, or section title.
+      placeholder: e.g. docs/GUIDELINES.md, README.md, "Pipeline Architecture" section
+    validations:
+      required: true
+  - type: textarea
+    id: issue
+    attributes:
+      label: What's wrong, unclear, or missing?
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested fix
+      description: If you have a proposed wording or change, share it here.
