@@ -1,31 +1,12 @@
-/**
- * Quiz activity wiring — replaces the deleted
- * `assets/adt/modules/activities/quiz.js` from the vanilla runtime.
- *
- * The static page HTML ships an `.activity-option` label per choice with
- * `data-activity-item` ids and a `data-correct-answers` JSON map on the
- * section. The React chrome owns the Submit/Retry button in the dock but
- * relies on this module to:
- *
- *   1. Wire click + keyboard selection on `.activity-option` labels.
- *   2. Push `validateHandler` / `retryHandler` into the activity atoms so
- *      the dock's submit button appears and routes to the right action.
- *   3. Render correct/incorrect feedback + explanation in-place.
- *   4. After a correct answer, switch the submit button to "next-activity"
- *      and navigate to the next page in `pagesAtom`.
- *
- * Single-question multiple-choice only — multi-question groups
- * (`[data-quiz-question-group]`) aren't used by current books.
- */
 import { getDefaultStore } from "jotai"
 import { translationsAtom } from "@/state/language.atoms"
 import { pagesAtom, currentSectionIdAtom } from "@/state/nav.atoms"
 import {
-  resetVisibleAtom,
-  retryHandlerAtom,
+  skipEnabledAtom,
+  skipHandlerAtom,
+  submitEnabledAtom,
   submitLabelAtom,
   submitStateAtom,
-  submitVisibleAtom,
   validateHandlerAtom,
 } from "@/state/activity.atoms"
 
@@ -126,22 +107,12 @@ function clearOptionStyles(section: HTMLElement): void {
   })
 }
 
-function selectOption(option: HTMLElement, section: HTMLElement): void {
-  // Single-select: clear other selections first.
-  section.querySelectorAll<HTMLElement>(".activity-option").forEach((opt) => {
-    opt.classList.remove("selected-option")
-    opt.setAttribute("aria-checked", "false")
-    const input = opt.querySelector<HTMLInputElement>('input[type="radio"]')
-    if (input) input.checked = false
-  })
+function markSelection(option: HTMLElement, section: HTMLElement): void {
+  clearOptionStyles(section)
   option.classList.add("selected-option")
   option.setAttribute("aria-checked", "true")
   const input = option.querySelector<HTMLInputElement>('input[type="radio"]')
   if (input) input.checked = true
-
-  const store = getDefaultStore()
-  store.set(submitStateAtom, "submit")
-  store.set(submitLabelAtom, null)
 }
 
 function applyValidationStyle(option: HTMLElement, isCorrect: boolean): void {
@@ -187,43 +158,28 @@ export function initializeQuizActivity(): (() => void) | null {
   const store = getDefaultStore()
   const correctAnswers = readCorrectAnswers(section)
 
-  const retry = () => {
-    clearOptionStyles(section)
-    playActivitySound("reset")
+  let selected: HTMLElement | null = null
+  let validated = false
+  const hasNextPage = findNextPageHref() !== null
+
+  const resetState = () => {
+    selected = null
+    validated = false
     store.set(submitStateAtom, "submit")
     store.set(submitLabelAtom, null)
-    store.set(submitVisibleAtom, false)
-    store.set(resetVisibleAtom, false)
+    store.set(submitEnabledAtom, false)
+    store.set(skipEnabledAtom, hasNextPage)
   }
 
   const handleSelect = (option: HTMLElement) => {
-    // Quizzes validate on click — no separate submit step. Selecting a
-    // different option after an attempt wipes the previous feedback first.
-    clearOptionStyles(section)
-    selectOption(option, section)
+    if (validated) clearOptionStyles(section)
+    markSelection(option, section)
     playActivitySound("drop")
-
-    const itemId = option.getAttribute("data-activity-item")
-    if (!itemId) return
-    const isCorrect = Boolean(correctAnswers[itemId])
-    applyValidationStyle(option, isCorrect)
-    showFeedback(option, isCorrect)
-    playActivitySound(isCorrect ? "success" : "error")
-
-    if (isCorrect) {
-      // Surface a "next activity" button in the dock if there is a next page.
-      const hasNext = findNextPageHref() !== null
-      store.set(submitStateAtom, "next")
-      store.set(submitLabelAtom, null)
-      store.set(submitVisibleAtom, hasNext)
-      store.set(resetVisibleAtom, false)
-    } else {
-      // Wrong answer — let the user reset and try again.
-      store.set(submitStateAtom, "submit")
-      store.set(submitLabelAtom, null)
-      store.set(submitVisibleAtom, false)
-      store.set(resetVisibleAtom, true)
-    }
+    selected = option
+    validated = false
+    store.set(submitStateAtom, "submit")
+    store.set(submitLabelAtom, null)
+    store.set(submitEnabledAtom, true)
   }
 
   const handleValidate = () => {
@@ -231,7 +187,32 @@ export function initializeQuizActivity(): (() => void) | null {
     if (state === "next") {
       const href = findNextPageHref()
       if (href) window.location.href = href
+      return
     }
+    if (!selected || validated) return
+
+    const itemId = selected.getAttribute("data-activity-item")
+    if (!itemId) return
+    const isCorrect = Boolean(correctAnswers[itemId])
+    applyValidationStyle(selected, isCorrect)
+    showFeedback(selected, isCorrect)
+    playActivitySound(isCorrect ? "success" : "error")
+    validated = true
+
+    if (isCorrect) {
+      store.set(submitStateAtom, "next")
+      store.set(submitLabelAtom, null)
+      store.set(submitEnabledAtom, hasNextPage)
+    } else {
+      store.set(submitStateAtom, "submit")
+      store.set(submitLabelAtom, null)
+      store.set(submitEnabledAtom, false)
+    }
+  }
+
+  const handleSkip = () => {
+    const href = findNextPageHref()
+    if (href) window.location.href = href
   }
 
   const options = section.querySelectorAll<HTMLElement>(".activity-option")
@@ -254,19 +235,15 @@ export function initializeQuizActivity(): (() => void) | null {
     })
   })
 
-  // Wire the dock's submit/retry buttons.
-  store.set(validateHandlerAtom, handleValidate)
-  store.set(retryHandlerAtom, retry)
-  store.set(submitVisibleAtom, false)
-  store.set(resetVisibleAtom, false)
-  store.set(submitStateAtom, "submit")
-  store.set(submitLabelAtom, null)
+  store.set(validateHandlerAtom, () => handleValidate)
+  store.set(skipHandlerAtom, () => handleSkip)
+  resetState()
 
   return () => {
     listeners.forEach((off) => off())
-    store.set(validateHandlerAtom, null)
-    store.set(retryHandlerAtom, null)
-    store.set(submitVisibleAtom, false)
-    store.set(resetVisibleAtom, false)
+    store.set(validateHandlerAtom, () => null)
+    store.set(skipHandlerAtom, () => null)
+    store.set(submitEnabledAtom, false)
+    store.set(skipEnabledAtom, false)
   }
 }

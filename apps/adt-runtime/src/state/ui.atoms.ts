@@ -33,6 +33,12 @@ export const iconSizeAtom = persistedStringAtom("iconSize", "md")
 export const reduceMotionAtom = persistedBoolAtom("reduceMotion", false)
 
 // Ephemeral view state — resets per page load.
+/**
+ * Flips `true` at the end of the boot lifecycle (config + manifests loaded,
+ * activity detection done). The dock renders a skeleton until then so the
+ * reader/activity mode swap doesn't flash on activity pages.
+ */
+export const dockReadyAtom = ephemeralAtom(false)
 export const dockHiddenAtom = ephemeralAtom(false)
 export const sidebarOpenAtom = ephemeralAtom(false)
 export const navOpenAtom = ephemeralAtom(false)

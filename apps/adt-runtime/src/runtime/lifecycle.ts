@@ -28,7 +28,11 @@ import {
   imageFilesAtom,
   translationsAtom,
 } from "@/state/language.atoms"
-import { easyReadModeAtom, glossaryModeAtom } from "@/state/ui.atoms"
+import {
+  dockReadyAtom,
+  easyReadModeAtom,
+  glossaryModeAtom,
+} from "@/state/ui.atoms"
 import { glossaryDataAtom } from "@/state/glossary.atoms"
 import {
   currentPageNumberAtom,
@@ -43,6 +47,7 @@ import {
 import { locateGlossaryTerm } from "@/lib/glossary/locate"
 import { initAnalytics } from "@/lib/analytics"
 import { installShowContentFallback, showMainContent } from "@/lib/errors"
+import { isActivityPageAtom } from "@/state/activity.atoms"
 import { initializeQuizActivity } from "./activity-quiz"
 
 function readCurrentSectionId(): string | null {
@@ -50,6 +55,11 @@ function readCurrentSectionId(): string | null {
   return (
     document.querySelector('meta[name="title-id"]')?.getAttribute("content") ?? null
   )
+}
+
+function readIsActivityPage(): boolean {
+  if (typeof document === "undefined") return false
+  return !!document.querySelector('section[data-section-type^="activity_"]')
 }
 
 function readCurrentPageNumber(): number | null {
@@ -61,8 +71,6 @@ function readCurrentPageNumber(): number | null {
 }
 
 function readPersistedLanguage(): string | null {
-  // Cookie/localStorage are both checked by the persist adapter once the
-  // mode is set; here we just want a best-effort hint pre-mode.
   if (typeof document === "undefined") return null
   const fromLs =
     typeof localStorage !== "undefined" ? localStorage.getItem("currentLanguage") : null
@@ -72,11 +80,6 @@ function readPersistedLanguage(): string | null {
   })()
   const raw = fromLs ?? fromCookie
   if (!raw) return null
-  // atomWithStorage persists via createJSONStorage, so a plain string like
-  // `pt-BR` gets stored as the literal `"pt-BR"` (JSON-encoded with quotes).
-  // Decode here so the value matches the unquoted entries in
-  // config.languages.available — otherwise pickLanguage falls back to the
-  // default on every navigation.
   try {
     const parsed = JSON.parse(raw)
     return typeof parsed === "string" ? parsed : raw
@@ -89,41 +92,41 @@ export async function bootRuntime(): Promise<void> {
   installShowContentFallback()
   addFavicons()
 
-  const config = await loadAppConfig()
   const store = getDefaultStore()
-  store.set(appConfigAtom, config)
-  setStorageMode(pickStorageMode(config))
+  try {
+    const config = await loadAppConfig()
+    store.set(appConfigAtom, config)
+    setStorageMode(pickStorageMode(config))
 
-  const htmlLang = document.documentElement.getAttribute("lang")
-  const persisted = readPersistedLanguage()
-  const language = pickLanguage(config, persisted, htmlLang)
-  store.set(currentLanguageAtom, language)
+    const htmlLang = document.documentElement.getAttribute("lang")
+    const persisted = readPersistedLanguage()
+    const language = pickLanguage(config, persisted, htmlLang)
+    store.set(currentLanguageAtom, language)
 
-  const [, pages, toc] = await Promise.all([
-    loadTranslations(language, config.bundleVersion),
-    loadPagesManifest(config.bundleVersion),
-    loadTocManifest(config.bundleVersion),
-    // Both fire-and-forget: missing glossary / timecode files are non-fatal.
-    // Atoms default to {} so consumers degrade gracefully (empty glossary
-    // panel, approximate word timings via the tokenizer).
-    loadGlossary(language, config.bundleVersion),
-    loadTimecodes(language, config.bundleVersion),
-  ])
-  store.set(pagesAtom, pages)
-  store.set(tocAtom, toc)
-  store.set(currentSectionIdAtom, readCurrentSectionId())
-  store.set(currentPageNumberAtom, readCurrentPageNumber())
+    const [, pages, toc] = await Promise.all([
+      loadTranslations(language, config.bundleVersion),
+      loadPagesManifest(config.bundleVersion),
+      loadTocManifest(config.bundleVersion),
+      loadGlossary(language, config.bundleVersion),
+      loadTimecodes(language, config.bundleVersion),
+    ])
+    store.set(pagesAtom, pages)
+    store.set(tocAtom, toc)
+    store.set(currentSectionIdAtom, readCurrentSectionId())
+    store.set(currentPageNumberAtom, readCurrentPageNumber())
+    store.set(isActivityPageAtom, readIsActivityPage())
 
-  // Apply translations to the static `#content` DOM. Chrome (React) reads
-  // from atoms via t(), but the page's content HTML uses `data-id` markers
-  // that the legacy runtime mutated in place. Mirror that here so swapping
-  // languages updates the page text without a full reload.
-  applyDOMTranslations()
+    applyDOMTranslations()
 
-  initAnalytics(config.analytics)
-  showMainContent()
-  processGlossaryLocateHint()
-  initializeQuizActivity()
+    initAnalytics(config.analytics)
+    showMainContent()
+    processGlossaryLocateHint()
+    initializeQuizActivity()
+  } finally {
+    // Always clear the dock skeleton — even on partial-load failures the dock
+    // should reveal whatever data DID make it into atoms.
+    store.set(dockReadyAtom, true)
+  }
 }
 
 function processGlossaryLocateHint(): void {

@@ -1,121 +1,39 @@
 import { useAtomValue } from "jotai";
-import { useLayoutEffect, useRef } from "react";
 import { appConfigAtom } from "@/state/config.atoms";
-import {
-  dockAlignAtom,
-  dockHiddenAtom,
-  dockMenuValueAtom,
-  dockPositionAtom,
-  dockWidthAtom,
-  iconSizeAtom,
-  reduceMotionAtom,
-  type DockAlign,
-  type DockPosition,
-  type DockWidth,
-  type IconSize,
-} from "@/state/ui.atoms";
-import { AudioPlayerProvider } from "@/hooks/AudioPlayerContext";
-import { useAutoHideDock } from "@/hooks/useAutoHideDock";
-import { useKeyboardPageNav } from "@/hooks/useKeyboardPageNav";
-import { useToolbarKeyboardNav } from "@/hooks/useToolbarKeyboardNav";
-import { useTranslation } from "@/hooks/useTranslation";
-import { cn } from "@/lib/utils";
+import { isActivityPageAtom } from "@/state/activity.atoms";
+import { dockReadyAtom } from "@/state/ui.atoms";
 import { BookMetadata } from "./BookMetadata";
-// import { DockActivityActions } from "./DockActivityActions";
-import { PageNav } from "./PageNav";
+import { Dock } from "./Dock";
+import { DockActivityActions } from "./DockActivityActions";
 import { DockMenu } from "./DockMenu";
+import { DockSkeleton } from "./DockSkeleton";
+import { PageNav } from "./PageNav";
 
 export function BottomDock() {
+  const ready = useAtomValue(dockReadyAtom);
+  const isActivity = useAtomValue(isActivityPageAtom);
+
+  let contents: React.ReactNode;
+  if (!ready) {
+    // Skeleton until boot finishes — prevents the reader→activity flash on
+    // activity pages and the empty→loaded flash on regular pages.
+    contents = <DockSkeleton />;
+  } else if (isActivity) {
+    contents = <DockActivityActions />;
+  } else {
+    contents = <ReaderDockContents />;
+  }
+
+  return <Dock>{contents}</Dock>;
+}
+
+function ReaderDockContents() {
   const features = useAtomValue(appConfigAtom).features;
-  const { t } = useTranslation();
-  const dockRef = useRef<HTMLDivElement>(null);
-
-  const position = useAtomValue(dockPositionAtom) as DockPosition;
-  const width = useAtomValue(dockWidthAtom) as DockWidth;
-  const align = useAtomValue(dockAlignAtom) as DockAlign;
-  const hidden = useAtomValue(dockHiddenAtom);
-  const menuValue = useAtomValue(dockMenuValueAtom);
-  const iconSize = useAtomValue(iconSizeAtom) as IconSize;
-  const reduceMotion = useAtomValue(reduceMotionAtom);
-
-  useAutoHideDock(dockRef);
-  useKeyboardPageNav();
-  useToolbarKeyboardNav(dockRef);
-
-  const isTop = position === "top";
-  const isCompact = width === "compact";
-  const isSpread = align === "spread";
-  const shouldHide = hidden && menuValue === "";
-
-  useLayoutEffect(() => {
-    const el = dockRef.current;
-    if (!el) return;
-    const update = () => {
-      const w = el.getBoundingClientRect().width;
-      document.documentElement.style.setProperty("--dock-width", `${w}px`);
-    };
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => {
-      ro.disconnect();
-      document.documentElement.style.removeProperty("--dock-width");
-    };
-  }, []);
-
-  useLayoutEffect(() => {
-    document.body.setAttribute("nav-position", isTop ? "top" : "bottom");
-    if (!isCompact) {
-      document.body.setAttribute("nav-size", "full");
-    } else {
-      document.body.removeAttribute("nav-size");
-    }
-    return () => {
-      document.body.removeAttribute("nav-position");
-      document.body.removeAttribute("nav-size");
-    };
-  }, [isCompact, isTop]);
-
-  useLayoutEffect(() => {
-    document.body.setAttribute("icon-size", iconSize);
-    if (reduceMotion) document.body.setAttribute("reduce-motion", "true");
-    else document.body.removeAttribute("reduce-motion");
-    return () => {
-      document.body.removeAttribute("icon-size");
-      document.body.removeAttribute("reduce-motion");
-    };
-  }, [iconSize, reduceMotion]);
-
   return (
-    <AudioPlayerProvider>
-      <div
-        ref={dockRef}
-        className={cn(
-          isSpread ? "justify-between" : "justify-center",
-          "flex items-center gap-1 p-1 h-full w-full",
-          "bg-popover/95 text-popover-foreground backdrop-blur-md",
-          "shadow-lg ring-1 ring-border",
-          "transition-all duration-200 ease-out will-change-transform",
-          isCompact ? "rounded-2xl max-w-3xl" : "rounded-none",
-          shouldHide && "opacity-0 pointer-events-none",
-          shouldHide &&
-            (isTop ? "-translate-y-[150%]" : "translate-y-[150%]"),
-          cn(
-            "fixed z-[55] h-14 left-0 right-0 mx-auto",
-            isCompact
-              ? (isTop ? "top-3" : "bottom-3")
-              : (isTop ? "top-0" : "bottom-0"),
-          ),
-        )}
-        role="toolbar"
-        aria-label={t("dock-label") || "Reader controls"}
-        aria-hidden={shouldHide || undefined}
-      >
-        <BookMetadata />
-        {/*<DockActivityActions />*/}
-        {features.showNavigationControls && <PageNav />}
-        <DockMenu anchor={dockRef} side={isTop ? "bottom" : "top"} />
-      </div>
-    </AudioPlayerProvider>
+    <>
+      <BookMetadata />
+      {features.showNavigationControls && <PageNav />}
+      <DockMenu />
+    </>
   );
 }

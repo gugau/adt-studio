@@ -21,20 +21,14 @@ import { useTranslation } from "@/hooks/useTranslation"
 import { trackToggleEvent } from "@/lib/analytics"
 import { cn } from "@/lib/utils"
 import { DockIconButton } from "./DockIconButton"
+import { useDockContext } from "./dock-context"
 import { TocContent } from "./content/TocContent"
 import { GlossaryContent } from "./content/GlossaryContent"
 import { AudioContent } from "./content/AudioContent"
 import { LanguageContent } from "./content/LanguageContent"
 import { SettingsContent } from "./content/SettingsContent"
 
-interface DockMenuProps {
-  /** Element each popover positions itself against (the dock as a whole). */
-  anchor?: React.RefObject<HTMLElement | null>
-  /** Side the popover opens toward relative to the dock. */
-  side?: "top" | "bottom"
-}
-
-export function DockMenu({ anchor, side = "top" }: DockMenuProps) {
+export function DockMenu() {
   const features = useAtomValue(appConfigAtom).features
   const [value, setValue] = useAtom(dockMenuValueAtom)
   const readAloud = useAtomValue(readAloudModeAtom)
@@ -42,6 +36,7 @@ export function DockMenu({ anchor, side = "top" }: DockMenuProps) {
   const [signLanguage, setSignLanguage] = useAtom(signLanguageModeAtom)
   const { isPlaying } = useAudioPlayerContext()
   const { t } = useTranslation()
+  const { ref: anchor, popoverSide: side } = useDockContext()
 
   const toggle = (next: DockMenuValue) =>
     setValue((prev) => (prev === next ? "" : next))
