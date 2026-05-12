@@ -68,12 +68,25 @@ body:
     attributes:
       label: Screenshots and videos
       description: If applicable, add screenshots or videos to help explain your problem.
-  - type: input
+  - type: dropdown
     id: version
     attributes:
       label: Version
-      description: What version of ADT Studio are you running? Please do not use "latest" or "newest" as version numbers.
-      placeholder: e.g. 0.2.0
+      description: What version of ADT Studio are you running? Check Help → About, or see https://github.com/unicef/adt-studio/releases.
+      options:
+        - v0.7.0-rc.6
+        - v0.6.0
+        - v0.5.1
+        - v0.5.0
+        - v0.4.8
+        - v0.4.7
+        - v0.4.6
+        - v0.4.5
+        - v0.4.4
+        - v0.4.3
+        - v0.4.2
+        - v0.4.1
+        - Older / unsure
     validations:
       required: true
   - type: dropdown
@@ -95,16 +108,21 @@ body:
     attributes:
       label: What area is this issue related to?
       options:
-        - PDF Import / Extraction
-        - Storyboard
-        - Quizzes
-        - LLM / Prompts
-        - Output / Export
-        - Studio UI
-        - Desktop App
-        - API / Backend
-        - Internationalization (i18n)
-        - Settings / Configuration
+        - Home / Book list
+        - Book creation wizard
+        - Book overview
+        - Pipeline — Extract
+        - Pipeline — Sectioning
+        - Pipeline — Storyboard
+        - Pipeline — Quizzes
+        - Pipeline — Image Captions
+        - Pipeline — Glossary
+        - Pipeline — Table of Contents
+        - Pipeline — Translate
+        - Pipeline — Speech
+        - Pipeline — Package
+        - Settings
+        - Internationalization (UI translations)
         - Other
     validations:
       required: true
