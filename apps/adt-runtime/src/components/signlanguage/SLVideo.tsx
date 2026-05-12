@@ -36,6 +36,7 @@ export function SLVideo() {
   const handleRef = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useAtom(slVideoPositionAtom)
   const [isDragging, setIsDragging] = useState(false)
+  const [aspectRatio, setAspectRatio] = useState<number | null>(null)
 
   const visible = features.signLanguage && slMode
 
@@ -100,19 +101,34 @@ export function SLVideo() {
     })
   }, [visible])
 
+  useEffect(() => {
+    setAspectRatio(null)
+  }, [src])
+
   if (!visible) return null
 
   const positioned = position !== null
+  const baseWidth = 320
+  const videoHeight = aspectRatio
+    ? Math.round(baseWidth / aspectRatio)
+    : Math.round(baseWidth * (3 / 5))
+  const containerHeight = videoHeight + 24
   const style = positioned
-    ? { left: position.x, top: position.y, right: "auto", bottom: "auto" }
-    : undefined
+    ? {
+        left: position.x,
+        top: position.y,
+        right: "auto",
+        bottom: "auto",
+        height: `${containerHeight}px`,
+      }
+    : { height: `${containerHeight}px` }
 
   return (
     <div
       ref={containerRef}
       style={style}
       className={cn(
-        "fixed w-80 h-48 max-w-[calc(100vw-2rem)]",
+        "fixed w-80 max-w-[calc(100vw-2rem)]",
         "bg-black rounded-lg shadow-lg overflow-hidden z-[55]",
         "transition-shadow",
         isDragging && "shadow-2xl ring-2 ring-primary",
@@ -140,7 +156,13 @@ export function SLVideo() {
           loop
           playsInline
           controls
-          className="w-full h-[calc(100%-1.5rem)] object-cover"
+          onLoadedMetadata={(e) => {
+            const v = e.currentTarget
+            if (v.videoWidth && v.videoHeight) {
+              setAspectRatio(v.videoWidth / v.videoHeight)
+            }
+          }}
+          className="w-full h-[calc(100%-1.5rem)] object-contain bg-black"
         />
       ) : (
         <div
