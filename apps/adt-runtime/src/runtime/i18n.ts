@@ -143,11 +143,18 @@ export function applyTranslationsToDOM(
     if (text === undefined) continue
 
     const elements = document.querySelectorAll(`[data-id="${cssEscape(key)}"]`)
+    const renderedHtml = text.replace(/\n/g, "<br>")
     elements.forEach((el) => {
       if (el.tagName === "IMG") {
         el.setAttribute("alt", text)
       } else {
-        ;(el as HTMLElement).innerHTML = text.replace(/\n/g, "<br>")
+        if ((el as HTMLElement).hasAttribute("data-tts-original-html")) {
+          ;(el as HTMLElement).setAttribute(
+            "data-tts-original-html",
+            renderedHtml,
+          )
+        }
+        ;(el as HTMLElement).innerHTML = renderedHtml
       }
     })
 

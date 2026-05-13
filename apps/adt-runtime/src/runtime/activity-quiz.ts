@@ -243,12 +243,13 @@ export function initializeQuizActivity(): (() => void) | null {
   // The section ships with `role="article"` from the template — override it
   // since the section's primary semantic here IS the radio group.
   section.setAttribute("role", "radiogroup")
-  if (!section.hasAttribute("aria-label")) {
+  const applyLocalizedAria = () => {
     section.setAttribute(
       "aria-label",
       tr("activity-options-label", "Answer options"),
     )
   }
+  applyLocalizedAria()
 
   const options = section.querySelectorAll<HTMLElement>(".activity-option")
   const listeners: Array<() => void> = []
@@ -274,8 +275,22 @@ export function initializeQuizActivity(): (() => void) | null {
   store.set(skipHandlerAtom, () => handleSkip)
   resetState()
 
+  // The feedback text and the section's aria-label are written into the DOM
+  // imperatively (no `[data-id]`), so `applyTranslationsToDOM` won't touch
+  // them on a language switch. Re-render them whenever the translation map
+  // changes so the visible result message stays in sync with the chrome.
+  const unsubTranslations = store.sub(translationsAtom, () => {
+    applyLocalizedAria()
+    if (selected && validated) {
+      const itemId = selected.getAttribute("data-activity-item")
+      if (!itemId) return
+      showFeedback(selected, Boolean(correctAnswers[itemId]))
+    }
+  })
+
   return () => {
     listeners.forEach((off) => off())
+    unsubTranslations()
     store.set(validateHandlerAtom, () => null)
     store.set(skipHandlerAtom, () => null)
     store.set(submitEnabledAtom, false)
