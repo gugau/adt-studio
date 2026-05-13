@@ -79,8 +79,13 @@ export function useAudioPlayer(): UseAudioPlayer {
   const describeImagesMode = useAtomValue(describeImagesModeAtom) as boolean
   const timecodeMap = useAtomValue(timecodeMapAtom)
   const wordHighlightModeRef = useRef(wordHighlightMode)
-  wordHighlightModeRef.current = wordHighlightMode
+  const speedRef = useRef(speed)
+  const volumeRef = useRef(volume)
   const initialResumeRef = useRef<boolean>(isPlaying || autoplayMode)
+
+  wordHighlightModeRef.current = wordHighlightMode
+  speedRef.current = speed
+  volumeRef.current = volume
 
   const items = useMemo(() => {
     const all = gatherPlayableItems(audioFiles)
@@ -157,8 +162,8 @@ export function useAudioPlayer(): UseAudioPlayer {
       teardownActive()
 
       audio.src = url
-      audio.playbackRate = speed
-      audio.volume = Math.max(0, Math.min(1, volume))
+      audio.playbackRate = speedRef.current
+      audio.volume = Math.max(0, Math.min(1, volumeRef.current))
 
       audio.onloadedmetadata = () => {
         if (
@@ -215,8 +220,6 @@ export function useAudioPlayer(): UseAudioPlayer {
     [
       items,
       language,
-      speed,
-      volume,
       setIsPlaying,
       setCurrentIndex,
       stopAndClear,
