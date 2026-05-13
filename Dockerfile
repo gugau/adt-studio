@@ -66,6 +66,7 @@ RUN --mount=type=cache,target=/root/.npm \
         dependencies: { \
           esbuild: p.devDependencies.esbuild, \
           tailwindcss: p.dependencies.tailwindcss, \
+          '@tailwindcss/postcss': p.dependencies['@tailwindcss/postcss'], \
           postcss: p.dependencies.postcss, \
           playwright: p.dependencies.playwright, \
           jsdom: p.dependencies.jsdom \

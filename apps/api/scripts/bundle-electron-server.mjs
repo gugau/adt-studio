@@ -21,6 +21,10 @@ await build({
         "jsdom",
         "esbuild",
         "tailwindcss",
+        "@tailwindcss/postcss",
+        "@tailwindcss/node",
+        "@tailwindcss/oxide",
+        "lightningcss",
         "postcss",
     ],
     banner: {
