@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 import { Trans } from "@lingui/react/macro"
 import { ACCENT_VAR } from "@/components/pipeline/lib/accent-var"
+import { DiagramWithLabel } from "@/components/pipeline/components/DiagramWithLabel"
 
 // eslint-disable-next-line lingui/no-unlocalized-strings -- pagination labels, identical across locales
 const PAGE_LABELS = ["P1", "P2", "P3", "P4", "P5"] as const
@@ -78,22 +79,3 @@ function SinglePagesDiagram() {
   )
 }
 
-function DiagramWithLabel({
-  label,
-  children,
-}: {
-  label: ReactNode
-  children: ReactNode
-}) {
-  return (
-    <div className="flex flex-col items-center gap-1.5">
-      {children}
-      <span
-        className="text-[10px] font-semibold uppercase tracking-[0.14em]"
-        style={{ color: ACCENT_VAR }}
-      >
-        {label}
-      </span>
-    </div>
-  )
-}
