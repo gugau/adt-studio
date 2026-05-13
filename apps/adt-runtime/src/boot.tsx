@@ -3,10 +3,10 @@ import "@/styles/globals.css"
 import React from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { Provider as JotaiProvider, getDefaultStore } from "jotai"
-import { ChromeRoot } from "@/components/ChromeRoot"
-import { NavRoot } from "@/components/NavRoot"
-import { bootRuntime, subscribeLanguageChanges } from "@/runtime/lifecycle"
-import { describeInitError, showErrorToast, showMainContent } from "@/lib/errors"
+import { ChromeRoot } from "@/app/ChromeRoot"
+import { NavRoot } from "@/app/NavRoot"
+import { bootRuntime, subscribeLanguageChanges } from "@/app/lifecycle"
+import { describeInitError, showErrorToast, showMainContent } from "@/shared/lib/errors"
 
 const sharedStore = getDefaultStore()
 
