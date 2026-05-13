@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useLayoutEffect } from "react"
-import type { ReactNode } from "react"
+import type { CSSProperties, ReactNode } from "react"
 import { Info } from "lucide-react"
 import { useLingui } from "@lingui/react/macro"
 import {
@@ -19,6 +19,8 @@ export function SettingExplainer({
   align = "start",
   openDelay = 120,
   closeDelay = 120,
+  accentColor,
+  accentColorSoft,
 }: {
   title?: ReactNode
   description?: ReactNode
@@ -29,6 +31,13 @@ export function SettingExplainer({
   align?: "start" | "center" | "end"
   openDelay?: number
   closeDelay?: number
+  /**
+   * Accent colors to re-establish inside the portaled popover. Required when
+   * the visual uses `var(--accent-color)` because the Radix HoverCard portal
+   * does not inherit the LandingPageShell's CSS variable cascade.
+   */
+  accentColor?: string
+  accentColorSoft?: string
 }) {
   const hasBody = Boolean(title || description || cta)
   const { t } = useLingui()
@@ -87,6 +96,18 @@ export function SettingExplainer({
         side={side}
         align={align}
         sideOffset={sideOffset}
+        style={
+          accentColor || accentColorSoft
+            ? ({
+                ...(accentColor
+                  ? { "--accent-color": accentColor }
+                  : null),
+                ...(accentColorSoft
+                  ? { "--accent-color-soft": accentColorSoft }
+                  : null),
+              } as CSSProperties)
+            : undefined
+        }
         className={cn(
           "w-[300px] rounded-xl border border-[#e5e5e5] bg-white p-0 shadow-lg",
           "data-[side=right]:slide-in-from-left-2 data-[side=left]:slide-in-from-right-2",
@@ -97,7 +118,7 @@ export function SettingExplainer({
         {visual && (
           <div
             className={cn(
-              "overflow-hidden bg-gradient-to-b from-[#fafafa] to-white px-4 pt-4 pb-4",
+              "overflow-hidden bg-white px-4 pt-4 pb-4",
               hasBody
                 ? "rounded-t-xl border-b border-[#f1f1f1]"
                 : "rounded-xl",

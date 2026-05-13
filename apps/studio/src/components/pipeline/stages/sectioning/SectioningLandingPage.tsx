@@ -6,8 +6,8 @@ import { LandingPageShell } from "@/components/pipeline/components/LandingPageSh
 import { PrereqGuard } from "@/components/pipeline/components/PrereqGuard"
 import { SettingsCard, SettingsField } from "@/components/pipeline/components/SettingsCard"
 import { SettingExplainer } from "@/components/pipeline/components/SettingExplainer"
+import { ToggleCard } from "@/components/pipeline/components/ToggleCard"
 import { SegmentedControl } from "@/components/ui/segmented-control"
-import { BrandedSwitch } from "@/components/ui/branded-switch"
 import { useBookConfig } from "@/hooks/use-book-config"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useStageStatus } from "@/hooks/use-stage-status"
@@ -170,7 +170,15 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
         </SettingsField>
       </SettingsCard>
 
-      <ActivityDetectionToggle
+      <ToggleCard
+        title={<Trans>Activity Detection</Trans>}
+        description={
+          <Trans>
+            Detects exercises and quizzes embedded in the book and classifies
+            them as their own sections so they can render as interactive
+            elements downstream.
+          </Trans>
+        }
         checked={activitiesEnabled}
         disabled={activityNames.length === 0}
         onCheckedChange={handleActivityDetectionChange}
@@ -304,74 +312,6 @@ function DiagramWithLabel({
       >
         {label}
       </span>
-    </div>
-  )
-}
-
-function ActivityDetectionToggle({
-  checked,
-  disabled,
-  onCheckedChange,
-}: {
-  checked: boolean
-  disabled: boolean
-  onCheckedChange: (next: boolean) => void
-}) {
-  function toggle() {
-    if (disabled) return
-    onCheckedChange(!checked)
-  }
-
-  return (
-    <div
-      role="switch"
-      id="sectioning-activity-detection"
-      aria-checked={checked}
-      aria-disabled={disabled}
-      aria-labelledby="sectioning-activity-detection-title"
-      aria-describedby="sectioning-activity-detection-subtitle"
-      tabIndex={disabled ? -1 : 0}
-      className={cn(
-        "flex w-full select-none items-center justify-center gap-2.5 rounded-lg border px-4 py-3 shadow-sm transition-colors",
-        "bg-white border-border",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        disabled
-          ? "cursor-not-allowed opacity-60"
-          : "cursor-pointer hover:bg-muted hover:border-input",
-      )}
-      onClick={toggle}
-      onKeyDown={(e) => {
-        if (disabled) return
-        if (e.key === " " || e.key === "Enter") {
-          e.preventDefault()
-          toggle()
-        }
-      }}
-    >
-      <div className="flex min-w-0 flex-1 flex-col items-start justify-center gap-0.5">
-        <p
-          id="sectioning-activity-detection-title"
-          className="select-none text-sm font-semibold leading-5 text-foreground"
-        >
-          <Trans>Activity Detection</Trans>
-        </p>
-        <p
-          id="sectioning-activity-detection-subtitle"
-          className="w-full select-none text-xs font-normal leading-4 text-muted-foreground"
-        >
-          <Trans>
-            Detects exercises and quizzes embedded in the book and classifies
-            them as their own sections so they can render as interactive
-            elements downstream.
-          </Trans>
-        </p>
-      </div>
-      <BrandedSwitch
-        id="sectioning-activity-detection-switch"
-        checked={checked}
-        decorative
-        disabled={disabled}
-      />
     </div>
   )
 }

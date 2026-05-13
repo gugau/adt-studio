@@ -1,30 +1,24 @@
 import { useState, useEffect, useMemo } from "react"
-import type { ReactNode } from "react"
-import { ArrowDown, BookOpen, FileText, Image as ImageIcon, List, Type } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { useBook } from "@/hooks/use-books"
 import { useSourcePdfInfo } from "@/hooks/use-source-pdf-info"
-import { CircleHelp } from "lucide-react"
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { LandingPageShell } from "@/components/pipeline/components/LandingPageShell"
 import { CascadeWarning } from "@/components/pipeline/components/CascadeWarning"
 import { SettingsCard, SettingsField } from "@/components/pipeline/components/SettingsCard"
 import { SettingExplainer } from "@/components/pipeline/components/SettingExplainer"
+import { HelpHint } from "@/components/pipeline/components/HelpHint"
+import { ToggleCard } from "@/components/pipeline/components/ToggleCard"
 import { RangeSlider } from "@/components/ui/range-slider"
-import { BrandedSwitch } from "@/components/ui/branded-switch"
 import { SegmentedControl } from "@/components/ui/segmented-control"
 import { useBookConfig } from "@/hooks/use-book-config"
 import { useStageStatus } from "@/hooks/use-stage-status"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { usePersistConfig } from "@/hooks/use-persist-config"
-import { ACCENT_VAR } from "@/components/pipeline/lib/accent-var"
-import { cn } from "@/lib/utils"
+import { PageGroupingVisual } from "./components/PageGroupingVisual"
+import { ExtractPreview } from "./components/ExtractPreview"
 
 type SpreadModeKey = "single" | "spread"
-
-// eslint-disable-next-line lingui/no-unlocalized-strings -- pagination labels, identical across locales
-const PAGE_LABELS = ["P1", "P2", "P3", "P4", "P5"] as const
 
 export function ExtractLandingPage({ bookLabel }: { bookLabel: string }) {
   const { t } = useLingui()
@@ -130,20 +124,10 @@ export function ExtractLandingPage({ bookLabel }: { bookLabel: string }) {
         <SettingsField
           label={<Trans>Page Range</Trans>}
           labelAction={
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  className="text-[#a3a3a3] transition-colors duration-150 hover:text-[#737373]"
-                  aria-label={t`Page range help`}
-                >
-                  <CircleHelp className="h-3 w-3" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                {t`In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized.`}
-              </TooltipContent>
-            </Tooltip>
+            <HelpHint
+              ariaLabel={t`Page range help`}
+              content={t`In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized.`}
+            />
           }
         >
           <RangeSlider
@@ -163,7 +147,13 @@ export function ExtractLandingPage({ bookLabel }: { bookLabel: string }) {
       <SettingsCard>
         <SettingsField
           label={<Trans>Page Grouping Mode</Trans>}
-          labelAction={<SettingExplainer visual={<PageGroupingVisual />} />}
+          labelAction={
+            <SettingExplainer
+              visual={<PageGroupingVisual />}
+              accentColor="#2563eb"
+              accentColorSoft="#dbeafe"
+            />
+          }
           hint={
             <Trans>
               Use Spread for printed books with facing-page layouts (covers
@@ -180,333 +170,17 @@ export function ExtractLandingPage({ bookLabel }: { bookLabel: string }) {
         </SettingsField>
       </SettingsCard>
 
-      <FigureExtractionToggle
-        checked={vectorTextGrouping}
-        onCheckedChange={handleVectorTextChange}
-      />
-    </LandingPageShell>
-  )
-}
-
-function NeutralPage({ label }: { label: ReactNode }) {
-  return (
-    <div className="flex h-[60px] w-7 items-center justify-center rounded border border-[#e5e5e5] bg-white text-[8px] font-medium text-[#a3a3a3]">
-      {label}
-    </div>
-  )
-}
-
-function SpreadPair({ left, right }: { left: ReactNode; right: ReactNode }) {
-  return (
-    <div
-      className="relative flex h-[60px] w-[56px] overflow-hidden rounded border-2"
-      style={{ borderColor: ACCENT_VAR }}
-    >
-      <div
-        className="absolute inset-0"
-        style={{ background: ACCENT_VAR, opacity: 0.1 }}
-        aria-hidden
-      />
-      <div
-        className="relative flex flex-1 items-center justify-center border-r border-dashed text-[8px] font-semibold"
-        style={{ color: ACCENT_VAR, borderColor: ACCENT_VAR }}
-      >
-        {left}
-      </div>
-      <div
-        className="relative flex flex-1 items-center justify-center text-[8px] font-semibold"
-        style={{ color: ACCENT_VAR }}
-      >
-        {right}
-      </div>
-    </div>
-  )
-}
-
-function SpreadPagesDiagram() {
-  return (
-    <div className="flex items-end justify-center gap-1.5">
-      <NeutralPage label={<Trans>Cover</Trans>} />
-      <SpreadPair left={PAGE_LABELS[1]} right={PAGE_LABELS[2]} />
-      <SpreadPair left={PAGE_LABELS[3]} right={PAGE_LABELS[4]} />
-    </div>
-  )
-}
-
-function SinglePagesDiagram() {
-  return (
-    <div className="flex items-end justify-center gap-1.5">
-      {PAGE_LABELS.map((label, i) => (
-        <NeutralPage key={i} label={label} />
-      ))}
-    </div>
-  )
-}
-
-function PageGroupingVisual() {
-  return (
-    <div className="flex flex-col gap-3 py-1">
-      <DiagramWithLabel label={<Trans>Spread</Trans>}>
-        <SpreadPagesDiagram />
-      </DiagramWithLabel>
-      <div
-        className="mx-auto h-px w-16"
-        style={{ background: ACCENT_VAR, opacity: 0.18 }}
-        aria-hidden
-      />
-      <DiagramWithLabel label={<Trans>Single</Trans>}>
-        <SinglePagesDiagram />
-      </DiagramWithLabel>
-    </div>
-  )
-}
-
-function DiagramWithLabel({
-  label,
-  children,
-}: {
-  label: ReactNode
-  children: ReactNode
-}) {
-  return (
-    <div className="flex flex-col items-center gap-1.5">
-      {children}
-      <span
-        className="text-[10px] font-semibold uppercase tracking-[0.14em]"
-        style={{ color: ACCENT_VAR }}
-      >
-        {label}
-      </span>
-    </div>
-  )
-}
-
-function FigureExtractionToggle({
-  checked,
-  onCheckedChange,
-}: {
-  checked: boolean
-  onCheckedChange: (next: boolean) => void
-}) {
-  function toggle() {
-    onCheckedChange(!checked)
-  }
-
-  return (
-    <div
-      role="switch"
-      id="extract-figure-extraction"
-      aria-checked={checked}
-      aria-labelledby="extract-figure-extraction-title"
-      aria-describedby="extract-figure-extraction-subtitle"
-      tabIndex={0}
-      className={cn(
-        "flex w-full cursor-pointer select-none items-center justify-center gap-2.5 rounded-lg border px-4 py-3 shadow-sm transition-colors",
-        "bg-white border-border",
-        "hover:bg-muted hover:border-input",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-      )}
-      onClick={toggle}
-      onKeyDown={(e) => {
-        if (e.key === " " || e.key === "Enter") {
-          e.preventDefault()
-          toggle()
-        }
-      }}
-    >
-      <div className="flex min-w-0 flex-1 flex-col items-start justify-center gap-0.5">
-        <p
-          id="extract-figure-extraction-title"
-          className="select-none text-sm font-semibold leading-5 text-foreground"
-        >
-          <Trans>Figure Extraction</Trans>
-        </p>
-        <p
-          id="extract-figure-extraction-subtitle"
-          className="w-full select-none text-xs font-normal leading-4 text-muted-foreground"
-        >
+      <ToggleCard
+        title={<Trans>Figure Extraction</Trans>}
+        description={
           <Trans>
             Detects complex charts and figures that contain a mix of text,
             vectors and images and crops them out of the page.
           </Trans>
-        </p>
-      </div>
-      <BrandedSwitch
-        id="extract-figure-extraction-switch"
-        checked={checked}
-        decorative
+        }
+        checked={vectorTextGrouping}
+        onCheckedChange={handleVectorTextChange}
       />
-    </div>
-  )
-}
-
-function ExtractPreview({
-  bookTitle,
-  pageCount,
-}: {
-  bookTitle: string
-  pageCount: number | null
-}) {
-  const totalPages = pageCount ?? 0
-  const truncatedTitle =
-    bookTitle.length > 32 ? `${bookTitle.slice(0, 32)}…` : bookTitle
-  return (
-    <div className="relative flex flex-1 min-h-0 overflow-hidden bg-gradient-to-b from-blue-50/40 via-white to-white">
-      <div className="flex flex-col items-center w-full px-5 py-4 gap-3">
-        {/* SOURCE PDF */}
-        <div className="flex flex-col items-center gap-1.5">
-          <div className="flex items-center gap-1.5">
-            <FileText className="w-3.5 h-3.5 text-blue-600" strokeWidth={2} />
-            <span className="font-semibold text-[10px] tracking-[0.18em] uppercase text-blue-700">
-              <Trans>Source PDF</Trans>
-            </span>
-          </div>
-          <div className="w-[88px] aspect-[3/4] rounded-md bg-blue-50/80 ring-1 ring-blue-200 flex items-center justify-center">
-            <BookOpen className="w-7 h-7 text-blue-300" strokeWidth={1.5} />
-          </div>
-          <div className="flex flex-col items-center gap-0.5">
-            <span className="text-[11px] font-medium text-blue-700/90 truncate max-w-[200px]">
-              {truncatedTitle}
-            </span>
-            {totalPages > 0 && (
-              <span className="font-mono text-[9px] tabular-nums text-blue-500/70">
-                <Trans>{totalPages} pages</Trans>
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* CONNECTOR */}
-        <div className="flex flex-col items-center" aria-hidden>
-          <div className="w-px h-2 bg-blue-200" />
-          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white shadow-sm">
-            <ArrowDown className="w-3 h-3" strokeWidth={2.5} />
-          </div>
-          <div className="w-px h-2 bg-blue-200" />
-        </div>
-
-        {/* EXTRACTED BLOCKS */}
-        <div className="flex flex-col items-stretch w-full gap-1.5">
-          <span className="font-semibold text-[10px] tracking-[0.18em] uppercase text-blue-700">
-            <Trans>Extracted Blocks</Trans>
-          </span>
-
-          <BlockCard
-            icon={<Type className="w-3 h-3" strokeWidth={2.25} />}
-            label={<Trans>Heading</Trans>}
-            highlighted
-          >
-            <p className="text-[12px] font-bold text-foreground leading-tight">
-              <Trans>Section 3 · Overview</Trans>
-            </p>
-          </BlockCard>
-
-          <BlockCard
-            icon={<Type className="w-3 h-3" strokeWidth={2.25} />}
-            label={<Trans>Paragraph</Trans>}
-            meta={<Trans>22 words</Trans>}
-          >
-            <p className="text-[10px] text-muted-foreground leading-snug">
-              <Trans>
-                Each section introduces a new theme with worked examples,
-                followed by short practice activities at the end of the page.
-              </Trans>
-            </p>
-          </BlockCard>
-
-          <BlockCard
-            icon={<List className="w-3 h-3" strokeWidth={2.25} />}
-            label={<Trans>List</Trans>}
-            meta={<Trans>3 items</Trans>}
-          >
-            <ul className="text-[10px] text-muted-foreground leading-snug list-disc pl-3.5 space-y-[1px]">
-              <li>
-                <Trans>Read the prompt aloud</Trans>
-              </li>
-              <li>
-                <Trans>Identify the key idea</Trans>
-              </li>
-              <li>
-                <Trans>Try the practice problem</Trans>
-              </li>
-            </ul>
-          </BlockCard>
-
-          <BlockCard
-            icon={<ImageIcon className="w-3 h-3" strokeWidth={2} />}
-            label={<Trans>Image</Trans>}
-            meta="842×320"
-          >
-            <div className="w-full h-9 rounded-[3px] bg-gradient-to-br from-blue-100 via-sky-100 to-indigo-100" />
-          </BlockCard>
-
-          <BlockCard
-            icon={<Type className="w-3 h-3" strokeWidth={2.25} />}
-            label={<Trans>Paragraph</Trans>}
-            faded
-          >
-            <div className="flex flex-col gap-[3px]">
-              <div className="h-[3px] w-full rounded-[1px] bg-blue-200/60" />
-              <div className="h-[3px] w-[80%] rounded-[1px] bg-blue-200/60" />
-            </div>
-          </BlockCard>
-        </div>
-
-        {/* FOOTER */}
-        <div className="flex items-center justify-center gap-2 mt-auto pt-1">
-          <span className="tracking-[0.3em] text-[10px] font-bold text-blue-400">···</span>
-          <span className="text-[10px] font-medium text-blue-600/70">
-            <Trans>and many more blocks across the entire book</Trans>
-          </span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function BlockCard({
-  icon,
-  label,
-  meta,
-  highlighted = false,
-  faded = false,
-  children,
-}: {
-  icon: React.ReactNode
-  label: React.ReactNode
-  meta?: React.ReactNode
-  highlighted?: boolean
-  faded?: boolean
-  children: React.ReactNode
-}) {
-  return (
-    <div
-      className={cn(
-        "rounded-md border px-3 py-2 flex flex-col gap-1.5 transition-colors",
-        highlighted
-          ? "border-blue-400/60 bg-blue-50/70"
-          : faded
-          ? "border-dashed border-blue-200/70 bg-white/60"
-          : "border-blue-200 bg-white",
-      )}
-    >
-      <div className="flex items-center gap-1.5">
-        <span className={cn(faded ? "text-blue-400" : "text-blue-500")}>{icon}</span>
-        <span
-          className={cn(
-            "font-semibold text-[8.5px] tracking-[0.16em] uppercase",
-            faded ? "text-blue-500/70" : "text-blue-700",
-          )}
-        >
-          {label}
-        </span>
-        {meta && (
-          <span className="ml-auto font-mono text-[8.5px] text-blue-500/70 tabular-nums">
-            {meta}
-          </span>
-        )}
-      </div>
-      {children}
-    </div>
+    </LandingPageShell>
   )
 }
