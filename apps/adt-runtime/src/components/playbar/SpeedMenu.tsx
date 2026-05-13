@@ -33,7 +33,7 @@ export function SpeedMenu() {
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger
         className={cn(
-          "min-w-30 h-8 px-3 rounded-lg",
+          "min-w-30 h-10 px-3 rounded-lg",
           "flex items-center gap-1",
           "text-xs font-medium text-foreground",
           "hover:bg-accent hover:text-accent-foreground",
@@ -44,7 +44,7 @@ export function SpeedMenu() {
         aria-label={`${t("read-aloud-speed-label") || "Playback speed"}: ${activeLabel}`}
       >
         <span className="flex-1 text-start">{activeLabel}</span>
-        <ChevronDown className="w-3 h-3 opacity-60" aria-hidden="true" />
+        <ChevronDown className="size-4 opacity-60" aria-hidden="true" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8} className="min-w-[8rem]">
         <DropdownMenuRadioGroup

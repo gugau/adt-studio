@@ -1,5 +1,6 @@
 import { Toaster } from "sonner"
 import { useThemeSync } from "@/hooks/useThemeSync"
+import { TooltipProvider } from "./ui/tooltip"
 import { ActivityHeader } from "./activity/ActivityHeader"
 import { SkipLink } from "./SkipLink"
 import { Notepad } from "./notepad/Notepad"
@@ -24,7 +25,7 @@ import { PagePrefetcher } from "./PagePrefetcher"
 export function ChromeRoot() {
   useThemeSync()
   return (
-    <>
+    <TooltipProvider delay={300} closeDelay={120}>
       <SkipLink />
       <ActivityHeader />
       <Notepad />
@@ -36,6 +37,6 @@ export function ChromeRoot() {
       <TutorialOverlay />
       <PagePrefetcher />
       <Toaster position="top-center" richColors closeButton />
-    </>
+    </TooltipProvider>
   )
 }

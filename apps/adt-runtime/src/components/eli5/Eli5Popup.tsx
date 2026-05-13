@@ -7,6 +7,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { appConfigAtom } from "@/state/config.atoms"
 import { eli5ModeAtom, eli5PopupOpenAtom } from "@/state/ui.atoms"
 import { translationsAtom } from "@/state/language.atoms"
@@ -34,19 +39,28 @@ export function Eli5Popup() {
     t("eli5-no-content") ??
     "No explanation available."
 
+  const eli5Label = t("eli5-aria-label") || "Explain to me"
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        render={
-          <button
-            type="button"
-            aria-label={t("eli5-aria-label") || "Explain to me"}
-            className="fixed bottom-[18rem] right-4 w-12 h-12 flex items-center justify-center rounded-full bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/40 dark:hover:bg-yellow-900/60 focus:outline-none focus:ring-4 focus:ring-blue-500 dark:focus:ring-blue-400 shadow-lg z-[55]"
-          >
-            <Sparkles className="w-6 h-6 text-yellow-600 dark:text-yellow-300" aria-hidden="true" />
-          </button>
-        }
-      />
+      <Tooltip>
+        <DialogTrigger
+          render={
+            <TooltipTrigger
+              render={
+                <button
+                  type="button"
+                  aria-label={eli5Label}
+                  title={eli5Label}
+                  className="fixed bottom-[18rem] right-4 w-12 h-12 flex items-center justify-center rounded-full bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/40 dark:hover:bg-yellow-900/60 focus:outline-none focus:ring-4 focus:ring-blue-500 dark:focus:ring-blue-400 shadow-lg z-[55]"
+                >
+                  <Sparkles className="w-6 h-6 text-yellow-600 dark:text-yellow-300" aria-hidden="true" />
+                </button>
+              }
+            />
+          }
+        />
+        <TooltipContent side="left">{eli5Label}</TooltipContent>
+      </Tooltip>
       <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

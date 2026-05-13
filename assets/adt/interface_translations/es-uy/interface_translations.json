@@ -74,6 +74,7 @@
     "eli5-no-content": "No hay explicación disponible.",
     "nav-label": "Menú de navegación",
     "activate-tts-label": "Activar texto a voz",
+    "deactivate-tts-label": "Desactivar texto a voz",
     "eli5-aria-label": "Explicación de IA Explícamelo",
     "eli5-close-label": "Cerrar explicación",
     "success-try-next-activity": "¡Buen trabajo! ¡Intenta la siguiente actividad!",

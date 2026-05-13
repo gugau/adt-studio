@@ -1,5 +1,6 @@
 {
     "activate-tts-label": "激活文字转语音",
+    "deactivate-tts-label": "停用文字转语音",
     "activity-completed": "已完成",
     "activity-to-do": "待办",
     "answers-submitted": "你的答案已提交给老师！",

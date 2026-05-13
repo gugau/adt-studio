@@ -1,23 +1,3 @@
-/**
- * Runtime entrypoint — bundled to:
- *   assets/adt/base.bundle.local.js  (IIFE — `<script src="...">`)
- *   assets/adt/base.bundle.min.js    (ESM module)
- *
- * Each book page is its own self-contained HTML document and loads this
- * script in its body. We mount React into the two empty placeholders the
- * page provides:
- *
- *   <div id="interface-container"></div>   ← ChromeRoot
- *   <div id="nav-container"></div>         ← NavRoot
- *
- * The page's own `<div id="content">` is left untouched — it's static
- * HTML that the runtime *enhances* (translations, TTS spans, glossary
- * highlights, activity portals) rather than re-renders.
- */
-// In Vite dev, this import is processed by @tailwindcss/vite to produce the
-// chrome's CSS. In production, esbuild's CSS loader is set to "empty" — all
-// styling comes from the per-book content/tailwind_output.css that
-// packages/pipeline regenerates against this same source file.
 import "@/styles/globals.css"
 
 import React from "react"
@@ -28,12 +8,6 @@ import { NavRoot } from "@/components/NavRoot"
 import { bootRuntime, subscribeLanguageChanges } from "@/runtime/lifecycle"
 import { describeInitError, showErrorToast, showMainContent } from "@/lib/errors"
 
-// CRITICAL: `<JotaiProvider>` without a `store` prop creates a *new* store
-// scoped to that React tree. Our boot lifecycle writes to `getDefaultStore()`,
-// so we MUST hand the same store to the Provider — otherwise components
-// read forever-stale initial values (config defaults, empty translations).
-// We also need a single shared store across ChromeRoot + NavRoot so a setting
-// changed in the sidebar (e.g. language) is visible to NavMenu / BackForwardBar.
 const sharedStore = getDefaultStore()
 
 declare global {
@@ -50,11 +24,9 @@ declare global {
 function ensureContainer(id: string): HTMLElement | null {
   const existing = document.getElementById(id)
   if (existing) return existing
-  // Some embedders strip the placeholders; create them on the fly so the
-  // chrome still renders rather than silently no-op-ing.
   const el = document.createElement("div")
   el.id = id
-  el.className = "relative z-50"
+  el.className = "relative z-10"
   document.body.appendChild(el)
   return el
 }
@@ -64,6 +36,9 @@ function mount(): void {
   const interfaceContainer = ensureContainer("interface-container")
   const navContainer = ensureContainer("nav-container")
   if (!interfaceContainer || !navContainer) return
+
+  interfaceContainer.style.zIndex = "60"
+  navContainer.style.zIndex = "50"
 
   const chromeRoot = createRoot(interfaceContainer)
   chromeRoot.render(

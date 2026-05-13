@@ -1,5 +1,6 @@
 {
     "activate-tts-label": "音声読み上げを有効にする",
+    "deactivate-tts-label": "音声読み上げを無効にする",
     "activity-completed": "完了",
     "activity-to-do": "やること",
     "answers-submitted": "あなたの回答は先生に送信されました！",

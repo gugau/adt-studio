@@ -2,6 +2,11 @@ import { useAtomValue, useSetAtom } from "jotai"
 import { useMemo } from "react"
 import { ClipboardCheck, LogOut, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { activityModeAtom, isActivityPageAtom } from "@/state/activity.atoms"
 import { currentSectionIdAtom, pagesAtom } from "@/state/nav.atoms"
 import { dockReadyAtom } from "@/state/ui.atoms"
@@ -88,32 +93,42 @@ export function ActivityHeader() {
               {hintLabel}
             </span>
           </div>
-          <Button
-            type="button"
-            size="sm"
-            variant={activityMode ? "outline" : "default"}
-            onClick={() => setActivityMode((m) => !m)}
-            className={cn(
-              "h-8 shrink-0 gap-1.5 px-3 text-xs font-medium",
-              !activityMode &&
-                "bg-emerald-600 hover:bg-emerald-700 text-white dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:text-emerald-950",
-            )}
-            aria-label={activityMode ? exitLabel : enterLabel}
-          >
-            {activityMode ? (
-              <>
-                <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>{t("exit-activity-mode-short") || "Exit"}</span>
-              </>
-            ) : (
-              <>
-                   <ClipboardCheck className="h-4 w-4" aria-hidden="true"/>
-                <span>
-                  {t("enter-activity-mode-short") || "Focus"}
-                </span>
-              </>
-            )}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={activityMode ? "outline" : "default"}
+                  onClick={() => setActivityMode((m) => !m)}
+                  className={cn(
+                    "h-8 shrink-0 gap-1.5 px-3 text-xs font-medium",
+                    !activityMode &&
+                      "bg-emerald-600 hover:bg-emerald-700 text-white dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:text-emerald-950",
+                  )}
+                  aria-label={activityMode ? exitLabel : enterLabel}
+                  title={activityMode ? exitLabel : enterLabel}
+                >
+                  {activityMode ? (
+                    <>
+                      <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
+                      <span>{t("exit-activity-mode-short") || "Exit"}</span>
+                    </>
+                  ) : (
+                    <>
+                      <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
+                      <span>
+                        {t("enter-activity-mode-short") || "Focus"}
+                      </span>
+                    </>
+                  )}
+                </Button>
+              }
+            />
+            <TooltipContent side="bottom">
+              {activityMode ? exitLabel : enterLabel}
+            </TooltipContent>
+          </Tooltip>
         </div>
         {progress !== null && total > 1 ? (
           <div

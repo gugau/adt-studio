@@ -42,6 +42,7 @@ export function LanguageContent({ onSelect }: LanguageContentProps) {
               <li key={lang}>
                 <button
                   type="button"
+                  title={names[lang] ?? lang}
                   onClick={() => {
                     setCurrentLanguage(lang)
                     onSelect?.()

@@ -3,6 +3,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * shadcn/ui new-york + neutral baseColor — generated via `pnpm dlx
+ * shadcn@latest init`. The chrome lives inside an existing book page that
+ * always renders on a white background, so dark mode is unused for now —
+ * the .dark variant is kept for future use and to match shadcn boilerplate.
+ */
 :root {
   --nav-height: 56px;
   --radius: 0.625rem;

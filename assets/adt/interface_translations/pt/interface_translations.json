@@ -97,6 +97,7 @@
     "eli5-no-content": "Não há explicação disponível.",
     "nav-label": "Menu de navegação",
     "activate-tts-label": "Ativar texto para fala",
+    "deactivate-tts-label": "Desativar texto para fala",
     "eli5-aria-label": "Explicação de IA Explique-me",
     "eli5-close-label": "Fechar explicação",
     "success-try-next-activity": "Bom trabalho! Tente a próxima atividade!",

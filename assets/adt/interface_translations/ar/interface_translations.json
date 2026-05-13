@@ -1,5 +1,6 @@
 {
     "activate-tts-label": "تفعيل النص إلى كلام",
+    "deactivate-tts-label": "إلغاء تفعيل النص إلى كلام",
     "activity-completed": "مكتمل",
     "activity-to-do": "للقيام به",
     "answers-submitted": "تم إرسال إجاباتك إلى معلمك!",

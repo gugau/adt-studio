@@ -99,6 +99,7 @@ function TocList({
           <li key={entry.section_id}>
             <button
               type="button"
+              title={entry.title}
               onClick={() => {
                 window.location.href = entry.href;
               }}
@@ -194,6 +195,7 @@ function PageList({
                   window.location.href = page.href;
                 }}
                 aria-label={ariaLabel}
+                title={ariaLabel}
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "w-full flex items-center justify-between gap-3 px-2.5 py-1.5 rounded-md text-sm text-left",

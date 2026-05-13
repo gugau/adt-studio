@@ -3,6 +3,11 @@ import { ListChecks } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent } from "@/components/ui/popover"
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
   skipEnabledAtom,
   skipHandlerAtom,
   submitEnabledAtom,
@@ -53,30 +58,46 @@ export function DockActivityActions() {
       </DockIconButton>
 
       <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          onClick={skip ?? undefined}
-          disabled={!skipEnabled || !skip}
-          variant="outline"
-          size="sm"
-          className="h-9 px-4 font-medium"
-        >
-          {skipLabel}
-        </Button>
-        <Button
-          type="button"
-          onClick={validate ?? undefined}
-          disabled={!submitEnabled || !validate}
-          size="sm"
-          className={cn(
-            "h-9 px-4 font-medium text-white",
-            submitState === "next"
-              ? "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:text-emerald-950"
-              : "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 dark:text-blue-950",
-          )}
-        >
-          {submitLabel}
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                type="button"
+                onClick={skip ?? undefined}
+                disabled={!skipEnabled || !skip}
+                variant="outline"
+                size="sm"
+                title={skipLabel}
+                className="h-9 px-4 font-medium"
+              >
+                {skipLabel}
+              </Button>
+            }
+          />
+          <TooltipContent side={popoverSide}>{skipLabel}</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                type="button"
+                onClick={validate ?? undefined}
+                disabled={!submitEnabled || !validate}
+                size="sm"
+                title={submitLabel}
+                className={cn(
+                  "h-9 px-4 font-medium text-white",
+                  submitState === "next"
+                    ? "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:text-emerald-950"
+                    : "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 dark:text-blue-950",
+                )}
+              >
+                {submitLabel}
+              </Button>
+            }
+          />
+          <TooltipContent side={popoverSide}>{submitLabel}</TooltipContent>
+        </Tooltip>
       </div>
 
       <Popover

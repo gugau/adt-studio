@@ -1,5 +1,6 @@
 {
     "activate-tts-label": "เปิดใช้งานข้อความเป็นเสียง",
+    "deactivate-tts-label": "ปิดใช้งานข้อความเป็นเสียง",
     "activity-completed": "เสร็จสิ้น",
     "activity-to-do": "ต้องทำ",
     "answers-submitted": "คำตอบของคุณถูกส่งไปยังครูของคุณแล้ว!",

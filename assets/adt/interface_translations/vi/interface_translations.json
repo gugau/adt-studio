@@ -1,5 +1,6 @@
 {
     "activate-tts-label": "Kích hoạt chuyển văn bản thành giọng nói",
+    "deactivate-tts-label": "Vô hiệu hóa chuyển văn bản thành giọng nói",
     "activity-completed": "Hoàn thành",
     "activity-to-do": "Cần làm",
     "answers-submitted": "Câu trả lời của bạn đã được gửi cho giáo viên!",

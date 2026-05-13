@@ -5,6 +5,7 @@
     "nav-label": "نیویگیشن مینو",
     "tts-label": "متن سے آواز",
     "activate-tts-label": "متن سے آواز فعال کریں",
+    "deactivate-tts-label": "متن سے آواز غیر فعال کریں",
     "eli5-label": "مجھے سمجھائیں",
     "eli5-aria-label": "AI مجھے سمجھانے کی وضاحت",
     "eli5-content-lang": "مجھے سمجھانے کے لیے کسی بھی چیز کو ٹچ کریں۔",

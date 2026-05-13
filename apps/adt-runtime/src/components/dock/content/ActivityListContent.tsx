@@ -43,6 +43,7 @@ export function ActivityListContent() {
                       window.location.href = page.href
                     }}
                     aria-current={active ? "page" : undefined}
+                    title={label}
                     className={cn(
                       "w-full flex items-center justify-between gap-3 px-2.5 py-1.5 rounded-md text-sm text-left",
                       "hover:bg-accent hover:text-accent-foreground",

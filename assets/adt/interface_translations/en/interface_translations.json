@@ -5,6 +5,7 @@
     "nav-label": "Navigation menu",
     "tts-label": "Text to speech",
     "activate-tts-label": "Activate text to speech",
+    "deactivate-tts-label": "Deactivate text to speech",
     "eli5-label": "Explain to me",
     "eli5-aria-label": "AI Explain Me Explanation",
     "eli5-content-lang": "Tap on anything to explain it to me.",

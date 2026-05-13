@@ -14,6 +14,11 @@ import { BookOpen } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Popover, PopoverContent } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { glossaryDataAtom } from "@/state/glossary.atoms"
 import {
   dockMenuValueAtom,
@@ -145,15 +150,25 @@ export function GlossaryTermPopover() {
             </div>
           </div>
           <div className="mt-3 pt-3 border-t border-border flex justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleViewInGlossary}
-              className="text-blue-600 border-blue-600 hover:bg-blue-50 dark:text-blue-300 dark:border-blue-400 dark:hover:bg-blue-950/40"
-            >
-              <BookOpen className="w-4 h-4 mr-1" aria-hidden="true" />
-              {t("glossary-view-term") || "View in glossary"}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleViewInGlossary}
+                    title={t("glossary-view-term") || "View in glossary"}
+                    className="text-blue-600 border-blue-600 hover:bg-blue-50 dark:text-blue-300 dark:border-blue-400 dark:hover:bg-blue-950/40"
+                  >
+                    <BookOpen className="w-4 h-4 mr-1" aria-hidden="true" />
+                    {t("glossary-view-term") || "View in glossary"}
+                  </Button>
+                }
+              />
+              <TooltipContent>
+                {t("glossary-view-term") || "View in glossary"}
+              </TooltipContent>
+            </Tooltip>
           </div>
         </PopoverContent>
       ) : null}

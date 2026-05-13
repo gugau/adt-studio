@@ -107,7 +107,7 @@ function RoundButton({ label, onClick, disabled, children }: RoundButtonProps) {
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "w-9 h-9 rounded-full flex items-center justify-center",
+        "w-11 h-11 rounded-lg flex items-center justify-center",
         "text-foreground hover:bg-accent hover:text-accent-foreground",
         "transition-colors duration-150",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",

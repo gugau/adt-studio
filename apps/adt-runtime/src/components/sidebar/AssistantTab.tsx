@@ -120,6 +120,7 @@ export function AssistantTab() {
           type="button"
           onClick={() => setGlossaryListOpen(true)}
           aria-label={t("glossary-label") || "Glossary"}
+          title={t("glossary-label") || "Glossary"}
           className="flex items-center justify-between py-3 border-t border-border w-full text-left hover:bg-accent/50 -mx-3 px-3 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-md"
         >
           <span className="text-base font-medium">

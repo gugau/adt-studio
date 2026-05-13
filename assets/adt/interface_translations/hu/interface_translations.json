@@ -1,5 +1,6 @@
 {
     "activate-tts-label": "Szöveg felolvasásának aktiválása",
+    "deactivate-tts-label": "Szöveg felolvasásának deaktiválása",
     "activity-completed": "Befejezve",
     "activity-to-do": "Teendő",
     "answers-submitted": "Válaszaidat elküldtük a tanárodnak!",

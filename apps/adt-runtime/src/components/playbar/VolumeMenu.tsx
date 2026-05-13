@@ -26,7 +26,7 @@ export function VolumeMenu() {
     <Popover>
       <PopoverTrigger
         className={cn(
-          "h-8 w-8 flex rounded-lg items-center justify-center",
+          "size-10 flex rounded-lg items-center justify-center",
           "text-foreground hover:bg-accent hover:text-accent-foreground",
           "transition-colors duration-150",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
