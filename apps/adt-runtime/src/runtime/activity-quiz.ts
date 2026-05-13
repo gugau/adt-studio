@@ -238,6 +238,18 @@ export function initializeQuizActivity(): (() => void) | null {
     if (href) window.location.href = href
   }
 
+  // WCAG 4.1.2: a list of `role="radio"` options is meaningless to screen
+  // readers without a `role="radiogroup"` container that names the group.
+  // The section ships with `role="article"` from the template — override it
+  // since the section's primary semantic here IS the radio group.
+  section.setAttribute("role", "radiogroup")
+  if (!section.hasAttribute("aria-label")) {
+    section.setAttribute(
+      "aria-label",
+      tr("activity-options-label", "Answer options"),
+    )
+  }
+
   const options = section.querySelectorAll<HTMLElement>(".activity-option")
   const listeners: Array<() => void> = []
   options.forEach((option) => {

@@ -125,7 +125,7 @@ export function AssistantTab() {
           <span className="text-base font-medium">
             {t("glossary-label") || "Glossary"}
           </span>
-          <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          <ChevronRight className="w-5 h-5 text-muted-foreground" aria-hidden="true" />
         </button>
       ) : null}
     </div>

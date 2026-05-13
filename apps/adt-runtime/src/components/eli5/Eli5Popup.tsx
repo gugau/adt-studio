@@ -43,7 +43,7 @@ export function Eli5Popup() {
             aria-label={t("eli5-aria-label") || "Explain to me"}
             className="fixed bottom-[18rem] right-4 w-12 h-12 flex items-center justify-center rounded-full bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/40 dark:hover:bg-yellow-900/60 focus:outline-none focus:ring-4 focus:ring-blue-500 dark:focus:ring-blue-400 shadow-lg z-[55]"
           >
-            <Sparkles className="w-6 h-6 text-yellow-600 dark:text-yellow-300" />
+            <Sparkles className="w-6 h-6 text-yellow-600 dark:text-yellow-300" aria-hidden="true" />
           </button>
         }
       />

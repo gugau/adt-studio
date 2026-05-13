@@ -106,6 +106,7 @@ function TocList({
                 "w-full text-left rounded-md px-2.5 py-1.5 text-sm",
                 "hover:bg-accent hover:text-accent-foreground",
                 "focus:outline-none focus:bg-accent focus:text-accent-foreground",
+                "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
                 active && "bg-accent text-accent-foreground font-medium",
                 entry.level === 2 && "pl-6",
                 entry.level === 3 && "pl-9",
@@ -198,6 +199,7 @@ function PageList({
                   "w-full flex items-center justify-between gap-3 px-2.5 py-1.5 rounded-md text-sm text-left",
                   "hover:bg-accent hover:text-accent-foreground",
                   "focus:outline-none focus:bg-accent focus:text-accent-foreground",
+                  "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
                   active && "bg-accent text-accent-foreground font-medium",
                 )}
               >

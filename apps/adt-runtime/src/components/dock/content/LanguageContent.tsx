@@ -50,6 +50,7 @@ export function LanguageContent({ onSelect }: LanguageContentProps) {
                     "w-full text-left px-2.5 py-2 rounded-lg text-sm",
                     "hover:bg-accent hover:text-accent-foreground",
                     "focus:outline-none focus:bg-accent focus:text-accent-foreground",
+                    "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
                     active && "bg-accent text-accent-foreground font-medium",
                   )}
                   aria-current={active ? "true" : undefined}

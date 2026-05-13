@@ -1,6 +1,7 @@
 import { Toaster } from "sonner"
 import { useThemeSync } from "@/hooks/useThemeSync"
 import { ActivityHeader } from "./activity/ActivityHeader"
+import { SkipLink } from "./SkipLink"
 import { Notepad } from "./notepad/Notepad"
 import { Eli5Popup } from "./eli5/Eli5Popup"
 import { SLVideo } from "./signlanguage/SLVideo"
@@ -24,6 +25,7 @@ export function ChromeRoot() {
   useThemeSync()
   return (
     <>
+      <SkipLink />
       <ActivityHeader />
       <Notepad />
       <Eli5Popup />

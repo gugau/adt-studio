@@ -61,7 +61,7 @@ export function TermDetails() {
         onClick={() => setSelected(null)}
         className="self-start -ml-2 text-muted-foreground"
       >
-        <ChevronLeft className="w-4 h-4 mr-1" />
+        <ChevronLeft className="w-4 h-4 mr-1" aria-hidden="true" />
         {t("glossary-label") || "Glossary"}
       </Button>
 

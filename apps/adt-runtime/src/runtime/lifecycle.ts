@@ -102,6 +102,9 @@ export async function bootRuntime(): Promise<void> {
     const persisted = readPersistedLanguage()
     const language = pickLanguage(config, persisted, htmlLang)
     store.set(currentLanguageAtom, language)
+    // WCAG 3.1.1: keep `<html lang>` aligned with the resolved language so
+    // screen readers / hyphenation / spellcheck use the right pronunciation.
+    document.documentElement.lang = language
 
     const [, pages, toc] = await Promise.all([
       loadTranslations(language, config.bundleVersion),
@@ -211,6 +214,9 @@ export function subscribeLanguageChanges(): () => void {
     const next = store.get(currentLanguageAtom) as string
     if (next === lastLanguage) return
     lastLanguage = next
+    // WCAG 3.1.2: re-tag the document so assistive tech adjusts to the
+    // new language alongside the translated content.
+    if (typeof document !== "undefined") document.documentElement.lang = next
     const config = store.get(appConfigAtom)
     void Promise.all([
       loadTranslations(next, config.bundleVersion),

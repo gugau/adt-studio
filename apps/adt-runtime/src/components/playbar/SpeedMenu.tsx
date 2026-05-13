@@ -44,7 +44,7 @@ export function SpeedMenu() {
         aria-label={`${t("read-aloud-speed-label") || "Playback speed"}: ${activeLabel}`}
       >
         <span className="flex-1 text-start">{activeLabel}</span>
-        <ChevronDown className="w-3 h-3 opacity-60" />
+        <ChevronDown className="w-3 h-3 opacity-60" aria-hidden="true" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8} className="min-w-[8rem]">
         <DropdownMenuRadioGroup
