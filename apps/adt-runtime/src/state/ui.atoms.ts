@@ -62,6 +62,7 @@ export type DockMenuValue =
   | "audio"
   | "language"
   | "settings"
+  | "activities"
   | ""
 export const dockMenuValueAtom = persistedStringAtom("dockMenuValue", "")
 

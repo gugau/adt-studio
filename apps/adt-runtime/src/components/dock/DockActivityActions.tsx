@@ -1,6 +1,7 @@
-import { useAtomValue } from "jotai"
-import { ChevronLeft } from "lucide-react"
+import { useAtom, useAtomValue } from "jotai"
+import { ChevronLeft, ListChecks } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent } from "@/components/ui/popover"
 import {
   skipEnabledAtom,
   skipHandlerAtom,
@@ -10,9 +11,12 @@ import {
   validateHandlerAtom,
 } from "@/state/activity.atoms"
 import { currentSectionIdAtom, pagesAtom } from "@/state/nav.atoms"
+import { dockMenuValueAtom } from "@/state/ui.atoms"
 import { useTranslation } from "@/hooks/useTranslation"
 import { cn } from "@/lib/utils"
 import { DockIconButton } from "./DockIconButton"
+import { useDockContext } from "./dock-context"
+import { ActivityListContent } from "./content/ActivityListContent"
 
 export function DockActivityActions() {
   const submitEnabled = useAtomValue(submitEnabledAtom)
@@ -23,6 +27,8 @@ export function DockActivityActions() {
   const submitLabelOverride = useAtomValue(submitLabelAtom)
   const pages = useAtomValue(pagesAtom)
   const currentSectionId = useAtomValue(currentSectionIdAtom)
+  const [menuValue, setMenuValue] = useAtom(dockMenuValueAtom)
+  const { ref: anchor, popoverSide } = useDockContext()
   const { t } = useTranslation()
 
   const idx = pages.findIndex((p) => p.section_id === currentSectionId)
@@ -33,19 +39,35 @@ export function DockActivityActions() {
       ? t("next-activity") || "Next activity"
       : t("submit-text") || "Submit"
   const submitLabel = submitLabelOverride ?? defaultLabel
-  const skipLabel = t("skip-activity") || "Skip activity"
+  const skipLabel =
+    submitState === "next"
+      ? t("next-page") || "Next page"
+      : t("skip-activity") || "Skip activity"
+  const activitiesOpen = menuValue === "activities"
 
   return (
     <div className="flex flex-1 items-center justify-between max-w-3xl gap-2 px-2">
-      <DockIconButton
-        ariaLabel={t("previous-page") || "Previous page"}
-        disabled={!prev}
-        onClick={() => {
-          if (prev) window.location.href = prev.href
-        }}
-      >
-        <ChevronLeft className="w-4 h-4" />
-      </DockIconButton>
+      <div className="flex items-center gap-1">
+        <DockIconButton
+          ariaLabel={t("previous-page") || "Previous page"}
+          disabled={!prev}
+          onClick={() => {
+            if (prev) window.location.href = prev.href
+          }}
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </DockIconButton>
+        <DockIconButton
+          ariaLabel={t("activities-label") || "Activities"}
+          pressed={activitiesOpen}
+          onClick={() =>
+            setMenuValue((prev) => (prev === "activities" ? "" : "activities"))
+          }
+        >
+          <ListChecks className="w-5 h-5" />
+        </DockIconButton>
+      </div>
+
       <div className="flex items-center gap-2">
         <Button
           type="button"
@@ -72,6 +94,33 @@ export function DockActivityActions() {
           {submitLabel}
         </Button>
       </div>
+
+      <Popover
+        open={activitiesOpen}
+        onOpenChange={(next, eventDetails) => {
+          if (next) return
+          if (
+            eventDetails.reason === "outside-press" &&
+            eventDetails.event &&
+            (eventDetails.event.target as HTMLElement | null)?.closest(
+              "[data-dock-trigger]",
+            )
+          ) {
+            return
+          }
+          setMenuValue("")
+        }}
+      >
+        <PopoverContent
+          side={popoverSide}
+          align="center"
+          sideOffset={12}
+          anchor={anchor}
+          className="w-auto p-0 overflow-hidden rounded-2xl"
+        >
+          <ActivityListContent />
+        </PopoverContent>
+      </Popover>
     </div>
   )
 }

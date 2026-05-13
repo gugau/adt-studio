@@ -150,6 +150,25 @@ function findNextPageHref(): string | null {
   return pages[idx + 1].href
 }
 
+/**
+ * Next page whose `section_id` starts with `qz` — same activity convention
+ * used by `packages/pipeline/src/package-web.ts:collectActivityIds`.
+ * Drives the post-correct "Next activity" jump (skip past any reading
+ * pages between this activity and the next one).
+ */
+function findNextActivityHref(): string | null {
+  const store = getDefaultStore()
+  const pages = store.get(pagesAtom)
+  const currentId = store.get(currentSectionIdAtom)
+  if (!currentId) return null
+  const idx = pages.findIndex((p) => p.section_id === currentId)
+  if (idx < 0) return null
+  for (let i = idx + 1; i < pages.length; i++) {
+    if (pages[i].section_id.startsWith("qz")) return pages[i].href
+  }
+  return null
+}
+
 export function initializeQuizActivity(): (() => void) | null {
   if (typeof document === "undefined") return null
   const section = document.querySelector<HTMLElement>(QUIZ_SELECTOR)
@@ -161,6 +180,7 @@ export function initializeQuizActivity(): (() => void) | null {
   let selected: HTMLElement | null = null
   let validated = false
   const hasNextPage = findNextPageHref() !== null
+  const hasNextActivity = findNextActivityHref() !== null
 
   const resetState = () => {
     selected = null
@@ -185,7 +205,9 @@ export function initializeQuizActivity(): (() => void) | null {
   const handleValidate = () => {
     const state = store.get(submitStateAtom)
     if (state === "next") {
-      const href = findNextPageHref()
+      // Post-correct: submit jumps to the next activity, skipping reading pages
+      // in between. The sibling "Next page" button handles plain sequential nav.
+      const href = findNextActivityHref()
       if (href) window.location.href = href
       return
     }
@@ -202,7 +224,8 @@ export function initializeQuizActivity(): (() => void) | null {
     if (isCorrect) {
       store.set(submitStateAtom, "next")
       store.set(submitLabelAtom, null)
-      store.set(submitEnabledAtom, hasNextPage)
+      // Submit becomes "Next activity" — enabled only when one exists.
+      store.set(submitEnabledAtom, hasNextActivity)
     } else {
       store.set(submitStateAtom, "submit")
       store.set(submitLabelAtom, null)
