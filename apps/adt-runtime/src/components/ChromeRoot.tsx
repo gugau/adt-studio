@@ -1,4 +1,5 @@
 import { Toaster } from "sonner"
+import { ActivityHeader } from "./activity/ActivityHeader"
 import { Notepad } from "./notepad/Notepad"
 import { Eli5Popup } from "./eli5/Eli5Popup"
 import { SLVideo } from "./signlanguage/SLVideo"
@@ -21,6 +22,7 @@ import { PagePrefetcher } from "./PagePrefetcher"
 export function ChromeRoot() {
   return (
     <>
+      <ActivityHeader />
       <Notepad />
       <Eli5Popup />
       <SLVideo />

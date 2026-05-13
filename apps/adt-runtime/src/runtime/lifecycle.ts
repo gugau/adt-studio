@@ -47,7 +47,7 @@ import {
 import { locateGlossaryTerm } from "@/lib/glossary/locate"
 import { initAnalytics } from "@/lib/analytics"
 import { installShowContentFallback, showMainContent } from "@/lib/errors"
-import { isActivityPageAtom } from "@/state/activity.atoms"
+import { activityModeAtom, isActivityPageAtom } from "@/state/activity.atoms"
 import { initializeQuizActivity } from "./activity-quiz"
 
 function readCurrentSectionId(): string | null {
@@ -114,7 +114,10 @@ export async function bootRuntime(): Promise<void> {
     store.set(tocAtom, toc)
     store.set(currentSectionIdAtom, readCurrentSectionId())
     store.set(currentPageNumberAtom, readCurrentPageNumber())
-    store.set(isActivityPageAtom, readIsActivityPage())
+    // Page-type signal (fixed for the document) + initial mode toggle.
+    const isActivity = readIsActivityPage()
+    store.set(isActivityPageAtom, isActivity)
+    store.set(activityModeAtom, isActivity)
 
     applyDOMTranslations()
 

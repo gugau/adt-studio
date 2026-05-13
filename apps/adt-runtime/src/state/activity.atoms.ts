@@ -5,6 +5,7 @@ export type SkipHandler = () => void
 export type SubmitState = "submit" | "next"
 
 export const isActivityPageAtom = ephemeralAtom(false)
+export const activityModeAtom = ephemeralAtom(false)
 
 export const submitEnabledAtom = ephemeralAtom(false)
 export const skipEnabledAtom = ephemeralAtom(false)
