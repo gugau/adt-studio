@@ -11,6 +11,7 @@ import {
 import { activeNavTabAtom } from "@/state/ui.atoms";
 import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { DockContent } from "./DockLayout";
 
 export function TocContent() {
@@ -61,18 +62,22 @@ export function TocContent() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="toc" className="min-h-0 overflow-y-auto">
-          <TocList entries={filteredTocEntries} currentSectionId={currentSectionId} />
+        <TabsContent value="toc" className="min-h-0">
+          <ScrollArea className="h-full">
+            <TocList entries={filteredTocEntries} currentSectionId={currentSectionId} />
+          </ScrollArea>
         </TabsContent>
 
-        <TabsContent value="pages">
-          <PageList
-            pages={pages}
-            toc={toc}
-            currentSectionId={currentSectionId}
-            printPageLabel={t("print-page-label") || "Print Page"}
-            coverLabel={t("cover-label") || "Cover"}
-          />
+        <TabsContent value="pages" className="min-h-0">
+          <ScrollArea className="h-full">
+            <PageList
+              pages={pages}
+              toc={toc}
+              currentSectionId={currentSectionId}
+              printPageLabel={t("print-page-label") || "Print Page"}
+              coverLabel={t("cover-label") || "Cover"}
+            />
+          </ScrollArea>
         </TabsContent>
       </Tabs>
     </DockContent>
@@ -87,7 +92,7 @@ function TocList({
   currentSectionId: string | null;
 }) {
   return (
-    <ul className="py-1 overflow-y-auto [scrollbar-gutter:stable]">
+    <ul className="py-1">
       {entries.map((entry) => {
         const active = entry.section_id === currentSectionId;
         return (
@@ -98,7 +103,7 @@ function TocList({
                 window.location.href = entry.href;
               }}
               className={cn(
-                "w-full text-left rounded-md mx-1 px-2.5 py-1.5 text-sm",
+                "w-full text-left rounded-md px-2.5 py-1.5 text-sm",
                 "hover:bg-accent hover:text-accent-foreground",
                 "focus:outline-none focus:bg-accent focus:text-accent-foreground",
                 active && "bg-accent text-accent-foreground font-medium",
@@ -165,7 +170,7 @@ function PageList({
   if (pages.length === 0) return null;
 
   return (
-    <ol className="flex-1 py-1 overflow-y-auto [scrollbar-gutter:stable]">
+    <ol className="py-1">
       {items.map(({ page, displayLabel, pdfPageLabel, chapterHeading }) => {
         const active = page.section_id === currentSectionId;
         const ariaLabel = pdfPageLabel
@@ -190,7 +195,7 @@ function PageList({
                 aria-label={ariaLabel}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "w-full flex items-center justify-between gap-3 mx-1 px-2.5 py-1.5 rounded-md text-sm text-left",
+                  "w-full flex items-center justify-between gap-3 px-2.5 py-1.5 rounded-md text-sm text-left",
                   "hover:bg-accent hover:text-accent-foreground",
                   "focus:outline-none focus:bg-accent focus:text-accent-foreground",
                   active && "bg-accent text-accent-foreground font-medium",

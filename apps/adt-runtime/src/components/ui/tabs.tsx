@@ -74,7 +74,8 @@ function TabsContent({ className, ...props }: TabsPrimitive.Panel.Props) {
     <TabsPrimitive.Panel
       data-slot="tabs-content"
       className={cn(
-        "flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable] text-sm outline-none",
+        // Callers wrap content in `<ScrollArea>` when overflow is expected.
+        "flex-1 min-h-0 text-sm outline-none",
         className,
       )}
       {...props}

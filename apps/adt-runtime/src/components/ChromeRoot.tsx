@@ -1,4 +1,5 @@
 import { Toaster } from "sonner"
+import { useThemeSync } from "@/hooks/useThemeSync"
 import { ActivityHeader } from "./activity/ActivityHeader"
 import { Notepad } from "./notepad/Notepad"
 import { Eli5Popup } from "./eli5/Eli5Popup"
@@ -20,6 +21,7 @@ import { PagePrefetcher } from "./PagePrefetcher"
  * inside `NavRoot`.
  */
 export function ChromeRoot() {
+  useThemeSync()
   return (
     <>
       <ActivityHeader />

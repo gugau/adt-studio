@@ -13,7 +13,9 @@ import {
   iconSizeAtom,
   reduceMotionAtom,
   stateModeAtom,
+  themeAtom,
   type IconSize,
+  type Theme,
 } from "@/state/ui.atoms";
 import { useTranslation } from "@/hooks/useTranslation";
 import { trackToggleEvent } from "@/lib/analytics";
@@ -27,6 +29,7 @@ export function SettingsTab() {
   const [describeImages, setDescribeImages] = useAtom(describeImagesModeAtom);
   const [iconSize, setIconSize] = useAtom(iconSizeAtom);
   const [reduceMotion, setReduceMotion] = useAtom(reduceMotionAtom);
+  const [theme, setTheme] = useAtom(themeAtom);
 
   const wrap =
     (name: string, setter: (v: boolean) => void) => (next: boolean) => {
@@ -69,14 +72,25 @@ export function SettingsTab() {
       ) : null}
 
       <SettingsSection title={t("settings-section-toolbar") || "Toolbar"}>
-        <div className="py-3">
-          <DockLayoutPicker />
-        </div>
+        <DockLayoutPicker />
       </SettingsSection>
 
       <SettingsSection
         title={t("settings-section-accessibility") || "Accessibility"}
       >
+        <SegmentedRow<Theme>
+          label={t("theme-label") || "Theme"}
+          value={theme as Theme}
+          onChange={(v) => {
+            trackToggleEvent(`Theme:${v}`, true);
+            setTheme(v);
+          }}
+          options={[
+            { value: "light", label: t("theme-light") || "Light" },
+            { value: "dark", label: t("theme-dark") || "Dark" },
+            { value: "system", label: t("theme-system") || "System" },
+          ]}
+        />
         <SegmentedRow<IconSize>
           label={t("icon-size-label") || "Icon size"}
           value={iconSize as IconSize}

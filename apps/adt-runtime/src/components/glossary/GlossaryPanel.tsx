@@ -1,6 +1,7 @@
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ToggleRow } from "@/components/sidebar/ToggleRow";
 import { TermDetails } from "./TermDetails";
 import { glossaryDataAtom, glossaryFilterAtom } from "@/state/glossary.atoms";
@@ -88,20 +89,24 @@ export function GlossaryPanel() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="page">
-          <ListItems
-            entries={pageTerms}
-            filter={filter}
-            onSelect={setSelected}
-          />
+        <TabsContent value="page" className="min-h-0">
+          <ScrollArea className="h-full">
+            <ListItems
+              entries={pageTerms}
+              filter={filter}
+              onSelect={setSelected}
+            />
+          </ScrollArea>
         </TabsContent>
 
-        <TabsContent value="book">
-          <ListItems
-            entries={filteredBookTerms}
-            filter={filter}
-            onSelect={setSelected}
-          />
+        <TabsContent value="book" className="min-h-0">
+          <ScrollArea className="h-full">
+            <ListItems
+              entries={filteredBookTerms}
+              filter={filter}
+              onSelect={setSelected}
+            />
+          </ScrollArea>
         </TabsContent>
       </Tabs>
     </DockContent>

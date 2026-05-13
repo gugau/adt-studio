@@ -71,8 +71,8 @@ export function DockActivityActions() {
           className={cn(
             "h-9 px-4 font-medium text-white",
             submitState === "next"
-              ? "bg-emerald-600 hover:bg-emerald-700"
-              : "bg-blue-600 hover:bg-blue-700",
+              ? "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:text-emerald-950"
+              : "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 dark:text-blue-950",
           )}
         >
           {submitLabel}

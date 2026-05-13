@@ -60,7 +60,7 @@ export function AssistantTab() {
           />
 
           {readAloud ? (
-            <div className="bg-gray-50 rounded-lg border border-gray-200 mt-2 px-3">
+            <div className="bg-muted/40 rounded-lg border border-border mt-2 px-3">
               {features.autoplay ? (
                 <ToggleRow
                   label={t("autoplay-label") || "Autoplay"}
@@ -120,7 +120,7 @@ export function AssistantTab() {
           type="button"
           onClick={() => setGlossaryListOpen(true)}
           aria-label={t("glossary-label") || "Glossary"}
-          className="flex items-center justify-between py-3 border-t border-gray-200 w-full text-left hover:bg-accent/50 -mx-3 px-3 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-md"
+          className="flex items-center justify-between py-3 border-t border-border w-full text-left hover:bg-accent/50 -mx-3 px-3 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-md"
         >
           <span className="text-base font-medium">
             {t("glossary-label") || "Glossary"}

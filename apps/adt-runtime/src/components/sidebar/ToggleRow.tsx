@@ -32,7 +32,7 @@ export function ToggleRow({
     <div
       className={cn(
         "flex items-center justify-between py-3 gap-2",
-        borderTop && "border-t border-gray-200",
+        borderTop && "border-t border-border",
         className,
       )}
     >

@@ -149,7 +149,7 @@ export function GlossaryTermPopover() {
               variant="outline"
               size="sm"
               onClick={handleViewInGlossary}
-              className="text-blue-600 border-blue-600 hover:bg-blue-50"
+              className="text-blue-600 border-blue-600 hover:bg-blue-50 dark:text-blue-300 dark:border-blue-400 dark:hover:bg-blue-950/40"
             >
               <BookOpen className="w-4 h-4 mr-1" />
               {t("glossary-view-term") || "View in glossary"}

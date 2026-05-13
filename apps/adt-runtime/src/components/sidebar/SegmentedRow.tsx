@@ -32,8 +32,8 @@ export function SegmentedRow<T extends string>({
   return (
     <div
       className={cn(
-        "flex items-center justify-between py-3 gap-2",
-        borderTop && "border-t border-gray-200",
+        "flex items-center justify-between py-2 gap-2",
+        borderTop && "border-t border-border",
         className,
       )}
       role="group"

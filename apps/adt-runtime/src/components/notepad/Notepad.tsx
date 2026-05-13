@@ -41,16 +41,16 @@ export function Notepad() {
           <button
             type="button"
             aria-label={t("notepad-open-label") || "Open notepad"}
-            className="fixed bottom-52 right-4 w-12 h-12 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-blue-500 shadow-lg transition-all duration-200 z-[55]"
+            className="fixed bottom-52 right-4 w-12 h-12 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 focus:outline-none focus:ring-4 focus:ring-blue-500 dark:focus:ring-blue-400 shadow-lg transition-all duration-200 z-[55]"
           >
-            <Pencil className="w-5 h-5 text-gray-700" />
+            <Pencil className="w-5 h-5 text-foreground" />
           </button>
         }
       />
       <PopoverContent side="left" className="w-96">
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-lg font-bold flex items-center gap-2">
-            <Pencil className="w-4 h-4 text-blue-600" />
+            <Pencil className="w-4 h-4 text-blue-600 dark:text-blue-300" />
             {t("notepad-label") || "Notepad"}
           </h3>
           <Button onClick={save} size="sm" variant="outline" aria-label={t("notepad-save-button") || "Save"}>
@@ -65,7 +65,7 @@ export function Notepad() {
           className="min-h-[14rem]"
         />
         {savedAt ? (
-          <p className="mt-2 text-sm text-green-600">
+          <p className="mt-2 text-sm text-green-600 dark:text-green-400">
             {t("notepad-saved-message") || "Saved"}
           </p>
         ) : null}

@@ -28,7 +28,7 @@ export function SettingsSection({
           <p className="text-xs text-muted-foreground/80">{description}</p>
         ) : null}
       </header>
-      <div className="flex flex-col rounded-xl border border-border bg-card divide-y divide-border px-3">
+      <div className="flex flex-col rounded-xl border border-border bg-card  px-3">
         {children}
       </div>
     </section>
