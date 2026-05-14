@@ -1,6 +1,5 @@
-import { useAtomValue, useAtom } from "jotai";
-import { useRef } from "react";
-import { appConfigAtom } from "@/shared/state/config.atoms";
+import { useAtom, useAtomValue } from "jotai";
+import { useMemo, useRef } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import { useDockContext } from "@/features/dock/context/dock-context";
 import { cn } from "@/shared/lib/utils";
@@ -10,7 +9,14 @@ import {
 } from "@/shared/state/ui.atoms"
 import { DockPanel } from "@/features/dock/components/DockPanel";
 import { TocContent } from "@/features/toc/components/TocDockContent";
-
+import {
+  currentSectionIdAtom,
+  tocAtom,
+} from "@/features/navigation/state/nav.atoms";
+import { useTranslation } from "@/features/language/hooks/useTranslation";
+import {
+  List,
+} from "lucide-react";
 interface BookMetadata {
   ariaLabel: string;
   tooltip?: string;
@@ -25,15 +31,18 @@ export function BookMetadata({
   const toggle = (next: DockMenuValue) =>
     setValue((prev) => (prev === next ? "" : next))
 
-  const config = useAtomValue(appConfigAtom);
-  const displayTitle = config.shortTitle ?? config.title ?? "";
-  const author = config.author ?? "";
-  const cover = config.cover ?? "./cover.png";
+  const { t } = useTranslation();
+  const toc = useAtomValue(tocAtom);
+  const currentSectionId = useAtomValue(currentSectionIdAtom);
   const { popoverSide } = useDockContext();
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  if (!displayTitle && !author) return null;
+  const activeTitle = useMemo(() => {
+    const entry = toc.find((e) => e.section_id === currentSectionId);
+    return entry?.title ?? "";
+  }, [toc, currentSectionId]);
 
+  const displayTitle = activeTitle || t("toc-title") || "Contents";
   const label = tooltip ?? ariaLabel;
   const pressed = value === "toc";
 
@@ -50,39 +59,22 @@ export function BookMetadata({
               aria-pressed={pressed}
               data-dock-trigger=""
               className={cn(
-                "rounded-lg flex items-center justify-center shrink-0",
+                "rounded-lg flex items-center justify-start shrink-0",
                 "text-foreground/80 hover:bg-accent hover:text-accent-foreground",
                 "transition-colors duration-150",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 "disabled:opacity-30 disabled:hover:bg-transparent",
                 "data-[state=open]:bg-accent data-[state=open]:text-accent-foreground",
                 "aria-pressed:bg-accent aria-pressed:text-accent-foreground",
-                "h-11 gap-2 p-2",
+                "h-11 gap-2 px-3",
                 className,
               )}
               onClick={() => toggle("toc")}
             >
-                {cover ? (
-                  <img
-                    src={cover}
-                    alt=""
-                    className="h-10 w-10 rounded-lg object-cover shrink-0 ring-1 ring-border"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).style.display =
-                        "none";
-                    }}
-                  />
-                ) : null}
-                <div className="min-w-0 hidden sm:flex flex-col leading-tight">
-                  <span className="text-sm font-semibold truncate w-[12rem]">
-                    {displayTitle}
-                  </span>
-                  {author ? (
-                    <span className="text-xs text-muted-foreground truncate max-w-[12rem]">
-                      {author}
-                    </span>
-                  ) : null}
-                </div>
+              <List className="size-6" />
+              <span className="text-sm font-medium truncate max-w-[16rem]">
+                {displayTitle}
+              </span>
             </button>
           }
         />

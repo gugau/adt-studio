@@ -13,7 +13,7 @@ function ReaderDockContents() {
   const features = useAtomValue(appConfigAtom).features;
   return (
     <>
-      <BookMetadata ariaLabel="Main Menu" />
+      <BookMetadata className="min-w-64" ariaLabel="Main Menu" />
       {features.showNavigationControls && <PageNav />}
       <DockMenu />
     </>
