@@ -3,7 +3,16 @@ import path from "node:path"
 import { JSDOM } from "jsdom"
 import type { Storage } from "@adt/storage"
 import type { BookMetadata, TocGenerationOutput, WordTimestampOutput } from "@adt/types"
-import { type PackageAdtWebOptions, copyDirRecursive, injectWebpubStyles, htmlToXhtml, getWordTimestamps } from "./package-web.js"
+import { type PackageAdtWebOptions, copyDirRecursive, injectWebpubStyles, htmlToXhtml, getWordTimestamps, pad3 } from "./package-web.js"
+
+/**
+ * Canonical word-id format used by SMIL fragment refs, EPUB packaging
+ * word-spans, and the runtime viewer's word highlighting. Mirror in
+ * `assets/adt/modules/tts_highlighter_utils.js:wordIdFor`.
+ */
+function wordIdFor(dataId: string, idx: number): string {
+  return `${dataId}_w${pad3(idx)}`
+}
 import { buildSmil, formatMediaDuration, type SmilParagraph } from "./smil.js"
 import { tokenizeWords } from "./word-tokenize.js"
 import { styleMapToInline } from "./fixed-layout-rendering.js"
@@ -748,9 +757,8 @@ function wrapBySegments(
       continue
     }
     wordIdx += 1
-    const wordId = `${dataId}_w${String(wordIdx).padStart(3, "0")}`
     const wrap = doc.createElement("span")
-    wrap.setAttribute("id", wordId)
+    wrap.setAttribute("id", wordIdFor(dataId, wordIdx))
     for (const piece of buildPieces(tok.start, tok.end)) wrap.appendChild(piece)
     parent.appendChild(wrap)
   }
@@ -773,9 +781,8 @@ function wrapTextNodes(
           fragment.appendChild(doc.createTextNode(tok.text))
         } else {
           counter.idx += 1
-          const wordId = `${dataId}_w${String(counter.idx).padStart(3, "0")}`
           const span = doc.createElement("span")
-          span.setAttribute("id", wordId)
+          span.setAttribute("id", wordIdFor(dataId, counter.idx))
           span.appendChild(doc.createTextNode(tok.text))
           fragment.appendChild(span)
         }

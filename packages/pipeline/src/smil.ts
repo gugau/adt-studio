@@ -3,13 +3,13 @@
  * word timestamps. Pure module — no filesystem access. Caller wires inputs
  * and writes the returned XML to disk.
  *
- * Per-paragraph behaviour mirrors the in-app viewer's count guard
- * (`tts_highlighter.js`): word-level `<par>` per word when source span
- * count exactly matches whisper word count, paragraph-level `<par>` for
- * the whole paragraph otherwise. No alignment / interpolation — if the
- * counts diverge, an EPUB reader gets a single highlight for the whole
- * paragraph instead of (potentially) wrong word timing.
+ * Per-paragraph emission: word-level `<par>` per word when the source word
+ * span count exactly matches the whisper word count; paragraph-level
+ * fallback otherwise. No alignment / interpolation — if the counts
+ * diverge, an EPUB reader gets a single highlight for the whole paragraph
+ * instead of (potentially) wrong word timing.
  */
+import { escapeHtml } from "./package-web.js"
 
 export interface SmilWordTimestamp {
   word: string
@@ -75,8 +75,8 @@ export function buildSmil(options: BuildSmilOptions): SmilOutput | null {
         const word = p.whisperWords[i]
         parLines.push(
           `      <par id="par${pad(parIdCounter)}">`,
-          `        <text src="${escapeXmlAttr(pageHref)}#${escapeXmlAttr(p.wordIds[i])}"/>`,
-          `        <audio src="${escapeXmlAttr(p.audioPath)}" clipBegin="${formatClock(word.start)}" clipEnd="${formatClock(word.end)}"/>`,
+          `        <text src="${escapeHtml(pageHref)}#${escapeHtml(p.wordIds[i])}"/>`,
+          `        <audio src="${escapeHtml(p.audioPath)}" clipBegin="${formatClock(word.start)}" clipEnd="${formatClock(word.end)}"/>`,
           `      </par>`,
         )
       }
@@ -84,14 +84,14 @@ export function buildSmil(options: BuildSmilOptions): SmilOutput | null {
       parIdCounter += 1
       parLines.push(
         `      <par id="par${pad(parIdCounter)}">`,
-        `        <text src="${escapeXmlAttr(pageHref)}#${escapeXmlAttr(p.paragraphId)}"/>`,
-        `        <audio src="${escapeXmlAttr(p.audioPath)}" clipBegin="${formatClock(0)}" clipEnd="${formatClock(p.audioDuration)}"/>`,
+        `        <text src="${escapeHtml(pageHref)}#${escapeHtml(p.paragraphId)}"/>`,
+        `        <audio src="${escapeHtml(p.audioPath)}" clipBegin="${formatClock(0)}" clipEnd="${formatClock(p.audioDuration)}"/>`,
         `      </par>`,
       )
     }
 
     seqs.push(
-      `    <seq id="seq-${escapeXmlAttr(p.paragraphId)}" epub:textref="${escapeXmlAttr(pageHref)}#${escapeXmlAttr(p.paragraphId)}">`,
+      `    <seq id="seq-${escapeHtml(p.paragraphId)}" epub:textref="${escapeHtml(pageHref)}#${escapeHtml(p.paragraphId)}">`,
       ...parLines,
       `    </seq>`,
     )
@@ -125,10 +125,3 @@ function pad(n: number): string {
   return String(n).padStart(4, "0")
 }
 
-function escapeXmlAttr(s: string): string {
-  return String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-}

@@ -26,6 +26,7 @@ import type {
   WebRenderingOutput,
   PositionedTextOutput,
 } from "@adt/types"
+import { escapeHtml } from "./package-web.js"
 
 /**
  * Whether the book should render as a fixed-layout EPUB.
@@ -709,14 +710,6 @@ export function processFixedLayoutPages(
  */
 function escapeHtmlAttr(str: string): string {
   return str.replace(/&/g, "&amp;").replace(/"/g, "&quot;")
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
 }
 
 /**
