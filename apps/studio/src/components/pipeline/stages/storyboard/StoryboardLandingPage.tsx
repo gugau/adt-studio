@@ -62,11 +62,11 @@ const LANDING_STRATEGY_ITEMS: LandingStrategyEntry[] = [
   },
   {
     id: "llm",
-    description: msg`AI lays out images and text per section.`,
+    description: msg`AI lays out images and text per section, matching the original book's design as closely as possible.`,
   },
   {
     id: "llm-overlay",
-    description: msg`Title and image with text overlaid as a caption.`,
+    description: msg`Title and image with text overlaid as a caption — AI matches the source book's visual style.`,
   },
   {
     id: "fixed_layout",
@@ -127,6 +127,11 @@ function strategyDisplayName(slug: string): string {
   if (descriptor) return linguiI18n._(descriptor)
   return slug
 }
+
+// Effort field hidden for now while we evaluate the per-strategy scaling.
+// State + persistence stay live so "medium" is the implicit default and
+// re-enabling is a single flag flip.
+const SHOW_EFFORT_FIELD = false
 
 export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
   const { t } = useLingui()
@@ -363,7 +368,7 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
           </Select>
         </SettingsField>
 
-        <CollapsibleField shown={isAi}>
+        <CollapsibleField shown={isAi && SHOW_EFFORT_FIELD}>
           <SettingsField
             label={<Trans>Effort</Trans>}
             hint={
