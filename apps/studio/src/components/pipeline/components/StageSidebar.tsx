@@ -212,15 +212,30 @@ export function StageSidebar({
     const stepGroup = "group" in step ? (step as { group?: StageGroup }).group : undefined
     if (stepGroup && stepGroup !== prevGroup) {
       stageItems.push(
-        <div
-          key={`group-${stepGroup}`}
-          className={cn(
-            "px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 truncate hidden",
-            x.showLabel,
-          )}
-        >
-          {i18n._(STAGE_GROUP_LABELS[stepGroup])}
-        </div>,
+        railCollapsed ? (
+          <div
+            key={`group-${stepGroup}`}
+            className="relative h-[26px] px-3 pt-3 pb-1 overflow-hidden"
+            role="presentation"
+          >
+            {/* Thin divider visible while the rail is collapsed; fades out as
+                the rail expands on hover so the label can fade in cleanly. */}
+            <span
+              aria-hidden
+              className="absolute left-1/2 top-[14px] -translate-x-1/2 h-px w-5 bg-muted-foreground/25 transition-opacity duration-150 group-hover/rail:opacity-0"
+            />
+            <span className="absolute left-3 right-3 top-[10px] whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 opacity-0 transition-opacity duration-150 delay-150 group-hover/rail:opacity-100">
+              {i18n._(STAGE_GROUP_LABELS[stepGroup])}
+            </span>
+          </div>
+        ) : (
+          <div
+            key={`group-${stepGroup}`}
+            className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 truncate"
+          >
+            {i18n._(STAGE_GROUP_LABELS[stepGroup])}
+          </div>
+        ),
       )
       prevGroup = stepGroup
     }
