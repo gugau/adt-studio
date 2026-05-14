@@ -4,7 +4,11 @@ export type DockSide = "top" | "bottom"
 
 export interface DockContextValue {
   ref: RefObject<HTMLDivElement | null>
-  popoverSide: DockSide
+  popoverSide: DockSide,
+  isCompact: boolean,
+  isTop: boolean,
+  shouldHide: boolean
+  isSpread: boolean
 }
 
 export const DockContext = createContext<DockContextValue | null>(null)

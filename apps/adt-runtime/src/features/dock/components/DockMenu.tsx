@@ -1,4 +1,4 @@
-import { useAtom, useAtomValue } from "jotai"
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import {
   BookOpen,
   Hand,
@@ -7,96 +7,67 @@ import {
   Settings,
   Volume2,
   VolumeX,
-} from "lucide-react"
-import { Popover, PopoverContent } from "@/shared/ui/popover"
-import { appConfigAtom } from "@/shared/state/config.atoms"
-import { playBarVisibleAtom, readAloudModeAtom } from "@/features/audio/state/audio.atoms"
+} from "lucide-react";
+import { Popover, PopoverContent } from "@/shared/ui/popover";
+import { appConfigAtom } from "@/shared/state/config.atoms";
+import {
+  playBarVisibleAtom,
+  readAloudModeAtom,
+} from "@/features/audio/state/audio.atoms";
 import {
   dockMenuValueAtom,
   signLanguageModeAtom,
   type DockMenuValue,
-} from "@/shared/state/ui.atoms"
-import { useAudioPlayerContext } from "@/features/audio/hooks/AudioPlayerContext"
-import { useTranslation } from "@/features/language/hooks/useTranslation"
-import { trackToggleEvent } from "@/shared/lib/analytics"
-import { cn } from "@/shared/lib/utils"
-import { DockIconButton } from "@/features/dock/components/DockIconButton"
-import { useDockContext } from "@/features/dock/context/dock-context"
-import { TocContent } from "@/features/toc/components/TocDockContent"
-import { GlossaryContent } from "@/features/glossary/components/GlossaryDockContent"
-import { AudioContent } from "@/features/audio/components/AudioDockContent"
-import { LanguageContent } from "@/features/language/components/LanguageDockContent"
-import { SettingsContent } from "@/features/settings/components/SettingsDockContent"
+} from "@/shared/state/ui.atoms";
+import { useAudioPlayerContext } from "@/features/audio/hooks/AudioPlayerContext";
+import { useTranslation } from "@/features/language/hooks/useTranslation";
+import { trackToggleEvent } from "@/shared/lib/analytics";
+import { cn } from "@/shared/lib/utils";
+import { DockIconButton } from "@/features/dock/components/DockIconButton";
+import { useDockContext } from "@/features/dock/context/dock-context";
+import { TocContent } from "@/features/toc/components/TocDockContent";
+import { GlossaryContent } from "@/features/glossary/components/GlossaryDockContent";
+import { AudioContent } from "@/features/audio/components/AudioDockContent";
+import { LanguageContent } from "@/features/language/components/LanguageDockContent";
+import { SettingsContent } from "@/features/settings/components/SettingsDockContent";
+import { DockPanel } from "./DockPanel";
 
 export function DockMenu() {
-  const features = useAtomValue(appConfigAtom).features
-  const [value, setValue] = useAtom(dockMenuValueAtom)
-  const readAloud = useAtomValue(readAloudModeAtom)
-  const [, setPlayBarVisible] = useAtom(playBarVisibleAtom)
-  const [signLanguage, setSignLanguage] = useAtom(signLanguageModeAtom)
-  const { isPlaying } = useAudioPlayerContext()
-  const { t } = useTranslation()
-  const { ref: anchor, popoverSide: side } = useDockContext()
+  const features = useAtomValue(appConfigAtom).features;
+  const [value, setValue] = useAtom(dockMenuValueAtom);
+  const [signLanguage, setSignLanguage] = useAtom(signLanguageModeAtom);
+  const { t } = useTranslation();
+  const { ref: anchor, popoverSide: side } = useDockContext();
 
   const toggle = (next: DockMenuValue) =>
-    setValue((prev) => (prev === next ? "" : next))
+    setValue((prev) => (prev === next ? "" : next));
 
   return (
     <>
-      <div className="flex items-center gap-0.5 pl-1">
-        {features.showNavigationControls ? (
-          <DockIconButton
-            ariaLabel={t("nav-label") || "Contents"}
-            pressed={value === "toc"}
-            onClick={() => toggle("toc")}
-          >
-            <List className="size-6" />
-          </DockIconButton>
-        ) : null}
-
+      <div className="flex items-center gap-2 pl-1">
         {features.glossary ? (
           <DockIconButton
             ariaLabel={t("glossary-label") || "Glossary"}
             pressed={value === "glossary"}
             onClick={() => toggle("glossary")}
           >
-            <BookOpen className="size-6" />
+            <BookOpen />
           </DockIconButton>
         ) : null}
 
-        {features.readAloud ? (
-          <DockIconButton
-            ariaLabel={
-              readAloud
-                ? t("deactivate-tts-label") || "Deactivate text to speech"
-                : t("activate-tts-label") || "Activate text to speech"
-            }
-            onClick={() => {
-              setPlayBarVisible(true)
-              toggle("audio")
-            }}
-          >
-            {readAloud ? (
-              <Volume2
-                className={cn("size-6", isPlaying && "animate-pulse")}
-              />
-            ) : (
-              <VolumeX className="size-6" />
-            )}
-          </DockIconButton>
-        ) : null}
+        <TTSDockButton />
 
         {features.signLanguage ? (
           <DockIconButton
             ariaLabel={t("sign-language-label") || "Sign language"}
             pressed={signLanguage}
             onClick={() => {
-              const next = !signLanguage
-              trackToggleEvent("SignLanguage", next)
-              setSignLanguage(next)
+              const next = !signLanguage;
+              trackToggleEvent("SignLanguage", next);
+              setSignLanguage(next);
             }}
           >
-            <Hand className="size-6" />
+            <Hand />
           </DockIconButton>
         ) : null}
 
@@ -105,7 +76,7 @@ export function DockMenu() {
           pressed={value === "language"}
           onClick={() => toggle("language")}
         >
-          <Languages className="size-6" />
+          <Languages />
         </DockIconButton>
 
         <DockIconButton
@@ -113,7 +84,7 @@ export function DockMenu() {
           pressed={value === "settings"}
           onClick={() => toggle("settings")}
         >
-          <Settings className="size-6" />
+          <Settings />
         </DockIconButton>
       </div>
 
@@ -163,64 +134,47 @@ export function DockMenu() {
         <SettingsContent />
       </DockPanel>
     </>
-  )
+  );
 }
 
-interface DockPanelProps {
-  open: boolean
-  onClose: () => void
-  anchor?: React.RefObject<HTMLElement | null>
-  side?: "top" | "bottom"
-  /**
-   * When true, the popover ignores outside-click and escape dismissal. The
-   * only ways to close it are programmatic (e.g. clicking Stop in the
-   * panel) or re-clicking the dock trigger button.
-   */
-  staysOpen?: boolean
-  children: React.ReactNode
-}
+function TTSDockButton() {
+  const hasTTS = useAtomValue(appConfigAtom).features.readAloud;
+  const [value, setValue] = useAtom(dockMenuValueAtom);
+  const readAloud = useAtomValue(readAloudModeAtom);
+  const setPlayBarVisible = useSetAtom(playBarVisibleAtom);
+  const { isPlaying, play, pause } = useAudioPlayerContext();
+  const { t } = useTranslation();
 
-function DockPanel({
-  open,
-  onClose,
-  anchor,
-  side = "top",
-  staysOpen,
-  children,
-}: DockPanelProps) {
+  const toggle = (next: DockMenuValue) =>
+    setValue((prev) => (prev === next ? "" : next));
+
+  const handleClick = () => {
+    setPlayBarVisible(true);
+    toggle("audio");
+
+    if (value != "audio") {
+      play()
+    } else {
+      pause()
+    }
+  }
+
+  if (!hasTTS) return null;
+
   return (
-    <Popover
-      open={open}
-      onOpenChange={(next, eventDetails) => {
-        if (next) return
-        if (
-          eventDetails.reason === "outside-press" &&
-          eventDetails.event &&
-          (eventDetails.event.target as HTMLElement | null)?.closest(
-            "[data-dock-trigger]",
-          )
-        ) {
-          return
-        }
-        if (
-          staysOpen &&
-          (eventDetails.reason === "outside-press" ||
-            eventDetails.reason === "escape-key")
-        ) {
-          return
-        }
-        onClose()
-      }}
+    <DockIconButton
+      ariaLabel={
+        readAloud
+          ? t("deactivate-tts-label") || "Deactivate text to speech"
+          : t("activate-tts-label") || "Activate text to speech"
+      }
+      onClick={handleClick}
     >
-      <PopoverContent
-        side={side}
-        align="center"
-        sideOffset={12}
-        anchor={anchor}
-        className="w-auto p-0 overflow-hidden rounded-2xl"
-      >
-        {children}
-      </PopoverContent>
-    </Popover>
-  )
+      {readAloud ? (
+        <Volume2 className={cn(isPlaying && "animate-pulse")} />
+      ) : (
+        <VolumeX />
+      )}
+    </DockIconButton>
+  );
 }

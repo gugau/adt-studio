@@ -1,5 +1,7 @@
-import { BottomDock } from "@/features/dock/components/BottomDock"
-import { TooltipProvider } from "@/shared/ui/tooltip"
+import { BottomDock } from "@/features/dock/components/BottomDock";
+import { TooltipProvider } from "@/shared/ui/tooltip";
+import { ActivityDock } from "@/features/activity/components/ActivityDock";
+import { Dock } from "@/features/dock/components/Dock";
 
 /**
  * The React tree mounted into `<div id="nav-container">`. Holds the unified
@@ -15,7 +17,10 @@ import { TooltipProvider } from "@/shared/ui/tooltip"
 export function NavRoot() {
   return (
     <TooltipProvider delay={300} closeDelay={120}>
-      <BottomDock />
+      <Dock>
+        <BottomDock />
+        <ActivityDock />
+      </Dock>
     </TooltipProvider>
-  )
+  );
 }

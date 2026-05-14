@@ -27,7 +27,7 @@ export function ChromeRoot() {
   return (
     <TooltipProvider delay={300} closeDelay={120}>
       <SkipLink />
-      <ActivityHeader />
+      {/*<ActivityHeader />*/}
       <Notepad />
       <Eli5Popup />
       <SLVideo />
