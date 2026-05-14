@@ -24,6 +24,7 @@ export interface TocGenerationConfig {
   modelId: string
   maxRetries: number
   language: string
+  mode: "extract" | "dynamic"
 }
 
 export function buildTocGenerationConfig(
@@ -38,6 +39,7 @@ export function buildTocGenerationConfig(
       "openai:gpt-4.1",
     maxRetries: appConfig.toc_generation?.max_retries ?? DEFAULT_LLM_MAX_RETRIES,
     language,
+    mode: appConfig.toc_mode ?? "extract",
   }
 }
 
@@ -164,8 +166,13 @@ export async function generateToc(
         title: h.title,
         roleType: h.roleType,
       })),
-      has_original_toc: originalTocText !== null,
-      original_toc_text: originalTocText ?? "",
+      // Dynamic mode ignores the original TOC even when one is present —
+      // the model rewrites titles from heading text instead of mirroring
+      // the printed TOC.
+      has_original_toc: config.mode === "extract" && originalTocText !== null,
+      original_toc_text:
+        config.mode === "extract" ? (originalTocText ?? "") : "",
+      mode: config.mode,
     },
     maxRetries: config.maxRetries,
     maxTokens: Math.max(8192, headings.length * 80),
