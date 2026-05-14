@@ -51,7 +51,7 @@ function DockPanel({
         align="center"
         sideOffset={12}
         anchor={anchor}
-        className="w-auto p-0 overflow-hidden rounded-2xl"
+        className="w-auto p-0 overflow-hidden rounded-lg"
       >
         {children}
       </PopoverContent>

@@ -1,14 +1,13 @@
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useRef } from "react";
 import {
   BookOpen,
   Hand,
   Languages,
-  List,
   Settings,
   Volume2,
   VolumeX,
 } from "lucide-react";
-import { Popover, PopoverContent } from "@/shared/ui/popover";
 import { appConfigAtom } from "@/shared/state/config.atoms";
 import {
   playBarVisibleAtom,
@@ -25,7 +24,6 @@ import { trackToggleEvent } from "@/shared/lib/analytics";
 import { cn } from "@/shared/lib/utils";
 import { DockIconButton } from "@/features/dock/components/DockIconButton";
 import { useDockContext } from "@/features/dock/context/dock-context";
-import { TocContent } from "@/features/toc/components/TocDockContent";
 import { GlossaryContent } from "@/features/glossary/components/GlossaryDockContent";
 import { AudioContent } from "@/features/audio/components/AudioDockContent";
 import { LanguageContent } from "@/features/language/components/LanguageDockContent";
@@ -37,7 +35,11 @@ export function DockMenu() {
   const [value, setValue] = useAtom(dockMenuValueAtom);
   const [signLanguage, setSignLanguage] = useAtom(signLanguageModeAtom);
   const { t } = useTranslation();
-  const { ref: anchor, popoverSide: side } = useDockContext();
+  const { popoverSide: side } = useDockContext();
+
+  const glossaryBtnRef = useRef<HTMLButtonElement>(null);
+  const languageBtnRef = useRef<HTMLButtonElement>(null);
+  const settingsBtnRef = useRef<HTMLButtonElement>(null);
 
   const toggle = (next: DockMenuValue) =>
     setValue((prev) => (prev === next ? "" : next));
@@ -47,6 +49,7 @@ export function DockMenu() {
       <div className="flex items-center gap-2 pl-1">
         {features.glossary ? (
           <DockIconButton
+            ref={glossaryBtnRef}
             ariaLabel={t("glossary-label") || "Glossary"}
             pressed={value === "glossary"}
             onClick={() => toggle("glossary")}
@@ -72,6 +75,7 @@ export function DockMenu() {
         ) : null}
 
         <DockIconButton
+          ref={languageBtnRef}
           ariaLabel={t("language-label") || "Language"}
           pressed={value === "language"}
           onClick={() => toggle("language")}
@@ -80,6 +84,7 @@ export function DockMenu() {
         </DockIconButton>
 
         <DockIconButton
+          ref={settingsBtnRef}
           ariaLabel={t("sidebar-title") || "Settings"}
           pressed={value === "settings"}
           onClick={() => toggle("settings")}
@@ -89,37 +94,18 @@ export function DockMenu() {
       </div>
 
       <DockPanel
-        open={value === "toc"}
-        onClose={() => setValue("")}
-        anchor={anchor}
-        side={side}
-      >
-        <TocContent />
-      </DockPanel>
-
-      <DockPanel
         open={value === "glossary"}
         onClose={() => setValue("")}
-        anchor={anchor}
+        anchor={glossaryBtnRef}
         side={side}
       >
         <GlossaryContent />
       </DockPanel>
 
       <DockPanel
-        open={value === "audio"}
-        onClose={() => setValue("")}
-        anchor={anchor}
-        side={side}
-        staysOpen
-      >
-        <AudioContent />
-      </DockPanel>
-
-      <DockPanel
         open={value === "language"}
         onClose={() => setValue("")}
-        anchor={anchor}
+        anchor={languageBtnRef}
         side={side}
       >
         <LanguageContent onSelect={() => setValue("")} />
@@ -128,7 +114,7 @@ export function DockMenu() {
       <DockPanel
         open={value === "settings"}
         onClose={() => setValue("")}
-        anchor={anchor}
+        anchor={settingsBtnRef}
         side={side}
       >
         <SettingsContent />
@@ -142,8 +128,10 @@ function TTSDockButton() {
   const [value, setValue] = useAtom(dockMenuValueAtom);
   const readAloud = useAtomValue(readAloudModeAtom);
   const setPlayBarVisible = useSetAtom(playBarVisibleAtom);
-  const { isPlaying, play, pause } = useAudioPlayerContext();
+  const { isPlaying, play } = useAudioPlayerContext();
   const { t } = useTranslation();
+  const { popoverSide: side } = useDockContext();
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   const toggle = (next: DockMenuValue) =>
     setValue((prev) => (prev === next ? "" : next));
@@ -154,27 +142,37 @@ function TTSDockButton() {
 
     if (value != "audio") {
       play()
-    } else {
-      pause()
     }
   }
 
   if (!hasTTS) return null;
 
   return (
-    <DockIconButton
-      ariaLabel={
-        readAloud
-          ? t("deactivate-tts-label") || "Deactivate text to speech"
-          : t("activate-tts-label") || "Activate text to speech"
-      }
-      onClick={handleClick}
-    >
-      {readAloud ? (
-        <Volume2 className={cn(isPlaying && "animate-pulse")} />
-      ) : (
-        <VolumeX />
-      )}
-    </DockIconButton>
+    <>
+      <DockIconButton
+        ref={btnRef}
+        ariaLabel={
+          readAloud
+            ? t("deactivate-tts-label") || "Deactivate text to speech"
+            : t("activate-tts-label") || "Activate text to speech"
+        }
+        onClick={handleClick}
+      >
+        {readAloud ? (
+          <Volume2 className={cn(isPlaying && "animate-pulse")} />
+        ) : (
+          <VolumeX />
+        )}
+      </DockIconButton>
+      <DockPanel
+        open={value === "audio"}
+        onClose={() => setValue("")}
+        anchor={btnRef}
+        side={side}
+        staysOpen
+      >
+        <AudioContent />
+      </DockPanel>
+    </>
   );
 }

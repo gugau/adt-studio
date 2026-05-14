@@ -9,6 +9,7 @@ export interface DockIconButtonProps
   tooltip?: string
   pressed?: boolean
   size?: "sm" | "default"
+  ref?: React.Ref<HTMLButtonElement>
 }
 
 /**
@@ -29,6 +30,7 @@ export function DockIconButton({
   size = "default",
   className,
   children,
+  ref,
   ...props
 }: DockIconButtonProps) {
   const { popoverSide } = useDockContext()
@@ -38,6 +40,7 @@ export function DockIconButton({
       <TooltipTrigger
         render={
           <button
+            ref={ref}
             type="button"
             aria-label={ariaLabel}
             title={label}

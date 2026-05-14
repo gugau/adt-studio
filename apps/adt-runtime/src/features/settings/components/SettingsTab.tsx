@@ -8,6 +8,7 @@ import {
   autoplayModeAtom,
   describeImagesModeAtom,
   readAloudModeAtom,
+  wordHighlightModeAtom,
 } from "@/features/audio/state/audio.atoms";
 import {
   iconSizeAtom,
@@ -27,6 +28,7 @@ export function SettingsTab() {
   const [readAloud, setReadAloud] = useAtom(readAloudModeAtom);
   const [autoplay, setAutoplay] = useAtom(autoplayModeAtom);
   const [describeImages, setDescribeImages] = useAtom(describeImagesModeAtom);
+  const [wordHighlight, setWordHighlight] = useAtom(wordHighlightModeAtom);
   const [iconSize, setIconSize] = useAtom(iconSizeAtom);
   const [reduceMotion, setReduceMotion] = useAtom(reduceMotionAtom);
   const [theme, setTheme] = useAtom(themeAtom);
@@ -38,8 +40,7 @@ export function SettingsTab() {
     };
 
   const showReadingSection = features.readAloud;
-  const showTtsSubsettings =
-    readAloud && (features.autoplay || features.describeImages);
+  const showTtsSubsettings = readAloud;
 
   return (
     <div className="flex flex-col gap-1 px-4 pb-6">
@@ -66,6 +67,22 @@ export function SettingsTab() {
                   onChange={wrap("DescribeImages", setDescribeImages)}
                 />
               ) : null}
+              <SegmentedRow<"word" | "sentence">
+                label={t("highlight-mode-label") || "Highlight"}
+                value={wordHighlight ? "word" : "sentence"}
+                onChange={(v) => {
+                  const next = v === "word";
+                  trackToggleEvent("WordHighlight", next);
+                  setWordHighlight(next);
+                }}
+                options={[
+                  { value: "word", label: t("highlight-word") || "Word" },
+                  {
+                    value: "sentence",
+                    label: t("highlight-sentence") || "Sentence",
+                  },
+                ]}
+              />
             </>
           ) : null}
         </SettingsSection>

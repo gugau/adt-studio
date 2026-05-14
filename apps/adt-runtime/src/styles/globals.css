@@ -160,6 +160,7 @@ span[data-word-index].bg-yellow-300 {
   color: #000 !important;
   border-radius: 3px;
   padding: 0 1px;
+  margin: 0 -1px;
   transition: background-color 120ms ease, color 120ms ease;
 }
 
