@@ -208,18 +208,6 @@ pnpm exec playwright install --with-deps chromium
 The browser opens automatically at `http://localhost:5173`. The API runs at `http://localhost:3001`.
 On first run, `pnpm dev` compiles all packages (~1 min). Subsequent runs are fast (incremental build).
 
-### AI agent setup (optional)
-
-`AGENTS.md` is the canonical instructions file for AI coding agents working on this repo. Most tools read their own filename instead (Claude Code → `CLAUDE.md`, Cursor → `.cursorrules`, etc.), so each contributor opts in to the tool they use:
-
-```bash
-pnpm agent claude         # creates CLAUDE.md that imports AGENTS.md
-pnpm agent cursor         # symlinks .cursorrules -> AGENTS.md
-pnpm agent claude cursor  # multiple at once
-```
-
-Supported: `claude`, `cursor`, `windsurf`, `cline`, `copilot`. Generated files are gitignored — they live only on your machine. Re-running is idempotent.
-
 ### Running the desktop app
 
 ```bash
