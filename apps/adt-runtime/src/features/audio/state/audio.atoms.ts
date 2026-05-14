@@ -10,7 +10,7 @@ import { ephemeralAtom, persistedBoolAtom, persistedNumberAtom } from "@/shared/
 
 // User preferences — survive navigation.
 export const readAloudModeAtom = persistedBoolAtom("readAloudMode", false)
-export const autoplayModeAtom = persistedBoolAtom("autoplayMode", false)
+export const autoplayModeAtom = persistedBoolAtom("autoplayMode", true)
 export const wordHighlightModeAtom = persistedBoolAtom("wordHighlightMode", true)
 export const describeImagesModeAtom = persistedBoolAtom("describeImagesMode", false)
 export const audioSpeedAtom = persistedNumberAtom("audioSpeed", 1)

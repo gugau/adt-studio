@@ -56,10 +56,13 @@ interface ActiveHighlight {
 export interface UseAudioPlayer {
   isPlaying: boolean
   hasItems: boolean
+  play: () => void
+  pause: () => void
   togglePlayPause: () => void
   playNext: () => void
   playPrevious: () => void
   stop: () => void
+  playAtIndex: (index: number) => void
 }
 
 export function useAudioPlayer(): UseAudioPlayer {
@@ -229,15 +232,17 @@ export function useAudioPlayer(): UseAudioPlayer {
     ],
   )
 
-  const togglePlayPause = useCallback(() => {
-    if (items.length === 0) return
+  const pause = useCallback(() => {
     const audio = audioRef.current
-    if (audio && !audio.paused) {
-      audio.pause()
-      setIsPlaying(false)
-      return
-    }
+    if (!audio || audio.paused) return
+    audio.pause()
+    setIsPlaying(false)
+  }, [setIsPlaying])
+
+  const play = useCallback(() => {
+    if (items.length === 0) return
     setReadAloudMode(true)
+    const audio = audioRef.current
     if (
       audio &&
       audio.src &&
@@ -252,6 +257,12 @@ export function useAudioPlayer(): UseAudioPlayer {
     }
     playAtIndex(currentIndex || 0)
   }, [items.length, currentIndex, playAtIndex, setIsPlaying, setReadAloudMode])
+
+  const togglePlayPause = useCallback(() => {
+    const audio = audioRef.current
+    if (audio && !audio.paused) pause()
+    else play()
+  }, [pause, play])
 
   const playNext = useCallback(() => {
     if (items.length === 0) return
@@ -317,9 +328,12 @@ export function useAudioPlayer(): UseAudioPlayer {
   return {
     isPlaying,
     hasItems: items.length > 0,
+    play,
+    pause,
     togglePlayPause,
     playNext,
     playPrevious,
     stop,
+    playAtIndex,
   }
 }

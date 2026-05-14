@@ -34,7 +34,7 @@ export function AudioContent() {
     <DockContent
       role="toolbar"
       aria-label={t("read-aloud-toolbar-label") || "Read aloud controls"}
-      className="h-auto flex-row items-center justify-center gap-1 p-1.5"
+      className="h-auto flex-row items-center justify-center gap-1 p-1.5 w-fit"
     >
       <RoundButton
         label={t("previous-audio") || "Previous audio"}
