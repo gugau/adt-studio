@@ -35,8 +35,8 @@ Thumbs.db
 # Claude Code (personal settings only — .claude/settings.json is shared)
 .claude/settings.local.json
 
-# AI agent rule files — generated locally via `pnpm agent <name>` to point at
-# AGENTS.md. AGENTS.md is the canonical source and stays tracked.
+# AI agent rule files — CLAUDE.md is auto-created by `pnpm install` postinstall
+# (dev only — skipped in CI and production). AGENTS.md stays tracked.
 CLAUDE.md
 CLAUDE.local.md
 .cursorrules
