@@ -213,3 +213,4 @@ See [`docs/I18N_ADD_LANGUAGE.md`](docs/I18N_ADD_LANGUAGE.md).
 
 For complete coding standards, security requirements, patterns, and anti-patterns, see [`docs/GUIDELINES.md`](docs/GUIDELINES.md).
 For technology decisions and reasoning, see [`docs/DECISIONS.md`](docs/DECISIONS.md).
+For per-role responsibilities when assigning focused agent tasks (Code Reviewer, Pipeline Developer, Frontend Developer), see [`docs/AGENT_ROLES.md`](docs/AGENT_ROLES.md).
