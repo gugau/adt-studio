@@ -5,6 +5,8 @@ import type { Storage } from "@adt/storage"
 import type { BookMetadata, TocGenerationOutput, WordTimestampOutput } from "@adt/types"
 import { type PackageAdtWebOptions, copyDirRecursive, injectWebpubStyles, htmlToXhtml, getWordTimestamps } from "./package-web.js"
 import { buildSmil, formatMediaDuration, type SmilParagraph } from "./smil.js"
+import { tokenizeWords } from "./word-tokenize.js"
+import { styleMapToInline } from "./fixed-layout-rendering.js"
 
 export type PackageEpubOptions = PackageAdtWebOptions
 
@@ -413,6 +415,10 @@ function buildOpf(opts: {
     const totalDuration = smilEntries.reduce((s, e) => s + e.durationSeconds, 0)
     metaLines.push(`    <meta property="media:duration">${formatMediaDuration(totalDuration)}</meta>`)
     metaLines.push(`    <meta property="media:active-class">-epub-media-overlay-active</meta>`)
+    // media:playback-active-class names the class added to the document
+    // currently being read aloud. Apple's Asset Guide lists it alongside
+    // media:active-class; emitting both is harmless on readers that ignore it.
+    metaLines.push(`    <meta property="media:playback-active-class">-epub-media-overlay-playing</meta>`)
     for (const e of smilEntries) {
       const overlayId = smilHrefToOverlayId.get(e.smilHref)!
       metaLines.push(
@@ -594,15 +600,210 @@ function escapeXml(str: string): string {
 }
 
 /**
+ * Mirror `data-id` to `id` on every element that has the former but not
+ * the latter. The renderer/LLM uses `data-id` as the semantic anchor for
+ * in-app TTS/audio mapping; EPUB readers only honour the standard `id`
+ * attribute when resolving SMIL `<text src="…#id"/>` fragment references.
+ * Without this pass, every paragraph-level media-overlay reference fails
+ * to resolve and Apple Books silently disables read-aloud.
+ *
+ * Implementation is a regex pass rather than a DOM round-trip so the
+ * output stays byte-equivalent to the htmlToXhtml() result outside the
+ * inserted `id=` attribute — important for tests and for not perturbing
+ * the existing well-formed XHTML.
+ */
+export function mirrorDataIdToId(xhtml: string): string {
+  // Captures: tag name, attrs, optional self-closing slash. Re-emits the
+  // slash at the end so `<img …/>` doesn't turn into `<img …/ id="x">`.
+  return xhtml.replace(
+    /<([a-zA-Z][\w-]*)((?:\s+[^>\s][^>]*?)?)(\s*\/?)>/g,
+    (match, tag, attrs, selfClose) => {
+      const dataIdMatch = attrs.match(/\sdata-id="([^"]+)"/)
+      if (!dataIdMatch) return match
+      if (/\sid\s*=/.test(attrs)) return match
+      return `<${tag}${attrs} id="${dataIdMatch[1]}"${selfClose}>`
+    },
+  )
+}
+
+/**
+ * Wrap every word inside `[data-id]` elements in
+ * `<span id="${dataId}_w${NNN}">…</span>` so SMIL `<text src="…#…_wNNN"/>`
+ * references resolve in EPUB readers. Uses the same Unicode tokenizer as
+ * the live viewer (`tokenizeWords` / `WORD_PATTERN`), so word counts agree
+ * with Whisper alignment and with runtime word highlighting.
+ *
+ * Two paths:
+ * - When the paragraph carries `data-segments` (fixed-layout), tokenise the
+ *   concatenated segment text and emit per-word spans that wrap per-segment
+ *   style fragments. Words that straddle style runs become ONE word span
+ *   containing two `<span style>` fragments (the "lahars" case) — required
+ *   for epubcheck (no duplicate ids) and for SMIL alignment (Whisper emits
+ *   one timestamp for the spoken word).
+ * - Otherwise (reflowable), walk text nodes and wrap each word, preserving
+ *   inline elements (`<em>`, `<strong>`, glossary spans) verbatim.
+ *
+ * `<img data-id="…">` is skipped: image audio (alt-text descriptions)
+ * doesn't currently flow through the EPUB media overlay pipeline.
+ *
+ * Runs on the HTML *before* `htmlToXhtml` so the subsequent XHTML
+ * normaliser handles void-tag closing for us — keeps this function from
+ * needing its own XML serializer.
+ */
+export function wrapWordSpans(html: string): string {
+  const dom = new JSDOM(html)
+  const doc = dom.window.document
+
+  for (const el of Array.from(doc.querySelectorAll("[data-id]"))) {
+    if (el.tagName.toLowerCase() === "img") continue
+    const dataId = el.getAttribute("data-id")
+    if (!dataId) continue
+
+    const segmentsAttr = el.getAttribute("data-segments")
+    if (segmentsAttr) {
+      wrapBySegments(el, dataId, segmentsAttr, doc)
+    } else {
+      const counter = { idx: 0 }
+      wrapTextNodes(el, dataId, counter, doc)
+    }
+  }
+
+  return dom.serialize()
+}
+
+/**
+ * Fixed-layout path: re-emit the paragraph's children from `data-segments`,
+ * tokenising the concatenated segment text and using positional overlap to
+ * split words across style runs where needed. Replaces the paragraph's
+ * existing inner DOM — caller has already filtered out `img[data-id]`.
+ */
+function wrapBySegments(
+  parent: Element,
+  dataId: string,
+  segmentsAttr: string,
+  doc: Document,
+): void {
+  let segments: { text?: string; style?: Record<string, string> }[]
+  try {
+    segments = JSON.parse(segmentsAttr)
+  } catch {
+    return
+  }
+  if (!Array.isArray(segments) || segments.length === 0) return
+
+  const concatText = segments.map((s) => s?.text ?? "").join("")
+  const segOffsets: number[] = []
+  {
+    let cursor = 0
+    for (const s of segments) {
+      segOffsets.push(cursor)
+      cursor += (s?.text ?? "").length
+    }
+  }
+
+  // Build the styled `<span>` pieces that cover [start, end) in concat
+  // coordinates. Each style run becomes one span; adjacent runs stay
+  // separate so the visual styling survives intact.
+  const buildPieces = (start: number, end: number): Element[] => {
+    const out: Element[] = []
+    for (let i = 0; i < segments.length; i++) {
+      const segStart = segOffsets[i]
+      const segText = segments[i]?.text ?? ""
+      const segEnd = segStart + segText.length
+      if (segEnd <= start) continue
+      if (segStart >= end) break
+      const slice = segText.slice(
+        Math.max(start, segStart) - segStart,
+        Math.min(end, segEnd) - segStart,
+      )
+      if (slice.length === 0) continue
+      const styleStr = segments[i]?.style ? styleMapToInline(segments[i].style!) : ""
+      if (styleStr) {
+        const span = doc.createElement("span")
+        span.setAttribute("style", styleStr)
+        span.appendChild(doc.createTextNode(slice))
+        out.push(span)
+      } else {
+        // Wrap unstyled text in a span so callers always get Element nodes;
+        // the only consumer (appendChild loop below) handles both.
+        const span = doc.createElement("span")
+        span.appendChild(doc.createTextNode(slice))
+        out.push(span)
+      }
+    }
+    return out
+  }
+
+  // Clear and re-emit.
+  while (parent.firstChild) parent.removeChild(parent.firstChild)
+
+  let wordIdx = 0
+  for (const tok of tokenizeWords(concatText)) {
+    if (tok.type === "separator") {
+      // Separators (whitespace, punctuation) emit bare so word boxes stay
+      // tight; surrounding glyphs don't inherit a segment's font metrics.
+      if (tok.text.length > 0) {
+        parent.appendChild(doc.createTextNode(tok.text))
+      }
+      continue
+    }
+    wordIdx += 1
+    const wordId = `${dataId}_w${String(wordIdx).padStart(3, "0")}`
+    const wrap = doc.createElement("span")
+    wrap.setAttribute("id", wordId)
+    for (const piece of buildPieces(tok.start, tok.end)) wrap.appendChild(piece)
+    parent.appendChild(wrap)
+  }
+}
+
+function wrapTextNodes(
+  parent: Element,
+  dataId: string,
+  counter: { idx: number },
+  doc: Document,
+): void {
+  // Snapshot children so the mutation below doesn't disturb iteration.
+  for (const child of Array.from(parent.childNodes)) {
+    if (child.nodeType === 3 /* TEXT_NODE */) {
+      const text = child.textContent ?? ""
+      if (text.length === 0) continue
+      const fragment = doc.createDocumentFragment()
+      for (const tok of tokenizeWords(text)) {
+        if (tok.type === "separator") {
+          fragment.appendChild(doc.createTextNode(tok.text))
+        } else {
+          counter.idx += 1
+          const wordId = `${dataId}_w${String(counter.idx).padStart(3, "0")}`
+          const span = doc.createElement("span")
+          span.setAttribute("id", wordId)
+          span.appendChild(doc.createTextNode(tok.text))
+          fragment.appendChild(span)
+        }
+      }
+      child.parentNode!.replaceChild(fragment, child)
+    } else if (child.nodeType === 1 /* ELEMENT_NODE */) {
+      // Recurse — inline tags (em, strong, glossary span…) wrap whole words
+      // in practice. A word that crosses an inline boundary would split
+      // across two word ids, mirroring the rare-case Whisper behaviour.
+      wrapTextNodes(child as Element, dataId, counter, doc)
+    }
+  }
+}
+
+/**
  * Convert an HTML content page to well-formed XHTML for EPUB 3.
  *
  * - Adds XML declaration and XHTML namespace
  * - Converts HTML to XML-safe markup (self-closing tags, etc.)
  * - Preserves all inline styles and content
+ * - Mirrors `data-id` to `id` so SMIL fragment refs resolve in EPUB readers
+ * - Wraps words in `<span id="…_wNNN">` so SMIL word-level fragments resolve
  */
 function convertPageToXhtml(html: string): string {
-  // Extract the content between <html> and </html>, converting the body
-  const xhtmlBody = htmlToXhtml(html)
+  // Wrap words first on raw HTML (JSDOM is forgiving there); subsequent
+  // htmlToXhtml normalises void-tag closing and entity references for the
+  // EPUB consumer. Then mirror data-id → id for paragraph-level fragments.
+  const xhtmlBody = mirrorDataIdToId(htmlToXhtml(wrapWordSpans(html)))
 
   // The htmlToXhtml parser strips the doctype and may mangle the html tag.
   // Rebuild a clean XHTML document with proper namespace.

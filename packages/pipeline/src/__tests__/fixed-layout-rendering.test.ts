@@ -379,12 +379,11 @@ describe("renderFixedLayoutPage", () => {
 
     expect(html).toContain('data-id="pg001_p000"')
     expect(html).toContain('data-id="pg001_p001"')
-    // Words are wrapped in per-word <span id>; check first + last word
-    // of each paragraph rather than the contiguous string.
-    expect(html).toContain(">I</span>")
-    expect(html).toContain(">girl.</span>")
-    expect(html).toContain(">My</span>")
-    expect(html).toContain(">Sue.</span>")
+    // Renderer emits a structural shell — one styled <span style> per
+    // segment, no per-word wrapping. Word ids are added downstream by
+    // wrapWordSpans (packaging) and wrapTextInSpans (live viewer).
+    expect(html).toContain(">I am a little girl.</span>")
+    expect(html).toContain(">My name is Sue.</span>")
   })
 
   it("emits width + text-align on a paragraph that carries blockBounds", () => {
@@ -700,78 +699,19 @@ describe("renderFixedLayoutPage", () => {
     ])
   })
 
-  it("wraps each word in <span id> derived from the paragraph nodeId", () => {
+  it("emits one styled <span> per segment as a structural shell (no word ids)", () => {
+    // The renderer produces a translation-friendly structural shell. Word
+    // ids — required by SMIL fragment refs and the in-viewer highlighter —
+    // are added downstream by wrapWordSpans (packaging) and wrapTextInSpans
+    // (live viewer), each consuming the data-segments JSON.
     const html = renderFixedLayoutPage(makeSection(), "/images").sections[0].html
-
-    // "I am a little girl." → 5 words → ids _w001 .. _w005 on pg001_p000.
-    // Each word span wraps the per-run <span style> fragment(s) (here a
-    // single styled run per word).
-    expect(html).toMatch(/<span id="pg001_p000_w001"><span style="[^"]*">I<\/span><\/span>/)
-    expect(html).toMatch(/<span id="pg001_p000_w002"><span style="[^"]*">am<\/span><\/span>/)
-    expect(html).toMatch(/<span id="pg001_p000_w003"><span style="[^"]*">a<\/span><\/span>/)
-    expect(html).toMatch(/<span id="pg001_p000_w004"><span style="[^"]*">little<\/span><\/span>/)
-    expect(html).toMatch(/<span id="pg001_p000_w005"><span style="[^"]*">girl\.<\/span><\/span>/)
-    // Numbering restarts per paragraph.
-    expect(html).toMatch(/<span id="pg001_p001_w001"><span style="[^"]*">My<\/span><\/span>/)
+    expect(html).not.toMatch(/<span id="pg001_p000_w\d+"/)
+    // Single styled <span> for the single-run paragraph.
+    expect(html).toMatch(/<span style="[^"]*">I am a little girl\.<\/span>/)
+    expect(html).toMatch(/<span style="[^"]*">My name is Sue\.<\/span>/)
   })
 
-  it("keeps whitespace between word spans (so word boxes stay tight)", () => {
-    const html = renderFixedLayoutPage(makeSection(), "/images").sections[0].html
-
-    // The space between "I" and "am" must sit OUTSIDE the word spans —
-    // otherwise word measurement (and any per-word styling later) picks up
-    // surrounding whitespace.
-    expect(html).toMatch(
-      /<span id="pg001_p000_w001"><span style="[^"]*">I<\/span><\/span> <span id="pg001_p000_w002"><span style="[^"]*">am<\/span><\/span>/,
-    )
-  })
-
-  it("keeps a word split across style runs as ONE word span wrapping the run fragments", () => {
-    // A single coloured letter inside a word ("la" + white "h" + "ars" →
-    // "lahars") must NOT produce one word id per fragment — Whisper emits
-    // one timestamp for the spoken word, so extra ids would force the
-    // SMIL/viewer count guard to fall back to block-level highlighting,
-    // and reusing one id across fragments is an epubcheck duplicate-id.
-    const baseStyle = { "font-family": "Palatino,serif", "font-size": "48px", color: "#000000" }
-    const whiteStyle = { ...baseStyle, color: "#ffffff" }
-    const section = sectionFixedLayoutPage({
-      pageId: "pg001",
-      pageNumber: 1,
-      viewport,
-      drawItems: [
-        { kind: "image", imageId: "pg001_im001", bounds: { x: 0, y: 0, width: 400, height: 300 } },
-        {
-          kind: "paragraph",
-          textId: "pg001_p000",
-          top: 100,
-          left: 72,
-          lineHeight: 48,
-          segments: [
-            { text: "the la", style: baseStyle },
-            { text: "h", style: whiteStyle },
-            { text: "ars came", style: baseStyle },
-          ],
-          text: "the lahars came",
-        },
-      ],
-      availableImageIds: new Set(["pg001_im001"]),
-    }).sections[0]
-
-    const html = renderFixedLayoutPage(section, "/images").sections[0].html
-
-    // "the" "lahars" "came" → exactly 3 word ids (the old per-fragment
-    // tokenisation would have produced 5: the / la / h / ars / came).
-    expect(html).toContain('<span id="pg001_p000_w001">')
-    expect(html).toContain('<span id="pg001_p000_w002">')
-    expect(html).toContain('<span id="pg001_p000_w003">')
-    expect(html).not.toContain("pg001_p000_w004")
-    // The split word is one `<span id>` wrapping the three styled fragments.
-    expect(html).toMatch(
-      /<span id="pg001_p000_w002"><span style="[^"]*color:#000000[^"]*">la<\/span><span style="[^"]*color:#ffffff[^"]*">h<\/span><span style="[^"]*color:#000000[^"]*">ars<\/span><\/span>/,
-    )
-  })
-
-  it("numbers words across segments within the same paragraph", () => {
+  it("preserves per-segment styling across multiple runs", () => {
     const palatinoBlackStyle = {
       "font-family": "Palatino,serif",
       "font-size": "48px",
@@ -803,20 +743,11 @@ describe("renderFixedLayoutPage", () => {
 
     const html = renderFixedLayoutPage(section, "/images").sections[0].html
 
-    // Sequential ids span across segment boundaries (no reset per styled run).
-    expect(html).toMatch(/<span id="pg001_p000_w001"><span style="[^"]*">There<\/span><\/span>/)
-    expect(html).toMatch(/<span id="pg001_p000_w002"><span style="[^"]*">are<\/span><\/span>/)
-    expect(html).toMatch(/<span id="pg001_p000_w003"><span style="[^"]*">long,<\/span><\/span>/)
-    expect(html).toMatch(/<span id="pg001_p000_w004"><span style="[^"]*">yellow<\/span><\/span>/)
-    expect(html).toMatch(/<span id="pg001_p000_w005"><span style="[^"]*">bookshelves\.<\/span><\/span>/)
-
-    // The per-word <span id> wraps the per-run <span style> fragment(s), so
-    // a word lying entirely in a coloured run keeps a single id and the
-    // run's style cascades to it. The trailing space stays outside the word
-    // span.
-    expect(html).toMatch(
-      /<span id="pg001_p000_w004"><span style="[^"]*color:#fff200[^"]*">yellow<\/span><\/span> /,
-    )
+    // One <span style> per source segment; mid-paragraph coloured run
+    // survives intact for the downstream word-wrap to see.
+    expect(html).toMatch(/<span style="[^"]*color:#000000[^"]*">There are long, <\/span>/)
+    expect(html).toMatch(/<span style="[^"]*color:#fff200[^"]*">yellow <\/span>/)
+    expect(html).toMatch(/<span style="[^"]*color:#000000[^"]*">bookshelves\.<\/span>/)
   })
 
   it("renders visible text (no transparent fallback)", () => {
