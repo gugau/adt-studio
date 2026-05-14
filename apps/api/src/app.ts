@@ -42,14 +42,6 @@ const configFolderPath = path.resolve(
   process.env.CONFIG_FOLDER_PATH ?? path.join(projectRoot, "config")
 )
 
-console.table({
-  path: projectRoot,
-  booksDir,
-  promptsDir,
-  configPath,
-  configFolderPath,
-})
-
 let webAssetsDir: string
 const adtResourcesZip = process.env.ADT_RESOURCES_ZIP
 if (adtResourcesZip && fs.existsSync(adtResourcesZip)) {
