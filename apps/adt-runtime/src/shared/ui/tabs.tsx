@@ -28,7 +28,7 @@ const tabsListVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-muted h-10",
+        default: "bg-muted h-11",
         line: "gap-1 bg-transparent",
       },
     },
@@ -75,7 +75,7 @@ function TabsContent({ className, ...props }: TabsPrimitive.Panel.Props) {
       data-slot="tabs-content"
       className={cn(
         // Callers wrap content in `<ScrollArea>` when overflow is expected.
-        "flex-1 min-h-0 text-sm outline-none",
+        "flex-1 min-h-0 text-base outline-none",
         className,
       )}
       {...props}

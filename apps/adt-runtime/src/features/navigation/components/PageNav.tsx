@@ -72,9 +72,9 @@ export function PageNav() {
         disabled={!prev}
         onClick={() => go(prev?.href)}
       >
-        <ChevronLeft className="w-4 h-4" />
+        <ChevronLeft />
       </DockIconButton>
-      <div className="min-w-12 flex text-xs tabular-nums px-2 text-foreground/80 select-none">
+      <div className="min-w-12 flex text-base tabular-nums px-2 text-foreground/80 select-none">
         <span className="font-medium text-foreground">{pageNumber ?? ""}</span>
         <span className="text-muted-foreground"> /</span>
         {totalPages > 0 && (
@@ -86,7 +86,7 @@ export function PageNav() {
         disabled={!next}
         onClick={() => go(next?.href)}
       >
-        <ChevronRight className="w-4 h-4" />
+        <ChevronRight />
       </DockIconButton>
     </div>
   );

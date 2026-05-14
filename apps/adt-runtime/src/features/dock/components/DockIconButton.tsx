@@ -51,7 +51,7 @@ export function DockIconButton({
               "disabled:opacity-30 disabled:hover:bg-transparent",
               "data-[state=open]:bg-accent data-[state=open]:text-accent-foreground",
               "aria-pressed:bg-accent aria-pressed:text-accent-foreground",
-              size === "sm" ? "h-7 w-7" : "h-10 w-10",
+              size === "sm" ? "h-7 w-7" : "h-11 w-11",
               className,
             )}
             {...props}

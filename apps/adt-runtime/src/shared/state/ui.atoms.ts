@@ -16,9 +16,9 @@ export type DockWidth = "full" | "compact"
 export type DockPosition = "top" | "bottom"
 export type DockAlign = "spread" | "center"
 
-export const dockWidthAtom = persistedStringAtom("dockWidth", "compact")
+export const dockWidthAtom = persistedStringAtom("dockWidth", "full")
 export const dockPositionAtom = persistedStringAtom("dockPosition", "bottom")
-export const dockAlignAtom = persistedStringAtom("dockAlign", "center")
+export const dockAlignAtom = persistedStringAtom("dockAlign", "spread")
 
 
 export type IconSize = "sm" | "md" | "lg"
@@ -26,7 +26,7 @@ export const iconSizeAtom = persistedStringAtom("iconSize", "md")
 export const reduceMotionAtom = persistedBoolAtom("reduceMotion", false)
 
 export type Theme = "light" | "dark" | "system"
-export const themeAtom = persistedStringAtom("theme", "system")
+export const themeAtom = persistedStringAtom("theme", "dark")
 
 
 export const dockReadyAtom = ephemeralAtom(false)
@@ -59,5 +59,5 @@ export interface SlVideoPosition {
 }
 export const slVideoPositionAtom = persistedJsonAtom<SlVideoPosition | null>(
   "slVideoPosition",
-  null,
+  null
 )

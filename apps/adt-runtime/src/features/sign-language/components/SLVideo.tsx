@@ -132,7 +132,7 @@ export function SLVideo() {
         "bg-black rounded-lg shadow-lg overflow-hidden z-[55]",
         "transition-shadow",
         isDragging && "shadow-2xl ring-2 ring-primary",
-        !positioned && "bottom-20 left-4",
+        !positioned && "bottom-20 right-4",
       )}
     >
       <div

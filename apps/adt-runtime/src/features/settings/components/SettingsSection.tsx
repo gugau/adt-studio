@@ -21,11 +21,11 @@ export function SettingsSection({
   return (
     <section className={cn("flex flex-col gap-1 py-4", className)}>
       <header className="flex flex-col gap-0.5 pb-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h3 className="text-base font-semibold uppercase tracking-wider text-muted-foreground">
           {title}
         </h3>
         {description ? (
-          <p className="text-xs text-muted-foreground/80">{description}</p>
+          <p className="text-base text-muted-foreground/80">{description}</p>
         ) : null}
       </header>
       <div className="flex flex-col rounded-xl border border-border bg-card  px-3">

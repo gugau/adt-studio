@@ -53,7 +53,7 @@ export function SegmentedRow<T extends string>({
               aria-checked={active}
               onClick={() => onChange(opt.value)}
               className={cn(
-                "px-3 py-1 text-sm rounded-md transition-colors duration-150",
+                "px-4 py-2 text-base rounded-md transition-colors duration-150",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 active
                   ? "bg-background text-foreground shadow-sm"
