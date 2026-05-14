@@ -7,7 +7,7 @@ import {
   isWordHighlightEnabled,
   normalizeGlossaryText,
   shouldUseBlockPlaybackHighlight,
-} from "@/features/audio/lib/tokenizer"
+} from "./tokenizer"
 
 describe("tts tokenizer", () => {
   it("preserves punctuation and spacing in the render plan", () => {

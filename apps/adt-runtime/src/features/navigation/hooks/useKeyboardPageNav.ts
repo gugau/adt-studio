@@ -21,17 +21,7 @@ import {
   type PageEntry,
 } from "@/features/navigation/state/nav.atoms"
 import { dockMenuValueAtom, sidebarOpenAtom } from "@/shared/state/ui.atoms"
-
-function isTypingTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false
-  const tag = target.tagName
-  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true
-  if (target.isContentEditable) return true
-  // Quiz options listen to arrow keys for radio-group navigation in the
-  // legacy a11y pattern; let them keep the keystroke when focused.
-  if (target.closest("[data-activity-item]")) return true
-  return false
-}
+import { isTypingTarget } from "@/features/navigation/lib/typing-target"
 
 function isAnyModalOpen(): boolean {
   if (typeof document === "undefined") return false
