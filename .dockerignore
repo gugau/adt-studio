@@ -26,9 +26,8 @@ Thumbs.db
 *.swp
 *.swo
 
-# Claude Code / AI config
+# AI agent config
 .claude/
-CLAUDE.md
 AGENTS.md
 
 # Logs

@@ -23,7 +23,8 @@
     "a11y:regression": "tsx scripts/run-curated-a11y-regression.ts --build",
     "a11y:regression:json": "tsx scripts/run-curated-a11y-regression.ts --build --format json",
     "a11y:browser-recheck": "tsx scripts/run-browser-a11y-recheck.ts --build",
-    "a11y:browser-recheck:json": "tsx scripts/run-browser-a11y-recheck.ts --build --format json"
+    "a11y:browser-recheck:json": "tsx scripts/run-browser-a11y-recheck.ts --build --format json",
+    "agent": "node scripts/install-agent.mjs"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.2",

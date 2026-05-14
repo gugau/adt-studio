@@ -402,8 +402,8 @@ Notes:
 |----------|-------------|
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture, package graph, pipeline model, data flow |
 | [docs/DEVELOPER-GUIDE.md](docs/DEVELOPER-GUIDE.md) | Hosting guide and developer extension reference for third-party teams |
-| [CLAUDE.md](CLAUDE.md) | Claude Code project configuration |
-| [AGENTS.md](AGENTS.md) | Specialized agent definitions |
+| [AGENTS.md](AGENTS.md) | Project instructions for AI coding agents (Claude Code, Codex, Cursor, etc.) |
+| [docs/AGENT_ROLES.md](docs/AGENT_ROLES.md) | Reference role definitions for focused agent tasks |
 | [docs/GUIDELINES.md](docs/GUIDELINES.md) | Full coding standards, security, patterns |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Architecture decision records with reasoning |
 | [docs/architecture.html](docs/architecture.html) | Interactive architecture diagram (open in browser) |

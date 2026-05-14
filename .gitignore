@@ -35,6 +35,15 @@ Thumbs.db
 # Claude Code (personal settings only — .claude/settings.json is shared)
 .claude/settings.local.json
 
+# AI agent rule files — generated locally via `pnpm agent <name>` to point at
+# AGENTS.md. AGENTS.md is the canonical source and stays tracked.
+CLAUDE.md
+CLAUDE.local.md
+.cursorrules
+.windsurfrules
+.clinerules
+.github/copilot-instructions.md
+
 # Tauri build output
 **/src-tauri/target/
 
