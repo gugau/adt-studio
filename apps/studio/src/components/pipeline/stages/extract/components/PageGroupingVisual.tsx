@@ -9,16 +9,16 @@ const PAGE_LABELS = ["P1", "P2", "P3", "P4", "P5"] as const
 export function PageGroupingVisual() {
   return (
     <div className="flex flex-col gap-3 py-1">
-      <DiagramWithLabel label={<Trans>Spread</Trans>}>
-        <SpreadPagesDiagram />
+      <DiagramWithLabel label={<Trans>Single</Trans>}>
+        <SinglePagesDiagram />
       </DiagramWithLabel>
       <div
         className="mx-auto h-px w-16"
         style={{ background: ACCENT_VAR, opacity: 0.18 }}
         aria-hidden
       />
-      <DiagramWithLabel label={<Trans>Single</Trans>}>
-        <SinglePagesDiagram />
+      <DiagramWithLabel label={<Trans>Spread</Trans>}>
+        <SpreadPagesDiagram />
       </DiagramWithLabel>
     </div>
   )

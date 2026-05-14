@@ -63,8 +63,8 @@ export function ExtractLandingPage({ bookLabel }: { bookLabel: string }) {
 
   const spreadOptions = useMemo(
     () => [
-      { value: "spread" as const, label: t`Spread` },
       { value: "single" as const, label: t`Single` },
+      { value: "spread" as const, label: t`Spread` },
     ],
     [t],
   )
