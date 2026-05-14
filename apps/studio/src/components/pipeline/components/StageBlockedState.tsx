@@ -46,28 +46,28 @@ export function StageBlockedState({ bookLabel, reason, stageLabel }: StageBlocke
         }
 
   return (
-    <div className="flex h-full min-h-[360px] w-full items-center justify-center p-6">
+    <div className="flex h-full min-h-[420px] w-full items-center justify-center p-8">
       <div
         className={cn(
-          "relative flex max-w-md flex-col items-center gap-6 overflow-hidden rounded-2xl border border-[#ececec] bg-white px-8 py-9 text-center shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.12)]",
+          "relative flex max-w-xl flex-col items-center gap-8 px-8 py-10 text-center",
           "motion-safe:animate-in motion-safe:fade-in-50 motion-safe:zoom-in-95 motion-safe:duration-500 motion-safe:ease-out",
         )}
       >
         <div className="relative">{config.illustration}</div>
 
-        <div className="relative flex flex-col items-center gap-2">
+        <div className="relative flex flex-col items-center gap-2.5">
           <span
             className={cn(
-              "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+              "rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
               config.tagClass,
             )}
           >
             {config.tag}
           </span>
-          <h2 className="text-[17px] font-semibold leading-tight tracking-tight text-[#0a0a0a]">
+          <h2 className="text-[22px] font-semibold leading-tight tracking-tight text-[#0a0a0a]">
             {config.title}
           </h2>
-          <p className="w-[34ch] text-[13.5px] leading-relaxed text-balance text-[#525252]">
+          <p className="w-[42ch] text-[14.5px] leading-relaxed text-balance text-[#525252]">
             {config.body}
           </p>
         </div>
@@ -75,11 +75,11 @@ export function StageBlockedState({ bookLabel, reason, stageLabel }: StageBlocke
         <Link
           to="/books/$label/$step"
           params={{ label: bookLabel, step: "storyboard" }}
-          className="group relative inline-flex items-center gap-1.5 rounded-md bg-violet-600 px-3.5 py-2 text-[12.5px] font-medium text-white shadow-sm transition-colors hover:bg-violet-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+          className="group relative inline-flex items-center gap-1.5 rounded-md bg-violet-600 px-5 py-2.5 text-[13.5px] font-medium text-white shadow-sm transition-colors hover:bg-violet-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
         >
           {config.ctaLabel}
           <ArrowRight
-            className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+            className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
             strokeWidth={2.5}
             aria-hidden
           />
@@ -91,7 +91,7 @@ export function StageBlockedState({ bookLabel, reason, stageLabel }: StageBlocke
 
 function StoryboardMissingIllustration() {
   return (
-    <div className="relative h-[148px] w-[180px]">
+    <div className="relative h-[200px] w-[244px]">
       <svg
         viewBox="0 0 180 148"
         className="absolute inset-0 h-full w-full"
@@ -204,7 +204,7 @@ function StoryboardMissingIllustration() {
 
 function AllPrunedIllustration() {
   return (
-    <div className="relative h-[148px] w-[180px]">
+    <div className="relative h-[200px] w-[244px]">
       <svg
         viewBox="0 0 180 148"
         className="absolute inset-0 h-full w-full"
@@ -310,8 +310,8 @@ function AllPrunedIllustration() {
       </svg>
 
       {/* Scissors badge floats above the SVG with proper depth */}
-      <span className="absolute right-2 top-4 flex h-9 w-9 rotate-[20deg] items-center justify-center rounded-full bg-violet-600 text-white shadow-[0_4px_12px_rgba(124,58,237,0.4)] ring-4 ring-white">
-        <Scissors className="h-4 w-4" strokeWidth={2.25} aria-hidden />
+      <span className="absolute right-3 top-6 flex h-12 w-12 rotate-[20deg] items-center justify-center rounded-full bg-violet-600 text-white shadow-[0_6px_16px_rgba(124,58,237,0.4)] ring-4 ring-white">
+        <Scissors className="h-5 w-5" strokeWidth={2.25} aria-hidden />
       </span>
     </div>
   )
