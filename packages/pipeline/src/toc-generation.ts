@@ -164,7 +164,7 @@ export async function generateToc(
       headings: headings.map((h) => ({
         sectionId: h.sectionId,
         title: h.title,
-        roleType: h.roleType,
+        textType: h.roleType,
       })),
       // Dynamic mode ignores the original TOC even when one is present —
       // the model rewrites titles from heading text instead of mirroring
