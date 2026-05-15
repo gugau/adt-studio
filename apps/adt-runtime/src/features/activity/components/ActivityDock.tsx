@@ -9,7 +9,11 @@ export function ActivityDock() {
   const { t } = useTranslation();
   const { isCompact, shouldHide, isTop } = useDockContext();
   const activityMode = useAtomValue(activityModeAtom);
+  const topClassname = isCompact ? "top-21" : "top-18";
+  const bottomClassname = isCompact ? "bottom-21" : "bottom-18";
+
   if (!activityMode) return null;
+
 
   return (
     <div
@@ -21,7 +25,7 @@ export function ActivityDock() {
         "transition-all duration-200 ease-out will-change-transform",
         "rounded-2xl",
         "fixed z-[56] h-auto left-0 right-0 mx-auto",
-        isCompact ? `${isTop ? "top" : "bottom" }-21` : `${isTop ? "top" : "bottom" }-18`,
+        isTop ? topClassname : bottomClassname,
         shouldHide && "opacity-0 pointer-events-none",
         shouldHide && (isTop ? "-translate-y-[150%]" : "translate-y-[150%]"),
       )}
