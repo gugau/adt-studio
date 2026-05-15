@@ -36,7 +36,7 @@ function Search({ className, ...props }: SearchProps) {
         type="text"
         placeholder={t("search-placeholder") || "Search"}
         aria-label={t("search-placeholder") || "Search"}
-        className="w-full h-9 pl-8 pr-2 text-sm rounded-lg bg-muted/50 border border-input outline-none focus:ring-2 focus:ring-ring"
+        className="w-full h-11 pl-8 pr-2 text-base rounded-lg bg-muted/50 border border-input outline-none focus:ring-2 focus:ring-ring"
         {...props}
       />
     </div>

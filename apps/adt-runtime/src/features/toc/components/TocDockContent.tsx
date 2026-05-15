@@ -104,7 +104,7 @@ function TocList({
                 window.location.href = entry.href;
               }}
               className={cn(
-                "w-full text-left rounded-md px-2.5 py-1.5 text-sm",
+                "w-full text-left rounded-md px-2.5 py-1.5 text-base",
                 "hover:bg-accent hover:text-accent-foreground",
                 "focus:outline-none focus:bg-accent focus:text-accent-foreground",
                 "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
@@ -182,7 +182,7 @@ function PageList({
           <Fragment key={page.section_id}>
             {chapterHeading ? (
               <li
-                className="mx-1 pt-3 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                className="mx-1 pt-3 pb-1 text-sm font-semibold tracking-wide text-muted-foreground uppercase"
                 data-chapter-id={chapterHeading.chapter_id || undefined}
               >
                 {chapterHeading.title}
@@ -198,7 +198,7 @@ function PageList({
                 title={ariaLabel}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "w-full flex items-center justify-between gap-3 px-2.5 py-1.5 rounded-md text-sm text-left",
+                  "w-full flex items-center justify-between gap-3 px-2.5 py-1.5 rounded-md text-base text-left",
                   "hover:bg-accent hover:text-accent-foreground",
                   "focus:outline-none focus:bg-accent focus:text-accent-foreground",
                   "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",

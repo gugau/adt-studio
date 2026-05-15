@@ -4,7 +4,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { ScrollArea } from "@/shared/ui/scroll-area";
 import { ToggleRow } from "@/features/settings/components/ToggleRow";
 import { TermDetails } from "@/features/glossary/components/TermDetails";
-import { glossaryDataAtom, glossaryFilterAtom } from "@/features/glossary/state/glossary.atoms";
+import {
+  glossaryDataAtom,
+  glossaryFilterAtom,
+} from "@/features/glossary/state/glossary.atoms";
 import {
   activeGlossaryTabAtom,
   dockMenuValueAtom,
@@ -142,14 +145,19 @@ function ListItems({
           <button
             type="button"
             onClick={() => onSelect(entry.word)}
-            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-accent transition-colors border-b border-border focus:outline-none focus:bg-accent"
+            className="w-full flex flex-col items-start gap-3 px-4 py-3 text-left hover:bg-accent transition-colors border-b border-border focus:outline-none focus:bg-accent"
           >
-            {entry.emoji ? (
+            {entry.emoji && (
               <span className="text-2xl shrink-0" aria-hidden>
                 {entry.emoji}
               </span>
-            ) : null}
-            <span className="flex-1 text-base font-medium">{entry.word}</span>
+            )}
+            <span className="flex-1 text-base font-medium capitalize">
+              {entry.word}
+            </span>
+            <span className="flex-1 text-base font-medium">
+              {entry.definition}
+            </span>
           </button>
         </li>
       ))}

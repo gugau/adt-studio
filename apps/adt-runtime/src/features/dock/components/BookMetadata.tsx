@@ -66,13 +66,13 @@ export function BookMetadata({
                 "disabled:opacity-30 disabled:hover:bg-transparent",
                 "data-[state=open]:bg-accent data-[state=open]:text-accent-foreground",
                 "aria-pressed:bg-accent aria-pressed:text-accent-foreground",
-                "h-11 gap-2 px-3",
+                "h-11 gap-3 px-3 max-w-64",
                 className,
               )}
               onClick={() => toggle("toc")}
             >
               <List className="size-6" />
-              <span className="text-sm font-medium truncate max-w-[16rem]">
+              <span className="text-base text-left font-medium truncate w-full">
                 {displayTitle}
               </span>
             </button>

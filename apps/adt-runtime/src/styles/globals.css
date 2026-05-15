@@ -94,10 +94,10 @@
  * land in the per-book Tailwind output too.
  */
 
-body[nav-size="full"][nav-position="top"] {
+body[nav-position="top"] {
   padding-top: var(--nav-height);
 }
-body[nav-size="full"][nav-position="bottom"] {
+body[nav-position="bottom"] {
   padding-bottom: var(--nav-height);
 }
 

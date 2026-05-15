@@ -48,7 +48,7 @@ export function LanguageContent({ onSelect }: LanguageContentProps) {
                     onSelect?.()
                   }}
                   className={cn(
-                    "w-full text-left px-2.5 py-2 rounded-lg text-sm",
+                    "w-full text-left px-2.5 py-2 rounded-lg text-base",
                     "hover:bg-accent hover:text-accent-foreground",
                     "focus:outline-none focus:bg-accent focus:text-accent-foreground",
                     "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
@@ -62,7 +62,7 @@ export function LanguageContent({ onSelect }: LanguageContentProps) {
             )
           })}
           {filtered.length === 0 ? (
-            <li className="px-2.5 py-2 text-sm text-muted-foreground">
+            <li className="px-2.5 py-2 text-base text-muted-foreground">
               {t("language-search-empty") || "No matches"}
             </li>
           ) : null}
