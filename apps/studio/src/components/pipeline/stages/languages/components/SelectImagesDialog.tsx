@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Check, Images, X, Search, Loader2, Maximize2 } from "lucide-react"
+import { Check, Clock, Images, X, Search, Loader2, Maximize2 } from "lucide-react"
 import { api, BASE_URL } from "@/api/client"
 import { useLingui } from "@lingui/react/macro"
 import { ImageLightbox } from "./ImageLightbox"
@@ -92,6 +92,17 @@ export function SelectImagesDialog({
           <p className="text-xs text-muted-foreground">
             {t`Only images that appear in the storyboard are listed. The selected images will be regenerated for each output language with their text translated.`}
           </p>
+
+          <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[11.5px] text-amber-800">
+            <Clock
+              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600"
+              strokeWidth={2}
+              aria-hidden
+            />
+            <span>
+              {t`Heads up: regenerating images takes considerably longer than text translation — each selected image is redrawn for every output language.`}
+            </span>
+          </div>
 
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
