@@ -1,3 +1,4 @@
+import { isElectron } from "@/lib/utils"
 import type {
   AccessibilityAssessmentOutput,
   BookDetail,
@@ -12,11 +13,13 @@ import type {
 export type { BookSummary, BookDetail }
 
 export function resolveBaseUrl(
-  loc: Pick<Location, "protocol" | "hostname"> = window.location,
+  _loc: Pick<Location, "protocol" | "hostname"> = window.location,
 ): string {
-  if (loc.protocol === "tauri:" || loc.hostname === "tauri.localhost") {
-    return "http://localhost:3001/api"
+  if (isElectron()) {
+    const apiPort = window.api.apiPort
+    return `http://localhost:${apiPort}/api`
   }
+
   return "/api"
 }
 
@@ -42,6 +45,13 @@ export function getAudioUrl(
 
 export function getSignLanguageVideoUrl(label: string, videoId: string): string {
   return `${BASE_URL}/books/${label}/sign-language-videos/${videoId}`
+}
+
+export function getBookCoverUrl(label: string, cacheKey?: string): string {
+  const base = `${BASE_URL}/books/${label}/cover`
+  if (!cacheKey) return base
+  const params = new URLSearchParams({ v: cacheKey })
+  return `${base}?${params.toString()}`
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -243,6 +253,7 @@ export interface GlossaryItem {
   definition: string
   variations: string[]
   emojis: string[]
+  pruned?: boolean
 }
 
 export interface GlossaryOutput {
@@ -1136,7 +1147,7 @@ export const api = {
   },
 
   exportProject: async (label: string): Promise<Blob | null> => {
-    if (!isTauri()) {
+    if (!isDesktop()) {
       triggerDirectDownload(`${BASE_URL}/books/${label}/export-project`)
       return null
     }
@@ -1156,7 +1167,7 @@ export const api = {
   },
 
   exportWebpub: async (label: string): Promise<Blob | null> => {
-    if (!isTauri()) {
+    if (!isDesktop()) {
       triggerDirectDownload(`${BASE_URL}/books/${label}/export-webpub`)
       return null
     }
@@ -1176,7 +1187,7 @@ export const api = {
   },
 
   exportScorm: async (label: string): Promise<Blob | null> => {
-    if (!isTauri()) {
+    if (!isDesktop()) {
       triggerDirectDownload(`${BASE_URL}/books/${label}/export-scorm`)
       return null
     }
@@ -1196,7 +1207,7 @@ export const api = {
   },
 
   exportAdt: async (label: string): Promise<Blob | null> => {
-    if (!isTauri()) {
+    if (!isDesktop()) {
       triggerDirectDownload(`${BASE_URL}/books/${label}/export-adt`)
       return null
     }
@@ -1216,7 +1227,7 @@ export const api = {
   },
 }
 
-function isTauri(): boolean {
+function isDesktop(): boolean {
   return BASE_URL.startsWith("http")
 }
 

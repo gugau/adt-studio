@@ -378,3 +378,11 @@
   --sidebar-border: oklch(0.26 0.03 250);
   --sidebar-ring: oklch(0.45 0.04 250);
 }
+
+.drag-region {
+  -webkit-app-region: drag !important;
+}
+
+.drag-region * {
+  -webkit-app-region: no-drag;
+}

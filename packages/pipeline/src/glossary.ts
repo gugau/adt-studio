@@ -62,16 +62,31 @@ export function isManualGlossaryItem(item: Pick<GlossaryItem, "source">): boolea
   return item.source === "manual"
 }
 
+export function isPrunedGlossaryItem(item: Pick<GlossaryItem, "pruned">): boolean {
+  return item.pruned === true
+}
+
+export function getPrunedGlossaryWords(items: GlossaryItem[]): string[] {
+  return items.filter(isPrunedGlossaryItem).map((item) => item.word)
+}
+
 export function mergeGeneratedGlossaryWithManualItems(
   generated: GlossaryOutput,
   existingItems: GlossaryItem[],
 ): GlossaryOutput {
   const manualItems = existingItems.filter(isManualGlossaryItem)
-  if (manualItems.length === 0) {
-    return generated
-  }
+  const prunedItems = existingItems.filter(
+    (item) => isPrunedGlossaryItem(item) && !isManualGlossaryItem(item),
+  )
+  const prunedWords = new Set(prunedItems.map((item) => normalizeGlossaryWord(item.word)))
 
-  const mergedItems = [...generated.items]
+  // Drop any generated item that matches a pruned word (server-side backstop
+  // in case the LLM ignores the excluded-words instruction).
+  const filteredGenerated = prunedWords.size > 0
+    ? generated.items.filter((item) => !prunedWords.has(normalizeGlossaryWord(item.word)))
+    : generated.items
+
+  const mergedItems = [...filteredGenerated]
   const existingIndexByWord = new Map(
     mergedItems.map((item, index) => [normalizeGlossaryWord(item.word), index]),
   )
@@ -94,6 +109,16 @@ export function mergeGeneratedGlossaryWithManualItems(
       ...manualItem,
       source: "manual",
     })
+  }
+
+  // Re-add pruned AI items so the user can still see / unprune them.
+  const wordsInMerged = new Set(mergedItems.map((item) => normalizeGlossaryWord(item.word)))
+  for (const prunedItem of prunedItems) {
+    const normalizedWord = normalizeGlossaryWord(prunedItem.word)
+    if (!wordsInMerged.has(normalizedWord)) {
+      mergedItems.push({ ...prunedItem, source: prunedItem.source ?? "ai", pruned: true })
+      wordsInMerged.add(normalizedWord)
+    }
   }
 
   return {
@@ -147,13 +172,17 @@ export interface GenerateGlossaryOptions {
   llmModel: LLMModel
   concurrency?: number
   onBatchComplete?: (completed: number, total: number) => void
+  /** Words the LLM should not re-suggest. Items returned matching one of these
+   * are also dropped server-side as a backstop. */
+  excludedWords?: string[]
 }
 
 export async function generateGlossary(
   options: GenerateGlossaryOptions
 ): Promise<GlossaryOutput> {
-  const { storage, pages, config, llmModel, concurrency = 1, onBatchComplete } = options
+  const { storage, pages, config, llmModel, concurrency = 1, onBatchComplete, excludedWords = [] } = options
   const languageContext = buildLanguageContext(config.language)
+  const excludedWordsNormalized = new Set(excludedWords.map(normalizeGlossaryWord))
 
   const pageTexts = collectPageTexts(storage, pages)
   if (pageTexts.length === 0) {
@@ -189,6 +218,7 @@ export async function generateGlossary(
         amount: config.amount ?? "",
         user_instructions: config.userPrompt ?? "",
         seed_terms: seedWords,
+        excluded_words: excludedWords,
       },
       maxRetries: config.maxRetries,
       maxTokens: 16384,
@@ -203,10 +233,13 @@ export async function generateGlossary(
     onBatchComplete?.(completed, batches.length)
   })
 
-  // Deduplicate: first definition wins, case-insensitive
+  // Deduplicate: first definition wins, case-insensitive. Drop any item whose
+  // word matches the caller-supplied exclusion list (backstop in case the LLM
+  // ignores the prompt instruction).
   const seen = new Map<string, GlossaryItem>()
   for (const item of allItems) {
     const key = item.word.toLowerCase()
+    if (excludedWordsNormalized.has(normalizeGlossaryWord(item.word))) continue
     if (!seen.has(key)) {
       seen.set(key, item)
     }

@@ -113,6 +113,8 @@ export const AppConfig = z
     quiz_generation: QuizGenerationConfig.optional(),
     default_render_strategy: z.string().optional(),
     render_strategies: z.record(z.string(), RenderStrategyConfig).optional(),
+    visual_review_prompt: z.string().optional(),
+    visual_review_max_iterations: z.number().int().min(1).max(50).optional(),
     section_render_strategies: z.record(z.string(), z.string()).optional(),
     storyboard_effort: z.enum(["high", "medium", "relaxed"]).optional(),
     storyboard_activity_mode: z
@@ -157,6 +159,7 @@ export const AppConfig = z
     spread_mode: z.boolean().optional(),
     vector_text_grouping: z.boolean().optional(),
     apply_body_background: z.boolean().optional(),
+    generate_activities: z.boolean().optional(),
     start_page: z.number().int().min(1).optional(),
     end_page: z.number().int().min(1).optional(),
     speech: SpeechConfig.optional(),

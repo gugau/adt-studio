@@ -8,6 +8,10 @@ I will provide you with text in {{ language }} (language code: {{ language_code 
 - Include 1-3 emojis per word in the separate "emojis" field.
 - Include variants of the word in the separate "variations" field. These are things like forest/forests, apple/apples, etc.
 - Do not include duplicate words. If a word appears multiple times, include it only once.
+{% if excluded_words and excluded_words.size > 0 %}
+- The following words have been explicitly rejected by the user and MUST NOT appear in your output, in any casing or variant form:
+{% for word in excluded_words %}  - {{ word }}
+{% endfor %}{% endif %}
 {% if amount != "" %}
 
 ## COVERAGE

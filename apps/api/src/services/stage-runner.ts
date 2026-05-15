@@ -28,6 +28,7 @@ import {
   generateGlossary,
   buildGlossaryConfig,
   mergeGeneratedGlossaryWithManualItems,
+  getPrunedGlossaryWords,
   generateToc,
   buildTocGenerationConfig,
   generateAllQuizzes,
@@ -1282,12 +1283,15 @@ async function runGlossaryStep(
     const existingGlossaryRow = storage.getLatestNodeData("glossary", "book")
     const existingGlossary = existingGlossaryRow?.data as GlossaryOutput | undefined
 
+    const excludedWords = getPrunedGlossaryWords(existingGlossary?.items ?? [])
+
     const generatedGlossary = await generateGlossary({
       storage,
       pages,
       config: glossaryConfig,
       llmModel: glossaryModel,
       concurrency: effectiveConcurrency,
+      excludedWords,
       onBatchComplete: (completed, total) => {
         progress.emit({
           type: "step-progress",

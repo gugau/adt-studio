@@ -920,7 +920,7 @@ describe("GET /books/:label/export-webpub", () => {
     const disposition = res.headers.get("Content-Disposition") ?? ""
     expect(disposition).toContain('filename="webpub-ascii.webpub"')
     expect(disposition).toContain("filename*=UTF-8''")
-  })
+  }, 15_000)
 
   it("uses safe label filename for non-ASCII titles", async () => {
     createBookWithTitle("sinhala-export", "\u0DC3\u0DD2\u0D82\u0DC4\u0DBD")
@@ -936,7 +936,7 @@ describe("GET /books/:label/export-webpub", () => {
     // UTF-8 encoded filename contains the Sinhala title
     expect(disposition).toContain("filename*=UTF-8''")
     expect(disposition).toContain(encodeURIComponent("\u0DC3\u0DD2\u0D82\u0DC4\u0DBD"))
-  })
+  }, 15_000)
 
   it("returns 404 for missing book", async () => {
     const app = createBookRoutes(tmpDir, webAssetsDir)

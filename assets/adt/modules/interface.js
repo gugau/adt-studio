@@ -435,11 +435,6 @@ export const switchLanguage = async () => {
     // Update language state
     setState("currentLanguage", dropdown.value);
 
-    // Persist language choice. In webpub/EPUB mode, cookies don't persist across
-    // page navigations so also write to localStorage. On the web, only use cookies
-    // (scoped by basePath) to avoid cross-book conflicts on the same origin.
-    const isWebpub = window.appConfig?.features?.showNavigationControls === false;
-    if (isWebpub) localStorage.setItem("currentLanguage", state.currentLanguage);
     const basePath = window.location.pathname.substring(
       0,
       window.location.pathname.lastIndexOf("/") + 1

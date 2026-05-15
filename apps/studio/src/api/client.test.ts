@@ -1,19 +1,18 @@
-import { describe, it, expect } from "vitest"
+// @vitest-environment jsdom
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
+
+vi.mock("@/lib/utils", () => ({
+  isElectron: vi.fn(() => false),
+}))
+
+import { isElectron } from "@/lib/utils"
 import { resolveBaseUrl } from "./client.js"
 
-describe("resolveBaseUrl", () => {
-  it("returns full API URL when protocol is tauri:", () => {
-    expect(resolveBaseUrl({ protocol: "tauri:", hostname: "tauri.localhost" })).toBe(
-      "http://localhost:3001/api",
-    )
-  })
+const mockedIsElectron = vi.mocked(isElectron)
 
-  it("returns full API URL when hostname is tauri.localhost (Windows WebView2)", () => {
-    // On Windows, Tauri uses https://tauri.localhost as the webview origin.
-    // The protocol check alone isn't sufficient — the hostname check catches this.
-    expect(resolveBaseUrl({ protocol: "https:", hostname: "tauri.localhost" })).toBe(
-      "http://localhost:3001/api",
-    )
+describe("resolveBaseUrl", () => {
+  beforeEach(() => {
+    mockedIsElectron.mockReturnValue(false)
   })
 
   it("returns relative /api in browser dev mode", () => {
@@ -22,5 +21,34 @@ describe("resolveBaseUrl", () => {
 
   it("returns relative /api for standard browser origins", () => {
     expect(resolveBaseUrl({ protocol: "https:", hostname: "example.com" })).toBe("/api")
+  })
+
+  describe("when running in Electron", () => {
+    beforeEach(() => {
+      mockedIsElectron.mockReturnValue(true)
+    })
+
+    afterEach(() => {
+      delete (window as { api?: unknown }).api
+    })
+
+    it("returns http://localhost:<port>/api using window.api.apiPort", () => {
+      ;(window as { api: { apiPort: number } }).api = { apiPort: 5421 }
+      expect(resolveBaseUrl()).toBe("http://localhost:5421/api")
+    })
+
+    it("ignores location and uses the Electron port", () => {
+      ;(window as { api: { apiPort: number } }).api = { apiPort: 5421 }
+      expect(resolveBaseUrl({ protocol: "https:", hostname: "example.com" })).toBe(
+        "http://localhost:5421/api",
+      )
+    })
+
+    it("reflects the current apiPort on each call", () => {
+      ;(window as { api: { apiPort: number } }).api = { apiPort: 9000 }
+      expect(resolveBaseUrl()).toBe("http://localhost:9000/api")
+      ;(window as { api: { apiPort: number } }).api = { apiPort: 9001 }
+      expect(resolveBaseUrl()).toBe("http://localhost:9001/api")
+    })
   })
 })

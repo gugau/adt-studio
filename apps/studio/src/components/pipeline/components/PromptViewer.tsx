@@ -28,6 +28,8 @@ interface PromptViewerBaseProps {
   modelGroups?: ModelGroup[]
   /** Whether to fetch the prompt (set false to defer loading) */
   enabled?: boolean
+  /** When true, the prompt is shown as a read-only preview (no editing). */
+  readOnly?: boolean
 }
 
 type PromptViewerProps =
@@ -64,6 +66,7 @@ export function PromptViewer({
   modelGroups = LLM_MODEL_GROUPS,
   enabled = true,
   hideModel = false,
+  readOnly = false,
 }: PromptViewerProps) {
   const { t } = useLingui()
 
@@ -163,6 +166,7 @@ export function PromptViewer({
             onChange={(e) => onChange(e.target.value)}
             onScroll={syncScroll}
             spellCheck={false}
+            readOnly={readOnly}
             className="relative w-full h-full text-xs font-mono p-4 whitespace-pre-wrap break-words bg-transparent text-transparent caret-foreground resize-none outline-none"
             style={{ WebkitTextFillColor: "transparent" }}
           />

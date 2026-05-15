@@ -343,7 +343,7 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
             <ModelSelect
               value={imageModel}
               onChange={(v) => { setImageModel(v); markDirty("image_translation") }}
-              placeholder="openai:gpt-image-1.5"
+              placeholder="openai:gpt-image-2"
               groups={IMAGE_MODEL_GROUPS}
               prefixProvider
               className="max-w-md"
