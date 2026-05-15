@@ -38,12 +38,14 @@ export async function loadAppConfig(versionParam = ""): Promise<AppConfig> {
 }
 
 /**
- * Determines the persistence mode for user preferences. WebPub/EPUB hosts
- * frequently strip cookies across navigations, so when the book disables
- * navigation controls we treat it as embedded mode and prefer localStorage.
+ * Determines the persistence mode for user preferences. Defaults to
+ * `localStorage` (matches the runtime's documented default in `persist.ts`).
+ * Cookies are only used when a book explicitly opts in via
+ * `features.cookieStorage = true` — typically for legacy multi-book deployments
+ * on a shared origin where path-scoped cookies are needed to isolate titles.
  */
 export function pickStorageMode(config: AppConfig): "cookie" | "localStorage" {
-  return config.features.showNavigationControls === false ? "localStorage" : "cookie"
+  return config.features.cookieStorage === true ? "cookie" : "localStorage"
 }
 
 /**

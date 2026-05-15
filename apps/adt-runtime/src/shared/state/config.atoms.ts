@@ -20,6 +20,12 @@ export interface AppFeatures {
   highlight?: boolean
   activities?: boolean
   state?: boolean
+  /**
+   * Opt into cookie-backed atom persistence instead of the default
+   * `localStorage`. Use only for legacy multi-book deployments on a shared
+   * origin where path-scoped cookies are needed to isolate titles.
+   */
+  cookieStorage?: boolean
 }
 
 export interface AppLanguages {

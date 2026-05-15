@@ -55,7 +55,7 @@ export function TocContent() {
         }}
         className="flex-1 min-h-0 flex flex-col"
       >
-        <TabsList className="w-full grid grid-cols-2 shrink-0 h-10">
+        <TabsList className="w-full grid grid-cols-2 shrink-0">
           <TabsTrigger value="toc">{t("toc-title") || "Contents"}</TabsTrigger>
           <TabsTrigger value="pages">
             {t("nav-page-tab-label") || "Page list"}
