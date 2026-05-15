@@ -19,8 +19,8 @@ export function NavRoot() {
   return (
     <TooltipProvider delay={300} closeDelay={120}>
       <Dock>
-        <BottomDock />
         <ActivityDock />
+        <BottomDock />
       </Dock>
       <ActivityConfetti />
     </TooltipProvider>

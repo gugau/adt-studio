@@ -30,7 +30,11 @@ import { LanguageContent } from "@/features/language/components/LanguageDockCont
 import { SettingsContent } from "@/features/settings/components/SettingsDockContent";
 import { DockPanel } from "./DockPanel";
 
-export function DockMenu() {
+interface DockMenuProps {
+  className?: string;
+}
+
+export function DockMenu({ className }: DockMenuProps) {
   const features = useAtomValue(appConfigAtom).features;
   const [value, setValue] = useAtom(dockMenuValueAtom);
   const [signLanguage, setSignLanguage] = useAtom(signLanguageModeAtom);
@@ -46,7 +50,7 @@ export function DockMenu() {
 
   return (
     <>
-      <div className="flex items-center gap-2 pl-1">
+      <div className={cn("flex items-center justify-end gap-2 pl-1", className)}>
         {features.glossary ? (
           <DockIconButton
             ref={glossaryBtnRef}
@@ -141,9 +145,9 @@ function TTSDockButton() {
     toggle("audio");
 
     if (value != "audio") {
-      play()
+      play();
     }
-  }
+  };
 
   if (!hasTTS) return null;
 

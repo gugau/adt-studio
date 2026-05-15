@@ -11,11 +11,16 @@ import { useTranslation } from "@/features/language/hooks/useTranslation";
 
 function ReaderDockContents() {
   const features = useAtomValue(appConfigAtom).features;
+  const { isSpread } = useDockContext();
   return (
     <>
-      <BookMetadata className="min-w-64" ariaLabel="Main Menu" />
+      <div className={cn(!isSpread ? "" : "flex-1")}>
+        <BookMetadata className="min-w-64" ariaLabel="Main Menu" />
+      </div>
+
       {features.showNavigationControls && <PageNav />}
-      <DockMenu />
+
+      <DockMenu className={cn(!isSpread ? "" : "flex-1", "min-w-64")} />
     </>
   );
 }
