@@ -19,3 +19,5 @@ export const submitLabelAtom = ephemeralAtom<string | null>(null)
 export const selectedOptionAtom = ephemeralAtom<string | null>(null)
 export const selectedWordAtom = ephemeralAtom<string | null>(null)
 export const currentWordAtom = ephemeralAtom<string | null>(null)
+
+export const confettiTriggerAtom = ephemeralAtom(0)

@@ -129,7 +129,7 @@ export function SLVideo() {
       style={style}
       className={cn(
         "fixed w-80 max-w-[calc(100vw-2rem)]",
-        "bg-black rounded-lg shadow-lg overflow-hidden z-[55]",
+        "bg-black rounded-lg shadow-lg overflow-hidden z-[49]",
         "transition-shadow",
         isDragging && "shadow-2xl ring-2 ring-primary",
         !positioned && "bottom-20 right-4",

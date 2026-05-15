@@ -1,6 +1,7 @@
 import { BottomDock } from "@/features/dock/components/BottomDock";
 import { TooltipProvider } from "@/shared/ui/tooltip";
 import { ActivityDock } from "@/features/activity/components/ActivityDock";
+import { ActivityConfetti } from "@/features/activity/components/ActivityConfetti";
 import { Dock } from "@/features/dock/components/Dock";
 
 /**
@@ -21,6 +22,7 @@ export function NavRoot() {
         <BottomDock />
         <ActivityDock />
       </Dock>
+      <ActivityConfetti />
     </TooltipProvider>
   );
 }

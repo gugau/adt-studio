@@ -22,7 +22,7 @@ export const dockAlignAtom = persistedStringAtom("dockAlign", "spread")
 
 
 export type IconSize = "sm" | "md" | "lg"
-export const iconSizeAtom = persistedStringAtom("iconSize", "md")
+export const iconSizeAtom = persistedStringAtom("iconSize", "lg")
 export const reduceMotionAtom = persistedBoolAtom("reduceMotion", false)
 
 export type Theme = "light" | "dark" | "system"

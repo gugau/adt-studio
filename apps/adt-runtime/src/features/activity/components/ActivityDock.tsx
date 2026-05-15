@@ -9,15 +9,6 @@ export function ActivityDock() {
   const { t } = useTranslation();
   const { isCompact, shouldHide, isTop } = useDockContext();
   const activityMode = useAtomValue(activityModeAtom);
-
-  const bottomClassname = cn(
-    isCompact ? "bottom-21" : "bottom-18",
-  );
-
-  const topClassName = cn(
-     isCompact ? "top-21" : "top-18",
-  );
-
   if (!activityMode) return null;
 
   return (

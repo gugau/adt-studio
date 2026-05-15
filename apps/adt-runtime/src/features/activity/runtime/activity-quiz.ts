@@ -2,6 +2,7 @@ import { getDefaultStore } from "jotai"
 import { translationsAtom } from "@/features/language/state/language.atoms"
 import { pagesAtom, currentSectionIdAtom } from "@/features/navigation/state/nav.atoms"
 import {
+  confettiTriggerAtom,
   skipEnabledAtom,
   skipHandlerAtom,
   submitEnabledAtom,
@@ -222,6 +223,7 @@ export function initializeQuizActivity(): (() => void) | null {
     validated = true
 
     if (isCorrect) {
+      store.set(confettiTriggerAtom, store.get(confettiTriggerAtom) + 1)
       store.set(submitStateAtom, "next")
       store.set(submitLabelAtom, null)
       // Submit becomes "Next activity" — enabled only when one exists.

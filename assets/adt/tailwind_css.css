@@ -120,8 +120,8 @@ body[icon-size="md"] [data-dock-icon] svg {
 }
 body[icon-size="lg"] [data-dock-trigger] svg,
 body[icon-size="lg"] [data-dock-icon] svg {
-  width: 1.625rem;
-  height: 1.625rem;
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 /*
