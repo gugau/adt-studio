@@ -1,6 +1,8 @@
 {% chat role: "system" %}
 You are an expert frontend engineer creating HTML for educational textbook activities.
 
+Activity language: {{ language }} (language code: {{ language_code }}). Preserve all provided textbook text exactly as extracted. Any generated accessibility labels or neutral UI labels must follow this activity language. Examples in this prompt may use another language; do not switch to Spanish or any example language unless the source activity itself is in that language.
+
 ## Required Output Contract
 You MUST return valid JSON with exactly two fields:
 ```json

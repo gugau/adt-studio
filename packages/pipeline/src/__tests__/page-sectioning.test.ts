@@ -799,6 +799,52 @@ describe("sectionPage", () => {
     expect(output.sections[0].nodes[0].children?.[0].text).toBe("Hello")
   })
 
+  it("passes the configured language context to generation and review prompts", async () => {
+    const contexts: Array<{ prompt?: string; language_code?: string }> = []
+    const fakeLlm: LLMModel = {
+      generateObject: async <T>(opts: GenerateObjectOptions) => {
+        contexts.push({
+          prompt: opts.prompt,
+          language_code: (opts.context as { language_code?: string }).language_code,
+        })
+        if (opts.prompt === "page_sectioning") {
+          return {
+            object: {
+              reasoning: "Grouped content",
+              sections: [
+                {
+                  section_type: "text_only",
+                  background_color: "#fff",
+                  text_color: "#000",
+                  page_number: 1,
+                  nodes: [{ role: "text", text: "Hello" }],
+                },
+              ],
+            } as T,
+          }
+        }
+        return {
+          object: {
+            approved: true,
+            reasoning: "Looks good.",
+            nodes_and_sections: null,
+          } as T,
+        }
+      },
+    }
+
+    await sectionPage(
+      makeInput({ language: "ne_np" }),
+      makeConfig({ maxRefinements: 1 }),
+      fakeLlm,
+    )
+
+    expect(contexts).toEqual([
+      { prompt: "page_sectioning", language_code: "ne-NP" },
+      { prompt: "page_sectioning_refinement", language_code: "ne-NP" },
+    ])
+  })
+
   it("adopts reviewer's replacement tree when reviewer rejects then proposes valid replacement", async () => {
     const initialTree = {
       reasoning: "Initial draft",

@@ -3,7 +3,7 @@ import path from "node:path"
 import { createBookStorage } from "@adt/storage"
 import { createLLMModel, createPromptEngine } from "@adt/llm"
 import type { LLMModel } from "@adt/llm"
-import { renderPage, buildRenderStrategyResolver, createTemplateEngine, loadBookConfig, createScreenshotRenderer, runVisualReviewLoop, DEFAULT_VISUAL_REVIEW_MODEL_ID, buildScreenshotHtml, SCREENSHOT_VIEWPORTS } from "@adt/pipeline"
+import { renderPage, buildRenderStrategyResolver, createTemplateEngine, loadBookConfig, normalizeLocale, createScreenshotRenderer, runVisualReviewLoop, DEFAULT_VISUAL_REVIEW_MODEL_ID, buildScreenshotHtml, SCREENSHOT_VIEWPORTS } from "@adt/pipeline"
 import type { VisualRefinementDeps } from "@adt/pipeline"
 import { PageSectioningOutput, WebRenderingOutput, webRenderingLLMSchema, editVerifyLLMSchema } from "@adt/types"
 import { loadStyleguideContent } from "./styleguide.js"
@@ -43,6 +43,15 @@ export interface AiEditSectionOptions {
 export interface AiEditSectionResult {
   html: string
   reasoning: string
+}
+
+function resolveConfiguredLanguage(
+  storage: ReturnType<typeof createBookStorage>,
+  config: ReturnType<typeof loadBookConfig>,
+): string {
+  const metadataRow = storage.getLatestNodeData("metadata", "book")
+  const metadata = metadataRow?.data as { language_code?: string | null } | null
+  return normalizeLocale(config.editing_language ?? metadata?.language_code ?? "en")
 }
 
 export async function reRenderPage(
@@ -104,6 +113,7 @@ export async function reRenderPage(
 
     // Load config and build render strategy resolver
     const config = loadBookConfig(label, booksDir, configPath)
+    const language = resolveConfiguredLanguage(storage, config)
     const resolveRenderConfig = buildRenderStrategyResolver(config)
 
     const styleguideContent = loadStyleguideContent(config.styleguide, configPath)
@@ -170,6 +180,7 @@ export async function reRenderPage(
       {
         label,
         pageId,
+        language,
         pageImageBase64,
         sectioning: structuringForRender,
         images: renderImages,

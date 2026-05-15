@@ -3,6 +3,8 @@ import { cn } from "@/lib/utils"
 export interface SegmentedControlOption<T extends string = string> {
   value: T
   label: string
+  disabled?: boolean
+  title?: string
 }
 
 interface SegmentedControlProps<T extends string = string> {
@@ -46,12 +48,22 @@ export function SegmentedControl<T extends string = string>({
           type="button"
           role="radio"
           aria-checked={value === option.value}
-          onClick={() => onValueChange(option.value)}
+          aria-disabled={option.disabled || undefined}
+          disabled={option.disabled}
+          title={option.title}
+          onClick={() => {
+            if (!option.disabled) onValueChange(option.value)
+          }}
           className={cn(
-            "relative z-10 flex h-7 flex-1 cursor-pointer items-center justify-center rounded-md text-sm",
-            value === option.value
+            "relative z-10 flex h-7 flex-1 items-center justify-center rounded-md text-sm",
+            option.disabled
+              ? "cursor-not-allowed opacity-60"
+              : "cursor-pointer",
+            value === option.value && !option.disabled
               ? "font-bold"
-              : "font-normal text-[#737373] hover:text-[#525252]",
+              : option.disabled
+                ? "font-normal text-[#a3a3a3]"
+                : "font-normal text-[#737373] hover:text-[#525252]",
           )}
           style={
             value === option.value

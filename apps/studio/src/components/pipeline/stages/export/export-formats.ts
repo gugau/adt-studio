@@ -63,7 +63,7 @@ export function buildExportFormatConfig(t: (msg: any) => string): Record<ExportF
     adt: {
       ...EXPORT_FORMAT_CONFIG.adt,
       label: t(msg`Web Export`),
-      description: t(msg`Full ADT bundle — HTML pages, images, audio, quizzes, and the compiled web app.`),
+      description: t(msg`Full ADT bundle — HTML pages, images, audio, activities, and the compiled web app.`),
     },
     scorm: {
       ...EXPORT_FORMAT_CONFIG.scorm,

@@ -5,13 +5,14 @@ import { z } from "zod"
 import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
 import { parseBookLabel, ImageClassificationOutput, PageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES } from "@adt/types"
+import type { ImageCaption } from "@adt/types"
 import type { ContentNodeData } from "@adt/types"
 import { openBookDb } from "@adt/storage"
 import { createBookStorage } from "@adt/storage"
 import type { Storage } from "@adt/storage"
 import { reRenderPage, aiEditSection } from "../services/page-edit-service.js"
 import type { TaskService } from "../services/task-service.js"
-import { segmentPageImages, getSegmentedImageId, loadBookConfig, applyCrop, generateStyleguide, buildStyleguideGenerationConfig } from "@adt/pipeline"
+import { segmentPageImages, getSegmentedImageId, loadBookConfig, applyCrop, generateStyleguide, buildStyleguideGenerationConfig, buildCaptionConfig, captionPageImages, normalizeLocale } from "@adt/pipeline"
 import { createLLMModel, createPromptEngine, renderLiquidTemplate, generateImageWithCache } from "@adt/llm"
 
 interface PageSummary {
@@ -302,6 +303,23 @@ async function executeAiImageGeneration(params: AiImageGenParams): Promise<{
 function clearCaptionData(storage: Storage): void {
   storage.clearNodesByType(["image-captioning", "text-catalog", "text-catalog-translation", "tts", "tts-timestamps"])
   storage.clearStepRuns(["image-captioning", "text-catalog", "catalog-translation", "tts"])
+}
+
+/** Merge a single generated caption into the same node consumed by Image Captions. */
+function upsertImageCaption(storage: Storage, pageId: string, caption: ImageCaption): number {
+  const existingRow = storage.getLatestNodeData("image-captioning", pageId)
+  const existing = existingRow ? ImageCaptioningOutput.safeParse(existingRow.data) : null
+  const captions = existing?.success ? existing.data.captions : []
+  const next = ImageCaptioningOutput.parse({
+    captions: [
+      ...captions.filter((candidate) => candidate.imageId !== caption.imageId),
+      caption,
+    ],
+  })
+  const version = storage.putNodeData("image-captioning", pageId, next)
+  storage.clearNodesByType(["text-catalog", "text-catalog-translation", "tts", "tts-timestamps"])
+  storage.clearStepRuns(["text-catalog", "catalog-translation", "tts"])
+  return version
 }
 
 /**
@@ -1818,17 +1836,97 @@ export function createPageRoutes(
         [newImageId, pageId, `images/${filename}`, hash, width, height]
       )
 
-      // Clear caption data since a new image was added
-      const storage = createBookStorage(safeLabel, booksDir)
-      try {
-        clearCaptionData(storage)
-      } finally {
-        storage.close()
-      }
-
       return c.json({ imageId: newImageId, width, height })
     } finally {
       db.close()
+    }
+  })
+
+  // POST /books/:label/images/:imageId/caption — Generate and sync one image caption
+  app.post("/books/:label/images/:imageId/caption", async (c) => {
+    const { label, imageId } = c.req.param()
+    const safeLabel = parseBookLabel(label)
+    validateImageId(imageId)
+    const resolvedDir = path.resolve(booksDir)
+    const bookDir = path.join(resolvedDir, safeLabel)
+    const dbPath = path.join(bookDir, `${safeLabel}.db`)
+
+    if (!fs.existsSync(dbPath)) {
+      throw new HTTPException(404, { message: `Book not found: ${safeLabel}` })
+    }
+
+    const body = await c.req.json().catch(() => ({}))
+    const requestedPageId = typeof body?.pageId === "string" ? validateImageId(body.pageId) : undefined
+    const credentials = {
+      openaiApiKey: c.req.header("X-OpenAI-Key") || undefined,
+      anthropicApiKey: c.req.header("X-Anthropic-API-Key") || undefined,
+      googleApiKey: c.req.header("X-Google-API-Key") || undefined,
+      customBaseUrl: c.req.header("X-Custom-Base-URL") || undefined,
+      customApiKey: c.req.header("X-Custom-API-Key") || undefined,
+    }
+    if (
+      !credentials.openaiApiKey &&
+      !credentials.anthropicApiKey &&
+      !credentials.googleApiKey &&
+      !(credentials.customBaseUrl && credentials.customApiKey)
+    ) {
+      throw new HTTPException(400, { message: "Missing provider API key" })
+    }
+
+    const storage = createBookStorage(safeLabel, booksDir)
+    try {
+      const imageMeta = storage.getImageMeta(imageId)
+      if (!imageMeta) {
+        throw new HTTPException(404, { message: `Image not found: ${imageId}` })
+      }
+      const pageId = imageMeta.pageId
+      if (requestedPageId && requestedPageId !== pageId) {
+        throw new HTTPException(400, {
+          message: `Image ${imageId} belongs to ${pageId}, not ${requestedPageId}`,
+        })
+      }
+      const page = storage.getPages().find((candidate) => candidate.pageId === pageId)
+      if (!page) {
+        throw new HTTPException(404, { message: `Page not found: ${pageId}` })
+      }
+
+      const config = loadBookConfig(safeLabel, booksDir, configPath)
+      const metadataRow = storage.getLatestNodeData("metadata", "book")
+      const metadata = metadataRow?.data as { language_code?: string | null } | null
+      const language = normalizeLocale(config.editing_language ?? metadata?.language_code ?? "en")
+      const summaryRow = storage.getLatestNodeData("book-summary", "book")
+      const bookSummary = (summaryRow?.data as { summary?: string } | undefined)?.summary
+      const captionConfig = buildCaptionConfig(config)
+      const bookPromptsDir = path.join(bookDir, "prompts")
+      const promptEngine = createPromptEngine([bookPromptsDir, promptsDir])
+      const cacheDir = path.join(bookDir, ".cache")
+      const llmModel = createLLMModel({
+        modelId: captionConfig.modelId,
+        cacheDir,
+        promptEngine,
+        credentials,
+        onLog: (entry) => storage.appendLlmLog(entry),
+      })
+
+      const result = await captionPageImages(
+        {
+          pageId,
+          pageImageBase64: storage.getPageImageBase64(pageId),
+          images: [{ imageId, imageBase64: storage.getImageBase64(imageId) }],
+          language,
+          bookSummary,
+        },
+        captionConfig,
+        llmModel
+      )
+      const caption = result.captions[0]
+      if (!caption) {
+        throw new HTTPException(500, { message: `Caption generation returned no caption for ${imageId}` })
+      }
+      const version = upsertImageCaption(storage, pageId, caption)
+      return c.json({ caption, version })
+    } finally {
+      storage.close()
     }
   })
 

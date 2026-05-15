@@ -30,6 +30,27 @@ describe("RenderStrategyConfig", () => {
 })
 
 describe("AppConfig", () => {
+  it("accepts MCQ option count in quiz generation config", () => {
+    const result = AppConfig.safeParse({
+      structure_types: { paragraph: "Paragraph" },
+      role_types: { heading: "Heading" },
+      quiz_generation: {
+        multiple_choice_option_count: 4,
+        open_ended_character_limit: 250,
+        matching_pair_count: 6,
+        sorting_item_count: 6,
+      },
+    })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.quiz_generation?.multiple_choice_option_count).toBe(4)
+      expect(result.data.quiz_generation?.open_ended_character_limit).toBe(250)
+      expect(result.data.quiz_generation?.matching_pair_count).toBe(6)
+      expect(result.data.quiz_generation?.sorting_item_count).toBe(6)
+    }
+  })
+
   it("fails when a non-activity render strategy includes answer_prompt", () => {
     const result = AppConfig.safeParse({
       structure_types: { paragraph: "Paragraph" },

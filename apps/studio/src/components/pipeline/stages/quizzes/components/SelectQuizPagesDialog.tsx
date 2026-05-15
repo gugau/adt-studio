@@ -76,7 +76,7 @@ export function SelectQuizPagesDialog({
         <div className="flex items-center justify-between px-5 py-3.5 border-b shrink-0">
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-blue-500" />
-            <h2 className="text-sm font-semibold">{t`Select pages for quizzes`}</h2>
+            <h2 className="text-sm font-semibold">{t`Select pages for activities`}</h2>
           </div>
           <button
             type="button"

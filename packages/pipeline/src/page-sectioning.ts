@@ -9,6 +9,7 @@ import {
   buildPageSectioningRefinementLLMSchema,
 } from "@adt/types"
 import type { LLMModel, ValidationResult } from "@adt/llm"
+import { buildLanguageContext } from "./language-context.js"
 
 // ── Types ───────────────────────────────────────────────────────
 
@@ -30,6 +31,8 @@ export interface PageSectioningConfig {
 export interface PageSectioningInput {
   pageId: string
   pageNumber: number
+  /** Configured language for interpreting activity instructions and visible text. */
+  language?: string
   text: string
   imageBase64: string
   /** All images available to place in the tree. Callers filter pruned images out. */
@@ -137,6 +140,7 @@ async function generateInitial(
     mode: "json",
     prompt: config.promptName,
     context: {
+      ...buildLanguageContext(input.language ?? "en"),
       page: {
         pageNumber: input.pageNumber,
         text: input.text,
@@ -179,6 +183,7 @@ async function generateReview(
     mode: "json",
     prompt: config.refinementPromptName,
     context: {
+      ...buildLanguageContext(input.language ?? "en"),
       page: {
         pageNumber: input.pageNumber,
         text: input.text,

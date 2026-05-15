@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { parseDocument, DomUtils } from "htmlparser2"
+import { parseDocument } from "htmlparser2"
 import type {
   AppConfig,
   WebRenderingOutput,
@@ -9,6 +9,7 @@ import type {
   QuizGroup,
   QuizActivityType,
   QuizQuestion,
+  ActivityTemplate,
 } from "@adt/types"
 import { getQuizLLMSchema, DEFAULT_LLM_MAX_RETRIES } from "@adt/types"
 import type { LLMModel, ValidationResult } from "@adt/llm"
@@ -22,6 +23,11 @@ export interface QuizConfig {
   /** When provided, replaces auto-batching: one quiz per group with explicit placement. */
   quizGroups?: QuizGroup[]
   activityType?: QuizActivityType
+  activityTemplate?: ActivityTemplate
+  multipleChoiceOptionCount?: number
+  openEndedCharacterLimit?: number
+  matchingPairCount?: number
+  sortingItemCount?: number
   promptName: string
   modelId: string
   maxRetries: number
@@ -41,7 +47,7 @@ export interface QuizPageInput {
 }
 
 function renumberOptionText(text: string, index: number): string {
-  const stripped = text.replace(/^\s*\d+\)\s*/u, "").trim()
+  const stripped = text.replace(/^\s*[\p{N}]+[\.)]\s*/u, "").trim()
   const label = `${index + 1})`
   return stripped ? `${label} ${stripped}` : label
 }
@@ -71,23 +77,75 @@ function shuffleQuizOptions(
   return { options: renumbered, answerIndex: newAnswerIndex }
 }
 
+function shuffleQuizOptionsWithAnswerIndexes(
+  options: Array<{ text: string; explanation: string }>,
+  answerIndexes: number[],
+  rng: () => number = Math.random
+): { options: Array<{ text: string; explanation: string }>; answerIndexes: number[] } {
+  const correctIndexes = new Set(answerIndexes)
+  const withCorrect = options.map((option, index) => ({
+    option,
+    isCorrect: correctIndexes.has(index),
+  }))
+  const shuffled = withCorrect.slice()
+
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+
+  const newAnswerIndexes = shuffled
+    .map((entry, index) => (entry.isCorrect ? index : -1))
+    .filter((index) => index >= 0)
+  const renumbered = shuffled.map((entry, index) => ({
+    text: renumberOptionText(entry.option.text, index),
+    explanation: entry.option.explanation,
+  }))
+
+  return { options: renumbered, answerIndexes: newAnswerIndexes }
+}
+
 export const QUIZ_ACTIVITY_LABELS: Record<QuizActivityType, string> = {
   multiple_choice: "Multiple choice",
+  multiple_select: "Multiple select",
   true_false: "True or false",
   fill_in_the_blank: "Fill in the blanks",
-  drag_and_drop: "Drag and drop matching",
+  open_ended: "Open ended",
+  drag_and_drop: "Matching pairs",
+  sorting: "Sorting",
+}
+
+function getMultipleChoiceOptionCount(count: number): number {
+  if (!Number.isFinite(count)) return 4
+  return Math.min(6, Math.max(2, Math.trunc(count)))
+}
+
+function getOpenEndedCharacterLimit(count: number | undefined): number {
+  if (count === undefined || !Number.isFinite(count)) return 250
+  return Math.min(2000, Math.max(50, Math.trunc(count)))
+}
+
+function getActivityItemLimit(count: number | undefined): number {
+  if (count === undefined || !Number.isFinite(count)) return 6
+  return Math.min(6, Math.max(2, Math.trunc(count)))
 }
 
 function normalizeQuestionTitle(activityType: QuizActivityType, question: string): string {
   const trimmed = question.trim()
   if (trimmed) return trimmed
   switch (activityType) {
+    case "multiple_select":
+      return "Choose all that apply."
     case "true_false":
       return "True or false."
     case "fill_in_the_blank":
       return "Fill in the blanks."
+    case "open_ended":
+      return "Answer in your own words."
     case "drag_and_drop":
       return "Match the pairs."
+    case "sorting":
+      return "Sort the items."
     case "multiple_choice":
     default:
       return "Quiz."
@@ -104,13 +162,21 @@ function normalizeDuplicateText(text: string): string {
 
 function questionDuplicateKeys(question: QuizQuestion): string[] {
   switch (question.activityType) {
+    case "multiple_select":
+      return [normalizeDuplicateText(question.question)]
     case "true_false":
       return (question.statements ?? []).map((s) => normalizeDuplicateText(s.text))
     case "fill_in_the_blank":
       return (question.blanks ?? []).map((b) => normalizeDuplicateText(b.prompt))
+    case "open_ended":
+      return [normalizeDuplicateText(question.question)]
     case "drag_and_drop":
       return (question.pairs ?? []).map((p) =>
         normalizeDuplicateText(`${p.item} → ${p.match}`)
+      )
+    case "sorting":
+      return (question.sortingItems ?? []).map((item) =>
+        normalizeDuplicateText(`${item.item} → ${item.category}`)
       )
     case "multiple_choice":
     default:
@@ -129,9 +195,14 @@ type QuizLLMResult = {
   question: string
   options?: Array<{ text: string; explanation: string }>
   answer_index?: number
+  answer_indexes?: number[]
   statements?: Array<{ text: string; answer: boolean }>
   blanks?: Array<{ prompt: string; answer: string }>
+  sample_answer?: string
+  guidance?: string
   pairs?: Array<{ item: string; match: string }>
+  categories?: Array<{ label: string }>
+  items?: Array<{ item: string; category: string }>
 }
 
 function quizQuestionFromLLM(raw: QuizLLMResult): QuizQuestion {
@@ -143,6 +214,17 @@ function quizQuestionFromLLM(raw: QuizLLMResult): QuizQuestion {
       question: normalizeQuestionTitle(activityType, raw.question),
       options: shuffled.options,
       answerIndex: shuffled.answerIndex,
+      reasoning: raw.reasoning,
+    }
+  }
+
+  if (activityType === "multiple_select") {
+    const shuffled = shuffleQuizOptionsWithAnswerIndexes(raw.options ?? [], raw.answer_indexes ?? [])
+    return {
+      activityType,
+      question: normalizeQuestionTitle(activityType, raw.question),
+      options: shuffled.options,
+      answerIndexes: shuffled.answerIndexes,
       reasoning: raw.reasoning,
     }
   }
@@ -165,19 +247,45 @@ function quizQuestionFromLLM(raw: QuizLLMResult): QuizQuestion {
     }
   }
 
-  return {
-    activityType,
-    question: normalizeQuestionTitle(activityType, raw.question),
-    pairs: raw.pairs ?? [],
-    reasoning: raw.reasoning,
+  if (activityType === "open_ended") {
+    return {
+      activityType,
+      question: normalizeQuestionTitle(activityType, raw.question),
+      sampleAnswer: raw.sample_answer,
+      guidance: raw.guidance,
+      reasoning: raw.reasoning,
+    }
   }
+
+  if (activityType === "sorting") {
+    return {
+      activityType,
+      question: normalizeQuestionTitle(activityType, raw.question),
+      categories: raw.categories ?? [],
+      sortingItems: raw.items ?? [],
+      reasoning: raw.reasoning,
+    }
+  }
+
+  if (activityType === "drag_and_drop") {
+    return {
+      activityType,
+      question: normalizeQuestionTitle(activityType, raw.question),
+      pairs: raw.pairs ?? [],
+      reasoning: raw.reasoning,
+    }
+  }
+
+  const exhaustive: never = activityType
+  throw new Error(`Unhandled activity type: ${exhaustive}`)
 }
 
 function quizFromQuestion(
   question: QuizQuestion,
   batch: QuizBatch,
   quizIndex: number,
-  questions?: QuizQuestion[]
+  questions?: QuizQuestion[],
+  template?: ActivityTemplate
 ): Quiz {
   return {
     ...question,
@@ -185,14 +293,24 @@ function quizFromQuestion(
     afterPageId: batch.afterPageId,
     pageIds: batch.pages.map((p) => p.pageId),
     isPruned: false,
+    ...(template ? { template } : {}),
     ...(questions ? { questions } : {}),
+  }
+}
+
+function applyConfiguredQuestionLimits(question: QuizQuestion, config: QuizConfig): QuizQuestion {
+  if (question.activityType !== "open_ended") return question
+  return {
+    ...question,
+    responseCharacterLimit: getOpenEndedCharacterLimit(config.openEndedCharacterLimit),
   }
 }
 
 function validateQuizLLMResult(
   raw: QuizLLMResult,
   activityType: QuizActivityType,
-  previousQuestions: QuizQuestion[]
+  previousQuestions: QuizQuestion[],
+  config: Pick<QuizConfig, "multipleChoiceOptionCount" | "matchingPairCount" | "sortingItemCount">
 ): string[] {
   const errors: string[] = []
   if (raw.activity_type !== undefined && raw.activity_type !== activityType) {
@@ -202,14 +320,15 @@ function validateQuizLLMResult(
   if (!questionText.trim()) {
     errors.push("Question/title is missing")
   }
-  if (questionText.length > 200) {
+  if (activityType !== "open_ended" && questionText.length > 200) {
     errors.push("Question/title exceeds 200 characters")
   }
 
   if (activityType === "multiple_choice") {
     const options = raw.options ?? []
-    if (options.length < 2) {
-      errors.push(`Must provide at least 2 options, got ${options.length}`)
+    const expectedOptionCount = getMultipleChoiceOptionCount(config.multipleChoiceOptionCount ?? 4)
+    if (options.length !== expectedOptionCount) {
+      errors.push(`Multiple choice must provide exactly ${expectedOptionCount} options, got ${options.length}`)
     }
     for (const opt of options) {
       if (opt.text.length > 80)
@@ -224,6 +343,36 @@ function validateQuizLLMResult(
     const answerIndex = raw.answer_index ?? -1
     if (answerIndex < 0 || answerIndex >= options.length) {
       errors.push(`answer_index ${answerIndex} is out of range [0, ${options.length - 1}]`)
+    }
+  }
+
+  if (activityType === "multiple_select") {
+    const options = raw.options ?? []
+    if (options.length < 3 || options.length > 6) {
+      errors.push(`Multiple select must provide 3-6 options, got ${options.length}`)
+    }
+    for (const opt of options) {
+      if (opt.text.length > 80)
+        errors.push(
+          `Option text exceeds 80 characters: "${opt.text.slice(0, 30)}..."`
+        )
+      if (opt.explanation.length > 400)
+        errors.push("Explanation exceeds 400 characters")
+      if (!opt.text) errors.push("Option text is missing")
+      if (!opt.explanation) errors.push("Option explanation is missing")
+    }
+    const answerIndexes = raw.answer_indexes ?? []
+    const uniqueAnswerIndexes = new Set(answerIndexes)
+    if (answerIndexes.length < 2) {
+      errors.push(`Multiple select must provide at least 2 correct answers, got ${answerIndexes.length}`)
+    }
+    if (uniqueAnswerIndexes.size !== answerIndexes.length) {
+      errors.push("Multiple select answer_indexes must be unique")
+    }
+    for (const answerIndex of answerIndexes) {
+      if (answerIndex < 0 || answerIndex >= options.length) {
+        errors.push(`answer_index ${answerIndex} is out of range [0, ${options.length - 1}]`)
+      }
     }
   }
 
@@ -253,10 +402,23 @@ function validateQuizLLMResult(
     }
   }
 
+  if (activityType === "open_ended") {
+    if (questionText.length > 240) {
+      errors.push("Open-ended prompt exceeds 240 characters")
+    }
+    if (raw.sample_answer && raw.sample_answer.length > 600) {
+      errors.push("Open-ended sample answer exceeds 600 characters")
+    }
+    if (raw.guidance && raw.guidance.length > 400) {
+      errors.push("Open-ended guidance exceeds 400 characters")
+    }
+  }
+
   if (activityType === "drag_and_drop") {
     const pairs = raw.pairs ?? []
-    if (pairs.length < 2 || pairs.length > 6) {
-      errors.push(`Drag/drop must provide 2-6 pairs, got ${pairs.length}`)
+    const maxPairs = getActivityItemLimit(config.matchingPairCount)
+    if (pairs.length < 2 || pairs.length > maxPairs) {
+      errors.push(`Drag/drop must provide 2-${maxPairs} pairs, got ${pairs.length}`)
     }
     const seen = new Set<string>()
     for (const pair of pairs) {
@@ -264,6 +426,36 @@ function validateQuizLLMResult(
       if (!pair.item.trim() || !pair.match.trim()) errors.push("Drag/drop pair item or match is missing")
       if (seen.has(key)) errors.push(`Duplicate drag/drop pair: "${pair.item}" / "${pair.match}"`)
       seen.add(key)
+    }
+  }
+
+  if (activityType === "sorting") {
+    const categories = raw.categories ?? []
+    const items = raw.items ?? []
+    const maxItems = getActivityItemLimit(config.sortingItemCount)
+    if (categories.length < 2 || categories.length > 5) {
+      errors.push(`Sorting must provide 2-5 categories, got ${categories.length}`)
+    }
+    if (items.length < 2 || items.length > maxItems) {
+      errors.push(`Sorting must provide 2-${maxItems} items, got ${items.length}`)
+    }
+    const categoryLabels = new Set<string>()
+    for (const category of categories) {
+      const key = normalizeDuplicateText(category.label)
+      if (!key) errors.push("Sorting category label is missing")
+      if (categoryLabels.has(key)) errors.push(`Duplicate sorting category: "${category.label}"`)
+      categoryLabels.add(key)
+    }
+    const itemLabels = new Set<string>()
+    for (const item of items) {
+      const itemKey = normalizeDuplicateText(item.item)
+      const categoryKey = normalizeDuplicateText(item.category)
+      if (!itemKey) errors.push("Sorting item text is missing")
+      if (itemLabels.has(itemKey)) errors.push(`Duplicate sorting item: "${item.item}"`)
+      itemLabels.add(itemKey)
+      if (!categoryLabels.has(categoryKey)) {
+        errors.push(`Sorting item category must match a provided category: "${item.category}"`)
+      }
     }
   }
 
@@ -295,6 +487,18 @@ export function buildQuizGenerationConfig(
     quizSectionTypes: appConfig.quiz_generation?.quiz_section_types,
     quizGroups: appConfig.quiz_generation?.quiz_groups,
     activityType: "multiple_choice",
+    multipleChoiceOptionCount: getMultipleChoiceOptionCount(
+      appConfig.quiz_generation?.multiple_choice_option_count ?? 4
+    ),
+    openEndedCharacterLimit: getOpenEndedCharacterLimit(
+      appConfig.quiz_generation?.open_ended_character_limit
+    ),
+    matchingPairCount: getActivityItemLimit(
+      appConfig.quiz_generation?.matching_pair_count
+    ),
+    sortingItemCount: getActivityItemLimit(
+      appConfig.quiz_generation?.sorting_item_count
+    ),
     promptName: appConfig.quiz_generation?.prompt ?? "quiz_generation",
     modelId:
       appConfig.quiz_generation?.model ??
@@ -306,19 +510,116 @@ export function buildQuizGenerationConfig(
   }
 }
 
+type ParsedHtmlChild = ReturnType<typeof parseDocument>["children"][number]
+
+const BLOCK_TEXT_TAGS = new Set([
+  "address",
+  "article",
+  "aside",
+  "blockquote",
+  "caption",
+  "dd",
+  "div",
+  "dl",
+  "dt",
+  "fieldset",
+  "figcaption",
+  "figure",
+  "footer",
+  "form",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "header",
+  "hr",
+  "li",
+  "main",
+  "nav",
+  "ol",
+  "p",
+  "pre",
+  "section",
+  "table",
+  "tbody",
+  "td",
+  "tfoot",
+  "th",
+  "thead",
+  "tr",
+  "ul",
+])
+
+function isElementNode(node: ParsedHtmlChild): node is ParsedHtmlChild & { name: string } {
+  return "name" in node && typeof node.name === "string"
+}
+
+function isBlockTextNode(node: ParsedHtmlChild): boolean {
+  return isElementNode(node) && BLOCK_TEXT_TAGS.has(node.name.toLowerCase())
+}
+
+function normalizeExtractedText(text: string): string {
+  return text
+    .replace(/[ \t\f\v\r]+/g, " ")
+    .replace(/ *\n */g, "\n")
+    .replace(/\n{2,}/g, "\n")
+    .trim()
+}
+
+function extractHtmlNodeText(node: ParsedHtmlChild): string {
+  if ("type" in node && node.type === "text" && "data" in node && typeof node.data === "string") {
+    return node.data.replace(/\s+/g, " ")
+  }
+
+  if (isElementNode(node) && node.name.toLowerCase() === "br") {
+    return "\n"
+  }
+
+  if ("children" in node && Array.isArray(node.children)) {
+    return extractHtmlChildrenText(node.children as ParsedHtmlChild[])
+  }
+
+  return ""
+}
+
+function extractHtmlChildrenText(children: readonly ParsedHtmlChild[]): string {
+  const parts: string[] = []
+
+  for (const child of children) {
+    const text = extractHtmlNodeText(child)
+    if (text === "\n") {
+      parts.push("\n")
+      continue
+    }
+    if (!text.trim()) continue
+    if (isBlockTextNode(child)) {
+      parts.push("\n", text.trim(), "\n")
+    } else {
+      parts.push(text)
+    }
+  }
+
+  return normalizeExtractedText(parts.join(""))
+}
+
 /**
- * Extract plain text from rendered HTML by stripping tags.
- * Uses htmlparser2 (already an @adt/pipeline dependency).
+ * Extract plain text from rendered HTML while preserving word boundaries
+ * between adjacent block elements.
  */
 export function extractTextFromHtml(html: string): string {
   const doc = parseDocument(html)
-  return DomUtils.textContent(doc).trim()
+  return extractHtmlChildrenText(doc.children)
 }
 
 function extractQuizPageText(page: QuizPageInput, quizSectionTypes?: string[]): string {
+  const sectioningByIndex = new Map(
+    page.sectioning.sections.map((section, sectionIndex) => [sectionIndex, section])
+  )
   const html = page.rendering.sections
     .filter((section) => {
-      const meta = page.sectioning.sections[section.sectionIndex]
+      const meta = sectioningByIndex.get(section.sectionIndex)
       if (meta?.isPruned) return false
       if (quizSectionTypes === undefined) return true
       return meta ? quizSectionTypes.includes(meta.sectionType) : quizSectionTypes.includes(section.sectionType)
@@ -424,12 +725,14 @@ export async function generateQuiz(
   llmModel: LLMModel,
   options?: {
     activityType?: QuizActivityType
+    template?: ActivityTemplate
     questionNumber?: number
     questionsPerQuiz?: number
     previousQuestions?: QuizQuestion[]
   }
 ): Promise<Quiz> {
   const activityType = options?.activityType ?? config.activityType ?? "multiple_choice"
+  const template = options?.template ?? config.activityTemplate
   const questionNumber = options?.questionNumber ?? 1
   const questionsPerQuiz = options?.questionsPerQuiz ?? 1
   const previousQuestions = options?.previousQuestions ?? []
@@ -447,6 +750,18 @@ export async function generateQuiz(
       individual_pages: pageTexts,
       activity_type: activityType,
       activity_type_label: QUIZ_ACTIVITY_LABELS[activityType],
+      activity_template: template
+        ? {
+            name: template.name,
+            style: template.style,
+            generation_mode: template.generationMode,
+            instructions: template.instructions ?? "",
+          }
+        : null,
+      multiple_choice_option_count: getMultipleChoiceOptionCount(config.multipleChoiceOptionCount ?? 4),
+      open_ended_character_limit: getOpenEndedCharacterLimit(config.openEndedCharacterLimit),
+      matching_pair_count: getActivityItemLimit(config.matchingPairCount),
+      sorting_item_count: getActivityItemLimit(config.sortingItemCount),
       question_number: questionNumber,
       questions_per_quiz: questionsPerQuiz,
       previous_questions: previousQuestions.map((question, index) => ({
@@ -457,7 +772,12 @@ export async function generateQuiz(
       })),
     },
     validate: (raw: unknown): ValidationResult => {
-      const errors = validateQuizLLMResult(raw as QuizLLMResult, activityType, previousQuestions)
+      const errors = validateQuizLLMResult(
+        raw as QuizLLMResult,
+        activityType,
+        previousQuestions,
+        config
+      )
       return { valid: errors.length === 0, errors }
     },
     maxRetries: config.maxRetries,
@@ -468,8 +788,8 @@ export async function generateQuiz(
     },
   })
 
-  const question = quizQuestionFromLLM(result.object)
-  return quizFromQuestion(question, batch, quizIndex)
+  const question = applyConfiguredQuestionLimits(quizQuestionFromLLM(result.object), config)
+  return quizFromQuestion(question, batch, quizIndex, undefined, template)
 }
 
 /**
@@ -485,12 +805,14 @@ export async function generateQuizForSelection(
   options: {
     activityType: QuizActivityType
     questionsPerQuiz?: number
+    template?: ActivityTemplate
   }
 ): Promise<Quiz> {
   const questionsPerQuiz = Math.max(1, options.questionsPerQuiz ?? 1)
   if (questionsPerQuiz === 1) {
     return generateQuiz(batch, quizIndex, config, llmModel, {
       activityType: options.activityType,
+      template: options.template,
       questionNumber: 1,
       questionsPerQuiz,
       previousQuestions: [],
@@ -501,6 +823,7 @@ export async function generateQuizForSelection(
   for (let i = 0; i < questionsPerQuiz; i++) {
     const quiz = await generateQuiz(batch, quizIndex, config, llmModel, {
       activityType: options.activityType,
+      template: options.template,
       questionNumber: i + 1,
       questionsPerQuiz,
       previousQuestions: questions,
@@ -510,14 +833,21 @@ export async function generateQuizForSelection(
       question: quiz.question,
       options: quiz.options,
       answerIndex: quiz.answerIndex,
+      answerIndexes: quiz.answerIndexes,
       statements: quiz.statements,
       blanks: quiz.blanks,
       pairs: quiz.pairs,
+      categories: quiz.categories,
+      sortingItems: quiz.sortingItems,
+      sampleAnswer: quiz.sampleAnswer,
+      guidance: quiz.guidance,
+      responseCharacterLimit: quiz.responseCharacterLimit,
       reasoning: quiz.reasoning,
     })
   }
 
-  return quizFromQuestion(questions[0], batch, quizIndex, questions)
+  const parentQuestion = applyConfiguredQuestionLimits(questions[0], config)
+  return quizFromQuestion(parentQuestion, batch, quizIndex, questions, options.template)
 }
 
 /**

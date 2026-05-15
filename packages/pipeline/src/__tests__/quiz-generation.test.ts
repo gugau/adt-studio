@@ -22,9 +22,14 @@ type FakeQuizResponse = {
   question: string
   options?: Array<{ text: string; explanation: string }>
   answer_index?: number
+  answer_indexes?: number[]
   statements?: Array<{ text: string; answer: boolean }>
   blanks?: Array<{ prompt: string; answer: string }>
+  sample_answer?: string
+  guidance?: string
   pairs?: Array<{ item: string; match: string }>
+  categories?: Array<{ label: string }>
+  items?: Array<{ item: string; category: string }>
 }
 
 function makeFakeLLMModel(
@@ -112,7 +117,7 @@ const FALLBACK_QUIZ_SECTION_TYPES = undefined
 describe("extractTextFromHtml", () => {
   it("strips HTML tags and returns plain text", () => {
     const html = "<section><h1>Hello</h1><p>World of <strong>plants</strong></p></section>"
-    expect(extractTextFromHtml(html)).toBe("HelloWorld of plants")
+    expect(extractTextFromHtml(html)).toBe("Hello\nWorld of plants")
   })
 
   it("returns empty string for empty HTML", () => {
@@ -121,7 +126,7 @@ describe("extractTextFromHtml", () => {
 
   it("handles nested elements", () => {
     const html = "<div><ul><li>Item 1</li><li>Item 2</li></ul></div>"
-    expect(extractTextFromHtml(html)).toBe("Item 1Item 2")
+    expect(extractTextFromHtml(html)).toBe("Item 1\nItem 2")
   })
 })
 
@@ -398,6 +403,10 @@ describe("buildQuizGenerationConfig", () => {
       quizSectionTypes: FALLBACK_QUIZ_SECTION_TYPES,
       quizGroups: undefined,
       activityType: "multiple_choice",
+      multipleChoiceOptionCount: 4,
+      openEndedCharacterLimit: 250,
+      matchingPairCount: 6,
+      sortingItemCount: 6,
       promptName: "quiz_generation",
       modelId: "openai:gpt-5.4",
       maxRetries: 5,
@@ -425,6 +434,10 @@ describe("buildQuizGenerationConfig", () => {
         prompt: "custom_quiz",
         max_retries: 4,
         timeout: 120,
+        multiple_choice_option_count: 5,
+        open_ended_character_limit: 500,
+        matching_pair_count: 4,
+        sorting_item_count: 5,
         quiz_section_types: ["text_only"],
       },
     }
@@ -435,6 +448,10 @@ describe("buildQuizGenerationConfig", () => {
       quizSectionTypes: ["text_only"],
       quizGroups: undefined,
       activityType: "multiple_choice",
+      multipleChoiceOptionCount: 5,
+      openEndedCharacterLimit: 500,
+      matchingPairCount: 4,
+      sortingItemCount: 5,
       promptName: "custom_quiz",
       modelId: "openai:gpt-4.1",
       maxRetries: 4,
@@ -518,8 +535,97 @@ describe("generateQuiz", () => {
     expect(quiz.options).toEqual(validQuizResponse.options)
     expect(quiz.answerIndex).toBe(0)
     expect(capturedOptions?.context?.activity_type).toBe("multiple_choice")
+    expect(capturedOptions?.context?.open_ended_character_limit).toBe(250)
+    expect(capturedOptions?.context?.matching_pair_count).toBe(6)
+    expect(capturedOptions?.context?.sorting_item_count).toBe(6)
     expect(capturedOptions?.context?.question_number).toBe(1)
     expect(capturedOptions?.context?.questions_per_quiz).toBe(1)
+  })
+
+  it("passes reusable activity template into prompt context and stores it on the quiz", async () => {
+    let capturedOptions: GenerateObjectOptions | null = null
+    const template = {
+      id: "custom-1",
+      name: "My workbook style",
+      style: "worksheet_rows" as const,
+      generationMode: "template_single_page" as const,
+      instructions: "Keep every activity compact and table-like.",
+    }
+    const llmModel = makeFakeLLMModel(validQuizResponse, (options) => {
+      capturedOptions = options
+    })
+
+    const quiz = await generateQuiz(
+      { pages: [makePageInput("pg001", "<p>Plants use sunlight.</p>")], afterPageId: "pg001" },
+      0,
+      autoConfig(),
+      llmModel,
+      { activityType: "multiple_choice", template }
+    )
+
+    expect(capturedOptions?.context?.activity_template).toEqual({
+      name: "My workbook style",
+      style: "worksheet_rows",
+      generation_mode: "template_single_page",
+      instructions: "Keep every activity compact and table-like.",
+    })
+    expect(quiz.template).toEqual(template)
+  })
+
+  it("requests and validates configured four multiple-choice options", async () => {
+    let capturedOptions: GenerateObjectOptions | null = null
+    const template = {
+      id: "practice-cards",
+      name: "Practice cards",
+      style: "practice_cards" as const,
+      generationMode: "template_single_page" as const,
+    }
+    const response: FakeQuizResponse = {
+      reasoning: "The page describes what Karma eats.",
+      activity_type: "multiple_choice",
+      question: "What did Karma like to eat?",
+      options: [
+        { text: "1) Tree leaves", explanation: "Correct." },
+        { text: "2) Bananas", explanation: "No." },
+        { text: "3) Big red chillies", explanation: "No." },
+        { text: "4) Mangoes", explanation: "No." },
+      ],
+      answer_index: 0,
+    }
+    const llmModel: LLMModel = {
+      generateObject: async <T>(options: GenerateObjectOptions) => {
+        capturedOptions = options
+        const invalid = options.validate?.({
+          ...response,
+          options: response.options?.slice(0, 3),
+        })
+        const valid = options.validate?.(response)
+        expect(invalid?.valid).toBe(false)
+        expect(invalid?.errors.join(" ")).toContain("exactly 4 options")
+        expect(valid?.valid).toBe(true)
+        return {
+          object: response as T,
+          usage: { inputTokens: 10, outputTokens: 10 },
+        } as GenerateObjectResult<T>
+      },
+    }
+
+    const randomSpy = vi
+      .spyOn(Math, "random")
+      .mockReturnValueOnce(0.99)
+      .mockReturnValueOnce(0.99)
+      .mockReturnValueOnce(0.99)
+    const quiz = await generateQuiz(
+      { pages: [makePageInput("pg001", "<p>Karma liked tree leaves.</p>")], afterPageId: "pg001" },
+      0,
+      autoConfig(),
+      llmModel,
+      { activityType: "multiple_choice", template }
+    )
+    randomSpy.mockRestore()
+
+    expect(capturedOptions?.context?.multiple_choice_option_count).toBe(4)
+    expect(quiz.options).toHaveLength(4)
   })
 
   it("shuffles options and renumbers answer labels", async () => {
@@ -557,6 +663,155 @@ describe("generateQuiz", () => {
     expect(quiz.answerIndex).toBe(1)
   })
 
+  it("renumbers non-ASCII and dotted option prefixes", async () => {
+    const response: FakeQuizResponse = {
+      reasoning: "The page describes what plants need.",
+      activity_type: "multiple_choice",
+      question: "What do plants need?",
+      options: [
+        { text: "১) Sunlight", explanation: "Correct." },
+        { text: "2. Darkness", explanation: "No." },
+        { text: "٣) Sand", explanation: "No." },
+        { text: "4) Ice", explanation: "No." },
+      ],
+      answer_index: 0,
+    }
+    const randomSpy = vi
+      .spyOn(Math, "random")
+      .mockReturnValueOnce(0.99)
+      .mockReturnValueOnce(0.99)
+      .mockReturnValueOnce(0.99)
+
+    const quiz = await generateQuiz(
+      { pages: [makePageInput("pg001", "<p>Plants need sunlight.</p>")], afterPageId: "pg001" },
+      0,
+      autoConfig(),
+      makeFakeLLMModel(response),
+      { activityType: "multiple_choice" }
+    )
+    randomSpy.mockRestore()
+
+    expect(quiz.options?.map((option) => option.text)).toEqual([
+      "1) Sunlight",
+      "2) Darkness",
+      "3) Sand",
+      "4) Ice",
+    ])
+  })
+
+  it("generates multiple-select questions with multiple answer indexes", async () => {
+    const response: FakeQuizResponse = {
+      reasoning: "The page names plant parts.",
+      activity_type: "multiple_select",
+      question: "Which are parts of a plant?",
+      options: [
+        { text: "1) Root", explanation: "Correct." },
+        { text: "2) Cloud", explanation: "No." },
+        { text: "3) Stem", explanation: "Correct." },
+        { text: "4) Stone", explanation: "No." },
+      ],
+      answer_indexes: [0, 2],
+    }
+    const llmModel = makeFakeLLMModel(response)
+    const randomSpy = vi
+      .spyOn(Math, "random")
+      .mockReturnValueOnce(0.99)
+      .mockReturnValueOnce(0.99)
+      .mockReturnValueOnce(0.99)
+
+    const quiz = await generateQuiz(
+      { pages: [makePageInput("pg001", "<p>Root and stem are plant parts.</p>")], afterPageId: "pg001" },
+      0,
+      autoConfig(),
+      llmModel,
+      { activityType: "multiple_select" }
+    )
+    randomSpy.mockRestore()
+
+    expect(quiz.activityType).toBe("multiple_select")
+    expect(quiz.answerIndexes).toEqual([0, 2])
+  })
+
+  it("generates sorting questions with categories and sortable items", async () => {
+    const response: FakeQuizResponse = {
+      reasoning: "The page contrasts animals and plants.",
+      activity_type: "sorting",
+      question: "Sort the items.",
+      categories: [{ label: "Animals" }, { label: "Plants" }],
+      items: [
+        { item: "Elephant", category: "Animals" },
+        { item: "Bamboo", category: "Plants" },
+      ],
+    }
+    const llmModel = makeFakeLLMModel(response)
+
+    const quiz = await generateQuiz(
+      { pages: [makePageInput("pg001", "<p>Elephant is an animal. Bamboo is a plant.</p>")], afterPageId: "pg001" },
+      0,
+      autoConfig(),
+      llmModel,
+      { activityType: "sorting" }
+    )
+
+    expect(quiz.activityType).toBe("sorting")
+    expect(quiz.categories).toEqual([{ label: "Animals" }, { label: "Plants" }])
+    expect(quiz.sortingItems).toEqual([
+      { item: "Elephant", category: "Animals" },
+      { item: "Bamboo", category: "Plants" },
+    ])
+  })
+
+  it("validates configured matching and sorting item limits", async () => {
+    const matchingResponse: FakeQuizResponse = {
+      reasoning: "The page lists animal facts.",
+      activity_type: "drag_and_drop",
+      question: "Match the pairs.",
+      pairs: [
+        { item: "Elephant", match: "Animal" },
+        { item: "Bamboo", match: "Plant" },
+        { item: "River", match: "Water" },
+        { item: "Sun", match: "Light" },
+      ],
+    }
+    let matchingOptions: GenerateObjectOptions | null = null
+    await generateQuiz(
+      { pages: [makePageInput("pg001", "<p>Content</p>")], afterPageId: "pg001" },
+      0,
+      autoConfig({ matchingPairCount: 3 }),
+      makeFakeLLMModel(matchingResponse, (options) => {
+        matchingOptions = options
+      }),
+      { activityType: "drag_and_drop" }
+    )
+    expect(matchingOptions?.context?.matching_pair_count).toBe(3)
+    expect(matchingOptions?.validate?.(matchingResponse, {})?.errors.join(" ")).toContain("2-3 pairs")
+
+    const sortingResponse: FakeQuizResponse = {
+      reasoning: "The page contrasts animals and plants.",
+      activity_type: "sorting",
+      question: "Sort the items.",
+      categories: [{ label: "Animals" }, { label: "Plants" }],
+      items: [
+        { item: "Elephant", category: "Animals" },
+        { item: "Tiger", category: "Animals" },
+        { item: "Bamboo", category: "Plants" },
+        { item: "Mango", category: "Plants" },
+      ],
+    }
+    let sortingOptions: GenerateObjectOptions | null = null
+    await generateQuiz(
+      { pages: [makePageInput("pg001", "<p>Content</p>")], afterPageId: "pg001" },
+      0,
+      autoConfig({ sortingItemCount: 3 }),
+      makeFakeLLMModel(sortingResponse, (options) => {
+        sortingOptions = options
+      }),
+      { activityType: "sorting" }
+    )
+    expect(sortingOptions?.context?.sorting_item_count).toBe(3)
+    expect(sortingOptions?.validate?.(sortingResponse, {})?.errors.join(" ")).toContain("2-3 items")
+  })
+
   it("validation catches wrong option count", async () => {
     const badResponse = {
       ...validQuizResponse,
@@ -585,7 +840,90 @@ describe("generateQuiz", () => {
 
     const validation = capturedOptions?.validate?.(badResponse, {})
     expect(validation?.valid).toBe(false)
-    expect(validation?.errors[0]).toContain("at least 2 options")
+    expect(validation?.errors[0]).toContain("exactly 4 options")
+  })
+
+  it("generates open-ended questions for learner-written answers", async () => {
+    const response: FakeQuizResponse = {
+      reasoning: "The page invites a personal explanation.",
+      activity_type: "open_ended",
+      question: "Why do you think Karma asked for help?",
+      sample_answer: "Karma needed help because she could not solve the problem alone.",
+      guidance: "Look for a reason tied to the story event.",
+    }
+    let capturedOptions: GenerateObjectOptions | null = null
+    const llmModel = makeFakeLLMModel(response, (options) => {
+      capturedOptions = options
+    })
+
+    const quiz = await generateQuiz(
+      { pages: [makePageInput("pg001", "<p>Karma asked a friend for help.</p>")], afterPageId: "pg001" },
+      0,
+      autoConfig(),
+      llmModel,
+      { activityType: "open_ended" }
+    )
+
+    expect(capturedOptions?.context?.activity_type).toBe("open_ended")
+    expect(capturedOptions?.context?.open_ended_character_limit).toBe(250)
+    expect(quiz.activityType).toBe("open_ended")
+    expect(quiz.question).toBe("Why do you think Karma asked for help?")
+    expect(quiz.sampleAnswer).toBe("Karma needed help because she could not solve the problem alone.")
+    expect(quiz.guidance).toBe("Look for a reason tied to the story event.")
+    expect(quiz.responseCharacterLimit).toBe(250)
+  })
+
+  it("generates true/false questions with statements", async () => {
+    const response: FakeQuizResponse = {
+      reasoning: "The text states what plants need.",
+      activity_type: "true_false",
+      question: "Decide whether each statement is true.",
+      statements: [
+        { text: "Plants need sunlight.", answer: true },
+        { text: "Plants grow best in complete darkness.", answer: false },
+      ],
+    }
+
+    const quiz = await generateQuiz(
+      { pages: [makePageInput("pg001", "<p>Plants need sunlight.</p>")], afterPageId: "pg001" },
+      0,
+      autoConfig(),
+      makeFakeLLMModel(response),
+      { activityType: "true_false" }
+    )
+
+    expect(quiz.activityType).toBe("true_false")
+    expect(quiz.statements).toEqual(response.statements)
+  })
+
+  it("generates fill-in-the-blank questions and rejects question prompts", async () => {
+    const response: FakeQuizResponse = {
+      reasoning: "The sentence can be completed from the page.",
+      activity_type: "fill_in_the_blank",
+      question: "Fill in the blank.",
+      blanks: [{ prompt: "Plants use ____ to make food.", answer: "sunlight" }],
+    }
+    let capturedOptions: GenerateObjectOptions | null = null
+
+    const quiz = await generateQuiz(
+      { pages: [makePageInput("pg001", "<p>Plants use sunlight to make food.</p>")], afterPageId: "pg001" },
+      0,
+      autoConfig(),
+      makeFakeLLMModel(response, (options) => {
+        capturedOptions = options
+      }),
+      { activityType: "fill_in_the_blank" }
+    )
+
+    expect(quiz.activityType).toBe("fill_in_the_blank")
+    expect(quiz.blanks).toEqual(response.blanks)
+
+    const validation = capturedOptions?.validate?.(
+      { ...response, blanks: [{ prompt: "What do plants use ____?", answer: "sunlight" }] },
+      {}
+    )
+    expect(validation?.valid).toBe(false)
+    expect(validation?.errors.join(" ")).toContain("cloze sentence")
   })
 })
 
@@ -697,6 +1035,58 @@ describe("generateQuizForSelection", () => {
         }),
       ])
     )
+  })
+
+  it("preserves responseCharacterLimit for multi-question open-ended selections", async () => {
+    const response: FakeQuizResponse = {
+      activity_type: "open_ended",
+      reasoning: "r",
+      question: "Why?",
+      sample_answer: "Because.",
+      guidance: "g",
+    }
+    const llmModel = makeFakeLLMSequence([
+      response,
+      { ...response, question: "Why2?" },
+    ])
+
+    const quiz = await generateQuizForSelection(
+      { pages: [makePageInput("pg001", "<p>x</p>")], afterPageId: "pg001" },
+      0,
+      autoConfig({ openEndedCharacterLimit: 500 }),
+      llmModel,
+      { activityType: "open_ended", questionsPerQuiz: 2 }
+    )
+
+    expect(quiz.responseCharacterLimit).toBe(500)
+    expect(quiz.questions?.every((q) => q.responseCharacterLimit === 500)).toBe(true)
+  })
+
+  it("validation catches duplicate generated questions across sub-questions", async () => {
+    const capturedValidations: Array<GenerateObjectOptions["validate"]> = []
+    const duplicateResponse = {
+      ...validQuizResponse,
+      activity_type: "multiple_choice",
+      question: "Which part of a plant takes in water?",
+    }
+    const llmModel = makeFakeLLMSequence(
+      [duplicateResponse, duplicateResponse],
+      (options) => {
+        capturedValidations.push(options.validate)
+      }
+    )
+
+    await generateQuizForSelection(
+      { pages: [makePageInput("pg001", "<p>Roots take in water.</p>")], afterPageId: "pg001" },
+      0,
+      autoConfig({ pagesPerQuiz: 1 }),
+      llmModel,
+      { activityType: "multiple_choice", questionsPerQuiz: 2 }
+    )
+
+    const validation = capturedValidations[1]?.(duplicateResponse, {})
+    expect(validation?.valid).toBe(false)
+    expect(validation?.errors.join(" ")).toContain("duplicates a previous question")
   })
 })
 

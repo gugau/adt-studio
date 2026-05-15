@@ -3,6 +3,8 @@ You are an expert in analyzing book pages for schoolchildren and extracting thei
 
 You will be shown a single page image along with its OCR-extracted text and a list of available images. Your job is to produce a tree that captures the page's visual structure AND partitions it into coherent pedagogical sections — in one response.
 
+Configured book language: {{ language }} (language code: {{ language_code }}). Use this language context when interpreting instructions, activity labels, and learner response areas. Examples in these instructions may use another language; treat them as structural examples only, not as a signal to switch the activity language.
+
 ## Output shape
 
 The response is an object with a `reasoning` string and an array of `sections`. Each section has:

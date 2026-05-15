@@ -173,9 +173,14 @@ function buildQuizEntries(storage: Storage): TextCatalogEntry[] {
           question: quiz.question,
           options: quiz.options,
           answerIndex: quiz.answerIndex,
+          answerIndexes: quiz.answerIndexes,
           statements: quiz.statements,
           blanks: quiz.blanks,
           pairs: quiz.pairs,
+          categories: quiz.categories,
+          sortingItems: quiz.sortingItems,
+          sampleAnswer: quiz.sampleAnswer,
+          guidance: quiz.guidance,
           reasoning: quiz.reasoning,
         }]
     const multiQuestion = questions.length > 1
@@ -187,21 +192,31 @@ function buildQuizEntries(storage: Storage): TextCatalogEntry[] {
       ? sharedQuestionTitle
       : questions[0]?.activityType === "fill_in_the_blank"
         ? "Fill in the blanks."
+        : questions[0]?.activityType === "open_ended"
+          ? "Answer in your own words."
         : questions[0]?.activityType === "true_false"
           ? "True or false."
           : questions[0]?.activityType === "drag_and_drop"
             ? "Match the pairs."
+            : questions[0]?.activityType === "multiple_select"
+              ? "Choose all that apply."
+              : questions[0]?.activityType === "sorting"
+                ? "Sort the items."
             : "Quiz."
     let blankItemIndex = 1
     entries.push({ id: `${qid}_que`, text: firstTitle })
 
     questions.forEach((question, questionIndex) => {
       const prefix = multiQuestion ? `${qid}_q${questionIndex + 1}` : qid
-      if (multiQuestion && (question.activityType === "multiple_choice" || sharedQuestionTitle === null)) {
+      if (multiQuestion && (
+        question.activityType === "multiple_choice" ||
+        question.activityType === "multiple_select" ||
+        sharedQuestionTitle === null
+      )) {
         entries.push({ id: `${prefix}_que`, text: question.question })
       }
 
-      if (question.activityType === "multiple_choice") {
+      if (question.activityType === "multiple_choice" || question.activityType === "multiple_select") {
         for (let j = 0; j < (question.options ?? []).length; j++) {
           const option = question.options![j]
           entries.push({ id: `${prefix}_o${j}`, text: option.text })
@@ -223,6 +238,13 @@ function buildQuizEntries(storage: Storage): TextCatalogEntry[] {
         for (let j = 0; j < (question.pairs ?? []).length; j++) {
           entries.push({ id: `${prefix}_pair${j}`, text: question.pairs![j].item })
           entries.push({ id: `${prefix}_match${j}`, text: question.pairs![j].match })
+        }
+      } else if (question.activityType === "sorting") {
+        for (let j = 0; j < (question.categories ?? []).length; j++) {
+          entries.push({ id: `${prefix}_cat${j}`, text: question.categories![j].label })
+        }
+        for (let j = 0; j < (question.sortingItems ?? []).length; j++) {
+          entries.push({ id: `${prefix}_sort${j}`, text: question.sortingItems![j].item })
         }
       }
     })

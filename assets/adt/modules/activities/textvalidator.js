@@ -14,18 +14,35 @@
 //import franc from '../../libs/franc/index.js';
 
 /**
- * Browser-compatible text validator using Spanish dictionary
- * Uses a simplified approach to validate text against a dictionary
+ * Browser-compatible text validator.
+ * Spanish uses the bundled dictionary. Other languages use conservative
+ * sanity checks only, because the bundle does not ship local dictionaries for
+ * every possible book language.
  */
 
 // Class for text validation
 class TextValidator {
   constructor() {
-    // Initialize with document language
-    this.documentLanguage = document.documentElement.lang || 'es';
+    // Initialize with the currently selected/configured document language.
+    this.documentLanguage = this.resolveDocumentLanguage();
+    this.baseLanguage = this.getBaseLanguage(this.documentLanguage);
     this.spanishWords = null;
     this.initialized = false;
     this.initializePromise = this.initialize();
+  }
+
+  resolveDocumentLanguage() {
+    const configuredDefault = window.appConfig?.languages?.default;
+    const selectedLanguage = document.documentElement.lang || localStorage.getItem('currentLanguage');
+    return this.normalizeLocale(selectedLanguage || configuredDefault || 'en');
+  }
+
+  normalizeLocale(language) {
+    return String(language || 'en').trim().replace(/_/g, '-').toLowerCase() || 'en';
+  }
+
+  getBaseLanguage(language) {
+    return this.normalizeLocale(language).split('-')[0];
   }
 
   /**
@@ -33,6 +50,14 @@ class TextValidator {
    */
   async initialize() {
     try {
+      // Only Spanish currently has a bundled dictionary. For English and other
+      // languages, avoid dictionary-based false negatives and rely on the
+      // lightweight gibberish checks in isValidText().
+      if (this.baseLanguage !== 'es') {
+        this.initialized = true;
+        return;
+      }
+
       // First, initialize with the fallback dictionary to ensure we have common words
       this.initializeFallbackDictionary();
 
@@ -184,7 +209,7 @@ class TextValidator {
   }
 
   /**
-   * Check if text is valid Spanish
+   * Check if text is valid for the configured activity/book language.
    * @param {string} text - Text to validate
    * @returns {Promise<boolean>} - True if text appears valid
    */
@@ -214,6 +239,10 @@ class TextValidator {
       if (!this.hasReasonableWordLengths(cleanText)) {
         console.warn('Text has unreasonable word lengths');
         return false;
+      }
+
+      if (this.baseLanguage !== 'es') {
+        return true;
       }
 
       // If we have a dictionary, use it
@@ -527,8 +556,15 @@ class TextValidator {
     const vowels = letters.match(/[aeiouáéíóúü]/g) || [];
     const vowelRatio = vowels.length / letters.length;
 
-    // Spanish has a higher vowel ratio than many languages
-    return vowelRatio >= 0.25 && vowelRatio <= 0.65;
+    if (this.baseLanguage === 'es') {
+      // Spanish has a higher vowel ratio than many languages.
+      return vowelRatio >= 0.25 && vowelRatio <= 0.65;
+    }
+
+    // English words such as "trust", "rhythm", and names can have a lower
+    // vowel ratio than Spanish. Keep this check broad for non-Spanish books so
+    // real answers are not rejected as spelling mistakes.
+    return vowelRatio >= 0.1 && vowelRatio <= 0.8;
   }
 
   /**

@@ -18,8 +18,10 @@ import type {
   WordTimestampOutput,
   TocGenerationOutput,
   Quiz,
+  ActivityTemplate,
   QuizActivityType,
   QuizQuestion,
+  QuizImageAsset,
   ImageCaptioningOutput,
 } from "@adt/types"
 import { WebRenderingOutput as WebRenderingOutputSchema } from "@adt/types"
@@ -367,7 +369,25 @@ export async function packageAdtWeb(
       const isFirstPage = pageList.length === 0
       const quizFilename = isFirstPage ? "index.html" : `${quizId}.html`
 
-      const quizHtmlContent = renderQuizHtml(quiz, quizId, catalog)
+      for (const imageId of collectQuizImageIds(quiz)) {
+        if (!copiedImages.has(imageId)) {
+          const filename = imageMap.get(imageId)
+          if (filename) {
+            fs.copyFileSync(
+              path.join(bookDir, "images", filename),
+              path.join(imageDir, filename),
+            )
+            copiedImages.add(imageId)
+          }
+        }
+      }
+
+      const quizHtmlContent = renderQuizHtml(quiz, quizId, catalog, {
+        imageSrc: (imageId) => {
+          const filename = imageMap.get(imageId)
+          return filename ? `images/${filename}` : null
+        },
+      })
       const quizPageHtml = renderPageHtml({
         content: quizHtmlContent,
         language,
@@ -1056,21 +1076,33 @@ export function getQuizQuestions(quiz: Quiz): QuizQuestion[] {
     question: quiz.question,
     options: quiz.options,
     answerIndex: quiz.answerIndex,
+    answerIndexes: quiz.answerIndexes,
     statements: quiz.statements,
     blanks: quiz.blanks,
     pairs: quiz.pairs,
+    categories: quiz.categories,
+    sortingItems: quiz.sortingItems,
+    sampleAnswer: quiz.sampleAnswer,
+    guidance: quiz.guidance,
+    responseCharacterLimit: quiz.responseCharacterLimit,
     reasoning: quiz.reasoning,
   }]
 }
 
 export function getDefaultQuizTitle(activityType: QuizActivityType): string {
   switch (activityType) {
+    case "multiple_select":
+      return "Choose all that apply."
     case "true_false":
       return "True or false."
     case "fill_in_the_blank":
       return "Fill in the blanks."
+    case "open_ended":
+      return "Answer in your own words."
     case "drag_and_drop":
       return "Match the pairs."
+    case "sorting":
+      return "Sort the items."
     case "multiple_choice":
     default:
       return "Quiz."
@@ -1092,21 +1124,570 @@ function getExactSharedQuizTitle(questions: QuizQuestion[]): string | null {
   return questions.every((q) => q.question.trim() === first) ? first : null
 }
 
+function getActivityTemplate(quiz: Quiz): ActivityTemplate {
+  return quiz.template ?? {
+    id: "worksheet-rows",
+    name: "Worksheet rows",
+    style: "worksheet_rows",
+    generationMode: "template_single_page",
+  }
+}
+
+function templateStyleFamily(template: ActivityTemplate): ActivityTemplate["style"] {
+  switch (template.style) {
+    case "clean_workbook":
+      return "worksheet_rows"
+    case "card_practice":
+      return "practice_cards"
+    case "compact_review":
+      return "quick_check"
+    default:
+      return template.style
+  }
+}
+
+function templateDataAttrs(template: ActivityTemplate): string {
+  return `data-activity-template="${escapeAttr(template.name)}" data-activity-template-style="${escapeAttr(templateStyleFamily(template))}" data-activity-generation-mode="${escapeAttr(template.generationMode)}"`
+}
+
+function templateSurfaceClass(template: ActivityTemplate, accentClass: string): string {
+  switch (templateStyleFamily(template)) {
+    case "practice_cards":
+      return `activity-template-surface mx-auto flex w-full max-w-5xl flex-col gap-6 rounded-lg border border-white/70 ${accentClass} p-6 shadow-sm`
+    case "quick_check":
+      return "activity-template-surface mx-auto flex w-full max-w-5xl flex-col gap-4 rounded-md border border-slate-200 bg-white p-5 shadow-sm"
+    case "guided_steps":
+      return `activity-template-surface mx-auto flex w-full max-w-5xl flex-col gap-5 rounded-md border border-violet-200 ${accentClass} p-6 shadow-sm`
+    case "worksheet_rows":
+    default:
+      return "activity-template-surface mx-auto flex w-full max-w-6xl flex-col gap-5 bg-white p-6"
+  }
+}
+
+function templateWideSurfaceClass(template: ActivityTemplate, accentClass: string): string {
+  return templateSurfaceClass(template, accentClass).replace(/max-w-(?:2xl|3xl|4xl|5xl|6xl)/, "max-w-7xl")
+}
+
+function templateTitleClass(template: ActivityTemplate): string {
+  switch (templateStyleFamily(template)) {
+    case "practice_cards":
+      return "text-2xl font-bold text-slate-950"
+    case "quick_check":
+      return "text-left text-base font-bold uppercase tracking-wide text-blue-800"
+    case "guided_steps":
+      return "text-left text-xl font-bold text-violet-950"
+    case "worksheet_rows":
+    default:
+      return "text-2xl font-bold text-slate-950"
+  }
+}
+
+function templatePanelClass(template: ActivityTemplate): string {
+  switch (templateStyleFamily(template)) {
+    case "practice_cards":
+      return "activity-template-panel space-y-3 rounded-lg border border-sky-100 bg-white/95 p-5 shadow-sm"
+    case "quick_check":
+      return "activity-template-panel space-y-2 rounded-md border border-slate-200 bg-slate-50/70 p-3"
+    case "guided_steps":
+      return "activity-template-panel space-y-3 rounded-md border border-violet-200 bg-white p-5 shadow-sm"
+    case "worksheet_rows":
+    default:
+      return "activity-template-panel space-y-3 rounded-md border border-slate-200 bg-white p-4"
+  }
+}
+
+function templateQuizGroupClass(template: ActivityTemplate): string {
+  switch (templateStyleFamily(template)) {
+    case "practice_cards":
+      return "quiz-question-group activity-question-group mt-6 flex w-full flex-col items-stretch gap-4 sm:px-4"
+    case "quick_check":
+      return "quiz-question-group activity-question-group flex w-full flex-col gap-2 rounded-md border border-slate-200 bg-slate-50/70 p-3"
+    case "guided_steps":
+      return "quiz-question-group activity-question-group mt-5 flex w-full flex-col gap-3 rounded-md border border-violet-200 bg-white p-4 shadow-sm"
+    case "worksheet_rows":
+    default:
+      return "quiz-question-group activity-question-group mt-6 flex w-full flex-col gap-3"
+  }
+}
+
+function templateOptionLayoutClass(template: ActivityTemplate): string {
+  switch (templateStyleFamily(template)) {
+    case "practice_cards":
+      return "activity-options-layout grid gap-4 md:grid-cols-2"
+    case "quick_check":
+      return "activity-options-layout grid gap-2 sm:grid-cols-2"
+    case "guided_steps":
+      return "activity-options-layout flex flex-col gap-2"
+    case "worksheet_rows":
+    default:
+      return "activity-options-layout flex flex-col gap-3"
+  }
+}
+
+function templateOptionClass(template: ActivityTemplate): string {
+  switch (templateStyleFamily(template)) {
+    case "practice_cards":
+      return "activity-option flex min-h-24 w-full cursor-pointer flex-col justify-center rounded-lg border-2 border-sky-200 bg-white px-5 py-4 text-center text-base font-semibold text-slate-900 shadow-sm transition-colors hover:border-sky-400"
+    case "quick_check":
+      return "activity-option w-full cursor-pointer rounded-md border border-slate-200 bg-white px-3 py-2 text-left text-sm font-medium text-slate-900 transition-colors hover:border-blue-300 hover:bg-blue-50/40"
+    case "guided_steps":
+      return "activity-option w-full cursor-pointer rounded-md border border-violet-200 bg-white px-4 py-3 text-left text-base font-medium text-slate-900 transition-colors hover:border-violet-500"
+    case "worksheet_rows":
+    default:
+      return "activity-option w-full cursor-pointer rounded-md border border-slate-300 bg-white px-4 py-3 text-left text-base font-medium text-slate-900 transition-colors hover:bg-slate-50"
+  }
+}
+
+function templateOptionTextClass(template: ActivityTemplate): string {
+  switch (templateStyleFamily(template)) {
+    case "practice_cards":
+      return "option-text block text-base md:text-lg text-slate-900"
+    case "quick_check":
+      return "option-text block text-sm leading-snug text-slate-900"
+    case "guided_steps":
+    case "worksheet_rows":
+    default:
+      return "option-text block text-base text-slate-900"
+  }
+}
+
+function templateQuestionEyebrowClass(template: ActivityTemplate): string {
+  switch (templateStyleFamily(template)) {
+    case "practice_cards":
+      return "text-sm font-semibold uppercase tracking-wide text-sky-700"
+    case "quick_check":
+      return "text-xs font-bold uppercase tracking-wide text-blue-700"
+    case "guided_steps":
+      return "text-sm font-bold uppercase tracking-wide text-violet-700"
+    case "worksheet_rows":
+    default:
+      return "text-sm font-semibold uppercase tracking-wide text-gray-500"
+  }
+}
+
+function templateQuestionTextClass(template: ActivityTemplate, nested = false): string {
+  switch (templateStyleFamily(template)) {
+    case "practice_cards":
+      return "text-xl font-bold text-slate-950"
+    case "quick_check":
+      return "text-base font-semibold text-slate-950"
+    case "guided_steps":
+      return "text-xl font-bold leading-tight text-violet-950"
+    case "worksheet_rows":
+    default:
+      return nested ? "text-base font-semibold text-gray-900" : "text-xl font-semibold text-gray-900"
+  }
+}
+
+function templateHasVisibleStepBadge(template: ActivityTemplate): boolean {
+  return templateStyleFamily(template) === "guided_steps"
+}
+
+function renderQuestionEyebrowHtml(template: ActivityTemplate, questionIndex: number): string {
+  if (templateHasVisibleStepBadge(template)) return ""
+  return `<p class="${templateQuestionEyebrowClass(template)}">Q${questionIndex + 1}</p>`
+}
+
+function activityContentClass(): string {
+  return "container content activity-content mx-auto flex min-h-screen w-full max-w-none items-start justify-center px-4 py-4 opacity-0"
+}
+
+function templateSelectedOptionCss(template: ActivityTemplate): string {
+  switch (templateStyleFamily(template)) {
+    case "practice_cards":
+      return `
+    .activity-option.selected-option {
+        border-color: #0284c7;
+        background-color: #e0f2fe;
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.18);
+    }`
+    case "quick_check":
+      return `
+    .activity-option.selected-option {
+        border-color: #2563eb;
+        background-color: #eff6ff;
+    }`
+    case "guided_steps":
+      return `
+    .activity-option.selected-option {
+        border-color: #7c3aed;
+        background-color: #f5f3ff;
+        box-shadow: inset 4px 0 0 #7c3aed;
+    }`
+    case "worksheet_rows":
+    default:
+      return `
+    .activity-option.selected-option {
+        border-color: #2563eb;
+        background-color: #eff6ff;
+    }`
+  }
+}
+
+function activityTemplateCss(): string {
+  return `
+    #content.activity-content {
+        align-items: flex-start;
+        max-width: none;
+        min-height: 100dvh;
+        padding: clamp(1rem, 2.5vw, 2.5rem);
+        width: 100%;
+    }
+
+    #content.activity-content #simple-main {
+        width: 100%;
+    }
+
+    #content.activity-content .activity-content-frame {
+        padding: 0;
+        width: 100%;
+    }
+
+    #simple-main .activity-template-surface,
+    #simple-main .activity-template-panel,
+    #simple-main .activity-question-group,
+    #simple-main .activity-option {
+        box-sizing: border-box;
+    }
+
+    #simple-main .activity-options-layout {
+        width: 100%;
+    }
+
+    #simple-main .activity-option-image,
+    #simple-main .activity-item-image {
+        display: block;
+        max-width: 100%;
+    }
+
+    #simple-main .activity-template-surface {
+        gap: clamp(1rem, 2vw, 1.75rem);
+        max-width: min(100%, 74rem);
+        padding: clamp(1.25rem, 2.5vw, 2.75rem);
+        width: 100%;
+    }
+
+    #simple-main[data-section-type='activity_sorting'] .activity-template-surface {
+        max-width: min(100%, 84rem);
+    }
+
+    #simple-main[data-section-type='activity_matching'] .activity-template-surface {
+        max-width: min(100%, 78rem);
+    }
+
+    #simple-main[data-section-type='activity_fill_in_the_blank'] .activity-template-surface {
+        max-width: min(100%, 72rem);
+    }
+
+    #simple-main[data-section-type='activity_open_ended_answer'] .activity-template-surface {
+        max-width: min(100%, 72rem);
+    }
+
+    #simple-main .activity-template-panel,
+    #simple-main .activity-question-group {
+        padding: clamp(1rem, 2vw, 1.75rem);
+    }
+
+    #simple-main .activity-option {
+        font-size: clamp(1rem, 1.25vw, 1.25rem);
+    }
+
+    #simple-main .fitb-sentence {
+        font-size: clamp(1.35rem, 2vw, 2rem);
+        line-height: 1.75;
+    }
+
+    #simple-main .fitb-inline-input {
+        font: inherit;
+    }
+
+    #simple-main .matching-bank,
+    #simple-main .matching-row,
+    #simple-main .word-card,
+    #simple-main .category {
+        font-size: clamp(0.95rem, 1.1vw, 1.125rem);
+    }
+
+    #simple-main[data-activity-template-style="worksheet_rows"] .activity-template-surface {
+        background: #ffffff;
+    }
+
+    #simple-main[data-activity-template-style="worksheet_rows"] .activity-question-group {
+        border-top: 1px solid #e2e8f0;
+        padding-top: 1rem;
+    }
+
+    #simple-main[data-activity-template-style="worksheet_rows"] .activity-option {
+        min-height: 3.25rem;
+    }
+
+    #simple-main[data-activity-template-style="practice_cards"] .activity-template-surface {
+        background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%);
+    }
+
+    #simple-main[data-activity-template-style="practice_cards"] .activity-page-shell {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        width: 100%;
+    }
+
+    #simple-main[data-activity-template-style="practice_cards"] .activity-pages {
+        display: flex;
+        gap: 1rem;
+        margin: -0.25rem;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        padding: 0.25rem;
+        scroll-behavior: smooth;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: thin;
+        width: 100%;
+    }
+
+    #simple-main[data-activity-template-style="practice_cards"] .activity-page {
+        flex: 0 0 100%;
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+        width: 100%;
+    }
+
+    #simple-main[data-activity-template-style="practice_cards"] .activity-page > .activity-question-group,
+    #simple-main[data-activity-template-style="practice_cards"] .activity-page > .activity-template-panel {
+        margin-top: 0;
+    }
+
+    #simple-main[data-activity-template-style="practice_cards"] .activity-page-status {
+        align-self: center;
+        border: 1px solid #bae6fd;
+        border-radius: 9999px;
+        background: #ffffff;
+        color: #0369a1;
+        font-size: 0.875rem;
+        font-weight: 700;
+        padding: 0.35rem 0.85rem;
+    }
+
+    #simple-main[data-activity-template-style="practice_cards"] .activity-page-nav {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        justify-content: center;
+    }
+
+    #simple-main[data-activity-template-style="practice_cards"] .activity-page-button {
+        border: 1px solid #7dd3fc;
+        border-radius: 9999px;
+        background: #ffffff;
+        color: #075985;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 700;
+        min-width: 6rem;
+        padding: 0.55rem 1rem;
+    }
+
+    #simple-main[data-activity-template-style="practice_cards"] .activity-page-button:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+    }
+
+    #simple-main[data-activity-template-style="practice_cards"] .activity-page-dots {
+        display: flex;
+        gap: 0.4rem;
+    }
+
+    #simple-main[data-activity-template-style="practice_cards"] .activity-page-dot {
+        align-items: center;
+        border: 1px solid #bae6fd;
+        border-radius: 9999px;
+        background: #ffffff;
+        color: #0369a1;
+        cursor: pointer;
+        display: inline-flex;
+        font-size: 0.75rem;
+        font-weight: 800;
+        height: 1.75rem;
+        justify-content: center;
+        width: 1.75rem;
+    }
+
+    #simple-main[data-activity-template-style="practice_cards"] .activity-page-dot[aria-current="step"] {
+        background: #0284c7;
+        border-color: #0284c7;
+        color: #ffffff;
+    }
+
+    #simple-main[data-activity-template-style="practice_cards"] .activity-options-layout {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    #simple-main[data-activity-template-style="practice_cards"] .activity-option,
+    #simple-main[data-activity-template-style="practice_cards"] .activity-item {
+        min-height: 6rem;
+        justify-content: center;
+        text-align: center;
+    }
+
+    #simple-main[data-activity-template-style="practice_cards"] .feedback-container {
+        text-align: left;
+    }
+
+    #simple-main[data-activity-template-style="quick_check"] .activity-template-surface {
+        border-top: 4px solid #2563eb;
+        box-shadow: none;
+    }
+
+    #simple-main[data-activity-template-style="quick_check"] .activity-question-group {
+        margin-top: 0.75rem;
+        gap: 0.65rem;
+    }
+
+    #simple-main[data-activity-template-style="quick_check"] .activity-template-panel {
+        border-left: 4px solid #2563eb;
+        border-radius: 0.375rem;
+        box-shadow: none;
+        padding: 0.75rem;
+    }
+
+    #simple-main[data-activity-template-style="quick_check"] .activity-option {
+        min-height: 0;
+        padding: 0.55rem 0.75rem;
+    }
+
+    #simple-main[data-activity-template-style="quick_check"] .feedback-container {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.8125rem;
+    }
+
+    #simple-main[data-activity-template-style="guided_steps"] .activity-template-surface {
+        background: linear-gradient(180deg, #f5f3ff 0%, #ffffff 100%);
+        counter-reset: activity-step;
+    }
+
+    #simple-main[data-activity-template-style="guided_steps"] .activity-question-group,
+    #simple-main[data-activity-template-style="guided_steps"] .activity-template-panel {
+        position: relative;
+        padding-left: 3.5rem;
+    }
+
+    #simple-main[data-activity-template-style="guided_steps"] .activity-question-group::before,
+    #simple-main[data-activity-template-style="guided_steps"] .activity-template-panel::before {
+        align-items: center;
+        background: #7c3aed;
+        border-radius: 9999px;
+        color: #ffffff;
+        content: attr(data-step-number);
+        display: flex;
+        font-size: 0.8rem;
+        font-weight: 800;
+        height: 1.75rem;
+        justify-content: center;
+        left: 1rem;
+        line-height: 1;
+        position: absolute;
+        top: 1rem;
+        width: 1.75rem;
+    }
+
+    #simple-main[data-activity-template-style="guided_steps"] .activity-option {
+        border-left-width: 4px;
+    }
+
+    @media (max-width: 640px) {
+        #simple-main[data-activity-template-style="practice_cards"] .activity-options-layout,
+        #simple-main[data-activity-template-style="quick_check"] .activity-options-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        #simple-main[data-activity-template-style="practice_cards"] .activity-pages {
+            scroll-behavior: auto;
+        }
+    }`
+}
+
+function shouldPageActivityQuestions(template: ActivityTemplate, questionCount: number): boolean {
+  return templateStyleFamily(template) === "practice_cards" && questionCount > 1
+}
+
+function renderActivityQuestionPages(
+  quizId: string,
+  template: ActivityTemplate,
+  questionHtml: string[],
+): string {
+  if (!shouldPageActivityQuestions(template, questionHtml.length)) {
+    return questionHtml.join("\n")
+  }
+
+  const pageCount = questionHtml.length
+  const pagesId = `${quizId}-activity-pages`
+  const statusId = `${quizId}-activity-page-status`
+  const dotsHtml = questionHtml.map((_, index) => `
+                    <button
+                        type="button"
+                        class="activity-page-dot"
+                        data-activity-page-dot="${index}"
+                        aria-label="Go to question ${index + 1}"
+                        ${index === 0 ? 'aria-current="step"' : ""}
+                    >${index + 1}</button>`).join("")
+
+  const pagesHtml = questionHtml.map((html, index) => `
+                    <article
+                        class="activity-page"
+                        data-activity-page
+                        data-activity-page-index="${index}"
+                        data-active="${index === 0 ? "true" : "false"}"
+                        aria-label="Question ${index + 1} of ${pageCount}"
+                    >
+${html}
+                    </article>`).join("\n")
+
+  return `
+                <div class="activity-page-shell" data-activity-page-shell>
+                    <p id="${escapeAttr(statusId)}" class="activity-page-status" data-activity-page-status aria-live="polite">Question 1 of ${pageCount}</p>
+                    <div
+                        id="${escapeAttr(pagesId)}"
+                        class="activity-pages"
+                        data-activity-pages
+                        tabindex="0"
+                        role="group"
+                        aria-describedby="${escapeAttr(statusId)}"
+                    >
+${pagesHtml}
+                    </div>
+                    <div class="activity-page-nav" data-activity-page-nav aria-controls="${escapeAttr(pagesId)}">
+                        <button type="button" class="activity-page-button" data-activity-page-prev aria-label="Previous question">Previous</button>
+                        <div class="activity-page-dots" role="group" aria-label="Questions">
+${dotsHtml}
+                        </div>
+                        <button type="button" class="activity-page-button" data-activity-page-next aria-label="Next question">Next</button>
+                    </div>
+                </div>`
+}
+
 function renderNestedQuestionHeading(
   quizId: string,
   question: QuizQuestion,
   questionIndex: number,
   questions: QuizQuestion[],
-  texts: Map<string, string>
+  texts: Map<string, string>,
+  template: ActivityTemplate,
 ): string {
   if (questions.length <= 1) return ""
   const titleId = `${quizId}_q${questionIndex + 1}_que`
   const title = texts.get(titleId) ?? question.question.trim()
   const showTitle = getExactSharedQuizTitle(questions) === null && title.length > 0
+  const eyebrowHtml = renderQuestionEyebrowHtml(template, questionIndex)
+  if (!eyebrowHtml && !showTitle) return ""
   return `
                     <div class="space-y-1">
-                        <p class="text-sm font-semibold uppercase tracking-wide text-gray-500">Q${questionIndex + 1}</p>
-                        ${showTitle ? `<p class="text-base font-semibold text-gray-900" data-id="${escapeAttr(titleId)}">${escapeHtml(title)}</p>` : ""}
+                        ${eyebrowHtml}
+                        ${showTitle ? `<p class="${templateQuestionTextClass(template, true)}" data-id="${escapeAttr(titleId)}">${escapeHtml(title)}</p>` : ""}
                     </div>`
 }
 
@@ -1116,6 +1697,48 @@ export function getQuestionPrefix(
   multiQuestion: boolean,
 ): string {
   return multiQuestion ? `${quizId}_q${questionIndex + 1}` : quizId
+}
+
+export interface RenderQuizHtmlOptions {
+  imageSrc?: (imageId: string) => string | null | undefined
+}
+
+function defaultQuizImageSrc(imageId: string): string {
+  return `images/${imageId}`
+}
+
+function resolveQuizImageSrc(
+  image: QuizImageAsset | undefined,
+  options?: RenderQuizHtmlOptions,
+): string | null {
+  if (!image?.imageId) return null
+  return options?.imageSrc?.(image.imageId) ?? defaultQuizImageSrc(image.imageId)
+}
+
+function renderQuizImageHtml(
+  image: QuizImageAsset | undefined,
+  options: RenderQuizHtmlOptions | undefined,
+  className: string,
+): string {
+  const src = resolveQuizImageSrc(image, options)
+  if (!src) return ""
+  return `<img src="${escapeAttr(src)}" alt="${escapeAttr(image?.alt ?? "")}" class="${className}" loading="lazy" />`
+}
+
+export function collectQuizImageIds(quiz: Quiz): string[] {
+  const imageIds: string[] = []
+  const add = (image: QuizImageAsset | undefined) => {
+    if (image?.imageId && !imageIds.includes(image.imageId)) imageIds.push(image.imageId)
+  }
+  for (const question of getQuizQuestions(quiz)) {
+    for (const option of question.options ?? []) add(option.image)
+    for (const pair of question.pairs ?? []) {
+      add(pair.itemImage)
+      add(pair.matchImage)
+    }
+    for (const item of question.sortingItems ?? []) add(item.image)
+  }
+  return imageIds
 }
 
 function textById(catalog: TextCatalogOutput | undefined): Map<string, string> {
@@ -1135,35 +1758,52 @@ export function renderQuizHtml(
   quiz: Quiz,
   quizId: string,
   catalog: TextCatalogOutput | undefined,
+  options?: RenderQuizHtmlOptions,
 ): string {
   const questions = getQuizQuestions(quiz)
   const activityType = questions[0]?.activityType ?? "multiple_choice"
+  if (activityType === "multiple_select") {
+    return renderMultipleChoiceQuizHtml(quiz, quizId, catalog, "multiple", options)
+  }
   if (activityType === "fill_in_the_blank") {
     return renderFillBlankQuizHtml(quiz, quizId, catalog)
+  }
+  if (activityType === "open_ended") {
+    return renderOpenEndedQuizHtml(quiz, quizId, catalog)
   }
   if (activityType === "true_false") {
     return renderTrueFalseQuizHtml(quiz, quizId, catalog)
   }
   if (activityType === "drag_and_drop") {
-    return renderMatchingQuizHtml(quiz, quizId, catalog)
+    return renderMatchingQuizHtml(quiz, quizId, catalog, options)
   }
-  return renderMultipleChoiceQuizHtml(quiz, quizId, catalog)
+  if (activityType === "sorting") {
+    return renderSortingQuizHtml(quiz, quizId, catalog, options)
+  }
+  return renderMultipleChoiceQuizHtml(quiz, quizId, catalog, "single", options)
 }
 
 function renderMultipleChoiceQuizHtml(
   quiz: Quiz,
   quizId: string,
   catalog: TextCatalogOutput | undefined,
+  selectionMode: "single" | "multiple" = "single",
+  renderOptions?: RenderQuizHtmlOptions,
 ): string {
   const questions = getQuizQuestions(quiz)
   const multiQuestion = questions.length > 1
+  const isMultipleSelect = selectionMode === "multiple"
+  const template = getActivityTemplate(quiz)
   const questionId = `${quizId}_que`
   const texts = textById(catalog)
-  const titleText = texts.get(questionId) ?? getSharedQuizTitle(questions, "multiple_choice")
+  const titleText = texts.get(questionId) ?? getSharedQuizTitle(
+    questions,
+    isMultipleSelect ? "multiple_select" : "multiple_choice"
+  )
 
   const correctAnswers: Record<string, boolean> = {}
   const explanationMapping: Record<string, string> = {}
-  let groupsHtml = ""
+  const groupHtml: string[] = []
 
   questions.forEach((question, questionIndex) => {
     const prefix = getQuestionPrefix(quizId, questionIndex, multiQuestion)
@@ -1171,10 +1811,10 @@ function renderMultipleChoiceQuizHtml(
     const promptText = texts.get(promptId) ?? question.question
     const promptLabelId = multiQuestion ? `${promptId}-question-label` : `${quizId}-question-label`
     const promptHtml = multiQuestion
-      ? `<p class="text-sm font-semibold uppercase tracking-wide text-gray-500">Q${questionIndex + 1}</p>
+      ? `${renderQuestionEyebrowHtml(template, questionIndex)}
                     <p
                         id="${escapeAttr(promptId)}-question-label"
-                        class="text-xl font-semibold text-gray-900"
+                        class="${templateQuestionTextClass(template)}"
                         data-id="${escapeAttr(promptId)}"
                     >
                         ${escapeHtml(promptText)}
@@ -1182,9 +1822,12 @@ function renderMultipleChoiceQuizHtml(
       : ""
     let optionsHtml = ""
     const options = question.options ?? []
+    const answerIndexes = new Set(question.answerIndexes ?? [])
     for (let i = 0; i < options.length; i++) {
       const optionId = `${prefix}_o${i}`
-      correctAnswers[optionId] = i === question.answerIndex
+      correctAnswers[optionId] = isMultipleSelect
+        ? answerIndexes.has(i)
+        : i === question.answerIndex
 
       const expId = `${optionId}_exp`
       if (texts.has(expId)) {
@@ -1195,17 +1838,22 @@ function renderMultipleChoiceQuizHtml(
       const expIdMapped = explanationMapping[optionId]
       const expText = expIdMapped ? (texts.get(expIdMapped) ?? options[i].explanation) : ""
       const expIdAttr = expIdMapped ? ` data-explanation-id="${escapeAttr(expIdMapped)}"` : ""
+      const optionImageHtml = renderQuizImageHtml(
+        options[i].image,
+        renderOptions,
+        "activity-option-image mb-3 max-h-36 w-full rounded-md object-contain"
+      )
 
       optionsHtml += `
                     <label
-                        class="activity-option w-full max-w-xl cursor-pointer rounded-2xl border-2 border-gray-900 bg-[#FFFAF5] px-8 py-6 text-center text-xl font-medium text-gray-900 shadow-[0_6px_0_0_rgba(0,0,0,0.65)] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-green-300 hover:translate-y-[-2px] hover:shadow-[0_8px_0_0_rgba(0,0,0,0.55)]"
+                        class="${templateOptionClass(template)}"
                         data-activity-item="${escapeAttr(optionId)}"
                         data-quiz-question-group="${escapeAttr(prefix)}"
                         data-explanation="${escapeAttr(expText)}"${expIdAttr}
                         tabindex="0"
                     >
                         <input
-                            type="radio"
+                            type="${isMultipleSelect ? "checkbox" : "radio"}"
                             name="${escapeAttr(prefix)}"
                             value="${escapeAttr(optionId)}"
                             data-activity-item="${escapeAttr(optionId)}"
@@ -1213,9 +1861,10 @@ function renderMultipleChoiceQuizHtml(
                             class="sr-only"
                             aria-labelledby="${escapeAttr(optionId)}-option-label"
                         />
+                        ${optionImageHtml}
                         <span
                             id="${escapeAttr(optionId)}-option-label"
-                            class="option-text block text-lg md:text-2xl text-gray-900"
+                            class="${templateOptionTextClass(template)}"
                             data-id="${escapeAttr(optionId)}"
                         >
                             ${escapeHtml(optionText)}
@@ -1229,26 +1878,27 @@ function renderMultipleChoiceQuizHtml(
                         <span class="validation-mark hidden"></span>
                     </label>`
     }
-    groupsHtml += `
+    groupHtml.push(`
                 <div
-                    class="quiz-question-group mt-8 flex flex-col items-center gap-5"
+                    class="${templateQuizGroupClass(template)}"
                     role="group"
+                    data-step-number="${questionIndex + 1}"
                     data-quiz-question-group="${escapeAttr(prefix)}"
+                    data-quiz-selection-mode="${isMultipleSelect ? "multiple" : "single"}"
                     aria-labelledby="${escapeAttr(promptLabelId)}"
                 >
                     ${promptHtml}
+                    <div class="${templateOptionLayoutClass(template)}">
 ${optionsHtml}
-                </div>`
+                    </div>
+                </div>`)
   })
+  const groupsHtml = renderActivityQuestionPages(quizId, template, groupHtml)
 
   return `<style>
-    .activity-option.selected-option {
-        border-color: #1d4ed8;
-        border-width: 4px;
-        background-color: rgba(59, 130, 246, 0.18);
-        box-shadow: 0 14px 0 rgba(29, 78, 216, 0.35);
-        transform: translateY(-3px);
-    }
+${activityTemplateCss()}
+
+${templateSelectedOptionCss(template)}
 
     .activity-option.selected-option .option-text {
         color: #1e3a8a;
@@ -1256,21 +1906,23 @@ ${optionsHtml}
     }
 </style>
 
-<div id="content" class="container content mx-auto w-full min-h-screen px-8 py-8 flex items-center justify-center opacity-0">
+<div id="content" class="${activityContentClass()}">
     <section
         id="simple-main"
         data-section-type="activity_quiz"
         data-id="${escapeAttr(quizId)}"
         data-area-id="${escapeAttr(quizId)}"
+        data-quiz-selection-mode="${isMultipleSelect ? "multiple" : "single"}"
+        ${templateDataAttrs(template)}
         data-correct-answers='${escapeAttr(JSON.stringify(correctAnswers))}'
         data-option-explanations='${escapeAttr(JSON.stringify(explanationMapping))}'
     >
-        <div class="flex w-full flex-col items-center gap-10 px-6 py-10">
-            <div class="w-full max-w-3xl rounded-3xl p-10">
+        <div class="activity-content-frame flex w-full flex-col items-center px-0 py-0">
+            <div class="${templateSurfaceClass(template, "bg-blue-50")}">
                 <header class="text-center">
                     <h1
                         id="${escapeAttr(quizId)}-question-label"
-                        class="text-3xl font-bold text-gray-900 tracking-tight"
+                        class="${templateTitleClass(template)}"
                         data-id="${escapeAttr(questionId)}"
                     >
                         ${escapeHtml(titleText)}
@@ -1302,16 +1954,18 @@ function renderFillBlankQuizHtml(
 ): string {
   const texts = textById(catalog)
   const questions = getQuizQuestions(quiz)
+  const template = getActivityTemplate(quiz)
   const titleId = `${quizId}_que`
   const title = texts.get(titleId) ?? getSharedQuizTitle(questions, "fill_in_the_blank")
   let itemIndex = 1
-  const questionsHtml = questions.map((question, questionIndex) => {
+  const questionHtml = questions.map((question, questionIndex) => {
     const headingHtml = renderNestedQuestionHeading(
       quizId,
       question,
       questionIndex,
       questions,
-      texts
+      texts,
+      template
     )
     const blanksHtml = (question.blanks ?? []).map((blank, blankIndex) => {
       const textId = questions.length > 1
@@ -1322,16 +1976,89 @@ function renderFillBlankQuizHtml(
       return `<p class="fitb-sentence text-lg leading-relaxed" data-id="${escapeAttr(textId)}">${blankPromptHtml(prompt, itemId)}</p>`
     }).join("\n")
     return `
-                <div class="space-y-3 rounded-2xl bg-white p-5 shadow-sm">
+                <div class="${templatePanelClass(template)}" data-step-number="${questionIndex + 1}">
 ${headingHtml}
 ${blanksHtml}
                 </div>`
-  }).join("\n")
+  })
+  const questionsHtml = renderActivityQuestionPages(quizId, template, questionHtml)
 
-  return `<div id="content" class="container content mx-auto w-full min-h-screen px-8 py-8 flex items-center justify-center opacity-0">
-    <section id="simple-main" data-section-type="activity_fill_in_the_blank" data-id="${escapeAttr(quizId)}" data-area-id="${escapeAttr(quizId)}">
-        <div class="mx-auto flex w-full max-w-3xl flex-col gap-8 rounded-3xl bg-emerald-50 p-10 shadow-sm">
-            <h1 class="text-3xl font-bold text-gray-900 tracking-tight" data-id="${escapeAttr(titleId)}">${escapeHtml(title)}</h1>
+  return `<style>
+${activityTemplateCss()}
+</style>
+
+<div id="content" class="${activityContentClass()}">
+    <section id="simple-main" data-section-type="activity_fill_in_the_blank" data-id="${escapeAttr(quizId)}" data-area-id="${escapeAttr(quizId)}" ${templateDataAttrs(template)}>
+        <div class="${templateSurfaceClass(template, "bg-emerald-50")}">
+            <h1 class="${templateTitleClass(template)}" data-id="${escapeAttr(titleId)}">${escapeHtml(title)}</h1>
+${questionsHtml}
+            <div data-submit-target class="flex flex-wrap items-center justify-center gap-4"></div>
+        </div>
+    </section>
+</div>`
+}
+
+function renderOpenEndedQuizHtml(
+  quiz: Quiz,
+  quizId: string,
+  catalog: TextCatalogOutput | undefined,
+): string {
+  const texts = textById(catalog)
+  const questions = getQuizQuestions(quiz)
+  const template = getActivityTemplate(quiz)
+  const titleId = `${quizId}_que`
+  const title = texts.get(titleId) ?? getSharedQuizTitle(questions, "open_ended")
+  const questionHtml = questions.map((question, questionIndex) => {
+    const prefix = getQuestionPrefix(quizId, questionIndex, questions.length > 1)
+    const promptId = questions.length > 1 ? `${prefix}_que` : titleId
+    const inputId = `${prefix}_answer`
+    const promptText = texts.get(promptId) ?? question.question
+    const responseLimit = question.responseCharacterLimit && question.responseCharacterLimit > 0
+      ? Math.trunc(question.responseCharacterLimit)
+      : null
+    const responseLimitAttrs = responseLimit
+      ? ` maxlength="${responseLimit}" data-character-limit="${responseLimit}"`
+      : ""
+    const headingHtml = renderNestedQuestionHeading(
+      quizId,
+      { ...question, question: promptText },
+      questionIndex,
+      questions,
+      texts,
+      template
+    )
+    const singlePromptHtml = questions.length === 1 ? "" : headingHtml
+    return `
+                <div class="${templatePanelClass(template)}" data-step-number="${questionIndex + 1}">
+${singlePromptHtml}
+                    <label class="block space-y-2" for="${escapeAttr(inputId)}">
+                        <span id="${escapeAttr(inputId)}-label" class="sr-only">${escapeHtml(promptText)}</span>
+                        <textarea
+                            id="${escapeAttr(inputId)}"
+                            data-aria-id="${escapeAttr(inputId)}"
+                            data-activity-item="${escapeAttr(inputId)}"
+                            aria-labelledby="${escapeAttr(inputId)}-label"
+                            ${responseLimitAttrs}
+                            class="open-ended-response min-h-40 w-full resize-y rounded-md border border-slate-300 bg-white p-4 text-base leading-relaxed text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                            rows="6"
+                        ></textarea>
+                    </label>
+                </div>`
+  })
+  const questionsHtml = renderActivityQuestionPages(quizId, template, questionHtml)
+
+  return `<style>
+${activityTemplateCss()}
+
+    #simple-main .open-ended-response {
+        font-family: inherit;
+    }
+</style>
+
+<div id="content" class="${activityContentClass()}">
+    <section id="simple-main" data-section-type="activity_open_ended_answer" data-id="${escapeAttr(quizId)}" data-area-id="${escapeAttr(quizId)}" ${templateDataAttrs(template)}>
+        <div class="${templateSurfaceClass(template, "bg-fuchsia-50")}">
+            <h1 id="${escapeAttr(quizId)}-question-label" class="${templateTitleClass(template)}" data-id="${escapeAttr(titleId)}">${escapeHtml(title)}</h1>
 ${questionsHtml}
             <div data-submit-target class="flex flex-wrap items-center justify-center gap-4"></div>
         </div>
@@ -1346,19 +2073,22 @@ function renderTrueFalseQuizHtml(
 ): string {
   const texts = textById(catalog)
   const questions = getQuizQuestions(quiz)
+  const template = getActivityTemplate(quiz)
   const titleId = `${quizId}_que`
   const title = texts.get(titleId) ?? getSharedQuizTitle(questions, "true_false")
   let itemIndex = 1
-  const questionsHtml = questions.map((question, questionIndex) => {
+  const questionHtml = questions.map((question, questionIndex) => {
     const headingHtml = renderNestedQuestionHeading(
       quizId,
       question,
       questionIndex,
       questions,
-      texts
+      texts,
+      template
     )
     const rowsHtml = (question.statements ?? []).map((statement, statementIndex) => {
       const itemId = `item-${itemIndex}`
+      const stepNumber = itemIndex
       const textId = questions.length > 1
         ? `${quizId}_q${questionIndex + 1}_tf${statementIndex}`
         : `${quizId}_tf${statementIndex}`
@@ -1366,7 +2096,7 @@ function renderTrueFalseQuizHtml(
       const name = `question${itemIndex}`
       itemIndex++
       return `
-                    <fieldset class="space-y-3 rounded-2xl bg-white p-5 shadow-sm">
+                    <fieldset class="${templatePanelClass(template)}" data-step-number="${stepNumber}">
                         <legend class="text-base font-semibold text-gray-900">
                             <span data-id="${escapeAttr(textId)}">${escapeHtml(text)}</span>
                         </legend>
@@ -1387,12 +2117,17 @@ function renderTrueFalseQuizHtml(
 ${headingHtml}
 ${rowsHtml}
                 </div>`
-  }).join("\n")
+  })
+  const questionsHtml = renderActivityQuestionPages(quizId, template, questionHtml)
 
-  return `<div id="content" class="container content mx-auto w-full min-h-screen px-8 py-8 flex items-center justify-center opacity-0">
-    <section id="simple-main" data-section-type="activity_true_false" data-id="${escapeAttr(quizId)}" data-area-id="${escapeAttr(quizId)}">
-        <div class="mx-auto flex w-full max-w-3xl flex-col gap-8 rounded-3xl bg-orange-50 p-10 shadow-sm">
-            <h1 class="text-3xl font-bold text-gray-900 tracking-tight" data-id="${escapeAttr(titleId)}">${escapeHtml(title)}</h1>
+  return `<style>
+${activityTemplateCss()}
+</style>
+
+<div id="content" class="${activityContentClass()}">
+    <section id="simple-main" data-section-type="activity_true_false" data-id="${escapeAttr(quizId)}" data-area-id="${escapeAttr(quizId)}" ${templateDataAttrs(template)}>
+        <div class="${templateSurfaceClass(template, "bg-orange-50")}">
+            <h1 class="${templateTitleClass(template)}" data-id="${escapeAttr(titleId)}">${escapeHtml(title)}</h1>
 ${questionsHtml}
             <div data-submit-target class="flex flex-wrap items-center justify-center gap-4"></div>
         </div>
@@ -1404,14 +2139,16 @@ function renderMatchingQuizHtml(
   quiz: Quiz,
   quizId: string,
   catalog: TextCatalogOutput | undefined,
+  renderOptions?: RenderQuizHtmlOptions,
 ): string {
   const texts = textById(catalog)
   const questions = getQuizQuestions(quiz)
+  const template = getActivityTemplate(quiz)
   const titleId = `${quizId}_que`
   const title = texts.get(titleId) ?? getSharedQuizTitle(questions, "drag_and_drop")
   let itemIndex = 1
   let itemsHtml = ""
-  let groupsHtml = ""
+  const groupHtml: string[] = []
 
   questions.forEach((question, questionIndex) => {
     const headingHtml = renderNestedQuestionHeading(
@@ -1419,7 +2156,8 @@ function renderMatchingQuizHtml(
       question,
       questionIndex,
       questions,
-      texts
+      texts,
+      template
     )
     let groupDropzones = ""
     ;(question.pairs ?? []).forEach((pair, pairIndex) => {
@@ -1431,30 +2169,170 @@ function renderMatchingQuizHtml(
       const matchTextId = questions.length > 1
         ? `${quizId}_q${questionIndex + 1}_match${pairIndex}`
         : `${quizId}_match${pairIndex}`
-      itemsHtml += `<button type="button" class="activity-item rounded-xl border border-sky-200 bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm" data-activity-item="${escapeAttr(itemId)}" data-id="${escapeAttr(itemTextId)}">${escapeHtml(texts.get(itemTextId) ?? pair.item)}</button>\n`
+      const itemImageHtml = renderQuizImageHtml(
+        pair.itemImage,
+        renderOptions,
+        "activity-item-image mb-2 max-h-24 w-full rounded object-contain"
+      )
+      const matchImageHtml = renderQuizImageHtml(
+        pair.matchImage,
+        renderOptions,
+        "activity-item-image mb-2 max-h-28 w-full rounded object-contain"
+      )
+      itemsHtml += `<button type="button" class="activity-item rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 shadow-sm" data-activity-item="${escapeAttr(itemId)}" data-id="${escapeAttr(itemTextId)}">${itemImageHtml}<span>${escapeHtml(texts.get(itemTextId) ?? pair.item)}</span></button>\n`
       groupDropzones += `
-                    <div class="dropzone rounded-xl border-2 border-dashed border-sky-200 bg-white p-3" id="${escapeAttr(`zone-${itemIndex}`)}" aria-label="${escapeAttr(texts.get(matchTextId) ?? pair.match)}">
-                        <p class="mb-2 text-sm font-medium text-gray-700" data-id="${escapeAttr(matchTextId)}">${escapeHtml(texts.get(matchTextId) ?? pair.match)}</p>
-                        <div id="${escapeAttr(dropzoneId)}" class="dropzone-slot min-h-12 rounded-lg bg-white/60"></div>
+                    <div class="matching-row dropzone grid gap-3 border-b border-slate-200 py-3 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_minmax(11rem,18rem)] sm:items-center" id="${escapeAttr(`zone-${itemIndex}`)}" aria-label="${escapeAttr(texts.get(matchTextId) ?? pair.match)}">
+                        <div class="text-base font-semibold text-slate-900" data-id="${escapeAttr(matchTextId)}">${matchImageHtml}<span>${escapeHtml(texts.get(matchTextId) ?? pair.match)}</span></div>
+                        <div id="${escapeAttr(dropzoneId)}" class="dropzone-slot flex min-h-11 items-center rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-500"></div>
                     </div>`
       itemIndex++
     })
-    groupsHtml += `
-                <div class="space-y-3">
+    groupHtml.push(`
+                <div class="${templatePanelClass(template)}" data-step-number="${questionIndex + 1}">
 ${headingHtml}
-                    <div class="grid gap-3 sm:grid-cols-2">
+                    <div class="rounded-lg border border-slate-200 bg-white px-4">
 ${groupDropzones}
+                    </div>
+                </div>`)
+  })
+  const groupsHtml = renderActivityQuestionPages(quizId, template, groupHtml)
+
+  return `<style>
+${activityTemplateCss()}
+
+    #simple-main .matching-bank:not(:has(.activity-item)) {
+        display: none;
+    }
+
+    #simple-main .dropzone-slot:has(.activity-item) {
+        border-style: solid;
+        background: #ffffff;
+        color: #0f172a;
+    }
+
+    #simple-main .dropzone-slot .activity-item {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+        padding: 0;
+        color: #0f172a;
+        text-align: left;
+    }
+
+    #simple-main .activity-item.placed-in-dropzone {
+        transform: none;
+    }
+  </style>
+
+<div id="content" class="${activityContentClass()}">
+    <section id="simple-main" data-section-type="activity_matching" data-id="${escapeAttr(quizId)}" data-area-id="${escapeAttr(quizId)}" data-aria-id="${escapeAttr(quizId)}" ${templateDataAttrs(template)}>
+        <div class="${templateSurfaceClass(template, "bg-indigo-50")}">
+            <h1 class="${templateTitleClass(template)}" data-id="${escapeAttr(titleId)}">${escapeHtml(title)}</h1>
+            <div class="matching-bank original-word-list flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+${itemsHtml}
+            </div>
+${groupsHtml}
+            <div id="feedback" class="text-sm font-medium"></div>
+            <div data-submit-target class="flex flex-wrap items-center justify-center gap-4"></div>
+        </div>
+    </section>
+</div>`
+}
+
+function renderSortingQuizHtml(
+  quiz: Quiz,
+  quizId: string,
+  catalog: TextCatalogOutput | undefined,
+  renderOptions?: RenderQuizHtmlOptions,
+): string {
+  const texts = textById(catalog)
+  const questions = getQuizQuestions(quiz)
+  const template = getActivityTemplate(quiz)
+  const titleId = `${quizId}_que`
+  const title = texts.get(titleId) ?? getSharedQuizTitle(questions, "sorting")
+  const categoryColors = [
+    "bg-amber-50 border-amber-300",
+    "bg-cyan-50 border-cyan-300",
+    "bg-lime-50 border-lime-300",
+    "bg-rose-50 border-rose-300",
+    "bg-violet-50 border-violet-300",
+  ]
+  let itemIndex = 1
+
+  const groupHtml = questions.map((question, questionIndex) => {
+    const headingHtml = renderNestedQuestionHeading(
+      quizId,
+      question,
+      questionIndex,
+      questions,
+      texts,
+      template
+    )
+    const prefix = getQuestionPrefix(quizId, questionIndex, questions.length > 1)
+    const itemsHtml = (question.sortingItems ?? []).map((item, itemOffset) => {
+      const itemId = `item-${itemIndex++}`
+      const textId = `${prefix}_sort${itemOffset}`
+      const text = texts.get(textId) ?? item.item
+      const itemImageHtml = renderQuizImageHtml(
+        item.image,
+        renderOptions,
+        "activity-item-image mb-2 max-h-24 w-full rounded object-contain"
+      )
+      return `
+                        <button
+                            type="button"
+                            class="word-card rounded-md border border-amber-300 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-800 shadow-sm cursor-pointer transition duration-300 hover:bg-amber-100 transform hover:scale-105"
+                            data-activity-item="${escapeAttr(itemId)}"
+                            data-id="${escapeAttr(textId)}"
+                            draggable="true"
+                            tabindex="0"
+                            role="option"
+                        >
+                            ${itemImageHtml}
+                            <span>${escapeHtml(text)}</span>
+                        </button>`
+    }).join("\n")
+
+    const categoriesHtml = (question.categories ?? []).map((category, categoryIndex) => {
+      const categoryId = `category-${questionIndex + 1}-${categoryIndex + 1}`
+      const textId = `${prefix}_cat${categoryIndex}`
+      const color = categoryColors[categoryIndex % categoryColors.length]
+      return `
+                        <div
+                            class="category ${color} rounded-2xl border-2 border-dashed p-3 min-h-[9rem]"
+                            data-activity-category="${escapeAttr(categoryId)}"
+                            tabindex="0"
+                            role="listbox"
+                        >
+                            <label class="block rounded-full bg-white/80 px-3 py-1 text-center text-sm font-semibold text-slate-900 shadow-sm" data-id="${escapeAttr(textId)}">${escapeHtml(texts.get(textId) ?? category.label)}</label>
+                            <ul class="word-list mt-3 flex min-h-20 flex-wrap content-start gap-2"></ul>
+                        </div>`
+    }).join("\n")
+
+    return `
+                <div class="${templatePanelClass(template)}" data-step-number="${questionIndex + 1}">
+${headingHtml}
+                    <div class="rounded-2xl border border-amber-200 bg-amber-100/50 p-4">
+                        <div class="flex flex-wrap justify-center gap-3" role="listbox">
+${itemsHtml}
+                        </div>
+                    </div>
+                    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" role="listbox">
+${categoriesHtml}
                     </div>
                 </div>`
   })
+  const groupsHtml = renderActivityQuestionPages(quizId, template, groupHtml)
 
-  return `<div id="content" class="container content mx-auto w-full min-h-screen px-8 py-8 flex items-center justify-center opacity-0">
-    <section id="simple-main" data-section-type="activity_matching" data-id="${escapeAttr(quizId)}" data-area-id="${escapeAttr(quizId)}" data-aria-id="${escapeAttr(quizId)}">
-        <div class="mx-auto flex w-full max-w-4xl flex-col gap-8 rounded-3xl bg-sky-50 p-10 shadow-sm">
-            <h1 class="text-3xl font-bold text-gray-900 tracking-tight" data-id="${escapeAttr(titleId)}">${escapeHtml(title)}</h1>
-            <div class="original-word-list flex flex-wrap gap-3">
-${itemsHtml}
-            </div>
+  return `<style>
+${activityTemplateCss()}
+</style>
+
+<div id="content" class="${activityContentClass()}">
+    <section id="simple-main" data-section-type="activity_sorting" data-id="${escapeAttr(quizId)}" data-area-id="${escapeAttr(quizId)}" data-aria-id="${escapeAttr(quizId)}" ${templateDataAttrs(template)}>
+        <div class="${templateWideSurfaceClass(template, "bg-amber-50")}">
+            <h1 class="${templateTitleClass(template)}" data-id="${escapeAttr(titleId)}">${escapeHtml(title)}</h1>
 ${groupsHtml}
             <div id="feedback" class="text-sm font-medium"></div>
             <div data-submit-target class="flex flex-wrap items-center justify-center gap-4"></div>
@@ -1473,6 +2351,14 @@ export function buildQuizAnswers(quiz: Quiz, quizId: string): Record<string, str
       const prefix = getQuestionPrefix(quizId, questionIndex, multiQuestion)
       for (let i = 0; i < (question.options ?? []).length; i++) {
         answers[`${prefix}_o${i}`] = i === question.answerIndex
+      }
+    })
+  } else if (activityType === "multiple_select") {
+    questions.forEach((question, questionIndex) => {
+      const prefix = getQuestionPrefix(quizId, questionIndex, multiQuestion)
+      const answerIndexes = new Set(question.answerIndexes ?? [])
+      for (let i = 0; i < (question.options ?? []).length; i++) {
+        answers[`${prefix}_o${i}`] = answerIndexes.has(i)
       }
     })
   } else if (activityType === "fill_in_the_blank") {
@@ -1497,6 +2383,20 @@ export function buildQuizAnswers(quiz: Quiz, quizId: string): Record<string, str
         itemIndex++
       }
     }
+  } else if (activityType === "sorting") {
+    let itemIndex = 1
+    questions.forEach((question, questionIndex) => {
+      const categoryByLabel = new Map(
+        (question.categories ?? []).map((category, categoryIndex) => [
+          category.label.trim().toLowerCase(),
+          `category-${questionIndex + 1}-${categoryIndex + 1}`,
+        ])
+      )
+      for (const item of question.sortingItems ?? []) {
+        answers[`item-${itemIndex}`] = categoryByLabel.get(item.category.trim().toLowerCase()) ?? ""
+        itemIndex++
+      }
+    })
   }
   return answers
 }

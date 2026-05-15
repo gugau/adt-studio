@@ -79,6 +79,7 @@ export interface RenderContext {
 export interface RenderSectionInput {
   label: string
   pageId: string
+  language: string
   pageImageBase64: string
   sectionIndex: number
   section: PageSectioningSection
@@ -91,6 +92,7 @@ export interface RenderSectionInput {
 export interface RenderPageInput {
   label: string
   pageId: string
+  language?: string
   pageImageBase64: string
   sectioning: PageSectioningOutput
   images: Map<string, { base64: string; width?: number; height?: number }>
@@ -238,6 +240,7 @@ export async function renderPage(
     const sectionInput: RenderSectionInput = {
       label: input.label,
       pageId: input.pageId,
+      language: input.language ?? "en",
       pageImageBase64: input.pageImageBase64,
       sectionIndex: i,
       section,

@@ -96,10 +96,10 @@ export const PIPELINE: StageDef[] = [
   },
   {
     name: "quizzes",
-    label: "Quizzes",
+    label: "Activities",
     dependsOn: ["storyboard"],
     steps: [
-      { name: "quiz-generation", label: "Quiz Generation" },
+      { name: "quiz-generation", label: "Activity Generation" },
     ],
   },
   {

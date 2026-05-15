@@ -29,6 +29,7 @@ import {
   buildTextCatalog,
   pad3,
   loadBookConfig,
+  buildImageMap,
   buildPreferredImageAltMap,
   rewriteImageUrls,
   convertLatexToMathml,
@@ -628,10 +629,17 @@ export function createAdtPreviewRoutes(
       // Include quiz HTML so Tailwind scans quiz classes
       const quizData = getQuizData(storage)
       const catalog = await getTextCatalog(storage)
+      const { bookDir } = resolveBook(safeLabel)
+      const imageMap = buildImageMap(path.join(bookDir, "images"))
       if (quizData?.quizzes) {
         for (let i = 0; i < quizData.quizzes.length; i++) {
           const quizId = `qz${pad3(i + 1)}`
-          allHtml += renderQuizHtml(quizData.quizzes[i], quizId, catalog) + "\n"
+          allHtml += renderQuizHtml(quizData.quizzes[i], quizId, catalog, {
+            imageSrc: (imageId) => {
+              const filename = imageMap.get(imageId)
+              return filename ? `images/${filename}` : null
+            },
+          }) + "\n"
         }
       }
 
@@ -850,8 +858,15 @@ export function createAdtPreviewRoutes(
         }
         const quiz = visibleQuizzes[quizIndex]
         const catalog = await getTextCatalog(storage)
+        const { bookDir } = resolveBook(safeLabel)
+        const imageMap = buildImageMap(path.join(bookDir, "images"))
 
-        const quizHtmlContent = renderQuizHtml(quiz, pageId, catalog)
+        const quizHtmlContent = renderQuizHtml(quiz, pageId, catalog, {
+          imageSrc: (imageId) => {
+            const filename = imageMap.get(imageId)
+            return filename ? `images/${filename}` : `/api/books/${safeLabel}/images/${imageId}`
+          },
+        })
         // Determine page index from the manifest
       const manifest = buildPagesManifest(storage)
       const manifestIndex = manifest.findIndex((e) => e.section_id === pageId)

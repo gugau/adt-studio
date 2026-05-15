@@ -5,6 +5,7 @@ import { validateSectionHtml } from "./validate-html.js"
 import { getViewportBreakpoints, type ScreenshotRenderer } from "./screenshot.js"
 import type { RenderConfig, RenderSectionInput } from "./web-rendering.js"
 import { runVisualReviewLoop } from "./visual-review.js"
+import { buildLanguageContext } from "./language-context.js"
 
 /** Dependencies for the optional visual refinement loop. */
 export interface VisualRefinementDeps {
@@ -36,6 +37,7 @@ export async function renderSectionLlm(
 
   const promptContext = {
     label: input.label,
+    ...buildLanguageContext(input.language),
     page_image_base64: input.pageImageBase64,
     section_id: section.sectionId,
     section_type: section.sectionType,

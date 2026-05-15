@@ -445,6 +445,7 @@ export async function runFullPipeline(
       const model = getModel(pageSectioningConfig.modelId)
       const pages = storage.getPages()
       const totalPages = pages.length
+      const language = getLanguage(storage, config)
       await processWithConcurrency(pages, effectiveConcurrency, async (page) => {
         const imageClassRow = storage.getLatestNodeData("image-filtering", page.pageId)
         if (!imageClassRow) return
@@ -461,6 +462,7 @@ export async function runFullPipeline(
           {
             pageId: page.pageId,
             pageNumber: page.pageNumber,
+            language,
             text: page.text,
             imageBase64,
             availableImages,
@@ -509,6 +511,7 @@ export async function runFullPipeline(
     })
 
     executors.set("web-rendering", async (p) => {
+      const language = getLanguage(storage, config)
       const renderModels = new Map<string, LLMModel>()
       const resolveRenderModel = (modelId: string): LLMModel => {
         let model = renderModels.get(modelId)
@@ -537,7 +540,7 @@ export async function runFullPipeline(
         }
         const pageImageBase64 = storage.getPageImageBase64(page.pageId)
         const result = await renderPage(
-          { label, pageId: page.pageId, pageImageBase64, sectioning: sectioning, images: renderImages },
+          { label, pageId: page.pageId, language, pageImageBase64, sectioning: sectioning, images: renderImages },
           resolveRenderConfig,
           resolveRenderModel,
           templateEngine,

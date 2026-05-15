@@ -36,6 +36,10 @@ export type QuizGroup = z.infer<typeof QuizGroup>
 
 export const QuizGenerationConfig = StepConfig.extend({
   pages_per_quiz: z.number().int().min(1).optional(),
+  multiple_choice_option_count: z.number().int().min(2).max(6).optional(),
+  open_ended_character_limit: z.number().int().min(50).max(2000).optional(),
+  matching_pair_count: z.number().int().min(2).max(6).optional(),
+  sorting_item_count: z.number().int().min(2).max(6).optional(),
   quiz_section_types: z.array(z.string()).optional(),
   /** When set, replaces auto-batching: one quiz per group. */
   quiz_groups: z.array(QuizGroup).optional(),

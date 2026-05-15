@@ -156,17 +156,20 @@ describe("page-edit-service", () => {
       }
       fs.writeFileSync(
         path.join(tmpDir, label, "config.yaml"),
-        "default_render_strategy: llm\n"
+        "editing_language: ne_np\ndefault_render_strategy: llm\n"
       )
 
+      let capturedLanguageCode: string | undefined
       llmMocks.generateObject.mockImplementation(async (opts: unknown) => {
         const context = (opts as {
           context: {
             section_id: string
             section_type: string
+            language_code?: string
             images: Array<{ image_id: string }>
           }
         }).context
+        capturedLanguageCode = context.language_code
         const sectionId = context.section_id
         const sectionType = context.section_type
         const imageId = context.images[0]?.image_id
@@ -189,6 +192,7 @@ describe("page-edit-service", () => {
       })
 
       expect(llmMocks.generateObject).toHaveBeenCalledTimes(1)
+      expect(capturedLanguageCode).toBe("ne-NP")
       const rendering = result.rendering as {
         sections: Array<{ sectionIndex: number; html: string }>
       }

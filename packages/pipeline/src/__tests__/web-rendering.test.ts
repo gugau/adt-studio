@@ -769,7 +769,7 @@ describe("renderPage", () => {
   })
 
   it("routes activity renderType through LLM renderer with answer generation", async () => {
-    const llmCalls: Array<{ prompt?: string; taskType?: string }> = []
+    const llmCalls: Array<{ prompt?: string; taskType?: string; languageCode?: string }> = []
     const activityHtmlResponse = {
       reasoning: "activity reasoning",
       content:
@@ -785,6 +785,7 @@ describe("renderPage", () => {
         llmCalls.push({
           prompt: opts.prompt,
           taskType: opts.log?.taskType,
+          languageCode: (opts.context as { language_code?: string }).language_code,
         })
         if (opts.log?.taskType === "activity-answers") {
           return { object: activityAnswersResponse as T } as GenerateObjectResult<T>
@@ -807,6 +808,7 @@ describe("renderPage", () => {
       {
         label: "test-book",
         pageId: "pg001",
+        language: "ne_np",
         pageImageBase64: "base64img",
         sectioning: {
           reasoning: "test",
@@ -836,8 +838,10 @@ describe("renderPage", () => {
     expect(llmCalls).toHaveLength(2)
     expect(llmCalls[0].prompt).toBe("activity_multiple_choice")
     expect(llmCalls[0].taskType).toBe("activity-rendering")
+    expect(llmCalls[0].languageCode).toBe("ne-NP")
     expect(llmCalls[1].prompt).toBe("activity_multiple_choice_answers")
     expect(llmCalls[1].taskType).toBe("activity-answers")
+    expect(llmCalls[1].languageCode).toBe("ne-NP")
 
     expect(result.sections).toHaveLength(1)
     expect(result.sections[0].activityReasoning).toBe("answer reasoning")

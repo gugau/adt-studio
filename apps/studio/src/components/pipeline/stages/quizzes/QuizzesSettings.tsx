@@ -31,6 +31,13 @@ function getSectionTypeDisplayDescription(value: string, configDesc: string): st
   return getSectionTypeDescription(value) ?? configDesc
 }
 
+function boundedNumber(value: string, min: number, max: number): number | undefined {
+  if (!value.trim()) return undefined
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) return undefined
+  return Math.min(max, Math.max(min, Math.trunc(parsed)))
+}
+
 export function QuizzesSettings({ bookLabel, headerTarget, tab = "general" }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string }) {
   const { t } = useLingui()
   const { data: bookConfigData } = useBookConfig(bookLabel)
@@ -41,7 +48,10 @@ export function QuizzesSettings({ bookLabel, headerTarget, tab = "general" }: { 
   const navigate = useNavigate()
   const [showRerunDialog, setShowRerunDialog] = useState(false)
 
-  const [pagesPerQuiz, setPagesPerQuiz] = useState("")
+  const [mcqOptionCount, setMcqOptionCount] = useState("4")
+  const [openEndedCharacterLimit, setOpenEndedCharacterLimit] = useState("250")
+  const [matchingPairCount, setMatchingPairCount] = useState("6")
+  const [sortingItemCount, setSortingItemCount] = useState("6")
   const [promptDraft, setPromptDraft] = useState<string | null>(null)
   const [sectionTypes, setSectionTypes] = useState<Record<string, string>>({})
   const [quizSectionTypes, setQuizSectionTypes] = useState<Set<string>>(new Set())
@@ -56,10 +66,17 @@ export function QuizzesSettings({ bookLabel, headerTarget, tab = "general" }: { 
     if (!activeConfigData) return
     setSectionTypes({})
     setQuizSectionTypes(new Set())
+    setMcqOptionCount("4")
+    setOpenEndedCharacterLimit("250")
+    setMatchingPairCount("6")
+    setSortingItemCount("6")
     const m = activeConfigData.merged as Record<string, unknown>
     if (m.quiz_generation && typeof m.quiz_generation === "object") {
       const qg = m.quiz_generation as Record<string, unknown>
-      if (qg.pages_per_quiz != null) setPagesPerQuiz(String(qg.pages_per_quiz))
+      setMcqOptionCount(qg.multiple_choice_option_count != null ? String(qg.multiple_choice_option_count) : "4")
+      setOpenEndedCharacterLimit(qg.open_ended_character_limit != null ? String(qg.open_ended_character_limit) : "250")
+      setMatchingPairCount(qg.matching_pair_count != null ? String(qg.matching_pair_count) : "6")
+      setSortingItemCount(qg.sorting_item_count != null ? String(qg.sorting_item_count) : "6")
       if (Array.isArray(qg.quiz_section_types)) {
         setQuizSectionTypes(new Set(qg.quiz_section_types as string[]))
       }
@@ -94,7 +111,10 @@ export function QuizzesSettings({ bookLabel, headerTarget, tab = "general" }: { 
       const nextQuizGeneration: Record<string, unknown> = {
         ...existing,
         ...quiz.configOverrides,
-        pages_per_quiz: pagesPerQuiz ? Number(pagesPerQuiz) : undefined,
+        multiple_choice_option_count: boundedNumber(mcqOptionCount, 2, 6),
+        open_ended_character_limit: boundedNumber(openEndedCharacterLimit, 50, 2000),
+        matching_pair_count: boundedNumber(matchingPairCount, 2, 6),
+        sorting_item_count: boundedNumber(sortingItemCount, 2, 6),
       }
       if (dirty.quiz_section_types || "quiz_section_types" in existing) {
         nextQuizGeneration.quiz_section_types = Array.from(quizSectionTypes)
@@ -130,26 +150,77 @@ export function QuizzesSettings({ bookLabel, headerTarget, tab = "general" }: { 
     <div className={tab === "prompt" ? "h-full max-w-4xl" : "p-4 max-w-2xl space-y-6"}>
       {tab === "general" && (
         <>
-          <div className="space-y-1.5">
-            <Label className="text-xs">{t`Pages per Quiz`}</Label>
-            <Input
-              type="number"
-              min={1}
-              value={pagesPerQuiz}
-              onChange={(e) => { setPagesPerQuiz(e.target.value); markDirty("quiz_generation") }}
-              placeholder="3"
-              className="w-32 h-8 text-xs"
-            />
-            <p className="text-xs text-muted-foreground">
-              {t`Number of pages of content to include per quiz question.`}
-            </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs">{t`MCQ options`}</Label>
+              <Input
+                type="number"
+                min={2}
+                max={6}
+                value={mcqOptionCount}
+                onChange={(e) => { setMcqOptionCount(e.target.value); markDirty("quiz_generation") }}
+                placeholder="4"
+                className="w-32 h-8 text-xs"
+              />
+              <p className="text-xs text-muted-foreground">
+                {t`Number of answer options to generate for each MCQ activity.`}
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">{t`Open-ended character limit`}</Label>
+              <Input
+                type="number"
+                min={50}
+                max={2000}
+                value={openEndedCharacterLimit}
+                onChange={(e) => { setOpenEndedCharacterLimit(e.target.value); markDirty("quiz_generation") }}
+                placeholder="250"
+                className="w-32 h-8 text-xs"
+              />
+              <p className="text-xs text-muted-foreground">
+                {t`Maximum characters learners can type for open-ended responses.`}
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">{t`Matching pairs`}</Label>
+              <Input
+                type="number"
+                min={2}
+                max={6}
+                value={matchingPairCount}
+                onChange={(e) => { setMatchingPairCount(e.target.value); markDirty("quiz_generation") }}
+                placeholder="6"
+                className="w-32 h-8 text-xs"
+              />
+              <p className="text-xs text-muted-foreground">
+                {t`Maximum number of matching pairs to generate.`}
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">{t`Sorting items`}</Label>
+              <Input
+                type="number"
+                min={2}
+                max={6}
+                value={sortingItemCount}
+                onChange={(e) => { setSortingItemCount(e.target.value); markDirty("quiz_generation") }}
+                placeholder="6"
+                className="w-32 h-8 text-xs"
+              />
+              <p className="text-xs text-muted-foreground">
+                {t`Maximum number of sorting items to generate.`}
+              </p>
+            </div>
           </div>
 
           {sectionTypeKeys.length > 0 && (
             <div className="space-y-2">
-              <Label className="text-xs">{t`Quiz Section Types`}</Label>
+              <Label className="text-xs">{t`Activity Source Section Types`}</Label>
               <p className="text-xs text-muted-foreground">
-                {t`Only pages containing these section types are counted when grouping pages for quiz generation.`}
+                {t`Only pages containing these section types are counted when grouping pages for activity generation.`}
               </p>
               <div className="rounded-md border divide-y">
                 {sectionTypeKeys.map((key) => {
@@ -182,8 +253,8 @@ export function QuizzesSettings({ bookLabel, headerTarget, tab = "general" }: { 
         <PromptViewer
           promptName="quiz_generation"
           bookLabel={bookLabel}
-          title={t`Quiz Generation Prompt`}
-          description={t`The prompt template used to generate quiz questions from page content.`}
+          title={t`Activity Generation Prompt`}
+          description={t`The prompt template used to generate activities from page content.`}
           model={quiz.model}
           onModelChange={quiz.onModelChange}
           maxRetries={quiz.maxRetries}
@@ -209,9 +280,9 @@ export function QuizzesSettings({ bookLabel, headerTarget, tab = "general" }: { 
       <Dialog open={showRerunDialog} onOpenChange={setShowRerunDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t`Save & Rerun Quizzes`}</DialogTitle>
+            <DialogTitle>{t`Save & Rerun Activities`}</DialogTitle>
             <DialogDescription>
-              {t`This will save your settings and re-run quiz generation.`}
+              {t`This will save your settings and re-run activity generation.`}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

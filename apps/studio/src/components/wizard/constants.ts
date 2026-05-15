@@ -390,7 +390,13 @@ export const PRESETS: PresetConfig[] = [
         "activity_open_ended_answer",
       ],
       image_filters: { min_stddev: 2 },
-      quiz_generation: { pages_per_quiz: 3 },
+      quiz_generation: {
+        pages_per_quiz: 3,
+        multiple_choice_option_count: 4,
+        open_ended_character_limit: 250,
+        matching_pair_count: 6,
+        sorting_item_count: 6,
+      },
     },
   },
   {

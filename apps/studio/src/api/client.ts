@@ -293,13 +293,44 @@ export interface TocSection {
 export interface QuizOption {
   text: string
   explanation: string
+  image?: QuizImageAsset
+}
+
+export interface QuizImageAsset {
+  imageId: string
+  alt?: string
 }
 
 export type QuizActivityType =
   | "multiple_choice"
+  | "multiple_select"
   | "true_false"
   | "fill_in_the_blank"
+  | "open_ended"
   | "drag_and_drop"
+  | "sorting"
+
+export type ActivityTemplateStyle =
+  | "worksheet_rows"
+  | "practice_cards"
+  | "quick_check"
+  | "guided_steps"
+  | "clean_workbook"
+  | "card_practice"
+  | "compact_review"
+
+export type ActivityGenerationMode =
+  | "template_single_page"
+  | "template_multi_step"
+  | "ai_generated_layout"
+
+export interface ActivityTemplate {
+  id?: string
+  name: string
+  style: ActivityTemplateStyle
+  generationMode: ActivityGenerationMode
+  instructions?: string
+}
 
 export interface QuizStatement {
   text: string
@@ -315,6 +346,8 @@ export interface QuizBlank {
 export interface QuizMatchPair {
   item: string
   match: string
+  itemImage?: QuizImageAsset
+  matchImage?: QuizImageAsset
   explanation?: string
 }
 
@@ -323,10 +356,27 @@ export interface QuizQuestion {
   question: string
   options?: QuizOption[]
   answerIndex?: number
+  answerIndexes?: number[]
   statements?: QuizStatement[]
   blanks?: QuizBlank[]
   pairs?: QuizMatchPair[]
+  categories?: QuizSortingCategory[]
+  sortingItems?: QuizSortingItem[]
+  sampleAnswer?: string
+  guidance?: string
+  responseCharacterLimit?: number
   reasoning: string
+}
+
+export interface QuizSortingCategory {
+  label: string
+}
+
+export interface QuizSortingItem {
+  item: string
+  category: string
+  image?: QuizImageAsset
+  explanation?: string
 }
 
 export interface QuizItem extends QuizQuestion {
@@ -334,7 +384,9 @@ export interface QuizItem extends QuizQuestion {
   afterPageId: string
   pageIds: string[]
   isPruned?: boolean
+  template?: ActivityTemplate
   questions?: QuizQuestion[]
+  sourceTextbookActivityId?: string
 }
 
 export interface QuizGenerationOutput {
@@ -349,9 +401,56 @@ export interface QuizzesResponse {
   version: number | null
 }
 
+export interface TextbookActivity {
+  id: string
+  pageId: string
+  pageNumber: number
+  sectionId: string
+  sectionIndex: number
+  sectionType: string
+  textPreview: string
+  textBlockCount: number
+  imageCount: number
+  answerCount: number
+  hasRendering: boolean
+  override?: TextbookActivityOverride
+}
+
+export interface TextbookActivityOverride {
+  id: string
+  sourcePageId: string
+  sourceSectionId: string
+  activityType: QuizActivityType
+  template: ActivityTemplate
+  questions: QuizQuestion[]
+  assignedPageIds: string[]
+  insertAfterPageId: string
+  questionsPerQuiz: number
+  replaceExistingForPages: boolean
+  hidden: boolean
+  updatedAt: string
+}
+
+export type TextbookActivityOverrideInput = Omit<TextbookActivityOverride, "id" | "updatedAt"> & {
+  id?: string
+  updatedAt?: string
+}
+
+export interface TextbookActivityOverrideResponse {
+  override: TextbookActivityOverride | null
+  version: number
+}
+
+export interface TextbookActivitiesResponse {
+  activities: TextbookActivity[]
+  orphanedOverrideIds?: string[]
+}
+
 export interface GenerateQuizzesRequest {
   pageIds: string[]
   activityType: QuizActivityType
+  template?: ActivityTemplate
+  insertAfterPageId?: string
   /** 1-20 questions inside the generated quiz activity. */
   questionsPerQuiz?: number
   replaceExistingForPages?: boolean
@@ -784,6 +883,25 @@ export const api = {
     )
   },
 
+  generateImageCaption: (
+    label: string,
+    pageId: string,
+    imageId: string,
+    apiKey: string,
+    providerCredentials?: StageRunProviderCredentials
+  ) =>
+    request<{
+      caption: { imageId: string; reasoning: string; caption: string }
+      version: number
+    }>(
+      `/books/${label}/images/${encodeURIComponent(imageId)}/caption`,
+      {
+        method: "POST",
+        headers: buildApiHeaders(apiKey, providerCredentials),
+        body: JSON.stringify({ pageId }),
+      }
+    ),
+
   uploadCroppedImage: (label: string, pageId: string, sourceImageId: string, imageBlob: Blob) => {
     const formData = new FormData()
     formData.append("image", imageBlob, "crop.png")
@@ -952,6 +1070,28 @@ export const api = {
 
   getQuizzes: (label: string) =>
     request<QuizzesResponse>(`/books/${label}/quizzes`),
+
+  getTextbookActivities: (label: string) =>
+    request<TextbookActivitiesResponse>(`/books/${label}/quizzes/textbook-activities`),
+
+  saveTextbookActivityOverride: (
+    label: string,
+    activityId: string,
+    data: TextbookActivityOverrideInput
+  ) =>
+    request<TextbookActivityOverrideResponse>(
+      `/books/${label}/quizzes/textbook-activities/${activityId}/override`,
+      {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }
+    ),
+
+  deleteTextbookActivityOverride: (label: string, activityId: string) =>
+    request<TextbookActivityOverrideResponse>(
+      `/books/${label}/quizzes/textbook-activities/${activityId}/override`,
+      { method: "DELETE" }
+    ),
 
   updateQuizzes: (label: string, data: unknown) =>
     request<{ version: number }>(`/books/${label}/quizzes`, {

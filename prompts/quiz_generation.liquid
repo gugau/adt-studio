@@ -13,6 +13,23 @@ General requirements:
 - Do not duplicate previous generated questions for this quiz.
 - The JSON must match the requested activity type and include `reasoning`, `activity_type`, and `question`.
 
+{% if activity_template %}
+Reusable activity template:
+- Template name: {{ activity_template.name }}
+- Generation mode: {{ activity_template.generation_mode }}
+- Visual style family: {{ activity_template.style }}
+- Style family meanings:
+  - worksheet_rows: practical classroom worksheet, clear rows, direct wording.
+  - practice_cards: friendly card practice, shorter prompts, answer choices that can stand alone.
+  - quick_check: compact review, concise prompts, minimal explanation length.
+  - guided_steps: ordered practice sequence, each item should feel like one step in a larger activity.
+{% if activity_template.instructions %}
+- Style/content instructions: {{ activity_template.instructions }}
+{% endif %}
+
+Use this template as a consistency contract. Generate content that fits the same instructional tone, complexity, and repeated activity pattern so many activities can feel like one coherent set.
+{% endif %}
+
 {% if previous_questions and previous_questions.size > 0 %}
 Previous questions to avoid:
 {% for previous in previous_questions %}
@@ -24,11 +41,20 @@ Previous questions to avoid:
 {% if activity_type == "multiple_choice" %}
 Multiple choice requirements:
 - Generate one comprehension question.
-- Provide exactly 3 answer options.
-- Each option text must begin with its numeric label ("1)", "2)", "3)").
+- Provide exactly {{ multiple_choice_option_count }} answer options.
+- Each option text must begin with its numeric label ("1)", "2)", "3)", and so on through option {{ multiple_choice_option_count }}).
 - Set `answer_index` to the zero-based index of the correct option.
 - Each option must include a short explanation.
 - The correct explanation should be encouraging; incorrect explanations should gently correct the learner.
+{% elsif activity_type == "multiple_select" %}
+Multiple-select MCQ requirements:
+- Generate one comprehension question where more than one option is correct.
+- Provide exactly 4 answer options.
+- Each option text must begin with its numeric label ("1)", "2)", "3)", "4)").
+- Set `answer_indexes` to the zero-based indexes of all correct options.
+- Include at least 2 correct options and at least 1 incorrect option.
+- Each option must include a short explanation.
+- Correct explanations should be encouraging; incorrect explanations should gently correct the learner.
 {% elsif activity_type == "true_false" %}
 True/false requirements:
 - `question` should be a shared title such as "True or false."
@@ -42,12 +68,29 @@ Fill-in-the-blank requirements:
 - Each blank `prompt` must be a cloze sentence, not a question.
 - Each blank `prompt` must contain exactly one `____` marker where the answer belongs.
 - Each `answer` must be the word or short phrase that belongs in the blank.
+{% elsif activity_type == "open_ended" %}
+Open-ended requirements:
+- Generate one clear prompt that asks the learner to answer in their own words.
+- The learner response will be limited to {{ open_ended_character_limit }} characters, so ask for a concise answer that fits.
+- The answer should naturally be one or more sentences, not a single fixed word.
+- Do not include answer options, true/false statements, blanks, matching pairs, or sorting items.
+- Include a concise `sample_answer` that models an acceptable response.
+- Include `guidance` for a teacher or learner about what a good answer should mention.
 {% elsif activity_type == "drag_and_drop" %}
-Drag/drop matching requirements:
+Matching-pairs requirements:
 - `question` should be a shared title such as "Match the pairs."
-- Provide 2 to 6 unique entries in `pairs`.
+- Provide 2 to {{ matching_pair_count }} unique entries in `pairs`.
 - Each pair must contain `item` and `match`.
 - Keep each item and match concise.
+- This is a one-to-one matching activity, not a sorting/category activity.
+{% elsif activity_type == "sorting" %}
+Sorting requirements:
+- `question` should be a shared title such as "Sort the items."
+- Provide 2 to 5 categories in `categories`; each category must contain a clear `label`.
+- Provide 2 to {{ sorting_item_count }} entries in `items`.
+- Each item must contain `item` and `category`.
+- Every item `category` must exactly match one provided category label.
+- Keep category labels and item text concise.
 {% endif %}
 {% endchat %}
 

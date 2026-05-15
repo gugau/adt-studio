@@ -12,6 +12,7 @@ import {
   renderPageHtml,
   renderQuizHtml,
   buildQuizAnswers,
+  collectQuizImageIds,
   rewriteImageUrls,
   convertLatexToMathml,
   convertLatexString,
@@ -236,6 +237,35 @@ describe("renderQuizHtml", () => {
     expect((html.match(/What is 2\+2\?/g) ?? [])).toHaveLength(1)
   })
 
+  it("renders and collects quiz item images", () => {
+    const quiz: Quiz = {
+      activityType: "multiple_choice",
+      quizIndex: 0,
+      afterPageId: "pg001",
+      pageIds: ["pg001"],
+      question: "Which picture shows the banana?",
+      options: [
+        {
+          text: "Banana",
+          explanation: "Yes",
+          image: { imageId: "pg001_img001", alt: "A yellow banana" },
+        },
+        { text: "Leaf", explanation: "No" },
+      ],
+      answerIndex: 0,
+      reasoning: "...",
+    }
+
+    const html = renderQuizHtml(quiz, "qz001", undefined, {
+      imageSrc: (imageId) => `images/${imageId}.png`,
+    })
+
+    expect(collectQuizImageIds(quiz)).toEqual(["pg001_img001"])
+    expect(html).toContain('src="images/pg001_img001.png"')
+    expect(html).toContain('alt="A yellow banana"')
+    expect(html).toContain("activity-option-image")
+  })
+
   it("renders nested fill-in-the-blank questions as one activity with sequential answer ids", () => {
     const quiz: Quiz = {
       activityType: "fill_in_the_blank",
@@ -373,6 +403,207 @@ describe("renderQuizHtml", () => {
     })
   })
 
+  it("renders multiple-select as checkbox quiz groups", () => {
+    const quiz: Quiz = {
+      activityType: "multiple_select",
+      quizIndex: 0,
+      afterPageId: "pg001",
+      pageIds: ["pg001"],
+      question: "Which are plant parts?",
+      options: [
+        { text: "1) Root", explanation: "Correct." },
+        { text: "2) Cloud", explanation: "No." },
+        { text: "3) Stem", explanation: "Correct." },
+        { text: "4) Stone", explanation: "No." },
+      ],
+      answerIndexes: [0, 2],
+      reasoning: "...",
+    }
+
+    const html = renderQuizHtml(quiz, "qz001", undefined)
+    const answers = buildQuizAnswers(quiz, "qz001")
+
+    expect(html).toContain('data-quiz-selection-mode="multiple"')
+    expect((html.match(/type="checkbox"/g) ?? [])).toHaveLength(4)
+    expect(answers).toEqual({
+      qz001_o0: true,
+      qz001_o1: false,
+      qz001_o2: true,
+      qz001_o3: false,
+    })
+  })
+
+  it("renders stored activity template metadata for generated activities", () => {
+    const quiz: Quiz = {
+      activityType: "multiple_choice",
+      quizIndex: 0,
+      afterPageId: "pg001",
+      pageIds: ["pg001"],
+      question: "Which animal is in the story?",
+      options: [
+        { text: "1) Elephant", explanation: "Correct." },
+        { text: "2) Tiger", explanation: "No." },
+        { text: "3) Horse", explanation: "No." },
+      ],
+      answerIndex: 0,
+      reasoning: "...",
+      template: {
+        id: "custom-1",
+        name: "My workbook style",
+        style: "quick_check",
+        generationMode: "template_single_page",
+        instructions: "Keep it compact.",
+      },
+    }
+
+    const html = renderQuizHtml(quiz, "qz001", undefined)
+
+    expect(html).toContain('data-activity-template="My workbook style"')
+    expect(html).toContain('data-activity-template-style="quick_check"')
+    expect(html).toContain('data-activity-generation-mode="template_single_page"')
+  })
+
+  it("renders distinct learner-facing scaffolds for activity template styles", () => {
+    const baseQuiz: Quiz = {
+      activityType: "multiple_choice",
+      quizIndex: 0,
+      afterPageId: "pg001",
+      pageIds: ["pg001"],
+      question: "Which animal is in the story?",
+      options: [
+        { text: "1) Elephant", explanation: "Correct." },
+        { text: "2) Tiger", explanation: "No." },
+        { text: "3) Horse", explanation: "No." },
+      ],
+      answerIndex: 0,
+      reasoning: "...",
+    }
+    const styles = [
+      "worksheet_rows",
+      "practice_cards",
+      "quick_check",
+      "guided_steps",
+    ] as const
+
+    const htmlByStyle = styles.map((style) => renderQuizHtml({
+      ...baseQuiz,
+      template: {
+        id: style,
+        name: style,
+        style,
+        generationMode: style === "guided_steps" ? "template_multi_step" : "template_single_page",
+      },
+    }, "qz001", undefined))
+    const optionLayouts = htmlByStyle.map((html) =>
+      html.match(/class="activity-options-layout[^"]+"/)?.[0]
+    )
+
+    expect(new Set(optionLayouts).size).toBe(styles.length)
+    expect(htmlByStyle[1]).toContain("scroll-snap-type: x mandatory")
+    expect(htmlByStyle[1]).toContain("grid-template-columns: repeat(2, minmax(0, 1fr))")
+    expect(htmlByStyle[2]).toContain("border-top: 4px solid #2563eb")
+    expect(htmlByStyle[3]).toContain('data-step-number="1"')
+    expect(htmlByStyle[3]).toContain("content: attr(data-step-number)")
+  })
+
+  it("renders practice-card multi-question activities as accessible horizontal pages", () => {
+    const quiz: Quiz = {
+      activityType: "multiple_choice",
+      quizIndex: 0,
+      afterPageId: "pg001",
+      pageIds: ["pg001"],
+      question: "Quiz.",
+      options: [
+        { text: "1) Water", explanation: "Correct." },
+        { text: "2) Stone", explanation: "No." },
+        { text: "3) Smoke", explanation: "No." },
+        { text: "4) Sand", explanation: "No." },
+      ],
+      answerIndex: 0,
+      reasoning: "...",
+      template: {
+        id: "practice-cards",
+        name: "Practice cards",
+        style: "practice_cards",
+        generationMode: "template_single_page",
+      },
+      questions: [
+        {
+          activityType: "multiple_choice",
+          question: "What do roots absorb?",
+          options: [
+            { text: "1) Water", explanation: "Correct." },
+            { text: "2) Stone", explanation: "No." },
+            { text: "3) Smoke", explanation: "No." },
+            { text: "4) Sand", explanation: "No." },
+          ],
+          answerIndex: 0,
+          reasoning: "...",
+        },
+        {
+          activityType: "multiple_choice",
+          question: "What gives plants energy?",
+          options: [
+            { text: "1) Moonlight", explanation: "No." },
+            { text: "2) Sunlight", explanation: "Correct." },
+            { text: "3) Sand", explanation: "No." },
+            { text: "4) Smoke", explanation: "No." },
+          ],
+          answerIndex: 1,
+          reasoning: "...",
+        },
+      ],
+    }
+
+    const html = renderQuizHtml(quiz, "qz001", undefined)
+
+    expect(html).toContain('data-activity-pages')
+    expect(html).toContain('data-activity-page-prev')
+    expect(html).toContain('data-activity-page-next')
+    expect(html).toContain('aria-live="polite">Question 1 of 2')
+    expect((html.match(/data-activity-page-index=/g) ?? [])).toHaveLength(2)
+    expect((html.match(/data-step-number="/g) ?? [])).toHaveLength(2)
+  })
+
+  it("does not duplicate question labels beside guided step badges", () => {
+    const quiz: Quiz = {
+      activityType: "fill_in_the_blank",
+      quizIndex: 0,
+      afterPageId: "pg001",
+      pageIds: ["pg001"],
+      question: "Fill in the blanks.",
+      blanks: [{ prompt: "Karma liked ____.", answer: "chillies" }],
+      reasoning: "...",
+      template: {
+        id: "step-by-step",
+        name: "Step by step",
+        style: "guided_steps",
+        generationMode: "template_multi_step",
+      },
+      questions: [
+        {
+          activityType: "fill_in_the_blank",
+          question: "Fill in the blanks.",
+          blanks: [{ prompt: "Karma liked ____.", answer: "chillies" }],
+          reasoning: "...",
+        },
+        {
+          activityType: "fill_in_the_blank",
+          question: "Fill in the blanks.",
+          blanks: [{ prompt: "Karma had a long ____.", answer: "trunk" }],
+          reasoning: "...",
+        },
+      ],
+    }
+
+    const html = renderQuizHtml(quiz, "qz001", undefined)
+
+    expect(html).toContain('data-step-number="1"')
+    expect(html).toContain("content: attr(data-step-number)")
+    expect(html).not.toContain(">Q1<")
+    expect(html).not.toContain(">Q2<")
+  })
+
   it("renders nested true/false as one flat answer map and one submit target", () => {
     const quiz: Quiz = {
       activityType: "true_false",
@@ -454,6 +685,57 @@ describe("renderQuizHtml", () => {
       "item-3": "dropzone-3",
       "item-4": "dropzone-4",
     })
+  })
+
+  it("renders sorting with sortable cards and category answer ids", () => {
+    const quiz: Quiz = {
+      activityType: "sorting",
+      quizIndex: 0,
+      afterPageId: "pg001",
+      pageIds: ["pg001"],
+      question: "Sort the items.",
+      categories: [{ label: "Animals" }, { label: "Plants" }],
+      sortingItems: [
+        { item: "Elephant", category: "Animals" },
+        { item: "Bamboo", category: "Plants" },
+      ],
+      reasoning: "...",
+    }
+
+    const html = renderQuizHtml(quiz, "qz001", undefined)
+    const answers = buildQuizAnswers(quiz, "qz001")
+
+    expect((html.match(/data-section-type="activity_sorting"/g) ?? [])).toHaveLength(1)
+    expect(html).toContain("word-card")
+    expect(html).toContain('data-activity-category="category-1-1"')
+    expect(answers).toEqual({
+      "item-1": "category-1-1",
+      "item-2": "category-1-2",
+    })
+  })
+
+  it("renders open-ended quizzes as writable answer activities", () => {
+    const quiz: Quiz = {
+      activityType: "open_ended",
+      quizIndex: 0,
+      afterPageId: "pg001",
+      pageIds: ["pg001"],
+      question: "Why did Karma ask for help?",
+      sampleAnswer: "Karma needed help because the task was difficult.",
+      guidance: "Look for a reason from the story.",
+      responseCharacterLimit: 250,
+      reasoning: "...",
+    }
+
+    const html = renderQuizHtml(quiz, "qz001", undefined)
+    const answers = buildQuizAnswers(quiz, "qz001")
+
+    expect((html.match(/data-section-type="activity_open_ended_answer"/g) ?? [])).toHaveLength(1)
+    expect(html).toContain("Why did Karma ask for help?")
+    expect(html).toContain("<textarea")
+    expect(html).toContain('maxlength="250"')
+    expect(html).toContain('data-character-limit="250"')
+    expect(answers).toEqual({})
   })
 })
 

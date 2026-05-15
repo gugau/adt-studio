@@ -143,15 +143,26 @@ export {
 } from "./glossary.js"
 
 export {
+  ActivityGenerationMode,
+  ActivityTemplate,
+  ActivityTemplateStyle,
   QuizActivityType,
+  QuizImageAsset,
   QuizOption,
   QuizStatement,
   QuizBlank,
   QuizMatchPair,
+  QuizSortingCategory,
+  QuizSortingItem,
   QuizQuestion,
   Quiz,
   QuizGenerationOutput,
   QuizGenerationRequest,
+  TextbookActivity,
+  TextbookActivityOverride,
+  TextbookActivityOverrideInput,
+  TextbookActivityOverrideResponse,
+  TextbookActivitiesResponse,
   quizLLMSchema,
   getQuizLLMSchema,
 } from "./quiz.js"

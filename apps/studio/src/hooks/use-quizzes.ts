@@ -8,3 +8,11 @@ export function useQuizzes(label: string) {
     enabled: !!label,
   })
 }
+
+export function useTextbookActivities(label: string) {
+  return useQuery({
+    queryKey: ["books", label, "quizzes", "textbook-activities"],
+    queryFn: () => api.getTextbookActivities(label),
+    enabled: !!label,
+  })
+}

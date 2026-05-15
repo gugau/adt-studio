@@ -772,7 +772,7 @@ export function ExportDialog({
                       />
                       <ProjectIncludedItem
                         icon={HelpCircle}
-                        label={<Trans>Quizzes</Trans>}
+                        label={<Trans>Activities</Trans>}
                         textColor="text-orange-600"
                         bgLight="bg-orange-50"
                         borderColor="border-orange-200"
@@ -861,9 +861,9 @@ export function ExportDialog({
                       {availableFeatures.quizzes && (
                         <FeatureToggleRow
                           icon={HelpCircle}
-                          label={<Trans>Quizzes</Trans>}
+                          label={<Trans>Activities</Trans>}
                           description={
-                            <Trans>Interactive assessment questions</Trans>
+                            <Trans>Interactive activity pages</Trans>
                           }
                           textColor="text-orange-600"
                           bgLight="bg-orange-50"

@@ -113,6 +113,15 @@ function toErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err)
 }
 
+function resolveConfiguredLanguage(
+  storage: Storage,
+  config: ReturnType<typeof loadBookConfig>,
+): string {
+  const metadataRow = storage.getLatestNodeData("metadata", "book")
+  const metadata = metadataRow?.data as { language_code?: string | null } | null
+  return normalizeLocale(config.editing_language ?? metadata?.language_code ?? "en")
+}
+
 function isGeminiTtsRateLimitMessage(message: string): boolean {
   return /\(429\)|quota exceeded|rate limit|too many requests/i.test(message)
 }
@@ -634,6 +643,7 @@ async function runSectioningStep(
     const metadataRow = storage.getLatestNodeData("metadata", "book")
     const metadata = metadataRow?.data as { language_code?: string | null } | null
     const sourceLanguage = metadata?.language_code ?? null
+    const language = resolveConfiguredLanguage(storage, config)
 
     const pageSectioningConfig = buildPageSectioningConfig(config)
     const translationConfig = buildTranslationConfig(config, sourceLanguage)
@@ -688,6 +698,7 @@ async function runSectioningStep(
             {
               pageId: page.pageId,
               pageNumber: page.pageNumber,
+              language,
               text: page.text,
               imageBase64: storage.getPageImageBase64(page.pageId),
               availableImages,
@@ -765,6 +776,7 @@ async function runStoryboardStep(
 
   try {
     const config = loadBookConfig(label, booksDir, configPath)
+    const language = resolveConfiguredLanguage(storage, config)
 
     const styleguideContent = loadStyleguideContent(config.styleguide, configPath)
 
@@ -896,6 +908,7 @@ async function runStoryboardStep(
             {
               label,
               pageId: page.pageId,
+              language,
               pageImageBase64,
               sectioning: sectioning,
               images: renderImages,

@@ -9,7 +9,7 @@ import { highlightElement, unhighlightElement, updatePlayPauseIcon } from '../ui
 const QUIZ_SECTION_SELECTOR = 'section[data-section-type="activity_quiz"]';
 const CORRECT_ANSWERS_SCRIPT_ID = 'quiz-correct-answers';
 const EXPLANATIONS_SCRIPT_ID = 'quiz-explanations';
-const QUIZ_SHORTCUT_KEYS = ['1', '2', '3'];
+const QUIZ_SHORTCUT_KEYS = ['1', '2', '3', '4', '5', '6'];
 let quizShortcutHandlerRegistered = false;
 
 const getSubmitButton = () => document.getElementById('submit-button');
@@ -69,7 +69,7 @@ const focusFirstQuizOption = () => {
     return;
   }
 
-  const radio = firstOption.querySelector('input[type="radio"]');
+  const radio = getOptionInput(firstOption);
   const target = radio || firstOption;
 
   requestAnimationFrame(() => {
@@ -138,6 +138,21 @@ const getQuizActivityId = () =>
 const getAreaId = (element) =>
   element.closest('[data-area-id]')?.getAttribute('data-area-id') || 'default';
 
+const getOptionInput = (option) =>
+  option?.querySelector('input[type="radio"], input[type="checkbox"]') || null;
+
+const getQuizSelectionMode = (group) =>
+  group?.getAttribute('data-quiz-selection-mode') ||
+  group?.closest(QUIZ_SECTION_SELECTOR)?.getAttribute('data-quiz-selection-mode') ||
+  'single';
+
+const isMultipleSelectGroup = (group) => getQuizSelectionMode(group) === 'multiple';
+
+const getCheckedOptionsForGroup = (group) =>
+  [...group.querySelectorAll('input[type="radio"]:checked, input[type="checkbox"]:checked')]
+    .map((input) => input.closest('.activity-option'))
+    .filter(Boolean);
+
 export const getQuizQuestionGroups = (section) => {
   const groups = [...section.querySelectorAll('[data-quiz-question-group]')].filter((group) =>
     group.classList.contains('quiz-question-group') ||
@@ -191,10 +206,13 @@ const saveQuizSelectionState = (option) => {
   const group = getOptionQuestionGroup(option);
   const groupId = getQuestionGroupId(group, Math.max(0, groups.indexOf(group)));
   const storageKey = getQuizSelectionStorageKey(activityId, areaId, groupId);
+  const isMultiple = isMultipleSelectGroup(group);
 
   const selectedData = {
     question: option.getAttribute('data-activity-item'),
-    value: option.querySelector('input[type="radio"]').value,
+    ...(isMultiple
+      ? { values: getCheckedOptionsForGroup(group).map((selected) => getOptionInput(selected)?.value).filter(Boolean) }
+      : { value: getOptionInput(option)?.value }),
     areaId
   };
 
@@ -215,14 +233,24 @@ const restoreQuizSelection = (section) => {
     const storageKey = getQuizSelectionStorageKey(activityId, areaId, groupId);
     const savedSelection = localStorage.getItem(storageKey);
     if (savedSelection) {
-      const { value } = JSON.parse(savedSelection);
-      const selectedOption = [...group.querySelectorAll('.activity-option')].find((option) =>
-        option.querySelector('input[type="radio"]').value === value
-      );
+      const { value, values } = JSON.parse(savedSelection);
+      if (Array.isArray(values)) {
+        const selectedOptions = [...group.querySelectorAll('.activity-option')].filter((option) =>
+          values.includes(getOptionInput(option)?.value)
+        );
+        selectedOptions.forEach((selectedOption) => markQuizSelection(selectedOption));
+        if (selectedOptions.length > 0) {
+          selections[groupId] = selectedOptions;
+        }
+      } else {
+        const selectedOption = [...group.querySelectorAll('.activity-option')].find((option) =>
+          getOptionInput(option)?.value === value
+        );
 
-      if (selectedOption) {
-        markQuizSelection(selectedOption);
-        selections[groupId] = selectedOption;
+        if (selectedOption) {
+          markQuizSelection(selectedOption);
+          selections[groupId] = selectedOption;
+        }
       }
     }
   });
@@ -234,7 +262,8 @@ const restoreQuizSelection = (section) => {
   }
   const complete = groups.every((group, index) => {
     const groupId = getQuestionGroupId(group, index);
-    return Boolean(selections[groupId]);
+    const selection = selections[groupId];
+    return Array.isArray(selection) ? selection.length > 0 : Boolean(selection);
   });
   if (complete) {
     enableQuizSubmitButton();
@@ -310,7 +339,7 @@ const clearQuizValidationStyling = () => {
       }
     }
 
-    const shadowInput = option.querySelector('input[type="radio"]');
+    const shadowInput = getOptionInput(option);
     if (shadowInput) {
       shadowInput.setAttribute('tabindex', '-1');
     }
@@ -352,7 +381,7 @@ const resetQuizOptions = (radioGroup) => {
 };
 
 const markQuizSelection = (option) => {
-  const input = option.querySelector('input[type="radio"]');
+  const input = getOptionInput(option);
   if (input) {
     input.checked = true;
   }
@@ -368,11 +397,29 @@ const markQuizSelection = (option) => {
   option.classList.add('selected-option');
 };
 
+const unmarkQuizSelection = (option) => {
+  const input = getOptionInput(option);
+  if (input) {
+    input.checked = false;
+  }
+
+  option.setAttribute('aria-checked', 'false');
+
+  setLetterAppearance(
+    option,
+    'w-8 h-8 aspect-square rounded-full border-2 border-gray-300 flex items-center justify-center',
+    'option-letter text-gray-500'
+  );
+
+  option.classList.remove('selected-option', 'bg-green-50', 'bg-red-50');
+  option.removeAttribute('aria-invalid');
+};
+
 const getQuizActivityItem = (element) => {
   let activityItem = element.getAttribute('data-activity-item');
 
   if (!activityItem) {
-    const input = element.querySelector('input[type="radio"]');
+    const input = getOptionInput(element);
     if (input) {
       activityItem = input.getAttribute('data-activity-item');
     }
@@ -625,10 +672,49 @@ const handleQuizOptionSelection = (option) => {
     return;
   }
   const groupId = getQuestionGroupId(radioGroup, Math.max(0, groups.indexOf(radioGroup)));
+  const isMultiple = isMultipleSelectGroup(radioGroup);
+
+  if (isMultiple) {
+    const input = getOptionInput(option);
+    if (!input) {
+      return;
+    }
+    if (input.checked) {
+      unmarkQuizSelection(option);
+    } else {
+      markQuizSelection(option);
+    }
+
+    radioGroup.querySelectorAll('input[type="checkbox"]:checked').forEach((checkedInput) => {
+      const selected = checkedInput.closest('.activity-option');
+      if (selected) markQuizSelection(selected);
+    });
+
+    const selectedOptions = getCheckedOptionsForGroup(radioGroup);
+    setState('quizSelectedOption', selectedOptions[0] || null);
+    setState('quizSelectedOptions', {
+      ...(state.quizSelectedOptions || {}),
+      [groupId]: selectedOptions
+    });
+    playActivitySound('drop');
+    announceQuizSelection(option);
+    saveQuizSelectionState(option);
+
+    const allGroupsSelected = groups.every((group, index) => {
+      const id = getQuestionGroupId(group, index);
+      if (id === groupId) return selectedOptions.length > 0;
+      const stored = (state.quizSelectedOptions || {})[id];
+      return (Array.isArray(stored) ? stored.length > 0 : Boolean(stored)) || getCheckedOptionsForGroup(group).length > 0;
+    });
+    if (allGroupsSelected) enableQuizSubmitButton();
+    else disableQuizSubmitButton();
+    restoreQuizSubmitButtonToValidate();
+    return;
+  }
 
   resetQuizOptions(radioGroup);
   markQuizSelection(option);
-  quizSection?.querySelectorAll('input[type="radio"]:checked').forEach((input) => {
+  quizSection?.querySelectorAll('input[type="radio"]:checked, input[type="checkbox"]:checked').forEach((input) => {
     const selected = input.closest('.activity-option');
     if (selected) markQuizSelection(selected);
   });
@@ -647,7 +733,8 @@ const handleQuizOptionSelection = (option) => {
   const allGroupsSelected = groups.length <= 1 || groups.every((group, index) => {
     const id = getQuestionGroupId(group, index);
     if (id === groupId) return true;
-    return Boolean((state.quizSelectedOptions || {})[id] || group.querySelector('input[type="radio"]:checked'));
+    const stored = (state.quizSelectedOptions || {})[id];
+    return Boolean(stored || getCheckedOptionsForGroup(group).length > 0);
   });
   if (allGroupsSelected) enableQuizSubmitButton();
   else disableQuizSubmitButton();
@@ -669,6 +756,20 @@ const isTypingTarget = (target) => {
   return Boolean(target.isContentEditable);
 };
 
+const getActiveQuizShortcutScope = (quizSection) => {
+  const activePage = quizSection.querySelector('[data-activity-page][data-active="true"]');
+  if (activePage) {
+    return activePage;
+  }
+
+  const focusedPage = document.activeElement?.closest?.('[data-activity-page]');
+  if (focusedPage && quizSection.contains(focusedPage)) {
+    return focusedPage;
+  }
+
+  return quizSection;
+};
+
 const handleQuizShortcutKeydown = (event) => {
   if (!QUIZ_SHORTCUT_KEYS.includes(event.key)) {
     return;
@@ -683,7 +784,8 @@ const handleQuizShortcutKeydown = (event) => {
     return;
   }
 
-  const options = quizSection.querySelectorAll('.activity-option');
+  const scope = getActiveQuizShortcutScope(quizSection);
+  const options = scope.querySelectorAll('.activity-option');
   const index = Number(event.key) - 1;
   const option = options[index];
   if (!option) {
@@ -710,7 +812,7 @@ export const resetQuizActivity = (activityId) => {
     return;
   }
 
-  quizSection.querySelectorAll('input[type="radio"]').forEach((input) => {
+  quizSection.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach((input) => {
     input.checked = false;
   });
 
@@ -771,7 +873,7 @@ export const prepareQuiz = (section) => {
 
     const optionText = option.querySelector('.option-text')?.textContent?.trim() || '';
     const imgAlt = option.querySelector('img')?.alt?.trim() || '';
-    const shadowInput = option.querySelector('input[type="radio"]');
+    const shadowInput = getOptionInput(option);
     if (shadowInput) {
       shadowInput.setAttribute('tabindex', '-1');
     }
@@ -785,8 +887,9 @@ export const prepareQuiz = (section) => {
     }
 
     const ariaLabel = labelParts.join(' ').trim() || 'Option';
+    const selectionMode = getQuizSelectionMode(getOptionQuestionGroup(option));
     option.setAttribute('aria-label', ariaLabel);
-    option.setAttribute('role', 'radio');
+    option.setAttribute('role', selectionMode === 'multiple' ? 'checkbox' : 'radio');
     option.setAttribute('aria-checked', 'false');
 
     option.classList.add(
@@ -807,7 +910,8 @@ export const prepareQuiz = (section) => {
   });
 
   getQuizQuestionGroups(section).forEach((radioGroup, index) => {
-    radioGroup.setAttribute('role', 'radiogroup');
+    const selectionMode = getQuizSelectionMode(radioGroup);
+    radioGroup.setAttribute('role', selectionMode === 'multiple' ? 'group' : 'radiogroup');
     const labelledBy =
       radioGroup.getAttribute('aria-labelledby') ||
       radioGroup.querySelector('[id$="-question-label"]')?.id ||
@@ -831,7 +935,8 @@ export const prepareQuiz = (section) => {
 
 export const checkQuiz = () => {
   const section = document.querySelector(QUIZ_SECTION_SELECTOR);
-  if (section && getQuizQuestionGroups(section).length > 1) {
+  const groups = section ? getQuizQuestionGroups(section) : [];
+  if (section && (groups.length > 1 || groups.some((group) => isMultipleSelectGroup(group)))) {
     checkMultiQuestionQuiz(section);
     return;
   }
@@ -869,9 +974,9 @@ export const checkMultiQuestionQuiz = (section) => {
   const groups = getQuizQuestionGroups(section);
   const selectedOptions = [];
   const missingGroup = groups.find((group) => {
-    const selected = group.querySelector('input[type="radio"]:checked')?.closest('.activity-option');
-    if (selected) selectedOptions.push(selected);
-    return !selected;
+    const selected = getCheckedOptionsForGroup(group);
+    if (selected.length > 0) selectedOptions.push(...selected);
+    return selected.length === 0;
   });
 
   if (missingGroup) {
@@ -887,12 +992,29 @@ export const checkMultiQuestionQuiz = (section) => {
   }
 
   let allCorrect = true;
-  selectedOptions.forEach((option) => {
-    const dataActivityItem = getQuizActivityItem(option);
+  groups.forEach((group) => {
+    if (isMultipleSelectGroup(group)) {
+      group.querySelectorAll('.activity-option').forEach((option) => {
+        const dataActivityItem = getQuizActivityItem(option);
+        const shouldBeChecked = Boolean(correctAnswers[dataActivityItem]);
+        const isChecked = Boolean(getOptionInput(option)?.checked);
+        const isOptionCorrect = isChecked === shouldBeChecked;
+        allCorrect = allCorrect && isOptionCorrect;
+        if (isChecked || shouldBeChecked) {
+          styleQuizOption(option, isOptionCorrect);
+          showQuizFeedback(option, isOptionCorrect, { recordCompletion: false, playAudio: false });
+        }
+      });
+      return;
+    }
+
+    const selected = getCheckedOptionsForGroup(group)[0];
+    if (!selected) return;
+    const dataActivityItem = getQuizActivityItem(selected);
     const isCorrect = correctAnswers[dataActivityItem];
     allCorrect = allCorrect && Boolean(isCorrect);
-    styleQuizOption(option, isCorrect);
-    showQuizFeedback(option, isCorrect, { recordCompletion: false, playAudio: false });
+    styleQuizOption(selected, isCorrect);
+    showQuizFeedback(selected, isCorrect, { recordCompletion: false, playAudio: false });
   });
 
   playActivitySound(allCorrect ? 'success' : 'error');

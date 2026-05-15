@@ -77,7 +77,7 @@ const activityHasUserData = (activityType) => {
             return document.querySelectorAll('section input[type="radio"]:checked').length > 0;
         }
         else if (activityType === 'activity_quiz') {
-            return document.querySelectorAll('section input[type="radio"]:checked').length > 0;
+            return document.querySelectorAll('section input[type="radio"]:checked, section input[type="checkbox"]:checked').length > 0;
         }
         else if (activityType === 'activity_true_false') {
             return document.querySelectorAll('section input[type="radio"]:checked').length > 0;
@@ -229,6 +229,152 @@ const relocateActionButtons = (section) => {
         removeActivityStyles();
         originalContainer.classList.remove('hidden');
     }
+};
+
+const PAGE_FOCUSABLE_SELECTOR = [
+    'a[href]',
+    'button:not([disabled])',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])'
+].join(', ');
+
+const getActivityPagePanels = (section) => {
+    const pages = section?.querySelector('[data-activity-pages]');
+    return pages ? Array.from(pages.querySelectorAll('[data-activity-page]')) : [];
+};
+
+const setPanelFocusability = (panel, isActive) => {
+    panel.toggleAttribute('aria-hidden', !isActive);
+    panel.toggleAttribute('inert', !isActive);
+    panel.dataset.active = isActive ? 'true' : 'false';
+
+    panel.querySelectorAll(PAGE_FOCUSABLE_SELECTOR).forEach((element) => {
+        if (!isActive) {
+            if (!element.hasAttribute('data-activity-page-tabindex')) {
+                element.setAttribute('data-activity-page-tabindex', element.getAttribute('tabindex') ?? '');
+            }
+            element.setAttribute('tabindex', '-1');
+            return;
+        }
+
+        if (!element.hasAttribute('data-activity-page-tabindex')) {
+            return;
+        }
+
+        const previous = element.getAttribute('data-activity-page-tabindex') ?? '';
+        if (previous) {
+            element.setAttribute('tabindex', previous);
+        } else {
+            element.removeAttribute('tabindex');
+        }
+        element.removeAttribute('data-activity-page-tabindex');
+    });
+};
+
+const getNearestActivityPageIndex = (pages, panels) => {
+    if (!pages || panels.length === 0) return 0;
+    const pagesLeft = pages.getBoundingClientRect().left;
+    let bestIndex = 0;
+    let bestDistance = Number.POSITIVE_INFINITY;
+
+    panels.forEach((panel, index) => {
+        const distance = Math.abs(panel.getBoundingClientRect().left - pagesLeft);
+        if (distance < bestDistance) {
+            bestIndex = index;
+            bestDistance = distance;
+        }
+    });
+
+    return bestIndex;
+};
+
+const setActiveActivityPage = (section, index, { focus = false, scroll = true } = {}) => {
+    const pages = section?.querySelector('[data-activity-pages]');
+    const panels = getActivityPagePanels(section);
+    if (!pages || panels.length <= 1) return;
+
+    const activeIndex = Math.max(0, Math.min(index, panels.length - 1));
+    const status = section.querySelector('[data-activity-page-status]');
+    const previous = section.querySelector('[data-activity-page-prev]');
+    const next = section.querySelector('[data-activity-page-next]');
+    const dots = Array.from(section.querySelectorAll('[data-activity-page-dot]'));
+
+    panels.forEach((panel, panelIndex) => {
+        setPanelFocusability(panel, panelIndex === activeIndex);
+    });
+
+    if (status) {
+        status.textContent = `Question ${activeIndex + 1} of ${panels.length}`;
+    }
+
+    if (previous) previous.disabled = activeIndex === 0;
+    if (next) next.disabled = activeIndex === panels.length - 1;
+
+    dots.forEach((dot, dotIndex) => {
+        if (dotIndex === activeIndex) {
+            dot.setAttribute('aria-current', 'step');
+        } else {
+            dot.removeAttribute('aria-current');
+        }
+    });
+
+    if (scroll) {
+        panels[activeIndex].scrollIntoView({
+            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+            block: 'nearest',
+            inline: 'start'
+        });
+    }
+
+    if (focus) {
+        const focusTarget = panels[activeIndex].querySelector(PAGE_FOCUSABLE_SELECTOR) || panels[activeIndex];
+        requestAnimationFrame(() => {
+            try {
+                focusTarget.focus({ preventScroll: true });
+            } catch (_error) {
+                focusTarget.focus();
+            }
+        });
+    }
+};
+
+const prepareActivityTemplatePages = (section) => {
+    const pages = section?.querySelector('[data-activity-pages]');
+    const panels = getActivityPagePanels(section);
+    if (!pages || panels.length <= 1 || pages.dataset.activityPagesReady === 'true') {
+        return;
+    }
+
+    pages.dataset.activityPagesReady = 'true';
+    setActiveActivityPage(section, 0, { scroll: false });
+
+    section.querySelector('[data-activity-page-prev]')?.addEventListener('click', () => {
+        const current = getNearestActivityPageIndex(pages, panels);
+        setActiveActivityPage(section, current - 1, { focus: true });
+    });
+
+    section.querySelector('[data-activity-page-next]')?.addEventListener('click', () => {
+        const current = getNearestActivityPageIndex(pages, panels);
+        setActiveActivityPage(section, current + 1, { focus: true });
+    });
+
+    section.querySelectorAll('[data-activity-page-dot]').forEach((dot) => {
+        dot.addEventListener('click', () => {
+            const index = Number(dot.getAttribute('data-activity-page-dot'));
+            setActiveActivityPage(section, Number.isFinite(index) ? index : 0, { focus: true });
+        });
+    });
+
+    let scrollFrame = null;
+    pages.addEventListener('scroll', () => {
+        if (scrollFrame !== null) return;
+        scrollFrame = requestAnimationFrame(() => {
+            scrollFrame = null;
+            setActiveActivityPage(section, getNearestActivityPageIndex(pages, panels), { scroll: false });
+        });
+    }, { passive: true });
 };
 
 // Clear localStorage for an activity
@@ -527,6 +673,7 @@ const setupActivitySection = (section, activityType, submitButton) => {
         submitButton.addEventListener("click", state.validateHandler);
     }
 
+    prepareActivityTemplatePages(section);
     relocateActionButtons(section);
 };
 
