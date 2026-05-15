@@ -1,9 +1,9 @@
-import { Sparkles } from "lucide-react"
+import { Headphones } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
 import { i18n as linguiI18n } from "@lingui/core"
 import type { MessageDescriptor } from "@lingui/core"
-import { ACCENT_VAR, ACCENT_VAR_SOFT } from "@/components/pipeline/lib/accent-var"
+import { ACCENT_VAR } from "@/components/pipeline/lib/accent-var"
 
 export type GradeLevelKey = "early" | "middle" | "advanced"
 
@@ -16,7 +16,8 @@ const CAPTION_SAMPLES: Record<GradeLevelKey, MessageDescriptor> = {
 export function CaptionsPreview({ grade }: { grade: GradeLevelKey }) {
   /* eslint-disable lingui/no-unlocalized-strings -- mock textbook content, illustrative only */
   return (
-    <div className="flex flex-1 min-h-0 gap-4 bg-white px-6 py-6">
+    <div className="flex flex-1 min-h-0 flex-col bg-white">
+      <div className="flex flex-1 min-h-0 gap-4 px-6 py-6">
       {/* Left column — placeholder body text (lorem ipsum, locale-agnostic) */}
       <div className="flex flex-1 flex-col gap-2 overflow-hidden">
         <p className="text-center text-base font-semibold leading-snug tracking-tight text-foreground">
@@ -102,30 +103,50 @@ export function CaptionsPreview({ grade }: { grade: GradeLevelKey }) {
           officia deserunt mollit anim id est laborum.
         </p>
       </div>
+      </div>
+      {/* Accessibility callout — explains who the captions are for. Kept
+          visually quiet so it informs without competing with the preview. */}
+      <AccessibilityCallout />
     </div>
   )
   /* eslint-enable lingui/no-unlocalized-strings */
 }
 
+function AccessibilityCallout() {
+  return (
+    <div
+      className="mx-6 mb-5 flex shrink-0 items-start gap-3.5 rounded-lg border border-teal-200 bg-gradient-to-br from-teal-50 to-white px-4 py-3.5 shadow-[0_6px_18px_-10px_rgba(13,148,136,0.35)]"
+    >
+      <span
+        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-white shadow-sm ring-4 ring-teal-100"
+        style={{ background: ACCENT_VAR }}
+        aria-hidden
+      >
+        <Headphones className="h-7 w-7 text-white" strokeWidth={2} />
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className="text-[12.5px] font-semibold leading-tight text-teal-800">
+          <Trans>Captions support accessibility.</Trans>
+        </span>
+        <p className="text-[11px] leading-[15px] text-foreground/70">
+          <Trans>
+            Captions make visual and audio content accessible to people who
+            are blind or have low vision by providing information that screen
+            readers can read aloud. Adding captions helps ensure everyone can
+            access and understand your content.
+          </Trans>
+        </p>
+      </div>
+    </div>
+  )
+}
+
 function AltTextCard({ grade }: { grade: GradeLevelKey }) {
   return (
     <div className="flex shrink-0 flex-col gap-1 rounded-md border border-[#e5e5e5] bg-white p-2.5 shadow-[0px_4px_10px_0px_rgba(0,0,0,0.08)] transition-[height] duration-300 ease-out">
-      <div className="flex items-center gap-1.5">
-        <div
-          className="shrink-0 rounded-full p-1"
-          style={{ background: ACCENT_VAR_SOFT }}
-        >
-          <Sparkles
-            className="h-3 w-3"
-            strokeWidth={2}
-            style={{ color: ACCENT_VAR }}
-            aria-hidden
-          />
-        </div>
-        <span className="text-[11px] font-semibold tracking-tight text-black">
-          <Trans>Image Alt-Text</Trans>
-        </span>
-      </div>
+      <span className="text-[11px] font-semibold tracking-tight text-black">
+        <Trans>Image Alt-Text</Trans>
+      </span>
       <p
         key={grade}
         className="text-[10px] font-medium leading-[13px] text-black text-justify motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-1 motion-safe:duration-200 motion-safe:ease-out"
