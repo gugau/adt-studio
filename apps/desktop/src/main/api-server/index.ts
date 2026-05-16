@@ -46,6 +46,7 @@ async function startApiServer(): Promise<{
       BOOKS_DIR: paths.booksDir,
       PROMPTS_DIR: paths.promptsDir,
       CONFIG_PATH: paths.configPath,
+      PROJECT_ROOT: paths.root,
       ADT_RESOURCES_ZIP: paths.adtResourcesZip,
       WEB_ASSETS_DIR: paths.webAssetsDir,
       ADT_ENVIRONMENT: "electron",
