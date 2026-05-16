@@ -517,6 +517,8 @@ export function StoryboardSectionDetail({
   // (selection change, save, unmount) so per-keystroke changes don't
   // re-render BookPreviewFrame and rebuild its body.
   const pendingHtmlRef = useRef<{ html: string; sectionIndex: number } | null>(null)
+  // Stamped by `discardAll` so late debounced commits get dropped.
+  const lastDiscardAtRef = useRef(0)
   // Tracks whether iframe-DOM edits exist that haven't been flushed into
   // pendingRendering yet. Lights up the Save/Discard bar on every change
   // without forcing a per-keystroke iframe rebuild.
@@ -699,10 +701,13 @@ export function StoryboardSectionDetail({
     ? Object.fromEntries(Object.entries(allSectionTypes).filter(([key]) => !disabledSectionTypes.has(key)))
     : undefined
 
-  // Clear pending state when page changes
+  // Mirrors `discardAll` so navigating away also drops in-flight class edits.
   useEffect(() => {
     setPendingSectioning(null)
     setPendingRendering(null)
+    pendingHtmlRef.current = null
+    setHasUnflushedEdits(false)
+    setPendingCategories(new Set())
     setSelectedElement(null)
     setCropTarget(null)
     setAiImageDialogTarget(null)
@@ -808,6 +813,7 @@ export function StoryboardSectionDetail({
   // dropped. All Discard entry points route through here so the semantics stay
   // identical regardless of which control the user clicked.
   const discardAll = () => {
+    lastDiscardAtRef.current = Date.now()
     setPendingSectioning(null)
     setPendingRendering(null)
     setPendingCategories(new Set())
@@ -1304,6 +1310,8 @@ export function StoryboardSectionDetail({
   const handleClassesChange = useCallback(
     (dataId: string, classes: string[]) => {
       if (!page.rendering) return
+      // 250ms covers the inspector's 200ms debounce plus slack.
+      if (Date.now() - lastDiscardAtRef.current < 250) return
       const fullHtml = previewFrameRef.current?.setElementClasses(dataId, classes)
       if (!fullHtml) return
       setSelectedElementClasses(classes)
