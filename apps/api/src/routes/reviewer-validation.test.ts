@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
+import { fileURLToPath } from "node:url"
 import { Hono } from "hono"
 import { createBookStorage } from "@adt/storage"
 import type { ReviewerPageValidationRecord, ReviewerValidationSession } from "@adt/types"
@@ -9,6 +10,10 @@ import { errorHandler } from "../middleware/error-handler.js"
 import { createReviewerValidationRoutes } from "./reviewer-validation.js"
 
 const label = "validation-book"
+const configFolderPath = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../../../config",
+)
 
 
 function enableReviewerValidation(configPath: string) {
@@ -68,7 +73,7 @@ describe("Reviewer validation routes", () => {
 
     app = new Hono()
     app.onError(errorHandler)
-    app.route("/api", createReviewerValidationRoutes(tmpDir, configPath))
+    app.route("/api", createReviewerValidationRoutes(tmpDir, configFolderPath, configPath))
   })
 
   afterEach(() => {
@@ -252,7 +257,7 @@ describe("Reviewer validation routes", () => {
 
     app = new Hono()
     app.onError(errorHandler)
-    app.route("/api", createReviewerValidationRoutes(tmpDir, configPath))
+    app.route("/api", createReviewerValidationRoutes(tmpDir, configFolderPath, configPath))
 
     const res = await app.request(`/api/books/${label}/validation/catalog`)
     expect(res.status).toBe(200)
