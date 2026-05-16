@@ -1,6 +1,6 @@
 import { ipcMain, BrowserWindow } from "electron";
 
-export function setupTitleBar() {
+export function registerTitleBarIpc(): void {
   const senderWindow = (event: Electron.IpcMainInvokeEvent) =>
     BrowserWindow.fromWebContents(event.sender);
 

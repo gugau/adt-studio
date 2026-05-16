@@ -1,13 +1,16 @@
 import { dirname, join } from "path";
 import { utilityProcess, type UtilityProcess } from "electron";
-import { findFreePort } from "./port";
-import { resolvePaths, waitForApi } from "./utils";
-import { Empty, LogForwarder } from "./types";
+import { resolvePaths } from "./paths";
+import { waitForApiReady } from "./wait-ready";
+import type { LogForwarder } from "./types";
+import { pushDebugLog } from "../services/debug-info";
 
 let apiProcess: UtilityProcess | null = null;
-let apiPort: number | Empty = null;
+let apiPort: number | null = null;
 let logForwarder: LogForwarder | null = null;
 const isApiDebugMode = process.env.ADT_DEBUG === "true";
+
+const READY_TIMEOUT_MS = 120_000;
 
 function setLogForwarder(fn: LogForwarder | null): void {
   logForwarder = fn;
@@ -17,13 +20,7 @@ async function startApiServer(): Promise<{
   apiProcess: UtilityProcess;
   apiPort: number;
 }> {
-  if (apiProcess) return { apiProcess, apiPort: apiPort! };
-
-  apiPort = await findFreePort({ random: true });
-
-  if (!apiPort) throw new Error("Failed to find free port");
-
-  const apiUrl = `http://localhost:${apiPort}/api/health`;
+  if (apiProcess && apiPort) return { apiProcess, apiPort };
 
   const paths = resolvePaths();
 
@@ -35,6 +32,10 @@ async function startApiServer(): Promise<{
     "Debug mode": isApiDebugMode ? "true" : "false",
   });
 
+  // PORT is intentionally omitted — under ADT_ENVIRONMENT=electron the API
+  // defaults to `0`, so the OS picks a free port. The actual port is
+  // reported back via `process.parentPort.postMessage` once the server
+  // binds (see `apps/api/src/server.ts`).
   apiProcess = utilityProcess.fork(paths.serverPath, [], {
     cwd: paths.root,
     stdio: "pipe",
@@ -42,7 +43,6 @@ async function startApiServer(): Promise<{
       ...process.env,
       NODE_ENV: process.env.NODE_ENV ?? "production",
       NODE_PATH: join(dirname(paths.serverPath), "node_modules"),
-      PORT: apiPort.toString(),
       BOOKS_DIR: paths.booksDir,
       PROMPTS_DIR: paths.promptsDir,
       CONFIG_PATH: paths.configPath,
@@ -55,19 +55,17 @@ async function startApiServer(): Promise<{
   apiProcess.stdout?.on("data", (data: Buffer) => {
     const line = data.toString().trimEnd();
     console.log("[api-server]", line);
-
-    if (isApiDebugMode) {
-      logForwarder?.({ stream: "stdout", line, timestamp: Date.now() });
-    }
+    const entry = { stream: "stdout" as const, line, timestamp: Date.now() };
+    pushDebugLog(entry);
+    if (isApiDebugMode) logForwarder?.(entry);
   });
 
   apiProcess.stderr?.on("data", (data: Buffer) => {
     const line = data.toString().trimEnd();
     console.error("[api-server]", line);
-
-    if (isApiDebugMode) {
-      logForwarder?.({ stream: "stderr", line, timestamp: Date.now() });
-    }
+    const entry = { stream: "stderr" as const, line, timestamp: Date.now() };
+    pushDebugLog(entry);
+    if (isApiDebugMode) logForwarder?.(entry);
   });
 
   const exitBeforeReady = new Promise<never>((_, reject) => {
@@ -78,15 +76,25 @@ async function startApiServer(): Promise<{
 
   apiProcess.on("exit", (code) => {
     console.log(`[api-process] API server exited (code=${code})`);
+    pushDebugLog({
+      stream: "main",
+      line: `API server exited (code=${code})`,
+      timestamp: Date.now(),
+    });
     apiProcess = null;
+    apiPort = null;
   });
 
-  await Promise.race([waitForApi(apiUrl), exitBeforeReady]);
+  const ready = await Promise.race([
+    waitForApiReady(apiProcess, READY_TIMEOUT_MS),
+    exitBeforeReady,
+  ]);
 
-  return {
-    apiProcess,
-    apiPort,
-  };
+  apiPort = ready.port;
+
+  console.log(`[api-process] API server ready on port ${apiPort}`);
+
+  return { apiProcess, apiPort };
 }
 
 function stopApiServer(): void {
@@ -95,6 +103,7 @@ function stopApiServer(): void {
   console.log("[api-process] Stopping API server");
   apiProcess.kill();
   apiProcess = null;
+  apiPort = null;
 }
 
 export {

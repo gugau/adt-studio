@@ -6,7 +6,7 @@ export interface SaveFileDialogOptions {
   filters?: Array<{ name: string; extensions: string[] }>;
 }
 
-export function setupFileDialog(): void {
+export function registerFileDialogIpc(): void {
   ipcMain.handle(
     "file:save",
     async (

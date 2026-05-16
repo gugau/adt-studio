@@ -1,6 +1,6 @@
 import { BrowserWindow } from "electron";
 import { randomUUID } from "node:crypto";
-import { htmlStore } from "./protocols/html-render.protocol";
+import { htmlStore } from "../protocols/html-render";
 
 const windows = new Set<InstanceType<typeof BrowserWindow>>();
 async function screenshot(
