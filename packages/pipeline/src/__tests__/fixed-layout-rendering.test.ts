@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from "vitest"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
-import { sectionFixedLayoutPage, renderFixedLayoutPage, contrastRatio, createBackgroundSampler, processFixedLayoutPages } from "../fixed-layout-rendering.js"
+import { sectionFixedLayoutPage, renderFixedLayoutPage, processFixedLayoutPages } from "../fixed-layout-rendering.js"
 import type { ContentNodeData, DrawItem, NodePlacement, PageSectioningSection, PositionedTextOutput } from "@adt/types"
 import type { ExtractedImage } from "@adt/pdf"
 import { createBookStorage } from "@adt/storage"
@@ -756,52 +756,6 @@ describe("renderFixedLayoutPage", () => {
     expect(html).not.toContain("color:transparent")
   })
 
-  it("adds contrast stroke for white text on light background", () => {
-    const section = makeSection({
-      drawItems: [
-        { kind: "image", imageId: "pg001_im001", bounds: { x: 0, y: 0, width: 400, height: 300 } },
-        {
-          kind: "paragraph",
-          textId: "pg001_p000",
-          top: 100,
-          left: 72,
-          lineHeight: 48,
-          segments: [
-            {
-              text: "white",
-              style: { "font-family": "Palatino,serif", "font-size": "48px", color: "#ffffff" },
-            },
-          ],
-          text: "white",
-        },
-      ],
-    })
-
-    const png = new PNG({ width: 800, height: 600 })
-    png.data.fill(255)
-    const pngBuffer = PNG.sync.write(png)
-    const sampler = createBackgroundSampler(pngBuffer)!
-
-    const html = renderFixedLayoutPage(section, "/images", {
-      backgroundSampler: sampler,
-      renderScale: 2,
-    }).sections[0].html
-
-    expect(html).toContain("-webkit-text-stroke")
-    expect(html).toContain("paint-order:stroke fill")
-    // Stroke must also appear inside `data-segments` so the runtime
-    // translation rebuild (`assets/adt/modules/translations.js`) re-emits
-    // spans with the stroke after a language switch / inline edit. Without
-    // this, low-contrast text becomes invisible against the page image
-    // again on the next swap.
-    const dataSegMatch = html.match(/data-segments="([^"]*)"/)
-    expect(dataSegMatch).not.toBeNull()
-    const decoded = dataSegMatch![1].replace(/&quot;/g, '"').replace(/&amp;/g, "&")
-    const parsed = JSON.parse(decoded) as Array<{ style: Record<string, string> }>
-    expect(parsed[0].style["-webkit-text-stroke"]).toMatch(/^\d+px /)
-    expect(parsed[0].style["paint-order"]).toBe("stroke fill")
-  })
-
   it("emits an SVG clipPath and applies clip-path:url() to images carrying a PDF clip", () => {
     const section = makeSection({
       drawItems: [
@@ -864,36 +818,6 @@ describe("renderFixedLayoutPage", () => {
     expect(html).not.toContain("opacity:")
   })
 
-  it("does not add contrast stroke for black text on white background", () => {
-    const png = new PNG({ width: 800, height: 600 })
-    png.data.fill(255)
-    const pngBuffer = PNG.sync.write(png)
-    const sampler = createBackgroundSampler(pngBuffer)!
-
-    const html = renderFixedLayoutPage(makeSection(), "/images", {
-      backgroundSampler: sampler,
-      renderScale: 2,
-    }).sections[0].html
-
-    expect(html).not.toContain("-webkit-text-stroke")
-  })
-})
-
-describe("contrastRatio", () => {
-  it("returns 21:1 for black on white", () => {
-    const ratio = contrastRatio({ r: 0, g: 0, b: 0 }, { r: 255, g: 255, b: 255 })
-    expect(ratio).toBeCloseTo(21, 0)
-  })
-
-  it("returns 1:1 for same colors", () => {
-    const ratio = contrastRatio({ r: 128, g: 128, b: 128 }, { r: 128, g: 128, b: 128 })
-    expect(ratio).toBeCloseTo(1, 1)
-  })
-
-  it("detects insufficient contrast for white text on light gray", () => {
-    const ratio = contrastRatio({ r: 255, g: 255, b: 255 }, { r: 220, g: 220, b: 220 })
-    expect(ratio).toBeLessThan(3)
-  })
 })
 
 describe("processFixedLayoutPages", () => {

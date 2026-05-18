@@ -12,7 +12,6 @@
  * (text-catalog, TTS, packageAdtWeb) walk the tree and ignore placement.
  */
 
-import { PNG } from "pngjs"
 import type { Storage } from "@adt/storage"
 import type {
   AppConfig,
@@ -48,128 +47,6 @@ export function isFixedLayoutBook(config: AppConfig): boolean {
     if (strategies[name]?.render_type === "fixed_layout") return true
   }
   return false
-}
-
-// ── Background Sampling & Contrast ────────────────────────────────
-
-interface RGB { r: number; g: number; b: number }
-
-export interface BackgroundSampler {
-  /** Sample average RGB color in a region (render pixel coordinates). */
-  sample(x: number, y: number, width: number, height: number): RGB
-}
-
-/**
- * Create a background sampler from a PNG image buffer.
- * Returns null if the buffer can't be decoded.
- */
-export function createBackgroundSampler(pngBuffer: Buffer): BackgroundSampler | null {
-  try {
-    const png = PNG.sync.read(pngBuffer)
-    const { data, width, height } = png
-    return {
-      sample(rx: number, ry: number, rw: number, rh: number): RGB {
-        // Clamp region to image bounds
-        const x0 = Math.max(0, Math.min(Math.round(rx), width - 1))
-        const y0 = Math.max(0, Math.min(Math.round(ry), height - 1))
-        const x1 = Math.max(x0 + 1, Math.min(Math.round(rx + rw), width))
-        const y1 = Math.max(y0 + 1, Math.min(Math.round(ry + rh), height))
-
-        let totalR = 0, totalG = 0, totalB = 0, count = 0
-        for (let y = y0; y < y1; y++) {
-          for (let x = x0; x < x1; x++) {
-            const idx = (y * width + x) * 4
-            totalR += data[idx]
-            totalG += data[idx + 1]
-            totalB += data[idx + 2]
-            count++
-          }
-        }
-
-        if (count === 0) return { r: 255, g: 255, b: 255 }
-        return {
-          r: Math.round(totalR / count),
-          g: Math.round(totalG / count),
-          b: Math.round(totalB / count),
-        }
-      },
-    }
-  } catch {
-    return null
-  }
-}
-
-/** sRGB → linear channel conversion */
-function linearize(srgb: number): number {
-  const c = srgb / 255
-  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
-}
-
-/** WCAG relative luminance */
-function relativeLuminance(c: RGB): number {
-  return 0.2126 * linearize(c.r) + 0.7152 * linearize(c.g) + 0.0722 * linearize(c.b)
-}
-
-/** WCAG contrast ratio (always ≥ 1) */
-export function contrastRatio(c1: RGB, c2: RGB): number {
-  const l1 = relativeLuminance(c1)
-  const l2 = relativeLuminance(c2)
-  const lighter = Math.max(l1, l2)
-  const darker = Math.min(l1, l2)
-  return (lighter + 0.05) / (darker + 0.05)
-}
-
-function parseHexColor(hex: string): RGB {
-  return {
-    r: parseInt(hex.slice(0, 2), 16),
-    g: parseInt(hex.slice(2, 4), 16),
-    b: parseInt(hex.slice(4, 6), 16),
-  }
-}
-
-/**
- * Compute the stroke style (or null when contrast is sufficient) for a
- * single text colour against a sampled background. Stroke direction is
- * the opposite luminance to the background; width scales with font size.
- */
-function computeStrokeForColor(
-  hex: string,
-  bgColor: RGB,
-  lineHeight: number,
-): { "-webkit-text-stroke": string; "paint-order": string } | null {
-  const textColor = parseHexColor(hex)
-  if (contrastRatio(textColor, bgColor) >= 3.0) return null
-  const bgLum = relativeLuminance(bgColor)
-  const strokeColor = bgLum > 0.5 ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)"
-  const strokeWidth = Math.max(1, Math.round(lineHeight * 0.06))
-  return {
-    "-webkit-text-stroke": `${strokeWidth}px ${strokeColor}`,
-    "paint-order": "stroke fill",
-  }
-}
-
-/**
- * Apply contrast strokes per segment by mutating the segment's `style` map.
- * Returning the mutated segments lets the caller serialise them into
- * `data-segments` so the runtime translation/rebuild path
- * (`assets/adt/modules/translations.js`) emits spans with the stroke too.
- * Spans whose colour already meets the WCAG AA large-text threshold (3:1)
- * are passed through unchanged.
- */
-function applyContrastStrokesToSegments(
-  segments: SectionTextSegment[] | undefined,
-  bgColor: RGB,
-  lineHeight: number,
-): SectionTextSegment[] | undefined {
-  if (!segments || segments.length === 0) return segments
-  return segments.map((seg) => {
-    const colorRaw = seg.style?.color
-    const colorMatch = colorRaw?.match(/^#([0-9a-fA-F]{6})$/)
-    if (!colorMatch) return seg
-    const stroke = computeStrokeForColor(colorMatch[1], bgColor, lineHeight)
-    if (!stroke) return seg
-    return { ...seg, style: { ...seg.style, ...stroke } }
-  })
 }
 
 // ── Fixed-Layout Page Sectioning ───────────────────────────────────
@@ -463,13 +340,6 @@ function withBundledFallback(fontFamily: string): string {
 export function renderFixedLayoutPage(
   section: PageSectioningSection,
   imageUrlPrefix: string,
-  options?: {
-    backgroundSampler?: BackgroundSampler
-    /** Scale for sampler coordinates — sampler operates in render-pixel
-     *  space (the original page image); section positions are in viewport
-     *  coordinates. Multiplying by `renderScale` converts back. */
-    renderScale?: number
-  },
 ): WebRenderingOutput {
   const viewport = section.viewport
   if (!viewport) {
@@ -478,8 +348,6 @@ export function renderFixedLayoutPage(
     )
   }
   const placement = section.placement ?? {}
-  const sampler = options?.backgroundSampler
-  const renderScale = options?.renderScale ?? 1
 
   // Emit every drawable leaf (image or text) as a direct sibling of
   // `#content`, in section-node order. Tree order = PDF draw order = HTML
@@ -554,23 +422,7 @@ export function renderFixedLayoutPage(
       const effectiveLineHeight = pickEffectiveLineHeight(p.segments, lineHeight)
       const style = `position:absolute;top:${top}px;left:${renderLeft}px;line-height:${effectiveLineHeight}px${widthRule}${heightRule}${alignRule}`
 
-      // Apply contrast strokes at the segment level (not on the rendered
-      // HTML afterwards) so the stroke style flows into both the inline
-      // `<span>` rendering AND the `data-segments` JSON. Without this, the
-      // runtime rebuild on language switch / inline edit re-emits spans
-      // from `data-segments` and drops the stroke — low-contrast text
-      // becomes invisible against the page background again.
-      let segments = p.segments
-      if (sampler) {
-        const sampleWidth = p.blockBounds ? p.blockBounds.width : lineHeight * 3
-        const bgColor = sampler.sample(
-          renderLeft * renderScale,
-          top * renderScale,
-          sampleWidth * renderScale,
-          lineHeight * renderScale,
-        )
-        segments = applyContrastStrokesToSegments(segments, bgColor, lineHeight)
-      }
+      const segments = p.segments
       const content = renderSegmentsToHtml(segments) || escapeHtml(node.text ?? "")
 
       // `data-segments` carries the structured styling inline so the viewer
@@ -644,7 +496,6 @@ export function processFixedLayoutPages(
         ? { width: pageRender.width, height: pageRender.height }
         : null
     if (!viewport) continue
-    const renderScale = positionedText ? positionedText.renderWidth / positionedText.pageWidth : 1
 
     const drawItems: DrawItem[] = positionedText?.drawItems ?? []
 
@@ -657,45 +508,9 @@ export function processFixedLayoutPages(
     })
     storage.putNodeData("page-sectioning", page.pageId, sectioning)
 
-    // Contrast sampler: always built from the page render when available,
-    // regardless of how the page is composed visually. The page render is an
-    // accurate preview of the final composited page, so sampling it gives a
-    // correct answer to "what is under this text?" for stroke-contrast decisions.
-    let backgroundSampler: BackgroundSampler | undefined
-    if (pageRender) {
-      try {
-        const imgBase64 = storage.getImageBase64(pageRender.imageId)
-        const imgBuffer = Buffer.from(imgBase64, "base64")
-        const rawSampler = createBackgroundSampler(imgBuffer)
-        if (rawSampler) {
-          const imgW = pageRender.width
-          const imgH = pageRender.height
-          const viewportPxW = viewport.width * renderScale
-          const viewportPxH = viewport.height * renderScale
-          // Map render-pixel sampler coords (viewport × renderScale) to the
-          // page render image's pixel coords.
-          backgroundSampler = {
-            sample(rx, ry, rw, rh) {
-              const ix = rx * (imgW / viewportPxW)
-              const iy = ry * (imgH / viewportPxH)
-              const iw = rw * (imgW / viewportPxW)
-              const ih = rh * (imgH / viewportPxH)
-              if (ix + iw < 0 || iy + ih < 0 || ix > imgW || iy > imgH) {
-                return { r: 255, g: 255, b: 255 }
-              }
-              return rawSampler.sample(ix, iy, iw, ih)
-            },
-          }
-        }
-      } catch {
-        // Page render not available — skip contrast checking
-      }
-    }
-
     const rendering = renderFixedLayoutPage(
       sectioning.sections[0],
       imageUrlPrefix,
-      { backgroundSampler, renderScale },
     )
     storage.putNodeData("web-rendering", page.pageId, rendering)
   }
