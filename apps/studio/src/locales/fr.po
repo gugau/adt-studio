@@ -25,6 +25,9 @@ msgstr "_page"
 msgid "-"
 msgstr "-"
 
+msgid "— pick a page —"
+msgstr ""
+
 msgid ", "
 msgstr ", "
 
@@ -164,9 +167,8 @@ msgstr "{0} pages"
 msgid "{0} pages selected"
 msgstr "{0} pages sélectionnées"
 
-#. placeholder {0}: String(selectedCount)
-msgid "{0} pages selected."
-msgstr ""
+#~ msgid "{0} pages selected."
+#~ msgstr ""
 
 #. placeholder {0}: String(displayQuestionCount)
 msgid "{0} questions"
@@ -191,11 +193,8 @@ msgstr ""
 msgid "{0} texts"
 msgstr "{0} textes"
 
-#. placeholder {0}: String(pickerOffset + 1)
-#. placeholder {1}: String(Math.min(pickerOffset + PAGE_PICKER_WINDOW_SIZE, pages.length))
-#. placeholder {2}: String(pages.length)
-msgid "{0}-{1} of {2}"
-msgstr "{0}-{1} sur {2}"
+#~ msgid "{0}-{1} of {2}"
+#~ msgstr "{0}-{1} sur {2}"
 
 #. placeholder {0}: String(generatedAudioCount)
 #. placeholder {1}: String(displayEntries.length)
@@ -316,8 +315,8 @@ msgstr "1 élément nécessite des modifications sur cette page"
 msgid "1 page selected"
 msgstr "1 page sélectionnée"
 
-msgid "1 page selected."
-msgstr ""
+#~ msgid "1 page selected."
+#~ msgstr ""
 
 msgid "1 selected image is no longer in the storyboard."
 msgstr "1 image sélectionnée ne figure plus dans le storyboard."
@@ -325,8 +324,8 @@ msgstr "1 image sélectionnée ne figure plus dans le storyboard."
 #~ msgid "1 source page selected • {0} question(s) will be generated."
 #~ msgstr ""
 
-msgid "1-12, 20"
-msgstr ""
+#~ msgid "1-12, 20"
+#~ msgstr ""
 
 msgid "1-12, 20, pg045"
 msgstr "1-12, 20, pg045"
@@ -571,6 +570,9 @@ msgid "Add {0} Images"
 msgstr "Ajouter {0} Images"
 
 msgid "Add an activity"
+msgstr ""
+
+msgid "Add an activity every"
 msgstr ""
 
 msgid "Add an API key in Settings to enable generation."
@@ -906,8 +908,8 @@ msgstr "Ressource"
 msgid "Assign to section..."
 msgstr "Assigner à une section..."
 
-#~ msgid "At the end of the book"
-#~ msgstr "À la fin du livre"
+msgid "At the end of the book"
+msgstr "À la fin du livre"
 
 msgid "At the river's edge"
 msgstr "Au bord de la rivière"
@@ -1195,6 +1197,9 @@ msgstr "Choisir a Preset"
 msgid "Choose a preset that matches your content — textbook, storyboard, reference, or custom — and ADT Studio tailors the pipeline accordingly."
 msgstr "Choisissez un préréglage qui correspond à votre contenu — manuel, storyboard, référence ou personnalisé — et ADT Studio adapte le pipeline en conséquence."
 
+msgid "Choose a specific page…"
+msgstr ""
+
 msgid "Choose an existing image from this project"
 msgstr "Choisissez une image existante de ce projet"
 
@@ -1212,6 +1217,9 @@ msgstr "Choisir des images..."
 
 #~ msgid "Choose pages..."
 #~ msgstr "Choisir des pages..."
+
+msgid "Choose pages…"
+msgstr ""
 
 msgid "Choose Provider"
 msgstr "Choisir le fournisseur"
@@ -1808,6 +1816,9 @@ msgstr "Modifier Invites"
 #~ msgid "Edit selection..."
 #~ msgstr "Modifier la sélection..."
 
+msgid "Edit selection…"
+msgstr ""
+
 msgid "Edit textbook activity"
 msgstr ""
 
@@ -1917,6 +1928,9 @@ msgstr "Évaporation"
 
 #~ msgid "Every"
 #~ msgstr "Toutes les"
+
+msgid "Every N pages"
+msgstr ""
 
 msgid "Every reader opens the same book, with the features they need on tap."
 msgstr "Chaque lecteur ouvre le même livre, avec les fonctionnalités dont il a besoin d'un simple toucher."
@@ -2073,6 +2087,9 @@ msgstr "Lacunes"
 
 msgid "Fill in the blanks"
 msgstr "Compléter les blancs"
+
+msgid "Fill in the Blanks"
+msgstr ""
 
 msgid "Filter activity status"
 msgstr ""
@@ -2236,6 +2253,11 @@ msgid "Generates the interactive HTML for this activity type."
 msgstr "Génère le HTML interactif pour ce type d'activité."
 
 msgid "Generating"
+msgstr ""
+
+#. placeholder {0}: String(progress.done)
+#. placeholder {1}: String(progress.total)
+msgid "Generating {0} of {1}…"
 msgstr ""
 
 msgid "Generating Activities..."
@@ -2560,9 +2582,8 @@ msgstr "sa langue originale"
 msgid "Jane Reviewer"
 msgstr "Jane Reviewer"
 
-#. placeholder {0}: String(initialPage.pageNumber)
-msgid "Just this page (page {0})"
-msgstr ""
+#~ msgid "Just this page (page {0})"
+#~ msgstr ""
 
 msgid "KB"
 msgstr "KB"
@@ -3011,7 +3032,13 @@ msgstr "Publications multi-format"
 msgid "Multiple choice"
 msgstr "Choix multiple"
 
-msgid "Multiple select (pick many)"
+msgid "Multiple Choice Quiz"
+msgstr ""
+
+#~ msgid "Multiple select (pick many)"
+#~ msgstr ""
+
+msgid "Multiple Select Quiz"
 msgstr ""
 
 msgid "my-book-slug"
@@ -3188,8 +3215,8 @@ msgstr "Aucune autre image dans ce livre"
 msgid "No page linked"
 msgstr "Aucune page liée"
 
-msgid "No pages"
-msgstr "Aucune page"
+#~ msgid "No pages"
+#~ msgstr "Aucune page"
 
 msgid "No pages available."
 msgstr "Aucune page disponible."
@@ -3317,6 +3344,9 @@ msgstr "Désactivé"
 msgid "On"
 msgstr "Activé"
 
+msgid "On the next page after the source pages"
+msgstr ""
+
 msgid "One activity page"
 msgstr ""
 
@@ -3377,13 +3407,16 @@ msgstr "Ouvrir l'aperçu de la page {pageId}"
 msgid "Open Preview"
 msgstr "Ouvrir l'aperçu"
 
-msgid "Open question"
-msgstr ""
+#~ msgid "Open question"
+#~ msgstr ""
 
 msgid "Open Validation"
 msgstr "Ouvrir la validation"
 
 msgid "Open-ended character limit"
+msgstr ""
+
+msgid "Open-Ended Question"
 msgstr ""
 
 msgid "OpenAI"
@@ -3525,8 +3558,8 @@ msgstr "Image de la page"
 msgid "Page Mode"
 msgstr "Mode de page"
 
-msgid "Page numbers (e.g. 1-12, 20)"
-msgstr ""
+#~ msgid "Page numbers (e.g. 1-12, 20)"
+#~ msgstr ""
 
 msgid "Page preview {pageId}"
 msgstr "Page aperçu {pageId}"
@@ -3554,6 +3587,12 @@ msgstr "pages"
 
 #~ msgid "Pages"
 #~ msgstr ""
+
+#. placeholder {0}: String(selectedPageNumbers[0])
+#. placeholder {1}: String(selectedPageNumbers[selectedPageNumbers.length - 1])
+#. placeholder {2}: String(selectedPageNumbers.length)
+msgid "Pages {0} – {1} ({2} total)"
+msgstr ""
 
 #. placeholder {0}: activeSession.session.start_page ?? "?"
 #. placeholder {1}: activeSession.session.end_page ?? "?"
@@ -3635,6 +3674,9 @@ msgstr "Choisissez un préréglage"
 #~ msgid "Pick a type and the pages to base the activity on. You can add more activities one at a time."
 #~ msgstr ""
 
+msgid "Pick at least one page to base the activity on."
+msgstr ""
+
 msgid "Pick from book"
 msgstr "Choisir dans le livre"
 
@@ -3644,8 +3686,8 @@ msgstr "Choisir dans le livre"
 msgid "Pick one layout approach."
 msgstr "Choisissez une approche de mise en page."
 
-msgid "Pick pages individually"
-msgstr ""
+#~ msgid "Pick pages individually"
+#~ msgstr ""
 
 msgid "Pick the pages you want to base this quiz on. All selected pages stay together in one custom quiz."
 msgstr "Choisissez les pages sur lesquelles baser ce quiz. Toutes les pages sélectionnées restent ensemble dans un quiz personnalisé."
@@ -3670,6 +3712,9 @@ msgstr "Étapes du pipeline"
 
 msgid "Pixel Art"
 msgstr "Pixel Art"
+
+msgid "Place quiz"
+msgstr ""
 
 #~ msgid "Place quiz:"
 #~ msgstr "Placer le quiz :"
@@ -3725,8 +3770,8 @@ msgstr "Aperçu : par phrase"
 msgid "Preview: word-by-word"
 msgstr "Aperçu : mot à mot"
 
-msgid "Previous"
-msgstr "Précédent"
+#~ msgid "Previous"
+#~ msgstr "Précédent"
 
 msgid "Previous slide"
 msgstr "Diapositive précédente"
@@ -4424,6 +4469,9 @@ msgstr "Sélectionner les images à traduire"
 msgid "Select node type..."
 msgstr "Sélectionnez le type de nœud..."
 
+msgid "Select pages"
+msgstr ""
+
 msgid "Select pages for activities"
 msgstr ""
 
@@ -4589,12 +4637,11 @@ msgstr "Diapositive {0}"
 msgid "Smart Cropping"
 msgstr "Recadrage intelligent"
 
-#. placeholder {0}: String(resolvedInsertAfterPage.pageNumber)
-msgid "Smart: after page {0}"
-msgstr ""
+#~ msgid "Smart: after page {0}"
+#~ msgstr ""
 
-msgid "Smart: last selected page"
-msgstr ""
+#~ msgid "Smart: last selected page"
+#~ msgstr ""
 
 msgid "Software update"
 msgstr "Mise à jour logicielle"
@@ -4611,7 +4658,10 @@ msgstr "Une erreur s’est produite"
 msgid "Sort books"
 msgstr "Trier les livres"
 
-msgid "Sort into groups"
+#~ msgid "Sort into groups"
+#~ msgstr ""
+
+msgid "Sort into Groups"
 msgstr ""
 
 msgid "Sorting"
@@ -4639,8 +4689,8 @@ msgstr "Espagnol"
 msgid "Specialized workflows"
 msgstr "Flux de travail spécialisés"
 
-msgid "Specific pages…"
-msgstr ""
+#~ msgid "Specific pages…"
+#~ msgstr ""
 
 msgid "Speech"
 msgstr "Parole"
@@ -4983,8 +5033,8 @@ msgstr "La table des matières."
 msgid "The Water Cycle"
 msgstr "Le cycle de l'eau"
 
-msgid "The whole book"
-msgstr ""
+#~ msgid "The whole book"
+#~ msgstr ""
 
 msgid "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."
 msgstr "Ces fonctionnalités améliorent l'accès pour les personnes handicapées. Les exécuter avant l'exportation aide votre livre à respecter les normes d'accessibilité ADT."
@@ -5136,7 +5186,10 @@ msgstr "Traite chaque page comme une seule section."
 msgid "True"
 msgstr "Vrai"
 
-msgid "True or false"
+#~ msgid "True or false"
+#~ msgstr ""
+
+msgid "True or False Quiz"
 msgstr ""
 
 msgid "True/False"
@@ -5196,8 +5249,8 @@ msgstr "Type"
 msgid "Type class name or search..."
 msgstr "Tapez un nom de classe ou recherchez..."
 
-msgid "Type page numbers separated by commas. Press Tab to apply."
-msgstr ""
+#~ msgid "Type page numbers separated by commas. Press Tab to apply."
+#~ msgstr ""
 
 msgid "Types used during page sectioning. Pruned types are classified but excluded from rendering. Disabled types are hidden from the LLM entirely."
 msgstr "Types utilisés lors du découpage des pages en sections. Les types élagués sont classés mais exclus du rendu. Les types désactivés sont masqués du LLM."

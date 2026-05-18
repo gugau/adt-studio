@@ -13,12 +13,12 @@ import { usePages } from "@/hooks/use-pages"
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useLingui } from "@lingui/react/macro"
+import { SelectQuizPagesDialog } from "./SelectQuizPagesDialog"
 
 const ACTIVITY_OPTIONS: QuizActivityType[] = [
   "multiple_choice",
@@ -30,9 +30,6 @@ const ACTIVITY_OPTIONS: QuizActivityType[] = [
   "sorting",
 ]
 
-const PAGE_PICKER_WINDOW_SIZE = 40
-// eslint-disable-next-line lingui/no-unlocalized-strings -- internal sentinel value, not user-visible
-const SMART_INSERT_AFTER = "__last_selected__"
 const BUILT_IN_TEMPLATE_STYLES: ActivityTemplateStyle[] = [
   "worksheet_rows",
   "practice_cards",
@@ -105,77 +102,6 @@ function normalizedTemplateStyle(style: ActivityTemplateStyle): ActivityTemplate
   }
 }
 
-function parsePageRange(
-  range: string,
-  pageIdsByNumber: Map<number, string>,
-  pageIdsByLowerId: Map<string, string>
-): string[] {
-  const ids: string[] = []
-  const seen = new Set<string>()
-  for (const rawPart of range.split(",")) {
-    const part = rawPart.trim()
-    if (!part) continue
-
-    const directPageId = pageIdsByLowerId.get(part.toLowerCase())
-    if (directPageId && !seen.has(directPageId)) {
-      ids.push(directPageId)
-      seen.add(directPageId)
-      continue
-    }
-
-    const match = part.match(/^(\d+)(?:\s*-\s*(\d+))?$/)
-    if (!match) continue
-    const start = Number(match[1])
-    const end = Number(match[2] ?? match[1])
-    const min = Math.min(start, end)
-    const max = Math.max(start, end)
-    for (let pageNumber = min; pageNumber <= max; pageNumber++) {
-      const pageId = pageIdsByNumber.get(pageNumber)
-      if (pageId && !seen.has(pageId)) {
-        ids.push(pageId)
-        seen.add(pageId)
-      }
-    }
-  }
-  return ids
-}
-
-function formatPageRange(pageIds: string[], pageNumberById: Map<string, number>): string {
-  const parts: string[] = []
-  let runStart: number | null = null
-  let runEnd: number | null = null
-
-  const flushRun = () => {
-    if (runStart == null || runEnd == null) return
-    parts.push(runStart === runEnd ? String(runStart) : `${runStart}-${runEnd}`)
-    runStart = null
-    runEnd = null
-  }
-
-  for (const pageId of pageIds) {
-    const pageNumber = pageNumberById.get(pageId)
-    if (pageNumber == null) {
-      flushRun()
-      parts.push(pageId)
-      continue
-    }
-
-    if (runStart == null || runEnd == null) {
-      runStart = pageNumber
-      runEnd = pageNumber
-    } else if (pageNumber === runEnd + 1) {
-      runEnd = pageNumber
-    } else {
-      flushRun()
-      runStart = pageNumber
-      runEnd = pageNumber
-    }
-  }
-
-  flushRun()
-  return parts.join(", ")
-}
-
 export function QuizzesLandingConfig({
   bookLabel,
   apiKey,
@@ -198,17 +124,20 @@ export function QuizzesLandingConfig({
   const pagesQuery = usePages(bookLabel)
   const [activityType, setActivityType] = useState<QuizActivityType>("multiple_choice")
   const [questionsPerQuiz, setQuestionsPerQuiz] = useState("1")
-  const [pageRange, setPageRange] = useState("")
+  type SourceMode = "every_n" | "select"
+  type PlacementMode = "after_source" | "end_of_book" | "specific"
+  const [sourceMode, setSourceMode] = useState<SourceMode>(
+    initialSelectedPageId ? "select" : "every_n"
+  )
+  const [everyN, setEveryN] = useState("3")
   const [selectedPageIds, setSelectedPageIds] = useState<string[]>(
     initialSelectedPageId ? [initialSelectedPageId] : []
   )
-  type PageScope = "whole_book" | "just_this" | "specific"
-  const [pageScope, setPageScope] = useState<PageScope>(
-    initialSelectedPageId ? "just_this" : "whole_book"
-  )
-  const [insertAfterPageId, setInsertAfterPageId] = useState(SMART_INSERT_AFTER)
+  const [showPagePicker, setShowPagePicker] = useState(false)
+  const [placementMode, setPlacementMode] = useState<PlacementMode>("after_source")
+  const [placementPageId, setPlacementPageId] = useState("")
   const [replaceExisting, setReplaceExisting] = useState(true)
-  const [pickerOffset, setPickerOffset] = useState(0)
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [savedTemplates, setSavedTemplates] = useState<ActivityTemplate[]>(() => loadSavedTemplates(bookLabel))
@@ -219,40 +148,13 @@ export function QuizzesLandingConfig({
   const [templateInstructions, setTemplateInstructions] = useState(DEFAULT_ACTIVITY_TEMPLATES[0].instructions ?? "")
   const [templateNotice, setTemplateNotice] = useState<string | null>(null)
   const appliedInitialPageIdRef = useRef<string | null>(null)
-  const autoFilledForOpenRef = useRef(false)
 
   const pages = pagesQuery.data ?? []
-  const pageIdsByNumber = useMemo(() => {
-    const map = new Map<number, string>()
-    for (const page of pages) map.set(page.pageNumber, page.pageId)
-    return map
-  }, [pages])
-  const pageIdsByLowerId = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const page of pages) map.set(page.pageId.toLowerCase(), page.pageId)
-    return map
-  }, [pages])
-  const pageNumberById = useMemo(() => {
-    const map = new Map<string, number>()
-    for (const page of pages) map.set(page.pageId, page.pageNumber)
-    return map
-  }, [pages])
-  const pageOrder = useMemo(() => new Map(pages.map((page, index) => [page.pageId, index])), [pages])
   const contentPageIds = useMemo(
     () => pages.filter((page) => page.sectionCount > page.prunedSections.length).map((p) => p.pageId),
     [pages]
   )
-  const visiblePages = pages.slice(pickerOffset, pickerOffset + PAGE_PICKER_WINDOW_SIZE)
-  const canPageBack = pickerOffset > 0
-  const canPageForward = pickerOffset + PAGE_PICKER_WINDOW_SIZE < pages.length
-  const resolvedInsertAfterPageId =
-    insertAfterPageId === SMART_INSERT_AFTER
-      ? selectedPageIds[selectedPageIds.length - 1] ?? ""
-      : insertAfterPageId
-  const resolvedInsertAfterPage = pages.find((page) => page.pageId === resolvedInsertAfterPageId)
-  const smartInsertAfterLabel = resolvedInsertAfterPage
-    ? t`Smart: after page ${String(resolvedInsertAfterPage.pageNumber)}`
-    : t`Smart: last selected page`
+  const lastBookPageId = pages.length > 0 ? pages[pages.length - 1].pageId : ""
   const allTemplates = [...DEFAULT_ACTIVITY_TEMPLATES, ...savedTemplates]
   const selectedTemplate: ActivityTemplate = {
     id: selectedTemplateId,
@@ -262,52 +164,32 @@ export function QuizzesLandingConfig({
     ...(templateInstructions.trim() ? { instructions: templateInstructions.trim() } : {}),
   }
 
-  const orderedSelectedPageIds = (ids: string[]) =>
-    ids.slice().sort((a, b) => (pageOrder.get(a) ?? Number.MAX_SAFE_INTEGER) - (pageOrder.get(b) ?? Number.MAX_SAFE_INTEGER))
-
-  // Keep selectedPageIds in sync with pageScope. Specific-pages mode lets the
-  // user free-text the range; the other scopes drive selection automatically.
-  useEffect(() => {
-    if (!open) return
-    if (pageScope === "whole_book") {
-      if (contentPageIds.length === 0) return
-      setSelectedPageIds(contentPageIds)
-      setPageRange(formatPageRange(contentPageIds, pageNumberById))
-    } else if (pageScope === "just_this" && initialSelectedPageId) {
-      setSelectedPageIds([initialSelectedPageId])
-      setPageRange(formatPageRange([initialSelectedPageId], pageNumberById) || initialSelectedPageId)
-    }
-  }, [open, pageScope, contentPageIds, pageNumberById, initialSelectedPageId])
-
+  // Auto-select the page the user came from (if any) the first time.
   useEffect(() => {
     if (!initialSelectedPageId) return
-    const formattedRange = formatPageRange([initialSelectedPageId], pageNumberById) || initialSelectedPageId
-    if (appliedInitialPageIdRef.current !== initialSelectedPageId) {
-      appliedInitialPageIdRef.current = initialSelectedPageId
-      setSelectedPageIds([initialSelectedPageId])
-      setPageRange(formattedRange)
-    } else if (pageRange === initialSelectedPageId && formattedRange !== initialSelectedPageId) {
-      setPageRange(formattedRange)
-    }
-  }, [initialSelectedPageId, pageNumberById, pageRange])
+    if (appliedInitialPageIdRef.current === initialSelectedPageId) return
+    appliedInitialPageIdRef.current = initialSelectedPageId
+    setSelectedPageIds([initialSelectedPageId])
+    setSourceMode("select")
+  }, [initialSelectedPageId])
 
   const activityTypeLabel = (value: QuizActivityType) => {
     switch (value) {
       case "multiple_select":
-        return t`Multiple select (pick many)`
+        return t`Multiple Select Quiz`
       case "true_false":
-        return t`True or false`
+        return t`True or False Quiz`
       case "fill_in_the_blank":
-        return t`Fill in the blanks`
+        return t`Fill in the Blanks`
       case "open_ended":
-        return t`Open question`
+        return t`Open-Ended Question`
       case "drag_and_drop":
-        return t`Matching pairs`
+        return t`Matching Pairs`
       case "sorting":
-        return t`Sort into groups`
+        return t`Sort into Groups`
       case "multiple_choice":
       default:
-        return t`Multiple choice`
+        return t`Multiple Choice Quiz`
     }
   }
 
@@ -375,41 +257,48 @@ export function QuizzesLandingConfig({
     setTemplateNotice(t`Template saved for this book`)
   }
 
-  const applyRange = () => {
-    const ids = parsePageRange(pageRange, pageIdsByNumber, pageIdsByLowerId)
-    const orderedIds = orderedSelectedPageIds(ids)
-    setSelectedPageIds(orderedIds)
-    setPageRange(formatPageRange(orderedIds, pageNumberById))
-  }
-
-  const togglePage = (pageId: string, enabled: boolean) => {
-    if (!enabled) return
-    const next = selectedPageIds.includes(pageId)
-      ? selectedPageIds.filter((id) => id !== pageId)
-      : [...selectedPageIds, pageId]
-    const orderedIds = orderedSelectedPageIds(next)
-    setSelectedPageIds(orderedIds)
-    setPageRange(formatPageRange(orderedIds, pageNumberById))
+  function resolveInsertAfter(batchPageIds: string[]): string {
+    if (placementMode === "end_of_book") return lastBookPageId
+    if (placementMode === "specific") return placementPageId || lastBookPageId
+    return batchPageIds[batchPageIds.length - 1] ?? ""
   }
 
   const handleGenerate = async () => {
-    if (!hasApiKey || selectedPageIds.length === 0 || generating) return
+    if (!hasApiKey || generating) return
+    const n = Math.max(1, Math.floor(Number(everyN) || 3))
+    const groups: string[][] = []
+    if (sourceMode === "every_n") {
+      for (let i = 0; i < contentPageIds.length; i += n) {
+        groups.push(contentPageIds.slice(i, i + n))
+      }
+    } else if (selectedPageIds.length > 0) {
+      groups.push(selectedPageIds)
+    }
+    if (groups.length === 0) {
+      setError(t`Pick at least one page to base the activity on.`)
+      return
+    }
     setGenerating(true)
     setError(null)
+    setProgress({ done: 0, total: groups.length })
     try {
-      await api.generateQuizzes(
-        bookLabel,
-        apiKey,
-        {
-          pageIds: selectedPageIds,
-          activityType,
-          template: selectedTemplate,
-          insertAfterPageId: resolvedInsertAfterPageId || undefined,
-          questionsPerQuiz: Math.min(20, Math.max(1, Number(questionsPerQuiz) || 1)),
-          replaceExistingForPages: replaceExisting,
-        },
-        providerCredentials
-      )
+      for (let i = 0; i < groups.length; i++) {
+        const pageIds = groups[i]
+        await api.generateQuizzes(
+          bookLabel,
+          apiKey,
+          {
+            pageIds,
+            activityType,
+            template: selectedTemplate,
+            insertAfterPageId: resolveInsertAfter(pageIds) || undefined,
+            questionsPerQuiz: Math.min(20, Math.max(1, Number(questionsPerQuiz) || 1)),
+            replaceExistingForPages: replaceExisting,
+          },
+          providerCredentials
+        )
+        setProgress({ done: i + 1, total: groups.length })
+      }
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "quizzes"] })
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "debug"] })
       onOpenChange(false)
@@ -417,14 +306,24 @@ export function QuizzesLandingConfig({
       setError(err instanceof Error ? err.message : String(err))
     } finally {
       setGenerating(false)
+      setProgress(null)
     }
   }
 
   const selectedCount = selectedPageIds.length
+  const selectedPageNumbers = selectedPageIds
+    .map((id) => pages.find((p) => p.pageId === id)?.pageNumber)
+    .filter((n): n is number => typeof n === "number")
+    .sort((a, b) => a - b)
+  const selectedSummary = selectedPageNumbers.length === 0
+    ? null
+    : selectedPageNumbers.length === 1
+      ? t`Page ${String(selectedPageNumbers[0])}`
+      : t`Pages ${String(selectedPageNumbers[0])} – ${String(selectedPageNumbers[selectedPageNumbers.length - 1])} (${String(selectedPageNumbers.length)} total)`
 
-  const initialPage = pages.find((p) => p.pageId === initialSelectedPageId)
-  const initialPageLabel = initialPage ? t`Just this page (page ${String(initialPage.pageNumber)})` : null
-  const isSpecificValid = pageScope !== "specific" || selectedCount > 0
+  const isValid =
+    (sourceMode === "every_n" && contentPageIds.length > 0 && Number(everyN) >= 1) ||
+    (sourceMode === "select" && selectedCount > 0)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -454,39 +353,94 @@ export function QuizzesLandingConfig({
               </select>
             </label>
 
+            {/* Source pages — segmented control */}
+            <div className="space-y-1.5">
+              <span className="block text-xs font-medium text-muted-foreground">{t`Source pages`}</span>
+              <div className="flex rounded-md border overflow-hidden w-full">
+                <button
+                  type="button"
+                  onClick={() => setSourceMode("every_n")}
+                  className={`flex-1 px-3 py-1.5 text-xs cursor-pointer transition-colors ${
+                    sourceMode === "every_n"
+                      ? "bg-orange-600 text-white"
+                      : "bg-background hover:bg-muted"
+                  }`}
+                >
+                  {t`Every N pages`}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSourceMode("select")}
+                  className={`flex-1 px-3 py-1.5 text-xs cursor-pointer transition-colors border-l ${
+                    sourceMode === "select"
+                      ? "bg-orange-600 text-white"
+                      : "bg-background hover:bg-muted"
+                  }`}
+                >
+                  {t`Select pages`}
+                </button>
+              </div>
+
+              {sourceMode === "every_n" && (
+                <div className="flex items-center gap-2 pt-1">
+                  <span className="text-xs text-muted-foreground">{t`Add an activity every`}</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={everyN}
+                    onChange={(e) => setEveryN(e.target.value)}
+                    className="h-8 w-16 rounded-md border border-input bg-background px-2 text-center text-sm"
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    {Number(everyN) === 1 ? t`page` : t`pages`}
+                  </span>
+                </div>
+              )}
+
+              {sourceMode === "select" && (
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowPagePicker(true)}
+                    className="h-8 rounded-md border border-input bg-background px-3 text-xs font-medium transition-colors hover:bg-muted/60"
+                  >
+                    {selectedCount > 0 ? t`Edit selection…` : t`Choose pages…`}
+                  </button>
+                  {selectedSummary && (
+                    <span className="text-[11px] text-muted-foreground">{selectedSummary}</span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Placement */}
             <label className="block space-y-1.5">
-              <span className="text-xs font-medium text-muted-foreground">{t`Source pages`}</span>
+              <span className="text-xs font-medium text-muted-foreground">{t`Place quiz`}</span>
               <select
-                value={pageScope}
-                onChange={(e) => setPageScope(e.target.value as PageScope)}
+                value={placementMode}
+                onChange={(e) => setPlacementMode(e.target.value as PlacementMode)}
                 className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
               >
-                <option value="whole_book">{t`The whole book`}</option>
-                {initialPageLabel && <option value="just_this">{initialPageLabel}</option>}
-                <option value="specific">{t`Specific pages…`}</option>
+                <option value="after_source">{t`On the next page after the source pages`}</option>
+                <option value="end_of_book">{t`At the end of the book`}</option>
+                <option value="specific">{t`Choose a specific page…`}</option>
               </select>
+              {placementMode === "specific" && (
+                <select
+                  value={placementPageId}
+                  onChange={(e) => setPlacementPageId(e.target.value)}
+                  className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                >
+                  <option value="">{t`— pick a page —`}</option>
+                  {pages.map((page) => (
+                    <option key={page.pageId} value={page.pageId}>
+                      {t`Page ${String(page.pageNumber)}`}
+                    </option>
+                  ))}
+                </select>
+              )}
             </label>
-
-            {pageScope === "specific" && (
-              <label className="block space-y-1.5">
-                <span className="text-[11px] text-muted-foreground">{t`Page numbers (e.g. 1-12, 20)`}</span>
-                <input
-                  value={pageRange}
-                  onChange={(e) => setPageRange(e.target.value)}
-                  onBlur={applyRange}
-                  placeholder={t`1-12, 20`}
-                  className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                  autoFocus
-                />
-                <span className="text-[11px] text-muted-foreground">
-                  {selectedCount === 0
-                    ? t`Type page numbers separated by commas. Press Tab to apply.`
-                    : selectedCount === 1
-                      ? t`1 page selected.`
-                      : t`${String(selectedCount)} pages selected.`}
-                </span>
-              </label>
-            )}
           </div>
 
           {/* Advanced — progressive disclosure */}
@@ -495,39 +449,19 @@ export function QuizzesLandingConfig({
               {t`Advanced`}
             </summary>
             <div className="space-y-4 px-3 pb-3 pt-1">
-              {/* Placement + questions per quiz */}
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="space-y-1.5">
-                  <span className="text-[11px] font-medium text-muted-foreground">
-                    {t`Questions per quiz`}
-                  </span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={20}
-                    value={questionsPerQuiz}
-                    onChange={(e) => setQuestionsPerQuiz(e.target.value)}
-                    className="h-8 w-full rounded border border-input bg-background px-2 text-xs"
-                  />
-                </label>
-                <label className="space-y-1.5">
-                  <span className="text-[11px] font-medium text-muted-foreground">
-                    {t`Insert after`}
-                  </span>
-                  <select
-                    value={insertAfterPageId}
-                    onChange={(e) => setInsertAfterPageId(e.target.value)}
-                    className="h-8 w-full rounded border border-input bg-background px-2 text-xs"
-                  >
-                    <option value={SMART_INSERT_AFTER}>{smartInsertAfterLabel}</option>
-                    {pages.map((page) => (
-                      <option key={page.pageId} value={page.pageId}>
-                        {t`Page ${String(page.pageNumber)}`} ({page.pageId})
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
+              <label className="block space-y-1.5">
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  {t`Questions per quiz`}
+                </span>
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={questionsPerQuiz}
+                  onChange={(e) => setQuestionsPerQuiz(e.target.value)}
+                  className="h-8 w-32 rounded border border-input bg-background px-2 text-xs"
+                />
+              </label>
 
               <label className="flex items-center gap-2 text-xs text-muted-foreground">
                 <input
@@ -628,64 +562,14 @@ export function QuizzesLandingConfig({
                 </div>
               </details>
 
-              {/* Per-page picker grid — also disclosed */}
-              <details className="rounded-md border bg-background">
-                <summary className="cursor-pointer px-3 py-2 text-[11px] font-medium text-muted-foreground">
-                  {t`Pick pages individually`}
-                </summary>
-                <div className="space-y-2 px-3 pb-3 pt-1">
-                  <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
-                    <span>
-                      {pages.length === 0
-                        ? t`No pages`
-                        : t`${String(pickerOffset + 1)}-${String(Math.min(pickerOffset + PAGE_PICKER_WINDOW_SIZE, pages.length))} of ${String(pages.length)}`}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setPickerOffset(Math.max(0, pickerOffset - PAGE_PICKER_WINDOW_SIZE))}
-                        disabled={!canPageBack}
-                        className="rounded border px-2 py-1 transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-45"
-                      >
-                        {t`Previous`}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPickerOffset(pickerOffset + PAGE_PICKER_WINDOW_SIZE)}
-                        disabled={!canPageForward}
-                        className="rounded border px-2 py-1 transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-45"
-                      >
-                        {t`Next`}
-                      </button>
-                    </div>
-                  </div>
-                  <div className="grid max-h-44 grid-cols-2 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-3 lg:grid-cols-4">
-                    {visiblePages.map((page) => {
-                      const isSelected = selectedPageIds.includes(page.pageId)
-                      const isContent = page.sectionCount > page.prunedSections.length
-                      return (
-                        <button
-                          key={page.pageId}
-                          type="button"
-                          disabled={!isContent}
-                          onClick={() => togglePage(page.pageId, isContent)}
-                          className={`rounded-md border px-2 py-1.5 text-left text-xs transition-colors ${
-                            isSelected
-                              ? "border-orange-500 bg-orange-50 text-orange-800"
-                              : "border-border bg-background hover:bg-muted/60"
-                          } ${!isContent ? "cursor-not-allowed opacity-45" : "cursor-pointer"}`}
-                        >
-                          <span className="block font-medium">{t`Page ${String(page.pageNumber)}`}</span>
-                          <span className="block truncate font-mono text-[10px] opacity-70">{page.pageId}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              </details>
             </div>
           </details>
 
+          {progress && (
+            <p className="text-xs text-muted-foreground">
+              {t`Generating ${String(progress.done)} of ${String(progress.total)}…`}
+            </p>
+          )}
           {error && <p className="text-xs text-red-500">{error}</p>}
         </div>
 
@@ -700,13 +584,25 @@ export function QuizzesLandingConfig({
           <button
             type="button"
             onClick={handleGenerate}
-            disabled={!hasApiKey || !isSpecificValid || generating}
+            disabled={!hasApiKey || !isValid || generating}
             className="inline-flex h-9 items-center gap-1.5 rounded-md bg-orange-600 px-4 text-xs font-medium text-white transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
             {t`Generate`}
           </button>
         </DialogFooter>
+
+        {showPagePicker && (
+          <SelectQuizPagesDialog
+            bookLabel={bookLabel}
+            initialSelected={selectedPageIds}
+            onConfirm={(ids) => {
+              setSelectedPageIds(ids)
+              setShowPagePicker(false)
+            }}
+            onClose={() => setShowPagePicker(false)}
+          />
+        )}
       </DialogContent>
     </Dialog>
   )
