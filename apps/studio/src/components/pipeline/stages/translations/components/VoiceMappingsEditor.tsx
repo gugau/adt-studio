@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { api } from "@/api/client"
+import { SettingsActionBar, SettingsActionButton } from "@/components/pipeline/components/SettingsActionBar"
 import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useLingui } from "@lingui/react/macro"
@@ -162,15 +163,21 @@ export function VoiceMappingsEditor({ bookLabel, headerTarget }: VoiceMappingsEd
   return (
     <div className="p-4 space-y-4">
       {headerTarget && createPortal(
-        <Button
-          size="sm"
-          className="h-7 px-2.5 text-xs bg-black/15 text-white hover:bg-black/25"
-          onClick={handleSave}
-          disabled={saving || updateConfig.isPending || (!dirtyMappings && !dirtyDefaultVoice) || (dirtyDefaultVoice && isBookConfigLoading)}
-        >
-          <Save className="mr-1.5 h-3.5 w-3.5" />
-          {saving ? t`Saving...` : t`Save`}
-        </Button>,
+        (() => {
+          const isDirty = dirtyMappings || dirtyDefaultVoice
+          return (
+            <SettingsActionBar dirty={isDirty}>
+              <SettingsActionButton
+                dirty={isDirty}
+                onClick={handleSave}
+                disabled={saving || updateConfig.isPending || !isDirty || (dirtyDefaultVoice && isBookConfigLoading)}
+              >
+                <Save className="mr-1.5 h-3.5 w-3.5" />
+                {saving ? t`Saving...` : t`Save`}
+              </SettingsActionButton>
+            </SettingsActionBar>
+          )
+        })(),
         headerTarget
       )}
 

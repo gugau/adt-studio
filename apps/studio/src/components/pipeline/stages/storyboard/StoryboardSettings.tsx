@@ -30,6 +30,7 @@ import { usePages, usePageImage } from "@/hooks/use-pages"
 import { api } from "@/api/client"
 import { PromptViewer } from "@/components/pipeline/components/PromptViewer"
 import { TemplateViewer } from "@/components/pipeline/components/TemplateViewer"
+import { SettingsActionBar, SettingsActionButton } from "@/components/pipeline/components/SettingsActionBar"
 import { useBookRun } from "@/hooks/use-book-run"
 import { Trans } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
@@ -889,24 +890,42 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
 
       {headerTarget && createPortal(
         tab === "image-generation" ? (
-          <Button
-            size="sm"
-            className="h-7 px-2.5 text-xs bg-black/15 text-white hover:bg-black/25"
-            onClick={saveImagePrompts}
-            disabled={savingImageGenPrompt || (imageGenPromptDraft == null && imageEditPromptDraft == null)}
-          >
-            {savingImageGenPrompt ? t`Saving...` : t`Save`}
-          </Button>
+          (() => {
+            const imageDirty = imageGenPromptDraft != null || imageEditPromptDraft != null
+            return (
+              <SettingsActionBar dirty={imageDirty}>
+                <SettingsActionButton
+                  dirty={imageDirty}
+                  onClick={saveImagePrompts}
+                  disabled={savingImageGenPrompt || !imageDirty}
+                >
+                  {savingImageGenPrompt ? t`Saving...` : t`Save`}
+                </SettingsActionButton>
+              </SettingsActionBar>
+            )
+          })()
         ) : (
-          <Button
-            size="sm"
-            className="h-7 px-2.5 text-xs bg-black/15 text-white hover:bg-black/25"
-            onClick={() => setShowRerunDialog(true)}
-            disabled={updateConfig.isPending || !hasApiKey}
-          >
-            <Play className="mr-1.5 h-3.5 w-3.5" />
-            {<Trans>Save & Rerun</Trans>}
-          </Button>
+          (() => {
+            const isDirty =
+              Object.values(dirty).some(Boolean) ||
+              renderingPromptDraft != null ||
+              renderingTemplateDraft != null ||
+              templateTabDraft != null ||
+              activityPromptDraft != null ||
+              activityAnswerDraft != null
+            return (
+              <SettingsActionBar dirty={isDirty}>
+                <SettingsActionButton
+                  dirty={isDirty}
+                  onClick={() => setShowRerunDialog(true)}
+                  disabled={updateConfig.isPending || !hasApiKey}
+                >
+                  <Play className="mr-1.5 h-3.5 w-3.5" />
+                  {<Trans>Save & Rerun</Trans>}
+                </SettingsActionButton>
+              </SettingsActionBar>
+            )
+          })()
         ),
         headerTarget
       )}

@@ -2853,6 +2853,9 @@ msgstr "Aucun texte extrait"
 msgid "No translations for this page"
 msgstr "Aucune traduction pour cette page"
 
+msgid "No unsaved changes"
+msgstr "Aucune modification non enregistrée"
+
 msgid "No versions"
 msgstr "Aucune version"
 
@@ -4584,6 +4587,9 @@ msgstr "Restaurer l'image"
 
 msgid "Unsaved changes"
 msgstr "Modifications non enregistrées"
+
+msgid "Unsaved changes — rerun to apply"
+msgstr "Modifications non enregistrées — relancez pour appliquer"
 
 msgid "Unsaved:"
 msgstr "Non enregistré :"

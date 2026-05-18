@@ -22,6 +22,7 @@ import { useActiveConfig } from "@/hooks/use-debug"
 import { useApiKey } from "@/hooks/use-api-key"
 import { api } from "@/api/client"
 import { PromptViewer } from "@/components/pipeline/components/PromptViewer"
+import { SettingsActionBar, SettingsActionButton } from "@/components/pipeline/components/SettingsActionBar"
 import { LanguagePicker } from "@/components/LanguagePicker"
 import { useBook } from "@/hooks/use-books"
 import { useBookRun } from "@/hooks/use-book-run"
@@ -447,15 +448,24 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general",
       )}
 
       {headerTarget && (tab === "general" || tab === "prompt" || tab === "speech" || tab === "image-translation") && createPortal(
-        <Button
-          size="sm"
-          className="h-7 px-2.5 text-xs bg-black/15 text-white hover:bg-black/25"
-          onClick={() => setShowRerunDialog(true)}
-          disabled={updateConfig.isPending || !hasApiKey}
-        >
-          <Play className="mr-1.5 h-3.5 w-3.5" />
-          {t`Save & Rerun`}
-        </Button>,
+        (() => {
+          const isDirty =
+            Object.values(dirty).some(Boolean) ||
+            promptDraft != null ||
+            imagePromptDraft != null
+          return (
+            <SettingsActionBar dirty={isDirty}>
+              <SettingsActionButton
+                dirty={isDirty}
+                onClick={() => setShowRerunDialog(true)}
+                disabled={updateConfig.isPending || !hasApiKey}
+              >
+                <Play className="mr-1.5 h-3.5 w-3.5" />
+                {t`Save & Rerun`}
+              </SettingsActionButton>
+            </SettingsActionBar>
+          )
+        })(),
         headerTarget
       )}
 
