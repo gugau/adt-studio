@@ -568,11 +568,14 @@ msgstr "Agregar"
 msgid "Add {0} Images"
 msgstr "Agregar {0} imágenes"
 
+msgid "Add a quiz every"
+msgstr ""
+
 msgid "Add an activity"
 msgstr ""
 
-msgid "Add an activity every"
-msgstr ""
+#~ msgid "Add an activity every"
+#~ msgstr ""
 
 msgid "Add an API key in Settings to enable generation."
 msgstr ""
@@ -1196,8 +1199,8 @@ msgstr "Elegir un Preajuste"
 msgid "Choose a preset that matches your content — textbook, storyboard, reference, or custom — and ADT Studio tailors the pipeline accordingly."
 msgstr "Elige un preajuste que coincida con tu contenido — libro de texto, guion gráfico, referencia o personalizado — y ADT Studio adapta el pipeline en consecuencia."
 
-msgid "Choose a specific page…"
-msgstr ""
+#~ msgid "Choose a specific page…"
+#~ msgstr ""
 
 msgid "Choose an existing image from this project"
 msgstr "Elige una imagen existente de este proyecto"
@@ -1928,8 +1931,8 @@ msgstr "Evaporación"
 #~ msgid "Every"
 #~ msgstr "Cada"
 
-msgid "Every N pages"
-msgstr ""
+#~ msgid "Every N pages"
+#~ msgstr ""
 
 msgid "Every reader opens the same book, with the features they need on tap."
 msgstr "Cada lector abre el mismo libro, con las funciones que necesita al tocar."
@@ -3343,8 +3346,11 @@ msgstr "Apagado"
 msgid "On"
 msgstr "Encendido"
 
-msgid "On the next page after the source pages"
+msgid "On a specific page…"
 msgstr ""
+
+#~ msgid "On the next page after the source pages"
+#~ msgstr ""
 
 msgid "One activity page"
 msgstr ""
@@ -3685,6 +3691,9 @@ msgstr "Elegir del libro"
 msgid "Pick one layout approach."
 msgstr "Elige un enfoque de diseño."
 
+msgid "Pick pages"
+msgstr ""
+
 #~ msgid "Pick pages individually"
 #~ msgstr ""
 
@@ -3712,8 +3721,8 @@ msgstr "Etapas del pipeline"
 msgid "Pixel Art"
 msgstr "Pixel Art"
 
-msgid "Place quiz"
-msgstr ""
+#~ msgid "Place quiz"
+#~ msgstr ""
 
 #~ msgid "Place quiz:"
 #~ msgstr "Ubicar cuestionario:"
@@ -4176,6 +4185,9 @@ msgstr "Reviewer validation summary"
 msgid "Rewriting the story of this section..."
 msgstr "Reescribiendo la historia de esta sección..."
 
+msgid "Right after the pages it covers"
+msgstr ""
+
 msgid "Rising ocean temperatures cause coral bleaching - when stressed corals expel the colorful algae living inside them and turn white. Without these algae, corals slowly starve. Protecting reefs means reducing pollution, overfishing, and greenhouse gas emissions."
 msgstr "El aumento de las temperaturas oceánicas causa el blanqueamiento de corales - cuando los corales estresados expulsan las algas coloridas que viven dentro de ellos y se vuelven blancos. Sin estas algas, los corales se mueren de hambre lentamente. Proteger los arrecifes significa reducir la contaminación, la sobrepesca y las emisiones de gases de efecto invernadero."
 
@@ -4468,8 +4480,8 @@ msgstr "Seleccionar imágenes para traducir"
 msgid "Select node type..."
 msgstr "Seleccionar tipo de nodo..."
 
-msgid "Select pages"
-msgstr ""
+#~ msgid "Select pages"
+#~ msgstr ""
 
 msgid "Select pages for activities"
 msgstr ""
@@ -4679,8 +4691,8 @@ msgstr ""
 msgid "Sorting items"
 msgstr ""
 
-msgid "Source pages"
-msgstr ""
+#~ msgid "Source pages"
+#~ msgstr ""
 
 msgid "Spanish"
 msgstr "Español"
@@ -5113,6 +5125,9 @@ msgstr "Esto guardará tu configuración y volverá a ejecutar el pipeline del g
 msgid "This will save your settings and re-run translations, rebuilding the text catalog and translating to output languages."
 msgstr "Esto guardará su configuración y volverá a ejecutar las traducciones, reconstruyendo el catálogo de texto y traduciendo a los idiomas de salida."
 
+msgid "Throughout the book"
+msgstr ""
+
 msgid "Time"
 msgstr "Hora"
 
@@ -5537,6 +5552,12 @@ msgstr "Cuando está activado, las marcas de tiempo por palabra se calculan auto
 
 msgid "When your PDF isn't built around facing pages, single mode keeps every page separate: nothing is merged across a spread. That matches how most textbooks, novels, and reference books are read - one page at a time."
 msgstr "Cuando tu PDF no está construido alrededor de páginas enfrentadas, el modo único mantiene cada página separada: nada se fusiona a través de una extensión. Eso coincide con cómo se leen la mayoría de los libros de texto, novelas y libros de referencia - una página a la vez."
+
+msgid "Where in the book"
+msgstr ""
+
+msgid "Where to put it"
+msgstr ""
 
 msgid "While editing"
 msgstr "Mientras editas"

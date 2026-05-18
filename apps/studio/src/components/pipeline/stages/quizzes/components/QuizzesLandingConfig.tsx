@@ -353,9 +353,9 @@ export function QuizzesLandingConfig({
               </select>
             </label>
 
-            {/* Source pages — segmented control */}
+            {/* Where in the book — segmented control */}
             <div className="space-y-1.5">
-              <span className="block text-xs font-medium text-muted-foreground">{t`Source pages`}</span>
+              <span className="block text-xs font-medium text-muted-foreground">{t`Where in the book`}</span>
               <div className="flex rounded-md border overflow-hidden w-full">
                 <button
                   type="button"
@@ -366,7 +366,7 @@ export function QuizzesLandingConfig({
                       : "bg-background hover:bg-muted"
                   }`}
                 >
-                  {t`Every N pages`}
+                  {t`Throughout the book`}
                 </button>
                 <button
                   type="button"
@@ -377,13 +377,13 @@ export function QuizzesLandingConfig({
                       : "bg-background hover:bg-muted"
                   }`}
                 >
-                  {t`Select pages`}
+                  {t`Pick pages`}
                 </button>
               </div>
 
               {sourceMode === "every_n" && (
                 <div className="flex items-center gap-2 pt-1">
-                  <span className="text-xs text-muted-foreground">{t`Add an activity every`}</span>
+                  <span className="text-xs text-muted-foreground">{t`Add a quiz every`}</span>
                   <input
                     type="number"
                     min={1}
@@ -416,15 +416,15 @@ export function QuizzesLandingConfig({
 
             {/* Placement */}
             <label className="block space-y-1.5">
-              <span className="text-xs font-medium text-muted-foreground">{t`Place quiz`}</span>
+              <span className="text-xs font-medium text-muted-foreground">{t`Where to put it`}</span>
               <select
                 value={placementMode}
                 onChange={(e) => setPlacementMode(e.target.value as PlacementMode)}
                 className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
               >
-                <option value="after_source">{t`On the next page after the source pages`}</option>
+                <option value="after_source">{t`Right after the pages it covers`}</option>
                 <option value="end_of_book">{t`At the end of the book`}</option>
-                <option value="specific">{t`Choose a specific page…`}</option>
+                <option value="specific">{t`On a specific page…`}</option>
               </select>
               {placementMode === "specific" && (
                 <select

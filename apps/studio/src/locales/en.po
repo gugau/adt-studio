@@ -568,11 +568,14 @@ msgstr "Add"
 msgid "Add {0} Images"
 msgstr "Add {0} Images"
 
+msgid "Add a quiz every"
+msgstr "Add a quiz every"
+
 msgid "Add an activity"
 msgstr "Add an activity"
 
-msgid "Add an activity every"
-msgstr "Add an activity every"
+#~ msgid "Add an activity every"
+#~ msgstr "Add an activity every"
 
 msgid "Add an API key in Settings to enable generation."
 msgstr "Add an API key in Settings to enable generation."
@@ -1196,8 +1199,8 @@ msgstr "Choose a Preset"
 msgid "Choose a preset that matches your content — textbook, storyboard, reference, or custom — and ADT Studio tailors the pipeline accordingly."
 msgstr "Choose a preset that matches your content — textbook, storyboard, reference, or custom — and ADT Studio tailors the pipeline accordingly."
 
-msgid "Choose a specific page…"
-msgstr "Choose a specific page…"
+#~ msgid "Choose a specific page…"
+#~ msgstr "Choose a specific page…"
 
 msgid "Choose an existing image from this project"
 msgstr "Choose an existing image from this project"
@@ -1928,8 +1931,8 @@ msgstr "Evaporation"
 #~ msgid "Every"
 #~ msgstr "Every"
 
-msgid "Every N pages"
-msgstr "Every N pages"
+#~ msgid "Every N pages"
+#~ msgstr "Every N pages"
 
 msgid "Every reader opens the same book, with the features they need on tap."
 msgstr "Every reader opens the same book, with the features they need on tap."
@@ -3343,8 +3346,11 @@ msgstr "Off"
 msgid "On"
 msgstr "On"
 
-msgid "On the next page after the source pages"
-msgstr "On the next page after the source pages"
+msgid "On a specific page…"
+msgstr "On a specific page…"
+
+#~ msgid "On the next page after the source pages"
+#~ msgstr "On the next page after the source pages"
 
 msgid "One activity page"
 msgstr "One activity page"
@@ -3685,6 +3691,9 @@ msgstr "Pick from Book"
 msgid "Pick one layout approach."
 msgstr "Pick one layout approach."
 
+msgid "Pick pages"
+msgstr "Pick pages"
+
 #~ msgid "Pick pages individually"
 #~ msgstr "Pick pages individually"
 
@@ -3712,8 +3721,8 @@ msgstr "Pipeline Stages"
 msgid "Pixel Art"
 msgstr "Pixel Art"
 
-msgid "Place quiz"
-msgstr "Place quiz"
+#~ msgid "Place quiz"
+#~ msgstr "Place quiz"
 
 #~ msgid "Place quiz:"
 #~ msgstr "Place quiz:"
@@ -4176,6 +4185,9 @@ msgstr "Reviewer validation summary"
 msgid "Rewriting the story of this section..."
 msgstr "Rewriting the story of this section..."
 
+msgid "Right after the pages it covers"
+msgstr "Right after the pages it covers"
+
 msgid "Rising ocean temperatures cause coral bleaching - when stressed corals expel the colorful algae living inside them and turn white. Without these algae, corals slowly starve. Protecting reefs means reducing pollution, overfishing, and greenhouse gas emissions."
 msgstr "Rising ocean temperatures cause coral bleaching - when stressed corals expel the colorful algae living inside them and turn white. Without these algae, corals slowly starve. Protecting reefs means reducing pollution, overfishing, and greenhouse gas emissions."
 
@@ -4468,8 +4480,8 @@ msgstr "Select images to translate"
 msgid "Select node type..."
 msgstr "Select node type..."
 
-msgid "Select pages"
-msgstr "Select pages"
+#~ msgid "Select pages"
+#~ msgstr "Select pages"
 
 msgid "Select pages for activities"
 msgstr "Select pages for activities"
@@ -4679,8 +4691,8 @@ msgstr "Sorting item {0}"
 msgid "Sorting items"
 msgstr "Sorting items"
 
-msgid "Source pages"
-msgstr "Source pages"
+#~ msgid "Source pages"
+#~ msgstr "Source pages"
 
 msgid "Spanish"
 msgstr "Spanish"
@@ -5113,6 +5125,9 @@ msgstr "This will save your settings and re-run the storyboard pipeline. Section
 msgid "This will save your settings and re-run translations, rebuilding the text catalog and translating to output languages."
 msgstr "This will save your settings and re-run translations, rebuilding the text catalog and translating to output languages."
 
+msgid "Throughout the book"
+msgstr "Throughout the book"
+
 msgid "Time"
 msgstr "Time"
 
@@ -5537,6 +5552,12 @@ msgstr "When enabled, word-level timestamps are calculated automatically during 
 
 msgid "When your PDF isn't built around facing pages, single mode keeps every page separate: nothing is merged across a spread. That matches how most textbooks, novels, and reference books are read - one page at a time."
 msgstr "When your PDF isn't built around facing pages, single mode keeps every page separate: nothing is merged across a spread. That matches how most textbooks, novels, and reference books are read - one page at a time."
+
+msgid "Where in the book"
+msgstr "Where in the book"
+
+msgid "Where to put it"
+msgstr "Where to put it"
 
 msgid "While editing"
 msgstr "While editing"

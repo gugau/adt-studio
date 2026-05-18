@@ -568,11 +568,14 @@ msgstr "Adicionar"
 msgid "Add {0} Images"
 msgstr "Adicionar {0} imagens"
 
+msgid "Add a quiz every"
+msgstr ""
+
 msgid "Add an activity"
 msgstr ""
 
-msgid "Add an activity every"
-msgstr ""
+#~ msgid "Add an activity every"
+#~ msgstr ""
 
 msgid "Add an API key in Settings to enable generation."
 msgstr ""
@@ -1196,8 +1199,8 @@ msgstr "Escolha uma Predefinição"
 msgid "Choose a preset that matches your content — textbook, storyboard, reference, or custom — and ADT Studio tailors the pipeline accordingly."
 msgstr "Escolha um preset que combine com seu conteúdo — livro didático, storyboard, referência ou personalizado — e o ADT Studio adapta o pipeline conforme necessário."
 
-msgid "Choose a specific page…"
-msgstr ""
+#~ msgid "Choose a specific page…"
+#~ msgstr ""
 
 msgid "Choose an existing image from this project"
 msgstr "Escolha uma imagem existente deste projeto"
@@ -1928,8 +1931,8 @@ msgstr "Evaporação"
 #~ msgid "Every"
 #~ msgstr "A cada"
 
-msgid "Every N pages"
-msgstr ""
+#~ msgid "Every N pages"
+#~ msgstr ""
 
 msgid "Every reader opens the same book, with the features they need on tap."
 msgstr "Todo leitor abre o mesmo livro, com os recursos que precisa ao toque."
@@ -3343,8 +3346,11 @@ msgstr "Desligado"
 msgid "On"
 msgstr "Ligado"
 
-msgid "On the next page after the source pages"
+msgid "On a specific page…"
 msgstr ""
+
+#~ msgid "On the next page after the source pages"
+#~ msgstr ""
 
 msgid "One activity page"
 msgstr ""
@@ -3685,6 +3691,9 @@ msgstr "Escolher do livro"
 msgid "Pick one layout approach."
 msgstr "Escolha uma abordagem de layout."
 
+msgid "Pick pages"
+msgstr ""
+
 #~ msgid "Pick pages individually"
 #~ msgstr ""
 
@@ -3712,8 +3721,8 @@ msgstr "Etapas do pipeline"
 msgid "Pixel Art"
 msgstr "Pixel Art"
 
-msgid "Place quiz"
-msgstr ""
+#~ msgid "Place quiz"
+#~ msgstr ""
 
 #~ msgid "Place quiz:"
 #~ msgstr "Posicionar quiz:"
@@ -4176,6 +4185,9 @@ msgstr "Reviewer validation summary"
 msgid "Rewriting the story of this section..."
 msgstr "Reescrevendo a história desta seção..."
 
+msgid "Right after the pages it covers"
+msgstr ""
+
 msgid "Rising ocean temperatures cause coral bleaching - when stressed corals expel the colorful algae living inside them and turn white. Without these algae, corals slowly starve. Protecting reefs means reducing pollution, overfishing, and greenhouse gas emissions."
 msgstr "O aumento das temperaturas dos oceanos causa o branqueamento dos corais - quando corais estressados expulsam as algas coloridas que vivem dentro deles e ficam brancos. Sem essas algas, os corais lentamente morrem de fome. Proteger os recifes significa reduzir a poluição, a pesca excessiva e as emissões de gases de efeito estufa."
 
@@ -4468,8 +4480,8 @@ msgstr "Selecionar imagens para traduzir"
 msgid "Select node type..."
 msgstr "Selecionar tipo de nó..."
 
-msgid "Select pages"
-msgstr ""
+#~ msgid "Select pages"
+#~ msgstr ""
 
 msgid "Select pages for activities"
 msgstr ""
@@ -4679,8 +4691,8 @@ msgstr ""
 msgid "Sorting items"
 msgstr ""
 
-msgid "Source pages"
-msgstr ""
+#~ msgid "Source pages"
+#~ msgstr ""
 
 msgid "Spanish"
 msgstr "Espanhol"
@@ -5113,6 +5125,9 @@ msgstr "Isso salvará suas configurações e reexecutará o pipeline do storyboa
 msgid "This will save your settings and re-run translations, rebuilding the text catalog and translating to output languages."
 msgstr "Isso salvará suas configurações e reexecutará as traduções, reconstruindo o catálogo de texto e traduzindo para os idiomas de saída."
 
+msgid "Throughout the book"
+msgstr ""
+
 msgid "Time"
 msgstr "Hora"
 
@@ -5537,6 +5552,12 @@ msgstr "Quando ativado, as marcações de tempo por palavra são calculadas auto
 
 msgid "When your PDF isn't built around facing pages, single mode keeps every page separate: nothing is merged across a spread. That matches how most textbooks, novels, and reference books are read - one page at a time."
 msgstr "Quando o PDF não foi feito em torno de páginas opostas, o modo individual mantém cada página separada: nada é unido como numa dupla. É o jeito usual de ler livros didáticos, romances e obras de referência — uma página por vez."
+
+msgid "Where in the book"
+msgstr ""
+
+msgid "Where to put it"
+msgstr ""
 
 msgid "While editing"
 msgstr "Durante a edição"

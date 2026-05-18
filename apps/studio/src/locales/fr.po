@@ -569,11 +569,14 @@ msgstr "Ajouter"
 msgid "Add {0} Images"
 msgstr "Ajouter {0} Images"
 
+msgid "Add a quiz every"
+msgstr ""
+
 msgid "Add an activity"
 msgstr ""
 
-msgid "Add an activity every"
-msgstr ""
+#~ msgid "Add an activity every"
+#~ msgstr ""
 
 msgid "Add an API key in Settings to enable generation."
 msgstr ""
@@ -1197,8 +1200,8 @@ msgstr "Choisir a Preset"
 msgid "Choose a preset that matches your content — textbook, storyboard, reference, or custom — and ADT Studio tailors the pipeline accordingly."
 msgstr "Choisissez un préréglage qui correspond à votre contenu — manuel, storyboard, référence ou personnalisé — et ADT Studio adapte le pipeline en conséquence."
 
-msgid "Choose a specific page…"
-msgstr ""
+#~ msgid "Choose a specific page…"
+#~ msgstr ""
 
 msgid "Choose an existing image from this project"
 msgstr "Choisissez une image existante de ce projet"
@@ -1929,8 +1932,8 @@ msgstr "Évaporation"
 #~ msgid "Every"
 #~ msgstr "Toutes les"
 
-msgid "Every N pages"
-msgstr ""
+#~ msgid "Every N pages"
+#~ msgstr ""
 
 msgid "Every reader opens the same book, with the features they need on tap."
 msgstr "Chaque lecteur ouvre le même livre, avec les fonctionnalités dont il a besoin d'un simple toucher."
@@ -3344,8 +3347,11 @@ msgstr "Désactivé"
 msgid "On"
 msgstr "Activé"
 
-msgid "On the next page after the source pages"
+msgid "On a specific page…"
 msgstr ""
+
+#~ msgid "On the next page after the source pages"
+#~ msgstr ""
 
 msgid "One activity page"
 msgstr ""
@@ -3686,6 +3692,9 @@ msgstr "Choisir dans le livre"
 msgid "Pick one layout approach."
 msgstr "Choisissez une approche de mise en page."
 
+msgid "Pick pages"
+msgstr ""
+
 #~ msgid "Pick pages individually"
 #~ msgstr ""
 
@@ -3713,8 +3722,8 @@ msgstr "Étapes du pipeline"
 msgid "Pixel Art"
 msgstr "Pixel Art"
 
-msgid "Place quiz"
-msgstr ""
+#~ msgid "Place quiz"
+#~ msgstr ""
 
 #~ msgid "Place quiz:"
 #~ msgstr "Placer le quiz :"
@@ -4177,6 +4186,9 @@ msgstr "Résumé de validation du réviseur"
 msgid "Rewriting the story of this section..."
 msgstr "Réécriture de l'histoire de cette section..."
 
+msgid "Right after the pages it covers"
+msgstr ""
+
 msgid "Rising ocean temperatures cause coral bleaching - when stressed corals expel the colorful algae living inside them and turn white. Without these algae, corals slowly starve. Protecting reefs means reducing pollution, overfishing, and greenhouse gas emissions."
 msgstr "La hausse des températures océaniques provoque le blanchissement des coraux — lorsque les coraux stressés expulsent les algues colorées vivant en eux et deviennent blancs. Sans ces algues, les coraux meurent lentement de faim. Protéger les récifs signifie réduire la pollution, la surpêche et les émissions de gaz à effet de serre."
 
@@ -4469,8 +4481,8 @@ msgstr "Sélectionner les images à traduire"
 msgid "Select node type..."
 msgstr "Sélectionnez le type de nœud..."
 
-msgid "Select pages"
-msgstr ""
+#~ msgid "Select pages"
+#~ msgstr ""
 
 msgid "Select pages for activities"
 msgstr ""
@@ -4680,8 +4692,8 @@ msgstr ""
 msgid "Sorting items"
 msgstr ""
 
-msgid "Source pages"
-msgstr ""
+#~ msgid "Source pages"
+#~ msgstr ""
 
 msgid "Spanish"
 msgstr "Espagnol"
@@ -5114,6 +5126,9 @@ msgstr "Ceci enregistrera vos paramètres et relancera le pipeline du storyboard
 msgid "This will save your settings and re-run translations, rebuilding the text catalog and translating to output languages."
 msgstr "Cela enregistrera vos paramètres et relancera les traductions, en reconstruisant le catalogue de texte et en traduisant vers les langues de sortie."
 
+msgid "Throughout the book"
+msgstr ""
+
 msgid "Time"
 msgstr "Temps"
 
@@ -5538,6 +5553,12 @@ msgstr "Lorsque cette option est activée, les horodatages au niveau du mot sont
 
 msgid "When your PDF isn't built around facing pages, single mode keeps every page separate: nothing is merged across a spread. That matches how most textbooks, novels, and reference books are read - one page at a time."
 msgstr "Lorsque votre PDF n'est pas conçu pour des pages en regard, le mode simple garde chaque page séparée : rien n'est fusionné sur une double page. Cela correspond à la lecture de la plupart des manuels, romans et ouvrages de référence — une page à la fois."
+
+msgid "Where in the book"
+msgstr ""
+
+msgid "Where to put it"
+msgstr ""
 
 msgid "While editing"
 msgstr "Pendant l'édition"
