@@ -962,7 +962,7 @@ describe("packageAdtWeb", () => {
     ) as Array<{ section_id: string; href: string; page_number?: number }>
 
     expect(pagesJson).toEqual([
-      { section_id: "qz001", href: "index.html" },
+      { section_id: "pg001_activity", href: "index.html" },
       { section_id: "pg002_sec001", href: "pg002_sec001.html" },
     ])
     expect(fs.existsSync(path.join(bookDir, "adt", "index.html"))).toBe(true)
@@ -973,7 +973,7 @@ describe("packageAdtWeb", () => {
 
     // SCORM adapter should include the quiz activity ID
     const scorm = fs.readFileSync(path.join(bookDir, "adt", "assets", "scorm.js"), "utf-8")
-    expect(scorm).toContain('"qz001"')
+    expect(scorm).toContain('"pg001_activity"')
   })
 
   it("skips pruned quizzes and renumbers exported quiz page ids", async () => {
@@ -1065,9 +1065,9 @@ describe("packageAdtWeb", () => {
       fs.readFileSync(path.join(bookDir, "adt", "content", "pages.json"), "utf-8"),
     ) as Array<{ section_id: string; href: string }>
 
-    expect(pagesJson.map((entry) => entry.section_id)).toEqual(["pg001_sec001", "qz001"])
-    expect(fs.existsSync(path.join(bookDir, "adt", "qz001.html"))).toBe(true)
-    expect(fs.readFileSync(path.join(bookDir, "adt", "qz001.html"), "utf-8")).toContain("Kept?")
+    expect(pagesJson.map((entry) => entry.section_id)).toEqual(["pg001_sec001", "pg001_activity"])
+    expect(fs.existsSync(path.join(bookDir, "adt", "pg001_activity.html"))).toBe(true)
+    expect(fs.readFileSync(path.join(bookDir, "adt", "pg001_activity.html"), "utf-8")).toContain("Kept?")
   })
 
   it("packages reader timecodes and enables word highlighting when timestamps exist", async () => {

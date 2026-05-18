@@ -361,10 +361,14 @@ export async function packageAdtWeb(
       }
     }
 
-    // Insert quiz pages after this page (even if page content was skipped)
-    for (const quiz of quizzes) {
-      const quizIndex = visibleQuizIndex.get(quiz) ?? 0
-      const quizId = `qz${pad3(quizIndex + 1)}`
+    // Insert quiz pages after this page (even if page content was skipped).
+    // Quizzes are named after the page they follow so the bundle reads as a
+    // continuous page flow: pg013_activity.html, pg013_activity_2.html, ...
+    // The "qz" preview filename is preserved internally (in-app preview API)
+    // but the bundle output uses page-derived names.
+    quizzes.forEach((quiz, indexInPage) => {
+      const suffix = indexInPage === 0 ? "" : `_${indexInPage + 1}`
+      const quizId = `${page.pageId}_activity${suffix}`
 
       const isFirstPage = pageList.length === 0
       const quizFilename = isFirstPage ? "index.html" : `${quizId}.html`
@@ -404,7 +408,7 @@ export async function packageAdtWeb(
       fs.writeFileSync(path.join(adtDir, quizFilename), quizPageHtml)
 
       pageList.push({ section_id: quizId, href: quizFilename })
-    }
+    })
   }
 
   // ------------------------------------------------------------------
@@ -3476,14 +3480,15 @@ ${fileEntries}
 /**
  * Scan all HTML files in the ADT directory for `data-area-id` attributes
  * and return the unique set of activity IDs.
- * Also includes quiz section IDs from the page list (entries starting with "qz").
+ * Also includes quiz section IDs from the page list (entries that contain
+ * "_activity" — the bundle names quizzes after the page they follow).
  */
 function collectActivityIds(adtDir: string, pageList: PageEntry[]): string[] {
   const ids = new Set<string>()
 
   // Quiz IDs from page list
   for (const page of pageList) {
-    if (page.section_id.startsWith("qz")) {
+    if (/_activity(?:_\d+)?$/.test(page.section_id)) {
       ids.add(page.section_id)
     }
   }
