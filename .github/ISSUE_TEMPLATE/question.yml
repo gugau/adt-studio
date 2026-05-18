@@ -8,9 +8,9 @@ body:
         <p align="center">
           <a href="https://github.com/unicef/adt-studio">
             <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Eliezir/adt-studio/eliezir/github-issue-templates/.github/assets/adt-studio-banner-dark.png">
-              <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Eliezir/adt-studio/eliezir/github-issue-templates/.github/assets/adt-studio-banner-light.png">
-              <img src="https://raw.githubusercontent.com/Eliezir/adt-studio/eliezir/github-issue-templates/.github/assets/adt-studio-banner-light.png" alt="ADT Studio — Turn PDFs into interactive HTML books" width="420">
+              <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/unicef/adt-studio/main/.github/assets/adt-studio-banner-dark.png">
+              <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/unicef/adt-studio/main/.github/assets/adt-studio-banner-light.png">
+              <img src="https://raw.githubusercontent.com/unicef/adt-studio/main/.github/assets/adt-studio-banner-light.png" alt="ADT Studio — Turn PDFs into interactive HTML books" width="420">
             </picture>
           </a>
         </p>
@@ -73,7 +73,8 @@ body:
       label: Platform (optional)
       multiple: true
       options:
-        - Windows
+        - Windows - x64
+        - Windows - ARM
         - macOS - Apple Silicon
         - macOS - Intel
         - Linux
