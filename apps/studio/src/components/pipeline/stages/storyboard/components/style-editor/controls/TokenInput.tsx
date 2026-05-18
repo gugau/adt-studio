@@ -8,6 +8,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useElementContext } from "../element-context"
 import { NumericInput } from "./NumericInput"
 
 export interface TokenChoice {
@@ -36,6 +37,7 @@ export function TokenInput({
   className,
 }: TokenInputProps) {
   const matched = tokens.find((t) => t.value === value)
+  const { dataId } = useElementContext()
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<"custom" | "variables">(
     matched ? "variables" : "custom",
@@ -46,6 +48,12 @@ export function TokenInput({
     setOpen(next)
     if (next) setTab(matched ? "variables" : "custom")
   }
+
+  // Close when the user picks a different element in the preview — clicks
+  // inside the iframe don't reach Radix's outside-click listener.
+  useEffect(() => {
+    setOpen(false)
+  }, [dataId])
 
   useEffect(() => {
     if (!open || tab !== "variables") return

@@ -1,5 +1,5 @@
 import Color from "color";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Check, Search } from "lucide-react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { cn } from "@/lib/utils";
@@ -25,6 +25,7 @@ import {
   hexFromTailwindName,
   tailwindNameFromHex,
 } from "../tailwind-palette";
+import { useElementContext } from "../element-context";
 
 interface ColorPickerProps {
   /** Active color — either a hex string (`#abc123`) or a Tailwind token (`violet-500`). */
@@ -60,8 +61,17 @@ export function ColorPicker({
   align = "end",
 }: ColorPickerProps) {
   const hex = isHex(value) ? value : (hexFromTailwindName(value) ?? "#000000");
+  const { dataId } = useElementContext();
+  const [open, setOpen] = useState(false);
+
+  // Close when the user picks a different element in the preview — clicks
+  // inside the iframe don't reach Radix's outside-click listener.
+  useEffect(() => {
+    setOpen(false);
+  }, [dataId]);
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         {children ?? <SwatchButton color={hex} />}
       </PopoverTrigger>
