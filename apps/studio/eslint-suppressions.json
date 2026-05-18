@@ -4,11 +4,6 @@
       "count": 17
     }
   },
-  "src/components/accessibility/AccessibilityCurrentPagePanel.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 5
-    }
-  },
   "src/components/debug/ConfigTab.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 15
@@ -17,11 +12,6 @@
   "src/components/debug/DebugPanel.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 2
-    }
-  },
-  "src/components/debug/DebugTabsNav.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 4
     }
   },
   "src/components/pipeline/stage-config.test.ts": {
@@ -44,6 +34,16 @@
       "count": 7
     }
   },
+  "src/components/pipeline/stages/quizzes/QuizzesView.tsx": {
+    "lingui/no-unlocalized-strings": {
+      "count": 50
+    }
+  },
+  "src/components/pipeline/stages/quizzes/components/QuizzesLandingConfig.tsx": {
+    "lingui/no-unlocalized-strings": {
+      "count": 5
+    }
+  },
   "src/components/pipeline/stages/storyboard/components/BookPreviewFrame.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 2
@@ -51,7 +51,7 @@
   },
   "src/components/pipeline/stages/storyboard/components/SectioningOverview.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 5
+      "count": 2
     }
   },
   "src/hooks/run-state.test.ts": {

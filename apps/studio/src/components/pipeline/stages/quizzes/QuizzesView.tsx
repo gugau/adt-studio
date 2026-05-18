@@ -2330,6 +2330,7 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
   const [lightboxPageId, setLightboxPageId] = useState<string | null>(null)
   const [tryQuizIndex, setTryQuizIndex] = useState<number | null>(null)
   const [sourceMode, setSourceMode] = useState<QuizSourceMode>("ai")
+  const [generateDialogOpen, setGenerateDialogOpen] = useState(false)
 
   // Reset pending when data changes
   useEffect(() => {
@@ -2882,20 +2883,36 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
     )
   }
 
+  const showEmptyState =
+    !isLoading && !selectedPageId && quizzes.length === 0 && !(canUseTextbookActivities && sourceMode === "textbook")
+
   return (
     <div className="space-y-3 p-4">
-      {canUseTextbookActivities && (
-        <SegmentedControl<QuizSourceMode>
-          value={sourceMode}
-          onValueChange={setSourceMode}
-          color="#ea580c"
-          className="max-w-xl"
-          options={[
-            { value: "ai", label: t`AI generated` },
-            { value: "textbook", label: t`Textbook activities` },
-          ]}
-        />
-      )}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {canUseTextbookActivities ? (
+          <SegmentedControl<QuizSourceMode>
+            value={sourceMode}
+            onValueChange={setSourceMode}
+            color="#ea580c"
+            className="max-w-xl"
+            options={[
+              { value: "ai", label: t`Generated` },
+              { value: "textbook", label: t`From your book` },
+            ]}
+          />
+        ) : <span />}
+        {(!canUseTextbookActivities || sourceMode === "ai") && quizzes.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setGenerateDialogOpen(true)}
+            disabled={!hasApiKey}
+            className="inline-flex h-8 items-center gap-1.5 rounded-md bg-orange-600 px-3 text-xs font-medium text-white transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            {t`Generate activity`}
+          </button>
+        )}
+      </div>
 
       {canUseTextbookActivities && sourceMode === "textbook" ? (
         <TextbookActivitiesPanel
@@ -2922,8 +2939,35 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
             hasApiKey={hasApiKey}
             providerCredentials={providerCredentials}
             initialSelectedPageId={selectedPageId}
+            open={generateDialogOpen}
+            onOpenChange={setGenerateDialogOpen}
           />
           {saveError && <p className="text-xs text-red-500">{saveError}</p>}
+          {showEmptyState && (
+            <div className="flex flex-col items-center justify-center rounded-md border bg-card py-16 px-6 text-center">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-orange-50">
+                <Sparkles className="h-6 w-6 text-orange-600" />
+              </div>
+              <h3 className="text-sm font-semibold">{t`No activities yet`}</h3>
+              <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+                {t`Add comprehension quizzes, fill-in-the-blanks and more. Pick where they go in your book.`}
+              </p>
+              <button
+                type="button"
+                onClick={() => setGenerateDialogOpen(true)}
+                disabled={!hasApiKey}
+                className="mt-5 inline-flex h-9 items-center gap-1.5 rounded-md bg-orange-600 px-4 text-xs font-medium text-white transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                {t`Generate activity`}
+              </button>
+              {!hasApiKey && (
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  {t`Add an API key in Settings to enable generation.`}
+                </p>
+              )}
+            </div>
+          )}
           {selectedPageId && displayQuizzes.length === 0 && quizzes.length > 0 && (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
               <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center mb-3">

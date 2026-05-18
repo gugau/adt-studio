@@ -10,6 +10,14 @@ import {
   type StageRunProviderCredentials,
 } from "@/api/client"
 import { usePages } from "@/hooks/use-pages"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { useLingui } from "@lingui/react/macro"
 
 const ACTIVITY_OPTIONS: QuizActivityType[] = [
@@ -23,6 +31,7 @@ const ACTIVITY_OPTIONS: QuizActivityType[] = [
 ]
 
 const PAGE_PICKER_WINDOW_SIZE = 40
+// eslint-disable-next-line lingui/no-unlocalized-strings -- internal sentinel value, not user-visible
 const SMART_INSERT_AFTER = "__last_selected__"
 const BUILT_IN_TEMPLATE_STYLES: ActivityTemplateStyle[] = [
   "worksheet_rows",
@@ -94,66 +103,6 @@ function normalizedTemplateStyle(style: ActivityTemplateStyle): ActivityTemplate
     default:
       return style
   }
-}
-
-function ActivityTemplatePreview({ style }: { style: ActivityTemplateStyle }) {
-  const normalizedStyle = normalizedTemplateStyle(style)
-
-  if (normalizedStyle === "practice_cards") {
-    return (
-      <div className="grid h-16 grid-cols-2 gap-2 rounded-md bg-sky-50 p-2">
-        <div className="rounded border border-sky-200 bg-white shadow-sm" />
-        <div className="rounded border border-sky-200 bg-white shadow-sm" />
-        <div className="rounded border border-sky-200 bg-white shadow-sm" />
-        <div className="rounded border border-sky-200 bg-white shadow-sm" />
-      </div>
-    )
-  }
-
-  if (normalizedStyle === "quick_check") {
-    return (
-      <div className="h-16 rounded-md border border-slate-200 bg-white p-2">
-        <div className="mb-1 h-2 w-1/2 rounded bg-slate-300" />
-        <div className="space-y-1">
-          <div className="h-1.5 rounded bg-slate-100" />
-          <div className="h-1.5 rounded bg-slate-100" />
-          <div className="h-1.5 rounded bg-slate-100" />
-          <div className="h-1.5 w-3/4 rounded bg-slate-100" />
-        </div>
-      </div>
-    )
-  }
-
-  if (normalizedStyle === "guided_steps") {
-    return (
-      <div className="h-20 space-y-1 overflow-hidden rounded-md bg-violet-50 p-2">
-        {[1, 2, 3].map((step) => (
-          <div key={step} className="flex h-4 items-center gap-2 rounded border border-violet-100 bg-white px-2">
-            <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-violet-600 text-[8px] font-semibold leading-none text-white">
-              {step}
-            </span>
-            <span className="h-1.5 flex-1 rounded bg-violet-100" />
-          </div>
-        ))}
-      </div>
-    )
-  }
-
-  return (
-    <div className="h-16 rounded-md border border-slate-200 bg-white p-2">
-      <div className="mb-2 h-2 w-2/5 rounded bg-slate-300" />
-      <div className="space-y-1.5">
-        <div className="grid grid-cols-[1fr_4rem] gap-2 rounded border border-slate-100 p-1">
-          <span className="h-1.5 rounded bg-slate-200" />
-          <span className="h-1.5 rounded bg-orange-100" />
-        </div>
-        <div className="grid grid-cols-[1fr_4rem] gap-2 rounded border border-slate-100 p-1">
-          <span className="h-1.5 rounded bg-slate-200" />
-          <span className="h-1.5 rounded bg-orange-100" />
-        </div>
-      </div>
-    </div>
-  )
 }
 
 function parsePageRange(
@@ -233,12 +182,16 @@ export function QuizzesLandingConfig({
   hasApiKey,
   providerCredentials,
   initialSelectedPageId,
+  open,
+  onOpenChange,
 }: {
   bookLabel: string
   apiKey: string
   hasApiKey: boolean
   providerCredentials?: StageRunProviderCredentials
   initialSelectedPageId?: string
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }) {
   const { t } = useLingui()
   const queryClient = useQueryClient()
@@ -262,6 +215,7 @@ export function QuizzesLandingConfig({
   const [templateInstructions, setTemplateInstructions] = useState(DEFAULT_ACTIVITY_TEMPLATES[0].instructions ?? "")
   const [templateNotice, setTemplateNotice] = useState<string | null>(null)
   const appliedInitialPageIdRef = useRef<string | null>(null)
+  const autoFilledForOpenRef = useRef(false)
 
   const pages = pagesQuery.data ?? []
   const pageIdsByNumber = useMemo(() => {
@@ -280,6 +234,10 @@ export function QuizzesLandingConfig({
     return map
   }, [pages])
   const pageOrder = useMemo(() => new Map(pages.map((page, index) => [page.pageId, index])), [pages])
+  const contentPageIds = useMemo(
+    () => pages.filter((page) => page.sectionCount > page.prunedSections.length).map((p) => p.pageId),
+    [pages]
+  )
   const visiblePages = pages.slice(pickerOffset, pickerOffset + PAGE_PICKER_WINDOW_SIZE)
   const canPageBack = pickerOffset > 0
   const canPageForward = pickerOffset + PAGE_PICKER_WINDOW_SIZE < pages.length
@@ -302,6 +260,25 @@ export function QuizzesLandingConfig({
 
   const orderedSelectedPageIds = (ids: string[]) =>
     ids.slice().sort((a, b) => (pageOrder.get(a) ?? Number.MAX_SAFE_INTEGER) - (pageOrder.get(b) ?? Number.MAX_SAFE_INTEGER))
+
+  // When the dialog opens, default the range to the whole book if the user
+  // hasn't already picked something. Lazy users can then press Generate
+  // without touching anything else.
+  useEffect(() => {
+    if (!open) {
+      autoFilledForOpenRef.current = false
+      return
+    }
+    if (autoFilledForOpenRef.current) return
+    if (selectedPageIds.length > 0) {
+      autoFilledForOpenRef.current = true
+      return
+    }
+    if (contentPageIds.length === 0) return
+    autoFilledForOpenRef.current = true
+    setSelectedPageIds(contentPageIds)
+    setPageRange(formatPageRange(contentPageIds, pageNumberById))
+  }, [open, selectedPageIds.length, contentPageIds, pageNumberById])
 
   useEffect(() => {
     if (!initialSelectedPageId) return
@@ -367,20 +344,6 @@ export function QuizzesLandingConfig({
     }
   }
 
-  const templateSummary = (template: ActivityTemplate) => {
-    switch (normalizedTemplateStyle(template.style)) {
-      case "practice_cards":
-        return t`Bigger answer cards with more space for younger learners.`
-      case "quick_check":
-        return t`A compact review page for many short questions.`
-      case "guided_steps":
-        return t`A short sequence that walks the learner through the page.`
-      case "worksheet_rows":
-      default:
-        return t`A familiar worksheet layout with clear rows and simple spacing.`
-    }
-  }
-
   const selectTemplate = (templateId: string) => {
     const template = allTemplates.find((candidate) => candidate.id === templateId)
     if (!template) return
@@ -420,6 +383,11 @@ export function QuizzesLandingConfig({
     setPageRange(formatPageRange(orderedIds, pageNumberById))
   }
 
+  const setRangeToWholeBook = () => {
+    setSelectedPageIds(contentPageIds)
+    setPageRange(formatPageRange(contentPageIds, pageNumberById))
+  }
+
   const togglePage = (pageId: string, enabled: boolean) => {
     if (!enabled) return
     const next = selectedPageIds.includes(pageId)
@@ -450,6 +418,7 @@ export function QuizzesLandingConfig({
       )
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "quizzes"] })
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "debug"] })
+      onOpenChange(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -457,280 +426,291 @@ export function QuizzesLandingConfig({
     }
   }
 
-  return (
-    <div className="rounded-md border bg-card">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-muted/20 px-4 py-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <Sparkles className="h-4 w-4 text-orange-600" />
-          <h2 className="text-sm font-semibold">{t`Generate Activities`}</h2>
-          <span className="rounded border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-medium text-orange-700">
-            {selectedPageIds.length === 1 ? t`1 page` : t`${String(selectedPageIds.length)} pages`}
-          </span>
-          <span className="rounded border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-medium text-sky-700">
-            {t`${String(Math.min(20, Math.max(1, Number(questionsPerQuiz) || 1)))} questions`}
-          </span>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <select
-            value={activityType}
-            onChange={(e) => setActivityType(e.target.value as QuizActivityType)}
-            className="h-8 rounded border border-input bg-background px-2 text-xs"
-          >
-            {ACTIVITY_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {activityTypeLabel(option)}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={handleGenerate}
-            disabled={!hasApiKey || selectedPageIds.length === 0 || generating}
-            className="inline-flex h-8 items-center gap-1.5 rounded bg-orange-600 px-3 text-xs font-medium text-white transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            {t`Generate`}
-          </button>
-        </div>
-      </div>
+  const selectedCount = selectedPageIds.length
+  const questionsCount = Math.min(20, Math.max(1, Number(questionsPerQuiz) || 1))
 
-      <div className="space-y-3 px-4 py-3">
-        <div className="space-y-3 border-b pb-3">
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div>
-              <div className="text-xs font-semibold text-foreground">{t`Choose activity layout`}</div>
-              <p className="text-[11px] text-muted-foreground">{t`Pick the format learners will see when they try the activity.`}</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {savedTemplates.length > 0 && (
-                <label className="flex h-8 items-center gap-2 rounded border border-input bg-background px-2 text-xs">
-                  <span className="whitespace-nowrap text-[10px] font-medium text-muted-foreground">{t`Saved styles`}</span>
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-base">
+            <Sparkles className="h-4 w-4 text-orange-600" />
+            {t`Generate activity`}
+          </DialogTitle>
+          <DialogDescription>
+            {t`Pick a type and the pages to base the activity on. You can add more activities one at a time.`}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Simple, always-visible controls */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="space-y-1.5">
+              <span className="text-xs font-medium">{t`Activity type`}</span>
+              <select
+                value={activityType}
+                onChange={(e) => setActivityType(e.target.value as QuizActivityType)}
+                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+              >
+                {ACTIVITY_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {activityTypeLabel(option)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="space-y-1.5">
+              <span className="text-xs font-medium">{t`Pages`}</span>
+              <div className="flex items-center gap-1.5">
+                <input
+                  value={pageRange}
+                  onChange={(e) => setPageRange(e.target.value)}
+                  onBlur={applyRange}
+                  placeholder={t`1-12, 20, pg045`}
+                  className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+                <button
+                  type="button"
+                  onClick={setRangeToWholeBook}
+                  className="h-9 shrink-0 rounded-md border border-input bg-background px-2.5 text-xs font-medium transition-colors hover:bg-muted/60"
+                >
+                  {t`Whole book`}
+                </button>
+              </div>
+            </label>
+          </div>
+
+          {selectedCount === 0 ? (
+            <p className="text-[11px] text-amber-700 dark:text-amber-400">
+              {t`Type a page range above, or click "Whole book" to use every content page.`}
+            </p>
+          ) : (
+            <p className="text-[11px] text-muted-foreground">
+              {selectedCount === 1
+                ? t`1 source page selected • ${String(questionsCount)} question(s) will be generated.`
+                : t`${String(selectedCount)} source pages selected • ${String(questionsCount)} question(s) will be generated.`}
+            </p>
+          )}
+
+          {/* Advanced — progressive disclosure */}
+          <details className="rounded-md border bg-muted/20">
+            <summary className="cursor-pointer px-3 py-2 text-xs font-medium">
+              {t`More options`}
+            </summary>
+            <div className="space-y-4 px-3 pb-3 pt-1">
+              {/* Placement + questions per quiz */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="space-y-1.5">
+                  <span className="text-[11px] font-medium text-muted-foreground">
+                    {t`Questions per quiz`}
+                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={questionsPerQuiz}
+                    onChange={(e) => setQuestionsPerQuiz(e.target.value)}
+                    className="h-8 w-full rounded border border-input bg-background px-2 text-xs"
+                  />
+                </label>
+                <label className="space-y-1.5">
+                  <span className="text-[11px] font-medium text-muted-foreground">
+                    {t`Insert after`}
+                  </span>
                   <select
-                    value={savedTemplates.some((template) => template.id === selectedTemplateId) ? selectedTemplateId : ""}
-                    onChange={(e) => {
-                      if (e.target.value) selectTemplate(e.target.value)
-                    }}
-                    className="bg-transparent text-xs focus:outline-none"
+                    value={insertAfterPageId}
+                    onChange={(e) => setInsertAfterPageId(e.target.value)}
+                    className="h-8 w-full rounded border border-input bg-background px-2 text-xs"
                   >
-                    <option value="">{t`Choose saved`}</option>
-                    {savedTemplates.map((template) => (
-                      <option key={template.id ?? template.name} value={template.id ?? template.name}>
-                        {template.name}
+                    <option value={SMART_INSERT_AFTER}>{smartInsertAfterLabel}</option>
+                    {pages.map((page) => (
+                      <option key={page.pageId} value={page.pageId}>
+                        {t`Page ${String(page.pageNumber)}`} ({page.pageId})
                       </option>
                     ))}
                   </select>
                 </label>
-              )}
-              {templateNotice && <span className="text-[10px] font-medium text-emerald-700">{templateNotice}</span>}
-            </div>
-          </div>
-
-          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-            {DEFAULT_ACTIVITY_TEMPLATES.map((template) => {
-              const isSelected = selectedTemplateId === template.id
-              return (
-                <button
-                  key={template.id}
-                  type="button"
-                  aria-pressed={isSelected}
-                  onClick={() => selectTemplate(template.id!)}
-                  className={`flex min-h-36 flex-col gap-2 rounded-md border p-3 text-left transition-colors ${
-                    isSelected
-                      ? "border-orange-500 bg-orange-50 text-orange-950 shadow-sm"
-                      : "border-border bg-background hover:bg-muted/50"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-sm font-semibold">{template.name}</span>
-                    <span className="rounded border bg-white px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                      {generationModeLabel(template.generationMode)}
-                    </span>
-                  </div>
-                  <ActivityTemplatePreview style={template.style} />
-                  <p className="text-[11px] leading-4 text-muted-foreground">{templateSummary(template)}</p>
-                </button>
-              )
-            })}
-          </div>
-
-          <details className="rounded-md border bg-muted/20 px-3 py-2">
-            <summary className="cursor-pointer text-xs font-medium text-foreground">{t`Customize selected layout`}</summary>
-            <div className="mt-3 space-y-2">
-              <div className="grid gap-2 lg:grid-cols-[minmax(160px,220px)_minmax(140px,180px)_minmax(150px,190px)_auto]">
-                <label className="space-y-1">
-                  <span className="text-[10px] font-medium text-muted-foreground">{t`Template name`}</span>
-                  <input
-                    value={templateName}
-                    onChange={(e) => {
-                      setTemplateName(e.target.value)
-                      setTemplateNotice(null)
-                    }}
-                    aria-label={t`Template name`}
-                    className="h-8 w-full rounded border border-input bg-background px-2 text-xs"
-                  />
-                </label>
-                <label className="space-y-1">
-                  <span className="text-[10px] font-medium text-muted-foreground">{t`Layout`}</span>
-                  <select
-                    value={normalizedTemplateStyle(templateStyle)}
-                    onChange={(e) => {
-                      setTemplateStyle(e.target.value as ActivityTemplateStyle)
-                      setTemplateNotice(null)
-                    }}
-                    className="h-8 w-full rounded border border-input bg-background px-2 text-xs"
-                  >
-                    {BUILT_IN_TEMPLATE_STYLES.map((style) => (
-                      <option key={style} value={style}>{templateStyleLabel(style)}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="space-y-1">
-                  <span className="text-[10px] font-medium text-muted-foreground">{t`Length`}</span>
-                  <select
-                    value={generationMode}
-                    onChange={(e) => {
-                      setGenerationMode(e.target.value as ActivityGenerationMode)
-                      setTemplateNotice(null)
-                    }}
-                    className="h-8 w-full rounded border border-input bg-background px-2 text-xs"
-                  >
-                    {(["template_single_page", "template_multi_step"] as ActivityGenerationMode[]).map((mode) => (
-                      <option key={mode} value={mode}>{generationModeLabel(mode)}</option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  onClick={saveTemplate}
-                  className="mt-auto h-8 rounded border border-input bg-background px-3 text-xs font-medium transition-colors hover:bg-muted/60"
-                >
-                  {t`Save as reusable style`}
-                </button>
               </div>
-              <textarea
-                value={templateInstructions}
-                onChange={(e) => {
-                  setTemplateInstructions(e.target.value)
-                  setTemplateNotice(null)
-                }}
-                aria-label={t`Template instructions`}
-                placeholder={t`Example: keep answers short, use the same tone as page 4, or make each activity a three-step review.`}
-                className="min-h-8 w-full resize-y rounded border border-input bg-background px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-                rows={2}
-              />
+
+              <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={replaceExisting}
+                  onChange={(e) => setReplaceExisting(e.target.checked)}
+                  className="h-3.5 w-3.5 accent-orange-600"
+                />
+                {t`Replace existing activities for selected pages`}
+              </label>
+
+              {/* Template / layout — collapsed by default */}
+              <details className="rounded-md border bg-background">
+                <summary className="cursor-pointer px-3 py-2 text-[11px] font-medium text-muted-foreground">
+                  {t`Layout style (advanced)`}
+                </summary>
+                <div className="space-y-3 px-3 pb-3 pt-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label className="flex h-8 items-center gap-2 rounded border border-input bg-background px-2 text-xs">
+                      <span className="text-[10px] font-medium text-muted-foreground">
+                        {t`Layout`}
+                      </span>
+                      <select
+                        value={normalizedTemplateStyle(templateStyle)}
+                        onChange={(e) => {
+                          setTemplateStyle(e.target.value as ActivityTemplateStyle)
+                          setTemplateNotice(null)
+                        }}
+                        className="bg-transparent text-xs focus:outline-none"
+                      >
+                        {BUILT_IN_TEMPLATE_STYLES.map((style) => (
+                          <option key={style} value={style}>{templateStyleLabel(style)}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="flex h-8 items-center gap-2 rounded border border-input bg-background px-2 text-xs">
+                      <span className="text-[10px] font-medium text-muted-foreground">
+                        {t`Length`}
+                      </span>
+                      <select
+                        value={generationMode}
+                        onChange={(e) => {
+                          setGenerationMode(e.target.value as ActivityGenerationMode)
+                          setTemplateNotice(null)
+                        }}
+                        className="bg-transparent text-xs focus:outline-none"
+                      >
+                        {(["template_single_page", "template_multi_step"] as ActivityGenerationMode[]).map((mode) => (
+                          <option key={mode} value={mode}>{generationModeLabel(mode)}</option>
+                        ))}
+                      </select>
+                    </label>
+                    {savedTemplates.length > 0 && (
+                      <label className="flex h-8 items-center gap-2 rounded border border-input bg-background px-2 text-xs">
+                        <span className="text-[10px] font-medium text-muted-foreground">{t`Saved`}</span>
+                        <select
+                          value={savedTemplates.some((tpl) => tpl.id === selectedTemplateId) ? selectedTemplateId : ""}
+                          onChange={(e) => {
+                            if (e.target.value) selectTemplate(e.target.value)
+                          }}
+                          className="bg-transparent text-xs focus:outline-none"
+                        >
+                          <option value="">{t`Choose saved`}</option>
+                          {savedTemplates.map((template) => (
+                            <option key={template.id ?? template.name} value={template.id ?? template.name}>
+                              {template.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+                    <button
+                      type="button"
+                      onClick={saveTemplate}
+                      className="h-8 rounded border border-input bg-background px-2.5 text-xs font-medium transition-colors hover:bg-muted/60"
+                    >
+                      {t`Save as reusable style`}
+                    </button>
+                    {templateNotice && (
+                      <span className="text-[10px] font-medium text-emerald-700">{templateNotice}</span>
+                    )}
+                  </div>
+                  <label className="block space-y-1">
+                    <span className="text-[10px] font-medium text-muted-foreground">
+                      {t`Style instructions (optional)`}
+                    </span>
+                    <textarea
+                      value={templateInstructions}
+                      onChange={(e) => {
+                        setTemplateInstructions(e.target.value)
+                        setTemplateNotice(null)
+                      }}
+                      placeholder={t`Example: keep answers short, use the same tone as page 4.`}
+                      className="min-h-8 w-full resize-y rounded border border-input bg-background px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                      rows={2}
+                    />
+                  </label>
+                </div>
+              </details>
+
+              {/* Per-page picker grid — also disclosed */}
+              <details className="rounded-md border bg-background">
+                <summary className="cursor-pointer px-3 py-2 text-[11px] font-medium text-muted-foreground">
+                  {t`Pick pages individually`}
+                </summary>
+                <div className="space-y-2 px-3 pb-3 pt-1">
+                  <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+                    <span>
+                      {pages.length === 0
+                        ? t`No pages`
+                        : t`${String(pickerOffset + 1)}-${String(Math.min(pickerOffset + PAGE_PICKER_WINDOW_SIZE, pages.length))} of ${String(pages.length)}`}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setPickerOffset(Math.max(0, pickerOffset - PAGE_PICKER_WINDOW_SIZE))}
+                        disabled={!canPageBack}
+                        className="rounded border px-2 py-1 transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-45"
+                      >
+                        {t`Previous`}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPickerOffset(pickerOffset + PAGE_PICKER_WINDOW_SIZE)}
+                        disabled={!canPageForward}
+                        className="rounded border px-2 py-1 transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-45"
+                      >
+                        {t`Next`}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid max-h-44 grid-cols-2 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-3 lg:grid-cols-4">
+                    {visiblePages.map((page) => {
+                      const isSelected = selectedPageIds.includes(page.pageId)
+                      const isContent = page.sectionCount > page.prunedSections.length
+                      return (
+                        <button
+                          key={page.pageId}
+                          type="button"
+                          disabled={!isContent}
+                          onClick={() => togglePage(page.pageId, isContent)}
+                          className={`rounded-md border px-2 py-1.5 text-left text-xs transition-colors ${
+                            isSelected
+                              ? "border-orange-500 bg-orange-50 text-orange-800"
+                              : "border-border bg-background hover:bg-muted/60"
+                          } ${!isContent ? "cursor-not-allowed opacity-45" : "cursor-pointer"}`}
+                        >
+                          <span className="block font-medium">{t`Page ${String(page.pageNumber)}`}</span>
+                          <span className="block truncate font-mono text-[10px] opacity-70">{page.pageId}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </details>
             </div>
           </details>
+
+          {error && <p className="text-xs text-red-500">{error}</p>}
         </div>
 
-        <div className="grid gap-2 lg:grid-cols-[minmax(220px,1fr)_auto_minmax(190px,260px)_auto]">
-          <input
-            value={pageRange}
-            onChange={(e) => setPageRange(e.target.value)}
-            onBlur={applyRange}
-            placeholder={t`1-12, 20, pg045`}
-            className="h-8 rounded border border-input bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-          />
-          <label className="flex h-8 items-center gap-2 rounded border border-input bg-background px-2 text-xs">
-            <span className="whitespace-nowrap text-[10px] font-medium text-muted-foreground">
-              {t`Questions/quiz`}
-            </span>
-            <input
-              type="number"
-              min={1}
-              max={20}
-              value={questionsPerQuiz}
-              onChange={(e) => setQuestionsPerQuiz(e.target.value)}
-              className="h-7 w-14 bg-transparent text-xs focus:outline-none"
-              aria-label={t`Questions per quiz`}
-            />
-          </label>
-          <label className="flex h-8 min-w-0 items-center gap-2 rounded border border-input bg-background px-2 text-xs">
-            <span className="whitespace-nowrap text-[10px] font-medium text-muted-foreground">
-              {t`Insert after`}
-            </span>
-            <select
-              value={insertAfterPageId}
-              onChange={(e) => setInsertAfterPageId(e.target.value)}
-              aria-label={t`Insert activity after`}
-              className="min-w-0 flex-1 bg-transparent text-xs focus:outline-none"
-            >
-              <option value={SMART_INSERT_AFTER}>{smartInsertAfterLabel}</option>
-              {pages.map((page) => (
-                <option key={page.pageId} value={page.pageId}>
-                  {t`Page ${String(page.pageNumber)}`} ({page.pageId})
-                </option>
-              ))}
-            </select>
-          </label>
+        <DialogFooter>
           <button
             type="button"
-            onClick={applyRange}
-            className="h-8 rounded border border-input bg-background px-3 text-xs font-medium transition-colors hover:bg-muted/60"
+            onClick={() => onOpenChange(false)}
+            className="h-9 rounded-md border border-input bg-background px-3 text-xs font-medium transition-colors hover:bg-muted/60"
           >
-            {t`Apply range`}
+            {t`Cancel`}
           </button>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            <input
-              type="checkbox"
-              checked={replaceExisting}
-              onChange={(e) => setReplaceExisting(e.target.checked)}
-              className="h-3.5 w-3.5 accent-orange-600"
-            />
-            {t`Replace existing activities for selected pages`}
-          </label>
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-            <button
-              type="button"
-              onClick={() => setPickerOffset(Math.max(0, pickerOffset - PAGE_PICKER_WINDOW_SIZE))}
-              disabled={!canPageBack}
-              className="rounded border px-2 py-1 transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-45"
-            >
-              {t`Previous`}
-            </button>
-            <span>
-              {pages.length === 0
-                ? t`No pages`
-                : t`${String(pickerOffset + 1)}-${String(Math.min(pickerOffset + PAGE_PICKER_WINDOW_SIZE, pages.length))} of ${String(pages.length)}`}
-            </span>
-            <button
-              type="button"
-              onClick={() => setPickerOffset(pickerOffset + PAGE_PICKER_WINDOW_SIZE)}
-              disabled={!canPageForward}
-              className="rounded border px-2 py-1 transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-45"
-            >
-              {t`Next`}
-            </button>
-          </div>
-        </div>
-
-        <div className="grid max-h-44 grid-cols-2 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-3 lg:grid-cols-4">
-          {visiblePages.map((page) => {
-            const isSelected = selectedPageIds.includes(page.pageId)
-            const isContent = page.sectionCount > page.prunedSections.length
-            return (
-              <button
-                key={page.pageId}
-                type="button"
-                disabled={!isContent}
-                onClick={() => togglePage(page.pageId, isContent)}
-                className={`rounded-md border px-2 py-1.5 text-left text-xs transition-colors ${
-                  isSelected
-                    ? "border-orange-500 bg-orange-50 text-orange-800"
-                    : "border-border bg-background hover:bg-muted/60"
-                } ${!isContent ? "cursor-not-allowed opacity-45" : "cursor-pointer"}`}
-              >
-                <span className="block font-medium">{t`Page ${String(page.pageNumber)}`}</span>
-                <span className="block truncate font-mono text-[10px] opacity-70">{page.pageId}</span>
-              </button>
-            )
-          })}
-        </div>
-
-        {error && <p className="text-xs text-red-500">{error}</p>}
-      </div>
-    </div>
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={!hasApiKey || selectedPageIds.length === 0 || generating}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-orange-600 px-4 text-xs font-medium text-white transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            {t`Generate`}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
