@@ -2356,9 +2356,10 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
   const quizzes = effective?.quizzes ?? []
   const dirty = pending != null
 
-  const displayQuizzes = selectedPageId
-    ? quizzes.filter((q) => q.pageIds.includes(selectedPageId))
-    : quizzes
+  // Always show all activities. Filtering the list by the currently-selected
+  // page is confusing because one activity can span several pages — clicking
+  // page 12 hiding an activity that covers pages 11-13 feels broken.
+  const displayQuizzes = quizzes
   const displayQuestionCount = displayQuizzes.reduce(
     (count, quiz) => count + getQuizQuestions(quiz).length,
     0
@@ -2894,8 +2895,6 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
 
   const showEmptyState =
     !isLoading && quizzes.length === 0 && !(canUseTextbookActivities && sourceMode === "textbook")
-  const showNoMatchForPage =
-    !!selectedPageId && displayQuizzes.length === 0 && quizzes.length > 0
 
   return (
     <div className="space-y-3 p-4">
@@ -2977,15 +2976,6 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
                   {t`Add an API key in Settings to enable generation.`}
                 </p>
               )}
-            </div>
-          )}
-          {showNoMatchForPage && (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center mb-3">
-                <HelpCircle className="w-6 h-6 text-orange-300" />
-              </div>
-              <p className="text-sm font-medium">{t`No activities for this page`}</p>
-              <p className="text-xs mt-1">{t`Activities are linked to other pages in this book`}</p>
             </div>
           )}
           {isLoading && quizzes.length === 0 && (
