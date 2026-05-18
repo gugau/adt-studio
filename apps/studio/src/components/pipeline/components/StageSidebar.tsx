@@ -6,6 +6,7 @@ import {
   Loader2,
   RotateCcw,
   Settings,
+  Sparkles,
 } from "lucide-react"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import { cn } from "@/lib/utils"
@@ -612,7 +613,16 @@ function PageRow({
   stageRunning,
 }: {
   bookLabel: string
-  page: { pageId: string; textPreview: string; pageNumber: number; sectionCount: number; hasRendering?: boolean; prunedSections?: number[] }
+  page: {
+    pageId: string
+    textPreview: string
+    pageNumber: number
+    sectionCount: number
+    hasRendering?: boolean
+    prunedSections?: number[]
+    isGeneratedActivity?: boolean
+    activityType?: string
+  }
   isActive: boolean
   activeStepDef?: (typeof STAGES)[number]
   onSelect: () => void
@@ -622,7 +632,11 @@ function PageRow({
   stageRunning?: boolean
 }) {
   const { i18n } = useLingui()
-  const { data, isLoading } = usePageImage(bookLabel, page.pageId)
+  // Skip the image fetch for synthetic activity entries — they have no PDF page.
+  const { data, isLoading } = usePageImage(
+    bookLabel,
+    page.isGeneratedActivity ? "" : page.pageId
+  )
   const [showPreview, setShowPreview] = useState(false)
   const [previewPos, setPreviewPos] = useState({ top: 0, left: 0 })
   const rowRef = useRef<HTMLButtonElement>(null)
@@ -683,7 +697,11 @@ function PageRow({
         )}
       >
         <div className="relative shrink-0 w-16 h-12">
-          {isLoading || !imgSrc ? (
+          {page.isGeneratedActivity ? (
+            <div className="w-full h-full rounded ring-1 ring-orange-200 bg-orange-50 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-orange-500" />
+            </div>
+          ) : isLoading || !imgSrc ? (
             <div className="w-full h-full bg-muted rounded ring-1 ring-border" />
           ) : (
             <img
@@ -694,19 +712,26 @@ function PageRow({
               className="w-full h-full rounded object-cover object-center ring-1 ring-border"
             />
           )}
-          {pageProcessing && (
+          {pageProcessing && !page.isGeneratedActivity && (
             <div className="absolute inset-0 flex items-center justify-center rounded bg-black/30">
               <Loader2 className="w-4 h-4 animate-spin text-white" />
             </div>
           )}
         </div>
         <div className="flex flex-col gap-0.5 min-w-0 flex-1 pt-0.5">
+          {page.isGeneratedActivity && (
+            <span className="inline-flex w-fit items-center rounded border border-orange-200 bg-orange-50 px-1 py-px text-[8px] font-medium text-orange-700">
+              {i18n._(msg`Activity`)}
+            </span>
+          )}
           <span className="text-[11px] leading-snug line-clamp-2">
             {page.textPreview || i18n._(msg`Untitled`)}
           </span>
           <span className="text-[9px] font-mono opacity-50 leading-none">
-            {`pg ${String(page.pageNumber)}`}
-            {page.sectionCount > 1 && (
+            {page.isGeneratedActivity
+              ? `after pg ${String(page.pageNumber)}`
+              : `pg ${String(page.pageNumber)}`}
+            {page.sectionCount > 1 && !page.isGeneratedActivity && (
               <span className="ml-1 inline-flex items-center justify-center min-w-[14px] h-[12px] px-0.5 rounded bg-black/10 text-[8px] font-semibold not-italic leading-none">
                 {page.sectionCount}
               </span>

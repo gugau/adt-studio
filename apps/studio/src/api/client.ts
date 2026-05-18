@@ -167,6 +167,11 @@ export interface PageSummaryItem {
   sectionCount: number
   prunedSections: number[]
   sections: Array<{ sectionId: string; sectionIndex: number }>
+  /** Synthetic entries surfaced for generated quizzes — not real PDF pages. */
+  isGeneratedActivity?: boolean
+  activityType?: string
+  quizIndex?: number
+  afterPageId?: string
 }
 
 export interface SectionRendering {

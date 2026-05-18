@@ -57,7 +57,10 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
   const prevPageId = currentPageIndex > 0 ? pageList[currentPageIndex - 1].pageId : null
   const nextPageId = currentPageIndex < pageList.length - 1 ? pageList[currentPageIndex + 1].pageId : null
 
-  const { data: page, isLoading: pageLoading } = usePage(bookLabel, selectedPageId ?? "")
+  // Skip page fetch for synthetic activity entries — they have no real page row.
+  const fetchPageId =
+    selectedPageId && !selectedPageSummary?.isGeneratedActivity ? selectedPageId : ""
+  const { data: page, isLoading: pageLoading } = usePage(bookLabel, fetchPageId)
 
   const sectionCount = page?.sectioningTree?.sections.length ?? 0
 
@@ -305,6 +308,34 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
           setSectionIndex(sectionIdx)
         }}
       />
+    )
+  }
+
+  // Synthetic activity pages (generated quizzes) aren't real PDF pages, so
+  // there's nothing to fetch — render the existing quiz preview iframe instead.
+  if (selectedPageSummary?.isGeneratedActivity && selectedPageSummary.quizIndex) {
+    const qzId = `qz${String(selectedPageSummary.quizIndex).padStart(3, "0")}`
+    return (
+      <div className="flex flex-col h-full min-h-0">
+        <div className="flex items-center gap-2 border-b px-4 py-2 bg-orange-50/50">
+          <span className="rounded border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-medium text-orange-700">
+            <Trans>Generated activity</Trans>
+          </span>
+          {selectedPageSummary.activityType && (
+            <span className="text-xs text-muted-foreground">
+              {selectedPageSummary.activityType.replace(/_/g, " ")}
+            </span>
+          )}
+          <span className="text-[11px] text-muted-foreground ml-auto">
+            <Trans>Editing happens on the Activities tab.</Trans>
+          </span>
+        </div>
+        <iframe
+          title="Activity preview"
+          className="flex-1 w-full bg-white"
+          src={`/api/books/${bookLabel}/adt-preview/${qzId}.html?embed=1`}
+        />
+      </div>
     )
   }
 

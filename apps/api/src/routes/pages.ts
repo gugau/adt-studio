@@ -4,7 +4,7 @@ import path from "node:path"
 import { z } from "zod"
 import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
-import { parseBookLabel, ImageClassificationOutput, PageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES } from "@adt/types"
+import { parseBookLabel, ImageClassificationOutput, PageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES, type Quiz } from "@adt/types"
 import type { ImageCaption } from "@adt/types"
 import type { ContentNodeData } from "@adt/types"
 import { openBookDb } from "@adt/storage"
@@ -26,6 +26,17 @@ interface PageSummary {
   sectionCount: number
   prunedSections: number[]
   sections: Array<{ sectionId: string; sectionIndex: number }>
+  /**
+   * Synthetic activity entries — generated quizzes surfaced as virtual page rows so the
+   * storyboard sidebar can display them inline with the real pages. The page itself
+   * is not stored in the SQLite `pages` table; the quiz is the source of truth.
+   */
+  isGeneratedActivity?: boolean
+  activityType?: string
+  /** 1-based index used by the existing /adt-preview/qzNNN.html route. */
+  quizIndex?: number
+  /** Page the synthetic entry was inserted after (for context only). */
+  afterPageId?: string
 }
 
 interface PageDetail {
@@ -516,18 +527,71 @@ export function createPageRoutes(
         }
       }
 
-      const result: PageSummary[] = pages.map((p) => ({
-        pageId: p.page_id,
-        pageNumber: p.page_number,
-        hasRendering: rendered.has(p.page_id),
-        hasCaptioning: captioned.has(p.page_id),
-        textPreview: structuredText.get(p.page_id) ?? p.text.slice(0, 150),
-        imageCount: imageCounts.get(p.page_id) ?? 0,
-        wordCount: p.text.trim() ? p.text.trim().split(/\s+/).length : 0,
-        sectionCount: sectionCounts.get(p.page_id) ?? 0,
-        prunedSections: prunedSections.get(p.page_id) ?? [],
-        sections: sectionIdsByPage.get(p.page_id) ?? [],
-      }))
+      // Load generated activities (quizzes) so we can surface them as
+      // virtual page rows in the sidebar. The data lives in the
+      // quiz-generation node; this is a read-only view, no migration.
+      const quizzesByAfterPageId = new Map<string, Array<{ quiz: Quiz; visibleIndex: number }>>()
+      try {
+        const quizRows = db.all(
+          "SELECT data FROM node_data WHERE node = ? AND item_id = ? ORDER BY version DESC LIMIT 1",
+          ["quiz-generation", "book"]
+        ) as Array<{ data: string }>
+        if (quizRows.length > 0) {
+          const parsed = JSON.parse(quizRows[0].data) as { quizzes?: Quiz[] }
+          let visibleIndex = 0
+          for (const quiz of parsed.quizzes ?? []) {
+            if (quiz.isPruned) continue
+            visibleIndex++
+            const list = quizzesByAfterPageId.get(quiz.afterPageId) ?? []
+            list.push({ quiz, visibleIndex })
+            quizzesByAfterPageId.set(quiz.afterPageId, list)
+          }
+        }
+      } catch {
+        // Quiz data is optional — fall through without synthetic entries.
+      }
+
+      const result: PageSummary[] = []
+      for (const p of pages) {
+        result.push({
+          pageId: p.page_id,
+          pageNumber: p.page_number,
+          hasRendering: rendered.has(p.page_id),
+          hasCaptioning: captioned.has(p.page_id),
+          textPreview: structuredText.get(p.page_id) ?? p.text.slice(0, 150),
+          imageCount: imageCounts.get(p.page_id) ?? 0,
+          wordCount: p.text.trim() ? p.text.trim().split(/\s+/).length : 0,
+          sectionCount: sectionCounts.get(p.page_id) ?? 0,
+          prunedSections: prunedSections.get(p.page_id) ?? [],
+          sections: sectionIdsByPage.get(p.page_id) ?? [],
+        })
+        const placed = quizzesByAfterPageId.get(p.page_id)
+        if (placed) {
+          for (const { quiz, visibleIndex } of placed) {
+            // Use the qzNNN pageId so the /adt-preview/qzNNN.html route lines up.
+            const syntheticPageId = `qz${String(visibleIndex).padStart(3, "0")}`
+            const activityType =
+              quiz.questions?.[0]?.activityType ?? quiz.activityType ?? "multiple_choice"
+            const question = quiz.questions?.[0]?.question ?? quiz.question ?? ""
+            result.push({
+              pageId: syntheticPageId,
+              pageNumber: p.page_number,
+              hasRendering: true,
+              hasCaptioning: false,
+              textPreview: question,
+              imageCount: 0,
+              wordCount: 0,
+              sectionCount: 1,
+              prunedSections: [],
+              sections: [],
+              isGeneratedActivity: true,
+              activityType,
+              quizIndex: visibleIndex,
+              afterPageId: p.page_id,
+            })
+          }
+        }
+      }
 
       return c.json(result)
     } finally {

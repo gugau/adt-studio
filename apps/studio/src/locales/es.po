@@ -505,14 +505,17 @@ msgstr "active sections"
 msgid "Activities"
 msgstr "Actividades"
 
-msgid "Activities are linked to other pages in this book"
-msgstr ""
+#~ msgid "Activities are linked to other pages in this book"
+#~ msgstr ""
 
 msgid "Activities disabled"
 msgstr "Actividades desactivadas"
 
 msgid "Activities enabled"
 msgstr "Actividades activadas"
+
+msgid "Activity"
+msgstr ""
 
 msgid "Activity 5.1"
 msgstr "Actividad 5.1"
@@ -1867,6 +1870,9 @@ msgstr "Editado en"
 msgid "Editing"
 msgstr "Editando"
 
+msgid "Editing happens on the Activities tab."
+msgstr ""
+
 msgid "Editing is disabled while the storyboard is running"
 msgstr "La edición está deshabilitada mientras el storyboard se está ejecutando"
 
@@ -2277,6 +2283,9 @@ msgid "Generate word timestamps"
 msgstr "Generar marcas de tiempo por palabra"
 
 msgid "Generated"
+msgstr ""
+
+msgid "Generated activity"
 msgstr ""
 
 msgid "Generates the interactive HTML for this activity type."
@@ -3137,8 +3146,8 @@ msgstr "No accessibility assessment has been generated yet. Package the ADT outp
 msgid "No accessibility findings were reported for this page."
 msgstr "No accessibility findings were reported for this page."
 
-msgid "No activities for this page"
-msgstr ""
+#~ msgid "No activities for this page"
+#~ msgstr ""
 
 msgid "No activities yet"
 msgstr ""

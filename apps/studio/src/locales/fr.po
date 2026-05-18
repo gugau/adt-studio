@@ -506,14 +506,17 @@ msgstr "sections actives"
 msgid "Activities"
 msgstr "Activités"
 
-msgid "Activities are linked to other pages in this book"
-msgstr ""
+#~ msgid "Activities are linked to other pages in this book"
+#~ msgstr ""
 
 msgid "Activities disabled"
 msgstr "Activités désactivées"
 
 msgid "Activities enabled"
 msgstr "Activités activées"
+
+msgid "Activity"
+msgstr ""
 
 msgid "Activity 5.1"
 msgstr "Activité 5.1"
@@ -1868,6 +1871,9 @@ msgstr "Modifié dans"
 msgid "Editing"
 msgstr "Modification"
 
+msgid "Editing happens on the Activities tab."
+msgstr ""
+
 msgid "Editing is disabled while the storyboard is running"
 msgstr "La modification est désactivée pendant l'exécution du scénarimage"
 
@@ -2278,6 +2284,9 @@ msgid "Generate word timestamps"
 msgstr "Générer les horodatages de mots"
 
 msgid "Generated"
+msgstr ""
+
+msgid "Generated activity"
 msgstr ""
 
 msgid "Generates the interactive HTML for this activity type."
@@ -3138,8 +3147,8 @@ msgstr "Aucune évaluation d'accessibilité n'a encore été générée. Empaque
 msgid "No accessibility findings were reported for this page."
 msgstr "Aucun résultat d'accessibilité n'a été signalé pour cette page."
 
-msgid "No activities for this page"
-msgstr ""
+#~ msgid "No activities for this page"
+#~ msgstr ""
 
 msgid "No activities yet"
 msgstr ""
