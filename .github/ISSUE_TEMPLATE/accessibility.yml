@@ -84,10 +84,10 @@ body:
     validations:
       required: true
   - type: dropdown
-    id: platform
+    id: os
     attributes:
-      label: Platform
-      description: Select all that apply.
+      label: Operating system
+      description: Fill this in if the issue is in the **ADT Studio app**. Select all that apply.
       multiple: true
       options:
         - Windows - x64
@@ -96,8 +96,19 @@ body:
         - macOS - Intel
         - Linux
         - Other
-    validations:
-      required: true
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      description: Fill this in if the issue is in a **generated ADT**. Select all that apply.
+      multiple: true
+      options:
+        - Chrome
+        - Edge
+        - Firefox
+        - Safari
+        - Other Chromium-based (Brave, Opera, etc.)
+        - Other
   - type: textarea
     id: screenshots
     attributes:
