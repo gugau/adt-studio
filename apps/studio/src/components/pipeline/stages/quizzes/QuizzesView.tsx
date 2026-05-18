@@ -2337,12 +2337,19 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
     return page ? t`After page ${String(page.pageNumber)}` : t`After ${pageId}`
   }
 
+  const { data: textbookData } = useTextbookActivities(bookLabel)
+  const textbookActivities: TextbookActivity[] = canUseTextbookActivities
+    ? textbookData?.activities ?? []
+    : []
+
   const [pending, setPending] = useState<QuizData | null>(null)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [lightboxPageId, setLightboxPageId] = useState<string | null>(null)
   const [tryQuizIndex, setTryQuizIndex] = useState<number | null>(null)
+  const [tryTextbookActivity, setTryTextbookActivity] = useState<TextbookActivity | null>(null)
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false)
+  const [sourceFilter, setSourceFilter] = useState<"all" | "generated" | "textbook">("all")
   /** When the user clicks "Convert" on a textbook activity, this carries that
    *  activity's source page id into the generate dialog as the default selection. */
   const [convertSourcePageId, setConvertSourcePageId] = useState<string | null>(null)
@@ -2373,6 +2380,53 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
     (count, quiz) => count + getQuizQuestions(quiz).length,
     0
   )
+
+  /**
+   * Unified, book-ordered activity list mixing generated quizzes and detected
+   * textbook activities. Sort key = the page number an activity sits after.
+   * Generated → quiz.afterPageId's page number.
+   * Textbook  → activity.pageNumber.
+   * Activities anchored to unknown pages sort to the end.
+   */
+  type ActivityRow =
+    | { source: "generated"; key: string; pageNumber: number; quiz: QuizData["quizzes"][number]; quizIdx: number }
+    | { source: "textbook"; key: string; pageNumber: number; activity: TextbookActivity }
+
+  const unifiedActivities: ActivityRow[] = (() => {
+    const rows: ActivityRow[] = []
+    const pageNumberById = new Map(pages.map((p) => [p.pageId, p.pageNumber]))
+    quizzes.forEach((quiz, quizIdx) => {
+      const num = pageNumberById.get(quiz.afterPageId) ?? Number.MAX_SAFE_INTEGER
+      rows.push({
+        source: "generated",
+        key: `gen-${quiz.afterPageId}-${quizIdx}`,
+        pageNumber: num,
+        quiz,
+        quizIdx,
+      })
+    })
+    for (const a of textbookActivities) {
+      rows.push({
+        source: "textbook",
+        key: `tb-${a.id}`,
+        pageNumber: a.pageNumber,
+        activity: a,
+      })
+    }
+    rows.sort((a, b) => {
+      if (a.pageNumber !== b.pageNumber) return a.pageNumber - b.pageNumber
+      // Tie-break: textbook activity (which lives on the page) comes before
+      // a generated activity inserted after the same page.
+      if (a.source !== b.source) return a.source === "textbook" ? -1 : 1
+      return 0
+    })
+    return rows
+  })()
+
+  const filteredActivities = unifiedActivities.filter((row) => {
+    if (sourceFilter === "all") return true
+    return row.source === sourceFilter
+  })
 
   const saveQuizzes = useCallback(async () => {
     if (!pending) return
@@ -2902,7 +2956,7 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
     )
   }
 
-  const showEmptyState = !isLoading && quizzes.length === 0
+  const showEmptyState = !isLoading && unifiedActivities.length === 0
 
   return (
     <div className="space-y-4 p-4">
@@ -2934,49 +2988,45 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
         }}
       />
 
-      {canUseTextbookActivities && (
-        <section className="space-y-2">
-          <div className="flex items-center gap-2 pb-1 border-b">
-            <BookOpen className="h-3.5 w-3.5 text-blue-600" />
-            <h2 className="text-sm font-semibold">{t`Activities in your book`}</h2>
-            <span className="text-[11px] text-muted-foreground">
-              {t`Detected from the source pages. Convert any of them into a re-generated activity.`}
-            </span>
-          </div>
-          <TextbookActivitiesPanel
-            bookLabel={bookLabel}
-            pages={pages}
-            apiKey={apiKey}
-            providerCredentials={providerCredentials}
-            onOpenInStoryboard={(activity) => {
-              const targetPageId = activity.override?.assignedPageIds?.[0] ?? activity.pageId
-              const targetSectionIndex = targetPageId === activity.pageId ? activity.sectionIndex : 0
-              skipNextResetRef.current = true
-              setSectionIndex(targetSectionIndex)
-              navigate({
-                to: "/books/$label/$step/$pageId",
-                params: { label: bookLabel, step: "storyboard", pageId: targetPageId },
-              })
-            }}
-            onConvertActivity={(activity) => {
-              // Pre-fill the generate dialog with the activity's source page,
-              // so the user can regenerate it as a template.
-              const sourcePageId = activity.override?.assignedPageIds?.[0] ?? activity.pageId
-              setConvertSourcePageId(sourcePageId)
-              setGenerateDialogOpen(true)
-            }}
-          />
-        </section>
+      {/* Filter chips */}
+      {(unifiedActivities.length > 0 || canUseTextbookActivities) && (
+        <div className="flex flex-wrap items-center gap-2 border-b pb-3">
+          {(["all", "generated", "textbook"] as const).map((option) => {
+            const count =
+              option === "all"
+                ? unifiedActivities.length
+                : unifiedActivities.filter((r) => r.source === option).length
+            // Hide "From the book" filter entirely on non-textbook books.
+            if (option === "textbook" && !canUseTextbookActivities) return null
+            const label =
+              option === "all"
+                ? t`All`
+                : option === "generated"
+                  ? t`Generated`
+                  : t`From the book`
+            const active = sourceFilter === option
+            return (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setSourceFilter(option)}
+                className={`inline-flex h-7 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors ${
+                  active
+                    ? "bg-foreground text-background border-foreground"
+                    : "bg-background text-muted-foreground hover:bg-muted/60"
+                }`}
+              >
+                {label}
+                <span className={`text-[10px] font-mono ${active ? "opacity-80" : "opacity-60"}`}>
+                  {count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       )}
 
       <section className="space-y-2">
-        <div className="flex items-center gap-2 pb-1 border-b">
-          <Sparkles className="h-3.5 w-3.5 text-orange-600" />
-          <h2 className="text-sm font-semibold">{t`Generated activities`}</h2>
-          <span className="text-[11px] text-muted-foreground">
-            {t`New activity pages you created with the AI generator.`}
-          </span>
-        </div>
         <>
           {saveError && <p className="text-xs text-red-500">{saveError}</p>}
           {showEmptyState && (
@@ -3010,8 +3060,100 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
               <span className="text-sm">{t`Loading activities...`}</span>
             </div>
           )}
-          {displayQuizzes.map((quiz) => {
-            const idx = quizzes.indexOf(quiz)
+          {filteredActivities.map((row) => {
+            // Textbook activity row (detected in the source book) — render a
+            // compact summary card. Editing happens in the Storyboard view.
+            if (row.source === "textbook") {
+              const activity = row.activity
+              const targetPageId = activity.override?.assignedPageIds?.[0] ?? activity.pageId
+              const isCustomized = !!activity.override && !activity.override.hidden
+              return (
+                <div key={row.key} className="rounded-md border bg-card overflow-hidden">
+                  <div className="flex flex-wrap items-center gap-3 px-3 py-2">
+                    {/* Placeholder thumb — visual-review thumbnails plug in here later. */}
+                    <div className="h-12 w-16 shrink-0 rounded ring-1 ring-blue-200 bg-blue-50 flex items-center justify-center">
+                      <BookOpen className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">
+                          {t`From the book`}
+                        </span>
+                        <span className="text-xs font-medium">
+                          {textbookActivityLabel(activity.sectionType)}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">·</span>
+                        <span className="text-[11px] text-muted-foreground">
+                          {t`Page ${String(activity.pageNumber)}`}
+                        </span>
+                        {isCustomized && (
+                          <span className="text-[10px] text-emerald-700">{t`Customized`}</span>
+                        )}
+                      </div>
+                      {activity.textPreview && (
+                        <p className="mt-0.5 text-[11px] text-muted-foreground line-clamp-1">
+                          {activity.textPreview}
+                        </p>
+                      )}
+                    </div>
+                    <div className="ml-auto flex shrink-0 items-center gap-1.5">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setTryTextbookActivity(activity)}
+                        disabled={!activity.hasRendering}
+                        className="h-7 gap-1 px-2 text-[10px]"
+                        title={
+                          activity.hasRendering
+                            ? t`Try activity`
+                            : t`Render this activity before previewing it`
+                        }
+                      >
+                        <Eye className="h-3 w-3" />
+                        {t`Try`}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const targetSectionIndex = targetPageId === activity.pageId ? activity.sectionIndex : 0
+                          skipNextResetRef.current = true
+                          setSectionIndex(targetSectionIndex)
+                          navigate({
+                            to: "/books/$label/$step/$pageId",
+                            params: { label: bookLabel, step: "storyboard", pageId: targetPageId },
+                          })
+                        }}
+                        className="h-7 gap-1 px-2 text-[10px]"
+                      >
+                        <BookOpen className="h-3 w-3" />
+                        {t`Open`}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setConvertSourcePageId(targetPageId)
+                          setGenerateDialogOpen(true)
+                        }}
+                        className="h-7 gap-1 px-2 text-[10px] border-orange-300 text-orange-700 hover:bg-orange-50"
+                        title={t`Re-generate this activity using the AI generator`}
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        {t`Convert`}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+
+            // Generated quiz row — collapsible card with the editor.
+            const quiz = row.quiz
+            const idx = row.quizIdx
             const cardKey = `${quiz.afterPageId}-${idx}`
             const isExpanded = expandedQuizIds.has(cardKey)
             const questions = getQuizQuestions(quiz)
@@ -3044,6 +3186,13 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
                 {isExpanded
                   ? <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   : <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
+                {/* Placeholder thumb — visual-review thumbnails plug in here later. */}
+                <div className="h-12 w-16 shrink-0 rounded ring-1 ring-orange-200 bg-orange-50 flex items-center justify-center">
+                  <Sparkles className="h-4 w-4 text-orange-500" />
+                </div>
+                <span className="rounded border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-medium text-orange-700">
+                  {t`Generated`}
+                </span>
                 <span className={`rounded border px-2 py-0.5 text-[10px] font-medium ${activityBadgeClass(activityType)}`}>
                   {getActivityLabel(activityType)}
                 </span>
@@ -3192,6 +3341,22 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
               title={t`Quiz preview`}
               className="h-[calc(85vh-44px)] w-full bg-white"
               src={`/api/books/${bookLabel}/adt-preview/qz${pad3(tryQuizIndex + 1)}.html?embed=1&v=${data?.version ?? 0}`}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={tryTextbookActivity != null} onOpenChange={(open) => { if (!open) setTryTextbookActivity(null) }}>
+        <DialogContent className="h-[85vh] w-[min(1100px,96vw)] max-w-[96vw] gap-0 overflow-hidden p-0 bg-white">
+          <DialogTitle className="sr-only">{t`Try activity`}</DialogTitle>
+          <DialogDescription className="sr-only">{t`Interactive preview for the selected activity.`}</DialogDescription>
+          <div className="flex h-11 items-center border-b px-3 pr-12">
+            <span className="text-xs font-medium text-muted-foreground">{t`Try`}</span>
+          </div>
+          {tryTextbookActivity && (
+            <iframe
+              title={t`Activity preview`}
+              className="h-[calc(85vh-44px)] w-full bg-white"
+              src={`/api/books/${bookLabel}/adt-preview/${tryTextbookActivity.sectionId}.html?embed=1`}
             />
           )}
         </DialogContent>

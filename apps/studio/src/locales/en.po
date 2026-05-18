@@ -514,8 +514,8 @@ msgstr "Activities disabled"
 msgid "Activities enabled"
 msgstr "Activities enabled"
 
-msgid "Activities in your book"
-msgstr "Activities in your book"
+#~ msgid "Activities in your book"
+#~ msgstr "Activities in your book"
 
 msgid "Activity"
 msgstr "Activity"
@@ -531,6 +531,9 @@ msgstr "Activity Generation"
 
 msgid "Activity Generation Prompt"
 msgstr "Activity Generation Prompt"
+
+msgid "Activity preview"
+msgstr "Activity preview"
 
 msgid "Activity Rendering"
 msgstr "Activity Rendering"
@@ -1700,8 +1703,8 @@ msgstr "Detected"
 msgid "Detected as {detectedLabel}"
 msgstr "Detected as {detectedLabel}"
 
-msgid "Detected from the source pages. Convert any of them into a re-generated activity."
-msgstr "Detected from the source pages. Convert any of them into a re-generated activity."
+#~ msgid "Detected from the source pages. Convert any of them into a re-generated activity."
+#~ msgstr "Detected from the source pages. Convert any of them into a re-generated activity."
 
 msgid "Detecting figures"
 msgstr "Detecting figures"
@@ -2210,6 +2213,9 @@ msgstr "French"
 msgid "From reference image..."
 msgstr "From reference image..."
 
+msgid "From the book"
+msgstr "From the book"
+
 #~ msgid "From your book"
 #~ msgstr "From your book"
 
@@ -2291,11 +2297,11 @@ msgstr "Generate with AI"
 msgid "Generate word timestamps"
 msgstr "Generate word timestamps"
 
-#~ msgid "Generated"
-#~ msgstr "Generated"
+msgid "Generated"
+msgstr "Generated"
 
-msgid "Generated activities"
-msgstr "Generated activities"
+#~ msgid "Generated activities"
+#~ msgstr "Generated activities"
 
 msgid "Generated activity"
 msgstr "Generated activity"
@@ -2601,6 +2607,9 @@ msgstr "Interactive activity pages"
 
 #~ msgid "Interactive assessment questions"
 #~ msgstr "Interactive assessment questions"
+
+msgid "Interactive preview for the selected activity."
+msgstr "Interactive preview for the selected activity."
 
 msgid "Interactive preview for the selected quiz."
 msgstr "Interactive preview for the selected quiz."
@@ -3125,8 +3134,8 @@ msgstr "Never"
 msgid "New"
 msgstr "New"
 
-msgid "New activity pages you created with the AI generator."
-msgstr "New activity pages you created with the AI generator."
+#~ msgid "New activity pages you created with the AI generator."
+#~ msgstr "New activity pages you created with the AI generator."
 
 msgid "New checklist item"
 msgstr "New checklist item"
@@ -3439,6 +3448,9 @@ msgstr "Only PDF files are supported"
 
 msgid "Only ZIP files are supported"
 msgstr "Only ZIP files are supported"
+
+msgid "Open"
+msgstr "Open"
 
 msgid "Open a page in Preview to show its page-specific accessibility findings here."
 msgstr "Open a page in Preview to show its page-specific accessibility findings here."

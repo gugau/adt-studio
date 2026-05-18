@@ -515,8 +515,8 @@ msgstr "Activités désactivées"
 msgid "Activities enabled"
 msgstr "Activités activées"
 
-msgid "Activities in your book"
-msgstr ""
+#~ msgid "Activities in your book"
+#~ msgstr ""
 
 msgid "Activity"
 msgstr ""
@@ -531,6 +531,9 @@ msgid "Activity Generation"
 msgstr ""
 
 msgid "Activity Generation Prompt"
+msgstr ""
+
+msgid "Activity preview"
 msgstr ""
 
 msgid "Activity Rendering"
@@ -1701,8 +1704,8 @@ msgstr ""
 msgid "Detected as {detectedLabel}"
 msgstr ""
 
-msgid "Detected from the source pages. Convert any of them into a re-generated activity."
-msgstr ""
+#~ msgid "Detected from the source pages. Convert any of them into a re-generated activity."
+#~ msgstr ""
 
 msgid "Detecting figures"
 msgstr "Détection des figures"
@@ -2211,6 +2214,9 @@ msgstr "Français"
 msgid "From reference image..."
 msgstr "À partir de l'image de référence..."
 
+msgid "From the book"
+msgstr ""
+
 #~ msgid "From your book"
 #~ msgstr ""
 
@@ -2292,11 +2298,11 @@ msgstr "Générer avec l'IA"
 msgid "Generate word timestamps"
 msgstr "Générer les horodatages de mots"
 
-#~ msgid "Generated"
-#~ msgstr ""
-
-msgid "Generated activities"
+msgid "Generated"
 msgstr ""
+
+#~ msgid "Generated activities"
+#~ msgstr ""
 
 msgid "Generated activity"
 msgstr ""
@@ -2602,6 +2608,9 @@ msgstr ""
 
 #~ msgid "Interactive assessment questions"
 #~ msgstr "Questions d'évaluation interactives"
+
+msgid "Interactive preview for the selected activity."
+msgstr ""
 
 msgid "Interactive preview for the selected quiz."
 msgstr "Aperçu interactif du quiz sélectionné."
@@ -3126,8 +3135,8 @@ msgstr "Jamais"
 msgid "New"
 msgstr "Nouveau"
 
-msgid "New activity pages you created with the AI generator."
-msgstr ""
+#~ msgid "New activity pages you created with the AI generator."
+#~ msgstr ""
 
 msgid "New checklist item"
 msgstr "Nouvel élément de liste de contrôle"
@@ -3440,6 +3449,9 @@ msgstr "Seuls les fichiers PDF sont pris en charge"
 
 msgid "Only ZIP files are supported"
 msgstr "Seuls les fichiers ZIP sont pris en charge"
+
+msgid "Open"
+msgstr ""
 
 msgid "Open a page in Preview to show its page-specific accessibility findings here."
 msgstr "Ouvrez une page dans l'aperçu pour afficher les résultats d'accessibilité spécifiques à la page ici."
