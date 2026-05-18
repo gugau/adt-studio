@@ -1,5 +1,5 @@
 name: Accessibility Issue
-description: Report an accessibility barrier in the ADT Studio app
+description: Report an accessibility barrier in the ADT Studio app or in a generated ADT
 labels: ["accessibility"]
 body:
   - type: markdown
@@ -18,8 +18,7 @@ body:
         <p align="center"><em>Thanks for reporting an accessibility issue!</em></p>
 
         > [!IMPORTANT]
-        > - This form is for accessibility issues in the ADT Studio app itself (keyboard navigation, screen readers, contrast, focus management, etc.).
-        > - For issues with the Accessibility Assessment pipeline stage's output, please file a Bug Report instead.
+        > - Use this form for accessibility issues in either **the ADT Studio app** (keyboard navigation, screen readers, contrast, focus management, etc.) or **a generated ADT** (the produced HTML book).
         > - Please provide a descriptive title and search existing issues to avoid creating duplicates.
   - type: checkboxes
     id: preliminary
@@ -28,8 +27,17 @@ body:
       options:
         - label: I have searched existing issues and avoided creating duplicates.
           required: true
-        - label: This is an accessibility issue in the Studio app's interface, not in the generated book output.
-          required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where is the issue?
+      description: Which surface does this accessibility issue affect?
+      options:
+        - ADT Studio app (the editor interface)
+        - Generated ADT (the produced HTML book)
+        - Both
+    validations:
+      required: true
   - type: textarea
     id: barrier
     attributes:
