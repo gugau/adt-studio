@@ -2532,6 +2532,9 @@ msgstr ""
 msgid "Insert after page"
 msgstr ""
 
+msgid "Insert at regular intervals"
+msgstr ""
+
 msgid "Inside Cover"
 msgstr "Contraportada interna"
 
@@ -5125,8 +5128,8 @@ msgstr "Esto guardará tu configuración y volverá a ejecutar el pipeline del g
 msgid "This will save your settings and re-run translations, rebuilding the text catalog and translating to output languages."
 msgstr "Esto guardará su configuración y volverá a ejecutar las traducciones, reconstruyendo el catálogo de texto y traduciendo a los idiomas de salida."
 
-msgid "Throughout the book"
-msgstr ""
+#~ msgid "Throughout the book"
+#~ msgstr ""
 
 msgid "Time"
 msgstr "Hora"

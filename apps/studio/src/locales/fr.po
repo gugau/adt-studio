@@ -2533,6 +2533,9 @@ msgstr ""
 msgid "Insert after page"
 msgstr ""
 
+msgid "Insert at regular intervals"
+msgstr ""
+
 msgid "Inside Cover"
 msgstr "Page de garde"
 
@@ -5126,8 +5129,8 @@ msgstr "Ceci enregistrera vos paramètres et relancera le pipeline du storyboard
 msgid "This will save your settings and re-run translations, rebuilding the text catalog and translating to output languages."
 msgstr "Cela enregistrera vos paramètres et relancera les traductions, en reconstruisant le catalogue de texte et en traduisant vers les langues de sortie."
 
-msgid "Throughout the book"
-msgstr ""
+#~ msgid "Throughout the book"
+#~ msgstr ""
 
 msgid "Time"
 msgstr "Temps"

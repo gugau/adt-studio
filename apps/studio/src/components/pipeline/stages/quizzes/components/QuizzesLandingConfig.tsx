@@ -258,6 +258,9 @@ export function QuizzesLandingConfig({
   }
 
   function resolveInsertAfter(batchPageIds: string[]): string {
+    // In "regular intervals" mode placement is always after each group of pages,
+    // regardless of whatever placementMode was last set to in "Pick pages" mode.
+    if (sourceMode === "every_n") return batchPageIds[batchPageIds.length - 1] ?? ""
     if (placementMode === "end_of_book") return lastBookPageId
     if (placementMode === "specific") return placementPageId || lastBookPageId
     return batchPageIds[batchPageIds.length - 1] ?? ""
@@ -366,7 +369,7 @@ export function QuizzesLandingConfig({
                       : "bg-background hover:bg-muted"
                   }`}
                 >
-                  {t`Throughout the book`}
+                  {t`Insert at regular intervals`}
                 </button>
                 <button
                   type="button"
@@ -414,33 +417,37 @@ export function QuizzesLandingConfig({
               )}
             </div>
 
-            {/* Placement */}
-            <label className="block space-y-1.5">
-              <span className="text-xs font-medium text-muted-foreground">{t`Where to put it`}</span>
-              <select
-                value={placementMode}
-                onChange={(e) => setPlacementMode(e.target.value as PlacementMode)}
-                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-              >
-                <option value="after_source">{t`Right after the pages it covers`}</option>
-                <option value="end_of_book">{t`At the end of the book`}</option>
-                <option value="specific">{t`On a specific page…`}</option>
-              </select>
-              {placementMode === "specific" && (
+            {/* Placement — only relevant when the user picks specific pages.
+                In "regular intervals" mode each quiz lands after its own group
+                of pages, so there's nothing to choose. */}
+            {sourceMode === "select" && (
+              <label className="block space-y-1.5">
+                <span className="text-xs font-medium text-muted-foreground">{t`Where to put it`}</span>
                 <select
-                  value={placementPageId}
-                  onChange={(e) => setPlacementPageId(e.target.value)}
-                  className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                  value={placementMode}
+                  onChange={(e) => setPlacementMode(e.target.value as PlacementMode)}
+                  className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
                 >
-                  <option value="">{t`— pick a page —`}</option>
-                  {pages.map((page) => (
-                    <option key={page.pageId} value={page.pageId}>
-                      {t`Page ${String(page.pageNumber)}`}
-                    </option>
-                  ))}
+                  <option value="after_source">{t`Right after the pages it covers`}</option>
+                  <option value="end_of_book">{t`At the end of the book`}</option>
+                  <option value="specific">{t`On a specific page…`}</option>
                 </select>
-              )}
-            </label>
+                {placementMode === "specific" && (
+                  <select
+                    value={placementPageId}
+                    onChange={(e) => setPlacementPageId(e.target.value)}
+                    className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                  >
+                    <option value="">{t`— pick a page —`}</option>
+                    {pages.map((page) => (
+                      <option key={page.pageId} value={page.pageId}>
+                        {t`Page ${String(page.pageNumber)}`}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </label>
+            )}
           </div>
 
           {/* Advanced — progressive disclosure */}

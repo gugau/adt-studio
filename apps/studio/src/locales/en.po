@@ -2532,6 +2532,9 @@ msgstr "Insert after"
 msgid "Insert after page"
 msgstr "Insert after page"
 
+msgid "Insert at regular intervals"
+msgstr "Insert at regular intervals"
+
 msgid "Inside Cover"
 msgstr "Inside Cover"
 
@@ -5125,8 +5128,8 @@ msgstr "This will save your settings and re-run the storyboard pipeline. Section
 msgid "This will save your settings and re-run translations, rebuilding the text catalog and translating to output languages."
 msgstr "This will save your settings and re-run translations, rebuilding the text catalog and translating to output languages."
 
-msgid "Throughout the book"
-msgstr "Throughout the book"
+#~ msgid "Throughout the book"
+#~ msgstr "Throughout the book"
 
 msgid "Time"
 msgstr "Time"

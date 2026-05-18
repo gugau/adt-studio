@@ -2532,6 +2532,9 @@ msgstr ""
 msgid "Insert after page"
 msgstr ""
 
+msgid "Insert at regular intervals"
+msgstr ""
+
 msgid "Inside Cover"
 msgstr "Contracapa interna"
 
@@ -5125,8 +5128,8 @@ msgstr "Isso salvará suas configurações e reexecutará o pipeline do storyboa
 msgid "This will save your settings and re-run translations, rebuilding the text catalog and translating to output languages."
 msgstr "Isso salvará suas configurações e reexecutará as traduções, reconstruindo o catálogo de texto e traduzindo para os idiomas de saída."
 
-msgid "Throughout the book"
-msgstr ""
+#~ msgid "Throughout the book"
+#~ msgstr ""
 
 msgid "Time"
 msgstr "Hora"
