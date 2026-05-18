@@ -723,6 +723,9 @@ msgstr ""
 msgid "After a specific page…"
 msgstr ""
 
+msgid "After p."
+msgstr ""
+
 #. placeholder {0}: String(page.pageNumber)
 msgid "After page {0}"
 msgstr ""
@@ -3176,6 +3179,9 @@ msgstr "No accessibility findings were reported for this page."
 msgid "No activities yet"
 msgstr ""
 
+msgid "no activity"
+msgstr ""
+
 msgid "No AI edits yet for this section."
 msgstr "Aún no hay ediciones con IA para esta sección."
 
@@ -3602,8 +3608,8 @@ msgid "Page"
 msgstr "Página"
 
 #. placeholder {0}: String(activity.pageNumber)
+#. placeholder {0}: String(nums[0])
 #. placeholder {0}: String(page.pageNumber)
-#. placeholder {0}: String(pageNumber)
 msgid "Page {0}"
 msgstr "Página {0}"
 
@@ -3663,8 +3669,14 @@ msgstr "páginas"
 #~ msgid "Pages"
 #~ msgstr ""
 
+#. placeholder {0}: nums.join(", ")
+msgid "Pages {0}"
+msgstr ""
+
 #. placeholder {0}: String(Math.min(startPage.pageNumber, endPage.pageNumber))
+#. placeholder {0}: String(nums[0])
 #. placeholder {1}: String(Math.max(startPage.pageNumber, endPage.pageNumber))
+#. placeholder {1}: String(nums[nums.length - 1])
 msgid "Pages {0} – {1}"
 msgstr ""
 

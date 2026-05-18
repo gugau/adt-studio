@@ -2428,6 +2428,78 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
     return row.source === sourceFilter
   })
 
+  /**
+   * Page-gap placeholders. Walk the book in order and insert a "Pages X-Y"
+   * row wherever there's a stretch of pages without any activity. Only
+   * meaningful in the "all" filter — once you've narrowed by source the
+   * gaps would be misleading (they'd hide activities of the other source).
+   */
+  type ListRow =
+    | { kind: "gap"; key: string; pageNumbers: number[] }
+    | { kind: "activity"; key: string; row: ActivityRow }
+
+  const interleavedRows: ListRow[] = (() => {
+    if (sourceFilter !== "all" || pages.length === 0) {
+      return filteredActivities.map((row) => ({
+        kind: "activity" as const,
+        key: row.key,
+        row,
+      }))
+    }
+    const textbookByPageNum = new Map<number, ActivityRow>()
+    const generatedAfterPageNum = new Map<number, ActivityRow[]>()
+    for (const row of unifiedActivities) {
+      if (row.source === "textbook") {
+        textbookByPageNum.set(row.pageNumber, row)
+      } else {
+        const list = generatedAfterPageNum.get(row.pageNumber) ?? []
+        list.push(row)
+        generatedAfterPageNum.set(row.pageNumber, list)
+      }
+    }
+    const rows: ListRow[] = []
+    let gapRun: number[] = []
+    const flushGap = () => {
+      if (gapRun.length === 0) return
+      rows.push({
+        kind: "gap",
+        key: `gap-${gapRun[0]}-${gapRun[gapRun.length - 1]}`,
+        pageNumbers: gapRun,
+      })
+      gapRun = []
+    }
+    for (const page of pages) {
+      const textbook = textbookByPageNum.get(page.pageNumber)
+      if (textbook) {
+        flushGap()
+        rows.push({ kind: "activity", key: textbook.key, row: textbook })
+      } else {
+        gapRun.push(page.pageNumber)
+      }
+      const generated = generatedAfterPageNum.get(page.pageNumber) ?? []
+      if (generated.length > 0) {
+        flushGap()
+        for (const g of generated) {
+          rows.push({ kind: "activity", key: g.key, row: g })
+        }
+      }
+    }
+    flushGap()
+    return rows
+  })()
+
+  /** Compact label like "Pages 6-9" or "Page 6" or "Pages 6, 8, 10". */
+  function formatPageGap(nums: number[]): string {
+    if (nums.length === 0) return ""
+    if (nums.length === 1) return t`Page ${String(nums[0])}`
+    // If contiguous, use a range; otherwise list.
+    const isContiguous = nums.every((n, i) => i === 0 || n === nums[i - 1] + 1)
+    if (isContiguous) {
+      return t`Pages ${String(nums[0])} – ${String(nums[nums.length - 1])}`
+    }
+    return t`Pages ${nums.join(", ")}`
+  }
+
   const saveQuizzes = useCallback(async () => {
     if (!pending) return
     setSaving(true)
@@ -3060,7 +3132,22 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
               <span className="text-sm">{t`Loading activities...`}</span>
             </div>
           )}
-          {filteredActivities.map((row) => {
+          {interleavedRows.map((listRow) => {
+            // Gap row — a stretch of pages without any activity. Lets the user
+            // see where activities sit in the natural flow of the book.
+            if (listRow.kind === "gap") {
+              return (
+                <div
+                  key={listRow.key}
+                  className="flex items-center gap-2 rounded-md border border-dashed border-border/60 bg-muted/20 px-3 py-2 text-[11px] text-muted-foreground"
+                >
+                  <span className="font-mono">{formatPageGap(listRow.pageNumbers)}</span>
+                  <span className="opacity-60">·</span>
+                  <span>{t`no activity`}</span>
+                </div>
+              )
+            }
+            const row = listRow.row
             // Textbook activity row (detected in the source book) — render a
             // compact summary card. Editing happens in the Storyboard view.
             if (row.source === "textbook") {
@@ -3068,8 +3155,17 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
               const targetPageId = activity.override?.assignedPageIds?.[0] ?? activity.pageId
               const isCustomized = !!activity.override && !activity.override.hidden
               return (
-                <div key={row.key} className="rounded-md border bg-card overflow-hidden">
+                <div key={listRow.key} className="rounded-md border bg-card overflow-hidden">
                   <div className="flex flex-wrap items-center gap-3 px-3 py-2">
+                    {/* Page anchor — clear visual indication of where this lives. */}
+                    <div className="flex flex-col items-center gap-1 shrink-0">
+                      <span className="text-[9px] font-semibold uppercase tracking-wide text-blue-600">
+                        {t`Page`}
+                      </span>
+                      <span className="text-lg font-bold leading-none text-blue-700">
+                        {activity.pageNumber}
+                      </span>
+                    </div>
                     {/* Placeholder thumb — visual-review thumbnails plug in here later. */}
                     <div className="h-12 w-16 shrink-0 rounded ring-1 ring-blue-200 bg-blue-50 flex items-center justify-center">
                       <BookOpen className="h-4 w-4 text-blue-500" />
@@ -3081,10 +3177,6 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
                         </span>
                         <span className="text-xs font-medium">
                           {textbookActivityLabel(activity.sectionType)}
-                        </span>
-                        <span className="text-[11px] text-muted-foreground">·</span>
-                        <span className="text-[11px] text-muted-foreground">
-                          {t`Page ${String(activity.pageNumber)}`}
                         </span>
                         {isCustomized && (
                           <span className="text-[10px] text-emerald-700">{t`Customized`}</span>
@@ -3186,6 +3278,15 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
                 {isExpanded
                   ? <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   : <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
+                {/* Page anchor — generated activities land AFTER the page below. */}
+                <div className="flex flex-col items-center gap-1 shrink-0">
+                  <span className="text-[9px] font-semibold uppercase tracking-wide text-orange-600">
+                    {t`After p.`}
+                  </span>
+                  <span className="text-lg font-bold leading-none text-orange-700">
+                    {pages.find((p) => p.pageId === quiz.afterPageId)?.pageNumber ?? "?"}
+                  </span>
+                </div>
                 {/* Placeholder thumb — visual-review thumbnails plug in here later. */}
                 <div className="h-12 w-16 shrink-0 rounded ring-1 ring-orange-200 bg-orange-50 flex items-center justify-center">
                   <Sparkles className="h-4 w-4 text-orange-500" />
@@ -3199,8 +3300,6 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
                 {sourceSummary && (
                   <span className="text-[11px] text-muted-foreground">{sourceSummary}</span>
                 )}
-                <span className="text-[11px] text-muted-foreground">·</span>
-                <span className="text-[11px] text-muted-foreground">{getPlacementLabel(quiz.afterPageId)}</span>
                 <span className="text-[11px] text-muted-foreground">·</span>
                 <span className="text-[11px] text-muted-foreground">{questionCountLabel}</span>
                 <span className="ml-auto flex items-center gap-1.5">
