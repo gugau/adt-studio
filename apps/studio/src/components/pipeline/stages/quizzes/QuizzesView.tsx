@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
-import { Check, CheckCircle2, XCircle, ChevronDown, HelpCircle, Loader2, ImageOff, Eye, Scissors, Trash2, BookOpen, FileQuestion, Pencil, RotateCcw, Save, ImagePlus, Upload, X, Image as ImageIcon, Sparkles } from "lucide-react"
+import { Check, CheckCircle2, XCircle, ChevronDown, ChevronRight, HelpCircle, Loader2, ImageOff, Eye, Scissors, Trash2, BookOpen, FileQuestion, Pencil, RotateCcw, Save, ImagePlus, Upload, X, Image as ImageIcon, Sparkles } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import { api, BASE_URL } from "@/api/client"
@@ -2331,6 +2331,15 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
   const [tryQuizIndex, setTryQuizIndex] = useState<number | null>(null)
   const [sourceMode, setSourceMode] = useState<QuizSourceMode>("ai")
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false)
+  const [expandedQuizIds, setExpandedQuizIds] = useState<Set<string>>(new Set())
+  const toggleQuizExpanded = (key: string) => {
+    setExpandedQuizIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
 
   // Reset pending when data changes
   useEffect(() => {
@@ -2987,105 +2996,161 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
           )}
           {displayQuizzes.map((quiz) => {
             const idx = quizzes.indexOf(quiz)
+            const cardKey = `${quiz.afterPageId}-${idx}`
+            const isExpanded = expandedQuizIds.has(cardKey)
             const questions = getQuizQuestions(quiz)
             const activityType = questions[0]?.activityType ?? "multiple_choice"
             const sharedTitle = activityType === "multiple_choice" || activityType === "multiple_select" || activityType === "open_ended"
               ? null
               : getSharedQuestionTitle(questions)
             const hasKnownPlacementPage = pages.some((page) => page.pageId === quiz.afterPageId)
+
+            const sourceNumbers = quiz.pageIds
+              .map((pid) => pages.find((p) => p.pageId === pid)?.pageNumber)
+              .filter((n): n is number => typeof n === "number")
+              .sort((a, b) => a - b)
+            const sourceSummary =
+              sourceNumbers.length === 0
+                ? null
+                : sourceNumbers.length === 1
+                  ? t`Page ${String(sourceNumbers[0])}`
+                  : t`Pages ${String(sourceNumbers[0])}–${String(sourceNumbers[sourceNumbers.length - 1])}`
+            const questionCountLabel = questions.length === 1 ? t`1 question` : t`${String(questions.length)} questions`
             return (
             <div key={idx} className={`rounded-md border bg-card overflow-hidden ${quiz.isPruned ? "opacity-55" : ""}`}>
-              <div className="flex flex-wrap items-center gap-2 px-4 py-2 bg-muted/20 border-b">
+              {/* Always-visible summary header (clickable to expand) */}
+              <button
+                type="button"
+                onClick={() => toggleQuizExpanded(cardKey)}
+                className="w-full flex flex-wrap items-center gap-2 px-4 py-2 bg-muted/20 border-b text-left transition-colors hover:bg-muted/30"
+                aria-expanded={isExpanded}
+              >
+                {isExpanded
+                  ? <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  : <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
                 <span className={`rounded border px-2 py-0.5 text-[10px] font-medium ${activityBadgeClass(activityType)}`}>
                   {getActivityLabel(activityType)}
                 </span>
-                <label className="inline-flex h-7 max-w-full items-center gap-1.5 rounded border border-input bg-background px-2 text-[10px]">
-                  <span className="whitespace-nowrap font-medium text-muted-foreground">{t`Insert after`}</span>
-                  <select
-                    value={quiz.afterPageId}
-                    onChange={(e) => updateQuizAt(idx, { afterPageId: e.target.value })}
-                    aria-label={t`Insert after page`}
-                    className="min-w-[120px] max-w-[220px] bg-transparent text-[10px] focus:outline-none"
+                {sourceSummary && (
+                  <span className="text-[11px] text-muted-foreground">{sourceSummary}</span>
+                )}
+                <span className="text-[11px] text-muted-foreground">·</span>
+                <span className="text-[11px] text-muted-foreground">{getPlacementLabel(quiz.afterPageId)}</span>
+                <span className="text-[11px] text-muted-foreground">·</span>
+                <span className="text-[11px] text-muted-foreground">{questionCountLabel}</span>
+                <span className="ml-auto flex items-center gap-1.5">
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (quiz.isPruned) return
+                      setTryQuizIndex(quizzes.filter((q) => !q.isPruned).indexOf(quiz))
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        if (quiz.isPruned) return
+                        setTryQuizIndex(quizzes.filter((q) => !q.isPruned).indexOf(quiz))
+                      }
+                    }}
+                    aria-disabled={quiz.isPruned}
+                    className={`inline-flex h-7 items-center gap-1 rounded border bg-background px-2 text-[10px] font-medium transition-colors hover:bg-muted/60 ${quiz.isPruned ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
                   >
-                    {!hasKnownPlacementPage && (
-                      <option value={quiz.afterPageId}>{getPlacementLabel(quiz.afterPageId)}</option>
-                    )}
-                    {pages.map((page) => (
-                      <option key={page.pageId} value={page.pageId}>
-                        {t`Page ${String(page.pageNumber)}`} ({page.pageId})
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setTryQuizIndex(quizzes.filter((q) => !q.isPruned).indexOf(quiz))}
-                  disabled={quiz.isPruned}
-                  className="ml-auto inline-flex h-7 items-center gap-1 rounded border bg-background px-2 text-[10px] font-medium transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Eye className="h-3 w-3" />
-                  {t`Try`}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateQuizAt(idx, { isPruned: !quiz.isPruned })}
-                  className="inline-flex h-7 items-center gap-1 rounded border bg-background px-2 text-[10px] font-medium transition-colors hover:bg-muted/60"
-                >
-                  <Scissors className="h-3 w-3" />
-                  {quiz.isPruned ? t`Unprune` : t`Prune`}
-                </button>
-                {quiz.isPruned && (
-                  <button
-                    type="button"
-                    onClick={() => void deleteQuizAt(idx)}
-                    disabled={saving}
-                    className="inline-flex h-7 items-center gap-1 rounded border border-red-200 bg-red-50 px-2 text-[10px] font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
-                    title={t`Delete pruned quiz`}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                    {t`Delete`}
-                  </button>
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-1.5 px-4 py-2 bg-muted/10 border-b">
-                {quiz.pageIds.length > 0 ? (
-                  quiz.pageIds.map((pageId) => (
-                    <PageThumb key={pageId} bookLabel={bookLabel} pageId={pageId} onClick={() => setLightboxPageId(pageId)} />
-                  ))
-                ) : (
-                  <span className="text-xs text-muted-foreground">{getPlacementLabel(quiz.afterPageId)}</span>
-                )}
-              </div>
-              <div className="px-4 py-3 space-y-4">
-                {sharedTitle && (
-                  <textarea
-                    value={sharedTitle}
-                    onChange={(e) => updateSharedTitle(idx, e.target.value)}
-                    className="w-full text-sm font-semibold resize-none rounded border border-transparent bg-transparent p-1 -m-1 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-                    rows={1}
-                  />
-                )}
-                <span className="text-[10px] text-muted-foreground mt-1 inline-block">
-                  {getPlacementLabel(quiz.afterPageId)}
+                    <Eye className="h-3 w-3" />
+                    {t`Try`}
+                  </span>
                 </span>
-              </div>
-              <div className="px-4 pb-3 space-y-4">
-                {questions.map((question, questionIdx) => (
-                  <div key={questionIdx} className="rounded-md border bg-muted/20 p-3 space-y-2">
-                    {questions.length > 1 && (
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        {t`Q${String(questionIdx + 1)}`}
-                      </p>
+              </button>
+
+              {isExpanded && (
+                <>
+                  {/* Edit controls */}
+                  <div className="flex flex-wrap items-center gap-2 px-4 py-2 bg-muted/10 border-b">
+                    <label className="inline-flex h-7 max-w-full items-center gap-1.5 rounded border border-input bg-background px-2 text-[10px]">
+                      <span className="whitespace-nowrap font-medium text-muted-foreground">{t`Insert after`}</span>
+                      <select
+                        value={quiz.afterPageId}
+                        onChange={(e) => updateQuizAt(idx, { afterPageId: e.target.value })}
+                        aria-label={t`Insert after page`}
+                        className="min-w-[120px] max-w-[220px] bg-transparent text-[10px] focus:outline-none"
+                      >
+                        {!hasKnownPlacementPage && (
+                          <option value={quiz.afterPageId}>{getPlacementLabel(quiz.afterPageId)}</option>
+                        )}
+                        {pages.map((page) => (
+                          <option key={page.pageId} value={page.pageId}>
+                            {t`Page ${String(page.pageNumber)}`} ({page.pageId})
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => updateQuizAt(idx, { isPruned: !quiz.isPruned })}
+                      className="ml-auto inline-flex h-7 items-center gap-1 rounded border bg-background px-2 text-[10px] font-medium transition-colors hover:bg-muted/60"
+                    >
+                      <Scissors className="h-3 w-3" />
+                      {quiz.isPruned ? t`Unprune` : t`Prune`}
+                    </button>
+                    {quiz.isPruned && (
+                      <button
+                        type="button"
+                        onClick={() => void deleteQuizAt(idx)}
+                        disabled={saving}
+                        className="inline-flex h-7 items-center gap-1 rounded border border-red-200 bg-red-50 px-2 text-[10px] font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                        title={t`Delete pruned quiz`}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        {t`Delete`}
+                      </button>
                     )}
-                    {renderQuestionEditor(idx, question, questionIdx, {
-                      showTitle: activityType !== "multiple_choice" && activityType !== "multiple_select" && !sharedTitle,
-                    })}
                   </div>
-                ))}
-                {quiz.reasoning && (
-                  <p className="text-xs italic text-muted-foreground px-1 pt-1">{quiz.reasoning}</p>
-                )}
-              </div>
+
+                  {/* Source page thumbs */}
+                  <div className="flex flex-wrap items-center gap-1.5 px-4 py-2 bg-muted/10 border-b">
+                    {quiz.pageIds.length > 0 ? (
+                      quiz.pageIds.map((pageId) => (
+                        <PageThumb key={pageId} bookLabel={bookLabel} pageId={pageId} onClick={() => setLightboxPageId(pageId)} />
+                      ))
+                    ) : (
+                      <span className="text-xs text-muted-foreground">{getPlacementLabel(quiz.afterPageId)}</span>
+                    )}
+                  </div>
+
+                  {/* Shared title (for activities like fill-blanks, matching) */}
+                  {sharedTitle && (
+                    <div className="px-4 py-3 space-y-4">
+                      <textarea
+                        value={sharedTitle}
+                        onChange={(e) => updateSharedTitle(idx, e.target.value)}
+                        className="w-full text-sm font-semibold resize-none rounded border border-transparent bg-transparent p-1 -m-1 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+                        rows={1}
+                      />
+                    </div>
+                  )}
+
+                  {/* Question editor(s) */}
+                  <div className="px-4 py-3 space-y-4">
+                    {questions.map((question, questionIdx) => (
+                      <div key={questionIdx} className="rounded-md border bg-muted/20 p-3 space-y-2">
+                        {questions.length > 1 && (
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            {t`Q${String(questionIdx + 1)}`}
+                          </p>
+                        )}
+                        {renderQuestionEditor(idx, question, questionIdx, {
+                          showTitle: activityType !== "multiple_choice" && activityType !== "multiple_select" && !sharedTitle,
+                        })}
+                      </div>
+                    ))}
+                    {quiz.reasoning && (
+                      <p className="text-xs italic text-muted-foreground px-1 pt-1">{quiz.reasoning}</p>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
             )
           })}

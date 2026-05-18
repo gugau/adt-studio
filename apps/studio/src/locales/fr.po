@@ -170,6 +170,7 @@ msgstr "{0} pages"
 #~ msgstr ""
 
 #. placeholder {0}: String(displayQuestionCount)
+#. placeholder {0}: String(questions.length)
 msgid "{0} questions"
 msgstr "{0} questions"
 
@@ -320,6 +321,9 @@ msgstr "1 élément nécessite des modifications sur cette page"
 
 #~ msgid "1 page selected."
 #~ msgstr ""
+
+msgid "1 question"
+msgstr ""
 
 msgid "1 selected image is no longer in the storyboard."
 msgstr "1 image sélectionnée ne figure plus dans le storyboard."
@@ -3635,7 +3639,9 @@ msgstr ""
 msgid "Pages {0} – {1} ({2} total)"
 msgstr ""
 
+#. placeholder {0}: String(sourceNumbers[0])
 #. placeholder {0}: activeSession.session.start_page ?? "?"
+#. placeholder {1}: String(sourceNumbers[sourceNumbers.length - 1])
 #. placeholder {1}: activeSession.session.end_page ?? "?"
 msgid "Pages {0}–{1}"
 msgstr "Pages {0}–{1}"

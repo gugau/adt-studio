@@ -158,7 +158,14 @@ export function StageSidebar({
   const currentState = stageState(activeStep)
   const effectivePagesOpen =
     hasStagePages(activeStep) &&
-    (currentState === "done" || currentState === "running" || currentState === "error")
+    // Quizzes is an authoring stage rather than an auto-run pipeline step —
+    // the user generates one activity at a time, so the stage state may stay
+    // "idle" forever. Always show the page list there so the user can jump
+    // between pages to add per-page activities.
+    (activeStep === "quizzes" ||
+      currentState === "done" ||
+      currentState === "running" ||
+      currentState === "error")
 
   const isSettings = !!matchRoute({
     to: "/books/$label/$step/settings",
