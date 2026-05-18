@@ -2884,7 +2884,9 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
   }
 
   const showEmptyState =
-    !isLoading && !selectedPageId && quizzes.length === 0 && !(canUseTextbookActivities && sourceMode === "textbook")
+    !isLoading && quizzes.length === 0 && !(canUseTextbookActivities && sourceMode === "textbook")
+  const showNoMatchForPage =
+    !!selectedPageId && displayQuizzes.length === 0 && quizzes.length > 0
 
   return (
     <div className="space-y-3 p-4">
@@ -2968,7 +2970,7 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
               )}
             </div>
           )}
-          {selectedPageId && displayQuizzes.length === 0 && quizzes.length > 0 && (
+          {showNoMatchForPage && (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
               <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center mb-3">
                 <HelpCircle className="w-6 h-6 text-orange-300" />
