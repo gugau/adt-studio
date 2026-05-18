@@ -22,7 +22,6 @@ import { usePageImage, usePages } from "@/hooks/use-pages"
 import { useBookConfig } from "@/hooks/use-book-config"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { SegmentedControl } from "@/components/ui/segmented-control"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useApiKey } from "@/hooks/use-api-key"
 import { useSectionNav } from "@/routes/books.$label"
@@ -32,7 +31,6 @@ import { useLingui } from "@lingui/react/macro"
 
 
 type QuizData = QuizGenerationOutput
-type QuizSourceMode = "ai" | "textbook"
 
 function getQuizQuestions(quiz: QuizItem): QuizQuestion[] {
   if (quiz.questions && quiz.questions.length > 0) return quiz.questions
@@ -1423,12 +1421,14 @@ function TextbookActivitiesPanel({
   apiKey,
   providerCredentials,
   onOpenInStoryboard,
+  onConvertActivity,
 }: {
   bookLabel: string
   pages: TextbookPageOption[]
   apiKey: string
   providerCredentials?: StageRunProviderCredentials
   onOpenInStoryboard: (activity: TextbookActivity) => void
+  onConvertActivity?: (activity: TextbookActivity) => void
 }) {
   const { t } = useLingui()
   const queryClient = useQueryClient()
@@ -1928,6 +1928,19 @@ function TextbookActivitiesPanel({
                   <BookOpen className="h-3.5 w-3.5" />
                   {t`Open in Storyboard`}
                 </Button>
+                {onConvertActivity && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onConvertActivity(activity)}
+                    className="h-8 gap-1 px-2.5 text-xs border-orange-300 text-orange-700 hover:bg-orange-50"
+                    title={t`Re-generate this activity using the AI generator`}
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    {t`Convert`}
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -2329,8 +2342,10 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
   const [saveError, setSaveError] = useState<string | null>(null)
   const [lightboxPageId, setLightboxPageId] = useState<string | null>(null)
   const [tryQuizIndex, setTryQuizIndex] = useState<number | null>(null)
-  const [sourceMode, setSourceMode] = useState<QuizSourceMode>("ai")
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false)
+  /** When the user clicks "Convert" on a textbook activity, this carries that
+   *  activity's source page id into the generate dialog as the default selection. */
+  const [convertSourcePageId, setConvertSourcePageId] = useState<string | null>(null)
   const [expandedQuizIds, setExpandedQuizIds] = useState<Set<string>>(new Set())
   const toggleQuizExpanded = (key: string) => {
     setExpandedQuizIds((prev) => {
@@ -2345,12 +2360,6 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
   useEffect(() => {
     setPending(null)
   }, [data?.version])
-
-  useEffect(() => {
-    if (!canUseTextbookActivities && sourceMode === "textbook") {
-      setSourceMode("ai")
-    }
-  }, [sourceMode, canUseTextbookActivities])
 
   const effective = pending ?? data?.quizzes
   const quizzes = effective?.quizzes ?? []
@@ -2893,25 +2902,13 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
     )
   }
 
-  const showEmptyState =
-    !isLoading && quizzes.length === 0 && !(canUseTextbookActivities && sourceMode === "textbook")
+  const showEmptyState = !isLoading && quizzes.length === 0
 
   return (
-    <div className="space-y-3 p-4">
+    <div className="space-y-4 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        {canUseTextbookActivities ? (
-          <SegmentedControl<QuizSourceMode>
-            value={sourceMode}
-            onValueChange={setSourceMode}
-            color="#ea580c"
-            className="max-w-xl"
-            options={[
-              { value: "ai", label: t`Generated` },
-              { value: "textbook", label: t`From your book` },
-            ]}
-          />
-        ) : <span />}
-        {(!canUseTextbookActivities || sourceMode === "ai") && quizzes.length > 0 && (
+        <h1 className="text-base font-semibold">{t`Activities`}</h1>
+        {quizzes.length > 0 && (
           <button
             type="button"
             onClick={() => setGenerateDialogOpen(true)}
@@ -2924,34 +2921,63 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
         )}
       </div>
 
-      {canUseTextbookActivities && sourceMode === "textbook" ? (
-        <TextbookActivitiesPanel
-          bookLabel={bookLabel}
-          pages={pages}
-          apiKey={apiKey}
-          providerCredentials={providerCredentials}
-          onOpenInStoryboard={(activity) => {
-            const targetPageId = activity.override?.assignedPageIds?.[0] ?? activity.pageId
-            const targetSectionIndex = targetPageId === activity.pageId ? activity.sectionIndex : 0
-            skipNextResetRef.current = true
-            setSectionIndex(targetSectionIndex)
-            navigate({
-              to: "/books/$label/$step/$pageId",
-              params: { label: bookLabel, step: "storyboard", pageId: targetPageId },
-            })
-          }}
-        />
-      ) : (
-        <>
-          <QuizzesLandingConfig
+      <QuizzesLandingConfig
+        bookLabel={bookLabel}
+        apiKey={apiKey}
+        hasApiKey={hasApiKey}
+        providerCredentials={providerCredentials}
+        initialSelectedPageId={convertSourcePageId ?? selectedPageId}
+        open={generateDialogOpen}
+        onOpenChange={(open) => {
+          setGenerateDialogOpen(open)
+          if (!open) setConvertSourcePageId(null)
+        }}
+      />
+
+      {canUseTextbookActivities && (
+        <section className="space-y-2">
+          <div className="flex items-center gap-2 pb-1 border-b">
+            <BookOpen className="h-3.5 w-3.5 text-blue-600" />
+            <h2 className="text-sm font-semibold">{t`Activities in your book`}</h2>
+            <span className="text-[11px] text-muted-foreground">
+              {t`Detected from the source pages. Convert any of them into a re-generated activity.`}
+            </span>
+          </div>
+          <TextbookActivitiesPanel
             bookLabel={bookLabel}
+            pages={pages}
             apiKey={apiKey}
-            hasApiKey={hasApiKey}
             providerCredentials={providerCredentials}
-            initialSelectedPageId={selectedPageId}
-            open={generateDialogOpen}
-            onOpenChange={setGenerateDialogOpen}
+            onOpenInStoryboard={(activity) => {
+              const targetPageId = activity.override?.assignedPageIds?.[0] ?? activity.pageId
+              const targetSectionIndex = targetPageId === activity.pageId ? activity.sectionIndex : 0
+              skipNextResetRef.current = true
+              setSectionIndex(targetSectionIndex)
+              navigate({
+                to: "/books/$label/$step/$pageId",
+                params: { label: bookLabel, step: "storyboard", pageId: targetPageId },
+              })
+            }}
+            onConvertActivity={(activity) => {
+              // Pre-fill the generate dialog with the activity's source page,
+              // so the user can regenerate it as a template.
+              const sourcePageId = activity.override?.assignedPageIds?.[0] ?? activity.pageId
+              setConvertSourcePageId(sourcePageId)
+              setGenerateDialogOpen(true)
+            }}
           />
+        </section>
+      )}
+
+      <section className="space-y-2">
+        <div className="flex items-center gap-2 pb-1 border-b">
+          <Sparkles className="h-3.5 w-3.5 text-orange-600" />
+          <h2 className="text-sm font-semibold">{t`Generated activities`}</h2>
+          <span className="text-[11px] text-muted-foreground">
+            {t`New activity pages you created with the AI generator.`}
+          </span>
+        </div>
+        <>
           {saveError && <p className="text-xs text-red-500">{saveError}</p>}
           {showEmptyState && (
             <div className="flex flex-col items-center justify-center rounded-md border bg-card py-16 px-6 text-center">
@@ -3145,7 +3171,7 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
             )
           })}
         </>
-      )}
+      </section>
       <PageLightbox
         bookLabel={bookLabel}
         pageId={lightboxPageId}

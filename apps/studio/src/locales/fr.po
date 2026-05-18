@@ -515,6 +515,9 @@ msgstr "Activités désactivées"
 msgid "Activities enabled"
 msgstr "Activités activées"
 
+msgid "Activities in your book"
+msgstr ""
+
 msgid "Activity"
 msgstr ""
 
@@ -1426,6 +1429,9 @@ msgstr "Contrôle la façon dont le contenu des pages est regroupé lors de l'é
 msgid "Conversion of light into chemical energy."
 msgstr "Conversion de la lumière en énergie chimique."
 
+msgid "Convert"
+msgstr ""
+
 msgid "Convert any textbook into an accessible digital edition — audio, structured layouts, translations, and sign-language, built in from the very first page."
 msgstr "Transformez n'importe quel livre en une édition numérique accessible — audio, mises en page structurées, traductions et langue des signes, intégrés dès la toute première page."
 
@@ -1693,6 +1699,9 @@ msgid "Detected"
 msgstr ""
 
 msgid "Detected as {detectedLabel}"
+msgstr ""
+
+msgid "Detected from the source pages. Convert any of them into a re-generated activity."
 msgstr ""
 
 msgid "Detecting figures"
@@ -2202,8 +2211,8 @@ msgstr "Français"
 msgid "From reference image..."
 msgstr "À partir de l'image de référence..."
 
-msgid "From your book"
-msgstr ""
+#~ msgid "From your book"
+#~ msgstr ""
 
 msgid "Front Cover"
 msgstr "Première de couverture"
@@ -2283,7 +2292,10 @@ msgstr "Générer avec l'IA"
 msgid "Generate word timestamps"
 msgstr "Générer les horodatages de mots"
 
-msgid "Generated"
+#~ msgid "Generated"
+#~ msgstr ""
+
+msgid "Generated activities"
 msgstr ""
 
 msgid "Generated activity"
@@ -3113,6 +3125,9 @@ msgstr "Jamais"
 
 msgid "New"
 msgstr "Nouveau"
+
+msgid "New activity pages you created with the AI generator."
+msgstr ""
 
 msgid "New checklist item"
 msgstr "Nouvel élément de liste de contrôle"
@@ -3954,6 +3969,9 @@ msgstr "Quiz Invite"
 
 msgid "Re-enable type"
 msgstr "Réactiver le type"
+
+msgid "Re-generate this activity using the AI generator"
+msgstr ""
 
 msgid "Re-package ADT"
 msgstr "Re-package ADT"

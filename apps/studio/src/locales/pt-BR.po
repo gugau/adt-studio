@@ -514,6 +514,9 @@ msgstr "Atividades desativadas"
 msgid "Activities enabled"
 msgstr "Atividades ativadas"
 
+msgid "Activities in your book"
+msgstr ""
+
 msgid "Activity"
 msgstr ""
 
@@ -1425,6 +1428,9 @@ msgstr "Controla como o conteúdo da página é agrupado durante a etapa de seci
 msgid "Conversion of light into chemical energy."
 msgstr "Conversão de luz em energia química."
 
+msgid "Convert"
+msgstr ""
+
 msgid "Convert any textbook into an accessible digital edition — audio, structured layouts, translations, and sign-language, built in from the very first page."
 msgstr "Converta qualquer livro em uma edição digital acessível — áudio, layouts estruturados, traduções e língua de sinais, integrados desde a primeira página."
 
@@ -1692,6 +1698,9 @@ msgid "Detected"
 msgstr ""
 
 msgid "Detected as {detectedLabel}"
+msgstr ""
+
+msgid "Detected from the source pages. Convert any of them into a re-generated activity."
 msgstr ""
 
 msgid "Detecting figures"
@@ -2201,8 +2210,8 @@ msgstr "Francês"
 msgid "From reference image..."
 msgstr "A partir de imagem de referência..."
 
-msgid "From your book"
-msgstr ""
+#~ msgid "From your book"
+#~ msgstr ""
 
 msgid "Front Cover"
 msgstr "Capa"
@@ -2282,7 +2291,10 @@ msgstr "Gerar com IA"
 msgid "Generate word timestamps"
 msgstr "Gerar marcações de tempo por palavra"
 
-msgid "Generated"
+#~ msgid "Generated"
+#~ msgstr ""
+
+msgid "Generated activities"
 msgstr ""
 
 msgid "Generated activity"
@@ -3112,6 +3124,9 @@ msgstr "Nunca"
 
 msgid "New"
 msgstr "Novo"
+
+msgid "New activity pages you created with the AI generator."
+msgstr ""
 
 msgid "New checklist item"
 msgstr "New checklist item"
@@ -3953,6 +3968,9 @@ msgstr "Prompt de questionário"
 
 msgid "Re-enable type"
 msgstr "Reativar tipo"
+
+msgid "Re-generate this activity using the AI generator"
+msgstr ""
 
 msgid "Re-package ADT"
 msgstr "Reempacotar ADT"

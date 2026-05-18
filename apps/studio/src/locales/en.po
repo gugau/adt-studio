@@ -514,6 +514,9 @@ msgstr "Activities disabled"
 msgid "Activities enabled"
 msgstr "Activities enabled"
 
+msgid "Activities in your book"
+msgstr "Activities in your book"
+
 msgid "Activity"
 msgstr "Activity"
 
@@ -1425,6 +1428,9 @@ msgstr "Controls how page content is grouped during the sectioning step."
 msgid "Conversion of light into chemical energy."
 msgstr "Conversion of light into chemical energy."
 
+msgid "Convert"
+msgstr "Convert"
+
 msgid "Convert any textbook into an accessible digital edition — audio, structured layouts, translations, and sign-language, built in from the very first page."
 msgstr "Convert any textbook into an accessible digital edition — audio, structured layouts, translations, and sign-language, built in from the very first page."
 
@@ -1693,6 +1699,9 @@ msgstr "Detected"
 
 msgid "Detected as {detectedLabel}"
 msgstr "Detected as {detectedLabel}"
+
+msgid "Detected from the source pages. Convert any of them into a re-generated activity."
+msgstr "Detected from the source pages. Convert any of them into a re-generated activity."
 
 msgid "Detecting figures"
 msgstr "Detecting figures"
@@ -2201,8 +2210,8 @@ msgstr "French"
 msgid "From reference image..."
 msgstr "From reference image..."
 
-msgid "From your book"
-msgstr "From your book"
+#~ msgid "From your book"
+#~ msgstr "From your book"
 
 msgid "Front Cover"
 msgstr "Front Cover"
@@ -2282,8 +2291,11 @@ msgstr "Generate with AI"
 msgid "Generate word timestamps"
 msgstr "Generate word timestamps"
 
-msgid "Generated"
-msgstr "Generated"
+#~ msgid "Generated"
+#~ msgstr "Generated"
+
+msgid "Generated activities"
+msgstr "Generated activities"
 
 msgid "Generated activity"
 msgstr "Generated activity"
@@ -3112,6 +3124,9 @@ msgstr "Never"
 
 msgid "New"
 msgstr "New"
+
+msgid "New activity pages you created with the AI generator."
+msgstr "New activity pages you created with the AI generator."
 
 msgid "New checklist item"
 msgstr "New checklist item"
@@ -3953,6 +3968,9 @@ msgstr "Quiz Prompt"
 
 msgid "Re-enable type"
 msgstr "Re-enable type"
+
+msgid "Re-generate this activity using the AI generator"
+msgstr "Re-generate this activity using the AI generator"
 
 msgid "Re-package ADT"
 msgstr "Re-package ADT"
