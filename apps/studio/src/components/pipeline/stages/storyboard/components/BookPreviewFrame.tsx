@@ -8,7 +8,11 @@ import {
 } from "./style-editor/device-chrome"
 import { IPhoneFrame } from "./style-editor/device-frames/iphone-frame"
 import { IPadFrame } from "./style-editor/device-frames/ipad-frame"
-import { promoteFirstHeadingToH1, reconstructHtmlWithEdit } from "./iframe-html"
+import {
+  demoteFirstHeadingIfPromoted,
+  promoteFirstHeadingToH1,
+  reconstructHtmlWithEdit,
+} from "./iframe-html"
 import { INTERACTIVE_SCRIPT, INTERACTIVE_STYLES } from "./iframe-interactive"
 
 // In Desktop version, BASE_URL is "http://localhost:3001/api"; extract the origin so the iframe
@@ -160,7 +164,7 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
         html = doc.body.innerHTML
       }
       el.setAttribute("data-adt-selected", "true")
-      return html
+      return demoteFirstHeadingIfPromoted(html, sanitizedHtmlRef.current)
     },
     resetContent: () => {
       if (readyRef.current) injectContent(latestHtmlRef.current)

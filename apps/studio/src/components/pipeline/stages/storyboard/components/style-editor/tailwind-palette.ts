@@ -411,6 +411,9 @@ export function hexFromTailwindName(name: string): string | null {
 }
 
 const NAME_BY_HEX = new Map<string, string>()
+for (const k of KEYWORD_COLORS) {
+  NAME_BY_HEX.set(k.hex.toLowerCase(), k.name)
+}
 for (const f of TAILWIND_FAMILIES) {
   for (const s of f.shades) {
     if (!NAME_BY_HEX.has(s.hex.toLowerCase())) {
