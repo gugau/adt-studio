@@ -73,6 +73,11 @@ const FONT_SIZE_PX_TO_TOKEN = new Map<number, string>(
   FONT_SIZE_TOKENS.map(([t, px]) => [px, t])
 )
 
+export const FONT_SIZE_TOKEN_LIST: ReadonlyArray<{
+  label: string
+  value: number
+}> = FONT_SIZE_TOKENS.map(([label, value]) => ({ label, value }))
+
 export const fontSizeClassMap: ClassMap<number> = {
   matches: (cls) =>
     /^text-(xs|sm|base|lg|xl|[2-9]xl|\[[\d.]+(?:px|rem|em)\])$/.test(cls),

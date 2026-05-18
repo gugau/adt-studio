@@ -14,8 +14,10 @@ import { Section } from "../controls/Section"
 import { Select, type SelectOption } from "../controls/Select"
 import { ColorInput } from "../controls/ColorInput"
 import { NumericInput } from "../controls/NumericInput"
+import { TokenInput } from "../controls/TokenInput"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import {
+  FONT_SIZE_TOKEN_LIST,
   fontSizeClassMap,
   fontWeightClassMap,
   textAlignClassMap,
@@ -64,11 +66,14 @@ export function TypographySection() {
   return (
     <Section title={<Trans>Typography</Trans>}>
       <StyleLabel label={<Trans>Size</Trans>} override={fontSize.override}>
-        <NumericInput
+        <TokenInput
           value={fontSize.value}
-          onCommit={fontSize.setValue}
-          inputMode="numeric"
+          onChange={fontSize.setValue}
+          tokens={FONT_SIZE_TOKEN_LIST}
           suffix="px"
+          renderPreview={(tok) => (
+            <span style={{ fontSize: Math.min(tok.value, 22) }}>Aa</span>
+          )}
         />
       </StyleLabel>
       <StyleLabel label={<Trans>Weight</Trans>} override={weight.override}>

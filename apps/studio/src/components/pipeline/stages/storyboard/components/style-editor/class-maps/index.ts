@@ -24,6 +24,7 @@ export {
   fontFamilyClassMap,
   fontWeightClassMap,
   fontSizeClassMap,
+  FONT_SIZE_TOKEN_LIST,
   textAlignClassMap,
   lineHeightClassMap,
   textDecorationClassMap,
