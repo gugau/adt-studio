@@ -18,6 +18,7 @@ import {
   type Page as MupdfPage,
   type Rect,
 } from "mupdf"
+import { colorToCss } from "./color-utils.js"
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -752,24 +753,6 @@ function cssFontFamily(font: MupdfFont): string {
   return `${name},serif`
 }
 
-/** Convert a mupdf Color (1, 3, or 4 floats in 0..1) to `#rrggbb`. */
-function colorToCss(color: Color): string {
-  let r: number, g: number, b: number
-  if (color.length === 1) {
-    r = g = b = color[0]
-  } else if (color.length === 3) {
-    [r, g, b] = color
-  } else {
-    // CMYK → naive conversion: r=(1-c)(1-k), g=(1-m)(1-k), b=(1-y)(1-k).
-    const [c, m, y, k] = color
-    r = (1 - c) * (1 - k)
-    g = (1 - m) * (1 - k)
-    b = (1 - y) * (1 - k)
-  }
-  const hex = (n: number) =>
-    Math.max(0, Math.min(255, Math.round(n * 255))).toString(16).padStart(2, "0")
-  return `#${hex(r)}${hex(g)}${hex(b)}`
-}
 
 // ── Block clustering ───────────────────────────────────────────────
 

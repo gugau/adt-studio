@@ -599,9 +599,10 @@ async function extractPage(doc: MupdfDocument, pageIndex: number, vectorTextGrou
 
   // Extract vector shapes and figure groups from SVG (text shapes participate in grouping when enabled)
   const pageSvg = getPageSvg(page);
-  const { images: figureImages, coveredRasterHashes, debug: extractionDebug } = await extractVectorImagesFromSvg(
+  const { images: figureImagesRaw, coveredRasterHashes, debug: extractionDebug } = await extractVectorImagesFromSvg(
     pageSvg, pageId, allRasterImages.length, pagePngBuf, vectorTextGrouping ? textShapes : undefined
   );
+  let figureImages = figureImagesRaw;
 
   // Filter out raster images that are covered by figure groups (dedup)
   const rasterImages = coveredRasterHashes.size > 0
@@ -616,9 +617,16 @@ async function extractPage(doc: MupdfDocument, pageIndex: number, vectorTextGrou
   // fully-resolved CTMs. This is the canonical mupdf z-order primitive.
   const recorder = runRecorderInViewport(page, pageBounds, 0, 0);
   stampRasterPlacementsFromOps(rasterImages, recorder.ops);
-  stampFigureSeqnosFromOps(figureImages, recorder.ops);
 
   const paragraphData = parsePageParagraphs(doc, pageIndex, 2, fixedLayout);
+  // Fold hand-lettered vector paint into the duplicate selectable text
+  // run, then drop the now-duplicate vector shapes (re-rendering figures
+  // that only partially duplicate text). Figure seqnos are stamped after,
+  // so re-rendered survivors get their true content-stream order.
+  const { restyledBoxes } = restyleCoincidentVectorText(paragraphData.paragraphs, recorder.ops);
+  figureImages = await excludeConsumedFigureShapes(figureImages, restyledBoxes);
+  stampFigureSeqnosFromOps(figureImages, recorder.ops);
+
   const positionedText = buildPositionedTextOutput(
     pageId,
     paragraphData,
@@ -932,6 +940,184 @@ function matchParagraphSeqno(
   return bestSeqno;
 }
 
+type Segment = AsHtmlParagraph["segments"][number];
+
+/** A path op's geometry bbox is "inside" a text run's glyph box when it
+ *  sits within it, give or take `tol` (SVG export rounds to 2dp). */
+function geomInside(
+  inner: { x0: number; y0: number; x1: number; y1: number },
+  outer: { x0: number; y0: number; x1: number; y1: number },
+  tol: number,
+): boolean {
+  return (
+    inner.x0 >= outer.x0 - tol &&
+    inner.y0 >= outer.y0 - tol &&
+    inner.x1 <= outer.x1 + tol &&
+    inner.y1 <= outer.y1 + tol
+  );
+}
+
+/** Single dominant value of a string list, or null if no strict majority. */
+function majority(vals: string[]): string | null {
+  if (vals.length === 0) return null;
+  const counts = new Map<string, number>();
+  for (const v of vals) counts.set(v, (counts.get(v) ?? 0) + 1);
+  let best: string | null = null;
+  let bestN = 0;
+  for (const [v, n] of counts) if (n > bestN) (best = v), (bestN = n);
+  return bestN * 2 > vals.length ? best : null;
+}
+
+/**
+ * Restyle text runs that duplicate hand-lettered vector art, faithfully,
+ * from the vector's own paint — so the *selectable text* carries the
+ * visual the PDF intended and the duplicate vector can be dropped
+ * (translation / TTS / glossary all operate on clean text).
+ *
+ * mupdf opens a new `fillText` op on every graphics-state change
+ * (incl. fill colour / font) — exactly where `groupIntoSegments` splits
+ * runs — so a styled segment maps to a `fillText` op; that op's bbox is
+ * the run's extent in the same viewport space as path ops' `geomBbox`.
+ *
+ * For a segment whose run box contains path ops:
+ *  - all-`strokePath`  → the vector is the glyph's outline: keep the run's
+ *    fill colour, add a faithful `-webkit-text-stroke` from the stroke
+ *    op's colour + width (e.g. hollow "white").
+ *  - all-`fillPath`    → the vector IS the visible glyph and the run's
+ *    colour is an invisible shim: recolour the run to the fill colour,
+ *    no stroke (e.g. solid black hand-drawn `h`).
+ *  - mixed             → both.
+ *  - colour disagreement / no run match → leave untouched (safe no-op;
+ *    never worse than today).
+ *
+ * Returns the set of path-op seqnos consumed by a restyle, so a later
+ * pass can exclude the now-duplicate vector shapes.
+ */
+function restyleCoincidentVectorText(
+  paragraphs: AsHtmlParagraph[],
+  ops: StreamOp[],
+): { consumed: Set<number>; restyledBoxes: BBox[] } {
+  const consumed = new Set<number>();
+  // Glyph boxes of runs we restyled. A figure shape that sits inside one
+  // of these is the vector duplicate of already-restyled text and is
+  // excluded — robust to a glyph being one SVG shape but many recorder
+  // subpath ops (op-bbox equality isn't).
+  const restyledBoxes: BBox[] = [];
+  const pathOps = ops.filter(
+    (o): o is PathStreamOp => o.kind === "fillPath" || o.kind === "strokePath",
+  );
+  if (pathOps.length === 0) return { consumed, restyledBoxes };
+  const textOps = ops.filter(
+    (o): o is TextStreamOp => o.kind === "fillText" || o.kind === "strokeText",
+  );
+  const TOL = 1;
+  const isWs = (c: string): boolean => /\s/.test(c);
+
+  for (const p of paragraphs) {
+    if (!p.segments || p.segments.length === 0) continue;
+    const baseline = p.top + p.lineHeight;
+    // Glyphs on THIS paragraph's line, gathered across every text op and
+    // filtered by per-glyph y: a uniform-style heading is coalesced by
+    // mupdf into ONE op spanning multiple lines/segments, so an op can't
+    // be matched whole to a segment. Per-glyph y picks only this line's
+    // glyphs out of such an op.
+    const lineGlyphs: { rune: string; x: number }[] = [];
+    for (const op of textOps) {
+      for (const g of op.glyphs) {
+        if (Math.abs(g.y - baseline) < Math.max(p.lineHeight, 4)) {
+          lineGlyphs.push({ rune: g.rune, x: g.x });
+        }
+      }
+    }
+    if (lineGlyphs.length === 0) continue;
+    lineGlyphs.sort((a, b) => a.x - b.x);
+
+    // Align each segment to its own glyph sub-span by a whitespace-tolerant
+    // two-pointer walk (segments concatenate to the line text). The segment
+    // box is the extent of just its glyphs — works whether the run is its
+    // own op or part of a coalesced multi-segment op, and repeated letters
+    // map to successive glyphs (cursor advances), so each occurrence's
+    // coincident vector is consumed independently.
+    let gi = 0;
+    for (const seg of p.segments as Segment[]) {
+      const txt = seg.text;
+      const trimmedLen = txt.replace(/\s+$/, "").length;
+      const start = gi;
+      let si = 0;
+      while (si < txt.length && gi < lineGlyphs.length) {
+        const sc = txt[si];
+        const gc = lineGlyphs[gi].rune;
+        if (sc === gc) {
+          si++;
+          gi++;
+        } else if (isWs(sc)) {
+          si++; // segment whitespace absent from glyph stream
+        } else if (isWs(gc)) {
+          gi++; // extra whitespace glyph (letter-spacing artefact)
+        } else {
+          break; // real mismatch — give up on this segment
+        }
+      }
+      if (trimmedLen === 0 || si < trimmedLen) continue; // unmatched → skip
+      const segGlyphs = lineGlyphs.slice(start, gi);
+      if (segGlyphs.length === 0) continue;
+      const last = segGlyphs[segGlyphs.length - 1];
+      // A per-line y band proportional to lineHeight: tall enough for a
+      // decorative glyph's ascender / hand-drawn stroke overhang, but tied
+      // to THIS line — NOT the op's bbox (a uniform body block is one
+      // coalesced op whose bbox spans the whole multi-line paragraph;
+      // using it swallowed unrelated path ops and restyled body text).
+      const segBox = {
+        x0: segGlyphs[0].x,
+        // Next glyph's x bounds the run on the right; fall back to a rough
+        // em past the last glyph for the line's final segment.
+        x1: lineGlyphs[gi]?.x ?? last.x + p.lineHeight,
+        y0: p.top - 0.1 * p.lineHeight,
+        y1: p.top + 1.5 * p.lineHeight,
+      };
+
+      const hits = pathOps.filter((po) => geomInside(po.geomBbox, segBox, TOL));
+      if (hits.length === 0) continue;
+
+      const strokes = hits.filter((h) => h.kind === "strokePath");
+      const fills = hits.filter((h) => h.kind === "fillPath");
+      // Per-role colour majority. A fill colour differing from a stroke
+      // colour is normal (e.g. white fill + black outline) — only
+      // disagreement *within* a role is ambiguous and skipped.
+      const fillColor = fills.length ? majority(fills.map((f) => f.color)) : null;
+      const strokeColor = strokes.length ? majority(strokes.map((s) => s.color)) : null;
+      const style = (seg.style ??= {});
+      let applied = false;
+
+      if (fillColor) {
+        // Fill role: the vector is the visible glyph; adopt its colour.
+        style.color = fillColor;
+        applied = true;
+      }
+      if (strokeColor) {
+        // Stroke role: faithful outline from the PDF's own stroke.
+        const widths = strokes
+          .map((s) => s.strokeWidth ?? 0)
+          .filter((w) => w > 0)
+          .sort((a, b) => a - b);
+        const w = widths.length ? widths[widths.length >> 1] : 1;
+        style["-webkit-text-stroke"] = `${Math.max(1, Math.round(w))}px ${strokeColor}`;
+        style["paint-order"] = "stroke fill";
+        applied = true;
+      } else if (applied) {
+        // Pure fill role — clear any stale stroke styling.
+        delete style["-webkit-text-stroke"];
+        delete style["paint-order"];
+      }
+
+      if (!applied) continue; // ambiguous within a role → faithful no-op
+      for (const h of hits) consumed.add(h.seqno);
+      restyledBoxes.push([segBox.x0, segBox.y0, segBox.x1, segBox.y1]);
+    }
+  }
+  return { consumed, restyledBoxes };
+}
+
 /**
  * Assemble the final `PositionedTextOutput` from extracted images + vector
  * figures + asHTML paragraphs, sorting everything by its true PDF
@@ -1165,7 +1351,6 @@ async function extractSpreadPage(
   // spread-level image stitching is needed — the two halves, each with their
   // own PDF-point bounds, compose correctly on the rendered spread viewport.
   const rasterImages = [...leftRaster, ...rightRaster];
-  const figureImages = [...leftResult.images, ...rightResult.images];
 
   // Run the recorder on both pages, in viewport coords; right-page x is
   // shifted by left page width so positions address the stitched spread,
@@ -1183,15 +1368,25 @@ async function extractSpreadPage(
     leftMaxSeqno + 1,
   );
   const ops: StreamOp[] = [...leftRecorder.ops, ...rightRecorder.ops];
-  // Stamp seqnos on rasters/figures using the unified op list. We split by
-  // page when matching rasters so dim-tied images on different pages don't
-  // accidentally pair across the spread boundary.
+  // Rasters: stamp per page so dim-tied images on different pages don't
+  // pair across the spread boundary.
   stampRasterPlacementsFromOps(leftRaster, leftRecorder.ops);
   stampRasterPlacementsFromOps(rightRaster, rightRecorder.ops);
-  stampFigureSeqnosFromOps(leftResult.images, leftRecorder.ops);
-  stampFigureSeqnosFromOps(rightResult.images, rightRecorder.ops);
 
   const paragraphData = parsePageParagraphsSpread(doc, leftIndex, rightIndex, 2, fixedLayout);
+  // Fold hand-lettered vector paint into the duplicate selectable text run
+  // and drop the now-duplicate vector shapes (per-figure xOffset/svgDefs
+  // is carried in the re-render context, so a single pass spans both
+  // halves). Figure seqnos are stamped after, over the unified op list:
+  // geometry identity is position-exact, so right-page shape boxes
+  // (xOffset-shifted) only coincide with right-page ops.
+  const { restyledBoxes } = restyleCoincidentVectorText(paragraphData.paragraphs, ops);
+  const figureImages = await excludeConsumedFigureShapes(
+    [...leftResult.images, ...rightResult.images],
+    restyledBoxes,
+  );
+  stampFigureSeqnosFromOps(figureImages, ops);
+
   const positionedText = buildPositionedTextOutput(
     pageId,
     paragraphData,
@@ -1443,6 +1638,27 @@ interface ShapeInfo {
   /** Character count of the text content (only set when isText is true) */
   textLength?: number;
 }
+
+/**
+ * Per-vector-figure context for re-rendering a *subset* of its shapes when
+ * some are excluded as text duplicates (Option A phase 4, seam (a)).
+ * `group` is index-aligned with the figure's `shapeGeomBoxes`. Keyed by
+ * the figure object in a WeakMap so it's transient and never persisted.
+ */
+interface FigureRenderCtx {
+  group: ShapeInfo[];
+  svgDefs: string;
+  pageWidth: number;
+  pageHeight: number;
+  xOffset: number;
+  aaGuardX: number;
+  aaGuardY: number;
+  /** Group contained raster image shapes → it was page-cropped from the
+   *  composited page render; its pixels can't be reconstructed from the
+   *  SVG shape subset, so it must never be re-rendered vector-only. */
+  hadImages: boolean;
+}
+const figureRenderCtx = new WeakMap<ExtractedImage, FigureRenderCtx>();
 
 /**
  * Compute the exact bounding box of a cubic Bezier curve.
@@ -2967,6 +3183,22 @@ async function extractVectorImagesFromSvg(
         s.bbox[2] + xOffset,
         s.bbox[3],
       ]);
+      // Keep what's needed to re-render a surviving subset if some of this
+      // figure's shapes are later excluded as text duplicates. Captured for
+      // page-crop figures too: a decorative-letter bubble is page-crop only
+      // because the invisible duplicate text joined the group; once those
+      // shapes are excluded the survivors are pure vector and re-render
+      // cleanly (no baked-in ghost glyph).
+      figureRenderCtx.set(img, {
+        group,
+        svgDefs,
+        pageWidth,
+        pageHeight,
+        xOffset,
+        aaGuardX,
+        aaGuardY,
+        hadImages: hasImages,
+      });
       images.push(img);
     }
   }
@@ -3000,6 +3232,127 @@ async function extractVectorImagesFromSvg(
   }
 
   return { images, coveredRasterHashes, imageHashToSeqno, debug };
+}
+
+/**
+ * Drop vector figure shapes that `restyleCoincidentVectorText` consumed
+ * (their paint was folded into the duplicate selectable text run), so the
+ * figure isn't double-rendered over the text it duplicates.
+ *
+ * - no shapes consumed → figure unchanged.
+ * - all shapes consumed → figure dropped (e.g. colouring `im002`, the
+ *   whole "white" outline).
+ * - some consumed → re-render the surviving shapes only, preserving the
+ *   figure's `imageId` (e.g. Volcanoes `im003`: keep the bubble, drop the
+ *   hand-lettered glyphs). Re-render mirrors the original vector-figure
+ *   build (same `computeGroupInkBbox` + page clamp + bounds/boxes).
+ *
+ * A figure shape is consumed when it sits inside an already-restyled
+ * run's glyph box (the vector duplicate of that run). Coincidence uses a
+ * ≥70%-of-shape-area overlap, not strict containment / op-bbox equality:
+ * a hand-lettered glyph is one SVG shape but many recorder subpath ops
+ * and may slightly overhang the font-metrics box, while a bubble outline
+ * barely intersects a small letter run box so it's never wrongly flagged.
+ * Figures whose survivors include a raster image (illustration panels)
+ * are kept whole; re-rendering them vector-only would drop the art.
+ */
+async function excludeConsumedFigureShapes(
+  figures: ExtractedImage[],
+  restyledBoxes: BBox[],
+): Promise<ExtractedImage[]> {
+  if (restyledBoxes.length === 0) return figures;
+  const MIN_INSIDE = 0.7;
+  const boxConsumed = (b: BBox): boolean => {
+    const area = Math.max(0, b[2] - b[0]) * Math.max(0, b[3] - b[1]);
+    if (area <= 0) return false;
+    return restyledBoxes.some((r) => {
+      const ix = Math.max(0, Math.min(b[2], r[2]) - Math.max(b[0], r[0]));
+      const iy = Math.max(0, Math.min(b[3], r[3]) - Math.max(b[1], r[1]));
+      return (ix * iy) / area >= MIN_INSIDE;
+    });
+  };
+
+  const out: ExtractedImage[] = [];
+  for (const fig of figures) {
+    const boxes = fig.shapeGeomBoxes;
+    if (!boxes || boxes.length === 0) {
+      out.push(fig);
+      continue;
+    }
+    const flags = boxes.map((b) => boxConsumed(b));
+    const n = flags.filter(Boolean).length;
+    if (n === 0) {
+      out.push(fig);
+      continue;
+    }
+    if (n === boxes.length) continue; // whole figure duplicates text → drop
+
+    const ctx = figureRenderCtx.get(fig);
+    if (!ctx) {
+      out.push(fig); // no re-render context — keep whole (safe)
+      continue;
+    }
+    // A figure built from a group that contained raster images is a crop
+    // of the composited page render — its illustration can't be rebuilt
+    // from the SVG shape subset, so re-rendering it vector-only destroys
+    // the artwork. Keep such figures whole (conservative; an illustration
+    // panel that also bakes a heading keeps a ghost — accepted). Only
+    // raster-free figures (decorative-letter bubbles, true vector figures)
+    // re-render cleanly.
+    if (ctx.hadImages) {
+      out.push(fig);
+      continue;
+    }
+    const survivingGroup = ctx.group.filter((_, i) => !flags[i]);
+    const survivingNonText = survivingGroup.filter((s) => !s.isText);
+    if (survivingNonText.length === 0) continue;
+    if (survivingNonText.some((s) => s.isImage)) {
+      out.push(fig);
+      continue;
+    }
+
+    const ink = computeGroupInkBbox(
+      survivingGroup,
+      ctx.aaGuardX,
+      ctx.aaGuardY,
+    );
+    const cropBbox: BBox = [
+      Math.max(0, ink[0]),
+      Math.max(0, ink[1]),
+      Math.min(ctx.pageWidth, ink[2]),
+      Math.min(ctx.pageHeight, ink[3]),
+    ];
+    const re = await renderShapeGroup(
+      survivingNonText,
+      fig.pageId,
+      0,
+      ctx.svgDefs,
+      ctx.pageWidth,
+      ctx.pageHeight,
+      cropBbox,
+    );
+    if (!re) continue;
+    re.imageId = fig.imageId; // preserve id — downstream keys on it
+    re.pageId = fig.pageId;
+    re.renderMethod = "vector";
+    re.bounds = {
+      x: cropBbox[0] + ctx.xOffset,
+      y: cropBbox[1],
+      width: cropBbox[2] - cropBbox[0],
+      height: cropBbox[3] - cropBbox[1],
+    };
+    // Fallback z-order; re-stamped from recorder ops after exclusion.
+    re.streamSeqno = Math.min(...survivingGroup.map((s) => s.seqno));
+    re.shapeGeomBoxes = survivingGroup.map((s): BBox => [
+      s.bbox[0] + ctx.xOffset,
+      s.bbox[1],
+      s.bbox[2] + ctx.xOffset,
+      s.bbox[3],
+    ]);
+    figureRenderCtx.set(re, { ...ctx, group: survivingGroup });
+    out.push(re);
+  }
+  return out;
 }
 
 // ============================================================================
@@ -3043,4 +3396,5 @@ export const _testing = {
   parseStrokeInkExtent,
   computeGroupInkBbox,
   stampFigureSeqnosFromOps,
+  restyleCoincidentVectorText,
 };

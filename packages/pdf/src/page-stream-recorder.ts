@@ -17,10 +17,13 @@
  */
 import mupdf, {
   type BlendMode,
+  type Color,
+  type ColorSpace,
   type Document as MupdfDocument,
   type Matrix as MupdfMatrix,
   type StrokeState,
 } from "mupdf"
+import { colorToCss } from "./color-utils.js"
 
 // mupdf's path/text getBounds() typings require a StrokeState, but the
 // runtime accepts null for unstroked-bound queries. Cast at call sites.
@@ -98,6 +101,13 @@ export interface PathStreamOp extends BaseStreamOp {
    *  that produced it by exact geometry identity — a stroked op's `bbox`
    *  is larger than its shape's geometry, so `bbox` can't be matched. */
   geomBbox: BBox
+  /** Paint colour as CSS hex (`#rrggbb`), from the op's colorspace+color. */
+  color: string
+  /** Composed alpha (per-op × transparency-group stack), 0..1. */
+  alpha: number
+  /** `strokePath` only: line width in transformed (page) space, i.e.
+   *  `StrokeState.getLineWidth()` scaled by the CTM. */
+  strokeWidth?: number
 }
 
 export interface TextStreamOp extends BaseStreamOp {
@@ -146,17 +156,19 @@ export function recordPageStream(page: AnyPage): StreamOp[] {
   }
 
   const device = new mupdf.Device({
-    fillPath(path, _evenOdd, ctm /*, _cs, _color, _alpha */) {
+    fillPath(path, _evenOdd, ctm, _cs: ColorSpace, color: Color, alpha: number) {
       const geom = rectToBBox(path.getBounds(NO_STROKE, ctm))
       ops.push({
         seqno: seqno++,
         kind: "fillPath",
         bbox: geom,
         geomBbox: geom,
+        color: colorToCss(color),
+        alpha: composedAlpha(alpha ?? 1),
         activeClipBbox: activeClipBbox(),
       })
     },
-    strokePath(path, stroke, ctm /*, _cs, _color, _alpha */) {
+    strokePath(path, stroke, ctm, _cs: ColorSpace, color: Color, alpha: number) {
       ops.push({
         seqno: seqno++,
         kind: "strokePath",
@@ -164,6 +176,9 @@ export function recordPageStream(page: AnyPage): StreamOp[] {
         // Geometry bounds without stroke inflation — matches the SVG
         // shape's bbox so the op can be tied back to its figure.
         geomBbox: rectToBBox(path.getBounds(NO_STROKE, ctm)),
+        color: colorToCss(color),
+        alpha: composedAlpha(alpha ?? 1),
+        strokeWidth: stroke.getLineWidth() * ctmScale(ctm),
         activeClipBbox: activeClipBbox(),
       })
     },
@@ -300,6 +315,14 @@ export function recordPageStream(page: AnyPage): StreamOp[] {
 /** Convert mupdf Rect tuple to {x0,y0,x1,y1}. */
 function rectToBBox(r: [number, number, number, number]): BBox {
   return { x0: r[0], y0: r[1], x1: r[2], y1: r[3] }
+}
+
+/** Scalar scale of a 2×3 affine CTM `[a,b,c,d,e,f]` — the larger of the
+ *  two axis norms, so a non-uniform transform never under-scales a stroke
+ *  width. Mirrors `parseStrokeInkExtent` in extract.ts. */
+function ctmScale(ctm: number[]): number {
+  const [a, b, c, d] = ctm
+  return Math.max(Math.hypot(a, b), Math.hypot(c, d)) || 1
 }
 
 /** Compute the AABB of an image after applying its CTM. The image's natural
