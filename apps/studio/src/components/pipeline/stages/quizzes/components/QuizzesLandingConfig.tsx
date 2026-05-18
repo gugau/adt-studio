@@ -202,6 +202,10 @@ export function QuizzesLandingConfig({
   const [selectedPageIds, setSelectedPageIds] = useState<string[]>(
     initialSelectedPageId ? [initialSelectedPageId] : []
   )
+  type PageScope = "whole_book" | "just_this" | "specific"
+  const [pageScope, setPageScope] = useState<PageScope>(
+    initialSelectedPageId ? "just_this" : "whole_book"
+  )
   const [insertAfterPageId, setInsertAfterPageId] = useState(SMART_INSERT_AFTER)
   const [replaceExisting, setReplaceExisting] = useState(true)
   const [pickerOffset, setPickerOffset] = useState(0)
@@ -261,24 +265,19 @@ export function QuizzesLandingConfig({
   const orderedSelectedPageIds = (ids: string[]) =>
     ids.slice().sort((a, b) => (pageOrder.get(a) ?? Number.MAX_SAFE_INTEGER) - (pageOrder.get(b) ?? Number.MAX_SAFE_INTEGER))
 
-  // When the dialog opens, default the range to the whole book if the user
-  // hasn't already picked something. Lazy users can then press Generate
-  // without touching anything else.
+  // Keep selectedPageIds in sync with pageScope. Specific-pages mode lets the
+  // user free-text the range; the other scopes drive selection automatically.
   useEffect(() => {
-    if (!open) {
-      autoFilledForOpenRef.current = false
-      return
+    if (!open) return
+    if (pageScope === "whole_book") {
+      if (contentPageIds.length === 0) return
+      setSelectedPageIds(contentPageIds)
+      setPageRange(formatPageRange(contentPageIds, pageNumberById))
+    } else if (pageScope === "just_this" && initialSelectedPageId) {
+      setSelectedPageIds([initialSelectedPageId])
+      setPageRange(formatPageRange([initialSelectedPageId], pageNumberById) || initialSelectedPageId)
     }
-    if (autoFilledForOpenRef.current) return
-    if (selectedPageIds.length > 0) {
-      autoFilledForOpenRef.current = true
-      return
-    }
-    if (contentPageIds.length === 0) return
-    autoFilledForOpenRef.current = true
-    setSelectedPageIds(contentPageIds)
-    setPageRange(formatPageRange(contentPageIds, pageNumberById))
-  }, [open, selectedPageIds.length, contentPageIds, pageNumberById])
+  }, [open, pageScope, contentPageIds, pageNumberById, initialSelectedPageId])
 
   useEffect(() => {
     if (!initialSelectedPageId) return
@@ -295,20 +294,20 @@ export function QuizzesLandingConfig({
   const activityTypeLabel = (value: QuizActivityType) => {
     switch (value) {
       case "multiple_select":
-        return t`MCQ Multiple Select`
+        return t`Multiple select (pick many)`
       case "true_false":
-        return t`True/False`
+        return t`True or false`
       case "fill_in_the_blank":
-        return t`Fill Blanks`
+        return t`Fill in the blanks`
       case "open_ended":
-        return t`Open Ended`
+        return t`Open question`
       case "drag_and_drop":
-        return t`Matching Pairs`
+        return t`Matching pairs`
       case "sorting":
-        return t`Sorting`
+        return t`Sort into groups`
       case "multiple_choice":
       default:
-        return t`MCQ`
+        return t`Multiple choice`
     }
   }
 
@@ -383,11 +382,6 @@ export function QuizzesLandingConfig({
     setPageRange(formatPageRange(orderedIds, pageNumberById))
   }
 
-  const setRangeToWholeBook = () => {
-    setSelectedPageIds(contentPageIds)
-    setPageRange(formatPageRange(contentPageIds, pageNumberById))
-  }
-
   const togglePage = (pageId: string, enabled: boolean) => {
     if (!enabled) return
     const next = selectedPageIds.includes(pageId)
@@ -427,26 +421,26 @@ export function QuizzesLandingConfig({
   }
 
   const selectedCount = selectedPageIds.length
-  const questionsCount = Math.min(20, Math.max(1, Number(questionsPerQuiz) || 1))
+
+  const initialPage = pages.find((p) => p.pageId === initialSelectedPageId)
+  const initialPageLabel = initialPage ? t`Just this page (page ${String(initialPage.pageNumber)})` : null
+  const isSpecificValid = pageScope !== "specific" || selectedCount > 0
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <Sparkles className="h-4 w-4 text-orange-600" />
-            {t`Generate activity`}
+            {t`Add an activity`}
           </DialogTitle>
-          <DialogDescription>
-            {t`Pick a type and the pages to base the activity on. You can add more activities one at a time.`}
-          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Simple, always-visible controls */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="space-y-1.5">
-              <span className="text-xs font-medium">{t`Activity type`}</span>
+          {/* Sentence-style form */}
+          <div className="space-y-3">
+            <label className="block space-y-1.5">
+              <span className="text-xs font-medium text-muted-foreground">{t`Activity type`}</span>
               <select
                 value={activityType}
                 onChange={(e) => setActivityType(e.target.value as QuizActivityType)}
@@ -459,43 +453,46 @@ export function QuizzesLandingConfig({
                 ))}
               </select>
             </label>
-            <label className="space-y-1.5">
-              <span className="text-xs font-medium">{t`Pages`}</span>
-              <div className="flex items-center gap-1.5">
+
+            <label className="block space-y-1.5">
+              <span className="text-xs font-medium text-muted-foreground">{t`Source pages`}</span>
+              <select
+                value={pageScope}
+                onChange={(e) => setPageScope(e.target.value as PageScope)}
+                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+              >
+                <option value="whole_book">{t`The whole book`}</option>
+                {initialPageLabel && <option value="just_this">{initialPageLabel}</option>}
+                <option value="specific">{t`Specific pages…`}</option>
+              </select>
+            </label>
+
+            {pageScope === "specific" && (
+              <label className="block space-y-1.5">
+                <span className="text-[11px] text-muted-foreground">{t`Page numbers (e.g. 1-12, 20)`}</span>
                 <input
                   value={pageRange}
                   onChange={(e) => setPageRange(e.target.value)}
                   onBlur={applyRange}
-                  placeholder={t`1-12, 20, pg045`}
-                  className="h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  placeholder={t`1-12, 20`}
+                  className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  autoFocus
                 />
-                <button
-                  type="button"
-                  onClick={setRangeToWholeBook}
-                  className="h-9 shrink-0 rounded-md border border-input bg-background px-2.5 text-xs font-medium transition-colors hover:bg-muted/60"
-                >
-                  {t`Whole book`}
-                </button>
-              </div>
-            </label>
+                <span className="text-[11px] text-muted-foreground">
+                  {selectedCount === 0
+                    ? t`Type page numbers separated by commas. Press Tab to apply.`
+                    : selectedCount === 1
+                      ? t`1 page selected.`
+                      : t`${String(selectedCount)} pages selected.`}
+                </span>
+              </label>
+            )}
           </div>
-
-          {selectedCount === 0 ? (
-            <p className="text-[11px] text-amber-700 dark:text-amber-400">
-              {t`Type a page range above, or click "Whole book" to use every content page.`}
-            </p>
-          ) : (
-            <p className="text-[11px] text-muted-foreground">
-              {selectedCount === 1
-                ? t`1 source page selected • ${String(questionsCount)} question(s) will be generated.`
-                : t`${String(selectedCount)} source pages selected • ${String(questionsCount)} question(s) will be generated.`}
-            </p>
-          )}
 
           {/* Advanced — progressive disclosure */}
           <details className="rounded-md border bg-muted/20">
             <summary className="cursor-pointer px-3 py-2 text-xs font-medium">
-              {t`More options`}
+              {t`Advanced`}
             </summary>
             <div className="space-y-4 px-3 pb-3 pt-1">
               {/* Placement + questions per quiz */}
@@ -703,7 +700,7 @@ export function QuizzesLandingConfig({
           <button
             type="button"
             onClick={handleGenerate}
-            disabled={!hasApiKey || selectedPageIds.length === 0 || generating}
+            disabled={!hasApiKey || !isSpecificValid || generating}
             className="inline-flex h-9 items-center gap-1.5 rounded-md bg-orange-600 px-4 text-xs font-medium text-white transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}

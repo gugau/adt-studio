@@ -163,6 +163,10 @@ msgstr "{0} páginas"
 msgid "{0} pages selected"
 msgstr "{0} páginas selecionadas"
 
+#. placeholder {0}: String(selectedCount)
+msgid "{0} pages selected."
+msgstr ""
+
 #. placeholder {0}: String(displayQuestionCount)
 msgid "{0} questions"
 msgstr "{0} questões"
@@ -171,10 +175,8 @@ msgstr "{0} questões"
 msgid "{0} selected images are no longer in the storyboard."
 msgstr "{0} imagens selecionadas não estão mais no storyboard."
 
-#. placeholder {0}: String(selectedCount)
-#. placeholder {1}: String(questionsCount)
-msgid "{0} source pages selected • {1} question(s) will be generated."
-msgstr ""
+#~ msgid "{0} source pages selected • {1} question(s) will be generated."
+#~ msgstr ""
 
 #. placeholder {0}: String(visibleCount)
 msgid "{0} terms"
@@ -313,11 +315,16 @@ msgstr "1 item needs changes on this page"
 msgid "1 page selected"
 msgstr "1 página selecionada"
 
+msgid "1 page selected."
+msgstr ""
+
 msgid "1 selected image is no longer in the storyboard."
 msgstr "1 imagem selecionada não está mais no storyboard."
 
-#. placeholder {0}: String(questionsCount)
-msgid "1 source page selected • {0} question(s) will be generated."
+#~ msgid "1 source page selected • {0} question(s) will be generated."
+#~ msgstr ""
+
+msgid "1-12, 20"
 msgstr ""
 
 msgid "1-12, 20, pg045"
@@ -562,6 +569,9 @@ msgstr "Adicionar"
 msgid "Add {0} Images"
 msgstr "Adicionar {0} imagens"
 
+msgid "Add an activity"
+msgstr ""
+
 msgid "Add an API key in Settings to enable generation."
 msgstr ""
 
@@ -667,6 +677,9 @@ msgstr "O ADT Studio usa suas próprias chaves de API para executar o pipeline. 
 
 msgid "ADT_DEBUG=1"
 msgstr "ADT_DEBUG=1"
+
+msgid "Advanced"
+msgstr ""
 
 #~ msgid "Advanced settings"
 #~ msgstr "Configurações avançadas"
@@ -2546,6 +2559,10 @@ msgstr "sua língua original"
 msgid "Jane Reviewer"
 msgstr "Jane Reviewer"
 
+#. placeholder {0}: String(initialPage.pageNumber)
+msgid "Just this page (page {0})"
+msgstr ""
+
 msgid "KB"
 msgstr "KB"
 
@@ -2984,14 +3001,17 @@ msgstr "Moderate"
 msgid "Modified {modifiedLabel}"
 msgstr "Modificado em {modifiedLabel}"
 
-msgid "More options"
-msgstr ""
+#~ msgid "More options"
+#~ msgstr ""
 
 msgid "Multi-format publications"
 msgstr "Publicações multi-formato"
 
 msgid "Multiple choice"
 msgstr "Múltipla escolha"
+
+msgid "Multiple select (pick many)"
+msgstr ""
 
 msgid "my-book-slug"
 msgstr "meu-livro-slug"
@@ -3356,6 +3376,9 @@ msgstr "Abrir pré-visualização da página {0}"
 msgid "Open Preview"
 msgstr "Open Preview"
 
+msgid "Open question"
+msgstr ""
+
 msgid "Open Validation"
 msgstr "Open Validation"
 
@@ -3501,6 +3524,9 @@ msgstr "Imagem da página"
 msgid "Page Mode"
 msgstr "Modo de Página"
 
+msgid "Page numbers (e.g. 1-12, 20)"
+msgstr ""
+
 msgid "Page preview {pageId}"
 msgstr "Pré-visualização da página {0}"
 
@@ -3525,8 +3551,8 @@ msgstr "Prompt de refinamento de seção"
 msgid "pages"
 msgstr "páginas"
 
-msgid "Pages"
-msgstr ""
+#~ msgid "Pages"
+#~ msgstr ""
 
 #. placeholder {0}: activeSession.session.start_page ?? "?"
 #. placeholder {1}: activeSession.session.end_page ?? "?"
@@ -3605,8 +3631,8 @@ msgstr "fotossintético, realizando fotossíntese"
 msgid "Pick a preset"
 msgstr "Escolha um preset"
 
-msgid "Pick a type and the pages to base the activity on. You can add more activities one at a time."
-msgstr ""
+#~ msgid "Pick a type and the pages to base the activity on. You can add more activities one at a time."
+#~ msgstr ""
 
 msgid "Pick from book"
 msgstr "Escolher do livro"
@@ -4584,6 +4610,9 @@ msgstr "Algo deu errado"
 msgid "Sort books"
 msgstr "Ordenar livros"
 
+msgid "Sort into groups"
+msgstr ""
+
 msgid "Sorting"
 msgstr ""
 
@@ -4600,11 +4629,17 @@ msgstr ""
 msgid "Sorting items"
 msgstr ""
 
+msgid "Source pages"
+msgstr ""
+
 msgid "Spanish"
 msgstr "Espanhol"
 
 msgid "Specialized workflows"
 msgstr "Fluxos de trabalho especializados"
+
+msgid "Specific pages…"
+msgstr ""
 
 msgid "Speech"
 msgstr "Fala"
@@ -4947,6 +4982,9 @@ msgstr "O índice."
 msgid "The Water Cycle"
 msgstr "O Ciclo da Água"
 
+msgid "The whole book"
+msgstr ""
+
 msgid "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."
 msgstr "Esses recursos melhoram o acesso para pessoas com deficiência. Executá-los antes de exportar ajuda seu livro a atender aos padrões de acessibilidade ADT."
 
@@ -5097,6 +5135,9 @@ msgstr "Trata cada página como uma única seção."
 msgid "True"
 msgstr "Verdadeiro"
 
+msgid "True or false"
+msgstr ""
+
 msgid "True/False"
 msgstr "Verdadeiro/Falso"
 
@@ -5148,11 +5189,14 @@ msgstr "Template de duas colunas para conteúdo narrativo"
 msgid "Type"
 msgstr "Tipo"
 
-msgid "Type a page range above, or click \"Whole book\" to use every content page."
-msgstr ""
+#~ msgid "Type a page range above, or click \"Whole book\" to use every content page."
+#~ msgstr ""
 
 msgid "Type class name or search..."
 msgstr "Digite nome da classe ou pesquise..."
+
+msgid "Type page numbers separated by commas. Press Tab to apply."
+msgstr ""
 
 msgid "Types used during page sectioning. Pruned types are classified but excluded from rendering. Disabled types are hidden from the LLM entirely."
 msgstr "Tipos usados durante o secionamento de páginas. Tipos removidos são classificados, mas excluídos da renderização. Tipos desativados são ocultados do LLM completamente."
@@ -5444,8 +5488,8 @@ msgstr "Quando o PDF não foi feito em torno de páginas opostas, o modo individ
 msgid "While editing"
 msgstr "Durante a edição"
 
-msgid "Whole book"
-msgstr ""
+#~ msgid "Whole book"
+#~ msgstr ""
 
 msgid "Whole-book checks for packaged ADT output, plus reviewer findings captured from Preview."
 msgstr "Whole-book checks for packaged ADT output, plus reviewer findings captured from Preview."
