@@ -33,48 +33,46 @@ export function DockActivityActions() {
 
   return (
     <div className="flex flex-1 items-center justify-between max-w-3xl gap-2 p-1">
-      <div className="flex items-center gap-2">
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                type="button"
-                onClick={skip ?? undefined}
-                disabled={!skipEnabled || !skip}
-                variant="outline"
-                size="lg"
-                title={skipLabel}
-                className="px-4 font-medium"
-              >
-                {skipLabel}
-              </Button>
-            }
-          />
-          <TooltipContent>{skipLabel}</TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                type="button"
-                onClick={validate ?? undefined}
-                disabled={!submitEnabled || !validate}
-                size="lg"
-                title={submitLabel}
-                className={cn(
-                  "px-4 font-medium text-white",
-                  submitState === "next"
-                    ? "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:text-emerald-950"
-                    : "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 dark:text-blue-950",
-                )}
-              >
-                {submitLabel}
-              </Button>
-            }
-          />
-          <TooltipContent>{submitLabel}</TooltipContent>
-        </Tooltip>
-      </div>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              onClick={skip ?? undefined}
+              disabled={!skipEnabled || !skip}
+              variant="outline"
+              size="lg"
+              title={skipLabel}
+              className="px-4 font-medium"
+            >
+              {skipLabel}
+            </Button>
+          }
+        />
+        <TooltipContent>{skipLabel}</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              onClick={validate ?? undefined}
+              disabled={!submitEnabled || !validate}
+              size="lg"
+              title={submitLabel}
+              className={cn(
+                "px-4 font-medium text-black",
+                submitState === "next"
+                  ? "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:white"
+                  : "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 dark:white",
+              )}
+            >
+              {submitLabel}
+            </Button>
+          }
+        />
+        <TooltipContent>{submitLabel}</TooltipContent>
+      </Tooltip>
     </div>
   );
 }

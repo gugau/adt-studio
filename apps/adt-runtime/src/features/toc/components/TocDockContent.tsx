@@ -182,7 +182,7 @@ function PageList({
           <Fragment key={page.section_id}>
             {chapterHeading ? (
               <li
-                className="mx-1 pt-3 pb-1 text-sm font-semibold tracking-wide text-muted-foreground uppercase"
+                className="px-1 pt-3 pb-1 text-base font-semibold tracking-wide text-muted-foreground uppercase"
                 data-chapter-id={chapterHeading.chapter_id || undefined}
               >
                 {chapterHeading.title}
@@ -207,7 +207,7 @@ function PageList({
               >
                 <span className="truncate">{displayLabel}</span>
                 {pdfPageLabel ? (
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  <span className="text-base text-muted-foreground whitespace-nowrap">
                     {printPageLabel} {pdfPageLabel}
                   </span>
                 ) : null}

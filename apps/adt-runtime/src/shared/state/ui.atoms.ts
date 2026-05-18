@@ -10,7 +10,7 @@ export const eli5ModeAtom = persistedBoolAtom("eli5Mode", false)
 export const signLanguageModeAtom = persistedBoolAtom("signLanguageMode", false)
 export const glossaryModeAtom = persistedBoolAtom("glossaryMode", false)
 export const syllablesModeAtom = persistedBoolAtom("syllablesMode", false)
-export const stateModeAtom = persistedBoolAtom("stateMode", true) // "Auto-hide menus" master switch
+export const stateModeAtom = persistedBoolAtom("stateMode", false) // "Auto-hide menus" master switch
 
 export type DockWidth = "full" | "compact"
 export type DockPosition = "top" | "bottom"
@@ -22,7 +22,7 @@ export const dockAlignAtom = persistedStringAtom("dockAlign", "spread")
 
 
 export type IconSize = "sm" | "md" | "lg"
-export const iconSizeAtom = persistedStringAtom("iconSize", "lg")
+export const iconSizeAtom = persistedStringAtom("iconSize", "md")
 export const reduceMotionAtom = persistedBoolAtom("reduceMotion", false)
 
 export type Theme = "light" | "dark" | "system"
