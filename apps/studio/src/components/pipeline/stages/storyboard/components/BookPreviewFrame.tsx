@@ -47,6 +47,11 @@ function parsePxStyle(value: string | undefined): number | null {
   return match ? parseFloat(match[1]) : null
 }
 
+// Upper bound for upscaling fixed-layout pages so small-page PDFs fill the
+// preview panel instead of rendering boxed. 2× keeps rasterised assets from
+// getting unacceptably soft while still filling the panel for typical books.
+const FL_MAX_SCALE = 2
+
 export interface BookPreviewFrameHandle {
   /** Get the iframe element's bounding rect in the viewport */
   getIframeRect: () => DOMRect | null
@@ -610,12 +615,13 @@ ${selectors}:hover {
   }, [])
 
   // Fixed-layout: scale off the page viewport so content fills the preview
-  // area (capped at 1× — no upscaling beyond the source resolution).
+  // area, upscaling small pages (PDFs whose natural width is below the panel)
+  // up to FL_MAX_SCALE so they don't render boxed with side whitespace.
   // Reflowable: fit to the device-frame base width, desktop capped at 1× and
   // mobile/tablet grown up to a target visible width for legibility.
   useEffect(() => {
     if (fixedLayoutSize) {
-      setScale(Math.min(1, availableWidth / fixedLayoutSize.width))
+      setScale(Math.min(FL_MAX_SCALE, availableWidth / fixedLayoutSize.width))
       return
     }
     const fitScale = Math.max(0, availableWidth / baseWidth)
