@@ -26,6 +26,7 @@ import { ImageActionsSection } from "./sections/ImageActions"
 import { TextRoleSection } from "./sections/TextRole"
 import { ElementProvider } from "./element-context"
 import type { DeviceView } from "./device-breakpoint"
+import type { ComputedTypographyStyles } from "../BookPreviewFrame"
 
 // eslint-disable-next-line lingui/no-unlocalized-strings -- HTML attribute identifier shown verbatim
 const DATA_ID_PREFIX = `data-id="`
@@ -40,6 +41,10 @@ interface StyleEditorPanelProps {
   elementProps: StyleEditorElementProps | null
   onClassesChange: (dataId: string, classes: string[]) => void
   deviceView: DeviceView
+  /** Snapshot of the iframe element's getComputedStyle for the inheritable
+   *  typography properties — used as inspector defaults so the fields show
+   *  the actually-rendered value when no explicit class is set. */
+  computedTypography?: ComputedTypographyStyles | null
 }
 
 export function StyleEditorPanel({
@@ -51,6 +56,7 @@ export function StyleEditorPanel({
   elementProps,
   onClassesChange,
   deviceView,
+  computedTypography,
 }: StyleEditorPanelProps) {
   const { t } = useLingui()
 
@@ -172,6 +178,7 @@ export function StyleEditorPanel({
             elementProps={displayElementProps}
             onClassesChange={onClassesChange}
             deviceView={deviceView}
+            computedTypography={computedTypography ?? null}
           />
         ) : null}
       </div>
@@ -238,6 +245,7 @@ interface StyleEditorBodyProps {
   elementProps: StyleEditorElementProps | null
   onClassesChange: (dataId: string, classes: string[]) => void
   deviceView: DeviceView
+  computedTypography: ComputedTypographyStyles | null
 }
 
 function StyleEditorBody({
@@ -247,6 +255,7 @@ function StyleEditorBody({
   elementProps,
   onClassesChange,
   deviceView,
+  computedTypography,
 }: StyleEditorBodyProps) {
   const visibleSections = useMemo(
     () => (elementType ? getVisibleSections(elementType) : []),
@@ -254,7 +263,15 @@ function StyleEditorBody({
   )
 
   return (
-    <ElementProvider value={{ dataId, classes, onClassesChange, deviceView }}>
+    <ElementProvider
+      value={{
+        dataId,
+        classes,
+        onClassesChange,
+        deviceView,
+        computedStyles: computedTypography ?? undefined,
+      }}
+    >
       <div className="flex flex-col">
         {elementProps?.isImage ? (
           <ImageActionsSection dataId={dataId} elementProps={elementProps} />

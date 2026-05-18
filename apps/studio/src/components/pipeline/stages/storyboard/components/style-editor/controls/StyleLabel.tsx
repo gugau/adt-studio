@@ -7,6 +7,12 @@ import {
   PopoverAnchor,
   PopoverContent,
 } from "@/components/ui/popover"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import type { DeviceView } from "../device-breakpoint"
 import type { OverrideInfo } from "../use-element-styles"
 
@@ -15,6 +21,10 @@ interface StyleLabelProps {
   htmlFor?: string
   children: ReactNode
   override?: OverrideInfo | null
+  /** True when the displayed value isn't set by any class on this element
+   *  (i.e., inherited from a parent). Adds a subtle italic + muted treatment so
+   *  the user knows the value isn't theirs. Ignored when `override` is set. */
+  inherited?: boolean
   className?: string
 }
 
@@ -74,6 +84,7 @@ export function StyleLabel({
   htmlFor,
   children,
   override,
+  inherited,
   className,
 }: StyleLabelProps) {
   const [resetOpen, setResetOpen] = useState(false)
@@ -91,18 +102,26 @@ export function StyleLabel({
     setResetOpen(true)
   }
 
+  const showInherited = !!inherited && !override
   const labelEl = (
     <label
       htmlFor={override ? undefined : htmlFor}
       onClick={handleLabelClick}
       className={cn(
-        "h-8 self-start flex items-center pl-3 text-[11px] font-normal select-none truncate",
+        "h-8 self-start flex items-center gap-1.5 pl-3 text-[11px] font-normal select-none truncate",
         override
           ? "rounded text-violet-700 bg-violet-100/70 hover:bg-violet-100 cursor-pointer"
-          : "text-muted-foreground/80"
+          : "text-muted-foreground/80",
+        showInherited && "cursor-help"
       )}
     >
-      {label}
+      {showInherited ? (
+        <span
+          aria-hidden="true"
+          className="inline-block w-1.5 h-1.5 shrink-0 rounded-full bg-violet-500"
+        />
+      ) : null}
+      <span className="truncate">{label}</span>
     </label>
   )
 
@@ -156,6 +175,18 @@ export function StyleLabel({
             </div>
           </PopoverContent>
         </Popover>
+      ) : showInherited ? (
+        <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>{labelEl}</TooltipTrigger>
+            <TooltipContent side="left" sideOffset={12} variant="light">
+              <Trans>
+                Inherited from a parent element. Choose a value here to override
+                on this element.
+              </Trans>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       ) : (
         labelEl
       )}

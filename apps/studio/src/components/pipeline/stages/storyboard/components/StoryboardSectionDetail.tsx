@@ -49,7 +49,11 @@ import { useBookTasks } from "@/hooks/use-book-tasks"
 import { useBookRun } from "@/hooks/use-book-run"
 import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import { useStepHeader } from "../../../components/StepViewRouter"
-import { BookPreviewFrame, type BookPreviewFrameHandle } from "./BookPreviewFrame"
+import {
+  BookPreviewFrame,
+  type BookPreviewFrameHandle,
+  type ComputedTypographyStyles,
+} from "./BookPreviewFrame"
 import { SectionEditPanel } from "./SectionEditPanel"
 import { StyleEditorPanel } from "./style-editor"
 import { ViewportToggle } from "./style-editor/ViewportToggle"
@@ -552,6 +556,9 @@ export function StoryboardSectionDetail({
     tagName?: string
   } | null>(null)
   const [selectedElementClasses, setSelectedElementClasses] = useState<string[] | null>(null)
+  const [selectedComputedTypography, setSelectedComputedTypography] = useState<
+    ComputedTypographyStyles | null
+  >(null)
   const [deviceView, setDeviceView] = useDeviceView(bookLabel, "desktop")
   const [previewVisibleWidth, setPreviewVisibleWidth] = useState(0)
   const previewFrameRef = useRef<BookPreviewFrameHandle>(null)
@@ -561,6 +568,19 @@ export function StoryboardSectionDetail({
   useEffect(() => {
     if (!selectedElement) setSelectedElementClasses(null)
   }, [selectedElement])
+
+  // Snapshot the iframe element's getComputedStyle so the inspector can show
+  // the actually-rendered value when no explicit class is set (e.g., font-size
+  // / color / weight inherited from a parent).
+  useEffect(() => {
+    if (!selectedElement) {
+      setSelectedComputedTypography(null)
+      return
+    }
+    setSelectedComputedTypography(
+      previewFrameRef.current?.getComputedTypographyStyles(selectedElement.dataId) ?? null,
+    )
+  }, [selectedElement, selectedElementClasses])
 
   // Track current pageId so async callbacks can detect stale closures
 
@@ -2437,6 +2457,7 @@ export function StoryboardSectionDetail({
       selectedDataId={selectedElement?.dataId ?? null}
       selectedTagName={selectedElement?.tagName ?? null}
       elementClasses={selectedElementClasses}
+      computedTypography={selectedComputedTypography}
       elementProps={
         selectedElement && selectedInfo
           ? {

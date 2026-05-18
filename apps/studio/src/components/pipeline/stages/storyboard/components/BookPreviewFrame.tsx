@@ -13,7 +13,17 @@ import {
   promoteFirstHeadingToH1,
   reconstructHtmlWithEdit,
 } from "./iframe-html"
+import {
+  type ComputedTypographyStyles,
+  lineHeightToMultiplier,
+  normalizeTextAlign,
+  parsePx,
+  rgbToHex,
+  weightToToken,
+} from "./iframe-computed-styles"
 import { INTERACTIVE_SCRIPT, INTERACTIVE_STYLES } from "./iframe-interactive"
+
+export type { ComputedTypographyStyles }
 
 // In Desktop version, BASE_URL is "http://localhost:3001/api"; extract the origin so the iframe
 // can resolve relative image URLs (stored in the DB) via a <base> tag (see Lesson #2).
@@ -44,6 +54,10 @@ export interface BookPreviewFrameHandle {
    *  DOM mutations (e.g. live `setElementClasses` edits). Used when the parent
    *  wants to revert to the saved state without changing the html prop. */
   resetContent: () => void
+  /** Read the iframe's getComputedStyle for the inheritable text properties
+   *  used by the Typography inspector. Returns nulls when the element isn't
+   *  in the iframe yet or a value can't be parsed. */
+  getComputedTypographyStyles: (dataId: string) => ComputedTypographyStyles
 }
 
 export interface BookPreviewFrameProps {
@@ -168,6 +182,31 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
     },
     resetContent: () => {
       if (readyRef.current) injectContent(latestHtmlRef.current)
+    },
+    getComputedTypographyStyles: (dataId: string): ComputedTypographyStyles => {
+      const empty: ComputedTypographyStyles = {
+        fontSize: null,
+        color: null,
+        fontWeight: null,
+        lineHeight: null,
+        textAlign: null,
+      }
+      const doc = iframeRef.current?.contentDocument
+      const win = doc?.defaultView
+      if (!doc || !win) return empty
+      const el = doc.querySelector(
+        `[data-id="${CSS.escape(dataId)}"]`,
+      ) as HTMLElement | null
+      if (!el) return empty
+      const s = win.getComputedStyle(el)
+      const fontSize = parsePx(s.fontSize)
+      return {
+        fontSize,
+        color: rgbToHex(s.color),
+        fontWeight: weightToToken(s.fontWeight),
+        lineHeight: lineHeightToMultiplier(s.lineHeight, fontSize),
+        textAlign: normalizeTextAlign(s.textAlign),
+      }
     },
   }))
   const [iframeReady, setIframeReady] = useState(false)

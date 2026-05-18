@@ -9,6 +9,16 @@ interface ElementCtx {
   /** Persists a new class list back to the element. */
   onClassesChange: (dataId: string, classes: string[]) => void
   deviceView: DeviceView
+  /** Snapshot of the iframe element's getComputedStyle, used as a fallback so
+   *  the inspector can show what the element actually renders at when no
+   *  explicit class is set (e.g., font-size inherited from a parent). */
+  computedStyles?: {
+    fontSize?: number | null
+    color?: string | null
+    fontWeight?: string | null
+    lineHeight?: number | null
+    textAlign?: string | null
+  }
 }
 
 const ElementContext = createContext<ElementCtx | null>(null)

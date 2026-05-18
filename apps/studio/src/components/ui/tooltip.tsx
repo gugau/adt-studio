@@ -50,7 +50,7 @@ const tooltipArrowVariants = cva(
     variants: {
       variant: {
         default: "bg-foreground fill-foreground",
-        light: "bg-background fill-background border-border",
+        light: "bg-background fill-background border-border shadow-md",
       },
     },
     defaultVariants: {

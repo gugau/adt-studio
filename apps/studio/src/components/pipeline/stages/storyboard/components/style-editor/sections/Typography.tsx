@@ -26,6 +26,7 @@ import {
   textColorClassMap,
 } from "../class-maps"
 import { useElementStyles } from "../use-element-styles"
+import { useElementContext } from "../element-context"
 
 const WEIGHT_OPTIONS: ReadonlyArray<SelectOption<string>> = [
   { value: "thin", label: "thin", preview: <span className="font-thin">Aa</span> },
@@ -43,12 +44,18 @@ const EMPTY_DECOR: string[] = []
 
 export function TypographySection() {
   const { t } = useLingui()
-  const fontSize = useElementStyles(fontSizeClassMap, 16)
-  const weight = useElementStyles(fontWeightClassMap, "normal")
+  const { computedStyles } = useElementContext()
+  const inheritedFontSize = computedStyles?.fontSize ?? null
+  const inheritedWeight = computedStyles?.fontWeight ?? null
+  const inheritedAlign = computedStyles?.textAlign ?? null
+  const inheritedLeading = computedStyles?.lineHeight ?? null
+  const inheritedColor = computedStyles?.color ?? null
+  const fontSize = useElementStyles(fontSizeClassMap, inheritedFontSize ?? 16)
+  const weight = useElementStyles(fontWeightClassMap, inheritedWeight ?? "normal")
   const decor = useElementStyles(textDecorationClassMap, EMPTY_DECOR)
-  const align = useElementStyles(textAlignClassMap, "left")
-  const leading = useElementStyles(lineHeightClassMap, 1.5)
-  const textColor = useElementStyles(textColorClassMap, "")
+  const align = useElementStyles(textAlignClassMap, inheritedAlign ?? "left")
+  const leading = useElementStyles(lineHeightClassMap, inheritedLeading ?? 1.5)
+  const textColor = useElementStyles(textColorClassMap, inheritedColor ?? "")
 
   const decorItems = [
     { value: "italic", icon: Italic, label: t`Italic` },
@@ -65,7 +72,11 @@ export function TypographySection() {
 
   return (
     <Section title={<Trans>Typography</Trans>}>
-      <StyleLabel label={<Trans>Size</Trans>} override={fontSize.override}>
+      <StyleLabel
+        label={<Trans>Size</Trans>}
+        override={fontSize.override}
+        inherited={!fontSize.isExplicit && inheritedFontSize != null}
+      >
         <TokenInput
           value={fontSize.value}
           onChange={fontSize.setValue}
@@ -76,7 +87,11 @@ export function TypographySection() {
           )}
         />
       </StyleLabel>
-      <StyleLabel label={<Trans>Weight</Trans>} override={weight.override}>
+      <StyleLabel
+        label={<Trans>Weight</Trans>}
+        override={weight.override}
+        inherited={!weight.isExplicit && inheritedWeight != null}
+      >
         <Select value={weight.value} onChange={weight.setValue} options={WEIGHT_OPTIONS} />
       </StyleLabel>
       <StyleLabel label={<Trans>Style</Trans>} override={decor.override}>
@@ -93,7 +108,11 @@ export function TypographySection() {
           ))}
         </ToggleGroup>
       </StyleLabel>
-      <StyleLabel label={<Trans>Align</Trans>} override={align.override}>
+      <StyleLabel
+        label={<Trans>Align</Trans>}
+        override={align.override}
+        inherited={!align.isExplicit && inheritedAlign != null}
+      >
         <ToggleGroup
           type="single"
           size="xs"
@@ -108,14 +127,22 @@ export function TypographySection() {
           ))}
         </ToggleGroup>
       </StyleLabel>
-      <StyleLabel label={<Trans>Leading</Trans>} override={leading.override}>
+      <StyleLabel
+        label={<Trans>Leading</Trans>}
+        override={leading.override}
+        inherited={!leading.isExplicit && inheritedLeading != null}
+      >
         <NumericInput
           value={leading.value}
           onCommit={leading.setValue}
           suffix="×"
         />
       </StyleLabel>
-      <StyleLabel label={<Trans>Text color</Trans>} override={textColor.override}>
+      <StyleLabel
+        label={<Trans>Text color</Trans>}
+        override={textColor.override}
+        inherited={!textColor.isExplicit && !!inheritedColor}
+      >
         <ColorInput value={textColor.value} onChange={textColor.setValue} />
       </StyleLabel>
     </Section>

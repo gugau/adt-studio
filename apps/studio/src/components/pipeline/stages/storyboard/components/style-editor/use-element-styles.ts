@@ -23,6 +23,10 @@ interface UseElementStylesResult<TValue> {
   value: TValue
   setValue: (next: TValue) => void
   override: OverrideInfo | null
+  /** True when at least one class in the cascade resolved to a value. When
+   *  false, `value` came from the caller-supplied default — useful for showing
+   *  an "inherited from parent" indicator. */
+  isExplicit: boolean
 }
 
 // Tailwind variant prefixes (md:, xl:, hover:, …) always sit before any
@@ -93,10 +97,9 @@ export function useElementStyles<TValue>(
     [classes, classMap]
   )
 
-  const value = useMemo<TValue>(
-    () => resolveAt(cascade) ?? defaultValue,
-    [resolveAt, cascade, defaultValue]
-  )
+  const resolved = useMemo(() => resolveAt(cascade), [resolveAt, cascade])
+  const value = resolved ?? defaultValue
+  const isExplicit = resolved !== null
 
   const setValue = useCallback(
     (next: TValue) => {
@@ -175,5 +178,5 @@ export function useElementStyles<TValue>(
     }
   }, [classes, classMap, currentPrefix, widerPrefixes, reset])
 
-  return { value, setValue, override }
+  return { value, setValue, override, isExplicit }
 }
