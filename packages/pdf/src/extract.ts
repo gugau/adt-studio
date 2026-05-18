@@ -1916,6 +1916,58 @@ function applyMatrixTransformToBbox(
 }
 
 /**
+ * Half the rendered stroke width of an SVG element, in page points — i.e.
+ * how far the stroke ink extends beyond the path geometry on each side.
+ *
+ * `ShapeInfo.bbox` is the path *geometry* bbox; a stroke straddles the path
+ * centreline and reaches `stroke-width / 2` past the geometry, so cropping a
+ * figure to the geometry bbox shaves the outer half of its outline off (the
+ * speech-bubble outline-clipping reported on PR #285). Returns 0 for
+ * fill-only shapes so their bbox stays tight.
+ *
+ * stroke-width is authored in the element's pre-transform user units; the
+ * `transform="matrix(a b c d e f)"` scales it into page space. We take the
+ * larger axis scale so a non-uniform transform never under-expands.
+ *
+ * Miter joins can spike past `stroke-width / 2` (up to
+ * `stroke-miterlimit × half`). We apply that factor only when the element
+ * *explicitly* declares `stroke-linejoin="miter"`: mupdf emits the join
+ * explicitly, and assuming the SVG default (miter) for elements that omit it
+ * would balloon every round-joined bubble. Document-derived throughout — no
+ * arbitrary bleed.
+ */
+function parseStrokeInkExtent(svgElement: string): number {
+  const stroke = /\sstroke="([^"]*)"/.exec(svgElement)?.[1]?.trim();
+  if (!stroke || stroke === "none" || stroke === "transparent") return 0;
+
+  const widthRaw = /\sstroke-width="([^"]*)"/.exec(svgElement)?.[1];
+  // SVG default stroke-width is 1 when a stroke is set but width omitted.
+  const strokeWidth = widthRaw != null ? parseFloat(widthRaw) : 1;
+  if (!Number.isFinite(strokeWidth) || strokeWidth <= 0) return 0;
+
+  let scale = 1;
+  const matrix = /matrix\(([^)]+)\)/.exec(svgElement)?.[1];
+  if (matrix) {
+    const v = matrix.split(/[\s,]+/).map(parseFloat);
+    if (v.length === 6 && v.every(Number.isFinite)) {
+      const [a, b, c, d] = v;
+      scale = Math.max(Math.hypot(a, b), Math.hypot(c, d)) || 1;
+    }
+  }
+
+  let half = (strokeWidth * scale) / 2;
+
+  const linejoin = /\sstroke-linejoin="([^"]*)"/.exec(svgElement)?.[1];
+  if (linejoin === "miter") {
+    const mlRaw = /\sstroke-miterlimit="([^"]*)"/.exec(svgElement)?.[1];
+    const miterLimit = mlRaw != null ? parseFloat(mlRaw) : 4; // SVG default
+    if (Number.isFinite(miterLimit) && miterLimit > 1) half *= miterLimit;
+  }
+
+  return half;
+}
+
+/**
  * Extract shapes from SVG content.
  * Returns array of shapes with their bounding boxes (after applying transforms).
  * Tracks clip-path associations from parent <g> elements (including nested clips).
@@ -2180,6 +2232,41 @@ function computeGroupBbox(group: ShapeInfo[]): BBox {
     minY = Math.min(minY, y0);
     maxX = Math.max(maxX, x1);
     maxY = Math.max(maxY, y1);
+  }
+
+  return [minX, minY, maxX, maxY];
+}
+
+/**
+ * Group bbox grown to the figure's true *ink* extent: each shape's geometry
+ * bbox expanded by its own rendered stroke half-width (see
+ * {@link parseStrokeInkExtent}) plus a one-device-pixel anti-alias guard.
+ *
+ * `computeGroupBbox` returns the geometry union, which crops strokes and the
+ * rasteriser's 1px anti-alias fringe (the grey edge pixel visible one row in
+ * from a "clipped" outline). `aaGuardX/Y` are 1 device pixel expressed in
+ * page points (`1 / pageScale`) — measured from the page render, not an
+ * arbitrary constant.
+ */
+function computeGroupInkBbox(
+  group: ShapeInfo[],
+  aaGuardX: number,
+  aaGuardY: number,
+): BBox {
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity;
+
+  for (const shape of group) {
+    const stroke = parseStrokeInkExtent(shape.svgElement);
+    const padX = stroke + aaGuardX;
+    const padY = stroke + aaGuardY;
+    const [x0, y0, x1, y1] = shape.bbox;
+    minX = Math.min(minX, x0 - padX);
+    minY = Math.min(minY, y0 - padY);
+    maxX = Math.max(maxX, x1 + padX);
+    maxY = Math.max(maxY, y1 + padY);
   }
 
   return [minX, minY, maxX, maxY];
@@ -2636,6 +2723,14 @@ async function extractVectorImagesFromSvg(
   const { svgContent, pageWidth, pageHeight } = svg;
   const svgDefs = `<defs>${svg.svgDefs}</defs>`;
 
+  // One device pixel of the page render expressed in page points
+  // (`1 / pageScale`) — the rasteriser's anti-alias fringe. Feeds
+  // computeGroupInkBbox so figure crops reach the figure's true ink extent
+  // instead of shaving stroked outlines (PR #285 speech-bubble clipping).
+  const pageDims = pngDimensions(pagePngBuffer);
+  const aaGuardX = pageDims.width > 0 ? pageWidth / pageDims.width : 0;
+  const aaGuardY = pageDims.height > 0 ? pageHeight / pageDims.height : 0;
+
   // Debug tracking
   const debug: ExtractionDebugOutput = {
     pageId,
@@ -2752,7 +2847,17 @@ async function extractVectorImagesFromSvg(
 
     const hasText = group.some(s => s.isText);
     const nonTextShapes = group.filter(s => !s.isText);
-    const cropBbox = bbox;
+    // Crop to the figure's true ink extent (geometry + per-shape stroke
+    // half-width + 1px AA), clamped to the page. The small-figure skip above
+    // intentionally stays on the geometry bbox so a stroke can't inflate a
+    // sub-threshold speck past MIN_VECTOR_DIMENSION.
+    const ink = computeGroupInkBbox(group, aaGuardX, aaGuardY);
+    const cropBbox: BBox = [
+      Math.max(0, ink[0]),
+      Math.max(0, ink[1]),
+      Math.min(pageWidth, ink[2]),
+      Math.min(pageHeight, ink[3]),
+    ];
 
     const cropW = cropBbox[2] - cropBbox[0];
     const cropH = cropBbox[3] - cropBbox[1];
@@ -2897,4 +3002,6 @@ export const _testing = {
   applyMatrixTransformToBbox,
   parseClipPathBounds,
   isPageLevelClip,
+  parseStrokeInkExtent,
+  computeGroupInkBbox,
 };
