@@ -110,10 +110,19 @@ export interface ExtractedImage {
    *   - Raster images: assigned by matching mupdf Device callbacks
    *     (`fillImage` / `fillImageMask`) to extracted XObjects by native
    *     dimensions, in stream order.
-   *   - Vector figures: assigned to the minimum seqno of `fillPath` /
-   *     `strokePath` ops that fall inside the figure's bounds.
+   *   - Vector figures: assigned to the minimum seqno of the recorder
+   *     path ops whose geometry bbox matches one of this figure's
+   *     constituent shape bboxes (see `shapeGeomBoxes`).
    */
   streamSeqno?: number;
+  /**
+   * Geometry bboxes of this vector figure's constituent SVG shapes, in the
+   * same coordinate space as recorder ops (page coords + spread xOffset).
+   * `stampFigureSeqnosFromOps` matches recorder path ops to a figure by
+   * exact geometry identity against these, not aggregate containment.
+   * Transient: vector figures only; not persisted.
+   */
+  shapeGeomBoxes?: BBox[];
   /**
    * SVG path `d` attribute representing the active PDF clip applied to this
    * image at draw time, in absolute viewport coordinates (PDF points,
@@ -709,6 +718,15 @@ function runRecorderInViewport(
       };
     }
     // fillPath / strokePath / shade
+    if (op.kind === "fillPath" || op.kind === "strokePath") {
+      return {
+        ...op,
+        seqno,
+        bbox: shiftBBox(op.bbox),
+        geomBbox: shiftBBox(op.geomBbox),
+        activeClipBbox,
+      };
+    }
     return { ...op, seqno, bbox: shiftBBox(op.bbox), activeClipBbox };
   });
   return { ops };
@@ -834,14 +852,24 @@ function pdfBlendModeToCss(mode: string): string {
 }
 
 /**
- * Stamp `streamSeqno` on each vector figure by finding the device path ops
- * whose bounds fall inside the figure's overall bounds. The figure's seqno
- * is the minimum of the matched ops' seqnos — the moment that figure
- * begins drawing in the content stream.
+ * Stamp `streamSeqno` on each vector figure with its true PDF
+ * content-stream position, by tying recorder path ops back to the figure
+ * by exact geometry identity.
  *
- * Why min, not e.g. mean: a figure is composed of several path ops drawn
- * sequentially; seqno = first op preserves correct ordering relative to
- * later ops that could draw on top of the figure (text, other figures).
+ * Each figure carries `shapeGeomBoxes` — the geometry bboxes of its
+ * constituent SVG shapes, in recorder space. A recorder path op is the
+ * same draw as one of those shapes iff their geometry bboxes coincide
+ * (same path, same CTM, same page space → identical geometry extent;
+ * `geomBbox` excludes stroke inflation so a stroked op still matches its
+ * shape). The figure's seqno is the minimum seqno over matched ops — the
+ * moment it begins drawing — which preserves z-order against later ops
+ * (text, other figures) that draw on top of it.
+ *
+ * This replaces the previous aggregate bbox-containment heuristic, which
+ * silently failed for stroked figures (a strokePath's rendered bounds
+ * spill outside the figure's geometry box, so containment never matched
+ * and the figure kept an unreliable SVG-document-order seqno — drawing it
+ * behind content it should sit on top of).
  */
 function stampFigureSeqnosFromOps(
   figures: ExtractedImage[],
@@ -850,31 +878,22 @@ function stampFigureSeqnosFromOps(
   const pathOps: PathStreamOp[] = ops.filter(
     (o): o is PathStreamOp => o.kind === "fillPath" || o.kind === "strokePath",
   );
+  // SVG export rounds coords to 2 decimals; getBounds is full precision.
+  const TOL = 1;
+  const eq = (a: number, b: number): boolean => Math.abs(a - b) <= TOL;
   for (const fig of figures) {
-    if (!fig.bounds) continue;
-    const figBox: StreamBBox = {
-      x0: fig.bounds.x,
-      y0: fig.bounds.y,
-      x1: fig.bounds.x + fig.bounds.width,
-      y1: fig.bounds.y + fig.bounds.height,
-    };
+    const boxes = fig.shapeGeomBoxes;
+    if (!boxes || boxes.length === 0) continue; // keeps SVG-order fallback
     let minSeqno = Infinity;
     for (const op of pathOps) {
-      if (bboxContainedIn(op.bbox, figBox, /* tol */ 1)) {
-        if (op.seqno < minSeqno) minSeqno = op.seqno;
-      }
+      const g = op.geomBbox;
+      const hit = boxes.some(
+        (b) => eq(g.x0, b[0]) && eq(g.y0, b[1]) && eq(g.x1, b[2]) && eq(g.y1, b[3]),
+      );
+      if (hit && op.seqno < minSeqno) minSeqno = op.seqno;
     }
     if (Number.isFinite(minSeqno)) fig.streamSeqno = minSeqno;
   }
-}
-
-function bboxContainedIn(inner: StreamBBox, outer: StreamBBox, tol: number): boolean {
-  return (
-    inner.x0 >= outer.x0 - tol &&
-    inner.y0 >= outer.y0 - tol &&
-    inner.x1 <= outer.x1 + tol &&
-    inner.y1 <= outer.y1 + tol
-  );
 }
 
 /**
@@ -2932,9 +2951,22 @@ async function extractVectorImagesFromSvg(
         width: cropW,
         height: cropH,
       };
-      // Stream seqno = earliest-drawn shape in the group. Used by fixed-layout
-      // rendering to restore PDF content-stream order across all draw items.
+      // Fallback z-order: earliest SVG-document-order shape. mupdf's SVG
+      // export order is NOT stream order, so this is unreliable on its own —
+      // stampFigureSeqnosFromOps overrides it with the true content-stream
+      // seqno by matching recorder path ops to the per-shape geometry boxes
+      // below. The fallback only survives for groups with no matching path
+      // op (e.g. pure raster/text page-crops).
       img.streamSeqno = Math.min(...group.map((s) => s.seqno));
+      // Per-shape geometry bboxes in recorder space (page coords + spread
+      // xOffset, matching `img.bounds.x`). Used for exact op→figure
+      // identity instead of brittle aggregate bbox containment.
+      img.shapeGeomBoxes = group.map((s): BBox => [
+        s.bbox[0] + xOffset,
+        s.bbox[1],
+        s.bbox[2] + xOffset,
+        s.bbox[3],
+      ]);
       images.push(img);
     }
   }
@@ -2957,7 +2989,13 @@ async function extractVectorImagesFromSvg(
       width: bgW,
       height: bgH,
     };
-    img.streamSeqno = shape.seqno;
+    img.streamSeqno = shape.seqno; // SVG-order fallback; overridden below.
+    img.shapeGeomBoxes = [[
+      bgBbox[0] + xOffset,
+      bgBbox[1],
+      bgBbox[2] + xOffset,
+      bgBbox[3],
+    ]];
     images.push(img);
   }
 
@@ -3004,4 +3042,5 @@ export const _testing = {
   isPageLevelClip,
   parseStrokeInkExtent,
   computeGroupInkBbox,
+  stampFigureSeqnosFromOps,
 };

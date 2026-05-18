@@ -90,7 +90,14 @@ export interface ImageStreamOp extends BaseStreamOp {
 
 export interface PathStreamOp extends BaseStreamOp {
   kind: "fillPath" | "strokePath"
+  /** Rendered bounds: stroke-inflated for `strokePath`, geometry for
+   *  `fillPath`. Used for spatial queries / placement. */
   bbox: BBox
+  /** Geometry-only bounds (path outline, no stroke inflation). Identical
+   *  to `bbox` for `fillPath`. Used to associate an op with the SVG shape
+   *  that produced it by exact geometry identity — a stroked op's `bbox`
+   *  is larger than its shape's geometry, so `bbox` can't be matched. */
+  geomBbox: BBox
 }
 
 export interface TextStreamOp extends BaseStreamOp {
@@ -140,10 +147,12 @@ export function recordPageStream(page: AnyPage): StreamOp[] {
 
   const device = new mupdf.Device({
     fillPath(path, _evenOdd, ctm /*, _cs, _color, _alpha */) {
+      const geom = rectToBBox(path.getBounds(NO_STROKE, ctm))
       ops.push({
         seqno: seqno++,
         kind: "fillPath",
-        bbox: rectToBBox(path.getBounds(NO_STROKE, ctm)),
+        bbox: geom,
+        geomBbox: geom,
         activeClipBbox: activeClipBbox(),
       })
     },
@@ -152,6 +161,9 @@ export function recordPageStream(page: AnyPage): StreamOp[] {
         seqno: seqno++,
         kind: "strokePath",
         bbox: rectToBBox(path.getBounds(stroke, ctm)),
+        // Geometry bounds without stroke inflation — matches the SVG
+        // shape's bbox so the op can be tied back to its figure.
+        geomBbox: rectToBBox(path.getBounds(NO_STROKE, ctm)),
         activeClipBbox: activeClipBbox(),
       })
     },
