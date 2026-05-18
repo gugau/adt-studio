@@ -723,8 +723,12 @@ msgstr "After {pageId}"
 msgid "After a specific page…"
 msgstr "After a specific page…"
 
-msgid "After p."
-msgstr "After p."
+#~ msgid "After p."
+#~ msgstr "After p."
+
+#. placeholder {0}: String(pages.find((p) => p.pageId === quiz.afterPageId)?.pageNumber ?? "?")
+msgid "after p.{0}"
+msgstr "after p.{0}"
 
 #. placeholder {0}: String(page.pageNumber)
 msgid "After page {0}"
@@ -3582,6 +3586,10 @@ msgstr "p. 14"
 
 msgid "p. 15"
 msgstr "p. 15"
+
+#. placeholder {0}: String(activity.pageNumber)
+msgid "p.{0}"
+msgstr "p.{0}"
 
 msgid "Package and preview the final ADT web application."
 msgstr "Package and preview the final ADT web application."

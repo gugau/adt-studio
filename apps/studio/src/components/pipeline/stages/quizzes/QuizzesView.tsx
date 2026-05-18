@@ -2436,21 +2436,27 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
    */
   type ListRow =
     | { kind: "gap"; key: string; pageNumbers: number[] }
-    | { kind: "activity"; key: string; row: ActivityRow }
+    | { kind: "activity"; key: string; row: ActivityRow; activityIndex: number }
 
   const interleavedRows: ListRow[] = (() => {
     if (sourceFilter !== "all" || pages.length === 0) {
-      return filteredActivities.map((row) => ({
+      return filteredActivities.map((row, idx) => ({
         kind: "activity" as const,
         key: row.key,
         row,
+        activityIndex: idx + 1,
       }))
     }
-    const textbookByPageNum = new Map<number, ActivityRow>()
+    // Group activities by anchor: multiple textbook sections may share a
+    // pageNumber, and multiple generated quizzes can be inserted after the
+    // same page.
+    const textbookByPageNum = new Map<number, ActivityRow[]>()
     const generatedAfterPageNum = new Map<number, ActivityRow[]>()
     for (const row of unifiedActivities) {
       if (row.source === "textbook") {
-        textbookByPageNum.set(row.pageNumber, row)
+        const list = textbookByPageNum.get(row.pageNumber) ?? []
+        list.push(row)
+        textbookByPageNum.set(row.pageNumber, list)
       } else {
         const list = generatedAfterPageNum.get(row.pageNumber) ?? []
         list.push(row)
@@ -2459,6 +2465,7 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
     }
     const rows: ListRow[] = []
     let gapRun: number[] = []
+    let activityCounter = 0
     const flushGap = () => {
       if (gapRun.length === 0) return
       rows.push({
@@ -2468,20 +2475,22 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
       })
       gapRun = []
     }
+    const pushActivity = (row: ActivityRow) => {
+      activityCounter++
+      rows.push({ kind: "activity", key: row.key, row, activityIndex: activityCounter })
+    }
     for (const page of pages) {
-      const textbook = textbookByPageNum.get(page.pageNumber)
-      if (textbook) {
+      const textbookActivitiesOnPage = textbookByPageNum.get(page.pageNumber) ?? []
+      if (textbookActivitiesOnPage.length > 0) {
         flushGap()
-        rows.push({ kind: "activity", key: textbook.key, row: textbook })
+        for (const a of textbookActivitiesOnPage) pushActivity(a)
       } else {
         gapRun.push(page.pageNumber)
       }
       const generated = generatedAfterPageNum.get(page.pageNumber) ?? []
       if (generated.length > 0) {
         flushGap()
-        for (const g of generated) {
-          rows.push({ kind: "activity", key: g.key, row: g })
-        }
+        for (const g of generated) pushActivity(g)
       }
     }
     flushGap()
@@ -3157,13 +3166,13 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
               return (
                 <div key={listRow.key} className="rounded-md border bg-card overflow-hidden">
                   <div className="flex flex-wrap items-center gap-3 px-3 py-2">
-                    {/* Page anchor — clear visual indication of where this lives. */}
-                    <div className="flex flex-col items-center gap-1 shrink-0">
-                      <span className="text-[9px] font-semibold uppercase tracking-wide text-blue-600">
-                        {t`Page`}
+                    {/* Sequential activity index — its position in the book flow. */}
+                    <div className="flex w-10 flex-col items-center shrink-0">
+                      <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        {t`Activity`}
                       </span>
-                      <span className="text-lg font-bold leading-none text-blue-700">
-                        {activity.pageNumber}
+                      <span className="text-lg font-bold leading-none text-foreground">
+                        {listRow.activityIndex}
                       </span>
                     </div>
                     {/* Placeholder thumb — visual-review thumbnails plug in here later. */}
@@ -3177,6 +3186,10 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
                         </span>
                         <span className="text-xs font-medium">
                           {textbookActivityLabel(activity.sectionType)}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">·</span>
+                        <span className="text-[11px] font-mono text-muted-foreground">
+                          {t`p.${String(activity.pageNumber)}`}
                         </span>
                         {isCustomized && (
                           <span className="text-[10px] text-emerald-700">{t`Customized`}</span>
@@ -3278,13 +3291,13 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
                 {isExpanded
                   ? <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   : <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
-                {/* Page anchor — generated activities land AFTER the page below. */}
-                <div className="flex flex-col items-center gap-1 shrink-0">
-                  <span className="text-[9px] font-semibold uppercase tracking-wide text-orange-600">
-                    {t`After p.`}
+                {/* Sequential activity index — its position in the book flow. */}
+                <div className="flex w-10 flex-col items-center shrink-0">
+                  <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t`Activity`}
                   </span>
-                  <span className="text-lg font-bold leading-none text-orange-700">
-                    {pages.find((p) => p.pageId === quiz.afterPageId)?.pageNumber ?? "?"}
+                  <span className="text-lg font-bold leading-none text-foreground">
+                    {listRow.activityIndex}
                   </span>
                 </div>
                 {/* Placeholder thumb — visual-review thumbnails plug in here later. */}
@@ -3300,6 +3313,10 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
                 {sourceSummary && (
                   <span className="text-[11px] text-muted-foreground">{sourceSummary}</span>
                 )}
+                <span className="text-[11px] text-muted-foreground">·</span>
+                <span className="text-[11px] font-mono text-muted-foreground">
+                  {t`after p.${String(pages.find((p) => p.pageId === quiz.afterPageId)?.pageNumber ?? "?")}`}
+                </span>
                 <span className="text-[11px] text-muted-foreground">·</span>
                 <span className="text-[11px] text-muted-foreground">{questionCountLabel}</span>
                 <span className="ml-auto flex items-center gap-1.5">
