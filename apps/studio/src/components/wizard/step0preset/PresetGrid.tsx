@@ -20,7 +20,7 @@ export function PresetGrid({ selected, onSelect }: PresetGridProps) {
       <div
         role="radiogroup"
         aria-labelledby="preset-step-heading"
-        className="w-full max-w-[1280px] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 px-4 sm:px-6 overflow-auto py-1"
+        className="w-full max-w-[1280px] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-4 sm:px-6 overflow-auto py-1"
       >
         {PRESETS.map((preset) => (
           <PresetCard
