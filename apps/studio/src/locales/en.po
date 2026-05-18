@@ -162,9 +162,8 @@ msgstr "{0} of {1} items"
 msgid "{0} pages"
 msgstr "{0} pages"
 
-#. placeholder {0}: String(selected.size)
-msgid "{0} pages selected"
-msgstr "{0} pages selected"
+#~ msgid "{0} pages selected"
+#~ msgstr "{0} pages selected"
 
 #~ msgid "{0} pages selected."
 #~ msgstr "{0} pages selected."
@@ -262,6 +261,10 @@ msgstr "{missingForCurrentStage} entry/entries are missing translations. Re-run 
 msgid "{pageCount} pages"
 msgstr "{pageCount} pages"
 
+#. placeholder {0}: String(selectedPageIds.length)
+msgid "{rangeLabel} ({0} pages)"
+msgstr "{rangeLabel} ({0} pages)"
+
 msgid "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
 msgstr "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
 
@@ -311,8 +314,8 @@ msgstr "1 item needs changes on this page"
 #~ msgid "1 page"
 #~ msgstr "1 page"
 
-msgid "1 page selected"
-msgstr "1 page selected"
+#~ msgid "1 page selected"
+#~ msgstr "1 page selected"
 
 #~ msgid "1 page selected."
 #~ msgstr "1 page selected."
@@ -704,6 +707,9 @@ msgstr "After"
 msgid "After {pageId}"
 msgstr "After {pageId}"
 
+msgid "After a specific page…"
+msgstr "After a specific page…"
+
 #. placeholder {0}: String(page.pageNumber)
 msgid "After page {0}"
 msgstr "After page {0}"
@@ -794,6 +800,9 @@ msgstr "An AI image is being generated. Cancel it and navigate?"
 
 msgid "An open-ended answer activity."
 msgstr "An open-ended answer activity."
+
+msgid "anchor"
+msgstr "anchor"
 
 msgid "Answer"
 msgstr "Answer"
@@ -1193,6 +1202,9 @@ msgstr "Checklist item"
 msgid "Choose a page before uploading an image."
 msgstr "Choose a page before uploading an image."
 
+msgid "Choose a page range"
+msgstr "Choose a page range"
+
 msgid "Choose a Preset"
 msgstr "Choose a Preset"
 
@@ -1265,11 +1277,20 @@ msgstr "Clear search"
 msgid "Click \"Add Videos\" to upload MP4 or WebM files."
 msgstr "Click \"Add Videos\" to upload MP4 or WebM files."
 
+msgid "Click a page to set the start of the range."
+msgstr "Click a page to set the start of the range."
+
 msgid "Click an image to select"
 msgstr "Click an image to select"
 
+msgid "Click any page to start a new range."
+msgstr "Click any page to start a new range."
+
 msgid "Click images to select"
 msgstr "Click images to select"
+
+msgid "Click the last page to extend the range."
+msgstr "Click the last page to extend the range."
 
 msgid "Click to edit"
 msgstr "Click to edit"
@@ -1885,6 +1906,9 @@ msgstr "Enabled"
 
 msgid "Enabled axe tags"
 msgstr "Enabled axe tags"
+
+msgid "end"
+msgstr "end"
 
 msgid "End"
 msgstr "End"
@@ -3250,6 +3274,9 @@ msgstr "No preview available."
 #~ msgid "No quizzes for this page"
 #~ msgstr "No quizzes for this page"
 
+msgid "No range selected"
+msgstr "No range selected"
+
 msgid "No rendered content for this section"
 msgstr "No rendered content for this section"
 
@@ -3349,8 +3376,8 @@ msgstr "Off"
 msgid "On"
 msgstr "On"
 
-msgid "On a specific page…"
-msgstr "On a specific page…"
+#~ msgid "On a specific page…"
+#~ msgstr "On a specific page…"
 
 #~ msgid "On the next page after the source pages"
 #~ msgstr "On the next page after the source pages"
@@ -3596,6 +3623,11 @@ msgstr "pages"
 #~ msgid "Pages"
 #~ msgstr "Pages"
 
+#. placeholder {0}: String(Math.min(startPage.pageNumber, endPage.pageNumber))
+#. placeholder {1}: String(Math.max(startPage.pageNumber, endPage.pageNumber))
+msgid "Pages {0} – {1}"
+msgstr "Pages {0} – {1}"
+
 #. placeholder {0}: String(selectedPageNumbers[0])
 #. placeholder {1}: String(selectedPageNumbers[selectedPageNumbers.length - 1])
 #. placeholder {2}: String(selectedPageNumbers.length)
@@ -3700,8 +3732,8 @@ msgstr "Pick pages"
 #~ msgid "Pick pages individually"
 #~ msgstr "Pick pages individually"
 
-msgid "Pick the pages you want to base this quiz on. All selected pages stay together in one custom quiz."
-msgstr "Pick the pages you want to base this quiz on. All selected pages stay together in one custom quiz."
+#~ msgid "Pick the pages you want to base this quiz on. All selected pages stay together in one custom quiz."
+#~ msgstr "Pick the pages you want to base this quiz on. All selected pages stay together in one custom quiz."
 
 #~ msgid "Pick the source pages for each quiz and where it should appear in the book."
 #~ msgstr "Pick the source pages for each quiz and where it should appear in the book."
@@ -4486,8 +4518,8 @@ msgstr "Select node type..."
 #~ msgid "Select pages"
 #~ msgstr "Select pages"
 
-msgid "Select pages for activities"
-msgstr "Select pages for activities"
+#~ msgid "Select pages for activities"
+#~ msgstr "Select pages for activities"
 
 #~ msgid "Select pages for quizzes"
 #~ msgstr "Select pages for quizzes"
@@ -4729,6 +4761,9 @@ msgstr "Sprinkling some digital fairy dust..."
 
 msgid "stage first."
 msgstr "stage first."
+
+msgid "start"
+msgstr "start"
 
 msgid "Start"
 msgstr "Start"

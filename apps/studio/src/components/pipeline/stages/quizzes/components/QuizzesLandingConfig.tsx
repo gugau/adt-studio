@@ -430,7 +430,7 @@ export function QuizzesLandingConfig({
                 >
                   <option value="after_source">{t`Right after the pages it covers`}</option>
                   <option value="end_of_book">{t`At the end of the book`}</option>
-                  <option value="specific">{t`On a specific page…`}</option>
+                  <option value="specific">{t`After a specific page…`}</option>
                 </select>
                 {placementMode === "specific" && (
                   <select
