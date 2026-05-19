@@ -286,14 +286,22 @@ ${INTERACTIVE_SCRIPT}
   const handleMessage = useCallback((e: MessageEvent) => {
     const data = e.data ?? {}
     if (typeof data !== "object" || !data.type) return
-    const { type, dataId, rect, newText, fullHtml, tagName } = data
+    const { type, dataId, rect, newText, tagName } = data
     if (type === "select" || type === "select-image" || type === "select-container") {
       callbacksRef.current.onSelectElement?.(dataId, rect, tagName)
     } else if (type === "text-changed") {
-      // Reconstruct fullHtml from original LaTeX HTML to prevent MathML
-      // from leaking into the data model when saving edits
+      // Reconstruct fullHtml from original LaTeX HTML so MathML doesn't leak
+      // into the data model. If reconstruction fails (parse error, missing
+      // data-id) we drop the edit — the iframe's `fullHtml` would carry
+      // rendered MathML that must never reach persistence.
       const reconstructed = reconstructHtmlWithEdit(sanitizedHtmlRef.current, dataId, newText)
-      callbacksRef.current.onTextChanged?.(dataId, newText, reconstructed ?? fullHtml)
+      if (reconstructed === null) {
+        console.warn(
+          `[adt] Text edit dropped for data-id=${dataId} — could not reconstruct from source HTML.`,
+        )
+        return
+      }
+      callbacksRef.current.onTextChanged?.(dataId, newText, reconstructed)
     } else if (type === "deselect") {
       callbacksRef.current.onSelectElement?.("", {} as DOMRect)
     }
