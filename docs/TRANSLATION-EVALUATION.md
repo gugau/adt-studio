@@ -10,6 +10,7 @@ It answers one question for each translated entry:
 
 - is this translation acceptable as-is?
 - if not, why does it need review?
+- if there is a clear correction, what target-language text should replace it?
 
 The implementation uses:
 
@@ -45,6 +46,7 @@ Relevant local volume in `docker-compose.yml`:
   - ADT Studio book storage, including each book's SQLite database and LLM cache
 
 Translation evaluation uses the OpenAI API key provided by the user in Studio. The Studio run request sends that key to the API using the existing `X-OpenAI-Key` header pattern.
+If no browser key is saved, the API can fall back to `OPENAI_API_KEY` configured on the server.
 
 ## Architecture
 
@@ -101,30 +103,33 @@ Responsibilities:
 - pass the user-provided OpenAI API key to the API
 - show task progress
 - show stored results by language
+- sort entries that need review before acceptable entries
+- show suggested fixes and let users accept a fix into the translated text catalog
 - expose settings for scope, batching, and judge instructions
 
 ## Evaluation Flow
 
 The end-to-end request path is:
 
-1. A user enables translation evaluation in Validation settings.
-2. A user opens `Validation -> Translation Evaluation`.
-3. A user selects a translated language and clicks `Run evaluation`.
-4. `apps/studio` sends the run request with `X-OpenAI-Key`.
-5. `apps/api` creates a `translation-evaluation` task.
-6. The API loads:
+1. A user opens `Validation -> Translation Evaluation`.
+2. A user selects a translated language and clicks `Run evaluation`.
+3. `apps/studio` sends the run request with `X-OpenAI-Key` when a browser key is available.
+4. `apps/api` creates a `translation-evaluation` task.
+5. The API loads:
    - latest `text-catalog`
    - latest `text-catalog-translation` for the selected language
-7. The API resolves configuration from `translation_evaluation`.
-8. The API selects entries according to:
+6. The API resolves configuration from `translation_evaluation`.
+7. The API selects entries according to:
    - scope mode
    - scope count
    - sampling method
    - sampling seed
-9. The API evaluates selected entries with the TypeScript translation judge.
-10. The judge uses `@adt/llm` so calls are cached and logged through the existing LLM transparency path.
-11. The API stores the result as a versioned `translation-evaluation` node.
-12. Studio refreshes evaluation queries and displays the saved result.
+8. The API evaluates selected entries with the TypeScript translation judge.
+9. The judge uses `@adt/llm` so calls are cached and logged through the existing LLM transparency path.
+10. The API stores the result as a versioned `translation-evaluation` node.
+11. Studio refreshes evaluation queries and displays the saved result.
+
+When a needs-review item includes `suggested_text`, Studio shows an `Accept fix` action. Accepting a fix updates the selected language's `text-catalog-translation` data through the existing translation update API, creating a new version of that translated catalog. The saved evaluation result itself is not mutated; it becomes stale because the translation version has changed.
 
 ## Stored Result Model
 
@@ -149,16 +154,17 @@ Each item includes:
 - `translated_text`
 - `rationale`
 - optional `issue_types`
+- optional `suggested_text`
 
-New results keep `source_text` and `translated_text` snapshots in every item for transparency.
+New results keep `source_text` and `translated_text` snapshots in every item for transparency. `suggested_text` is stored only when the judge marks an item as needing review and can provide a concrete corrected translation.
 
 ## Configuration
 
 Translation evaluation is configured under `translation_evaluation` in the merged book config.
+There is no separate enable switch in the current UI. Evaluation is run manually for a selected language.
 
 Current fields:
 
-- `enable_translation_evaluation`
 - `judge_model`
 - `max_retries`
 - `evaluation_scope_mode`
@@ -171,10 +177,11 @@ Current fields:
 
 Legacy compatibility is still supported for:
 
+- `enable_translation_evaluation`
 - `enabled`
 - `sample_size`
 
-These old fields are mapped into the new structure by shared config resolution logic in `packages/types`.
+These old fields are parsed by shared config resolution logic in `packages/types`, but new UI saves only the current evaluator settings.
 
 ## Evaluation Scope vs Batch Size
 
@@ -196,6 +203,8 @@ This means:
 - 50 entries are chosen for the run
 - those 50 entries are processed in 5 batches of 10
 
+The current runner still evaluates entries sequentially within those chunks. Parallel workers or multi-entry judge requests are future performance improvements, not part of this V1 flow.
+
 ## Sampling Behavior
 
 Sampling is applied in the API before evaluation starts.
@@ -213,12 +222,13 @@ If scope mode is `all`, the sampling controls are informational only and do not 
 
 Common failure cases:
 
-- translation evaluation is disabled in book settings
 - missing `X-OpenAI-Key`
+- missing server `OPENAI_API_KEY` when no browser key is sent
 - no translated catalog exists for the requested language
 - invalid judge model identifier
 - provider failure
 - returned result does not match the request versions/config hash
+- accepting a suggested fix when the translated catalog no longer exists for that language
 
 Per-entry LLM failures after retries are saved as `acceptable: false` with an error rationale and `issue_types: ["other"]`.
 
@@ -228,6 +238,9 @@ This implementation does not:
 
 - block packaging
 - replace reviewer validation
+- automatically run after translation generation
+- update translations without explicit user acceptance
+- provide a general evaluation landing page across all evaluation types
 - implement a generic multi-provider evaluation framework
 
 The current implementation is translation-focused, TypeScript-native, and stores user-visible results in ADT Studio book storage.
