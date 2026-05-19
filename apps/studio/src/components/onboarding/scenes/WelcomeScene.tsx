@@ -15,21 +15,24 @@ export function WelcomeScene({ onNext }: OnboardingStepProps) {
 
   return (
     <div className="relative flex h-full w-full flex-col items-center justify-center gap-8 p-8 text-center">
-      <img
-        aria-hidden
-        src="/favicon.svg"
-        alt=""
-        width={104}
-        height={104}
-        className={cn(
-          "rounded-[22px] transition-all duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
-          mounted ? "scale-100 opacity-100" : "scale-[0.85] opacity-0",
-        )}
-        style={{
-          boxShadow:
-            "0 24px 60px -18px rgba(43,127,255,.55), 0 2px 8px rgba(0,0,0,.08)",
-        }}
-      />
+      <picture>
+        <source srcSet="/logo-dark.png" media="(prefers-color-scheme: dark)" />
+        <img
+          aria-hidden
+          src="/logo.png"
+          alt=""
+          width={104}
+          height={104}
+          className={cn(
+            "rounded-[22px] transition-all duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+            mounted ? "scale-100 opacity-100" : "scale-[0.85] opacity-0",
+          )}
+          style={{
+            boxShadow:
+              "0 24px 60px -18px rgba(43,127,255,.55), 0 2px 8px rgba(0,0,0,.08)",
+          }}
+        />
+      </picture>
 
       <div
         className={cn(
