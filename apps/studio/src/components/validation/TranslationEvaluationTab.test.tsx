@@ -2,6 +2,7 @@
 import React from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import type { TranslationEvaluationStatusResponse } from "@/api/client"
 
 function templateToString(strings: TemplateStringsArray, values: unknown[]) {
@@ -48,6 +49,25 @@ const apiKeyState = {
   hasApiKey: true,
 }
 
+const apiState = {
+  getTextCatalog: vi.fn(),
+  updateTranslation: vi.fn(),
+}
+
+function renderWithQueryClient(ui: React.ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  })
+  return render(
+    <QueryClientProvider client={queryClient}>
+      {ui}
+    </QueryClientProvider>,
+  )
+}
+
 vi.mock("@lingui/react/macro", () => ({
   Trans: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useLingui: () => ({
@@ -58,6 +78,7 @@ vi.mock("@lingui/react/macro", () => ({
 }))
 
 vi.mock("@/hooks/use-translation-evaluation", () => ({
+  translationEvaluationsKey: (label: string) => ["evaluations", "translations", label] as const,
   useTranslationEvaluations: () => evaluationsState,
   useRunTranslationEvaluation: () => runEvaluationState,
 }))
@@ -74,6 +95,10 @@ vi.mock("@/hooks/use-api-key", () => ({
   useApiKey: () => apiKeyState,
 }))
 
+vi.mock("@/api/client", () => ({
+  api: apiState,
+}))
+
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
@@ -87,6 +112,8 @@ afterEach(() => {
   bookTasksState.tasks = []
   apiKeyState.apiKey = "sk-test"
   apiKeyState.hasApiKey = true
+  apiState.getTextCatalog.mockReset()
+  apiState.updateTranslation.mockReset()
 })
 
 describe("TranslationEvaluationTab", () => {
@@ -135,7 +162,7 @@ describe("TranslationEvaluationTab", () => {
     }
 
     const { TranslationEvaluationTab } = await import("./TranslationEvaluationTab")
-    render(<TranslationEvaluationTab label="demo-book" />)
+    renderWithQueryClient(<TranslationEvaluationTab label="demo-book" />)
 
     await waitFor(() => expect(screen.getByText("Translation evaluation")).toBeTruthy())
 
@@ -150,10 +177,71 @@ describe("TranslationEvaluationTab", () => {
     expect(screen.getByText("Missing term target")).toBeTruthy()
     expect(screen.getByText("Original")).toBeTruthy()
     expect(screen.getByText("Translation")).toBeTruthy()
-    expect(screen.getByText("Rationale")).toBeTruthy()
     fireEvent.click(screen.getByRole("button", { name: "Expand details" }))
     expect(screen.getByText("Hello world")).toBeTruthy()
     expect(screen.getByText("Bonjour le monde")).toBeTruthy()
+  })
+
+  it("accepts a suggested fix by saving a new translated catalog version", async () => {
+    evaluationsState.data = {
+      evaluations: [
+        {
+          language: "fr",
+          currentSourceCatalogVersion: 4,
+          currentTranslationVersion: 3,
+          evaluationVersion: 2,
+          isStale: false,
+          evaluation: {
+            generated_at: "2026-04-06T10:00:00.000Z",
+            provider: "adt-llm",
+            language: "fr",
+            source_catalog_version: 4,
+            translation_version: 3,
+            eval_config_hash: "cfg-123",
+            summary: {
+              total: 1,
+              acceptable: 0,
+              unacceptable: 1,
+            },
+            items: [
+              {
+                entry_id: "pg001_tx002",
+                acceptable: false,
+                source_text: "Key term source",
+                translated_text: "Missing term target",
+                rationale: "Drops a key term from the source sentence.",
+                issue_types: ["meaning", "terminology"],
+                suggested_text: "Target with key term",
+              },
+            ],
+          },
+        },
+      ],
+    }
+    apiState.getTextCatalog.mockResolvedValue({
+      entries: [{ id: "pg001_tx002", text: "Key term source" }],
+      generatedAt: "2026-04-06T10:00:00.000Z",
+      version: 4,
+      translations: {
+        fr: {
+          version: 3,
+          entries: [{ id: "pg001_tx002", text: "Missing term target" }],
+        },
+      },
+    })
+    apiState.updateTranslation.mockResolvedValue({ version: 4 })
+
+    const { TranslationEvaluationTab } = await import("./TranslationEvaluationTab")
+    renderWithQueryClient(<TranslationEvaluationTab label="demo-book" />)
+
+    fireEvent.click(await screen.findByRole("button", { name: "Accept fix" }))
+
+    await waitFor(() => {
+      expect(apiState.updateTranslation).toHaveBeenCalledWith("demo-book", "fr", {
+        entries: [{ id: "pg001_tx002", text: "Target with key term" }],
+      })
+    })
+    expect(await screen.findByRole("button", { name: "Accepted" })).toBeTruthy()
   })
 
   it("submits a run for the selected language and shows task errors", async () => {
@@ -179,7 +267,7 @@ describe("TranslationEvaluationTab", () => {
     ]
 
     const { TranslationEvaluationTab } = await import("./TranslationEvaluationTab")
-    render(<TranslationEvaluationTab label="demo-book" />)
+    renderWithQueryClient(<TranslationEvaluationTab label="demo-book" />)
 
     await waitFor(() => {
       const runButton = screen.getByRole("button", { name: "Run evaluation" }) as HTMLButtonElement
@@ -212,7 +300,7 @@ describe("TranslationEvaluationTab", () => {
     }
 
     const { TranslationEvaluationTab } = await import("./TranslationEvaluationTab")
-    render(<TranslationEvaluationTab label="demo-book" />)
+    renderWithQueryClient(<TranslationEvaluationTab label="demo-book" />)
 
     const runButton = await screen.findByRole("button", { name: "Run evaluation" }) as HTMLButtonElement
     expect(runButton.disabled).toBe(false)
@@ -251,7 +339,7 @@ describe("TranslationEvaluationTab", () => {
     }
 
     const { TranslationEvaluationTab } = await import("./TranslationEvaluationTab")
-    render(<TranslationEvaluationTab label="demo-book" />)
+    renderWithQueryClient(<TranslationEvaluationTab label="demo-book" />)
 
     const currentButton = await screen.findByRole("button", { name: "Evaluation current" }) as HTMLButtonElement
     expect(currentButton.disabled).toBe(true)
@@ -298,7 +386,7 @@ describe("TranslationEvaluationTab", () => {
     ]
 
     const { TranslationEvaluationTab } = await import("./TranslationEvaluationTab")
-    render(<TranslationEvaluationTab label="demo-book" />)
+    renderWithQueryClient(<TranslationEvaluationTab label="demo-book" />)
 
     await waitFor(() => expect(screen.getByText("Translation evaluation is running")).toBeTruthy())
 

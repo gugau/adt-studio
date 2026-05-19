@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { ChevronDown, ChevronRight, FlaskConical, RotateCcw, Save } from "lucide-react"
+import { FlaskConical, RotateCcw, Save } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import {
   DEFAULT_TRANSLATION_EVALUATION_BATCH_SIZE,
@@ -22,7 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
 
@@ -39,44 +38,20 @@ function SettingsSection({
   title,
   description,
   children,
-  collapsible = false,
-  defaultOpen = true,
 }: {
   title: React.ReactNode
   description: React.ReactNode
   children: React.ReactNode
-  collapsible?: boolean
-  defaultOpen?: boolean
 }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen)
-
   return (
-    <div className="rounded-2xl border bg-card p-5">
-      {collapsible ? (
-        <button
-          type="button"
-          onClick={() => setIsOpen((current) => !current)}
-          className="flex w-full items-start justify-between gap-4 text-left"
-        >
-          <div className="space-y-1">
-            <SectionHeader title={title} description={description} />
-          </div>
-          <div className="mt-1 text-muted-foreground">
-            {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-          </div>
-        </button>
-      ) : (
-        <div className="space-y-1">
-          <SectionHeader title={title} description={description} />
-        </div>
-      )}
-      {(!collapsible || isOpen) ? <div className="mt-5">{children}</div> : null}
+    <div className="rounded-lg border bg-card p-5">
+      <SectionHeader title={title} description={description} />
+      <div className="mt-5">{children}</div>
     </div>
   )
 }
 
 interface TranslationEvaluationSettingsState {
-  enable_translation_evaluation: boolean
   judge_model: string
   max_retries: string
   evaluation_scope_mode: TranslationEvaluationScopeMode
@@ -98,7 +73,6 @@ function buildSettingsState(config: Record<string, unknown> | null | undefined):
   )
 
   return {
-    enable_translation_evaluation: resolved.enable_translation_evaluation,
     judge_model: resolved.judge_model,
     max_retries: String(resolved.max_retries),
     evaluation_scope_mode: resolved.evaluation_scope_mode,
@@ -162,8 +136,6 @@ export function TranslationEvaluationSettingsTab({ label }: { label: string }) {
   const saveSettings = () => {
     const currentConfig = { ...(bookConfigData?.config ?? {}) } as Record<string, unknown>
     currentConfig.translation_evaluation = {
-      enable_translation_evaluation: settings.enable_translation_evaluation,
-      enabled: settings.enable_translation_evaluation,
       judge_model: settings.judge_model.trim() || DEFAULT_TRANSLATION_EVALUATION_JUDGE_MODEL,
       max_retries: maxRetriesValue ?? DEFAULT_TRANSLATION_EVALUATION_MAX_RETRIES,
       evaluation_scope_mode: settings.evaluation_scope_mode,
@@ -213,7 +185,7 @@ export function TranslationEvaluationSettingsTab({ label }: { label: string }) {
             <FlaskConical className="h-4 w-4 text-muted-foreground" />
             <SectionHeader
               title={t`Translation evaluation settings`}
-              description={t`Configure LLM-based translation evaluation for this book, including evaluation scope, execution controls, and judge instructions.`}
+              description={t`Configure how manual translation evaluation runs review this book.`}
             />
           </div>
         </div>
@@ -253,9 +225,9 @@ export function TranslationEvaluationSettingsTab({ label }: { label: string }) {
 
       <SettingsSection
         title={t`General`}
-        description={t`Turn translation evaluation on or off for this book and choose the judge model used to review translations.`}
+        description={t`Choose the judge model used to review translations.`}
       >
-        <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="grid gap-5 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="translation-evaluation-judge-model"><Trans>Judge model</Trans></Label>
             <Input
@@ -269,30 +241,12 @@ export function TranslationEvaluationSettingsTab({ label }: { label: string }) {
               <Trans>Model identifier used by the API when asking the judge to review translations.</Trans>
             </p>
           </div>
-
-          <div className="space-y-2 md:min-w-52">
-            <Label htmlFor="translation-evaluation-enabled"><Trans>Enable translation evaluation</Trans></Label>
-            <div className="flex items-center justify-between rounded-xl border px-3 py-3">
-              <div className="pr-3 text-sm text-muted-foreground">
-                <Trans>Existing evaluation history remains stored even if you disable new runs.</Trans>
-              </div>
-              <Switch
-                id="translation-evaluation-enabled"
-                checked={settings.enable_translation_evaluation}
-                onCheckedChange={(checked) => setField("enable_translation_evaluation", checked)}
-                disabled={updateConfig.isPending}
-                aria-label={settings.enable_translation_evaluation ? t`Disable translation evaluation` : t`Enable translation evaluation`}
-              />
-            </div>
-          </div>
         </div>
       </SettingsSection>
 
       <SettingsSection
         title={t`Evaluation Scope`}
         description={t`Control how many entries are evaluated in one run and how sampled entries are selected.`}
-        collapsible
-        defaultOpen={false}
       >
         <div className="grid gap-5 md:grid-cols-2">
           <div className="space-y-2">
@@ -372,8 +326,6 @@ export function TranslationEvaluationSettingsTab({ label }: { label: string }) {
       <SettingsSection
         title={t`Execution`}
         description={t`Tune retry behavior and batch processing. Scope count controls the total entries selected; batch size controls how many selected entries are processed per chunk.`}
-        collapsible
-        defaultOpen={false}
       >
         <div className="grid gap-5 md:grid-cols-2">
           <div className="space-y-2">
@@ -413,8 +365,6 @@ export function TranslationEvaluationSettingsTab({ label }: { label: string }) {
       <SettingsSection
         title={t`Judge Configuration`}
         description={t`Customize the instructions sent to the translation judge. The API supplies the source text, translated text, and language context for each entry.`}
-        collapsible
-        defaultOpen={false}
       >
         <div className="space-y-5">
           <div className="space-y-2">

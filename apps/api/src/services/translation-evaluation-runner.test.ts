@@ -87,6 +87,7 @@ describe("translation-evaluation-runner", () => {
       system: string
     }
     expect(generateOptions.system).toContain("Always include issue_types")
+    expect(generateOptions.system).toContain("include suggested_text")
     expect(generateOptions.schema.safeParse({
       acceptable: true,
       rationale: "Acceptable translation.",
@@ -108,6 +109,38 @@ describe("translation-evaluation-runner", () => {
     })
     expect(result.judge?.model).toBe("openai:gpt-4.1-mini")
     expect(result.metadata?.failed_items).toBe(0)
+  })
+
+  it("stores suggested corrected text for needs-review items", async () => {
+    const generateObject = vi.fn(async () => ({
+      object: {
+        acceptable: false,
+        rationale: "The translation drops an important term.",
+        issue_types: ["terminology"],
+        suggested_text: "Bonjour le monde clé",
+      },
+      usage: { inputTokens: 10, outputTokens: 10 },
+      cached: false,
+    }))
+    const createModel = vi.fn(() => ({
+      generateObject,
+      renderPrompt: vi.fn(),
+    }) as unknown as LLMModel)
+
+    const result = await evaluateTranslationInApi(buildRequest(), {
+      booksDir: tmpDir,
+      apiKey: "sk-test",
+      createModel,
+    })
+
+    expect(result.summary).toEqual({ total: 1, acceptable: 0, unacceptable: 1 })
+    expect(result.items[0]).toEqual(expect.objectContaining({
+      entry_id: "pg001:body",
+      acceptable: false,
+      rationale: "The translation drops an important term.",
+      issue_types: ["terminology"],
+      suggested_text: "Bonjour le monde clé",
+    }))
   })
 
   it("records per-entry LLM failures as needs-review items", async () => {

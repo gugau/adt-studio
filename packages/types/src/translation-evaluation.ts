@@ -12,6 +12,7 @@ Use these criteria:
 - preserve meaningful formatting markers and placeholders when they affect meaning
 
 Return a concise rationale for your decision.
+When the translation needs review, return a suggested corrected translation when a clear correction is possible.
 `.trim()
 
 export const DEFAULT_TRANSLATION_EVALUATION_JUDGE_MODEL = "openai:/gpt-4.1-mini"
@@ -67,7 +68,7 @@ export function resolveTranslationEvaluationConfig(
   return {
     enable_translation_evaluation: config?.enable_translation_evaluation
       ?? config?.enabled
-      ?? false,
+      ?? true,
     judge_model: config?.judge_model ?? DEFAULT_TRANSLATION_EVALUATION_JUDGE_MODEL,
     max_retries: config?.max_retries ?? DEFAULT_TRANSLATION_EVALUATION_MAX_RETRIES,
     evaluation_scope_mode: evaluationScopeMode,
@@ -114,6 +115,7 @@ export const TranslationEvaluationItem = z.object({
   translated_text: z.string().optional(),
   rationale: z.string().min(1),
   issue_types: z.array(TranslationEvaluationIssueType).optional(),
+  suggested_text: z.string().min(1).optional(),
 })
 export type TranslationEvaluationItem = z.infer<typeof TranslationEvaluationItem>
 

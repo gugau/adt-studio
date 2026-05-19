@@ -26,6 +26,7 @@ Use these criteria:
 - preserve meaningful formatting markers and placeholders when they affect meaning
 
 Return a concise rationale for your decision.
+When the translation needs review, return a suggested corrected translation when a clear correction is possible.
 `.trim()
 
 async function flushTasks(): Promise<void> {
@@ -110,7 +111,7 @@ describe("Translation evaluation routes", () => {
     }
   })
 
-  function enableTranslationEvaluation() {
+  function writeTranslationEvaluationConfig() {
     fs.writeFileSync(configPath, [
       "structure_types:",
       "  paragraph: Paragraph",
@@ -212,18 +213,18 @@ describe("Translation evaluation routes", () => {
     expect(await res.text()).toContain("Translation evaluation not found")
   })
 
-  it("blocks run submission when translation evaluation is disabled", async () => {
+  it("allows run submission without a translation evaluation settings gate", async () => {
     const res = await app.request(`/api/books/${label}/evaluations/translations/fr/run`, {
       method: "POST",
+      headers: { "X-OpenAI-Key": "sk-test" },
     })
 
-    expect(res.status).toBe(409)
-    expect(await res.text()).toContain("Translation evaluation is disabled")
+    expect(res.status).toBe(200)
+    await flushTasks()
+    expect(evaluateTranslation).toHaveBeenCalledTimes(1)
   })
 
   it("requires an OpenAI API key for run submission", async () => {
-    enableTranslationEvaluation()
-
     const res = await app.request(`/api/books/${label}/evaluations/translations/fr/run`, {
       method: "POST",
     })
@@ -233,7 +234,7 @@ describe("Translation evaluation routes", () => {
   })
 
   it("blocks run submission when the translation does not exist", async () => {
-    enableTranslationEvaluation()
+    writeTranslationEvaluationConfig()
 
     const res = await app.request(`/api/books/${label}/evaluations/translations/sw/run`, {
       method: "POST",
@@ -245,7 +246,7 @@ describe("Translation evaluation routes", () => {
   })
 
   it("submits a translation evaluation task", async () => {
-    enableTranslationEvaluation()
+    writeTranslationEvaluationConfig()
 
     const res = await app.request(`/api/books/${label}/evaluations/translations/fr/run`, {
       method: "POST",
@@ -276,7 +277,7 @@ describe("Translation evaluation routes", () => {
   })
 
   it("uses OPENAI_API_KEY from the API environment when the request header is absent", async () => {
-    enableTranslationEvaluation()
+    writeTranslationEvaluationConfig()
     process.env.OPENAI_API_KEY = "sk-env-test"
 
     const res = await app.request(`/api/books/${label}/evaluations/translations/fr/run`, {
@@ -297,7 +298,7 @@ describe("Translation evaluation routes", () => {
   })
 
   it("accepts the fallback ADT OpenAI key header", async () => {
-    enableTranslationEvaluation()
+    writeTranslationEvaluationConfig()
 
     const res = await app.request(`/api/books/${label}/evaluations/translations/fr/run`, {
       method: "POST",
@@ -318,7 +319,7 @@ describe("Translation evaluation routes", () => {
   })
 
   it("accepts the OpenAI key from the Authorization bearer header", async () => {
-    enableTranslationEvaluation()
+    writeTranslationEvaluationConfig()
 
     const res = await app.request(`/api/books/${label}/evaluations/translations/fr/run`, {
       method: "POST",
@@ -339,7 +340,7 @@ describe("Translation evaluation routes", () => {
   })
 
   it("does not create a duplicate evaluation version when the current result already matches", async () => {
-    enableTranslationEvaluation()
+    writeTranslationEvaluationConfig()
 
     const firstRes = await app.request(`/api/books/${label}/evaluations/translations/fr/run`, {
       method: "POST",
@@ -370,7 +371,7 @@ describe("Translation evaluation routes", () => {
   })
 
   it("marks an evaluation stale when the evaluation settings change", async () => {
-    enableTranslationEvaluation()
+    writeTranslationEvaluationConfig()
 
     const runRes = await app.request(`/api/books/${label}/evaluations/translations/fr/run`, {
       method: "POST",

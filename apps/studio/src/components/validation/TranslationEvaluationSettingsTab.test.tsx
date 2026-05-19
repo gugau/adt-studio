@@ -24,13 +24,13 @@ Use these criteria:
 - preserve meaningful formatting markers and placeholders when they affect meaning
 
 Return a concise rationale for your decision.
+When the translation needs review, return a suggested corrected translation when a clear correction is possible.
 `.trim()
 
 const bookConfigState = {
   data: {
     config: {
       translation_evaluation: {
-        enable_translation_evaluation: true,
         judge_model: "openai:/gpt-4.1-mini",
         max_retries: 2,
         evaluation_scope_mode: "sample",
@@ -72,7 +72,6 @@ afterEach(() => {
   bookConfigState.data = {
     config: {
       translation_evaluation: {
-        enable_translation_evaluation: true,
         judge_model: "openai:/gpt-4.1-mini",
         max_retries: 2,
         evaluation_scope_mode: "sample",
@@ -94,10 +93,6 @@ describe("TranslationEvaluationSettingsTab", () => {
   it("saves the redesigned translation evaluation settings", async () => {
     const { TranslationEvaluationSettingsTab } = await import("./TranslationEvaluationSettingsTab")
     render(<TranslationEvaluationSettingsTab label="demo-book" />)
-
-    fireEvent.click(screen.getByRole("button", { name: /Evaluation Scope/ }))
-    fireEvent.click(screen.getByRole("button", { name: /Execution/ }))
-    fireEvent.click(screen.getByRole("button", { name: /Judge Configuration/ }))
 
     fireEvent.change(screen.getByLabelText("Judge model"), {
       target: { value: "openai:/gpt-5.4-mini" },
@@ -127,8 +122,6 @@ describe("TranslationEvaluationSettingsTab", () => {
       label: "demo-book",
       config: {
         translation_evaluation: {
-          enable_translation_evaluation: true,
-          enabled: true,
           judge_model: "openai:/gpt-5.4-mini",
           max_retries: 4,
           evaluation_scope_mode: "sample",
@@ -158,8 +151,6 @@ describe("TranslationEvaluationSettingsTab", () => {
     const { TranslationEvaluationSettingsTab } = await import("./TranslationEvaluationSettingsTab")
     render(<TranslationEvaluationSettingsTab label="demo-book" />)
 
-    fireEvent.click(screen.getByRole("button", { name: /Evaluation Scope/ }))
-
     expect((screen.getByRole("combobox", { name: "Scope mode" }) as HTMLButtonElement).textContent).toContain("Sample entries")
     expect((screen.getByLabelText("Evaluation scope count") as HTMLInputElement).value).toBe("25")
   })
@@ -167,8 +158,6 @@ describe("TranslationEvaluationSettingsTab", () => {
   it("resets judge instructions to the default template", async () => {
     const { TranslationEvaluationSettingsTab } = await import("./TranslationEvaluationSettingsTab")
     render(<TranslationEvaluationSettingsTab label="demo-book" />)
-
-    fireEvent.click(screen.getByRole("button", { name: /Judge Configuration/ }))
 
     fireEvent.change(screen.getByLabelText("Judge instructions"), {
       target: { value: "Custom judge prompt" },
@@ -184,7 +173,6 @@ describe("TranslationEvaluationSettingsTab", () => {
     const { TranslationEvaluationSettingsTab } = await import("./TranslationEvaluationSettingsTab")
     render(<TranslationEvaluationSettingsTab label="demo-book" />)
 
-    fireEvent.click(screen.getByRole("button", { name: /Evaluation Scope/ }))
     fireEvent.click(screen.getByRole("combobox", { name: "Scope mode" }))
     fireEvent.click(screen.getByText("All entries"))
 

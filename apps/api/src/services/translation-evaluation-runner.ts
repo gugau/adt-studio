@@ -30,6 +30,7 @@ const TranslationEvaluationJudgeOutput = z.object({
   acceptable: z.boolean(),
   rationale: z.string().min(1),
   issue_types: z.array(TranslationEvaluationIssueType),
+  suggested_text: z.string().min(1).optional(),
 })
 type TranslationEvaluationJudgeOutput = z.infer<typeof TranslationEvaluationJudgeOutput>
 
@@ -74,6 +75,8 @@ Decision rules:
 - Always include issue_types. Use [] when acceptable=true.
 - If acceptable=false, include one or more issue_types from: ${ISSUE_TYPES.join(", ")}.
 - If no issue type clearly applies, use "other".
+- If acceptable=false and a clear correction is possible, include suggested_text containing only the corrected target-language translation.
+- Do not include suggested_text when acceptable=true.
 - Keep the rationale concise and specific.
 `.trim()
 }
@@ -109,6 +112,9 @@ function normalizeJudgeOutput(
     translated_text: entry.translated_text,
     rationale: output.rationale.trim(),
     issue_types: issueTypes,
+    ...(!output.acceptable && output.suggested_text?.trim()
+      ? { suggested_text: output.suggested_text.trim() }
+      : {}),
   }
 }
 

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react"
-import { CheckCircle2, ChevronDown, ChevronRight, FlaskConical, Loader2, TriangleAlert } from "lucide-react"
+import { Check, CheckCircle2, ChevronDown, ChevronRight, FlaskConical, Loader2, TriangleAlert } from "lucide-react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Trans, useLingui } from "@lingui/react/macro"
+import { api, type TranslationEvaluationStatusResponse } from "@/api/client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -10,14 +12,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useBookConfig } from "@/hooks/use-book-config"
 import { useBookTasks } from "@/hooks/use-book-tasks"
 import { useApiKey } from "@/hooks/use-api-key"
 import {
   useRunTranslationEvaluation,
   useTranslationEvaluations,
+  translationEvaluationsKey,
 } from "@/hooks/use-translation-evaluation"
 import { cn } from "@/lib/utils"
+
+type TranslationEvaluationItem = NonNullable<NonNullable<TranslationEvaluationStatusResponse["evaluation"]>["items"][number]>
 
 function truncatePreview(text: string, maxLength = 220) {
   const normalized = text.replace(/\s+/g, " ").trim()
@@ -114,8 +118,14 @@ function StatusBadge({
 
 function TranslationEvaluationResultCard({
   item,
+  onAcceptSuggestion,
+  acceptingSuggestion,
+  suggestionAccepted,
 }: {
-  item: NonNullable<NonNullable<ReturnType<typeof useTranslationEvaluations>["data"]>["evaluations"][number]["evaluation"]>["items"][number]
+  item: TranslationEvaluationItem
+  onAcceptSuggestion: (item: TranslationEvaluationItem) => void
+  acceptingSuggestion: boolean
+  suggestionAccepted: boolean
 }) {
   const { t } = useLingui()
   const [isOpen, setIsOpen] = useState(!item.acceptable)
@@ -202,12 +212,28 @@ function TranslationEvaluationResultCard({
               </p>
             </div>
 
-            <div className="space-y-1 md:col-span-2">
-              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                <Trans>Rationale</Trans>
+            {!item.acceptable && item.suggested_text ? (
+              <div className="space-y-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 md:col-span-2 dark:border-emerald-900 dark:bg-emerald-950/20">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-1">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">
+                      <Trans>Suggested fix</Trans>
+                    </div>
+                    <p className="whitespace-pre-wrap text-sm text-foreground">{item.suggested_text}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="shrink-0"
+                    onClick={() => onAcceptSuggestion(item)}
+                    disabled={acceptingSuggestion || suggestionAccepted}
+                  >
+                    {acceptingSuggestion ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                    {suggestionAccepted ? <Trans>Accepted</Trans> : <Trans>Accept fix</Trans>}
+                  </Button>
+                </div>
               </div>
-              <p className="whitespace-pre-wrap text-sm text-foreground">{item.rationale}</p>
-            </div>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -217,21 +243,17 @@ function TranslationEvaluationResultCard({
 
 export function TranslationEvaluationTab({ label }: { label: string }) {
   const { t } = useLingui()
+  const queryClient = useQueryClient()
   const evaluations = useTranslationEvaluations(label)
   const runEvaluation = useRunTranslationEvaluation(label)
-  const bookConfig = useBookConfig(label)
   const { isTaskRunning, tasks } = useBookTasks(label)
   const { apiKey } = useApiKey()
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null)
+  const [acceptedSuggestions, setAcceptedSuggestions] = useState<Set<string>>(() => new Set())
   const openaiApiKey = apiKey.trim()
   const hasOpenaiApiKey = openaiApiKey.length > 0
 
   const items = evaluations.data?.evaluations ?? []
-  const translationEvaluationConfig = (bookConfig.data?.config?.translation_evaluation ?? null) as
-    | { enable_translation_evaluation?: boolean; enabled?: boolean }
-    | null
-  const translationEvaluationEnabled = translationEvaluationConfig?.enable_translation_evaluation === true
-    || translationEvaluationConfig?.enabled === true
   const evaluationRunning = isTaskRunning("translation-evaluation")
   const activeEvaluationTask = useMemo(() => {
     return [...tasks]
@@ -262,6 +284,34 @@ export function TranslationEvaluationTab({ label }: { label: string }) {
     [items, selectedLanguage],
   )
   const selectedEvaluationIsCurrent = Boolean(selectedEvaluation?.evaluation && !selectedEvaluation.isStale)
+  const acceptSuggestion = useMutation({
+    mutationFn: async (variables: { language: string; entryId: string; suggestedText: string }) => {
+      const catalog = await api.getTextCatalog(label)
+      if (!catalog) {
+        throw new Error(t`Text catalog not found for this book.`)
+      }
+      const translation = catalog.translations[variables.language]
+      if (!translation) {
+        throw new Error(t`Translated text catalog not found for this language.`)
+      }
+      const currentEntries = translation.entries
+      const hasEntry = currentEntries.some((entry) => entry.id === variables.entryId)
+      const entries = hasEntry
+        ? currentEntries.map((entry) => entry.id === variables.entryId
+          ? { ...entry, text: variables.suggestedText }
+          : entry)
+        : [...currentEntries, { id: variables.entryId, text: variables.suggestedText }]
+
+      return api.updateTranslation(label, variables.language, { entries })
+    },
+    onSuccess: async (_result, variables) => {
+      setAcceptedSuggestions((current) => new Set(current).add(`${variables.language}:${variables.entryId}`))
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["books", label, "text-catalog"] }),
+        queryClient.invalidateQueries({ queryKey: translationEvaluationsKey(label) }),
+      ])
+    },
+  })
 
   const summary = selectedEvaluation?.evaluation?.summary ?? null
   const acceptable = summary ? summary.acceptable : null
@@ -275,6 +325,12 @@ export function TranslationEvaluationTab({ label }: { label: string }) {
       }
     }
     return [...counts.entries()].sort((left, right) => right[1] - left[1])
+  }, [selectedEvaluation?.evaluation?.items])
+  const sortedEvaluationItems = useMemo(() => {
+    return [...(selectedEvaluation?.evaluation?.items ?? [])].sort((left, right) => {
+      if (left.acceptable !== right.acceptable) return left.acceptable ? 1 : -1
+      return left.entry_id.localeCompare(right.entry_id)
+    })
   }, [selectedEvaluation?.evaluation?.items])
   const activeEvaluationProgressPercent =
     typeof activeEvaluationTask?.progressPercent === "number"
@@ -331,7 +387,6 @@ export function TranslationEvaluationTab({ label }: { label: string }) {
                 !selectedLanguage
                 || evaluationRunning
                 || runEvaluation.isPending
-                || !translationEvaluationEnabled
                 || selectedEvaluationIsCurrent
               }
               onClick={() => {
@@ -345,13 +400,7 @@ export function TranslationEvaluationTab({ label }: { label: string }) {
           </div>
         </div>
 
-        {!translationEvaluationEnabled ? (
-          <div className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-700">
-            <Trans>Translation evaluation is disabled in book settings. Enable it before running a new evaluation.</Trans>
-          </div>
-        ) : null}
-
-        {translationEvaluationEnabled && !hasOpenaiApiKey ? (
+        {!hasOpenaiApiKey ? (
           <div className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-700">
             <Trans>No browser OpenAI key is saved. The API will use the server OPENAI_API_KEY if configured.</Trans>
           </div>
@@ -414,6 +463,12 @@ export function TranslationEvaluationTab({ label }: { label: string }) {
             {latestTaskError}
           </div>
         ) : null}
+
+        {acceptSuggestion.error ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {acceptSuggestion.error.message}
+          </div>
+        ) : null}
       </div>
 
       {selectedEvaluation ? (
@@ -458,8 +513,25 @@ export function TranslationEvaluationTab({ label }: { label: string }) {
 
           {selectedEvaluation.evaluation ? (
             <div className="space-y-3">
-              {selectedEvaluation.evaluation.items.map((item) => (
-                <TranslationEvaluationResultCard key={item.entry_id} item={item} />
+              {sortedEvaluationItems.map((item) => (
+                <TranslationEvaluationResultCard
+                  key={item.entry_id}
+                  item={item}
+                  onAcceptSuggestion={(evaluationItem) => {
+                    if (!selectedEvaluation.language || !evaluationItem.suggested_text) return
+                    acceptSuggestion.mutate({
+                      language: selectedEvaluation.language,
+                      entryId: evaluationItem.entry_id,
+                      suggestedText: evaluationItem.suggested_text,
+                    })
+                  }}
+                  acceptingSuggestion={
+                    acceptSuggestion.isPending
+                    && acceptSuggestion.variables?.language === selectedEvaluation.language
+                    && acceptSuggestion.variables?.entryId === item.entry_id
+                  }
+                  suggestionAccepted={acceptedSuggestions.has(`${selectedEvaluation.language}:${item.entry_id}`)}
+                />
               ))}
             </div>
           ) : (

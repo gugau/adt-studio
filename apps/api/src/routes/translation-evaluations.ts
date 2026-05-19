@@ -32,12 +32,6 @@ function safeParseLabel(label: string): string {
   }
 }
 
-function isTranslationEvaluationEnabled(booksDir: string, configPath: string | undefined, label: string): boolean {
-  if (!configPath) return false
-  const config = loadBookConfig(label, booksDir, configPath)
-  return resolveTranslationEvaluationConfig(config.translation_evaluation).enable_translation_evaluation
-}
-
 function parseLanguage(language: string): string {
   const parsed = TranslationEvaluationLanguageParam.safeParse(language)
   if (!parsed.success) {
@@ -315,12 +309,6 @@ export function createTranslationEvaluationRoutes(
     const safeLabel = safeParseLabel(label)
     const safeLanguage = parseLanguage(language)
     const apiKey = getOpenAIApiKeyFromRequest(c)
-
-    if (!isTranslationEvaluationEnabled(booksDir, configPath, safeLabel)) {
-      throw new HTTPException(409, {
-        message: "Translation evaluation is disabled for this book",
-      })
-    }
 
     const evaluation = getTranslationEvaluationStatus(safeLabel, booksDir, safeLanguage)
     if (!evaluation || evaluation.currentTranslationVersion === null) {
