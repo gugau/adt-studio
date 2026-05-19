@@ -39,6 +39,10 @@ const promptsDir = path.resolve(process.env.PROMPTS_DIR ?? path.join(projectRoot
 const configPath = path.resolve(
   process.env.CONFIG_PATH ?? path.join(projectRoot, "config.yaml")
 )
+const configFolderPath = path.resolve(
+  process.env.CONFIG_FOLDER_PATH ?? path.join(projectRoot, "config")
+)
+
 let webAssetsDir: string
 const adtResourcesZip = process.env.ADT_RESOURCES_ZIP
 if (adtResourcesZip && fs.existsSync(adtResourcesZip)) {
@@ -71,9 +75,7 @@ const app = new Hono()
 app.use("*", logger())
 const ALLOWED_ORIGINS = [
   "http://localhost:5173",
-  "tauri://localhost",
-  "https://tauri.localhost",
-  "http://tauri.localhost",
+  "app://adt.studio",
 ]
 
 app.use(
@@ -87,7 +89,7 @@ app.onError(errorHandler)
 app.route("/api", healthRoutes)
 app.route("/api", createBookRoutes(booksDir, webAssetsDir, configPath, taskService))
 app.route("/api", createPageRoutes(booksDir, promptsDir, webAssetsDir, configPath, taskService))
-app.route("/api", createGlossaryRoutes(booksDir))
+app.route("/api", createGlossaryRoutes(booksDir, promptsDir, configPath))
 app.route("/api", createTocRoutes(booksDir))
 app.route("/api", createDebugRoutes(booksDir, promptsDir, configPath))
 app.route("/api", createQuizRoutes(booksDir))
@@ -103,7 +105,7 @@ app.route("/api", createTaskRoutes(taskService))
 app.route("/api", createPresetRoutes(configPath))
 app.route("/api", createAdtPreviewRoutes(booksDir, webAssetsDir, configPath))
 app.route("/api", createSpeechConfigRoutes(configPath))
-app.route("/api", createReviewerValidationRoutes(booksDir, configPath))
+app.route("/api", createReviewerValidationRoutes(booksDir, configFolderPath, configPath))
 app.route("/api", createTranslationEvaluationRoutes(booksDir, configPath, taskService))
 app.route("/api", createSignLanguageVideoRoutes(booksDir))
 

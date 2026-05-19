@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto"
 import { generateObject, APICallError, NoObjectGeneratedError, type LanguageModel, type CoreMessage } from "ai"
 import { createOpenAI, openai } from "@ai-sdk/openai"
-import { anthropic } from "@ai-sdk/anthropic"
-import { google } from "@ai-sdk/google"
+import { anthropic, createAnthropic } from "@ai-sdk/anthropic"
+import { google, createGoogleGenerativeAI } from "@ai-sdk/google"
 import type {
   LLMModel,
   GenerateObjectOptions,
@@ -16,18 +16,21 @@ import { computeHash, readCache, writeCache, bustCache } from "./cache.js"
 import { sanitizeMessages, type LlmLogEntry } from "./log.js"
 import { createLogger, type LogLevel } from "./logger.js"
 
+export interface LLMProviderCredentials {
+  openaiApiKey?: string
+  anthropicApiKey?: string
+  googleApiKey?: string
+  customBaseUrl?: string
+  customApiKey?: string
+}
+
 export interface CreateLLMModelOptions {
   modelId: string // "openai:gpt-5.4" format
   cacheDir?: string
   promptEngine?: PromptEngine
   onLog?: (entry: LlmLogEntry) => void
   rateLimiter?: RateLimiter
-  /** Optional request-scoped OpenAI API key. Falls back to the provider env var when omitted. */
-  openaiApiKey?: string
-  /** Optional request-scoped custom OpenAI-compatible provider URL. Falls back to CUSTOM_OPENAI_BASE_URL. */
-  customBaseUrl?: string
-  /** Optional request-scoped custom OpenAI-compatible provider key. Falls back to CUSTOM_OPENAI_API_KEY. */
-  customApiKey?: string
+  credentials?: LLMProviderCredentials
   /** Console log level. Defaults to "info" (show all). Use "silent" to suppress. */
   logLevel?: LogLevel
 }
@@ -42,14 +45,8 @@ export interface CreateLLMModelOptions {
  * - Optional prompt rendering (pass promptEngine + use prompt option)
  */
 export function createLLMModel(options: CreateLLMModelOptions): LLMModel {
-  const { modelId, cacheDir, promptEngine, onLog, rateLimiter, logLevel, openaiApiKey, customBaseUrl, customApiKey } = options
+  const { modelId, cacheDir, promptEngine, onLog, rateLimiter, credentials, logLevel } = options
   const log = createLogger(logLevel)
-  const resolveProviderModel = (structuredOutputs?: boolean) => resolveModel(modelId, {
-    structuredOutputs,
-    openaiApiKey,
-    customBaseUrl,
-    customApiKey,
-  })
 
   return {
     async renderPrompt(name: string, context: Record<string, unknown>): Promise<Message[]> {
@@ -119,7 +116,9 @@ export function createLLMModel(options: CreateLLMModelOptions): LLMModel {
             } else {
               if (rateLimiter) await rateLimiter.acquire()
               const generated = await callLLM<T>(
-                resolveProviderModel(opts.mode === "json" ? false : undefined),
+                resolveModel(modelId, credentials, {
+                  structuredOutputs: opts.mode === "json" ? false : undefined,
+                }),
                 opts,
                 system,
                 currentMessages
@@ -133,7 +132,9 @@ export function createLLMModel(options: CreateLLMModelOptions): LLMModel {
           } else {
             if (rateLimiter) await rateLimiter.acquire()
             const generated = await callLLM<T>(
-              resolveProviderModel(opts.mode === "json" ? false : undefined),
+              resolveModel(modelId, credentials, {
+                structuredOutputs: opts.mode === "json" ? false : undefined,
+              }),
               opts,
               system,
               currentMessages
@@ -313,31 +314,40 @@ export function createLLMModel(options: CreateLLMModelOptions): LLMModel {
 
 function resolveModel(
   modelId: string,
-  options: {
-    structuredOutputs?: boolean
-    openaiApiKey?: string
-    customBaseUrl?: string
-    customApiKey?: string
-  } = {}
+  credentials?: LLMProviderCredentials,
+  options: { structuredOutputs?: boolean } = {}
 ): LanguageModel {
   const colonIdx = modelId.indexOf(":")
   const provider = colonIdx >= 0 ? modelId.slice(0, colonIdx) : "openai"
   const model = colonIdx >= 0 ? modelId.slice(colonIdx + 1) : modelId
 
   switch (provider) {
-    case "openai":
-      if (options.openaiApiKey?.trim()) {
-        const scopedOpenAI = createOpenAI({ apiKey: options.openaiApiKey.trim() })
-        return scopedOpenAI(model, options.structuredOutputs !== undefined ? { structuredOutputs: options.structuredOutputs } : undefined)
-      }
-      return openai(model, options.structuredOutputs !== undefined ? { structuredOutputs: options.structuredOutputs } : undefined)
-    case "anthropic":
-      return anthropic(model)
-    case "google":
-      return google(model)
+    case "openai": {
+      const providerClient = credentials?.openaiApiKey
+        ? createOpenAI({ apiKey: credentials.openaiApiKey })
+        : openai
+      return providerClient(
+        model,
+        options.structuredOutputs !== undefined
+          ? { structuredOutputs: options.structuredOutputs }
+          : undefined,
+      )
+    }
+    case "anthropic": {
+      const providerClient = credentials?.anthropicApiKey
+        ? createAnthropic({ apiKey: credentials.anthropicApiKey })
+        : anthropic
+      return providerClient(model)
+    }
+    case "google": {
+      const providerClient = credentials?.googleApiKey
+        ? createGoogleGenerativeAI({ apiKey: credentials.googleApiKey })
+        : google
+      return providerClient(model)
+    }
     case "custom": {
-      const baseURL = options.customBaseUrl?.trim() || process.env.CUSTOM_OPENAI_BASE_URL
-      const apiKey = options.customApiKey?.trim() || process.env.CUSTOM_OPENAI_API_KEY
+      const baseURL = credentials?.customBaseUrl ?? process.env.CUSTOM_OPENAI_BASE_URL
+      const apiKey = credentials?.customApiKey ?? process.env.CUSTOM_OPENAI_API_KEY
       if (!baseURL) throw new Error("Custom provider requires CUSTOM_OPENAI_BASE_URL to be set (configure in Settings → Custom)")
       const custom = createOpenAI({ baseURL, apiKey: apiKey || "dummy" })
       return custom(model, options.structuredOutputs !== undefined ? { structuredOutputs: options.structuredOutputs } : undefined)

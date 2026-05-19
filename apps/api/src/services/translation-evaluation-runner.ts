@@ -41,7 +41,7 @@ export interface TranslationEvaluationRunnerOptions {
     modelId: string
     cacheDir: string
     onLog: (entry: LlmLogEntry) => void
-    openaiApiKey: string
+    credentials: { openaiApiKey: string }
   }) => LLMModel
 }
 
@@ -159,9 +159,10 @@ export async function evaluateTranslationInApi(
 
   try {
     const onLog = (entry: LlmLogEntry) => storage.appendLlmLog(entry)
+    const llmCredentials = { openaiApiKey: apiKey }
     const llmModel = options.createModel
-      ? options.createModel({ modelId, cacheDir, onLog, openaiApiKey: apiKey })
-      : createLLMModel({ modelId, cacheDir, onLog, openaiApiKey: apiKey })
+      ? options.createModel({ modelId, cacheDir, onLog, credentials: llmCredentials })
+      : createLLMModel({ modelId, cacheDir, onLog, credentials: llmCredentials })
     const batches = chunkEntries(parsedRequest.entries, batchSize)
     const items: TranslationEvaluationResultData["items"] = []
     let failedItems = 0

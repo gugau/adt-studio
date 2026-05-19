@@ -71,7 +71,7 @@ describe("translation-evaluation-runner", () => {
     expect(createModel).toHaveBeenCalledWith(expect.objectContaining({
       modelId: "openai:gpt-4.1-mini",
       cacheDir: path.join(tmpDir, label, ".cache"),
-      openaiApiKey: "sk-test",
+      credentials: { openaiApiKey: "sk-test" },
     }))
     expect(generateObject).toHaveBeenCalledWith(expect.objectContaining({
       maxRetries: 2,
@@ -241,7 +241,7 @@ describe("translation-evaluation-runner", () => {
       })
 
       expect(createModel).toHaveBeenCalledWith(expect.objectContaining({
-        openaiApiKey: "sk-request-key",
+        credentials: { openaiApiKey: "sk-request-key" },
       }))
       expect(process.env.OPENAI_API_KEY).toBe("sk-existing-env")
     } finally {

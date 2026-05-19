@@ -56,6 +56,7 @@ vi.mock("@/components/pipeline/pipeline-i18n", () => ({
 
 vi.mock("@/lib/utils", () => ({
   cn: (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(" "),
+  isElectron: () => false,
 }))
 
 vi.mock("@/components/pipeline/stages/extract/ExtractSettings", () => ({ ExtractSettings: () => <div>extract-settings</div> }))

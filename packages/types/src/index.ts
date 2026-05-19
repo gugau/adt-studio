@@ -156,6 +156,7 @@ export {
 export {
   TTSProviderConfig,
   SpeechConfig,
+  isSpeechWordHighlightingEnabled,
   SpeechFileEntry,
   TTSOutput,
   WordTimestamp,
@@ -223,3 +224,27 @@ export {
   ReviewerPageValidationResult,
   ReviewerPageValidationRecord,
 } from "./reviewer-validation.js"
+
+export {
+  screenshotIpcViewportSchema,
+  screenshotIpcRequestSchema,
+  screenshotIpcCloseSchema,
+  screenshotIpcUtilityToMainSchema,
+  screenshotIpcReplySuccessSchema,
+  screenshotIpcReplyErrorSchema,
+  screenshotIpcReplySchema,
+  type ScreenshotIpcUtilityToMain,
+  type ScreenshotIpcReply,
+} from "./screenshot-ipc.js"
+
+export {
+  accessibilityAuditIpcViewportSchema,
+  accessibilityAuditIpcRequestSchema,
+  accessibilityAuditIpcCloseSchema,
+  accessibilityAuditIpcUtilityToMainSchema,
+  accessibilityAuditIpcReplySuccessSchema,
+  accessibilityAuditIpcReplyErrorSchema,
+  accessibilityAuditIpcReplySchema,
+  type AccessibilityAuditIpcUtilityToMain,
+  type AccessibilityAuditIpcReply,
+} from "./accessibility-audit-ipc.js"

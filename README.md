@@ -1,4 +1,105 @@
-# ADT Studio
+<div align="center">
+  <h1>ADT Studio</h1>
+  <p>Turn any PDF into an accessible web publication — audio, translations, structured HTML layouts — all generated from your source file, all editable, all yours.</p>
+   <p>
+     <img width="563" height="426" alt="Diagram showing a 238-page PDF being transformed by ADT into an accessible digital book with audio narration in English, Portuguese and Spanish, sign language in ASL and LIBRAS, image alt text, a glossary, and translation features." src="https://github.com/user-attachments/assets/2df657a0-6023-48ae-acd8-3f7a86f1a1b4" />
+  </p> 
+
+  [![Download for Windows](https://img.shields.io/badge/Download-Windows-0078D6?logo=windows&logoColor=white)](https://github.com/unicef/adt-studio/releases/download/v0.3.0-electron/adt-studio.exe)
+  [![Download for macOS](https://img.shields.io/badge/Download-macOS-000000?logo=apple&logoColor=white)](https://github.com/unicef/adt-studio/releases/download/v0.3.0-electron/adt-studio.dmg)
+  ![Platform](https://img.shields.io/badge/platform-desktop-5E3370?logo=electron&logoColor=white)
+  ![OS](https://img.shields.io/badge/os-windows%2C%20macos-pink)
+  [![License: AGPL v3](https://img.shields.io/badge/license-AGPL--3.0-green)](../LICENSE)
+  [![ADT Initiative](https://img.shields.io/badge/ADT_Initiative-accessibletextbooksforall.org-1CABE2)](https://www.accessibletextbooksforall.org/)
+
+<h2>Supported by</h2>
+
+<p align="center">
+  <a href="https://www.unicef.org/" title="UNICEF">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/e/ed/Logo_of_UNICEF.svg" alt="UNICEF" height="56">
+  </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="https://openai.com/" title="OpenAI">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/4/4d/OpenAI_Logo.svg" alt="OpenAI" height="36">
+  </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</p>
+
+</div>
+
+
+
+## Key features
+
+### From PDF to structured content
+- **Extracts everything** — text, figures, layout structure from any PDF.
+- **AI sectioning** — labels chapters, headings, and pedagogic content automatically.
+- **Smart filtering** — keeps what matters, drops what doesn't.
+- **Complex figure handling** — detects and extracts multi-part figures, with multilingual support.
+
+### Built for accessibility
+- **WCAG-validated output** — accessibility checked, not just claimed.
+- **Multiple render modes** — readers choose how content is displayed.
+- **Context-aware alt text** — image descriptions that actually describe the image.
+- **Localized text-to-speech** — natural narration in the right voice for each language.
+- **Multilingual translation** — one source, many languages.
+
+### Generated learning material
+- **Comprehension quizzes** — accessible, auto-generated from chapter content.
+- **Pedagogically aligned glossary** — key terms surfaced and defined.
+- **Table of contents** — navigable, structured, automatic.
+- **Interactive activities** — static exercises converted into web-native interactions.
+- **Original-matching design** — AI rebuilds the book's visual identity, accessibly.
+
+### Author-friendly tooling
+- **Visual editor** — tweak design and content without touching code.
+- **Accessibility evaluator** — flags issues before you publish.
+- **Major model support** — works with the LLMs your team already uses.
+- **Desktop app** — download, install, run locally. Windows and macOS.
+
+### Ships everywhere
+Export to **Web · WebPub · EPUB 3 · SCORM** — drop into any LMS, library platform, or website.
+
+## See ADTs in action
+
+These are live ADTs generated from real PDF source files. They span the spectrum from **fully unedited AI output** to **textbook content with hands-on curation** — pick one to get a feel for what the pipeline produces at each level of human involvement.
+
+<table>
+<tr>
+<td align="center" valign="top" width="33%">
+
+### 🇧🇹 Momo and the Leopards
+Multilingual reader from Bhutan
+
+![AI output: pure](https://img.shields.io/badge/AI_output-pure_%28no_edits%29-1CABE2)
+
+**[Open demo →](https://unicef.github.io/adt-momo-storybook/)**
+
+</td>
+<td align="center" valign="top" width="33%">
+
+### 🇺🇾 Queremos Participar
+Informative reader from Uruguay
+
+![AI output: lightly edited](https://img.shields.io/badge/AI_output-lightly_edited-yellowgreen)
+
+**[Open demo →](https://unicef.github.io/adt-queremos-participar/)**
+
+</td>
+<td align="center" valign="top" width="33%">
+
+### 🇺🇾 Cuaderno 5, Ch. 1
+Grade 5 textbook with activities, Uruguay
+
+![AI output: extensively edited](https://img.shields.io/badge/AI_output-extensively_edited-orange)
+
+**[Open demo →](https://unicef.github.io/ADT-cuaderno5-chapter1/)**
+
+</td>
+</tr>
+</table>
+
+## About
 
 Desktop-first application for automated book production — extract content from PDFs, process through LLM pipelines, and generate formatted output bundles.
 
@@ -11,39 +112,14 @@ Desktop-first application for automated book production — extract content from
 | Backend | Hono, node-sqlite3-wasm, Zod |
 | Visual QA | Playwright (Chromium) |
 | Frontend | React + Vite, TanStack (Router, Query, Table, Form), Tailwind CSS |
-| Desktop | Tauri v2 |
+| Desktop | Electron (electron-vite + electron-builder) |
 | Testing | Vitest |
 
 ### Desktop app — additional requirements
 
-[Rust](https://www.rust-lang.org/tools/install) is required for the Tauri desktop wrapper.
+The desktop wrapper is Electron-based and uses [electron-vite](https://electron-vite.org/) for development and [electron-builder](https://www.electron.build/) for packaging. No Rust toolchain or platform-native build tools are required for app code; electron-builder fetches the right binaries for the host OS automatically.
 
-#### Platform-specific dependencies
-
-<details>
-<summary><strong>macOS</strong></summary>
-
-- Xcode Command Line Tools:
-  ```bash
-  xcode-select --install
-  ```
-</details>
-
-<details>
-<summary><strong>Windows</strong></summary>
-
-- [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) — install the "Desktop development with C++" workload
-- [WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) — pre-installed on Windows 10 (version 1803+) and Windows 11
-</details>
-
-<details>
-<summary><strong>Linux</strong></summary>
-
-- System dependencies (Debian/Ubuntu):
-  ```bash
-  sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
-  ```
-</details>
+Code signing and notarization are optional and only needed when producing distributable installers — see [`apps/desktop/README.md`](apps/desktop/README.md) for the relevant environment variables (`AZ_TOKEN`, `APPLEID`, `APPLEIDPASS`, `APPLEIDTEAM`).
 
 ## Getting Started
 
@@ -165,13 +241,21 @@ For the detailed design and request flow, see:
 
 ### Running the desktop app
 
-With the dev servers running (`pnpm dev`), open a separate terminal:
-
 ```bash
 pnpm dev:desktop
 ```
 
-This launches the Tauri desktop window pointing at the Vite dev server. First run will compile the Rust backend which takes a few minutes — subsequent runs are fast.
+This launches the Electron app via `electron-vite dev`, with HMR for the renderer (Studio SPA) and main/preload reloads for the Electron processes. The API server is started in-process by the Electron main process — there is no separate `pnpm dev` to run.
+
+To package a distributable installer:
+
+```bash
+pnpm build:desktop                       # all-in-one
+pnpm --filter @adt/desktop build:unpack  # unpacked dir, no installer
+pnpm --filter @adt/desktop build:win     # Windows NSIS installer
+pnpm --filter @adt/desktop build:mac     # macOS DMG
+pnpm --filter @adt/desktop build:linux   # Linux AppImage
+```
 
 ## Project Structure
 
@@ -187,7 +271,7 @@ adt-studio/
 ├── apps/                    # Application tier
 │   ├── api/                 # Hono HTTP server
 │   ├── studio/              # React SPA (Vite + TanStack)
-│   └── desktop/             # Tauri v2 desktop wrapper
+│   └── desktop/             # Electron desktop wrapper
 │
 ├── templates/               # Layout templates
 ├── config/                  # Global configuration
@@ -228,7 +312,7 @@ Frontend apps communicate with the API over HTTP only — they never import from
 ```bash
 pnpm install          # Install all dependencies
 pnpm dev              # Start dev servers (API + Studio)
-pnpm dev:desktop      # Launch Tauri desktop app (requires pnpm dev running)
+pnpm dev:desktop      # Launch the Electron desktop app (electron-vite dev, runs API in-process)
 pnpm build            # Build all packages and apps
 pnpm test             # Run tests
 pnpm test:coverage    # Run tests with coverage
@@ -351,8 +435,8 @@ Notes:
 |----------|-------------|
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture, package graph, pipeline model, data flow |
 | [docs/DEVELOPER-GUIDE.md](docs/DEVELOPER-GUIDE.md) | Hosting guide and developer extension reference for third-party teams |
-| [CLAUDE.md](CLAUDE.md) | Claude Code project configuration |
-| [AGENTS.md](AGENTS.md) | Specialized agent definitions |
+| [AGENTS.md](AGENTS.md) | Project instructions for AI coding agents (Claude Code, Codex, Cursor, etc.) |
+| [docs/AGENT_ROLES.md](docs/AGENT_ROLES.md) | Reference role definitions for focused agent tasks |
 | [docs/GUIDELINES.md](docs/GUIDELINES.md) | Full coding standards, security, patterns |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Architecture decision records with reasoning |
 | [docs/architecture.html](docs/architecture.html) | Interactive architecture diagram (open in browser) |

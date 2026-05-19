@@ -27,7 +27,7 @@ adt-studio/
 ├── apps/                        # Application tier
 │   ├── api/                     # Hono HTTP server (Node.js backend)
 │   ├── studio/                  # React SPA (Vite + TanStack)
-│   └── desktop/                 # Tauri v2 desktop wrapper (optional)
+│   └── desktop/                 # Electron desktop wrapper (optional)
 │
 ├── prompts/                     # Liquid (.liquid) templates for all LLM calls
 ├── templates/                   # HTML layout templates for rendering steps
@@ -45,7 +45,7 @@ Data and dependencies flow in one direction only:
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  apps/studio (React SPA)  │  apps/desktop (Tauri)   │
+│  apps/studio (React SPA)  │  apps/desktop (Electron)│
 └───────────────────┬─────────────────────────────────┘
                     │  HTTP only — never direct imports
                     ▼

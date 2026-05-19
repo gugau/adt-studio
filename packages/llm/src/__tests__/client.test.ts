@@ -1,111 +1,144 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { z } from "zod"
+import { createLLMModel } from "../client.js"
 
-const mocks = vi.hoisted(() => {
-  const generateObject = vi.fn()
-  const scopedOpenAIModel = vi.fn((model: string, options?: unknown) => ({
-    provider: "scoped-openai",
-    model,
-    options,
-  }))
-  const createOpenAI = vi.fn(() => scopedOpenAIModel)
-  const openai = vi.fn((model: string, options?: unknown) => ({
-    provider: "env-openai",
-    model,
-    options,
-  }))
-  const anthropic = vi.fn()
-  const google = vi.fn()
-
+const {
+  generateObjectMock,
+  openaiProviderMock,
+  createOpenAIMock,
+  anthropicProviderMock,
+  createAnthropicMock,
+  googleProviderMock,
+  createGoogleGenerativeAIMock,
+} = vi.hoisted(() => {
   return {
-    anthropic,
-    createOpenAI,
-    generateObject,
-    google,
-    openai,
-    scopedOpenAIModel,
+    generateObjectMock: vi.fn(),
+    openaiProviderMock: vi.fn(),
+    createOpenAIMock: vi.fn(),
+    anthropicProviderMock: vi.fn(),
+    createAnthropicMock: vi.fn(),
+    googleProviderMock: vi.fn(),
+    createGoogleGenerativeAIMock: vi.fn(),
   }
 })
 
 vi.mock("ai", () => ({
+  generateObject: generateObjectMock,
   APICallError: { isInstance: () => false },
   NoObjectGeneratedError: { isInstance: () => false },
-  generateObject: mocks.generateObject,
 }))
 
 vi.mock("@ai-sdk/openai", () => ({
-  createOpenAI: mocks.createOpenAI,
-  openai: mocks.openai,
+  openai: openaiProviderMock,
+  createOpenAI: createOpenAIMock,
 }))
 
 vi.mock("@ai-sdk/anthropic", () => ({
-  anthropic: mocks.anthropic,
+  anthropic: anthropicProviderMock,
+  createAnthropic: createAnthropicMock,
 }))
 
 vi.mock("@ai-sdk/google", () => ({
-  google: mocks.google,
+  google: googleProviderMock,
+  createGoogleGenerativeAI: createGoogleGenerativeAIMock,
 }))
 
-import { createLLMModel } from "../client.js"
-
-describe("createLLMModel", () => {
-  beforeEach(() => {
+describe("createLLMModel credentials", () => {
+  afterEach(() => {
     vi.clearAllMocks()
-    mocks.generateObject.mockResolvedValue({
+  })
+
+  it("uses a request-scoped OpenAI client when openaiApiKey is provided", async () => {
+    const requestScopedModel = { provider: "request-openai" }
+    const defaultModel = { provider: "default-openai" }
+
+    openaiProviderMock.mockReturnValue(defaultModel)
+    createOpenAIMock.mockReturnValue(vi.fn(() => requestScopedModel))
+    generateObjectMock.mockResolvedValue({
       object: { ok: true },
-      usage: { promptTokens: 3, completionTokens: 2 },
+      usage: { promptTokens: 1, completionTokens: 2 },
     })
+
+    const llm = createLLMModel({
+      modelId: "openai:gpt-4.1",
+      credentials: { openaiApiKey: "sk-request" },
+    })
+
+    await llm.generateObject({
+      schema: z.object({ ok: z.boolean() }),
+      messages: [{ role: "user", content: "hello" }],
+    })
+
+    expect(createOpenAIMock).toHaveBeenCalledWith({ apiKey: "sk-request" })
+    expect(openaiProviderMock).not.toHaveBeenCalled()
+    expect(generateObjectMock).toHaveBeenCalledWith(
+      expect.objectContaining({ model: requestScopedModel }),
+    )
   })
 
-  it("passes an explicit OpenAI API key without using the env-backed provider", async () => {
-    const model = createLLMModel({
-      modelId: "openai:gpt-test",
-      openaiApiKey: " sk-explicit ",
-      logLevel: "silent",
+  it("falls back to the default provider client when no request-scoped key is provided", async () => {
+    const defaultModel = { provider: "default-openai" }
+
+    openaiProviderMock.mockReturnValue(defaultModel)
+    generateObjectMock.mockResolvedValue({
+      object: { ok: true },
+      usage: { promptTokens: 1, completionTokens: 2 },
     })
 
-    await model.generateObject({
+    const llm = createLLMModel({
+      modelId: "openai:gpt-4.1",
+    })
+
+    await llm.generateObject({
       schema: z.object({ ok: z.boolean() }),
-      messages: [{ role: "user", content: "test" }],
+      messages: [{ role: "user", content: "hello" }],
     })
 
-    expect(mocks.createOpenAI).toHaveBeenCalledWith({ apiKey: "sk-explicit" })
-    expect(mocks.scopedOpenAIModel).toHaveBeenCalledWith("gpt-test", undefined)
-    expect(mocks.openai).not.toHaveBeenCalled()
+    expect(createOpenAIMock).not.toHaveBeenCalled()
+    expect(openaiProviderMock).toHaveBeenCalled()
+    expect(generateObjectMock).toHaveBeenCalledWith(
+      expect.objectContaining({ model: defaultModel }),
+    )
   })
 
-  it("keeps the existing env-backed OpenAI provider when no explicit key is supplied", async () => {
-    const model = createLLMModel({
-      modelId: "openai:gpt-test",
-      logLevel: "silent",
+  it("supports request-scoped Anthropic and Google credentials", async () => {
+    const anthropicModel = { provider: "request-anthropic" }
+    const googleModel = { provider: "request-google" }
+
+    createAnthropicMock.mockReturnValue(vi.fn(() => anthropicModel))
+    createGoogleGenerativeAIMock.mockReturnValue(vi.fn(() => googleModel))
+    generateObjectMock.mockResolvedValue({
+      object: { ok: true },
+      usage: { promptTokens: 1, completionTokens: 2 },
     })
 
-    await model.generateObject({
+    const anthropicLlm = createLLMModel({
+      modelId: "anthropic:claude-3-5-sonnet-latest",
+      credentials: { anthropicApiKey: "ak-request" },
+    })
+    await anthropicLlm.generateObject({
       schema: z.object({ ok: z.boolean() }),
-      messages: [{ role: "user", content: "test" }],
+      messages: [{ role: "user", content: "hello" }],
     })
 
-    expect(mocks.openai).toHaveBeenCalledWith("gpt-test", undefined)
-    expect(mocks.createOpenAI).not.toHaveBeenCalled()
-  })
-
-  it("passes explicit custom provider credentials", async () => {
-    const model = createLLMModel({
-      modelId: "custom:gpt-test",
-      customBaseUrl: " https://llm.example/v1 ",
-      customApiKey: " custom-key ",
-      logLevel: "silent",
+    const googleLlm = createLLMModel({
+      modelId: "google:gemini-2.5-flash",
+      credentials: { googleApiKey: "gk-request" },
     })
-
-    await model.generateObject({
+    await googleLlm.generateObject({
       schema: z.object({ ok: z.boolean() }),
-      messages: [{ role: "user", content: "test" }],
+      messages: [{ role: "user", content: "hello" }],
     })
 
-    expect(mocks.createOpenAI).toHaveBeenCalledWith({
-      baseURL: "https://llm.example/v1",
-      apiKey: "custom-key",
-    })
-    expect(mocks.scopedOpenAIModel).toHaveBeenCalledWith("gpt-test", undefined)
+    expect(createAnthropicMock).toHaveBeenCalledWith({ apiKey: "ak-request" })
+    expect(createGoogleGenerativeAIMock).toHaveBeenCalledWith({ apiKey: "gk-request" })
+    expect(generateObjectMock).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ model: anthropicModel }),
+    )
+    expect(generateObjectMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ model: googleModel }),
+    )
   })
 })

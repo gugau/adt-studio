@@ -77,6 +77,15 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 
+// Image src format embedded in stored rendering HTML — must match the pipeline's
+// web-rendering.ts `imageUrlFor`. Always relative so the iframe's <base> resolves it.
+// Don't use BASE_URL here: in Electron BASE_URL is absolute (http://localhost:<port>/api),
+// which won't match the relative URLs the pipeline writes into the HTML and causes
+// crop / replace / segment / AI-image swaps to silently leave the old src in place.
+function renderedImageSrc(label: string, imageId: string): string {
+  return `/api/books/${label}/images/${imageId}`
+}
+
 // -- AI loading messages --
 
 const AI_MESSAGE_DESCRIPTORS = [
@@ -500,10 +509,23 @@ export function StoryboardSectionDetail({
   const [selectedElementClasses, setSelectedElementClasses] = useState<string[] | null>(null)
   const previewFrameRef = useRef<BookPreviewFrameHandle>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const toolbarRef = useRef<HTMLDivElement>(null)
 
   // Clear cached classes when element is deselected
   useEffect(() => {
     if (!selectedElement) setSelectedElementClasses(null)
+  }, [selectedElement])
+
+  // Close toolbar when clicking outside of it
+  useEffect(() => {
+    if (!selectedElement) return
+    const handler = (e: MouseEvent) => {
+      if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
+        setSelectedElement(null)
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
   }, [selectedElement])
 
   // Track current pageId so async callbacks can detect stale closures
@@ -1293,8 +1315,8 @@ export function StoryboardSectionDetail({
       // 2. Update rendered HTML to swap image references so preview reflects the crop
       const rBase = pendingRendering ?? page.rendering
       if (rBase) {
-        const oldSrc = `${BASE_URL}/books/${bookLabel}/images/${cropTarget}`
-        const newSrc = `${BASE_URL}/books/${bookLabel}/images/${result.imageId}`
+        const oldSrc = renderedImageSrc(bookLabel, cropTarget)
+        const newSrc = renderedImageSrc(bookLabel, result.imageId)
         const updatedRendering: RenderingData = {
           ...rBase,
           sections: rBase.sections.map((s) => {
@@ -1361,8 +1383,8 @@ export function StoryboardSectionDetail({
 
       const rBase = pendingRendering ?? page.rendering
       if (rBase) {
-        const oldSrc = `${BASE_URL}/books/${bookLabel}/images/${targetId}`
-        const newSrc = `${BASE_URL}/books/${bookLabel}/images/${result.imageId}`
+        const oldSrc = renderedImageSrc(bookLabel, targetId)
+        const newSrc = renderedImageSrc(bookLabel, result.imageId)
         const updatedRendering: RenderingData = {
           ...rBase,
           sections: rBase.sections.map((s) => {
@@ -1402,8 +1424,8 @@ export function StoryboardSectionDetail({
 
       const rBase = pendingRendering ?? page.rendering
       if (rBase) {
-        const oldSrc = `${BASE_URL}/books/${bookLabel}/images/${targetId}`
-        const newSrc = `${BASE_URL}/books/${bookLabel}/images/${newImageId}`
+        const oldSrc = renderedImageSrc(bookLabel, targetId)
+        const newSrc = renderedImageSrc(bookLabel, newImageId)
         const updatedRendering: RenderingData = {
           ...rBase,
           sections: rBase.sections.map((s) => {
@@ -1511,7 +1533,7 @@ export function StoryboardSectionDetail({
               const segImgs = result.segments
                 .map(
                   (seg) =>
-                    `<img data-id="${seg.imageId}" src="${BASE_URL}/books/${bookLabel}/images/${seg.imageId}" width="${seg.width}" height="${seg.height}" alt="${seg.label}" class="w-full" />`
+                    `<img data-id="${seg.imageId}" src="${renderedImageSrc(bookLabel, seg.imageId)}" width="${seg.width}" height="${seg.height}" alt="${seg.label}" class="w-full" />`
                 )
                 .join("\n")
               const imgPattern = new RegExp(
@@ -1556,8 +1578,8 @@ export function StoryboardSectionDetail({
       setPendingRendering((prev) => {
         const rBase = prev ?? pageDataRef.current.rendering
         if (!rBase) return prev
-        const oldSrc = `${BASE_URL}/books/${bookLabel}/images/${targetId}`
-        const newSrc = `${BASE_URL}/books/${bookLabel}/images/${newImageId}`
+        const oldSrc = renderedImageSrc(bookLabel, targetId)
+        const newSrc = renderedImageSrc(bookLabel, newImageId)
         return {
           ...rBase,
           sections: rBase.sections.map((s) => {
@@ -1602,7 +1624,7 @@ export function StoryboardSectionDetail({
         const rBase = prev ?? pageDataRef.current.rendering
         if (!rBase) return prev
         // eslint-disable-next-line lingui/no-unlocalized-strings
-        const imgTag = `<img data-id="${newImageId}" src="${BASE_URL}/books/${bookLabel}/images/${newImageId}"${dims ? ` width="${dims.w}" height="${dims.h}"` : ""} alt="${newImageId}" class="w-full" />`
+        const imgTag = `<img data-id="${newImageId}" src="${renderedImageSrc(bookLabel, newImageId)}"${dims ? ` width="${dims.w}" height="${dims.h}"` : ""} alt="${newImageId}" class="w-full" />`
         return {
           ...rBase,
           sections: rBase.sections.map((s) => {
@@ -2226,6 +2248,7 @@ export function StoryboardSectionDetail({
 
       {/* Floating popover for selected element */}
       {selectedElement && selectedInfo && (
+        <div ref={toolbarRef}>
         <SectionEditToolbar
           dataId={selectedElement.dataId}
           rect={selectedElement.rect}
@@ -2250,6 +2273,7 @@ export function StoryboardSectionDetail({
           elementClasses={selectedElementClasses ?? undefined}
           onClassesChange={handleClassesChange}
         />
+        </div>
       )}
 
       {/* Slide-out section data panel */}

@@ -183,13 +183,13 @@ describe("runVisualReviewLoop", () => {
     expect(result.approved).toBe(true)
     expect(result.html).toContain(">v3<")
 
-    // On the 4th call, history keeps initial turn and latest two turns:
-    // Initial, v2, v3 (v1 is dropped).
+    // The conversation window keeps only the most recent turn; the system prompt
+    // is sent separately so prior screenshots/HTML aren't carried forward.
     const fourthCall = userHtmlSnippetsByCall[3]
-    expect(fourthCall).toHaveLength(3)
-    expect(fourthCall[0]).toContain("Initial")
-    expect(fourthCall[1]).toContain("v2")
-    expect(fourthCall[2]).toContain("v3")
-    expect(fourthCall.join(" ")).not.toContain("v1")
+    expect(fourthCall).toHaveLength(1)
+    expect(fourthCall[0]).toContain("v3")
+    expect(fourthCall[0]).not.toContain("Initial")
+    expect(fourthCall[0]).not.toContain("v1")
+    expect(fourthCall[0]).not.toContain("v2")
   })
 })

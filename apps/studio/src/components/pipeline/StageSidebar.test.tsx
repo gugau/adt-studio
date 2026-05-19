@@ -94,6 +94,10 @@ vi.mock("@/hooks/use-sign-language-videos", () => ({
   useSignLanguageVideos: () => ({ data: { videos: [] } }),
 }))
 
+vi.mock("@/hooks/use-stage-missing-counts", () => ({
+  useStageMissingCounts: () => ({ translate: 0, speech: 0 }),
+}))
+
 vi.mock("@/hooks/use-pages", () => ({
   usePages: () => ({ data: [] }),
   usePageImage: () => ({ data: null }),

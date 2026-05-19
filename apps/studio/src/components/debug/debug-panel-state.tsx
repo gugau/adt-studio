@@ -5,6 +5,7 @@ export const DEBUG_TAB_VALUES = [
   "logs",
   "config",
   "versions",
+  "api-logs",
 ] as const
 
 export type DebugTabValue = (typeof DEBUG_TAB_VALUES)[number]

@@ -439,7 +439,7 @@
         </div>
         <div class="arch-box">
           apps/desktop
-          <div class="tooltip">Desktop wrapper (Tauri or Electron — TBD)<br>Native OS integration<br>Embeds studio webview</div>
+          <div class="tooltip">Electron desktop wrapper<br>Native OS integration<br>Boots the API in the main process and loads the Studio SPA in the renderer</div>
         </div>
       </div>
     </div>
@@ -687,7 +687,7 @@
           <li>Faster request handling benchmarks vs Express</li>
           <li>Edge-ready (works on Cloudflare Workers, Deno, Bun)</li>
           <li>Middleware ecosystem: CORS, body parsing, error handling built-in</li>
-          <li>Perfect for embedding in desktop sidecar (minimal footprint)</li>
+          <li>Perfect for embedding in the Electron main process (minimal footprint)</li>
         </ul>
       </div>
     </div>
@@ -720,18 +720,18 @@
 
     <div class="lib-card" onclick="this.classList.toggle('expanded')">
       <div class="lib-header">
-        <span class="lib-name">Tauri or Electron</span>
-        <span class="lib-category">Desktop (TBD)</span>
+        <span class="lib-name">Electron</span>
+        <span class="lib-category">Desktop runtime</span>
       </div>
-      <div class="lib-why">Desktop runtime decision deferred — architecture is shell-agnostic</div>
-      <div class="lib-over"><strong>Candidates:</strong> Tauri, Electron</div>
+      <div class="lib-why">Chromium + Node.js shell — consistent rendering across platforms, same language as the rest of the stack</div>
+      <div class="lib-over"><strong>Over:</strong> Tauri v2 sidecar</div>
       <div class="lib-details">
-        <strong style="color: var(--text);">Tauri</strong> — ~10x smaller bundle (system webview), Rust backend, allowlist security, lower memory<br><br>
-        <strong style="color: var(--text);">Electron</strong> — Bundles Chromium (consistent rendering), Node.js backend (same language), mature ecosystem<br><br>
         <ul>
-          <li>Decision deferred until desktop packaging work begins</li>
-          <li>Studio SPA talks to API over HTTP — agnostic to which shell wraps it</li>
-          <li><code>apps/desktop/</code> is isolated so the choice doesn't affect other packages</li>
+          <li>Driven by <code>electron-vite</code> in dev (renderer HMR + main/preload reloads) and packaged with <code>electron-builder</code> (NSIS / DMG / AppImage)</li>
+          <li>Main process boots the API server in-process from a bundled <code>api-server.mjs</code> (esbuild + WASM assets) on a free local port</li>
+          <li>Preload exposes a narrow <code>window.electronAPI</code> bridge to the renderer with <code>contextIsolation</code> enabled</li>
+          <li>No Rust toolchain or per-OS native build tools required — only Node.js + pnpm</li>
+          <li>Trade-off: larger bundle (~150 MB, bundles Chromium) and higher memory than Tauri, accepted for cross-platform rendering parity</li>
         </ul>
       </div>
     </div>

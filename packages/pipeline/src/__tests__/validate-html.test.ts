@@ -19,6 +19,43 @@ describe("validateSectionHtml", () => {
     expect(result.errors).toEqual([])
   })
 
+  it("allows optional text-ids to be omitted", () => {
+    const html = `
+      <div id="content"><section data-section-type="activity_fill_in_the_blank">
+        <p data-id="pg001_n0001">Question?</p>
+        <input type="text" />
+      </section></div>
+    `
+    const result = validateSectionHtml(
+      html,
+      ["pg001_n0001", "pg001_n0002", "pg001_n0003"],
+      [],
+      undefined,
+      { optionalTextIds: new Set(["pg001_n0002", "pg001_n0003"]) }
+    )
+    expect(result.valid).toBe(true)
+    expect(result.errors).toEqual([])
+  })
+
+  it("still requires non-optional text-ids when optionalTextIds is set", () => {
+    const html = `
+      <section data-section-type="activity_fill_in_the_blank">
+        <p data-id="pg001_n0002">Foo</p>
+      </section>
+    `
+    const result = validateSectionHtml(
+      html,
+      ["pg001_n0001", "pg001_n0002"],
+      [],
+      undefined,
+      { optionalTextIds: new Set(["pg001_n0002"]) }
+    )
+    expect(result.valid).toBe(false)
+    expect(result.errors).toContainEqual(
+      expect.stringContaining('Missing required text data-id: "pg001_n0001"')
+    )
+  })
+
   it("detects unknown data-id", () => {
     const html = `
       <section>

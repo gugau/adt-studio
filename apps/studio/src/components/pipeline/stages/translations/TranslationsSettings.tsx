@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ModelSelect, OPENAI_TTS_MODELS, AZURE_TTS_MODELS, GEMINI_TTS_MODELS } from "@/components/pipeline/components/ModelSelect"
+import { Switch } from "@/components/ui/switch"
+import { ModelSelect, OPENAI_TTS_MODELS, AZURE_TTS_MODELS, GEMINI_TTS_MODELS, IMAGE_MODEL_GROUPS } from "@/components/pipeline/components/ModelSelect"
 import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useApiKey } from "@/hooks/use-api-key"
@@ -29,6 +30,8 @@ import { normalizeLocale } from "@/lib/languages"
 import { resolveSpeechProviderForLanguage } from "@/lib/speech-routing"
 import { SpeechPromptsEditor } from "./components/SpeechPromptsEditor"
 import { VoiceMappingsEditor } from "./components/VoiceMappingsEditor"
+import { SelectImagesDialog } from "./components/SelectImagesDialog"
+import { WordHighlightPreview } from "./components/WordHighlightPreview"
 import { useLingui } from "@lingui/react/macro"
 
 const langNames = new Intl.DisplayNames(["en"], { type: "language" })
@@ -38,6 +41,11 @@ function displayLang(code: string): string {
 
 export function TranslationsSettings({ bookLabel, headerTarget, tab = "general", stageSlug = "translate" }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string; stageSlug?: string }) {
   const isSpeechStage = stageSlug === "speech"
+  const captionedImagesQuery = useQuery({
+    queryKey: ["books", bookLabel, "captioned-images"],
+    queryFn: () => api.listCaptionedImages(bookLabel),
+    enabled: !isSpeechStage,
+  })
   const { t } = useLingui()
   const { data: book } = useBook(bookLabel)
   const { data: bookConfigData } = useBookConfig(bookLabel)
@@ -51,6 +59,13 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general",
   const [outputLanguages, setOutputLanguages] = useState<Set<string>>(new Set())
   const [promptDraft, setPromptDraft] = useState<string | null>(null)
 
+  // Image translation
+  const [imageTranslationEnabled, setImageTranslationEnabled] = useState(false)
+  const [imageModel, setImageModel] = useState("")
+  const [selectedImageIds, setSelectedImageIds] = useState<string[]>([])
+  const [imagePromptDraft, setImagePromptDraft] = useState<string | null>(null)
+  const [showImagePicker, setShowImagePicker] = useState(false)
+
   // Speech settings
   const [speechModel, setSpeechModel] = useState("")
   const [format, setFormat] = useState("")
@@ -63,12 +78,14 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general",
   const [geminiLanguages, setGeminiLanguages] = useState("")
   const [bitRate, setBitRate] = useState("")
   const [sampleRate, setSampleRate] = useState("")
+  const [wordHighlighting, setWordHighlighting] = useState(false)
 
   const [dirty, setDirty] = useState<Record<string, boolean>>({})
   const markDirty = (field: string) => setDirty((prev) => ({ ...prev, [field]: true }))
 
   const merged = activeConfigData?.merged as Record<string, unknown> | undefined
   const translation = useStepConfig(merged, "translation", markDirty)
+  const imageTranslation = useStepConfig(merged, "image_translation", markDirty)
 
   const configuredEditingLanguage = merged?.editing_language as string | undefined
   const bookLanguage = book?.languageCode ?? book?.metadata?.language_code ?? null
@@ -81,6 +98,16 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general",
       const normalized = (m.output_languages as string[]).map((code) => normalizeLocale(code))
       setOutputLanguages(new Set(normalized))
     }
+    if (m.image_translation && typeof m.image_translation === "object") {
+      const it = m.image_translation as Record<string, unknown>
+      setImageTranslationEnabled(it.enabled === true)
+      setImageModel(typeof it.image_model === "string" ? it.image_model : "")
+      setSelectedImageIds(Array.isArray(it.selected_image_ids) ? (it.selected_image_ids as string[]) : [])
+    } else {
+      setImageTranslationEnabled(false)
+      setImageModel("")
+      setSelectedImageIds([])
+    }
     if (m.speech && typeof m.speech === "object") {
       const s = m.speech as Record<string, unknown>
       if (s.model) setSpeechModel(String(s.model))
@@ -88,6 +115,7 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general",
       if (s.default_provider) setDefaultProvider(String(s.default_provider))
       if (s.bit_rate) setBitRate(String(s.bit_rate))
       if (s.sample_rate) setSampleRate(String(s.sample_rate))
+      setWordHighlighting(s.word_highlighting === true)
       if (s.providers && typeof s.providers === "object") {
         const providers = s.providers as Record<string, Record<string, unknown>>
         if (providers.openai) {
@@ -121,6 +149,16 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general",
       const normalized = Array.from(outputLanguages).map((code) => normalizeLocale(code))
       overrides.output_languages = normalized.length > 0 ? normalized : undefined
     }
+    if (shouldWrite("image_translation")) {
+      const existing = (bookConfigData?.config?.image_translation ?? {}) as Record<string, unknown>
+      overrides.image_translation = {
+        ...existing,
+        ...imageTranslation.configOverrides,
+        enabled: imageTranslationEnabled,
+        image_model: imageModel.trim() || undefined,
+        selected_image_ids: selectedImageIds.length > 0 ? selectedImageIds : undefined,
+      }
+    }
     if (shouldWrite("speech")) {
       const existing = (bookConfigData?.config?.speech ?? {}) as Record<string, unknown>
       const openaiLangs = openaiLanguages.split(",").map((s) => s.trim()).filter(Boolean)
@@ -153,6 +191,7 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general",
         providers: Object.keys(providers).length > 0 ? providers : undefined,
         bit_rate: bitRate.trim() || undefined,
         sample_rate: sampleRate.trim() ? Number(sampleRate.trim()) : undefined,
+        word_highlighting: wordHighlighting,
       }
     }
     return overrides
@@ -174,6 +213,7 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general",
   const confirmSaveAndRerun = async () => {
     const promptSaves: Promise<unknown>[] = []
     if (promptDraft != null) promptSaves.push(api.updatePrompt("translation", promptDraft, bookLabel))
+    if (imagePromptDraft != null) promptSaves.push(api.updatePrompt("image_translation", imagePromptDraft, bookLabel))
     if (promptSaves.length > 0) await Promise.all(promptSaves)
 
     const overrides = buildOverrides()
@@ -183,6 +223,7 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general",
         onSuccess: async () => {
           setDirty({})
           setPromptDraft(null)
+          setImagePromptDraft(null)
           setShowRerunDialog(false)
           queueRun({
             fromStage: stageSlug as "translate" | "speech",
@@ -253,7 +294,147 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general",
           geminiLanguages={geminiLanguages} setGeminiLanguages={setGeminiLanguages}
           bitRate={bitRate} setBitRate={setBitRate}
           sampleRate={sampleRate} setSampleRate={setSampleRate}
+          wordHighlighting={wordHighlighting} setWordHighlighting={setWordHighlighting}
           markDirty={markDirty}
+        />
+      )}
+
+      {tab === "image-translation" && !isSpeechStage && (
+        <div className="space-y-5">
+          <div>
+            <h3 className="text-sm font-semibold">{t`Image Translation`}</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              {t`Regenerate selected images for each output language so that any text burned into them is shown in the target language.`}
+            </p>
+          </div>
+
+          {/* Enable */}
+          <label className="flex items-start gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={imageTranslationEnabled}
+              onChange={(e) => {
+                setImageTranslationEnabled(e.target.checked)
+                markDirty("image_translation")
+              }}
+              className="mt-0.5 h-4 w-4 rounded border-input"
+            />
+            <div>
+              <span className="text-sm font-medium">{t`Translate text in images`}</span>
+              <p className="text-xs text-muted-foreground">
+                {t`When enabled, the selected images below are regenerated for every output language during the translate stage.`}
+              </p>
+            </div>
+          </label>
+
+          {/* Image model */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">{t`Image model`}</Label>
+            <ModelSelect
+              value={imageModel}
+              onChange={(v) => { setImageModel(v); markDirty("image_translation") }}
+              placeholder="openai:gpt-image-2"
+              groups={IMAGE_MODEL_GROUPS}
+              prefixProvider
+              className="max-w-md"
+              inputClassName="h-9 text-sm"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              {t`OpenAI image-edit model used to regenerate each image with translated text.`}
+            </p>
+          </div>
+
+          {/* Selected images */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">{t`Selected images`}</Label>
+            <div className="flex items-center gap-3">
+              <Badge variant="secondary" className="text-xs font-normal">
+                {selectedImageIds.length === 1
+                  ? t`1 image selected`
+                  : t`${String(selectedImageIds.length)} images selected`}
+              </Badge>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 text-xs"
+                onClick={() => setShowImagePicker(true)}
+              >
+                {t`Choose images...`}
+              </Button>
+              {selectedImageIds.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 text-xs text-muted-foreground"
+                  onClick={() => {
+                    setSelectedImageIds([])
+                    markDirty("image_translation")
+                  }}
+                >
+                  {t`Clear`}
+                </Button>
+              )}
+            </div>
+            {(() => {
+              const available = captionedImagesQuery.data?.images
+              if (!available || selectedImageIds.length === 0) return null
+              const availableIds = new Set(available.map((img) => img.imageId))
+              const stale = selectedImageIds.filter((id) => !availableIds.has(id))
+              if (stale.length === 0) return null
+              return (
+                <div className="flex items-center gap-3 text-[11px] text-amber-600 dark:text-amber-400">
+                  <span>
+                    {stale.length === 1
+                      ? t`1 selected image is no longer in the storyboard.`
+                      : t`${String(stale.length)} selected images are no longer in the storyboard.`}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 text-[11px] underline"
+                    onClick={() => {
+                      setSelectedImageIds((prev) => prev.filter((id) => availableIds.has(id)))
+                      markDirty("image_translation")
+                    }}
+                  >
+                    {t`Remove`}
+                  </Button>
+                </div>
+              )
+            })()}
+            <p className="text-[11px] text-muted-foreground">
+              {t`Only images that appear in the storyboard (have captions) can be selected.`}
+            </p>
+          </div>
+
+          {/* Prompt */}
+          <div className="pt-2 border-t">
+            <PromptViewer
+              promptName="image_translation"
+              bookLabel={bookLabel}
+              title={t`Image translation prompt`}
+              description={t`The prompt sent to the image model alongside each selected image.`}
+              model={imageTranslation.model}
+              onModelChange={imageTranslation.onModelChange}
+              maxRetries={imageTranslation.maxRetries}
+              onMaxRetriesChange={imageTranslation.onMaxRetriesChange}
+              onContentChange={setImagePromptDraft}
+              enabled={tab === "image-translation"}
+            />
+          </div>
+        </div>
+      )}
+
+      {showImagePicker && (
+        <SelectImagesDialog
+          bookLabel={bookLabel}
+          initialSelected={selectedImageIds}
+          onConfirm={(ids) => {
+            setSelectedImageIds(ids)
+            markDirty("image_translation")
+            setShowImagePicker(false)
+          }}
+          onClose={() => setShowImagePicker(false)}
         />
       )}
 
@@ -265,7 +446,7 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general",
         <VoiceMappingsEditor bookLabel={bookLabel} headerTarget={headerTarget} />
       )}
 
-      {headerTarget && (tab === "general" || tab === "prompt" || tab === "speech") && createPortal(
+      {headerTarget && (tab === "general" || tab === "prompt" || tab === "speech" || tab === "image-translation") && createPortal(
         <Button
           size="sm"
           className="h-7 px-2.5 text-xs bg-black/15 text-white hover:bg-black/25"
@@ -328,6 +509,7 @@ function SpeechLanguageCards({
   geminiLanguages, setGeminiLanguages,
   bitRate, setBitRate,
   sampleRate, setSampleRate,
+  wordHighlighting, setWordHighlighting,
   markDirty,
 }: {
   bookLabel: string
@@ -344,6 +526,7 @@ function SpeechLanguageCards({
   geminiLanguages: string; setGeminiLanguages: (v: string) => void
   bitRate: string; setBitRate: (v: string) => void
   sampleRate: string; setSampleRate: (v: string) => void
+  wordHighlighting: boolean; setWordHighlighting: (v: boolean) => void
   markDirty: (field: string) => void
 }) {
   const { t } = useLingui()
@@ -494,6 +677,20 @@ function SpeechLanguageCards({
             />
           </div>
         </div>
+        <div className="flex items-start gap-3 pt-2">
+          <Switch
+            id="word-highlighting"
+            checked={wordHighlighting}
+            onCheckedChange={(v) => { setWordHighlighting(v); markDirty("speech") }}
+          />
+          <div className="space-y-2 flex-1">
+            <Label htmlFor="word-highlighting" className="text-xs">{t`Word-level highlighting`}</Label>
+            <p className="text-[11px] text-muted-foreground">
+              {t`When enabled, word-level timestamps are calculated automatically during speech generation so the reader can highlight words as they're spoken. When disabled, you can still calculate timestamps manually from the speech view.`}
+            </p>
+            <WordHighlightPreview enabled={wordHighlighting} />
+          </div>
+        </div>
       </div>
 
       {/* Per-language cards */}
@@ -579,3 +776,4 @@ function SpeechLanguageCards({
     </div>
   )
 }
+

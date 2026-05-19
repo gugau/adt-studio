@@ -5,6 +5,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export function isElectron(): boolean {
+  return typeof navigator !== "undefined" && navigator.userAgent.toLowerCase().includes("electron")
+}
 export function formatBytes(bytes: number): string {
   /* eslint-disable-next-line lingui/no-unlocalized-strings */
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`

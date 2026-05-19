@@ -17,7 +17,7 @@ export function WelcomeScene({ onNext }: OnboardingStepProps) {
     <div className="relative flex h-full w-full flex-col items-center justify-center gap-8 p-8 text-center">
       <img
         aria-hidden
-        src="/favicon.svg"
+        src="/logo.png"
         alt=""
         width={104}
         height={104}

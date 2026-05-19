@@ -19,7 +19,6 @@ import {
   createAzureTTSSynthesizer,
   createGeminiTTSSynthesizer,
   createTTSSynthesizer,
-  transcribeWithWhisper,
   type LlmLogEntry,
 } from "@adt/llm"
 import {
@@ -32,6 +31,7 @@ import {
   resolveSpeechModel,
   resolveVoice,
   generateSpeechFile,
+  generateWordTimestamps,
   type ProviderRouting,
 } from "@adt/pipeline"
 
@@ -42,8 +42,28 @@ const GenerateSingleTTSBody = z
   })
   .strict()
 
+const UploadSingleTTSFields = z
+  .object({
+    textId: z.string().min(1),
+    language: z.string().min(1),
+  })
+  .strict()
+
 const GEMINI_FLASH_PREVIEW_TTS_MODEL = "gemini-2.5-flash-preview-tts"
 const GEMINI_PRO_PREVIEW_TTS_MODEL = "gemini-2.5-pro-preview-tts"
+const SAFE_AUDIO_LANGUAGE_RE = /^[A-Za-z0-9_-]+$/
+const SAFE_AUDIO_TEXT_ID_RE = /^[A-Za-z0-9._-]+$/
+const AUDIO_UPLOAD_FORMAT_BY_MIME: Record<string, "mp3" | "wav" | "ogg"> = {
+  "audio/mpeg": "mp3",
+  "audio/mp3": "mp3",
+  "audio/wav": "wav",
+  "audio/x-wav": "wav",
+  "audio/wave": "wav",
+  "audio/vnd.wave": "wav",
+  "audio/ogg": "ogg",
+  "application/ogg": "ogg",
+}
+const AUDIO_UPLOAD_EXTENSIONS = new Set([".mp3", ".wav", ".ogg"])
 
 interface SingleItemFallbackAttempt {
   provider: "openai" | "azure"
@@ -239,6 +259,48 @@ function getSingleItemFallbackAttempts(options: {
   return attempts
 }
 
+function resolveUploadedAudioFormat(file: File): "mp3" | "wav" | "ogg" {
+  const mimeType = file.type.trim().toLowerCase()
+  const byMime = AUDIO_UPLOAD_FORMAT_BY_MIME[mimeType]
+  if (byMime) {
+    return byMime
+  }
+
+  const extension = path.extname(file.name).toLowerCase()
+  if (AUDIO_UPLOAD_EXTENSIONS.has(extension)) {
+    return extension.slice(1) as "mp3" | "wav" | "ogg"
+  }
+
+  throw new HTTPException(400, {
+    message: `Unsupported audio type: ${file.type || file.name}. Allowed formats: mp3, wav, ogg`,
+  })
+}
+
+function clearWordTimestampEntry(
+  storage: ReturnType<typeof createBookStorage>,
+  language: string,
+  textId: string
+): void {
+  const normalizedLanguage = normalizeLocale(language)
+  const legacyLanguage = normalizedLanguage.replace("-", "_")
+  const row =
+    storage.getLatestNodeData("tts-timestamps", normalizedLanguage) ??
+    storage.getLatestNodeData("tts-timestamps", legacyLanguage)
+
+  if (!row) return
+
+  const existing = (row.data as WordTimestampOutput).entries
+  if (!(textId in existing)) return
+
+  const nextEntries = { ...existing }
+  delete nextEntries[textId]
+
+  storage.putNodeData("tts-timestamps", normalizedLanguage, {
+    entries: nextEntries,
+    generatedAt: new Date().toISOString(),
+  } satisfies WordTimestampOutput)
+}
+
 function appendSingleTtsLog(
   storage: ReturnType<typeof createBookStorage>,
   options: {
@@ -303,21 +365,32 @@ export function createTTSRoutes(booksDir: string, configPath?: string, taskServi
         ["tts", "tts"]
       ) as Array<{ item_id: string; data: string; version: number }>
 
-      const languages: Record<string, { entries: Array<{ textId: string; fileName: string; voice: string; model: string; cached: boolean; provider?: string }>; generatedAt: string; version: number }> = {}
+      const languages: Record<string, { entries: Array<{ textId: string; fileName: string; voice: string; model: string; cached: boolean; provider?: string; cacheKey?: string }>; generatedAt: string; version: number }> = {}
+      const resolvedBooksDir = path.resolve(booksDir)
       for (const row of rows) {
         try {
           const parsed = JSON.parse(row.data)
           const validated = TTSOutput.safeParse(parsed)
           if (!validated.success) continue
+          const audioDir = path.join(resolvedBooksDir, safeLabel, "audio", row.item_id)
           languages[row.item_id] = {
-            entries: validated.data.entries.map((e) => ({
-              textId: e.textId,
-              fileName: e.fileName,
-              voice: e.voice,
-              model: e.model,
-              cached: e.cached,
-              provider: e.provider,
-            })),
+            entries: validated.data.entries.map((e) => {
+              let cacheKey: string | undefined
+              try {
+                cacheKey = fs.statSync(path.join(audioDir, e.fileName)).mtimeMs.toString(36)
+              } catch {
+                // file missing — leave cacheKey undefined
+              }
+              return {
+                textId: e.textId,
+                fileName: e.fileName,
+                voice: e.voice,
+                model: e.model,
+                cached: e.cached,
+                provider: e.provider,
+                cacheKey,
+              }
+            }),
             generatedAt: validated.data.generatedAt,
             version: row.version,
           }
@@ -355,6 +428,177 @@ export function createTTSRoutes(booksDir: string, configPath?: string, taskServi
       }
 
       return c.json({ ok: true })
+    } finally {
+      storage.close()
+    }
+  })
+
+  // POST /books/:label/tts/upload-one — Upload a manual audio file for a single text entry
+  app.post("/books/:label/tts/upload-one", async (c) => {
+    const { label } = c.req.param()
+    const safeLabel = safeParseLabel(label)
+    const dbPath = getBookDbPath(booksDir, safeLabel)
+
+    if (!fs.existsSync(dbPath)) {
+      throw new HTTPException(404, { message: `Book not found: ${safeLabel}` })
+    }
+
+    const formData = await c.req.formData()
+    const audioFile = formData.get("audio")
+    const textId = formData.get("textId")
+    const language = formData.get("language")
+
+    if (!(audioFile instanceof File)) {
+      throw new HTTPException(400, { message: "Audio file is required" })
+    }
+
+    const parsed = UploadSingleTTSFields.safeParse({
+      textId: typeof textId === "string" ? textId : undefined,
+      language: typeof language === "string" ? language : undefined,
+    })
+    if (!parsed.success) {
+      throw new HTTPException(400, {
+        message: `Invalid upload request: ${parsed.error.message}`,
+      })
+    }
+
+    const normalizedLanguage = normalizeLocale(parsed.data.language)
+    if (!SAFE_AUDIO_LANGUAGE_RE.test(normalizedLanguage)) {
+      throw new HTTPException(400, {
+        message: `Invalid language: ${normalizedLanguage}`,
+      })
+    }
+
+    const storage = createBookStorage(safeLabel, booksDir)
+
+    try {
+      const { config, language: sourceLanguage } = getSourceLanguage(
+        storage,
+        booksDir,
+        safeLabel,
+        configPath
+      )
+      const languageEntries = getCatalogEntriesForLanguage(
+        storage,
+        sourceLanguage,
+        normalizedLanguage
+      )
+      const textEntry = languageEntries.find(
+        (entry) => entry.id === parsed.data.textId
+      )
+      if (!textEntry) {
+        throw new HTTPException(404, {
+          message: `Text entry not found for ${parsed.data.textId} (${normalizedLanguage})`,
+        })
+      }
+      if (!SAFE_AUDIO_TEXT_ID_RE.test(textEntry.id)) {
+        throw new HTTPException(400, {
+          message: `Unsupported text ID for audio upload: ${textEntry.id}`,
+        })
+      }
+
+      const format = resolveUploadedAudioFormat(audioFile)
+      const nextEntry: SpeechFileEntry = {
+        textId: textEntry.id,
+        language: normalizedLanguage,
+        fileName: `${textEntry.id}.${format}`,
+        voice: "uploaded",
+        model: "uploaded",
+        cached: false,
+        provider: "manual",
+      }
+
+      const buffer = Buffer.from(await audioFile.arrayBuffer())
+      if (buffer.length === 0) {
+        throw new HTTPException(400, {
+          message: "Uploaded audio file is empty",
+        })
+      }
+
+      const bookDir = path.join(path.resolve(booksDir), safeLabel)
+      const audioRoot = path.resolve(bookDir, "audio")
+      const audioDir = path.resolve(audioRoot, normalizedLanguage)
+      if (
+        audioDir !== audioRoot &&
+        !audioDir.startsWith(audioRoot + path.sep)
+      ) {
+        throw new HTTPException(400, { message: "Invalid audio directory" })
+      }
+
+      const outputPath = path.resolve(audioDir, nextEntry.fileName)
+      if (!outputPath.startsWith(audioDir + path.sep)) {
+        throw new HTTPException(400, { message: "Invalid audio file path" })
+      }
+
+      const existingEntries = getLatestTtsEntries(storage, normalizedLanguage)
+      const existingEntry = existingEntries.find(
+        (entry) => entry.textId === textEntry.id
+      )
+
+      fs.mkdirSync(audioDir, { recursive: true })
+      fs.writeFileSync(outputPath, buffer)
+
+      if (
+        existingEntry &&
+        existingEntry.fileName !== nextEntry.fileName
+      ) {
+        const previousPath = path.resolve(audioDir, existingEntry.fileName)
+        if (
+          previousPath.startsWith(audioDir + path.sep) &&
+          fs.existsSync(previousPath)
+        ) {
+          fs.rmSync(previousPath, { force: true })
+        }
+      }
+
+      const mergedEntries = mergeSpeechEntry(
+        existingEntries,
+        nextEntry,
+        languageEntries.map((entry) => entry.id)
+      )
+
+      const version = storage.putNodeData("tts", normalizedLanguage, {
+        entries: mergedEntries,
+        generatedAt: new Date().toISOString(),
+      })
+
+      clearWordTimestampEntry(storage, normalizedLanguage, textEntry.id)
+
+      const completion = getTtsCompletionSummary(
+        storage,
+        config,
+        sourceLanguage
+      )
+      if (completion.allComplete) {
+        storage.markStepCompleted("tts")
+      } else {
+        const currentStatus = storage
+          .getStepRuns()
+          .find((step) => step.step === "tts")?.status
+        if (currentStatus === "error") {
+          storage.recordStepError(
+            "tts",
+            `${completion.remainingItems} audio item(s) still need generation or upload.`
+          )
+        }
+      }
+
+      let cacheKey: string | undefined
+      try {
+        cacheKey = fs.statSync(outputPath).mtimeMs.toString(36)
+      } catch {
+        // ignore — file was just written, this shouldn't happen
+      }
+
+      return c.json(
+        {
+          entry: { ...nextEntry, cacheKey },
+          version,
+          completed: completion.allComplete,
+          remainingItems: completion.remainingItems,
+        },
+        201
+      )
     } finally {
       storage.close()
     }
@@ -840,13 +1084,14 @@ export function createTTSRoutes(booksDir: string, configPath?: string, taskServi
         // Non-critical — proceed without prompt
       }
 
-      const result = await transcribeWithWhisper(
+      const result = await generateWordTimestamps({
         audioBuffer,
-        ttsEntry.fileName,
-        openaiApiKey,
-        baseLanguage,
-        textPrompt,
-      )
+        fileName: ttsEntry.fileName,
+        apiKey: openaiApiKey,
+        language: baseLanguage,
+        prompt: textPrompt,
+        cacheDir: path.join(bookDir, ".cache"),
+      })
 
       const timestampEntry: WordTimestampEntry = {
         textId: parsed.data.textId,
@@ -972,13 +1217,14 @@ export function createTTSRoutes(booksDir: string, configPath?: string, taskServi
 
             const audioBuffer = Buffer.from(fs.readFileSync(audioPath))
             const textPrompt = textMap.get(ttsEntry.textId)
-            const result = await transcribeWithWhisper(
+            const result = await generateWordTimestamps({
               audioBuffer,
-              ttsEntry.fileName,
-              openaiApiKey,
-              baseLanguage,
-              textPrompt,
-            )
+              fileName: ttsEntry.fileName,
+              apiKey: openaiApiKey,
+              language: baseLanguage,
+              prompt: textPrompt,
+              cacheDir: path.join(bookDir, ".cache"),
+            })
 
             const entry: WordTimestampEntry = {
               textId: ttsEntry.textId,

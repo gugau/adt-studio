@@ -6,6 +6,7 @@ import {
   playPreviousAudio,
   togglePlayPause,
   toggleReadAloud,
+  toggleWordHighlightMode,
   initializeTtsQuickToggle,
 } from "./modules/audio.js";
 import { initializeWordByWordHighlighter } from "./modules/tts_highlighter.js";
@@ -72,6 +73,7 @@ import {
   setDescribeImagesContainerVisibility,
   updateTtsOptionsContainerVisibility,
   loadToggleButtonState,
+  loadWordHighlightState,
   initializeEli5
 } from "./modules/ui_utils.js";
 import {
@@ -553,6 +555,7 @@ function setupEventListeners() {
     "toggle-glossary": toggleGlossaryMode,
     "toggle-autoplay": toggleAutoplay,
     "toggle-describe-images": toggleDescribeImages,
+    "toggle-highlight": toggleWordHighlightMode,
     "toggle-state": toggleStateMode,
     "back-button": previousPage,
     "forward-button": nextPage,
@@ -671,6 +674,9 @@ async function initializeUIComponents() {
         initializeNotepad();
       }
 
+      // Load state modes - only if features are enabled
+      const stateInitTasks = [];
+
       // Character display
       if (isFeatureEnabled('characterDisplay')) {
         initCharacterDisplay();
@@ -680,10 +686,8 @@ async function initializeUIComponents() {
       // Highlighting text
       if (isFeatureEnabled('highlight')) {
         initializeWordByWordHighlighter();
+        stateInitTasks.push(loadWordHighlightState);
       }
-
-      // Load state modes - only if features are enabled
-      const stateInitTasks = [];
 
       if (isFeatureEnabled('easyRead')) {
         const easyReadSection = document.getElementById("easy-read-section");

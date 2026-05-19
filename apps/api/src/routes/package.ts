@@ -198,6 +198,7 @@ async function runPackaging(
       title,
       webAssetsDir,
       applyBodyBackground: config.apply_body_background,
+      speechConfig: config.speech,
     })
 
     const baseAccessibility = await runAccessibilityAssessment({

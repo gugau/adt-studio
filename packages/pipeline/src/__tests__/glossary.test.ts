@@ -11,6 +11,8 @@ import {
   buildGlossaryConfig,
   collectPageTexts,
   generateGlossary,
+  getGlossaryItemTextId,
+  mergeGeneratedGlossaryWithManualItems,
 } from "../glossary.js"
 
 describe("stripHtml", () => {
@@ -345,5 +347,139 @@ describe("generateGlossary", () => {
     })
 
     expect(batchSizes).toEqual([10, 5])
+  })
+})
+
+describe("getGlossaryItemTextId", () => {
+  it("preserves explicit glossary item ids", () => {
+    expect(
+      getGlossaryItemTextId({ id: "gl_manual_soil" }, 0),
+    ).toBe("gl_manual_soil")
+  })
+
+  it("falls back to positional ids for legacy glossary items", () => {
+    expect(
+      getGlossaryItemTextId({}, 1),
+    ).toBe("gl002")
+  })
+})
+
+describe("mergeGeneratedGlossaryWithManualItems", () => {
+  it("appends manual glossary items that do not exist in generated output", () => {
+    const merged = mergeGeneratedGlossaryWithManualItems(
+      {
+        items: [
+          {
+            word: "Forest",
+            definition: "Trees in one place",
+            variations: ["forests"],
+            emojis: ["🌲"],
+            source: "ai",
+          },
+        ],
+        pageCount: 1,
+        generatedAt: "2026-01-01T00:00:00.000Z",
+      },
+      [
+        {
+          id: "gl_manual_river",
+          source: "manual",
+          word: "River",
+          definition: "A long flow of water",
+          variations: ["rivers"],
+          emojis: ["🏞️"],
+        },
+      ],
+    )
+
+    expect(merged.items).toHaveLength(2)
+    expect(merged.items[1]).toEqual({
+      id: "gl_manual_river",
+      source: "manual",
+      word: "River",
+      definition: "A long flow of water",
+      variations: ["rivers"],
+      emojis: ["🏞️"],
+    })
+  })
+
+  it("preserves pruned AI items and drops re-generated ones that match", () => {
+    const merged = mergeGeneratedGlossaryWithManualItems(
+      {
+        items: [
+          {
+            word: "Forest",
+            definition: "Trees",
+            variations: [],
+            emojis: ["🌲"],
+            source: "ai",
+          },
+          {
+            word: "River",
+            definition: "Water flow",
+            variations: [],
+            emojis: ["🏞️"],
+            source: "ai",
+          },
+        ],
+        pageCount: 1,
+        generatedAt: "2026-01-01T00:00:00.000Z",
+      },
+      [
+        {
+          word: "River",
+          definition: "Old definition",
+          variations: [],
+          emojis: ["🏞️"],
+          source: "ai",
+          pruned: true,
+        },
+      ],
+    )
+
+    const words = merged.items.map((item) => ({ word: item.word, pruned: item.pruned }))
+    expect(words).toEqual([
+      { word: "Forest", pruned: undefined },
+      { word: "River", pruned: true },
+    ])
+  })
+
+  it("lets manual glossary entries override generated ones while preserving generated ids", () => {
+    const merged = mergeGeneratedGlossaryWithManualItems(
+      {
+        items: [
+          {
+            word: "Forest",
+            definition: "AI definition",
+            variations: ["forests"],
+            emojis: ["🌲"],
+            source: "ai",
+          },
+        ],
+        pageCount: 1,
+        generatedAt: "2026-01-01T00:00:00.000Z",
+      },
+      [
+        {
+          id: "gl_manual_forest",
+          source: "manual",
+          word: "Forest",
+          definition: "Manual definition",
+          variations: ["forest"],
+          emojis: ["🌳"],
+        },
+      ],
+    )
+
+    expect(merged.items).toEqual([
+      {
+        id: "gl001",
+        source: "manual",
+        word: "Forest",
+        definition: "Manual definition",
+        variations: ["forest"],
+        emojis: ["🌳"],
+      },
+    ])
   })
 })
