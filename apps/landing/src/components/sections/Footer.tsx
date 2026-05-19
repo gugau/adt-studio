@@ -65,7 +65,7 @@ export function Footer() {
           <div className="flex flex-col gap-4">
             <a href="#top" className="flex items-center gap-2.5">
               <img
-                src={`${import.meta.env.BASE_URL}favicon.svg`}
+                src={`${import.meta.env.BASE_URL}logo.png`}
                 alt=""
                 width={28}
                 height={28}

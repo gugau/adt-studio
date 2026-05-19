@@ -62,7 +62,7 @@ export function Nav() {
               className="absolute inset-0 rounded-md bg-[color:var(--color-primary)]/30 opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-100"
             />
             <img
-              src={`${import.meta.env.BASE_URL}favicon.svg`}
+              src={`${import.meta.env.BASE_URL}logo.png`}
               alt=""
               width={26}
               height={26}

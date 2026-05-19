@@ -95,7 +95,7 @@ export function DownloadPage() {
             className="absolute inset-0 -z-0 rounded-3xl bg-[color:var(--color-primary)]/25 opacity-70 blur-xl transition-opacity duration-500 group-hover:opacity-100"
           />
           <img
-            src={`${import.meta.env.BASE_URL}favicon.svg`}
+            src={`${import.meta.env.BASE_URL}logo.png`}
             alt=""
             width={88}
             height={88}
