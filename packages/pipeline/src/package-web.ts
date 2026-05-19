@@ -668,7 +668,13 @@ export async function packageAdtWeb(
   const activityIds = collectActivityIds(adtDir, pageList)
   generateScormAdapter(assetsDir, activityIds)
 
-  // Offline preloader must run last — it reads the final state of all files
+  // Inline fonts as base64 in fonts.css so `@font-face` works under file://
+  // (browsers treat each file:// path as a unique origin and block cross-origin
+  // font requests; data: URIs sidestep this entirely).
+  inlineFontsInCss(adtDir)
+
+  // Offline preloader must run after all asset writes — it snapshots the
+  // final state of every file it inlines (page HTML, content JSON, nav.html).
   generateOfflinePreloader(adtDir, outputLanguages)
 
   generateImsManifest(adtDir, title, label, pageList)
@@ -1025,8 +1031,6 @@ ${fallbackHeadingHtml}${contentBlock}
     <title>${escapeHtml(opts.pageTitle)}</title>
     <meta name="title-id" content="${escapeAttr(opts.sectionId)}" />
     <meta name="page-section-id" content="${opts.pageIndex}" />
-    <link rel="preload" href="./assets/fonts/Merriweather-VariableFont.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="./assets/fonts/Merriweather-Italic-VariableFont.woff2" as="font" type="font/woff2" crossorigin>
     <link href="./content/tailwind_output.css" rel="stylesheet">
     <link href="./assets/libs/fontawesome/css/all.min.css" rel="stylesheet">
     <link href="./assets/fonts.css" rel="stylesheet">
@@ -1909,6 +1913,30 @@ async function renderAgentsMd(
 // ---------------------------------------------------------------------------
 
 /**
+ * Rewrite `assets/fonts.css` so each `@font-face` `url('./fonts/X.woff2')`
+ * becomes a `data:font/woff2;base64,...` URI, then delete `assets/fonts/`.
+ * Required for `file://` (double-click) mode: browsers treat every file path
+ * as a unique origin and block cross-origin font fetches, even though the
+ * woff2 lives in the same directory tree.
+ */
+function inlineFontsInCss(adtDir: string): void {
+  const cssPath = path.join(adtDir, "assets", "fonts.css")
+  if (!fs.existsSync(cssPath)) return
+  const original = fs.readFileSync(cssPath, "utf-8")
+  const updated = original.replace(
+    /url\(\s*['"]?(?:\.\/)?fonts\/([^'")]+\.woff2)['"]?\s*\)\s*format\(\s*['"]woff2['"]\s*\)/g,
+    (_match, file: string) => {
+      const fontPath = path.join(adtDir, "assets", "fonts", file)
+      const b64 = fs.readFileSync(fontPath).toString("base64")
+      return `url('data:font/woff2;base64,${b64}') format('woff2')`
+    },
+  )
+  if (updated === original) return
+  fs.writeFileSync(cssPath, updated)
+  fs.rmSync(path.join(adtDir, "assets", "fonts"), { recursive: true, force: true })
+}
+
+/**
  * Generate `assets/offline-preloader.js` — inlines all JSON/HTML files that
  * the ADT bundle fetches at startup and monkey-patches `window.fetch` to
  * serve them from memory. This allows the ADT to work when opened via
@@ -1949,6 +1977,15 @@ function generateOfflinePreloader(
   const navHtml = readTextSafe("content/navigation/nav.html")
   if (navHtml !== null) inline["./content/navigation/nav.html"] = navHtml
 
+  // Inline every page HTML at the bundle root (index.html + pgNNN_secMMM.html).
+  // The glossary "show on page" feature fetches these to scan for terms,
+  // which fails under file:// without inlining.
+  for (const name of fs.readdirSync(adtDir)) {
+    if (!name.endsWith(".html")) continue
+    const text = readTextSafe(name)
+    if (text !== null) inline[`./${name}`] = text
+  }
+
   // Per-language files
   for (const lang of outputLanguages) {
     const itPath = `assets/interface_translations/${lang}/interface_translations.json`
@@ -1959,6 +1996,7 @@ function generateOfflinePreloader(
       "texts.json",
       "audios.json",
       "videos.json",
+      "images.json",
       "glossary.json",
       "timecode/timecode_output.json",
     ]) {
@@ -1971,12 +2009,27 @@ function generateOfflinePreloader(
   const js = `// offline-preloader.js — auto-generated, do not edit by hand
 (function () {
   var INLINE = ${JSON.stringify(inline)};
+  var BASE_DIR = (function () {
+    var href = location.href.split("?")[0].split("#")[0];
+    return href.slice(0, href.lastIndexOf("/") + 1);
+  })();
+  function lookup(url) {
+    var clean = String(url).split("?")[0].split("#")[0];
+    if (BASE_DIR && clean.indexOf(BASE_DIR) === 0) clean = clean.slice(BASE_DIR.length);
+    if (clean.indexOf("./") === 0) clean = clean.slice(2);
+    var withDot = "./" + clean;
+    if (Object.prototype.hasOwnProperty.call(INLINE, withDot)) return withDot;
+    if (Object.prototype.hasOwnProperty.call(INLINE, clean)) return clean;
+    return null;
+  }
   var _realFetch = window.fetch.bind(window);
   window.fetch = function (url, opts) {
-    var clean = String(url).split("?")[0];
-    if (Object.prototype.hasOwnProperty.call(INLINE, clean)) {
-      var data = INLINE[clean];
-      var isJson = clean.slice(-5) === ".json";
+    // Normalize Request objects to their URL string.
+    var raw = (url && typeof url === "object" && typeof url.url === "string") ? url.url : url;
+    var key = lookup(raw);
+    if (key !== null) {
+      var data = INLINE[key];
+      var isJson = key.slice(-5) === ".json";
       var body = isJson ? JSON.stringify(data) : data;
       var ct = isJson ? "application/json" : "text/html; charset=utf-8";
       return Promise.resolve(

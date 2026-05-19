@@ -91,7 +91,7 @@ function createMinimalStorage(): Storage {
 }
 
 describe("renderPageHtml", () => {
-  it("includes font preload links before stylesheet links", () => {
+  it("does not emit font preload links (fonts are inlined as base64 in fonts.css for file:// support)", () => {
     const html = renderPageHtml({
       content: "<p>Hello</p>",
       language: "en",
@@ -105,16 +105,9 @@ describe("renderPageHtml", () => {
     expect((html.match(/<main\b/g) ?? [])).toHaveLength(1)
     expect(html).toContain('<main class="w-full">')
     expect(html).toContain('<div id="content" class="opacity-0">')
-    expect(html).toContain(
-      '<link rel="preload" href="./assets/fonts/Merriweather-VariableFont.woff2" as="font" type="font/woff2" crossorigin>',
-    )
-    expect(html).toContain(
-      '<link rel="preload" href="./assets/fonts/Merriweather-Italic-VariableFont.woff2" as="font" type="font/woff2" crossorigin>',
-    )
-
-    const preloadPos = html.indexOf('rel="preload"')
-    const stylesheetPos = html.indexOf('href="./assets/fonts.css"')
-    expect(preloadPos).toBeLessThan(stylesheetPos)
+    expect(html).not.toContain('rel="preload"')
+    expect(html).not.toContain("Merriweather-VariableFont.woff2")
+    expect(html).toContain('href="./assets/fonts.css"')
   })
 
   it("uses offline/SCORM scripts instead of type=module in normal mode", () => {
@@ -152,7 +145,7 @@ describe("renderPageHtml", () => {
     expect(html).not.toContain("scorm.js")
   })
 
-  it("includes crossorigin on font preloads", () => {
+  it("does not reference woff2 fonts directly (they are inlined as base64 in fonts.css)", () => {
     const html = renderPageHtml({
       content: "<p>Hello</p>",
       language: "en",
@@ -163,7 +156,7 @@ describe("renderPageHtml", () => {
       bundleVersion: "1",
     })
 
-    expect(html).toContain('as="font" type="font/woff2" crossorigin>')
+    expect(html).not.toContain("woff2")
   })
 
   it("injects an sr-only h1 fallback when content has no headings", () => {

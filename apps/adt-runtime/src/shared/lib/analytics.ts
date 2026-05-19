@@ -17,6 +17,10 @@ let initialized = false
 export function initAnalytics(config: AppAnalytics | undefined): void {
   if (!config?.enabled || initialized) return
   if (typeof window === "undefined") return
+  // Skip under non-HTTP protocols (file://, app://, etc.) — the tracker
+  // script and beacon requests would be blocked, producing console noise
+  // with no useful data collected.
+  if (!/^https?:$/.test(window.location.protocol)) return
 
   initialized = true
   window._paq = window._paq ?? []
