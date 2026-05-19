@@ -19,6 +19,7 @@ import {
 } from "@/shared/state/ui.atoms";
 import { AudioPlayerProvider } from "@/features/audio/hooks/AudioPlayerContext";
 import { useAutoHideDock } from "@/features/dock/hooks/useAutoHideDock";
+import { useDockShortcuts } from "@/features/dock/hooks/useDockShortcuts";
 import { useKeyboardPageNav } from "@/features/navigation/hooks/useKeyboardPageNav";
 import { useToolbarKeyboardNav } from "@/features/dock/hooks/useToolbarKeyboardNav";
 
@@ -39,6 +40,7 @@ export function Dock({ children }: DockProps) {
   useAutoHideDock(dockRef);
   useKeyboardPageNav();
   useToolbarKeyboardNav(dockRef);
+  useDockShortcuts();
 
   const isTop = position === "top";
   const isCompact = width === "compact";

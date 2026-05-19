@@ -39,7 +39,7 @@ export function ToggleRow({
       <label htmlFor={id} className="flex flex-col gap-1 cursor-pointer">
         <span className="text-base font-medium text-foreground">{label}</span>
         {description ? (
-          <span className="text-xs text-muted-foreground">{description}</span>
+          <span className="text-base text-muted-foreground">{description}</span>
         ) : null}
       </label>
       <Switch id={id} checked={checked} onCheckedChange={onChange} disabled={disabled} />

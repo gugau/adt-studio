@@ -26,7 +26,7 @@ export function ChromeRoot() {
   useThemeSync()
   return (
     <TooltipProvider delay={300} closeDelay={120}>
-      <SkipLink />
+      {/*<SkipLink />*/}
       {/*<ActivityHeader />*/}
       <Notepad />
       <Eli5Popup />

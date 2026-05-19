@@ -3,6 +3,7 @@ import { ToggleRow } from "@/features/settings/components/ToggleRow";
 import { SegmentedRow } from "@/features/settings/components/SegmentedRow";
 import { SettingsSection } from "@/features/settings/components/SettingsSection";
 import { DockLayoutPicker } from "@/features/settings/components/DockLayoutPicker";
+import { KeyboardShortcutsSection } from "@/features/settings/components/KeyboardShortcutsSection";
 import { appConfigAtom } from "@/shared/state/config.atoms";
 import {
   autoplayModeAtom,
@@ -147,6 +148,8 @@ export function SettingsTab() {
           />
         </SettingsSection>
       ) : null}
+
+      <KeyboardShortcutsSection />
     </div>
   );
 }
