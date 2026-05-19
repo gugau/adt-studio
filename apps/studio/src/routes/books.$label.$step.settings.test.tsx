@@ -108,6 +108,19 @@ describe("books.$label.$step.settings route", () => {
     )
   })
 
+  it("routes translation-evaluation tab into Validation settings", async () => {
+    useParamsMock.mockReturnValue({ label: "demo-book", step: "validation" })
+    useSearchMock.mockReturnValue({ tab: "translation-evaluation" })
+
+    const { StepSettingsPage } = await import("./books.$label.$step.settings")
+    render(<StepSettingsPage />)
+
+    expect(screen.getByTestId("validation-settings").textContent).toContain("validation-settings:demo-book:translation-evaluation")
+    expect(validationSettingsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ bookLabel: "demo-book", tab: "translation-evaluation" }),
+    )
+  })
+
   it("shows the unavailable message for non-settings stages", async () => {
     useParamsMock.mockReturnValue({ label: "demo-book", step: "preview" })
     useSearchMock.mockReturnValue({ tab: "general" })

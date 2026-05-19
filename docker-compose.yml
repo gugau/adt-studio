@@ -17,6 +17,7 @@ services:
       - PROMPTS_DIR=/app/prompts
       - TEMPLATES_DIR=/app/templates
       - CONFIG_PATH=/app/config.yaml
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
     networks:
       - internal
     healthcheck:

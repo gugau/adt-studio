@@ -376,6 +376,58 @@ describe("packageAdtWeb", () => {
     expect(manifest).toContain("index.html")
   })
 
+  it("packages rendered sections when legacy section metadata has no nodes array", async () => {
+    const bookDir = path.join(tmpDir, "book")
+    const webAssetsDir = path.join(tmpDir, "assets-web")
+    fs.mkdirSync(bookDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+
+    const storage = createMockStorage(
+      [{ pageId: "pg001", pageNumber: 1, text: "Page one" }],
+      {
+        "web-rendering": {
+          pg001: {
+            sections: [
+              {
+                sectionIndex: 0,
+                sectionType: "content",
+                reasoning: "ok",
+                html: "<div>Rendered from legacy metadata</div>",
+              },
+            ],
+          },
+        },
+        "page-sectioning": {
+          pg001: {
+            reasoning: "legacy",
+            sections: [
+              {
+                sectionId: "pg001_sec001",
+                sectionType: "content",
+                backgroundColor: "#fff",
+                textColor: "#000",
+                pageNumber: 1,
+                isPruned: false,
+              },
+            ],
+          },
+        },
+      },
+    )
+
+    await packageAdtWeb(storage, {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Book Title",
+      webAssetsDir,
+    })
+
+    const pageHtml = fs.readFileSync(path.join(bookDir, "adt", "index.html"), "utf-8")
+    expect(pageHtml).toContain("Rendered from legacy metadata")
+  })
+
   it("inserts quiz pages even when the anchor page has no rendered sections", async () => {
     const bookDir = path.join(tmpDir, "book")
     const webAssetsDir = path.join(tmpDir, "assets-web")

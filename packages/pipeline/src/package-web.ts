@@ -1214,6 +1214,11 @@ function loadImageCaptionMap(storage: Storage, pageId: string): Map<string, stri
   return map
 }
 
+function getSectionNodes(section: PageSectioningSection): ContentNodeData[] {
+  const nodes = (section as { nodes?: unknown }).nodes
+  return Array.isArray(nodes) ? nodes as ContentNodeData[] : []
+}
+
 /** Collect every non-pruned image_group node in a section along with its image id. */
 function collectImageGroups(section: PageSectioningSection): Array<{ group: ContentNodeData; imageId: string }> {
   const out: Array<{ group: ContentNodeData; imageId: string }> = []
@@ -1227,7 +1232,7 @@ function collectImageGroups(section: PageSectioningSection): Array<{ group: Cont
       for (const c of node.children) walk(c)
     }
   }
-  for (const n of section.nodes) walk(n)
+  for (const n of getSectionNodes(section)) walk(n)
   return out
 }
 
@@ -2281,7 +2286,7 @@ function findHeadingText(
     }
     return null
   }
-  for (const n of section.nodes) {
+  for (const n of getSectionNodes(section)) {
     const hit = walk(n)
     if (hit) return hit
   }

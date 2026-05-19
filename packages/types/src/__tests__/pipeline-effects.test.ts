@@ -48,4 +48,8 @@ describe("pipeline effects", () => {
   it("maps metadata node to book/list resources", () => {
     expect(getCacheResourcesForNode("metadata")).toEqual(["books", "book"])
   })
+
+  it("maps translation evaluation node to evaluation resources", () => {
+    expect(getCacheResourcesForNode("translation-evaluation")).toEqual(["evaluations"])
+  })
 })

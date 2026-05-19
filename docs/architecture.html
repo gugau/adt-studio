@@ -419,6 +419,7 @@
 <div class="tabs">
   <button class="tab active" onclick="showTab('architecture')">Architecture</button>
   <button class="tab" onclick="showTab('dataflow')">Data Flow</button>
+  <button class="tab" onclick="showTab('translation-eval')">Translation Eval</button>
   <button class="tab" onclick="showTab('libraries')">Libraries</button>
   <button class="tab" onclick="showTab('principles')">Core Principles</button>
   <button class="tab" onclick="showTab('security')">Security</button>
@@ -504,6 +505,11 @@
     <h3 style="color: var(--danger);">Boundary Rule</h3>
     <p>Frontend apps (studio, desktop) MUST NOT import directly from packages. All data flows through the API via HTTP. This ensures clean separation and allows the API to enforce validation, authentication, and business logic.</p>
   </div>
+
+  <div class="card" style="border-color: var(--accent5);">
+    <h3 style="color: var(--accent5);">Translation Evaluation Runtime</h3>
+    <p>Translation evaluation runs inside <code>apps/api</code>. The API receives the user-provided OpenAI key from Studio, evaluates selected translation entries through <code>@adt/llm</code>, records per-entry judge output, and stores normalized results in the book database.</p>
+  </div>
 </div>
 
 <!-- ==================== DATA FLOW ==================== -->
@@ -575,6 +581,70 @@
   <div class="card">
     <h3>LLM Caching</h3>
     <p>Every LLM call is cached by hashing all ordered inputs (model, prompt, parameters). If a pipeline step is re-run with identical parameters, the cached response is returned instantly. Cache lives inside the book directory so it travels with the book.</p>
+  </div>
+</div>
+
+<!-- ==================== TRANSLATION EVAL ==================== -->
+<div id="translation-eval" class="tab-content">
+  <h2 style="margin-bottom: 1.5rem;">Translation Evaluation</h2>
+
+  <div class="card">
+    <h3>Purpose</h3>
+    <p>Translation evaluation is an optional validation workflow for translated <code>text-catalog</code> entries. It reviews generated translations, stores a normalized acceptable/needs-review result per entry in the book database, and exposes the results in the Validation UI.</p>
+  </div>
+
+  <div class="flow-container">
+    <div class="flow-step" style="border-color: var(--accent4);">
+      <div class="icon">🖥️</div>
+      <div class="name">Validation UI</div>
+      <div class="pkg">apps/studio</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="border-color: var(--accent);">
+      <div class="icon">🌐</div>
+      <div class="name">Run API</div>
+      <div class="pkg">apps/api</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="border-color: var(--accent2);">
+      <div class="icon">🤖</div>
+      <div class="name">LLM Judge</div>
+      <div class="pkg">@adt/llm</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="border-color: var(--accent3);">
+      <div class="icon">🧾</div>
+      <div class="name">LLM Logs</div>
+      <div class="pkg">book logs</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="border-color: var(--accent5);">
+      <div class="icon">💾</div>
+      <div class="name">Stored Result</div>
+      <div class="pkg">book DB</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Docker Compose Infra</h3>
+    <p>Translation evaluation no longer adds Docker services. The existing <code>api</code> service handles judge execution and persistence, while Studio supplies the user-entered OpenAI key for each run. Docker Compose only needs the regular <code>api</code> and <code>studio</code> services for this workflow.</p>
+  </div>
+
+  <div class="card">
+    <h3>Request Flow</h3>
+    <p>1. The user enables translation evaluation in Validation settings.</p>
+    <p>2. The API loads source and translated text catalogs for the selected language.</p>
+    <p>3. The API applies scope, sampling, batching, and judge configuration.</p>
+    <p>4. The API creates a <code>translation-evaluation</code> task and evaluates each selected entry with the configured LLM judge.</p>
+    <p>5. Each entry is parsed into a structured acceptable/needs-review result with rationale and issue types.</p>
+    <p>6. Per-entry judge failures are recorded as unacceptable results with an error rationale.</p>
+    <p>7. The API stores the payload as a versioned <code>translation-evaluation</code> node and Studio renders the stored result.</p>
+  </div>
+
+  <div class="card">
+    <h3>Settings</h3>
+    <p>Translation evaluation settings live under <code>translation_evaluation</code> in the book config. The current model supports:</p>
+    <p style="margin-top: 0.75rem;"><code>enable_translation_evaluation</code>, <code>judge_model</code>, <code>max_retries</code>, <code>evaluation_scope_mode</code>, <code>evaluation_scope_count</code>, <code>sampling_method</code>, <code>sampling_seed</code>, <code>batch_size</code>, <code>judge_instructions</code>, and <code>additional_guidance</code>.</p>
   </div>
 </div>
 

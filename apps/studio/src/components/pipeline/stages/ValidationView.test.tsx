@@ -58,6 +58,10 @@ vi.mock("@/components/validation/ReviewerValidationSummaryTab", () => ({
   ReviewerValidationSummaryTab: ({ label }: { label: string }) => <div>reviewer-validation:{label}</div>,
 }))
 
+vi.mock("@/components/validation/TranslationEvaluationTab", () => ({
+  TranslationEvaluationTab: ({ label }: { label: string }) => <div>translation-evaluation:{label}</div>,
+}))
+
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
@@ -87,8 +91,18 @@ describe("ValidationView", () => {
     render(<ValidationView bookLabel="demo-book" />)
 
     await waitFor(() => expect(packageAdtMock).toHaveBeenCalledWith("demo-book"))
+    await waitFor(() => expect(screen.getByText("Reviewer Validation")).toBeTruthy())
+  })
 
-    expect(screen.getByText("Reviewer Validation")).toBeTruthy()
+  it("shows the Translation Evaluation tab", async () => {
+    useSearchMock.mockReturnValue({ tab: "translation-evaluation" })
+
+    const { ValidationView } = await import("./ValidationView")
+    render(<ValidationView bookLabel="demo-book" />)
+
+    await waitFor(() => expect(packageAdtMock).toHaveBeenCalledWith("demo-book"))
+
+    expect(screen.getByText("Translation Evaluation")).toBeTruthy()
   })
 
   it("exits loading state after async package task completes", async () => {

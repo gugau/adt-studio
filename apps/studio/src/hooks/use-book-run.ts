@@ -268,7 +268,14 @@ export function useBookRunStatus(label: string): BookRunContextValue {
           }
         } else if (d.type === "task-complete") {
           if (idx !== -1) {
-            tasks[idx] = { ...tasks[idx], status: "completed", result: d.result, completedAt: Date.now() }
+            tasks[idx] = {
+              ...tasks[idx],
+              status: "completed",
+              result: d.result,
+              progressMessage: undefined,
+              progressPercent: undefined,
+              completedAt: Date.now(),
+            }
           }
           // Invalidate related data — use cache entry if available, fall back to polling
           const completedTask = idx !== -1 ? tasks[idx] : undefined
@@ -277,6 +284,9 @@ export function useBookRunStatus(label: string): BookRunContextValue {
             queryClient.invalidateQueries({ queryKey: ["debug", "accessibility", label] })
             queryClient.invalidateQueries({ queryKey: ["debug", "versions", label, "accessibility-assessment", "book"] })
             queryClient.invalidateQueries({ queryKey: ["book-config", label] })
+          }
+          if (completedTask?.kind === "translation-evaluation") {
+            queryClient.invalidateQueries({ queryKey: ["evaluations", "translations", label] })
           }
           if ((completedTask?.kind === "image-generate" || completedTask?.kind === "re-render" || completedTask?.kind === "ai-edit") && completedTask.pageId) {
             queryClient.invalidateQueries({ queryKey: ["books", label, "pages", completedTask.pageId] })
@@ -294,11 +304,22 @@ export function useBookRunStatus(label: string): BookRunContextValue {
           queryClient.invalidateQueries({ queryKey: bookTasksKey(label) })
         } else if (d.type === "task-error") {
           if (idx !== -1) {
-            tasks[idx] = { ...tasks[idx], status: "failed", error: d.error, completedAt: Date.now() }
+            tasks[idx] = {
+              ...tasks[idx],
+              status: "failed",
+              error: d.error,
+              progressMessage: undefined,
+              progressPercent: undefined,
+              completedAt: Date.now(),
+            }
           }
         } else if (d.type === "task-progress") {
           if (idx !== -1) {
-            tasks[idx] = { ...tasks[idx], progressMessage: d.message, progressPercent: d.percent }
+            tasks[idx] = {
+              ...tasks[idx],
+              progressMessage: d.message,
+              progressPercent: d.percent,
+            }
           }
         }
 

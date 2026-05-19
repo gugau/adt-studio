@@ -145,6 +145,10 @@ docker run -p 8080:80 -v ./books:/app/books ghcr.io/unicef/adt-studio:latest
 
 Open `http://localhost:8080`. Book data persists in the local `./books/` directory.
 
+Relevant persistent volumes:
+
+- `./books`
+
 <details>
 <summary>Build from source</summary>
 
@@ -208,6 +212,33 @@ pnpm exec playwright install --with-deps chromium
 The browser opens automatically at `http://localhost:5173`. The API runs at `http://localhost:3001`.
 On first run, `pnpm dev` compiles all packages (~1 min). Subsequent runs are fast (incremental build).
 
+### Translation evaluation
+
+Translation evaluation is an optional validation workflow for translated `text-catalog` entries. It runs inside the existing TypeScript API service and uses the OpenAI API key provided by the user in Studio.
+
+At a high level:
+
+1. ADT Studio generates or stores translated `text-catalog-translation` data.
+2. A user enables translation evaluation in `Validation Settings`.
+3. A user runs an evaluation from `Validation -> Translation Evaluation`.
+4. The API loads the source and translated catalogs, applies scope/sampling settings, and submits a `translation-evaluation` task.
+5. The task evaluates the selected entries with the cached `@adt/llm` client.
+6. The API stores the normalized payload locally as a versioned `translation-evaluation` artifact.
+7. Studio reads the stored result and shows:
+   - detailed results in `Validation`
+   - lightweight status badges in `Text & Speech`
+
+Important:
+
+- Translation evaluation runs in the API process and stores versioned results in each book database.
+- LLM calls are logged through the existing ADT Studio LLM log path for transparency.
+- ADT Studio remains the source of truth for stored user-visible evaluation results.
+
+For the detailed design and request flow, see:
+
+- [docs/TRANSLATION-EVALUATION.md](docs/TRANSLATION-EVALUATION.md)
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+
 ### Running the desktop app
 
 ```bash
@@ -247,6 +278,8 @@ adt-studio/
 └── docs/                    # Documentation
     ├── GUIDELINES.md        # Coding standards & patterns
     ├── DECISIONS.md         # Architecture decision records
+    ├── ARCHITECTURE.md      # System architecture
+    ├── TRANSLATION-EVALUATION.md # Translation evaluation architecture and flow
     └── architecture.html    # Interactive architecture diagram
 ```
 

@@ -8,7 +8,9 @@ import type {
   ReviewerValidationInstruction,
   ReviewerValidationSection,
   ReviewerValidationSession,
+  TranslationEvaluationResult,
 } from "@adt/types"
+import { getStoredOpenAIApiKey } from "@/lib/openai-api-key-storage"
 
 export type { BookSummary, BookDetail }
 
@@ -488,6 +490,27 @@ export interface ReviewerPageValidationRecordsResponse {
   records: ReviewerPageValidationRecordEntry[]
 }
 
+export interface TranslationEvaluationStatusResponse {
+  language: string
+  currentSourceCatalogVersion: number | null
+  currentTranslationVersion: number | null
+  evaluationVersion: number | null
+  evaluation: TranslationEvaluationResult | null
+  isStale: boolean
+}
+
+export interface TranslationEvaluationStatusesResponse {
+  evaluations: TranslationEvaluationStatusResponse[]
+}
+
+export interface TranslationEvaluationRunResponse {
+  status: "submitted" | "current"
+  taskId: string | null
+  label: string
+  language: string
+  version?: number | null
+}
+
 export interface LlmLogsParams {
   step?: string
   itemId?: string
@@ -517,10 +540,10 @@ export interface TaskInfoResponse {
   url?: string
   error?: string
   result?: unknown
-  startedAt?: number
-  completedAt?: number
   progressMessage?: string
   progressPercent?: number
+  startedAt?: number
+  completedAt?: number
 }
 
 export const api = {
@@ -868,6 +891,26 @@ export const api = {
       method: "POST",
       body: JSON.stringify(record),
     }),
+
+  getTranslationEvaluations: (label: string) =>
+    request<TranslationEvaluationStatusesResponse>(`/books/${label}/evaluations/translations`),
+
+  getTranslationEvaluation: (label: string, language: string) =>
+    request<TranslationEvaluationStatusResponse>(`/books/${label}/evaluations/translations/${language}`),
+
+  runTranslationEvaluation: (label: string, language: string, apiKey: string) => {
+    const openaiApiKey = apiKey.trim() || getStoredOpenAIApiKey()
+    return request<TranslationEvaluationRunResponse>(`/books/${label}/evaluations/translations/${language}/run`, {
+      method: "POST",
+      headers: openaiApiKey
+        ? {
+            "X-OpenAI-Key": openaiApiKey,
+            "X-ADT-OpenAI-Key": openaiApiKey,
+            Authorization: `Bearer ${openaiApiKey}`,
+          }
+        : {},
+    })
+  },
 
   getVersionHistory: (
     label: string,

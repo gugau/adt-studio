@@ -7,6 +7,7 @@ export const TaskKind = z.enum([
   "package-adt",
   "prepare-export",
   "transcribe-timestamps",
+  "translation-evaluation",
 ])
 export type TaskKind = z.infer<typeof TaskKind>
 
@@ -51,6 +52,8 @@ export const TaskInfo = z.object({
   url: z.string().optional(),
   error: z.string().optional(),
   result: z.unknown().optional(),
+  progressMessage: z.string().optional(),
+  progressPercent: z.number().optional(),
   startedAt: z.number().optional(),
   completedAt: z.number().optional(),
 })
