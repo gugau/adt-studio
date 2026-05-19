@@ -62,6 +62,7 @@ const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   "speech-prompts": msg`Speech Prompts`,
   voices: msg`Voices`,
   "toc-prompt": msg`Generation Prompt`,
+  "easy-read-prompt": msg`Easy Read Prompt`,
 }
 
 const STAGE_GROUP_LABELS: Record<StageGroup, MessageDescriptor> = {
@@ -116,6 +117,9 @@ function getSettingsTabs(
     ],
     toc: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE["toc-prompt"]) },
+    ],
+    "easy-read": [
+      { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE["easy-read-prompt"]) },
     ],
     captions: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE["caption-prompt"]) },

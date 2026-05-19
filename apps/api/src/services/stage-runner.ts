@@ -35,6 +35,11 @@ import {
   buildQuizGenerationConfig,
   // Master step imports
   buildTextCatalog,
+  buildEasyReadConfig,
+  buildEasyReadSourceBlocks,
+  createEmptyEasyReadOutput,
+  generateEasyRead,
+  flattenEasyReadEntries,
   translateCatalogBatch,
   buildCatalogTranslationConfig,
   getTargetLanguages,
@@ -77,6 +82,7 @@ import type {
   GlossaryOutput,
   TextCatalogOutput,
   TextCatalogEntry,
+  EasyReadOutput,
   SpeechFileEntry,
   TTSOutput,
   WordTimestampEntry,
@@ -329,6 +335,7 @@ const STAGE_RUNNERS: Record<StageName, RunFn> = {
   "captions": runCaptionsStep,
   "glossary": runGlossaryStep,
   "toc": runTocStep,
+  "easy-read": runEasyReadStep,
   "translate": runTranslateStep,
   "speech": runSpeechStep,
   "package": async () => { /* packaging handled separately */ },
@@ -1401,10 +1408,10 @@ async function runTocStep(
 }
 
 // ---------------------------------------------------------------------------
-// Translate stage (text catalog + catalog translation)
+// Easy Read stage (text catalog + Easy Read)
 // ---------------------------------------------------------------------------
 
-async function runTranslateStep(
+async function runEasyReadStep(
   label: string,
   options: StageRunOptions,
   progress: StageRunProgress
@@ -1471,9 +1478,108 @@ async function runTranslateStep(
     })
     progress.emit({ type: "step-complete", step: "text-catalog" })
 
+    const easyReadConfig = buildEasyReadConfig(config, language)
+    let easyReadEntries: TextCatalogEntry[] = []
+
+    if (!easyReadConfig.enabled) {
+      progress.emit({ type: "step-skip", step: "easy-read" })
+      console.log(`[stage-run] ${label}: easy read skipped (disabled)`)
+    } else {
+      progress.emit({ type: "step-start", step: "easy-read" })
+      const blocks = buildEasyReadSourceBlocks(storage, pages)
+      if (blocks.length === 0) {
+        storage.putNodeData("easy-read", "book", createEmptyEasyReadOutput())
+        progress.emit({ type: "step-skip", step: "easy-read" })
+        console.log(`[stage-run] ${label}: easy read skipped (no eligible text)`)
+      } else {
+        const easyReadModel = createLLMModel({
+          modelId: easyReadConfig.modelId,
+          cacheDir,
+          promptEngine,
+          rateLimiter,
+          onLog: onLlmLog,
+          credentials: llmCredentials,
+        })
+        const easyRead = await generateEasyRead(blocks, easyReadConfig, easyReadModel)
+        storage.putNodeData("easy-read", "book", easyRead)
+        easyReadEntries = flattenEasyReadEntries(easyRead)
+        progress.emit({
+          type: "step-progress",
+          step: "easy-read",
+          message: `${easyReadEntries.length} entries`,
+        })
+        progress.emit({ type: "step-complete", step: "easy-read" })
+        console.log(`[stage-run] ${label}: easy read generated ${easyReadEntries.length} entries`)
+      }
+    }
+
+    console.log(`[stage-run] ${label}: easy read stage complete`)
+  } finally {
+    storage.close()
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Translate stage (catalog translation + image translation)
+// ---------------------------------------------------------------------------
+
+async function runTranslateStep(
+  label: string,
+  options: StageRunOptions,
+  progress: StageRunProgress
+): Promise<void> {
+  const { booksDir, promptsDir, configPath } = options
+
+  const storage = createBookStorage(label, booksDir)
+
+  try {
+    const config = loadBookConfig(label, booksDir, configPath)
+    const cacheDir = path.join(path.resolve(booksDir), label, ".cache")
+    const bookPromptsDir = path.join(path.resolve(booksDir), label, "prompts")
+    const promptEngine = createPromptEngine([bookPromptsDir, promptsDir])
+    const rateLimiter = config.rate_limit
+      ? createRateLimiter(config.rate_limit.requests_per_minute)
+      : undefined
+    const llmCredentials = buildLLMCredentials(options)
+
+    const metadataRow = storage.getLatestNodeData("metadata", "book")
+    const metadata = metadataRow?.data as { language_code?: string | null } | null
+    const language = normalizeLocale(config.editing_language ?? metadata?.language_code ?? "en")
+
+    const onLlmLog = (entry: LlmLogEntry) => {
+      storage.appendLlmLog(entry)
+      const step = entry.taskType as StepName
+      progress.emit({
+        type: "llm-log",
+        step,
+        itemId: entry.pageId ?? "",
+        promptName: entry.promptName,
+        modelId: entry.modelId,
+        cacheHit: entry.cacheHit,
+        durationMs: entry.durationMs,
+        inputTokens: entry.usage?.inputTokens,
+        outputTokens: entry.usage?.outputTokens,
+        validationErrors: entry.validationErrors,
+      })
+    }
+
+    const effectiveConcurrency = config.concurrency ?? 32
+    const outputLanguages = Array.from(
+      new Set(
+        [language, ...(config.output_languages ?? [])].map((code) => normalizeLocale(code))
+      )
+    )
+
+    const catalogRow = storage.getLatestNodeData("text-catalog", "book")
+    const catalog = catalogRow?.data as TextCatalogOutput | undefined
+    const easyReadRow = storage.getLatestNodeData("easy-read", "book")
+    const easyRead = easyReadRow?.data as EasyReadOutput | undefined
+    const easyReadEntries = easyRead ? flattenEasyReadEntries(easyRead) : []
+    const translationEntries = [...(catalog?.entries ?? []), ...easyReadEntries]
+
     // ── Step 2: Translate catalog to target languages ────────────────
     const targetLanguages = getTargetLanguages(outputLanguages, language)
-    if (targetLanguages.length === 0 || catalog.entries.length === 0) {
+    if (targetLanguages.length === 0 || translationEntries.length === 0) {
       progress.emit({ type: "step-skip", step: "catalog-translation" })
       console.log(`[stage-run] ${label}: catalog translation skipped`)
     } else {
@@ -1497,11 +1603,11 @@ async function runTranslateStep(
       }
       const workItems: TranslationWorkItem[] = []
       for (const lang of targetLanguages) {
-        for (let i = 0; i < catalog.entries.length; i += batchSize) {
+        for (let i = 0; i < translationEntries.length; i += batchSize) {
           workItems.push({
             language: lang,
             batchIndex: Math.floor(i / batchSize),
-            entries: catalog.entries.slice(i, i + batchSize),
+            entries: translationEntries.slice(i, i + batchSize),
           })
         }
       }
@@ -1522,7 +1628,7 @@ async function runTranslateStep(
         totalPages: totalBatches,
       })
 
-      console.log(`[stage-run] ${label}: translating ${catalog.entries.length} entries to ${targetLanguages.length} languages (${totalBatches} batches)`)
+      console.log(`[stage-run] ${label}: translating ${translationEntries.length} entries to ${targetLanguages.length} languages (${totalBatches} batches)`)
 
       await processWithConcurrency(
         workItems,
@@ -1548,7 +1654,7 @@ async function runTranslateStep(
 
       for (const lang of targetLanguages) {
         const entries = resultsByLang.get(lang)!
-        const idOrder = new Map(catalog.entries.map((e, i) => [e.id, i]))
+        const idOrder = new Map(translationEntries.map((e, i) => [e.id, i]))
         entries.sort((a, b) => (idOrder.get(a.id) ?? 0) - (idOrder.get(b.id) ?? 0))
 
         const output: TextCatalogOutput = {
@@ -1761,8 +1867,13 @@ async function runSpeechStep(
     // Load text catalog from storage (produced by translate stage)
     const catalogRow = storage.getLatestNodeData("text-catalog", "book")
     const catalog = catalogRow?.data as TextCatalogOutput | null
+    const easyReadConfig = buildEasyReadConfig(config, language)
+    const easyReadRow = storage.getLatestNodeData("easy-read", "book")
+    const sourceEasyReadEntries = easyReadConfig.tts
+      ? flattenEasyReadEntries(easyReadRow?.data as EasyReadOutput | undefined)
+      : []
 
-    if (!catalog || catalog.entries.length === 0) {
+    if (!catalog || (catalog.entries.length === 0 && sourceEasyReadEntries.length === 0)) {
       progress.emit({ type: "step-skip", step: "tts" })
       progress.emit({ type: "step-skip", step: "word-timestamps" })
       console.log(`[stage-run] ${label}: TTS skipped (empty catalog)`)
@@ -1830,7 +1941,7 @@ async function runSpeechStep(
 
       let entries: TextCatalogEntry[]
       if (baseLang === baseSource) {
-        entries = catalog.entries
+        entries = [...catalog.entries, ...sourceEasyReadEntries]
       } else {
         const legacyLang = lang.replace("-", "_")
         const translatedRow =

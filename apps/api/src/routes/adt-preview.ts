@@ -9,6 +9,7 @@ import {
   PageSectioningOutput,
   type SpeechConfig,
   type TextCatalogOutput,
+  type EasyReadOutput,
   type GlossaryOutput,
   type QuizGenerationOutput,
   type TTSOutput,
@@ -28,6 +29,7 @@ import {
   renderQuizHtml,
   buildQuizAnswers,
   buildTextCatalog,
+  flattenEasyReadEntries,
   pad3,
   loadBookConfig,
   buildPreferredImageAltMap,
@@ -118,8 +120,10 @@ function getPreviewBundleVersion(webAssetsDir: string): string {
 
 function getBookLanguage(storage: Storage): string {
   const configRow = storage.getLatestNodeData("config", "book")
-  const config = configRow?.data as { language?: string } | undefined
-  return normalizeLocale(config?.language ?? "en")
+  const config = configRow?.data as { language?: string; editing_language?: string } | undefined
+  const metadataRow = storage.getLatestNodeData("metadata", "book")
+  const metadata = metadataRow?.data as { language_code?: string | null } | undefined
+  return normalizeLocale(config?.language ?? config?.editing_language ?? metadata?.language_code ?? "en")
 }
 
 function getBookTitle(storage: Storage): string {
@@ -157,6 +161,9 @@ function buildTextsMap(
     if (catalog?.entries) {
       for (const e of catalog.entries) textsMap[e.id] = e.text
     }
+    const easyReadRow = storage.getLatestNodeData("easy-read", "book")
+    const easyReadEntries = flattenEasyReadEntries(easyReadRow?.data as EasyReadOutput | undefined)
+    for (const e of easyReadEntries) textsMap[e.id] = e.text
   } else {
     const legacyLang = normalizedLang.replace("-", "_")
     const transRow =
@@ -435,6 +442,8 @@ function buildPreviewConfig(
   }
 
   const hasSignLanguageVideos = storage.getSignLanguageVideos().some((v) => v.sectionId !== null)
+  const easyReadRow = storage.getLatestNodeData("easy-read", "book")
+  const hasEasyRead = flattenEasyReadEntries(easyReadRow?.data as EasyReadOutput | undefined).length > 0
 
   // Available languages = the source language + every translation actually
   // present in the DB. We restrict against the book's configured
@@ -465,7 +474,7 @@ function buildPreviewConfig(
     },
     features: {
       signLanguage: hasSignLanguageVideos,
-      easyRead: false,
+      easyRead: hasEasyRead,
       glossary: hasGlossary,
       eli5: false,
       readAloud: hasTTS,

@@ -52,6 +52,7 @@ export {
   DEFAULT_LLM_MAX_RETRIES,
   StepConfig,
   QuizGenerationConfig,
+  EasyReadConfig,
   PageSectioningConfig,
   RenderType,
   VisualRefinementStrategyConfig,
@@ -152,6 +153,12 @@ export {
   TextCatalogEntry,
   TextCatalogOutput,
 } from "./text-catalog.js"
+
+export {
+  EasyReadEntry,
+  EasyReadSectionBlock,
+  EasyReadOutput,
+} from "./easy-read.js"
 
 export {
   TTSProviderConfig,

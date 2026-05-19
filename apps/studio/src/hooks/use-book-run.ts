@@ -464,6 +464,10 @@ function invalidateStageData(qc: ReturnType<typeof useQueryClient>, label: strin
     case "glossary":
       qc.invalidateQueries({ queryKey: ["books", label, "glossary"] })
       break
+    case "easy-read":
+      qc.invalidateQueries({ queryKey: ["books", label, "easy-read"] })
+      qc.invalidateQueries({ queryKey: ["books", label, "text-catalog"] })
+      break
     case "translate":
       qc.invalidateQueries({ queryKey: ["books", label, "text-catalog"] })
       qc.invalidateQueries({ queryKey: ["books", label, "translated-images"] })

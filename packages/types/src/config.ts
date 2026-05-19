@@ -25,6 +25,13 @@ export const QuizGenerationConfig = StepConfig.extend({
 })
 export type QuizGenerationConfig = z.infer<typeof QuizGenerationConfig>
 
+export const EasyReadConfig = StepConfig.extend({
+  enabled: z.boolean().optional(),
+  batch_size: z.number().int().min(1).optional(),
+  tts: z.boolean().optional(),
+})
+export type EasyReadConfig = z.infer<typeof EasyReadConfig>
+
 export const PageSectioningConfig = StepConfig.extend({
   max_refinements: z.number().int().min(0).optional(),
   mode: z.enum(["page", "dynamic"]).catch("dynamic").optional(),
@@ -111,6 +118,7 @@ export const AppConfig = z
     metadata: StepConfig.optional(),
     book_summary: StepConfig.optional(),
     quiz_generation: QuizGenerationConfig.optional(),
+    easy_read: EasyReadConfig.optional(),
     default_render_strategy: z.string().optional(),
     render_strategies: z.record(z.string(), RenderStrategyConfig).optional(),
     visual_review_prompt: z.string().optional(),

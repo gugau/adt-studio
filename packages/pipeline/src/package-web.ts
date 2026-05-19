@@ -20,6 +20,7 @@ import type {
   PageSectioningOutput,
   PageSectioningSection,
   TextCatalogOutput,
+  EasyReadOutput,
   GlossaryOutput,
   QuizGenerationOutput,
   BookSummaryOutput,
@@ -37,6 +38,7 @@ import { nullProgress } from "./progress.js"
 import { getGlossaryItemTextId } from "./glossary.js"
 import { getBaseLanguage, normalizeLocale } from "./language-context.js"
 import { buildTextCatalog } from "./text-catalog.js"
+import { flattenEasyReadEntries } from "./easy-read.js"
 import { normalizeHtmlSectionSemantics } from "./html-semantics.js"
 
 export interface PackageAdtWebOptions {
@@ -79,6 +81,10 @@ interface RuntimeTimecodeEntry {
     word_timestamps: Array<{ text: string; start: number; end: number }>
   }]
 }
+
+// Bump this when packaging output semantics change in a way that is not captured
+// by storage, config, or asset fingerprints.
+const PACKAGE_WEB_CACHE_VERSION = 2
 
 // ---------------------------------------------------------------------------
 // Build-cache helpers
@@ -150,6 +156,10 @@ export interface ComputePackagingInputHashOptions {
 
 export function computePackagingInputHash(options: ComputePackagingInputHashOptions): string {
   const hash = createHash("sha256")
+
+  // 0. Packaging implementation version. This prevents stale adt/ directories
+  // when package-web changes how it materializes existing storage data.
+  hash.update(JSON.stringify({ packageWebCacheVersion: PACKAGE_WEB_CACHE_VERSION }))
 
   // 1. Storage entity versions (exclude outputs like accessibility-assessment)
   const fingerprint = options.storage.getNodeVersionFingerprint(["accessibility-assessment"])
@@ -259,6 +269,10 @@ export async function packageAdtWeb(
 
   const tocRow = storage.getLatestNodeData("toc-generation", "book")
   const llmToc = tocRow?.data as TocGenerationOutput | undefined
+
+  const easyReadRow = storage.getLatestNodeData("easy-read", "book")
+  const easyRead = easyReadRow?.data as EasyReadOutput | undefined
+  const easyReadEntries = flattenEasyReadEntries(easyRead)
 
   // ------------------------------------------------------------------
   // Process pages
@@ -486,6 +500,7 @@ export async function packageAdtWeb(
       if (catalog?.entries) {
         for (const e of catalog.entries) textsMap[e.id] = e.text
       }
+      for (const e of easyReadEntries) textsMap[e.id] = e.text
     } else {
       // Translated language
       const legacyLang = lang.replace("-", "_")
@@ -601,6 +616,7 @@ export async function packageAdtWeb(
   // ------------------------------------------------------------------
   const hasGlossary = (features?.glossary !== false) && (glossary !== undefined && glossary.items.some((item) => !item.pruned))
   const hasQuiz = (features?.quizzes !== false) && (quizData !== undefined && quizData.quizzes.length > 0)
+  const hasEasyRead = easyReadEntries.length > 0
 
   const hasSignLanguageVideos = (features?.signLanguage !== false) && storage.getSignLanguageVideos().some((v) => v.sectionId !== null)
 
@@ -613,7 +629,7 @@ export async function packageAdtWeb(
     },
     features: {
       signLanguage: hasSignLanguageVideos,
-      easyRead: false,
+      easyRead: hasEasyRead,
       glossary: hasGlossary,
       eli5: false,
       readAloud: hasTTS,

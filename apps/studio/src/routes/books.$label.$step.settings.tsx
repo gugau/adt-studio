@@ -14,6 +14,7 @@ import { GlossarySettings } from "@/components/pipeline/stages/glossary/Glossary
 import { GlossaryLandingPage } from "@/components/pipeline/stages/glossary/GlossaryLandingPage"
 import { TocSettings } from "@/components/pipeline/stages/toc/TocSettings"
 import { TocLandingPage } from "@/components/pipeline/stages/toc/TocLandingPage"
+import { EasyReadSettings } from "@/components/pipeline/stages/easy-read/EasyReadSettings"
 import { CaptionsSettings } from "@/components/pipeline/stages/captions/CaptionsSettings"
 import { CaptionsLandingPage } from "@/components/pipeline/stages/captions/CaptionsLandingPage"
 import { LanguageSettings } from "@/components/pipeline/stages/languages/LanguageSettings"

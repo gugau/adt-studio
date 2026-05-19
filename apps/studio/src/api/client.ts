@@ -331,6 +331,31 @@ export interface TextCatalogResponse {
   translations: Record<string, { entries: TextCatalogEntry[]; version: number }>
 }
 
+export interface EasyReadEntry {
+  sourceId: string
+  easyReadId: string
+  originalText: string
+  text: string
+  pageId: string
+  sectionId: string
+  sectionIndex: number
+}
+
+export interface EasyReadSectionBlock {
+  pageId: string
+  pageNumber: number
+  sectionId: string
+  sectionIndex: number
+  sectionType: string
+  entries: EasyReadEntry[]
+}
+
+export interface EasyReadResponse {
+  blocks: EasyReadSectionBlock[]
+  generatedAt: string
+  version: number
+}
+
 // --- TTS types ---
 
 export interface TTSEntry {
@@ -960,6 +985,21 @@ export const api = {
 
   getTextCatalog: (label: string) =>
     request<TextCatalogResponse | null>(`/books/${label}/text-catalog`),
+
+  getEasyRead: (label: string) =>
+    request<EasyReadResponse | null>(`/books/${label}/easy-read`),
+
+  updateEasyRead: (label: string, data: { blocks: EasyReadSectionBlock[]; generatedAt: string }) =>
+    request<{ version: number }>(`/books/${label}/easy-read`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  regenerateEasyRead: (label: string, apiKey: string) =>
+    request<EasyReadResponse>(`/books/${label}/easy-read/regenerate`, {
+      method: "POST",
+      headers: { "X-OpenAI-Key": apiKey },
+    }),
 
   updateTranslation: (label: string, language: string, data: unknown) =>
     request<{ version: number }>(`/books/${label}/text-catalog-translation/${language}`, {

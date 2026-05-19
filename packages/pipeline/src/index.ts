@@ -150,6 +150,16 @@ export {
 } from "./quiz-generation.js"
 export { buildTextCatalog } from "./text-catalog.js"
 export {
+  buildEasyReadConfig,
+  buildEasyReadSourceBlocks,
+  buildPageEasyReadBlocks,
+  createEmptyEasyReadOutput,
+  generateEasyRead,
+  flattenEasyReadEntries,
+  EMPTY_EASY_READ_GENERATED_AT,
+  type EasyReadConfig,
+} from "./easy-read.js"
+export {
   resolveVoice,
   resolveInstructions,
   resolveProviderForLanguage,
