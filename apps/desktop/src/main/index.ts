@@ -40,7 +40,7 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 app.whenReady().then(async () => {
-  electronApp.setAppUserModelId("com.electron");
+  electronApp.setAppUserModelId("com.nees.adt-studio");
 
   registerAppInfoIpc();
   registerSplashIpc();
