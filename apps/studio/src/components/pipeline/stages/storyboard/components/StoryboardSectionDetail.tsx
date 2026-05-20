@@ -1,23 +1,26 @@
 import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from "react"
 import { createPortal } from "react-dom"
 import {
+  Boxes,
   Check,
   ChevronDown,
   Code,
   Eye,
   EyeOff,
   GripHorizontal,
-  ImagePlus,
+  Image as ImageIcon,
+  Layers,
   LayoutGrid,
   Loader2,
   MessageSquare,
+  Palette,
   PanelRightClose,
   PanelRightOpen,
   PenLine,
   Play,
-  RefreshCw,
   Save,
   Sparkles,
+  Type,
   X,
 } from "lucide-react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
@@ -46,9 +49,18 @@ import { useBookTasks } from "@/hooks/use-book-tasks"
 import { useBookRun } from "@/hooks/use-book-run"
 import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import { useStepHeader } from "../../../components/StepViewRouter"
-import { BookPreviewFrame, type BookPreviewFrameHandle } from "./BookPreviewFrame"
-import { SectionEditToolbar } from "./SectionEditToolbar"
+import {
+  BookPreviewFrame,
+  type BookPreviewFrameHandle,
+  type ComputedTypographyStyles,
+} from "./BookPreviewFrame"
 import { SectionEditPanel } from "./SectionEditPanel"
+import { StyleEditorPanel } from "./style-editor"
+import { ViewportToggle } from "./style-editor/ViewportToggle"
+import {
+  DEVICE_WIDTHS,
+  useDeviceView,
+} from "./style-editor/device-breakpoint"
 import { ImageCropDialog } from "./ImageCropDialog"
 import { AiImageDialog } from "./AiImageDialog"
 import { AddImageDialog } from "./AddImageDialog"
@@ -56,17 +68,9 @@ import { ReplaceFromBookDialog } from "./ReplaceFromBookDialog"
 import { SegmentPreviewDialog, type SegmentRegion } from "./SegmentPreviewDialog"
 import { AiEditHistoryDrawer } from "./AiEditHistoryDrawer"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { useLingui } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
 import { i18n } from "@lingui/core"
-import { cn } from "@/lib/utils"
 import { getSectionTypeLabel, getSectionTypeDescription } from "@/lib/section-constants"
 import {
   Dialog,
@@ -76,6 +80,13 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
+
+const TEXT_LIKE_TAGS = new Set([
+  "p", "h1", "h2", "h3", "h4", "h5", "h6",
+  "span", "em", "strong", "i", "b", "u", "s",
+  "code", "kbd", "samp", "sub", "sup",
+  "blockquote", "figcaption", "small", "mark", "cite",
+])
 
 // Image src format embedded in stored rendering HTML — must match the pipeline's
 // web-rendering.ts `imageUrlFor`. Always relative so the iframe's <base> resolves it.
@@ -244,6 +255,18 @@ function VersionPicker({
 
 type SectioningData = PageSectioningOutput
 type RenderingData = NonNullable<PageDetail["rendering"]>
+
+// `_el#` data-ids are assigned by the iframe at runtime to give the inspector
+// a stable handle on container elements; they must not be persisted.
+function stripTransientIds(rendering: RenderingData): RenderingData {
+  return {
+    ...rendering,
+    sections: rendering.sections.map((s) => ({
+      ...s,
+      html: s.html.replace(/\s+data-id="_el\d+"/g, ""),
+    })),
+  }
+}
 
 // Replace the section at index `sectionIndex` with the given section, producing
 // a new PageSectioningOutput.
@@ -493,6 +516,32 @@ export function StoryboardSectionDetail({
   const [confirmMerge, setConfirmMerge] = useState<{ action: () => Promise<void>; label: string } | null>(null)
   const [pendingSectioning, setPendingSectioning] = useState<SectioningData | null>(null)
   const [pendingRendering, setPendingRendering] = useState<RenderingData | null>(null)
+  // Inspector edits mutate the iframe DOM directly; this ref stashes the
+  // resulting HTML and is committed to React state only at boundaries
+  // (selection change, save, unmount) so per-keystroke changes don't
+  // re-render BookPreviewFrame and rebuild its body.
+  const pendingHtmlRef = useRef<{ html: string; sectionIndex: number } | null>(null)
+  // Stamped by `discardAll` so late debounced commits get dropped.
+  const lastDiscardAtRef = useRef(0)
+  // Tracks whether iframe-DOM edits exist that haven't been flushed into
+  // pendingRendering yet. Lights up the Save/Discard bar on every change
+  // without forcing a per-keystroke iframe rebuild.
+  const [hasUnflushedEdits, setHasUnflushedEdits] = useState(false)
+  // Tags describing what kind of unsaved edits exist, surfaced in the floating
+  // save bar so the user can see what they're about to discard or commit.
+  // Cleared on save success and on discard.
+  type PendingCategory = "sections" | "style" | "text" | "images" | "elements"
+  const [pendingCategories, setPendingCategories] = useState<Set<PendingCategory>>(
+    () => new Set()
+  )
+  const markPending = useCallback((category: PendingCategory) => {
+    setPendingCategories((prev) => {
+      if (prev.has(category)) return prev
+      const next = new Set(prev)
+      next.add(category)
+      return next
+    })
+  }, [])
   // Tracks whether pending sectioning changes require LLM re-render on save.
   // Pure prune/delete can be resolved locally; unprune/type change/reorder need LLM.
   const needsRerenderRef = useRef(false)
@@ -507,31 +556,39 @@ export function StoryboardSectionDetail({
     tagName?: string
   } | null>(null)
   const [selectedElementClasses, setSelectedElementClasses] = useState<string[] | null>(null)
+  const [selectedComputedTypography, setSelectedComputedTypography] = useState<
+    ComputedTypographyStyles | null
+  >(null)
+  const [deviceView, setDeviceView] = useDeviceView(bookLabel, "desktop")
+  const [previewVisibleWidth, setPreviewVisibleWidth] = useState(0)
   const previewFrameRef = useRef<BookPreviewFrameHandle>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const toolbarRef = useRef<HTMLDivElement>(null)
 
   // Clear cached classes when element is deselected
   useEffect(() => {
     if (!selectedElement) setSelectedElementClasses(null)
   }, [selectedElement])
 
-  // Close toolbar when clicking outside of it
+  // Snapshot the iframe element's getComputedStyle so the inspector can show
+  // the actually-rendered value when no explicit class is set (e.g., font-size
+  // / color / weight inherited from a parent).
   useEffect(() => {
-    if (!selectedElement) return
-    const handler = (e: MouseEvent) => {
-      if (toolbarRef.current && !toolbarRef.current.contains(e.target as Node)) {
-        setSelectedElement(null)
-      }
+    if (!selectedElement) {
+      setSelectedComputedTypography(null)
+      return
     }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
-  }, [selectedElement])
+    setSelectedComputedTypography(
+      previewFrameRef.current?.getComputedTypographyStyles(selectedElement.dataId) ?? null,
+    )
+  }, [selectedElement, selectedElementClasses])
 
   // Track current pageId so async callbacks can detect stale closures
 
   // Section data panel state
   const [panelOpen, setPanelOpen] = useState(false)
+  const openSectionPanel = useCallback(() => {
+    setPanelOpen((v) => !v)
+  }, [])
   const [htmlPreview, setHtmlPreview] = useState(false)
   const [htmlPanelHeight, setHtmlPanelHeight] = useState(() => Math.floor(window.innerHeight * 0.35))
   const htmlPanelRef = useRef<HTMLDivElement>(null)
@@ -664,10 +721,13 @@ export function StoryboardSectionDetail({
     ? Object.fromEntries(Object.entries(allSectionTypes).filter(([key]) => !disabledSectionTypes.has(key)))
     : undefined
 
-  // Clear pending state when page changes
+  // Mirrors `discardAll` so navigating away also drops in-flight class edits.
   useEffect(() => {
     setPendingSectioning(null)
     setPendingRendering(null)
+    pendingHtmlRef.current = null
+    setHasUnflushedEdits(false)
+    setPendingCategories(new Set())
     setSelectedElement(null)
     setCropTarget(null)
     setAiImageDialogTarget(null)
@@ -688,15 +748,6 @@ export function StoryboardSectionDetail({
     scrollContainerRef.current?.scrollTo(0, 0)
   }, [pageId, sectionIndex])
 
-  // Dismiss toolbar on scroll (position would be stale)
-  useEffect(() => {
-    const container = scrollContainerRef.current
-    if (!container) return
-    const onScroll = () => setSelectedElement(null)
-    container.addEventListener("scroll", onScroll, { passive: true })
-    return () => container.removeEventListener("scroll", onScroll)
-  }, [])
-
   // Effective data
   const sectioningData = pendingSectioning ?? (page.sectioningTree as SectioningData | null)
   const dirty = pendingSectioning != null
@@ -705,7 +756,7 @@ export function StoryboardSectionDetail({
   const section = sectioningData?.sections[sectionIndex]
   const renderingData = pendingRendering ?? page.rendering
   const renderedSection = getRenderedSectionByIndex(renderingData, sectionIndex)
-  const renderingDirty = pendingRendering != null
+  const renderingDirty = pendingRendering != null || hasUnflushedEdits
 
   // When server-delivered HTML for the current section changes to something we
   // haven't rendered before, refresh the iframe's Tailwind CSS so new classes
@@ -751,13 +802,15 @@ export function StoryboardSectionDetail({
       // Save rendering if dirty (from delete/prune removing HTML elements).
       // Use renderingFromPrune if we just stripped pruned elements above,
       // since React state won't have updated yet within this async call.
-      const renderingToSave = renderingFromPrune ?? pendingRendering
+      const flushed = flushPendingHtml()
+      const renderingToSave = renderingFromPrune ?? flushed ?? pendingRendering
       if (renderingToSave) {
-        await api.updateRendering(bookLabel, pageId, renderingToSave)
+        await api.updateRendering(bookLabel, pageId, stripTransientIds(renderingToSave))
       }
 
       setPendingSectioning(null)
       setPendingRendering(null)
+      setPendingCategories(new Set())
       needsRerenderRef.current = false
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
       invalidateStoryboardDependents(queryClient, bookLabel)
@@ -775,25 +828,37 @@ export function StoryboardSectionDetail({
     }
   }
 
-  const discardSectioning = () => {
+  // Wipe every pending change (sectioning, rendering, in-flight class edits)
+  // and re-inject the saved HTML into the iframe so live DOM mutations are
+  // dropped. All Discard entry points route through here so the semantics stay
+  // identical regardless of which control the user clicked.
+  const discardAll = () => {
+    lastDiscardAtRef.current = Date.now()
     setPendingSectioning(null)
     setPendingRendering(null)
+    setPendingCategories(new Set())
+    pendingHtmlRef.current = null
+    setHasUnflushedEdits(false)
     needsRerenderRef.current = false
+    previewFrameRef.current?.resetContent()
   }
 
   // Save rendering (including back-propagation to sectioning)
   const saveRendering = async () => {
-    if (!pendingRendering || storyboardRunning) return
+    const flushed = flushPendingHtml()
+    const renderingToSave = flushed ?? pendingRendering
+    if (!renderingToSave || storyboardRunning) return
     setSaving(true)
     setPanelOpen(false)
     try {
       const minDelay = new Promise((r) => setTimeout(r, 400))
 
-      // Save the rendering
-      await api.updateRendering(bookLabel, pageId, pendingRendering)
+      await api.updateRendering(bookLabel, pageId, stripTransientIds(renderingToSave))
 
-      // Back-propagate: if we have sectioning data and edited HTML, update sectioning too
-      const editedHtml = getRenderedSectionByIndex(pendingRendering, sectionIndex)?.html
+      // Back-propagate text changes into sectioning. `renderingToSave` already
+      // includes the flushed inspector edit; the closure `pendingRendering`
+      // is stale until React re-renders.
+      const editedHtml = getRenderedSectionByIndex(renderingToSave, sectionIndex)?.html
       const sBase = pendingSectioning ?? (page.sectioningTree as SectioningData | null)
       if (editedHtml && sBase) {
         const updatedSectioning = backPropagateTextChanges(
@@ -808,6 +873,7 @@ export function StoryboardSectionDetail({
 
       setPendingRendering(null)
       setPendingSectioning(null)
+      setPendingCategories(new Set())
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
       invalidateStoryboardDependents(queryClient, bookLabel)
       await minDelay
@@ -987,9 +1053,10 @@ export function StoryboardSectionDetail({
         }),
       }
       setPendingRendering(updated)
+      markPending("elements")
       return updated
     },
-    [pendingRendering, page.rendering, sectionIndex]
+    [pendingRendering, page.rendering, sectionIndex, markPending]
   )
 
   // Clone data-id elements in the rendered HTML and insert after the originals.
@@ -1054,8 +1121,9 @@ export function StoryboardSectionDetail({
         }),
       }
       setPendingRendering(updated)
+      markPending("elements")
     },
-    [pendingRendering, page.rendering, sectionIndex]
+    [pendingRendering, page.rendering, sectionIndex, markPending]
   )
 
   // Replace textContent of a single [data-id="..."] element in the rendered HTML.
@@ -1083,8 +1151,9 @@ export function StoryboardSectionDetail({
         }),
       }
       setPendingRendering(updated)
+      markPending("text")
     },
-    [pendingRendering, page.rendering, sectionIndex]
+    [pendingRendering, page.rendering, sectionIndex, markPending]
   )
 
   // Update a single activity answer value in the rendering
@@ -1103,8 +1172,9 @@ export function StoryboardSectionDetail({
         }),
       }
       setPendingRendering(updated)
+      markPending("text")
     },
-    [pendingRendering, page.rendering, sectionIndex]
+    [pendingRendering, page.rendering, sectionIndex, markPending]
   )
 
   // Delete selected block from rendered HTML and remove the matching leaf from sectioning.
@@ -1232,9 +1302,9 @@ export function StoryboardSectionDetail({
         }),
       }
       setPendingRendering(updated)
-      setSelectedElement(null)
+      markPending("text")
     },
-    [page.rendering, pendingRendering, sectionIndex]
+    [page.rendering, pendingRendering, sectionIndex, markPending]
   )
 
   // Handle element selection from BookPreviewFrame
@@ -1257,34 +1327,49 @@ export function StoryboardSectionDetail({
     setSelectedElementClasses(previewFrameRef.current?.getElementClasses(dataId) ?? null)
   }, [])
 
-  // Handle Tailwind class changes from the toolbar
   const handleClassesChange = useCallback(
     (dataId: string, classes: string[]) => {
       if (!page.rendering) return
+      // 250ms covers the inspector's 200ms debounce plus slack.
+      if (Date.now() - lastDiscardAtRef.current < 250) return
       const fullHtml = previewFrameRef.current?.setElementClasses(dataId, classes)
       if (!fullHtml) return
-      // Optimistically update stored classes
       setSelectedElementClasses(classes)
-      const base = pendingRendering ?? page.rendering
-      const updated = {
-        ...base,
-        sections: base.sections.map((s) => {
-          if (s.sectionIndex !== sectionIndex) return s
-          return { ...s, html: fullHtml }
-        }),
-      }
-      setPendingRendering(updated)
-      // Refresh Tailwind CSS so newly added classes render correctly
       previewFrameRef.current?.refreshCss(fullHtml)
+      pendingHtmlRef.current = { html: fullHtml, sectionIndex }
+      setHasUnflushedEdits(true)
+      markPending("style")
     },
-    [page.rendering, pendingRendering, sectionIndex]
+    [page.rendering, sectionIndex, markPending]
   )
+
+  const flushPendingHtml = useCallback((): RenderingData | null => {
+    const queued = pendingHtmlRef.current
+    if (!queued) return pendingRendering
+    if (!page.rendering) return pendingRendering
+    pendingHtmlRef.current = null
+    setHasUnflushedEdits(false)
+    const base = pendingRendering ?? page.rendering
+    const merged: RenderingData = {
+      ...base,
+      sections: base.sections.map((s) =>
+        s.sectionIndex !== queued.sectionIndex ? s : { ...s, html: queued.html }
+      ),
+    }
+    setPendingRendering(merged)
+    return merged
+  }, [page.rendering, pendingRendering])
+
+  useEffect(() => {
+    return () => {
+      flushPendingHtml()
+    }
+  }, [selectedElement?.dataId, flushPendingHtml])
 
   // Handle toolbar prune toggle (nodeId === data-id in tree shape)
   const handleToolbarPrune = useCallback(
     (dataId: string) => {
       toggleLeafPrunedById(dataId)
-      setSelectedElement(null)
     },
     [toggleLeafPrunedById]
   )
@@ -1328,6 +1413,7 @@ export function StoryboardSectionDetail({
           }),
         }
         setPendingRendering(updatedRendering)
+        markPending("images")
       }
 
       setCropTarget(null)
@@ -1339,7 +1425,6 @@ export function StoryboardSectionDetail({
 
   // Recrop from page: fetch the full page image and open crop dialog with it
   const handleRecropFromPage = useCallback(async (dataId: string) => {
-    setSelectedElement(null)
     try {
       const { imageBase64 } = await api.getPageImage(bookLabel, pageId)
       setCropTarget(dataId)
@@ -1353,7 +1438,6 @@ export function StoryboardSectionDetail({
   const handleImageReplace = useCallback((dataId: string) => {
     replaceTargetRef.current = dataId
     fileInputRef.current?.click()
-    setSelectedElement(null)
   }, [])
 
   // Process uploaded file: upload to API, swap image in sectioning + rendering
@@ -1396,6 +1480,7 @@ export function StoryboardSectionDetail({
           }),
         }
         setPendingRendering(updatedRendering)
+        markPending("images")
       }
     },
     [bookLabel, pageId, pendingSectioning, page.sectioningTree, pendingRendering, page.rendering, sectionIndex, section, t]
@@ -1404,7 +1489,6 @@ export function StoryboardSectionDetail({
   // Replace from book: open picker dialog
   const handleReplaceFromBook = useCallback((dataId: string) => {
     setReplaceFromBookTarget(dataId)
-    setSelectedElement(null)
   }, [])
 
   // Process replace-from-book selection: swap image in sectioning + rendering
@@ -1437,6 +1521,7 @@ export function StoryboardSectionDetail({
           }),
         }
         setPendingRendering(updatedRendering)
+        markPending("images")
       }
     },
     [bookLabel, replaceFromBookTarget, pendingSectioning, page.sectioningTree, pendingRendering, page.rendering, sectionIndex, section]
@@ -1445,7 +1530,6 @@ export function StoryboardSectionDetail({
   // Open AI image dialog for a specific image
   const handleAiImage = useCallback((dataId: string) => {
     setAiImageDialogTarget(dataId)
-    setSelectedElement(null)
   }, [])
 
   // Run LLM segmentation analysis on a single image (phase 1: get bounding boxes)
@@ -1453,7 +1537,6 @@ export function StoryboardSectionDetail({
     async (dataId: string) => {
       if (!hasApiKey) return
       setSegmenting(true)
-      setSelectedElement(null)
 
       try {
         const result = await api.segmentImage(bookLabel, dataId, pageId, apiKey)
@@ -1756,23 +1839,23 @@ export function StoryboardSectionDetail({
     })
   }
 
-  // Compute toolbar info for selected element
   const getSelectedElementInfo = () => {
     if (!selectedElement || !sectioningData) return null
     const { dataId, tagName } = selectedElement
-
-    // Container elements (div, section, button, etc.) — class editing only
-    if (tagName) {
-      return { isImage: false, isContainer: true, tagName, textType: undefined, isPruned: false, imageSrc: undefined }
-    }
+    const tag = tagName?.toLowerCase()
 
     const leaf = section ? findNode(section.nodes, dataId) : null
-    const isImage = leaf?.role === "image" || (!leaf && dataId.includes("_im"))
+    const isImage =
+      tag === "img" ||
+      leaf?.role === "image" ||
+      (!leaf && !tag && dataId.includes("_im"))
+
+    const isContainer = !isImage && (!tag || !TEXT_LIKE_TAGS.has(tag))
 
     return {
       isImage,
-      isContainer: false,
-      tagName: undefined,
+      isContainer,
+      tagName: tag,
       textType: leaf && !isImage ? leaf.role : undefined,
       isPruned: leaf?.isPruned ?? false,
       imageSrc: isImage ? `${BASE_URL}/books/${bookLabel}/images/${dataId}` : undefined,
@@ -1877,9 +1960,12 @@ export function StoryboardSectionDetail({
         inline
         onPreview={(data) => setPendingRendering(data as RenderingData)}
         onSave={saveRendering}
-        onDiscard={() => {
-          setPendingRendering(null)
-        }}
+        onDiscard={discardAll}
+      />
+      <ViewportToggle
+        value={deviceView}
+        onChange={setDeviceView}
+        currentWidth={previewVisibleWidth}
       />
       {renderedSection?.html && hasApiKey ? (
         <div className="relative flex-1 min-w-[100px]">
@@ -1928,7 +2014,7 @@ export function StoryboardSectionDetail({
       )}
       <button
         type="button"
-        onClick={() => setPanelOpen((v) => !v)}
+        onClick={openSectionPanel}
         className="flex items-center gap-1 px-2 py-1 rounded bg-white/10 hover:bg-white/20 transition-colors cursor-pointer shrink-0"
         title={panelOpen ? t`Close edit panel` : t`Open edit panel`}
       >
@@ -1955,7 +2041,8 @@ export function StoryboardSectionDetail({
   return (
     <>
     {headerSlotEl && createPortal(headerControls, headerSlotEl)}
-    <div className="h-full flex flex-col relative overflow-hidden">
+    <div className="h-full flex overflow-hidden">
+    <div className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
       {/* Error bar below header */}
       {aiError && (
         <div className="px-4 py-1.5 border-b shrink-0 text-xs bg-muted/30">
@@ -1975,7 +2062,10 @@ export function StoryboardSectionDetail({
       )}
 
       {/* Preview — fills remaining space, scrolls independently */}
-      <div className="flex-1 overflow-auto px-4 py-4 relative" ref={scrollContainerRef}>
+      <div
+        className="flex-1 overflow-auto px-4 py-4 relative [scrollbar-gutter:stable]"
+        ref={scrollContainerRef}
+      >
         {!section ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
@@ -1997,13 +2087,17 @@ export function StoryboardSectionDetail({
                   ref={previewFrameRef}
                   html={renderedSection.html}
                   bookLabel={bookLabel}
-                  className="w-full rounded border"
+                  className="w-full rounded borde"
                   editable={!hasActiveTask && !storyboardRunning}
                   prunedDataIds={prunedDataIds}
                   changedElements={changedElements}
                   onSelectElement={handleSelectElement}
                   onTextChanged={handleTextChanged}
                   applyBodyBackground={applyBodyBackground}
+                  selectedDataId={selectedElement?.dataId ?? null}
+                  renderWidth={DEVICE_WIDTHS[deviceView]}
+                  deviceView={deviceView}
+                  onVisibleWidthChange={setPreviewVisibleWidth}
                 />
             )}
           </>
@@ -2208,73 +2302,87 @@ export function StoryboardSectionDetail({
       )}
 
       {/* Floating save/discard bar */}
-      {(dirty || renderingDirty) && !saving && (
-        <div className="absolute bottom-4 left-1/2 z-40 -translate-x-1/2 animate-in slide-in-from-bottom-4 fade-in duration-200">
-          <div className="flex items-center gap-3 rounded-lg border bg-background px-4 py-2.5 shadow-lg">
-            <span className="text-sm text-muted-foreground">
-              {t`Unsaved:`}{" "}
-              <span className="font-medium text-foreground">
-                {[dirty && t`sections`, renderingDirty && t`rendering`].filter(Boolean).join(", ")}
-              </span>
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={async () => {
-                  if (pendingRendering) await saveRendering()
-                  else if (pendingSectioning) await saveSectioning()
-                }}
-                className="flex items-center gap-1 text-xs font-medium rounded px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white cursor-pointer transition-colors"
-              >
-                <Save className="h-3 w-3" />
-                {t`Save`}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setPendingSectioning(null)
-                  setPendingRendering(null)
-                }}
-                className="flex items-center gap-1 text-xs font-medium rounded px-3 py-1.5 bg-muted hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors"
-              >
-                <X className="h-3 w-3" />
-                {t`Discard`}
-              </button>
+      {(dirty || renderingDirty) && !saving && (() => {
+        const labels: Record<PendingCategory, string> = {
+          sections: t`Sections`,
+          style: t`Style`,
+          text: t`Text`,
+          images: t`Images`,
+          elements: t`Elements`,
+        }
+        const icons: Record<PendingCategory, typeof Layers> = {
+          sections: Layers,
+          style: Palette,
+          text: Type,
+          images: ImageIcon,
+          elements: Boxes,
+        }
+        const active = new Set(pendingCategories)
+        if (dirty) active.add("sections")
+        const orderedCategories: PendingCategory[] = ["sections", "style", "text", "images", "elements"]
+        const visible = orderedCategories.filter((c) => active.has(c))
+
+        return (
+          <div className="absolute bottom-4 left-1/2 z-40 -translate-x-1/2 animate-in slide-in-from-bottom-4 fade-in zoom-in-95 duration-300 ease-out">
+            <div className="flex items-center gap-3 rounded-md border border-border/60 bg-background/95 backdrop-blur px-2 py-1.5 shadow-xl shadow-black/5 transition-all duration-200">
+              {/* Status indicator + chips */}
+              <div className="flex items-center gap-2 pl-2">
+                <span className="relative inline-flex h-2 w-2 shrink-0" aria-hidden>
+                  <span className="absolute inset-0 rounded-full bg-amber-500/40 animate-ping" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                </span>
+                {visible.length > 0 ? (
+                  <div className="flex items-center gap-1">
+                    {visible.map((cat) => {
+                      const Icon = icons[cat]
+                      return (
+                        <span
+                          key={cat}
+                          className="adt-pill-chip inline-flex items-center gap-1 rounded bg-muted/70 px-2 py-0.5 text-[11px] font-medium text-foreground overflow-hidden whitespace-nowrap"
+                        >
+                          <Icon className="h-3 w-3 text-muted-foreground" />
+                          {labels[cat]}
+                        </span>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <span className="text-[11px] font-medium text-foreground">
+                    {t`Unsaved changes`}
+                  </span>
+                )}
+              </div>
+
+              {/* Divider */}
+              <div className="h-5 w-px bg-border/80" aria-hidden />
+
+              {/* Actions */}
+              <div className="flex items-center gap-1 pr-1">
+                <button
+                  type="button"
+                  onClick={discardAll}
+                  className="inline-flex items-center gap-1.5 rounded px-3 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                >
+                  <X className="h-3 w-3" />
+                  {t`Discard`}
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (renderingDirty) await saveRendering()
+                    else if (pendingSectioning) await saveSectioning()
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded px-3 py-1 text-[11px] font-medium bg-green-600 hover:bg-green-500 text-white shadow-sm shadow-green-600/20 transition-colors cursor-pointer"
+                >
+                  <Save className="h-3 w-3" />
+                  {t`Save`}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
-
-      {/* Floating popover for selected element */}
-      {selectedElement && selectedInfo && (
-        <div ref={toolbarRef}>
-        <SectionEditToolbar
-          dataId={selectedElement.dataId}
-          rect={selectedElement.rect}
-          containerOffset={{ top: selectedElement.iframeTop, left: selectedElement.iframeLeft }}
-          isImage={selectedInfo.isImage}
-          isContainer={selectedInfo.isContainer}
-          containerTagName={selectedInfo.tagName}
-          textType={selectedInfo.textType}
-          isPruned={selectedInfo.isPruned}
-          textTypes={textTypes}
-          imageSrc={selectedInfo.imageSrc}
-          onChangeTextType={storyboardRunning || selectedInfo.isContainer ? undefined : handleToolbarChangeTextType}
-          onTogglePrune={storyboardRunning || selectedInfo.isContainer ? undefined : handleToolbarPrune}
-          onCrop={selectedInfo.isImage && !storyboardRunning ? (dataId) => setCropTarget(dataId) : undefined}
-          onRecropFromPage={selectedInfo.isImage && !storyboardRunning ? handleRecropFromPage : undefined}
-          onReplace={selectedInfo.isImage && !storyboardRunning ? handleImageReplace : undefined}
-          onReplaceFromBook={selectedInfo.isImage && !storyboardRunning ? handleReplaceFromBook : undefined}
-          onAiImage={selectedInfo.isImage && hasApiKey && !storyboardRunning ? handleAiImage : undefined}
-          onSegment={selectedInfo.isImage && hasApiKey && !storyboardRunning ? handleSegment : undefined}
-          segmenting={segmenting}
-          onDelete={!storyboardRunning ? handleDeleteBlock : undefined}
-          elementClasses={selectedElementClasses ?? undefined}
-          onClassesChange={handleClassesChange}
-        />
-        </div>
-      )}
 
       {/* Slide-out section data panel */}
       {section && (
@@ -2321,7 +2429,7 @@ export function StoryboardSectionDetail({
               }
             }}
             onSave={saveSectioning}
-            onDiscard={discardSectioning}
+            onDiscard={discardAll}
           />
         }
         merging={merging}
@@ -2340,6 +2448,65 @@ export function StoryboardSectionDetail({
       {htmlDraggingActive && (
         <div className="absolute inset-0 z-50 cursor-row-resize" />
       )}
+    </div>
+
+    {/* Inline element style editor — opens automatically on selection */}
+    <StyleEditorPanel
+      open={!!selectedElement}
+      onClose={() => setSelectedElement(null)}
+      selectedDataId={selectedElement?.dataId ?? null}
+      selectedTagName={selectedElement?.tagName ?? null}
+      elementClasses={selectedElementClasses}
+      computedTypography={selectedComputedTypography}
+      elementProps={
+        selectedElement && selectedInfo
+          ? {
+                isImage: selectedInfo.isImage,
+                isContainer: selectedInfo.isContainer,
+                textType: selectedInfo.textType,
+                isPruned: selectedInfo.isPruned,
+                textTypes,
+                imageSrc: selectedInfo.imageSrc,
+                segmenting,
+                onChangeTextType:
+                  storyboardRunning || selectedInfo.isContainer
+                    ? undefined
+                    : handleToolbarChangeTextType,
+                onTogglePrune:
+                  storyboardRunning || selectedInfo.isContainer
+                    ? undefined
+                    : handleToolbarPrune,
+                onCrop:
+                  selectedInfo.isImage && !storyboardRunning
+                    ? (dataId) => setCropTarget(dataId)
+                    : undefined,
+                onRecropFromPage:
+                  selectedInfo.isImage && !storyboardRunning
+                    ? handleRecropFromPage
+                    : undefined,
+                onReplace:
+                  selectedInfo.isImage && !storyboardRunning
+                    ? handleImageReplace
+                    : undefined,
+                onReplaceFromBook:
+                  selectedInfo.isImage && !storyboardRunning
+                    ? handleReplaceFromBook
+                    : undefined,
+                onAiImage:
+                  selectedInfo.isImage && hasApiKey && !storyboardRunning
+                    ? handleAiImage
+                    : undefined,
+                onSegment:
+                  selectedInfo.isImage && hasApiKey && !storyboardRunning
+                    ? handleSegment
+                    : undefined,
+                onDelete: !storyboardRunning ? handleDeleteBlock : undefined,
+              }
+            : null
+        }
+        onClassesChange={handleClassesChange}
+        deviceView={deviceView}
+      />
     </div>
 
     {/* Hidden file input for image replace */}

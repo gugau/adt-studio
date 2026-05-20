@@ -40,6 +40,9 @@ msgstr "(actif)"
 msgid "(base)"
 msgstr "(base)"
 
+msgid "(default)"
+msgstr "(par défaut)"
+
 msgid "(empty)"
 msgstr "(vide)"
 
@@ -506,8 +509,8 @@ msgstr "Ajouter un livre"
 msgid "Add checklist item to this section"
 msgstr "Ajouter un élément de liste de contrôle à cette section"
 
-msgid "Add class"
-msgstr "Ajouter une classe"
+#~ msgid "Add class"
+#~ msgstr "Ajouter une classe"
 
 msgid "Add emojis"
 msgstr "Ajouter des emojis"
@@ -541,6 +544,9 @@ msgstr "Ajouter des consignes pour le réviseur."
 
 msgid "Add section"
 msgstr "Ajouter une section"
+
+msgid "Add sizing field"
+msgstr "Ajouter un champ de dimensionnement"
 
 msgid "Add Term"
 msgstr "Ajouter un terme"
@@ -581,6 +587,9 @@ msgstr "ADT Studio utilise vos propres clés API pour exécuter le pipeline. Les
 
 msgid "ADT_DEBUG=1"
 msgstr "ADT_DEBUG=1"
+
+msgid "Advanced"
+msgstr "Avancé"
 
 msgid "Adventure Tales - Vol. 1"
 msgstr "Adventure Tales - Vol. 1"
@@ -636,6 +645,18 @@ msgstr "Mise en page assistée par IA qui conserve la page originale en arrière
 
 msgid "AIza..."
 msgstr "AIza..."
+
+msgid "Align"
+msgstr "Aligner"
+
+msgid "Align center"
+msgstr "Aligner au centre"
+
+msgid "Align left"
+msgstr "Aligner à gauche"
+
+msgid "Align right"
+msgstr "Aligner à droite"
 
 msgid "All"
 msgstr "Tout"
@@ -715,6 +736,9 @@ msgstr "Journaux API"
 msgid "API logs are only available in the desktop app."
 msgstr "Les journaux de l'API ne sont disponibles que dans l'application de bureau."
 
+msgid "Appearance"
+msgstr "Apparence"
+
 msgid "Application Programming Interface — a set of rules that allows programs to communicate."
 msgstr "Interface de programmation d'applications — un ensemble de règles permettant aux programmes de communiquer."
 
@@ -760,6 +784,12 @@ msgstr "zones"
 
 msgid "Arrange extracted content into a structured storyboard with pages, sections, and layouts."
 msgstr "Organisez le contenu extrait en un scénarimage structuré avec des pages, des sections et des mises en page."
+
+msgid "Article"
+msgstr "Article"
+
+msgid "Aside"
+msgstr "Aparté"
 
 msgid "Ask AI to edit..."
 msgstr "Demander à l'IA de modifier..."
@@ -910,8 +940,20 @@ msgstr "Livre Aperçu"
 msgid "Book Summary"
 msgstr "Livre Résumé"
 
+#~ msgid "Book Summary Prompt"
+#~ msgstr "Livre Résumé Invite"
+
+#~ msgid "Book Title"
+#~ msgstr "Titre du livre"
+
+msgid "Borders"
+msgstr "Bordures"
+
 msgid "Boxed Text"
 msgstr "Boxed Texte"
+
+msgid "Breakpoint override"
+msgstr "Remplacement de point de rupture"
 
 msgid "Brewing a fresh batch of HTML..."
 msgstr "Préparation d'un nouveau lot de HTML..."
@@ -927,6 +969,9 @@ msgstr "Construction de l'aperçu..."
 
 msgid "Building Storyboard..."
 msgstr "Construction du scénarimage..."
+
+msgid "Button"
+msgstr "Bouton"
 
 msgid "By Page"
 msgstr "Par page"
@@ -985,6 +1030,9 @@ msgstr "Catalog Traduction"
 
 msgid "Cell division producing two identical cells."
 msgstr "Division cellulaire produisant deux cellules identiques."
+
+msgid "Center"
+msgstr "Centrer"
 
 msgid "Change"
 msgstr "Modifier"
@@ -1103,6 +1151,9 @@ msgstr "Fermer"
 msgid "Close edit panel"
 msgstr "Fermer le panneau de modification"
 
+msgid "Close style editor"
+msgstr "Fermer l'éditeur de style"
+
 msgid "Clownfish, sea turtles, and parrotfish are just a few of the thousands of species that depend on reefs for food, shelter, and nursery grounds."
 msgstr "Les poissons-clowns, les tortues de mer et les poissons-perroquets ne sont que quelques-unes des milliers d'espèces qui dépendent des récifs pour se nourrir, s'abriter et se reproduire."
 
@@ -1118,8 +1169,17 @@ msgstr "Réduire toutes les sections"
 msgid "Collapse validation"
 msgstr "Réduire la validation"
 
+msgid "Color"
+msgstr "Couleur"
+
 msgid "color-contrast"
 msgstr "couleur-contrast"
+
+msgid "Column"
+msgstr "Colonne"
+
+msgid "Column reverse"
+msgstr "Colonne inversée"
 
 msgid "coming soon"
 msgstr "bientôt disponible"
@@ -1171,6 +1231,9 @@ msgstr "Connectez un fournisseur d'IA"
 
 msgid "Consulting the style council..."
 msgstr "Consultation du conseil de style..."
+
+msgid "Container"
+msgstr "Conteneur"
 
 msgid "Container node types the LLM may produce in the content tree during sectioning."
 msgstr "Types de nœuds conteneurs que le LLM peut produire dans l'arborescence de contenu pendant le sectionnement."
@@ -1325,8 +1388,8 @@ msgstr "Démo de mise en page personnalisée"
 msgid "Custom section {index}"
 msgstr "Section personnalisée {index}"
 
-msgid "Custom:"
-msgstr "Personnalisé:"
+#~ msgid "Custom:"
+#~ msgstr "Personnalisé:"
 
 msgid "Debug mode is not enabled."
 msgstr "Le mode de débogage n'est pas activé."
@@ -1420,6 +1483,9 @@ msgstr "Supprimer tout parole"
 msgid "Delete book"
 msgstr "Supprimer livre"
 
+msgid "Delete element"
+msgstr "Supprimer l'élément"
+
 msgid "Delete failed"
 msgstr "Supprimer échoué"
 
@@ -1456,6 +1522,9 @@ msgstr "Description..."
 msgid "Deselect all"
 msgstr "Tout désélectionner"
 
+msgid "Desktop"
+msgstr "Bureau"
+
 msgid "Detecting figures"
 msgstr "Détection des figures"
 
@@ -1473,6 +1542,9 @@ msgstr "Diagramme"
 
 msgid "Did you know?"
 msgstr "Le saviez-vous ?"
+
+msgid "Direction"
+msgstr "Direction"
 
 msgid "Disable reviewer validation"
 msgstr "Désactiver la validation du réviseur"
@@ -1493,7 +1565,7 @@ msgid "Discard"
 msgstr "Abandonner"
 
 msgid "Display"
-msgstr "Affichage"
+msgstr "Display"
 
 msgid "Don't have a project yet?"
 msgstr "Vous n'avez pas encore de projet ?"
@@ -1623,6 +1695,18 @@ msgstr "La modification est désactivée pendant l'exécution du scénarimage"
 msgid "Editing Language"
 msgstr "Langue d'édition"
 
+msgid "Edits go to this Tailwind variant prefix"
+msgstr "Les modifications vont à ce préfixe de variante Tailwind"
+
+msgid "Element style editor"
+msgstr "Éditeur de style d'élément"
+
+#~ msgid "elements"
+#~ msgstr "éléments"
+
+msgid "Elements"
+msgstr "Éléments"
+
 msgid "Emoji"
 msgstr "Emoji"
 
@@ -1685,8 +1769,8 @@ msgstr "Saisissez une dimension minimale valide (nombre entier ≥ 0)"
 msgid "Enter a valid project name"
 msgstr "Saisissez un nom de projet valide"
 
-msgid "Enter hex color and press Enter"
-msgstr "Saisissez une couleur hexadécimale et appuyez sur Entrée"
+#~ msgid "Enter hex color and press Enter"
+#~ msgstr "Saisissez une couleur hexadécimale et appuyez sur Entrée"
 
 msgid "Error"
 msgstr "Erreur"
@@ -1817,6 +1901,9 @@ msgstr "Échec de la lecture de l'archive"
 msgid "Failed:"
 msgstr "Échoué :"
 
+msgid "Falls back to"
+msgstr "Hérite de"
+
 msgid "Fast, consistent results with no AI cost"
 msgstr "Résultats rapides et cohérents sans coût d'IA"
 
@@ -1858,6 +1945,9 @@ msgstr "Premier"
 
 msgid "First language is the default"
 msgstr "La première langue est la langue par défaut"
+
+msgid "Fit"
+msgstr "Ajuster"
 
 msgid "Fixed two-column template layout"
 msgstr "Mise en page fixe à deux colonnes"
@@ -1917,6 +2007,9 @@ msgstr "Mise en page en colonne unique pleine largeur. Idéale pour les document
 
 msgid "Fully interactive"
 msgstr "Entièrement interactif"
+
+msgid "Gap"
+msgstr "Écart"
 
 msgid "Gemini"
 msgstr "Gemini"
@@ -2029,6 +2122,15 @@ msgstr "Regroupement du contenu par objectif, puis mise en page de chaque sectio
 msgid "Header"
 msgstr "En-tête"
 
+#~ msgid "Header Text"
+#~ msgstr "En-tête Texte"
+
+msgid "Heading"
+msgstr "Titre"
+
+msgid "Height"
+msgstr "Hauteur"
+
 msgid "Hide"
 msgstr "Masquer"
 
@@ -2080,6 +2182,12 @@ msgstr "Illustration"
 msgid "image"
 msgstr "image"
 
+msgid "Image"
+msgstr "Image"
+
+#~ msgid "Image Associated Text"
+#~ msgstr "Image Associated Texte"
+
 msgid "Image Captioning"
 msgstr "Légendes d'images"
 
@@ -2106,6 +2214,9 @@ msgstr "Filtrage d'images"
 
 msgid "Image Filters"
 msgstr "Filtres d'images"
+
+msgid "Image fit"
+msgstr "Ajustement de l'image"
 
 msgid "Image generated"
 msgstr "Image généré"
@@ -2203,11 +2314,20 @@ msgstr "Inclure les superpositions de texte dans les groupes vectoriels"
 msgid "Increase indent"
 msgstr "Augmenter l'indentation"
 
+msgid "Individual sides"
+msgstr "Côtés individuels"
+
 msgid "Infographic"
 msgstr "Infographie"
 
+msgid "Inherited from a parent element. Choose a value here to override on this element."
+msgstr "Hérité d'un élément parent. Choisissez une valeur ici pour remplacer sur cet élément."
+
 msgid "Initial Page"
 msgstr "Page initiale"
+
+msgid "Input"
+msgstr "Entrée"
 
 msgid "Input Tokens"
 msgstr "Jetons d'entrée"
@@ -2236,6 +2356,9 @@ msgstr "Ressource isolée"
 msgid "Issues"
 msgstr "Problèmes"
 
+msgid "Italic"
+msgstr "Italique"
+
 msgid "Item"
 msgstr "Élément"
 
@@ -2254,6 +2377,9 @@ msgstr "sa langue originale"
 
 msgid "Jane Reviewer"
 msgstr "Jane Reviewer"
+
+msgid "Justify"
+msgstr "Justifier"
 
 msgid "KB"
 msgstr "KB"
@@ -2313,6 +2439,21 @@ msgstr "Ajoutez traductions, synthèse vocale et glossaire — le tout inspectab
 msgid "Laying out spreads"
 msgstr "Mise en page des doubles pages"
 
+msgid "Layout"
+msgstr "Disposition"
+
+msgid "Leading"
+msgstr "Interligne"
+
+#~ msgid "Leaf node roles the LLM may assign to text and image leaves in the content tree."
+#~ msgstr "Rôles de nœud feuille que le LLM peut attribuer aux feuilles de texte et d'image dans l'arbre de contenu."
+
+#~ msgid "Leaf node roles the LLM may assign to text and image leaves in the content tree. Each role has a description shown to the model."
+#~ msgstr "Rôles de nœud feuille que le LLM peut attribuer aux feuilles de texte et d'image dans l'arbre de contenu. Chaque rôle a une description montrée au modèle."
+
+#~ msgid "Leaf text roles the LLM can assign to each text element. Pruned roles are classified but excluded from rendering."
+#~ msgstr "Rôles de texte feuilles que le LLM peut attribuer à chaque élément de texte. Les rôles élagués sont classés mais exclus du rendu."
+
 msgid "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 msgstr "Laissez sur Aucun pour exécuter la segmentation sur toutes les images éligibles (selon les règles du pipeline)."
 
@@ -2343,8 +2484,14 @@ msgstr "lignes"
 msgid "Língua Portuguesa - 3° Ano"
 msgstr "Língua Portuguesa - 3° Ano"
 
+msgid "Link"
+msgstr "Lien"
+
 msgid "Linked to: {value}"
 msgstr "Linked to: {value}"
+
+msgid "List"
+msgstr "Liste"
 
 msgid "Live"
 msgstr "Live"
@@ -2493,11 +2640,17 @@ msgstr "Associez les codes de langue aux noms de voix pour chaque fournisseur TT
 msgid "margin"
 msgstr "marge"
 
+msgid "Margin"
+msgstr "Marge"
+
 msgid "Match Design"
 msgstr "Correspondance avec le design"
 
 msgid "Match each stage of the water cycle to its definition:"
 msgstr "Associez chaque étape du cycle de l'eau à sa définition :"
+
+msgid "Max height"
+msgstr "Hauteur max"
 
 msgid "Max Iterations"
 msgstr "Itérations max"
@@ -2514,11 +2667,20 @@ msgstr "Côté max. (px)"
 msgid "Max Size (px)"
 msgstr "Taille max (px)"
 
+msgid "Max width"
+msgstr "Largeur max"
+
 msgid "Maximize"
 msgstr "Agrandir"
 
+#~ msgid "Maximum number of reviewer passes after the initial sectioning. Set to 0 to disable refinement."
+#~ msgstr "Nombre maximum de passes du réviseur après le sectionnement initial. Mettre à 0 pour désactiver le raffinement."
+
 msgid "Meaningfulness Prompt"
 msgstr "Meaningfulness Invite"
+
+msgid "Media"
+msgstr "Média"
 
 msgid "Media & timing"
 msgstr "Médias et temporisation"
@@ -2580,6 +2742,9 @@ msgstr "Méthode"
 msgid "Min complexity"
 msgstr "Min complexité"
 
+msgid "Min height"
+msgstr "Hauteur min"
+
 msgid "Min image dimension (px)"
 msgstr "Dimension min. d'image (px)"
 
@@ -2588,6 +2753,9 @@ msgstr "Côté min. (px)"
 
 msgid "Min Size (px)"
 msgstr "Taille min (px)"
+
+msgid "Min width"
+msgstr "Largeur min"
 
 msgid "Minimize"
 msgstr "Réduire"
@@ -2622,6 +2790,9 @@ msgstr "mitose"
 msgid "Mixed Content Project"
 msgstr "Projet de contenu mixte"
 
+msgid "Mobile"
+msgstr "Mobile"
+
 msgid "Model"
 msgstr "Modèle"
 
@@ -2645,6 +2816,9 @@ msgstr "N/A"
 
 msgid "Name"
 msgstr "Nom"
+
+msgid "Nav"
+msgstr "Navigation"
 
 msgid "Navigate within Preview to capture page-specific review notes"
 msgstr "Naviguez dans l'aperçu pour capturer des notes de révision spécifiques à la page"
@@ -2712,6 +2886,9 @@ msgstr "Aucune légende pour cette page"
 msgid "No changes flagged on this page"
 msgstr "Aucune modification signalée sur cette page"
 
+msgid "No colors found"
+msgstr "Aucune couleur trouvée"
+
 msgid "No cover available"
 msgstr "Pas de couverture disponible"
 
@@ -2723,6 +2900,9 @@ msgstr "Aucune règle désactivée"
 
 msgid "No extracted text yet. Run the pipeline first."
 msgstr "Aucun texte extrait pour le moment. Exécutez d'abord le pipeline."
+
+msgid "No fields to add"
+msgstr "Aucun champ à ajouter"
 
 msgid "No finding categories reported."
 msgstr "Aucune catégorie de résultats signalée."
@@ -2778,8 +2958,8 @@ msgstr "Aucun lien"
 msgid "No log entries found yet."
 msgstr "Aucune entrée de journal trouvée."
 
-msgid "No matches"
-msgstr "Aucune correspondance"
+#~ msgid "No matches"
+#~ msgstr "Aucune correspondance"
 
 msgid "No matches for \"{search}\""
 msgstr "Aucun résultat pour \\\"{search}\\\""
@@ -2928,6 +3108,9 @@ msgstr "Seuls les fichiers PDF sont pris en charge"
 msgid "Only ZIP files are supported"
 msgstr "Seuls les fichiers ZIP sont pris en charge"
 
+msgid "Opacity"
+msgstr "Opacité"
+
 msgid "Open a page in Preview to show its page-specific accessibility findings here."
 msgstr "Ouvrez une page dans l'aperçu pour afficher les résultats d'accessibilité spécifiques à la page ici."
 
@@ -3049,6 +3232,9 @@ msgstr "L'empaquetage a échoué"
 msgid "Packaging validation results..."
 msgstr "Empaquetage des résultats de validation..."
 
+msgid "Padding"
+msgstr "Padding"
+
 msgid "page"
 msgstr "page"
 
@@ -3115,6 +3301,9 @@ msgstr "Pages révisées"
 
 msgid "Paper Collage"
 msgstr "Collage papier"
+
+msgid "Paragraph"
+msgstr "Paragraphe"
 
 msgid "Parsing pages"
 msgstr "Analyse des pages"
@@ -3224,6 +3413,9 @@ msgstr "Peaufinage des paragraphes à la perfection..."
 msgid "Portuguese (BR)"
 msgstr "Portugais (BR)"
 
+msgid "Position"
+msgstr "Position"
+
 msgid "Práticas de Alfabetização e de Matemática"
 msgstr "Práticas de Alfabetização e de Matemática"
 
@@ -3236,8 +3428,8 @@ msgstr "Preset"
 msgid "Presets add recommendations and specific settings for your use case. You still choose each option step by step, and you can go back to select a different preset at any time."
 msgstr "Les préréglages ajoutent des recommandations et des paramètres spécifiques à votre cas d'utilisation. Vous choisissez toujours chaque option étape par étape, et vous pouvez revenir à tout moment pour sélectionner un autre préréglage."
 
-msgid "Press Enter to add"
-msgstr "Appuyez sur Entrée pour ajouter"
+#~ msgid "Press Enter to add"
+#~ msgstr "Appuyez sur Entrée pour ajouter"
 
 msgid "Prev"
 msgstr "Préc."
@@ -3344,6 +3536,12 @@ msgstr "Quiz"
 
 msgid "Quizzes are linked to other pages in this book"
 msgstr "Les quiz sont liés à d'autres pages de ce livre"
+
+msgid "Quote"
+msgstr "Citation"
+
+msgid "Radius"
+msgstr "Rayon"
 
 msgid "Re-enable type"
 msgstr "Réactiver le type"
@@ -3487,8 +3685,8 @@ msgstr "Raisonnement de rendu"
 msgid "Render Strategy"
 msgstr "Stratégie de rendu"
 
-msgid "rendering"
-msgstr "rendu"
+#~ msgid "rendering"
+#~ msgstr "rendu"
 
 msgid "Rendering Prompt"
 msgstr "Rendering Invite"
@@ -3498,6 +3696,9 @@ msgstr "Rendu de cette section..."
 
 msgid "Replace"
 msgstr "Remplacer"
+
+msgid "Replace from book"
+msgstr "Remplacer depuis le livre"
 
 msgid "Replace from Book"
 msgstr "Remplacer depuis le livre"
@@ -3526,14 +3727,17 @@ msgstr "Champs requis"
 msgid "Reset to defaults"
 msgstr "Réinitialiser aux valeurs par défaut"
 
+msgid "Reset to inherited"
+msgstr "Réinitialiser à la valeur héritée"
+
 msgid "Reset to inherited defaults"
 msgstr "Réinitialiser aux valeurs par défaut héritées"
 
 msgid "Resolving source language..."
 msgstr "Résolution de la langue source..."
 
-msgid "Responsive / State variants"
-msgstr "Variantes responsives / d'état"
+#~ msgid "Responsive / State variants"
+#~ msgstr "Variantes responsives / d'état"
 
 msgid "Restart and install"
 msgstr "Redémarrer et installer"
@@ -3616,6 +3820,15 @@ msgstr "Réécriture de l'histoire de cette section..."
 
 msgid "Rising ocean temperatures cause coral bleaching - when stressed corals expel the colorful algae living inside them and turn white. Without these algae, corals slowly starve. Protecting reefs means reducing pollution, overfishing, and greenhouse gas emissions."
 msgstr "La hausse des températures océaniques provoque le blanchissement des coraux — lorsque les coraux stressés expulsent les algues colorées vivant en eux et deviennent blancs. Sans ces algues, les coraux meurent lentement de faim. Protéger les récifs signifie réduire la pollution, la surpêche et les émissions de gaz à effet de serre."
+
+msgid "Role"
+msgstr "Rôle"
+
+msgid "Row"
+msgstr "Ligne"
+
+msgid "Row reverse"
+msgstr "Ligne inversée"
 
 msgid "Run {stageLabel}"
 msgstr "Exécuter {stageLabel}"
@@ -3740,6 +3953,9 @@ msgstr "Rechercher des livres"
 msgid "Search books..."
 msgstr "Rechercher des livres..."
 
+msgid "Search colors"
+msgstr "Rechercher des couleurs"
+
 msgid "Search languages..."
 msgstr "Rechercher langues..."
 
@@ -3813,11 +4029,14 @@ msgstr "Raisonnement du sectionnement"
 msgid "sections"
 msgstr "sections"
 
+msgid "Sections"
+msgstr "Sections"
+
 msgid "See examples"
 msgstr "Voir les exemples"
 
 msgid "Segment"
-msgstr "Segment"
+msgstr "Segmenter"
 
 msgid "Segment Preview"
 msgstr "Aperçu du segment"
@@ -3845,6 +4064,9 @@ msgstr "Segmentation des scènes"
 
 msgid "Segmenting..."
 msgstr "Segmentation..."
+
+msgid "Segmenting…"
+msgstr "Segmentation…"
 
 msgid "Select a node type and enter an item ID to view versions."
 msgstr "Sélectionnez un type de nœud et saisissez un ID d'élément pour voir les versions."
@@ -3939,6 +4161,9 @@ msgstr "Paramètres"
 msgid "Settings for this step are not yet available."
 msgstr "Les paramètres pour cette étape ne sont pas encore disponibles."
 
+msgid "Shadow"
+msgstr "Ombre"
+
 msgid "Show accessibility summary"
 msgstr "Afficher le résumé d'accessibilité"
 
@@ -4000,8 +4225,14 @@ msgstr "Mode simple"
 msgid "Single Page"
 msgstr "Page unique"
 
+msgid "Single value"
+msgstr "Valeur unique"
+
 msgid "Size"
 msgstr "Taille"
+
+msgid "Sizing"
+msgstr "Dimensionnement"
 
 msgid "sk-..."
 msgstr "sk-..."
@@ -4049,6 +4280,18 @@ msgstr "Une erreur s’est produite"
 msgid "Sort books"
 msgstr "Trier les livres"
 
+msgid "Space around"
+msgstr "Espace autour"
+
+msgid "Space between"
+msgstr "Espace entre"
+
+msgid "Space-separated. Saves on blur."
+msgstr "Séparé par des espaces. Sauvegarde sur flou."
+
+msgid "Spacing"
+msgstr "Espacement"
+
 msgid "Spanish"
 msgstr "Espagnol"
 
@@ -4080,7 +4323,7 @@ msgid "stage first."
 msgstr "étape premier."
 
 msgid "Start"
-msgstr "Démarrer"
+msgstr "Début"
 
 msgid "Start a reviewer session"
 msgstr "Démarrer une session de révision"
@@ -4125,8 +4368,17 @@ msgstr "Le scénarimage a déjà été exécuté. Les modifications effectuées 
 msgid "Storybook"
 msgstr "Livre d'histoires"
 
+msgid "Stretch"
+msgstr "Étirer"
+
 msgid "Strict"
 msgstr "Strict"
+
+msgid "Strikethrough"
+msgstr "Barré"
+
+#~ msgid "Structural containers the LLM can use when building the page tree (paragraphs, lists, tables, activities, etc.)."
+#~ msgstr "Conteneurs structurels que le LLM peut utiliser pour construire l'arborescence de la page (paragraphes, listes, tableaux, activités, etc.)."
 
 msgid "Structure"
 msgstr "Structure"
@@ -4142,6 +4394,9 @@ msgstr "Chapitres structurés, exercices. Idéal pour le contenu éducatif avec 
 
 msgid "Structured HTML"
 msgstr "HTML structuré"
+
+#~ msgid "style"
+#~ msgstr "style"
 
 msgid "Style"
 msgstr "Style"
@@ -4197,6 +4452,12 @@ msgstr "tableau des matières"
 msgid "Tables"
 msgstr "Tableaux"
 
+msgid "Tablet"
+msgstr "Tablette"
+
+msgid "Tailwind classes"
+msgstr "Classes Tailwind"
+
 msgid "Task Running"
 msgstr "Tâche En cours"
 
@@ -4230,6 +4491,9 @@ msgstr "Basé sur un modèle"
 msgid "Terms marked with an asterisk (*) are defined by the ISO standard and may differ from colloquial usage in other fields."
 msgstr "Les termes marqués d'un astérisque (*) sont définis par la norme ISO et peuvent différer de l'usage courant dans d'autres domaines."
 
+#~ msgid "text"
+#~ msgstr "texte"
+
 msgid "Text"
 msgstr "Texte"
 
@@ -4244,6 +4508,15 @@ msgstr "Alternatives textuelles"
 
 msgid "Text Catalog"
 msgstr "Catalogue de texte"
+
+#~ msgid "Text Classification"
+#~ msgstr "Classification de texte"
+
+#~ msgid "Text Classification Prompt"
+#~ msgstr "Invite de classification de texte"
+
+msgid "Text color"
+msgstr "Couleur du texte"
 
 #. placeholder {0}: section.textColor
 msgid "Text color: {0}"
@@ -4357,6 +4630,12 @@ msgstr "La table des matières."
 msgid "The Water Cycle"
 msgstr "Le cycle de l'eau"
 
+#~ msgid "The water cycle describes continuous movement of water."
+#~ msgstr "Le cycle de l'eau décrit le mouvement continu de l'eau."
+
+msgid "Theme"
+msgstr "Thème"
+
 msgid "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."
 msgstr "Ces fonctionnalités améliorent l'accès pour les personnes handicapées. Les exécuter avant l'exportation aide votre livre à respecter les normes d'accessibilité ADT."
 
@@ -4438,6 +4717,9 @@ msgstr "Temps"
 msgid "Timestamps"
 msgstr "Horodatages"
 
+msgid "Tip: {MODIFIER_LABEL}+Click the label to reset."
+msgstr "Astuce : {MODIFIER_LABEL}+Cliquez sur l'étiquette pour réinitialiser."
+
 msgid "to"
 msgstr "to"
 
@@ -4495,6 +4777,9 @@ msgstr "Traduction Invite"
 msgid "Translations"
 msgstr "Traductions"
 
+msgid "Transparent"
+msgstr "Transparent"
+
 msgid "Transport"
 msgstr "Transport"
 
@@ -4534,11 +4819,17 @@ msgstr "Modèle à deux colonnes pour le contenu narratif"
 msgid "Type"
 msgstr "Type"
 
-msgid "Type class name or search..."
-msgstr "Tapez un nom de classe ou recherchez..."
+#~ msgid "Type class name or search..."
+#~ msgstr "Tapez un nom de classe ou recherchez..."
 
 msgid "Types used during page sectioning. Pruned types are classified but excluded from rendering. Disabled types are hidden from the LLM entirely."
 msgstr "Types utilisés lors du découpage des pages en sections. Les types élagués sont classés mais exclus du rendu. Les types désactivés sont masqués du LLM."
+
+#~ msgid "Types used during text classification. Pruned types are excluded from rendering."
+#~ msgstr "Types utilisés lors de la classification du texte. Les types élagués sont exclus du rendu."
+
+msgid "Typography"
+msgstr "Typographie"
 
 msgid "Unable to load reviewer checklist settings."
 msgstr "Impossible de charger les paramètres de la liste de contrôle du réviseur."
@@ -4554,6 +4845,9 @@ msgstr "Indisponible"
 
 msgid "Uncategorized"
 msgstr "Non catégorisé"
+
+msgid "Underline"
+msgstr "Souligné"
 
 msgid "UNICEF"
 msgstr "UNICEF"
@@ -4585,8 +4879,8 @@ msgstr "Restaurer l'image"
 msgid "Unsaved changes"
 msgstr "Modifications non enregistrées"
 
-msgid "Unsaved:"
-msgstr "Non enregistré :"
+#~ msgid "Unsaved:"
+#~ msgstr "Non enregistré :"
 
 msgid "Untangling nested divs with care..."
 msgstr "Démêlage des divs imbriqués avec soin..."
@@ -4685,8 +4979,11 @@ msgstr "Validation"
 msgid "Validation Errors ({0})"
 msgstr "Validation Erreurs ({0})"
 
-msgid "Variant:"
-msgstr "Variant:"
+msgid "Variables"
+msgstr "Variables"
+
+#~ msgid "Variant:"
+#~ msgstr "Variant:"
 
 msgid "Variations"
 msgstr "Variantes"
@@ -4741,13 +5038,13 @@ msgid "Wait for glossary generation to finish"
 msgstr "Attendre la fin de la génération du glossaire"
 
 msgid "Wait for storyboard to complete"
-msgstr "Attendre la fin du scénarimage<<<<<<< HEAD"
+msgstr "Attendre la fin du scénarimage"
 
 msgid "WAITING"
-msgstr "EN ATTENTE>>>>>>> 2c2fecb6c91e9cc33b5beca5b52a7ebc3267312c"
+msgstr "EN ATTENTE"
 
 msgid "Waiting for API output…"
-msgstr "En attente de la sortie de l'API…======="
+msgstr "En attente de la sortie de l'API…"
 
 msgid "Waiting for page to be processed..."
 msgstr "En attente du traitement de la page..."
@@ -4791,6 +5088,9 @@ msgstr "WebPub"
 msgid "WebPub Export"
 msgstr "Exportation WebPub"
 
+msgid "Weight"
+msgstr "Poids"
+
 msgid "Welcome to ADT Studio"
 msgstr "Bienvenue sur ADT Studio"
 
@@ -4823,6 +5123,9 @@ msgstr "Pendant l'édition"
 
 msgid "Whole-book checks for packaged ADT output, plus reviewer findings captured from Preview."
 msgstr "Vérifications du livre entier pour la sortie ADT empaquetée, plus les résultats du réviseur capturés depuis l'aperçu."
+
+msgid "Width"
+msgstr "Largeur"
 
 msgid "Within range"
 msgstr "Dans la plage"
