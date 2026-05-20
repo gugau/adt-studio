@@ -1,0 +1,82 @@
+name: Question / Support
+description: Ask a question about using ADT Studio
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        <p align="center">
+          <a href="https://github.com/unicef/adt-studio">
+            <picture>
+              <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/unicef/adt-studio/main/.github/assets/adt-studio-banner-dark.png">
+              <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/unicef/adt-studio/main/.github/assets/adt-studio-banner-light.png">
+              <img src="https://raw.githubusercontent.com/unicef/adt-studio/main/.github/assets/adt-studio-banner-light.png" alt="ADT Studio — Turn PDFs into interactive HTML books" width="420">
+            </picture>
+          </a>
+        </p>
+
+        <p align="center"><em>Have a question? We're here to help.</em></p>
+
+        > [!IMPORTANT]
+        > - If you found a bug, please use the **Bug Report** form instead.
+        > - If you want to suggest a new feature, please use the **Feature Request** form instead.
+        > - Please search existing issues and the documentation before asking.
+  - type: checkboxes
+    id: preliminary
+    attributes:
+      label: Preliminary Checks
+      options:
+        - label: I have searched existing issues and the documentation.
+          required: true
+        - label: This is a question, not a bug report or feature request.
+          required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: What are you trying to do?
+      description: Describe your goal or use case so we can give the most useful answer.
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you tried?
+      description: List any approaches, settings, or workarounds you've already attempted.
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version (optional)
+      options:
+        - v0.7.0-rc.6
+        - v0.6.0
+        - v0.5.1
+        - v0.5.0
+        - v0.4.8
+        - v0.4.7
+        - v0.4.6
+        - v0.4.5
+        - v0.4.4
+        - v0.4.3
+        - v0.4.2
+        - v0.4.1
+        - Older / unsure
+        - Not applicable
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform (optional)
+      multiple: true
+      options:
+        - Windows - x64
+        - Windows - ARM
+        - macOS - Apple Silicon
+        - macOS - Intel
+        - Linux
+        - Other
+        - Not applicable

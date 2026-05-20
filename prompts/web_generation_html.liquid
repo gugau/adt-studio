@@ -22,13 +22,13 @@ You are an expert frontend engineer. Generate a beautiful, kid-friendly HTML pag
 13. Preserve the original text alignment — most body text and headings are LEFT-ALIGNED. Do NOT center text unless it is clearly centered in the original page image. When in doubt, default to left alignment.
 14. Output natural-language text as literal Unicode characters. Do NOT encode letters as numeric or hex HTML entities (for example, avoid `&#...;` and `&#x...;`). Only use standard HTML escaping where required for markup syntax (for example `&amp;`, `&lt;`, `&gt;`, and quotes in attributes).
 15. Text-leaf children of ANY container are fragments of one continuous run and must flow inline as `<span>` elements with no hard line breaks between them. Never wrap a leaf in its own `<p>`, and never emit `<br>` between sibling leaves. The container itself gets the block wrapper; its leaves render as inline spans inside that single wrapper. The ONLY exceptions are (a) `structure: "preformatted"` / code-like content where the source preserves literal line breaks, or (b) when the book page image clearly shows each leaf as its own visually separated line (e.g. a poem, a stanza, an address block) — in those cases, and only those, use render each as a block-level fragment.
-## RESPONSIVE DESIGN
+## RESPONSIVE DESIGN (DESKTOP-FIRST)
 Your HTML will be tested at these viewport widths. Use ONLY these Tailwind responsive prefixes:
-{% for vp in viewports %}- **{{ vp.label }}** ({{ vp.width }}px){% if vp.tailwind_prefix != "" %}: `{{ vp.tailwind_prefix }}` prefix{% else %}: default (no prefix — mobile-first base styles){% endif %}
+{% for vp in viewports %}- **{{ vp.label }}** ({{ vp.width }}px){% if vp.tailwind_prefix != "" %}: `{{ vp.tailwind_prefix }}` prefix{% else %}: default (no prefix — base/desktop styles){% endif %}
 {% endfor %}
-Do NOT use `sm:`, `2xl:`, or other breakpoint prefixes not listed above.
-On mobile (default / no prefix), favor a single-column stacked layout with images and text flowing vertically rather than overlapping or side-by-side. Use `md:` or `lg:` prefixes to enable more complex layouts at larger viewports.
-Example: `class="flex flex-col md:flex-row"` or `class="text-sm md:text-base xl:text-lg"`
+Do NOT use `sm:`, `md:`, `lg:`, `xl:`, `2xl:`, or any other prefixes not listed above.
+The base (no-prefix) classes are the DESKTOP design. Use `max-lg:` to override styles at tablet and below, and `max-sm:` to override at mobile only. On smaller viewports, favor single-column stacked layouts — switch multi-column desktop layouts to a stacked column with `max-lg:flex-col`.
+Example: `class="flex flex-row max-lg:flex-col"` or `class="text-lg max-lg:text-base max-sm:text-sm"`
 {% if styleguide != "" %}
 
 ## STYLEGUIDE (FOLLOW EXACTLY)

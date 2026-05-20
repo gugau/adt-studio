@@ -308,6 +308,61 @@
   background: oklch(0.55 0 0 / 0.4);
 }
 
+.scrollbar-hide {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.7 0 0 / 0.25) transparent;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.scrollbar-hide::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-hide::-webkit-scrollbar-thumb {
+  background: oklch(0.7 0 0 / 0.25);
+  border-radius: 9999px;
+  transition: background 0.2s ease;
+}
+
+.scrollbar-hide::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.55 0 0 / 0.45);
+}
+
+/* react-colorful: shrink the default 28px thumb to a tighter, more minimal
+   14px ring. The thumb still tracks the current color (currentColor fill)
+   for orientation; we just trim the chrome around it. */
+.react-colorful__pointer {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.08),
+    0 1px 2px rgb(0 0 0 / 0.1);
+}
+
+/* Floating save-bar chip entry: animates max-width + opacity from zero so the
+   pill smoothly grows as new chips appear. Uses @starting-style (Chrome 117+,
+   Safari 17.5+) — falls back to no animation in older browsers. */
+.adt-pill-chip {
+  max-width: 200px;
+  opacity: 1;
+  transition:
+    max-width 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 180ms ease-out,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@starting-style {
+  .adt-pill-chip {
+    max-width: 0;
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);

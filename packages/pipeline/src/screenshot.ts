@@ -19,15 +19,17 @@ export const SCREENSHOT_VIEWPORTS = [
   { label: "mobile",  width: 390,  height: 844 },
 ] as const
 
-/** Derive Tailwind responsive prefixes from viewport widths. */
+/** Derive Tailwind responsive prefixes from viewport widths.
+ *  Desktop-first: the default (no prefix) targets desktop, and `max-*`
+ *  prefixes scale down to tablet and mobile. This matches the editor's
+ *  desktop-first override model. */
 export function getViewportBreakpoints() {
   return SCREENSHOT_VIEWPORTS.map((vp) => ({
     label: vp.label,
     width: vp.width,
     tailwind_prefix:
-      vp.width >= 1280 ? "xl:" :
-      vp.width >= 1024 ? "lg:" :
-      vp.width >= 768  ? "md:" : "",
+      vp.width >= 1024 ? "" :
+      vp.width >= 640  ? "max-lg:" : "max-sm:",
   }))
 }
 
@@ -60,7 +62,7 @@ export async function _createScreenshotRenderer(): Promise<ScreenshotRenderer> {
     async screenshot(
       html: string,
       viewport = { width: 1024, height: 768 }
-    ): Promise<string> {  
+    ): Promise<string> {
       const context = await browser.newContext({ viewport })
       try {
         const page = await context.newPage()

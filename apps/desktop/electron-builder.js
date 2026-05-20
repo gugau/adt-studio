@@ -63,7 +63,7 @@ const config = {
   },
   mac: {
     target: ["dmg", "zip"],
-    icon: "build/icon.icns",
+    icon: "build/icon.icon",
     category: "public.app-category.developer-tools",
     type: "distribution",
     hardenedRuntime: true,
