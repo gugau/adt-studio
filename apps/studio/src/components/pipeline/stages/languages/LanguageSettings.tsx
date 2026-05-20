@@ -76,6 +76,7 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
   const [bitRate, setBitRate] = useState("")
   const [sampleRate, setSampleRate] = useState("")
   const [wordHighlighting, setWordHighlighting] = useState(false)
+  const [easyReadTts, setEasyReadTts] = useState(false)
 
   const [dirty, setDirty] = useState<Record<string, boolean>>({})
   const markDirty = (field: string) => setDirty((prev) => ({ ...prev, [field]: true }))
@@ -128,6 +129,12 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
           if (Array.isArray(providers.gemini.languages)) setGeminiLanguages((providers.gemini.languages as string[]).join(", "))
         }
       }
+    }
+    if (m.easy_read && typeof m.easy_read === "object") {
+      const er = m.easy_read as Record<string, unknown>
+      setEasyReadTts(er.tts === true)
+    } else {
+      setEasyReadTts(false)
     }
   }, [activeConfigData])
 
@@ -189,6 +196,13 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
         bit_rate: bitRate.trim() || undefined,
         sample_rate: sampleRate.trim() ? Number(sampleRate.trim()) : undefined,
         word_highlighting: wordHighlighting,
+      }
+    }
+    if (shouldWrite("easy_read")) {
+      const existing = (bookConfigData?.config?.easy_read ?? {}) as Record<string, unknown>
+      overrides.easy_read = {
+        ...existing,
+        tts: easyReadTts,
       }
     }
     return overrides
@@ -304,6 +318,7 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
           bitRate={bitRate} setBitRate={setBitRate}
           sampleRate={sampleRate} setSampleRate={setSampleRate}
           wordHighlighting={wordHighlighting} setWordHighlighting={setWordHighlighting}
+          easyReadTts={easyReadTts} setEasyReadTts={setEasyReadTts}
           markDirty={markDirty}
         />
         </>
@@ -520,6 +535,7 @@ function SpeechLanguageCards({
   bitRate, setBitRate,
   sampleRate, setSampleRate,
   wordHighlighting, setWordHighlighting,
+  easyReadTts, setEasyReadTts,
   markDirty,
 }: {
   bookLabel: string
@@ -537,6 +553,7 @@ function SpeechLanguageCards({
   bitRate: string; setBitRate: (v: string) => void
   sampleRate: string; setSampleRate: (v: string) => void
   wordHighlighting: boolean; setWordHighlighting: (v: boolean) => void
+  easyReadTts: boolean; setEasyReadTts: (v: boolean) => void
   markDirty: (field: string) => void
 }) {
   const { t } = useLingui()
@@ -699,6 +716,19 @@ function SpeechLanguageCards({
               {t`When enabled, word-level timestamps are calculated automatically during speech generation so the reader can highlight words as they're spoken. When disabled, you can still calculate timestamps manually from the speech view.`}
             </p>
             <WordHighlightPreview enabled={wordHighlighting} />
+          </div>
+        </div>
+        <div className="flex items-start gap-3 pt-2">
+          <Switch
+            id="easy-read-tts"
+            checked={easyReadTts}
+            onCheckedChange={(v) => { setEasyReadTts(v); markDirty("easy_read") }}
+          />
+          <div className="space-y-1 flex-1">
+            <Label htmlFor="easy-read-tts" className="text-xs">{t`Generate Easy Read audio`}</Label>
+            <p className="text-[11px] text-muted-foreground">
+              {t`When enabled, speech generation also creates audio for Easy Read texts. The ADT uses that audio while Easy Read mode is active and falls back to the original audio when it is missing.`}
+            </p>
           </div>
         </div>
       </div>

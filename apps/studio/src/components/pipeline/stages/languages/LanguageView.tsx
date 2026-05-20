@@ -215,6 +215,11 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
     ? speechConfig as Record<string, unknown>
     : null
   const wordHighlightingEnabled = speechConfigRecord?.word_highlighting === true
+  const easyReadConfig = merged?.easy_read
+  const easyReadConfigRecord = easyReadConfig && typeof easyReadConfig === "object"
+    ? easyReadConfig as Record<string, unknown>
+    : null
+  const easyReadTtsEnabled = easyReadConfigRecord?.tts === true
   const outputLanguages = Array.from(
     new Set(((merged?.output_languages as string[] | undefined) ?? []).map((code) => normalizeLocale(code)))
   )
@@ -297,6 +302,18 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
     }
     updateConfig.mutate({ label: bookLabel, config: currentConfig })
   }, [bookConfigData?.config, bookLabel, updateConfig, wordHighlightingEnabled])
+
+  const toggleEasyReadTts = useCallback(() => {
+    const currentConfig = { ...(bookConfigData?.config ?? {}) } as Record<string, unknown>
+    const existingEasyRead = currentConfig.easy_read && typeof currentConfig.easy_read === "object"
+      ? { ...(currentConfig.easy_read as Record<string, unknown>) }
+      : {}
+    currentConfig.easy_read = {
+      ...existingEasyRead,
+      tts: !easyReadTtsEnabled,
+    }
+    updateConfig.mutate({ label: bookLabel, config: currentConfig })
+  }, [bookConfigData?.config, bookLabel, easyReadTtsEnabled, updateConfig])
 
   // Fetch word timestamps for the active language on the speech page
   const { data: timestampData } = useQuery({
@@ -698,6 +715,22 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
               <div className="space-y-2">
                 <div className="flex flex-row items-center justify-between rounded-lg border bg-background p-3">
                   <div className="space-y-0.5 pr-3">
+                    <Label htmlFor="easy-read-tts-landing" className="text-sm font-medium cursor-pointer">
+                      {t`Easy Read audio`}
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      {t`Generates audio for Easy Read texts. In the ADT, Easy Read mode uses that audio when available and falls back to the original voice otherwise.`}
+                    </p>
+                  </div>
+                  <Switch
+                    id="easy-read-tts-landing"
+                    checked={easyReadTtsEnabled}
+                    onCheckedChange={toggleEasyReadTts}
+                    disabled={updateConfig.isPending || isRunning}
+                  />
+                </div>
+                <div className="flex flex-row items-center justify-between rounded-lg border bg-background p-3">
+                  <div className="space-y-0.5 pr-3">
                     <Label htmlFor="word-highlight-landing" className="text-sm font-medium cursor-pointer">
                       {t`Word-level highlighting`}
                     </Label>
@@ -775,6 +808,25 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
               <RotateCcw className="mr-1 h-3 w-3" />
               {isSpeechStage ? t`Re-run speech` : t`Re-run translation`}
             </Button>
+          </div>
+        )}
+
+        {isSpeechStage && (
+          <div className="flex flex-col gap-2 rounded-md border bg-card px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-medium">{t`Easy Read audio`}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {easyReadTtsEnabled
+                  ? t`Speech generation includes Easy Read audio. The ADT uses it while Easy Read mode is active.`
+                  : t`Speech generation uses original text only. Easy Read mode will fall back to original audio.`}
+              </p>
+            </div>
+            <Switch
+              checked={easyReadTtsEnabled}
+              onCheckedChange={toggleEasyReadTts}
+              disabled={updateConfig.isPending || isRunning}
+              aria-label={t`Generate Easy Read audio`}
+            />
           </div>
         )}
 
