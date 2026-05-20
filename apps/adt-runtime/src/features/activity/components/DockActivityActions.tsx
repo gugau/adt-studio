@@ -38,6 +38,28 @@ export function DockActivityActions() {
           render={
             <Button
               type="button"
+              onClick={validate ?? undefined}
+              disabled={!submitEnabled || !validate}
+              size="lg"
+              title={submitLabel}
+              className={cn(
+                "order-2 px-4 font-medium text-black",
+                submitState === "next"
+                  ? "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:white"
+                  : "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 dark:white",
+              )}
+            >
+              {submitLabel}
+            </Button>
+          }
+        />
+        <TooltipContent>{submitLabel}</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
               onClick={skip ?? undefined}
               disabled={!skipEnabled || !skip}
               variant="outline"
@@ -50,28 +72,6 @@ export function DockActivityActions() {
           }
         />
         <TooltipContent>{skipLabel}</TooltipContent>
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              type="button"
-              onClick={validate ?? undefined}
-              disabled={!submitEnabled || !validate}
-              size="lg"
-              title={submitLabel}
-              className={cn(
-                "px-4 font-medium text-black",
-                submitState === "next"
-                  ? "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:white"
-                  : "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 dark:white",
-              )}
-            >
-              {submitLabel}
-            </Button>
-          }
-        />
-        <TooltipContent>{submitLabel}</TooltipContent>
       </Tooltip>
     </div>
   );

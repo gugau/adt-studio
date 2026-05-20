@@ -14,13 +14,17 @@ function ReaderDockContents() {
   const { isSpread } = useDockContext();
   return (
     <>
-      <div className={cn(!isSpread ? "" : "flex-1")}>
+      {features.showNavigationControls && (
+        <div className="order-2">
+          <PageNav />
+        </div>
+      )}
+
+      <div className={cn("order-1", isSpread && "flex-1")}>
         <BookMetadata className="min-w-64" ariaLabel="Main Menu" />
       </div>
 
-      {features.showNavigationControls && <PageNav />}
-
-      <DockMenu className={cn(!isSpread ? "" : "flex-1", "min-w-64")} />
+      <DockMenu className={cn("order-3", isSpread && "flex-1", "min-w-64")} />
     </>
   );
 }

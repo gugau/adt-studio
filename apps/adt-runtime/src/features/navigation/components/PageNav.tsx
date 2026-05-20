@@ -68,13 +68,15 @@ export function PageNav() {
   return (
     <div className="flex items-center gap-0.5 px-1">
       <DockIconButton
-        ariaLabel={t("previous-page") || "Previous page"}
-        disabled={!prev}
-        onClick={() => go(prev?.href)}
+        ariaLabel={t("next-page") || "Next page"}
+        disabled={!next}
+        onClick={() => go(next?.href)}
+        className="order-4"
       >
-        <ChevronLeft />
+        <ChevronRight />
       </DockIconButton>
-      <div className="min-w-12 flex text-base tabular-nums px-2 text-foreground/80 select-none">
+
+      <div className="order-3 min-w-12 flex text-base tabular-nums px-2 text-foreground/80 select-none">
         <span className="font-medium text-foreground">{pageNumber ?? ""}</span>
         <span className="text-muted-foreground"> /</span>
         {totalPages > 0 && (
@@ -82,11 +84,12 @@ export function PageNav() {
         )}
       </div>
       <DockIconButton
-        ariaLabel={t("next-page") || "Next page"}
-        disabled={!next}
-        onClick={() => go(next?.href)}
+        ariaLabel={t("previous-page") || "Previous page"}
+        disabled={!prev}
+        onClick={() => go(prev?.href)}
+        className="order-2"
       >
-        <ChevronRight />
+        <ChevronLeft />
       </DockIconButton>
     </div>
   );
