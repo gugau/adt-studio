@@ -224,6 +224,9 @@ msgstr "{missingForCurrentStage} entrée(s) sans audio. Relancez pour générer 
 msgid "{missingForCurrentStage} entry/entries are missing translations. Re-run to fill the missing items."
 msgstr "{missingForCurrentStage} entrée(s) sans traduction. Relancez pour compléter les éléments manquants."
 
+msgid "{pageCount} {pageCount, plural, one {page} other {pages}}"
+msgstr "{pageCount} {pageCount, plural, one {page} other {pages}}"
+
 msgid "{pageCount} pages"
 msgstr "{pageCount} pages"
 
@@ -1271,6 +1274,9 @@ msgstr "Contrôle la façon dont le contenu des pages est regroupé lors de l'é
 msgid "Conversion of light into chemical energy."
 msgstr "Conversion de la lumière en énergie chimique."
 
+msgid "Convert a PDF"
+msgstr "Convertir un PDF"
+
 msgid "Convert any textbook into an accessible digital edition — audio, structured layouts, translations, and sign-language, built in from the very first page."
 msgstr "Transformez n'importe quel livre en une édition numérique accessible — audio, mises en page structurées, traductions et langue des signes, intégrés dès la toute première page."
 
@@ -1291,6 +1297,9 @@ msgstr "Les récifs coralliens couvrent moins de 1 % du fond océanique, mais il
 
 msgid "Could not read this PDF. The file may be corrupted or password-protected."
 msgstr "Impossible de lire ce PDF. Le fichier est peut-être corrompu ou protégé par un mot de passe."
+
+msgid "Couldn't read this PDF"
+msgstr "Impossible de lire ce PDF"
 
 msgid "Cover"
 msgstr "Couverture"
@@ -2748,6 +2757,9 @@ msgstr "Largeur min"
 msgid "Minimize"
 msgstr "Réduire"
 
+msgid "Minimize accessibility summary"
+msgstr "Réduire le résumé d'accessibilité"
+
 msgid "Minimum image dimension"
 msgstr "Dimension minimale d'image"
 
@@ -3314,11 +3326,17 @@ msgstr "Charge utile"
 msgid "PDF"
 msgstr "PDF"
 
+msgid "PDF accepted"
+msgstr "PDF accepté"
+
 msgid "PDF Extraction"
 msgstr "Extraction PDF"
 
 msgid "PDF File"
 msgstr "Fichier PDF"
+
+msgid "PDF info"
+msgstr "Infos du PDF"
 
 msgid "PDF page {pageLabel} preview"
 msgstr "Aperçu de la page PDF {pageLabel}"
@@ -3561,6 +3579,9 @@ msgstr "Les lecteurs voient"
 msgid "Reading archive..."
 msgstr "Lecture de l'archive..."
 
+msgid "Reading PDF..."
+msgstr "Lecture du PDF..."
+
 msgid "Readium Web Publication format for standards-based digital distribution platforms."
 msgstr "Format de publication Web Readium pour les plateformes de distribution numérique basées sur des normes."
 
@@ -3642,6 +3663,9 @@ msgstr "Retirer du groupe"
 
 msgid "Remove manual glossary term"
 msgstr "Supprimer le terme manuel du glossaire"
+
+msgid "Remove PDF"
+msgstr "Supprimer le PDF"
 
 msgid "Remove section"
 msgstr "Retirer section"
@@ -3754,6 +3778,9 @@ msgstr "Progression de la révision"
 
 msgid "Review the project details below and confirm the import."
 msgstr "Vérifiez les détails du projet ci-dessous et confirmez l'importation."
+
+msgid "Review the source PDF details below and continue to configure how your book will be converted into an Accessible Digital Textbook."
+msgstr "Examinez les détails du PDF source ci-dessous, puis continuez pour configurer la conversion de votre livre en Manuel Numérique Accessible."
 
 msgid "Reviewer checklist"
 msgstr "Liste de contrôle du réviseur"
@@ -4905,6 +4932,9 @@ msgstr "Téléversez des vidéos en langue des signes et assignez-les aux sectio
 
 msgid "Upload Style Guide"
 msgstr "Téléverser un guide de style"
+
+msgid "Upload the source PDF of your book and we'll turn it into an Accessible Digital Textbook with interactive activities and adaptive layouts."
+msgstr "Téléversez le PDF source de votre livre et nous le transformerons en Manuel Numérique Accessible, avec activités interactives et mises en page adaptatives."
 
 msgid "Upload to an LMS as a SCORM 1.2 package with completion tracking and offline support."
 msgstr "Téléchargez vers un LMS en tant que package SCORM 1.2 avec suivi de l'achèvement et support hors ligne."

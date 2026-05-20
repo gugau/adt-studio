@@ -11,6 +11,7 @@ import {
   CircleHelp,
   FileWarning,
   Loader2,
+  X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AccessibilityCurrentPagePanel } from "@/components/accessibility/AccessibilityCurrentPagePanel"
@@ -108,14 +109,23 @@ export function PreviewAccessibilityCard({
 }: PreviewAccessibilityCardProps) {
   const { t, i18n } = useLingui()
   const storageKey = `adt-preview-a11y-card:${label}`
+  const minifiedStorageKey = `adt-preview-a11y-card-minified:${label}`
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") {
       return true
     }
     return window.sessionStorage.getItem(storageKey) !== "expanded"
   })
-  const [showCollapsedCard, setShowCollapsedCard] = useState(() => collapsed && !panelOpen)
-  const [collapsedCardVisible, setCollapsedCardVisible] = useState(() => collapsed && !panelOpen)
+  const [minified, setMinified] = useState<boolean>(() => {
+    if (typeof window === "undefined") {
+      return false
+    }
+    return window.sessionStorage.getItem(minifiedStorageKey) === "minified"
+  })
+  const [showCollapsedCard, setShowCollapsedCard] = useState(() => collapsed && !panelOpen && !minified)
+  const [collapsedCardVisible, setCollapsedCardVisible] = useState(() => collapsed && !panelOpen && !minified)
+  const [showMiniIcon, setShowMiniIcon] = useState(() => collapsed && !panelOpen && minified)
+  const [miniIconVisible, setMiniIconVisible] = useState(() => collapsed && !panelOpen && minified)
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -123,6 +133,19 @@ export function PreviewAccessibilityCard({
     }
     window.sessionStorage.setItem(storageKey, collapsed ? "collapsed" : "expanded")
   }, [collapsed, storageKey])
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return
+    }
+    window.sessionStorage.setItem(minifiedStorageKey, minified ? "minified" : "expanded")
+  }, [minified, minifiedStorageKey])
+
+  useEffect(() => {
+    if (!collapsed) {
+      setMinified(false)
+    }
+  }, [collapsed])
 
   useEffect(() => {
     if (panelOpen) {
@@ -135,10 +158,18 @@ export function PreviewAccessibilityCard({
   }, [collapsed, onExpandedChange])
 
   useEffect(() => {
-    if (!collapsed || panelOpen || otherCardExpanded) {
+    if (!collapsed || panelOpen || otherCardExpanded || minified) {
       setCollapsedCardVisible(false)
-      setShowCollapsedCard(false)
-      return
+      if (typeof window === "undefined") {
+        setShowCollapsedCard(false)
+        return
+      }
+      const unmountId = window.setTimeout(() => {
+        setShowCollapsedCard(false)
+      }, 200)
+      return () => {
+        window.clearTimeout(unmountId)
+      }
     }
 
     if (typeof window === "undefined") {
@@ -157,7 +188,40 @@ export function PreviewAccessibilityCard({
     return () => {
       window.clearTimeout(timeoutId)
     }
-  }, [collapsed, otherCardExpanded, panelOpen])
+  }, [collapsed, otherCardExpanded, panelOpen, minified])
+
+  useEffect(() => {
+    if (!collapsed || panelOpen || !minified) {
+      setMiniIconVisible(false)
+      if (typeof window === "undefined") {
+        setShowMiniIcon(false)
+        return
+      }
+      const unmountId = window.setTimeout(() => {
+        setShowMiniIcon(false)
+      }, 200)
+      return () => {
+        window.clearTimeout(unmountId)
+      }
+    }
+
+    if (typeof window === "undefined") {
+      setShowMiniIcon(true)
+      setMiniIconVisible(true)
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setShowMiniIcon(true)
+      window.requestAnimationFrame(() => {
+        setMiniIconVisible(true)
+      })
+    }, 140)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [collapsed, minified, panelOpen])
 
   const violationCount = assessment?.summary.violationCount ?? 0
   const incompleteCount = assessment?.summary.incompleteCount ?? 0
@@ -185,40 +249,82 @@ export function PreviewAccessibilityCard({
       : null
 
   if (collapsed) {
-    if (!showCollapsedCard) {
+    if (!showCollapsedCard && !showMiniIcon) {
       return null
     }
 
     return (
-      <button
-        type="button"
-        className={cn(
-          "fixed bottom-4 right-14 z-40 flex w-[min(22.5rem,calc(100vw-2rem))] items-start gap-3 rounded-2xl border bg-background/95 px-3.5 py-3 text-left shadow-md backdrop-blur-sm transition-all duration-150 ease-out supports-[backdrop-filter]:bg-background/90",
-          collapsedCardVisible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0",
-        )}
-        onClick={() => setCollapsed(false)}
-        title={t`Show accessibility summary`}
-      >
-        <div className="mt-0.5 shrink-0">
-          <StatusIcon
-            isLoading={isLoading}
-            error={error}
-            violationCount={violationCount}
-            incompleteCount={incompleteCount}
-            collapsed
-          />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-3 text-sm">
-            <span className="font-medium"><Trans>Accessibility</Trans></span>
-            {overallSummary ? <span className="shrink-0 text-[11px] text-muted-foreground">{overallSummary}</span> : null}
+      <>
+        {showMiniIcon ? (
+          <button
+            type="button"
+            className={cn(
+              "fixed bottom-4 right-20 z-40 flex h-9 w-9 origin-center items-center justify-center rounded-full border bg-background/95 shadow-md backdrop-blur-sm transition-all duration-200 ease-out hover:bg-background supports-[backdrop-filter]:bg-background/90",
+              miniIconVisible ? "scale-100 opacity-100 hover:scale-110" : "pointer-events-none scale-50 opacity-0",
+            )}
+            onClick={() => setMinified(false)}
+            title={t`Show accessibility summary`}
+          >
+            <StatusIcon
+              isLoading={isLoading}
+              error={error}
+              violationCount={violationCount}
+              incompleteCount={incompleteCount}
+              collapsed
+            />
+          </button>
+        ) : null}
+        {showCollapsedCard ? (
+          <div
+            className={cn(
+              "fixed bottom-4 right-20 z-40 flex w-[min(22.5rem,calc(100vw-2rem))] origin-bottom-right items-start gap-2 rounded-2xl border bg-background/95 py-3 pl-3.5 pr-2 shadow-md backdrop-blur-sm transition-all duration-200 ease-out supports-[backdrop-filter]:bg-background/90",
+              collapsedCardVisible
+                ? "translate-y-0 scale-100 opacity-100"
+                : "pointer-events-none translate-y-1 scale-90 opacity-0",
+            )}
+          >
+        <button
+          type="button"
+          className="flex min-w-0 flex-1 items-start gap-3 text-left"
+          onClick={() => setCollapsed(false)}
+          title={t`Show accessibility summary`}
+        >
+          <div className="mt-0.5 shrink-0">
+            <StatusIcon
+              isLoading={isLoading}
+              error={error}
+              violationCount={violationCount}
+              incompleteCount={incompleteCount}
+              collapsed
+            />
           </div>
-          <div className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{pageSummary}</div>
-        </div>
 
-        <ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-      </button>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <span className="font-medium"><Trans>Accessibility</Trans></span>
+              {overallSummary ? <span className="shrink-0 text-[11px] text-muted-foreground">{overallSummary}</span> : null}
+            </div>
+            <div className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{pageSummary}</div>
+          </div>
+
+          <ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        </button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 shrink-0 rounded-full text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground"
+              onClick={(event) => {
+                event.stopPropagation()
+                setMinified(true)
+              }}
+              title={t`Minimize accessibility summary`}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        ) : null}
+      </>
     )
   }
 

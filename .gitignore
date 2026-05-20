@@ -32,8 +32,16 @@ Thumbs.db
 *.swp
 *.swo
 
-# Claude Code (personal settings only — .claude/settings.json is shared)
-.claude/settings.local.json
+# AI agent local config
+.claude/
+
+# AI agent rule files
+CLAUDE.md
+CLAUDE.local.md
+.cursorrules
+.windsurfrules
+.clinerules
+.github/copilot-instructions.md
 
 # Tauri build output
 **/src-tauri/target/

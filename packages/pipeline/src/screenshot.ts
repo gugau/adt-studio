@@ -62,7 +62,7 @@ export async function _createScreenshotRenderer(): Promise<ScreenshotRenderer> {
     async screenshot(
       html: string,
       viewport = { width: 1024, height: 768 }
-    ): Promise<string> {  
+    ): Promise<string> {
       const context = await browser.newContext({ viewport })
       try {
         const page = await context.newPage()

@@ -15,7 +15,7 @@ import {
 } from "../services/reviewer-validation-service.js"
 import { getReviewerValidationCatalog, isReviewerValidationEnabled } from "../services/reviewer-validation-catalog.js"
 
-export function createReviewerValidationRoutes(booksDir: string, configPath?: string): Hono {
+export function createReviewerValidationRoutes(booksDir: string, configFolderPath: string, configPath?: string, ): Hono {
   const app = new Hono()
 
   app.get("/books/:label/validation/catalog", (c) => {
@@ -23,7 +23,7 @@ export function createReviewerValidationRoutes(booksDir: string, configPath?: st
     const config = configPath ? loadBookConfig(safeLabel, booksDir, configPath) : null
     return c.json({
       enabled: isReviewerValidationEnabled(config?.reviewer_validation),
-      ...getReviewerValidationCatalog(config?.reviewer_validation),
+      ...getReviewerValidationCatalog(configFolderPath, config?.reviewer_validation),
     })
   })
 
@@ -46,7 +46,7 @@ export function createReviewerValidationRoutes(booksDir: string, configPath?: st
     if (!isReviewerValidationEnabled(config?.reviewer_validation)) {
       throw new HTTPException(409, { message: "Reviewer validation is disabled for this book" })
     }
-    const catalogSnapshot = getReviewerValidationCatalog(config?.reviewer_validation)
+    const catalogSnapshot = getReviewerValidationCatalog(configFolderPath, config?.reviewer_validation)
     const saved = saveReviewerValidationSession(label, booksDir, {
       ...parsed.data,
       catalog_snapshot: parsed.data.catalog_snapshot ?? catalogSnapshot,
