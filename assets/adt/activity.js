@@ -1,5 +1,5 @@
 import { state, setState } from './modules/state.js';
-import { ActivityTypes } from './modules/utils.js'; // Import ActivityTypes first
+import { ActivityTypes, isCustomActivityType } from './modules/utils.js'; // Import ActivityTypes first
 import { initializeActivityAudioElements, playActivitySound } from './modules/audio.js';
 import { prepareMultipleChoice } from './modules/activities/multiple_choice.js';
 import { prepareQuiz, resetQuizActivity } from './modules/activities/quiz.js';
@@ -10,6 +10,7 @@ import { validateInputs } from './modules/activities/validation.js';
 import { preparefillInBlank } from './modules/activities/fill_in_the_blank.js';
 import { prepareFillInTable } from './modules/activities/fill_in_a_table.js';
 import { prepareOpenEnded } from './modules/activities/open_ended.js';
+import { prepareCustomActivity, resetCustomActivity } from './modules/activities/custom.js';
 import { translateText } from './modules/translations.js';
 import { nextPage } from './modules/navigation.js';
 
@@ -464,6 +465,14 @@ function initializeActivityHandlers() {
         validate: () => validateInputs(ActivityTypes.FILL_IN_A_TABLE)
     };
 
+    activityHandlers[ActivityTypes.CUSTOM] = {
+        setup: prepareCustomActivity,
+        validate: () => validateInputs(ActivityTypes.CUSTOM),
+    };
+    activityResetHandlers[ActivityTypes.CUSTOM] = (activityId) => {
+        resetCustomActivity(activityId);
+    };
+
     return { activityResetHandlers, activityHandlers };
 }
 
@@ -486,7 +495,10 @@ const handleResetActivity = () => {
     const activitySection = getActivitySection();
     if (activitySection) {
         const activityType = activitySection.dataset.sectionType;
-        const resetHandler = activityResetHandlers[activityType];
+        const resolvedType = isCustomActivityType(activityType)
+            ? ActivityTypes.CUSTOM
+            : activityType;
+        const resetHandler = activityResetHandlers[resolvedType];
 
         if (resetHandler) {
             resetHandler(activityId);
@@ -510,7 +522,12 @@ const setupActivitySection = (section, activityType, submitButton) => {
         activityHandlers = handlers.activityHandlers;
     }
 
-    const handler = activityHandlers[activityType];
+    // Custom activities use a single shared handler regardless of the
+    // descriptive suffix (e.g. activity_custom_drag_drop → activity_custom).
+    const resolvedType = isCustomActivityType(activityType)
+        ? ActivityTypes.CUSTOM
+        : activityType;
+    const handler = activityHandlers[resolvedType];
 
     if (handler) {
         handler.setup(section);

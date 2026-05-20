@@ -8,6 +8,7 @@ import { checkMatching } from './matching.js';
 import { checkSorting } from './sorting.js';
 import { checkTrueFalse } from './true_false.js';
 import { checkTableInputs } from './fill_in_a_table.js';
+import { checkCustomActivity } from './custom.js';
 import { isLikelySpanish } from './gibberish_detector.js';
 import { executeMail } from './send-email.js';
 import { containsProfanity } from './profanity_detector.js';
@@ -51,6 +52,10 @@ export const validateInputs = (activityType) => {
 
             case ActivityTypes.FILL_IN_A_TABLE:
                 checkTableInputs();
+                break;
+
+            case ActivityTypes.CUSTOM:
+                checkCustomActivity();
                 break;
 
             default:

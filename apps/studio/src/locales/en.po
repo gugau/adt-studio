@@ -55,6 +55,9 @@ msgstr "(p.{0})"
 msgid "(template)"
 msgstr "(template)"
 
+msgid "(this section)"
+msgstr "(this section)"
+
 #. placeholder {0}: lockedLang.name
 msgid "{0} — type country or Enter for base"
 msgstr "{0} — type country or Enter for base"
@@ -317,6 +320,9 @@ msgstr "A matching activity where students connect related items."
 msgid "A multiple choice activity."
 msgstr "A multiple choice activity."
 
+msgid "A new activity section will be appended to page {anchorPageNumber} ({anchorPageId}). The agent may read other pages in the book to mirror their layout."
+msgstr "A new activity section will be appended to page {anchorPageNumber} ({anchorPageId}). The agent may read other pages in the book to mirror their layout."
+
 msgid "A new version is available for download."
 msgstr "A new version is available for download."
 
@@ -456,6 +462,12 @@ msgstr "Activity 5.1"
 msgid "Activity Converter"
 msgstr "Activity Converter"
 
+msgid "Activity created on this page"
+msgstr "Activity created on this page"
+
+msgid "Activity generation failed"
+msgstr "Activity generation failed"
+
 msgid "Activity Rendering"
 msgstr "Activity Rendering"
 
@@ -556,6 +568,9 @@ msgstr "Add Videos"
 msgid "Add your first book"
 msgstr "Add your first book"
 
+msgid "Additional instruction (optional)"
+msgstr "Additional instruction (optional)"
+
 msgid "Additional Languages"
 msgstr "Additional Languages"
 
@@ -596,6 +611,9 @@ msgstr "After {0}"
 
 msgid "age 8"
 msgstr "age 8"
+
+msgid "Agent task failed"
+msgstr "Agent task failed"
 
 msgid "AI"
 msgstr "AI"
@@ -719,6 +737,9 @@ msgstr "Application Programming Interface — a set of rules that allows program
 
 msgid "Apply"
 msgstr "Apply"
+
+msgid "Apply layout"
+msgstr "Apply layout"
 
 msgid "Apply page background colors"
 msgstr "Apply page background colors"
@@ -1437,6 +1458,9 @@ msgstr "Delivered"
 msgid "Dense text, tables, glossaries. Best for technical material and documentation."
 msgstr "Dense text, tables, glossaries. Best for technical material and documentation."
 
+msgid "Describe the activity"
+msgstr "Describe the activity"
+
 msgid "Describe the image"
 msgstr "Describe the image"
 
@@ -1490,6 +1514,9 @@ msgstr "Disabled rules"
 
 msgid "Discard"
 msgstr "Discard"
+
+msgid "Dismiss"
+msgstr "Dismiss"
 
 msgid "Display"
 msgstr "Display"
@@ -1568,8 +1595,14 @@ msgstr "e.g. fr, es-mx"
 msgid "e.g. http://localhost:11434/v1"
 msgstr "e.g. http://localhost:11434/v1"
 
+msgid "e.g. keep the image on the right"
+msgstr "e.g. keep the image on the right"
+
 msgid "e.g. Kore"
 msgstr "e.g. Kore"
+
+msgid "e.g. multiple-choice question about photosynthesis with 4 options"
+msgstr "e.g. multiple-choice question about photosynthesis with 4 options"
 
 msgid "e.g., A cheerful leopard family in a green forest, children's book style..."
 msgstr "e.g., A cheerful leopard family in a green forest, children's book style..."
@@ -1834,6 +1867,9 @@ msgstr "Figure Extraction"
 msgid "File accepted"
 msgstr "File accepted"
 
+msgid "Fill in the blank"
+msgstr "Fill in the blank"
+
 msgid "Filter by image ID or caption..."
 msgstr "Filter by image ID or caption..."
 
@@ -1932,6 +1968,24 @@ msgstr "General"
 msgid "Generate"
 msgstr "Generate"
 
+msgid "Generate 3 true/false statements about the content of this page."
+msgstr "Generate 3 true/false statements about the content of this page."
+
+msgid "Generate a 4-option multiple-choice question testing comprehension of this page."
+msgstr "Generate a 4-option multiple-choice question testing comprehension of this page."
+
+msgid "Generate a fill-in-the-blank activity with 3 sentences based on this page."
+msgstr "Generate a fill-in-the-blank activity with 3 sentences based on this page."
+
+msgid "Generate a new activity from a description"
+msgstr "Generate a new activity from a description"
+
+msgid "Generate activity"
+msgstr "Generate activity"
+
+msgid "Generate an open-ended reflection question about this page."
+msgstr "Generate an open-ended reflection question about this page."
+
 msgid "Generate and customize the table of contents for the book navigation."
 msgstr "Generate and customize the table of contents for the book navigation."
 
@@ -1964,6 +2018,9 @@ msgstr "Generate word timestamps"
 
 msgid "Generates the interactive HTML for this activity type."
 msgstr "Generates the interactive HTML for this activity type."
+
+msgid "Generating activity..."
+msgstr "Generating activity..."
 
 msgid "Generating Glossary..."
 msgstr "Generating Glossary..."
@@ -2312,6 +2369,12 @@ msgstr "Layer on translations, text-to-speech, and a glossary — all inspectabl
 msgid "Laying out spreads"
 msgstr "Laying out spreads"
 
+msgid "Layout mirror failed"
+msgstr "Layout mirror failed"
+
+msgid "Layout mirrored onto this section"
+msgstr "Layout mirrored onto this section"
+
 msgid "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 msgstr "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 
@@ -2606,6 +2669,15 @@ msgstr "minor"
 msgid "Minor"
 msgstr "Minor"
 
+msgid "Mirror layout"
+msgstr "Mirror layout"
+
+msgid "Mirror layout from another section"
+msgstr "Mirror layout from another section"
+
+msgid "Mirroring layout..."
+msgstr "Mirroring layout..."
+
 msgid "Miss"
 msgstr "Miss"
 
@@ -2635,6 +2707,9 @@ msgstr "Modified {modifiedLabel}"
 
 msgid "Multi-format publications"
 msgstr "Multi-format publications"
+
+msgid "Multiple choice"
+msgstr "Multiple choice"
 
 msgid "my-book-slug"
 msgstr "my-book-slug"
@@ -2819,6 +2894,9 @@ msgstr "No quizzes for this page"
 msgid "No rendered content for this section"
 msgstr "No rendered content for this section"
 
+msgid "no rendering"
+msgstr "no rendering"
+
 msgid "No review areas are currently flagged in this reviewer session."
 msgstr "No review areas are currently flagged in this reviewer session."
 
@@ -2950,6 +3028,9 @@ msgstr "Open Preview"
 
 msgid "Open Validation"
 msgstr "Open Validation"
+
+msgid "Open-ended question"
+msgstr "Open-ended question"
 
 msgid "OpenAI"
 msgstr "OpenAI"
@@ -3101,6 +3182,9 @@ msgstr "Page Sectioning Refinement Prompt"
 msgid "pages"
 msgstr "pages"
 
+msgid "Pages"
+msgstr "Pages"
+
 #. placeholder {0}: activeSession.session.start_page ?? "?"
 #. placeholder {1}: activeSession.session.end_page ?? "?"
 msgid "Pages {0}–{1}"
@@ -3178,8 +3262,14 @@ msgstr "photosynthesis"
 msgid "photosynthetic, photosynthesizing"
 msgstr "photosynthetic, photosynthesizing"
 
+msgid "Pick a page to see its sections."
+msgstr "Pick a page to see its sections."
+
 msgid "Pick a preset"
 msgstr "Pick a preset"
+
+msgid "Pick a source section. Its layout will be applied to this section while keeping this section's content and data-ids."
+msgstr "Pick a source section. Its layout will be applied to this section while keeping this section's content and data-ids."
 
 msgid "Pick from book"
 msgstr "Pick from book"
@@ -3325,6 +3415,9 @@ msgstr "px"
 
 msgid "Query param"
 msgstr "Query param"
+
+msgid "Quick fill"
+msgstr "Quick fill"
 
 msgid "Quiz Generation"
 msgstr "Quiz Generation"
@@ -3811,6 +3904,9 @@ msgstr "Sectioning Reasoning"
 
 msgid "sections"
 msgstr "sections"
+
+msgid "Sections"
+msgstr "Sections"
 
 msgid "See examples"
 msgstr "See examples"
@@ -4500,6 +4596,9 @@ msgstr "Transport"
 msgid "Treats each page as a single section."
 msgstr "Treats each page as a single section."
 
+msgid "True / false"
+msgstr "True / false"
+
 msgid "Try Activity"
 msgstr "Try Activity"
 
@@ -4711,6 +4810,9 @@ msgstr "video"
 
 msgid "videos"
 msgstr "videos"
+
+msgid "View"
+msgstr "View"
 
 msgid "View HTML source"
 msgstr "View HTML source"

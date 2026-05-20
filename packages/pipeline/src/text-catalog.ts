@@ -22,6 +22,28 @@ function pad3(n: number): string {
 }
 
 /**
+ * Like DomUtils.textContent but skips the children of any <script>/<style>
+ * descendants. Used so a stray inline script inside a data-id element doesn't
+ * leak its source into the catalogued text (and from there into the runtime's
+ * innerHTML replacement on translation).
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function textContentExcludingScripts(node: any): string {
+  if (!node) return ""
+  if (node.type === "text") return node.data ?? ""
+  const tagName = (node.name ?? node.type ?? "").toLowerCase()
+  if (tagName === "script" || tagName === "style") return ""
+  if (Array.isArray(node.children)) {
+    let out = ""
+    for (const child of node.children) {
+      out += textContentExcludingScripts(child)
+    }
+    return out
+  }
+  return ""
+}
+
+/**
  * Extract text catalog entries from a single page's rendered HTML sections.
  * Walks the DOM looking for elements with data-id attributes.
  * - Non-img elements: extract text content
@@ -40,6 +62,21 @@ function extractPageEntries(
 
   for (const section of rendering.sections) {
     if (prunedSectionIndices?.has(section.sectionIndex)) continue
+
+    // Custom activities own their structure (the agent writes HTML + script
+    // and wires interaction itself). Cataloguing the wrapper element pulls in
+    // the script source — `DomUtils.textContent` walks <script> children too
+    // — which the runtime then innerHTMLs back in, wiping the layout. Skip
+    // these sections entirely from the catalog. They will not be translated
+    // by the i18n pass; that's the right behavior for v0 — a future
+    // per-data-id translator can revisit when custom activities need l10n.
+    if (
+      section.sectionType === "activity_custom" ||
+      section.sectionType.startsWith("activity_custom_")
+    ) {
+      continue
+    }
+
     const doc = parseDocument(section.html)
 
     const elements = DomUtils.findAll(
@@ -63,7 +100,11 @@ function extractPageEntries(
           ? `${pageId}_ac${pad3(++activityCounter)}`
           : dataId
 
-        const text = DomUtils.textContent(el).replace(/\s+/g, " ").trim()
+        // Belt-and-braces: even for non-custom sections, exclude any inline
+        // <script>/<style> bodies from the catalogued text. Authors shouldn't
+        // be using them here, but a stray bit of inline JS shouldn't corrupt
+        // the catalog.
+        const text = textContentExcludingScripts(el).replace(/\s+/g, " ").trim()
         if (text.length > 0) {
           entries.push({ id, text })
         }

@@ -232,6 +232,14 @@ const applyTranslationToElements = (key, translationKey) => {
     const elements = document.querySelectorAll(`[data-id="${key}"]`);
     elements.forEach((element) => {
         if (element) {
+            // Custom activities own their own DOM (the agent ships HTML + script
+            // and wires interaction itself). Applying innerHTML from the text
+            // catalog would wipe the structure — and, before the catalog fix,
+            // would even leak the script source as visible text. Skip them.
+            const customAncestor = element.closest('section[data-section-type^="activity_custom"]');
+            if (customAncestor) {
+                return;
+            }
             if (element.tagName === "IMG") {
                 element.setAttribute("alt", state.translations[translationKey]);
             } else {

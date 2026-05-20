@@ -55,6 +55,8 @@ import { AddImageDialog } from "./AddImageDialog"
 import { ReplaceFromBookDialog } from "./ReplaceFromBookDialog"
 import { SegmentPreviewDialog, type SegmentRegion } from "./SegmentPreviewDialog"
 import { AiEditHistoryDrawer } from "./AiEditHistoryDrawer"
+import { LayoutMirrorDialog } from "./LayoutMirrorDialog"
+import { GenerateActivityDialog } from "./GenerateActivityDialog"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -625,15 +627,89 @@ export function StoryboardSectionDetail({
   const [aiError, setAiError] = useState<string | null>(null)
   const [aiMessageIdx, setAiMessageIdx] = useState(0)
   const [showAiHistory, setShowAiHistory] = useState(false)
+  const [layoutMirrorOpen, setLayoutMirrorOpen] = useState(false)
+  const [generateActivityOpen, setGenerateActivityOpen] = useState(false)
 
   // Derive AI editing state from active tasks
   const aiEditing = useMemo(
     () => bookTasks.some((t) => t.kind === "ai-edit" && t.pageId === pageId && t.status === "running"),
     [bookTasks, pageId]
   )
+  const layoutMirrorRunning = useMemo(
+    () => bookTasks.some((t) => t.kind === "layout-mirror" && t.pageId === pageId && t.status === "running"),
+    [bookTasks, pageId]
+  )
+  const generateActivityRunning = useMemo(
+    () => bookTasks.some((t) => t.kind === "generate-activity" && t.pageId === pageId && t.status === "running"),
+    [bookTasks, pageId]
+  )
+
+  // Surface failed agent tasks on this page through the existing aiError bar.
+  // Watches each failed task once (keyed by taskId) so re-renders don't re-trigger.
+  const reportedFailureIds = useRef(new Set<string>())
+  useEffect(() => {
+    for (const task of bookTasks) {
+      if (
+        (task.kind === "layout-mirror" || task.kind === "generate-activity") &&
+        task.pageId === pageId &&
+        task.status === "failed" &&
+        !reportedFailureIds.current.has(task.taskId)
+      ) {
+        reportedFailureIds.current.add(task.taskId)
+        setAiError(task.error ?? t`Agent task failed`)
+      }
+    }
+  }, [bookTasks, pageId, t])
+
+  // Surface successful agent completions as a transient banner with a "View"
+  // button that scrolls to the newly-created section. Each task is shown at
+  // most once.
+  const [completionBanner, setCompletionBanner] = useState<{
+    taskId: string
+    message: string
+    targetSectionIndex?: number
+  } | null>(null)
+  const announcedCompletionIds = useRef(new Set<string>())
+  useEffect(() => {
+    for (const task of bookTasks) {
+      if (
+        (task.kind === "generate-activity" || task.kind === "layout-mirror") &&
+        task.pageId === pageId &&
+        task.status === "completed" &&
+        !announcedCompletionIds.current.has(task.taskId)
+      ) {
+        announcedCompletionIds.current.add(task.taskId)
+
+        // generate-activity appends one section — the new index is the LAST
+        // one in the page's rendering list. The page-detail query has been
+        // refetched by use-book-run by the time this fires.
+        const renderedSections = page.rendering?.sections ?? []
+        const target =
+          task.kind === "generate-activity"
+            ? Math.max(0, renderedSections.length - 1)
+            : sectionIndex // layout-mirror writes the same section the user was viewing
+
+        setCompletionBanner({
+          taskId: task.taskId,
+          message:
+            task.kind === "generate-activity"
+              ? t`Activity created on this page`
+              : t`Layout mirrored onto this section`,
+          targetSectionIndex: target,
+        })
+      }
+    }
+  }, [bookTasks, pageId, page.rendering?.sections?.length, sectionIndex, t])
+
+  // Auto-dismiss the banner after 10s.
+  useEffect(() => {
+    if (!completionBanner) return
+    const handle = setTimeout(() => setCompletionBanner(null), 10_000)
+    return () => clearTimeout(handle)
+  }, [completionBanner])
 
   // Any task running on this page — used to mask the section and prevent stacking operations
-  const hasActiveTask = aiEditing || rerendering || (aiImageGen?.status === "generating")
+  const hasActiveTask = aiEditing || rerendering || layoutMirrorRunning || generateActivityRunning || (aiImageGen?.status === "generating")
   const aiLoading = aiEditing
   const aiMessages = getAiMessages()
 
@@ -1756,6 +1832,39 @@ export function StoryboardSectionDetail({
     })
   }
 
+  const handleLayoutMirrorSubmit = (
+    source: { pageId: string; sectionIndex: number },
+    instruction: string | undefined,
+  ) => {
+    setLayoutMirrorOpen(false)
+    if (!hasApiKey) return
+    setAiError(null)
+    api
+      .agentLayoutMirror(
+        bookLabel,
+        source,
+        [{ pageId, sectionIndex }],
+        apiKey,
+        instruction,
+      )
+      .catch((err) => {
+        setAiError(err instanceof Error ? err.message : t`Layout mirror failed`)
+      })
+  }
+
+  const handleGenerateActivitySubmit = (description: string) => {
+    setGenerateActivityOpen(false)
+    if (!hasApiKey) return
+    setAiError(null)
+    api
+      .agentGenerateActivity(bookLabel, pageId, description, apiKey)
+      .catch((err) => {
+        setAiError(
+          err instanceof Error ? err.message : t`Activity generation failed`,
+        )
+      })
+  }
+
   // Compute toolbar info for selected element
   const getSelectedElementInfo = () => {
     if (!selectedElement || !sectioningData) return null
@@ -1913,6 +2022,28 @@ export function StoryboardSectionDetail({
           <MessageSquare className="h-3.5 w-3.5" />
         </button>
       )}
+      {renderedSection?.html && hasApiKey && (
+        <button
+          type="button"
+          onClick={() => setLayoutMirrorOpen(true)}
+          disabled={hasActiveTask || storyboardRunning}
+          className="flex items-center gap-1 px-2 py-1 rounded bg-white/10 hover:bg-white/20 transition-colors cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+          title={t`Mirror layout from another section`}
+        >
+          <LayoutGrid className="h-3.5 w-3.5" />
+        </button>
+      )}
+      {hasApiKey && (
+        <button
+          type="button"
+          onClick={() => setGenerateActivityOpen(true)}
+          disabled={hasActiveTask || storyboardRunning}
+          className="flex items-center gap-1 px-2 py-1 rounded bg-white/10 hover:bg-white/20 transition-colors cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+          title={t`Generate a new activity from a description`}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+        </button>
+      )}
       {renderedSection?.html && (
         <button
           type="button"
@@ -1960,6 +2091,46 @@ export function StoryboardSectionDetail({
       {aiError && (
         <div className="px-4 py-1.5 border-b shrink-0 text-xs bg-muted/30">
           <p className="text-[10px] text-destructive">{aiError}</p>
+        </div>
+      )}
+
+      {/* Agent completion banner */}
+      {completionBanner && (
+        <div className="px-4 py-2 border-b shrink-0 bg-emerald-50 dark:bg-emerald-950/40 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-200">
+              <Check className="h-3.5 w-3.5" />
+              <p className="text-xs font-medium">{completionBanner.message}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {completionBanner.targetSectionIndex !== undefined &&
+                completionBanner.targetSectionIndex !== sectionIndex &&
+                onNavigateSection && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (
+                        completionBanner.targetSectionIndex !== undefined
+                      ) {
+                        onNavigateSection(completionBanner.targetSectionIndex)
+                      }
+                      setCompletionBanner(null)
+                    }}
+                    className="text-[11px] font-medium px-2 py-1 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                  >
+                    {t`View`}
+                  </button>
+                )}
+              <button
+                type="button"
+                onClick={() => setCompletionBanner(null)}
+                className="text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 dark:hover:text-emerald-100 transition-colors"
+                aria-label={t`Dismiss`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -2060,7 +2231,10 @@ export function StoryboardSectionDetail({
           </div>
         </div>
       )}
-      {(aiEditing || (rerendering && !saving)) && (
+      {(aiEditing ||
+        (rerendering && !saving) ||
+        layoutMirrorRunning ||
+        generateActivityRunning) && (
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
           {aiEditing && (
             <div className="flex items-center gap-2 rounded-full px-3.5 py-2 shadow-lg text-white text-xs font-medium bg-purple-600">
@@ -2072,6 +2246,18 @@ export function StoryboardSectionDetail({
             <div className="flex items-center gap-2 rounded-full px-3.5 py-2 shadow-lg text-white text-xs font-medium bg-blue-600">
               <Loader2 className="h-3 w-3 animate-spin" />
               <span>{t`Re-rendering...`}</span>
+            </div>
+          )}
+          {layoutMirrorRunning && (
+            <div className="flex items-center gap-2 rounded-full px-3.5 py-2 shadow-lg text-white text-xs font-medium bg-blue-600">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              <span>{t`Mirroring layout...`}</span>
+            </div>
+          )}
+          {generateActivityRunning && (
+            <div className="flex items-center gap-2 rounded-full px-3.5 py-2 shadow-lg text-white text-xs font-medium bg-violet-600">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              <span>{t`Generating activity...`}</span>
             </div>
           )}
         </div>
@@ -2401,6 +2587,27 @@ export function StoryboardSectionDetail({
         onUpload={handleAddImageUpload}
         onGenerate={handleAddImageGenerate}
         onClose={() => setAddImageDialogOpen(false)}
+      />
+    )}
+
+    {/* Layout mirror dialog */}
+    {layoutMirrorOpen && (
+      <LayoutMirrorDialog
+        bookLabel={bookLabel}
+        targetPageId={pageId}
+        targetSectionIndex={sectionIndex}
+        onSubmit={handleLayoutMirrorSubmit}
+        onClose={() => setLayoutMirrorOpen(false)}
+      />
+    )}
+
+    {/* Generate activity dialog */}
+    {generateActivityOpen && (
+      <GenerateActivityDialog
+        anchorPageId={pageId}
+        anchorPageNumber={page.pageNumber}
+        onSubmit={handleGenerateActivitySubmit}
+        onClose={() => setGenerateActivityOpen(false)}
       />
     )}
 

@@ -26,7 +26,27 @@ export const ActivityTypes = Object.freeze({
     MATCHING: "activity_matching",
     TRUE_FALSE: "activity_true_false",
     FILL_IN_A_TABLE: "activity_fill_in_a_table",
+    /**
+     * Escape hatch for agent-generated activities that don't fit the templated
+     * set. The section's own embedded <script> defines the interaction; the
+     * runtime executes it and lets the script register validate/reset via
+     * window.adtRegisterCustomActivity. The dispatcher matches this type by
+     * PREFIX, so the agent can name a custom activity semantically (e.g.
+     * "activity_custom_drag_drop", "activity_custom_crossword") and still
+     * route through the same handler.
+     */
+    CUSTOM: "activity_custom",
 });
+
+/**
+ * True if a section's data-section-type belongs to the custom-activity escape
+ * hatch. Matches the literal "activity_custom" plus any descriptive suffix
+ * (e.g. "activity_custom_drag_drop").
+ */
+export const isCustomActivityType = (sectionType) =>
+    typeof sectionType === "string" &&
+    (sectionType === ActivityTypes.CUSTOM ||
+        sectionType.startsWith(`${ActivityTypes.CUSTOM}_`));
 
 window.utils = {
     provideFeedback: null
