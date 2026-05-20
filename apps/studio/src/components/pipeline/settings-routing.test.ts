@@ -15,8 +15,11 @@ describe("settings-routing", () => {
 
   it("returns null for stages without settings views", () => {
     expect(resolveSettingsStageSlug("book")).toBeNull()
-    expect(resolveSettingsStageSlug("preview")).toBeNull()
-    expect(resolveSettingsStageSlug("export")).toBeNull()
     expect(resolveSettingsStageSlug("not-a-stage")).toBeNull()
+  })
+
+  it("resolves preview and export — they expose an Overview tab", () => {
+    expect(resolveSettingsStageSlug("preview")).toBe("preview")
+    expect(resolveSettingsStageSlug("export")).toBe("export")
   })
 })

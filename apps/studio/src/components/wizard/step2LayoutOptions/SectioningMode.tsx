@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label"
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import { usePresetRecommendations } from "@/components/wizard/usePresetRecommendations"
 import { PRESETS, getPresetAccent } from "@/components/wizard/constants"
-import { InfoCarousel, type CarouselSlide } from "@/components/wizard/shared/InfoCarousel"
+import { InfoCarousel, type CarouselSlide } from "@/components/ui/info-carousel"
 import { SectioningModeSelect } from "./SectioningModeSelect"
 
 const INFO_CAROUSEL_LABEL = msg`About section mode`

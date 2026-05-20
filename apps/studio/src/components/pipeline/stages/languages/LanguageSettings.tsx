@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
-import { useNavigate } from "@tanstack/react-router"
-import { Play, Lock } from "lucide-react"
+import { useNavigate, Link } from "@tanstack/react-router"
+import { Play, Lock, ArrowLeft } from "lucide-react"
+import { Trans } from "@lingui/react/macro"
 import { useQuery } from "@tanstack/react-query"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -33,13 +34,9 @@ import { VoiceMappingsEditor } from "./components/VoiceMappingsEditor"
 import { SelectImagesDialog } from "./components/SelectImagesDialog"
 import { WordHighlightPreview } from "./components/WordHighlightPreview"
 import { useLingui } from "@lingui/react/macro"
+import { displayLang } from "./lib/display-lang"
 
-const langNames = new Intl.DisplayNames(["en"], { type: "language" })
-function displayLang(code: string): string {
-  try { return langNames.of(code) ?? code } catch { return code }
-}
-
-export function TranslationsSettings({ bookLabel, headerTarget, tab = "general", stageSlug = "translate" }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string; stageSlug?: string }) {
+export function LanguageSettings({ bookLabel, headerTarget, tab = "general", stageSlug = "translate" }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string; stageSlug?: string }) {
   const isSpeechStage = stageSlug === "speech"
   const captionedImagesQuery = useQuery({
     queryKey: ["books", bookLabel, "captioned-images"],
@@ -279,6 +276,18 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general",
       )}
 
       {(tab === "speech" || (isSpeechStage && tab === "general")) && (
+        <>
+          {isSpeechStage && (
+            <Link
+              to="/books/$label/$step/settings"
+              params={{ label: bookLabel, step: "speech" }}
+              search={{ tab: "overview" }}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-[#737373] transition-colors hover:text-rose-700 focus:outline-none focus-visible:underline"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden />
+              <Trans>Back to Speech overview</Trans>
+            </Link>
+          )}
         <SpeechLanguageCards
           bookLabel={bookLabel}
           baseLanguage={baseLanguage}
@@ -297,6 +306,7 @@ export function TranslationsSettings({ bookLabel, headerTarget, tab = "general",
           wordHighlighting={wordHighlighting} setWordHighlighting={setWordHighlighting}
           markDirty={markDirty}
         />
+        </>
       )}
 
       {tab === "image-translation" && !isSpeechStage && (

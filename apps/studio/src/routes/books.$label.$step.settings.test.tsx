@@ -65,7 +65,8 @@ vi.mock("@/components/pipeline/stages/quizzes/QuizzesSettings", () => ({ Quizzes
 vi.mock("@/components/pipeline/stages/glossary/GlossarySettings", () => ({ GlossarySettings: () => <div>glossary-settings</div> }))
 vi.mock("@/components/pipeline/stages/toc/TocSettings", () => ({ TocSettings: () => <div>toc-settings</div> }))
 vi.mock("@/components/pipeline/stages/captions/CaptionsSettings", () => ({ CaptionsSettings: () => <div>captions-settings</div> }))
-vi.mock("@/components/pipeline/stages/translations/TranslationsSettings", () => ({ TranslationsSettings: () => <div>translations-settings</div> }))
+vi.mock("@/components/pipeline/stages/languages/LanguageSettings", () => ({ LanguageSettings: () => <div>language-settings</div> }))
+vi.mock("@/components/pipeline/stages/speech/SpeechSettings", () => ({ SpeechSettings: () => <div>speech-settings</div> }))
 
 const validationSettingsMock = vi.fn(({ bookLabel, tab }: { bookLabel: string; tab?: string }) => (
   <div data-testid="validation-settings">

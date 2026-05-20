@@ -1,8 +1,9 @@
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Check, Images, X, Search, Loader2 } from "lucide-react"
+import { Check, Clock, Images, X, Search, Loader2, Maximize2 } from "lucide-react"
 import { api, BASE_URL } from "@/api/client"
 import { useLingui } from "@lingui/react/macro"
+import { ImageLightbox } from "./ImageLightbox"
 
 interface SelectImagesDialogProps {
   bookLabel: string
@@ -25,6 +26,7 @@ export function SelectImagesDialog({
   const { t } = useLingui()
   const [filter, setFilter] = useState("")
   const [selected, setSelected] = useState<Set<string>>(new Set(initialSelected))
+  const [lightbox, setLightbox] = useState<{ src: string; caption: string; imageId: string } | null>(null)
 
   const imagesQuery = useQuery({
     queryKey: ["books", bookLabel, "captioned-images"],
@@ -73,7 +75,7 @@ export function SelectImagesDialog({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b shrink-0">
           <div className="flex items-center gap-2">
-            <Images className="h-4 w-4 text-blue-500" />
+            <Images className="h-4 w-4 text-pink-500" />
             <h2 className="text-sm font-semibold">{t`Select images to translate`}</h2>
           </div>
           <button
@@ -91,6 +93,17 @@ export function SelectImagesDialog({
             {t`Only images that appear in the storyboard are listed. The selected images will be regenerated for each output language with their text translated.`}
           </p>
 
+          <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[11.5px] text-amber-800">
+            <Clock
+              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600"
+              strokeWidth={2}
+              aria-hidden
+            />
+            <span>
+              {t`Heads up: regenerating images takes considerably longer than text translation — each selected image is redrawn for every output language.`}
+            </span>
+          </div>
+
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -99,7 +112,7 @@ export function SelectImagesDialog({
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 placeholder={t`Filter by image ID or caption...`}
-                className="w-full text-sm border rounded-lg pl-8 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-full text-sm border rounded-lg pl-8 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500/30"
               />
             </div>
             {filtered && filtered.length > 0 && (
@@ -140,25 +153,54 @@ export function SelectImagesDialog({
               {filtered.map((img) => {
                 const isSelected = selected.has(img.imageId)
                 return (
-                  <button
+                  <div
                     key={img.imageId}
-                    type="button"
+                    role="checkbox"
+                    aria-checked={isSelected}
+                    aria-label={img.imageId}
+                    tabIndex={0}
                     onClick={() => toggleOne(img.imageId)}
-                    className={`group relative rounded border overflow-hidden bg-card flex flex-col items-stretch transition-all cursor-pointer text-left ${
+                    onKeyDown={(e) => {
+                      if (e.key === " " || e.key === "Enter") {
+                        e.preventDefault()
+                        toggleOne(img.imageId)
+                      }
+                    }}
+                    className={`group relative rounded border overflow-hidden bg-card flex flex-col items-stretch transition-all cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 ${
                       isSelected
-                        ? "ring-2 ring-blue-500 border-blue-500"
-                        : "hover:ring-2 hover:ring-blue-500/40"
+                        ? "ring-2 ring-pink-500 border-pink-500"
+                        : "hover:ring-2 hover:ring-pink-500/40"
                     }`}
                   >
-                    {isSelected && (
-                      <div className="absolute top-1 right-1 z-10 h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center">
-                        <Check className="h-3 w-3 text-white" />
-                      </div>
-                    )}
+                    <div
+                      className={`absolute top-1.5 left-1.5 z-10 h-4 w-4 rounded-[4px] border flex items-center justify-center shadow-sm transition-colors ${
+                        isSelected
+                          ? "bg-pink-500 border-pink-500"
+                          : "bg-white/95 border-neutral-300 group-hover:border-pink-400"
+                      }`}
+                    >
+                      {isSelected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setLightbox({
+                          src: `${BASE_URL}/books/${bookLabel}/images/${img.imageId}`,
+                          caption: img.caption,
+                          imageId: img.imageId,
+                        })
+                      }}
+                      aria-label={t`View image`}
+                      className="absolute top-1.5 right-1.5 z-10 h-6 w-6 rounded-md bg-black/55 text-white opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-black/75 flex items-center justify-center transition-opacity cursor-pointer"
+                    >
+                      <Maximize2 className="h-3 w-3" />
+                    </button>
                     <img
                       src={`${BASE_URL}/books/${bookLabel}/images/${img.imageId}`}
                       alt={img.imageId}
-                      className="w-full h-32 object-contain bg-muted/30"
+                      draggable={false}
+                      className="w-full h-32 object-contain bg-muted/30 select-none pointer-events-none"
                       loading="lazy"
                     />
                     <div className="px-2 py-1.5 border-t bg-muted/30">
@@ -171,7 +213,7 @@ export function SelectImagesDialog({
                         </span>
                       )}
                     </div>
-                  </button>
+                  </div>
                 )
               })}
             </div>
@@ -196,13 +238,21 @@ export function SelectImagesDialog({
             <button
               type="button"
               onClick={() => onConfirm(Array.from(selected))}
-              className="text-xs font-medium rounded px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white cursor-pointer transition-colors"
+              className="text-xs font-medium rounded px-3 py-1.5 bg-pink-600 hover:bg-pink-500 text-white cursor-pointer transition-colors"
             >
               {t`Save selection`}
             </button>
           </div>
         </div>
       </div>
+      {lightbox && (
+        <ImageLightbox
+          src={lightbox.src}
+          alt={lightbox.imageId}
+          caption={lightbox.caption}
+          onClose={() => setLightbox(null)}
+        />
+      )}
     </div>
   )
 }

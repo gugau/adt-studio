@@ -127,6 +127,28 @@ describe("buildCaptionConfig", () => {
     expect(config.modelId).toBe("openai:gpt-5.4")
     expect(config.maxRetries).toBe(12)
   })
+
+  it("reads user prompt and grade level from app config", () => {
+    const appConfig: AppConfig = {
+      role_types: { section_text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
+      image_captioning_user_prompt: "Focus on cultural context.",
+      image_captioning_grade_level: "early",
+    }
+    const config = buildCaptionConfig(appConfig)
+    expect(config.userPrompt).toBe("Focus on cultural context.")
+    expect(config.gradeLevel).toBe("early")
+  })
+
+  it("treats empty user prompt as undefined", () => {
+    const appConfig: AppConfig = {
+      role_types: { section_text: "Main body text" },
+      structure_types: { paragraph: "Paragraph" },
+      image_captioning_user_prompt: "",
+    }
+    const config = buildCaptionConfig(appConfig)
+    expect(config.userPrompt).toBeUndefined()
+  })
 })
 
 describe("captionPageImages", () => {
@@ -217,6 +239,74 @@ describe("captionPageImages", () => {
     expect(capturedOptions?.context?.book_summary).toBe(
       "A grade 3 science textbook about the water cycle."
     )
+  })
+
+  it("defaults user_instructions and grade_level to empty strings when unset", async () => {
+    let capturedOptions: GenerateObjectOptions | null = null
+    const llm = makeFakeLLMModel(
+      [
+        {
+          image_id: "pg001_im001",
+          reasoning: "x",
+          caption: "y",
+        },
+      ],
+      (options) => {
+        capturedOptions = options
+      }
+    )
+
+    await captionPageImages(
+      {
+        pageId: "pg001",
+        pageImageBase64: "base64pageimage",
+        images: [{ imageId: "pg001_im001", imageBase64: "base64img1" }],
+        language: "en",
+      },
+      { promptName: "image_captioning", modelId: "openai:gpt-4.1", maxRetries: 5 },
+      llm
+    )
+
+    expect(capturedOptions?.context?.user_instructions).toBe("")
+    expect(capturedOptions?.context?.grade_level).toBe("")
+  })
+
+  it("threads user prompt and grade level into LLM context", async () => {
+    let capturedOptions: GenerateObjectOptions | null = null
+    const llm = makeFakeLLMModel(
+      [
+        {
+          image_id: "pg001_im001",
+          reasoning: "x",
+          caption: "y",
+        },
+      ],
+      (options) => {
+        capturedOptions = options
+      }
+    )
+
+    await captionPageImages(
+      {
+        pageId: "pg001",
+        pageImageBase64: "base64pageimage",
+        images: [{ imageId: "pg001_im001", imageBase64: "base64img1" }],
+        language: "en",
+      },
+      {
+        promptName: "image_captioning",
+        modelId: "openai:gpt-4.1",
+        maxRetries: 5,
+        userPrompt: "Mention colors when relevant.",
+        gradeLevel: "advanced",
+      },
+      llm
+    )
+
+    expect(capturedOptions?.context?.user_instructions).toBe(
+      "Mention colors when relevant."
+    )
+    expect(capturedOptions?.context?.grade_level).toBe("advanced")
   })
 
   it("handles multiple images per page", async () => {

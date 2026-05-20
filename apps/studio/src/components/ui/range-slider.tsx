@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 
 interface RangeSliderProps {
   label: string;
+  hideLabel?: boolean;
   tooltip?: string;
   min: number;
   max: number;
@@ -193,6 +194,7 @@ export function SingleValueSlider({
 
 export function RangeSlider({
   label,
+  hideLabel,
   tooltip,
   min,
   max,
@@ -224,7 +226,7 @@ export function RangeSlider({
       role="group"
       aria-labelledby={groupLabelId}
     >
-      <div className="flex items-center gap-1.5">
+      <div className={cn("flex items-center gap-1.5", hideLabel && "sr-only")}>
         <Label
           id={groupLabelId}
           className="cursor-default text-sm font-medium text-black"

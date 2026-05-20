@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import type { AccessibilityFinding } from "@adt/types"
-import { Loader2, AlertCircle } from "lucide-react"
+import { Loader2 } from "lucide-react"
+import { Trans } from "@lingui/react/macro"
+import { StageBlockedState } from "@/components/pipeline/components/StageBlockedState"
+import { useAllPagesPruned } from "@/hooks/use-all-pages-pruned"
 import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate, useSearch } from "@tanstack/react-router"
 import { api, getAdtUrl } from "@/api/client"
@@ -29,6 +32,7 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
   const { stageState } = useBookRun()
   const { isTaskRunning, getTask } = useBookTasks(bookLabel)
   const storyboardDone = stageState("storyboard") === "done"
+  const { allPruned } = useAllPagesPruned(bookLabel)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const ranRef = useRef(false)
   const { panelOpen } = useDebugPanelState()
@@ -225,16 +229,21 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
 
   if (!storyboardDone) {
     return (
-      <div className="p-6 max-w-xl flex flex-col items-center gap-3 text-center">
-        <AlertCircle className="w-8 h-8 text-muted-foreground/50" />
-        <p className="text-sm text-muted-foreground">
-          A storyboard must be built before previewing.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Run the pipeline through
-          at least the <span className="font-medium text-foreground">Storyboard</span> stage first.
-        </p>
-      </div>
+      <StageBlockedState
+        bookLabel={bookLabel}
+        reason="storyboard-missing"
+        stageLabel={<Trans>Preview</Trans>}
+      />
+    )
+  }
+
+  if (allPruned) {
+    return (
+      <StageBlockedState
+        bookLabel={bookLabel}
+        reason="all-pruned"
+        stageLabel={<Trans>Preview</Trans>}
+      />
     )
   }
 
