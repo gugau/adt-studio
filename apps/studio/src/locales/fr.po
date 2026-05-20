@@ -2320,6 +2320,9 @@ msgstr "Côtés individuels"
 msgid "Infographic"
 msgstr "Infographie"
 
+msgid "Inherited from a parent element. Choose a value here to override on this element."
+msgstr "Hérité d'un élément parent. Choisissez une valeur ici pour remplacer sur cet élément."
+
 msgid "Initial Page"
 msgstr "Page initiale"
 
