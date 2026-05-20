@@ -103,3 +103,12 @@ export function persistedJsonAtom<T>(key: string, defaultValue: T) {
 export function ephemeralAtom<T>(initial: T) {
   return atom(initial)
 }
+
+/**
+ * Returns true if the configured storage already holds a value for `key`.
+ * Used at boot to decide whether to seed an atom from a config-provided
+ * default — we only override when the reader hasn't picked their own value.
+ */
+export function hasPersistedValue(key: string): boolean {
+  return adapter.getItem(key) !== null
+}

@@ -21,17 +21,28 @@ import { applyImageVariants, applyTranslationsToDOM, loadTranslations } from "@/
 import { loadPagesManifest, loadTocManifest } from "@/shared/runtime/manifest-loader"
 import { loadGlossary } from "@/features/glossary/runtime/glossary-loader"
 import { loadTimecodes } from "@/features/audio/runtime/tts-loader"
-import { setStorageMode } from "@/shared/state/persist"
-import { appConfigAtom } from "@/shared/state/config.atoms"
+import { hasPersistedValue, setStorageMode } from "@/shared/state/persist"
+import {
+  appConfigAtom,
+  isSettingLocked,
+  type AppConfig,
+  type LockableSetting,
+} from "@/shared/state/config.atoms"
 import {
   currentLanguageAtom,
   imageFilesAtom,
   translationsAtom,
 } from "@/features/language/state/language.atoms"
 import {
+  dockAlignAtom,
+  dockPositionAtom,
   dockReadyAtom,
+  dockWidthAtom,
   easyReadModeAtom,
   glossaryModeAtom,
+  iconSizeAtom,
+  reduceMotionAtom,
+  themeAtom,
 } from "@/shared/state/ui.atoms"
 import { glossaryDataAtom } from "@/features/glossary/state/glossary.atoms"
 import {
@@ -70,6 +81,44 @@ function readCurrentPageNumber(): number | null {
   return Number.isFinite(num) ? num : null
 }
 
+/**
+ * Apply `defaultSettings` and `lockedSettings` from the loaded config.
+ *
+ * For each setting: when locked, the configured default (or the atom's
+ * hardcoded fallback) is written every boot — the picker is hidden in this
+ * case so the author's value must win. When unlocked, the configured default
+ * only seeds the atom if the reader hasn't already chosen a value in storage.
+ */
+function applyConfiguredSettings(config: AppConfig): void {
+  const store = getDefaultStore()
+  const defaults = config.defaultSettings
+  const seed = <T>(
+    key: LockableSetting,
+    storageKey: string,
+    atom: Parameters<typeof store.set>[0],
+    value: T | undefined,
+  ): void => {
+    const locked = isSettingLocked(config, key)
+    if (locked && value !== undefined) {
+      store.set(atom as never, value as never)
+    } else if (!locked && value !== undefined && !hasPersistedValue(storageKey)) {
+      store.set(atom as never, value as never)
+    }
+  }
+
+  seed("dockLayout", "dockWidth", dockWidthAtom, defaults?.dockLayout?.width)
+  seed(
+    "dockLayout",
+    "dockPosition",
+    dockPositionAtom,
+    defaults?.dockLayout?.position,
+  )
+  seed("dockLayout", "dockAlign", dockAlignAtom, defaults?.dockLayout?.align)
+  seed("theme", "theme", themeAtom, defaults?.theme)
+  seed("iconSize", "iconSize", iconSizeAtom, defaults?.iconSize)
+  seed("reduceMotion", "reduceMotion", reduceMotionAtom, defaults?.reduceMotion)
+}
+
 function readPersistedLanguage(): string | null {
   if (typeof document === "undefined") return null
   const fromLs =
@@ -97,6 +146,7 @@ export async function bootRuntime(): Promise<void> {
     const config = await loadAppConfig()
     store.set(appConfigAtom, config)
     setStorageMode(pickStorageMode(config))
+    applyConfiguredSettings(config)
 
     const htmlLang = document.documentElement.getAttribute("lang")
     const persisted = readPersistedLanguage()

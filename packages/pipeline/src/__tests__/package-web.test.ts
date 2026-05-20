@@ -586,6 +586,99 @@ describe("packageAdtWeb", () => {
     expect(preloader).toContain("timecode/timecode_output.json")
   })
 
+  it("emits defaultSettings and lockedSettings in config.json when provided", async () => {
+    const bookDir = path.join(tmpDir, "book")
+    const webAssetsDir = path.join(tmpDir, "assets-web")
+    fs.mkdirSync(bookDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+
+    await packageAdtWeb(createMinimalStorage(), {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Book",
+      webAssetsDir,
+      defaultSettings: {
+        dockLayout: { width: "compact", position: "top", align: "center" },
+        theme: "light",
+        iconSize: "lg",
+        reduceMotion: true,
+      },
+      lockedSettings: ["dockLayout", "theme", "iconSize", "reduceMotion"],
+    })
+
+    const configJson = JSON.parse(
+      fs.readFileSync(path.join(bookDir, "adt", "assets", "config.json"), "utf-8"),
+    ) as {
+      defaultSettings: {
+        dockLayout: { width: string; position: string; align: string }
+        theme: string
+        iconSize: string
+        reduceMotion: boolean
+      }
+      lockedSettings: string[]
+    }
+    expect(configJson.defaultSettings.dockLayout).toEqual({
+      width: "compact",
+      position: "top",
+      align: "center",
+    })
+    expect(configJson.defaultSettings.theme).toBe("light")
+    expect(configJson.defaultSettings.iconSize).toBe("lg")
+    expect(configJson.defaultSettings.reduceMotion).toBe(true)
+    expect(configJson.lockedSettings).toEqual([
+      "dockLayout",
+      "theme",
+      "iconSize",
+      "reduceMotion",
+    ])
+  })
+
+  it("omits defaultSettings and lockedSettings when not provided", async () => {
+    const bookDir = path.join(tmpDir, "book")
+    const webAssetsDir = path.join(tmpDir, "assets-web")
+    fs.mkdirSync(bookDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+
+    await packageAdtWeb(createMinimalStorage(), {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Book",
+      webAssetsDir,
+    })
+
+    const configJson = JSON.parse(
+      fs.readFileSync(path.join(bookDir, "adt", "assets", "config.json"), "utf-8"),
+    ) as Record<string, unknown>
+    expect(configJson.defaultSettings).toBeUndefined()
+    expect(configJson.lockedSettings).toBeUndefined()
+  })
+
+  it("omits lockedSettings when given an empty array", async () => {
+    const bookDir = path.join(tmpDir, "book")
+    const webAssetsDir = path.join(tmpDir, "assets-web")
+    fs.mkdirSync(bookDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+
+    await packageAdtWeb(createMinimalStorage(), {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Book",
+      webAssetsDir,
+      lockedSettings: [],
+    })
+
+    const configJson = JSON.parse(
+      fs.readFileSync(path.join(bookDir, "adt", "assets", "config.json"), "utf-8"),
+    ) as Record<string, unknown>
+    expect(configJson.lockedSettings).toBeUndefined()
+  })
+
   it("enables highlight fallback when TTS exists without stored word timestamps", async () => {
     const bookDir = path.join(tmpDir, "book")
     const webAssetsDir = path.join(tmpDir, "assets-web")

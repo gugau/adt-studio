@@ -4,7 +4,7 @@ import { SegmentedRow } from "@/features/settings/components/SegmentedRow";
 import { SettingsSection } from "@/features/settings/components/SettingsSection";
 import { DockLayoutPicker } from "@/features/settings/components/DockLayoutPicker";
 import { KeyboardShortcutsSection } from "@/features/settings/components/KeyboardShortcutsSection";
-import { appConfigAtom } from "@/shared/state/config.atoms";
+import { appConfigAtom, isSettingLocked } from "@/shared/state/config.atoms";
 import {
   autoplayModeAtom,
   describeImagesModeAtom,
@@ -24,7 +24,14 @@ import { trackToggleEvent } from "@/shared/lib/analytics";
 
 export function SettingsTab() {
   const { t } = useTranslation();
-  const features = useAtomValue(appConfigAtom).features;
+  const config = useAtomValue(appConfigAtom);
+  const features = config.features;
+  const dockLayoutLocked = isSettingLocked(config, "dockLayout");
+  const themeLocked = isSettingLocked(config, "theme");
+  const iconSizeLocked = isSettingLocked(config, "iconSize");
+  const reduceMotionLocked = isSettingLocked(config, "reduceMotion");
+  const showAccessibilitySection =
+    !themeLocked || !iconSizeLocked || !reduceMotionLocked;
   const [stateMode, setStateMode] = useAtom(stateModeAtom);
   const [readAloud, setReadAloud] = useAtom(readAloudModeAtom);
   const [autoplay, setAutoplay] = useAtom(autoplayModeAtom);
@@ -89,52 +96,62 @@ export function SettingsTab() {
         </SettingsSection>
       ) : null}
 
-      <SettingsSection title={t("settings-section-toolbar") || "Toolbar"}>
-        <DockLayoutPicker />
-      </SettingsSection>
+      {!dockLayoutLocked ? (
+        <SettingsSection title={t("settings-section-toolbar") || "Toolbar"}>
+          <DockLayoutPicker />
+        </SettingsSection>
+      ) : null}
 
-      <SettingsSection
-        title={t("settings-section-accessibility") || "Accessibility"}
-      >
-        <SegmentedRow<Theme>
-          label={t("theme-label") || "Theme"}
-          value={theme as Theme}
-          onChange={(v) => {
-            trackToggleEvent(`Theme:${v}`, true);
-            setTheme(v);
-          }}
-          options={[
-            { value: "light", label: t("theme-light") || "Light" },
-            { value: "dark", label: t("theme-dark") || "Dark" },
-            { value: "system", label: t("theme-system") || "System" },
-          ]}
-        />
-        <SegmentedRow<IconSize>
-          label={t("icon-size-label") || "Icon size"}
-          value={iconSize as IconSize}
-          onChange={(v) => {
-            trackToggleEvent(`IconSize:${v}`, true);
-            setIconSize(v);
-          }}
-          options={[
-            { value: "sm", label: t("icon-size-sm") || "Small" },
-            { value: "md", label: t("icon-size-md") || "Medium" },
-            { value: "lg", label: t("icon-size-lg") || "Large" },
-          ]}
-        />
-        <ToggleRow
-          label={t("reduce-motion-label") || "Reduce motion"}
-          description={
-            t("reduce-motion-description") ||
-            "Disable animations and transitions across the reader."
-          }
-          checked={reduceMotion}
-          onChange={(v) => {
-            trackToggleEvent("ReduceMotion", v);
-            setReduceMotion(v);
-          }}
-        />
-      </SettingsSection>
+      {showAccessibilitySection ? (
+        <SettingsSection
+          title={t("settings-section-accessibility") || "Accessibility"}
+        >
+          {!themeLocked ? (
+            <SegmentedRow<Theme>
+              label={t("theme-label") || "Theme"}
+              value={theme as Theme}
+              onChange={(v) => {
+                trackToggleEvent(`Theme:${v}`, true);
+                setTheme(v);
+              }}
+              options={[
+                { value: "light", label: t("theme-light") || "Light" },
+                { value: "dark", label: t("theme-dark") || "Dark" },
+                { value: "system", label: t("theme-system") || "System" },
+              ]}
+            />
+          ) : null}
+          {!iconSizeLocked ? (
+            <SegmentedRow<IconSize>
+              label={t("icon-size-label") || "Icon size"}
+              value={iconSize as IconSize}
+              onChange={(v) => {
+                trackToggleEvent(`IconSize:${v}`, true);
+                setIconSize(v);
+              }}
+              options={[
+                { value: "sm", label: t("icon-size-sm") || "Small" },
+                { value: "md", label: t("icon-size-md") || "Medium" },
+                { value: "lg", label: t("icon-size-lg") || "Large" },
+              ]}
+            />
+          ) : null}
+          {!reduceMotionLocked ? (
+            <ToggleRow
+              label={t("reduce-motion-label") || "Reduce motion"}
+              description={
+                t("reduce-motion-description") ||
+                "Disable animations and transitions across the reader."
+              }
+              checked={reduceMotion}
+              onChange={(v) => {
+                trackToggleEvent("ReduceMotion", v);
+                setReduceMotion(v);
+              }}
+            />
+          ) : null}
+        </SettingsSection>
+      ) : null}
 
       {features.showAutoHideButton !== false ? (
         <SettingsSection title={t("settings-section-behavior") || "Behavior"}>

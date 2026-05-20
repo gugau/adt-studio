@@ -140,6 +140,23 @@ export const AppConfig = z
     end_page: z.number().int().min(1).optional(),
     speech: SpeechConfig.optional(),
     styleguide: z.string().regex(/^[a-zA-Z0-9_-]+$/).optional(),
+    default_settings: z
+      .object({
+        dock_layout: z
+          .object({
+            width: z.enum(["compact", "full"]).optional(),
+            position: z.enum(["top", "bottom"]).optional(),
+            align: z.enum(["center", "spread"]).optional(),
+          })
+          .optional(),
+        theme: z.enum(["light", "dark", "system"]).optional(),
+        icon_size: z.enum(["sm", "md", "lg"]).optional(),
+        reduce_motion: z.boolean().optional(),
+      })
+      .optional(),
+    locked_settings: z
+      .array(z.enum(["dockLayout", "theme", "iconSize", "reduceMotion"]))
+      .optional(),
     accessibility_assessment: AccessibilityAssessmentConfig.optional(),
     reviewer_validation: ReviewerValidationConfig.optional(),
   })

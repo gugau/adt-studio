@@ -101,6 +101,23 @@ export async function prepareExport(
       ? normalizedRequested.filter((lang) => outputLanguages.includes(lang))
       : outputLanguages
 
+    const defaultSettings = config.default_settings
+      ? {
+          ...(config.default_settings.dock_layout
+            ? { dockLayout: config.default_settings.dock_layout }
+            : {}),
+          ...(config.default_settings.theme !== undefined
+            ? { theme: config.default_settings.theme }
+            : {}),
+          ...(config.default_settings.icon_size !== undefined
+            ? { iconSize: config.default_settings.icon_size }
+            : {}),
+          ...(config.default_settings.reduce_motion !== undefined
+            ? { reduceMotion: config.default_settings.reduce_motion }
+            : {}),
+        }
+      : undefined
+
     const opts = {
       bookDir,
       label: safeLabel,
@@ -111,6 +128,8 @@ export async function prepareExport(
       applyBodyBackground: config.apply_body_background,
       speechConfig: config.speech,
       features,
+      defaultSettings,
+      lockedSettings: config.locked_settings,
     }
 
     await packageAdtWeb(storage, opts)

@@ -55,6 +55,17 @@ export interface PackageAdtWebOptions {
     quizzes?: boolean
     signLanguage?: boolean
   }
+  defaultSettings?: {
+    dockLayout?: {
+      width?: "compact" | "full"
+      position?: "top" | "bottom"
+      align?: "center" | "spread"
+    }
+    theme?: "light" | "dark" | "system"
+    iconSize?: "sm" | "md" | "lg"
+    reduceMotion?: boolean
+  }
+  lockedSettings?: ("dockLayout" | "theme" | "iconSize" | "reduceMotion")[]
 }
 
 interface PageEntry {
@@ -199,6 +210,8 @@ export async function packageAdtWeb(
     applyBodyBackground,
     speechConfig,
     features,
+    defaultSettings,
+    lockedSettings,
   } = options
   const language = normalizeLocale(rawLanguage)
   const outputLanguages = Array.from(new Set(rawOutputLanguages.map((code) => normalizeLocale(code))))
@@ -591,7 +604,7 @@ export async function packageAdtWeb(
 
   const hasSignLanguageVideos = (features?.signLanguage !== false) && storage.getSignLanguageVideos().some((v) => v.sectionId !== null)
 
-  const configJson = {
+  const configJson: Record<string, unknown> = {
     title,
     bundleVersion,
     languages: {
@@ -620,6 +633,12 @@ export async function packageAdtWeb(
       trackerUrl: "https://unisitetracker.unicef.io/matomo.php",
       srcUrl: "https://unisitetracker.unicef.io/matomo.js",
     },
+  }
+  if (defaultSettings && Object.keys(defaultSettings).length > 0) {
+    configJson.defaultSettings = defaultSettings
+  }
+  if (lockedSettings && lockedSettings.length > 0) {
+    configJson.lockedSettings = lockedSettings
   }
 
   // ------------------------------------------------------------------

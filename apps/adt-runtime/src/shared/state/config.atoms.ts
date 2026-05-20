@@ -40,6 +40,19 @@ export interface AppAnalytics {
   srcUrl?: string
 }
 
+export type LockableSetting = "dockLayout" | "theme" | "iconSize" | "reduceMotion"
+
+export interface DefaultSettings {
+  dockLayout?: {
+    width?: "compact" | "full"
+    position?: "top" | "bottom"
+    align?: "center" | "spread"
+  }
+  theme?: "light" | "dark" | "system"
+  iconSize?: "sm" | "md" | "lg"
+  reduceMotion?: boolean
+}
+
 export interface AppConfig {
   title?: string
   shortTitle?: string
@@ -49,6 +62,8 @@ export interface AppConfig {
   languages: AppLanguages
   features: AppFeatures
   analytics?: AppAnalytics
+  defaultSettings?: DefaultSettings
+  lockedSettings?: LockableSetting[]
 }
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -57,3 +72,10 @@ const DEFAULT_CONFIG: AppConfig = {
 }
 
 export const appConfigAtom = ephemeralAtom<AppConfig>(DEFAULT_CONFIG)
+
+export function isSettingLocked(
+  config: AppConfig,
+  key: LockableSetting,
+): boolean {
+  return config.lockedSettings?.includes(key) === true
+}
