@@ -40,7 +40,7 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
   const [pendingTaskId, setPendingTaskId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
-  const [version, setVersion] = useState(0)
+  const [version, setVersion] = useState("0")
   const [currentPreviewPage, setCurrentPreviewPage] = useState<{
     sectionId: string | null
     href: string | null
@@ -137,7 +137,7 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
         queryClient.invalidateQueries({ queryKey: ["debug", "accessibility", bookLabel] }),
         queryClient.invalidateQueries({ queryKey: ["debug", "versions", bookLabel, "accessibility-assessment", "book"] }),
       ]).then(() => {
-        setVersion((value) => Math.max(value + 1, Date.now()))
+        setVersion(readPackageVersion(task.result) ?? createPreviewVersion())
         setReady(true)
       })
     } else if (task.status === "failed") {
@@ -167,7 +167,7 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
           queryClient.invalidateQueries({ queryKey: ["debug", "accessibility", bookLabel] }),
           queryClient.invalidateQueries({ queryKey: ["debug", "versions", bookLabel, "accessibility-assessment", "book"] }),
         ])
-        setVersion((value) => Math.max(value + 1, Date.now()))
+        setVersion(result.version ?? createPreviewVersion())
         setReady(true)
       }
     } catch (e) {
@@ -337,6 +337,16 @@ function deriveReviewPageId(sectionId: string | null, href: string | null): stri
   }
 
   return null
+}
+
+function createPreviewVersion(): string {
+  return String(Date.now())
+}
+
+function readPackageVersion(result: unknown): string | null {
+  if (typeof result !== "object" || result === null) return null
+  const version = (result as { version?: unknown }).version
+  return typeof version === "string" && version.length > 0 ? version : null
 }
 
 function deriveReviewPageNumber(pageId: string | null): number | null {

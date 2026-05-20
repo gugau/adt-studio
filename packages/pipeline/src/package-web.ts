@@ -84,7 +84,7 @@ interface RuntimeTimecodeEntry {
 
 // Bump this when packaging output semantics change in a way that is not captured
 // by storage, config, or asset fingerprints.
-const PACKAGE_WEB_CACHE_VERSION = 2
+const PACKAGE_WEB_CACHE_VERSION = 3
 
 // ---------------------------------------------------------------------------
 // Build-cache helpers
@@ -161,8 +161,15 @@ export function computePackagingInputHash(options: ComputePackagingInputHashOpti
   // when package-web changes how it materializes existing storage data.
   hash.update(JSON.stringify({ packageWebCacheVersion: PACKAGE_WEB_CACHE_VERSION }))
 
-  // 1. Storage entity versions (exclude outputs like accessibility-assessment)
+  // 1. Storage entity versions and content (exclude outputs like accessibility-assessment)
   const fingerprint = options.storage.getNodeVersionFingerprint(["accessibility-assessment"])
+    .map((entry) => {
+      const row = options.storage.getLatestNodeData(entry.node, entry.itemId)
+      return {
+        ...entry,
+        dataHash: hashValue(row?.data ?? null),
+      }
+    })
   hash.update(JSON.stringify(fingerprint))
 
   // 2. Packaging options that affect output
@@ -193,6 +200,12 @@ export function computePackagingInputHash(options: ComputePackagingInputHashOpti
   hash.update(JSON.stringify(videoEntries))
 
   return hash.digest("hex")
+}
+
+function hashValue(value: unknown): string {
+  return createHash("sha256")
+    .update(JSON.stringify(value) ?? "undefined")
+    .digest("hex")
 }
 
 // ---------------------------------------------------------------------------

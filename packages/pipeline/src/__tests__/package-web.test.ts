@@ -34,7 +34,13 @@ function createMockStorage(
     appendLlmLog: () => {},
     getSignLanguageVideos: () => [],
     getSignLanguageVideoPath: () => null,
-    getNodeVersionFingerprint: () => ({}),
+    getNodeVersionFingerprint: (excludeNodes: string[] = []) =>
+      Object.entries(nodeData)
+        .filter(([node]) => !excludeNodes.includes(node))
+        .flatMap(([node, items]) =>
+          Object.keys(items).map((itemId) => ({ node, itemId, version: 1 })),
+        )
+        .sort((a, b) => a.node.localeCompare(b.node) || a.itemId.localeCompare(b.itemId)),
     close: () => {},
   }
 }
@@ -1908,6 +1914,52 @@ describe("packageWebpub", () => {
     const secondHash = computePackagingInputHash(baseOptions)
 
     expect('console.log("alpha")\n'.length).toBe('console.log("omega")\n'.length)
+    expect(firstHash).not.toBe(secondHash)
+  })
+
+  it("changes the packaging hash when node data changes without changing versions", () => {
+    const bookDir = path.join(tmpDir, "hash-book-data")
+    const webAssetsDir = path.join(tmpDir, "hash-assets-data")
+    fs.mkdirSync(bookDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+
+    const nodeData = {
+      "easy-read": {
+        book: {
+          blocks: [
+            {
+              entries: [
+                { easyReadId: "tx001_easy_read", text: "Easy Read text one" },
+              ],
+            },
+          ],
+        },
+      },
+    }
+    const storage = createMockStorage([], nodeData)
+    const baseOptions = {
+      storage,
+      bookDir,
+      label: "hash-book-data",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Hash Book",
+      webAssetsDir,
+      config: {},
+    }
+
+    const firstHash = computePackagingInputHash(baseOptions)
+    nodeData["easy-read"].book = {
+      blocks: [
+        {
+          entries: [
+            { easyReadId: "tx001_easy_read", text: "Easy Read text two" },
+          ],
+        },
+      ],
+    }
+    const secondHash = computePackagingInputHash(baseOptions)
+
     expect(firstHash).not.toBe(secondHash)
   })
 })

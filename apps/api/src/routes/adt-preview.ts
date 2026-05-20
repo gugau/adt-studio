@@ -1,5 +1,6 @@
 import fs from "node:fs"
 import path from "node:path"
+import { createHash } from "node:crypto"
 import { pathToFileURL } from "node:url"
 import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
@@ -106,6 +107,35 @@ function getPreviewBundleVersion(webAssetsDir: string): string {
 
   const latest = Math.max(...candidates, 1)
   return String(Math.trunc(latest))
+}
+
+function getPreviewContentVersion(storage: Storage, webAssetsDir: string): string {
+  const assetVersion = getPreviewBundleVersion(webAssetsDir)
+  const fingerprint = storage.getNodeVersionFingerprint(["accessibility-assessment"])
+    .map((entry) => {
+      const row = storage.getLatestNodeData(entry.node, entry.itemId)
+      return {
+        ...entry,
+        dataHash: hashValue(row?.data ?? null),
+      }
+    })
+  const hash = createHash("sha256")
+    .update(assetVersion)
+    .update(JSON.stringify(fingerprint))
+    .digest("hex")
+    .slice(0, 12)
+  return `${assetVersion}-${hash}`
+}
+
+function hashValue(value: unknown): string {
+  return createHash("sha256")
+    .update(JSON.stringify(value) ?? "undefined")
+    .digest("hex")
+}
+
+function setNoStoreHeaders(c: { header: (name: string, value: string) => void }): void {
+  c.header("Cache-Control", "no-store, max-age=0")
+  c.header("Pragma", "no-cache")
 }
 
 // ---------------------------------------------------------------------------
@@ -467,7 +497,7 @@ function buildPreviewConfig(
 
   return {
     title: getBookTitle(storage),
-    bundleVersion: getPreviewBundleVersion(webAssetsDir),
+    bundleVersion: getPreviewContentVersion(storage, webAssetsDir),
     languages: {
       available,
       default: sourceLang,
@@ -556,6 +586,7 @@ export function createAdtPreviewRoutes(
         bookConfig.output_languages,
       )
     })
+    setNoStoreHeaders(c)
     c.header("Content-Type", "application/json")
     return c.body(JSON.stringify(previewConfig))
   })
@@ -617,6 +648,7 @@ export function createAdtPreviewRoutes(
   // /content/pages.json — All rendered pages
   app.get("/books/:label/adt-preview/content/pages.json", (c) => {
     const pages = withStorage(c.req.param("label"), (storage) => buildPagesManifest(storage))
+    setNoStoreHeaders(c)
     c.header("Content-Type", "application/json")
     return c.body(JSON.stringify(pages))
   })
@@ -624,6 +656,7 @@ export function createAdtPreviewRoutes(
   // /content/toc.json
   app.get("/books/:label/adt-preview/content/toc.json", (c) => {
     const toc = withStorage(c.req.param("label"), (storage) => buildTocManifest(storage))
+    setNoStoreHeaders(c)
     c.header("Content-Type", "application/json")
     return c.body(JSON.stringify(toc))
   })
@@ -680,6 +713,7 @@ export function createAdtPreviewRoutes(
   app.get("/books/:label/adt-preview/content/tailwind_output.css", async (c) => {
     const { safeLabel } = resolveBook(c.req.param("label"))
     const css = await generateTailwindCss(safeLabel)
+    setNoStoreHeaders(c)
     c.header("Content-Type", "text/css")
     return c.body(css)
   })
@@ -688,6 +722,7 @@ export function createAdtPreviewRoutes(
     const { safeLabel } = resolveBook(c.req.param("label"))
     const body = await c.req.json<{ extraHtml?: string }>()
     const css = await generateTailwindCss(safeLabel, body.extraHtml)
+    setNoStoreHeaders(c)
     c.header("Content-Type", "text/css")
     return c.body(css)
   })
@@ -701,6 +736,7 @@ export function createAdtPreviewRoutes(
       const catalog = await getTextCatalog(storage)
       return buildTextsMap(storage, lang, sourceLanguage, catalog)
     })
+    setNoStoreHeaders(c)
     c.header("Content-Type", "application/json")
     return c.body(JSON.stringify(textsMap))
   })
@@ -717,6 +753,7 @@ export function createAdtPreviewRoutes(
       const baseLang = getBaseLanguage(lang)
       return buildGlossaryJson(glossary, catalog, textsMap, baseLang === sourceLanguage)
     })
+    setNoStoreHeaders(c)
     c.header("Content-Type", "application/json")
     return c.body(JSON.stringify(glossaryJson))
   })
@@ -736,6 +773,7 @@ export function createAdtPreviewRoutes(
       }
       return map
     })
+    setNoStoreHeaders(c)
     c.header("Content-Type", "application/json")
     return c.body(JSON.stringify(audioMap))
   })
@@ -750,6 +788,7 @@ export function createAdtPreviewRoutes(
           buildRuntimeTimecodeMap(getWordTimestamps(storage, lang))
         )
       : {}
+    setNoStoreHeaders(c)
     c.header("Content-Type", "application/json")
     return c.body(JSON.stringify(timecodes))
   })
@@ -773,6 +812,7 @@ export function createAdtPreviewRoutes(
       }
       return map
     })
+    setNoStoreHeaders(c)
     c.header("Content-Type", "application/json")
     return c.body(JSON.stringify(videosMap))
   })
@@ -886,7 +926,7 @@ export function createAdtPreviewRoutes(
         // Determine page index from the manifest
       const manifest = buildPagesManifest(storage)
       const manifestIndex = manifest.findIndex((e) => e.section_id === pageId)
-      const previewBundleVersion = getPreviewBundleVersion(webAssetsDir)
+      const previewBundleVersion = getPreviewContentVersion(storage, webAssetsDir)
 
       const html = renderPageHtml({
         content: quizHtmlContent,
@@ -902,6 +942,7 @@ export function createAdtPreviewRoutes(
         embed,
       })
 
+        setNoStoreHeaders(c)
         c.header("Content-Type", "text/html; charset=utf-8")
         return c.body(html)
       }
@@ -943,7 +984,7 @@ export function createAdtPreviewRoutes(
       // Determine page index from manifest (includes quiz pages)
       const manifest = buildPagesManifest(storage)
       const manifestIndex = manifest.findIndex((e) => e.section_id === pageId)
-      const previewBundleVersion = getPreviewBundleVersion(webAssetsDir)
+      const previewBundleVersion = getPreviewContentVersion(storage, webAssetsDir)
 
       const sectionMeta = sectioningParsed?.success
         ? sectioningParsed.data.sections[targetSectionIndex]
@@ -971,6 +1012,7 @@ export function createAdtPreviewRoutes(
         embed,
       })
 
+      setNoStoreHeaders(c)
       c.header("Content-Type", "text/html; charset=utf-8")
       return c.body(html)
     })

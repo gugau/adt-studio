@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { createPortal } from "react-dom"
 import { useNavigate } from "@tanstack/react-router"
+import { useQueryClient } from "@tanstack/react-query"
 import { Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -38,10 +39,13 @@ export function EasyReadSettings({
   const { data: bookConfigData } = useBookConfig(bookLabel)
   const { data: activeConfigData } = useActiveConfig(bookLabel)
   const updateConfig = useUpdateBookConfig()
+  const queryClient = useQueryClient()
   const { apiKey, hasApiKey } = useApiKey()
   const { queueRun } = useBookRun()
   const navigate = useNavigate()
   const [showRerunDialog, setShowRerunDialog] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [isSavingAndRunning, setIsSavingAndRunning] = useState(false)
   const [promptDraft, setPromptDraft] = useState<string | null>(null)
   const [promptName, setPromptName] = useState(DEFAULT_PROMPT)
   const [enabled, setEnabled] = useState(false)
@@ -95,22 +99,27 @@ export function EasyReadSettings({
 
   const confirmSaveAndRerun = async () => {
     const selectedPrompt = promptName.trim() || DEFAULT_PROMPT
-    if (promptDraft != null) {
-      await api.updatePrompt(selectedPrompt, promptDraft, bookLabel)
-    }
+    setSaveError(null)
+    setIsSavingAndRunning(true)
 
-    updateConfig.mutate(
-      { label: bookLabel, config: buildOverrides() },
-      {
-        onSuccess: async () => {
-          setDirty({})
-          setPromptDraft(null)
-          setShowRerunDialog(false)
-          queueRun({ fromStage: "easy-read", toStage: "easy-read", apiKey })
-          navigate({ to: "/books/$label/$step", params: { label: bookLabel, step: "easy-read" } })
-        },
-      },
-    )
+    try {
+      if (promptDraft != null) {
+        const savedPrompt = await api.updatePrompt(selectedPrompt, promptDraft, bookLabel)
+        queryClient.setQueryData(["prompts", selectedPrompt, bookLabel], savedPrompt)
+        await queryClient.invalidateQueries({ queryKey: ["prompts", selectedPrompt, bookLabel] })
+      }
+
+      await updateConfig.mutateAsync({ label: bookLabel, config: buildOverrides() })
+      setDirty({})
+      setPromptDraft(null)
+      setShowRerunDialog(false)
+      queueRun({ fromStage: "easy-read", toStage: "easy-read", apiKey })
+      navigate({ to: "/books/$label/$step", params: { label: bookLabel, step: "easy-read" } })
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : String(error))
+    } finally {
+      setIsSavingAndRunning(false)
+    }
   }
 
   const selectedPrompt = promptName.trim() || DEFAULT_PROMPT
@@ -186,8 +195,11 @@ export function EasyReadSettings({
         <Button
           size="sm"
           className="h-7 px-2.5 text-xs bg-black/15 text-white hover:bg-black/25"
-          onClick={() => setShowRerunDialog(true)}
-          disabled={updateConfig.isPending || !hasApiKey}
+          onClick={() => {
+            setSaveError(null)
+            setShowRerunDialog(true)
+          }}
+          disabled={updateConfig.isPending || isSavingAndRunning || !hasApiKey}
         >
           <Play className="mr-1.5 h-3.5 w-3.5" />
           {t`Save & Rerun`}
@@ -203,12 +215,17 @@ export function EasyReadSettings({
               {t`This will save your Easy Read settings and generate a new editable Easy Read version.`}
             </DialogDescription>
           </DialogHeader>
+          {saveError && (
+            <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+              {saveError}
+            </p>
+          )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRerunDialog(false)}>
+            <Button variant="outline" onClick={() => setShowRerunDialog(false)} disabled={isSavingAndRunning}>
               {t`Cancel`}
             </Button>
-            <Button onClick={confirmSaveAndRerun} disabled={updateConfig.isPending}>
-              {updateConfig.isPending ? t`Saving...` : t`Confirm Rerun`}
+            <Button onClick={confirmSaveAndRerun} disabled={updateConfig.isPending || isSavingAndRunning}>
+              {updateConfig.isPending || isSavingAndRunning ? t`Saving...` : t`Confirm Rerun`}
             </Button>
           </DialogFooter>
         </DialogContent>

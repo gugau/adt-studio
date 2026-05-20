@@ -1081,7 +1081,7 @@ export const api = {
     }),
 
   packageAdt: (label: string) =>
-    request<{ status: string; label: string; taskId?: string }>(
+    request<{ status: string; label: string; taskId?: string; version?: string }>(
       `/books/${label}/package-adt`,
       { method: "POST" }
     ),
