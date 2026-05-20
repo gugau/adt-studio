@@ -217,7 +217,7 @@ export function StageSidebar({
         railCollapsed ? (
           <div
             key={`group-${stepGroup}`}
-            className="relative h-[26px] px-3 pt-3 pb-1 overflow-hidden"
+            className="relative h-[26px] shrink-0 px-3 pt-3 pb-1 overflow-hidden"
             role="presentation"
           >
             {/* Thin divider visible while the rail is collapsed; fades out as
@@ -233,7 +233,7 @@ export function StageSidebar({
         ) : (
           <div
             key={`group-${stepGroup}`}
-            className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 truncate"
+            className="shrink-0 px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 truncate"
           >
             {i18n._(STAGE_GROUP_LABELS[stepGroup])}
           </div>
