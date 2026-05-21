@@ -1,8 +1,6 @@
 import { Toaster } from "sonner"
 import { useThemeSync } from "@/features/settings/hooks/useThemeSync"
 import { TooltipProvider } from "@/shared/ui/tooltip"
-import { ActivityHeader } from "@/features/activity/components/ActivityHeader"
-import { SkipLink } from "@/features/navigation/components/SkipLink"
 import { Notepad } from "@/features/notepad/components/Notepad"
 import { Eli5Popup } from "@/features/eli5/components/Eli5Popup"
 import { SLVideo } from "@/features/sign-language/components/SLVideo"
