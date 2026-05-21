@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useExportWatcher } from "@/hooks/use-export-watcher"
 import { type ExportFeatureToggles, useAvailableExportFeatures } from "@/hooks/use-export-features"
+import { useCapturedPreviewSettings } from "@/hooks/use-preview-settings-listener"
 import { buildExportFormatConfig, type ExportFormat } from "./export-formats"
 import { ExportDialog } from "./ExportDialog"
 
@@ -16,6 +17,7 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
   const { stageState } = useBookRun()
   const storyboardDone = stageState("storyboard") === "done"
   const availableFeatures = useAvailableExportFeatures(bookLabel)
+  const capturedPreviewSettings = useCapturedPreviewSettings(bookLabel)
   const formats = buildExportFormatConfig(t)
 
   const [featureToggles, setFeatureToggles] = useState<ExportFeatureToggles>({
@@ -44,7 +46,9 @@ export function ExportView({ bookLabel }: { bookLabel: string }) {
         signLanguage: featureToggles.signLanguage && availableFeatures.signLanguage,
         languages: languageOrder ?? undefined,
       }
-      startExport(selectedFormat, features)
+      const defaultSettings =
+        selectedFormat === "project" ? undefined : capturedPreviewSettings
+      startExport(selectedFormat, features, defaultSettings)
       setExportDialogOpen(false)
     }
   }

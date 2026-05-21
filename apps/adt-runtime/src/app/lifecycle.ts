@@ -282,3 +282,58 @@ export function subscribeLanguageChanges(): () => void {
     unsubEasyRead()
   }
 }
+
+/**
+ * When the runtime is mounted inside a Studio preview iframe, post a snapshot
+ * of the reader-customization atoms (dock layout, theme, icon size, reduce
+ * motion) to `window.parent` on boot and on every change. Studio uses these
+ * to seed the exported web ADT's `defaultSettings`.
+ *
+ * No-op when the runtime is standalone (file://, exported HTTP) — there's no
+ * parent listening.
+ */
+export function subscribePreviewSettings(): () => void {
+  if (typeof window === "undefined") return () => {}
+  if (window.parent === window) return () => {}
+
+  const bookLabelMatch = window.location.pathname.match(/\/books\/([^/]+)\//)
+  if (!bookLabelMatch) return () => {}
+  const bookLabel = bookLabelMatch[1]
+
+  const store = getDefaultStore()
+
+  const snapshot = (): void => {
+    window.parent.postMessage(
+      {
+        type: "adt-runtime/preview-settings",
+        bookLabel,
+        settings: {
+          dockLayout: {
+            width: store.get(dockWidthAtom) as string,
+            position: store.get(dockPositionAtom) as string,
+            align: store.get(dockAlignAtom) as string,
+          },
+          theme: store.get(themeAtom) as string,
+          iconSize: store.get(iconSizeAtom) as string,
+          reduceMotion: store.get(reduceMotionAtom) as boolean,
+        },
+      },
+      "*",
+    )
+  }
+
+  snapshot()
+
+  const unsubs = [
+    store.sub(dockWidthAtom, snapshot),
+    store.sub(dockPositionAtom, snapshot),
+    store.sub(dockAlignAtom, snapshot),
+    store.sub(themeAtom, snapshot),
+    store.sub(iconSizeAtom, snapshot),
+    store.sub(reduceMotionAtom, snapshot),
+  ]
+
+  return () => {
+    for (const unsub of unsubs) unsub()
+  }
+}

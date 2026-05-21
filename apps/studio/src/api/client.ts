@@ -1132,13 +1132,22 @@ export const api = {
   prepareExport: (
     label: string,
     format: "project" | "webpub" | "scorm" | "adt" = "project",
-    features?: { glossary?: boolean; readAloud?: boolean; quizzes?: boolean; signLanguage?: boolean; languages?: string[] }
+    features?: { glossary?: boolean; readAloud?: boolean; quizzes?: boolean; signLanguage?: boolean; languages?: string[] },
+    defaultSettings?: {
+      dockLayout?: { width?: "compact" | "full"; position?: "top" | "bottom"; align?: "center" | "spread" }
+      theme?: "light" | "dark" | "system"
+      iconSize?: "sm" | "md" | "lg"
+      reduceMotion?: boolean
+    },
   ) => {
+    const body: Record<string, unknown> = {}
+    if (features) body.features = features
+    if (defaultSettings) body.defaultSettings = defaultSettings
     return request<{ taskId?: string; status: string; label: string }>(
       `/books/${label}/prepare-export?format=${format}`,
       {
         method: "POST",
-        body: features ? JSON.stringify({ features }) : undefined,
+        body: Object.keys(body).length > 0 ? JSON.stringify(body) : undefined,
       }
     )
   },

@@ -56,6 +56,17 @@ export interface ExportFeatures {
   languages?: string[]
 }
 
+export interface ExportDefaultSettings {
+  dockLayout?: {
+    width?: "compact" | "full"
+    position?: "top" | "bottom"
+    align?: "center" | "spread"
+  }
+  theme?: "light" | "dark" | "system"
+  iconSize?: "sm" | "md" | "lg"
+  reduceMotion?: boolean
+}
+
 /**
  * Prepare export by rebuilding the adt/ (and optionally webpub/) directories.
  * Called as a separate step before the actual download so the client can show
@@ -68,6 +79,7 @@ export async function prepareExport(
   webAssetsDir: string,
   configPath?: string,
   features?: ExportFeatures,
+  defaultSettingsOverride?: ExportDefaultSettings,
 ): Promise<void> {
   const safeLabel = parseBookLabel(label)
   const resolvedDir = path.resolve(booksDir)
@@ -101,7 +113,7 @@ export async function prepareExport(
       ? normalizedRequested.filter((lang) => outputLanguages.includes(lang))
       : outputLanguages
 
-    const defaultSettings = config.default_settings
+    const yamlDefaultSettings = config.default_settings
       ? {
           ...(config.default_settings.dock_layout
             ? { dockLayout: config.default_settings.dock_layout }
@@ -118,6 +130,22 @@ export async function prepareExport(
         }
       : undefined
 
+    // Preview-captured values (from request body) override YAML per top-level
+    // key. dockLayout merges one level deep — fields the override didn't touch
+    // fall back to YAML.
+    const mergedDefaultSettings = (() => {
+      if (!yamlDefaultSettings && !defaultSettingsOverride) return undefined
+      const yaml = yamlDefaultSettings ?? {}
+      const override = defaultSettingsOverride ?? {}
+      return {
+        ...yaml,
+        ...override,
+        ...(yaml.dockLayout || override.dockLayout
+          ? { dockLayout: { ...yaml.dockLayout, ...override.dockLayout } }
+          : {}),
+      }
+    })()
+
     const opts = {
       bookDir,
       label: safeLabel,
@@ -128,7 +156,7 @@ export async function prepareExport(
       applyBodyBackground: config.apply_body_background,
       speechConfig: config.speech,
       features,
-      defaultSettings,
+      defaultSettings: mergedDefaultSettings,
       lockedSettings: config.locked_settings,
     }
 

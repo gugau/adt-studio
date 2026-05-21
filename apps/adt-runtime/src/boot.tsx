@@ -5,7 +5,11 @@ import { createRoot, type Root } from "react-dom/client"
 import { Provider as JotaiProvider, getDefaultStore } from "jotai"
 import { ChromeRoot } from "@/app/ChromeRoot"
 import { NavRoot } from "@/app/NavRoot"
-import { bootRuntime, subscribeLanguageChanges } from "@/app/lifecycle"
+import {
+  bootRuntime,
+  subscribeLanguageChanges,
+  subscribePreviewSettings,
+} from "@/app/lifecycle"
 import { describeInitError, showErrorToast, showMainContent } from "@/shared/lib/errors"
 
 const sharedStore = getDefaultStore()
@@ -64,8 +68,12 @@ function mount(): void {
   // language-change subscription so the sidebar selector triggers reloads.
   void bootRuntime()
     .then(() => {
-      const unsubscribe = subscribeLanguageChanges()
-      window.__adtRuntime!.unsubscribe = unsubscribe
+      const unsubLanguage = subscribeLanguageChanges()
+      const unsubPreview = subscribePreviewSettings()
+      window.__adtRuntime!.unsubscribe = () => {
+        unsubLanguage()
+        unsubPreview()
+      }
     })
     .catch((err) => {
       console.error("ADT runtime boot failed", err)
