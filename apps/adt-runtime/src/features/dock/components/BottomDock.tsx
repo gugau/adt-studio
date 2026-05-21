@@ -12,6 +12,7 @@ import { useTranslation } from "@/features/language/hooks/useTranslation";
 function ReaderDockContents() {
   const features = useAtomValue(appConfigAtom).features;
   const { isSpread } = useDockContext();
+  const { t } = useTranslation();
   return (
     <>
       {features.showNavigationControls && (
@@ -21,7 +22,10 @@ function ReaderDockContents() {
       )}
 
       <div className={cn("order-1", isSpread && "flex-1")}>
-        <BookMetadata className="min-w-64" ariaLabel="Main Menu" />
+        <BookMetadata
+          className="min-w-64"
+          ariaLabel={t("main-menu-label") || "Main Menu"}
+        />
       </div>
 
       <DockMenu className={cn("order-3", isSpread && "flex-1", "min-w-64")} />

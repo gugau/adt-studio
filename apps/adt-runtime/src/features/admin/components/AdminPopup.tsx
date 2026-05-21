@@ -29,7 +29,7 @@ export function AdminPopup() {
           </DialogTitle>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">
-          Admin tools will be ported in a follow-up.
+          {t("admin-popup-stub-message") || "Admin tools will be ported in a follow-up."}
         </p>
       </DialogContent>
     </Dialog>
