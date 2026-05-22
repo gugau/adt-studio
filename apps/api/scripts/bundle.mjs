@@ -15,7 +15,7 @@ import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { zipSync } from "fflate"
 import postcss from "postcss"
-import tailwindcss from "tailwindcss"
+import tailwindcss from "@tailwindcss/postcss"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(__dirname, "..")
@@ -137,65 +137,49 @@ console.log("✓ Bundled → dist-pkg/api-server.mjs")
 
 const webAssetsDir = path.resolve(monorepoRoot, "assets", "adt")
 
-// Step A: Pre-build base.bundle.min.js (ESM) + base.bundle.local.js (IIFE)
-// esbuild cannot run inside the @yao-pkg/pkg sidecar binary at runtime.
-// package-web.ts:buildJsBundle() checks for these files first and copies them.
-await build({
-  entryPoints: [path.join(webAssetsDir, "base.js")],
-  bundle: true,
-  minify: true,
-  sourcemap: true,
-  format: "esm",
-  target: "es2020",
-  outfile: path.join(webAssetsDir, "base.bundle.min.js"),
-})
-await build({
-  entryPoints: [path.join(webAssetsDir, "base.js")],
-  bundle: true,
-  minify: true,
-  format: "iife",
-  target: "es2020",
-  outfile: path.join(webAssetsDir, "base.bundle.local.js"),
-})
-console.log("✓ Pre-built assets/adt/base.bundle.min.js + base.bundle.local.js")
+// Step A: Pre-build the ADT runtime bundle (React + Jotai chrome).
+//
+// Source lives at apps/adt-runtime; its build.config.mjs emits
+// base.bundle.min.js (ESM) + base.bundle.local.js (IIFE) into assets/adt/
+// and copies static public assets (sounds/, symbols/, fonts/, etc.) alongside.
+// esbuild cannot run inside the @yao-pkg/pkg sidecar binary at runtime, so we
+// pre-build here. package-web.ts:buildJsBundle() picks up the pre-built files.
+const adtRuntimeBuildScript = path.resolve(
+  monorepoRoot,
+  "apps/adt-runtime/build.config.mjs",
+)
+await import(adtRuntimeBuildScript)
+console.log("✓ Pre-built assets/adt/base.bundle.min.js + base.bundle.local.js (via adt-runtime)")
 
 // Step B: Pre-build tailwind_output.css
-// tailwindcss/postcss cannot run inside pkg. package-web.ts:buildTailwindCss()
-// checks for this file first and copies it.
+//
+// Tailwind v4 is CSS-first — the theme tokens, color mappings, and base
+// layer all live inside tailwind_css.css (mirrored from
+// apps/adt-runtime/src/styles/globals.css by the runtime build above).
+// Content sources are injected via `@source` directives prepended to the
+// input CSS so we don't depend on filesystem auto-detection (which would
+// resolve relative to `webAssetsDir` rather than the chrome source).
+//
+// This pre-builds tailwind_output.css for sidecar/pkg mode where
+// @tailwindcss/postcss can't run at runtime; package-web.ts:buildTailwindCss()
+// copies the pre-built file when present.
 const inputCssPath = path.join(webAssetsDir, "tailwind_css.css")
 const inputCss = fs.existsSync(inputCssPath)
   ? fs.readFileSync(inputCssPath, "utf-8")
-  : "@tailwind base;\n@tailwind components;\n@tailwind utilities;"
-const tailwindConfig = {
-  content: [
-    path.join(webAssetsDir, "interface.html"),
-    path.join(webAssetsDir, "modules", "**", "*.js"),
-  ],
-  theme: {
-    extend: {
-      keyframes: {
-        tutorialPopIn: {
-          "0%": { opacity: "0", transform: "scale(0.9)" },
-          "100%": { opacity: "1", transform: "scale(1)" },
-        },
-        pulseBorder: {
-          "0%": { boxShadow: "0 0 0 0 rgba(49,130,206,0.7)" },
-          "70%": { boxShadow: "0 0 0 10px rgba(49,130,206,0)" },
-          "100%": { boxShadow: "0 0 0 0 rgba(49,130,206,0)" },
-        },
-      },
-      animation: {
-        tutorialPopIn: "tutorialPopIn 0.3s ease-out forwards",
-        pulseBorder: "pulseBorder 2s infinite",
-      },
-      boxShadow: { tutorial: "0 0 0 4px rgba(49,130,206,0.3)" },
-    },
-  },
-  plugins: [],
-}
-const tailwindResult = await postcss([tailwindcss(tailwindConfig)]).process(
-  inputCss,
-  { from: undefined },
+  : '@import "tailwindcss";'
+
+const sourceDirectives = [
+  `@source "${path.join(monorepoRoot, "apps/adt-runtime/src").replace(/\\/g, "/")}";`,
+  `@source "${path.join(webAssetsDir, "base.bundle.min.js").replace(/\\/g, "/")}";`,
+].join("\n")
+
+// Tailwind v4 resolves `@import "tailwindcss"` relative to the postcss
+// `from` path. assets/adt/ has no node_modules of its own, so we point
+// `from` at a virtual path inside this package where tailwindcss is
+// installed. `base` controls where @source globs are anchored.
+const tailwindResult = await postcss([tailwindcss({ base: monorepoRoot })]).process(
+  `${sourceDirectives}\n${inputCss}`,
+  { from: path.join(root, "_tailwind_input.css") },
 )
 fs.writeFileSync(path.join(webAssetsDir, "tailwind_output.css"), tailwindResult.css)
 console.log("✓ Pre-built assets/adt/tailwind_output.css")

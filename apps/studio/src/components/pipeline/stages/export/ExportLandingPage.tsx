@@ -20,6 +20,7 @@ import {
 import { ExportDialog } from "./ExportDialog"
 import { FormatPicker } from "./components/FormatPicker"
 import { ExportPreview } from "./components/ExportPreview"
+import { useCapturedPreviewSettings } from "@/hooks/use-preview-settings-listener"
 
 export function ExportLandingPage({ bookLabel }: { bookLabel: string }) {
   const { t } = useLingui()
@@ -30,7 +31,7 @@ export function ExportLandingPage({ bookLabel }: { bookLabel: string }) {
     useExportWatcher()
   const projectFeatures = useAllProjectFeatures(bookLabel)
   const available = projectFeatures.toggleable
-
+ const capturedPreviewSettings = useCapturedPreviewSettings(bookLabel)
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>("adt")
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [languageOrder, setLanguageOrder] = useState<string[] | null>(null)
@@ -57,7 +58,9 @@ export function ExportLandingPage({ bookLabel }: { bookLabel: string }) {
               featureToggles.signLanguage && available.signLanguage,
             languages: languageOrder ?? undefined,
           }
-    startExport(selectedFormat, features)
+    const defaultSettings =
+      selectedFormat === "project" ? undefined : capturedPreviewSettings
+    startExport(selectedFormat, features, defaultSettings)
     setExportDialogOpen(false)
   }
 

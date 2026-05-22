@@ -292,3 +292,24 @@ image_filters:
 
 # rate_limit:
 #   requests_per_minute: 60
+
+# Reader-customization defaults and locks applied to the exported web ADT.
+# `default_settings` seeds the reader's starting values (only overrides
+# localStorage when the corresponding key is locked).
+# `locked_settings` hides those controls from the reader's settings panel.
+#
+# Example:
+# default_settings:
+#   dock_layout:
+#     width: full        # compact | full
+#     position: bottom   # top | bottom
+#     align: spread      # center | spread
+#   theme: dark          # light | dark | system
+#   icon_size: md        # sm | md | lg
+#   reduce_motion: false
+
+locked_settings:
+  - dockLayout
+  - theme
+  - iconSize
+  - reduceMotion

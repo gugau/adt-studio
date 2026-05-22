@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { I18nProvider } from "@lingui/react"
 import { i18n } from "@lingui/core"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { usePreviewSettingsListener } from "@/hooks/use-preview-settings-listener"
 import { messages as enMessages } from "./locales/en.po"
 import { messages as ptBRMessages } from "./locales/pt-BR.po"
 import { messages as esMessages } from "./locales/es.po"
@@ -63,11 +64,17 @@ declare module "@tanstack/react-router" {
   }
 }
 
+function PreviewSettingsListener(): null {
+  usePreviewSettingsListener()
+  return null
+}
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <I18nProvider i18n={i18n}>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider delayDuration={300}>
+          <PreviewSettingsListener />
           <RouterProvider router={router} />
         </TooltipProvider>
       </QueryClientProvider>

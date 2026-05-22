@@ -16,7 +16,7 @@ export interface BuildScreenshotHtmlOptions {
   label: string
   /** Map of imageId → base64 data for inline embedding. */
   images: Map<string, { base64: string }>
-  /** Path to the web assets directory (fonts, tailwind config, etc). */
+  /** Path to the web assets directory (fonts, tailwind CSS entry, etc). */
   webAssetsDir: string
   /** HTML lang attribute. Defaults to "en". */
   language?: string

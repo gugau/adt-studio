@@ -20,6 +20,7 @@ import {
   exportScorm,
   exportAdt,
   type ExportFeatures,
+  type ExportDefaultSettings,
   type ExportResult,
 } from "../services/export-service.js"
 import { importProject, previewImport } from "../services/import-service.js"
@@ -210,11 +211,16 @@ export function createBookRoutes(
     const { label } = c.req.param()
     const format = (c.req.query("format") ?? "project") as "project" | "webpub" | "scorm" | "adt"
     let features: ExportFeatures | undefined
+    let defaultSettings: ExportDefaultSettings | undefined
     const hasBody = (c.req.header("content-length") ?? "0") !== "0"
     if (hasBody) {
       try {
-        const body = await c.req.json<{ features?: ExportFeatures }>()
+        const body = await c.req.json<{
+          features?: ExportFeatures
+          defaultSettings?: ExportDefaultSettings
+        }>()
         features = body.features
+        defaultSettings = body.defaultSettings
       } catch {
         throw new HTTPException(400, { message: "Invalid JSON body" })
       }
@@ -227,14 +233,14 @@ export function createBookRoutes(
         "prepare-export",
         `Preparing ${format} export`,
         async () => {
-          await prepareExport(label, format, booksDir, webAssetsDir ?? "", configPath, features)
+          await prepareExport(label, format, booksDir, webAssetsDir ?? "", configPath, features, defaultSettings)
         },
         { url: `/books/${safeLabel}/export-${format}` }
       )
       return c.json({ status: "submitted", taskId, label: safeLabel })
     }
 
-    await prepareExport(label, format, booksDir, webAssetsDir ?? "", configPath, features)
+    await prepareExport(label, format, booksDir, webAssetsDir ?? "", configPath, features, defaultSettings)
     return c.json({ status: "completed", label: safeLabel })
   })
 

@@ -41,9 +41,16 @@ function createMockStorage(
 
 function createWebAssets(webAssetsDir: string): void {
   fs.mkdirSync(webAssetsDir, { recursive: true })
+  // Pre-built runtime bundles. In production these come from
+  // apps/adt-runtime/build.config.mjs; in tests we write them directly so
+  // buildJsBundle's "copy from webAssetsDir" path is exercised without
+  // pulling in the real React build.
+  const bundleStub = 'window.__ADT_BUNDLE_TEST__ = "ok";\n'
+  fs.writeFileSync(path.join(webAssetsDir, "base.bundle.min.js"), bundleStub)
+  fs.writeFileSync(path.join(webAssetsDir, "base.bundle.local.js"), bundleStub)
   fs.writeFileSync(
-    path.join(webAssetsDir, "base.js"),
-    'window.__ADT_BUNDLE_TEST__ = "ok";\n',
+    path.join(webAssetsDir, "base.bundle.min.js.map"),
+    '{"version":3,"sources":["base.tsx"],"mappings":""}',
   )
   fs.writeFileSync(path.join(webAssetsDir, "fonts.css"), "body { font-family: serif; }")
   fs.writeFileSync(
@@ -84,7 +91,7 @@ function createMinimalStorage(): Storage {
 }
 
 describe("renderPageHtml", () => {
-  it("includes font preload links before stylesheet links", () => {
+  it("does not emit font preload links (fonts are inlined as base64 in fonts.css for file:// support)", () => {
     const html = renderPageHtml({
       content: "<p>Hello</p>",
       language: "en",
@@ -98,16 +105,9 @@ describe("renderPageHtml", () => {
     expect((html.match(/<main\b/g) ?? [])).toHaveLength(1)
     expect(html).toContain('<main class="w-full">')
     expect(html).toContain('<div id="content" class="opacity-0">')
-    expect(html).toContain(
-      '<link rel="preload" href="./assets/fonts/Merriweather-VariableFont.woff2" as="font" type="font/woff2" crossorigin>',
-    )
-    expect(html).toContain(
-      '<link rel="preload" href="./assets/fonts/Merriweather-Italic-VariableFont.woff2" as="font" type="font/woff2" crossorigin>',
-    )
-
-    const preloadPos = html.indexOf('rel="preload"')
-    const stylesheetPos = html.indexOf('href="./assets/fonts.css"')
-    expect(preloadPos).toBeLessThan(stylesheetPos)
+    expect(html).not.toContain('rel="preload"')
+    expect(html).not.toContain("Merriweather-VariableFont.woff2")
+    expect(html).toContain('href="./assets/fonts.css"')
   })
 
   it("uses offline/SCORM scripts instead of type=module in normal mode", () => {
@@ -145,7 +145,7 @@ describe("renderPageHtml", () => {
     expect(html).not.toContain("scorm.js")
   })
 
-  it("includes crossorigin on font preloads", () => {
+  it("does not reference woff2 fonts directly (they are inlined as base64 in fonts.css)", () => {
     const html = renderPageHtml({
       content: "<p>Hello</p>",
       language: "en",
@@ -156,7 +156,7 @@ describe("renderPageHtml", () => {
       bundleVersion: "1",
     })
 
-    expect(html).toContain('as="font" type="font/woff2" crossorigin>')
+    expect(html).not.toContain("woff2")
   })
 
   it("injects an sr-only h1 fallback when content has no headings", () => {
@@ -350,7 +350,6 @@ describe("packageAdtWeb", () => {
     const bundlePath = path.join(bookDir, "adt", "assets", "base.bundle.min.js")
     expect(fs.existsSync(bundlePath)).toBe(true)
     expect(fs.readFileSync(bundlePath, "utf-8")).toContain("__ADT_BUNDLE_TEST__")
-    expect(fs.existsSync(`${bundlePath}.map`)).toBe(true)
 
     // Offline preloader generated
     const preloaderPath = path.join(bookDir, "adt", "assets", "offline-preloader.js")
@@ -585,6 +584,99 @@ describe("packageAdtWeb", () => {
       "utf-8",
     )
     expect(preloader).toContain("timecode/timecode_output.json")
+  })
+
+  it("emits defaultSettings and lockedSettings in config.json when provided", async () => {
+    const bookDir = path.join(tmpDir, "book")
+    const webAssetsDir = path.join(tmpDir, "assets-web")
+    fs.mkdirSync(bookDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+
+    await packageAdtWeb(createMinimalStorage(), {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Book",
+      webAssetsDir,
+      defaultSettings: {
+        dockLayout: { width: "compact", position: "top", align: "center" },
+        theme: "light",
+        iconSize: "lg",
+        reduceMotion: true,
+      },
+      lockedSettings: ["dockLayout", "theme", "iconSize", "reduceMotion"],
+    })
+
+    const configJson = JSON.parse(
+      fs.readFileSync(path.join(bookDir, "adt", "assets", "config.json"), "utf-8"),
+    ) as {
+      defaultSettings: {
+        dockLayout: { width: string; position: string; align: string }
+        theme: string
+        iconSize: string
+        reduceMotion: boolean
+      }
+      lockedSettings: string[]
+    }
+    expect(configJson.defaultSettings.dockLayout).toEqual({
+      width: "compact",
+      position: "top",
+      align: "center",
+    })
+    expect(configJson.defaultSettings.theme).toBe("light")
+    expect(configJson.defaultSettings.iconSize).toBe("lg")
+    expect(configJson.defaultSettings.reduceMotion).toBe(true)
+    expect(configJson.lockedSettings).toEqual([
+      "dockLayout",
+      "theme",
+      "iconSize",
+      "reduceMotion",
+    ])
+  })
+
+  it("omits defaultSettings and lockedSettings when not provided", async () => {
+    const bookDir = path.join(tmpDir, "book")
+    const webAssetsDir = path.join(tmpDir, "assets-web")
+    fs.mkdirSync(bookDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+
+    await packageAdtWeb(createMinimalStorage(), {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Book",
+      webAssetsDir,
+    })
+
+    const configJson = JSON.parse(
+      fs.readFileSync(path.join(bookDir, "adt", "assets", "config.json"), "utf-8"),
+    ) as Record<string, unknown>
+    expect(configJson.defaultSettings).toBeUndefined()
+    expect(configJson.lockedSettings).toBeUndefined()
+  })
+
+  it("omits lockedSettings when given an empty array", async () => {
+    const bookDir = path.join(tmpDir, "book")
+    const webAssetsDir = path.join(tmpDir, "assets-web")
+    fs.mkdirSync(bookDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+
+    await packageAdtWeb(createMinimalStorage(), {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Book",
+      webAssetsDir,
+      lockedSettings: [],
+    })
+
+    const configJson = JSON.parse(
+      fs.readFileSync(path.join(bookDir, "adt", "assets", "config.json"), "utf-8"),
+    ) as Record<string, unknown>
+    expect(configJson.lockedSettings).toBeUndefined()
   })
 
   it("enables highlight fallback when TTS exists without stored word timestamps", async () => {
@@ -1115,75 +1207,120 @@ describe("packageAdtWeb", () => {
     ])
   })
 
-  it("builds IIFE bundle via esbuild when only pre-built ESM exists", async () => {
-    const bookDir = path.join(tmpDir, "book")
-    const webAssetsDir = path.join(tmpDir, "assets-web")
+  it("invokes apps/adt-runtime/build.config.mjs when only pre-built ESM exists", async () => {
+    // Lay out a fake monorepo root so buildJsBundle can resolve
+    // <webAssetsDir>/../../apps/adt-runtime/build.config.mjs.
+    const monorepoTmp = fs.mkdtempSync(path.join(os.tmpdir(), "adt-pkg-bundle-esm-"))
+    const bookDir = path.join(monorepoTmp, "book")
+    const webAssetsDir = path.join(monorepoTmp, "assets", "adt")
+    const runtimeDir = path.join(monorepoTmp, "apps", "adt-runtime")
     fs.mkdirSync(bookDir, { recursive: true })
-    createWebAssets(webAssetsDir)
+    fs.mkdirSync(webAssetsDir, { recursive: true })
+    fs.mkdirSync(runtimeDir, { recursive: true })
 
-    // Simulate partial pre-build: only ESM pre-built, no IIFE
-    const preBuiltContent = '/* pre-built ESM marker */\nconsole.log("esm");'
-    fs.writeFileSync(path.join(webAssetsDir, "base.bundle.min.js"), preBuiltContent)
+    // Required non-bundle assets
+    fs.writeFileSync(path.join(webAssetsDir, "fonts.css"), "body { font-family: serif; }")
+    fs.writeFileSync(
+      path.join(webAssetsDir, "tailwind_css.css"),
+      "@tailwind base;\n",
+    )
 
-    const storage = createMinimalStorage()
-    await packageAdtWeb(storage, {
-      bookDir,
-      label: "book",
-      language: "en",
-      outputLanguages: ["en"],
-      title: "Test",
-      webAssetsDir,
-    })
+    // Partial pre-build: only ESM. The IIFE must be produced by invoking the
+    // central build script.
+    const preBuiltEsm = '/* pre-built ESM marker */\nconsole.log("esm");'
+    fs.writeFileSync(path.join(webAssetsDir, "base.bundle.min.js"), preBuiltEsm)
 
-    const assetsDir = path.join(bookDir, "adt", "assets")
+    // Fake build script writes both bundles into the expected location
+    fs.writeFileSync(
+      path.join(runtimeDir, "build.config.mjs"),
+      [
+        "import fs from 'node:fs'",
+        "import path from 'node:path'",
+        "import { fileURLToPath } from 'node:url'",
+        "const __dirname = path.dirname(fileURLToPath(import.meta.url))",
+        "const outDir = path.resolve(__dirname, '../../assets/adt')",
+        "fs.writeFileSync(path.join(outDir, 'base.bundle.min.js'), '__ADT_BUILD_SCRIPT_ESM__')",
+        "fs.writeFileSync(path.join(outDir, 'base.bundle.local.js'), '__ADT_BUILD_SCRIPT_IIFE__')",
+      ].join("\n"),
+    )
 
-    // ESM was copied (matches pre-built content exactly)
-    const esmOutput = fs.readFileSync(path.join(assetsDir, "base.bundle.min.js"), "utf-8")
-    expect(esmOutput).toBe(preBuiltContent)
+    try {
+      const storage = createMinimalStorage()
+      await packageAdtWeb(storage, {
+        bookDir,
+        label: "book",
+        language: "en",
+        outputLanguages: ["en"],
+        title: "Test",
+        webAssetsDir,
+      })
 
-    // IIFE was built by esbuild (exists, has content from base.js)
-    const iifePath = path.join(assetsDir, "base.bundle.local.js")
-    expect(fs.existsSync(iifePath)).toBe(true)
-    const iifeContent = fs.readFileSync(iifePath, "utf-8")
-    expect(iifeContent.length).toBeGreaterThan(0)
-    expect(iifeContent).toContain("__ADT_BUNDLE_TEST__")
-    expect(iifeContent).not.toContain("pre-built ESM marker")
+      const assetsDir = path.join(bookDir, "adt", "assets")
+      // Build script overwrote the partial ESM and produced the IIFE
+      expect(fs.readFileSync(path.join(assetsDir, "base.bundle.min.js"), "utf-8")).toContain(
+        "__ADT_BUILD_SCRIPT_ESM__",
+      )
+      expect(fs.readFileSync(path.join(assetsDir, "base.bundle.local.js"), "utf-8")).toContain(
+        "__ADT_BUILD_SCRIPT_IIFE__",
+      )
+    } finally {
+      fs.rmSync(monorepoTmp, { recursive: true, force: true })
+    }
   })
 
-  it("builds ESM bundle via esbuild when only pre-built IIFE exists", async () => {
-    const bookDir = path.join(tmpDir, "book")
-    const webAssetsDir = path.join(tmpDir, "assets-web")
+  it("invokes apps/adt-runtime/build.config.mjs when only pre-built IIFE exists", async () => {
+    const monorepoTmp = fs.mkdtempSync(path.join(os.tmpdir(), "adt-pkg-bundle-iife-"))
+    const bookDir = path.join(monorepoTmp, "book")
+    const webAssetsDir = path.join(monorepoTmp, "assets", "adt")
+    const runtimeDir = path.join(monorepoTmp, "apps", "adt-runtime")
     fs.mkdirSync(bookDir, { recursive: true })
-    createWebAssets(webAssetsDir)
+    fs.mkdirSync(webAssetsDir, { recursive: true })
+    fs.mkdirSync(runtimeDir, { recursive: true })
 
-    // Simulate partial pre-build: only IIFE pre-built, no ESM
-    const preBuiltContent = '/* pre-built IIFE marker */\nconsole.log("iife");'
-    fs.writeFileSync(path.join(webAssetsDir, "base.bundle.local.js"), preBuiltContent)
+    fs.writeFileSync(path.join(webAssetsDir, "fonts.css"), "body { font-family: serif; }")
+    fs.writeFileSync(
+      path.join(webAssetsDir, "tailwind_css.css"),
+      "@tailwind base;\n",
+    )
 
-    const storage = createMinimalStorage()
-    await packageAdtWeb(storage, {
-      bookDir,
-      label: "book",
-      language: "en",
-      outputLanguages: ["en"],
-      title: "Test",
-      webAssetsDir,
-    })
+    // Partial pre-build: only IIFE
+    const preBuiltIife = '/* pre-built IIFE marker */\nconsole.log("iife");'
+    fs.writeFileSync(path.join(webAssetsDir, "base.bundle.local.js"), preBuiltIife)
 
-    const assetsDir = path.join(bookDir, "adt", "assets")
+    fs.writeFileSync(
+      path.join(runtimeDir, "build.config.mjs"),
+      [
+        "import fs from 'node:fs'",
+        "import path from 'node:path'",
+        "import { fileURLToPath } from 'node:url'",
+        "const __dirname = path.dirname(fileURLToPath(import.meta.url))",
+        "const outDir = path.resolve(__dirname, '../../assets/adt')",
+        "fs.writeFileSync(path.join(outDir, 'base.bundle.min.js'), '__ADT_BUILD_SCRIPT_ESM__')",
+        "fs.writeFileSync(path.join(outDir, 'base.bundle.local.js'), '__ADT_BUILD_SCRIPT_IIFE__')",
+      ].join("\n"),
+    )
 
-    // IIFE was copied (matches pre-built content exactly)
-    const iifeOutput = fs.readFileSync(path.join(assetsDir, "base.bundle.local.js"), "utf-8")
-    expect(iifeOutput).toBe(preBuiltContent)
+    try {
+      const storage = createMinimalStorage()
+      await packageAdtWeb(storage, {
+        bookDir,
+        label: "book",
+        language: "en",
+        outputLanguages: ["en"],
+        title: "Test",
+        webAssetsDir,
+      })
 
-    // ESM was built by esbuild (exists, has content from base.js, has sourcemap)
-    const esmPath = path.join(assetsDir, "base.bundle.min.js")
-    expect(fs.existsSync(esmPath)).toBe(true)
-    const esmContent = fs.readFileSync(esmPath, "utf-8")
-    expect(esmContent.length).toBeGreaterThan(0)
-    expect(esmContent).toContain("__ADT_BUNDLE_TEST__")
-    expect(fs.existsSync(`${esmPath}.map`)).toBe(true)
-    expect(esmContent).not.toContain("pre-built IIFE marker")
+      const assetsDir = path.join(bookDir, "adt", "assets")
+      expect(fs.readFileSync(path.join(assetsDir, "base.bundle.min.js"), "utf-8")).toContain(
+        "__ADT_BUILD_SCRIPT_ESM__",
+      )
+      expect(fs.readFileSync(path.join(assetsDir, "base.bundle.local.js"), "utf-8")).toContain(
+        "__ADT_BUILD_SCRIPT_IIFE__",
+      )
+    } finally {
+      fs.rmSync(monorepoTmp, { recursive: true, force: true })
+    }
   })
 
   it("copies both bundles without rebuilding when both pre-built files exist", async () => {
@@ -1192,11 +1329,15 @@ describe("packageAdtWeb", () => {
     fs.mkdirSync(bookDir, { recursive: true })
     createWebAssets(webAssetsDir)
 
-    // Both pre-built
+    // Both pre-built — override createWebAssets defaults with distinct markers
     const esmContent = '/* pre-built ESM */\nconsole.log("esm");'
     const iifeContent = '/* pre-built IIFE */\nconsole.log("iife");'
     fs.writeFileSync(path.join(webAssetsDir, "base.bundle.min.js"), esmContent)
     fs.writeFileSync(path.join(webAssetsDir, "base.bundle.local.js"), iifeContent)
+    // The sourcemap stub from createWebAssets is irrelevant — buildJsBundle
+    // does not copy it. Remove it so the assertion below tests the contract
+    // (no .map in the output) rather than the fixture.
+    fs.rmSync(path.join(webAssetsDir, "base.bundle.min.js.map"), { force: true })
 
     const storage = createMinimalStorage()
     await packageAdtWeb(storage, {
@@ -1214,7 +1355,7 @@ describe("packageAdtWeb", () => {
     expect(fs.readFileSync(path.join(assetsDir, "base.bundle.min.js"), "utf-8")).toBe(esmContent)
     expect(fs.readFileSync(path.join(assetsDir, "base.bundle.local.js"), "utf-8")).toBe(iifeContent)
 
-    // No sourcemap — esbuild was not invoked
+    // buildJsBundle does not copy the sourcemap to the per-book output
     expect(fs.existsSync(path.join(assetsDir, "base.bundle.min.js.map"))).toBe(false)
   })
 })
