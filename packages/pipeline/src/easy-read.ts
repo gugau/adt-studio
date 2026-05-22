@@ -6,6 +6,8 @@ import type { LLMModel, ValidationResult } from "@adt/llm"
 import type { Storage, PageData } from "@adt/storage"
 import { buildLanguageContext, normalizeLocale } from "./language-context.js"
 
+export const DEFAULT_EASY_READ_MODEL_ID = "openai:gpt-4.1"
+
 export interface EasyReadConfig {
   enabled: boolean
   language: string
@@ -20,6 +22,13 @@ export const EMPTY_EASY_READ_GENERATED_AT = "1970-01-01T00:00:00.000Z"
 
 export function createEmptyEasyReadOutput(): EasyReadOutput {
   return { blocks: [], generatedAt: EMPTY_EASY_READ_GENERATED_AT }
+}
+
+export function isDeterministicEmptyEasyReadOutput(value: unknown): boolean {
+  const parsed = EasyReadOutputSchema.safeParse(value)
+  return parsed.success &&
+    parsed.data.blocks.length === 0 &&
+    parsed.data.generatedAt === EMPTY_EASY_READ_GENERATED_AT
 }
 
 export type EasyReadElementExclusionReason =
@@ -46,7 +55,7 @@ export function buildEasyReadConfig(appConfig: AppConfig, language: string): Eas
       appConfig.easy_read?.model ??
       appConfig.translation?.model ??
       appConfig.page_sectioning?.model ??
-      "openai:gpt-4.1",
+      DEFAULT_EASY_READ_MODEL_ID,
     maxRetries: appConfig.easy_read?.max_retries ?? DEFAULT_LLM_MAX_RETRIES,
     batchSize: appConfig.easy_read?.batch_size ?? 50,
     tts: appConfig.easy_read?.tts ?? false,

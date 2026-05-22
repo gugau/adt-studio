@@ -43,7 +43,7 @@ import { generateGlossary, buildGlossaryConfig } from "./glossary.js"
 import { generateToc, buildTocGenerationConfig } from "./toc-generation.js"
 import { generateAllQuizzes, buildQuizGenerationConfig, type QuizPageInput } from "./quiz-generation.js"
 import { buildTextCatalog } from "./text-catalog.js"
-import { buildEasyReadConfig, buildEasyReadSourceBlocks, createEmptyEasyReadOutput, generateEasyRead, flattenEasyReadEntries } from "./easy-read.js"
+import { buildEasyReadConfig, buildEasyReadSourceBlocks, createEmptyEasyReadOutput, generateEasyRead, flattenEasyReadEntries, isDeterministicEmptyEasyReadOutput } from "./easy-read.js"
 import { translateCatalogBatch, buildCatalogTranslationConfig, getTargetLanguages } from "./catalog-translation.js"
 import { getBaseLanguage, normalizeLocale } from "./language-context.js"
 import {
@@ -703,7 +703,10 @@ export async function runFullPipeline(
       const pages = storage.getPages()
       const blocks = buildEasyReadSourceBlocks(storage, pages)
       if (blocks.length === 0) {
-        storage.putNodeData("easy-read", "book", createEmptyEasyReadOutput())
+        const existingEasyRead = storage.getLatestNodeData("easy-read", "book")?.data
+        if (!isDeterministicEmptyEasyReadOutput(existingEasyRead)) {
+          storage.putNodeData("easy-read", "book", createEmptyEasyReadOutput())
+        }
         return
       }
       const model = getModel(easyReadConfig.modelId)

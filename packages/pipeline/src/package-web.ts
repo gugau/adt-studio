@@ -82,10 +82,6 @@ interface RuntimeTimecodeEntry {
   }]
 }
 
-// Bump this when packaging output semantics change in a way that is not captured
-// by storage, config, or asset fingerprints.
-const PACKAGE_WEB_CACHE_VERSION = 3
-
 // ---------------------------------------------------------------------------
 // Build-cache helpers
 // ---------------------------------------------------------------------------
@@ -156,10 +152,6 @@ export interface ComputePackagingInputHashOptions {
 
 export function computePackagingInputHash(options: ComputePackagingInputHashOptions): string {
   const hash = createHash("sha256")
-
-  // 0. Packaging implementation version. This prevents stale adt/ directories
-  // when package-web changes how it materializes existing storage data.
-  hash.update(JSON.stringify({ packageWebCacheVersion: PACKAGE_WEB_CACHE_VERSION }))
 
   // 1. Storage entity versions and content (exclude outputs like accessibility-assessment)
   const fingerprint = options.storage.getNodeVersionFingerprint(["accessibility-assessment"])

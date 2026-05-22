@@ -7,9 +7,11 @@ import type { PageData } from "@adt/storage"
 import { buildEasyReadConfig } from "../easy-read.js"
 import {
   buildPageEasyReadBlocks,
+  createEmptyEasyReadOutput,
   generateEasyRead,
   flattenEasyReadEntries,
   getEasyReadElementEligibility,
+  isDeterministicEmptyEasyReadOutput,
 } from "../easy-read.js"
 
 function makeFakeModel(
@@ -272,6 +274,17 @@ describe("generateEasyRead", () => {
     )
 
     expect(config.enabled).toBe(false)
+  })
+
+  it("uses a deterministic empty output marker", () => {
+    const empty = createEmptyEasyReadOutput()
+
+    expect(empty).toEqual({
+      blocks: [],
+      generatedAt: "1970-01-01T00:00:00.000Z",
+    })
+    expect(isDeterministicEmptyEasyReadOutput(empty)).toBe(true)
+    expect(isDeterministicEmptyEasyReadOutput({ blocks: [], generatedAt: new Date().toISOString() })).toBe(false)
   })
 
   it("generates _easy_read entries and validates response count", async () => {

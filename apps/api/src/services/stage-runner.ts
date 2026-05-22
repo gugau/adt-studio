@@ -40,6 +40,7 @@ import {
   createEmptyEasyReadOutput,
   generateEasyRead,
   flattenEasyReadEntries,
+  isDeterministicEmptyEasyReadOutput,
   translateCatalogBatch,
   buildCatalogTranslationConfig,
   getTargetLanguages,
@@ -1488,7 +1489,10 @@ async function runEasyReadStep(
       progress.emit({ type: "step-start", step: "easy-read" })
       const blocks = buildEasyReadSourceBlocks(storage, pages)
       if (blocks.length === 0) {
-        storage.putNodeData("easy-read", "book", createEmptyEasyReadOutput())
+        const existingEasyRead = storage.getLatestNodeData("easy-read", "book")?.data
+        if (!isDeterministicEmptyEasyReadOutput(existingEasyRead)) {
+          storage.putNodeData("easy-read", "book", createEmptyEasyReadOutput())
+        }
         progress.emit({ type: "step-skip", step: "easy-read" })
         console.log(`[stage-run] ${label}: easy read skipped (no eligible text)`)
       } else {
