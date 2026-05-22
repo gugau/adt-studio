@@ -129,6 +129,8 @@ export function StepSettingsPage() {
               return <GlossarySettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             case "toc":
               return <TocSettings bookLabel={label} headerTarget={headerTarget} />
+            case "easy-read":
+              return <EasyReadSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             case "captions":
               return <CaptionsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             case "translate":
