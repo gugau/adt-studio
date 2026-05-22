@@ -302,6 +302,10 @@ const DEFAULT_VISUAL_REFINEMENT = {
  *   2. default_render_strategy → named strategy in render_strategies
  *   3. Hard-coded defaults
  *
+ * After resolution, applies the `storyboard_effort` knob (relaxed/medium/high)
+ * to scale LLM retries and visual-refinement iterations on top of the per-
+ * strategy defaults. Only affects `llm` and `activity` render types — template
+ * strategies pass through unchanged.
  */
 export function buildRenderStrategyResolver(
   appConfig: AppConfig
@@ -313,6 +317,7 @@ export function buildRenderStrategyResolver(
       ? Object.fromEntries(Object.entries(rawSectionMapping).filter(([k]) => !k.startsWith("activity_")))
       : rawSectionMapping
   const defaultName = appConfig.default_render_strategy
+  const effort = appConfig.storyboard_effort
 
   return (sectionType: string): RenderConfig => {
     const sectionStrategyName = sectionMapping[sectionType]
@@ -327,7 +332,7 @@ export function buildRenderStrategyResolver(
 
     const vr = cfg?.visual_refinement
 
-    return {
+    const base: RenderConfig = {
       renderType: strategy?.render_type ?? "llm",
       promptName: cfg?.prompt ?? DEFAULT_RENDER_CONFIG.prompt,
       modelId: cfg?.model ?? DEFAULT_RENDER_CONFIG.model,
@@ -349,5 +354,37 @@ export function buildRenderStrategyResolver(
         },
       }),
     }
+
+    return applyEffort(base, effort)
+  }
+}
+
+/**
+ * Scale a `RenderConfig` based on the `storyboard_effort` knob. No-op for
+ * template render types and for `medium`/unset (treated as the baseline).
+ */
+function applyEffort(
+  base: RenderConfig,
+  effort: "high" | "medium" | "relaxed" | undefined,
+): RenderConfig {
+  if (!effort || effort === "medium") return base
+  if (base.renderType !== "llm" && base.renderType !== "activity") return base
+  if (effort === "relaxed") {
+    return {
+      ...base,
+      maxRetries: Math.min(base.maxRetries, 2),
+      visualRefinement: undefined,
+    }
+  }
+  // effort === "high"
+  return {
+    ...base,
+    maxRetries: base.maxRetries + 2,
+    visualRefinement: base.visualRefinement
+      ? {
+          ...base.visualRefinement,
+          maxIterations: base.visualRefinement.maxIterations + 1,
+        }
+      : undefined,
   }
 }

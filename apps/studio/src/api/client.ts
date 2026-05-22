@@ -669,6 +669,9 @@ export const api = {
 
   getBook: (label: string) => request<BookDetail>(`/books/${label}`),
 
+  getSourcePdfInfo: (label: string) =>
+    request<{ pageCount: number }>(`/books/${label}/source-pdf/info`),
+
   createBook: (label: string, pdf: File, config?: Record<string, unknown>) => {
     const formData = new FormData()
     formData.append("label", label)

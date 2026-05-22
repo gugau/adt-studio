@@ -38,6 +38,10 @@ const promptsDir = path.resolve(process.env.PROMPTS_DIR ?? path.join(projectRoot
 const configPath = path.resolve(
   process.env.CONFIG_PATH ?? path.join(projectRoot, "config.yaml")
 )
+const configFolderPath = path.resolve(
+  process.env.CONFIG_FOLDER_PATH ?? path.join(projectRoot, "config")
+)
+
 let webAssetsDir: string
 const adtResourcesZip = process.env.ADT_RESOURCES_ZIP
 if (adtResourcesZip && fs.existsSync(adtResourcesZip)) {
@@ -100,7 +104,7 @@ app.route("/api", createTaskRoutes(taskService))
 app.route("/api", createPresetRoutes(configPath))
 app.route("/api", createAdtPreviewRoutes(booksDir, webAssetsDir, configPath))
 app.route("/api", createSpeechConfigRoutes(configPath))
-app.route("/api", createReviewerValidationRoutes(booksDir, configPath))
+app.route("/api", createReviewerValidationRoutes(booksDir, configFolderPath, configPath))
 app.route("/api", createSignLanguageVideoRoutes(booksDir))
 
 export default app

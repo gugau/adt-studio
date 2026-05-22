@@ -386,6 +386,20 @@ function openPdfFromBuffer(buffer: Buffer): MupdfDocument {
   }
 }
 
+/**
+ * Cheaply count the number of pages in a PDF buffer without extracting any
+ * content. Used by surfaces that need a page-range upper bound before
+ * extraction has run.
+ */
+export function countPdfPages(buffer: Buffer): number {
+  const doc = openPdfFromBuffer(buffer);
+  try {
+    return doc.countPages();
+  } finally {
+    doc.destroy();
+  }
+}
+
 const METADATA_KEYS: [keyof PdfMetadata, string][] = [
   ["title", "info:Title"],
   ["author", "info:Author"],

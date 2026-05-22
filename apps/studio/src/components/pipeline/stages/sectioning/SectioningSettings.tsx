@@ -79,7 +79,7 @@ function getSectionTypeDisplayLabel(value: string): string {
   return label || value.replace(/_/g, " ")
 }
 
-export function SectioningSettings({ bookLabel, headerTarget, tab = "general" }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string }) {
+export function SectioningSettings({ bookLabel, headerTarget, tab = "section-types" }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string }) {
   const { t } = useLingui()
   const { data: bookConfigData } = useBookConfig(bookLabel)
   const { data: activeConfigData } = useActiveConfig(bookLabel)
@@ -395,7 +395,7 @@ export function SectioningSettings({ bookLabel, headerTarget, tab = "general" }:
 
   return (
     <div className={tab === "sectioning-prompt" || tab === "refinement-prompt" ? "h-full" : "p-4 space-y-6"}>
-      {tab === "general" && (
+      {tab === "section-types" && (
         <div className="space-y-6">
           <div>
             <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">

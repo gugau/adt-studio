@@ -6,7 +6,7 @@ Activity language: {{ language }} (language code: {{ language_code }}). Preserve
 ### Layout Shell
 - The application wraps your HTML in the `<body>` shell and injects the persistent `interface-container` and `nav-container` elements for you.
 - Start your markup with the page wrapper: `flex justify-center items-start min-h-[calc(100dvh-100px)]`
-- Nest the content container inside: `container mx-auto max-w-5xl bg-white rounded-lg lg:px-24 md:px-12 sm:px-6 pt-12 pb-12` with `id="content"`
+- Nest the content container inside: `container mx-auto max-w-5xl bg-white rounded-lg px-24 max-lg:px-12 max-sm:px-6 pt-12 pb-12` with `id="content"`
 
 ### Common Styling
 - Primary heading (H1): `text-5xl font-bold mb-4 text-amber-700`
@@ -39,7 +39,7 @@ IMPORTANT: Your reasoning MUST be written in English, regardless of the activity
 ## CRITICAL: Fill in a Table Activity Structure (activity_fill_in_a_table)
 
 **Form-based input fields:**
-- Use grid layouts: `grid grid-cols-1 lg:grid-cols-2 gap-4` for responsive form rows
+- Use grid layouts: `grid grid-cols-2 max-lg:grid-cols-1 gap-4` for responsive form rows
 - Input containers: `p-4 rounded bg-gray-100 flex items-center` with relative positioning
 - Labels: Use `font-bold whitespace-nowrap` with proper `data-id` attributes
 - **CRITICAL**: ALL input fields MUST have `data-activity-item="item-N"` attribute (item-1, item-2, item-3, etc.)
@@ -66,7 +66,7 @@ Example fill in table activity:
   </p>
 
   <div class="activity-text">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+    <div class="grid grid-cols-2 max-lg:grid-cols-1 gap-4 mb-6">
       <div class="p-4 rounded bg-gray-100 flex items-center">
         <label for="field1" class="mr-2 font-bold whitespace-nowrap" data-id="text-10-3">
           Label text
@@ -78,9 +78,9 @@ Example fill in table activity:
     <div class="grid grid-cols-1 gap-4 mb-6">
       <div class="p-4 rounded bg-gray-100 flex items-center">
         <label for="field2" class="mr-2 font-bold" data-id="text-10-6">First part</label>
-        <input type="text" id="field2" data-activity-item="item-2" class="border border-gray-300 rounded p-2 w-24 sm:w-32">
+        <input type="text" id="field2" data-activity-item="item-2" class="border border-gray-300 rounded p-2 w-32 max-sm:w-24">
         <label for="field3" class="mx-2 font-bold whitespace-nowrap" data-id="text-10-7">Second part</label>
-        <input type="text" id="field3" data-activity-item="item-3" class="border border-gray-300 rounded p-2 w-24 sm:w-32">
+        <input type="text" id="field3" data-activity-item="item-3" class="border border-gray-300 rounded p-2 w-32 max-sm:w-24">
       </div>
     </div>
   </div>
@@ -94,7 +94,7 @@ Example fill in table activity:
 - Table row headers must use `<th scope="row">`, and column headers must use `<th scope="col">`
 - If the top-left corner cell of a table is intentionally blank, render it as `<td aria-hidden="true"></td>` rather than an empty `<th>`
 - Every text input, textarea, or select must have an accessible name via an associated `<label>` or a meaningful `aria-label`
-- Use appropriate input widths (`w-full`, `w-24`, `sm:w-32`) based on expected content length
+- Use appropriate input widths (`w-full`, `w-24`, `max-sm:w-24` for narrow inputs that shrink on mobile) based on expected content length
 - Maintain consistent spacing with `mb-6` between sections
 - Title typically has `bg-green-200` background with special styling
 - VALIDATION: After generating HTML, verify that every `<input>` element has `data-activity-item="item-X"`. If any input is missing it, FIX IT before responding.

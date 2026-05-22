@@ -1,9 +1,12 @@
+import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
 
 export interface SegmentedControlOption<T extends string = string> {
   value: T
   label: string
+  icon?: ReactNode
   disabled?: boolean
+  disabledHint?: string
   title?: string
 }
 
@@ -50,28 +53,39 @@ export function SegmentedControl<T extends string = string>({
           aria-checked={value === option.value}
           aria-disabled={option.disabled || undefined}
           disabled={option.disabled}
-          title={option.title}
+          title={option.disabled ? option.disabledHint : option.title}
           onClick={() => {
-            if (!option.disabled) onValueChange(option.value)
+            if (option.disabled) return
+            onValueChange(option.value)
           }}
           className={cn(
             "relative z-10 flex h-7 flex-1 items-center justify-center rounded-md text-sm",
+            "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-ring/40",
             option.disabled
-              ? "cursor-not-allowed opacity-60"
-              : "cursor-pointer",
-            value === option.value && !option.disabled
-              ? "font-bold"
-              : option.disabled
-                ? "font-normal text-[#a3a3a3]"
-                : "font-normal text-[#737373] hover:text-[#525252]",
+              ? "cursor-not-allowed font-normal text-[#a3a3a3] opacity-60"
+              : value === option.value
+                ? "cursor-pointer font-bold"
+                : "cursor-pointer font-normal text-[#737373] hover:text-[#525252]",
           )}
           style={
-            value === option.value
-              ? { color: color ?? "#2b7fff", transition: "color 0.4s ease" }
+            !option.disabled && value === option.value
+              ? {
+                  color: color ?? "var(--accent-color, #2b7fff)",
+                  transition: "color 0.4s ease",
+                }
               : { transition: "color 0.4s ease" }
           }
         >
-          {option.label}
+          {option.icon ? (
+            <span className="inline-flex items-center gap-1.5">
+              <span className="inline-flex shrink-0 items-center" aria-hidden>
+                {option.icon}
+              </span>
+              {option.label}
+            </span>
+          ) : (
+            option.label
+          )}
         </button>
       ))}
     </div>

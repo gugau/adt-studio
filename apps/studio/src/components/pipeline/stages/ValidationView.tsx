@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { AlertCircle, Loader2, RotateCcw, ShieldCheck } from "lucide-react"
+import { Loader2, RotateCcw, ShieldCheck } from "lucide-react"
+import { StageBlockedState } from "@/components/pipeline/components/StageBlockedState"
+import { useAllPagesPruned } from "@/hooks/use-all-pages-pruned"
 import { useNavigate, useSearch } from "@tanstack/react-router"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -32,6 +34,7 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
   const reviewerValidationCatalog = useReviewerValidationCatalog(bookLabel)
   const reviewerValidationEnabled = reviewerValidationCatalog.data?.enabled ?? false
   const storyboardDone = stageState("storyboard") === "done"
+  const { allPruned } = useAllPagesPruned(bookLabel)
   const ranRef = useRef(false)
   const [isSubmittingPackage, setIsSubmittingPackage] = useState(false)
   const [pendingPackagingTaskId, setPendingPackagingTaskId] = useState<string | null>(null)
@@ -85,17 +88,21 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
 
   if (!storyboardDone) {
     return (
-      <div className="flex max-w-xl flex-col items-center gap-3 p-6 text-center">
-        <AlertCircle className="h-8 w-8 text-muted-foreground/50" />
-        <p className="text-sm text-muted-foreground">
-          <Trans>A storyboard must be built before running validation.</Trans>
-        </p>
-        <p className="text-sm text-muted-foreground">
-          <Trans>
-            Run the pipeline through at least the <span className="font-medium text-foreground">Storyboard</span> stage first.
-          </Trans>
-        </p>
-      </div>
+      <StageBlockedState
+        bookLabel={bookLabel}
+        reason="storyboard-missing"
+        stageLabel={<Trans>Validation</Trans>}
+      />
+    )
+  }
+
+  if (allPruned) {
+    return (
+      <StageBlockedState
+        bookLabel={bookLabel}
+        reason="all-pruned"
+        stageLabel={<Trans>Validation</Trans>}
+      />
     )
   }
 

@@ -7,7 +7,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control"
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import { usePresetRecommendations } from "@/components/wizard/usePresetRecommendations"
 import { PRESETS, getPresetAccent } from "@/components/wizard/constants"
-import { InfoCarousel, type CarouselSlide } from "@/components/wizard/shared/InfoCarousel"
+import { InfoCarousel, type CarouselSlide } from "@/components/ui/info-carousel"
 
 const GROUPING_OPTION_SPREAD_LABEL = msg`Spread`
 const GROUPING_OPTION_SINGLE_LABEL = msg`Single`
@@ -85,8 +85,8 @@ export function PageGroupingMode() {
 
   const groupingOptions = useMemo(
     () => [
-      { value: "spread" as const, label: i18n._(GROUPING_OPTION_SPREAD_LABEL) },
       { value: "single" as const, label: i18n._(GROUPING_OPTION_SINGLE_LABEL) },
+      { value: "spread" as const, label: i18n._(GROUPING_OPTION_SPREAD_LABEL) },
     ],
     [i18n.locale],
   )
@@ -98,14 +98,14 @@ export function PageGroupingMode() {
   const slides = useMemo(
     (): CarouselSlide[] => [
       {
-        title: i18n._(CAROUSEL_SPREAD_TITLE),
-        description: i18n._(CAROUSEL_SPREAD_DESCRIPTION),
-        Diagram: SpreadDiagram,
-      },
-      {
         title: i18n._(CAROUSEL_SINGLE_TITLE),
         description: i18n._(CAROUSEL_SINGLE_DESCRIPTION),
         Diagram: SingleDiagram,
+      },
+      {
+        title: i18n._(CAROUSEL_SPREAD_TITLE),
+        description: i18n._(CAROUSEL_SPREAD_DESCRIPTION),
+        Diagram: SpreadDiagram,
       },
     ],
     [i18n.locale],

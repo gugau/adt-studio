@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 import { useWizardForm } from "@/components/wizard/wizardForm"
 import { usePresetRecommendations } from "@/components/wizard/usePresetRecommendations"
 import { PRESETS, getPresetAccent } from "@/components/wizard/constants"
-import { SingleValueSlider, RangeSlider } from "@/components/wizard/shared/RangeSlider"
+import { SingleValueSlider, RangeSlider } from "@/components/ui/range-slider"
 import { ImageProcessingFeatureSwitch } from "./ImageProcessingFeatureSwitch"
 import { useDelayedPreviewFocus } from "@/components/wizard"
 

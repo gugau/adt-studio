@@ -1,7 +1,7 @@
-/* eslint-disable lingui/no-unlocalized-strings -- wizard strings are finalized later */
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
 import { useStore } from "@tanstack/react-form"
+import { Trans, useLingui } from "@lingui/react/macro"
 import {
   ArrowLeft,
   ArrowRight,
@@ -47,6 +47,7 @@ function PdfPreviewCard({
   pageCount: number
   onReplace: () => void
 }) {
+  const { t } = useLingui()
   const { pages, isLoading } = usePdfPreviewPages({
     file,
     mode: "first",
@@ -70,13 +71,13 @@ function PdfPreviewCard({
 
         <div className="px-5 pb-4">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
-            PDF info
+            <Trans>PDF info</Trans>
           </p>
           <div className="space-y-2 text-xs text-slate-500">
             <div className="flex items-center gap-2">
               <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <span>
-                {pageCount} {pageCount === 1 ? "page" : "pages"}
+                {t`${pageCount} {pageCount, plural, one {page} other {pages}}`}
               </span>
             </div>
           </div>
@@ -91,7 +92,7 @@ function PdfPreviewCard({
             className="h-8 px-3 text-xs"
           >
             <Upload className="h-3.5 w-3.5 mr-1.5" />
-            Replace PDF
+            <Trans>Replace PDF</Trans>
           </Button>
         </div>
       </div>
@@ -118,6 +119,7 @@ function PdfPreviewCard({
 }
 
 export function StepUpload() {
+  const { t } = useLingui()
   const navigate = useNavigate()
   const { setPhase, stepDirection } = useWizard()
   const form = useWizardForm()
@@ -183,7 +185,7 @@ export function StepUpload() {
       } catch {
         if (cancelled) return
         setPreviewError(
-          "Could not read this PDF. The file may be corrupted or password-protected.",
+          t`Could not read this PDF. The file may be corrupted or password-protected.`,
         )
       } finally {
         if (!cancelled) setPreviewLoading(false)
@@ -241,11 +243,11 @@ export function StepUpload() {
 
   return (
     <div className="flex flex-1 min-h-0 flex-col h-full bg-white">
-      <StudioTopBar brandLinksHome trailingTitle="Add Book" />
+      <StudioTopBar brandLinksHome trailingTitle={t`Add Book`} />
       <FileDropOverlay
         overlay={overlay}
-        dropLabel="Drop PDF here"
-        errorLabel="Only PDF files are supported"
+        dropLabel={<Trans>Drop PDF here</Trans>}
+        errorLabel={<Trans>Only PDF files are supported</Trans>}
         accent="blue"
       />
 
@@ -259,7 +261,7 @@ export function StepUpload() {
       >
         <div className="flex flex-col items-center gap-1">
           <h1 className="text-2xl sm:text-[30px] font-semibold leading-tight sm:leading-9 tracking-[-0.75px] text-[#030303] text-center">
-            Convert a PDF
+            <Trans>Convert a PDF</Trans>
           </h1>
           <div className="max-w-xl grid [&>*]:col-start-1 [&>*]:row-start-1">
             <p
@@ -268,8 +270,10 @@ export function StepUpload() {
                 showPreview ? "opacity-0 pointer-events-none" : "opacity-100",
               )}
             >
-              Upload the source PDF of your book and we&apos;ll turn it into an Accessible
-              Digital Textbook with interactive activities and adaptive layouts.
+              <Trans>
+                Upload the source PDF of your book and we'll turn it into an Accessible
+                Digital Textbook with interactive activities and adaptive layouts.
+              </Trans>
             </p>
             <p
               className={cn(
@@ -277,8 +281,10 @@ export function StepUpload() {
                 showPreview ? "opacity-100" : "opacity-0 pointer-events-none",
               )}
             >
-              Review the source PDF details below and continue to configure how your book
-              will be converted into an Accessible Digital Textbook.
+              <Trans>
+                Review the source PDF details below and continue to configure how your book
+                will be converted into an Accessible Digital Textbook.
+              </Trans>
             </p>
           </div>
         </div>
@@ -305,7 +311,7 @@ export function StepUpload() {
                 <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-red-700">
-                    Couldn&apos;t read this PDF
+                    <Trans>Couldn't read this PDF</Trans>
                   </p>
                   <p className="text-xs text-red-600/80 mt-0.5 leading-relaxed">
                     {previewError}
@@ -329,7 +335,7 @@ export function StepUpload() {
                 tabIndex={showPreview ? -1 : 0}
                 onClick={openFilePicker}
                 onKeyDown={(e) => e.key === "Enter" && openFilePicker()}
-                aria-label="Upload PDF or drag and drop"
+                aria-label={t`Upload PDF or drag and drop`}
                 className={cn(
                   "flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg w-full max-w-md h-full cursor-pointer transition-colors duration-300",
                   accepted
@@ -366,7 +372,7 @@ export function StepUpload() {
                       </svg>
                     </div>
                     <span className="text-sm font-medium text-emerald-600">
-                      PDF accepted
+                      <Trans>PDF accepted</Trans>
                     </span>
                   </div>
                   <div
@@ -379,7 +385,7 @@ export function StepUpload() {
                   >
                     <Loader2 className="h-5 w-5 text-[#2b7fff] animate-spin" />
                     <span className="text-sm text-[#737373]">
-                      Reading PDF...
+                      <Trans>Reading PDF...</Trans>
                     </span>
                   </div>
                   <div
@@ -402,7 +408,11 @@ export function StepUpload() {
                         hasError ? "text-red-500" : "text-[#737373]",
                       )}
                     >
-                      {hasError ? "Try another file" : "Upload PDF or drag and drop"}
+                      {hasError ? (
+                        <Trans>Try another file</Trans>
+                      ) : (
+                        <Trans>Upload PDF or drag and drop</Trans>
+                      )}
                     </span>
                   </div>
                 </div>
@@ -428,7 +438,7 @@ export function StepUpload() {
                     type="button"
                     onClick={clearFile}
                     className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-white border border-[#e5e5e5] text-[#737373] hover:text-[#ef4444] hover:border-[#ef4444]/50 transition-colors shadow-sm"
-                    aria-label="Remove PDF"
+                    aria-label={t`Remove PDF`}
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
@@ -445,14 +455,14 @@ export function StepUpload() {
             className="h-9 px-3 py-2 bg-[#f5f5f5] text-[#262626] hover:bg-[#e5e5e5] border-0"
           >
             <ArrowLeft className="h-4 w-4 mr-1.5" />
-            Back
+            <Trans>Back</Trans>
           </Button>
           <Button
             disabled={!hasPreview || previewLoading}
             onClick={handleContinue}
             className="h-9 px-3 py-2 text-white bg-[#2b7fff] hover:bg-[#2b7fff]/90 disabled:opacity-50 border-0"
           >
-            Continue
+            <Trans>Continue</Trans>
             <ArrowRight className="h-4 w-4 ml-1.5" />
           </Button>
         </div>

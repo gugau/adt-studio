@@ -1,0 +1,82 @@
+name: Feature Request
+description: Suggest a new feature or enhancement for ADT Studio
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        <p align="center">
+          <a href="https://github.com/unicef/adt-studio">
+            <picture>
+              <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/unicef/adt-studio/main/.github/assets/adt-studio-banner-dark.png">
+              <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/unicef/adt-studio/main/.github/assets/adt-studio-banner-light.png">
+              <img src="https://raw.githubusercontent.com/unicef/adt-studio/main/.github/assets/adt-studio-banner-light.png" alt="ADT Studio — Turn PDFs into interactive HTML books" width="420">
+            </picture>
+          </a>
+        </p>
+
+        <p align="center"><em>Thanks for suggesting an improvement to ADT Studio!</em></p>
+
+        > [!IMPORTANT]
+        > - Please provide a descriptive title.
+        > - Please search existing issues to avoid creating duplicates.
+        > - This form is for feature requests and enhancements, not bug reports.
+        > - Describe the problem you're trying to solve, not just the solution you have in mind.
+  - type: checkboxes
+    id: preliminary
+    attributes:
+      label: Preliminary Checks
+      description: Please confirm the following before submitting.
+      options:
+        - label: I have searched existing issues and avoided creating duplicates.
+          required: true
+        - label: I am filing a feature request, not a bug report.
+          required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What problem are you trying to solve? What use case or pain point does this address?
+      placeholder: I'm trying to … and currently I have to …
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: What would you like to see happen?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What other approaches did you consider, and why didn't they work?
+  - type: dropdown
+    id: component
+    attributes:
+      label: What area is this request related to?
+      options:
+        - Home / Book list
+        - Book creation wizard
+        - Book overview
+        - Pipeline — Extract
+        - Pipeline — Sectioning
+        - Pipeline — Storyboard
+        - Pipeline — Quizzes
+        - Pipeline — Image Captions
+        - Pipeline — Glossary
+        - Pipeline — Table of Contents
+        - Pipeline — Translate
+        - Pipeline — Speech
+        - Pipeline — Package
+        - Settings
+        - Internationalization (UI translations)
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Mockups, references, links to related issues, or anything else that helps explain the request.

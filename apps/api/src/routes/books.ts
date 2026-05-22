@@ -4,6 +4,7 @@ import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
 import { parseBookLabel, PIPELINE } from "@adt/types"
 import { openBookDb } from "@adt/storage"
+import { countPdfPages } from "@adt/pdf"
 import {
   listBooks,
   getBook,
@@ -66,6 +67,32 @@ export function createBookRoutes(
         throw new HTTPException(404, { message })
       }
       throw new HTTPException(400, { message })
+    }
+  })
+
+  // GET /books/:label/source-pdf/info — Source PDF metadata (page count)
+  // Used by surfaces (e.g. Extract landing page) that need a page-range upper
+  // bound before extraction has run.
+  app.get("/books/:label/source-pdf/info", (c) => {
+    const { label } = c.req.param()
+    let safeLabel: string
+    try {
+      safeLabel = parseBookLabel(label)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      throw new HTTPException(400, { message })
+    }
+    const pdfPath = path.join(booksDir, safeLabel, `${safeLabel}.pdf`)
+    if (!fs.existsSync(pdfPath)) {
+      throw new HTTPException(404, { message: "Source PDF not found" })
+    }
+    try {
+      const buffer = fs.readFileSync(pdfPath)
+      const pageCount = countPdfPages(buffer)
+      return c.json({ pageCount })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      throw new HTTPException(500, { message: `Failed to read source PDF: ${message}` })
     }
   })
 

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="ADT Studio">
-  <ellipse cx="60" cy="102" rx="32" ry="3" fill="#0a0a0a" fill-opacity="0.08"></ellipse>
-  <rect x="22" y="30" width="76" height="64" rx="10" fill="#0a2647"></rect>
-  <rect x="22" y="22" width="76" height="64" rx="10" fill="#2b7fff"></rect>
-  <line x1="60" y1="26" x2="60" y2="82" stroke="#1f5ec2" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"></line>
-  <circle cx="36" cy="36" r="5" fill="#1cabe2"></circle>
-</svg>

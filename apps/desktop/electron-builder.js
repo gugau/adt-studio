@@ -62,8 +62,8 @@ const config = {
     allowToChangeInstallationDirectory: true,
   },
   mac: {
-    target: ["dmg"],
-    icon: "build/icon.icns",
+    target: ["dmg", "zip"],
+    icon: "build/icon.icon",
     category: "public.app-category.developer-tools",
     type: "distribution",
     hardenedRuntime: true,
