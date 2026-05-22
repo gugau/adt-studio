@@ -1479,7 +1479,12 @@ async function runEasyReadStep(
     })
     progress.emit({ type: "step-complete", step: "text-catalog" })
 
-    const easyReadConfig = buildEasyReadConfig(config, language)
+    const baseEasyReadConfig = buildEasyReadConfig(config, language)
+    const explicitEasyReadRun = options.fromStage === "easy-read" && options.toStage === "easy-read"
+    const easyReadConfig = {
+      ...baseEasyReadConfig,
+      enabled: explicitEasyReadRun || baseEasyReadConfig.enabled,
+    }
     let easyReadEntries: TextCatalogEntry[] = []
 
     if (!easyReadConfig.enabled) {

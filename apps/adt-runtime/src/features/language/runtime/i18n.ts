@@ -201,7 +201,7 @@ export function applyTranslationsToDOM(
         const htmlElement = el as HTMLElement
         setEasyReadTextFormatting(htmlElement, isEasyRead)
         if (htmlElement.hasAttribute("data-tts-original-html")) {
-          htmlElement.setAttribute("data-tts-original-html", renderedHtml)
+          htmlElement.removeAttribute("data-tts-original-html")
         }
         if (isEasyRead) {
           applyPlainTextWithLineBreaks(htmlElement, text)

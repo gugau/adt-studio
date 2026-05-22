@@ -50,7 +50,6 @@ export function EasyReadSettings({
   const [promptName, setPromptName] = useState(DEFAULT_PROMPT)
   const [enabled, setEnabled] = useState(false)
   const [batchSize, setBatchSize] = useState(DEFAULT_BATCH_SIZE)
-  const [tts, setTts] = useState(false)
 
   const [dirty, setDirty] = useState<Record<string, boolean>>({})
   const markDirty = (field: string) => setDirty((prev) => ({ ...prev, [field]: true }))
@@ -66,12 +65,10 @@ export function EasyReadSettings({
       setEnabled(easyReadConfig.enabled === true)
       setPromptName(typeof easyReadConfig.prompt === "string" ? easyReadConfig.prompt : DEFAULT_PROMPT)
       setBatchSize(easyReadConfig.batch_size != null ? String(easyReadConfig.batch_size) : DEFAULT_BATCH_SIZE)
-      setTts(easyReadConfig.tts === true)
     } else {
       setEnabled(false)
       setPromptName(DEFAULT_PROMPT)
       setBatchSize(DEFAULT_BATCH_SIZE)
-      setTts(false)
     }
   }, [activeConfigData])
 
@@ -90,7 +87,6 @@ export function EasyReadSettings({
         enabled,
         prompt: promptName.trim() || DEFAULT_PROMPT,
         batch_size: batchSize.trim() ? Number(batchSize.trim()) : undefined,
-        tts,
       }
     }
 
@@ -164,16 +160,6 @@ export function EasyReadSettings({
                 }}
               />
               {t`Enabled`}
-            </label>
-            <label className="flex items-center gap-2 text-xs">
-              <Switch
-                checked={tts}
-                onCheckedChange={(value) => {
-                  setTts(value)
-                  markDirty("easy_read")
-                }}
-              />
-              {t`Generate Easy Read audio`}
             </label>
           </div>
         </div>

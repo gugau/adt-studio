@@ -102,6 +102,15 @@ describe("buildPageEasyReadBlocks", () => {
         sectionId: "pg001_sec001",
         sectionIndex: 0,
       },
+      {
+        sourceId: "pg001_tx002",
+        easyReadId: "pg001_tx002_easy_read",
+        originalText: "Do this activity.",
+        text: "Do this activity.",
+        pageId: "pg001",
+        sectionId: "pg001_sec001",
+        sectionIndex: 0,
+      },
     ])
     expect(blocks[1].entries).toEqual([
       {
@@ -126,6 +135,7 @@ describe("buildPageEasyReadBlocks", () => {
         <div data-id="activity_gen_opt1">Generated option.</div>
         <p class="activity-text" data-id="pg001_tx002">Activity instruction.</p>
         <button data-activity-item="item-1"><span data-id="pg001_tx003">Option</span></button>
+        <button><span data-id="pg001_tx005">Button text</span></button>
         <p data-id="pg001_tx004">   </p>
       </section>
     `)
@@ -145,8 +155,9 @@ describe("buildPageEasyReadBlocks", () => {
     expect(reasons.get("pg001_im001")).toBe("image")
     expect(reasons.get("pg001_im002")).toBe("image-caption")
     expect(reasons.get("activity_gen_opt1")).toBe("activity-generated")
-    expect(reasons.get("pg001_tx002")).toBe("excluded-context")
+    expect(reasons.get("pg001_tx002")).toBe("eligible")
     expect(reasons.get("pg001_tx003")).toBe("excluded-context")
+    expect(reasons.get("pg001_tx005")).toBe("excluded-context")
     expect(reasons.get("pg001_tx004")).toBe("empty-text")
   })
 

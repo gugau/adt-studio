@@ -15,7 +15,7 @@ export type { BookSummary, BookDetail }
 export function resolveBaseUrl(
   _loc: Pick<Location, "protocol" | "hostname"> = window.location,
 ): string {
-  if (isElectron()) {
+  if (isElectron() && typeof window.api?.apiPort === "number") {
     const apiPort = window.api.apiPort
     return `http://localhost:${apiPort}/api`
   }
@@ -1090,7 +1090,7 @@ export const api = {
     request<{ tasks: TaskInfoResponse[] }>(`/books/${label}/tasks`),
 
   getPackageAdtStatus: (label: string) =>
-    request<{ label: string; hasAdt: boolean }>(
+    request<{ label: string; hasAdt: boolean; version?: string }>(
       `/books/${label}/package-adt/status`
     ),
 

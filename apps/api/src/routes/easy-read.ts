@@ -111,9 +111,9 @@ export function createEasyReadRoutes(
       const metadataRow = storage.getLatestNodeData("metadata", "book")
       const metadata = metadataRow?.data as BookMetadata | null
       const language = readLanguage(metadata, config)
-      const easyReadConfig = buildEasyReadConfig(config, language)
-      if (!easyReadConfig.enabled) {
-        throw new HTTPException(400, { message: "Easy Read is disabled in config" })
+      const easyReadConfig = {
+        ...buildEasyReadConfig(config, language),
+        enabled: true,
       }
 
       const pages = storage.getPages()

@@ -13,6 +13,7 @@ const {
   capturedCaptionInputs,
   captionPageImagesMock,
   generateSpeechFileMock,
+  easyReadGenerateObjectMock,
   renderPageMock,
   sectionPageMock,
   transcribeWithWhisperMock,
@@ -24,6 +25,7 @@ const {
       capturedCaptionInputs.push(input)
       return { captions: [] }
     }),
+    easyReadGenerateObjectMock: vi.fn(),
     generateSpeechFileMock: vi.fn(),
     renderPageMock: vi.fn(async () => ({ sections: [] })),
     sectionPageMock: vi.fn(async () => ({ reasoning: "", sections: [] })),
@@ -48,8 +50,27 @@ vi.mock("@adt/llm", async () => {
   const actual = await vi.importActual<typeof import("@adt/llm")>("@adt/llm")
   return {
     ...actual,
+    createLLMModel: vi.fn(() => ({
+      generateObject: easyReadGenerateObjectMock,
+    })),
     transcribeWithWhisper: transcribeWithWhisperMock,
   }
+})
+
+beforeEach(() => {
+  easyReadGenerateObjectMock.mockReset()
+  easyReadGenerateObjectMock.mockImplementation(async (options: {
+    context?: { texts?: Array<{ text: string }> }
+    validate?: (raw: unknown, context: unknown) => { valid: boolean; errors: string[] }
+  }) => {
+    const texts = options.context?.texts ?? []
+    const object = { texts: texts.map((text) => `Easy: ${text.text}`) }
+    const validation = options.validate?.(object, options.context)
+    if (validation && !validation.valid) {
+      throw new Error(validation.errors.join("\n"))
+    }
+    return { object, usage: { inputTokens: 1, outputTokens: 1 } }
+  })
 })
 
 function writeBaseConfig(configPath: string): void {
@@ -166,6 +187,55 @@ function seedStoryboardBook(booksDir: string, label: string): void {
   }
 }
 
+function seedEasyReadBook(booksDir: string, label: string): void {
+  const storage = createBookStorage(label, booksDir)
+  try {
+    storage.putExtractedPage({
+      pageId: "pg001",
+      pageNumber: 1,
+      text: "Original text",
+      pageImage: {
+        imageId: "pg001_page",
+        buffer: Buffer.from("fake-page-image"),
+        format: "png",
+        hash: "hash-page",
+        width: 800,
+        height: 600,
+      },
+      images: [],
+    })
+
+    storage.putNodeData("page-sectioning", "pg001", {
+      reasoning: "",
+      sections: [
+        {
+          sectionId: "pg001_sec001",
+          sectionType: "text_only",
+          backgroundColor: "#fff",
+          textColor: "#000",
+          pageNumber: 1,
+          isPruned: false,
+          nodes: [],
+        },
+      ],
+    })
+
+    storage.putNodeData("web-rendering", "pg001", {
+      sections: [
+        {
+          sectionIndex: 0,
+          sectionType: "text_only",
+          reasoning: "",
+          html: '<section><p data-id="pg001_tx001">Original text</p></section>',
+        },
+      ],
+    })
+
+  } finally {
+    storage.close()
+  }
+}
+
 function seedTextAndSpeechBook(booksDir: string, label: string): void {
   const storage = createBookStorage(label, booksDir)
   try {
@@ -193,6 +263,11 @@ function seedTextAndSpeechBook(booksDir: string, label: string): void {
           html: '<p data-id="pg001_t001">Hello world</p>',
         },
       ],
+    })
+
+    storage.putNodeData("text-catalog", "book", {
+      entries: [{ id: "pg001_t001", text: "Hello world" }],
+      generatedAt: "2026-01-01T00:00:00.000Z",
     })
   } finally {
     storage.close()
@@ -372,6 +447,72 @@ describe("createStageRunner storyboard render-only", () => {
           event.type === "step-complete" && event.step === "page-sectioning"
       )
     ).toBe(false)
+  })
+})
+
+describe("createStageRunner easy read step", () => {
+  let tmpDir = ""
+
+  afterEach(() => {
+    if (tmpDir) {
+      fs.rmSync(tmpDir, { recursive: true, force: true })
+      tmpDir = ""
+    }
+  })
+
+  it("generates for a single Easy Read stage run even when disabled by default", async () => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "stage-runner-easy-read-"))
+    const booksDir = path.join(tmpDir, "books")
+    const promptsDir = path.join(tmpDir, "prompts")
+    const configPath = path.join(tmpDir, "config.yaml")
+    fs.mkdirSync(promptsDir, { recursive: true })
+    writeBaseConfig(configPath)
+    seedEasyReadBook(booksDir, "explicit-easy-read")
+
+    const events: ProgressEvent[] = []
+    const runner = createStageRunner()
+    await runner.run(
+      "explicit-easy-read",
+      {
+        booksDir,
+        apiKey: "sk-test",
+        promptsDir,
+        configPath,
+        fromStage: "easy-read",
+        toStage: "easy-read",
+      },
+      { emit: (event) => events.push(event) }
+    )
+
+    expect(easyReadGenerateObjectMock).toHaveBeenCalledTimes(1)
+    expect(
+      events.some(
+        (event) => event.type === "step-complete" && event.step === "easy-read"
+      )
+    ).toBe(true)
+
+    const storage = createBookStorage("explicit-easy-read", booksDir)
+    try {
+      const row = storage.getLatestNodeData("easy-read", "book")
+      expect(row?.data).toMatchObject({
+        blocks: [
+          {
+            entries: [
+              {
+                sourceId: "pg001_tx001",
+                easyReadId: "pg001_tx001_easy_read",
+                originalText: "Original text",
+                text: "Easy: Original text",
+              },
+            ],
+          },
+        ],
+      })
+      const easyReadStep = storage.getStepRuns().find((step) => step.step === "easy-read")
+      expect(easyReadStep?.status).toBe("done")
+    } finally {
+      storage.close()
+    }
   })
 })
 

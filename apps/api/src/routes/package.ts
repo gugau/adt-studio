@@ -23,6 +23,12 @@ interface PackagingCacheState {
   version: string
 }
 
+interface PackagingStatus {
+  label: string
+  hasAdt: boolean
+  version?: string
+}
+
 interface PackagingResult {
   version: string
 }
@@ -46,6 +52,13 @@ function readBuildVersion(bookDir: string, fallbackHash: string): string {
     if (version.length > 0) return version
   }
   return packageVersionFromHash(fallbackHash)
+}
+
+function readStoredBuildVersion(bookDir: string): string | null {
+  const versionPath = getBuildVersionPath(bookDir)
+  if (!fs.existsSync(versionPath)) return null
+  const version = fs.readFileSync(versionPath, "utf-8").trim()
+  return version.length > 0 ? version : null
 }
 
 function getPackagingCacheState(
@@ -130,6 +143,7 @@ export function createPackageRoutes(
       })
     }
 
+    let cacheState: PackagingCacheState
     const storage = createBookStorage(safeLabel, booksDir)
     try {
       const pages = storage.getPages()
@@ -143,7 +157,7 @@ export function createPackageRoutes(
       }
 
       // Fast path: skip task submission entirely when build cache is valid
-      const cacheState = getPackagingCacheState(storage, safeLabel, booksDir, bookDir, webAssetsDir, configPath)
+      cacheState = getPackagingCacheState(storage, safeLabel, booksDir, bookDir, webAssetsDir, configPath)
       if (cacheState.cached) {
         return c.json({ status: "completed", label: safeLabel, version: cacheState.version })
       }
@@ -152,6 +166,18 @@ export function createPackageRoutes(
     }
 
     if (taskService) {
+      const existingTask = taskService
+        .getActiveTasks(safeLabel)
+        .find((task) => task.kind === "package-adt" && task.status === "running")
+      if (existingTask) {
+        return c.json({
+          status: "submitted",
+          taskId: existingTask.taskId,
+          label: safeLabel,
+          version: cacheState.version,
+        })
+      }
+
       const { taskId } = taskService.submitTask(
         safeLabel,
         "package-adt",
@@ -161,7 +187,7 @@ export function createPackageRoutes(
         },
         { url: `/books/${safeLabel}/preview` },
       )
-      return c.json({ status: "submitted", taskId, label: safeLabel })
+      return c.json({ status: "submitted", taskId, label: safeLabel, version: cacheState.version })
     }
 
     try {
@@ -187,8 +213,11 @@ export function createPackageRoutes(
     const bookDir = path.join(path.resolve(booksDir), safeLabel)
     const pagesPath = path.join(bookDir, "adt", "content", "pages.json")
     const hasAdt = hasPackagedAdtPages(pagesPath)
+    const version = hasAdt ? readStoredBuildVersion(bookDir) : null
 
-    return c.json({ label: safeLabel, hasAdt })
+    const status: PackagingStatus = { label: safeLabel, hasAdt }
+    if (version) status.version = version
+    return c.json(status)
   })
 
   return app
@@ -238,6 +267,7 @@ async function runPackaging(
       applyBodyBackground: config.apply_body_background,
       speechConfig: config.speech,
     })
+    fs.writeFileSync(versionPath, bundleVersion, "utf-8")
 
     const baseAccessibility = await runAccessibilityAssessment({
       bookDir,

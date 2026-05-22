@@ -1,8 +1,23 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import { openBookDb } from "@adt/storage"
+
+const { generateObjectMock } = vi.hoisted(() => ({
+  generateObjectMock: vi.fn(),
+}))
+
+vi.mock("@adt/llm", async () => {
+  const actual = await vi.importActual<typeof import("@adt/llm")>("@adt/llm")
+  return {
+    ...actual,
+    createLLMModel: vi.fn(() => ({
+      generateObject: generateObjectMock,
+    })),
+  }
+})
+
 import { createEasyReadRoutes } from "./easy-read.js"
 
 let tmpDir: string
@@ -11,6 +26,19 @@ let promptsDir: string
 beforeEach(() => {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "adt-easy-read-route-"))
   promptsDir = fs.mkdtempSync(path.join(os.tmpdir(), "adt-easy-read-prompts-"))
+  generateObjectMock.mockReset()
+  generateObjectMock.mockImplementation(async (options: {
+    context?: { texts?: Array<{ text: string }> }
+    validate?: (raw: unknown, context: unknown) => { valid: boolean; errors: string[] }
+  }) => {
+    const texts = options.context?.texts ?? []
+    const object = { texts: texts.map((text) => `Easy: ${text.text}`) }
+    const validation = options.validate?.(object, options.context)
+    if (validation && !validation.valid) {
+      throw new Error(validation.errors.join("\n"))
+    }
+    return { object, usage: { inputTokens: 1, outputTokens: 1 } }
+  })
 })
 
 afterEach(() => {
@@ -39,6 +67,58 @@ function createTestBook(label: string): void {
     ],
   )
   db.close()
+}
+
+function seedRenderedEasyReadSource(label: string): void {
+  const db = openBookDb(path.join(tmpDir, label, `${label}.db`))
+  try {
+    db.run(
+      "INSERT INTO pages (page_id, page_number, text) VALUES (?, ?, ?)",
+      ["pg001", 1, "Original text"],
+    )
+    db.run(
+      "INSERT INTO node_data (node, item_id, version, data) VALUES (?, ?, ?, ?)",
+      [
+        "page-sectioning",
+        "pg001",
+        1,
+        JSON.stringify({
+          reasoning: "",
+          sections: [
+            {
+              sectionId: "pg001_sec001",
+              sectionType: "text_only",
+              backgroundColor: "#fff",
+              textColor: "#000",
+              pageNumber: 1,
+              isPruned: false,
+              nodes: [],
+            },
+          ],
+        }),
+      ],
+    )
+    db.run(
+      "INSERT INTO node_data (node, item_id, version, data) VALUES (?, ?, ?, ?)",
+      [
+        "web-rendering",
+        "pg001",
+        1,
+        JSON.stringify({
+          sections: [
+            {
+              sectionIndex: 0,
+              sectionType: "text_only",
+              reasoning: "",
+              html: '<section><p data-id="pg001_tx001">Original text</p></section>',
+            },
+          ],
+        }),
+      ],
+    )
+  } finally {
+    db.close()
+  }
 }
 
 function easyReadData(text = "Easy text") {
@@ -132,5 +212,27 @@ describe("easy read routes", () => {
     })
 
     expect(res.status).toBe(400)
+  })
+
+  it("regenerates on explicit request even when Easy Read is disabled by default", async () => {
+    createTestBook("manual-regenerate")
+    seedRenderedEasyReadSource("manual-regenerate")
+
+    const app = createEasyReadRoutes(tmpDir, promptsDir)
+    const res = await app.request("/books/manual-regenerate/easy-read/regenerate", {
+      method: "POST",
+      headers: { "X-OpenAI-Key": "sk-test" },
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.blocks[0].entries[0]).toMatchObject({
+      sourceId: "pg001_tx001",
+      easyReadId: "pg001_tx001_easy_read",
+      originalText: "Original text",
+      text: "Easy: Original text",
+    })
+    expect(body.version).toBe(1)
+    expect(generateObjectMock).toHaveBeenCalledTimes(1)
   })
 })

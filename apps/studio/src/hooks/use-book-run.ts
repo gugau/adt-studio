@@ -276,6 +276,7 @@ export function useBookRunStatus(label: string): BookRunContextValue {
           const completedTask = idx !== -1 ? tasks[idx] : undefined
           if (completedTask?.kind === "package-adt") {
             queryClient.invalidateQueries({ queryKey: ["books", label, "step-status"] })
+            queryClient.invalidateQueries({ queryKey: ["package-adt-status", label] })
             queryClient.invalidateQueries({ queryKey: ["debug", "accessibility", label] })
             queryClient.invalidateQueries({ queryKey: ["debug", "versions", label, "accessibility-assessment", "book"] })
             queryClient.invalidateQueries({ queryKey: ["book-config", label] })
@@ -439,6 +440,7 @@ function invalidateBookQueries(qc: ReturnType<typeof useQueryClient>, label: str
   qc.invalidateQueries({ queryKey: ["books", label] })
   qc.invalidateQueries({ queryKey: ["books"] })
   qc.invalidateQueries({ queryKey: ["books", label, "pages"] })
+  qc.invalidateQueries({ queryKey: ["package-adt-status", label] })
   qc.invalidateQueries({ queryKey: ["debug"] })
 }
 

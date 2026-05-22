@@ -5,8 +5,9 @@ import path from "node:path"
 import { Hono } from "hono"
 import type { ExtractedPage } from "@adt/pdf"
 import { createBookStorage, openBookDb } from "@adt/storage"
-import { AccessibilityAssessmentOutput } from "@adt/types"
+import { AccessibilityAssessmentOutput, type TaskInfo } from "@adt/types"
 import { errorHandler } from "../middleware/error-handler.js"
+import type { TaskService } from "../services/task-service.js"
 import { createPackageRoutes } from "./package.js"
 
 describe("Package routes", () => {
@@ -201,6 +202,47 @@ describe("Package routes", () => {
       expect(JSON.parse(fs.readFileSync(textsPath, "utf-8")).pg001_n0001_easy_read).toBe("Updated easy text")
       expect(secondBody.version).not.toBe(firstBody.version)
       expect(JSON.parse(fs.readFileSync(configPath, "utf-8")).bundleVersion).toBe(secondBody.version)
+    })
+
+    it("reuses an active packaging task for duplicate preview requests", async () => {
+      createRenderedBook("book-package-dedupe")
+      createWebAssets()
+
+      const activeTasks: TaskInfo[] = []
+      let submitCount = 0
+      const taskService: TaskService = {
+        submitTask(label, kind, description) {
+          submitCount += 1
+          const taskId = `task-${submitCount}`
+          activeTasks.push({
+            taskId,
+            kind,
+            status: "running",
+            description,
+            url: `/books/${label}/preview`,
+          })
+          return { taskId }
+        },
+        getActiveTasks() {
+          return activeTasks
+        },
+      }
+      const taskApp = new Hono()
+      taskApp.onError(errorHandler)
+      taskApp.route("/api", createPackageRoutes(tmpDir, webAssetsDir, undefined, taskService))
+
+      const firstRes = await taskApp.request("/api/books/book-package-dedupe/package-adt", {
+        method: "POST",
+      })
+      const secondRes = await taskApp.request("/api/books/book-package-dedupe/package-adt", {
+        method: "POST",
+      })
+
+      expect(firstRes.status).toBe(200)
+      expect(secondRes.status).toBe(200)
+      expect(await firstRes.json()).toMatchObject({ status: "submitted", taskId: "task-1" })
+      expect(await secondRes.json()).toMatchObject({ status: "submitted", taskId: "task-1" })
+      expect(submitCount).toBe(1)
     })
   })
 

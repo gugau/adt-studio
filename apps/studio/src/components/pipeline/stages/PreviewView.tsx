@@ -9,6 +9,7 @@ import { useNavigate, useSearch } from "@tanstack/react-router"
 import { api, getAdtUrl } from "@/api/client"
 import { useDebugPanelState } from "@/components/debug/debug-panel-state"
 import { useAccessibilityAssessment } from "@/hooks/use-debug"
+import { usePackageAdtStatus } from "@/hooks/use-books"
 import { useReviewerValidationCatalog } from "@/hooks/use-reviewer-validation"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useBookTasks } from "@/hooks/use-book-tasks"
@@ -38,6 +39,7 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
   const { panelOpen } = useDebugPanelState()
   const [isSubmittingPackage, setIsSubmittingPackage] = useState(false)
   const [pendingTaskId, setPendingTaskId] = useState<string | null>(null)
+  const [pendingVersion, setPendingVersion] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
   const [version, setVersion] = useState("0")
@@ -52,6 +54,9 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
   const [accessibilityCardExpanded, setAccessibilityCardExpanded] = useState(false)
   const [validationCardExpanded, setValidationCardExpanded] = useState(false)
   const { data, isLoading: assessmentLoading, error: assessmentError } = useAccessibilityAssessment(bookLabel)
+  const { data: packageStatus } = usePackageAdtStatus(bookLabel, {
+    refetchInterval: pendingVersion && !ready ? 1_000 : false,
+  })
   const reviewerValidationCatalog = useReviewerValidationCatalog(bookLabel)
   const reviewerValidationEnabled = reviewerValidationCatalog.data?.enabled ?? false
 
@@ -123,7 +128,7 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
     }
   }, [])
 
-  const packaging = isSubmittingPackage || isTaskRunning("package-adt")
+  const packaging = !ready && (isSubmittingPackage || isTaskRunning("package-adt"))
 
   useEffect(() => {
     if (!pendingTaskId) return
@@ -131,9 +136,11 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
     if (!task) return
     if (task.status === "completed") {
       setPendingTaskId(null)
+      setPendingVersion(null)
       setIsSubmittingPackage(false)
       void Promise.all([
         queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "step-status"] }),
+        queryClient.invalidateQueries({ queryKey: ["package-adt-status", bookLabel] }),
         queryClient.invalidateQueries({ queryKey: ["debug", "accessibility", bookLabel] }),
         queryClient.invalidateQueries({ queryKey: ["debug", "versions", bookLabel, "accessibility-assessment", "book"] }),
       ]).then(() => {
@@ -142,14 +149,26 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
       })
     } else if (task.status === "failed") {
       setPendingTaskId(null)
+      setPendingVersion(null)
       setIsSubmittingPackage(false)
-      setError(task.error ?? "Packaging failed")
+      if (!ready) {
+        setError(task.error ?? "Packaging failed")
+      }
     }
-  }, [pendingTaskId, getTask, bookLabel, queryClient])
+  }, [pendingTaskId, getTask, bookLabel, queryClient, ready])
+
+  useEffect(() => {
+    if (!pendingVersion || ready) return
+    if (!packageStatus?.hasAdt || packageStatus.version !== pendingVersion) return
+    setVersion(pendingVersion)
+    setReady(true)
+    setIsSubmittingPackage(false)
+  }, [packageStatus?.hasAdt, packageStatus?.version, pendingVersion, ready])
 
   const runPackage = useCallback(async () => {
     setIsSubmittingPackage(true)
     setPendingTaskId(null)
+    setPendingVersion(null)
     setError(null)
     setReady(false)
     setCurrentPreviewPage({ sectionId: null, href: null, title: null, hasImages: false, hasActivity: false, signLanguageEnabled: false })
@@ -159,11 +178,13 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
       taskId = result.taskId
       if (taskId) {
         setPendingTaskId(taskId)
+        setPendingVersion(result.version ?? createPreviewVersion())
       } else {
         // Synchronous completion (cache hit) — no task to wait for
         setIsSubmittingPackage(false)
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "step-status"] }),
+          queryClient.invalidateQueries({ queryKey: ["package-adt-status", bookLabel] }),
           queryClient.invalidateQueries({ queryKey: ["debug", "accessibility", bookLabel] }),
           queryClient.invalidateQueries({ queryKey: ["debug", "versions", bookLabel, "accessibility-assessment", "book"] }),
         ])

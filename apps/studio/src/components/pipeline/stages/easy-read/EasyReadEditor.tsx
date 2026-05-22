@@ -43,6 +43,9 @@ export function EasyReadEditor({
       queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "text-catalog"] }),
       queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "tts"] }),
       queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "step-status"] }),
+      queryClient.invalidateQueries({ queryKey: ["package-adt-status", bookLabel] }),
+      queryClient.invalidateQueries({ queryKey: ["debug", "accessibility", bookLabel] }),
+      queryClient.invalidateQueries({ queryKey: ["debug", "versions", bookLabel, "accessibility-assessment", "book"] }),
     ])
   }
 
@@ -65,6 +68,8 @@ export function EasyReadEditor({
       await invalidateEasyReadDependents()
     },
   })
+  const mutationError =
+    getErrorMessage(regenerateMutation.error) ?? getErrorMessage(saveMutation.error)
 
   const updateEntry = (
     blockKey: { pageId: string; sectionId: string; sectionIndex: number },
@@ -104,6 +109,7 @@ export function EasyReadEditor({
         <div>
           <p className="text-xs font-medium">{t`Easy Read`}</p>
           <p className="text-xs text-muted-foreground">{t`Generate editable Easy Read blocks for the ADT toggle.`}</p>
+          {mutationError && <p className="mt-1 text-xs text-destructive">{mutationError}</p>}
         </div>
         <Button
           type="button"
@@ -174,6 +180,12 @@ export function EasyReadEditor({
         </div>
       </div>
 
+      {mutationError && (
+        <div className="border-b px-3 py-2 text-xs text-destructive">
+          {mutationError}
+        </div>
+      )}
+
       {visibleBlocks.length === 0 ? (
         <div className="px-3 py-3 text-xs text-muted-foreground">
           {t`No Easy Read block is available for this page.`}
@@ -213,4 +225,10 @@ export function EasyReadEditor({
       )}
     </div>
   )
+}
+
+function getErrorMessage(error: unknown): string | null {
+  if (error instanceof Error) return error.message
+  if (typeof error === "string") return error
+  return null
 }

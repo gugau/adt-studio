@@ -81,9 +81,14 @@ function hasExcludedAncestor(el: { parent?: unknown } | null): boolean {
   while (current) {
     const className = current.attribs?.class ?? ""
     if (
-      className.split(/\s+/).some((c) => c === "word-card" || c === "activity-text") ||
+      className.split(/\s+/).some((c) => c === "word-card") ||
       current.attribs?.["data-activity-item"] !== undefined ||
-      current.name === "nav"
+      current.name === "nav" ||
+      current.name === "button" ||
+      current.name === "input" ||
+      current.name === "textarea" ||
+      current.name === "select" ||
+      current.name === "option"
     ) {
       return true
     }
