@@ -38,6 +38,7 @@ COPY tsconfig.json ./
 COPY packages/ ./packages/
 COPY apps/api/ ./apps/api/
 COPY apps/studio/ ./apps/studio/
+COPY apps/adt-runtime/ ./apps/adt-runtime/
 
 # Read-only code assets required during build (prompts, templates, global config)
 COPY prompts/ ./prompts/
