@@ -25,7 +25,11 @@ export type {
 export { resolveAgentModel } from "./resolve-model.js"
 export type { AgentCredentials } from "./resolve-model.js"
 
-export { ACTIVITY_GENERATION_SYSTEM_PROMPT } from "./prompts/activity-generation.js"
+export {
+  ACTIVITY_GENERATION_SYSTEM_PROMPT,
+  buildActivityGenerationSystemPrompt,
+} from "./prompts/activity-generation.js"
+export type { ActivityGenerationPromptOptions } from "./prompts/activity-generation.js"
 export {
   LAYOUT_MIRROR_SYSTEM_PROMPT,
   buildLayoutMirrorUserPrompt,

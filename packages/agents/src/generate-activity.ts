@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto"
 import type { Storage } from "@adt/storage"
 import { runAgent, type AgentStepEvent } from "./runner.js"
 import { createBookTools, type BookToolCallRecord } from "./tools/book-tools.js"
-import { ACTIVITY_GENERATION_SYSTEM_PROMPT } from "./prompts/activity-generation.js"
+import { buildActivityGenerationSystemPrompt } from "./prompts/activity-generation.js"
 import type { AgentCredentials } from "./resolve-model.js"
 
 export interface GenerateActivityOptions {
@@ -15,6 +15,12 @@ export interface GenerateActivityOptions {
   anchorPageId: string
   /** Natural-language description of the activity the user wants. */
   description: string
+  /**
+   * When true (default), the system prompt includes the Universal Design for
+   * Learning block. Set to false to disable inclusive-design guidance for
+   * comparison/testing purposes.
+   */
+  inclusiveDesign?: boolean
   modelId: string
   /** Optional book styleguide markdown — appended to the agent's system prompt and forwarded to the renderer for the templated path. */
   styleguide?: string
@@ -115,7 +121,11 @@ export async function generateActivity(
     restrictWritesToPageId: opts.anchorPageId,
   })
 
-  const systemParts: string[] = [ACTIVITY_GENERATION_SYSTEM_PROMPT]
+  const systemParts: string[] = [
+    buildActivityGenerationSystemPrompt({
+      inclusiveDesign: opts.inclusiveDesign,
+    }),
+  ]
   if (opts.styleguide && opts.styleguide.trim()) {
     systemParts.push(
       [

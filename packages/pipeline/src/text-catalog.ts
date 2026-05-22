@@ -63,25 +63,26 @@ function extractPageEntries(
   for (const section of rendering.sections) {
     if (prunedSectionIndices?.has(section.sectionIndex)) continue
 
-    // Custom activities own their structure (the agent writes HTML + script
-    // and wires interaction itself). Cataloguing the wrapper element pulls in
-    // the script source — `DomUtils.textContent` walks <script> children too
-    // — which the runtime then innerHTMLs back in, wiping the layout. Skip
-    // these sections entirely from the catalog. They will not be translated
-    // by the i18n pass; that's the right behavior for v0 — a future
-    // per-data-id translator can revisit when custom activities need l10n.
-    if (
-      section.sectionType === "activity_custom" ||
-      section.sectionType.startsWith("activity_custom_")
-    ) {
-      continue
-    }
-
     const doc = parseDocument(section.html)
 
+    // Only catalog leaves of the data-id tree. A wrapper element with a
+    // data-id whose descendants also have data-ids would otherwise emit an
+    // entry whose text is the concatenation of every leaf — and a translation
+    // replacing that wrapper's innerHTML at runtime would wipe the leaves'
+    // structure. Custom-activity sections in particular put data-id on both
+    // the outer <section> and inner text elements; leaves-only handles them
+    // correctly without a section-type special case.
     const elements = DomUtils.findAll(
-      (el) => el.type === "tag" && el.attribs?.["data-id"] !== undefined,
-      doc.children
+      (el) =>
+        el.type === "tag" &&
+        el.attribs?.["data-id"] !== undefined &&
+        !DomUtils.findOne(
+          (child) =>
+            child.type === "tag" && child.attribs?.["data-id"] !== undefined,
+          el.children ?? [],
+          true,
+        ),
+      doc.children,
     )
 
     for (const el of elements) {

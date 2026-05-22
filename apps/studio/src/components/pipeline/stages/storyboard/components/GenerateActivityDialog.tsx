@@ -8,7 +8,7 @@ interface GenerateActivityDialogProps {
   /** The anchor page the new activity section will be appended to. */
   anchorPageId: string
   anchorPageNumber: number
-  onSubmit: (description: string) => void
+  onSubmit: (description: string, options: { inclusiveDesign: boolean }) => void
   onClose: () => void
 }
 
@@ -52,12 +52,13 @@ export function GenerateActivityDialog({
 }: GenerateActivityDialogProps) {
   const { t } = useLingui()
   const [description, setDescription] = useState("")
+  const [inclusiveDesign, setInclusiveDesign] = useState(true)
 
   const canSubmit = description.trim().length > 0
 
   const handleSubmit = () => {
     if (!canSubmit) return
-    onSubmit(description.trim())
+    onSubmit(description.trim(), { inclusiveDesign })
   }
 
   return (
@@ -114,6 +115,23 @@ export function GenerateActivityDialog({
               ))}
             </div>
           </div>
+
+          <label className="flex items-start gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={inclusiveDesign}
+              onChange={(e) => setInclusiveDesign(e.target.checked)}
+              className="mt-0.5 h-3.5 w-3.5 rounded border-input text-violet-600 focus-visible:ring-2 focus-visible:ring-violet-500/50"
+            />
+            <span className="flex-1">
+              <span className="block text-xs font-medium">
+                {t`Inclusive design`}
+              </span>
+              <span className="block text-[11px] text-muted-foreground mt-0.5">
+                {t`Adds Universal Design for Learning guidance (plain language, keyboard + click fallback for drag, aria-live grading, no color-only feedback). Turn off to compare output without this guidance.`}
+              </span>
+            </span>
+          </label>
         </div>
 
         <div className="px-5 py-3 border-t flex items-center justify-end gap-2 shrink-0">

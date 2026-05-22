@@ -721,13 +721,18 @@ export const api = {
     anchorPageId: string,
     description: string,
     apiKey: string,
+    options?: { inclusiveDesign?: boolean },
   ) =>
     request<{ taskId?: string; status?: string; text?: string; touchedPageIds?: string[]; toolCalls?: Array<{ name: string; args: unknown; result: unknown; error?: string }>; stepCount?: number; finishReason?: string }>(
       `/books/${label}/agents/generate-activity`,
       {
         method: "POST",
         headers: { "X-OpenAI-Key": apiKey },
-        body: JSON.stringify({ anchorPageId, description }),
+        body: JSON.stringify({
+          anchorPageId,
+          description,
+          inclusiveDesign: options?.inclusiveDesign ?? true,
+        }),
         signal: AbortSignal.timeout(30_000),
       },
     ),

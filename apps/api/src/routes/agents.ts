@@ -16,6 +16,7 @@ interface LayoutMirrorRequestBody {
 interface GenerateActivityRequestBody {
   anchorPageId?: unknown
   description?: unknown
+  inclusiveDesign?: unknown
 }
 
 function parseTarget(v: {
@@ -135,6 +136,9 @@ export function createAgentRoutes(
     }
     const anchorPageId = body.anchorPageId
     const description = body.description
+    // Default-on. Only honor an explicit `false`; any other value (missing,
+    // null, non-boolean) leaves the inclusive-design block in the prompt.
+    const inclusiveDesign = body.inclusiveDesign !== false
 
     const run = (emitProgress?: (msg: string, percent?: number) => void) =>
       generateActivityService({
@@ -144,6 +148,7 @@ export function createAgentRoutes(
         configPath,
         anchorPageId,
         description,
+        inclusiveDesign,
         apiKey,
         onProgress: emitProgress
           ? (message: string) => emitProgress(message)

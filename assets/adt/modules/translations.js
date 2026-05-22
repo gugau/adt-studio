@@ -232,12 +232,15 @@ const applyTranslationToElements = (key, translationKey) => {
     const elements = document.querySelectorAll(`[data-id="${key}"]`);
     elements.forEach((element) => {
         if (element) {
-            // Custom activities own their own DOM (the agent ships HTML + script
-            // and wires interaction itself). Applying innerHTML from the text
-            // catalog would wipe the structure — and, before the catalog fix,
-            // would even leak the script source as visible text. Skip them.
-            const customAncestor = element.closest('section[data-section-type^="activity_custom"]');
-            if (customAncestor) {
+            // Only translate leaves of the data-id tree. A wrapper element
+            // that contains other data-id descendants would have its nested
+            // structure wiped when we innerHTML the translation in. The
+            // text-catalog extractor uses the same leaves-only rule, so in
+            // practice catalog keys should always resolve to leaves — but
+            // guarding here keeps the policy unified for legacy catalogs and
+            // for the custom-activity wrapper, whose own data-id matches the
+            // section's index but is not meant to be translated.
+            if (element.querySelector('[data-id]')) {
                 return;
             }
             if (element.tagName === "IMG") {

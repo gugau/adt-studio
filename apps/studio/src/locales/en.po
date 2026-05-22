@@ -577,6 +577,9 @@ msgstr "Additional Languages"
 msgid "Additional terminology may be introduced in later sections. All terms are listed in the glossary appendix at the end of this document for quick reference."
 msgstr "Additional terminology may be introduced in later sections. All terms are listed in the glossary appendix at the end of this document for quick reference."
 
+msgid "Adds Universal Design for Learning guidance (plain language, keyboard + click fallback for drag, aria-live grading, no color-only feedback). Turn off to compare output without this guidance."
+msgstr "Adds Universal Design for Learning guidance (plain language, keyboard + click fallback for drag, aria-live grading, no color-only feedback). Turn off to compare output without this guidance."
+
 msgid "ADT"
 msgstr "ADT"
 
@@ -2255,6 +2258,9 @@ msgstr "Include in render"
 
 msgid "Include text overlays in vector groups"
 msgstr "Include text overlays in vector groups"
+
+msgid "Inclusive design"
+msgstr "Inclusive design"
 
 msgid "Increase indent"
 msgstr "Increase indent"

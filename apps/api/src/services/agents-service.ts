@@ -114,6 +114,8 @@ export interface GenerateActivityServiceOptions {
   configPath?: string
   anchorPageId: string
   description: string
+  /** Defaults to true. When false, the UDL block is omitted from the agent's system prompt. */
+  inclusiveDesign?: boolean
   apiKey: string
   /** Forwarded to the agent so per-step progress reaches the task UI. */
   onProgress?: (message: string) => void
@@ -129,6 +131,7 @@ export async function generateActivityService(
     configPath,
     anchorPageId,
     description,
+    inclusiveDesign,
     apiKey,
     onProgress,
   } = options
@@ -148,6 +151,7 @@ export async function generateActivityService(
       configPath,
       anchorPageId,
       description,
+      inclusiveDesign,
       modelId,
       styleguide,
       apiKey,

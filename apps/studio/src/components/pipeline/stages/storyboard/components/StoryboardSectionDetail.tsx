@@ -1852,12 +1852,15 @@ export function StoryboardSectionDetail({
       })
   }
 
-  const handleGenerateActivitySubmit = (description: string) => {
+  const handleGenerateActivitySubmit = (
+    description: string,
+    options: { inclusiveDesign: boolean },
+  ) => {
     setGenerateActivityOpen(false)
     if (!hasApiKey) return
     setAiError(null)
     api
-      .agentGenerateActivity(bookLabel, pageId, description, apiKey)
+      .agentGenerateActivity(bookLabel, pageId, description, apiKey, options)
       .catch((err) => {
         setAiError(
           err instanceof Error ? err.message : t`Activity generation failed`,
