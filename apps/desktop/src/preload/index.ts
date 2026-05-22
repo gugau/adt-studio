@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import type { ApiLogEntry } from '../main/api/types'
-import type { UpdateStatus } from '../main/auto-updater'
+import type { ApiLogEntry } from '../main/api-server/types'
+import type { UpdateStatus } from '../main/services/auto-updater'
 
 type ApiLogCallback = (entry: ApiLogEntry) => void
 type MaximizeChangeCallback = (isMaximized: boolean) => void

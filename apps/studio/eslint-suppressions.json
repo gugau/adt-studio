@@ -46,12 +46,17 @@
   },
   "src/components/pipeline/stages/storyboard/components/BookPreviewFrame.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 2
+      "count": 1
     }
   },
   "src/components/pipeline/stages/storyboard/components/SectioningOverview.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 5
+      "count": 2
+    }
+  },
+  "src/components/pipeline/stages/storyboard/components/iframe-html.ts": {
+    "lingui/no-unlocalized-strings": {
+      "count": 1
     }
   },
   "src/hooks/run-state.test.ts": {

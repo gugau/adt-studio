@@ -27,6 +27,7 @@ export function LanguagePicker({
   label,
   hint,
   size = "sm",
+  renderBadges = true,
 }: {
   selected: string | Set<string>
   onSelect: (code: string) => void
@@ -34,6 +35,7 @@ export function LanguagePicker({
   label: string
   hint?: string
   size?: "sm" | "default"
+  renderBadges?: boolean
 }) {
   const { t } = useLingui()
   const [search, setSearch] = useState("")
@@ -261,7 +263,7 @@ export function LanguagePicker({
       )}
 
       {/* Selected badges for multi-select */}
-      {multiple && selectedSet && selectedSet.size > 0 && (
+      {renderBadges && multiple && selectedSet && selectedSet.size > 0 && (
         <div className="flex flex-wrap gap-1">
           {Array.from(selectedSet).map((code) => (
             <Badge

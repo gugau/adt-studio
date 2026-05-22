@@ -4,13 +4,22 @@ import { X } from "lucide-react"
 import { STAGES, isStageSlug } from "@/components/pipeline/stage-config"
 import { resolveSettingsStageSlug } from "@/components/pipeline/settings-routing"
 import { ExtractSettings } from "@/components/pipeline/stages/extract/ExtractSettings"
+import { ExtractLandingPage } from "@/components/pipeline/stages/extract/ExtractLandingPage"
 import { SectioningSettings } from "@/components/pipeline/stages/sectioning/SectioningSettings"
+import { SectioningLandingPage } from "@/components/pipeline/stages/sectioning/SectioningLandingPage"
 import { StoryboardSettings } from "@/components/pipeline/stages/storyboard/StoryboardSettings"
+import { StoryboardLandingPage } from "@/components/pipeline/stages/storyboard/StoryboardLandingPage"
 import { QuizzesSettings } from "@/components/pipeline/stages/quizzes/QuizzesSettings"
 import { GlossarySettings } from "@/components/pipeline/stages/glossary/GlossarySettings"
+import { GlossaryLandingPage } from "@/components/pipeline/stages/glossary/GlossaryLandingPage"
 import { TocSettings } from "@/components/pipeline/stages/toc/TocSettings"
+import { TocLandingPage } from "@/components/pipeline/stages/toc/TocLandingPage"
 import { CaptionsSettings } from "@/components/pipeline/stages/captions/CaptionsSettings"
-import { TranslationsSettings } from "@/components/pipeline/stages/translations/TranslationsSettings"
+import { CaptionsLandingPage } from "@/components/pipeline/stages/captions/CaptionsLandingPage"
+import { LanguageSettings } from "@/components/pipeline/stages/languages/LanguageSettings"
+import { LanguageLandingPage } from "@/components/pipeline/stages/languages/LanguageLandingPage"
+import { SpeechSettings } from "@/components/pipeline/stages/speech/SpeechSettings"
+import { SpeechLandingPage } from "@/components/pipeline/stages/speech/SpeechLandingPage"
 import { ValidationSettings } from "@/components/pipeline/stages/ValidationSettings"
 import { getStageLabelI18n } from "@/components/pipeline/pipeline-i18n"
 import { cn } from "@/lib/utils"
@@ -85,6 +94,27 @@ export function StepSettingsPage() {
         {(() => {
           const settingsStage = resolveSettingsStageSlug(step)
 
+          if (tab === "overview") {
+            switch (settingsStage) {
+              case "extract":
+                return <ExtractLandingPage bookLabel={label} />
+              case "sectioning":
+                return <SectioningLandingPage bookLabel={label} />
+              case "storyboard":
+                return <StoryboardLandingPage bookLabel={label} />
+              case "captions":
+                return <CaptionsLandingPage bookLabel={label} />
+              case "glossary":
+                return <GlossaryLandingPage bookLabel={label} />
+              case "translate":
+                return <LanguageLandingPage bookLabel={label} />
+              case "speech":
+                return <SpeechLandingPage bookLabel={label} />
+              case "toc":
+                return <TocLandingPage bookLabel={label} />
+            }
+          }
+
           switch (settingsStage) {
             case "extract":
               return <ExtractSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
@@ -101,9 +131,9 @@ export function StepSettingsPage() {
             case "captions":
               return <CaptionsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             case "translate":
-              return <TranslationsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} stageSlug="translate" />
+              return <LanguageSettings bookLabel={label} headerTarget={headerTarget} tab={tab} stageSlug="translate" />
             case "speech":
-              return <TranslationsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} stageSlug="speech" />
+              return <SpeechSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             case "validation":
               return <ValidationSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             default:

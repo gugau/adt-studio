@@ -16,7 +16,7 @@ You MUST return valid JSON with exactly two fields:
 Use this exact outer shell:
 ```html
 <div class="flex justify-center items-start min-h-[calc(100dvh-100px)]">
-  <div class="container mx-auto max-w-5xl bg-white rounded-lg lg:px-24 md:px-12 sm:px-6 pt-12 pb-12" id="content">
+  <div class="container mx-auto max-w-5xl bg-white rounded-lg px-24 max-lg:px-12 max-sm:px-6 pt-12 pb-12" id="content">
     <!-- one section goes here -->
   </div>
 </div>
@@ -87,7 +87,7 @@ Use this exact outer shell:
   <div class="questions grow space-y-4" role="group">
     <p data-id="TEXT_ID_FROM_INPUT">EXACT_TEXT_FROM_INPUT</p>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div class="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
       <label class="activity-option flex items-start gap-4 p-4 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
         <div class="flex-shrink-0">
           <div class="w-8 h-8 aspect-square rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-500 option-letter">

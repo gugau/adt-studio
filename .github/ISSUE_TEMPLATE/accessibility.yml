@@ -1,0 +1,116 @@
+name: Accessibility Issue
+description: Report an accessibility barrier in the ADT Studio app or in a generated ADT
+labels: ["accessibility"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        <p align="center">
+          <a href="https://github.com/unicef/adt-studio">
+            <picture>
+              <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/unicef/adt-studio/main/.github/assets/adt-studio-banner-dark.png">
+              <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/unicef/adt-studio/main/.github/assets/adt-studio-banner-light.png">
+              <img src="https://raw.githubusercontent.com/unicef/adt-studio/main/.github/assets/adt-studio-banner-light.png" alt="ADT Studio — Turn PDFs into interactive HTML books" width="420">
+            </picture>
+          </a>
+        </p>
+
+        <p align="center"><em>Thanks for reporting an accessibility issue!</em></p>
+
+        > [!IMPORTANT]
+        > - Use this form for accessibility issues in either **the ADT Studio app** (keyboard navigation, screen readers, contrast, focus management, etc.) or **a generated ADT** (the produced HTML book).
+        > - Please provide a descriptive title and search existing issues to avoid creating duplicates.
+  - type: checkboxes
+    id: preliminary
+    attributes:
+      label: Preliminary Checks
+      options:
+        - label: I have searched existing issues and avoided creating duplicates.
+          required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where is the issue?
+      description: Which surface does this accessibility issue affect?
+      options:
+        - ADT Studio app (the editor interface)
+        - Generated ADT (the produced HTML book)
+        - Both
+    validations:
+      required: true
+  - type: textarea
+    id: barrier
+    attributes:
+      label: Description of the barrier
+      description: What can't you do, or what is unnecessarily difficult?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide numbered steps so we can reproduce the issue.
+    validations:
+      required: true
+  - type: input
+    id: assistive-tech
+    attributes:
+      label: Assistive technology
+      description: What are you using? (e.g. NVDA, VoiceOver, JAWS, keyboard only, screen magnifier, voice control)
+  - type: input
+    id: wcag
+    attributes:
+      label: WCAG criterion (optional)
+      description: If you know which WCAG success criterion this relates to, please include it (e.g. 1.4.3 Contrast, 2.1.1 Keyboard).
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version
+      description: What version of ADT Studio are you running? Check Help → About, or see https://github.com/unicef/adt-studio/releases.
+      options:
+        - v0.7.0-rc.6
+        - v0.6.0
+        - v0.5.1
+        - v0.5.0
+        - v0.4.8
+        - v0.4.7
+        - v0.4.6
+        - v0.4.5
+        - v0.4.4
+        - v0.4.3
+        - v0.4.2
+        - v0.4.1
+        - Older / unsure
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      description: Fill this in if the issue is in the **ADT Studio app**. Select all that apply.
+      multiple: true
+      options:
+        - Windows - x64
+        - Windows - ARM
+        - macOS - Apple Silicon
+        - macOS - Intel
+        - Linux
+        - Other
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      description: Fill this in if the issue is in a **generated ADT**. Select all that apply.
+      multiple: true
+      options:
+        - Chrome
+        - Edge
+        - Firefox
+        - Safari
+        - Other Chromium-based (Brave, Opera, etc.)
+        - Other
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or recordings
+      description: If applicable, attach screenshots or recordings to help illustrate the problem.

@@ -116,16 +116,40 @@ export const AppConfig = z
     visual_review_prompt: z.string().optional(),
     visual_review_max_iterations: z.number().int().min(1).max(50).optional(),
     section_render_strategies: z.record(z.string(), z.string()).optional(),
+    storyboard_effort: z.enum(["high", "medium", "relaxed"]).optional(),
+    storyboard_activity_mode: z
+      .enum(["dynamic", "match_source", "template"])
+      .optional(),
     image_filters: ImageFilters.optional(),
     image_meaningfulness: StepConfig.optional(),
     glossary: StepConfig.optional(),
     toc_generation: StepConfig.optional(),
+    toc_mode: z.enum(["extract", "dynamic"]).optional(),
     concurrency: z.number().int().min(1).optional(),
     rate_limit: RateLimitConfig.optional(),
     editing_language: z.string().optional(),
     output_languages: z.array(z.string()).optional(),
     book_format: z.array(BookFormat).optional(),
     image_captioning: StepConfig.optional(),
+    image_captioning_grade_level: z
+      .enum(["early", "middle", "advanced"])
+      .optional(),
+    image_captioning_user_prompt: z.string().optional(),
+    glossary_amount: z
+      .enum(["concise", "standard", "comprehensive"])
+      .optional(),
+    glossary_user_prompt: z.string().optional(),
+    glossary_seed_terms: z
+      .array(
+        z.object({
+          id: z.string(),
+          word: z.string(),
+          definition: z.string(),
+          variations: z.array(z.string()).default([]),
+          emojis: z.array(z.string()).default([]),
+        }),
+      )
+      .optional(),
     image_translation: ImageTranslationConfig.optional(),
     image_segmentation: StepConfig.extend({
       min_side: z.number().int().min(0).optional(),
