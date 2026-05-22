@@ -161,6 +161,7 @@ export interface PageSummaryItem {
   pageNumber: number
   hasRendering: boolean
   hasCaptioning: boolean
+  hasQuizSourceContent?: boolean
   textPreview: string
   imageCount: number
   wordCount: number
@@ -454,6 +455,7 @@ export interface GenerateQuizzesRequest {
   /** 1-20 questions inside the generated quiz activity. */
   questionsPerQuiz?: number
   replaceExistingForPages?: boolean
+  replaceQuizIndex?: number
 }
 
 // --- Text Catalog types ---

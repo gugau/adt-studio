@@ -12,7 +12,7 @@ import { createBookStorage } from "@adt/storage"
 import type { Storage } from "@adt/storage"
 import { reRenderPage, aiEditSection } from "../services/page-edit-service.js"
 import type { TaskService } from "../services/task-service.js"
-import { segmentPageImages, getSegmentedImageId, loadBookConfig, applyCrop, generateStyleguide, buildStyleguideGenerationConfig, buildCaptionConfig, captionPageImages, normalizeLocale } from "@adt/pipeline"
+import { segmentPageImages, getSegmentedImageId, loadBookConfig, applyCrop, generateStyleguide, buildStyleguideGenerationConfig, buildCaptionConfig, captionPageImages, normalizeLocale, buildQuizGenerationConfig, isContentPage } from "@adt/pipeline"
 import { createLLMModel, createPromptEngine, renderLiquidTemplate, generateImageWithCache } from "@adt/llm"
 
 interface PageSummary {
@@ -20,6 +20,7 @@ interface PageSummary {
   pageNumber: number
   hasRendering: boolean
   hasCaptioning: boolean
+  hasQuizSourceContent: boolean
   textPreview: string
   imageCount: number
   wordCount: number
@@ -471,6 +472,7 @@ export function createPageRoutes(
       const prunedSections = new Map<string, number[]>()
       const sectionIdsByPage = new Map<string, Array<{ sectionId: string; sectionIndex: number }>>()
       const structuredText = new Map<string, string>()
+      const sectioningByPage = new Map<string, PageSectioningOutput>()
       const structuringRows = db.all(
         "SELECT item_id, data FROM node_data WHERE node = ? ORDER BY version DESC",
         ["page-sectioning"]
@@ -479,6 +481,10 @@ export function createPageRoutes(
         if (!sectionCounts.has(row.item_id)) {
           try {
             const parsed = JSON.parse(row.data)
+            const validated = PageSectioningOutput.safeParse(parsed)
+            if (validated.success) {
+              sectioningByPage.set(row.item_id, validated.data)
+            }
             const sections = parsed.sections as Array<{
               sectionId?: string
               isPruned?: boolean
@@ -516,11 +522,54 @@ export function createPageRoutes(
         }
       }
 
+      const renderingByPage = new Map<string, WebRenderingOutput>()
+      const renderingRows = db.all(
+        "SELECT item_id, data FROM node_data WHERE node = ? ORDER BY version DESC",
+        ["web-rendering"]
+      ) as Array<{ item_id: string; data: string }>
+      for (const row of renderingRows) {
+        if (renderingByPage.has(row.item_id)) continue
+        try {
+          const parsed = WebRenderingOutput.safeParse(JSON.parse(row.data))
+          if (parsed.success) renderingByPage.set(row.item_id, parsed.data)
+        } catch {
+          // Ignore invalid rendering data for the summary endpoint.
+        }
+      }
+
+      const metadataRow = db.all(
+        "SELECT data FROM node_data WHERE node = ? AND item_id = ? ORDER BY version DESC LIMIT 1",
+        ["metadata", "book"]
+      ) as Array<{ data: string }>
+      let metadata: { language_code?: string | null } | null = null
+      if (metadataRow[0]) {
+        try {
+          metadata = JSON.parse(metadataRow[0].data) as { language_code?: string | null }
+        } catch {
+          metadata = null
+        }
+      }
+      const config = loadBookConfig(safeLabel, booksDir, configPath)
+      const language = normalizeLocale(config.editing_language ?? metadata?.language_code ?? "en")
+      const quizConfig = buildQuizGenerationConfig(config, language)
+      const hasQuizSourceContent = new Map<string, boolean>()
+      if (quizConfig) {
+        for (const page of pages) {
+          const sectioning = sectioningByPage.get(page.page_id)
+          const rendering = renderingByPage.get(page.page_id)
+          hasQuizSourceContent.set(
+            page.page_id,
+            Boolean(sectioning && rendering && isContentPage(sectioning, quizConfig.quizSectionTypes))
+          )
+        }
+      }
+
       const result: PageSummary[] = pages.map((p) => ({
         pageId: p.page_id,
         pageNumber: p.page_number,
         hasRendering: rendered.has(p.page_id),
         hasCaptioning: captioned.has(p.page_id),
+        hasQuizSourceContent: hasQuizSourceContent.get(p.page_id) ?? false,
         textPreview: structuredText.get(p.page_id) ?? p.text.slice(0, 150),
         imageCount: imageCounts.get(p.page_id) ?? 0,
         wordCount: p.text.trim() ? p.text.trim().split(/\s+/).length : 0,

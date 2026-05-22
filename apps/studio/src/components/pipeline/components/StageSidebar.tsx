@@ -211,6 +211,7 @@ export function StageSidebar({
     const iconFilled = step.slug === "book" ? true : stageCompleted
 
     const stepLabel = step.slug === "book" ? toCamelLabel(bookLabel) : getStageLabelI18n(step.slug)
+    const keepSelectedPage = Boolean(selectedPageId && hasStagePages(step.slug) && step.slug !== "quizzes")
 
     return (
       <div key={step.slug} className="relative">
@@ -230,8 +231,8 @@ export function StageSidebar({
           )}
         >
           <Link
-            to={selectedPageId && hasStagePages(step.slug) ? "/books/$label/$step/$pageId" : "/books/$label/$step"}
-            params={selectedPageId && hasStagePages(step.slug)
+            to={keepSelectedPage ? "/books/$label/$step/$pageId" : "/books/$label/$step"}
+            params={keepSelectedPage
               ? { label: bookLabel, step: step.slug, pageId: selectedPageId }
               : { label: bookLabel, step: step.slug }}
             className={cn("flex items-center gap-2.5 min-w-7", x.flex1)}

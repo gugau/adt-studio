@@ -57,8 +57,8 @@ beforeEach(() => {
   })
   mocks.usePages.mockReturnValue({
     data: [
-      { pageId: "pg001", pageNumber: 1, sectionCount: 1, prunedSections: [] },
-      { pageId: "pg002", pageNumber: 2, sectionCount: 1, prunedSections: [] },
+      { pageId: "pg001", pageNumber: 1, sectionCount: 1, prunedSections: [], hasQuizSourceContent: true },
+      { pageId: "pg002", pageNumber: 2, sectionCount: 1, prunedSections: [], hasQuizSourceContent: true },
     ],
   })
 })
@@ -114,28 +114,27 @@ describe("QuizzesLandingConfig", () => {
 
     const selector = screen.getByDisplayValue("MCQ")
     expect(selector.textContent).toContain("MCQ Multiple Select")
+    expect(selector.textContent).toContain("True / False")
     expect(selector.textContent).toContain("Open Ended")
     expect(selector.textContent).toContain("Sorting")
   })
 
-  it("offers distinct plain-language reusable activity layouts", () => {
+  it("labels the question count badge as the per-quiz setting", () => {
     renderConfig()
 
-    expect(screen.getByRole("button", { name: /Worksheet rows/ })).toBeTruthy()
-    expect(screen.getByRole("button", { name: /Practice cards/ })).toBeTruthy()
-    expect(screen.getByRole("button", { name: /Quick check/ })).toBeTruthy()
-    expect(screen.getByRole("button", { name: /Step by step/ })).toBeTruthy()
+    expect(screen.getByText("Questions/quiz: 1")).toBeTruthy()
+    expect(screen.queryByText("1 questions")).toBeNull()
   })
 
-  it("sends the selected reusable template when generating", async () => {
+  it("explains that pages without usable content are hidden by default", () => {
     renderConfig()
 
-    fireEvent.change(screen.getByLabelText("Template name"), {
-      target: { value: "My workbook style" },
-    })
-    fireEvent.change(screen.getByLabelText("Template instructions"), {
-      target: { value: "Keep every activity compact and table-like." },
-    })
+    expect(screen.getByText("Note: Pages without usable content are hidden by default.")).toBeTruthy()
+  })
+
+  it("sends the default worksheet template when generating", async () => {
+    renderConfig()
+
     fireEvent.click(screen.getByRole("button", { name: "Generate" }))
 
     await waitFor(() => {
@@ -144,10 +143,9 @@ describe("QuizzesLandingConfig", () => {
         "test-key",
         expect.objectContaining({
           template: expect.objectContaining({
-            name: "My workbook style",
+            name: "Worksheet rows",
             style: "worksheet_rows",
             generationMode: "template_single_page",
-            instructions: "Keep every activity compact and table-like.",
           }),
         }),
         undefined
@@ -155,15 +153,25 @@ describe("QuizzesLandingConfig", () => {
     })
   })
 
-  it.each([
-    ["Worksheet rows", "worksheet_rows", "template_single_page"],
-    ["Practice cards", "practice_cards", "template_single_page"],
-    ["Quick check", "quick_check", "template_single_page"],
-    ["Step by step", "guided_steps", "template_multi_step"],
-  ])("sends the %s layout preset when generating", async (buttonName, style, generationMode) => {
+  it("hides pages without usable quiz source content by default and skips them in ranges", async () => {
+    mocks.usePages.mockReturnValue({
+      data: [
+        { pageId: "pg001", pageNumber: 1, sectionCount: 1, prunedSections: [], hasQuizSourceContent: false },
+        { pageId: "pg002", pageNumber: 2, sectionCount: 1, prunedSections: [], hasQuizSourceContent: true },
+      ],
+    })
     renderConfig()
 
-    fireEvent.click(screen.getByRole("button", { name: new RegExp(buttonName) }))
+    expect(screen.queryByRole("button", { name: "Page 1, No quiz source" })).toBeNull()
+    expect(screen.getByRole("button", { name: "Page 2" })).toBeTruthy()
+
+    fireEvent.click(screen.getByRole("button", { name: "Show hidden pages" }))
+    expect(screen.getByRole("button", { name: "Page 1, No quiz source" }).hasAttribute("disabled")).toBe(true)
+
+    fireEvent.change(screen.getByPlaceholderText("1-12, 20, pg045"), {
+      target: { value: "1-2" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Apply range" }))
     fireEvent.click(screen.getByRole("button", { name: "Generate" }))
 
     await waitFor(() => {
@@ -171,10 +179,8 @@ describe("QuizzesLandingConfig", () => {
         "demo-book",
         "test-key",
         expect.objectContaining({
-          template: expect.objectContaining({
-            style,
-            generationMode,
-          }),
+          pageIds: ["pg002"],
+          insertAfterPageId: "pg002",
         }),
         undefined
       )

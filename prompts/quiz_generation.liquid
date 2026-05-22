@@ -78,10 +78,13 @@ Open-ended requirements:
 - Include `guidance` for a teacher or learner about what a good answer should mention.
 {% elsif activity_type == "drag_and_drop" %}
 Matching-pairs requirements:
-- `question` should be a shared title such as "Match the pairs."
+- `question` should be a shared title such as "Complete the sentences."
 - Provide 2 to {{ matching_pair_count }} unique entries in `pairs`.
 - Each pair must contain `item` and `match`.
-- Keep each item and match concise.
+- Use `item` for the sentence starter or prompt that will stay in the row.
+- Use `match` for the word or short phrase the learner drags into that row.
+- The combined text `item` + `match` should read like a natural, correct sentence or phrase.
+- Keep each item and match concise, and avoid repeating the same words in both halves.
 - This is a one-to-one matching activity, not a sorting/category activity.
 {% elsif activity_type == "sorting" %}
 Sorting requirements:

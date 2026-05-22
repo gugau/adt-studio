@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
-import { Check, CheckCircle2, XCircle, ChevronDown, HelpCircle, Loader2, ImageOff, Eye, Scissors, Trash2, BookOpen, FileQuestion, Pencil, RotateCcw, Save, ImagePlus, Upload, X, Image as ImageIcon, Sparkles } from "lucide-react"
+import { Check, CheckCircle2, XCircle, ChevronDown, ChevronRight, HelpCircle, Loader2, ImageOff, Eye, Scissors, Trash2, BookOpen, FileQuestion, Pencil, RotateCcw, Save, ImagePlus, Upload, X, Image as ImageIcon, Sparkles } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
-import { useNavigate } from "@tanstack/react-router"
 import { api, BASE_URL } from "@/api/client"
 import type {
   ActivityGenerationMode,
@@ -19,20 +18,18 @@ import type {
 } from "@/api/client"
 import { useQuizzes, useTextbookActivities } from "@/hooks/use-quizzes"
 import { usePageImage, usePages } from "@/hooks/use-pages"
-import { useBookConfig } from "@/hooks/use-book-config"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { SegmentedControl } from "@/components/ui/segmented-control"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useApiKey } from "@/hooks/use-api-key"
-import { useSectionNav } from "@/routes/books.$label"
+import { useBookRun } from "@/hooks/use-book-run"
 import { getRequestedPageId, getQuizImageRenderState } from "./lib/quizzes-image-state"
 import { QuizzesLandingConfig } from "./components/QuizzesLandingConfig"
+import { StageRunCard } from "../../components/StageRunCard"
 import { useLingui } from "@lingui/react/macro"
 
 
 type QuizData = QuizGenerationOutput
-type QuizSourceMode = "ai" | "textbook"
 
 function getQuizQuestions(quiz: QuizItem): QuizQuestion[] {
   if (quiz.questions && quiz.questions.length > 0) return quiz.questions
@@ -81,6 +78,162 @@ function getSharedQuestionTitle(questions: QuizQuestion[]): string | null {
   const first = questions[0].question.trim()
   if (!first) return null
   return questions.every((q) => q.question.trim() === first) ? first : null
+}
+
+function cleanQuizText(text: string | undefined): string {
+  return (text ?? "").trim().replace(/\s+/g, " ")
+}
+
+function uniqueQuizTexts(texts: Array<string | undefined>, fallback: string[]): string[] {
+  const seen = new Set<string>()
+  const values: string[] = []
+  for (const text of [...texts, ...fallback]) {
+    const value = cleanQuizText(text)
+    if (!value) continue
+    const key = value.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    values.push(value)
+  }
+  return values
+}
+
+function getQuestionPrimaryText(question: QuizQuestion): string {
+  return cleanQuizText(question.question)
+    || cleanQuizText(question.statements?.[0]?.text)
+    || cleanQuizText(question.blanks?.[0]?.prompt)
+    || cleanQuizText(question.pairs?.[0]?.item)
+    || cleanQuizText(question.sortingItems?.[0]?.item)
+    || "Question"
+}
+
+function getQuestionChoiceTexts(question: QuizQuestion): string[] {
+  return uniqueQuizTexts([
+    ...(question.options ?? []).map((option) => option.text),
+    ...(question.blanks ?? []).map((blank) => blank.answer),
+    ...(question.statements ?? []).map((statement) => statement.text),
+    ...(question.pairs ?? []).flatMap((pair) => [pair.item, pair.match]),
+    ...(question.sortingItems ?? []).map((item) => item.item),
+    question.sampleAnswer,
+  ], ["Option 1", "Option 2", "Option 3", "Option 4"])
+}
+
+function getCorrectChoiceText(question: QuizQuestion): string {
+  if (question.activityType === "multiple_choice") {
+    const option = question.options?.[question.answerIndex ?? 0]
+    return cleanQuizText(option?.text) || "Answer"
+  }
+  if (question.activityType === "multiple_select") {
+    const firstAnswerIndex = question.answerIndexes?.[0] ?? 0
+    return cleanQuizText(question.options?.[firstAnswerIndex]?.text) || "Answer"
+  }
+  if (question.activityType === "fill_in_the_blank") {
+    return cleanQuizText(question.blanks?.[0]?.answer) || "Answer"
+  }
+  if (question.activityType === "drag_and_drop") {
+    return cleanQuizText(question.pairs?.[0]?.match) || "Answer"
+  }
+  if (question.activityType === "sorting") {
+    return cleanQuizText(question.sortingItems?.[0]?.item) || "Answer"
+  }
+  return cleanQuizText(question.sampleAnswer) || "Answer"
+}
+
+function toBlankPrompt(text: string): string {
+  const normalized = cleanQuizText(text).replace(/_{2,}/g, "____")
+  if ((normalized.match(/____/g) ?? []).length === 1) return normalized
+  return `${normalized.replace(/[?？]\s*$/u, "") || "Complete the sentence"} ____`
+}
+
+function convertQuestionActivityType(question: QuizQuestion, activityType: QuizActivityType): QuizQuestion {
+  if (question.activityType === activityType) return question
+
+  const prompt = getQuestionPrimaryText(question)
+  const choices = getQuestionChoiceTexts(question)
+  const correctChoice = getCorrectChoiceText(question)
+  const reasoning = question.reasoning || "Converted activity type."
+
+  switch (activityType) {
+    case "multiple_choice": {
+      const options = choices.slice(0, 4).map((text) => ({ text, explanation: "" }))
+      return {
+        activityType,
+        question: prompt,
+        options,
+        answerIndex: Math.max(0, options.findIndex((option) => option.text === correctChoice)),
+        reasoning,
+      }
+    }
+    case "multiple_select": {
+      const options = choices.slice(0, 6)
+      while (options.length < 3) options.push(`Option ${String(options.length + 1)}`)
+      return {
+        activityType,
+        question: prompt,
+        options: options.map((text) => ({ text, explanation: "" })),
+        answerIndexes: [0, 1],
+        reasoning,
+      }
+    }
+    case "true_false": {
+      const correctStatement = `${prompt.replace(/[?？]\s*$/u, "")} ${correctChoice}`.trim()
+      const alternate = choices.find((choice) => choice !== correctChoice) ?? "Not correct"
+      return {
+        activityType,
+        question: "True or false.",
+        statements: [
+          { text: correctStatement, answer: true },
+          { text: `${prompt.replace(/[?？]\s*$/u, "")} ${alternate}`.trim(), answer: false },
+        ],
+        reasoning,
+      }
+    }
+    case "fill_in_the_blank":
+      return {
+        activityType,
+        question: "Fill in the blanks.",
+        blanks: [{ prompt: toBlankPrompt(prompt), answer: correctChoice, explanation: "" }],
+        reasoning,
+      }
+    case "open_ended":
+      return {
+        activityType,
+        question: prompt,
+        sampleAnswer: cleanQuizText(question.sampleAnswer) || correctChoice,
+        guidance: cleanQuizText(question.guidance) || "A good answer should use details from the page.",
+        responseCharacterLimit: question.responseCharacterLimit ?? 250,
+        reasoning,
+      }
+    case "drag_and_drop": {
+      const [, second, third, fourth] = choices
+      return {
+        activityType,
+        question: "Complete the sentences.",
+        pairs: [
+          { item: prompt.replace(/[?？]\s*$/u, "") || "Sentence starter", match: correctChoice },
+          { item: second || "Another starter", match: third || fourth || "matching phrase" },
+        ],
+        reasoning,
+      }
+    }
+    case "sorting": {
+      const categories = [{ label: "Correct" }, { label: "Review" }]
+      return {
+        activityType,
+        question: "Sort the items.",
+        categories,
+        sortingItems: choices.slice(0, 6).map((item) => ({
+          item,
+          category: item === correctChoice ? categories[0].label : categories[1].label,
+        })),
+        reasoning,
+      }
+    }
+    default: {
+      const exhaustive: never = activityType
+      return exhaustive
+    }
+  }
 }
 
 function pad3(n: number): string {
@@ -692,7 +845,7 @@ function getActivityTypeLabel(activityType: QuizActivityType): string {
     case "multiple_select":
       return "MCQ Multiple Select"
     case "true_false":
-      return "True/False"
+      return "True / False"
     case "fill_in_the_blank":
       return "Fill Blanks"
     case "open_ended":
@@ -1505,7 +1658,7 @@ function TextbookActivitiesPanel({
       case "multiple_select":
         return t`MCQ Multiple Select`
       case "true_false":
-        return t`True/False`
+        return t`True / False`
       case "fill_in_the_blank":
         return t`Fill Blanks`
       case "open_ended":
@@ -2267,13 +2420,11 @@ function TextbookActivitiesPanel({
 
 export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; selectedPageId?: string }) {
   const { t } = useLingui()
-  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { data, isLoading } = useQuizzes(bookLabel)
   const pagesQuery = usePages(bookLabel)
-  const { data: bookConfigData } = useBookConfig(bookLabel)
   const { setExtra } = useStepHeader()
-  const { setSectionIndex, skipNextResetRef } = useSectionNav()
+  const { stageState, queueRun } = useBookRun()
   const {
     apiKey,
     hasApiKey,
@@ -2294,17 +2445,16 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
     geminiApiKey: geminiKey || undefined,
   }
   const pages = pagesQuery.data ?? []
-  const layoutType = typeof bookConfigData?.config?.layout_type === "string"
-    ? bookConfigData.config.layout_type
-    : undefined
-  const canUseTextbookActivities = layoutType === "textbook"
+  const quizzesState = stageState("quizzes")
+  const quizzesDone = quizzesState === "done"
+  const quizzesRunning = quizzesState === "running" || quizzesState === "queued"
 
   const getActivityLabel = (activityType: QuizActivityType) => {
     switch (activityType) {
       case "multiple_select":
         return t`MCQ Multiple Select`
       case "true_false":
-        return t`True/False`
+        return t`True / False`
       case "fill_in_the_blank":
         return t`Fill in the blanks`
       case "open_ended":
@@ -2329,18 +2479,12 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
   const [saveError, setSaveError] = useState<string | null>(null)
   const [lightboxPageId, setLightboxPageId] = useState<string | null>(null)
   const [tryQuizIndex, setTryQuizIndex] = useState<number | null>(null)
-  const [sourceMode, setSourceMode] = useState<QuizSourceMode>("ai")
+  const [collapsedQuizIndexes, setCollapsedQuizIndexes] = useState<Set<number>>(() => new Set())
 
   // Reset pending when data changes
   useEffect(() => {
     setPending(null)
   }, [data?.version])
-
-  useEffect(() => {
-    if (!canUseTextbookActivities && sourceMode === "textbook") {
-      setSourceMode("ai")
-    }
-  }, [sourceMode, canUseTextbookActivities])
 
   const effective = pending ?? data?.quizzes
   const quizzes = effective?.quizzes ?? []
@@ -2353,6 +2497,11 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
     (count, quiz) => count + getQuizQuestions(quiz).length,
     0
   )
+
+  const handleRunQuizzes = useCallback(() => {
+    if (!hasApiKey || quizzesRunning) return
+    queueRun({ fromStage: "quizzes", toStage: "quizzes", apiKey })
+  }, [hasApiKey, quizzesRunning, queueRun, apiKey])
 
   const saveQuizzes = useCallback(async () => {
     if (!pending) return
@@ -2392,6 +2541,29 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
     )
     return () => setExtra(null)
   }, [data, displayQuestionCount, saving, dirty, bookLabel, selectedPageId])
+
+  if (!effective && isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12 text-muted-foreground">
+        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+        <span className="text-sm">{t`Loading activities...`}</span>
+      </div>
+    )
+  }
+
+  if (!effective) {
+    return (
+      <div className="p-4">
+        <StageRunCard
+          stageSlug="quizzes"
+          isRunning={quizzesRunning}
+          completed={quizzesDone}
+          onRun={handleRunQuizzes}
+          disabled={!hasApiKey || quizzesRunning}
+        />
+      </div>
+    )
+  }
 
   const updateQuizQuestions = (
     quizIdx: number,
@@ -2433,6 +2605,54 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
         index === quizIdx ? { ...quiz, ...patch } : quiz
       ),
     })
+  }
+
+  const updateQuizActivityType = (quizIdx: number, activityType: QuizActivityType) => {
+    updateQuizQuestions(quizIdx, (questions) =>
+      questions.map((question) => convertQuestionActivityType(question, activityType))
+    )
+  }
+
+  const toggleQuizCollapsed = (quizIdx: number) => {
+    setCollapsedQuizIndexes((current) => {
+      const next = new Set(current)
+      if (next.has(quizIdx)) next.delete(quizIdx)
+      else next.add(quizIdx)
+      return next
+    })
+  }
+
+  const regenerateQuizLayout = async (quizIdx: number, template: ActivityTemplate) => {
+    const quiz = quizzes[quizIdx]
+    if (!quiz || !hasApiKey || saving) return
+    setSaving(true)
+    setSaveError(null)
+    const minDelay = new Promise((r) => setTimeout(r, 400))
+    try {
+      const questions = getQuizQuestions(quiz)
+      const result = await api.generateQuizzes(
+        bookLabel,
+        apiKey,
+        {
+          pageIds: quiz.pageIds,
+          activityType: questions[0]?.activityType ?? quiz.activityType ?? "multiple_choice",
+          template,
+          insertAfterPageId: quiz.afterPageId,
+          questionsPerQuiz: Math.min(20, Math.max(1, questions.length)),
+          replaceQuizIndex: quizIdx,
+        },
+        providerCredentials
+      )
+      queryClient.setQueryData(["books", bookLabel, "quizzes"], result)
+      await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "quizzes"] })
+      await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "debug"] })
+      setPending(null)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : String(err))
+    } finally {
+      await minDelay
+      setSaving(false)
+    }
   }
 
   const deleteQuizAt = async (quizIdx: number) => {
@@ -2884,62 +3104,30 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
 
   return (
     <div className="space-y-3 p-4">
-      {canUseTextbookActivities && (
-        <SegmentedControl<QuizSourceMode>
-          value={sourceMode}
-          onValueChange={setSourceMode}
-          color="#ea580c"
-          className="max-w-xl"
-          options={[
-            { value: "ai", label: t`AI generated` },
-            { value: "textbook", label: t`Textbook activities` },
-          ]}
-        />
+      <QuizzesLandingConfig
+        bookLabel={bookLabel}
+        apiKey={apiKey}
+        hasApiKey={hasApiKey}
+        providerCredentials={providerCredentials}
+        initialSelectedPageId={selectedPageId}
+      />
+      {saveError && <p className="text-xs text-red-500">{saveError}</p>}
+      {selectedPageId && displayQuizzes.length === 0 && quizzes.length > 0 && (
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+          <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center mb-3">
+            <HelpCircle className="w-6 h-6 text-orange-300" />
+          </div>
+          <p className="text-sm font-medium">{t`No activities for this page`}</p>
+          <p className="text-xs mt-1">{t`Activities are linked to other pages in this book`}</p>
+        </div>
       )}
-
-      {canUseTextbookActivities && sourceMode === "textbook" ? (
-        <TextbookActivitiesPanel
-          bookLabel={bookLabel}
-          pages={pages}
-          apiKey={apiKey}
-          providerCredentials={providerCredentials}
-          onOpenInStoryboard={(activity) => {
-            const targetPageId = activity.override?.assignedPageIds?.[0] ?? activity.pageId
-            const targetSectionIndex = targetPageId === activity.pageId ? activity.sectionIndex : 0
-            skipNextResetRef.current = true
-            setSectionIndex(targetSectionIndex)
-            navigate({
-              to: "/books/$label/$step/$pageId",
-              params: { label: bookLabel, step: "storyboard", pageId: targetPageId },
-            })
-          }}
-        />
-      ) : (
-        <>
-          <QuizzesLandingConfig
-            bookLabel={bookLabel}
-            apiKey={apiKey}
-            hasApiKey={hasApiKey}
-            providerCredentials={providerCredentials}
-            initialSelectedPageId={selectedPageId}
-          />
-          {saveError && <p className="text-xs text-red-500">{saveError}</p>}
-          {selectedPageId && displayQuizzes.length === 0 && quizzes.length > 0 && (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center mb-3">
-                <HelpCircle className="w-6 h-6 text-orange-300" />
-              </div>
-              <p className="text-sm font-medium">{t`No activities for this page`}</p>
-              <p className="text-xs mt-1">{t`Activities are linked to other pages in this book`}</p>
-            </div>
-          )}
-          {isLoading && quizzes.length === 0 && (
-            <div className="flex items-center justify-center py-12 text-muted-foreground">
-              <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              <span className="text-sm">{t`Loading activities...`}</span>
-            </div>
-          )}
-          {displayQuizzes.map((quiz) => {
+      {isLoading && quizzes.length === 0 && (
+        <div className="flex items-center justify-center py-12 text-muted-foreground">
+          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+          <span className="text-sm">{t`Loading activities...`}</span>
+        </div>
+      )}
+      {displayQuizzes.map((quiz) => {
             const idx = quizzes.indexOf(quiz)
             const questions = getQuizQuestions(quiz)
             const activityType = questions[0]?.activityType ?? "multiple_choice"
@@ -2947,104 +3135,153 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
               ? null
               : getSharedQuestionTitle(questions)
             const hasKnownPlacementPage = pages.some((page) => page.pageId === quiz.afterPageId)
+            const isCollapsed = collapsedQuizIndexes.has(idx)
+            const questionName = sharedTitle ?? questions[0]?.question?.trim() ?? getActivityLabel(activityType)
+            const selectedTemplateStyle = normalizedTemplateStyle(quiz.template?.style ?? DEFAULT_ACTIVITY_TEMPLATES[0].style)
             return (
-            <div key={idx} className={`rounded-md border bg-card overflow-hidden ${quiz.isPruned ? "opacity-55" : ""}`}>
-              <div className="flex flex-wrap items-center gap-2 px-4 py-2 bg-muted/20 border-b">
-                <span className={`rounded border px-2 py-0.5 text-[10px] font-medium ${activityBadgeClass(activityType)}`}>
-                  {getActivityLabel(activityType)}
-                </span>
-                <label className="inline-flex h-7 max-w-full items-center gap-1.5 rounded border border-input bg-background px-2 text-[10px]">
-                  <span className="whitespace-nowrap font-medium text-muted-foreground">{t`Insert after`}</span>
-                  <select
-                    value={quiz.afterPageId}
-                    onChange={(e) => updateQuizAt(idx, { afterPageId: e.target.value })}
-                    aria-label={t`Insert after page`}
-                    className="min-w-[120px] max-w-[220px] bg-transparent text-[10px] focus:outline-none"
-                  >
-                    {!hasKnownPlacementPage && (
-                      <option value={quiz.afterPageId}>{getPlacementLabel(quiz.afterPageId)}</option>
-                    )}
-                    {pages.map((page) => (
-                      <option key={page.pageId} value={page.pageId}>
-                        {t`Page ${String(page.pageNumber)}`} ({page.pageId})
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setTryQuizIndex(quizzes.filter((q) => !q.isPruned).indexOf(quiz))}
-                  disabled={quiz.isPruned}
-                  className="ml-auto inline-flex h-7 items-center gap-1 rounded border bg-background px-2 text-[10px] font-medium transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Eye className="h-3 w-3" />
-                  {t`Try`}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateQuizAt(idx, { isPruned: !quiz.isPruned })}
-                  className="inline-flex h-7 items-center gap-1 rounded border bg-background px-2 text-[10px] font-medium transition-colors hover:bg-muted/60"
-                >
-                  <Scissors className="h-3 w-3" />
-                  {quiz.isPruned ? t`Unprune` : t`Prune`}
-                </button>
-                {quiz.isPruned && (
+              <div key={idx} className={`rounded-md border bg-card overflow-hidden ${quiz.isPruned ? "opacity-55" : ""}`}>
+                <div className="flex flex-wrap items-center gap-2 px-3 py-2 bg-muted/20 border-b">
                   <button
                     type="button"
-                    onClick={() => void deleteQuizAt(idx)}
-                    disabled={saving}
-                    className="inline-flex h-7 items-center gap-1 rounded border border-red-200 bg-red-50 px-2 text-[10px] font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
-                    title={t`Delete pruned quiz`}
+                    onClick={() => toggleQuizCollapsed(idx)}
+                    aria-label={isCollapsed ? t`Expand activity` : t`Collapse activity`}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded border bg-background transition-colors hover:bg-muted/60"
                   >
-                    <Trash2 className="h-3 w-3" />
-                    {t`Delete`}
+                    {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                   </button>
+                  <label className={`inline-flex h-7 items-center rounded border px-2 py-0.5 text-[10px] font-medium ${activityBadgeClass(activityType)}`}>
+                    <span className="sr-only">{t`Activity type`}</span>
+                    <select
+                      value={activityType}
+                      onChange={(e) => updateQuizActivityType(idx, e.target.value as QuizActivityType)}
+                      aria-label={t`Activity type`}
+                      className="max-w-[150px] bg-transparent font-medium focus:outline-none"
+                    >
+                      {TEXTBOOK_ACTIVITY_TYPES.map((option) => (
+                        <option key={option} value={option}>
+                          {getActivityLabel(option)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <span className="min-w-[180px] flex-1 truncate text-sm font-semibold text-foreground">
+                    {questionName}
+                  </span>
+                  <label className="inline-flex h-7 max-w-full items-center gap-1.5 rounded border border-input bg-background px-2 text-[10px]">
+                    <span className="whitespace-nowrap font-medium text-muted-foreground">{t`Insert after`}</span>
+                    <select
+                      value={quiz.afterPageId}
+                      onChange={(e) => updateQuizAt(idx, { afterPageId: e.target.value })}
+                      aria-label={t`Insert after page`}
+                      className="min-w-[120px] max-w-[220px] bg-transparent text-[10px] focus:outline-none"
+                    >
+                      {!hasKnownPlacementPage && (
+                        <option value={quiz.afterPageId}>{getPlacementLabel(quiz.afterPageId)}</option>
+                      )}
+                      {pages.map((page) => (
+                        <option key={page.pageId} value={page.pageId}>
+                          {t`Page ${String(page.pageNumber)}`} ({page.pageId})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="inline-flex h-7 max-w-full items-center gap-1.5 rounded border border-input bg-background px-2 text-[10px]">
+                    <span className="whitespace-nowrap font-medium text-muted-foreground">{t`Layout`}</span>
+                    <select
+                      value={selectedTemplateStyle}
+                      onChange={(e) => {
+                        const template = DEFAULT_ACTIVITY_TEMPLATES.find(
+                          (candidate) => normalizedTemplateStyle(candidate.style) === e.target.value
+                        ) ?? DEFAULT_ACTIVITY_TEMPLATES[0]
+                        void regenerateQuizLayout(idx, template)
+                      }}
+                      disabled={!hasApiKey || saving}
+                      aria-label={t`Activity layout`}
+                      className="min-w-[120px] max-w-[180px] bg-transparent text-[10px] focus:outline-none disabled:cursor-not-allowed"
+                    >
+                      {DEFAULT_ACTIVITY_TEMPLATES.map((template) => (
+                        <option key={template.id} value={normalizedTemplateStyle(template.style)}>
+                          {getTemplateStyleLabel(template.style)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setTryQuizIndex(quizzes.filter((q) => !q.isPruned).indexOf(quiz))}
+                    disabled={quiz.isPruned}
+                    className="inline-flex h-7 items-center gap-1 rounded border bg-background px-2 text-[10px] font-medium transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Eye className="h-3 w-3" />
+                    {t`Try`}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateQuizAt(idx, { isPruned: !quiz.isPruned })}
+                    className="inline-flex h-7 items-center gap-1 rounded border bg-background px-2 text-[10px] font-medium transition-colors hover:bg-muted/60"
+                  >
+                    <Scissors className="h-3 w-3" />
+                    {quiz.isPruned ? t`Unprune` : t`Prune`}
+                  </button>
+                  {quiz.isPruned && (
+                    <button
+                      type="button"
+                      onClick={() => void deleteQuizAt(idx)}
+                      disabled={saving}
+                      className="inline-flex h-7 items-center gap-1 rounded border border-red-200 bg-red-50 px-2 text-[10px] font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      title={t`Delete pruned quiz`}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      {t`Delete`}
+                    </button>
+                  )}
+                </div>
+                {!isCollapsed && (
+                  <>
+                    <div className="flex flex-wrap items-center gap-1.5 px-4 py-2 bg-muted/10 border-b">
+                      {quiz.pageIds.length > 0 ? (
+                        quiz.pageIds.map((pageId) => (
+                          <PageThumb key={pageId} bookLabel={bookLabel} pageId={pageId} onClick={() => setLightboxPageId(pageId)} />
+                        ))
+                      ) : (
+                        <span className="text-xs text-muted-foreground">{getPlacementLabel(quiz.afterPageId)}</span>
+                      )}
+                    </div>
+                    <div className="px-4 py-3 space-y-4">
+                      {sharedTitle && (
+                        <textarea
+                          value={sharedTitle}
+                          onChange={(e) => updateSharedTitle(idx, e.target.value)}
+                          className="w-full text-sm font-semibold resize-none rounded border border-transparent bg-transparent p-1 -m-1 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+                          rows={1}
+                        />
+                      )}
+                      <span className="text-[10px] text-muted-foreground mt-1 inline-block">
+                        {getPlacementLabel(quiz.afterPageId)}
+                      </span>
+                    </div>
+                    <div className="px-4 pb-3 space-y-4">
+                      {questions.map((question, questionIdx) => (
+                        <div key={questionIdx} className="rounded-md border bg-muted/20 p-3 space-y-2">
+                          {questions.length > 1 && (
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                              {t`Q${String(questionIdx + 1)}`}
+                            </p>
+                          )}
+                          {renderQuestionEditor(idx, question, questionIdx, {
+                            showTitle: activityType !== "multiple_choice" && activityType !== "multiple_select" && !sharedTitle,
+                          })}
+                        </div>
+                      ))}
+                      {quiz.reasoning && (
+                        <p className="text-xs italic text-muted-foreground px-1 pt-1">{quiz.reasoning}</p>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
-              <div className="flex flex-wrap items-center gap-1.5 px-4 py-2 bg-muted/10 border-b">
-                {quiz.pageIds.length > 0 ? (
-                  quiz.pageIds.map((pageId) => (
-                    <PageThumb key={pageId} bookLabel={bookLabel} pageId={pageId} onClick={() => setLightboxPageId(pageId)} />
-                  ))
-                ) : (
-                  <span className="text-xs text-muted-foreground">{getPlacementLabel(quiz.afterPageId)}</span>
-                )}
-              </div>
-              <div className="px-4 py-3 space-y-4">
-                {sharedTitle && (
-                  <textarea
-                    value={sharedTitle}
-                    onChange={(e) => updateSharedTitle(idx, e.target.value)}
-                    className="w-full text-sm font-semibold resize-none rounded border border-transparent bg-transparent p-1 -m-1 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-                    rows={1}
-                  />
-                )}
-                <span className="text-[10px] text-muted-foreground mt-1 inline-block">
-                  {getPlacementLabel(quiz.afterPageId)}
-                </span>
-              </div>
-              <div className="px-4 pb-3 space-y-4">
-                {questions.map((question, questionIdx) => (
-                  <div key={questionIdx} className="rounded-md border bg-muted/20 p-3 space-y-2">
-                    {questions.length > 1 && (
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        {t`Q${String(questionIdx + 1)}`}
-                      </p>
-                    )}
-                    {renderQuestionEditor(idx, question, questionIdx, {
-                      showTitle: activityType !== "multiple_choice" && activityType !== "multiple_select" && !sharedTitle,
-                    })}
-                  </div>
-                ))}
-                {quiz.reasoning && (
-                  <p className="text-xs italic text-muted-foreground px-1 pt-1">{quiz.reasoning}</p>
-                )}
-              </div>
-            </div>
             )
           })}
-        </>
-      )}
       <PageLightbox
         bookLabel={bookLabel}
         pageId={lightboxPageId}

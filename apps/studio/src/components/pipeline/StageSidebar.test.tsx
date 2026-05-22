@@ -48,8 +48,14 @@ vi.mock("@lingui/react", () => ({
 }))
 
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children, title, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
-    <a title={title} {...props}>{children}</a>
+  Link: ({
+    children,
+    title,
+    to,
+    params,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { to?: string; params?: unknown }) => (
+    <a title={title} data-to={to} data-params={JSON.stringify(params ?? null)} {...props}>{children}</a>
   ),
   useMatchRoute: () => matchRouteMock,
   useSearch: () => searchMock,
@@ -131,5 +137,31 @@ describe("StageSidebar", () => {
     expect(screen.getByText("Reviewer Checklist")).toBeTruthy()
     expect(container.textContent).toContain("Validation")
     expect(container.textContent).toContain("Preview")
+  })
+
+  it("opens Activities at the generated activity overview instead of a carried-over page filter", async () => {
+    const { StageSidebar } = await import("./components/StageSidebar")
+    render(
+      <StageSidebar
+        bookLabel="demo-book"
+        activeStep="storyboard"
+        selectedPageId="pg001"
+      />,
+    )
+
+    const activitiesLink = screen.getByTitle("Activities")
+    expect(activitiesLink.getAttribute("data-to")).toBe("/books/$label/$step")
+    expect(activitiesLink.getAttribute("data-params")).toBe(JSON.stringify({
+      label: "demo-book",
+      step: "quizzes",
+    }))
+
+    const storyboardLink = screen.getByTitle("Storyboard")
+    expect(storyboardLink.getAttribute("data-to")).toBe("/books/$label/$step/$pageId")
+    expect(storyboardLink.getAttribute("data-params")).toBe(JSON.stringify({
+      label: "demo-book",
+      step: "storyboard",
+      pageId: "pg001",
+    }))
   })
 })

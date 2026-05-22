@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Loader2, Sparkles } from "lucide-react"
+import { Check, Eye, EyeOff, Loader2, Sparkles } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import {
   api,
@@ -246,24 +246,25 @@ export function QuizzesLandingConfig({
   const [activityType, setActivityType] = useState<QuizActivityType>("multiple_choice")
   const [questionsPerQuiz, setQuestionsPerQuiz] = useState("1")
   const [pageRange, setPageRange] = useState("")
-  const [selectedPageIds, setSelectedPageIds] = useState<string[]>(
-    initialSelectedPageId ? [initialSelectedPageId] : []
-  )
+  const [selectedPageIds, setSelectedPageIds] = useState<string[]>([])
   const [insertAfterPageId, setInsertAfterPageId] = useState(SMART_INSERT_AFTER)
   const [replaceExisting, setReplaceExisting] = useState(true)
   const [pickerOffset, setPickerOffset] = useState(0)
+  const [showHiddenPages, setShowHiddenPages] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [savedTemplates, setSavedTemplates] = useState<ActivityTemplate[]>(() => loadSavedTemplates(bookLabel))
-  const [selectedTemplateId, setSelectedTemplateId] = useState(DEFAULT_ACTIVITY_TEMPLATES[0].id!)
-  const [templateName, setTemplateName] = useState(DEFAULT_ACTIVITY_TEMPLATES[0].name)
-  const [templateStyle, setTemplateStyle] = useState<ActivityTemplateStyle>(DEFAULT_ACTIVITY_TEMPLATES[0].style)
-  const [generationMode, setGenerationMode] = useState<ActivityGenerationMode>(DEFAULT_ACTIVITY_TEMPLATES[0].generationMode)
-  const [templateInstructions, setTemplateInstructions] = useState(DEFAULT_ACTIVITY_TEMPLATES[0].instructions ?? "")
-  const [templateNotice, setTemplateNotice] = useState<string | null>(null)
   const appliedInitialPageIdRef = useRef<string | null>(null)
 
   const pages = pagesQuery.data ?? []
+  const pageHasQuizSourceContent = (page: (typeof pages)[number]) =>
+    page.hasQuizSourceContent ?? page.sectionCount > page.prunedSections.length
+  const pagesWithQuizSourceContent = useMemo(() => pages.filter(pageHasQuizSourceContent), [pages])
+  const hiddenPageCount = pages.length - pagesWithQuizSourceContent.length
+  const pickerPages = showHiddenPages ? pages : pagesWithQuizSourceContent
+  const usablePageIds = useMemo(
+    () => new Set(pages.filter(pageHasQuizSourceContent).map((page) => page.pageId)),
+    [pages]
+  )
   const pageIdsByNumber = useMemo(() => {
     const map = new Map<number, string>()
     for (const page of pages) map.set(page.pageNumber, page.pageId)
@@ -280,9 +281,9 @@ export function QuizzesLandingConfig({
     return map
   }, [pages])
   const pageOrder = useMemo(() => new Map(pages.map((page, index) => [page.pageId, index])), [pages])
-  const visiblePages = pages.slice(pickerOffset, pickerOffset + PAGE_PICKER_WINDOW_SIZE)
+  const visiblePages = pickerPages.slice(pickerOffset, pickerOffset + PAGE_PICKER_WINDOW_SIZE)
   const canPageBack = pickerOffset > 0
-  const canPageForward = pickerOffset + PAGE_PICKER_WINDOW_SIZE < pages.length
+  const canPageForward = pickerOffset + PAGE_PICKER_WINDOW_SIZE < pickerPages.length
   const resolvedInsertAfterPageId =
     insertAfterPageId === SMART_INSERT_AFTER
       ? selectedPageIds[selectedPageIds.length - 1] ?? ""
@@ -291,20 +292,21 @@ export function QuizzesLandingConfig({
   const smartInsertAfterLabel = resolvedInsertAfterPage
     ? t`Smart: after page ${String(resolvedInsertAfterPage.pageNumber)}`
     : t`Smart: last selected page`
-  const allTemplates = [...DEFAULT_ACTIVITY_TEMPLATES, ...savedTemplates]
-  const selectedTemplate: ActivityTemplate = {
-    id: selectedTemplateId,
-    name: templateName.trim() || t`Untitled template`,
-    style: normalizedTemplateStyle(templateStyle),
-    generationMode,
-    ...(templateInstructions.trim() ? { instructions: templateInstructions.trim() } : {}),
-  }
+  const selectedTemplate: ActivityTemplate = DEFAULT_ACTIVITY_TEMPLATES[0]
+  const normalizedQuestionsPerQuiz = Math.min(20, Math.max(1, Number(questionsPerQuiz) || 1))
 
   const orderedSelectedPageIds = (ids: string[]) =>
     ids.slice().sort((a, b) => (pageOrder.get(a) ?? Number.MAX_SAFE_INTEGER) - (pageOrder.get(b) ?? Number.MAX_SAFE_INTEGER))
 
   useEffect(() => {
+    if (pickerOffset === 0 || pickerOffset < pickerPages.length) return
+    const lastPageOffset = Math.max(0, Math.floor(Math.max(0, pickerPages.length - 1) / PAGE_PICKER_WINDOW_SIZE) * PAGE_PICKER_WINDOW_SIZE)
+    setPickerOffset(lastPageOffset)
+  }, [pickerOffset, pickerPages.length])
+
+  useEffect(() => {
     if (!initialSelectedPageId) return
+    if (pages.length === 0 || !usablePageIds.has(initialSelectedPageId)) return
     const formattedRange = formatPageRange([initialSelectedPageId], pageNumberById) || initialSelectedPageId
     if (appliedInitialPageIdRef.current !== initialSelectedPageId) {
       appliedInitialPageIdRef.current = initialSelectedPageId
@@ -313,14 +315,14 @@ export function QuizzesLandingConfig({
     } else if (pageRange === initialSelectedPageId && formattedRange !== initialSelectedPageId) {
       setPageRange(formattedRange)
     }
-  }, [initialSelectedPageId, pageNumberById, pageRange])
+  }, [initialSelectedPageId, pageNumberById, pageRange, pages.length, usablePageIds])
 
   const activityTypeLabel = (value: QuizActivityType) => {
     switch (value) {
       case "multiple_select":
         return t`MCQ Multiple Select`
       case "true_false":
-        return t`True/False`
+        return t`True / False`
       case "fill_in_the_blank":
         return t`Fill Blanks`
       case "open_ended":
@@ -335,86 +337,10 @@ export function QuizzesLandingConfig({
     }
   }
 
-  const templateStyleLabel = (value: ActivityTemplateStyle) => {
-    switch (value) {
-      case "worksheet_rows":
-        return t`Worksheet rows`
-      case "practice_cards":
-        return t`Practice cards`
-      case "quick_check":
-        return t`Quick check`
-      case "guided_steps":
-        return t`Step by step`
-      case "card_practice":
-        return t`Practice cards`
-      case "compact_review":
-        return t`Quick check`
-      case "clean_workbook":
-      default:
-        return t`Worksheet rows`
-    }
-  }
-
-  const generationModeLabel = (value: ActivityGenerationMode) => {
-    switch (value) {
-      case "template_multi_step":
-        return t`Step by step`
-      case "ai_generated_layout":
-        return t`AI-generated layout`
-      case "template_single_page":
-      default:
-        return t`One activity page`
-    }
-  }
-
-  const templateSummary = (template: ActivityTemplate) => {
-    switch (normalizedTemplateStyle(template.style)) {
-      case "practice_cards":
-        return t`Bigger answer cards with more space for younger learners.`
-      case "quick_check":
-        return t`A compact review page for many short questions.`
-      case "guided_steps":
-        return t`A short sequence that walks the learner through the page.`
-      case "worksheet_rows":
-      default:
-        return t`A familiar worksheet layout with clear rows and simple spacing.`
-    }
-  }
-
-  const selectTemplate = (templateId: string) => {
-    const template = allTemplates.find((candidate) => candidate.id === templateId)
-    if (!template) return
-    setSelectedTemplateId(template.id ?? templateId)
-    setTemplateName(template.name)
-    setTemplateStyle(template.style)
-    setGenerationMode(template.generationMode)
-    setTemplateInstructions(template.instructions ?? "")
-    if (template.generationMode === "template_multi_step") {
-      setQuestionsPerQuiz((current) => {
-        const parsed = Number(current)
-        return Number.isFinite(parsed) && parsed > 1 ? current : "3"
-      })
-    }
-    setTemplateNotice(null)
-  }
-
-  const saveTemplate = () => {
-    const template: ActivityTemplate = {
-      ...selectedTemplate,
-      id: selectedTemplate.id?.startsWith("custom-") ? selectedTemplate.id : `custom-${Date.now()}`,
-    }
-    const next = [
-      ...savedTemplates.filter((candidate) => candidate.id !== template.id),
-      template,
-    ]
-    setSavedTemplates(next)
-    saveTemplates(bookLabel, next)
-    setSelectedTemplateId(template.id!)
-    setTemplateNotice(t`Template saved for this book`)
-  }
-
   const applyRange = () => {
-    const ids = parsePageRange(pageRange, pageIdsByNumber, pageIdsByLowerId)
+    const ids = parsePageRange(pageRange, pageIdsByNumber, pageIdsByLowerId).filter((pageId) =>
+      usablePageIds.has(pageId)
+    )
     const orderedIds = orderedSelectedPageIds(ids)
     setSelectedPageIds(orderedIds)
     setPageRange(formatPageRange(orderedIds, pageNumberById))
@@ -443,7 +369,7 @@ export function QuizzesLandingConfig({
           activityType,
           template: selectedTemplate,
           insertAfterPageId: resolvedInsertAfterPageId || undefined,
-          questionsPerQuiz: Math.min(20, Math.max(1, Number(questionsPerQuiz) || 1)),
+          questionsPerQuiz: normalizedQuestionsPerQuiz,
           replaceExistingForPages: replaceExisting,
         },
         providerCredentials
@@ -467,7 +393,7 @@ export function QuizzesLandingConfig({
             {selectedPageIds.length === 1 ? t`1 page` : t`${String(selectedPageIds.length)} pages`}
           </span>
           <span className="rounded border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-medium text-sky-700">
-            {t`${String(Math.min(20, Math.max(1, Number(questionsPerQuiz) || 1)))} questions`}
+            {t`Questions/quiz: ${String(normalizedQuestionsPerQuiz)}`}
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -495,133 +421,6 @@ export function QuizzesLandingConfig({
       </div>
 
       <div className="space-y-3 px-4 py-3">
-        <div className="space-y-3 border-b pb-3">
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div>
-              <div className="text-xs font-semibold text-foreground">{t`Choose activity layout`}</div>
-              <p className="text-[11px] text-muted-foreground">{t`Pick the format learners will see when they try the activity.`}</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {savedTemplates.length > 0 && (
-                <label className="flex h-8 items-center gap-2 rounded border border-input bg-background px-2 text-xs">
-                  <span className="whitespace-nowrap text-[10px] font-medium text-muted-foreground">{t`Saved styles`}</span>
-                  <select
-                    value={savedTemplates.some((template) => template.id === selectedTemplateId) ? selectedTemplateId : ""}
-                    onChange={(e) => {
-                      if (e.target.value) selectTemplate(e.target.value)
-                    }}
-                    className="bg-transparent text-xs focus:outline-none"
-                  >
-                    <option value="">{t`Choose saved`}</option>
-                    {savedTemplates.map((template) => (
-                      <option key={template.id ?? template.name} value={template.id ?? template.name}>
-                        {template.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-              {templateNotice && <span className="text-[10px] font-medium text-emerald-700">{templateNotice}</span>}
-            </div>
-          </div>
-
-          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-            {DEFAULT_ACTIVITY_TEMPLATES.map((template) => {
-              const isSelected = selectedTemplateId === template.id
-              return (
-                <button
-                  key={template.id}
-                  type="button"
-                  aria-pressed={isSelected}
-                  onClick={() => selectTemplate(template.id!)}
-                  className={`flex min-h-36 flex-col gap-2 rounded-md border p-3 text-left transition-colors ${
-                    isSelected
-                      ? "border-orange-500 bg-orange-50 text-orange-950 shadow-sm"
-                      : "border-border bg-background hover:bg-muted/50"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-sm font-semibold">{template.name}</span>
-                    <span className="rounded border bg-white px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                      {generationModeLabel(template.generationMode)}
-                    </span>
-                  </div>
-                  <ActivityTemplatePreview style={template.style} />
-                  <p className="text-[11px] leading-4 text-muted-foreground">{templateSummary(template)}</p>
-                </button>
-              )
-            })}
-          </div>
-
-          <details className="rounded-md border bg-muted/20 px-3 py-2">
-            <summary className="cursor-pointer text-xs font-medium text-foreground">{t`Customize selected layout`}</summary>
-            <div className="mt-3 space-y-2">
-              <div className="grid gap-2 lg:grid-cols-[minmax(160px,220px)_minmax(140px,180px)_minmax(150px,190px)_auto]">
-                <label className="space-y-1">
-                  <span className="text-[10px] font-medium text-muted-foreground">{t`Template name`}</span>
-                  <input
-                    value={templateName}
-                    onChange={(e) => {
-                      setTemplateName(e.target.value)
-                      setTemplateNotice(null)
-                    }}
-                    aria-label={t`Template name`}
-                    className="h-8 w-full rounded border border-input bg-background px-2 text-xs"
-                  />
-                </label>
-                <label className="space-y-1">
-                  <span className="text-[10px] font-medium text-muted-foreground">{t`Layout`}</span>
-                  <select
-                    value={normalizedTemplateStyle(templateStyle)}
-                    onChange={(e) => {
-                      setTemplateStyle(e.target.value as ActivityTemplateStyle)
-                      setTemplateNotice(null)
-                    }}
-                    className="h-8 w-full rounded border border-input bg-background px-2 text-xs"
-                  >
-                    {BUILT_IN_TEMPLATE_STYLES.map((style) => (
-                      <option key={style} value={style}>{templateStyleLabel(style)}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="space-y-1">
-                  <span className="text-[10px] font-medium text-muted-foreground">{t`Length`}</span>
-                  <select
-                    value={generationMode}
-                    onChange={(e) => {
-                      setGenerationMode(e.target.value as ActivityGenerationMode)
-                      setTemplateNotice(null)
-                    }}
-                    className="h-8 w-full rounded border border-input bg-background px-2 text-xs"
-                  >
-                    {(["template_single_page", "template_multi_step"] as ActivityGenerationMode[]).map((mode) => (
-                      <option key={mode} value={mode}>{generationModeLabel(mode)}</option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  onClick={saveTemplate}
-                  className="mt-auto h-8 rounded border border-input bg-background px-3 text-xs font-medium transition-colors hover:bg-muted/60"
-                >
-                  {t`Save as reusable style`}
-                </button>
-              </div>
-              <textarea
-                value={templateInstructions}
-                onChange={(e) => {
-                  setTemplateInstructions(e.target.value)
-                  setTemplateNotice(null)
-                }}
-                aria-label={t`Template instructions`}
-                placeholder={t`Example: keep answers short, use the same tone as page 4, or make each activity a three-step review.`}
-                className="min-h-8 w-full resize-y rounded border border-input bg-background px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-                rows={2}
-              />
-            </div>
-          </details>
-        </div>
-
         <div className="grid gap-2 lg:grid-cols-[minmax(220px,1fr)_auto_minmax(190px,260px)_auto]">
           <input
             value={pageRange}
@@ -672,15 +471,20 @@ export function QuizzesLandingConfig({
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            <input
-              type="checkbox"
-              checked={replaceExisting}
-              onChange={(e) => setReplaceExisting(e.target.checked)}
-              className="h-3.5 w-3.5 accent-orange-600"
-            />
-            {t`Replace existing activities for selected pages`}
-          </label>
+          <div className="space-y-1">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={replaceExisting}
+                onChange={(e) => setReplaceExisting(e.target.checked)}
+                className="h-3.5 w-3.5 accent-orange-600"
+              />
+              {t`Replace existing activities for selected pages`}
+            </label>
+            <p className="pl-5 text-[11px] text-muted-foreground">
+              {t`Note: Pages without usable content are hidden by default.`}
+            </p>
+          </div>
           <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
             <button
               type="button"
@@ -690,10 +494,23 @@ export function QuizzesLandingConfig({
             >
               {t`Previous`}
             </button>
+            {hiddenPageCount > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowHiddenPages((value) => !value)
+                  setPickerOffset(0)
+                }}
+                className="inline-flex items-center gap-1 rounded border px-2 py-1 font-medium transition-colors hover:bg-muted/60"
+              >
+                {showHiddenPages ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                {showHiddenPages ? t`Hide hidden pages` : t`Show hidden pages`}
+              </button>
+            )}
             <span>
-              {pages.length === 0
+              {pickerPages.length === 0
                 ? t`No pages`
-                : t`${String(pickerOffset + 1)}-${String(Math.min(pickerOffset + PAGE_PICKER_WINDOW_SIZE, pages.length))} of ${String(pages.length)}`}
+                : t`${String(pickerOffset + 1)}-${String(Math.min(pickerOffset + PAGE_PICKER_WINDOW_SIZE, pickerPages.length))} of ${String(pickerPages.length)}`}
             </span>
             <button
               type="button"
@@ -706,24 +523,28 @@ export function QuizzesLandingConfig({
           </div>
         </div>
 
-        <div className="grid max-h-44 grid-cols-2 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid max-h-28 grid-cols-5 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12">
           {visiblePages.map((page) => {
             const isSelected = selectedPageIds.includes(page.pageId)
-            const isContent = page.sectionCount > page.prunedSections.length
+            const isContent = pageHasQuizSourceContent(page)
+            const disabledReason = t`No quiz source`
             return (
               <button
                 key={page.pageId}
                 type="button"
                 disabled={!isContent}
                 onClick={() => togglePage(page.pageId, isContent)}
-                className={`rounded-md border px-2 py-1.5 text-left text-xs transition-colors ${
+                aria-label={!isContent ? `${t`Page ${String(page.pageNumber)}`}, ${disabledReason}` : t`Page ${String(page.pageNumber)}`}
+                title={!isContent ? disabledReason : page.pageId}
+                className={`relative flex h-8 min-w-0 items-center justify-center rounded-md border px-1.5 text-[11px] font-medium transition-colors ${
                   isSelected
                     ? "border-orange-500 bg-orange-50 text-orange-800"
                     : "border-border bg-background hover:bg-muted/60"
                 } ${!isContent ? "cursor-not-allowed opacity-45" : "cursor-pointer"}`}
               >
-                <span className="block font-medium">{t`Page ${String(page.pageNumber)}`}</span>
-                <span className="block truncate font-mono text-[10px] opacity-70">{page.pageId}</span>
+                <span className="truncate">{t`Page ${String(page.pageNumber)}`}</span>
+                {isSelected && <Check className="absolute right-1 top-1 h-2.5 w-2.5" />}
+                {!isContent && <span className="ml-1 h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/40" />}
               </button>
             )
           })}

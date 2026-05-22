@@ -416,6 +416,7 @@ export const QuizGenerationRequest = z.object({
   insertAfterPageId: z.string().optional(),
   questionsPerQuiz: z.number().int().min(1).max(20).optional(),
   replaceExistingForPages: z.boolean().optional(),
+  replaceQuizIndex: z.number().int().min(0).optional(),
 })
 export type QuizGenerationRequest = z.infer<typeof QuizGenerationRequest>
 

@@ -620,6 +620,22 @@ export function createQuizRoutes(
         onLog: (entry: LlmLogEntry) => storage.appendLlmLog(entry),
       })
 
+      const existingRow = storage.getLatestNodeData("quiz-generation", "book")
+      const existing = existingRow
+        ? QuizGenerationOutput.safeParse(existingRow.data).success
+          ? QuizGenerationOutput.parse(existingRow.data)
+          : null
+        : null
+      const replaceQuizIndex = parsed.data.replaceQuizIndex
+      if (
+        replaceQuizIndex !== undefined &&
+        (!existing || replaceQuizIndex >= existing.quizzes.length)
+      ) {
+        throw new HTTPException(400, {
+          message: "Replacement quiz was not found",
+        })
+      }
+
       const generatedQuiz = await generateQuizForSelection(
         {
           pages: quizPages,
@@ -635,16 +651,14 @@ export function createQuizRoutes(
         }
       )
 
-      const existingRow = storage.getLatestNodeData("quiz-generation", "book")
-      const existing = existingRow
-        ? QuizGenerationOutput.safeParse(existingRow.data).success
-          ? QuizGenerationOutput.parse(existingRow.data)
-          : null
-        : null
       const selected = new Set(requestedIds)
       const existingQuizzes = existing?.quizzes ?? []
 
-      const merged = parsed.data.replaceExistingForPages
+      const merged = replaceQuizIndex !== undefined
+        ? existingQuizzes.map((quiz, index) =>
+            index === replaceQuizIndex ? { ...generatedQuiz, quizIndex: index } : quiz
+          )
+        : parsed.data.replaceExistingForPages
         ? sortQuizzesByBookOrder(
             [
               ...existingQuizzes.filter(

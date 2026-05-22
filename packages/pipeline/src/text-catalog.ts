@@ -188,21 +188,25 @@ function buildQuizEntries(storage: Storage): TextCatalogEntry[] {
     const sharedQuestionTitle = questions.every((q) => q.question.trim() === firstQuestionTitle)
       ? firstQuestionTitle
       : null
-    const firstTitle = sharedQuestionTitle
-      ? sharedQuestionTitle
-      : questions[0]?.activityType === "fill_in_the_blank"
-        ? "Fill in the blanks."
-        : questions[0]?.activityType === "open_ended"
-          ? "Answer in your own words."
-        : questions[0]?.activityType === "true_false"
-          ? "True or false."
-          : questions[0]?.activityType === "drag_and_drop"
-            ? "Match the pairs."
-            : questions[0]?.activityType === "multiple_select"
-              ? "Choose all that apply."
-              : questions[0]?.activityType === "sorting"
-                ? "Sort the items."
-            : "Quiz."
+    const fallbackTitle = (() => {
+      switch (questions[0]?.activityType) {
+        case "fill_in_the_blank":
+          return "Fill in the blanks."
+        case "open_ended":
+          return "Answer in your own words."
+        case "true_false":
+          return "True or false."
+        case "drag_and_drop":
+          return "Complete the sentences."
+        case "multiple_select":
+          return "Choose all that apply."
+        case "sorting":
+          return "Sort the items."
+        default:
+          return "Quiz."
+      }
+    })()
+    const firstTitle = sharedQuestionTitle ? sharedQuestionTitle : fallbackTitle
     let blankItemIndex = 1
     entries.push({ id: `${qid}_que`, text: firstTitle })
 

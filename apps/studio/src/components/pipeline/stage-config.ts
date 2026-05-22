@@ -55,7 +55,7 @@ export const STAGE_DESCRIPTIONS: Record<NonBookStageSlug, string> = {
   extract: "Extract text and images from each page of the PDF using AI-powered analysis.",
   sectioning: "Structure each page into a content tree of sections and nodes for downstream rendering.",
   storyboard: "Arrange extracted content into a structured storyboard with pages, sections, and layouts.",
-  quizzes: "Generate and manage AI-generated and textbook activities based on the book content.",
+  quizzes: "Generate and manage AI-generated activities based on the book content.",
   captions: "Create descriptive captions for images to improve accessibility.",
   glossary: "Build a glossary of key terms and definitions found in the text.",
   toc: "Generate and customize the table of contents for the book navigation.",

@@ -143,7 +143,7 @@ function normalizeQuestionTitle(activityType: QuizActivityType, question: string
     case "open_ended":
       return "Answer in your own words."
     case "drag_and_drop":
-      return "Match the pairs."
+      return "Complete the sentences."
     case "sorting":
       return "Sort the items."
     case "multiple_choice":

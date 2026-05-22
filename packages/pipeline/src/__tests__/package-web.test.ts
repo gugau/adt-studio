@@ -687,6 +687,27 @@ describe("renderQuizHtml", () => {
     })
   })
 
+  it("renders matching rows as sentence starters with draggable endings", () => {
+    const quiz: Quiz = {
+      activityType: "drag_and_drop",
+      quizIndex: 0,
+      afterPageId: "pg001",
+      pageIds: ["pg001"],
+      question: "Complete the sentences.",
+      pairs: [
+        { item: "Karma did not like", match: "bananas or tree leaves" },
+        { item: "Elephants like", match: "bananas and tree leaves" },
+      ],
+      reasoning: "...",
+    }
+
+    const html = renderQuizHtml(quiz, "qz001", undefined)
+
+    expect(html).toMatch(/data-activity-item="item-1"[^>]*data-id="qz001_match0"[\s\S]*bananas or tree leaves/)
+    expect(html).toMatch(/id="zone-1"[^>]*aria-label="Karma did not like"[\s\S]*data-id="qz001_pair0"[\s\S]*Karma did not like[\s\S]*id="dropzone-1"/)
+    expect(html.indexOf('data-id="qz001_pair0"')).toBeLessThan(html.indexOf('id="dropzone-1"'))
+  })
+
   it("renders sorting with sortable cards and category answer ids", () => {
     const quiz: Quiz = {
       activityType: "sorting",
@@ -706,8 +727,13 @@ describe("renderQuizHtml", () => {
     const answers = buildQuizAnswers(quiz, "qz001")
 
     expect((html.match(/data-section-type="activity_sorting"/g) ?? [])).toHaveLength(1)
-    expect(html).toContain("word-card")
+    expect(html).toContain("sorting-bank")
+    expect(html).toContain("sorting-categories")
+    expect(html).toContain("word-card sorting-word-card")
+    expect(html).toContain("sorting-category-blue")
+    expect(html).toContain("sorting-category-emerald")
     expect(html).toContain('data-activity-category="category-1-1"')
+    expect(html).not.toContain("lg:grid-cols-3")
     expect(answers).toEqual({
       "item-1": "category-1-1",
       "item-2": "category-1-2",

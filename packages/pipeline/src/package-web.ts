@@ -1100,7 +1100,7 @@ export function getDefaultQuizTitle(activityType: QuizActivityType): string {
     case "open_ended":
       return "Answer in your own words."
     case "drag_and_drop":
-      return "Match the pairs."
+      return "Complete the sentences."
     case "sorting":
       return "Sort the items."
     case "multiple_choice":
@@ -2169,20 +2169,20 @@ function renderMatchingQuizHtml(
       const matchTextId = questions.length > 1
         ? `${quizId}_q${questionIndex + 1}_match${pairIndex}`
         : `${quizId}_match${pairIndex}`
-      const itemImageHtml = renderQuizImageHtml(
+      const promptImageHtml = renderQuizImageHtml(
         pair.itemImage,
-        renderOptions,
-        "activity-item-image mb-2 max-h-24 w-full rounded object-contain"
-      )
-      const matchImageHtml = renderQuizImageHtml(
-        pair.matchImage,
         renderOptions,
         "activity-item-image mb-2 max-h-28 w-full rounded object-contain"
       )
-      itemsHtml += `<button type="button" class="activity-item rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 shadow-sm" data-activity-item="${escapeAttr(itemId)}" data-id="${escapeAttr(itemTextId)}">${itemImageHtml}<span>${escapeHtml(texts.get(itemTextId) ?? pair.item)}</span></button>\n`
+      const answerImageHtml = renderQuizImageHtml(
+        pair.matchImage,
+        renderOptions,
+        "activity-item-image mb-2 max-h-24 w-full rounded object-contain"
+      )
+      itemsHtml += `<button type="button" class="activity-item rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 shadow-sm" data-activity-item="${escapeAttr(itemId)}" data-id="${escapeAttr(matchTextId)}">${answerImageHtml}<span>${escapeHtml(texts.get(matchTextId) ?? pair.match)}</span></button>\n`
       groupDropzones += `
-                    <div class="matching-row dropzone grid gap-3 border-b border-slate-200 py-3 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_minmax(11rem,18rem)] sm:items-center" id="${escapeAttr(`zone-${itemIndex}`)}" aria-label="${escapeAttr(texts.get(matchTextId) ?? pair.match)}">
-                        <div class="text-base font-semibold text-slate-900" data-id="${escapeAttr(matchTextId)}">${matchImageHtml}<span>${escapeHtml(texts.get(matchTextId) ?? pair.match)}</span></div>
+                    <div class="matching-row dropzone grid gap-3 border-b border-slate-200 py-3 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_minmax(12rem,24rem)] sm:items-center" id="${escapeAttr(`zone-${itemIndex}`)}" aria-label="${escapeAttr(texts.get(itemTextId) ?? pair.item)}">
+                        <div class="text-base font-semibold text-slate-900" data-id="${escapeAttr(itemTextId)}">${promptImageHtml}<span>${escapeHtml(texts.get(itemTextId) ?? pair.item)}</span></div>
                         <div id="${escapeAttr(dropzoneId)}" class="dropzone-slot flex min-h-11 items-center rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-500"></div>
                     </div>`
       itemIndex++
@@ -2252,11 +2252,11 @@ function renderSortingQuizHtml(
   const titleId = `${quizId}_que`
   const title = texts.get(titleId) ?? getSharedQuizTitle(questions, "sorting")
   const categoryColors = [
-    "bg-amber-50 border-amber-300",
-    "bg-cyan-50 border-cyan-300",
-    "bg-lime-50 border-lime-300",
-    "bg-rose-50 border-rose-300",
-    "bg-violet-50 border-violet-300",
+    "sorting-category-blue",
+    "sorting-category-emerald",
+    "sorting-category-violet",
+    "sorting-category-rose",
+    "sorting-category-cyan",
   ]
   let itemIndex = 1
 
@@ -2282,7 +2282,7 @@ function renderSortingQuizHtml(
       return `
                         <button
                             type="button"
-                            class="word-card rounded-md border border-amber-300 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-800 shadow-sm cursor-pointer transition duration-300 hover:bg-amber-100 transform hover:scale-105"
+                            class="word-card sorting-word-card inline-flex min-h-11 items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-900 shadow-sm cursor-pointer transition-colors duration-200 hover:border-orange-300 hover:bg-orange-50"
                             data-activity-item="${escapeAttr(itemId)}"
                             data-id="${escapeAttr(textId)}"
                             draggable="true"
@@ -2300,25 +2300,25 @@ function renderSortingQuizHtml(
       const color = categoryColors[categoryIndex % categoryColors.length]
       return `
                         <div
-                            class="category ${color} rounded-2xl border-2 border-dashed p-3 min-h-[9rem]"
+                            class="category sorting-category ${color} rounded-lg border-2 border-dashed p-4 min-h-[8rem]"
                             data-activity-category="${escapeAttr(categoryId)}"
                             tabindex="0"
                             role="listbox"
                         >
-                            <label class="block rounded-full bg-white/80 px-3 py-1 text-center text-sm font-semibold text-slate-900 shadow-sm" data-id="${escapeAttr(textId)}">${escapeHtml(texts.get(textId) ?? category.label)}</label>
-                            <ul class="word-list mt-3 flex min-h-20 flex-wrap content-start gap-2"></ul>
+                            <label class="sorting-category-label block rounded-md border px-3 py-2 text-center text-sm font-semibold text-slate-900" data-id="${escapeAttr(textId)}">${escapeHtml(texts.get(textId) ?? category.label)}</label>
+                            <ul class="word-list mt-4 flex min-h-14 flex-wrap content-start gap-2"></ul>
                         </div>`
     }).join("\n")
 
     return `
                 <div class="${templatePanelClass(template)}" data-step-number="${questionIndex + 1}">
 ${headingHtml}
-                    <div class="rounded-2xl border border-amber-200 bg-amber-100/50 p-4">
+                    <div class="sorting-bank rounded-lg border border-slate-200 bg-slate-50 p-4">
                         <div class="flex flex-wrap justify-center gap-3" role="listbox">
 ${itemsHtml}
                         </div>
                     </div>
-                    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" role="listbox">
+                    <div class="sorting-categories grid gap-4" role="listbox">
 ${categoriesHtml}
                     </div>
                 </div>`
@@ -2327,6 +2327,65 @@ ${categoriesHtml}
 
   return `<style>
 ${activityTemplateCss()}
+
+    #simple-main .sorting-bank {
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+    }
+
+    #simple-main .sorting-categories {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    }
+
+    #simple-main .sorting-category {
+        background: var(--sorting-category-bg);
+        border-color: var(--sorting-category-border);
+    }
+
+    #simple-main .sorting-category-label {
+        background: var(--sorting-category-label-bg);
+        border-color: var(--sorting-category-border);
+    }
+
+    #simple-main .sorting-category-blue {
+        --sorting-category-bg: #eff6ff;
+        --sorting-category-border: #60a5fa;
+        --sorting-category-label-bg: #dbeafe;
+    }
+
+    #simple-main .sorting-category-emerald {
+        --sorting-category-bg: #ecfdf5;
+        --sorting-category-border: #34d399;
+        --sorting-category-label-bg: #d1fae5;
+    }
+
+    #simple-main .sorting-category-violet {
+        --sorting-category-bg: #f5f3ff;
+        --sorting-category-border: #a78bfa;
+        --sorting-category-label-bg: #ede9fe;
+    }
+
+    #simple-main .sorting-category-rose {
+        --sorting-category-bg: #fff1f2;
+        --sorting-category-border: #fb7185;
+        --sorting-category-label-bg: #ffe4e6;
+    }
+
+    #simple-main .sorting-category-cyan {
+        --sorting-category-bg: #ecfeff;
+        --sorting-category-border: #22d3ee;
+        --sorting-category-label-bg: #cffafe;
+    }
+
+    #simple-main .sorting-word-card {
+        color: #0f172a;
+        min-width: min(12rem, 100%);
+    }
+
+    #simple-main .sorting-category .sorting-word-card {
+        border-color: #cbd5e1;
+        background: #ffffff;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+    }
 </style>
 
 <div id="content" class="${activityContentClass()}">

@@ -44,7 +44,7 @@ export const STAGE_DESCRIPTION_MESSAGES: Record<string, MessageDescriptor> = {
   extract: msg`Extract text and images from each page of the PDF using AI-powered analysis.`,
   sectioning: msg`Structure each page into a content tree of sections and nodes for downstream rendering.`,
   storyboard: msg`Arrange extracted content into a structured storyboard with pages, sections, and layouts.`,
-  quizzes: msg`Generate and manage AI-generated and textbook activities based on the book content.`,
+  quizzes: msg`Generate and manage AI-generated activities based on the book content.`,
   captions: msg`Create descriptive captions for images to improve accessibility.`,
   glossary: msg`Build a glossary of key terms and definitions found in the text.`,
   toc: msg`Generate and customize the table of contents for the book navigation.`,
