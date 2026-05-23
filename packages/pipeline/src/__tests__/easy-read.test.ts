@@ -488,6 +488,7 @@ describe("easy_read prompt", () => {
     expect(prompt).toContain("Cada salida debe corresponder solo al texto de entrada con el mismo índice")
     expect(prompt).toContain("No fusiones varios textos de entrada")
     expect(prompt).toContain("El idioma de salida debe ser {{ language }} ({{ language_code }})")
+    expect(prompt).toContain("No agregues emojis, íconos ni símbolos decorativos")
     expect(prompt).toContain("Si el texto de entrada enumera 3 o más elementos como ejemplos, partes, características")
     expect(prompt).toContain("No mantengas 3 o más elementos separados solo por comas dentro de una tabla")
     expect(prompt).toContain("Cada viñeta debe empezar con guion y un espacio")

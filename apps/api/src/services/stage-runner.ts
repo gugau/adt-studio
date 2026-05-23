@@ -53,8 +53,10 @@ import {
   resolveProviderForLanguage,
   resolveSpeechModel,
   resolveSpeechFormat,
+  computeSpeechCacheKey,
   generateSpeechFile,
   generateWordTimestamps,
+  stripEmojis,
   generateBookSummary,
   buildBookSummaryConfig,
   filterPageImageMeaningfulness,
@@ -178,11 +180,14 @@ function emitSpeechStepProgress(
   audioCompleted: number,
   audioTotal: number,
   audioFailures: number,
+  reusedTotal = 0,
 ): void {
+  const reusedSuffix = reusedTotal > 0 ? ` (${reusedTotal} reused)` : ""
+  const failureSuffix = audioFailures > 0 ? ` (${audioFailures} failed)` : ""
   progress.emit({
     type: "step-progress",
     step: "tts",
-    message: `${audioCompleted}/${audioTotal} audio entries${audioFailures > 0 ? ` (${audioFailures} failed)` : ""}`,
+    message: `${audioCompleted}/${audioTotal} audio entries${reusedSuffix}${failureSuffix}`,
     page: audioCompleted,
     totalPages: audioTotal,
   })
@@ -222,6 +227,104 @@ function resolveSpeechAudioPath(
   }
 
   return null
+}
+
+function resolveSpeechOutputPath(
+  bookDir: string,
+  language: string,
+  fileName: string,
+): string | null {
+  if (!/^[A-Za-z0-9_.-]+$/.test(fileName)) return null
+
+  const audioRoot = path.resolve(bookDir, "audio")
+  const audioDir = path.resolve(audioRoot, normalizeLocale(language))
+  const outputPath = path.resolve(audioDir, fileName)
+
+  if (audioDir !== audioRoot && !audioDir.startsWith(audioRoot + path.sep)) {
+    return null
+  }
+  if (!outputPath.startsWith(audioDir + path.sep)) {
+    return null
+  }
+
+  return outputPath
+}
+
+function resolveSpeechCachePath(
+  cacheDir: string,
+  cacheKey: string,
+  format: string,
+): string | null {
+  if (!/^[a-f0-9]{64}$/.test(cacheKey)) return null
+  if (!/^[a-z0-9]+$/.test(format)) return null
+
+  const cacheRoot = path.resolve(cacheDir, "tts")
+  const cachePath = path.resolve(cacheRoot, `${cacheKey}.${format}`)
+  if (!cachePath.startsWith(cacheRoot + path.sep)) {
+    return null
+  }
+
+  return cachePath
+}
+
+function getExistingSpeechEntries(
+  storage: Storage,
+  language: string,
+): Map<string, SpeechFileEntry> {
+  const normalizedLanguage = normalizeLocale(language)
+  const legacyLanguage = normalizedLanguage.replace("-", "_")
+  const row =
+    storage.getLatestNodeData("tts", normalizedLanguage) ??
+    storage.getLatestNodeData("tts", legacyLanguage)
+  const entries = (row?.data as TTSOutput | undefined)?.entries ?? []
+  return new Map(entries.map((entry) => [entry.textId, entry]))
+}
+
+function canReuseSpeechEntry(
+  entry: SpeechFileEntry | undefined,
+  options: {
+    bookDir: string
+    cacheDir: string
+    language: string
+    text: string
+    provider: string
+    model: string
+    voice: string
+    instructions: string
+    format: string
+  },
+): entry is SpeechFileEntry {
+  if (!entry) return false
+
+  if (entry.provider === "manual") {
+    return resolveSpeechAudioPath(options.bookDir, options.language, entry.fileName) !== null
+  }
+
+  const entryProvider = entry.provider ?? "openai"
+  if (entryProvider !== options.provider) return false
+  if (entry.model !== options.model) return false
+  if (entry.voice !== options.voice) return false
+
+  const expectedExt = `.${options.format.toLowerCase()}`
+  if (path.extname(entry.fileName).toLowerCase() !== expectedExt) return false
+
+  const sanitized = stripEmojis(options.text).trim()
+  const cacheKey = computeSpeechCacheKey({
+    text: sanitized,
+    voice: options.voice,
+    model: options.model,
+    instructions: options.instructions,
+    provider: options.provider,
+  })
+  const cachePath = resolveSpeechCachePath(options.cacheDir, cacheKey, options.format.toLowerCase())
+  if (!cachePath || !fs.existsSync(cachePath)) return false
+
+  const outputPath = resolveSpeechOutputPath(options.bookDir, options.language, entry.fileName)
+  if (!outputPath) return false
+
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true })
+  fs.copyFileSync(cachePath, outputPath)
+  return true
 }
 
 interface GenerateSpeechWordTimestampsOptions {
@@ -368,16 +471,21 @@ export function createStageRunner(): StageRunner {
       // This is the single place where step state transitions are recorded,
       // so the step-status endpoint can read from step_runs.
       const completionStorage = createBookStorage(label, booksDir)
+      const runningSteps = new Set<StepName>()
       try {
         const trackingProgress: StageRunProgress = {
           emit(event) {
             if (event.type === "step-start") {
+              runningSteps.add(event.step)
               completionStorage.markStepStarted(event.step)
             } else if (event.type === "step-complete") {
+              runningSteps.delete(event.step)
               completionStorage.markStepCompleted(event.step)
             } else if (event.type === "step-skip") {
+              runningSteps.delete(event.step)
               completionStorage.markStepSkipped(event.step)
             } else if (event.type === "step-error") {
+              runningSteps.delete(event.step)
               completionStorage.recordStepError(event.step, event.error)
             } else if (event.type === "step-progress" && event.message) {
               completionStorage.updateStepMessage(event.step, event.message)
@@ -390,6 +498,13 @@ export function createStageRunner(): StageRunner {
           const stage = STAGE_ORDER[i]
           await STAGE_RUNNERS[stage](label, options, trackingProgress)
         }
+      } catch (err) {
+        const message = toErrorMessage(err)
+        for (const step of runningSteps) {
+          completionStorage.recordStepError(step, message)
+          progress.emit({ type: "step-error", step, error: message })
+        }
+        throw err
       } finally {
         completionStorage.close()
       }
@@ -1890,6 +2005,7 @@ async function runSpeechStep(
     }
 
     progress.emit({ type: "step-start", step: "tts" })
+    progress.emit({ type: "step-progress", step: "tts", message: "Preparing audio..." })
 
     const voiceMaps = loadVoicesConfig(configDir)
     const instructionsMap = loadSpeechInstructions(configDir)
@@ -1943,10 +2059,17 @@ async function runSpeechStep(
     }
     const ttsWorkItems: TTSWorkItem[] = []
     const textByLanguage = new Map<string, Map<string, string>>()
+    const ttsResultsByLang = new Map<string, SpeechFileEntry[]>()
+    const reusedEntriesByLang = new Map<string, number>()
+    for (const lang of outputLanguages) {
+      ttsResultsByLang.set(lang, [])
+      reusedEntriesByLang.set(lang, 0)
+    }
 
     for (const lang of outputLanguages) {
       const baseSource = getBaseLanguage(sourceLanguage)
       const baseLang = getBaseLanguage(lang)
+      const existingSpeechEntries = getExistingSpeechEntries(storage, lang)
 
       let entries: TextCatalogEntry[]
       if (baseLang === baseSource) {
@@ -1966,8 +2089,36 @@ async function runSpeechStep(
 
       const languageTextMap = new Map<string, string>()
       for (const entry of entries) {
-        ttsWorkItems.push({ textId: entry.id, text: entry.text, language: lang })
         languageTextMap.set(entry.id, entry.text)
+
+        const provider = resolveProviderForLanguage(lang, routing)
+        const providerModel = resolveSpeechModel(provider, providerConfigs, speechModel)
+        const outputFormat = resolveSpeechFormat(provider, config.speech?.format)
+        const voice = resolveVoice(provider, lang, voiceMaps, config.speech?.voice)
+        const instructions = provider === "openai"
+          ? resolveInstructions(lang, instructionsMap)
+          : ""
+        const existingEntry = existingSpeechEntries.get(entry.id)
+
+        if (
+          canReuseSpeechEntry(existingEntry, {
+            bookDir,
+            cacheDir,
+            language: lang,
+            text: entry.text,
+            provider,
+            model: providerModel,
+            voice,
+            instructions,
+            format: outputFormat,
+          })
+        ) {
+          ttsResultsByLang.get(lang)?.push(existingEntry)
+          reusedEntriesByLang.set(lang, (reusedEntriesByLang.get(lang) ?? 0) + 1)
+          continue
+        }
+
+        ttsWorkItems.push({ textId: entry.id, text: entry.text, language: lang })
       }
       textByLanguage.set(lang, languageTextMap)
     }
@@ -1975,9 +2126,10 @@ async function runSpeechStep(
     const totalItems = ttsWorkItems.length
     let completedItems = 0
 
-    emitSpeechStepProgress(progress, 0, totalItems, 0)
+    const reusedItems = [...reusedEntriesByLang.values()].reduce((sum, count) => sum + count, 0)
+    emitSpeechStepProgress(progress, 0, totalItems, 0, reusedItems)
 
-    console.log(`[stage-run] ${label}: generating TTS for ${totalItems} entries across ${outputLanguages.length} languages (${outputLanguages.join(", ")})`)
+    console.log(`[stage-run] ${label}: generating TTS for ${totalItems} entries and reusing ${reusedItems} existing entries across ${outputLanguages.length} languages (${outputLanguages.join(", ")})`)
     console.log(`[stage-run] ${label}: TTS routing — for each language: ${outputLanguages.map((l) => `${l}→${resolveProviderForLanguage(l, routing)}`).join(", ")}`)
 
     const hasGeminiTts = outputLanguages.some(
@@ -1994,11 +2146,6 @@ async function runSpeechStep(
       console.log(
         `[stage-run] ${label}: Gemini TTS limiter active at ${geminiTtsRequestsPerMinute} req/min`
       )
-    }
-
-    const ttsResultsByLang = new Map<string, SpeechFileEntry[]>()
-    for (const lang of outputLanguages) {
-      ttsResultsByLang.set(lang, [])
     }
 
     const failedItems: string[] = []
@@ -2145,7 +2292,7 @@ async function runSpeechStep(
         }
 
         completedItems++
-        emitSpeechStepProgress(progress, completedItems, totalItems, failedItems.length)
+        emitSpeechStepProgress(progress, completedItems, totalItems, failedItems.length, reusedItems)
       }
     )
 

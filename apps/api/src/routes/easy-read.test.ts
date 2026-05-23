@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import fs from "node:fs"
 import os from "node:os"
 import path from "node:path"
-import { openBookDb } from "@adt/storage"
+import { createBookStorage, openBookDb } from "@adt/storage"
 
 const { generateObjectMock } = vi.hoisted(() => ({
   generateObjectMock: vi.fn(),
@@ -147,6 +147,41 @@ function easyReadData(text = "Easy text") {
   }
 }
 
+function twoEntryEasyReadData(firstText = "Easy one", secondText = "Easy two") {
+  return {
+    blocks: [
+      {
+        pageId: "pg001",
+        pageNumber: 1,
+        sectionId: "pg001_sec001",
+        sectionIndex: 0,
+        sectionType: "text_only",
+        entries: [
+          {
+            sourceId: "pg001_tx001",
+            easyReadId: "pg001_tx001_easy_read",
+            originalText: "Original one",
+            text: firstText,
+            pageId: "pg001",
+            sectionId: "pg001_sec001",
+            sectionIndex: 0,
+          },
+          {
+            sourceId: "pg001_tx002",
+            easyReadId: "pg001_tx002_easy_read",
+            originalText: "Original two",
+            text: secondText,
+            pageId: "pg001",
+            sectionId: "pg001_sec001",
+            sectionIndex: 0,
+          },
+        ],
+      },
+    ],
+    generatedAt: "2026-01-01T00:00:00.000Z",
+  }
+}
+
 describe("easy read routes", () => {
   it("returns null when no Easy Read output exists", async () => {
     createTestBook("empty")
@@ -199,6 +234,87 @@ describe("easy read routes", () => {
       expect(stepRuns).toEqual([])
     } finally {
       verify.close()
+    }
+  })
+
+  it("keeps unchanged Easy Read speech and removes only changed audio metadata", async () => {
+    createTestBook("selective-speech")
+
+    const storage = createBookStorage("selective-speech", tmpDir)
+    try {
+      storage.putNodeData("easy-read", "book", twoEntryEasyReadData("Easy one", "Easy two"))
+      storage.putNodeData("tts", "en", {
+        entries: [
+          {
+            textId: "pg001_tx001_easy_read",
+            language: "en",
+            fileName: "pg001_tx001_easy_read.wav",
+            voice: "Kore",
+            model: "gemini-2.5-pro-preview-tts",
+            cached: false,
+            provider: "gemini",
+          },
+          {
+            textId: "pg001_tx002_easy_read",
+            language: "en",
+            fileName: "pg001_tx002_easy_read.wav",
+            voice: "Kore",
+            model: "gemini-2.5-pro-preview-tts",
+            cached: false,
+            provider: "gemini",
+          },
+        ],
+        generatedAt: "2026-01-01T00:00:00.000Z",
+      })
+      storage.putNodeData("tts-timestamps", "en", {
+        entries: {
+          pg001_tx001_easy_read: {
+            textId: "pg001_tx001_easy_read",
+            language: "en",
+            words: [{ word: "Easy", start: 0, end: 0.5 }],
+            duration: 0.5,
+          },
+          pg001_tx002_easy_read: {
+            textId: "pg001_tx002_easy_read",
+            language: "en",
+            words: [{ word: "Easy", start: 0, end: 0.5 }],
+            duration: 0.5,
+          },
+        },
+        generatedAt: "2026-01-01T00:00:00.000Z",
+      })
+      storage.markStepCompleted("tts")
+      storage.markStepCompleted("word-timestamps")
+    } finally {
+      storage.close()
+    }
+
+    const app = createEasyReadRoutes(tmpDir, promptsDir)
+    const res = await app.request("/books/selective-speech/easy-read", {
+      method: "PUT",
+      body: JSON.stringify(twoEntryEasyReadData("Edited one", "Easy two")),
+      headers: { "Content-Type": "application/json" },
+    })
+
+    expect(res.status).toBe(200)
+
+    const after = createBookStorage("selective-speech", tmpDir)
+    try {
+      const ttsRow = after.getLatestNodeData("tts", "en")
+      expect((ttsRow?.data as { entries: Array<{ textId: string }> }).entries.map((entry) => entry.textId)).toEqual([
+        "pg001_tx002_easy_read",
+      ])
+
+      const timestampsRow = after.getLatestNodeData("tts-timestamps", "en")
+      expect(Object.keys((timestampsRow?.data as { entries: Record<string, unknown> }).entries)).toEqual([
+        "pg001_tx002_easy_read",
+      ])
+
+      const stepRuns = after.getStepRuns()
+      expect(stepRuns.find((step) => step.step === "tts")).toBeUndefined()
+      expect(stepRuns.find((step) => step.step === "word-timestamps")).toBeUndefined()
+    } finally {
+      after.close()
     }
   })
 

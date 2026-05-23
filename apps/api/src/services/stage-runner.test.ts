@@ -540,6 +540,74 @@ describe("createStageRunner speech Gemini partial failures", () => {
     }
   })
 
+  it("records an active step as error when a stage throws before emitting step-error", async () => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "stage-runner-translate-"))
+    const booksDir = path.join(tmpDir, "books")
+    const promptsDir = path.join(tmpDir, "prompts")
+    const configPath = path.join(tmpDir, "config.yaml")
+    fs.mkdirSync(promptsDir, { recursive: true })
+    fs.writeFileSync(
+      configPath,
+      `role_types:
+  section_text: Main body text
+structure_types:
+  paragraph: Paragraph
+output_languages:
+  - fr
+`
+    )
+    seedTextAndSpeechBook(booksDir, "catalog-translation-failure")
+
+    easyReadGenerateObjectMock.mockImplementation(async (options: {
+      context?: { texts?: Array<{ text: string }> }
+      validate?: (raw: unknown, context: unknown) => { valid: boolean; errors: string[] }
+    }) => {
+      const invalid = { translations: [] }
+      const validation = options.validate?.(invalid, options.context)
+      if (validation && !validation.valid) {
+        throw new Error(validation.errors.join("\n"))
+      }
+      return { object: invalid, usage: { inputTokens: 1, outputTokens: 1 } }
+    })
+
+    const events: ProgressEvent[] = []
+    const runner = createStageRunner()
+    await expect(
+      runner.run(
+        "catalog-translation-failure",
+        {
+          booksDir,
+          apiKey: "sk-test",
+          promptsDir,
+          configPath,
+          fromStage: "translate",
+          toStage: "translate",
+        },
+        { emit: (event) => events.push(event) }
+      )
+    ).rejects.toThrow("Expected 1 translations but got 0")
+
+    expect(
+      events.some(
+        (event) =>
+          event.type === "step-error" &&
+          event.step === "catalog-translation" &&
+          event.error.includes("Expected 1 translations but got 0")
+      )
+    ).toBe(true)
+
+    const storage = createBookStorage("catalog-translation-failure", booksDir)
+    try {
+      const catalogTranslationStep = storage
+        .getStepRuns()
+        .find((step) => step.step === "catalog-translation")
+      expect(catalogTranslationStep?.status).toBe("error")
+      expect(catalogTranslationStep?.error).toContain("Expected 1 translations but got 0")
+    } finally {
+      storage.close()
+    }
+  })
+
   it("keeps Gemini TTS in error state when some audio items fail", async () => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "stage-runner-tts-"))
     const booksDir = path.join(tmpDir, "books")

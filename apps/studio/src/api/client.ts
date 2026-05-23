@@ -1008,7 +1008,13 @@ export const api = {
     }),
 
   getStepStatus: (label: string) =>
-    request<{ stages: Record<string, string>; steps: Record<string, string>; error: string | null; stepErrors: Record<string, string> | null }>(`/books/${label}/step-status`),
+    request<{
+      stages: Record<string, string>
+      steps: Record<string, string>
+      error: string | null
+      stepErrors: Record<string, string> | null
+      stepMessages: Record<string, string> | null
+    }>(`/books/${label}/step-status`),
 
   getTTS: (label: string) =>
     request<TTSResponse>(`/books/${label}/tts`),

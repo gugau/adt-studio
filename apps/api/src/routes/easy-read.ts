@@ -2,12 +2,13 @@ import fs from "node:fs"
 import path from "node:path"
 import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
-import { EasyReadOutput, parseBookLabel } from "@adt/types"
+import { EasyReadOutput, parseBookLabel, TTSOutput, WordTimestampOutput } from "@adt/types"
 import type { BookMetadata, EasyReadOutput as EasyReadOutputType } from "@adt/types"
 import { createBookStorage } from "@adt/storage"
 import {
   buildEasyReadConfig,
   buildEasyReadSourceBlocks,
+  flattenEasyReadEntries,
   generateEasyRead,
   loadBookConfig,
   normalizeLocale,
@@ -26,21 +27,116 @@ function readLanguage(
   return normalizeLocale(config.editing_language ?? metadata?.language_code ?? "en")
 }
 
-function clearEasyReadDependents(storage: ReturnType<typeof createBookStorage>): void {
+function getEasyReadTextMap(output: EasyReadOutputType | null | undefined): Map<string, string> {
+  return new Map(flattenEasyReadEntries(output).map((entry) => [entry.id, entry.text]))
+}
+
+function parseStoredEasyRead(value: unknown): EasyReadOutputType | undefined {
+  const parsed = EasyReadOutput.safeParse(value)
+  return parsed.success ? parsed.data : undefined
+}
+
+function getChangedEasyReadIds(
+  previous: EasyReadOutputType | null | undefined,
+  next: EasyReadOutputType,
+): Set<string> {
+  const previousMap = getEasyReadTextMap(previous)
+  const nextMap = getEasyReadTextMap(next)
+  const changedIds = new Set<string>()
+
+  for (const [id, previousText] of previousMap) {
+    if (nextMap.get(id) !== previousText) {
+      changedIds.add(id)
+    }
+  }
+  for (const id of nextMap.keys()) {
+    if (!previousMap.has(id)) {
+      changedIds.add(id)
+    }
+  }
+
+  return changedIds
+}
+
+function pruneSpeechEntriesForTextIds(
+  storage: ReturnType<typeof createBookStorage>,
+  textIds: Set<string>,
+): boolean {
+  if (textIds.size === 0) return false
+
+  let changed = false
+  const fingerprint = storage.getNodeVersionFingerprint()
+  const generatedAt = new Date().toISOString()
+
+  for (const { node, itemId } of fingerprint) {
+    if (node !== "tts" && node !== "tts-timestamps") continue
+
+    const row = storage.getLatestNodeData(node, itemId)
+    if (!row) continue
+
+    if (node === "tts") {
+      const parsed = TTSOutput.safeParse(row.data)
+      if (!parsed.success) continue
+
+      const nextEntries = parsed.data.entries.filter((entry) => !textIds.has(entry.textId))
+      if (nextEntries.length === parsed.data.entries.length) continue
+
+      storage.putNodeData("tts", itemId, {
+        ...parsed.data,
+        entries: nextEntries,
+        generatedAt,
+      })
+      changed = true
+      continue
+    }
+
+    const parsed = WordTimestampOutput.safeParse(row.data)
+    if (!parsed.success) continue
+
+    const nextEntries = Object.fromEntries(
+      Object.entries(parsed.data.entries).filter(([textId]) => !textIds.has(textId)),
+    )
+    if (Object.keys(nextEntries).length === Object.keys(parsed.data.entries).length) continue
+
+    storage.putNodeData("tts-timestamps", itemId, {
+      ...parsed.data,
+      entries: nextEntries,
+      generatedAt,
+    })
+    changed = true
+  }
+
+  return changed
+}
+
+function clearEasyReadDependents(
+  storage: ReturnType<typeof createBookStorage>,
+  previous: EasyReadOutputType | null | undefined,
+  next: EasyReadOutputType,
+  options: { easyReadTtsEnabled: boolean },
+): void {
+  const changedIds = getChangedEasyReadIds(previous, next)
+  if (changedIds.size === 0) return
+
+  const speechPruned = pruneSpeechEntriesForTextIds(storage, changedIds)
+
   storage.clearNodesByType([
     "text-catalog-translation",
-    "tts",
-    "tts-timestamps",
     "accessibility-assessment",
   ])
-  storage.clearStepRuns([
+
+  const stepsToClear = [
     "catalog-translation",
     "image-translation",
-    "tts",
-    "word-timestamps",
     "package-web",
     "accessibility-assessment",
-  ])
+  ]
+
+  if (options.easyReadTtsEnabled || speechPruned) {
+    stepsToClear.push("tts", "word-timestamps")
+  }
+
+  storage.clearStepRuns(stepsToClear)
 }
 
 export function createEasyReadRoutes(
@@ -87,8 +183,17 @@ export function createEasyReadRoutes(
 
     const storage = createBookStorage(safeLabel, booksDir)
     try {
+      const previousRow = storage.getLatestNodeData("easy-read", "book")
+      const previousEasyRead = parseStoredEasyRead(previousRow?.data)
+      const config = loadBookConfig(safeLabel, booksDir, configPath)
+      const metadataRow = storage.getLatestNodeData("metadata", "book")
+      const metadata = metadataRow?.data as BookMetadata | null
+      const language = readLanguage(metadata, config)
+      const easyReadConfig = buildEasyReadConfig(config, language)
       const version = storage.putNodeData("easy-read", "book", parsed.data)
-      clearEasyReadDependents(storage)
+      clearEasyReadDependents(storage, previousEasyRead, parsed.data, {
+        easyReadTtsEnabled: easyReadConfig.tts,
+      })
       return c.json({ version })
     } finally {
       storage.close()
@@ -135,8 +240,12 @@ export function createEasyReadRoutes(
           onLog: (entry) => storage.appendLlmLog(entry),
         })
         const output: EasyReadOutputType = await generateEasyRead(blocks, easyReadConfig, model)
+        const previousRow = storage.getLatestNodeData("easy-read", "book")
+        const previousEasyRead = parseStoredEasyRead(previousRow?.data)
         const version = storage.putNodeData("easy-read", "book", output)
-        clearEasyReadDependents(storage)
+        clearEasyReadDependents(storage, previousEasyRead, output, {
+          easyReadTtsEnabled: easyReadConfig.tts,
+        })
         return c.json({ ...output, version })
       } finally {
         if (previousKey !== undefined) {

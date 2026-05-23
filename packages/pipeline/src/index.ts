@@ -171,6 +171,7 @@ export {
   stripEmojis,
   loadVoicesConfig,
   loadSpeechInstructions,
+  computeSpeechCacheKey,
   generateSpeechFile,
   generateWordTimestamps,
   type VoiceMaps,

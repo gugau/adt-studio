@@ -30,7 +30,7 @@ import {
 import { useSettingsDialog } from "@/routes/__root"
 import type { TaskInfoResponse } from "@/api/client"
 import { getStageLabelI18n, getStepLabelI18n } from "../pipeline-i18n"
-import { ALL_STEP_NAMES, PAGE_PROGRESS_STEPS } from "@adt/types"
+import { ALL_STEP_NAMES } from "@adt/types"
 
 const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   general: msg`General`,
@@ -443,26 +443,23 @@ function TaskIndicator({ bookLabel }: { bookLabel: string }) {
   const { runningTasks, runningCount } = useBookTasks(bookLabel)
   const { stepState, stepProgress } = useBookRun()
 
-  // Build step-progress rows for running pipeline steps that have page-level progress
-  const stageProgressRows: { step: string; label: string; page: number; totalPages: number }[] = []
-  for (const step of PAGE_PROGRESS_STEPS) {
+  // Running steps with visible progress (pages, entries, batches, etc.)
+  const stageProgressRows: { step: string; label: string; progressLabel: string }[] = []
+  const activeSteps: { step: string; label: string }[] = []
+  for (const step of ALL_STEP_NAMES) {
     if (stepState(step) === "running") {
       const prog = stepProgress(step)
-      if (prog?.totalPages) {
+      const hasPages = prog?.page != null && prog?.totalPages != null && prog.totalPages > 0
+      const numericProgressLabel = hasPages ? `${prog.page}/${prog.totalPages}` : null
+      const progressLabel = prog?.message?.trim() || numericProgressLabel
+      if (progressLabel) {
         stageProgressRows.push({
           step,
           label: getStepLabelI18n(step),
-          page: prog.page ?? 0,
-          totalPages: prog.totalPages,
+          progressLabel,
         })
+        continue
       }
-    }
-  }
-
-  // Non-page-progress steps that are currently running (e.g. metadata, book-summary)
-  const activeSteps: { step: string; label: string }[] = []
-  for (const step of ALL_STEP_NAMES) {
-    if (!PAGE_PROGRESS_STEPS.has(step) && stepState(step) === "running") {
       activeSteps.push({ step, label: getStepLabelI18n(step) })
     }
   }
@@ -482,7 +479,7 @@ function TaskIndicator({ bookLabel }: { bookLabel: string }) {
               {row.label}
             </p>
             <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
-              {row.page}/{row.totalPages}
+              {row.progressLabel}
             </span>
           </div>
         ))}
