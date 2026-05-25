@@ -376,6 +376,12 @@ msgstr "About section mode"
 msgid "Accent Prompt"
 msgstr "Accent Prompt"
 
+msgid "Accept anyway"
+msgstr "Accept anyway"
+
+msgid "Accepted anyway"
+msgstr "Accepted anyway"
+
 msgid "Accessibility"
 msgstr "Accessibility"
 
@@ -702,6 +708,9 @@ msgstr "Apply page background colors"
 
 msgid "Apply Segmentation"
 msgstr "Apply Segmentation"
+
+msgid "Apply suggestion"
+msgstr "Apply suggestion"
 
 msgid "AR"
 msgstr "AR"
@@ -1425,6 +1434,9 @@ msgstr "Description"
 msgid "Description..."
 msgstr "Description..."
 
+msgid "Details"
+msgstr "Details"
+
 msgid "Detecting figures"
 msgstr "Detecting figures"
 
@@ -2010,6 +2022,9 @@ msgstr "Header"
 
 #~ msgid "Heading"
 #~ msgstr "Heading"
+
+msgid "Hide"
+msgstr "Hide"
 
 msgid "Hide AI edit history"
 msgstr "Hide AI edit history"
@@ -2622,6 +2637,9 @@ msgstr "Name"
 msgid "Navigate within Preview to capture page-specific review notes"
 msgstr "Navigate within Preview to capture page-specific review notes"
 
+msgid "Needs attention"
+msgstr "Needs attention"
+
 msgid "Needs changes"
 msgstr "Needs changes"
 
@@ -2825,6 +2843,9 @@ msgstr "No versions"
 
 msgid "No versions found for {node} / {itemId}"
 msgstr "No versions found for {node} / {itemId}"
+
+msgid "No visible translations to review."
+msgstr "No visible translations to review."
 
 msgid "No voice mappings configured."
 msgstr "No voice mappings configured."
@@ -3496,6 +3517,9 @@ msgstr "Retry"
 msgid "Retry Export"
 msgstr "Retry Export"
 
+msgid "Review"
+msgstr "Review"
+
 msgid "Review areas with the most items marked as needing changes in this session."
 msgstr "Review areas with the most items marked as needing changes in this session."
 
@@ -3507,6 +3531,9 @@ msgstr "Review progress"
 
 msgid "Review the project details below and confirm the import."
 msgstr "Review the project details below and confirm the import."
+
+msgid "Review visible translations"
+msgstr "Review visible translations"
 
 msgid "Reviewer checklist"
 msgstr "Reviewer checklist"
@@ -3806,6 +3833,9 @@ msgstr "Select a section mode to continue"
 msgid "Select a style guide to preview how it styles the generated pages - typography, colors, and component layout."
 msgstr "Select a style guide to preview how it styles the generated pages - typography, colors, and component layout."
 
+msgid "Select a target language first."
+msgstr "Select a target language first."
+
 msgid "Select activity type..."
 msgstr "Select activity type..."
 
@@ -4097,6 +4127,9 @@ msgstr "Suggested modification"
 msgid "Suggested modification:"
 msgstr "Suggested modification:"
 
+msgid "Suggested translation"
+msgstr "Suggested translation"
+
 msgid "Summary Prompt"
 msgstr "Summary Prompt"
 
@@ -4281,6 +4314,9 @@ msgstr "The rendering strategy used for sections without an explicit mapping."
 msgid "The river meets the sea"
 msgstr "The river meets the sea"
 
+msgid "The saved translation review is stale. Run Review again for the visible translations."
+msgstr "The saved translation review is stale. Run Review again for the visible translations."
+
 msgid "The sun heats water in oceans, lakes, and rivers, turning it into vapor that rises into the atmosphere. As the vapor cools at higher altitudes, it condenses into tiny droplets that form clouds."
 msgstr "The sun heats water in oceans, lakes, and rivers, turning it into vapor that rises into the atmosphere. As the vapor cools at higher altitudes, it condenses into tiny droplets that form clouds."
 
@@ -4424,6 +4460,9 @@ msgstr "Translation"
 
 msgid "Translation Prompt"
 msgstr "Translation Prompt"
+
+msgid "Translation review is running."
+msgstr "Translation review is running."
 
 msgid "Translations"
 msgstr "Translations"

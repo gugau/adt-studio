@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { Link } from "@tanstack/react-router"
-import { Check, ChevronDown, ChevronRight, ChevronUp, Languages, Loader2, Play, Pause, Plus, RotateCcw, Save, Settings, Trash2, Type, WandSparkles, X } from "lucide-react"
+import { Check, ChevronDown, ChevronRight, ChevronUp, Languages, Loader2, Play, Pause, Plus, RotateCcw, Save, Settings, Trash2, TriangleAlert, Type, WandSparkles, X } from "lucide-react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { api, getAudioUrl, BASE_URL } from "@/api/client"
-import type { TextCatalogEntry, VersionEntry, WordTimestamp, WordTimestampEntry } from "@/api/client"
+import type { TextCatalogEntry, TranslationEvaluationStatusResponse, VersionEntry, WordTimestamp, WordTimestampEntry } from "@/api/client"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useBook } from "@/hooks/use-books"
 import { useStepHeader } from "../../components/StepViewRouter"
@@ -20,6 +20,8 @@ import { Button } from "@/components/ui/button"
 import { resolveTranslationLanguageState } from "./lib/translations-view-state"
 import { msg } from "@lingui/core/macro"
 import { useLingui } from "@lingui/react/macro"
+
+type TranslationEvaluationItem = NonNullable<NonNullable<TranslationEvaluationStatusResponse["evaluation"]>["items"][number]>
 
 const IMAGE_ID_RE = /_im\d{3}/
 function isImageEntry(id: string): boolean {
@@ -168,6 +170,109 @@ function VersionPicker({
   )
 }
 
+function TranslationReviewInline({
+  item,
+  onApplySuggestion,
+  onAcceptAnyway,
+  acceptingAnyway,
+}: {
+  item: TranslationEvaluationItem
+  onApplySuggestion: (suggestedText: string) => void
+  onAcceptAnyway: () => void
+  acceptingAnyway: boolean
+}) {
+  const { t } = useLingui()
+  const [open, setOpen] = useState(!item.accepted_anyway && !item.acceptable)
+
+  useEffect(() => {
+    setOpen(!item.accepted_anyway && !item.acceptable)
+  }, [item.acceptable, item.accepted_anyway, item.entry_id, item.rationale])
+
+  if (item.acceptable) return null
+
+  if (item.accepted_anyway) {
+    return (
+      <div className="mt-2 inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-200">
+        <Check className="h-3 w-3" />
+        {t`Accepted anyway`}
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-2 rounded-md border border-orange-200 bg-orange-50/70 p-2.5 text-xs text-orange-950">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-start gap-2">
+          <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-orange-600" />
+          <div className="min-w-0">
+            <div className="font-medium text-orange-800">{t`Needs attention`}</div>
+            <p className="mt-1 whitespace-pre-wrap leading-relaxed">{item.rationale}</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setOpen((current) => !current)}
+          className="shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium text-orange-700 hover:bg-orange-100"
+        >
+          {open ? t`Hide` : t`Details`}
+        </button>
+      </div>
+
+      {open ? (
+        <div className="mt-2 space-y-2">
+          {item.issue_types && item.issue_types.length > 0 ? (
+            <div className="flex flex-wrap gap-1">
+              {item.issue_types.map((issueType) => (
+                <span key={`${item.entry_id}-${issueType}`} className="rounded bg-white/80 px-1.5 py-0.5 font-mono text-[10px] text-orange-800 ring-1 ring-orange-200">
+                  {issueType}
+                </span>
+              ))}
+              {item.severity ? (
+                <span className="rounded bg-white/80 px-1.5 py-0.5 font-mono text-[10px] text-orange-800 ring-1 ring-orange-200">
+                  {item.severity}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+
+          {item.suggested_text ? (
+            <div className="rounded border border-emerald-200 bg-emerald-50 p-2 text-emerald-950">
+              <div className="mb-1 text-[10px] font-semibold uppercase text-emerald-700">{t`Suggested translation`}</div>
+              <p className="whitespace-pre-wrap leading-relaxed">{item.suggested_text}</p>
+            </div>
+          ) : null}
+
+          <div className="flex flex-wrap gap-1.5">
+            {item.suggested_text ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 border-emerald-300 bg-white px-2 text-xs text-emerald-800 hover:bg-emerald-50"
+                onClick={() => onApplySuggestion(item.suggested_text!)}
+              >
+                <Check className="h-3 w-3" />
+                {t`Apply suggestion`}
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 border-orange-300 bg-white px-2 text-xs text-orange-800 hover:bg-orange-100"
+              onClick={onAcceptAnyway}
+              disabled={acceptingAnyway}
+            >
+              {acceptingAnyway ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+              {t`Accept anyway`}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 export function TranslationsView({ bookLabel, stageSlug = "translate", selectedPageId, onSelectPage }: { bookLabel: string; stageSlug?: string; selectedPageId?: string; onSelectPage?: (pageId: string | null) => void }) {
   const isSpeechStage = stageSlug === "speech"
   const { t, i18n } = useLingui()
@@ -176,7 +281,7 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
   const { data: book, isLoading: isBookLoading } = useBook(bookLabel)
   const queryClient = useQueryClient()
   const { stageState, queueRun, error: runError } = useBookRun()
-  const { isTaskRunning } = useBookTasks(bookLabel)
+  const { isTaskRunning, tasks } = useBookTasks(bookLabel)
   const { apiKey, hasApiKey, azureKey, azureRegion, geminiKey } = useApiKey()
   const translateState = stageState("translate")
   const speechState = stageState("speech")
@@ -304,6 +409,7 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
     await api.updateTranslation(bookLabel, selectedLang, { entries: pendingEntries })
     setPendingEntries(null)
     await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "text-catalog"] })
+    await queryClient.invalidateQueries({ queryKey: ["evaluations", "translations", bookLabel] })
     await minDelay
     setSaving(false)
   }, [pendingEntries, selectedLang, bookLabel, queryClient])
@@ -323,6 +429,76 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
       setPendingEntries([...base, { id: entryId, text: newText }])
     }
   }
+
+  const translationEvaluationKey = ["evaluations", "translations", bookLabel, selectedLang] as const
+  const reviewEntryIds = useMemo(
+    () => displayEntries.map((entry) => entry.id),
+    [displayEntries],
+  )
+  const translationEvaluation = useQuery({
+    queryKey: translationEvaluationKey,
+    queryFn: () => api.getTranslationEvaluation(bookLabel, selectedLang!),
+    enabled: !!bookLabel && !!selectedLang && !isSourceLang && !isSpeechStage,
+    retry: false,
+  })
+  const evaluationStatus = translationEvaluation.data ?? null
+  const evaluationItemsByEntryId = useMemo(() => {
+    const map = new Map<string, TranslationEvaluationItem>()
+    if (!evaluationStatus?.evaluation || evaluationStatus.isStale) return map
+    const selectedIds = evaluationStatus.evaluation.metadata?.selected_entry_ids
+    const visibleIds = new Set(reviewEntryIds)
+    const matchesVisibleScope = selectedIds
+      ? selectedIds.some((entryId) => visibleIds.has(entryId))
+      : true
+    if (!matchesVisibleScope) return map
+    for (const item of evaluationStatus.evaluation.items) {
+      if (visibleIds.has(item.entry_id)) {
+        map.set(item.entry_id, item)
+      }
+    }
+    return map
+  }, [evaluationStatus, reviewEntryIds])
+  const activeEvaluationTask = useMemo(() => {
+    return [...tasks]
+      .filter((task) =>
+        task.kind === "translation-evaluation" &&
+        (task.status === "running" || task.status === "queued")
+      )
+      .sort((left, right) => (right.startedAt ?? 0) - (left.startedAt ?? 0))[0] ?? null
+  }, [tasks])
+  const runTranslationReview = useMutation({
+    mutationFn: async () => {
+      if (!selectedLang) throw new Error(i18n._(msg`Select a target language first.`))
+      if (reviewEntryIds.length === 0) throw new Error(i18n._(msg`No visible translations to review.`))
+      return api.runTranslationEvaluation(bookLabel, selectedLang, apiKey, {
+        pageId: selectedPageId ?? undefined,
+        entryIds: reviewEntryIds,
+      })
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["evaluations", "translations", bookLabel] })
+      await queryClient.invalidateQueries({ queryKey: translationEvaluationKey })
+    },
+  })
+  const acceptAnyway = useMutation({
+    mutationFn: async (entryId: string) => {
+      if (!selectedLang) throw new Error(i18n._(msg`Select a target language first.`))
+      return api.acceptTranslationEvaluationItemAnyway(bookLabel, selectedLang, entryId)
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["evaluations", "translations", bookLabel] })
+      await queryClient.invalidateQueries({ queryKey: translationEvaluationKey })
+    },
+  })
+  const canReviewVisibleTranslations =
+    !isSourceLang &&
+    !isSpeechStage &&
+    !!selectedLang &&
+    reviewEntryIds.length > 0 &&
+    !runTranslationReview.isPending &&
+    !isTaskRunning("translation-evaluation")
+  const runTranslationReviewMutate = runTranslationReview.mutate
+  const runTranslationReviewPending = runTranslationReview.isPending
 
   // Build audio lookup — use selected language, or editing language when no output languages
   const audioMap = new Map<string, { fileName: string; voice: string }>()
@@ -499,6 +675,22 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
             onDiscard={() => setPendingEntries(null)}
           />
         )}
+        {selectedLang && !isSourceLang && !isSpeechStage && (
+          <button
+            type="button"
+            onClick={() => runTranslationReviewMutate()}
+            disabled={!canReviewVisibleTranslations}
+            title={t`Review visible translations`}
+            className="inline-flex h-6 items-center gap-1 rounded bg-white/20 px-2 text-[10px] font-medium text-white transition-colors hover:bg-white/30 disabled:cursor-default disabled:opacity-40"
+          >
+            {runTranslationReviewPending || activeEvaluationTask ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <WandSparkles className="h-3 w-3" />
+            )}
+            {t`Review`}
+          </button>
+        )}
         <div className="w-px h-4 bg-white/20" />
         <button
           type="button"
@@ -545,16 +737,7 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
       </div>
     )
     return () => setExtra(null)
-  }, [catalog, t, displayEntries.length, outputLanguages.length, selectedLang, translationVersion, saving, dirty, bookLabel, isSourceLang, totalAudioFiles, selectedPageId, currentLanguageUsesGemini, generatedAudioCount, missingAudioCount, hasApiKey, isRunning, apiKey, queueRun, stageSlug, isSpeechStage, handleDeleteTTS, audioLang, transcribeAllMutation, isTaskRunning])
-
-  if (!showRunCard && isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">{t`Loading text catalog...`}</span>
-      </div>
-    )
-  }
+  }, [catalog, t, displayEntries.length, outputLanguages.length, selectedLang, translationVersion, saving, dirty, bookLabel, isSourceLang, totalAudioFiles, selectedPageId, currentLanguageUsesGemini, generatedAudioCount, missingAudioCount, hasApiKey, isRunning, apiKey, queueRun, stageSlug, isSpeechStage, handleDeleteTTS, audioLang, transcribeAllMutation, isTaskRunning, runTranslationReviewMutate, runTranslationReviewPending, canReviewVisibleTranslations, activeEvaluationTask])
 
   // Resolve speech config summary for display
   const speechSummary = useMemo(() => {
@@ -569,6 +752,15 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
     const providerModel = providers?.[provider]?.model as string | undefined
     return { provider, voice, model: providerModel ?? model ?? "gpt-4o-mini-tts" }
   }, [speechConfig])
+
+  if (!showRunCard && isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12 text-muted-foreground">
+        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+        <span className="text-sm">{t`Loading text catalog...`}</span>
+      </div>
+    )
+  }
 
   if (showRunCard || !catalog || entries.length === 0) {
     return (
@@ -760,6 +952,38 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
         </div>
         )}
 
+        {!isSourceLang && !isSpeechStage && activeEvaluationTask && (
+          <div className="flex items-center gap-2 rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <span>{activeEvaluationTask.progressMessage ?? t`Translation review is running.`}</span>
+            {typeof activeEvaluationTask.progressPercent === "number" && (
+              <span className="ml-auto tabular-nums">{Math.round(activeEvaluationTask.progressPercent)}%</span>
+            )}
+          </div>
+        )}
+
+        {!isSourceLang && !isSpeechStage && evaluationStatus?.isStale && (
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            {t`The saved translation review is stale. Run Review again for the visible translations.`}
+          </div>
+        )}
+
+        {!isSourceLang && !isSpeechStage && runTranslationReview.error && (
+          <Alert variant="destructive" className="rounded-md">
+            <AlertDescription className="text-xs whitespace-pre-wrap break-words">
+              {runTranslationReview.error.message}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {!isSourceLang && !isSpeechStage && acceptAnyway.error && (
+          <Alert variant="destructive" className="rounded-md">
+            <AlertDescription className="text-xs whitespace-pre-wrap break-words">
+              {acceptAnyway.error.message}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {!isSourceLang && !isSourceLanguagePending && displayEntries.length > 0 && (
           <div className="grid grid-cols-2 gap-3 px-3 py-1.5">
             <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
@@ -794,6 +1018,7 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
             const baseAudio = baseAudioMap.get(entry.id)
             const isImg = isImageEntry(entry.id)
             const isAnswer = isAnswerEntry(entry.id)
+            const evaluationItem = evaluationItemsByEntryId.get(entry.id)
 
             return (
               <div
@@ -906,14 +1131,27 @@ export function TranslationsView({ bookLabel, stageSlug = "translate", selectedP
                                 isPlaying={playingEntryId === entry.id}
                               />
                             ) : (
-                              <textarea
-                                value={translated ?? ""}
-                                onChange={(e) => updateEntry(entry.id, e.target.value)}
-                                placeholder={t`Pending...`}
-                                className="w-full text-sm leading-relaxed mt-0.5 resize-none rounded border border-transparent bg-transparent p-1.5 -ml-1.5 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors placeholder:text-muted-foreground placeholder:italic"
-                                style={{ fieldSizing: "content" } as React.CSSProperties}
-                                rows={1}
-                              />
+                              <>
+                                <textarea
+                                  value={translated ?? ""}
+                                  onChange={(e) => updateEntry(entry.id, e.target.value)}
+                                  placeholder={t`Pending...`}
+                                  className="w-full text-sm leading-relaxed mt-0.5 resize-none rounded border border-transparent bg-transparent p-1.5 -ml-1.5 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors placeholder:text-muted-foreground placeholder:italic"
+                                  style={{ fieldSizing: "content" } as React.CSSProperties}
+                                  rows={1}
+                                />
+                                {evaluationItem ? (
+                                  <TranslationReviewInline
+                                    item={evaluationItem}
+                                    onApplySuggestion={(suggestedText) => updateEntry(entry.id, suggestedText)}
+                                    onAcceptAnyway={() => acceptAnyway.mutate(entry.id)}
+                                    acceptingAnyway={
+                                      acceptAnyway.isPending &&
+                                      acceptAnyway.variables === entry.id
+                                    }
+                                  />
+                                ) : null}
+                              </>
                             )}
                           </div>
                           {isSpeechStage && !isAnswer && <AudioAction

@@ -376,6 +376,12 @@ msgstr "Acerca del modo de sección"
 msgid "Accent Prompt"
 msgstr "Prompt de acento"
 
+msgid "Accept anyway"
+msgstr "Aceptar de todos modos"
+
+msgid "Accepted anyway"
+msgstr "Aceptado de todos modos"
+
 msgid "Accessibility"
 msgstr "Accessibility"
 
@@ -702,6 +708,9 @@ msgstr "Aplicar colores de fondo de página"
 
 msgid "Apply Segmentation"
 msgstr "Apply Segmentation"
+
+msgid "Apply suggestion"
+msgstr "Aplicar sugerencia"
 
 msgid "AR"
 msgstr "AR"
@@ -1425,6 +1434,9 @@ msgstr "Descripción"
 msgid "Description..."
 msgstr "Descripción..."
 
+msgid "Details"
+msgstr "Detalles"
+
 msgid "Detecting figures"
 msgstr "Detectando figuras"
 
@@ -2010,6 +2022,9 @@ msgstr "Encabezado"
 
 #~ msgid "Heading"
 #~ msgstr "Título"
+
+msgid "Hide"
+msgstr "Ocultar"
 
 msgid "Hide AI edit history"
 msgstr "Ocultar historial de edición con IA"
@@ -2622,6 +2637,9 @@ msgstr "Nombre"
 msgid "Navigate within Preview to capture page-specific review notes"
 msgstr "Navigate within Preview to capture page-specific review notes"
 
+msgid "Needs attention"
+msgstr "Requiere atención"
+
 msgid "Needs changes"
 msgstr "Needs changes"
 
@@ -2825,6 +2843,9 @@ msgstr "Sin versiones"
 
 msgid "No versions found for {node} / {itemId}"
 msgstr "No se encontraron versiones para {node} / {itemId}"
+
+msgid "No visible translations to review."
+msgstr "No hay traducciones visibles para revisar."
 
 msgid "No voice mappings configured."
 msgstr "No hay asignaciones de voz configuradas."
@@ -3496,6 +3517,9 @@ msgstr "Reintentar"
 msgid "Retry Export"
 msgstr "Reintentar exportación"
 
+msgid "Review"
+msgstr "Revisar"
+
 msgid "Review areas with the most items marked as needing changes in this session."
 msgstr "Review areas with the most items marked as needing changes in this session."
 
@@ -3507,6 +3531,9 @@ msgstr "Review progress"
 
 msgid "Review the project details below and confirm the import."
 msgstr "Revisa los detalles del proyecto a continuación y confirma la importación."
+
+msgid "Review visible translations"
+msgstr "Revisar traducciones visibles"
 
 msgid "Reviewer checklist"
 msgstr "Reviewer checklist"
@@ -3806,6 +3833,9 @@ msgstr "Selecciona un modo de sección para continuar"
 msgid "Select a style guide to preview how it styles the generated pages - typography, colors, and component layout."
 msgstr "Selecciona una guía de estilo para previsualizar cómo estiliza las páginas generadas - tipografía, colores y diseño de componentes."
 
+msgid "Select a target language first."
+msgstr "Selecciona primero un idioma de destino."
+
 msgid "Select activity type..."
 msgstr "Seleccionar tipo de actividad..."
 
@@ -4097,6 +4127,9 @@ msgstr "Suggested modification"
 msgid "Suggested modification:"
 msgstr "Suggested modification:"
 
+msgid "Suggested translation"
+msgstr "Traducción sugerida"
+
 msgid "Summary Prompt"
 msgstr "Indicación de resumen"
 
@@ -4281,6 +4314,9 @@ msgstr "La estrategia de renderización usada para secciones sin un mapeo explí
 msgid "The river meets the sea"
 msgstr "El río se encuentra con el mar"
 
+msgid "The saved translation review is stale. Run Review again for the visible translations."
+msgstr "La revisión de traducción guardada está obsoleta. Vuelve a ejecutar Revisar para las traducciones visibles."
+
 msgid "The sun heats water in oceans, lakes, and rivers, turning it into vapor that rises into the atmosphere. As the vapor cools at higher altitudes, it condenses into tiny droplets that form clouds."
 msgstr "El sol calienta el agua en océanos, lagos y ríos, convirtiéndola en vapor que asciende a la atmósfera. A medida que el vapor se enfría a mayores altitudes, se condensa en pequeñas gotas que forman nubes."
 
@@ -4424,6 +4460,9 @@ msgstr "Traducción"
 
 msgid "Translation Prompt"
 msgstr "Prompt de traducción"
+
+msgid "Translation review is running."
+msgstr "La revisión de traducción está en curso."
 
 msgid "Translations"
 msgstr "Traducciones"
