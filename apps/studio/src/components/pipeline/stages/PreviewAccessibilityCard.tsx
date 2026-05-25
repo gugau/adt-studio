@@ -259,7 +259,7 @@ export function PreviewAccessibilityCard({
           <button
             type="button"
             className={cn(
-              "fixed bottom-4 right-20 z-40 flex h-9 w-9 origin-center items-center justify-center rounded-full border bg-background/95 shadow-md backdrop-blur-sm transition-all duration-200 ease-out hover:bg-background supports-[backdrop-filter]:bg-background/90",
+              "fixed bottom-16 right-20 z-40 flex h-9 w-9 origin-center items-center justify-center rounded-full border bg-background/95 shadow-md backdrop-blur-sm transition-all duration-200 ease-out hover:bg-background supports-[backdrop-filter]:bg-background/90",
               miniIconVisible ? "scale-100 opacity-100 hover:scale-110" : "pointer-events-none scale-50 opacity-0",
             )}
             onClick={() => setMinified(false)}
