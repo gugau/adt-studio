@@ -192,7 +192,7 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
           <Button
             variant="outline"
             size="icon"
-            className="fixed bottom-4 right-4 z-50 h-8 w-8 rounded-full shadow-md opacity-60 hover:opacity-100"
+            className="fixed bottom-16 right-4 z-50 h-8 w-8 rounded-full shadow-md opacity-60 hover:opacity-100"
             onClick={() => openDebugPanel()}
             title="Debug Panel (Cmd+Shift+D)"
           >
