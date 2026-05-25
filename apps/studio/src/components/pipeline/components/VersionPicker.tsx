@@ -173,8 +173,8 @@ export function VersionPicker({
 
   const handleOpenChange = async (next: boolean) => {
     setOpen(next)
-    if (next && versions == null) {
-      setLoadingVersions(true)
+    if (next) {
+      if (versions == null) setLoadingVersions(true)
       const res = await api.getVersionHistory(bookLabel, step, itemId, true)
       setVersions(res.versions)
       setLoadingVersions(false)
