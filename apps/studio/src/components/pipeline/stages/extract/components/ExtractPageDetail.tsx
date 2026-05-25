@@ -1,133 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { AlertTriangle, Check, Crop, Eye, EyeOff, FileText, Image, ImageOff, Layers, Loader2, ChevronDown, X } from "lucide-react"
+import { AlertTriangle, Crop, Eye, EyeOff, FileText, Image, ImageOff, Layers, Loader2, X } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { usePage, usePageImage } from "@/hooks/use-pages"
 import { api, BASE_URL } from "@/api/client"
-import type { VersionEntry } from "@/api/client"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useBookRun } from "@/hooks/use-book-run"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
 import { ImageCropDialog } from "@/components/pipeline/stages/storyboard/components/ImageCropDialog"
-
-function VersionPicker({
-  currentVersion,
-  saving,
-  dirty,
-  bookLabel,
-  node,
-  itemId,
-  onPreview,
-  onSave,
-  onDiscard,
-}: {
-  currentVersion: number | null
-  saving: boolean
-  dirty: boolean
-  bookLabel: string
-  node: string
-  itemId: string
-  onPreview: (data: unknown) => void
-  onSave: () => void
-  onDiscard: () => void
-}) {
-  const [open, setOpen] = useState(false)
-  const [versions, setVersions] = useState<VersionEntry[] | null>(null)
-  const [loading, setLoading] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [open])
-
-  const handleOpen = async () => {
-    if (saving || currentVersion == null) return
-    setOpen(true)
-    setLoading(true)
-    const res = await api.getVersionHistory(bookLabel, node, itemId, true)
-    setVersions(res.versions)
-    setLoading(false)
-  }
-
-  const handlePick = (v: VersionEntry) => {
-    if (v.version === currentVersion && !dirty) {
-      setOpen(false)
-      return
-    }
-    setOpen(false)
-    onPreview(v.data)
-  }
-
-  if (saving) {
-    return <Loader2 className="h-3 w-3 animate-spin ml-auto" />
-  }
-
-  if (currentVersion == null) return null
-
-  if (dirty) {
-    return (
-      <div className="ml-auto flex items-center gap-1.5">
-        <button
-          type="button"
-          onClick={onDiscard}
-          className="text-[10px] font-medium rounded px-2 py-0.5 bg-muted hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors"
-        >
-          <Trans>Discard</Trans>
-        </button>
-        <button
-          type="button"
-          onClick={onSave}
-          className="flex items-center gap-1 text-[10px] font-medium rounded px-2 py-0.5 bg-green-600 hover:bg-green-500 text-white cursor-pointer transition-colors"
-        >
-          <Check className="h-3 w-3" />
-          <Trans>Save</Trans>
-        </button>
-      </div>
-    )
-  }
-
-  return (
-    <div ref={ref} className="relative ml-auto">
-      <button
-        type="button"
-        onClick={handleOpen}
-        className="flex items-center gap-0.5 text-[10px] font-normal normal-case tracking-normal bg-muted hover:bg-muted/80 rounded px-1.5 py-0.5 transition-colors"
-      >
-        v{currentVersion}
-        <ChevronDown className="h-2.5 w-2.5" />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full mt-1 z-20 bg-popover border rounded shadow-md min-w-[80px] py-1">
-          {loading ? (
-            <div className="flex items-center justify-center py-2 px-3">
-              <Loader2 className="h-3 w-3 animate-spin" />
-            </div>
-          ) : versions && versions.length > 0 ? (
-            versions.map((v) => (
-              <button
-                key={v.version}
-                type="button"
-                onClick={() => handlePick(v)}
-                className={`w-full text-left px-3 py-1 text-xs hover:bg-accent transition-colors ${
-                  v.version === currentVersion ? "font-semibold text-foreground" : "text-muted-foreground"
-                }`}
-              >
-                v{v.version}
-              </button>
-            ))
-          ) : (
-            <div className="px-3 py-1 text-xs text-muted-foreground"><Trans>No versions</Trans></div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
+import { VersionPicker } from "@/components/pipeline/components/VersionPicker"
 
 function ImageCard({ imageId, bookLabel, isPruned, reason, onTogglePrune, onRecrop, cacheBust }: { imageId: string; bookLabel: string; isPruned?: boolean; reason?: string; onTogglePrune?: () => void; onRecrop?: () => void; cacheBust?: number }) {
   const { t } = useLingui()
@@ -320,17 +201,19 @@ export function ExtractPageDetail({
             <h3 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
               <Image className="h-3 w-3" />
               <Trans>Extracted Images ({String(count)})</Trans>
-              <VersionPicker
-                currentVersion={page.versions.imageClassification}
-                saving={savingImages}
-                dirty={imageDirty}
-                bookLabel={bookLabel}
-                node="image-filtering"
-                itemId={pageId}
-                onPreview={(data) => setPendingImageData(data as ImageClassData)}
-                onSave={saveImageChanges}
-                onDiscard={() => setPendingImageData(null)}
-              />
+              <div className="ml-auto">
+                <VersionPicker
+                  step="image-filtering"
+                  itemId={pageId}
+                  currentVersion={page.versions.imageClassification}
+                  saving={savingImages}
+                  dirty={imageDirty}
+                  bookLabel={bookLabel}
+                  onPreview={(data) => setPendingImageData(data as ImageClassData)}
+                  onSave={saveImageChanges}
+                  onDiscard={() => setPendingImageData(null)}
+                />
+              </div>
             </h3>
           )
         })()}
