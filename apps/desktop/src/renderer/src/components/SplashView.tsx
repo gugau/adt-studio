@@ -21,23 +21,32 @@ export function SplashView() {
     <div
       role="status"
       aria-live="polite"
-      className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-linear-to- from-white to-slate-50"
+      className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-2xl bg-white"
     >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(120% 80% at 50% 28%, #f4f8ff 0%, #ffffff 55%, #f8fafc 100%)",
+        }}
+      />
+
       <Link
         to="/debug"
         aria-label="Show debug info"
-        className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+        className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
       >
         <BugIcon />
       </Link>
 
-      <div className="flex animate-[splash-fade-in-up_0.6s_ease_both] flex-col items-center gap-5">
+      <div className="flex animate-[splash-fade-in-up_0.7s_ease_both] flex-col items-center gap-6">
         <SplashLogo />
-        <div>
-          <div className="text-center text-[15px] font-semibold uppercase tracking-[0.18em] text-slate-900">
+        <div className="flex flex-col items-center gap-1.5">
+          <div className="text-center text-[20px] font-semibold tracking-tight text-slate-900">
             ADT Studio
           </div>
-          <div className="mt-1 text-center text-[11px] font-normal uppercase tracking-[0.12em] text-slate-400">
+          <div className="text-center text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400">
             <Trans>Accessible Digital Textbooks</Trans>
           </div>
         </div>
