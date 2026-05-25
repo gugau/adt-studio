@@ -50,7 +50,7 @@ describe("raven.pdf extraction", () => {
     expect(imgs[0].width).toBe(546);
     expect(imgs[0].height).toBe(546);
     expect(imgs[1].imageId).toBe("pg001_im002");
-    expect(imgs[1].hash).toBe("14b8a1e04e930b83");
+    expect(imgs[1].hash).toBe("c9b639d01b6c22f6");
   });
 
   // -- Page 2 --
@@ -69,7 +69,7 @@ describe("raven.pdf extraction", () => {
   it("page 2 — extracts 2 images with correct hashes", () => {
     const imgs = result.pages[1].images;
     expect(imgs).toHaveLength(2);
-    expect(imgs[0].hash).toBe("2bdb94c1a5f96fe7");
+    expect(imgs[0].hash).toBe("e93e376bae3d5ab6");
     expect(imgs[1].hash).toBe("f7c69061b5fb89ed");
   });
 
@@ -88,7 +88,7 @@ describe("raven.pdf extraction", () => {
   it("page 3 — extracts 2 images with correct hashes", () => {
     const imgs = result.pages[2].images;
     expect(imgs).toHaveLength(2);
-    expect(imgs[0].hash).toBe("1aecee2cc36cd072");
+    expect(imgs[0].hash).toBe("3327c0395cbae5df");
     expect(imgs[1].hash).toBe("b20ccebb2681ac27");
   });
 });

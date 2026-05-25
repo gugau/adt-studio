@@ -10,6 +10,7 @@ import mupdf, {
   type PDFDocument,
   type PDFPage,
   type PDFObject,
+  type Pixmap,
 } from "mupdf";
 import { cropPng, decodePng, stitchPngsHorizontally } from "./png-utils.js";
 import { extractTextFromStructuredText } from "./fm-sinhala.js";
@@ -320,6 +321,104 @@ function jpegDimensions(buf: Buffer): { width: number; height: number } {
 
 function pngDimensions(buf: Buffer): { width: number; height: number } {
   return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+}
+
+/** Force a pixmap to DeviceRGB so encoders/browsers can render it. RGB and
+ * Gray pass through unchanged. */
+function normalizeToDisplayableRgb(pixmap: Pixmap): Pixmap {
+  const type = pixmap.getColorSpace()?.getType();
+  if (type === "RGB" || type === "Gray") return pixmap;
+  return pixmap.convertToColorSpace(mupdf.ColorSpace.DeviceRGB);
+}
+
+/** Compose a base pixmap with its /SMask into a single RGBA pixmap. mupdf's
+ * `toPixmap()` does not apply the attached soft mask, so without this step
+ * transparent images arrive opaque on whatever was in the raster buffer.
+ *
+ * If `matteRgb` is provided, the base colors are treated as pre-blended with
+ * that matte color and un-matted (`c = matte + (c' - matte) / a`) so semi-
+ * transparent edges don't show halos. */
+function composeWithSoftMask(
+  base: Pixmap,
+  mask: Pixmap,
+  matteRgb?: readonly [number, number, number]
+): Pixmap {
+  const rgb =
+    base.getColorSpace()?.getType() === "RGB"
+      ? base
+      : base.convertToColorSpace(mupdf.ColorSpace.DeviceRGB);
+
+  const w = rgb.getWidth();
+  const h = rgb.getHeight();
+  const out = new mupdf.Pixmap(mupdf.ColorSpace.DeviceRGB, [0, 0, w, h], true);
+
+  const basePx = rgb.getPixels();
+  const baseStride = rgb.getStride();
+  const baseN = rgb.getNumberOfComponents();
+  const maskPx = mask.getPixels();
+  const maskStride = mask.getStride();
+  const maskN = mask.getNumberOfComponents();
+  const maskW = mask.getWidth();
+  const maskH = mask.getHeight();
+  const outPx = out.getPixels();
+  const outStride = out.getStride();
+
+  const mr = matteRgb ? matteRgb[0] : 0;
+  const mg = matteRgb ? matteRgb[1] : 0;
+  const mb = matteRgb ? matteRgb[2] : 0;
+
+  for (let y = 0; y < h; y++) {
+    const my = maskH === h ? y : Math.min(maskH - 1, Math.floor((y * maskH) / h));
+    for (let x = 0; x < w; x++) {
+      const mx = maskW === w ? x : Math.min(maskW - 1, Math.floor((x * maskW) / w));
+      const baseOff = y * baseStride + x * baseN;
+      const outOff = y * outStride + x * 4;
+      const a = maskPx[my * maskStride + mx * maskN];
+      let r = basePx[baseOff];
+      let g = basePx[baseOff + 1];
+      let b = basePx[baseOff + 2];
+      if (matteRgb && a > 0 && a < 255) {
+        r = Math.max(0, Math.min(255, Math.round(mr + ((r - mr) * 255) / a)));
+        g = Math.max(0, Math.min(255, Math.round(mg + ((g - mg) * 255) / a)));
+        b = Math.max(0, Math.min(255, Math.round(mb + ((b - mb) * 255) / a)));
+      }
+      outPx[outOff] = r;
+      outPx[outOff + 1] = g;
+      outPx[outOff + 2] = b;
+      outPx[outOff + 3] = a;
+    }
+  }
+  return out;
+}
+
+/** Read the /Matte array off an SMask dictionary, expressed as 8-bit RGB.
+ * Only RGB (3) and Gray (1) source colorspaces are handled; for anything
+ * else (e.g. CMYK) we conservatively skip un-matting. */
+function readSoftMaskMatte(
+  imageDict: PDFObject,
+  srcType: string | undefined
+): [number, number, number] | undefined {
+  const smask = imageDict.get("SMask");
+  if (smask.isNull()) return undefined;
+  const smaskDict = smask.isIndirect() ? smask.resolve() : smask;
+  const matte = smaskDict.get("Matte");
+  if (matte.isNull() || !matte.isArray()) return undefined;
+
+  const toByte = (v: number) =>
+    Math.max(0, Math.min(255, Math.round(v * 255)));
+
+  if (matte.length === 3 && srcType === "RGB") {
+    return [
+      toByte(matte.get(0).asNumber()),
+      toByte(matte.get(1).asNumber()),
+      toByte(matte.get(2).asNumber()),
+    ];
+  }
+  if (matte.length === 1 && srcType === "Gray") {
+    const g = toByte(matte.get(0).asNumber());
+    return [g, g, g];
+  }
+  return undefined;
 }
 
 /** Returns true if every pixel in the RGBA PNG is fully transparent (alpha === 0). */
@@ -668,30 +767,36 @@ function extractRasterImagesFromPdf(
         // filter decoding, so we must not treat those as raw JPEG bytes.
         const isSingleFilter = filterNames.length === 1;
 
-        if (filterName === "DCTDecode" && isSingleFilter) {
-          // Check colorspace — CMYK JPEGs need conversion (browsers can't display them)
-          const cs = resolved.get("ColorSpace");
-          const isCmyk =
-            (!cs.isNull() && cs.isName() && cs.asName() === "DeviceCMYK") ||
-            (!cs.isNull() && cs.isArray() && cs.get(0).asName() === "ICCBased" &&
-              cs.get(1).resolve().get("N").asNumber() === 4);
+        const image = doc.loadImage(streamObj);
+        const softMask = image.getMask();
+        const srcType = image.getColorSpace()?.getType();
+        const canRawExtract =
+          softMask === null &&
+          filterName === "DCTDecode" &&
+          isSingleFilter &&
+          (srcType === "RGB" || srcType === "Gray");
 
-          if (isCmyk) {
-            // CMYK JPEG: decode through mupdf for color conversion → re-encode as JPEG
-            const image = doc.loadImage(streamObj);
-            const pixmap = image.toPixmap();
-            buf = Buffer.from(pixmap.asJPEG(90, true));
-            format = "jpeg";
-          } else {
-            // RGB/Gray JPEG: extract raw bytes directly
-            buf = Buffer.from(streamObj.readRawStream().asUint8Array());
-            format = "jpeg";
-          }
+        if (canRawExtract) {
+          // Fast path: RGB/Gray JPEG with no transparency — copy bytes as-is.
+          buf = Buffer.from(streamObj.readRawStream().asUint8Array());
+          format = "jpeg";
+        } else if (softMask !== null) {
+          // Must be PNG to preserve the alpha we recover from the SMask.
+          const matteRgb = readSoftMaskMatte(resolved, srcType);
+          const composed = composeWithSoftMask(
+            image.toPixmap(),
+            softMask.toPixmap(),
+            matteRgb
+          );
+          buf = Buffer.from(composed.asPNG());
+          format = "png";
+        } else if (filterName === "DCTDecode" && isSingleFilter) {
+          // Single-filter JPEG with non-displayable colorspace (CMYK, Lab, etc.)
+          buf = Buffer.from(normalizeToDisplayableRgb(image.toPixmap()).asJPEG(90, false));
+          format = "jpeg";
         } else {
-          // Multi-filter chains or non-JPEG: decode through mupdf → PNG
-          const image = doc.loadImage(streamObj);
-          const pixmap = image.toPixmap();
-          buf = Buffer.from(pixmap.asPNG());
+          // Multi-filter chains or non-JPEG: PNG can't encode CMYK/Lab/etc.
+          buf = Buffer.from(normalizeToDisplayableRgb(image.toPixmap()).asPNG());
           format = "png";
         }
 
