@@ -2,26 +2,22 @@ name: Release
 
 on:
   push:
-    tags: ["v*"]
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Version tag to release (e.g. v1.2.3)"
-        required: true
-
-permissions:
-  contents: write
+    tags: ['v*']
 
 jobs:
   desktop:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
     permissions:
       contents: write
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - uses: pnpm/action-setup@v4
 
@@ -30,50 +26,40 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: apps/desktop/src-tauri -> target
+      - name: Build desktop
+        run: pnpm --filter @adt/desktop build
 
-      - name: Extract version from tag
-        id: version
-        shell: bash
-        run: |
-          REF="${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
-          VERSION="${REF#v}"
-          VERSION_MSI="${VERSION%%-*}"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "version_msi=$VERSION_MSI" >> "$GITHUB_OUTPUT"
-          echo "tag=${REF}" >> "$GITHUB_OUTPUT"
-
-      - name: Set version in tauri.conf.json
-        shell: bash
-        run: |
-          node -e "
-            const fs = require('fs');
-            const p = 'apps/desktop/src-tauri/tauri.conf.json';
-            const conf = JSON.parse(fs.readFileSync(p, 'utf-8'));
-            conf.version = '${{ steps.version.outputs.version_msi }}';
-            fs.writeFileSync(p, JSON.stringify(conf, null, 2) + '\n');
-          "
-
-      - run: pnpm install --frozen-lockfile
-
-      - run: pnpm build
-
-      - uses: tauri-apps/tauri-action@v0
+      - name: Publish MacOS
+        if: matrix.os == 'macos-latest'
+        run: pnpm --filter @adt/desktop exec electron-builder --mac --publish always
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          projectPath: apps/desktop
-          args: --verbose
-          tagName: ${{ steps.version.outputs.tag }}
-          releaseName: "ADT Studio ${{ steps.version.outputs.tag }}"
-          releaseBody: ""
-          releaseDraft: false
-          prerelease: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # macOS signing + notarization
+          # CSC_LINK — the base64-encoded .p12 content
+          # CSC_KEY_PASSWORD — the certificate password
+          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
+      - name: Publish Windows
+        if: matrix.os == 'windows-latest'
+        run: pnpm --filter @adt/desktop exec electron-builder --win --publish always
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: pnpm --filter @adt/desktop exec electron-builder --linux --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   docker:
     runs-on: ubuntu-latest
     permissions:
