@@ -29,10 +29,10 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const search = useSearch({ strict: false }) as { previewHref?: string }
-  const { stageState } = useBookRun()
+  const { stageState, isStatusLoading } = useBookRun()
   const { isTaskRunning, getTask } = useBookTasks(bookLabel)
   const storyboardDone = stageState("storyboard") === "done"
-  const { allPruned } = useAllPagesPruned(bookLabel)
+  const { allPruned, isLoading: prunedLoading } = useAllPagesPruned(bookLabel)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const ranRef = useRef(false)
   const { panelOpen } = useDebugPanelState()
@@ -227,24 +227,16 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
     })
   }, [bookLabel, currentPreviewPage.href, navigate, navigatePreviewToHref, ready, search.previewHref])
 
+  if (isStatusLoading || prunedLoading) {
+    return <LoadingState stageSlug="preview" variant="stage" label={<Trans>Loading preview...</Trans>} />
+  }
+
   if (!storyboardDone) {
-    return (
-      <StageBlockedState
-        bookLabel={bookLabel}
-        reason="storyboard-missing"
-        stageLabel={<Trans>Preview</Trans>}
-      />
-    )
+    return <StageBlockedState bookLabel={bookLabel} reason="storyboard-missing" stageLabel={<Trans>Preview</Trans>} />
   }
 
   if (allPruned) {
-    return (
-      <StageBlockedState
-        bookLabel={bookLabel}
-        reason="all-pruned"
-        stageLabel={<Trans>Preview</Trans>}
-      />
-    )
+    return <StageBlockedState bookLabel={bookLabel} reason="all-pruned" stageLabel={<Trans>Preview</Trans>} />
   }
 
   if (packaging) {

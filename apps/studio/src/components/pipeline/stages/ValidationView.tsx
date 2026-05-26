@@ -30,12 +30,12 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
   const { t } = useLingui()
   const navigate = useNavigate()
   const search = useSearch({ strict: false }) as { tab?: string }
-  const { stageState } = useBookRun()
+  const { stageState, isStatusLoading } = useBookRun()
   const { isTaskRunning, getTask } = useBookTasks(bookLabel)
   const reviewerValidationCatalog = useReviewerValidationCatalog(bookLabel)
   const reviewerValidationEnabled = reviewerValidationCatalog.data?.enabled ?? false
   const storyboardDone = stageState("storyboard") === "done"
-  const { allPruned } = useAllPagesPruned(bookLabel)
+  const { allPruned, isLoading: prunedLoading } = useAllPagesPruned(bookLabel)
   const ranRef = useRef(false)
   const [isSubmittingPackage, setIsSubmittingPackage] = useState(false)
   const [pendingPackagingTaskId, setPendingPackagingTaskId] = useState<string | null>(null)
@@ -87,24 +87,16 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
     }
   }, [getTask, pendingPackagingTaskId, t])
 
+  if (isStatusLoading || prunedLoading) {
+    return <LoadingState stageSlug="validation" variant="stage" label={<Trans>Loading validation...</Trans>} />
+  }
+
   if (!storyboardDone) {
-    return (
-      <StageBlockedState
-        bookLabel={bookLabel}
-        reason="storyboard-missing"
-        stageLabel={<Trans>Validation</Trans>}
-      />
-    )
+    return <StageBlockedState bookLabel={bookLabel} reason="storyboard-missing" stageLabel={<Trans>Validation</Trans>} />
   }
 
   if (allPruned) {
-    return (
-      <StageBlockedState
-        bookLabel={bookLabel}
-        reason="all-pruned"
-        stageLabel={<Trans>Validation</Trans>}
-      />
-    )
+    return <StageBlockedState bookLabel={bookLabel} reason="all-pruned" stageLabel={<Trans>Validation</Trans>} />
   }
 
   const packaging = isSubmittingPackage || pendingPackagingTaskId !== null || isTaskRunning("package-adt")
