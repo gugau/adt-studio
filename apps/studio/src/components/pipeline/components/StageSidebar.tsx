@@ -3,7 +3,9 @@ import { createPortal } from "react-dom"
 import { Link, useMatchRoute, useSearch } from "@tanstack/react-router"
 import { Trans } from "@lingui/react/macro"
 import {
+  HelpCircle,
   Loader2,
+  Puzzle,
   RotateCcw,
   Settings,
 } from "lucide-react"
@@ -21,6 +23,10 @@ import { usePackageAdtStatus } from "@/hooks/use-books"
 import { useSignLanguageVideos } from "@/hooks/use-sign-language-videos"
 import { StepProgressRing } from "./StepProgressRing"
 import { usePages, usePageImage } from "@/hooks/use-pages"
+import { ActivitiesIndex } from "../stages/quizzes/components/ActivitiesIndex"
+import { useQuizzes } from "@/hooks/use-quizzes"
+import { useActivities } from "../stages/quizzes/hooks/use-activities"
+import type { PageSummaryItem, QuizItem } from "@/api/client"
 import {
   STAGES,
   hasStagePages,
@@ -284,10 +290,16 @@ export function StageSidebar({
           )}
         >
           <Link
-            to={selectedPageId && hasStagePages(step.slug) ? "/books/$label/$step/$pageId" : "/books/$label/$step"}
-            params={selectedPageId && hasStagePages(step.slug)
-              ? { label: bookLabel, step: step.slug, pageId: selectedPageId }
-              : { label: bookLabel, step: step.slug }}
+            to={
+              step.slug !== "quizzes" && selectedPageId && hasStagePages(step.slug)
+                ? "/books/$label/$step/$pageId"
+                : "/books/$label/$step"
+            }
+            params={
+              step.slug !== "quizzes" && selectedPageId && hasStagePages(step.slug)
+                ? { label: bookLabel, step: step.slug, pageId: selectedPageId }
+                : { label: bookLabel, step: step.slug }
+            }
             className={cn("flex items-center gap-2.5 min-w-7", x.flex1)}
             title={stepLabel}
           >
@@ -412,18 +424,22 @@ export function StageSidebar({
           </div>
         </div>
 
-        {/* Pages panel — only when pages are open and not in settings */}
+        {/* Pages / activities panel — only when open and not in settings */}
         {effectivePagesOpen && !isSettings && (
           <div className="flex-1 min-w-0 flex flex-col overflow-hidden border-l">
-            <PageIndex
-              bookLabel={bookLabel}
-              activeStep={activeStep}
-              selectedPageId={selectedPageId}
-              onSelectPage={onSelectPage}
-              sectionIndex={sectionIndex}
-              onSelectSection={onSelectSection}
-              stageRunning={currentState === "running"}
-            />
+            {activeStep === "quizzes" ? (
+              <ActivitiesIndex bookLabel={bookLabel} />
+            ) : (
+              <PageIndex
+                bookLabel={bookLabel}
+                activeStep={activeStep}
+                selectedPageId={selectedPageId}
+                onSelectPage={onSelectPage}
+                sectionIndex={sectionIndex}
+                onSelectSection={onSelectSection}
+                stageRunning={currentState === "running"}
+              />
+            )}
           </div>
         )}
       </div>
@@ -556,6 +572,10 @@ function TaskRow({ task }: { task: TaskInfoResponse }) {
 
 /* ---------- PageIndex ---------- */
 
+type SequenceItem =
+  | { kind: "page"; key: string; page: PageSummaryItem; hasActivities: boolean }
+  | { kind: "quiz"; key: string; quiz: QuizItem }
+
 function PageIndex({
   bookLabel,
   activeStep,
@@ -574,18 +594,63 @@ function PageIndex({
   stageRunning?: boolean
 }) {
   const { data: pages } = usePages(bookLabel)
+  const isStoryboard = activeStep === "storyboard"
+  const { data: quizData } = useQuizzes(bookLabel)
+  const { data: activitiesData } = useActivities(bookLabel, { enabled: isStoryboard })
   const activeStepDef = STAGES.find((s) => s.slug === activeStep)
   const parentRef = useRef<HTMLDivElement>(null)
 
+  const sequence = useMemo<SequenceItem[]>(() => {
+    if (!pages) return []
+    if (!isStoryboard) {
+      return pages.map((p) => ({
+        kind: "page" as const,
+        key: p.pageId,
+        page: p,
+        hasActivities: false,
+      }))
+    }
+    const quizzesByAfter = new Map<string, QuizItem[]>()
+    for (const q of quizData?.quizzes?.quizzes ?? []) {
+      const existing = quizzesByAfter.get(q.afterPageId) ?? []
+      existing.push(q)
+      quizzesByAfter.set(q.afterPageId, existing)
+    }
+    const pagesWithActivities = new Set<string>()
+    for (const item of activitiesData?.items ?? []) {
+      if (item.kind === "section-activity") {
+        pagesWithActivities.add(item.pageId)
+      }
+    }
+    const items: SequenceItem[] = []
+    for (const page of pages) {
+      items.push({
+        kind: "page",
+        key: page.pageId,
+        page,
+        hasActivities: pagesWithActivities.has(page.pageId),
+      })
+      const quizzes = quizzesByAfter.get(page.pageId) ?? []
+      for (const q of quizzes) {
+        items.push({
+          kind: "quiz",
+          key: `quiz:${q.quizIndex}`,
+          quiz: q,
+        })
+      }
+    }
+    return items
+  }, [pages, isStoryboard, quizData, activitiesData])
+
   const selectedIndex = useMemo(
-    () => pages?.findIndex((p) => p.pageId === selectedPageId) ?? -1,
-    [pages, selectedPageId],
+    () => sequence.findIndex((i) => i.kind === "page" && i.page.pageId === selectedPageId),
+    [sequence, selectedPageId],
   )
 
   const virtualizer = useVirtualizer({
-    count: pages?.length ?? 0,
+    count: sequence.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 52,
+    estimateSize: (index) => (sequence[index]?.kind === "quiz" ? 44 : 52),
     overscan: 5,
   })
 
@@ -613,11 +678,11 @@ function PageIndex({
         }}
       >
         {virtualizer.getVirtualItems().map((virtualRow) => {
-          const page = pages[virtualRow.index]
-          const isActive = page.pageId === selectedPageId
+          const item = sequence[virtualRow.index]
+          if (!item) return null
           return (
             <div
-              key={page.pageId}
+              key={item.key}
               data-index={virtualRow.index}
               ref={virtualizer.measureElement}
               style={{
@@ -628,21 +693,56 @@ function PageIndex({
                 transform: `translateY(${virtualRow.start}px)`,
               }}
             >
-              <PageRow
-                bookLabel={bookLabel}
-                page={page}
-                isActive={isActive}
-                activeStepDef={activeStepDef}
-                onSelect={() => onSelectPage?.(page.pageId)}
-                sectionIndex={isActive ? sectionIndex : undefined}
-                onSelectSection={isActive ? onSelectSection : undefined}
-                stageRunning={stageRunning}
-              />
+              {item.kind === "page" ? (
+                <PageRow
+                  bookLabel={bookLabel}
+                  page={item.page}
+                  isActive={item.page.pageId === selectedPageId}
+                  activeStepDef={activeStepDef}
+                  hasActivities={item.hasActivities}
+                  onSelect={() => onSelectPage?.(item.page.pageId)}
+                  sectionIndex={item.page.pageId === selectedPageId ? sectionIndex : undefined}
+                  onSelectSection={item.page.pageId === selectedPageId ? onSelectSection : undefined}
+                  stageRunning={stageRunning}
+                />
+              ) : (
+                <QuizRow bookLabel={bookLabel} quiz={item.quiz} />
+              )}
             </div>
           )
         })}
       </div>
     </div>
+  )
+}
+
+function QuizRow({
+  bookLabel,
+  quiz,
+}: {
+  bookLabel: string
+  quiz: QuizItem
+}) {
+  const { i18n } = useLingui()
+  return (
+    <Link
+      to="/books/$label/$step"
+      params={{ label: bookLabel, step: "quizzes" }}
+      search={{ activity: `quiz:${quiz.quizIndex}` }}
+      className="flex items-start gap-2 px-2 py-1.5 text-left w-full hover:bg-orange-50 transition-colors text-muted-foreground"
+    >
+      <div className="shrink-0 w-16 h-9 rounded ring-1 ring-orange-200 bg-orange-50 flex items-center justify-center">
+        <HelpCircle className="w-4 h-4 text-orange-600" />
+      </div>
+      <div className="flex flex-col gap-0.5 min-w-0 flex-1 pt-0.5">
+        <span className="text-[11px] leading-snug line-clamp-2 font-medium text-orange-700">
+          {quiz.question || i18n._(msg`Quiz`)}
+        </span>
+        <span className="text-[9px] font-mono opacity-60 leading-none">
+          {i18n._(msg`Quiz · after ${quiz.afterPageId}`)}
+        </span>
+      </div>
+    </Link>
   )
 }
 
@@ -653,6 +753,7 @@ function PageRow({
   page,
   isActive,
   activeStepDef,
+  hasActivities,
   onSelect,
   sectionIndex,
   onSelectSection,
@@ -662,6 +763,7 @@ function PageRow({
   page: { pageId: string; textPreview: string; pageNumber: number; sectionCount: number; hasRendering?: boolean; prunedSections?: number[] }
   isActive: boolean
   activeStepDef?: (typeof STAGES)[number]
+  hasActivities?: boolean
   onSelect: () => void
   sectionIndex?: number
   onSelectSection?: (index: number) => void
@@ -744,6 +846,14 @@ function PageRow({
           {pageProcessing && (
             <div className="absolute inset-0 flex items-center justify-center rounded bg-black/30">
               <Loader2 className="w-4 h-4 animate-spin text-white" />
+            </div>
+          )}
+          {hasActivities && !pageProcessing && (
+            <div
+              className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-violet-500 text-white ring-2 ring-background"
+              title={i18n._(msg`Has interactive activities`)}
+            >
+              <Puzzle className="h-2.5 w-2.5" />
             </div>
           )}
         </div>

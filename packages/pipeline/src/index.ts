@@ -143,6 +143,7 @@ export {
   generateAllQuizzes,
   buildQuizGenerationConfig,
   extractTextFromHtml,
+  shuffleQuizOptions,
   isContentPage,
   batchPages,
   type QuizConfig,

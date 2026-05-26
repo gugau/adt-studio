@@ -317,6 +317,41 @@ export interface QuizzesResponse {
   version: number | null
 }
 
+export type ActivityItem =
+  | {
+      kind: "quiz"
+      quizIndex: number
+      afterPageId: string
+      pageIds: string[]
+      quiz: QuizItem
+    }
+  | {
+      kind: "section-activity"
+      pageId: string
+      pageNumber: number
+      sectionIndex: number
+      sectionType: string
+      sectionId: string
+      html: string
+      activityAnswers: Record<string, string | boolean | number>
+      activityReasoning?: string
+    }
+
+export interface ActivitiesResponse {
+  items: ActivityItem[]
+  quizVersion: number | null
+}
+
+export interface AddQuizInput {
+  afterPageId: string
+  pageIds: string[]
+  quizType: "multiple-choice"
+  question: string
+  options: QuizOption[]
+  answerIndex: number
+  reasoning?: string
+}
+
 // --- Text Catalog types ---
 
 export interface TextCatalogEntry {
@@ -679,6 +714,34 @@ export const api = {
       }
     ),
 
+  updateSectionType: (
+    label: string,
+    pageId: string,
+    sectionIndex: number,
+    sectionType: string,
+  ) =>
+    request<{ version: number }>(
+      `/books/${label}/pages/${pageId}/sections/${sectionIndex}/type`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ sectionType }),
+      },
+    ),
+
+  updateActivityAnswers: (
+    label: string,
+    pageId: string,
+    sectionIndex: number,
+    activityAnswers: Record<string, string | boolean | number>,
+  ) =>
+    request<{ version: number }>(
+      `/books/${label}/pages/${pageId}/sections/${sectionIndex}/answers`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ activityAnswers }),
+      },
+    ),
+
   aiEditSection: (
     label: string,
     pageId: string,
@@ -920,6 +983,56 @@ export const api = {
     request<{ version: number }>(`/books/${label}/quizzes`, {
       method: "PUT",
       body: JSON.stringify(data),
+    }),
+
+  addQuiz: (label: string, input: AddQuizInput) =>
+    request<{ version: number; quizIndex: number }>(
+      `/books/${label}/quizzes`,
+      {
+        method: "POST",
+        body: JSON.stringify(input),
+      },
+    ),
+
+  aiEditQuiz: (
+    label: string,
+    quizIndex: number,
+    instruction: string,
+    apiKey: string,
+    currentQuiz?: QuizItem,
+  ) =>
+    request<{ quiz: QuizItem; reasoning: string }>(
+      `/books/${label}/quizzes/${quizIndex}/ai-edit`,
+      {
+        method: "POST",
+        headers: { "X-OpenAI-Key": apiKey },
+        body: JSON.stringify({ instruction, currentQuiz }),
+        signal: AbortSignal.timeout(120_000),
+      },
+    ),
+
+  getActivities: (label: string) =>
+    request<ActivitiesResponse>(`/books/${label}/activities`),
+
+  createActivity: (
+    label: string,
+    input: {
+      contextPageIds: string[]
+      sectionType: string
+      extraInstructions?: string
+    },
+    apiKey: string,
+  ) =>
+    request<{
+      pageId: string
+      sectionIndex: number
+      sectioningVersion: number
+      renderingVersion: number
+    }>(`/books/${label}/activities`, {
+      method: "POST",
+      headers: { "X-OpenAI-Key": apiKey },
+      body: JSON.stringify(input),
+      signal: AbortSignal.timeout(180_000),
     }),
 
   getGlossary: (label: string) =>

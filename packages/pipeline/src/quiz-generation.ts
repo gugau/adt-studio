@@ -34,7 +34,7 @@ function renumberOptionText(text: string, index: number): string {
   return stripped ? `${label} ${stripped}` : label
 }
 
-function shuffleQuizOptions(
+export function shuffleQuizOptions(
   options: Array<{ text: string; explanation: string }>,
   answerIndex: number,
   rng: () => number = Math.random

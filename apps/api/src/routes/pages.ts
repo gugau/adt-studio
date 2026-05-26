@@ -694,6 +694,94 @@ export function createPageRoutes(
     }
   })
 
+  // PUT /books/:label/pages/:pageId/sections/:sectionIndex/type — Change a section's type
+  app.put("/books/:label/pages/:pageId/sections/:sectionIndex/type", async (c) => {
+    const { label, pageId, sectionIndex } = c.req.param()
+    const safeLabel = parseBookLabel(label)
+    const idx = parseInt(sectionIndex, 10)
+    if (Number.isNaN(idx) || idx < 0) {
+      throw new HTTPException(400, { message: "Invalid section index" })
+    }
+
+    const body = await c.req.json()
+    const typeSchema = z.object({ sectionType: z.string().min(1) })
+    const parsed = typeSchema.safeParse(body)
+    if (!parsed.success) {
+      throw new HTTPException(400, {
+        message: `Invalid request: ${parsed.error.message}`,
+      })
+    }
+
+    const storage = createBookStorage(safeLabel, booksDir)
+    try {
+      const sectioningRow = storage.getLatestNodeData("page-sectioning", pageId)
+      if (!sectioningRow) {
+        throw new HTTPException(404, { message: `No sectioning for page: ${pageId}` })
+      }
+      const sectioningParsed = PageSectioningOutput.safeParse(sectioningRow.data)
+      if (!sectioningParsed.success) {
+        throw new HTTPException(500, { message: "Invalid page-sectioning data" })
+      }
+      if (idx >= sectioningParsed.data.sections.length) {
+        throw new HTTPException(404, { message: `Section ${idx} not found` })
+      }
+      const updated = {
+        ...sectioningParsed.data,
+        sections: sectioningParsed.data.sections.map((s, i) =>
+          i === idx ? { ...s, sectionType: parsed.data.sectionType } : s,
+        ),
+      }
+      const version = saveStoryboardNode(storage, "page-sectioning", pageId, updated)
+      return c.json({ version })
+    } finally {
+      storage.close()
+    }
+  })
+
+  // PUT /books/:label/pages/:pageId/sections/:sectionIndex/answers — Update activity answer key
+  app.put("/books/:label/pages/:pageId/sections/:sectionIndex/answers", async (c) => {
+    const { label, pageId, sectionIndex } = c.req.param()
+    const safeLabel = parseBookLabel(label)
+    const idx = parseInt(sectionIndex, 10)
+    if (Number.isNaN(idx) || idx < 0) {
+      throw new HTTPException(400, { message: "Invalid section index" })
+    }
+
+    const body = await c.req.json()
+    const answersSchema = z.record(z.string(), z.union([z.string(), z.boolean(), z.number()]))
+    const parsed = answersSchema.safeParse(body?.activityAnswers)
+    if (!parsed.success) {
+      throw new HTTPException(400, {
+        message: `Invalid activityAnswers: ${parsed.error.message}`,
+      })
+    }
+
+    const storage = createBookStorage(safeLabel, booksDir)
+    try {
+      const renderingRow = storage.getLatestNodeData("web-rendering", pageId)
+      if (!renderingRow) {
+        throw new HTTPException(404, { message: `No rendering for page: ${pageId}` })
+      }
+      const renderingParsed = WebRenderingOutput.safeParse(renderingRow.data)
+      if (!renderingParsed.success) {
+        throw new HTTPException(500, { message: "Invalid web-rendering data" })
+      }
+      const section = renderingParsed.data.sections.find((s) => s.sectionIndex === idx)
+      if (!section) {
+        throw new HTTPException(404, { message: `Section ${idx} not found` })
+      }
+      const updated = {
+        sections: renderingParsed.data.sections.map((s) =>
+          s.sectionIndex === idx ? { ...s, activityAnswers: parsed.data } : s,
+        ),
+      }
+      const version = saveStoryboardNode(storage, "web-rendering", pageId, updated)
+      return c.json({ version })
+    } finally {
+      storage.close()
+    }
+  })
+
   // PUT /books/:label/pages/:pageId/rendering — Update web rendering
   app.put("/books/:label/pages/:pageId/rendering", async (c) => {
     const { label, pageId } = c.req.param()

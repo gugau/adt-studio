@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, ErrorComponentProps } from "@tanstack/react-router"
 import { useCallback } from "react"
+import { z } from "zod"
 import { StepViewRouter } from "@/components/pipeline/components/StepViewRouter"
 import { ErrorScreen } from "@/components/ErrorScreen"
 
@@ -7,9 +8,16 @@ function BookErrorComponent({ error, reset }: ErrorComponentProps) {
   return <ErrorScreen variant="route" error={error} reset={reset} />
 }
 
+const StepIndexSearch = z
+  .object({
+    activity: z.string().optional(),
+  })
+  .passthrough()
+
 export const Route = createFileRoute("/books/$label/$step/")({
   component: StepIndexPage,
   errorComponent: BookErrorComponent,
+  validateSearch: StepIndexSearch,
 })
 
 function StepIndexPage() {
