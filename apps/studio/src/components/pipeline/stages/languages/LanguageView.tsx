@@ -14,6 +14,7 @@ import { useBookTasks } from "@/hooks/use-book-tasks"
 import { useStageMissingCounts } from "@/hooks/use-stage-missing-counts"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
+import { StageEmptyState } from "../../components/StageEmptyState"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import { cn } from "@/lib/utils"
 import { normalizeLocale } from "@/lib/languages"
@@ -888,13 +889,12 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
           <span className="text-sm">{t`Resolving source language...`}</span>
         </div>
       ) : selectedPageId && displayEntries.length === 0 && entries.length > 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-          <div className="w-12 h-12 rounded-full bg-pink-50 flex items-center justify-center mb-3">
-            <Languages className="w-6 h-6 text-pink-300" />
-          </div>
-          <p className="text-sm font-medium">{t`No translations for this page`}</p>
-          <p className="text-xs mt-1">{t`This page has no translatable text entries`}</p>
-        </div>
+        <StageEmptyState
+          icon={Languages}
+          color="pink"
+          title={t`No translations for this page`}
+          subtitle={t`This page has no translatable text entries`}
+        />
       ) : (
       <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
         <div style={{ height: virtualizer.getTotalSize(), width: "100%", position: "relative" }}>

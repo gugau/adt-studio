@@ -49,6 +49,7 @@ import { useBookTasks } from "@/hooks/use-book-tasks"
 import { useBookRun } from "@/hooks/use-book-run"
 import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import { useStepHeader } from "../../../components/StepViewRouter"
+import { StageEmptyState } from "../../../components/StageEmptyState"
 import {
   BookPreviewFrame,
   type BookPreviewFrameHandle,
@@ -2107,13 +2108,12 @@ export function StoryboardSectionDetail({
             <p className="text-sm font-medium">{t`Rendering this section...`}</p>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-            <div className="w-12 h-12 rounded-full bg-violet-50 flex items-center justify-center mb-3">
-              <LayoutGrid className="w-6 h-6 text-violet-300" />
-            </div>
-            <p className="text-sm font-medium">{t`No rendered content for this section`}</p>
-            <p className="text-xs mt-1">{t`This section has no storyboard rendering yet`}</p>
-          </div>
+          <StageEmptyState
+            icon={LayoutGrid}
+            color="violet"
+            title={t`No rendered content for this section`}
+            subtitle={t`This section has no storyboard rendering yet`}
+          />
         )}
 
       </div>

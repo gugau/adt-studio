@@ -172,7 +172,7 @@ export function StepViewRouter({
 
         {/* Step content */}
         {entry.fullHeight ? (
-          <div className="flex-1 min-h-0 overflow-auto">
+          <div className="flex flex-1 flex-col min-h-0 overflow-auto">
             <View
               bookLabel={bookLabel}
               stageSlug={step}
@@ -181,7 +181,7 @@ export function StepViewRouter({
             />
           </div>
         ) : (
-          <div className="flex-1 min-h-0 overflow-auto p-4">
+          <div className="flex flex-1 flex-col min-h-0 overflow-auto p-4">
             <View
               bookLabel={bookLabel}
               stageSlug={step}
