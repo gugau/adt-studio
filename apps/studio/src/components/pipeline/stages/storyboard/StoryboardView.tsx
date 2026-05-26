@@ -1,10 +1,11 @@
 import { useEffect, useRef, useCallback, useState } from "react"
-import { ArrowLeft, ArrowRight, LayoutGrid, Loader2, Table2 } from "lucide-react"
+import { ArrowLeft, ArrowRight, LayoutGrid, Table2 } from "lucide-react"
 import { usePages, usePage } from "@/hooks/use-pages"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
+import { LoadingState } from "../../components/LoadingState"
 import { StoryboardSectionDetail } from "./components/StoryboardSectionDetail"
 import { SectioningOverview } from "./components/SectioningOverview"
 import { useSectionNav } from "@/routes/books.$label"
@@ -276,12 +277,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
   }
 
   if (pagesLoading) {
-    return (
-      <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <Trans>Loading pages...</Trans>
-      </div>
-    )
+    return <LoadingState stageSlug="storyboard" variant="stage" label={<Trans>Loading pages...</Trans>} />
   }
 
   if (pageList.length === 0) {
@@ -310,22 +306,12 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
   }
 
   if (pageLoading || !page) {
-    return (
-      <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <Trans>Loading page...</Trans>
-      </div>
-    )
+    return <LoadingState stageSlug="storyboard" variant="stage" label={<Trans>Loading page...</Trans>} />
   }
 
   if (!page.sectioningTree) {
     if (storyboardRunning) {
-      return (
-        <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <Trans>Waiting for page to be processed...</Trans>
-        </div>
-      )
+      return <LoadingState stageSlug="storyboard" variant="stage" label={<Trans>Waiting for page to be processed...</Trans>} />
     }
     return (
       <div className="p-4">

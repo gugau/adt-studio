@@ -1,8 +1,9 @@
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Check, Clock, Images, X, Search, Loader2, Maximize2 } from "lucide-react"
+import { Check, Clock, Images, X, Search, Maximize2 } from "lucide-react"
 import { api, BASE_URL } from "@/api/client"
 import { useLingui } from "@lingui/react/macro"
+import { LoadingState } from "@/components/pipeline/components/LoadingState"
 import { ImageLightbox } from "./ImageLightbox"
 
 interface SelectImagesDialogProps {
@@ -129,9 +130,7 @@ export function SelectImagesDialog({
           </div>
 
           {imagesQuery.isLoading && (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
+            <LoadingState stageSlug="translate" variant="stage" label={t`Loading images...`} />
           )}
 
           {imagesQuery.isError && (

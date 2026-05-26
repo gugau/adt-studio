@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Loader2, RotateCcw, ShieldCheck } from "lucide-react"
+import { RotateCcw, ShieldCheck } from "lucide-react"
 import { StageBlockedState } from "@/components/pipeline/components/StageBlockedState"
+import { LoadingState } from "@/components/pipeline/components/LoadingState"
 import { useAllPagesPruned } from "@/hooks/use-all-pages-pruned"
 import { useNavigate, useSearch } from "@tanstack/react-router"
 import { Trans, useLingui } from "@lingui/react/macro"
@@ -109,12 +110,7 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
   const packaging = isSubmittingPackage || pendingPackagingTaskId !== null || isTaskRunning("package-adt")
 
   if (packaging) {
-    return (
-      <div className="flex h-full items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        <span className="text-sm"><Trans>Packaging validation results...</Trans></span>
-      </div>
-    )
+    return <LoadingState stageSlug="validation" variant="stage" label={<Trans>Packaging validation results...</Trans>} />
   }
 
   return (

@@ -2952,6 +2952,9 @@ msgstr "Chargement du glossaire..."
 msgid "Loading image..."
 msgstr "Chargement de l'image..."
 
+msgid "Loading images..."
+msgstr "Chargement des images..."
+
 msgid "Loading logs..."
 msgstr "Chargement des journaux..."
 
@@ -3742,6 +3745,9 @@ msgstr "Empaquetage"
 
 msgid "Packaging failed"
 msgstr "L'empaquetage a échoué"
+
+msgid "Packaging preview..."
+msgstr "Aperçu de l'emballage..."
 
 msgid "Packaging validation results..."
 msgstr "Empaquetage des résultats de validation..."

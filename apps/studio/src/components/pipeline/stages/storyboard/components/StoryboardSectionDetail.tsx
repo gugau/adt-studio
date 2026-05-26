@@ -41,7 +41,6 @@ import {
   replaceNodeId,
   setLeafRole,
   toggleNodePruned,
-  type IdFactory,
 } from "@adt/types"
 import { useApiKey } from "@/hooks/use-api-key"
 import { useActiveConfig } from "@/hooks/use-debug"
@@ -49,6 +48,7 @@ import { useBookTasks } from "@/hooks/use-book-tasks"
 import { useBookRun } from "@/hooks/use-book-run"
 import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import { useStepHeader } from "../../../components/StepViewRouter"
+import { LoadingState } from "../../../components/LoadingState"
 import {
   BookPreviewFrame,
   type BookPreviewFrameHandle,
@@ -71,7 +71,6 @@ import { Input } from "@/components/ui/input"
 import { useLingui } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
 import { i18n } from "@lingui/core"
-import { getSectionTypeLabel, getSectionTypeDescription } from "@/lib/section-constants"
 import {
   Dialog,
   DialogContent,
@@ -2102,10 +2101,7 @@ export function StoryboardSectionDetail({
             )}
           </>
         ) : storyboardRunning && !section?.isPruned ? (
-          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-            <Loader2 className="w-8 h-8 animate-spin text-violet-400 mb-3" />
-            <p className="text-sm font-medium">{t`Rendering this section...`}</p>
-          </div>
+          <LoadingState stageSlug="storyboard" variant="stage" label={t`Rendering this section...`} />
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <div className="w-12 h-12 rounded-full bg-violet-50 flex items-center justify-center mb-3">

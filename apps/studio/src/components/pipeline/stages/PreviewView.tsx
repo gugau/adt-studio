@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import type { AccessibilityFinding } from "@adt/types"
-import { Loader2 } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { StageBlockedState } from "@/components/pipeline/components/StageBlockedState"
+import { LoadingState } from "@/components/pipeline/components/LoadingState"
 import { useAllPagesPruned } from "@/hooks/use-all-pages-pruned"
 import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate, useSearch } from "@tanstack/react-router"
@@ -248,12 +248,7 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
   }
 
   if (packaging) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">Packaging preview...</span>
-      </div>
-    )
+    return <LoadingState stageSlug="preview" variant="stage" label={<Trans>Packaging preview...</Trans>} />
   }
 
   if (error) {

@@ -10,6 +10,7 @@ import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
+import { StageContentGuard } from "../../components/StageContentGuard"
 import { getRequestedPageId, getQuizImageRenderState } from "./lib/quizzes-image-state"
 import { useLingui } from "@lingui/react/macro"
 
@@ -374,18 +375,16 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
     })
   }
 
-  if (!showRunCard && isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">{t`Loading quizzes...`}</span>
-      </div>
-    )
-  }
+  const showPerPageEmpty =
+    selectedPageId && displayQuizzes.length === 0 && quizzes.length > 0
 
-  if (showRunCard || quizzes.length === 0) {
-    return (
-      <div className="p-4">
+  return (
+    <StageContentGuard
+      stageSlug="quizzes"
+      isLoading={!showRunCard && isLoading}
+      loadingLabel={t`Loading quizzes...`}
+      showRunCard={showRunCard || quizzes.length === 0}
+      runCard={
         <StageRunCard
           stageSlug="quizzes"
           isRunning={quizzesRunning}
@@ -393,23 +392,17 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
           onRun={handleRunQuizzes}
           disabled={!hasApiKey || quizzesRunning}
         />
-      </div>
-    )
-  }
-
-  if (selectedPageId && displayQuizzes.length === 0 && quizzes.length > 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-        <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center mb-3">
-          <HelpCircle className="w-6 h-6 text-orange-300" />
+      }
+    >
+      {showPerPageEmpty ? (
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+          <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center mb-3">
+            <HelpCircle className="w-6 h-6 text-orange-300" />
+          </div>
+          <p className="text-sm font-medium">{t`No quizzes for this page`}</p>
+          <p className="text-xs mt-1">{t`Quizzes are linked to other pages in this book`}</p>
         </div>
-        <p className="text-sm font-medium">{t`No quizzes for this page`}</p>
-        <p className="text-xs mt-1">{t`Quizzes are linked to other pages in this book`}</p>
-      </div>
-    )
-  }
-
-  return (
+      ) : (
     <div className="space-y-2">
       {displayQuizzes.map((quiz) => {
         const idx = quizzes.indexOf(quiz)
@@ -482,5 +475,7 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
         }}
       />
     </div>
+      )}
+    </StageContentGuard>
   )
 }

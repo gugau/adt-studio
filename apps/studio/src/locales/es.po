@@ -2950,6 +2950,9 @@ msgstr "Cargando glosario..."
 msgid "Loading image..."
 msgstr "Cargando imagen..."
 
+msgid "Loading images..."
+msgstr "Cargando imágenes..."
+
 msgid "Loading logs..."
 msgstr "Cargando registros..."
 
@@ -3740,6 +3743,9 @@ msgstr "Empaquetando"
 
 msgid "Packaging failed"
 msgstr "Packaging failed"
+
+msgid "Packaging preview..."
+msgstr "Empaquetando vista previa..."
 
 msgid "Packaging validation results..."
 msgstr "Packaging validation results..."
