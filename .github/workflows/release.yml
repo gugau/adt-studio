@@ -2,10 +2,80 @@ name: Release
 
 on:
   push:
-    tags: ['v*']
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v0.8.0)'
+        required: true
 
 jobs:
+  prepare:
+    # Only run on RELEASE: <tag> commits or on a manual dispatch.
+    if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'RELEASE:') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      version: ${{ steps.tag.outputs.version }}
+      sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract tag
+        id: tag
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ inputs.tag }}"
+          else
+            MSG=$(git log -1 --pretty=%s)
+            TAG=$(printf '%s\n' "$MSG" | sed -nE 's/^RELEASE:[[:space:]]*([^[:space:]]+).*/\1/p')
+          fi
+          if [[ -z "$TAG" ]]; then
+            echo "::error::Could not extract tag from commit message or input."
+            exit 1
+          fi
+          [[ "$TAG" =~ ^v ]] || TAG="v$TAG"
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Resolved tag: $TAG (version: $VERSION)"
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Update issue template version dropdowns
+        run: node scripts/update-issue-template-versions.mjs "${{ steps.tag.outputs.tag }}"
+
+      - name: Bump apps/desktop package.json
+        run: npm pkg set version="${{ steps.tag.outputs.version }}" --workspace @adt/desktop
+
+      - name: Commit release metadata and push tag
+        id: commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/ISSUE_TEMPLATE/*.yml apps/desktop/package.json
+          if git diff --staged --quiet; then
+            echo "No metadata changes to commit."
+          else
+            git commit -m "chore(release): ${{ steps.tag.outputs.tag }}"
+            git push origin HEAD:main
+          fi
+          git tag -f "${{ steps.tag.outputs.tag }}"
+          git push origin "${{ steps.tag.outputs.tag }}" --force
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
   desktop:
+    needs: prepare
     strategy:
       fail-fast: false
       matrix:
@@ -18,6 +88,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
 
       - uses: pnpm/action-setup@v4
 
@@ -60,7 +132,9 @@ jobs:
         run: pnpm --filter @adt/desktop exec electron-builder --linux --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   docker:
+    needs: prepare
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -68,12 +142,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Extract tag
-        id: version
-        run: |
-          REF="${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
-          echo "tag=${REF}" >> "$GITHUB_OUTPUT"
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -90,26 +160,26 @@ jobs:
           push: true
           tags: |
             ghcr.io/unicef/adt-studio:latest
-            ghcr.io/unicef/adt-studio:${{ steps.version.outputs.tag }}
+            ghcr.io/unicef/adt-studio:${{ needs.prepare.outputs.tag }}
 
       - name: Ensure GitHub release exists
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${{ steps.version.outputs.tag }}"
+          TAG="${{ needs.prepare.outputs.tag }}"
           gh release view "$TAG" --repo ${{ github.repository }} 2>/dev/null || \
             gh release create "$TAG" --repo ${{ github.repository }} --title "ADT Studio $TAG" --notes ""
 
       - name: Generate standalone docker-compose.yml
         run: |
-          TAG="${{ steps.version.outputs.tag }}"
+          TAG="${{ needs.prepare.outputs.tag }}"
           sed "s/__TAG__/${TAG}/g" docker/compose-release.yml.template > docker-compose.yml
 
       - name: Upload docker-compose.yml to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ steps.version.outputs.tag }} docker-compose.yml \
+          gh release upload ${{ needs.prepare.outputs.tag }} docker-compose.yml \
             --repo ${{ github.repository }} \
             --clobber
 
@@ -117,7 +187,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ steps.version.outputs.tag }} scripts/windows-setup-and-run.bat \
+          gh release upload ${{ needs.prepare.outputs.tag }} scripts/windows-setup-and-run.bat \
             --repo ${{ github.repository }} \
             --clobber
 
@@ -125,7 +195,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${{ steps.version.outputs.tag }}"
+          TAG="${{ needs.prepare.outputs.tag }}"
           NOTES=$(gh api repos/${{ github.repository }}/releases/generate-notes \
             -f tag_name="$TAG" \
             --jq '.body')
