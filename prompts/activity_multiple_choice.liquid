@@ -39,6 +39,7 @@ Use this exact outer shell:
 
 ## Multiple Choice Structure
 - Render option rows with radio inputs (`type="radio"`), one shared `name` per question group.
+- **If the section contains MORE THAN ONE question group, each group MUST use a distinct `name` value** (e.g. `question-group-1`, `question-group-2`, `question-group-3`, …). Browsers treat radios with the same `name` as a single mutually-exclusive set, so reusing one `name` across multiple questions makes it impossible for the learner to answer both. Number the groups sequentially in the order the questions appear.
 - Each radio input must include:
   - `class="sr-only"`
   - `tabindex="0"`

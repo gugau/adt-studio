@@ -235,6 +235,112 @@ describe("initializeQuizActivity — embedded activity_multiple_choice", () => {
     expect(store.get(submitStateAtom)).toBe("next")
   })
 
+  it("supports multiple question groups on a single page", () => {
+    document.body.innerHTML = `
+      <section data-section-type="activity_multiple_choice" data-section-id="pg002_sec020">
+        <div role="group">
+          <p>Question 1.</p>
+          <div class="option-container">
+            <label class="activity-option">
+              <input type="radio" name="question-group-1" value="item-1" data-activity-item="item-1" class="sr-only" />
+              <div data-id="text-1">Q1A</div>
+              <div class="feedback-container hidden"><div><span class="feedback-icon"></span><span class="feedback-text"></span></div></div>
+            </label>
+          </div>
+          <div class="option-container">
+            <label class="activity-option">
+              <input type="radio" name="question-group-1" value="item-2" data-activity-item="item-2" class="sr-only" />
+              <div data-id="text-2">Q1B</div>
+              <div class="feedback-container hidden"><div><span class="feedback-icon"></span><span class="feedback-text"></span></div></div>
+            </label>
+          </div>
+        </div>
+        <div role="group">
+          <p>Question 2.</p>
+          <div class="option-container">
+            <label class="activity-option">
+              <input type="radio" name="question-group-2" value="item-3" data-activity-item="item-3" class="sr-only" />
+              <div data-id="text-3">Q2A</div>
+              <div class="feedback-container hidden"><div><span class="feedback-icon"></span><span class="feedback-text"></span></div></div>
+            </label>
+          </div>
+          <div class="option-container">
+            <label class="activity-option">
+              <input type="radio" name="question-group-2" value="item-4" data-activity-item="item-4" class="sr-only" />
+              <div data-id="text-4">Q2B</div>
+              <div class="feedback-container hidden"><div><span class="feedback-icon"></span><span class="feedback-text"></span></div></div>
+            </label>
+          </div>
+        </div>
+      </section>
+    `
+    // Q1A and Q2B are correct.
+    window.correctAnswers = {
+      "item-1": true,
+      "item-2": false,
+      "item-3": false,
+      "item-4": true,
+    }
+    initializeQuizActivity()
+
+    const q1a = document
+      .querySelector<HTMLInputElement>("input[data-activity-item='item-1']")!
+      .closest<HTMLElement>(".activity-option")!
+    const q2b = document
+      .querySelector<HTMLInputElement>("input[data-activity-item='item-4']")!
+      .closest<HTMLElement>(".activity-option")!
+
+    // Picking in q1 should NOT clear q2 and vice versa.
+    q1a.click()
+    expect(q1a.classList.contains("ring-2")).toBe(true)
+    q2b.click()
+    expect(q1a.classList.contains("ring-2")).toBe(true) // still selected
+    expect(q2b.classList.contains("ring-2")).toBe(true)
+    expect(store.get(submitEnabledAtom)).toBe(true)
+
+    store.get(validateHandlerAtom)?.()
+    expect(store.get(submitStateAtom)).toBe("next")
+  })
+
+  it("requires every group to be answered correctly before flipping to next", () => {
+    document.body.innerHTML = `
+      <section data-section-type="activity_multiple_choice" data-section-id="pg002_sec021">
+        <div role="group">
+          <label class="activity-option">
+            <input type="radio" name="question-group-1" value="item-1" data-activity-item="item-1" class="sr-only" />
+            <div data-id="text-1">Q1A</div>
+            <div class="feedback-container hidden"><div><span class="feedback-icon"></span><span class="feedback-text"></span></div></div>
+          </label>
+        </div>
+        <div role="group">
+          <label class="activity-option">
+            <input type="radio" name="question-group-2" value="item-2" data-activity-item="item-2" class="sr-only" />
+            <div data-id="text-2">Q2A (wrong)</div>
+            <div class="feedback-container hidden"><div><span class="feedback-icon"></span><span class="feedback-text"></span></div></div>
+          </label>
+        </div>
+      </section>
+    `
+    window.correctAnswers = { "item-1": true, "item-2": false }
+    initializeQuizActivity()
+
+    // Answer q1 correctly, leave q2 unanswered — should stay in submit.
+    document
+      .querySelector<HTMLInputElement>("input[data-activity-item='item-1']")!
+      .closest<HTMLElement>(".activity-option")!
+      .click()
+    store.get(validateHandlerAtom)?.()
+    expect(store.get(submitStateAtom)).toBe("submit")
+
+    // Now answer q2 (the only option, which is wrong) — still stays in submit.
+    document
+      .querySelector<HTMLInputElement>("input[data-activity-item='item-2']")!
+      .closest<HTMLElement>(".activity-option")!
+      .click()
+    store.get(validateHandlerAtom)?.()
+    expect(store.get(submitStateAtom)).toBe("submit")
+  })
+
   it("handles option labels that mix an image and a text label", () => {
     document.body.innerHTML = `
       <section data-section-type="activity_multiple_choice" data-section-id="pg002_sec011">
