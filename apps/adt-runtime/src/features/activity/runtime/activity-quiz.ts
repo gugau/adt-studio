@@ -10,44 +10,10 @@ import {
   submitStateAtom,
   validateHandlerAtom,
 } from "@/features/activity/state/activity.atoms"
+import { playActivitySound } from "@/features/activity/runtime/sounds"
 
 const QUIZ_SELECTOR = 'section[data-section-type="activity_quiz"]'
 const CORRECT_ANSWERS_SCRIPT_ID = "quiz-correct-answers"
-
-type ActivitySoundKey = "drop" | "success" | "error" | "reset"
-
-let activitySounds: Record<ActivitySoundKey, HTMLAudioElement> | null = null
-
-function initActivitySounds(): Record<ActivitySoundKey, HTMLAudioElement> {
-  if (activitySounds) return activitySounds
-  const make = (file: string) => {
-    const a = new Audio(`./assets/sounds/${file}`)
-    a.volume = 0.5
-    a.preload = "auto"
-    return a
-  }
-  activitySounds = {
-    drop: make("drop.mp3"),
-    success: make("success.mp3"),
-    error: make("error.mp3"),
-    reset: make("reset.mp3"),
-  }
-  return activitySounds
-}
-
-function playActivitySound(key: ActivitySoundKey): void {
-  const sounds = initActivitySounds()
-  const audio = sounds[key]
-  try {
-    audio.pause()
-    audio.currentTime = 0
-    void audio.play().catch(() => {
-      // Autoplay can be blocked until the user interacts — silently ignore.
-    })
-  } catch {
-    // ignore
-  }
-}
 
 function tr(key: string, fallback: string): string {
   const dict = getDefaultStore().get(translationsAtom)
