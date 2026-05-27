@@ -9,8 +9,20 @@ export function ActivityDock() {
   const { t } = useTranslation();
   const { isCompact, shouldHide, isTop } = useDockContext();
   const activityMode = useAtomValue(activityModeAtom);
-  const topClassname = isCompact ? "top-21" : "top-18";
-  const bottomClassname = isCompact ? "bottom-21" : "bottom-18";
+
+  // In embed mode (storyboard "Try activity" iframe) there is no BottomDock
+  // below us, so sit flush near the iframe edge instead of leaving room for
+  // chrome that isn't there.
+  const isEmbed =
+    typeof document !== "undefined" &&
+    document.body.getAttribute("data-embed") === "1";
+
+  const topClassname = isEmbed ? "top-3" : isCompact ? "top-21" : "top-18";
+  const bottomClassname = isEmbed
+    ? "bottom-3"
+    : isCompact
+      ? "bottom-21"
+      : "bottom-18";
 
   if (!activityMode) return null;
 
