@@ -39,6 +39,7 @@ import {
   dockReadyAtom,
   dockWidthAtom,
   easyReadModeAtom,
+  embedModeAtom,
   glossaryModeAtom,
   iconSizeAtom,
   reduceMotionAtom,
@@ -71,6 +72,11 @@ function readCurrentSectionId(): string | null {
 function readIsActivityPage(): boolean {
   if (typeof document === "undefined") return false
   return !!document.querySelector('section[data-section-type^="activity_"]')
+}
+
+function readIsEmbedMode(): boolean {
+  if (typeof window === "undefined") return false
+  return new URLSearchParams(window.location.search).get("embed") === "1"
 }
 
 function readCurrentPageNumber(): number | null {
@@ -171,6 +177,7 @@ export async function bootRuntime(): Promise<void> {
     const isActivity = readIsActivityPage()
     store.set(isActivityPageAtom, isActivity)
     store.set(activityModeAtom, isActivity)
+    store.set(embedModeAtom, readIsEmbedMode())
 
     applyDOMTranslations()
 

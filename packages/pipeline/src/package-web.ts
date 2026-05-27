@@ -1108,17 +1108,17 @@ ${fallbackHeadingHtml}${contentBlock}
       : ""
   }
 
-  // In embed mode, hide all interface chrome except the submit/reset buttons
+  // In embed mode, hide non-essential chrome. The React runtime mounts the
+  // activity Submit/Skip buttons inside #nav-container, so it must stay
+  // visible — BottomDock self-hides via embedModeAtom (see ui.atoms.ts).
   const embedStyles = opts.embed
     ? `
     <style>
       /* Hide navigation, sidebar, and other chrome in embed mode */
-      #nav-container, #back-forward-buttons, #nav-popup,
+      #back-forward-buttons, #nav-popup,
       #open-sidebar, #sidebar, #tts-quick-toggle-button, #play-bar,
       #sl-quick-toggle-button, #sign-language-video,
       #explain-me-button, #eli5-content, #notepad-button, #notepad-content { display: none !important; }
-      /* Keep submit/reset container fixed at bottom-right in embed mode */
-      #submit-reset-container { position: fixed !important; bottom: 1rem; right: 1rem; z-index: 50; }
     </style>`
     : ""
 
@@ -1140,7 +1140,7 @@ ${mathScript}${embedStyles}</head>
 ${mainBlock}
 ${answersScript}
     <div class="relative z-50" id="interface-container"></div>
-    <div class="relative z-50" id="nav-container"${opts.embed ? ' style="display:none"' : ""}></div>
+    <div class="relative z-50" id="nav-container"></div>
 ${opts.embed
       ? `    <script src="./assets/base.bundle.min.js?v=${escapeAttr(opts.bundleVersion)}" type="module"></script>`
       : `    <script src="./assets/offline-preloader.js"></script>
