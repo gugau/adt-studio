@@ -49,9 +49,12 @@ function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
+// JavaScript's `\b` is ASCII-only, so it doesn't fire around non-ASCII letters
+// like "ñ" / "ó". Use Unicode-property lookarounds (with the `u` flag) so
+// words like "coño" and future entries like "maricón" are correctly bounded.
 const PROFANITY_REGEX = new RegExp(
-  `\\b(?:${INAPPROPRIATE_WORDS.map(escapeRegex).join("|")})\\b`,
-  "i",
+  `(?<![\\p{L}\\p{N}])(?:${INAPPROPRIATE_WORDS.map(escapeRegex).join("|")})(?![\\p{L}\\p{N}])`,
+  "iu",
 )
 
 export function containsProfanity(text: string): boolean {

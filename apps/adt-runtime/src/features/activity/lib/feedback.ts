@@ -193,11 +193,14 @@ export function applyFeedback(
   input.setAttribute("aria-invalid", style.ariaInvalid ? "true" : "false")
 
   const suffix = translate(style.ariaLabelKey, style.ariaLabelFallback)
-  // Don't prefix with the user's value when empty — produces a screen-reader
-  // announcement like " - Try again" with a stranded separator.
+  // Append the suffix to the existing label rather than replacing it — the
+  // hydrated FITB inputs carry a "Blank N of M" prefix that must survive
+  // repeated validations. clearInputValidationFeedback above already stripped
+  // any prior " - suffix" so we're appending to the bare base label.
+  const baseLabel = input.getAttribute("aria-label") ?? ""
   input.setAttribute(
     "aria-label",
-    input.value ? `${input.value} - ${suffix}` : suffix,
+    baseLabel ? `${baseLabel} - ${suffix}` : suffix,
   )
   if (kind === "gibberish") input.setAttribute("data-has-gibberish-feedback", "true")
   if (kind === "profanity") input.setAttribute("data-has-profanity-feedback", "true")
