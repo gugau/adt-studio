@@ -158,15 +158,15 @@ describe("initializeQuizActivity — embedded activity_multiple_choice", () => {
       .querySelector<HTMLInputElement>("input[data-activity-item='item-1']")!
       .closest<HTMLElement>(".activity-option")!
     opt1.click()
-    expect(opt1.classList.contains("activity-option-selected")).toBe(true)
+    expect(opt1.getAttribute("data-mc-style-state") === "selected").toBe(true)
 
     // Switching to a different option moves the highlight, doesn't accumulate.
     const opt2 = document
       .querySelector<HTMLInputElement>("input[data-activity-item='item-2']")!
       .closest<HTMLElement>(".activity-option")!
     opt2.click()
-    expect(opt1.classList.contains("activity-option-selected")).toBe(false)
-    expect(opt2.classList.contains("activity-option-selected")).toBe(true)
+    expect(opt1.getAttribute("data-mc-style-state") === "selected").toBe(false)
+    expect(opt2.getAttribute("data-mc-style-state") === "selected").toBe(true)
   })
 
   it("strips the selection highlight on validation and applies the correct/incorrect state class", () => {
@@ -178,8 +178,8 @@ describe("initializeQuizActivity — embedded activity_multiple_choice", () => {
       .closest<HTMLElement>(".activity-option")!
     opt.click()
     store.get(validateHandlerAtom)?.()
-    expect(opt.classList.contains("activity-option-selected")).toBe(false)
-    expect(opt.classList.contains("activity-option-correct")).toBe(true)
+    expect(opt.getAttribute("data-mc-style-state") === "selected").toBe(false)
+    expect(opt.getAttribute("data-mc-style-state") === "correct").toBe(true)
   })
 
   it("injects a status badge for correct/incorrect verdicts (non-color cue)", () => {
@@ -208,7 +208,7 @@ describe("initializeQuizActivity — embedded activity_multiple_choice", () => {
     radio2.dispatchEvent(new Event("change", { bubbles: true }))
 
     const opt2 = radio2.closest<HTMLElement>(".activity-option")!
-    expect(opt2.classList.contains("activity-option-selected")).toBe(true)
+    expect(opt2.getAttribute("data-mc-style-state") === "selected").toBe(true)
     expect(store.get(submitEnabledAtom)).toBe(true)
 
     // Validation runs against the keyboard-selected option.
@@ -241,7 +241,7 @@ describe("initializeQuizActivity — embedded activity_multiple_choice", () => {
       .querySelector<HTMLInputElement>("input[data-activity-item='item-1']")!
       .closest<HTMLElement>(".activity-option")!
     correctImgOpt.click()
-    expect(correctImgOpt.classList.contains("activity-option-selected")).toBe(true)
+    expect(correctImgOpt.getAttribute("data-mc-style-state") === "selected").toBe(true)
 
     store.get(validateHandlerAtom)?.()
     expect(store.get(submitStateAtom)).toBe("next")
@@ -304,10 +304,10 @@ describe("initializeQuizActivity — embedded activity_multiple_choice", () => {
 
     // Picking in q1 should NOT clear q2 and vice versa.
     q1a.click()
-    expect(q1a.classList.contains("activity-option-selected")).toBe(true)
+    expect(q1a.getAttribute("data-mc-style-state") === "selected").toBe(true)
     q2b.click()
-    expect(q1a.classList.contains("activity-option-selected")).toBe(true) // still selected
-    expect(q2b.classList.contains("activity-option-selected")).toBe(true)
+    expect(q1a.getAttribute("data-mc-style-state") === "selected").toBe(true) // still selected
+    expect(q2b.getAttribute("data-mc-style-state") === "selected").toBe(true)
     expect(store.get(submitEnabledAtom)).toBe(true)
 
     store.get(validateHandlerAtom)?.()

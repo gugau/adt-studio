@@ -108,12 +108,45 @@ const VERDICT_CLASSES = [
 
 // Multiple-choice (embedded `activity_multiple_choice`) visual states. The
 // runtime owns these so the look is consistent regardless of how the LLM
-// laid out the option (image card, text row, inline pill). Class definitions
-// live in `assets/adt/tailwind_css.css`.
-const MC_SELECTED_CLASS = "activity-option-selected"
-const MC_CORRECT_CLASS = "activity-option-correct"
-const MC_INCORRECT_CLASS = "activity-option-incorrect"
+// laid out the option (image card, text row, inline pill). Outlines are
+// applied as inline styles (not Tailwind classes) so they work on existing
+// rendered pages without rebuilding the per-book CSS.
+const MC_STYLE_FLAG_ATTR = "data-mc-style-state"
 const MC_BADGE_ATTR = "data-mc-status-badge"
+const MC_BADGE_SIZE = 22
+
+const MC_OUTLINE_COLORS = {
+  selected: "rgb(37, 99, 235)", // blue-600
+  correct: "rgb(22, 163, 74)", // green-600
+  incorrect: "rgb(220, 38, 38)", // red-600
+} as const
+
+const MC_BG_COLORS = {
+  selected: "transparent",
+  correct: "rgba(240, 253, 244, 0.6)",
+  incorrect: "rgba(254, 242, 242, 0.6)",
+} as const
+
+type McStyleState = keyof typeof MC_OUTLINE_COLORS
+
+function applyMcOutline(option: HTMLElement, state: McStyleState): void {
+  option.style.outline = `3px solid ${MC_OUTLINE_COLORS[state]}`
+  option.style.outlineOffset = "2px"
+  option.style.borderRadius = option.style.borderRadius || "0.5rem"
+  option.style.backgroundColor = MC_BG_COLORS[state]
+  option.setAttribute(MC_STYLE_FLAG_ATTR, state)
+}
+
+function clearMcOutline(option: HTMLElement): void {
+  if (!option.hasAttribute(MC_STYLE_FLAG_ATTR)) return
+  option.style.outline = ""
+  option.style.outlineOffset = ""
+  // Only clear the inline border-radius if we set it (other code may rely on
+  // the LLM's `rounded-*` Tailwind class).
+  option.style.borderRadius = ""
+  option.style.backgroundColor = ""
+  option.removeAttribute(MC_STYLE_FLAG_ATTR)
+}
 
 function clearMcBadge(option: HTMLElement): void {
   option
@@ -122,10 +155,25 @@ function clearMcBadge(option: HTMLElement): void {
 }
 
 /**
- * Inject a small green/red badge with a check or cross icon at the option's
- * top-right corner. This is the non-color WCAG 1.4.1 cue that pairs with the
- * outline color — even if the learner can't perceive the green/red outline,
- * the icon shape says "correct" or "incorrect" plainly.
+ * Pick the most "anchor-like" child of an option to dock the status badge
+ * against. Prefers the A/B/C/D letter circle when present, then any radio
+ * input, then the option itself. This keeps the badge close to the visible
+ * affordance even when the option is a full-row label that would otherwise
+ * push the badge hundreds of pixels to the right.
+ */
+function findBadgeAnchor(option: HTMLElement): HTMLElement {
+  const letter = option.querySelector<HTMLElement>(".option-letter")
+  if (letter) return letter
+  const radio = option.querySelector<HTMLElement>('input[type="radio"]')
+  if (radio) return radio
+  return option
+}
+
+/**
+ * Inject a small green/red badge with a check or cross icon at the top-right
+ * corner of the option's "anchor" element. This is the non-color WCAG 1.4.1
+ * cue that pairs with the outline color — the icon shape says "correct" or
+ * "incorrect" plainly even when color perception is degraded.
  */
 function attachMcBadge(option: HTMLElement, isCorrect: boolean): void {
   clearMcBadge(option)
@@ -138,12 +186,9 @@ function attachMcBadge(option: HTMLElement, isCorrect: boolean): void {
       : tr("multiple-choice-try-again", "Incorrect"),
   )
   badge.setAttribute("role", "status")
-  // Inline styles so the badge doesn't depend on additional CSS classes.
   badge.style.position = "absolute"
-  badge.style.top = "-10px"
-  badge.style.right = "-10px"
-  badge.style.width = "22px"
-  badge.style.height = "22px"
+  badge.style.width = `${MC_BADGE_SIZE}px`
+  badge.style.height = `${MC_BADGE_SIZE}px`
   badge.style.borderRadius = "9999px"
   badge.style.display = "flex"
   badge.style.alignItems = "center"
@@ -165,29 +210,17 @@ function attachMcBadge(option: HTMLElement, isCorrect: boolean): void {
     option.style.position = "relative"
   }
   option.appendChild(badge)
-}
 
-/**
- * Locate the option's `.feedback-container`. If the LLM didn't emit one,
- * inject one at the end of the option so feedback always sits on its own
- * line below the option content (LLM-emitted containers sometimes end up
- * inside a flex row and squash sideways).
- */
-function ensureMcFeedbackContainer(option: HTMLElement): HTMLElement {
-  let container = option.querySelector<HTMLElement>(".feedback-container")
-  if (!container) {
-    container = document.createElement("div")
-    container.className = "feedback-container mt-2"
-    const text = document.createElement("div")
-    text.className = "feedback-text"
-    container.appendChild(text)
-    option.appendChild(container)
-  }
-  // Force block + full-width so the feedback line never gets eaten by an
-  // ambient flex layout.
-  container.style.display = "block"
-  container.style.width = "100%"
-  return container
+  // Position the badge so its center sits on the top-right corner of the
+  // anchor element. Done with getBoundingClientRect AFTER append so we have
+  // real measurements; if the anchor is the option itself the result is a
+  // top-right corner badge on the whole option.
+  const anchor = findBadgeAnchor(option)
+  const anchorRect = anchor.getBoundingClientRect()
+  const optionRect = option.getBoundingClientRect()
+  const half = MC_BADGE_SIZE / 2
+  badge.style.top = `${anchorRect.top - optionRect.top - half}px`
+  badge.style.left = `${anchorRect.right - optionRect.left - half}px`
 }
 
 interface QuestionGroup {
@@ -230,15 +263,15 @@ function clearOptionState(option: HTMLElement, isStandaloneQuiz: boolean): void 
     "selected-option",
     ...SELECTION_HIGHLIGHT_CLASSES,
     ...VERDICT_CLASSES,
-    MC_SELECTED_CLASS,
-    MC_CORRECT_CLASS,
-    MC_INCORRECT_CLASS,
   )
   option.removeAttribute("aria-invalid")
   option.setAttribute("aria-checked", "false")
   const input = option.querySelector<HTMLInputElement>('input[type="radio"]')
   if (input) input.checked = false
-  if (!isStandaloneQuiz) clearMcBadge(option)
+  if (!isStandaloneQuiz) {
+    clearMcOutline(option)
+    clearMcBadge(option)
+  }
   const feedback = option.querySelector<HTMLElement>(".feedback-container")
   if (feedback) {
     feedback.classList.add("hidden")
@@ -263,7 +296,7 @@ function markSelection(
   if (isStandaloneQuiz) {
     option.classList.add("selected-option", ...SELECTION_HIGHLIGHT_CLASSES)
   } else {
-    option.classList.add(MC_SELECTED_CLASS)
+    applyMcOutline(option, "selected")
   }
   option.setAttribute("aria-checked", "true")
   const input = option.querySelector<HTMLInputElement>('input[type="radio"]')
@@ -280,21 +313,28 @@ function applyValidationStyle(
     option.classList.remove("selected-option", ...SELECTION_HIGHLIGHT_CLASSES)
     option.classList.add(isCorrect ? "bg-green-50" : "bg-red-50")
   } else {
-    option.classList.remove(MC_SELECTED_CLASS)
-    option.classList.add(isCorrect ? MC_CORRECT_CLASS : MC_INCORRECT_CLASS)
+    // Keep the outline (now green/red) so the badge has something to dock on
+    // and the verdict is visible from across the page.
+    applyMcOutline(option, isCorrect ? "correct" : "incorrect")
     attachMcBadge(option, isCorrect)
   }
   option.setAttribute("aria-invalid", isCorrect ? "false" : "true")
 }
 
+/**
+ * Per-option text feedback. Standalone quiz pages keep their LLM-emitted
+ * `.feedback-container` slot ("Great job! …"). Multi-choice is badge-only —
+ * the dock toast at the top of the page handles the summary message, which
+ * works across the variable MC layouts (pills, text rows, image cards) far
+ * more reliably than trying to dock a text caption to each option.
+ */
 function showFeedback(
   option: HTMLElement,
   isCorrect: boolean,
   isStandaloneQuiz: boolean,
 ): void {
-  const container = isStandaloneQuiz
-    ? option.querySelector<HTMLElement>(".feedback-container")
-    : ensureMcFeedbackContainer(option)
+  if (!isStandaloneQuiz) return
+  const container = option.querySelector<HTMLElement>(".feedback-container")
   if (!container) return
   container.classList.remove("hidden")
   let text = container.querySelector<HTMLElement>(".feedback-text")

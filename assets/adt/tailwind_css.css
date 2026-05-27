@@ -225,32 +225,4 @@ span[data-word-index].bg-yellow-300 {
     border-radius: 4px;
     animation: glossaryFlash 3.5s ease-out forwards;
   }
-
-  /*
-   * Multiple-choice validation states — runtime-owned visual overlay that
-   * works regardless of how the LLM laid out a given option (image-card,
-   * text-row, pill, etc.). Uses outline (not ring/border) so it doesn't get
-   * clipped by overflow:hidden parents and doesn't shift layout. Applied by
-   * `apps/adt-runtime/src/features/activity/runtime/activity-quiz.ts`.
-   *
-   * Standalone activity_quiz pages keep their template-specific styling and
-   * do NOT receive these classes.
-   */
-  .activity-option-selected {
-    outline: 3px solid rgb(37, 99, 235);
-    outline-offset: 2px;
-    border-radius: 0.5rem;
-  }
-  .activity-option-correct {
-    outline: 3px solid rgb(22, 163, 74);
-    outline-offset: 2px;
-    border-radius: 0.5rem;
-    background-color: rgba(240, 253, 244, 0.6);
-  }
-  .activity-option-incorrect {
-    outline: 3px solid rgb(220, 38, 38);
-    outline-offset: 2px;
-    border-radius: 0.5rem;
-    background-color: rgba(254, 242, 242, 0.6);
-  }
 }
