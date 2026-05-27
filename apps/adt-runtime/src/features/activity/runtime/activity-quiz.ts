@@ -77,10 +77,19 @@ function resolveExplanation(option: HTMLElement): string | null {
   return option.getAttribute("data-explanation")
 }
 
+// Tailwind classes that give every kind of option (text-only, image-only,
+// image-plus-text) a visible "this is what I picked" state. The standalone
+// quiz template also bakes `.selected-option { ... }` into its inline CSS,
+// but in-page multiple-choice sections rely on the LLM's classes only — so
+// without these utilities the radio is `sr-only` and the user has no visual
+// feedback that the click registered.
+const SELECTION_HIGHLIGHT_CLASSES = ["ring-2", "ring-blue-400", "bg-blue-50"]
+
 function clearOptionStyles(section: HTMLElement): void {
   section.querySelectorAll<HTMLElement>(".activity-option").forEach((opt) => {
     opt.classList.remove(
       "selected-option",
+      ...SELECTION_HIGHLIGHT_CLASSES,
       "bg-green-50",
       "bg-red-50",
       "border-green-500",
@@ -104,14 +113,15 @@ function clearOptionStyles(section: HTMLElement): void {
 
 function markSelection(option: HTMLElement, section: HTMLElement): void {
   clearOptionStyles(section)
-  option.classList.add("selected-option")
+  option.classList.add("selected-option", ...SELECTION_HIGHLIGHT_CLASSES)
   option.setAttribute("aria-checked", "true")
   const input = option.querySelector<HTMLInputElement>('input[type="radio"]')
   if (input) input.checked = true
 }
 
 function applyValidationStyle(option: HTMLElement, isCorrect: boolean): void {
-  option.classList.remove("selected-option")
+  // Strip the blue selection ring so it doesn't fight the green/red verdict.
+  option.classList.remove("selected-option", ...SELECTION_HIGHLIGHT_CLASSES)
   option.classList.add(isCorrect ? "bg-green-50" : "bg-red-50")
   option.setAttribute("aria-invalid", isCorrect ? "false" : "true")
 }
@@ -276,6 +286,23 @@ export function initializeQuizActivity(): (() => void) | null {
     option.addEventListener("keydown", onKey)
     option.setAttribute("role", "radio")
     option.setAttribute("aria-checked", "false")
+
+    // Arrow-key navigation between native radios fires `change` on the new
+    // radio without firing `click` on its label. Listen here too so keyboard
+    // users actually see selection state update.
+    const innerRadio = option.querySelector<HTMLInputElement>(
+      'input[type="radio"]',
+    )
+    if (innerRadio) {
+      const onChange = () => {
+        if (innerRadio.checked) handleSelect(option)
+      }
+      innerRadio.addEventListener("change", onChange)
+      listeners.push(() =>
+        innerRadio.removeEventListener("change", onChange),
+      )
+    }
+
     listeners.push(() => {
       option.removeEventListener("click", onClick)
       option.removeEventListener("keydown", onKey)

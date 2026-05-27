@@ -149,4 +149,120 @@ describe("initializeQuizActivity — embedded activity_multiple_choice", () => {
     // Next page exists in the page list above (pg003_sec001), so enabled.
     expect(store.get(submitEnabledAtom)).toBe(true)
   })
+
+  it("applies a visible selection highlight on the picked option label", () => {
+    setupMultipleChoice()
+    initializeQuizActivity()
+
+    const opt1 = document
+      .querySelector<HTMLInputElement>("input[data-activity-item='item-1']")!
+      .closest<HTMLElement>(".activity-option")!
+    opt1.click()
+    expect(opt1.classList.contains("ring-2")).toBe(true)
+    expect(opt1.classList.contains("ring-blue-400")).toBe(true)
+    expect(opt1.classList.contains("bg-blue-50")).toBe(true)
+
+    // Switching to a different option moves the highlight, doesn't accumulate.
+    const opt2 = document
+      .querySelector<HTMLInputElement>("input[data-activity-item='item-2']")!
+      .closest<HTMLElement>(".activity-option")!
+    opt2.click()
+    expect(opt1.classList.contains("ring-2")).toBe(false)
+    expect(opt2.classList.contains("ring-2")).toBe(true)
+  })
+
+  it("strips the selection highlight on validation so green/red can show through", () => {
+    setupMultipleChoice()
+    initializeQuizActivity()
+
+    const opt = document
+      .querySelector<HTMLInputElement>("input[data-activity-item='item-1']")!
+      .closest<HTMLElement>(".activity-option")!
+    opt.click()
+    store.get(validateHandlerAtom)?.()
+    expect(opt.classList.contains("ring-2")).toBe(false)
+    expect(opt.classList.contains("bg-blue-50")).toBe(false)
+    expect(opt.classList.contains("bg-green-50")).toBe(true)
+  })
+
+  it("syncs selection state when the inner radio fires `change` (arrow-key navigation)", () => {
+    setupMultipleChoice()
+    initializeQuizActivity()
+
+    const radio2 = document.querySelector<HTMLInputElement>(
+      "input[data-activity-item='item-2']",
+    )!
+    radio2.checked = true
+    radio2.dispatchEvent(new Event("change", { bubbles: true }))
+
+    const opt2 = radio2.closest<HTMLElement>(".activity-option")!
+    expect(opt2.classList.contains("ring-2")).toBe(true)
+    expect(store.get(submitEnabledAtom)).toBe(true)
+
+    // Validation runs against the keyboard-selected option.
+    store.get(validateHandlerAtom)?.()
+    expect(store.get(submitStateAtom)).toBe("submit") // item-2 is the wrong answer
+  })
+
+  it("handles image-only option labels (no inner text)", () => {
+    document.body.innerHTML = `
+      <section data-section-type="activity_multiple_choice" data-section-id="pg002_sec010">
+        <div role="group">
+          <p>Pick the right image.</p>
+          <label class="activity-option">
+            <input type="radio" name="q1" value="item-1" data-activity-item="item-1" class="sr-only" />
+            <img data-id="img-1" src="images/a.png" alt="A" style="width:100%" />
+            <div class="feedback-container hidden"><div><span class="feedback-icon"></span><span class="feedback-text"></span></div></div>
+          </label>
+          <label class="activity-option">
+            <input type="radio" name="q1" value="item-2" data-activity-item="item-2" class="sr-only" />
+            <img data-id="img-2" src="images/b.png" alt="B" style="width:100%" />
+            <div class="feedback-container hidden"><div><span class="feedback-icon"></span><span class="feedback-text"></span></div></div>
+          </label>
+        </div>
+      </section>
+    `
+    window.correctAnswers = { "item-1": true, "item-2": false }
+    initializeQuizActivity()
+
+    const correctImgOpt = document
+      .querySelector<HTMLInputElement>("input[data-activity-item='item-1']")!
+      .closest<HTMLElement>(".activity-option")!
+    correctImgOpt.click()
+    expect(correctImgOpt.classList.contains("ring-2")).toBe(true)
+
+    store.get(validateHandlerAtom)?.()
+    expect(store.get(submitStateAtom)).toBe("next")
+  })
+
+  it("handles option labels that mix an image and a text label", () => {
+    document.body.innerHTML = `
+      <section data-section-type="activity_multiple_choice" data-section-id="pg002_sec011">
+        <div role="group">
+          <p>Pick the right one.</p>
+          <label class="activity-option">
+            <input type="radio" name="q1" value="item-1" data-activity-item="item-1" class="sr-only" />
+            <img data-id="img-1" src="images/a.png" alt="" style="width:100%" />
+            <span data-id="text-1">Caption A</span>
+            <div class="feedback-container hidden"><div><span class="feedback-icon"></span><span class="feedback-text"></span></div></div>
+          </label>
+          <label class="activity-option">
+            <input type="radio" name="q1" value="item-2" data-activity-item="item-2" class="sr-only" />
+            <img data-id="img-2" src="images/b.png" alt="" style="width:100%" />
+            <span data-id="text-2">Caption B</span>
+            <div class="feedback-container hidden"><div><span class="feedback-icon"></span><span class="feedback-text"></span></div></div>
+          </label>
+        </div>
+      </section>
+    `
+    window.correctAnswers = { "item-1": false, "item-2": true }
+    initializeQuizActivity()
+
+    // Click on the image inside the label — should still register selection
+    // on the parent .activity-option via event bubbling.
+    const img = document.querySelector<HTMLImageElement>("img[data-id='img-2']")!
+    img.closest<HTMLElement>(".activity-option")!.click()
+    store.get(validateHandlerAtom)?.()
+    expect(store.get(submitStateAtom)).toBe("next")
+  })
 })
