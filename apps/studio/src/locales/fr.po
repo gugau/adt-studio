@@ -2946,6 +2946,9 @@ msgstr "Chargement du livre..."
 msgid "Loading books..."
 msgstr "Chargement des livres..."
 
+msgid "Loading export..."
+msgstr "Chargement de l'exportation..."
+
 msgid "Loading glossary..."
 msgstr "Chargement du glossaire..."
 
@@ -3008,6 +3011,9 @@ msgstr "Chargement du modèle..."
 
 msgid "Loading text catalog..."
 msgstr "Chargement du catalogue de texte..."
+
+msgid "Loading validation..."
+msgstr "Chargement de la validation..."
 
 msgid "Loading voice mappings..."
 msgstr "Chargement des correspondances de voix..."

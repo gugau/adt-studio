@@ -2944,6 +2944,9 @@ msgstr "Loading Book..."
 msgid "Loading books..."
 msgstr "Loading books..."
 
+msgid "Loading export..."
+msgstr "Loading export..."
+
 msgid "Loading glossary..."
 msgstr "Loading glossary..."
 
@@ -3006,6 +3009,9 @@ msgstr "Loading template..."
 
 msgid "Loading text catalog..."
 msgstr "Loading text catalog..."
+
+msgid "Loading validation..."
+msgstr "Loading validation..."
 
 msgid "Loading voice mappings..."
 msgstr "Loading voice mappings..."
