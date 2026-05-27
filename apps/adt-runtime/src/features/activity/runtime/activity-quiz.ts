@@ -11,6 +11,7 @@ import {
   validateHandlerAtom,
 } from "@/features/activity/state/activity.atoms"
 import { playActivitySound } from "@/features/activity/runtime/sounds"
+import { showActivityProgressToast } from "@/features/activity/lib/progress-toast"
 
 /**
  * Quiz (standalone `activity_quiz` page) and in-page `activity_multiple_choice`
@@ -156,16 +157,16 @@ function clearMcBadge(option: HTMLElement): void {
 
 /**
  * Pick the most "anchor-like" child of an option to dock the status badge
- * against. Prefers the A/B/C/D letter circle when present, then any radio
- * input, then the option itself. This keeps the badge close to the visible
- * affordance even when the option is a full-row label that would otherwise
- * push the badge hundreds of pixels to the right.
+ * against. Prefers the visible A/B/C/D letter circle when present; otherwise
+ * falls back to the option's own bounding box (top-right corner). We
+ * deliberately don't anchor to the radio input — it's almost always
+ * `sr-only` with unreliable rendered position, and on inline pills the
+ * sr-only radio sits centered inside the pill, dragging the badge across
+ * the answer text.
  */
 function findBadgeAnchor(option: HTMLElement): HTMLElement {
   const letter = option.querySelector<HTMLElement>(".option-letter")
   if (letter) return letter
-  const radio = option.querySelector<HTMLElement>('input[type="radio"]')
-  if (radio) return radio
   return option
 }
 
@@ -449,9 +450,12 @@ export function initializeQuizActivity(): (() => void) | null {
     // is correct — partial successes stay in submit so the user can fix wrong
     // picks or fill missing ones.
     let allCorrect = true
+    let correctCount = 0
+    let unansweredCount = 0
     for (const group of groups) {
       if (!group.selected) {
         allCorrect = false
+        unansweredCount++
         continue
       }
       const itemId = getOptionItemId(group.selected)
@@ -463,10 +467,22 @@ export function initializeQuizActivity(): (() => void) | null {
       applyValidationStyle(group.selected, isCorrect, isStandaloneQuiz)
       showFeedback(group.selected, isCorrect, isStandaloneQuiz)
       group.validated = true
-      if (!isCorrect) allCorrect = false
+      if (isCorrect) correctCount++
+      else allCorrect = false
     }
 
     playActivitySound(allCorrect ? "success" : "error")
+
+    // Summary toast for multiple-choice. Standalone quiz keeps its
+    // per-option text feedback ("Great job!") and skips the toast to avoid
+    // duplicating the message.
+    if (!isStandaloneQuiz) {
+      showActivityProgressToast({
+        total: groups.length,
+        correct: correctCount,
+        unfilled: unansweredCount,
+      })
+    }
 
     if (allCorrect) {
       store.set(confettiTriggerAtom, store.get(confettiTriggerAtom) + 1)
