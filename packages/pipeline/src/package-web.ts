@@ -1108,13 +1108,13 @@ ${fallbackHeadingHtml}${contentBlock}
       : ""
   }
 
-  // In embed mode, hide the reader chrome (sidebar, page nav, etc.) but keep
-  // #nav-container visible — the React activity dock (submit button) renders
-  // there. NavRoot reads <body data-embed="1"> and skips BottomDock, so the
-  // dock container only ends up holding the activity actions.
+  // In embed mode, hide non-essential chrome. The React runtime mounts the
+  // activity Submit/Skip buttons inside #nav-container, so it must stay
+  // visible — BottomDock self-hides via embedModeAtom (see ui.atoms.ts).
   const embedStyles = opts.embed
     ? `
     <style>
+      /* Hide navigation, sidebar, and other chrome in embed mode */
       #back-forward-buttons, #nav-popup,
       #open-sidebar, #sidebar, #tts-quick-toggle-button, #play-bar,
       #sl-quick-toggle-button, #sign-language-video,
@@ -1136,7 +1136,7 @@ ${fallbackHeadingHtml}${contentBlock}
     <link href="./assets/fonts.css" rel="stylesheet">
 ${mathScript}${embedStyles}</head>
 
-<body${opts.embed ? ' data-embed="1"' : ""}${opts.fixedViewport ? ` style="margin:0;overflow:hidden;width:${opts.fixedViewport.width}px;height:${opts.fixedViewport.height}px"` : ` class="min-h-screen flex items-center justify-center"${bodyStyle}`}>
+<body${opts.fixedViewport ? ` style="margin:0;overflow:hidden;width:${opts.fixedViewport.width}px;height:${opts.fixedViewport.height}px"` : ` class="min-h-screen flex items-center justify-center"${bodyStyle}`}>
 ${mainBlock}
 ${answersScript}
     <div class="relative z-50" id="interface-container"></div>

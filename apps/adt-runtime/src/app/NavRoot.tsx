@@ -14,22 +14,13 @@ import { Dock } from "@/features/dock/components/Dock";
  * Wrapped in its own `TooltipProvider` because ChromeRoot is a separate
  * React tree — context doesn't cross root boundaries, so each root needs
  * its own provider.
- *
- * In embed mode (server sets `<body data-embed="1">` for the storyboard's
- * "Try activity" iframe), the reader chrome is hidden but the activity dock
- * stays so users can submit. Read once on render — the attribute is
- * server-rendered and won't change at runtime.
  */
 export function NavRoot() {
-  const isEmbed =
-    typeof document !== "undefined" &&
-    document.body.getAttribute("data-embed") === "1";
-
   return (
     <TooltipProvider delay={300} closeDelay={120}>
       <Dock>
         <ActivityDock />
-        {!isEmbed && <BottomDock />}
+        <BottomDock />
       </Dock>
       <ActivityConfetti />
     </TooltipProvider>

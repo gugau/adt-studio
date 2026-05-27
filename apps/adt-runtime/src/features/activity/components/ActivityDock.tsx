@@ -4,25 +4,17 @@ import { useTranslation } from "@/features/language/hooks/useTranslation";
 import { useAtomValue } from "jotai";
 import { activityModeAtom } from "@/features/activity/state/activity.atoms";
 import { useDockContext } from "@/features/dock/context/dock-context";
+import { embedModeAtom } from "@/shared/state/ui.atoms";
 
 export function ActivityDock() {
   const { t } = useTranslation();
   const { isCompact, shouldHide, isTop } = useDockContext();
   const activityMode = useAtomValue(activityModeAtom);
-
-  // In embed mode (storyboard "Try activity" iframe) there is no BottomDock
-  // below us, so sit flush near the iframe edge instead of leaving room for
-  // chrome that isn't there.
-  const isEmbed =
-    typeof document !== "undefined" &&
-    document.body.getAttribute("data-embed") === "1";
-
-  const topClassname = isEmbed ? "top-3" : isCompact ? "top-21" : "top-18";
-  const bottomClassname = isEmbed
-    ? "bottom-3"
-    : isCompact
-      ? "bottom-21"
-      : "bottom-18";
+  const embed = useAtomValue(embedModeAtom);
+  // In embed mode the BottomDock is hidden, so sit flush near the edge
+  // instead of leaving room above the (absent) reader dock.
+  const topClassname = embed ? "top-3" : isCompact ? "top-21" : "top-18";
+  const bottomClassname = embed ? "bottom-3" : isCompact ? "bottom-21" : "bottom-18";
 
   if (!activityMode) return null;
 
