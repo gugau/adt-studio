@@ -205,7 +205,6 @@ export function applyFeedback(
   if (kind === "gibberish") input.setAttribute("data-has-gibberish-feedback", "true")
   if (kind === "profanity") input.setAttribute("data-has-profanity-feedback", "true")
 
-  input.style.paddingRight = "30px"
   attachIcon(input, kind, style)
 
   if (style.text) {
@@ -237,6 +236,16 @@ function attachIcon(
   wrapper.style.position = "absolute"
   wrapper.style.pointerEvents = "none"
   wrapper.style.zIndex = "10"
+  // Badge sizing — the icon glyph (fa-check-circle / fa-times-circle) is solid
+  // and renders at font-size. Keep it small so it reads as a corner badge.
+  const BADGE_SIZE = 16
+  wrapper.style.fontSize = `${BADGE_SIZE}px`
+  wrapper.style.lineHeight = "1"
+  // White circular backdrop — the FA "circle" icons carve out the check/times
+  // shape, so without a backdrop the carved area shows whatever's behind (the
+  // letter the learner typed, in one-character blanks).
+  wrapper.style.background = "white"
+  wrapper.style.borderRadius = "9999px"
   wrapper.setAttribute("data-feedback-kind", kind)
 
   const i = document.createElement("i")
@@ -244,12 +253,14 @@ function attachIcon(
   i.setAttribute("aria-hidden", "true")
   wrapper.appendChild(i)
 
-  // Position the icon at the right edge of the input. Use getBoundingClientRect
-  // relative to the parent so it survives layout shifts from added text.
+  // Position the icon as a badge half-overhanging the input's top-right
+  // corner so it never covers the typed value, even for one-letter blanks.
+  // Use getBoundingClientRect relative to the parent so it survives layout
+  // shifts from added feedback text.
   const rect = input.getBoundingClientRect()
   const parentRect = parent.getBoundingClientRect()
-  wrapper.style.top = `${rect.top - parentRect.top + (rect.height - 24) / 2}px`
-  wrapper.style.right = `${parentRect.right - rect.right + 10}px`
+  wrapper.style.top = `${rect.top - parentRect.top - BADGE_SIZE / 2}px`
+  wrapper.style.right = `${parentRect.right - rect.right - BADGE_SIZE / 2}px`
 
   if (window.getComputedStyle(parent).position === "static") {
     parent.style.position = "relative"
