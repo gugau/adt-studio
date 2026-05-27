@@ -39,6 +39,8 @@
     "fill-in-the-blank-correct-answer": "Great job!",
     "fill-in-the-blank-try-again": "Try again",
     "answers-submitted": "Your answers have been submitted to your teacher!",
+    "open-ended-progress-complete": "complete",
+    "open-ended-all-saved": "Your responses have been saved",
     "correct-answer": "Great job! Your answer is correct.",
     "retry": "Retry",
     "fill-in-the-blank-not-complete": "Please fill all fields. ${unfilledCount} blank left.",

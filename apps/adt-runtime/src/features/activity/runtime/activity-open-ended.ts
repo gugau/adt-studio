@@ -231,11 +231,18 @@ export function initializeOpenEndedActivity(): (() => void) | null {
     const allAccepted = total > 0 && cleanCount === total
 
     playActivitySound(allAccepted ? "success" : "error")
-    showActivityProgressToast({
-      total,
-      correct: cleanCount,
-      unfilled: emptyCount,
-    })
+    // Open-ended doesn't grade for "correct"-ness — there's no answer key. Use
+    // "complete" in the progress count and "saved" in the success message.
+    showActivityProgressToast(
+      { total, correct: cleanCount, unfilled: emptyCount },
+      {
+        correctLabel: tr("open-ended-progress-complete", "complete"),
+        allCorrectMessage: tr(
+          "open-ended-all-saved",
+          "Your responses have been saved",
+        ),
+      },
+    )
 
     if (allAccepted) {
       announceToScreenReader(
