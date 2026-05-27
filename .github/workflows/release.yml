@@ -9,6 +9,13 @@ on:
         description: 'Release tag (e.g. v0.8.0)'
         required: true
 
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   prepare:
     # Only run on RELEASE: <tag> commits or on a manual dispatch.
@@ -28,9 +35,12 @@ jobs:
 
       - name: Extract tag
         id: tag
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            TAG="${{ inputs.tag }}"
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            TAG="$INPUT_TAG"
           else
             MSG=$(git log -1 --pretty=%s)
             TAG=$(printf '%s\n' "$MSG" | sed -nE 's/^RELEASE:[[:space:]]*([^[:space:]]+).*/\1/p')
@@ -40,6 +50,12 @@ jobs:
             exit 1
           fi
           [[ "$TAG" =~ ^v ]] || TAG="v$TAG"
+          # Validate charset before propagating downstream. This both rejects
+          # malformed tags and blocks shell / GITHUB_OUTPUT injection via the tag.
+          if [[ ! "$TAG" =~ ^v[0-9A-Za-z.+_-]+$ ]]; then
+            echo "::error::Invalid tag format: $TAG"
+            exit 1
+          fi
           VERSION="${TAG#v}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
@@ -53,13 +69,19 @@ jobs:
           cache: pnpm
 
       - name: Update issue template version dropdowns
-        run: node scripts/update-issue-template-versions.mjs "${{ steps.tag.outputs.tag }}"
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: node scripts/update-issue-template-versions.mjs "$TAG"
 
       - name: Bump apps/desktop package.json
-        run: npm pkg set version="${{ steps.tag.outputs.version }}" --workspace @adt/desktop
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: npm pkg set version="$VERSION" --workspace @adt/desktop
 
       - name: Commit release metadata and push tag
         id: commit
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -67,11 +89,11 @@ jobs:
           if git diff --staged --quiet; then
             echo "No metadata changes to commit."
           else
-            git commit -m "chore(release): ${{ steps.tag.outputs.tag }}"
+            git commit -m "chore(release): $TAG"
             git push origin HEAD:main
           fi
-          git tag -f "${{ steps.tag.outputs.tag }}"
-          git push origin "${{ steps.tag.outputs.tag }}" --force
+          git tag -f "$TAG"
+          git push origin "$TAG" --force
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
   desktop:
@@ -165,38 +187,45 @@ jobs:
       - name: Ensure GitHub release exists
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          REPO: ${{ github.repository }}
         run: |
-          TAG="${{ needs.prepare.outputs.tag }}"
-          gh release view "$TAG" --repo ${{ github.repository }} 2>/dev/null || \
-            gh release create "$TAG" --repo ${{ github.repository }} --title "ADT Studio $TAG" --notes ""
+          gh release view "$TAG" --repo "$REPO" 2>/dev/null || \
+            gh release create "$TAG" --repo "$REPO" --title "ADT Studio $TAG" --notes ""
 
       - name: Generate standalone docker-compose.yml
+        env:
+          TAG: ${{ needs.prepare.outputs.tag }}
         run: |
-          TAG="${{ needs.prepare.outputs.tag }}"
           sed "s/__TAG__/${TAG}/g" docker/compose-release.yml.template > docker-compose.yml
 
       - name: Upload docker-compose.yml to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          REPO: ${{ github.repository }}
         run: |
-          gh release upload ${{ needs.prepare.outputs.tag }} docker-compose.yml \
-            --repo ${{ github.repository }} \
+          gh release upload "$TAG" docker-compose.yml \
+            --repo "$REPO" \
             --clobber
 
       - name: Upload launcher scripts to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          REPO: ${{ github.repository }}
         run: |
-          gh release upload ${{ needs.prepare.outputs.tag }} scripts/windows-setup-and-run.bat \
-            --repo ${{ github.repository }} \
+          gh release upload "$TAG" scripts/windows-setup-and-run.bat \
+            --repo "$REPO" \
             --clobber
 
       - name: Generate release notes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          REPO: ${{ github.repository }}
         run: |
-          TAG="${{ needs.prepare.outputs.tag }}"
-          NOTES=$(gh api repos/${{ github.repository }}/releases/generate-notes \
+          NOTES=$(gh api repos/"$REPO"/releases/generate-notes \
             -f tag_name="$TAG" \
             --jq '.body')
           gh release edit "$TAG" --notes "$NOTES"
