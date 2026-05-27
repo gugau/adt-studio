@@ -31,6 +31,10 @@ export const themeAtom = persistedStringAtom("theme", "dark")
 
 export const dockReadyAtom = ephemeralAtom(false)
 export const dockHiddenAtom = ephemeralAtom(false)
+// True when the runtime is mounted inside a `?embed=1` preview iframe (e.g.
+// the Studio storyboard activity preview). BottomDock hides itself so only
+// the activity Submit/Skip controls remain visible.
+export const embedModeAtom = ephemeralAtom(false)
 export const sidebarOpenAtom = ephemeralAtom(false)
 export const navOpenAtom = ephemeralAtom(false)
 export const navScrollPositionAtom = ephemeralAtom(0)
