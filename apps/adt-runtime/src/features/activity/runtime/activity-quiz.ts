@@ -94,12 +94,10 @@ function getOptionItemId(option: HTMLElement): string | null {
   )
 }
 
-// Tailwind classes that give every kind of option (text-only, image-only,
-// image-plus-text) a visible "this is what I picked" state. The standalone
-// quiz template also bakes `.selected-option { ... }` into its inline CSS,
-// but in-page multiple-choice sections rely on the LLM's classes only — so
-// without these utilities the radio is `sr-only` and the user has no visual
-// feedback that the click registered.
+// Standalone-quiz selection styling. The standalone quiz template bakes
+// `.selected-option { ... }` into its inline CSS; these utility classes are
+// the runtime supplement that gives the same visual identity for image-only
+// or image-plus-text option layouts.
 const SELECTION_HIGHLIGHT_CLASSES = ["ring-2", "ring-blue-400", "bg-blue-50"]
 const VERDICT_CLASSES = [
   "bg-green-50",
@@ -107,6 +105,90 @@ const VERDICT_CLASSES = [
   "border-green-500",
   "border-red-500",
 ]
+
+// Multiple-choice (embedded `activity_multiple_choice`) visual states. The
+// runtime owns these so the look is consistent regardless of how the LLM
+// laid out the option (image card, text row, inline pill). Class definitions
+// live in `assets/adt/tailwind_css.css`.
+const MC_SELECTED_CLASS = "activity-option-selected"
+const MC_CORRECT_CLASS = "activity-option-correct"
+const MC_INCORRECT_CLASS = "activity-option-incorrect"
+const MC_BADGE_ATTR = "data-mc-status-badge"
+
+function clearMcBadge(option: HTMLElement): void {
+  option
+    .querySelectorAll<HTMLElement>(`[${MC_BADGE_ATTR}]`)
+    .forEach((b) => b.remove())
+}
+
+/**
+ * Inject a small green/red badge with a check or cross icon at the option's
+ * top-right corner. This is the non-color WCAG 1.4.1 cue that pairs with the
+ * outline color — even if the learner can't perceive the green/red outline,
+ * the icon shape says "correct" or "incorrect" plainly.
+ */
+function attachMcBadge(option: HTMLElement, isCorrect: boolean): void {
+  clearMcBadge(option)
+  const badge = document.createElement("span")
+  badge.setAttribute(MC_BADGE_ATTR, isCorrect ? "correct" : "incorrect")
+  badge.setAttribute(
+    "aria-label",
+    isCorrect
+      ? tr("multiple-choice-correct-answer", "Correct")
+      : tr("multiple-choice-try-again", "Incorrect"),
+  )
+  badge.setAttribute("role", "status")
+  // Inline styles so the badge doesn't depend on additional CSS classes.
+  badge.style.position = "absolute"
+  badge.style.top = "-10px"
+  badge.style.right = "-10px"
+  badge.style.width = "22px"
+  badge.style.height = "22px"
+  badge.style.borderRadius = "9999px"
+  badge.style.display = "flex"
+  badge.style.alignItems = "center"
+  badge.style.justifyContent = "center"
+  badge.style.fontSize = "12px"
+  badge.style.color = "white"
+  badge.style.zIndex = "10"
+  badge.style.pointerEvents = "none"
+  badge.style.background = isCorrect ? "rgb(22, 163, 74)" : "rgb(220, 38, 38)"
+  badge.style.boxShadow = "0 1px 3px rgba(0,0,0,0.2)"
+
+  const icon = document.createElement("i")
+  icon.className = isCorrect ? "fas fa-check" : "fas fa-times"
+  icon.setAttribute("aria-hidden", "true")
+  badge.appendChild(icon)
+
+  // Option must establish a positioning context for the absolute badge.
+  if (window.getComputedStyle(option).position === "static") {
+    option.style.position = "relative"
+  }
+  option.appendChild(badge)
+}
+
+/**
+ * Locate the option's `.feedback-container`. If the LLM didn't emit one,
+ * inject one at the end of the option so feedback always sits on its own
+ * line below the option content (LLM-emitted containers sometimes end up
+ * inside a flex row and squash sideways).
+ */
+function ensureMcFeedbackContainer(option: HTMLElement): HTMLElement {
+  let container = option.querySelector<HTMLElement>(".feedback-container")
+  if (!container) {
+    container = document.createElement("div")
+    container.className = "feedback-container mt-2"
+    const text = document.createElement("div")
+    text.className = "feedback-text"
+    container.appendChild(text)
+    option.appendChild(container)
+  }
+  // Force block + full-width so the feedback line never gets eaten by an
+  // ambient flex layout.
+  container.style.display = "block"
+  container.style.width = "100%"
+  return container
+}
 
 interface QuestionGroup {
   key: string
@@ -143,16 +225,20 @@ function findGroupForOption(
   return groups.find((g) => g.key === key) ?? null
 }
 
-function clearOptionState(option: HTMLElement): void {
+function clearOptionState(option: HTMLElement, isStandaloneQuiz: boolean): void {
   option.classList.remove(
     "selected-option",
     ...SELECTION_HIGHLIGHT_CLASSES,
     ...VERDICT_CLASSES,
+    MC_SELECTED_CLASS,
+    MC_CORRECT_CLASS,
+    MC_INCORRECT_CLASS,
   )
   option.removeAttribute("aria-invalid")
   option.setAttribute("aria-checked", "false")
   const input = option.querySelector<HTMLInputElement>('input[type="radio"]')
   if (input) input.checked = false
+  if (!isStandaloneQuiz) clearMcBadge(option)
   const feedback = option.querySelector<HTMLElement>(".feedback-container")
   if (feedback) {
     feedback.classList.add("hidden")
@@ -164,31 +250,59 @@ function clearOptionState(option: HTMLElement): void {
   }
 }
 
-function clearGroupStyles(group: QuestionGroup): void {
-  group.options.forEach(clearOptionState)
+function clearGroupStyles(group: QuestionGroup, isStandaloneQuiz: boolean): void {
+  group.options.forEach((opt) => clearOptionState(opt, isStandaloneQuiz))
 }
 
-function markSelection(option: HTMLElement, group: QuestionGroup): void {
-  clearGroupStyles(group)
-  option.classList.add("selected-option", ...SELECTION_HIGHLIGHT_CLASSES)
+function markSelection(
+  option: HTMLElement,
+  group: QuestionGroup,
+  isStandaloneQuiz: boolean,
+): void {
+  clearGroupStyles(group, isStandaloneQuiz)
+  if (isStandaloneQuiz) {
+    option.classList.add("selected-option", ...SELECTION_HIGHLIGHT_CLASSES)
+  } else {
+    option.classList.add(MC_SELECTED_CLASS)
+  }
   option.setAttribute("aria-checked", "true")
   const input = option.querySelector<HTMLInputElement>('input[type="radio"]')
   if (input) input.checked = true
 }
 
-function applyValidationStyle(option: HTMLElement, isCorrect: boolean): void {
-  // Strip the blue selection ring so it doesn't fight the green/red verdict.
-  option.classList.remove("selected-option", ...SELECTION_HIGHLIGHT_CLASSES)
-  option.classList.add(isCorrect ? "bg-green-50" : "bg-red-50")
+function applyValidationStyle(
+  option: HTMLElement,
+  isCorrect: boolean,
+  isStandaloneQuiz: boolean,
+): void {
+  if (isStandaloneQuiz) {
+    // Strip the blue selection ring so it doesn't fight the green/red verdict.
+    option.classList.remove("selected-option", ...SELECTION_HIGHLIGHT_CLASSES)
+    option.classList.add(isCorrect ? "bg-green-50" : "bg-red-50")
+  } else {
+    option.classList.remove(MC_SELECTED_CLASS)
+    option.classList.add(isCorrect ? MC_CORRECT_CLASS : MC_INCORRECT_CLASS)
+    attachMcBadge(option, isCorrect)
+  }
   option.setAttribute("aria-invalid", isCorrect ? "false" : "true")
 }
 
-function showFeedback(option: HTMLElement, isCorrect: boolean): void {
-  const container = option.querySelector<HTMLElement>(".feedback-container")
+function showFeedback(
+  option: HTMLElement,
+  isCorrect: boolean,
+  isStandaloneQuiz: boolean,
+): void {
+  const container = isStandaloneQuiz
+    ? option.querySelector<HTMLElement>(".feedback-container")
+    : ensureMcFeedbackContainer(option)
   if (!container) return
   container.classList.remove("hidden")
-  const text = container.querySelector<HTMLElement>(".feedback-text")
-  if (!text) return
+  let text = container.querySelector<HTMLElement>(".feedback-text")
+  if (!text) {
+    text = document.createElement("div")
+    text.className = "feedback-text"
+    container.appendChild(text)
+  }
   const explanation = resolveExplanation(option)
   text.textContent =
     explanation ||
@@ -269,8 +383,8 @@ export function initializeQuizActivity(): (() => void) | null {
   const handleSelect = (option: HTMLElement) => {
     const group = findGroupForOption(groups, option)
     if (!group) return
-    if (group.validated) clearGroupStyles(group)
-    markSelection(option, group)
+    if (group.validated) clearGroupStyles(group, isStandaloneQuiz)
+    markSelection(option, group, isStandaloneQuiz)
     playActivitySound("drop")
     group.selected = option
     group.validated = false
@@ -306,8 +420,8 @@ export function initializeQuizActivity(): (() => void) | null {
         continue
       }
       const isCorrect = Boolean(correctAnswers[itemId])
-      applyValidationStyle(group.selected, isCorrect)
-      showFeedback(group.selected, isCorrect)
+      applyValidationStyle(group.selected, isCorrect, isStandaloneQuiz)
+      showFeedback(group.selected, isCorrect, isStandaloneQuiz)
       group.validated = true
       if (!isCorrect) allCorrect = false
     }
@@ -400,7 +514,11 @@ export function initializeQuizActivity(): (() => void) | null {
       if (!group.validated || !group.selected) continue
       const itemId = getOptionItemId(group.selected)
       if (!itemId) continue
-      showFeedback(group.selected, Boolean(correctAnswers[itemId]))
+      showFeedback(
+        group.selected,
+        Boolean(correctAnswers[itemId]),
+        isStandaloneQuiz,
+      )
     }
   })
 

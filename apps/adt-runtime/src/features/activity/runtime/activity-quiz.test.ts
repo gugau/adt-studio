@@ -158,20 +158,18 @@ describe("initializeQuizActivity — embedded activity_multiple_choice", () => {
       .querySelector<HTMLInputElement>("input[data-activity-item='item-1']")!
       .closest<HTMLElement>(".activity-option")!
     opt1.click()
-    expect(opt1.classList.contains("ring-2")).toBe(true)
-    expect(opt1.classList.contains("ring-blue-400")).toBe(true)
-    expect(opt1.classList.contains("bg-blue-50")).toBe(true)
+    expect(opt1.classList.contains("activity-option-selected")).toBe(true)
 
     // Switching to a different option moves the highlight, doesn't accumulate.
     const opt2 = document
       .querySelector<HTMLInputElement>("input[data-activity-item='item-2']")!
       .closest<HTMLElement>(".activity-option")!
     opt2.click()
-    expect(opt1.classList.contains("ring-2")).toBe(false)
-    expect(opt2.classList.contains("ring-2")).toBe(true)
+    expect(opt1.classList.contains("activity-option-selected")).toBe(false)
+    expect(opt2.classList.contains("activity-option-selected")).toBe(true)
   })
 
-  it("strips the selection highlight on validation so green/red can show through", () => {
+  it("strips the selection highlight on validation and applies the correct/incorrect state class", () => {
     setupMultipleChoice()
     initializeQuizActivity()
 
@@ -180,9 +178,23 @@ describe("initializeQuizActivity — embedded activity_multiple_choice", () => {
       .closest<HTMLElement>(".activity-option")!
     opt.click()
     store.get(validateHandlerAtom)?.()
-    expect(opt.classList.contains("ring-2")).toBe(false)
-    expect(opt.classList.contains("bg-blue-50")).toBe(false)
-    expect(opt.classList.contains("bg-green-50")).toBe(true)
+    expect(opt.classList.contains("activity-option-selected")).toBe(false)
+    expect(opt.classList.contains("activity-option-correct")).toBe(true)
+  })
+
+  it("injects a status badge for correct/incorrect verdicts (non-color cue)", () => {
+    setupMultipleChoice()
+    initializeQuizActivity()
+
+    const correctOpt = document
+      .querySelector<HTMLInputElement>("input[data-activity-item='item-1']")!
+      .closest<HTMLElement>(".activity-option")!
+    correctOpt.click()
+    store.get(validateHandlerAtom)?.()
+    const badge = correctOpt.querySelector("[data-mc-status-badge]")
+    expect(badge).not.toBeNull()
+    expect(badge?.getAttribute("data-mc-status-badge")).toBe("correct")
+    expect(badge?.querySelector(".fa-check")).not.toBeNull()
   })
 
   it("syncs selection state when the inner radio fires `change` (arrow-key navigation)", () => {
@@ -196,7 +208,7 @@ describe("initializeQuizActivity — embedded activity_multiple_choice", () => {
     radio2.dispatchEvent(new Event("change", { bubbles: true }))
 
     const opt2 = radio2.closest<HTMLElement>(".activity-option")!
-    expect(opt2.classList.contains("ring-2")).toBe(true)
+    expect(opt2.classList.contains("activity-option-selected")).toBe(true)
     expect(store.get(submitEnabledAtom)).toBe(true)
 
     // Validation runs against the keyboard-selected option.
@@ -229,7 +241,7 @@ describe("initializeQuizActivity — embedded activity_multiple_choice", () => {
       .querySelector<HTMLInputElement>("input[data-activity-item='item-1']")!
       .closest<HTMLElement>(".activity-option")!
     correctImgOpt.click()
-    expect(correctImgOpt.classList.contains("ring-2")).toBe(true)
+    expect(correctImgOpt.classList.contains("activity-option-selected")).toBe(true)
 
     store.get(validateHandlerAtom)?.()
     expect(store.get(submitStateAtom)).toBe("next")
@@ -292,10 +304,10 @@ describe("initializeQuizActivity — embedded activity_multiple_choice", () => {
 
     // Picking in q1 should NOT clear q2 and vice versa.
     q1a.click()
-    expect(q1a.classList.contains("ring-2")).toBe(true)
+    expect(q1a.classList.contains("activity-option-selected")).toBe(true)
     q2b.click()
-    expect(q1a.classList.contains("ring-2")).toBe(true) // still selected
-    expect(q2b.classList.contains("ring-2")).toBe(true)
+    expect(q1a.classList.contains("activity-option-selected")).toBe(true) // still selected
+    expect(q2b.classList.contains("activity-option-selected")).toBe(true)
     expect(store.get(submitEnabledAtom)).toBe(true)
 
     store.get(validateHandlerAtom)?.()
