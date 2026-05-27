@@ -14,6 +14,7 @@ import {
   translationsAtom,
   videoFilesAtom,
 } from "@/features/language/state/language.atoms"
+import { rebuildSegmentedInnerHtml } from "@/shared/lib/fl-segments"
 
 async function safeJsonFetch<T = unknown>(
   url: string,
@@ -147,15 +148,20 @@ export function applyTranslationsToDOM(
     elements.forEach((el) => {
       if (el.tagName === "IMG") {
         el.setAttribute("alt", text)
-      } else {
-        if ((el as HTMLElement).hasAttribute("data-tts-original-html")) {
-          ;(el as HTMLElement).setAttribute(
-            "data-tts-original-html",
-            renderedHtml,
-          )
-        }
-        ;(el as HTMLElement).innerHTML = renderedHtml
+        return
       }
+      // Fixed-layout paragraphs carry per-run styling on `data-segments`.
+      // Rebuild the styled-span tree from that JSON so font-family, color,
+      // size, weight, and stroke survive the text swap — straight innerHTML
+      // assignment would flatten them.
+      const segmentsAttr = (el as HTMLElement).getAttribute("data-segments")
+      const html = segmentsAttr
+        ? rebuildSegmentedInnerHtml(segmentsAttr, renderedHtml)
+        : renderedHtml
+      if ((el as HTMLElement).hasAttribute("data-tts-original-html")) {
+        ;(el as HTMLElement).setAttribute("data-tts-original-html", html)
+      }
+      ;(el as HTMLElement).innerHTML = html
     })
 
     const placeholders = document.querySelectorAll(
@@ -173,6 +179,17 @@ export function applyTranslationsToDOM(
   if (titleMeta) {
     const id = titleMeta.getAttribute("content")
     if (id && translations[id]) document.title = translations[id]
+  }
+
+  // Re-run fixed-layout auto-fit after rebuilding segment spans — the new
+  // elements have no `data-adt-fs` cache and the translated content has a
+  // different length than the source, so an earlier auto-fit pass against
+  // the original spans no longer reflects the rendered DOM. Double-rAF so
+  // we measure after the browser has laid out the new innerHTML.
+  const runAutoFit = (window as Window & { __adtRunAutoFit?: () => void })
+    .__adtRunAutoFit
+  if (typeof runAutoFit === "function") {
+    requestAnimationFrame(() => requestAnimationFrame(() => runAutoFit()))
   }
 }
 

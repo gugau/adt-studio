@@ -14,6 +14,8 @@ export interface ImageData {
   height: number
   /** How this image was produced: vector SVG render, page crop, or direct raster extraction */
   renderMethod?: RenderMethodValue
+  /** Placement on the page in PDF points (top-left origin), when known. */
+  bounds?: { x: number; y: number; width: number; height: number }
 }
 
 export interface NodeDataRow {

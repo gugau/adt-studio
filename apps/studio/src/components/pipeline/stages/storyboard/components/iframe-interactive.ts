@@ -123,6 +123,11 @@ export const INTERACTIVE_SCRIPT = `<script>
       type: 'text-changed',
       dataId: dataId,
       newText: newText,
+      // The element's edited innerHTML — contentEditable preserves any existing
+      // styled child spans (e.g. fixed-layout colour runs) as the user types
+      // within them. The parent splices this into the original LaTeX-form HTML
+      // so non-edited siblings keep LaTeX (not MathML).
+      editedInnerHtml: el.innerHTML,
       fullHtml: fullHtml
     }, '*');
   }

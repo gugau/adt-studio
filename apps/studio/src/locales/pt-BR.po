@@ -1352,6 +1352,9 @@ msgstr "Clique em uma imagem para selecionar"
 msgid "Click images to select"
 msgstr "Clique nas imagens para selecionar"
 
+msgid "Click Next to continue to language settings."
+msgstr "Clique em Avançar para continuar para as configurações de idioma."
+
 msgid "Click to edit"
 msgstr "Clique para editar"
 
@@ -2060,6 +2063,15 @@ msgstr "Insira um nome de projeto válido"
 #~ msgid "Enter hex color and press Enter"
 #~ msgstr "Digite uma cor hex e pressione Enter"
 
+msgid "EPUB"
+msgstr "EPUB"
+
+msgid "EPUB 3"
+msgstr "EPUB 3"
+
+msgid "EPUB Export"
+msgstr "Exportar EPUB"
+
 msgid "Error"
 msgstr "Erro"
 
@@ -2276,6 +2288,9 @@ msgstr "Layout Fixo"
 
 msgid "Fixed two-column template layout"
 msgstr "Layout fixo de duas colunas (template)"
+
+msgid "Fixed-layout books use the original page images as backgrounds with positioned text extracted from the PDF. Activities detection, figure extraction, and image cropping or segmentation don't apply to this layout."
+msgstr "Livros de layout fixo usam as imagens originais das páginas como fundo com texto posicionado extraído do PDF. Detecção de atividades, extração de figuras, recorte ou segmentação de imagens não se aplicam a este layout."
 
 msgid "flagged"
 msgstr "flagged"
@@ -3332,6 +3347,9 @@ msgstr "No changes flagged on this page"
 msgid "No colors found"
 msgstr "Nenhuma cor encontrada"
 
+msgid "No content processing needed"
+msgstr "Não é necessário processamento de conteúdo"
+
 msgid "No cover available"
 msgstr "Capa não disponível"
 
@@ -3596,6 +3614,9 @@ msgstr "Open a page to see page-level findings"
 msgid "Open edit panel"
 msgstr "Abrir painel de edição"
 
+msgid "Open in any EPUB 3 reader, e-reader, or accessibility tool."
+msgstr "Abra em qualquer leitor EPUB 3, leitor eletrônico ou ferramenta de acessibilidade."
+
 msgid "Open page preview for {pageId}"
 msgstr "Abrir pré-visualização da página {0}"
 
@@ -3782,6 +3803,9 @@ msgstr "Modo de agrupamento de páginas"
 msgid "Page image"
 msgstr "Imagem da página"
 
+msgid "Page image as background with positioned text overlay. Preserves the original page composition; ideal for illustrated storybooks."
+msgstr "Imagem da página como fundo com texto posicionado sobreposto. Preserva a composição original da página; ideal para livros ilustrados."
+
 msgid "Page Mode"
 msgstr "Modo de Página"
 
@@ -3954,6 +3978,13 @@ msgstr "Português (BR)"
 
 msgid "Position"
 msgstr "Posição"
+
+#. placeholder {0}: Math.round(bounds.x)
+#. placeholder {1}: Math.round(bounds.y)
+#. placeholder {2}: Math.round(bounds.width)
+#. placeholder {3}: Math.round(bounds.height)
+msgid "Position {0}, {1} → {2}×{3} pt"
+msgstr "Posição {0}, {1} → {2}×{3} pt"
 
 msgid "Práticas de Alfabetização e de Matemática"
 msgstr "Práticas de Alfabetização e de Matemática"
@@ -5053,6 +5084,12 @@ msgstr "Salpicando um pouco de pó mágico digital..."
 msgid "Standard"
 msgstr "Padrão"
 
+msgid "Standard e-book for readers & libraries"
+msgstr "E-book padrão para leitores e bibliotecas"
+
+msgid "Standard EPUB 3 file for e-readers, reading apps, and accessibility tools. Interactive features (quizzes, TTS) work in readers that support JavaScript."
+msgstr "Arquivo EPUB 3 padrão para leitores eletrônicos, aplicativos de leitura e ferramentas de acessibilidade. Recursos interativos (questionários, TTS) funcionam em leitores que suportam JavaScript."
+
 msgid "Start"
 msgstr "Início"
 
@@ -5421,6 +5458,9 @@ msgstr "Isto é o <0>ADT Studio</0>."
 
 msgid "This is a preview of the options you have selected for your book, each option affects the preview in a different way."
 msgstr "Esta é uma pré-visualização das opções que você selecionou para o seu livro, cada opção afeta a pré-visualização de uma maneira diferente."
+
+msgid "This is Pip! He has a wiggly tail."
+msgstr "Este é o Pip! Ele tem um rabo que balança."
 
 msgid "This is Pip! He is a happy caramel dog with a very wiggly tail. Pip loves the green grass, the bright yellow sun, and making new friends in his garden."
 msgstr "Este é o Pip! Ele é um cachorro caramelo feliz com um rabo muito agitado. Pip adora a grama verde, o sol amarelo brilhante e fazer novos amigos em seu jardim."

@@ -19,6 +19,7 @@ import {
   exportWebpub,
   exportScorm,
   exportAdt,
+  exportEpub,
   type ExportFeatures,
   type ExportDefaultSettings,
   type ExportResult,
@@ -209,7 +210,7 @@ export function createBookRoutes(
   // POST /books/:label/prepare-export — Rebuild adt/ (and webpub/ if needed) before download
   app.post("/books/:label/prepare-export", async (c) => {
     const { label } = c.req.param()
-    const format = (c.req.query("format") ?? "project") as "project" | "webpub" | "scorm" | "adt"
+    const format = (c.req.query("format") ?? "project") as "project" | "webpub" | "scorm" | "adt" | "epub"
     let features: ExportFeatures | undefined
     let defaultSettings: ExportDefaultSettings | undefined
     const hasBody = (c.req.header("content-length") ?? "0") !== "0"
@@ -266,6 +267,27 @@ export function createBookRoutes(
       return c.body(result.stream)
     })
   }
+
+  // GET /books/:label/export-epub — Download book as EPUB 3
+  app.get("/books/:label/export-epub", async (c) => {
+    const { label } = c.req.param()
+    try {
+      const result = await exportEpub(label, booksDir)
+      c.header("Content-Type", "application/epub+zip")
+      const encodedName = encodeURIComponent(result.filename)
+      c.header(
+        "Content-Disposition",
+        `attachment; filename="${result.safeFilename}"; filename*=UTF-8''${encodedName}`
+      )
+      return c.body(result.stream)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      if (message.includes("Book not found")) {
+        throw new HTTPException(404, { message })
+      }
+      throw new HTTPException(400, { message })
+    }
+  })
 
   // GET /books/:label/images — List all images in a book
   app.get("/books/:label/images", (c) => {

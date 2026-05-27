@@ -10,6 +10,9 @@ export interface ExtractOptions {
   endPage?: number
   spreadMode?: boolean
   vectorTextGrouping?: boolean
+  /** Enables the metric-based positioned-text spacing cleanup; only
+   *  meaningful for fixed-layout books (reflowable text uses a separate path). */
+  fixedLayout?: boolean
 }
 
 export async function extractPDF(
@@ -17,7 +20,7 @@ export async function extractPDF(
   storage: Storage,
   progress: Progress
 ): Promise<void> {
-  const { pdfPath, startPage, endPage, spreadMode, vectorTextGrouping } = options
+  const { pdfPath, startPage, endPage, spreadMode, vectorTextGrouping, fixedLayout } = options
 
   progress.emit({ type: "step-start", step: "extract" })
 
@@ -25,7 +28,7 @@ export async function extractPDF(
     const pdfBuffer = fs.readFileSync(pdfPath)
 
     const { pdfMetadata, pages } = extractPdfStream(
-      { pdfBuffer, startPage, endPage, spreadMode, vectorTextGrouping },
+      { pdfBuffer, startPage, endPage, spreadMode, vectorTextGrouping, fixedLayout },
       (p) => {
         progress.emit({
           type: "step-progress",
@@ -42,6 +45,9 @@ export async function extractPDF(
 
     for await (const page of pages) {
       storage.putExtractedPage(page)
+      // Store positioned text (paragraphs + viewport dims). Always available so
+      // fixed-layout rendering doesn't need a separate pre-extraction step.
+      storage.putNodeData("positioned-text", page.pageId, page.positionedText)
       // Store extraction debug info (grouping decisions, render method choices)
       if (page.extractionDebug) {
         storage.putNodeData("extraction-debug", page.pageId, page.extractionDebug)
