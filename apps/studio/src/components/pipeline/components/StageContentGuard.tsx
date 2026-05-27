@@ -19,7 +19,7 @@ export function StageContentGuard({
   stageSlug,
 }: StageContentGuardProps) {
   if (isLoading) {
-    return <LoadingState variant="stage" label={loadingLabel} stageSlug={stageSlug} />
+    return <LoadingState label={loadingLabel} stageSlug={stageSlug} />
   }
   if (showRunCard) {
     return <div className="p-4">{runCard}</div>

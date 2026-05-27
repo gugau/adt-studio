@@ -228,7 +228,7 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
   }, [bookLabel, currentPreviewPage.href, navigate, navigatePreviewToHref, ready, search.previewHref])
 
   if (isStatusLoading || prunedLoading) {
-    return <LoadingState stageSlug="preview" variant="stage" label={<Trans>Loading preview...</Trans>} />
+    return <LoadingState stageSlug="preview" label={<Trans>Loading preview...</Trans>} />
   }
 
   if (!storyboardDone) {
@@ -240,7 +240,7 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
   }
 
   if (packaging) {
-    return <LoadingState stageSlug="preview" variant="stage" label={<Trans>Packaging preview...</Trans>} />
+    return <LoadingState stageSlug="preview" label={<Trans>Packaging preview...</Trans>} />
   }
 
   if (error) {

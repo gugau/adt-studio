@@ -73,7 +73,7 @@ export function ExportLandingPage({ bookLabel }: { bookLabel: string }) {
   const isThisFormatPreparing = preparingFormat === selectedFormat
 
   if (isStatusLoading || prunedLoading) {
-    return <LoadingState stageSlug="export" variant="stage" label={<Trans>Loading export...</Trans>} />
+    return <LoadingState stageSlug="export" label={<Trans>Loading export...</Trans>} />
   }
 
   if (!storyboardDone) {

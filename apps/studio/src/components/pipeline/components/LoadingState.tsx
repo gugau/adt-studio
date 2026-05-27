@@ -4,13 +4,10 @@ import { useDelayedFlag } from "@/hooks/use-delayed-flag"
 
 const SHOW_DELAY_MS = 200
 
-export type LoadingStateVariant = "stage" | "inline"
-
 export type StageSlug = keyof typeof STAGE_SVGS
 
 interface LoadingStateProps {
   label: ReactNode
-  variant?: LoadingStateVariant
   stageSlug?: StageSlug
 }
 
@@ -376,43 +373,20 @@ function resolveStage(slug: StageSlug | undefined): { hex: string; Svg: (props: 
   return { hex: def.hex, Svg }
 }
 
-export function LoadingState({ label, variant = "inline", stageSlug }: LoadingStateProps) {
+export function LoadingState({ label, stageSlug }: LoadingStateProps) {
   const stage = resolveStage(stageSlug)
   const visible = useDelayedFlag(true, SHOW_DELAY_MS)
-
-  if (variant === "stage") {
-    return (
-      <div
-        role="status"
-        aria-live="polite"
-        aria-busy="true"
-        className="flex h-full min-h-105 w-full flex-col items-center justify-center gap-2 p-8"
-      >
-        {visible && (
-          <>
-            <span className="block w-32 h-32">{stage.Svg({ hex: stage.hex })}</span>
-            <span
-              className="text-sm font-medium tracking-wide opacity-80"
-              style={{ color: stage.hex }}
-            >
-              {label}
-            </span>
-          </>
-        )}
-      </div>
-    )
-  }
 
   return (
     <div
       role="status"
       aria-live="polite"
       aria-busy="true"
-      className="flex items-center justify-center gap-3 p-4"
+      className="flex h-full min-h-105 w-full flex-col items-center justify-center gap-2 p-8"
     >
       {visible && (
         <>
-          <span className="block w-8 h-8">{stage.Svg({ hex: stage.hex })}</span>
+          <span className="block w-32 h-32">{stage.Svg({ hex: stage.hex })}</span>
           <span
             className="text-sm font-medium tracking-wide opacity-80"
             style={{ color: stage.hex }}

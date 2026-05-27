@@ -277,7 +277,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
   }
 
   if (pagesLoading) {
-    return <LoadingState stageSlug="storyboard" variant="stage" label={<Trans>Loading pages...</Trans>} />
+    return <LoadingState stageSlug="storyboard" label={<Trans>Loading pages...</Trans>} />
   }
 
   if (pageList.length === 0) {
@@ -306,12 +306,12 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
   }
 
   if (pageLoading || !page) {
-    return <LoadingState stageSlug="storyboard" variant="stage" label={<Trans>Loading page...</Trans>} />
+    return <LoadingState stageSlug="storyboard" label={<Trans>Loading page...</Trans>} />
   }
 
   if (!page.sectioningTree) {
     if (storyboardRunning) {
-      return <LoadingState stageSlug="storyboard" variant="stage" label={<Trans>Waiting for page to be processed...</Trans>} />
+      return <LoadingState stageSlug="storyboard" label={<Trans>Waiting for page to be processed...</Trans>} />
     }
     return (
       <div className="p-4">

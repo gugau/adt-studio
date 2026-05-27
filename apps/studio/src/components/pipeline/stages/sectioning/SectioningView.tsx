@@ -185,7 +185,7 @@ export function SectioningView({ bookLabel, selectedPageId: selectedPageIdProp, 
   }
 
   if (pagesLoading) {
-    return <LoadingState stageSlug="sectioning" variant="stage" label={<Trans>Loading pages...</Trans>} />
+    return <LoadingState stageSlug="sectioning" label={<Trans>Loading pages...</Trans>} />
   }
 
   if (pageList.length === 0) {
@@ -212,12 +212,12 @@ export function SectioningView({ bookLabel, selectedPageId: selectedPageIdProp, 
   }
 
   if (pageLoading || !page) {
-    return <LoadingState stageSlug="sectioning" variant="stage" label={<Trans>Loading page...</Trans>} />
+    return <LoadingState stageSlug="sectioning" label={<Trans>Loading page...</Trans>} />
   }
 
   if (!page.sectioningTree) {
     if (sectioningRunning) {
-      return <LoadingState stageSlug="sectioning" variant="stage" label={<Trans>Waiting for page to be processed...</Trans>} />
+      return <LoadingState stageSlug="sectioning" label={<Trans>Waiting for page to be processed...</Trans>} />
     }
     return (
       <div className="p-4">

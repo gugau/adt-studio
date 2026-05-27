@@ -2101,7 +2101,7 @@ export function StoryboardSectionDetail({
             )}
           </>
         ) : storyboardRunning && !section?.isPruned ? (
-          <LoadingState stageSlug="storyboard" variant="stage" label={t`Rendering this section...`} />
+          <LoadingState stageSlug="storyboard" label={t`Rendering this section...`} />
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <div className="w-12 h-12 rounded-full bg-violet-50 flex items-center justify-center mb-3">

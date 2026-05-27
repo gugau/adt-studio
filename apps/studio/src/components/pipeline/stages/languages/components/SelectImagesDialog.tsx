@@ -130,7 +130,7 @@ export function SelectImagesDialog({
           </div>
 
           {imagesQuery.isLoading && (
-            <LoadingState stageSlug="translate" variant="stage" label={t`Loading images...`} />
+            <LoadingState stageSlug="translate" label={t`Loading images...`} />
           )}
 
           {imagesQuery.isError && (

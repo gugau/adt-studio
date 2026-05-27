@@ -285,7 +285,7 @@ export function ExtractView({ bookLabel, selectedPageId: selectedPageIdProp, onS
   }, [selectedPageId, prevPageId, nextPageId, showRunCard, setSelectedPageId])
 
   if (!showRunCard && isLoading) {
-    return <LoadingState stageSlug="extract" variant="stage" label={<Trans>Loading pages...</Trans>} />
+    return <LoadingState stageSlug="extract" label={<Trans>Loading pages...</Trans>} />
   }
 
   // Page detail view — available once pages exist (even while later steps run)

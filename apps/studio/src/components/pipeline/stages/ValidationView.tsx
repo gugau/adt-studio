@@ -88,7 +88,7 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
   }, [getTask, pendingPackagingTaskId, t])
 
   if (isStatusLoading || prunedLoading) {
-    return <LoadingState stageSlug="validation" variant="stage" label={<Trans>Loading validation...</Trans>} />
+    return <LoadingState stageSlug="validation" label={<Trans>Loading validation...</Trans>} />
   }
 
   if (!storyboardDone) {
@@ -102,7 +102,7 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
   const packaging = isSubmittingPackage || pendingPackagingTaskId !== null || isTaskRunning("package-adt")
 
   if (packaging) {
-    return <LoadingState stageSlug="validation" variant="stage" label={<Trans>Packaging validation results...</Trans>} />
+    return <LoadingState stageSlug="validation" label={<Trans>Packaging validation results...</Trans>} />
   }
 
   return (

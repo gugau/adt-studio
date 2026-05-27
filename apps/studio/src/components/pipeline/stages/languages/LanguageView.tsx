@@ -616,7 +616,7 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
   ) : null
 
   if (!showRunCard && isLoading) {
-    return <LoadingState stageSlug="translate" variant="stage" label={t`Loading text catalog...`} />
+    return <LoadingState stageSlug="translate" label={t`Loading text catalog...`} />
   }
 
   // Resolve speech config summary for display
@@ -879,7 +879,7 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
 
       {/* Entries */}
       {isSourceLanguagePending ? (
-        <LoadingState stageSlug="translate" variant="stage" label={t`Resolving source language...`} />
+        <LoadingState stageSlug="translate" label={t`Resolving source language...`} />
       ) : selectedPageId && displayEntries.length === 0 && entries.length > 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
           <div className="w-12 h-12 rounded-full bg-pink-50 flex items-center justify-center mb-3">
