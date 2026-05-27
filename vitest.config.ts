@@ -13,6 +13,7 @@ export default defineConfig({
       "packages/*/src/**/__tests__/**/*.test.ts",
       "apps/*/src/**/*.test.ts",
       "apps/*/src/**/*.test.tsx",
+      "scripts/**/*.test.mjs",
     ],
   },
 })
