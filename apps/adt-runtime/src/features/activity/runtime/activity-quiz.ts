@@ -12,12 +12,34 @@ import {
 } from "@/features/activity/state/activity.atoms"
 import { playActivitySound } from "@/features/activity/runtime/sounds"
 
-const QUIZ_SELECTOR = 'section[data-section-type="activity_quiz"]'
+/**
+ * Quiz (standalone `activity_quiz` page) and in-page `activity_multiple_choice`
+ * share the same option-selection model: one set of `.activity-option` labels,
+ * each carrying a unique `data-activity-item`, with a correctness map keyed by
+ * those item IDs. The two diverge in:
+ *   - where the correct-answers map lives (`data-correct-answers` attribute /
+ *     embedded <script> for quiz; `window.correctAnswers` for MC),
+ *   - what "Next activity" means (jump to next `qz` page for quiz; advance
+ *     one page for MC).
+ */
+const QUIZ_SELECTOR =
+  'section[data-section-type="activity_quiz"], section[data-section-type="activity_multiple_choice"]'
 const CORRECT_ANSWERS_SCRIPT_ID = "quiz-correct-answers"
 
 function tr(key: string, fallback: string): string {
   const dict = getDefaultStore().get(translationsAtom)
   return dict[key] || fallback
+}
+
+declare global {
+  interface Window {
+    /**
+     * Map of item id → correctness. Multiple-choice ships boolean values;
+     * other text-input activities ship strings. Injected by
+     * `packages/pipeline/src/package-web.ts:renderPageHtml`.
+     */
+    correctAnswers?: Record<string, unknown>
+  }
 }
 
 function readCorrectAnswers(section: HTMLElement): Record<string, boolean> {
@@ -34,8 +56,14 @@ function readCorrectAnswers(section: HTMLElement): Record<string, boolean> {
     try {
       return JSON.parse(scriptEl.textContent) as Record<string, boolean>
     } catch {
-      // ignore
+      // fall through to window global
     }
+  }
+  // Multiple-choice sections rely on the global written by renderPageHtml.
+  if (typeof window !== "undefined" && window.correctAnswers) {
+    const out: Record<string, boolean> = {}
+    for (const [k, v] of Object.entries(window.correctAnswers)) out[k] = Boolean(v)
+    return out
   }
   return {}
 }
@@ -144,10 +172,18 @@ export function initializeQuizActivity(): (() => void) | null {
   const store = getDefaultStore()
   const correctAnswers = readCorrectAnswers(section)
 
+  // Standalone quiz pages jump to the next `qz` page on success; embedded
+  // multiple-choice activities just advance one page like any other content.
+  const sectionType = section.getAttribute("data-section-type")
+  const isStandaloneQuiz = sectionType === "activity_quiz"
+  const findPostCorrectHref = isStandaloneQuiz
+    ? findNextActivityHref
+    : findNextPageHref
+
   let selected: HTMLElement | null = null
   let validated = false
   const hasNextPage = findNextPageHref() !== null
-  const hasNextActivity = findNextActivityHref() !== null
+  const hasPostCorrectTarget = findPostCorrectHref() !== null
 
   const resetState = () => {
     selected = null
@@ -172,15 +208,22 @@ export function initializeQuizActivity(): (() => void) | null {
   const handleValidate = () => {
     const state = store.get(submitStateAtom)
     if (state === "next") {
-      // Post-correct: submit jumps to the next activity, skipping reading pages
-      // in between. The sibling "Next page" button handles plain sequential nav.
-      const href = findNextActivityHref()
+      // Post-correct: standalone quiz jumps to the next quiz, skipping reading
+      // pages between them; embedded MC just advances one page.
+      const href = findPostCorrectHref()
       if (href) window.location.href = href
       return
     }
     if (!selected || validated) return
 
-    const itemId = selected.getAttribute("data-activity-item")
+    // Standalone quiz puts `data-activity-item` on the `.activity-option`
+    // label itself; multiple-choice puts it on the inner radio input.
+    const itemId =
+      selected.getAttribute("data-activity-item") ??
+      selected
+        .querySelector<HTMLElement>("[data-activity-item]")
+        ?.getAttribute("data-activity-item") ??
+      null
     if (!itemId) return
     const isCorrect = Boolean(correctAnswers[itemId])
     applyValidationStyle(selected, isCorrect)
@@ -192,8 +235,8 @@ export function initializeQuizActivity(): (() => void) | null {
       store.set(confettiTriggerAtom, store.get(confettiTriggerAtom) + 1)
       store.set(submitStateAtom, "next")
       store.set(submitLabelAtom, null)
-      // Submit becomes "Next activity" — enabled only when one exists.
-      store.set(submitEnabledAtom, hasNextActivity)
+      // Submit becomes "Next activity" — enabled only when a target exists.
+      store.set(submitEnabledAtom, hasPostCorrectTarget)
     } else {
       store.set(submitStateAtom, "submit")
       store.set(submitLabelAtom, null)
@@ -250,7 +293,12 @@ export function initializeQuizActivity(): (() => void) | null {
   const unsubTranslations = store.sub(translationsAtom, () => {
     applyLocalizedAria()
     if (selected && validated) {
-      const itemId = selected.getAttribute("data-activity-item")
+      const itemId =
+        selected.getAttribute("data-activity-item") ??
+        selected
+          .querySelector<HTMLElement>("[data-activity-item]")
+          ?.getAttribute("data-activity-item") ??
+        null
       if (!itemId) return
       showFeedback(selected, Boolean(correctAnswers[itemId]))
     }

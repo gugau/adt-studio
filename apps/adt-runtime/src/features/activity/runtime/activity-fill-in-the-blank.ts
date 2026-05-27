@@ -1,16 +1,24 @@
 /**
- * Fill-in-the-blank initializer — wires up the dock submit/skip buttons via
- * atoms, hydrates `[[blank:item-N]]` markers into <input>s, validates each
- * input on change and on submit, and persists user input across reloads.
+ * Fill-in-the-blank (and fill-in-a-table) initializer — wires up the dock
+ * submit/skip buttons via atoms, hydrates `[[blank:item-N]]` markers into
+ * <input>s, validates each input on change and on submit, and persists user
+ * input across reloads.
  *
- * Activity HTML is emitted by `prompts/activity_fill_in_the_blank.liquid` and
+ * Activity HTML is emitted by `prompts/activity_fill_in_the_blank.liquid`,
+ * `prompts/activity_fill_in_a_table.liquid`, and
  * `packages/pipeline/src/package-web.ts`:
- *   - <section data-section-type="activity_fill_in_the_blank">
+ *   - <section data-section-type="activity_fill_in_the_blank"> OR
+ *     <section data-section-type="activity_fill_in_a_table">
  *   - .fitb-sentence containers with [[blank:item-N(:hint)?]] markers inside
- *     elements that carry data-id (pattern 2)
+ *     elements that carry data-id (FITB pattern 2 only — tables never have
+ *     these, so the hydration step is a no-op for tables)
  *   - Standalone <input>/<textarea> with data-activity-item="item-N" outside
- *     any data-id element (pattern 2b — labels + separate writable areas)
+ *     any data-id element (FITB pattern 2b + every table input)
  *   - window.correctAnswers map keyed by item id, emitted by renderPageHtml
+ *
+ * Tables and fill-in-the-blank share the same input-validation model, so they
+ * run through the same initializer. The only structural difference is the
+ * absence of `[[blank:]]` markers in tables.
  */
 import { getDefaultStore } from "jotai"
 import { translationsAtom } from "../../language/state/language.atoms"
@@ -36,7 +44,8 @@ import {
 import { showActivityProgressToast } from "../lib/progress-toast"
 import { announceToScreenReader } from "../../../shared/lib/aria-live"
 
-const FITB_SELECTOR = 'section[data-section-type="activity_fill_in_the_blank"]'
+const FITB_SELECTOR =
+  'section[data-section-type="activity_fill_in_the_blank"], section[data-section-type="activity_fill_in_a_table"]'
 
 declare global {
   interface Window {
@@ -368,9 +377,13 @@ export function initializeFillInTheBlankActivity(): (() => void) | null {
   // but we still want it announced as a form for assistive tech.
   if (!section.getAttribute("role")) section.setAttribute("role", "form")
   if (!section.getAttribute("aria-label")) {
+    const isTable =
+      section.getAttribute("data-section-type") === "activity_fill_in_a_table"
     section.setAttribute(
       "aria-label",
-      tr("fitb-activity-label", "Fill in the blank activity"),
+      isTable
+        ? tr("fitb-table-activity-label", "Fill in the table activity")
+        : tr("fitb-activity-label", "Fill in the blank activity"),
     )
   }
 

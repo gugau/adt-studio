@@ -62,6 +62,7 @@ import { activityModeAtom, isActivityPageAtom } from "@/features/activity/state/
 import { initializeQuizActivity } from "@/features/activity/runtime/activity-quiz"
 import { initializeFillInTheBlankActivity } from "@/features/activity/runtime/activity-fill-in-the-blank"
 import { initializeOpenEndedActivity } from "@/features/activity/runtime/activity-open-ended"
+import { initializeTrueFalseActivity } from "@/features/activity/runtime/activity-true-false"
 
 function readCurrentSectionId(): string | null {
   if (typeof document === "undefined") return null
@@ -182,6 +183,7 @@ export async function bootRuntime(): Promise<void> {
     initializeQuizActivity()
     initializeFillInTheBlankActivity()
     initializeOpenEndedActivity()
+    initializeTrueFalseActivity()
   } finally {
     // Always clear the dock skeleton — even on partial-load failures the dock
     // should reveal whatever data DID make it into atoms.

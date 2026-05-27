@@ -163,3 +163,70 @@ describe("initializeFillInTheBlankActivity — guards", () => {
     expect(initializeFillInTheBlankActivity()).toBeNull()
   })
 })
+
+describe("initializeFillInTheBlankActivity — fill-in-a-table", () => {
+  it("validates a fill-in-a-table section against window.correctAnswers", () => {
+    document.body.innerHTML = `
+      <section data-section-type="activity_fill_in_a_table" data-section-id="pg001_sec010">
+        <div class="activity-text">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="p-4 rounded bg-gray-100 flex items-center">
+              <label for="field1" data-id="text-1">House:</label>
+              <input type="text" id="field1" data-aria-id="aria-1-0-0" data-activity-item="item-1" />
+            </div>
+            <div class="p-4 rounded bg-gray-100 flex items-center">
+              <label for="field2" data-id="text-2">Dog:</label>
+              <input type="text" id="field2" data-aria-id="aria-1-0-1" data-activity-item="item-2" />
+            </div>
+          </div>
+        </div>
+      </section>
+    `
+    window.correctAnswers = { "item-1": "casa", "item-2": "perro" }
+    initializeFillInTheBlankActivity()
+
+    const i1 = document.querySelector<HTMLInputElement>(
+      "input[data-activity-item='item-1']",
+    )!
+    const i2 = document.querySelector<HTMLInputElement>(
+      "input[data-activity-item='item-2']",
+    )!
+    i1.value = "casa"
+    i1.dispatchEvent(new Event("input", { bubbles: true }))
+    i2.value = "perro"
+    i2.dispatchEvent(new Event("input", { bubbles: true }))
+
+    store.get(validateHandlerAtom)?.()
+    expect(store.get(submitStateAtom)).toBe("next")
+  })
+
+  it("does not hydrate any inputs (no [[blank:]] markers in tables)", () => {
+    document.body.innerHTML = `
+      <section data-section-type="activity_fill_in_a_table" data-section-id="pg001_sec011">
+        <div class="activity-text">
+          <input type="text" data-aria-id="aria-1-0-0" data-activity-item="item-1" />
+        </div>
+      </section>
+    `
+    window.correctAnswers = { "item-1": "x" }
+    initializeFillInTheBlankActivity()
+
+    // Only the one input the LLM emitted — no extras spawned by marker hydration.
+    expect(document.querySelectorAll("input").length).toBe(1)
+  })
+
+  it("uses a table-specific aria-label for fill-in-a-table sections", () => {
+    document.body.innerHTML = `
+      <section data-section-type="activity_fill_in_a_table" data-section-id="pg001_sec012">
+        <input type="text" data-aria-id="aria-1-0-0" data-activity-item="item-1" />
+      </section>
+    `
+    window.correctAnswers = { "item-1": "x" }
+    initializeFillInTheBlankActivity()
+
+    const section = document.querySelector<HTMLElement>(
+      "section[data-section-type='activity_fill_in_a_table']",
+    )!
+    expect(section.getAttribute("aria-label")).toBe("Fill in the table activity")
+  })
+})
