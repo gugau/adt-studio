@@ -122,19 +122,25 @@ const MC_OUTLINE_COLORS = {
   incorrect: "rgb(220, 38, 38)", // red-600
 } as const
 
+// Only correct/incorrect get a faint wash; selected gets outline only so the
+// option's own background (often supplied by the LLM via a `bg-*` class) is
+// preserved and the user doesn't see a flash to transparent when picking.
 const MC_BG_COLORS = {
-  selected: "transparent",
   correct: "rgba(240, 253, 244, 0.6)",
   incorrect: "rgba(254, 242, 242, 0.6)",
 } as const
 
-type McStyleState = keyof typeof MC_OUTLINE_COLORS
+type McStyleState = "selected" | keyof typeof MC_BG_COLORS
 
 function applyMcOutline(option: HTMLElement, state: McStyleState): void {
   option.style.outline = `3px solid ${MC_OUTLINE_COLORS[state]}`
+  // The outline follows the option's natural border-radius in modern browsers
+  // — don't impose an inline radius here or we'll flatten LLM-emitted shapes
+  // like `rounded-full` pills.
   option.style.outlineOffset = "2px"
-  option.style.borderRadius = option.style.borderRadius || "0.5rem"
-  option.style.backgroundColor = MC_BG_COLORS[state]
+  if (state !== "selected") {
+    option.style.backgroundColor = MC_BG_COLORS[state]
+  }
   option.setAttribute(MC_STYLE_FLAG_ATTR, state)
 }
 
@@ -142,9 +148,6 @@ function clearMcOutline(option: HTMLElement): void {
   if (!option.hasAttribute(MC_STYLE_FLAG_ATTR)) return
   option.style.outline = ""
   option.style.outlineOffset = ""
-  // Only clear the inline border-radius if we set it (other code may rely on
-  // the LLM's `rounded-*` Tailwind class).
-  option.style.borderRadius = ""
   option.style.backgroundColor = ""
   option.removeAttribute(MC_STYLE_FLAG_ATTR)
 }
@@ -570,11 +573,11 @@ export function initializeQuizActivity(): (() => void) | null {
       if (!group.validated || !group.selected) continue
       const itemId = getOptionItemId(group.selected)
       if (!itemId) continue
-      showFeedback(
-        group.selected,
-        Boolean(correctAnswers[itemId]),
-        isStandaloneQuiz,
-      )
+      const isCorrect = Boolean(correctAnswers[itemId])
+      showFeedback(group.selected, isCorrect, isStandaloneQuiz)
+      // showFeedback is a no-op for MC, so the badge's aria-label would stay
+      // in the previous language. Re-attach so the localized label refreshes.
+      if (!isStandaloneQuiz) attachMcBadge(group.selected, isCorrect)
     }
   })
 
