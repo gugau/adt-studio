@@ -35,14 +35,19 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           INPUT_TAG: ${{ inputs.tag }}
         run: |
+          MSG=""
           if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
             TAG="$INPUT_TAG"
           else
             MSG=$(git log -1 --pretty=%s)
-            TAG=$(printf '%s\n' "$MSG" | sed -nE 's/^RELEASE:[[:space:]]*([^[:space:]]+).*/\1/p')
+            shopt -s nocasematch
+            if [[ "$MSG" =~ ^release:[[:space:]]*([^[:space:]]+) ]]; then
+              TAG="${BASH_REMATCH[1]}"
+            fi
+            shopt -u nocasematch
           fi
           if [[ -z "$TAG" ]]; then
-            echo "::error::Could not extract tag from commit message or input."
+            echo "::error::Could not extract tag. event=$EVENT_NAME input='$INPUT_TAG' subject='$MSG'"
             exit 1
           fi
           [[ "$TAG" =~ ^v ]] || TAG="v$TAG"
