@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const SCHEMA_VERSION = 12
+export const SCHEMA_VERSION = 13
 
 export const ImageSource = z.enum(["page", "extract", "crop", "segment", "upload", "translate"])
 export type ImageSource = z.infer<typeof ImageSource>
@@ -27,6 +27,11 @@ export const ImageRow = z.object({
   height: z.number().int(),
   source: ImageSource,
   render_method: RenderMethod,
+  /** Placement on the page in PDF points (top-left origin). */
+  bounds_x: z.number().nullable(),
+  bounds_y: z.number().nullable(),
+  bounds_w: z.number().nullable(),
+  bounds_h: z.number().nullable(),
 })
 export type ImageRow = z.infer<typeof ImageRow>
 

@@ -4,6 +4,7 @@ import {
   BookOpen,
   AlignLeft,
   SlidersHorizontal,
+  Image,
 } from "lucide-react";
 import type { MessageDescriptor } from "@lingui/core";
 import { msg } from "@lingui/core/macro";
@@ -88,6 +89,13 @@ export const RENDER_STRATEGIES = [
     Icon: TwoColumnStoryStrategyIcon,
     title: msg`Two Columns Story`,
     description: msg`Perfect for children's books, pairing large images with minimal text.`,
+    category: "template",
+  },
+  {
+    id: "fixed_layout",
+    Icon: Image,
+    title: msg`Fixed Layout`,
+    description: msg`Page image as background with positioned text overlay. Preserves the original page composition; ideal for illustrated storybooks.`,
     category: "template",
   },
 ] as const satisfies readonly RenderStrategyOption[];
@@ -318,7 +326,7 @@ export const PRESETS: PresetConfig[] = [
     bgColor: "bg-amber-500/5",
     title: msg`Storybook`,
     description: msg`Large images, narrative flow. Best for illustrated books with high-fidelity TTS voices.`,
-    renderStrategies: ["llm", "llm-overlay", "two_column", "two_column_story"],
+    renderStrategies: ["llm", "llm-overlay", "two_column", "two_column_story", "fixed_layout"],
     recommendedStrategies: ["llm-overlay", "two_column_story"],
     recommendedFor: [
       msg`Illustrated children's books`,
@@ -373,6 +381,9 @@ export const PRESETS: PresetConfig[] = [
             max_retries: 25,
             timeout: 180,
           },
+        },
+        fixed_layout: {
+          render_type: "fixed_layout",
         },
       },
       section_render_strategies: {},

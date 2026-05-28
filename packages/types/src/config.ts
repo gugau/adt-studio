@@ -40,7 +40,7 @@ export const ImageTranslationConfig = StepConfig.extend({
 })
 export type ImageTranslationConfig = z.infer<typeof ImageTranslationConfig>
 
-export const BookFormat = z.enum(["web", "webpub"])
+export const BookFormat = z.enum(["web", "webpub", "epub"])
 export type BookFormat = z.infer<typeof BookFormat>
 
 export const LayoutType = z.enum(["textbook", "storybook", "reference", "custom"])
@@ -49,7 +49,7 @@ export type LayoutType = z.infer<typeof LayoutType>
 export const StyleguideName = z.string().regex(/^[a-zA-Z0-9_-]+$/)
 export type StyleguideName = z.infer<typeof StyleguideName>
 
-export const RenderType = z.enum(["llm", "template", "activity"])
+export const RenderType = z.enum(["llm", "template", "activity", "fixed_layout"])
 export type RenderType = z.infer<typeof RenderType>
 
 export const VisualRefinementStrategyConfig = z.object({
