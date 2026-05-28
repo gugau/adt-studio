@@ -17,8 +17,10 @@ import {
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { useAccessibilityAssessment } from "@/hooks/use-debug"
-import { useBook } from "@/hooks/use-books"
+import { useBook, usePackageAdtStatus } from "@/hooks/use-books"
+import { useBookTasks } from "@/hooks/use-book-tasks"
 import { usePages, usePageImage } from "@/hooks/use-pages"
+import { useSignLanguageVideos } from "@/hooks/use-sign-language-videos"
 import { StageRunCard } from "../components/StageRunCard"
 import { cn } from "@/lib/utils"
 
@@ -38,7 +40,22 @@ export function BookView({ bookLabel }: ViewProps) {
   const { stageState, queueRun } = useBookRun()
   const { apiKey, hasApiKey } = useApiKey()
   const { data: accessibilityAssessment } = useAccessibilityAssessment(bookLabel)
+  const { data: signLanguageData } = useSignLanguageVideos(bookLabel)
+  const { data: packageStatus } = usePackageAdtStatus(bookLabel)
+  const { tasks } = useBookTasks(bookLabel)
   const validationCompleted = Boolean(accessibilityAssessment?.assessment)
+  const signLanguageCompleted =
+    signLanguageData?.videos?.some((v) => v.sectionId !== null) ?? false
+  const previewCompleted = packageStatus?.hasAdt ?? false
+  const exportCompleted = tasks.some(
+    (t) => t.kind === "prepare-export" && t.status === "completed",
+  )
+  const completionOverrides: Record<string, boolean> = {
+    "sign-language": signLanguageCompleted,
+    validation: validationCompleted,
+    preview: previewCompleted,
+    export: exportCompleted,
+  }
 
   const handleRun = useCallback(
     (stage: NonBookStageDefinition) => {
@@ -68,12 +85,13 @@ export function BookView({ bookLabel }: ViewProps) {
   }
 
   const renderCard = (step: NonBookStageDefinition) => {
-    const state =
-      step.slug === "validation" && validationCompleted
-        ? "done"
-        : stageState(step.slug)
+    const rawState = stageState(step.slug)
+    const state = completionOverrides[step.slug] ? "done" : rawState
+    // Validation/preview/export/sign-language aren't driven by the pipeline
+    // runner, so their "running" state from useBookRun is meaningless. Only
+    // pipeline stages should show the spinner.
     const isRunning =
-      step.slug !== "validation" && (state === "running" || state === "queued")
+      isPipelineStage(step) && (rawState === "running" || rawState === "queued")
     const stageCompleted = state === "done"
     const showRunButton = isPipelineStage(step) && step.slug !== "preview"
     const recommended = RECOMMENDED_STAGES.has(step.slug)
@@ -242,8 +260,10 @@ function SourcePdfCard({ bookLabel }: { bookLabel: string }) {
     enabled: !!firstPageId,
   })
 
+  // File extension is the same across locales — no translation needed.
+  // eslint-disable-next-line lingui/no-unlocalized-strings
   const pdfFilename = `${bookLabel}.pdf`
-  const title = book?.title ?? null
+  const title = book?.title?.trim() || null
   const pageCount = book?.pageCount ?? 0
   const imgSrc = pageImage?.imageBase64
     ? `data:image/png;base64,${pageImage.imageBase64}`

@@ -140,7 +140,7 @@ export function StageRunCard({
                       <Minus
                         className="w-4 h-4 text-muted-foreground/40 shrink-0"
                         strokeWidth={2}
-                        aria-label="Disabled"
+                        aria-label={t`Disabled`}
                       />
                     ) : isError ? (
                       <XCircle className="w-4 h-4 text-red-500 shrink-0" />
