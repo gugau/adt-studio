@@ -252,6 +252,9 @@ msgstr "{pageCount} {pageCount, plural, one {page} other {pages}}"
 msgid "{pageCount} pages"
 msgstr "{pageCount} pages"
 
+msgid "{pdfFilename} · {pageCount} pages"
+msgstr "{pdfFilename} · {pageCount} pages"
+
 msgid "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
 msgstr "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
 
@@ -1442,6 +1445,9 @@ msgstr "Condensation"
 msgid "Config"
 msgstr "Config"
 
+#~ msgid "Configure"
+#~ msgstr "Configure"
+
 msgid "Configure activity detection and image processing options for extracted content. Hover any setting to see how it affects the preview."
 msgstr "Configure activity detection and image processing options for extracted content. Hover any setting to see how it affects the preview."
 
@@ -2139,6 +2145,9 @@ msgstr "Export"
 msgid "Export {0}"
 msgstr "Export {0}"
 
+msgid "Export is not blocked by the stages below. As soon as Storyboard is done, you can ship a bundle. Enhancements, Localization, and Validation are optional ways to enrich the book — you can export again anytime later."
+msgstr "Export is not blocked by the stages below. As soon as Storyboard is done, you can ship a bundle. Enhancements, Localization, and Validation are optional ways to enrich the book — you can export again anytime later."
+
 msgid "Export Options"
 msgstr "Export Options"
 
@@ -2459,11 +2468,20 @@ msgstr "Glossary Preview"
 msgid "Glossary Prompt"
 msgstr "Glossary Prompt"
 
+msgid "Go to {stageLabel}"
+msgstr "Go to {stageLabel}"
+
 msgid "Go to book"
 msgstr "Go to book"
 
+msgid "Go to Export"
+msgstr "Go to Export"
+
 msgid "Go to home"
 msgstr "Go to home"
+
+msgid "Go to Image Captions"
+msgstr "Go to Image Captions"
 
 msgid "Go to Storyboard"
 msgstr "Go to Storyboard"
@@ -2563,6 +2581,9 @@ msgstr "I'll start later"
 
 msgid "Identify the key idea"
 msgstr "Identify the key idea"
+
+msgid "If you don't run Image Captions, your output will not be accessible to readers who use screen readers or can't see the images."
+msgstr "If you don't run Image Captions, your output will not be accessible to readers who use screen readers or can't see the images."
 
 msgid "Illustrated children's books"
 msgstr "Illustrated children's books"
@@ -3027,6 +3048,9 @@ msgstr "Loading..."
 
 msgid "Loading…"
 msgstr "Loading…"
+
+msgid "Localization"
+msgstr "Localization"
 
 msgid "Logs"
 msgstr "Logs"
@@ -3641,8 +3665,17 @@ msgstr "OpenAI key required"
 msgid "OpenAI Voice"
 msgstr "OpenAI Voice"
 
+msgid "Optional"
+msgstr "Optional"
+
 msgid "Optional Features"
 msgstr "Optional Features"
+
+msgid "Optional features to enrich the book — accessibility, comprehension, and navigation. Run any of these in any order once the core pipeline is complete."
+msgstr "Optional features to enrich the book — accessibility, comprehension, and navigation. Run any of these in any order once the core pipeline is complete."
+
+#~ msgid "Optional features to enrich the book — accessibility, comprehension, navigation, translations, and audio. Run any of these in any order once the core pipeline is complete."
+#~ msgstr "Optional features to enrich the book — accessibility, comprehension, navigation, translations, and audio. Run any of these in any order once the core pipeline is complete."
 
 msgid "Optional instructions for the LLM..."
 msgstr "Optional instructions for the LLM..."
@@ -4228,6 +4261,9 @@ msgstr "Recommended for"
 msgid "Recommended for {0}"
 msgstr "Recommended for {0}"
 
+msgid "Recommended for accessibility"
+msgstr "Recommended for accessibility"
+
 msgid "Record reviewer findings for the current page and save them to the active validation session."
 msgstr "Record reviewer findings for the current page and save them to the active validation session."
 
@@ -4407,6 +4443,9 @@ msgstr "Retry"
 
 msgid "Retry Export"
 msgstr "Retry Export"
+
+#~ msgid "Review"
+#~ msgstr "Review"
 
 msgid "Review areas with the most items marked as needing changes in this session."
 msgstr "Review areas with the most items marked as needing changes in this session."
@@ -4862,6 +4901,9 @@ msgstr "Self-contained ADT web app"
 
 msgid "Separator"
 msgstr "Separator"
+
+msgid "Sequential stages that turn the source PDF into structured, rendered content. Run these in order."
+msgstr "Sequential stages that turn the source PDF into structured, rendered content. Run these in order."
 
 msgid "serious"
 msgstr "serious"
@@ -5603,6 +5645,9 @@ msgstr "Translate the book content to output languages."
 msgid "Translate the book into additional languages. Each language is generated alongside the original, ready for narration, captions, and on-page reading."
 msgstr "Translate the book into additional languages. Each language is generated alongside the original, ready for narration, captions, and on-page reading."
 
+msgid "Translate the book into other languages and generate narration. Run these after the enhancements you want included are in place."
+msgstr "Translate the book into other languages and generate narration. Run these after the enhancements you want included are in place."
+
 msgid "Translating languages..."
 msgstr "Translating languages..."
 
@@ -5855,6 +5900,9 @@ msgstr "Used for Claude models (claude-opus-4-6, claude-sonnet-4-6, etc.)"
 msgid "Used for Gemini models — both LLM (gemini-2.5-pro, etc.) and TTS (gemini-2.5-pro-preview-tts, etc.)"
 msgstr "Used for Gemini models — both LLM (gemini-2.5-pro, etc.) and TTS (gemini-2.5-pro-preview-tts, etc.)"
 
+msgid "Validate, preview, and export the final ADT bundle for delivery."
+msgstr "Validate, preview, and export the final ADT bundle for delivery."
+
 msgid "Validation"
 msgstr "Validation"
 
@@ -5946,6 +5994,9 @@ msgstr "Waiting for page to be processed..."
 
 msgid "Wall Clock"
 msgstr "Wall Clock"
+
+msgid "Warning: Image Captions are required for accessibility"
+msgstr "Warning: Image Captions are required for accessibility"
 
 msgid "Water is always moving. It travels from the oceans into the sky, falls as rain or snow, flows through rivers, and eventually returns to the sea. This continuous journey is called the water cycle."
 msgstr "Water is always moving. It travels from the oceans into the sky, falls as rain or snow, flows through rivers, and eventually returns to the sea. This continuous journey is called the water cycle."
@@ -6072,6 +6123,9 @@ msgstr "Wraps 'Edit this image' requests. The AI receives the original image alo
 
 msgid "Wraps 'Generate new' requests. Supports user_prompt, style, and image_type variables. Uses Liquid syntax for conditionals."
 msgstr "Wraps 'Generate new' requests. Supports user_prompt, style, and image_type variables. Uses Liquid syntax for conditionals."
+
+msgid "You can export at this stage"
+msgstr "You can export at this stage"
 
 msgid "Young adult fiction"
 msgstr "Young adult fiction"

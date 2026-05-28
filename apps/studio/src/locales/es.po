@@ -252,6 +252,9 @@ msgstr "{pageCount} {pageCount, plural, one {página} other {páginas}}"
 msgid "{pageCount} pages"
 msgstr "{pageCount} páginas"
 
+msgid "{pdfFilename} · {pageCount} pages"
+msgstr "{pdfFilename} · {pageCount} páginas"
+
 msgid "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
 msgstr "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
 
@@ -1442,6 +1445,9 @@ msgstr "Condensación"
 msgid "Config"
 msgstr "Configuración"
 
+#~ msgid "Configure"
+#~ msgstr "Configurar"
+
 msgid "Configure activity detection and image processing options for extracted content. Hover any setting to see how it affects the preview."
 msgstr "Configura las opciones de detección de actividad y procesamiento de imágenes para el contenido extraído. Pasa el cursor sobre cualquier configuración para ver cómo afecta la vista previa."
 
@@ -2139,6 +2145,9 @@ msgstr "Exportar"
 msgid "Export {0}"
 msgstr "Exportar {0}"
 
+msgid "Export is not blocked by the stages below. As soon as Storyboard is done, you can ship a bundle. Enhancements, Localization, and Validation are optional ways to enrich the book — you can export again anytime later."
+msgstr "La exportación no está bloqueada por las etapas siguientes. En cuanto se complete Storyboard, puedes enviar un paquete. Mejoras, Localización y Validación son maneras opcionales de enriquecer el libro: puedes exportar de nuevo en cualquier momento."
+
 msgid "Export Options"
 msgstr "Opciones de exportación"
 
@@ -2459,11 +2468,20 @@ msgstr "Vista previa del Glosario"
 msgid "Glossary Prompt"
 msgstr "Prompt de glosario"
 
+msgid "Go to {stageLabel}"
+msgstr "Ir a {stageLabel}"
+
 msgid "Go to book"
 msgstr "Ir al libro"
 
+msgid "Go to Export"
+msgstr "Ir a Exportar"
+
 msgid "Go to home"
 msgstr "Ir a inicio"
+
+msgid "Go to Image Captions"
+msgstr "Ir a Leyendas de Imágenes"
 
 msgid "Go to Storyboard"
 msgstr "Ir al Storyboard"
@@ -2563,6 +2581,9 @@ msgstr "Empezaré más tarde"
 
 msgid "Identify the key idea"
 msgstr "Identificar la idea clave"
+
+msgid "If you don't run Image Captions, your output will not be accessible to readers who use screen readers or can't see the images."
+msgstr "Si no ejecutas Leyendas de Imágenes, tu salida no será accesible para lectores que usen lectores de pantalla o no puedan ver las imágenes."
 
 msgid "Illustrated children's books"
 msgstr "Libros infantiles ilustrados"
@@ -3027,6 +3048,9 @@ msgstr "Cargando..."
 
 msgid "Loading…"
 msgstr "Cargando…"
+
+msgid "Localization"
+msgstr "Localización"
 
 msgid "Logs"
 msgstr "Registros"
@@ -3641,8 +3665,17 @@ msgstr "Se requiere clave de OpenAI"
 msgid "OpenAI Voice"
 msgstr "Voz OpenAI"
 
+msgid "Optional"
+msgstr "Opcional"
+
 msgid "Optional Features"
 msgstr "Características opcionales"
+
+msgid "Optional features to enrich the book — accessibility, comprehension, and navigation. Run any of these in any order once the core pipeline is complete."
+msgstr "Funciones opcionales para enriquecer el libro: accesibilidad, comprensión y navegación. Ejecuta cualquiera de ellas en cualquier orden una vez completado el flujo principal."
+
+#~ msgid "Optional features to enrich the book — accessibility, comprehension, navigation, translations, and audio. Run any of these in any order once the core pipeline is complete."
+#~ msgstr "Funciones opcionales para enriquecer el libro: accesibilidad, comprensión, navegación, traducciones y audio. Ejecuta cualquiera de ellas en cualquier orden una vez completado el flujo principal."
 
 msgid "Optional instructions for the LLM..."
 msgstr "Instrucciones opcionales para el LLM..."
@@ -4228,6 +4261,9 @@ msgstr "Recomendado para"
 msgid "Recommended for {0}"
 msgstr "Recomendado para {0}"
 
+msgid "Recommended for accessibility"
+msgstr "Recomendado para la accesibilidad"
+
 msgid "Record reviewer findings for the current page and save them to the active validation session."
 msgstr "Record reviewer findings for the current page and save them to the active validation session."
 
@@ -4407,6 +4443,9 @@ msgstr "Reintentar"
 
 msgid "Retry Export"
 msgstr "Reintentar exportación"
+
+#~ msgid "Review"
+#~ msgstr "Revisar"
 
 msgid "Review areas with the most items marked as needing changes in this session."
 msgstr "Review areas with the most items marked as needing changes in this session."
@@ -4862,6 +4901,9 @@ msgstr "Aplicación web ADT autónoma"
 
 msgid "Separator"
 msgstr "Separador"
+
+msgid "Sequential stages that turn the source PDF into structured, rendered content. Run these in order."
+msgstr "Etapas secuenciales que transforman el PDF de origen en contenido estructurado y renderizado. Ejecútalas en orden."
 
 msgid "serious"
 msgstr "serious"
@@ -5603,6 +5645,9 @@ msgstr "Traducir el contenido del libro a los idiomas de salida."
 msgid "Translate the book into additional languages. Each language is generated alongside the original, ready for narration, captions, and on-page reading."
 msgstr "Traduce el libro a idiomas adicionales. Cada idioma se genera junto al original, listo para narración, subtítulos y lectura en página."
 
+msgid "Translate the book into other languages and generate narration. Run these after the enhancements you want included are in place."
+msgstr "Traduce el libro a otros idiomas y genera narración. Ejecuta estas etapas después de que las mejoras que deseas incluir estén en su lugar."
+
 msgid "Translating languages..."
 msgstr "Traduciendo idiomas..."
 
@@ -5855,6 +5900,9 @@ msgstr "Utilizada para modelos Claude (claude-opus-4-6, claude-sonnet-4-6, etc.)
 msgid "Used for Gemini models — both LLM (gemini-2.5-pro, etc.) and TTS (gemini-2.5-pro-preview-tts, etc.)"
 msgstr "Utilizada para modelos Gemini — tanto LLM (gemini-2.5-pro, etc.) como TTS (gemini-2.5-pro-preview-tts, etc.)"
 
+msgid "Validate, preview, and export the final ADT bundle for delivery."
+msgstr "Valida, previsualiza y exporta el paquete ADT final para su entrega."
+
 msgid "Validation"
 msgstr "Validation"
 
@@ -5946,6 +5994,9 @@ msgstr "Esperando a que la página sea procesada..."
 
 msgid "Wall Clock"
 msgstr "Tiempo transcurrido"
+
+msgid "Warning: Image Captions are required for accessibility"
+msgstr "Advertencia: Las Leyendas de Imágenes son necesarias para la accesibilidad"
 
 msgid "Water is always moving. It travels from the oceans into the sky, falls as rain or snow, flows through rivers, and eventually returns to the sea. This continuous journey is called the water cycle."
 msgstr "El agua siempre está en movimiento. Viaja desde los océanos al cielo, cae como lluvia o nieve, fluye a través de ríos y finalmente regresa al mar. Este viaje continuo se llama el ciclo del agua."
@@ -6072,6 +6123,9 @@ msgstr "Envuelve solicitudes de 'Editar esta imagen'. La IA recibe la imagen ori
 
 msgid "Wraps 'Generate new' requests. Supports user_prompt, style, and image_type variables. Uses Liquid syntax for conditionals."
 msgstr "Envuelve solicitudes de 'Generar nueva'. Soporta variables user_prompt, style e image_type. Usa sintaxis Liquid para condicionales."
+
+msgid "You can export at this stage"
+msgstr "Puedes exportar en esta etapa"
 
 msgid "Young adult fiction"
 msgstr "Ficción para jóvenes adultos"

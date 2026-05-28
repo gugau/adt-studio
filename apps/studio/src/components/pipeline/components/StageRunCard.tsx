@@ -1,5 +1,6 @@
 import { type ReactNode } from "react"
-import { Check, Loader2, Minus, Play, RotateCcw, XCircle } from "lucide-react"
+import { Link } from "@tanstack/react-router"
+import { ArrowRight, Check, Loader2, Minus, Play, RotateCcw, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -34,6 +35,8 @@ interface StageRunCardProps {
   isRunning: boolean
   completed?: boolean
   showRunButton?: boolean
+  /** When provided, render a prominent "Go to {stage}" navigation button. */
+  bookLabel?: string
   onRun: () => void
   disabled: boolean
   children?: ReactNode
@@ -56,6 +59,7 @@ export function StageRunCard({
   isRunning,
   completed,
   showRunButton = true,
+  bookLabel,
   onRun,
   disabled,
   children,
@@ -122,7 +126,7 @@ export function StageRunCard({
                       isDone
                         ? "text-muted-foreground"
                         : isSkipped
-                          ? "text-muted-foreground"
+                          ? "text-muted-foreground/40"
                           : isError
                             ? "text-red-500"
                             : isSubRunning
@@ -133,7 +137,11 @@ export function StageRunCard({
                     {isDone ? (
                       <Check className="w-4 h-4 text-green-500 shrink-0" />
                     ) : isSkipped ? (
-                      <Minus className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={3} />
+                      <Minus
+                        className="w-4 h-4 text-muted-foreground/40 shrink-0"
+                        strokeWidth={2}
+                        aria-label="Disabled"
+                      />
                     ) : isError ? (
                       <XCircle className="w-4 h-4 text-red-500 shrink-0" />
                     ) : isSubRunning ? (
@@ -141,7 +149,9 @@ export function StageRunCard({
                     ) : (
                       <div className="w-4 h-4 rounded-full border border-current opacity-30 shrink-0" />
                     )}
-                    <span>{getStepLabelI18n(key)}</span>
+                    <span className={cn(isSkipped && "line-through decoration-muted-foreground/30")}>
+                      {getStepLabelI18n(key)}
+                    </span>
                     {isSubRunning && hasPages && (
                       <span className="text-muted-foreground tabular-nums">{progress?.page}/{progress?.totalPages}</span>
                     )}
@@ -204,6 +214,28 @@ export function StageRunCard({
           </p>
         )}
       </CardContent>
+
+      {/* "Go to {stage}" navigation button — outlined by default, illuminated once complete */}
+      {bookLabel && (
+        <div className="px-5 pb-4 pt-0">
+          <Link
+            to="/books/$label/$step"
+            params={{ label: bookLabel, step: stageSlug }}
+            className={cn(
+              "flex w-full items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-semibold transition-colors",
+              isCompleted
+                ? cn(color, "border-transparent text-white hover:opacity-90")
+                : cn(
+                    "border-input bg-white text-foreground",
+                    "hover:bg-muted/60 hover:border-muted-foreground/40",
+                  ),
+            )}
+          >
+            {t`Go to ${stageLabel}`}
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      )}
 
       {/* Injected config content */}
       {children && (
