@@ -26,8 +26,6 @@ jobs:
       version: ${{ steps.tag.outputs.version }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Extract tag
         id: tag
@@ -140,13 +138,47 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
+      - name: Azure login (Windows signing)
+        if: matrix.os == 'windows-latest'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+      - name: Acquire Azure code signing token
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          TOKEN=$(az account get-access-token --resource https://codesigning.azure.net --query accessToken -o tsv)
+          echo "::add-mask::$TOKEN"
+          echo "AZ_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+
+      - name: Set up Java (for jsign)
+        if: matrix.os == 'windows-latest'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Cache jsign.jar
+        if: matrix.os == 'windows-latest'
+        id: jsign-cache
+        uses: actions/cache@v4
+        with:
+          path: apps/desktop/jsign.jar
+          key: jsign-7.0
+
+      - name: Download jsign.jar
+        if: matrix.os == 'windows-latest' && steps.jsign-cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          curl -fsSL -o apps/desktop/jsign.jar \
+            https://github.com/ebourg/jsign/releases/download/7.0/jsign-7.0.jar
+
       - name: Package Windows
         if: matrix.os == 'windows-latest'
         run: pnpm --filter @adt/desktop exec electron-builder --win --publish never
-        env:
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
 
       - name: Package Linux
         if: matrix.os == 'ubuntu-latest'
@@ -162,7 +194,6 @@ jobs:
             apps/desktop/release/*.dmg
             apps/desktop/release/*.zip
             apps/desktop/release/*.exe
-            apps/desktop/release/*.deb
             apps/desktop/release/*.AppImage
             apps/desktop/release/*.blockmap
             apps/desktop/release/latest*.yml

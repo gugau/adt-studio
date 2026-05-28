@@ -26,9 +26,10 @@ exports.default = async function (context) {
   }
 
   if (electronPlatformName === "darwin") {
-    const { APPLEID, APPLEIDPASS, APPLEIDTEAM } = process.env;
+    const { APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID } =
+      process.env;
 
-    if (!APPLEID || !APPLEIDPASS || !APPLEIDTEAM) {
+    if (!APPLE_ID || !APPLE_APP_SPECIFIC_PASSWORD || !APPLE_TEAM_ID) {
       console.warn("Skipping macOS notarization: missing Apple credentials");
       return;
     }
@@ -42,10 +43,10 @@ exports.default = async function (context) {
       tool: "notarytool",
       appBundleId: "com.nees.adt-studio",
       appPath,
-      appleId: APPLEID,
-      appleIdPassword: APPLEIDPASS,
-      ascProvider: APPLEIDTEAM,
-      teamId: APPLEIDTEAM,
+      appleId: APPLE_ID,
+      appleIdPassword: APPLE_APP_SPECIFIC_PASSWORD,
+      ascProvider: APPLE_TEAM_ID,
+      teamId: APPLE_TEAM_ID,
     });
   }
 
