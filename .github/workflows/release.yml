@@ -81,7 +81,10 @@ jobs:
       - name: Bump apps/desktop package.json
         env:
           VERSION: ${{ steps.tag.outputs.version }}
-        run: pnpm --filter @adt/desktop pkg set version="$VERSION"
+        # --no-git-tag-version: don't commit or tag here (finalize does that).
+        run: |
+          cd apps/desktop
+          pnpm version "$VERSION" --no-git-tag-version
 
       - name: Upload staged release metadata
         uses: actions/upload-artifact@v4
