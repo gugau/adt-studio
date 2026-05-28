@@ -1,8 +1,14 @@
+// electron-builder afterSign hook.
+//
+// macOS notarization is handled by electron-builder's built-in support when
+// APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID are present in the
+// environment, so we do NOT re-run it here. This script exists for Windows
+// only: electron-builder doesn't know how to use Azure Trusted Signing with
+// jsign, so we sign the .exe ourselves after electron-builder finishes.
 require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
-const { notarize } = require("@electron/notarize");
 
 function findExeFile(dir) {
   // Look for *.exe files in the output directory
@@ -17,37 +23,16 @@ function findExeFile(dir) {
 exports.default = async function (context) {
   const { electronPlatformName, appOutDir } = context;
   console.log(
-    `Notarization context: platform=${electronPlatformName}, appOutDir=${appOutDir}`,
+    `afterSign hook: platform=${electronPlatformName}, appOutDir=${appOutDir}`,
   );
 
   if (process.env.SKIP_NOTARIZE === "true") {
-    console.warn("Skipping notarization/signing due to SKIP_NOTARIZE=true");
+    console.warn("Skipping signing/notarization due to SKIP_NOTARIZE=true");
     return;
   }
 
   if (electronPlatformName === "darwin") {
-    const { APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID } =
-      process.env;
-
-    if (!APPLE_ID || !APPLE_APP_SPECIFIC_PASSWORD || !APPLE_TEAM_ID) {
-      console.warn("Skipping macOS notarization: missing Apple credentials");
-      return;
-    }
-
-    const appName = context.packager.appInfo.productFilename;
-    const appPath = path.join(appOutDir, `${appName}.app`);
-
-    console.log("Starting macOS notarization...");
-
-    return notarize({
-      tool: "notarytool",
-      appBundleId: "com.nees.adt-studio",
-      appPath,
-      appleId: APPLE_ID,
-      appleIdPassword: APPLE_APP_SPECIFIC_PASSWORD,
-      ascProvider: APPLE_TEAM_ID,
-      teamId: APPLE_TEAM_ID,
-    });
+    return;
   }
 
   if (electronPlatformName?.includes("win")) {
