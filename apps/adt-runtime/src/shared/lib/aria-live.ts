@@ -5,6 +5,7 @@
  */
 
 let region: HTMLElement | null = null
+let pendingAnnounce: ReturnType<typeof setTimeout> | null = null
 
 function ensureRegion(): HTMLElement {
   if (region) return region
@@ -30,10 +31,19 @@ export function announceToScreenReader(
   if (typeof document === "undefined") return
   const el = ensureRegion()
   el.setAttribute("aria-live", options.assertive ? "assertive" : "polite")
+  // Cancel any in-flight announcement first. Without this, a rapid second call
+  // would clear the textContent before the first call's setTimeout fires,
+  // letting the first announcement land AFTER the second clear and overwrite
+  // it — the user hears a stale message.
+  if (pendingAnnounce !== null) {
+    clearTimeout(pendingAnnounce)
+    pendingAnnounce = null
+  }
   // Clearing first guarantees screen readers register the change even when the
   // message is identical to the previous announcement.
   el.textContent = ""
-  setTimeout(() => {
+  pendingAnnounce = setTimeout(() => {
     el.textContent = message
+    pendingAnnounce = null
   }, 50)
 }

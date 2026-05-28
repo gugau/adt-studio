@@ -178,6 +178,11 @@ export function initializeOpenEndedActivity(): (() => void) | null {
 
   const hasNextPage = findNextPageHref() !== null
   let listenerCleanups: Array<() => void> = []
+  // Re-entry guard: validation is async (the text validator awaits per input),
+  // so a user double-click could fire two parallel validateAll loops that
+  // interleave DOM feedback and play `success`/`error` sounds twice. Block
+  // the second click until the first finishes.
+  let validationInFlight = false
 
   function attachInputListeners(): void {
     listenerCleanups.forEach((off) => off())
@@ -277,7 +282,11 @@ export function initializeOpenEndedActivity(): (() => void) | null {
       if (href) window.location.href = href
       return
     }
-    void runValidation()
+    if (validationInFlight) return
+    validationInFlight = true
+    runValidation().finally(() => {
+      validationInFlight = false
+    })
   }
 
   function handleSkip(): void {

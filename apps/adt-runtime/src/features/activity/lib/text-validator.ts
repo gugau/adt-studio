@@ -243,13 +243,16 @@ export class TextValidator {
   }
 }
 
-let sharedValidator: TextValidator | null = null
-
 /**
- * A process-wide validator instance. Cheap to construct, but reuse keeps the
- * fallback set allocation singular and gives callers a stable place to look up.
+ * Return a validator wired to the CURRENT language. Constructed fresh on each
+ * call so an in-session language switch is picked up — the constructor only
+ * reads `currentLanguageAtom` and assigns a reference to the module-level
+ * `FALLBACK_SPANISH_WORDS` Set, so this is cheap (no dictionary copy).
+ *
+ * (Previously this cached a singleton instance, which kept the original `base`
+ * language even after the learner switched language — Spanish heuristics
+ * applied to English text, or vice versa.)
  */
 export function getSharedTextValidator(): TextValidator {
-  if (!sharedValidator) sharedValidator = new TextValidator()
-  return sharedValidator
+  return new TextValidator()
 }
