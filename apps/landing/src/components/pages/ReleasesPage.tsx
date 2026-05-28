@@ -1,24 +1,14 @@
-import {
-  ArrowLeft,
-  ArrowUpRight,
-  Download,
-  Tag,
-} from "lucide-react";
+import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/Button";
 import { cn } from "@/lib/cn";
 import {
-  formatAbsoluteDate,
-  formatDownloads,
-  formatRelativeDate,
-  stripMarkdown,
-  sumReleaseDownloads,
-  useGithubReleases,
-  type GithubRelease,
-} from "@/lib/useGithubReleases";
+  formatRelativeApprox,
+  MOCK_RELEASES,
+  type MockRelease,
+} from "@/data/mockReleases";
 
 export function ReleasesPage() {
-  const { releases, loading, error } = useGithubReleases();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -26,87 +16,75 @@ export function ReleasesPage() {
     return () => cancelAnimationFrame(id);
   }, []);
 
-  const items = releases ?? [];
+  const items = MOCK_RELEASES;
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[color:var(--color-background)] pb-24 pt-32 lg:pb-32">
+    <div className="relative min-h-screen bg-[color:var(--color-background)] pb-32 pt-32 lg:pb-40">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[420px] [background:radial-gradient(ellipse_55%_55%_at_50%_0%,color-mix(in_oklch,var(--color-primary)_14%,transparent),transparent_70%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[420px] [background:radial-gradient(ellipse_55%_55%_at_50%_0%,color-mix(in_oklch,var(--color-primary)_12%,transparent),transparent_70%)]"
       />
 
-      <div className="relative mx-auto w-full max-w-3xl px-4">
+      <div className="relative mx-auto w-full max-w-5xl px-5 md:px-8">
         <div
           className={cn(
-            "flex items-center gap-2 transition-all duration-500",
+            "transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
             mounted ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
           )}
         >
           <a
             href="#top"
-            className="group inline-flex items-center gap-1.5 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-card)]/70 px-3 py-1 text-xs font-semibold text-[color:var(--color-muted-foreground)] shadow-sm backdrop-blur-sm transition-all hover:border-[color:var(--color-primary)]/30 hover:text-[color:var(--color-foreground)]"
+            className="group inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--color-muted-foreground)] transition-colors hover:text-[color:var(--color-foreground)]"
           >
-            <ArrowLeft className="h-3.5 w-3.5 transition-transform duration-200 group-hover:-translate-x-0.5" />
+            <ArrowLeft className="h-3.5 w-3.5 transition-transform duration-300 ease-out group-hover:-translate-x-0.5" />
             Back to home
           </a>
         </div>
 
-        <header className="mt-8 flex flex-col gap-3">
+        <header className="relative mt-14 flex flex-col items-center gap-5 text-center">
           <div
+            aria-hidden
             className={cn(
-              "text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--color-muted-foreground)] transition-opacity duration-500",
+              "pointer-events-none absolute left-1/2 top-1/2 -z-0 h-48 w-[520px] -translate-x-1/2 -translate-y-1/2 transition-opacity duration-[1200ms]",
+              "[background:radial-gradient(ellipse_60%_60%_at_50%_50%,color-mix(in_oklch,var(--color-primary)_22%,transparent),transparent_70%)] blur-2xl",
               mounted ? "opacity-100" : "opacity-0",
             )}
-            style={{ transitionDelay: "80ms" }}
-          >
-            Releases
-          </div>
+          />
           <h1
             className={cn(
-              "text-balance text-3xl font-bold leading-[1.1] tracking-tight transition-all duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] md:text-[44px]",
+              "relative text-balance text-5xl font-bold leading-[1.02] tracking-[-0.035em] transition-all duration-[800ms] ease-[cubic-bezier(0.22,1,0.36,1)] md:text-7xl",
+              "bg-gradient-to-b from-[color:var(--color-foreground)] via-[color:var(--color-foreground)] to-[color:var(--color-foreground)]/55 bg-clip-text text-transparent",
               mounted ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
             )}
             style={{ transitionDelay: "140ms" }}
           >
-            Every release of ADT Studio.
+            Updates
           </h1>
           <p
             className={cn(
-              "max-w-xl text-base leading-relaxed text-[color:var(--color-muted-foreground)] transition-opacity duration-[600ms] md:text-lg",
+              "relative max-w-xl text-base leading-relaxed text-[color:var(--color-muted-foreground)] transition-opacity duration-[700ms] md:text-lg",
               mounted ? "opacity-100" : "opacity-0",
             )}
-            style={{ transitionDelay: "240ms" }}
+            style={{ transitionDelay: "260ms" }}
           >
-            Full changelog, sorted newest first. Click any release for the
-            complete notes and per-asset downloads.
+            What&rsquo;s new in ADT Studio.
           </p>
         </header>
 
-        <div className="mt-12">
-          {loading && items.length === 0 ? (
-            <ReleaseListSkeleton mounted={mounted} />
-          ) : error && items.length === 0 ? (
-            <ErrorCard />
-          ) : items.length === 0 ? (
-            <EmptyCard />
-          ) : (
-            <ol className="flex flex-col gap-3">
-              {items.map((release, i) => (
-                <ReleaseRow
-                  key={release.tag_name}
-                  release={release}
-                  index={i}
-                  isLatest={i === 0}
-                  mounted={mounted}
-                />
-              ))}
-            </ol>
-          )}
-        </div>
+        <ol className="mt-20 flex flex-col gap-24 md:gap-32">
+          {items.map((release, i) => (
+            <ReleaseEntry
+              key={release.tag}
+              release={release}
+              index={i}
+              mounted={mounted}
+            />
+          ))}
+        </ol>
 
         <div
           className={cn(
-            "mt-10 flex flex-wrap items-center justify-center gap-2 transition-opacity duration-500",
+            "mt-24 flex flex-wrap items-center justify-center gap-2 transition-opacity duration-700",
             mounted ? "opacity-100" : "opacity-0",
           )}
           style={{ transitionDelay: "560ms" }}
@@ -127,146 +105,98 @@ export function ReleasesPage() {
   );
 }
 
-function ReleaseRow({
+function ReleaseEntry({
   release,
   index,
-  isLatest,
   mounted,
 }: {
-  release: GithubRelease;
+  release: MockRelease;
   index: number;
-  isLatest: boolean;
   mounted: boolean;
 }) {
-  const title = release.name?.trim() || release.tag_name;
-  const summary = stripMarkdown(release.body)
-    .split("\n")
-    .filter(Boolean)
-    .slice(0, 2)
-    .join(" · ");
-  const detailHref = `#/releases/${encodeURIComponent(release.tag_name)}`;
-  const totalDownloads = sumReleaseDownloads(release);
+  const detailHref = `#/releases/${encodeURIComponent(release.tag)}`;
 
   return (
     <li
+      id={release.tag}
       className={cn(
-        "group transition-all duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
-        mounted ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0",
+        "scroll-mt-32 transition-all duration-[800ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+        mounted ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
       )}
-      style={{ transitionDelay: `${300 + Math.min(index, 8) * 60}ms` }}
+      style={{ transitionDelay: `${260 + Math.min(index, 6) * 60}ms` }}
     >
-      <a
-        href={detailHref}
-        className="relative flex flex-col gap-3 rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[color:var(--color-primary)]/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)] sm:flex-row sm:items-center sm:gap-5"
-      >
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-md bg-[color:var(--color-primary)]/10 px-2 py-0.5 font-mono text-[11px] font-bold text-[color:var(--color-primary)]">
-              <Tag className="h-3 w-3" />
-              {release.tag_name}
-            </span>
-            {isLatest && (
-              <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
-                Latest
-              </span>
-            )}
-            {release.prerelease && (
-              <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700">
-                Beta
-              </span>
-            )}
-            <span className="font-mono text-[11px] text-[color:var(--color-muted-foreground)]">
-              {formatAbsoluteDate(release.published_at)}
-              <span className="opacity-60">
-                {" · "}
-                {formatRelativeDate(release.published_at)}
-              </span>
-            </span>
-            {totalDownloads > 0 && (
-              <span className="inline-flex items-center gap-1 font-mono text-[11px] text-[color:var(--color-muted-foreground)]">
-                <Download className="h-3 w-3" />
-                {formatDownloads(totalDownloads)}
-              </span>
-            )}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-[200px_1fr] md:gap-12">
+        <aside className="flex flex-col gap-2 md:sticky md:top-28 md:self-start md:pt-1">
+          <div className="flex items-center gap-2 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-[color:var(--color-muted-foreground)]">
+            <span
+              aria-hidden
+              className="h-1 w-1 rounded-full bg-[color:var(--color-primary)]/70"
+            />
+            {release.tag}
           </div>
-
-          <div className="line-clamp-1 text-base font-semibold tracking-tight text-[color:var(--color-foreground)]">
-            {title}
+          <a
+            href={detailHref}
+            className="text-balance text-xl font-semibold leading-[1.15] tracking-tight text-[color:var(--color-foreground)] transition-colors duration-300 ease-out hover:text-[color:var(--color-primary)] md:text-[22px]"
+          >
+            {release.name}
+          </a>
+          <div className="font-mono text-[11px] tracking-tight text-[color:var(--color-muted-foreground)]">
+            {formatRelativeApprox(release.published_at)}
           </div>
+        </aside>
 
-          {summary && (
-            <p className="line-clamp-2 text-sm leading-relaxed text-[color:var(--color-muted-foreground)]">
-              {summary}
-            </p>
+        <div className="flex flex-col gap-7">
+          <a
+            href={detailHref}
+            aria-label={`Open ${release.name} release notes`}
+            className="group relative block overflow-hidden rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-card)] shadow-sm transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:shadow-xl"
+          >
+            <div className="aspect-[16/9] w-full overflow-hidden bg-[color:var(--color-muted)]">
+              <img
+                src={release.hero.src}
+                alt={release.hero.alt}
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover transition-transform duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.03]"
+              />
+            </div>
+          </a>
+
+          <p className="max-w-2xl text-[15px] leading-relaxed text-[color:var(--color-foreground)]/85 md:text-base">
+            {release.summary}{" "}
+            <a
+              href={detailHref}
+              className="font-medium text-[color:var(--color-primary)] underline-offset-2 hover:underline"
+            >
+              Watch the video
+            </a>{" "}
+            to learn more.
+          </p>
+
+          {release.sections && release.sections.length > 0 && (
+            <div className="mt-2 flex flex-col gap-7 md:gap-8">
+              {release.sections.map((section, j) => (
+                <div key={j}>
+                  <div className="text-sm font-semibold tracking-tight text-[color:var(--color-foreground)]">
+                    {section.heading}
+                  </div>
+                  <ul className="mt-3 flex flex-col gap-1.5 text-[15px] leading-relaxed text-[color:var(--color-foreground)]/85">
+                    {section.items.map((item, k) => (
+                      <li key={k} className="flex gap-2.5">
+                        <span
+                          aria-hidden
+                          className="mt-[0.7em] h-1 w-1 shrink-0 rounded-full bg-[color:var(--color-muted-foreground)]/60"
+                        />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
           )}
         </div>
-
-        <span className="hidden shrink-0 items-center gap-1 text-xs font-semibold text-[color:var(--color-muted-foreground)] transition-colors group-hover:text-[color:var(--color-primary)] sm:inline-flex">
-          View details
-          <ArrowUpRight className="h-3.5 w-3.5" />
-        </span>
-      </a>
+      </div>
     </li>
-  );
-}
-
-function ReleaseListSkeleton({ mounted }: { mounted: boolean }) {
-  return (
-    <ol className="flex flex-col gap-3" aria-busy>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <li
-          key={i}
-          className={cn(
-            "rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-5 transition-opacity duration-500",
-            mounted ? "opacity-100" : "opacity-0",
-          )}
-          style={{ transitionDelay: `${300 + i * 60}ms` }}
-        >
-          <div className="flex items-center gap-2">
-            <span className="h-4 w-16 rounded bg-[color:var(--color-muted)]" />
-            <span className="h-3 w-24 rounded bg-[color:var(--color-muted)]" />
-          </div>
-          <div className="mt-3 h-4 w-2/3 rounded bg-[color:var(--color-muted)]" />
-          <div className="mt-2 flex flex-col gap-1.5">
-            <span className="block h-2 w-[92%] rounded bg-[color:var(--color-muted)]" />
-            <span className="block h-2 w-[80%] rounded bg-[color:var(--color-muted)]" />
-          </div>
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-function ErrorCard() {
-  return (
-    <div className="rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-6">
-      <div className="text-base font-semibold text-[color:var(--color-foreground)]">
-        Couldn&rsquo;t load the release list
-      </div>
-      <p className="mt-1 text-sm text-[color:var(--color-muted-foreground)]">
-        We couldn&rsquo;t reach GitHub. The full list is always available on
-        the upstream repo.
-      </p>
-      <div className="mt-4">
-        <Button
-          href="https://github.com/unicef/adt-studio/releases"
-          target="_blank"
-          rel="noreferrer noopener"
-          variant="secondary"
-          size="md"
-        >
-          Open on GitHub
-          <ArrowUpRight className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function EmptyCard() {
-  return (
-    <div className="rounded-2xl border border-dashed border-[color:var(--color-border)] bg-[color:var(--color-card)]/60 p-6 text-sm text-[color:var(--color-muted-foreground)]">
-      No releases published yet — check back once the first build ships.
-    </div>
   );
 }
