@@ -108,6 +108,7 @@ jobs:
         os: [macos-latest, windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60 # mac signing/notarization can take a while
+    environment: desktop
     permissions:
       contents: read
     env:
