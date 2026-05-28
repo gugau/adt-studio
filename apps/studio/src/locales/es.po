@@ -418,6 +418,9 @@ msgstr "Una sección con texto y múltiples imágenes."
 msgid "A section with text in a highlighted box."
 msgstr "Una sección con texto en un cuadro resaltado."
 
+msgid "A select-all-that-apply activity where the learner can choose more than one option per question."
+msgstr "Una actividad de seleccionar todas las opciones que correspondan, en la que el estudiante puede elegir más de una opción por pregunta."
+
 msgid "A separator page between sections."
 msgstr "Una página separadora entre secciones."
 
@@ -558,6 +561,9 @@ msgstr "Actividad: Completar espacios"
 
 msgid "Activity: Matching"
 msgstr "Actividad: Emparejar"
+
+msgid "Activity: Multi-Select"
+msgstr "Actividad: Selección múltiple (varias)"
 
 msgid "Activity: Multiple Choice"
 msgstr "Actividad: Selección múltiple"
