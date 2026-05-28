@@ -3334,6 +3334,9 @@ msgstr "Pas encore de clé API pour {0}. Ajoutez-en une dans les paramètres du 
 msgid "No assessment"
 msgstr "Aucune évaluation"
 
+msgid "No audio for this page"
+msgstr "Pas de son pour cette page"
+
 msgid "No books match your search"
 msgstr "Aucun livre ne correspond à votre recherche"
 
@@ -4531,6 +4534,9 @@ msgstr "Exécutez le storyboard pour générer des sections auxquelles vous pouv
 msgid "Run the pipeline"
 msgstr "Exécuter le pipeline"
 
+msgid "Run the pipeline to extract content"
+msgstr "Exécutez le pipeline pour extraire le contenu"
+
 msgid "Run TOC"
 msgstr "Exécuter la table des matières"
 
@@ -5469,6 +5475,9 @@ msgstr "Voici Pip ! C'est un joyeux chien caramel avec une queue très remuante.
 
 msgid "This page has no captioned images"
 msgstr "Cette page n'a pas d'images légendées"
+
+msgid "This page has no entries to synthesize"
+msgstr "Cette page n'a pas d'entrées à synthétiser"
 
 msgid "This page has no sectioning output"
 msgstr "Cette page n'a pas de sortie de sectionnement"

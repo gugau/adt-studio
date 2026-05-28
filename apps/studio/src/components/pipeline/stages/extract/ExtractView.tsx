@@ -9,6 +9,7 @@ import { useApiKey } from "@/hooks/use-api-key"
 import { ExtractPageDetail } from "./components/ExtractPageDetail"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { StageRunCard } from "../../components/StageRunCard"
+import { StageEmptyState } from "../../components/StageEmptyState"
 import type { PageSummaryItem } from "@/api/client"
 
 /** Returns true once the element has scrolled into view. */
@@ -316,9 +317,12 @@ export function ExtractView({ bookLabel, selectedPageId: selectedPageIdProp, onS
           disabled={!extractError || !hasApiKey || extractRunning}
         />
       ) : pageList.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          <Trans>No pages extracted yet. Run the pipeline to extract content.</Trans>
-        </p>
+        <StageEmptyState
+          icon={FileText}
+          color="blue"
+          title={t`No pages extracted yet`}
+          subtitle={t`Run the pipeline to extract content`}
+        />
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           {pageList.map((page) => (
