@@ -54,11 +54,11 @@ const config = {
   win: {
     target: ["nsis"],
     icon: "build/icon.ico",
-    publisherName: [
-      "Núcleo de Excelência em Tecnologias Sociais - NEES",
-      "UNICEF",
-    ],
     signtoolOptions: {
+      publisherName: [
+        "Núcleo de Excelência em Tecnologias Sociais - NEES",
+        "UNICEF",
+      ],
       sign: "./scripts/sign-windows.js",
     },
   },
