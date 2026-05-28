@@ -54,10 +54,11 @@ const config = {
   win: {
     target: ["nsis"],
     icon: "build/icon.ico",
+    publisherName: [
+      "Núcleo de Excelência em Tecnologias Sociais - NEES",
+      "UNICEF",
+    ],
     signtoolOptions: {
-      // Called for every .exe electron-builder produces (inner app + installer).
-      // Macs are signed/notarized by electron-builder's built-in support — no
-      // afterSign hook needed.
       sign: "./scripts/sign-windows.js",
     },
   },
