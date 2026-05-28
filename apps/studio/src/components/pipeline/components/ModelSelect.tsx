@@ -256,8 +256,6 @@ export const IMAGE_MODEL_GROUPS: ModelGroup[] = [
     provider: "openai",
     models: [
       "gpt-image-2",
-      "gpt-image-1.5",
-      "gpt-image-1",
       "dall-e-3",
     ],
   },
