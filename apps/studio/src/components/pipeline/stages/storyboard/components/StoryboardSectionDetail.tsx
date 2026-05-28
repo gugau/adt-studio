@@ -2068,13 +2068,12 @@ export function StoryboardSectionDetail({
         ref={scrollContainerRef}
       >
         {!section ? (
-          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-            <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
-              <LayoutGrid className="w-6 h-6 text-muted-foreground/40" />
-            </div>
-            <p className="text-sm font-medium">{t`No sections on this page`}</p>
-            <p className="text-xs mt-1">{t`All sections have been deleted`}</p>
-          </div>
+          <StageEmptyState
+            icon={LayoutGrid}
+            color="violet"
+            title={t`No sections on this page`}
+            subtitle={t`All sections have been deleted`}
+          />
         ) : renderedSection?.html ? (
           <>
             {activityPreviewMode ? (

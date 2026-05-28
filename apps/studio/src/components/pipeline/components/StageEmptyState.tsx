@@ -1,7 +1,17 @@
 import type { LucideIcon } from "lucide-react"
 import type { ReactNode } from "react"
 
-export type EmptyStateColor = "orange" | "teal" | "pink" | "violet" | "sky"
+export type EmptyStateColor =
+  | "orange"
+  | "teal"
+  | "pink"
+  | "violet"
+  | "sky"
+  | "blue"
+  | "lime"
+  | "amber"
+  | "rose"
+  | "cyan"
 
 interface ColorClasses {
   iconBg: string
@@ -14,6 +24,11 @@ const COLOR_CLASSES: Record<EmptyStateColor, ColorClasses> = {
   pink: { iconBg: "bg-pink-50", iconColor: "text-pink-300" },
   violet: { iconBg: "bg-violet-50", iconColor: "text-violet-300" },
   sky: { iconBg: "bg-sky-50", iconColor: "text-sky-300" },
+  blue: { iconBg: "bg-blue-50", iconColor: "text-blue-300" },
+  lime: { iconBg: "bg-lime-50", iconColor: "text-lime-300" },
+  amber: { iconBg: "bg-amber-50", iconColor: "text-amber-300" },
+  rose: { iconBg: "bg-rose-50", iconColor: "text-rose-300" },
+  cyan: { iconBg: "bg-cyan-50", iconColor: "text-cyan-300" },
 }
 
 interface StageEmptyStateProps {

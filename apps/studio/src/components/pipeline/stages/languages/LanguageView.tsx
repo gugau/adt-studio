@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo, type ChangeEvent } from "react"
 import { createPortal } from "react-dom"
 import { Link } from "@tanstack/react-router"
-import { Check, ChevronDown, ChevronRight, ChevronUp, Languages, Loader2, Play, Pause, Plus, RotateCcw, Save, Settings, Trash2, Type, Upload, WandSparkles, X } from "lucide-react"
+import { AudioLines, Check, ChevronDown, ChevronRight, ChevronUp, Languages, Loader2, Play, Pause, Plus, RotateCcw, Save, Settings, Trash2, Type, Upload, WandSparkles, X } from "lucide-react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { api, getAudioUrl, BASE_URL } from "@/api/client"
 import type { TextCatalogEntry, VersionEntry, WordTimestamp, WordTimestampEntry } from "@/api/client"
@@ -890,10 +890,10 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
         </div>
       ) : selectedPageId && displayEntries.length === 0 && entries.length > 0 ? (
         <StageEmptyState
-          icon={Languages}
-          color="pink"
-          title={t`No translations for this page`}
-          subtitle={t`This page has no translatable text entries`}
+          icon={isSpeechStage ? AudioLines : Languages}
+          color={isSpeechStage ? "rose" : "pink"}
+          title={isSpeechStage ? t`No audio for this page` : t`No translations for this page`}
+          subtitle={isSpeechStage ? t`This page has no entries to synthesize` : t`This page has no translatable text entries`}
         />
       ) : (
       <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
