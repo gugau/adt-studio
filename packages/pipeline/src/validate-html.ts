@@ -301,6 +301,12 @@ function walkNode(
       if (isInsideExemptTag(node)) return
       if (hasGeneratedA11yLabelAncestor(node)) return
       if (hasAriaHiddenAncestor(node)) return
+      // Screen-reader-only text (Tailwind `sr-only`, or the historical
+      // `visually-hidden` class) is invisible to sighted users by design —
+      // the LLM uses it for accessible labels on inputs and image controls.
+      // Allow such text without a data-id since it can't visually pollute
+      // the rendered page and improves a11y when the LLM emits it.
+      if (hasSrOnlyAncestor(node)) return
       // Allow single-digit numbers as bare text (used as option markers in activities)
       if (/^\d$/.test(node.data.trim())) return
       if (!hasAncestorWithDataId(node)) {
@@ -383,11 +389,14 @@ function walkNode(
         // Compare without the blank markers in actual and underscore/dot/placeholder markers in expected.
         // Also strip single `_` chars from the expected so inline letter blanks (e.g. source text `"en_ro"`
         // rendered as `"en[[blank:item-1]]ro"`) match without the underscore throwing off similarity.
+        // Strip `[placeholder:...]` markers BEFORE the dot-run regex, otherwise the dot run inside the
+        // placeholder (e.g. `[placeholder:..........]`) gets consumed first, leaving `[placeholder:]`
+        // (empty contents) which then no longer matches PLACEHOLDER_MARKER_RE.
         const strippedActual = normalizeText(actualText.replace(BLANK_MARKER_RE, ""))
         const strippedExpected = normalizeText(
           expectedText
-            .replace(TEXTBOOK_BLANK_RE, "")
             .replace(PLACEHOLDER_MARKER_RE, "")
+            .replace(TEXTBOOK_BLANK_RE, "")
             .replace(/_/g, "")
         )
         if (strippedActual !== strippedExpected) {
@@ -449,6 +458,34 @@ function hasGeneratedA11yLabelAncestor(node: any): boolean {
   while (current) {
     if (current.attribs?.["data-generated-a11y-label"] === "true") {
       return true
+    }
+    current = current.parent
+  }
+  return false
+}
+
+/**
+ * True if the node sits inside an element with a screen-reader-only utility
+ * class (`sr-only` from Tailwind, or the historical `visually-hidden` /
+ * `screen-reader-only` aliases). Such content is invisible to sighted users
+ * and exists purely for assistive tech.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function hasSrOnlyAncestor(node: any): boolean {
+  let current = node.parent
+  while (current) {
+    if (current.type === "tag") {
+      const cls = current.attribs?.class
+      if (typeof cls === "string") {
+        const tokens = cls.split(/\s+/)
+        if (
+          tokens.includes("sr-only") ||
+          tokens.includes("visually-hidden") ||
+          tokens.includes("screen-reader-only")
+        ) {
+          return true
+        }
+      }
     }
     current = current.parent
   }
@@ -555,9 +592,12 @@ function normalizeText(text: string): string {
  * and dashes belong between inputs, not in the label text.
  */
 function stripBlankPlaceholders(text: string): string {
+  // Order matters: `[placeholder:...]` markers must be removed first so the
+  // dot-run regex doesn't eat their contents and leave a literal `[placeholder:]`
+  // behind that no longer matches PLACEHOLDER_MARKER_RE.
   return text
-    .replace(TEXTBOOK_BLANK_RE, "")
     .replace(PLACEHOLDER_MARKER_RE, "")
+    .replace(TEXTBOOK_BLANK_RE, "")
     .replace(ORPHAN_SEPARATOR_RUN_RE, "")
     .replace(/\s+/g, " ")
     .trim()

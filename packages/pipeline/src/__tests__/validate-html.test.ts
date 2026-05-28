@@ -1470,3 +1470,115 @@ describe("text replacement preserves nested editables", () => {
     expect(result.sectionHtml).toContain("<input")
   })
 })
+
+describe("sr-only text exemption", () => {
+  it("allows text inside an <label class=\"sr-only\"> without a data-id", () => {
+    const html = `
+      <section data-section-type="activity_fill_in_the_blank" data-section-id="pg001_section">
+        <p data-id="pg001_gp001">Question?</p>
+        <label class="sr-only" for="input-1">Respuesta sandía</label>
+        <input id="input-1" type="text" data-activity-item="item-1" aria-labelledby="..." />
+      </section>
+    `
+    const result = validateSectionHtml(html, ["pg001_gp001"], [])
+    expect(result.valid).toBe(true)
+    expect(result.errors).toEqual([])
+  })
+
+  it("allows text inside a nested <span class=\"sr-only\"> element", () => {
+    const html = `
+      <section data-section-type="text_only" data-section-id="pg001_section">
+        <button>
+          <i class="fas fa-volume" aria-hidden="true"></i>
+          <span class="sr-only">Play audio</span>
+        </button>
+      </section>
+    `
+    const result = validateSectionHtml(html, [], [])
+    expect(result.valid).toBe(true)
+  })
+
+  it("still flags text outside any data-id when sr-only is not present", () => {
+    const html = `
+      <section data-section-type="text_only" data-section-id="pg001_section">
+        <p>Some text not wrapped in data-id</p>
+      </section>
+    `
+    const result = validateSectionHtml(html, [], [])
+    expect(result.valid).toBe(false)
+    expect(result.errors[0]).toContain("Text node outside any data-id element")
+  })
+})
+
+describe("[placeholder:...] marker stripping", () => {
+  it("matches expected text containing [placeholder:..........] against rendered text with [[blank:item-N:..........]]", () => {
+    // Regression: TEXTBOOK_BLANK_RE was eating the dot-run INSIDE the
+    // `[placeholder:...]` marker before PLACEHOLDER_MARKER_RE could strip
+    // the wrapper, leaving a literal `[placeholder:]` in strippedExpected
+    // that the rendered text could never match.
+    const html = `
+      <section data-section-type="activity_fill_in_the_blank" data-section-id="pg002_section">
+        <p class="fitb-sentence" data-id="pg002_n0042">No lo [[blank:item-3:..........]] ni [[blank:item-4:..............]] la raíz.</p>
+      </section>
+    `
+    const result = validateSectionHtml(
+      html,
+      ["pg002_n0042"],
+      [],
+      undefined,
+      {
+        expectedTexts: new Map([
+          ["pg002_n0042", "No lo [placeholder:..........] ni [placeholder:..............] la raíz."],
+        ]),
+      },
+    )
+    expect(result.valid).toBe(true)
+    expect(result.errors).toEqual([])
+  })
+
+  it("matches expected text containing [placeholder:...] against a single [[blank:item-N]] marker", () => {
+    const html = `
+      <section data-section-type="activity_fill_in_the_blank" data-section-id="pg002_section">
+        <p class="fitb-sentence" data-id="pg002_n0048">[[blank:item-7:..................]] la tierra con las manos.</p>
+      </section>
+    `
+    const result = validateSectionHtml(
+      html,
+      ["pg002_n0048"],
+      [],
+      undefined,
+      {
+        expectedTexts: new Map([
+          ["pg002_n0048", "[placeholder:..................] la tierra con las manos."],
+        ]),
+      },
+    )
+    expect(result.valid).toBe(true)
+    expect(result.errors).toEqual([])
+  })
+
+  it("strips [placeholder:...] markers from the rendered text when the LLM omits the blank marker", () => {
+    // When the LLM emits a separate <input> instead of an inline [[blank:]] marker,
+    // it should also strip the `[placeholder:...]` text — but if it doesn't, the
+    // replacement should still substitute the cleaned text.
+    const html = `
+      <section data-section-type="activity_fill_in_the_blank" data-section-id="pg002_section">
+        <p data-id="pg002_n0048">la tierra con las manos.</p>
+        <input type="text" data-activity-item="item-7" aria-label="x" />
+      </section>
+    `
+    const result = validateSectionHtml(
+      html,
+      ["pg002_n0048"],
+      [],
+      undefined,
+      {
+        expectedTexts: new Map([
+          ["pg002_n0048", "[placeholder:..................] la tierra con las manos."],
+        ]),
+      },
+    )
+    expect(result.valid).toBe(true)
+    expect(result.sectionHtml).not.toContain("[placeholder:")
+  })
+})
