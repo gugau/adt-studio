@@ -2,7 +2,7 @@ name: Release
 
 on:
   push:
-    branches: [main]
+    branches: [feature/desktop-ci]
   workflow_dispatch:
     inputs:
       tag:
@@ -18,20 +18,16 @@ concurrency:
 
 jobs:
   prepare:
-    # Only run on RELEASE: <tag> commits or on a manual dispatch.
     if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'RELEASE:') }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    timeout-minutes: 10
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
       version: ${{ steps.tag.outputs.version }}
-      sha: ${{ steps.commit.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract tag
         id: tag
@@ -56,6 +52,10 @@ jobs:
             echo "::error::Invalid tag format: $TAG"
             exit 1
           fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "::error::Tag $TAG already exists on origin. Bump the version."
+            exit 1
+          fi
           VERSION="${TAG#v}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
@@ -78,23 +78,15 @@ jobs:
           VERSION: ${{ steps.tag.outputs.version }}
         run: npm pkg set version="$VERSION" --workspace @adt/desktop
 
-      - name: Commit release metadata and push tag
-        id: commit
-        env:
-          TAG: ${{ steps.tag.outputs.tag }}
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .github/ISSUE_TEMPLATE/*.yml apps/desktop/package.json
-          if git diff --staged --quiet; then
-            echo "No metadata changes to commit."
-          else
-            git commit -m "chore(release): $TAG"
-            git push origin HEAD:main
-          fi
-          git tag -f "$TAG"
-          git push origin "$TAG" --force
-          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Upload staged release metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-metadata
+          include-hidden-files: true # .github is a dotfile dir
+          retention-days: 1
+          path: |
+            .github/ISSUE_TEMPLATE
+            apps/desktop/package.json
 
   desktop:
     needs: prepare
@@ -102,16 +94,14 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
-
     runs-on: ${{ matrix.os }}
-
+    timeout-minutes: 60 # mac signing/notarization can take a while
     permissions:
-      contents: write
-
+      contents: read
+    env:
+      APP_VERSION: ${{ needs.prepare.outputs.version }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.prepare.outputs.sha }}
 
       - uses: pnpm/action-setup@v4
 
@@ -126,11 +116,10 @@ jobs:
       - name: Build desktop
         run: pnpm --filter @adt/desktop build
 
-      - name: Publish MacOS
+      - name: Package MacOS
         if: matrix.os == 'macos-latest'
-        run: pnpm --filter @adt/desktop exec electron-builder --mac --publish always
+        run: pnpm --filter @adt/desktop exec electron-builder --mac --publish never
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # macOS signing + notarization
           # CSC_LINK — the base64-encoded .p12 content
           # CSC_KEY_PASSWORD — the certificate password
@@ -140,32 +129,42 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
-      - name: Publish Windows
+      - name: Package Windows
         if: matrix.os == 'windows-latest'
-        run: pnpm --filter @adt/desktop exec electron-builder --win --publish always
+        run: pnpm --filter @adt/desktop exec electron-builder --win --publish never
         env:
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish Linux
+      - name: Package Linux
         if: matrix.os == 'ubuntu-latest'
-        run: pnpm --filter @adt/desktop exec electron-builder --linux --publish always
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm --filter @adt/desktop exec electron-builder --linux --publish never
+
+      - name: Collect installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: installers-${{ matrix.os }}
+          retention-days: 1
+          if-no-files-found: error
+          path: |
+            apps/desktop/release/*.dmg
+            apps/desktop/release/*.zip
+            apps/desktop/release/*.exe
+            apps/desktop/release/*.AppImage
+            apps/desktop/release/*.blockmap
+            apps/desktop/release/latest*.yml
 
   docker:
     needs: prepare
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
-      contents: write
+      contents: read
       packages: write
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.prepare.outputs.sha }}
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -184,14 +183,52 @@ jobs:
             ghcr.io/unicef/adt-studio:latest
             ghcr.io/unicef/adt-studio:${{ needs.prepare.outputs.tag }}
 
-      - name: Ensure GitHub release exists
+  finalize:
+    needs: [prepare, desktop, docker]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ needs.prepare.outputs.tag }}
+      version: ${{ needs.prepare.outputs.version }}
+      sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Restore staged release metadata
+        uses: actions/download-artifact@v4
+        with:
+          name: release-metadata
+          path: .
+
+      - name: Download installers
+        uses: actions/download-artifact@v4
+        with:
+          pattern: installers-*
+          path: dist
+          merge-multiple: true # flatten the per-OS artifacts into one dir
+
+      - name: Commit release metadata and push tag
+        id: commit
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.prepare.outputs.tag }}
-          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
         run: |
-          gh release view "$TAG" --repo "$REPO" 2>/dev/null || \
-            gh release create "$TAG" --repo "$REPO" --title "ADT Studio $TAG" --notes ""
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/ISSUE_TEMPLATE/*.yml apps/desktop/package.json
+          if git diff --staged --quiet; then
+            echo "No metadata changes to commit."
+          else
+            git commit -m "chore(release): $TAG"
+            git push origin HEAD:"$BRANCH"
+          fi
+          git tag "$TAG"
+          git push origin "$TAG"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Generate standalone docker-compose.yml
         env:
@@ -199,33 +236,15 @@ jobs:
         run: |
           sed "s/__TAG__/${TAG}/g" docker/compose-release.yml.template > docker-compose.yml
 
-      - name: Upload docker-compose.yml to release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ needs.prepare.outputs.tag }}
-          REPO: ${{ github.repository }}
-        run: |
-          gh release upload "$TAG" docker-compose.yml \
-            --repo "$REPO" \
-            --clobber
-
-      - name: Upload launcher scripts to release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ needs.prepare.outputs.tag }}
-          REPO: ${{ github.repository }}
-        run: |
-          gh release upload "$TAG" scripts/windows-setup-and-run.bat \
-            --repo "$REPO" \
-            --clobber
-
-      - name: Generate release notes
+      - name: Create GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.prepare.outputs.tag }}
           REPO: ${{ github.repository }}
         run: |
-          NOTES=$(gh api repos/"$REPO"/releases/generate-notes \
-            -f tag_name="$TAG" \
-            --jq '.body')
-          gh release edit "$TAG" --notes "$NOTES"
+          gh release create "$TAG" --repo "$REPO" \
+            --title "ADT Studio $TAG" \
+            --generate-notes \
+            dist/* \
+            docker-compose.yml \
+            scripts/windows-setup-and-run.bat
