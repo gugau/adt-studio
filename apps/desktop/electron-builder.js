@@ -54,8 +54,11 @@ const config = {
   win: {
     target: ["nsis"],
     icon: "build/icon.ico",
+    // Called for every .exe electron-builder produces (inner app + installer).
+    // Macs are signed/notarized by electron-builder's built-in support — no
+    // afterSign hook needed.
+    sign: "./scripts/sign-windows.js",
   },
-  afterSign: "scripts/notarize.js",
   nsis: {
     artifactName,
     oneClick: false,
