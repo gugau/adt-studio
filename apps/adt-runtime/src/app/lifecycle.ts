@@ -61,6 +61,7 @@ import { initAnalytics } from "@/shared/lib/analytics"
 import { installShowContentFallback, showMainContent } from "@/shared/lib/errors"
 import { activityModeAtom, isActivityPageAtom } from "@/features/activity/state/activity.atoms"
 import { initializeQuizActivity } from "@/features/activity/runtime/activity-quiz"
+import { initializeMultiSelectActivity } from "@/features/activity/runtime/activity-multi-select"
 import { initializeFillInTheBlankActivity } from "@/features/activity/runtime/activity-fill-in-the-blank"
 import { initializeOpenEndedActivity } from "@/features/activity/runtime/activity-open-ended"
 import { initializeTrueFalseActivity } from "@/features/activity/runtime/activity-true-false"
@@ -188,6 +189,7 @@ export async function bootRuntime(): Promise<void> {
     showMainContent()
     processGlossaryLocateHint()
     initializeQuizActivity()
+    initializeMultiSelectActivity()
     initializeFillInTheBlankActivity()
     initializeOpenEndedActivity()
     initializeTrueFalseActivity()

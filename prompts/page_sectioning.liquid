@@ -43,6 +43,7 @@ Use these to disambiguate activity types:
   Trigger phrases (and their non-English equivalents — Spanish, Sinhala, Portuguese, etc.): "circle the X", "mark with an X / ✗", "draw a line under / above / around the X", "underline the X", "color the X", "tick the X", "choose the X", "pick the X", "which is bigger / smaller / longer / shorter / correct / the same?", "find the one that…". When these appear alongside multiple items in a presented set, treat the page as an activity even if no writable area is visible.
   Sub-type for SELECT-AMONG pages:
   • Items presented as pickable choices, learner picks ONE per question → `activity_multiple_choice`. This includes 2-image comparisons like "pick the bigger of two pictures" or "draw a line under the smaller item" — TWO options with a comparison framing is `activity_multiple_choice` (two-option MC), NOT `activity_true_false`. True/false is reserved for explicit truth-judgment framings.
+  • Items presented as pickable choices, learner picks MORE THAN ONE per question (the prompt asks for every option matching a criterion) → `activity_multi_select`. Trigger phrases and their non-English equivalents: "select all that apply", "check all that apply", "mark all the X", "tick all the X", "circle all the X that are Y", "choose every X", "which of these are X?" (plural, expecting multiple), "which animals live in water?" with a list of 6 animals where 3 are aquatic. The hallmark is that MORE THAN ONE answer in the option set is correct AND the learner is invited to mark each one (not pick the "best"). If the prompt says "pick THE X" (singular best answer), it's `activity_multiple_choice` even when several options look plausible.
   • All items must be assigned to categories, items OUTNUMBER categories → `activity_sorting` (many-to-one).
   • All items must be assigned to targets, total counts EQUAL → `activity_matching` (strict one-to-one).
   • The prompt asks for a truth-judgment ("Mark T or F", "Yes or no?", "Is this statement true?") → `activity_true_false`.
@@ -81,9 +82,10 @@ Use these to disambiguate activity types:
   • What do the instructions ask? (e.g., "choose the best", "connect with", "sort into", "circle by color")
   • What does the visual layout show? (e.g., options listed per question, a shared pool with categories, two columns)
   • What are the counts? How many total items, how many categories/targets?
-  • Does the learner pick ONE correct answer per question, or assign ALL items to categories?
+  • Does the learner pick ONE correct answer per question, MORE THAN ONE ("all that apply") per question, or assign ALL items to categories?
   Then apply:
   • activity_multiple_choice — learner picks one correct answer per question from a set of options; the other options are distractors
+  • activity_multi_select — learner picks every option matching a criterion ("check all that apply", "mark all the X"); more than one option in the set is correct
   • activity_matching — learner assigns ALL items to targets, and the total counts are EQUAL (one-to-one pairing)
   • activity_sorting — learner assigns ALL items to categories, and items OUTNUMBER categories (many-to-one)
   Hard constraint: if total items > total categories, it is activity_sorting, never activity_matching — regardless of what the instruction wording suggests.
@@ -146,6 +148,7 @@ SPLIT the page into multiple sections when either of these applies:
 1. MIXED MECHANICS — the page contains TWO OR MORE different response mechanics for the learner. Each mechanic gets its own section, even when an overarching instruction or narrative theme appears to unify them. The runtime renders only ONE answer-submission UI per section, so mixed mechanics in a single section cannot work — they MUST split.
    Decide by what the learner DOES at each writable spot, not by how the page "feels":
    - Picking one option from a list → activity_multiple_choice (or activity_true_false / activity_sorting / activity_matching depending on shape)
+   - Picking every option matching a criterion ("select all that apply") → activity_multi_select
    - Writing a discrete short value (word, number, name, date, missing letter, copied value) → activity_fill_in_the_blank
    - Writing sentences/paragraphs in the learner's own words → activity_open_ended_answer
    - Filling cells in a grid → activity_fill_in_a_table
@@ -176,6 +179,7 @@ The correct partition is TWO sections. Labeling the whole page `activity_other` 
 - Classify by the COGNITIVE TASK, not the physical action (circling, coloring, underlining, drawing lines).
 - For every activity section, your `reasoning` MUST state: (1) what the instructions ask, (2) what the visual layout shows, (3) for sorting/matching: an explicit count (e.g. "6 total items, 3 categories"). Then pick the activity type.
 - `activity_multiple_choice` — learner picks ONE correct answer per question from a set of options; other options are distractors.
+- `activity_multi_select` — learner picks EVERY option that matches a criterion ("check all that apply", "mark all the X"). More than one option in the set is correct.
 - `activity_matching` — learner assigns ALL items to targets, total counts EQUAL (one-to-one).
 - `activity_sorting` — learner assigns ALL items to categories, items OUTNUMBER categories (many-to-one). Hard constraint: if total items > total categories, it is `activity_sorting`, never `activity_matching`.
 - Exactly two options (true/false, yes/no, correct/incorrect) → `activity_true_false`.

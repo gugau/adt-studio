@@ -106,6 +106,117 @@ describe("validateActivityStructure — multiple choice", () => {
 })
 
 // ---------------------------------------------------------------------------
+// Multi-select ("select all that apply")
+// ---------------------------------------------------------------------------
+
+describe("validateActivityStructure — multi-select", () => {
+  it("accepts a well-formed multi-select section", () => {
+    const errs = check(`
+      <section data-section-type="activity_multi_select">
+        <label class="activity-option">
+          <input type="checkbox" name="q1" data-activity-item="item-1" />
+          <span>A</span>
+        </label>
+        <label class="activity-option">
+          <input type="checkbox" name="q1" data-activity-item="item-2" />
+          <span>B</span>
+        </label>
+        <label class="activity-option">
+          <input type="checkbox" name="q1" data-activity-item="item-3" />
+          <span>C</span>
+        </label>
+      </section>
+    `)
+    expect(errs).toEqual([])
+  })
+
+  it("flags an option label missing class=\"activity-option\"", () => {
+    const errs = check(`
+      <section data-section-type="activity_multi_select">
+        <label class="flex items-center cursor-pointer">
+          <input type="checkbox" name="q1" data-activity-item="item-1" />
+          <span>A</span>
+        </label>
+      </section>
+    `)
+    expect(errs.some((e) => e.includes("class=\"activity-option\""))).toBe(true)
+    expect(errs.some((e) => e.includes("item-1"))).toBe(true)
+  })
+
+  it("flags a checkbox missing the name attribute", () => {
+    const errs = check(`
+      <section data-section-type="activity_multi_select">
+        <label class="activity-option">
+          <input type="checkbox" data-activity-item="item-1" />
+        </label>
+      </section>
+    `)
+    expect(errs.some((e) => e.includes("name"))).toBe(true)
+    expect(errs.some((e) => e.includes("item-1"))).toBe(true)
+  })
+
+  it("flags an .activity-option label with no inner checkbox", () => {
+    const errs = check(`
+      <section data-section-type="activity_multi_select">
+        <label class="activity-option">
+          <span>just text, no checkbox</span>
+        </label>
+      </section>
+    `)
+    expect(errs.some((e) => e.includes("no <input type=\"checkbox\""))).toBe(true)
+  })
+
+  it("does NOT misfire on a sibling radio in a multi-select section", () => {
+    // Defensive: a stray radio inside a multi-select section shouldn't be
+    // misinterpreted as a missing-name checkbox violation. The MS rule only
+    // looks at type="checkbox" inputs.
+    const errs = check(`
+      <section data-section-type="activity_multi_select">
+        <label class="activity-option">
+          <input type="checkbox" name="q1" data-activity-item="item-1" />
+        </label>
+        <input type="radio" data-activity-item="ignored-1" />
+      </section>
+    `)
+    expect(errs.filter((e) => e.includes("checkbox"))).toEqual([])
+  })
+
+  it("flags duplicate data-activity-item across checkboxes", () => {
+    const errs = check(`
+      <section data-section-type="activity_multi_select">
+        <label class="activity-option">
+          <input type="checkbox" name="q1" data-activity-item="item-1" />
+        </label>
+        <label class="activity-option">
+          <input type="checkbox" name="q1" data-activity-item="item-1" />
+        </label>
+      </section>
+    `)
+    expect(errs.some((e) => e.includes("appears 2 times"))).toBe(true)
+  })
+
+  it("accepts multiple question groups with distinct names", () => {
+    const errs = check(`
+      <section data-section-type="activity_multi_select">
+        <label class="activity-option">
+          <input type="checkbox" name="question-group-1" data-activity-item="item-1" />
+        </label>
+        <label class="activity-option">
+          <input type="checkbox" name="question-group-1" data-activity-item="item-2" />
+        </label>
+        <label class="activity-option">
+          <input type="checkbox" name="question-group-2" data-activity-item="item-3" />
+        </label>
+        <label class="activity-option">
+          <input type="checkbox" name="question-group-2" data-activity-item="item-4" />
+        </label>
+      </section>
+    `)
+    expect(errs).toEqual([])
+  })
+})
+
+// ---------------------------------------------------------------------------
 // True/false
 // ---------------------------------------------------------------------------
 

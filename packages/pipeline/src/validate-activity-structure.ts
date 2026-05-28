@@ -86,6 +86,14 @@ function isRadioWithItem(el: Element): boolean {
   )
 }
 
+function isCheckboxWithItem(el: Element): boolean {
+  return (
+    tag(el, "input") &&
+    (attr(el, "type") ?? "").toLowerCase() === "checkbox" &&
+    typeof attr(el, "data-activity-item") === "string"
+  )
+}
+
 function isWritableTextInput(el: Element): boolean {
   if (tag(el, "textarea")) return true
   if (!tag(el, "input")) return false
@@ -146,6 +154,61 @@ function mcLabelMustWrapRadio(ctx: ActivityRuleContext): string[] {
       errors.push(
         `A <label class="activity-option"> contains no <input type="radio" data-activity-item="..."> descendant. ` +
           `Every option label must wrap a radio with a unique data-activity-item.`,
+      )
+    }
+  }
+  return errors
+}
+
+// ---------------------------------------------------------------------------
+// Multi-select rules (checkboxes — "select all that apply")
+// ---------------------------------------------------------------------------
+
+function msOptionLabelMustHaveActivityClass(
+  ctx: ActivityRuleContext,
+): string[] {
+  const errors: string[] = []
+  const seen = new Set<Element>()
+  for (const checkbox of findAll(ctx.section, isCheckboxWithItem)) {
+    const label = findAncestor(checkbox, (el) => tag(el, "label"))
+    if (!label || seen.has(label)) continue
+    seen.add(label)
+    if (!hasClass(label, "activity-option")) {
+      const item = attr(checkbox, "data-activity-item")
+      errors.push(
+        `The <label> wrapping checkbox data-activity-item="${item}" is missing class="activity-option". ` +
+          `Add "activity-option" alongside any layout classes — the runtime uses this class to find clickable options.`,
+      )
+    }
+  }
+  return errors
+}
+
+function msCheckboxMustHaveName(ctx: ActivityRuleContext): string[] {
+  const errors: string[] = []
+  for (const checkbox of findAll(ctx.section, isCheckboxWithItem)) {
+    if (!attr(checkbox, "name")) {
+      const item = attr(checkbox, "data-activity-item")
+      errors.push(
+        `The checkbox with data-activity-item="${item}" is missing a "name" attribute. ` +
+          `All checkboxes in a single "select all that apply" question must share the same "name"; ` +
+          `checkboxes in different question groups must use distinct names.`,
+      )
+    }
+  }
+  return errors
+}
+
+function msLabelMustWrapCheckbox(ctx: ActivityRuleContext): string[] {
+  const errors: string[] = []
+  for (const label of findAll(ctx.section, (el) =>
+    tag(el, "label") && hasClass(el, "activity-option"),
+  )) {
+    if (findAll(label, isCheckboxWithItem).length === 0) {
+      errors.push(
+        `A <label class="activity-option"> in a multi-select section contains no ` +
+          `<input type="checkbox" data-activity-item="..."> descendant. Every option label ` +
+          `must wrap a checkbox with a unique data-activity-item.`,
       )
     }
   }
@@ -313,7 +376,7 @@ function uniqueDataActivityItems(ctx: ActivityRuleContext): string[] {
   // id across its two radios (paired by item), so we exclude radios from this
   // uniqueness check and handle them in the true/false-specific rule.
   for (const el of findAll(ctx.section, (n) => typeof attr(n, "data-activity-item") === "string")) {
-    if (isRadioWithItem(el)) continue
+    if (isRadioWithItem(el) || isCheckboxWithItem(el)) continue
     const item = attr(el, "data-activity-item")!
     seen.set(item, (seen.get(item) ?? 0) + 1)
   }
@@ -325,6 +388,12 @@ function uniqueDataActivityItems(ctx: ActivityRuleContext): string[] {
       const item = attr(el, "data-activity-item")!
       seen.set(item, (seen.get(item) ?? 0) + 1)
     }
+  }
+
+  // Multi-select checkboxes follow the same one-item-per-option rule as MC radios.
+  for (const el of findAll(ctx.section, isCheckboxWithItem)) {
+    const item = attr(el, "data-activity-item")!
+    seen.set(item, (seen.get(item) ?? 0) + 1)
   }
 
   // Markers count once per occurrence in text.
@@ -354,6 +423,13 @@ const MC_RULES: ActivityRule[] = [
   { name: "unique-items", check: uniqueDataActivityItems },
 ]
 
+const MULTI_SELECT_RULES: ActivityRule[] = [
+  { name: "option-label-class", check: msOptionLabelMustHaveActivityClass },
+  { name: "checkbox-has-name", check: msCheckboxMustHaveName },
+  { name: "label-wraps-checkbox", check: msLabelMustWrapCheckbox },
+  { name: "unique-items", check: uniqueDataActivityItems },
+]
+
 const TRUE_FALSE_RULES: ActivityRule[] = [
   { name: "fieldset-paired-radios", check: tfFieldsetMustHavePairedRadios },
   { name: "validation-mark-present", check: tfLabelShouldHaveValidationMark },
@@ -373,6 +449,7 @@ const OPEN_ENDED_RULES: ActivityRule[] = [
 export const ACTIVITY_RULES: Record<string, ActivityRule[]> = {
   activity_multiple_choice: MC_RULES,
   activity_quiz: MC_RULES,
+  activity_multi_select: MULTI_SELECT_RULES,
   activity_true_false: TRUE_FALSE_RULES,
   activity_fill_in_the_blank: FITB_RULES,
   activity_fill_in_a_table: FITB_RULES,
