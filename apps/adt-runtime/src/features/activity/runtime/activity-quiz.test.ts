@@ -383,4 +383,37 @@ describe("initializeQuizActivity — embedded activity_multiple_choice", () => {
     store.get(validateHandlerAtom)?.()
     expect(store.get(submitStateAtom)).toBe("next")
   })
+
+  it("falls back to structural detection when the LLM omits `.activity-option`", () => {
+    // Mirrors pg006 sec 1: image-grid layout where the LLM drops the
+    // activity-option class. The runtime should still pick up each <label>
+    // that wraps a radio with data-activity-item.
+    document.body.innerHTML = `
+      <section data-section-type="activity_multiple_choice" data-section-id="pg006_sec001">
+        <div role="group" aria-label="Question group 1">
+          <div class="grid grid-cols-2 gap-4">
+            <label class="relative flex items-center justify-center cursor-pointer">
+              <input type="radio" name="question-group-1" value="item-1" data-activity-item="item-1" class="sr-only" />
+              <img data-id="img-1" src="images/a.png" alt="A" style="width:60%" />
+            </label>
+            <label class="relative flex items-center justify-center cursor-pointer">
+              <input type="radio" name="question-group-1" value="item-2" data-activity-item="item-2" class="sr-only" />
+              <img data-id="img-2" src="images/b.png" alt="B" style="width:82%" />
+            </label>
+          </div>
+        </div>
+      </section>
+    `
+    window.correctAnswers = { "item-1": false, "item-2": true }
+    initializeQuizActivity()
+
+    const winner = document
+      .querySelector<HTMLInputElement>("input[data-activity-item='item-2']")!
+      .closest<HTMLElement>("label")!
+    winner.click()
+    expect(store.get(submitEnabledAtom)).toBe(true)
+
+    store.get(validateHandlerAtom)?.()
+    expect(store.get(submitStateAtom)).toBe("next")
+  })
 })

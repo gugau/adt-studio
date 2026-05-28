@@ -239,9 +239,38 @@ function groupKeyForOption(option: HTMLElement): string {
   return radio?.name || DEFAULT_GROUP_KEY
 }
 
+/**
+ * Find every option label in the section. Preferred path is the explicit
+ * `.activity-option` class emitted by the prompt; the fallback handles MC
+ * pages where the LLM invented a custom layout (e.g. an image grid) and
+ * dropped the class — we pick the nearest <label> for each radio that
+ * carries `data-activity-item`. The QUIZ_SELECTOR scopes this to
+ * quiz/multiple-choice sections, so this won't pick up true-false radios.
+ */
+function findOptionElements(section: HTMLElement): HTMLElement[] {
+  const explicit = Array.from(
+    section.querySelectorAll<HTMLElement>(".activity-option"),
+  )
+  if (explicit.length > 0) return explicit
+  const seen = new Set<HTMLElement>()
+  const fallback: HTMLElement[] = []
+  section
+    .querySelectorAll<HTMLInputElement>(
+      'input[type="radio"][data-activity-item]',
+    )
+    .forEach((radio) => {
+      const label = radio.closest<HTMLElement>("label")
+      if (label && !seen.has(label)) {
+        seen.add(label)
+        fallback.push(label)
+      }
+    })
+  return fallback
+}
+
 function buildGroups(section: HTMLElement): QuestionGroup[] {
   const byKey = new Map<string, HTMLElement[]>()
-  section.querySelectorAll<HTMLElement>(".activity-option").forEach((opt) => {
+  findOptionElements(section).forEach((opt) => {
     const key = groupKeyForOption(opt)
     const list = byKey.get(key) ?? []
     list.push(opt)
