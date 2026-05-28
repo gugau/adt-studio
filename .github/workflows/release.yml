@@ -16,6 +16,12 @@ concurrency:
   group: release
   cancel-in-progress: false
 
+# Opt JS actions into Node 24 ahead of the June 2026 default — silences the
+# Node 20 deprecation warning until upstream actions ship Node 24 majors.
+# https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   prepare:
     if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'RELEASE:') }}
@@ -125,6 +131,15 @@ jobs:
       - name: Build desktop
         run: pnpm --filter @adt/desktop build
 
+      # electron-builder >=26 calls `actool` to compose the macOS icon asset
+      # catalog and requires actool >= 26.0 (Xcode 26+). The runner has it
+      # installed but defaults to an older Xcode; select the latest stable.
+      - name: Select latest Xcode (for actool)
+        if: matrix.os == 'macos-latest'
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
       - name: Package MacOS
         if: matrix.os == 'macos-latest'
         run: pnpm --filter @adt/desktop exec electron-builder --mac --publish never
@@ -138,19 +153,28 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
-      - name: Azure login (Windows signing)
-        if: matrix.os == 'windows-latest'
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
 
       - name: Acquire Azure code signing token
         if: matrix.os == 'windows-latest'
         shell: bash
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         run: |
-          TOKEN=$(az account get-access-token --resource https://codesigning.azure.net --query accessToken -o tsv)
+          if [ -z "${AZURE_TENANT_ID:-}" ] || [ -z "${AZURE_CLIENT_ID:-}" ] || [ -z "${AZURE_CLIENT_SECRET:-}" ]; then
+            echo "::error::Missing Azure credentials (AZURE_TENANT_ID / AZURE_CLIENT_ID / AZURE_CLIENT_SECRET)."
+            exit 1
+          fi
+          TOKEN=$(curl -fsS -X POST \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "grant_type=client_credentials&client_id=${AZURE_CLIENT_ID}&client_secret=${AZURE_CLIENT_SECRET}&resource=https%3A%2F%2Fcodesigning.azure.net" \
+            "https://login.microsoftonline.com/${AZURE_TENANT_ID}/oauth2/token" \
+            | jq -r '.access_token')
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+            echo "::error::Failed to obtain AZ_TOKEN from Azure OAuth endpoint."
+            exit 1
+          fi
           echo "::add-mask::$TOKEN"
           echo "AZ_TOKEN=$TOKEN" >> "$GITHUB_ENV"
 
@@ -167,14 +191,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: apps/desktop/jsign.jar
-          key: jsign-7.0
+          key: jsign-7.1
 
       - name: Download jsign.jar
         if: matrix.os == 'windows-latest' && steps.jsign-cache.outputs.cache-hit != 'true'
         shell: bash
         run: |
           curl -fsSL -o apps/desktop/jsign.jar \
-            https://github.com/ebourg/jsign/releases/download/7.0/jsign-7.0.jar
+            https://repo1.maven.org/maven2/net/jsign/jsign/7.1/jsign-7.1.jar
 
       - name: Package Windows
         if: matrix.os == 'windows-latest'
