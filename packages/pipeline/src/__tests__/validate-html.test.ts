@@ -23,7 +23,7 @@ describe("validateSectionHtml", () => {
     const html = `
       <div id="content"><section data-section-type="activity_fill_in_the_blank">
         <p data-id="pg001_n0001">Question?</p>
-        <input type="text" />
+        <input type="text" data-activity-item="item-1" />
       </section></div>
     `
     const result = validateSectionHtml(

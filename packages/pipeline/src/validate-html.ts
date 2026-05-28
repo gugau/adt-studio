@@ -1,5 +1,6 @@
 import { parseDocument, DomUtils } from "htmlparser2"
 import { normalizeSectionSemantics } from "./html-semantics.js"
+import { validateActivityStructure } from "./validate-activity-structure.js"
 
 /** Minimum similarity (0–1) for auto-fixing text vs treating as a validation error */
 const TEXT_SIMILARITY_THRESHOLD = 0.7
@@ -153,6 +154,16 @@ export function validateSectionHtml(
     errors.push(
       `Section type "${sectionType}" requires at least one editable element (<textarea>, <input>, or [[blank:item-N]] marker), but none were found. The learner cannot type into this page.`
     )
+  }
+
+  // Activity-specific structural checks. These catch failure modes the visual
+  // reviewer can't see (missing `.activity-option`, broken true/false pairing,
+  // duplicate item ids, etc.) and feed the LLM precise, actionable errors via
+  // the visual-review feedback loop.
+  if (typeof sectionType === "string") {
+    for (const err of validateActivityStructure(section, sectionType)) {
+      errors.push(err)
+    }
   }
 
   // Verify all expected text IDs are present in the generated HTML.
