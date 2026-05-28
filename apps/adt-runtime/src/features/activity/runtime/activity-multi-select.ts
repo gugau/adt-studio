@@ -482,6 +482,13 @@ export function initializeMultiSelectActivity(): (() => void) | null {
         // the tab order — pointer + keyboard input still reaches the label.
         innerCheckbox.setAttribute("aria-hidden", "true")
         innerCheckbox.setAttribute("tabindex", "-1")
+        // Defensive init: clear any pre-checked state from server-rendered
+        // HTML or browser autofill so the native input agrees with our
+        // empty `group.selected` set. Without this the first user click on
+        // an autofilled checkbox would set our state to selected while the
+        // native input was already checked — visually fine (sr-only hides
+        // it) but a confusing source of state divergence.
+        innerCheckbox.checked = false
 
         const onChange = () => {
           // The native checkbox's checked state may now disagree with our
