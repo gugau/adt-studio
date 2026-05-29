@@ -1475,6 +1475,18 @@ describe("rewriteImageUrls", () => {
     expect(out).toContain('data-id="logo2" src="images/logo2.png" style="max-width: 100%; height: auto;" alt=""')
   })
 
+  it("marks decorative images with empty alt, role and aria-hidden, ignoring any caption", () => {
+    const html = `<img data-id="deco1" src="/api/books/mybook/images/deco1">`
+    const imageMap = new Map([["deco1", "deco1.png"]])
+    const altMap = new Map([["deco1", "A caption that should be ignored"]])
+    const decorative = new Set(["deco1"])
+    const { html: out } = rewriteImageUrls(html, "mybook", imageMap, altMap, decorative)
+    expect(out).toContain('alt=""')
+    expect(out).toContain('role="presentation"')
+    expect(out).toContain('aria-hidden="true"')
+    expect(out).not.toContain("A caption that should be ignored")
+  })
+
   it("does not include unreferenced images in referencedImages", () => {
     const html = `<img src="/api/books/mybook/images/unknown">`
     const imageMap = new Map([["abc123", "photo.jpg"]])

@@ -1202,8 +1202,15 @@ msgstr "capped at {0}"
 msgid "Caption"
 msgstr "Caption"
 
+#. placeholder {0}: cap.imageId
+msgid "Caption for {0}"
+msgstr "Caption for {0}"
+
 msgid "Caption Prompt"
 msgstr "Caption Prompt"
+
+msgid "Captioned"
+msgstr "Captioned"
 
 msgid "Captioning Images..."
 msgstr "Captioning Images..."
@@ -1348,6 +1355,12 @@ msgstr "Clear, descriptive captions for middle and high school readers."
 
 msgid "Click an image to select"
 msgstr "Click an image to select"
+
+msgid "Click any caption to edit it, or mark an image as decorative to hide it from screen readers when it doesn't need a caption. Changes are saved as a new version, so you can always roll back."
+msgstr "Click any caption to edit it, or mark an image as decorative to hide it from screen readers when it doesn't need a caption. Changes are saved as a new version, so you can always roll back."
+
+#~ msgid "Click any caption to edit it. Your changes are saved as a new version, so you can always roll back to an earlier one."
+#~ msgstr "Click any caption to edit it. Your changes are saved as a new version, so you can always roll back to an earlier one."
 
 msgid "Click images to select"
 msgstr "Click images to select"
@@ -1652,6 +1665,12 @@ msgstr "Custom section {index}"
 msgid "Debug mode is not enabled."
 msgstr "Debug mode is not enabled."
 
+msgid "Decorative"
+msgstr "Decorative"
+
+msgid "Decorative images are hidden from screen readers and don't need a caption"
+msgstr "Decorative images are hidden from screen readers and don't need a caption"
+
 msgid "Decrease indent"
 msgstr "Decrease indent"
 
@@ -1828,6 +1847,9 @@ msgstr "Disabled rules"
 msgid "Discard"
 msgstr "Discard"
 
+msgid "Dismiss"
+msgstr "Dismiss"
+
 msgid "Display"
 msgstr "Display"
 
@@ -1964,6 +1986,9 @@ msgstr "Edit this image"
 
 msgid "Edit this section"
 msgstr "Edit this section"
+
+#~ msgid "Editable"
+#~ msgstr "Editable"
 
 msgid "edited"
 msgstr "edited"
@@ -3069,6 +3094,9 @@ msgstr "margin"
 
 msgid "Margin"
 msgstr "Margin"
+
+msgid "Marked as decorative — hidden from screen readers, no caption needed."
+msgstr "Marked as decorative — hidden from screen readers, no caption needed."
 
 msgid "Match Design"
 msgstr "Match Design"
@@ -4908,6 +4936,9 @@ msgstr "Shadow"
 msgid "Short, simple sentences for kindergarten through 5th grade."
 msgstr "Short, simple sentences for kindergarten through 5th grade."
 
+msgid "Show"
+msgstr "Show"
+
 msgid "Show accessibility summary"
 msgstr "Show accessibility summary"
 
@@ -5442,6 +5473,9 @@ msgstr "The world before us"
 
 msgid "Theme"
 msgstr "Theme"
+
+msgid "These captions were generated automatically"
+msgstr "These captions were generated automatically"
 
 msgid "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."
 msgstr "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."

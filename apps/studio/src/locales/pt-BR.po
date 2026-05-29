@@ -1202,8 +1202,15 @@ msgstr "limitado a {0}"
 msgid "Caption"
 msgstr "Legenda"
 
+#. placeholder {0}: cap.imageId
+msgid "Caption for {0}"
+msgstr "Legenda de {0}"
+
 msgid "Caption Prompt"
 msgstr "Prompt de legenda"
+
+msgid "Captioned"
+msgstr "Com legenda"
 
 msgid "Captioning Images..."
 msgstr "Legendando imagens..."
@@ -1348,6 +1355,12 @@ msgstr "Legendas claras e descritivas para leitores do ensino fundamental e méd
 
 msgid "Click an image to select"
 msgstr "Clique em uma imagem para selecionar"
+
+msgid "Click any caption to edit it, or mark an image as decorative to hide it from screen readers when it doesn't need a caption. Changes are saved as a new version, so you can always roll back."
+msgstr "Clique em qualquer legenda para editá-la ou marque uma imagem como decorativa para ocultá-la dos leitores de tela quando não precisar de legenda. As alterações são salvas como uma nova versão, então você sempre pode reverter."
+
+#~ msgid "Click any caption to edit it. Your changes are saved as a new version, so you can always roll back to an earlier one."
+#~ msgstr "Clique em qualquer legenda para editá-la. Suas alterações são salvas como uma nova versão, então você sempre pode reverter para uma anterior."
 
 msgid "Click images to select"
 msgstr "Clique nas imagens para selecionar"
@@ -1652,6 +1665,12 @@ msgstr "Custom section {index}"
 msgid "Debug mode is not enabled."
 msgstr "Modo de depuração não está ativado."
 
+msgid "Decorative"
+msgstr "Decorativa"
+
+msgid "Decorative images are hidden from screen readers and don't need a caption"
+msgstr "Imagens decorativas são ocultadas dos leitores de tela e não precisam de legenda"
+
 msgid "Decrease indent"
 msgstr "Diminuir recuo"
 
@@ -1828,6 +1847,9 @@ msgstr "Disabled rules"
 msgid "Discard"
 msgstr "Descartar"
 
+msgid "Dismiss"
+msgstr "Fechar"
+
 msgid "Display"
 msgstr "Exibição"
 
@@ -1964,6 +1986,9 @@ msgstr "Editar esta imagem"
 
 msgid "Edit this section"
 msgstr "Editar esta seção"
+
+#~ msgid "Editable"
+#~ msgstr "Editável"
 
 msgid "edited"
 msgstr "editado"
@@ -3069,6 +3094,9 @@ msgstr "margem"
 
 msgid "Margin"
 msgstr "Margem"
+
+msgid "Marked as decorative — hidden from screen readers, no caption needed."
+msgstr "Marcada como decorativa — oculta dos leitores de tela, nenhuma legenda necessária."
 
 msgid "Match Design"
 msgstr "Corresponder ao Design"
@@ -4908,6 +4936,9 @@ msgstr "Sombra"
 msgid "Short, simple sentences for kindergarten through 5th grade."
 msgstr "Frases curtas e simples para jardim de infância até o 5º ano."
 
+msgid "Show"
+msgstr "Mostrar"
+
 msgid "Show accessibility summary"
 msgstr "Show accessibility summary"
 
@@ -5442,6 +5473,9 @@ msgstr "O mundo diante de nós"
 
 msgid "Theme"
 msgstr "Tema"
+
+msgid "These captions were generated automatically"
+msgstr "Estas legendas foram geradas automaticamente"
 
 msgid "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."
 msgstr "Esses recursos melhoram o acesso para pessoas com deficiência. Executá-los antes de exportar ajuda seu livro a atender aos padrões de acessibilidade ADT."

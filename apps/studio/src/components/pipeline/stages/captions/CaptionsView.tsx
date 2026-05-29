@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
-import { Check, ChevronDown, Image as ImageIcon, Loader2 } from "lucide-react"
+import { Check, ChevronDown, Eye, EyeOff, Image as ImageIcon, Info, Loader2, X } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { api, BASE_URL } from "@/api/client"
 import type { PageDetail, VersionEntry } from "@/api/client"
@@ -17,6 +17,66 @@ import { useLingui } from "@lingui/react/macro"
 
 
 type CaptioningData = NonNullable<PageDetail["imageCaptioning"]>
+type CaptionEntry = CaptioningData["captions"][number]
+
+type DecorativeFilter = "all" | "captioned" | "decorative"
+
+function matchesDecorativeFilter(cap: CaptionEntry, filter: DecorativeFilter): boolean {
+  if (filter === "captioned") return cap.decorative !== true
+  if (filter === "decorative") return cap.decorative === true
+  return true
+}
+
+const CAPTIONS_HINT_KEY = "adt-studio-captions-hint-dismissed"
+
+/** Dismissible banner explaining that captions are AI-generated and editable. */
+function CaptionsHint() {
+  const { t } = useLingui()
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(CAPTIONS_HINT_KEY) === "1"
+    } catch {
+      return false
+    }
+  })
+
+  if (dismissed) return null
+
+  const dismiss = () => {
+    try {
+      localStorage.setItem(CAPTIONS_HINT_KEY, "1")
+    } catch {
+      // localStorage unavailable
+    }
+    setDismissed(true)
+  }
+
+  return (
+    <div className="flex gap-3 rounded-lg border border-teal-200 bg-teal-50 px-4 py-3">
+      <Info className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
+      <div className="flex flex-1 flex-col gap-0.5">
+        <span className="text-[13px] font-medium text-teal-800">
+          <Trans>These captions were generated automatically</Trans>
+        </span>
+        <span className="text-[12px] text-teal-700 leading-relaxed">
+          <Trans>
+            Click any caption to edit it, or mark an image as decorative to hide it from screen
+            readers when it doesn't need a caption. Changes are saved as a new version, so you can
+            always roll back.
+          </Trans>
+        </span>
+      </div>
+      <button
+        type="button"
+        onClick={dismiss}
+        aria-label={t`Dismiss`}
+        className="shrink-0 -mr-1 -mt-1 rounded p-1 text-teal-600 hover:bg-teal-100 hover:text-teal-800 transition-colors cursor-pointer"
+      >
+        <X className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  )
+}
 
 function VersionPicker({
   currentVersion,
@@ -155,7 +215,7 @@ function buildImageSectionMap(page: PageDetail | undefined): Map<string, number>
 interface CaptionGroup {
   sectionIndex: number
   sectionType?: string
-  captions: Array<{ imageId: string; reasoning: string; caption: string }>
+  captions: CaptionEntry[]
 }
 
 function PageCaptions({
@@ -165,6 +225,7 @@ function PageCaptions({
   emptyState,
   largeImages,
   filterSectionIndex,
+  decorativeFilter,
 }: {
   bookLabel: string
   pageId: string
@@ -172,6 +233,7 @@ function PageCaptions({
   emptyState?: React.ReactNode
   largeImages?: boolean
   filterSectionIndex?: number
+  decorativeFilter: DecorativeFilter
 }) {
   const { t } = useLingui()
   const queryClient = useQueryClient()
@@ -189,6 +251,13 @@ function PageCaptions({
   const captions = effective?.captions ?? []
   const dirty = pending != null
 
+  // Apply the show/hide decorative filter (display only — editing still
+  // operates on the full caption list).
+  const visibleCaptions = useMemo(
+    () => captions.filter((c) => matchesDecorativeFilter(c, decorativeFilter)),
+    [captions, decorativeFilter]
+  )
+
   // Map imageId → sectionIndex
   const imageSectionMap = useMemo(() => buildImageSectionMap(page), [page?.sectioningTree])
 
@@ -200,8 +269,8 @@ function PageCaptions({
       return null
     }
     const grouped = new Map<number, CaptionGroup>()
-    const unsectioned: Array<{ imageId: string; reasoning: string; caption: string }> = []
-    for (const cap of captions) {
+    const unsectioned: CaptionEntry[] = []
+    for (const cap of visibleCaptions) {
       const si = imageSectionMap.get(cap.imageId)
       if (si != null) {
         let group = grouped.get(si)
@@ -224,9 +293,11 @@ function PageCaptions({
       result.push({ sectionIndex: -1, sectionType: undefined, captions: unsectioned })
     }
     return result
-  }, [captions, imageSectionMap, page?.sectioningTree?.sections])
+  }, [visibleCaptions, imageSectionMap, page?.sectioningTree?.sections])
 
   if (!page?.imageCaptioning || captions.length === 0) return emptyState ?? null
+  // Nothing matches the active filter on this page — drop it from the gallery.
+  if (visibleCaptions.length === 0) return emptyState ?? null
 
   const updateCaption = (imageId: string, newCaption: string) => {
     const base = pending ?? page.imageCaptioning
@@ -234,7 +305,18 @@ function PageCaptions({
     setPending({
       ...base,
       captions: base.captions.map((c) =>
-        c.imageId === imageId ? { ...c, caption: newCaption } : c
+        c.imageId === imageId ? { ...c, caption: newCaption, source: "manual" } : c
+      ),
+    })
+  }
+
+  const toggleDecorative = (imageId: string) => {
+    const base = pending ?? page.imageCaptioning
+    if (!base) return
+    setPending({
+      ...base,
+      captions: base.captions.map((c) =>
+        c.imageId === imageId ? { ...c, decorative: !c.decorative, source: "manual" } : c
       ),
     })
   }
@@ -257,8 +339,8 @@ function PageCaptions({
 
   // Filter captions by section when a section is selected
   const filteredCaptions = filterSectionIndex != null
-    ? captions.filter((cap) => imageSectionMap.get(cap.imageId) === filterSectionIndex)
-    : captions
+    ? visibleCaptions.filter((cap) => imageSectionMap.get(cap.imageId) === filterSectionIndex)
+    : visibleCaptions
 
   if (filterSectionIndex != null && filteredCaptions.length === 0) {
     return (
@@ -270,26 +352,63 @@ function PageCaptions({
     )
   }
 
-  const renderCaption = (cap: { imageId: string; reasoning: string; caption: string }) => (
-    <div key={cap.imageId} className="flex items-start gap-4 rounded-md border bg-card overflow-hidden">
-      <img
-        src={`${BASE_URL}/books/${bookLabel}/images/${cap.imageId}`}
-        alt={cap.caption}
-        className={`shrink-0 self-stretch bg-muted object-cover block ${largeImages ? "w-96" : "w-48"}`}
-      />
-      <div className="flex-1 min-w-0 py-2.5 pr-3">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-[10px] font-medium text-teal-600">{cap.imageId}</span>
-        </div>
-        <textarea
-          value={cap.caption}
-          onChange={(e) => updateCaption(cap.imageId, e.target.value)}
-          className="w-full text-sm text-foreground leading-relaxed resize-none rounded border border-transparent bg-transparent p-1.5 -ml-1.5 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-          rows={2}
+  const gridClass = largeImages
+    ? "grid grid-cols-1 sm:grid-cols-2 gap-3"
+    : "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3"
+  const imgHeightClass = largeImages ? "h-64" : "h-44"
+
+  const renderCaption = (cap: CaptionEntry) => {
+    const isDecorative = cap.decorative === true
+    return (
+      <div
+        key={cap.imageId}
+        className={`flex flex-col rounded-lg border bg-card overflow-hidden ${
+          isDecorative ? "border-dashed border-amber-300" : ""
+        }`}
+      >
+        <img
+          src={`${BASE_URL}/books/${bookLabel}/images/${cap.imageId}`}
+          alt={isDecorative ? "" : cap.caption}
+          aria-hidden={isDecorative || undefined}
+          className={`w-full ${imgHeightClass} bg-muted object-contain block ${
+            isDecorative ? "opacity-60" : ""
+          }`}
         />
+        <div className="flex flex-1 flex-col gap-1.5 p-2.5">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-medium text-teal-600">{cap.imageId}</span>
+            <button
+              type="button"
+              onClick={() => toggleDecorative(cap.imageId)}
+              aria-pressed={isDecorative}
+              title={t`Decorative images are hidden from screen readers and don't need a caption`}
+              className={`ml-auto flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
+                isDecorative
+                  ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                  : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              }`}
+            >
+              {isDecorative ? <EyeOff className="h-2.5 w-2.5" /> : <Eye className="h-2.5 w-2.5" />}
+              {t`Decorative`}
+            </button>
+          </div>
+          {isDecorative ? (
+            <p className="flex flex-1 items-center rounded-md border border-dashed border-amber-200 bg-amber-50/60 p-2 text-[11px] leading-relaxed text-amber-700">
+              <Trans>Marked as decorative — hidden from screen readers, no caption needed.</Trans>
+            </p>
+          ) : (
+            <textarea
+              value={cap.caption}
+              onChange={(e) => updateCaption(cap.imageId, e.target.value)}
+              aria-label={t`Caption for ${cap.imageId}`}
+              className="w-full flex-1 text-sm text-foreground leading-relaxed resize-none rounded-md border border-input bg-background p-2 hover:border-ring/60 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+              rows={3}
+            />
+          )}
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   return (
     <div className="space-y-1.5">
@@ -314,12 +433,12 @@ function PageCaptions({
         </div>
       </div>
       {filterSectionIndex != null ? (
-        // Filtered to a specific section — flat list
-        filteredCaptions.map(renderCaption)
+        // Filtered to a specific section — flat gallery
+        <div className={gridClass}>{filteredCaptions.map(renderCaption)}</div>
       ) : groups ? (
-        // Grouped by section
+        // Grouped by section — gallery per section
         groups.map((group) => (
-          <div key={group.sectionIndex}>
+          <div key={group.sectionIndex} className="space-y-1.5">
             <div className="px-1 pt-1.5 pb-0.5">
               <span className="text-[9px] font-medium text-muted-foreground/70 uppercase tracking-wider">
                 {group.sectionIndex >= 0
@@ -330,12 +449,12 @@ function PageCaptions({
                 }
               </span>
             </div>
-            {group.captions.map(renderCaption)}
+            <div className={gridClass}>{group.captions.map(renderCaption)}</div>
           </div>
         ))
       ) : (
-        // Single section or no sectioning — flat list
-        filteredCaptions.map(renderCaption)
+        // Single section or no sectioning — flat gallery
+        <div className={gridClass}>{filteredCaptions.map(renderCaption)}</div>
       )}
     </div>
   )
@@ -352,6 +471,7 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
   const captionsRunning = captionsState === "running" || captionsState === "queued"
   const showRunCard = !captionsDone || captionsRunning
   const { sectionIndex, setSectionIndex } = useSectionNav()
+  const [decorativeFilter, setDecorativeFilter] = useState<DecorativeFilter>("all")
 
   const handleRunCaptions = useCallback(() => {
     if (!hasApiKey || captionsRunning) return
@@ -472,28 +592,56 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
 
   return (
     <div className="flex flex-1 flex-col gap-4">
-      {selectedPageId && (
-        <div className="flex justify-end px-4 pt-3">
+      <div className="px-4 pt-3">
+        <CaptionsHint />
+      </div>
+      <div className="flex items-center gap-2 px-4">
+        <span className="text-[11px] font-medium text-muted-foreground">{t`Show`}</span>
+        <div className="inline-flex items-center rounded-md border bg-muted/40 p-0.5">
+          {([
+            { value: "all", label: t`All` },
+            { value: "captioned", label: t`Captioned` },
+            { value: "decorative", label: t`Decorative` },
+          ] as const).map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setDecorativeFilter(opt.value)}
+              aria-pressed={decorativeFilter === opt.value}
+              className={`rounded px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer ${
+                decorativeFilter === opt.value
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        {selectedPageId && (
           <button
             type="button"
             onClick={() => onSelectPage?.(null)}
-            className="text-xs font-medium text-teal-600 hover:text-teal-700 hover:underline transition-colors"
+            className="ml-auto text-xs font-medium text-teal-600 hover:text-teal-700 hover:underline transition-colors"
           >
             {t`Show all`}
           </button>
-        </div>
-      )}
-      {displayPages.map((page) => (
-        <PageCaptions
-          key={page.pageId}
-          bookLabel={bookLabel}
-          pageId={page.pageId}
-          pageNumber={page.pageNumber}
-          emptyState={singlePageEmptyState}
-          largeImages={!!selectedPageId}
-          filterSectionIndex={page.pageId === selectedPageId ? filterSectionIndex : undefined}
-        />
-      ))}
+        )}
+      </div>
+      <div className="flex flex-col gap-4 px-4 pb-4">
+        {displayPages.map((page) => (
+          <PageCaptions
+            key={page.pageId}
+            bookLabel={bookLabel}
+            pageId={page.pageId}
+            pageNumber={page.pageNumber}
+            emptyState={singlePageEmptyState}
+            largeImages={!!selectedPageId}
+            filterSectionIndex={page.pageId === selectedPageId ? filterSectionIndex : undefined}
+            decorativeFilter={decorativeFilter}
+          />
+        ))}
+      </div>
     </div>
   )
 }

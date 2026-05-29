@@ -1202,8 +1202,15 @@ msgstr "limitado a {0}"
 msgid "Caption"
 msgstr "Pie de foto"
 
+#. placeholder {0}: cap.imageId
+msgid "Caption for {0}"
+msgstr "Subtítulo de {0}"
+
 msgid "Caption Prompt"
 msgstr "Prompt de leyenda"
+
+msgid "Captioned"
+msgstr "Con subtítulo"
 
 msgid "Captioning Images..."
 msgstr "Subtitulando imágenes..."
@@ -1348,6 +1355,12 @@ msgstr "Subtítulos claros y descriptivos para lectores de secundaria y preparat
 
 msgid "Click an image to select"
 msgstr "Haz clic en una imagen para seleccionar"
+
+msgid "Click any caption to edit it, or mark an image as decorative to hide it from screen readers when it doesn't need a caption. Changes are saved as a new version, so you can always roll back."
+msgstr "Haz clic en cualquier subtítulo para editarlo, o marca una imagen como decorativa para ocultarla de los lectores de pantalla cuando no necesite subtítulo. Los cambios se guardan como una nueva versión, por lo que siempre puedes volver atrás."
+
+#~ msgid "Click any caption to edit it. Your changes are saved as a new version, so you can always roll back to an earlier one."
+#~ msgstr "Haz clic en cualquier subtítulo para editarlo. Tus cambios se guardan como una nueva versión, por lo que siempre puedes volver a una anterior."
 
 msgid "Click images to select"
 msgstr "Haz clic en las imágenes para seleccionar"
@@ -1652,6 +1665,12 @@ msgstr "Custom section {index}"
 msgid "Debug mode is not enabled."
 msgstr "El modo de depuración no está habilitado."
 
+msgid "Decorative"
+msgstr "Decorativa"
+
+msgid "Decorative images are hidden from screen readers and don't need a caption"
+msgstr "Las imágenes decorativas se ocultan de los lectores de pantalla y no necesitan subtítulo"
+
 msgid "Decrease indent"
 msgstr "Disminuir sangría"
 
@@ -1828,6 +1847,9 @@ msgstr "Disabled rules"
 msgid "Discard"
 msgstr "Descartar"
 
+msgid "Dismiss"
+msgstr "Cerrar"
+
 msgid "Display"
 msgstr "Visualización"
 
@@ -1964,6 +1986,9 @@ msgstr "Editar esta imagen"
 
 msgid "Edit this section"
 msgstr "Editar esta sección"
+
+#~ msgid "Editable"
+#~ msgstr "Editable"
 
 msgid "edited"
 msgstr "editado"
@@ -3069,6 +3094,9 @@ msgstr "margen"
 
 msgid "Margin"
 msgstr "Margen"
+
+msgid "Marked as decorative — hidden from screen readers, no caption needed."
+msgstr "Marcada como decorativa: oculta para los lectores de pantalla, no necesita subtítulo."
 
 msgid "Match Design"
 msgstr "Coincidir con el diseño"
@@ -4908,6 +4936,9 @@ msgstr "Sombra"
 msgid "Short, simple sentences for kindergarten through 5th grade."
 msgstr "Oraciones cortas y simples para jardín de infancia hasta 5º grado."
 
+msgid "Show"
+msgstr "Mostrar"
+
 msgid "Show accessibility summary"
 msgstr "Show accessibility summary"
 
@@ -5442,6 +5473,9 @@ msgstr "El mundo ante nosotros"
 
 msgid "Theme"
 msgstr "Tema"
+
+msgid "These captions were generated automatically"
+msgstr "Estos subtítulos se generaron automáticamente"
 
 msgid "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."
 msgstr "Estas funciones mejoran el acceso para personas con discapacidades. Ejecutarlas antes de exportar ayuda a que su libro cumpla con los estándares de accesibilidad ADT."

@@ -214,6 +214,7 @@ export {
   buildGlossaryJson,
   buildImageMap,
   buildPreferredImageAltMap,
+  buildDecorativeImageIdSet,
   rewriteImageUrls,
   htmlToXhtml,
   renderQuizHtml,

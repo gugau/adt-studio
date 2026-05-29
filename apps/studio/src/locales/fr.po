@@ -1204,8 +1204,15 @@ msgstr "limité à {0}"
 msgid "Caption"
 msgstr "Légende"
 
+#. placeholder {0}: cap.imageId
+msgid "Caption for {0}"
+msgstr "Légende pour {0}"
+
 msgid "Caption Prompt"
 msgstr "Légende Invite"
+
+msgid "Captioned"
+msgstr "Avec légende"
 
 msgid "Captioning Images..."
 msgstr "Génération des légendes..."
@@ -1350,6 +1357,12 @@ msgstr "Des sous-titres clairs et descriptifs pour les lecteurs de collège et d
 
 msgid "Click an image to select"
 msgstr "Cliquez sur une image pour la sélectionner"
+
+msgid "Click any caption to edit it, or mark an image as decorative to hide it from screen readers when it doesn't need a caption. Changes are saved as a new version, so you can always roll back."
+msgstr "Cliquez sur n'importe quelle légende pour la modifier, ou marquez une image comme décorative pour la masquer aux lecteurs d'écran lorsqu'elle n'a pas besoin de légende. Les modifications sont enregistrées comme une nouvelle version, vous pouvez donc toujours revenir en arrière."
+
+#~ msgid "Click any caption to edit it. Your changes are saved as a new version, so you can always roll back to an earlier one."
+#~ msgstr "Cliquez sur n'importe quelle légende pour la modifier. Vos modifications sont enregistrées comme une nouvelle version, vous pouvez donc toujours revenir à une version antérieure."
 
 msgid "Click images to select"
 msgstr "Cliquez sur les images pour les sélectionner"
@@ -1654,6 +1667,12 @@ msgstr "Section personnalisée {index}"
 msgid "Debug mode is not enabled."
 msgstr "Le mode débogage n'est pas activé."
 
+msgid "Decorative"
+msgstr "Décorative"
+
+msgid "Decorative images are hidden from screen readers and don't need a caption"
+msgstr "Les images décoratives sont masquées aux lecteurs d'écran et n'ont pas besoin de légende"
+
 msgid "Decrease indent"
 msgstr "Diminuer l'indentation"
 
@@ -1830,6 +1849,9 @@ msgstr "Règles désactivées"
 msgid "Discard"
 msgstr "Abandonner"
 
+msgid "Dismiss"
+msgstr "Fermer"
+
 msgid "Display"
 msgstr "Affichage"
 
@@ -1966,6 +1988,9 @@ msgstr "Modifier cette image"
 
 msgid "Edit this section"
 msgstr "Modifier cette section"
+
+#~ msgid "Editable"
+#~ msgstr "Modifiable"
 
 msgid "edited"
 msgstr "modifié"
@@ -3071,6 +3096,9 @@ msgstr "marge"
 
 msgid "Margin"
 msgstr "Marge"
+
+msgid "Marked as decorative — hidden from screen readers, no caption needed."
+msgstr "Marquée comme décorative — masquée aux lecteurs d'écran, aucune légende nécessaire."
 
 msgid "Match Design"
 msgstr "Correspondre au design"
@@ -4910,6 +4938,9 @@ msgstr "Ombre"
 msgid "Short, simple sentences for kindergarten through 5th grade."
 msgstr "Phrases courtes et simples pour la maternelle jusqu'à la 5e année."
 
+msgid "Show"
+msgstr "Afficher"
+
 msgid "Show accessibility summary"
 msgstr "Afficher le résumé d'accessibilité"
 
@@ -5444,6 +5475,9 @@ msgstr "Le monde devant nous"
 
 msgid "Theme"
 msgstr "Thème"
+
+msgid "These captions were generated automatically"
+msgstr "Ces légendes ont été générées automatiquement"
 
 msgid "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."
 msgstr "Ces fonctionnalités améliorent l'accès pour les personnes handicapées. Les exécuter avant l'exportation aide votre livre à respecter les normes d'accessibilité ADT."
