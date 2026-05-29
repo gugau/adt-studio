@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { useLingui } from "@lingui/react"
+import { i18n } from "@lingui/core"
 
 type AxeRuleMessages = { help?: string; description?: string }
 type AxeRuleMap = Record<string, AxeRuleMessages>
@@ -20,9 +20,12 @@ export interface AxeRuleTranslator {
 }
 
 export function useAxeRuleTranslator(): AxeRuleTranslator {
-  const { i18n } = useLingui()
-  const locale = i18n.locale
+  const [locale, setLocale] = useState(() => i18n.locale)
   const [rules, setRules] = useState<AxeRuleMap | null>(null)
+
+  // Track the active locale via the shared lingui instance rather than the
+  // React context, so this works in any tree (and in tests) without a provider.
+  useEffect(() => i18n.on("change", () => setLocale(i18n.locale)), [])
 
   useEffect(() => {
     const loader = AXE_LOCALE_LOADERS[locale]
