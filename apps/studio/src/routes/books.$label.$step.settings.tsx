@@ -15,6 +15,7 @@ import { GlossaryLandingPage } from "@/components/pipeline/stages/glossary/Gloss
 import { TocSettings } from "@/components/pipeline/stages/toc/TocSettings"
 import { TocLandingPage } from "@/components/pipeline/stages/toc/TocLandingPage"
 import { EasyReadSettings } from "@/components/pipeline/stages/easy-read/EasyReadSettings"
+import { EasyReadLandingPage } from "@/components/pipeline/stages/easy-read/EasyReadLandingPage"
 import { CaptionsSettings } from "@/components/pipeline/stages/captions/CaptionsSettings"
 import { CaptionsLandingPage } from "@/components/pipeline/stages/captions/CaptionsLandingPage"
 import { LanguageSettings } from "@/components/pipeline/stages/languages/LanguageSettings"
@@ -113,6 +114,8 @@ export function StepSettingsPage() {
                 return <SpeechLandingPage bookLabel={label} />
               case "toc":
                 return <TocLandingPage bookLabel={label} />
+              case "easy-read":
+                return <EasyReadLandingPage bookLabel={label} />
             }
           }
 

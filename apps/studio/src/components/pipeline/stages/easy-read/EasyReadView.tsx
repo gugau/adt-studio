@@ -1,15 +1,13 @@
-import { useCallback } from "react"
 import { Loader2, RotateCcw } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { useLingui } from "@lingui/react/macro"
 import { api } from "@/api/client"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { useApiKey } from "@/hooks/use-api-key"
-import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
 import { useBookRun } from "@/hooks/use-book-run"
 import { StageRunCard } from "../../components/StageRunCard"
 import { EasyReadEditor } from "./EasyReadEditor"
+import { useRunEasyRead } from "./use-run-easy-read"
 
 export function EasyReadView({
   bookLabel,
@@ -19,10 +17,8 @@ export function EasyReadView({
   selectedPageId?: string
 }) {
   const { t } = useLingui()
-  const { apiKey, hasApiKey } = useApiKey()
-  const { isRunning, queueRun, stageState } = useBookRun()
-  const { data: bookConfigData } = useBookConfig(bookLabel)
-  const updateConfig = useUpdateBookConfig()
+  const { runEasyRead, hasApiKey, isRunning } = useRunEasyRead(bookLabel)
+  const { stageState } = useBookRun()
   const status = stageState("easy-read")
   const isStageRunning = status === "running" || status === "queued"
 
@@ -32,22 +28,6 @@ export function EasyReadView({
     enabled: !!bookLabel,
   })
   const hasBlocks = (data?.blocks?.length ?? 0) > 0
-
-  // Generate/regenerate through the normal stage runner so the run shows up in
-  // the bottom-left progress like every other stage. The easy-read stage is
-  // gated on `easy_read.enabled`, so make sure it is on before queueing.
-  const runEasyRead = useCallback(async () => {
-    if (!hasApiKey || isRunning) return
-    const current = (bookConfigData?.config ?? {}) as Record<string, unknown>
-    const easyReadCfg = (current.easy_read ?? {}) as Record<string, unknown>
-    if (easyReadCfg.enabled !== true) {
-      await updateConfig.mutateAsync({
-        label: bookLabel,
-        config: { easy_read: { ...easyReadCfg, enabled: true } },
-      })
-    }
-    queueRun({ fromStage: "easy-read", toStage: "easy-read", apiKey })
-  }, [apiKey, hasApiKey, isRunning, bookConfigData?.config, bookLabel, updateConfig, queueRun])
 
   if (isLoading && !data) {
     return (

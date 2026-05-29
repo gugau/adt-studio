@@ -601,6 +601,9 @@ msgstr "Add {0} Images"
 msgid "Add a language to see translations appear here."
 msgstr "Add a language to see translations appear here."
 
+msgid "Add an API key in Book settings to generate Easy Read content."
+msgstr "Add an API key in Book settings to generate Easy Read content."
+
 msgid "Add an API key in Book settings to run captions."
 msgstr "Add an API key in Book settings to run captions."
 
@@ -1181,6 +1184,9 @@ msgstr "Building Preview..."
 
 msgid "Building Storyboard..."
 msgstr "Building Storyboard..."
+
+msgid "But the team kept walking up the mountain."
+msgstr "But the team kept walking up the mountain."
 
 msgid "Button"
 msgstr "Button"
@@ -1803,6 +1809,9 @@ msgstr "Deselect all"
 msgid "Desktop"
 msgstr "Desktop"
 
+msgid "Despite the inclement weather, the expedition pressed on toward the summit, undeterred by the mounting obstacles in their path."
+msgstr "Despite the inclement weather, the expedition pressed on toward the summit, undeterred by the mounting obstacles in their path."
+
 msgid "Detailed, technical captions for college and adult readers."
 msgstr "Detailed, technical captions for college and adult readers."
 
@@ -1964,8 +1973,14 @@ msgstr "Early"
 msgid "Easy Read"
 msgstr "Easy Read"
 
+msgid "Easy Read adapts the text placed on each page by Storyboard. Finish Storyboard before running this stage."
+msgstr "Easy Read adapts the text placed on each page by Storyboard. Finish Storyboard before running this stage."
+
 #~ msgid "Easy Read audio"
 #~ msgstr "Easy Read audio"
+
+msgid "Easy Read Preview"
+msgstr "Easy Read Preview"
 
 msgid "Easy Read Prompt"
 msgstr "Easy Read Prompt"
@@ -2400,6 +2415,9 @@ msgstr "General"
 
 msgid "Generate"
 msgstr "Generate"
+
+msgid "Generate a simplified, easier-to-read version of every text block in the book. Readers turn it on with the Easy Read toggle in the ADT; you can review and edit each simplified block before packaging."
+msgstr "Generate a simplified, easier-to-read version of every text block in the book. Readers turn it on with the Easy Read toggle in the ADT; you can review and edit each simplified block before packaging."
 
 msgid "Generate and customize the table of contents for the book navigation."
 msgstr "Generate and customize the table of contents for the book navigation."
@@ -3733,6 +3751,9 @@ msgstr "options are deterministic;"
 msgid "options generate a fresh layout per page."
 msgstr "options generate a fresh layout per page."
 
+msgid "Original"
+msgstr "Original"
+
 msgid "Original language"
 msgstr "Original language"
 
@@ -4551,6 +4572,9 @@ msgstr "Run {upstreamLabel} first"
 msgid "Run Captions"
 msgstr "Run Captions"
 
+msgid "Run Easy Read"
+msgstr "Run Easy Read"
+
 msgid "Run Extract"
 msgstr "Run Extract"
 
@@ -4580,6 +4604,9 @@ msgstr "Run Storyboard"
 
 msgid "Run Storyboard first — captions describe the images placed by Storyboard."
 msgstr "Run Storyboard first — captions describe the images placed by Storyboard."
+
+msgid "Run Storyboard first — Easy Read simplifies the text it places on each page."
+msgstr "Run Storyboard first — Easy Read simplifies the text it places on each page."
 
 msgid "Run Storyboard first — the glossary is built from the typed sections placed by Storyboard."
 msgstr "Run Storyboard first — the glossary is built from the typed sections placed by Storyboard."
@@ -5516,6 +5543,9 @@ msgstr "The TOC lists the typed sections placed by Storyboard. Finish Storyboard
 msgid "The Water Cycle"
 msgstr "The Water Cycle"
 
+msgid "The weather was very bad."
+msgstr "The weather was very bad."
+
 msgid "The world before us"
 msgstr "The world before us"
 
@@ -5527,6 +5557,9 @@ msgstr "These features improve access for people with disabilities. Running them
 
 msgid "These values reflect either the saved book override or the latest packaged defaults."
 msgstr "These values reflect either the saved book override or the latest packaged defaults."
+
+msgid "They did not give up."
+msgstr "They did not give up."
 
 msgid "This book has no pages. Make sure the extraction and storyboard stages produced content before generating {stageName}."
 msgstr "This book has no pages. Make sure the extraction and storyboard stages produced content before generating {stageName}."
@@ -5744,6 +5777,9 @@ msgstr "Try the practice problem"
 
 msgid "Try this screen again"
 msgstr "Try this screen again"
+
+msgid "Tune how text is simplified in the Easy Read Prompt settings. After running, each block becomes editable here in the Easy Read step."
+msgstr "Tune how text is simplified in the Easy Read Prompt settings. After running, each block becomes editable here in the Easy Read step."
 
 msgid "Turn any PDF into a fully accessible book — audio, translations, structured HTML layouts — all generated from your source file, <0>all editable</0>, <1>all yours</1>."
 msgstr "Turn any PDF into a fully accessible book — audio, translations, structured HTML layouts — all generated from your source file, <0>all editable</0>, <1>all yours</1>."

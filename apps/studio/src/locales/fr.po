@@ -603,6 +603,9 @@ msgstr "Ajouter {0} Images"
 msgid "Add a language to see translations appear here."
 msgstr "Ajoutez une langue pour voir les traductions apparaître ici."
 
+msgid "Add an API key in Book settings to generate Easy Read content."
+msgstr "Ajoutez une clé API dans les paramètres du livre pour générer du contenu Lecture Facile."
+
 msgid "Add an API key in Book settings to run captions."
 msgstr "Ajoutez une clé API dans les paramètres du livre pour exécuter les sous-titres."
 
@@ -1183,6 +1186,9 @@ msgstr "Construction de l'aperçu..."
 
 msgid "Building Storyboard..."
 msgstr "Construction du scénarimage..."
+
+msgid "But the team kept walking up the mountain."
+msgstr "Mais l'équipe a continué à gravir la montagne."
 
 msgid "Button"
 msgstr "Bouton"
@@ -1805,6 +1811,9 @@ msgstr "Tout désélectionner"
 msgid "Desktop"
 msgstr "Bureau"
 
+msgid "Despite the inclement weather, the expedition pressed on toward the summit, undeterred by the mounting obstacles in their path."
+msgstr "Malgré le mauvais temps, l'expédition a poursuivi sa route vers le sommet, sans se laisser décourager par les obstacles croissants sur son chemin."
+
 msgid "Detailed, technical captions for college and adult readers."
 msgstr "Des sous-titres détaillés et techniques pour les lecteurs universitaires et adultes."
 
@@ -1966,8 +1975,14 @@ msgstr "Précoce"
 msgid "Easy Read"
 msgstr "Lecture Facile"
 
+msgid "Easy Read adapts the text placed on each page by Storyboard. Finish Storyboard before running this stage."
+msgstr "Lecture Facile adapte le texte placé sur chaque page par le Storyboard. Terminez le Storyboard avant de lancer cette étape."
+
 #~ msgid "Easy Read audio"
 #~ msgstr "Audio Lecture Facile"
+
+msgid "Easy Read Preview"
+msgstr "Aperçu Lecture Facile"
 
 msgid "Easy Read Prompt"
 msgstr "Invite Lecture Facile"
@@ -2402,6 +2417,9 @@ msgstr "Général"
 
 msgid "Generate"
 msgstr "Générer"
+
+msgid "Generate a simplified, easier-to-read version of every text block in the book. Readers turn it on with the Easy Read toggle in the ADT; you can review and edit each simplified block before packaging."
+msgstr "Générez une version simplifiée et plus facile à lire de chaque bloc de texte du livre. Les lecteurs l'activent avec le bouton Lecture Facile dans l'ADT ; vous pouvez relire et modifier chaque bloc simplifié avant l'empaquetage."
 
 msgid "Generate and customize the table of contents for the book navigation."
 msgstr "Générez et personnalisez la table des matières pour la navigation du livre."
@@ -3735,6 +3753,9 @@ msgstr "les options sont déterministes ;"
 msgid "options generate a fresh layout per page."
 msgstr "les options génèrent une nouvelle mise en page par page."
 
+msgid "Original"
+msgstr "Original"
+
 msgid "Original language"
 msgstr "Langue originale"
 
@@ -4553,6 +4574,9 @@ msgstr "Exécutez d'abord {upstreamLabel}"
 msgid "Run Captions"
 msgstr "Exécuter les sous-titres"
 
+msgid "Run Easy Read"
+msgstr "Lancer Lecture Facile"
+
 msgid "Run Extract"
 msgstr "Exécuter l'extraction"
 
@@ -4582,6 +4606,9 @@ msgstr "Exécuter le storyboard"
 
 msgid "Run Storyboard first — captions describe the images placed by Storyboard."
 msgstr "Exécutez d'abord le storyboard — les sous-titres décrivent les images placées par le storyboard."
+
+msgid "Run Storyboard first — Easy Read simplifies the text it places on each page."
+msgstr "Lancez d'abord le Storyboard — Lecture Facile simplifie le texte qu'il place sur chaque page."
 
 msgid "Run Storyboard first — the glossary is built from the typed sections placed by Storyboard."
 msgstr "Exécutez d'abord le storyboard — le glossaire est construit à partir des sections tapées placées par le storyboard."
@@ -5518,6 +5545,9 @@ msgstr "La table des matières liste les sections tapées placées par le Storyb
 msgid "The Water Cycle"
 msgstr "Le cycle de l'eau"
 
+msgid "The weather was very bad."
+msgstr "Le temps était très mauvais."
+
 msgid "The world before us"
 msgstr "Le monde devant nous"
 
@@ -5529,6 +5559,9 @@ msgstr "Ces fonctionnalités améliorent l'accès pour les personnes handicapée
 
 msgid "These values reflect either the saved book override or the latest packaged defaults."
 msgstr "Ces valeurs reflètent soit le remplacement enregistré du livre, soit les valeurs par défaut du dernier empaquetage."
+
+msgid "They did not give up."
+msgstr "Ils n'ont pas abandonné."
 
 msgid "This book has no pages. Make sure the extraction and storyboard stages produced content before generating {stageName}."
 msgstr "Ce livre n'a pas de pages. Assurez-vous que les étapes d'extraction et de storyboard ont produit du contenu avant de générer {stageName}."
@@ -5746,6 +5779,9 @@ msgstr "Essayez le problème pratique"
 
 msgid "Try this screen again"
 msgstr "Réessayer cet écran"
+
+msgid "Tune how text is simplified in the Easy Read Prompt settings. After running, each block becomes editable here in the Easy Read step."
+msgstr "Ajustez la façon dont le texte est simplifié dans les paramètres de l'invite Lecture Facile. Après l'exécution, chaque bloc devient modifiable ici dans l'étape Lecture Facile."
 
 msgid "Turn any PDF into a fully accessible book — audio, translations, structured HTML layouts — all generated from your source file, <0>all editable</0>, <1>all yours</1>."
 msgstr "Transformez n'importe quel PDF en livre entièrement accessible — audio, traductions, mises en page HTML structurées — le tout généré à partir de votre fichier source, <0>tout modifiable</0>, <1>tout à vous</1>."
