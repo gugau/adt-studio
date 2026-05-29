@@ -418,6 +418,9 @@ msgstr "Una sección con texto y múltiples imágenes."
 msgid "A section with text in a highlighted box."
 msgstr "Una sección con texto en un cuadro resaltado."
 
+msgid "A select-all-that-apply activity where the learner can choose more than one option per question."
+msgstr "Una actividad de seleccionar todas las opciones que correspondan, en la que el estudiante puede elegir más de una opción por pregunta."
+
 msgid "A separator page between sections."
 msgstr "Una página separadora entre secciones."
 
@@ -558,6 +561,9 @@ msgstr "Actividad: Completar espacios"
 
 msgid "Activity: Matching"
 msgstr "Actividad: Emparejar"
+
+msgid "Activity: Multi-Select"
+msgstr "Actividad: Selección múltiple (varias)"
 
 msgid "Activity: Multiple Choice"
 msgstr "Actividad: Selección múltiple"
@@ -1352,6 +1358,9 @@ msgstr "Haz clic en una imagen para seleccionar"
 msgid "Click images to select"
 msgstr "Haz clic en las imágenes para seleccionar"
 
+msgid "Click Next to continue to language settings."
+msgstr "Haz clic en Siguiente para continuar con la configuración de idioma."
+
 msgid "Click to edit"
 msgstr "Haz clic para editar"
 
@@ -2060,6 +2069,15 @@ msgstr "Introduce un nombre de proyecto válido"
 #~ msgid "Enter hex color and press Enter"
 #~ msgstr "Ingresa un color hex y presiona Enter"
 
+msgid "EPUB"
+msgstr "EPUB"
+
+msgid "EPUB 3"
+msgstr "EPUB 3"
+
+msgid "EPUB Export"
+msgstr "Exportar EPUB"
+
 msgid "Error"
 msgstr "Error"
 
@@ -2276,6 +2294,9 @@ msgstr "Diseño Fijo"
 
 msgid "Fixed two-column template layout"
 msgstr "Plantilla de diseño fijo de dos columnas"
+
+msgid "Fixed-layout books use the original page images as backgrounds with positioned text extracted from the PDF. Activities detection, figure extraction, and image cropping or segmentation don't apply to this layout."
+msgstr "Los libros de diseño fijo usan las imágenes originales de las páginas como fondo con texto posicionado extraído del PDF. La detección de actividades, extracción de figuras, recorte o segmentación de imágenes no aplican a este diseño."
 
 msgid "flagged"
 msgstr "flagged"
@@ -3344,6 +3365,9 @@ msgstr "No changes flagged on this page"
 msgid "No colors found"
 msgstr "No se encontraron colores"
 
+msgid "No content processing needed"
+msgstr "No se necesita procesamiento de contenido"
+
 msgid "No cover available"
 msgstr "Portada no disponible"
 
@@ -3608,6 +3632,9 @@ msgstr "Open a page to see page-level findings"
 msgid "Open edit panel"
 msgstr "Abrir panel de edición"
 
+msgid "Open in any EPUB 3 reader, e-reader, or accessibility tool."
+msgstr "Ábrelo en cualquier lector EPUB 3, lector electrónico o herramienta de accesibilidad."
+
 msgid "Open page preview for {pageId}"
 msgstr "Abrir vista previa de la página {0}"
 
@@ -3797,6 +3824,9 @@ msgstr "Modo de Agrupación de Páginas"
 msgid "Page image"
 msgstr "Imagen de la página"
 
+msgid "Page image as background with positioned text overlay. Preserves the original page composition; ideal for illustrated storybooks."
+msgstr "Imagen de página como fondo con texto posicionado superpuesto. Preserva la composición original de la página; ideal para libros ilustrados."
+
 msgid "Page Mode"
 msgstr "Modo de Página"
 
@@ -3970,6 +4000,13 @@ msgstr "Portugués (BR)"
 msgid "Position"
 msgstr "Posición"
 
+#. placeholder {0}: Math.round(bounds.x)
+#. placeholder {1}: Math.round(bounds.y)
+#. placeholder {2}: Math.round(bounds.width)
+#. placeholder {3}: Math.round(bounds.height)
+msgid "Position {0}, {1} → {2}×{3} pt"
+msgstr "Posición {0}, {1} → {2}×{3} pt"
+
 msgid "Práticas de Alfabetização e de Matemática"
 msgstr "Prácticas de Alfabetización y Matemáticas"
 
@@ -3981,6 +4018,12 @@ msgstr "Precipitación"
 
 msgid "Prefer terms central to the book's subject matter. Skip generic vocabulary and proper nouns that don't carry meaning beyond the page."
 msgstr "Prefiere términos centrales al tema del libro. Omite vocabulario genérico y nombres propios que no tienen significado más allá de la página."
+
+msgid "Preserves the source PDF's exact page layout"
+msgstr "Conserva el diseño de página exacto del PDF original"
+
+msgid "Preserves the source PDF's exact page layout — images and positioned text rendered in place."
+msgstr "Conserva el diseño de página exacto del PDF original: imágenes y texto posicionado representados en su lugar."
 
 msgid "Preset"
 msgstr "Preajuste"
@@ -5071,6 +5114,12 @@ msgstr "Espolvoreando un poco de polvo mágico digital..."
 msgid "Standard"
 msgstr "Estándar"
 
+msgid "Standard e-book for readers & libraries"
+msgstr "Libro electrónico estándar para lectores y bibliotecas"
+
+msgid "Standard EPUB 3 file for e-readers, reading apps, and accessibility tools. Interactive features (quizzes, TTS) work in readers that support JavaScript."
+msgstr "Archivo EPUB 3 estándar para lectores electrónicos, aplicaciones de lectura y herramientas de accesibilidad. Las funciones interactivas (cuestionarios, TTS) funcionan en lectores que admiten JavaScript."
+
 msgid "Start"
 msgstr "Inicio"
 
@@ -5135,8 +5184,8 @@ msgstr "Estirar"
 msgid "Strict"
 msgstr "Estricto"
 
-msgid "Strict grid template that repeats across pages."
-msgstr "Plantilla de cuadrícula estricta que se repite a través de las páginas."
+#~ msgid "Strict grid template that repeats across pages."
+#~ msgstr "Plantilla de cuadrícula estricta que se repite a través de las páginas."
 
 msgid "Strikethrough"
 msgstr "Tachado"
@@ -5439,6 +5488,9 @@ msgstr "Esto es <0>ADT Studio</0>."
 
 msgid "This is a preview of the options you have selected for your book, each option affects the preview in a different way."
 msgstr "Esta es una vista previa de las opciones que has seleccionado para tu libro, cada opción afecta la vista previa de una manera diferente."
+
+msgid "This is Pip! He has a wiggly tail."
+msgstr "¡Este es Pip! Tiene una cola que se mueve."
 
 msgid "This is Pip! He is a happy caramel dog with a very wiggly tail. Pip loves the green grass, the bright yellow sun, and making new friends in his garden."
 msgstr "¡Este es Pip! Es un perro caramelo feliz con una cola muy movida. A Pip le encanta el césped verde, el brillante sol amarillo y hacer nuevos amigos en su jardín."

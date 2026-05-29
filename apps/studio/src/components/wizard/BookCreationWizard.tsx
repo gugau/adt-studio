@@ -275,11 +275,15 @@ export function BookCreationWizard() {
   }
   const previewWidth = currentStep === 2 ? getPreviewWidth(renderStrategy) : 650
 
+  const isFixedLayout = values.renderStrategy === "fixed_layout"
+
   function renderPreviewContent({mobileMode}: {mobileMode: boolean} = {mobileMode: false}) {
     if (currentStep === 1) return <PdfCoverPreview file={file} width={650} height={812} />
     if (currentStep === 2) return <LayoutPreview strategy={renderStrategy} />
-    if (currentStep === 3)
+    if (currentStep === 3) {
+      if (isFixedLayout) return <PdfCoverPreview file={file} width={650} height={812} />
       return <ImageProcessingPreviewPane focus={previewFocus} mobile={mobileMode} />
+    }
     if (currentStep === 4)
       return <LanguagesPreviewPane editingLanguage={editingLanguage} outputLanguages={outputLanguages} />
     if (currentStep === 5)

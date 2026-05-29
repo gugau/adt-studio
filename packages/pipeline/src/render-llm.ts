@@ -223,9 +223,11 @@ function isPlaceholderOnlyText(text: string): boolean {
   // Reset regex lastIndex (the .test() call above advances stateful global regexes).
   TEXTBOOK_BLANK_RE.lastIndex = 0
   PLACEHOLDER_MARKER_RE.lastIndex = 0
+  // Strip `[placeholder:...]` markers first so the dot-run regex doesn't
+  // consume their contents and leave a literal `[placeholder:]` behind.
   const stripped = text
-    .replace(TEXTBOOK_BLANK_RE, "")
     .replace(PLACEHOLDER_MARKER_RE, "")
+    .replace(TEXTBOOK_BLANK_RE, "")
     .replace(/[\s/\-]/g, "")
   return stripped.length === 0
 }

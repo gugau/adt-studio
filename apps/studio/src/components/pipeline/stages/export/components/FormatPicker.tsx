@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils"
 import { buildExportFormatConfig, type ExportFormat } from "../export-formats"
 import type { useLingui } from "@lingui/react/macro"
 
-const FORMAT_ORDER: ExportFormat[] = ["project", "adt", "scorm", "webpub"]
+const FORMAT_ORDER: ExportFormat[] = ["project", "adt", "scorm", "webpub", "epub"]
 
 export function FormatPicker({
   selected,

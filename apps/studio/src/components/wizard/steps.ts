@@ -46,10 +46,7 @@ export const STEPS: StepDef[] = [
     description: msg`Choose how the content should be formatted.`,
     component: Step2,
     hasRequiredFields: true,
-    isValid: (v) =>
-      v.renderStrategy !== "" &&
-      v.pageGrouping !== "" &&
-      v.sectioningMode !== "",
+    isValid: (v) => v.renderStrategy !== "" && v.pageGrouping !== "" && v.sectioningMode !== "",
     scrollToFirstInvalid: (v) => {
       if (!v.renderStrategy) return "wizard-render-strategy"
       if (!v.pageGrouping) return "wizard-page-grouping"

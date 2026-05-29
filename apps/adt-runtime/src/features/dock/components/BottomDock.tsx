@@ -1,6 +1,6 @@
 import { useAtomValue } from "jotai";
 import { appConfigAtom } from "@/shared/state/config.atoms";
-import { dockReadyAtom } from "@/shared/state/ui.atoms";
+import { dockReadyAtom, embedModeAtom } from "@/shared/state/ui.atoms";
 import { BookMetadata } from "@/features/dock/components/BookMetadata";
 import { DockMenu } from "@/features/dock/components/DockMenu";
 import { DockSkeleton } from "@/features/dock/components/DockSkeleton";
@@ -73,6 +73,9 @@ function DockContainer({ children }: DockContainerProps) {
 
 export function BottomDock() {
   const ready = useAtomValue(dockReadyAtom);
+  const embed = useAtomValue(embedModeAtom);
+
+  if (embed) return null;
 
   if (!ready) {
     return (
