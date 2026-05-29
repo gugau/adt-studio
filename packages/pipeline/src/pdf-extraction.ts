@@ -10,8 +10,10 @@ export interface ExtractOptions {
   endPage?: number
   spreadMode?: boolean
   vectorTextGrouping?: boolean
-  /** Enables the metric-based positioned-text spacing cleanup; only
-   *  meaningful for fixed-layout books (reflowable text uses a separate path). */
+  /** Whether the book renders fixed-layout. Gates the entire positioned-text
+   *  extraction pipeline (stream-order recorder + paragraph parsing), which is
+   *  consumed only by fixed-layout rendering, and enables the metric-based
+   *  spacing cleanup. Reflowable books skip all of it. */
   fixedLayout?: boolean
 }
 

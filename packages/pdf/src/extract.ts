@@ -419,6 +419,56 @@ function normalizeToDisplayableRgb(pixmap: Pixmap): Pixmap {
   return pixmap.convertToColorSpace(mupdf.ColorSpace.DeviceRGB);
 }
 
+/**
+ * Classify an image XObject's colorspace from its PDF dictionary alone — no
+ * `loadImage`/decode. `displayable` means the raw image bytes (for a JPEG)
+ * are already in a form a browser can render directly (RGB or Gray);
+ * `needs-convert` means the image must be decoded and converted to RGB
+ * (CMYK, Lab, ICCBased-non-RGB, Separation, DeviceN, Indexed, …) or we
+ * couldn't prove it's safe.
+ *
+ * This is the cheap pre-check that lets the common RGB/Gray JPEG case skip
+ * `doc.loadImage()` entirely. It is deliberately conservative: anything not
+ * unambiguously RGB/Gray returns `needs-convert`, so the (correct, slower)
+ * decode path still handles every case #442 added — we never route a
+ * non-displayable image to the raw fast path.
+ */
+function classifyImageColorSpace(resolved: PDFObject): "displayable" | "needs-convert" {
+  try {
+    const cs = resolved.get("ColorSpace");
+    if (cs.isNull()) return "needs-convert";
+
+    if (cs.isName()) {
+      switch (cs.asName()) {
+        case "DeviceRGB":
+        case "CalRGB":
+        case "DeviceGray":
+        case "CalGray":
+          return "displayable";
+        default:
+          return "needs-convert"; // DeviceCMYK, Pattern, named refs, …
+      }
+    }
+
+    if (cs.isArray() && cs.length > 0) {
+      const family = cs.get(0).asName();
+      if (family === "CalRGB" || family === "CalGray") return "displayable";
+      if (family === "ICCBased") {
+        const n = cs.get(1).resolve().get("N").asNumber();
+        // N=1 (Gray) and N=3 (RGB) are browser-displayable; N=4 is CMYK.
+        return n === 1 || n === 3 ? "displayable" : "needs-convert";
+      }
+      // Lab, Separation, DeviceN, Indexed, Pattern, … all need conversion.
+      return "needs-convert";
+    }
+
+    return "needs-convert";
+  } catch {
+    // Any malformed/unexpected colorspace structure → take the safe path.
+    return "needs-convert";
+  }
+}
+
 /** Read the /Matte array off an SMask dictionary, expressed as 8-bit RGB.
  * Only RGB (3) and Gray (1) source colorspaces are handled; for anything
  * else (e.g. CMYK) we conservatively skip un-matting. */
@@ -526,6 +576,9 @@ function compositeColorAndMask(
       png.data[dstIdx + 3] = a;
     }
   }
+  // Free the temporary conversion pixmap (the caller owns and destroys the
+  // original `color`).
+  if (rgb !== color) rgb.destroy();
   return PNG.sync.write(png);
 }
 
@@ -675,31 +728,45 @@ async function extractPage(doc: MupdfDocument, pageIndex: number, vectorTextGrou
     ? allRasterImages.filter(img => !coveredRasterHashes.has(img.hash))
     : allRasterImages;
 
-  // Stream-order assignment: run the page through a recording device so
-  // every draw op gets a true PDF content-stream seqno. mupdf's
-  // StructuredText walker is a layout reconstruction (reading flow, not
-  // stream order) so we cannot use it for z-order — but the device
-  // callbacks fire once per content-stream operator, in stream order, with
-  // fully-resolved CTMs. This is the canonical mupdf z-order primitive.
-  const recorder = runRecorderInViewport(page, pageBounds, 0, 0);
-  stampRasterPlacementsFromOps(rasterImages, recorder.ops);
+  // Positioned-text + stream-order extraction is consumed ONLY by fixed-layout
+  // rendering (the sole reader of positionedText and of the recorder-derived
+  // image bounds/seqno/clip/blend/opacity). For reflowable books we skip it
+  // entirely, which avoids a full extra device traversal of the page plus the
+  // structured-text walks parsePageParagraphs runs.
+  let positionedText: PositionedTextOutput;
+  if (fixedLayout) {
+    // Stream-order assignment: run the page through a recording device so
+    // every draw op gets a true PDF content-stream seqno. mupdf's
+    // StructuredText walker is a layout reconstruction (reading flow, not
+    // stream order) so we cannot use it for z-order — but the device
+    // callbacks fire once per content-stream operator, in stream order, with
+    // fully-resolved CTMs. This is the canonical mupdf z-order primitive.
+    const recorder = runRecorderInViewport(page, pageBounds, 0, 0);
+    stampRasterPlacementsFromOps(rasterImages, recorder.ops);
 
-  const paragraphData = parsePageParagraphs(doc, pageIndex, 2, fixedLayout);
-  // Fold hand-lettered vector paint into the duplicate selectable text
-  // run, then drop the now-duplicate vector shapes (re-rendering figures
-  // that only partially duplicate text). Figure seqnos are stamped after,
-  // so re-rendered survivors get their true content-stream order.
-  const { restyledBoxes } = restyleCoincidentVectorText(paragraphData.paragraphs, recorder.ops);
-  figureImages = await excludeConsumedFigureShapes(figureImages, restyledBoxes);
-  stampFigureSeqnosFromOps(figureImages, recorder.ops);
+    // Reuse the StructuredText already built above — no extra pass.
+    const paragraphData = parsePageParagraphs(page, stext, 2, fixedLayout);
+    // Fold hand-lettered vector paint into the duplicate selectable text
+    // run, then drop the now-duplicate vector shapes (re-rendering figures
+    // that only partially duplicate text). Figure seqnos are stamped after,
+    // so re-rendered survivors get their true content-stream order.
+    const { restyledBoxes } = restyleCoincidentVectorText(paragraphData.paragraphs, recorder.ops);
+    figureImages = await excludeConsumedFigureShapes(figureImages, restyledBoxes);
+    stampFigureSeqnosFromOps(figureImages, recorder.ops);
 
-  const positionedText = buildPositionedTextOutput(
-    pageId,
-    paragraphData,
-    rasterImages,
-    figureImages,
-    recorder.ops,
-  );
+    positionedText = buildPositionedTextOutput(
+      pageId,
+      paragraphData,
+      rasterImages,
+      figureImages,
+      recorder.ops,
+    );
+  } else {
+    positionedText = emptyPositionedText(
+      pageBounds[2] - pageBounds[0],
+      pageBounds[3] - pageBounds[1],
+    );
+  }
 
   return {
     pageId,
@@ -810,6 +877,27 @@ type AnyPage = ReturnType<MupdfDocument["loadPage"]>;
 
 function bboxToImageBounds(b: StreamBBox): ImageBounds {
   return { x: b.x0, y: b.y0, width: b.x1 - b.x0, height: b.y1 - b.y0 };
+}
+
+/**
+ * Minimal positioned-text output for reflowable books, which don't run the
+ * positioned-text extraction pipeline. Carries the page's viewport dimensions
+ * (cheap, from page bounds) so any consumer that falls back to them still
+ * works, with no draw items. Dimensions match what `buildPositionedTextOutput`
+ * would emit (page size in points; render size at `renderScale`).
+ */
+function emptyPositionedText(
+  pageWidth: number,
+  pageHeight: number,
+  renderScale = 2,
+): PositionedTextOutput {
+  return {
+    drawItems: [],
+    pageWidth,
+    pageHeight,
+    renderWidth: Math.round(pageWidth * renderScale),
+    renderHeight: Math.round(pageHeight * renderScale),
+  };
 }
 
 /** Serialize PathCommand[] to an SVG `d` attribute string in absolute coords. */
@@ -1418,48 +1506,61 @@ async function extractSpreadPage(
   // own PDF-point bounds, compose correctly on the rendered spread viewport.
   const rasterImages = [...leftRaster, ...rightRaster];
 
-  // Run the recorder on both pages, in viewport coords; right-page x is
-  // shifted by left page width so positions address the stitched spread,
-  // and right-page seqnos shift past left so cross-page sort puts left
-  // ahead of right (matches PDF reading order).
-  const leftRecorder = runRecorderInViewport(leftPage, leftBounds, 0, 0);
-  const leftMaxSeqno = leftRecorder.ops.reduce(
-    (m, o) => Math.max(m, o.seqno),
-    -1,
-  );
-  const rightRecorder = runRecorderInViewport(
-    rightPage,
-    rightBounds,
-    leftPageWidthPt,
-    leftMaxSeqno + 1,
-  );
-  const ops: StreamOp[] = [...leftRecorder.ops, ...rightRecorder.ops];
-  // Rasters: stamp per page so dim-tied images on different pages don't
-  // pair across the spread boundary.
-  stampRasterPlacementsFromOps(leftRaster, leftRecorder.ops);
-  stampRasterPlacementsFromOps(rightRaster, rightRecorder.ops);
+  // Positioned-text + stream-order extraction is consumed ONLY by fixed-layout
+  // rendering. Skip it for reflowable books (see extractPage for rationale).
+  let positionedText: PositionedTextOutput;
+  let figureImages: ExtractedImage[];
+  if (fixedLayout) {
+    // Run the recorder on both pages, in viewport coords; right-page x is
+    // shifted by left page width so positions address the stitched spread,
+    // and right-page seqnos shift past left so cross-page sort puts left
+    // ahead of right (matches PDF reading order).
+    const leftRecorder = runRecorderInViewport(leftPage, leftBounds, 0, 0);
+    const leftMaxSeqno = leftRecorder.ops.reduce(
+      (m, o) => Math.max(m, o.seqno),
+      -1,
+    );
+    const rightRecorder = runRecorderInViewport(
+      rightPage,
+      rightBounds,
+      leftPageWidthPt,
+      leftMaxSeqno + 1,
+    );
+    const ops: StreamOp[] = [...leftRecorder.ops, ...rightRecorder.ops];
+    // Rasters: stamp per page so dim-tied images on different pages don't
+    // pair across the spread boundary.
+    stampRasterPlacementsFromOps(leftRaster, leftRecorder.ops);
+    stampRasterPlacementsFromOps(rightRaster, rightRecorder.ops);
 
-  const paragraphData = parsePageParagraphsSpread(doc, leftIndex, rightIndex, 2, fixedLayout);
-  // Fold hand-lettered vector paint into the duplicate selectable text run
-  // and drop the now-duplicate vector shapes (per-figure xOffset/svgDefs
-  // is carried in the re-render context, so a single pass spans both
-  // halves). Figure seqnos are stamped after, over the unified op list:
-  // geometry identity is position-exact, so right-page shape boxes
-  // (xOffset-shifted) only coincide with right-page ops.
-  const { restyledBoxes } = restyleCoincidentVectorText(paragraphData.paragraphs, ops);
-  const figureImages = await excludeConsumedFigureShapes(
-    [...leftResult.images, ...rightResult.images],
-    restyledBoxes,
-  );
-  stampFigureSeqnosFromOps(figureImages, ops);
+    // Reuse the per-page StructuredText already built above — no extra pass.
+    const paragraphData = parsePageParagraphsSpread(leftPage, rightPage, leftStext, rightStext, 2, fixedLayout);
+    // Fold hand-lettered vector paint into the duplicate selectable text run
+    // and drop the now-duplicate vector shapes (per-figure xOffset/svgDefs
+    // is carried in the re-render context, so a single pass spans both
+    // halves). Figure seqnos are stamped after, over the unified op list:
+    // geometry identity is position-exact, so right-page shape boxes
+    // (xOffset-shifted) only coincide with right-page ops.
+    const { restyledBoxes } = restyleCoincidentVectorText(paragraphData.paragraphs, ops);
+    figureImages = await excludeConsumedFigureShapes(
+      [...leftResult.images, ...rightResult.images],
+      restyledBoxes,
+    );
+    stampFigureSeqnosFromOps(figureImages, ops);
 
-  const positionedText = buildPositionedTextOutput(
-    pageId,
-    paragraphData,
-    rasterImages,
-    figureImages,
-    ops,
-  );
+    positionedText = buildPositionedTextOutput(
+      pageId,
+      paragraphData,
+      rasterImages,
+      figureImages,
+      ops,
+    );
+  } else {
+    figureImages = [...leftResult.images, ...rightResult.images];
+    positionedText = emptyPositionedText(
+      leftBounds[2] - leftBounds[0] + (rightBounds[2] - rightBounds[0]),
+      Math.max(leftBounds[3] - leftBounds[1], rightBounds[3] - rightBounds[1]),
+    );
+  }
 
   const images: ExtractedImage[] = [...rasterImages, ...figureImages];
 
@@ -1566,13 +1667,14 @@ function extractRasterImagesFromPdf(
         const smaskObj = resolved.get("SMask");
         const hasSMask = !smaskObj.isNull();
 
-        const image = doc.loadImage(streamObj);
-        const srcType = image.getColorSpace()?.getType();
+        // Decide the cheapest correct path WITHOUT decoding. Only the
+        // branches that genuinely need pixels call `doc.loadImage()`; the
+        // common RGB/Gray JPEG case copies raw bytes and never touches mupdf.
         const canRawExtract =
           !hasSMask &&
           filterName === "DCTDecode" &&
           isSingleFilter &&
-          (srcType === "RGB" || srcType === "Gray");
+          classifyImageColorSpace(resolved) === "displayable";
 
         if (canRawExtract) {
           // Fast path: RGB/Gray JPEG with no transparency — copy bytes as-is.
@@ -1581,23 +1683,43 @@ function extractRasterImagesFromPdf(
         } else if (hasSMask) {
           // Composite color + soft-mask into an RGBA PNG, un-matting if the
           // SMask carries a /Matte entry (avoids colored halos at edges).
+          const image = doc.loadImage(streamObj);
+          const srcType = image.getColorSpace()?.getType();
           const colorPixmap = image.toPixmap();
-          const smaskStream = smaskObj.isIndirect() ? smaskObj : resolved.get("SMask");
-          const maskPixmap = doc.loadImage(smaskStream).toPixmap();
+          const maskImage = doc.loadImage(
+            smaskObj.isIndirect() ? smaskObj : resolved.get("SMask")
+          );
+          const maskPixmap = maskImage.toPixmap();
           const matteRgb = readSoftMaskMatte(smaskObj, srcType);
           buf = compositeColorAndMask(colorPixmap, maskPixmap, matteRgb);
           format = "png";
+          colorPixmap.destroy();
+          maskPixmap.destroy();
+          maskImage.destroy();
+          image.destroy();
         } else if (filterName === "DCTDecode" && isSingleFilter) {
           // Single-filter JPEG with non-displayable colorspace (CMYK, Lab,
           // ICCBased non-RGB, etc.) — decode, convert to RGB, re-encode.
-          buf = Buffer.from(normalizeToDisplayableRgb(image.toPixmap()).asJPEG(90, false));
+          const image = doc.loadImage(streamObj);
+          const px = image.toPixmap();
+          const rgb = normalizeToDisplayableRgb(px);
+          buf = Buffer.from(rgb.asJPEG(90, false));
           format = "jpeg";
+          if (rgb !== px) rgb.destroy();
+          px.destroy();
+          image.destroy();
         } else {
           // Multi-filter chains or non-JPEG without SMask: decode through
           // mupdf → PNG. Normalize to RGB first since PNG can't encode
           // CMYK/Lab/etc.
-          buf = Buffer.from(normalizeToDisplayableRgb(image.toPixmap()).asPNG());
+          const image = doc.loadImage(streamObj);
+          const px = image.toPixmap();
+          const rgb = normalizeToDisplayableRgb(px);
+          buf = Buffer.from(rgb.asPNG());
           format = "png";
+          if (rgb !== px) rgb.destroy();
+          px.destroy();
+          image.destroy();
         }
 
         if (buf.length === 0) continue;

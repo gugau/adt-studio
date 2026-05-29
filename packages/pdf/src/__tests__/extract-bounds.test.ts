@@ -7,8 +7,10 @@ describe("extractPdf — per-image bounds", () => {
     // Test PDF places a 30x30 native image at (100, 300) scaled to 200x200pt
     // on a 612x792pt page. mupdf's preserve-images walker returns bboxes in
     // top-left page coordinates, so the expected y is 792 - 300 - 200 = 292.
+    // Per-image bounds are stamped by the stream-order recorder, which only
+    // runs for fixed-layout extraction (the sole consumer of bounds).
     const pdfBuffer = createRasterOnlyTestPdf();
-    const result = await extractPdf({ pdfBuffer });
+    const result = await extractPdf({ pdfBuffer, fixedLayout: true });
 
     expect(result.pages).toHaveLength(1);
     const page = result.pages[0];
