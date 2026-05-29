@@ -2,6 +2,16 @@
   "name": "@adt/desktop",
   "version": "0.7.0-rc.9",
   "description": "An Electron Version of ADT STUDIO",
+  "homepage": "https://github.com/unicef/adt-studio",
+  "author": {
+    "name": "UNICEF",
+    "url": "https://github.com/unicef"
+  },
+  "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unicef/adt-studio.git"
+  },
   "main": "./out/main/index.js",
   "private": true,
   "scripts": {
