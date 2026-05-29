@@ -166,6 +166,50 @@ function seedStoryboardBook(booksDir: string, label: string): void {
   }
 }
 
+function seedStoryboardBookPages(
+  booksDir: string,
+  label: string,
+  pageIds: string[]
+): void {
+  const storage = createBookStorage(label, booksDir)
+  try {
+    pageIds.forEach((pageId, idx) => {
+      storage.putExtractedPage({
+        pageId,
+        pageNumber: idx + 1,
+        text: "Page text",
+        pageImage: {
+          imageId: `${pageId}_page`,
+          buffer: Buffer.from("fake-page-image"),
+          format: "png",
+          hash: `hash-page-${pageId}`,
+          width: 800,
+          height: 600,
+        },
+        images: [],
+      })
+      storage.putNodeData("page-sectioning", pageId, {
+        reasoning: "existing sectioning",
+        sections: [
+          {
+            sectionId: `${pageId}_sec001`,
+            sectionType: "content",
+            backgroundColor: "#ffffff",
+            textColor: "#000000",
+            pageNumber: idx + 1,
+            isPruned: false,
+            nodes: [
+              { nodeId: `${pageId}_n001`, isPruned: false, role: "text", text: "Hello" },
+            ],
+          },
+        ],
+      })
+    })
+  } finally {
+    storage.close()
+  }
+}
+
 function seedTextAndSpeechBook(booksDir: string, label: string): void {
   const storage = createBookStorage(label, booksDir)
   try {
@@ -372,6 +416,89 @@ describe("createStageRunner storyboard render-only", () => {
           event.type === "step-complete" && event.step === "page-sectioning"
       )
     ).toBe(false)
+  })
+})
+
+describe("createStageRunner cancellation", () => {
+  let tmpDir = ""
+
+  beforeEach(() => {
+    renderPageMock.mockReset()
+  })
+
+  afterEach(() => {
+    if (tmpDir) {
+      fs.rmSync(tmpDir, { recursive: true, force: true })
+      tmpDir = ""
+    }
+  })
+
+  it("cancels storyboard mid-run: keeps rendered pages and leaves the step not complete", async () => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "stage-runner-cancel-"))
+    const booksDir = path.join(tmpDir, "books")
+    const promptsDir = path.join(tmpDir, "prompts")
+    const configPath = path.join(tmpDir, "config.yaml")
+    fs.mkdirSync(promptsDir, { recursive: true })
+    // concurrency: 1 so the run awaits each page; the abort then takes effect
+    // before the next page is scheduled.
+    fs.writeFileSync(
+      configPath,
+      `role_types:
+  section_text: Main body text
+structure_types:
+  paragraph: Paragraph
+concurrency: 1
+`
+    )
+    seedStoryboardBookPages(booksDir, "cancel-storyboard", ["pg001", "pg002"])
+
+    const controller = new AbortController()
+    renderPageMock.mockImplementation(async () => {
+      // Abort as soon as the first page renders; the second must not start.
+      controller.abort()
+      return { sections: [] }
+    })
+
+    const events: ProgressEvent[] = []
+    const runner = createStageRunner()
+    await runner.run(
+      "cancel-storyboard",
+      {
+        booksDir,
+        apiKey: "sk-test",
+        promptsDir,
+        configPath,
+        fromStage: "storyboard",
+        toStage: "storyboard",
+        signal: controller.signal,
+      },
+      { emit: (event) => events.push(event) }
+    )
+
+    // Scheduling stopped after the abort — only the first page rendered.
+    expect(renderPageMock).toHaveBeenCalledTimes(1)
+
+    // The interrupted step must NOT be marked complete (that would let the next
+    // stage treat a partial step as finished). It surfaces as a step error.
+    expect(
+      events.some((e) => e.type === "step-complete" && e.step === "web-rendering")
+    ).toBe(false)
+    expect(
+      events.some((e) => e.type === "step-error" && e.step === "web-rendering")
+    ).toBe(true)
+
+    const storage = createBookStorage("cancel-storyboard", booksDir)
+    try {
+      const step = storage.getStepRuns().find((s) => s.step === "web-rendering")
+      expect(step?.status).toBe("error")
+      expect(step?.error).toContain("re-run to resume")
+      // The page that finished before the cancel is kept.
+      expect(storage.getLatestNodeData("web-rendering", "pg001")).not.toBeNull()
+      // The page that never started has no rendering.
+      expect(storage.getLatestNodeData("web-rendering", "pg002")).toBeNull()
+    } finally {
+      storage.close()
+    }
   })
 })
 

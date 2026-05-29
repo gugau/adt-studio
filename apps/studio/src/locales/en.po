@@ -1201,6 +1201,9 @@ msgstr "Calls"
 msgid "Cancel"
 msgstr "Cancel"
 
+msgid "Cancel run"
+msgstr "Cancel run"
+
 #. placeholder {0}: String(MAX_ENTRIES)
 msgid "capped at {0}"
 msgstr "capped at {0}"

@@ -1,5 +1,5 @@
 import { type ReactNode } from "react"
-import { Check, Loader2, Minus, Play, RotateCcw, XCircle } from "lucide-react"
+import { Check, Loader2, Minus, Play, RotateCcw, X, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -62,7 +62,7 @@ export function StageRunCard({
 }: StageRunCardProps) {
   const { t } = useLingui()
   const stage = STAGES.find((s) => s.slug === stageSlug) ?? STAGES[0]
-  const { stageState, stepState, stepProgress, stepError, error } = useBookRun()
+  const { stageState, stepState, stepProgress, stepError, error, cancelRun } = useBookRun()
   const stageStatus = stageState(stageSlug)
   const subSteps = STAGE_SUB_STEPS[stageSlug as StageName] ?? []
   const Icon = stage.icon
@@ -159,14 +159,19 @@ export function StageRunCard({
         {showRunButton && (
           <div className="shrink-0">
             {isRunning ? (
-              <div
-                onClick={(e) => { e.stopPropagation(); e.preventDefault() }}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); e.preventDefault(); cancelRun() }}
+                title={t`Cancel run`}
                 className={cn(
-                "flex items-center justify-center w-12 h-12 rounded-full opacity-60 cursor-default",
-                color, "text-white",
-              )}>
-                <Loader2 className="w-5 h-5 animate-spin" />
-              </div>
+                  "group flex items-center justify-center w-12 h-12 rounded-full text-white transition-colors cursor-pointer",
+                  color,
+                  "hover:bg-red-600",
+                )}
+              >
+                <Loader2 className="w-5 h-5 animate-spin group-hover:hidden" />
+                <X className="w-5 h-5 hidden group-hover:block" />
+              </button>
             ) : (
               <Button
                 variant="ghost"

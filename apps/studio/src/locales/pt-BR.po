@@ -1201,6 +1201,9 @@ msgstr "Chamadas"
 msgid "Cancel"
 msgstr "Cancelar"
 
+msgid "Cancel run"
+msgstr "Cancelar execução"
+
 #. placeholder {0}: String(MAX_ENTRIES)
 msgid "capped at {0}"
 msgstr "limitado a {0}"
