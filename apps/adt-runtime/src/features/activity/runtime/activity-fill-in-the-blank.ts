@@ -162,9 +162,6 @@ function hydrateFitbSentences(section: HTMLElement): void {
           counter++
           const offset = offsetVal as number
           const src = source as string
-          const placeholderAttr = hint
-            ? ` placeholder="${escapeAttr(hint)}"`
-            : ""
           const label = blankLabel(counter, total)
 
           // Word-internal blanks: marker sits inside a word (missing-letter
@@ -211,7 +208,7 @@ function hydrateFitbSentences(section: HTMLElement): void {
             `autocomplete="off" ` +
             `data-aria-id="aria-${counter}-0-0" ` +
             `data-activity-item="item-${itemNum}" ` +
-            `tabindex="0"${placeholderAttr} />`
+            `tabindex="0" />`
           )
         },
       )
