@@ -145,7 +145,13 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
   const sectioningStatus = useStageStatus("sectioning")
   const extractStatus = useStageStatus("extract")
   const sectioningReady = sectioningStatus.isCompleted
-  const extractReady = extractStatus.isCompleted
+  // "Covered" = already done, running, or queued — it will produce its output
+  // without us starting it, so we can queue Storyboard behind it instead of
+  // pulling it into the run.
+  const extractCovered = extractStatus.isCompleted || extractStatus.isRunning
+  const sectioningCovered =
+    sectioningStatus.isCompleted || sectioningStatus.isRunning
+  const upstreamCovered = extractCovered && sectioningCovered
 
   const [defaultRenderStrategy, setDefaultRenderStrategy] = useState("")
   const [renderStrategyItems, setRenderStrategyItems] = useState<LandingStrategyEntry[]>([])
@@ -227,11 +233,12 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
 
   const handleRun = () => {
     if (!hasApiKey || status.isRunning) return
-    // Cue from here even if upstream stages haven't run — queue from the first
-    // incomplete core stage so the chain produces what Storyboard needs.
-    const fromStage = !extractReady
+    // Cue from here even if upstream stages haven't run. Queue from the first
+    // upstream stage that isn't already covered (done/running/queued) so we
+    // never try to re-run a stage that's mid-flight.
+    const fromStage = !extractCovered
       ? "extract"
-      : !sectioningReady
+      : !sectioningCovered
         ? "sectioning"
         : "storyboard"
     queueRun({ fromStage, toStage: "storyboard", apiKey })
@@ -291,7 +298,7 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
 
       {sectioningReady ? (
         <CascadeWarning stageSlug="storyboard" />
-      ) : (
+      ) : !upstreamCovered ? (
         <LandingPageWarning
           variant="prereq"
           title={<Trans>Earlier stages haven't run yet</Trans>}
@@ -302,7 +309,7 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
             </Trans>
           }
         />
-      )}
+      ) : null}
 
       <SettingsCard>
         <SettingsField

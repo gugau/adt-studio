@@ -28,6 +28,9 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
   const status = useStageStatus("sectioning")
   const extractStatus = useStageStatus("extract")
   const extractReady = extractStatus.isCompleted
+  // "Covered" = already done, running, or queued — i.e. it will produce its
+  // output without us starting it, so we can just queue Sectioning behind it.
+  const extractCovered = extractStatus.isCompleted || extractStatus.isRunning
 
   const [sectioningMode, setSectioningMode] = useState<SectioningModeKey>("dynamic")
   const [disabledSectionTypes, setDisabledSectionTypes] = useState<Set<string>>(new Set())
@@ -82,9 +85,10 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
 
   const handleRun = () => {
     if (!hasApiKey || status.isRunning) return
-    // Cue from here even if Extract hasn't run yet — queue from the first
-    // incomplete upstream stage so the chain produces what Sectioning needs.
-    const fromStage = extractReady ? "sectioning" : "extract"
+    // Cue from here even if Extract hasn't run yet. If Extract is already
+    // done/running/queued it will produce its output, so queue Sectioning
+    // behind it; only pull Extract into the run when it isn't covered.
+    const fromStage = extractCovered ? "sectioning" : "extract"
     queueRun({ fromStage, toStage: "sectioning", apiKey })
   }
 
@@ -135,7 +139,7 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
 
       {extractReady ? (
         <CascadeWarning stageSlug="sectioning" />
-      ) : (
+      ) : !extractCovered ? (
         <LandingPageWarning
           variant="prereq"
           title={<Trans>Extract hasn't run yet</Trans>}
@@ -146,7 +150,7 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
             </Trans>
           }
         />
-      )}
+      ) : null}
 
       <SettingsCard>
         <SettingsField
