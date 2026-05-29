@@ -68,6 +68,14 @@ export {
   PageSectioningOutput,
   buildPageSectioningLLMSchema,
   buildPageSectioningRefinementLLMSchema,
+  // Out-of-band placement sidecar — PDF coordinates, image clip/blend/opacity,
+  // viewport dimensions. Carried alongside the semantic tree on
+  // `PageSectioningSection.placement` so any renderer can use it.
+  TextPosition,
+  SectionTextSegment,
+  ImagePartBounds,
+  SectionViewport,
+  NodePlacement,
 } from "./page-sectioning.js"
 
 export {
@@ -196,6 +204,17 @@ export {
   ReviewerValidationConfig,
   type ReviewerValidationCatalog,
 } from "./reviewer-validation-config.js"
+
+export {
+  PositionedParagraph,
+  PositionedTextOutput,
+  ImageBounds,
+  DrawItem,
+  DrawItemImage,
+  DrawItemParagraph,
+  TextSegment,
+  TextBlockBounds,
+} from "./positioned-text.js"
 
 export {
   ReviewerValidationStatus,

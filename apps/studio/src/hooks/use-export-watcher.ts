@@ -8,8 +8,7 @@ import { isElectron } from "@/lib/utils"
 import { useBookTasks } from "./use-book-tasks"
 import type { ExportFeatureToggles } from "./use-export-features"
 import type { CapturedSettings } from "./use-preview-settings-listener"
-
-type ExportFormat = "project" | "webpub" | "scorm" | "adt"
+import type { ExportFormat } from "@/components/pipeline/stages/export/export-formats"
 
 interface PendingExport {
   taskId: string
@@ -129,6 +128,8 @@ async function triggerExportDownload(
     blob = await api.exportProject(label)
   } else if (format === "webpub") {
     blob = await api.exportWebpub(label)
+  } else if (format === "epub") {
+    blob = await api.exportEpub(label)
   } else if (format === "scorm") {
     blob = await api.exportScorm(label)
   } else {
@@ -147,6 +148,7 @@ async function triggerExportDownload(
     webpub: { ext: "webpub", suffix: "", filterName: i18n._(msg`WebPub`) },
     scorm: { ext: "zip", suffix: "-scorm", filterName: i18n._(msg`SCORM Package`) },
     adt: { ext: "zip", suffix: "-adt", filterName: i18n._(msg`ADT Package`) },
+    epub: { ext: "epub", suffix: "", filterName: i18n._(msg`EPUB`) },
   }
   /* eslint-enable lingui/no-unlocalized-strings */
   const meta = formatMeta[format]

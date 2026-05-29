@@ -36,6 +36,13 @@ interface PageDetail {
   imageCropping: unknown | null
   rendering: unknown | null
   imageCaptioning: unknown | null
+  /** Per-image metadata for this page (dimensions, optional PDF-point placement bounds). */
+  imagesMeta: Array<{
+    imageId: string
+    width: number
+    height: number
+    bounds?: { x: number; y: number; width: number; height: number }
+  }>
   versions: {
     sectioning: number | null
     imageClassification: number | null
@@ -183,7 +190,7 @@ async function executeAiImageGeneration(params: AiImageGenParams): Promise<{
   try {
     generated = await generateImageWithCache({
       apiKey,
-      modelId: "openai:gpt-image-1.5",
+      modelId: "openai:gpt-image-2",
       prompt: finalPrompt,
       size: size as `${number}x${number}`,
       referenceImages,
@@ -588,6 +595,32 @@ export function createPageRoutes(
         if (parsed.success) sectioningTreeForUI = parsed.data
       }
 
+      // Per-image meta (width/height/bounds) — sourced directly from the
+      // images table rather than node_data so it reflects the latest state.
+      const imageMetaRows = db.all(
+        "SELECT image_id, width, height, bounds_x, bounds_y, bounds_w, bounds_h FROM images WHERE page_id = ? ORDER BY image_id",
+        [pageId]
+      ) as Array<{
+        image_id: string
+        width: number
+        height: number
+        bounds_x: number | null
+        bounds_y: number | null
+        bounds_w: number | null
+        bounds_h: number | null
+      }>
+      const imagesMeta: PageDetail["imagesMeta"] = imageMetaRows.map((r) => {
+        const meta: PageDetail["imagesMeta"][number] = {
+          imageId: r.image_id,
+          width: r.width,
+          height: r.height,
+        }
+        if (r.bounds_x !== null && r.bounds_y !== null && r.bounds_w !== null && r.bounds_h !== null) {
+          meta.bounds = { x: r.bounds_x, y: r.bounds_y, width: r.bounds_w, height: r.bounds_h }
+        }
+        return meta
+      })
+
       const result: PageDetail = {
         pageId: page.page_id,
         pageNumber: page.page_number,
@@ -597,6 +630,7 @@ export function createPageRoutes(
         imageCropping: imageCroppingNode?.data ?? null,
         rendering: renderingNode?.data ?? null,
         imageCaptioning: imageCaptioningNode?.data ?? null,
+        imagesMeta,
         versions: {
           sectioning: sectioningNode?.version ?? null,
           imageClassification: imageClassNode?.version ?? null,
@@ -1585,7 +1619,7 @@ export function createPageRoutes(
     }
   })
 
-  // POST /books/:label/images/ai-generate — Generate image via gpt-image-1.5
+  // POST /books/:label/images/ai-generate — Generate image via gpt-image-2
   app.post("/books/:label/images/ai-generate", async (c) => {
     try {
       const { label } = c.req.param()

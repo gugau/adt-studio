@@ -147,6 +147,14 @@ msgstr "{0} pages"
 msgid "{0} questions"
 msgstr "{0} questions"
 
+#. placeholder {0}: String(blocks.length)
+msgid "{0} section block(s)"
+msgstr "{0} section block(s)"
+
+#. placeholder {0}: String(visibleBlocks.length)
+msgid "{0} section block(s) on this page"
+msgstr "{0} section block(s) on this page"
+
 #. placeholder {0}: String(stale.length)
 msgid "{0} selected images are no longer in the storyboard."
 msgstr "{0} selected images are no longer in the storyboard."
@@ -418,6 +426,9 @@ msgstr "A section with text and multiple images."
 msgid "A section with text in a highlighted box."
 msgstr "A section with text in a highlighted box."
 
+msgid "A select-all-that-apply activity where the learner can choose more than one option per question."
+msgstr "A select-all-that-apply activity where the learner can choose more than one option per question."
+
 msgid "A separator page between sections."
 msgstr "A separator page between sections."
 
@@ -559,6 +570,9 @@ msgstr "Activity: Fill in the Blank"
 msgid "Activity: Matching"
 msgstr "Activity: Matching"
 
+msgid "Activity: Multi-Select"
+msgstr "Activity: Multi-Select"
+
 msgid "Activity: Multiple Choice"
 msgstr "Activity: Multiple Choice"
 
@@ -610,6 +624,9 @@ msgstr "Add an API key in Book settings to run TOC generation."
 
 msgid "Add an API key in Book settings to run translation."
 msgstr "Add an API key in Book settings to run translation."
+
+msgid "Add an API key to generate Easy Read content."
+msgstr "Add an API key to generate Easy Read content."
 
 msgid "Add at least one output language to run translation."
 msgstr "Add at least one output language to run translation."
@@ -1065,6 +1082,9 @@ msgstr "Base URL"
 msgid "Basic Information"
 msgstr "Basic Information"
 
+msgid "Batch size"
+msgstr "Batch size"
+
 msgid "Be descriptive — include style, colors, mood, and composition."
 msgstr "Be descriptive — include style, colors, mood, and composition."
 
@@ -1351,6 +1371,9 @@ msgstr "Click an image to select"
 
 msgid "Click images to select"
 msgstr "Click images to select"
+
+msgid "Click Next to continue to language settings."
+msgstr "Click Next to continue to language settings."
 
 msgid "Click to edit"
 msgstr "Click to edit"
@@ -1938,6 +1961,15 @@ msgstr "Each section introduces a new theme with worked examples, followed by sh
 msgid "Early"
 msgstr "Early"
 
+msgid "Easy Read"
+msgstr "Easy Read"
+
+msgid "Easy Read audio"
+msgstr "Easy Read audio"
+
+msgid "Easy Read Prompt"
+msgstr "Easy Read Prompt"
+
 msgid "Ecosystem"
 msgstr "Ecosystem"
 
@@ -2059,6 +2091,15 @@ msgstr "Enter a valid project name"
 
 #~ msgid "Enter hex color and press Enter"
 #~ msgstr "Enter hex color and press Enter"
+
+msgid "EPUB"
+msgstr "EPUB"
+
+msgid "EPUB 3"
+msgstr "EPUB 3"
+
+msgid "EPUB Export"
+msgstr "EPUB Export"
 
 msgid "Error"
 msgstr "Error"
@@ -2277,6 +2318,9 @@ msgstr "Fixed Layout"
 msgid "Fixed two-column template layout"
 msgstr "Fixed two-column template layout"
 
+msgid "Fixed-layout books use the original page images as backgrounds with positioned text extracted from the PDF. Activities detection, figure extraction, and image cropping or segmentation don't apply to this layout."
+msgstr "Fixed-layout books use the original page images as backgrounds with positioned text extracted from the PDF. Activities detection, figure extraction, and image cropping or segmentation don't apply to this layout."
+
 msgid "flagged"
 msgstr "flagged"
 
@@ -2360,6 +2404,9 @@ msgstr "Generate"
 msgid "Generate and customize the table of contents for the book navigation."
 msgstr "Generate and customize the table of contents for the book navigation."
 
+msgid "Generate and edit Easy Read text blocks for the ADT accessibility toggle."
+msgstr "Generate and edit Easy Read text blocks for the ADT accessibility toggle."
+
 msgid "Generate audio narration for every page of the book. Pick a provider and choose whether to highlight each word as it's read aloud."
 msgstr "Generate audio narration for every page of the book. Pick a provider and choose whether to highlight each word as it's read aloud."
 
@@ -2371,6 +2418,12 @@ msgstr "Generate comprehension quizzes and activities based on the book content.
 
 msgid "Generate descriptive captions for every image in the book. Pick a reading level so captions match your audience, and add custom instructions if you want to nudge the tone or focus."
 msgstr "Generate descriptive captions for every image in the book. Pick a reading level so captions match your audience, and add custom instructions if you want to nudge the tone or focus."
+
+msgid "Generate Easy Read audio"
+msgstr "Generate Easy Read audio"
+
+msgid "Generate editable Easy Read blocks for the ADT toggle."
+msgstr "Generate editable Easy Read blocks for the ADT toggle."
 
 msgid "Generate from pages"
 msgstr "Generate from pages"
@@ -2393,8 +2446,14 @@ msgstr "Generate with AI"
 msgid "Generate word timestamps"
 msgstr "Generate word timestamps"
 
+msgid "Generates audio for Easy Read texts. In the ADT, Easy Read mode uses that audio when available and falls back to the original voice otherwise."
+msgstr "Generates audio for Easy Read texts. In the ADT, Easy Read mode uses that audio when available and falls back to the original voice otherwise."
+
 msgid "Generates the interactive HTML for this activity type."
 msgstr "Generates the interactive HTML for this activity type."
+
+msgid "Generating Easy Read..."
+msgstr "Generating Easy Read..."
 
 msgid "Generating Glossary..."
 msgstr "Generating Glossary..."
@@ -2944,6 +3003,9 @@ msgstr "Loading Book..."
 msgid "Loading books..."
 msgstr "Loading books..."
 
+msgid "Loading Easy Read..."
+msgstr "Loading Easy Read..."
+
 msgid "Loading glossary..."
 msgstr "Loading glossary..."
 
@@ -3317,6 +3379,9 @@ msgstr "No API key for {0} yet. Add one in Book settings to enable this provider
 msgid "No assessment"
 msgstr "No assessment"
 
+msgid "No audio for this page"
+msgstr "No audio for this page"
+
 msgid "No books match your search"
 msgstr "No books match your search"
 
@@ -3332,6 +3397,9 @@ msgstr "No changes flagged on this page"
 msgid "No colors found"
 msgstr "No colors found"
 
+msgid "No content processing needed"
+msgstr "No content processing needed"
+
 msgid "No cover available"
 msgstr "No cover available"
 
@@ -3340,6 +3408,9 @@ msgstr "No data"
 
 msgid "No disabled rules"
 msgstr "No disabled rules"
+
+msgid "No Easy Read block is available for this page."
+msgstr "No Easy Read block is available for this page."
 
 msgid "No extracted text yet. Run the pipeline first."
 msgstr "No extracted text yet. Run the pipeline first."
@@ -3596,6 +3667,9 @@ msgstr "Open a page to see page-level findings"
 msgid "Open edit panel"
 msgstr "Open edit panel"
 
+msgid "Open in any EPUB 3 reader, e-reader, or accessibility tool."
+msgstr "Open in any EPUB 3 reader, e-reader, or accessibility tool."
+
 msgid "Open page preview for {pageId}"
 msgstr "Open page preview for {pageId}"
 
@@ -3759,6 +3833,11 @@ msgstr "Page"
 msgid "Page {0}"
 msgstr "Page {0}"
 
+#. placeholder {0}: String(block.pageNumber)
+#. placeholder {1}: String(block.sectionIndex + 1)
+msgid "Page {0} - Section {1}"
+msgstr "Page {0} - Section {1}"
+
 #. placeholder {0}: page.pageNumber
 #. placeholder {1}: i + 1
 msgid "Page {0} — Section {1}"
@@ -3781,6 +3860,9 @@ msgstr "Page Grouping Mode"
 
 msgid "Page image"
 msgstr "Page image"
+
+msgid "Page image as background with positioned text overlay. Preserves the original page composition; ideal for illustrated storybooks."
+msgstr "Page image as background with positioned text overlay. Preserves the original page composition; ideal for illustrated storybooks."
 
 msgid "Page Mode"
 msgstr "Page Mode"
@@ -3955,6 +4037,13 @@ msgstr "Portuguese (BR)"
 msgid "Position"
 msgstr "Position"
 
+#. placeholder {0}: Math.round(bounds.x)
+#. placeholder {1}: Math.round(bounds.y)
+#. placeholder {2}: Math.round(bounds.width)
+#. placeholder {3}: Math.round(bounds.height)
+msgid "Position {0}, {1} → {2}×{3} pt"
+msgstr "Position {0}, {1} → {2}×{3} pt"
+
 msgid "Práticas de Alfabetização e de Matemática"
 msgstr "Práticas de Alfabetização e de Matemática"
 
@@ -4014,6 +4103,9 @@ msgstr "Project Name"
 
 msgid "Prompt"
 msgstr "Prompt"
+
+msgid "Prompt template"
+msgstr "Prompt template"
 
 msgid "Prompt template not found."
 msgstr "Prompt template not found."
@@ -4218,8 +4310,14 @@ msgstr "Refresh validation"
 msgid "Refreshing results for this packaged preview."
 msgstr "Refreshing results for this packaged preview."
 
+msgid "Regenerate"
+msgstr "Regenerate"
+
 msgid "Regenerate definition, variations, and emoji"
 msgstr "Regenerate definition, variations, and emoji"
+
+msgid "Regenerate Easy Read"
+msgstr "Regenerate Easy Read"
 
 msgid "Regenerate selected images for each output language so that any text burned into them is shown in the target language."
 msgstr "Regenerate selected images for each output language so that any text burned into them is shown in the target language."
@@ -4498,6 +4596,9 @@ msgstr "Run Storyboard to generate sections you can match sign-language videos t
 msgid "Run the pipeline"
 msgstr "Run the pipeline"
 
+msgid "Run the pipeline to extract content"
+msgstr "Run the pipeline to extract content"
+
 msgid "Run TOC"
 msgstr "Run TOC"
 
@@ -4546,6 +4647,9 @@ msgstr "Save & Rerun"
 msgid "Save & Rerun Captions"
 msgstr "Save & Rerun Captions"
 
+msgid "Save & Rerun Easy Read"
+msgstr "Save & Rerun Easy Read"
+
 msgid "Save & Rerun Extraction"
 msgstr "Save & Rerun Extraction"
 
@@ -4581,6 +4685,9 @@ msgstr "Save checklist"
 
 msgid "Save failed"
 msgstr "Save failed"
+
+msgid "Save or discard edits before regenerating"
+msgstr "Save or discard edits before regenerating"
 
 msgid "Save page review"
 msgstr "Save page review"
@@ -5026,6 +5133,12 @@ msgstr "Speech"
 msgid "Speech Generation"
 msgstr "Speech Generation"
 
+msgid "Speech generation includes Easy Read audio. The ADT uses it while Easy Read mode is active."
+msgstr "Speech generation includes Easy Read audio. The ADT uses it while Easy Read mode is active."
+
+msgid "Speech generation uses original text only. Easy Read mode will fall back to original audio."
+msgstr "Speech generation uses original text only. Easy Read mode will fall back to original audio."
+
 msgid "Speech narrates the translated text Language produces. Finish Language before running this stage."
 msgstr "Speech narrates the translated text Language produces. Finish Language before running this stage."
 
@@ -5052,6 +5165,12 @@ msgstr "Sprinkling some digital fairy dust..."
 
 msgid "Standard"
 msgstr "Standard"
+
+msgid "Standard e-book for readers & libraries"
+msgstr "Standard e-book for readers & libraries"
+
+msgid "Standard EPUB 3 file for e-readers, reading apps, and accessibility tools. Interactive features (quizzes, TTS) work in readers that support JavaScript."
+msgstr "Standard EPUB 3 file for e-readers, reading apps, and accessibility tools. Interactive features (quizzes, TTS) work in readers that support JavaScript."
 
 msgid "Start"
 msgstr "Start"
@@ -5349,6 +5468,9 @@ msgstr "The prompt template used to extract book metadata (title, author, etc.) 
 msgid "The prompt template used to generate captions for images in the book."
 msgstr "The prompt template used to generate captions for images in the book."
 
+msgid "The prompt template used to generate editable Easy Read text blocks."
+msgstr "The prompt template used to generate editable Easy Read text blocks."
+
 msgid "The prompt template used to generate glossary terms from book content."
 msgstr "The prompt template used to generate glossary terms from book content."
 
@@ -5422,11 +5544,17 @@ msgstr "This is <0>ADT Studio</0>."
 msgid "This is a preview of the options you have selected for your book, each option affects the preview in a different way."
 msgstr "This is a preview of the options you have selected for your book, each option affects the preview in a different way."
 
+msgid "This is Pip! He has a wiggly tail."
+msgstr "This is Pip! He has a wiggly tail."
+
 msgid "This is Pip! He is a happy caramel dog with a very wiggly tail. Pip loves the green grass, the bright yellow sun, and making new friends in his garden."
 msgstr "This is Pip! He is a happy caramel dog with a very wiggly tail. Pip loves the green grass, the bright yellow sun, and making new friends in his garden."
 
 msgid "This page has no captioned images"
 msgstr "This page has no captioned images"
+
+msgid "This page has no entries to synthesize"
+msgstr "This page has no entries to synthesize"
 
 msgid "This page has no sectioning output"
 msgstr "This page has no sectioning output"
@@ -5457,6 +5585,9 @@ msgstr "This session is using an older reviewer checklist snapshot. Newer checkl
 
 msgid "This text is only perceptible to assistive technologies."
 msgstr "This text is only perceptible to assistive technologies."
+
+msgid "This will save your Easy Read settings and generate a new editable Easy Read version."
+msgstr "This will save your Easy Read settings and generate a new editable Easy Read version."
 
 msgid "This will save your settings and re-generate the table of contents."
 msgstr "This will save your settings and re-generate the table of contents."
@@ -5975,6 +6106,9 @@ msgstr "When describing images, mention any culturally specific objects, locatio
 
 msgid "When enabled, background colors from the styleguide are applied to the full page body."
 msgstr "When enabled, background colors from the styleguide are applied to the full page body."
+
+msgid "When enabled, speech generation also creates audio for Easy Read texts. The ADT uses that audio while Easy Read mode is active and falls back to the original audio when it is missing."
+msgstr "When enabled, speech generation also creates audio for Easy Read texts. The ADT uses that audio while Easy Read mode is active and falls back to the original audio when it is missing."
 
 msgid "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."
 msgstr "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."

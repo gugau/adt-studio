@@ -1,8 +1,8 @@
 import { msg } from "@lingui/core/macro"
 import type { LucideIcon } from "lucide-react"
-import { FileDown, Globe, GraduationCap } from "lucide-react"
+import { FileDown, Globe, GraduationCap, BookText } from "lucide-react"
 
-export type ExportFormat = "project" | "webpub" | "scorm" | "adt"
+export type ExportFormat = "project" | "webpub" | "scorm" | "adt" | "epub"
 
 export interface FormatConfig {
   icon: LucideIcon
@@ -47,6 +47,13 @@ export const EXPORT_FORMAT_CONFIG: Record<ExportFormat, Omit<FormatConfig, "labe
     borderColor: "border-blue-200",
     buttonClass: "bg-blue-600 hover:bg-blue-700 text-white",
   },
+  epub: {
+    icon: BookText,
+    textColor: "text-purple-600",
+    bgLight: "bg-purple-50",
+    borderColor: "border-purple-200",
+    buttonClass: "bg-purple-600 hover:bg-purple-700 text-white",
+  },
 }
 
 /**
@@ -74,6 +81,12 @@ export function buildExportFormatConfig(t: (msg: any) => string): Record<ExportF
       ...EXPORT_FORMAT_CONFIG.webpub,
       label: t(msg`WebPub Export`),
       description: t(msg`Readium Web Publication format for standards-based digital distribution platforms.`),
+      badge: t(msg`Beta`),
+    },
+    epub: {
+      ...EXPORT_FORMAT_CONFIG.epub,
+      label: t(msg`EPUB Export`),
+      description: t(msg`Standard EPUB 3 file for e-readers, reading apps, and accessibility tools. Interactive features (quizzes, TTS) work in readers that support JavaScript.`),
       badge: t(msg`Beta`),
     },
   }

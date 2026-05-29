@@ -12,6 +12,7 @@ import {
   runAccessibilityAssessment,
   runBrowserAccessibilityAssessment,
   mergeAccessibilityResults,
+  isFixedLayoutBook,
 } from "@adt/pipeline"
 import type { Storage } from "@adt/storage"
 import type { TaskService } from "../services/task-service.js"
@@ -266,6 +267,7 @@ async function runPackaging(
       bundleVersion,
       applyBodyBackground: config.apply_body_background,
       speechConfig: config.speech,
+      fixedLayout: isFixedLayoutBook(config),
     })
     fs.writeFileSync(versionPath, bundleVersion, "utf-8")
 

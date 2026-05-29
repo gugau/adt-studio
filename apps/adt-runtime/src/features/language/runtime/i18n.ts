@@ -15,6 +15,7 @@ import {
   videoFilesAtom,
 } from "@/features/language/state/language.atoms"
 import { applyPlainTextWithLineBreaks } from "./text-formatting"
+import { rebuildSegmentedInnerHtml } from "@/shared/lib/fl-segments"
 
 const EASY_READ_FORMATTED_ATTR = "data-easy-read-formatted"
 const EASY_READ_PREVIOUS_STYLE_ATTRS = {
@@ -197,18 +198,32 @@ export function applyTranslationsToDOM(
     elements.forEach((el) => {
       if (el.tagName === "IMG") {
         el.setAttribute("alt", text)
-      } else {
-        const htmlElement = el as HTMLElement
-        setEasyReadTextFormatting(htmlElement, isEasyRead)
-        if (htmlElement.hasAttribute("data-tts-original-html")) {
-          htmlElement.removeAttribute("data-tts-original-html")
-        }
-        if (isEasyRead) {
-          applyPlainTextWithLineBreaks(htmlElement, text)
-        } else {
-          htmlElement.innerHTML = renderedHtml
-        }
+        return
       }
+      const htmlElement = el as HTMLElement
+      // Easy Read is a new content mode: toggle its inline formatting on
+      // every element (the helper restores prior styles when disabled, so
+      // this is a no-op for the normal path) before swapping text.
+      setEasyReadTextFormatting(htmlElement, isEasyRead)
+      if (isEasyRead) {
+        // Easy Read replaces the styled run tree with plain wrapped text, so
+        // the cached TTS markup no longer applies — drop it.
+        htmlElement.removeAttribute("data-tts-original-html")
+        applyPlainTextWithLineBreaks(htmlElement, text)
+        return
+      }
+      // Fixed-layout paragraphs carry per-run styling on `data-segments`.
+      // Rebuild the styled-span tree from that JSON so font-family, color,
+      // size, weight, and stroke survive the text swap — straight innerHTML
+      // assignment would flatten them.
+      const segmentsAttr = htmlElement.getAttribute("data-segments")
+      const html = segmentsAttr
+        ? rebuildSegmentedInnerHtml(segmentsAttr, renderedHtml)
+        : renderedHtml
+      if (htmlElement.hasAttribute("data-tts-original-html")) {
+        htmlElement.setAttribute("data-tts-original-html", html)
+      }
+      htmlElement.innerHTML = html
     })
 
     const placeholders = document.querySelectorAll(
@@ -226,6 +241,17 @@ export function applyTranslationsToDOM(
   if (titleMeta) {
     const id = titleMeta.getAttribute("content")
     if (id && translations[id]) document.title = translations[id]
+  }
+
+  // Re-run fixed-layout auto-fit after rebuilding segment spans — the new
+  // elements have no `data-adt-fs` cache and the translated content has a
+  // different length than the source, so an earlier auto-fit pass against
+  // the original spans no longer reflects the rendered DOM. Double-rAF so
+  // we measure after the browser has laid out the new innerHTML.
+  const runAutoFit = (window as Window & { __adtRunAutoFit?: () => void })
+    .__adtRunAutoFit
+  if (typeof runAutoFit === "function") {
+    requestAnimationFrame(() => requestAnimationFrame(() => runAutoFit()))
   }
 }
 

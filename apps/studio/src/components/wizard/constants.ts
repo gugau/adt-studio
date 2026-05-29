@@ -4,6 +4,7 @@ import {
   BookOpen,
   AlignLeft,
   SlidersHorizontal,
+  Image,
 } from "lucide-react";
 import type { MessageDescriptor } from "@lingui/core";
 import { msg } from "@lingui/core/macro";
@@ -88,6 +89,13 @@ export const RENDER_STRATEGIES = [
     Icon: TwoColumnStoryStrategyIcon,
     title: msg`Two Columns Story`,
     description: msg`Perfect for children's books, pairing large images with minimal text.`,
+    category: "template",
+  },
+  {
+    id: "fixed_layout",
+    Icon: Image,
+    title: msg`Fixed Layout`,
+    description: msg`Page image as background with positioned text overlay. Preserves the original page composition; ideal for illustrated storybooks.`,
     category: "template",
   },
 ] as const satisfies readonly RenderStrategyOption[];
@@ -224,6 +232,18 @@ export const PRESETS: PresetConfig[] = [
             visual_refinement: { enabled: true, max_iterations: 3 },
           },
         },
+        activity_multi_select: {
+          render_type: "activity",
+          config: {
+            prompt: "activity_multi_select",
+            answer_prompt: "activity_multi_select_answers",
+            model: "openai:gpt-5.4",
+            max_retries: 5,
+            timeout: 180,
+            temperature: 0.3,
+            visual_refinement: { enabled: true, max_iterations: 3 },
+          },
+        },
         activity_true_false: {
           render_type: "activity",
           config: {
@@ -298,6 +318,7 @@ export const PRESETS: PresetConfig[] = [
       },
       section_render_strategies: {
         activity_multiple_choice: "activity_multiple_choice",
+        activity_multi_select: "activity_multi_select",
         activity_true_false: "activity_true_false",
         activity_fill_in_the_blank: "activity_fill_in_the_blank",
         activity_fill_in_a_table: "activity_fill_in_a_table",
@@ -318,7 +339,7 @@ export const PRESETS: PresetConfig[] = [
     bgColor: "bg-amber-500/5",
     title: msg`Storybook`,
     description: msg`Large images, narrative flow. Best for illustrated books with high-fidelity TTS voices.`,
-    renderStrategies: ["llm", "llm-overlay", "two_column", "two_column_story"],
+    renderStrategies: ["llm", "llm-overlay", "two_column", "two_column_story", "fixed_layout"],
     recommendedStrategies: ["llm-overlay", "two_column_story"],
     recommendedFor: [
       msg`Illustrated children's books`,
@@ -374,6 +395,9 @@ export const PRESETS: PresetConfig[] = [
             timeout: 180,
           },
         },
+        fixed_layout: {
+          render_type: "fixed_layout",
+        },
       },
       section_render_strategies: {},
       pruned_role_types: ["header_text", "footer_text", "page_number"],
@@ -382,6 +406,7 @@ export const PRESETS: PresetConfig[] = [
         "credits",
         "inside_cover",
         "activity_multiple_choice",
+        "activity_multi_select",
         "activity_true_false",
         "activity_fill_in_the_blank",
         "activity_fill_in_a_table",
@@ -468,6 +493,7 @@ export const PRESETS: PresetConfig[] = [
         "credits",
         "inside_cover",
         "activity_multiple_choice",
+        "activity_multi_select",
         "activity_true_false",
         "activity_fill_in_the_blank",
         "activity_fill_in_a_table",

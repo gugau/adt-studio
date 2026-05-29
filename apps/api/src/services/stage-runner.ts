@@ -71,6 +71,7 @@ import {
   getSegmentedImageId,
   createScreenshotRenderer,
   DEFAULT_VISUAL_REVIEW_MODEL_ID,
+  isFixedLayoutBook,
 } from "@adt/pipeline"
 import type { PageSectioningConfig, TranslationConfig, QuizPageInput, ProviderRouting, MeaningfulnessConfig, CroppingConfig, SegmentationConfig, VisualRefinementDeps } from "@adt/pipeline"
 import { loadStyleguideContent } from "./styleguide.js"
@@ -549,6 +550,7 @@ async function runExtractStep(
         endPage: config.end_page,
         spreadMode: config.spread_mode,
         vectorTextGrouping: config.vector_text_grouping,
+        fixedLayout: isFixedLayoutBook(config),
       },
       storage,
       progress
@@ -964,6 +966,23 @@ async function runStoryboardStep(
     const pages = storage.getPages()
     const totalPages = pages.length
     const effectiveConcurrency = config.concurrency ?? 32
+
+    if (isFixedLayoutBook(config)) {
+      // Fixed-layout: both sectioning and rendering happen here, driven
+      // off the positioned-text + image-filtering data the extract step
+      // already wrote. No LLM call. Emit start/complete for both steps so
+      // the progress UI mirrors the reflowable flow's two-step shape.
+      console.log(`[stage-run] ${label}: fixed-layout rendering for ${totalPages} pages`)
+      progress.emit({ type: "step-start", step: "page-sectioning" })
+      progress.emit({ type: "step-start", step: "web-rendering" })
+      const { processFixedLayoutPages } = await import("@adt/pipeline")
+      const imageUrlPrefix = `/api/books/${label}/images`
+      processFixedLayoutPages(storage, imageUrlPrefix)
+      progress.emit({ type: "step-complete", step: "page-sectioning" })
+      progress.emit({ type: "step-complete", step: "web-rendering" })
+      console.log(`[stage-run] ${label}: fixed-layout rendering complete`)
+      return
+    }
 
     console.log(
       `[stage-run] ${label}: rendering storyboard for ${totalPages} pages (concurrency=${effectiveConcurrency})`

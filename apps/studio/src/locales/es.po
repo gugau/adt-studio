@@ -147,6 +147,14 @@ msgstr "{0} páginas"
 msgid "{0} questions"
 msgstr "{0} preguntas"
 
+#. placeholder {0}: String(blocks.length)
+msgid "{0} section block(s)"
+msgstr "{0} bloque(s) de sección"
+
+#. placeholder {0}: String(visibleBlocks.length)
+msgid "{0} section block(s) on this page"
+msgstr "{0} bloque(s) de sección en esta página"
+
 #. placeholder {0}: String(stale.length)
 msgid "{0} selected images are no longer in the storyboard."
 msgstr "{0} imágenes seleccionadas ya no están en el guion gráfico."
@@ -418,6 +426,9 @@ msgstr "Una sección con texto y múltiples imágenes."
 msgid "A section with text in a highlighted box."
 msgstr "Una sección con texto en un cuadro resaltado."
 
+msgid "A select-all-that-apply activity where the learner can choose more than one option per question."
+msgstr "Una actividad de seleccionar todas las opciones que correspondan, en la que el estudiante puede elegir más de una opción por pregunta."
+
 msgid "A separator page between sections."
 msgstr "Una página separadora entre secciones."
 
@@ -559,6 +570,9 @@ msgstr "Actividad: Completar espacios"
 msgid "Activity: Matching"
 msgstr "Actividad: Emparejar"
 
+msgid "Activity: Multi-Select"
+msgstr "Actividad: Selección múltiple (varias)"
+
 msgid "Activity: Multiple Choice"
 msgstr "Actividad: Selección múltiple"
 
@@ -610,6 +624,9 @@ msgstr "Añade una clave API en la configuración del libro para ejecutar la gen
 
 msgid "Add an API key in Book settings to run translation."
 msgstr "Añade una clave API en la configuración del libro para ejecutar traducción."
+
+msgid "Add an API key to generate Easy Read content."
+msgstr "Agrega una clave de API para generar contenido de Lectura Fácil."
 
 msgid "Add at least one output language to run translation."
 msgstr "Añade al menos un idioma de salida para ejecutar traducción."
@@ -1065,6 +1082,9 @@ msgstr "URL base"
 msgid "Basic Information"
 msgstr "Información Básica"
 
+msgid "Batch size"
+msgstr "Tamaño del lote"
+
 msgid "Be descriptive — include style, colors, mood, and composition."
 msgstr "Sé descriptivo — incluye estilo, colores, estado de ánimo y composición."
 
@@ -1351,6 +1371,9 @@ msgstr "Haz clic en una imagen para seleccionar"
 
 msgid "Click images to select"
 msgstr "Haz clic en las imágenes para seleccionar"
+
+msgid "Click Next to continue to language settings."
+msgstr "Haz clic en Siguiente para continuar con la configuración de idioma."
 
 msgid "Click to edit"
 msgstr "Haz clic para editar"
@@ -1938,6 +1961,15 @@ msgstr "Cada sección introduce un nuevo tema con ejemplos trabajados, seguido d
 msgid "Early"
 msgstr "Temprano"
 
+msgid "Easy Read"
+msgstr "Lectura Fácil"
+
+msgid "Easy Read audio"
+msgstr "Audio de Lectura Fácil"
+
+msgid "Easy Read Prompt"
+msgstr "Prompt de Lectura Fácil"
+
 msgid "Ecosystem"
 msgstr "Ecosistema"
 
@@ -2059,6 +2091,15 @@ msgstr "Introduce un nombre de proyecto válido"
 
 #~ msgid "Enter hex color and press Enter"
 #~ msgstr "Ingresa un color hex y presiona Enter"
+
+msgid "EPUB"
+msgstr "EPUB"
+
+msgid "EPUB 3"
+msgstr "EPUB 3"
+
+msgid "EPUB Export"
+msgstr "Exportar EPUB"
 
 msgid "Error"
 msgstr "Error"
@@ -2277,6 +2318,9 @@ msgstr "Diseño Fijo"
 msgid "Fixed two-column template layout"
 msgstr "Plantilla de diseño fijo de dos columnas"
 
+msgid "Fixed-layout books use the original page images as backgrounds with positioned text extracted from the PDF. Activities detection, figure extraction, and image cropping or segmentation don't apply to this layout."
+msgstr "Los libros de diseño fijo usan las imágenes originales de las páginas como fondo con texto posicionado extraído del PDF. La detección de actividades, extracción de figuras, recorte o segmentación de imágenes no aplican a este diseño."
+
 msgid "flagged"
 msgstr "flagged"
 
@@ -2360,6 +2404,9 @@ msgstr "Generar"
 msgid "Generate and customize the table of contents for the book navigation."
 msgstr "Genera y personaliza la tabla de contenidos para la navegación del libro."
 
+msgid "Generate and edit Easy Read text blocks for the ADT accessibility toggle."
+msgstr "Genera y edita bloques de texto de Lectura Fácil para el interruptor de accesibilidad del ADT."
+
 msgid "Generate audio narration for every page of the book. Pick a provider and choose whether to highlight each word as it's read aloud."
 msgstr "Genera narración de audio para cada página del libro. Elige un proveedor y decide si resaltar cada palabra mientras se lee en voz alta."
 
@@ -2371,6 +2418,12 @@ msgstr "Genera cuestionarios y actividades de comprensión basados en el conteni
 
 msgid "Generate descriptive captions for every image in the book. Pick a reading level so captions match your audience, and add custom instructions if you want to nudge the tone or focus."
 msgstr "Genera subtítulos descriptivos para cada imagen del libro. Elige un nivel de lectura para que los subtítulos coincidan con tu audiencia y añade instrucciones personalizadas si deseas ajustar el tono o enfoque."
+
+msgid "Generate Easy Read audio"
+msgstr "Generar audio de Lectura Fácil"
+
+msgid "Generate editable Easy Read blocks for the ADT toggle."
+msgstr "Genera bloques editables de Lectura Fácil para el interruptor del ADT."
 
 msgid "Generate from pages"
 msgstr "Generar desde páginas"
@@ -2393,8 +2446,14 @@ msgstr "Generar con IA"
 msgid "Generate word timestamps"
 msgstr "Generar marcas de tiempo por palabra"
 
+msgid "Generates audio for Easy Read texts. In the ADT, Easy Read mode uses that audio when available and falls back to the original voice otherwise."
+msgstr "Genera audio para los textos de Lectura Fácil. En el ADT, el modo Lectura Fácil usa ese audio cuando está disponible y recurre a la voz original en caso contrario."
+
 msgid "Generates the interactive HTML for this activity type."
 msgstr "Genera el HTML interactivo para este tipo de actividad."
+
+msgid "Generating Easy Read..."
+msgstr "Generando Lectura Fácil..."
 
 msgid "Generating Glossary..."
 msgstr "Generando glosario..."
@@ -2944,6 +3003,9 @@ msgstr "Cargando libro..."
 msgid "Loading books..."
 msgstr "Cargando libros..."
 
+msgid "Loading Easy Read..."
+msgstr "Cargando Lectura Fácil..."
+
 msgid "Loading glossary..."
 msgstr "Cargando glosario..."
 
@@ -3317,6 +3379,9 @@ msgstr "Aún no hay clave API para {0}. Añade una en la configuración del libr
 msgid "No assessment"
 msgstr "No assessment"
 
+msgid "No audio for this page"
+msgstr "No hay audio para esta página"
+
 msgid "No books match your search"
 msgstr "Ningún libro coincide con tu búsqueda"
 
@@ -3332,6 +3397,9 @@ msgstr "No changes flagged on this page"
 msgid "No colors found"
 msgstr "No se encontraron colores"
 
+msgid "No content processing needed"
+msgstr "No se necesita procesamiento de contenido"
+
 msgid "No cover available"
 msgstr "Portada no disponible"
 
@@ -3340,6 +3408,9 @@ msgstr "Sin datos"
 
 msgid "No disabled rules"
 msgstr "No disabled rules"
+
+msgid "No Easy Read block is available for this page."
+msgstr "No hay ningún bloque de Lectura Fácil disponible para esta página."
 
 msgid "No extracted text yet. Run the pipeline first."
 msgstr "Aún no se extrajo texto. Ejecuta el pipeline primero."
@@ -3596,6 +3667,9 @@ msgstr "Open a page to see page-level findings"
 msgid "Open edit panel"
 msgstr "Abrir panel de edición"
 
+msgid "Open in any EPUB 3 reader, e-reader, or accessibility tool."
+msgstr "Ábrelo en cualquier lector EPUB 3, lector electrónico o herramienta de accesibilidad."
+
 msgid "Open page preview for {pageId}"
 msgstr "Abrir vista previa de la página {0}"
 
@@ -3759,6 +3833,11 @@ msgstr "Página"
 msgid "Page {0}"
 msgstr "Página {0}"
 
+#. placeholder {0}: String(block.pageNumber)
+#. placeholder {1}: String(block.sectionIndex + 1)
+msgid "Page {0} - Section {1}"
+msgstr "Página {0} - Sección {1}"
+
 #. placeholder {0}: page.pageNumber
 #. placeholder {1}: i + 1
 msgid "Page {0} — Section {1}"
@@ -3781,6 +3860,9 @@ msgstr "Modo de Agrupación de Páginas"
 
 msgid "Page image"
 msgstr "Imagen de la página"
+
+msgid "Page image as background with positioned text overlay. Preserves the original page composition; ideal for illustrated storybooks."
+msgstr "Imagen de página como fondo con texto posicionado superpuesto. Preserva la composición original de la página; ideal para libros ilustrados."
 
 msgid "Page Mode"
 msgstr "Modo de Página"
@@ -3955,6 +4037,13 @@ msgstr "Portugués (BR)"
 msgid "Position"
 msgstr "Posición"
 
+#. placeholder {0}: Math.round(bounds.x)
+#. placeholder {1}: Math.round(bounds.y)
+#. placeholder {2}: Math.round(bounds.width)
+#. placeholder {3}: Math.round(bounds.height)
+msgid "Position {0}, {1} → {2}×{3} pt"
+msgstr "Posición {0}, {1} → {2}×{3} pt"
+
 msgid "Práticas de Alfabetização e de Matemática"
 msgstr "Prácticas de Alfabetización y Matemáticas"
 
@@ -4014,6 +4103,9 @@ msgstr "Nombre del Proyecto"
 
 msgid "Prompt"
 msgstr "Prompt"
+
+msgid "Prompt template"
+msgstr "Plantilla de prompt"
 
 msgid "Prompt template not found."
 msgstr "Prompt template not found."
@@ -4218,8 +4310,14 @@ msgstr "Refresh validation"
 msgid "Refreshing results for this packaged preview."
 msgstr "Refreshing results for this packaged preview."
 
+msgid "Regenerate"
+msgstr "Regenerar"
+
 msgid "Regenerate definition, variations, and emoji"
 msgstr "Regenerar definición, variaciones y emoji"
+
+msgid "Regenerate Easy Read"
+msgstr "Regenerar Lectura Fácil"
 
 msgid "Regenerate selected images for each output language so that any text burned into them is shown in the target language."
 msgstr "Regenera las imágenes seleccionadas para cada idioma de salida de modo que el texto incrustado en ellas aparezca en el idioma de destino."
@@ -4498,6 +4596,9 @@ msgstr "Ejecuta Storyboard para generar secciones a las que puedas asignar video
 msgid "Run the pipeline"
 msgstr "Ejecutar el pipeline"
 
+msgid "Run the pipeline to extract content"
+msgstr "Ejecuta la canalización para extraer contenido"
+
 msgid "Run TOC"
 msgstr "Ejecutar TOC"
 
@@ -4546,6 +4647,9 @@ msgstr "Guardar y reejecutar"
 msgid "Save & Rerun Captions"
 msgstr "Guardar y reejecutar leyendas"
 
+msgid "Save & Rerun Easy Read"
+msgstr "Guardar y reejecutar Lectura Fácil"
+
 msgid "Save & Rerun Extraction"
 msgstr "Guardar y reejecutar extracción"
 
@@ -4581,6 +4685,9 @@ msgstr "Save checklist"
 
 msgid "Save failed"
 msgstr "Save failed"
+
+msgid "Save or discard edits before regenerating"
+msgstr "Guarda o descarta los cambios antes de regenerar"
 
 msgid "Save page review"
 msgstr "Save page review"
@@ -5026,6 +5133,12 @@ msgstr "Voz"
 msgid "Speech Generation"
 msgstr "Generación de voz"
 
+msgid "Speech generation includes Easy Read audio. The ADT uses it while Easy Read mode is active."
+msgstr "La generación de voz incluye audio de Lectura Fácil. El ADT lo usa mientras el modo Lectura Fácil está activo."
+
+msgid "Speech generation uses original text only. Easy Read mode will fall back to original audio."
+msgstr "La generación de voz usa solo el texto original. El modo Lectura Fácil recurrirá al audio original."
+
 msgid "Speech narrates the translated text Language produces. Finish Language before running this stage."
 msgstr "La voz narra el texto traducido que produce Idioma. Termina Idioma antes de ejecutar esta etapa."
 
@@ -5052,6 +5165,12 @@ msgstr "Espolvoreando un poco de polvo mágico digital..."
 
 msgid "Standard"
 msgstr "Estándar"
+
+msgid "Standard e-book for readers & libraries"
+msgstr "Libro electrónico estándar para lectores y bibliotecas"
+
+msgid "Standard EPUB 3 file for e-readers, reading apps, and accessibility tools. Interactive features (quizzes, TTS) work in readers that support JavaScript."
+msgstr "Archivo EPUB 3 estándar para lectores electrónicos, aplicaciones de lectura y herramientas de accesibilidad. Las funciones interactivas (cuestionarios, TTS) funcionan en lectores que admiten JavaScript."
 
 msgid "Start"
 msgstr "Inicio"
@@ -5349,6 +5468,9 @@ msgstr "La plantilla de prompt usada para extraer metadatos del libro (título, 
 msgid "The prompt template used to generate captions for images in the book."
 msgstr "La plantilla de prompt usada para generar leyendas para imágenes del libro."
 
+msgid "The prompt template used to generate editable Easy Read text blocks."
+msgstr "La plantilla de prompt utilizada para generar bloques de texto editables de Lectura Fácil."
+
 msgid "The prompt template used to generate glossary terms from book content."
 msgstr "La plantilla de prompt usada para generar términos de glosario a partir del contenido del libro."
 
@@ -5422,11 +5544,17 @@ msgstr "Esto es <0>ADT Studio</0>."
 msgid "This is a preview of the options you have selected for your book, each option affects the preview in a different way."
 msgstr "Esta es una vista previa de las opciones que has seleccionado para tu libro, cada opción afecta la vista previa de una manera diferente."
 
+msgid "This is Pip! He has a wiggly tail."
+msgstr "¡Este es Pip! Tiene una cola que se mueve."
+
 msgid "This is Pip! He is a happy caramel dog with a very wiggly tail. Pip loves the green grass, the bright yellow sun, and making new friends in his garden."
 msgstr "¡Este es Pip! Es un perro caramelo feliz con una cola muy movida. A Pip le encanta el césped verde, el brillante sol amarillo y hacer nuevos amigos en su jardín."
 
 msgid "This page has no captioned images"
 msgstr "Esta página no tiene imágenes con leyendas"
+
+msgid "This page has no entries to synthesize"
+msgstr "Esta página no tiene entradas para sintetizar"
 
 msgid "This page has no sectioning output"
 msgstr "Esta página no tiene salida de seccionamiento"
@@ -5457,6 +5585,9 @@ msgstr "This session is using an older reviewer checklist snapshot. Newer checkl
 
 msgid "This text is only perceptible to assistive technologies."
 msgstr "Este texto solo es perceptible para tecnologías de asistencia."
+
+msgid "This will save your Easy Read settings and generate a new editable Easy Read version."
+msgstr "Esto guardará tu configuración de Lectura Fácil y generará una nueva versión editable de Lectura Fácil."
 
 msgid "This will save your settings and re-generate the table of contents."
 msgstr "Esto guardará tu configuración y volverá a generar la tabla de contenidos."
@@ -5975,6 +6106,9 @@ msgstr "Al describir imágenes, menciona cualquier objeto, ubicación o personaj
 
 msgid "When enabled, background colors from the styleguide are applied to the full page body."
 msgstr "Cuando está activado, los colores de fondo de la guía de estilo se aplican al cuerpo completo de la página."
+
+msgid "When enabled, speech generation also creates audio for Easy Read texts. The ADT uses that audio while Easy Read mode is active and falls back to the original audio when it is missing."
+msgstr "Cuando está habilitado, la generación de voz también crea audio para los textos de Lectura Fácil. El ADT usa ese audio mientras el modo Lectura Fácil está activo y recurre al audio original cuando falta."
 
 msgid "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."
 msgstr "Cuando está activado, las etiquetas de texto cercanas a imágenes vectoriales (p. ej. dimensiones de gráficos, globos de diálogo) se agrupan y extraen como recortes rasterizados. Desactive para extraer solo las formas vectoriales sin texto."

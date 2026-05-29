@@ -40,14 +40,14 @@ export type PageSectioningConfig = z.infer<typeof PageSectioningConfig>
 
 export const ImageTranslationConfig = StepConfig.extend({
   enabled: z.boolean().optional(),
-  /** Image model id (e.g. "openai:gpt-image-1.5"). When unset, the step is a no-op. */
+  /** Image model id (e.g. "openai:gpt-image-2"). When unset, the step is a no-op. */
   image_model: z.string().optional(),
   /** Image IDs the user has chosen to translate. Empty = no images regenerated. */
   selected_image_ids: z.array(z.string()).optional(),
 })
 export type ImageTranslationConfig = z.infer<typeof ImageTranslationConfig>
 
-export const BookFormat = z.enum(["web", "webpub"])
+export const BookFormat = z.enum(["web", "webpub", "epub"])
 export type BookFormat = z.infer<typeof BookFormat>
 
 export const LayoutType = z.enum(["textbook", "storybook", "reference", "custom"])
@@ -56,7 +56,7 @@ export type LayoutType = z.infer<typeof LayoutType>
 export const StyleguideName = z.string().regex(/^[a-zA-Z0-9_-]+$/)
 export type StyleguideName = z.infer<typeof StyleguideName>
 
-export const RenderType = z.enum(["llm", "template", "activity"])
+export const RenderType = z.enum(["llm", "template", "activity", "fixed_layout"])
 export type RenderType = z.infer<typeof RenderType>
 
 export const VisualRefinementStrategyConfig = z.object({
