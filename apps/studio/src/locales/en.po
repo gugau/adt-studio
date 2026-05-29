@@ -1544,6 +1544,9 @@ msgstr "Copy"
 msgid "Copy error details"
 msgstr "Copy error details"
 
+msgid "Copy error output"
+msgstr "Copy error output"
+
 msgid "Coral reefs cover less than 1% of the ocean floor, yet they support roughly 25% of all marine species. Often called the 'rainforests of the sea,' these underwater ecosystems are built by tiny animals called coral polyps."
 msgstr "Coral reefs cover less than 1% of the ocean floor, yet they support roughly 25% of all marine species. Often called the 'rainforests of the sea,' these underwater ecosystems are built by tiny animals called coral polyps."
 
@@ -2086,6 +2089,9 @@ msgstr "EPUB Export"
 
 msgid "Error"
 msgstr "Error"
+
+msgid "Error output"
+msgstr "Error output"
 
 msgid "Errors"
 msgstr "Errors"

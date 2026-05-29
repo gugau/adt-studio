@@ -1546,6 +1546,9 @@ msgstr "Copier"
 msgid "Copy error details"
 msgstr "Copier les détails de l'erreur"
 
+msgid "Copy error output"
+msgstr "Copier la sortie d'erreur"
+
 msgid "Coral reefs cover less than 1% of the ocean floor, yet they support roughly 25% of all marine species. Often called the 'rainforests of the sea,' these underwater ecosystems are built by tiny animals called coral polyps."
 msgstr "Les récifs coralliens couvrent moins de 1 % du fond océanique, mais ils abritent environ 25 % de toutes les espèces marines. Souvent appelés les « forêts tropicales de la mer », ces écosystèmes sous-marins sont construits par de minuscules animaux appelés polypes coralliens."
 
@@ -2088,6 +2091,9 @@ msgstr "Export EPUB"
 
 msgid "Error"
 msgstr "Erreur"
+
+msgid "Error output"
+msgstr "Sortie d'erreur"
 
 msgid "Errors"
 msgstr "Erreurs"

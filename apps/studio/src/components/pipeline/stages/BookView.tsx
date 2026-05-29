@@ -1,6 +1,7 @@
 import {
   Fragment,
   useCallback,
+  useState,
   type MouseEvent,
   type ReactNode,
 } from "react"
@@ -11,6 +12,7 @@ import {
   ArrowRight,
   Check,
   ChevronRight,
+  Copy,
   FileText,
   Loader2,
   Play,
@@ -65,7 +67,8 @@ const RECOMMENDED_STAGES = new Set<string>(["captions"])
 export function BookView({ bookLabel }: ViewProps) {
   const { t } = useLingui()
   const overviewSteps = getBookOverviewStages()
-  const { stageState, stepState, queueRun } = useBookRun()
+  const { stageState, stepState, stepError, error: runError, queueRun } =
+    useBookRun()
   const { apiKey, hasApiKey } = useApiKey()
   const { data: accessibilityAssessment } = useAccessibilityAssessment(bookLabel)
   const { data: signLanguageData } = useSignLanguageVideos(bookLabel)
@@ -149,6 +152,8 @@ export function BookView({ bookLabel }: ViewProps) {
       canRun: showRunButton && hasApiKey,
       recommended: RECOMMENDED_STAGES.has(step.slug),
       stepState,
+      stepError,
+      runError,
     }
   }
 
@@ -291,6 +296,8 @@ interface HomeStageCardProps {
   canRun: boolean
   recommended: boolean
   stepState: (key: string) => string
+  stepError: (key: string) => string | undefined
+  runError: string | null
 }
 
 function HomeStageCard({
@@ -305,6 +312,8 @@ function HomeStageCard({
   canRun,
   recommended,
   stepState,
+  stepError,
+  runError,
 }: HomeStageCardProps) {
   const navigate = useNavigate()
   const Icon = stage.icon
@@ -312,6 +321,17 @@ function HomeStageCard({
   const description = getStageDescriptionI18n(stage.slug)
   const stageLabel = getStageLabelI18n(stage.slug)
   const runningLabel = getStageRunningLabelI18n(stage.slug)
+
+  // Collect any failure output so it can be shown — and copied — directly on
+  // the card. Prefer per-step messages (which carry the actual console/stack
+  // output), falling back to the whole-run error.
+  const stepErrorLines = subSteps.flatMap((s) => {
+    const msg = stepError(s.key)
+    return msg ? [`${getStepLabelI18n(s.key)}: ${msg}`] : []
+  })
+  const errorText = stepErrorLines.length
+    ? stepErrorLines.join("\n\n")
+    : (runError ?? "")
 
   const handleCardClick = () => {
     navigate({
@@ -337,9 +357,13 @@ function HomeStageCard({
         }
       }}
       className={cn(
-        "group relative flex cursor-pointer items-start gap-5 overflow-hidden rounded-2xl border bg-card p-5 text-left transition-all",
+        "group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border bg-card text-left transition-all",
         "hover:border-foreground/15 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        isCompleted ? "border-border" : "border-border/70",
+        hasError
+          ? "border-destructive/40"
+          : isCompleted
+            ? "border-border"
+            : "border-border/70",
       )}
     >
       {/* Accent bar */}
@@ -348,73 +372,131 @@ function HomeStageCard({
         className={cn("absolute inset-y-0 left-0 w-1", stage.color)}
       />
 
-      {/* Icon squircle */}
-      <div
-        className={cn(
-          "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl shadow-sm",
-          stage.color,
-        )}
-      >
-        <Icon className="h-6 w-6 text-white" strokeWidth={2} />
-      </div>
+      {/* Main row */}
+      <div className="flex items-start gap-5 p-5">
+        {/* Icon squircle */}
+        <div
+          className={cn(
+            "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl shadow-sm",
+            stage.color,
+          )}
+        >
+          <Icon className="h-6 w-6 text-white" strokeWidth={2} />
+        </div>
 
-      {/* Main content */}
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-lg font-bold leading-tight tracking-tight text-foreground">
-            {isRunning ? runningLabel : stageLabel}
-          </h3>
-          <StageStatusBadge
-            isCompleted={isCompleted}
-            isRunning={isRunning}
-            hasError={hasError}
-            canRun={canRun}
-          />
-          {recommended && (
-            <Badge className="border-transparent bg-amber-100 text-[10px] uppercase tracking-wider text-amber-900 hover:bg-amber-100">
-              <Trans>Recommended</Trans>
-            </Badge>
+        {/* Main content */}
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-lg font-bold leading-tight tracking-tight text-foreground">
+              {isRunning ? runningLabel : stageLabel}
+            </h3>
+            <StageStatusBadge
+              isCompleted={isCompleted}
+              isRunning={isRunning}
+              hasError={hasError}
+              canRun={canRun}
+            />
+            {recommended && (
+              <Badge className="border-transparent bg-amber-100 text-[10px] uppercase tracking-wider text-amber-900 hover:bg-amber-100">
+                <Trans>Recommended</Trans>
+              </Badge>
+            )}
+          </div>
+
+          {description && (
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {description}
+            </p>
+          )}
+
+          {subSteps.length > 0 && (
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {subSteps.map((subStep) => (
+                <SubStepPill
+                  key={subStep.key}
+                  stepKey={subStep.key}
+                  state={stepState(subStep.key)}
+                />
+              ))}
+            </div>
           )}
         </div>
 
-        {description && (
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            {description}
-          </p>
-        )}
-
-        {subSteps.length > 0 && (
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            {subSteps.map((subStep) => (
-              <SubStepPill
-                key={subStep.key}
-                stepKey={subStep.key}
-                state={stepState(subStep.key)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Right controls */}
-      <div className="flex shrink-0 items-center gap-2 self-center">
-        {showRunButton && (
-          <RunButton
-            isRunning={isRunning}
-            isCompleted={isCompleted}
-            hasError={hasError}
-            color={stage.color}
-            disabled={runDisabled}
-            stageLabel={stageLabel}
-            onClick={handleRunClick}
+        {/* Right controls */}
+        <div className="flex shrink-0 items-center gap-2 self-center">
+          {showRunButton && (
+            <RunButton
+              isRunning={isRunning}
+              isCompleted={isCompleted}
+              hasError={hasError}
+              color={stage.color}
+              disabled={runDisabled}
+              stageLabel={stageLabel}
+              onClick={handleRunClick}
+            />
+          )}
+          <ChevronRight
+            aria-hidden
+            className="h-5 w-5 text-muted-foreground/40 transition-colors group-hover:text-foreground/70"
           />
-        )}
-        <ChevronRight
-          aria-hidden
-          className="h-5 w-5 text-muted-foreground/40 transition-colors group-hover:text-foreground/70"
-        />
+        </div>
       </div>
 
+      {/* Error output — full width, copyable */}
+      {hasError && errorText && <StageErrorOutput errorText={errorText} />}
+    </div>
+  )
+}
+
+function StageErrorOutput({ errorText }: { errorText: string }) {
+  const { t } = useLingui()
+  const [copied, setCopied] = useState(false)
+
+  const stop = (e: MouseEvent) => e.stopPropagation()
+
+  const handleCopy = async (e: MouseEvent) => {
+    e.stopPropagation()
+    try {
+      await navigator.clipboard.writeText(errorText)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1500)
+    } catch (err) {
+      console.error("Failed to copy error output", err)
+    }
+  }
+
+  return (
+    <div
+      // Clicking inside the error panel shouldn't navigate to the stage.
+      onClick={stop}
+      className="mx-5 mb-5 rounded-lg border border-destructive/30 bg-destructive/5"
+    >
+      <div className="flex items-center justify-between gap-2 border-b border-destructive/20 px-3 py-1.5">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-destructive">
+          <Trans>Error output</Trans>
+        </span>
+        <button
+          type="button"
+          onClick={handleCopy}
+          aria-label={t`Copy error output`}
+          className="inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-medium text-destructive transition-colors hover:bg-destructive/10"
+        >
+          {copied ? (
+            <>
+              <Check className="h-3 w-3" />
+              <Trans>Copied</Trans>
+            </>
+          ) : (
+            <>
+              <Copy className="h-3 w-3" />
+              <Trans>Copy</Trans>
+            </>
+          )}
+        </button>
+      </div>
+      <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words px-3 py-2 font-mono text-[11px] leading-relaxed text-destructive/90">
+        {errorText}
+      </pre>
     </div>
   )
 }
