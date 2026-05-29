@@ -20,6 +20,7 @@ import {
 import { Trans, useLingui } from "@lingui/react/macro"
 import { type StageName } from "@adt/types"
 import {
+  STAGES,
   getBookOverviewStages,
   isPipelineStage,
   type NonBookStageDefinition,
@@ -595,7 +596,7 @@ function EnrichmentSection({
       <div className="overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-indigo-50/40 via-violet-50/30 to-white p-6">
         <div className="mb-5 flex flex-col gap-1">
           <h2 className="text-2xl font-bold tracking-tight text-foreground">
-            <Trans>Parallel enrichment</Trans>
+            <Trans>Enhancements</Trans>
           </h2>
           <p className="text-sm leading-relaxed text-muted-foreground">
             <Trans>
@@ -635,51 +636,55 @@ function InstructionCallout({
   bookLabel: string
   toStep: string
 }) {
+  // Match the action button to the destination stage's accent color so the
+  // visual link between the callout and the target card is obvious.
+  const destStage = STAGES.find((s) => s.slug === toStep)
+  const buttonColor = destStage?.color ?? "bg-foreground"
+
   const styles =
     variant === "info"
       ? {
-          wrap: "border-emerald-200 bg-emerald-50/60",
+          wrap: "border-emerald-200/70 bg-emerald-50/50",
           iconWrap: "bg-emerald-100 text-emerald-700",
-          button: "bg-emerald-600 hover:bg-emerald-700 text-white",
         }
       : {
-          wrap: "border-amber-200 bg-amber-50/60",
-          iconWrap: "bg-amber-100 text-amber-700",
-          button: "bg-amber-600 hover:bg-amber-700 text-white",
+          // Softer, more advisory than alarming.
+          wrap: "border-amber-200/60 bg-amber-50/40",
+          iconWrap: "bg-amber-100/70 text-amber-700",
         }
 
   return (
     <div
       className={cn(
-        "flex items-start gap-4 rounded-2xl border px-5 py-4",
+        "flex items-start gap-3 rounded-2xl border px-4 py-3",
         styles.wrap,
       )}
     >
       <div
         className={cn(
-          "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
           styles.iconWrap,
         )}
       >
-        <Icon className="h-[18px] w-[18px]" strokeWidth={2.25} />
+        <Icon className="h-4 w-4" strokeWidth={2.25} />
       </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <h3 className="text-sm font-semibold leading-tight text-foreground">
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <h3 className="text-[13px] font-semibold leading-tight text-foreground">
           {title}
         </h3>
-        <p className="text-[13px] leading-relaxed text-muted-foreground">
+        <p className="text-[12.5px] leading-relaxed text-muted-foreground">
           {body}
         </p>
         <Link
           to="/books/$label/$step"
           params={{ label: bookLabel, step: toStep }}
           className={cn(
-            "mt-1 inline-flex w-fit items-center gap-1 rounded-md px-3 py-1.5 text-sm font-semibold transition-colors",
-            styles.button,
+            "mt-1 inline-flex w-fit items-center gap-1 rounded-md px-3 py-1.5 text-[13px] font-semibold text-white shadow-sm transition-colors hover:opacity-90",
+            buttonColor,
           )}
         >
           {actionLabel}
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-3.5 w-3.5" />
         </Link>
       </div>
     </div>
