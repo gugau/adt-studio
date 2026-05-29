@@ -40,6 +40,7 @@ import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { useAccessibilityAssessment } from "@/hooks/use-debug"
 import { useBook, usePackageAdtStatus } from "@/hooks/use-books"
+import { getSourcePdfUrl } from "@/api/client"
 import { useBookTasks } from "@/hooks/use-book-tasks"
 import { usePages, usePageImage } from "@/hooks/use-pages"
 import { useSignLanguageVideos } from "@/hooks/use-sign-language-videos"
@@ -753,6 +754,7 @@ function InstructionCallout({
 // ---------------------------------------------------------------------------
 
 function SourcePdfCard({ bookLabel }: { bookLabel: string }) {
+  const { t } = useLingui()
   const { data: book } = useBook(bookLabel)
   const { data: pages } = usePages(bookLabel)
   const firstPageId = pages?.[0]?.pageId
@@ -768,9 +770,12 @@ function SourcePdfCard({ bookLabel }: { bookLabel: string }) {
   const imgSrc = pageImage?.imageBase64
     ? `data:image/png;base64,${pageImage.imageBase64}`
     : null
+  // Only offer to open the PDF once we know the book has a source PDF on disk.
+  const canOpenPdf = book?.hasSourcePdf ?? false
+  const pdfUrl = getSourcePdfUrl(bookLabel)
 
-  return (
-    <div className="flex items-center gap-4 rounded-2xl border border-border bg-card px-5 py-4 shadow-sm">
+  const content = (
+    <>
       <div className="flex h-[72px] w-14 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted ring-1 ring-border">
         {imgSrc ? (
           <img
@@ -806,10 +811,37 @@ function SourcePdfCard({ bookLabel }: { bookLabel: string }) {
           ) : null}
         </p>
       </div>
-      <div className="hidden shrink-0 text-muted-foreground/40 sm:block">
-        <ArrowRight className="h-5 w-5" strokeWidth={2} />
-      </div>
-    </div>
+      {canOpenPdf && (
+        <div className="hidden shrink-0 flex-col items-center gap-0.5 text-muted-foreground/50 transition-colors group-hover:text-foreground/70 sm:flex">
+          <ArrowRight className="h-5 w-5" strokeWidth={2} />
+          <span className="text-[9px] font-semibold uppercase tracking-[0.16em]">
+            <Trans>Open</Trans>
+          </span>
+        </div>
+      )}
+    </>
+  )
+
+  const baseClassName =
+    "flex items-center gap-4 rounded-2xl border border-border bg-card px-5 py-4 shadow-sm"
+
+  if (!canOpenPdf) {
+    return <div className={baseClassName}>{content}</div>
+  }
+
+  return (
+    <a
+      href={pdfUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={t`Open source PDF in a new tab`}
+      className={cn(
+        baseClassName,
+        "group cursor-pointer transition-all hover:border-foreground/15 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+      )}
+    >
+      {content}
+    </a>
   )
 }
 

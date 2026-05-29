@@ -48,6 +48,10 @@ export function getSignLanguageVideoUrl(label: string, videoId: string): string 
   return `${BASE_URL}/books/${label}/sign-language-videos/${videoId}`
 }
 
+export function getSourcePdfUrl(label: string): string {
+  return `${BASE_URL}/books/${label}/source-pdf`
+}
+
 export function getBookCoverUrl(label: string, cacheKey?: string): string {
   const base = `${BASE_URL}/books/${label}/cover`
   if (!cacheKey) return base

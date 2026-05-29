@@ -3629,6 +3629,9 @@ msgstr "Apenas arquivos ZIP são suportados"
 msgid "Opacity"
 msgstr "Opacidade"
 
+msgid "Open"
+msgstr "Abrir"
+
 msgid "Open a page in Preview to show its page-specific accessibility findings here."
 msgstr "Open a page in Preview to show its page-specific accessibility findings here."
 
@@ -3652,6 +3655,9 @@ msgstr "Abrir pré-visualização da página {0}"
 
 msgid "Open Preview"
 msgstr "Open Preview"
+
+msgid "Open source PDF in a new tab"
+msgstr "Abrir o PDF de origem em uma nova aba"
 
 msgid "Open Validation"
 msgstr "Open Validation"
