@@ -67,17 +67,6 @@ msgstr "(modèle)"
 msgid "{0} — type country or Enter for base"
 msgstr "{0} — tapez un pays ou Entrée pour base"
 
-#. placeholder {0}: finding.count
-#. placeholder {1}: finding.count === 1 ? "issue" : "issues"
-#. placeholder {1}: finding.count === 1 ? "manual review item" : "manual review items"
-msgid "{0} {1}"
-msgstr "{0} {1}"
-
-#. placeholder {0}: activeMetrics.pagesReviewed
-#. placeholder {1}: activeMetrics.pagesReviewed === 1 ? "page" : "pages"
-msgid "{0} {1} reviewed so far"
-msgstr "{0} {1} révisé(s) jusqu'à présent"
-
 #. placeholder {0}: bbox.w
 #. placeholder {1}: bbox.h
 #. placeholder {2}: points.length
@@ -145,6 +134,10 @@ msgstr "{0} sur {1} éléments"
 msgid "{0} pages"
 msgstr "{0} pages"
 
+#. placeholder {0}: section.criteria.length - reviewed
+msgid "{0} pending"
+msgstr "{0} en attente"
+
 #. placeholder {0}: String(displayQuizzes.length)
 msgid "{0} questions"
 msgstr "{0} questions"
@@ -194,6 +187,12 @@ msgstr "il y a {0} min"
 #. placeholder {0}: String(Math.floor(diff / 1000))
 msgid "{0}s ago"
 msgstr "il y a {0} s"
+
+msgid "{count} {count, plural, one {issue} other {issues}}"
+msgstr "{count} {count, plural, one {problème} other {problèmes}}"
+
+msgid "{count} {count, plural, one {manual review item} other {manual review items}}"
+msgstr "{count} {count, plural, one {élément de révision manuelle} other {éléments de révision manuelle}}"
 
 msgid "{count} translations"
 msgstr "{count} traductions"
@@ -248,11 +247,17 @@ msgstr "{missingForCurrentStage} entrée(s) sans audio. Relancez pour générer 
 msgid "{missingForCurrentStage} entry/entries are missing translations. Re-run to fill the missing items."
 msgstr "{missingForCurrentStage} entrée(s) sans traduction. Relancez pour compléter les éléments manquants."
 
+msgid "{needsChanges} flagged"
+msgstr "{needsChanges} signalés"
+
 msgid "{pageCount} {pageCount, plural, one {page} other {pages}}"
 msgstr "{pageCount} {pageCount, plural, one {page} other {pages}}"
 
 msgid "{pageCount} pages"
 msgstr "{pageCount} pages"
+
+msgid "{pagesReviewed} {pagesReviewed, plural, one {page} other {pages}} reviewed so far"
+msgstr "{pagesReviewed} {pagesReviewed, plural, one {page} other {pages}} révisées jusqu'à présent"
 
 msgid "{regionCount} {regionCount, plural, one {region} other {regions}} detected"
 msgstr "{regionCount} {regionCount, plural, one {region} other {regions}} détectée(s)"
@@ -627,9 +632,6 @@ msgstr "Ajouter un livre"
 
 msgid "Add checklist item to this section"
 msgstr "Ajouter un élément de liste de contrôle à cette section"
-
-#~ msgid "Add class"
-#~ msgstr "Ajouter une classe"
 
 msgid "Add custom instructions"
 msgstr "Ajouter des instructions personnalisées"
@@ -1654,9 +1656,6 @@ msgstr "Démo de mise en page personnalisée"
 msgid "Custom section {index}"
 msgstr "Section personnalisée {index}"
 
-#~ msgid "Custom:"
-#~ msgstr "Personnalisé:"
-
 msgid "Debug mode is not enabled."
 msgstr "Le mode débogage n'est pas activé."
 
@@ -2067,9 +2066,6 @@ msgstr "Saisissez une dimension minimale valide (nombre entier ≥ 0)"
 
 msgid "Enter a valid project name"
 msgstr "Saisissez un nom de projet valide"
-
-#~ msgid "Enter hex color and press Enter"
-#~ msgstr "Saisissez une couleur hexadécimale et appuyez sur Entrée"
 
 msgid "EPUB"
 msgstr "EPUB"
@@ -3430,9 +3426,6 @@ msgstr "Aucun lien"
 msgid "No log entries found yet."
 msgstr "Aucune entrée de journal trouvée."
 
-#~ msgid "No matches"
-#~ msgstr "Aucune correspondance"
-
 msgid "No matches for \"{search}\""
 msgstr "Aucun résultat pour \\\"{search}\\\""
 
@@ -4015,9 +4008,6 @@ msgstr "Preset"
 msgid "Presets add recommendations and specific settings for your use case. You still choose each option step by step, and you can go back to select a different preset at any time."
 msgstr "Les préréglages ajoutent des recommandations et des paramètres spécifiques à votre cas d'utilisation. Vous choisissez toujours chaque option étape par étape, et vous pouvez revenir à tout moment pour sélectionner un autre préréglage."
 
-#~ msgid "Press Enter to add"
-#~ msgstr "Appuyez sur Entrée pour ajouter"
-
 msgid "Prev"
 msgstr "Préc."
 
@@ -4334,9 +4324,6 @@ msgstr "Raisonnement de rendu"
 msgid "Render Strategy"
 msgstr "Stratégie de rendu"
 
-#~ msgid "rendering"
-#~ msgstr "rendu"
-
 msgid "Rendering Prompt"
 msgstr "Rendering Invite"
 
@@ -4384,9 +4371,6 @@ msgstr "Réinitialiser aux valeurs par défaut héritées"
 
 msgid "Resolving source language..."
 msgstr "Résolution de la langue source..."
-
-#~ msgid "Responsive / State variants"
-#~ msgstr "Variantes responsives / d'état"
 
 msgid "Restart and install"
 msgstr "Redémarrer et installer"
@@ -5698,9 +5682,6 @@ msgstr "Modèle à deux colonnes pour le contenu narratif"
 msgid "Type"
 msgstr "Type"
 
-#~ msgid "Type class name or search..."
-#~ msgstr "Tapez un nom de classe ou recherchez..."
-
 msgid "Typed Sections"
 msgstr "Sections tapées"
 
@@ -5760,9 +5741,6 @@ msgstr "Restaurer l'image"
 
 msgid "Unsaved changes"
 msgstr "Modifications non enregistrées"
-
-#~ msgid "Unsaved:"
-#~ msgstr "Non enregistré :"
 
 msgid "Untangling nested divs with care..."
 msgstr "Démêlage des divs imbriqués avec soin..."
@@ -5881,9 +5859,6 @@ msgstr "Validation Erreurs ({0})"
 
 msgid "Variables"
 msgstr "Variables"
-
-#~ msgid "Variant:"
-#~ msgstr "Variant:"
 
 msgid "Variations"
 msgstr "Variantes"
