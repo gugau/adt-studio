@@ -11,8 +11,46 @@ import { createBookStorage } from "@adt/storage"
 import type { Storage } from "@adt/storage"
 import { reRenderPage, aiEditSection } from "../services/page-edit-service.js"
 import type { TaskService } from "../services/task-service.js"
-import { segmentPageImages, getSegmentedImageId, loadBookConfig, applyCrop, generateStyleguide, buildStyleguideGenerationConfig } from "@adt/pipeline"
+import {
+  segmentPageImages,
+  getSegmentedImageId,
+  loadBookConfig,
+  applyCrop,
+  generateStyleguide,
+  buildStyleguideGenerationConfig,
+  buildScreenshotHtml,
+  createScreenshotRenderer,
+  SCREENSHOT_VIEWPORTS,
+  type ScreenshotRenderer,
+} from "@adt/pipeline"
 import { createLLMModel, createPromptEngine, renderLiquidTemplate, generateImageWithCache } from "@adt/llm"
+
+/**
+ * Lazily-initialized shared Playwright renderer for section screenshots.
+ * Launching Chromium is slow (~500ms-1s) so we keep one instance alive for
+ * the API process lifetime. Concurrent requests share the same browser; each
+ * screenshot call opens its own browser context inside it.
+ */
+let sharedScreenshotRendererPromise: Promise<ScreenshotRenderer> | null = null
+function getSharedScreenshotRenderer(): Promise<ScreenshotRenderer> {
+  if (!sharedScreenshotRendererPromise) {
+    sharedScreenshotRendererPromise = createScreenshotRenderer().catch((err) => {
+      // Reset on failure so the next request can retry.
+      sharedScreenshotRendererPromise = null
+      throw err
+    })
+  }
+  return sharedScreenshotRendererPromise
+}
+
+interface PageSummarySection {
+  sectionId: string
+  sectionIndex: number
+  sectionType: string
+  isActivity: boolean
+  isPruned: boolean
+  textPreview: string
+}
 
 interface PageSummary {
   pageId: string
@@ -24,7 +62,9 @@ interface PageSummary {
   wordCount: number
   sectionCount: number
   prunedSections: number[]
-  sections: Array<{ sectionId: string; sectionIndex: number }>
+  renderingVersion: number | null
+  sectioningVersion: number | null
+  sections: PageSummarySection[]
 }
 
 interface PageDetail {
@@ -408,14 +448,36 @@ export function createPageRoutes(
         "SELECT page_id, page_number, text FROM pages ORDER BY page_number"
       ) as Array<{ page_id: string; page_number: number; text: string }>
 
-      // Check which pages have web-rendering output
+      // Check which pages have web-rendering output, and load latest rendering
+      // per page so we can compute per-section activity flags.
       const rendered = new Set<string>()
+      const renderingByPage = new Map<string, { version: number; activityBySectionIndex: Map<number, boolean> }>()
       const renderRows = db.all(
-        "SELECT DISTINCT item_id FROM node_data WHERE node = ?",
+        "SELECT item_id, version, data FROM node_data WHERE node = ? ORDER BY version DESC",
         ["web-rendering"]
-      ) as Array<{ item_id: string }>
+      ) as Array<{ item_id: string; version: number; data: string }>
       for (const row of renderRows) {
         rendered.add(row.item_id)
+        if (renderingByPage.has(row.item_id)) continue
+        try {
+          const parsed = JSON.parse(row.data) as {
+            sections?: Array<{
+              sectionIndex: number
+              activityReasoning?: string
+              activityAnswers?: Record<string, unknown>
+            }>
+          }
+          const activityBySectionIndex = new Map<number, boolean>()
+          for (const s of parsed.sections ?? []) {
+            const hasActivity =
+              (typeof s.activityReasoning === "string" && s.activityReasoning.length > 0) ||
+              (s.activityAnswers != null && Object.keys(s.activityAnswers).length > 0)
+            if (hasActivity) activityBySectionIndex.set(s.sectionIndex, true)
+          }
+          renderingByPage.set(row.item_id, { version: row.version, activityBySectionIndex })
+        } catch {
+          // Ignore malformed rendering rows — page still flagged as rendered.
+        }
       }
 
       // Check which pages have image-captioning output
@@ -451,50 +513,76 @@ export function createPageRoutes(
       // Get section counts, pruned indices, sectionIds, and flattened text per page from page-sectioning node data
       const sectionCounts = new Map<string, number>()
       const prunedSections = new Map<string, number[]>()
-      const sectionIdsByPage = new Map<string, Array<{ sectionId: string; sectionIndex: number }>>()
+      const sectionsByPage = new Map<string, PageSummarySection[]>()
+      const sectioningVersions = new Map<string, number>()
       const structuredText = new Map<string, string>()
       const structuringRows = db.all(
-        "SELECT item_id, data FROM node_data WHERE node = ? ORDER BY version DESC",
+        "SELECT item_id, version, data FROM node_data WHERE node = ? ORDER BY version DESC",
         ["page-sectioning"]
-      ) as Array<{ item_id: string; data: string }>
+      ) as Array<{ item_id: string; version: number; data: string }>
       for (const row of structuringRows) {
-        if (!sectionCounts.has(row.item_id)) {
-          try {
-            const parsed = JSON.parse(row.data)
-            const sections = parsed.sections as Array<{
-              sectionId?: string
-              isPruned?: boolean
-              nodes?: unknown[]
-            }>
-            sectionCounts.set(row.item_id, sections?.length ?? 0)
-            const pruned = (sections ?? []).reduce<number[]>((acc, s, i) => {
-              if (s.isPruned) acc.push(i)
-              return acc
-            }, [])
-            if (pruned.length > 0) prunedSections.set(row.item_id, pruned)
-            const sectionIds = (sections ?? [])
-              .map((s, i) => ({ sectionId: s.sectionId ?? `${row.item_id}_sec${String(i + 1).padStart(3, "0")}`, sectionIndex: i, isPruned: s.isPruned }))
-              .filter((s) => !s.isPruned)
-              .map(({ sectionId, sectionIndex }) => ({ sectionId, sectionIndex }))
-            sectionIdsByPage.set(row.item_id, sectionIds)
+        if (sectionCounts.has(row.item_id)) continue
+        sectioningVersions.set(row.item_id, row.version)
+        try {
+          const parsed = JSON.parse(row.data)
+          const rawSections = parsed.sections as Array<{
+            sectionId?: string
+            sectionType?: string
+            isPruned?: boolean
+            nodes?: unknown[]
+          }>
+          sectionCounts.set(row.item_id, rawSections?.length ?? 0)
+          const pruned = (rawSections ?? []).reduce<number[]>((acc, s, i) => {
+            if (s.isPruned) acc.push(i)
+            return acc
+          }, [])
+          if (pruned.length > 0) prunedSections.set(row.item_id, pruned)
 
-            // Flatten tree to plain-text preview (skip pruned sections + pruned leaves)
+          const activityMap = renderingByPage.get(row.item_id)?.activityBySectionIndex
+
+          // Walk a content tree, collecting visible text. Used both for the
+          // whole-page preview and the per-section preview.
+          const collectText = (
+            nodes: unknown[] | undefined,
+            { skipPruned }: { skipPruned: boolean }
+          ): string => {
             const parts: string[] = []
             const walk = (node: { isPruned?: boolean; text?: string; children?: unknown[] }): void => {
-              if (node.isPruned) return
+              if (skipPruned && node.isPruned) return
               if (typeof node.text === "string" && node.text.length > 0) parts.push(node.text)
               if (Array.isArray(node.children)) {
                 for (const c of node.children) walk(c as typeof node)
               }
             }
-            for (const section of sections ?? []) {
-              if (section.isPruned) continue
-              for (const n of section.nodes ?? []) walk(n as { isPruned?: boolean; text?: string; children?: unknown[] })
-            }
-            structuredText.set(row.item_id, parts.join("\n"))
-          } catch {
-            sectionCounts.set(row.item_id, 0)
+            for (const n of nodes ?? []) walk(n as { isPruned?: boolean; text?: string; children?: unknown[] })
+            return parts.join("\n")
           }
+
+          const sectionEntries: PageSummarySection[] = (rawSections ?? []).map((s, i) => {
+            const sectionId = s.sectionId ?? `${row.item_id}_sec${String(i + 1).padStart(3, "0")}`
+            // Pruned sections keep their own text in the per-section preview so
+            // they can be displayed in the storyboard sidebar even when grayed out.
+            const sectionText = collectText(s.nodes, { skipPruned: false })
+            return {
+              sectionId,
+              sectionIndex: i,
+              sectionType: s.sectionType ?? "",
+              isActivity: activityMap?.get(i) === true,
+              isPruned: !!s.isPruned,
+              textPreview: sectionText.slice(0, 200),
+            }
+          })
+          sectionsByPage.set(row.item_id, sectionEntries)
+
+          // Page-level preview ignores pruned sections + pruned leaves.
+          const pageParts: string[] = []
+          for (const section of rawSections ?? []) {
+            if (section.isPruned) continue
+            pageParts.push(collectText(section.nodes, { skipPruned: true }))
+          }
+          structuredText.set(row.item_id, pageParts.join("\n"))
+        } catch {
+          sectionCounts.set(row.item_id, 0)
         }
       }
 
@@ -508,7 +596,9 @@ export function createPageRoutes(
         wordCount: p.text.trim() ? p.text.trim().split(/\s+/).length : 0,
         sectionCount: sectionCounts.get(p.page_id) ?? 0,
         prunedSections: prunedSections.get(p.page_id) ?? [],
-        sections: sectionIdsByPage.get(p.page_id) ?? [],
+        renderingVersion: renderingByPage.get(p.page_id)?.version ?? null,
+        sectioningVersion: sectioningVersions.get(p.page_id) ?? null,
+        sections: sectionsByPage.get(p.page_id) ?? [],
       }))
 
       return c.json(result)
@@ -635,6 +725,111 @@ export function createPageRoutes(
       db.close()
     }
   })
+
+  // GET /books/:label/pages/:pageId/sections/:sectionIndex/screenshot — Rendered section as PNG
+  // Lazily generates a Playwright screenshot of the section's rendered HTML and
+  // caches it on disk keyed by HTML hash + viewport, so subsequent requests are
+  // fast and the cache invalidates automatically when rendering changes.
+  app.get(
+    "/books/:label/pages/:pageId/sections/:sectionIndex/screenshot",
+    async (c) => {
+      const { label, pageId, sectionIndex } = c.req.param()
+      const safeLabel = parseBookLabel(label)
+      const idx = parseInt(sectionIndex, 10)
+      if (isNaN(idx) || idx < 0) {
+        throw new HTTPException(400, { message: "Invalid section index" })
+      }
+      const viewportLabel = c.req.query("viewport") ?? "desktop"
+      const viewport = SCREENSHOT_VIEWPORTS.find((v) => v.label === viewportLabel)
+      if (!viewport) {
+        throw new HTTPException(400, { message: `Unknown viewport: ${viewportLabel}` })
+      }
+
+      const resolvedDir = path.resolve(booksDir)
+      const bookDir = path.join(resolvedDir, safeLabel)
+      const dbPath = path.join(bookDir, `${safeLabel}.db`)
+      if (!fs.existsSync(dbPath)) {
+        throw new HTTPException(404, { message: `Book not found: ${safeLabel}` })
+      }
+
+      // Look up the section's rendered HTML.
+      const db = openBookDb(dbPath)
+      let sectionHtml: string
+      try {
+        const rows = db.all(
+          "SELECT data FROM node_data WHERE node = ? AND item_id = ? ORDER BY version DESC LIMIT 1",
+          ["web-rendering", pageId]
+        ) as Array<{ data: string }>
+        if (rows.length === 0) {
+          throw new HTTPException(404, { message: `No rendering for page: ${pageId}` })
+        }
+        const parsed = WebRenderingOutput.safeParse(JSON.parse(rows[0].data))
+        if (!parsed.success) {
+          throw new HTTPException(500, { message: `Rendering data malformed for ${pageId}` })
+        }
+        const section = parsed.data.sections.find((s) => s.sectionIndex === idx)
+        if (!section) {
+          throw new HTTPException(404, { message: `Section ${idx} has no rendering` })
+        }
+        sectionHtml = section.html
+      } finally {
+        db.close()
+      }
+
+      // Resolve images referenced by the section HTML so screenshots show real pixels.
+      const referencedImageIds = new Set<string>()
+      const imgDataIdRegex = /<img\s[^>]*data-id="([^"]+)"/g
+      let m: RegExpExecArray | null
+      while ((m = imgDataIdRegex.exec(sectionHtml)) !== null) {
+        referencedImageIds.add(m[1])
+      }
+      const storage = createBookStorage(safeLabel, booksDir)
+      const images = new Map<string, { base64: string }>()
+      try {
+        for (const id of referencedImageIds) {
+          try {
+            images.set(id, { base64: storage.getImageBase64(id) })
+          } catch {
+            // Image missing — screenshot will show a broken image.
+          }
+        }
+      } finally {
+        storage.close()
+      }
+
+      const screenshotHtml = await buildScreenshotHtml({
+        sectionHtml,
+        label: safeLabel,
+        images,
+        webAssetsDir,
+      })
+
+      // Cache key incorporates HTML + viewport so cache invalidates whenever
+      // either changes. Stored under .section-renders/ inside the book dir.
+      const cacheDir = path.join(bookDir, ".section-renders")
+      fs.mkdirSync(cacheDir, { recursive: true })
+      const hash = crypto
+        .createHash("sha256")
+        .update(`${viewport.label}:${viewport.width}x${viewport.height}\n${screenshotHtml}`)
+        .digest("hex")
+        .slice(0, 16)
+      const cachePath = path.join(cacheDir, `${hash}.png`)
+
+      if (!fs.existsSync(cachePath)) {
+        const renderer = await getSharedScreenshotRenderer()
+        const base64 = await renderer.screenshot(screenshotHtml, {
+          width: viewport.width,
+          height: viewport.height,
+        })
+        fs.writeFileSync(cachePath, Buffer.from(base64, "base64"))
+      }
+
+      const buffer = fs.readFileSync(cachePath)
+      c.header("Cache-Control", "private, max-age=300")
+      c.header("Content-Type", "image/png")
+      return c.body(buffer)
+    }
+  )
 
   // PUT /books/:label/pages/:pageId/sectioning — Update sectioning with canonical tree data
   app.put("/books/:label/pages/:pageId/sectioning", async (c) => {

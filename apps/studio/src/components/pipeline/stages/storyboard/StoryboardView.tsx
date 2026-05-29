@@ -6,6 +6,7 @@ import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
 import { StoryboardSectionDetail } from "./components/StoryboardSectionDetail"
+import { StoryboardQuizDetail } from "./components/StoryboardQuizDetail"
 import { SectioningOverview } from "./components/SectioningOverview"
 import { useSectionNav } from "@/routes/books.$label"
 import { Trans } from "@lingui/react/macro"
@@ -44,6 +45,13 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
   const isGeneratingRef = useRef(false)
   const handleGeneratingChange = useCallback((g: boolean) => { isGeneratingRef.current = g }, [])
 
+  // Quizzes appear in the sidebar with a synthetic pageId of `quiz-{index}`.
+  // When that pageId is in the URL we render the quiz panel instead of loading
+  // page detail — calling usePage with a fake id would 404.
+  const quizMatch = selectedPageIdProp?.match(/^quiz-(\d+)$/)
+  const selectedQuizIndex = quizMatch ? parseInt(quizMatch[1], 10) : null
+  const isQuizRoute = selectedQuizIndex != null
+
   // Auto-select first page when no page is selected
   useEffect(() => {
     if (showRunCard) return
@@ -53,12 +61,18 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
   }, [selectedPageIdProp, pageList.length, showRunCard, setSelectedPageId])
 
   const selectedPageId = selectedPageIdProp ?? null
-  const currentPageIndex = selectedPageId ? pageList.findIndex((p) => p.pageId === selectedPageId) : -1
+  const currentPageIndex =
+    selectedPageId && !isQuizRoute
+      ? pageList.findIndex((p) => p.pageId === selectedPageId)
+      : -1
   const selectedPageSummary = currentPageIndex >= 0 ? pageList[currentPageIndex] : null
   const prevPageId = currentPageIndex > 0 ? pageList[currentPageIndex - 1].pageId : null
   const nextPageId = currentPageIndex < pageList.length - 1 ? pageList[currentPageIndex + 1].pageId : null
 
-  const { data: page, isLoading: pageLoading } = usePage(bookLabel, selectedPageId ?? "")
+  const { data: page, isLoading: pageLoading } = usePage(
+    bookLabel,
+    !isQuizRoute && selectedPageId ? selectedPageId : "",
+  )
 
   const sectionCount = page?.sectioningTree?.sections.length ?? 0
 
@@ -204,7 +218,9 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
       }
     }
 
-    // When StoryboardSectionDetail is rendered, it manages the header itself
+    // When StoryboardSectionDetail or StoryboardQuizDetail is rendered, those
+    // components manage the header themselves.
+    if (isQuizRoute) return
     if (page?.sectioningTree && sectionCount > 0) return
 
     if (selectedPageSummary) {
@@ -242,7 +258,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
       setExtra(null)
       setOnLabelClick(null)
     }
-  }, [selectedPageId, selectedPageSummary?.pageNumber, sectionIndex, sectionCount, canGoPrev, canGoNext, prevPageId, nextPageId, setExtra, setOnLabelClick, page?.sectioningTree, showRunCard, overviewMode])
+  }, [selectedPageId, selectedPageSummary?.pageNumber, sectionIndex, sectionCount, canGoPrev, canGoNext, prevPageId, nextPageId, setExtra, setOnLabelClick, page?.sectioningTree, showRunCard, overviewMode, isQuizRoute])
 
   // Keyboard arrow navigation
   useEffect(() => {
@@ -305,6 +321,19 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
           setSelectedPageId(pageId)
           setSectionIndex(sectionIdx)
         }}
+      />
+    )
+  }
+
+  // Quiz route: pseudo-pageId is `quiz-{index}`. Render the quiz panel.
+  if (isQuizRoute && selectedQuizIndex != null) {
+    return (
+      <StoryboardQuizDetail
+        bookLabel={bookLabel}
+        quizIndex={selectedQuizIndex}
+        navigationArrows={
+          <div className="flex gap-1">{overviewToggle}</div>
+        }
       />
     )
   }

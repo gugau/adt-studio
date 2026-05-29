@@ -134,10 +134,10 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
 
   return (
     <DebugPanelStateProvider value={debugPanelState}>
-      <>
+      <SectionNavCtx.Provider value={sectionNav}>
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex min-h-0 flex-1">
-            <div className="relative w-[220px] shrink-0">
+            <div className="relative w-[280px] shrink-0">
               <div className="absolute inset-y-0 left-0 z-30 flex w-full flex-col overflow-hidden bg-background">
                 <div
                   className="flex h-10 shrink-0 items-center border-r border-gray-700 bg-gray-700 text-white drag-region"
@@ -170,11 +170,9 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
             </div>
 
             <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-              <SectionNavCtx.Provider value={sectionNav}>
-                <ExportWatcherProvider value={exportWatcher}>
-                  <Outlet />
-                </ExportWatcherProvider>
-              </SectionNavCtx.Provider>
+              <ExportWatcherProvider value={exportWatcher}>
+                <Outlet />
+              </ExportWatcherProvider>
             </div>
           </div>
 
@@ -199,7 +197,7 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
             <Terminal className="h-4 w-4" />
           </Button>
         )}
-      </>
+      </SectionNavCtx.Provider>
     </DebugPanelStateProvider>
   )
 }

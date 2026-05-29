@@ -55,6 +55,8 @@ import {
   type ComputedTypographyStyles,
 } from "./BookPreviewFrame"
 import { SectionEditPanel } from "./SectionEditPanel"
+import { StorySectionBanner } from "./StorySectionBanner"
+import { Puzzle } from "lucide-react"
 import { StyleEditorPanel } from "./style-editor"
 import { ViewportToggle } from "./style-editor/ViewportToggle"
 import {
@@ -1930,6 +1932,16 @@ export function StoryboardSectionDetail({
   const hasTextParts = leafNodes.some((l) => l.role && l.role !== "image")
   const hasImageParts = leafNodes.some((l) => l.role === "image")
 
+  // Activity sections get a banner above the rendered preview so the user can
+  // tell at a glance that they're editing an interactive question/exercise
+  // rather than narrative content.
+  const isActivitySection = Boolean(
+    renderedSection?.activityReasoning ||
+      (renderedSection?.activityAnswers &&
+        Object.keys(renderedSection.activityAnswers).length > 0)
+  )
+  const activityTypeLabel = section?.sectionType ? getSectionTypeLabel(section.sectionType) : ""
+
   // Header controls rendered via portal into the purple step header
   const headerControls = (
     <>
@@ -2076,6 +2088,17 @@ export function StoryboardSectionDetail({
           </div>
         ) : renderedSection?.html ? (
           <>
+            {isActivitySection && (
+              <StorySectionBanner
+                icon={<Puzzle className="w-4 h-4" />}
+                title={
+                  activityTypeLabel
+                    ? t`Activity: ${activityTypeLabel}`
+                    : t`Activity`
+                }
+                subtitle={t`Interactive page: AI conversion from the original PDF.`}
+              />
+            )}
             {activityPreviewMode ? (
               <iframe
                 src={`${BASE_URL}/books/${bookLabel}/adt-preview/${pageId}_sec${String(sectionIndex + 1).padStart(3, "0")}.html?embed=1&v=${page.versions.rendering ?? 0}`}
