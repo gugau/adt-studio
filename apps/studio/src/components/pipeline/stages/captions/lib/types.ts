@@ -17,6 +17,12 @@ export interface LightboxEntry {
   pageNumber: number
 }
 
+/** An in-progress caption edit: which image, and the current draft text. */
+export interface CaptionEdit {
+  imageId: string
+  draft: string
+}
+
 export interface PageStats {
   total: number
   captioned: number

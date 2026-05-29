@@ -2,13 +2,13 @@ import { useEffect, useRef } from "react"
 import { Eye, EyeOff, Maximize2, Pencil } from "lucide-react"
 import { BASE_URL } from "@/api/client"
 import { Trans, useLingui } from "@lingui/react/macro"
-import type { CaptionEntry, LightboxEntry } from "../lib/types"
+import type { CaptionEdit, CaptionEntry, LightboxEntry } from "../lib/types"
 
 interface CaptionCardProps {
   bookLabel: string
   cap: CaptionEntry
   list: CaptionEntry[]
-  editing: { imageId: string; draft: string } | null
+  editing: CaptionEdit | null
   onStartEdit: (cap: CaptionEntry) => void
   onChangeDraft: (value: string) => void
   onCommitEdit: () => void
@@ -82,6 +82,7 @@ export function CaptionCard({
           src={`${BASE_URL}/books/${bookLabel}/images/${cap.imageId}`}
           alt={isDecorative ? "" : cap.caption}
           aria-hidden={isDecorative || undefined}
+          loading="lazy"
           className={`w-full h-full object-contain block transition-transform duration-300 ease-out group-hover/card:scale-[1.02] ${
             isDecorative ? "opacity-80" : ""
           }`}

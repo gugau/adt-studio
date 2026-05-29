@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { Image as ImageIcon, Loader2, Search, X } from "lucide-react"
-import { useQueryClient, useQueries } from "@tanstack/react-query"
+import { useQueries } from "@tanstack/react-query"
 import { api } from "@/api/client"
-import type { PageDetail } from "@/api/client"
 import { usePages } from "@/hooks/use-pages"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
@@ -14,14 +13,12 @@ import { useLingui } from "@lingui/react/macro"
 import { CaptionsHintBanner } from "./components/CaptionsHintBanner"
 import { PageCaptions } from "./components/PageCaptions"
 import { PageJumper } from "./components/PageJumper"
-import { Lightbox } from "./components/Lightbox"
-import type { CaptioningData, DecorativeFilter, LightboxEntry, PageJumperEntry } from "./lib/types"
+import type { DecorativeFilter, PageJumperEntry } from "./lib/types"
 
 const TOOLBAR_HEIGHT = 64
 
 export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { bookLabel: string; selectedPageId?: string; onSelectPage?: (pageId: string | null) => void }) {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   const { data: pages, isLoading } = usePages(bookLabel)
   const { setExtra } = useStepHeader()
   const { stageState, queueRun } = useBookRun()
@@ -33,7 +30,6 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
   const { sectionIndex, setSectionIndex } = useSectionNav()
   const [decorativeFilter, setDecorativeFilter] = useState<DecorativeFilter>("all")
   const [searchQuery, setSearchQuery] = useState("")
-  const [lightbox, setLightbox] = useState<{ entries: LightboxEntry[]; index: number } | null>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [activePageId, setActivePageId] = useState<string | null>(null)
 
@@ -48,9 +44,13 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
   )
   const hasCaptionData = pagesWithImages.some((p) => p.hasCaptioning)
 
-  const displayPages = selectedPageId
-    ? pagesWithImages.filter((p) => p.pageId === selectedPageId)
-    : pagesWithImages
+  const displayPages = useMemo(
+    () =>
+      selectedPageId
+        ? pagesWithImages.filter((p) => p.pageId === selectedPageId)
+        : pagesWithImages,
+    [pagesWithImages, selectedPageId],
+  )
   const totalImages = displayPages.reduce((sum, p) => sum + p.imageCount, 0)
 
   const selectedPageSummary = selectedPageId
@@ -198,75 +198,6 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
     const section = root.querySelector<HTMLElement>(`section[data-page-id="${pageId}"]`)
     if (section) section.scrollIntoView({ behavior: "smooth", block: "start" })
   }, [])
-
-  const handleOpenLightbox = useCallback((entries: LightboxEntry[], index: number) => {
-    setLightbox({ entries, index })
-  }, [])
-
-  const handleLightboxNavigate = useCallback((next: number) => {
-    setLightbox((prev) => (prev ? { ...prev, index: next } : prev))
-  }, [])
-
-  const handleLightboxCaptionChange = useCallback(
-    async (entry: LightboxEntry, newCaption: string) => {
-      const pageData = await queryClient.fetchQuery({
-        queryKey: ["books", bookLabel, "pages", entry.pageId],
-        queryFn: () => api.getPage(bookLabel, entry.pageId),
-      })
-      if (!pageData?.imageCaptioning) return
-      const next: CaptioningData = {
-        ...pageData.imageCaptioning,
-        captions: pageData.imageCaptioning.captions.map((c) =>
-          c.imageId === entry.cap.imageId ? { ...c, caption: newCaption, source: "manual" } : c,
-        ),
-      }
-      queryClient.setQueryData<PageDetail>(["books", bookLabel, "pages", entry.pageId], (prev) =>
-        prev ? { ...prev, imageCaptioning: next } : prev,
-      )
-      setLightbox((prev) => {
-        if (!prev) return prev
-        const updated = prev.entries.map((e) =>
-          e.cap.imageId === entry.cap.imageId
-            ? { ...e, cap: { ...e.cap, caption: newCaption, source: "manual" as const } }
-            : e,
-        )
-        return { ...prev, entries: updated }
-      })
-    },
-    [bookLabel, queryClient],
-  )
-
-  const handleLightboxToggleDecorative = useCallback(
-    async (entry: LightboxEntry) => {
-      const pageData = await queryClient.fetchQuery({
-        queryKey: ["books", bookLabel, "pages", entry.pageId],
-        queryFn: () => api.getPage(bookLabel, entry.pageId),
-      })
-      if (!pageData?.imageCaptioning) return
-      const isDecorative = !entry.cap.decorative
-      const next: CaptioningData = {
-        ...pageData.imageCaptioning,
-        captions: pageData.imageCaptioning.captions.map((c) =>
-          c.imageId === entry.cap.imageId
-            ? { ...c, decorative: isDecorative, source: "manual" }
-            : c,
-        ),
-      }
-      queryClient.setQueryData<PageDetail>(["books", bookLabel, "pages", entry.pageId], (prev) =>
-        prev ? { ...prev, imageCaptioning: next } : prev,
-      )
-      setLightbox((prev) => {
-        if (!prev) return prev
-        const updated = prev.entries.map((e) =>
-          e.cap.imageId === entry.cap.imageId
-            ? { ...e, cap: { ...e.cap, decorative: isDecorative, source: "manual" as const } }
-            : e,
-        )
-        return { ...prev, entries: updated }
-      })
-    },
-    [bookLabel, queryClient],
-  )
 
   if (!showRunCard && isLoading) {
     return (
@@ -418,23 +349,10 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
             filterSectionIndex={page.pageId === selectedPageId ? filterSectionIndex : undefined}
             decorativeFilter={decorativeFilter}
             searchQuery={searchQuery}
-            onOpenLightbox={handleOpenLightbox}
             toolbarHeight={TOOLBAR_HEIGHT}
           />
         ))}
       </div>
-
-      {lightbox && (
-        <Lightbox
-          bookLabel={bookLabel}
-          entries={lightbox.entries}
-          index={lightbox.index}
-          onClose={() => setLightbox(null)}
-          onNavigate={handleLightboxNavigate}
-          onCaptionChange={handleLightboxCaptionChange}
-          onToggleDecorative={handleLightboxToggleDecorative}
-        />
-      )}
     </div>
   )
 }

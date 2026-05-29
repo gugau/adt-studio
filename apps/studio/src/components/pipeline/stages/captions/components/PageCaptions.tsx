@@ -8,9 +8,11 @@ import { StageEmptyState } from "../../../components/StageEmptyState"
 import { useLingui } from "@lingui/react/macro"
 import { CaptionCard } from "./CaptionCard"
 import { VersionPicker } from "./VersionPicker"
+import { Lightbox } from "./Lightbox"
 import { matchesDecorativeFilter, matchesSearch, buildImageSectionMap } from "../lib/utils"
 import type {
   CaptioningData,
+  CaptionEdit,
   CaptionEntry,
   CaptionGroup,
   DecorativeFilter,
@@ -26,7 +28,6 @@ export function PageCaptions({
   filterSectionIndex,
   decorativeFilter,
   searchQuery,
-  onOpenLightbox,
   toolbarHeight,
 }: {
   bookLabel: string
@@ -37,7 +38,6 @@ export function PageCaptions({
   filterSectionIndex?: number
   decorativeFilter: DecorativeFilter
   searchQuery: string
-  onOpenLightbox: (entries: LightboxEntry[], index: number) => void
   toolbarHeight: number
 }) {
   const { t } = useLingui()
@@ -47,11 +47,13 @@ export function PageCaptions({
 
   const [pending, setPending] = useState<CaptioningData | null>(null)
   const [saving, setSaving] = useState(false)
-  const [editing, setEditing] = useState<{ imageId: string; draft: string } | null>(null)
+  const [editing, setEditing] = useState<CaptionEdit | null>(null)
+  const [lightbox, setLightbox] = useState<{ imageIds: string[]; index: number } | null>(null)
 
   useEffect(() => {
     setPending(null)
     setEditing(null)
+    setLightbox(null)
   }, [page?.versions.imageCaptioning])
 
   const effective = pending ?? page?.imageCaptioning
@@ -182,6 +184,21 @@ export function PageCaptions({
     ? `data:image/png;base64,${pageImage.imageBase64}`
     : null
 
+  const handleOpenLightbox = (entries: LightboxEntry[], index: number) => {
+    setLightbox({ imageIds: entries.map((e) => e.cap.imageId), index })
+  }
+
+  // Derive lightbox entries from the current (pending-aware) captions so edits
+  // made in the dialog show live and flow through the same save state.
+  const lightboxEntries: LightboxEntry[] = lightbox
+    ? lightbox.imageIds
+        .map((id) => {
+          const cap = captions.find((c) => c.imageId === id)
+          return cap ? { cap, pageId, pageNumber } : null
+        })
+        .filter((e): e is LightboxEntry => e != null)
+    : []
+
   const renderCard = (cap: CaptionEntry, list: CaptionEntry[]) => (
     <CaptionCard
       key={cap.imageId}
@@ -194,7 +211,7 @@ export function PageCaptions({
       onCommitEdit={handleCommitEdit}
       onCancelEdit={handleCancelEdit}
       onToggleDecorative={toggleDecorative}
-      onOpenLightbox={onOpenLightbox}
+      onOpenLightbox={handleOpenLightbox}
       pageId={pageId}
       pageNumber={pageNumber}
     />
@@ -285,6 +302,18 @@ export function PageCaptions({
           </div>
         )}
       </div>
+
+      {lightbox && lightboxEntries.length > 0 && (
+        <Lightbox
+          bookLabel={bookLabel}
+          entries={lightboxEntries}
+          index={Math.min(lightbox.index, lightboxEntries.length - 1)}
+          onClose={() => setLightbox(null)}
+          onNavigate={(next) => setLightbox((prev) => (prev ? { ...prev, index: next } : prev))}
+          onCaptionChange={(entry, newCaption) => applyCaption(entry.cap.imageId, newCaption)}
+          onToggleDecorative={(entry) => toggleDecorative(entry.cap.imageId)}
+        />
+      )}
     </section>
   )
 }
