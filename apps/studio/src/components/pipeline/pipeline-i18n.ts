@@ -53,6 +53,7 @@ export const STAGE_DESCRIPTION_MESSAGES: Record<string, MessageDescriptor> = {
   "sign-language": msg`Upload and assign sign language videos to book pages.`,
   validation: msg`Run whole-book validation checks and configure accessibility assessment settings.`,
   preview: msg`Package and preview the final ADT web application.`,
+  export: msg`Export the packaged book and related artifacts for delivery.`,
 }
 
 export const STEP_LABEL_MESSAGES: Record<string, MessageDescriptor> = {

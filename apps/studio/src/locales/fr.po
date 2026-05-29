@@ -2185,6 +2185,9 @@ msgstr "La préparation de l'exportation a échoué"
 msgid "Export Preview"
 msgstr "Aperçu de l'exportation"
 
+msgid "Export the packaged book and related artifacts for delivery."
+msgstr "Exporter le livre emballé et les artefacts associés pour la livraison."
+
 msgid "Export to a reader"
 msgstr "Exporter vers un lecteur"
 
