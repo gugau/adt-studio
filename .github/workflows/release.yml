@@ -2,7 +2,7 @@ name: Release
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop, feature/desktop-ci]
   workflow_dispatch:
     inputs:
       tag:
@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: release
+  group: release-${{ github.ref_name }}
   cancel-in-progress: false
 
 # Opt JS actions into Node 24 ahead of the June 2026 default — silences the
@@ -30,6 +30,8 @@ jobs:
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
       version: ${{ steps.tag.outputs.version }}
+      prerelease: ${{ steps.tag.outputs.prerelease }}
+      docker_tags: ${{ steps.tag.outputs.docker_tags }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -45,6 +47,7 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           INPUT_TAG: ${{ inputs.tag }}
+          BRANCH: ${{ github.ref_name }}
         run: |
           MSG=""
           if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
@@ -72,10 +75,36 @@ jobs:
             echo "::error::Tag $TAG already exists on origin. Bump the version."
             exit 1
           fi
+          if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-beta(\.[0-9]+)?$ ]]; then
+            PRERELEASE=true
+          elif [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            PRERELEASE=false
+          else
+            echo "::error::Tag $TAG must be either vX.Y.Z (stable) or vX.Y.Z-beta[.N]."
+            exit 1
+          fi
+          if [[ "$BRANCH" == "develop" && "$PRERELEASE" != "true" ]]; then
+            echo "::error::develop only ships beta prereleases (got $TAG). Use vX.Y.Z-beta[.N]."
+            exit 1
+          fi
+          if [[ "$BRANCH" == "main" && "$PRERELEASE" == "true" ]]; then
+            echo "::error::main only ships stable tags (got $TAG). Use vX.Y.Z."
+            exit 1
+          fi
           VERSION="${TAG#v}"
+          DOCKER_TAGS="ghcr.io/unicef/adt-studio:$TAG"
+          if [[ "$PRERELEASE" == "false" ]]; then
+            DOCKER_TAGS="$DOCKER_TAGS"$'\n'"ghcr.io/unicef/adt-studio:latest"
+          fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Resolved tag: $TAG (version: $VERSION)"
+          echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
+          {
+            echo "docker_tags<<EOF"
+            echo "$DOCKER_TAGS"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "Resolved tag: $TAG (version: $VERSION, prerelease: $PRERELEASE)"
 
       - uses: pnpm/action-setup@v4
 
@@ -92,7 +121,6 @@ jobs:
       - name: Bump apps/desktop package.json
         env:
           VERSION: ${{ steps.tag.outputs.version }}
-        # --no-git-tag-version: don't commit or tag here (finalize does that).
         run: |
           cd apps/desktop
           pnpm version "$VERSION" --no-git-tag-version
@@ -233,6 +261,7 @@ jobs:
             apps/desktop/release/*.AppImage
             apps/desktop/release/*.blockmap
             apps/desktop/release/latest*.yml
+            apps/desktop/release/beta*.yml
 
   docker:
     needs: prepare
@@ -258,9 +287,7 @@ jobs:
           context: .
           target: app
           push: true
-          tags: |
-            ghcr.io/unicef/adt-studio:latest
-            ghcr.io/unicef/adt-studio:${{ needs.prepare.outputs.tag }}
+          tags: ${{ needs.prepare.outputs.docker_tags }}
 
   finalize:
     needs: [prepare, desktop, docker]
@@ -320,10 +347,13 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.prepare.outputs.tag }}
           REPO: ${{ github.repository }}
+          PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
         run: |
+          PRERELEASE_FLAG=""
+          [[ "$PRERELEASE" == "true" ]] && PRERELEASE_FLAG="--prerelease"
           gh release create "$TAG" --repo "$REPO" \
             --title "ADT Studio $TAG" \
-            --generate-notes \
+            --generate-notes $PRERELEASE_FLAG \
             dist/* \
             docker-compose.yml \
             scripts/windows-setup-and-run.bat
