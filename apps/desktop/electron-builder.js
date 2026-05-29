@@ -7,7 +7,10 @@ require("dotenv").config({
 const extraResources = [
   { from: "../api/dist-electron/node_modules", to: "./api/node_modules" },
   { from: "../api/dist-electron/api-server.mjs", to: "./api/api-server.mjs" },
-  { from: "../api/dist-electron/node-sqlite3-wasm.wasm", to: "./api/node-sqlite3-wasm.wasm" },
+  {
+    from: "../api/dist-electron/node-sqlite3-wasm.wasm",
+    to: "./api/node-sqlite3-wasm.wasm",
+  },
   { from: "../api/dist-electron/mupdf-wasm.wasm", to: "./api/mupdf-wasm.wasm" },
   { from: "../api/dist-electron/index_bg.wasm", to: "./api/index_bg.wasm" },
   {
@@ -100,14 +103,16 @@ const config = {
   linux: {
     target: ["AppImage", "deb"],
     icon: "build/icons",
-    artifactName
+    artifactName,
+    // TODO: change to "UNICEF <email@unicef.org>",
+    maintainer: "electronjs.org",
   },
 
   publish: {
     provider: "github",
     owner: "unicef",
     repo: "adt-studio",
-  }
+  },
 };
 
 module.exports = config;
