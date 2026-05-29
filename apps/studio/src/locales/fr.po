@@ -3891,8 +3891,8 @@ msgstr "paragraphe"
 msgid "Paragraph"
 msgstr "Paragraphe"
 
-msgid "Parallel enrichment"
-msgstr "Enrichissement parallèle"
+#~ msgid "Parallel enrichment"
+#~ msgstr "Enrichissement parallèle"
 
 msgid "Parsing pages"
 msgstr "Analyse des pages"
