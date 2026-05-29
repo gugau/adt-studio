@@ -1,11 +1,5 @@
-import {
-  Fragment,
-  useCallback,
-  useState,
-  type MouseEvent,
-  type ReactNode,
-} from "react"
-import { Link, useNavigate } from "@tanstack/react-router"
+import { Fragment, useState, type MouseEvent, type ReactNode } from "react"
+import { useNavigate } from "@tanstack/react-router"
 import {
   AlertTriangle,
   ArrowDown,
@@ -14,15 +8,11 @@ import {
   ChevronRight,
   Copy,
   FileText,
-  Loader2,
-  Play,
-  RotateCcw,
   type LucideIcon,
 } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { type StageName } from "@adt/types"
 import {
-  STAGES,
   getBookOverviewStages,
   isPipelineStage,
   type NonBookStageDefinition,
@@ -32,6 +22,7 @@ import {
   STAGE_SUB_STEPS,
   type StageSubStep,
 } from "../components/StageRunCard"
+import { SubStepPillRow } from "../components/SubStepPillRow"
 import {
   getStageDescriptionI18n,
   getStageLabelI18n,
@@ -39,7 +30,6 @@ import {
   getStepLabelI18n,
 } from "../pipeline-i18n"
 import { useBookRun } from "@/hooks/use-book-run"
-import { useApiKey } from "@/hooks/use-api-key"
 import { useAccessibilityAssessment } from "@/hooks/use-debug"
 import { useBook, usePackageAdtStatus } from "@/hooks/use-books"
 import { getSourcePdfUrl } from "@/api/client"
@@ -67,9 +57,13 @@ const RECOMMENDED_STAGES = new Set<string>(["captions"])
 export function BookView({ bookLabel }: ViewProps) {
   const { t } = useLingui()
   const overviewSteps = getBookOverviewStages()
-  const { stageState, stepState, stepError, error: runError, queueRun } =
-    useBookRun()
-  const { apiKey, hasApiKey } = useApiKey()
+  const {
+    stageState,
+    stepState,
+    stepProgress,
+    stepError,
+    error: runError,
+  } = useBookRun()
   const { data: accessibilityAssessment } = useAccessibilityAssessment(bookLabel)
   const { data: signLanguageData } = useSignLanguageVideos(bookLabel)
   const { data: packageStatus } = usePackageAdtStatus(bookLabel)
@@ -87,16 +81,6 @@ export function BookView({ bookLabel }: ViewProps) {
     preview: previewCompleted,
     export: exportCompleted,
   }
-
-  const handleRun = useCallback(
-    (stage: NonBookStageDefinition) => {
-      if (!hasApiKey || !isPipelineStage(stage)) return
-      const state = stageState(stage.slug)
-      if (state === "running" || state === "queued") return
-      queueRun({ fromStage: stage.slug, toStage: stage.slug, apiKey })
-    },
-    [hasApiKey, stageState, queueRun, apiKey],
-  )
 
   const grouped: Record<StageGroup, NonBookStageDefinition[]> = {
     convert: [],
@@ -136,22 +120,15 @@ export function BookView({ bookLabel }: ViewProps) {
       isPipelineStage(step) && (rawState === "running" || rawState === "queued")
     const isCompleted = state === "done"
     const hasError = rawState === "error"
-    const showRunButton = isPipelineStage(step) && step.slug !== "preview"
     return {
       stage: step,
       bookLabel,
       isRunning,
       isCompleted,
       hasError,
-      showRunButton,
-      onRun: () => handleRun(step),
-      runDisabled: !hasApiKey || isRunning,
-      // "Ready" badge only makes sense for stages that have a Run button
-      // here. Non-pipeline stages (validation/preview/export/sign-language)
-      // are configured from their own page.
-      canRun: showRunButton && hasApiKey,
       recommended: RECOMMENDED_STAGES.has(step.slug),
       stepState,
+      stepProgress,
       stepError,
       runError,
     }
@@ -159,7 +136,7 @@ export function BookView({ bookLabel }: ViewProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
-      <SourcePdfCard bookLabel={bookLabel} />
+      <BookOverviewCard bookLabel={bookLabel} />
 
       {/* Core Pipeline cluster — connectors hug the cards. */}
       <div className="flex flex-col gap-2">
@@ -190,9 +167,6 @@ export function BookView({ bookLabel }: ViewProps) {
                 book — you can export again anytime later.
               </Trans>
             }
-            actionLabel={<Trans>Go to Export</Trans>}
-            bookLabel={bookLabel}
-            toStep="export"
           />
           <InstructionCallout
             variant="warning"
@@ -209,9 +183,6 @@ export function BookView({ bookLabel }: ViewProps) {
                 images.
               </Trans>
             }
-            actionLabel={<Trans>Go to Image Captions</Trans>}
-            bookLabel={bookLabel}
-            toStep="captions"
           />
         </div>
       )}
@@ -290,12 +261,9 @@ interface HomeStageCardProps {
   isRunning: boolean
   isCompleted: boolean
   hasError: boolean
-  showRunButton: boolean
-  onRun: () => void
-  runDisabled: boolean
-  canRun: boolean
   recommended: boolean
   stepState: (key: string) => string
+  stepProgress: (key: string) => { page?: number; totalPages?: number } | undefined
   stepError: (key: string) => string | undefined
   runError: string | null
 }
@@ -306,12 +274,9 @@ function HomeStageCard({
   isRunning,
   isCompleted,
   hasError,
-  showRunButton,
-  onRun,
-  runDisabled,
-  canRun,
   recommended,
   stepState,
+  stepProgress,
   stepError,
   runError,
 }: HomeStageCardProps) {
@@ -322,9 +287,6 @@ function HomeStageCard({
   const stageLabel = getStageLabelI18n(stage.slug)
   const runningLabel = getStageRunningLabelI18n(stage.slug)
 
-  // Collect any failure output so it can be shown — and copied — directly on
-  // the card. Prefer per-step messages (which carry the actual console/stack
-  // output), falling back to the whole-run error.
   const stepErrorLines = subSteps.flatMap((s) => {
     const msg = stepError(s.key)
     return msg ? [`${getStepLabelI18n(s.key)}: ${msg}`] : []
@@ -338,11 +300,6 @@ function HomeStageCard({
       to: "/books/$label/$step",
       params: { label: bookLabel, step: stage.slug },
     })
-  }
-
-  const handleRunClick = (e: MouseEvent) => {
-    e.stopPropagation()
-    onRun()
   }
 
   return (
@@ -394,7 +351,6 @@ function HomeStageCard({
               isCompleted={isCompleted}
               isRunning={isRunning}
               hasError={hasError}
-              canRun={canRun}
             />
             {recommended && (
               <Badge className="border-transparent bg-amber-100 text-[10px] uppercase tracking-wider text-amber-900 hover:bg-amber-100">
@@ -410,36 +366,20 @@ function HomeStageCard({
           )}
 
           {subSteps.length > 0 && (
-            <div className="mt-1 flex flex-wrap gap-1.5">
-              {subSteps.map((subStep) => (
-                <SubStepPill
-                  key={subStep.key}
-                  stepKey={subStep.key}
-                  state={stepState(subStep.key)}
-                />
-              ))}
-            </div>
+            <SubStepPillRow
+              subSteps={subSteps}
+              stepState={stepState}
+              stepProgress={stepProgress}
+              stepError={stepError}
+            />
           )}
         </div>
 
-        {/* Right controls */}
-        <div className="flex shrink-0 items-center gap-2 self-center">
-          {showRunButton && (
-            <RunButton
-              isRunning={isRunning}
-              isCompleted={isCompleted}
-              hasError={hasError}
-              color={stage.color}
-              disabled={runDisabled}
-              stageLabel={stageLabel}
-              onClick={handleRunClick}
-            />
-          )}
-          <ChevronRight
-            aria-hidden
-            className="h-5 w-5 text-muted-foreground/40 transition-colors group-hover:text-foreground/70"
-          />
-        </div>
+        {/* Right affordance — click anywhere on the card to open the stage page */}
+        <ChevronRight
+          aria-hidden
+          className="h-5 w-5 shrink-0 self-center text-muted-foreground/40 transition-colors group-hover:text-foreground/70"
+        />
       </div>
 
       {/* Error output — full width, copyable */}
@@ -467,7 +407,6 @@ function StageErrorOutput({ errorText }: { errorText: string }) {
 
   return (
     <div
-      // Clicking inside the error panel shouldn't navigate to the stage.
       onClick={stop}
       className="mx-5 mb-5 rounded-lg border border-destructive/30 bg-destructive/5"
     >
@@ -505,12 +444,10 @@ function StageStatusBadge({
   isCompleted,
   isRunning,
   hasError,
-  canRun,
 }: {
   isCompleted: boolean
   isRunning: boolean
   hasError: boolean
-  canRun: boolean
 }) {
   if (hasError) {
     return (
@@ -536,121 +473,7 @@ function StageStatusBadge({
       </Badge>
     )
   }
-  if (canRun) {
-    return (
-      <Badge
-        variant="outline"
-        className="text-[10px] uppercase tracking-wider text-muted-foreground"
-      >
-        <Trans>Ready</Trans>
-      </Badge>
-    )
-  }
   return null
-}
-
-function SubStepPill({ stepKey, state }: { stepKey: string; state: string }) {
-  const isDone = state === "done"
-  const isSkipped = state === "skipped"
-  const isError = state === "error"
-  const isRunning = state === "running"
-  const label = getStepLabelI18n(stepKey)
-
-  return (
-    <span className="relative inline-flex">
-      <span
-        aria-hidden
-        className="pointer-events-none invisible inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
-      >
-        <Check className="h-2.5 w-2.5" strokeWidth={3} />
-        {label}
-      </span>
-      <span
-        className={cn(
-          "absolute inset-0 inline-flex items-center justify-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors duration-200",
-          isDone
-            ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70"
-            : isError
-              ? "bg-red-50 text-red-800 ring-1 ring-red-200/70"
-              : isRunning
-                ? "bg-blue-50 text-blue-800 ring-1 ring-blue-200/70"
-                : isSkipped
-                  ? "bg-muted/40 text-muted-foreground/50 line-through ring-1 ring-border/50"
-                  : "bg-muted/60 text-muted-foreground ring-1 ring-border/60",
-        )}
-      >
-        {isDone && <Check className="h-2.5 w-2.5" strokeWidth={3} />}
-        {isRunning && <Loader2 className="h-2.5 w-2.5 animate-spin" />}
-        {label}
-      </span>
-    </span>
-  )
-}
-
-function RunButton({
-  isRunning,
-  isCompleted,
-  hasError,
-  color,
-  disabled,
-  stageLabel,
-  onClick,
-}: {
-  isRunning: boolean
-  isCompleted: boolean
-  hasError: boolean
-  color: string
-  disabled: boolean
-  stageLabel: string
-  onClick: (e: MouseEvent) => void
-}) {
-  const { t } = useLingui()
-  const title = hasError
-    ? t`Retry`
-    : isCompleted
-      ? t`Re-run ${stageLabel}`
-      : t`Run ${stageLabel}`
-
-  if (isRunning) {
-    return (
-      <div
-        aria-label={t`Running`}
-        className={cn(
-          "flex h-11 w-11 items-center justify-center rounded-full text-white opacity-70",
-          color,
-        )}
-      >
-        <Loader2 className="h-4 w-4 animate-spin" />
-      </div>
-    )
-  }
-
-  const toneClass = hasError
-    ? "bg-red-600 text-white hover:bg-red-700"
-    : isCompleted
-      ? cn(color, "text-white hover:opacity-90")
-      : "bg-muted text-foreground hover:bg-muted/80"
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      aria-label={title}
-      className={cn(
-        "flex h-11 w-11 items-center justify-center rounded-full transition-all",
-        "hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100",
-        toneClass,
-      )}
-    >
-      {hasError || isCompleted ? (
-        <RotateCcw className="h-4 w-4" />
-      ) : (
-        <Play className="ml-0.5 h-4 w-4" />
-      )}
-    </button>
-  )
 }
 
 // ---------------------------------------------------------------------------
@@ -764,23 +587,12 @@ function InstructionCallout({
   icon: Icon,
   title,
   body,
-  actionLabel,
-  bookLabel,
-  toStep,
 }: {
   variant: "info" | "warning"
   icon: LucideIcon
   title: ReactNode
   body: ReactNode
-  actionLabel: ReactNode
-  bookLabel: string
-  toStep: string
 }) {
-  // Match the action button to the destination stage's accent color so the
-  // visual link between the callout and the target card is obvious.
-  const destStage = STAGES.find((s) => s.slug === toStep)
-  const buttonColor = destStage?.color ?? "bg-foreground"
-
   const styles =
     variant === "info"
       ? {
@@ -788,7 +600,6 @@ function InstructionCallout({
           iconWrap: "bg-emerald-100 text-emerald-700",
         }
       : {
-          // Softer, more advisory than alarming.
           wrap: "border-amber-200/60 bg-amber-50/40",
           iconWrap: "bg-amber-100/70 text-amber-700",
         }
@@ -815,27 +626,17 @@ function InstructionCallout({
         <p className="text-[12.5px] leading-relaxed text-muted-foreground">
           {body}
         </p>
-        <Link
-          to="/books/$label/$step"
-          params={{ label: bookLabel, step: toStep }}
-          className={cn(
-            "mt-1 inline-flex w-fit items-center gap-1 rounded-md px-3 py-1.5 text-[13px] font-semibold text-white shadow-sm transition-colors hover:opacity-90",
-            buttonColor,
-          )}
-        >
-          {actionLabel}
-          <ChevronRight className="h-3.5 w-3.5" />
-        </Link>
       </div>
     </div>
   )
 }
 
 // ---------------------------------------------------------------------------
-// SourcePdfCard — shows the input PDF above the first phase.
+// BookOverviewCard — top-of-page hero: book info + a short orientation to
+// the pipeline laid out below.
 // ---------------------------------------------------------------------------
 
-function SourcePdfCard({ bookLabel }: { bookLabel: string }) {
+function BookOverviewCard({ bookLabel }: { bookLabel: string }) {
   const { t } = useLingui()
   const { data: book } = useBook(bookLabel)
   const { data: pages } = usePages(bookLabel)
@@ -852,13 +653,12 @@ function SourcePdfCard({ bookLabel }: { bookLabel: string }) {
   const imgSrc = pageImage?.imageBase64
     ? `data:image/png;base64,${pageImage.imageBase64}`
     : null
-  // Only offer to open the PDF once we know the book has a source PDF on disk.
   const canOpenPdf = book?.hasSourcePdf ?? false
   const pdfUrl = getSourcePdfUrl(bookLabel)
 
-  const content = (
+  const headerInner = (
     <>
-      <div className="flex h-[72px] w-14 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted ring-1 ring-border">
+      <div className="flex h-[88px] w-[66px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted ring-1 ring-border">
         {imgSrc ? (
           <img
             src={imgSrc}
@@ -872,13 +672,13 @@ function SourcePdfCard({ bookLabel }: { bookLabel: string }) {
           />
         )}
       </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          <Trans>Source PDF</Trans>
+          <Trans>Your book</Trans>
         </p>
-        <p className="truncate text-base font-semibold leading-snug text-foreground">
+        <h1 className="truncate text-xl font-bold leading-tight tracking-tight text-foreground">
           {title ?? pdfFilename}
-        </p>
+        </h1>
         <p className="truncate text-xs text-muted-foreground tabular-nums">
           {title ? (
             pageCount > 0 ? (
@@ -894,7 +694,7 @@ function SourcePdfCard({ bookLabel }: { bookLabel: string }) {
         </p>
       </div>
       {canOpenPdf && (
-        <div className="hidden shrink-0 flex-col items-center gap-0.5 text-muted-foreground/50 transition-colors group-hover:text-foreground/70 sm:flex">
+        <div className="hidden shrink-0 flex-col items-center gap-0.5 self-center text-muted-foreground/50 transition-colors group-hover:text-foreground/70 sm:flex">
           <ArrowRight className="h-5 w-5" strokeWidth={2} />
           <span className="text-[9px] font-semibold uppercase tracking-[0.16em]">
             <Trans>Open</Trans>
@@ -904,26 +704,43 @@ function SourcePdfCard({ bookLabel }: { bookLabel: string }) {
     </>
   )
 
-  const baseClassName =
-    "flex items-center gap-4 rounded-2xl border border-border bg-card px-5 py-4 shadow-sm"
-
-  if (!canOpenPdf) {
-    return <div className={baseClassName}>{content}</div>
-  }
-
   return (
-    <a
-      href={pdfUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={t`Open source PDF in a new tab`}
-      className={cn(
-        baseClassName,
-        "group cursor-pointer transition-all hover:border-foreground/15 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+    <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      {canOpenPdf ? (
+        <a
+          href={pdfUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={t`Open source PDF in a new tab`}
+          className="group flex items-start gap-5 px-6 py-5 transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+        >
+          {headerInner}
+        </a>
+      ) : (
+        <header className="flex items-start gap-5 px-6 py-5">{headerInner}</header>
       )}
-    >
-      {content}
-    </a>
+
+      <div className="flex flex-col gap-2 border-t border-border/60 bg-muted/20 px-6 py-5">
+        <h2 className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          <Trans>How it works</Trans>
+        </h2>
+        <p className="text-sm leading-relaxed text-foreground/80">
+          <Trans>
+            Use the sidebar on the left to open any stage of the
+            pipeline. Each stage has its own page where you can review
+            its content, configure its settings, and start a run. The
+            cards below mirror that navigation — click a card to jump
+            straight to that stage's page.
+          </Trans>
+        </p>
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          <Trans>
+            Stages are rerunable and every result is versioned, so
+            experimenting is safe — nothing is ever overwritten.
+          </Trans>
+        </p>
+      </div>
+    </section>
   )
 }
 

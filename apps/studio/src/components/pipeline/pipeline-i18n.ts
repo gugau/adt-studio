@@ -78,6 +78,30 @@ export const STEP_LABEL_MESSAGES: Record<string, MessageDescriptor> = {
   "package-web": msg`Web Package`,
 }
 
+export const STEP_DESCRIPTION_MESSAGES: Record<string, MessageDescriptor> = {
+  extract: msg`Extracts text and image data from each page of the PDF.`,
+  metadata: msg`Pulls the book's metadata — title, author, language — from the PDF.`,
+  "book-summary": msg`Generates a short summary of the book used to seed downstream prompts.`,
+  "image-filtering": msg`Filters out decorative or non-content images on each page.`,
+  "image-segmentation": msg`Groups image regions into discrete illustrations on each page.`,
+  "image-meaningfulness": msg`Scores each image for how much it contributes to the book's meaning.`,
+  "image-cropping": msg`Crops each image to its visible bounding box.`,
+  "page-sectioning": msg`Structures each page into a tree of sections and nodes.`,
+  translation: msg`Translates extracted page text into the target languages.`,
+  "web-rendering": msg`Renders each page into the storyboard layout used by the web reader.`,
+  "quiz-generation": msg`Generates comprehension questions and activities from the book.`,
+  "image-captioning": msg`Generates descriptive alt-text for images so screen readers can describe them.`,
+  glossary: msg`Builds a glossary of key terms and definitions found in the text.`,
+  "toc-generation": msg`Builds the table of contents from the book's sections.`,
+  "text-catalog": msg`Collects all translatable text into a single catalog.`,
+  "catalog-translation": msg`Translates the catalog into each target language.`,
+  "image-translation": msg`Translates text embedded in images — labels, captions, signs.`,
+  tts: msg`Synthesizes narration audio for each page.`,
+  "word-timestamps": msg`Aligns narration with text to enable word-level highlighting.`,
+  "package-web": msg`Bundles the rendered book into a deployable web package.`,
+  "accessibility-assessment": msg`Runs accessibility checks against the packaged book.`,
+}
+
 /** Resolve a stage label message descriptor to a translated string. Safe to call outside React. */
 export function getStageLabelI18n(slug: string): string {
   const descriptor = STAGE_LABEL_MESSAGES[slug]
@@ -100,4 +124,10 @@ export function getStageDescriptionI18n(slug: string): string | undefined {
 export function getStepLabelI18n(slug: string): string {
   const descriptor = STEP_LABEL_MESSAGES[slug]
   return descriptor ? i18n._(descriptor) : slug
+}
+
+/** Resolve a step description message descriptor to a translated string. Safe to call outside React. */
+export function getStepDescriptionI18n(slug: string): string | undefined {
+  const descriptor = STEP_DESCRIPTION_MESSAGES[slug]
+  return descriptor ? i18n._(descriptor) : undefined
 }
