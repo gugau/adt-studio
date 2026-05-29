@@ -127,8 +127,8 @@ export function EasyReadEditor({
   }
 
   return (
-    <div className="rounded-md border bg-card">
-      <div className="flex items-center justify-between gap-3 border-b px-3 py-2">
+    <div className="flex h-full min-h-0 flex-col rounded-md border bg-card">
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b px-3 py-2">
         <div>
           <p className="text-xs font-medium">
             {t`Easy Read`}
@@ -187,11 +187,11 @@ export function EasyReadEditor({
       )}
 
       {visibleBlocks.length === 0 ? (
-        <div className="px-3 py-3 text-xs text-muted-foreground">
+        <div className="flex-1 px-3 py-3 text-xs text-muted-foreground">
           {t`No Easy Read block is available for this page.`}
         </div>
       ) : (
-        <div className="max-h-72 overflow-auto divide-y">
+        <div className="min-h-0 flex-1 overflow-auto divide-y">
           {visibleBlocks.map((block) => (
             <div key={`${block.pageId}:${block.sectionId}:${block.sectionIndex}`} className="px-3 py-3">
               <div className="mb-2 flex items-center justify-between gap-2">
