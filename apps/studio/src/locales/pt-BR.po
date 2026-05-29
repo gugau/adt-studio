@@ -3326,6 +3326,9 @@ msgstr "Ainda não há chave de API para {0}. Adicione uma nas configurações d
 msgid "No assessment"
 msgstr "No assessment"
 
+msgid "No audio for this page"
+msgstr "Sem áudio para esta página"
+
 msgid "No books match your search"
 msgstr "Nenhum livro corresponde à sua busca"
 
@@ -4510,6 +4513,9 @@ msgstr "Execute Storyboard para gerar seções que você pode associar a vídeos
 msgid "Run the pipeline"
 msgstr "Executar o pipeline"
 
+msgid "Run the pipeline to extract content"
+msgstr "Execute o pipeline para extrair conteúdo"
+
 msgid "Run TOC"
 msgstr "Executar Sumário"
 
@@ -5439,6 +5445,9 @@ msgstr "Este é o Pip! Ele é um cachorro caramelo feliz com um rabo muito agita
 
 msgid "This page has no captioned images"
 msgstr "Esta página não tem imagens legendadas"
+
+msgid "This page has no entries to synthesize"
+msgstr "Esta página não tem entradas para sintetizar"
 
 msgid "This page has no sectioning output"
 msgstr "Esta página não tem saída de seccionamento"

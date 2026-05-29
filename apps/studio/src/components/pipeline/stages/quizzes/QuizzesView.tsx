@@ -11,6 +11,7 @@ import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
 import { StageContentGuard } from "../../components/StageContentGuard"
+import { StageEmptyState } from "../../components/StageEmptyState"
 import { getRequestedPageId, getQuizImageRenderState } from "./lib/quizzes-image-state"
 import { useLingui } from "@lingui/react/macro"
 
@@ -395,13 +396,12 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
       }
     >
       {showPerPageEmpty ? (
-        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-          <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center mb-3">
-            <HelpCircle className="w-6 h-6 text-orange-300" />
-          </div>
-          <p className="text-sm font-medium">{t`No quizzes for this page`}</p>
-          <p className="text-xs mt-1">{t`Quizzes are linked to other pages in this book`}</p>
-        </div>
+        <StageEmptyState
+          icon={HelpCircle}
+          color="orange"
+          title={t`No quizzes for this page`}
+          subtitle={t`Quizzes are linked to other pages in this book`}
+        />
       ) : (
     <div className="space-y-2">
       {displayQuizzes.map((quiz) => {

@@ -3326,6 +3326,9 @@ msgstr "Aún no hay clave API para {0}. Añade una en la configuración del libr
 msgid "No assessment"
 msgstr "No assessment"
 
+msgid "No audio for this page"
+msgstr "No hay audio para esta página"
+
 msgid "No books match your search"
 msgstr "Ningún libro coincide con tu búsqueda"
 
@@ -4510,6 +4513,9 @@ msgstr "Ejecuta Storyboard para generar secciones a las que puedas asignar video
 msgid "Run the pipeline"
 msgstr "Ejecutar el pipeline"
 
+msgid "Run the pipeline to extract content"
+msgstr "Ejecuta la canalización para extraer contenido"
+
 msgid "Run TOC"
 msgstr "Ejecutar TOC"
 
@@ -5439,6 +5445,9 @@ msgstr "¡Este es Pip! Es un perro caramelo feliz con una cola muy movida. A Pip
 
 msgid "This page has no captioned images"
 msgstr "Esta página no tiene imágenes con leyendas"
+
+msgid "This page has no entries to synthesize"
+msgstr "Esta página no tiene entradas para sintetizar"
 
 msgid "This page has no sectioning output"
 msgstr "Esta página no tiene salida de seccionamiento"

@@ -49,6 +49,7 @@ import { useBookRun } from "@/hooks/use-book-run"
 import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import { useStepHeader } from "../../../components/StepViewRouter"
 import { LoadingState } from "../../../components/LoadingState"
+import { StageEmptyState } from "../../../components/StageEmptyState"
 import {
   BookPreviewFrame,
   type BookPreviewFrameHandle,
@@ -2066,13 +2067,12 @@ export function StoryboardSectionDetail({
         ref={scrollContainerRef}
       >
         {!section ? (
-          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-            <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
-              <LayoutGrid className="w-6 h-6 text-muted-foreground/40" />
-            </div>
-            <p className="text-sm font-medium">{t`No sections on this page`}</p>
-            <p className="text-xs mt-1">{t`All sections have been deleted`}</p>
-          </div>
+          <StageEmptyState
+            icon={LayoutGrid}
+            color="violet"
+            title={t`No sections on this page`}
+            subtitle={t`All sections have been deleted`}
+          />
         ) : renderedSection?.html ? (
           <>
             {activityPreviewMode ? (
@@ -2103,13 +2103,12 @@ export function StoryboardSectionDetail({
         ) : storyboardRunning && !section?.isPruned ? (
           <LoadingState stageSlug="storyboard" label={t`Rendering this section...`} />
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-            <div className="w-12 h-12 rounded-full bg-violet-50 flex items-center justify-center mb-3">
-              <LayoutGrid className="w-6 h-6 text-violet-300" />
-            </div>
-            <p className="text-sm font-medium">{t`No rendered content for this section`}</p>
-            <p className="text-xs mt-1">{t`This section has no storyboard rendering yet`}</p>
-          </div>
+          <StageEmptyState
+            icon={LayoutGrid}
+            color="violet"
+            title={t`No rendered content for this section`}
+            subtitle={t`This section has no storyboard rendering yet`}
+          />
         )}
 
       </div>

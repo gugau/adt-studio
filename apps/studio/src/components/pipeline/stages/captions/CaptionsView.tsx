@@ -11,6 +11,7 @@ import { useApiKey } from "@/hooks/use-api-key"
 import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import { StageRunCard } from "../../components/StageRunCard"
 import { StageContentGuard } from "../../components/StageContentGuard"
+import { StageEmptyState } from "../../components/StageEmptyState"
 import { useSectionNav } from "@/routes/books.$label"
 import { useLingui } from "@lingui/react/macro"
 
@@ -261,12 +262,11 @@ function PageCaptions({
 
   if (filterSectionIndex != null && filteredCaptions.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-        <div className="w-12 h-12 rounded-full bg-teal-50 flex items-center justify-center mb-3">
-          <ImageIcon className="w-6 h-6 text-teal-300" />
-        </div>
-        <p className="text-sm font-medium">{t`No images in this section`}</p>
-      </div>
+      <StageEmptyState
+        icon={ImageIcon}
+        color="teal"
+        title={t`No images in this section`}
+      />
     )
   }
 
@@ -420,13 +420,12 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
   }, [pages, totalImages, displayPages.length, setExtra, selectedPageId, selectedPageSummary?.pageNumber, selectedPageSummary?.sectionCount, hasSections, sectionIndex, setSectionIndex])
 
   const singlePageEmptyState = selectedPageId ? (
-    <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-      <div className="w-12 h-12 rounded-full bg-teal-50 flex items-center justify-center mb-3">
-        <ImageIcon className="w-6 h-6 text-teal-300" />
-      </div>
-      <p className="text-sm font-medium">{t`No captions for this page`}</p>
-      <p className="text-xs mt-1">{t`This page has no captioned images`}</p>
-    </div>
+    <StageEmptyState
+      icon={ImageIcon}
+      color="teal"
+      title={t`No captions for this page`}
+      subtitle={t`This page has no captioned images`}
+    />
   ) : undefined
 
   const showNoImagesEmpty =
@@ -449,21 +448,22 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
       }
     >
       {showNoImagesEmpty ? (
-        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-          <div className="w-12 h-12 rounded-full bg-teal-50 flex items-center justify-center mb-3">
-            <ImageIcon className="w-6 h-6 text-teal-300" />
-          </div>
-          <p className="text-sm font-medium">{t`No images on this page`}</p>
-          <button
-            type="button"
-            onClick={() => onSelectPage?.(null)}
-            className="mt-3 text-xs font-medium text-teal-600 hover:text-teal-700 hover:underline transition-colors"
-          >
-            {t`Show all`}
-          </button>
-        </div>
+        <StageEmptyState
+          icon={ImageIcon}
+          color="teal"
+          title={t`No images on this page`}
+          cta={
+            <button
+              type="button"
+              onClick={() => onSelectPage?.(null)}
+              className="text-xs font-medium text-teal-600 hover:text-teal-700 hover:underline transition-colors"
+            >
+              {t`Show all`}
+            </button>
+          }
+        />
       ) : (
-    <div className="space-y-4">
+    <div className="flex flex-1 flex-col gap-4">
       {selectedPageId && (
         <div className="flex justify-end px-4 pt-3">
           <button

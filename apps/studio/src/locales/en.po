@@ -3326,6 +3326,9 @@ msgstr "No API key for {0} yet. Add one in Book settings to enable this provider
 msgid "No assessment"
 msgstr "No assessment"
 
+msgid "No audio for this page"
+msgstr "No audio for this page"
+
 msgid "No books match your search"
 msgstr "No books match your search"
 
@@ -4510,6 +4513,9 @@ msgstr "Run Storyboard to generate sections you can match sign-language videos t
 msgid "Run the pipeline"
 msgstr "Run the pipeline"
 
+msgid "Run the pipeline to extract content"
+msgstr "Run the pipeline to extract content"
+
 msgid "Run TOC"
 msgstr "Run TOC"
 
@@ -5439,6 +5445,9 @@ msgstr "This is Pip! He is a happy caramel dog with a very wiggly tail. Pip love
 
 msgid "This page has no captioned images"
 msgstr "This page has no captioned images"
+
+msgid "This page has no entries to synthesize"
+msgstr "This page has no entries to synthesize"
 
 msgid "This page has no sectioning output"
 msgstr "This page has no sectioning output"
