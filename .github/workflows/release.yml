@@ -33,7 +33,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-tags: true
+          fetch-depth: 0
+
+      - name: Debug — list git tags visible to the runner
+        run: |
+          echo "Total tags: $(git tag --list | wc -l)"
+          git tag --list | sort -V
 
       - name: Extract tag
         id: tag

@@ -73,7 +73,7 @@ function listGitTags() {
   } catch (err) {
     console.error(
       "Failed to list git tags. Run this script inside a git repository " +
-        "with access to its tags (e.g. checkout with fetch-tags: true).",
+        "with access to its tags (e.g. checkout with fetch-depth: 0).",
     );
     console.error(err.message);
     process.exit(1);
@@ -98,12 +98,40 @@ function topVersions(candidates) {
     .filter((v) => v.prerelease !== null)
     .sort(desc)
     .slice(0, KEEP_BETA);
-  return [...beta.map((v) => v.raw), ...official.map((v) => v.raw)];
+  return {
+    topBeta: beta.map((v) => v.raw),
+    topOfficial: official.map((v) => v.raw),
+    parsedCount: versions.length,
+  };
 }
 
 const gitTags = listGitTags();
 const candidates = extraTag ? [...gitTags, extraTag] : gitTags;
-const topList = topVersions(candidates);
+const { topBeta, topOfficial, parsedCount } = topVersions(candidates);
+const topList = [...topBeta, ...topOfficial];
+
+console.log(`extraTag (CLI arg): ${extraTag ?? "(none)"}`);
+console.log(
+  `git tag --list returned ${gitTags.length} tag(s)` +
+    (gitTags.length ? `: ${gitTags.join(", ")}` : ""),
+);
+console.log(`Parsed as version tags: ${parsedCount}`);
+console.log(
+  `Top ${topBeta.length} beta(s): ${topBeta.length ? topBeta.join(", ") : "(none)"}`,
+);
+console.log(
+  `Top ${topOfficial.length} official(s): ${
+    topOfficial.length ? topOfficial.join(", ") : "(none)"
+  }`,
+);
+if (gitTags.length <= 1) {
+  console.warn(
+    "::warning::Only " +
+      gitTags.length +
+      " git tag(s) visible — the runner likely has a shallow clone. " +
+      "Use `actions/checkout@v4` with `fetch-depth: 0` to fetch full tag history.",
+  );
+}
 
 const dir = ".github/ISSUE_TEMPLATE";
 const files = readdirSync(dir).filter(
