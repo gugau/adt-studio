@@ -815,6 +815,7 @@ export function StoryboardSectionDetail({
       setPendingCategories(new Set())
       needsRerenderRef.current = false
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
+      await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages"] })
       invalidateStoryboardDependents(queryClient, bookLabel)
       await minDelay
 
@@ -877,6 +878,7 @@ export function StoryboardSectionDetail({
       setPendingSectioning(null)
       setPendingCategories(new Set())
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
+      await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages"] })
       invalidateStoryboardDependents(queryClient, bookLabel)
       await minDelay
     } catch (err) {
