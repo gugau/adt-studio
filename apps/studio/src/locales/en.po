@@ -432,6 +432,9 @@ msgstr "A select-all-that-apply activity where the learner can choose more than 
 msgid "A separator page between sections."
 msgstr "A separator page between sections."
 
+msgid "A simplified Easy Read version makes the text accessible to readers with cognitive disabilities, learning differences, or limited reading proficiency."
+msgstr "A simplified Easy Read version makes the text accessible to readers with cognitive disabilities, learning differences, or limited reading proficiency."
+
 msgid "A single water molecule can take over 3,000 years to complete one full trip through the water cycle - from ocean to sky to river and back again."
 msgstr "A single water molecule can take over 3,000 years to complete one full trip through the water cycle - from ocean to sky to river and back again."
 

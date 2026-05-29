@@ -432,6 +432,9 @@ msgstr "Uma atividade do tipo \"marcar todas as que se aplicam\", em que o estud
 msgid "A separator page between sections."
 msgstr "Uma página separadora entre seções."
 
+msgid "A simplified Easy Read version makes the text accessible to readers with cognitive disabilities, learning differences, or limited reading proficiency."
+msgstr "Uma versão simplificada de Leitura Fácil torna o texto acessível para leitores com deficiências cognitivas, diferenças de aprendizagem ou proficiência de leitura limitada."
+
 msgid "A single water molecule can take over 3,000 years to complete one full trip through the water cycle - from ocean to sky to river and back again."
 msgstr "Uma única molécula de água pode levar mais de 3.000 anos para completar uma viagem completa pelo ciclo da água - do oceano ao céu, ao rio e de volta."
 
