@@ -1,8 +1,14 @@
 import { useEffect } from "react"
-import { createPortal } from "react-dom"
-import { ChevronLeft, ChevronRight, Eye, EyeOff, X } from "lucide-react"
+import { ChevronLeft, ChevronRight, Eye, EyeOff, Image as ImageIcon } from "lucide-react"
 import { BASE_URL } from "@/api/client"
 import { Trans, useLingui } from "@lingui/react/macro"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import type { LightboxEntry } from "../lib/types"
 
 export function Lightbox({
@@ -27,13 +33,14 @@ export function Lightbox({
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose()
-      else if (e.key === "ArrowLeft" && index > 0) onNavigate(index - 1)
+      const el = e.target as HTMLElement | null
+      if (el && (el.tagName === "TEXTAREA" || el.tagName === "INPUT")) return
+      if (e.key === "ArrowLeft" && index > 0) onNavigate(index - 1)
       else if (e.key === "ArrowRight" && index < entries.length - 1) onNavigate(index + 1)
     }
     document.addEventListener("keydown", handler)
     return () => document.removeEventListener("keydown", handler)
-  }, [index, entries.length, onClose, onNavigate])
+  }, [index, entries.length, onNavigate])
 
   if (!entry) return null
   const { cap, pageNumber } = entry
@@ -41,107 +48,101 @@ export function Lightbox({
   const hasPrev = index > 0
   const hasNext = index < entries.length - 1
 
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[60] flex items-stretch justify-center bg-black/85 backdrop-blur-sm animate-in fade-in duration-200"
-      role="dialog"
-      aria-modal="true"
-      onClick={onClose}
+  return (
+    <Dialog
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose()
+      }}
     >
-      <div
-        className="relative flex h-full w-full max-w-7xl flex-col md:flex-row gap-6 p-6 md:p-10"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="relative flex flex-1 items-center justify-center min-h-0">
-          <img
-            src={`${BASE_URL}/books/${bookLabel}/images/${cap.imageId}`}
-            alt={isDecorative ? "" : cap.caption}
-            className="max-h-full max-w-full object-contain rounded-lg shadow-2xl"
-          />
-          {hasPrev && (
-            <button
-              type="button"
-              onClick={() => onNavigate(index - 1)}
-              aria-label={t`Previous image`}
-              className="absolute left-0 top-1/2 -translate-y-1/2 -ml-2 md:-ml-6 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer backdrop-blur"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-          )}
-          {hasNext && (
-            <button
-              type="button"
-              onClick={() => onNavigate(index + 1)}
-              aria-label={t`Next image`}
-              className="absolute right-0 top-1/2 -translate-y-1/2 -mr-2 md:-mr-6 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer backdrop-blur"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          )}
-        </div>
-
-        <aside className="flex w-full md:w-80 shrink-0 flex-col gap-3 text-white">
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-[11px] font-semibold tracking-wide text-teal-200 bg-teal-900/40 rounded px-2 py-0.5">
+      <DialogContent className="flex max-h-[90vh] max-w-3xl flex-col gap-0 overflow-hidden p-0">
+        <DialogHeader className="shrink-0 space-y-1 border-b px-5 py-3 pr-12 text-left">
+          <DialogTitle className="flex items-center gap-2 text-base">
+            <ImageIcon className="h-4 w-4 text-teal-600" />
+            <Trans>Edit caption</Trans>
+          </DialogTitle>
+          <DialogDescription className="flex items-center gap-2 text-[11px]">
+            <span className="font-mono font-medium text-foreground bg-muted rounded px-1.5 py-0.5">
               {cap.imageId}
             </span>
-            <span className="text-[11px] text-white/60">
-              {t`Page ${String(pageNumber)}`}
-            </span>
-            <span className="ml-auto text-[11px] text-white/60 tabular-nums">
+            <span>{t`Page ${String(pageNumber)}`}</span>
+            <span className="ml-auto tabular-nums">
               {index + 1} / {entries.length}
             </span>
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-5 sm:flex-row">
+          <div className="relative flex h-[58vh] flex-1 items-center justify-center rounded-lg border bg-muted/30 p-2">
+            <img
+              src={`${BASE_URL}/books/${bookLabel}/images/${cap.imageId}`}
+              alt={isDecorative ? "" : cap.caption}
+              draggable={false}
+              className="max-h-full max-w-full rounded object-contain"
+            />
+            {hasPrev && (
+              <button
+                type="button"
+                onClick={() => onNavigate(index - 1)}
+                aria-label={t`Previous image`}
+                className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border bg-background/90 text-foreground shadow-sm backdrop-blur hover:bg-muted transition-colors cursor-pointer"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+            )}
+            {hasNext && (
+              <button
+                type="button"
+                onClick={() => onNavigate(index + 1)}
+                aria-label={t`Next image`}
+                className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border bg-background/90 text-foreground shadow-sm backdrop-blur hover:bg-muted transition-colors cursor-pointer"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            )}
           </div>
 
-          <button
-            type="button"
-            onClick={() => onToggleDecorative(entry)}
-            aria-pressed={isDecorative}
-            className={`flex items-center justify-center gap-2 rounded-md px-3 py-2 text-[12px] font-medium transition-colors cursor-pointer ${
-              isDecorative
-                ? "bg-amber-500/20 text-amber-200 hover:bg-amber-500/30"
-                : "bg-white/10 text-white/80 hover:bg-white/15"
-            }`}
-          >
-            {isDecorative ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-            {isDecorative ? t`Marked decorative` : t`Mark as decorative`}
-          </button>
+          <aside className="flex w-full shrink-0 flex-col gap-3 sm:w-64">
+            <button
+              type="button"
+              onClick={() => onToggleDecorative(entry)}
+              aria-pressed={isDecorative}
+              className={`flex items-center justify-center gap-2 rounded-md border px-3 py-2.5 text-[13px] font-semibold shadow-sm transition-colors cursor-pointer ${
+                isDecorative
+                  ? "border-amber-400 bg-amber-100 text-amber-800 hover:bg-amber-200"
+                  : "border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400 hover:bg-amber-100"
+              }`}
+            >
+              {isDecorative ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {isDecorative ? t`Marked decorative` : t`Mark as decorative`}
+            </button>
 
-          {isDecorative ? (
-            <p className="rounded-md border border-amber-400/30 bg-amber-500/10 px-3 py-3 text-[12px] leading-relaxed text-amber-100">
-              <Trans>
-                This image is decorative. Screen readers will skip it and no caption is needed.
-              </Trans>
-            </p>
-          ) : (
-            <>
-              <label className="text-[11px] font-medium uppercase tracking-wider text-white/60">
-                <Trans>Caption</Trans>
-              </label>
-              <textarea
-                value={cap.caption}
-                onChange={(e) => onCaptionChange(entry, e.target.value)}
-                aria-label={t`Caption for ${cap.imageId}`}
-                placeholder={t`Describe this image…`}
-                className="flex-1 min-h-[160px] resize-none rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm leading-relaxed text-white placeholder:text-white/40 focus:border-teal-300 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-teal-400/30 transition-colors"
-              />
-              <p className="text-[10px] text-white/50">
-                <Trans>Changes save automatically when you save on the page card.</Trans>
+            {isDecorative ? (
+              <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-[12px] leading-relaxed text-amber-700">
+                <Trans>
+                  This image is decorative. Screen readers will skip it and no caption is needed.
+                </Trans>
               </p>
-            </>
-          )}
-        </aside>
-
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={t`Close`}
-          className="absolute top-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-    </div>,
-    document.body,
+            ) : (
+              <>
+                <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  <Trans>Caption</Trans>
+                </label>
+                <textarea
+                  value={cap.caption}
+                  onChange={(e) => onCaptionChange(entry, e.target.value)}
+                  aria-label={t`Caption for ${cap.imageId}`}
+                  placeholder={t`Describe this image…`}
+                  className="min-h-[160px] flex-1 resize-none rounded-md border border-border bg-background px-3 py-2 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-200 transition-colors"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  <Trans>Changes save automatically when you save on the page card.</Trans>
+                </p>
+              </>
+            )}
+          </aside>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
