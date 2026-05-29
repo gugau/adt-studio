@@ -628,9 +628,6 @@ msgstr "Agregar libro"
 msgid "Add checklist item to this section"
 msgstr "Add checklist item to this section"
 
-#~ msgid "Add class"
-#~ msgstr "Agregar clase"
-
 msgid "Add custom instructions"
 msgstr "Añadir instrucciones personalizadas"
 
@@ -1471,9 +1468,6 @@ msgstr "Condensación"
 msgid "Config"
 msgstr "Configuración"
 
-#~ msgid "Configure"
-#~ msgstr "Configurar"
-
 msgid "Configure activity detection and image processing options for extracted content. Hover any setting to see how it affects the preview."
 msgstr "Configura las opciones de detección de actividad y procesamiento de imágenes para el contenido extraído. Pasa el cursor sobre cualquier configuración para ver cómo afecta la vista previa."
 
@@ -1683,9 +1677,6 @@ msgstr "Demostración de Diseño Personalizado"
 
 msgid "Custom section {index}"
 msgstr "Custom section {index}"
-
-#~ msgid "Custom:"
-#~ msgstr "Personalizado:"
 
 msgid "Debug mode is not enabled."
 msgstr "El modo de depuración no está habilitado."
@@ -2100,9 +2091,6 @@ msgstr "Introduce una dimensión mínima válida (número entero ≥ 0)"
 
 msgid "Enter a valid project name"
 msgstr "Introduce un nombre de proyecto válido"
-
-#~ msgid "Enter hex color and press Enter"
-#~ msgstr "Ingresa un color hex y presiona Enter"
 
 msgid "EPUB"
 msgstr "EPUB"
@@ -2530,14 +2518,8 @@ msgstr "Ir a {stageLabel}"
 msgid "Go to book"
 msgstr "Ir al libro"
 
-#~ msgid "Go to Export"
-#~ msgstr "Ir a Exportar"
-
 msgid "Go to home"
 msgstr "Ir a inicio"
-
-#~ msgid "Go to Image Captions"
-#~ msgstr "Ir a Leyendas de Imágenes"
 
 msgid "Go to Storyboard"
 msgstr "Ir al Storyboard"
@@ -3502,9 +3484,6 @@ msgstr "Sin enlace"
 msgid "No log entries found yet."
 msgstr "Aún no hay entradas de registro."
 
-#~ msgid "No matches"
-#~ msgstr "Sin resultados"
-
 msgid "No matches for \"{search}\""
 msgstr "Sin resultados para \"{0}\""
 
@@ -3742,12 +3721,6 @@ msgstr "Opcional"
 msgid "Optional Features"
 msgstr "Características opcionales"
 
-#~ msgid "Optional features to enrich the book — accessibility, comprehension, and navigation. Run any of these in any order once the core pipeline is complete."
-#~ msgstr "Funciones opcionales para enriquecer el libro: accesibilidad, comprensión y navegación. Ejecuta cualquiera de ellas en cualquier orden una vez completado el flujo principal."
-
-#~ msgid "Optional features to enrich the book — accessibility, comprehension, navigation, translations, and audio. Run any of these in any order once the core pipeline is complete."
-#~ msgstr "Funciones opcionales para enriquecer el libro: accesibilidad, comprensión, navegación, traducciones y audio. Ejecuta cualquiera de ellas en cualquier orden una vez completado el flujo principal."
-
 msgid "Optional instructions for the LLM..."
 msgstr "Instrucciones opcionales para el LLM..."
 
@@ -3957,9 +3930,6 @@ msgstr "párrafo"
 msgid "Paragraph"
 msgstr "Párrafo"
 
-#~ msgid "Parallel enrichment"
-#~ msgstr "Enriquecimiento paralelo"
-
 msgid "Parsing pages"
 msgstr "Analizando páginas"
 
@@ -4116,9 +4086,6 @@ msgstr "Preajuste"
 
 msgid "Presets add recommendations and specific settings for your use case. You still choose each option step by step, and you can go back to select a different preset at any time."
 msgstr "Los preajustes añaden recomendaciones y configuraciones específicas para tu caso. Aún eliges cada opción paso a paso, y puedes volver a seleccionar un preajuste diferente en cualquier momento."
-
-#~ msgid "Press Enter to add"
-#~ msgstr "Presiona Enter para agregar"
 
 msgid "Prev"
 msgstr "Anterior"
@@ -4328,9 +4295,6 @@ msgstr "Libro digital compatible con Readium"
 msgid "Reads in"
 msgstr "Lee en"
 
-#~ msgid "Ready"
-#~ msgstr "Listo"
-
 msgid "Real books processed with this preset — before and after."
 msgstr "Libros reales procesados con este preajuste — antes y después."
 
@@ -4349,9 +4313,6 @@ msgstr "Recomendado para"
 #. placeholder {0}: i18n._(presetLabel)
 msgid "Recommended for {0}"
 msgstr "Recomendado para {0}"
-
-#~ msgid "Recommended for accessibility"
-#~ msgstr "Recomendado para la accesibilidad"
 
 msgid "Record reviewer findings for the current page and save them to the active validation session."
 msgstr "Record reviewer findings for the current page and save them to the active validation session."
@@ -4448,9 +4409,6 @@ msgstr "Razonamiento de renderizado"
 msgid "Render Strategy"
 msgstr "Estrategia de renderización"
 
-#~ msgid "rendering"
-#~ msgstr "renderización"
-
 msgid "Rendering Prompt"
 msgstr "Prompt de renderización"
 
@@ -4502,9 +4460,6 @@ msgstr "Reset to inherited defaults"
 msgid "Resolving source language..."
 msgstr "Resolviendo idioma de origen..."
 
-#~ msgid "Responsive / State variants"
-#~ msgstr "Variantes responsivas / de estado"
-
 msgid "Restart and install"
 msgstr "Reiniciar e instalar"
 
@@ -4535,9 +4490,6 @@ msgstr "Reintentar"
 
 msgid "Retry Export"
 msgstr "Reintentar exportación"
-
-#~ msgid "Review"
-#~ msgstr "Revisar"
 
 msgid "Review areas with the most items marked as needing changes in this session."
 msgstr "Review areas with the most items marked as needing changes in this session."
@@ -5002,9 +4954,6 @@ msgstr "Aplicación web ADT autónoma"
 
 msgid "Separator"
 msgstr "Separador"
-
-#~ msgid "Sequential stages that turn the source PDF into structured, rendered content. Run these in order."
-#~ msgstr "Etapas secuenciales que transforman el PDF de origen en contenido estructurado y renderizado. Ejecútalas en orden."
 
 msgid "serious"
 msgstr "serious"
@@ -5761,9 +5710,6 @@ msgstr "Traducir el contenido del libro a los idiomas de salida."
 msgid "Translate the book into additional languages. Each language is generated alongside the original, ready for narration, captions, and on-page reading."
 msgstr "Traduce el libro a idiomas adicionales. Cada idioma se genera junto al original, listo para narración, subtítulos y lectura en página."
 
-#~ msgid "Translate the book into other languages and generate narration. Run these after the enhancements you want included are in place."
-#~ msgstr "Traduce el libro a otros idiomas y genera narración. Ejecuta estas etapas después de que las mejoras que deseas incluir estén en su lugar."
-
 msgid "Translate the book into other languages and generate narration. These stages are optional — skip them if your book doesn't need multilingual or audio output."
 msgstr "Traduce el libro a otros idiomas y genera narración. Estas etapas son opcionales: omítelas si tu libro no necesita salida multilingüe o de audio."
 
@@ -5854,9 +5800,6 @@ msgstr "Plantilla de dos columnas para contenido narrativo"
 msgid "Type"
 msgstr "Tipo"
 
-#~ msgid "Type class name or search..."
-#~ msgstr "Escriba nombre de clase o busque..."
-
 msgid "Typed Sections"
 msgstr "Secciones Escritas"
 
@@ -5916,9 +5859,6 @@ msgstr "Restaurar imagen"
 
 msgid "Unsaved changes"
 msgstr "Cambios sin guardar"
-
-#~ msgid "Unsaved:"
-#~ msgstr "Sin guardar:"
 
 msgid "Untangling nested divs with care..."
 msgstr "Desenredando divs anidados con cuidado..."
@@ -6031,9 +5971,6 @@ msgstr "Utilizada para modelos Claude (claude-opus-4-6, claude-sonnet-4-6, etc.)
 msgid "Used for Gemini models — both LLM (gemini-2.5-pro, etc.) and TTS (gemini-2.5-pro-preview-tts, etc.)"
 msgstr "Utilizada para modelos Gemini — tanto LLM (gemini-2.5-pro, etc.) como TTS (gemini-2.5-pro-preview-tts, etc.)"
 
-#~ msgid "Validate, preview, and export the final ADT bundle for delivery."
-#~ msgstr "Valida, previsualiza y exporta el paquete ADT final para su entrega."
-
 msgid "Validation"
 msgstr "Validation"
 
@@ -6043,9 +5980,6 @@ msgstr "Errores de validación ({0})"
 
 msgid "Variables"
 msgstr "Variables"
-
-#~ msgid "Variant:"
-#~ msgstr "Variante:"
 
 msgid "Variations"
 msgstr "Variaciones"

@@ -628,9 +628,6 @@ msgstr "Add Book"
 msgid "Add checklist item to this section"
 msgstr "Add checklist item to this section"
 
-#~ msgid "Add class"
-#~ msgstr "Add class"
-
 msgid "Add custom instructions"
 msgstr "Add custom instructions"
 
@@ -1471,9 +1468,6 @@ msgstr "Condensation"
 msgid "Config"
 msgstr "Config"
 
-#~ msgid "Configure"
-#~ msgstr "Configure"
-
 msgid "Configure activity detection and image processing options for extracted content. Hover any setting to see how it affects the preview."
 msgstr "Configure activity detection and image processing options for extracted content. Hover any setting to see how it affects the preview."
 
@@ -1683,9 +1677,6 @@ msgstr "Custom Layout Demo"
 
 msgid "Custom section {index}"
 msgstr "Custom section {index}"
-
-#~ msgid "Custom:"
-#~ msgstr "Custom:"
 
 msgid "Debug mode is not enabled."
 msgstr "Debug mode is not enabled."
@@ -2100,9 +2091,6 @@ msgstr "Enter a valid minimum dimension (whole number ≥ 0)"
 
 msgid "Enter a valid project name"
 msgstr "Enter a valid project name"
-
-#~ msgid "Enter hex color and press Enter"
-#~ msgstr "Enter hex color and press Enter"
 
 msgid "EPUB"
 msgstr "EPUB"
@@ -2530,14 +2518,8 @@ msgstr "Go to {stageLabel}"
 msgid "Go to book"
 msgstr "Go to book"
 
-#~ msgid "Go to Export"
-#~ msgstr "Go to Export"
-
 msgid "Go to home"
 msgstr "Go to home"
-
-#~ msgid "Go to Image Captions"
-#~ msgstr "Go to Image Captions"
 
 msgid "Go to Storyboard"
 msgstr "Go to Storyboard"
@@ -3502,9 +3484,6 @@ msgstr "No link"
 msgid "No log entries found yet."
 msgstr "No log entries found yet."
 
-#~ msgid "No matches"
-#~ msgstr "No matches"
-
 msgid "No matches for \"{search}\""
 msgstr "No matches for \"{search}\""
 
@@ -3742,12 +3721,6 @@ msgstr "Optional"
 msgid "Optional Features"
 msgstr "Optional Features"
 
-#~ msgid "Optional features to enrich the book — accessibility, comprehension, and navigation. Run any of these in any order once the core pipeline is complete."
-#~ msgstr "Optional features to enrich the book — accessibility, comprehension, and navigation. Run any of these in any order once the core pipeline is complete."
-
-#~ msgid "Optional features to enrich the book — accessibility, comprehension, navigation, translations, and audio. Run any of these in any order once the core pipeline is complete."
-#~ msgstr "Optional features to enrich the book — accessibility, comprehension, navigation, translations, and audio. Run any of these in any order once the core pipeline is complete."
-
 msgid "Optional instructions for the LLM..."
 msgstr "Optional instructions for the LLM..."
 
@@ -3957,9 +3930,6 @@ msgstr "paragraph"
 msgid "Paragraph"
 msgstr "Paragraph"
 
-#~ msgid "Parallel enrichment"
-#~ msgstr "Parallel enrichment"
-
 msgid "Parsing pages"
 msgstr "Parsing pages"
 
@@ -4116,9 +4086,6 @@ msgstr "Preset"
 
 msgid "Presets add recommendations and specific settings for your use case. You still choose each option step by step, and you can go back to select a different preset at any time."
 msgstr "Presets add recommendations and specific settings for your use case. You still choose each option step by step, and you can go back to select a different preset at any time."
-
-#~ msgid "Press Enter to add"
-#~ msgstr "Press Enter to add"
 
 msgid "Prev"
 msgstr "Prev"
@@ -4328,9 +4295,6 @@ msgstr "Readium-compatible digital book"
 msgid "Reads in"
 msgstr "Reads in"
 
-#~ msgid "Ready"
-#~ msgstr "Ready"
-
 msgid "Real books processed with this preset — before and after."
 msgstr "Real books processed with this preset — before and after."
 
@@ -4349,9 +4313,6 @@ msgstr "Recommended for"
 #. placeholder {0}: i18n._(presetLabel)
 msgid "Recommended for {0}"
 msgstr "Recommended for {0}"
-
-#~ msgid "Recommended for accessibility"
-#~ msgstr "Recommended for accessibility"
 
 msgid "Record reviewer findings for the current page and save them to the active validation session."
 msgstr "Record reviewer findings for the current page and save them to the active validation session."
@@ -4448,9 +4409,6 @@ msgstr "Render Reasoning"
 msgid "Render Strategy"
 msgstr "Render Strategy"
 
-#~ msgid "rendering"
-#~ msgstr "rendering"
-
 msgid "Rendering Prompt"
 msgstr "Rendering Prompt"
 
@@ -4502,9 +4460,6 @@ msgstr "Reset to inherited defaults"
 msgid "Resolving source language..."
 msgstr "Resolving source language..."
 
-#~ msgid "Responsive / State variants"
-#~ msgstr "Responsive / State variants"
-
 msgid "Restart and install"
 msgstr "Restart and install"
 
@@ -4535,9 +4490,6 @@ msgstr "Retry"
 
 msgid "Retry Export"
 msgstr "Retry Export"
-
-#~ msgid "Review"
-#~ msgstr "Review"
 
 msgid "Review areas with the most items marked as needing changes in this session."
 msgstr "Review areas with the most items marked as needing changes in this session."
@@ -5002,9 +4954,6 @@ msgstr "Self-contained ADT web app"
 
 msgid "Separator"
 msgstr "Separator"
-
-#~ msgid "Sequential stages that turn the source PDF into structured, rendered content. Run these in order."
-#~ msgstr "Sequential stages that turn the source PDF into structured, rendered content. Run these in order."
 
 msgid "serious"
 msgstr "serious"
@@ -5761,9 +5710,6 @@ msgstr "Translate the book content to output languages."
 msgid "Translate the book into additional languages. Each language is generated alongside the original, ready for narration, captions, and on-page reading."
 msgstr "Translate the book into additional languages. Each language is generated alongside the original, ready for narration, captions, and on-page reading."
 
-#~ msgid "Translate the book into other languages and generate narration. Run these after the enhancements you want included are in place."
-#~ msgstr "Translate the book into other languages and generate narration. Run these after the enhancements you want included are in place."
-
 msgid "Translate the book into other languages and generate narration. These stages are optional — skip them if your book doesn't need multilingual or audio output."
 msgstr "Translate the book into other languages and generate narration. These stages are optional — skip them if your book doesn't need multilingual or audio output."
 
@@ -5854,9 +5800,6 @@ msgstr "Two-column template for story content"
 msgid "Type"
 msgstr "Type"
 
-#~ msgid "Type class name or search..."
-#~ msgstr "Type class name or search..."
-
 msgid "Typed Sections"
 msgstr "Typed Sections"
 
@@ -5916,9 +5859,6 @@ msgstr "Unprune image"
 
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
-
-#~ msgid "Unsaved:"
-#~ msgstr "Unsaved:"
 
 msgid "Untangling nested divs with care..."
 msgstr "Untangling nested divs with care..."
@@ -6031,9 +5971,6 @@ msgstr "Used for Claude models (claude-opus-4-6, claude-sonnet-4-6, etc.)"
 msgid "Used for Gemini models — both LLM (gemini-2.5-pro, etc.) and TTS (gemini-2.5-pro-preview-tts, etc.)"
 msgstr "Used for Gemini models — both LLM (gemini-2.5-pro, etc.) and TTS (gemini-2.5-pro-preview-tts, etc.)"
 
-#~ msgid "Validate, preview, and export the final ADT bundle for delivery."
-#~ msgstr "Validate, preview, and export the final ADT bundle for delivery."
-
 msgid "Validation"
 msgstr "Validation"
 
@@ -6043,9 +5980,6 @@ msgstr "Validation Errors ({0})"
 
 msgid "Variables"
 msgstr "Variables"
-
-#~ msgid "Variant:"
-#~ msgstr "Variant:"
 
 msgid "Variations"
 msgstr "Variations"
