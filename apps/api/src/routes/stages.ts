@@ -134,6 +134,16 @@ export function createStageRoutes(
     return c.json({ status: result.status, label, fromStage, toStage })
   })
 
+  // POST /books/:label/stages/cancel — Stop the active run, keep completed work.
+  // Stages stop scheduling new work and any unfinished step is recorded as
+  // not-complete, so downstream stages stay gated. Re-running resumes cheaply
+  // (completed per-page work is persisted and cached LLM calls are reused).
+  app.post("/books/:label/stages/cancel", (c) => {
+    const { label } = c.req.param()
+    const result = stageService.cancelStageRun(label)
+    return c.json({ cancelled: result.cancelled, label })
+  })
+
   // GET /books/:label/step-status — Unified stage + step status
   // DB step_runs is the single source of truth for step/stage state.
   // Only "queued" comes from the in-memory run queue.
@@ -284,6 +294,11 @@ export function createStageRoutes(
                     label: event.label,
                     error: event.error,
                   }),
+                })
+              } else if (event.type === "stage-run-cancelled") {
+                await stream.writeSSE({
+                  event: "cancelled",
+                  data: JSON.stringify({ label: event.label }),
                 })
               } else if (event.type === "task") {
                 await stream.writeSSE({

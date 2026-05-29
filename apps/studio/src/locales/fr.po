@@ -1197,6 +1197,9 @@ msgstr "Appels"
 msgid "Cancel"
 msgstr "Annuler"
 
+msgid "Cancel run"
+msgstr "Annuler l'exécution"
+
 #. placeholder {0}: String(MAX_ENTRIES)
 msgid "capped at {0}"
 msgstr "limité à {0}"

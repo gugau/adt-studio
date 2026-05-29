@@ -114,6 +114,10 @@ function toErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err)
 }
 
+/** Recorded as the step error when a run is cancelled mid-step. */
+const CANCEL_MESSAGE =
+  "Cancelled before this step finished. Completed pages are kept — re-run to resume."
+
 function isGeminiTtsRateLimitMessage(message: string): boolean {
   return /\(429\)|quota exceeded|rate limit|too many requests/i.test(message)
 }
@@ -152,10 +156,14 @@ export function buildStageRunnerImageClassifyConfig(
 async function processWithConcurrency<T>(
   items: T[],
   concurrency: number,
-  fn: (item: T) => Promise<void>
+  fn: (item: T) => Promise<void>,
+  signal?: AbortSignal,
 ): Promise<void> {
   const executing = new Set<Promise<void>>()
   for (const item of items) {
+    // Cancellation: stop scheduling new work. In-flight items are still awaited
+    // below so their persisted output is never lost or written after teardown.
+    if (signal?.aborted) break
     const p = fn(item).finally(() => {
       executing.delete(p)
     })
@@ -228,6 +236,7 @@ interface GenerateSpeechWordTimestampsOptions {
   textByLanguage: Map<string, Map<string, string>>
   concurrency: number
   progress: StageRunProgress
+  signal?: AbortSignal
 }
 
 async function generateSpeechWordTimestamps(
@@ -246,6 +255,7 @@ async function generateSpeechWordTimestamps(
     textByLanguage,
     concurrency,
     progress,
+    signal,
   } = options
 
   const entriesByLanguage = new Map<string, Record<string, WordTimestampEntry>>()
@@ -315,6 +325,7 @@ async function generateSpeechWordTimestamps(
         emitWordTimestampStepProgress(progress, completed, workItems.length, failedItems.length)
       }
     },
+    signal,
   )
 
   return { entriesByLanguage, failedItems }
@@ -364,6 +375,16 @@ export function createStageRunner(): StageRunner {
       try {
         const trackingProgress: StageRunProgress = {
           emit(event) {
+            // If a cancel has already landed, an in-flight step's "complete"
+            // event must NOT mark the step done — that would let the next stage
+            // treat a partial step as finished. Record it as a non-complete
+            // terminal state instead so the stage stays gated and the user can
+            // resume (per-page work that finished is already persisted).
+            if (options.signal?.aborted && event.type === "step-complete") {
+              completionStorage.recordStepError(event.step, CANCEL_MESSAGE)
+              progress.emit({ type: "step-error", step: event.step, error: CANCEL_MESSAGE })
+              return
+            }
             if (event.type === "step-start") {
               completionStorage.markStepStarted(event.step)
             } else if (event.type === "step-complete") {
@@ -380,8 +401,20 @@ export function createStageRunner(): StageRunner {
         }
 
         for (let i = fromIndex; i <= toIndex; i++) {
+          if (options.signal?.aborted) break
           const stage = STAGE_ORDER[i]
           await STAGE_RUNNERS[stage](label, options, trackingProgress)
+          if (options.signal?.aborted) break
+        }
+
+        if (options.signal?.aborted) {
+          // Safety net: any step still "running" when the cancel landed (and not
+          // already converted above) becomes a non-complete terminal state.
+          for (const row of completionStorage.getStepRuns()) {
+            if (row.status === "running") {
+              completionStorage.recordStepError(row.step, CANCEL_MESSAGE)
+            }
+          }
         }
       } finally {
         completionStorage.close()
@@ -565,22 +598,22 @@ async function runExtractStep(
 
     await runFilterPass(
       label, pages, storage, imageClassifyConfig,
-      effectiveConcurrency, pageResults, failedPages, progress
+      effectiveConcurrency, pageResults, failedPages, progress, options.signal
     )
 
     await runMeaningfulnessPass(
       label, pages, storage, meaningfulnessConfig, meaningfulnessModel,
-      effectiveConcurrency, pageResults, failedPages, progress
+      effectiveConcurrency, pageResults, failedPages, progress, options.signal
     )
 
     await runSegmentationPass(
       label, pages, storage, segmentationConfig, segmentationModel,
-      effectiveConcurrency, pageResults, progress
+      effectiveConcurrency, pageResults, progress, options.signal
     )
 
     await runCroppingPass(
       label, pages, storage, croppingConfig, croppingModel,
-      effectiveConcurrency, pageResults, progress
+      effectiveConcurrency, pageResults, progress, options.signal
     )
 
     if (failedPages.length > 0) {
@@ -736,6 +769,7 @@ async function runSectioningStep(
           })
         }
       },
+      options.signal,
     )
 
     if (failedPages.length > 0) {
@@ -865,6 +899,7 @@ async function runStoryboardStep(
       `[stage-run] ${label}: rendering storyboard for ${totalPages} pages (concurrency=${effectiveConcurrency})`
     )
 
+    progress.emit({ type: "step-start", step: "web-rendering" })
     let completedRendering = 0
     const failedPages: string[] = []
 
@@ -946,7 +981,8 @@ async function runStoryboardStep(
             error: `${page.pageId} failed: ${msg}`,
           })
         }
-      }
+      },
+      options.signal,
     )
 
     if (failedPages.length > 0) {
@@ -1221,7 +1257,8 @@ async function runCaptionsStep(
             error: `${page.pageId} failed: ${msg}`,
           })
         }
-      }
+      },
+      options.signal,
     )
 
     if (failedPages.length > 0) {
@@ -1562,7 +1599,8 @@ async function runTranslateStep(
             page: completedBatches,
             totalPages: totalBatches,
           })
-        }
+        },
+        options.signal,
       )
 
       for (const lang of targetLanguages) {
@@ -1729,7 +1767,7 @@ async function runTranslateStep(
               totalPages: total,
             })
           }
-        })
+        }, options.signal)
 
         progress.emit({ type: "step-complete", step: "image-translation" })
         console.log(`[stage-run] ${label}: image translation complete (${completed}/${total})`)
@@ -2045,7 +2083,8 @@ async function runSpeechStep(
 
         completedItems++
         emitSpeechStepProgress(progress, completedItems, totalItems, failedItems.length)
-      }
+      },
+      options.signal,
     )
 
     if (failedItems.length > 0) {
@@ -2091,6 +2130,7 @@ async function runSpeechStep(
         textByLanguage,
         concurrency: effectiveConcurrency,
         progress,
+        signal: options.signal,
       })
       wordTimestampsByLang = generatedWordTimestamps.entriesByLanguage
       timestampFailedItems = generatedWordTimestamps.failedItems
@@ -2140,6 +2180,7 @@ async function runFilterPass(
   results: Map<string, ImageClassificationOutput>,
   failedPages: string[],
   progress: StageRunProgress,
+  signal?: AbortSignal,
 ): Promise<void> {
   const total = pages.length
   let completed = 0
@@ -2169,7 +2210,7 @@ async function runFilterPass(
         totalPages: total,
       })
     }
-  })
+  }, signal)
   progress.emit({ type: "step-complete", step: "image-filtering" })
 }
 
@@ -2183,6 +2224,7 @@ async function runMeaningfulnessPass(
   results: Map<string, ImageClassificationOutput>,
   failedPages: string[],
   progress: StageRunProgress,
+  signal?: AbortSignal,
 ): Promise<void> {
   if (!config || !model) {
     progress.emit({ type: "step-skip", step: "image-meaningfulness" })
@@ -2252,7 +2294,7 @@ async function runMeaningfulnessPass(
         totalPages: total,
       })
     }
-  })
+  }, signal)
   progress.emit({ type: "step-complete", step: "image-meaningfulness" })
 }
 
@@ -2265,6 +2307,7 @@ async function runSegmentationPass(
   concurrency: number,
   results: Map<string, ImageClassificationOutput>,
   progress: StageRunProgress,
+  signal?: AbortSignal,
 ): Promise<void> {
   if (!config || !model) {
     progress.emit({ type: "step-skip", step: "image-segmentation" })
@@ -2359,7 +2402,7 @@ async function runSegmentationPass(
         totalPages: total,
       })
     }
-  })
+  }, signal)
   progress.emit({ type: "step-complete", step: "image-segmentation" })
 }
 
@@ -2372,6 +2415,7 @@ async function runCroppingPass(
   concurrency: number,
   results: Map<string, ImageClassificationOutput>,
   progress: StageRunProgress,
+  signal?: AbortSignal,
 ): Promise<void> {
   if (!config || !model) {
     progress.emit({ type: "step-skip", step: "image-cropping" })
@@ -2458,6 +2502,6 @@ async function runCroppingPass(
         totalPages: total,
       })
     }
-  })
+  }, signal)
   progress.emit({ type: "step-complete", step: "image-cropping" })
 }

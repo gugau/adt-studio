@@ -588,6 +588,11 @@ export const api = {
       }
     ),
 
+  cancelRun: (label: string) =>
+    request<{ cancelled: boolean; label: string }>(`/books/${label}/stages/cancel`, {
+      method: "POST",
+    }),
+
   getStagesStatus: (label: string) =>
     request<StageRunStatus>(`/books/${label}/stages/status`),
 

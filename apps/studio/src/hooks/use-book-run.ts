@@ -66,6 +66,8 @@ export interface BookRunContextValue {
   isStatusLoading: boolean
   /** Queue a stage run */
   queueRun(options: QueueRunOptions): void
+  /** Cancel the active run. Completed pages are kept; re-run to resume. */
+  cancelRun(): void
 }
 
 const BookRunContext = createContext<BookRunContextValue | null>(null)
@@ -231,6 +233,14 @@ export function useBookRunStatus(label: string): BookRunContextValue {
       invalidateBookQueries(queryClient, label)
     })
 
+    // Run cancelled — the interrupted step is recorded as not-complete in the DB.
+    // Refetch to reconcile; completed pages are preserved.
+    es.addEventListener("cancelled", () => {
+      progressRef.current.clear()
+      queryClient.invalidateQueries({ queryKey: stepStatusKey(label) })
+      invalidateBookQueries(queryClient, label)
+    })
+
     es.addEventListener("error", (e) => {
       if (es.readyState === EventSource.CLOSED) return
       const me = e as MessageEvent
@@ -383,6 +393,16 @@ export function useBookRunStatus(label: string): BookRunContextValue {
   )
 
   // ------------------------------------------------------------------
+  // cancelRun — stop the active run; the authoritative state arrives via
+  // the "cancelled" SSE event (after in-flight work settles).
+  // ------------------------------------------------------------------
+  const cancelRun = useCallback(() => {
+    api.cancelRun(label).catch(() => {
+      // Ignore — the SSE stream reconciles the real state.
+    })
+  }, [label])
+
+  // ------------------------------------------------------------------
   // Accessors
   // ------------------------------------------------------------------
   const stageState = useCallback(
@@ -428,6 +448,7 @@ export function useBookRunStatus(label: string): BookRunContextValue {
     isRunning,
     isStatusLoading: isPending,
     queueRun,
+    cancelRun,
   }
 }
 
