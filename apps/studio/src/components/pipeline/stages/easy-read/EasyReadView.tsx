@@ -6,6 +6,7 @@ import { api } from "@/api/client"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { useApiKey } from "@/hooks/use-api-key"
+import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
 import { useBookRun } from "@/hooks/use-book-run"
 import { StageRunCard } from "../../components/StageRunCard"
 import { EasyReadEditor } from "./EasyReadEditor"
@@ -20,6 +21,8 @@ export function EasyReadView({
   const { t } = useLingui()
   const { apiKey, hasApiKey } = useApiKey()
   const { isRunning, queueRun, stageState } = useBookRun()
+  const { data: bookConfigData } = useBookConfig(bookLabel)
+  const updateConfig = useUpdateBookConfig()
   const status = stageState("easy-read")
   const isStageRunning = status === "running" || status === "queued"
 
@@ -30,10 +33,21 @@ export function EasyReadView({
   })
   const hasBlocks = (data?.blocks?.length ?? 0) > 0
 
-  const handleRun = useCallback(() => {
+  // Generate/regenerate through the normal stage runner so the run shows up in
+  // the bottom-left progress like every other stage. The easy-read stage is
+  // gated on `easy_read.enabled`, so make sure it is on before queueing.
+  const runEasyRead = useCallback(async () => {
     if (!hasApiKey || isRunning) return
+    const current = (bookConfigData?.config ?? {}) as Record<string, unknown>
+    const easyReadCfg = (current.easy_read ?? {}) as Record<string, unknown>
+    if (easyReadCfg.enabled !== true) {
+      await updateConfig.mutateAsync({
+        label: bookLabel,
+        config: { easy_read: { ...easyReadCfg, enabled: true } },
+      })
+    }
     queueRun({ fromStage: "easy-read", toStage: "easy-read", apiKey })
-  }, [apiKey, hasApiKey, isRunning, queueRun])
+  }, [apiKey, hasApiKey, isRunning, bookConfigData?.config, bookLabel, updateConfig, queueRun])
 
   if (isLoading && !data) {
     return (
@@ -54,7 +68,7 @@ export function EasyReadView({
           stageSlug="easy-read"
           isRunning={isStageRunning}
           completed={status === "done"}
-          onRun={handleRun}
+          onRun={() => void runEasyRead()}
           disabled={!hasApiKey || isRunning}
         />
 
@@ -78,9 +92,9 @@ export function EasyReadView({
       <EasyReadEditor
         bookLabel={bookLabel}
         selectedPageId={selectedPageId}
-        isRunning={isRunning}
+        isRunning={isRunning || isStageRunning}
         hasApiKey={hasApiKey}
-        apiKey={apiKey}
+        onRegenerate={() => void runEasyRead()}
       />
     </div>
   )

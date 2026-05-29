@@ -11,13 +11,13 @@ export function EasyReadEditor({
   selectedPageId,
   isRunning,
   hasApiKey,
-  apiKey,
+  onRegenerate,
 }: {
   bookLabel: string
   selectedPageId?: string
   isRunning: boolean
   hasApiKey: boolean
-  apiKey: string
+  onRegenerate: () => void
 }) {
   const { t } = useLingui()
   const queryClient = useQueryClient()
@@ -61,15 +61,7 @@ export function EasyReadEditor({
     },
   })
 
-  const regenerateMutation = useMutation({
-    mutationFn: () => api.regenerateEasyRead(bookLabel, apiKey),
-    onSuccess: async () => {
-      setDraftBlocks(null)
-      await invalidateEasyReadDependents()
-    },
-  })
-  const mutationError =
-    getErrorMessage(regenerateMutation.error) ?? getErrorMessage(saveMutation.error)
+  const mutationError = getErrorMessage(saveMutation.error)
 
   const updateEntry = (
     blockKey: { pageId: string; sectionId: string; sectionIndex: number },
@@ -116,10 +108,10 @@ export function EasyReadEditor({
           size="sm"
           variant="outline"
           className="h-7 px-2 text-xs"
-          disabled={!hasApiKey || isRunning || regenerateMutation.isPending}
-          onClick={() => regenerateMutation.mutate()}
+          disabled={!hasApiKey || isRunning}
+          onClick={onRegenerate}
         >
-          {regenerateMutation.isPending ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <WandSparkles className="mr-1 h-3 w-3" />}
+          {isRunning ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <WandSparkles className="mr-1 h-3 w-3" />}
           {t`Generate`}
         </Button>
       </div>
@@ -170,11 +162,11 @@ export function EasyReadEditor({
             size="sm"
             variant="outline"
             className="h-7 px-2 text-xs"
-            disabled={!hasApiKey || isRunning || regenerateMutation.isPending || dirty}
-            onClick={() => regenerateMutation.mutate()}
+            disabled={!hasApiKey || isRunning || dirty}
+            onClick={onRegenerate}
             title={dirty ? t`Save or discard edits before regenerating` : t`Regenerate Easy Read`}
           >
-            {regenerateMutation.isPending ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <RotateCcw className="mr-1 h-3 w-3" />}
+            {isRunning ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <RotateCcw className="mr-1 h-3 w-3" />}
             {t`Regenerate`}
           </Button>
         </div>
