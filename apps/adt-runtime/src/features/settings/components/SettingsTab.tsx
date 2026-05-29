@@ -12,6 +12,7 @@ import {
   wordHighlightModeAtom,
 } from "@/features/audio/state/audio.atoms";
 import {
+  easyReadModeAtom,
   iconSizeAtom,
   reduceMotionAtom,
   stateModeAtom,
@@ -31,7 +32,8 @@ export function SettingsTab() {
   const iconSizeLocked = isSettingLocked(config, "iconSize");
   const reduceMotionLocked = isSettingLocked(config, "reduceMotion");
   const showAccessibilitySection =
-    !themeLocked || !iconSizeLocked || !reduceMotionLocked;
+    !themeLocked || !iconSizeLocked || !reduceMotionLocked || !!features.easyRead;
+  const [easyRead, setEasyRead] = useAtom(easyReadModeAtom);
   const [stateMode, setStateMode] = useAtom(stateModeAtom);
   const [readAloud, setReadAloud] = useAtom(readAloudModeAtom);
   const [autoplay, setAutoplay] = useAtom(autoplayModeAtom);
@@ -106,6 +108,13 @@ export function SettingsTab() {
         <SettingsSection
           title={t("settings-section-accessibility") || "Accessibility"}
         >
+          {features.easyRead ? (
+            <ToggleRow
+              label={t("easy-read-label") || "Easy Read"}
+              checked={easyRead}
+              onChange={wrap("EasyRead", setEasyRead)}
+            />
+          ) : null}
           {!themeLocked ? (
             <SegmentedRow<Theme>
               label={t("theme-label") || "Theme"}
