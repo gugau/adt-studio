@@ -12,18 +12,19 @@ import { getStageLabelI18n } from "../pipeline-i18n";
 import { SETTINGS_STAGE_SLUGS } from "../settings-routing";
 import {
   BookView,
-  ExtractView,
-  SectioningView,
-  StoryboardView,
+  ExtractIndex,
+  SectioningIndex,
+  StoryboardIndex,
   QuizzesView,
-  CaptionsView,
-  GlossaryView,
-  TocView,
-  TranslationsView,
-  SignLanguageView,
+  CaptionsIndex,
+  GlossaryIndex,
+  TocIndex,
+  LanguageIndex,
+  SpeechIndex,
+  SignLanguageLandingPage,
   PreviewView,
   ValidationView,
-  ExportView,
+  ExportLandingPage,
 } from "../stages";
 import { cn } from "@/lib/utils";
 import { Trans } from "@lingui/react/macro";
@@ -60,21 +61,23 @@ interface ViewEntry {
   fullHeight?: boolean;
 }
 
+
+// TODO: Remove the fullHeight flag once we have a landing page for sectioning
 const VIEW_MAP: Record<string, ViewEntry> = {
   book: { component: BookView },
-  extract: { component: ExtractView, fullHeight: true },
-  sectioning: { component: SectioningView, fullHeight: true },
-  storyboard: { component: StoryboardView, fullHeight: true },
+  extract: { component: ExtractIndex, fullHeight: true },
+  sectioning: { component: SectioningIndex, fullHeight: true },
+  storyboard: { component: StoryboardIndex, fullHeight: true },
   quizzes: { component: QuizzesView },
-  captions: { component: CaptionsView },
-  glossary: { component: GlossaryView },
-  toc: { component: TocView },
-  translate: { component: TranslationsView, fullHeight: true },
-  speech: { component: TranslationsView, fullHeight: true },
-  "sign-language": { component: SignLanguageView, fullHeight: true },
+  captions: { component: CaptionsIndex, fullHeight: true },
+  glossary: { component: GlossaryIndex, fullHeight: true },
+  toc: { component: TocIndex, fullHeight: true },
+  translate: { component: LanguageIndex, fullHeight: true },
+  speech: { component: SpeechIndex, fullHeight: true },
+  "sign-language": { component: SignLanguageLandingPage, fullHeight: true },
   validation: { component: ValidationView, fullHeight: true },
   preview: { component: PreviewView, fullHeight: true },
-  export: { component: ExportView, fullHeight: true },
+  export: { component: ExportLandingPage, fullHeight: true },
 };
 
 export function StepViewRouter({
@@ -169,7 +172,7 @@ export function StepViewRouter({
 
         {/* Step content */}
         {entry.fullHeight ? (
-          <div className="flex-1 min-h-0 overflow-auto">
+          <div className="flex flex-1 flex-col min-h-0 overflow-auto">
             <View
               bookLabel={bookLabel}
               stageSlug={step}
@@ -178,7 +181,7 @@ export function StepViewRouter({
             />
           </div>
         ) : (
-          <div className="flex-1 min-h-0 overflow-auto p-4">
+          <div className="flex flex-1 flex-col min-h-0 overflow-auto p-4">
             <View
               bookLabel={bookLabel}
               stageSlug={step}

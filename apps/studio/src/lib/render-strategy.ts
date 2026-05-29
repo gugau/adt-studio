@@ -7,9 +7,12 @@ type RenderStrategyMap = Record<string, RenderStrategyLike>
 export function listSelectableRenderStrategies(
   strategies: RenderStrategyMap
 ): string[] {
-  return Object.keys(strategies).filter(
-    (name) => strategies[name]?.render_type !== "activity"
-  )
+  return Object.keys(strategies).filter((name) => {
+    const type = strategies[name]?.render_type
+    // `activity` strategies are auto-assigned to matching section types.
+    // `fixed_layout` is a book-wide rendering mode, not a per-section override.
+    return type !== "activity" && type !== "fixed_layout"
+  })
 }
 
 export function chooseDefaultRenderStrategyFallback(

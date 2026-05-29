@@ -38,6 +38,7 @@ COPY tsconfig.json ./
 COPY packages/ ./packages/
 COPY apps/api/ ./apps/api/
 COPY apps/studio/ ./apps/studio/
+COPY apps/adt-runtime/ ./apps/adt-runtime/
 
 # Read-only code assets required during build (prompts, templates, global config)
 COPY prompts/ ./prompts/
@@ -66,6 +67,7 @@ RUN --mount=type=cache,target=/root/.npm \
         dependencies: { \
           esbuild: p.devDependencies.esbuild, \
           tailwindcss: p.dependencies.tailwindcss, \
+          '@tailwindcss/postcss': p.dependencies['@tailwindcss/postcss'], \
           postcss: p.dependencies.postcss, \
           playwright: p.dependencies.playwright, \
           jsdom: p.dependencies.jsdom \

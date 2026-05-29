@@ -198,6 +198,10 @@ export {
   type PipelineDAGResult,
 } from "./dag.js"
 export {
+  packageEpub,
+  type PackageEpubOptions,
+} from "./package-epub.js"
+export {
   packageAdtWeb,
   packageWebpub,
   computePackagingInputHash,
@@ -229,3 +233,4 @@ export {
   type BuildBrowserAccessibilityRecheckPlanOptions,
 } from "./browser-accessibility-assessment.js"
 export { mergeAccessibilityResults } from "./accessibility-assessment-shared.js"
+export { processFixedLayoutPages, isFixedLayoutBook } from "./fixed-layout-rendering.js"

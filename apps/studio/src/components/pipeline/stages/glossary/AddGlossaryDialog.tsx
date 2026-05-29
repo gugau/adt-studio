@@ -250,7 +250,14 @@ export function AddGlossaryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent
+        style={
+          {
+            "--accent-color": "#65a30d",
+            "--ring": "#65a30d",
+          } as React.CSSProperties
+        }
+      >
         <DialogHeader>
           <DialogTitle>{t`Add Glossary Term`}</DialogTitle>
           <DialogDescription>
@@ -389,7 +396,11 @@ export function AddGlossaryDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t`Cancel`}
           </Button>
-          <Button onClick={handleSubmit} disabled={generating}>
+          <Button
+            onClick={handleSubmit}
+            disabled={generating}
+            className="bg-lime-600 text-white hover:bg-lime-700 border-0"
+          >
             {t`Add Term`}
           </Button>
         </DialogFooter>

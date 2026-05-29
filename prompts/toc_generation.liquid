@@ -11,7 +11,11 @@ I will provide you with section headings extracted from a book in {{ language }}
   - Level 3 = Subsection or minor heading
 - Return entries in reading order (same order as provided).
 - Use the exact sectionId from the input for each entry.
+{% if mode == "dynamic" %}
+- **Rewrite each title** into a short, descriptive chapter or section name that reflects what the section is about. Use the original heading as inspiration, but you may rephrase, condense, or invent an evocative title. Keep titles concise (under ~60 characters) and in the same language as the source ({{ language }}).
+{% else %}
 - Use the exact title text from the input — do not rephrase or translate.
+{% endif %}
 
 {% if has_original_toc %}
 I will also provide the original table of contents page from the book. Use it as **the primary guide for structure**:

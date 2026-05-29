@@ -7,8 +7,8 @@ import { api } from "@/api/client"
 import { isElectron } from "@/lib/utils"
 import { useBookTasks } from "./use-book-tasks"
 import type { ExportFeatureToggles } from "./use-export-features"
-
-type ExportFormat = "project" | "webpub" | "scorm" | "adt"
+import type { CapturedSettings } from "./use-preview-settings-listener"
+import type { ExportFormat } from "@/components/pipeline/stages/export/export-formats"
 
 interface PendingExport {
   taskId: string
@@ -22,7 +22,11 @@ interface ExportError {
 }
 
 export interface ExportWatcherValue {
-  startExport: (format: ExportFormat, features?: ExportFeatureToggles) => void
+  startExport: (
+    format: ExportFormat,
+    features?: ExportFeatureToggles,
+    defaultSettings?: CapturedSettings,
+  ) => void
   isPreparing: boolean
   preparingFormat: ExportFormat | null
   error: ExportError | null
@@ -72,8 +76,15 @@ export function useExportWatcherSetup(label: string): ExportWatcherValue {
   }, [pendingExport, getTask, i18n, label])
 
   const prepareMutation = useMutation({
-    mutationFn: ({ format, features }: { format: ExportFormat; features?: ExportFeatureToggles }) =>
-      api.prepareExport(label, format, features),
+    mutationFn: ({
+      format,
+      features,
+      defaultSettings,
+    }: {
+      format: ExportFormat
+      features?: ExportFeatureToggles
+      defaultSettings?: CapturedSettings
+    }) => api.prepareExport(label, format, features, defaultSettings),
     onMutate: () => setError(null),
     onSuccess: (result, { format, features }) => {
       if (result.taskId) {
@@ -93,8 +104,11 @@ export function useExportWatcherSetup(label: string): ExportWatcherValue {
     ?? (prepareMutation.isPending ? prepareMutation.variables?.format ?? null : null)
 
   return {
-    startExport: (format: ExportFormat, features?: ExportFeatureToggles) =>
-      prepareMutation.mutate({ format, features }),
+    startExport: (
+      format: ExportFormat,
+      features?: ExportFeatureToggles,
+      defaultSettings?: CapturedSettings,
+    ) => prepareMutation.mutate({ format, features, defaultSettings }),
     isPreparing:
       prepareMutation.isPending || pendingExport !== null || downloadingFormat !== null,
     preparingFormat,
@@ -114,6 +128,8 @@ async function triggerExportDownload(
     blob = await api.exportProject(label)
   } else if (format === "webpub") {
     blob = await api.exportWebpub(label)
+  } else if (format === "epub") {
+    blob = await api.exportEpub(label)
   } else if (format === "scorm") {
     blob = await api.exportScorm(label)
   } else {
@@ -132,6 +148,7 @@ async function triggerExportDownload(
     webpub: { ext: "webpub", suffix: "", filterName: i18n._(msg`WebPub`) },
     scorm: { ext: "zip", suffix: "-scorm", filterName: i18n._(msg`SCORM Package`) },
     adt: { ext: "zip", suffix: "-adt", filterName: i18n._(msg`ADT Package`) },
+    epub: { ext: "epub", suffix: "", filterName: i18n._(msg`EPUB`) },
   }
   /* eslint-enable lingui/no-unlocalized-strings */
   const meta = formatMeta[format]

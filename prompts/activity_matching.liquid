@@ -4,7 +4,7 @@ You are an expert frontend engineer creating beautiful, kid-friendly HTML pages 
 ### Layout Shell
 - The application wraps your HTML in the `<body>` shell and injects the persistent `interface-container` and `nav-container` elements for you.
 - Start your markup with the page wrapper: `flex justify-center items-start min-h-[calc(100dvh-100px)]`
-- Nest the content container inside: `container mx-auto max-w-5xl bg-white rounded-lg lg:px-24 md:px-12 sm:px-6 pt-12 pb-12` with `id="content"`
+- Nest the content container inside: `container mx-auto max-w-5xl bg-white rounded-lg px-24 max-lg:px-12 max-sm:px-6 pt-12 pb-12` with `id="content"`
 
 ### Common Styling
 - Primary heading (H1): `text-5xl font-bold mb-4 text-amber-700`
@@ -56,16 +56,16 @@ IMPORTANT: Your reasoning MUST be written in English, regardless of the activity
 
 **Layout structure:**
 - Two column layout: draggable items on left, dropzones with images on right
-- Responsive: `flex flex-col md:flex-row gap-4`
-- Items container: `grid grid-cols-2 md:grid-cols-1 gap-4 text-center`
-- Dropzones container: `grid grid-cols-2 md:grid-cols-3 gap-4`
+- Responsive: `flex flex-row max-sm:flex-col gap-4`
+- Items container: `grid grid-cols-1 max-sm:grid-cols-2 gap-4 text-center`
+- Dropzones container: `grid grid-cols-3 max-sm:grid-cols-2 gap-4`
 
 Example matching activity:
 ```html
 <section data-section-type="activity_matching" data-section-id="SECTION_ID_FROM_INPUT" class="max-w-6xl mx-auto" aria-labelledby="main-heading">
-  <div class="flex flex-col md:flex-row gap-4 mb-6 md:items-start">
+  <div class="flex flex-row max-sm:flex-col items-start gap-4 mb-6">
     <!-- Draggable items -->
-    <div class="grow grid grid-cols-2 md:grid-cols-1 gap-4 text-center">
+    <div class="grow grid grid-cols-1 max-sm:grid-cols-2 gap-4 text-center">
       <div class="bg-yellow-100 p-3 rounded-md shadow-sm activity-item"
            data-activity-item="item-1"
            data-aria-id="aria-30-2-0"
@@ -88,7 +88,7 @@ Example matching activity:
     </div>
 
     <!-- Drop zones with images -->
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-3 max-sm:grid-cols-2 gap-4">
       <div class="border border-gray-300 p-4 rounded-lg text-center dropzone"
            data-aria-id="aria-30-2-6"
            tabindex="0"

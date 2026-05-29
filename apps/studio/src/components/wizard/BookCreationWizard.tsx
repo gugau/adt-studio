@@ -5,8 +5,6 @@ import { Eye, ArrowLeft, ArrowRight, Zap, Loader2 } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
 import { useNavigate } from "@tanstack/react-router"
 import { Button } from "@/components/ui/button"
-import { api } from "@/api/client"
-import { useApiKey } from "@/hooks/use-api-key"
 import { useBooks, useCreateBook } from "@/hooks/use-books"
 import { useWizard } from "./index"
 import { useWizardForm } from "./wizardForm"
@@ -198,7 +196,6 @@ export function BookCreationWizard() {
   const form = useWizardForm()
   const createMutation = useCreateBook()
   const { data: books, isPending: booksLoading } = useBooks()
-  const { apiKey, hasApiKey, azureKey, azureRegion, geminiKey } = useApiKey()
   const [previewOpen, setPreviewOpen] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
@@ -269,19 +266,6 @@ export function BookCreationWizard() {
         config: buildConfigOverrides(values),
       })
 
-      if (hasApiKey && apiKey) {
-        try {
-          await api.runStages(
-            book.label,
-            apiKey,
-            { fromStage: "extract", toStage: "sectioning" },
-            { azure: { key: azureKey, region: azureRegion }, geminiApiKey: geminiKey },
-          )
-        } catch (pipelineError) {
-          console.error("[wizard] pipeline kickoff failed:", pipelineError)
-        }
-      }
-
       navigate({ to: "/books/$label/$step", params: { label: book.label, step: "book" } })
     } catch (error) {
       creatingRef.current = false
@@ -291,11 +275,15 @@ export function BookCreationWizard() {
   }
   const previewWidth = currentStep === 2 ? getPreviewWidth(renderStrategy) : 650
 
+  const isFixedLayout = values.renderStrategy === "fixed_layout"
+
   function renderPreviewContent({mobileMode}: {mobileMode: boolean} = {mobileMode: false}) {
     if (currentStep === 1) return <PdfCoverPreview file={file} width={650} height={812} />
     if (currentStep === 2) return <LayoutPreview strategy={renderStrategy} />
-    if (currentStep === 3)
+    if (currentStep === 3) {
+      if (isFixedLayout) return <PdfCoverPreview file={file} width={650} height={812} />
       return <ImageProcessingPreviewPane focus={previewFocus} mobile={mobileMode} />
+    }
     if (currentStep === 4)
       return <LanguagesPreviewPane editingLanguage={editingLanguage} outputLanguages={outputLanguages} />
     if (currentStep === 5)

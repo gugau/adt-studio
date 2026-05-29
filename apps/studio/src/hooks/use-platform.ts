@@ -1,10 +1,9 @@
 import { useMemo } from "react"
-import { isElectron } from "@/lib/utils"
 
 export type DesktopOS = "windows" | "macos" | "linux"
 
 function resolveDesktopOS(): DesktopOS {
-  if (isElectron() && typeof window !== "undefined" && window.api?.platform) {
+  if (typeof window !== "undefined" && window.api?.platform) {
     switch (window.api.platform) {
       case "darwin":
         return "macos"

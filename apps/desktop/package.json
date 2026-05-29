@@ -1,6 +1,6 @@
 {
   "name": "@adt/desktop",
-  "version": "0.7.0-rc.6",
+  "version": "0.7.0-rc.8",
   "description": "An Electron Version of ADT STUDIO",
   "main": "./out/main/index.js",
   "private": true,
@@ -60,11 +60,5 @@
     "tailwindcss": "^4.0.0",
     "typescript": "^5.9.3",
     "vite": "^7.2.6"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "electron",
-      "esbuild"
-    ]
   }
 }

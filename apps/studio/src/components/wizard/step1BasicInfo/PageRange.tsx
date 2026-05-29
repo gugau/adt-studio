@@ -1,6 +1,6 @@
 import { useStore } from "@tanstack/react-form"
 import { useWizardForm } from "@/components/wizard/wizardForm"
-import { RangeSlider } from "@/components/wizard/shared/RangeSlider"
+import { RangeSlider } from "@/components/ui/range-slider"
 import { getPresetAccent } from "@/components/wizard/constants"
 import { usePdfField } from "./PdfField"
 import { t } from "@lingui/core/macro"

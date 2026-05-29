@@ -4,7 +4,7 @@ import { Zip, ZipDeflate, ZipPassThrough } from "fflate"
 import { HTTPException } from "hono/http-exception"
 import { parseBookLabel } from "@adt/types"
 import { createBookStorage } from "@adt/storage"
-import { packageAdtWeb, packageWebpub, loadBookConfig, normalizeLocale } from "@adt/pipeline"
+import { packageAdtWeb, packageWebpub, packageEpub, loadBookConfig, normalizeLocale, isFixedLayoutBook } from "@adt/pipeline"
 
 /** File extensions that are already compressed — skip deflation to save CPU */
 const COMPRESSED_EXTS = new Set([
@@ -56,6 +56,17 @@ export interface ExportFeatures {
   languages?: string[]
 }
 
+export interface ExportDefaultSettings {
+  dockLayout?: {
+    width?: "compact" | "full"
+    position?: "top" | "bottom"
+    align?: "center" | "spread"
+  }
+  theme?: "light" | "dark" | "system"
+  iconSize?: "sm" | "md" | "lg"
+  reduceMotion?: boolean
+}
+
 /**
  * Prepare export by rebuilding the adt/ (and optionally webpub/) directories.
  * Called as a separate step before the actual download so the client can show
@@ -63,11 +74,12 @@ export interface ExportFeatures {
  */
 export async function prepareExport(
   label: string,
-  format: "project" | "webpub" | "scorm" | "adt",
+  format: "project" | "webpub" | "scorm" | "adt" | "epub",
   booksDir: string,
   webAssetsDir: string,
   configPath?: string,
   features?: ExportFeatures,
+  defaultSettingsOverride?: ExportDefaultSettings,
 ): Promise<void> {
   const safeLabel = parseBookLabel(label)
   const resolvedDir = path.resolve(booksDir)
@@ -101,6 +113,39 @@ export async function prepareExport(
       ? normalizedRequested.filter((lang) => outputLanguages.includes(lang))
       : outputLanguages
 
+    const yamlDefaultSettings = config.default_settings
+      ? {
+          ...(config.default_settings.dock_layout
+            ? { dockLayout: config.default_settings.dock_layout }
+            : {}),
+          ...(config.default_settings.theme !== undefined
+            ? { theme: config.default_settings.theme }
+            : {}),
+          ...(config.default_settings.icon_size !== undefined
+            ? { iconSize: config.default_settings.icon_size }
+            : {}),
+          ...(config.default_settings.reduce_motion !== undefined
+            ? { reduceMotion: config.default_settings.reduce_motion }
+            : {}),
+        }
+      : undefined
+
+    // Preview-captured values (from request body) override YAML per top-level
+    // key. dockLayout merges one level deep — fields the override didn't touch
+    // fall back to YAML.
+    const mergedDefaultSettings = (() => {
+      if (!yamlDefaultSettings && !defaultSettingsOverride) return undefined
+      const yaml = yamlDefaultSettings ?? {}
+      const override = defaultSettingsOverride ?? {}
+      return {
+        ...yaml,
+        ...override,
+        ...(yaml.dockLayout || override.dockLayout
+          ? { dockLayout: { ...yaml.dockLayout, ...override.dockLayout } }
+          : {}),
+      }
+    })()
+
     const opts = {
       bookDir,
       label: safeLabel,
@@ -111,12 +156,17 @@ export async function prepareExport(
       applyBodyBackground: config.apply_body_background,
       speechConfig: config.speech,
       features,
+      defaultSettings: mergedDefaultSettings,
+      lockedSettings: config.locked_settings,
+      fixedLayout: isFixedLayoutBook(config),
     }
 
     await packageAdtWeb(storage, opts)
 
     if (format === "webpub") {
       packageWebpub(storage, opts)
+    } else if (format === "epub") {
+      packageEpub(storage, opts)
     }
   } finally {
     storage.close()
@@ -213,6 +263,46 @@ export async function exportAdt(
     stream: createZipStream(adtDir),
     filename: `${title}-adt.zip`,
     safeFilename: `${safeLabel}-adt.zip`,
+  }
+}
+
+export interface EpubExportResult {
+  stream: ReadableStream<Uint8Array>
+  filename: string
+  safeFilename: string
+}
+
+export async function exportEpub(
+  label: string,
+  booksDir: string,
+): Promise<EpubExportResult> {
+  const safeLabel = parseBookLabel(label)
+  const resolvedDir = path.resolve(booksDir)
+  const bookDir = path.join(resolvedDir, safeLabel)
+
+  if (!fs.existsSync(bookDir)) {
+    throw new Error(`Book not found: ${safeLabel}`)
+  }
+
+  let title = safeLabel
+  const storage = createBookStorage(safeLabel, resolvedDir)
+  try {
+    const metadataRow = storage.getLatestNodeData("metadata", "book")
+    const metadata = metadataRow?.data as { title?: string | null } | null
+    title = metadata?.title ?? safeLabel
+  } finally {
+    storage.close()
+  }
+
+  const epubDir = path.join(bookDir, "epub")
+  if (!fs.existsSync(epubDir)) {
+    throw new Error("EPUB directory not found — run prepare-export first")
+  }
+
+  return {
+    stream: createZipStream(epubDir),
+    filename: `${title}.epub`,
+    safeFilename: `${safeLabel}.epub`,
   }
 }
 

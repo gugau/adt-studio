@@ -9,6 +9,7 @@ import type {
   ReviewerValidationSection,
   ReviewerValidationSession,
 } from "@adt/types"
+import type { ExportFormat } from "@/components/pipeline/stages/export/export-formats"
 
 export type { BookSummary, BookDetail }
 
@@ -235,6 +236,13 @@ export interface PageDetail {
   imageCaptioning: {
     captions: Array<{ imageId: string; reasoning: string; caption: string }>
   } | null
+  /** Per-image metadata (dimensions + optional PDF-point placement bounds). */
+  imagesMeta: Array<{
+    imageId: string
+    width: number
+    height: number
+    bounds?: { x: number; y: number; width: number; height: number }
+  }>
   versions: {
     imageClassification: number | null
     imageCropping: number | null
@@ -527,6 +535,9 @@ export const api = {
   getBooks: () => request<BookSummary[]>("/books"),
 
   getBook: (label: string) => request<BookDetail>(`/books/${label}`),
+
+  getSourcePdfInfo: (label: string) =>
+    request<{ pageCount: number }>(`/books/${label}/source-pdf/info`),
 
   createBook: (label: string, pdf: File, config?: Record<string, unknown>) => {
     const formData = new FormData()
@@ -1169,14 +1180,23 @@ export const api = {
 
   prepareExport: (
     label: string,
-    format: "project" | "webpub" | "scorm" | "adt" = "project",
-    features?: { glossary?: boolean; readAloud?: boolean; quizzes?: boolean; signLanguage?: boolean; languages?: string[] }
+    format: ExportFormat = "project",
+    features?: { glossary?: boolean; readAloud?: boolean; quizzes?: boolean; signLanguage?: boolean; languages?: string[] },
+    defaultSettings?: {
+      dockLayout?: { width?: "compact" | "full"; position?: "top" | "bottom"; align?: "center" | "spread" }
+      theme?: "light" | "dark" | "system"
+      iconSize?: "sm" | "md" | "lg"
+      reduceMotion?: boolean
+    },
   ) => {
+    const body: Record<string, unknown> = {}
+    if (features) body.features = features
+    if (defaultSettings) body.defaultSettings = defaultSettings
     return request<{ taskId?: string; status: string; label: string }>(
       `/books/${label}/prepare-export?format=${format}`,
       {
         method: "POST",
-        body: features ? JSON.stringify({ features }) : undefined,
+        body: Object.keys(body).length > 0 ? JSON.stringify(body) : undefined,
       }
     )
   },
@@ -1219,6 +1239,26 @@ export const api = {
     }
     const buf = await res.arrayBuffer()
     return new Blob([buf], { type: "application/zip" })
+  },
+
+  exportEpub: async (label: string): Promise<Blob | null> => {
+    if (!isDesktop()) {
+      triggerDirectDownload(`${BASE_URL}/books/${label}/export-epub`)
+      return null
+    }
+    const url = `${BASE_URL}/books/${label}/export-epub`
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/epub+zip" },
+      mode: "cors",
+      signal: AbortSignal.timeout(300_000),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ error: res.statusText }))
+      throw new Error(body.error ?? `EPUB export failed: ${res.status}`)
+    }
+    const buf = await res.arrayBuffer()
+    return new Blob([buf], { type: "application/epub+zip" })
   },
 
   exportScorm: async (label: string): Promise<Blob | null> => {

@@ -42,15 +42,18 @@ describe("raven.pdf extraction", () => {
     expect(result.pages[0].text).toContain("Tony Lelliott");
   });
 
-  it("page 1 — extracts 2 images with correct hashes", () => {
+  it("page 1 — extracts 2 raster images with correct hashes", () => {
     const imgs = result.pages[0].images;
-    expect(imgs).toHaveLength(2);
-    expect(imgs[0].imageId).toBe("pg001_im001");
-    expect(imgs[0].hash).toBe("f7c69061b5fb89ed");
-    expect(imgs[0].width).toBe(546);
-    expect(imgs[0].height).toBe(546);
-    expect(imgs[1].imageId).toBe("pg001_im002");
-    expect(imgs[1].hash).toBe("14b8a1e04e930b83");
+    const rasters = imgs.filter((i) => i.renderMethod === "raster");
+    expect(rasters).toHaveLength(2);
+    expect(rasters[0].imageId).toBe("pg001_im001");
+    expect(rasters[0].hash).toBe("f7c69061b5fb89ed");
+    expect(rasters[0].width).toBe(546);
+    expect(rasters[0].height).toBe(546);
+    expect(rasters[1].imageId).toBe("pg001_im002");
+    // Hash reflects RGBA output (color + SMask alpha composited). Was
+    // opaque-black before SMask handling landed.
+    expect(rasters[1].hash).toBe("8965a2a0ee0f63ae");
   });
 
   // -- Page 2 --
@@ -66,11 +69,13 @@ describe("raven.pdf extraction", () => {
     expect(text).toContain("friends");
   });
 
-  it("page 2 — extracts 2 images with correct hashes", () => {
+  it("page 2 — extracts 2 raster images with correct hashes", () => {
     const imgs = result.pages[1].images;
-    expect(imgs).toHaveLength(2);
-    expect(imgs[0].hash).toBe("2bdb94c1a5f96fe7");
-    expect(imgs[1].hash).toBe("f7c69061b5fb89ed");
+    const rasters = imgs.filter((i) => i.renderMethod === "raster");
+    expect(rasters).toHaveLength(2);
+    // Hash reflects RGBA output (color + SMask alpha composited).
+    expect(rasters[0].hash).toBe("0e15f84a869b4f66");
+    expect(rasters[1].hash).toBe("f7c69061b5fb89ed");
   });
 
   // -- Page 3 --
@@ -85,10 +90,12 @@ describe("raven.pdf extraction", () => {
     expect(text).toContain("into the sky");
   });
 
-  it("page 3 — extracts 2 images with correct hashes", () => {
+  it("page 3 — extracts 2 raster images with correct hashes", () => {
     const imgs = result.pages[2].images;
-    expect(imgs).toHaveLength(2);
-    expect(imgs[0].hash).toBe("1aecee2cc36cd072");
-    expect(imgs[1].hash).toBe("b20ccebb2681ac27");
+    const rasters = imgs.filter((i) => i.renderMethod === "raster");
+    expect(rasters).toHaveLength(2);
+    // Hash reflects RGBA output (color + SMask alpha composited).
+    expect(rasters[0].hash).toBe("360de701626b47da");
+    expect(rasters[1].hash).toBe("b20ccebb2681ac27");
   });
 });

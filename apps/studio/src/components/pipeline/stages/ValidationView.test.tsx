@@ -50,6 +50,10 @@ vi.mock("@/hooks/use-reviewer-validation", () => ({
   useReviewerValidationCatalog: (...args: unknown[]) => reviewerCatalogMock(...args),
 }))
 
+vi.mock("@/hooks/use-all-pages-pruned", () => ({
+  useAllPagesPruned: () => ({ allPruned: false, isLoading: false }),
+}))
+
 vi.mock("@/components/validation/AccessibilityValidationTabs", () => ({
   AccessibilityOverviewTab: ({ label }: { label: string }) => <div>accessibility-summary:{label}</div>,
 }))

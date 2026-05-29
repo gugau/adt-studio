@@ -1,6 +1,17 @@
 import { createHash } from "node:crypto"
 import fs from "node:fs"
+import os from "node:os"
 import path from "node:path"
+import { fileURLToPath, pathToFileURL } from "node:url"
+
+/**
+ * Tailwind v4 resolves `@import "tailwindcss"` relative to the postcss `from`
+ * path. webAssetsDir / book directories don't have their own node_modules,
+ * so we route the postcss invocation through this package's own directory
+ * where tailwindcss + @tailwindcss/postcss are installed.
+ */
+const PIPELINE_PACKAGE_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
+const TAILWIND_VIRTUAL_FROM = path.join(PIPELINE_PACKAGE_DIR, "_tailwind_input.css")
 import { parseDocument, DomUtils } from "htmlparser2"
 import temml from "temml"
 import type { Storage } from "@adt/storage"
@@ -44,6 +55,18 @@ export interface PackageAdtWebOptions {
     quizzes?: boolean
     signLanguage?: boolean
   }
+  defaultSettings?: {
+    dockLayout?: {
+      width?: "compact" | "full"
+      position?: "top" | "bottom"
+      align?: "center" | "spread"
+    }
+    theme?: "light" | "dark" | "system"
+    iconSize?: "sm" | "md" | "lg"
+    reduceMotion?: boolean
+  }
+  lockedSettings?: ("dockLayout" | "theme" | "iconSize" | "reduceMotion")[]
+  fixedLayout?: boolean
 }
 
 interface PageEntry {
@@ -77,7 +100,7 @@ function collectDirectoryFingerprint(dirPath: string, prefix = ""): Array<[strin
   return entries
 }
 
-function getWordTimestamps(
+export function getWordTimestamps(
   storage: Storage,
   language: string,
 ): WordTimestampOutput | undefined {
@@ -188,6 +211,9 @@ export async function packageAdtWeb(
     applyBodyBackground,
     speechConfig,
     features,
+    defaultSettings,
+    lockedSettings,
+    fixedLayout,
   } = options
   const language = normalizeLocale(rawLanguage)
   const outputLanguages = Array.from(new Set(rawOutputLanguages.map((code) => normalizeLocale(code))))
@@ -316,6 +342,17 @@ export async function packageAdtWeb(
 
           const headingText = sectionMeta ? findHeadingText(sectionMeta) : null
 
+          // For fixed-layout pages, extract viewport from the rendered content div.
+          // Viewport matches content dimensions (2x render scale) exactly — no
+          // transform needed, Apple Books scales the viewport to fit the screen.
+          let fixedViewport: { width: number; height: number } | undefined
+          if (fixedLayout) {
+            const vp = rewrittenHtml.match(/width:(\d+)px;height:(\d+)px/)
+            if (vp) {
+              fixedViewport = { width: parseInt(vp[1], 10), height: parseInt(vp[2], 10) }
+            }
+          }
+
           const pageHtml = renderPageHtml({
             content: rewrittenHtml,
             language,
@@ -327,6 +364,7 @@ export async function packageAdtWeb(
             hasMath: sectionHasMath,
             bundleVersion,
             applyBodyBackground,
+            fixedViewport,
           })
           fs.writeFileSync(path.join(adtDir, filename), pageHtml)
 
@@ -580,7 +618,7 @@ export async function packageAdtWeb(
 
   const hasSignLanguageVideos = (features?.signLanguage !== false) && storage.getSignLanguageVideos().some((v) => v.sectionId !== null)
 
-  const configJson = {
+  const configJson: Record<string, unknown> = {
     title,
     bundleVersion,
     languages: {
@@ -609,6 +647,15 @@ export async function packageAdtWeb(
       trackerUrl: "https://unisitetracker.unicef.io/matomo.php",
       srcUrl: "https://unisitetracker.unicef.io/matomo.js",
     },
+  }
+  if (defaultSettings && Object.keys(defaultSettings).length > 0) {
+    configJson.defaultSettings = defaultSettings
+  }
+  if (lockedSettings && lockedSettings.length > 0) {
+    configJson.lockedSettings = lockedSettings
+  }
+  if (fixedLayout) {
+    configJson.fixedLayout = true
   }
 
   // ------------------------------------------------------------------
@@ -657,7 +704,13 @@ export async function packageAdtWeb(
   const activityIds = collectActivityIds(adtDir, pageList)
   generateScormAdapter(assetsDir, activityIds)
 
-  // Offline preloader must run last — it reads the final state of all files
+  // Inline fonts as base64 in fonts.css so `@font-face` works under file://
+  // (browsers treat each file:// path as a unique origin and block cross-origin
+  // font requests; data: URIs sidestep this entirely).
+  inlineFontsInCss(adtDir)
+
+  // Offline preloader must run after all asset writes — it snapshots the
+  // final state of every file it inlines (page HTML, content JSON, nav.html).
   generateOfflinePreloader(adtDir, outputLanguages)
 
   generateImsManifest(adtDir, title, label, pageList)
@@ -737,7 +790,7 @@ export function packageWebpub(
 
   // Inject CSS into HTML pages to prevent readers (e.g. Thorium) from applying
   // column-based pagination which breaks the single-page ADT layout.
-  injectWebpubStyles(webpubDir)
+  injectWebpubStyles(webpubDir, { fixedLayout: options.fixedLayout })
 
   // Load metadata for manifest
   const metadataRow = storage.getLatestNodeData("metadata", "book")
@@ -801,8 +854,8 @@ export function packageWebpub(
   writeJson(path.join(webpubDir, "manifest.json"), manifest)
 }
 
-const WEBPUB_OVERRIDE_CSS = `<style>
-/* ── WebPub / EPUB reader overrides ──
+const REFLOWABLE_OVERRIDE_CSS = `<style>
+/* ── WebPub / EPUB reader overrides (reflowable) ──
    EPUB readers like Thorium inject their own column-based pagination.
    The ADT pages use Tailwind flex centering and responsive breakpoints
    that don't work well in reflowable EPUB viewports. Override everything
@@ -856,18 +909,73 @@ img {
 }
 </style>`
 
+const FIXED_LAYOUT_OVERRIDE_CSS = `<style>
+/* ── EPUB reader overrides (fixed-layout) ──
+   Preserve absolute positioning for fixed-layout pages while
+   ensuring content is visible and the viewport is respected. */
+
+/* Prevent reader column pagination */
+:root, html, body {
+  columns: auto !important;
+  column-width: auto !important;
+  column-count: auto !important;
+  column-gap: normal !important;
+}
+
+/* Body: fill viewport, no flex centering */
+body {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: auto !important;
+  overflow: hidden !important;
+}
+
+/* Override Tailwind Preflight img reset that breaks positioned images */
+#content img {
+  max-width: none !important;
+}
+
+/* Content wrapper: preserve position:relative and explicit dimensions */
+#content {
+  opacity: 1 !important;
+  margin: 0 !important;
+}
+
+/* Positioned text must stay absolute */
+.text-overlay {
+  position: absolute !important;
+}
+.text-overlay p {
+  position: absolute !important;
+}
+
+/* SMIL media-overlay active class — declared in the OPF as
+   media:active-class. EPUB readers toggle this on the active text
+   element during read-aloud playback. */
+.-epub-media-overlay-active {
+  background: rgba(255, 235, 59, 0.4);
+  border-radius: 0.15em;
+}
+</style>`
+
+export interface InjectWebpubStylesOptions {
+  fixedLayout?: boolean
+}
+
 /**
  * Walk all .html files in `dir` and inject a `<style>` block right before
  * `</head>` that overrides reader-injected column pagination CSS.
  */
-function injectWebpubStyles(dir: string): void {
+export function injectWebpubStyles(dir: string, options?: InjectWebpubStylesOptions): void {
+  const css = options?.fixedLayout ? FIXED_LAYOUT_OVERRIDE_CSS : REFLOWABLE_OVERRIDE_CSS
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const fullPath = path.join(dir, entry.name)
     if (entry.isDirectory()) {
-      injectWebpubStyles(fullPath)
+      injectWebpubStyles(fullPath, options)
     } else if (entry.isFile() && entry.name.endsWith(".html")) {
       let html = fs.readFileSync(fullPath, "utf-8")
-      html = html.replace("</head>", `${WEBPUB_OVERRIDE_CSS}\n</head>`)
+      html = html.replace("</head>", `${css}\n</head>`)
       fs.writeFileSync(fullPath, html)
     }
   }
@@ -916,6 +1024,9 @@ export interface RenderPageOptions {
   /** When true, renders a minimal page without navigation/sidebar chrome.
    *  Content is visible immediately (no opacity-0). Used for storyboard preview. */
   embed?: boolean
+  /** Fixed viewport dimensions for fixed-layout pages (e.g., pre-paginated EPUB).
+   *  When set, overrides the responsive viewport meta with a fixed size. */
+  fixedViewport?: { width: number; height: number }
 }
 
 /**
@@ -964,11 +1075,13 @@ export function renderPageHtml(opts: RenderPageOptions): string {
   // a duplicate #content element.
   // Inject opacity-0 into the existing wrapper for the fade-in animation (skip in embed mode).
   const contentAlreadyWrapped = /^\s*<div\b[^>]*\bid="content"/.test(normalizedContent)
+  const skipOpacity = opts.embed || opts.fixedViewport
+
   const contentBlock = opts.skipContentWrapper
     ? `      ${normalizedContent}`
     : contentAlreadyWrapped
-      ? `      ${!opts.embed ? injectOpacityClass(normalizedContent) : normalizedContent}`
-      : `      <div id="content"${opts.embed ? "" : ` class="opacity-0"`}>
+      ? `      ${!skipOpacity ? injectOpacityClass(normalizedContent) : normalizedContent}`
+      : `      <div id="content"${skipOpacity ? "" : ` class="opacity-0"`}>
         ${normalizedContent}
       </div>`
 
@@ -978,7 +1091,11 @@ export function renderPageHtml(opts: RenderPageOptions): string {
     : `      <h1 class="sr-only" id="page-heading">${escapeHtml(fallbackPageHeading)}</h1>
 `
 
-  const mainBlock = `    <main class="w-full">
+  const mainBlock = opts.fixedViewport
+    ? `    <main>
+${contentBlock}
+    </main>`
+    : `    <main class="w-full">
 ${fallbackHeadingHtml}${contentBlock}
     </main>`
 
@@ -991,17 +1108,17 @@ ${fallbackHeadingHtml}${contentBlock}
       : ""
   }
 
-  // In embed mode, hide all interface chrome except the submit/reset buttons
+  // In embed mode, hide non-essential chrome. The React runtime mounts the
+  // activity Submit/Skip buttons inside #nav-container, so it must stay
+  // visible — BottomDock self-hides via embedModeAtom (see ui.atoms.ts).
   const embedStyles = opts.embed
     ? `
     <style>
       /* Hide navigation, sidebar, and other chrome in embed mode */
-      #nav-container, #back-forward-buttons, #nav-popup,
+      #back-forward-buttons, #nav-popup,
       #open-sidebar, #sidebar, #tts-quick-toggle-button, #play-bar,
       #sl-quick-toggle-button, #sign-language-video,
       #explain-me-button, #eli5-content, #notepad-button, #notepad-content { display: none !important; }
-      /* Keep submit/reset container fixed at bottom-right in embed mode */
-      #submit-reset-container { position: fixed !important; bottom: 1rem; right: 1rem; z-index: 50; }
     </style>`
     : ""
 
@@ -1010,22 +1127,20 @@ ${fallbackHeadingHtml}${contentBlock}
 
 <head>
     <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <meta name="viewport" content="${opts.fixedViewport ? `width=${opts.fixedViewport.width}, height=${opts.fixedViewport.height}` : "width=device-width, initial-scale=1"}" />
     <title>${escapeHtml(opts.pageTitle)}</title>
     <meta name="title-id" content="${escapeAttr(opts.sectionId)}" />
     <meta name="page-section-id" content="${opts.pageIndex}" />
-    <link rel="preload" href="./assets/fonts/Merriweather-VariableFont.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="./assets/fonts/Merriweather-Italic-VariableFont.woff2" as="font" type="font/woff2" crossorigin>
     <link href="./content/tailwind_output.css" rel="stylesheet">
     <link href="./assets/libs/fontawesome/css/all.min.css" rel="stylesheet">
     <link href="./assets/fonts.css" rel="stylesheet">
 ${mathScript}${embedStyles}</head>
 
-<body class="min-h-screen flex items-center justify-center"${bodyStyle}>
+<body${opts.fixedViewport ? ` style="margin:0;overflow:hidden;width:${opts.fixedViewport.width}px;height:${opts.fixedViewport.height}px"` : ` class="min-h-screen flex items-center justify-center"${bodyStyle}`}>
 ${mainBlock}
 ${answersScript}
     <div class="relative z-50" id="interface-container"></div>
-    <div class="relative z-50" id="nav-container"${opts.embed ? ' style="display:none"' : ""}></div>
+    <div class="relative z-50" id="nav-container"></div>
 ${opts.embed
       ? `    <script src="./assets/base.bundle.min.js?v=${escapeAttr(opts.bundleVersion)}" type="module"></script>`
       : `    <script src="./assets/offline-preloader.js"></script>
@@ -1332,11 +1447,14 @@ export function rewriteImageUrls(
         delete img.attribs.width
         delete img.attribs.height
         const existingStyle = img.attribs.style ?? ""
-        const sizeStyle = "max-width: 100%; height: auto;"
-        if (!existingStyle.includes("max-width")) {
-          img.attribs.style = existingStyle
-            ? `${existingStyle.trimEnd().replace(/;$/, "")}; ${sizeStyle}`
-            : sizeStyle
+        // Don't add responsive sizing to absolutely-positioned images (fixed-layout)
+        if (!existingStyle.includes("position:absolute")) {
+          const sizeStyle = "max-width: 100%; height: auto;"
+          if (!existingStyle.includes("max-width")) {
+            img.attribs.style = existingStyle
+              ? `${existingStyle.trimEnd().replace(/;$/, "")}; ${sizeStyle}`
+              : sizeStyle
+          }
         }
       }
     }
@@ -1352,11 +1470,14 @@ export function rewriteImageUrls(
       delete img.attribs.width
       delete img.attribs.height
       const existingStyle = img.attribs.style ?? ""
-      const sizeStyle = "max-width: 100%; height: auto;"
-      if (!existingStyle.includes("max-width")) {
-        img.attribs.style = existingStyle
-          ? `${existingStyle.trimEnd().replace(/;$/, "")}; ${sizeStyle}`
-          : sizeStyle
+      // Don't add responsive sizing to absolutely-positioned images (fixed-layout)
+      if (!existingStyle.includes("position:absolute")) {
+        const sizeStyle = "max-width: 100%; height: auto;"
+        if (!existingStyle.includes("max-width")) {
+          img.attribs.style = existingStyle
+            ? `${existingStyle.trimEnd().replace(/;$/, "")}; ${sizeStyle}`
+            : sizeStyle
+        }
       }
     }
 
@@ -1668,48 +1789,35 @@ async function buildTailwindCss(
 
   // Dynamic imports to avoid issues if not installed
   const postcss = (await import("postcss")).default
-  const tailwindcss = (await import("tailwindcss")).default
+  // @tailwindcss/postcss is the Tailwind v4 plugin. Theme/colors live in CSS
+  // (tailwind_css.css → globals.css) via the @theme inline directive, so the
+  // plugin needs no JS-side config.
+  const tailwindcss = (await import("@tailwindcss/postcss")).default
 
   const inputCssPath = path.join(webAssetsDir, "tailwind_css.css")
   const inputCss = fs.existsSync(inputCssPath)
     ? fs.readFileSync(inputCssPath, "utf-8")
-    : "@tailwind base;\n@tailwind components;\n@tailwind utilities;"
+    : '@import "tailwindcss";'
 
-  const tailwindConfig = {
-    content: [
-      path.join(adtDir, "**/*.html"),
-      path.join(adtDir, "**/*.js"),
-    ],
-    theme: {
-      extend: {
-        keyframes: {
-          tutorialPopIn: {
-            "0%": { opacity: "0", transform: "scale(0.9)" },
-            "100%": { opacity: "1", transform: "scale(1)" },
-          },
-          pulseBorder: {
-            "0%": { boxShadow: "0 0 0 0 rgba(49,130,206,0.7)" },
-            "70%": { boxShadow: "0 0 0 10px rgba(49,130,206,0)" },
-            "100%": { boxShadow: "0 0 0 0 rgba(49,130,206,0)" },
-          },
-        },
-        animation: {
-          tutorialPopIn: "tutorialPopIn 0.3s ease-out forwards",
-          pulseBorder: "pulseBorder 2s infinite",
-        },
-        boxShadow: {
-          tutorial: "0 0 0 4px rgba(49,130,206,0.3)",
-        },
-      },
-    },
-    plugins: [],
-  }
+  // Inject content sources via @source directives. Tailwind v4 scans only
+  // files on disk, so compiled chrome bundles + book HTML files are
+  // referenced by absolute path.
+  const sourceDirectives = [
+    `@source "${toPosix(path.join(adtDir, "**/*.html"))}";`,
+    `@source "${toPosix(path.join(adtDir, "**/*.js"))}";`,
+  ].join("\n")
 
-  const result = await postcss([tailwindcss(tailwindConfig)]).process(inputCss, {
-    from: undefined,
-  })
+  const result = await postcss([tailwindcss({ base: adtDir })]).process(
+    `${sourceDirectives}\n${inputCss}`,
+    { from: TAILWIND_VIRTUAL_FROM },
+  )
 
   fs.writeFileSync(outputPath, result.css)
+}
+
+/** Convert Windows backslashes to forward slashes for `@source` paths. */
+function toPosix(p: string): string {
+  return p.replace(/\\/g, "/")
 }
 
 /**
@@ -1721,59 +1829,37 @@ export async function buildPreviewTailwindCss(
   webAssetsDir: string,
 ): Promise<string> {
   const postcss = (await import("postcss")).default
-  const tailwindcss = (await import("tailwindcss")).default
+  const tailwindcss = (await import("@tailwindcss/postcss")).default
 
   const inputCssPath = path.join(webAssetsDir, "tailwind_css.css")
   const inputCss = fs.existsSync(inputCssPath)
     ? fs.readFileSync(inputCssPath, "utf-8")
-    : "@tailwind base;\n@tailwind components;\n@tailwind utilities;"
+    : '@import "tailwindcss";'
 
-  // Also scan the ADT bundle assets for Tailwind classes used by the interface
-  const contentSources: Array<{ raw: string; extension: string }> = [
-    { raw: contentHtml, extension: "html" },
-  ]
-  for (const file of ["interface.html", "base.bundle.min.js"]) {
-    const filePath = path.join(webAssetsDir, file)
-    if (fs.existsSync(filePath)) {
-      contentSources.push({
-        raw: fs.readFileSync(filePath, "utf-8"),
-        extension: path.extname(file).slice(1),
-      })
-    }
+  // Tailwind v4 scans files on disk only — there's no equivalent to v3's
+  // `content: [{ raw, extension }]`. For dynamic content (HTML built from
+  // the DB rows), write to a temp file and reference it via @source.
+  // For chrome classes, scan apps/adt-runtime/src directly so JSX class
+  // strings are picked up before they get minified into the bundle.
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "adt-twv4-"))
+  const tempHtml = path.join(tempDir, "preview-content.html")
+  fs.writeFileSync(tempHtml, contentHtml)
+
+  const sourceDirectives = [
+    `@source "${toPosix(tempHtml)}";`,
+    `@source "${toPosix(path.resolve(webAssetsDir, "../../apps/adt-runtime/src"))}";`,
+    `@source "${toPosix(path.join(webAssetsDir, "base.bundle.min.js"))}";`,
+  ].join("\n")
+
+  try {
+    const result = await postcss([tailwindcss({ base: webAssetsDir })]).process(
+      `${sourceDirectives}\n${inputCss}`,
+      { from: TAILWIND_VIRTUAL_FROM },
+    )
+    return result.css
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true })
   }
-
-  const tailwindConfig = {
-    content: contentSources,
-    theme: {
-      extend: {
-        keyframes: {
-          tutorialPopIn: {
-            "0%": { opacity: "0", transform: "scale(0.9)" },
-            "100%": { opacity: "1", transform: "scale(1)" },
-          },
-          pulseBorder: {
-            "0%": { boxShadow: "0 0 0 0 rgba(49,130,206,0.7)" },
-            "70%": { boxShadow: "0 0 0 10px rgba(49,130,206,0)" },
-            "100%": { boxShadow: "0 0 0 0 rgba(49,130,206,0)" },
-          },
-        },
-        animation: {
-          tutorialPopIn: "tutorialPopIn 0.3s ease-out forwards",
-          pulseBorder: "pulseBorder 2s infinite",
-        },
-        boxShadow: {
-          tutorial: "0 0 0 4px rgba(49,130,206,0.3)",
-        },
-      },
-    },
-    plugins: [],
-  }
-
-  const result = await postcss([tailwindcss(tailwindConfig)]).process(inputCss, {
-    from: undefined,
-  })
-
-  return result.css
 }
 
 // ---------------------------------------------------------------------------
@@ -1784,54 +1870,36 @@ async function buildJsBundle(
   webAssetsDir: string,
   outputAssetsDir: string,
 ): Promise<void> {
-  // In Tauri sidecar mode, esbuild cannot run inside the pkg binary.
-  // bundle.mjs pre-builds base.bundle.min.js + base.bundle.local.js into
-  // webAssetsDir before zipping.  Copy whichever pre-built files exist,
-  // then fall through to esbuild for any that are missing (common in dev mode
-  // where bundle.mjs hasn't been run).
+  // The runtime bundle is produced by apps/adt-runtime/build.config.mjs and
+  // emitted into webAssetsDir as base.bundle.min.js (ESM) +
+  // base.bundle.local.js (IIFE). bundle.mjs pre-builds these for sidecar
+  // mode (esbuild can't run inside the pkg binary). In dev mode we trigger
+  // the build script on-demand if the pre-built files are missing.
   const preBuiltEsm = path.join(webAssetsDir, "base.bundle.min.js")
   const preBuiltIife = path.join(webAssetsDir, "base.bundle.local.js")
 
-  const hasPreBuiltEsm = fs.existsSync(preBuiltEsm)
-  const hasPreBuiltIife = fs.existsSync(preBuiltIife)
+  if (!fs.existsSync(preBuiltEsm) || !fs.existsSync(preBuiltIife)) {
+    // Resolve apps/adt-runtime/build.config.mjs relative to webAssetsDir
+    // (which is typically <monorepo>/assets/adt). The script writes the
+    // bundles back into webAssetsDir.
+    const buildScript = path.resolve(
+      webAssetsDir,
+      "../../apps/adt-runtime/build.config.mjs",
+    )
+    if (fs.existsSync(buildScript)) {
+      // Convert to a file:// URL so Node's ESM loader doesn't read the
+      // Windows drive letter as a URL scheme.
+      const buildScriptUrl = pathToFileURL(buildScript)
+      buildScriptUrl.searchParams.set("t", String(Date.now()))
+      await import(buildScriptUrl.href)
+    }
+  }
 
-  if (hasPreBuiltEsm) {
+  if (fs.existsSync(preBuiltEsm)) {
     fs.copyFileSync(preBuiltEsm, path.join(outputAssetsDir, "base.bundle.min.js"))
   }
-  if (hasPreBuiltIife) {
+  if (fs.existsSync(preBuiltIife)) {
     fs.copyFileSync(preBuiltIife, path.join(outputAssetsDir, "base.bundle.local.js"))
-  }
-
-  // Both pre-built — nothing left to do
-  if (hasPreBuiltEsm && hasPreBuiltIife) return
-
-  // Build any missing bundles with esbuild
-  const esbuild = await import("esbuild")
-  const entryPoint = path.join(webAssetsDir, "base.js")
-  if (!fs.existsSync(entryPoint)) return // skip if no source
-
-  if (!hasPreBuiltEsm) {
-    await esbuild.build({
-      entryPoints: [entryPoint],
-      bundle: true,
-      minify: true,
-      sourcemap: true,
-      format: "esm",
-      target: "es2020",
-      outfile: path.join(outputAssetsDir, "base.bundle.min.js"),
-    })
-  }
-
-  if (!hasPreBuiltIife) {
-    // IIFE version for file:// offline use (no ES module export)
-    await esbuild.build({
-      entryPoints: [entryPoint],
-      bundle: true,
-      minify: true,
-      format: "iife",
-      target: "es2020",
-      outfile: path.join(outputAssetsDir, "base.bundle.local.js"),
-    })
   }
 }
 
@@ -1951,6 +2019,30 @@ async function renderAgentsMd(
 // ---------------------------------------------------------------------------
 
 /**
+ * Rewrite `assets/fonts.css` so each `@font-face` `url('./fonts/X.woff2')`
+ * becomes a `data:font/woff2;base64,...` URI, then delete `assets/fonts/`.
+ * Required for `file://` (double-click) mode: browsers treat every file path
+ * as a unique origin and block cross-origin font fetches, even though the
+ * woff2 lives in the same directory tree.
+ */
+function inlineFontsInCss(adtDir: string): void {
+  const cssPath = path.join(adtDir, "assets", "fonts.css")
+  if (!fs.existsSync(cssPath)) return
+  const original = fs.readFileSync(cssPath, "utf-8")
+  const updated = original.replace(
+    /url\(\s*['"]?(?:\.\/)?fonts\/([^'")]+\.woff2)['"]?\s*\)\s*format\(\s*['"]woff2['"]\s*\)/g,
+    (_match, file: string) => {
+      const fontPath = path.join(adtDir, "assets", "fonts", file)
+      const b64 = fs.readFileSync(fontPath).toString("base64")
+      return `url('data:font/woff2;base64,${b64}') format('woff2')`
+    },
+  )
+  if (updated === original) return
+  fs.writeFileSync(cssPath, updated)
+  fs.rmSync(path.join(adtDir, "assets", "fonts"), { recursive: true, force: true })
+}
+
+/**
  * Generate `assets/offline-preloader.js` — inlines all JSON/HTML files that
  * the ADT bundle fetches at startup and monkey-patches `window.fetch` to
  * serve them from memory. This allows the ADT to work when opened via
@@ -1974,8 +2066,10 @@ function generateOfflinePreloader(
   }
 
   // Shared files
-  const interfaceHtml = readTextSafe("assets/interface.html")
-  if (interfaceHtml !== null) inline["./assets/interface.html"] = interfaceHtml
+  // Note: interface.html is no longer emitted — the React runtime mounts
+  // the chrome imperatively into <div id="interface-container">, so there's
+  // nothing to inline. The legacy fragment was inlined here to avoid an
+  // extra round-trip on page load; that round-trip no longer exists.
 
   for (const rel of [
     "assets/config.json",
@@ -1989,6 +2083,15 @@ function generateOfflinePreloader(
   const navHtml = readTextSafe("content/navigation/nav.html")
   if (navHtml !== null) inline["./content/navigation/nav.html"] = navHtml
 
+  // Inline every page HTML at the bundle root (index.html + pgNNN_secMMM.html).
+  // The glossary "show on page" feature fetches these to scan for terms,
+  // which fails under file:// without inlining.
+  for (const name of fs.readdirSync(adtDir)) {
+    if (!name.endsWith(".html")) continue
+    const text = readTextSafe(name)
+    if (text !== null) inline[`./${name}`] = text
+  }
+
   // Per-language files
   for (const lang of outputLanguages) {
     const itPath = `assets/interface_translations/${lang}/interface_translations.json`
@@ -1999,6 +2102,7 @@ function generateOfflinePreloader(
       "texts.json",
       "audios.json",
       "videos.json",
+      "images.json",
       "glossary.json",
       "timecode/timecode_output.json",
     ]) {
@@ -2011,12 +2115,27 @@ function generateOfflinePreloader(
   const js = `// offline-preloader.js — auto-generated, do not edit by hand
 (function () {
   var INLINE = ${JSON.stringify(inline)};
+  var BASE_DIR = (function () {
+    var href = location.href.split("?")[0].split("#")[0];
+    return href.slice(0, href.lastIndexOf("/") + 1);
+  })();
+  function lookup(url) {
+    var clean = String(url).split("?")[0].split("#")[0];
+    if (BASE_DIR && clean.indexOf(BASE_DIR) === 0) clean = clean.slice(BASE_DIR.length);
+    if (clean.indexOf("./") === 0) clean = clean.slice(2);
+    var withDot = "./" + clean;
+    if (Object.prototype.hasOwnProperty.call(INLINE, withDot)) return withDot;
+    if (Object.prototype.hasOwnProperty.call(INLINE, clean)) return clean;
+    return null;
+  }
   var _realFetch = window.fetch.bind(window);
   window.fetch = function (url, opts) {
-    var clean = String(url).split("?")[0];
-    if (Object.prototype.hasOwnProperty.call(INLINE, clean)) {
-      var data = INLINE[clean];
-      var isJson = clean.slice(-5) === ".json";
+    // Normalize Request objects to their URL string.
+    var raw = (url && typeof url === "object" && typeof url.url === "string") ? url.url : url;
+    var key = lookup(raw);
+    if (key !== null) {
+      var data = INLINE[key];
+      var isJson = key.slice(-5) === ".json";
       var body = isJson ? JSON.stringify(data) : data;
       var ct = isJson ? "application/json" : "text/html; charset=utf-8";
       return Promise.resolve(
@@ -2319,7 +2438,7 @@ function escapeInlineScriptJson(s: string): string {
     .replace(/&/g, "\\u0026")
 }
 
-function copyDirRecursive(
+export function copyDirRecursive(
   src: string,
   dest: string,
   skip?: Set<string>,
@@ -2339,7 +2458,7 @@ function copyDirRecursive(
   }
 }
 
-function escapeHtml(s: string): string {
+export function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")

@@ -5,6 +5,7 @@ import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
+import { StageEmptyState } from "../../components/StageEmptyState"
 import { StoryboardSectionDetail } from "./components/StoryboardSectionDetail"
 import { SectioningOverview } from "./components/SectioningOverview"
 import { useSectionNav } from "@/routes/books.$label"
@@ -23,6 +24,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
   const storyboardState = stageState("storyboard")
   const storyboardDone = storyboardState === "done"
   const storyboardRunning = storyboardState === "running" || storyboardState === "queued"
+  const sectioningReady = stageState("sectioning") === "done"
   // Show page content during a run (or after an error) once pages have data.
   // Only show the run card when idle or no data exists yet.
   const hasPageData = (pages ?? []).some((p) => p.sectionCount > 0)
@@ -31,9 +33,9 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
     : !storyboardDone
 
   const handleRunStoryboard = useCallback(() => {
-    if (!hasApiKey || storyboardRunning) return
+    if (!hasApiKey || !sectioningReady || storyboardRunning) return
     queueRun({ fromStage: "storyboard", toStage: "storyboard", apiKey })
-  }, [hasApiKey, storyboardRunning, apiKey, queueRun])
+  }, [hasApiKey, sectioningReady, storyboardRunning, apiKey, queueRun])
 
   const pageList = pages ?? []
   const { sectionIndex, setSectionIndex, skipNextResetRef } = useSectionNav()
@@ -268,7 +270,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
           isRunning={storyboardRunning}
           completed={storyboardDone}
           onRun={handleRunStoryboard}
-          disabled={!hasApiKey || storyboardRunning}
+          disabled={!hasApiKey || !sectioningReady || storyboardRunning}
         />
       </div>
     )
@@ -333,7 +335,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
           isRunning={storyboardRunning}
           completed={storyboardDone}
           onRun={handleRunStoryboard}
-          disabled={!hasApiKey || storyboardRunning}
+          disabled={!hasApiKey || !sectioningReady || storyboardRunning}
         />
       </div>
     )
@@ -341,13 +343,12 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
 
   if (sectionCount === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-        <div className="w-12 h-12 rounded-full bg-violet-50 flex items-center justify-center mb-3">
-          <LayoutGrid className="w-6 h-6 text-violet-300" />
-        </div>
-        <p className="text-sm font-medium"><Trans>No sections for this page</Trans></p>
-        <p className="text-xs mt-1"><Trans>This page has no storyboard sections</Trans></p>
-      </div>
+      <StageEmptyState
+        icon={LayoutGrid}
+        color="violet"
+        title={<Trans>No sections for this page</Trans>}
+        subtitle={<Trans>This page has no storyboard sections</Trans>}
+      />
     )
   }
 

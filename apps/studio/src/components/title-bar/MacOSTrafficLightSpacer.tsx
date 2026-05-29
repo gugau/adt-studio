@@ -2,8 +2,8 @@ import { usePlatform } from "@/hooks/use-platform"
 import { useWindowControls } from "@/hooks/use-window-controls";
 
 export function MacOSTrafficLightSpacer() {
-  const platform = usePlatform()
   const { available } = useWindowControls()
+  const platform = usePlatform()
 
   if (platform !== "macos" || !available) return null
 

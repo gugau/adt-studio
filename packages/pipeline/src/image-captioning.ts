@@ -19,6 +19,8 @@ export interface CaptionConfig {
   promptName: string
   modelId: string
   maxRetries: number
+  userPrompt?: string
+  gradeLevel?: "early" | "middle" | "advanced"
 }
 
 /**
@@ -55,6 +57,8 @@ export function buildCaptionConfig(appConfig: AppConfig): CaptionConfig {
       "openai:gpt-4.1",
     maxRetries:
       appConfig.image_captioning?.max_retries ?? DEFAULT_LLM_MAX_RETRIES,
+    userPrompt: appConfig.image_captioning_user_prompt || undefined,
+    gradeLevel: appConfig.image_captioning_grade_level,
   }
 }
 
@@ -84,6 +88,8 @@ export async function captionPageImages(
       images: input.images,
       ...languageContext,
       ...(input.bookSummary ? { book_summary: input.bookSummary } : {}),
+      user_instructions: config.userPrompt ?? "",
+      grade_level: config.gradeLevel ?? "",
     },
     validate: (
       raw: unknown

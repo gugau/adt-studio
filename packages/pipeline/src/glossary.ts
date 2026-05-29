@@ -17,6 +17,9 @@ export interface GlossaryConfig {
   maxRetries: number
   language: string
   batchSize: number
+  amount?: "concise" | "standard" | "comprehensive"
+  userPrompt?: string
+  seedTerms?: GlossaryItem[]
 }
 
 export function buildGlossaryConfig(
@@ -32,6 +35,12 @@ export function buildGlossaryConfig(
     maxRetries: appConfig.glossary?.max_retries ?? DEFAULT_LLM_MAX_RETRIES,
     language,
     batchSize: 10,
+    amount: appConfig.glossary_amount,
+    userPrompt: appConfig.glossary_user_prompt || undefined,
+    seedTerms:
+      appConfig.glossary_seed_terms && appConfig.glossary_seed_terms.length > 0
+        ? appConfig.glossary_seed_terms
+        : undefined,
   }
 }
 
@@ -194,6 +203,8 @@ export async function generateGlossary(
   const allItems: GlossaryItem[] = []
   let completed = 0
 
+  const seedWords = config.seedTerms?.map((t) => t.word) ?? []
+
   await processWithConcurrency(batches, concurrency, async (batch) => {
     const result = await llmModel.generateObject<{
       reasoning: string
@@ -204,6 +215,9 @@ export async function generateGlossary(
       context: {
         ...languageContext,
         pages: batch,
+        amount: config.amount ?? "",
+        user_instructions: config.userPrompt ?? "",
+        seed_terms: seedWords,
         excluded_words: excludedWords,
       },
       maxRetries: config.maxRetries,
@@ -236,7 +250,7 @@ export async function generateGlossary(
     a.word.toLowerCase().localeCompare(b.word.toLowerCase())
   )
 
-  return {
+  const aiGlossary: GlossaryOutput = {
     items: items.map((item) => ({
       ...item,
       source: item.source ?? "ai",
@@ -244,6 +258,19 @@ export async function generateGlossary(
     pageCount: pageTexts.length,
     generatedAt: new Date().toISOString(),
   }
+
+  // Pin user-defined seed terms as manual items so they always appear and
+  // survive re-runs, taking precedence over LLM-generated entries with the
+  // same word.
+  if (config.seedTerms && config.seedTerms.length > 0) {
+    const seedManualItems: GlossaryItem[] = config.seedTerms.map((t) => ({
+      ...t,
+      source: "manual" as const,
+    }))
+    return mergeGeneratedGlossaryWithManualItems(aiGlossary, seedManualItems)
+  }
+
+  return aiGlossary
 }
 
 export interface GenerateGlossaryItemOptions {
