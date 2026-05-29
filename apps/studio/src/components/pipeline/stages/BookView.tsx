@@ -471,25 +471,35 @@ function SubStepPill({ stepKey, state }: { stepKey: string; state: string }) {
   const isSkipped = state === "skipped"
   const isError = state === "error"
   const isRunning = state === "running"
+  const label = getStepLabelI18n(stepKey)
 
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
-        isDone
-          ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70"
-          : isError
-            ? "bg-red-50 text-red-800 ring-1 ring-red-200/70"
-            : isRunning
-              ? "bg-blue-50 text-blue-800 ring-1 ring-blue-200/70"
-              : isSkipped
-                ? "bg-muted/40 text-muted-foreground/50 line-through ring-1 ring-border/50"
-                : "bg-muted/60 text-muted-foreground ring-1 ring-border/60",
-      )}
-    >
-      {isDone && <Check className="h-2.5 w-2.5" strokeWidth={3} />}
-      {isRunning && <Loader2 className="h-2.5 w-2.5 animate-spin" />}
-      {getStepLabelI18n(stepKey)}
+    <span className="relative inline-flex">
+      <span
+        aria-hidden
+        className="pointer-events-none invisible inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+      >
+        <Check className="h-2.5 w-2.5" strokeWidth={3} />
+        {label}
+      </span>
+      <span
+        className={cn(
+          "absolute inset-0 inline-flex items-center justify-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors duration-200",
+          isDone
+            ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70"
+            : isError
+              ? "bg-red-50 text-red-800 ring-1 ring-red-200/70"
+              : isRunning
+                ? "bg-blue-50 text-blue-800 ring-1 ring-blue-200/70"
+                : isSkipped
+                  ? "bg-muted/40 text-muted-foreground/50 line-through ring-1 ring-border/50"
+                  : "bg-muted/60 text-muted-foreground ring-1 ring-border/60",
+        )}
+      >
+        {isDone && <Check className="h-2.5 w-2.5" strokeWidth={3} />}
+        {isRunning && <Loader2 className="h-2.5 w-2.5 animate-spin" />}
+        {label}
+      </span>
     </span>
   )
 }
