@@ -1964,8 +1964,8 @@ msgstr "Early"
 msgid "Easy Read"
 msgstr "Easy Read"
 
-msgid "Easy Read audio"
-msgstr "Easy Read audio"
+#~ msgid "Easy Read audio"
+#~ msgstr "Easy Read audio"
 
 msgid "Easy Read Prompt"
 msgstr "Easy Read Prompt"
@@ -2419,8 +2419,8 @@ msgstr "Generate comprehension quizzes and activities based on the book content.
 msgid "Generate descriptive captions for every image in the book. Pick a reading level so captions match your audience, and add custom instructions if you want to nudge the tone or focus."
 msgstr "Generate descriptive captions for every image in the book. Pick a reading level so captions match your audience, and add custom instructions if you want to nudge the tone or focus."
 
-msgid "Generate Easy Read audio"
-msgstr "Generate Easy Read audio"
+#~ msgid "Generate Easy Read audio"
+#~ msgstr "Generate Easy Read audio"
 
 msgid "Generate editable Easy Read blocks for the ADT toggle."
 msgstr "Generate editable Easy Read blocks for the ADT toggle."
@@ -2446,8 +2446,8 @@ msgstr "Generate with AI"
 msgid "Generate word timestamps"
 msgstr "Generate word timestamps"
 
-msgid "Generates audio for Easy Read texts. In the ADT, Easy Read mode uses that audio when available and falls back to the original voice otherwise."
-msgstr "Generates audio for Easy Read texts. In the ADT, Easy Read mode uses that audio when available and falls back to the original voice otherwise."
+#~ msgid "Generates audio for Easy Read texts. In the ADT, Easy Read mode uses that audio when available and falls back to the original voice otherwise."
+#~ msgstr "Generates audio for Easy Read texts. In the ADT, Easy Read mode uses that audio when available and falls back to the original voice otherwise."
 
 msgid "Generates the interactive HTML for this activity type."
 msgstr "Generates the interactive HTML for this activity type."
@@ -5133,11 +5133,11 @@ msgstr "Speech"
 msgid "Speech Generation"
 msgstr "Speech Generation"
 
-msgid "Speech generation includes Easy Read audio. The ADT uses it while Easy Read mode is active."
-msgstr "Speech generation includes Easy Read audio. The ADT uses it while Easy Read mode is active."
+#~ msgid "Speech generation includes Easy Read audio. The ADT uses it while Easy Read mode is active."
+#~ msgstr "Speech generation includes Easy Read audio. The ADT uses it while Easy Read mode is active."
 
-msgid "Speech generation uses original text only. Easy Read mode will fall back to original audio."
-msgstr "Speech generation uses original text only. Easy Read mode will fall back to original audio."
+#~ msgid "Speech generation uses original text only. Easy Read mode will fall back to original audio."
+#~ msgstr "Speech generation uses original text only. Easy Read mode will fall back to original audio."
 
 msgid "Speech narrates the translated text Language produces. Finish Language before running this stage."
 msgstr "Speech narrates the translated text Language produces. Finish Language before running this stage."
@@ -6107,8 +6107,8 @@ msgstr "When describing images, mention any culturally specific objects, locatio
 msgid "When enabled, background colors from the styleguide are applied to the full page body."
 msgstr "When enabled, background colors from the styleguide are applied to the full page body."
 
-msgid "When enabled, speech generation also creates audio for Easy Read texts. The ADT uses that audio while Easy Read mode is active and falls back to the original audio when it is missing."
-msgstr "When enabled, speech generation also creates audio for Easy Read texts. The ADT uses that audio while Easy Read mode is active and falls back to the original audio when it is missing."
+#~ msgid "When enabled, speech generation also creates audio for Easy Read texts. The ADT uses that audio while Easy Read mode is active and falls back to the original audio when it is missing."
+#~ msgstr "When enabled, speech generation also creates audio for Easy Read texts. The ADT uses that audio while Easy Read mode is active and falls back to the original audio when it is missing."
 
 msgid "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."
 msgstr "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."

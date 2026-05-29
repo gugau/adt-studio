@@ -113,30 +113,27 @@ function clearEasyReadDependents(
   storage: ReturnType<typeof createBookStorage>,
   previous: EasyReadOutputType | null | undefined,
   next: EasyReadOutputType,
-  options: { easyReadTtsEnabled: boolean },
 ): void {
   const changedIds = getChangedEasyReadIds(previous, next)
   if (changedIds.size === 0) return
 
-  const speechPruned = pruneSpeechEntriesForTextIds(storage, changedIds)
+  pruneSpeechEntriesForTextIds(storage, changedIds)
 
   storage.clearNodesByType([
     "text-catalog-translation",
     "accessibility-assessment",
   ])
 
-  const stepsToClear = [
+  // Easy Read audio is always (re)generated when Easy Read is enabled, so a
+  // change to the easy-read texts must invalidate speech + timestamps too.
+  storage.clearStepRuns([
     "catalog-translation",
     "image-translation",
     "package-web",
     "accessibility-assessment",
-  ]
-
-  if (options.easyReadTtsEnabled || speechPruned) {
-    stepsToClear.push("tts", "word-timestamps")
-  }
-
-  storage.clearStepRuns(stepsToClear)
+    "tts",
+    "word-timestamps",
+  ])
 }
 
 export function createEasyReadRoutes(
@@ -185,15 +182,8 @@ export function createEasyReadRoutes(
     try {
       const previousRow = storage.getLatestNodeData("easy-read", "book")
       const previousEasyRead = parseStoredEasyRead(previousRow?.data)
-      const config = loadBookConfig(safeLabel, booksDir, configPath)
-      const metadataRow = storage.getLatestNodeData("metadata", "book")
-      const metadata = metadataRow?.data as BookMetadata | null
-      const language = readLanguage(metadata, config)
-      const easyReadConfig = buildEasyReadConfig(config, language)
       const version = storage.putNodeData("easy-read", "book", parsed.data)
-      clearEasyReadDependents(storage, previousEasyRead, parsed.data, {
-        easyReadTtsEnabled: easyReadConfig.tts,
-      })
+      clearEasyReadDependents(storage, previousEasyRead, parsed.data)
       return c.json({ version })
     } finally {
       storage.close()
@@ -243,9 +233,7 @@ export function createEasyReadRoutes(
         const previousRow = storage.getLatestNodeData("easy-read", "book")
         const previousEasyRead = parseStoredEasyRead(previousRow?.data)
         const version = storage.putNodeData("easy-read", "book", output)
-        clearEasyReadDependents(storage, previousEasyRead, output, {
-          easyReadTtsEnabled: easyReadConfig.tts,
-        })
+        clearEasyReadDependents(storage, previousEasyRead, output)
         return c.json({ ...output, version })
       } finally {
         if (previousKey !== undefined) {

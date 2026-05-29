@@ -2012,7 +2012,9 @@ async function runSpeechStep(
     const catalog = catalogRow?.data as TextCatalogOutput | null
     const easyReadConfig = buildEasyReadConfig(config, language)
     const easyReadRow = storage.getLatestNodeData("easy-read", "book")
-    const sourceEasyReadEntries = easyReadConfig.tts
+    // Easy Read audio is generated whenever Easy Read is enabled (all
+    // languages), so include the source-language easy-read entries here too.
+    const sourceEasyReadEntries = easyReadConfig.enabled
       ? flattenEasyReadEntries(easyReadRow?.data as EasyReadOutput | undefined)
       : []
 

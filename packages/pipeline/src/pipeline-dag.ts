@@ -788,7 +788,11 @@ export async function runFullPipeline(
       if (!catalogRow) return
       const sourceCatalog = catalogRow.data as TextCatalogOutput
       const easyReadRow = storage.getLatestNodeData("easy-read", "book")
-      const easyReadEntries = easyReadConfig.tts
+      // Easy Read audio is generated for every language (source included)
+      // whenever Easy Read is enabled — target languages already carry the
+      // easy-read entries via text-catalog-translation, so gate the source
+      // side on `enabled` to match.
+      const easyReadEntries = easyReadConfig.enabled
         ? flattenEasyReadEntries(easyReadRow?.data as EasyReadOutput | undefined)
         : []
       const sourceEntries = [...sourceCatalog.entries, ...easyReadEntries]

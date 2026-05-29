@@ -1966,8 +1966,8 @@ msgstr "Précoce"
 msgid "Easy Read"
 msgstr "Lecture Facile"
 
-msgid "Easy Read audio"
-msgstr "Audio Lecture Facile"
+#~ msgid "Easy Read audio"
+#~ msgstr "Audio Lecture Facile"
 
 msgid "Easy Read Prompt"
 msgstr "Invite Lecture Facile"
@@ -2421,8 +2421,8 @@ msgstr "Générez des quiz de compréhension et des activités basés sur le con
 msgid "Generate descriptive captions for every image in the book. Pick a reading level so captions match your audience, and add custom instructions if you want to nudge the tone or focus."
 msgstr "Générez des sous-titres descriptifs pour chaque image du livre. Choisissez un niveau de lecture pour que les sous-titres correspondent à votre public, et ajoutez des instructions personnalisées si vous souhaitez ajuster le ton ou l'accent."
 
-msgid "Generate Easy Read audio"
-msgstr "Générer l'audio Lecture Facile"
+#~ msgid "Generate Easy Read audio"
+#~ msgstr "Générer l'audio Lecture Facile"
 
 msgid "Generate editable Easy Read blocks for the ADT toggle."
 msgstr "Générez des blocs Lecture Facile modifiables pour le bouton de l'ADT."
@@ -2448,8 +2448,8 @@ msgstr "Générer avec l'IA"
 msgid "Generate word timestamps"
 msgstr "Générer les horodatages de mots"
 
-msgid "Generates audio for Easy Read texts. In the ADT, Easy Read mode uses that audio when available and falls back to the original voice otherwise."
-msgstr "Génère l'audio pour les textes Lecture Facile. Dans l'ADT, le mode Lecture Facile utilise cet audio lorsqu'il est disponible et revient à la voix d'origine sinon."
+#~ msgid "Generates audio for Easy Read texts. In the ADT, Easy Read mode uses that audio when available and falls back to the original voice otherwise."
+#~ msgstr "Génère l'audio pour les textes Lecture Facile. Dans l'ADT, le mode Lecture Facile utilise cet audio lorsqu'il est disponible et revient à la voix d'origine sinon."
 
 msgid "Generates the interactive HTML for this activity type."
 msgstr "Génère le HTML interactif pour ce type d'activité."
@@ -5135,11 +5135,11 @@ msgstr "Parole"
 msgid "Speech Generation"
 msgstr "Parole Génération"
 
-msgid "Speech generation includes Easy Read audio. The ADT uses it while Easy Read mode is active."
-msgstr "La génération vocale inclut l'audio Lecture Facile. L'ADT l'utilise lorsque le mode Lecture Facile est actif."
+#~ msgid "Speech generation includes Easy Read audio. The ADT uses it while Easy Read mode is active."
+#~ msgstr "La génération vocale inclut l'audio Lecture Facile. L'ADT l'utilise lorsque le mode Lecture Facile est actif."
 
-msgid "Speech generation uses original text only. Easy Read mode will fall back to original audio."
-msgstr "La génération vocale utilise uniquement le texte d'origine. Le mode Lecture Facile reviendra à l'audio d'origine."
+#~ msgid "Speech generation uses original text only. Easy Read mode will fall back to original audio."
+#~ msgstr "La génération vocale utilise uniquement le texte d'origine. Le mode Lecture Facile reviendra à l'audio d'origine."
 
 msgid "Speech narrates the translated text Language produces. Finish Language before running this stage."
 msgstr "La parole narre le texte traduit produit par la langue. Terminez la langue avant d'exécuter cette étape."
@@ -6109,8 +6109,8 @@ msgstr "Lors de la description des images, mentionnez par leur nom tout objet, l
 msgid "When enabled, background colors from the styleguide are applied to the full page body."
 msgstr "Lorsque cette option est activée, les couleurs d'arrière-plan du guide de style sont appliquées à l'ensemble du corps de la page."
 
-msgid "When enabled, speech generation also creates audio for Easy Read texts. The ADT uses that audio while Easy Read mode is active and falls back to the original audio when it is missing."
-msgstr "Lorsqu'il est activé, la génération vocale crée également l'audio des textes Lecture Facile. L'ADT utilise cet audio lorsque le mode Lecture Facile est actif et revient à l'audio d'origine lorsqu'il est manquant."
+#~ msgid "When enabled, speech generation also creates audio for Easy Read texts. The ADT uses that audio while Easy Read mode is active and falls back to the original audio when it is missing."
+#~ msgstr "Lorsqu'il est activé, la génération vocale crée également l'audio des textes Lecture Facile. L'ADT utilise cet audio lorsque le mode Lecture Facile est actif et revient à l'audio d'origine lorsqu'il est manquant."
 
 msgid "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."
 msgstr "Lorsque cette option est activée, les libellés de texte proches des images vectorielles (par ex. dimensions de graphique, bulles de dialogue) sont regroupés et extraits en recadrages raster. Désactivez pour extraire uniquement les formes vectorielles sans texte."
