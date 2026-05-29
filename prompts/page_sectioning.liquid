@@ -39,6 +39,19 @@ Do NOT set both `structure` and `role` on the same node. Do NOT nest containers 
 Use these to disambiguate activity types:
 - WRITABLE-PAGE PRECEDENCE: If the page contains ANY response lines, blank lines, underlines, dotted lines, or empty boxes/cells where the learner is expected to WRITE (a word, a phrase, a sentence, or a longer answer), the section MUST be classified as an activity type — never as text_only, boxed_text, text_and_single_image, text_and_images, or other. This holds regardless of how much surrounding prose, instructions, or imagery the page contains. Choose the activity sub-type using the rules below.
   Visual signals that indicate writable response areas include: horizontal lines (solid, dotted, or dashed), runs of underscores ("___"), runs of dots ("..."), empty ruled rows, empty small squares or rectangular boxes sitting next to a prompt (they are blanks even without a line — the learner writes a number, letter, or short answer inside the box), and blank boxes labelled "Answer:", "Write:", "Respuesta:", "Escribe:", or similar. A small empty square beside a prompt is every bit as much a writable blank as an underline is — do not skip the writable classification just because the textbook used a box instead of a line.
+- SELECT-AMONG PRECEDENCE: If the page presents a SET of items and asks the learner to PICK one — even when the answer is captured by marking the picked item itself rather than writing into a separate response area — the section MUST be classified as an activity type. The act of picking IS the response; do not require a writable area for this case. This holds regardless of whether any underlines, dotted lines, or empty boxes appear on the page.
+  Trigger phrases (and their non-English equivalents — Spanish, Sinhala, Portuguese, etc.): "circle the X", "mark with an X / ✗", "draw a line under / above / around the X", "underline the X", "color the X", "tick the X", "choose the X", "pick the X", "which is bigger / smaller / longer / shorter / correct / the same?", "find the one that…". When these appear alongside multiple items in a presented set, treat the page as an activity even if no writable area is visible.
+  Sub-type for SELECT-AMONG pages:
+  • Items presented as pickable choices, learner picks ONE per question → `activity_multiple_choice`. This includes 2-image comparisons like "pick the bigger of two pictures" or "draw a line under the smaller item" — TWO options with a comparison framing is `activity_multiple_choice` (two-option MC), NOT `activity_true_false`. True/false is reserved for explicit truth-judgment framings.
+  • Items presented as pickable choices, learner picks MORE THAN ONE per question (the prompt asks for every option matching a criterion) → `activity_multi_select`. Trigger phrases and their non-English equivalents: "select all that apply", "check all that apply", "mark all the X", "tick all the X", "circle all the X that are Y", "choose every X", "which of these are X?" (plural, expecting multiple), "which animals live in water?" with a list of 6 animals where 3 are aquatic. The hallmark is that MORE THAN ONE answer in the option set is correct AND the learner is invited to mark each one (not pick the "best"). If the prompt says "pick THE X" (singular best answer), it's `activity_multiple_choice` even when several options look plausible.
+  • All items must be assigned to categories, items OUTNUMBER categories → `activity_sorting` (many-to-one).
+  • All items must be assigned to targets, total counts EQUAL → `activity_matching` (strict one-to-one).
+  • The prompt asks for a truth-judgment ("Mark T or F", "Yes or no?", "Is this statement true?") → `activity_true_false`.
+- COMBINED-EVIDENCE FALLBACK: When neither `WRITABLE-PAGE PRECEDENCE` nor `SELECT-AMONG PRECEDENCE` fires on its own (e.g. the action-prompting instruction is in an unfamiliar script and you can't confidently match a trigger phrase), gather these activity signals from across the section:
+  (a) An activity heading or banner — "Activity N", "Exercise N", "Actividad N", "Atividade N", "ක්‍රියාකාරකම N", or the equivalent in any language. A numbered or labeled exercise heading is a strong publisher-supplied signal. A banner or boxed label at the top of a content block containing a number counts as (a) regardless of whether you can fully read the script — the visual shape (banner + number) is the signal.
+  (b) An action-prompting instruction — a sentence in instruction-position telling the learner to do something: write, mark, circle, underline, draw a line under/around/below, color, tick, choose, pick, compare, identify, decide, judge. If the script is unreadable and you cannot confidently identify the verb, do NOT count (b) — rely on (a) and (c) instead. Do not infer (b) from heading position alone.
+  (c) Multiple presented items the learner could plausibly act on — rows of options, pairs of related images, lists of statements, sets of cards or boxes. This is a purely visual signal: language- and OCR-independent.
+  If TWO OR MORE of (a), (b), (c) are present, the section IS an activity. Classify by sub-type using the rules below. Multiple signals together outweigh the absence of writable areas or formal A/B/C option markers — the publisher labeled it as an exercise, the items to act on are right there, and the instruction (when readable) tells the learner to act.
 - WRITABLE SUB-TYPE TEST: The sub-type depends on the STRUCTURE of the response, NOT on whether the correct answer is knowable from the page. A full-width line next to a prompt is NOT automatically open-ended — look at what shape of answer the prompt expects.
   • STRUCTURED / DISCRETE FIELDS → activity_fill_in_the_blank. Pick this whenever the writing area expects a specific type of short answer: a word, number, letter, date, name, short phrase, or a value copied from the prompt. This covers:
     - Inline blanks inside a sentence ("El Sol es una ___")
@@ -56,6 +69,9 @@ Use these to disambiguate activity types:
     - "Tiene ___ sílabas" for the word "Nacimiento" → activity_fill_in_the_blank (discrete number, determinable).
     - "Describe a tu familia: _________________" with 4 ruled lines → activity_open_ended_answer (free-form composition about personal life, spans multiple lines).
     - "¿Qué aprendiste hoy? _________________" with a large box → activity_open_ended_answer.
+    - "Draw a line under the larger image" with four pairs of images (one big and one small in each pair) → activity_multiple_choice. No writable area on the page; the marking happens on the picked image itself. Two options per question, comparison framing — MC with 2 options, not true/false.
+    - "Circle the animal that lives in water" with three animal pictures → activity_multiple_choice (pick-one from three options; the circling IS the response).
+    - "Mark T or F next to each statement" with five statements → activity_true_false (truth-judgment framing).
 - Classify by the COGNITIVE TASK the learner must perform, not the physical action (circling, coloring, underlining, drawing lines). Look at what the learner must DECIDE or PRODUCE, not how they mark their answer.
 - For EVERY activity section, your "reasoning" field MUST include:
   1. What the instructions ask the learner to do
@@ -66,9 +82,10 @@ Use these to disambiguate activity types:
   • What do the instructions ask? (e.g., "choose the best", "connect with", "sort into", "circle by color")
   • What does the visual layout show? (e.g., options listed per question, a shared pool with categories, two columns)
   • What are the counts? How many total items, how many categories/targets?
-  • Does the learner pick ONE correct answer per question, or assign ALL items to categories?
+  • Does the learner pick ONE correct answer per question, MORE THAN ONE ("all that apply") per question, or assign ALL items to categories?
   Then apply:
   • activity_multiple_choice — learner picks one correct answer per question from a set of options; the other options are distractors
+  • activity_multi_select — learner picks every option matching a criterion ("check all that apply", "mark all the X"); more than one option in the set is correct
   • activity_matching — learner assigns ALL items to targets, and the total counts are EQUAL (one-to-one pairing)
   • activity_sorting — learner assigns ALL items to categories, and items OUTNUMBER categories (many-to-one)
   Hard constraint: if total items > total categories, it is activity_sorting, never activity_matching — regardless of what the instruction wording suggests.
@@ -76,7 +93,7 @@ Use these to disambiguate activity types:
 - If the expected answer is FREE-FORM (legitimately varies between students — opinion, description, narrative, reflection, personal data, or teacher-dictated content) → activity_open_ended_answer
 - If the expected answer is DETERMINABLE (one correct value derivable from the prompt or page — unscrambling, counting, missing letters, labelling, copying from a passage, solving) → activity_fill_in_the_blank. This is the right pick whenever the writing area has a correct answer, regardless of whether the blank is inline in a sentence or a full-width line beside the prompt.
 - If a table grid has empty cells to complete → activity_fill_in_a_table
-- activity_other is a last resort — only use it when the learning mechanic itself is truly unique (e.g., free drawing, crafts, physical movement) and no other activity type applies.
+- activity_other is a last resort — only use it when the learning mechanic itself is truly unique (e.g., free drawing, crafts, physical movement) and no other activity type applies. Do NOT use `activity_other` to bundle multiple different known mechanics on one page into a single section — if the page contains both choice options AND a writing area (or any two different known mechanics), split into separate sections with their known types instead.
 
 ## Tree construction rules
 
@@ -127,16 +144,34 @@ The entire page is always ONE section. Emit exactly one section containing all t
 DEFAULT: the entire page is ONE section. Keep it as one section unless the split condition below applies.
 
 SPLIT the page into multiple sections when either of these applies:
-1. The page contains TWO OR MORE activities of DIFFERENT types (e.g. one `activity_multiple_choice` and one `activity_fill_in_the_blank`, or an `activity_sorting` and an `activity_open_ended_answer`). Each activity of a different type goes in its own section.
-2. The page contains TWO OR MORE activities and a fresh set of activity instructions (a new instructional prompt like "Agora responda…", "Now complete the following…", "Match the items below…") precedes one of them. A new instruction block is a strong signal that a new activity begins there, and it should start a new section — even if the activity type is the same as the previous one.
+
+1. MIXED MECHANICS — the page contains TWO OR MORE different response mechanics for the learner. Each mechanic gets its own section, even when an overarching instruction or narrative theme appears to unify them. The runtime renders only ONE answer-submission UI per section, so mixed mechanics in a single section cannot work — they MUST split.
+   Decide by what the learner DOES at each writable spot, not by how the page "feels":
+   - Picking one option from a list → activity_multiple_choice (or activity_true_false / activity_sorting / activity_matching depending on shape)
+   - Picking every option matching a criterion ("select all that apply") → activity_multi_select
+   - Writing a discrete short value (word, number, name, date, missing letter, copied value) → activity_fill_in_the_blank
+   - Writing sentences/paragraphs in the learner's own words → activity_open_ended_answer
+   - Filling cells in a grid → activity_fill_in_a_table
+   If the page shows TWO OR MORE of these mechanics → SPLIT into one section per mechanic. A shared instruction at the top, a single narrative thread, or a single visual frame NEVER overrides this. Annotate each section with the slice of instructions that apply to it.
+
+2. NEW INSTRUCTION BLOCK — the page contains TWO OR MORE activities and a fresh set of activity instructions (a new instructional prompt like "Agora responda…", "Now complete the following…", "Match the items below…") precedes one of them. A new instruction block is a strong signal that a new activity begins there, and it should start a new section — even if the activity type is the same as the previous one.
 
 In any split, attach surrounding non-activity content (headings, passages, instructions) to whichever section it visually belongs with — a new instruction block goes with the activity it introduces.
 
 Do NOT split in any of these cases:
-- A page with a single activity (of any type), regardless of how many questions it contains.
-- A page with multiple same-type activities sharing ONE instruction block (e.g. several multiple-choice items all governed by a single prompt) — keep them together in one section.
+- A page with a SINGLE MECHANIC, regardless of how many questions/items it contains. ("Single activity" alone is NOT the test — the test is single mechanic. 6 multi-choice items sharing one instruction → ONE section. 4 fill-in-the-blank sentences sharing one prompt → ONE section.)
 - A page with no activities — always one section.
 - Separation by visual whitespace, headings, or topic alone — not a reason to split.
+
+`activity_other` IS NOT A BUNDLING ESCAPE HATCH for mixed mechanics. If a page contains two or more different known mechanics, you MUST split into multiple sections, each with its own known activity type — NEVER roll the whole page up under `activity_other` to avoid splitting. `activity_other` is reserved for pages where the SINGLE mechanic itself is genuinely unique (free drawing, crafts, physical movement) and no known type fits.
+
+### Worked example: multi-choice items + a final free-write line
+
+A page shows 4 reading passages, each paired with a list of 3 summary options to choose from, AND at the bottom a fresh instruction "Write a sentence that summarizes the episode:" followed by a long writing line. Even though there is one overall theme ("read each passage and choose the best summary"), this page has TWO different mechanics:
+- 4 passages × 3 options each → activity_multiple_choice (one section with 4 question groups sharing the choose-the-summary instruction).
+- The final write-a-sentence prompt and its writing line → activity_open_ended_answer (a second section).
+
+The correct partition is TWO sections. Labeling the whole page `activity_other` is WRONG. Keeping both mechanics inside one `structure: "activity"` container under one section is WRONG.
 {% endif %}
 
 ## Activity classification
@@ -144,13 +179,14 @@ Do NOT split in any of these cases:
 - Classify by the COGNITIVE TASK, not the physical action (circling, coloring, underlining, drawing lines).
 - For every activity section, your `reasoning` MUST state: (1) what the instructions ask, (2) what the visual layout shows, (3) for sorting/matching: an explicit count (e.g. "6 total items, 3 categories"). Then pick the activity type.
 - `activity_multiple_choice` — learner picks ONE correct answer per question from a set of options; other options are distractors.
+- `activity_multi_select` — learner picks EVERY option that matches a criterion ("check all that apply", "mark all the X"). More than one option in the set is correct.
 - `activity_matching` — learner assigns ALL items to targets, total counts EQUAL (one-to-one).
 - `activity_sorting` — learner assigns ALL items to categories, items OUTNUMBER categories (many-to-one). Hard constraint: if total items > total categories, it is `activity_sorting`, never `activity_matching`.
 - Exactly two options (true/false, yes/no, correct/incorrect) → `activity_true_false`.
 - No options, learner writes freely → `activity_open_ended_answer`.
 - Sentences with blanks → `activity_fill_in_the_blank`.
 - Grid table with empty cells → `activity_fill_in_a_table`.
-- `activity_other` is a last resort — only when the learning mechanic itself is genuinely unique (e.g. free drawing, crafts, physical movement).
+- `activity_other` is a last resort — only when the learning mechanic itself is genuinely unique (e.g. free drawing, crafts, physical movement). Never use `activity_other` to keep mixed mechanics in one section instead of splitting.
 
 ## Common mistakes — do NOT do these
 
