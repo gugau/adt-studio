@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
 import { api } from "@/api/client"
 import { PromptViewer } from "@/components/pipeline/components/PromptViewer"
 import { useApiKey } from "@/hooks/use-api-key"
@@ -48,7 +47,6 @@ export function EasyReadSettings({
   const [isSavingAndRunning, setIsSavingAndRunning] = useState(false)
   const [promptDraft, setPromptDraft] = useState<string | null>(null)
   const [promptName, setPromptName] = useState(DEFAULT_PROMPT)
-  const [enabled, setEnabled] = useState(false)
   const [batchSize, setBatchSize] = useState(DEFAULT_BATCH_SIZE)
 
   const [dirty, setDirty] = useState<Record<string, boolean>>({})
@@ -62,11 +60,9 @@ export function EasyReadSettings({
     const cfg = (activeConfigData.merged as Record<string, unknown>).easy_read
     if (cfg && typeof cfg === "object") {
       const easyReadConfig = cfg as Record<string, unknown>
-      setEnabled(easyReadConfig.enabled === true)
       setPromptName(typeof easyReadConfig.prompt === "string" ? easyReadConfig.prompt : DEFAULT_PROMPT)
       setBatchSize(easyReadConfig.batch_size != null ? String(easyReadConfig.batch_size) : DEFAULT_BATCH_SIZE)
     } else {
-      setEnabled(false)
       setPromptName(DEFAULT_PROMPT)
       setBatchSize(DEFAULT_BATCH_SIZE)
     }
@@ -84,7 +80,9 @@ export function EasyReadSettings({
       overrides.easy_read = {
         ...existing,
         ...easyRead.configOverrides,
-        enabled,
+        // Saving + rerunning from settings implies Easy Read should be on —
+        // there is no separate enable toggle; running the stage enables it.
+        enabled: true,
         prompt: promptName.trim() || DEFAULT_PROMPT,
         batch_size: batchSize.trim() ? Number(batchSize.trim()) : undefined,
       }
@@ -123,7 +121,7 @@ export function EasyReadSettings({
   return (
     <div className="h-full max-w-4xl">
       <div className="border-b px-4 py-3">
-        <div className="grid gap-3 md:grid-cols-[minmax(180px,260px)_auto_auto] md:items-end">
+        <div className="grid gap-3 md:grid-cols-[minmax(180px,260px)_auto] md:items-end">
           <div>
             <Label className="text-xs">{t`Prompt template`}</Label>
             <Input
@@ -149,18 +147,6 @@ export function EasyReadSettings({
               placeholder={DEFAULT_BATCH_SIZE}
               className="mt-1 w-24 text-xs"
             />
-          </div>
-          <div className="flex items-center gap-5 pb-1">
-            <label className="flex items-center gap-2 text-xs">
-              <Switch
-                checked={enabled}
-                onCheckedChange={(value) => {
-                  setEnabled(value)
-                  markDirty("easy_read")
-                }}
-              />
-              {t`Enabled`}
-            </label>
           </div>
         </div>
       </div>
