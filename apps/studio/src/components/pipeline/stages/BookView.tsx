@@ -106,20 +106,20 @@ export function BookView({ bookLabel }: ViewProps) {
     if (group) grouped[group].push(step)
   }
 
-  // Assign sequential phase numbers — Core Pipeline stages first, then the
-  // Parallel Enrichment block counts as one phase, then Localization stages
-  // each get a phase, then Packaging stages each get a phase.
+  // Assign sequential phase numbers — Core Pipeline stages each get their
+  // own phase, then the Enhancements block counts as one phase, then the
+  // Localization block counts as one phase, then each Packaging stage gets
+  // its own phase.
   const phaseNumberByStage = new Map<string, number>()
   let phaseCounter = 0
   for (const step of grouped.convert) {
     phaseCounter += 1
     phaseNumberByStage.set(step.slug, phaseCounter)
   }
-  const enrichmentPhase = grouped.enhancements.length > 0 ? ++phaseCounter : null
-  for (const step of grouped.localization) {
-    phaseCounter += 1
-    phaseNumberByStage.set(step.slug, phaseCounter)
-  }
+  const enrichmentPhase =
+    grouped.enhancements.length > 0 ? ++phaseCounter : null
+  const localizationPhase =
+    grouped.localization.length > 0 ? ++phaseCounter : null
   for (const step of grouped.packaging) {
     phaseCounter += 1
     phaseNumberByStage.set(step.slug, phaseCounter)
@@ -214,28 +214,43 @@ export function BookView({ bookLabel }: ViewProps) {
       {enrichmentPhase !== null && (
         <div className="flex flex-col gap-2">
           <PhaseConnector label={t`Branch out`} />
-          <EnrichmentSection
+          <OptionalGroupSection
             phaseNumber={enrichmentPhase}
+            title={<Trans>Enhancements</Trans>}
+            description={
+              <Trans>
+                These stages are optional. They don't depend on each other —
+                run any of them in any order once the core pipeline is
+                complete.
+              </Trans>
+            }
+            containerClassName="bg-gradient-to-br from-indigo-50/40 via-violet-50/30 to-white"
             steps={grouped.enhancements}
+            layout="grid"
             cardPropsFor={cardPropsFor}
           />
         </div>
       )}
 
-      {/* Localization cluster */}
-      {grouped.localization.length > 0 && (
+      {/* Localization cluster — also optional. */}
+      {localizationPhase !== null && (
         <div className="flex flex-col gap-2">
-          <PhaseConnector label={t`Continue`} />
-          {grouped.localization.map((step, index) => (
-            <Fragment key={step.slug}>
-              <PhaseBlock phaseNumber={phaseNumberByStage.get(step.slug)!}>
-                <HomeStageCard {...cardPropsFor(step)} />
-              </PhaseBlock>
-              {index < grouped.localization.length - 1 && (
-                <PhaseConnector label={t`Continue`} />
-              )}
-            </Fragment>
-          ))}
+          <PhaseConnector label={t`Or`} />
+          <OptionalGroupSection
+            phaseNumber={localizationPhase}
+            title={<Trans>Localization</Trans>}
+            description={
+              <Trans>
+                Translate the book into other languages and generate
+                narration. These stages are optional — skip them if your
+                book doesn't need multilingual or audio output.
+              </Trans>
+            }
+            containerClassName="bg-gradient-to-br from-pink-50/30 via-rose-50/20 to-white"
+            steps={grouped.localization}
+            layout="stack"
+            cardPropsFor={cardPropsFor}
+          />
         </div>
       )}
 
@@ -582,16 +597,26 @@ function PhaseConnector({ label }: { label: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// EnrichmentSection — single bordered block containing optional stages.
+// OptionalGroupSection — single bordered block for an "optional" stage group
+// (Enhancements / Localization). Layout is either a 2-col grid for parallel
+// stages or a vertical stack for sequential ones.
 // ---------------------------------------------------------------------------
 
-function EnrichmentSection({
+function OptionalGroupSection({
   phaseNumber,
+  title,
+  description,
+  containerClassName,
   steps,
+  layout,
   cardPropsFor,
 }: {
   phaseNumber: number
+  title: ReactNode
+  description: ReactNode
+  containerClassName: string
   steps: NonBookStageDefinition[]
+  layout: "grid" | "stack"
   cardPropsFor: (step: NonBookStageDefinition) => HomeStageCardProps
 }) {
   return (
@@ -599,19 +624,35 @@ function EnrichmentSection({
       <p className="px-1 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground/60">
         <Trans>Phase {phaseNumber}</Trans>
       </p>
-      <div className="overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-indigo-50/40 via-violet-50/30 to-white p-6">
+      <div
+        className={cn(
+          "overflow-hidden rounded-2xl border border-border/70 p-6",
+          containerClassName,
+        )}
+      >
         <div className="mb-5 flex flex-col gap-1">
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">
-            <Trans>Enhancements</Trans>
-          </h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">
+              {title}
+            </h2>
+            <Badge
+              variant="outline"
+              className="text-[10px] uppercase tracking-wider text-muted-foreground"
+            >
+              <Trans>Optional</Trans>
+            </Badge>
+          </div>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            <Trans>
-              These stages are optional. They don't depend on each other —
-              run any of them in any order once the core pipeline is complete.
-            </Trans>
+            {description}
           </p>
         </div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div
+          className={cn(
+            layout === "grid"
+              ? "grid grid-cols-1 gap-3 md:grid-cols-2"
+              : "flex flex-col gap-2",
+          )}
+        >
           {steps.map((step) => (
             <HomeStageCard key={step.slug} {...cardPropsFor(step)} />
           ))}

@@ -3671,8 +3671,8 @@ msgstr "Se requiere clave de OpenAI"
 msgid "OpenAI Voice"
 msgstr "Voz OpenAI"
 
-#~ msgid "Optional"
-#~ msgstr "Opcional"
+msgid "Optional"
+msgstr "Opcional"
 
 msgid "Optional Features"
 msgstr "Características opcionales"
@@ -3718,6 +3718,9 @@ msgstr "las opciones son deterministas;"
 
 msgid "options generate a fresh layout per page."
 msgstr "las opciones generan un diseño nuevo por página."
+
+msgid "Or"
+msgstr "O"
 
 msgid "Original language"
 msgstr "Idioma original"
@@ -5671,6 +5674,9 @@ msgstr "Traduce el libro a idiomas adicionales. Cada idioma se genera junto al o
 
 #~ msgid "Translate the book into other languages and generate narration. Run these after the enhancements you want included are in place."
 #~ msgstr "Traduce el libro a otros idiomas y genera narración. Ejecuta estas etapas después de que las mejoras que deseas incluir estén en su lugar."
+
+msgid "Translate the book into other languages and generate narration. These stages are optional — skip them if your book doesn't need multilingual or audio output."
+msgstr "Traduce el libro a otros idiomas y genera narración. Estas etapas son opcionales: omítelas si tu libro no necesita salida multilingüe o de audio."
 
 msgid "Translating languages..."
 msgstr "Traduciendo idiomas..."
