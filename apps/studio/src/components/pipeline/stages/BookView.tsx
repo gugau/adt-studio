@@ -152,20 +152,22 @@ export function BookView({ bookLabel }: ViewProps) {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-6">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
       <SourcePdfCard bookLabel={bookLabel} />
 
-      {/* Core Pipeline phases */}
-      {grouped.convert.map((step, index) => (
-        <Fragment key={step.slug}>
-          <PhaseBlock phaseNumber={phaseNumberByStage.get(step.slug)!}>
-            <HomeStageCard {...cardPropsFor(step)} />
-          </PhaseBlock>
-          {index < grouped.convert.length - 1 && (
-            <PhaseConnector label={t`Continue`} />
-          )}
-        </Fragment>
-      ))}
+      {/* Core Pipeline cluster — connectors hug the cards. */}
+      <div className="flex flex-col gap-2">
+        {grouped.convert.map((step, index) => (
+          <Fragment key={step.slug}>
+            <PhaseBlock phaseNumber={phaseNumberByStage.get(step.slug)!}>
+              <HomeStageCard {...cardPropsFor(step)} />
+            </PhaseBlock>
+            {index < grouped.convert.length - 1 && (
+              <PhaseConnector label={t`Continue`} />
+            )}
+          </Fragment>
+        ))}
+      </div>
 
       {/* Post-core callouts */}
       {grouped.convert.length > 0 && (
@@ -208,47 +210,51 @@ export function BookView({ bookLabel }: ViewProps) {
         </div>
       )}
 
-      {/* Parallel Enrichment */}
+      {/* Enhancements cluster (connector + section). */}
       {enrichmentPhase !== null && (
-        <>
+        <div className="flex flex-col gap-2">
           <PhaseConnector label={t`Branch out`} />
           <EnrichmentSection
             phaseNumber={enrichmentPhase}
             steps={grouped.enhancements}
             cardPropsFor={cardPropsFor}
           />
-        </>
+        </div>
       )}
 
-      {/* Localization phases */}
+      {/* Localization cluster */}
       {grouped.localization.length > 0 && (
-        <PhaseConnector label={t`Continue`} />
+        <div className="flex flex-col gap-2">
+          <PhaseConnector label={t`Continue`} />
+          {grouped.localization.map((step, index) => (
+            <Fragment key={step.slug}>
+              <PhaseBlock phaseNumber={phaseNumberByStage.get(step.slug)!}>
+                <HomeStageCard {...cardPropsFor(step)} />
+              </PhaseBlock>
+              {index < grouped.localization.length - 1 && (
+                <PhaseConnector label={t`Continue`} />
+              )}
+            </Fragment>
+          ))}
+        </div>
       )}
-      {grouped.localization.map((step, index) => (
-        <Fragment key={step.slug}>
-          <PhaseBlock phaseNumber={phaseNumberByStage.get(step.slug)!}>
-            <HomeStageCard {...cardPropsFor(step)} />
-          </PhaseBlock>
-          {index < grouped.localization.length - 1 && (
-            <PhaseConnector label={t`Continue`} />
-          )}
-        </Fragment>
-      ))}
 
-      {/* Packaging phases */}
+      {/* Packaging cluster */}
       {grouped.packaging.length > 0 && (
-        <PhaseConnector label={t`Ship`} />
+        <div className="flex flex-col gap-2">
+          <PhaseConnector label={t`Ship`} />
+          {grouped.packaging.map((step, index) => (
+            <Fragment key={step.slug}>
+              <PhaseBlock phaseNumber={phaseNumberByStage.get(step.slug)!}>
+                <HomeStageCard {...cardPropsFor(step)} />
+              </PhaseBlock>
+              {index < grouped.packaging.length - 1 && (
+                <PhaseConnector label={t`Continue`} />
+              )}
+            </Fragment>
+          ))}
+        </div>
       )}
-      {grouped.packaging.map((step, index) => (
-        <Fragment key={step.slug}>
-          <PhaseBlock phaseNumber={phaseNumberByStage.get(step.slug)!}>
-            <HomeStageCard {...cardPropsFor(step)} />
-          </PhaseBlock>
-          {index < grouped.packaging.length - 1 && (
-            <PhaseConnector label={t`Continue`} />
-          )}
-        </Fragment>
-      ))}
     </div>
   )
 }
