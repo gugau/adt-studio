@@ -2965,11 +2965,17 @@ msgstr "Cargando libro..."
 msgid "Loading books..."
 msgstr "Cargando libros..."
 
+msgid "Loading export..."
+msgstr "Cargando exportación..."
+
 msgid "Loading glossary..."
 msgstr "Cargando glosario..."
 
 msgid "Loading image..."
 msgstr "Cargando imagen..."
+
+msgid "Loading images..."
+msgstr "Cargando imágenes..."
 
 msgid "Loading logs..."
 msgstr "Cargando registros..."
@@ -3024,6 +3030,9 @@ msgstr "Loading template..."
 
 msgid "Loading text catalog..."
 msgstr "Cargando catálogo de textos..."
+
+msgid "Loading validation..."
+msgstr "Cargando validación..."
 
 msgid "Loading voice mappings..."
 msgstr "Cargando asignaciones de voz..."
@@ -3770,6 +3779,9 @@ msgstr "Empaquetando"
 
 msgid "Packaging failed"
 msgstr "Packaging failed"
+
+msgid "Packaging preview..."
+msgstr "Empaquetando vista previa..."
 
 msgid "Packaging validation results..."
 msgstr "Packaging validation results..."

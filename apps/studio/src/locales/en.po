@@ -2965,11 +2965,17 @@ msgstr "Loading Book..."
 msgid "Loading books..."
 msgstr "Loading books..."
 
+msgid "Loading export..."
+msgstr "Loading export..."
+
 msgid "Loading glossary..."
 msgstr "Loading glossary..."
 
 msgid "Loading image..."
 msgstr "Loading image..."
+
+msgid "Loading images..."
+msgstr "Loading images..."
 
 msgid "Loading logs..."
 msgstr "Loading logs..."
@@ -3024,6 +3030,9 @@ msgstr "Loading template..."
 
 msgid "Loading text catalog..."
 msgstr "Loading text catalog..."
+
+msgid "Loading validation..."
+msgstr "Loading validation..."
 
 msgid "Loading voice mappings..."
 msgstr "Loading voice mappings..."
@@ -3770,6 +3779,9 @@ msgstr "Packaging"
 
 msgid "Packaging failed"
 msgstr "Packaging failed"
+
+msgid "Packaging preview..."
+msgstr "Packaging preview..."
 
 msgid "Packaging validation results..."
 msgstr "Packaging validation results..."

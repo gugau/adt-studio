@@ -9,6 +9,7 @@ import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
+import { StageContentGuard } from "../../components/StageContentGuard"
 
 type TocData = Omit<TocGenerationOutput, "version">
 
@@ -355,18 +356,13 @@ export function TocView({ bookLabel }: { bookLabel: string }) {
     updateEntry(id, { level: newLevel })
   }
 
-  if (!showRunCard && isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">{t`Loading table of contents...`}</span>
-      </div>
-    )
-  }
-
-  if (showRunCard || entries.length === 0) {
-    return (
-      <div className="p-4">
+  return (
+    <StageContentGuard
+      stageSlug="toc"
+      isLoading={!showRunCard && isLoading}
+      loadingLabel={t`Loading table of contents...`}
+      showRunCard={showRunCard || entries.length === 0}
+      runCard={
         <StageRunCard
           stageSlug="toc"
           isRunning={tocRunning}
@@ -374,11 +370,8 @@ export function TocView({ bookLabel }: { bookLabel: string }) {
           onRun={handleRunToc}
           disabled={!hasApiKey || tocRunning}
         />
-      </div>
-    )
-  }
-
-  return (
+      }
+    >
     <div className="space-y-0.5">
       {entries.map((entry) => (
         <div
@@ -448,5 +441,6 @@ export function TocView({ bookLabel }: { bookLabel: string }) {
         </div>
       ))}
     </div>
+    </StageContentGuard>
   )
 }

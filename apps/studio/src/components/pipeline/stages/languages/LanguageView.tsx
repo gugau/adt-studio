@@ -9,6 +9,7 @@ import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useBook } from "@/hooks/use-books"
 import { useStepHeader } from "../../components/StepViewRouter"
+import { LoadingState } from "../../components/LoadingState"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useBookTasks } from "@/hooks/use-book-tasks"
 import { useStageMissingCounts } from "@/hooks/use-stage-missing-counts"
@@ -616,12 +617,7 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
   ) : null
 
   if (!showRunCard && isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">{t`Loading text catalog...`}</span>
-      </div>
-    )
+    return <LoadingState stageSlug="translate" label={t`Loading text catalog...`} />
   }
 
   // Resolve speech config summary for display
@@ -884,10 +880,7 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
 
       {/* Entries */}
       {isSourceLanguagePending ? (
-        <div className="flex items-center justify-center py-12 text-muted-foreground">
-          <Loader2 className="w-4 h-4 animate-spin mr-2" />
-          <span className="text-sm">{t`Resolving source language...`}</span>
-        </div>
+        <LoadingState stageSlug="translate" label={t`Resolving source language...`} />
       ) : selectedPageId && displayEntries.length === 0 && entries.length > 0 ? (
         <StageEmptyState
           icon={isSpeechStage ? AudioLines : Languages}

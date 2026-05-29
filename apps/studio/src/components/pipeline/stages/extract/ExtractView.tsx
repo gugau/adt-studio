@@ -7,6 +7,7 @@ import { usePages, usePageImage } from "@/hooks/use-pages"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { ExtractPageDetail } from "./components/ExtractPageDetail"
+import { LoadingState } from "../../components/LoadingState"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { StageRunCard } from "../../components/StageRunCard"
 import { StageEmptyState } from "../../components/StageEmptyState"
@@ -285,12 +286,7 @@ export function ExtractView({ bookLabel, selectedPageId: selectedPageIdProp, onS
   }, [selectedPageId, prevPageId, nextPageId, showRunCard, setSelectedPageId])
 
   if (!showRunCard && isLoading) {
-    return (
-      <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <Trans>Loading pages...</Trans>
-      </div>
-    )
+    return <LoadingState stageSlug="extract" label={<Trans>Loading pages...</Trans>} />
   }
 
   // Page detail view — available once pages exist (even while later steps run)
