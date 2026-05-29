@@ -4298,6 +4298,9 @@ msgstr "Readium-compatible digital book"
 msgid "Reads in"
 msgstr "Reads in"
 
+msgid "Ready"
+msgstr "Ready"
+
 msgid "Real books processed with this preset — before and after."
 msgstr "Real books processed with this preset — before and after."
 

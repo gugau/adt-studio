@@ -4298,6 +4298,9 @@ msgstr "Livro digital compatível com Readium"
 msgid "Reads in"
 msgstr "Lê em"
 
+msgid "Ready"
+msgstr "Pronto"
+
 msgid "Real books processed with this preset — before and after."
 msgstr "Livros reais processados com este predefinido — antes e depois."
 

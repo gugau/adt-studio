@@ -1,4 +1,10 @@
-import { Fragment, useState, type MouseEvent, type ReactNode } from "react"
+import {
+  Fragment,
+  useCallback,
+  useState,
+  type MouseEvent,
+  type ReactNode,
+} from "react"
 import { useNavigate } from "@tanstack/react-router"
 import {
   AlertTriangle,
@@ -8,6 +14,9 @@ import {
   ChevronRight,
   Copy,
   FileText,
+  Loader2,
+  Play,
+  RotateCcw,
   type LucideIcon,
 } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
@@ -30,6 +39,7 @@ import {
   getStepLabelI18n,
 } from "../pipeline-i18n"
 import { useBookRun } from "@/hooks/use-book-run"
+import { useApiKey } from "@/hooks/use-api-key"
 import { useAccessibilityAssessment } from "@/hooks/use-debug"
 import { useBook, usePackageAdtStatus } from "@/hooks/use-books"
 import { getSourcePdfUrl } from "@/api/client"
@@ -63,7 +73,9 @@ export function BookView({ bookLabel }: ViewProps) {
     stepProgress,
     stepError,
     error: runError,
+    queueRun,
   } = useBookRun()
+  const { apiKey, hasApiKey } = useApiKey()
   const { data: accessibilityAssessment } = useAccessibilityAssessment(bookLabel)
   const { data: signLanguageData } = useSignLanguageVideos(bookLabel)
   const { data: packageStatus } = usePackageAdtStatus(bookLabel)
@@ -81,6 +93,16 @@ export function BookView({ bookLabel }: ViewProps) {
     preview: previewCompleted,
     export: exportCompleted,
   }
+
+  const handleRun = useCallback(
+    (stage: NonBookStageDefinition) => {
+      if (!hasApiKey || !isPipelineStage(stage)) return
+      const state = stageState(stage.slug)
+      if (state === "running" || state === "queued") return
+      queueRun({ fromStage: stage.slug, toStage: stage.slug, apiKey })
+    },
+    [hasApiKey, stageState, queueRun, apiKey],
+  )
 
   const grouped: Record<StageGroup, NonBookStageDefinition[]> = {
     convert: [],
@@ -120,12 +142,19 @@ export function BookView({ bookLabel }: ViewProps) {
       isPipelineStage(step) && (rawState === "running" || rawState === "queued")
     const isCompleted = state === "done"
     const hasError = rawState === "error"
+    const showRunButton = isPipelineStage(step) && step.slug !== "preview"
     return {
       stage: step,
       bookLabel,
       isRunning,
       isCompleted,
       hasError,
+      showRunButton,
+      onRun: () => handleRun(step),
+      runDisabled: !hasApiKey || isRunning,
+      // "Ready" badge / enabled run button only apply to stages that can be
+      // queued from here (non-pipeline stages run from their own page).
+      canRun: showRunButton && hasApiKey,
       recommended: RECOMMENDED_STAGES.has(step.slug),
       stepState,
       stepProgress,
@@ -261,6 +290,10 @@ interface HomeStageCardProps {
   isRunning: boolean
   isCompleted: boolean
   hasError: boolean
+  showRunButton: boolean
+  onRun: () => void
+  runDisabled: boolean
+  canRun: boolean
   recommended: boolean
   stepState: (key: string) => string
   stepProgress: (key: string) => { page?: number; totalPages?: number } | undefined
@@ -274,6 +307,10 @@ function HomeStageCard({
   isRunning,
   isCompleted,
   hasError,
+  showRunButton,
+  onRun,
+  runDisabled,
+  canRun,
   recommended,
   stepState,
   stepProgress,
@@ -294,6 +331,11 @@ function HomeStageCard({
   const errorText = stepErrorLines.length
     ? stepErrorLines.join("\n\n")
     : (runError ?? "")
+
+  const handleRunClick = (e: MouseEvent) => {
+    e.stopPropagation()
+    onRun()
+  }
 
   const handleCardClick = () => {
     navigate({
@@ -351,6 +393,7 @@ function HomeStageCard({
               isCompleted={isCompleted}
               isRunning={isRunning}
               hasError={hasError}
+              canRun={canRun}
             />
             {recommended && (
               <Badge className="border-transparent bg-amber-100 text-[10px] uppercase tracking-wider text-amber-900 hover:bg-amber-100">
@@ -375,11 +418,24 @@ function HomeStageCard({
           )}
         </div>
 
-        {/* Right affordance — click anywhere on the card to open the stage page */}
-        <ChevronRight
-          aria-hidden
-          className="h-5 w-5 shrink-0 self-center text-muted-foreground/40 transition-colors group-hover:text-foreground/70"
-        />
+        {/* Right controls — queue the stage, then open the stage page */}
+        <div className="flex shrink-0 items-center gap-2 self-center">
+          {showRunButton && (
+            <RunButton
+              isRunning={isRunning}
+              isCompleted={isCompleted}
+              hasError={hasError}
+              color={stage.color}
+              disabled={runDisabled}
+              stageLabel={stageLabel}
+              onClick={handleRunClick}
+            />
+          )}
+          <ChevronRight
+            aria-hidden
+            className="h-5 w-5 text-muted-foreground/40 transition-colors group-hover:text-foreground/70"
+          />
+        </div>
       </div>
 
       {/* Error output — full width, copyable */}
@@ -444,10 +500,12 @@ function StageStatusBadge({
   isCompleted,
   isRunning,
   hasError,
+  canRun,
 }: {
   isCompleted: boolean
   isRunning: boolean
   hasError: boolean
+  canRun: boolean
 }) {
   if (hasError) {
     return (
@@ -473,7 +531,83 @@ function StageStatusBadge({
       </Badge>
     )
   }
+  if (canRun) {
+    return (
+      <Badge
+        variant="outline"
+        className="text-[10px] uppercase tracking-wider text-muted-foreground"
+      >
+        <Trans>Ready</Trans>
+      </Badge>
+    )
+  }
   return null
+}
+
+function RunButton({
+  isRunning,
+  isCompleted,
+  hasError,
+  color,
+  disabled,
+  stageLabel,
+  onClick,
+}: {
+  isRunning: boolean
+  isCompleted: boolean
+  hasError: boolean
+  color: string
+  disabled: boolean
+  stageLabel: string
+  onClick: (e: MouseEvent) => void
+}) {
+  const { t } = useLingui()
+  const title = hasError
+    ? t`Retry`
+    : isCompleted
+      ? t`Re-run ${stageLabel}`
+      : t`Run ${stageLabel}`
+
+  if (isRunning) {
+    return (
+      <div
+        aria-label={t`Running`}
+        className={cn(
+          "flex h-11 w-11 items-center justify-center rounded-full text-white opacity-70",
+          color,
+        )}
+      >
+        <Loader2 className="h-4 w-4 animate-spin" />
+      </div>
+    )
+  }
+
+  const toneClass = hasError
+    ? "bg-red-600 text-white hover:bg-red-700"
+    : isCompleted
+      ? cn(color, "text-white hover:opacity-90")
+      : "bg-muted text-foreground hover:bg-muted/80"
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      aria-label={title}
+      className={cn(
+        "flex h-11 w-11 items-center justify-center rounded-full transition-all",
+        "hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100",
+        toneClass,
+      )}
+    >
+      {hasError || isCompleted ? (
+        <RotateCcw className="h-4 w-4" />
+      ) : (
+        <Play className="ml-0.5 h-4 w-4" />
+      )}
+    </button>
+  )
 }
 
 // ---------------------------------------------------------------------------
