@@ -18,7 +18,8 @@ import { msg } from "@lingui/core/macro"
 import { i18n as linguiI18n } from "@lingui/core"
 import type { MessageDescriptor } from "@lingui/core"
 import { LandingPageShell } from "@/components/pipeline/components/LandingPageShell"
-import { PrereqGuard } from "@/components/pipeline/components/PrereqGuard"
+import { CascadeWarning } from "@/components/pipeline/components/CascadeWarning"
+import { LandingPageWarning } from "@/components/pipeline/components/LandingPageWarning"
 import { SettingExplainer } from "@/components/pipeline/components/SettingExplainer"
 import { SettingsCard, SettingsField } from "@/components/pipeline/components/SettingsCard"
 import { SegmentedControl } from "@/components/ui/segmented-control"
@@ -142,7 +143,9 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
   const { queueRun } = useBookRun()
   const status = useStageStatus("storyboard")
   const sectioningStatus = useStageStatus("sectioning")
+  const extractStatus = useStageStatus("extract")
   const sectioningReady = sectioningStatus.isCompleted
+  const extractReady = extractStatus.isCompleted
 
   const [defaultRenderStrategy, setDefaultRenderStrategy] = useState("")
   const [renderStrategyItems, setRenderStrategyItems] = useState<LandingStrategyEntry[]>([])
@@ -223,8 +226,15 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
   }
 
   const handleRun = () => {
-    if (!hasApiKey || !sectioningReady || status.isRunning) return
-    queueRun({ fromStage: "storyboard", toStage: "storyboard", apiKey })
+    if (!hasApiKey || status.isRunning) return
+    // Cue from here even if upstream stages haven't run — queue from the first
+    // incomplete core stage so the chain produces what Storyboard needs.
+    const fromStage = !extractReady
+      ? "extract"
+      : !sectioningReady
+        ? "sectioning"
+        : "storyboard"
+    queueRun({ fromStage, toStage: "storyboard", apiKey })
   }
 
   const isAi = AI_STRATEGIES.has(defaultRenderStrategy)
@@ -244,8 +254,6 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
 
   const disabledReason = !hasApiKey ? (
     <Trans>Add an API key in Book settings to run storyboard.</Trans>
-  ) : !sectioningReady ? (
-    <Trans>Run Sectioning first — storyboard needs typed sections to render.</Trans>
   ) : undefined
 
   return (
@@ -260,7 +268,7 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
       isCompleted={status.isCompleted}
       hasError={status.hasError}
       canRun={true}
-      extraDisabled={!hasApiKey || !sectioningReady}
+      extraDisabled={!hasApiKey}
       disabledReason={disabledReason}
       runLabel={<Trans>Run Storyboard</Trans>}
       rerunLabel={<Trans>Re-run</Trans>}
@@ -281,16 +289,20 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
         </p>
       </div>
 
-      <PrereqGuard
-        upstreamSlug="sectioning"
-        stageSlug="storyboard"
-        description={
-          <Trans>
-            Storyboard renders the typed sections produced by Sectioning.
-            Finish Sectioning before running this stage.
-          </Trans>
-        }
-      />
+      {sectioningReady ? (
+        <CascadeWarning stageSlug="storyboard" />
+      ) : (
+        <LandingPageWarning
+          variant="prereq"
+          title={<Trans>Earlier stages haven't run yet</Trans>}
+          description={
+            <Trans>
+              Running Storyboard will run the earlier core stages it depends on
+              first, then render the typed sections.
+            </Trans>
+          }
+        />
+      )}
 
       <SettingsCard>
         <SettingsField

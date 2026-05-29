@@ -1970,6 +1970,9 @@ msgstr "Cada pólipo secreta un esqueleto duro de carbonato de calcio. Durante c
 msgid "Each section introduces a new theme with worked examples, followed by short practice activities at the end of the page."
 msgstr "Cada sección introduce un nuevo tema con ejemplos trabajados, seguido de actividades prácticas cortas al final de la página."
 
+msgid "Earlier stages haven't run yet"
+msgstr "Las etapas anteriores aún no se han ejecutado"
+
 msgid "Early"
 msgstr "Temprano"
 
@@ -2194,6 +2197,9 @@ msgstr "Exportando..."
 
 msgid "Extract"
 msgstr "Extracción"
+
+msgid "Extract hasn't run yet"
+msgstr "Extracción aún no se ha ejecutado"
 
 msgid "Extract Preview"
 msgstr "Vista previa de Extracción"
@@ -4298,8 +4304,8 @@ msgstr "Libro digital compatible con Readium"
 msgid "Reads in"
 msgstr "Lee en"
 
-msgid "Ready"
-msgstr "Listo"
+#~ msgid "Ready"
+#~ msgstr "Listo"
 
 msgid "Real books processed with this preset — before and after."
 msgstr "Libros reales procesados con este preajuste — antes y después."
@@ -4576,8 +4582,8 @@ msgstr "Ejecutar Subtítulos"
 msgid "Run Extract"
 msgstr "Ejecutar Extracción"
 
-msgid "Run Extract first — sectioning needs extracted page text and images."
-msgstr "Ejecuta Extracción primero — el seccionamiento necesita texto e imágenes extraídas de la página."
+#~ msgid "Run Extract first — sectioning needs extracted page text and images."
+#~ msgstr "Ejecuta Extracción primero — el seccionamiento necesita texto e imágenes extraídas de la página."
 
 msgid "Run Glossary"
 msgstr "Ejecutar Glosario"
@@ -4591,8 +4597,8 @@ msgstr "Ejecuta Idioma primero — la voz narra el texto traducido."
 msgid "Run Sectioning"
 msgstr "Ejecutar Seccionamiento"
 
-msgid "Run Sectioning first — storyboard needs typed sections to render."
-msgstr "Ejecuta Seccionamiento primero — el storyboard necesita secciones escritas para renderizar."
+#~ msgid "Run Sectioning first — storyboard needs typed sections to render."
+#~ msgstr "Ejecuta Seccionamiento primero — el storyboard necesita secciones escritas para renderizar."
 
 msgid "Run Speech"
 msgstr "Ejecutar Voz"
@@ -4635,6 +4641,12 @@ msgstr "En ejecución"
 
 msgid "RUNNING"
 msgstr "EN CURSO"
+
+msgid "Running Sectioning will run Extract first, then section the extracted pages."
+msgstr "Ejecutar Sectioning ejecutará primero Extracción y luego dividirá en secciones las páginas extraídas."
+
+msgid "Running Storyboard will run the earlier core stages it depends on first, then render the typed sections."
+msgstr "Ejecutar Storyboard ejecutará primero las etapas principales anteriores de las que depende y luego renderizará las secciones tipificadas."
 
 msgid "Running Validation..."
 msgstr "Running Validation..."
@@ -4835,8 +4847,8 @@ msgstr "Modo de sección"
 msgid "Sectioning Mode"
 msgstr "Modo de sección"
 
-msgid "Sectioning needs the page text and images that Extract produces. Finish Extract before running this stage."
-msgstr "El seccionamiento necesita el texto e imágenes de la página que produce Extracción. Termina Extracción antes de ejecutar esta etapa."
+#~ msgid "Sectioning needs the page text and images that Extract produces. Finish Extract before running this stage."
+#~ msgstr "El seccionamiento necesita el texto e imágenes de la página que produce Extracción. Termina Extracción antes de ejecutar esta etapa."
 
 msgid "Sectioning Pages..."
 msgstr "Seccionando páginas..."
@@ -5246,8 +5258,8 @@ msgstr "Vista general del Storyboard"
 msgid "Storyboard Preview"
 msgstr "Vista previa del Storyboard"
 
-msgid "Storyboard renders the typed sections produced by Sectioning. Finish Sectioning before running this stage."
-msgstr "El Storyboard renderiza las secciones escritas producidas por el Seccionamiento. Termina el Seccionamiento antes de ejecutar esta etapa."
+#~ msgid "Storyboard renders the typed sections produced by Sectioning. Finish Sectioning before running this stage."
+#~ msgstr "El Storyboard renderiza las secciones escritas producidas por el Seccionamiento. Termina el Seccionamiento antes de ejecutar esta etapa."
 
 msgid "Storybook"
 msgstr "Libro de cuentos"

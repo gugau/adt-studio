@@ -1970,6 +1970,9 @@ msgstr "Each polyp secretes a hard calcium carbonate skeleton. Over hundreds of 
 msgid "Each section introduces a new theme with worked examples, followed by short practice activities at the end of the page."
 msgstr "Each section introduces a new theme with worked examples, followed by short practice activities at the end of the page."
 
+msgid "Earlier stages haven't run yet"
+msgstr "Earlier stages haven't run yet"
+
 msgid "Early"
 msgstr "Early"
 
@@ -2194,6 +2197,9 @@ msgstr "Exporting..."
 
 msgid "Extract"
 msgstr "Extract"
+
+msgid "Extract hasn't run yet"
+msgstr "Extract hasn't run yet"
 
 msgid "Extract Preview"
 msgstr "Extract Preview"
@@ -4298,8 +4304,8 @@ msgstr "Readium-compatible digital book"
 msgid "Reads in"
 msgstr "Reads in"
 
-msgid "Ready"
-msgstr "Ready"
+#~ msgid "Ready"
+#~ msgstr "Ready"
 
 msgid "Real books processed with this preset — before and after."
 msgstr "Real books processed with this preset — before and after."
@@ -4576,8 +4582,8 @@ msgstr "Run Captions"
 msgid "Run Extract"
 msgstr "Run Extract"
 
-msgid "Run Extract first — sectioning needs extracted page text and images."
-msgstr "Run Extract first — sectioning needs extracted page text and images."
+#~ msgid "Run Extract first — sectioning needs extracted page text and images."
+#~ msgstr "Run Extract first — sectioning needs extracted page text and images."
 
 msgid "Run Glossary"
 msgstr "Run Glossary"
@@ -4591,8 +4597,8 @@ msgstr "Run Language first — speech narrates the translated text."
 msgid "Run Sectioning"
 msgstr "Run Sectioning"
 
-msgid "Run Sectioning first — storyboard needs typed sections to render."
-msgstr "Run Sectioning first — storyboard needs typed sections to render."
+#~ msgid "Run Sectioning first — storyboard needs typed sections to render."
+#~ msgstr "Run Sectioning first — storyboard needs typed sections to render."
 
 msgid "Run Speech"
 msgstr "Run Speech"
@@ -4635,6 +4641,12 @@ msgstr "Running"
 
 msgid "RUNNING"
 msgstr "RUNNING"
+
+msgid "Running Sectioning will run Extract first, then section the extracted pages."
+msgstr "Running Sectioning will run Extract first, then section the extracted pages."
+
+msgid "Running Storyboard will run the earlier core stages it depends on first, then render the typed sections."
+msgstr "Running Storyboard will run the earlier core stages it depends on first, then render the typed sections."
 
 msgid "Running Validation..."
 msgstr "Running Validation..."
@@ -4835,8 +4847,8 @@ msgstr "Sectioning mode"
 msgid "Sectioning Mode"
 msgstr "Sectioning Mode"
 
-msgid "Sectioning needs the page text and images that Extract produces. Finish Extract before running this stage."
-msgstr "Sectioning needs the page text and images that Extract produces. Finish Extract before running this stage."
+#~ msgid "Sectioning needs the page text and images that Extract produces. Finish Extract before running this stage."
+#~ msgstr "Sectioning needs the page text and images that Extract produces. Finish Extract before running this stage."
 
 msgid "Sectioning Pages..."
 msgstr "Sectioning Pages..."
@@ -5246,8 +5258,8 @@ msgstr "Storyboard Overview"
 msgid "Storyboard Preview"
 msgstr "Storyboard Preview"
 
-msgid "Storyboard renders the typed sections produced by Sectioning. Finish Sectioning before running this stage."
-msgstr "Storyboard renders the typed sections produced by Sectioning. Finish Sectioning before running this stage."
+#~ msgid "Storyboard renders the typed sections produced by Sectioning. Finish Sectioning before running this stage."
+#~ msgstr "Storyboard renders the typed sections produced by Sectioning. Finish Sectioning before running this stage."
 
 msgid "Storybook"
 msgstr "Storybook"

@@ -1972,6 +1972,9 @@ msgstr "Chaque polype sécrète un squelette rigide de carbonate de calcium. Au 
 msgid "Each section introduces a new theme with worked examples, followed by short practice activities at the end of the page."
 msgstr "Chaque section introduit un nouveau thème avec des exemples travaillés, suivis de courtes activités pratiques à la fin de la page."
 
+msgid "Earlier stages haven't run yet"
+msgstr "Les étapes précédentes n'ont pas encore été exécutées"
+
 msgid "Early"
 msgstr "Précoce"
 
@@ -2196,6 +2199,9 @@ msgstr "Exportation..."
 
 msgid "Extract"
 msgstr "Extraire"
+
+msgid "Extract hasn't run yet"
+msgstr "Extraction n'a pas encore été exécutée"
 
 msgid "Extract Preview"
 msgstr "Aperçu de l'extraction"
@@ -4300,8 +4306,8 @@ msgstr "Livre numérique compatible Readium"
 msgid "Reads in"
 msgstr "Lit en"
 
-msgid "Ready"
-msgstr "Prêt"
+#~ msgid "Ready"
+#~ msgstr "Prêt"
 
 msgid "Real books processed with this preset — before and after."
 msgstr "De vrais livres traités avec ce préréglage — avant et après."
@@ -4578,8 +4584,8 @@ msgstr "Exécuter les sous-titres"
 msgid "Run Extract"
 msgstr "Exécuter l'extraction"
 
-msgid "Run Extract first — sectioning needs extracted page text and images."
-msgstr "Exécutez d'abord l'extraction — le découpage a besoin du texte et des images extraits des pages."
+#~ msgid "Run Extract first — sectioning needs extracted page text and images."
+#~ msgstr "Exécutez d'abord l'extraction — le découpage a besoin du texte et des images extraits des pages."
 
 msgid "Run Glossary"
 msgstr "Exécuter le glossaire"
@@ -4593,8 +4599,8 @@ msgstr "Exécutez d'abord la langue — la parole narre le texte traduit."
 msgid "Run Sectioning"
 msgstr "Exécuter le découpage"
 
-msgid "Run Sectioning first — storyboard needs typed sections to render."
-msgstr "Exécutez d'abord le découpage — le storyboard a besoin de sections tapées pour rendre."
+#~ msgid "Run Sectioning first — storyboard needs typed sections to render."
+#~ msgstr "Exécutez d'abord le découpage — le storyboard a besoin de sections tapées pour rendre."
 
 msgid "Run Speech"
 msgstr "Exécuter la parole"
@@ -4637,6 +4643,12 @@ msgstr "En cours"
 
 msgid "RUNNING"
 msgstr "EN COURS"
+
+msgid "Running Sectioning will run Extract first, then section the extracted pages."
+msgstr "Lancer Sectioning exécutera d'abord Extraction, puis découpera en sections les pages extraites."
+
+msgid "Running Storyboard will run the earlier core stages it depends on first, then render the typed sections."
+msgstr "Lancer Storyboard exécutera d'abord les étapes principales précédentes dont il dépend, puis affichera les sections typées."
 
 msgid "Running Validation..."
 msgstr "Validation en cours..."
@@ -4837,8 +4849,8 @@ msgstr "Mode de sectionnement"
 msgid "Sectioning Mode"
 msgstr "Mode de sectionnement"
 
-msgid "Sectioning needs the page text and images that Extract produces. Finish Extract before running this stage."
-msgstr "Le découpage a besoin du texte et des images des pages produits par l'extraction. Terminez l'extraction avant d'exécuter cette étape."
+#~ msgid "Sectioning needs the page text and images that Extract produces. Finish Extract before running this stage."
+#~ msgstr "Le découpage a besoin du texte et des images des pages produits par l'extraction. Terminez l'extraction avant d'exécuter cette étape."
 
 msgid "Sectioning Pages..."
 msgstr "Sectionnement des pages..."
@@ -5248,8 +5260,8 @@ msgstr "Aperçu du storyboard"
 msgid "Storyboard Preview"
 msgstr "Aperçu du storyboard"
 
-msgid "Storyboard renders the typed sections produced by Sectioning. Finish Sectioning before running this stage."
-msgstr "Le storyboard rend les sections tapées produites par le découpage. Terminez le découpage avant d'exécuter cette étape."
+#~ msgid "Storyboard renders the typed sections produced by Sectioning. Finish Sectioning before running this stage."
+#~ msgstr "Le storyboard rend les sections tapées produites par le découpage. Terminez le découpage avant d'exécuter cette étape."
 
 msgid "Storybook"
 msgstr "Livre d'histoires"

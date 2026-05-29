@@ -1970,6 +1970,9 @@ msgstr "Cada pólipo secreta um esqueleto duro de carbonato de cálcio. Ao longo
 msgid "Each section introduces a new theme with worked examples, followed by short practice activities at the end of the page."
 msgstr "Cada seção introduz um novo tema com exemplos trabalhados, seguidos por atividades práticas curtas no final da página."
 
+msgid "Earlier stages haven't run yet"
+msgstr "As etapas anteriores ainda não foram executadas"
+
 msgid "Early"
 msgstr "Iniciante"
 
@@ -2194,6 +2197,9 @@ msgstr "Exportando..."
 
 msgid "Extract"
 msgstr "Extração"
+
+msgid "Extract hasn't run yet"
+msgstr "Extração ainda não foi executada"
 
 msgid "Extract Preview"
 msgstr "Pré-visualização de Extração"
@@ -4298,8 +4304,8 @@ msgstr "Livro digital compatível com Readium"
 msgid "Reads in"
 msgstr "Lê em"
 
-msgid "Ready"
-msgstr "Pronto"
+#~ msgid "Ready"
+#~ msgstr "Pronto"
 
 msgid "Real books processed with this preset — before and after."
 msgstr "Livros reais processados com este predefinido — antes e depois."
@@ -4576,8 +4582,8 @@ msgstr "Executar Legendas"
 msgid "Run Extract"
 msgstr "Executar Extração"
 
-msgid "Run Extract first — sectioning needs extracted page text and images."
-msgstr "Execute Extração primeiro — o seccionamento precisa do texto e das imagens extraídas da página."
+#~ msgid "Run Extract first — sectioning needs extracted page text and images."
+#~ msgstr "Execute Extração primeiro — o seccionamento precisa do texto e das imagens extraídas da página."
 
 msgid "Run Glossary"
 msgstr "Executar Glossário"
@@ -4591,8 +4597,8 @@ msgstr "Execute Idioma primeiro — a fala narra o texto traduzido."
 msgid "Run Sectioning"
 msgstr "Executar Seccionamento"
 
-msgid "Run Sectioning first — storyboard needs typed sections to render."
-msgstr "Execute Seccionamento primeiro — o storyboard precisa de seções classificadas para renderizar."
+#~ msgid "Run Sectioning first — storyboard needs typed sections to render."
+#~ msgstr "Execute Seccionamento primeiro — o storyboard precisa de seções classificadas para renderizar."
 
 msgid "Run Speech"
 msgstr "Executar Fala"
@@ -4635,6 +4641,12 @@ msgstr "Em execução"
 
 msgid "RUNNING"
 msgstr "EM EXECUÇÃO"
+
+msgid "Running Sectioning will run Extract first, then section the extracted pages."
+msgstr "Executar Sectioning executará primeiro a Extração e depois dividirá em seções as páginas extraídas."
+
+msgid "Running Storyboard will run the earlier core stages it depends on first, then render the typed sections."
+msgstr "Executar Storyboard executará primeiro as etapas principais anteriores das quais depende e depois renderizará as seções tipadas."
 
 msgid "Running Validation..."
 msgstr "Running Validation..."
@@ -4835,8 +4847,8 @@ msgstr "Modo de seção"
 msgid "Sectioning Mode"
 msgstr "Modo de seção"
 
-msgid "Sectioning needs the page text and images that Extract produces. Finish Extract before running this stage."
-msgstr "O seccionamento precisa do texto e das imagens da página que a Extração produz. Termine a Extração antes de executar esta etapa."
+#~ msgid "Sectioning needs the page text and images that Extract produces. Finish Extract before running this stage."
+#~ msgstr "O seccionamento precisa do texto e das imagens da página que a Extração produz. Termine a Extração antes de executar esta etapa."
 
 msgid "Sectioning Pages..."
 msgstr "Seccionando páginas..."
@@ -5246,8 +5258,8 @@ msgstr "Visão Geral do Storyboard"
 msgid "Storyboard Preview"
 msgstr "Pré-visualização do Storyboard"
 
-msgid "Storyboard renders the typed sections produced by Sectioning. Finish Sectioning before running this stage."
-msgstr "O Storyboard renderiza as seções classificadas produzidas pelo Seccionamento. Termine o Seccionamento antes de executar esta etapa."
+#~ msgid "Storyboard renders the typed sections produced by Sectioning. Finish Sectioning before running this stage."
+#~ msgstr "O Storyboard renderiza as seções classificadas produzidas pelo Seccionamento. Termine o Seccionamento antes de executar esta etapa."
 
 msgid "Storybook"
 msgstr "Livro de Histórias"

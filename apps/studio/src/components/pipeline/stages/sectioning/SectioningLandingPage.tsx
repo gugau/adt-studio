@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { LandingPageShell } from "@/components/pipeline/components/LandingPageShell"
-import { PrereqGuard } from "@/components/pipeline/components/PrereqGuard"
+import { CascadeWarning } from "@/components/pipeline/components/CascadeWarning"
+import { LandingPageWarning } from "@/components/pipeline/components/LandingPageWarning"
 import { SettingsCard, SettingsField } from "@/components/pipeline/components/SettingsCard"
 import { SettingExplainer } from "@/components/pipeline/components/SettingExplainer"
 import { ToggleCard } from "@/components/pipeline/components/ToggleCard"
@@ -80,8 +81,11 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
   }
 
   const handleRun = () => {
-    if (!hasApiKey || !extractReady || status.isRunning) return
-    queueRun({ fromStage: "sectioning", toStage: "sectioning", apiKey })
+    if (!hasApiKey || status.isRunning) return
+    // Cue from here even if Extract hasn't run yet — queue from the first
+    // incomplete upstream stage so the chain produces what Sectioning needs.
+    const fromStage = extractReady ? "sectioning" : "extract"
+    queueRun({ fromStage, toStage: "sectioning", apiKey })
   }
 
   const modeOptions = useMemo(
@@ -94,8 +98,6 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
 
   const disabledReason = !hasApiKey ? (
     <Trans>Add an API key in Book settings to run sectioning.</Trans>
-  ) : !extractReady ? (
-    <Trans>Run Extract first — sectioning needs extracted page text and images.</Trans>
   ) : undefined
 
   return (
@@ -110,7 +112,7 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
       isCompleted={status.isCompleted}
       hasError={status.hasError}
       canRun={true}
-      extraDisabled={!hasApiKey || !extractReady}
+      extraDisabled={!hasApiKey}
       disabledReason={disabledReason}
       runLabel={<Trans>Run Sectioning</Trans>}
       rerunLabel={<Trans>Re-run</Trans>}
@@ -131,16 +133,20 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
         </p>
       </div>
 
-      <PrereqGuard
-        upstreamSlug="extract"
-        stageSlug="sectioning"
-        description={
-          <Trans>
-            Sectioning needs the page text and images that Extract produces.
-            Finish Extract before running this stage.
-          </Trans>
-        }
-      />
+      {extractReady ? (
+        <CascadeWarning stageSlug="sectioning" />
+      ) : (
+        <LandingPageWarning
+          variant="prereq"
+          title={<Trans>Extract hasn't run yet</Trans>}
+          description={
+            <Trans>
+              Running Sectioning will run Extract first, then section the
+              extracted pages.
+            </Trans>
+          }
+        />
+      )}
 
       <SettingsCard>
         <SettingsField
