@@ -359,6 +359,18 @@ export function useAudioPlayer(): UseAudioPlayer {
     if (isPlaying && audioRef.current) playAtIndex(currentIndex)
   }, [language])
 
+  // When Easy Read mode toggles, the on-screen text has already swapped (via
+  // applyTranslationsToDOM) and `items` has been rebuilt to point at the
+  // matching audio track (easy-read recording vs original). Realign the audio
+  // so it follows the text: re-play the current item if playing, or drop the
+  // now-stale loaded track so the next play() starts fresh on the right one.
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio || !audio.src) return
+    if (isPlaying) playAtIndex(currentIndex)
+    else stopAndClear()
+  }, [easyReadMode])
+
   useEffect(() => {
     const audio = audioRef.current
     if (!audio || !audio.src) return
