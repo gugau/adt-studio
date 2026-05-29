@@ -1137,6 +1137,9 @@ msgstr "Bordures"
 msgid "Boxed Text"
 msgstr "Boxed Texte"
 
+msgid "Branch out"
+msgstr "Bifurquer"
+
 msgid "Breakpoint override"
 msgstr "Remplacement de point de rupture"
 
@@ -1844,6 +1847,9 @@ msgstr "Distribuez via des applications et bibliothèques de lecture compatibles
 
 msgid "Don't have a project yet?"
 msgstr "Vous n'avez pas encore de projet ?"
+
+msgid "Done"
+msgstr "Terminé"
 
 msgid "DONE"
 msgstr "TERMINÉ"
@@ -3667,14 +3673,14 @@ msgstr "Clé OpenAI requise"
 msgid "OpenAI Voice"
 msgstr "OpenAI Voix"
 
-msgid "Optional"
-msgstr "Facultatif"
+#~ msgid "Optional"
+#~ msgstr "Facultatif"
 
 msgid "Optional Features"
 msgstr "Fonctionnalités optionnelles"
 
-msgid "Optional features to enrich the book — accessibility, comprehension, and navigation. Run any of these in any order once the core pipeline is complete."
-msgstr "Fonctionnalités facultatives pour enrichir le livre — accessibilité, compréhension et navigation. Exécutez-les dans n'importe quel ordre une fois le pipeline principal terminé."
+#~ msgid "Optional features to enrich the book — accessibility, comprehension, and navigation. Run any of these in any order once the core pipeline is complete."
+#~ msgstr "Fonctionnalités facultatives pour enrichir le livre — accessibilité, compréhension et navigation. Exécutez-les dans n'importe quel ordre une fois le pipeline principal terminé."
 
 #~ msgid "Optional features to enrich the book — accessibility, comprehension, navigation, translations, and audio. Run any of these in any order once the core pipeline is complete."
 #~ msgstr "Fonctionnalités facultatives pour enrichir le livre — accessibilité, compréhension, navigation, traductions et audio. Exécutez-les dans n'importe quel ordre une fois le pipeline principal terminé."
@@ -3885,6 +3891,9 @@ msgstr "paragraphe"
 msgid "Paragraph"
 msgstr "Paragraphe"
 
+msgid "Parallel enrichment"
+msgstr "Enrichissement parallèle"
+
 msgid "Parsing pages"
 msgstr "Analyse des pages"
 
@@ -3947,6 +3956,9 @@ msgstr "Par mot"
 
 msgid "Perfect for children's books, pairing large images with minimal text."
 msgstr "Parfait pour les livres pour enfants, associant de grandes images avec un minimum de texte."
+
+msgid "Phase {phaseNumber}"
+msgstr "Phase {phaseNumber}"
 
 msgid "Photograph"
 msgstr "Photographie"
@@ -4244,6 +4256,9 @@ msgstr "Livre numérique compatible Readium"
 msgid "Reads in"
 msgstr "Lit en"
 
+msgid "Ready"
+msgstr "Prêt"
+
 msgid "Real books processed with this preset — before and after."
 msgstr "De vrais livres traités avec ce préréglage — avant et après."
 
@@ -4263,8 +4278,8 @@ msgstr "Recommandé pour"
 msgid "Recommended for {0}"
 msgstr "Recommandé pour {0}"
 
-msgid "Recommended for accessibility"
-msgstr "Recommandé pour l'accessibilité"
+#~ msgid "Recommended for accessibility"
+#~ msgstr "Recommandé pour l'accessibilité"
 
 msgid "Record reviewer findings for the current page and save them to the active validation session."
 msgstr "Enregistrez les résultats du réviseur pour la page actuelle et sauvegardez-les dans la session de validation active."
@@ -4581,6 +4596,9 @@ msgstr "Exécutez les vérifications de validation du livre entier et configurez
 
 msgid "Run-only tags"
 msgstr "Tags d'exécution uniquement"
+
+msgid "Running"
+msgstr "En cours"
 
 msgid "RUNNING"
 msgstr "EN COURS"
@@ -4904,8 +4922,8 @@ msgstr "Application web ADT autonome"
 msgid "Separator"
 msgstr "Séparateur"
 
-msgid "Sequential stages that turn the source PDF into structured, rendered content. Run these in order."
-msgstr "Étapes séquentielles qui transforment le PDF source en contenu structuré et rendu. Exécutez-les dans l'ordre."
+#~ msgid "Sequential stages that turn the source PDF into structured, rendered content. Run these in order."
+#~ msgstr "Étapes séquentielles qui transforment le PDF source en contenu structuré et rendu. Exécutez-les dans l'ordre."
 
 msgid "serious"
 msgstr "grave"
@@ -4942,6 +4960,9 @@ msgstr "Les paramètres pour cette étape ne sont pas encore disponibles."
 
 msgid "Shadow"
 msgstr "Ombre"
+
+msgid "Ship"
+msgstr "Livrer"
 
 msgid "Short, simple sentences for kindergarten through 5th grade."
 msgstr "Phrases courtes et simples pour la maternelle jusqu'à la 5e année."
@@ -5484,6 +5505,9 @@ msgstr "Thème"
 msgid "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."
 msgstr "Ces fonctionnalités améliorent l'accès pour les personnes handicapées. Les exécuter avant l'exportation aide votre livre à respecter les normes d'accessibilité ADT."
 
+msgid "These stages are optional. They don't depend on each other — run any of them in any order once the core pipeline is complete."
+msgstr "Ces étapes sont facultatives. Elles ne dépendent pas les unes des autres — exécutez-les dans n'importe quel ordre une fois le pipeline principal terminé."
+
 msgid "These values reflect either the saved book override or the latest packaged defaults."
 msgstr "Ces valeurs reflètent soit le remplacement enregistré du livre, soit les valeurs par défaut du dernier empaquetage."
 
@@ -5647,8 +5671,8 @@ msgstr "Traduisez le contenu du livre vers les langues de sortie."
 msgid "Translate the book into additional languages. Each language is generated alongside the original, ready for narration, captions, and on-page reading."
 msgstr "Traduisez le livre dans des langues supplémentaires. Chaque langue est générée aux côtés de l'original, prête pour la narration, les sous-titres et la lecture sur page."
 
-msgid "Translate the book into other languages and generate narration. Run these after the enhancements you want included are in place."
-msgstr "Traduisez le livre dans d'autres langues et générez la narration. Exécutez ces étapes après avoir mis en place les améliorations souhaitées."
+#~ msgid "Translate the book into other languages and generate narration. Run these after the enhancements you want included are in place."
+#~ msgstr "Traduisez le livre dans d'autres langues et générez la narration. Exécutez ces étapes après avoir mis en place les améliorations souhaitées."
 
 msgid "Translating languages..."
 msgstr "Traduction des langues..."
@@ -5902,8 +5926,8 @@ msgstr "Utilisé pour les modèles Claude (claude-opus-4-6, claude-sonnet-4-6, e
 msgid "Used for Gemini models — both LLM (gemini-2.5-pro, etc.) and TTS (gemini-2.5-pro-preview-tts, etc.)"
 msgstr "Utilisé pour les modèles Gemini — LLM (gemini-2.5-pro, etc.) et TTS (gemini-2.5-pro-preview-tts, etc.)"
 
-msgid "Validate, preview, and export the final ADT bundle for delivery."
-msgstr "Validez, prévisualisez et exportez le bundle ADT final pour la livraison."
+#~ msgid "Validate, preview, and export the final ADT bundle for delivery."
+#~ msgstr "Validez, prévisualisez et exportez le bundle ADT final pour la livraison."
 
 msgid "Validation"
 msgstr "Validation"
