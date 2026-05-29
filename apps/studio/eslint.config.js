@@ -207,6 +207,9 @@ export default [
             "onFeatureToggleChange",
           ],
           ignore: [
+            // Single-character literals — decorative SVG glyphs (`?`, `A`, `文`, `あ`),
+            // drop-cap letters, single-symbol labels. Never translation targets.
+            "^.$",
             // project brand name (intentional non-translatable literal)
             "^ADT Studio$",
             // npm package names and module paths (e.g. "@tanstack/react-router")

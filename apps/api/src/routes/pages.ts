@@ -190,7 +190,7 @@ async function executeAiImageGeneration(params: AiImageGenParams): Promise<{
   try {
     generated = await generateImageWithCache({
       apiKey,
-      modelId: "openai:gpt-image-1.5",
+      modelId: "openai:gpt-image-2",
       prompt: finalPrompt,
       size: size as `${number}x${number}`,
       referenceImages,
@@ -1587,7 +1587,7 @@ export function createPageRoutes(
     }
   })
 
-  // POST /books/:label/images/ai-generate — Generate image via gpt-image-1.5
+  // POST /books/:label/images/ai-generate — Generate image via gpt-image-2
   app.post("/books/:label/images/ai-generate", async (c) => {
     try {
       const { label } = c.req.param()

@@ -32,7 +32,7 @@ describe("generateImageWithCache", () => {
 
     const first = await generateImageWithCache({
       apiKey: "sk-test",
-      modelId: "openai:gpt-image-1.5",
+      modelId: "openai:gpt-image-2",
       prompt: "a bright diagram",
       size: "1024x1024",
       cacheDir,
@@ -40,7 +40,7 @@ describe("generateImageWithCache", () => {
 
     const second = await generateImageWithCache({
       apiKey: "sk-test",
-      modelId: "openai:gpt-image-1.5",
+      modelId: "openai:gpt-image-2",
       prompt: "a bright diagram",
       size: "1024x1024",
       cacheDir,
@@ -89,7 +89,7 @@ describe("generateImageWithCache", () => {
 
     const result = await generateImageWithCache({
       apiKey: "sk-test",
-      modelId: "openai:gpt-image-1.5",
+      modelId: "openai:gpt-image-2",
       prompt: "make it cleaner",
       size: "1024x1024",
       referenceImages: [

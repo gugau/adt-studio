@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo, type CSSProperties } from "react"
 import type { AccessibilityFinding } from "@adt/types"
-import { Loader2 } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { StageBlockedState } from "@/components/pipeline/components/StageBlockedState"
+import { LoadingState } from "@/components/pipeline/components/LoadingState"
 import { useAllPagesPruned } from "@/hooks/use-all-pages-pruned"
 import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate, useSearch } from "@tanstack/react-router"
@@ -29,10 +29,10 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const search = useSearch({ strict: false }) as { previewHref?: string }
-  const { stageState } = useBookRun()
+  const { stageState, isStatusLoading } = useBookRun()
   const { isTaskRunning, getTask } = useBookTasks(bookLabel)
   const storyboardDone = stageState("storyboard") === "done"
-  const { allPruned } = useAllPagesPruned(bookLabel)
+  const { allPruned, isLoading: prunedLoading } = useAllPagesPruned(bookLabel)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const ranRef = useRef(false)
@@ -266,33 +266,20 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
     })
   }, [bookLabel, currentPreviewPage.href, navigate, navigatePreviewToHref, ready, search.previewHref])
 
+  if (isStatusLoading || prunedLoading) {
+    return <LoadingState stageSlug="preview" label={<Trans>Loading preview...</Trans>} />
+  }
+
   if (!storyboardDone) {
-    return (
-      <StageBlockedState
-        bookLabel={bookLabel}
-        reason="storyboard-missing"
-        stageLabel={<Trans>Preview</Trans>}
-      />
-    )
+    return <StageBlockedState bookLabel={bookLabel} reason="storyboard-missing" stageLabel={<Trans>Preview</Trans>} />
   }
 
   if (allPruned) {
-    return (
-      <StageBlockedState
-        bookLabel={bookLabel}
-        reason="all-pruned"
-        stageLabel={<Trans>Preview</Trans>}
-      />
-    )
+    return <StageBlockedState bookLabel={bookLabel} reason="all-pruned" stageLabel={<Trans>Preview</Trans>} />
   }
 
   if (packaging) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">Packaging preview...</span>
-      </div>
-    )
+    return <LoadingState stageSlug="preview" label={<Trans>Packaging preview...</Trans>} />
   }
 
   if (error) {

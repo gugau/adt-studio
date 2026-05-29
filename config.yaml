@@ -109,6 +109,11 @@ section_types:
     Select the correct answer from a list of predefined options.
     Each question presents one or more possible answers, and the learner
     chooses the best option.
+  activity_multi_select: >
+    Select all options that apply from a list of predefined options.
+    More than one option per question may be correct, and the learner must
+    pick every option that satisfies the prompt (a "check all that apply"
+    or "mark every X" task). Use checkboxes, not radios.
   activity_true_false: >
     Decide whether each statement is true or false.
     The learner evaluates given statements and selects between two options:
@@ -184,11 +189,23 @@ render_strategies:
     render_type: template
     config:
       template: one_column_render
+  fixed_layout:
+    render_type: fixed_layout
   activity_multiple_choice:
     render_type: activity
     config:
       prompt: activity_multiple_choice
       answer_prompt: activity_multiple_choice_answers
+      model: openai:gpt-5.4
+      max_retries: 5
+      timeout: 180
+      visual_refinement:
+        enabled: true
+  activity_multi_select:
+    render_type: activity
+    config:
+      prompt: activity_multi_select
+      answer_prompt: activity_multi_select_answers
       model: openai:gpt-5.4
       max_retries: 5
       timeout: 180
@@ -256,6 +273,7 @@ render_strategies:
 
 section_render_strategies:
   activity_multiple_choice: activity_multiple_choice
+  activity_multi_select: activity_multi_select
   activity_true_false: activity_true_false
   activity_fill_in_the_blank: activity_fill_in_the_blank
   activity_fill_in_a_table: activity_fill_in_a_table

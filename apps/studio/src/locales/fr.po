@@ -420,6 +420,9 @@ msgstr "Une section avec du texte et plusieurs images."
 msgid "A section with text in a highlighted box."
 msgstr "Une section avec du texte dans un encadré mis en évidence."
 
+msgid "A select-all-that-apply activity where the learner can choose more than one option per question."
+msgstr "Une activité de type « cocher toutes les réponses qui s'appliquent », où l'apprenant peut choisir plus d'une option par question."
+
 msgid "A separator page between sections."
 msgstr "Une page de séparation entre les sections."
 
@@ -560,6 +563,9 @@ msgstr "Activité : Compléter les blancs"
 
 msgid "Activity: Matching"
 msgstr "Activité : Appariement"
+
+msgid "Activity: Multi-Select"
+msgstr "Activité : Sélection multiple"
 
 msgid "Activity: Multiple Choice"
 msgstr "Activité : Choix multiple"
@@ -2961,11 +2967,17 @@ msgstr "Chargement du livre..."
 msgid "Loading books..."
 msgstr "Chargement des livres..."
 
+msgid "Loading export..."
+msgstr "Chargement de l'exportation..."
+
 msgid "Loading glossary..."
 msgstr "Chargement du glossaire..."
 
 msgid "Loading image..."
 msgstr "Chargement de l'image..."
+
+msgid "Loading images..."
+msgstr "Chargement des images..."
 
 msgid "Loading logs..."
 msgstr "Chargement des journaux..."
@@ -3020,6 +3032,9 @@ msgstr "Chargement du modèle..."
 
 msgid "Loading text catalog..."
 msgstr "Chargement du catalogue de texte..."
+
+msgid "Loading validation..."
+msgstr "Chargement de la validation..."
 
 msgid "Loading voice mappings..."
 msgstr "Chargement des correspondances de voix..."
@@ -3333,6 +3348,9 @@ msgstr "Pas encore de clé API pour {0}. Ajoutez-en une dans les paramètres du 
 
 msgid "No assessment"
 msgstr "Aucune évaluation"
+
+msgid "No audio for this page"
+msgstr "Pas de son pour cette page"
 
 msgid "No books match your search"
 msgstr "Aucun livre ne correspond à votre recherche"
@@ -3764,6 +3782,9 @@ msgstr "Empaquetage"
 msgid "Packaging failed"
 msgstr "L'empaquetage a échoué"
 
+msgid "Packaging preview..."
+msgstr "Aperçu de l'emballage..."
+
 msgid "Packaging validation results..."
 msgstr "Empaquetage des résultats de validation..."
 
@@ -3999,6 +4020,12 @@ msgstr "Précipitations"
 
 msgid "Prefer terms central to the book's subject matter. Skip generic vocabulary and proper nouns that don't carry meaning beyond the page."
 msgstr "Privilégiez les termes centraux au sujet du livre. Évitez le vocabulaire générique et les noms propres qui n'ont pas de signification au-delà de la page."
+
+msgid "Preserves the source PDF's exact page layout"
+msgstr "Préserve la mise en page exacte du PDF source"
+
+msgid "Preserves the source PDF's exact page layout — images and positioned text rendered in place."
+msgstr "Préserve la mise en page exacte du PDF source — images et texte positionné rendus à leur emplacement."
 
 msgid "Preset"
 msgstr "Preset"
@@ -4530,6 +4557,9 @@ msgstr "Exécutez le storyboard pour générer des sections auxquelles vous pouv
 
 msgid "Run the pipeline"
 msgstr "Exécuter le pipeline"
+
+msgid "Run the pipeline to extract content"
+msgstr "Exécutez le pipeline pour extraire le contenu"
 
 msgid "Run TOC"
 msgstr "Exécuter la table des matières"
@@ -5156,8 +5186,8 @@ msgstr "Étirer"
 msgid "Strict"
 msgstr "Strict"
 
-msgid "Strict grid template that repeats across pages."
-msgstr "Modèle de grille strict qui se répète sur les pages."
+#~ msgid "Strict grid template that repeats across pages."
+#~ msgstr "Modèle de grille strict qui se répète sur les pages."
 
 msgid "Strikethrough"
 msgstr "Barré"
@@ -5469,6 +5499,9 @@ msgstr "Voici Pip ! C'est un joyeux chien caramel avec une queue très remuante.
 
 msgid "This page has no captioned images"
 msgstr "Cette page n'a pas d'images légendées"
+
+msgid "This page has no entries to synthesize"
+msgstr "Cette page n'a pas d'entrées à synthétiser"
 
 msgid "This page has no sectioning output"
 msgstr "Cette page n'a pas de sortie de sectionnement"

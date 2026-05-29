@@ -511,6 +511,47 @@ The UI sidebar, run cards, and step indicators all derive from the `PIPELINE` co
 
 ---
 
+### New Activity Type
+
+Activity types (e.g., `activity_multiple_choice`, `activity_multi_select`, `activity_true_false`) are the interactive section kinds that page-sectioning can classify and that the runtime knows how to score. Adding a new one touches: type registries, prompts, the validator, the runtime, config, and tests.
+
+The recipe — using `activity_multi_select` (added in v0.x for "select all that apply" prompts) as a worked example:
+
+**1. Register the section type value** in three places:
+- `apps/studio/src/lib/section-constants.ts` — add to `SECTION_TYPES`, plus a label and description in the localized message maps.
+- `apps/studio/src/lib/config-constants.ts` — add to `ALL_SECTION_TYPES`.
+- `apps/studio/src/components/wizard/constants.ts` — add a `render_strategies` entry and a `section_render_strategies` mapping in each wizard preset that should support it; also add to each preset's `pruned_section_types` list where applicable.
+
+**2. Author the prompts** (`prompts/`):
+- `activity_<name>.liquid` — render prompt. Returns `{ reasoning, content }` where `content` is the activity HTML.
+- `activity_<name>_answers.liquid` — answers prompt. Returns `{ reasoning, answers: [{ id, value }, …] }` keyed by `data-activity-item`.
+
+**3. Register the render strategy in `config.yaml`:**
+- Add a description under `section_types:`.
+- Add a `render_strategies.activity_<name>:` block with `render_type: activity`, the prompt names, model, retries, and visual-refinement settings.
+- Map the section type to the strategy under `section_render_strategies:`.
+
+**4. Teach page-sectioning to detect it** (`prompts/page_sectioning.liquid`): extend the SELECT-AMONG sub-type list (or whichever precedence block applies), the cognitive-task recap, and the MIXED MECHANICS routing so the classifier knows when to emit your new type.
+
+**5. Add structural validation rules** in `packages/pipeline/src/validate-activity-structure.ts`: define a rules array (e.g., `MULTI_SELECT_RULES`) and register it in `ACTIVITY_RULES` keyed by the section type. Rules should catch markup that screenshots fine but breaks the runtime (missing classes, missing `data-activity-item`, etc.).
+
+**6. Implement the runtime handler** in `apps/adt-runtime/src/features/activity/runtime/activity-<name>.ts`:
+- Export `initialize<Name>Activity(): (() => void) | null`.
+- Read correct answers from `data-correct-answers` / `window.correctAnswers`.
+- Wire into the submit/skip atoms (`submitEnabledAtom`, `validateHandlerAtom`, `skipHandlerAtom`, etc.).
+- Apply outline + badge feedback consistent with the other activity handlers.
+- Set appropriate ARIA roles (`radiogroup` for single-select, `group` for multi-select, etc.).
+
+**7. Wire the initializer into the runtime lifecycle** (`apps/adt-runtime/src/app/lifecycle.ts`): import it and call it from `bootRuntime()` alongside the other activity initializers.
+
+**8. Add tests:**
+- Validator: extend `packages/pipeline/src/__tests__/validate-activity-structure.test.ts` with rule-by-rule coverage for the new type.
+- Runtime: add `apps/adt-runtime/src/features/activity/runtime/activity-<name>.test.ts` mirroring the existing activity-type tests (interaction → verdict → post-correct navigation).
+
+**9. Update i18n catalogs:** run `pnpm --filter @adt/studio extract` to surface the new label/description strings into `en/pt-BR/es/fr` `.po` files, and translate before merging — CI will block on empty `msgstr` entries.
+
+---
+
 ### New API Endpoint
 
 **1. Create the route file (`apps/api/src/routes/your-resource.ts`):**

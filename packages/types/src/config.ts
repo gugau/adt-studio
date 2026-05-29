@@ -33,7 +33,7 @@ export type PageSectioningConfig = z.infer<typeof PageSectioningConfig>
 
 export const ImageTranslationConfig = StepConfig.extend({
   enabled: z.boolean().optional(),
-  /** Image model id (e.g. "openai:gpt-image-1.5"). When unset, the step is a no-op. */
+  /** Image model id (e.g. "openai:gpt-image-2"). When unset, the step is a no-op. */
   image_model: z.string().optional(),
   /** Image IDs the user has chosen to translate. Empty = no images regenerated. */
   selected_image_ids: z.array(z.string()).optional(),
