@@ -162,23 +162,34 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
   }, [pages, totalImages, displayPages.length, setExtra, selectedPageId, selectedPageSummary, hasSections, sectionIndex, setSectionIndex, t])
 
   useEffect(() => {
-    if (!scrollContainerRef.current || displayPages.length === 0) return
     const root = scrollContainerRef.current
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => (a.boundingClientRect.top ?? 0) - (b.boundingClientRect.top ?? 0))[0]
-        if (visible) {
-          const id = (visible.target as HTMLElement).dataset.pageId
-          if (id) setActivePageId(id)
+    if (!root || displayPages.length === 0) return
+    let frame = 0
+    const computeActive = () => {
+      frame = 0
+      const sections = root.querySelectorAll<HTMLElement>("section[data-page-id]")
+      if (sections.length === 0) return
+      const rootTop = root.getBoundingClientRect().top
+      const line = TOOLBAR_HEIGHT + 48
+      let current = sections[0].dataset.pageId ?? null
+      for (const section of sections) {
+        if (section.getBoundingClientRect().top - rootTop <= line) {
+          current = section.dataset.pageId ?? current
+        } else {
+          break
         }
-      },
-      { root, rootMargin: `-${TOOLBAR_HEIGHT + 40}px 0px -60% 0px`, threshold: 0 },
-    )
-    const sections = root.querySelectorAll<HTMLElement>("section[data-page-id]")
-    sections.forEach((s) => observer.observe(s))
-    return () => observer.disconnect()
+      }
+      if (current) setActivePageId(current)
+    }
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(computeActive)
+    }
+    root.addEventListener("scroll", onScroll, { passive: true })
+    computeActive()
+    return () => {
+      root.removeEventListener("scroll", onScroll)
+      if (frame) cancelAnimationFrame(frame)
+    }
   }, [displayPages])
 
   const handleJumpToPage = useCallback((pageId: string) => {

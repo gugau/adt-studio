@@ -93,9 +93,6 @@ export function PageJumper({
         <span className="tabular-nums">
           {activePage ? activePage.pageNumber : "—"}
         </span>
-        <span className="text-muted-foreground">
-          {t`of ${String(pages.length)}`}
-        </span>
         <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
