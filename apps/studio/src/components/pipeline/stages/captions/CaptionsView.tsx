@@ -1,467 +1,27 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
-import { Check, ChevronDown, Eye, EyeOff, Image as ImageIcon, Info, Loader2, X } from "lucide-react"
-import { useQueryClient } from "@tanstack/react-query"
-import { api, BASE_URL } from "@/api/client"
-import type { PageDetail, VersionEntry } from "@/api/client"
-import type { ContentNodeData } from "@adt/types"
-import { usePages, usePage } from "@/hooks/use-pages"
+import { Image as ImageIcon, Loader2, Search, X } from "lucide-react"
+import { useQueryClient, useQueries } from "@tanstack/react-query"
+import { api } from "@/api/client"
+import type { PageDetail } from "@/api/client"
+import { usePages } from "@/hooks/use-pages"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
-import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import { StageRunCard } from "../../components/StageRunCard"
 import { StageEmptyState } from "../../components/StageEmptyState"
 import { useSectionNav } from "@/routes/books.$label"
-import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
+import { CaptionsHintBanner } from "./components/CaptionsHintBanner"
+import { PageCaptions } from "./components/PageCaptions"
+import { PageJumper } from "./components/PageJumper"
+import { Lightbox } from "./components/Lightbox"
+import type { CaptioningData, DecorativeFilter, LightboxEntry, PageJumperEntry } from "./lib/types"
 
-
-type CaptioningData = NonNullable<PageDetail["imageCaptioning"]>
-type CaptionEntry = CaptioningData["captions"][number]
-
-type DecorativeFilter = "all" | "captioned" | "decorative"
-
-function matchesDecorativeFilter(cap: CaptionEntry, filter: DecorativeFilter): boolean {
-  if (filter === "captioned") return cap.decorative !== true
-  if (filter === "decorative") return cap.decorative === true
-  return true
-}
-
-const CAPTIONS_HINT_KEY = "adt-studio-captions-hint-dismissed"
-
-/** Dismissible banner explaining that captions are AI-generated and editable. */
-function CaptionsHint() {
-  const { t } = useLingui()
-  const [dismissed, setDismissed] = useState(() => {
-    try {
-      return localStorage.getItem(CAPTIONS_HINT_KEY) === "1"
-    } catch {
-      return false
-    }
-  })
-
-  if (dismissed) return null
-
-  const dismiss = () => {
-    try {
-      localStorage.setItem(CAPTIONS_HINT_KEY, "1")
-    } catch {
-      // localStorage unavailable
-    }
-    setDismissed(true)
-  }
-
-  return (
-    <div className="flex gap-3 rounded-lg border border-teal-200 bg-teal-50 px-4 py-3">
-      <Info className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
-      <div className="flex flex-1 flex-col gap-0.5">
-        <span className="text-[13px] font-medium text-teal-800">
-          <Trans>These captions were generated automatically</Trans>
-        </span>
-        <span className="text-[12px] text-teal-700 leading-relaxed">
-          <Trans>
-            Click any caption to edit it, or mark an image as decorative to hide it from screen
-            readers when it doesn't need a caption. Changes are saved as a new version, so you can
-            always roll back.
-          </Trans>
-        </span>
-      </div>
-      <button
-        type="button"
-        onClick={dismiss}
-        aria-label={t`Dismiss`}
-        className="shrink-0 -mr-1 -mt-1 rounded p-1 text-teal-600 hover:bg-teal-100 hover:text-teal-800 transition-colors cursor-pointer"
-      >
-        <X className="w-3.5 h-3.5" />
-      </button>
-    </div>
-  )
-}
-
-function VersionPicker({
-  currentVersion,
-  saving,
-  dirty,
-  bookLabel,
-  itemId,
-  onPreview,
-  onSave,
-  onDiscard,
-}: {
-  currentVersion: number | null
-  saving: boolean
-  dirty: boolean
-  bookLabel: string
-  itemId: string
-  onPreview: (data: unknown) => void
-  onSave: () => void
-  onDiscard: () => void
-}) {
-  const { t } = useLingui()
-  const [open, setOpen] = useState(false)
-  const [versions, setVersions] = useState<VersionEntry[] | null>(null)
-  const [loading, setLoading] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [open])
-
-  const handleOpen = async () => {
-    if (saving || currentVersion == null) return
-    setOpen(true)
-    setLoading(true)
-    const res = await api.getVersionHistory(bookLabel, "image-captioning", itemId, true)
-    setVersions(res.versions)
-    setLoading(false)
-  }
-
-  const handlePick = (v: VersionEntry) => {
-    if (v.version === currentVersion && !dirty) {
-      setOpen(false)
-      return
-    }
-    setOpen(false)
-    onPreview(v.data)
-  }
-
-  if (saving) {
-    return <Loader2 className="h-3 w-3 animate-spin" />
-  }
-
-  if (currentVersion == null) return null
-
-  if (dirty) {
-    return (
-      <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          onClick={onDiscard}
-          className="text-[10px] font-medium rounded px-2 py-0.5 bg-muted hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors"
-        >
-          {t`Discard`}
-        </button>
-        <button
-          type="button"
-          onClick={onSave}
-          className="flex items-center gap-1 text-[10px] font-medium rounded px-2 py-0.5 bg-green-600 hover:bg-green-500 text-white cursor-pointer transition-colors"
-        >
-          <Check className="h-3 w-3" />
-          {t`Save`}
-        </button>
-      </div>
-    )
-  }
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={handleOpen}
-        className="flex items-center gap-0.5 text-[10px] font-normal normal-case tracking-normal bg-muted hover:bg-muted/80 rounded px-1.5 py-0.5 transition-colors"
-      >
-        v{currentVersion}
-        <ChevronDown className="h-2.5 w-2.5" />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full mt-1 z-20 bg-popover border rounded shadow-md min-w-[80px] py-1">
-          {loading ? (
-            <div className="flex items-center justify-center py-2 px-3">
-              <Loader2 className="h-3 w-3 animate-spin" />
-            </div>
-          ) : versions && versions.length > 0 ? (
-            versions.map((v) => (
-              <button
-                key={v.version}
-                type="button"
-                onClick={() => handlePick(v)}
-                className={`w-full text-left px-3 py-1 text-xs hover:bg-accent transition-colors ${
-                  v.version === currentVersion ? "font-semibold text-foreground" : "text-muted-foreground"
-                }`}
-              >
-                v{v.version}
-              </button>
-            ))
-          ) : (
-            <div className="px-3 py-1 text-xs text-muted-foreground">{t`No versions`}</div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-/** Build a map from imageId → sectionIndex by walking each section's tree. */
-function buildImageSectionMap(page: PageDetail | undefined): Map<string, number> {
-  const map = new Map<string, number>()
-  if (!page?.sectioningTree) return map
-  const walk = (nodes: ContentNodeData[], sectionIdx: number) => {
-    for (const node of nodes) {
-      if (node.role === "image") map.set(node.nodeId, sectionIdx)
-      else if (node.children) walk(node.children, sectionIdx)
-    }
-  }
-  page.sectioningTree.sections.forEach((section, idx) => {
-    walk(section.nodes, idx)
-  })
-  return map
-}
-
-interface CaptionGroup {
-  sectionIndex: number
-  sectionType?: string
-  captions: CaptionEntry[]
-}
-
-function PageCaptions({
-  bookLabel,
-  pageId,
-  pageNumber,
-  emptyState,
-  largeImages,
-  filterSectionIndex,
-  decorativeFilter,
-}: {
-  bookLabel: string
-  pageId: string
-  pageNumber: number
-  emptyState?: React.ReactNode
-  largeImages?: boolean
-  filterSectionIndex?: number
-  decorativeFilter: DecorativeFilter
-}) {
-  const { t } = useLingui()
-  const queryClient = useQueryClient()
-  const { data: page } = usePage(bookLabel, pageId)
-
-  const [pending, setPending] = useState<CaptioningData | null>(null)
-  const [saving, setSaving] = useState(false)
-
-  // Reset pending when page data changes
-  useEffect(() => {
-    setPending(null)
-  }, [page?.versions.imageCaptioning])
-
-  const effective = pending ?? page?.imageCaptioning
-  const captions = effective?.captions ?? []
-  const dirty = pending != null
-
-  // Apply the show/hide decorative filter (display only — editing still
-  // operates on the full caption list).
-  const visibleCaptions = useMemo(
-    () => captions.filter((c) => matchesDecorativeFilter(c, decorativeFilter)),
-    [captions, decorativeFilter]
-  )
-
-  // Map imageId → sectionIndex
-  const imageSectionMap = useMemo(() => buildImageSectionMap(page), [page?.sectioningTree])
-
-  // Group captions by section
-  const groups = useMemo(() => {
-    const sections = page?.sectioningTree?.sections
-    if (!sections || sections.length <= 1) {
-      // No sectioning or single section — flat list, no grouping
-      return null
-    }
-    const grouped = new Map<number, CaptionGroup>()
-    const unsectioned: CaptionEntry[] = []
-    for (const cap of visibleCaptions) {
-      const si = imageSectionMap.get(cap.imageId)
-      if (si != null) {
-        let group = grouped.get(si)
-        if (!group) {
-          group = {
-            sectionIndex: si,
-            sectionType: sections[si]?.sectionType,
-            captions: [],
-          }
-          grouped.set(si, group)
-        }
-        group.captions.push(cap)
-      } else {
-        unsectioned.push(cap)
-      }
-    }
-    // Sort by section index
-    const result = Array.from(grouped.values()).sort((a, b) => a.sectionIndex - b.sectionIndex)
-    if (unsectioned.length > 0) {
-      result.push({ sectionIndex: -1, sectionType: undefined, captions: unsectioned })
-    }
-    return result
-  }, [visibleCaptions, imageSectionMap, page?.sectioningTree?.sections])
-
-  if (!page?.imageCaptioning || captions.length === 0) return emptyState ?? null
-  // Nothing matches the active filter on this page — drop it from the gallery.
-  if (visibleCaptions.length === 0) return emptyState ?? null
-
-  const updateCaption = (imageId: string, newCaption: string) => {
-    const base = pending ?? page.imageCaptioning
-    if (!base) return
-    setPending({
-      ...base,
-      captions: base.captions.map((c) =>
-        c.imageId === imageId ? { ...c, caption: newCaption, source: "manual" } : c
-      ),
-    })
-  }
-
-  const toggleDecorative = (imageId: string) => {
-    const base = pending ?? page.imageCaptioning
-    if (!base) return
-    setPending({
-      ...base,
-      captions: base.captions.map((c) =>
-        c.imageId === imageId ? { ...c, decorative: !c.decorative, source: "manual" } : c
-      ),
-    })
-  }
-
-  const saveCaptions = async () => {
-    if (!pending) return
-    setSaving(true)
-    const minDelay = new Promise((r) => setTimeout(r, 400))
-    await api.updateImageCaptioning(bookLabel, pageId, pending)
-    setPending(null)
-    await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
-    invalidateStoryboardDependents(queryClient, bookLabel)
-    await minDelay
-    setSaving(false)
-  }
-
-  const handlePreview = (data: unknown) => {
-    setPending(data as CaptioningData)
-  }
-
-  // Filter captions by section when a section is selected
-  const filteredCaptions = filterSectionIndex != null
-    ? visibleCaptions.filter((cap) => imageSectionMap.get(cap.imageId) === filterSectionIndex)
-    : visibleCaptions
-
-  if (filterSectionIndex != null && filteredCaptions.length === 0) {
-    return (
-      <StageEmptyState
-        icon={ImageIcon}
-        color="teal"
-        title={t`No images in this section`}
-      />
-    )
-  }
-
-  const gridClass = largeImages
-    ? "grid grid-cols-1 sm:grid-cols-2 gap-3"
-    : "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3"
-  const imgHeightClass = largeImages ? "h-64" : "h-44"
-
-  const renderCaption = (cap: CaptionEntry) => {
-    const isDecorative = cap.decorative === true
-    return (
-      <div
-        key={cap.imageId}
-        className={`flex flex-col rounded-lg border bg-card overflow-hidden ${
-          isDecorative ? "border-dashed border-amber-300" : ""
-        }`}
-      >
-        <img
-          src={`${BASE_URL}/books/${bookLabel}/images/${cap.imageId}`}
-          alt={isDecorative ? "" : cap.caption}
-          aria-hidden={isDecorative || undefined}
-          className={`w-full ${imgHeightClass} bg-muted object-contain block ${
-            isDecorative ? "opacity-60" : ""
-          }`}
-        />
-        <div className="flex flex-1 flex-col gap-1.5 p-2.5">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-medium text-teal-600">{cap.imageId}</span>
-            <button
-              type="button"
-              onClick={() => toggleDecorative(cap.imageId)}
-              aria-pressed={isDecorative}
-              title={t`Decorative images are hidden from screen readers and don't need a caption`}
-              className={`ml-auto flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
-                isDecorative
-                  ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
-                  : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              }`}
-            >
-              {isDecorative ? <EyeOff className="h-2.5 w-2.5" /> : <Eye className="h-2.5 w-2.5" />}
-              {t`Decorative`}
-            </button>
-          </div>
-          {isDecorative ? (
-            <p className="flex flex-1 items-center rounded-md border border-dashed border-amber-200 bg-amber-50/60 p-2 text-[11px] leading-relaxed text-amber-700">
-              <Trans>Marked as decorative — hidden from screen readers, no caption needed.</Trans>
-            </p>
-          ) : (
-            <textarea
-              value={cap.caption}
-              onChange={(e) => updateCaption(cap.imageId, e.target.value)}
-              aria-label={t`Caption for ${cap.imageId}`}
-              className="w-full flex-1 text-sm text-foreground leading-relaxed resize-none rounded-md border border-input bg-background p-2 hover:border-ring/60 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-              rows={3}
-            />
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center gap-2 px-1">
-        <span className="text-sm font-medium text-foreground">
-          {t`Page ${String(pageNumber)}`}
-          {filterSectionIndex != null && (
-            <span className="text-muted-foreground"> {t`/ Section ${String(filterSectionIndex + 1)}`}</span>
-          )}
-        </span>
-        <div className="ml-auto">
-          <VersionPicker
-            currentVersion={page.versions.imageCaptioning}
-            saving={saving}
-            dirty={dirty}
-            bookLabel={bookLabel}
-            itemId={pageId}
-            onPreview={handlePreview}
-            onSave={saveCaptions}
-            onDiscard={() => setPending(null)}
-          />
-        </div>
-      </div>
-      {filterSectionIndex != null ? (
-        // Filtered to a specific section — flat gallery
-        <div className={gridClass}>{filteredCaptions.map(renderCaption)}</div>
-      ) : groups ? (
-        // Grouped by section — gallery per section
-        groups.map((group) => (
-          <div key={group.sectionIndex} className="space-y-1.5">
-            <div className="px-1 pt-1.5 pb-0.5">
-              <span className="text-[9px] font-medium text-muted-foreground/70 uppercase tracking-wider">
-                {group.sectionIndex >= 0
-                  ? group.sectionType
-                    ? t`Section ${String(group.sectionIndex + 1)} — ${group.sectionType}`
-                    : t`Section ${String(group.sectionIndex + 1)}`
-                  : t`Other images`
-                }
-              </span>
-            </div>
-            <div className={gridClass}>{group.captions.map(renderCaption)}</div>
-          </div>
-        ))
-      ) : (
-        // Single section or no sectioning — flat gallery
-        <div className={gridClass}>{filteredCaptions.map(renderCaption)}</div>
-      )}
-    </div>
-  )
-}
+const TOOLBAR_HEIGHT = 64
 
 export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { bookLabel: string; selectedPageId?: string; onSelectPage?: (pageId: string | null) => void }) {
   const { t } = useLingui()
+  const queryClient = useQueryClient()
   const { data: pages, isLoading } = usePages(bookLabel)
   const { setExtra } = useStepHeader()
   const { stageState, queueRun } = useBookRun()
@@ -472,13 +32,20 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
   const showRunCard = !captionsDone || captionsRunning
   const { sectionIndex, setSectionIndex } = useSectionNav()
   const [decorativeFilter, setDecorativeFilter] = useState<DecorativeFilter>("all")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [lightbox, setLightbox] = useState<{ entries: LightboxEntry[]; index: number } | null>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const [activePageId, setActivePageId] = useState<string | null>(null)
 
   const handleRunCaptions = useCallback(() => {
     if (!hasApiKey || captionsRunning) return
     queueRun({ fromStage: "captions", toStage: "captions", apiKey })
   }, [hasApiKey, captionsRunning, apiKey, queueRun])
 
-  const pagesWithImages = (pages ?? []).filter((p) => p.imageCount > 0)
+  const pagesWithImages = useMemo(
+    () => (pages ?? []).filter((p) => p.imageCount > 0),
+    [pages],
+  )
   const hasCaptionData = pagesWithImages.some((p) => p.hasCaptioning)
 
   const displayPages = selectedPageId
@@ -486,14 +53,69 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
     : pagesWithImages
   const totalImages = displayPages.reduce((sum, p) => sum + p.imageCount, 0)
 
-  // Determine if we should filter by section (only when a specific page is selected and it has sections)
   const selectedPageSummary = selectedPageId
     ? (pages ?? []).find((p) => p.pageId === selectedPageId)
     : null
   const hasSections = selectedPageSummary && selectedPageSummary.sectionCount > 1
-  const filterSectionIndex = selectedPageId && hasSections
-    ? sectionIndex
-    : undefined
+  const filterSectionIndex = selectedPageId && hasSections ? sectionIndex : undefined
+
+  const pageDetailQueries = useQueries({
+    queries: displayPages.map((p) => ({
+      queryKey: ["books", bookLabel, "pages", p.pageId],
+      queryFn: () => api.getPage(bookLabel, p.pageId),
+      enabled: !!bookLabel && hasCaptionData,
+    })),
+  })
+
+  const pageImageQueries = useQueries({
+    queries: displayPages.map((p) => ({
+      queryKey: ["books", bookLabel, "pages", p.pageId, "image"],
+      queryFn: () => api.getPageImage(bookLabel, p.pageId),
+      enabled: !!bookLabel && hasCaptionData,
+      staleTime: Infinity,
+    })),
+  })
+
+  const aggregateCounts = useMemo(() => {
+    let total = 0
+    let captioned = 0
+    let decorative = 0
+    for (const q of pageDetailQueries) {
+      const captions = q.data?.imageCaptioning?.captions ?? []
+      for (const c of captions) {
+        total += 1
+        if (c.decorative === true) decorative += 1
+        else captioned += 1
+      }
+    }
+    return { total, captioned, decorative }
+  }, [pageDetailQueries])
+
+  const pageJumperEntries: PageJumperEntry[] = useMemo(
+    () =>
+      displayPages.map((p, idx) => {
+        const detail = pageDetailQueries[idx]?.data
+        const captions = detail?.imageCaptioning?.captions ?? []
+        let decorativeCount = 0
+        let captionedCount = 0
+        for (const c of captions) {
+          if (c.decorative === true) decorativeCount += 1
+          else captionedCount += 1
+        }
+        const imgData = pageImageQueries[idx]?.data?.imageBase64
+        return {
+          pageId: p.pageId,
+          pageNumber: p.pageNumber,
+          textPreview: p.textPreview,
+          imageCount: p.imageCount,
+          thumbnail: imgData ? `data:image/png;base64,${imgData}` : null,
+          stats: detail?.imageCaptioning
+            ? { total: captions.length, captioned: captionedCount, decorative: decorativeCount }
+            : undefined,
+        }
+      }),
+    [displayPages, pageDetailQueries, pageImageQueries],
+  )
 
   useEffect(() => {
     if (!pages) return
@@ -534,10 +156,106 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
           <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{t`${String(totalImages)} images`}</span>
           <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{t`${String(displayPages.length)} pages`}</span>
         </div>
-      </>
+      </>,
     )
     return () => setExtra(null)
-  }, [pages, totalImages, displayPages.length, setExtra, selectedPageId, selectedPageSummary?.pageNumber, selectedPageSummary?.sectionCount, hasSections, sectionIndex, setSectionIndex])
+  }, [pages, totalImages, displayPages.length, setExtra, selectedPageId, selectedPageSummary, hasSections, sectionIndex, setSectionIndex, t])
+
+  useEffect(() => {
+    if (!scrollContainerRef.current || displayPages.length === 0) return
+    const root = scrollContainerRef.current
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => (a.boundingClientRect.top ?? 0) - (b.boundingClientRect.top ?? 0))[0]
+        if (visible) {
+          const id = (visible.target as HTMLElement).dataset.pageId
+          if (id) setActivePageId(id)
+        }
+      },
+      { root, rootMargin: `-${TOOLBAR_HEIGHT + 40}px 0px -60% 0px`, threshold: 0 },
+    )
+    const sections = root.querySelectorAll<HTMLElement>("section[data-page-id]")
+    sections.forEach((s) => observer.observe(s))
+    return () => observer.disconnect()
+  }, [displayPages])
+
+  const handleJumpToPage = useCallback((pageId: string) => {
+    const root = scrollContainerRef.current
+    if (!root) return
+    const section = root.querySelector<HTMLElement>(`section[data-page-id="${pageId}"]`)
+    if (section) section.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [])
+
+  const handleOpenLightbox = useCallback((entries: LightboxEntry[], index: number) => {
+    setLightbox({ entries, index })
+  }, [])
+
+  const handleLightboxNavigate = useCallback((next: number) => {
+    setLightbox((prev) => (prev ? { ...prev, index: next } : prev))
+  }, [])
+
+  const handleLightboxCaptionChange = useCallback(
+    async (entry: LightboxEntry, newCaption: string) => {
+      const pageData = await queryClient.fetchQuery({
+        queryKey: ["books", bookLabel, "pages", entry.pageId],
+        queryFn: () => api.getPage(bookLabel, entry.pageId),
+      })
+      if (!pageData?.imageCaptioning) return
+      const next: CaptioningData = {
+        ...pageData.imageCaptioning,
+        captions: pageData.imageCaptioning.captions.map((c) =>
+          c.imageId === entry.cap.imageId ? { ...c, caption: newCaption, source: "manual" } : c,
+        ),
+      }
+      queryClient.setQueryData<PageDetail>(["books", bookLabel, "pages", entry.pageId], (prev) =>
+        prev ? { ...prev, imageCaptioning: next } : prev,
+      )
+      setLightbox((prev) => {
+        if (!prev) return prev
+        const updated = prev.entries.map((e) =>
+          e.cap.imageId === entry.cap.imageId
+            ? { ...e, cap: { ...e.cap, caption: newCaption, source: "manual" as const } }
+            : e,
+        )
+        return { ...prev, entries: updated }
+      })
+    },
+    [bookLabel, queryClient],
+  )
+
+  const handleLightboxToggleDecorative = useCallback(
+    async (entry: LightboxEntry) => {
+      const pageData = await queryClient.fetchQuery({
+        queryKey: ["books", bookLabel, "pages", entry.pageId],
+        queryFn: () => api.getPage(bookLabel, entry.pageId),
+      })
+      if (!pageData?.imageCaptioning) return
+      const isDecorative = !entry.cap.decorative
+      const next: CaptioningData = {
+        ...pageData.imageCaptioning,
+        captions: pageData.imageCaptioning.captions.map((c) =>
+          c.imageId === entry.cap.imageId
+            ? { ...c, decorative: isDecorative, source: "manual" }
+            : c,
+        ),
+      }
+      queryClient.setQueryData<PageDetail>(["books", bookLabel, "pages", entry.pageId], (prev) =>
+        prev ? { ...prev, imageCaptioning: next } : prev,
+      )
+      setLightbox((prev) => {
+        if (!prev) return prev
+        const updated = prev.entries.map((e) =>
+          e.cap.imageId === entry.cap.imageId
+            ? { ...e, cap: { ...e.cap, decorative: isDecorative, source: "manual" as const } }
+            : e,
+        )
+        return { ...prev, entries: updated }
+      })
+    },
+    [bookLabel, queryClient],
+  )
 
   if (!showRunCard && isLoading) {
     return (
@@ -590,58 +308,122 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
     />
   ) : undefined
 
+  const chipBase =
+    "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-200 cursor-pointer"
+
   return (
-    <div className="flex flex-1 flex-col gap-4">
-      <div className="px-4 pt-3">
-        <CaptionsHint />
-      </div>
-      <div className="flex items-center gap-2 px-4">
-        <span className="text-[11px] font-medium text-muted-foreground">{t`Show`}</span>
-        <div className="inline-flex items-center rounded-md border bg-muted/40 p-0.5">
+    <div ref={scrollContainerRef} className="flex flex-1 flex-col overflow-y-auto">
+      <CaptionsHintBanner />
+      <div
+        className="sticky top-0 z-20 flex items-center gap-3 px-6 py-3 bg-background/95 backdrop-blur-md border-b border-border/60"
+        style={{ height: TOOLBAR_HEIGHT }}
+      >
+        <div className="inline-flex items-center rounded-lg border border-border/70 bg-muted/40 p-0.5">
           {([
-            { value: "all", label: t`All` },
-            { value: "captioned", label: t`Captioned` },
-            { value: "decorative", label: t`Decorative` },
-          ] as const).map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setDecorativeFilter(opt.value)}
-              aria-pressed={decorativeFilter === opt.value}
-              className={`rounded px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer ${
-                decorativeFilter === opt.value
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+            { value: "all", label: t`All`, count: aggregateCounts.total },
+            { value: "captioned", label: t`Captioned`, count: aggregateCounts.captioned },
+            { value: "decorative", label: t`Decorative`, count: aggregateCounts.decorative },
+          ] as const).map((opt) => {
+            const active = decorativeFilter === opt.value
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setDecorativeFilter(opt.value)}
+                aria-pressed={active}
+                className={`${chipBase} ${
+                  active
+                    ? "bg-background text-foreground shadow-sm ring-1 ring-border/60"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <span>{opt.label}</span>
+                <span
+                  className={`tabular-nums text-[11px] ${
+                    active
+                      ? opt.value === "decorative"
+                        ? "text-amber-600"
+                        : "text-teal-700"
+                      : "text-muted-foreground/60"
+                  }`}
+                >
+                  {opt.count}
+                </span>
+              </button>
+            )
+          })}
         </div>
-        {selectedPageId && (
-          <button
-            type="button"
-            onClick={() => onSelectPage?.(null)}
-            className="ml-auto text-xs font-medium text-teal-600 hover:text-teal-700 hover:underline transition-colors"
-          >
-            {t`Show all`}
-          </button>
-        )}
+
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/70 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t`Search captions or image IDs…`}
+            className="w-full h-8 rounded-md border border-border/70 bg-background pl-8 pr-8 text-[12px] placeholder:text-muted-foreground/60 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-200 transition-colors"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              aria-label={t`Clear search`}
+              className="absolute right-1 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+
+        <div className="ml-auto flex items-center gap-1.5">
+          {selectedPageId && (
+            <button
+              type="button"
+              onClick={() => onSelectPage?.(null)}
+              className="text-[12px] font-medium text-teal-600 hover:text-teal-700 hover:underline transition-colors"
+            >
+              {t`Show all pages`}
+            </button>
+          )}
+          {!selectedPageId && displayPages.length > 1 && (
+            <PageJumper
+              pages={pageJumperEntries}
+              activePageId={activePageId}
+              onJump={handleJumpToPage}
+            />
+          )}
+        </div>
       </div>
-      <div className="flex flex-col gap-4 px-4 pb-4">
+
+      <div className="flex flex-col gap-8 px-4 pb-12 pt-3">
         {displayPages.map((page) => (
           <PageCaptions
             key={page.pageId}
             bookLabel={bookLabel}
             pageId={page.pageId}
             pageNumber={page.pageNumber}
+            textPreview={page.textPreview}
             emptyState={singlePageEmptyState}
-            largeImages={!!selectedPageId}
             filterSectionIndex={page.pageId === selectedPageId ? filterSectionIndex : undefined}
             decorativeFilter={decorativeFilter}
+            searchQuery={searchQuery}
+            onOpenLightbox={handleOpenLightbox}
+            toolbarHeight={TOOLBAR_HEIGHT}
           />
         ))}
       </div>
+
+      {lightbox && (
+        <Lightbox
+          bookLabel={bookLabel}
+          entries={lightbox.entries}
+          index={lightbox.index}
+          onClose={() => setLightbox(null)}
+          onNavigate={handleLightboxNavigate}
+          onCaptionChange={handleLightboxCaptionChange}
+          onToggleDecorative={handleLightboxToggleDecorative}
+        />
+      )}
     </div>
   )
 }
