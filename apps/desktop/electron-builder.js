@@ -51,6 +51,7 @@ const config = {
   },
   extraResources,
   files: ["out/**/*", "!out/renderer/placeholder-*"],
+
   win: {
     target: ["nsis"],
     icon: "build/icon.ico",
@@ -62,11 +63,13 @@ const config = {
       sign: "./scripts/sign-windows.js",
     },
   },
+
   nsis: {
     artifactName,
     oneClick: false,
     allowToChangeInstallationDirectory: true,
   },
+
   mac: {
     target: ["dmg", "zip"],
     icon: "build/icon.icon",
@@ -89,13 +92,17 @@ const config = {
         "Application requests access to the user's Downloads folder.",
     },
   },
+
   dmg: {
     artifactName,
   },
+
   linux: {
-    target: ["AppImage"],
+    target: ["AppImage", "deb"],
     icon: "build/icons",
+    artifactName
   },
+
   publish: {
     provider: "github",
     owner: "unicef",
