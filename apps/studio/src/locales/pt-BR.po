@@ -4007,6 +4007,12 @@ msgstr "Precipitação"
 msgid "Prefer terms central to the book's subject matter. Skip generic vocabulary and proper nouns that don't carry meaning beyond the page."
 msgstr "Prefira termos centrais ao assunto do livro. Pule vocabulário genérico e nomes próprios que não carregam significado além da página."
 
+msgid "Preserves the source PDF's exact page layout"
+msgstr "Preserva o layout de página exato do PDF de origem"
+
+msgid "Preserves the source PDF's exact page layout — images and positioned text rendered in place."
+msgstr "Preserva o layout de página exato do PDF de origem — imagens e texto posicionado renderizados no lugar."
+
 msgid "Preset"
 msgstr "Predefinido"
 
@@ -5166,8 +5172,8 @@ msgstr "Esticar"
 msgid "Strict"
 msgstr "Rigoroso"
 
-msgid "Strict grid template that repeats across pages."
-msgstr "Modelo de grade estrito que se repete nas páginas."
+#~ msgid "Strict grid template that repeats across pages."
+#~ msgstr "Modelo de grade estrito que se repete nas páginas."
 
 msgid "Strikethrough"
 msgstr "Tachado"

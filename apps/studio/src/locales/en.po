@@ -4007,6 +4007,12 @@ msgstr "Precipitation"
 msgid "Prefer terms central to the book's subject matter. Skip generic vocabulary and proper nouns that don't carry meaning beyond the page."
 msgstr "Prefer terms central to the book's subject matter. Skip generic vocabulary and proper nouns that don't carry meaning beyond the page."
 
+msgid "Preserves the source PDF's exact page layout"
+msgstr "Preserves the source PDF's exact page layout"
+
+msgid "Preserves the source PDF's exact page layout — images and positioned text rendered in place."
+msgstr "Preserves the source PDF's exact page layout — images and positioned text rendered in place."
+
 msgid "Preset"
 msgstr "Preset"
 
@@ -5166,8 +5172,8 @@ msgstr "Stretch"
 msgid "Strict"
 msgstr "Strict"
 
-msgid "Strict grid template that repeats across pages."
-msgstr "Strict grid template that repeats across pages."
+#~ msgid "Strict grid template that repeats across pages."
+#~ msgstr "Strict grid template that repeats across pages."
 
 msgid "Strikethrough"
 msgstr "Strikethrough"
