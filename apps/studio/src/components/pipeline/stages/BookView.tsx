@@ -116,14 +116,15 @@ export function BookView({ bookLabel }: ViewProps) {
   const cardPropsFor = (step: NonBookStageDefinition): HomeStageCardProps => {
     const rawState = stageState(step.slug)
     const state = completionOverrides[step.slug] ? "done" : rawState
-    const isRunning =
-      isPipelineStage(step) && (rawState === "running" || rawState === "queued")
+    const isRunning = isPipelineStage(step) && rawState === "running"
+    const isQueued = isPipelineStage(step) && rawState === "queued"
     const isCompleted = state === "done"
     const hasError = rawState === "error"
     return {
       stage: step,
       bookLabel,
       isRunning,
+      isQueued,
       isCompleted,
       hasError,
       recommended: RECOMMENDED_STAGES.has(step.slug),
@@ -259,6 +260,7 @@ interface HomeStageCardProps {
   stage: NonBookStageDefinition
   bookLabel: string
   isRunning: boolean
+  isQueued: boolean
   isCompleted: boolean
   hasError: boolean
   recommended: boolean
@@ -272,6 +274,7 @@ function HomeStageCard({
   stage,
   bookLabel,
   isRunning,
+  isQueued,
   isCompleted,
   hasError,
   recommended,
@@ -350,6 +353,7 @@ function HomeStageCard({
             <StageStatusBadge
               isCompleted={isCompleted}
               isRunning={isRunning}
+              isQueued={isQueued}
               hasError={hasError}
             />
             {recommended && (
@@ -443,10 +447,12 @@ function StageErrorOutput({ errorText }: { errorText: string }) {
 function StageStatusBadge({
   isCompleted,
   isRunning,
+  isQueued,
   hasError,
 }: {
   isCompleted: boolean
   isRunning: boolean
+  isQueued: boolean
   hasError: boolean
 }) {
   if (hasError) {
@@ -470,6 +476,13 @@ function StageStatusBadge({
     return (
       <Badge className="border-transparent bg-blue-100 text-[10px] uppercase tracking-wider text-blue-900 hover:bg-blue-100">
         <Trans>Running</Trans>
+      </Badge>
+    )
+  }
+  if (isQueued) {
+    return (
+      <Badge className="border-transparent bg-amber-100 text-[10px] uppercase tracking-wider text-amber-900 hover:bg-amber-100">
+        <Trans>Queued</Trans>
       </Badge>
     )
   }

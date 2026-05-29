@@ -4202,6 +4202,9 @@ msgstr "Parámetro de consulta"
 msgid "question"
 msgstr "pregunta"
 
+msgid "Queued"
+msgstr "En cola"
+
 msgid "Quiz Generation"
 msgstr "Generación de cuestionarios"
 

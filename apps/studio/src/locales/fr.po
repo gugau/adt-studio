@@ -4204,6 +4204,9 @@ msgstr "Paramètre de requête"
 msgid "question"
 msgstr "question"
 
+msgid "Queued"
+msgstr "En file d'attente"
+
 msgid "Quiz Generation"
 msgstr "Génération de quiz"
 
