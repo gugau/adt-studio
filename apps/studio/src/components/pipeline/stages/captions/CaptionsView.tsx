@@ -94,9 +94,14 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
 
   const pageJumperEntries: PageJumperEntry[] = useMemo(
     () =>
-      displayPages.map((p, idx) => {
-        const detail = pageDetailQueries[idx]?.data
+      displayPages.flatMap((p, idx) => {
+        const query = pageDetailQueries[idx]
+        const detail = query?.data
         const captions = detail?.imageCaptioning?.captions ?? []
+        // The gallery only renders pages that have caption images, so the jumper
+        // should match. Drop pages we've confirmed have none; keep ones still
+        // loading so the list doesn't flash empty.
+        if (query?.isSuccess && captions.length === 0) return []
         let decorativeCount = 0
         let captionedCount = 0
         for (const c of captions) {
@@ -104,16 +109,18 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
           else captionedCount += 1
         }
         const imgData = pageImageQueries[idx]?.data?.imageBase64
-        return {
-          pageId: p.pageId,
-          pageNumber: p.pageNumber,
-          textPreview: p.textPreview,
-          imageCount: p.imageCount,
-          thumbnail: imgData ? `data:image/png;base64,${imgData}` : null,
-          stats: detail?.imageCaptioning
-            ? { total: captions.length, captioned: captionedCount, decorative: decorativeCount }
-            : undefined,
-        }
+        return [
+          {
+            pageId: p.pageId,
+            pageNumber: p.pageNumber,
+            textPreview: p.textPreview,
+            imageCount: p.imageCount,
+            thumbnail: imgData ? `data:image/png;base64,${imgData}` : null,
+            stats: detail?.imageCaptioning
+              ? { total: captions.length, captioned: captionedCount, decorative: decorativeCount }
+              : undefined,
+          },
+        ]
       }),
     [displayPages, pageDetailQueries, pageImageQueries],
   )
@@ -328,7 +335,7 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
               {t`Show all pages`}
             </button>
           )}
-          {!selectedPageId && displayPages.length > 1 && (
+          {!selectedPageId && pageJumperEntries.length > 1 && (
             <PageJumper
               pages={pageJumperEntries}
               activePageId={activePageId}

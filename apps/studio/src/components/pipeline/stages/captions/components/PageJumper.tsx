@@ -127,13 +127,25 @@ export function PageJumper({
                       onJump(p.pageId)
                       setOpen(false)
                     }}
-                    className={`flex w-full items-center gap-3 px-3 py-2 text-left transition-colors duration-100 ${
-                      isHighlighted
-                        ? "bg-teal-50 text-foreground"
-                        : "hover:bg-muted/50 text-foreground"
+                    className={`relative flex w-full items-center gap-3 px-3 py-2 text-left transition-colors duration-150 ${
+                      isActive
+                        ? "bg-teal-100/80 ring-1 ring-inset ring-teal-300 text-foreground"
+                        : isHighlighted
+                          ? "bg-teal-50 text-foreground"
+                          : "hover:bg-muted/50 text-foreground"
                     }`}
                   >
-                    <div className="flex h-10 w-8 shrink-0 items-center justify-center overflow-hidden rounded bg-muted ring-1 ring-border">
+                    {isActive && (
+                      <span
+                        aria-hidden
+                        className="absolute inset-y-0 left-0 w-1 rounded-r bg-teal-500"
+                      />
+                    )}
+                    <div
+                      className={`flex h-10 w-8 shrink-0 items-center justify-center overflow-hidden rounded bg-muted transition-all duration-150 ${
+                        isActive ? "ring-2 ring-teal-400" : "ring-1 ring-border"
+                      }`}
+                    >
                       {p.thumbnail ? (
                         <img src={p.thumbnail} alt="" className="h-full w-full object-cover" />
                       ) : (
@@ -142,11 +154,11 @@ export function PageJumper({
                     </div>
                     <div className="flex flex-col min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <span className={`text-[12px] font-semibold tabular-nums ${isActive ? "text-teal-700" : "text-foreground"}`}>
+                        <span className={`text-[12px] tabular-nums ${isActive ? "font-bold text-teal-800" : "font-semibold text-foreground"}`}>
                           {t`Page ${String(p.pageNumber)}`}
                         </span>
                         {isActive && (
-                          <span className="text-[9px] uppercase tracking-wider text-teal-600 font-semibold">
+                          <span className="rounded-full bg-teal-600 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
                             <Trans>Current</Trans>
                           </span>
                         )}
