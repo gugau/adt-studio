@@ -1275,8 +1275,8 @@ msgstr "Cambiar idioma"
 msgid "Change Preset"
 msgstr "Cambiar Preajuste"
 
-msgid "Changes save automatically when you save on the page card."
-msgstr "Los cambios se guardan automáticamente cuando guardas en la tarjeta de la página."
+#~ msgid "Changes save automatically when you save on the page card."
+#~ msgstr "Los cambios se guardan automáticamente cuando guardas en la tarjeta de la página."
 
 msgid "Chapter 1: Introduction"
 msgstr "Capítulo 1: Introducción"
@@ -3155,8 +3155,8 @@ msgstr "Marcar como decorativo (oculto para lectores de pantalla)"
 #~ msgid "Marked as decorative — hidden from screen readers, no caption needed."
 #~ msgstr "Marcada como decorativa: oculta para los lectores de pantalla, no necesita subtítulo."
 
-msgid "Marked decorative"
-msgstr "Marcado como decorativo"
+#~ msgid "Marked decorative"
+#~ msgstr "Marcado como decorativo"
 
 msgid "Match Design"
 msgstr "Coincidir con el diseño"
@@ -3657,9 +3657,8 @@ msgstr "OCR y limpieza"
 msgid "of"
 msgstr "of"
 
-#. placeholder {0}: String(pages.length)
-msgid "of {0}"
-msgstr "de {0}"
+#~ msgid "of {0}"
+#~ msgstr "de {0}"
 
 msgid "Off"
 msgstr "Apagado"
