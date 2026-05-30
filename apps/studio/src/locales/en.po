@@ -608,6 +608,9 @@ msgstr "Add a language to see translations appear here."
 msgid "Add a quiz"
 msgstr "Add a quiz"
 
+msgid "Add an API key in Book settings to add a quiz."
+msgstr "Add an API key in Book settings to add a quiz."
+
 msgid "Add an API key in Book settings to generate a quiz."
 msgstr "Add an API key in Book settings to generate a quiz."
 

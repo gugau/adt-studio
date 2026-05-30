@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
-import { Loader2 } from "lucide-react"
+import { Check, Loader2 } from "lucide-react"
 import { useLingui } from "@lingui/react/macro"
 import { api } from "@/api/client"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -14,10 +15,97 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { usePages } from "@/hooks/use-pages"
+import { usePages, usePageImage } from "@/hooks/use-pages"
 import { useApiKey } from "@/hooks/use-api-key"
 
 const MAX_SOURCE_PAGES = 5
+
+/** Selectable page card with a lazily-loaded thumbnail preview. */
+function PagePickCard({
+  bookLabel,
+  page,
+  checked,
+  disabled,
+  onToggle,
+}: {
+  bookLabel: string
+  page: { pageId: string; pageNumber: number }
+  checked: boolean
+  disabled: boolean
+  onToggle: () => void
+}) {
+  const { t } = useLingui()
+  const ref = useRef<HTMLButtonElement>(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    if (visible) return
+    const el = ref.current
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setVisible(true)
+      return
+    }
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVisible(true)
+          obs.disconnect()
+        }
+      },
+      { rootMargin: "200px" },
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [visible])
+
+  const { data } = usePageImage(bookLabel, page.pageId, { enabled: visible })
+  const src = data?.imageBase64
+    ? `data:image/png;base64,${data.imageBase64}`
+    : null
+
+  return (
+    <button
+      ref={ref}
+      type="button"
+      onClick={onToggle}
+      disabled={disabled}
+      aria-pressed={checked}
+      className={cn(
+        "group aspect-video relative flex flex-col overflow-hidden rounded-md border text-left transition-all",
+        checked
+          ? "border-orange-500 ring-2 ring-orange-500/40"
+          : "border-border hover:border-orange-300",
+        disabled && "cursor-not-allowed opacity-40",
+      )}
+    >
+      <div className="relative h-full w-full bg-muted">
+        <div className="absolute inset-x-0 bottom-0 flex items-end bg-linear-to-t from-black/75 to-transparent px-1.5 pb-1 pt-4">
+          <span className="text-sm font-semibold text-white drop-shadow-sm">
+            {t`Page ${page.pageNumber}`}
+          </span>
+        </div>
+        {src ? (
+          <img
+            src={src}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-cover object-top"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          </div>
+        )}
+        {checked && (
+          <span className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-white shadow ring-2 ring-white">
+            <Check className="h-3 w-3" strokeWidth={3} />
+          </span>
+        )}
+
+      </div>
+    </button>
+  )
+}
 
 export function AddQuizDialog({
   open,
@@ -123,7 +211,7 @@ export function AddQuizDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-lg"
+        className="flex max-h-[90vh] flex-col sm:max-w-3xl"
         style={
           {
             "--accent-color": "#ea580c",
@@ -138,8 +226,8 @@ export function AddQuizDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="space-y-1.5">
+        <div className="flex min-h-0 flex-1 flex-col gap-4">
+          <div className="flex min-h-0 flex-1 flex-col gap-1.5">
             <div className="flex items-center justify-between">
               <Label>{t`Source pages`}</Label>
               <span className="text-xs text-muted-foreground">
@@ -149,45 +237,30 @@ export function AddQuizDialog({
             <p className="text-xs text-muted-foreground">
               {t`Choose up to ${MAX_SOURCE_PAGES} pages whose content the quiz question is based on.`}
             </p>
-            <div className="max-h-56 overflow-y-auto rounded-md border divide-y">
-              {renderedPages.length === 0 ? (
-                <p className="px-3 py-4 text-xs text-muted-foreground">
-                  {t`No rendered pages yet. Run Storyboard first.`}
-                </p>
-              ) : (
-                renderedPages.map((page) => {
+            {renderedPages.length === 0 ? (
+              <p className="rounded-md border px-3 py-4 text-xs text-muted-foreground">
+                {t`No rendered pages yet. Run Storyboard first.`}
+              </p>
+            ) : (
+              <div className="grid min-h-0 flex-1 grid-cols-3 gap-2 overflow-y-auto rounded-md border p-2 sm:grid-cols-4 md:grid-cols-5">
+                {renderedPages.map((page) => {
                   const checked = selected.includes(page.pageId)
-                  const disabled = !checked && atLimit
                   return (
-                    <label
+                    <PagePickCard
                       key={page.pageId}
-                      className={`flex items-center gap-2.5 px-3 py-1.5 transition-colors ${
-                        disabled
-                          ? "cursor-not-allowed opacity-40"
-                          : "cursor-pointer hover:bg-muted/50"
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        disabled={disabled}
-                        onChange={() => toggle(page.pageId)}
-                        className="h-3.5 w-3.5 rounded border-border accent-orange-600"
-                      />
-                      <span className="text-xs font-medium shrink-0 w-16">
-                        {t`Page ${page.pageNumber}`}
-                      </span>
-                      <span className="text-xs text-muted-foreground truncate">
-                        {page.textPreview}
-                      </span>
-                    </label>
+                      bookLabel={bookLabel}
+                      page={page}
+                      checked={checked}
+                      disabled={!checked && atLimit}
+                      onToggle={() => toggle(page.pageId)}
+                    />
                   )
-                })
-              )}
-            </div>
+                })}
+              </div>
+            )}
           </div>
 
-          <div className="space-y-1.5">
+          <div className="shrink-0 space-y-1.5">
             <Label htmlFor="quiz-after-page">{t`Show quiz after`}</Label>
             <select
               id="quiz-after-page"

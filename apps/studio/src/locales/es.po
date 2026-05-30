@@ -608,6 +608,9 @@ msgstr "Añade un idioma para ver las traducciones aquí."
 msgid "Add a quiz"
 msgstr "Añadir un cuestionario"
 
+msgid "Add an API key in Book settings to add a quiz."
+msgstr "Añade una clave de API en los ajustes del libro para agregar un cuestionario."
+
 msgid "Add an API key in Book settings to generate a quiz."
 msgstr "Añade una clave de API en los ajustes del libro para generar un cuestionario."
 

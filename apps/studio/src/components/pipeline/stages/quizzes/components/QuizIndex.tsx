@@ -1,12 +1,15 @@
 import { useMemo, useRef, useEffect, useState, useCallback } from "react"
 import { createPortal } from "react-dom"
-import { FileText, CheckCircle2, Circle, HelpCircle } from "lucide-react"
+import { FileText, CheckCircle2, Circle, HelpCircle, Plus } from "lucide-react"
 import { useLingui } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 import { useQuizzes } from "@/hooks/use-quizzes"
 import { usePages } from "@/hooks/use-pages"
+import { useApiKey } from "@/hooks/use-api-key"
 import type { QuizItem } from "@/api/client"
 import { formatPageNumbers } from "../lib/format-page-numbers"
+import { AddQuizDialog } from "../AddQuizDialog"
 
 const PREVIEW_W = 288
 const PREVIEW_H = 230
@@ -178,8 +181,11 @@ export function QuizIndex({
   selectedPageId?: string
   onSelectPage?: (pageId: string) => void
 }) {
+  const { t } = useLingui()
   const { data } = useQuizzes(bookLabel)
   const { data: pages } = usePages(bookLabel)
+  const { hasApiKey } = useApiKey()
+  const [showAdd, setShowAdd] = useState(false)
   const quizzes = data?.quizzes?.quizzes ?? []
 
   const pageNumberById = useMemo(() => {
@@ -193,22 +199,40 @@ export function QuizIndex({
   if (quizzes.length === 0) return null
 
   return (
-    <div className="flex-1 overflow-y-auto py-1">
-      {quizzes.map((quiz, i) => {
-        const pageNumbers = quiz.pageIds
-          .map((id) => pageNumberById.get(id))
-          .filter((n): n is number => n != null)
-        return (
-          <QuizRow
-            key={`${quiz.afterPageId}-${i}`}
-            quiz={quiz}
-            index={i}
-            isActive={!!selectedPageId && quiz.afterPageId === selectedPageId}
-            pagesLabel={formatPageNumbers(pageNumbers)}
-            onSelect={() => onSelectPage?.(quiz.afterPageId)}
-          />
-        )
-      })}
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="shrink-0 border-b p-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 w-full gap-1.5 text-xs"
+          disabled={!hasApiKey}
+          title={hasApiKey ? undefined : t`Add an API key in Book settings to add a quiz.`}
+          onClick={() => setShowAdd(true)}
+        >
+          <Plus className="h-3.5 w-3.5" />
+          {t`Add quiz`}
+        </Button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto py-1">
+        {quizzes.map((quiz, i) => {
+          const pageNumbers = quiz.pageIds
+            .map((id) => pageNumberById.get(id))
+            .filter((n): n is number => n != null)
+          return (
+            <QuizRow
+              key={`${quiz.afterPageId}-${i}`}
+              quiz={quiz}
+              index={i}
+              isActive={!!selectedPageId && quiz.afterPageId === selectedPageId}
+              pagesLabel={formatPageNumbers(pageNumbers)}
+              onSelect={() => onSelectPage?.(quiz.afterPageId)}
+            />
+          )
+        })}
+      </div>
+
+      <AddQuizDialog open={showAdd} onOpenChange={setShowAdd} bookLabel={bookLabel} />
     </div>
   )
 }
