@@ -82,6 +82,10 @@ msgstr "{0} {1} reviewed so far"
 msgid "{0} × {1}px · {2} points"
 msgstr "{0} × {1}px · {2} puntos"
 
+#. placeholder {0}: reviewCounts.acceptedAnyway
+msgid "{0} accepted anyway"
+msgstr "{0} aceptadas de todos modos"
+
 #. placeholder {0}: String(totalAudioFiles)
 msgid "{0} audio"
 msgstr "{0} audios"
@@ -111,6 +115,10 @@ msgstr "{0} imágenes"
 #. placeholder {0}: String(selectedImageIds.length)
 msgid "{0} images selected"
 msgstr "{0} imágenes seleccionadas"
+
+#. placeholder {0}: reviewCounts.needsAttention
+msgid "{0} issue/issues"
+msgstr "{0} incidencia(s)"
 
 #. placeholder {0}: visibleFindingsUniverse.length
 msgid "{0} items"
@@ -142,6 +150,10 @@ msgstr "{0} de {1} elementos"
 #. placeholder {0}: String(displayPages.length)
 msgid "{0} pages"
 msgstr "{0} páginas"
+
+#. placeholder {0}: reviewCounts.pendingSave
+msgid "{0} pending save"
+msgstr "{0} pendientes de guardar"
 
 #. placeholder {0}: String(displayQuizzes.length)
 msgid "{0} questions"
@@ -477,6 +489,9 @@ msgstr "Aceptar de todos modos"
 
 msgid "Accept reasonable web redesigns. Reject only for functional defects (visible placeholder tokens, missing content, overlap, overflow). Fewest rejections."
 msgstr "Aceptar rediseños web razonables. Rechazar solo por defectos funcionales (tokens de marcador de posición visibles, contenido faltante, superposición, desbordamiento). Menos rechazos."
+
+msgid "Acceptable"
+msgstr "Aceptable"
 
 msgid "Accepted anyway"
 msgstr "Aceptado de todos modos"
@@ -3307,6 +3322,9 @@ msgstr "Más recientes primero"
 msgid "Next"
 msgstr "Siguiente"
 
+msgid "Next issue"
+msgstr "Siguiente incidencia"
+
 msgid "Next missing section"
 msgstr "Siguiente sección faltante"
 
@@ -3315,6 +3333,9 @@ msgstr "Siguiente diapositiva"
 
 msgid "Next Step"
 msgstr "Siguiente Paso"
+
+msgid "No acceptable review results for this view."
+msgstr "No hay resultados aceptables de revisión para esta vista."
 
 msgid "No accessibility assessment has been generated yet. Package the ADT output to create one."
 msgstr "No accessibility assessment has been generated yet. Package the ADT output to create one."
@@ -3464,6 +3485,9 @@ msgstr "Sin contenido renderizado para esta sección"
 msgid "No review areas are currently flagged in this reviewer session."
 msgstr "No review areas are currently flagged in this reviewer session."
 
+msgid "No review results for this view."
+msgstr "No hay resultados de revisión para esta vista."
+
 msgid "No reviewer validation sessions have been started yet. Open Preview to create a reviewer session and begin recording page-level findings."
 msgstr "No reviewer validation sessions have been started yet. Open Preview to create a reviewer session and begin recording page-level findings."
 
@@ -3491,6 +3515,9 @@ msgstr "No segmentation needed for this image"
 msgid "No storyboard sections found. Run Storyboard to generate sections you can match videos to."
 msgstr "No se encontraron secciones de storyboard. Ejecuta Storyboard para generar secciones a las que puedas asignar videos."
 
+msgid "No suggestions are pending save in this view."
+msgstr "No hay sugerencias pendientes de guardar en esta vista."
+
 msgid "No terms match your filter."
 msgstr "Ningún término coincide con tu filtro."
 
@@ -3502,6 +3529,12 @@ msgstr "No se extrajo texto"
 
 msgid "No translations for this page"
 msgstr "Sin traducciones para esta página"
+
+msgid "No translations need attention."
+msgstr "Ninguna traducción necesita atención."
+
+msgid "No translations were accepted anyway in this view."
+msgstr "No se aceptó ninguna traducción de todos modos en esta vista."
 
 msgid "No versions"
 msgstr "Sin versiones"
@@ -3888,6 +3921,9 @@ msgstr "Vista previa de la página PDF {pageLabel}"
 
 msgid "Pencil Sketch"
 msgstr "Dibujo a lápiz"
+
+msgid "Pending save"
+msgstr "Pendiente de guardar"
 
 msgid "Pending..."
 msgstr "Pendiente..."
@@ -4401,6 +4437,26 @@ msgstr "Revisar"
 msgid "Review areas with the most items marked as needing changes in this session."
 msgstr "Review areas with the most items marked as needing changes in this session."
 
+#. placeholder {0}: reviewCounts.acceptable
+#. placeholder {1}: reviewCounts.needsAttention
+#. placeholder {2}: reviewCounts.pendingSave
+msgid "Review complete: {0} acceptable, {1} need attention, {2} pending save."
+msgstr "Revisión completa: {0} aceptables, {1} necesitan atención, {2} pendientes de guardar."
+
+#. placeholder {0}: reviewCounts.acceptable
+#. placeholder {1}: reviewCounts.needsAttention
+msgid "Review complete: {0} acceptable, {1} need attention."
+msgstr "Revisión completa: {0} aceptables, {1} necesitan atención."
+
+#. placeholder {0}: reviewCounts.acceptable
+#. placeholder {1}: reviewCounts.pendingSave
+msgid "Review complete: {0} acceptable, {1} pending save."
+msgstr "Revisión completa: {0} aceptables, {1} pendientes de guardar."
+
+#. placeholder {0}: reviewCounts.total
+msgid "Review complete: all {0} reviewed translations are acceptable."
+msgstr "Revisión completa: las {0} traducciones revisadas son aceptables."
+
 msgid "Review one session at a time to inspect page coverage and flagged findings."
 msgstr "Review one session at a time to inspect page coverage and flagged findings."
 
@@ -4418,6 +4474,9 @@ msgstr "Revisa los detalles del PDF fuente a continuación y continúa configura
 
 msgid "Review visible translations"
 msgstr "Revisar traducciones visibles"
+
+msgid "Reviewed"
+msgstr "Revisada"
 
 msgid "Reviewer checklist"
 msgstr "Reviewer checklist"
@@ -4448,6 +4507,9 @@ msgstr "Reviewer validation checklist"
 
 msgid "Reviewer validation summary"
 msgstr "Reviewer validation summary"
+
+msgid "Reviewing..."
+msgstr "Revisando..."
 
 msgid "Rewriting the story of this section..."
 msgstr "Reescribiendo la historia de esta sección..."
@@ -4597,8 +4659,14 @@ msgstr "Guardar y reejecutar traducciones"
 msgid "Save changes before re-rendering"
 msgstr "Guarda los cambios antes de re-renderizar"
 
+msgid "Save changes before reviewing"
+msgstr "Guarda los cambios antes de revisar"
+
 msgid "Save changes first to preview the latest version"
 msgstr "Guarda los cambios primero para previsualizar la versión más reciente"
+
+msgid "Save changes, then run Review again."
+msgstr "Guarda los cambios y luego ejecuta la revisión de nuevo."
 
 msgid "Save checklist"
 msgstr "Save checklist"
@@ -4923,6 +4991,9 @@ msgstr "Show fewer"
 msgid "Show pruned terms"
 msgstr "Mostrar términos podados"
 
+msgid "Show review rationale"
+msgstr "Mostrar justificación de la revisión"
+
 msgid "Show reviewer validation"
 msgstr "Show reviewer validation"
 
@@ -5204,6 +5275,9 @@ msgstr "Suggested modification:"
 msgid "Suggested translation"
 msgstr "Traducción sugerida"
 
+msgid "Suggestion applied"
+msgstr "Sugerencia aplicada"
+
 msgid "Summary Prompt"
 msgstr "Indicación de resumen"
 
@@ -5360,6 +5434,9 @@ msgstr "La elección ideal para novelas, enfocada en una experiencia de lectura 
 
 msgid "The inside cover of the book."
 msgstr "La portada interior del libro."
+
+msgid "The last translation review failed before producing reliable item-level results. Run Review again for the visible translations."
+msgstr "La última revisión de traducción falló antes de producir resultados fiables por elemento. Vuelve a ejecutar Revisar para las traducciones visibles."
 
 msgid "The Lost Forest"
 msgstr "El Bosque Perdido"
