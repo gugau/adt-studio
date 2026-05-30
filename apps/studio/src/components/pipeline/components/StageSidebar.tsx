@@ -30,6 +30,8 @@ import {
 import { useSettingsDialog } from "@/routes/__root"
 import type { TaskInfoResponse } from "@/api/client"
 import { getStageLabelI18n, getStepLabelI18n } from "../pipeline-i18n"
+import { QuizIndex } from "../stages/quizzes/components/QuizIndex"
+import { useQuizzes } from "@/hooks/use-quizzes"
 import { ALL_STEP_NAMES, PAGE_PROGRESS_STEPS } from "@adt/types"
 
 const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
@@ -172,10 +174,17 @@ export function StageSidebar({
   const translateNeedsRerun = stageMissing.translate > 0
   const speechNeedsRerun = stageMissing.speech > 0
 
+  const { data: quizData } = useQuizzes(bookLabel)
   const currentState = stageState(activeStep)
-  const effectivePagesOpen =
-    hasStagePages(activeStep) &&
-    (currentState === "done" || currentState === "running" || currentState === "error")
+  // Quizzes only open the side panel once quizzes exist — otherwise the stage
+  // just shows its landing page. Other stages open on run state as usual.
+  const stageHasContent =
+    activeStep === "quizzes"
+      ? (quizData?.quizzes?.quizzes?.length ?? 0) > 0
+      : currentState === "done" ||
+        currentState === "running" ||
+        currentState === "error"
+  const effectivePagesOpen = hasStagePages(activeStep) && stageHasContent
 
   const isSettings = !!matchRoute({
     to: "/books/$label/$step/settings",
@@ -412,18 +421,27 @@ export function StageSidebar({
           </div>
         </div>
 
-        {/* Pages panel — only when pages are open and not in settings */}
+        {/* Pages panel — only when pages are open and not in settings.
+            Quizzes get a quiz list instead of the page list. */}
         {effectivePagesOpen && !isSettings && (
           <div className="flex-1 min-w-0 flex flex-col overflow-hidden border-l">
-            <PageIndex
-              bookLabel={bookLabel}
-              activeStep={activeStep}
-              selectedPageId={selectedPageId}
-              onSelectPage={onSelectPage}
-              sectionIndex={sectionIndex}
-              onSelectSection={onSelectSection}
-              stageRunning={currentState === "running"}
-            />
+            {activeStep === "quizzes" ? (
+              <QuizIndex
+                bookLabel={bookLabel}
+                selectedPageId={selectedPageId}
+                onSelectPage={onSelectPage}
+              />
+            ) : (
+              <PageIndex
+                bookLabel={bookLabel}
+                activeStep={activeStep}
+                selectedPageId={selectedPageId}
+                onSelectPage={onSelectPage}
+                sectionIndex={sectionIndex}
+                onSelectSection={onSelectSection}
+                stageRunning={currentState === "running"}
+              />
+            )}
           </div>
         )}
       </div>

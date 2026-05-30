@@ -103,6 +103,10 @@ vi.mock("@/hooks/use-pages", () => ({
   usePageImage: () => ({ data: null }),
 }))
 
+vi.mock("@/hooks/use-quizzes", () => ({
+  useQuizzes: () => ({ data: null }),
+}))
+
 vi.mock("@/routes/__root", () => ({
   useSettingsDialog: () => ({ openSettings: vi.fn() }),
 }))

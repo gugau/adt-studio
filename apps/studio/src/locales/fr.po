@@ -167,6 +167,10 @@ msgstr "{0}/{1} audio"
 msgid "{0}/{criteriaCount} checked"
 msgstr "{0}/{criteriaCount} vérifié(s)"
 
+#. placeholder {0}: selected.length
+msgid "{0}/{MAX_SOURCE_PAGES} selected"
+msgstr "{0}/{MAX_SOURCE_PAGES} sélectionnées"
+
 #. placeholder {0}: String(selectedPageIds.size)
 msgid "{0}/5 pages selected"
 msgstr "{0}/5 pages sélectionnées"
@@ -322,6 +326,9 @@ msgstr "1 image sélectionnée"
 
 msgid "1 item needs changes on this page"
 msgstr "1 élément nécessite des modifications sur cette page"
+
+msgid "1 quiz / {frequency} pages"
+msgstr "1 quiz / {frequency} pages"
 
 msgid "1 selected image is no longer in the storyboard."
 msgstr "1 image sélectionnée ne figure plus dans le storyboard."
@@ -600,6 +607,15 @@ msgstr "Ajouter {0} Images"
 msgid "Add a language to see translations appear here."
 msgstr "Ajoutez une langue pour voir les traductions apparaître ici."
 
+msgid "Add a quiz"
+msgstr "Ajouter un quiz"
+
+msgid "Add an API key in Book settings to generate a quiz."
+msgstr "Ajoutez une clé d'API dans les paramètres du livre pour générer un quiz."
+
+msgid "Add an API key in Book settings to generate quizzes."
+msgstr "Ajoutez une clé d'API dans les paramètres du livre pour générer des quiz."
+
 msgid "Add an API key in Book settings to run captions."
 msgstr "Ajoutez une clé API dans les paramètres du livre pour exécuter les sous-titres."
 
@@ -662,6 +678,9 @@ msgstr "Ajouter une langue"
 
 msgid "Add languages to translate the book content into."
 msgstr "Ajoutez des langues pour traduire le contenu du livre."
+
+msgid "Add quiz"
+msgstr "Ajouter un quiz"
 
 msgid "Add reviewer guidance."
 msgstr "Ajouter des consignes pour le réviseur."
@@ -745,6 +764,9 @@ msgstr "Après"
 #. placeholder {0}: quiz.afterPageId
 msgid "After {0}"
 msgstr "Après {0}"
+
+msgid "After page {afterNumber}"
+msgstr "Après la page {afterNumber}"
 
 msgid "age 8"
 msgstr "8 ans"
@@ -1322,6 +1344,9 @@ msgstr "Choisir des images..."
 
 msgid "Choose Provider"
 msgstr "Choisir le fournisseur"
+
+msgid "Choose up to {MAX_SOURCE_PAGES} pages whose content the quiz question is based on."
+msgstr "Choisissez jusqu'à {MAX_SOURCE_PAGES} pages dont le contenu servira de base à la question du quiz."
 
 msgid "Choose which per-page validation items reviewers must check, customize the wording and guidance, and add your own checklist items for this document."
 msgstr "Choisissez quels éléments de validation par page les réviseurs doivent vérifier, personnalisez la formulation et les consignes, et ajoutez vos propres éléments de liste de contrôle pour ce document."
@@ -2198,6 +2223,9 @@ msgstr "Échec de la création de la session de révision"
 msgid "Failed to generate glossary entry."
 msgstr "Échec de la génération de l'entrée du glossaire."
 
+msgid "Failed to generate the quiz."
+msgstr "Échec de la génération du quiz."
+
 #. placeholder {0}: error.message
 msgid "Failed to load accessibility results: {0}"
 msgstr "Échec du chargement des résultats d'accessibilité : {0}"
@@ -2376,6 +2404,9 @@ msgstr "Général"
 msgid "Generate"
 msgstr "Générer"
 
+msgid "Generate a single quiz from specific pages and place it at a chosen location."
+msgstr "Générez un seul quiz à partir de pages spécifiques et placez-le à l'endroit de votre choix."
+
 msgid "Generate and customize the table of contents for the book navigation."
 msgstr "Générez et personnalisez la table des matières pour la navigation du livre."
 
@@ -2397,11 +2428,17 @@ msgstr "Générer à partir des pages"
 msgid "Generate missing Gemini audio"
 msgstr "Générer l'audio Gemini manquant"
 
+msgid "Generate multiple-choice comprehension quizzes from the book's content. Set how often a quiz appears, then run the stage to create them across the whole book."
+msgstr "Générez des quiz de compréhension à choix multiples à partir du contenu du livre. Définissez la fréquence d'apparition d'un quiz, puis exécutez l'étape pour les créer dans tout le livre."
+
 msgid "Generate new"
 msgstr "Générer nouveau"
 
 msgid "Generate Prompt"
 msgstr "Générer Invite"
+
+msgid "Generate quiz"
+msgstr "Générer le quiz"
 
 msgid "Generate Styleguide from Pages"
 msgstr "Générer un guide de style à partir des pages"
@@ -2411,6 +2448,12 @@ msgstr "Générer avec l'IA"
 
 msgid "Generate word timestamps"
 msgstr "Générer les horodatages de mots"
+
+msgid "Generated from pages {fromLabel}"
+msgstr "Généré à partir des pages {fromLabel}"
+
+msgid "Generated from these pages"
+msgstr "Généré à partir de ces pages"
 
 msgid "Generates the interactive HTML for this activity type."
 msgstr "Génère le HTML interactif pour ce type d'activité."
@@ -2558,6 +2601,9 @@ msgstr "Dans quelle mesure la révision visuelle doit-elle correspondre à la pa
 
 msgid "How it works"
 msgstr "Comment ça marche"
+
+msgid "How many pages of content go into each quiz. A lower number means more quizzes across the book."
+msgstr "Combien de pages de contenu entrent dans chaque quiz. Un nombre plus faible signifie plus de quiz dans le livre."
 
 msgid "HTML"
 msgstr "HTML"
@@ -3474,8 +3520,14 @@ msgstr "Aucun aperçu disponible."
 msgid "No quizzes for this page"
 msgstr "Aucun quiz pour cette page"
 
+#~ msgid "No quizzes yet"
+#~ msgstr "Aucun quiz pour l'instant"
+
 msgid "No rendered content for this section"
 msgstr "Aucun contenu rendu pour cette section"
+
+msgid "No rendered pages yet. Run Storyboard first."
+msgstr "Aucune page rendue pour l'instant. Exécutez d'abord Scénarimage."
 
 msgid "No review areas are currently flagged in this reviewer session."
 msgstr "Aucune zone de révision n'est actuellement signalée dans cette session de révision."
@@ -3825,8 +3877,11 @@ msgstr "Image de page en arrière-plan avec texte positionné en superposition. 
 msgid "Page Mode"
 msgstr "Mode de page"
 
-msgid "Page preview {pageId}"
-msgstr "Page aperçu {pageId}"
+msgid "Page preview"
+msgstr "Aperçu de la page"
+
+#~ msgid "Page preview {pageId}"
+#~ msgstr "Page aperçu {pageId}"
 
 msgid "Page Range"
 msgstr "Plage de pages"
@@ -3850,6 +3905,9 @@ msgstr "pages"
 #. placeholder {1}: activeSession.session.end_page ?? "?"
 msgid "Pages {0}–{1}"
 msgstr "Pages {0}–{1}"
+
+msgid "pages per quiz"
+msgstr "pages par quiz"
 
 msgid "Pages per Quiz"
 msgstr "Pages par quiz"
@@ -3955,6 +4013,9 @@ msgstr "Choisissez une approche de mise en page."
 
 msgid "Pick the languages you want to translate to. The book's original language stays as-is."
 msgstr "Choisissez les langues vers lesquelles vous souhaitez traduire. La langue originale du livre reste inchangée."
+
+msgid "Pick the pages the quiz is written from and choose where it appears in the book."
+msgstr "Choisissez les pages à partir desquelles le quiz est rédigé et où il apparaît dans le livre."
 
 msgid "Pick which voice each language uses for narration, including regional accents."
 msgstr "Choisissez quelle voix chaque langue utilise pour la narration, y compris les accents régionaux."
@@ -4126,11 +4187,20 @@ msgstr "Paramètre de requête"
 msgid "question"
 msgstr "question"
 
+msgid "Quiz"
+msgstr "Quiz"
+
+msgid "Quiz frequency"
+msgstr "Fréquence des quiz"
+
 msgid "Quiz Generation"
 msgstr "Génération de quiz"
 
 msgid "Quiz Generation Prompt"
 msgstr "Quiz Génération Invite"
+
+msgid "Quiz Preview"
+msgstr "Aperçu du quiz"
 
 msgid "Quiz Prompt"
 msgstr "Quiz Invite"
@@ -4143,6 +4213,12 @@ msgstr "Quiz"
 
 msgid "Quizzes are linked to other pages in this book"
 msgstr "Les quiz sont liés à d'autres pages de ce livre"
+
+msgid "Quizzes are written from the content that Storyboard places into pages. Finish Storyboard before running this stage."
+msgstr "Les quiz sont rédigés à partir du contenu que Scénarimage place dans les pages. Terminez Scénarimage avant d'exécuter cette étape."
+
+#~ msgid "Quizzes you generate will show up here."
+#~ msgstr "Les quiz que vous générez apparaîtront ici."
 
 msgid "Quote"
 msgstr "Citation"
@@ -4387,6 +4463,9 @@ msgstr "Réinitialiser à la valeur héritée"
 msgid "Reset to inherited defaults"
 msgstr "Réinitialiser aux valeurs par défaut héritées"
 
+msgid "Reset zoom"
+msgstr "Réinitialiser le zoom"
+
 msgid "Resolving source language..."
 msgstr "Résolution de la langue source..."
 
@@ -4512,6 +4591,9 @@ msgstr "Exécutez d'abord les sous-titres d'images — seules les images sous-ti
 msgid "Run Language first — speech narrates the translated text."
 msgstr "Exécutez d'abord la langue — la parole narre le texte traduit."
 
+msgid "Run Quizzes"
+msgstr "Exécuter les quiz"
+
 msgid "Run Sectioning"
 msgstr "Exécuter le découpage"
 
@@ -4526,6 +4608,9 @@ msgstr "Exécuter le storyboard"
 
 msgid "Run Storyboard first — captions describe the images placed by Storyboard."
 msgstr "Exécutez d'abord le storyboard — les sous-titres décrivent les images placées par le storyboard."
+
+msgid "Run Storyboard first — quizzes are written from the content placed into pages by Storyboard."
+msgstr "Exécutez d'abord Scénarimage — les quiz sont rédigés à partir du contenu placé dans les pages par Scénarimage."
 
 msgid "Run Storyboard first — the glossary is built from the typed sections placed by Storyboard."
 msgstr "Exécutez d'abord le storyboard — le glossaire est construit à partir des sections tapées placées par le storyboard."
@@ -4816,6 +4901,9 @@ msgstr "Sélectionnez un type de nœud et saisissez un ID d'élément pour voir 
 msgid "Select a page grouping to continue"
 msgstr "Sélectionnez un regroupement de pages pour continuer"
 
+msgid "Select a page…"
+msgstr "Sélectionnez une page…"
+
 msgid "Select a render strategy to continue"
 msgstr "Sélectionnez une stratégie de rendu pour continuer"
 
@@ -4943,11 +5031,17 @@ msgstr "Afficher moins"
 msgid "Show pruned terms"
 msgstr "Afficher les termes élagués"
 
+msgid "Show quiz after"
+msgstr "Afficher le quiz après"
+
 msgid "Show reviewer validation"
 msgstr "Afficher la validation du réviseur"
 
 msgid "Show:"
 msgstr "Afficher:"
+
+msgid "Shown after page {afterNumber}"
+msgstr "Affiché après la page {afterNumber}"
 
 msgid "Side-by-side image and narrative."
 msgstr "Image et narration côte à côte."
@@ -5045,6 +5139,9 @@ msgstr "Trier les livres"
 
 msgid "Source"
 msgstr "Source"
+
+msgid "Source pages"
+msgstr "Pages sources"
 
 msgid "Source PDF"
 msgstr "PDF source"
@@ -5426,6 +5523,9 @@ msgstr "Le prompt utilisé par la passe de revue pour inspecter et corriger un a
 msgid "The quick brown fox jumps over the lazy dog."
 msgstr "Le vif renard brun saute par-dessus le chien paresseux."
 
+msgid "The quiz is inserted into the book right after this page."
+msgstr "Le quiz est inséré dans le livre juste après cette page."
+
 msgid "The rendering strategy used for sections without an explicit mapping."
 msgstr "La stratégie de rendu utilisée pour les sections sans correspondance explicite."
 
@@ -5458,6 +5558,15 @@ msgstr "Ces fonctionnalités améliorent l'accès pour les personnes handicapée
 
 msgid "These values reflect either the saved book override or the latest packaged defaults."
 msgstr "Ces valeurs reflètent soit le remplacement enregistré du livre, soit les valeurs par défaut du dernier empaquetage."
+
+msgid "They absorb water and nutrients from the soil."
+msgstr "Elles absorbent l'eau et les nutriments du sol."
+
+msgid "They produce flowers to attract pollinators."
+msgstr "Elles produisent des fleurs pour attirer les pollinisateurs."
+
+msgid "They release oxygen directly into the air."
+msgstr "Elles libèrent de l'oxygène directement dans l'air."
 
 msgid "This book has no pages. Make sure the extraction and storyboard stages produced content before generating {stageName}."
 msgstr "Ce livre n'a pas de pages. Assurez-vous que les étapes d'extraction et de storyboard ont produit du contenu avant de générer {stageName}."
@@ -5766,6 +5875,9 @@ msgstr "Démêlage des divs imbriqués avec soin..."
 msgid "Untitled"
 msgstr "Sans titre"
 
+msgid "Untitled quiz"
+msgstr "Quiz sans titre"
+
 msgid "Update available"
 msgstr "Mise à jour disponible"
 
@@ -6005,6 +6117,9 @@ msgstr "Poids"
 msgid "Welcome to ADT Studio"
 msgstr "Bienvenue sur ADT Studio"
 
+msgid "What is the main role of a plant's roots?"
+msgstr "Quel est le rôle principal des racines d'une plante ?"
+
 msgid "What it does"
 msgstr "Ce qu'il fait"
 
@@ -6094,3 +6209,9 @@ msgstr "Vos livres"
 
 msgid "Your first ADT <0>starts here.</0>"
 msgstr "Votre premier ADT <0>commence ici.</0>"
+
+msgid "Zoom in"
+msgstr "Zoom avant"
+
+msgid "Zoom out"
+msgstr "Zoom arrière"
