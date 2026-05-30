@@ -4,7 +4,7 @@ import { useNavigate } from "@tanstack/react-router"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react"
 import { msg } from "@lingui/core/macro"
-import { AlertTriangle, ArrowLeftRight, EyeOff, FileText, HelpCircle, Loader2, Monitor, Puzzle } from "lucide-react"
+import { AlertTriangle, ArrowLeftRight, CheckCircle2, EyeOff, FileText, HelpCircle, Loader2, Monitor, Puzzle } from "lucide-react"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import { cn } from "@/lib/utils"
 import { usePages, usePageImage } from "@/hooks/use-pages"
@@ -350,10 +350,15 @@ function QuizRow({
   onSelect: () => void
 }) {
   const { i18n } = useLingui()
+  const rowRef = useRef<HTMLButtonElement>(null)
+  const hover = useHoverPreview(rowRef, { width: 420, height: 340 })
   return (
     <button
+      ref={rowRef}
       type="button"
       onClick={onSelect}
+      onMouseEnter={hover.handleEnter}
+      onMouseLeave={hover.handleLeave}
       title={i18n._(msg`Quiz after page ${page.pageNumber}`)}
       className={cn(
         "flex items-start gap-2 px-2 py-1.5 text-left transition-colors w-full",
@@ -362,15 +367,43 @@ function QuizRow({
           : "text-muted-foreground hover:bg-orange-50 hover:text-orange-700",
       )}
     >
+      {/* Mini quiz preview: option bars with the correct answer highlighted */}
       <div
         className={cn(
-          "relative shrink-0 w-28 aspect-video rounded-md flex items-center justify-center",
-          isActive
-            ? "ring-1 ring-orange-400 bg-orange-100 shadow-sm"
-            : "ring-1 ring-orange-200 bg-orange-50",
+          "relative shrink-0 w-28 aspect-video rounded-md overflow-hidden bg-white",
+          isActive ? "ring-1 ring-orange-400 shadow-sm" : "ring-1 ring-orange-200",
         )}
       >
-        <HelpCircle className="w-6 h-6 text-orange-500" />
+        <div className="absolute inset-0 px-1.5 flex flex-col justify-center gap-1">
+          {quiz.options.map((_, i) => {
+            const correct = i === quiz.answerIndex
+            return (
+              <div
+                key={i}
+                className={cn(
+                  "flex items-center gap-1 h-2 rounded-sm px-1",
+                  correct ? "bg-emerald-100" : "bg-muted",
+                )}
+              >
+                <div
+                  className={cn(
+                    "w-1 h-1 rounded-full shrink-0",
+                    correct ? "bg-emerald-500" : "bg-muted-foreground/30",
+                  )}
+                />
+                <div
+                  className={cn(
+                    "h-0.5 rounded-full flex-1",
+                    correct ? "bg-emerald-400/70" : "bg-muted-foreground/20",
+                  )}
+                />
+              </div>
+            )
+          })}
+        </div>
+        <div className="absolute top-0.5 right-0.5 flex items-center justify-center w-3.5 h-3.5 rounded-full bg-orange-500 text-white shadow-sm">
+          <HelpCircle className="w-2.5 h-2.5" />
+        </div>
       </div>
       <div className="flex flex-col gap-0.5 min-w-0 flex-1 pt-0.5">
         <span className="text-[11px] leading-snug line-clamp-2">{quiz.question}</span>
@@ -378,13 +411,80 @@ function QuizRow({
           <Trans>after pg {String(page.pageNumber)}</Trans>
         </span>
       </div>
+      {hover.show &&
+        createPortal(
+          <QuizPreview pos={hover.pos} quiz={quiz} pageNumber={page.pageNumber} />,
+          document.body,
+        )}
     </button>
+  )
+}
+
+/* ---------- QuizPreview (hover) ---------- */
+
+function QuizPreview({
+  pos,
+  quiz,
+  pageNumber,
+}: {
+  pos: { top: number; left: number }
+  quiz: Quiz
+  pageNumber: number
+}) {
+  return (
+    <div
+      className="fixed z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-150"
+      style={{ top: pos.top, left: pos.left }}
+    >
+      <div className="w-[420px] rounded-xl bg-background shadow-2xl ring-1 ring-border overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b bg-muted/30">
+          <span className="inline-flex items-center gap-1 px-1.5 h-[18px] rounded bg-orange-100 text-orange-700 text-[10px] font-semibold">
+            <HelpCircle className="w-2.5 h-2.5" />
+            <Trans>Quiz</Trans>
+          </span>
+          <span className="text-xs text-muted-foreground">
+            <Trans>after page {String(pageNumber)}</Trans>
+          </span>
+        </div>
+        {/* Question + options */}
+        <div className="p-4 space-y-3 bg-background">
+          <p className="text-sm font-medium leading-snug">{quiz.question}</p>
+          <div className="space-y-1.5">
+            {quiz.options.map((option, i) => {
+              const correct = i === quiz.answerIndex
+              return (
+                <div
+                  key={i}
+                  className={cn(
+                    "flex items-start gap-2 px-2.5 py-1.5 rounded-md text-xs",
+                    correct ? "bg-emerald-50 ring-1 ring-emerald-200" : "bg-muted/40",
+                  )}
+                >
+                  {correct ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-px" />
+                  ) : (
+                    <div className="w-3.5 h-3.5 rounded-full ring-1 ring-muted-foreground/30 shrink-0 mt-px" />
+                  )}
+                  <span className={cn("flex-1 min-w-0", correct && "text-emerald-900 font-medium")}>
+                    {option.text}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
 /* ---------- Hover preview helpers ---------- */
 
-function useHoverPreview(rowRef: React.RefObject<HTMLElement | null>) {
+function useHoverPreview(
+  rowRef: React.RefObject<HTMLElement | null>,
+  opts?: { width?: number; height?: number },
+) {
   const [show, setShow] = useState(false)
   const [pos, setPos] = useState({ top: 0, left: 0 })
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -394,8 +494,8 @@ function useHoverPreview(rowRef: React.RefObject<HTMLElement | null>) {
     timerRef.current = setTimeout(() => {
       if (!rowRef.current) return
       const rect = rowRef.current.getBoundingClientRect()
-      const previewW = 760
-      const previewH = 510
+      const previewW = opts?.width ?? 760
+      const previewH = opts?.height ?? 510
       const gap = 20
       const margin = 8
       const top = Math.max(margin, Math.min(rect.top, window.innerHeight - previewH - margin))
@@ -408,7 +508,7 @@ function useHoverPreview(rowRef: React.RefObject<HTMLElement | null>) {
       setPos({ top, left })
       setShow(true)
     }, 800)
-  }, [rowRef])
+  }, [rowRef, opts?.width, opts?.height])
 
   const handleLeave = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current)

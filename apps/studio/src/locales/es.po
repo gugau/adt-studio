@@ -739,6 +739,7 @@ msgstr "Después"
 msgid "After {0}"
 msgstr "Después de {0}"
 
+#. placeholder {0}: String(pageNumber)
 #. placeholder {0}: afterPage.pageNumber
 msgid "after page {0}"
 msgstr "después de la página {0}"
