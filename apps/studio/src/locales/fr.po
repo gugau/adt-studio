@@ -415,10 +415,10 @@ msgid "A question worth asking"
 msgstr "Une question qui mérite d'être posée"
 
 msgid "A quiz already exists at this position. Generating will replace the current quiz here."
-msgstr ""
+msgstr "Un quiz existe déjà à cette position. Le générer remplacera le quiz actuel."
 
 msgid "A quiz already sits here — generating will replace it"
-msgstr ""
+msgstr "Un quiz se trouve déjà ici — le générer le remplacera"
 
 msgid "A scenic view at dusk."
 msgstr "Un panorama au crépuscule."
@@ -1791,14 +1791,26 @@ msgstr "Supprimer l'élément"
 msgid "Delete failed"
 msgstr "Supprimer échoué"
 
+msgid "Delete quiz"
+msgstr "Supprimer le quiz"
+
 msgid "Delete section"
 msgstr "Supprimer section"
+
+msgid "Delete this quiz"
+msgstr "Supprimer ce quiz"
+
+msgid "Delete this quiz?"
+msgstr "Supprimer ce quiz ?"
 
 msgid "Delete video"
 msgstr "Supprimer video"
 
 msgid "Deleting..."
 msgstr "Suppression..."
+
+msgid "Deleting…"
+msgstr "Suppression…"
 
 msgid "Delivered"
 msgstr "Livré"
@@ -4477,7 +4489,7 @@ msgid "Replace PDF"
 msgstr "Remplacer le PDF"
 
 msgid "Replace quiz"
-msgstr ""
+msgstr "Remplacer le quiz"
 
 msgid "Replace this audio file"
 msgstr "Remplacer ce fichier audio"
@@ -5656,6 +5668,9 @@ msgstr "Cela supprime définitivement chaque vidéo téléchargée et efface tou
 
 msgid "This prompt instructs the LLM how to evaluate the rendered HTML against the original page. Selection above controls which template is used."
 msgstr "Cette invite indique au LLM comment évaluer le HTML rendu par rapport à la page originale. La sélection ci-dessus contrôle le modèle utilisé."
+
+msgid "This quiz will be removed from the book. You can still restore it from the version history."
+msgstr "Ce quiz sera retiré du livre. Vous pourrez toujours le restaurer depuis l'historique des versions."
 
 msgid "This screen couldn’t load"
 msgstr "Cet écran n'a pas pu se charger"

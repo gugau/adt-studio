@@ -10,6 +10,7 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
+  Trash2,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/client";
@@ -21,8 +22,11 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { useStepHeader } from "../../components/StepViewRouter";
 import { StageContentGuard } from "../../components/StageContentGuard";
 import { StageEmptyState } from "../../components/StageEmptyState";
@@ -434,6 +438,8 @@ export function QuizzesView({
   const [pending, setPending] = useState<QuizData | null>(null);
   const [saving, setSaving] = useState(false);
   const [lightboxPageId, setLightboxPageId] = useState<string | null>(null);
+  const [confirmDeleteIdx, setConfirmDeleteIdx] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Reset pending when data changes
   useEffect(() => {
@@ -463,6 +469,31 @@ export function QuizzesView({
 
   const saveRef = useRef(saveQuizzes);
   saveRef.current = saveQuizzes;
+
+  // Remove a quiz from the book. Operates on the currently visible list (so any
+  // unsaved edits are preserved), renumbers quizIndex, and persists immediately.
+  // A removed quiz can still be recovered from version history.
+  const deleteQuiz = useCallback(
+    async (idx: number) => {
+      const base = pending ?? data?.quizzes;
+      if (!base) return;
+      setDeleting(true);
+      const next: QuizData = {
+        ...base,
+        quizzes: base.quizzes
+          .filter((_, i) => i !== idx)
+          .map((q, i) => ({ ...q, quizIndex: i })),
+      };
+      await api.updateQuizzes(bookLabel, next);
+      setPending(null);
+      await queryClient.invalidateQueries({
+        queryKey: ["books", bookLabel, "quizzes"],
+      });
+      setDeleting(false);
+      setConfirmDeleteIdx(null);
+    },
+    [pending, data?.quizzes, bookLabel, queryClient],
+  );
 
   useEffect(() => {
     if (!data?.quizzes) return;
@@ -574,9 +605,18 @@ export function QuizzesView({
             return (
               <div
                 key={idx}
-                className="rounded-md border bg-card overflow-hidden"
+                className="relative rounded-md border bg-card overflow-hidden"
               >
-                <div className="flex flex-col gap-1.5 px-4 py-2 bg-muted/20 border-b">
+                <button
+                  type="button"
+                  onClick={() => setConfirmDeleteIdx(idx)}
+                  aria-label={t`Delete this quiz`}
+                  title={t`Delete this quiz`}
+                  className="absolute right-2 top-2 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+                <div className="flex flex-col gap-1.5 px-4 py-2 pr-12 bg-muted/20 border-b">
                   {quiz.pageIds.length > 0 ? (
                     <>
                       <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -674,6 +714,46 @@ export function QuizzesView({
               if (!open) setLightboxPageId(null);
             }}
           />
+          <Dialog
+            open={confirmDeleteIdx != null}
+            onOpenChange={(open) => {
+              if (!open && !deleting) setConfirmDeleteIdx(null);
+            }}
+          >
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>{t`Delete this quiz?`}</DialogTitle>
+                <DialogDescription>
+                  {t`This quiz will be removed from the book. You can still restore it from the version history.`}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setConfirmDeleteIdx(null)}
+                  disabled={deleting}
+                >
+                  {t`Cancel`}
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() =>
+                    confirmDeleteIdx != null && deleteQuiz(confirmDeleteIdx)
+                  }
+                  disabled={deleting}
+                >
+                  {deleting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {t`Deleting…`}
+                    </>
+                  ) : (
+                    t`Delete quiz`
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       )}
     </StageContentGuard>

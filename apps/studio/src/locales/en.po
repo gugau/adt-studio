@@ -1789,14 +1789,26 @@ msgstr "Delete element"
 msgid "Delete failed"
 msgstr "Delete failed"
 
+msgid "Delete quiz"
+msgstr "Delete quiz"
+
 msgid "Delete section"
 msgstr "Delete section"
+
+msgid "Delete this quiz"
+msgstr "Delete this quiz"
+
+msgid "Delete this quiz?"
+msgstr "Delete this quiz?"
 
 msgid "Delete video"
 msgstr "Delete video"
 
 msgid "Deleting..."
 msgstr "Deleting..."
+
+msgid "Deleting…"
+msgstr "Deleting…"
 
 msgid "Delivered"
 msgstr "Delivered"
@@ -5654,6 +5666,9 @@ msgstr "This permanently deletes every uploaded video and clears all section ass
 
 msgid "This prompt instructs the LLM how to evaluate the rendered HTML against the original page. Selection above controls which template is used."
 msgstr "This prompt instructs the LLM how to evaluate the rendered HTML against the original page. Selection above controls which template is used."
+
+msgid "This quiz will be removed from the book. You can still restore it from the version history."
+msgstr "This quiz will be removed from the book. You can still restore it from the version history."
 
 msgid "This screen couldn’t load"
 msgstr "This screen couldn’t load"
