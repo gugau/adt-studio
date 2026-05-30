@@ -108,7 +108,7 @@ describe("evaluateTranslationInApi", () => {
     expect(String(prompt)).toContain("Y a ti?")
   })
 
-  it("normalizes acceptable judge items when issue metadata is omitted", async () => {
+  it("normalizes acceptable judge items when issue metadata is null", async () => {
     const label = "eval-runner-acceptable"
     seedBook(label)
     const generateObject = vi.fn<LLMModel["generateObject"]>().mockResolvedValue({
@@ -117,7 +117,10 @@ describe("evaluateTranslationInApi", () => {
           {
             entry_id: "pg001_t001",
             acceptable: true,
-            rationale: "Translation is acceptable.",
+            rationale: null,
+            issue_types: null,
+            severity: null,
+            suggested_text: null,
           },
         ],
       },

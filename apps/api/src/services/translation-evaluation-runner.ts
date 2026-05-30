@@ -31,10 +31,10 @@ const ISSUE_TYPES: TranslationEvaluationIssueTypeData[] = [
 const TranslationEvaluationJudgeItem = z.object({
   entry_id: z.string().min(1),
   acceptable: z.boolean(),
-  rationale: z.string().min(1).optional(),
-  issue_types: z.array(TranslationEvaluationIssueType).optional(),
-  severity: TranslationEvaluationSeverity.optional(),
-  suggested_text: z.string().min(1).optional(),
+  rationale: z.string().min(1).nullable(),
+  issue_types: z.array(TranslationEvaluationIssueType).nullable(),
+  severity: TranslationEvaluationSeverity.nullable(),
+  suggested_text: z.string().min(1).nullable(),
 })
 
 const TranslationEvaluationJudgeOutput = z.object({
@@ -136,7 +136,7 @@ function buildUserPrompt(page: TranslationEvaluationRunPage, request: Translatio
   }, null, 2)
 }
 
-function severityRank(severity: "low" | "medium" | "high" | undefined): number {
+function severityRank(severity: "low" | "medium" | "high" | null | undefined): number {
   if (severity === "high") return 3
   if (severity === "medium") return 2
   if (severity === "low") return 1
