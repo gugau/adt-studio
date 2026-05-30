@@ -1,11 +1,20 @@
 import { useEffect } from "react"
-import { ChevronLeft, ChevronRight, Eye, EyeOff, Image as ImageIcon } from "lucide-react"
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  Image as ImageIcon,
+  Loader2,
+} from "lucide-react"
 import { BASE_URL } from "@/api/client"
 import { Trans, useLingui } from "@lingui/react/macro"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -15,18 +24,26 @@ export function Lightbox({
   bookLabel,
   entries,
   index,
+  dirty,
+  saving,
   onClose,
   onNavigate,
   onCaptionChange,
   onToggleDecorative,
+  onSave,
+  onDiscard,
 }: {
   bookLabel: string
   entries: LightboxEntry[]
   index: number
+  dirty: boolean
+  saving: boolean
   onClose: () => void
   onNavigate: (next: number) => void
   onCaptionChange: (entry: LightboxEntry, newCaption: string) => void
   onToggleDecorative: (entry: LightboxEntry) => void
+  onSave: () => void
+  onDiscard: () => void
 }) {
   const { t } = useLingui()
   const entry = entries[index]
@@ -66,9 +83,11 @@ export function Lightbox({
               {cap.imageId}
             </span>
             <span>{t`Page ${String(pageNumber)}`}</span>
-            <span className="ml-auto tabular-nums">
-              {index + 1} / {entries.length}
-            </span>
+            {entries.length > 1 && (
+              <span className="ml-auto tabular-nums">
+                {index + 1} / {entries.length}
+              </span>
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -78,7 +97,9 @@ export function Lightbox({
               src={`${BASE_URL}/books/${bookLabel}/images/${cap.imageId}`}
               alt={isDecorative ? "" : cap.caption}
               draggable={false}
-              className="max-h-full max-w-full rounded object-contain"
+              className={`max-h-full max-w-full rounded object-contain transition-opacity duration-300 ${
+                isDecorative ? "opacity-80" : "opacity-100"
+              }`}
             />
             {hasPrev && (
               <button
@@ -103,22 +124,8 @@ export function Lightbox({
           </div>
 
           <aside className="flex w-full shrink-0 flex-col gap-3 sm:w-64">
-            <button
-              type="button"
-              onClick={() => onToggleDecorative(entry)}
-              aria-pressed={isDecorative}
-              className={`flex items-center justify-center gap-2 rounded-md border px-3 py-2.5 text-[13px] font-semibold shadow-sm transition-colors cursor-pointer ${
-                isDecorative
-                  ? "border-amber-400 bg-amber-100 text-amber-800 hover:bg-amber-200"
-                  : "border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400 hover:bg-amber-100"
-              }`}
-            >
-              {isDecorative ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              {isDecorative ? t`Marked decorative` : t`Mark as decorative`}
-            </button>
-
             {isDecorative ? (
-              <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-[12px] leading-relaxed text-amber-700">
+              <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-[12px] leading-relaxed text-amber-700 animate-in fade-in duration-200">
                 <Trans>
                   This image is decorative. Screen readers will skip it and no caption is needed.
                 </Trans>
@@ -135,13 +142,49 @@ export function Lightbox({
                   placeholder={t`Describe this image…`}
                   className="min-h-[160px] flex-1 resize-none rounded-md border border-border bg-background px-3 py-2 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-200 transition-colors"
                 />
-                <p className="text-[10px] text-muted-foreground">
-                  <Trans>Changes save automatically when you save on the page card.</Trans>
-                </p>
               </>
             )}
           </aside>
         </div>
+
+        <DialogFooter className="shrink-0 items-center border-t px-5 py-3 sm:justify-between">
+          <button
+            type="button"
+            onClick={() => onToggleDecorative(entry)}
+            aria-pressed={isDecorative}
+            className={`flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[11px] font-semibold shadow-sm transition-colors cursor-pointer ${
+              isDecorative
+                ? "border-amber-400 bg-amber-100 text-amber-800 hover:bg-amber-200"
+                : "border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400 hover:bg-amber-100"
+            }`}
+          >
+            {isDecorative ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+            {isDecorative ? t`Decorative` : t`Mark as decorative`}
+          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={onDiscard}
+              disabled={!dirty || saving}
+              className="text-[11px] font-medium rounded-md px-2.5 py-1.5 bg-muted hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-muted disabled:hover:text-foreground"
+            >
+              {t`Discard`}
+            </button>
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={!dirty || saving}
+              className="flex items-center gap-1 text-[11px] font-medium rounded-md px-2.5 py-1.5 bg-teal-600 hover:bg-teal-500 text-white cursor-pointer transition-colors shadow-sm disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-teal-600"
+            >
+              {saving ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Check className="h-3 w-3" />
+              )}
+              {t`Save changes`}
+            </button>
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

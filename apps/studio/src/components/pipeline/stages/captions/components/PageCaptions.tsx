@@ -225,11 +225,11 @@ export function PageCaptions({
     >
       <div className="-mx-4 px-4 py-2 border-b border-border/60">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted ring-1 ring-border">
+          <div className="flex h-14 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted ring-1 ring-border">
             {pageImgSrc ? (
               <img src={pageImgSrc} alt="" className="h-full w-full object-cover" />
             ) : (
-              <span className="text-[9px] font-mono text-muted-foreground">{pageNumber}</span>
+              <span className="text-[11px] font-mono text-muted-foreground">{pageNumber}</span>
             )}
           </div>
           <div className="flex flex-col min-w-0">
@@ -308,10 +308,14 @@ export function PageCaptions({
           bookLabel={bookLabel}
           entries={lightboxEntries}
           index={Math.min(lightbox.index, lightboxEntries.length - 1)}
+          dirty={dirty}
+          saving={saving}
           onClose={() => setLightbox(null)}
           onNavigate={(next) => setLightbox((prev) => (prev ? { ...prev, index: next } : prev))}
           onCaptionChange={(entry, newCaption) => applyCaption(entry.cap.imageId, newCaption)}
           onToggleDecorative={(entry) => toggleDecorative(entry.cap.imageId)}
+          onSave={saveCaptions}
+          onDiscard={() => setPending(null)}
         />
       )}
     </section>
