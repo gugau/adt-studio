@@ -107,4 +107,41 @@ describe("evaluateTranslationInApi", () => {
     expect(String(prompt)).toContain("Forest Book")
     expect(String(prompt)).toContain("Y a ti?")
   })
+
+  it("normalizes acceptable judge items when issue metadata is omitted", async () => {
+    const label = "eval-runner-acceptable"
+    seedBook(label)
+    const generateObject = vi.fn<LLMModel["generateObject"]>().mockResolvedValue({
+      object: {
+        items: [
+          {
+            entry_id: "pg001_t001",
+            acceptable: true,
+            rationale: "Translation is acceptable.",
+          },
+        ],
+      },
+    })
+    const model: LLMModel = {
+      generateObject,
+      renderPrompt: vi.fn(),
+    }
+
+    const result = await evaluateTranslationInApi(
+      buildRequest(label),
+      {
+        booksDir: tmpDir,
+        apiKey: "sk-test",
+        createModel: () => model,
+      },
+    )
+
+    expect(result.summary).toEqual({ total: 1, acceptable: 1, unacceptable: 0 })
+    expect(result.items[0]).toMatchObject({
+      entry_id: "pg001_t001",
+      acceptable: true,
+      issue_types: [],
+      rationale: "Translation is acceptable.",
+    })
+  })
 })

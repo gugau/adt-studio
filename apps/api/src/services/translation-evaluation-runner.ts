@@ -31,8 +31,8 @@ const ISSUE_TYPES: TranslationEvaluationIssueTypeData[] = [
 const TranslationEvaluationJudgeItem = z.object({
   entry_id: z.string().min(1),
   acceptable: z.boolean(),
-  rationale: z.string().min(1),
-  issue_types: z.array(TranslationEvaluationIssueType),
+  rationale: z.string().min(1).optional(),
+  issue_types: z.array(TranslationEvaluationIssueType).optional(),
   severity: TranslationEvaluationSeverity.optional(),
   suggested_text: z.string().min(1).optional(),
 })
@@ -134,13 +134,16 @@ function normalizeJudgeOutput(
       : outputItem.issue_types && outputItem.issue_types.length > 0
         ? outputItem.issue_types
         : ["other" as const]
+    const rationale = outputItem.rationale?.trim()
     items.push({
       entry_id: entry.entry_id,
       acceptable: outputItem.acceptable,
       page_id: page.page_id,
       source_text: entry.source_text,
       translated_text: entry.translated_text,
-      rationale: outputItem.rationale.trim(),
+      rationale: rationale || (outputItem.acceptable
+        ? "Translation is acceptable."
+        : "Translation needs human review."),
       issue_types: issueTypes,
       ...(outputItem.severity ? { severity: outputItem.severity } : {}),
       ...(entry.source_hash ? { source_hash: entry.source_hash } : {}),

@@ -24,6 +24,9 @@ const TranslationEvaluationRunBody = z.object({
   page_id: z.string().min(1).optional(),
   entry_ids: z.array(z.string().min(1)).min(1).optional(),
 }).optional()
+const TranslationCatalogEntries = z.object({
+  entries: z.array(z.object({ id: z.string(), text: z.string() })),
+})
 
 function safeParseLabel(label: string): string {
   try {
@@ -167,7 +170,7 @@ function buildTranslationEvaluationRunRequest(options: {
     if (!translationRow) {
       throw new Error(`Translated text catalog not found for language: ${options.language}`)
     }
-    const parsedTranslation = TextCatalogOutput.safeParse(translationRow.data)
+    const parsedTranslation = TranslationCatalogEntries.safeParse(translationRow.data)
     if (!parsedTranslation.success) {
       throw new Error(`Stored translated text catalog data is invalid for language: ${options.language}`)
     }
@@ -398,7 +401,8 @@ export function createTranslationEvaluationRoutes(
       evaluation.evaluation.translation_version === request.translation_version &&
       evaluation.evaluation.eval_config_hash === request.eval_config_hash &&
       evaluation.evaluation.metadata?.page_id === request.pages[0]?.page_id &&
-      equalEntryIds(evaluation.evaluation.metadata?.selected_entry_ids, requestedEntryIds)
+      equalEntryIds(evaluation.evaluation.metadata?.selected_entry_ids, requestedEntryIds) &&
+      (evaluation.evaluation.metadata?.failed_pages ?? 0) === 0
     ) {
       return c.json({
         status: "current",
