@@ -100,9 +100,9 @@ i18n.load({ en: enMessages, "pt-BR": ptBRMessages, es: esMessages, fr: frMessage
 
 ---
 
-### 6) Update CLAUDE.md
+### 6) Update AGENTS.md
 
-Update the two references to the supported locale list in `CLAUDE.md`:
+Update the two references to the supported locale list in `AGENTS.md`:
 
 - The sentence: `All user-visible text in apps/studio/ must be translated to all supported locales: **en, pt-BR, es**`
 - The `### Available locales` section listing each locale and its description

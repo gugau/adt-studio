@@ -1,15 +1,18 @@
 import fs from "node:fs"
 import path from "node:path"
+import { pathToFileURL } from "node:url"
 import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
 import { parseBookLabel } from "@adt/types"
 import {
   WebRenderingOutput,
   PageSectioningOutput,
+  type SpeechConfig,
   type TextCatalogOutput,
   type GlossaryOutput,
   type QuizGenerationOutput,
   type TTSOutput,
+  type WordTimestampOutput,
   type TocGenerationOutput,
   type Quiz,
   type ContentNodeData,
@@ -65,14 +68,14 @@ function getMimeType(filePath: string): string {
   return MIME_TYPES[path.extname(filePath).toLowerCase()] ?? "application/octet-stream"
 }
 
-/** Highest mtime across base.js + everything under modules/ — used to detect
- *  when the pre-built bundle is out of date relative to its sources. */
-function maxSourceMtime(webAssetsDir: string): number {
+/** Highest mtime across the adt-runtime React source — used to detect when
+ *  the pre-built bundle is out of date relative to its sources. */
+function maxSourceMtime(_webAssetsDir: string): number {
+  // The runtime source moved from assets/adt/{base.js,modules/} to
+  // apps/adt-runtime/src/. Walk that tree instead.
+  const runtimeSrc = path.resolve(_webAssetsDir, "../../apps/adt-runtime/src")
+  if (!fs.existsSync(runtimeSrc)) return 0
   let max = 0
-  const baseJs = path.join(webAssetsDir, "base.js")
-  if (fs.existsSync(baseJs)) max = Math.max(max, fs.statSync(baseJs).mtimeMs)
-  const modulesDir = path.join(webAssetsDir, "modules")
-  if (!fs.existsSync(modulesDir)) return max
   const walk = (dir: string) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name)
@@ -83,8 +86,24 @@ function maxSourceMtime(webAssetsDir: string): number {
       }
     }
   }
-  walk(modulesDir)
+  walk(runtimeSrc)
   return max
+}
+
+function getPreviewBundleVersion(webAssetsDir: string): string {
+  const candidates = [
+    maxSourceMtime(webAssetsDir),
+  ]
+
+  for (const fileName of ["base.bundle.min.js", "base.bundle.local.js"]) {
+    const bundlePath = path.join(webAssetsDir, fileName)
+    if (fs.existsSync(bundlePath)) {
+      candidates.push(fs.statSync(bundlePath).mtimeMs)
+    }
+  }
+
+  const latest = Math.max(...candidates, 1)
+  return String(Math.trunc(latest))
 }
 
 // ---------------------------------------------------------------------------
@@ -149,6 +168,50 @@ function buildTextsMap(
     }
   }
   return textsMap
+}
+
+function getWordTimestamps(
+  storage: Storage,
+  language: string,
+): WordTimestampOutput | undefined {
+  const normalizedLanguage = normalizeLocale(language)
+  const legacyLanguage = normalizedLanguage.replace("-", "_")
+  const row =
+    storage.getLatestNodeData("tts-timestamps", normalizedLanguage) ??
+    storage.getLatestNodeData("tts-timestamps", legacyLanguage)
+  return row?.data as WordTimestampOutput | undefined
+}
+
+function buildRuntimeTimecodeMap(
+  timestamps: WordTimestampOutput | undefined,
+): Record<string, {
+  timecodes: [null, {
+    word_timestamps: Array<{ text: string; start: number; end: number }>
+  }]
+}> {
+  const map: Record<string, {
+    timecodes: [null, {
+      word_timestamps: Array<{ text: string; start: number; end: number }>
+    }]
+  }> = {}
+
+  for (const [textId, entry] of Object.entries(timestamps?.entries ?? {})) {
+    if (entry.words.length === 0) continue
+    map[textId] = {
+      timecodes: [
+        null,
+        {
+          word_timestamps: entry.words.map((word) => ({
+            text: word.word,
+            start: word.start,
+            end: word.end,
+          })),
+        },
+      ],
+    }
+  }
+
+  return map
 }
 
 /** Build a map from sectionId → 1-based pageIndex matching the manifest order */
@@ -332,7 +395,13 @@ function buildHeadingBasedToc(storage: Storage): Array<{ section_id: string; hre
 }
 
 /** Build config.json that reflects actual book capabilities */
-function buildPreviewConfig(storage: Storage, language: string) {
+function buildPreviewConfig(
+  storage: Storage,
+  language: string,
+  webAssetsDir: string,
+  speechConfig?: SpeechConfig,
+  configuredOutputLanguages?: string[],
+) {
   const glossary = getGlossary(storage)
   const hasGlossary = glossary !== undefined && glossary.items.length > 0
 
@@ -341,6 +410,7 @@ function buildPreviewConfig(storage: Storage, language: string) {
     storage.getLatestNodeData("tts", language) ??
     storage.getLatestNodeData("tts", legacyLanguage)
   const hasTTS = ttsRow !== null
+  const highlightEnabled = hasTTS && speechConfig?.word_highlighting === true
 
   const quizRow = storage.getLatestNodeData("quiz-generation", "book")
   const quizData = quizRow?.data as { quizzes?: unknown[] } | undefined
@@ -366,12 +436,32 @@ function buildPreviewConfig(storage: Storage, language: string) {
 
   const hasSignLanguageVideos = storage.getSignLanguageVideos().some((v) => v.sectionId !== null)
 
+  // Available languages = the source language + every translation actually
+  // present in the DB. We restrict against the book's configured
+  // `output_languages` so partial / in-progress translations don't leak into
+  // the language picker, but always include the source language even if it
+  // isn't listed there. Falls back to `[language]` when no translations exist.
+  const sourceLang = normalizeLocale(language)
+  const allowed = new Set(
+    (configuredOutputLanguages ?? []).map((l) => normalizeLocale(l)),
+  )
+  const availableSet = new Set<string>([sourceLang])
+  for (const lang of allowed) {
+    if (lang === sourceLang) continue
+    const legacy = lang.replace("-", "_")
+    const hasTranslation =
+      storage.getLatestNodeData("text-catalog-translation", lang) !== null ||
+      storage.getLatestNodeData("text-catalog-translation", legacy) !== null
+    if (hasTranslation) availableSet.add(lang)
+  }
+  const available = Array.from(availableSet)
+
   return {
     title: getBookTitle(storage),
-    bundleVersion: "1",
+    bundleVersion: getPreviewBundleVersion(webAssetsDir),
     languages: {
-      available: [language],
-      default: language,
+      available,
+      default: sourceLang,
     },
     features: {
       signLanguage: hasSignLanguageVideos,
@@ -386,7 +476,7 @@ function buildPreviewConfig(storage: Storage, language: string) {
       notepad: false,
       state: false,
       characterDisplay: false,
-      highlight: false,
+      highlight: highlightEnabled,
       activities: hasQuiz || hasActivitySections,
     },
     analytics: {
@@ -445,12 +535,20 @@ export function createAdtPreviewRoutes(
 
   // /assets/config.json — Dynamic config reflecting book capabilities
   app.get("/books/:label/adt-preview/assets/config.json", (c) => {
-    const config = withStorage(c.req.param("label"), (storage) => {
+    const safeLabel = parseBookLabel(c.req.param("label"))
+    const bookConfig = loadBookConfig(safeLabel, booksDir, configPath)
+    const previewConfig = withStorage(c.req.param("label"), (storage) => {
       const language = getBookLanguage(storage)
-      return buildPreviewConfig(storage, language)
+      return buildPreviewConfig(
+        storage,
+        language,
+        webAssetsDir,
+        bookConfig.speech,
+        bookConfig.output_languages,
+      )
     })
     c.header("Content-Type", "application/json")
-    return c.body(JSON.stringify(config))
+    return c.body(JSON.stringify(previewConfig))
   })
 
   // /assets/* — Static files from webAssetsDir
@@ -465,27 +563,26 @@ export function createAdtPreviewRoutes(
       throw new HTTPException(403, { message: "Forbidden" })
     }
 
-    // Auto-build base.bundle.min.js on-the-fly if it's missing OR stale relative
-    // to its source modules (dev mode). The file is gitignored and normally
-    // pre-built by `pnpm --filter @adt/api bundle`. Skip in packaged mode
+    // Auto-build the runtime bundle on-the-fly if it's missing OR stale
+    // relative to apps/adt-runtime/src (dev mode). Normally pre-built by
+    // `pnpm --filter @adt/api bundle`. Skip in packaged mode
     // (ADT_RESOURCES_ZIP) where esbuild isn't available inside the pkg'd binary.
-    if (assetPath === "base.bundle.min.js" && !process.env.ADT_RESOURCES_ZIP) {
-      const entryPoint = path.join(webAssetsDir, "base.js")
-      if (fs.existsSync(entryPoint)) {
+    if (
+      (assetPath === "base.bundle.min.js" || assetPath === "base.bundle.local.js") &&
+      !process.env.ADT_RESOURCES_ZIP
+    ) {
+      const buildScript = path.resolve(webAssetsDir, "../../apps/adt-runtime/build.config.mjs")
+      if (fs.existsSync(buildScript)) {
         const bundleMtime = fs.existsSync(resolved) ? fs.statSync(resolved).mtimeMs : 0
-        const isStale =
-          bundleMtime === 0 || maxSourceMtime(webAssetsDir) > bundleMtime
+        const isStale = bundleMtime === 0 || maxSourceMtime(webAssetsDir) > bundleMtime
         if (isStale) {
-          const esbuild = await import("esbuild")
-          await esbuild.build({
-            entryPoints: [entryPoint],
-            bundle: true,
-            minify: true,
-            sourcemap: true,
-            format: "esm",
-            target: "es2020",
-            outfile: resolved,
-          })
+          // Re-import with a cache-busting URL so repeated invocations pick
+          // up source changes when using watch mode. Convert to a file:// URL
+          // so Node's ESM loader doesn't read the Windows drive letter as a
+          // URL scheme.
+          const buildScriptUrl = pathToFileURL(buildScript)
+          buildScriptUrl.searchParams.set("t", String(Date.now()))
+          await import(buildScriptUrl.href)
         }
       }
     }
@@ -634,6 +731,20 @@ export function createAdtPreviewRoutes(
     return c.body(JSON.stringify(audioMap))
   })
 
+  // /content/i18n/:lang/timecode/timecode_output.json — word-level read-aloud timings
+  app.get("/books/:label/adt-preview/content/i18n/:lang/timecode/timecode_output.json", (c) => {
+    const lang = normalizeLocale(c.req.param("lang"))
+    const safeLabel = parseBookLabel(c.req.param("label"))
+    const bookConfig = loadBookConfig(safeLabel, booksDir, configPath)
+    const timecodes = bookConfig.speech?.word_highlighting === true
+      ? withStorage(c.req.param("label"), (storage) =>
+          buildRuntimeTimecodeMap(getWordTimestamps(storage, lang))
+        )
+      : {}
+    c.header("Content-Type", "application/json")
+    return c.body(JSON.stringify(timecodes))
+  })
+
   // /content/i18n/:lang/videos.json — Sign language video mapping
   // The ADT JS runtime expects keys like "video-{pageIndex}" and files served from "video/" path.
   // Each video is assigned to a sectionId which maps 1:1 to a pageIndex.
@@ -764,22 +875,23 @@ export function createAdtPreviewRoutes(
 
         const quizHtmlContent = renderQuizHtml(quiz, pageId, catalog)
         // Determine page index from the manifest
-        const manifest = buildPagesManifest(storage)
-        const manifestIndex = manifest.findIndex((e) => e.section_id === pageId)
+      const manifest = buildPagesManifest(storage)
+      const manifestIndex = manifest.findIndex((e) => e.section_id === pageId)
+      const previewBundleVersion = getPreviewBundleVersion(webAssetsDir)
 
-        const html = renderPageHtml({
-          content: quizHtmlContent,
-          language,
-          sectionId: pageId,
-          pageTitle: title,
-          pageIndex: manifestIndex >= 0 ? manifestIndex + 1 : 1,
-          activityAnswers: buildQuizAnswers(quiz, pageId),
-          hasMath: false,
-          bundleVersion: "1",
-          skipContentWrapper: true,
-          applyBodyBackground,
-          embed,
-        })
+      const html = renderPageHtml({
+        content: quizHtmlContent,
+        language,
+        sectionId: pageId,
+        pageTitle: title,
+        pageIndex: manifestIndex >= 0 ? manifestIndex + 1 : 1,
+        activityAnswers: buildQuizAnswers(quiz, pageId),
+        hasMath: false,
+        bundleVersion: previewBundleVersion,
+        skipContentWrapper: true,
+        applyBodyBackground,
+        embed,
+      })
 
         c.header("Content-Type", "text/html; charset=utf-8")
         return c.body(html)
@@ -822,6 +934,7 @@ export function createAdtPreviewRoutes(
       // Determine page index from manifest (includes quiz pages)
       const manifest = buildPagesManifest(storage)
       const manifestIndex = manifest.findIndex((e) => e.section_id === pageId)
+      const previewBundleVersion = getPreviewBundleVersion(webAssetsDir)
 
       const sectionMeta = sectioningParsed?.success
         ? sectioningParsed.data.sections[targetSectionIndex]
@@ -844,7 +957,7 @@ export function createAdtPreviewRoutes(
         pageIndex: manifestIndex >= 0 ? manifestIndex + 1 : 1,
         activityAnswers: renderedSection.activityAnswers,
         hasMath: previewHasMath,
-        bundleVersion: "1",
+        bundleVersion: previewBundleVersion,
         applyBodyBackground,
         embed,
       })

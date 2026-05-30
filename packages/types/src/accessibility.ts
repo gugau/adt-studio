@@ -65,7 +65,7 @@ export type AccessibilityAssessmentOutput = z.infer<typeof AccessibilityAssessme
 
 export const BrowserAccessibilityAssessmentOutput = z.object({
   generatedAt: z.string(),
-  tool: z.literal("axe-core-playwright"),
+  tool: z.enum(["axe-core-playwright", "axe-core-electron"]),
   baseGeneratedAt: z.string().nullable(),
   ruleIds: z.array(z.string()),
   pages: z.array(BrowserAccessibilityPageResult),

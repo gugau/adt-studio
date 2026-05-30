@@ -4,6 +4,7 @@ import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
 import { parseBookLabel, PIPELINE } from "@adt/types"
 import { openBookDb } from "@adt/storage"
+import { countPdfPages } from "@adt/pdf"
 import {
   listBooks,
   getBook,
@@ -19,6 +20,7 @@ import {
   exportScorm,
   exportAdt,
   type ExportFeatures,
+  type ExportDefaultSettings,
   type ExportResult,
 } from "../services/export-service.js"
 import { importProject, previewImport } from "../services/import-service.js"
@@ -66,6 +68,32 @@ export function createBookRoutes(
         throw new HTTPException(404, { message })
       }
       throw new HTTPException(400, { message })
+    }
+  })
+
+  // GET /books/:label/source-pdf/info — Source PDF metadata (page count)
+  // Used by surfaces (e.g. Extract landing page) that need a page-range upper
+  // bound before extraction has run.
+  app.get("/books/:label/source-pdf/info", (c) => {
+    const { label } = c.req.param()
+    let safeLabel: string
+    try {
+      safeLabel = parseBookLabel(label)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      throw new HTTPException(400, { message })
+    }
+    const pdfPath = path.join(booksDir, safeLabel, `${safeLabel}.pdf`)
+    if (!fs.existsSync(pdfPath)) {
+      throw new HTTPException(404, { message: "Source PDF not found" })
+    }
+    try {
+      const buffer = fs.readFileSync(pdfPath)
+      const pageCount = countPdfPages(buffer)
+      return c.json({ pageCount })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      throw new HTTPException(500, { message: `Failed to read source PDF: ${message}` })
     }
   })
 
@@ -183,11 +211,16 @@ export function createBookRoutes(
     const { label } = c.req.param()
     const format = (c.req.query("format") ?? "project") as "project" | "webpub" | "scorm" | "adt"
     let features: ExportFeatures | undefined
+    let defaultSettings: ExportDefaultSettings | undefined
     const hasBody = (c.req.header("content-length") ?? "0") !== "0"
     if (hasBody) {
       try {
-        const body = await c.req.json<{ features?: ExportFeatures }>()
+        const body = await c.req.json<{
+          features?: ExportFeatures
+          defaultSettings?: ExportDefaultSettings
+        }>()
         features = body.features
+        defaultSettings = body.defaultSettings
       } catch {
         throw new HTTPException(400, { message: "Invalid JSON body" })
       }
@@ -200,14 +233,14 @@ export function createBookRoutes(
         "prepare-export",
         `Preparing ${format} export`,
         async () => {
-          await prepareExport(label, format, booksDir, webAssetsDir ?? "", configPath, features)
+          await prepareExport(label, format, booksDir, webAssetsDir ?? "", configPath, features, defaultSettings)
         },
         { url: `/books/${safeLabel}/export-${format}` }
       )
       return c.json({ status: "submitted", taskId, label: safeLabel })
     }
 
-    await prepareExport(label, format, booksDir, webAssetsDir ?? "", configPath, features)
+    await prepareExport(label, format, booksDir, webAssetsDir ?? "", configPath, features, defaultSettings)
     return c.json({ status: "completed", label: safeLabel })
   })
 
@@ -275,6 +308,225 @@ export function createBookRoutes(
           source: r.source,
         })),
       })
+    } finally {
+      db.close()
+    }
+  })
+
+  // GET /books/:label/captioned-images — List images that have a caption
+  // (i.e. are used in the storyboard and survived pruning). Used by the
+  // image-translation picker so users only choose from images that will
+  // actually appear in the rendered book.
+  app.get("/books/:label/captioned-images", (c) => {
+    const { label } = c.req.param()
+    let safeLabel: string
+    try {
+      safeLabel = parseBookLabel(label)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      throw new HTTPException(400, { message })
+    }
+    const resolvedDir = path.resolve(booksDir)
+    const bookDir = path.join(resolvedDir, safeLabel)
+    const dbPath = path.join(bookDir, `${safeLabel}.db`)
+
+    if (!fs.existsSync(dbPath)) {
+      throw new HTTPException(404, { message: `Book not found: ${safeLabel}` })
+    }
+
+    const db = openBookDb(dbPath)
+    try {
+      // Pull every image-captioning row (one per page) and union the
+      // imageIds referenced inside their captions[] arrays.
+      const captionRows = db.all(
+        `SELECT data FROM node_data
+         WHERE node = 'image-captioning'
+         AND (node, item_id, version) IN (
+           SELECT node, item_id, MAX(version) FROM node_data
+           WHERE node = 'image-captioning'
+           GROUP BY node, item_id
+         )`
+      ) as Array<{ data: string }>
+
+      const captionedIds = new Map<string, string>()
+      for (const row of captionRows) {
+        try {
+          const parsed = JSON.parse(row.data) as {
+            captions?: Array<{ imageId?: string; caption?: string }>
+          }
+          for (const cap of parsed.captions ?? []) {
+            if (cap.imageId && !captionedIds.has(cap.imageId)) {
+              captionedIds.set(cap.imageId, cap.caption ?? "")
+            }
+          }
+        } catch { /* ignore malformed rows */ }
+      }
+
+      if (captionedIds.size === 0) {
+        return c.json({ images: [] })
+      }
+
+      const placeholders = Array.from(captionedIds.keys()).map(() => "?").join(", ")
+      const imageRows = db.all(
+        `SELECT image_id, page_id, width, height, source FROM images
+         WHERE image_id IN (${placeholders}) AND source != 'translate'
+         ORDER BY page_id, image_id`,
+        Array.from(captionedIds.keys())
+      ) as Array<{
+        image_id: string
+        page_id: string
+        width: number
+        height: number
+        source: string
+      }>
+
+      return c.json({
+        images: imageRows.map((r) => ({
+          imageId: r.image_id,
+          pageId: r.page_id,
+          width: r.width,
+          height: r.height,
+          source: r.source,
+          caption: captionedIds.get(r.image_id) ?? "",
+        })),
+      })
+    } finally {
+      db.close()
+    }
+  })
+
+  // GET /books/:label/translated-images — List localized image variants
+  // produced by the image-translation step. Each row maps a source image
+  // (the original) to its translated variant for a specific language.
+  app.get("/books/:label/translated-images", (c) => {
+    const { label } = c.req.param()
+    let safeLabel: string
+    try {
+      safeLabel = parseBookLabel(label)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      throw new HTTPException(400, { message })
+    }
+    const resolvedDir = path.resolve(booksDir)
+    const bookDir = path.join(resolvedDir, safeLabel)
+    const dbPath = path.join(bookDir, `${safeLabel}.db`)
+
+    if (!fs.existsSync(dbPath)) {
+      throw new HTTPException(404, { message: `Book not found: ${safeLabel}` })
+    }
+
+    const db = openBookDb(dbPath)
+    try {
+      const rows = db.all(
+        "SELECT image_id, page_id, width, height FROM images WHERE source = 'translate' ORDER BY image_id"
+      ) as Array<{ image_id: string; page_id: string; width: number; height: number }>
+
+      // image_id format: `${sourceImageId}_tr_${language}`
+      const images = rows.flatMap((r) => {
+        const match = r.image_id.match(/^(.+)_tr_([a-zA-Z0-9_-]+)$/)
+        if (!match) return []
+        return [{
+          imageId: r.image_id,
+          sourceImageId: match[1],
+          language: match[2],
+          pageId: r.page_id,
+          width: r.width,
+          height: r.height,
+        }]
+      })
+
+      return c.json({ images })
+    } finally {
+      db.close()
+    }
+  })
+
+  // GET /books/:label/cover — Serve the first extracted page image (book cover)
+  app.get("/books/:label/cover", (c) => {
+    const { label } = c.req.param()
+    let safeLabel: string
+    try {
+      safeLabel = parseBookLabel(label)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      throw new HTTPException(400, { message })
+    }
+    const resolvedDir = path.resolve(booksDir)
+    const bookDir = path.join(resolvedDir, safeLabel)
+    const dbPath = path.join(bookDir, `${safeLabel}.db`)
+
+    if (!fs.existsSync(dbPath)) {
+      throw new HTTPException(404, {
+        message: `Book not found: ${safeLabel}`,
+      })
+    }
+
+    const db = openBookDb(dbPath)
+    try {
+      const metadataRow = db.all(
+        `SELECT data FROM node_data
+         WHERE node = 'metadata' AND item_id = 'book'
+         ORDER BY version DESC LIMIT 1`
+      ) as Array<{ data: string }>
+
+      let coverPageNumber: number | null = null
+      if (metadataRow.length > 0) {
+        try {
+          const parsed = JSON.parse(metadataRow[0].data) as {
+            cover_page_number?: number | null
+          }
+          if (typeof parsed.cover_page_number === "number") {
+            coverPageNumber = parsed.cover_page_number
+          }
+        } catch { /* ignore malformed metadata */ }
+      }
+
+      const pageRows =
+        coverPageNumber !== null
+          ? (db.all(
+              "SELECT page_id FROM pages WHERE page_number = ? LIMIT 1",
+              [coverPageNumber]
+            ) as Array<{ page_id: string }>)
+          : (db.all(
+              "SELECT page_id FROM pages ORDER BY page_number ASC LIMIT 1"
+            ) as Array<{ page_id: string }>)
+
+      if (pageRows.length === 0) {
+        throw new HTTPException(404, { message: "No pages extracted yet" })
+      }
+
+      const imageId = `${pageRows[0].page_id}_page`
+      const imageRows = db.all(
+        "SELECT path FROM images WHERE image_id = ?",
+        [imageId]
+      ) as Array<{ path: string }>
+
+      if (imageRows.length === 0) {
+        throw new HTTPException(404, { message: "Cover image not found" })
+      }
+
+      const imagePath = path.resolve(bookDir, imageRows[0].path)
+      if (!imagePath.startsWith(bookDir + path.sep)) {
+        throw new HTTPException(400, { message: "Invalid image path" })
+      }
+
+      let stat: fs.Stats
+      try {
+        stat = fs.statSync(imagePath)
+      } catch {
+        throw new HTTPException(404, { message: "Cover image file not found" })
+      }
+      if (!stat.isFile()) {
+        throw new HTTPException(404, { message: "Cover image file not found" })
+      }
+
+      const imageBuffer = fs.readFileSync(imagePath)
+      const ext = path.extname(imagePath).toLowerCase()
+      const contentType =
+        ext === ".jpg" || ext === ".jpeg" ? "image/jpeg" : "image/png"
+      c.header("Content-Type", contentType)
+      c.header("Cache-Control", "public, max-age=86400")
+      return c.body(imageBuffer)
     } finally {
       db.close()
     }

@@ -1,6 +1,8 @@
-import { useCallback } from "react"
+import { useCallback, useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { api, type TaskInfoResponse } from "@/api/client"
+
+const EMPTY_TASKS: TaskInfoResponse[] = []
 
 // ---------------------------------------------------------------------------
 // Query key
@@ -21,10 +23,11 @@ export function useBookTasks(label: string) {
     refetchInterval: 5_000,
   })
 
-  const tasks = data?.tasks ?? []
+  const tasks = data?.tasks ?? EMPTY_TASKS
 
-  const runningTasks = tasks.filter(
-    (t) => t.status === "running" || t.status === "queued"
+  const runningTasks = useMemo(
+    () => tasks.filter((t) => t.status === "running" || t.status === "queued"),
+    [tasks],
   )
 
   const isTaskRunning = useCallback(

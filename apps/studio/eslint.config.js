@@ -127,13 +127,6 @@ export default [
             // --- TanStack Query cache keys ---
             "queryKey",
 
-            // --- File dialog / download props (Tauri + browser) ---
-            "defaultPath",
-            "suffix",
-            "download",
-            "filters",
-            "extensions",
-
             // --- React internals ---
             "displayName",
 
@@ -228,9 +221,10 @@ export default [
             "^/[a-zA-Z0-9_-]",
             // Tailwind CSS classes, internal identifiers, and status values
             // (all-lowercase-no-spaces: bg-gray-600, hover:bg-white, gap-2.5, "success", "error", "done")
-            "^[a-z][a-z0-9._:-]*$",
-            // Multi-class Tailwind strings (space-separated tokens, e.g. "bg-red-600 text-white hover:bg-red-700")
-            "^[a-z][a-z0-9._:/-]*( [a-z!][a-z0-9._:/-]*)+$",
+            "^[a-z][a-z0-9._:/\\[\\]()#%,-]*$",
+            // Multi-class Tailwind strings (space-separated tokens, including arbitrary
+            // values like w-[46px], bg-[#c42b1c], text-[1.5rem])
+            "^[a-z][a-z0-9._:/\\[\\]()#%,-]*( [a-z!][a-z0-9._:/\\[\\]()#%,-]*)+$",
             // Hex color values (e.g. "#ffffff", "#2563eb")
             "^#[0-9a-fA-F]+$",
             // CSS dimension values (e.g. "10px", "1.5rem", "48px")

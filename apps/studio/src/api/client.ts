@@ -1,3 +1,4 @@
+import { isElectron } from "@/lib/utils"
 import type {
   AccessibilityAssessmentOutput,
   BookDetail,
@@ -13,11 +14,13 @@ import type {
 export type { BookSummary, BookDetail }
 
 export function resolveBaseUrl(
-  loc: Pick<Location, "protocol" | "hostname"> = window.location,
+  _loc: Pick<Location, "protocol" | "hostname"> = window.location,
 ): string {
-  if (loc.protocol === "tauri:" || loc.hostname === "tauri.localhost") {
-    return "http://localhost:3001/api"
+  if (isElectron()) {
+    const apiPort = window.api.apiPort
+    return `http://localhost:${apiPort}/api`
   }
+
   return "/api"
 }
 
@@ -29,12 +32,27 @@ export function getAdtUrl(label: string): string {
   return `${BASE_URL}/books/${label}/adt`
 }
 
-export function getAudioUrl(label: string, language: string, fileName: string): string {
-  return `${BASE_URL}/books/${label}/audio/${language}/${fileName}`
+export function getAudioUrl(
+  label: string,
+  language: string,
+  fileName: string,
+  cacheKey?: string,
+): string {
+  const base = `${BASE_URL}/books/${label}/audio/${language}/${fileName}`
+  if (!cacheKey) return base
+  const params = new URLSearchParams({ v: cacheKey })
+  return `${base}?${params.toString()}`
 }
 
 export function getSignLanguageVideoUrl(label: string, videoId: string): string {
   return `${BASE_URL}/books/${label}/sign-language-videos/${videoId}`
+}
+
+export function getBookCoverUrl(label: string, cacheKey?: string): string {
+  const base = `${BASE_URL}/books/${label}/cover`
+  if (!cacheKey) return base
+  const params = new URLSearchParams({ v: cacheKey })
+  return `${base}?${params.toString()}`
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -230,10 +248,13 @@ export interface PageDetail {
 // --- Glossary types ---
 
 export interface GlossaryItem {
+  id?: string
+  source?: "ai" | "manual"
   word: string
   definition: string
   variations: string[]
   emojis: string[]
+  pruned?: boolean
 }
 
 export interface GlossaryOutput {
@@ -342,6 +363,7 @@ export interface TTSEntry {
   model: string
   cached: boolean
   provider?: string
+  cacheKey?: string
 }
 
 export interface TTSLanguageData {
@@ -528,6 +550,9 @@ export const api = {
 
   getBook: (label: string) => request<BookDetail>(`/books/${label}`),
 
+  getSourcePdfInfo: (label: string) =>
+    request<{ pageCount: number }>(`/books/${label}/source-pdf/info`),
+
   createBook: (label: string, pdf: File, config?: Record<string, unknown>) => {
     const formData = new FormData()
     formData.append("label", label)
@@ -709,6 +734,30 @@ export const api = {
         source: string
       }>
     }>(`/books/${label}/images`),
+
+  listCaptionedImages: (label: string) =>
+    request<{
+      images: Array<{
+        imageId: string
+        pageId: string
+        width: number
+        height: number
+        source: string
+        caption: string
+      }>
+    }>(`/books/${label}/captioned-images`),
+
+  listTranslatedImages: (label: string) =>
+    request<{
+      images: Array<{
+        imageId: string
+        sourceImageId: string
+        language: string
+        pageId: string
+        width: number
+        height: number
+      }>
+    }>(`/books/${label}/translated-images`),
 
   uploadNewImage: (label: string, pageId: string, imageBlob: Blob) => {
     const formData = new FormData()
@@ -904,6 +953,21 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  generateGlossaryItem: (
+    label: string,
+    apiKey: string,
+    body: { word: string; context?: string; candidateVariations?: string[] }
+  ) =>
+    request<{ definition: string; variations: string[]; emojis: string[] }>(
+      `/books/${label}/glossary/generate-one`,
+      {
+        method: "POST",
+        headers: { "X-OpenAI-Key": apiKey },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(60_000),
+      }
+    ),
+
   getToc: (label: string) =>
     request<TocGenerationOutput | null>(`/books/${label}/toc`),
 
@@ -981,6 +1045,22 @@ export const api = {
       },
       body: JSON.stringify({ textId, language }),
     }),
+
+  uploadTTSForItem: (
+    label: string,
+    textId: string,
+    language: string,
+    file: File,
+  ) => {
+    const formData = new FormData()
+    formData.append("audio", file)
+    formData.append("textId", textId)
+    formData.append("language", language)
+    return request<GenerateSingleTTSResponse>(`/books/${label}/tts/upload-one`, {
+      method: "POST",
+      body: formData,
+    })
+  },
 
   getWordTimestamps: (label: string, language: string) =>
     request<WordTimestampResponse>(`/books/${label}/tts/timestamps/${language}`),
@@ -1104,19 +1184,28 @@ export const api = {
   prepareExport: (
     label: string,
     format: "project" | "webpub" | "scorm" | "adt" = "project",
-    features?: { glossary?: boolean; readAloud?: boolean; quizzes?: boolean; signLanguage?: boolean; languages?: string[] }
+    features?: { glossary?: boolean; readAloud?: boolean; quizzes?: boolean; signLanguage?: boolean; languages?: string[] },
+    defaultSettings?: {
+      dockLayout?: { width?: "compact" | "full"; position?: "top" | "bottom"; align?: "center" | "spread" }
+      theme?: "light" | "dark" | "system"
+      iconSize?: "sm" | "md" | "lg"
+      reduceMotion?: boolean
+    },
   ) => {
+    const body: Record<string, unknown> = {}
+    if (features) body.features = features
+    if (defaultSettings) body.defaultSettings = defaultSettings
     return request<{ taskId?: string; status: string; label: string }>(
       `/books/${label}/prepare-export?format=${format}`,
       {
         method: "POST",
-        body: features ? JSON.stringify({ features }) : undefined,
+        body: Object.keys(body).length > 0 ? JSON.stringify(body) : undefined,
       }
     )
   },
 
   exportProject: async (label: string): Promise<Blob | null> => {
-    if (!isTauri()) {
+    if (!isDesktop()) {
       triggerDirectDownload(`${BASE_URL}/books/${label}/export-project`)
       return null
     }
@@ -1136,7 +1225,7 @@ export const api = {
   },
 
   exportWebpub: async (label: string): Promise<Blob | null> => {
-    if (!isTauri()) {
+    if (!isDesktop()) {
       triggerDirectDownload(`${BASE_URL}/books/${label}/export-webpub`)
       return null
     }
@@ -1156,7 +1245,7 @@ export const api = {
   },
 
   exportScorm: async (label: string): Promise<Blob | null> => {
-    if (!isTauri()) {
+    if (!isDesktop()) {
       triggerDirectDownload(`${BASE_URL}/books/${label}/export-scorm`)
       return null
     }
@@ -1176,7 +1265,7 @@ export const api = {
   },
 
   exportAdt: async (label: string): Promise<Blob | null> => {
-    if (!isTauri()) {
+    if (!isDesktop()) {
       triggerDirectDownload(`${BASE_URL}/books/${label}/export-adt`)
       return null
     }
@@ -1196,7 +1285,7 @@ export const api = {
   },
 }
 
-function isTauri(): boolean {
+function isDesktop(): boolean {
   return BASE_URL.startsWith("http")
 }
 

@@ -9,11 +9,24 @@ import { markOnboardingCompleted } from "@/hooks/use-onboarding";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { usePlatform } from "@/hooks/use-platform";
+import { useWindowControls } from "@/hooks/use-window-controls";
+import {
+  LinuxControls,
+  MacOSTrafficLightSpacer,
+  WindowsControls,
+} from "@/components/title-bar";
+import { DRAG_REGION, NO_DRAG_REGION } from "@/constants";
 
 export function OnboardingFlow() {
   const navigate = useNavigate();
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState<"forward" | "back">("forward");
+  const platform = usePlatform();
+  const { available: hasWindowControls } = useWindowControls();
+  const showMacOSSpacer = hasWindowControls && platform === "macos";
+  const showWindowsControls = hasWindowControls && platform === "windows";
+  const showLinuxControls = hasWindowControls && platform === "linux";
 
   const step = ONBOARDING_STEPS[index];
   const isFirst = index === 0;
@@ -53,6 +66,35 @@ export function OnboardingFlow() {
 
   return (
     <OnboardingLayout>
+      <div
+        className={cn(
+          "absolute inset-x-0 top-0 z-20 flex min-h-11 items-center px-6 animate-onboarding-fade-in [animation-delay:200ms]",
+          animationClass,
+          showWindowsControls && "pr-0 pl-2",
+        )}
+        style={DRAG_REGION}
+      >
+        {showMacOSSpacer && <MacOSTrafficLightSpacer />}
+        <div style={NO_DRAG_REGION}>
+          <LocaleSwitcher variant="standalone" />
+        </div>
+        <div className="flex-1" />
+        {!isLast && (
+          <button
+            type="button"
+            onClick={skipIntro}
+            style={NO_DRAG_REGION}
+            className="rounded-lg border border-border bg-card/80 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur transition-colors hover:text-foreground cursor-pointer"
+          >
+            <Trans>Skip intro</Trans>
+          </button>
+        )}
+        {showLinuxControls && <LinuxControls className="self-stretch ml-3" />}
+        {showWindowsControls && (
+          <WindowsControls className="self-stretch ml-2 h-auto" />
+        )}
+      </div>
+
       <OnboardingStepContainer
         variant={step.layout}
         animationClass={animationClass}
@@ -67,21 +109,6 @@ export function OnboardingFlow() {
           isLast={isLast}
         />
       </OnboardingStepContainer>
-
-      <LocaleSwitcher
-        variant="standalone"
-        className="absolute left-6 top-6 animate-onboarding-fade-in [animation-delay:200ms]"
-      />
-
-      {!isLast && (
-        <button
-          type="button"
-          onClick={skipIntro}
-          className="absolute right-6 top-6 rounded-lg border border-border bg-card/80 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur transition-colors hover:text-foreground animate-onboarding-fade-in [animation-delay:200ms] cursor-pointer"
-        >
-          <Trans>Skip intro</Trans>
-        </button>
-      )}
 
       <div className="absolute inset-x-0 min-h-[69px] bottom-0 flex items-center justify-between border-t border-border/50 px-8 py-4 animate-onboarding-fade-in [animation-delay:400ms]">
         <div className="min-w-[230px]">

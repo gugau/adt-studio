@@ -12,8 +12,10 @@ describe("pipeline effects", () => {
       "quiz-generation",
       "text-catalog",
       "catalog-translation",
+      "image-translation",
       "text-catalog-translation",
       "tts",
+      "word-timestamps",
       "package-web",
       "accessibility-assessment",
     ])
@@ -21,6 +23,7 @@ describe("pipeline effects", () => {
 
   it("derives stage-clear cache resources from cleared nodes", () => {
     expect(getCacheResourcesForStageClear("quizzes")).toEqual([
+      "pages",
       "quizzes",
       "text-catalog",
       "tts",
@@ -31,6 +34,7 @@ describe("pipeline effects", () => {
 
   it("derives stage-output cache resources from produced nodes", () => {
     expect(getCacheResourcesForStageOutput("translate")).toEqual([
+      "pages",
       "text-catalog",
       "step-status",
     ])
@@ -38,6 +42,7 @@ describe("pipeline effects", () => {
       "tts",
       "step-status",
     ])
+    expect(getCacheResourcesForNode("word-timestamps")).toEqual(["tts"])
   })
 
   it("maps metadata node to book/list resources", () => {

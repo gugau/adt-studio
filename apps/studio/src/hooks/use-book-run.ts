@@ -62,6 +62,8 @@ export interface BookRunContextValue {
   error: string | null
   /** Is any stage running or queued? */
   isRunning: boolean
+  /** True while the initial step-status fetch is in flight */
+  isStatusLoading: boolean
   /** Queue a stage run */
   queueRun(options: QueueRunOptions): void
 }
@@ -90,7 +92,7 @@ export function useBookRunStatus(label: string): BookRunContextValue {
   const { anthropicKey, googleKey, customBaseUrl, customApiKey, azureKey, azureRegion, geminiKey } = useApiKey()
 
   // Primary source of truth: enriched step-status from the server
-  const { data } = useQuery<StepStatusResponse>({
+  const { data, isPending } = useQuery<StepStatusResponse>({
     queryKey: stepStatusKey(label),
     queryFn: () => api.getStepStatus(label),
     enabled: !!label,
@@ -427,6 +429,7 @@ export function useBookRunStatus(label: string): BookRunContextValue {
     stepError: stepErrorAccessor,
     error: data?.error ?? null,
     isRunning,
+    isStatusLoading: isPending,
     queueRun,
   }
 }
@@ -466,6 +469,8 @@ function invalidateStageData(qc: ReturnType<typeof useQueryClient>, label: strin
       break
     case "translate":
       qc.invalidateQueries({ queryKey: ["books", label, "text-catalog"] })
+      qc.invalidateQueries({ queryKey: ["books", label, "translated-images"] })
+      qc.invalidateQueries({ queryKey: ["books", label, "captioned-images"] })
       break
     case "speech":
       qc.invalidateQueries({ queryKey: ["books", label, "tts"] })

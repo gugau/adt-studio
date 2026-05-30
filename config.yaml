@@ -163,7 +163,6 @@ render_strategies:
       timeout: 180
       visual_refinement:
         enabled: true
-        max_iterations: 5
   llm-overlay:
     render_type: llm
     config:
@@ -173,7 +172,6 @@ render_strategies:
       timeout: 180
       visual_refinement:
         enabled: true
-        max_iterations: 5
   two_column:
     render_type: template
     config:
@@ -196,7 +194,6 @@ render_strategies:
       timeout: 180
       visual_refinement:
         enabled: true
-        max_iterations: 5
   activity_true_false:
     render_type: activity
     config:
@@ -207,7 +204,6 @@ render_strategies:
       timeout: 180
       visual_refinement:
         enabled: true
-        max_iterations: 5
   activity_fill_in_the_blank:
     render_type: activity
     config:
@@ -218,7 +214,6 @@ render_strategies:
       timeout: 180
       visual_refinement:
         enabled: true
-        max_iterations: 5
   activity_fill_in_a_table:
     render_type: activity
     config:
@@ -229,7 +224,6 @@ render_strategies:
       timeout: 180
       visual_refinement:
         enabled: true
-        max_iterations: 5
   activity_matching:
     render_type: activity
     config:
@@ -240,7 +234,6 @@ render_strategies:
       timeout: 180
       visual_refinement:
         enabled: true
-        max_iterations: 5
   activity_sorting:
     render_type: activity
     config:
@@ -251,7 +244,6 @@ render_strategies:
       timeout: 180
       visual_refinement:
         enabled: true
-        max_iterations: 5
   activity_open_ended_answer:
     render_type: activity
     config:
@@ -261,7 +253,6 @@ render_strategies:
       timeout: 180
       visual_refinement:
         enabled: true
-        max_iterations: 5
 
 section_render_strategies:
   activity_multiple_choice: activity_multiple_choice
@@ -301,3 +292,24 @@ image_filters:
 
 # rate_limit:
 #   requests_per_minute: 60
+
+# Reader-customization defaults and locks applied to the exported web ADT.
+# `default_settings` seeds the reader's starting values (only overrides
+# localStorage when the corresponding key is locked).
+# `locked_settings` hides those controls from the reader's settings panel.
+#
+# Example:
+# default_settings:
+#   dock_layout:
+#     width: full        # compact | full
+#     position: bottom   # top | bottom
+#     align: spread      # center | spread
+#   theme: dark          # light | dark | system
+#   icon_size: md        # sm | md | lg
+#   reduce_motion: false
+
+locked_settings:
+  - dockLayout
+  - theme
+  - iconSize
+  - reduceMotion

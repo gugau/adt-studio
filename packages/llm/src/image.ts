@@ -1,6 +1,4 @@
 import { randomUUID } from "node:crypto"
-import { experimental_generateImage } from "ai"
-import { createOpenAI } from "@ai-sdk/openai"
 import { computeHash, readCache, writeCache } from "./cache.js"
 import { sanitizeMessages, type LlmLogEntry } from "./log.js"
 import { createLogger, type LogLevel } from "./logger.js"
@@ -182,6 +180,44 @@ function buildMessages(
   ]
 }
 
+// Direct fetch instead of @ai-sdk/openai for the generations endpoint: that SDK
+// auto-injects `response_format: "b64_json"` for any model not in its hardcoded
+// `hasDefaultResponseFormat` set (currently just "gpt-image-1"), and the OpenAI
+// API rejects that parameter for newer gpt-image-* variants —
+// "Unknown parameter: 'response_format'".
+async function callOpenAiImageApi(options: {
+  apiKey: string
+  endpoint: "generations" | "edits"
+  body: string | FormData
+  jsonBody?: boolean
+  abortSignal?: AbortSignal
+}): Promise<CachedImageResult> {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${options.apiKey}`,
+  }
+  if (options.jsonBody) headers["Content-Type"] = "application/json"
+
+  const response = await fetch(`https://api.openai.com/v1/images/${options.endpoint}`, {
+    method: "POST",
+    headers,
+    body: options.body,
+    signal: options.abortSignal,
+  })
+
+  const text = await response.text()
+  if (!response.ok) {
+    throw new Error(parseOpenAiError(text, response.status))
+  }
+
+  const data = JSON.parse(text) as { data?: Array<{ b64_json?: string }> }
+  const base64 = data.data?.[0]?.b64_json
+  if (!base64) {
+    throw new Error("No image data returned from OpenAI")
+  }
+
+  return { base64, mimeType: "image/png" }
+}
+
 async function generateFreshImage(options: {
   apiKey: string
   modelId: string
@@ -189,23 +225,20 @@ async function generateFreshImage(options: {
   size?: `${number}x${number}`
   abortSignal?: AbortSignal
 }): Promise<CachedImageResult> {
-  const provider = createOpenAI({ apiKey: options.apiKey })
-  const result = await experimental_generateImage({
-    model: provider.image(options.modelId),
+  const body: Record<string, unknown> = {
+    model: options.modelId,
     prompt: options.prompt,
-    size: options.size,
-    abortSignal: options.abortSignal,
-    providerOptions: {
-      openai: {
-        output_format: "png",
-      },
-    },
-  })
-
-  return {
-    base64: result.image.base64,
-    mimeType: result.image.mimeType,
+    output_format: "png",
   }
+  if (options.size) body.size = options.size
+
+  return callOpenAiImageApi({
+    apiKey: options.apiKey,
+    endpoint: "generations",
+    body: JSON.stringify(body),
+    jsonBody: true,
+    abortSignal: options.abortSignal,
+  })
 }
 
 async function editImage(options: {
@@ -219,9 +252,7 @@ async function editImage(options: {
   const formData = new FormData()
   formData.append("model", options.modelId)
   formData.append("prompt", options.prompt)
-  if (options.size) {
-    formData.append("size", options.size)
-  }
+  if (options.size) formData.append("size", options.size)
   formData.append("output_format", "png")
 
   for (const [index, image] of options.referenceImages.entries()) {
@@ -232,34 +263,12 @@ async function editImage(options: {
     )
   }
 
-  const response = await fetch("https://api.openai.com/v1/images/edits", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${options.apiKey}`,
-    },
+  return callOpenAiImageApi({
+    apiKey: options.apiKey,
+    endpoint: "edits",
     body: formData,
-    signal: options.abortSignal,
+    abortSignal: options.abortSignal,
   })
-
-  const body = await response.text()
-  if (!response.ok) {
-    throw new Error(parseOpenAiError(body, response.status))
-  }
-
-  const data = JSON.parse(body) as {
-    data?: Array<{
-      b64_json?: string
-    }>
-  }
-  const base64 = data.data?.[0]?.b64_json
-  if (!base64) {
-    throw new Error("No image data returned from OpenAI")
-  }
-
-  return {
-    base64,
-    mimeType: "image/png",
-  }
 }
 
 function emitLog(options: {

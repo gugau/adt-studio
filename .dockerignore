@@ -1,6 +1,9 @@
 node_modules/
+**/node_modules/
 dist/
+**/dist/
 *.tsbuildinfo
+**/*.tsbuildinfo
 .git/
 .gitignore
 
@@ -26,16 +29,18 @@ Thumbs.db
 *.swp
 *.swo
 
-# Claude Code / AI config
+# AI agent config
 .claude/
-CLAUDE.md
 AGENTS.md
 
 # Logs
 *.log
 
-# Tauri build output
-**/src-tauri/target/
+# Electron build output
+apps/desktop/out/
+apps/desktop/release/
+apps/desktop/dist/
+apps/api/dist-electron/
 
 # Documentation (not needed in build)
 docs/

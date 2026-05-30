@@ -1,5 +1,13 @@
 import { useState, useEffect, useCallback, useRef, useMemo, createContext, useContext } from "react"
-import { createFileRoute, Outlet, useParams, useNavigate, Link, useMatchRoute } from "@tanstack/react-router"
+import {
+  createFileRoute,
+  Outlet,
+  useParams,
+  useNavigate,
+  Link,
+  useMatchRoute,
+  type ErrorComponentProps,
+} from "@tanstack/react-router"
 import { Home, Terminal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DebugPanel } from "@/components/debug/DebugPanel"
@@ -7,6 +15,9 @@ import { DebugPanelStateProvider, type DebugTabValue } from "@/components/debug/
 import { StageSidebar } from "@/components/pipeline/components/StageSidebar"
 import { useBookRunStatus, BookRunProvider } from "@/hooks/use-book-run"
 import { useExportWatcherSetup, ExportWatcherProvider } from "@/hooks/use-export-watcher"
+import { usePlatform } from "@/hooks/use-platform"
+import { useWindowControls } from "@/hooks/use-window-controls"
+import { MacOSTrafficLightSpacer } from "@/components/title-bar"
 
 interface SectionNavContext {
   sectionIndex: number
@@ -43,6 +54,9 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
   const [debugDefaultTab, setDebugDefaultTab] = useState<DebugTabValue>("stats")
   const isDebugRoute = !!matchRoute({ to: "/books/$label/debug", params: { label } })
   const exportWatcher = useExportWatcherSetup(label)
+  const platform = usePlatform()
+  const { available: hasWindowControls } = useWindowControls()
+  const showMacOSSpacer = hasWindowControls && platform === "macos"
 
   const activeStep = step ?? "book"
   const [sectionIndex, setSectionIndex] = useState(0)
@@ -125,10 +139,13 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
           <div className="flex min-h-0 flex-1">
             <div className="relative w-[220px] shrink-0">
               <div className="absolute inset-y-0 left-0 z-30 flex w-full flex-col overflow-hidden bg-background">
-                <div className="flex h-10 shrink-0 items-center border-r border-gray-700 bg-gray-700 text-white">
+                <div
+                  className="flex h-10 shrink-0 items-center border-r border-gray-700 bg-gray-700 text-white drag-region"
+                >
+                  {showMacOSSpacer && <MacOSTrafficLightSpacer />}
                   <Link
                     to="/"
-                    className="flex h-full min-w-0 flex-1 items-center justify-start gap-2.5 px-4 transition-colors hover:bg-gray-800"
+                    className="w-full flex h-full min-w-0 items-center gap-2.5 px-4 transition-colors hover:bg-gray-800"
                     title="Back to books"
                   >
                     <Home className="h-4 w-4 shrink-0" />
@@ -136,6 +153,7 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
                       ADT Studio
                     </span>
                   </Link>
+                  <div className="flex-1 h-full" />
                 </div>
 
                 <div className="flex min-h-0 flex-1 flex-col border-r border-gray-300">

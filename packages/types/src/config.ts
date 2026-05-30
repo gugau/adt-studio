@@ -32,6 +32,15 @@ export const PageSectioningConfig = StepConfig.extend({
 })
 export type PageSectioningConfig = z.infer<typeof PageSectioningConfig>
 
+export const ImageTranslationConfig = StepConfig.extend({
+  enabled: z.boolean().optional(),
+  /** Image model id (e.g. "openai:gpt-image-1.5"). When unset, the step is a no-op. */
+  image_model: z.string().optional(),
+  /** Image IDs the user has chosen to translate. Empty = no images regenerated. */
+  selected_image_ids: z.array(z.string()).optional(),
+})
+export type ImageTranslationConfig = z.infer<typeof ImageTranslationConfig>
+
 export const BookFormat = z.enum(["web", "webpub"])
 export type BookFormat = z.infer<typeof BookFormat>
 
@@ -105,17 +114,44 @@ export const AppConfig = z
     quiz_generation: QuizGenerationConfig.optional(),
     default_render_strategy: z.string().optional(),
     render_strategies: z.record(z.string(), RenderStrategyConfig).optional(),
+    visual_review_prompt: z.string().optional(),
+    visual_review_max_iterations: z.number().int().min(1).max(50).optional(),
     section_render_strategies: z.record(z.string(), z.string()).optional(),
+    storyboard_effort: z.enum(["high", "medium", "relaxed"]).optional(),
+    storyboard_activity_mode: z
+      .enum(["dynamic", "match_source", "template"])
+      .optional(),
     image_filters: ImageFilters.optional(),
     image_meaningfulness: StepConfig.optional(),
     glossary: StepConfig.optional(),
     toc_generation: StepConfig.optional(),
+    toc_mode: z.enum(["extract", "dynamic"]).optional(),
     concurrency: z.number().int().min(1).optional(),
     rate_limit: RateLimitConfig.optional(),
     editing_language: z.string().optional(),
     output_languages: z.array(z.string()).optional(),
     book_format: z.array(BookFormat).optional(),
     image_captioning: StepConfig.optional(),
+    image_captioning_grade_level: z
+      .enum(["early", "middle", "advanced"])
+      .optional(),
+    image_captioning_user_prompt: z.string().optional(),
+    glossary_amount: z
+      .enum(["concise", "standard", "comprehensive"])
+      .optional(),
+    glossary_user_prompt: z.string().optional(),
+    glossary_seed_terms: z
+      .array(
+        z.object({
+          id: z.string(),
+          word: z.string(),
+          definition: z.string(),
+          variations: z.array(z.string()).default([]),
+          emojis: z.array(z.string()).default([]),
+        }),
+      )
+      .optional(),
+    image_translation: ImageTranslationConfig.optional(),
     image_segmentation: StepConfig.extend({
       min_side: z.number().int().min(0).optional(),
     }).optional(),
@@ -124,10 +160,28 @@ export const AppConfig = z
     spread_mode: z.boolean().optional(),
     vector_text_grouping: z.boolean().optional(),
     apply_body_background: z.boolean().optional(),
+    generate_activities: z.boolean().optional(),
     start_page: z.number().int().min(1).optional(),
     end_page: z.number().int().min(1).optional(),
     speech: SpeechConfig.optional(),
     styleguide: z.string().regex(/^[a-zA-Z0-9_-]+$/).optional(),
+    default_settings: z
+      .object({
+        dock_layout: z
+          .object({
+            width: z.enum(["compact", "full"]).optional(),
+            position: z.enum(["top", "bottom"]).optional(),
+            align: z.enum(["center", "spread"]).optional(),
+          })
+          .optional(),
+        theme: z.enum(["light", "dark", "system"]).optional(),
+        icon_size: z.enum(["sm", "md", "lg"]).optional(),
+        reduce_motion: z.boolean().optional(),
+      })
+      .optional(),
+    locked_settings: z
+      .array(z.enum(["dockLayout", "theme", "iconSize", "reduceMotion"]))
+      .optional(),
     accessibility_assessment: AccessibilityAssessmentConfig.optional(),
     reviewer_validation: ReviewerValidationConfig.optional(),
     translation_evaluation: TranslationEvaluationConfig.optional(),

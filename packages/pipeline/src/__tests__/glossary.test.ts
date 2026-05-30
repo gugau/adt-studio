@@ -11,6 +11,8 @@ import {
   buildGlossaryConfig,
   collectPageTexts,
   generateGlossary,
+  getGlossaryItemTextId,
+  mergeGeneratedGlossaryWithManualItems,
 } from "../glossary.js"
 
 describe("stripHtml", () => {
@@ -80,6 +82,41 @@ describe("buildGlossaryConfig", () => {
     }
     const config = buildGlossaryConfig(appConfig, "en")
     expect(config.modelId).toBe("openai:gpt-4.1-mini")
+  })
+
+  it("reads amount, user prompt, and seed terms from app config", () => {
+    const appConfig: AppConfig = {
+      role_types: { section_text: "Main" },
+      structure_types: { paragraph: "Para" },
+      glossary_amount: "comprehensive",
+      glossary_user_prompt: "Focus on scientific vocabulary.",
+      glossary_seed_terms: [
+        {
+          id: "gl001",
+          word: "Mitochondria",
+          definition: "The powerhouse of the cell.",
+          variations: ["mitochondrion"],
+          emojis: ["🔬"],
+        },
+      ],
+    }
+    const config = buildGlossaryConfig(appConfig, "English")
+    expect(config.amount).toBe("comprehensive")
+    expect(config.userPrompt).toBe("Focus on scientific vocabulary.")
+    expect(config.seedTerms).toHaveLength(1)
+    expect(config.seedTerms?.[0].word).toBe("Mitochondria")
+  })
+
+  it("treats empty user prompt and empty seed_terms as undefined", () => {
+    const appConfig: AppConfig = {
+      role_types: { section_text: "Main" },
+      structure_types: { paragraph: "Para" },
+      glossary_user_prompt: "",
+      glossary_seed_terms: [],
+    }
+    const config = buildGlossaryConfig(appConfig, "English")
+    expect(config.userPrompt).toBeUndefined()
+    expect(config.seedTerms).toBeUndefined()
   })
 })
 
@@ -345,5 +382,321 @@ describe("generateGlossary", () => {
     })
 
     expect(batchSizes).toEqual([10, 5])
+  })
+
+  it("defaults amount, user_instructions, and seed_terms to empty in LLM context when unset", async () => {
+    const rendering: WebRenderingOutput = {
+      sections: [
+        { sectionIndex: 0, sectionType: "content", reasoning: "", html: "<p>text</p>" },
+      ],
+    }
+    const storage = {
+      getLatestNodeData: (node: string) => {
+        if (node === "web-rendering") return { version: 1, data: rendering }
+        return null
+      },
+    } as Storage
+
+    const pages: PageData[] = [
+      { pageId: "pg001", pageNumber: 1, text: "" },
+    ]
+
+    let capturedContext: Record<string, unknown> | null = null
+    const llmModel: LLMModel = {
+      generateObject: async <T>(options: GenerateObjectOptions) => {
+        capturedContext = options.context as Record<string, unknown>
+        return {
+          object: { reasoning: "", items: [] } as T,
+        } as GenerateObjectResult<T>
+      },
+    }
+
+    await generateGlossary({
+      storage,
+      pages,
+      config: buildGlossaryConfig(
+        { role_types: {}, structure_types: {} },
+        "English"
+      ),
+      llmModel,
+    })
+
+    expect(capturedContext?.amount).toBe("")
+    expect(capturedContext?.user_instructions).toBe("")
+    expect(capturedContext?.seed_terms).toEqual([])
+  })
+
+  it("threads amount, user instructions, and seed term words into LLM context", async () => {
+    const rendering: WebRenderingOutput = {
+      sections: [
+        { sectionIndex: 0, sectionType: "content", reasoning: "", html: "<p>text</p>" },
+      ],
+    }
+    const storage = {
+      getLatestNodeData: (node: string) => {
+        if (node === "web-rendering") return { version: 1, data: rendering }
+        return null
+      },
+    } as Storage
+
+    const pages: PageData[] = [
+      { pageId: "pg001", pageNumber: 1, text: "" },
+    ]
+
+    let capturedContext: Record<string, unknown> | null = null
+    const llmModel: LLMModel = {
+      generateObject: async <T>(options: GenerateObjectOptions) => {
+        capturedContext = options.context as Record<string, unknown>
+        return {
+          object: { reasoning: "", items: [] } as T,
+        } as GenerateObjectResult<T>
+      },
+    }
+
+    await generateGlossary({
+      storage,
+      pages,
+      config: {
+        ...buildGlossaryConfig(
+          { role_types: {}, structure_types: {} },
+          "English"
+        ),
+        amount: "comprehensive",
+        userPrompt: "Skip proper nouns.",
+        seedTerms: [
+          {
+            id: "gl001",
+            word: "Mitochondria",
+            definition: "x",
+            variations: [],
+            emojis: [],
+          },
+          {
+            id: "gl002",
+            word: "Photosynthesis",
+            definition: "y",
+            variations: [],
+            emojis: [],
+          },
+        ],
+      },
+      llmModel,
+    })
+
+    expect(capturedContext?.amount).toBe("comprehensive")
+    expect(capturedContext?.user_instructions).toBe("Skip proper nouns.")
+    expect(capturedContext?.seed_terms).toEqual([
+      "Mitochondria",
+      "Photosynthesis",
+    ])
+  })
+
+  it("pins seed terms in output as manual items, overriding LLM duplicates", async () => {
+    const rendering: WebRenderingOutput = {
+      sections: [
+        { sectionIndex: 0, sectionType: "content", reasoning: "", html: "<p>text</p>" },
+      ],
+    }
+    const storage = {
+      getLatestNodeData: (node: string) => {
+        if (node === "web-rendering") return { version: 1, data: rendering }
+        return null
+      },
+    } as Storage
+
+    const pages: PageData[] = [
+      { pageId: "pg001", pageNumber: 1, text: "" },
+    ]
+
+    // LLM returns a term that overlaps with a seed
+    const llmModel = makeFakeLLMModel([
+      [
+        {
+          word: "Mitochondria",
+          definition: "LLM definition (should be overridden)",
+          variations: ["mitochondrion"],
+          emojis: ["🤖"],
+        },
+        {
+          word: "Forest",
+          definition: "A large area with trees",
+          variations: ["forests"],
+          emojis: ["🌲"],
+        },
+      ],
+    ])
+
+    const result = await generateGlossary({
+      storage,
+      pages,
+      config: {
+        ...buildGlossaryConfig(
+          { role_types: {}, structure_types: {} },
+          "English"
+        ),
+        seedTerms: [
+          {
+            id: "gl001",
+            word: "Mitochondria",
+            definition: "The powerhouse of the cell.",
+            variations: ["mitochondrion"],
+            emojis: ["🔬"],
+          },
+          {
+            id: "gl002",
+            word: "Symbiosis",
+            definition: "A long-term relationship between species.",
+            variations: [],
+            emojis: ["🤝"],
+          },
+        ],
+      },
+      llmModel,
+    })
+
+    const mitochondria = result.items.find((i) => i.word === "Mitochondria")
+    expect(mitochondria?.source).toBe("manual")
+    expect(mitochondria?.definition).toBe("The powerhouse of the cell.")
+
+    const symbiosis = result.items.find((i) => i.word === "Symbiosis")
+    expect(symbiosis).toBeDefined()
+    expect(symbiosis?.source).toBe("manual")
+
+    const forest = result.items.find((i) => i.word === "Forest")
+    expect(forest?.source).toBe("ai")
+  })
+})
+
+describe("getGlossaryItemTextId", () => {
+  it("preserves explicit glossary item ids", () => {
+    expect(
+      getGlossaryItemTextId({ id: "gl_manual_soil" }, 0),
+    ).toBe("gl_manual_soil")
+  })
+
+  it("falls back to positional ids for legacy glossary items", () => {
+    expect(
+      getGlossaryItemTextId({}, 1),
+    ).toBe("gl002")
+  })
+})
+
+describe("mergeGeneratedGlossaryWithManualItems", () => {
+  it("appends manual glossary items that do not exist in generated output", () => {
+    const merged = mergeGeneratedGlossaryWithManualItems(
+      {
+        items: [
+          {
+            word: "Forest",
+            definition: "Trees in one place",
+            variations: ["forests"],
+            emojis: ["🌲"],
+            source: "ai",
+          },
+        ],
+        pageCount: 1,
+        generatedAt: "2026-01-01T00:00:00.000Z",
+      },
+      [
+        {
+          id: "gl_manual_river",
+          source: "manual",
+          word: "River",
+          definition: "A long flow of water",
+          variations: ["rivers"],
+          emojis: ["🏞️"],
+        },
+      ],
+    )
+
+    expect(merged.items).toHaveLength(2)
+    expect(merged.items[1]).toEqual({
+      id: "gl_manual_river",
+      source: "manual",
+      word: "River",
+      definition: "A long flow of water",
+      variations: ["rivers"],
+      emojis: ["🏞️"],
+    })
+  })
+
+  it("preserves pruned AI items and drops re-generated ones that match", () => {
+    const merged = mergeGeneratedGlossaryWithManualItems(
+      {
+        items: [
+          {
+            word: "Forest",
+            definition: "Trees",
+            variations: [],
+            emojis: ["🌲"],
+            source: "ai",
+          },
+          {
+            word: "River",
+            definition: "Water flow",
+            variations: [],
+            emojis: ["🏞️"],
+            source: "ai",
+          },
+        ],
+        pageCount: 1,
+        generatedAt: "2026-01-01T00:00:00.000Z",
+      },
+      [
+        {
+          word: "River",
+          definition: "Old definition",
+          variations: [],
+          emojis: ["🏞️"],
+          source: "ai",
+          pruned: true,
+        },
+      ],
+    )
+
+    const words = merged.items.map((item) => ({ word: item.word, pruned: item.pruned }))
+    expect(words).toEqual([
+      { word: "Forest", pruned: undefined },
+      { word: "River", pruned: true },
+    ])
+  })
+
+  it("lets manual glossary entries override generated ones while preserving generated ids", () => {
+    const merged = mergeGeneratedGlossaryWithManualItems(
+      {
+        items: [
+          {
+            word: "Forest",
+            definition: "AI definition",
+            variations: ["forests"],
+            emojis: ["🌲"],
+            source: "ai",
+          },
+        ],
+        pageCount: 1,
+        generatedAt: "2026-01-01T00:00:00.000Z",
+      },
+      [
+        {
+          id: "gl_manual_forest",
+          source: "manual",
+          word: "Forest",
+          definition: "Manual definition",
+          variations: ["forest"],
+          emojis: ["🌳"],
+        },
+      ],
+    )
+
+    expect(merged.items).toEqual([
+      {
+        id: "gl001",
+        source: "manual",
+        word: "Forest",
+        definition: "Manual definition",
+        variations: ["forest"],
+        emojis: ["🌳"],
+      },
+    ])
   })
 })

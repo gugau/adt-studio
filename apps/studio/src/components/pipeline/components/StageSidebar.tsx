@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from "react"
 import { createPortal } from "react-dom"
 import { Link, useMatchRoute, useSearch } from "@tanstack/react-router"
 import { Trans } from "@lingui/react/macro"
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useAccessibilityAssessment } from "@/hooks/use-debug"
 import { useBookTasks } from "@/hooks/use-book-tasks"
+import { useStageMissingCounts } from "@/hooks/use-stage-missing-counts"
 import { usePackageAdtStatus } from "@/hooks/use-books"
 import { useSignLanguageVideos } from "@/hooks/use-sign-language-videos"
 import { StepProgressRing } from "./StepProgressRing"
@@ -24,6 +25,7 @@ import {
   STAGES,
   hasStagePages,
   toCamelLabel,
+  type StageGroup,
 } from "../stage-config"
 import { useSettingsDialog } from "@/routes/__root"
 import type { TaskInfoResponse } from "@/api/client"
@@ -32,6 +34,9 @@ import { ALL_STEP_NAMES, PAGE_PROGRESS_STEPS } from "@adt/types"
 
 const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   general: msg`General`,
+  overview: msg`Overview`,
+  "image-processing": msg`Image Processing`,
+  "section-types": msg`Section Types`,
   "container-types": msg`Container Types`,
   "text-types": msg`Text Types`,
   "metadata-prompt": msg`Metadata Prompt`,
@@ -46,15 +51,23 @@ const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   "rendering-template": msg`Template Rendering`,
   "activity-prompts": msg`Activity Rendering`,
   "image-generation": msg`Image Generation`,
+  "visual-review-prompt": msg`Visual Review`,
   "quiz-prompt": msg`Quiz Prompt`,
   "glossary-prompt": msg`Glossary Prompt`,
   "caption-prompt": msg`Caption Prompt`,
   languages: msg`Languages`,
   "translation-prompt": msg`Translation Prompt`,
-  speech: msg`Speech`,
+  "image-translation": msg`Image Translation`,
+  speech: msg`Speech Settings`,
   "speech-prompts": msg`Speech Prompts`,
   voices: msg`Voices`,
   "toc-prompt": msg`Generation Prompt`,
+}
+
+const STAGE_GROUP_LABELS: Record<StageGroup, MessageDescriptor> = {
+  convert: msg`Core Pipeline`,
+  enhancements: msg`Enhancements`,
+  packaging: msg`Packaging`,
 }
 
 const TASK_KIND_LABELS: Record<string, MessageDescriptor> = {
@@ -69,6 +82,7 @@ const TASK_KIND_LABELS: Record<string, MessageDescriptor> = {
 function getSettingsTabs(
   slug: string,
   i18n: ReturnType<typeof useLingui>["i18n"],
+  showOverviewTab: boolean,
 ): { key: string; label: string }[] | undefined {
   const tabs: Record<string, { key: string; label: string }[]> = {
     extract: [
@@ -79,7 +93,7 @@ function getSettingsTabs(
       { key: "segmentation-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["segmentation-prompt"]) },
     ],
     sectioning: [
-      { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.general) },
+      { key: "section-types", label: i18n._(SETTINGS_TAB_MESSAGE["section-types"]) },
       { key: "sectioning-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["sectioning-prompt"]) },
       { key: "refinement-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["refinement-prompt"]) },
       { key: "container-types", label: i18n._(SETTINGS_TAB_MESSAGE["container-types"]) },
@@ -91,6 +105,7 @@ function getSettingsTabs(
       { key: "rendering-template", label: i18n._(SETTINGS_TAB_MESSAGE["rendering-template"]) },
       { key: "activity-prompts", label: i18n._(SETTINGS_TAB_MESSAGE["activity-prompts"]) },
       { key: "image-generation", label: i18n._(SETTINGS_TAB_MESSAGE["image-generation"]) },
+      { key: "visual-review-prompt", label: i18n._(SETTINGS_TAB_MESSAGE["visual-review-prompt"]) },
     ],
     quizzes: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.general) },
@@ -108,6 +123,7 @@ function getSettingsTabs(
     translate: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.languages) },
       { key: "prompt", label: i18n._(SETTINGS_TAB_MESSAGE["translation-prompt"]) },
+      { key: "image-translation", label: i18n._(SETTINGS_TAB_MESSAGE["image-translation"]) },
     ],
     speech: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE.speech) },
@@ -119,7 +135,13 @@ function getSettingsTabs(
       { key: "reviewer-checklist", label: i18n._(msg`Reviewer Checklist`) },
     ],
   }
-  return tabs[slug]
+  const stageTabs = tabs[slug]
+  if (!stageTabs) return undefined
+  if (!showOverviewTab) return stageTabs
+  return [
+    { key: "overview", label: i18n._(SETTINGS_TAB_MESSAGE.overview) },
+    ...stageTabs,
+  ]
 }
 
 export function StageSidebar({
@@ -146,6 +168,9 @@ export function StageSidebar({
   const { data: packageStatus } = usePackageAdtStatus(bookLabel)
   const { tasks } = useBookTasks(bookLabel)
   const { openSettings } = useSettingsDialog()
+  const stageMissing = useStageMissingCounts(bookLabel)
+  const translateNeedsRerun = stageMissing.translate > 0
+  const speechNeedsRerun = stageMissing.speech > 0
 
   const currentState = stageState(activeStep)
   const effectivePagesOpen =
@@ -183,24 +208,68 @@ export function StageSidebar({
     export: exportCompleted,
   }
 
-  const stageItems = STAGES.map((step, index) => {
+  const stageItems: ReactNode[] = []
+  let prevGroup: StageGroup | undefined
+  STAGES.forEach((step, index) => {
+    const stepGroup = "group" in step ? (step as { group?: StageGroup }).group : undefined
+    if (stepGroup && stepGroup !== prevGroup) {
+      stageItems.push(
+        railCollapsed ? (
+          <div
+            key={`group-${stepGroup}`}
+            className="relative h-[26px] shrink-0 px-3 pt-3 pb-1 overflow-hidden"
+            role="presentation"
+          >
+            {/* Thin divider visible while the rail is collapsed; fades out as
+                the rail expands on hover so the label can fade in cleanly. */}
+            <span
+              aria-hidden
+              className="absolute left-1/2 top-[14px] -translate-x-1/2 h-px w-5 bg-muted-foreground/25 transition-opacity duration-150 group-hover/rail:opacity-0"
+            />
+            <span className="absolute left-3 right-3 top-[10px] whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 opacity-0 transition-opacity duration-150 delay-150 group-hover/rail:opacity-100">
+              {i18n._(STAGE_GROUP_LABELS[stepGroup])}
+            </span>
+          </div>
+        ) : (
+          <div
+            key={`group-${stepGroup}`}
+            className="shrink-0 px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 truncate"
+          >
+            {i18n._(STAGE_GROUP_LABELS[stepGroup])}
+          </div>
+        ),
+      )
+      prevGroup = stepGroup
+    }
+
     const isActive = step.slug === activeStep
     const Icon = step.icon
-    const settingsTabs = getSettingsTabs(step.slug, i18n)
-    const showSubTabs = isActive && isSettings && !!settingsTabs
     const state = completionOverrides[step.slug] ? "done" : stageState(step.slug)
     const stageCompleted = state === "done"
-    const ringState = state
+    const showOverviewTab = state === "done" || state === "running" || state === "queued"
+    const settingsTabs = getSettingsTabs(step.slug, i18n, showOverviewTab)
+    const showSubTabs = isActive && isSettings && !!settingsTabs
+
+    // Translate/Speech revert to needs-rerun look when their downstream output
+    // has gaps (e.g. after a glossary addition). The in-view banner gives the
+    // user the actionable details and Re-run button.
+    const stageNeedsRerun =
+      (step.slug === "translate" && translateNeedsRerun) ||
+      (step.slug === "speech" && speechNeedsRerun)
+    const ringState = stageNeedsRerun ? "idle" : state
 
     // "book" is always filled; all other stages fill when their own completion signal is met.
     const iconFilled = step.slug === "book" ? true : stageCompleted
 
     const stepLabel = step.slug === "book" ? toCamelLabel(bookLabel) : getStageLabelI18n(step.slug)
 
-    return (
+    const nextStep = STAGES[index + 1]
+    const nextGroup = nextStep && "group" in nextStep ? (nextStep as { group?: StageGroup }).group : undefined
+    const showConnector = index < STAGES.length - 1 && nextGroup === stepGroup
+
+    stageItems.push(
       <div key={step.slug} className="relative">
-        {/* Connector line */}
-        {index < STAGES.length - 1 && (
+        {showConnector && (
           <div className="absolute left-[24px] top-[36px] bottom-[-10px] w-0.5 bg-border z-10" />
         )}
 

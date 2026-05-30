@@ -1,8 +1,31 @@
 import { useRef, useMemo, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from "react"
 import DOMPurify from "dompurify"
 import { BASE_URL } from "@/api/client"
+import type { DeviceView } from "./style-editor/device-breakpoint"
+import {
+  getDeviceFrame,
+  getTargetVisibleWidth,
+} from "./style-editor/device-chrome"
+import { IPhoneFrame } from "./style-editor/device-frames/iphone-frame"
+import { IPadFrame } from "./style-editor/device-frames/ipad-frame"
+import {
+  demoteFirstHeadingIfPromoted,
+  promoteFirstHeadingToH1,
+  reconstructHtmlWithEdit,
+} from "./iframe-html"
+import {
+  type ComputedTypographyStyles,
+  lineHeightToMultiplier,
+  normalizeTextAlign,
+  parsePx,
+  rgbToHex,
+  weightToToken,
+} from "./iframe-computed-styles"
+import { INTERACTIVE_SCRIPT, INTERACTIVE_STYLES } from "./iframe-interactive"
 
-// In Tauri, BASE_URL is "http://localhost:3001/api"; extract the origin so the iframe
+export type { ComputedTypographyStyles }
+
+// In Desktop version, BASE_URL is "http://localhost:3001/api"; extract the origin so the iframe
 // can resolve relative image URLs (stored in the DB) via a <base> tag (see Lesson #2).
 // Use new URL().origin instead of string slicing — immune to path changes (Lesson #11).
 const IFRAME_BASE = BASE_URL.startsWith("http") ? new URL(BASE_URL).origin : ""
@@ -12,35 +35,10 @@ function previewAssetsUrl(bookLabel: string): string {
   return `${BASE_URL}/books/${bookLabel}/adt-preview`
 }
 
-function promoteFirstHeadingToH1(html: string): string {
-  if (/<h1\b/i.test(html)) return html
-  return html.replace(/<h([2-6])(\b[^>]*)>([\s\S]*?)<\/h\1>/i, '<h1$2>$3</h1>')
-}
-
-/** Fixed viewport width the iframe renders at — matches a typical desktop preview.
- *  The iframe is scaled down via CSS transform to fit the actual panel width. */
-const RENDER_WIDTH = 1280
-
-/**
- * Apply a text edit to the original (LaTeX) HTML by replacing the textContent
- * of the element matching the given data-id. Returns the reconstructed wrapper
- * HTML, or null if the element was not found.
- */
-function reconstructHtmlWithEdit(originalHtml: string, dataId: string, newText: string): string | null {
-  try {
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(`<div id="__root">${originalHtml}</div>`, "text/html")
-    const el = doc.querySelector(`[data-id="${CSS.escape(dataId)}"]`)
-    if (!el) return null
-    el.textContent = newText
-    const wrapper = doc.getElementById("content") ?? doc.getElementById("__root")
-    if (!wrapper) return null
-    const cls = wrapper.getAttribute("class")?.trim()
-    return cls ? wrapper.outerHTML : wrapper.innerHTML
-  } catch {
-    return null
-  }
-}
+/** Default render-width when no `width` prop is supplied — matches a typical
+ *  desktop preview. The iframe is scaled down via CSS transform to fit the
+ *  actual panel width. */
+const DEFAULT_RENDER_WIDTH = 1280
 
 export interface BookPreviewFrameHandle {
   /** Get the iframe element's bounding rect in the viewport */
@@ -52,6 +50,14 @@ export interface BookPreviewFrameHandle {
   getElementClasses: (dataId: string) => string[]
   /** Set the full class list on an element by data-id. Returns updated full HTML, or null. */
   setElementClasses: (dataId: string, classes: string[]) => string | null
+  /** Re-inject the current `html` prop into the iframe, discarding any in-iframe
+   *  DOM mutations (e.g. live `setElementClasses` edits). Used when the parent
+   *  wants to revert to the saved state without changing the html prop. */
+  resetContent: () => void
+  /** Read the iframe's getComputedStyle for the inheritable text properties
+   *  used by the Typography inspector. Returns nulls when the element isn't
+   *  in the iframe yet or a value can't be parsed. */
+  getComputedTypographyStyles: (dataId: string) => ComputedTypographyStyles
 }
 
 export interface BookPreviewFrameProps {
@@ -72,6 +78,15 @@ export interface BookPreviewFrameProps {
   onTextChanged?: (dataId: string, newText: string, fullHtml: string) => void
   /** When true (default), applies data-background-color to the iframe body */
   applyBodyBackground?: boolean
+  /** data-id of the currently selected element; re-applied after each body rebuild. */
+  selectedDataId?: string | null
+  /** Inner viewport width the iframe renders at; the wrapper scales it to fit. */
+  renderWidth?: number
+  /** When set, draws device chrome (bezel + rounded corners) around the iframe. */
+  deviceView?: DeviceView
+  /** Reports the iframe's current on-screen width in CSS pixels (renderWidth × scale).
+   *  Updates whenever the canvas resizes — useful for showing the active viewport size. */
+  onVisibleWidthChange?: (width: number) => void
 }
 
 /**
@@ -95,15 +110,21 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   onSelectElement,
   onTextChanged,
   applyBodyBackground,
+  selectedDataId,
+  renderWidth = DEFAULT_RENDER_WIDTH,
+  deviceView,
+  onVisibleWidthChange,
 }, ref) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
+  const refreshIdRef = useRef(0)
 
   const assetsPrefix = previewAssetsUrl(bookLabel)
 
   useImperativeHandle(ref, () => ({
     getIframeRect: () => iframeRef.current?.getBoundingClientRect() ?? null,
     refreshCss: async (extraHtml: string) => {
+      const id = ++refreshIdRef.current
       const doc = iframeRef.current?.contentDocument
       if (!doc?.head) return
       const res = await fetch(`${assetsPrefix}/content/tailwind_output.css`, {
@@ -111,8 +132,9 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ extraHtml }),
       })
-      if (!res.ok) return
+      if (id !== refreshIdRef.current || !res.ok) return
       const css = await res.text()
+      if (id !== refreshIdRef.current) return
       const styleId = "adt-dynamic-css"
       let styleEl = doc.getElementById(styleId) as HTMLStyleElement | null
       if (!styleEl) {
@@ -121,9 +143,9 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
         doc.head.appendChild(styleEl)
       }
       styleEl.textContent = css
-      // Re-measure height since new styles may change layout
       requestAnimationFrame(() => {
-        const h = doc.body?.scrollHeight
+        const main = doc.querySelector("main")
+        const h = (main ?? doc.body)?.scrollHeight
         if (h && h > 0) setContentHeight(h)
       })
     },
@@ -140,15 +162,13 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
       const el = doc.querySelector(`[data-id="${CSS.escape(dataId)}"]`) as HTMLElement | null
       if (!el) return null
       el.className = classes.join(" ")
-      // Strip transient selection/editing attributes before extracting HTML
+      // Don't strip `_el#` data-ids here — the inspector relies on them across
+      // edits in a session. They're stripped only at API persist time.
       const transientEls = doc.querySelectorAll("[data-adt-selected], [data-adt-editing]")
       transientEls.forEach((te) => {
         te.removeAttribute("data-adt-selected")
         te.removeAttribute("data-adt-editing")
       })
-      // Also strip dynamically-assigned container data-ids (prefixed _el)
-      doc.querySelectorAll('[data-id^="_el"]').forEach((te) => te.removeAttribute("data-id"))
-      // Extract the full HTML to persist into rendering
       const wrapper = doc.getElementById("content")
       let html: string
       if (wrapper) {
@@ -157,11 +177,36 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
       } else {
         html = doc.body.innerHTML
       }
-      // Restore the selected attribute on the current element
       el.setAttribute("data-adt-selected", "true")
-      // Restore the dynamic data-id if it was stripped
-      if (dataId.startsWith("_el")) el.setAttribute("data-id", dataId)
-      return html
+      return demoteFirstHeadingIfPromoted(html, sanitizedHtmlRef.current)
+    },
+    resetContent: () => {
+      if (readyRef.current) injectContent(latestHtmlRef.current)
+    },
+    getComputedTypographyStyles: (dataId: string): ComputedTypographyStyles => {
+      const empty: ComputedTypographyStyles = {
+        fontSize: null,
+        color: null,
+        fontWeight: null,
+        lineHeight: null,
+        textAlign: null,
+      }
+      const doc = iframeRef.current?.contentDocument
+      const win = doc?.defaultView
+      if (!doc || !win) return empty
+      const el = doc.querySelector(
+        `[data-id="${CSS.escape(dataId)}"]`,
+      ) as HTMLElement | null
+      if (!el) return empty
+      const s = win.getComputedStyle(el)
+      const fontSize = parsePx(s.fontSize)
+      return {
+        fontSize,
+        color: rgbToHex(s.color),
+        fontWeight: weightToToken(s.fontWeight),
+        lineHeight: lineHeightToMultiplier(s.lineHeight, fontSize),
+        textAlign: normalizeTextAlign(s.textAlign),
+      }
     },
   }))
   const [iframeReady, setIframeReady] = useState(false)
@@ -210,222 +255,6 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
     originalTextsRef.current = map
   }, [sanitizedHtml])
 
-  // Interactive script — always present in the iframe, gated by data-editable on <body>.
-  // This avoids srcdoc changes (and thus iframe reloads) when the editable prop toggles.
-  const interactiveScript = `<script>
-(function() {
-  var selected = null;
-  var editing = null;
-  var savedDisplayHtml = null;
-  var savedOriginalText = null;
-  var containerIdCounter = 0;
-
-  function isEditable() { return document.body.dataset.editable === 'true'; }
-
-  /** Structural tags eligible for container selection (when no data-id ancestor). */
-  var CONTAINER_TAGS = { DIV:1, SECTION:1, ARTICLE:1, MAIN:1, NAV:1, ASIDE:1, HEADER:1, FOOTER:1,
-    BUTTON:1, A:1, UL:1, OL:1, LI:1, FIGURE:1, FIGCAPTION:1, BLOCKQUOTE:1, TABLE:1,
-    THEAD:1, TBODY:1, TR:1, TD:1, TH:1, FORM:1, FIELDSET:1, DETAILS:1, SUMMARY:1, SPAN:1,
-    INPUT:1, SELECT:1, TEXTAREA:1, LABEL:1 };
-
-  /** Walk up from target to find the nearest meaningful container element. */
-  function findContainer(target) {
-    var el = target;
-    while (el && el !== document.body && el.id !== 'content') {
-      if (el.nodeType === 1 && CONTAINER_TAGS[el.tagName]) return el;
-      el = el.parentElement;
-    }
-    return null;
-  }
-
-  /** Ensure the element has a data-id; assign one if missing. */
-  function ensureDataId(el) {
-    var id = el.getAttribute('data-id');
-    if (id) return id;
-    id = '_el' + (++containerIdCounter);
-    el.setAttribute('data-id', id);
-    return id;
-  }
-
-  function getRect(el) {
-    var r = el.getBoundingClientRect();
-    return { x: r.x, y: r.y, width: r.width, height: r.height, top: r.top, left: r.left, right: r.right, bottom: r.bottom };
-  }
-
-  function clearSelection() {
-    if (selected) {
-      selected.removeAttribute('data-adt-selected');
-    }
-    selected = null;
-  }
-
-  function selectElement(el) {
-    clearSelection();
-    selected = el;
-    el.setAttribute('data-adt-selected', 'true');
-    var isImg = el.tagName === 'IMG';
-    parent.postMessage({
-      type: isImg ? 'select-image' : 'select',
-      dataId: el.getAttribute('data-id'),
-      rect: getRect(el)
-    }, '*');
-  }
-
-  function startEditing(el) {
-    if (editing === el) return;
-    if (el.tagName === 'IMG') return;
-    editing = el;
-    // Save the current MathML display before swapping to LaTeX
-    savedDisplayHtml = el.innerHTML;
-    var dataId = el.getAttribute('data-id');
-    if (window.__origTexts && window.__origTexts[dataId] != null) {
-      el.innerHTML = window.__origTexts[dataId];
-    }
-    // Capture original text AFTER the LaTeX swap so the comparison
-    // in finishEditing compares LaTeX-to-LaTeX, not MathML-to-LaTeX
-    savedOriginalText = el.textContent || '';
-    el.contentEditable = 'true';
-    el.setAttribute('data-adt-editing', 'true');
-    el.focus();
-    parent.postMessage({ type: 'editing', dataId: dataId }, '*');
-  }
-
-  function finishEditing() {
-    if (!editing) return;
-    var el = editing;
-    var restoreHtml = savedDisplayHtml;
-    var origText = savedOriginalText;
-    editing = null;
-    savedDisplayHtml = null;
-    savedOriginalText = null;
-    el.contentEditable = 'false';
-    el.removeAttribute('data-adt-editing');
-    var newText = el.textContent || '';
-    var dataId = el.getAttribute('data-id');
-    // If nothing changed, restore the saved MathML display so math content
-    // re-renders (startEditing had swapped it to LaTeX source).
-    if (newText === origText) {
-      if (restoreHtml != null) el.innerHTML = restoreHtml;
-      return;
-    }
-    // Text was edited: leave the new content in place and let the parent's
-    // re-render replace it. Restoring the pre-edit HTML here would cause a
-    // visible flash of the old text before the parent's update propagates.
-    var wrapper = document.getElementById('content');
-    var fullHtml;
-    if (wrapper) {
-      var cls = (wrapper.getAttribute('class') || '').trim();
-      fullHtml = cls ? wrapper.outerHTML : wrapper.innerHTML;
-    } else {
-      fullHtml = document.body.innerHTML;
-    }
-    parent.postMessage({
-      type: 'text-changed',
-      dataId: dataId,
-      newText: newText,
-      fullHtml: fullHtml
-    }, '*');
-  }
-
-  // Enter edit mode on mousedown (before the browser's default selection
-  // behavior) so native drag-to-select works within the contentEditable
-  // element. Handling this on 'click' was too late: the selection created
-  // during mousedown/drag was wiped when startEditing swapped innerHTML.
-  document.addEventListener('mousedown', function(e) {
-    if (!isEditable()) return;
-    var el = e.target.closest('[data-id]');
-    if (!el) return;
-    if (el.tagName === 'IMG') return;
-    if (editing === el) return;
-    if (editing && editing !== el) finishEditing();
-    selectElement(el);
-    startEditing(el);
-  });
-
-  document.addEventListener('click', function(e) {
-    if (!isEditable()) return;
-    var el = e.target.closest('[data-id]');
-    if (!el) {
-      // No data-id ancestor — try selecting a container element
-      var container = findContainer(e.target);
-      if (container) {
-        // Prevent native focus/interaction on form elements so the click selects for editing
-        var tag = container.tagName;
-        if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON') {
-          e.preventDefault();
-        }
-        if (editing) finishEditing();
-        var cId = ensureDataId(container);
-        clearSelection();
-        selected = container;
-        container.setAttribute('data-adt-selected', 'true');
-        parent.postMessage({
-          type: 'select-container',
-          dataId: cId,
-          tagName: container.tagName.toLowerCase(),
-          rect: getRect(container)
-        }, '*');
-        return;
-      }
-      if (editing) finishEditing();
-      clearSelection();
-      parent.postMessage({ type: 'deselect' }, '*');
-      return;
-    }
-    if (editing === el) return;
-    if (editing && editing !== el) finishEditing();
-    selectElement(el);
-    if (el.tagName !== 'IMG') startEditing(el);
-  });
-
-  document.addEventListener('keydown', function(e) {
-    if (!isEditable()) {
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-        parent.dispatchEvent(new KeyboardEvent('keydown', { key: e.key }));
-      }
-      return;
-    }
-    if (editing) {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        finishEditing();
-      }
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        // Restore MathML display on cancel
-        if (savedDisplayHtml != null) {
-          editing.innerHTML = savedDisplayHtml;
-          savedDisplayHtml = null;
-        }
-        editing.contentEditable = 'false';
-        editing.removeAttribute('data-adt-editing');
-        editing = null;
-      }
-      return;
-    }
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-      parent.dispatchEvent(new KeyboardEvent('keydown', { key: e.key }));
-    }
-  });
-})();
-<\/script>`
-
-  // Interactive hover styles — scoped to body[data-editable="true"] so they only
-  // apply when editing is enabled, without needing to change the srcdoc.
-  const interactiveStyles = `body[data-editable="true"] [data-id] { cursor: pointer; transition: outline 0.1s; }
-    body[data-editable="true"] [data-id]:hover { outline: 2px solid rgba(59,130,246,0.3); outline-offset: 2px; }
-    body[data-editable="true"] img[data-id] { position: relative; z-index: 1; }
-    body[data-editable="true"] div:hover, body[data-editable="true"] section:hover,
-    body[data-editable="true"] button:hover, body[data-editable="true"] nav:hover,
-    body[data-editable="true"] article:hover, body[data-editable="true"] aside:hover,
-    body[data-editable="true"] figure:hover, body[data-editable="true"] li:hover,
-    body[data-editable="true"] input:hover, body[data-editable="true"] select:hover,
-    body[data-editable="true"] textarea:hover, body[data-editable="true"] label:hover {
-      outline: 1px dashed rgba(59,130,246,0.25); outline-offset: 1px;
-    }
-    [data-adt-selected] { outline: 2px solid rgba(59,130,246,0.8) !important; outline-offset: 2px !important; }
-    [data-adt-editing] { outline: 2px solid rgba(59,130,246,1) !important; outline-offset: 2px !important; }`
-
   // Stable shell — loaded once, never changes.
   // Mirrors the preview's renderPageHtml output: same CSS, fonts, body classes.
   const srcdoc = useMemo(
@@ -440,11 +269,11 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   <link href="${assetsPrefix}/assets/fonts.css" rel="stylesheet">
   <link href="${assetsPrefix}/assets/libs/fontawesome/css/all.min.css" rel="stylesheet">
   <style>
-    ${interactiveStyles}
+    ${INTERACTIVE_STYLES}
   </style>
 </head>
 <body class="min-h-screen flex items-center justify-center">
-${interactiveScript}
+${INTERACTIVE_SCRIPT}
 </body>
 </html>`,
     [assetsPrefix]
@@ -455,16 +284,24 @@ ${interactiveScript}
   callbacksRef.current = { onSelectElement, onTextChanged }
 
   const handleMessage = useCallback((e: MessageEvent) => {
-    const iframe = iframeRef.current
-    if (!iframe || e.source !== iframe.contentWindow) return
-    const { type, dataId, rect, newText, fullHtml, tagName } = e.data ?? {}
+    const data = e.data ?? {}
+    if (typeof data !== "object" || !data.type) return
+    const { type, dataId, rect, newText, tagName } = data
     if (type === "select" || type === "select-image" || type === "select-container") {
       callbacksRef.current.onSelectElement?.(dataId, rect, tagName)
     } else if (type === "text-changed") {
-      // Reconstruct fullHtml from original LaTeX HTML to prevent MathML
-      // from leaking into the data model when saving edits
+      // Reconstruct fullHtml from original LaTeX HTML so MathML doesn't leak
+      // into the data model. If reconstruction fails (parse error, missing
+      // data-id) we drop the edit — the iframe's `fullHtml` would carry
+      // rendered MathML that must never reach persistence.
       const reconstructed = reconstructHtmlWithEdit(sanitizedHtmlRef.current, dataId, newText)
-      callbacksRef.current.onTextChanged?.(dataId, newText, reconstructed ?? fullHtml)
+      if (reconstructed === null) {
+        console.warn(
+          `[adt] Text edit dropped for data-id=${dataId} — could not reconstruct from source HTML.`,
+        )
+        return
+      }
+      callbacksRef.current.onTextChanged?.(dataId, newText, reconstructed)
     } else if (type === "deselect") {
       callbacksRef.current.onSelectElement?.("", {} as DOMRect)
     }
@@ -475,11 +312,15 @@ ${interactiveScript}
     return () => window.removeEventListener("message", handleMessage)
   }, [handleMessage])
 
-  /** Measure the intrinsic content height of the iframe document. */
+  /** Measure the intrinsic content height of the iframe document. We measure
+   *  the inner <main> rather than <body> because the body uses `min-h-screen`
+   *  + flex centering for desktop layout, which inflates body.scrollHeight to
+   *  the iframe viewport even when the actual content is shorter. */
   function measureHeight() {
     const doc = iframeRef.current?.contentDocument
     if (!doc?.body) return
-    const h = doc.body.scrollHeight
+    const main = doc.querySelector("main")
+    const h = (main ?? doc.body).scrollHeight
     if (h > 0) setContentHeight(h)
   }
 
@@ -539,11 +380,26 @@ ${interactiveScript}
     measureTimerRef.current = setTimeout(measureHeight, 500)
   }
 
-  // When html prop changes, reset height and update the body directly (no iframe reload)
+  // injectContent re-measures synchronously, so don't reset contentHeight
+  // here — collapsing to 800 first causes a layout jump on every commit.
   useEffect(() => {
-    setContentHeight(800)
     if (readyRef.current) injectContent(displayHtml)
   }, [displayHtml, applyBodyBackground])
+
+  // Re-stamp the selection attribute after every body rebuild. Must run
+  // after the inject effect above (declaration order matters).
+  useEffect(() => {
+    const doc = iframeRef.current?.contentDocument
+    if (!doc) return
+    doc.querySelectorAll("[data-adt-selected]").forEach((el) => {
+      if (el.getAttribute("data-id") !== selectedDataId) {
+        el.removeAttribute("data-adt-selected")
+      }
+    })
+    if (!selectedDataId) return
+    const el = doc.querySelector(`[data-id="${CSS.escape(selectedDataId)}"]`)
+    if (el) el.setAttribute("data-adt-selected", "true")
+  }, [selectedDataId, displayHtml, iframeReady])
 
   // Toggle editability dynamically via data attribute (no iframe reload needed)
   useEffect(() => {
@@ -551,6 +407,19 @@ ${interactiveScript}
     if (!doc?.body) return
     doc.body.dataset.editable = editable ? "true" : "false"
   }, [editable, iframeReady])
+
+  // Suppress the iframe's own scrollbar in desktop view (where the iframe is
+  // sized to its content and the host container provides the scroll). Phone
+  // and tablet frames keep the default since their fixed-height chrome relies
+  // on internal scrolling.
+  useEffect(() => {
+    const doc = iframeRef.current?.contentDocument
+    if (!doc) return
+    const desktop = !deviceView || deviceView === "desktop"
+    const value = desktop ? "hidden" : ""
+    if (doc.documentElement) doc.documentElement.style.overflow = value
+    if (doc.body) doc.body.style.overflow = value
+  }, [deviceView, iframeReady])
 
   // Inject/update pruned element styles into the iframe
   useEffect(() => {
@@ -621,7 +490,14 @@ ${selectors}:hover {
     }
   }, [changedElements, iframeReady])
 
-  // Compute scale factor when wrapper resizes
+  const frame = useMemo(() => getDeviceFrame(deviceView, renderWidth), [deviceView, renderWidth])
+  const targetVisibleWidth = getTargetVisibleWidth(deviceView)
+  const baseWidth = frame.chromeWidth
+
+  // Compute the scale factor. The chrome (when present) is rendered at its
+  // full logical size; we then `transform: scale()` the entire wrapper so it
+  // fits the canvas. Desktop is capped at 1×; mobile/tablet grow up to a
+  // target visible width for legibility.
   useEffect(() => {
     const wrapper = wrapperRef.current
     if (!wrapper) return
@@ -630,27 +506,38 @@ ${selectors}:hover {
       const entry = entries[0]
       if (!entry) return
       const availableWidth = entry.contentRect.width
-      setScale(Math.min(1, availableWidth / RENDER_WIDTH))
+      const fitScale = Math.max(0, availableWidth / baseWidth)
+      const cap =
+        deviceView === "desktop" || deviceView === undefined
+          ? 1
+          : targetVisibleWidth / baseWidth
+      setScale(Math.min(cap, fitScale))
     })
     ro.observe(wrapper)
     return () => ro.disconnect()
-  }, [])
+  }, [baseWidth, targetVisibleWidth, deviceView])
 
-  // One-time iframe setup
-  useEffect(() => {
-    const iframe = iframeRef.current
-    if (!iframe) return
+  // Ref callback so the iframe re-initializes whenever the conditional
+  // device-frame branch swaps it out (toggling Desktop ↔ Mobile ↔ Tablet
+  // remounts the <iframe> element). Without this, the new iframe never
+  // gets its load listener attached and the preview shows white until the
+  // section is re-selected.
+  const initIframe = useCallback((iframe: HTMLIFrameElement | null) => {
+    iframeRef.current = iframe
+    if (!iframe) {
+      readyRef.current = false
+      setIframeReady(false)
+      return
+    }
 
     const onLoad = () => {
       const doc = iframe.contentDocument
       if (!doc) return
-
       const start = () => {
         readyRef.current = true
         setIframeReady(true)
         injectContent(latestHtmlRef.current)
       }
-
       if (doc.fonts?.ready) {
         doc.fonts.ready.then(start)
       } else {
@@ -659,30 +546,78 @@ ${selectors}:hover {
     }
 
     iframe.addEventListener("load", onLoad)
+  }, [])
+
+  // Tear down measurement timer on unmount.
+  useEffect(() => {
     return () => {
-      iframe.removeEventListener("load", onLoad)
       if (measureTimerRef.current) clearTimeout(measureTimerRef.current)
-      readyRef.current = false
-      setIframeReady(false)
     }
   }, [])
 
-  const scaledHeight = contentHeight * scale
+  const visibleWidth = Math.round(renderWidth * scale)
+  useEffect(() => {
+    onVisibleWidthChange?.(visibleWidth)
+  }, [visibleWidth, onVisibleWidthChange])
+
+  // Mobile/tablet keep their fixed device-screen height (the chrome is meant
+  // to look like a real phone/tablet). Desktop has no chrome — making the
+  // iframe content-tall avoids the dead space `min-h-screen flex items-center`
+  // produces when a section is shorter than the canvas.
+  const isDesktop = !deviceView || deviceView === "desktop"
+  const iframeHeight = isDesktop ? contentHeight : frame.screenHeight
+  const visibleHeight = isDesktop
+    ? contentHeight * scale
+    : frame.chromeHeight * scale
+
+  const iframeNode = (
+    <iframe
+      ref={initIframe}
+      srcDoc={srcdoc}
+      className="block"
+      style={{
+        width: frame.screenWidth,
+        height: iframeHeight,
+        border: "none",
+      }}
+    />
+  )
 
   return (
-    <div ref={wrapperRef} className={className} style={{ height: scaledHeight, overflow: "hidden" }}>
-      <iframe
-        ref={iframeRef}
-        srcDoc={srcdoc}
-        scrolling="no"
+    <div
+      ref={wrapperRef}
+      className={className}
+      style={{
+        height: visibleHeight,
+        overflow: "hidden",
+        display: "flex",
+        justifyContent: "center",
+      }}
+    >
+      <div
         style={{
-          width: RENDER_WIDTH,
-          height: contentHeight,
-          border: "none",
-          transformOrigin: "top left",
+          transformOrigin: "50% 0",
           transform: `scale(${scale})`,
         }}
-      />
+      >
+        {deviceView === "mobile" ? (
+          <IPhoneFrame width={frame.chromeWidth}>{iframeNode}</IPhoneFrame>
+        ) : deviceView === "tablet" ? (
+          <IPadFrame screenWidth={frame.screenWidth} screenHeight={frame.screenHeight}>
+            {iframeNode}
+          </IPadFrame>
+        ) : (
+          <div
+            style={{
+              width: frame.screenWidth,
+              height: iframeHeight,
+              overflow: "hidden",
+            }}
+          >
+            {iframeNode}
+          </div>
+        )}
+      </div>
     </div>
   )
 })

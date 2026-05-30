@@ -2,7 +2,7 @@ import type { MessageDescriptor } from "@lingui/core"
 import type { PresetAccent } from "@/components/wizard/constants"
 import { useLingui } from "@lingui/react/macro"
 import { cn } from "@/lib/utils"
-import { WizardSwitch } from "@/components/wizard/shared/WizardSwitch"
+import { BrandedSwitch } from "@/components/ui/branded-switch"
 import type { ImageProcessingPreviewFocus } from "./imageProcessingPreviewTypes"
 import { useDelayedPreviewFocus } from "@/components/wizard"
 
@@ -101,7 +101,7 @@ export function ImageProcessingFeatureSwitch({
           </p>
         </div>
       </div>
-      <WizardSwitch
+      <BrandedSwitch
         id={`${id}-switch`}
         checked={checked}
         decorative
