@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
-import { Check, Loader2 } from "lucide-react"
+import { Check, ChevronLeft, ChevronRight, Loader2, Plus } from "lucide-react"
 import { useLingui } from "@lingui/react/macro"
 import { api } from "@/api/client"
 import { cn } from "@/lib/utils"
@@ -9,33 +9,37 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
 import { usePages, usePageImage } from "@/hooks/use-pages"
 import { useApiKey } from "@/hooks/use-api-key"
 
 const MAX_SOURCE_PAGES = 5
 
-/** Selectable page card with a lazily-loaded thumbnail preview. */
-function PagePickCard({
+type PageRef = { pageId: string; pageNumber: number }
+
+/** A page thumbnail in the bottom filmstrip. Click navigates; the corner badge toggles selection. */
+function FilmstripThumb({
   bookLabel,
   page,
-  checked,
-  disabled,
-  onToggle,
+  isCurrent,
+  isSelected,
+  selectDisabled,
+  onNavigate,
+  onToggleSelect,
 }: {
   bookLabel: string
-  page: { pageId: string; pageNumber: number }
-  checked: boolean
-  disabled: boolean
-  onToggle: () => void
+  page: PageRef
+  isCurrent: boolean
+  isSelected: boolean
+  selectDisabled: boolean
+  onNavigate: () => void
+  onToggleSelect: () => void
 }) {
   const { t } = useLingui()
-  const ref = useRef<HTMLButtonElement>(null)
+  const ref = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -52,7 +56,7 @@ function PagePickCard({
           obs.disconnect()
         }
       },
-      { rootMargin: "200px" },
+      { root: el.parentElement, rootMargin: "300px" },
     )
     obs.observe(el)
     return () => obs.disconnect()
@@ -64,26 +68,20 @@ function PagePickCard({
     : null
 
   return (
-    <button
-      ref={ref}
-      type="button"
-      onClick={onToggle}
-      disabled={disabled}
-      aria-pressed={checked}
-      className={cn(
-        "group aspect-video relative flex flex-col overflow-hidden rounded-md border text-left transition-all",
-        checked
-          ? "border-orange-500 ring-2 ring-orange-500/40"
-          : "border-border hover:border-orange-300",
-        disabled && "cursor-not-allowed opacity-40",
-      )}
-    >
-      <div className="relative h-full w-full bg-muted">
-        <div className="absolute inset-x-0 bottom-0 flex items-end bg-linear-to-t from-black/75 to-transparent px-1.5 pb-1 pt-4">
-          <span className="text-sm font-semibold text-white drop-shadow-sm">
-            {t`Page ${page.pageNumber}`}
-          </span>
-        </div>
+    <div ref={ref} className="relative shrink-0">
+      <button
+        type="button"
+        onClick={onNavigate}
+        aria-current={isCurrent}
+        title={t`Page ${page.pageNumber}`}
+        className={cn(
+          "relative flex h-28 w-20 flex-col overflow-hidden rounded-md border bg-muted transition-all",
+          isSelected
+            ? "border-orange-500 ring-2 ring-orange-500/40"
+            : "border-border hover:border-orange-300",
+          isCurrent && "ring-2 ring-primary ring-offset-1 ring-offset-background",
+        )}
+      >
         {src ? (
           <img
             src={src}
@@ -96,13 +94,71 @@ function PagePickCard({
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           </div>
         )}
-        {checked && (
-          <span className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-white shadow ring-2 ring-white">
-            <Check className="h-3 w-3" strokeWidth={3} />
-          </span>
+        <span className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent px-1 pb-0.5 pt-3 text-center text-[11px] font-semibold text-white">
+          {page.pageNumber}
+        </span>
+      </button>
+      <button
+        type="button"
+        onClick={onToggleSelect}
+        disabled={selectDisabled}
+        aria-pressed={isSelected}
+        aria-label={
+          isSelected
+            ? t`Remove page ${page.pageNumber} from the quiz`
+            : t`Use page ${page.pageNumber} for the quiz`
+        }
+        className={cn(
+          "absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full border shadow-sm transition-colors",
+          isSelected
+            ? "border-orange-500 bg-orange-500 text-white"
+            : "border-white/80 bg-black/40 text-white hover:bg-black/60",
+          selectDisabled && "cursor-not-allowed opacity-40",
         )}
+      >
+        {isSelected && <Check className="h-3 w-3" strokeWidth={3} />}
+      </button>
+    </div>
+  )
+}
 
-      </div>
+/** The clickable gap between two pages that marks where the quiz is inserted. */
+function InsertGap({
+  active,
+  onSelect,
+}: {
+  active: boolean
+  onSelect: () => void
+}) {
+  const { t } = useLingui()
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={active}
+      title={t`Insert the quiz here`}
+      className="group relative flex h-28 w-8 shrink-0 items-center justify-center"
+    >
+      <span
+        className={cn(
+          "absolute inset-y-2 w-0.5 rounded-full transition-colors",
+          active ? "bg-orange-500" : "bg-border group-hover:bg-orange-300",
+        )}
+      />
+      <span
+        className={cn(
+          "relative flex h-6 w-6 items-center justify-center rounded-full border text-white transition-all",
+          active
+            ? "border-orange-500 bg-orange-500"
+            : "border-border bg-background text-muted-foreground group-hover:border-orange-400 group-hover:text-orange-500",
+        )}
+      >
+        {active ? (
+          <Check className="h-3.5 w-3.5" strokeWidth={3} />
+        ) : (
+          <Plus className="h-3.5 w-3.5" />
+        )}
+      </span>
     </button>
   )
 }
@@ -133,6 +189,7 @@ export function AddQuizDialog({
   const [selected, setSelected] = useState<string[]>([])
   const [afterPageId, setAfterPageId] = useState("")
   const [afterTouched, setAfterTouched] = useState(false)
+  const [currentIndex, setCurrentIndex] = useState(0)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -146,6 +203,7 @@ export function AddQuizDialog({
       setSelected([])
       setAfterPageId("")
       setAfterTouched(false)
+      setCurrentIndex(0)
       setGenerating(false)
       setError(null)
     }
@@ -165,6 +223,16 @@ export function AddQuizDialog({
     setAfterPageId(last)
   }, [selected, afterTouched, renderedPages])
 
+  const current = renderedPages[currentIndex] as PageRef | undefined
+  const atLimit = selected.length >= MAX_SOURCE_PAGES
+
+  const { data: currentImage } = usePageImage(bookLabel, current?.pageId ?? "", {
+    enabled: !!current,
+  })
+  const currentSrc = currentImage?.imageBase64
+    ? `data:image/png;base64,${currentImage.imageBase64}`
+    : null
+
   const toggle = (pageId: string) => {
     setError(null)
     setSelected((prev) => {
@@ -172,6 +240,15 @@ export function AddQuizDialog({
       if (prev.length >= MAX_SOURCE_PAGES) return prev
       return [...prev, pageId]
     })
+  }
+
+  const goTo = (index: number) => {
+    setCurrentIndex(Math.max(0, Math.min(renderedPages.length - 1, index)))
+  }
+
+  const pickPlacement = (pageId: string) => {
+    setAfterTouched(true)
+    setAfterPageId(pageId)
   }
 
   const handleGenerate = async () => {
@@ -206,12 +283,12 @@ export function AddQuizDialog({
     }
   }
 
-  const atLimit = selected.length >= MAX_SOURCE_PAGES
+  const currentSelected = !!current && selected.includes(current.pageId)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="flex max-h-[90vh] flex-col sm:max-w-3xl"
+        className="flex h-[90vh] max-h-[90vh] w-[95vw] max-w-[72rem] flex-col gap-0 p-0"
         style={
           {
             "--accent-color": "#ea580c",
@@ -219,83 +296,152 @@ export function AddQuizDialog({
           } as React.CSSProperties
         }
       >
-        <DialogHeader>
-          <DialogTitle>{t`Add a quiz`}</DialogTitle>
-          <DialogDescription>
-            {t`Pick the pages the quiz is written from and choose where it appears in the book.`}
-          </DialogDescription>
+        <DialogHeader className="flex-row items-center justify-between gap-4 border-b px-6 py-4">
+          <div className="space-y-1">
+            <DialogTitle>{t`Add a quiz`}</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              {t`Select the pages the quiz is written from, then choose where it appears using the buttons between pages.`}
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+            {t`${selected.length}/${MAX_SOURCE_PAGES} selected`}
+          </span>
         </DialogHeader>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-4">
-          <div className="flex min-h-0 flex-1 flex-col gap-1.5">
-            <div className="flex items-center justify-between">
-              <Label>{t`Source pages`}</Label>
-              <span className="text-xs text-muted-foreground">
-                {t`${selected.length}/${MAX_SOURCE_PAGES} selected`}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {t`Choose up to ${MAX_SOURCE_PAGES} pages whose content the quiz question is based on.`}
+        {renderedPages.length === 0 ? (
+          <div className="flex flex-1 items-center justify-center p-6">
+            <p className="rounded-md border px-4 py-6 text-sm text-muted-foreground">
+              {t`No rendered pages yet. Run Storyboard first.`}
             </p>
-            {renderedPages.length === 0 ? (
-              <p className="rounded-md border px-3 py-4 text-xs text-muted-foreground">
-                {t`No rendered pages yet. Run Storyboard first.`}
-              </p>
-            ) : (
-              <div className="grid min-h-0 flex-1 grid-cols-3 gap-2 overflow-y-auto rounded-md border p-2 sm:grid-cols-4 md:grid-cols-5">
-                {renderedPages.map((page) => {
-                  const checked = selected.includes(page.pageId)
-                  return (
-                    <PagePickCard
-                      key={page.pageId}
+          </div>
+        ) : (
+          <>
+            {/* Fullscreen preview of the current page — click to use it for the quiz. */}
+            <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-muted/40 px-14 py-4">
+              <button
+                type="button"
+                onClick={() => current && toggle(current.pageId)}
+                disabled={!current || (!currentSelected && atLimit)}
+                aria-pressed={currentSelected}
+                className={cn(
+                  "group relative flex h-full max-h-full items-center justify-center rounded-md transition-all",
+                  !currentSelected && atLimit && "cursor-not-allowed",
+                )}
+              >
+                {currentSrc ? (
+                  <img
+                    src={currentSrc}
+                    alt={current ? t`Page ${current.pageNumber}` : ""}
+                    className={cn(
+                      "h-full max-h-full w-auto max-w-full rounded-md object-contain shadow-md ring-offset-2 ring-offset-background transition-all",
+                      currentSelected
+                        ? "ring-4 ring-orange-500"
+                        : "ring-1 ring-border group-hover:ring-2 group-hover:ring-orange-300",
+                    )}
+                  />
+                ) : (
+                  <div className="flex h-full w-72 items-center justify-center rounded-md border bg-background">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+                <span
+                  className={cn(
+                    "absolute left-3 top-3 flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium shadow-sm transition-colors",
+                    currentSelected
+                      ? "bg-orange-500 text-white"
+                      : "bg-background/90 text-muted-foreground group-hover:text-orange-600",
+                  )}
+                >
+                  {currentSelected ? (
+                    <>
+                      <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                      {t`Used for this quiz`}
+                    </>
+                  ) : (
+                    t`Click to use this page`
+                  )}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => goTo(currentIndex - 1)}
+                disabled={currentIndex === 0}
+                aria-label={t`Previous page`}
+                className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border bg-background/90 text-foreground shadow-sm transition-colors hover:bg-background disabled:pointer-events-none disabled:opacity-30"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => goTo(currentIndex + 1)}
+                disabled={currentIndex >= renderedPages.length - 1}
+                aria-label={t`Next page`}
+                className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border bg-background/90 text-foreground shadow-sm transition-colors hover:bg-background disabled:pointer-events-none disabled:opacity-30"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+
+              {current && (
+                <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-background/90 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+                  {t`Page ${current.pageNumber} of ${renderedPages.length}`}
+                </span>
+              )}
+            </div>
+
+            {/* Filmstrip with an insertion gap after each page. */}
+            <div className="shrink-0 border-t bg-background">
+              <div className="flex items-center justify-between px-6 pt-3">
+                <span className="text-xs font-medium text-muted-foreground">
+                  {t`Pages`}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {t`Use the + between pages to place the quiz`}
+                </span>
+              </div>
+              <div className="flex items-center gap-0 overflow-x-auto px-6 py-3">
+                {renderedPages.map((page, index) => (
+                  <div key={page.pageId} className="flex items-center">
+                    <FilmstripThumb
                       bookLabel={bookLabel}
                       page={page}
-                      checked={checked}
-                      disabled={!checked && atLimit}
-                      onToggle={() => toggle(page.pageId)}
+                      isCurrent={index === currentIndex}
+                      isSelected={selected.includes(page.pageId)}
+                      selectDisabled={
+                        !selected.includes(page.pageId) && atLimit
+                      }
+                      onNavigate={() => goTo(index)}
+                      onToggleSelect={() => toggle(page.pageId)}
                     />
-                  )
-                })}
+                    <InsertGap
+                      active={afterPageId === page.pageId}
+                      onSelect={() => pickPlacement(page.pageId)}
+                    />
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
+            </div>
+          </>
+        )}
 
-          <div className="shrink-0 space-y-1.5">
-            <Label htmlFor="quiz-after-page">{t`Show quiz after`}</Label>
-            <select
-              id="quiz-after-page"
-              value={afterPageId}
-              onChange={(e) => {
-                setAfterTouched(true)
-                setAfterPageId(e.target.value)
-              }}
-              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="" disabled>
-                {t`Select a page…`}
-              </option>
-              {renderedPages.map((page) => (
-                <option key={page.pageId} value={page.pageId}>
-                  {t`Page ${page.pageNumber}`}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-muted-foreground">
-              {t`The quiz is inserted into the book right after this page.`}
-            </p>
-          </div>
+        {error && (
+          <p className="px-6 text-sm text-destructive">{error}</p>
+        )}
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={generating}>
+        <DialogFooter className="border-t px-6 py-4">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={generating}
+          >
             {t`Cancel`}
           </Button>
           <Button
             onClick={handleGenerate}
-            disabled={generating || !hasApiKey || selected.length === 0 || !afterPageId}
-            className="bg-orange-600 text-white hover:bg-orange-700 border-0"
+            disabled={
+              generating || !hasApiKey || selected.length === 0 || !afterPageId
+            }
+            className="border-0 bg-orange-600 text-white hover:bg-orange-700"
           >
             {generating ? (
               <>
