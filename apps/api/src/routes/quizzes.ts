@@ -210,14 +210,21 @@ export function createQuizRoutes(
       // The user chooses where the quiz lands, independent of its source pages.
       const newQuiz: Quiz = { ...generated, afterPageId }
 
-      // Append to the existing quiz set (or start a fresh one), then re-order by
-      // book position and renumber so quizIndex stays sequential.
+      // Add to the existing quiz set (or start a fresh one). A position can hold
+      // at most one quiz, so a new quiz at an occupied afterPageId replaces the
+      // one already there. Then re-order by book position and renumber so
+      // quizIndex stays sequential.
       const existingRow = storage.getLatestNodeData("quiz-generation", "book")
       const existing = existingRow
         ? (existingRow.data as QuizGenerationOutput)
         : null
 
-      const quizzes = [...(existing?.quizzes ?? []), newQuiz]
+      const quizzes = [
+        ...(existing?.quizzes ?? []).filter(
+          (q) => q.afterPageId !== afterPageId
+        ),
+        newQuiz,
+      ]
       quizzes.sort(
         (a, b) =>
           (pageNumberById.get(a.afterPageId) ?? 0) -

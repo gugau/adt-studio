@@ -414,6 +414,12 @@ msgstr "Une nouvelle version est disponible au téléchargement."
 msgid "A question worth asking"
 msgstr "Une question qui mérite d'être posée"
 
+msgid "A quiz already exists at this position. Generating will replace the current quiz here."
+msgstr ""
+
+msgid "A quiz already sits here — generating will replace it"
+msgstr ""
+
 msgid "A scenic view at dusk."
 msgstr "Un panorama au crépuscule."
 
@@ -4469,6 +4475,9 @@ msgstr "Remplacer depuis le livre"
 
 msgid "Replace PDF"
 msgstr "Remplacer le PDF"
+
+msgid "Replace quiz"
+msgstr ""
 
 msgid "Replace this audio file"
 msgstr "Remplacer ce fichier audio"

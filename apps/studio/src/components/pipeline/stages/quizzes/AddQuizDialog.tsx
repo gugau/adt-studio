@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import {
+  AlertTriangle,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -21,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { usePages, usePageImage } from "@/hooks/use-pages"
+import { useQuizzes } from "@/hooks/use-quizzes"
 import { useApiKey } from "@/hooks/use-api-key"
 
 const MAX_SOURCE_PAGES = 5
@@ -132,9 +134,11 @@ function FilmstripThumb({
 /** The clickable gap between two pages that marks where the quiz is inserted. */
 function InsertGap({
   active,
+  hasExistingQuiz,
   onSelect,
 }: {
   active: boolean
+  hasExistingQuiz: boolean
   onSelect: () => void
 }) {
   const { t } = useLingui()
@@ -143,25 +147,37 @@ function InsertGap({
       type="button"
       onClick={onSelect}
       aria-pressed={active}
-      title={t`Insert the quiz here`}
+      title={
+        hasExistingQuiz
+          ? t`A quiz already sits here — generating will replace it`
+          : t`Insert the quiz here`
+      }
       className="group relative flex h-28 w-8 shrink-0 items-center justify-center"
     >
       <span
         className={cn(
           "absolute inset-y-2 w-0.5 rounded-full transition-colors",
-          active ? "bg-orange-500" : "bg-border group-hover:bg-orange-300",
+          active
+            ? "bg-orange-500"
+            : hasExistingQuiz
+              ? "bg-amber-400"
+              : "bg-border group-hover:bg-orange-300",
         )}
       />
       <span
         className={cn(
-          "relative flex h-6 w-6 items-center justify-center rounded-full border text-white transition-all",
+          "relative flex h-6 w-6 items-center justify-center rounded-full border transition-all",
           active
-            ? "border-orange-500 bg-orange-500"
-            : "border-border bg-background text-muted-foreground group-hover:border-orange-400 group-hover:text-orange-500",
+            ? "border-orange-500 bg-orange-500 text-white"
+            : hasExistingQuiz
+              ? "border-amber-400 bg-amber-50 text-amber-600 group-hover:border-orange-400"
+              : "border-border bg-background text-muted-foreground group-hover:border-orange-400 group-hover:text-orange-500",
         )}
       >
         {active ? (
           <Check className="h-3.5 w-3.5" strokeWidth={3} />
+        ) : hasExistingQuiz ? (
+          <HelpCircle className="h-3.5 w-3.5" strokeWidth={2.5} />
         ) : (
           <Plus className="h-3.5 w-3.5" />
         )}
@@ -181,6 +197,7 @@ export function AddQuizDialog({
 }) {
   const { t } = useLingui()
   const { data: pages } = usePages(bookLabel)
+  const { data: existingQuizzes } = useQuizzes(bookLabel)
   const {
     apiKey,
     hasApiKey,
@@ -203,6 +220,13 @@ export function AddQuizDialog({
   const renderedPages = useMemo(
     () => (pages ?? []).filter((p) => p.hasRendering),
     [pages]
+  )
+
+  // Positions (afterPageId) that already hold a quiz. Generating at one of
+  // these replaces the quiz there instead of adding a second one.
+  const occupiedAfterPageIds = useMemo(
+    () => new Set((existingQuizzes?.quizzes?.quizzes ?? []).map((q) => q.afterPageId)),
+    [existingQuizzes]
   )
 
   useEffect(() => {
@@ -232,6 +256,7 @@ export function AddQuizDialog({
 
   const current = renderedPages[currentIndex] as PageRef | undefined
   const atLimit = selected.length >= MAX_SOURCE_PAGES
+  const willReplace = !!afterPageId && occupiedAfterPageIds.has(afterPageId)
 
   const { data: currentImage } = usePageImage(bookLabel, current?.pageId ?? "", {
     enabled: !!current,
@@ -429,6 +454,7 @@ export function AddQuizDialog({
                     />
                     <InsertGap
                       active={afterPageId === page.pageId}
+                      hasExistingQuiz={occupiedAfterPageIds.has(page.pageId)}
                       onSelect={() => pickPlacement(page.pageId)}
                     />
                   </div>
@@ -436,6 +462,15 @@ export function AddQuizDialog({
               </div>
             </div>
           </>
+        )}
+
+        {willReplace && !generating && (
+          <div className="mx-6 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <span>
+              {t`A quiz already exists at this position. Generating will replace the current quiz here.`}
+            </span>
+          </div>
         )}
 
         {error && (
@@ -462,6 +497,8 @@ export function AddQuizDialog({
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 {t`Generating…`}
               </>
+            ) : willReplace ? (
+              t`Replace quiz`
             ) : (
               t`Generate quiz`
             )}
