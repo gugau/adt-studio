@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
-import { Check, ChevronLeft, ChevronRight, Loader2, Plus } from "lucide-react"
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  HelpCircle,
+  Loader2,
+  Plus,
+} from "lucide-react"
 import { useLingui } from "@lingui/react/macro"
 import { api } from "@/api/client"
 import { cn } from "@/lib/utils"
@@ -298,7 +305,14 @@ export function AddQuizDialog({
       >
         <DialogHeader className="flex-row items-center justify-between gap-4 border-b px-6 py-4">
           <div className="space-y-1">
-            <DialogTitle>{t`Add a quiz`}</DialogTitle>
+            <div className="flex items-center gap-2">
+              <HelpCircle
+                className="h-4 w-4 text-orange-500"
+                strokeWidth={2.25}
+                aria-hidden
+              />
+              <DialogTitle>{t`Add a quiz`}</DialogTitle>
+            </div>
             <p className="text-sm text-muted-foreground">
               {t`Select the pages the quiz is written from, then choose where it appears using the buttons between pages.`}
             </p>

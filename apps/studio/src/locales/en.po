@@ -1346,8 +1346,8 @@ msgstr "Choose images..."
 msgid "Choose Provider"
 msgstr "Choose Provider"
 
-msgid "Choose up to {MAX_SOURCE_PAGES} pages whose content the quiz question is based on."
-msgstr "Choose up to {MAX_SOURCE_PAGES} pages whose content the quiz question is based on."
+#~ msgid "Choose up to {MAX_SOURCE_PAGES} pages whose content the quiz question is based on."
+#~ msgstr "Choose up to {MAX_SOURCE_PAGES} pages whose content the quiz question is based on."
 
 msgid "Choose which per-page validation items reviewers must check, customize the wording and guidance, and add your own checklist items for this document."
 msgstr "Choose which per-page validation items reviewers must check, customize the wording and guidance, and add your own checklist items for this document."
@@ -1399,6 +1399,9 @@ msgstr "Click to pick a style reference image"
 
 msgid "Click to select an image"
 msgstr "Click to select an image"
+
+msgid "Click to use this page"
+msgstr "Click to use this page"
 
 msgid "Clone failed"
 msgstr "Clone failed"
@@ -2783,6 +2786,9 @@ msgstr "Input"
 msgid "Input Tokens"
 msgstr "Input Tokens"
 
+msgid "Insert the quiz here"
+msgstr "Insert the quiz here"
+
 msgid "Inside Cover"
 msgstr "Inside Cover"
 
@@ -3370,6 +3376,9 @@ msgstr "Next"
 msgid "Next missing section"
 msgstr "Next missing section"
 
+msgid "Next page"
+msgstr "Next page"
+
 msgid "Next slide"
 msgstr "Next slide"
 
@@ -3854,6 +3863,11 @@ msgstr "Page {0}"
 msgid "Page {0} — Section {1}"
 msgstr "Page {0} — Section {1}"
 
+#. placeholder {0}: current.pageNumber
+#. placeholder {1}: renderedPages.length
+msgid "Page {0} of {1}"
+msgstr "Page {0} of {1}"
+
 msgid "Page {n}"
 msgstr "Page {n}"
 
@@ -3901,6 +3915,9 @@ msgstr "Page Sectioning Refinement Prompt"
 
 msgid "pages"
 msgstr "pages"
+
+msgid "Pages"
+msgstr "Pages"
 
 #. placeholder {0}: activeSession.session.start_page ?? "?"
 #. placeholder {1}: activeSession.session.end_page ?? "?"
@@ -4015,8 +4032,8 @@ msgstr "Pick one layout approach."
 msgid "Pick the languages you want to translate to. The book's original language stays as-is."
 msgstr "Pick the languages you want to translate to. The book's original language stays as-is."
 
-msgid "Pick the pages the quiz is written from and choose where it appears in the book."
-msgstr "Pick the pages the quiz is written from and choose where it appears in the book."
+#~ msgid "Pick the pages the quiz is written from and choose where it appears in the book."
+#~ msgstr "Pick the pages the quiz is written from and choose where it appears in the book."
 
 msgid "Pick which voice each language uses for narration, including regional accents."
 msgstr "Pick which voice each language uses for narration, including regional accents."
@@ -4111,6 +4128,9 @@ msgstr "Preview: Per-Word"
 
 msgid "Preview: word-by-word"
 msgstr "Preview: word-by-word"
+
+msgid "Previous page"
+msgstr "Previous page"
 
 msgid "Previous slide"
 msgstr "Previous slide"
@@ -4398,6 +4418,10 @@ msgstr "Remove from group"
 
 msgid "Remove manual glossary term"
 msgstr "Remove manual glossary term"
+
+#. placeholder {0}: page.pageNumber
+msgid "Remove page {0} from the quiz"
+msgstr "Remove page {0} from the quiz"
 
 msgid "Remove PDF"
 msgstr "Remove PDF"
@@ -4906,8 +4930,8 @@ msgstr "Select a node type and enter an item ID to view versions."
 msgid "Select a page grouping to continue"
 msgstr "Select a page grouping to continue"
 
-msgid "Select a page…"
-msgstr "Select a page…"
+#~ msgid "Select a page…"
+#~ msgstr "Select a page…"
 
 msgid "Select a render strategy to continue"
 msgstr "Select a render strategy to continue"
@@ -4953,6 +4977,9 @@ msgstr "Select styleguide..."
 
 msgid "Select template..."
 msgstr "Select template..."
+
+msgid "Select the pages the quiz is written from, then choose where it appears using the buttons between pages."
+msgstr "Select the pages the quiz is written from, then choose where it appears using the buttons between pages."
 
 msgid "Select up to 5 pages to use as visual references. The LLM will analyze them and generate a styleguide."
 msgstr "Select up to 5 pages to use as visual references. The LLM will analyze them and generate a styleguide."
@@ -5036,8 +5063,8 @@ msgstr "Show fewer"
 msgid "Show pruned terms"
 msgstr "Show pruned terms"
 
-msgid "Show quiz after"
-msgstr "Show quiz after"
+#~ msgid "Show quiz after"
+#~ msgstr "Show quiz after"
 
 msgid "Show reviewer validation"
 msgstr "Show reviewer validation"
@@ -5145,8 +5172,8 @@ msgstr "Sort books"
 msgid "Source"
 msgstr "Source"
 
-msgid "Source pages"
-msgstr "Source pages"
+#~ msgid "Source pages"
+#~ msgstr "Source pages"
 
 msgid "Source PDF"
 msgstr "Source PDF"
@@ -5528,8 +5555,8 @@ msgstr "The prompt used by the reviewer pass to inspect and correct a candidate 
 msgid "The quick brown fox jumps over the lazy dog."
 msgstr "The quick brown fox jumps over the lazy dog."
 
-msgid "The quiz is inserted into the book right after this page."
-msgstr "The quiz is inserted into the book right after this page."
+#~ msgid "The quiz is inserted into the book right after this page."
+#~ msgstr "The quiz is inserted into the book right after this page."
 
 msgid "The rendering strategy used for sections without an explicit mapping."
 msgstr "The rendering strategy used for sections without an explicit mapping."
@@ -5964,11 +5991,18 @@ msgstr "Use an LLM to detect and split composited images (e.g., multiple photos 
 msgid "Use an LLM to filter out decorative or non-educational images."
 msgstr "Use an LLM to filter out decorative or non-educational images."
 
+#. placeholder {0}: page.pageNumber
+msgid "Use page {0} for the quiz"
+msgstr "Use page {0} for the quiz"
+
 msgid "Use section headings verbatim. Fast, deterministic, and preserves the original wording from the book."
 msgstr "Use section headings verbatim. Fast, deterministic, and preserves the original wording from the book."
 
 msgid "Use Spread for printed books with facing-page layouts (covers stay solo, then 2+3, 4+5, …). Use Single when each PDF page should be processed on its own."
 msgstr "Use Spread for printed books with facing-page layouts (covers stay solo, then 2+3, 4+5, …). Use Single when each PDF page should be processed on its own."
+
+msgid "Use the + between pages to place the quiz"
+msgstr "Use the + between pages to place the quiz"
 
 msgid "Use this for checks you intentionally want to suppress, such as known false positives."
 msgstr "Use this for checks you intentionally want to suppress, such as known false positives."
@@ -5984,6 +6018,9 @@ msgstr "Used for Claude models (claude-opus-4-6, claude-sonnet-4-6, etc.)"
 
 msgid "Used for Gemini models — both LLM (gemini-2.5-pro, etc.) and TTS (gemini-2.5-pro-preview-tts, etc.)"
 msgstr "Used for Gemini models — both LLM (gemini-2.5-pro, etc.) and TTS (gemini-2.5-pro-preview-tts, etc.)"
+
+msgid "Used for this quiz"
+msgstr "Used for this quiz"
 
 msgid "Validation"
 msgstr "Validation"
