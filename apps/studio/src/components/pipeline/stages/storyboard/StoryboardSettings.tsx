@@ -36,7 +36,7 @@ import { msg } from "@lingui/core/macro"
 import { useLingui } from "@lingui/react/macro"
 import { i18n } from "@lingui/core"
 import {
-  listSelectableRenderStrategies,
+  listDefaultRenderStrategies,
   normalizeDefaultRenderStrategy,
 } from "@/lib/render-strategy"
 import { getSectionTypeLabel } from "@/lib/section-constants"
@@ -50,6 +50,7 @@ function titleCase(slug: string): string {
 const STRATEGY_LABEL_MSGS: Record<string, ReturnType<typeof msg>> = {
   llm: msg`AI Generated`,
   "llm-overlay": msg`AI Overlay`,
+  fixed_layout: msg`Fixed Layout`,
 }
 
 function strategyDisplayName(slug: string): string {
@@ -63,6 +64,7 @@ const STRATEGY_DESCRIPTION_MSGS: Record<string, ReturnType<typeof msg>> = {
   "llm-overlay": msg`LLM positions text over background images`,
   two_column: msg`Fixed two-column template layout`,
   two_column_story: msg`Two-column template for story content`,
+  fixed_layout: msg`Preserves the source PDF's exact page layout`,
 }
 
 function strategyDescription(name: string): string {
@@ -276,7 +278,7 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
     )
     setDefaultRenderStrategy(normalizedDefaultRenderStrategy)
 
-    setRenderStrategyNames(listSelectableRenderStrategies(strategies))
+    setRenderStrategyNames(listDefaultRenderStrategies(strategies))
 
     // Styleguide
     setStyleguide(typeof merged.styleguide === "string" ? merged.styleguide : "")

@@ -14,6 +14,13 @@ declare module "*.po" {
   export { messages }
 }
 
+declare module "axe-core/locales/*.json" {
+  const data: {
+    rules?: Record<string, { help?: string; description?: string }>
+  }
+  export default data
+}
+
 interface ElectronApiLogEntry {
   stream: "stdout" | "stderr"
   line: string

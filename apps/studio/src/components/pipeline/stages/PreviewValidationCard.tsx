@@ -837,7 +837,7 @@ export function PreviewValidationCard({
                       </div>
                     </div>
                     <Badge variant={needsChanges > 0 ? "destructive" : "outline"} className="text-[11px]">
-                      {needsChanges > 0 ? `${needsChanges} flagged` : `${section.criteria.length - reviewed} pending`}
+                      {needsChanges > 0 ? t`${needsChanges} flagged` : t`${section.criteria.length - reviewed} pending`}
                     </Badge>
                   </summary>
 

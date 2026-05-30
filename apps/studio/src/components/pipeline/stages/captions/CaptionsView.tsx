@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
-import { Image as ImageIcon, Loader2, Search, X } from "lucide-react"
+import { Image as ImageIcon, Search, X } from "lucide-react"
 import { useQueries } from "@tanstack/react-query"
 import { api } from "@/api/client"
 import { usePages } from "@/hooks/use-pages"
@@ -7,6 +7,7 @@ import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
+import { StageContentGuard } from "../../components/StageContentGuard"
 import { StageEmptyState } from "../../components/StageEmptyState"
 import { useSectionNav } from "@/routes/books.$label"
 import { useLingui } from "@lingui/react/macro"
@@ -199,48 +200,6 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
     if (section) section.scrollIntoView({ behavior: "smooth", block: "start" })
   }, [])
 
-  if (!showRunCard && isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">{t`Loading pages...`}</span>
-      </div>
-    )
-  }
-
-  if (showRunCard || pagesWithImages.length === 0 || !hasCaptionData) {
-    return (
-      <div className="p-4">
-        <StageRunCard
-          stageSlug="captions"
-          isRunning={captionsRunning}
-          completed={captionsDone}
-          onRun={handleRunCaptions}
-          disabled={!hasApiKey || captionsRunning}
-        />
-      </div>
-    )
-  }
-
-  if (selectedPageId && displayPages.length === 0 && pagesWithImages.length > 0) {
-    return (
-      <StageEmptyState
-        icon={ImageIcon}
-        color="teal"
-        title={t`No images on this page`}
-        cta={
-          <button
-            type="button"
-            onClick={() => onSelectPage?.(null)}
-            className="text-xs font-medium text-teal-600 hover:text-teal-700 hover:underline transition-colors"
-          >
-            {t`Show all`}
-          </button>
-        }
-      />
-    )
-  }
-
   const singlePageEmptyState = selectedPageId ? (
     <StageEmptyState
       icon={ImageIcon}
@@ -253,7 +212,49 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
   const chipBase =
     "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-200 cursor-pointer"
 
+  const hasNoImages = pagesWithImages.length === 0
+  const showNoImagesEmpty =
+    selectedPageId && displayPages.length === 0 && pagesWithImages.length > 0
+
   return (
+    <StageContentGuard
+      stageSlug="captions"
+      isLoading={!showRunCard && isLoading}
+      loadingLabel={t`Loading pages...`}
+      showRunCard={!hasNoImages && (showRunCard || !hasCaptionData)}
+      runCard={
+        <StageRunCard
+          stageSlug="captions"
+          isRunning={captionsRunning}
+          completed={captionsDone}
+          onRun={handleRunCaptions}
+          disabled={!hasApiKey || captionsRunning}
+        />
+      }
+    >
+      {hasNoImages ? (
+        <StageEmptyState
+          icon={ImageIcon}
+          color="teal"
+          title={t`No images in this book`}
+          subtitle={t`This book has no images to caption`}
+        />
+      ) : showNoImagesEmpty ? (
+        <StageEmptyState
+          icon={ImageIcon}
+          color="teal"
+          title={t`No images on this page`}
+          cta={
+            <button
+              type="button"
+              onClick={() => onSelectPage?.(null)}
+              className="text-xs font-medium text-teal-600 hover:text-teal-700 hover:underline transition-colors"
+            >
+              {t`Show all`}
+            </button>
+          }
+        />
+      ) : (
     <div ref={scrollContainerRef} className="flex flex-1 flex-col overflow-y-auto">
       <CaptionsHintBanner />
       <div
@@ -354,5 +355,7 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
         ))}
       </div>
     </div>
+      )}
+    </StageContentGuard>
   )
 }
