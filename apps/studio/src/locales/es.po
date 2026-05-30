@@ -4188,6 +4188,10 @@ msgstr "pregunta"
 msgid "Quiz"
 msgstr "Cuestionario"
 
+#. placeholder {0}: index + 1
+msgid "Quiz {0}"
+msgstr "Cuestionario {0}"
+
 msgid "Quiz frequency"
 msgstr "Frecuencia del cuestionario"
 
