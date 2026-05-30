@@ -713,6 +713,9 @@ msgstr "Add your first book"
 msgid "Add your first term"
 msgstr "Add your first term"
 
+msgid "Additional judge guidance"
+msgstr "Additional judge guidance"
+
 msgid "Additional Languages"
 msgstr "Additional Languages"
 
@@ -1077,6 +1080,9 @@ msgstr "Background"
 msgid "Background: {0}"
 msgstr "Background: {0}"
 
+msgid "Balanced"
+msgstr "Balanced"
+
 msgid "base"
 msgstr "base"
 
@@ -1088,6 +1094,9 @@ msgstr "Base URL"
 
 msgid "Basic Information"
 msgstr "Basic Information"
+
+msgid "Batch size"
+msgstr "Batch size"
 
 msgid "Be descriptive — include style, colors, mood, and composition."
 msgstr "Be descriptive — include style, colors, mood, and composition."
@@ -1140,6 +1149,9 @@ msgstr "Book info"
 
 msgid "Book Language"
 msgstr "Book Language"
+
+msgid "Book metadata"
+msgstr "Book metadata"
 
 msgid "Book preview"
 msgstr "Book preview"
@@ -1478,6 +1490,9 @@ msgstr "Configure each stage — extract, storyboard, layout — then let ADT St
 msgid "Configure features to include in the export"
 msgstr "Configure features to include in the export"
 
+msgid "Configure the LLM judge used when you click Review on visible translations."
+msgstr "Configure the LLM judge used when you click Review on visible translations."
+
 msgid "Configure voices and accents"
 msgstr "Configure voices and accents"
 
@@ -1510,6 +1525,9 @@ msgstr "Content Processing"
 
 msgid "Contents"
 msgstr "Contents"
+
+msgid "Context included"
+msgstr "Context included"
 
 msgid "Continue"
 msgstr "Continue"
@@ -1923,6 +1941,9 @@ msgstr "Dynamic Overlay"
 msgid "e.g. alloy"
 msgstr "e.g. alloy"
 
+msgid "e.g. early readers"
+msgstr "e.g. early readers"
+
 msgid "e.g. eastus, westeurope"
 msgstr "e.g. eastus, westeurope"
 
@@ -1940,6 +1961,9 @@ msgstr "e.g. fr, es-mx"
 
 msgid "e.g. http://localhost:11434/v1"
 msgstr "e.g. http://localhost:11434/v1"
+
+msgid "e.g. keep a warm children's-book tone"
+msgstr "e.g. keep a warm children's-book tone"
 
 msgid "e.g. Kore"
 msgstr "e.g. Kore"
@@ -2050,6 +2074,9 @@ msgstr "Enable or disable reviewer-authored checklist reviews for this book. Aut
 
 msgid "Enable reviewer validation"
 msgstr "Enable reviewer validation"
+
+msgid "Enable translation review"
+msgstr "Enable translation review"
 
 msgid "Enabled"
 msgstr "Enabled"
@@ -2168,6 +2195,9 @@ msgstr "Export to a reader"
 
 msgid "Exporting..."
 msgstr "Exporting..."
+
+msgid "Extra review rules for this book."
+msgstr "Extra review rules for this book."
 
 msgid "Extract"
 msgstr "Extract"
@@ -2304,6 +2334,9 @@ msgstr "Fixed Layout"
 msgid "Fixed two-column template layout"
 msgstr "Fixed two-column template layout"
 
+msgid "Flag severity threshold"
+msgstr "Flag severity threshold"
+
 msgid "flagged"
 msgstr "flagged"
 
@@ -2329,6 +2362,9 @@ msgstr "Foreword"
 
 msgid "Format"
 msgstr "Format"
+
+msgid "Formatting and placeholders"
+msgstr "Formatting and placeholders"
 
 msgid "Forms & controls"
 msgstr "Forms & controls"
@@ -2414,6 +2450,9 @@ msgstr "Generate Prompt"
 msgid "Generate Styleguide from Pages"
 msgstr "Generate Styleguide from Pages"
 
+msgid "Generate suggested replacement translations for flagged entries"
+msgstr "Generate suggested replacement translations for flagged entries"
+
 msgid "Generate with AI"
 msgstr "Generate with AI"
 
@@ -2491,6 +2530,9 @@ msgstr "Google's voices with strong intonation for narrative content."
 
 msgid "Grade Level"
 msgstr "Grade Level"
+
+msgid "Grammar and fluency"
+msgstr "Grammar and fluency"
 
 msgid "Group each page's text and images into typed sections with a structured content tree. Sections drive how downstream stages render, translate, and read the book aloud."
 msgstr "Group each page's text and images into typed sections with a structured content tree. Sections drive how downstream stages render, translate, and read the book aloud."
@@ -2771,6 +2813,9 @@ msgstr "Invalid project archive"
 msgid "Isolated asset"
 msgstr "Isolated asset"
 
+msgid "Issue types to check"
+msgstr "Issue types to check"
+
 msgid "Issues"
 msgstr "Issues"
 
@@ -2795,6 +2840,12 @@ msgstr "its original language"
 
 msgid "Jane Reviewer"
 msgstr "Jane Reviewer"
+
+msgid "Judge instructions"
+msgstr "Judge instructions"
+
+msgid "Judge model"
+msgstr "Judge model"
 
 msgid "Justify"
 msgstr "Justify"
@@ -2886,6 +2937,9 @@ msgstr "Legal and compliance manuals"
 
 msgid "Legal Compliance Guide"
 msgstr "Legal Compliance Guide"
+
+msgid "Lenient"
+msgstr "Lenient"
 
 msgid "Let the model write descriptive chapter titles based on each section's contents. Best for storybooks or when headings are missing."
 msgstr "Let the model write descriptive chapter titles based on each section's contents. Best for storybooks or when headings are missing."
@@ -3049,6 +3103,9 @@ msgstr "Looking forward"
 msgid "Lookup definitions for key terms"
 msgstr "Lookup definitions for key terms"
 
+msgid "Low"
+msgstr "Low"
+
 msgid "Lower values produce more consistent styling across pages."
 msgstr "Lower values produce more consistent styling across pages."
 
@@ -3117,6 +3174,9 @@ msgstr "Max width"
 
 msgid "Maximize"
 msgstr "Maximize"
+
+msgid "Meaning changed"
+msgstr "Meaning changed"
 
 msgid "Meaningfulness Prompt"
 msgstr "Meaningfulness Prompt"
@@ -3237,6 +3297,9 @@ msgstr "Misses"
 
 msgid "Missing"
 msgstr "Missing"
+
+msgid "Missing or added content"
+msgstr "Missing or added content"
 
 msgid "Mission 01"
 msgstr "Mission 01"
@@ -3623,6 +3686,9 @@ msgstr "Only pages containing these section types are counted when grouping page
 msgid "Only PDF files are supported"
 msgstr "Only PDF files are supported"
 
+msgid "Only suggest replacements when the correction is high confidence"
+msgstr "Only suggest replacements when the correction is high confidence"
+
 msgid "Only the most central vocabulary."
 msgstr "Only the most central vocabulary."
 
@@ -3820,6 +3886,9 @@ msgstr "Page {n}"
 
 msgid "Page {pageId}"
 msgstr "Page {pageId}"
+
+msgid "Page context"
+msgstr "Page context"
 
 msgid "Page coverage"
 msgstr "Page coverage"
@@ -4385,6 +4454,9 @@ msgstr "Required"
 msgid "Required Fields"
 msgstr "Required Fields"
 
+msgid "Reset default"
+msgstr "Reset default"
+
 msgid "Reset to defaults"
 msgstr "Reset to defaults"
 
@@ -4465,6 +4537,9 @@ msgstr "Review progress"
 
 msgid "Review pruned sections"
 msgstr "Review pruned sections"
+
+msgid "Review strictness"
+msgstr "Review strictness"
 
 msgid "Review the project details below and confirm the import."
 msgstr "Review the project details below and confirm the import."
@@ -4676,6 +4751,9 @@ msgstr "Save failed"
 
 msgid "Save page review"
 msgstr "Save page review"
+
+msgid "Save Review Settings"
+msgstr "Save Review Settings"
 
 msgid "Save selection"
 msgstr "Save selection"
@@ -5097,6 +5175,9 @@ msgstr "Sort books"
 msgid "Source"
 msgstr "Source"
 
+msgid "Source language"
+msgstr "Source language"
+
 msgid "Source PDF"
 msgstr "Source PDF"
 
@@ -5218,6 +5299,9 @@ msgstr "Strict"
 msgid "Strict grid template that repeats across pages."
 msgstr "Strict grid template that repeats across pages."
 
+msgid "Strictness controls how aggressively the judge flags tone, fluency, terminology, and style concerns."
+msgstr "Strictness controls how aggressively the judge flags tone, fluency, terminology, and style concerns."
+
 msgid "Strikethrough"
 msgstr "Strikethrough"
 
@@ -5238,6 +5322,9 @@ msgstr "Structured HTML"
 
 msgid "Style"
 msgstr "Style"
+
+msgid "Style guidance"
+msgstr "Style guidance"
 
 msgid "Style guide"
 msgstr "Style guide"
@@ -5278,6 +5365,9 @@ msgstr "Suggested translation"
 msgid "Suggestion applied"
 msgstr "Suggestion applied"
 
+msgid "Suggestion behavior"
+msgstr "Suggestion behavior"
+
 msgid "Summary Prompt"
 msgstr "Summary Prompt"
 
@@ -5307,6 +5397,12 @@ msgstr "Tailwind classes"
 
 msgid "Takes liberties and produces something similar."
 msgstr "Takes liberties and produces something similar."
+
+msgid "Target audience"
+msgstr "Target audience"
+
+msgid "Target language"
+msgstr "Target language"
 
 msgid "Task Running"
 msgstr "Task Running"
@@ -5344,8 +5440,17 @@ msgstr "Template Rendering"
 msgid "Template-based"
 msgstr "Template-based"
 
+msgid "Terminology"
+msgstr "Terminology"
+
+msgid "Terminology guidance"
+msgstr "Terminology guidance"
+
 msgid "Terms marked with an asterisk (*) are defined by the ISO standard and may differ from colloquial usage in other fields."
 msgstr "Terms marked with an asterisk (*) are defined by the ISO standard and may differ from colloquial usage in other fields."
+
+msgid "Terms, character names, or phrases the judge should preserve or prefer."
+msgstr "Terms, character names, or phrases the judge should preserve or prefer."
 
 msgid "Text"
 msgstr "Text"
@@ -5688,6 +5793,9 @@ msgstr "Translation Preview"
 msgid "Translation Prompt"
 msgstr "Translation Prompt"
 
+msgid "Translation Review"
+msgstr "Translation Review"
+
 msgid "Translation review is running."
 msgstr "Translation review is running."
 
@@ -5975,6 +6083,9 @@ msgstr "View HTML source"
 msgid "View image"
 msgstr "View image"
 
+msgid "Visible page entries"
+msgstr "Visible page entries"
+
 msgid "Visual & sensory cues"
 msgstr "Visual & sensory cues"
 
@@ -6088,6 +6199,9 @@ msgstr "When describing images, mention any culturally specific objects, locatio
 
 msgid "When enabled, background colors from the styleguide are applied to the full page body."
 msgstr "When enabled, background colors from the styleguide are applied to the full page body."
+
+msgid "When enabled, Studio can evaluate saved translations with the configured judge."
+msgstr "When enabled, Studio can evaluate saved translations with the configured judge."
 
 msgid "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."
 msgstr "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."

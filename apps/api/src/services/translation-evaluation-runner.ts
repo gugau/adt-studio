@@ -63,7 +63,18 @@ function normalizeJudgeModel(modelId: string | undefined): string {
 
 function buildJudgeInstructions(request: TranslationEvaluationRunRequestData): string {
   const base = (request.judge_instructions || DEFAULT_TRANSLATION_EVALUATION_JUDGE_INSTRUCTIONS).trim()
-  const sections = [base, `Strictness: ${request.strictness ?? "balanced"}.`]
+  const issueTypes = request.issue_types && request.issue_types.length > 0 ? request.issue_types : ISSUE_TYPES
+  const sections = [
+    base,
+    `Strictness: ${request.strictness ?? "balanced"}.`,
+    `Flag severity threshold: ${request.severity_threshold ?? "medium"}. Issues below this threshold should be treated as acceptable.`,
+    `Issue types to check: ${issueTypes.join(", ")}.`,
+    request.generate_suggestions === false
+      ? "Do not return suggested_text."
+      : request.only_suggest_when_confident
+        ? "Return suggested_text only when the correction is clear and high confidence."
+        : "Return suggested_text for entries that need attention when a clear correction is possible.",
+  ]
   if (request.target_audience?.trim()) {
     sections.push(`Target audience: ${request.target_audience.trim()}`)
   }
@@ -79,7 +90,8 @@ function buildJudgeInstructions(request: TranslationEvaluationRunRequestData): s
   return sections.join("\n\n")
 }
 
-function buildSystemPrompt(instructions: string): string {
+function buildSystemPrompt(instructions: string, request: TranslationEvaluationRunRequestData): string {
+  const issueTypes = request.issue_types && request.issue_types.length > 0 ? request.issue_types : ISSUE_TYPES
   return `
 ${instructions}
 
@@ -92,20 +104,26 @@ Decision rules:
 - acceptable=false means the entry needs human attention.
 - Always return one result for every entry_id provided.
 - Always include issue_types. Use [] when acceptable=true.
-- If acceptable=false, include one or more issue_types from: ${ISSUE_TYPES.join(", ")}.
+- If acceptable=false, include one or more issue_types from: ${issueTypes.join(", ")}.
 - If no issue type clearly applies, use "other".
-- If acceptable=false and a clear correction is possible, include suggested_text containing only the corrected target-language translation.
+- Assign severity as low, medium, or high for entries that need attention.
+- Treat issues below the configured severity threshold as acceptable.
+- If acceptable=false and suggested translations are enabled, include suggested_text containing only the corrected target-language translation when a clear correction is possible.
 - Do not include suggested_text when acceptable=true.
 - Keep rationale concise and specific; for acceptable entries, use a short confirmation.
 `.trim()
 }
 
 function buildUserPrompt(page: TranslationEvaluationRunPage, request: TranslationEvaluationRunRequestData): string {
+  const context = request.context ?? {}
+  const includeBookMetadata = context.book_metadata !== false
+  const includeSourceLanguage = context.source_language !== false
+  const includeTargetLanguage = context.target_language !== false
   return JSON.stringify({
     book: {
-      metadata: request.book_metadata ?? null,
-      source_language: request.source_language ?? "unknown",
-      target_language: request.language,
+      metadata: includeBookMetadata ? request.book_metadata ?? null : null,
+      source_language: includeSourceLanguage ? request.source_language ?? "unknown" : "not included",
+      target_language: includeTargetLanguage ? request.language : "not included",
     },
     page: {
       page_id: page.page_id,
@@ -118,37 +136,50 @@ function buildUserPrompt(page: TranslationEvaluationRunPage, request: Translatio
   }, null, 2)
 }
 
+function severityRank(severity: "low" | "medium" | "high" | undefined): number {
+  if (severity === "high") return 3
+  if (severity === "medium") return 2
+  if (severity === "low") return 1
+  return 2
+}
+
 function normalizeJudgeOutput(
   page: TranslationEvaluationRunPage,
   output: TranslationEvaluationJudgeOutput,
+  request: TranslationEvaluationRunRequestData,
 ) {
   const sourceById = new Map(page.entries.map((entry) => [entry.entry_id, entry]))
   const items = []
   const seen = new Set<string>()
+  const severityThreshold = request.severity_threshold ?? "medium"
+  const allowedIssueTypes = new Set(request.issue_types && request.issue_types.length > 0 ? request.issue_types : ISSUE_TYPES)
   for (const outputItem of output.items) {
     const entry = sourceById.get(outputItem.entry_id)
     if (!entry) continue
     seen.add(outputItem.entry_id)
-    const issueTypes = outputItem.acceptable
+    const issueAboveThreshold = severityRank(outputItem.severity) >= severityRank(severityThreshold)
+    const acceptable = outputItem.acceptable || !issueAboveThreshold
+    const rawIssueTypes = outputItem.issue_types?.filter((issueType) => allowedIssueTypes.has(issueType)) ?? []
+    const issueTypes = acceptable
       ? []
-      : outputItem.issue_types && outputItem.issue_types.length > 0
-        ? outputItem.issue_types
+      : rawIssueTypes.length > 0
+        ? rawIssueTypes
         : ["other" as const]
     const rationale = outputItem.rationale?.trim()
     items.push({
       entry_id: entry.entry_id,
-      acceptable: outputItem.acceptable,
+      acceptable,
       page_id: page.page_id,
       source_text: entry.source_text,
       translated_text: entry.translated_text,
-      rationale: rationale || (outputItem.acceptable
+      rationale: rationale || (acceptable
         ? "Translation is acceptable."
         : "Translation needs human review."),
       issue_types: issueTypes,
-      ...(outputItem.severity ? { severity: outputItem.severity } : {}),
+      ...(!acceptable && outputItem.severity ? { severity: outputItem.severity } : {}),
       ...(entry.source_hash ? { source_hash: entry.source_hash } : {}),
       ...(entry.translated_hash ? { translated_hash: entry.translated_hash } : {}),
-      ...(!outputItem.acceptable && outputItem.suggested_text?.trim()
+      ...(!acceptable && request.generate_suggestions !== false && outputItem.suggested_text?.trim()
         ? { suggested_text: outputItem.suggested_text.trim() }
         : {}),
     })
@@ -210,7 +241,7 @@ export async function evaluateTranslationInApi(
 
   const modelId = normalizeJudgeModel(parsedRequest.judge_model)
   const instructions = buildJudgeInstructions(parsedRequest)
-  const system = buildSystemPrompt(instructions)
+  const system = buildSystemPrompt(instructions, parsedRequest)
   const batchSize = parsedRequest.batch_size ?? DEFAULT_TRANSLATION_EVALUATION_BATCH_SIZE
   const maxRetries = parsedRequest.max_retries ?? DEFAULT_TRANSLATION_EVALUATION_MAX_RETRIES
   const cacheDir = path.join(path.resolve(options.booksDir), parsedRequest.book_label, ".cache")
@@ -248,14 +279,14 @@ export async function evaluateTranslationInApi(
                 },
               ],
               maxRetries,
-              temperature: 0,
+              temperature: parsedRequest.temperature ?? 0,
               log: {
                 taskType: "translation-evaluation",
                 pageId: page.page_id,
                 promptName: "translation-evaluation-judge",
               },
             })
-            items.push(...normalizeJudgeOutput(page, result.object))
+            items.push(...normalizeJudgeOutput(page, result.object, parsedRequest))
           } catch (err) {
             failedPages += 1
             items.push(...buildFailedEvaluationItems(page, err))
@@ -284,7 +315,13 @@ export async function evaluateTranslationInApi(
           additional_guidance: parsedRequest.additional_guidance ?? null,
           max_retries: maxRetries,
           batch_size: batchSize,
+          temperature: parsedRequest.temperature ?? 0,
           strictness: parsedRequest.strictness ?? "balanced",
+          severity_threshold: parsedRequest.severity_threshold ?? "medium",
+          issue_types: parsedRequest.issue_types ?? ISSUE_TYPES,
+          generate_suggestions: parsedRequest.generate_suggestions ?? true,
+          only_suggest_when_confident: parsedRequest.only_suggest_when_confident ?? false,
+          context: parsedRequest.context,
           target_audience: parsedRequest.target_audience ?? null,
           style_guidance: parsedRequest.style_guidance ?? null,
           terminology_guidance: parsedRequest.terminology_guidance ?? null,

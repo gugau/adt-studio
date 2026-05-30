@@ -144,4 +144,70 @@ describe("evaluateTranslationInApi", () => {
       rationale: "Translation is acceptable.",
     })
   })
+
+  it("uses judge preferences for severity threshold and suggestions", async () => {
+    const label = "eval-runner-preferences"
+    seedBook(label)
+    const generateObject = vi.fn<LLMModel["generateObject"]>().mockResolvedValue({
+      object: {
+        items: [
+          {
+            entry_id: "pg001_t001",
+            acceptable: false,
+            rationale: "Minor wording issue.",
+            issue_types: ["fluency"],
+            severity: "low",
+            suggested_text: "¿Lo haces tú?",
+          },
+        ],
+      },
+    })
+    const model: LLMModel = {
+      generateObject,
+      renderPrompt: vi.fn(),
+    }
+
+    const result = await evaluateTranslationInApi(
+      {
+        ...buildRequest(label),
+        temperature: 0.2,
+        severity_threshold: "medium",
+        issue_types: ["meaning", "fluency"],
+        generate_suggestions: false,
+        only_suggest_when_confident: true,
+        context: {
+          book_metadata: false,
+          visible_page_entries: true,
+          source_language: true,
+          target_language: true,
+        },
+      },
+      {
+        booksDir: tmpDir,
+        apiKey: "sk-test",
+        createModel: () => model,
+      },
+    )
+
+    expect(result.summary).toEqual({ total: 1, acceptable: 1, unacceptable: 0 })
+    expect(result.items[0]).toMatchObject({
+      entry_id: "pg001_t001",
+      acceptable: true,
+      issue_types: [],
+    })
+    expect(result.items[0]?.suggested_text).toBeUndefined()
+    expect(result.judge).toMatchObject({
+      temperature: 0.2,
+      severity_threshold: "medium",
+      issue_types: ["meaning", "fluency"],
+      generate_suggestions: false,
+      only_suggest_when_confident: true,
+    })
+    expect(generateObject).toHaveBeenCalledWith(expect.objectContaining({
+      temperature: 0.2,
+      system: expect.stringContaining("Do not return suggested_text."),
+    }))
+    const prompt = generateObject.mock.calls[0][0].messages?.[0]?.content
+    expect(String(prompt)).toContain("\"metadata\": null")
+  })
 })

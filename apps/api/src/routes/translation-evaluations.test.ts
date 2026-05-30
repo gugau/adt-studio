@@ -6,9 +6,13 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { createBookStorage } from "@adt/storage"
 import {
   DEFAULT_TRANSLATION_EVALUATION_BATCH_SIZE,
+  DEFAULT_TRANSLATION_EVALUATION_CONTEXT_OPTIONS,
+  DEFAULT_TRANSLATION_EVALUATION_ISSUE_TYPES,
   DEFAULT_TRANSLATION_EVALUATION_JUDGE_INSTRUCTIONS,
   DEFAULT_TRANSLATION_EVALUATION_JUDGE_MODEL,
   DEFAULT_TRANSLATION_EVALUATION_MAX_RETRIES,
+  DEFAULT_TRANSLATION_EVALUATION_SEVERITY_THRESHOLD,
+  DEFAULT_TRANSLATION_EVALUATION_TEMPERATURE,
 } from "@adt/types"
 import type { TaskService } from "../services/task-service.js"
 import { saveTranslationEvaluationResult } from "../services/translation-evaluation-service.js"
@@ -63,9 +67,15 @@ function defaultEvalConfigHash(): string {
       judge_model: DEFAULT_TRANSLATION_EVALUATION_JUDGE_MODEL,
       max_retries: DEFAULT_TRANSLATION_EVALUATION_MAX_RETRIES,
       batch_size: DEFAULT_TRANSLATION_EVALUATION_BATCH_SIZE,
+      temperature: DEFAULT_TRANSLATION_EVALUATION_TEMPERATURE,
       judge_instructions: DEFAULT_TRANSLATION_EVALUATION_JUDGE_INSTRUCTIONS,
       additional_guidance: null,
       strictness: "balanced",
+      severity_threshold: DEFAULT_TRANSLATION_EVALUATION_SEVERITY_THRESHOLD,
+      issue_types: DEFAULT_TRANSLATION_EVALUATION_ISSUE_TYPES,
+      generate_suggestions: true,
+      only_suggest_when_confident: false,
+      context: DEFAULT_TRANSLATION_EVALUATION_CONTEXT_OPTIONS,
       target_audience: null,
       style_guidance: null,
       terminology_guidance: null,
@@ -263,5 +273,100 @@ describe("translation evaluation routes", () => {
 
     expect(res.status).toBe(200)
     expect(submitted).toBe(true)
+  })
+
+  it("passes configured judge settings into the review request", async () => {
+    const label = "configured-review"
+    seedBook(label)
+    const configPath = path.join(tmpDir, "config.yaml")
+    fs.writeFileSync(configPath, [
+      "structure_types:",
+      "  paragraph: Paragraph",
+      "role_types:",
+      "  body: Body",
+      "translation_evaluation:",
+      "  judge_model: openai:gpt-4.1",
+      "  max_retries: 2",
+      "  batch_size: 1",
+      "  temperature: 0.2",
+      "  strictness: strict",
+      "  severity_threshold: low",
+      "  issue_types:",
+      "    - meaning",
+      "    - terminology",
+      "  generate_suggestions: false",
+      "  only_suggest_when_confident: true",
+      "  context:",
+      "    book_metadata: false",
+      "    visible_page_entries: true",
+      "    source_language: true",
+      "    target_language: true",
+      "  judge_instructions: Review meaning and terminology only.",
+      "",
+    ].join("\n"))
+
+    let capturedRequest: unknown = null
+    const taskService: TaskService = {
+      submitTask: (_label, _kind, _description, executor) => {
+        void executor(() => undefined)
+        return { taskId: "task-1" }
+      },
+      getActiveTasks: () => [],
+    }
+    const app = createTranslationEvaluationRoutes(
+      tmpDir,
+      configPath,
+      taskService,
+      async (request) => {
+        capturedRequest = request
+        return {
+          generated_at: new Date().toISOString(),
+          provider: "adt-llm",
+          language: request.language,
+          ...(request.source_language ? { source_language: request.source_language } : {}),
+          source_catalog_version: request.source_catalog_version,
+          translation_version: request.translation_version,
+          eval_config_hash: request.eval_config_hash,
+          summary: { total: 1, acceptable: 1, unacceptable: 0 },
+          items: [
+            {
+              entry_id: "pg001_t001",
+              page_id: "visible",
+              acceptable: true,
+              source_text: "Do you?",
+              translated_text: "Y a ti?",
+              rationale: "Translation is acceptable.",
+              issue_types: [],
+            },
+          ],
+        }
+      },
+    )
+
+    const res = await app.request(`/books/${label}/evaluations/translations/es/run`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-OpenAI-Key": "sk-test" },
+      body: JSON.stringify({ entry_ids: ["pg001_t001"] }),
+    })
+
+    expect(res.status).toBe(200)
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(capturedRequest).toMatchObject({
+      judge_model: "openai:gpt-4.1",
+      max_retries: 2,
+      temperature: 0.2,
+      strictness: "strict",
+      severity_threshold: "low",
+      issue_types: ["meaning", "terminology"],
+      generate_suggestions: false,
+      only_suggest_when_confident: true,
+      context: {
+        book_metadata: false,
+        visible_page_entries: true,
+        source_language: true,
+        target_language: true,
+      },
+      judge_instructions: "Review meaning and terminology only.",
+    })
   })
 })

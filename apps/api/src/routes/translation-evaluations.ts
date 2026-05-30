@@ -69,9 +69,15 @@ function buildEvalConfigHash(config: {
   judge_model?: string
   max_retries?: number
   batch_size?: number
+  temperature?: number
   judge_instructions?: string
   additional_guidance?: string | null
   strictness?: string
+  severity_threshold?: string
+  issue_types?: string[]
+  generate_suggestions?: boolean
+  only_suggest_when_confident?: boolean
+  context?: Record<string, unknown>
   target_audience?: string | null
   style_guidance?: string | null
   terminology_guidance?: string | null
@@ -82,9 +88,15 @@ function buildEvalConfigHash(config: {
       judge_model: config.judge_model ?? null,
       max_retries: config.max_retries ?? null,
       batch_size: config.batch_size ?? null,
+      temperature: config.temperature ?? null,
       judge_instructions: config.judge_instructions ?? null,
       additional_guidance: config.additional_guidance ?? null,
       strictness: config.strictness ?? null,
+      severity_threshold: config.severity_threshold ?? null,
+      issue_types: config.issue_types ?? null,
+      generate_suggestions: config.generate_suggestions ?? null,
+      only_suggest_when_confident: config.only_suggest_when_confident ?? null,
+      context: config.context ?? null,
       target_audience: config.target_audience ?? null,
       style_guidance: config.style_guidance ?? null,
       terminology_guidance: config.terminology_guidance ?? null,
@@ -100,9 +112,15 @@ function getCurrentEvalConfigHash(booksDir: string, configPath: string | undefin
     judge_model: resolvedConfig.judge_model,
     max_retries: resolvedConfig.max_retries,
     batch_size: resolvedConfig.batch_size,
+    temperature: resolvedConfig.temperature,
     judge_instructions: resolvedConfig.judge_instructions,
     additional_guidance: resolvedConfig.additional_guidance,
     strictness: resolvedConfig.strictness,
+    severity_threshold: resolvedConfig.severity_threshold,
+    issue_types: resolvedConfig.issue_types,
+    generate_suggestions: resolvedConfig.generate_suggestions,
+    only_suggest_when_confident: resolvedConfig.only_suggest_when_confident,
+    context: resolvedConfig.context,
     target_audience: resolvedConfig.target_audience,
     style_guidance: resolvedConfig.style_guidance,
     terminology_guidance: resolvedConfig.terminology_guidance,
@@ -218,9 +236,15 @@ function buildTranslationEvaluationRunRequest(options: {
         judge_model: resolvedConfig.judge_model,
         max_retries: resolvedConfig.max_retries,
         batch_size: resolvedConfig.batch_size,
+        temperature: resolvedConfig.temperature,
         judge_instructions: resolvedConfig.judge_instructions,
         additional_guidance: resolvedConfig.additional_guidance,
         strictness: resolvedConfig.strictness,
+        severity_threshold: resolvedConfig.severity_threshold,
+        issue_types: resolvedConfig.issue_types,
+        generate_suggestions: resolvedConfig.generate_suggestions,
+        only_suggest_when_confident: resolvedConfig.only_suggest_when_confident,
+        context: resolvedConfig.context,
         target_audience: resolvedConfig.target_audience,
         style_guidance: resolvedConfig.style_guidance,
         terminology_guidance: resolvedConfig.terminology_guidance,
@@ -228,11 +252,17 @@ function buildTranslationEvaluationRunRequest(options: {
       judge_model: resolvedConfig.judge_model,
       max_retries: resolvedConfig.max_retries,
       batch_size: resolvedConfig.batch_size,
+      temperature: resolvedConfig.temperature,
       judge_instructions: resolvedConfig.judge_instructions,
       ...(resolvedConfig.additional_guidance
         ? { additional_guidance: resolvedConfig.additional_guidance }
         : {}),
       strictness: resolvedConfig.strictness,
+      severity_threshold: resolvedConfig.severity_threshold,
+      issue_types: resolvedConfig.issue_types,
+      generate_suggestions: resolvedConfig.generate_suggestions,
+      only_suggest_when_confident: resolvedConfig.only_suggest_when_confident,
+      context: resolvedConfig.context,
       ...(resolvedConfig.target_audience ? { target_audience: resolvedConfig.target_audience } : {}),
       ...(resolvedConfig.style_guidance ? { style_guidance: resolvedConfig.style_guidance } : {}),
       ...(resolvedConfig.terminology_guidance ? { terminology_guidance: resolvedConfig.terminology_guidance } : {}),

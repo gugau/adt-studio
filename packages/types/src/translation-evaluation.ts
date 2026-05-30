@@ -19,6 +19,47 @@ When an entry needs attention, return a suggested corrected translation when a c
 export const DEFAULT_TRANSLATION_EVALUATION_JUDGE_MODEL = "openai:/gpt-4.1-mini"
 export const DEFAULT_TRANSLATION_EVALUATION_MAX_RETRIES = 3
 export const DEFAULT_TRANSLATION_EVALUATION_BATCH_SIZE = 1
+export const DEFAULT_TRANSLATION_EVALUATION_TEMPERATURE = 0
+export const DEFAULT_TRANSLATION_EVALUATION_SEVERITY_THRESHOLD = "medium"
+
+export const TranslationEvaluationIssueType = z.enum([
+  "meaning",
+  "fluency",
+  "terminology",
+  "omission-or-addition",
+  "formatting",
+  "context",
+  "other",
+])
+export type TranslationEvaluationIssueType = z.infer<typeof TranslationEvaluationIssueType>
+
+export const TranslationEvaluationSeverity = z.enum(["low", "medium", "high"])
+export type TranslationEvaluationSeverity = z.infer<typeof TranslationEvaluationSeverity>
+
+export const DEFAULT_TRANSLATION_EVALUATION_ISSUE_TYPES: TranslationEvaluationIssueType[] = [
+  "meaning",
+  "fluency",
+  "terminology",
+  "omission-or-addition",
+  "formatting",
+  "context",
+  "other",
+]
+
+export const TranslationEvaluationContextOptions = z.object({
+  book_metadata: z.boolean().optional(),
+  visible_page_entries: z.boolean().optional(),
+  source_language: z.boolean().optional(),
+  target_language: z.boolean().optional(),
+})
+export type TranslationEvaluationContextOptions = z.infer<typeof TranslationEvaluationContextOptions>
+
+export const DEFAULT_TRANSLATION_EVALUATION_CONTEXT_OPTIONS: Required<TranslationEvaluationContextOptions> = {
+  book_metadata: true,
+  visible_page_entries: true,
+  source_language: true,
+  target_language: true,
+}
 
 export const TranslationEvaluationConfig = z.object({
   enable_translation_evaluation: z.boolean().optional(),
@@ -26,9 +67,15 @@ export const TranslationEvaluationConfig = z.object({
   judge_model: z.string().min(1).optional(),
   max_retries: z.number().int().min(0).optional(),
   batch_size: z.number().int().min(1).optional(),
+  temperature: z.number().min(0).max(2).optional(),
   judge_instructions: z.string().min(1).optional(),
   additional_guidance: z.string().min(1).optional(),
   strictness: z.enum(["lenient", "balanced", "strict"]).optional(),
+  severity_threshold: TranslationEvaluationSeverity.optional(),
+  issue_types: z.array(TranslationEvaluationIssueType).min(1).optional(),
+  generate_suggestions: z.boolean().optional(),
+  only_suggest_when_confident: z.boolean().optional(),
+  context: TranslationEvaluationContextOptions.optional(),
   target_audience: z.string().min(1).optional(),
   style_guidance: z.string().min(1).optional(),
   terminology_guidance: z.string().min(1).optional(),
@@ -40,9 +87,15 @@ export interface ResolvedTranslationEvaluationConfig {
   judge_model: string
   max_retries: number
   batch_size: number
+  temperature: number
   judge_instructions: string
   additional_guidance: string | null
   strictness: "lenient" | "balanced" | "strict"
+  severity_threshold: TranslationEvaluationSeverity
+  issue_types: TranslationEvaluationIssueType[]
+  generate_suggestions: boolean
+  only_suggest_when_confident: boolean
+  context: Required<TranslationEvaluationContextOptions>
   target_audience: string | null
   style_guidance: string | null
   terminology_guidance: string | null
@@ -58,28 +111,23 @@ export function resolveTranslationEvaluationConfig(
     judge_model: config?.judge_model ?? DEFAULT_TRANSLATION_EVALUATION_JUDGE_MODEL,
     max_retries: config?.max_retries ?? DEFAULT_TRANSLATION_EVALUATION_MAX_RETRIES,
     batch_size: config?.batch_size ?? DEFAULT_TRANSLATION_EVALUATION_BATCH_SIZE,
+    temperature: config?.temperature ?? DEFAULT_TRANSLATION_EVALUATION_TEMPERATURE,
     judge_instructions: config?.judge_instructions ?? DEFAULT_TRANSLATION_EVALUATION_JUDGE_INSTRUCTIONS,
     additional_guidance: config?.additional_guidance ?? null,
     strictness: config?.strictness ?? "balanced",
+    severity_threshold: config?.severity_threshold ?? DEFAULT_TRANSLATION_EVALUATION_SEVERITY_THRESHOLD,
+    issue_types: config?.issue_types ?? DEFAULT_TRANSLATION_EVALUATION_ISSUE_TYPES,
+    generate_suggestions: config?.generate_suggestions ?? true,
+    only_suggest_when_confident: config?.only_suggest_when_confident ?? false,
+    context: {
+      ...DEFAULT_TRANSLATION_EVALUATION_CONTEXT_OPTIONS,
+      ...(config?.context ?? {}),
+    },
     target_audience: config?.target_audience ?? null,
     style_guidance: config?.style_guidance ?? null,
     terminology_guidance: config?.terminology_guidance ?? null,
   }
 }
-
-export const TranslationEvaluationIssueType = z.enum([
-  "meaning",
-  "fluency",
-  "terminology",
-  "omission-or-addition",
-  "formatting",
-  "context",
-  "other",
-])
-export type TranslationEvaluationIssueType = z.infer<typeof TranslationEvaluationIssueType>
-
-export const TranslationEvaluationSeverity = z.enum(["low", "medium", "high"])
-export type TranslationEvaluationSeverity = z.infer<typeof TranslationEvaluationSeverity>
 
 export const TranslationEvaluationSummary = z
   .object({
@@ -125,7 +173,13 @@ export const TranslationEvaluationJudgeMetadata = z.object({
   additional_guidance: z.string().min(1).nullable().optional(),
   max_retries: z.number().int().min(0).optional(),
   batch_size: z.number().int().min(1).optional(),
+  temperature: z.number().min(0).max(2).optional(),
   strictness: z.enum(["lenient", "balanced", "strict"]).optional(),
+  severity_threshold: TranslationEvaluationSeverity.optional(),
+  issue_types: z.array(TranslationEvaluationIssueType).optional(),
+  generate_suggestions: z.boolean().optional(),
+  only_suggest_when_confident: z.boolean().optional(),
+  context: TranslationEvaluationContextOptions.optional(),
   target_audience: z.string().min(1).nullable().optional(),
   style_guidance: z.string().min(1).nullable().optional(),
   terminology_guidance: z.string().min(1).nullable().optional(),
@@ -166,9 +220,15 @@ export const TranslationEvaluationRunRequest = z.object({
   judge_model: z.string().min(1).optional(),
   max_retries: z.number().int().min(0).optional(),
   batch_size: z.number().int().min(1).optional(),
+  temperature: z.number().min(0).max(2).optional(),
   judge_instructions: z.string().min(1).optional(),
   additional_guidance: z.string().min(1).optional(),
   strictness: z.enum(["lenient", "balanced", "strict"]).optional(),
+  severity_threshold: TranslationEvaluationSeverity.optional(),
+  issue_types: z.array(TranslationEvaluationIssueType).min(1).optional(),
+  generate_suggestions: z.boolean().optional(),
+  only_suggest_when_confident: z.boolean().optional(),
+  context: TranslationEvaluationContextOptions.optional(),
   target_audience: z.string().min(1).optional(),
   style_guidance: z.string().min(1).optional(),
   terminology_guidance: z.string().min(1).optional(),
