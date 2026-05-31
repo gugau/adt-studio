@@ -45,6 +45,8 @@ export async function extractPDF(
     storage.clearExtractedData()
     storage.putNodeData("metadata", "book", toBookMetadata(pdfMetadata))
 
+    let serifChars = 0
+    let sansChars = 0
     for await (const page of pages) {
       storage.putExtractedPage(page)
       // Store positioned text (paragraphs + viewport dims). Always available so
@@ -54,7 +56,16 @@ export async function extractPDF(
       if (page.extractionDebug) {
         storage.putNodeData("extraction-debug", page.pageId, page.extractionDebug)
       }
+      serifChars += page.fontStats?.serifChars ?? 0
+      sansChars += page.fontStats?.sansChars ?? 0
     }
+
+    // Book-level font profile: the dominant body-text category (serif vs sans)
+    // across all pages, used to pick a reflowable base font. null when the book
+    // has no extractable text.
+    const category =
+      serifChars === 0 && sansChars === 0 ? null : serifChars >= sansChars ? "serif" : "sans"
+    storage.putNodeData("font-profile", "book", { category, serifChars, sansChars })
 
     progress.emit({ type: "step-complete", step: "extract" })
   } catch (err) {

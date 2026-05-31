@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest"
 import {
+  GOOGLE_FONTS,
   resolveGoogleFont,
   googleFontsCss2Url,
   googleFontsReferencedIn,
@@ -24,9 +25,41 @@ describe("resolveGoogleFont", () => {
     expect(resolveGoogleFont("ABCDEF+MouseMemoirs")?.family).toBe("Mouse Memoirs")
   })
 
-  it("returns null for unregistered fonts and empty input", () => {
-    expect(resolveGoogleFont("Palatino")).toBeNull()
+  it("returns null for empty input", () => {
     expect(resolveGoogleFont("")).toBeNull()
+  })
+
+  it("maps well-known proprietary/system fonts to close Google families", () => {
+    expect(resolveGoogleFont("Arial")?.family).toBe("Arimo")
+    expect(resolveGoogleFont("Helvetica")?.family).toBe("Arimo")
+    expect(resolveGoogleFont("TimesNewRomanPSMT")?.family).toBe("Tinos")
+    expect(resolveGoogleFont("Times New Roman")?.family).toBe("Tinos")
+    expect(resolveGoogleFont("CourierNew")?.family).toBe("Cousine")
+    expect(resolveGoogleFont("Calibri")?.family).toBe("Carlito")
+    expect(resolveGoogleFont("Cambria")?.family).toBe("Caladea")
+    expect(resolveGoogleFont("Georgia")?.family).toBe("Gelasio")
+    expect(resolveGoogleFont("ComicSansMS")?.family).toBe("Comic Neue")
+  })
+
+  it("falls back to a category close-match for unrecognized sans/mono/script", () => {
+    expect(resolveGoogleFont("FuturaBT")?.family).toBe("Arimo") // sans token
+    expect(resolveGoogleFont("ProximaNova")?.family).toBe("Arimo")
+    expect(resolveGoogleFont("SomeMonoFont")?.family).toBe("Cousine")
+    expect(resolveGoogleFont("BrushScriptStd")?.family).toBe("Caveat")
+  })
+
+  it("keeps serif / unknown fonts unmapped (bundled Merriweather fallback)", () => {
+    expect(resolveGoogleFont("Palatino")).toBeNull()
+    expect(resolveGoogleFont("Garamond")).toBeNull()
+    expect(resolveGoogleFont("Baskerville")).toBeNull()
+  })
+
+  it("only resolves to loadable families (every result is in GOOGLE_FONTS)", () => {
+    const names = ["Arial", "Calibri", "ComicSansMS", "FuturaBT", "SomeMonoFont", "BrushScript"]
+    for (const n of names) {
+      const r = resolveGoogleFont(n)
+      if (r) expect(GOOGLE_FONTS.some((f) => f.family === r.family)).toBe(true)
+    }
   })
 })
 

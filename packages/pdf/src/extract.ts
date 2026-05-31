@@ -74,6 +74,13 @@ export interface ExtractedPage {
   positionedText: PositionedTextOutput;
   /** Debug info about figure grouping and render decisions */
   extractionDebug?: ExtractionDebugOutput;
+  /**
+   * Per-page serif/sans character tally from the structured-text layer
+   * (weighted by character so body text dominates). The pipeline aggregates
+   * these across pages to pick a book-level reflowable base font. Transient:
+   * not persisted per page.
+   */
+  fontStats?: { serifChars: number; sansChars: number };
 }
 
 export type ImageFormat = "png" | "jpeg";
@@ -393,6 +400,28 @@ function hashBuffer(buf: Buffer): string {
   return createHash("sha256").update(buf).digest("hex").slice(0, 16);
 }
 
+/**
+ * Tally non-whitespace characters by serif vs. sans (mupdf's `font.isSerif()`)
+ * over the structured-text layer. Cheap — one walk of an already-built
+ * StructuredText. The pipeline aggregates these across pages to choose a
+ * book-level reflowable base font (body text dominates because it has the most
+ * characters).
+ */
+function tallyFontCategories(
+  stext: ReturnType<AnyPage["toStructuredText"]>
+): { serifChars: number; sansChars: number } {
+  let serifChars = 0;
+  let sansChars = 0;
+  stext.walk({
+    onChar(c, _origin, font) {
+      if (!c || /\s/.test(c)) return;
+      if (font?.isSerif?.()) serifChars++;
+      else sansChars++;
+    },
+  });
+  return { serifChars, sansChars };
+}
+
 /** Read width and height from a JPEG buffer by finding the SOF0/SOF2 marker. */
 function jpegDimensions(buf: Buffer): { width: number; height: number } {
   let i = 2; // skip SOI (0xFFD8)
@@ -708,6 +737,7 @@ async function extractPage(doc: MupdfDocument, pageIndex: number, vectorTextGrou
   // Extract text (handles legacy FM Sinhala font remapping when detected)
   const stext = page.toStructuredText();
   const text = extractTextFromStructuredText(stext);
+  const fontStats = tallyFontCategories(stext);
   const pageBounds = page.getBounds();
   const textShapes = extractTextShapes(stext, 0, pageBounds[2] - pageBounds[0]);
 
@@ -776,6 +806,7 @@ async function extractPage(doc: MupdfDocument, pageIndex: number, vectorTextGrou
     images: [...rasterImages, ...figureImages],
     positionedText,
     extractionDebug,
+    fontStats,
   };
 }
 
@@ -1447,6 +1478,12 @@ async function extractSpreadPage(
   const leftText = extractTextFromStructuredText(leftStext);
   const rightText = extractTextFromStructuredText(rightStext);
   const text = leftText + "\n" + rightText;
+  const leftFontStats = tallyFontCategories(leftStext);
+  const rightFontStats = tallyFontCategories(rightStext);
+  const fontStats = {
+    serifChars: leftFontStats.serifChars + rightFontStats.serifChars,
+    sansChars: leftFontStats.sansChars + rightFontStats.sansChars,
+  };
   const leftBounds = leftPage.getBounds();
   const rightBounds = rightPage.getBounds();
   const leftTextShapes = extractTextShapes(leftStext, 0, leftBounds[2] - leftBounds[0]);
@@ -1572,6 +1609,7 @@ async function extractSpreadPage(
     images,
     positionedText,
     extractionDebug,
+    fontStats,
   };
 }
 

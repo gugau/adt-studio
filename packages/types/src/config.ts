@@ -113,6 +113,12 @@ export const AppConfig = z
     quiz_generation: QuizGenerationConfig.optional(),
     default_render_strategy: z.string().optional(),
     render_strategies: z.record(z.string(), RenderStrategyConfig).optional(),
+    /** Base font for reflowable (non-fixed-layout) output. `auto` (default)
+     *  picks the detected serif/sans category's default; an explicit id
+     *  overrides. Ignored for fixed-layout books (they keep original fonts). */
+    reflowable_font: z
+      .enum(["auto", "atkinson-hyperlegible", "lexend", "merriweather", "lora"])
+      .optional(),
     visual_review_prompt: z.string().optional(),
     visual_review_max_iterations: z.number().int().min(1).max(50).optional(),
     section_render_strategies: z.record(z.string(), z.string()).optional(),

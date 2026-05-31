@@ -33,6 +33,8 @@ import type {
 } from "@adt/types"
 import { WebRenderingOutput as WebRenderingOutputSchema } from "@adt/types"
 import { googleFontsReferencedIn, googleFontsCss2Url } from "@adt/types"
+import { resolveReflowableFont, reflowableFontFamilyChain, type FontCategory } from "@adt/types"
+import { bundleGoogleFontsIntoCss } from "./google-fonts-bundle.js"
 import type { Progress } from "./progress.js"
 import { nullProgress } from "./progress.js"
 import { getGlossaryItemTextId } from "./glossary.js"
@@ -68,6 +70,9 @@ export interface PackageAdtWebOptions {
   }
   lockedSettings?: ("dockLayout" | "theme" | "iconSize" | "reduceMotion")[]
   fixedLayout?: boolean
+  /** `reflowable_font` config value (font id or "auto"). Selects the reflowable
+   *  base font; ignored for fixed-layout books. */
+  reflowableFont?: string
 }
 
 interface PageEntry {
@@ -215,9 +220,13 @@ export async function packageAdtWeb(
     defaultSettings,
     lockedSettings,
     fixedLayout,
+    reflowableFont,
   } = options
   const language = normalizeLocale(rawLanguage)
   const outputLanguages = Array.from(new Set(rawOutputLanguages.map((code) => normalizeLocale(code))))
+  // Reflowable base font (serif/sans default from the detected profile, or an
+  // explicit override). undefined for fixed-layout / Merriweather-default.
+  const bodyFontFamily = resolveReflowableFontChain(storage, { fixedLayout, reflowableFont })
 
   const step = "package-web" as const
   progress.emit({ type: "step-start", step })
@@ -366,6 +375,7 @@ export async function packageAdtWeb(
             bundleVersion,
             applyBodyBackground,
             fixedViewport,
+            bodyFontFamily,
           })
           fs.writeFileSync(path.join(adtDir, filename), pageHtml)
 
@@ -415,6 +425,7 @@ export async function packageAdtWeb(
         bundleVersion,
         skipContentWrapper: true,
         applyBodyBackground,
+        bodyFontFamily,
       })
       fs.writeFileSync(path.join(adtDir, quizFilename), quizPageHtml)
 
@@ -704,6 +715,17 @@ export async function packageAdtWeb(
 
   const activityIds = collectActivityIds(adtDir, pageList)
   generateScormAdapter(assetsDir, activityIds)
+
+  // Bundle any Google Fonts the book uses (fetch the woff2, inline as base64
+  // @font-face) so they render under file:// / offline; the online <link> in
+  // each page stays as the fallback when the fetch fails. Runs before
+  // inlineFontsInCss, which only rewrites local ./fonts/ urls and leaves these
+  // data: URIs alone.
+  progress.emit({ type: "step-progress", step, message: "Bundling fonts..." })
+  const bundledFonts = await bundleGoogleFontsIntoCss(adtDir)
+  if (bundledFonts.length > 0) {
+    progress.emit({ type: "step-progress", step, message: `Bundled fonts: ${bundledFonts.join(", ")}` })
+  }
 
   // Inline fonts as base64 in fonts.css so `@font-face` works under file://
   // (browsers treat each file:// path as a unique origin and block cross-origin
@@ -1028,6 +1050,11 @@ export interface RenderPageOptions {
   /** Fixed viewport dimensions for fixed-layout pages (e.g., pre-paginated EPUB).
    *  When set, overrides the responsive viewport meta with a fixed size. */
   fixedViewport?: { width: number; height: number }
+  /** CSS font-family chain for the reflowable base font (e.g.
+   *  `'Atkinson Hyperlegible','Merriweather',sans-serif`). When set, overrides
+   *  the global Merriweather rule from fonts.css and the family is loaded via
+   *  Google Fonts. Omit (fixed-layout / serif default) to keep Merriweather. */
+  bodyFontFamily?: string
 }
 
 /**
@@ -1052,6 +1079,24 @@ function injectOpacityClass(html: string): string {
 export function promoteFirstHeadingToH1(html: string): string {
   if (/<h1\b/i.test(html)) return html
   return html.replace(/<h([2-6])(\b[^>]*)>([\s\S]*?)<\/h\1>/i, '<h1$2>$3</h1>')
+}
+
+/**
+ * Resolve the reflowable base-font CSS chain for a book, or undefined when no
+ * override is needed (fixed-layout books keep original fonts; the serif default
+ * Merriweather is already the global font). Reads the book-level `font-profile`
+ * node (detected serif/sans category) and the explicit `reflowableFont` setting.
+ */
+export function resolveReflowableFontChain(
+  storage: Storage,
+  opts: { fixedLayout?: boolean; reflowableFont?: string },
+): string | undefined {
+  if (opts.fixedLayout) return undefined
+  const row = storage.getLatestNodeData("font-profile", "book")
+  const category = (row?.data as { category?: FontCategory | null } | undefined)?.category ?? null
+  const font = resolveReflowableFont(opts.reflowableFont, category)
+  if (font.family === "Merriweather") return undefined // global default already
+  return reflowableFontFamilyChain(font)
 }
 
 export function renderPageHtml(opts: RenderPageOptions): string {
@@ -1123,10 +1168,18 @@ ${fallbackHeadingHtml}${contentBlock}
     </style>`
     : ""
 
-  // Load any Google Fonts the page actually uses (fixed-layout pages declare
-  // the Google family name, e.g. `"Mouse Memoirs"`, on their text runs). The
-  // bundled Merriweather remains the fallback for everything else.
-  const googleFamilies = googleFontsReferencedIn(normalizedContent)
+  // Reflowable base-font override: re-declare the same elements fonts.css
+  // targets with the chosen family, placed last in <head> so it wins. Omitted
+  // for fixed-layout / serif-default books (keeps the global Merriweather).
+  const bodyFontStyle = opts.bodyFontFamily
+    ? `\n    <style>\n      body, p, h1, h2, h3, h4, h5, h6, span, div, button, input, textarea, select { font-family: ${opts.bodyFontFamily}; }\n    </style>`
+    : ""
+
+  // Load any Google Fonts the page actually uses — fixed-layout pages declare
+  // the Google family on their text runs, and the reflowable base-font style
+  // (above) declares the body family. The bundled Merriweather remains the
+  // fallback for everything else.
+  const googleFamilies = googleFontsReferencedIn(normalizedContent + bodyFontStyle)
   const googleFontsUrl = googleFontsCss2Url(googleFamilies)
   const googleFontsLinks = googleFontsUrl
     ? `
@@ -1147,7 +1200,7 @@ ${fallbackHeadingHtml}${contentBlock}
     <link href="./content/tailwind_output.css" rel="stylesheet">
     <link href="./assets/libs/fontawesome/css/all.min.css" rel="stylesheet">
     <link href="./assets/fonts.css" rel="stylesheet">${googleFontsLinks}
-${mathScript}${embedStyles}</head>
+${mathScript}${embedStyles}${bodyFontStyle}</head>
 
 <body${opts.fixedViewport ? ` style="margin:0;overflow:hidden;width:${opts.fixedViewport.width}px;height:${opts.fixedViewport.height}px"` : ` class="min-h-screen flex items-center justify-center"${bodyStyle}`}>
 ${mainBlock}

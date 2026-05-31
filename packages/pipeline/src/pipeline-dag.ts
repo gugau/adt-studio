@@ -883,6 +883,8 @@ export async function runFullPipeline(
         webAssetsDir: options.webAssetsDir,
         applyBodyBackground: config.apply_body_background,
         speechConfig: config.speech,
+        fixedLayout: isFixedLayoutBook(config),
+        reflowableFont: config.reflowable_font,
       }, progressOnly(p))
     })
 

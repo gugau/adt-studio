@@ -21,6 +21,16 @@ export {
 } from "./google-fonts.js"
 
 export {
+  type FontCategory,
+  type ReflowableFont,
+  type ReflowableFontSetting,
+  REFLOWABLE_FONTS,
+  REFLOWABLE_FONT_SETTINGS,
+  resolveReflowableFont,
+  reflowableFontFamilyChain,
+} from "./reflowable-fonts.js"
+
+export {
   StepName,
   StageName,
   type StepDef,
