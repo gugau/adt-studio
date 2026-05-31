@@ -198,6 +198,10 @@ export async function runFullPipeline(
           startPage: startPage ?? config.start_page,
           endPage: endPage ?? config.end_page,
           spreadMode: config.spread_mode,
+          vectorTextGrouping: config.vector_text_grouping,
+          // Gates the positioned-text pipeline (fixed-layout rendering is its
+          // only consumer). Must match stage-runner so re-runs are consistent.
+          fixedLayout: isFixedLayoutBook(config),
         },
         storage,
         progressOnly(p),
@@ -879,6 +883,8 @@ export async function runFullPipeline(
         webAssetsDir: options.webAssetsDir,
         applyBodyBackground: config.apply_body_background,
         speechConfig: config.speech,
+        fixedLayout: isFixedLayoutBook(config),
+        reflowableFont: config.reflowable_font,
       }, progressOnly(p))
     })
 

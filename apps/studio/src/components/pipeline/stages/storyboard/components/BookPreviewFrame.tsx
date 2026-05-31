@@ -22,6 +22,7 @@ import {
   weightToToken,
 } from "./iframe-computed-styles"
 import { INTERACTIVE_SCRIPT, INTERACTIVE_STYLES } from "./iframe-interactive"
+import { primaryFontFamily, googleFontsCss2Url } from "@adt/types"
 
 export type { ComputedTypographyStyles }
 
@@ -99,6 +100,11 @@ export interface BookPreviewFrameProps {
   /** Reports the iframe's current on-screen width in CSS pixels (renderWidth × scale).
    *  Updates whenever the canvas resizes — useful for showing the active viewport size. */
   onVisibleWidthChange?: (width: number) => void
+  /** Resolved reflowable base-font CSS chain (e.g. `'Atkinson
+   *  Hyperlegible','Merriweather',sans-serif`). When set, the shell loads the
+   *  family from Google Fonts and overrides the global Merriweather, matching
+   *  packaged output. Omit for fixed-layout (keeps per-span fonts). */
+  bodyFontFamily?: string
 }
 
 /**
@@ -127,6 +133,7 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   renderWidth = DEFAULT_RENDER_WIDTH,
   deviceView,
   onVisibleWidthChange,
+  bodyFontFamily,
 }, ref) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
@@ -203,6 +210,7 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
         fontWeight: null,
         lineHeight: null,
         textAlign: null,
+        fontFamily: null,
       }
       const doc = iframeRef.current?.contentDocument
       const win = doc?.defaultView
@@ -213,12 +221,20 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
       if (!el) return empty
       const s = win.getComputedStyle(el)
       const fontSize = parsePx(s.fontSize)
+      // The font is declared on the inner styled run(s) (fixed-layout
+      // `data-segments` spans), not the paragraph itself — so walk into the
+      // first descendant that carries a font-family and read its resolved
+      // family. Fall back to the element's own computed family.
+      const fontEl =
+        (el.querySelector('[style*="font-family"]') as HTMLElement | null) ?? el
+      const family = primaryFontFamily(win.getComputedStyle(fontEl).fontFamily)
       return {
         fontSize,
         color: rgbToHex(s.color),
         fontWeight: weightToToken(s.fontWeight),
         lineHeight: lineHeightToMultiplier(s.lineHeight, fontSize),
         textAlign: normalizeTextAlign(s.textAlign),
+        fontFamily: family || null,
       }
     },
   }))
@@ -229,9 +245,15 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
    * When the page is fixed-layout, `#content` has explicit pixel width/height
    * (viewport coords from the renderer). Scaling off these instead of the
    * fixed `DEFAULT_RENDER_WIDTH` makes the content fill the available preview area.
+   * `referenceWidth` is the book-wide widest page (a full spread in spread
+   * mode), stamped on `#content` as `data-fl-reference-width`; scaling off it
+   * — rather than this page's own width — keeps every page at one uniform
+   * scale, so a single cover/end page renders centered at half-width instead
+   * of being upscaled 2× to fill the panel. Falls back to the page's own
+   * width when the attribute is absent (older content / ad-hoc renders).
    * null for reflowable pages.
    */
-  const [fixedLayoutSize, setFixedLayoutSize] = useState<{ width: number; height: number } | null>(null)
+  const [fixedLayoutSize, setFixedLayoutSize] = useState<{ width: number; height: number; referenceWidth: number } | null>(null)
   const [availableWidth, setAvailableWidth] = useState(DEFAULT_RENDER_WIDTH)
   const readyRef = useRef(false)
   const latestHtmlRef = useRef("")
@@ -284,6 +306,17 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   // injectContent can trigger another pass after content swaps.
   // eslint-disable-next-line lingui/no-unlocalized-strings
   const autoFitScript = `<script src="${assetsPrefix}/assets/auto-fit.js"></script>`
+  // Reflowable base-font override: load the family from Google Fonts and
+  // re-declare the global element font (last in <head> so it wins over
+  // fonts.css's Merriweather rule). Mirrors renderPageHtml's injection so the
+  // preview matches packaged output. Omitted for fixed-layout (no prop).
+  const fontOverride = useMemo(() => {
+    if (!bodyFontFamily) return ""
+    const url = googleFontsCss2Url([primaryFontFamily(bodyFontFamily)])
+    const link = url ? `\n  <link href="${url}" rel="stylesheet">` : ""
+    // eslint-disable-next-line lingui/no-unlocalized-strings
+    return `${link}\n  <style>\n    body, p, h1, h2, h3, h4, h5, h6, span, div, button, input, textarea, select { font-family: ${bodyFontFamily}; }\n  </style>`
+  }, [bodyFontFamily])
   // Stable shell — loaded once, never changes.
   // Mirrors the preview's renderPageHtml output: same CSS, fonts, body classes.
   const srcdoc = useMemo(
@@ -299,7 +332,7 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   <link href="${assetsPrefix}/assets/libs/fontawesome/css/all.min.css" rel="stylesheet">
   <style>
     ${INTERACTIVE_STYLES}
-  </style>
+  </style>${fontOverride}
 </head>
 <body class="min-h-screen flex items-center justify-center">
 ${INTERACTIVE_SCRIPT}
@@ -307,9 +340,9 @@ ${autoFitScript}
 </body>
 </html>`,
     // autoFitScript embeds assetsPrefix; INTERACTIVE_SCRIPT/INTERACTIVE_STYLES
-    // are stable module constants. Re-memoise the shell only when the prefix
-    // (and thus the auto-fit script URL) changes.
-    [assetsPrefix, autoFitScript]
+    // are stable module constants. Re-memoise when the prefix (auto-fit URL) or
+    // the reflowable font override changes.
+    [assetsPrefix, autoFitScript, fontOverride]
   )
 
   // Listen for postMessage from iframe
@@ -365,7 +398,10 @@ ${autoFitScript}
     const styleW = contentEl ? parsePxStyle(contentEl.style.width) : null
     const styleH = contentEl ? parsePxStyle(contentEl.style.height) : null
     if (contentEl && styleW !== null && styleH !== null) {
-      setFixedLayoutSize({ width: styleW, height: styleH })
+      const refRaw = contentEl.dataset.flReferenceWidth
+      const ref = refRaw ? parseFloat(refRaw) : NaN
+      const referenceWidth = Number.isFinite(ref) && ref > 0 ? ref : styleW
+      setFixedLayoutSize({ width: styleW, height: styleH, referenceWidth })
       return
     }
 
@@ -614,14 +650,16 @@ ${selectors}:hover {
     return () => ro.disconnect()
   }, [])
 
-  // Fixed-layout: scale off the page viewport so content fills the preview
-  // area, upscaling small pages (PDFs whose natural width is below the panel)
-  // up to FL_MAX_SCALE so they don't render boxed with side whitespace.
+  // Fixed-layout: scale off the book-wide reference (spread) width so every
+  // page shares one scale — a full spread fills the panel, a single cover/end
+  // page renders centered at its natural fraction (e.g. half) of the panel
+  // rather than being upscaled to fill it. Small books (reference width below
+  // the panel) still upscale up to FL_MAX_SCALE so they don't render boxed.
   // Reflowable: fit to the device-frame base width, desktop capped at 1× and
   // mobile/tablet grown up to a target visible width for legibility.
   useEffect(() => {
     if (fixedLayoutSize) {
-      setScale(Math.min(FL_MAX_SCALE, availableWidth / fixedLayoutSize.width))
+      setScale(Math.min(FL_MAX_SCALE, availableWidth / fixedLayoutSize.referenceWidth))
       return
     }
     const fitScale = Math.max(0, availableWidth / baseWidth)
