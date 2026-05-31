@@ -35,6 +35,7 @@ import {
   type PathCommand,
 } from "./page-stream-recorder.js";
 import type { DrawItem, PositionedTextOutput } from "@adt/types";
+import { classifyFontCategoryByName } from "@adt/types";
 
 // ============================================================================
 // Types
@@ -401,21 +402,30 @@ function hashBuffer(buf: Buffer): string {
 }
 
 /**
- * Tally non-whitespace characters by serif vs. sans (mupdf's `font.isSerif()`)
- * over the structured-text layer. Cheap — one walk of an already-built
- * StructuredText. The pipeline aggregates these across pages to choose a
- * book-level reflowable base font (body text dominates because it has the most
- * characters).
+ * Tally non-whitespace characters by serif vs. sans over the structured-text
+ * layer. Classification prefers the font NAME (e.g. HelveticaNeue / MyriadPro
+ * → sans) because mupdf's `font.isSerif()` is unreliable for embedded subset
+ * fonts — it misflags common sans faces as serif — and only falls back to
+ * `isSerif()` when the name carries no signal. Cheap: one walk of an already-
+ * built StructuredText. The pipeline aggregates these across pages to choose a
+ * book-level reflowable base font (body text dominates by character count).
  */
 function tallyFontCategories(
   stext: ReturnType<AnyPage["toStructuredText"]>
 ): { serifChars: number; sansChars: number } {
   let serifChars = 0;
   let sansChars = 0;
+  const cache = new Map<string, "serif" | "sans">();
   stext.walk({
     onChar(c, _origin, font) {
       if (!c || /\s/.test(c)) return;
-      if (font?.isSerif?.()) serifChars++;
+      const name = font?.getName?.() ?? "";
+      let cat = cache.get(name);
+      if (!cat) {
+        cat = classifyFontCategoryByName(name) ?? (font?.isSerif?.() ? "serif" : "sans");
+        cache.set(name, cat);
+      }
+      if (cat === "serif") serifChars++;
       else sansChars++;
     },
   });

@@ -246,6 +246,8 @@ export interface PageDetail {
   /** Distinct fonts the extractor found on this page (positioned text only),
    *  each with the rounded px sizes it appears at. */
   fonts: Array<{ family: string; sizes: number[] }>
+  /** Book-level detected serif/sans category (drives the reflowable base font). */
+  fontProfile: { category: "serif" | "sans" | null; serifChars: number; sansChars: number } | null
   versions: {
     imageClassification: number | null
     imageCropping: number | null

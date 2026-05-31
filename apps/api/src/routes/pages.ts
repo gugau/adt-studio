@@ -47,6 +47,10 @@ interface PageDetail {
    *  each with the rounded sizes (px) it appears at. Empty for reflowable
    *  books, which don't extract positioned text. */
   fonts: Array<{ family: string; sizes: number[] }>
+  /** Book-level detected font category (serif vs sans, char-weighted) used to
+   *  pick the reflowable base font. Same for every page; null when the book has
+   *  no extractable text. */
+  fontProfile: { category: "serif" | "sans" | null; serifChars: number; sansChars: number } | null
   versions: {
     sectioning: number | null
     imageClassification: number | null
@@ -601,6 +605,15 @@ export function createPageRoutes(
       const renderingNode = getNodeData("web-rendering")
       const imageCaptioningNode = getNodeData("image-captioning")
       const positionedTextNode = getNodeData("positioned-text")
+      // Book-level font profile (item_id "book", not the page id).
+      const fontProfileRows = db.all(
+        "SELECT data FROM node_data WHERE node = 'font-profile' AND item_id = 'book' ORDER BY version DESC LIMIT 1",
+        []
+      ) as Array<{ data: string }>
+      const fontProfile =
+        fontProfileRows.length > 0
+          ? (JSON.parse(fontProfileRows[0].data) as PageDetail["fontProfile"])
+          : null
 
       // Validate the stored blob against the canonical tree schema; if it
       // doesn't match (older data or a failed run), return null so the
@@ -648,6 +661,7 @@ export function createPageRoutes(
         imageCaptioning: imageCaptioningNode?.data ?? null,
         imagesMeta,
         fonts: derivePageFonts(positionedTextNode?.data),
+        fontProfile,
         versions: {
           sectioning: sectioningNode?.version ?? null,
           imageClassification: imageClassNode?.version ?? null,

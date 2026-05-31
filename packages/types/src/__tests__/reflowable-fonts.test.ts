@@ -2,7 +2,30 @@ import { describe, it, expect } from "vitest"
 import {
   resolveReflowableFont,
   reflowableFontFamilyChain,
+  classifyFontCategoryByName,
 } from "../reflowable-fonts.js"
+
+describe("classifyFontCategoryByName", () => {
+  it("classifies common sans fonts by name (mupdf isSerif misflags these)", () => {
+    expect(classifyFontCategoryByName("LKHXKC+HelveticaNeueLTStd-Lt")).toBe("sans")
+    expect(classifyFontCategoryByName("DYGBCS+MyriadPro-Cond")).toBe("sans")
+    expect(classifyFontCategoryByName("Arial-BoldMT")).toBe("sans")
+    expect(classifyFontCategoryByName("Calibri")).toBe("sans")
+    expect(classifyFontCategoryByName("CenturyGothic")).toBe("sans")
+  })
+
+  it("classifies common serif fonts by name", () => {
+    expect(classifyFontCategoryByName("TimesNewRomanPSMT")).toBe("serif")
+    expect(classifyFontCategoryByName("ABCDEF+MinionPro-Regular")).toBe("serif")
+    expect(classifyFontCategoryByName("Georgia")).toBe("serif")
+    expect(classifyFontCategoryByName("EB Garamond")).toBe("serif")
+  })
+
+  it("returns null when the name carries no signal", () => {
+    expect(classifyFontCategoryByName("ABCDEF+Font1")).toBeNull()
+    expect(classifyFontCategoryByName("")).toBeNull()
+  })
+})
 
 describe("resolveReflowableFont", () => {
   it("picks the category default when set to auto / unset", () => {

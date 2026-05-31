@@ -45,6 +45,27 @@ export const REFLOWABLE_FONT_SETTINGS = [
 ] as const
 export type ReflowableFontSetting = (typeof REFLOWABLE_FONT_SETTINGS)[number]
 
+// Strong serif/sans tokens found in real font names. mupdf's `isSerif()` is
+// unreliable for embedded subset fonts (it reports HelveticaNeue / MyriadPro
+// as serif), so name classification takes precedence over it in detection.
+const SANS_NAME_RE =
+  /(sans|grotesk|gothic|arial|helvet|myriad|verdana|tahoma|segoe|calibri|frutiger|franklin|futura|gill|avenir|proxima|gotham|circular|roboto|lato|montserrat|poppins|nunito|raleway|\binter\b|ubuntu|optima|univers|akzidenz|interstate|\bdin\b|trebuchet|century\s*gothic)/i
+const SERIF_NAME_RE =
+  /(serif|times|georgia|garamond|minion|baskerville|caslon|palatino|cambria|antiqua|didot|bodoni|merriweather|\blora\b|playfair|cardo|sabon|utopia|chaparral|freight|tinos|gelasio|caladea|\bgaramond\b)/i
+
+/**
+ * Classify a font by its name into serif / sans, or null when the name carries
+ * no strong signal. Sans is checked first so "Century Gothic" resolves to sans.
+ * Used by extraction to pick the book's reflowable category — preferred over
+ * mupdf's `isSerif()`, which misflags many embedded sans fonts.
+ */
+export function classifyFontCategoryByName(name: string): FontCategory | null {
+  if (!name) return null
+  if (SANS_NAME_RE.test(name)) return "sans"
+  if (SERIF_NAME_RE.test(name)) return "serif"
+  return null
+}
+
 function defaultForCategory(category: FontCategory): ReflowableFont {
   // Non-null: every category has exactly one default in the table above.
   return REFLOWABLE_FONTS.find((f) => f.category === category && f.role === "default")!

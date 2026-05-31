@@ -1792,6 +1792,9 @@ msgstr "Escritorio"
 msgid "Detailed, technical captions for college and adult readers."
 msgstr "Subtítulos detallados y técnicos para lectores universitarios y adultos."
 
+msgid "Detected Font"
+msgstr "Fuente detectada"
+
 msgid "Detecting figures"
 msgstr "Detectando figuras"
 
@@ -4593,6 +4596,9 @@ msgstr "Ejemplo de Manual de Referencia"
 msgid "Sample shown for illustration. The actual languages used come from your Output Languages list above."
 msgstr "Muestra mostrada para ilustración. Los idiomas reales utilizados provienen de tu lista de Idiomas de Salida arriba."
 
+msgid "Sans-serif"
+msgstr "Sin serifa"
+
 msgid "Save"
 msgstr "Guardar"
 
@@ -4887,6 +4893,9 @@ msgstr "Aplicación web ADT autónoma"
 
 msgid "Separator"
 msgstr "Separador"
+
+msgid "Serif"
+msgstr "Con serifa"
 
 msgid "serious"
 msgstr "serious"

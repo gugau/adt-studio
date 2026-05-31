@@ -9,6 +9,7 @@ import { useBookRun } from "@/hooks/use-book-run"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
 import { ImageCropDialog } from "@/components/pipeline/stages/storyboard/components/ImageCropDialog"
+import { resolveReflowableFont } from "@adt/types"
 
 function VersionPicker({
   currentVersion,
@@ -314,6 +315,15 @@ export function ExtractPageDetail({
 
   if (!page) return null
 
+  // For reflowable books, map the detected serif/sans category (+ any config
+  // override) to the base reading font, to show alongside the detection.
+  const reflowableFont = page.fontProfile?.category
+    ? resolveReflowableFont(
+        (activeConfigData as { reflowable_font?: string } | undefined)?.reflowable_font,
+        page.fontProfile.category,
+      )
+    : null
+
   return (
     <div className="space-y-2 p-4">
       {storyboardDone && (
@@ -455,6 +465,33 @@ export function ExtractPageDetail({
                   )}
                 </span>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Reflowable books carry no positioned text — surface the detected
+            serif/sans category and the base reading font it maps to. */}
+        {(!page.fonts || page.fonts.length === 0) && page.fontProfile?.category && (
+          <div className="mb-4">
+            <h3 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              <Type className="h-3 w-3" />
+              <Trans>Detected Font</Trans>
+            </h3>
+            <div className="flex flex-wrap items-center gap-1.5 text-xs">
+              <span className="inline-flex items-center rounded border bg-muted/30 px-2 py-1 font-medium text-foreground">
+                {page.fontProfile.category === "sans" ? <Trans>Sans-serif</Trans> : <Trans>Serif</Trans>}
+              </span>
+              {reflowableFont && (
+                <>
+                  <span className="text-muted-foreground">&rarr;</span>
+                  <span
+                    className="inline-flex items-center rounded border bg-muted/30 px-2 py-1 font-medium text-foreground"
+                    title={reflowableFont.family}
+                  >
+                    {reflowableFont.family}
+                  </span>
+                </>
+              )}
             </div>
           </div>
         )}
