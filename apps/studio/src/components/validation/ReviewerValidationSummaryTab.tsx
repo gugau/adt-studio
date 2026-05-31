@@ -364,6 +364,7 @@ export function ReviewerValidationSummaryTab({
 
   const anyRecordQueryLoading = sessionRecordQueries.some((query) => query.isLoading)
   const anyRecordQueryError = sessionRecordQueries.find((query) => query.error)?.error
+  const pagesReviewed = activeMetrics.pagesReviewed
 
   if (sessions.isLoading || anyRecordQueryLoading || (!activeCatalog && catalog.isLoading)) {
     return <LoadingState message={t`Loading reviewer validation summary...`} />
@@ -528,7 +529,7 @@ export function ReviewerValidationSummaryTab({
                   </span>
                 ) : (
                   <span>
-                    {t`${activeMetrics.pagesReviewed} ${activeMetrics.pagesReviewed === 1 ? "page" : "pages"} reviewed so far`}
+                    {t`${pagesReviewed} {pagesReviewed, plural, one {page} other {pages}} reviewed so far`}
                   </span>
                 )}
                 {activeProgress.criteriaPerPage > 0 ? (

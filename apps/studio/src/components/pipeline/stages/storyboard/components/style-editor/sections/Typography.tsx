@@ -45,6 +45,7 @@ const EMPTY_DECOR: string[] = []
 export function TypographySection() {
   const { t } = useLingui()
   const { computedStyles } = useElementContext()
+  const elementFontFamily = computedStyles?.fontFamily ?? null
   const inheritedFontSize = computedStyles?.fontSize ?? null
   const inheritedWeight = computedStyles?.fontWeight ?? null
   const inheritedAlign = computedStyles?.textAlign ?? null
@@ -72,6 +73,16 @@ export function TypographySection() {
 
   return (
     <Section title={<Trans>Typography</Trans>}>
+      {elementFontFamily ? (
+        <StyleLabel label={<Trans>Font</Trans>}>
+          <span
+            className="text-[11px] text-foreground truncate"
+            title={elementFontFamily}
+          >
+            {elementFontFamily}
+          </span>
+        </StyleLabel>
+      ) : null}
       <StyleLabel
         label={<Trans>Size</Trans>}
         override={fontSize.override}

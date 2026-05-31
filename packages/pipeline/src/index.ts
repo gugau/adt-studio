@@ -208,6 +208,7 @@ export {
   type PackageAdtWebOptions,
   type ComputePackagingInputHashOptions,
   renderPageHtml,
+  resolveReflowableFontChain,
   NAV_HTML,
   type RenderPageOptions,
   buildPreviewTailwindCss,
