@@ -58,9 +58,13 @@ export function resolveGoogleFont(declared: string): GoogleFontEntry | null {
   return GOOGLE_FONTS.find((f) => f.key === key) ?? null
 }
 
-/** Wrap a CSS family name in double quotes when it contains whitespace. */
+/** Wrap a CSS family name in SINGLE quotes when it contains whitespace.
+ *  Single quotes (not double) because these values are serialized into
+ *  double-quoted inline `style="..."` attributes — an embedded double quote
+ *  would terminate the attribute and drop the whole style. CSS accepts
+ *  either quote style for family names. */
 export function cssQuoteFamily(family: string): string {
-  return /\s/.test(family) ? `"${family}"` : family
+  return /\s/.test(family) ? `'${family}'` : family
 }
 
 /**

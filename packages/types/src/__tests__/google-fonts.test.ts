@@ -60,8 +60,9 @@ describe("googleFontsReferencedIn", () => {
 })
 
 describe("cssQuoteFamily / normalizeFontKey", () => {
-  it("quotes families with whitespace only", () => {
-    expect(cssQuoteFamily("Mouse Memoirs")).toBe(`"Mouse Memoirs"`)
+  it("single-quotes families with whitespace only (safe inside style=\"...\")", () => {
+    expect(cssQuoteFamily("Mouse Memoirs")).toBe("'Mouse Memoirs'")
+    expect(cssQuoteFamily("Mouse Memoirs")).not.toContain('"')
     expect(cssQuoteFamily("Merriweather")).toBe("Merriweather")
   })
 
