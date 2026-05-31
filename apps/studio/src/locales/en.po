@@ -1029,6 +1029,9 @@ msgstr "Auto-fill from book context"
 msgid "Auto-scroll"
 msgstr "Auto-scroll"
 
+msgid "Automatic"
+msgstr "Automatic"
+
 msgid "Automatically adapts the layout based on each page's content using AI."
 msgstr "Automatically adapts the layout based on each page's content using AI."
 
@@ -1080,6 +1083,9 @@ msgstr "Background: {0}"
 
 msgid "base"
 msgstr "base"
+
+msgid "Base font for AI-rendered and template (reflowable) text. Fixed-layout pages keep their original fonts."
+msgstr "Base font for AI-rendered and template (reflowable) text. Fixed-layout pages keep their original fonts."
 
 msgid "Base Language"
 msgstr "Base Language"
@@ -1709,6 +1715,9 @@ msgstr "Default"
 
 msgid "Default (from prompt)"
 msgstr "Default (from prompt)"
+
+msgid "Default Font"
+msgstr "Default Font"
 
 msgid "Default model"
 msgstr "Default model"
@@ -3188,6 +3197,9 @@ msgstr "Match each stage of the water cycle to its definition:"
 
 msgid "Match Source"
 msgstr "Match Source"
+
+msgid "Match the book's detected style"
+msgstr "Match the book's detected style"
 
 msgid "Matches the original book design with some flexibility."
 msgstr "Matches the original book design with some flexibility."

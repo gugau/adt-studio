@@ -1029,6 +1029,9 @@ msgstr "Autocompletar desde el contexto del libro"
 msgid "Auto-scroll"
 msgstr "Desplazamiento automático"
 
+msgid "Automatic"
+msgstr "Automático"
+
 msgid "Automatically adapts the layout based on each page's content using AI."
 msgstr "Adapta automáticamente el diseño según el contenido de cada página usando IA."
 
@@ -1080,6 +1083,9 @@ msgstr "Fondo: {0}"
 
 msgid "base"
 msgstr "base"
+
+msgid "Base font for AI-rendered and template (reflowable) text. Fixed-layout pages keep their original fonts."
+msgstr "Fuente base para el texto generado por IA y por plantilla. Las páginas de maquetación fija conservan sus fuentes originales."
 
 msgid "Base Language"
 msgstr "Idioma base"
@@ -1709,6 +1715,9 @@ msgstr "Predeterminado"
 
 msgid "Default (from prompt)"
 msgstr "Predeterminado (del prompt)"
+
+msgid "Default Font"
+msgstr "Fuente predeterminada"
 
 msgid "Default model"
 msgstr "Modelo predeterminado"
@@ -3188,6 +3197,9 @@ msgstr "Asocia cada etapa del ciclo del agua con su definición:"
 
 msgid "Match Source"
 msgstr "Coincidir con la Fuente"
+
+msgid "Match the book's detected style"
+msgstr "Coincide con el estilo detectado del libro"
 
 msgid "Matches the original book design with some flexibility."
 msgstr "Coincide con el diseño original del libro con cierta flexibilidad."
