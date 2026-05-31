@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { LandingPageShell } from "@/components/pipeline/components/LandingPageShell"
-import { PrereqGuard } from "@/components/pipeline/components/PrereqGuard"
+import { CascadeWarning } from "@/components/pipeline/components/CascadeWarning"
+import { LandingPageWarning } from "@/components/pipeline/components/LandingPageWarning"
 import { SettingsCard, SettingsField } from "@/components/pipeline/components/SettingsCard"
 import { SettingExplainer } from "@/components/pipeline/components/SettingExplainer"
 import { ToggleCard } from "@/components/pipeline/components/ToggleCard"
@@ -27,6 +28,9 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
   const status = useStageStatus("sectioning")
   const extractStatus = useStageStatus("extract")
   const extractReady = extractStatus.isCompleted
+  // "Covered" = already done, running, or queued — i.e. it will produce its
+  // output without us starting it, so we can just queue Sectioning behind it.
+  const extractCovered = extractStatus.isCompleted || extractStatus.isRunning
 
   const [sectioningMode, setSectioningMode] = useState<SectioningModeKey>("dynamic")
   const [disabledSectionTypes, setDisabledSectionTypes] = useState<Set<string>>(new Set())
@@ -80,8 +84,12 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
   }
 
   const handleRun = () => {
-    if (!hasApiKey || !extractReady || status.isRunning) return
-    queueRun({ fromStage: "sectioning", toStage: "sectioning", apiKey })
+    if (!hasApiKey || status.isRunning) return
+    // Cue from here even if Extract hasn't run yet. If Extract is already
+    // done/running/queued it will produce its output, so queue Sectioning
+    // behind it; only pull Extract into the run when it isn't covered.
+    const fromStage = extractCovered ? "sectioning" : "extract"
+    queueRun({ fromStage, toStage: "sectioning", apiKey })
   }
 
   const modeOptions = useMemo(
@@ -94,8 +102,6 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
 
   const disabledReason = !hasApiKey ? (
     <Trans>Add an API key in Book settings to run sectioning.</Trans>
-  ) : !extractReady ? (
-    <Trans>Run Extract first — sectioning needs extracted page text and images.</Trans>
   ) : undefined
 
   return (
@@ -110,7 +116,7 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
       isCompleted={status.isCompleted}
       hasError={status.hasError}
       canRun={true}
-      extraDisabled={!hasApiKey || !extractReady}
+      extraDisabled={!hasApiKey}
       disabledReason={disabledReason}
       runLabel={<Trans>Run Sectioning</Trans>}
       rerunLabel={<Trans>Re-run</Trans>}
@@ -131,16 +137,20 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
         </p>
       </div>
 
-      <PrereqGuard
-        upstreamSlug="extract"
-        stageSlug="sectioning"
-        description={
-          <Trans>
-            Sectioning needs the page text and images that Extract produces.
-            Finish Extract before running this stage.
-          </Trans>
-        }
-      />
+      {extractReady ? (
+        <CascadeWarning stageSlug="sectioning" />
+      ) : !extractCovered ? (
+        <LandingPageWarning
+          variant="prereq"
+          title={<Trans>Extract hasn't run yet</Trans>}
+          description={
+            <Trans>
+              Running Sectioning will run Extract first, then section the
+              extracted pages.
+            </Trans>
+          }
+        />
+      ) : null}
 
       <SettingsCard>
         <SettingsField

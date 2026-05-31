@@ -61,12 +61,15 @@ const tooltipArrowVariants = cva(
 
 interface TooltipContentProps
   extends React.ComponentProps<typeof TooltipPrimitive.Content>,
-    VariantProps<typeof tooltipContentVariants> {}
+    VariantProps<typeof tooltipContentVariants> {
+  showArrow?: boolean
+}
 
 function TooltipContent({
   className,
   sideOffset = 0,
   variant,
+  showArrow = true,
   children,
   ...props
 }: TooltipContentProps) {
@@ -79,7 +82,11 @@ function TooltipContent({
         {...props}
       >
         {children}
-        <TooltipPrimitive.Arrow className={tooltipArrowVariants({ variant })} />
+        {showArrow && (
+          <TooltipPrimitive.Arrow
+            className={tooltipArrowVariants({ variant })}
+          />
+        )}
       </TooltipPrimitive.Content>
     </TooltipPrimitive.Portal>
   )
