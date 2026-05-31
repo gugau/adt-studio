@@ -10,6 +10,16 @@ export {
 } from "./db.js"
 
 export {
+  type GoogleFontEntry,
+  GOOGLE_FONTS,
+  normalizeFontKey,
+  resolveGoogleFont,
+  cssQuoteFamily,
+  googleFontsCss2Url,
+  googleFontsReferencedIn,
+} from "./google-fonts.js"
+
+export {
   StepName,
   StageName,
   type StepDef,

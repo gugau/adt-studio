@@ -19,6 +19,7 @@ import {
   type StructuredText,
 } from "mupdf"
 import { colorToCss } from "./color-utils.js"
+import { resolveGoogleFont, cssQuoteFamily } from "@adt/types"
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -749,6 +750,12 @@ function cssFontFamily(font: MupdfFont): string {
   // Strip common foundry suffixes.
   name = name.replace(/(MT|LT|PS|Pro|Std)$/g, "")
   if (!name) name = "serif"
+  // When the font is available on Google Fonts, emit the *Google* family
+  // name (e.g. "MouseMemoirs" → `"Mouse Memoirs"`) so the declared family
+  // matches the @font-face the renderer loads. Otherwise keep the declared
+  // name and fall back to the bundled serif (Merriweather) downstream.
+  const google = resolveGoogleFont(name)
+  if (google) return `${cssQuoteFamily(google.family)},serif`
   return `${name},serif`
 }
 

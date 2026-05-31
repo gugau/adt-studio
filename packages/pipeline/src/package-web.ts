@@ -32,6 +32,7 @@ import type {
   ImageCaptioningOutput,
 } from "@adt/types"
 import { WebRenderingOutput as WebRenderingOutputSchema } from "@adt/types"
+import { googleFontsReferencedIn, googleFontsCss2Url } from "@adt/types"
 import type { Progress } from "./progress.js"
 import { nullProgress } from "./progress.js"
 import { getGlossaryItemTextId } from "./glossary.js"
@@ -1122,6 +1123,18 @@ ${fallbackHeadingHtml}${contentBlock}
     </style>`
     : ""
 
+  // Load any Google Fonts the page actually uses (fixed-layout pages declare
+  // the Google family name, e.g. `"Mouse Memoirs"`, on their text runs). The
+  // bundled Merriweather remains the fallback for everything else.
+  const googleFamilies = googleFontsReferencedIn(normalizedContent)
+  const googleFontsUrl = googleFontsCss2Url(googleFamilies)
+  const googleFontsLinks = googleFontsUrl
+    ? `
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="${escapeAttr(googleFontsUrl)}" rel="stylesheet">`
+    : ""
+
   return `<!DOCTYPE html>
 <html lang="${escapeAttr(opts.language)}">
 
@@ -1133,7 +1146,7 @@ ${fallbackHeadingHtml}${contentBlock}
     <meta name="page-section-id" content="${opts.pageIndex}" />
     <link href="./content/tailwind_output.css" rel="stylesheet">
     <link href="./assets/libs/fontawesome/css/all.min.css" rel="stylesheet">
-    <link href="./assets/fonts.css" rel="stylesheet">
+    <link href="./assets/fonts.css" rel="stylesheet">${googleFontsLinks}
 ${mathScript}${embedStyles}</head>
 
 <body${opts.fixedViewport ? ` style="margin:0;overflow:hidden;width:${opts.fixedViewport.width}px;height:${opts.fixedViewport.height}px"` : ` class="min-h-screen flex items-center justify-center"${bodyStyle}`}>

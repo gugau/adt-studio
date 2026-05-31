@@ -110,6 +110,35 @@ describe("renderPageHtml", () => {
     expect(html).toContain('href="./assets/fonts.css"')
   })
 
+  it("injects a Google Fonts stylesheet for fonts the page actually uses", () => {
+    const html = renderPageHtml({
+      content: `<p><span style="font-family:&quot;Mouse Memoirs&quot;,Merriweather,serif">Hi</span></p>`,
+      language: "en",
+      sectionId: "pg001",
+      pageTitle: "Test",
+      pageIndex: 1,
+      hasMath: false,
+      bundleVersion: "1",
+    })
+
+    expect(html).toContain("fonts.googleapis.com/css2?family=Mouse+Memoirs")
+    expect(html).toContain('rel="preconnect"')
+  })
+
+  it("does not inject Google Fonts links when no registered font is used", () => {
+    const html = renderPageHtml({
+      content: `<p><span style="font-family:Palatino,Merriweather,serif">Hi</span></p>`,
+      language: "en",
+      sectionId: "pg001",
+      pageTitle: "Test",
+      pageIndex: 1,
+      hasMath: false,
+      bundleVersion: "1",
+    })
+
+    expect(html).not.toContain("fonts.googleapis.com")
+  })
+
   it("uses offline/SCORM scripts instead of type=module in normal mode", () => {
     const html = renderPageHtml({
       content: "<p>Hello</p>",
