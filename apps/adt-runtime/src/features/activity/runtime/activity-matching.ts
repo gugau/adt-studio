@@ -91,6 +91,13 @@ const VERDICT_MARK_CLASS = "validation-mark"
 interface Item {
   el: HTMLElement
   itemId: string
+  /**
+   * The card's accessible name, captured once at init from the pristine
+   * aria-label/text. `place()` rewrites the element's aria-label into a
+   * composite ("X — placed. Press Enter to remove."), so we can't re-derive
+   * the bare label from the DOM later — keep the original here.
+   */
+  label: string
   /** Where the card lives in the bank, so removal restores original order. */
   home: { parent: HTMLElement; index: number }
   /** Slot id the card currently occupies, or null when in the bank. */
@@ -134,7 +141,13 @@ export function initializeMatchingActivity(): (() => void) | null {
     const parent = el.parentElement
     if (!parent) return
     const index = Array.from(parent.children).indexOf(el)
-    items.set(itemId, { el, itemId, home: { parent, index }, slotId: null })
+    items.set(itemId, {
+      el,
+      itemId,
+      label: itemLabel(el),
+      home: { parent, index },
+      slotId: null,
+    })
   })
 
   const dropzones = Array.from(section.querySelectorAll<HTMLElement>(".dropzone"))
@@ -181,7 +194,7 @@ export function initializeMatchingActivity(): (() => void) | null {
     item.el.classList.add(...SELECTED_CLASSES)
     highlightZones(true)
     announceToScreenReader(
-      `${tr("matching-selected", "Selected")}: ${itemLabel(item.el)}. ` +
+      `${tr("matching-selected", "Selected")}: ${item.label}. ` +
         tr("matching-choose-zone", "Choose a drop zone to place it in."),
     )
   }
@@ -211,7 +224,7 @@ export function initializeMatchingActivity(): (() => void) | null {
     item.slotId = null
     item.el.classList.remove(PLACED_CLASS, ...SELECTED_CLASSES)
     item.el.removeAttribute("title")
-    item.el.setAttribute("aria-label", itemLabel(item.el))
+    item.el.setAttribute("aria-label", item.label)
   }
 
   const place = (item: Item, slotId: string) => {
@@ -233,7 +246,7 @@ export function initializeMatchingActivity(): (() => void) | null {
     item.el.setAttribute("title", tr("click-to-remove", "Click to remove"))
     item.el.setAttribute(
       "aria-label",
-      `${itemLabel(item.el)} — ${tr("matching-placed", "placed")}. ${tr(
+      `${item.label} — ${tr("matching-placed", "placed")}. ${tr(
         "matching-press-to-remove",
         "Press Enter to remove.",
       )}`,
@@ -243,7 +256,7 @@ export function initializeMatchingActivity(): (() => void) | null {
     highlightZones(false)
     playActivitySound("drop")
     refreshSubmit()
-    announceToScreenReader(`${itemLabel(item.el)} ${tr("matching-placed", "placed")}.`)
+    announceToScreenReader(`${item.label} ${tr("matching-placed", "placed")}.`)
   }
 
   const remove = (item: Item) => {
@@ -253,7 +266,7 @@ export function initializeMatchingActivity(): (() => void) | null {
     playActivitySound("reset")
     refreshSubmit()
     announceToScreenReader(
-      `${itemLabel(item.el)} ${tr("matching-returned", "returned to available options.")}`,
+      `${item.label} ${tr("matching-returned", "returned to available options.")}`,
     )
     item.el.focus()
   }

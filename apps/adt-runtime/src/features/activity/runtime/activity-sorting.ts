@@ -131,6 +131,14 @@ function applyPlacementStyle(el: HTMLElement, placed: boolean): void {
 interface Card {
   el: HTMLElement
   itemId: string
+  /**
+   * The card's accessible name, captured once at init. `place()` rewrites the
+   * element's aria-label into a composite ("X — placed in Y. Press Enter to
+   * remove."), so it can't be re-derived from the DOM later. Image-only cards
+   * carry their name in aria-label rather than visible text, so we fall back
+   * to it here.
+   */
+  label: string
   /** Where the card lives in the bank, so removal restores original order. */
   home: { parent: HTMLElement; index: number }
   /** Currently-assigned category id, or null when sitting in the bank. */
@@ -142,7 +150,9 @@ function getItemId(el: HTMLElement): string | null {
 }
 
 function cardLabel(el: HTMLElement): string {
-  return (el.textContent ?? "").replace(/\s+/g, " ").trim()
+  const text = (el.textContent ?? "").replace(/\s+/g, " ").trim()
+  // Image-only cards have no text leaf — their name lives in aria-label.
+  return text || el.getAttribute("aria-label")?.trim() || ""
 }
 
 function categoryName(category: HTMLElement): string {
@@ -182,7 +192,13 @@ export function initializeSortingActivity(): (() => void) | null {
     const parent = el.parentElement
     if (!parent) return
     const index = Array.from(parent.children).indexOf(el)
-    cards.set(itemId, { el, itemId, home: { parent, index }, category: null })
+    cards.set(itemId, {
+      el,
+      itemId,
+      label: cardLabel(el),
+      home: { parent, index },
+      category: null,
+    })
   })
 
   const categories = Array.from(
@@ -227,7 +243,7 @@ export function initializeSortingActivity(): (() => void) | null {
     const first = categories[0]
     announceToScreenReader(
       tr("sorting-selected-word", "Selected") +
-        `: ${cardLabel(card.el)}. ` +
+        `: ${card.label}. ` +
         tr(
           "sorting-choose-category",
           "Choose a category to place it in, or press Enter on a category.",
@@ -268,7 +284,7 @@ export function initializeSortingActivity(): (() => void) | null {
     card.el.setAttribute("role", "button")
     card.el.setAttribute(
       "aria-label",
-      `${cardLabel(card.el)} — ${tr("sorting-placed-in", "placed in")} ${categoryName(
+      `${card.label} — ${tr("sorting-placed-in", "placed in")} ${categoryName(
         category,
       )}. ${tr("sorting-press-to-remove", "Press Enter to remove.")}`,
     )
@@ -279,7 +295,7 @@ export function initializeSortingActivity(): (() => void) | null {
     refreshSubmit()
 
     announceToScreenReader(
-      `${cardLabel(card.el)} ${tr("sorting-placed-in", "placed in")} ${categoryName(category)}.`,
+      `${card.label} ${tr("sorting-placed-in", "placed in")} ${categoryName(category)}.`,
     )
   }
 
@@ -297,12 +313,12 @@ export function initializeSortingActivity(): (() => void) | null {
     applyPlacementStyle(card.el, false)
     card.el.setAttribute("draggable", "true")
     card.el.setAttribute("role", "option")
-    card.el.setAttribute("aria-label", cardLabel(card.el))
+    card.el.setAttribute("aria-label", card.label)
 
     playActivitySound("reset")
     refreshSubmit()
     announceToScreenReader(
-      `${cardLabel(card.el)} ${tr(
+      `${card.label} ${tr(
         "sorting-returned",
         "returned to available options.",
       )}`,
