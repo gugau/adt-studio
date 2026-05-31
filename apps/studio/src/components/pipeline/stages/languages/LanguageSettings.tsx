@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { useNavigate, Link } from "@tanstack/react-router"
-import { Play, Lock, ArrowLeft } from "lucide-react"
+import { Play, Lock, ArrowLeft, ChevronDown } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { useQuery } from "@tanstack/react-query"
 import { Badge } from "@/components/ui/badge"
@@ -45,6 +45,7 @@ type TranslationEvaluationIssueType =
   | "context"
   | "other"
 type TranslationEvaluationSeverity = "low" | "medium" | "high"
+type TranslationReviewStyle = "light" | "standard" | "detailed" | "custom"
 
 const DEFAULT_TRANSLATION_EVALUATION_JUDGE_MODEL = "openai:/gpt-4.1-mini"
 const DEFAULT_TRANSLATION_EVALUATION_MAX_RETRIES = 3
@@ -77,13 +78,34 @@ const TRANSLATION_REVIEW_ISSUE_TYPES: TranslationEvaluationIssueType[] = [
   "other",
 ]
 
+const VISIBLE_TRANSLATION_REVIEW_ISSUE_TYPES: TranslationEvaluationIssueType[] = TRANSLATION_REVIEW_ISSUE_TYPES.filter((issueType) => issueType !== "other")
 const DEFAULT_TRANSLATION_EVALUATION_ISSUE_TYPES = TRANSLATION_REVIEW_ISSUE_TYPES
 const TRANSLATION_REVIEW_SEVERITIES: TranslationEvaluationSeverity[] = ["low", "medium", "high"]
+const TRANSLATION_REVIEW_STYLES: Exclude<TranslationReviewStyle, "custom">[] = ["light", "standard", "detailed"]
+const TRANSLATION_REVIEW_STYLE_SETTINGS: Record<Exclude<TranslationReviewStyle, "custom">, {
+  strictness: "lenient" | "balanced" | "strict"
+  severity: TranslationEvaluationSeverity
+}> = {
+  light: { strictness: "lenient", severity: "medium" },
+  standard: { strictness: "balanced", severity: "medium" },
+  detailed: { strictness: "strict", severity: "low" },
+}
 const DEFAULT_TRANSLATION_EVALUATION_CONTEXT_OPTIONS = {
   book_metadata: true,
   visible_page_entries: true,
   source_language: true,
   target_language: true,
+}
+
+const resolveTranslationReviewStyle = (
+  strictness: "lenient" | "balanced" | "strict",
+  severity: TranslationEvaluationSeverity,
+): TranslationReviewStyle => {
+  const match = TRANSLATION_REVIEW_STYLES.find((style) => {
+    const settings = TRANSLATION_REVIEW_STYLE_SETTINGS[style]
+    return settings.strictness === strictness && settings.severity === severity
+  })
+  return match ?? "custom"
 }
 
 export function LanguageSettings({ bookLabel, headerTarget, tab = "general", stageSlug = "translate" }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string; stageSlug?: string }) {
@@ -127,6 +149,7 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
   const [reviewTerminologyGuidance, setReviewTerminologyGuidance] = useState("")
   const [reviewAdditionalGuidance, setReviewAdditionalGuidance] = useState("")
   const [reviewJudgeInstructions, setReviewJudgeInstructions] = useState(DEFAULT_TRANSLATION_EVALUATION_JUDGE_INSTRUCTIONS)
+  const [advancedReviewOpen, setAdvancedReviewOpen] = useState(false)
 
   // Image translation
   const [imageTranslationEnabled, setImageTranslationEnabled] = useState(false)
@@ -331,6 +354,9 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
     if (shouldWrite("translation_evaluation")) {
       const existing = (bookConfigData?.config?.translation_evaluation ?? {}) as Record<string, unknown>
       const selectedIssueTypes = Array.from(reviewIssueTypes)
+      const issueTypes = selectedIssueTypes.includes("other")
+        ? selectedIssueTypes
+        : [...selectedIssueTypes, "other" as const]
       overrides.translation_evaluation = {
         ...existing,
         enable_translation_evaluation: reviewEnabled,
@@ -340,7 +366,7 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
         temperature: parseTemperature(reviewTemperature),
         strictness: reviewStrictness,
         severity_threshold: reviewSeverityThreshold,
-        issue_types: selectedIssueTypes.length > 0 ? selectedIssueTypes : DEFAULT_TRANSLATION_EVALUATION_ISSUE_TYPES,
+        issue_types: issueTypes.length > 0 ? issueTypes : DEFAULT_TRANSLATION_EVALUATION_ISSUE_TYPES,
         generate_suggestions: reviewGenerateSuggestions,
         only_suggest_when_confident: reviewOnlySuggestWhenConfident,
         context: {
@@ -410,6 +436,14 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
     )
   }
 
+  const reviewStyle = resolveTranslationReviewStyle(reviewStrictness, reviewSeverityThreshold)
+  const setReviewStyle = (style: Exclude<TranslationReviewStyle, "custom">) => {
+    const settings = TRANSLATION_REVIEW_STYLE_SETTINGS[style]
+    setReviewStrictness(settings.strictness)
+    setReviewSeverityThreshold(settings.severity)
+    markDirty("translation_evaluation")
+  }
+
   return (
     <div className={tab === "prompt" ? "h-full max-w-4xl" : "p-4 max-w-2xl space-y-6"}>
       {tab === "general" && !isSpeechStage && (
@@ -457,7 +491,7 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
           <div>
             <h3 className="text-sm font-semibold">{t`Translation Review`}</h3>
             <p className="mt-1 text-xs text-muted-foreground">
-              {t`Configure the LLM judge used when you click Review on visible translations.`}
+              {t`Choose how Studio reviews the visible translations when you click Review.`}
             </p>
           </div>
 
@@ -478,6 +512,149 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
               </p>
             </div>
           </label>
+
+          <div className="space-y-5 border-t pt-5">
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t`General Settings`}</h4>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t`Use these settings for the common review workflow.`}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs">{t`Review style`}</Label>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {TRANSLATION_REVIEW_STYLES.map((style) => (
+                  <button
+                    key={style}
+                    type="button"
+                    onClick={() => setReviewStyle(style)}
+                    className={`min-h-24 rounded-md border p-3 text-left transition-colors ${
+                      reviewStyle === style
+                        ? "border-black bg-black text-white"
+                        : "border-border bg-white hover:bg-muted"
+                    }`}
+                  >
+                    <span className="block text-sm font-semibold">
+                      {style === "light" ? t`Light` : style === "standard" ? t`Standard` : t`Detailed`}
+                    </span>
+                    <span className={`mt-1 block text-xs leading-relaxed ${reviewStyle === style ? "text-white/80" : "text-muted-foreground"}`}>
+                      {style === "light"
+                        ? t`Flags clear meaning, missing-content, and formatting problems.`
+                        : style === "standard"
+                          ? t`Balances accuracy, fluency, terminology, and page context.`
+                          : t`Flags smaller wording, tone, and consistency concerns.`}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {reviewStyle === "custom" && (
+                <p className="text-[11px] text-amber-700">
+                  {t`Advanced settings currently use a custom review style.`}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs">{t`What should the review focus on?`}</Label>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {VISIBLE_TRANSLATION_REVIEW_ISSUE_TYPES.map((issueType) => (
+                  <label key={issueType} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={reviewIssueTypes.has(issueType)}
+                      onChange={(e) => {
+                        setReviewIssueTypes((current) => {
+                          const next = new Set(current)
+                          if (e.target.checked) next.add(issueType)
+                          else next.delete(issueType)
+                          return next
+                        })
+                        markDirty("translation_evaluation")
+                      }}
+                      className="h-4 w-4 rounded border-input"
+                    />
+                    <span>
+                      {issueType === "meaning"
+                        ? t`Meaning is preserved`
+                        : issueType === "fluency"
+                          ? t`Translation sounds natural`
+                          : issueType === "terminology"
+                            ? t`Names and terms are consistent`
+                            : issueType === "omission-or-addition"
+                              ? t`Nothing important is missing or added`
+                              : issueType === "formatting"
+                                ? t`Formatting and placeholders are preserved`
+                                : t`Page context is respected`}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={reviewGenerateSuggestions}
+                onChange={(e) => {
+                  setReviewGenerateSuggestions(e.target.checked)
+                  markDirty("translation_evaluation")
+                }}
+                className="mt-0.5 h-4 w-4 rounded border-input"
+              />
+              <span>{t`Suggest improved translations when an entry needs attention`}</span>
+            </label>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="translation-review-audience" className="text-xs">{t`Audience or reading level`}</Label>
+              <Input
+                id="translation-review-audience"
+                value={reviewTargetAudience}
+                onChange={(e) => {
+                  setReviewTargetAudience(e.target.value)
+                  markDirty("translation_evaluation")
+                }}
+                placeholder={t`e.g. early readers`}
+                className="h-9 text-sm"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="translation-review-guidance" className="text-xs">{t`Guidance for this book`}</Label>
+              <textarea
+                id="translation-review-guidance"
+                value={reviewAdditionalGuidance}
+                onChange={(e) => {
+                  setReviewAdditionalGuidance(e.target.value)
+                  markDirty("translation_evaluation")
+                }}
+                className="min-h-20 w-full rounded-md border border-input bg-background p-3 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring"
+                placeholder={t`Anything the judge should keep in mind for this book.`}
+              />
+            </div>
+          </div>
+
+          <div className="border-t pt-5">
+            <button
+              type="button"
+              onClick={() => setAdvancedReviewOpen((open) => !open)}
+              className="flex w-full items-center justify-between gap-3 text-left"
+              aria-expanded={advancedReviewOpen}
+            >
+              <div>
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t`Advanced Settings`}</h4>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t`Open this section to tune the model, judge prompt, retry behavior, and exact review thresholds.`}
+                </p>
+              </div>
+              <ChevronDown
+                className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${advancedReviewOpen ? "rotate-180" : ""}`}
+                aria-hidden
+              />
+            </button>
+
+            {advancedReviewOpen && (
+              <div className="mt-5 space-y-5">
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
@@ -685,33 +862,18 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="translation-review-audience" className="text-xs">{t`Target audience`}</Label>
-              <Input
-                id="translation-review-audience"
-                value={reviewTargetAudience}
-                onChange={(e) => {
-                  setReviewTargetAudience(e.target.value)
-                  markDirty("translation_evaluation")
-                }}
-                placeholder={t`e.g. early readers`}
-                className="h-9 text-sm"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="translation-review-style" className="text-xs">{t`Style guidance`}</Label>
-              <Input
-                id="translation-review-style"
-                value={reviewStyleGuidance}
-                onChange={(e) => {
-                  setReviewStyleGuidance(e.target.value)
-                  markDirty("translation_evaluation")
-                }}
-                placeholder={t`e.g. keep a warm children's-book tone`}
-                className="h-9 text-sm"
-              />
-            </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="translation-review-style" className="text-xs">{t`Style guidance`}</Label>
+            <Input
+              id="translation-review-style"
+              value={reviewStyleGuidance}
+              onChange={(e) => {
+                setReviewStyleGuidance(e.target.value)
+                markDirty("translation_evaluation")
+              }}
+              placeholder={t`e.g. keep a warm children's-book tone`}
+              className="h-9 text-sm"
+            />
           </div>
 
           <div className="space-y-1.5">
@@ -725,20 +887,6 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
               }}
               className="min-h-20 w-full rounded-md border border-input bg-background p-3 font-mono text-xs leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring"
               placeholder={t`Terms, character names, or phrases the judge should preserve or prefer.`}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="translation-review-guidance" className="text-xs">{t`Additional judge guidance`}</Label>
-            <textarea
-              id="translation-review-guidance"
-              value={reviewAdditionalGuidance}
-              onChange={(e) => {
-                setReviewAdditionalGuidance(e.target.value)
-                markDirty("translation_evaluation")
-              }}
-              className="min-h-20 w-full rounded-md border border-input bg-background p-3 font-mono text-xs leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring"
-              placeholder={t`Extra review rules for this book.`}
             />
           </div>
 
@@ -767,6 +915,9 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
               }}
               className="min-h-56 w-full rounded-md border border-input bg-background p-3 font-mono text-xs leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring"
             />
+          </div>
+              </div>
+            )}
           </div>
         </div>
       )}

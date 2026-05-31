@@ -713,8 +713,8 @@ msgstr "Adicione seu primeiro livro"
 msgid "Add your first term"
 msgstr "Adicione seu primeiro termo"
 
-msgid "Additional judge guidance"
-msgstr "Orientação adicional para o juiz"
+#~ msgid "Additional judge guidance"
+#~ msgstr "Orientação adicional para o juiz"
 
 msgid "Additional Languages"
 msgstr "Idiomas adicionais"
@@ -746,6 +746,9 @@ msgstr "Avançado"
 
 msgid "Advanced Settings"
 msgstr "Configurações Avançadas"
+
+msgid "Advanced settings currently use a custom review style."
+msgstr "As configurações avançadas usam atualmente um estilo de revisão personalizado."
 
 msgid "Adventure Tales - Vol. 1"
 msgstr "Contos de Aventura - Vol. 1"
@@ -901,6 +904,9 @@ msgstr "Qualquer endpoint compatível com OpenAI (Ollama, vLLM, Together AI, etc
 msgid "Any other section type."
 msgstr "Qualquer outro tipo de seção."
 
+msgid "Anything the judge should keep in mind for this book."
+msgstr "Qualquer coisa que o avaliador deva considerar para este livro."
+
 msgid "API"
 msgstr "API"
 
@@ -1001,6 +1007,9 @@ msgstr "Atribuir..."
 msgid "At the river's edge"
 msgstr "Na beira do rio"
 
+msgid "Audience or reading level"
+msgstr "Público ou nível de leitura"
+
 msgid "Audio"
 msgstr "Áudio"
 
@@ -1082,6 +1091,9 @@ msgstr "Fundo: {0}"
 
 msgid "Balanced"
 msgstr "Equilibrado"
+
+msgid "Balances accuracy, fluency, terminology, and page context."
+msgstr "Equilibra precisão, fluência, terminologia e contexto da página."
 
 msgid "base"
 msgstr "base"
@@ -1340,6 +1352,9 @@ msgstr "Escolha uma imagem existente deste projeto"
 msgid "Choose features to include in this export"
 msgstr "Escolha as características para incluir nesta exportação"
 
+msgid "Choose how Studio reviews the visible translations when you click Review."
+msgstr "Escolha como o Studio revisa as traduções visíveis quando você clica em Revisar."
+
 msgid "Choose how the content should be formatted."
 msgstr "Escolha como o conteúdo deve ser formatado."
 
@@ -1490,8 +1505,8 @@ msgstr "Configure cada etapa — extração, storyboard, layout — e deixe o AD
 msgid "Configure features to include in the export"
 msgstr "Configure as funcionalidades a incluir na exportação"
 
-msgid "Configure the LLM judge used when you click Review on visible translations."
-msgstr "Configure o juiz LLM usado quando você clica em Revisar nas traduções visíveis."
+#~ msgid "Configure the LLM judge used when you click Review on visible translations."
+#~ msgstr "Configure o juiz LLM usado quando você clica em Revisar nas traduções visíveis."
 
 msgid "Configure voices and accents"
 msgstr "Configurar vozes e sotaques"
@@ -1821,6 +1836,9 @@ msgstr "Desmarcar tudo"
 
 msgid "Desktop"
 msgstr "Desktop"
+
+msgid "Detailed"
+msgstr "Detalhado"
 
 msgid "Detailed, technical captions for college and adult readers."
 msgstr "Legendas detalhadas e técnicas para leitores universitários e adultos."
@@ -2196,8 +2214,8 @@ msgstr "Exportar para um leitor"
 msgid "Exporting..."
 msgstr "Exportando..."
 
-msgid "Extra review rules for this book."
-msgstr "Regras extras de revisão para este livro."
+#~ msgid "Extra review rules for this book."
+#~ msgstr "Regras extras de revisão para este livro."
 
 msgid "Extract"
 msgstr "Extração"
@@ -2346,6 +2364,12 @@ msgstr "Flagged by review area"
 msgid "Flagged findings"
 msgstr "Flagged findings"
 
+msgid "Flags clear meaning, missing-content, and formatting problems."
+msgstr "Marca problemas claros de significado, conteúdo ausente e formatação."
+
+msgid "Flags smaller wording, tone, and consistency concerns."
+msgstr "Marca problemas menores de redação, tom e consistência."
+
 msgid "Flat Vector"
 msgstr "Vetor plano"
 
@@ -2365,6 +2389,9 @@ msgstr "Formato"
 
 msgid "Formatting and placeholders"
 msgstr "Formatação e espaços reservados"
+
+msgid "Formatting and placeholders are preserved"
+msgstr "A formatação e os espaços reservados são preservados"
 
 msgid "Forms & controls"
 msgstr "Forms & controls"
@@ -2416,6 +2443,9 @@ msgstr "Voz do Gemini"
 
 msgid "General"
 msgstr "Geral"
+
+msgid "General Settings"
+msgstr "Configurações gerais"
 
 msgid "Generate"
 msgstr "Gerar"
@@ -2539,6 +2569,9 @@ msgstr "Agrupe o texto e as imagens de cada página em seções classificadas co
 
 msgid "Grouping content by purpose, then laying out every section as reviewable HTML."
 msgstr "Agrupando o conteúdo por propósito e montando cada seção como HTML revisável."
+
+msgid "Guidance for this book"
+msgstr "Orientações para este livro"
 
 msgid "Header"
 msgstr "Cabeçalho"
@@ -2950,6 +2983,9 @@ msgstr "Aplicativos de biblioteca"
 msgid "Life in the Coral Reef"
 msgstr "Vida no Recife de Coral"
 
+msgid "Light"
+msgstr "Leve"
+
 msgid "Lila wandered between the tall pines, her flashlight catching glimmers of gold among the leaves. The path narrowed, and the wind began to whisper her name."
 msgstr "Lila vagava entre os altos pinheiros, sua lanterna captando brilhos de ouro entre as folhas. O caminho estreitou-se, e o vento começou a sussurrar seu nome."
 
@@ -3178,6 +3214,9 @@ msgstr "Maximizar"
 msgid "Meaning changed"
 msgstr "Significado alterado"
 
+msgid "Meaning is preserved"
+msgstr "O significado é preservado"
+
 msgid "Meaningfulness Prompt"
 msgstr "Prompt de relevância"
 
@@ -3339,6 +3378,9 @@ msgstr "meu-livro-slug"
 
 msgid "N/A"
 msgstr "N/A"
+
+msgid "Names and terms are consistent"
+msgstr "Nomes e termos são consistentes"
 
 msgid "Natural, expressive voices. Best general-purpose default."
 msgstr "Vozes naturais e expressivas. Melhor padrão para uso geral."
@@ -3635,6 +3677,9 @@ msgstr "Not reviewed"
 msgid "Note"
 msgstr "Nota"
 
+msgid "Nothing important is missing or added"
+msgstr "Nada importante está faltando ou foi adicionado"
+
 msgid "Nothing to show"
 msgstr "Nada para mostrar"
 
@@ -3718,6 +3763,9 @@ msgstr "Abrir pré-visualização da página {0}"
 
 msgid "Open Preview"
 msgstr "Open Preview"
+
+msgid "Open this section to tune the model, judge prompt, retry behavior, and exact review thresholds."
+msgstr "Abra esta seção para ajustar o modelo, o prompt do avaliador, o comportamento de novas tentativas e os limites exatos de revisão."
 
 msgid "Open Validation"
 msgstr "Open Validation"
@@ -3889,6 +3937,9 @@ msgstr "Página {0}"
 
 msgid "Page context"
 msgstr "Contexto da página"
+
+msgid "Page context is respected"
+msgstr "O contexto da página é respeitado"
 
 msgid "Page coverage"
 msgstr "Page coverage"
@@ -4540,6 +4591,9 @@ msgstr "Revisar seções excluídas"
 
 msgid "Review strictness"
 msgstr "Rigor da revisão"
+
+msgid "Review style"
+msgstr "Estilo de revisão"
 
 msgid "Review the project details below and confirm the import."
 msgstr "Revise os detalhes do projeto abaixo e confirme a importação."
@@ -5353,6 +5407,9 @@ msgstr "Sucesso"
 msgid "Successfully uploaded"
 msgstr "Enviado com sucesso"
 
+msgid "Suggest improved translations when an entry needs attention"
+msgstr "Sugerir traduções melhoradas quando uma entrada precisar de atenção"
+
 msgid "Suggested modification"
 msgstr "Suggested modification"
 
@@ -5398,8 +5455,8 @@ msgstr "Classes Tailwind"
 msgid "Takes liberties and produces something similar."
 msgstr "Toma liberdades e produz algo semelhante."
 
-msgid "Target audience"
-msgstr "Público-alvo"
+#~ msgid "Target audience"
+#~ msgstr "Público-alvo"
 
 msgid "Target language"
 msgstr "Idioma de destino"
@@ -5802,6 +5859,9 @@ msgstr "A revisão de tradução está em andamento."
 msgid "Translation runs on the typed sections placed by Storyboard. Finish Storyboard before running this stage."
 msgstr "A tradução é executada nas seções classificadas colocadas pelo Storyboard. Termine o Storyboard antes de executar esta etapa."
 
+msgid "Translation sounds natural"
+msgstr "A tradução soa natural"
+
 msgid "Translations"
 msgstr "Traduções"
 
@@ -6021,6 +6081,9 @@ msgstr "Use os títulos das seções literalmente. Rápido, determinístico e pr
 msgid "Use Spread for printed books with facing-page layouts (covers stay solo, then 2+3, 4+5, …). Use Single when each PDF page should be processed on its own."
 msgstr "Use Spread para livros impressos com layouts de páginas opostas (capas ficam sozinhas, depois 2+3, 4+5, …). Use Single quando cada página do PDF deve ser processada individualmente."
 
+msgid "Use these settings for the common review workflow."
+msgstr "Use estas configurações para o fluxo de revisão comum."
+
 msgid "Use this for checks you intentionally want to suppress, such as known false positives."
 msgstr "Use this for checks you intentionally want to suppress, such as known false positives."
 
@@ -6186,6 +6249,9 @@ msgstr "O que faz"
 
 msgid "What should the AI change?"
 msgstr "O que a IA deve alterar?"
+
+msgid "What should the review focus on?"
+msgstr "Em que a revisão deve se concentrar?"
 
 msgid "What we discovered"
 msgstr "O que descobrimos"

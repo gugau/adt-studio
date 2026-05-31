@@ -713,8 +713,8 @@ msgstr "Add your first book"
 msgid "Add your first term"
 msgstr "Add your first term"
 
-msgid "Additional judge guidance"
-msgstr "Additional judge guidance"
+#~ msgid "Additional judge guidance"
+#~ msgstr "Additional judge guidance"
 
 msgid "Additional Languages"
 msgstr "Additional Languages"
@@ -746,6 +746,9 @@ msgstr "Advanced"
 
 msgid "Advanced Settings"
 msgstr "Advanced Settings"
+
+msgid "Advanced settings currently use a custom review style."
+msgstr "Advanced settings currently use a custom review style."
 
 msgid "Adventure Tales - Vol. 1"
 msgstr "Adventure Tales - Vol. 1"
@@ -901,6 +904,9 @@ msgstr "Any OpenAI-compatible endpoint (Ollama, vLLM, Together AI, etc.). Use th
 msgid "Any other section type."
 msgstr "Any other section type."
 
+msgid "Anything the judge should keep in mind for this book."
+msgstr "Anything the judge should keep in mind for this book."
+
 msgid "API"
 msgstr "API"
 
@@ -1001,6 +1007,9 @@ msgstr "Assign..."
 msgid "At the river's edge"
 msgstr "At the river's edge"
 
+msgid "Audience or reading level"
+msgstr "Audience or reading level"
+
 msgid "Audio"
 msgstr "Audio"
 
@@ -1082,6 +1091,9 @@ msgstr "Background: {0}"
 
 msgid "Balanced"
 msgstr "Balanced"
+
+msgid "Balances accuracy, fluency, terminology, and page context."
+msgstr "Balances accuracy, fluency, terminology, and page context."
 
 msgid "base"
 msgstr "base"
@@ -1340,6 +1352,9 @@ msgstr "Choose an existing image from this project"
 msgid "Choose features to include in this export"
 msgstr "Choose features to include in this export"
 
+msgid "Choose how Studio reviews the visible translations when you click Review."
+msgstr "Choose how Studio reviews the visible translations when you click Review."
+
 msgid "Choose how the content should be formatted."
 msgstr "Choose how the content should be formatted."
 
@@ -1490,8 +1505,8 @@ msgstr "Configure each stage — extract, storyboard, layout — then let ADT St
 msgid "Configure features to include in the export"
 msgstr "Configure features to include in the export"
 
-msgid "Configure the LLM judge used when you click Review on visible translations."
-msgstr "Configure the LLM judge used when you click Review on visible translations."
+#~ msgid "Configure the LLM judge used when you click Review on visible translations."
+#~ msgstr "Configure the LLM judge used when you click Review on visible translations."
 
 msgid "Configure voices and accents"
 msgstr "Configure voices and accents"
@@ -1821,6 +1836,9 @@ msgstr "Deselect all"
 
 msgid "Desktop"
 msgstr "Desktop"
+
+msgid "Detailed"
+msgstr "Detailed"
 
 msgid "Detailed, technical captions for college and adult readers."
 msgstr "Detailed, technical captions for college and adult readers."
@@ -2196,8 +2214,8 @@ msgstr "Export to a reader"
 msgid "Exporting..."
 msgstr "Exporting..."
 
-msgid "Extra review rules for this book."
-msgstr "Extra review rules for this book."
+#~ msgid "Extra review rules for this book."
+#~ msgstr "Extra review rules for this book."
 
 msgid "Extract"
 msgstr "Extract"
@@ -2346,6 +2364,12 @@ msgstr "Flagged by review area"
 msgid "Flagged findings"
 msgstr "Flagged findings"
 
+msgid "Flags clear meaning, missing-content, and formatting problems."
+msgstr "Flags clear meaning, missing-content, and formatting problems."
+
+msgid "Flags smaller wording, tone, and consistency concerns."
+msgstr "Flags smaller wording, tone, and consistency concerns."
+
 msgid "Flat Vector"
 msgstr "Flat Vector"
 
@@ -2365,6 +2389,9 @@ msgstr "Format"
 
 msgid "Formatting and placeholders"
 msgstr "Formatting and placeholders"
+
+msgid "Formatting and placeholders are preserved"
+msgstr "Formatting and placeholders are preserved"
 
 msgid "Forms & controls"
 msgstr "Forms & controls"
@@ -2416,6 +2443,9 @@ msgstr "Gemini Voice"
 
 msgid "General"
 msgstr "General"
+
+msgid "General Settings"
+msgstr "General Settings"
 
 msgid "Generate"
 msgstr "Generate"
@@ -2539,6 +2569,9 @@ msgstr "Group each page's text and images into typed sections with a structured 
 
 msgid "Grouping content by purpose, then laying out every section as reviewable HTML."
 msgstr "Grouping content by purpose, then laying out every section as reviewable HTML."
+
+msgid "Guidance for this book"
+msgstr "Guidance for this book"
 
 msgid "Header"
 msgstr "Header"
@@ -2950,6 +2983,9 @@ msgstr "Library apps"
 msgid "Life in the Coral Reef"
 msgstr "Life in the Coral Reef"
 
+msgid "Light"
+msgstr "Light"
+
 msgid "Lila wandered between the tall pines, her flashlight catching glimmers of gold among the leaves. The path narrowed, and the wind began to whisper her name."
 msgstr "Lila wandered between the tall pines, her flashlight catching glimmers of gold among the leaves. The path narrowed, and the wind began to whisper her name."
 
@@ -3178,6 +3214,9 @@ msgstr "Maximize"
 msgid "Meaning changed"
 msgstr "Meaning changed"
 
+msgid "Meaning is preserved"
+msgstr "Meaning is preserved"
+
 msgid "Meaningfulness Prompt"
 msgstr "Meaningfulness Prompt"
 
@@ -3339,6 +3378,9 @@ msgstr "my-book-slug"
 
 msgid "N/A"
 msgstr "N/A"
+
+msgid "Names and terms are consistent"
+msgstr "Names and terms are consistent"
 
 msgid "Natural, expressive voices. Best general-purpose default."
 msgstr "Natural, expressive voices. Best general-purpose default."
@@ -3635,6 +3677,9 @@ msgstr "Not reviewed"
 msgid "Note"
 msgstr "Note"
 
+msgid "Nothing important is missing or added"
+msgstr "Nothing important is missing or added"
+
 msgid "Nothing to show"
 msgstr "Nothing to show"
 
@@ -3718,6 +3763,9 @@ msgstr "Open page preview for {pageId}"
 
 msgid "Open Preview"
 msgstr "Open Preview"
+
+msgid "Open this section to tune the model, judge prompt, retry behavior, and exact review thresholds."
+msgstr "Open this section to tune the model, judge prompt, retry behavior, and exact review thresholds."
 
 msgid "Open Validation"
 msgstr "Open Validation"
@@ -3889,6 +3937,9 @@ msgstr "Page {pageId}"
 
 msgid "Page context"
 msgstr "Page context"
+
+msgid "Page context is respected"
+msgstr "Page context is respected"
 
 msgid "Page coverage"
 msgstr "Page coverage"
@@ -4540,6 +4591,9 @@ msgstr "Review pruned sections"
 
 msgid "Review strictness"
 msgstr "Review strictness"
+
+msgid "Review style"
+msgstr "Review style"
 
 msgid "Review the project details below and confirm the import."
 msgstr "Review the project details below and confirm the import."
@@ -5353,6 +5407,9 @@ msgstr "Success"
 msgid "Successfully uploaded"
 msgstr "Successfully uploaded"
 
+msgid "Suggest improved translations when an entry needs attention"
+msgstr "Suggest improved translations when an entry needs attention"
+
 msgid "Suggested modification"
 msgstr "Suggested modification"
 
@@ -5398,8 +5455,8 @@ msgstr "Tailwind classes"
 msgid "Takes liberties and produces something similar."
 msgstr "Takes liberties and produces something similar."
 
-msgid "Target audience"
-msgstr "Target audience"
+#~ msgid "Target audience"
+#~ msgstr "Target audience"
 
 msgid "Target language"
 msgstr "Target language"
@@ -5802,6 +5859,9 @@ msgstr "Translation review is running."
 msgid "Translation runs on the typed sections placed by Storyboard. Finish Storyboard before running this stage."
 msgstr "Translation runs on the typed sections placed by Storyboard. Finish Storyboard before running this stage."
 
+msgid "Translation sounds natural"
+msgstr "Translation sounds natural"
+
 msgid "Translations"
 msgstr "Translations"
 
@@ -6021,6 +6081,9 @@ msgstr "Use section headings verbatim. Fast, deterministic, and preserves the or
 msgid "Use Spread for printed books with facing-page layouts (covers stay solo, then 2+3, 4+5, …). Use Single when each PDF page should be processed on its own."
 msgstr "Use Spread for printed books with facing-page layouts (covers stay solo, then 2+3, 4+5, …). Use Single when each PDF page should be processed on its own."
 
+msgid "Use these settings for the common review workflow."
+msgstr "Use these settings for the common review workflow."
+
 msgid "Use this for checks you intentionally want to suppress, such as known false positives."
 msgstr "Use this for checks you intentionally want to suppress, such as known false positives."
 
@@ -6184,6 +6247,9 @@ msgstr "What it does"
 
 msgid "What should the AI change?"
 msgstr "What should the AI change?"
+
+msgid "What should the review focus on?"
+msgstr "What should the review focus on?"
 
 msgid "What we discovered"
 msgstr "What we discovered"
