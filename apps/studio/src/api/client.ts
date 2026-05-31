@@ -243,6 +243,9 @@ export interface PageDetail {
     height: number
     bounds?: { x: number; y: number; width: number; height: number }
   }>
+  /** Distinct fonts the extractor found on this page (positioned text only),
+   *  each with the rounded px sizes it appears at. */
+  fonts: Array<{ family: string; sizes: number[] }>
   versions: {
     imageClassification: number | null
     imageCropping: number | null

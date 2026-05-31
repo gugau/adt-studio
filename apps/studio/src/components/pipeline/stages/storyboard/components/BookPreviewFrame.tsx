@@ -22,6 +22,7 @@ import {
   weightToToken,
 } from "./iframe-computed-styles"
 import { INTERACTIVE_SCRIPT, INTERACTIVE_STYLES } from "./iframe-interactive"
+import { primaryFontFamily } from "@adt/types"
 
 export type { ComputedTypographyStyles }
 
@@ -203,6 +204,7 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
         fontWeight: null,
         lineHeight: null,
         textAlign: null,
+        fontFamily: null,
       }
       const doc = iframeRef.current?.contentDocument
       const win = doc?.defaultView
@@ -213,12 +215,20 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
       if (!el) return empty
       const s = win.getComputedStyle(el)
       const fontSize = parsePx(s.fontSize)
+      // The font is declared on the inner styled run(s) (fixed-layout
+      // `data-segments` spans), not the paragraph itself — so walk into the
+      // first descendant that carries a font-family and read its resolved
+      // family. Fall back to the element's own computed family.
+      const fontEl =
+        (el.querySelector('[style*="font-family"]') as HTMLElement | null) ?? el
+      const family = primaryFontFamily(win.getComputedStyle(fontEl).fontFamily)
       return {
         fontSize,
         color: rgbToHex(s.color),
         fontWeight: weightToToken(s.fontWeight),
         lineHeight: lineHeightToMultiplier(s.lineHeight, fontSize),
         textAlign: normalizeTextAlign(s.textAlign),
+        fontFamily: family || null,
       }
     },
   }))

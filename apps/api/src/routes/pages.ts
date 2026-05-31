@@ -4,7 +4,7 @@ import path from "node:path"
 import { z } from "zod"
 import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
-import { parseBookLabel, ImageClassificationOutput, PageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES } from "@adt/types"
+import { parseBookLabel, ImageClassificationOutput, PageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES, primaryFontFamily } from "@adt/types"
 import type { ContentNodeData } from "@adt/types"
 import { openBookDb } from "@adt/storage"
 import { createBookStorage } from "@adt/storage"
@@ -43,6 +43,10 @@ interface PageDetail {
     height: number
     bounds?: { x: number; y: number; width: number; height: number }
   }>
+  /** Distinct fonts the extractor found on this page (from positioned text),
+   *  each with the rounded sizes (px) it appears at. Empty for reflowable
+   *  books, which don't extract positioned text. */
+  fonts: Array<{ family: string; sizes: number[] }>
   versions: {
     sectioning: number | null
     imageClassification: number | null
@@ -50,6 +54,35 @@ interface PageDetail {
     rendering: number | null
     imageCaptioning: number | null
   }
+}
+
+/**
+ * Summarize the fonts used on a page from its stored positioned-text node:
+ * the distinct primary families, each with the rounded px sizes it appears
+ * at. Defensive against shape drift (older/missing data) — returns [] rather
+ * than throwing. Sorted by family for stable display.
+ */
+function derivePageFonts(data: unknown): PageDetail["fonts"] {
+  const drawItems = (data as { drawItems?: unknown } | null)?.drawItems
+  if (!Array.isArray(drawItems)) return []
+  const sizesByFamily = new Map<string, Set<number>>()
+  for (const item of drawItems) {
+    const segments = (item as { segments?: unknown })?.segments
+    if (!Array.isArray(segments)) continue
+    for (const seg of segments) {
+      const style = (seg as { style?: Record<string, string> })?.style
+      if (!style) continue
+      const family = primaryFontFamily(style["font-family"] ?? "")
+      if (!family) continue
+      const size = parseFloat(style["font-size"] ?? "")
+      const sizes = sizesByFamily.get(family) ?? new Set<number>()
+      if (Number.isFinite(size)) sizes.add(Math.round(size))
+      sizesByFamily.set(family, sizes)
+    }
+  }
+  return [...sizesByFamily.entries()]
+    .map(([family, sizes]) => ({ family, sizes: [...sizes].sort((a, b) => a - b) }))
+    .sort((a, b) => a.family.localeCompare(b.family))
 }
 
 function getDbPath(label: string, booksDir: string): string {
@@ -567,6 +600,7 @@ export function createPageRoutes(
       const imageCroppingNode = getNodeData("image-cropping")
       const renderingNode = getNodeData("web-rendering")
       const imageCaptioningNode = getNodeData("image-captioning")
+      const positionedTextNode = getNodeData("positioned-text")
 
       // Validate the stored blob against the canonical tree schema; if it
       // doesn't match (older data or a failed run), return null so the
@@ -613,6 +647,7 @@ export function createPageRoutes(
         rendering: renderingNode?.data ?? null,
         imageCaptioning: imageCaptioningNode?.data ?? null,
         imagesMeta,
+        fonts: derivePageFonts(positionedTextNode?.data),
         versions: {
           sectioning: sectioningNode?.version ?? null,
           imageClassification: imageClassNode?.version ?? null,

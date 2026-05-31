@@ -58,6 +58,17 @@ export function resolveGoogleFont(declared: string): GoogleFontEntry | null {
   return GOOGLE_FONTS.find((f) => f.key === key) ?? null
 }
 
+/**
+ * Extract the primary (declared) family from a CSS font-family chain — the
+ * first token, with surrounding quotes stripped. e.g. `'Mouse Memoirs',serif`
+ * and `"Mouse Memoirs", Merriweather, serif` both → `Mouse Memoirs`. Returns
+ * "" for empty input.
+ */
+export function primaryFontFamily(chain: string): string {
+  if (!chain) return ""
+  return chain.split(",")[0].trim().replace(/^["']|["']$/g, "")
+}
+
 /** Wrap a CSS family name in SINGLE quotes when it contains whitespace.
  *  Single quotes (not double) because these values are serialized into
  *  double-quoted inline `style="..."` attributes — an embedded double quote

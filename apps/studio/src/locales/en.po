@@ -2313,6 +2313,13 @@ msgstr "Flat Vector"
 msgid "Flexible"
 msgstr "Flexible"
 
+msgid "Font"
+msgstr "Font"
+
+#. placeholder {0}: String(page.fonts.length)
+msgid "Fonts ({0})"
+msgstr "Fonts ({0})"
+
 #. placeholder {0}: i18n._(preset.title)
 #. placeholder {1}: recommendedOption.label
 msgid "For {0}, we recommend {1}."

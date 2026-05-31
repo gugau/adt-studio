@@ -15,6 +15,7 @@ export {
   normalizeFontKey,
   resolveGoogleFont,
   cssQuoteFamily,
+  primaryFontFamily,
   googleFontsCss2Url,
   googleFontsReferencedIn,
 } from "./google-fonts.js"
