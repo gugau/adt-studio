@@ -12,7 +12,12 @@ function templateToString(strings: TemplateStringsArray, values: unknown[]) {
     text += strings[index]
     if (index < values.length) text += String(values[index])
   }
-  return text
+  // Resolve inline ICU plurals (e.g. "1 {count, plural, one {item} other {items}}")
+  // the way real Lingui would, using the count rendered immediately before.
+  return text.replace(
+    /(\d+)\s+\{[^,}]+, plural, one \{([^}]*)\} other \{([^}]*)\}\}/g,
+    (_match, count, one, other) => `${count} ${Number(count) === 1 ? one : other}`,
+  )
 }
 
 const i18n = {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo, type ChangeEvent } from "react"
 import { createPortal } from "react-dom"
 import { Link } from "@tanstack/react-router"
-import { Check, ChevronDown, ChevronRight, ChevronUp, Languages, Loader2, Play, Pause, Plus, RotateCcw, Save, Settings, Trash2, Type, Upload, WandSparkles, X } from "lucide-react"
+import { AudioLines, Check, ChevronDown, ChevronRight, ChevronUp, Languages, Loader2, Play, Pause, Plus, RotateCcw, Save, Settings, Trash2, Type, Upload, WandSparkles, X } from "lucide-react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { api, getAudioUrl, BASE_URL } from "@/api/client"
 import type { TextCatalogEntry, VersionEntry, WordTimestamp, WordTimestampEntry } from "@/api/client"
@@ -9,11 +9,13 @@ import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useBook } from "@/hooks/use-books"
 import { useStepHeader } from "../../components/StepViewRouter"
+import { LoadingState } from "../../components/LoadingState"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useBookTasks } from "@/hooks/use-book-tasks"
 import { useStageMissingCounts } from "@/hooks/use-stage-missing-counts"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
+import { StageEmptyState } from "../../components/StageEmptyState"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import { cn } from "@/lib/utils"
 import { normalizeLocale } from "@/lib/languages"
@@ -615,12 +617,7 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
   ) : null
 
   if (!showRunCard && isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">{t`Loading text catalog...`}</span>
-      </div>
-    )
+    return <LoadingState stageSlug="translate" label={t`Loading text catalog...`} />
   }
 
   // Resolve speech config summary for display
@@ -883,18 +880,14 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
 
       {/* Entries */}
       {isSourceLanguagePending ? (
-        <div className="flex items-center justify-center py-12 text-muted-foreground">
-          <Loader2 className="w-4 h-4 animate-spin mr-2" />
-          <span className="text-sm">{t`Resolving source language...`}</span>
-        </div>
+        <LoadingState stageSlug="translate" label={t`Resolving source language...`} />
       ) : selectedPageId && displayEntries.length === 0 && entries.length > 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-          <div className="w-12 h-12 rounded-full bg-pink-50 flex items-center justify-center mb-3">
-            <Languages className="w-6 h-6 text-pink-300" />
-          </div>
-          <p className="text-sm font-medium">{t`No translations for this page`}</p>
-          <p className="text-xs mt-1">{t`This page has no translatable text entries`}</p>
-        </div>
+        <StageEmptyState
+          icon={isSpeechStage ? AudioLines : Languages}
+          color={isSpeechStage ? "rose" : "pink"}
+          title={isSpeechStage ? t`No audio for this page` : t`No translations for this page`}
+          subtitle={isSpeechStage ? t`This page has no entries to synthesize` : t`This page has no translatable text entries`}
+        />
       ) : (
       <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
         <div style={{ height: virtualizer.getTotalSize(), width: "100%", position: "relative" }}>

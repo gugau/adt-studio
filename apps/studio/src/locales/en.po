@@ -65,16 +65,11 @@ msgstr "(template)"
 msgid "{0} — type country or Enter for base"
 msgstr "{0} — type country or Enter for base"
 
-#. placeholder {0}: finding.count
-#. placeholder {1}: finding.count === 1 ? "issue" : "issues"
-#. placeholder {1}: finding.count === 1 ? "manual review item" : "manual review items"
-msgid "{0} {1}"
-msgstr "{0} {1}"
+#~ msgid "{0} {1}"
+#~ msgstr "{0} {1}"
 
-#. placeholder {0}: activeMetrics.pagesReviewed
-#. placeholder {1}: activeMetrics.pagesReviewed === 1 ? "page" : "pages"
-msgid "{0} {1} reviewed so far"
-msgstr "{0} {1} reviewed so far"
+#~ msgid "{0} {1} reviewed so far"
+#~ msgstr "{0} {1} reviewed so far"
 
 #. placeholder {0}: progress?.page
 #. placeholder {1}: progress?.totalPages
@@ -148,6 +143,10 @@ msgstr "{0} of {1} items"
 msgid "{0} pages"
 msgstr "{0} pages"
 
+#. placeholder {0}: section.criteria.length - reviewed
+msgid "{0} pending"
+msgstr "{0} pending"
+
 #. placeholder {0}: String(displayQuizzes.length)
 msgid "{0} questions"
 msgstr "{0} questions"
@@ -197,6 +196,12 @@ msgstr "{0}m ago"
 #. placeholder {0}: String(Math.floor(diff / 1000))
 msgid "{0}s ago"
 msgstr "{0}s ago"
+
+msgid "{count} {count, plural, one {issue} other {issues}}"
+msgstr "{count} {count, plural, one {issue} other {issues}}"
+
+msgid "{count} {count, plural, one {manual review item} other {manual review items}}"
+msgstr "{count} {count, plural, one {manual review item} other {manual review items}}"
 
 msgid "{count} translations"
 msgstr "{count} translations"
@@ -251,11 +256,17 @@ msgstr "{missingForCurrentStage} entry/entries are missing audio. Re-run to gene
 msgid "{missingForCurrentStage} entry/entries are missing translations. Re-run to fill the missing items."
 msgstr "{missingForCurrentStage} entry/entries are missing translations. Re-run to fill the missing items."
 
+msgid "{needsChanges} flagged"
+msgstr "{needsChanges} flagged"
+
 msgid "{pageCount} {pageCount, plural, one {page} other {pages}}"
 msgstr "{pageCount} {pageCount, plural, one {page} other {pages}}"
 
 msgid "{pageCount} pages"
 msgstr "{pageCount} pages"
+
+msgid "{pagesReviewed} {pagesReviewed, plural, one {page} other {pages}} reviewed so far"
+msgstr "{pagesReviewed} {pagesReviewed, plural, one {page} other {pages}} reviewed so far"
 
 msgid "{pdfFilename} · {pageCount} pages"
 msgstr "{pdfFilename} · {pageCount} pages"
@@ -426,6 +437,9 @@ msgstr "A section with text and multiple images."
 msgid "A section with text in a highlighted box."
 msgstr "A section with text in a highlighted box."
 
+msgid "A select-all-that-apply activity where the learner can choose more than one option per question."
+msgstr "A select-all-that-apply activity where the learner can choose more than one option per question."
+
 msgid "A separator page between sections."
 msgstr "A separator page between sections."
 
@@ -566,6 +580,9 @@ msgstr "Activity: Fill in the Blank"
 
 msgid "Activity: Matching"
 msgstr "Activity: Matching"
+
+msgid "Activity: Multi-Select"
+msgstr "Activity: Multi-Select"
 
 msgid "Activity: Multiple Choice"
 msgstr "Activity: Multiple Choice"
@@ -3030,11 +3047,17 @@ msgstr "Loading Book..."
 msgid "Loading books..."
 msgstr "Loading books..."
 
+msgid "Loading export..."
+msgstr "Loading export..."
+
 msgid "Loading glossary..."
 msgstr "Loading glossary..."
 
 msgid "Loading image..."
 msgstr "Loading image..."
+
+msgid "Loading images..."
+msgstr "Loading images..."
 
 msgid "Loading logs..."
 msgstr "Loading logs..."
@@ -3089,6 +3112,9 @@ msgstr "Loading template..."
 
 msgid "Loading text catalog..."
 msgstr "Loading text catalog..."
+
+msgid "Loading validation..."
+msgstr "Loading validation..."
 
 msgid "Loading voice mappings..."
 msgstr "Loading voice mappings..."
@@ -3405,6 +3431,9 @@ msgstr "No API key for {0} yet. Add one in Book settings to enable this provider
 
 msgid "No assessment"
 msgstr "No assessment"
+
+msgid "No audio for this page"
+msgstr "No audio for this page"
 
 msgid "No books match your search"
 msgstr "No books match your search"
@@ -3851,6 +3880,9 @@ msgstr "Packaging"
 msgid "Packaging failed"
 msgstr "Packaging failed"
 
+msgid "Packaging preview..."
+msgstr "Packaging preview..."
+
 msgid "Packaging validation results..."
 msgstr "Packaging validation results..."
 
@@ -4089,6 +4121,12 @@ msgstr "Precipitation"
 
 msgid "Prefer terms central to the book's subject matter. Skip generic vocabulary and proper nouns that don't carry meaning beyond the page."
 msgstr "Prefer terms central to the book's subject matter. Skip generic vocabulary and proper nouns that don't carry meaning beyond the page."
+
+msgid "Preserves the source PDF's exact page layout"
+msgstr "Preserves the source PDF's exact page layout"
+
+msgid "Preserves the source PDF's exact page layout — images and positioned text rendered in place."
+msgstr "Preserves the source PDF's exact page layout — images and positioned text rendered in place."
 
 msgid "Preset"
 msgstr "Preset"
@@ -4626,6 +4664,9 @@ msgstr "Run Storyboard to generate sections you can match sign-language videos t
 
 msgid "Run the pipeline"
 msgstr "Run the pipeline"
+
+msgid "Run the pipeline to extract content"
+msgstr "Run the pipeline to extract content"
 
 msgid "Run TOC"
 msgstr "Run TOC"
@@ -5273,8 +5314,8 @@ msgstr "Stretch"
 msgid "Strict"
 msgstr "Strict"
 
-msgid "Strict grid template that repeats across pages."
-msgstr "Strict grid template that repeats across pages."
+#~ msgid "Strict grid template that repeats across pages."
+#~ msgstr "Strict grid template that repeats across pages."
 
 msgid "Strikethrough"
 msgstr "Strikethrough"
@@ -5595,6 +5636,9 @@ msgstr "This is Pip! He is a happy caramel dog with a very wiggly tail. Pip love
 
 msgid "This page has no captioned images"
 msgstr "This page has no captioned images"
+
+msgid "This page has no entries to synthesize"
+msgstr "This page has no entries to synthesize"
 
 msgid "This page has no sectioning output"
 msgstr "This page has no sectioning output"

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Loader2, RotateCcw, ShieldCheck } from "lucide-react"
+import { RotateCcw, ShieldCheck } from "lucide-react"
 import { StageBlockedState } from "@/components/pipeline/components/StageBlockedState"
+import { LoadingState } from "@/components/pipeline/components/LoadingState"
 import { useAllPagesPruned } from "@/hooks/use-all-pages-pruned"
 import { useNavigate, useSearch } from "@tanstack/react-router"
 import { Trans, useLingui } from "@lingui/react/macro"
@@ -29,12 +30,12 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
   const { t } = useLingui()
   const navigate = useNavigate()
   const search = useSearch({ strict: false }) as { tab?: string }
-  const { stageState } = useBookRun()
+  const { stageState, isStatusLoading } = useBookRun()
   const { isTaskRunning, getTask } = useBookTasks(bookLabel)
   const reviewerValidationCatalog = useReviewerValidationCatalog(bookLabel)
   const reviewerValidationEnabled = reviewerValidationCatalog.data?.enabled ?? false
   const storyboardDone = stageState("storyboard") === "done"
-  const { allPruned } = useAllPagesPruned(bookLabel)
+  const { allPruned, isLoading: prunedLoading } = useAllPagesPruned(bookLabel)
   const ranRef = useRef(false)
   const [isSubmittingPackage, setIsSubmittingPackage] = useState(false)
   const [pendingPackagingTaskId, setPendingPackagingTaskId] = useState<string | null>(null)
@@ -86,35 +87,22 @@ export function ValidationView({ bookLabel }: { bookLabel: string }) {
     }
   }, [getTask, pendingPackagingTaskId, t])
 
+  if (isStatusLoading || prunedLoading) {
+    return <LoadingState stageSlug="validation" label={<Trans>Loading validation...</Trans>} />
+  }
+
   if (!storyboardDone) {
-    return (
-      <StageBlockedState
-        bookLabel={bookLabel}
-        reason="storyboard-missing"
-        stageLabel={<Trans>Validation</Trans>}
-      />
-    )
+    return <StageBlockedState bookLabel={bookLabel} reason="storyboard-missing" stageLabel={<Trans>Validation</Trans>} />
   }
 
   if (allPruned) {
-    return (
-      <StageBlockedState
-        bookLabel={bookLabel}
-        reason="all-pruned"
-        stageLabel={<Trans>Validation</Trans>}
-      />
-    )
+    return <StageBlockedState bookLabel={bookLabel} reason="all-pruned" stageLabel={<Trans>Validation</Trans>} />
   }
 
   const packaging = isSubmittingPackage || pendingPackagingTaskId !== null || isTaskRunning("package-adt")
 
   if (packaging) {
-    return (
-      <div className="flex h-full items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        <span className="text-sm"><Trans>Packaging validation results...</Trans></span>
-      </div>
-    )
+    return <LoadingState stageSlug="validation" label={<Trans>Packaging validation results...</Trans>} />
   }
 
   return (

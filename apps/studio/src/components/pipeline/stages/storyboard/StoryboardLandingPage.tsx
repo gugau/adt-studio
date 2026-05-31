@@ -36,7 +36,7 @@ import { useStageStatus } from "@/hooks/use-stage-status"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import {
-  listSelectableRenderStrategies,
+  listDefaultRenderStrategies,
   normalizeDefaultRenderStrategy,
 } from "@/lib/render-strategy"
 import { RenderStrategyVisual } from "./components/RenderStrategyVisual"
@@ -71,8 +71,7 @@ const LANDING_STRATEGY_ITEMS: LandingStrategyEntry[] = [
   },
   {
     id: "fixed_layout",
-    description: msg`Strict grid template that repeats across pages.`,
-    comingSoon: true,
+    description: msg`Preserves the source PDF's exact page layout — images and positioned text rendered in place.`,
   },
   {
     id: "two_column_story",
@@ -195,7 +194,7 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
       strategies,
     )
     setDefaultRenderStrategy(normalized)
-    const selectable = new Set(listSelectableRenderStrategies(strategies))
+    const selectable = new Set(listDefaultRenderStrategies(strategies))
     setRenderStrategyItems(
       LANDING_STRATEGY_ITEMS.filter(
         (item) => item.comingSoon || selectable.has(item.id),

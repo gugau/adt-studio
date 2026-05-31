@@ -10,8 +10,9 @@ import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import { StageRunCard } from "../../components/StageRunCard"
+import { StageContentGuard } from "../../components/StageContentGuard"
+import { StageEmptyState } from "../../components/StageEmptyState"
 import { useSectionNav } from "@/routes/books.$label"
-import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
 
 
@@ -261,12 +262,11 @@ function PageCaptions({
 
   if (filterSectionIndex != null && filteredCaptions.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-        <div className="w-12 h-12 rounded-full bg-teal-50 flex items-center justify-center mb-3">
-          <ImageIcon className="w-6 h-6 text-teal-300" />
-        </div>
-        <p className="text-sm font-medium">{t`No images in this section`}</p>
-      </div>
+      <StageEmptyState
+        icon={ImageIcon}
+        color="teal"
+        title={t`No images in this section`}
+      />
     )
   }
 
@@ -419,18 +419,25 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
     return () => setExtra(null)
   }, [pages, totalImages, displayPages.length, setExtra, selectedPageId, selectedPageSummary?.pageNumber, selectedPageSummary?.sectionCount, hasSections, sectionIndex, setSectionIndex])
 
-  if (!showRunCard && isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">{t`Loading pages...`}</span>
-      </div>
-    )
-  }
+  const singlePageEmptyState = selectedPageId ? (
+    <StageEmptyState
+      icon={ImageIcon}
+      color="teal"
+      title={t`No captions for this page`}
+      subtitle={t`This page has no captioned images`}
+    />
+  ) : undefined
 
-  if (showRunCard || pagesWithImages.length === 0 || !hasCaptionData) {
-    return (
-      <div className="p-4">
+  const showNoImagesEmpty =
+    selectedPageId && displayPages.length === 0 && pagesWithImages.length > 0
+
+  return (
+    <StageContentGuard
+      stageSlug="captions"
+      isLoading={!showRunCard && isLoading}
+      loadingLabel={t`Loading pages...`}
+      showRunCard={showRunCard || pagesWithImages.length === 0 || !hasCaptionData}
+      runCard={
         <StageRunCard
           stageSlug="captions"
           isRunning={captionsRunning}
@@ -438,40 +445,25 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
           onRun={handleRunCaptions}
           disabled={!hasApiKey || captionsRunning}
         />
-      </div>
-    )
-  }
-
-  if (selectedPageId && displayPages.length === 0 && pagesWithImages.length > 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-        <div className="w-12 h-12 rounded-full bg-teal-50 flex items-center justify-center mb-3">
-          <ImageIcon className="w-6 h-6 text-teal-300" />
-        </div>
-        <p className="text-sm font-medium">{t`No images on this page`}</p>
-        <button
-          type="button"
-          onClick={() => onSelectPage?.(null)}
-          className="mt-3 text-xs font-medium text-teal-600 hover:text-teal-700 hover:underline transition-colors"
-        >
-          {t`Show all`}
-        </button>
-      </div>
-    )
-  }
-
-  const singlePageEmptyState = selectedPageId ? (
-    <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-      <div className="w-12 h-12 rounded-full bg-teal-50 flex items-center justify-center mb-3">
-        <ImageIcon className="w-6 h-6 text-teal-300" />
-      </div>
-      <p className="text-sm font-medium">{t`No captions for this page`}</p>
-      <p className="text-xs mt-1">{t`This page has no captioned images`}</p>
-    </div>
-  ) : undefined
-
-  return (
-    <div className="space-y-4">
+      }
+    >
+      {showNoImagesEmpty ? (
+        <StageEmptyState
+          icon={ImageIcon}
+          color="teal"
+          title={t`No images on this page`}
+          cta={
+            <button
+              type="button"
+              onClick={() => onSelectPage?.(null)}
+              className="text-xs font-medium text-teal-600 hover:text-teal-700 hover:underline transition-colors"
+            >
+              {t`Show all`}
+            </button>
+          }
+        />
+      ) : (
+    <div className="flex flex-1 flex-col gap-4">
       {selectedPageId && (
         <div className="flex justify-end px-4 pt-3">
           <button
@@ -495,5 +487,7 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
         />
       ))}
     </div>
+      )}
+    </StageContentGuard>
   )
 }
