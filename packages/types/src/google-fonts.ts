@@ -53,6 +53,16 @@ export const GOOGLE_FONTS: readonly GoogleFontEntry[] = [
   { key: "atkinsonhyperlegible", family: "Atkinson Hyperlegible" },
   { key: "lexend", family: "Lexend" },
   { key: "lora", family: "Lora" },
+  { key: "opensans", family: "Open Sans" },
+  { key: "roboto", family: "Roboto" },
+  { key: "inter", family: "Inter" },
+  { key: "notosans", family: "Noto Sans" },
+  { key: "notoserif", family: "Noto Serif" },
+  { key: "ptsans", family: "PT Sans" },
+  { key: "ptserif", family: "PT Serif" },
+  { key: "patrickhand", family: "Patrick Hand" },
+  { key: "edunswactfoundation", family: "Edu NSW ACT Foundation" },
+  { key: "notosansmono", family: "Noto Sans Mono" },
 ]
 
 /** Look up a loadable entry by its Google family display name. */
@@ -179,16 +189,23 @@ export function googleFontsCss2Url(families: string[]): string | null {
 }
 
 /**
- * Scan arbitrary rendered HTML/CSS text and return the Google Fonts family
- * display names referenced in it (those whose `@font-face` we should load).
- * Matches the family name verbatim (the extractor emits the Google family
- * name), so a page that uses `font-family:'Mouse Memoirs',...` is detected.
+ * Scan rendered HTML/CSS and return the Google Fonts family display names
+ * referenced in `font-family` declarations (those whose `@font-face` we should
+ * load). Matching is scoped to declaration values — not arbitrary body text —
+ * so short family names (e.g. "Inter") don't false-match prose like
+ * "Internet". HTML-escaped JSON in `data-segments` (`font-family&quot;:`) is
+ * skipped because the `:` must follow `font-family` directly.
  */
 export function googleFontsReferencedIn(text: string): string[] {
   if (!text) return []
+  // Collect just the values of font-family declarations (inline styles + CSS
+  // rules). The value runs until the next `;` / `}` / closing quote / `<`.
+  const decls = text.match(/font-family\s*:\s*[^;"}<]+/gi)
+  if (!decls) return []
+  const haystack = decls.join("\n")
   const found: string[] = []
   for (const f of GOOGLE_FONTS) {
-    if (text.includes(f.family)) found.push(f.family)
+    if (haystack.includes(f.family)) found.push(f.family)
   }
   return found
 }

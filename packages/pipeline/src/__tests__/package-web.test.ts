@@ -113,7 +113,7 @@ describe("renderPageHtml", () => {
 
   it("injects a Google Fonts stylesheet for fonts the page actually uses", () => {
     const html = renderPageHtml({
-      content: `<p><span style="font-family:&quot;Mouse Memoirs&quot;,Merriweather,serif">Hi</span></p>`,
+      content: `<p><span style="font-family:'Mouse Memoirs',Merriweather,serif">Hi</span></p>`,
       language: "en",
       sectionId: "pg001",
       pageTitle: "Test",

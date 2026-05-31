@@ -33,7 +33,7 @@ import type {
 } from "@adt/types"
 import { WebRenderingOutput as WebRenderingOutputSchema } from "@adt/types"
 import { googleFontsReferencedIn, googleFontsCss2Url } from "@adt/types"
-import { resolveReflowableFont, reflowableFontFamilyChain, type FontCategory } from "@adt/types"
+import { resolveReflowableFont, reflowableFontFamilyChain } from "@adt/types"
 import { bundleGoogleFontsIntoCss } from "./google-fonts-bundle.js"
 import type { Progress } from "./progress.js"
 import { nullProgress } from "./progress.js"
@@ -1093,7 +1093,8 @@ export function resolveReflowableFontChain(
 ): string | undefined {
   if (opts.fixedLayout) return undefined
   const row = storage.getLatestNodeData("font-profile", "book")
-  const category = (row?.data as { category?: FontCategory | null } | undefined)?.category ?? null
+  // The font profile only records the auto-detected categories (serif/sans).
+  const category = (row?.data as { category?: "serif" | "sans" | null } | undefined)?.category ?? null
   const font = resolveReflowableFont(opts.reflowableFont, category)
   if (font.family === "Merriweather") return undefined // global default already
   return reflowableFontFamilyChain(font)

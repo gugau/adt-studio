@@ -2590,6 +2590,9 @@ msgstr "Agrupando el contenido por propósito y maquetando cada sección como HT
 msgid "Groups image regions into discrete illustrations on each page."
 msgstr "Agrupa regiones de imágenes en ilustraciones discretas en cada página."
 
+msgid "Handwriting"
+msgstr "Manuscrita"
+
 msgid "Header"
 msgstr "Encabezado"
 
@@ -3371,6 +3374,9 @@ msgstr "Moderado"
 
 msgid "Modified {modifiedLabel}"
 msgstr "Modificado el {modifiedLabel}"
+
+msgid "Monospace"
+msgstr "Monoespaciada"
 
 msgid "More info"
 msgstr "Más información"

@@ -22,6 +22,7 @@ export {
 
 export {
   type FontCategory,
+  type DetectedFontCategory,
   type ReflowableFont,
   type ReflowableFontSetting,
   REFLOWABLE_FONTS,

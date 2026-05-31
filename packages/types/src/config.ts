@@ -2,6 +2,7 @@ import { z } from "zod"
 import { ImageFilters } from "./image-filtering.js"
 import { SpeechConfig } from "./speech.js"
 import { ReviewerValidationConfig } from "./reviewer-validation-config.js"
+import { REFLOWABLE_FONT_SETTINGS } from "./reflowable-fonts.js"
 
 export const DEFAULT_LLM_MAX_RETRIES = 5
 
@@ -116,9 +117,7 @@ export const AppConfig = z
     /** Base font for reflowable (non-fixed-layout) output. `auto` (default)
      *  picks the detected serif/sans category's default; an explicit id
      *  overrides. Ignored for fixed-layout books (they keep original fonts). */
-    reflowable_font: z
-      .enum(["auto", "atkinson-hyperlegible", "lexend", "merriweather", "lora"])
-      .optional(),
+    reflowable_font: z.enum(REFLOWABLE_FONT_SETTINGS).optional(),
     visual_review_prompt: z.string().optional(),
     visual_review_max_iterations: z.number().int().min(1).max(50).optional(),
     section_render_strategies: z.record(z.string(), z.string()).optional(),

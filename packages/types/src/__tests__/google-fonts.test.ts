@@ -82,9 +82,19 @@ describe("googleFontsCss2Url", () => {
 })
 
 describe("googleFontsReferencedIn", () => {
-  it("detects the Google family name in rendered html", () => {
-    const html = `<span style="font-family:&quot;Mouse Memoirs&quot;,serif">x</span>`
+  it("detects the Google family in a font-family declaration", () => {
+    const html = `<span style="font-family:'Mouse Memoirs',Merriweather,serif">x</span>`
     expect(googleFontsReferencedIn(html)).toEqual(["Mouse Memoirs"])
+  })
+
+  it("detects a single-word family in a CSS rule", () => {
+    const html = `<style>body{font-family:Inter,'Merriweather',sans-serif}</style>`
+    expect(googleFontsReferencedIn(html)).toEqual(["Inter"])
+  })
+
+  it("does NOT match a family name that appears only in body text", () => {
+    // "Internet" contains "Inter" — must not trigger a font load.
+    expect(googleFontsReferencedIn(`<p>The Internet changed everything.</p>`)).toEqual([])
   })
 
   it("returns nothing when no registered family appears", () => {

@@ -542,7 +542,10 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
                     <div className="flex flex-col items-start">
                       <span>{f.family}</span>
                       <span className="text-xs text-muted-foreground">
-                        {f.category === "sans" ? <Trans>Sans-serif</Trans> : <Trans>Serif</Trans>}
+                        {f.category === "sans" ? <Trans>Sans-serif</Trans>
+                          : f.category === "serif" ? <Trans>Serif</Trans>
+                          : f.category === "handwriting" ? <Trans>Handwriting</Trans>
+                          : <Trans>Monospace</Trans>}
                       </span>
                     </div>
                   </SelectItem>

@@ -2592,6 +2592,9 @@ msgstr "Regroupement du contenu par objectif, puis mise en page de chaque sectio
 msgid "Groups image regions into discrete illustrations on each page."
 msgstr "Regroupe les régions d'image en illustrations distinctes sur chaque page."
 
+msgid "Handwriting"
+msgstr "Manuscrite"
+
 msgid "Header"
 msgstr "En-tête"
 
@@ -3373,6 +3376,9 @@ msgstr "Modéré"
 
 msgid "Modified {modifiedLabel}"
 msgstr "Modifié le {modifiedLabel}"
+
+msgid "Monospace"
+msgstr "À chasse fixe"
 
 msgid "More info"
 msgstr "Plus d'infos"

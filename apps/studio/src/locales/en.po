@@ -2590,6 +2590,9 @@ msgstr "Grouping content by purpose, then laying out every section as reviewable
 msgid "Groups image regions into discrete illustrations on each page."
 msgstr "Groups image regions into discrete illustrations on each page."
 
+msgid "Handwriting"
+msgstr "Handwriting"
+
 msgid "Header"
 msgstr "Header"
 
@@ -3371,6 +3374,9 @@ msgstr "Moderate"
 
 msgid "Modified {modifiedLabel}"
 msgstr "Modified {modifiedLabel}"
+
+msgid "Monospace"
+msgstr "Monospace"
 
 msgid "More info"
 msgstr "More info"
