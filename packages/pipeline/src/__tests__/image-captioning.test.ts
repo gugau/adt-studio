@@ -12,7 +12,7 @@ import {
 } from "../image-captioning.js"
 
 function makeFakeLLMModel(
-  captions: Array<{ image_id: string; reasoning: string; caption: string }>,
+  captions: Array<{ image_id: string; reasoning: string; caption: string; decorative?: boolean }>,
   onCall?: (options: GenerateObjectOptions) => void
 ): LLMModel {
   return {
@@ -459,6 +459,60 @@ describe("captionPageImages", () => {
     )
     expect(validation?.valid).toBe(true)
     expect(validation?.errors).toEqual([])
+  })
+
+  it("marks decorative images, clears their caption, and omits the flag for meaningful ones", async () => {
+    let capturedOptions: GenerateObjectOptions | null = null
+    const llm = makeFakeLLMModel(
+      [
+        {
+          image_id: "pg001_im001",
+          reasoning: "Small pencil icon prompting the reader to write",
+          caption: "should be dropped",
+          decorative: true,
+        },
+        {
+          image_id: "pg001_im002",
+          reasoning: "A diagram",
+          caption: "Parts of a plant",
+        },
+      ],
+      (options) => {
+        capturedOptions = options
+      }
+    )
+
+    const result = await captionPageImages(
+      {
+        pageId: "pg001",
+        pageImageBase64: "base64page",
+        images: [
+          { imageId: "pg001_im001", imageBase64: "base64a", width: 14, height: 14 },
+          { imageId: "pg001_im002", imageBase64: "base64b", width: 420, height: 300 },
+        ],
+        language: "en",
+      },
+      { promptName: "image_captioning", modelId: "openai:gpt-4.1", maxRetries: 5 },
+      llm
+    )
+
+    expect(result.captions[0]).toEqual({
+      imageId: "pg001_im001",
+      reasoning: "Small pencil icon prompting the reader to write",
+      caption: "",
+      decorative: true,
+    })
+    expect(result.captions[1]).toEqual({
+      imageId: "pg001_im002",
+      reasoning: "A diagram",
+      caption: "Parts of a plant",
+    })
+    expect("decorative" in result.captions[1]).toBe(false)
+
+    // Per-image dimensions are forwarded to the prompt as a size hint.
+    const ctxImages = capturedOptions?.context?.images as Array<{ width?: number; height?: number }>
+    expect(ctxImages[0].width).toBe(14)
+    expect(ctxImages[0].height).toBe(14)
   })
 
   it("validates duplicate image IDs in LLM output", async () => {

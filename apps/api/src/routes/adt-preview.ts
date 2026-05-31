@@ -31,6 +31,7 @@ import {
   pad3,
   loadBookConfig,
   buildPreferredImageAltMap,
+  buildDecorativeImageIdSet,
   rewriteImageUrls,
   convertLatexToMathml,
   isFixedLayoutBook,
@@ -952,11 +953,13 @@ export function createAdtPreviewRoutes(
         ? sectioningParsed.data.sections[targetSectionIndex]
         : undefined
       const preferredImageAltMap = buildPreferredImageAltMap(storage, ownerPageId, sectionMeta)
+      const decorativeImageIds = buildDecorativeImageIdSet(storage, ownerPageId)
       const { html: previewSectionHtml } = rewriteImageUrls(
         renderedSection.html,
         label,
         new Map<string, string>(),
         preferredImageAltMap,
+        decorativeImageIds,
       )
 
       const previewHasMath = /(?:\\\(|\\\)|\\\[|\\\]|\$[^$]+\$|\\frac|\\sqrt|\\sum|\\int|\\text\{|\\hat\{|\\circ)/.test(previewSectionHtml)
