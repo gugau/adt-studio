@@ -69,6 +69,8 @@ When an entry needs attention, return suggested_text only when a clear correctio
 Suggested text must be a complete replacement translation, not a partial edit.
 Suggested text must preserve every source meaning unit, including roles, names, numbers, actions, quoted text, and important modifiers.
 For terminology-only issues, make the smallest possible edit that fixes the terminology while preserving the rest of the translation.
+Treat existing translations on the page as local terminology memory. Repeated source roles, names, objects, and domain terms should keep the same target-language term unless user guidance says otherwise.
+For terminology-only fixes, preserve the current translation's structure, role order, punctuation, and wording as much as possible.
 Do not fix one issue by omitting, weakening, or changing another part of the source meaning.
 Only return suggested_text if you would mark that suggested replacement acceptable under the same review criteria.
 `.trim()

@@ -28,6 +28,51 @@ const ISSUE_TYPES: TranslationEvaluationIssueTypeData[] = [
   "other",
 ]
 
+const TERMINOLOGY_STOP_WORDS = new Set([
+  "about",
+  "after",
+  "again",
+  "alone",
+  "also",
+  "been",
+  "before",
+  "being",
+  "could",
+  "dear",
+  "does",
+  "done",
+  "from",
+  "have",
+  "into",
+  "knew",
+  "like",
+  "more",
+  "much",
+  "over",
+  "said",
+  "same",
+  "some",
+  "soon",
+  "sure",
+  "than",
+  "that",
+  "their",
+  "them",
+  "then",
+  "there",
+  "they",
+  "this",
+  "train",
+  "very",
+  "were",
+  "what",
+  "when",
+  "will",
+  "with",
+  "would",
+  "your",
+])
+
 const TranslationEvaluationJudgeItem = z.object({
   entry_id: z.string().min(1),
   acceptable: z.boolean(),
@@ -123,7 +168,8 @@ Decision rules:
 - If acceptable=false and suggested translations are enabled, include suggested_text containing only the corrected target-language translation when a clear correction is possible.
 - suggested_text must be a full target-language replacement for translated_text, not a partial edit or explanation.
 - suggested_text must preserve every source meaning unit. Do not fix one issue by dropping another phrase.
-- For terminology-only issues, change only the terminology needed to fix the problem.
+- Treat existing translations on the page as local terminology memory. Repeated source roles, names, objects, and domain terms should keep the same target-language term unless user guidance says otherwise.
+- For terminology-only issues, change only the terminology needed to fix the problem. Preserve the current translation's structure, role order, punctuation, and wording as much as possible.
 - Only include suggested_text if that exact replacement would be acceptable under these same review criteria.
 - Do not include suggested_text when acceptable=true.
 - Keep rationale concise and specific; for acceptable entries, use a short confirmation.
@@ -148,6 +194,8 @@ Validation rules:
 - proposed_suggested_text must preserve every source meaning unit, including roles, names, numbers, actions, quoted text, and important modifiers.
 - proposed_suggested_text must be a complete target-language replacement, not a partial edit or explanation.
 - proposed_suggested_text must fix the original issue without introducing omissions, additions, terminology drift, fluency problems, or context problems.
+- Treat terminology_evidence as local terminology memory. If a repeated source term has neighboring translations that consistently use a target-language term, proposed_suggested_text must use that same term unless user guidance explicitly says otherwise.
+- For terminology-only fixes, proposed_suggested_text should preserve the current translation's structure, role order, punctuation, and wording except for the necessary term replacement.
 - Treat issues below the configured severity threshold as acceptable.
 - Consider these issue types: ${issueTypes.join(", ")}.
 - rationale should explain why the proposed suggestion passes or fails.
@@ -155,6 +203,39 @@ ${allowRepair
     ? "- If proposed_suggested_text is not acceptable and a safe complete replacement is clear, return repaired_suggested_text with the corrected full target-language translation. Otherwise return repaired_suggested_text=null."
     : "- Return repaired_suggested_text=null."}
 `.trim()
+}
+
+function sourceTerminologyTerms(sourceText: string): string[] {
+  const words = sourceText
+    .toLowerCase()
+    .match(/[a-z][a-z'-]{3,}/g) ?? []
+  return Array.from(new Set(words.filter((word) => !TERMINOLOGY_STOP_WORDS.has(word))))
+}
+
+function buildTerminologyEvidence(
+  page: TranslationEvaluationRunPage,
+  item: TranslationEvaluationResultData["items"][number],
+) {
+  const sourceText = item.source_text ?? ""
+  const terms = sourceTerminologyTerms(sourceText)
+  return terms
+    .map((term) => {
+      const neighboringEntries = page.entries
+        .filter((entry) => entry.entry_id !== item.entry_id && entry.source_text.toLowerCase().includes(term))
+        .slice(0, 5)
+        .map((entry) => ({
+          entry_id: entry.entry_id,
+          source_text: entry.source_text,
+          translated_text: entry.translated_text,
+        }))
+      return neighboringEntries.length > 0
+        ? { source_term: term, neighboring_entries: neighboringEntries }
+        : null
+    })
+    .filter((evidence): evidence is {
+      source_term: string
+      neighboring_entries: Array<{ entry_id: string; source_text: string; translated_text: string }>
+    } => evidence != null)
 }
 
 function buildUserPrompt(page: TranslationEvaluationRunPage, request: TranslationEvaluationRunRequestData): string {
@@ -210,6 +291,7 @@ function buildSuggestionValidationPrompt(
       original_rationale: item.rationale,
       original_issue_types: item.issue_types ?? [],
       proposed_suggested_text: proposedSuggestedText,
+      terminology_evidence: buildTerminologyEvidence(page, item),
     },
   }, null, 2)
 }
@@ -544,6 +626,9 @@ export async function evaluateTranslationInApi(
 
 export const translationEvaluationRunnerInternals = {
   buildJudgeInstructions,
+  buildSuggestionValidationPrompt,
+  buildSuggestionValidationSystem,
+  buildTerminologyEvidence,
   buildSystemPrompt,
   buildUserPrompt,
   normalizeJudgeModel,

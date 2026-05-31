@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { createBookStorage } from "@adt/storage"
 import type { LLMModel } from "@adt/llm"
 import type { TranslationEvaluationRunRequest } from "@adt/types"
-import { evaluateTranslationInApi } from "./translation-evaluation-runner.js"
+import { evaluateTranslationInApi, translationEvaluationRunnerInternals } from "./translation-evaluation-runner.js"
 
 let tmpDir = ""
 
@@ -247,6 +247,76 @@ describe("evaluateTranslationInApi", () => {
       suggestion_validation_rationale: "The repaired suggestion preserves both railway roles.",
     })
     expect(generateObject).toHaveBeenCalledTimes(3)
+  })
+
+  it("passes repeated page terminology evidence to suggestion validation", () => {
+    const page = {
+      page_id: "pg006007",
+      entries: [
+        {
+          entry_id: "pg006007_n0009",
+          source_text: "The engine driver and the guard will be with you.”",
+          translated_text: "La maquinista y el guardia estarán contigo».",
+        },
+        {
+          entry_id: "pg006007_n0011",
+          source_text: "Loco knew the guard.",
+          translated_text: "Loco conocía al revisor.",
+        },
+        {
+          entry_id: "pg006007_n0013",
+          source_text: "Loco saw that the guard was quite small.",
+          translated_text: "Loco vio que el revisor era bastante pequeño.",
+        },
+        {
+          entry_id: "pg006007_n0015",
+          source_text: "But, Loco also knew the engine driver Babu and trusted her kind face.",
+          translated_text: "Pero Loco también conocía a Babu, la maquinista, y confiaba en su cara amable.",
+        },
+      ],
+    }
+    const item = {
+      entry_id: "pg006007_n0009",
+      acceptable: false,
+      source_text: "The engine driver and the guard will be with you.”",
+      translated_text: "La maquinista y el guardia estarán contigo».",
+      rationale: "Railway terminology is inconsistent.",
+      issue_types: ["terminology" as const],
+      severity: "medium" as const,
+      suggested_text: "El guarda y la maquinista estarán contigo».",
+    }
+
+    const prompt = JSON.parse(translationEvaluationRunnerInternals.buildSuggestionValidationPrompt(
+      page,
+      buildRequest("terminology-evidence"),
+      item,
+      item.suggested_text,
+    ))
+
+    expect(prompt.candidate.terminology_evidence).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        source_term: "guard",
+        neighboring_entries: expect.arrayContaining([
+          expect.objectContaining({
+            entry_id: "pg006007_n0011",
+            translated_text: "Loco conocía al revisor.",
+          }),
+          expect.objectContaining({
+            entry_id: "pg006007_n0013",
+            translated_text: "Loco vio que el revisor era bastante pequeño.",
+          }),
+        ]),
+      }),
+      expect.objectContaining({
+        source_term: "engine",
+        neighboring_entries: expect.arrayContaining([
+          expect.objectContaining({
+            entry_id: "pg006007_n0015",
+            translated_text: "Pero Loco también conocía a Babu, la maquinista, y confiaba en su cara amable.",
+          }),
+        ]),
+      }),
+    ]))
   })
 
   it("normalizes acceptable judge items when issue metadata is null", async () => {
