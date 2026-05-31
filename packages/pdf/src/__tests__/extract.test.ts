@@ -781,4 +781,37 @@ describe("extractPdf chained image filters", () => {
     expect(img.buffer[1]).toBe(0xd8);
     expect(img.buffer[2]).toBe(0xff);
   });
+
+  it("takes the raw fast path for RGB JPEGs (no doc.loadImage decode)", async () => {
+    // A single-filter DCTDecode RGB JPEG with no SMask must be copied straight
+    // from the stream — the colorspace is read from the PDF dictionary, so
+    // doc.loadImage() (which decodes) must never run for it. This guards the
+    // #442 regression where loadImage was called for every image.
+    const pdfBuffer = createPdfWithSingleArrayDctFilterImage();
+
+    // Patch whichever prototype owns loadImage to count decode calls.
+    const protos = [mupdf.PDFDocument?.prototype, mupdf.Document?.prototype].filter(
+      (p): p is { loadImage: (...a: unknown[]) => unknown } =>
+        !!p && Object.prototype.hasOwnProperty.call(p, "loadImage")
+    );
+    const originals = protos.map((p) => p.loadImage);
+    let loadImageCalls = 0;
+    protos.forEach((p, i) => {
+      p.loadImage = function (this: unknown, ...a: unknown[]) {
+        loadImageCalls++;
+        return originals[i].apply(this, a);
+      };
+    });
+
+    try {
+      const result = await extractPdf({ pdfBuffer });
+      const img = result.pages[0].images.find((i) => !i.imageId.endsWith("_page"));
+      expect(img?.format).toBe("jpeg");
+      expect(loadImageCalls).toBe(0);
+    } finally {
+      protos.forEach((p, i) => {
+        p.loadImage = originals[i];
+      });
+    }
+  });
 });

@@ -542,6 +542,51 @@ describe("renderFixedLayoutPage", () => {
     expect(html).toContain("font-family:Chokle,Merriweather,serif")
   })
 
+  it("keeps a quoted Google family safe inside the inline style attribute", () => {
+    // Regression: a double-quoted family ("Mouse Memoirs") inside style="..."
+    // terminates the attribute early and drops the whole style (font-size,
+    // color too). The extractor emits single-quoted families so the span
+    // survives intact.
+    const drawItems: DrawItem[] = [
+      {
+        kind: "paragraph",
+        textId: "pg001_p000",
+        top: 38,
+        left: 172,
+        lineHeight: 30.24,
+        segments: [
+          {
+            text: "Ishte garë",
+            style: {
+              "font-family": "'Mouse Memoirs',serif",
+              "font-size": "30.24px",
+              color: "#a9414b",
+            },
+          },
+        ],
+        text: "Ishte garë",
+        blockBounds: { x: 172, y: 38, width: 385, height: 36 },
+      },
+    ]
+    const section = sectionFixedLayoutPage({
+      pageId: "pg001",
+      pageNumber: 1,
+      viewport: { width: 800, height: 600 },
+      drawItems,
+      availableImageIds: new Set(),
+    }).sections[0]
+
+    const html = renderFixedLayoutPage(section, "/images").sections[0].html
+
+    // Single-quoted family with Merriweather fallback, and the size/color
+    // survive in the same attribute (i.e. it wasn't truncated).
+    expect(html).toContain("font-family:'Mouse Memoirs',Merriweather,serif")
+    expect(html).toContain("font-size:30.24px")
+    expect(html).toContain("color:#a9414b")
+    // The broken form (double quote ending the attribute) must NOT appear.
+    expect(html).not.toContain('style="font-family:"')
+  })
+
   it("leaves font-family untouched when Merriweather is already present", () => {
     const drawItems: DrawItem[] = [
       { kind: "image", imageId: "pg001_im001", bounds: { x: 0, y: 0, width: 400, height: 300 } },

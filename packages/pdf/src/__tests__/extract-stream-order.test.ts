@@ -80,7 +80,8 @@ ET
 describe("positioned-text draw order — stream-order recorder", () => {
   it("emits bubble-text after its enclosing bubble shape", async () => {
     const pdfBuffer = createBubbleScenarioPdf()
-    const result = await extractPdf({ pdfBuffer })
+    // positionedText / draw-order is a fixed-layout concern, so request it.
+    const result = await extractPdf({ pdfBuffer, fixedLayout: true })
 
     expect(result.pages).toHaveLength(1)
     const page = result.pages[0]
@@ -123,12 +124,28 @@ describe("positioned-text draw order — stream-order recorder", () => {
 
   it("matches each asHTML paragraph to a glyph-stream-order seqno", async () => {
     const pdfBuffer = createBubbleScenarioPdf()
-    const result = await extractPdf({ pdfBuffer })
+    // positionedText / draw-order is a fixed-layout concern, so request it.
+    const result = await extractPdf({ pdfBuffer, fixedLayout: true })
 
     const items = result.pages[0].positionedText.drawItems
     const paragraphs = items.filter((i) => i.kind === "paragraph")
     // Both text strings should appear; both have unique textIds.
     const ids = new Set(paragraphs.map((p) => (p.kind === "paragraph" ? p.textId : "")))
     expect(ids.size).toBe(paragraphs.length)
+  })
+
+  it("skips positioned-text extraction for reflowable books (no fixedLayout)", async () => {
+    // The positioned-text pipeline (recorder + paragraph parsing) is gated on
+    // fixedLayout. A reflowable extraction must still emit the viewport
+    // dimensions but produce no draw items (the recorder/paragraph passes are
+    // skipped entirely).
+    const pdfBuffer = createBubbleScenarioPdf()
+    const result = await extractPdf({ pdfBuffer })
+
+    const page = result.pages[0]
+    expect(page.positionedText.drawItems).toEqual([])
+    // Viewport dims are still populated (cheap, from page bounds).
+    expect(page.positionedText.pageWidth).toBeCloseTo(612, 0)
+    expect(page.positionedText.pageHeight).toBeCloseTo(792, 0)
   })
 })

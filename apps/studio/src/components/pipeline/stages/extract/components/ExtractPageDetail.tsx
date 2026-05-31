@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
-import { AlertTriangle, Check, Crop, Eye, EyeOff, FileText, Image, ImageOff, Layers, Loader2, ChevronDown, Square, X } from "lucide-react"
+import { AlertTriangle, Check, Crop, Eye, EyeOff, FileText, Image, ImageOff, Layers, Loader2, ChevronDown, Square, Type, X } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { usePage, usePageImage } from "@/hooks/use-pages"
 import { api, BASE_URL } from "@/api/client"
@@ -9,6 +9,7 @@ import { useBookRun } from "@/hooks/use-book-run"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
 import { ImageCropDialog } from "@/components/pipeline/stages/storyboard/components/ImageCropDialog"
+import { resolveReflowableFont } from "@adt/types"
 
 function VersionPicker({
   currentVersion,
@@ -314,6 +315,15 @@ export function ExtractPageDetail({
 
   if (!page) return null
 
+  // For reflowable books, map the detected serif/sans category (+ any config
+  // override) to the base reading font, to show alongside the detection.
+  const reflowableFont = page.fontProfile?.category
+    ? resolveReflowableFont(
+        (activeConfigData as { reflowable_font?: string } | undefined)?.reflowable_font,
+        page.fontProfile.category,
+      )
+    : null
+
   return (
     <div className="space-y-2 p-4">
       {storyboardDone && (
@@ -430,6 +440,59 @@ export function ExtractPageDetail({
           <div className="mb-4 flex items-center gap-2 rounded border border-dashed p-3 text-xs text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
             <Trans>Processing metadata…</Trans>
+          </div>
+        )}
+
+        {/* Fonts — distinct families the extractor found (positioned text). */}
+        {page.fonts && page.fonts.length > 0 && (
+          <div className="mb-4">
+            <h3 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              <Type className="h-3 w-3" />
+              <Trans>Fonts ({String(page.fonts.length)})</Trans>
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {page.fonts.map((f) => (
+                <span
+                  key={f.family}
+                  className="inline-flex items-center gap-1.5 rounded border bg-muted/30 px-2 py-1 text-xs"
+                  title={f.family}
+                >
+                  <span className="font-medium text-foreground">{f.family}</span>
+                  {f.sizes.length > 0 && (
+                    <span className="text-[10px] text-muted-foreground tabular-nums">
+                      {f.sizes.map((s) => `${s}px`).join(", ")}
+                    </span>
+                  )}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Reflowable books carry no positioned text — surface the detected
+            serif/sans category and the base reading font it maps to. */}
+        {(!page.fonts || page.fonts.length === 0) && page.fontProfile?.category && (
+          <div className="mb-4">
+            <h3 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              <Type className="h-3 w-3" />
+              <Trans>Detected Font</Trans>
+            </h3>
+            <div className="flex flex-wrap items-center gap-1.5 text-xs">
+              <span className="inline-flex items-center rounded border bg-muted/30 px-2 py-1 font-medium text-foreground">
+                {page.fontProfile.category === "sans" ? <Trans>Sans-serif</Trans> : <Trans>Serif</Trans>}
+              </span>
+              {reflowableFont && (
+                <>
+                  <span className="text-muted-foreground">&rarr;</span>
+                  <span
+                    className="inline-flex items-center rounded border bg-muted/30 px-2 py-1 font-medium text-foreground"
+                    title={reflowableFont.family}
+                  >
+                    {reflowableFont.family}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         )}
 

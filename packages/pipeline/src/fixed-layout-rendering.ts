@@ -482,6 +482,7 @@ export function processFixedLayoutPages(
   imageUrlPrefix: string,
 ): void {
   const pages = storage.getPages()
+  let totalDrawItems = 0
 
   // Pass 1: resolve each page's viewport + inputs. We collect these up front
   // so we can compute the book-wide reference (spread) width before rendering
@@ -524,6 +525,7 @@ export function processFixedLayoutPages(
     if (!viewport) continue
 
     const drawItems: DrawItem[] = positionedText?.drawItems ?? []
+    totalDrawItems += drawItems.length
     prepared.push({ page, viewport, drawItems, availableImageIds })
   }
 
@@ -550,6 +552,21 @@ export function processFixedLayoutPages(
       referenceWidth,
     )
     storage.putNodeData("web-rendering", page.pageId, rendering)
+  }
+
+  // Positioned text is produced by the Extract stage only when the book is
+  // configured fixed-layout. A fixed-layout book with no positioned text on
+  // ANY page almost always means extraction ran under a reflowable config
+  // (e.g. the render strategy was switched after extracting). Re-running the
+  // Extract stage regenerates it; warn loudly so the empty overlays aren't
+  // mistaken for a rendering bug.
+  if (pages.length > 0 && totalDrawItems === 0) {
+    console.warn(
+      "[fixed-layout] No positioned text found on any page — fixed-layout " +
+        "pages will render without text overlays. Re-run the Extract stage " +
+        "for this book (positioned text is only generated when the book is " +
+        "configured for fixed-layout rendering)."
+    )
   }
 }
 

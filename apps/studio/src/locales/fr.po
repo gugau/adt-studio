@@ -1031,6 +1031,9 @@ msgstr "Remplissage automatique à partir du contexte du livre"
 msgid "Auto-scroll"
 msgstr "Défilement automatique"
 
+msgid "Automatic"
+msgstr "Automatique"
+
 msgid "Automatically adapts the layout based on each page's content using AI."
 msgstr "Adapte automatiquement la mise en page en fonction du contenu de chaque page grâce à l'IA."
 
@@ -1082,6 +1085,9 @@ msgstr "Arrière-plan : {0}"
 
 msgid "base"
 msgstr "base"
+
+msgid "Base font for AI-rendered and template (reflowable) text. Fixed-layout pages keep their original fonts."
+msgstr "Police de base pour le texte généré par IA et par modèle. Les pages à mise en page fixe conservent leurs polices d'origine."
 
 msgid "Base Language"
 msgstr "Base Langue"
@@ -1712,6 +1718,9 @@ msgstr "Par défaut"
 msgid "Default (from prompt)"
 msgstr "Par défaut (from invite)"
 
+msgid "Default Font"
+msgstr "Police par défaut"
+
 msgid "Default model"
 msgstr "Par défaut modèle"
 
@@ -1833,6 +1842,9 @@ msgstr "Bureau"
 
 msgid "Detailed, technical captions for college and adult readers."
 msgstr "Des sous-titres détaillés et techniques pour les lecteurs universitaires et adultes."
+
+msgid "Detected Font"
+msgstr "Police détectée"
 
 msgid "Detecting figures"
 msgstr "Détection des figures"
@@ -2379,6 +2391,13 @@ msgstr "Vecteur plat"
 msgid "Flexible"
 msgstr "Flexible"
 
+msgid "Font"
+msgstr "Police"
+
+#. placeholder {0}: String(page.fonts.length)
+msgid "Fonts ({0})"
+msgstr "Polices ({0})"
+
 #. placeholder {0}: i18n._(preset.title)
 #. placeholder {1}: recommendedOption.label
 msgid "For {0}, we recommend {1}."
@@ -2572,6 +2591,9 @@ msgstr "Regroupement du contenu par objectif, puis mise en page de chaque sectio
 
 msgid "Groups image regions into discrete illustrations on each page."
 msgstr "Regroupe les régions d'image en illustrations distinctes sur chaque page."
+
+msgid "Handwriting"
+msgstr "Manuscrite"
 
 msgid "Header"
 msgstr "En-tête"
@@ -3181,6 +3203,9 @@ msgstr "Associez chaque étape du cycle de l'eau à sa définition :"
 msgid "Match Source"
 msgstr "Correspondre à la source"
 
+msgid "Match the book's detected style"
+msgstr "Correspond au style détecté du livre"
+
 msgid "Matches the original book design with some flexibility."
 msgstr "Correspond au design original du livre avec une certaine flexibilité."
 
@@ -3351,6 +3376,9 @@ msgstr "Modéré"
 
 msgid "Modified {modifiedLabel}"
 msgstr "Modifié le {modifiedLabel}"
+
+msgid "Monospace"
+msgstr "À chasse fixe"
 
 msgid "More info"
 msgstr "Plus d'infos"
@@ -4721,6 +4749,9 @@ msgstr "Exemple de manuel de référence"
 msgid "Sample shown for illustration. The actual languages used come from your Output Languages list above."
 msgstr "Exemple montré à titre d'illustration. Les langues réellement utilisées proviennent de votre liste de langues de sortie ci-dessus."
 
+msgid "Sans-serif"
+msgstr "Sans empattement"
+
 msgid "Save"
 msgstr "Enregistrer"
 
@@ -5018,6 +5049,9 @@ msgstr "Application web ADT autonome"
 
 msgid "Separator"
 msgstr "Séparateur"
+
+msgid "Serif"
+msgstr "Avec empattement"
 
 msgid "serious"
 msgstr "grave"

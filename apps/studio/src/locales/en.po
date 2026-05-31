@@ -1029,6 +1029,9 @@ msgstr "Auto-fill from book context"
 msgid "Auto-scroll"
 msgstr "Auto-scroll"
 
+msgid "Automatic"
+msgstr "Automatic"
+
 msgid "Automatically adapts the layout based on each page's content using AI."
 msgstr "Automatically adapts the layout based on each page's content using AI."
 
@@ -1080,6 +1083,9 @@ msgstr "Background: {0}"
 
 msgid "base"
 msgstr "base"
+
+msgid "Base font for AI-rendered and template (reflowable) text. Fixed-layout pages keep their original fonts."
+msgstr "Base font for AI-rendered and template (reflowable) text. Fixed-layout pages keep their original fonts."
 
 msgid "Base Language"
 msgstr "Base Language"
@@ -1710,6 +1716,9 @@ msgstr "Default"
 msgid "Default (from prompt)"
 msgstr "Default (from prompt)"
 
+msgid "Default Font"
+msgstr "Default Font"
+
 msgid "Default model"
 msgstr "Default model"
 
@@ -1831,6 +1840,9 @@ msgstr "Desktop"
 
 msgid "Detailed, technical captions for college and adult readers."
 msgstr "Detailed, technical captions for college and adult readers."
+
+msgid "Detected Font"
+msgstr "Detected Font"
 
 msgid "Detecting figures"
 msgstr "Detecting figures"
@@ -2377,6 +2389,13 @@ msgstr "Flat Vector"
 msgid "Flexible"
 msgstr "Flexible"
 
+msgid "Font"
+msgstr "Font"
+
+#. placeholder {0}: String(page.fonts.length)
+msgid "Fonts ({0})"
+msgstr "Fonts ({0})"
+
 #. placeholder {0}: i18n._(preset.title)
 #. placeholder {1}: recommendedOption.label
 msgid "For {0}, we recommend {1}."
@@ -2570,6 +2589,9 @@ msgstr "Grouping content by purpose, then laying out every section as reviewable
 
 msgid "Groups image regions into discrete illustrations on each page."
 msgstr "Groups image regions into discrete illustrations on each page."
+
+msgid "Handwriting"
+msgstr "Handwriting"
 
 msgid "Header"
 msgstr "Header"
@@ -3179,6 +3201,9 @@ msgstr "Match each stage of the water cycle to its definition:"
 msgid "Match Source"
 msgstr "Match Source"
 
+msgid "Match the book's detected style"
+msgstr "Match the book's detected style"
+
 msgid "Matches the original book design with some flexibility."
 msgstr "Matches the original book design with some flexibility."
 
@@ -3349,6 +3374,9 @@ msgstr "Moderate"
 
 msgid "Modified {modifiedLabel}"
 msgstr "Modified {modifiedLabel}"
+
+msgid "Monospace"
+msgstr "Monospace"
 
 msgid "More info"
 msgstr "More info"
@@ -4719,6 +4747,9 @@ msgstr "Sample Reference Manual"
 msgid "Sample shown for illustration. The actual languages used come from your Output Languages list above."
 msgstr "Sample shown for illustration. The actual languages used come from your Output Languages list above."
 
+msgid "Sans-serif"
+msgstr "Sans-serif"
+
 msgid "Save"
 msgstr "Save"
 
@@ -5016,6 +5047,9 @@ msgstr "Self-contained ADT web app"
 
 msgid "Separator"
 msgstr "Separator"
+
+msgid "Serif"
+msgstr "Serif"
 
 msgid "serious"
 msgstr "serious"

@@ -247,6 +247,15 @@ export interface PageDetail {
     height: number
     bounds?: { x: number; y: number; width: number; height: number }
   }>
+  /** Distinct fonts the extractor found on this page (positioned text only),
+   *  each with the rounded px sizes it appears at. */
+  fonts: Array<{ family: string; sizes: number[] }>
+  /** Book-level detected serif/sans category (drives the reflowable base font). */
+  fontProfile: { category: "serif" | "sans" | null; serifChars: number; sansChars: number } | null
+  /** Resolved reflowable base-font CSS chain (gated; null for fixed-layout or
+   *  the Merriweather default). The storyboard preview injects it to match the
+   *  packaged output. */
+  reflowableFontFamily: string | null
   versions: {
     imageClassification: number | null
     imageCropping: number | null
