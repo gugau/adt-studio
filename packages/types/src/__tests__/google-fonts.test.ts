@@ -97,6 +97,12 @@ describe("googleFontsReferencedIn", () => {
     expect(googleFontsReferencedIn(`<p>The Internet changed everything.</p>`)).toEqual([])
   })
 
+  it("exact-matches family tokens — no prefix collision", () => {
+    // "Noto Sans" is a substring of "Noto Sans Mono" but must not be pulled in.
+    const html = `<p><span style="font-family:'Noto Sans Mono',monospace">x</span></p>`
+    expect(googleFontsReferencedIn(html)).toEqual(["Noto Sans Mono"])
+  })
+
   it("returns nothing when no registered family appears", () => {
     expect(googleFontsReferencedIn(`font-family:Palatino,serif`)).toEqual([])
   })

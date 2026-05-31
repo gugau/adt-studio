@@ -29,6 +29,7 @@ export {
   REFLOWABLE_FONT_SETTINGS,
   resolveReflowableFont,
   reflowableFontFamilyChain,
+  reflowableFontChain,
   classifyFontCategoryByName,
 } from "./reflowable-fonts.js"
 

@@ -4,7 +4,7 @@ import path from "node:path"
 import { z } from "zod"
 import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
-import { parseBookLabel, ImageClassificationOutput, PageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES, primaryFontFamily, resolveReflowableFont, reflowableFontFamilyChain } from "@adt/types"
+import { parseBookLabel, ImageClassificationOutput, PageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES, primaryFontFamily, reflowableFontChain } from "@adt/types"
 import type { ContentNodeData } from "@adt/types"
 import { openBookDb } from "@adt/storage"
 import { createBookStorage } from "@adt/storage"
@@ -625,10 +625,12 @@ export function createPageRoutes(
       let reflowableFontFamily: string | null = null
       try {
         const cfg = loadBookConfig(safeLabel, booksDir, configPath)
-        if (!isFixedLayoutBook(cfg)) {
-          const font = resolveReflowableFont(cfg.reflowable_font, fontProfile?.category ?? null)
-          if (font.family !== "Merriweather") reflowableFontFamily = reflowableFontFamilyChain(font)
-        }
+        // Same resolver packaging + preview use, so the Extract display and the
+        // storyboard preview can't drift from the shipped output.
+        reflowableFontFamily = reflowableFontChain(fontProfile?.category ?? null, {
+          fixedLayout: isFixedLayoutBook(cfg),
+          reflowableFont: cfg.reflowable_font,
+        })
       } catch {
         // config unavailable → no override
       }

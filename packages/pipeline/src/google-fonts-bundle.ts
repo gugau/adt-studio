@@ -104,11 +104,25 @@ export async function buildInlinedGoogleFontFaceCss(
     const css = await fetchText(url)
     const urls = extractWoff2Urls(css)
     const base64ByUrl = new Map<string, string>()
-    await Promise.all(
-      urls.map(async (u) => {
-        base64ByUrl.set(u, await woff2Base64(u, cacheDir, fetchBytes))
-      }),
+    // allSettled (not Promise.all): a single woff2 failure must NOT discard the
+    // fonts that fetched fine — inline what succeeded, leave any failed URL
+    // remote (its @font-face still works online), and warn.
+    const results = await Promise.allSettled(
+      urls.map(async (u): Promise<[string, string]> => [u, await woff2Base64(u, cacheDir, fetchBytes)]),
     )
+    let failed = 0
+    for (const r of results) {
+      if (r.status === "fulfilled") base64ByUrl.set(r.value[0], r.value[1])
+      else failed++
+    }
+    // Nothing inlined → behave like a total failure (rely on the online <link>)
+    // rather than appending all-remote @font-face rules.
+    if (base64ByUrl.size === 0) return ""
+    if (failed > 0) {
+      console.warn(
+        `[google-fonts] ${failed}/${urls.length} woff2 fetch(es) failed; those stay online-only`,
+      )
+    }
     return inlineWoff2Urls(css, base64ByUrl)
   } catch (err) {
     console.warn(

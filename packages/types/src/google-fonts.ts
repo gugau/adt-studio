@@ -198,14 +198,17 @@ export function googleFontsCss2Url(families: string[]): string | null {
  */
 export function googleFontsReferencedIn(text: string): string[] {
   if (!text) return []
-  // Collect just the values of font-family declarations (inline styles + CSS
-  // rules). The value runs until the next `;` / `}` / closing quote / `<`.
-  const decls = text.match(/font-family\s*:\s*[^;"}<]+/gi)
-  if (!decls) return []
-  const haystack = decls.join("\n")
-  const found: string[] = []
-  for (const f of GOOGLE_FONTS) {
-    if (haystack.includes(f.family)) found.push(f.family)
+  const found = new Set<string>()
+  // Scan font-family declaration values only (inline styles + CSS rules), then
+  // exact-match each comma-separated family token. Exact (not substring)
+  // matching avoids body-text false positives AND prefix collisions — e.g. a
+  // page using "Noto Sans Mono" must not also pull "Noto Sans".
+  for (const m of text.matchAll(/font-family\s*:\s*([^;"}<]+)/gi)) {
+    for (const tokenRaw of m[1].split(",")) {
+      const token = tokenRaw.trim().replace(/^['"]+|['"]+$/g, "")
+      const entry = GOOGLE_FONTS.find((f) => f.family === token)
+      if (entry) found.add(entry.family)
+    }
   }
-  return found
+  return [...found]
 }

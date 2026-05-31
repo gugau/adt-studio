@@ -146,3 +146,20 @@ export function reflowableFontFamilyChain(font: ReflowableFont): string {
     ? `${fam},'Merriweather',${generic}`
     : `${fam},${generic}`
 }
+
+/**
+ * The reflowable base-font CSS chain for a book, or null when no override is
+ * needed — fixed-layout books keep their original per-run fonts, and the serif
+ * default (Merriweather) is already the global body font. Single source of
+ * truth shared by packaging, the preview route, and the storyboard preview, so
+ * they can't drift.
+ */
+export function reflowableFontChain(
+  category: DetectedFontCategory | null,
+  opts: { fixedLayout?: boolean; reflowableFont?: string },
+): string | null {
+  if (opts.fixedLayout) return null
+  const font = resolveReflowableFont(opts.reflowableFont, category)
+  if (font.family === "Merriweather") return null
+  return reflowableFontFamilyChain(font)
+}

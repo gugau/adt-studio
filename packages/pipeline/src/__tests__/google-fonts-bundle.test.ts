@@ -70,6 +70,22 @@ describe("buildInlinedGoogleFontFaceCss", () => {
     expect(css).toContain("unicode-range")
   })
 
+  it("inlines the woff2 that succeed even if one fails (partial success)", async () => {
+    const css = await buildInlinedGoogleFontFaceCss(["Mouse Memoirs"], {
+      cacheDir: makeTmpDir(),
+      fetchText: async () => SAMPLE_CSS,
+      // AAA succeeds, BBB fails.
+      fetchBytes: async (u) => {
+        if (u.includes("BBB")) throw new Error("boom")
+        return Buffer.from(`bytes:${u}`)
+      },
+    })
+    // The successful subset is inlined…
+    expect(css).toContain("data:font/woff2;base64,")
+    // …and the failed one is left as its remote url (works online).
+    expect(css).toContain("/BBB.woff2)")
+  })
+
   it("returns '' (graceful) when the fetch fails", async () => {
     const css = await buildInlinedGoogleFontFaceCss(["Mouse Memoirs"], {
       cacheDir: makeTmpDir(),
