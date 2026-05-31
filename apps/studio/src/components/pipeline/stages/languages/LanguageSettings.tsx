@@ -47,7 +47,7 @@ type TranslationEvaluationIssueType =
 type TranslationEvaluationSeverity = "low" | "medium" | "high"
 type TranslationReviewStyle = "light" | "standard" | "detailed" | "custom"
 
-const DEFAULT_TRANSLATION_EVALUATION_JUDGE_MODEL = "openai:/gpt-4.1-mini"
+const DEFAULT_TRANSLATION_EVALUATION_JUDGE_MODEL = "openai:/gpt-5.4"
 const DEFAULT_TRANSLATION_EVALUATION_MAX_RETRIES = 3
 const DEFAULT_TRANSLATION_EVALUATION_TEMPERATURE = 0
 const DEFAULT_TRANSLATION_EVALUATION_SEVERITY_THRESHOLD: TranslationEvaluationSeverity = "medium"

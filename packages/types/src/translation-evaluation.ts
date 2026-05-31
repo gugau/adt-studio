@@ -16,7 +16,7 @@ Return a concise rationale for entries that need attention.
 When an entry needs attention, return a suggested corrected translation when a clear correction is possible.
 `.trim()
 
-export const DEFAULT_TRANSLATION_EVALUATION_JUDGE_MODEL = "openai:/gpt-4.1-mini"
+export const DEFAULT_TRANSLATION_EVALUATION_JUDGE_MODEL = "openai:/gpt-5.4"
 export const DEFAULT_TRANSLATION_EVALUATION_MAX_RETRIES = 3
 export const DEFAULT_TRANSLATION_EVALUATION_BATCH_SIZE = 1
 export const DEFAULT_TRANSLATION_EVALUATION_TEMPERATURE = 0
