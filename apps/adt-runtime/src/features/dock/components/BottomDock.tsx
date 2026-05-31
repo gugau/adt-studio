@@ -62,7 +62,7 @@ function DockContainer({ children }: DockContainerProps) {
               : "bottom-0",
         ),
       )}
-      role="toolbar"
+      role="group"
       aria-label={t("dock-label") || "Reader controls"}
       aria-hidden={shouldHide || undefined}
     >
