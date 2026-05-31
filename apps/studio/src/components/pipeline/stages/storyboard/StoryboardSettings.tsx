@@ -528,7 +528,9 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
                     : (REFLOWABLE_FONTS.find((f) => f.id === reflowableFont)?.family ?? reflowableFont)}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent align="start">
+              {/* Cap height + scroll: 15 two-line items otherwise run past the
+                  bottom of the settings panel/window. */}
+              <SelectContent align="start" className="max-h-72">
                 <SelectItem value="auto">
                   <div className="flex flex-col items-start">
                     <span>{<Trans>Automatic</Trans>}</span>
