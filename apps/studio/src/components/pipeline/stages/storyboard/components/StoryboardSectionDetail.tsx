@@ -45,6 +45,7 @@ import {
 } from "@adt/types"
 import { useApiKey } from "@/hooks/use-api-key"
 import { useActiveConfig } from "@/hooks/use-debug"
+import { usePage } from "@/hooks/use-pages"
 import { useBookTasks } from "@/hooks/use-book-tasks"
 import { useBookRun } from "@/hooks/use-book-run"
 import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
@@ -507,6 +508,9 @@ export function StoryboardSectionDetail({
   const { stageState } = useBookRun()
   const storyboardRunning = stageState("storyboard") === "running" || stageState("storyboard") === "queued"
   const { data: activeConfigData } = useActiveConfig(bookLabel)
+  // Resolved reflowable base font (gated server-side; null for fixed-layout /
+  // Merriweather default) — applied to the preview shell to match output.
+  const { data: pageDetail } = usePage(bookLabel, pageId)
   const applyBodyBackground = (activeConfigData?.merged as Record<string, unknown> | undefined)?.apply_body_background !== false
 
   const [saving, setSaving] = useState(false)
@@ -2098,6 +2102,7 @@ export function StoryboardSectionDetail({
                   renderWidth={DEVICE_WIDTHS[deviceView]}
                   deviceView={deviceView}
                   onVisibleWidthChange={setPreviewVisibleWidth}
+                  bodyFontFamily={pageDetail?.reflowableFontFamily ?? undefined}
                 />
             )}
           </>

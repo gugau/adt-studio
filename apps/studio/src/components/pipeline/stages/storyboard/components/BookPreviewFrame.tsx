@@ -22,7 +22,7 @@ import {
   weightToToken,
 } from "./iframe-computed-styles"
 import { INTERACTIVE_SCRIPT, INTERACTIVE_STYLES } from "./iframe-interactive"
-import { primaryFontFamily } from "@adt/types"
+import { primaryFontFamily, googleFontsCss2Url } from "@adt/types"
 
 export type { ComputedTypographyStyles }
 
@@ -100,6 +100,11 @@ export interface BookPreviewFrameProps {
   /** Reports the iframe's current on-screen width in CSS pixels (renderWidth × scale).
    *  Updates whenever the canvas resizes — useful for showing the active viewport size. */
   onVisibleWidthChange?: (width: number) => void
+  /** Resolved reflowable base-font CSS chain (e.g. `'Atkinson
+   *  Hyperlegible','Merriweather',sans-serif`). When set, the shell loads the
+   *  family from Google Fonts and overrides the global Merriweather, matching
+   *  packaged output. Omit for fixed-layout (keeps per-span fonts). */
+  bodyFontFamily?: string
 }
 
 /**
@@ -128,6 +133,7 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   renderWidth = DEFAULT_RENDER_WIDTH,
   deviceView,
   onVisibleWidthChange,
+  bodyFontFamily,
 }, ref) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
@@ -294,6 +300,17 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   // injectContent can trigger another pass after content swaps.
   // eslint-disable-next-line lingui/no-unlocalized-strings
   const autoFitScript = `<script src="${assetsPrefix}/assets/auto-fit.js"></script>`
+  // Reflowable base-font override: load the family from Google Fonts and
+  // re-declare the global element font (last in <head> so it wins over
+  // fonts.css's Merriweather rule). Mirrors renderPageHtml's injection so the
+  // preview matches packaged output. Omitted for fixed-layout (no prop).
+  const fontOverride = useMemo(() => {
+    if (!bodyFontFamily) return ""
+    const url = googleFontsCss2Url([primaryFontFamily(bodyFontFamily)])
+    const link = url ? `\n  <link href="${url}" rel="stylesheet">` : ""
+    // eslint-disable-next-line lingui/no-unlocalized-strings
+    return `${link}\n  <style>\n    body, p, h1, h2, h3, h4, h5, h6, span, div, button, input, textarea, select { font-family: ${bodyFontFamily}; }\n  </style>`
+  }, [bodyFontFamily])
   // Stable shell — loaded once, never changes.
   // Mirrors the preview's renderPageHtml output: same CSS, fonts, body classes.
   const srcdoc = useMemo(
@@ -309,7 +326,7 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   <link href="${assetsPrefix}/assets/libs/fontawesome/css/all.min.css" rel="stylesheet">
   <style>
     ${INTERACTIVE_STYLES}
-  </style>
+  </style>${fontOverride}
 </head>
 <body class="min-h-screen flex items-center justify-center">
 ${INTERACTIVE_SCRIPT}
@@ -317,9 +334,9 @@ ${autoFitScript}
 </body>
 </html>`,
     // autoFitScript embeds assetsPrefix; INTERACTIVE_SCRIPT/INTERACTIVE_STYLES
-    // are stable module constants. Re-memoise the shell only when the prefix
-    // (and thus the auto-fit script URL) changes.
-    [assetsPrefix, autoFitScript]
+    // are stable module constants. Re-memoise when the prefix (auto-fit URL) or
+    // the reflowable font override changes.
+    [assetsPrefix, autoFitScript, fontOverride]
   )
 
   // Listen for postMessage from iframe

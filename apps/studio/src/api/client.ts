@@ -248,6 +248,10 @@ export interface PageDetail {
   fonts: Array<{ family: string; sizes: number[] }>
   /** Book-level detected serif/sans category (drives the reflowable base font). */
   fontProfile: { category: "serif" | "sans" | null; serifChars: number; sansChars: number } | null
+  /** Resolved reflowable base-font CSS chain (gated; null for fixed-layout or
+   *  the Merriweather default). The storyboard preview injects it to match the
+   *  packaged output. */
+  reflowableFontFamily: string | null
   versions: {
     imageClassification: number | null
     imageCropping: number | null

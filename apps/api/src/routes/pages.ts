@@ -4,14 +4,14 @@ import path from "node:path"
 import { z } from "zod"
 import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
-import { parseBookLabel, ImageClassificationOutput, PageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES, primaryFontFamily } from "@adt/types"
+import { parseBookLabel, ImageClassificationOutput, PageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES, primaryFontFamily, resolveReflowableFont, reflowableFontFamilyChain } from "@adt/types"
 import type { ContentNodeData } from "@adt/types"
 import { openBookDb } from "@adt/storage"
 import { createBookStorage } from "@adt/storage"
 import type { Storage } from "@adt/storage"
 import { reRenderPage, aiEditSection } from "../services/page-edit-service.js"
 import type { TaskService } from "../services/task-service.js"
-import { segmentPageImages, getSegmentedImageId, loadBookConfig, applyCrop, generateStyleguide, buildStyleguideGenerationConfig } from "@adt/pipeline"
+import { segmentPageImages, getSegmentedImageId, loadBookConfig, applyCrop, generateStyleguide, buildStyleguideGenerationConfig, isFixedLayoutBook } from "@adt/pipeline"
 import { createLLMModel, createPromptEngine, renderLiquidTemplate, generateImageWithCache } from "@adt/llm"
 
 interface PageSummary {
@@ -51,6 +51,11 @@ interface PageDetail {
    *  pick the reflowable base font. Same for every page; null when the book has
    *  no extractable text. */
   fontProfile: { category: "serif" | "sans" | null; serifChars: number; sansChars: number } | null
+  /** Resolved reflowable base-font CSS chain (e.g. `'Atkinson
+   *  Hyperlegible','Merriweather',sans-serif`), already gated: null for
+   *  fixed-layout books and for the Merriweather default (no override needed).
+   *  Mirrors what packaging/preview inject, so the storyboard preview can match. */
+  reflowableFontFamily: string | null
   versions: {
     sectioning: number | null
     imageClassification: number | null
@@ -614,6 +619,19 @@ export function createPageRoutes(
         fontProfileRows.length > 0
           ? (JSON.parse(fontProfileRows[0].data) as PageDetail["fontProfile"])
           : null
+      // Resolve the reflowable base font (gated): null for fixed-layout books
+      // and for the Merriweather default. Mirrors resolveReflowableFontChain so
+      // the storyboard preview shell can apply the same font packaging does.
+      let reflowableFontFamily: string | null = null
+      try {
+        const cfg = loadBookConfig(safeLabel, booksDir, configPath)
+        if (!isFixedLayoutBook(cfg)) {
+          const font = resolveReflowableFont(cfg.reflowable_font, fontProfile?.category ?? null)
+          if (font.family !== "Merriweather") reflowableFontFamily = reflowableFontFamilyChain(font)
+        }
+      } catch {
+        // config unavailable → no override
+      }
 
       // Validate the stored blob against the canonical tree schema; if it
       // doesn't match (older data or a failed run), return null so the
@@ -662,6 +680,7 @@ export function createPageRoutes(
         imagesMeta,
         fonts: derivePageFonts(positionedTextNode?.data),
         fontProfile,
+        reflowableFontFamily,
         versions: {
           sectioning: sectioningNode?.version ?? null,
           imageClassification: imageClassNode?.version ?? null,
