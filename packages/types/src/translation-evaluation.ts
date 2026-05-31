@@ -13,7 +13,12 @@ Use these criteria:
 - preserve meaningful formatting markers and placeholders when they affect meaning
 
 Return a concise rationale for entries that need attention.
-When an entry needs attention, return a suggested corrected translation when a clear correction is possible.
+When an entry needs attention, return suggested_text only when a clear correction is possible.
+Suggested text must be a complete replacement translation, not a partial edit.
+Suggested text must preserve every source meaning unit, including roles, names, numbers, actions, quoted text, and important modifiers.
+For terminology-only issues, make the smallest possible edit that fixes the terminology while preserving the rest of the translation.
+Do not fix one issue by omitting, weakening, or changing another part of the source meaning.
+Only return suggested_text if you would mark that suggested replacement acceptable under the same review criteria.
 `.trim()
 
 export const DEFAULT_TRANSLATION_EVALUATION_JUDGE_MODEL = "openai:/gpt-5.4"
@@ -118,7 +123,7 @@ export function resolveTranslationEvaluationConfig(
     severity_threshold: config?.severity_threshold ?? DEFAULT_TRANSLATION_EVALUATION_SEVERITY_THRESHOLD,
     issue_types: config?.issue_types ?? DEFAULT_TRANSLATION_EVALUATION_ISSUE_TYPES,
     generate_suggestions: config?.generate_suggestions ?? true,
-    only_suggest_when_confident: config?.only_suggest_when_confident ?? false,
+    only_suggest_when_confident: config?.only_suggest_when_confident ?? true,
     context: {
       ...DEFAULT_TRANSLATION_EVALUATION_CONTEXT_OPTIONS,
       ...(config?.context ?? {}),
@@ -159,6 +164,8 @@ export const TranslationEvaluationItem = z.object({
   issue_types: z.array(TranslationEvaluationIssueType).optional(),
   severity: TranslationEvaluationSeverity.optional(),
   suggested_text: z.string().min(1).optional(),
+  suggestion_validated: z.boolean().optional(),
+  suggestion_validation_rationale: z.string().min(1).optional(),
   source_hash: z.string().min(1).optional(),
   translated_hash: z.string().min(1).optional(),
 })

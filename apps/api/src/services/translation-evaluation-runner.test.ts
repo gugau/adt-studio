@@ -31,7 +31,7 @@ function buildRequest(label: string): TranslationEvaluationRunRequest {
     source_catalog_version: 1,
     translation_version: 2,
     eval_config_hash: "hash",
-    judge_model: "openai:/gpt-4.1-mini",
+    judge_model: "openai:/gpt-5.4",
     max_retries: 1,
     batch_size: 1,
     judge_instructions: "Review translations.",
@@ -60,20 +60,28 @@ describe("evaluateTranslationInApi", () => {
   it("evaluates entries with page context and stores item-level results", async () => {
     const label = "eval-runner"
     seedBook(label)
-    const generateObject = vi.fn<LLMModel["generateObject"]>().mockResolvedValue({
-      object: {
-        items: [
-          {
-            entry_id: "pg001_t001",
-            acceptable: false,
-            rationale: "The translation changes the implied question.",
-            issue_types: ["meaning"],
-            severity: "high",
-            suggested_text: "¿Lo haces tú?",
-          },
-        ],
-      },
-    })
+    const generateObject = vi.fn<LLMModel["generateObject"]>()
+      .mockResolvedValueOnce({
+        object: {
+          items: [
+            {
+              entry_id: "pg001_t001",
+              acceptable: false,
+              rationale: "The translation changes the implied question.",
+              issue_types: ["meaning"],
+              severity: "high",
+              suggested_text: "¿Lo haces tú?",
+            },
+          ],
+        },
+      })
+      .mockResolvedValueOnce({
+        object: {
+          acceptable: true,
+          rationale: "The suggestion preserves the source meaning.",
+          repaired_suggested_text: null,
+        },
+      })
     const model: LLMModel = {
       generateObject,
       renderPrompt: vi.fn(),
@@ -97,6 +105,7 @@ describe("evaluateTranslationInApi", () => {
       acceptable: false,
       severity: "high",
       suggested_text: "¿Lo haces tú?",
+      suggestion_validated: true,
       source_hash: "source-hash",
       translated_hash: "translated-hash",
     })
@@ -106,6 +115,138 @@ describe("evaluateTranslationInApi", () => {
     const prompt = generateObject.mock.calls[0][0].messages?.[0]?.content
     expect(String(prompt)).toContain("Forest Book")
     expect(String(prompt)).toContain("Y a ti?")
+  })
+
+  it("withholds a suggested fix when validation finds that it drops source meaning", async () => {
+    const label = "eval-runner-invalid-suggestion"
+    seedBook(label)
+    const generateObject = vi.fn<LLMModel["generateObject"]>()
+      .mockResolvedValueOnce({
+        object: {
+          items: [
+            {
+              entry_id: "pg001_t001",
+              acceptable: false,
+              rationale: "Railway terminology is inconsistent.",
+              issue_types: ["terminology", "context"],
+              severity: "medium",
+              suggested_text: "El revisor irá contigo».",
+            },
+          ],
+        },
+      })
+      .mockResolvedValueOnce({
+        object: {
+          acceptable: false,
+          rationale: "The suggestion omits the engine driver.",
+          repaired_suggested_text: null,
+        },
+      })
+    const model: LLMModel = {
+      generateObject,
+      renderPrompt: vi.fn(),
+    }
+
+    const result = await evaluateTranslationInApi(
+      {
+        ...buildRequest(label),
+        pages: [
+          {
+            page_id: "pg001",
+            entries: [
+              {
+                entry_id: "pg001_t001",
+                source_text: "The engine driver and the guard will be with you.”",
+                translated_text: "El maquinista y el guardia irán contigo».",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        booksDir: tmpDir,
+        apiKey: "sk-test",
+        createModel: () => model,
+      },
+    )
+
+    expect(result.items[0]).toMatchObject({
+      entry_id: "pg001_t001",
+      acceptable: false,
+      suggestion_validated: false,
+      suggestion_validation_rationale: "The suggestion omits the engine driver.",
+    })
+    expect(result.items[0]?.suggested_text).toBeUndefined()
+  })
+
+  it("uses one repaired suggestion when the first suggestion fails validation and the repair passes", async () => {
+    const label = "eval-runner-repaired-suggestion"
+    seedBook(label)
+    const generateObject = vi.fn<LLMModel["generateObject"]>()
+      .mockResolvedValueOnce({
+        object: {
+          items: [
+            {
+              entry_id: "pg001_t001",
+              acceptable: false,
+              rationale: "Railway terminology is inconsistent.",
+              issue_types: ["terminology", "context"],
+              severity: "medium",
+              suggested_text: "El revisor irá contigo».",
+            },
+          ],
+        },
+      })
+      .mockResolvedValueOnce({
+        object: {
+          acceptable: false,
+          rationale: "The suggestion omits the engine driver.",
+          repaired_suggested_text: "La maquinista y el revisor estarán contigo».",
+        },
+      })
+      .mockResolvedValueOnce({
+        object: {
+          acceptable: true,
+          rationale: "The repaired suggestion preserves both railway roles.",
+          repaired_suggested_text: null,
+        },
+      })
+    const model: LLMModel = {
+      generateObject,
+      renderPrompt: vi.fn(),
+    }
+
+    const result = await evaluateTranslationInApi(
+      {
+        ...buildRequest(label),
+        pages: [
+          {
+            page_id: "pg001",
+            entries: [
+              {
+                entry_id: "pg001_t001",
+                source_text: "The engine driver and the guard will be with you.”",
+                translated_text: "El maquinista y el guardia irán contigo».",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        booksDir: tmpDir,
+        apiKey: "sk-test",
+        createModel: () => model,
+      },
+    )
+
+    expect(result.items[0]).toMatchObject({
+      entry_id: "pg001_t001",
+      acceptable: false,
+      suggested_text: "La maquinista y el revisor estarán contigo».",
+      suggestion_validated: true,
+      suggestion_validation_rationale: "The repaired suggestion preserves both railway roles.",
+    })
+    expect(generateObject).toHaveBeenCalledTimes(3)
   })
 
   it("normalizes acceptable judge items when issue metadata is null", async () => {

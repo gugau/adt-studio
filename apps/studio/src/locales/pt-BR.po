@@ -3458,6 +3458,9 @@ msgstr "Ainda não há chave de API para {0}. Adicione uma nas configurações d
 msgid "No assessment"
 msgstr "No assessment"
 
+msgid "No automatic suggestion is shown because the proposed fix did not pass validation."
+msgstr "Nenhuma sugestão automática é exibida porque a correção proposta não passou na validação."
+
 msgid "No books match your search"
 msgstr "Nenhum livro corresponde à sua busca"
 
@@ -5425,6 +5428,9 @@ msgstr "Sugestão aplicada"
 msgid "Suggestion behavior"
 msgstr "Comportamento das sugestões"
 
+msgid "Suggestion withheld"
+msgstr "Sugestão retida"
+
 msgid "Summary Prompt"
 msgstr "Prompt de resumo"
 
@@ -6098,6 +6104,9 @@ msgstr "Utilizada para modelos Claude (claude-opus-4-6, claude-sonnet-4-6, etc.)
 
 msgid "Used for Gemini models — both LLM (gemini-2.5-pro, etc.) and TTS (gemini-2.5-pro-preview-tts, etc.)"
 msgstr "Utilizada para modelos Gemini — tanto LLM (gemini-2.5-pro, etc.) quanto TTS (gemini-2.5-pro-preview-tts, etc.)"
+
+msgid "Validated"
+msgstr "Validada"
 
 msgid "Validation"
 msgstr "Validation"

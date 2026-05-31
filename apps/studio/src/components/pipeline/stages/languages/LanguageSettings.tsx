@@ -65,7 +65,12 @@ Use these criteria:
 - preserve meaningful formatting markers and placeholders when they affect meaning
 
 Return a concise rationale for entries that need attention.
-When an entry needs attention, return a suggested corrected translation when a clear correction is possible.
+When an entry needs attention, return suggested_text only when a clear correction is possible.
+Suggested text must be a complete replacement translation, not a partial edit.
+Suggested text must preserve every source meaning unit, including roles, names, numbers, actions, quoted text, and important modifiers.
+For terminology-only issues, make the smallest possible edit that fixes the terminology while preserving the rest of the translation.
+Do not fix one issue by omitting, weakening, or changing another part of the source meaning.
+Only return suggested_text if you would mark that suggested replacement acceptable under the same review criteria.
 `.trim()
 
 const TRANSLATION_REVIEW_ISSUE_TYPES: TranslationEvaluationIssueType[] = [
@@ -140,7 +145,7 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
     () => new Set(DEFAULT_TRANSLATION_EVALUATION_ISSUE_TYPES),
   )
   const [reviewGenerateSuggestions, setReviewGenerateSuggestions] = useState(true)
-  const [reviewOnlySuggestWhenConfident, setReviewOnlySuggestWhenConfident] = useState(false)
+  const [reviewOnlySuggestWhenConfident, setReviewOnlySuggestWhenConfident] = useState(true)
   const [reviewIncludeBookMetadata, setReviewIncludeBookMetadata] = useState(DEFAULT_TRANSLATION_EVALUATION_CONTEXT_OPTIONS.book_metadata)
   const [reviewIncludeSourceLanguage, setReviewIncludeSourceLanguage] = useState(DEFAULT_TRANSLATION_EVALUATION_CONTEXT_OPTIONS.source_language)
   const [reviewIncludeTargetLanguage, setReviewIncludeTargetLanguage] = useState(DEFAULT_TRANSLATION_EVALUATION_CONTEXT_OPTIONS.target_language)
@@ -219,7 +224,7 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
           : DEFAULT_TRANSLATION_EVALUATION_ISSUE_TYPES,
       ))
       setReviewGenerateSuggestions(te.generate_suggestions !== false)
-      setReviewOnlySuggestWhenConfident(te.only_suggest_when_confident === true)
+      setReviewOnlySuggestWhenConfident(te.only_suggest_when_confident !== false)
       const context = te.context && typeof te.context === "object" ? te.context as Record<string, unknown> : {}
       setReviewIncludeBookMetadata(context.book_metadata !== false)
       setReviewIncludeSourceLanguage(context.source_language !== false)
@@ -239,7 +244,7 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
       setReviewSeverityThreshold(DEFAULT_TRANSLATION_EVALUATION_SEVERITY_THRESHOLD)
       setReviewIssueTypes(new Set(DEFAULT_TRANSLATION_EVALUATION_ISSUE_TYPES))
       setReviewGenerateSuggestions(true)
-      setReviewOnlySuggestWhenConfident(false)
+      setReviewOnlySuggestWhenConfident(true)
       setReviewIncludeBookMetadata(true)
       setReviewIncludeSourceLanguage(true)
       setReviewIncludeTargetLanguage(true)

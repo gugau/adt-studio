@@ -259,8 +259,25 @@ function TranslationReviewInline({
 
           {item.suggested_text ? (
             <div className="rounded border border-emerald-200 bg-emerald-50 p-2 text-emerald-950">
-              <div className="mb-1 text-[10px] font-semibold uppercase text-emerald-700">{t`Suggested translation`}</div>
+              <div className="mb-1 flex flex-wrap items-center gap-1.5">
+                <span className="text-[10px] font-semibold uppercase text-emerald-700">{t`Suggested translation`}</span>
+                {item.suggestion_validated ? (
+                  <span className="rounded bg-white/80 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 ring-1 ring-emerald-200">
+                    {t`Validated`}
+                  </span>
+                ) : null}
+              </div>
               <p className="whitespace-pre-wrap leading-relaxed">{item.suggested_text}</p>
+            </div>
+          ) : null}
+
+          {!item.suggested_text && item.suggestion_validated === false ? (
+            <div className="rounded border border-amber-200 bg-amber-50 p-2 text-amber-950">
+              <div className="mb-1 text-[10px] font-semibold uppercase text-amber-700">{t`Suggestion withheld`}</div>
+              <p className="whitespace-pre-wrap leading-relaxed">
+                {item.suggestion_validation_rationale
+                  ?? t`No automatic suggestion is shown because the proposed fix did not pass validation.`}
+              </p>
             </div>
           ) : null}
 

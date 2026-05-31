@@ -74,7 +74,7 @@ function defaultEvalConfigHash(): string {
       severity_threshold: DEFAULT_TRANSLATION_EVALUATION_SEVERITY_THRESHOLD,
       issue_types: DEFAULT_TRANSLATION_EVALUATION_ISSUE_TYPES,
       generate_suggestions: true,
-      only_suggest_when_confident: false,
+      only_suggest_when_confident: true,
       context: DEFAULT_TRANSLATION_EVALUATION_CONTEXT_OPTIONS,
       target_audience: null,
       style_guidance: null,
