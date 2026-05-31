@@ -802,6 +802,12 @@ async function extractPage(doc: MupdfDocument, pageIndex: number, vectorTextGrou
       recorder.ops,
     );
   } else {
+    // NOTE: skipping the recorder pass here also skips
+    // excludeConsumedFigureShapes, so vector-drawn lettering that duplicates a
+    // selectable-text run is NOT deduped for reflowable books and stays in
+    // `images`. Known trade-off: restoring the dedup needs the recorder this
+    // gate deliberately avoids. Narrow in practice (such content is usually
+    // fixed-layout), so left as-is for now.
     positionedText = emptyPositionedText(
       pageBounds[2] - pageBounds[0],
       pageBounds[3] - pageBounds[1],
@@ -1602,6 +1608,9 @@ async function extractSpreadPage(
       ops,
     );
   } else {
+    // NOTE: see extractPage — skipping the recorder also skips
+    // excludeConsumedFigureShapes, so figures are not deduped against
+    // coincident selectable text for reflowable books. Known trade-off.
     figureImages = [...leftResult.images, ...rightResult.images];
     positionedText = emptyPositionedText(
       leftBounds[2] - leftBounds[0] + (rightBounds[2] - rightBounds[0]),
