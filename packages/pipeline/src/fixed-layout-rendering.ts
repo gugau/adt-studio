@@ -340,6 +340,17 @@ function withBundledFallback(fontFamily: string): string {
 export function renderFixedLayoutPage(
   section: PageSectioningSection,
   imageUrlPrefix: string,
+  /**
+   * Book-wide reference width — the widest page in the book (a full spread in
+   * spread mode). When provided, it's stamped onto `#content` as
+   * `data-fl-reference-width` so viewers scale every page by the SAME factor
+   * (availableWidth / referenceWidth) instead of each page's own width. A
+   * single page (cover/end, half a spread's width) then renders centered at
+   * half the panel width — the same apparent page size as one half of a
+   * spread — rather than being upscaled 2× to fill the panel. Omitted in
+   * unit tests / ad-hoc renders, where viewers fall back to per-page width.
+   */
+  referenceWidth?: number,
 ): WebRenderingOutput {
   const viewport = section.viewport
   if (!viewport) {
@@ -439,7 +450,12 @@ export function renderFixedLayoutPage(
 
   const hasFitTargets = elements.some((el) => el.includes("data-adt-fit=\"1\""))
   const fitScript = hasFitTargets ? `\n${FIT_SCRIPT}` : ""
-  const html = `<div id="content" style="position:relative;width:${viewport.width}px;height:${viewport.height}px;margin:0 auto;overflow:hidden">
+  // Keep the attribute before `style` so the per-page viewport regex in
+  // package-web (`/width:(\d+)px;height:(\d+)px/`) still reads the page's own
+  // dimensions from the style rule, not this book-wide value.
+  const refWidthAttr =
+    referenceWidth !== undefined ? ` data-fl-reference-width="${Math.round(referenceWidth)}"` : ""
+  const html = `<div id="content"${refWidthAttr} style="position:relative;width:${viewport.width}px;height:${viewport.height}px;margin:0 auto;overflow:hidden">
 ${elements.join("\n")}${fitScript}
 </div>`
 
@@ -467,6 +483,16 @@ export function processFixedLayoutPages(
 ): void {
   const pages = storage.getPages()
   let totalDrawItems = 0
+
+  // Pass 1: resolve each page's viewport + inputs. We collect these up front
+  // so we can compute the book-wide reference (spread) width before rendering
+  // — that value must be identical on every page (see renderFixedLayoutPage).
+  const prepared: Array<{
+    page: (typeof pages)[number]
+    viewport: { width: number; height: number }
+    drawItems: DrawItem[]
+    availableImageIds: Set<string>
+  }> = []
 
   for (const page of pages) {
     // Render whatever image-filtering left unpruned. The wizard writes
@@ -500,7 +526,17 @@ export function processFixedLayoutPages(
 
     const drawItems: DrawItem[] = positionedText?.drawItems ?? []
     totalDrawItems += drawItems.length
+    prepared.push({ page, viewport, drawItems, availableImageIds })
+  }
 
+  // The widest page is the book's reference width: a full spread in spread
+  // mode, or just the common page width otherwise. Stamped onto every page so
+  // viewers scale uniformly and single (cover/end) pages render centered at
+  // their natural fraction of the panel instead of being upscaled to fill it.
+  const referenceWidth = prepared.reduce((max, p) => Math.max(max, p.viewport.width), 0)
+
+  // Pass 2: section + render each page with the shared reference width.
+  for (const { page, viewport, drawItems, availableImageIds } of prepared) {
     const sectioning = sectionFixedLayoutPage({
       pageId: page.pageId,
       pageNumber: page.pageNumber,
@@ -513,6 +549,7 @@ export function processFixedLayoutPages(
     const rendering = renderFixedLayoutPage(
       sectioning.sections[0],
       imageUrlPrefix,
+      referenceWidth,
     )
     storage.putNodeData("web-rendering", page.pageId, rendering)
   }

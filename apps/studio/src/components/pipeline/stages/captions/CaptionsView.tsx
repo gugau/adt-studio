@@ -10,9 +10,9 @@ import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import { StageRunCard } from "../../components/StageRunCard"
+import { StageContentGuard } from "../../components/StageContentGuard"
 import { StageEmptyState } from "../../components/StageEmptyState"
 import { useSectionNav } from "@/routes/books.$label"
-import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
 
 
@@ -419,48 +419,6 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
     return () => setExtra(null)
   }, [pages, totalImages, displayPages.length, setExtra, selectedPageId, selectedPageSummary?.pageNumber, selectedPageSummary?.sectionCount, hasSections, sectionIndex, setSectionIndex])
 
-  if (!showRunCard && isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">{t`Loading pages...`}</span>
-      </div>
-    )
-  }
-
-  if (showRunCard || pagesWithImages.length === 0 || !hasCaptionData) {
-    return (
-      <div className="p-4">
-        <StageRunCard
-          stageSlug="captions"
-          isRunning={captionsRunning}
-          completed={captionsDone}
-          onRun={handleRunCaptions}
-          disabled={!hasApiKey || captionsRunning}
-        />
-      </div>
-    )
-  }
-
-  if (selectedPageId && displayPages.length === 0 && pagesWithImages.length > 0) {
-    return (
-      <StageEmptyState
-        icon={ImageIcon}
-        color="teal"
-        title={t`No images on this page`}
-        cta={
-          <button
-            type="button"
-            onClick={() => onSelectPage?.(null)}
-            className="text-xs font-medium text-teal-600 hover:text-teal-700 hover:underline transition-colors"
-          >
-            {t`Show all`}
-          </button>
-        }
-      />
-    )
-  }
-
   const singlePageEmptyState = selectedPageId ? (
     <StageEmptyState
       icon={ImageIcon}
@@ -470,7 +428,41 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
     />
   ) : undefined
 
+  const showNoImagesEmpty =
+    selectedPageId && displayPages.length === 0 && pagesWithImages.length > 0
+
   return (
+    <StageContentGuard
+      stageSlug="captions"
+      isLoading={!showRunCard && isLoading}
+      loadingLabel={t`Loading pages...`}
+      showRunCard={showRunCard || pagesWithImages.length === 0 || !hasCaptionData}
+      runCard={
+        <StageRunCard
+          stageSlug="captions"
+          isRunning={captionsRunning}
+          completed={captionsDone}
+          onRun={handleRunCaptions}
+          disabled={!hasApiKey || captionsRunning}
+        />
+      }
+    >
+      {showNoImagesEmpty ? (
+        <StageEmptyState
+          icon={ImageIcon}
+          color="teal"
+          title={t`No images on this page`}
+          cta={
+            <button
+              type="button"
+              onClick={() => onSelectPage?.(null)}
+              className="text-xs font-medium text-teal-600 hover:text-teal-700 hover:underline transition-colors"
+            >
+              {t`Show all`}
+            </button>
+          }
+        />
+      ) : (
     <div className="flex flex-1 flex-col gap-4">
       {selectedPageId && (
         <div className="flex justify-end px-4 pt-3">
@@ -495,5 +487,7 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
         />
       ))}
     </div>
+      )}
+    </StageContentGuard>
   )
 }

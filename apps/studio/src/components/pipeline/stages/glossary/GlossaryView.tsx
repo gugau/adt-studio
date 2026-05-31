@@ -11,6 +11,7 @@ import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
+import { StageContentGuard } from "../../components/StageContentGuard"
 import { useLingui } from "@lingui/react/macro"
 import { AddGlossaryDialog } from "./AddGlossaryDialog"
 
@@ -295,37 +296,31 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
     })
   }
 
-  if (isLoading && !effective) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">{t`Loading glossary...`}</span>
-      </div>
-    )
-  }
-
-  if (items.length === 0) {
-    return (
-      <div className="p-4 space-y-4">
-        <StageRunCard
-          stageSlug="glossary"
-          isRunning={glossaryRunning}
-          completed={glossaryDone}
-          onRun={handleRunGlossary}
-          disabled={!hasApiKey || glossaryRunning}
-        />
-        <AddGlossaryDialog
-          open={showAddDialog}
-          onOpenChange={setShowAddDialog}
-          bookLabel={bookLabel}
-          existingItems={items}
-          onAdd={addManualItem}
-        />
-      </div>
-    )
-  }
-
   return (
+    <StageContentGuard
+      stageSlug="glossary"
+      isLoading={isLoading && !effective}
+      loadingLabel={t`Loading glossary...`}
+      showRunCard={items.length === 0}
+      runCard={
+        <>
+          <StageRunCard
+            stageSlug="glossary"
+            isRunning={glossaryRunning}
+            completed={glossaryDone}
+            onRun={handleRunGlossary}
+            disabled={!hasApiKey || glossaryRunning}
+          />
+          <AddGlossaryDialog
+            open={showAddDialog}
+            onOpenChange={setShowAddDialog}
+            bookLabel={bookLabel}
+            existingItems={items}
+            onAdd={addManualItem}
+          />
+        </>
+      }
+    >
     <div className="space-y-2">
       <div className="flex items-center gap-2 px-1">
         <div className="relative flex-1 min-w-0">
@@ -447,6 +442,7 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
         onAdd={addManualItem}
       />
     </div>
+    </StageContentGuard>
   )
 }
 

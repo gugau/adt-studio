@@ -245,9 +245,15 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
    * When the page is fixed-layout, `#content` has explicit pixel width/height
    * (viewport coords from the renderer). Scaling off these instead of the
    * fixed `DEFAULT_RENDER_WIDTH` makes the content fill the available preview area.
+   * `referenceWidth` is the book-wide widest page (a full spread in spread
+   * mode), stamped on `#content` as `data-fl-reference-width`; scaling off it
+   * — rather than this page's own width — keeps every page at one uniform
+   * scale, so a single cover/end page renders centered at half-width instead
+   * of being upscaled 2× to fill the panel. Falls back to the page's own
+   * width when the attribute is absent (older content / ad-hoc renders).
    * null for reflowable pages.
    */
-  const [fixedLayoutSize, setFixedLayoutSize] = useState<{ width: number; height: number } | null>(null)
+  const [fixedLayoutSize, setFixedLayoutSize] = useState<{ width: number; height: number; referenceWidth: number } | null>(null)
   const [availableWidth, setAvailableWidth] = useState(DEFAULT_RENDER_WIDTH)
   const readyRef = useRef(false)
   const latestHtmlRef = useRef("")
@@ -392,7 +398,10 @@ ${autoFitScript}
     const styleW = contentEl ? parsePxStyle(contentEl.style.width) : null
     const styleH = contentEl ? parsePxStyle(contentEl.style.height) : null
     if (contentEl && styleW !== null && styleH !== null) {
-      setFixedLayoutSize({ width: styleW, height: styleH })
+      const refRaw = contentEl.dataset.flReferenceWidth
+      const ref = refRaw ? parseFloat(refRaw) : NaN
+      const referenceWidth = Number.isFinite(ref) && ref > 0 ? ref : styleW
+      setFixedLayoutSize({ width: styleW, height: styleH, referenceWidth })
       return
     }
 
@@ -641,14 +650,16 @@ ${selectors}:hover {
     return () => ro.disconnect()
   }, [])
 
-  // Fixed-layout: scale off the page viewport so content fills the preview
-  // area, upscaling small pages (PDFs whose natural width is below the panel)
-  // up to FL_MAX_SCALE so they don't render boxed with side whitespace.
+  // Fixed-layout: scale off the book-wide reference (spread) width so every
+  // page shares one scale — a full spread fills the panel, a single cover/end
+  // page renders centered at its natural fraction (e.g. half) of the panel
+  // rather than being upscaled to fill it. Small books (reference width below
+  // the panel) still upscale up to FL_MAX_SCALE so they don't render boxed.
   // Reflowable: fit to the device-frame base width, desktop capped at 1× and
   // mobile/tablet grown up to a target visible width for legibility.
   useEffect(() => {
     if (fixedLayoutSize) {
-      setScale(Math.min(FL_MAX_SCALE, availableWidth / fixedLayoutSize.width))
+      setScale(Math.min(FL_MAX_SCALE, availableWidth / fixedLayoutSize.referenceWidth))
       return
     }
     const fitScale = Math.max(0, availableWidth / baseWidth)
