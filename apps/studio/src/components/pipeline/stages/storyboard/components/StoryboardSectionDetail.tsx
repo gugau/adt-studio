@@ -1941,9 +1941,12 @@ export function StoryboardSectionDetail({
 
   // Activity sections get a banner above the rendered preview so the user can
   // tell at a glance that they're editing an interactive question/exercise
-  // rather than narrative content.
+  // rather than narrative content. Detect primarily by section type (covers
+  // activities with no fixed answers, e.g. open-ended) and fall back to the
+  // rendered activity metadata.
   const isActivitySection = Boolean(
-    renderedSection?.activityReasoning ||
+    section?.sectionType?.startsWith("activity_") ||
+      renderedSection?.activityReasoning ||
       (renderedSection?.activityAnswers &&
         Object.keys(renderedSection.activityAnswers).length > 0)
   )
