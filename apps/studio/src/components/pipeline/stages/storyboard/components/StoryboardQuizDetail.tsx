@@ -135,12 +135,11 @@ export function StoryboardQuizDetail({
       {/* Real rendered quiz — the same template the runtime/output uses, served
           on-demand by the adt-preview route (renderQuizHtml + ADT bundle) so the
           storyboard shows the true quiz, not a separate React mock-up. */}
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 min-h-0 pb-6 px-6">
         <iframe
           title={t`Quiz preview`}
           src={`${BASE_URL}/books/${bookLabel}/adt-preview/${quizId}.html?embed=1&v=${quizzesData?.version ?? 0}`}
-          className="w-full rounded border bg-white"
-          style={{ height: "80vh" }}
+          className="w-full h-full rounded border bg-white"
         />
       </div>
     </div>
