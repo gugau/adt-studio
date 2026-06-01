@@ -617,7 +617,11 @@ export function createPageRoutes(
               sectionId,
               sectionIndex: i,
               sectionType: s.sectionType ?? "",
-              isActivity: activityMap?.get(i) === true,
+              // Flag activities by section type (covers types with no fixed
+              // answers, e.g. open-ended) and fall back to rendered activity
+              // metadata. Matches the storyboard banner detection.
+              isActivity:
+                (s.sectionType ?? "").startsWith("activity_") || activityMap?.get(i) === true,
               isPruned: !!s.isPruned,
               textPreview: sectionText.slice(0, 200),
             }
