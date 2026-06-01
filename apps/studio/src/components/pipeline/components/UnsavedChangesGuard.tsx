@@ -22,7 +22,11 @@ export function UnsavedChangesGuard() {
   const hasUnsaved = useHasUnsavedChanges()
 
   const { status, proceed, reset } = useBlocker({
-    shouldBlockFn: () => hasUnsaved,
+    // Only block when actually leaving the view (pathname change). Same-path
+    // navigations — e.g. switching settings tabs via search params, where the
+    // page stays mounted and edits persist — shouldn't prompt.
+    shouldBlockFn: ({ current, next }) =>
+      hasUnsaved && current.pathname !== next.pathname,
     enableBeforeUnload: () => hasUnsaved,
     withResolver: true,
   })

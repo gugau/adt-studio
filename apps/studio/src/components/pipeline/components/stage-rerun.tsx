@@ -14,6 +14,7 @@ import {
 import { useUpdateBookConfig } from "@/hooks/use-book-config"
 import { useApiKey } from "@/hooks/use-api-key"
 import { useBookRun } from "@/hooks/use-book-run"
+import { useFloatingSave } from "./floating-save"
 import { useLingui } from "@lingui/react/macro"
 
 export interface DirtyConfig {
@@ -106,6 +107,16 @@ export function useSaveAndRerun(opts: SaveAndRerunOptions): SaveAndRerunControll
   const { queueRun } = useBookRun()
   const navigate = useNavigate()
   const [showDialog, setShowDialog] = useState(false)
+
+  // Surface unsaved settings to the navigation guard (warn before leaving /
+  // reloading), without rendering an entity bar — StageRerunBar owns the UI.
+  useFloatingSave({
+    id: `settings:${stage}`,
+    dirty: hasPendingChanges,
+    saving: updateConfig.isPending,
+    onDiscard: () => {},
+    silent: true,
+  })
 
   const confirm = async () => {
     if (savePrompts) await savePrompts()

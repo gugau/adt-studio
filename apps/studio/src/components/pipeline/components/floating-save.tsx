@@ -52,6 +52,12 @@ export interface FloatingSaveEntry {
    * re-renders; entries with a static label can omit it.
    */
   labelKey?: string
+  /**
+   * When true, the entry counts as unsaved work (so useHasUnsavedChanges and
+   * the navigation guard fire) but never renders the floating bar — for
+   * surfaces that own their own save UI (e.g. the settings Save & Rerun bar).
+   */
+  silent?: boolean
 }
 
 /** Fields whose change must re-render the host (label content excluded — see labelKey). */
@@ -126,7 +132,9 @@ function FloatingSaveHost({ store }: { store: FloatingSaveStore }) {
   const { t } = useLingui()
   useSyncExternalStore(store.subscribe, store.getVersion, store.getVersion)
 
-  const entries = store.active()
+  // Silent entries still count as unsaved work (for the nav guard) but render
+  // no bar — they own their own save UI.
+  const entries = store.active().filter((e) => !e.silent)
   if (entries.length === 0) return null
 
   // Callbacks indirect through the store so they're never stale, even when the
