@@ -20,6 +20,8 @@ import { useStageMissingCounts } from "@/hooks/use-stage-missing-counts"
 import { usePackageAdtStatus } from "@/hooks/use-books"
 import { useSignLanguageVideos } from "@/hooks/use-sign-language-videos"
 import { StepProgressRing } from "./StepProgressRing"
+import { StoryboardIndex } from "./StoryboardIndex"
+import { useSectionNav } from "@/routes/books.$label"
 import { usePages, usePageImage } from "@/hooks/use-pages"
 import {
   STAGES,
@@ -416,15 +418,26 @@ export function StageSidebar({
         {/* Pages panel — only when pages are open and not in settings */}
         {effectivePagesOpen && !isSettings && (
           <div className="flex-1 min-w-0 flex flex-col overflow-hidden border-l">
-            <PageIndex
-              bookLabel={bookLabel}
-              activeStep={activeStep}
-              selectedPageId={selectedPageId}
-              onSelectPage={onSelectPage}
-              sectionIndex={sectionIndex}
-              onSelectSection={onSelectSection}
-              stageRunning={currentState === "running"}
-            />
+            {activeStep === "storyboard" ? (
+              <StoryboardSidebarBridge
+                bookLabel={bookLabel}
+                selectedPageId={selectedPageId}
+                onSelectPage={onSelectPage}
+                sectionIndex={sectionIndex}
+                onSelectSection={onSelectSection}
+                stageRunning={currentState === "running"}
+              />
+            ) : (
+              <PageIndex
+                bookLabel={bookLabel}
+                activeStep={activeStep}
+                selectedPageId={selectedPageId}
+                onSelectPage={onSelectPage}
+                sectionIndex={sectionIndex}
+                onSelectSection={onSelectSection}
+                stageRunning={currentState === "running"}
+              />
+            )}
           </div>
         )}
       </div>
@@ -552,6 +565,53 @@ function TaskRow({ task }: { task: TaskInfoResponse }) {
     <div className="flex items-center gap-2 px-1 py-1">
       {content}
     </div>
+  )
+}
+
+/* ---------- StoryboardSidebarBridge ----------
+ *
+ * Adapts StoryboardIndex (which selects by pageId + sectionIndex) to the
+ * StageSidebar's onSelectPage / onSelectSection callbacks. When the user
+ * picks a section on a different page, we also flip `skipNextResetRef` so
+ * the layout-level effect that resets sectionIndex on page change leaves
+ * our chosen index alone.
+ */
+function StoryboardSidebarBridge({
+  bookLabel,
+  selectedPageId,
+  onSelectPage,
+  sectionIndex,
+  onSelectSection,
+  stageRunning,
+}: {
+  bookLabel: string
+  selectedPageId?: string
+  onSelectPage?: (pageId: string | null) => void
+  sectionIndex?: number
+  onSelectSection?: (index: number) => void
+  stageRunning?: boolean
+}) {
+  const { skipNextResetRef } = useSectionNav()
+  const handleSelectSection = useCallback(
+    (pageId: string, idx: number) => {
+      if (pageId !== selectedPageId) {
+        skipNextResetRef.current = true
+        onSelectSection?.(idx)
+        onSelectPage?.(pageId)
+      } else {
+        onSelectSection?.(idx)
+      }
+    },
+    [selectedPageId, onSelectPage, onSelectSection, skipNextResetRef],
+  )
+  return (
+    <StoryboardIndex
+      bookLabel={bookLabel}
+      selectedPageId={selectedPageId}
+      sectionIndex={sectionIndex}
+      onSelectSection={handleSelectSection}
+      stageRunning={stageRunning}
+    />
   )
 }
 
