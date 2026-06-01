@@ -1,4 +1,5 @@
-import { useBlocker } from "@tanstack/react-router"
+import { useCallback, useRef } from "react"
+import { useBlocker, type ShouldBlockFn } from "@tanstack/react-router"
 import { Trans } from "@lingui/react/macro"
 import { Button } from "@/components/ui/button"
 import {
@@ -20,14 +21,24 @@ import { useHasUnsavedChanges } from "./floating-save"
  */
 export function UnsavedChangesGuard() {
   const hasUnsaved = useHasUnsavedChanges()
+  // Read the live value through a ref so the blocker callbacks can stay stable
+  // (registered once) yet never see a stale value.
+  const hasUnsavedRef = useRef(hasUnsaved)
+  hasUnsavedRef.current = hasUnsaved
+
+  // Only block when actually leaving the view (pathname change). Same-path
+  // navigations — e.g. switching settings tabs via search params, where the
+  // page stays mounted and edits persist — shouldn't prompt.
+  const shouldBlockFn = useCallback<ShouldBlockFn>(
+    ({ current, next }) =>
+      hasUnsavedRef.current && current.pathname !== next.pathname,
+    [],
+  )
+  const enableBeforeUnload = useCallback(() => hasUnsavedRef.current, [])
 
   const { status, proceed, reset } = useBlocker({
-    // Only block when actually leaving the view (pathname change). Same-path
-    // navigations — e.g. switching settings tabs via search params, where the
-    // page stays mounted and edits persist — shouldn't prompt.
-    shouldBlockFn: ({ current, next }) =>
-      hasUnsaved && current.pathname !== next.pathname,
-    enableBeforeUnload: () => hasUnsaved,
+    shouldBlockFn,
+    enableBeforeUnload,
     withResolver: true,
   })
 
@@ -45,10 +56,7 @@ export function UnsavedChangesGuard() {
             <Trans>Discard unsaved changes?</Trans>
           </AlertDialogTitle>
           <AlertDialogDescription>
-            <Trans>
-              You have unsaved changes that will be lost if you leave. Save them
-              first, or leave to discard.
-            </Trans>
+            <Trans>You have unsaved changes. If you leave, they'll be lost.</Trans>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
