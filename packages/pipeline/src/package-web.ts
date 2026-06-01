@@ -300,6 +300,7 @@ export async function packageAdtWeb(
     const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
     const sectioning = structuringRow?.data as PageSectioningOutput | undefined
     const imageCaptionMap = loadImageCaptionMap(storage, page.pageId)
+    const decorativeImageIds = buildDecorativeImageIdSet(storage, page.pageId)
 
     const renderRow = storage.getLatestNodeData("web-rendering", page.pageId)
     if (renderRow) {
@@ -325,6 +326,7 @@ export async function packageAdtWeb(
             label,
             imageMap,
             preferredImageAltMap,
+            decorativeImageIds,
           )
 
           for (const imageId of referencedImages) {
@@ -1394,6 +1396,19 @@ function loadImageCaptionMap(storage: Storage, pageId: string): Map<string, stri
   return map
 }
 
+/** Build the set of image IDs the user has marked as decorative for a page. */
+export function buildDecorativeImageIdSet(storage: Storage, pageId: string): Set<string> {
+  const row = storage.getLatestNodeData("image-captioning", pageId)
+  const ids = new Set<string>()
+  if (!row) return ids
+
+  const data = row.data as ImageCaptioningOutput
+  for (const caption of data.captions ?? []) {
+    if (caption.decorative) ids.add(caption.imageId)
+  }
+  return ids
+}
+
 /** Collect every non-pruned image_group node in a section along with its image id. */
 function collectImageGroups(section: PageSectioningSection): Array<{ group: ContentNodeData; imageId: string }> {
   const out: Array<{ group: ContentNodeData; imageId: string }> = []
@@ -1489,6 +1504,7 @@ export function rewriteImageUrls(
   label: string,
   imageMap: Map<string, string>,
   altTextByImageId?: Map<string, string>,
+  decorativeImageIds?: Set<string>,
 ): { html: string; referencedImages: string[] } {
   const prefix = `/api/books/${label}/images/`
   const referencedImages: string[] = []
@@ -1547,10 +1563,18 @@ export function rewriteImageUrls(
     }
 
     const imageIdForAlt = resolvedImageId ?? dataId
-    const hasPreferredAlt = imageIdForAlt ? altTextByImageId?.has(imageIdForAlt) ?? false : false
-    const altText = imageIdForAlt ? altTextByImageId?.get(imageIdForAlt)?.trim() ?? "" : ""
-    if (hasPreferredAlt && (img.attribs.alt === undefined || img.attribs.alt.trim() === "")) {
-      img.attribs.alt = altText
+    const isDecorative = imageIdForAlt ? decorativeImageIds?.has(imageIdForAlt) ?? false : false
+    if (isDecorative) {
+      // Decorative image: needs no caption, hidden from assistive technology.
+      img.attribs.alt = ""
+      img.attribs.role = "presentation"
+      img.attribs["aria-hidden"] = "true"
+    } else {
+      const hasPreferredAlt = imageIdForAlt ? altTextByImageId?.has(imageIdForAlt) ?? false : false
+      const altText = imageIdForAlt ? altTextByImageId?.get(imageIdForAlt)?.trim() ?? "" : ""
+      if (hasPreferredAlt && (img.attribs.alt === undefined || img.attribs.alt.trim() === "")) {
+        img.attribs.alt = altText
+      }
     }
   }
 

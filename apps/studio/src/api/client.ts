@@ -263,7 +263,7 @@ export interface PageDetail {
     sections: SectionRendering[]
   } | null
   imageCaptioning: {
-    captions: Array<{ imageId: string; reasoning: string; caption: string }>
+    captions: Array<{ imageId: string; reasoning: string; caption: string; decorative?: boolean; source?: "ai" | "manual" }>
   } | null
   /** Per-image metadata (dimensions + optional PDF-point placement bounds). */
   imagesMeta: Array<{

@@ -404,9 +404,11 @@ export function createBookRoutes(
       for (const row of captionRows) {
         try {
           const parsed = JSON.parse(row.data) as {
-            captions?: Array<{ imageId?: string; caption?: string }>
+            captions?: Array<{ imageId?: string; caption?: string; decorative?: boolean }>
           }
           for (const cap of parsed.captions ?? []) {
+            // Decorative images have no caption to translate — skip them.
+            if (cap.decorative) continue
             if (cap.imageId && !captionedIds.has(cap.imageId)) {
               captionedIds.set(cap.imageId, cap.caption ?? "")
             }
