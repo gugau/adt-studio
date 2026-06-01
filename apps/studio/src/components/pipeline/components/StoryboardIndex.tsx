@@ -260,7 +260,7 @@ function SectionRow({
         section.isPruned && "opacity-50",
       )}
     >
-      <div className="relative shrink-0 w-28 aspect-video">
+      <div className="relative shrink-0 w-24 aspect-[4/3]">
         {renderedThumb ? (
           <img
             src={renderedThumb}
@@ -302,11 +302,11 @@ function SectionRow({
         >
           {previewLabel}
         </span>
-        <span className="text-[9px] font-mono opacity-50 leading-none">
-          <Trans>pg {String(page.pageNumber)} · s{String(section.sectionIndex + 1)}</Trans>
-          {section.isActivity && (
-            <span className="ml-1 inline-flex items-center gap-0.5 px-1 h-[12px] rounded bg-violet-100 text-violet-700 text-[8px] font-semibold not-italic leading-none">
-              <Trans>Activity</Trans>
+        <span className="mt-1 inline-flex items-center text-[10px] opacity-60 leading-none">
+          {`pg ${String(page.pageNumber)}`}
+          {page.sectionCount > 1 && (
+            <span className="ml-1 inline-flex items-center justify-center min-w-[15px] h-[13px] px-0.5 rounded bg-black/10 text-[9px] font-semibold leading-none">
+              {`${section.sectionIndex + 1}/${page.sectionCount}`}
             </span>
           )}
         </span>
@@ -370,7 +370,7 @@ function QuizRow({
       {/* Mini quiz preview: option bars with the correct answer highlighted */}
       <div
         className={cn(
-          "relative shrink-0 w-28 aspect-video rounded-md overflow-hidden bg-white",
+          "relative shrink-0 w-24 aspect-[4/3] rounded-md overflow-hidden bg-white",
           isActive ? "ring-1 ring-orange-400 shadow-sm" : "ring-1 ring-orange-200",
         )}
       >
@@ -601,7 +601,7 @@ function ComparisonPreview({
           <PreviewPanel
             src={renderedThumb}
             icon={<Monitor className="w-3 h-3" />}
-            label={<Trans>Generated page</Trans>}
+            label={<Trans>Generated section</Trans>}
             fallback={
               isPruned ? (
                 <Trans>This section is pruned and isn't rendered.</Trans>

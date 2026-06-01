@@ -2096,12 +2096,9 @@ export function StoryboardSectionDetail({
           <>
             {isActivitySection && (
               <StorySectionBanner
+                tone="violet"
                 icon={<Puzzle className="w-4 h-4" />}
-                title={
-                  activityTypeLabel
-                    ? t`Activity: ${activityTypeLabel}`
-                    : t`Activity`
-                }
+                title={activityTypeLabel || t`Activity`}
                 subtitle={t`Interactive page: AI conversion from the original PDF.`}
               />
             )}
