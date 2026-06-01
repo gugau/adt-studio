@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react"
+import { Plus } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  SegmentedControl,
+  type SegmentedControlOption,
+} from "@/components/ui/segmented-control"
 import { LandingPageShell } from "@/components/pipeline/components/LandingPageShell"
 import { PrereqGuard } from "@/components/pipeline/components/PrereqGuard"
 import {
@@ -14,8 +20,11 @@ import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { usePersistConfig } from "@/hooks/use-persist-config"
 import { QuizzesPreview } from "./components/QuizzesPreview"
+import { AddQuizDialog } from "./AddQuizDialog"
 
 const DEFAULT_PAGES_PER_QUIZ = 3
+
+type QuizMode = "frequency" | "specific"
 
 export function QuizzesLandingPage({ bookLabel }: { bookLabel: string }) {
   const { t } = useLingui()
@@ -28,6 +37,8 @@ export function QuizzesLandingPage({ bookLabel }: { bookLabel: string }) {
   const storyboardStatus = useStageStatus("storyboard")
   const storyboardReady = storyboardStatus.isCompleted
 
+  const [mode, setMode] = useState<QuizMode>("frequency")
+  const [showAddQuiz, setShowAddQuiz] = useState(false)
   const [pagesPerQuiz, setPagesPerQuiz] = useState(String(DEFAULT_PAGES_PER_QUIZ))
 
   useEffect(() => {
@@ -60,7 +71,14 @@ export function QuizzesLandingPage({ bookLabel }: { bookLabel: string }) {
       Run Storyboard first — quizzes are written from the content placed into
       pages by Storyboard.
     </Trans>
+  ) : status.isRunning ? (
+    <Trans>Quizzes are generating. Wait for the run to finish before adding a quiz.</Trans>
   ) : undefined
+
+  const modeOptions: SegmentedControlOption<QuizMode>[] = [
+    { value: "frequency", label: t`Every few pages` },
+    { value: "specific", label: t`Specific pages` },
+  ]
 
   return (
     <LandingPageShell
@@ -80,7 +98,8 @@ export function QuizzesLandingPage({ bookLabel }: { bookLabel: string }) {
       rerunLabel={<Trans>Re-run</Trans>}
       previewLabel={t`Quiz Preview`}
       onRun={handleRun}
-      preview={<QuizzesPreview pagesPerQuiz={Number(pagesPerQuiz)} />}
+      hideRunButton={mode === "specific"}
+      preview={<QuizzesPreview pagesPerQuiz={Number(pagesPerQuiz)} mode={mode} />}
     >
       <div className="flex flex-col gap-2">
         <h1 className="text-[26px] font-semibold leading-tight tracking-tight text-[#0a0a0a]">
@@ -89,8 +108,8 @@ export function QuizzesLandingPage({ bookLabel }: { bookLabel: string }) {
         <p className="text-[14px] text-[#737373] leading-relaxed">
           <Trans>
             Generate multiple-choice comprehension quizzes from the book's
-            content. Set how often a quiz appears, then run the stage to create
-            them across the whole book.
+            content. Create them automatically across the whole book, or add a
+            single quiz from specific pages.
           </Trans>
         </p>
       </div>
@@ -108,28 +127,83 @@ export function QuizzesLandingPage({ bookLabel }: { bookLabel: string }) {
 
       <SettingsCard>
         <SettingsField
-          label={<Trans>Quiz frequency</Trans>}
+          label={<Trans>How to add quizzes</Trans>}
           hint={
-            <Trans>
-              How many pages of content go into each quiz. A lower number means
-              more quizzes across the book.
-            </Trans>
+            mode === "frequency" ? (
+              <Trans>
+                Automatically create quizzes across the whole book at a set
+                frequency.
+              </Trans>
+            ) : (
+              <Trans>
+                Create one quiz from specific pages and place it exactly where
+                you want it in the book.
+              </Trans>
+            )
           }
         >
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              min={1}
-              value={pagesPerQuiz}
-              onChange={(e) => handleFrequencyChange(e.target.value)}
-              className="w-24 h-9"
-            />
-            <span className="text-[13px] text-[#737373]">
-              <Trans>pages per quiz</Trans>
-            </span>
-          </div>
+          <SegmentedControl
+            options={modeOptions}
+            value={mode}
+            onValueChange={setMode}
+          />
         </SettingsField>
+
+        {mode === "frequency" ? (
+          <SettingsField
+            label={<Trans>Quiz frequency</Trans>}
+            hint={
+              <Trans>
+                How many pages of content go into each quiz. A lower number
+                means more quizzes across the book.
+              </Trans>
+            }
+          >
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={1}
+                value={pagesPerQuiz}
+                onChange={(e) => handleFrequencyChange(e.target.value)}
+                className="w-24 h-9"
+              />
+              <span className="text-[13px] text-[#737373]">
+                <Trans>pages per quiz</Trans>
+              </span>
+            </div>
+          </SettingsField>
+        ) : (
+          <SettingsField
+            label={<Trans>Add a quiz</Trans>}
+            hint={
+              <Trans>
+                Choose the source pages and where the quiz lands in the page
+                editor.
+              </Trans>
+            }
+          >
+            <Button
+              onClick={() => setShowAddQuiz(true)}
+              disabled={!hasApiKey || !storyboardReady || status.isRunning}
+              className="h-10 gap-1.5 border-0 bg-orange-600 px-4 text-white hover:bg-orange-700"
+            >
+              <Plus className="h-4 w-4" />
+              <Trans>Add a quiz</Trans>
+            </Button>
+            {disabledReason && (
+              <p className="text-xs text-[#737373] leading-relaxed">
+                {disabledReason}
+              </p>
+            )}
+          </SettingsField>
+        )}
       </SettingsCard>
+
+      <AddQuizDialog
+        open={showAddQuiz}
+        onOpenChange={setShowAddQuiz}
+        bookLabel={bookLabel}
+      />
     </LandingPageShell>
   )
 }
