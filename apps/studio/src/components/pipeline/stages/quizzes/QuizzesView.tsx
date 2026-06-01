@@ -13,6 +13,7 @@ import { StageRunCard } from "../../components/StageRunCard"
 import { VersionPicker } from "../../components/VersionPicker"
 import { StageContentGuard } from "../../components/StageContentGuard"
 import { StageEmptyState } from "../../components/StageEmptyState"
+import { usePendingChanges } from "../../components/change-summary"
 import { getRequestedPageId, getQuizImageRenderState } from "./lib/quizzes-image-state"
 import { useLingui } from "@lingui/react/macro"
 
@@ -191,6 +192,17 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
     ? quizzes.filter((q) => q.pageIds.includes(selectedPageId))
     : quizzes
 
+  const { label: pendingLabel, labelKey: pendingLabelKey } = usePendingChanges({
+    prev: data?.quizzes?.quizzes ?? [],
+    next: pending?.quizzes,
+    keyOf: (q) => String(q.quizIndex),
+    isEqual: (a, b) =>
+      a.question === b.question &&
+      a.answerIndex === b.answerIndex &&
+      JSON.stringify(a.options) === JSON.stringify(b.options),
+    noun: { one: t`quiz`, other: t`quizzes` },
+  })
+
   const saveQuizzes = useCallback(async () => {
     if (!pending) return
     setSaving(true)
@@ -217,6 +229,8 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
           saving={saving}
           dirty={dirty}
           bookLabel={bookLabel}
+          pendingLabel={pendingLabel}
+          pendingLabelKey={pendingLabelKey}
           onPreview={(d) => setPending(d as QuizData)}
           onSave={() => saveRef.current()}
           onDiscard={() => setPending(null)}
@@ -224,7 +238,7 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
       </div>
     )
     return () => setExtra(null)
-  }, [data, displayQuizzes.length, saving, dirty, bookLabel, selectedPageId])
+  }, [data, displayQuizzes.length, saving, dirty, bookLabel, selectedPageId, pendingLabel, pendingLabelKey])
 
   const updateQuestion = (idx: number, question: string) => {
     const base = pending ?? data?.quizzes

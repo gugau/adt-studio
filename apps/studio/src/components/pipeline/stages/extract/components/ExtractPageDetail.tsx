@@ -9,6 +9,7 @@ import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
 import { ImageCropDialog } from "@/components/pipeline/stages/storyboard/components/ImageCropDialog"
 import { VersionPicker } from "@/components/pipeline/components/VersionPicker"
+import { usePendingChanges } from "@/components/pipeline/components/change-summary"
 import { resolveReflowableFont } from "@adt/types"
 
 function ImageCard({ imageId, bookLabel, isPruned, reason, bounds, onTogglePrune, onRecrop, cacheBust }: { imageId: string; bookLabel: string; isPruned?: boolean; reason?: string; bounds?: { x: number; y: number; width: number; height: number }; onTogglePrune?: () => void; onRecrop?: () => void; cacheBust?: number }) {
@@ -158,6 +159,17 @@ export function ExtractPageDetail({
   const imageClassData = pendingImageData ?? page?.imageClassification ?? null
   const imageDirty = pendingImageData != null
 
+  const { label: pendingLabel, labelKey: pendingLabelKey } = usePendingChanges({
+    prev: page?.imageClassification?.images ?? [],
+    next: pendingImageData?.images,
+    keyOf: (i) => i.imageId,
+    isEqual: (a, b) => !!a.isPruned === !!b.isPruned,
+    classifyChanged: (before, after) =>
+      after.isPruned && !before.isPruned ? "pruned" : "restored",
+    includeAddRemove: false,
+    noun: { one: t`image`, other: t`images` },
+  })
+
   // Lookup for per-image page-placement bounds (when available from extract)
   const boundsByImageId = useMemo(() => {
     const map = new Map<string, { x: number; y: number; width: number; height: number }>()
@@ -236,6 +248,8 @@ export function ExtractPageDetail({
                   saving={savingImages}
                   dirty={imageDirty}
                   bookLabel={bookLabel}
+                  pendingLabel={pendingLabel}
+                  pendingLabelKey={pendingLabelKey}
                   onPreview={(data) => setPendingImageData(data as ImageClassData)}
                   onSave={saveImageChanges}
                   onDiscard={() => setPendingImageData(null)}

@@ -13,6 +13,7 @@ import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
 import { VersionPicker } from "../../components/VersionPicker"
 import { StageContentGuard } from "../../components/StageContentGuard"
+import { usePendingChanges } from "../../components/change-summary"
 import { useLingui } from "@lingui/react/macro"
 import { AddGlossaryDialog } from "./AddGlossaryDialog"
 
@@ -60,6 +61,21 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
   const currentVersion = data?.version ?? null
   const prunedCount = useMemo(() => items.filter((item) => item.pruned).length, [items])
   const visibleCount = items.length - prunedCount
+
+  const { label: pendingLabel, labelKey: pendingLabelKey } = usePendingChanges({
+    prev: data?.items ?? [],
+    next: pending?.items,
+    keyOf: (i) => i.id ?? i.word,
+    isEqual: (a, b) =>
+      a.word === b.word &&
+      a.definition === b.definition &&
+      a.emojis.join("|") === b.emojis.join("|") &&
+      a.variations.join("|") === b.variations.join("|") &&
+      !!a.pruned === !!b.pruned,
+    classifyChanged: (before, after) =>
+      !!after.pruned && !before.pruned ? "pruned" : "edited",
+    noun: { one: t`term`, other: t`terms` },
+  })
 
   const filteredItems = useMemo(() => {
     const q = searchQuery.trim().toLocaleLowerCase()
@@ -117,6 +133,8 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
           dirty={dirty}
           bookLabel={bookLabel}
           saveDisabledReason={glossaryRunning ? t`Wait for glossary generation to finish` : undefined}
+          pendingLabel={pendingLabel}
+          pendingLabelKey={pendingLabelKey}
           onPreview={(d) => setPending(d as GlossaryData)}
           onSave={() => saveRef.current()}
           onDiscard={() => setPending(null)}
@@ -124,7 +142,7 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
       </div>
     )
     return () => setExtra(null)
-  }, [visibleCount, saving, dirty, bookLabel, currentVersion, openAddDialog, glossaryRunning, t, setExtra])
+  }, [visibleCount, saving, dirty, bookLabel, currentVersion, openAddDialog, glossaryRunning, t, setExtra, pendingLabel, pendingLabelKey])
 
   const updateDefinition = (itemId: string, newDefinition: string) => {
     const base = pending ?? data ?? createEmptyGlossary()

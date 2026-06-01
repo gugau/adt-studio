@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { DebugPanel } from "@/components/debug/DebugPanel"
 import { DebugPanelStateProvider, type DebugTabValue } from "@/components/debug/debug-panel-state"
 import { StageSidebar } from "@/components/pipeline/components/StageSidebar"
+import { FloatingSaveProvider } from "@/components/pipeline/components/floating-save"
 import { useBookRunStatus, BookRunProvider } from "@/hooks/use-book-run"
 import { useExportWatcherSetup, ExportWatcherProvider } from "@/hooks/use-export-watcher"
 import { usePlatform } from "@/hooks/use-platform"
@@ -134,7 +135,7 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
 
   return (
     <DebugPanelStateProvider value={debugPanelState}>
-      <>
+      <FloatingSaveProvider>
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex min-h-0 flex-1">
             <div className="relative w-[220px] shrink-0">
@@ -199,7 +200,7 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
             <Terminal className="h-4 w-4" />
           </Button>
         )}
-      </>
+      </FloatingSaveProvider>
     </DebugPanelStateProvider>
   )
 }

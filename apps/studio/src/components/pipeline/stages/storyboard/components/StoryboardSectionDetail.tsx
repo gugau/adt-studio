@@ -16,7 +16,6 @@ import {
   PanelRightOpen,
   PenLine,
   Play,
-  Save,
   Sparkles,
   Type,
   X,
@@ -50,6 +49,7 @@ import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import { useStepHeader } from "../../../components/StepViewRouter"
 import { LoadingState } from "../../../components/LoadingState"
 import { StageEmptyState } from "../../../components/StageEmptyState"
+import { useFloatingSave, PendingChip } from "../../../components/floating-save"
 import {
   BookPreviewFrame,
   type BookPreviewFrameHandle,
@@ -751,6 +751,50 @@ export function StoryboardSectionDetail({
       setSaving(false)
     }
   }
+
+  // Register combined pending state (sectioning + rendering + inspector edits)
+  // with the shared floating save bar. Category chips carry over as the label.
+  const pendingChipCats = (() => {
+    const active = new Set(pendingCategories)
+    if (dirty) active.add("sections")
+    const ordered: PendingCategory[] = ["sections", "style", "text", "images", "elements"]
+    return ordered.filter((c) => active.has(c))
+  })()
+  const pendingChipLabels: Record<PendingCategory, string> = {
+    sections: t`Sections`,
+    style: t`Style`,
+    text: t`Text`,
+    images: t`Images`,
+    elements: t`Elements`,
+  }
+  const pendingChipIcons: Record<PendingCategory, typeof Layers> = {
+    sections: Layers,
+    style: Palette,
+    text: Type,
+    images: ImageIcon,
+    elements: Boxes,
+  }
+  useFloatingSave({
+    id: `storyboard:${pageId}`,
+    dirty: dirty || renderingDirty,
+    saving,
+    labelKey: pendingChipCats.join(","),
+    label:
+      pendingChipCats.length > 0 ? (
+        <div className="flex items-center gap-1">
+          {pendingChipCats.map((cat) => (
+            <PendingChip key={cat} icon={pendingChipIcons[cat]}>
+              {pendingChipLabels[cat]}
+            </PendingChip>
+          ))}
+        </div>
+      ) : undefined,
+    onSave: () => {
+      if (renderingDirty) void saveRendering()
+      else if (pendingSectioning) void saveSectioning()
+    },
+    onDiscard: discardAll,
+  })
 
   // Clone current section
   const handleCloneSection = async () => {
@@ -2165,87 +2209,6 @@ export function StoryboardSectionDetail({
         </div>
       )}
 
-      {/* Floating save/discard bar */}
-      {(dirty || renderingDirty) && !saving && (() => {
-        const labels: Record<PendingCategory, string> = {
-          sections: t`Sections`,
-          style: t`Style`,
-          text: t`Text`,
-          images: t`Images`,
-          elements: t`Elements`,
-        }
-        const icons: Record<PendingCategory, typeof Layers> = {
-          sections: Layers,
-          style: Palette,
-          text: Type,
-          images: ImageIcon,
-          elements: Boxes,
-        }
-        const active = new Set(pendingCategories)
-        if (dirty) active.add("sections")
-        const orderedCategories: PendingCategory[] = ["sections", "style", "text", "images", "elements"]
-        const visible = orderedCategories.filter((c) => active.has(c))
-
-        return (
-          <div className="absolute bottom-4 left-1/2 z-40 -translate-x-1/2 animate-in slide-in-from-bottom-4 fade-in zoom-in-95 duration-300 ease-out">
-            <div className="flex items-center gap-3 rounded-md border border-border/60 bg-background/95 backdrop-blur px-2 py-1.5 shadow-xl shadow-black/5 transition-all duration-200">
-              {/* Status indicator + chips */}
-              <div className="flex items-center gap-2 pl-2">
-                <span className="relative inline-flex h-2 w-2 shrink-0" aria-hidden>
-                  <span className="absolute inset-0 rounded-full bg-amber-500/40 animate-ping" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
-                </span>
-                {visible.length > 0 ? (
-                  <div className="flex items-center gap-1">
-                    {visible.map((cat) => {
-                      const Icon = icons[cat]
-                      return (
-                        <span
-                          key={cat}
-                          className="adt-pill-chip inline-flex items-center gap-1 rounded bg-muted/70 px-2 py-0.5 text-[11px] font-medium text-foreground overflow-hidden whitespace-nowrap"
-                        >
-                          <Icon className="h-3 w-3 text-muted-foreground" />
-                          {labels[cat]}
-                        </span>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <span className="text-[11px] font-medium text-foreground">
-                    {t`Unsaved changes`}
-                  </span>
-                )}
-              </div>
-
-              {/* Divider */}
-              <div className="h-5 w-px bg-border/80" aria-hidden />
-
-              {/* Actions */}
-              <div className="flex items-center gap-1 pr-1">
-                <button
-                  type="button"
-                  onClick={discardAll}
-                  className="inline-flex items-center gap-1.5 rounded px-3 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-                >
-                  <X className="h-3 w-3" />
-                  {t`Discard`}
-                </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (renderingDirty) await saveRendering()
-                    else if (pendingSectioning) await saveSectioning()
-                  }}
-                  className="inline-flex items-center gap-1.5 rounded px-3 py-1 text-[11px] font-medium bg-green-600 hover:bg-green-500 text-white shadow-sm shadow-green-600/20 transition-colors cursor-pointer"
-                >
-                  <Save className="h-3 w-3" />
-                  {t`Save`}
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      })()}
 
 
       {/* Slide-out section data panel */}

@@ -36,6 +36,7 @@ import {
 import { displayLang } from "./lib/display-lang"
 import { ImageLightbox } from "./components/ImageLightbox"
 import { WordHighlightPreview } from "./components/WordHighlightPreview"
+import { usePendingChanges } from "../../components/change-summary"
 import { msg } from "@lingui/core/macro"
 import { useLingui } from "@lingui/react/macro"
 
@@ -211,6 +212,14 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
   const effectiveEntries = pendingEntries ?? translatedEntries
   const translatedMap = new Map(effectiveEntries.map((e) => [e.id, e.text]))
   const dirty = pendingEntries != null
+
+  const { label: pendingLabel, labelKey: pendingLabelKey } = usePendingChanges({
+    prev: translatedEntries,
+    next: pendingEntries,
+    keyOf: (e) => e.id,
+    isEqual: (a, b) => a.text === b.text,
+    noun: { one: t`translation`, other: t`translations` },
+  })
 
   const saveTranslation = useCallback(async () => {
     if (!pendingEntries || !selectedLang) return
@@ -446,6 +455,8 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
           saving={saving}
           dirty={dirty}
           bookLabel={bookLabel}
+          pendingLabel={pendingLabel}
+          pendingLabelKey={pendingLabelKey}
           onPreview={(d) => {
             const data = d as { entries?: TextCatalogEntry[] }
             setPendingEntries(data?.entries ?? [])

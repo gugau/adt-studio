@@ -11,6 +11,7 @@ import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
 import { VersionPicker } from "../../components/VersionPicker"
 import { StageContentGuard } from "../../components/StageContentGuard"
+import { usePendingChanges } from "../../components/change-summary"
 
 type TocData = Omit<TocGenerationOutput, "version">
 
@@ -154,6 +155,18 @@ export function TocView({ bookLabel }: { bookLabel: string }) {
   const entries = effective?.entries ?? []
   const dirty = pending != null
 
+  const { label: pendingLabel, labelKey: pendingLabelKey } = usePendingChanges({
+    prev: data?.entries ?? [],
+    next: pending?.entries,
+    keyOf: (e) => e.id,
+    isEqual: (a, b) =>
+      a.title === b.title &&
+      a.sectionId === b.sectionId &&
+      a.href === b.href &&
+      a.level === b.level,
+    noun: { one: t`entry`, other: t`entries` },
+  })
+
   const saveToc = useCallback(async () => {
     if (!pending) return
     setSaving(true)
@@ -185,6 +198,8 @@ export function TocView({ bookLabel }: { bookLabel: string }) {
           saving={saving}
           dirty={dirty}
           bookLabel={bookLabel}
+          pendingLabel={pendingLabel}
+          pendingLabelKey={pendingLabelKey}
           onPreview={(d) => setPending(d as TocData)}
           onSave={() => saveRef.current()}
           onDiscard={() => setPending(null)}
@@ -192,7 +207,7 @@ export function TocView({ bookLabel }: { bookLabel: string }) {
       </div>,
     )
     return () => setExtra(null)
-  }, [data, entries.length, saving, dirty, bookLabel, setExtra])
+  }, [data, entries.length, saving, dirty, bookLabel, setExtra, pendingLabel, pendingLabelKey])
 
   const updateEntry = (id: string, updates: Partial<TocEntry>) => {
     const base = pending ?? data
