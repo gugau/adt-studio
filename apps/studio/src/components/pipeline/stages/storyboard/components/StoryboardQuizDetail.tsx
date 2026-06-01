@@ -153,7 +153,7 @@ export function StoryboardQuizDetail({
       </div>
 
       {/* Interactive quiz — fills the remaining height */}
-      <div className="flex-1 overflow-auto px-6 pb-6">
+      <div className="flex-1 overflow-auto p-6">
         <div className="h-full flex flex-col rounded-xl bg-card ring-1 ring-border shadow-sm overflow-hidden">
           {/* Question */}
           <div className="px-6 pt-6 pb-4">
