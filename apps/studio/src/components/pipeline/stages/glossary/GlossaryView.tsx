@@ -1,5 +1,26 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
-import { BookOpen, Check, ChevronDown, EyeOff, Loader2, Plus, RotateCcw, Search, Trash2, X } from "lucide-react"
+import {
+  ArrowDownAZ,
+  ArrowDownWideNarrow,
+  ArrowDownZA,
+  ArrowUpDown,
+  ArrowUpNarrowWide,
+  BookOpen,
+  Check,
+  ChevronDown,
+  EyeOff,
+  Hash,
+  ListOrdered,
+  Loader2,
+  MapPin,
+  PencilLine,
+  Plus,
+  RotateCcw,
+  Search,
+  Sparkles,
+  Trash2,
+  X,
+} from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { api } from "@/api/client"
 import type { GlossaryItem, GlossaryOutput, VersionEntry } from "@/api/client"
@@ -10,13 +31,16 @@ import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
 import { StageContentGuard } from "../../components/StageContentGuard"
 import { StageEmptyState } from "../../components/StageEmptyState"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useLingui } from "@lingui/react/macro"
 import { AddGlossaryDialog } from "./AddGlossaryDialog"
 import { GlossaryHintBanner } from "./components/GlossaryHintBanner"
+import { useGlossaryOccurrences, type TermOccurrence } from "./lib/occurrences"
 
 
 type GlossaryData = Omit<GlossaryOutput, "version">
 type GlossaryFilter = "all" | "active" | "pruned"
+type SortMode = "default" | "az" | "za" | "usage-desc" | "usage-asc"
 
 const TOOLBAR_HEIGHT = 64
 
@@ -169,6 +193,8 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [filter, setFilter] = useState<GlossaryFilter>("active")
+  const [manualOnly, setManualOnly] = useState(false)
+  const [sortMode, setSortMode] = useState<SortMode>("default")
 
   // Reset pending when data changes
   useEffect(() => {
@@ -180,20 +206,46 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
   const dirty = pending != null
   const currentVersion = data?.version ?? null
   const prunedCount = useMemo(() => items.filter((item) => item.pruned).length, [items])
+  const manualCount = useMemo(() => items.filter((item) => item.source === "manual").length, [items])
   const visibleCount = items.length - prunedCount
+  const { byItem: occurrences, isLoading: occurrencesLoading } = useGlossaryOccurrences(
+    bookLabel,
+    items,
+  )
 
-  const filteredItems = useMemo(() => {
+  const displayItems = useMemo(() => {
     const q = searchQuery.trim().toLocaleLowerCase()
-    return items.filter((item) => {
+    const list = items.filter((item) => {
       if (filter === "active" && item.pruned) return false
       if (filter === "pruned" && !item.pruned) return false
+      if (manualOnly && item.source !== "manual") return false
       if (!q) return true
       const haystack = [item.word, item.definition, ...item.variations]
         .join(" ")
         .toLocaleLowerCase()
       return haystack.includes(q)
     })
-  }, [items, searchQuery, filter])
+    if (sortMode === "default") return list
+    const usage = (item: GlossaryItem) => occurrences.get(item.id ?? item.word)?.count ?? 0
+    const byWord = (a: GlossaryItem, b: GlossaryItem) =>
+      a.word.localeCompare(b.word, undefined, { sensitivity: "base" })
+    const sorted = [...list]
+    switch (sortMode) {
+      case "az":
+        sorted.sort(byWord)
+        break
+      case "za":
+        sorted.sort((a, b) => byWord(b, a))
+        break
+      case "usage-desc":
+        sorted.sort((a, b) => usage(b) - usage(a) || byWord(a, b))
+        break
+      case "usage-asc":
+        sorted.sort((a, b) => usage(a) - usage(b) || byWord(a, b))
+        break
+    }
+    return sorted
+  }, [items, searchQuery, filter, manualOnly, sortMode, occurrences])
 
   const openAddDialog = useCallback(() => {
     setShowAddDialog(true)
@@ -359,6 +411,22 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
             })}
           </div>
 
+          <button
+            type="button"
+            onClick={() => setManualOnly((v) => !v)}
+            aria-pressed={manualOnly}
+            title={t`Show only terms you added manually`}
+            className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-[12px] font-medium transition-colors cursor-pointer ${
+              manualOnly
+                ? "border-lime-300 bg-lime-50 text-lime-700"
+                : "border-border/70 bg-background text-muted-foreground hover:text-foreground hover:bg-muted/60"
+            }`}
+          >
+            <PencilLine className="h-3.5 w-3.5" />
+            {t`Manual`}
+            <span className="tabular-nums text-[11px] text-muted-foreground/70">{manualCount}</span>
+          </button>
+
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/70 pointer-events-none" />
             <input
@@ -381,6 +449,7 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
           </div>
 
           <div className="ml-auto flex items-center gap-1.5">
+            <SortMenu value={sortMode} onChange={setSortMode} />
             <button
               type="button"
               onClick={openAddDialog}
@@ -395,23 +464,27 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
         </div>
 
         <div className="flex flex-col gap-2.5 px-4 pb-12 pt-4">
-          {filteredItems.length === 0 ? (
+          {displayItems.length === 0 ? (
             <StageEmptyState
               icon={BookOpen}
               color="lime"
               title={
                 searchQuery
                   ? t`No terms match your search`
-                  : filter === "pruned"
-                    ? t`No pruned terms`
-                    : t`No terms to show`
+                  : manualOnly
+                    ? t`No manual terms yet`
+                    : filter === "pruned"
+                      ? t`No pruned terms`
+                      : t`No terms to show`
               }
             />
           ) : (
-            filteredItems.map((item) => (
+            displayItems.map((item) => (
               <GlossaryItemCard
                 key={item.id ?? item.word}
                 item={item}
+                occurrence={occurrences.get(item.id ?? item.word)}
+                occurrenceLoading={occurrencesLoading}
                 onDefinitionChange={updateDefinition}
                 onEmojisChange={updateEmojis}
                 onRemoveManual={removeManualItem}
@@ -433,14 +506,94 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
   )
 }
 
+function SortMenu({
+  value,
+  onChange,
+}: {
+  value: SortMode
+  onChange: (mode: SortMode) => void
+}) {
+  const { t } = useLingui()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [open])
+
+  const options = [
+    { value: "default" as const, label: t`Book order`, icon: ListOrdered },
+    { value: "az" as const, label: t`A → Z`, icon: ArrowDownAZ },
+    { value: "za" as const, label: t`Z → A`, icon: ArrowDownZA },
+    { value: "usage-desc" as const, label: t`Most used`, icon: ArrowDownWideNarrow },
+    { value: "usage-asc" as const, label: t`Least used`, icon: ArrowUpNarrowWide },
+  ]
+  const current = options.find((o) => o.value === value) ?? options[0]
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border/70 bg-background pl-2.5 pr-2 text-[12px] font-medium text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+      >
+        <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="text-muted-foreground">{t`Sort`}</span>
+        <span>{current.label}</span>
+        <ChevronDown
+          className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1.5 z-30 w-48 rounded-lg border border-border bg-popover shadow-xl py-1 animate-in fade-in zoom-in-95 duration-150">
+          {options.map((o) => {
+            const Icon = o.icon
+            const active = o.value === value
+            return (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => {
+                  onChange(o.value)
+                  setOpen(false)
+                }}
+                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] transition-colors cursor-pointer ${
+                  active
+                    ? "bg-lime-50 font-medium text-lime-800"
+                    : "text-foreground hover:bg-muted/60"
+                }`}
+              >
+                <Icon className={`h-3.5 w-3.5 shrink-0 ${active ? "text-lime-600" : "text-muted-foreground"}`} />
+                <span className="flex-1">{o.label}</span>
+                {active && <Check className="h-3.5 w-3.5 text-lime-600" />}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function GlossaryItemCard({
   item,
+  occurrence,
+  occurrenceLoading,
   onDefinitionChange,
   onEmojisChange,
   onRemoveManual,
   onTogglePruned,
 }: {
   item: GlossaryItem
+  occurrence?: TermOccurrence
+  occurrenceLoading: boolean
   onDefinitionChange: (itemId: string, definition: string) => void
   onEmojisChange: (itemId: string, emojis: string[]) => void
   onRemoveManual: (itemId: string) => void
@@ -451,22 +604,34 @@ function GlossaryItemCard({
   const isPruned = item.pruned === true
   const isManual = item.source === "manual"
 
+  const sourceLabel = isManual ? t`Added manually` : t`Generated by AI`
+
   return (
     <div
-      className={`group/card relative flex flex-col gap-2.5 rounded-xl border p-3.5 transition-all duration-200 ${
+      className={`relative flex flex-col gap-2.5 rounded-xl border p-3.5 ${
         isPruned
-          ? "border-border/50 bg-muted/20 opacity-70 hover:opacity-100"
-          : "border-border/70 bg-card hover:shadow-md hover:border-lime-300/70"
+          ? "border-border/50 bg-muted/20 opacity-70"
+          : "border-border/70 bg-card"
       }`}
     >
       <div className="flex items-start gap-3">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5">
-            <span
-              aria-hidden
-              className={`h-1.5 w-1.5 rounded-full ${isManual ? "bg-emerald-500" : "bg-violet-400"}`}
-              title={isManual ? t`Added manually` : t`Generated by AI`}
-            />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className="inline-flex h-5 w-5 shrink-0 items-center justify-center"
+                  aria-label={sourceLabel}
+                >
+                  {isManual ? (
+                    <PencilLine className="h-3.5 w-3.5 text-emerald-600" aria-hidden />
+                  ) : (
+                    <Sparkles className="h-3.5 w-3.5 text-violet-500" aria-hidden />
+                  )}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>{sourceLabel}</TooltipContent>
+            </Tooltip>
             <span
               className={`text-[14px] font-semibold leading-tight ${
                 isPruned ? "text-muted-foreground line-through" : "text-foreground"
@@ -480,11 +645,6 @@ function GlossaryItemCard({
             onChange={(next) => onEmojisChange(itemId, next)}
             placeholder={t`emoji`}
           />
-          {isManual && (
-            <span className="inline-flex items-center rounded-full bg-lime-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-lime-700">
-              {t`Manual`}
-            </span>
-          )}
           {isPruned && (
             <span className="inline-flex items-center rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               {t`Pruned`}
@@ -500,7 +660,7 @@ function GlossaryItemCard({
           ))}
         </div>
 
-        <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-200 group-hover/card:opacity-100 focus-within:opacity-100">
+        <div className="flex shrink-0 items-center gap-0.5">
           {isManual ? (
             <button
               type="button"
@@ -538,6 +698,66 @@ function GlossaryItemCard({
         placeholder={t`Add a definition…`}
         ariaLabel={t`Definition for ${item.word}`}
       />
+
+      <TermOccurrenceMeta occurrence={occurrence} loading={occurrenceLoading} />
+    </div>
+  )
+}
+
+/** Shows how often the term appears in the book and on which pages. */
+function TermOccurrenceMeta({
+  occurrence,
+  loading,
+}: {
+  occurrence?: TermOccurrence
+  loading: boolean
+}) {
+  const { t } = useLingui()
+
+  if (!occurrence && loading) {
+    return (
+      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/60">
+        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground/40" />
+        {t`Counting occurrences…`}
+      </div>
+    )
+  }
+
+  const count = occurrence?.count ?? 0
+  const pages = occurrence?.pages ?? []
+
+  if (count === 0) {
+    return (
+      <p className="text-[11px] italic text-muted-foreground/60">
+        {t`Not found in the book text`}
+      </p>
+    )
+  }
+
+  const shown = pages.slice(0, 8)
+  const shownStr = shown.join(", ")
+  const more = pages.length - shown.length
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
+      <span className="inline-flex items-center gap-1 font-medium text-foreground/70">
+        <Hash className="h-3 w-3 text-lime-600" aria-hidden />
+        <span className="tabular-nums">{t`${String(count)}×`}</span>
+        <span className="font-normal text-muted-foreground">{t`in the book`}</span>
+      </span>
+      {pages.length > 0 && (
+        <span
+          className="inline-flex items-center gap-1"
+          title={t`Appears on pages ${pages.join(", ")}`}
+        >
+          <span className="text-muted-foreground/40">·</span>
+          <MapPin className="h-3 w-3 text-muted-foreground/60" aria-hidden />
+          <span className="tabular-nums">
+            {pages.length === 1 ? t`page ${shownStr}` : t`pages ${shownStr}`}
+            {more > 0 ? t` +${String(more)} more` : ""}
+          </span>
+        </span>
+      )}
     </div>
   )
 }
