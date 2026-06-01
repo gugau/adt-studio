@@ -1,25 +1,16 @@
 import { useState, useEffect } from "react"
-import { createPortal } from "react-dom"
-import { useNavigate } from "@tanstack/react-router"
-import { Play } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
+import { useBookConfig } from "@/hooks/use-book-config"
 import { useActiveConfig } from "@/hooks/use-debug"
-import { useApiKey } from "@/hooks/use-api-key"
 import { api } from "@/api/client"
 import { PromptViewer } from "@/components/pipeline/components/PromptViewer"
-import { useBookRun } from "@/hooks/use-book-run"
 import { useStepConfig } from "@/hooks/use-step-config"
+import {
+  useSaveAndRerun,
+  useDirtyConfig,
+  StageRerunBar,
+} from "@/components/pipeline/components/stage-rerun"
 import { useLingui } from "@lingui/react/macro"
 import { getSectionTypeLabel, getSectionTypeDescription } from "@/lib/section-constants"
 
@@ -31,23 +22,17 @@ function getSectionTypeDisplayDescription(value: string, configDesc: string): st
   return getSectionTypeDescription(value) ?? configDesc
 }
 
-export function QuizzesSettings({ bookLabel, headerTarget, tab = "general" }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string }) {
+export function QuizzesSettings({ bookLabel, tab = "general" }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string }) {
   const { t } = useLingui()
   const { data: bookConfigData } = useBookConfig(bookLabel)
   const { data: activeConfigData } = useActiveConfig(bookLabel)
-  const updateConfig = useUpdateBookConfig()
-  const { apiKey, hasApiKey } = useApiKey()
-  const { queueRun } = useBookRun()
-  const navigate = useNavigate()
-  const [showRerunDialog, setShowRerunDialog] = useState(false)
 
   const [pagesPerQuiz, setPagesPerQuiz] = useState("")
   const [promptDraft, setPromptDraft] = useState<string | null>(null)
   const [sectionTypes, setSectionTypes] = useState<Record<string, string>>({})
   const [quizSectionTypes, setQuizSectionTypes] = useState<Set<string>>(new Set())
 
-  const [dirty, setDirty] = useState<Record<string, boolean>>({})
-  const markDirty = (field: string) => setDirty((prev) => ({ ...prev, [field]: true }))
+  const { dirty, markDirty, isDirty, shouldWrite, reset } = useDirtyConfig(bookConfigData?.config)
 
   const merged = activeConfigData?.merged as Record<string, unknown> | undefined
   const quiz = useStepConfig(merged, "quiz_generation", markDirty)
@@ -82,9 +67,6 @@ export function QuizzesSettings({ bookLabel, headerTarget, tab = "general" }: { 
     })
   }
 
-  const shouldWrite = (field: string) =>
-    dirty[field] || (bookConfigData?.config && field in bookConfigData.config)
-
   const buildOverrides = () => {
     const overrides: Record<string, unknown> = {}
     if (bookConfigData?.config) Object.assign(overrides, bookConfigData.config)
@@ -104,30 +86,28 @@ export function QuizzesSettings({ bookLabel, headerTarget, tab = "general" }: { 
     return overrides
   }
 
-  const confirmSaveAndRerun = async () => {
-    const promptSaves: Promise<unknown>[] = []
-    if (promptDraft != null) promptSaves.push(api.updatePrompt("quiz_generation", promptDraft, bookLabel))
-    if (promptSaves.length > 0) await Promise.all(promptSaves)
-
-    const overrides = buildOverrides()
-    updateConfig.mutate(
-      { label: bookLabel, config: overrides },
-      {
-        onSuccess: async () => {
-          setDirty({})
-          setPromptDraft(null)
-          setShowRerunDialog(false)
-          queueRun({ fromStage: "quizzes", toStage: "quizzes", apiKey })
-          navigate({ to: "/books/$label/$step", params: { label: bookLabel, step: "quizzes" } })
-        },
-      }
-    )
-  }
+  const rerun = useSaveAndRerun({
+    bookLabel,
+    stage: "quizzes",
+    hasPendingChanges: isDirty || promptDraft != null,
+    buildOverrides,
+    savePrompts: async () => {
+      if (promptDraft != null) await api.updatePrompt("quiz_generation", promptDraft, bookLabel)
+    },
+    onSaved: () => {
+      reset()
+      setPromptDraft(null)
+    },
+    dialogTitle: t`Save & Rerun Quizzes`,
+    dialogDescription: t`This will save your settings and re-run quiz generation.`,
+  })
 
   const sectionTypeKeys = Object.keys(sectionTypes).filter((k) => !k.startsWith("activity_"))
 
   return (
-    <div className={tab === "prompt" ? "h-full max-w-4xl" : "p-4 max-w-2xl space-y-6"}>
+    <>
+      <StageRerunBar controller={rerun} />
+      <div className={tab === "prompt" ? "h-full max-w-4xl" : "p-4 max-w-2xl space-y-6"}>
       {tab === "general" && (
         <>
           <div className="space-y-1.5">
@@ -193,37 +173,7 @@ export function QuizzesSettings({ bookLabel, headerTarget, tab = "general" }: { 
         />
       )}
 
-      {headerTarget && createPortal(
-        <Button
-          size="sm"
-          className="h-7 px-2.5 text-xs bg-black/15 text-white hover:bg-black/25"
-          onClick={() => setShowRerunDialog(true)}
-          disabled={updateConfig.isPending || !hasApiKey}
-        >
-          <Play className="mr-1.5 h-3.5 w-3.5" />
-          {t`Save & Rerun`}
-        </Button>,
-        headerTarget
-      )}
-
-      <Dialog open={showRerunDialog} onOpenChange={setShowRerunDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t`Save & Rerun Quizzes`}</DialogTitle>
-            <DialogDescription>
-              {t`This will save your settings and re-run quiz generation.`}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRerunDialog(false)}>
-              {t`Cancel`}
-            </Button>
-            <Button onClick={confirmSaveAndRerun} disabled={updateConfig.isPending}>
-              {updateConfig.isPending ? t`Saving...` : t`Confirm Rerun`}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+      </div>
+    </>
   )
 }

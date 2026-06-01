@@ -1,31 +1,25 @@
 import { useState, useEffect } from "react"
-import { createPortal } from "react-dom"
-import { useNavigate, Link } from "@tanstack/react-router"
-import { Play, Lock, ArrowLeft } from "lucide-react"
+import { Link } from "@tanstack/react-router"
+import { Lock, ArrowLeft } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { useQuery } from "@tanstack/react-query"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { ModelSelect, OPENAI_TTS_MODELS, AZURE_TTS_MODELS, GEMINI_TTS_MODELS, IMAGE_MODEL_GROUPS } from "@/components/pipeline/components/ModelSelect"
-import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
+import { useBookConfig } from "@/hooks/use-book-config"
 import { useActiveConfig } from "@/hooks/use-debug"
-import { useApiKey } from "@/hooks/use-api-key"
 import { api } from "@/api/client"
 import { PromptViewer } from "@/components/pipeline/components/PromptViewer"
 import { LanguagePicker } from "@/components/LanguagePicker"
 import { useBook } from "@/hooks/use-books"
-import { useBookRun } from "@/hooks/use-book-run"
+import {
+  useSaveAndRerun,
+  useDirtyConfig,
+  StageRerunBar,
+} from "@/components/pipeline/components/stage-rerun"
 import { useStepConfig } from "@/hooks/use-step-config"
 import { normalizeLocale } from "@/lib/languages"
 import { resolveSpeechProviderForLanguage } from "@/lib/speech-routing"
@@ -47,11 +41,6 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
   const { data: book } = useBook(bookLabel)
   const { data: bookConfigData } = useBookConfig(bookLabel)
   const { data: activeConfigData } = useActiveConfig(bookLabel)
-  const updateConfig = useUpdateBookConfig()
-  const { apiKey, hasApiKey } = useApiKey()
-  const { queueRun } = useBookRun()
-  const navigate = useNavigate()
-  const [showRerunDialog, setShowRerunDialog] = useState(false)
 
   const [outputLanguages, setOutputLanguages] = useState<Set<string>>(new Set())
   const [promptDraft, setPromptDraft] = useState<string | null>(null)
@@ -77,8 +66,7 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
   const [sampleRate, setSampleRate] = useState("")
   const [wordHighlighting, setWordHighlighting] = useState(false)
 
-  const [dirty, setDirty] = useState<Record<string, boolean>>({})
-  const markDirty = (field: string) => setDirty((prev) => ({ ...prev, [field]: true }))
+  const { markDirty, isDirty, shouldWrite, reset } = useDirtyConfig(bookConfigData?.config)
 
   const merged = activeConfigData?.merged as Record<string, unknown> | undefined
   const translation = useStepConfig(merged, "translation", markDirty)
@@ -130,9 +118,6 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
       }
     }
   }, [activeConfigData])
-
-  const shouldWrite = (field: string) =>
-    dirty[field] || (bookConfigData?.config && field in bookConfigData.config)
 
   const buildOverrides = () => {
     const overrides: Record<string, unknown> = {}
@@ -207,34 +192,39 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
     markDirty("output_languages")
   }
 
-  const confirmSaveAndRerun = async () => {
-    const promptSaves: Promise<unknown>[] = []
-    if (promptDraft != null) promptSaves.push(api.updatePrompt("translation", promptDraft, bookLabel))
-    if (imagePromptDraft != null) promptSaves.push(api.updatePrompt("image_translation", imagePromptDraft, bookLabel))
-    if (promptSaves.length > 0) await Promise.all(promptSaves)
+  const isMainTab =
+    tab === "general" ||
+    tab === "prompt" ||
+    tab === "speech" ||
+    tab === "image-translation"
 
-    const overrides = buildOverrides()
-    updateConfig.mutate(
-      { label: bookLabel, config: overrides },
-      {
-        onSuccess: async () => {
-          setDirty({})
-          setPromptDraft(null)
-          setImagePromptDraft(null)
-          setShowRerunDialog(false)
-          queueRun({
-            fromStage: stageSlug as "translate" | "speech",
-            toStage: stageSlug as "translate" | "speech",
-            apiKey,
-          })
-          navigate({ to: "/books/$label/$step", params: { label: bookLabel, step: stageSlug } })
-        },
-      }
-    )
-  }
+  const rerun = useSaveAndRerun({
+    bookLabel,
+    stage: stageSlug,
+    hasPendingChanges:
+      isMainTab && (isDirty || promptDraft != null || imagePromptDraft != null),
+    buildOverrides,
+    savePrompts: async () => {
+      const saves: Promise<unknown>[] = []
+      if (promptDraft != null) saves.push(api.updatePrompt("translation", promptDraft, bookLabel))
+      if (imagePromptDraft != null) saves.push(api.updatePrompt("image_translation", imagePromptDraft, bookLabel))
+      if (saves.length > 0) await Promise.all(saves)
+    },
+    onSaved: () => {
+      reset()
+      setPromptDraft(null)
+      setImagePromptDraft(null)
+    },
+    dialogTitle: isSpeechStage ? t`Save & Rerun Speech` : t`Save & Rerun Translations`,
+    dialogDescription: isSpeechStage
+      ? t`This will save your settings and re-run speech generation.`
+      : t`This will save your settings and re-run translations, rebuilding the text catalog and translating to output languages.`,
+  })
 
   return (
-    <div className={tab === "prompt" ? "h-full max-w-4xl" : "p-4 max-w-2xl space-y-6"}>
+    <>
+      <StageRerunBar controller={rerun} />
+      <div className={tab === "prompt" ? "h-full max-w-4xl" : "p-4 max-w-2xl space-y-6"}>
       {tab === "general" && !isSpeechStage && (
         <div className="space-y-4">
           {/* Base language (non-removable) */}
@@ -456,40 +446,8 @@ export function LanguageSettings({ bookLabel, headerTarget, tab = "general", sta
         <VoiceMappingsEditor bookLabel={bookLabel} headerTarget={headerTarget} />
       )}
 
-      {headerTarget && (tab === "general" || tab === "prompt" || tab === "speech" || tab === "image-translation") && createPortal(
-        <Button
-          size="sm"
-          className="h-7 px-2.5 text-xs bg-black/15 text-white hover:bg-black/25"
-          onClick={() => setShowRerunDialog(true)}
-          disabled={updateConfig.isPending || !hasApiKey}
-        >
-          <Play className="mr-1.5 h-3.5 w-3.5" />
-          {t`Save & Rerun`}
-        </Button>,
-        headerTarget
-      )}
-
-      <Dialog open={showRerunDialog} onOpenChange={setShowRerunDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{isSpeechStage ? t`Save & Rerun Speech` : t`Save & Rerun Translations`}</DialogTitle>
-            <DialogDescription>
-              {isSpeechStage
-                ? t`This will save your settings and re-run speech generation.`
-                : t`This will save your settings and re-run translations, rebuilding the text catalog and translating to output languages.`}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRerunDialog(false)}>
-              {t`Cancel`}
-            </Button>
-            <Button onClick={confirmSaveAndRerun} disabled={updateConfig.isPending}>
-              {updateConfig.isPending ? t`Saving...` : t`Confirm Rerun`}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+      </div>
+    </>
   )
 }
 
