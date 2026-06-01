@@ -170,6 +170,19 @@ function FloatingSaveHost({ store }: { store: FloatingSaveStore }) {
   )
 }
 
+const noopSubscribe = () => () => {}
+
+/**
+ * Whether any registered surface currently has unsaved changes. Reactive —
+ * re-renders when the dirty set changes. Returns false outside a provider.
+ */
+export function useHasUnsavedChanges(): boolean {
+  const store = useContext(FloatingSaveContext)
+  const subscribe = store ? store.subscribe : noopSubscribe
+  const getSnapshot = () => (store ? store.active().length > 0 : false)
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+}
+
 /**
  * Register an editable surface's pending-save state with the shared floating
  * bar. Pass a stable `id`. When `dirty` is false the entry contributes nothing.

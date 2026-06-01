@@ -14,6 +14,7 @@ import { DebugPanel } from "@/components/debug/DebugPanel"
 import { DebugPanelStateProvider, type DebugTabValue } from "@/components/debug/debug-panel-state"
 import { StageSidebar } from "@/components/pipeline/components/StageSidebar"
 import { FloatingSaveProvider } from "@/components/pipeline/components/floating-save"
+import { UnsavedChangesGuard } from "@/components/pipeline/components/UnsavedChangesGuard"
 import { useBookRunStatus, BookRunProvider } from "@/hooks/use-book-run"
 import { useExportWatcherSetup, ExportWatcherProvider } from "@/hooks/use-export-watcher"
 import { usePlatform } from "@/hooks/use-platform"
@@ -136,6 +137,7 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
   return (
     <DebugPanelStateProvider value={debugPanelState}>
       <FloatingSaveProvider>
+        <UnsavedChangesGuard />
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex min-h-0 flex-1">
             <div className="relative w-[220px] shrink-0">
