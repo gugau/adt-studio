@@ -67,6 +67,7 @@ const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
 const STAGE_GROUP_LABELS: Record<StageGroup, MessageDescriptor> = {
   convert: msg`Core Pipeline`,
   enhancements: msg`Enhancements`,
+  localization: msg`Localization`,
   packaging: msg`Packaging`,
 }
 

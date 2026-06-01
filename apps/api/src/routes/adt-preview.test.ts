@@ -110,17 +110,43 @@ describe("ADT preview routes", () => {
     fs.rmSync(webAssetsDir, { recursive: true, force: true })
   })
 
-  it("auto-builds base.bundle.min.js when missing and base.js exists", async () => {
-    // Remove the pre-built bundle but ensure the source entry point exists
-    fs.unlinkSync(path.join(webAssetsDir, "base.bundle.min.js"))
-    fs.writeFileSync(path.join(webAssetsDir, "base.js"), "export const x = 1;")
+  it("auto-builds base.bundle.min.js by invoking apps/adt-runtime/build.config.mjs when stale", async () => {
+    // The preview route resolves `apps/adt-runtime/build.config.mjs` relative
+    // to `<webAssetsDir>/../../`. To exercise the auto-build path we lay out
+    // a fake monorepo root that mirrors that resolution.
+    const monorepoTmp = fs.mkdtempSync(path.join(os.tmpdir(), "adt-preview-monorepo-"))
+    const fakeWebAssets = path.join(monorepoTmp, "assets", "adt")
+    const runtimeDir = path.join(monorepoTmp, "apps", "adt-runtime")
+    const runtimeSrc = path.join(runtimeDir, "src")
+    fs.mkdirSync(fakeWebAssets, { recursive: true })
+    fs.mkdirSync(runtimeSrc, { recursive: true })
+    // Reuse the same book storage layout in the new webAssetsDir
+    fs.writeFileSync(path.join(runtimeSrc, "boot.tsx"), "// fake source")
+    // Fake build script writes the bundle into the expected location
+    fs.writeFileSync(
+      path.join(runtimeDir, "build.config.mjs"),
+      [
+        "import fs from 'node:fs'",
+        "import path from 'node:path'",
+        "import { fileURLToPath } from 'node:url'",
+        "const __dirname = path.dirname(fileURLToPath(import.meta.url))",
+        "const outDir = path.resolve(__dirname, '../../assets/adt')",
+        "fs.mkdirSync(outDir, { recursive: true })",
+        "fs.writeFileSync(path.join(outDir, 'base.bundle.min.js'), '/* auto-built */')",
+      ].join("\n"),
+    )
 
-    const app = createAdtPreviewRoutes(tmpDir, webAssetsDir, path.resolve(process.cwd(), "config.yaml"))
-    const res = await app.request(`/books/${label}/adt-preview/assets/base.bundle.min.js`)
+    try {
+      const app = createAdtPreviewRoutes(tmpDir, fakeWebAssets, path.resolve(process.cwd(), "config.yaml"))
+      const res = await app.request(`/books/${label}/adt-preview/assets/base.bundle.min.js`)
 
-    expect(res.status).toBe(200)
-    // The auto-built file should now exist on disk
-    expect(fs.existsSync(path.join(webAssetsDir, "base.bundle.min.js"))).toBe(true)
+      expect(res.status).toBe(200)
+      const bundlePath = path.join(fakeWebAssets, "base.bundle.min.js")
+      expect(fs.existsSync(bundlePath)).toBe(true)
+      expect(fs.readFileSync(bundlePath, "utf-8")).toContain("auto-built")
+    } finally {
+      fs.rmSync(monorepoTmp, { recursive: true, force: true })
+    }
   })
 
   it("renders the requested section id instead of falling back to the first section", async () => {
@@ -150,6 +176,31 @@ describe("ADT preview routes", () => {
     expect(html).not.toContain('role="article"')
     expect(html).toContain('data-id="hero-image" src="/api/books/preview-book/images/hero-image" alt="Preview hero image"')
     expect(html).toContain('data-id="hero-image-duplicate" src="/api/books/preview-book/images/hero-image-duplicate" alt=""')
+  })
+
+  it("hides decorative images from assistive tech in preview output", async () => {
+    const storage = createBookStorage(label, tmpDir)
+    try {
+      storage.putNodeData("image-captioning", `${label}_p1`, {
+        captions: [
+          { imageId: "hero-image", caption: "", decorative: true },
+          { imageId: "hero-image-duplicate", caption: "Preview hero image" },
+        ],
+      })
+    } finally {
+      storage.close()
+    }
+
+    const app = createAdtPreviewRoutes(tmpDir, webAssetsDir, path.resolve(process.cwd(), "config.yaml"))
+    const res = await app.request(`/books/${label}/adt-preview/${label}_p1_sec002.html`)
+
+    expect(res.status).toBe(200)
+    const html = await res.text()
+    // Decorative image: empty alt, presentation role, hidden from a11y tree.
+    expect(html).toMatch(/data-id="hero-image"[^>]*\srole="presentation"/)
+    expect(html).toMatch(/data-id="hero-image"[^>]*\saria-hidden="true"/)
+    // Non-decorative image still gets its caption as alt.
+    expect(html).toContain('data-id="hero-image-duplicate" src="/api/books/preview-book/images/hero-image-duplicate" alt="Preview hero image"')
   })
 
   it("preserves preview image-alt cleanup while converting latex to mathml", async () => {
@@ -392,23 +443,89 @@ describe("ADT preview routes", () => {
   })
 
   it("cache-busts embedded preview assets with the latest bundle source version", async () => {
-    const baseJsPath = path.join(webAssetsDir, "base.js")
-    fs.writeFileSync(baseJsPath, "export const previewVersion = true;\n")
+    // bundleVersion derives from the highest mtime in apps/adt-runtime/src/**
+    // (plus mtimes of any pre-built bundles in webAssetsDir). Lay out a fake
+    // monorepo root so we can control the source-tree mtime.
+    const monorepoTmp = fs.mkdtempSync(path.join(os.tmpdir(), "adt-preview-version-"))
+    const fakeWebAssets = path.join(monorepoTmp, "assets", "adt")
+    const runtimeSrc = path.join(monorepoTmp, "apps", "adt-runtime", "src")
+    fs.mkdirSync(fakeWebAssets, { recursive: true })
+    fs.mkdirSync(runtimeSrc, { recursive: true })
+    // Seed the storage in a fresh tmpDir to keep the preview route happy
+    const monorepoBooks = path.join(monorepoTmp, "books")
+    fs.mkdirSync(monorepoBooks, { recursive: true })
+    // Re-seed minimal book data in the new books dir
+    const storage = createBookStorage(label, monorepoBooks)
+    try {
+      storage.putExtractedPage({
+        pageId: `${label}_p1`,
+        pageNumber: 1,
+        text: "Page one",
+        pageImage: {
+          imageId: `${label}_p1_page`,
+          buffer: Buffer.from("fake-png-data"),
+          format: "png",
+          hash: "hash-1",
+          width: 100,
+          height: 100,
+        },
+        images: [],
+      })
+      storage.putNodeData("metadata", "book", {
+        title: "Preview Book",
+        language_code: "en",
+        reasoning: "test",
+      })
+      storage.putNodeData("config", "book", { language: "en" })
+      storage.putNodeData("page-sectioning", `${label}_p1`, {
+        reasoning: "ok",
+        sections: [
+          {
+            sectionId: `${label}_p1_sec001`,
+            sectionType: "content",
+            backgroundColor: "#fff",
+            textColor: "#000",
+            pageNumber: 1,
+            isPruned: false,
+            nodes: [],
+          },
+        ],
+      })
+      storage.putNodeData("web-rendering", `${label}_p1`, {
+        sections: [
+          {
+            sectionIndex: 0,
+            sectionType: "content",
+            reasoning: "ok",
+            html: `<section data-section-id="${label}_p1_sec001"><p>First section body</p></section>`,
+          },
+        ],
+      })
+    } finally {
+      storage.close()
+    }
+
+    const sourceFile = path.join(runtimeSrc, "boot.tsx")
+    fs.writeFileSync(sourceFile, "// preview source\n")
     const expectedVersion = new Date("2030-01-01T00:00:00.000Z")
-    fs.utimesSync(baseJsPath, expectedVersion, expectedVersion)
+    fs.utimesSync(sourceFile, expectedVersion, expectedVersion)
 
-    const app = createAdtPreviewRoutes(tmpDir, webAssetsDir, path.resolve(process.cwd(), "config.yaml"))
+    try {
+      const app = createAdtPreviewRoutes(monorepoBooks, fakeWebAssets, path.resolve(process.cwd(), "config.yaml"))
 
-    const configRes = await app.request(`/books/${label}/adt-preview/assets/config.json`)
-    expect(configRes.status).toBe(200)
-    const config = await configRes.json() as { bundleVersion: string }
+      const configRes = await app.request(`/books/${label}/adt-preview/assets/config.json`)
+      expect(configRes.status).toBe(200)
+      const config = await configRes.json() as { bundleVersion: string }
 
-    const htmlRes = await app.request(`/books/${label}/adt-preview/${label}_p1_sec001.html?embed=1`)
-    expect(htmlRes.status).toBe(200)
-    const html = await htmlRes.text()
+      const htmlRes = await app.request(`/books/${label}/adt-preview/${label}_p1_sec001.html?embed=1`)
+      expect(htmlRes.status).toBe(200)
+      const html = await htmlRes.text()
 
-    expect(config.bundleVersion).toBe(String(Math.trunc(expectedVersion.getTime())))
-    expect(html).toContain(`./assets/base.bundle.min.js?v=${config.bundleVersion}`)
+      expect(config.bundleVersion).toBe(String(Math.trunc(expectedVersion.getTime())))
+      expect(html).toContain(`./assets/base.bundle.min.js?v=${config.bundleVersion}`)
+    } finally {
+      fs.rmSync(monorepoTmp, { recursive: true, force: true })
+    }
   })
 
   it("orders pages.json sections by sectionIndex when rendering rows are out of order", async () => {

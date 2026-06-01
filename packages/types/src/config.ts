@@ -2,6 +2,7 @@ import { z } from "zod"
 import { ImageFilters } from "./image-filtering.js"
 import { SpeechConfig } from "./speech.js"
 import { ReviewerValidationConfig } from "./reviewer-validation-config.js"
+import { REFLOWABLE_FONT_SETTINGS } from "./reflowable-fonts.js"
 
 export const DEFAULT_LLM_MAX_RETRIES = 5
 
@@ -33,14 +34,14 @@ export type PageSectioningConfig = z.infer<typeof PageSectioningConfig>
 
 export const ImageTranslationConfig = StepConfig.extend({
   enabled: z.boolean().optional(),
-  /** Image model id (e.g. "openai:gpt-image-1.5"). When unset, the step is a no-op. */
+  /** Image model id (e.g. "openai:gpt-image-2"). When unset, the step is a no-op. */
   image_model: z.string().optional(),
   /** Image IDs the user has chosen to translate. Empty = no images regenerated. */
   selected_image_ids: z.array(z.string()).optional(),
 })
 export type ImageTranslationConfig = z.infer<typeof ImageTranslationConfig>
 
-export const BookFormat = z.enum(["web", "webpub"])
+export const BookFormat = z.enum(["web", "webpub", "epub"])
 export type BookFormat = z.infer<typeof BookFormat>
 
 export const LayoutType = z.enum(["textbook", "storybook", "reference", "custom"])
@@ -49,7 +50,7 @@ export type LayoutType = z.infer<typeof LayoutType>
 export const StyleguideName = z.string().regex(/^[a-zA-Z0-9_-]+$/)
 export type StyleguideName = z.infer<typeof StyleguideName>
 
-export const RenderType = z.enum(["llm", "template", "activity"])
+export const RenderType = z.enum(["llm", "template", "activity", "fixed_layout"])
 export type RenderType = z.infer<typeof RenderType>
 
 export const VisualRefinementStrategyConfig = z.object({
@@ -113,6 +114,10 @@ export const AppConfig = z
     quiz_generation: QuizGenerationConfig.optional(),
     default_render_strategy: z.string().optional(),
     render_strategies: z.record(z.string(), RenderStrategyConfig).optional(),
+    /** Base font for reflowable (non-fixed-layout) output. `auto` (default)
+     *  picks the detected serif/sans category's default; an explicit id
+     *  overrides. Ignored for fixed-layout books (they keep original fonts). */
+    reflowable_font: z.enum(REFLOWABLE_FONT_SETTINGS).optional(),
     visual_review_prompt: z.string().optional(),
     visual_review_max_iterations: z.number().int().min(1).max(50).optional(),
     section_render_strategies: z.record(z.string(), z.string()).optional(),
@@ -164,6 +169,23 @@ export const AppConfig = z
     end_page: z.number().int().min(1).optional(),
     speech: SpeechConfig.optional(),
     styleguide: z.string().regex(/^[a-zA-Z0-9_-]+$/).optional(),
+    default_settings: z
+      .object({
+        dock_layout: z
+          .object({
+            width: z.enum(["compact", "full"]).optional(),
+            position: z.enum(["top", "bottom"]).optional(),
+            align: z.enum(["center", "spread"]).optional(),
+          })
+          .optional(),
+        theme: z.enum(["light", "dark", "system"]).optional(),
+        icon_size: z.enum(["sm", "md", "lg"]).optional(),
+        reduce_motion: z.boolean().optional(),
+      })
+      .optional(),
+    locked_settings: z
+      .array(z.enum(["dockLayout", "theme", "iconSize", "reduceMotion"]))
+      .optional(),
     accessibility_assessment: AccessibilityAssessmentConfig.optional(),
     reviewer_validation: ReviewerValidationConfig.optional(),
   })

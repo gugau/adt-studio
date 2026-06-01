@@ -1,229 +1,22 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
-import { Image as ImageIcon, Loader2 } from "lucide-react"
-import { useQueryClient } from "@tanstack/react-query"
-import { api, BASE_URL } from "@/api/client"
-import type { PageDetail } from "@/api/client"
-import type { ContentNodeData } from "@adt/types"
-import { usePages, usePage } from "@/hooks/use-pages"
+import { Image as ImageIcon, Search, X } from "lucide-react"
+import { useQueries } from "@tanstack/react-query"
+import { api } from "@/api/client"
+import { usePages } from "@/hooks/use-pages"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
-import { invalidateStoryboardDependents } from "@/hooks/use-page-mutations"
 import { StageRunCard } from "../../components/StageRunCard"
-import { VersionPicker } from "../../components/VersionPicker"
+import { StageContentGuard } from "../../components/StageContentGuard"
+import { StageEmptyState } from "../../components/StageEmptyState"
 import { useSectionNav } from "@/routes/books.$label"
-import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
+import { CaptionsHintBanner } from "./components/CaptionsHintBanner"
+import { PageCaptions } from "./components/PageCaptions"
+import { PageJumper } from "./components/PageJumper"
+import type { DecorativeFilter, PageJumperEntry } from "./lib/types"
 
-
-type CaptioningData = NonNullable<PageDetail["imageCaptioning"]>
-
-/** Build a map from imageId → sectionIndex by walking each section's tree. */
-function buildImageSectionMap(page: PageDetail | undefined): Map<string, number> {
-  const map = new Map<string, number>()
-  if (!page?.sectioningTree) return map
-  const walk = (nodes: ContentNodeData[], sectionIdx: number) => {
-    for (const node of nodes) {
-      if (node.role === "image") map.set(node.nodeId, sectionIdx)
-      else if (node.children) walk(node.children, sectionIdx)
-    }
-  }
-  page.sectioningTree.sections.forEach((section, idx) => {
-    walk(section.nodes, idx)
-  })
-  return map
-}
-
-interface CaptionGroup {
-  sectionIndex: number
-  sectionType?: string
-  captions: Array<{ imageId: string; reasoning: string; caption: string }>
-}
-
-function PageCaptions({
-  bookLabel,
-  pageId,
-  pageNumber,
-  emptyState,
-  largeImages,
-  filterSectionIndex,
-}: {
-  bookLabel: string
-  pageId: string
-  pageNumber: number
-  emptyState?: React.ReactNode
-  largeImages?: boolean
-  filterSectionIndex?: number
-}) {
-  const { t } = useLingui()
-  const queryClient = useQueryClient()
-  const { data: page } = usePage(bookLabel, pageId)
-
-  const [pending, setPending] = useState<CaptioningData | null>(null)
-  const [saving, setSaving] = useState(false)
-
-  // Reset pending when page data changes
-  useEffect(() => {
-    setPending(null)
-  }, [page?.versions.imageCaptioning])
-
-  const effective = pending ?? page?.imageCaptioning
-  const captions = effective?.captions ?? []
-  const dirty = pending != null
-
-  // Map imageId → sectionIndex
-  const imageSectionMap = useMemo(() => buildImageSectionMap(page), [page?.sectioningTree])
-
-  // Group captions by section
-  const groups = useMemo(() => {
-    const sections = page?.sectioningTree?.sections
-    if (!sections || sections.length <= 1) {
-      // No sectioning or single section — flat list, no grouping
-      return null
-    }
-    const grouped = new Map<number, CaptionGroup>()
-    const unsectioned: Array<{ imageId: string; reasoning: string; caption: string }> = []
-    for (const cap of captions) {
-      const si = imageSectionMap.get(cap.imageId)
-      if (si != null) {
-        let group = grouped.get(si)
-        if (!group) {
-          group = {
-            sectionIndex: si,
-            sectionType: sections[si]?.sectionType,
-            captions: [],
-          }
-          grouped.set(si, group)
-        }
-        group.captions.push(cap)
-      } else {
-        unsectioned.push(cap)
-      }
-    }
-    // Sort by section index
-    const result = Array.from(grouped.values()).sort((a, b) => a.sectionIndex - b.sectionIndex)
-    if (unsectioned.length > 0) {
-      result.push({ sectionIndex: -1, sectionType: undefined, captions: unsectioned })
-    }
-    return result
-  }, [captions, imageSectionMap, page?.sectioningTree?.sections])
-
-  if (!page?.imageCaptioning || captions.length === 0) return emptyState ?? null
-
-  const updateCaption = (imageId: string, newCaption: string) => {
-    const base = pending ?? page.imageCaptioning
-    if (!base) return
-    setPending({
-      ...base,
-      captions: base.captions.map((c) =>
-        c.imageId === imageId ? { ...c, caption: newCaption } : c
-      ),
-    })
-  }
-
-  const saveCaptions = async () => {
-    if (!pending) return
-    setSaving(true)
-    const minDelay = new Promise((r) => setTimeout(r, 400))
-    await api.updateImageCaptioning(bookLabel, pageId, pending)
-    setPending(null)
-    await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
-    invalidateStoryboardDependents(queryClient, bookLabel)
-    await minDelay
-    setSaving(false)
-  }
-
-  const handlePreview = (data: unknown) => {
-    setPending(data as CaptioningData)
-  }
-
-  // Filter captions by section when a section is selected
-  const filteredCaptions = filterSectionIndex != null
-    ? captions.filter((cap) => imageSectionMap.get(cap.imageId) === filterSectionIndex)
-    : captions
-
-  if (filterSectionIndex != null && filteredCaptions.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-        <div className="w-12 h-12 rounded-full bg-teal-50 flex items-center justify-center mb-3">
-          <ImageIcon className="w-6 h-6 text-teal-300" />
-        </div>
-        <p className="text-sm font-medium">{t`No images in this section`}</p>
-      </div>
-    )
-  }
-
-  const renderCaption = (cap: { imageId: string; reasoning: string; caption: string }) => (
-    <div key={cap.imageId} className="flex items-start gap-4 rounded-md border bg-card overflow-hidden">
-      <img
-        src={`${BASE_URL}/books/${bookLabel}/images/${cap.imageId}`}
-        alt={cap.caption}
-        className={`shrink-0 self-stretch bg-muted object-cover block ${largeImages ? "w-96" : "w-48"}`}
-      />
-      <div className="flex-1 min-w-0 py-2.5 pr-3">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-[10px] font-medium text-teal-600">{cap.imageId}</span>
-        </div>
-        <textarea
-          value={cap.caption}
-          onChange={(e) => updateCaption(cap.imageId, e.target.value)}
-          className="w-full text-sm text-foreground leading-relaxed resize-none rounded border border-transparent bg-transparent p-1.5 -ml-1.5 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-          rows={2}
-        />
-      </div>
-    </div>
-  )
-
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center gap-2 px-1">
-        <span className="text-sm font-medium text-foreground">
-          {t`Page ${String(pageNumber)}`}
-          {filterSectionIndex != null && (
-            <span className="text-muted-foreground"> {t`/ Section ${String(filterSectionIndex + 1)}`}</span>
-          )}
-        </span>
-        <div className="ml-auto">
-          <VersionPicker
-            step="image-captioning"
-            itemId={pageId}
-            currentVersion={page.versions.imageCaptioning}
-            saving={saving}
-            dirty={dirty}
-            bookLabel={bookLabel}
-            onPreview={handlePreview}
-            onSave={saveCaptions}
-            onDiscard={() => setPending(null)}
-          />
-        </div>
-      </div>
-      {filterSectionIndex != null ? (
-        // Filtered to a specific section — flat list
-        filteredCaptions.map(renderCaption)
-      ) : groups ? (
-        // Grouped by section
-        groups.map((group) => (
-          <div key={group.sectionIndex}>
-            <div className="px-1 pt-1.5 pb-0.5">
-              <span className="text-[9px] font-medium text-muted-foreground/70 uppercase tracking-wider">
-                {group.sectionIndex >= 0
-                  ? group.sectionType
-                    ? t`Section ${String(group.sectionIndex + 1)} — ${group.sectionType}`
-                    : t`Section ${String(group.sectionIndex + 1)}`
-                  : t`Other images`
-                }
-              </span>
-            </div>
-            {group.captions.map(renderCaption)}
-          </div>
-        ))
-      ) : (
-        // Single section or no sectioning — flat list
-        filteredCaptions.map(renderCaption)
-      )}
-    </div>
-  )
-}
+const TOOLBAR_HEIGHT = 64
 
 export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { bookLabel: string; selectedPageId?: string; onSelectPage?: (pageId: string | null) => void }) {
   const { t } = useLingui()
@@ -236,28 +29,101 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
   const captionsRunning = captionsState === "running" || captionsState === "queued"
   const showRunCard = !captionsDone || captionsRunning
   const { sectionIndex, setSectionIndex } = useSectionNav()
+  const [decorativeFilter, setDecorativeFilter] = useState<DecorativeFilter>("all")
+  const [searchQuery, setSearchQuery] = useState("")
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const [activePageId, setActivePageId] = useState<string | null>(null)
 
   const handleRunCaptions = useCallback(() => {
     if (!hasApiKey || captionsRunning) return
     queueRun({ fromStage: "captions", toStage: "captions", apiKey })
   }, [hasApiKey, captionsRunning, apiKey, queueRun])
 
-  const pagesWithImages = (pages ?? []).filter((p) => p.imageCount > 0)
+  const pagesWithImages = useMemo(
+    () => (pages ?? []).filter((p) => p.imageCount > 0),
+    [pages],
+  )
   const hasCaptionData = pagesWithImages.some((p) => p.hasCaptioning)
 
-  const displayPages = selectedPageId
-    ? pagesWithImages.filter((p) => p.pageId === selectedPageId)
-    : pagesWithImages
+  const displayPages = useMemo(
+    () =>
+      selectedPageId
+        ? pagesWithImages.filter((p) => p.pageId === selectedPageId)
+        : pagesWithImages,
+    [pagesWithImages, selectedPageId],
+  )
   const totalImages = displayPages.reduce((sum, p) => sum + p.imageCount, 0)
 
-  // Determine if we should filter by section (only when a specific page is selected and it has sections)
   const selectedPageSummary = selectedPageId
     ? (pages ?? []).find((p) => p.pageId === selectedPageId)
     : null
   const hasSections = selectedPageSummary && selectedPageSummary.sectionCount > 1
-  const filterSectionIndex = selectedPageId && hasSections
-    ? sectionIndex
-    : undefined
+  const filterSectionIndex = selectedPageId && hasSections ? sectionIndex : undefined
+
+  const pageDetailQueries = useQueries({
+    queries: displayPages.map((p) => ({
+      queryKey: ["books", bookLabel, "pages", p.pageId],
+      queryFn: () => api.getPage(bookLabel, p.pageId),
+      enabled: !!bookLabel && hasCaptionData,
+    })),
+  })
+
+  const pageImageQueries = useQueries({
+    queries: displayPages.map((p) => ({
+      queryKey: ["books", bookLabel, "pages", p.pageId, "image"],
+      queryFn: () => api.getPageImage(bookLabel, p.pageId),
+      enabled: !!bookLabel && hasCaptionData,
+      staleTime: Infinity,
+    })),
+  })
+
+  const aggregateCounts = useMemo(() => {
+    let total = 0
+    let captioned = 0
+    let decorative = 0
+    for (const q of pageDetailQueries) {
+      const captions = q.data?.imageCaptioning?.captions ?? []
+      for (const c of captions) {
+        total += 1
+        if (c.decorative === true) decorative += 1
+        else captioned += 1
+      }
+    }
+    return { total, captioned, decorative }
+  }, [pageDetailQueries])
+
+  const pageJumperEntries: PageJumperEntry[] = useMemo(
+    () =>
+      displayPages.flatMap((p, idx) => {
+        const query = pageDetailQueries[idx]
+        const detail = query?.data
+        const captions = detail?.imageCaptioning?.captions ?? []
+        // The gallery only renders pages that have caption images, so the jumper
+        // should match. Drop pages we've confirmed have none; keep ones still
+        // loading so the list doesn't flash empty.
+        if (query?.isSuccess && captions.length === 0) return []
+        let decorativeCount = 0
+        let captionedCount = 0
+        for (const c of captions) {
+          if (c.decorative === true) decorativeCount += 1
+          else captionedCount += 1
+        }
+        const imgData = pageImageQueries[idx]?.data?.imageBase64
+        return [
+          {
+            pageId: p.pageId,
+            pageNumber: p.pageNumber,
+            textPreview: p.textPreview,
+            imageCount: p.imageCount,
+            thumbnail: imgData ? `data:image/png;base64,${imgData}` : null,
+            stats: detail?.imageCaptioning
+              ? { total: captions.length, captioned: captionedCount, decorative: decorativeCount }
+              : undefined,
+          },
+        ]
+      }),
+    [displayPages, pageDetailQueries, pageImageQueries],
+  )
 
   useEffect(() => {
     if (!pages) return
@@ -298,23 +164,72 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
           <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{t`${String(totalImages)} images`}</span>
           <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{t`${String(displayPages.length)} pages`}</span>
         </div>
-      </>
+      </>,
     )
     return () => setExtra(null)
-  }, [pages, totalImages, displayPages.length, setExtra, selectedPageId, selectedPageSummary?.pageNumber, selectedPageSummary?.sectionCount, hasSections, sectionIndex, setSectionIndex])
+  }, [pages, totalImages, displayPages.length, setExtra, selectedPageId, selectedPageSummary, hasSections, sectionIndex, setSectionIndex, t])
 
-  if (!showRunCard && isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">{t`Loading pages...`}</span>
-      </div>
-    )
-  }
+  useEffect(() => {
+    const root = scrollContainerRef.current
+    if (!root || displayPages.length === 0) return
+    let frame = 0
+    const computeActive = () => {
+      frame = 0
+      const sections = root.querySelectorAll<HTMLElement>("section[data-page-id]")
+      if (sections.length === 0) return
+      const rootTop = root.getBoundingClientRect().top
+      const line = TOOLBAR_HEIGHT + 48
+      let current = sections[0].dataset.pageId ?? null
+      for (const section of sections) {
+        if (section.getBoundingClientRect().top - rootTop <= line) {
+          current = section.dataset.pageId ?? current
+        } else {
+          break
+        }
+      }
+      if (current) setActivePageId(current)
+    }
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(computeActive)
+    }
+    root.addEventListener("scroll", onScroll, { passive: true })
+    computeActive()
+    return () => {
+      root.removeEventListener("scroll", onScroll)
+      if (frame) cancelAnimationFrame(frame)
+    }
+  }, [displayPages])
 
-  if (showRunCard || pagesWithImages.length === 0 || !hasCaptionData) {
-    return (
-      <div className="p-4">
+  const handleJumpToPage = useCallback((pageId: string) => {
+    const root = scrollContainerRef.current
+    if (!root) return
+    const section = root.querySelector<HTMLElement>(`section[data-page-id="${pageId}"]`)
+    if (section) section.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [])
+
+  const singlePageEmptyState = selectedPageId ? (
+    <StageEmptyState
+      icon={ImageIcon}
+      color="teal"
+      title={t`No captions for this page`}
+      subtitle={t`This page has no captioned images`}
+    />
+  ) : undefined
+
+  const chipBase =
+    "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-200 cursor-pointer"
+
+  const hasNoImages = pagesWithImages.length === 0
+  const showNoImagesEmpty =
+    selectedPageId && displayPages.length === 0 && pagesWithImages.length > 0
+
+  return (
+    <StageContentGuard
+      stageSlug="captions"
+      isLoading={!showRunCard && isLoading}
+      loadingLabel={t`Loading pages...`}
+      showRunCard={!hasNoImages && (showRunCard || !hasCaptionData)}
+      runCard={
         <StageRunCard
           stageSlug="captions"
           isRunning={captionsRunning}
@@ -322,62 +237,132 @@ export function CaptionsView({ bookLabel, selectedPageId, onSelectPage }: { book
           onRun={handleRunCaptions}
           disabled={!hasApiKey || captionsRunning}
         />
-      </div>
-    )
-  }
-
-  if (selectedPageId && displayPages.length === 0 && pagesWithImages.length > 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-        <div className="w-12 h-12 rounded-full bg-teal-50 flex items-center justify-center mb-3">
-          <ImageIcon className="w-6 h-6 text-teal-300" />
-        </div>
-        <p className="text-sm font-medium">{t`No images on this page`}</p>
-        <button
-          type="button"
-          onClick={() => onSelectPage?.(null)}
-          className="mt-3 text-xs font-medium text-teal-600 hover:text-teal-700 hover:underline transition-colors"
-        >
-          {t`Show all`}
-        </button>
-      </div>
-    )
-  }
-
-  const singlePageEmptyState = selectedPageId ? (
-    <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-      <div className="w-12 h-12 rounded-full bg-teal-50 flex items-center justify-center mb-3">
-        <ImageIcon className="w-6 h-6 text-teal-300" />
-      </div>
-      <p className="text-sm font-medium">{t`No captions for this page`}</p>
-      <p className="text-xs mt-1">{t`This page has no captioned images`}</p>
-    </div>
-  ) : undefined
-
-  return (
-    <div className="space-y-4">
-      {selectedPageId && (
-        <div className="flex justify-end px-4 pt-3">
-          <button
-            type="button"
-            onClick={() => onSelectPage?.(null)}
-            className="text-xs font-medium text-teal-600 hover:text-teal-700 hover:underline transition-colors"
-          >
-            {t`Show all`}
-          </button>
-        </div>
-      )}
-      {displayPages.map((page) => (
-        <PageCaptions
-          key={page.pageId}
-          bookLabel={bookLabel}
-          pageId={page.pageId}
-          pageNumber={page.pageNumber}
-          emptyState={singlePageEmptyState}
-          largeImages={!!selectedPageId}
-          filterSectionIndex={page.pageId === selectedPageId ? filterSectionIndex : undefined}
+      }
+    >
+      {hasNoImages ? (
+        <StageEmptyState
+          icon={ImageIcon}
+          color="teal"
+          title={t`No images in this book`}
+          subtitle={t`This book has no images to caption`}
         />
-      ))}
+      ) : showNoImagesEmpty ? (
+        <StageEmptyState
+          icon={ImageIcon}
+          color="teal"
+          title={t`No images on this page`}
+          cta={
+            <button
+              type="button"
+              onClick={() => onSelectPage?.(null)}
+              className="text-xs font-medium text-teal-600 hover:text-teal-700 hover:underline transition-colors"
+            >
+              {t`Show all`}
+            </button>
+          }
+        />
+      ) : (
+    <div ref={scrollContainerRef} className="flex flex-1 flex-col overflow-y-auto">
+      <CaptionsHintBanner />
+      <div
+        className="sticky top-0 z-20 flex items-center gap-3 px-6 py-3 bg-background/95 backdrop-blur-md border-b border-border/60"
+        style={{ height: TOOLBAR_HEIGHT }}
+      >
+        <div className="inline-flex items-center rounded-lg border border-border/70 bg-muted/40 p-0.5">
+          {([
+            { value: "all", label: t`All`, count: aggregateCounts.total },
+            { value: "captioned", label: t`Captioned`, count: aggregateCounts.captioned },
+            { value: "decorative", label: t`Decorative`, count: aggregateCounts.decorative },
+          ] as const).map((opt) => {
+            const active = decorativeFilter === opt.value
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setDecorativeFilter(opt.value)}
+                aria-pressed={active}
+                className={`${chipBase} ${
+                  active
+                    ? "bg-background text-foreground shadow-sm ring-1 ring-border/60"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <span>{opt.label}</span>
+                <span
+                  className={`tabular-nums text-[11px] ${
+                    active
+                      ? opt.value === "decorative"
+                        ? "text-amber-600"
+                        : "text-teal-700"
+                      : "text-muted-foreground/60"
+                  }`}
+                >
+                  {opt.count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/70 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t`Search captions or image IDs…`}
+            className="w-full h-8 rounded-md border border-border/70 bg-background pl-8 pr-8 text-[12px] placeholder:text-muted-foreground/60 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-200 transition-colors"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              aria-label={t`Clear search`}
+              className="absolute right-1 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+
+        <div className="ml-auto flex items-center gap-1.5">
+          {selectedPageId && (
+            <button
+              type="button"
+              onClick={() => onSelectPage?.(null)}
+              className="text-[12px] font-medium text-teal-600 hover:text-teal-700 hover:underline transition-colors"
+            >
+              {t`Show all pages`}
+            </button>
+          )}
+          {!selectedPageId && pageJumperEntries.length > 1 && (
+            <PageJumper
+              pages={pageJumperEntries}
+              activePageId={activePageId}
+              onJump={handleJumpToPage}
+            />
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-8 px-4 pb-12 pt-3">
+        {displayPages.map((page) => (
+          <PageCaptions
+            key={page.pageId}
+            bookLabel={bookLabel}
+            pageId={page.pageId}
+            pageNumber={page.pageNumber}
+            textPreview={page.textPreview}
+            emptyState={singlePageEmptyState}
+            filterSectionIndex={page.pageId === selectedPageId ? filterSectionIndex : undefined}
+            decorativeFilter={decorativeFilter}
+            searchQuery={searchQuery}
+            toolbarHeight={TOOLBAR_HEIGHT}
+          />
+        ))}
+      </div>
     </div>
+      )}
+    </StageContentGuard>
   )
 }

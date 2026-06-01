@@ -22,20 +22,23 @@ export function demoteFirstHeadingIfPromoted(
   )
 }
 
-// Apply a text edit to the original (LaTeX) HTML by replacing the textContent
-// of the element matching the given data-id. Returns the reconstructed wrapper
-// HTML, or null if the element was not found.
+// Apply a text edit to the original (LaTeX) HTML by splicing the iframe's
+// edited innerHTML into the element matching the given data-id. Using innerHTML
+// (rather than `textContent = newText`) preserves the inner span structure that
+// contentEditable kept intact while the user typed — e.g. fixed-layout
+// paragraphs whose words are wrapped in differently coloured `<span>`s. Returns
+// the reconstructed wrapper HTML, or null if the element was not found.
 export function reconstructHtmlWithEdit(
   originalHtml: string,
   dataId: string,
-  newText: string
+  editedInnerHtml: string
 ): string | null {
   try {
     const parser = new DOMParser()
     const doc = parser.parseFromString(`<div id="__root">${originalHtml}</div>`, "text/html")
     const el = doc.querySelector(`[data-id="${CSS.escape(dataId)}"]`)
     if (!el) return null
-    el.textContent = newText
+    el.innerHTML = editedInnerHtml
     const wrapper = doc.getElementById("content") ?? doc.getElementById("__root")
     if (!wrapper) return null
     const cls = wrapper.getAttribute("class")?.trim()

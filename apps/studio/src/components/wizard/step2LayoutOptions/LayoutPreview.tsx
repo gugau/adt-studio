@@ -13,6 +13,7 @@ const STRATEGY_WIDTHS: Record<RenderStrategyId, number> = {
   single_column: 650,
   two_column: 650,
   two_column_story: 980,
+  fixed_layout: 650,
 }
 
 export function getPreviewWidth(strategy: string): number {
@@ -480,6 +481,23 @@ function TwoColumnStoryPreview() {
   )
 }
 
+function FixedLayoutPreview() {
+  return (
+    <div className="relative flex h-full min-h-0 items-center justify-center px-2 py-4 @min-[420px]:px-3 @min-[420px]:py-6 @min-[540px]:px-5 @min-[620px]:px-[30px] @min-[620px]:py-[66px]">
+      <div className="relative h-full max-h-[444px] w-full max-w-[440px]">
+        <img
+          alt=""
+          src="/previews/two-column-story.png"
+          className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+        />
+        <div className="absolute left-[8%] top-[58%] right-[8%] rounded-md bg-white/85 px-3 py-2 text-center text-[11px] font-semibold leading-snug tracking-[0.3px] text-[#0a0a0a] shadow-sm @min-[420px]:px-4 @min-[420px]:py-2.5 @min-[420px]:text-xs @min-[480px]:text-sm @min-[540px]:px-5 @min-[540px]:py-3 @min-[540px]:text-base @min-[620px]:text-lg @min-[760px]:text-xl">
+          <Trans>This is Pip! He has a wiggly tail.</Trans>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Registry & export ──────────────────────────────────────────────────────
 
 const STRATEGY_PREVIEWS: Record<RenderStrategyId, React.FC> = {
@@ -488,6 +506,7 @@ const STRATEGY_PREVIEWS: Record<RenderStrategyId, React.FC> = {
   single_column: SingleColumnPreview,
   two_column: TwoColumnPreview,
   two_column_story: TwoColumnStoryPreview,
+  fixed_layout: FixedLayoutPreview,
 }
 
 const RENDER_STRATEGY_LABEL = msg`Render Strategy`

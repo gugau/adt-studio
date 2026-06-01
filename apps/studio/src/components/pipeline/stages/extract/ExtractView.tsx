@@ -7,8 +7,10 @@ import { usePages, usePageImage } from "@/hooks/use-pages"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { ExtractPageDetail } from "./components/ExtractPageDetail"
+import { LoadingState } from "../../components/LoadingState"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { StageRunCard } from "../../components/StageRunCard"
+import { StageEmptyState } from "../../components/StageEmptyState"
 import type { PageSummaryItem } from "@/api/client"
 
 /** Returns true once the element has scrolled into view. */
@@ -284,12 +286,7 @@ export function ExtractView({ bookLabel, selectedPageId: selectedPageIdProp, onS
   }, [selectedPageId, prevPageId, nextPageId, showRunCard, setSelectedPageId])
 
   if (!showRunCard && isLoading) {
-    return (
-      <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <Trans>Loading pages...</Trans>
-      </div>
-    )
+    return <LoadingState stageSlug="extract" label={<Trans>Loading pages...</Trans>} />
   }
 
   // Page detail view — available once pages exist (even while later steps run)
@@ -316,9 +313,12 @@ export function ExtractView({ bookLabel, selectedPageId: selectedPageIdProp, onS
           disabled={!extractError || !hasApiKey || extractRunning}
         />
       ) : pageList.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          <Trans>No pages extracted yet. Run the pipeline to extract content.</Trans>
-        </p>
+        <StageEmptyState
+          icon={FileText}
+          color="blue"
+          title={t`No pages extracted yet`}
+          subtitle={t`Run the pipeline to extract content`}
+        />
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           {pageList.map((page) => (

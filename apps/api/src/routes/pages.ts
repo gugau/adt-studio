@@ -4,14 +4,14 @@ import path from "node:path"
 import { z } from "zod"
 import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
-import { parseBookLabel, ImageClassificationOutput, PageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES } from "@adt/types"
+import { parseBookLabel, ImageClassificationOutput, PageSectioningOutput, WebRenderingOutput, ImageCaptioningOutput, ImageSegmentRegion, DEFAULT_LLM_MAX_RETRIES, primaryFontFamily, reflowableFontChain } from "@adt/types"
 import type { ContentNodeData } from "@adt/types"
 import { openBookDb } from "@adt/storage"
 import { createBookStorage } from "@adt/storage"
 import type { Storage } from "@adt/storage"
 import { reRenderPage, aiEditSection } from "../services/page-edit-service.js"
 import type { TaskService } from "../services/task-service.js"
-import { segmentPageImages, getSegmentedImageId, loadBookConfig, applyCrop, generateStyleguide, buildStyleguideGenerationConfig } from "@adt/pipeline"
+import { segmentPageImages, getSegmentedImageId, loadBookConfig, applyCrop, generateStyleguide, buildStyleguideGenerationConfig, isFixedLayoutBook } from "@adt/pipeline"
 import { createLLMModel, createPromptEngine, renderLiquidTemplate, generateImageWithCache } from "@adt/llm"
 
 interface PageSummary {
@@ -36,6 +36,26 @@ interface PageDetail {
   imageCropping: unknown | null
   rendering: unknown | null
   imageCaptioning: unknown | null
+  /** Per-image metadata for this page (dimensions, optional PDF-point placement bounds). */
+  imagesMeta: Array<{
+    imageId: string
+    width: number
+    height: number
+    bounds?: { x: number; y: number; width: number; height: number }
+  }>
+  /** Distinct fonts the extractor found on this page (from positioned text),
+   *  each with the rounded sizes (px) it appears at. Empty for reflowable
+   *  books, which don't extract positioned text. */
+  fonts: Array<{ family: string; sizes: number[] }>
+  /** Book-level detected font category (serif vs sans, char-weighted) used to
+   *  pick the reflowable base font. Same for every page; null when the book has
+   *  no extractable text. */
+  fontProfile: { category: "serif" | "sans" | null; serifChars: number; sansChars: number } | null
+  /** Resolved reflowable base-font CSS chain (e.g. `'Atkinson
+   *  Hyperlegible','Merriweather',sans-serif`), already gated: null for
+   *  fixed-layout books and for the Merriweather default (no override needed).
+   *  Mirrors what packaging/preview inject, so the storyboard preview can match. */
+  reflowableFontFamily: string | null
   versions: {
     sectioning: number | null
     imageClassification: number | null
@@ -43,6 +63,35 @@ interface PageDetail {
     rendering: number | null
     imageCaptioning: number | null
   }
+}
+
+/**
+ * Summarize the fonts used on a page from its stored positioned-text node:
+ * the distinct primary families, each with the rounded px sizes it appears
+ * at. Defensive against shape drift (older/missing data) — returns [] rather
+ * than throwing. Sorted by family for stable display.
+ */
+function derivePageFonts(data: unknown): PageDetail["fonts"] {
+  const drawItems = (data as { drawItems?: unknown } | null)?.drawItems
+  if (!Array.isArray(drawItems)) return []
+  const sizesByFamily = new Map<string, Set<number>>()
+  for (const item of drawItems) {
+    const segments = (item as { segments?: unknown })?.segments
+    if (!Array.isArray(segments)) continue
+    for (const seg of segments) {
+      const style = (seg as { style?: Record<string, string> })?.style
+      if (!style) continue
+      const family = primaryFontFamily(style["font-family"] ?? "")
+      if (!family) continue
+      const size = parseFloat(style["font-size"] ?? "")
+      const sizes = sizesByFamily.get(family) ?? new Set<number>()
+      if (Number.isFinite(size)) sizes.add(Math.round(size))
+      sizesByFamily.set(family, sizes)
+    }
+  }
+  return [...sizesByFamily.entries()]
+    .map(([family, sizes]) => ({ family, sizes: [...sizes].sort((a, b) => a - b) }))
+    .sort((a, b) => a.family.localeCompare(b.family))
 }
 
 function getDbPath(label: string, booksDir: string): string {
@@ -183,7 +232,7 @@ async function executeAiImageGeneration(params: AiImageGenParams): Promise<{
   try {
     generated = await generateImageWithCache({
       apiKey,
-      modelId: "openai:gpt-image-1.5",
+      modelId: "openai:gpt-image-2",
       prompt: finalPrompt,
       size: size as `${number}x${number}`,
       referenceImages,
@@ -560,6 +609,31 @@ export function createPageRoutes(
       const imageCroppingNode = getNodeData("image-cropping")
       const renderingNode = getNodeData("web-rendering")
       const imageCaptioningNode = getNodeData("image-captioning")
+      const positionedTextNode = getNodeData("positioned-text")
+      // Book-level font profile (item_id "book", not the page id).
+      const fontProfileRows = db.all(
+        "SELECT data FROM node_data WHERE node = 'font-profile' AND item_id = 'book' ORDER BY version DESC LIMIT 1",
+        []
+      ) as Array<{ data: string }>
+      const fontProfile =
+        fontProfileRows.length > 0
+          ? (JSON.parse(fontProfileRows[0].data) as PageDetail["fontProfile"])
+          : null
+      // Resolve the reflowable base font (gated): null for fixed-layout books
+      // and for the Merriweather default. Mirrors resolveReflowableFontChain so
+      // the storyboard preview shell can apply the same font packaging does.
+      let reflowableFontFamily: string | null = null
+      try {
+        const cfg = loadBookConfig(safeLabel, booksDir, configPath)
+        // Same resolver packaging + preview use, so the Extract display and the
+        // storyboard preview can't drift from the shipped output.
+        reflowableFontFamily = reflowableFontChain(fontProfile?.category ?? null, {
+          fixedLayout: isFixedLayoutBook(cfg),
+          reflowableFont: cfg.reflowable_font,
+        })
+      } catch {
+        // config unavailable → no override
+      }
 
       // Validate the stored blob against the canonical tree schema; if it
       // doesn't match (older data or a failed run), return null so the
@@ -570,6 +644,32 @@ export function createPageRoutes(
         if (parsed.success) sectioningTreeForUI = parsed.data
       }
 
+      // Per-image meta (width/height/bounds) — sourced directly from the
+      // images table rather than node_data so it reflects the latest state.
+      const imageMetaRows = db.all(
+        "SELECT image_id, width, height, bounds_x, bounds_y, bounds_w, bounds_h FROM images WHERE page_id = ? ORDER BY image_id",
+        [pageId]
+      ) as Array<{
+        image_id: string
+        width: number
+        height: number
+        bounds_x: number | null
+        bounds_y: number | null
+        bounds_w: number | null
+        bounds_h: number | null
+      }>
+      const imagesMeta: PageDetail["imagesMeta"] = imageMetaRows.map((r) => {
+        const meta: PageDetail["imagesMeta"][number] = {
+          imageId: r.image_id,
+          width: r.width,
+          height: r.height,
+        }
+        if (r.bounds_x !== null && r.bounds_y !== null && r.bounds_w !== null && r.bounds_h !== null) {
+          meta.bounds = { x: r.bounds_x, y: r.bounds_y, width: r.bounds_w, height: r.bounds_h }
+        }
+        return meta
+      })
+
       const result: PageDetail = {
         pageId: page.page_id,
         pageNumber: page.page_number,
@@ -579,6 +679,10 @@ export function createPageRoutes(
         imageCropping: imageCroppingNode?.data ?? null,
         rendering: renderingNode?.data ?? null,
         imageCaptioning: imageCaptioningNode?.data ?? null,
+        imagesMeta,
+        fonts: derivePageFonts(positionedTextNode?.data),
+        fontProfile,
+        reflowableFontFamily,
         versions: {
           sectioning: sectioningNode?.version ?? null,
           imageClassification: imageClassNode?.version ?? null,
@@ -1553,7 +1657,7 @@ export function createPageRoutes(
     }
   })
 
-  // POST /books/:label/images/ai-generate — Generate image via gpt-image-1.5
+  // POST /books/:label/images/ai-generate — Generate image via gpt-image-2
   app.post("/books/:label/images/ai-generate", async (c) => {
     try {
       const { label } = c.req.param()

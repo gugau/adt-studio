@@ -1,5 +1,6 @@
 import fs from "node:fs"
 import path from "node:path"
+import { pathToFileURL } from "node:url"
 import { Hono } from "hono"
 import { HTTPException } from "hono/http-exception"
 import { parseBookLabel } from "@adt/types"
@@ -30,8 +31,11 @@ import {
   pad3,
   loadBookConfig,
   buildPreferredImageAltMap,
+  buildDecorativeImageIdSet,
   rewriteImageUrls,
   convertLatexToMathml,
+  isFixedLayoutBook,
+  resolveReflowableFontChain,
 } from "@adt/pipeline"
 
 // ---------------------------------------------------------------------------
@@ -67,14 +71,14 @@ function getMimeType(filePath: string): string {
   return MIME_TYPES[path.extname(filePath).toLowerCase()] ?? "application/octet-stream"
 }
 
-/** Highest mtime across base.js + everything under modules/ — used to detect
- *  when the pre-built bundle is out of date relative to its sources. */
-function maxSourceMtime(webAssetsDir: string): number {
+/** Highest mtime across the adt-runtime React source — used to detect when
+ *  the pre-built bundle is out of date relative to its sources. */
+function maxSourceMtime(_webAssetsDir: string): number {
+  // The runtime source moved from assets/adt/{base.js,modules/} to
+  // apps/adt-runtime/src/. Walk that tree instead.
+  const runtimeSrc = path.resolve(_webAssetsDir, "../../apps/adt-runtime/src")
+  if (!fs.existsSync(runtimeSrc)) return 0
   let max = 0
-  const baseJs = path.join(webAssetsDir, "base.js")
-  if (fs.existsSync(baseJs)) max = Math.max(max, fs.statSync(baseJs).mtimeMs)
-  const modulesDir = path.join(webAssetsDir, "modules")
-  if (!fs.existsSync(modulesDir)) return max
   const walk = (dir: string) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name)
@@ -85,7 +89,7 @@ function maxSourceMtime(webAssetsDir: string): number {
       }
     }
   }
-  walk(modulesDir)
+  walk(runtimeSrc)
   return max
 }
 
@@ -399,6 +403,8 @@ function buildPreviewConfig(
   language: string,
   webAssetsDir: string,
   speechConfig?: SpeechConfig,
+  configuredOutputLanguages?: string[],
+  fixedLayout?: boolean,
 ) {
   const glossary = getGlossary(storage)
   const hasGlossary = glossary !== undefined && glossary.items.length > 0
@@ -434,12 +440,32 @@ function buildPreviewConfig(
 
   const hasSignLanguageVideos = storage.getSignLanguageVideos().some((v) => v.sectionId !== null)
 
+  // Available languages = the source language + every translation actually
+  // present in the DB. We restrict against the book's configured
+  // `output_languages` so partial / in-progress translations don't leak into
+  // the language picker, but always include the source language even if it
+  // isn't listed there. Falls back to `[language]` when no translations exist.
+  const sourceLang = normalizeLocale(language)
+  const allowed = new Set(
+    (configuredOutputLanguages ?? []).map((l) => normalizeLocale(l)),
+  )
+  const availableSet = new Set<string>([sourceLang])
+  for (const lang of allowed) {
+    if (lang === sourceLang) continue
+    const legacy = lang.replace("-", "_")
+    const hasTranslation =
+      storage.getLatestNodeData("text-catalog-translation", lang) !== null ||
+      storage.getLatestNodeData("text-catalog-translation", legacy) !== null
+    if (hasTranslation) availableSet.add(lang)
+  }
+  const available = Array.from(availableSet)
+
   return {
     title: getBookTitle(storage),
     bundleVersion: getPreviewBundleVersion(webAssetsDir),
     languages: {
-      available: [language],
-      default: language,
+      available,
+      default: sourceLang,
     },
     features: {
       signLanguage: hasSignLanguageVideos,
@@ -463,6 +489,7 @@ function buildPreviewConfig(
       trackerUrl: "",
       srcUrl: "",
     },
+    ...(fixedLayout ? { fixedLayout: true } : {}),
   }
 }
 
@@ -517,7 +544,14 @@ export function createAdtPreviewRoutes(
     const bookConfig = loadBookConfig(safeLabel, booksDir, configPath)
     const previewConfig = withStorage(c.req.param("label"), (storage) => {
       const language = getBookLanguage(storage)
-      return buildPreviewConfig(storage, language, webAssetsDir, bookConfig.speech)
+      return buildPreviewConfig(
+        storage,
+        language,
+        webAssetsDir,
+        bookConfig.speech,
+        bookConfig.output_languages,
+        isFixedLayoutBook(bookConfig),
+      )
     })
     c.header("Content-Type", "application/json")
     return c.body(JSON.stringify(previewConfig))
@@ -535,27 +569,26 @@ export function createAdtPreviewRoutes(
       throw new HTTPException(403, { message: "Forbidden" })
     }
 
-    // Auto-build base.bundle.min.js on-the-fly if it's missing OR stale relative
-    // to its source modules (dev mode). The file is gitignored and normally
-    // pre-built by `pnpm --filter @adt/api bundle`. Skip in packaged mode
+    // Auto-build the runtime bundle on-the-fly if it's missing OR stale
+    // relative to apps/adt-runtime/src (dev mode). Normally pre-built by
+    // `pnpm --filter @adt/api bundle`. Skip in packaged mode
     // (ADT_RESOURCES_ZIP) where esbuild isn't available inside the pkg'd binary.
-    if (assetPath === "base.bundle.min.js" && !process.env.ADT_RESOURCES_ZIP) {
-      const entryPoint = path.join(webAssetsDir, "base.js")
-      if (fs.existsSync(entryPoint)) {
+    if (
+      (assetPath === "base.bundle.min.js" || assetPath === "base.bundle.local.js") &&
+      !process.env.ADT_RESOURCES_ZIP
+    ) {
+      const buildScript = path.resolve(webAssetsDir, "../../apps/adt-runtime/build.config.mjs")
+      if (fs.existsSync(buildScript)) {
         const bundleMtime = fs.existsSync(resolved) ? fs.statSync(resolved).mtimeMs : 0
-        const isStale =
-          bundleMtime === 0 || maxSourceMtime(webAssetsDir) > bundleMtime
+        const isStale = bundleMtime === 0 || maxSourceMtime(webAssetsDir) > bundleMtime
         if (isStale) {
-          const esbuild = await import("esbuild")
-          await esbuild.build({
-            entryPoints: [entryPoint],
-            bundle: true,
-            minify: true,
-            sourcemap: true,
-            format: "esm",
-            target: "es2020",
-            outfile: resolved,
-          })
+          // Re-import with a cache-busting URL so repeated invocations pick
+          // up source changes when using watch mode. Convert to a file:// URL
+          // so Node's ESM loader doesn't read the Windows drive letter as a
+          // URL scheme.
+          const buildScriptUrl = pathToFileURL(buildScript)
+          buildScriptUrl.searchParams.set("t", String(Date.now()))
+          await import(buildScriptUrl.href)
         }
       }
     }
@@ -834,6 +867,12 @@ export function createAdtPreviewRoutes(
     return await withStorage(label, async (storage) => {
       const title = getBookTitle(storage)
       const language = getBookLanguage(storage)
+      // Reflowable base font (serif/sans default or override) — matches the
+      // packaged output so the preview shows the same typography.
+      const bodyFontFamily = resolveReflowableFontChain(storage, {
+        fixedLayout: isFixedLayoutBook(config),
+        reflowableFont: config.reflowable_font,
+      })
 
       // Check if this is a quiz page (qzNNN)
       const quizMatch = pageId.match(/^qz(\d{3})$/)
@@ -864,6 +903,7 @@ export function createAdtPreviewRoutes(
         skipContentWrapper: true,
         applyBodyBackground,
         embed,
+        bodyFontFamily,
       })
 
         c.header("Content-Type", "text/html; charset=utf-8")
@@ -913,11 +953,13 @@ export function createAdtPreviewRoutes(
         ? sectioningParsed.data.sections[targetSectionIndex]
         : undefined
       const preferredImageAltMap = buildPreferredImageAltMap(storage, ownerPageId, sectionMeta)
+      const decorativeImageIds = buildDecorativeImageIdSet(storage, ownerPageId)
       const { html: previewSectionHtml } = rewriteImageUrls(
         renderedSection.html,
         label,
         new Map<string, string>(),
         preferredImageAltMap,
+        decorativeImageIds,
       )
 
       const previewHasMath = /(?:\\\(|\\\)|\\\[|\\\]|\$[^$]+\$|\\frac|\\sqrt|\\sum|\\int|\\text\{|\\hat\{|\\circ)/.test(previewSectionHtml)
@@ -933,6 +975,7 @@ export function createAdtPreviewRoutes(
         bundleVersion: previewBundleVersion,
         applyBodyBackground,
         embed,
+        bodyFontFamily,
       })
 
       c.header("Content-Type", "text/html; charset=utf-8")

@@ -10,7 +10,7 @@ import { buildLanguageContext } from "./language-context.js"
 export interface CaptionPageInput {
   pageId: string
   pageImageBase64: string
-  images: { imageId: string; imageBase64: string }[]
+  images: { imageId: string; imageBase64: string; width?: number; height?: number }[]
   language: string
   bookSummary?: string
 }
@@ -79,7 +79,7 @@ export async function captionPageImages(
   const languageContext = buildLanguageContext(input.language)
 
   const result = await llmModel.generateObject<{
-    captions: Array<{ image_id: string; reasoning: string; caption: string }>
+    captions: Array<{ image_id: string; reasoning: string; caption: string; decorative?: boolean }>
   }>({
     schema: imageCaptioningLLMSchema,
     prompt: config.promptName,
@@ -95,7 +95,7 @@ export async function captionPageImages(
       raw: unknown
     ): ValidationResult => {
       const r = raw as {
-        captions: Array<{ image_id: string; reasoning: string; caption: string }>
+        captions: Array<{ image_id: string; reasoning: string; caption: string; decorative?: boolean }>
       }
       const returnedIds = r.captions.map((c) => c.image_id)
       const missing = inputImageIds.filter((id) => !returnedIds.includes(id))
@@ -134,7 +134,9 @@ export async function captionPageImages(
     captions: result.object.captions.map((c) => ({
       imageId: c.image_id,
       reasoning: c.reasoning,
-      caption: c.caption,
+      // Decorative images need no caption — drop any text the model emitted.
+      caption: c.decorative ? "" : c.caption,
+      ...(c.decorative ? { decorative: true } : {}),
     })),
   }
 }

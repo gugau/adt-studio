@@ -198,18 +198,24 @@ export {
   type PipelineDAGResult,
 } from "./dag.js"
 export {
+  packageEpub,
+  type PackageEpubOptions,
+} from "./package-epub.js"
+export {
   packageAdtWeb,
   packageWebpub,
   computePackagingInputHash,
   type PackageAdtWebOptions,
   type ComputePackagingInputHashOptions,
   renderPageHtml,
+  resolveReflowableFontChain,
   NAV_HTML,
   type RenderPageOptions,
   buildPreviewTailwindCss,
   buildGlossaryJson,
   buildImageMap,
   buildPreferredImageAltMap,
+  buildDecorativeImageIdSet,
   rewriteImageUrls,
   htmlToXhtml,
   renderQuizHtml,
@@ -229,3 +235,4 @@ export {
   type BuildBrowserAccessibilityRecheckPlanOptions,
 } from "./browser-accessibility-assessment.js"
 export { mergeAccessibilityResults } from "./accessibility-assessment-shared.js"
+export { processFixedLayoutPages, isFixedLayoutBook } from "./fixed-layout-rendering.js"

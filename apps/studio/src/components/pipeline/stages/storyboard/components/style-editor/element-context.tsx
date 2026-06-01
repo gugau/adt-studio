@@ -18,6 +18,9 @@ interface ElementCtx {
     fontWeight?: string | null
     lineHeight?: number | null
     textAlign?: string | null
+    /** Primary declared font family of the element's text (e.g. "Mouse
+     *  Memoirs"), read from the rendered HTML. Display-only. */
+    fontFamily?: string | null
   }
 }
 

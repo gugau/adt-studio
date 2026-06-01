@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { LandingPageShell } from "@/components/pipeline/components/LandingPageShell"
 import { StageBlockedState } from "@/components/pipeline/components/StageBlockedState"
+import { LoadingState } from "@/components/pipeline/components/LoadingState"
 import {
   SettingsCard,
   SettingsField,
@@ -20,17 +21,18 @@ import {
 import { ExportDialog } from "./ExportDialog"
 import { FormatPicker } from "./components/FormatPicker"
 import { ExportPreview } from "./components/ExportPreview"
+import { useCapturedPreviewSettings } from "@/hooks/use-preview-settings-listener"
 
 export function ExportLandingPage({ bookLabel }: { bookLabel: string }) {
   const { t } = useLingui()
-  const { stageState } = useBookRun()
+  const { stageState, isStatusLoading } = useBookRun()
   const storyboardDone = stageState("storyboard") === "done"
-  const { allPruned } = useAllPagesPruned(bookLabel)
+  const { allPruned, isLoading: prunedLoading } = useAllPagesPruned(bookLabel)
   const { startExport, isPreparing, preparingFormat, error } =
     useExportWatcher()
   const projectFeatures = useAllProjectFeatures(bookLabel)
   const available = projectFeatures.toggleable
-
+ const capturedPreviewSettings = useCapturedPreviewSettings(bookLabel)
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>("adt")
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [languageOrder, setLanguageOrder] = useState<string[] | null>(null)
@@ -57,7 +59,9 @@ export function ExportLandingPage({ bookLabel }: { bookLabel: string }) {
               featureToggles.signLanguage && available.signLanguage,
             languages: languageOrder ?? undefined,
           }
-    startExport(selectedFormat, features)
+    const defaultSettings =
+      selectedFormat === "project" ? undefined : capturedPreviewSettings
+    startExport(selectedFormat, features, defaultSettings)
     setExportDialogOpen(false)
   }
 
@@ -66,27 +70,19 @@ export function ExportLandingPage({ bookLabel }: { bookLabel: string }) {
   const formatError =
     error?.format === selectedFormat ? error.message : null
 
+  const isThisFormatPreparing = preparingFormat === selectedFormat
+
+  if (isStatusLoading || prunedLoading) {
+    return <LoadingState stageSlug="export" label={<Trans>Loading export...</Trans>} />
+  }
+
   if (!storyboardDone) {
-    return (
-      <StageBlockedState
-        bookLabel={bookLabel}
-        reason="storyboard-missing"
-        stageLabel={<Trans>Export</Trans>}
-      />
-    )
+    return <StageBlockedState bookLabel={bookLabel} reason="storyboard-missing" stageLabel={<Trans>Export</Trans>} />
   }
 
   if (allPruned) {
-    return (
-      <StageBlockedState
-        bookLabel={bookLabel}
-        reason="all-pruned"
-        stageLabel={<Trans>Export</Trans>}
-      />
-    )
+    return <StageBlockedState bookLabel={bookLabel} reason="all-pruned" stageLabel={<Trans>Export</Trans>} />
   }
-
-  const isThisFormatPreparing = preparingFormat === selectedFormat
 
   return (
     <LandingPageShell

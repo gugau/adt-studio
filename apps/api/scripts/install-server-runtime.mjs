@@ -24,6 +24,8 @@ const stub = {
   dependencies: {
     esbuild: p.devDependencies.esbuild,
     tailwindcss: p.dependencies.tailwindcss,
+    "@tailwindcss/postcss": p.dependencies["@tailwindcss/postcss"],
+    "tw-animate-css": p.dependencies["tw-animate-css"],
     postcss: p.dependencies.postcss,
     jsdom: p.dependencies.jsdom,
   },

@@ -4,6 +4,9 @@ import type { StageName, StepName } from "./pipeline.js"
 export type PipelineNodeName =
   | StepName
   | "text-catalog-translation"
+  // Sub-product of the `extract` step — written alongside the main
+  // page data, not its own pipeline step.
+  | "positioned-text"
 
 /**
  * Shared, UI-agnostic cache/resource tags used by apps to derive
@@ -23,6 +26,7 @@ export type PipelineCacheResource =
 
 const EXTRA_STAGE_OUTPUT_NODES: Partial<Record<StageName, readonly PipelineNodeName[]>> = {
   "translate": ["text-catalog-translation"],
+  "extract": ["positioned-text"],
 }
 
 /** All node_data node names written by each stage. */
@@ -87,6 +91,7 @@ const NODE_CACHE_RESOURCES: Record<PipelineNodeName, readonly PipelineCacheResou
   "package-web": [],
   "accessibility-assessment": ["debug"],
   "text-catalog-translation": ["text-catalog"],
+  "positioned-text": ["pages"],
 }
 
 const CACHE_RESOURCE_ORDER: readonly PipelineCacheResource[] = [
