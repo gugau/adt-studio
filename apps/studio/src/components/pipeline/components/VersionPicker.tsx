@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Check, ChevronDown, Loader2 } from "lucide-react"
+import { ChevronDown, Loader2 } from "lucide-react"
 import { useLingui } from "@lingui/react/macro"
 import { api } from "@/api/client"
 import type { VersionEntry } from "@/api/client"
@@ -8,12 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { FloatingSaveBar } from "./FloatingSaveBar"
 
 export type VersionedStep =
   | "toc-generation"
@@ -30,65 +25,20 @@ type Variant = "header" | "muted"
 interface StepStyling {
   variant: Variant
   triggerClass: string
-  discardClass: string
-  saveClass: string
 }
 
-const HEADER_DISCARD = "bg-black/40 text-white hover:bg-black/55"
 const HEADER_TRIGGER = "bg-white/20 text-white hover:bg-white/30"
-
 const MUTED_TRIGGER = "bg-muted hover:bg-muted/80"
-const MUTED_DISCARD = "bg-muted hover:bg-accent hover:text-accent-foreground"
 
 const STEP_STYLING: Record<VersionedStep, StepStyling> = {
-  "toc-generation": {
-    variant: "header",
-    triggerClass: HEADER_TRIGGER,
-    discardClass: HEADER_DISCARD,
-    saveClass: "bg-white text-amber-800 hover:bg-white/80",
-  },
-  glossary: {
-    variant: "header",
-    triggerClass: HEADER_TRIGGER,
-    discardClass: HEADER_DISCARD,
-    saveClass: "bg-white text-lime-800 hover:bg-white/80",
-  },
-  "quiz-generation": {
-    variant: "header",
-    triggerClass: HEADER_TRIGGER,
-    discardClass: HEADER_DISCARD,
-    saveClass: "bg-white text-orange-800 hover:bg-white/80",
-  },
-  "text-catalog-translation": {
-    variant: "header",
-    triggerClass: HEADER_TRIGGER,
-    discardClass: HEADER_DISCARD,
-    saveClass: "bg-white text-pink-800 hover:bg-white/80",
-  },
-  "web-rendering": {
-    variant: "header",
-    triggerClass: HEADER_TRIGGER,
-    discardClass: HEADER_DISCARD,
-    saveClass: "bg-white text-violet-800 hover:bg-white/80",
-  },
-  "image-filtering": {
-    variant: "muted",
-    triggerClass: MUTED_TRIGGER,
-    discardClass: MUTED_DISCARD,
-    saveClass: "bg-blue-700 hover:bg-blue-600 text-white",
-  },
-  "image-captioning": {
-    variant: "muted",
-    triggerClass: MUTED_TRIGGER,
-    discardClass: MUTED_DISCARD,
-    saveClass: "bg-teal-700 hover:bg-teal-600 text-white",
-  },
-  "page-sectioning": {
-    variant: "muted",
-    triggerClass: MUTED_TRIGGER,
-    discardClass: MUTED_DISCARD,
-    saveClass: "bg-violet-700 hover:bg-violet-600 text-white",
-  },
+  "toc-generation": { variant: "header", triggerClass: HEADER_TRIGGER },
+  glossary: { variant: "header", triggerClass: HEADER_TRIGGER },
+  "quiz-generation": { variant: "header", triggerClass: HEADER_TRIGGER },
+  "text-catalog-translation": { variant: "header", triggerClass: HEADER_TRIGGER },
+  "web-rendering": { variant: "header", triggerClass: HEADER_TRIGGER },
+  "image-filtering": { variant: "muted", triggerClass: MUTED_TRIGGER },
+  "image-captioning": { variant: "muted", triggerClass: MUTED_TRIGGER },
+  "page-sectioning": { variant: "muted", triggerClass: MUTED_TRIGGER },
 }
 
 interface VersionPickerProps {
@@ -102,6 +52,14 @@ interface VersionPickerProps {
   onSave?: () => void
   onDiscard: () => void
   saveDisabledReason?: string
+  /**
+   * Whether this picker renders its own bottom-centered FloatingSaveBar when
+   * dirty. Defaults to true. Set false for views that own a combined save bar
+   * (e.g. the storyboard section editor, which tracks multiple pending states
+   * in a single bar). The picker never falls back to inline Save/Discard
+   * buttons — Save/Discard always live in a floating bar.
+   */
+  renderSaveBar?: boolean
 }
 
 export function VersionPicker({
@@ -115,6 +73,7 @@ export function VersionPicker({
   onSave,
   onDiscard,
   saveDisabledReason,
+  renderSaveBar = true,
 }: VersionPickerProps) {
   const { t } = useLingui()
   const styling = STEP_STYLING[step]
@@ -131,45 +90,6 @@ export function VersionPicker({
   }
 
   if (currentVersion == null) return null
-
-  if (dirty) {
-    const saveDisabled = !!saveDisabledReason
-    const saveButton = onSave && (
-      <button
-        type="button"
-        onClick={onSave}
-        disabled={saveDisabled}
-        className={`flex items-center gap-1 text-[10px] font-medium rounded px-2 py-0.5 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${styling.saveClass}`}
-      >
-        <Check className="h-3 w-3" />
-        {t`Save`}
-      </button>
-    )
-
-    return (
-      <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          onClick={onDiscard}
-          className={`text-[10px] font-medium rounded px-2 py-0.5 cursor-pointer transition-colors ${styling.discardClass}`}
-        >
-          {t`Discard`}
-        </button>
-        {saveButton && saveDisabled ? (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span>{saveButton}</span>
-              </TooltipTrigger>
-              <TooltipContent>{saveDisabledReason}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        ) : (
-          saveButton
-        )}
-      </div>
-    )
-  }
 
   const handleOpenChange = async (next: boolean) => {
     setOpen(next)
@@ -188,42 +108,51 @@ export function VersionPicker({
   }
 
   return (
-    <Popover open={open} onOpenChange={handleOpenChange}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className={`flex items-center gap-0.5 text-[10px] font-normal normal-case tracking-normal rounded px-1.5 py-0.5 transition-colors ${styling.triggerClass}`}
-        >
-          v{currentVersion}
-          <ChevronDown className="h-2.5 w-2.5" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-auto min-w-[80px] p-1">
-        {loadingVersions ? (
-          <div className="flex items-center justify-center py-2 px-3">
-            <Loader2 className="h-3 w-3 animate-spin" />
-          </div>
-        ) : versions && versions.length > 0 ? (
-          versions.map((v) => (
-            <button
-              key={v.version}
-              type="button"
-              onClick={() => handlePick(v)}
-              className={`block w-full text-left px-3 py-1 text-xs rounded hover:bg-accent transition-colors ${
-                v.version === currentVersion
-                  ? "font-semibold text-foreground"
-                  : "text-muted-foreground"
-              }`}
-            >
-              v{v.version}
-            </button>
-          ))
-        ) : (
-          <div className="px-3 py-1 text-xs text-muted-foreground">
-            {t`No versions`}
-          </div>
-        )}
-      </PopoverContent>
-    </Popover>
+    <>
+      <Popover open={open} onOpenChange={handleOpenChange}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className={`flex items-center gap-0.5 text-[10px] font-normal normal-case tracking-normal rounded px-1.5 py-0.5 transition-colors ${styling.triggerClass}`}
+          >
+            v{currentVersion}
+            <ChevronDown className="h-2.5 w-2.5" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-auto min-w-[80px] p-1">
+          {loadingVersions ? (
+            <div className="flex items-center justify-center py-2 px-3">
+              <Loader2 className="h-3 w-3 animate-spin" />
+            </div>
+          ) : versions && versions.length > 0 ? (
+            versions.map((v) => (
+              <button
+                key={v.version}
+                type="button"
+                onClick={() => handlePick(v)}
+                className={`block w-full text-left px-3 py-1 text-xs rounded hover:bg-accent transition-colors ${
+                  v.version === currentVersion
+                    ? "font-semibold text-foreground"
+                    : "text-muted-foreground"
+                }`}
+              >
+                v{v.version}
+              </button>
+            ))
+          ) : (
+            <div className="px-3 py-1 text-xs text-muted-foreground">
+              {t`No versions`}
+            </div>
+          )}
+        </PopoverContent>
+      </Popover>
+      {dirty && renderSaveBar && (
+        <FloatingSaveBar
+          onSave={onSave}
+          onDiscard={onDiscard}
+          saveDisabledReason={saveDisabledReason}
+        />
+      )}
+    </>
   )
 }

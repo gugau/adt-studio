@@ -1824,6 +1824,7 @@ export function StoryboardSectionDetail({
         onPreview={(data) => setPendingRendering(data as RenderingData)}
         onSave={saveRendering}
         onDiscard={discardAll}
+        renderSaveBar={false}
       />
       <ViewportToggle
         value={deviceView}
@@ -2293,6 +2294,7 @@ export function StoryboardSectionDetail({
             }}
             onSave={saveSectioning}
             onDiscard={discardAll}
+            renderSaveBar={false}
           />
         }
         merging={merging}
