@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import {
+  listDefaultRenderStrategies,
   listSelectableRenderStrategies,
   normalizeDefaultRenderStrategy,
 } from "./render-strategy"
@@ -15,6 +16,32 @@ describe("listSelectableRenderStrategies", () => {
     expect(listSelectableRenderStrategies(strategies)).toEqual([
       "llm",
       "two_column",
+    ])
+  })
+
+  it("filters out fixed_layout (not a per-section override)", () => {
+    const strategies = {
+      llm: { render_type: "llm" },
+      fixed_layout: { render_type: "fixed_layout" },
+    }
+
+    expect(listSelectableRenderStrategies(strategies)).toEqual(["llm"])
+  })
+})
+
+describe("listDefaultRenderStrategies", () => {
+  it("includes fixed_layout but still excludes activities", () => {
+    const strategies = {
+      llm: { render_type: "llm" },
+      two_column: { render_type: "template" },
+      fixed_layout: { render_type: "fixed_layout" },
+      activity_multiple_choice: { render_type: "activity" },
+    }
+
+    expect(listDefaultRenderStrategies(strategies)).toEqual([
+      "llm",
+      "two_column",
+      "fixed_layout",
     ])
   })
 })
@@ -58,6 +85,29 @@ describe("normalizeDefaultRenderStrategy", () => {
     }
 
     expect(normalizeDefaultRenderStrategy("missing", strategies)).toBe(
+      "two_column"
+    )
+  })
+
+  it("allows fixed_layout as an explicit default", () => {
+    const strategies = {
+      llm: { render_type: "llm" },
+      two_column: { render_type: "template" },
+      fixed_layout: { render_type: "fixed_layout" },
+    }
+
+    expect(normalizeDefaultRenderStrategy("fixed_layout", strategies)).toBe(
+      "fixed_layout"
+    )
+  })
+
+  it("never auto-falls-back to fixed_layout", () => {
+    const strategies = {
+      two_column: { render_type: "template" },
+      fixed_layout: { render_type: "fixed_layout" },
+    }
+
+    expect(normalizeDefaultRenderStrategy("dynamic", strategies)).toBe(
       "two_column"
     )
   })

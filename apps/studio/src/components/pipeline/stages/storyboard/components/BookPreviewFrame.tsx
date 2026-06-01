@@ -22,6 +22,7 @@ import {
   weightToToken,
 } from "./iframe-computed-styles"
 import { INTERACTIVE_SCRIPT, INTERACTIVE_STYLES } from "./iframe-interactive"
+import { primaryFontFamily, googleFontsCss2Url } from "@adt/types"
 
 export type { ComputedTypographyStyles }
 
@@ -39,6 +40,18 @@ function previewAssetsUrl(bookLabel: string): string {
  *  desktop preview. The iframe is scaled down via CSS transform to fit the
  *  actual panel width. */
 const DEFAULT_RENDER_WIDTH = 1280
+
+/** Parse a pixel value (e.g. "612px") to a number, or null for non-px values. */
+function parsePxStyle(value: string | undefined): number | null {
+  if (!value) return null
+  const match = /^(\d+(?:\.\d+)?)px$/.exec(value.trim())
+  return match ? parseFloat(match[1]) : null
+}
+
+// Upper bound for upscaling fixed-layout pages so small-page PDFs fill the
+// preview panel instead of rendering boxed. 2× keeps rasterised assets from
+// getting unacceptably soft while still filling the panel for typical books.
+const FL_MAX_SCALE = 2
 
 export interface BookPreviewFrameHandle {
   /** Get the iframe element's bounding rect in the viewport */
@@ -87,14 +100,20 @@ export interface BookPreviewFrameProps {
   /** Reports the iframe's current on-screen width in CSS pixels (renderWidth × scale).
    *  Updates whenever the canvas resizes — useful for showing the active viewport size. */
   onVisibleWidthChange?: (width: number) => void
+  /** Resolved reflowable base-font CSS chain (e.g. `'Atkinson
+   *  Hyperlegible','Merriweather',sans-serif`). When set, the shell loads the
+   *  family from Google Fonts and overrides the global Merriweather, matching
+   *  packaged output. Omit for fixed-layout (keeps per-span fonts). */
+  bodyFontFamily?: string
 }
 
 /**
  * Renders section HTML in an iframe that matches the final book output structure.
  * Uses the same CSS, fonts, and body layout as the preview so rendering is pixel-identical.
  *
- * The iframe always renders at a fixed desktop-width viewport (RENDER_WIDTH) then
- * scales down via CSS transform to fit the available panel width. This ensures
+ * The iframe renders reflowable content at a fixed desktop-width viewport
+ * (DEFAULT_RENDER_WIDTH) — fixed-layout pages render at their own pixel
+ * dimensions — then scales via CSS transform to fit the available panel width. This ensures
  * responsive breakpoints, overlay positions, and image sizing match the preview.
  *
  * When `editable` is true, injects interactive scripts that allow clicking and
@@ -114,6 +133,7 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   renderWidth = DEFAULT_RENDER_WIDTH,
   deviceView,
   onVisibleWidthChange,
+  bodyFontFamily,
 }, ref) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
@@ -190,6 +210,7 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
         fontWeight: null,
         lineHeight: null,
         textAlign: null,
+        fontFamily: null,
       }
       const doc = iframeRef.current?.contentDocument
       const win = doc?.defaultView
@@ -200,18 +221,40 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
       if (!el) return empty
       const s = win.getComputedStyle(el)
       const fontSize = parsePx(s.fontSize)
+      // The font is declared on the inner styled run(s) (fixed-layout
+      // `data-segments` spans), not the paragraph itself — so walk into the
+      // first descendant that carries a font-family and read its resolved
+      // family. Fall back to the element's own computed family.
+      const fontEl =
+        (el.querySelector('[style*="font-family"]') as HTMLElement | null) ?? el
+      const family = primaryFontFamily(win.getComputedStyle(fontEl).fontFamily)
       return {
         fontSize,
         color: rgbToHex(s.color),
         fontWeight: weightToToken(s.fontWeight),
         lineHeight: lineHeightToMultiplier(s.lineHeight, fontSize),
         textAlign: normalizeTextAlign(s.textAlign),
+        fontFamily: family || null,
       }
     },
   }))
   const [iframeReady, setIframeReady] = useState(false)
   const [scale, setScale] = useState(1)
   const [contentHeight, setContentHeight] = useState(800)
+  /**
+   * When the page is fixed-layout, `#content` has explicit pixel width/height
+   * (viewport coords from the renderer). Scaling off these instead of the
+   * fixed `DEFAULT_RENDER_WIDTH` makes the content fill the available preview area.
+   * `referenceWidth` is the book-wide widest page (a full spread in spread
+   * mode), stamped on `#content` as `data-fl-reference-width`; scaling off it
+   * — rather than this page's own width — keeps every page at one uniform
+   * scale, so a single cover/end page renders centered at half-width instead
+   * of being upscaled 2× to fill the panel. Falls back to the page's own
+   * width when the attribute is absent (older content / ad-hoc renders).
+   * null for reflowable pages.
+   */
+  const [fixedLayoutSize, setFixedLayoutSize] = useState<{ width: number; height: number; referenceWidth: number } | null>(null)
+  const [availableWidth, setAvailableWidth] = useState(DEFAULT_RENDER_WIDTH)
   const readyRef = useRef(false)
   const latestHtmlRef = useRef("")
   const sanitizedHtmlRef = useRef("")
@@ -255,6 +298,25 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
     originalTextsRef.current = map
   }, [sanitizedHtml])
 
+  // Auto-fit script — loaded by URL from the shared assets/adt/auto-fit.js
+  // so studio storyboard, packaged-book pages, and PreviewView all run
+  // the same code. (We can't inline a per-page script in storyboard
+  // anyway because DOMPurify strips the <script> tags before innerHTML
+  // injection.) The shared script exposes window.__adtRunAutoFit so
+  // injectContent can trigger another pass after content swaps.
+  // eslint-disable-next-line lingui/no-unlocalized-strings
+  const autoFitScript = `<script src="${assetsPrefix}/assets/auto-fit.js"></script>`
+  // Reflowable base-font override: load the family from Google Fonts and
+  // re-declare the global element font (last in <head> so it wins over
+  // fonts.css's Merriweather rule). Mirrors renderPageHtml's injection so the
+  // preview matches packaged output. Omitted for fixed-layout (no prop).
+  const fontOverride = useMemo(() => {
+    if (!bodyFontFamily) return ""
+    const url = googleFontsCss2Url([primaryFontFamily(bodyFontFamily)])
+    const link = url ? `\n  <link href="${url}" rel="stylesheet">` : ""
+    // eslint-disable-next-line lingui/no-unlocalized-strings
+    return `${link}\n  <style>\n    body, p, h1, h2, h3, h4, h5, h6, span, div, button, input, textarea, select { font-family: ${bodyFontFamily}; }\n  </style>`
+  }, [bodyFontFamily])
   // Stable shell — loaded once, never changes.
   // Mirrors the preview's renderPageHtml output: same CSS, fonts, body classes.
   const srcdoc = useMemo(
@@ -270,13 +332,17 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
   <link href="${assetsPrefix}/assets/libs/fontawesome/css/all.min.css" rel="stylesheet">
   <style>
     ${INTERACTIVE_STYLES}
-  </style>
+  </style>${fontOverride}
 </head>
 <body class="min-h-screen flex items-center justify-center">
 ${INTERACTIVE_SCRIPT}
+${autoFitScript}
 </body>
 </html>`,
-    [assetsPrefix]
+    // autoFitScript embeds assetsPrefix; INTERACTIVE_SCRIPT/INTERACTIVE_STYLES
+    // are stable module constants. Re-memoise when the prefix (auto-fit URL) or
+    // the reflowable font override changes.
+    [assetsPrefix, autoFitScript, fontOverride]
   )
 
   // Listen for postMessage from iframe
@@ -284,17 +350,24 @@ ${INTERACTIVE_SCRIPT}
   callbacksRef.current = { onSelectElement, onTextChanged }
 
   const handleMessage = useCallback((e: MessageEvent) => {
+    const iframe = iframeRef.current
+    if (!iframe || e.source !== iframe.contentWindow) return
     const data = e.data ?? {}
     if (typeof data !== "object" || !data.type) return
-    const { type, dataId, rect, newText, tagName } = data
+    const { type, dataId, rect, newText, editedInnerHtml, tagName } = data
     if (type === "select" || type === "select-image" || type === "select-container") {
       callbacksRef.current.onSelectElement?.(dataId, rect, tagName)
     } else if (type === "text-changed") {
-      // Reconstruct fullHtml from original LaTeX HTML so MathML doesn't leak
-      // into the data model. If reconstruction fails (parse error, missing
-      // data-id) we drop the edit — the iframe's `fullHtml` would carry
-      // rendered MathML that must never reach persistence.
-      const reconstructed = reconstructHtmlWithEdit(sanitizedHtmlRef.current, dataId, newText)
+      // Splice the edited element's innerHTML into the original LaTeX-form HTML
+      // so the edited element keeps the styled child spans contentEditable
+      // preserved (e.g. fixed-layout colour runs), while non-edited siblings
+      // stay in LaTeX form (not MathML). Drop the edit if reconstruction fails
+      // — the iframe's rendered MathML must never reach persistence.
+      const reconstructed = reconstructHtmlWithEdit(
+        sanitizedHtmlRef.current,
+        dataId,
+        editedInnerHtml ?? newText,
+      )
       if (reconstructed === null) {
         console.warn(
           `[adt] Text edit dropped for data-id=${dataId} — could not reconstruct from source HTML.`,
@@ -319,6 +392,20 @@ ${INTERACTIVE_SCRIPT}
   function measureHeight() {
     const doc = iframeRef.current?.contentDocument
     if (!doc?.body) return
+    // Fixed-layout detection: `#content` with explicit pixel width + height.
+    // Our fixed-layout renderer emits `<div id="content" style="...width:Wpx;height:Hpx...">`.
+    const contentEl = doc.getElementById("content") as HTMLElement | null
+    const styleW = contentEl ? parsePxStyle(contentEl.style.width) : null
+    const styleH = contentEl ? parsePxStyle(contentEl.style.height) : null
+    if (contentEl && styleW !== null && styleH !== null) {
+      const refRaw = contentEl.dataset.flReferenceWidth
+      const ref = refRaw ? parseFloat(refRaw) : NaN
+      const referenceWidth = Number.isFinite(ref) && ref > 0 ? ref : styleW
+      setFixedLayoutSize({ width: styleW, height: styleH, referenceWidth })
+      return
+    }
+
+    setFixedLayoutSize(null)
     const main = doc.querySelector("main")
     const h = (main ?? doc.body).scrollHeight
     if (h > 0) setContentHeight(h)
@@ -330,8 +417,12 @@ ${INTERACTIVE_SCRIPT}
     const doc = iframe?.contentDocument
     if (!doc?.body) return
 
-    // Preserve the interactive script if present
-    const scriptEl = doc.body.querySelector("script")
+    // Preserve the interactive + auto-fit shell scripts. They were
+    // injected once into the srcdoc body and would be wiped when we
+    // replace innerHTML below; the appended copies don't re-execute
+    // (script re-insertion doesn't run them) but they keep the DOM
+    // structure consistent with what the shell expects.
+    const scriptEls = Array.from(doc.body.querySelectorAll("script"))
     const normalizedHtml = promoteFirstHeadingToH1(newHtml)
     // Mirror the packaged page shell closely: a page-level <main> containing
     // either the existing #content wrapper or a generated one.
@@ -339,8 +430,8 @@ ${INTERACTIVE_SCRIPT}
     const hasOwnWrapper = /^\s*<div\b[^>]*\bid="content"/.test(normalizedHtml)
     const contentHtml = hasOwnWrapper ? normalizedHtml : `<div id="content">${normalizedHtml}</div>`
     doc.body.innerHTML = hasOwnMain ? normalizedHtml : `<main class="w-full">${contentHtml}</main>`
-    if (scriptEl) {
-      doc.body.appendChild(scriptEl)
+    for (const s of scriptEls) {
+      doc.body.appendChild(s)
     }
 
     // Inject original LaTeX texts so startEditing can swap MathML → LaTeX
@@ -360,6 +451,34 @@ ${INTERACTIVE_SCRIPT}
     // Force synchronous reflow so the browser repaints the scaled iframe
     // immediately after innerHTML changes (fixes delayed style rendering).
     void doc.body.offsetHeight
+
+    // Trigger the shell-level auto-fit on the freshly injected content.
+    // The function was defined once when the iframe shell loaded; we call
+    // it via rAF so layout for the new innerHTML has flushed.
+    //
+    // We need TWO passes (mirroring auto-fit.js's own initial-load schedule):
+    //   1. Immediately after layout, in case fonts are already loaded.
+    //   2. After document.fonts.ready resolves for the just-injected content.
+    //
+    // The shell parses with an empty body, so its first fonts.ready resolves
+    // *before* any text is on the page — auto-fit.js's own post-fonts-ready
+    // hook therefore runs against an empty body and never re-fires for the
+    // injected content. Without the explicit second pass here, auto-fit
+    // measures against fallback-font metrics (Times for Palatino, etc.) and
+    // shrinks paragraphs that fit fine in the actual rendered font.
+    const runFit = () => {
+      const w = iframe?.contentWindow as (Window & { __adtRunAutoFit?: () => void }) | null
+      if (typeof w?.__adtRunAutoFit !== "function") {
+        // eslint-disable-next-line no-console, lingui/no-unlocalized-strings
+        console.warn("[BookPreviewFrame] __adtRunAutoFit is not defined on iframe contentWindow — auto-fit script did not load/execute. assetsPrefix:", assetsPrefix)
+        return
+      }
+      w.__adtRunAutoFit()
+    }
+    requestAnimationFrame(runFit)
+    if (doc.fonts?.ready) {
+      doc.fonts.ready.then(() => requestAnimationFrame(runFit))
+    }
 
     // Measure after fonts + images settle
     requestAnimationFrame(() => {
@@ -420,6 +539,28 @@ ${INTERACTIVE_SCRIPT}
     if (doc.documentElement) doc.documentElement.style.overflow = value
     if (doc.body) doc.body.style.overflow = value
   }, [deviceView, iframeReady])
+
+  // Fixed-layout pages overlay positioned text on top of full-page images
+  // via DOM order. The editable-mode `img[data-id] { z-index: 1 }` rule (used
+  // for image-selection outlines in reflowable books) would lift those images
+  // above the text and bury it — neutralise the z-index for fixed-layout pages.
+  useEffect(() => {
+    const doc = iframeRef.current?.contentDocument
+    if (!doc?.head) return
+    const styleId = "adt-fixed-layout-styles"
+    let styleEl = doc.getElementById(styleId) as HTMLStyleElement | null
+    if (!fixedLayoutSize) {
+      styleEl?.remove()
+      return
+    }
+    if (!styleEl) {
+      styleEl = doc.createElement("style")
+      styleEl.id = styleId
+      doc.head.appendChild(styleEl)
+    }
+    // eslint-disable-next-line lingui/no-unlocalized-strings
+    styleEl.textContent = `body[data-editable="true"] img[data-id] { z-index: auto; }`
+  }, [fixedLayoutSize, iframeReady])
 
   // Inject/update pruned element styles into the iframe
   useEffect(() => {
@@ -494,10 +635,8 @@ ${selectors}:hover {
   const targetVisibleWidth = getTargetVisibleWidth(deviceView)
   const baseWidth = frame.chromeWidth
 
-  // Compute the scale factor. The chrome (when present) is rendered at its
-  // full logical size; we then `transform: scale()` the entire wrapper so it
-  // fits the canvas. Desktop is capped at 1×; mobile/tablet grow up to a
-  // target visible width for legibility.
+  // Track the wrapper width; the scale effect below recomputes scale from it,
+  // branching on mode (fixed-layout page vs reflowable / device-frame).
   useEffect(() => {
     const wrapper = wrapperRef.current
     if (!wrapper) return
@@ -505,17 +644,31 @@ ${selectors}:hover {
     const ro = new ResizeObserver((entries) => {
       const entry = entries[0]
       if (!entry) return
-      const availableWidth = entry.contentRect.width
-      const fitScale = Math.max(0, availableWidth / baseWidth)
-      const cap =
-        deviceView === "desktop" || deviceView === undefined
-          ? 1
-          : targetVisibleWidth / baseWidth
-      setScale(Math.min(cap, fitScale))
+      setAvailableWidth(entry.contentRect.width)
     })
     ro.observe(wrapper)
     return () => ro.disconnect()
-  }, [baseWidth, targetVisibleWidth, deviceView])
+  }, [])
+
+  // Fixed-layout: scale off the book-wide reference (spread) width so every
+  // page shares one scale — a full spread fills the panel, a single cover/end
+  // page renders centered at its natural fraction (e.g. half) of the panel
+  // rather than being upscaled to fill it. Small books (reference width below
+  // the panel) still upscale up to FL_MAX_SCALE so they don't render boxed.
+  // Reflowable: fit to the device-frame base width, desktop capped at 1× and
+  // mobile/tablet grown up to a target visible width for legibility.
+  useEffect(() => {
+    if (fixedLayoutSize) {
+      setScale(Math.min(FL_MAX_SCALE, availableWidth / fixedLayoutSize.referenceWidth))
+      return
+    }
+    const fitScale = Math.max(0, availableWidth / baseWidth)
+    const cap =
+      deviceView === "desktop" || deviceView === undefined
+        ? 1
+        : targetVisibleWidth / baseWidth
+    setScale(Math.min(cap, fitScale))
+  }, [availableWidth, fixedLayoutSize, baseWidth, targetVisibleWidth, deviceView])
 
   // Ref callback so the iframe re-initializes whenever the conditional
   // device-frame branch swaps it out (toggling Desktop ↔ Mobile ↔ Tablet
@@ -555,20 +708,25 @@ ${selectors}:hover {
     }
   }, [])
 
-  const visibleWidth = Math.round(renderWidth * scale)
+  const visibleWidth = Math.round((fixedLayoutSize?.width ?? renderWidth) * scale)
   useEffect(() => {
     onVisibleWidthChange?.(visibleWidth)
   }, [visibleWidth, onVisibleWidthChange])
 
-  // Mobile/tablet keep their fixed device-screen height (the chrome is meant
-  // to look like a real phone/tablet). Desktop has no chrome — making the
-  // iframe content-tall avoids the dead space `min-h-screen flex items-center`
-  // produces when a section is shorter than the canvas.
+  // Fixed-layout pages carry explicit pixel dimensions and ignore device
+  // chrome. Reflowable: mobile/tablet keep their fixed device-screen height
+  // (the chrome is meant to look like a real phone/tablet); desktop has no
+  // chrome — making the iframe content-tall avoids the dead space
+  // `min-h-screen flex items-center` produces when a section is shorter than
+  // the canvas.
   const isDesktop = !deviceView || deviceView === "desktop"
-  const iframeHeight = isDesktop ? contentHeight : frame.screenHeight
-  const visibleHeight = isDesktop
-    ? contentHeight * scale
-    : frame.chromeHeight * scale
+  const iframeWidth = fixedLayoutSize?.width ?? frame.screenWidth
+  const iframeHeight = fixedLayoutSize?.height ?? (isDesktop ? contentHeight : frame.screenHeight)
+  const visibleHeight = fixedLayoutSize
+    ? fixedLayoutSize.height * scale
+    : isDesktop
+      ? contentHeight * scale
+      : frame.chromeHeight * scale
 
   const iframeNode = (
     <iframe
@@ -576,7 +734,7 @@ ${selectors}:hover {
       srcDoc={srcdoc}
       className="block"
       style={{
-        width: frame.screenWidth,
+        width: iframeWidth,
         height: iframeHeight,
         border: "none",
       }}
@@ -609,7 +767,7 @@ ${selectors}:hover {
         ) : (
           <div
             style={{
-              width: frame.screenWidth,
+              width: iframeWidth,
               height: iframeHeight,
               overflow: "hidden",
             }}

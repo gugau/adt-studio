@@ -18,7 +18,8 @@ import { msg } from "@lingui/core/macro"
 import { i18n as linguiI18n } from "@lingui/core"
 import type { MessageDescriptor } from "@lingui/core"
 import { LandingPageShell } from "@/components/pipeline/components/LandingPageShell"
-import { PrereqGuard } from "@/components/pipeline/components/PrereqGuard"
+import { CascadeWarning } from "@/components/pipeline/components/CascadeWarning"
+import { LandingPageWarning } from "@/components/pipeline/components/LandingPageWarning"
 import { SettingExplainer } from "@/components/pipeline/components/SettingExplainer"
 import { SettingsCard, SettingsField } from "@/components/pipeline/components/SettingsCard"
 import { SegmentedControl } from "@/components/ui/segmented-control"
@@ -35,7 +36,7 @@ import { useStageStatus } from "@/hooks/use-stage-status"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import {
-  listSelectableRenderStrategies,
+  listDefaultRenderStrategies,
   normalizeDefaultRenderStrategy,
 } from "@/lib/render-strategy"
 import { RenderStrategyVisual } from "./components/RenderStrategyVisual"
@@ -70,8 +71,7 @@ const LANDING_STRATEGY_ITEMS: LandingStrategyEntry[] = [
   },
   {
     id: "fixed_layout",
-    description: msg`Strict grid template that repeats across pages.`,
-    comingSoon: true,
+    description: msg`Preserves the source PDF's exact page layout — images and positioned text rendered in place.`,
   },
   {
     id: "two_column_story",
@@ -142,7 +142,15 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
   const { queueRun } = useBookRun()
   const status = useStageStatus("storyboard")
   const sectioningStatus = useStageStatus("sectioning")
+  const extractStatus = useStageStatus("extract")
   const sectioningReady = sectioningStatus.isCompleted
+  // "Covered" = already done, running, or queued — it will produce its output
+  // without us starting it, so we can queue Storyboard behind it instead of
+  // pulling it into the run.
+  const extractCovered = extractStatus.isCompleted || extractStatus.isRunning
+  const sectioningCovered =
+    sectioningStatus.isCompleted || sectioningStatus.isRunning
+  const upstreamCovered = extractCovered && sectioningCovered
 
   const [defaultRenderStrategy, setDefaultRenderStrategy] = useState("")
   const [renderStrategyItems, setRenderStrategyItems] = useState<LandingStrategyEntry[]>([])
@@ -186,7 +194,7 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
       strategies,
     )
     setDefaultRenderStrategy(normalized)
-    const selectable = new Set(listSelectableRenderStrategies(strategies))
+    const selectable = new Set(listDefaultRenderStrategies(strategies))
     setRenderStrategyItems(
       LANDING_STRATEGY_ITEMS.filter(
         (item) => item.comingSoon || selectable.has(item.id),
@@ -223,8 +231,16 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
   }
 
   const handleRun = () => {
-    if (!hasApiKey || !sectioningReady || status.isRunning) return
-    queueRun({ fromStage: "storyboard", toStage: "storyboard", apiKey })
+    if (!hasApiKey || status.isRunning) return
+    // Cue from here even if upstream stages haven't run. Queue from the first
+    // upstream stage that isn't already covered (done/running/queued) so we
+    // never try to re-run a stage that's mid-flight.
+    const fromStage = !extractCovered
+      ? "extract"
+      : !sectioningCovered
+        ? "sectioning"
+        : "storyboard"
+    queueRun({ fromStage, toStage: "storyboard", apiKey })
   }
 
   const isAi = AI_STRATEGIES.has(defaultRenderStrategy)
@@ -244,8 +260,6 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
 
   const disabledReason = !hasApiKey ? (
     <Trans>Add an API key in Book settings to run storyboard.</Trans>
-  ) : !sectioningReady ? (
-    <Trans>Run Sectioning first — storyboard needs typed sections to render.</Trans>
   ) : undefined
 
   return (
@@ -260,7 +274,7 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
       isCompleted={status.isCompleted}
       hasError={status.hasError}
       canRun={true}
-      extraDisabled={!hasApiKey || !sectioningReady}
+      extraDisabled={!hasApiKey}
       disabledReason={disabledReason}
       runLabel={<Trans>Run Storyboard</Trans>}
       rerunLabel={<Trans>Re-run</Trans>}
@@ -281,16 +295,20 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
         </p>
       </div>
 
-      <PrereqGuard
-        upstreamSlug="sectioning"
-        stageSlug="storyboard"
-        description={
-          <Trans>
-            Storyboard renders the typed sections produced by Sectioning.
-            Finish Sectioning before running this stage.
-          </Trans>
-        }
-      />
+      {sectioningReady ? (
+        <CascadeWarning stageSlug="storyboard" />
+      ) : !upstreamCovered ? (
+        <LandingPageWarning
+          variant="prereq"
+          title={<Trans>Earlier stages haven't run yet</Trans>}
+          description={
+            <Trans>
+              Running Storyboard will run the earlier core stages it depends on
+              first, then render the typed sections.
+            </Trans>
+          }
+        />
+      ) : null}
 
       <SettingsCard>
         <SettingsField

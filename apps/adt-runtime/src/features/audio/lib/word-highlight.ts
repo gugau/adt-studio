@@ -23,19 +23,89 @@ import {
   createApproximateWordTimestamps,
   type WordTimestamp,
 } from "@/features/audio/lib/tokenizer"
+import { parseSegments, styleToInline, type Segment } from "@/shared/lib/fl-segments"
 
 const ORIGINAL_HTML_ATTR = "data-tts-original-html"
 const WORD_HIGHLIGHT_CLASS = "bg-yellow-300"
 const BLOCK_HIGHLIGHT_CLASS = "tts-active-block"
 
 /**
+ * Fixed-layout word wrap: tokenise across the concatenated `data-segments`
+ * text, then for each word emit a `<span data-word-index="N">` containing
+ * the per-segment styled `<span style="…">` slices that overlap the word's
+ * character range. Preserves the styled-run structure (coloured letters,
+ * mixed fonts, contrast strokes) the renderer baked in.
+ */
+function wrapWordsFromSegments(element: HTMLElement, segments: Segment[]): boolean {
+  const plan = buildWordRenderPlan(segments.map((s) => s.text).join(""))
+  if (!plan.some((s) => s.type === "word")) return false
+
+  const doc = element.ownerDocument
+  const segOffsets: number[] = []
+  let cursor = 0
+  for (const s of segments) {
+    segOffsets.push(cursor)
+    cursor += s.text.length
+  }
+
+  const buildPieces = (start: number, end: number): HTMLSpanElement[] => {
+    const out: HTMLSpanElement[] = []
+    for (let i = 0; i < segments.length; i++) {
+      const segStart = segOffsets[i]
+      const segEnd = segStart + segments[i].text.length
+      if (segEnd <= start) continue
+      if (segStart >= end) break
+      const slice = segments[i].text.slice(
+        Math.max(start, segStart) - segStart,
+        Math.min(end, segEnd) - segStart,
+      )
+      if (!slice.length) continue
+      const span = doc.createElement("span")
+      const styleStr = styleToInline(segments[i].style)
+      if (styleStr) span.setAttribute("style", styleStr)
+      span.appendChild(doc.createTextNode(slice))
+      out.push(span)
+    }
+    return out
+  }
+
+  const fragment = doc.createDocumentFragment()
+  let charCursor = 0
+  for (const seg of plan) {
+    if (seg.type === "separator") {
+      if (seg.text.length > 0) fragment.appendChild(doc.createTextNode(seg.text))
+      charCursor += seg.text.length
+      continue
+    }
+    const start = charCursor
+    const end = start + seg.text.length
+    const wrap = doc.createElement("span")
+    wrap.setAttribute("data-word-index", String(seg.wordIndex))
+    for (const piece of buildPieces(start, end)) wrap.appendChild(piece)
+    fragment.appendChild(wrap)
+    charCursor = end
+  }
+  element.replaceChildren(fragment)
+  return true
+}
+
+/**
  * Wrap each whitespace-separated word inside `element` with a span carrying
  * `data-word-index="N"`. Idempotent — calling twice on the same element
- * is a no-op.
+ * is a no-op. When the element carries `data-segments` (fixed-layout
+ * paragraphs with per-run styling), the styled-span structure is preserved
+ * inside each word wrap.
  */
 export function wrapWordsForElement(element: HTMLElement, text: string): void {
   if (element.hasAttribute(ORIGINAL_HTML_ATTR)) return
   element.setAttribute(ORIGINAL_HTML_ATTR, element.innerHTML)
+
+  const segments = parseSegments(element.getAttribute("data-segments"))
+  if (segments && segments.length > 0) {
+    if (wrapWordsFromSegments(element, segments)) return
+    element.removeAttribute(ORIGINAL_HTML_ATTR)
+    return
+  }
 
   const plan = buildWordRenderPlan(text)
   // No matchable words (pure punctuation, empty string) — leave the element

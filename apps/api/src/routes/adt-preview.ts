@@ -33,6 +33,8 @@ import {
   buildPreferredImageAltMap,
   rewriteImageUrls,
   convertLatexToMathml,
+  isFixedLayoutBook,
+  resolveReflowableFontChain,
 } from "@adt/pipeline"
 
 // ---------------------------------------------------------------------------
@@ -401,6 +403,7 @@ function buildPreviewConfig(
   webAssetsDir: string,
   speechConfig?: SpeechConfig,
   configuredOutputLanguages?: string[],
+  fixedLayout?: boolean,
 ) {
   const glossary = getGlossary(storage)
   const hasGlossary = glossary !== undefined && glossary.items.length > 0
@@ -485,6 +488,7 @@ function buildPreviewConfig(
       trackerUrl: "",
       srcUrl: "",
     },
+    ...(fixedLayout ? { fixedLayout: true } : {}),
   }
 }
 
@@ -545,6 +549,7 @@ export function createAdtPreviewRoutes(
         webAssetsDir,
         bookConfig.speech,
         bookConfig.output_languages,
+        isFixedLayoutBook(bookConfig),
       )
     })
     c.header("Content-Type", "application/json")
@@ -861,6 +866,12 @@ export function createAdtPreviewRoutes(
     return await withStorage(label, async (storage) => {
       const title = getBookTitle(storage)
       const language = getBookLanguage(storage)
+      // Reflowable base font (serif/sans default or override) — matches the
+      // packaged output so the preview shows the same typography.
+      const bodyFontFamily = resolveReflowableFontChain(storage, {
+        fixedLayout: isFixedLayoutBook(config),
+        reflowableFont: config.reflowable_font,
+      })
 
       // Check if this is a quiz page (qzNNN)
       const quizMatch = pageId.match(/^qz(\d{3})$/)
@@ -891,6 +902,7 @@ export function createAdtPreviewRoutes(
         skipContentWrapper: true,
         applyBodyBackground,
         embed,
+        bodyFontFamily,
       })
 
         c.header("Content-Type", "text/html; charset=utf-8")
@@ -960,6 +972,7 @@ export function createAdtPreviewRoutes(
         bundleVersion: previewBundleVersion,
         applyBodyBackground,
         embed,
+        bodyFontFamily,
       })
 
       c.header("Content-Type", "text/html; charset=utf-8")

@@ -56,6 +56,7 @@ import {
   type ProviderRouting,
 } from "./speech.js"
 import { packageAdtWeb } from "./package-web.js"
+import { processFixedLayoutPages, isFixedLayoutBook } from "./fixed-layout-rendering.js"
 import { runAccessibilityAssessment } from "./accessibility-assessment.js"
 import { loadBookConfig } from "./config.js"
 import { nullProgress, type Progress } from "./progress.js"
@@ -197,6 +198,10 @@ export async function runFullPipeline(
           startPage: startPage ?? config.start_page,
           endPage: endPage ?? config.end_page,
           spreadMode: config.spread_mode,
+          vectorTextGrouping: config.vector_text_grouping,
+          // Gates the positioned-text pipeline (fixed-layout rendering is its
+          // only consumer). Must match stage-runner so re-runs are consistent.
+          fixedLayout: isFixedLayoutBook(config),
         },
         storage,
         progressOnly(p),
@@ -441,7 +446,18 @@ export async function runFullPipeline(
 
     // ── Sectioning stage ─────────────────────────────────────────
 
+    const isFixedLayout = isFixedLayoutBook(config)
+
     executors.set("page-sectioning", async (p) => {
+      if (isFixedLayout) {
+        // Fixed-layout: both sectioning and rendering happen here, driven
+        // off the positioned-text + image-filtering data the extract step
+        // already wrote. No LLM call.
+        const imageUrlPrefix = `/api/books/${label}/images`
+        processFixedLayoutPages(storage, imageUrlPrefix)
+        p.emit({ type: "step-progress", step: "page-sectioning", message: "fixed-layout pages" })
+        return
+      }
       const model = getModel(pageSectioningConfig.modelId)
       const pages = storage.getPages()
       const totalPages = pages.length
@@ -509,6 +525,9 @@ export async function runFullPipeline(
     })
 
     executors.set("web-rendering", async (p) => {
+      // Fixed-layout rendering is already done in page-sectioning step
+      if (isFixedLayout) return
+
       const renderModels = new Map<string, LLMModel>()
       const resolveRenderModel = (modelId: string): LLMModel => {
         let model = renderModels.get(modelId)
@@ -864,6 +883,8 @@ export async function runFullPipeline(
         webAssetsDir: options.webAssetsDir,
         applyBodyBackground: config.apply_body_background,
         speechConfig: config.speech,
+        fixedLayout: isFixedLayoutBook(config),
+        reflowableFont: config.reflowable_font,
       }, progressOnly(p))
     })
 

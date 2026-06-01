@@ -9,6 +9,9 @@ export interface ComputedTypographyStyles {
   fontWeight: string | null
   lineHeight: number | null
   textAlign: string | null
+  /** Primary declared family (first token, unquoted) of the element's text,
+   *  e.g. "Mouse Memoirs". Null when no family is resolvable. */
+  fontFamily: string | null
 }
 
 export function parsePx(value: string): number | null {

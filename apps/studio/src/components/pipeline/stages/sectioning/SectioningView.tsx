@@ -1,10 +1,12 @@
 import { useEffect, useCallback, useState } from "react"
-import { ArrowLeft, ArrowRight, LayoutGrid, Loader2, Table2 } from "lucide-react"
+import { ArrowLeft, ArrowRight, LayoutGrid, Table2 } from "lucide-react"
 import { usePages, usePage } from "@/hooks/use-pages"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
+import { LoadingState } from "../../components/LoadingState"
+import { StageEmptyState } from "../../components/StageEmptyState"
 import { SectioningPageDetail } from "./SectioningPageDetail"
 import { SectioningOverview } from "../storyboard/components/SectioningOverview"
 import { Trans } from "@lingui/react/macro"
@@ -184,12 +186,7 @@ export function SectioningView({ bookLabel, selectedPageId: selectedPageIdProp, 
   }
 
   if (pagesLoading) {
-    return (
-      <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <Trans>Loading pages...</Trans>
-      </div>
-    )
+    return <LoadingState stageSlug="sectioning" label={<Trans>Loading pages...</Trans>} />
   }
 
   if (pageList.length === 0) {
@@ -216,22 +213,12 @@ export function SectioningView({ bookLabel, selectedPageId: selectedPageIdProp, 
   }
 
   if (pageLoading || !page) {
-    return (
-      <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <Trans>Loading page...</Trans>
-      </div>
-    )
+    return <LoadingState stageSlug="sectioning" label={<Trans>Loading page...</Trans>} />
   }
 
   if (!page.sectioningTree) {
     if (sectioningRunning) {
-      return (
-        <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <Trans>Waiting for page to be processed...</Trans>
-        </div>
-      )
+      return <LoadingState stageSlug="sectioning" label={<Trans>Waiting for page to be processed...</Trans>} />
     }
     return (
       <div className="p-4">
@@ -248,13 +235,12 @@ export function SectioningView({ bookLabel, selectedPageId: selectedPageIdProp, 
 
   if (page.sectioningTree.sections.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-        <div className="w-12 h-12 rounded-full bg-sky-50 flex items-center justify-center mb-3">
-          <LayoutGrid className="w-6 h-6 text-sky-300" />
-        </div>
-        <p className="text-sm font-medium"><Trans>No sections for this page</Trans></p>
-        <p className="text-xs mt-1"><Trans>This page has no sectioning output</Trans></p>
-      </div>
+      <StageEmptyState
+        icon={LayoutGrid}
+        color="sky"
+        title={<Trans>No sections for this page</Trans>}
+        subtitle={<Trans>This page has no sectioning output</Trans>}
+      />
     )
   }
 

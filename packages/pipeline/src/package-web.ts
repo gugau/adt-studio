@@ -32,6 +32,9 @@ import type {
   ImageCaptioningOutput,
 } from "@adt/types"
 import { WebRenderingOutput as WebRenderingOutputSchema } from "@adt/types"
+import { googleFontsReferencedIn, googleFontsCss2Url } from "@adt/types"
+import { reflowableFontChain } from "@adt/types"
+import { bundleGoogleFontsIntoCss } from "./google-fonts-bundle.js"
 import type { Progress } from "./progress.js"
 import { nullProgress } from "./progress.js"
 import { getGlossaryItemTextId } from "./glossary.js"
@@ -66,6 +69,10 @@ export interface PackageAdtWebOptions {
     reduceMotion?: boolean
   }
   lockedSettings?: ("dockLayout" | "theme" | "iconSize" | "reduceMotion")[]
+  fixedLayout?: boolean
+  /** `reflowable_font` config value (font id or "auto"). Selects the reflowable
+   *  base font; ignored for fixed-layout books. */
+  reflowableFont?: string
 }
 
 interface PageEntry {
@@ -99,7 +106,7 @@ function collectDirectoryFingerprint(dirPath: string, prefix = ""): Array<[strin
   return entries
 }
 
-function getWordTimestamps(
+export function getWordTimestamps(
   storage: Storage,
   language: string,
 ): WordTimestampOutput | undefined {
@@ -212,9 +219,14 @@ export async function packageAdtWeb(
     features,
     defaultSettings,
     lockedSettings,
+    fixedLayout,
+    reflowableFont,
   } = options
   const language = normalizeLocale(rawLanguage)
   const outputLanguages = Array.from(new Set(rawOutputLanguages.map((code) => normalizeLocale(code))))
+  // Reflowable base font (serif/sans default from the detected profile, or an
+  // explicit override). undefined for fixed-layout / Merriweather-default.
+  const bodyFontFamily = resolveReflowableFontChain(storage, { fixedLayout, reflowableFont })
 
   const step = "package-web" as const
   progress.emit({ type: "step-start", step })
@@ -340,6 +352,17 @@ export async function packageAdtWeb(
 
           const headingText = sectionMeta ? findHeadingText(sectionMeta) : null
 
+          // For fixed-layout pages, extract viewport from the rendered content div.
+          // Viewport matches content dimensions (2x render scale) exactly — no
+          // transform needed, Apple Books scales the viewport to fit the screen.
+          let fixedViewport: { width: number; height: number } | undefined
+          if (fixedLayout) {
+            const vp = rewrittenHtml.match(/width:(\d+)px;height:(\d+)px/)
+            if (vp) {
+              fixedViewport = { width: parseInt(vp[1], 10), height: parseInt(vp[2], 10) }
+            }
+          }
+
           const pageHtml = renderPageHtml({
             content: rewrittenHtml,
             language,
@@ -351,6 +374,8 @@ export async function packageAdtWeb(
             hasMath: sectionHasMath,
             bundleVersion,
             applyBodyBackground,
+            fixedViewport,
+            bodyFontFamily,
           })
           fs.writeFileSync(path.join(adtDir, filename), pageHtml)
 
@@ -400,6 +425,7 @@ export async function packageAdtWeb(
         bundleVersion,
         skipContentWrapper: true,
         applyBodyBackground,
+        bodyFontFamily,
       })
       fs.writeFileSync(path.join(adtDir, quizFilename), quizPageHtml)
 
@@ -640,6 +666,9 @@ export async function packageAdtWeb(
   if (lockedSettings && lockedSettings.length > 0) {
     configJson.lockedSettings = lockedSettings
   }
+  if (fixedLayout) {
+    configJson.fixedLayout = true
+  }
 
   // ------------------------------------------------------------------
   // Copy web assets
@@ -686,6 +715,17 @@ export async function packageAdtWeb(
 
   const activityIds = collectActivityIds(adtDir, pageList)
   generateScormAdapter(assetsDir, activityIds)
+
+  // Bundle any Google Fonts the book uses (fetch the woff2, inline as base64
+  // @font-face) so they render under file:// / offline; the online <link> in
+  // each page stays as the fallback when the fetch fails. Runs before
+  // inlineFontsInCss, which only rewrites local ./fonts/ urls and leaves these
+  // data: URIs alone.
+  progress.emit({ type: "step-progress", step, message: "Bundling fonts..." })
+  const bundledFonts = await bundleGoogleFontsIntoCss(adtDir)
+  if (bundledFonts.length > 0) {
+    progress.emit({ type: "step-progress", step, message: `Bundled fonts: ${bundledFonts.join(", ")}` })
+  }
 
   // Inline fonts as base64 in fonts.css so `@font-face` works under file://
   // (browsers treat each file:// path as a unique origin and block cross-origin
@@ -773,7 +813,7 @@ export function packageWebpub(
 
   // Inject CSS into HTML pages to prevent readers (e.g. Thorium) from applying
   // column-based pagination which breaks the single-page ADT layout.
-  injectWebpubStyles(webpubDir)
+  injectWebpubStyles(webpubDir, { fixedLayout: options.fixedLayout })
 
   // Load metadata for manifest
   const metadataRow = storage.getLatestNodeData("metadata", "book")
@@ -837,8 +877,8 @@ export function packageWebpub(
   writeJson(path.join(webpubDir, "manifest.json"), manifest)
 }
 
-const WEBPUB_OVERRIDE_CSS = `<style>
-/* ── WebPub / EPUB reader overrides ──
+const REFLOWABLE_OVERRIDE_CSS = `<style>
+/* ── WebPub / EPUB reader overrides (reflowable) ──
    EPUB readers like Thorium inject their own column-based pagination.
    The ADT pages use Tailwind flex centering and responsive breakpoints
    that don't work well in reflowable EPUB viewports. Override everything
@@ -892,18 +932,73 @@ img {
 }
 </style>`
 
+const FIXED_LAYOUT_OVERRIDE_CSS = `<style>
+/* ── EPUB reader overrides (fixed-layout) ──
+   Preserve absolute positioning for fixed-layout pages while
+   ensuring content is visible and the viewport is respected. */
+
+/* Prevent reader column pagination */
+:root, html, body {
+  columns: auto !important;
+  column-width: auto !important;
+  column-count: auto !important;
+  column-gap: normal !important;
+}
+
+/* Body: fill viewport, no flex centering */
+body {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: auto !important;
+  overflow: hidden !important;
+}
+
+/* Override Tailwind Preflight img reset that breaks positioned images */
+#content img {
+  max-width: none !important;
+}
+
+/* Content wrapper: preserve position:relative and explicit dimensions */
+#content {
+  opacity: 1 !important;
+  margin: 0 !important;
+}
+
+/* Positioned text must stay absolute */
+.text-overlay {
+  position: absolute !important;
+}
+.text-overlay p {
+  position: absolute !important;
+}
+
+/* SMIL media-overlay active class — declared in the OPF as
+   media:active-class. EPUB readers toggle this on the active text
+   element during read-aloud playback. */
+.-epub-media-overlay-active {
+  background: rgba(255, 235, 59, 0.4);
+  border-radius: 0.15em;
+}
+</style>`
+
+export interface InjectWebpubStylesOptions {
+  fixedLayout?: boolean
+}
+
 /**
  * Walk all .html files in `dir` and inject a `<style>` block right before
  * `</head>` that overrides reader-injected column pagination CSS.
  */
-function injectWebpubStyles(dir: string): void {
+export function injectWebpubStyles(dir: string, options?: InjectWebpubStylesOptions): void {
+  const css = options?.fixedLayout ? FIXED_LAYOUT_OVERRIDE_CSS : REFLOWABLE_OVERRIDE_CSS
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const fullPath = path.join(dir, entry.name)
     if (entry.isDirectory()) {
-      injectWebpubStyles(fullPath)
+      injectWebpubStyles(fullPath, options)
     } else if (entry.isFile() && entry.name.endsWith(".html")) {
       let html = fs.readFileSync(fullPath, "utf-8")
-      html = html.replace("</head>", `${WEBPUB_OVERRIDE_CSS}\n</head>`)
+      html = html.replace("</head>", `${css}\n</head>`)
       fs.writeFileSync(fullPath, html)
     }
   }
@@ -952,6 +1047,14 @@ export interface RenderPageOptions {
   /** When true, renders a minimal page without navigation/sidebar chrome.
    *  Content is visible immediately (no opacity-0). Used for storyboard preview. */
   embed?: boolean
+  /** Fixed viewport dimensions for fixed-layout pages (e.g., pre-paginated EPUB).
+   *  When set, overrides the responsive viewport meta with a fixed size. */
+  fixedViewport?: { width: number; height: number }
+  /** CSS font-family chain for the reflowable base font (e.g.
+   *  `'Atkinson Hyperlegible','Merriweather',sans-serif`). When set, overrides
+   *  the global Merriweather rule from fonts.css and the family is loaded via
+   *  Google Fonts. Omit (fixed-layout / serif default) to keep Merriweather. */
+  bodyFontFamily?: string
 }
 
 /**
@@ -978,6 +1081,23 @@ export function promoteFirstHeadingToH1(html: string): string {
   return html.replace(/<h([2-6])(\b[^>]*)>([\s\S]*?)<\/h\1>/i, '<h1$2>$3</h1>')
 }
 
+/**
+ * Resolve the reflowable base-font CSS chain for a book, or undefined when no
+ * override is needed (fixed-layout books keep original fonts; the serif default
+ * Merriweather is already the global font). Reads the book-level `font-profile`
+ * node (detected serif/sans category) and the explicit `reflowableFont` setting.
+ */
+export function resolveReflowableFontChain(
+  storage: Storage,
+  opts: { fixedLayout?: boolean; reflowableFont?: string },
+): string | undefined {
+  const row = storage.getLatestNodeData("font-profile", "book")
+  // The font profile only records the auto-detected categories (serif/sans).
+  const category = (row?.data as { category?: "serif" | "sans" | null } | undefined)?.category ?? null
+  // Single source of truth — same resolution packaging, preview, and pages use.
+  return reflowableFontChain(category, opts) ?? undefined
+}
+
 export function renderPageHtml(opts: RenderPageOptions): string {
   // LaTeX is converted to static MathML at build time by Temml,
   // so no client-side math library is needed.
@@ -1000,11 +1120,13 @@ export function renderPageHtml(opts: RenderPageOptions): string {
   // a duplicate #content element.
   // Inject opacity-0 into the existing wrapper for the fade-in animation (skip in embed mode).
   const contentAlreadyWrapped = /^\s*<div\b[^>]*\bid="content"/.test(normalizedContent)
+  const skipOpacity = opts.embed || opts.fixedViewport
+
   const contentBlock = opts.skipContentWrapper
     ? `      ${normalizedContent}`
     : contentAlreadyWrapped
-      ? `      ${!opts.embed ? injectOpacityClass(normalizedContent) : normalizedContent}`
-      : `      <div id="content"${opts.embed ? "" : ` class="opacity-0"`}>
+      ? `      ${!skipOpacity ? injectOpacityClass(normalizedContent) : normalizedContent}`
+      : `      <div id="content"${skipOpacity ? "" : ` class="opacity-0"`}>
         ${normalizedContent}
       </div>`
 
@@ -1014,7 +1136,11 @@ export function renderPageHtml(opts: RenderPageOptions): string {
     : `      <h1 class="sr-only" id="page-heading">${escapeHtml(fallbackPageHeading)}</h1>
 `
 
-  const mainBlock = `    <main class="w-full">
+  const mainBlock = opts.fixedViewport
+    ? `    <main>
+${contentBlock}
+    </main>`
+    : `    <main class="w-full">
 ${fallbackHeadingHtml}${contentBlock}
     </main>`
 
@@ -1027,18 +1153,38 @@ ${fallbackHeadingHtml}${contentBlock}
       : ""
   }
 
-  // In embed mode, hide all interface chrome except the submit/reset buttons
+  // In embed mode, hide non-essential chrome. The React runtime mounts the
+  // activity Submit/Skip buttons inside #nav-container, so it must stay
+  // visible — BottomDock self-hides via embedModeAtom (see ui.atoms.ts).
   const embedStyles = opts.embed
     ? `
     <style>
       /* Hide navigation, sidebar, and other chrome in embed mode */
-      #nav-container, #back-forward-buttons, #nav-popup,
+      #back-forward-buttons, #nav-popup,
       #open-sidebar, #sidebar, #tts-quick-toggle-button, #play-bar,
       #sl-quick-toggle-button, #sign-language-video,
       #explain-me-button, #eli5-content, #notepad-button, #notepad-content { display: none !important; }
-      /* Keep submit/reset container fixed at bottom-right in embed mode */
-      #submit-reset-container { position: fixed !important; bottom: 1rem; right: 1rem; z-index: 50; }
     </style>`
+    : ""
+
+  // Reflowable base-font override: re-declare the same elements fonts.css
+  // targets with the chosen family, placed last in <head> so it wins. Omitted
+  // for fixed-layout / serif-default books (keeps the global Merriweather).
+  const bodyFontStyle = opts.bodyFontFamily
+    ? `\n    <style>\n      body, p, h1, h2, h3, h4, h5, h6, span, div, button, input, textarea, select { font-family: ${opts.bodyFontFamily}; }\n    </style>`
+    : ""
+
+  // Load any Google Fonts the page actually uses — fixed-layout pages declare
+  // the Google family on their text runs, and the reflowable base-font style
+  // (above) declares the body family. The bundled Merriweather remains the
+  // fallback for everything else.
+  const googleFamilies = googleFontsReferencedIn(normalizedContent + bodyFontStyle)
+  const googleFontsUrl = googleFontsCss2Url(googleFamilies)
+  const googleFontsLinks = googleFontsUrl
+    ? `
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="${escapeAttr(googleFontsUrl)}" rel="stylesheet">`
     : ""
 
   return `<!DOCTYPE html>
@@ -1046,20 +1192,20 @@ ${fallbackHeadingHtml}${contentBlock}
 
 <head>
     <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <meta name="viewport" content="${opts.fixedViewport ? `width=${opts.fixedViewport.width}, height=${opts.fixedViewport.height}` : "width=device-width, initial-scale=1"}" />
     <title>${escapeHtml(opts.pageTitle)}</title>
     <meta name="title-id" content="${escapeAttr(opts.sectionId)}" />
     <meta name="page-section-id" content="${opts.pageIndex}" />
     <link href="./content/tailwind_output.css" rel="stylesheet">
     <link href="./assets/libs/fontawesome/css/all.min.css" rel="stylesheet">
-    <link href="./assets/fonts.css" rel="stylesheet">
-${mathScript}${embedStyles}</head>
+    <link href="./assets/fonts.css" rel="stylesheet">${googleFontsLinks}
+${mathScript}${embedStyles}${bodyFontStyle}</head>
 
-<body class="min-h-screen flex items-center justify-center"${bodyStyle}>
+<body${opts.fixedViewport ? ` style="margin:0;overflow:hidden;width:${opts.fixedViewport.width}px;height:${opts.fixedViewport.height}px"` : ` class="min-h-screen flex items-center justify-center"${bodyStyle}`}>
 ${mainBlock}
 ${answersScript}
     <div class="relative z-50" id="interface-container"></div>
-    <div class="relative z-50" id="nav-container"${opts.embed ? ' style="display:none"' : ""}></div>
+    <div class="relative z-50" id="nav-container"></div>
 ${opts.embed
       ? `    <script src="./assets/base.bundle.min.js?v=${escapeAttr(opts.bundleVersion)}" type="module"></script>`
       : `    <script src="./assets/offline-preloader.js"></script>
@@ -1366,11 +1512,14 @@ export function rewriteImageUrls(
         delete img.attribs.width
         delete img.attribs.height
         const existingStyle = img.attribs.style ?? ""
-        const sizeStyle = "max-width: 100%; height: auto;"
-        if (!existingStyle.includes("max-width")) {
-          img.attribs.style = existingStyle
-            ? `${existingStyle.trimEnd().replace(/;$/, "")}; ${sizeStyle}`
-            : sizeStyle
+        // Don't add responsive sizing to absolutely-positioned images (fixed-layout)
+        if (!existingStyle.includes("position:absolute")) {
+          const sizeStyle = "max-width: 100%; height: auto;"
+          if (!existingStyle.includes("max-width")) {
+            img.attribs.style = existingStyle
+              ? `${existingStyle.trimEnd().replace(/;$/, "")}; ${sizeStyle}`
+              : sizeStyle
+          }
         }
       }
     }
@@ -1386,11 +1535,14 @@ export function rewriteImageUrls(
       delete img.attribs.width
       delete img.attribs.height
       const existingStyle = img.attribs.style ?? ""
-      const sizeStyle = "max-width: 100%; height: auto;"
-      if (!existingStyle.includes("max-width")) {
-        img.attribs.style = existingStyle
-          ? `${existingStyle.trimEnd().replace(/;$/, "")}; ${sizeStyle}`
-          : sizeStyle
+      // Don't add responsive sizing to absolutely-positioned images (fixed-layout)
+      if (!existingStyle.includes("position:absolute")) {
+        const sizeStyle = "max-width: 100%; height: auto;"
+        if (!existingStyle.includes("max-width")) {
+          img.attribs.style = existingStyle
+            ? `${existingStyle.trimEnd().replace(/;$/, "")}; ${sizeStyle}`
+            : sizeStyle
+        }
       }
     }
 
@@ -2351,7 +2503,7 @@ function escapeInlineScriptJson(s: string): string {
     .replace(/&/g, "\\u0026")
 }
 
-function copyDirRecursive(
+export function copyDirRecursive(
   src: string,
   dest: string,
   skip?: Set<string>,
@@ -2371,7 +2523,7 @@ function copyDirRecursive(
   }
 }
 
-function escapeHtml(s: string): string {
+export function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")

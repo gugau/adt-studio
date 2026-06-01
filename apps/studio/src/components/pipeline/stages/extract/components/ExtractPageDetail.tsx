@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react"
-import { AlertTriangle, Check, Crop, Eye, EyeOff, FileText, Image, ImageOff, Layers, Loader2, ChevronDown, X } from "lucide-react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { AlertTriangle, Check, Crop, Eye, EyeOff, FileText, Image, ImageOff, Layers, Loader2, ChevronDown, Square, Type, X } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { usePage, usePageImage } from "@/hooks/use-pages"
 import { api, BASE_URL } from "@/api/client"
@@ -9,6 +9,7 @@ import { useBookRun } from "@/hooks/use-book-run"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
 import { ImageCropDialog } from "@/components/pipeline/stages/storyboard/components/ImageCropDialog"
+import { resolveReflowableFont } from "@adt/types"
 
 function VersionPicker({
   currentVersion,
@@ -129,7 +130,7 @@ function VersionPicker({
   )
 }
 
-function ImageCard({ imageId, bookLabel, isPruned, reason, onTogglePrune, onRecrop, cacheBust }: { imageId: string; bookLabel: string; isPruned?: boolean; reason?: string; onTogglePrune?: () => void; onRecrop?: () => void; cacheBust?: number }) {
+function ImageCard({ imageId, bookLabel, isPruned, reason, bounds, onTogglePrune, onRecrop, cacheBust }: { imageId: string; bookLabel: string; isPruned?: boolean; reason?: string; bounds?: { x: number; y: number; width: number; height: number }; onTogglePrune?: () => void; onRecrop?: () => void; cacheBust?: number }) {
   const { t } = useLingui()
   const [dimensions, setDimensions] = useState<{ w: number; h: number } | null>(null)
   // eslint-disable-next-line lingui/no-unlocalized-strings
@@ -140,6 +141,14 @@ function ImageCard({ imageId, bookLabel, isPruned, reason, onTogglePrune, onRecr
       className={`relative rounded border overflow-hidden bg-card flex flex-col items-center min-h-[80px] ${isPruned ? "opacity-40" : ""}`}
       title={isPruned && reason ? t`Pruned: ${reason}` : undefined}
     >
+      {bounds && (
+        <div
+          className="absolute top-1 left-1 z-10 flex items-center justify-center w-5 h-5 rounded-full bg-black/30 text-white"
+          title={t`Position ${Math.round(bounds.x)}, ${Math.round(bounds.y)} → ${Math.round(bounds.width)}×${Math.round(bounds.height)} pt`}
+        >
+          <Square className="h-3 w-3" />
+        </div>
+      )}
       <div className="absolute top-1 right-1 z-10 flex items-center gap-1">
         {onRecrop && (
           <button
@@ -268,6 +277,15 @@ export function ExtractPageDetail({
   const imageClassData = pendingImageData ?? page?.imageClassification ?? null
   const imageDirty = pendingImageData != null
 
+  // Lookup for per-image page-placement bounds (when available from extract)
+  const boundsByImageId = useMemo(() => {
+    const map = new Map<string, { x: number; y: number; width: number; height: number }>()
+    for (const meta of page?.imagesMeta ?? []) {
+      if (meta.bounds) map.set(meta.imageId, meta.bounds)
+    }
+    return map
+  }, [page?.imagesMeta])
+
   const toggleImagePrune = (imageId: string) => {
     const base = pendingImageData ?? page?.imageClassification
     if (!base) return
@@ -296,6 +314,15 @@ export function ExtractPageDetail({
   }
 
   if (!page) return null
+
+  // For reflowable books, map the detected serif/sans category (+ any config
+  // override) to the base reading font, to show alongside the detection.
+  const reflowableFont = page.fontProfile?.category
+    ? resolveReflowableFont(
+        (activeConfigData as { reflowable_font?: string } | undefined)?.reflowable_font,
+        page.fontProfile.category,
+      )
+    : null
 
   return (
     <div className="space-y-2 p-4">
@@ -394,6 +421,7 @@ export function ExtractPageDetail({
                     bookLabel={bookLabel}
                     isPruned={img.isPruned}
                     reason={img.reason}
+                    bounds={boundsByImageId.get(img.imageId)}
                     onTogglePrune={() => toggleImagePrune(img.imageId)}
                     onRecrop={!storyboardRunning ? () => handleRecropFromPage(img.imageId) : undefined}
                     cacheBust={cacheBust}
@@ -412,6 +440,59 @@ export function ExtractPageDetail({
           <div className="mb-4 flex items-center gap-2 rounded border border-dashed p-3 text-xs text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
             <Trans>Processing metadata…</Trans>
+          </div>
+        )}
+
+        {/* Fonts — distinct families the extractor found (positioned text). */}
+        {page.fonts && page.fonts.length > 0 && (
+          <div className="mb-4">
+            <h3 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              <Type className="h-3 w-3" />
+              <Trans>Fonts ({String(page.fonts.length)})</Trans>
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {page.fonts.map((f) => (
+                <span
+                  key={f.family}
+                  className="inline-flex items-center gap-1.5 rounded border bg-muted/30 px-2 py-1 text-xs"
+                  title={f.family}
+                >
+                  <span className="font-medium text-foreground">{f.family}</span>
+                  {f.sizes.length > 0 && (
+                    <span className="text-[10px] text-muted-foreground tabular-nums">
+                      {f.sizes.map((s) => `${s}px`).join(", ")}
+                    </span>
+                  )}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Reflowable books carry no positioned text — surface the detected
+            serif/sans category and the base reading font it maps to. */}
+        {(!page.fonts || page.fonts.length === 0) && page.fontProfile?.category && (
+          <div className="mb-4">
+            <h3 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              <Type className="h-3 w-3" />
+              <Trans>Detected Font</Trans>
+            </h3>
+            <div className="flex flex-wrap items-center gap-1.5 text-xs">
+              <span className="inline-flex items-center rounded border bg-muted/30 px-2 py-1 font-medium text-foreground">
+                {page.fontProfile.category === "sans" ? <Trans>Sans-serif</Trans> : <Trans>Serif</Trans>}
+              </span>
+              {reflowableFont && (
+                <>
+                  <span className="text-muted-foreground">&rarr;</span>
+                  <span
+                    className="inline-flex items-center rounded border bg-muted/30 px-2 py-1 font-medium text-foreground"
+                    title={reflowableFont.family}
+                  >
+                    {reflowableFont.family}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         )}
 

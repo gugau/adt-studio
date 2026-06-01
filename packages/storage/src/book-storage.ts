@@ -135,15 +135,30 @@ export function createBookStorage(label: string, booksRoot: string): Storage {
 
     getPageImages(pageId: string): ImageData[] {
       const rows = db.all(
-        "SELECT image_id, width, height, render_method FROM images WHERE page_id = ? ORDER BY image_id",
+        "SELECT image_id, width, height, render_method, bounds_x, bounds_y, bounds_w, bounds_h FROM images WHERE page_id = ? ORDER BY image_id",
         [pageId]
-      ) as Array<{ image_id: string; width: number; height: number; render_method: string | null }>
-      return rows.map((r) => ({
-        imageId: r.image_id,
-        width: r.width,
-        height: r.height,
-        renderMethod: r.render_method as ImageData["renderMethod"],
-      }))
+      ) as Array<{
+        image_id: string
+        width: number
+        height: number
+        render_method: string | null
+        bounds_x: number | null
+        bounds_y: number | null
+        bounds_w: number | null
+        bounds_h: number | null
+      }>
+      return rows.map((r) => {
+        const image: ImageData = {
+          imageId: r.image_id,
+          width: r.width,
+          height: r.height,
+          renderMethod: r.render_method as ImageData["renderMethod"],
+        }
+        if (r.bounds_x !== null && r.bounds_y !== null && r.bounds_w !== null && r.bounds_h !== null) {
+          image.bounds = { x: r.bounds_x, y: r.bounds_y, width: r.bounds_w, height: r.bounds_h }
+        }
+        return image
+      })
     },
 
     putCroppedImage(input: CroppedImageInput): void {
@@ -502,8 +517,8 @@ function writeImage(
 
   db.run(
     `INSERT INTO images
-       (image_id, page_id, path, hash, width, height, source, render_method)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       (image_id, page_id, path, hash, width, height, source, render_method, bounds_x, bounds_y, bounds_w, bounds_h)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT (image_id) DO UPDATE SET
        page_id = excluded.page_id,
        path = excluded.path,
@@ -511,7 +526,11 @@ function writeImage(
        width = excluded.width,
        height = excluded.height,
        source = excluded.source,
-       render_method = excluded.render_method`,
+       render_method = excluded.render_method,
+       bounds_x = excluded.bounds_x,
+       bounds_y = excluded.bounds_y,
+       bounds_w = excluded.bounds_w,
+       bounds_h = excluded.bounds_h`,
     [
       image.imageId,
       pageId,
@@ -521,6 +540,10 @@ function writeImage(
       image.height,
       source,
       image.renderMethod ?? null,
+      image.bounds?.x ?? null,
+      image.bounds?.y ?? null,
+      image.bounds?.width ?? null,
+      image.bounds?.height ?? null,
     ]
   )
 }

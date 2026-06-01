@@ -5,6 +5,8 @@ import { Eye, ArrowLeft, ArrowRight, Zap, Loader2 } from "lucide-react"
 import { useStore } from "@tanstack/react-form"
 import { useNavigate } from "@tanstack/react-router"
 import { Button } from "@/components/ui/button"
+import { api } from "@/api/client"
+import { useApiKey } from "@/hooks/use-api-key"
 import { useBooks, useCreateBook } from "@/hooks/use-books"
 import { useWizard } from "./index"
 import { useWizardForm } from "./wizardForm"
@@ -195,6 +197,7 @@ export function BookCreationWizard() {
   const { phase, currentStep, setCurrentStep, stepDirection, previewFocus } = useWizard()
   const form = useWizardForm()
   const createMutation = useCreateBook()
+  const { apiKey, hasApiKey, anthropicKey, googleKey, customBaseUrl, customApiKey, azureKey, azureRegion, geminiKey } = useApiKey()
   const { data: books, isPending: booksLoading } = useBooks()
   const [previewOpen, setPreviewOpen] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -266,6 +269,28 @@ export function BookCreationWizard() {
         config: buildConfigOverrides(values),
       })
 
+      // Kick off extraction automatically so the user lands on the book home
+      // with the Extract stage already running.
+      if (hasApiKey) {
+        try {
+          await api.runStages(
+            book.label,
+            apiKey,
+            { fromStage: "extract", toStage: "extract" },
+            {
+              anthropicApiKey: anthropicKey || undefined,
+              googleApiKey: googleKey || undefined,
+              customBaseUrl: customBaseUrl || undefined,
+              customApiKey: customApiKey || undefined,
+              azure: { key: azureKey, region: azureRegion },
+              geminiApiKey: geminiKey || undefined,
+            },
+          )
+        } catch (pipelineError) {
+          console.error("[wizard] extract kickoff failed:", pipelineError)
+        }
+      }
+
       navigate({ to: "/books/$label/$step", params: { label: book.label, step: "book" } })
     } catch (error) {
       creatingRef.current = false
@@ -275,11 +300,15 @@ export function BookCreationWizard() {
   }
   const previewWidth = currentStep === 2 ? getPreviewWidth(renderStrategy) : 650
 
+  const isFixedLayout = values.renderStrategy === "fixed_layout"
+
   function renderPreviewContent({mobileMode}: {mobileMode: boolean} = {mobileMode: false}) {
     if (currentStep === 1) return <PdfCoverPreview file={file} width={650} height={812} />
     if (currentStep === 2) return <LayoutPreview strategy={renderStrategy} />
-    if (currentStep === 3)
+    if (currentStep === 3) {
+      if (isFixedLayout) return <PdfCoverPreview file={file} width={650} height={812} />
       return <ImageProcessingPreviewPane focus={previewFocus} mobile={mobileMode} />
+    }
     if (currentStep === 4)
       return <LanguagesPreviewPane editingLanguage={editingLanguage} outputLanguages={outputLanguages} />
     if (currentStep === 5)
