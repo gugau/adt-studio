@@ -17,7 +17,13 @@ const SAMPLE_OPTIONS: SampleOption[] = [
   { text: msg`They release oxygen directly into the air.` },
 ]
 
-export function QuizzesPreview({ pagesPerQuiz }: { pagesPerQuiz: number }) {
+export function QuizzesPreview({
+  pagesPerQuiz,
+  mode = "frequency",
+}: {
+  pagesPerQuiz: number
+  mode?: "frequency" | "specific"
+}) {
   const frequency = Number.isFinite(pagesPerQuiz) && pagesPerQuiz > 0 ? pagesPerQuiz : 3
 
   return (
@@ -36,7 +42,11 @@ export function QuizzesPreview({ pagesPerQuiz }: { pagesPerQuiz: number }) {
               <Trans>Quiz</Trans>
             </h2>
             <span className="ml-auto text-[10px] font-medium text-[#a3a3a3]">
-              <Trans>1 quiz / {frequency} pages</Trans>
+              {mode === "specific" ? (
+                <Trans>Single quiz</Trans>
+              ) : (
+                <Trans>1 quiz / {frequency} pages</Trans>
+              )}
             </span>
           </div>
 

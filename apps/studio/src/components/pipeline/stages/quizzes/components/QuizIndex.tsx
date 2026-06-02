@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { useQuizzes } from "@/hooks/use-quizzes"
 import { usePages } from "@/hooks/use-pages"
 import { useApiKey } from "@/hooks/use-api-key"
+import { useStageStatus } from "@/hooks/use-stage-status"
 import type { QuizItem } from "@/api/client"
 import { formatPageNumbers } from "../lib/format-page-numbers"
 import { AddQuizDialog } from "../AddQuizDialog"
@@ -185,6 +186,7 @@ export function QuizIndex({
   const { data } = useQuizzes(bookLabel)
   const { data: pages } = usePages(bookLabel)
   const { hasApiKey } = useApiKey()
+  const quizzesStatus = useStageStatus("quizzes")
   const [showAdd, setShowAdd] = useState(false)
   const quizzes = data?.quizzes?.quizzes ?? []
 
@@ -205,8 +207,14 @@ export function QuizIndex({
           variant="outline"
           size="sm"
           className="h-7 w-full gap-1.5 text-xs"
-          disabled={!hasApiKey}
-          title={hasApiKey ? undefined : t`Add an API key in Book settings to add a quiz.`}
+          disabled={!hasApiKey || quizzesStatus.isRunning}
+          title={
+            !hasApiKey
+              ? t`Add an API key in Book settings to add a quiz.`
+              : quizzesStatus.isRunning
+                ? t`Quizzes are generating. Wait for the run to finish before adding a quiz.`
+                : undefined
+          }
           onClick={() => setShowAdd(true)}
         >
           <Plus className="h-3.5 w-3.5" />

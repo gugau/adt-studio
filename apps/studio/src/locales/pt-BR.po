@@ -412,11 +412,14 @@ msgstr "Uma nova versão está disponível para download."
 msgid "A question worth asking"
 msgstr "Uma pergunta que vale a pena fazer"
 
-msgid "A quiz already exists at this position. Generating will replace the current quiz here."
-msgstr "Já existe um questionário nesta posição. Gerar irá substituir o questionário atual."
+#~ msgid "A quiz already exists at this position. Generating will replace the current quiz here."
+#~ msgstr "Já existe um questionário nesta posição. Gerar irá substituir o questionário atual."
 
-msgid "A quiz already sits here — generating will replace it"
-msgstr "Já existe um questionário aqui — gerar irá substituí-lo"
+msgid "A quiz already sits here — add another after it or replace it"
+msgstr "Já existe um questionário aqui — adicione outro depois ou substitua-o"
+
+#~ msgid "A quiz already sits here — generating will replace it"
+#~ msgstr "Já existe um questionário aqui — gerar irá substituí-lo"
 
 msgid "A scenic view at dusk."
 msgstr "Uma vista cênica ao entardecer."
@@ -614,6 +617,9 @@ msgstr "Adicione um idioma para ver as traduções aparecerem aqui."
 msgid "Add a quiz"
 msgstr "Adicionar um questionário"
 
+msgid "Add after"
+msgstr "Adicionar depois"
+
 msgid "Add an API key in Book settings to add a quiz."
 msgstr "Adicione uma chave de API nas configurações do livro para adicionar um questionário."
 
@@ -688,6 +694,9 @@ msgstr "Adicione idiomas para traduzir o conteúdo do livro."
 
 msgid "Add quiz"
 msgstr "Adicionar questionário"
+
+msgid "Add quiz here"
+msgstr "Adicionar questionário aqui"
 
 msgid "Add reviewer guidance."
 msgstr "Adicione orientação para o revisor."
@@ -1046,6 +1055,9 @@ msgstr "Rolagem automática"
 msgid "Automatically adapts the layout based on each page's content using AI."
 msgstr "Adapta automaticamente o layout com base no conteúdo de cada página usando IA."
 
+msgid "Automatically create quizzes across the whole book at a set frequency."
+msgstr "Crie questionários automaticamente em todo o livro com uma frequência definida."
+
 msgid "Avg Duration"
 msgstr "Duração média"
 
@@ -1352,6 +1364,9 @@ msgstr "Escolher imagens..."
 msgid "Choose Provider"
 msgstr "Escolher provedor"
 
+msgid "Choose the source pages and where the quiz lands in the page editor."
+msgstr "Escolha as páginas de origem e onde o questionário será inserido no editor de páginas."
+
 #~ msgid "Choose up to {MAX_SOURCE_PAGES} pages whose content the quiz question is based on."
 #~ msgstr "Escolha até {MAX_SOURCE_PAGES} páginas cujo conteúdo servirá de base para a pergunta do questionário."
 
@@ -1627,6 +1642,9 @@ msgstr "Cria legendas descritivas para imagens para melhorar a acessibilidade."
 
 msgid "Create from scratch using your description"
 msgstr "Criar do zero usando sua descrição"
+
+msgid "Create one quiz from specific pages and place it exactly where you want it in the book."
+msgstr "Crie um único questionário a partir de páginas específicas e coloque-o exatamente onde quiser no livro."
 
 msgid "Create session"
 msgstr "Criar sessão"
@@ -2141,6 +2159,9 @@ msgstr "Custo estimado"
 msgid "Evaporation"
 msgstr "Evaporação"
 
+msgid "Every few pages"
+msgstr "A cada poucas páginas"
+
 msgid "Every notable concept and named entity."
 msgstr "Todo conceito notável e entidade nomeada."
 
@@ -2450,8 +2471,11 @@ msgstr "Gerar a partir das páginas"
 msgid "Generate missing Gemini audio"
 msgstr "Gerar áudio faltante do Gemini"
 
-msgid "Generate multiple-choice comprehension quizzes from the book's content. Set how often a quiz appears, then run the stage to create them across the whole book."
-msgstr "Gere questionários de compreensão de múltipla escolha a partir do conteúdo do livro. Defina com que frequência um questionário aparece e execute a etapa para criá-los em todo o livro."
+msgid "Generate multiple-choice comprehension quizzes from the book's content. Create them automatically across the whole book, or add a single quiz from specific pages."
+msgstr "Gere questionários de compreensão de múltipla escolha a partir do conteúdo do livro. Crie-os automaticamente em todo o livro ou adicione um único questionário a partir de páginas específicas."
+
+#~ msgid "Generate multiple-choice comprehension quizzes from the book's content. Set how often a quiz appears, then run the stage to create them across the whole book."
+#~ msgstr "Gere questionários de compreensão de múltipla escolha a partir do conteúdo do livro. Defina com que frequência um questionário aparece e execute a etapa para criá-los em todo o livro."
 
 msgid "Generate new"
 msgstr "Gerar nova"
@@ -2626,6 +2650,9 @@ msgstr "Como funciona"
 
 msgid "How many pages of content go into each quiz. A lower number means more quizzes across the book."
 msgstr "Quantas páginas de conteúdo entram em cada questionário. Um número menor significa mais questionários ao longo do livro."
+
+msgid "How to add quizzes"
+msgstr "Como adicionar questionários"
 
 msgid "HTML"
 msgstr "HTML"
@@ -4254,6 +4281,9 @@ msgstr "Tipos de seção do quiz"
 msgid "Quizzes"
 msgstr "Questionários"
 
+msgid "Quizzes are generating. Wait for the run to finish before adding a quiz."
+msgstr "Os questionários estão sendo gerados. Aguarde o término da execução antes de adicionar um questionário."
+
 msgid "Quizzes are linked to other pages in this book"
 msgstr "Os quizzes estão vinculados a outras páginas deste livro"
 
@@ -4488,6 +4518,9 @@ msgstr "Substituir PDF"
 
 msgid "Replace quiz"
 msgstr "Substituir questionário"
+
+msgid "Replace quizzes"
+msgstr "Substituir questionários"
 
 msgid "Replace this audio file"
 msgstr "Substituir este arquivo de áudio"
@@ -5135,6 +5168,9 @@ msgstr "Modo individual"
 msgid "Single Page"
 msgstr "Página Única"
 
+msgid "Single quiz"
+msgstr "Questionário único"
+
 msgid "Single value"
 msgstr "Valor único"
 
@@ -5216,6 +5252,9 @@ msgstr "Espanhol"
 
 msgid "Specialized workflows"
 msgstr "Fluxos de trabalho especializados"
+
+msgid "Specific pages"
+msgstr "Páginas específicas"
 
 msgid "Speech"
 msgstr "Fala"
@@ -5663,6 +5702,12 @@ msgstr "Esta página ainda não foi revisada"
 
 msgid "This permanently deletes every uploaded video and clears all section assignments. This can't be undone."
 msgstr "Isso exclui permanentemente todos os vídeos enviados e limpa todas as atribuições de seção. Isso não pode ser desfeito."
+
+msgid "This position already has {occupiedCount} quizzes. Add another after them, or replace them."
+msgstr "Esta posição já tem {occupiedCount} questionários. Adicione outro depois deles ou substitua-os."
+
+msgid "This position already has a quiz. Add another right after it, or replace it."
+msgstr "Esta posição já tem um questionário. Adicione outro logo depois ou substitua-o."
 
 msgid "This prompt instructs the LLM how to evaluate the rendered HTML against the original page. Selection above controls which template is used."
 msgstr "Este prompt instrui o LLM sobre como avaliar o HTML renderizado em relação à página original. A seleção acima controla qual modelo é usado."

@@ -412,11 +412,14 @@ msgstr "A new version is available for download."
 msgid "A question worth asking"
 msgstr "A question worth asking"
 
-msgid "A quiz already exists at this position. Generating will replace the current quiz here."
-msgstr "A quiz already exists at this position. Generating will replace the current quiz here."
+#~ msgid "A quiz already exists at this position. Generating will replace the current quiz here."
+#~ msgstr "A quiz already exists at this position. Generating will replace the current quiz here."
 
-msgid "A quiz already sits here — generating will replace it"
-msgstr "A quiz already sits here — generating will replace it"
+msgid "A quiz already sits here — add another after it or replace it"
+msgstr "A quiz already sits here — add another after it or replace it"
+
+#~ msgid "A quiz already sits here — generating will replace it"
+#~ msgstr "A quiz already sits here — generating will replace it"
 
 msgid "A scenic view at dusk."
 msgstr "A scenic view at dusk."
@@ -614,6 +617,9 @@ msgstr "Add a language to see translations appear here."
 msgid "Add a quiz"
 msgstr "Add a quiz"
 
+msgid "Add after"
+msgstr "Add after"
+
 msgid "Add an API key in Book settings to add a quiz."
 msgstr "Add an API key in Book settings to add a quiz."
 
@@ -688,6 +694,9 @@ msgstr "Add languages to translate the book content into."
 
 msgid "Add quiz"
 msgstr "Add quiz"
+
+msgid "Add quiz here"
+msgstr "Add quiz here"
 
 msgid "Add reviewer guidance."
 msgstr "Add reviewer guidance."
@@ -1046,6 +1055,9 @@ msgstr "Auto-scroll"
 msgid "Automatically adapts the layout based on each page's content using AI."
 msgstr "Automatically adapts the layout based on each page's content using AI."
 
+msgid "Automatically create quizzes across the whole book at a set frequency."
+msgstr "Automatically create quizzes across the whole book at a set frequency."
+
 msgid "Avg Duration"
 msgstr "Avg Duration"
 
@@ -1352,6 +1364,9 @@ msgstr "Choose images..."
 msgid "Choose Provider"
 msgstr "Choose Provider"
 
+msgid "Choose the source pages and where the quiz lands in the page editor."
+msgstr "Choose the source pages and where the quiz lands in the page editor."
+
 #~ msgid "Choose up to {MAX_SOURCE_PAGES} pages whose content the quiz question is based on."
 #~ msgstr "Choose up to {MAX_SOURCE_PAGES} pages whose content the quiz question is based on."
 
@@ -1627,6 +1642,9 @@ msgstr "Create descriptive captions for images to improve accessibility."
 
 msgid "Create from scratch using your description"
 msgstr "Create from scratch using your description"
+
+msgid "Create one quiz from specific pages and place it exactly where you want it in the book."
+msgstr "Create one quiz from specific pages and place it exactly where you want it in the book."
 
 msgid "Create session"
 msgstr "Create session"
@@ -2141,6 +2159,9 @@ msgstr "Est. Cost"
 msgid "Evaporation"
 msgstr "Evaporation"
 
+msgid "Every few pages"
+msgstr "Every few pages"
+
 msgid "Every notable concept and named entity."
 msgstr "Every notable concept and named entity."
 
@@ -2450,8 +2471,11 @@ msgstr "Generate from pages"
 msgid "Generate missing Gemini audio"
 msgstr "Generate missing Gemini audio"
 
-msgid "Generate multiple-choice comprehension quizzes from the book's content. Set how often a quiz appears, then run the stage to create them across the whole book."
-msgstr "Generate multiple-choice comprehension quizzes from the book's content. Set how often a quiz appears, then run the stage to create them across the whole book."
+msgid "Generate multiple-choice comprehension quizzes from the book's content. Create them automatically across the whole book, or add a single quiz from specific pages."
+msgstr "Generate multiple-choice comprehension quizzes from the book's content. Create them automatically across the whole book, or add a single quiz from specific pages."
+
+#~ msgid "Generate multiple-choice comprehension quizzes from the book's content. Set how often a quiz appears, then run the stage to create them across the whole book."
+#~ msgstr "Generate multiple-choice comprehension quizzes from the book's content. Set how often a quiz appears, then run the stage to create them across the whole book."
 
 msgid "Generate new"
 msgstr "Generate new"
@@ -2626,6 +2650,9 @@ msgstr "How it works"
 
 msgid "How many pages of content go into each quiz. A lower number means more quizzes across the book."
 msgstr "How many pages of content go into each quiz. A lower number means more quizzes across the book."
+
+msgid "How to add quizzes"
+msgstr "How to add quizzes"
 
 msgid "HTML"
 msgstr "HTML"
@@ -4254,6 +4281,9 @@ msgstr "Quiz Section Types"
 msgid "Quizzes"
 msgstr "Quizzes"
 
+msgid "Quizzes are generating. Wait for the run to finish before adding a quiz."
+msgstr "Quizzes are generating. Wait for the run to finish before adding a quiz."
+
 msgid "Quizzes are linked to other pages in this book"
 msgstr "Quizzes are linked to other pages in this book"
 
@@ -4488,6 +4518,9 @@ msgstr "Replace PDF"
 
 msgid "Replace quiz"
 msgstr "Replace quiz"
+
+msgid "Replace quizzes"
+msgstr "Replace quizzes"
 
 msgid "Replace this audio file"
 msgstr "Replace this audio file"
@@ -5135,6 +5168,9 @@ msgstr "Single Mode"
 msgid "Single Page"
 msgstr "Single Page"
 
+msgid "Single quiz"
+msgstr "Single quiz"
+
 msgid "Single value"
 msgstr "Single value"
 
@@ -5216,6 +5252,9 @@ msgstr "Spanish"
 
 msgid "Specialized workflows"
 msgstr "Specialized workflows"
+
+msgid "Specific pages"
+msgstr "Specific pages"
 
 msgid "Speech"
 msgstr "Speech"
@@ -5663,6 +5702,12 @@ msgstr "This page has not been reviewed yet"
 
 msgid "This permanently deletes every uploaded video and clears all section assignments. This can't be undone."
 msgstr "This permanently deletes every uploaded video and clears all section assignments. This can't be undone."
+
+msgid "This position already has {occupiedCount} quizzes. Add another after them, or replace them."
+msgstr "This position already has {occupiedCount} quizzes. Add another after them, or replace them."
+
+msgid "This position already has a quiz. Add another right after it, or replace it."
+msgstr "This position already has a quiz. Add another right after it, or replace it."
 
 msgid "This prompt instructs the LLM how to evaluate the rendered HTML against the original page. Selection above controls which template is used."
 msgstr "This prompt instructs the LLM how to evaluate the rendered HTML against the original page. Selection above controls which template is used."
