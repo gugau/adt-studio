@@ -10,10 +10,13 @@ import { SectioningLandingPage } from "@/components/pipeline/stages/sectioning/S
 import { StoryboardSettings } from "@/components/pipeline/stages/storyboard/StoryboardSettings"
 import { StoryboardLandingPage } from "@/components/pipeline/stages/storyboard/StoryboardLandingPage"
 import { QuizzesSettings } from "@/components/pipeline/stages/quizzes/QuizzesSettings"
+import { QuizzesLandingPage } from "@/components/pipeline/stages/quizzes/QuizzesLandingPage"
 import { GlossarySettings } from "@/components/pipeline/stages/glossary/GlossarySettings"
 import { GlossaryLandingPage } from "@/components/pipeline/stages/glossary/GlossaryLandingPage"
 import { TocSettings } from "@/components/pipeline/stages/toc/TocSettings"
 import { TocLandingPage } from "@/components/pipeline/stages/toc/TocLandingPage"
+import { EasyReadSettings } from "@/components/pipeline/stages/easy-read/EasyReadSettings"
+import { EasyReadLandingPage } from "@/components/pipeline/stages/easy-read/EasyReadLandingPage"
 import { CaptionsSettings } from "@/components/pipeline/stages/captions/CaptionsSettings"
 import { CaptionsLandingPage } from "@/components/pipeline/stages/captions/CaptionsLandingPage"
 import { LanguageSettings } from "@/components/pipeline/stages/languages/LanguageSettings"
@@ -106,12 +109,16 @@ export function StepSettingsPage() {
                 return <CaptionsLandingPage bookLabel={label} />
               case "glossary":
                 return <GlossaryLandingPage bookLabel={label} />
+              case "quizzes":
+                return <QuizzesLandingPage bookLabel={label} />
               case "translate":
                 return <LanguageLandingPage bookLabel={label} />
               case "speech":
                 return <SpeechLandingPage bookLabel={label} />
               case "toc":
                 return <TocLandingPage bookLabel={label} />
+              case "easy-read":
+                return <EasyReadLandingPage bookLabel={label} />
             }
           }
 
@@ -128,6 +135,8 @@ export function StepSettingsPage() {
               return <GlossarySettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             case "toc":
               return <TocSettings bookLabel={label} headerTarget={headerTarget} />
+            case "easy-read":
+              return <EasyReadSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             case "captions":
               return <CaptionsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             case "translate":

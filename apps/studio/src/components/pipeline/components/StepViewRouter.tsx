@@ -15,10 +15,11 @@ import {
   ExtractIndex,
   SectioningIndex,
   StoryboardIndex,
-  QuizzesView,
+  QuizzesIndex,
   CaptionsIndex,
   GlossaryIndex,
   TocIndex,
+  EasyReadIndex,
   LanguageIndex,
   SpeechIndex,
   SignLanguageLandingPage,
@@ -68,10 +69,11 @@ const VIEW_MAP: Record<string, ViewEntry> = {
   extract: { component: ExtractIndex, fullHeight: true },
   sectioning: { component: SectioningIndex, fullHeight: true },
   storyboard: { component: StoryboardIndex, fullHeight: true },
-  quizzes: { component: QuizzesView },
+  quizzes: { component: QuizzesIndex, fullHeight: true },
   captions: { component: CaptionsIndex, fullHeight: true },
   glossary: { component: GlossaryIndex, fullHeight: true },
   toc: { component: TocIndex, fullHeight: true },
+  "easy-read": { component: EasyReadIndex, fullHeight: true },
   translate: { component: LanguageIndex, fullHeight: true },
   speech: { component: SpeechIndex, fullHeight: true },
   "sign-language": { component: SignLanguageLandingPage, fullHeight: true },
@@ -172,7 +174,7 @@ export function StepViewRouter({
 
         {/* Step content */}
         {entry.fullHeight ? (
-          <div className="flex-1 min-h-0 overflow-auto">
+          <div className="flex flex-1 flex-col min-h-0 overflow-auto">
             <View
               bookLabel={bookLabel}
               stageSlug={step}
@@ -181,7 +183,7 @@ export function StepViewRouter({
             />
           </div>
         ) : (
-          <div className="flex-1 min-h-0 overflow-auto p-4">
+          <div className="flex flex-1 flex-col min-h-0 overflow-auto p-4">
             <View
               bookLabel={bookLabel}
               stageSlug={step}

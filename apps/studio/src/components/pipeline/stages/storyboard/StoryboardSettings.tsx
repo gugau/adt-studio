@@ -36,11 +36,12 @@ import { msg } from "@lingui/core/macro"
 import { useLingui } from "@lingui/react/macro"
 import { i18n } from "@lingui/core"
 import {
-  listSelectableRenderStrategies,
+  listDefaultRenderStrategies,
   normalizeDefaultRenderStrategy,
 } from "@/lib/render-strategy"
 import { getSectionTypeLabel } from "@/lib/section-constants"
 import { hasSectioningData } from "./lib/storyboard-rerun-policy"
+import { REFLOWABLE_FONTS } from "@adt/types"
 
 /** "two_column_story" → "Two Column Story" */
 function titleCase(slug: string): string {
@@ -50,6 +51,7 @@ function titleCase(slug: string): string {
 const STRATEGY_LABEL_MSGS: Record<string, ReturnType<typeof msg>> = {
   llm: msg`AI Generated`,
   "llm-overlay": msg`AI Overlay`,
+  fixed_layout: msg`Fixed Layout`,
 }
 
 function strategyDisplayName(slug: string): string {
@@ -63,6 +65,7 @@ const STRATEGY_DESCRIPTION_MSGS: Record<string, ReturnType<typeof msg>> = {
   "llm-overlay": msg`LLM positions text over background images`,
   two_column: msg`Fixed two-column template layout`,
   two_column_story: msg`Two-column template for story content`,
+  fixed_layout: msg`Preserves the source PDF's exact page layout`,
 }
 
 function strategyDescription(name: string): string {
@@ -154,6 +157,7 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
   const [renderingTemperature, setRenderingTemperature] = useState("")
   const [styleguide, setStyleguide] = useState("")
   const [applyBodyBackground, setApplyBodyBackground] = useState(true)
+  const [reflowableFont, setReflowableFont] = useState("auto")
   const [renderingPromptDraft, setRenderingPromptDraft] = useState<string | null>(null)
   const [renderingTemplateDraft, setRenderingTemplateDraft] = useState<string | null>(null)
   const [templateTabName, setTemplateTabName] = useState("")
@@ -276,12 +280,14 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
     )
     setDefaultRenderStrategy(normalizedDefaultRenderStrategy)
 
-    setRenderStrategyNames(listSelectableRenderStrategies(strategies))
+    setRenderStrategyNames(listDefaultRenderStrategies(strategies))
 
     // Styleguide
     setStyleguide(typeof merged.styleguide === "string" ? merged.styleguide : "")
     // Body background
     setApplyBodyBackground(merged.apply_body_background !== false)
+    // Reflowable base font (book-wide default; "auto" follows detection)
+    setReflowableFont(typeof merged.reflowable_font === "string" ? merged.reflowable_font : "auto")
     // Rendering config comes from the default render strategy
     const defaultStrategy = normalizedDefaultRenderStrategy
       ? strategies[normalizedDefaultRenderStrategy]
@@ -339,6 +345,10 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
     }
     if (shouldWrite("apply_body_background")) {
       overrides.apply_body_background = applyBodyBackground
+    }
+    if (shouldWrite("reflowable_font")) {
+      // "auto" is the default behavior — store undefined to keep config clean.
+      overrides.reflowable_font = reflowableFont === "auto" ? undefined : reflowableFont
     }
     if (shouldWrite("visual_review_prompt")) {
       overrides.visual_review_prompt = visualReviewPrompt
@@ -499,6 +509,55 @@ export function StoryboardSettings({ bookLabel, headerTarget, tab = "general" }:
           <p className="text-xs text-muted-foreground mt-1.5">
             {<Trans>The rendering strategy used for sections without an explicit mapping.</Trans>}
           </p>
+
+          <div className="mt-6">
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+              {<Trans>Default Font</Trans>}
+            </h3>
+            <Select
+              value={reflowableFont}
+              onValueChange={(v) => {
+                setReflowableFont(v)
+                markDirty("reflowable_font")
+              }}
+            >
+              <SelectTrigger className="w-72">
+                <SelectValue>
+                  {reflowableFont === "auto"
+                    ? <Trans>Automatic</Trans>
+                    : (REFLOWABLE_FONTS.find((f) => f.id === reflowableFont)?.family ?? reflowableFont)}
+                </SelectValue>
+              </SelectTrigger>
+              {/* Cap height + scroll: 15 two-line items otherwise run past the
+                  bottom of the settings panel/window. */}
+              <SelectContent align="start" className="max-h-72">
+                <SelectItem value="auto">
+                  <div className="flex flex-col items-start">
+                    <span>{<Trans>Automatic</Trans>}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {<Trans>Match the book's detected style</Trans>}
+                    </span>
+                  </div>
+                </SelectItem>
+                {REFLOWABLE_FONTS.map((f) => (
+                  <SelectItem key={f.id} value={f.id}>
+                    <div className="flex flex-col items-start">
+                      <span>{f.family}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {f.category === "sans" ? <Trans>Sans-serif</Trans>
+                          : f.category === "serif" ? <Trans>Serif</Trans>
+                          : f.category === "handwriting" ? <Trans>Handwriting</Trans>
+                          : <Trans>Monospace</Trans>}
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1.5">
+              {<Trans>Base font for AI-rendered and template (reflowable) text. Fixed-layout pages keep their original fonts.</Trans>}
+            </p>
+          </div>
         </div>
       )}
 

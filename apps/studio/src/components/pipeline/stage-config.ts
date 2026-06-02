@@ -16,7 +16,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
-export type StageGroup = "convert" | "enhancements" | "packaging"
+export type StageGroup = "convert" | "enhancements" | "localization" | "packaging"
 
 export const STAGES = [
   { slug: "book", label: "Book", runningLabel: "Loading Book", icon: BookMarked, color: "bg-gray-600", hex: "#4b5563", textColor: "text-gray-600", bgLight: "bg-gray-50", borderColor: "border-gray-200", borderDark: "border-gray-600" },
@@ -27,9 +27,10 @@ export const STAGES = [
   { slug: "quizzes", label: "Quizzes", runningLabel: "Generating Quizzes", icon: HelpCircle, color: "bg-orange-600", hex: "#ea580c", textColor: "text-orange-600", bgLight: "bg-orange-50", borderColor: "border-orange-200", borderDark: "border-orange-600", group: "enhancements" },
   { slug: "glossary", label: "Glossary", runningLabel: "Generating Glossary", icon: BookOpen, color: "bg-lime-600", hex: "#65a30d", textColor: "text-lime-600", bgLight: "bg-lime-50", borderColor: "border-lime-200", borderDark: "border-lime-600", group: "enhancements" },
   { slug: "toc", label: "Table of Contents", runningLabel: "Generating TOC", icon: List, color: "bg-amber-600", hex: "#d97706", textColor: "text-amber-600", bgLight: "bg-amber-50", borderColor: "border-amber-200", borderDark: "border-amber-600", group: "enhancements" },
-  { slug: "translate", label: "Language", runningLabel: "Translating", icon: Languages, color: "bg-pink-600", hex: "#db2777", textColor: "text-pink-600", bgLight: "bg-pink-50", borderColor: "border-pink-200", borderDark: "border-pink-600", group: "enhancements" },
-  { slug: "speech", label: "Speech", runningLabel: "Generating Speech", icon: AudioLines, color: "bg-rose-600", hex: "#e11d48", textColor: "text-rose-600", bgLight: "bg-rose-50", borderColor: "border-rose-200", borderDark: "border-rose-600", group: "enhancements" },
+  { slug: "easy-read", label: "Easy Read", runningLabel: "Generating Easy Read", icon: FileText, color: "bg-fuchsia-600", hex: "#c026d3", textColor: "text-fuchsia-600", bgLight: "bg-fuchsia-50", borderColor: "border-fuchsia-200", borderDark: "border-fuchsia-600", group: "enhancements" },
   { slug: "sign-language", label: "Sign Language", runningLabel: "Sign Language", icon: Hand, color: "bg-cyan-600", hex: "#0891b2", textColor: "text-cyan-600", bgLight: "bg-cyan-50", borderColor: "border-cyan-200", borderDark: "border-cyan-600", group: "enhancements" },
+  { slug: "translate", label: "Language", runningLabel: "Translating", icon: Languages, color: "bg-pink-600", hex: "#db2777", textColor: "text-pink-600", bgLight: "bg-pink-50", borderColor: "border-pink-200", borderDark: "border-pink-600", group: "localization" },
+  { slug: "speech", label: "Speech", runningLabel: "Generating Speech", icon: AudioLines, color: "bg-rose-600", hex: "#e11d48", textColor: "text-rose-600", bgLight: "bg-rose-50", borderColor: "border-rose-200", borderDark: "border-rose-600", group: "localization" },
   { slug: "validation", label: "Validation", runningLabel: "Running Validation", icon: ShieldCheck, color: "bg-emerald-600", hex: "#059669", textColor: "text-emerald-600", bgLight: "bg-emerald-50", borderColor: "border-emerald-200", borderDark: "border-emerald-600", group: "packaging" },
   { slug: "preview", label: "Preview", runningLabel: "Building Preview", icon: Eye, color: "bg-gray-600", hex: "#4b5563", textColor: "text-gray-600", bgLight: "bg-gray-50", borderColor: "border-gray-200", borderDark: "border-gray-600", group: "packaging" },
   { slug: "export", label: "Export", runningLabel: "Exporting", icon: FileDown, color: "bg-indigo-700", hex: "#4338ca", textColor: "text-indigo-700", bgLight: "bg-indigo-50", borderColor: "border-indigo-200", borderDark: "border-indigo-700", group: "packaging" },
@@ -62,6 +63,7 @@ export const STAGE_DESCRIPTIONS: Record<NonBookStageSlug, string> = {
   captions: "Create descriptive captions for images to improve accessibility.",
   glossary: "Build a glossary of key terms and definitions found in the text.",
   toc: "Generate and customize the table of contents for the book navigation.",
+  "easy-read": "Generate and edit Easy Read text blocks for the ADT accessibility toggle.",
   translate: "Translate the book content to output languages.",
   speech: "Generate audio narration for the book content.",
   "sign-language": "Upload and assign sign language videos to book pages.",
@@ -75,7 +77,6 @@ export const STAGES_WITH_PAGES = new Set<StageSlug>([
   "sectioning",
   "storyboard",
   "quizzes",
-  "captions",
   "translate",
   "speech",
 ])

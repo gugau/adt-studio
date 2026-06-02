@@ -1,14 +1,15 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo, type CSSProperties } from "react"
 import type { AccessibilityFinding } from "@adt/types"
-import { Loader2 } from "lucide-react"
 import { Trans } from "@lingui/react/macro"
 import { StageBlockedState } from "@/components/pipeline/components/StageBlockedState"
+import { LoadingState } from "@/components/pipeline/components/LoadingState"
 import { useAllPagesPruned } from "@/hooks/use-all-pages-pruned"
 import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate, useSearch } from "@tanstack/react-router"
 import { api, getAdtUrl } from "@/api/client"
 import { useDebugPanelState } from "@/components/debug/debug-panel-state"
 import { useAccessibilityAssessment } from "@/hooks/use-debug"
+import { usePackageAdtStatus } from "@/hooks/use-books"
 import { useReviewerValidationCatalog } from "@/hooks/use-reviewer-validation"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useBookTasks } from "@/hooks/use-book-tasks"
@@ -29,18 +30,32 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const search = useSearch({ strict: false }) as { previewHref?: string }
-  const { stageState } = useBookRun()
+  const { stageState, isStatusLoading } = useBookRun()
   const { isTaskRunning, getTask } = useBookTasks(bookLabel)
   const storyboardDone = stageState("storyboard") === "done"
-  const { allPruned } = useAllPagesPruned(bookLabel)
+  const { allPruned, isLoading: prunedLoading } = useAllPagesPruned(bookLabel)
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
   const ranRef = useRef(false)
+  // Fixed-layout pages render at their native pixel viewport (e.g.
+  // 1587×1224) which usually exceeds the studio preview pane. Detect the
+  // page's intrinsic size from the iframe body's inline width/height and
+  // CSS-scale the iframe to fit, mirroring the storyboard preview.
+  // null = reflowable (no scaling).
+  // `referenceWidth` is the book-wide widest page (a full spread in spread
+  // mode), read from `#content`'s `data-fl-reference-width`. Scaling off it —
+  // not this page's own width — keeps every page at one uniform scale, so a
+  // single cover/end page renders centered at half-width rather than upscaled
+  // to fill the pane. Falls back to the page's own width when absent.
+  const [fixedLayoutSize, setFixedLayoutSize] = useState<{ height: number; referenceWidth: number } | null>(null)
+  const [availableWidth, setAvailableWidth] = useState(0)
   const { panelOpen } = useDebugPanelState()
   const [isSubmittingPackage, setIsSubmittingPackage] = useState(false)
   const [pendingTaskId, setPendingTaskId] = useState<string | null>(null)
+  const [pendingVersion, setPendingVersion] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
-  const [version, setVersion] = useState(0)
+  const [version, setVersion] = useState("0")
   const [currentPreviewPage, setCurrentPreviewPage] = useState<{
     sectionId: string | null
     href: string | null
@@ -52,6 +67,9 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
   const [accessibilityCardExpanded, setAccessibilityCardExpanded] = useState(false)
   const [validationCardExpanded, setValidationCardExpanded] = useState(false)
   const { data, isLoading: assessmentLoading, error: assessmentError } = useAccessibilityAssessment(bookLabel)
+  const { data: packageStatus } = usePackageAdtStatus(bookLabel, {
+    refetchInterval: pendingVersion && !ready ? 1_000 : false,
+  })
   const reviewerValidationCatalog = useReviewerValidationCatalog(bookLabel)
   const reviewerValidationEnabled = reviewerValidationCatalog.data?.enabled ?? false
 
@@ -117,13 +135,60 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
       const signLanguageEnabled =
         iframe.contentDocument.querySelector("#sl-quick-toggle-button, #sign-language-video") !== null
 
+      // Detect fixed-layout pages — `package-web.ts` emits inline
+      // `style="...width:Wpx;height:Hpx..."` on `<body>` for fixed-layout
+      // page HTML. Parse those values; null otherwise. The book-wide
+      // reference width lives on `#content`'s `data-fl-reference-width`.
+      const body = iframe.contentDocument.body
+      const w = parsePxStyle(body?.style.width)
+      const h = parsePxStyle(body?.style.height)
+      const contentEl = iframe.contentDocument.getElementById("content")
+      const refRaw = contentEl?.getAttribute("data-fl-reference-width")
+      const ref = refRaw ? parseFloat(refRaw) : NaN
+      if (w !== null && h !== null && body) {
+        // The iframe is laid out at the book's reference (spread) width so the
+        // reader's full-width bottom dock — fixed to the iframe viewport —
+        // stays one constant width on every page (see iframeStyle). Center this
+        // page's (possibly narrower) body within that viewport so a single
+        // cover/end page sits in the middle with the dock spanning the whole
+        // panel beneath it. Overrides the produced page's inline `margin:0`.
+        body.style.marginLeft = "auto"
+        body.style.marginRight = "auto"
+        setFixedLayoutSize({ height: h, referenceWidth: Number.isFinite(ref) && ref > 0 ? ref : w })
+      } else {
+        setFixedLayoutSize(null)
+      }
+
       setCurrentPreviewPage({ sectionId, href, title, hasImages, hasActivity, signLanguageEnabled })
     } catch {
+      setFixedLayoutSize(null)
       setCurrentPreviewPage({ sectionId: null, href: null, title: null, hasImages: false, hasActivity: false, signLanguageEnabled: false })
     }
   }, [])
 
-  const packaging = isSubmittingPackage || isTaskRunning("package-adt")
+  // Track wrapper width so the scale recomputes when the panel resizes
+  // (debug panel toggle, window resize, sidebar collapse, etc.). Depends
+  // on `ready` because the wrapper only renders once packaging is done —
+  // without that dep the effect runs once on mount when the wrapper
+  // doesn't exist yet, ref is null, and the observer never attaches.
+  useEffect(() => {
+    if (!ready) return
+    const el = wrapperRef.current
+    if (!el) return
+    setAvailableWidth(el.getBoundingClientRect().width)
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      if (entry) setAvailableWidth(entry.contentRect.width)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [ready])
+
+  const scale = fixedLayoutSize && availableWidth > 0
+    ? Math.min(1, availableWidth / fixedLayoutSize.referenceWidth)
+    : 1
+
+  const packaging = !ready && (isSubmittingPackage || isTaskRunning("package-adt"))
 
   useEffect(() => {
     if (!pendingTaskId) return
@@ -131,25 +196,39 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
     if (!task) return
     if (task.status === "completed") {
       setPendingTaskId(null)
+      setPendingVersion(null)
       setIsSubmittingPackage(false)
       void Promise.all([
         queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "step-status"] }),
+        queryClient.invalidateQueries({ queryKey: ["package-adt-status", bookLabel] }),
         queryClient.invalidateQueries({ queryKey: ["debug", "accessibility", bookLabel] }),
         queryClient.invalidateQueries({ queryKey: ["debug", "versions", bookLabel, "accessibility-assessment", "book"] }),
       ]).then(() => {
-        setVersion((value) => Math.max(value + 1, Date.now()))
+        setVersion(readPackageVersion(task.result) ?? createPreviewVersion())
         setReady(true)
       })
     } else if (task.status === "failed") {
       setPendingTaskId(null)
+      setPendingVersion(null)
       setIsSubmittingPackage(false)
-      setError(task.error ?? "Packaging failed")
+      if (!ready) {
+        setError(task.error ?? "Packaging failed")
+      }
     }
-  }, [pendingTaskId, getTask, bookLabel, queryClient])
+  }, [pendingTaskId, getTask, bookLabel, queryClient, ready])
+
+  useEffect(() => {
+    if (!pendingVersion || ready) return
+    if (!packageStatus?.hasAdt || packageStatus.version !== pendingVersion) return
+    setVersion(pendingVersion)
+    setReady(true)
+    setIsSubmittingPackage(false)
+  }, [packageStatus?.hasAdt, packageStatus?.version, pendingVersion, ready])
 
   const runPackage = useCallback(async () => {
     setIsSubmittingPackage(true)
     setPendingTaskId(null)
+    setPendingVersion(null)
     setError(null)
     setReady(false)
     setCurrentPreviewPage({ sectionId: null, href: null, title: null, hasImages: false, hasActivity: false, signLanguageEnabled: false })
@@ -159,15 +238,17 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
       taskId = result.taskId
       if (taskId) {
         setPendingTaskId(taskId)
+        setPendingVersion(result.version ?? createPreviewVersion())
       } else {
         // Synchronous completion (cache hit) — no task to wait for
         setIsSubmittingPackage(false)
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "step-status"] }),
+          queryClient.invalidateQueries({ queryKey: ["package-adt-status", bookLabel] }),
           queryClient.invalidateQueries({ queryKey: ["debug", "accessibility", bookLabel] }),
           queryClient.invalidateQueries({ queryKey: ["debug", "versions", bookLabel, "accessibility-assessment", "book"] }),
         ])
-        setVersion((value) => Math.max(value + 1, Date.now()))
+        setVersion(result.version ?? createPreviewVersion())
         setReady(true)
       }
     } catch (e) {
@@ -227,33 +308,20 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
     })
   }, [bookLabel, currentPreviewPage.href, navigate, navigatePreviewToHref, ready, search.previewHref])
 
+  if (isStatusLoading || prunedLoading) {
+    return <LoadingState stageSlug="preview" label={<Trans>Loading preview...</Trans>} />
+  }
+
   if (!storyboardDone) {
-    return (
-      <StageBlockedState
-        bookLabel={bookLabel}
-        reason="storyboard-missing"
-        stageLabel={<Trans>Preview</Trans>}
-      />
-    )
+    return <StageBlockedState bookLabel={bookLabel} reason="storyboard-missing" stageLabel={<Trans>Preview</Trans>} />
   }
 
   if (allPruned) {
-    return (
-      <StageBlockedState
-        bookLabel={bookLabel}
-        reason="all-pruned"
-        stageLabel={<Trans>Preview</Trans>}
-      />
-    )
+    return <StageBlockedState bookLabel={bookLabel} reason="all-pruned" stageLabel={<Trans>Preview</Trans>} />
   }
 
   if (packaging) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-sm">Packaging preview...</span>
-      </div>
-    )
+    return <LoadingState stageSlug="preview" label={<Trans>Packaging preview...</Trans>} />
   }
 
   if (error) {
@@ -267,15 +335,46 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
   }
 
   if (ready) {
+    // Fixed-layout: lay the iframe out at the book's reference (spread) width —
+    // not this page's own width — and CSS-scale it via transform to fit the
+    // pane. Using the constant reference width keeps the reader's bottom dock
+    // (fixed to the iframe viewport, full-width) one consistent width on every
+    // page; a single page's narrower body is centered within that viewport
+    // (see syncCurrentPreviewPage), so the cover sits in the middle with the
+    // dock spanning the whole panel. The sizing div takes the *scaled*
+    // dimensions (the iframe's layout box stays at native size despite the
+    // transform, so we wrap it to keep page layout honest).
+    // Reflowable: iframe fills the wrapper as before.
+    const iframeStyle: CSSProperties = fixedLayoutSize
+      ? {
+          width: fixedLayoutSize.referenceWidth,
+          height: fixedLayoutSize.height,
+          transform: `scale(${scale})`,
+          transformOrigin: "0 0",
+        }
+      : { width: "100%", height: "100%" }
+    const sizerStyle: CSSProperties = fixedLayoutSize
+      ? {
+          width: fixedLayoutSize.referenceWidth * scale,
+          height: fixedLayoutSize.height * scale,
+          overflow: "hidden",
+          // Center the reader within the pane when it's narrower than the pane
+          // (large screens, scale capped at 1×).
+          margin: "0 auto",
+        }
+      : { width: "100%", height: "100%" }
     return (
-      <div className="relative h-full w-full bg-muted/20">
-        <iframe
-          ref={iframeRef}
-          src={`${getAdtUrl(bookLabel)}/v-${version}/`}
-          className="h-full w-full border-0"
-          title="ADT Preview"
-          onLoad={syncCurrentPreviewPage}
-        />
+      <div ref={wrapperRef} className="relative h-full w-full bg-muted/20 overflow-auto">
+        <div style={sizerStyle}>
+          <iframe
+            ref={iframeRef}
+            src={`${getAdtUrl(bookLabel)}/v-${version}/`}
+            className="border-0"
+            style={iframeStyle}
+            title="ADT Preview"
+            onLoad={syncCurrentPreviewPage}
+          />
+        </div>
 
         <PreviewAccessibilityCard
           label={bookLabel}
@@ -322,6 +421,13 @@ export function PreviewView({ bookLabel }: { bookLabel: string }) {
   return null
 }
 
+/** Parse a pixel value (e.g. "1587px") to a number, or null for missing/non-px values. */
+function parsePxStyle(value: string | undefined): number | null {
+  if (!value) return null
+  const match = /^(\d+(?:\.\d+)?)px$/.exec(value.trim())
+  return match ? parseFloat(match[1]) : null
+}
+
 function deriveReviewPageId(sectionId: string | null, href: string | null): string | null {
   if (sectionId) {
     const sectionMatch = sectionId.match(/^(.+)_sec\d{3}$/)
@@ -337,6 +443,16 @@ function deriveReviewPageId(sectionId: string | null, href: string | null): stri
   }
 
   return null
+}
+
+function createPreviewVersion(): string {
+  return String(Date.now())
+}
+
+function readPackageVersion(result: unknown): string | null {
+  if (typeof result !== "object" || result === null) return null
+  const version = (result as { version?: unknown }).version
+  return typeof version === "string" && version.length > 0 ? version : null
 }
 
 function deriveReviewPageNumber(pageId: string | null): number | null {

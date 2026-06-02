@@ -40,7 +40,10 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 app.whenReady().then(async () => {
-  electronApp.setAppUserModelId("com.nees.adt-studio");
+  const isBeta = app.getVersion().includes("-beta");
+  electronApp.setAppUserModelId(
+    isBeta ? "com.nees.adt-studio.beta" : "com.nees.adt-studio",
+  );
 
   registerAppInfoIpc();
   registerSplashIpc();
@@ -103,7 +106,9 @@ app.on("before-quit", () => {
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
+
     app.quit();
     stopApiServer();
+
   }
 });

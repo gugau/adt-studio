@@ -39,6 +39,7 @@ import {
   dockReadyAtom,
   dockWidthAtom,
   easyReadModeAtom,
+  embedModeAtom,
   glossaryModeAtom,
   iconSizeAtom,
   reduceMotionAtom,
@@ -60,6 +61,12 @@ import { initAnalytics } from "@/shared/lib/analytics"
 import { installShowContentFallback, showMainContent } from "@/shared/lib/errors"
 import { activityModeAtom, isActivityPageAtom } from "@/features/activity/state/activity.atoms"
 import { initializeQuizActivity } from "@/features/activity/runtime/activity-quiz"
+import { initializeMultiSelectActivity } from "@/features/activity/runtime/activity-multi-select"
+import { initializeFillInTheBlankActivity } from "@/features/activity/runtime/activity-fill-in-the-blank"
+import { initializeOpenEndedActivity } from "@/features/activity/runtime/activity-open-ended"
+import { initializeTrueFalseActivity } from "@/features/activity/runtime/activity-true-false"
+import { initializeSortingActivity } from "@/features/activity/runtime/activity-sorting"
+import { initializeMatchingActivity } from "@/features/activity/runtime/activity-matching"
 
 function readCurrentSectionId(): string | null {
   if (typeof document === "undefined") return null
@@ -71,6 +78,11 @@ function readCurrentSectionId(): string | null {
 function readIsActivityPage(): boolean {
   if (typeof document === "undefined") return false
   return !!document.querySelector('section[data-section-type^="activity_"]')
+}
+
+function readIsEmbedMode(): boolean {
+  if (typeof window === "undefined") return false
+  return new URLSearchParams(window.location.search).get("embed") === "1"
 }
 
 function readCurrentPageNumber(): number | null {
@@ -171,6 +183,7 @@ export async function bootRuntime(): Promise<void> {
     const isActivity = readIsActivityPage()
     store.set(isActivityPageAtom, isActivity)
     store.set(activityModeAtom, isActivity)
+    store.set(embedModeAtom, readIsEmbedMode())
 
     applyDOMTranslations()
 
@@ -178,6 +191,12 @@ export async function bootRuntime(): Promise<void> {
     showMainContent()
     processGlossaryLocateHint()
     initializeQuizActivity()
+    initializeMultiSelectActivity()
+    initializeFillInTheBlankActivity()
+    initializeOpenEndedActivity()
+    initializeTrueFalseActivity()
+    initializeSortingActivity()
+    initializeMatchingActivity()
   } finally {
     // Always clear the dock skeleton — even on partial-load failures the dock
     // should reveal whatever data DID make it into atoms.

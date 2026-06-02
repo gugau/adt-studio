@@ -35,7 +35,11 @@ CREATE TABLE IF NOT EXISTS images (
   width INTEGER NOT NULL,
   height INTEGER NOT NULL,
   source TEXT NOT NULL CHECK (source IN ('page', 'extract', 'crop', 'segment', 'upload', 'translate')),
-  render_method TEXT CHECK (render_method IN ('vector', 'page-crop', 'raster') OR render_method IS NULL)
+  render_method TEXT CHECK (render_method IN ('vector', 'page-crop', 'raster') OR render_method IS NULL),
+  bounds_x REAL,
+  bounds_y REAL,
+  bounds_w REAL,
+  bounds_h REAL
 );
 
 CREATE TABLE IF NOT EXISTS llm_log (
@@ -149,6 +153,12 @@ function initSchema(db: sqlite.Database): void {
     version = 12
   }
 
+  // Migrate v12 → v13: add bounds_* columns to images for per-image page placement
+  if (version === 12) {
+    migrateV12toV13(db)
+    version = 13
+  }
+
   if (version === SCHEMA_VERSION) {
     cleanupDeprecatedSchema(db)
     upsertSchemaVersion(db, SCHEMA_VERSION)
@@ -215,7 +225,7 @@ function migrateV6toV7(db: sqlite.Database): void {
       "metadata", "book-summary", "image-filtering", "image-segmentation",
       "image-cropping", "page-sectioning",
       "web-rendering", "quiz-generation", "image-captioning", "glossary",
-      "text-catalog", "tts",
+      "text-catalog", "easy-read", "tts",
     ]
     for (const step of directSteps) {
       if (nodes.has(step)) {
@@ -378,6 +388,28 @@ function migrateV11toV12(db: sqlite.Database): void {
       INSERT INTO images_new SELECT * FROM images;
       DROP TABLE images;
       ALTER TABLE images_new RENAME TO images;
+    `)
+    db.exec("COMMIT")
+  } catch (err) {
+    db.exec("ROLLBACK")
+    throw err
+  }
+}
+
+/**
+ * Migrate v12 → v13: add per-image page-placement columns. Used by
+ * fixed-layout rendering to position each image at its PDF coordinates;
+ * NULL for images without a recorded placement (legacy rows, vector
+ * figures that don't map to a single quad).
+ */
+function migrateV12toV13(db: sqlite.Database): void {
+  db.exec("BEGIN IMMEDIATE")
+  try {
+    db.exec(`
+      ALTER TABLE images ADD COLUMN bounds_x REAL;
+      ALTER TABLE images ADD COLUMN bounds_y REAL;
+      ALTER TABLE images ADD COLUMN bounds_w REAL;
+      ALTER TABLE images ADD COLUMN bounds_h REAL;
     `)
     db.exec("COMMIT")
   } catch (err) {

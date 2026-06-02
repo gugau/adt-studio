@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
 import { useAccessibilityAssessment } from "@/hooks/use-debug"
 import { buildAccessibilityOverview, buildFrequentAccessibilityFindings, getAccessibilityCategoryLabel } from "@/lib/accessibility-summary"
+import { useAxeRuleTranslator } from "@/lib/axe-rule-locale"
 import { cn } from "@/lib/utils"
 
 interface AccessibilityTabProps {
@@ -200,7 +201,9 @@ function FrequentFindingCard({
   onFilterCategory: (category: AccessibilityCategoryKey) => void
 }) {
   const { t, i18n } = useLingui()
+  const axeRules = useAxeRuleTranslator()
   const coveragePercent = Math.round(finding.pageCoverage * 100)
+  const count = finding.count
 
   return (
     <div className="rounded-lg border px-3 py-3">
@@ -233,10 +236,10 @@ function FrequentFindingCard({
             {getAccessibilityCategoryLabel(i18n, finding.categoryKey)}
           </Badge>
         </div>
-        <div className="text-sm font-semibold tabular-nums">{finding.reviewOnly ? t`${finding.count} ${finding.count === 1 ? "manual review item" : "manual review items"}` : t`${finding.count} ${finding.count === 1 ? "issue" : "issues"}`}</div>
+        <div className="text-sm font-semibold tabular-nums">{finding.reviewOnly ? t`${count} {count, plural, one {manual review item} other {manual review items}}` : t`${count} {count, plural, one {issue} other {issues}}`}</div>
       </div>
       <div className="mt-2 flex items-center justify-between gap-2">
-        <span className="font-medium">{finding.help}</span>
+        <span className="font-medium">{axeRules.help(finding.id, finding.help)}</span>
         {finding.helpUrl ? (
           <a href={finding.helpUrl} target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground">
             <code>{finding.id}</code>
@@ -246,7 +249,7 @@ function FrequentFindingCard({
           <code className="shrink-0 text-[11px] text-muted-foreground">{finding.id}</code>
         )}
       </div>
-      <div className="mt-1 text-xs text-muted-foreground">{finding.description}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{axeRules.description(finding.id, finding.description)}</div>
 
       <div className="mt-3 space-y-1">
         <div className="flex items-center justify-between text-[11px] text-muted-foreground">

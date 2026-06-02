@@ -1,135 +1,18 @@
-import { useState, useEffect, useRef, useCallback } from "react"
-import { AlertTriangle, Check, Crop, Eye, EyeOff, FileText, Image, ImageOff, Layers, Loader2, ChevronDown, X } from "lucide-react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { AlertTriangle, Check, Crop, Eye, EyeOff, FileText, Image, ImageOff, Layers, Loader2, ChevronDown, Square, Type, X } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { usePage, usePageImage } from "@/hooks/use-pages"
 import { api, BASE_URL } from "@/api/client"
-import type { VersionEntry } from "@/api/client"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useBookRun } from "@/hooks/use-book-run"
 import { Trans } from "@lingui/react/macro"
 import { useLingui } from "@lingui/react/macro"
 import { ImageCropDialog } from "@/components/pipeline/stages/storyboard/components/ImageCropDialog"
+import { VersionPicker } from "@/components/pipeline/components/VersionPicker"
+import { usePendingChanges } from "@/components/pipeline/components/change-summary"
+import { resolveReflowableFont } from "@adt/types"
 
-function VersionPicker({
-  currentVersion,
-  saving,
-  dirty,
-  bookLabel,
-  node,
-  itemId,
-  onPreview,
-  onSave,
-  onDiscard,
-}: {
-  currentVersion: number | null
-  saving: boolean
-  dirty: boolean
-  bookLabel: string
-  node: string
-  itemId: string
-  onPreview: (data: unknown) => void
-  onSave: () => void
-  onDiscard: () => void
-}) {
-  const [open, setOpen] = useState(false)
-  const [versions, setVersions] = useState<VersionEntry[] | null>(null)
-  const [loading, setLoading] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [open])
-
-  const handleOpen = async () => {
-    if (saving || currentVersion == null) return
-    setOpen(true)
-    setLoading(true)
-    const res = await api.getVersionHistory(bookLabel, node, itemId, true)
-    setVersions(res.versions)
-    setLoading(false)
-  }
-
-  const handlePick = (v: VersionEntry) => {
-    if (v.version === currentVersion && !dirty) {
-      setOpen(false)
-      return
-    }
-    setOpen(false)
-    onPreview(v.data)
-  }
-
-  if (saving) {
-    return <Loader2 className="h-3 w-3 animate-spin ml-auto" />
-  }
-
-  if (currentVersion == null) return null
-
-  if (dirty) {
-    return (
-      <div className="ml-auto flex items-center gap-1.5">
-        <button
-          type="button"
-          onClick={onDiscard}
-          className="text-[10px] font-medium rounded px-2 py-0.5 bg-muted hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors"
-        >
-          <Trans>Discard</Trans>
-        </button>
-        <button
-          type="button"
-          onClick={onSave}
-          className="flex items-center gap-1 text-[10px] font-medium rounded px-2 py-0.5 bg-green-600 hover:bg-green-500 text-white cursor-pointer transition-colors"
-        >
-          <Check className="h-3 w-3" />
-          <Trans>Save</Trans>
-        </button>
-      </div>
-    )
-  }
-
-  return (
-    <div ref={ref} className="relative ml-auto">
-      <button
-        type="button"
-        onClick={handleOpen}
-        className="flex items-center gap-0.5 text-[10px] font-normal normal-case tracking-normal bg-muted hover:bg-muted/80 rounded px-1.5 py-0.5 transition-colors"
-      >
-        v{currentVersion}
-        <ChevronDown className="h-2.5 w-2.5" />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full mt-1 z-20 bg-popover border rounded shadow-md min-w-[80px] py-1">
-          {loading ? (
-            <div className="flex items-center justify-center py-2 px-3">
-              <Loader2 className="h-3 w-3 animate-spin" />
-            </div>
-          ) : versions && versions.length > 0 ? (
-            versions.map((v) => (
-              <button
-                key={v.version}
-                type="button"
-                onClick={() => handlePick(v)}
-                className={`w-full text-left px-3 py-1 text-xs hover:bg-accent transition-colors ${
-                  v.version === currentVersion ? "font-semibold text-foreground" : "text-muted-foreground"
-                }`}
-              >
-                v{v.version}
-              </button>
-            ))
-          ) : (
-            <div className="px-3 py-1 text-xs text-muted-foreground"><Trans>No versions</Trans></div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function ImageCard({ imageId, bookLabel, isPruned, reason, onTogglePrune, onRecrop, cacheBust }: { imageId: string; bookLabel: string; isPruned?: boolean; reason?: string; onTogglePrune?: () => void; onRecrop?: () => void; cacheBust?: number }) {
+function ImageCard({ imageId, bookLabel, isPruned, reason, bounds, onTogglePrune, onRecrop, cacheBust }: { imageId: string; bookLabel: string; isPruned?: boolean; reason?: string; bounds?: { x: number; y: number; width: number; height: number }; onTogglePrune?: () => void; onRecrop?: () => void; cacheBust?: number }) {
   const { t } = useLingui()
   const [dimensions, setDimensions] = useState<{ w: number; h: number } | null>(null)
   // eslint-disable-next-line lingui/no-unlocalized-strings
@@ -140,6 +23,14 @@ function ImageCard({ imageId, bookLabel, isPruned, reason, onTogglePrune, onRecr
       className={`relative rounded border overflow-hidden bg-card flex flex-col items-center min-h-[80px] ${isPruned ? "opacity-40" : ""}`}
       title={isPruned && reason ? t`Pruned: ${reason}` : undefined}
     >
+      {bounds && (
+        <div
+          className="absolute top-1 left-1 z-10 flex items-center justify-center w-5 h-5 rounded-full bg-black/30 text-white"
+          title={t`Position ${Math.round(bounds.x)}, ${Math.round(bounds.y)} → ${Math.round(bounds.width)}×${Math.round(bounds.height)} pt`}
+        >
+          <Square className="h-3 w-3" />
+        </div>
+      )}
       <div className="absolute top-1 right-1 z-10 flex items-center gap-1">
         {onRecrop && (
           <button
@@ -266,7 +157,30 @@ export function ExtractPageDetail({
 
   // Effective data: pending if dirty, otherwise server
   const imageClassData = pendingImageData ?? page?.imageClassification ?? null
-  const imageDirty = pendingImageData != null
+
+  const {
+    label: pendingLabel,
+    labelKey: pendingLabelKey,
+    hasChanges: imageDirty,
+  } = usePendingChanges({
+    prev: page?.imageClassification?.images ?? [],
+    next: pendingImageData?.images,
+    keyOf: (i) => i.imageId,
+    isEqual: (a, b) => !!a.isPruned === !!b.isPruned,
+    classifyChanged: (before, after) =>
+      after.isPruned && !before.isPruned ? "pruned" : "restored",
+    includeAddRemove: false,
+    noun: { one: t`image`, other: t`images` },
+  })
+
+  // Lookup for per-image page-placement bounds (when available from extract)
+  const boundsByImageId = useMemo(() => {
+    const map = new Map<string, { x: number; y: number; width: number; height: number }>()
+    for (const meta of page?.imagesMeta ?? []) {
+      if (meta.bounds) map.set(meta.imageId, meta.bounds)
+    }
+    return map
+  }, [page?.imagesMeta])
 
   const toggleImagePrune = (imageId: string) => {
     const base = pendingImageData ?? page?.imageClassification
@@ -297,6 +211,15 @@ export function ExtractPageDetail({
 
   if (!page) return null
 
+  // For reflowable books, map the detected serif/sans category (+ any config
+  // override) to the base reading font, to show alongside the detection.
+  const reflowableFont = page.fontProfile?.category
+    ? resolveReflowableFont(
+        (activeConfigData as { reflowable_font?: string } | undefined)?.reflowable_font,
+        page.fontProfile.category,
+      )
+    : null
+
   return (
     <div className="space-y-2 p-4">
       {storyboardDone && (
@@ -320,17 +243,21 @@ export function ExtractPageDetail({
             <h3 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
               <Image className="h-3 w-3" />
               <Trans>Extracted Images ({String(count)})</Trans>
-              <VersionPicker
-                currentVersion={page.versions.imageClassification}
-                saving={savingImages}
-                dirty={imageDirty}
-                bookLabel={bookLabel}
-                node="image-filtering"
-                itemId={pageId}
-                onPreview={(data) => setPendingImageData(data as ImageClassData)}
-                onSave={saveImageChanges}
-                onDiscard={() => setPendingImageData(null)}
-              />
+              <div className="ml-auto">
+                <VersionPicker
+                  step="image-filtering"
+                  itemId={pageId}
+                  currentVersion={page.versions.imageClassification}
+                  saving={savingImages}
+                  dirty={imageDirty}
+                  bookLabel={bookLabel}
+                  pendingLabel={pendingLabel}
+                  pendingLabelKey={pendingLabelKey}
+                  onPreview={(data) => setPendingImageData(data as ImageClassData)}
+                  onSave={saveImageChanges}
+                  onDiscard={() => setPendingImageData(null)}
+                />
+              </div>
             </h3>
           )
         })()}
@@ -394,6 +321,7 @@ export function ExtractPageDetail({
                     bookLabel={bookLabel}
                     isPruned={img.isPruned}
                     reason={img.reason}
+                    bounds={boundsByImageId.get(img.imageId)}
                     onTogglePrune={() => toggleImagePrune(img.imageId)}
                     onRecrop={!storyboardRunning ? () => handleRecropFromPage(img.imageId) : undefined}
                     cacheBust={cacheBust}
@@ -412,6 +340,59 @@ export function ExtractPageDetail({
           <div className="mb-4 flex items-center gap-2 rounded border border-dashed p-3 text-xs text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
             <Trans>Processing metadata…</Trans>
+          </div>
+        )}
+
+        {/* Fonts — distinct families the extractor found (positioned text). */}
+        {page.fonts && page.fonts.length > 0 && (
+          <div className="mb-4">
+            <h3 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              <Type className="h-3 w-3" />
+              <Trans>Fonts ({String(page.fonts.length)})</Trans>
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {page.fonts.map((f) => (
+                <span
+                  key={f.family}
+                  className="inline-flex items-center gap-1.5 rounded border bg-muted/30 px-2 py-1 text-xs"
+                  title={f.family}
+                >
+                  <span className="font-medium text-foreground">{f.family}</span>
+                  {f.sizes.length > 0 && (
+                    <span className="text-[10px] text-muted-foreground tabular-nums">
+                      {f.sizes.map((s) => `${s}px`).join(", ")}
+                    </span>
+                  )}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Reflowable books carry no positioned text — surface the detected
+            serif/sans category and the base reading font it maps to. */}
+        {(!page.fonts || page.fonts.length === 0) && page.fontProfile?.category && (
+          <div className="mb-4">
+            <h3 className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              <Type className="h-3 w-3" />
+              <Trans>Detected Font</Trans>
+            </h3>
+            <div className="flex flex-wrap items-center gap-1.5 text-xs">
+              <span className="inline-flex items-center rounded border bg-muted/30 px-2 py-1 font-medium text-foreground">
+                {page.fontProfile.category === "sans" ? <Trans>Sans-serif</Trans> : <Trans>Serif</Trans>}
+              </span>
+              {reflowableFont && (
+                <>
+                  <span className="text-muted-foreground">&rarr;</span>
+                  <span
+                    className="inline-flex items-center rounded border bg-muted/30 px-2 py-1 font-medium text-foreground"
+                    title={reflowableFont.family}
+                  >
+                    {reflowableFont.family}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         )}
 

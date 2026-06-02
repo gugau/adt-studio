@@ -2,8 +2,6 @@ import { useAtomValue } from "jotai";
 import { Button } from "@/shared/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import {
-  skipEnabledAtom,
-  skipHandlerAtom,
   submitEnabledAtom,
   submitLabelAtom,
   submitStateAtom,
@@ -14,25 +12,21 @@ import { cn } from "@/shared/lib/utils";
 
 export function DockActivityActions() {
   const submitEnabled = useAtomValue(submitEnabledAtom);
-  const skipEnabled = useAtomValue(skipEnabledAtom);
   const validate = useAtomValue(validateHandlerAtom);
-  const skip = useAtomValue(skipHandlerAtom);
   const submitState = useAtomValue(submitStateAtom);
   const submitLabelOverride = useAtomValue(submitLabelAtom);
   const { t } = useTranslation();
 
   const defaultLabel =
     submitState === "next"
-      ? t("next-activity") || "Next activity"
+      // The post-submit button advances to the next page, which may or may not
+      // be another activity — use the neutral "Next" rather than "Next activity".
+      ? t("next") || "Next"
       : t("submit-text") || "Submit";
   const submitLabel = submitLabelOverride ?? defaultLabel;
-  const skipLabel =
-    submitState === "next"
-      ? t("next-page") || "Next page"
-      : t("skip-activity") || "Skip activity";
 
   return (
-    <div className="flex flex-1 items-center justify-between max-w-3xl gap-2 p-1">
+    <div className="flex flex-1 items-center justify-center max-w-3xl p-1">
       <Tooltip>
         <TooltipTrigger
           render={
@@ -43,10 +37,12 @@ export function DockActivityActions() {
               size="lg"
               title={submitLabel}
               className={cn(
-                "order-2 px-4 font-medium text-black",
+                // WCAG AA: white text on bg-blue-600 ≈ 8.6:1, on bg-emerald-600 ≈ 4.8:1.
+                // Bumped from text-sm (button default) to text-base for legibility.
+                "px-6 py-3 text-base font-semibold text-white",
                 submitState === "next"
-                  ? "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:white"
-                  : "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 dark:white",
+                  ? "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400"
+                  : "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400",
               )}
             >
               {submitLabel}
@@ -54,24 +50,6 @@ export function DockActivityActions() {
           }
         />
         <TooltipContent>{submitLabel}</TooltipContent>
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              type="button"
-              onClick={skip ?? undefined}
-              disabled={!skipEnabled || !skip}
-              variant="outline"
-              size="lg"
-              title={skipLabel}
-              className="px-4 font-medium"
-            >
-              {skipLabel}
-            </Button>
-          }
-        />
-        <TooltipContent>{skipLabel}</TooltipContent>
       </Tooltip>
     </div>
   );

@@ -19,6 +19,7 @@ import {
   exportWebpub,
   exportScorm,
   exportAdt,
+  exportEpub,
   type ExportFeatures,
   type ExportDefaultSettings,
   type ExportResult,
@@ -91,6 +92,36 @@ export function createBookRoutes(
       const buffer = fs.readFileSync(pdfPath)
       const pageCount = countPdfPages(buffer)
       return c.json({ pageCount })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      throw new HTTPException(500, { message: `Failed to read source PDF: ${message}` })
+    }
+  })
+
+  // GET /books/:label/source-pdf — Stream the original source PDF inline so it
+  // can be opened/viewed directly in the browser.
+  app.get("/books/:label/source-pdf", (c) => {
+    const { label } = c.req.param()
+    let safeLabel: string
+    try {
+      safeLabel = parseBookLabel(label)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      throw new HTTPException(400, { message })
+    }
+    const pdfPath = path.join(booksDir, safeLabel, `${safeLabel}.pdf`)
+    if (!fs.existsSync(pdfPath)) {
+      throw new HTTPException(404, { message: "Source PDF not found" })
+    }
+    try {
+      const buffer = fs.readFileSync(pdfPath)
+      c.header("Content-Type", "application/pdf")
+      c.header(
+        "Content-Disposition",
+        `inline; filename="${safeLabel}.pdf"`,
+      )
+      c.header("Cache-Control", "private, max-age=3600")
+      return c.body(buffer)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       throw new HTTPException(500, { message: `Failed to read source PDF: ${message}` })
@@ -209,7 +240,7 @@ export function createBookRoutes(
   // POST /books/:label/prepare-export — Rebuild adt/ (and webpub/ if needed) before download
   app.post("/books/:label/prepare-export", async (c) => {
     const { label } = c.req.param()
-    const format = (c.req.query("format") ?? "project") as "project" | "webpub" | "scorm" | "adt"
+    const format = (c.req.query("format") ?? "project") as "project" | "webpub" | "scorm" | "adt" | "epub"
     let features: ExportFeatures | undefined
     let defaultSettings: ExportDefaultSettings | undefined
     const hasBody = (c.req.header("content-length") ?? "0") !== "0"
@@ -266,6 +297,27 @@ export function createBookRoutes(
       return c.body(result.stream)
     })
   }
+
+  // GET /books/:label/export-epub — Download book as EPUB 3
+  app.get("/books/:label/export-epub", async (c) => {
+    const { label } = c.req.param()
+    try {
+      const result = await exportEpub(label, booksDir)
+      c.header("Content-Type", "application/epub+zip")
+      const encodedName = encodeURIComponent(result.filename)
+      c.header(
+        "Content-Disposition",
+        `attachment; filename="${result.safeFilename}"; filename*=UTF-8''${encodedName}`
+      )
+      return c.body(result.stream)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      if (message.includes("Book not found")) {
+        throw new HTTPException(404, { message })
+      }
+      throw new HTTPException(400, { message })
+    }
+  })
 
   // GET /books/:label/images — List all images in a book
   app.get("/books/:label/images", (c) => {
@@ -352,9 +404,11 @@ export function createBookRoutes(
       for (const row of captionRows) {
         try {
           const parsed = JSON.parse(row.data) as {
-            captions?: Array<{ imageId?: string; caption?: string }>
+            captions?: Array<{ imageId?: string; caption?: string; decorative?: boolean }>
           }
           for (const cap of parsed.captions ?? []) {
+            // Decorative images have no caption to translate — skip them.
+            if (cap.decorative) continue
             if (cap.imageId && !captionedIds.has(cap.imageId)) {
               captionedIds.set(cap.imageId, cap.caption ?? "")
             }

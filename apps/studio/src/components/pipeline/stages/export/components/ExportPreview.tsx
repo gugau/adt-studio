@@ -4,6 +4,7 @@ import {
   ArrowDownToLine,
   BarChart3,
   Bookmark,
+  BookText,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -95,6 +96,20 @@ const FORMAT_VISUALS: Record<ExportFormat, FormatVisual> = {
     footerHint: (
       <Trans>
         Distribute through Readium-compatible reading apps and libraries.
+      </Trans>
+    ),
+  },
+  epub: {
+    accent: "bg-purple-600",
+    accentSoft: "bg-purple-50",
+    accentText: "text-purple-700",
+    accentBorder: "border-purple-200",
+    Icon: BookText,
+    eyebrow: <Trans>EPUB 3</Trans>,
+    tagline: <Trans>Standard e-book for readers &amp; libraries</Trans>,
+    footerHint: (
+      <Trans>
+        Open in any EPUB 3 reader, e-reader, or accessibility tool.
       </Trans>
     ),
   },

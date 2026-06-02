@@ -7,7 +7,10 @@ require("dotenv").config({
 const extraResources = [
   { from: "../api/dist-electron/node_modules", to: "./api/node_modules" },
   { from: "../api/dist-electron/api-server.mjs", to: "./api/api-server.mjs" },
-  { from: "../api/dist-electron/node-sqlite3-wasm.wasm", to: "./api/node-sqlite3-wasm.wasm" },
+  {
+    from: "../api/dist-electron/node-sqlite3-wasm.wasm",
+    to: "./api/node-sqlite3-wasm.wasm",
+  },
   { from: "../api/dist-electron/mupdf-wasm.wasm", to: "./api/mupdf-wasm.wasm" },
   { from: "../api/dist-electron/index_bg.wasm", to: "./api/index_bg.wasm" },
   {
@@ -33,13 +36,16 @@ const extraResources = [
 ];
 
 const version = process.env.APP_VERSION || require("./package.json").version;
-const productName = "ADT-Studio";
+
+const isBeta = version.includes("-beta");
+const appId = isBeta ? "com.nees.adt-studio.beta" : "com.nees.adt-studio";
+const productName = isBeta ? "ADT-Studio-Beta" : "ADT-Studio";
 const artifactName = `${productName}-\${version}.\${ext}`
   .toLowerCase()
   .replace(/ /g, "-");
 
 const config = {
-  appId: "com.nees.adt-studio",
+  appId,
   productName,
   electronVersion: "41.1.1",
   directories: {
@@ -51,16 +57,26 @@ const config = {
   },
   extraResources,
   files: ["out/**/*", "!out/renderer/placeholder-*"],
+
+
   win: {
     target: ["nsis"],
     icon: "build/icon.ico",
+    signtoolOptions: {
+      publisherName: [
+        "Núcleo de Excelência em Tecnologias Sociais - NEES",
+        "UNICEF",
+      ],
+      sign: "./scripts/sign-windows.js",
+    },
   },
-  afterSign: "scripts/notarize.js",
+
   nsis: {
     artifactName,
     oneClick: false,
     allowToChangeInstallationDirectory: true,
   },
+
   mac: {
     target: ["dmg", "zip"],
     icon: "build/icon.icon",
@@ -83,18 +99,24 @@ const config = {
         "Application requests access to the user's Downloads folder.",
     },
   },
+
   dmg: {
     artifactName,
   },
+
   linux: {
-    target: ["AppImage"],
+    target: ["AppImage", "deb"],
     icon: "build/icons",
+    artifactName,
+    // TODO: change to "UNICEF <email@unicef.org>",
+    maintainer: "electronjs.org",
   },
+
   publish: {
     provider: "github",
     owner: "unicef",
     repo: "adt-studio",
-  }
+  },
 };
 
 module.exports = config;

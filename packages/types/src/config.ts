@@ -3,6 +3,7 @@ import { ImageFilters } from "./image-filtering.js"
 import { SpeechConfig } from "./speech.js"
 import { ReviewerValidationConfig } from "./reviewer-validation-config.js"
 import { TranslationEvaluationConfig } from "./translation-evaluation.js"
+import { REFLOWABLE_FONT_SETTINGS } from "./reflowable-fonts.js"
 
 export const DEFAULT_LLM_MAX_RETRIES = 5
 
@@ -26,6 +27,13 @@ export const QuizGenerationConfig = StepConfig.extend({
 })
 export type QuizGenerationConfig = z.infer<typeof QuizGenerationConfig>
 
+export const EasyReadConfig = StepConfig.extend({
+  enabled: z.boolean().optional(),
+  batch_size: z.number().int().min(1).optional(),
+  tts: z.boolean().optional(),
+})
+export type EasyReadConfig = z.infer<typeof EasyReadConfig>
+
 export const PageSectioningConfig = StepConfig.extend({
   max_refinements: z.number().int().min(0).optional(),
   mode: z.enum(["page", "dynamic"]).catch("dynamic").optional(),
@@ -34,14 +42,14 @@ export type PageSectioningConfig = z.infer<typeof PageSectioningConfig>
 
 export const ImageTranslationConfig = StepConfig.extend({
   enabled: z.boolean().optional(),
-  /** Image model id (e.g. "openai:gpt-image-1.5"). When unset, the step is a no-op. */
+  /** Image model id (e.g. "openai:gpt-image-2"). When unset, the step is a no-op. */
   image_model: z.string().optional(),
   /** Image IDs the user has chosen to translate. Empty = no images regenerated. */
   selected_image_ids: z.array(z.string()).optional(),
 })
 export type ImageTranslationConfig = z.infer<typeof ImageTranslationConfig>
 
-export const BookFormat = z.enum(["web", "webpub"])
+export const BookFormat = z.enum(["web", "webpub", "epub"])
 export type BookFormat = z.infer<typeof BookFormat>
 
 export const LayoutType = z.enum(["textbook", "storybook", "reference", "custom"])
@@ -50,7 +58,7 @@ export type LayoutType = z.infer<typeof LayoutType>
 export const StyleguideName = z.string().regex(/^[a-zA-Z0-9_-]+$/)
 export type StyleguideName = z.infer<typeof StyleguideName>
 
-export const RenderType = z.enum(["llm", "template", "activity"])
+export const RenderType = z.enum(["llm", "template", "activity", "fixed_layout"])
 export type RenderType = z.infer<typeof RenderType>
 
 export const VisualRefinementStrategyConfig = z.object({
@@ -112,8 +120,13 @@ export const AppConfig = z
     metadata: StepConfig.optional(),
     book_summary: StepConfig.optional(),
     quiz_generation: QuizGenerationConfig.optional(),
+    easy_read: EasyReadConfig.optional(),
     default_render_strategy: z.string().optional(),
     render_strategies: z.record(z.string(), RenderStrategyConfig).optional(),
+    /** Base font for reflowable (non-fixed-layout) output. `auto` (default)
+     *  picks the detected serif/sans category's default; an explicit id
+     *  overrides. Ignored for fixed-layout books (they keep original fonts). */
+    reflowable_font: z.enum(REFLOWABLE_FONT_SETTINGS).optional(),
     visual_review_prompt: z.string().optional(),
     visual_review_max_iterations: z.number().int().min(1).max(50).optional(),
     section_render_strategies: z.record(z.string(), z.string()).optional(),

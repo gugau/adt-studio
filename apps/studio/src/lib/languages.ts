@@ -10,6 +10,14 @@ export interface Language {
 }
 
 export const SUPPORTED_LANGUAGES: Language[] = [
+  { code: "sq", name: "Albanian", countries: [
+    { code: "al", name: "Albania" },
+    { code: "xk", name: "Kosovo" },
+    { code: "mk", name: "North Macedonia" },
+    { code: "me", name: "Montenegro" },
+    { code: "rs", name: "Serbia" },
+    { code: "gr", name: "Greece" },
+  ]},
   { code: "ar", name: "Arabic", countries: [
     { code: "eg", name: "Egypt" },
     { code: "sa", name: "Saudi Arabia" },
@@ -235,7 +243,9 @@ export const SUPPORTED_LANGUAGES: Language[] = [
   ]},
   { code: "sr", name: "Serbian", countries: [
     { code: "rs", name: "Serbia" },
+    { code: "xk", name: "Kosovo" },
     { code: "ba", name: "Bosnia and Herzegovina" },
+    { code: "me", name: "Montenegro" },
   ]},
   { code: "si", name: "Sinhala", countries: [
     { code: "lk", name: "Sri Lanka" },
@@ -397,6 +407,7 @@ export const ALL_COUNTRIES: Country[] = [
   { code: "ke", name: "Kenya" },
   { code: "kp", name: "North Korea" },
   { code: "kr", name: "South Korea" },
+  { code: "xk", name: "Kosovo" },
   { code: "kw", name: "Kuwait" },
   { code: "kg", name: "Kyrgyzstan" },
   { code: "la", name: "Laos" },
@@ -413,6 +424,7 @@ export const ALL_COUNTRIES: Country[] = [
   { code: "mx", name: "Mexico" },
   { code: "md", name: "Moldova" },
   { code: "mn", name: "Mongolia" },
+  { code: "me", name: "Montenegro" },
   { code: "ma", name: "Morocco" },
   { code: "mz", name: "Mozambique" },
   { code: "mm", name: "Myanmar" },
@@ -423,6 +435,7 @@ export const ALL_COUNTRIES: Country[] = [
   { code: "ni", name: "Nicaragua" },
   { code: "ne", name: "Niger" },
   { code: "ng", name: "Nigeria" },
+  { code: "mk", name: "North Macedonia" },
   { code: "no", name: "Norway" },
   { code: "om", name: "Oman" },
   { code: "pk", name: "Pakistan" },

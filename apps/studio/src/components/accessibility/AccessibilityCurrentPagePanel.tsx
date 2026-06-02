@@ -2,6 +2,7 @@ import { Fragment, useMemo } from "react"
 import type { AccessibilityFinding, AccessibilityPageResult } from "@adt/types"
 import { Trans, useLingui } from "@lingui/react/macro"
 import type { PageAccessibilitySummary } from "@/lib/accessibility-summary"
+import { useAxeRuleTranslator } from "@/lib/axe-rule-locale"
 import { ExternalLink } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -158,6 +159,7 @@ function FindingCard({
   onFindingHover?: (finding: AccessibilityFinding | null) => void
 }) {
   const { t } = useLingui()
+  const axeRules = useAxeRuleTranslator()
   const severity = getFindingSeverity(finding.impact)
 
   return (
@@ -190,7 +192,7 @@ function FindingCard({
         )}
       </div>
       <div className="flex items-start justify-between gap-2">
-        <div className="text-sm font-medium leading-snug">{finding.help}</div>
+        <div className="text-sm font-medium leading-snug">{axeRules.help(finding.id, finding.help)}</div>
         {finding.helpUrl ? (
           <a href={finding.helpUrl} target="_blank" rel="noopener noreferrer" className="shrink-0">
             <code className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground hover:text-foreground">
@@ -200,7 +202,7 @@ function FindingCard({
           </a>
         ) : null}
       </div>
-      <LinkifiedText text={finding.description} className="text-xs leading-relaxed text-muted-foreground" />
+      <LinkifiedText text={axeRules.description(finding.id, finding.description)} className="text-xs leading-relaxed text-muted-foreground" />
       {finding.nodes.length > 0 ? (
         <div className="space-y-1.5">
           <div className="text-xs font-medium text-muted-foreground"><Trans>Nodes</Trans></div>

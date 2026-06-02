@@ -10,13 +10,14 @@ import type {
   ReviewerValidationSession,
   TranslationEvaluationResult,
 } from "@adt/types"
+import type { ExportFormat } from "@/components/pipeline/stages/export/export-formats"
 
 export type { BookSummary, BookDetail }
 
 export function resolveBaseUrl(
   _loc: Pick<Location, "protocol" | "hostname"> = window.location,
 ): string {
-  if (isElectron()) {
+  if (isElectron() && typeof window.api?.apiPort === "number") {
     const apiPort = window.api.apiPort
     return `http://localhost:${apiPort}/api`
   }
@@ -46,6 +47,24 @@ export function getAudioUrl(
 
 export function getSignLanguageVideoUrl(label: string, videoId: string): string {
   return `${BASE_URL}/books/${label}/sign-language-videos/${videoId}`
+}
+
+export function getSectionScreenshotUrl(
+  label: string,
+  pageId: string,
+  sectionIndex: number,
+  options?: { viewport?: "desktop" | "tablet" | "mobile"; cacheKey?: string | number | null },
+): string {
+  const base = `${BASE_URL}/books/${label}/pages/${pageId}/sections/${sectionIndex}/screenshot`
+  const params = new URLSearchParams()
+  if (options?.viewport) params.set("viewport", options.viewport)
+  if (options?.cacheKey != null) params.set("v", String(options.cacheKey))
+  const qs = params.toString()
+  return qs ? `${base}?${qs}` : base
+}
+
+export function getSourcePdfUrl(label: string): string {
+  return `${BASE_URL}/books/${label}/source-pdf`
 }
 
 export function getBookCoverUrl(label: string, cacheKey?: string): string {
@@ -157,6 +176,15 @@ export interface StageRunStatus {
   queue?: Array<{ id: string; fromStage: string; toStage: string }>
 }
 
+export interface PageSummarySection {
+  sectionId: string
+  sectionIndex: number
+  sectionType: string
+  isActivity: boolean
+  isPruned: boolean
+  textPreview: string
+}
+
 export interface PageSummaryItem {
   pageId: string
   pageNumber: number
@@ -167,7 +195,9 @@ export interface PageSummaryItem {
   wordCount: number
   sectionCount: number
   prunedSections: number[]
-  sections: Array<{ sectionId: string; sectionIndex: number }>
+  renderingVersion: number | null
+  sectioningVersion: number | null
+  sections: PageSummarySection[]
 }
 
 export interface SectionRendering {
@@ -234,8 +264,24 @@ export interface PageDetail {
     sections: SectionRendering[]
   } | null
   imageCaptioning: {
-    captions: Array<{ imageId: string; reasoning: string; caption: string }>
+    captions: Array<{ imageId: string; reasoning: string; caption: string; decorative?: boolean; source?: "ai" | "manual" }>
   } | null
+  /** Per-image metadata (dimensions + optional PDF-point placement bounds). */
+  imagesMeta: Array<{
+    imageId: string
+    width: number
+    height: number
+    bounds?: { x: number; y: number; width: number; height: number }
+  }>
+  /** Distinct fonts the extractor found on this page (positioned text only),
+   *  each with the rounded px sizes it appears at. */
+  fonts: Array<{ family: string; sizes: number[] }>
+  /** Book-level detected serif/sans category (drives the reflowable base font). */
+  fontProfile: { category: "serif" | "sans" | null; serifChars: number; sansChars: number } | null
+  /** Resolved reflowable base-font CSS chain (gated; null for fixed-layout or
+   *  the Merriweather default). The storyboard preview injects it to match the
+   *  packaged output. */
+  reflowableFontFamily: string | null
   versions: {
     imageClassification: number | null
     imageCropping: number | null
@@ -351,6 +397,31 @@ export interface TranslationEvaluationRunResponse {
   label: string
   language: string
   version?: number | null
+}
+
+export interface EasyReadEntry {
+  sourceId: string
+  easyReadId: string
+  originalText: string
+  text: string
+  pageId: string
+  sectionId: string
+  sectionIndex: number
+}
+
+export interface EasyReadSectionBlock {
+  pageId: string
+  pageNumber: number
+  sectionId: string
+  sectionIndex: number
+  sectionType: string
+  entries: EasyReadEntry[]
+}
+
+export interface EasyReadResponse {
+  blocks: EasyReadSectionBlock[]
+  generatedAt: string
+  version: number
 }
 
 // --- TTS types ---
@@ -944,6 +1015,26 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  generateQuiz: (
+    label: string,
+    apiKey: string,
+    body: {
+      pageIds: string[]
+      afterPageId: string
+      placement?: "replace" | "after"
+    },
+    providerCredentials?: StageRunProviderCredentials
+  ) =>
+    request<{ quiz: QuizItem; version: number }>(
+      `/books/${label}/quizzes/generate-one`,
+      {
+        method: "POST",
+        headers: buildApiHeaders(apiKey, providerCredentials),
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(120_000),
+      }
+    ),
+
   getGlossary: (label: string) =>
     request<GlossaryOutput | null>(`/books/${label}/glossary`),
 
@@ -983,6 +1074,21 @@ export const api = {
   getTextCatalog: (label: string) =>
     request<TextCatalogResponse | null>(`/books/${label}/text-catalog`),
 
+  getEasyRead: (label: string) =>
+    request<EasyReadResponse | null>(`/books/${label}/easy-read`),
+
+  updateEasyRead: (label: string, data: { blocks: EasyReadSectionBlock[]; generatedAt: string }) =>
+    request<{ version: number }>(`/books/${label}/easy-read`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  regenerateEasyRead: (label: string, apiKey: string) =>
+    request<EasyReadResponse>(`/books/${label}/easy-read/regenerate`, {
+      method: "POST",
+      headers: { "X-OpenAI-Key": apiKey },
+    }),
+
   updateTranslation: (label: string, language: string, data: unknown) =>
     request<{ version: number }>(`/books/${label}/text-catalog-translation/${language}`, {
       method: "PUT",
@@ -1017,7 +1123,13 @@ export const api = {
     ),
 
   getStepStatus: (label: string) =>
-    request<{ stages: Record<string, string>; steps: Record<string, string>; error: string | null; stepErrors: Record<string, string> | null }>(`/books/${label}/step-status`),
+    request<{
+      stages: Record<string, string>
+      steps: Record<string, string>
+      error: string | null
+      stepErrors: Record<string, string> | null
+      stepMessages: Record<string, string> | null
+    }>(`/books/${label}/step-status`),
 
   getTTS: (label: string) =>
     request<TTSResponse>(`/books/${label}/tts`),
@@ -1090,7 +1202,7 @@ export const api = {
     }),
 
   packageAdt: (label: string) =>
-    request<{ status: string; label: string; taskId?: string }>(
+    request<{ status: string; label: string; taskId?: string; version?: string }>(
       `/books/${label}/package-adt`,
       { method: "POST" }
     ),
@@ -1099,7 +1211,7 @@ export const api = {
     request<{ tasks: TaskInfoResponse[] }>(`/books/${label}/tasks`),
 
   getPackageAdtStatus: (label: string) =>
-    request<{ label: string; hasAdt: boolean }>(
+    request<{ label: string; hasAdt: boolean; version?: string }>(
       `/books/${label}/package-adt/status`
     ),
 
@@ -1183,7 +1295,7 @@ export const api = {
 
   prepareExport: (
     label: string,
-    format: "project" | "webpub" | "scorm" | "adt" = "project",
+    format: ExportFormat = "project",
     features?: { glossary?: boolean; readAloud?: boolean; quizzes?: boolean; signLanguage?: boolean; languages?: string[] },
     defaultSettings?: {
       dockLayout?: { width?: "compact" | "full"; position?: "top" | "bottom"; align?: "center" | "spread" }
@@ -1242,6 +1354,26 @@ export const api = {
     }
     const buf = await res.arrayBuffer()
     return new Blob([buf], { type: "application/zip" })
+  },
+
+  exportEpub: async (label: string): Promise<Blob | null> => {
+    if (!isDesktop()) {
+      triggerDirectDownload(`${BASE_URL}/books/${label}/export-epub`)
+      return null
+    }
+    const url = `${BASE_URL}/books/${label}/export-epub`
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/epub+zip" },
+      mode: "cors",
+      signal: AbortSignal.timeout(300_000),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ error: res.statusText }))
+      throw new Error(body.error ?? `EPUB export failed: ${res.status}`)
+    }
+    const buf = await res.arrayBuffer()
+    return new Blob([buf], { type: "application/epub+zip" })
   },
 
   exportScorm: async (label: string): Promise<Blob | null> => {

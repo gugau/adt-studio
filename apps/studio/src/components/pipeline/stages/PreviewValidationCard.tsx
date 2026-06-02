@@ -197,6 +197,11 @@ export function PreviewValidationCard({
     queryFn: () => api.getTTS(label),
     enabled: !!label,
   })
+  const easyRead = useQuery({
+    queryKey: ["books", label, "easy-read"],
+    queryFn: () => api.getEasyRead(label),
+    enabled: !!label,
+  })
   const saveSessionMutation = useSaveReviewerValidationSession(label)
   const saveRecordMutation = useSaveReviewerPageValidationRecord(label)
 
@@ -375,7 +380,7 @@ export function PreviewValidationCard({
   const ttsPending = speechStageDone && tts.isLoading
   const translationAvailable = hasLanguageEntries(textCatalog.data?.translations, sessionLanguage)
   const translationPending = translateStageDone && textCatalog.isLoading
-  const easyReadAvailable = false
+  const easyReadAvailable = (easyRead.data?.blocks ?? []).some((block) => block.entries.length > 0)
 
   const resolvedResults = useMemo(() => {
     const map = new Map<string, DerivedCriterionStatus>()
@@ -837,7 +842,7 @@ export function PreviewValidationCard({
                       </div>
                     </div>
                     <Badge variant={needsChanges > 0 ? "destructive" : "outline"} className="text-[11px]">
-                      {needsChanges > 0 ? `${needsChanges} flagged` : `${section.criteria.length - reviewed} pending`}
+                      {needsChanges > 0 ? t`${needsChanges} flagged` : t`${section.criteria.length - reviewed} pending`}
                     </Badge>
                   </summary>
 

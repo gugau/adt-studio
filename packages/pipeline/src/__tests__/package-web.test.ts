@@ -9,6 +9,7 @@ import {
   packageAdtWeb,
   packageWebpub,
   renderPageHtml,
+  resolveReflowableFontChain,
   renderQuizHtml,
   rewriteImageUrls,
   convertLatexToMathml,
@@ -34,7 +35,13 @@ function createMockStorage(
     appendLlmLog: () => {},
     getSignLanguageVideos: () => [],
     getSignLanguageVideoPath: () => null,
-    getNodeVersionFingerprint: () => ({}),
+    getNodeVersionFingerprint: (excludeNodes: string[] = []) =>
+      Object.entries(nodeData)
+        .filter(([node]) => !excludeNodes.includes(node))
+        .flatMap(([node, items]) =>
+          Object.keys(items).map((itemId) => ({ node, itemId, version: 1 })),
+        )
+        .sort((a, b) => a.node.localeCompare(b.node) || a.itemId.localeCompare(b.itemId)),
     close: () => {},
   }
 }
@@ -108,6 +115,67 @@ describe("renderPageHtml", () => {
     expect(html).not.toContain('rel="preload"')
     expect(html).not.toContain("Merriweather-VariableFont.woff2")
     expect(html).toContain('href="./assets/fonts.css"')
+  })
+
+  it("injects a Google Fonts stylesheet for fonts the page actually uses", () => {
+    const html = renderPageHtml({
+      content: `<p><span style="font-family:'Mouse Memoirs',Merriweather,serif">Hi</span></p>`,
+      language: "en",
+      sectionId: "pg001",
+      pageTitle: "Test",
+      pageIndex: 1,
+      hasMath: false,
+      bundleVersion: "1",
+    })
+
+    expect(html).toContain("fonts.googleapis.com/css2?family=Mouse+Memoirs")
+    expect(html).toContain('rel="preconnect"')
+  })
+
+  it("injects a reflowable base-font override and loads it from Google", () => {
+    const html = renderPageHtml({
+      content: "<p>Hello</p>",
+      language: "en",
+      sectionId: "pg001",
+      pageTitle: "Test",
+      pageIndex: 1,
+      hasMath: false,
+      bundleVersion: "1",
+      bodyFontFamily: "'Atkinson Hyperlegible','Merriweather',sans-serif",
+    })
+
+    // Base-font override style is present and targets body + block elements.
+    expect(html).toContain("'Atkinson Hyperlegible','Merriweather',sans-serif")
+    expect(html).toMatch(/<style>[\s\S]*body, p, h1[\s\S]*font-family:/)
+    // The body family is also loaded from Google Fonts.
+    expect(html).toContain("fonts.googleapis.com/css2?family=Atkinson+Hyperlegible")
+  })
+
+  it("omits the base-font override when bodyFontFamily is unset", () => {
+    const html = renderPageHtml({
+      content: "<p>Hello</p>",
+      language: "en",
+      sectionId: "pg001",
+      pageTitle: "Test",
+      pageIndex: 1,
+      hasMath: false,
+      bundleVersion: "1",
+    })
+    expect(html).not.toContain("Atkinson Hyperlegible")
+  })
+
+  it("does not inject Google Fonts links when no registered font is used", () => {
+    const html = renderPageHtml({
+      content: `<p><span style="font-family:Palatino,Merriweather,serif">Hi</span></p>`,
+      language: "en",
+      sectionId: "pg001",
+      pageTitle: "Test",
+      pageIndex: 1,
+      hasMath: false,
+      bundleVersion: "1",
+    })
+
+    expect(html).not.toContain("fonts.googleapis.com")
   })
 
   it("uses offline/SCORM scripts instead of type=module in normal mode", () => {
@@ -206,6 +274,35 @@ describe("renderPageHtml", () => {
 
     expect((html.match(/<h1\b/g) ?? [])).toHaveLength(1)
     expect(html).not.toContain('id="page-heading"')
+  })
+})
+
+describe("resolveReflowableFontChain", () => {
+  const fakeStorage = (category: string | null) =>
+    ({
+      getLatestNodeData: (node: string) =>
+        node === "font-profile" ? { data: { category }, version: 1 } : null,
+    }) as unknown as Storage
+
+  it("returns undefined for fixed-layout books (keep original fonts)", () => {
+    expect(resolveReflowableFontChain(fakeStorage("sans"), { fixedLayout: true })).toBeUndefined()
+  })
+
+  it("returns undefined when the resolved font is the Merriweather default", () => {
+    expect(resolveReflowableFontChain(fakeStorage("serif"), {})).toBeUndefined()
+    expect(resolveReflowableFontChain(fakeStorage(null), {})).toBeUndefined()
+  })
+
+  it("returns the chain for a sans-serif book", () => {
+    expect(resolveReflowableFontChain(fakeStorage("sans"), {})).toBe(
+      "'Atkinson Hyperlegible','Merriweather',sans-serif",
+    )
+  })
+
+  it("honors an explicit override", () => {
+    expect(resolveReflowableFontChain(fakeStorage("serif"), { reflowableFont: "lora" })).toBe(
+      "Lora,'Merriweather',serif",
+    )
   })
 })
 
@@ -373,6 +470,96 @@ describe("packageAdtWeb", () => {
     const manifest = fs.readFileSync(manifestPath, "utf-8")
     expect(manifest).toContain("ADL SCORM")
     expect(manifest).toContain("index.html")
+  })
+
+  it("packages persisted Easy Read entries for the source language", async () => {
+    const bookDir = path.join(tmpDir, "book")
+    const webAssetsDir = path.join(tmpDir, "assets-web")
+    fs.mkdirSync(bookDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+
+    const pages: PageData[] = [{ pageId: "pg001", pageNumber: 1, text: "Page one" }]
+    const storage = createMockStorage(pages, {
+      "web-rendering": {
+        pg001: {
+          sections: [
+            {
+              sectionIndex: 0,
+              sectionType: "content",
+              reasoning: "ok",
+              html: '<p data-id="pg001_tx001">Original text</p>',
+            },
+          ],
+        },
+      },
+      "page-sectioning": {
+        pg001: {
+          reasoning: "ok",
+          sections: [
+            {
+              sectionId: "pg001_sec001",
+              sectionType: "content",
+              nodes: [],
+              backgroundColor: "#fff",
+              textColor: "#000",
+              pageNumber: 1,
+              isPruned: false,
+            },
+          ],
+        },
+      },
+      "text-catalog": {
+        book: {
+          entries: [{ id: "pg001_tx001", text: "Original text", pageId: "pg001" }],
+          generatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      },
+      "easy-read": {
+        book: {
+          generatedAt: "2026-01-02T00:00:00.000Z",
+          blocks: [
+            {
+              pageId: "pg001",
+              pageNumber: 1,
+              sectionId: "pg001_sec001",
+              sectionIndex: 0,
+              sectionType: "content",
+              entries: [
+                {
+                  sourceId: "pg001_tx001",
+                  easyReadId: "pg001_tx001_easy_read",
+                  originalText: "Original text",
+                  text: "Easy text",
+                  pageId: "pg001",
+                  sectionId: "pg001_sec001",
+                  sectionIndex: 0,
+                },
+              ],
+            },
+          ],
+        },
+      },
+    })
+
+    await packageAdtWeb(storage, {
+      bookDir,
+      label: "book",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Book Title",
+      webAssetsDir,
+    })
+
+    const textsJson = JSON.parse(
+      fs.readFileSync(path.join(bookDir, "adt", "content", "i18n", "en", "texts.json"), "utf-8"),
+    ) as Record<string, string>
+    expect(textsJson.pg001_tx001).toBe("Original text")
+    expect(textsJson.pg001_tx001_easy_read).toBe("Easy text")
+
+    const configJson = JSON.parse(
+      fs.readFileSync(path.join(bookDir, "adt", "assets", "config.json"), "utf-8"),
+    ) as { features: { easyRead: boolean } }
+    expect(configJson.features.easyRead).toBe(true)
   })
 
   it("inserts quiz pages even when the anchor page has no rendered sections", async () => {
@@ -1475,6 +1662,18 @@ describe("rewriteImageUrls", () => {
     expect(out).toContain('data-id="logo2" src="images/logo2.png" style="max-width: 100%; height: auto;" alt=""')
   })
 
+  it("marks decorative images with empty alt, role and aria-hidden, ignoring any caption", () => {
+    const html = `<img data-id="deco1" src="/api/books/mybook/images/deco1">`
+    const imageMap = new Map([["deco1", "deco1.png"]])
+    const altMap = new Map([["deco1", "A caption that should be ignored"]])
+    const decorative = new Set(["deco1"])
+    const { html: out } = rewriteImageUrls(html, "mybook", imageMap, altMap, decorative)
+    expect(out).toContain('alt=""')
+    expect(out).toContain('role="presentation"')
+    expect(out).toContain('aria-hidden="true"')
+    expect(out).not.toContain("A caption that should be ignored")
+  })
+
   it("does not include unreferenced images in referencedImages", () => {
     const html = `<img src="/api/books/mybook/images/unknown">`
     const imageMap = new Map([["abc123", "photo.jpg"]])
@@ -1818,6 +2017,52 @@ describe("packageWebpub", () => {
     const secondHash = computePackagingInputHash(baseOptions)
 
     expect('console.log("alpha")\n'.length).toBe('console.log("omega")\n'.length)
+    expect(firstHash).not.toBe(secondHash)
+  })
+
+  it("changes the packaging hash when node data changes without changing versions", () => {
+    const bookDir = path.join(tmpDir, "hash-book-data")
+    const webAssetsDir = path.join(tmpDir, "hash-assets-data")
+    fs.mkdirSync(bookDir, { recursive: true })
+    createWebAssets(webAssetsDir)
+
+    const nodeData = {
+      "easy-read": {
+        book: {
+          blocks: [
+            {
+              entries: [
+                { easyReadId: "tx001_easy_read", text: "Easy Read text one" },
+              ],
+            },
+          ],
+        },
+      },
+    }
+    const storage = createMockStorage([], nodeData)
+    const baseOptions = {
+      storage,
+      bookDir,
+      label: "hash-book-data",
+      language: "en",
+      outputLanguages: ["en"],
+      title: "Hash Book",
+      webAssetsDir,
+      config: {},
+    }
+
+    const firstHash = computePackagingInputHash(baseOptions)
+    nodeData["easy-read"].book = {
+      blocks: [
+        {
+          entries: [
+            { easyReadId: "tx001_easy_read", text: "Easy Read text two" },
+          ],
+        },
+      ],
+    }
+    const secondHash = computePackagingInputHash(baseOptions)
+
     expect(firstHash).not.toBe(secondHash)
   })
 })

@@ -37,6 +37,20 @@ export function buildConfigOverrides(values: WizardFormValues): Record<string, u
       max_side: values.imageFilterMaxSide,
       cropping: values.imageCropping,
       segmentation: values.imageSegmentation,
+      // Fixed-layout treats every extracted image as positioned page content
+      // (speech bubbles, decorative strips, captions all matter visually).
+      // Override the size / complexity / meaningfulness filters so nothing is
+      // pruned at extract time except the full-page render itself (handled
+      // separately by image-filtering's `_page` rule). The book config is
+      // honest about what will run; users can flip any of these back on in
+      // Extract Settings. `max_side: undefined` makes js-yaml omit the key
+      // entirely, so the pipeline's max-side check is skipped.
+      ...(values.renderStrategy === "fixed_layout" && {
+        min_side: 0,
+        max_side: undefined,
+        min_stddev: 0,
+        meaningfulness: false,
+      }),
     },
   }
 

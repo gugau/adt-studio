@@ -14,6 +14,56 @@ import {
   translationsAtom,
   videoFilesAtom,
 } from "@/features/language/state/language.atoms"
+import { applyPlainTextWithLineBreaks } from "./text-formatting"
+import { rebuildSegmentedInnerHtml } from "@/shared/lib/fl-segments"
+
+const EASY_READ_FORMATTED_ATTR = "data-easy-read-formatted"
+const EASY_READ_PREVIOUS_STYLE_ATTRS = {
+  whiteSpace: "data-easy-read-prev-white-space",
+  overflowWrap: "data-easy-read-prev-overflow-wrap",
+  wordBreak: "data-easy-read-prev-word-break",
+  maxWidth: "data-easy-read-prev-max-width",
+  display: "data-easy-read-prev-display",
+  marginBlockEnd: "data-easy-read-prev-margin-block-end",
+} as const
+
+function setEasyReadTextFormatting(element: HTMLElement, enabled: boolean): void {
+  if (enabled) {
+    if (!element.hasAttribute(EASY_READ_FORMATTED_ATTR)) {
+      element.setAttribute(EASY_READ_FORMATTED_ATTR, "true")
+      element.setAttribute(EASY_READ_PREVIOUS_STYLE_ATTRS.whiteSpace, element.style.whiteSpace)
+      element.setAttribute(EASY_READ_PREVIOUS_STYLE_ATTRS.overflowWrap, element.style.overflowWrap)
+      element.setAttribute(EASY_READ_PREVIOUS_STYLE_ATTRS.wordBreak, element.style.wordBreak)
+      element.setAttribute(EASY_READ_PREVIOUS_STYLE_ATTRS.maxWidth, element.style.maxWidth)
+      element.setAttribute(EASY_READ_PREVIOUS_STYLE_ATTRS.display, element.style.display)
+      element.setAttribute(EASY_READ_PREVIOUS_STYLE_ATTRS.marginBlockEnd, element.style.marginBlockEnd)
+    }
+    element.style.whiteSpace = "pre-line"
+    element.style.overflowWrap = "anywhere"
+    element.style.wordBreak = "normal"
+    element.style.maxWidth = "100%"
+    if (element.tagName.toLowerCase() === "span" && element.closest("p")) {
+      element.style.display = "block"
+      element.style.marginBlockEnd = "0.85em"
+    }
+    return
+  }
+
+  if (element.hasAttribute(EASY_READ_FORMATTED_ATTR)) {
+    element.removeAttribute(EASY_READ_FORMATTED_ATTR)
+    element.style.whiteSpace = element.getAttribute(EASY_READ_PREVIOUS_STYLE_ATTRS.whiteSpace) ?? ""
+    element.style.overflowWrap =
+      element.getAttribute(EASY_READ_PREVIOUS_STYLE_ATTRS.overflowWrap) ?? ""
+    element.style.wordBreak = element.getAttribute(EASY_READ_PREVIOUS_STYLE_ATTRS.wordBreak) ?? ""
+    element.style.maxWidth = element.getAttribute(EASY_READ_PREVIOUS_STYLE_ATTRS.maxWidth) ?? ""
+    element.style.display = element.getAttribute(EASY_READ_PREVIOUS_STYLE_ATTRS.display) ?? ""
+    element.style.marginBlockEnd =
+      element.getAttribute(EASY_READ_PREVIOUS_STYLE_ATTRS.marginBlockEnd) ?? ""
+    Object.values(EASY_READ_PREVIOUS_STYLE_ATTRS).forEach((attr) => {
+      element.removeAttribute(attr)
+    })
+  }
+}
 
 async function safeJsonFetch<T = unknown>(
   url: string,
@@ -143,19 +193,37 @@ export function applyTranslationsToDOM(
     if (text === undefined) continue
 
     const elements = document.querySelectorAll(`[data-id="${cssEscape(key)}"]`)
+    const isEasyRead = translationKey.endsWith("_easy_read")
     const renderedHtml = text.replace(/\n/g, "<br>")
     elements.forEach((el) => {
       if (el.tagName === "IMG") {
         el.setAttribute("alt", text)
-      } else {
-        if ((el as HTMLElement).hasAttribute("data-tts-original-html")) {
-          ;(el as HTMLElement).setAttribute(
-            "data-tts-original-html",
-            renderedHtml,
-          )
-        }
-        ;(el as HTMLElement).innerHTML = renderedHtml
+        return
       }
+      const htmlElement = el as HTMLElement
+      // Easy Read is a new content mode: toggle its inline formatting on
+      // every element (the helper restores prior styles when disabled, so
+      // this is a no-op for the normal path) before swapping text.
+      setEasyReadTextFormatting(htmlElement, isEasyRead)
+      if (isEasyRead) {
+        // Easy Read replaces the styled run tree with plain wrapped text, so
+        // the cached TTS markup no longer applies — drop it.
+        htmlElement.removeAttribute("data-tts-original-html")
+        applyPlainTextWithLineBreaks(htmlElement, text)
+        return
+      }
+      // Fixed-layout paragraphs carry per-run styling on `data-segments`.
+      // Rebuild the styled-span tree from that JSON so font-family, color,
+      // size, weight, and stroke survive the text swap — straight innerHTML
+      // assignment would flatten them.
+      const segmentsAttr = htmlElement.getAttribute("data-segments")
+      const html = segmentsAttr
+        ? rebuildSegmentedInnerHtml(segmentsAttr, renderedHtml)
+        : renderedHtml
+      if (htmlElement.hasAttribute("data-tts-original-html")) {
+        htmlElement.setAttribute("data-tts-original-html", html)
+      }
+      htmlElement.innerHTML = html
     })
 
     const placeholders = document.querySelectorAll(
@@ -173,6 +241,17 @@ export function applyTranslationsToDOM(
   if (titleMeta) {
     const id = titleMeta.getAttribute("content")
     if (id && translations[id]) document.title = translations[id]
+  }
+
+  // Re-run fixed-layout auto-fit after rebuilding segment spans — the new
+  // elements have no `data-adt-fs` cache and the translated content has a
+  // different length than the source, so an earlier auto-fit pass against
+  // the original spans no longer reflects the rendered DOM. Double-rAF so
+  // we measure after the browser has laid out the new innerHTML.
+  const runAutoFit = (window as Window & { __adtRunAutoFit?: () => void })
+    .__adtRunAutoFit
+  if (typeof runAutoFit === "function") {
+    requestAnimationFrame(() => requestAnimationFrame(() => runAutoFit()))
   }
 }
 

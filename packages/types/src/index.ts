@@ -10,6 +10,30 @@ export {
 } from "./db.js"
 
 export {
+  type GoogleFontEntry,
+  GOOGLE_FONTS,
+  normalizeFontKey,
+  resolveGoogleFont,
+  cssQuoteFamily,
+  primaryFontFamily,
+  googleFontsCss2Url,
+  googleFontsReferencedIn,
+} from "./google-fonts.js"
+
+export {
+  type FontCategory,
+  type DetectedFontCategory,
+  type ReflowableFont,
+  type ReflowableFontSetting,
+  REFLOWABLE_FONTS,
+  REFLOWABLE_FONT_SETTINGS,
+  resolveReflowableFont,
+  reflowableFontFamilyChain,
+  reflowableFontChain,
+  classifyFontCategoryByName,
+} from "./reflowable-fonts.js"
+
+export {
   StepName,
   StageName,
   type StepDef,
@@ -52,6 +76,7 @@ export {
   DEFAULT_LLM_MAX_RETRIES,
   StepConfig,
   QuizGenerationConfig,
+  EasyReadConfig,
   PageSectioningConfig,
   RenderType,
   VisualRefinementStrategyConfig,
@@ -67,6 +92,14 @@ export {
   PageSectioningOutput,
   buildPageSectioningLLMSchema,
   buildPageSectioningRefinementLLMSchema,
+  // Out-of-band placement sidecar — PDF coordinates, image clip/blend/opacity,
+  // viewport dimensions. Carried alongside the semantic tree on
+  // `PageSectioningSection.placement` so any renderer can use it.
+  TextPosition,
+  SectionTextSegment,
+  ImagePartBounds,
+  SectionViewport,
+  NodePlacement,
 } from "./page-sectioning.js"
 
 export {
@@ -154,6 +187,12 @@ export {
 } from "./text-catalog.js"
 
 export {
+  EasyReadEntry,
+  EasyReadSectionBlock,
+  EasyReadOutput,
+} from "./easy-read.js"
+
+export {
   TTSProviderConfig,
   SpeechConfig,
   isSpeechWordHighlightingEnabled,
@@ -189,6 +228,17 @@ export {
   ReviewerValidationConfig,
   type ReviewerValidationCatalog,
 } from "./reviewer-validation-config.js"
+
+export {
+  PositionedParagraph,
+  PositionedTextOutput,
+  ImageBounds,
+  DrawItem,
+  DrawItemImage,
+  DrawItemParagraph,
+  TextSegment,
+  TextBlockBounds,
+} from "./positioned-text.js"
 
 export {
   ReviewerValidationStatus,

@@ -1,14 +1,4 @@
 {
-  "src/api/client.test.ts": {
-    "lingui/no-unlocalized-strings": {
-      "count": 17
-    }
-  },
-  "src/components/accessibility/AccessibilityCurrentPagePanel.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 5
-    }
-  },
   "src/components/debug/ConfigTab.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 15
@@ -19,19 +9,9 @@
       "count": 2
     }
   },
-  "src/components/debug/DebugTabsNav.tsx": {
-    "lingui/no-unlocalized-strings": {
-      "count": 4
-    }
-  },
-  "src/components/pipeline/stage-config.test.ts": {
-    "lingui/no-unlocalized-strings": {
-      "count": 16
-    }
-  },
   "src/components/pipeline/stage-config.ts": {
     "lingui/no-unlocalized-strings": {
-      "count": 27
+      "count": 29
     }
   },
   "src/components/pipeline/stages/PreviewValidationCard.tsx": {
@@ -41,7 +21,7 @@
   },
   "src/components/pipeline/stages/PreviewView.tsx": {
     "lingui/no-unlocalized-strings": {
-      "count": 7
+      "count": 3
     }
   },
   "src/components/pipeline/stages/storyboard/components/BookPreviewFrame.tsx": {
@@ -59,21 +39,6 @@
       "count": 1
     }
   },
-  "src/hooks/run-state.test.ts": {
-    "lingui/no-unlocalized-strings": {
-      "count": 35
-    }
-  },
-  "src/lib/label-validation.test.ts": {
-    "lingui/no-unlocalized-strings": {
-      "count": 29
-    }
-  },
-  "src/lib/render-strategy.test.ts": {
-    "lingui/no-unlocalized-strings": {
-      "count": 36
-    }
-  },
   "src/routes/books.$label.debug.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 1
@@ -82,11 +47,6 @@
   "src/routes/books.$label.tsx": {
     "lingui/no-unlocalized-strings": {
       "count": 2
-    }
-  },
-  "src/vite-env.d.ts": {
-    "lingui/no-unlocalized-strings": {
-      "count": 1
     }
   }
 }

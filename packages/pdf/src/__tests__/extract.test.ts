@@ -518,6 +518,228 @@ function createPdfWithSingleArrayDctFilterImage(): Buffer {
   return Buffer.from(doc.saveToBuffer("").asUint8Array());
 }
 
+/**
+ * Build a PDF with a CMYK JPEG image. Mirrors what print-oriented PDFs commonly
+ * produce — the image data is a single-filter DCTDecode stream with /ColorSpace
+ * /DeviceCMYK.
+ */
+function createPdfWithCmykJpegImage(): Buffer {
+  const doc = new mupdf.PDFDocument();
+
+  // Create a CMYK pixmap and encode it as a CMYK JPEG.
+  const cmykPixmap = new mupdf.Pixmap(mupdf.ColorSpace.DeviceCMYK, [0, 0, 4, 4], false);
+  const cmykJpegBytes = Buffer.from(cmykPixmap.asJPEG(90, false));
+
+  const imgDict = doc.newDictionary();
+  imgDict.put("Type", doc.newName("XObject"));
+  imgDict.put("Subtype", doc.newName("Image"));
+  imgDict.put("Width", 4);
+  imgDict.put("Height", 4);
+  imgDict.put("BitsPerComponent", 8);
+  imgDict.put("ColorSpace", doc.newName("DeviceCMYK"));
+  imgDict.put("Filter", doc.newName("DCTDecode"));
+
+  const imgObj = doc.addRawStream(cmykJpegBytes, imgDict);
+
+  const resources = doc.newDictionary();
+  const xobjects = doc.newDictionary();
+  xobjects.put("Im1", imgObj);
+  resources.put("XObject", xobjects);
+
+  const pageContent = "q 100 0 0 100 50 650 cm /Im1 Do Q";
+  const pageObj = doc.addPage([0, 0, 612, 792], 0, resources, pageContent);
+  doc.insertPage(-1, pageObj);
+
+  return Buffer.from(doc.saveToBuffer("").asUint8Array());
+}
+
+/**
+ * Build a PDF with an RGB image that has an attached /SMask carrying alpha.
+ * Mirrors the typical output of design tools that flatten transparency to a
+ * base image plus a soft mask.
+ */
+function createPdfWithSoftMaskImage(): Buffer {
+  const doc = new mupdf.PDFDocument();
+  const w = 4;
+  const h = 4;
+
+  // Base RGB image — 4x4, fill with bright red so the alpha effect is obvious.
+  const baseBytes = Buffer.alloc(w * h * 3);
+  for (let i = 0; i < w * h; i++) {
+    baseBytes[i * 3 + 0] = 255;
+    baseBytes[i * 3 + 1] = 0;
+    baseBytes[i * 3 + 2] = 0;
+  }
+
+  // SMask — gray; left half opaque (255), right half transparent (0).
+  const maskBytes = Buffer.alloc(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      maskBytes[y * w + x] = x < w / 2 ? 255 : 0;
+    }
+  }
+
+  const maskDict = doc.newDictionary();
+  maskDict.put("Type", doc.newName("XObject"));
+  maskDict.put("Subtype", doc.newName("Image"));
+  maskDict.put("Width", w);
+  maskDict.put("Height", h);
+  maskDict.put("BitsPerComponent", 8);
+  maskDict.put("ColorSpace", doc.newName("DeviceGray"));
+  const maskObj = doc.addStream(maskBytes, maskDict);
+
+  const imgDict = doc.newDictionary();
+  imgDict.put("Type", doc.newName("XObject"));
+  imgDict.put("Subtype", doc.newName("Image"));
+  imgDict.put("Width", w);
+  imgDict.put("Height", h);
+  imgDict.put("BitsPerComponent", 8);
+  imgDict.put("ColorSpace", doc.newName("DeviceRGB"));
+  imgDict.put("SMask", maskObj);
+  const imgObj = doc.addStream(baseBytes, imgDict);
+
+  const resources = doc.newDictionary();
+  const xobjects = doc.newDictionary();
+  xobjects.put("Im1", imgObj);
+  resources.put("XObject", xobjects);
+
+  const pageContent = "q 100 0 0 100 50 650 cm /Im1 Do Q";
+  const pageObj = doc.addPage([0, 0, 612, 792], 0, resources, pageContent);
+  doc.insertPage(-1, pageObj);
+
+  return Buffer.from(doc.saveToBuffer("").asUint8Array());
+}
+
+/**
+ * Build a PDF whose SMask carries a /Matte entry. The base RGB bytes are stored
+ * pre-blended with the matte color (white) at 50% alpha — i.e. ~(127, 127, 127)
+ * — so that un-matting must recover the original color (~black).
+ */
+function createPdfWithMattedSoftMaskImage(): Buffer {
+  const doc = new mupdf.PDFDocument();
+  const w = 4;
+  const h = 4;
+
+  // Pre-blended pixels: original black (0) onto white matte (255) at a=0.5.
+  const baseBytes = Buffer.alloc(w * h * 3);
+  for (let i = 0; i < w * h; i++) {
+    baseBytes[i * 3 + 0] = 127;
+    baseBytes[i * 3 + 1] = 127;
+    baseBytes[i * 3 + 2] = 127;
+  }
+
+  // Uniform 50% alpha (128).
+  const maskBytes = Buffer.alloc(w * h);
+  for (let i = 0; i < w * h; i++) maskBytes[i] = 128;
+
+  const maskDict = doc.newDictionary();
+  maskDict.put("Type", doc.newName("XObject"));
+  maskDict.put("Subtype", doc.newName("Image"));
+  maskDict.put("Width", w);
+  maskDict.put("Height", h);
+  maskDict.put("BitsPerComponent", 8);
+  maskDict.put("ColorSpace", doc.newName("DeviceGray"));
+  const matte = doc.newArray();
+  matte.push(1);
+  matte.push(1);
+  matte.push(1);
+  maskDict.put("Matte", matte);
+  const maskObj = doc.addStream(maskBytes, maskDict);
+
+  const imgDict = doc.newDictionary();
+  imgDict.put("Type", doc.newName("XObject"));
+  imgDict.put("Subtype", doc.newName("Image"));
+  imgDict.put("Width", w);
+  imgDict.put("Height", h);
+  imgDict.put("BitsPerComponent", 8);
+  imgDict.put("ColorSpace", doc.newName("DeviceRGB"));
+  imgDict.put("SMask", maskObj);
+  const imgObj = doc.addStream(baseBytes, imgDict);
+
+  const resources = doc.newDictionary();
+  const xobjects = doc.newDictionary();
+  xobjects.put("Im1", imgObj);
+  resources.put("XObject", xobjects);
+
+  const pageContent = "q 100 0 0 100 50 650 cm /Im1 Do Q";
+  const pageObj = doc.addPage([0, 0, 612, 792], 0, resources, pageContent);
+  doc.insertPage(-1, pageObj);
+
+  return Buffer.from(doc.saveToBuffer("").asUint8Array());
+}
+
+describe("extractPdf images with soft masks", () => {
+  it("preserves alpha from /SMask instead of producing an opaque image on a black background", async () => {
+    const pdfBuffer = createPdfWithSoftMaskImage();
+    const result = await extractPdf({ pdfBuffer });
+
+    const rasterImages = result.pages[0].images.filter(
+      (img) => !img.imageId.endsWith("_page")
+    );
+    expect(rasterImages).toHaveLength(1);
+    const img = rasterImages[0];
+    expect(img.format).toBe("png");
+
+    // Decode and verify: left half is opaque red, right half is transparent.
+    const { data, width, height } = decodePng(img.buffer);
+    expect(width).toBe(4);
+    expect(height).toBe(4);
+
+    // The PNG must have an alpha channel.
+    expect(data.length).toBe(width * height * 4);
+
+    // Left column: opaque red.
+    expect(data[0]).toBe(255); // R
+    expect(data[1]).toBe(0); // G
+    expect(data[2]).toBe(0); // B
+    expect(data[3]).toBe(255); // A
+
+    // Right column: alpha 0 (the actual color underneath is irrelevant —
+    // the failure mode being tested is opaque pixels with no alpha).
+    const lastPixelOffset = (4 * 4 - 1) * 4;
+    expect(data[lastPixelOffset + 3]).toBe(0);
+  });
+
+  it("un-mattes base colors when /SMask carries a /Matte entry", async () => {
+    const pdfBuffer = createPdfWithMattedSoftMaskImage();
+    const result = await extractPdf({ pdfBuffer });
+
+    const rasterImages = result.pages[0].images.filter(
+      (img) => !img.imageId.endsWith("_page")
+    );
+    expect(rasterImages).toHaveLength(1);
+    const { data } = decodePng(rasterImages[0].buffer);
+
+    // Stored pixels are gray (~127) because they were pre-blended with a
+    // white matte at 50% alpha. After un-matting we must recover near-black;
+    // without un-matting the channels would stay around 127.
+    expect(data[0]).toBeLessThan(10);
+    expect(data[1]).toBeLessThan(10);
+    expect(data[2]).toBeLessThan(10);
+    expect(data[3]).toBe(128);
+  });
+});
+
+describe("extractPdf CMYK images", () => {
+  it("converts CMYK JPEGs to RGB so browsers render them correctly", async () => {
+    const pdfBuffer = createPdfWithCmykJpegImage();
+    const result = await extractPdf({ pdfBuffer });
+
+    expect(result.pages).toHaveLength(1);
+    const rasterImages = result.pages[0].images.filter(
+      (img) => !img.imageId.endsWith("_page")
+    );
+    expect(rasterImages).toHaveLength(1);
+    const img = rasterImages[0];
+
+    expect(img.format).toBe("jpeg");
+    // Re-decode the extracted JPEG and confirm it is no longer CMYK.
+    const reloaded = new mupdf.Image(img.buffer);
+    const cs = reloaded.getColorSpace();
+    expect(cs?.getType()).toBe("RGB");
+  });
+});
+
 describe("extractPdf chained image filters", () => {
   it("extracts a valid image from a [FlateDecode, DCTDecode] filter chain", async () => {
     const pdfBuffer = createPdfWithChainedFilterImage();
@@ -558,5 +780,38 @@ describe("extractPdf chained image filters", () => {
     expect(img.buffer[0]).toBe(0xff);
     expect(img.buffer[1]).toBe(0xd8);
     expect(img.buffer[2]).toBe(0xff);
+  });
+
+  it("takes the raw fast path for RGB JPEGs (no doc.loadImage decode)", async () => {
+    // A single-filter DCTDecode RGB JPEG with no SMask must be copied straight
+    // from the stream — the colorspace is read from the PDF dictionary, so
+    // doc.loadImage() (which decodes) must never run for it. This guards the
+    // #442 regression where loadImage was called for every image.
+    const pdfBuffer = createPdfWithSingleArrayDctFilterImage();
+
+    // Patch whichever prototype owns loadImage to count decode calls.
+    const protos = [mupdf.PDFDocument?.prototype, mupdf.Document?.prototype].filter(
+      (p): p is { loadImage: (...a: unknown[]) => unknown } =>
+        !!p && Object.prototype.hasOwnProperty.call(p, "loadImage")
+    );
+    const originals = protos.map((p) => p.loadImage);
+    let loadImageCalls = 0;
+    protos.forEach((p, i) => {
+      p.loadImage = function (this: unknown, ...a: unknown[]) {
+        loadImageCalls++;
+        return originals[i].apply(this, a);
+      };
+    });
+
+    try {
+      const result = await extractPdf({ pdfBuffer });
+      const img = result.pages[0].images.find((i) => !i.imageId.endsWith("_page"));
+      expect(img?.format).toBe("jpeg");
+      expect(loadImageCalls).toBe(0);
+    } finally {
+      protos.forEach((p, i) => {
+        p.loadImage = originals[i];
+      });
+    }
   });
 });
