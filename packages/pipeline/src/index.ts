@@ -150,6 +150,18 @@ export {
 } from "./quiz-generation.js"
 export { buildTextCatalog } from "./text-catalog.js"
 export {
+  buildEasyReadConfig,
+  buildEasyReadSourceBlocks,
+  buildPageEasyReadBlocks,
+  createEmptyEasyReadOutput,
+  generateEasyRead,
+  flattenEasyReadEntries,
+  DEFAULT_EASY_READ_MODEL_ID,
+  EMPTY_EASY_READ_GENERATED_AT,
+  isDeterministicEmptyEasyReadOutput,
+  type EasyReadConfig,
+} from "./easy-read.js"
+export {
   resolveVoice,
   resolveInstructions,
   resolveProviderForLanguage,
@@ -159,6 +171,7 @@ export {
   stripEmojis,
   loadVoicesConfig,
   loadSpeechInstructions,
+  computeSpeechCacheKey,
   generateSpeechFile,
   generateWordTimestamps,
   type VoiceMaps,
