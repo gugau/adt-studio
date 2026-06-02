@@ -40,6 +40,7 @@ import { QuizzesHintBanner } from "./components/QuizzesHintBanner";
 import { QuizJumper, type QuizJumperEntry } from "./components/QuizJumper";
 import { AddQuizDialog } from "./AddQuizDialog";
 import { useApiKey } from "@/hooks/use-api-key";
+import { useStageStatus } from "@/hooks/use-stage-status";
 import { useLingui } from "@lingui/react/macro";
 
 type QuizData = QuizGenerationOutput;
@@ -432,6 +433,7 @@ export function QuizzesView({
   const { data: pages } = usePages(bookLabel);
   const { setExtra } = useStepHeader();
   const { hasApiKey } = useApiKey();
+  const quizzesStatus = useStageStatus("quizzes");
   const [activeQuizId, setActiveQuizId] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
@@ -709,11 +711,13 @@ export function QuizzesView({
               <Button
                 size="sm"
                 className="h-8 gap-1.5 bg-orange-600 text-xs text-white hover:bg-orange-700"
-                disabled={!hasApiKey}
+                disabled={!hasApiKey || quizzesStatus.isRunning}
                 title={
-                  hasApiKey
-                    ? undefined
-                    : t`Add an API key in Book settings to add a quiz.`
+                  !hasApiKey
+                    ? t`Add an API key in Book settings to add a quiz.`
+                    : quizzesStatus.isRunning
+                      ? t`Quizzes are generating. Wait for the run to finish before adding a quiz.`
+                      : undefined
                 }
                 onClick={() => setShowAdd(true)}
               >

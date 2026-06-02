@@ -11,7 +11,13 @@ const SAMPLE_OPTIONS: MessageDescriptor[] = [
   msg`They release oxygen directly into the air.`,
 ]
 
-export function QuizzesPreview({ pagesPerQuiz }: { pagesPerQuiz: number }) {
+export function QuizzesPreview({
+  pagesPerQuiz,
+  mode = "frequency",
+}: {
+  pagesPerQuiz: number
+  mode?: "frequency" | "specific"
+}) {
   const frequency = Number.isFinite(pagesPerQuiz) && pagesPerQuiz > 0 ? pagesPerQuiz : 3
 
   return (
@@ -22,7 +28,11 @@ export function QuizzesPreview({ pagesPerQuiz }: { pagesPerQuiz: number }) {
 
       <div className="flex w-full h-full flex-col items-center justify-center gap-5 overflow-auto px-6 py-8 min-h-0">
         <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#a3a3a3]">
-          <Trans>1 quiz / {frequency} pages</Trans>
+          {mode === "specific" ? (
+            <Trans>Single quiz</Trans>
+          ) : (
+            <Trans>1 quiz / {frequency} pages</Trans>
+          )}
         </span>
 
         <div className="flex w-full max-w-sm flex-col items-center">

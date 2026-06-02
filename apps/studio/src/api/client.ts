@@ -933,7 +933,11 @@ export const api = {
   generateQuiz: (
     label: string,
     apiKey: string,
-    body: { pageIds: string[]; afterPageId: string },
+    body: {
+      pageIds: string[]
+      afterPageId: string
+      placement?: "replace" | "after"
+    },
     providerCredentials?: StageRunProviderCredentials
   ) =>
     request<{ quiz: QuizItem; version: number }>(

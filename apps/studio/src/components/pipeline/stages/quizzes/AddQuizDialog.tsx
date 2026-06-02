@@ -15,6 +15,10 @@ import { api } from "@/api/client"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
+  SegmentedControl,
+  type SegmentedControlOption,
+} from "@/components/ui/segmented-control"
+import {
   Dialog,
   DialogContent,
   DialogFooter,
@@ -24,10 +28,13 @@ import {
 import { usePages, usePageImage } from "@/hooks/use-pages"
 import { useQuizzes } from "@/hooks/use-quizzes"
 import { useApiKey } from "@/hooks/use-api-key"
+import { useStageStatus } from "@/hooks/use-stage-status"
 
 const MAX_SOURCE_PAGES = 5
 
 type PageRef = { pageId: string; pageNumber: number }
+/** How a new quiz relates to quizzes already sitting at the chosen position. */
+type QuizPlacement = "after" | "replace"
 
 /** A page thumbnail in the bottom filmstrip. Click navigates; the corner badge toggles selection. */
 function FilmstripThumb({
@@ -149,7 +156,7 @@ function InsertGap({
       aria-pressed={active}
       title={
         hasExistingQuiz
-          ? t`A quiz already sits here — generating will replace it`
+          ? t`A quiz already sits here — add another after it or replace it`
           : t`Insert the quiz here`
       }
       className="group relative flex h-28 w-8 shrink-0 items-center justify-center"
@@ -209,12 +216,17 @@ export function AddQuizDialog({
   } = useApiKey()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  // A running (or queued) quiz-generation stage rewrites the whole quiz set when
+  // it finishes, which would clobber a hand-added quiz — so block adding until
+  // it's done.
+  const { isRunning: stageRunning } = useStageStatus("quizzes")
 
   const [selected, setSelected] = useState<string[]>([])
   const [afterPageId, setAfterPageId] = useState("")
   const [afterTouched, setAfterTouched] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [generating, setGenerating] = useState(false)
+  const [placement, setPlacement] = useState<QuizPlacement>("after")
   const [error, setError] = useState<string | null>(null)
 
   const renderedPages = useMemo(
@@ -222,12 +234,16 @@ export function AddQuizDialog({
     [pages]
   )
 
-  // Positions (afterPageId) that already hold a quiz. Generating at one of
-  // these replaces the quiz there instead of adding a second one.
-  const occupiedAfterPageIds = useMemo(
-    () => new Set((existingQuizzes?.quizzes?.quizzes ?? []).map((q) => q.afterPageId)),
-    [existingQuizzes]
-  )
+  // How many quizzes already sit at each position (afterPageId). A position can
+  // hold several quizzes shown one after another, so generating at an occupied
+  // spot lets the user stack a new quiz after them or replace what's there.
+  const quizCountByAfterPageId = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const q of existingQuizzes?.quizzes?.quizzes ?? []) {
+      counts.set(q.afterPageId, (counts.get(q.afterPageId) ?? 0) + 1)
+    }
+    return counts
+  }, [existingQuizzes])
 
   useEffect(() => {
     if (open) {
@@ -236,6 +252,7 @@ export function AddQuizDialog({
       setAfterTouched(false)
       setCurrentIndex(0)
       setGenerating(false)
+      setPlacement("after")
       setError(null)
     }
   }, [open])
@@ -256,7 +273,23 @@ export function AddQuizDialog({
 
   const current = renderedPages[currentIndex] as PageRef | undefined
   const atLimit = selected.length >= MAX_SOURCE_PAGES
-  const willReplace = !!afterPageId && occupiedAfterPageIds.has(afterPageId)
+  const occupiedCount = afterPageId
+    ? quizCountByAfterPageId.get(afterPageId) ?? 0
+    : 0
+  const isOccupied = occupiedCount > 0
+
+  const placementOptions: SegmentedControlOption<QuizPlacement>[] = [
+    { value: "after", label: t`Add after` },
+    { value: "replace", label: t`Replace` },
+  ]
+
+  const generateLabel = !isOccupied
+    ? t`Generate quiz`
+    : placement === "replace"
+      ? occupiedCount > 1
+        ? t`Replace quizzes`
+        : t`Replace quiz`
+      : t`Add quiz here`
 
   const { data: currentImage } = usePageImage(bookLabel, current?.pageId ?? "", {
     enabled: !!current,
@@ -281,17 +314,30 @@ export function AddQuizDialog({
   const pickPlacement = (pageId: string) => {
     setAfterTouched(true)
     setAfterPageId(pageId)
+    // Each newly chosen position starts on the additive (non-destructive) action.
+    setPlacement("after")
   }
 
   const handleGenerate = async () => {
-    if (!hasApiKey || selected.length === 0 || !afterPageId || generating) return
+    if (
+      !hasApiKey ||
+      selected.length === 0 ||
+      !afterPageId ||
+      generating ||
+      stageRunning
+    )
+      return
     setGenerating(true)
     setError(null)
     try {
       await api.generateQuiz(
         bookLabel,
         apiKey,
-        { pageIds: selected, afterPageId },
+        {
+          pageIds: selected,
+          afterPageId,
+          placement: isOccupied ? placement : "after",
+        },
         {
           anthropicApiKey: anthropicKey || undefined,
           googleApiKey: googleKey || undefined,
@@ -300,9 +346,16 @@ export function AddQuizDialog({
           geminiApiKey: geminiKey || undefined,
         }
       )
-      await queryClient.invalidateQueries({
-        queryKey: ["books", bookLabel, "quizzes"],
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["books", bookLabel, "quizzes"],
+        }),
+        // Adding a quiz marks the quiz-generation step done server-side; refresh
+        // step-status so the quizzes stage lights up as completed right away.
+        queryClient.invalidateQueries({
+          queryKey: ["books", bookLabel, "step-status"],
+        }),
+      ])
       onOpenChange(false)
       navigate({
         to: "/books/$label/$step",
@@ -454,7 +507,9 @@ export function AddQuizDialog({
                     />
                     <InsertGap
                       active={afterPageId === page.pageId}
-                      hasExistingQuiz={occupiedAfterPageIds.has(page.pageId)}
+                      hasExistingQuiz={
+                        (quizCountByAfterPageId.get(page.pageId) ?? 0) > 0
+                      }
                       onSelect={() => pickPlacement(page.pageId)}
                     />
                   </div>
@@ -464,12 +519,32 @@ export function AddQuizDialog({
           </>
         )}
 
-        {willReplace && !generating && (
+        {stageRunning && (
           <div className="mx-6 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin" aria-hidden />
             <span>
-              {t`A quiz already exists at this position. Generating will replace the current quiz here.`}
+              {t`Quizzes are generating. Wait for the run to finish before adding a quiz.`}
             </span>
+          </div>
+        )}
+
+        {isOccupied && !generating && !stageRunning && (
+          <div className="mx-6 flex flex-col gap-2.5 rounded-md border border-amber-200 bg-amber-50/70 px-3 py-2.5">
+            <div className="flex items-start gap-2 text-sm text-amber-800">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+              <span>
+                {occupiedCount > 1
+                  ? t`This position already has ${occupiedCount} quizzes. Add another after them, or replace them.`
+                  : t`This position already has a quiz. Add another right after it, or replace it.`}
+              </span>
+            </div>
+            <SegmentedControl
+              options={placementOptions}
+              value={placement}
+              onValueChange={setPlacement}
+              color="#ea580c"
+              className="h-9 max-w-xs"
+            />
           </div>
         )}
 
@@ -488,7 +563,11 @@ export function AddQuizDialog({
           <Button
             onClick={handleGenerate}
             disabled={
-              generating || !hasApiKey || selected.length === 0 || !afterPageId
+              generating ||
+              !hasApiKey ||
+              selected.length === 0 ||
+              !afterPageId ||
+              stageRunning
             }
             className="border-0 bg-orange-600 text-white hover:bg-orange-700"
           >
@@ -497,10 +576,8 @@ export function AddQuizDialog({
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 {t`Generating…`}
               </>
-            ) : willReplace ? (
-              t`Replace quiz`
             ) : (
-              t`Generate quiz`
+              generateLabel
             )}
           </Button>
         </DialogFooter>
