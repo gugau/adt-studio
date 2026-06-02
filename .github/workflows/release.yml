@@ -87,10 +87,6 @@ jobs:
             echo "::error::Tag $TAG must be either vX.Y.Z (stable) or vX.Y.Z-beta[.N]."
             exit 1
           fi
-          if [[ "$BRANCH" == "develop" && "$PRERELEASE" != "true" ]]; then
-            echo "::error::develop only ships beta prereleases (got $TAG). Use vX.Y.Z-beta[.N]."
-            exit 1
-          fi
           if [[ "$BRANCH" == "main" && "$PRERELEASE" == "true" ]]; then
             echo "::error::main only ships stable tags (got $TAG). Use vX.Y.Z."
             exit 1
