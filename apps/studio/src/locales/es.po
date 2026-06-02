@@ -933,6 +933,9 @@ msgstr "Diseño impulsado por IA que preserva la página original como fondo con
 msgid "AIza..."
 msgstr "AIza..."
 
+msgid "Albanian"
+msgstr "Albanés"
+
 msgid "Align"
 msgstr "Alinear"
 

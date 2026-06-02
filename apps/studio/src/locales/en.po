@@ -933,6 +933,9 @@ msgstr "AI-powered layout that preserves the original page as a background with 
 msgid "AIza..."
 msgstr "AIza..."
 
+msgid "Albanian"
+msgstr "Albanian"
+
 msgid "Align"
 msgstr "Align"
 

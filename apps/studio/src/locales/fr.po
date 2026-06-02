@@ -935,6 +935,9 @@ msgstr "Mise en page assistée par IA qui conserve la page originale en arrière
 msgid "AIza..."
 msgstr "AIza..."
 
+msgid "Albanian"
+msgstr "Albanais"
+
 msgid "Align"
 msgstr "Aligner"
 
