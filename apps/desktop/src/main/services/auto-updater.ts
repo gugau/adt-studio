@@ -25,6 +25,11 @@ export type UpdateStatus =
 
 type StatusListener = (status: UpdateStatus) => void;
 
+
+function isPrereleaseVersion(version: string): boolean {
+  return version.includes("-beta");
+}
+
 const listeners = new Set<StatusListener>();
 let lastStatus: UpdateStatus = { phase: "idle" };
 let lastInfo: UpdateInfo | null = null;
@@ -63,11 +68,14 @@ let configured = false;
 
 function configure(): void {
   if (configured) return;
+  const isBeta = isPrereleaseVersion(app.getVersion());
+
   configured = true;
 
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = false;
-  autoUpdater.allowPrerelease = true;
+  autoUpdater.allowPrerelease = isBeta;
+  autoUpdater.channel = isBeta ? "beta" : "latest";
   autoUpdater.logger = console;
 
   autoUpdater.on("checking-for-update", () => {

@@ -7,7 +7,10 @@ require("dotenv").config({
 const extraResources = [
   { from: "../api/dist-electron/node_modules", to: "./api/node_modules" },
   { from: "../api/dist-electron/api-server.mjs", to: "./api/api-server.mjs" },
-  { from: "../api/dist-electron/node-sqlite3-wasm.wasm", to: "./api/node-sqlite3-wasm.wasm" },
+  {
+    from: "../api/dist-electron/node-sqlite3-wasm.wasm",
+    to: "./api/node-sqlite3-wasm.wasm",
+  },
   { from: "../api/dist-electron/mupdf-wasm.wasm", to: "./api/mupdf-wasm.wasm" },
   { from: "../api/dist-electron/index_bg.wasm", to: "./api/index_bg.wasm" },
   {
@@ -51,16 +54,32 @@ const config = {
   },
   extraResources,
   files: ["out/**/*", "!out/renderer/placeholder-*"],
+
+  // Write update metadata for every channel on each build, so a stable release
+  // also emits beta.yml (not just latest.yml). Beta clients track beta.yml, and
+  // without this they'd only graduate to a stable build via electron-updater's
+  // fragile 404-fallback-to-latest.yml path. This makes beta→stable graduation
+  // deterministic — see RELEASING.md.
+  generateUpdatesFilesForAllChannels: true,
+
   win: {
     target: ["nsis"],
     icon: "build/icon.ico",
+    signtoolOptions: {
+      publisherName: [
+        "Núcleo de Excelência em Tecnologias Sociais - NEES",
+        "UNICEF",
+      ],
+      sign: "./scripts/sign-windows.js",
+    },
   },
-  afterSign: "scripts/notarize.js",
+
   nsis: {
     artifactName,
     oneClick: false,
     allowToChangeInstallationDirectory: true,
   },
+
   mac: {
     target: ["dmg", "zip"],
     icon: "build/icon.icon",
@@ -83,18 +102,24 @@ const config = {
         "Application requests access to the user's Downloads folder.",
     },
   },
+
   dmg: {
     artifactName,
   },
+
   linux: {
-    target: ["AppImage"],
+    target: ["AppImage", "deb"],
     icon: "build/icons",
+    artifactName,
+    // TODO: change to "UNICEF <email@unicef.org>",
+    maintainer: "electronjs.org",
   },
+
   publish: {
     provider: "github",
     owner: "unicef",
     repo: "adt-studio",
-  }
+  },
 };
 
 module.exports = config;
