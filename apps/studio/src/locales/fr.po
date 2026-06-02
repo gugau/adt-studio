@@ -3824,6 +3824,12 @@ msgstr "Aucune image légendée pour le moment. Exécutez d'abord l'étape de l�
 msgid "No captions for this page"
 msgstr "Aucune légende pour cette page"
 
+msgid "No captions match these filters"
+msgstr "Aucune légende ne correspond à ces filtres"
+
+msgid "No captions match your search"
+msgstr "Aucune légende ne correspond à votre recherche"
+
 msgid "No changes flagged on this page"
 msgstr "Aucune modification signalée sur cette page"
 
