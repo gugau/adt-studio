@@ -599,6 +599,7 @@ describe("GET /books/:label/step-status", () => {
     expect(body.steps["package-web"]).toBe("idle")
     expect(body.error).toBeNull()
     expect(body.stepErrors).toBeNull()
+    expect(body.stepMessages).toBeNull()
   })
 
   it("returns queued stages from in-memory queue", async () => {
@@ -633,6 +634,38 @@ describe("GET /books/:label/step-status", () => {
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.error).toBe("pipeline failed")
+  })
+
+  it("reports stale running steps from a failed active run as errors", async () => {
+    createTestBook("failed-running-step")
+    const storage = createBookStorage("failed-running-step", tmpDir)
+    try {
+      storage.markStepStarted("catalog-translation")
+    } finally {
+      storage.close()
+    }
+
+    const app = createStageRoutes(
+      mockStageService({
+        active: makeActiveRun({
+          status: "failed",
+          fromStage: "translate",
+          toStage: "translate",
+          error: "translation failed",
+        }),
+      }),
+      mockEventBus,
+      tmpDir,
+      "",
+      ""
+    )
+
+    const res = await app.request("/books/failed-running-step/step-status")
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.stages.translate).toBe("error")
+    expect(body.steps["catalog-translation"]).toBe("error")
+    expect(body.stepErrors["catalog-translation"]).toBe("translation failed")
   })
 
   it("does not mark extract complete when only some steps are done", async () => {
@@ -722,6 +755,25 @@ describe("GET /books/:label/step-status", () => {
     const body = await res.json()
     expect(body.stages.extract).toBe("running")
     expect(body.steps.metadata).toBe("running")
+  })
+
+  it("returns step progress messages from DB", async () => {
+    createTestBook("step-message-test")
+    const storage = createBookStorage("step-message-test", tmpDir)
+    try {
+      storage.markStepStarted("tts")
+      storage.updateStepMessage("tts", "4/12 audio entries")
+    } finally {
+      storage.close()
+    }
+    const app = createStageRoutes(mockStageService(), mockEventBus, tmpDir, "", "")
+
+    const res = await app.request("/books/step-message-test/step-status")
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.stages.speech).toBe("running")
+    expect(body.steps.tts).toBe("running")
+    expect(body.stepMessages.tts).toBe("4/12 audio entries")
   })
 
   it("shows active run range: running extract, queued storyboard", async () => {

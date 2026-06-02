@@ -205,6 +205,16 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
     enabled: !!bookLabel,
   })
 
+  // Easy Read source entries (`{sourceId}_easy_read`) live in their own node,
+  // not the text catalog, but their translations are merged into
+  // text-catalog-translation by the translate stage. Pull the source entries
+  // in here so they surface as their own category/tab alongside the catalog.
+  const { data: easyReadData } = useQuery({
+    queryKey: ["books", bookLabel, "easy-read"],
+    queryFn: () => api.getEasyRead(bookLabel),
+    enabled: !!bookLabel,
+  })
+
   const { data: ttsData } = useQuery({
     queryKey: ["books", bookLabel, "tts"],
     queryFn: () => api.getTTS(bookLabel),
@@ -251,7 +261,17 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
     }
   }, [outputLanguages.length, hasExplicitOutputLanguages])
 
-  const entries = catalog?.entries ?? []
+  const easyReadEntries = useMemo(
+    () =>
+      (easyReadData?.blocks ?? []).flatMap((block) =>
+        block.entries.map((entry) => ({ id: entry.easyReadId, text: entry.text }))
+      ),
+    [easyReadData]
+  )
+  const entries = useMemo(() => {
+    const base = catalog?.entries ?? []
+    return easyReadEntries.length > 0 ? [...base, ...easyReadEntries] : base
+  }, [catalog?.entries, easyReadEntries])
   const pageFilteredEntries = selectedPageId
     ? entries.filter((e) => e.id.startsWith(selectedPageId + "_"))
     : entries
@@ -838,6 +858,7 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
             ["captions", t`Captions`],
             ["answers", t`Answers`],
             ["glossary", t`Glossary`],
+            ["easy-read", t`Easy Read`],
           ] as const).map(([key, label]) => {
             const count = key === "all"
               ? pageFilteredEntries.length
