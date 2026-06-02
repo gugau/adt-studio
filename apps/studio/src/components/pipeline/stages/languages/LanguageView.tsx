@@ -540,16 +540,24 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
 
   // Resolve speech config summary for display
   const speechSummary = useMemo(() => {
+    // Per-provider defaults shown when the book hasn't pinned a voice/model. Mirror the
+    // resolveVoice()/resolveSpeechModel() defaults in @adt/pipeline (and config/voices.yaml)
+    // so we never show an OpenAI voice (alloy) or model for a Gemini/Azure provider.
+    // Display only — actual generation resolves these server-side.
+    const defaultVoiceFor = (p: string): string =>
+      ({ openai: "alloy", azure: "en-US-JennyNeural", gemini: "Kore" })[p] ?? "alloy"
+    const defaultModelFor = (p: string): string =>
+      ({ openai: "gpt-4o-mini-tts", azure: "azure-tts", gemini: "gemini-2.5-pro-preview-tts" })[p] ?? "gpt-4o-mini-tts"
     if (!speechConfig || typeof speechConfig !== "object") {
-      return { provider: "openai", voice: "alloy", model: "gpt-4o-mini-tts" }
+      return { provider: "openai", voice: defaultVoiceFor("openai"), model: defaultModelFor("openai") }
     }
     const sc = speechConfig as Record<string, unknown>
     const provider = (sc.default_provider as string) ?? "openai"
-    const voice = (sc.voice as string) ?? "alloy"
+    const voice = (sc.voice as string) ?? defaultVoiceFor(provider)
     const model = (sc.model as string) ?? undefined
     const providers = sc.providers as Record<string, Record<string, unknown>> | undefined
     const providerModel = providers?.[provider]?.model as string | undefined
-    return { provider, voice, model: providerModel ?? model ?? "gpt-4o-mini-tts" }
+    return { provider, voice, model: providerModel ?? model ?? defaultModelFor(provider) }
   }, [speechConfig])
 
   if (showRunCard || !catalog || entries.length === 0) {
