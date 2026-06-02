@@ -24,7 +24,11 @@ env:
 
 jobs:
   prepare:
-    if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'RELEASE:') }}
+    if: >-
+      ${{
+        contains(fromJSON('["main", "develop", "feature/desktop-ci"]'), github.ref_name)
+        && (github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'RELEASE:'))
+      }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
