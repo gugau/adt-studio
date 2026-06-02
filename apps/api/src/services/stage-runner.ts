@@ -83,6 +83,7 @@ import type {
   ImageClassificationOutput,
   PageSectioningOutput,
   WebRenderingOutput,
+  ImageCaptioningOutput,
   GlossaryOutput,
   TextCatalogOutput,
   TextCatalogEntry,
@@ -1314,10 +1315,15 @@ async function runCaptionsStep(
             return
           }
 
-          const images = imageIds.map((imageId) => ({
-            imageId,
-            imageBase64: storage.getImageBase64(imageId),
-          }))
+          const images = imageIds.map((imageId) => {
+            const dims = storage.getImageDimensions(imageId)
+            return {
+              imageId,
+              imageBase64: storage.getImageBase64(imageId),
+              width: dims?.width,
+              height: dims?.height,
+            }
+          })
           const pageImageBase64 = storage.getPageImageBase64(page.pageId)
 
           const result = await captionPageImages(
@@ -1325,6 +1331,23 @@ async function runCaptionsStep(
             captionConfig,
             captionModel
           )
+
+          // Re-running captioning preserves the user's manual work. An entry the
+          // user edited (caption text or the decorative toggle) is marked
+          // source:"manual" and is kept wholesale across re-runs; everything
+          // else is freshly regenerated and stamped source:"ai". Images that no
+          // longer appear on the page simply fall out (their caption is moot).
+          const prev = storage.getLatestNodeData("image-captioning", page.pageId)
+            ?.data as ImageCaptioningOutput | undefined
+          const prevById = new Map(
+            (prev?.captions ?? []).map((c) => [c.imageId, c])
+          )
+          result.captions = result.captions.map((c) => {
+            const prior = prevById.get(c.imageId)
+            if (prior?.source === "manual") return prior
+            return { ...c, source: "ai" as const }
+          })
+
           storage.putNodeData("image-captioning", page.pageId, result)
 
           completedCaptions++

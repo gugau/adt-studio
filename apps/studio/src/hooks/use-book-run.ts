@@ -206,9 +206,13 @@ export function useBookRunStatus(label: string): BookRunContextValue {
       } else if (d.type === "step-complete" || d.type === "step-skip") {
         // Mark step as done/skipped, recompute stage state
         const nextStepState: StepState = d.type === "step-skip" ? "skipped" : "done"
-        let stageCompleted = false
+        // Only chime on the transition into done — not on every trailing
+        // step event for a stage that's already complete (which would
+        // re-register the same completion and beep repeatedly).
+        let stageJustCompleted = false
         queryClient.setQueryData<StepStatusResponse>(stepStatusKey(label), (old) => {
           if (!old) return old
+          const wasComplete = old.stages[uiStage] === "done"
           const steps = { ...old.steps, [pipelineStep]: nextStepState }
           const stepMessages = removeStepMessage(old.stepMessages, pipelineStep)
 
@@ -220,7 +224,7 @@ export function useBookRunStatus(label: string): BookRunContextValue {
             [uiStage]: allDone ? "done" : old.stages[uiStage],
           }
 
-          stageCompleted = allDone
+          stageJustCompleted = allDone && !wasComplete
           return {
             ...old,
             stages,
@@ -228,7 +232,7 @@ export function useBookRunStatus(label: string): BookRunContextValue {
             stepMessages,
           }
         })
-        if (stageCompleted) playCompletionSound()
+        if (stageJustCompleted) playCompletionSound()
         progressRef.current.delete(pipelineStep)
 
         // Also invalidate data queries for the completed step's stage
@@ -319,6 +323,7 @@ export function useBookRunStatus(label: string): BookRunContextValue {
           }
           if ((completedTask?.kind === "image-generate" || completedTask?.kind === "re-render" || completedTask?.kind === "ai-edit") && completedTask.pageId) {
             queryClient.invalidateQueries({ queryKey: ["books", label, "pages", completedTask.pageId] })
+            queryClient.invalidateQueries({ queryKey: ["books", label, "pages"] })
             if (completedTask.kind === "ai-edit") {
               queryClient.invalidateQueries({ queryKey: ["books", label, "pages", completedTask.pageId, "ai-edit-history"] })
             }

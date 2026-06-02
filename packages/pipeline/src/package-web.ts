@@ -33,6 +33,9 @@ import type {
   ImageCaptioningOutput,
 } from "@adt/types"
 import { WebRenderingOutput as WebRenderingOutputSchema } from "@adt/types"
+import { googleFontsReferencedIn, googleFontsCss2Url } from "@adt/types"
+import { reflowableFontChain } from "@adt/types"
+import { bundleGoogleFontsIntoCss } from "./google-fonts-bundle.js"
 import type { Progress } from "./progress.js"
 import { nullProgress } from "./progress.js"
 import { getGlossaryItemTextId } from "./glossary.js"
@@ -69,6 +72,9 @@ export interface PackageAdtWebOptions {
   }
   lockedSettings?: ("dockLayout" | "theme" | "iconSize" | "reduceMotion")[]
   fixedLayout?: boolean
+  /** `reflowable_font` config value (font id or "auto"). Selects the reflowable
+   *  base font; ignored for fixed-layout books. */
+  reflowableFont?: string
 }
 
 interface PageEntry {
@@ -229,9 +235,13 @@ export async function packageAdtWeb(
     defaultSettings,
     lockedSettings,
     fixedLayout,
+    reflowableFont,
   } = options
   const language = normalizeLocale(rawLanguage)
   const outputLanguages = Array.from(new Set(rawOutputLanguages.map((code) => normalizeLocale(code))))
+  // Reflowable base font (serif/sans default from the detected profile, or an
+  // explicit override). undefined for fixed-layout / Merriweather-default.
+  const bodyFontFamily = resolveReflowableFontChain(storage, { fixedLayout, reflowableFont })
 
   const step = "package-web" as const
   progress.emit({ type: "step-start", step })
@@ -309,6 +319,7 @@ export async function packageAdtWeb(
     const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
     const sectioning = structuringRow?.data as PageSectioningOutput | undefined
     const imageCaptionMap = loadImageCaptionMap(storage, page.pageId)
+    const decorativeImageIds = buildDecorativeImageIdSet(storage, page.pageId)
 
     const renderRow = storage.getLatestNodeData("web-rendering", page.pageId)
     if (renderRow) {
@@ -334,6 +345,7 @@ export async function packageAdtWeb(
             label,
             imageMap,
             preferredImageAltMap,
+            decorativeImageIds,
           )
 
           for (const imageId of referencedImages) {
@@ -384,6 +396,7 @@ export async function packageAdtWeb(
             bundleVersion,
             applyBodyBackground,
             fixedViewport,
+            bodyFontFamily,
           })
           fs.writeFileSync(path.join(adtDir, filename), pageHtml)
 
@@ -433,6 +446,7 @@ export async function packageAdtWeb(
         bundleVersion,
         skipContentWrapper: true,
         applyBodyBackground,
+        bodyFontFamily,
       })
       fs.writeFileSync(path.join(adtDir, quizFilename), quizPageHtml)
 
@@ -724,6 +738,17 @@ export async function packageAdtWeb(
 
   const activityIds = collectActivityIds(adtDir, pageList)
   generateScormAdapter(assetsDir, activityIds)
+
+  // Bundle any Google Fonts the book uses (fetch the woff2, inline as base64
+  // @font-face) so they render under file:// / offline; the online <link> in
+  // each page stays as the fallback when the fetch fails. Runs before
+  // inlineFontsInCss, which only rewrites local ./fonts/ urls and leaves these
+  // data: URIs alone.
+  progress.emit({ type: "step-progress", step, message: "Bundling fonts..." })
+  const bundledFonts = await bundleGoogleFontsIntoCss(adtDir)
+  if (bundledFonts.length > 0) {
+    progress.emit({ type: "step-progress", step, message: `Bundled fonts: ${bundledFonts.join(", ")}` })
+  }
 
   // Inline fonts as base64 in fonts.css so `@font-face` works under file://
   // (browsers treat each file:// path as a unique origin and block cross-origin
@@ -1048,6 +1073,11 @@ export interface RenderPageOptions {
   /** Fixed viewport dimensions for fixed-layout pages (e.g., pre-paginated EPUB).
    *  When set, overrides the responsive viewport meta with a fixed size. */
   fixedViewport?: { width: number; height: number }
+  /** CSS font-family chain for the reflowable base font (e.g.
+   *  `'Atkinson Hyperlegible','Merriweather',sans-serif`). When set, overrides
+   *  the global Merriweather rule from fonts.css and the family is loaded via
+   *  Google Fonts. Omit (fixed-layout / serif default) to keep Merriweather. */
+  bodyFontFamily?: string
 }
 
 /**
@@ -1072,6 +1102,23 @@ function injectOpacityClass(html: string): string {
 export function promoteFirstHeadingToH1(html: string): string {
   if (/<h1\b/i.test(html)) return html
   return html.replace(/<h([2-6])(\b[^>]*)>([\s\S]*?)<\/h\1>/i, '<h1$2>$3</h1>')
+}
+
+/**
+ * Resolve the reflowable base-font CSS chain for a book, or undefined when no
+ * override is needed (fixed-layout books keep original fonts; the serif default
+ * Merriweather is already the global font). Reads the book-level `font-profile`
+ * node (detected serif/sans category) and the explicit `reflowableFont` setting.
+ */
+export function resolveReflowableFontChain(
+  storage: Storage,
+  opts: { fixedLayout?: boolean; reflowableFont?: string },
+): string | undefined {
+  const row = storage.getLatestNodeData("font-profile", "book")
+  // The font profile only records the auto-detected categories (serif/sans).
+  const category = (row?.data as { category?: "serif" | "sans" | null } | undefined)?.category ?? null
+  // Single source of truth — same resolution packaging, preview, and pages use.
+  return reflowableFontChain(category, opts) ?? undefined
 }
 
 export function renderPageHtml(opts: RenderPageOptions): string {
@@ -1143,6 +1190,26 @@ ${fallbackHeadingHtml}${contentBlock}
     </style>`
     : ""
 
+  // Reflowable base-font override: re-declare the same elements fonts.css
+  // targets with the chosen family, placed last in <head> so it wins. Omitted
+  // for fixed-layout / serif-default books (keeps the global Merriweather).
+  const bodyFontStyle = opts.bodyFontFamily
+    ? `\n    <style>\n      body, p, h1, h2, h3, h4, h5, h6, span, div, button, input, textarea, select { font-family: ${opts.bodyFontFamily}; }\n    </style>`
+    : ""
+
+  // Load any Google Fonts the page actually uses — fixed-layout pages declare
+  // the Google family on their text runs, and the reflowable base-font style
+  // (above) declares the body family. The bundled Merriweather remains the
+  // fallback for everything else.
+  const googleFamilies = googleFontsReferencedIn(normalizedContent + bodyFontStyle)
+  const googleFontsUrl = googleFontsCss2Url(googleFamilies)
+  const googleFontsLinks = googleFontsUrl
+    ? `
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="${escapeAttr(googleFontsUrl)}" rel="stylesheet">`
+    : ""
+
   return `<!DOCTYPE html>
 <html lang="${escapeAttr(opts.language)}">
 
@@ -1154,8 +1221,8 @@ ${fallbackHeadingHtml}${contentBlock}
     <meta name="page-section-id" content="${opts.pageIndex}" />
     <link href="./content/tailwind_output.css" rel="stylesheet">
     <link href="./assets/libs/fontawesome/css/all.min.css" rel="stylesheet">
-    <link href="./assets/fonts.css" rel="stylesheet">
-${mathScript}${embedStyles}</head>
+    <link href="./assets/fonts.css" rel="stylesheet">${googleFontsLinks}
+${mathScript}${embedStyles}${bodyFontStyle}</head>
 
 <body${opts.fixedViewport ? ` style="margin:0;overflow:hidden;width:${opts.fixedViewport.width}px;height:${opts.fixedViewport.height}px"` : ` class="min-h-screen flex items-center justify-center"${bodyStyle}`}>
 ${mainBlock}
@@ -1350,6 +1417,19 @@ function loadImageCaptionMap(storage: Storage, pageId: string): Map<string, stri
   return map
 }
 
+/** Build the set of image IDs the user has marked as decorative for a page. */
+export function buildDecorativeImageIdSet(storage: Storage, pageId: string): Set<string> {
+  const row = storage.getLatestNodeData("image-captioning", pageId)
+  const ids = new Set<string>()
+  if (!row) return ids
+
+  const data = row.data as ImageCaptioningOutput
+  for (const caption of data.captions ?? []) {
+    if (caption.decorative) ids.add(caption.imageId)
+  }
+  return ids
+}
+
 /** Collect every non-pruned image_group node in a section along with its image id. */
 function collectImageGroups(section: PageSectioningSection): Array<{ group: ContentNodeData; imageId: string }> {
   const out: Array<{ group: ContentNodeData; imageId: string }> = []
@@ -1445,6 +1525,7 @@ export function rewriteImageUrls(
   label: string,
   imageMap: Map<string, string>,
   altTextByImageId?: Map<string, string>,
+  decorativeImageIds?: Set<string>,
 ): { html: string; referencedImages: string[] } {
   const prefix = `/api/books/${label}/images/`
   const referencedImages: string[] = []
@@ -1503,10 +1584,18 @@ export function rewriteImageUrls(
     }
 
     const imageIdForAlt = resolvedImageId ?? dataId
-    const hasPreferredAlt = imageIdForAlt ? altTextByImageId?.has(imageIdForAlt) ?? false : false
-    const altText = imageIdForAlt ? altTextByImageId?.get(imageIdForAlt)?.trim() ?? "" : ""
-    if (hasPreferredAlt && (img.attribs.alt === undefined || img.attribs.alt.trim() === "")) {
-      img.attribs.alt = altText
+    const isDecorative = imageIdForAlt ? decorativeImageIds?.has(imageIdForAlt) ?? false : false
+    if (isDecorative) {
+      // Decorative image: needs no caption, hidden from assistive technology.
+      img.attribs.alt = ""
+      img.attribs.role = "presentation"
+      img.attribs["aria-hidden"] = "true"
+    } else {
+      const hasPreferredAlt = imageIdForAlt ? altTextByImageId?.has(imageIdForAlt) ?? false : false
+      const altText = imageIdForAlt ? altTextByImageId?.get(imageIdForAlt)?.trim() ?? "" : ""
+      if (hasPreferredAlt && (img.attribs.alt === undefined || img.attribs.alt.trim() === "")) {
+        img.attribs.alt = altText
+      }
     }
   }
 

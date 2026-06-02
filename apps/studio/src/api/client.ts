@@ -48,6 +48,24 @@ export function getSignLanguageVideoUrl(label: string, videoId: string): string 
   return `${BASE_URL}/books/${label}/sign-language-videos/${videoId}`
 }
 
+export function getSectionScreenshotUrl(
+  label: string,
+  pageId: string,
+  sectionIndex: number,
+  options?: { viewport?: "desktop" | "tablet" | "mobile"; cacheKey?: string | number | null },
+): string {
+  const base = `${BASE_URL}/books/${label}/pages/${pageId}/sections/${sectionIndex}/screenshot`
+  const params = new URLSearchParams()
+  if (options?.viewport) params.set("viewport", options.viewport)
+  if (options?.cacheKey != null) params.set("v", String(options.cacheKey))
+  const qs = params.toString()
+  return qs ? `${base}?${qs}` : base
+}
+
+export function getSourcePdfUrl(label: string): string {
+  return `${BASE_URL}/books/${label}/source-pdf`
+}
+
 export function getBookCoverUrl(label: string, cacheKey?: string): string {
   const base = `${BASE_URL}/books/${label}/cover`
   if (!cacheKey) return base
@@ -157,6 +175,15 @@ export interface StageRunStatus {
   queue?: Array<{ id: string; fromStage: string; toStage: string }>
 }
 
+export interface PageSummarySection {
+  sectionId: string
+  sectionIndex: number
+  sectionType: string
+  isActivity: boolean
+  isPruned: boolean
+  textPreview: string
+}
+
 export interface PageSummaryItem {
   pageId: string
   pageNumber: number
@@ -167,7 +194,9 @@ export interface PageSummaryItem {
   wordCount: number
   sectionCount: number
   prunedSections: number[]
-  sections: Array<{ sectionId: string; sectionIndex: number }>
+  renderingVersion: number | null
+  sectioningVersion: number | null
+  sections: PageSummarySection[]
 }
 
 export interface SectionRendering {
@@ -234,7 +263,7 @@ export interface PageDetail {
     sections: SectionRendering[]
   } | null
   imageCaptioning: {
-    captions: Array<{ imageId: string; reasoning: string; caption: string }>
+    captions: Array<{ imageId: string; reasoning: string; caption: string; decorative?: boolean; source?: "ai" | "manual" }>
   } | null
   /** Per-image metadata (dimensions + optional PDF-point placement bounds). */
   imagesMeta: Array<{
@@ -243,6 +272,15 @@ export interface PageDetail {
     height: number
     bounds?: { x: number; y: number; width: number; height: number }
   }>
+  /** Distinct fonts the extractor found on this page (positioned text only),
+   *  each with the rounded px sizes it appears at. */
+  fonts: Array<{ family: string; sizes: number[] }>
+  /** Book-level detected serif/sans category (drives the reflowable base font). */
+  fontProfile: { category: "serif" | "sans" | null; serifChars: number; sansChars: number } | null
+  /** Resolved reflowable base-font CSS chain (gated; null for fixed-layout or
+   *  the Merriweather default). The storyboard preview injects it to match the
+   *  packaged output. */
+  reflowableFontFamily: string | null
   versions: {
     imageClassification: number | null
     imageCropping: number | null

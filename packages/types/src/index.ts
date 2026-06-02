@@ -10,6 +10,30 @@ export {
 } from "./db.js"
 
 export {
+  type GoogleFontEntry,
+  GOOGLE_FONTS,
+  normalizeFontKey,
+  resolveGoogleFont,
+  cssQuoteFamily,
+  primaryFontFamily,
+  googleFontsCss2Url,
+  googleFontsReferencedIn,
+} from "./google-fonts.js"
+
+export {
+  type FontCategory,
+  type DetectedFontCategory,
+  type ReflowableFont,
+  type ReflowableFontSetting,
+  REFLOWABLE_FONTS,
+  REFLOWABLE_FONT_SETTINGS,
+  resolveReflowableFont,
+  reflowableFontFamilyChain,
+  reflowableFontChain,
+  classifyFontCategoryByName,
+} from "./reflowable-fonts.js"
+
+export {
   StepName,
   StageName,
   type StepDef,

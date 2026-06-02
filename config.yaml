@@ -189,6 +189,8 @@ render_strategies:
     render_type: template
     config:
       template: one_column_render
+  fixed_layout:
+    render_type: fixed_layout
   activity_multiple_choice:
     render_type: activity
     config:

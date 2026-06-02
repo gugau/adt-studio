@@ -393,6 +393,114 @@ describe("createStageRunner captions step", () => {
     const firstInput = capturedCaptionInputs[0] as { bookSummary?: string }
     expect(firstInput.bookSummary).toBeUndefined()
   })
+
+  it("preserves a manual caption wholesale when captioning is re-run", async () => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "stage-runner-captions-"))
+    const booksDir = path.join(tmpDir, "books")
+    const promptsDir = path.join(tmpDir, "prompts")
+    const configPath = path.join(tmpDir, "config.yaml")
+    fs.mkdirSync(promptsDir, { recursive: true })
+    writeBaseConfig(configPath)
+
+    seedCaptionBook(booksDir, "rerun-manual")
+
+    // The user manually edited this caption.
+    {
+      const storage = createBookStorage("rerun-manual", booksDir)
+      try {
+        storage.putNodeData("image-captioning", "pg001", {
+          captions: [
+            { imageId: "pg001_im001", reasoning: "edited", caption: "A cat on a mat", source: "manual" },
+          ],
+        })
+      } finally {
+        storage.close()
+      }
+    }
+
+    // Re-run: the model returns a different caption (and would even flag it decorative).
+    captionPageImagesMock.mockImplementationOnce(async (input: unknown) => {
+      capturedCaptionInputs.push(input)
+      return {
+        captions: [
+          { imageId: "pg001_im001", reasoning: "looks decorative", caption: "", decorative: true },
+        ],
+      }
+    })
+
+    const runner = createStageRunner()
+    await runner.run(
+      "rerun-manual",
+      { booksDir, apiKey: "sk-test", promptsDir, configPath, fromStage: "captions", toStage: "captions" },
+      { emit: () => {} }
+    )
+
+    const storage = createBookStorage("rerun-manual", booksDir)
+    try {
+      const stored = storage.getLatestNodeData("image-captioning", "pg001")?.data as {
+        captions: Array<{ imageId: string; caption: string; decorative?: boolean; source?: string }>
+      }
+      const cap = stored.captions.find((x) => x.imageId === "pg001_im001")
+      // Manual entry is preserved wholesale — text, no decorative, still manual.
+      expect(cap?.caption).toBe("A cat on a mat")
+      expect(cap?.decorative).toBeUndefined()
+      expect(cap?.source).toBe("manual")
+    } finally {
+      storage.close()
+    }
+  })
+
+  it("regenerates an AI-sourced caption on re-run", async () => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "stage-runner-captions-"))
+    const booksDir = path.join(tmpDir, "books")
+    const promptsDir = path.join(tmpDir, "prompts")
+    const configPath = path.join(tmpDir, "config.yaml")
+    fs.mkdirSync(promptsDir, { recursive: true })
+    writeBaseConfig(configPath)
+
+    seedCaptionBook(booksDir, "rerun-ai")
+
+    // A prior AI-generated caption (no manual edit).
+    {
+      const storage = createBookStorage("rerun-ai", booksDir)
+      try {
+        storage.putNodeData("image-captioning", "pg001", {
+          captions: [
+            { imageId: "pg001_im001", reasoning: "old", caption: "Old caption", source: "ai" },
+          ],
+        })
+      } finally {
+        storage.close()
+      }
+    }
+
+    captionPageImagesMock.mockImplementationOnce(async (input: unknown) => {
+      capturedCaptionInputs.push(input)
+      return {
+        captions: [{ imageId: "pg001_im001", reasoning: "fresh", caption: "New caption" }],
+      }
+    })
+
+    const runner = createStageRunner()
+    await runner.run(
+      "rerun-ai",
+      { booksDir, apiKey: "sk-test", promptsDir, configPath, fromStage: "captions", toStage: "captions" },
+      { emit: () => {} }
+    )
+
+    const storage = createBookStorage("rerun-ai", booksDir)
+    try {
+      const stored = storage.getLatestNodeData("image-captioning", "pg001")?.data as {
+        captions: Array<{ imageId: string; caption: string; source?: string }>
+      }
+      const cap = stored.captions.find((x) => x.imageId === "pg001_im001")
+      // AI entry is regenerated with the fresh caption, stamped source:"ai".
+      expect(cap?.caption).toBe("New caption")
+      expect(cap?.source).toBe("ai")
+    } finally {
+      storage.close()
+    }
+  })
 })
 
 describe("createStageRunner storyboard render-only", () => {

@@ -178,6 +178,31 @@ describe("ADT preview routes", () => {
     expect(html).toContain('data-id="hero-image-duplicate" src="/api/books/preview-book/images/hero-image-duplicate" alt=""')
   })
 
+  it("hides decorative images from assistive tech in preview output", async () => {
+    const storage = createBookStorage(label, tmpDir)
+    try {
+      storage.putNodeData("image-captioning", `${label}_p1`, {
+        captions: [
+          { imageId: "hero-image", caption: "", decorative: true },
+          { imageId: "hero-image-duplicate", caption: "Preview hero image" },
+        ],
+      })
+    } finally {
+      storage.close()
+    }
+
+    const app = createAdtPreviewRoutes(tmpDir, webAssetsDir, path.resolve(process.cwd(), "config.yaml"))
+    const res = await app.request(`/books/${label}/adt-preview/${label}_p1_sec002.html`)
+
+    expect(res.status).toBe(200)
+    const html = await res.text()
+    // Decorative image: empty alt, presentation role, hidden from a11y tree.
+    expect(html).toMatch(/data-id="hero-image"[^>]*\srole="presentation"/)
+    expect(html).toMatch(/data-id="hero-image"[^>]*\saria-hidden="true"/)
+    // Non-decorative image still gets its caption as alt.
+    expect(html).toContain('data-id="hero-image-duplicate" src="/api/books/preview-book/images/hero-image-duplicate" alt="Preview hero image"')
+  })
+
   it("preserves preview image-alt cleanup while converting latex to mathml", async () => {
     const storage = createBookStorage(label, tmpDir)
     try {

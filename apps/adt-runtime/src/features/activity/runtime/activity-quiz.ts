@@ -20,8 +20,6 @@ import { showActivityProgressToast } from "@/features/activity/lib/progress-toas
  * those item IDs. The two diverge in:
  *   - where the correct-answers map lives (`data-correct-answers` attribute /
  *     embedded <script> for quiz; `window.correctAnswers` for MC),
- *   - what "Next activity" means (jump to next `qz` page for quiz; advance
- *     one page for MC),
  *   - cardinality: a section may host MULTIPLE multiple-choice question
  *     groups, each identified by its inner radio's `name` attribute. Each
  *     group tracks its own selection + validation state independently.
@@ -399,25 +397,6 @@ function findNextPageHref(): string | null {
   return pages[idx + 1].href
 }
 
-/**
- * Next page whose `section_id` starts with `qz` — same activity convention
- * used by `packages/pipeline/src/package-web.ts:collectActivityIds`.
- * Drives the post-correct "Next activity" jump (skip past any reading
- * pages between this activity and the next one).
- */
-function findNextActivityHref(): string | null {
-  const store = getDefaultStore()
-  const pages = store.get(pagesAtom)
-  const currentId = store.get(currentSectionIdAtom)
-  if (!currentId) return null
-  const idx = pages.findIndex((p) => p.section_id === currentId)
-  if (idx < 0) return null
-  for (let i = idx + 1; i < pages.length; i++) {
-    if (pages[i].section_id.startsWith("qz")) return pages[i].href
-  }
-  return null
-}
-
 export function initializeQuizActivity(): (() => void) | null {
   if (typeof document === "undefined") return null
   const section = document.querySelector<HTMLElement>(QUIZ_SELECTOR)
@@ -426,13 +405,13 @@ export function initializeQuizActivity(): (() => void) | null {
   const store = getDefaultStore()
   const correctAnswers = readCorrectAnswers(section)
 
-  // Standalone quiz pages jump to the next `qz` page on success; embedded
-  // multiple-choice activities just advance one page like any other content.
+  // On success the dock advances to the next page — for both standalone quiz
+  // pages and embedded multiple-choice. (Standalone quizzes previously skipped
+  // ahead to the next `qz` page; they now move one page like any other content
+  // so the reader can't accidentally jump past intervening reading pages.)
   const sectionType = section.getAttribute("data-section-type")
   const isStandaloneQuiz = sectionType === "activity_quiz"
-  const findPostCorrectHref = isStandaloneQuiz
-    ? findNextActivityHref
-    : findNextPageHref
+  const findPostCorrectHref = findNextPageHref
 
   const groups = buildGroups(section)
   const hasNextPage = findNextPageHref() !== null
@@ -469,8 +448,7 @@ export function initializeQuizActivity(): (() => void) | null {
   const handleValidate = () => {
     const state = store.get(submitStateAtom)
     if (state === "next") {
-      // Post-correct: standalone quiz jumps to the next quiz, skipping reading
-      // pages between them; embedded MC just advances one page.
+      // Post-correct: advance to the next page in reading order.
       const href = findPostCorrectHref()
       if (href) window.location.href = href
       return
@@ -520,7 +498,7 @@ export function initializeQuizActivity(): (() => void) | null {
       store.set(confettiTriggerAtom, store.get(confettiTriggerAtom) + 1)
       store.set(submitStateAtom, "next")
       store.set(submitLabelAtom, null)
-      // Submit becomes "Next activity" — enabled only when a target exists.
+      // Submit becomes "Next" — enabled only when a next page exists.
       store.set(submitEnabledAtom, hasPostCorrectTarget)
     } else {
       store.set(submitStateAtom, "submit")

@@ -268,6 +268,7 @@ async function runPackaging(
       applyBodyBackground: config.apply_body_background,
       speechConfig: config.speech,
       fixedLayout: isFixedLayoutBook(config),
+      reflowableFont: config.reflowable_font,
     })
     fs.writeFileSync(versionPath, bundleVersion, "utf-8")
 

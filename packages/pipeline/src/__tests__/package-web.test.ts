@@ -9,6 +9,7 @@ import {
   packageAdtWeb,
   packageWebpub,
   renderPageHtml,
+  resolveReflowableFontChain,
   renderQuizHtml,
   rewriteImageUrls,
   convertLatexToMathml,
@@ -116,6 +117,67 @@ describe("renderPageHtml", () => {
     expect(html).toContain('href="./assets/fonts.css"')
   })
 
+  it("injects a Google Fonts stylesheet for fonts the page actually uses", () => {
+    const html = renderPageHtml({
+      content: `<p><span style="font-family:'Mouse Memoirs',Merriweather,serif">Hi</span></p>`,
+      language: "en",
+      sectionId: "pg001",
+      pageTitle: "Test",
+      pageIndex: 1,
+      hasMath: false,
+      bundleVersion: "1",
+    })
+
+    expect(html).toContain("fonts.googleapis.com/css2?family=Mouse+Memoirs")
+    expect(html).toContain('rel="preconnect"')
+  })
+
+  it("injects a reflowable base-font override and loads it from Google", () => {
+    const html = renderPageHtml({
+      content: "<p>Hello</p>",
+      language: "en",
+      sectionId: "pg001",
+      pageTitle: "Test",
+      pageIndex: 1,
+      hasMath: false,
+      bundleVersion: "1",
+      bodyFontFamily: "'Atkinson Hyperlegible','Merriweather',sans-serif",
+    })
+
+    // Base-font override style is present and targets body + block elements.
+    expect(html).toContain("'Atkinson Hyperlegible','Merriweather',sans-serif")
+    expect(html).toMatch(/<style>[\s\S]*body, p, h1[\s\S]*font-family:/)
+    // The body family is also loaded from Google Fonts.
+    expect(html).toContain("fonts.googleapis.com/css2?family=Atkinson+Hyperlegible")
+  })
+
+  it("omits the base-font override when bodyFontFamily is unset", () => {
+    const html = renderPageHtml({
+      content: "<p>Hello</p>",
+      language: "en",
+      sectionId: "pg001",
+      pageTitle: "Test",
+      pageIndex: 1,
+      hasMath: false,
+      bundleVersion: "1",
+    })
+    expect(html).not.toContain("Atkinson Hyperlegible")
+  })
+
+  it("does not inject Google Fonts links when no registered font is used", () => {
+    const html = renderPageHtml({
+      content: `<p><span style="font-family:Palatino,Merriweather,serif">Hi</span></p>`,
+      language: "en",
+      sectionId: "pg001",
+      pageTitle: "Test",
+      pageIndex: 1,
+      hasMath: false,
+      bundleVersion: "1",
+    })
+
+    expect(html).not.toContain("fonts.googleapis.com")
+  })
+
   it("uses offline/SCORM scripts instead of type=module in normal mode", () => {
     const html = renderPageHtml({
       content: "<p>Hello</p>",
@@ -212,6 +274,35 @@ describe("renderPageHtml", () => {
 
     expect((html.match(/<h1\b/g) ?? [])).toHaveLength(1)
     expect(html).not.toContain('id="page-heading"')
+  })
+})
+
+describe("resolveReflowableFontChain", () => {
+  const fakeStorage = (category: string | null) =>
+    ({
+      getLatestNodeData: (node: string) =>
+        node === "font-profile" ? { data: { category }, version: 1 } : null,
+    }) as unknown as Storage
+
+  it("returns undefined for fixed-layout books (keep original fonts)", () => {
+    expect(resolveReflowableFontChain(fakeStorage("sans"), { fixedLayout: true })).toBeUndefined()
+  })
+
+  it("returns undefined when the resolved font is the Merriweather default", () => {
+    expect(resolveReflowableFontChain(fakeStorage("serif"), {})).toBeUndefined()
+    expect(resolveReflowableFontChain(fakeStorage(null), {})).toBeUndefined()
+  })
+
+  it("returns the chain for a sans-serif book", () => {
+    expect(resolveReflowableFontChain(fakeStorage("sans"), {})).toBe(
+      "'Atkinson Hyperlegible','Merriweather',sans-serif",
+    )
+  })
+
+  it("honors an explicit override", () => {
+    expect(resolveReflowableFontChain(fakeStorage("serif"), { reflowableFont: "lora" })).toBe(
+      "Lora,'Merriweather',serif",
+    )
   })
 })
 
@@ -1569,6 +1660,18 @@ describe("rewriteImageUrls", () => {
     const { html: out } = rewriteImageUrls(html, "mybook", imageMap, altMap)
     expect(out).toContain('data-id="logo1" src="images/logo1.png" style="max-width: 100%; height: auto;" alt="UNICEF logo with the words for every child."')
     expect(out).toContain('data-id="logo2" src="images/logo2.png" style="max-width: 100%; height: auto;" alt=""')
+  })
+
+  it("marks decorative images with empty alt, role and aria-hidden, ignoring any caption", () => {
+    const html = `<img data-id="deco1" src="/api/books/mybook/images/deco1">`
+    const imageMap = new Map([["deco1", "deco1.png"]])
+    const altMap = new Map([["deco1", "A caption that should be ignored"]])
+    const decorative = new Set(["deco1"])
+    const { html: out } = rewriteImageUrls(html, "mybook", imageMap, altMap, decorative)
+    expect(out).toContain('alt=""')
+    expect(out).toContain('role="presentation"')
+    expect(out).toContain('aria-hidden="true"')
+    expect(out).not.toContain("A caption that should be ignored")
   })
 
   it("does not include unreferenced images in referencedImages", () => {

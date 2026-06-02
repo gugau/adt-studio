@@ -13,12 +13,13 @@
 
 import {
   type Color,
-  type Document as MupdfDocument,
   type Font as MupdfFont,
   type Page as MupdfPage,
   type Rect,
+  type StructuredText,
 } from "mupdf"
 import { colorToCss } from "./color-utils.js"
+import { resolveGoogleFont, cssQuoteFamily } from "@adt/types"
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -170,20 +171,22 @@ export interface PositionedTextPageInfo {
  * same bounds.
  */
 export function parsePageParagraphs(
-  doc: MupdfDocument,
-  pageIndex: number,
+  page: MupdfPage,
+  stext: StructuredText,
   renderScale = 2,
   cleanSpacing = false,
 ): { paragraphs: AsHtmlParagraph[] } & PageGeometry {
-  const page = doc.loadPage(pageIndex)
   const bounds = page.getBounds() as Rect
   const pageWidth = bounds[2] - bounds[0]
   const pageHeight = bounds[3] - bounds[1]
-  const paragraphs = walkPageParagraphs(page)
+  // Both walks read the same StructuredText — the caller builds it once and
+  // shares it (it also feeds reflowable text extraction), so positioned-text
+  // adds no extra structured-text pass.
+  const paragraphs = walkPageParagraphs(stext)
   // Per-character geometry is only needed by the metric-based
   // space-stripping pass; skip it when not cleaning to avoid the
   // overhead.
-  const lineBboxes = collectLineBboxes(page, cleanSpacing)
+  const lineBboxes = collectLineBboxes(stext, cleanSpacing)
   if (cleanSpacing) {
     // Strip spurious U+0020 spaces (the literal-letter-spacing artefacts
     // some PDFs emit between glyphs of a tracked-letterform word) before
@@ -213,14 +216,13 @@ export function parsePageParagraphs(
  * pages remain in separate blocks even when their layout lines up.
  */
 export function parsePageParagraphsSpread(
-  doc: MupdfDocument,
-  leftIndex: number,
-  rightIndex: number,
+  leftPage: MupdfPage,
+  rightPage: MupdfPage,
+  leftStext: StructuredText,
+  rightStext: StructuredText,
   renderScale = 2,
   cleanSpacing = false,
 ): { paragraphs: AsHtmlParagraph[] } & PageGeometry {
-  const leftPage = doc.loadPage(leftIndex)
-  const rightPage = doc.loadPage(rightIndex)
   const leftBounds = leftPage.getBounds() as Rect
   const rightBounds = rightPage.getBounds() as Rect
 
@@ -231,15 +233,15 @@ export function parsePageParagraphsSpread(
   const spreadWidth = leftWidth + rightWidth
   const spreadHeight = Math.max(leftHeight, rightHeight)
 
-  const leftParagraphs = walkPageParagraphs(leftPage)
-  const rightParagraphs = walkPageParagraphs(rightPage)
+  const leftParagraphs = walkPageParagraphs(leftStext)
+  const rightParagraphs = walkPageParagraphs(rightStext)
   const shifted = rightParagraphs.map((p) => ({ ...p, left: p.left + leftWidth }))
 
-  const leftLines = collectLineBboxes(leftPage, cleanSpacing)
+  const leftLines = collectLineBboxes(leftStext, cleanSpacing)
   // For the right page we shift `chars[].ox/qLeft/qRight` along with
   // `left`/`right` so per-character geometry stays consistent in the
   // spread coordinate space.
-  const rightLines = collectLineBboxes(rightPage, cleanSpacing).map((l) => ({
+  const rightLines = collectLineBboxes(rightStext, cleanSpacing).map((l) => ({
     ...l,
     left: l.left + leftWidth,
     right: l.right + leftWidth,
@@ -279,8 +281,7 @@ export function parsePageParagraphsSpread(
  * per-line bboxes — they're tight and trustworthy — and do our own
  * clustering on top.
  */
-function collectLineBboxes(page: MupdfPage, withChars = false): LineBbox[] {
-  const stext = page.toStructuredText()
+function collectLineBboxes(stext: StructuredText, withChars = false): LineBbox[] {
   const lines: LineBbox[] = []
   let curBbox: Rect | null = null
   let curChars: LineChar[] = []
@@ -566,8 +567,7 @@ export function cleanParagraphSpacing(paragraphs: AsHtmlParagraph[], lines: { te
  * same data (font, size, color, position) directly, so no HTML round-trip
  * is needed.
  */
-function walkPageParagraphs(page: MupdfPage): AsHtmlParagraph[] {
-  const stext = page.toStructuredText()
+function walkPageParagraphs(stext: StructuredText): AsHtmlParagraph[] {
   const paragraphs: AsHtmlParagraph[] = []
   const seen = new Map<string, number>()
 
@@ -750,6 +750,12 @@ function cssFontFamily(font: MupdfFont): string {
   // Strip common foundry suffixes.
   name = name.replace(/(MT|LT|PS|Pro|Std)$/g, "")
   if (!name) name = "serif"
+  // When the font is available on Google Fonts, emit the *Google* family
+  // name (e.g. "MouseMemoirs" → `"Mouse Memoirs"`) so the declared family
+  // matches the @font-face the renderer loads. Otherwise keep the declared
+  // name and fall back to the bundled serif (Merriweather) downstream.
+  const google = resolveGoogleFont(name)
+  if (google) return `${cssQuoteFamily(google.family)},serif`
   return `${name},serif`
 }
 

@@ -1,12 +1,14 @@
 import { useEffect, useRef, useCallback, useState } from "react"
-import { ArrowLeft, ArrowRight, LayoutGrid, Loader2, Table2 } from "lucide-react"
+import { ArrowLeft, ArrowRight, LayoutGrid, Table2 } from "lucide-react"
 import { usePages, usePage } from "@/hooks/use-pages"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { StageRunCard } from "../../components/StageRunCard"
+import { LoadingState } from "../../components/LoadingState"
 import { StageEmptyState } from "../../components/StageEmptyState"
 import { StoryboardSectionDetail } from "./components/StoryboardSectionDetail"
+import { StoryboardQuizDetail } from "./components/StoryboardQuizDetail"
 import { SectioningOverview } from "./components/SectioningOverview"
 import { useSectionNav } from "@/routes/books.$label"
 import { Trans } from "@lingui/react/macro"
@@ -45,6 +47,13 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
   const isGeneratingRef = useRef(false)
   const handleGeneratingChange = useCallback((g: boolean) => { isGeneratingRef.current = g }, [])
 
+  // Quizzes appear in the sidebar with a synthetic pageId of `quiz-{index}`.
+  // When that pageId is in the URL we render the quiz panel instead of loading
+  // page detail — calling usePage with a fake id would 404.
+  const quizMatch = selectedPageIdProp?.match(/^quiz-(\d+)$/)
+  const selectedQuizIndex = quizMatch ? parseInt(quizMatch[1], 10) : null
+  const isQuizRoute = selectedQuizIndex != null
+
   // Auto-select first page when no page is selected
   useEffect(() => {
     if (showRunCard) return
@@ -54,12 +63,18 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
   }, [selectedPageIdProp, pageList.length, showRunCard, setSelectedPageId])
 
   const selectedPageId = selectedPageIdProp ?? null
-  const currentPageIndex = selectedPageId ? pageList.findIndex((p) => p.pageId === selectedPageId) : -1
+  const currentPageIndex =
+    selectedPageId && !isQuizRoute
+      ? pageList.findIndex((p) => p.pageId === selectedPageId)
+      : -1
   const selectedPageSummary = currentPageIndex >= 0 ? pageList[currentPageIndex] : null
   const prevPageId = currentPageIndex > 0 ? pageList[currentPageIndex - 1].pageId : null
   const nextPageId = currentPageIndex < pageList.length - 1 ? pageList[currentPageIndex + 1].pageId : null
 
-  const { data: page, isLoading: pageLoading } = usePage(bookLabel, selectedPageId ?? "")
+  const { data: page, isLoading: pageLoading } = usePage(
+    bookLabel,
+    !isQuizRoute && selectedPageId ? selectedPageId : "",
+  )
 
   const sectionCount = page?.sectioningTree?.sections.length ?? 0
 
@@ -205,7 +220,9 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
       }
     }
 
-    // When StoryboardSectionDetail is rendered, it manages the header itself
+    // When StoryboardSectionDetail or StoryboardQuizDetail is rendered, those
+    // components manage the header themselves.
+    if (isQuizRoute) return
     if (page?.sectioningTree && sectionCount > 0) return
 
     if (selectedPageSummary) {
@@ -243,7 +260,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
       setExtra(null)
       setOnLabelClick(null)
     }
-  }, [selectedPageId, selectedPageSummary?.pageNumber, sectionIndex, sectionCount, canGoPrev, canGoNext, prevPageId, nextPageId, setExtra, setOnLabelClick, page?.sectioningTree, showRunCard, overviewMode])
+  }, [selectedPageId, selectedPageSummary?.pageNumber, sectionIndex, sectionCount, canGoPrev, canGoNext, prevPageId, nextPageId, setExtra, setOnLabelClick, page?.sectioningTree, showRunCard, overviewMode, isQuizRoute])
 
   // Keyboard arrow navigation
   useEffect(() => {
@@ -277,12 +294,7 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
   }
 
   if (pagesLoading) {
-    return (
-      <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <Trans>Loading pages...</Trans>
-      </div>
-    )
+    return <LoadingState stageSlug="storyboard" label={<Trans>Loading pages...</Trans>} />
   }
 
   if (pageList.length === 0) {
@@ -310,23 +322,26 @@ export function StoryboardView({ bookLabel, selectedPageId: selectedPageIdProp, 
     )
   }
 
-  if (pageLoading || !page) {
+  // Quiz route: pseudo-pageId is `quiz-{index}`. Render the quiz panel.
+  if (isQuizRoute && selectedQuizIndex != null) {
     return (
-      <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <Trans>Loading page...</Trans>
-      </div>
+      <StoryboardQuizDetail
+        bookLabel={bookLabel}
+        quizIndex={selectedQuizIndex}
+        navigationArrows={
+          <div className="flex gap-1">{overviewToggle}</div>
+        }
+      />
     )
+  }
+
+  if (pageLoading || !page) {
+    return <LoadingState stageSlug="storyboard" label={<Trans>Loading page...</Trans>} />
   }
 
   if (!page.sectioningTree) {
     if (storyboardRunning) {
-      return (
-        <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <Trans>Waiting for page to be processed...</Trans>
-        </div>
-      )
+      return <LoadingState stageSlug="storyboard" label={<Trans>Waiting for page to be processed...</Trans>} />
     }
     return (
       <div className="p-4">

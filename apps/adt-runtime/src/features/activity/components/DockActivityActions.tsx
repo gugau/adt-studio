@@ -19,7 +19,9 @@ export function DockActivityActions() {
 
   const defaultLabel =
     submitState === "next"
-      ? t("next-activity") || "Next activity"
+      // The post-submit button advances to the next page, which may or may not
+      // be another activity — use the neutral "Next" rather than "Next activity".
+      ? t("next") || "Next"
       : t("submit-text") || "Submit";
   const submitLabel = submitLabelOverride ?? defaultLabel;
 

@@ -159,6 +159,7 @@ export async function prepareExport(
       defaultSettings: mergedDefaultSettings,
       lockedSettings: config.locked_settings,
       fixedLayout: isFixedLayoutBook(config),
+      reflowableFont: config.reflowable_font,
     }
 
     await packageAdtWeb(storage, opts)
