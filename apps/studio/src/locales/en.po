@@ -69,12 +69,6 @@ msgstr "(template)"
 msgid "{0} — type country or Enter for base"
 msgstr "{0} — type country or Enter for base"
 
-#~ msgid "{0} {1}"
-#~ msgstr "{0} {1}"
-
-#~ msgid "{0} {1} reviewed so far"
-#~ msgstr "{0} {1} reviewed so far"
-
 #. placeholder {0}: progress?.page
 #. placeholder {1}: progress?.totalPages
 msgid "{0} / {1}"
@@ -89,9 +83,6 @@ msgstr "{0} × {1}px · {2} points"
 #. placeholder {0}: String(totalAudioFiles)
 msgid "{0} audio"
 msgstr "{0} audio"
-
-#~ msgid "{0} blocks"
-#~ msgstr "{0} blocks"
 
 #. placeholder {0}: activeProgress.criteriaPerPage
 msgid "{0} checks per page"
@@ -170,9 +161,6 @@ msgstr "{0} of {1} images"
 msgid "{0} of {1} items"
 msgstr "{0} of {1} items"
 
-#~ msgid "{0} on page"
-#~ msgstr "{0} on page"
-
 #. placeholder {0}: String(displayPages.length)
 msgid "{0} pages"
 msgstr "{0} pages"
@@ -184,12 +172,6 @@ msgstr "{0} pending"
 #. placeholder {0}: String(displayQuizzes.length)
 msgid "{0} questions"
 msgstr "{0} questions"
-
-#~ msgid "{0} section block(s)"
-#~ msgstr "{0} section block(s)"
-
-#~ msgid "{0} section block(s) on this page"
-#~ msgstr "{0} section block(s) on this page"
 
 #. placeholder {0}: String(group.blocks.length)
 msgid "{0} sections"
@@ -727,9 +709,6 @@ msgstr "Add an API key in Book settings to run TOC generation."
 msgid "Add an API key in Book settings to run translation."
 msgstr "Add an API key in Book settings to run translation."
 
-#~ msgid "Add an API key to generate Easy Read content."
-#~ msgstr "Add an API key to generate Easy Read content."
-
 msgid "Add at least one output language to run translation."
 msgstr "Add at least one output language to run translation."
 
@@ -742,14 +721,8 @@ msgstr "Add caption…"
 msgid "Add checklist item to this section"
 msgstr "Add checklist item to this section"
 
-#~ msgid "Add class"
-#~ msgstr "Add class"
-
 msgid "Add custom instructions"
 msgstr "Add custom instructions"
-
-#~ msgid "Add emojis"
-#~ msgstr "Add emojis"
 
 msgid "Add entry"
 msgstr "Add entry"
@@ -1884,9 +1857,6 @@ msgstr "Custom Layout Demo"
 msgid "Custom section {index}"
 msgstr "Custom section {index}"
 
-#~ msgid "Custom:"
-#~ msgstr "Custom:"
-
 msgid "Debug mode is not enabled."
 msgstr "Debug mode is not enabled."
 
@@ -2100,9 +2070,6 @@ msgstr "Discard"
 msgid "Discard unsaved changes?"
 msgstr "Discard unsaved changes?"
 
-#~ msgid "Dismiss"
-#~ msgstr "Dismiss"
-
 msgid "Display"
 msgstr "Display"
 
@@ -2233,9 +2200,6 @@ msgstr "Easy Read"
 
 msgid "Easy Read adapts the text placed on each page by Storyboard. Finish Storyboard before running this stage."
 msgstr "Easy Read adapts the text placed on each page by Storyboard. Finish Storyboard before running this stage."
-
-#~ msgid "Easy Read audio"
-#~ msgstr "Easy Read audio"
 
 msgid "Easy Read Preview"
 msgstr "Easy Read Preview"
@@ -2379,9 +2343,6 @@ msgstr "Enter a valid minimum dimension (whole number ≥ 0)"
 
 msgid "Enter a valid project name"
 msgstr "Enter a valid project name"
-
-#~ msgid "Enter hex color and press Enter"
-#~ msgstr "Enter hex color and press Enter"
 
 msgid "entries"
 msgstr "entries"
@@ -2627,9 +2588,6 @@ msgstr "Filter pages…"
 msgid "Filter quizzes…"
 msgstr "Filter quizzes…"
 
-#~ msgid "Filter terms…"
-#~ msgstr "Filter terms…"
-
 msgid "Filtered by:"
 msgstr "Filtered by:"
 
@@ -2717,9 +2675,6 @@ msgstr "Full control over render strategies, pruning, and filters."
 msgid "Full project backup & transfer"
 msgstr "Full project backup & transfer"
 
-#~ msgid "Full-size source page preview for the selected quiz."
-#~ msgstr "Full-size source page preview for the selected quiz."
-
 msgid "Full-size source page preview."
 msgstr "Full-size source page preview."
 
@@ -2774,12 +2729,6 @@ msgstr "Generate comprehension quizzes and activities based on the book content.
 msgid "Generate descriptive captions for every image in the book. Pick a reading level so captions match your audience, and add custom instructions if you want to nudge the tone or focus."
 msgstr "Generate descriptive captions for every image in the book. Pick a reading level so captions match your audience, and add custom instructions if you want to nudge the tone or focus."
 
-#~ msgid "Generate Easy Read audio"
-#~ msgstr "Generate Easy Read audio"
-
-#~ msgid "Generate editable Easy Read blocks for the ADT toggle."
-#~ msgstr "Generate editable Easy Read blocks for the ADT toggle."
-
 msgid "Generate from pages"
 msgstr "Generate from pages"
 
@@ -2821,9 +2770,6 @@ msgstr "Generated section"
 
 msgid "Generates a short summary of the book used to seed downstream prompts."
 msgstr "Generates a short summary of the book used to seed downstream prompts."
-
-#~ msgid "Generates audio for Easy Read texts. In the ADT, Easy Read mode uses that audio when available and falls back to the original voice otherwise."
-#~ msgstr "Generates audio for Easy Read texts. In the ADT, Easy Read mode uses that audio when available and falls back to the original voice otherwise."
 
 msgid "Generates comprehension questions and activities from the book."
 msgstr "Generates comprehension questions and activities from the book."
@@ -2947,9 +2893,6 @@ msgstr "Hide AI edit history"
 
 msgid "Hide error details"
 msgstr "Hide error details"
-
-#~ msgid "Hide pruned terms"
-#~ msgstr "Hide pruned terms"
 
 msgid "High"
 msgstr "High"
@@ -3563,9 +3506,6 @@ msgstr "Manage all sections"
 msgid "Manage sign-language videos"
 msgstr "Manage sign-language videos"
 
-#~ msgid "manual"
-#~ msgstr "manual"
-
 msgid "Manual only"
 msgstr "Manual only"
 
@@ -3900,9 +3840,6 @@ msgstr "No data"
 msgid "No disabled rules"
 msgstr "No disabled rules"
 
-#~ msgid "No Easy Read block is available for this page."
-#~ msgstr "No Easy Read block is available for this page."
-
 msgid "No Easy Read for this page"
 msgstr "No Easy Read for this page"
 
@@ -3966,17 +3903,11 @@ msgstr "No language-specific prompts configured."
 msgid "No languages configured. Add languages in the Language settings."
 msgstr "No languages configured. Add languages in the Language settings."
 
-#~ msgid "No link"
-#~ msgstr "No link"
-
 msgid "No log entries found yet."
 msgstr "No log entries found yet."
 
 msgid "No manual terms yet"
 msgstr "No manual terms yet"
-
-#~ msgid "No matches"
-#~ msgstr "No matches"
 
 msgid "No matches for \"{search}\""
 msgstr "No matches for \"{search}\""
@@ -4077,17 +4008,11 @@ msgstr "No source image"
 msgid "No storyboard sections found. Run Storyboard to generate sections you can match videos to."
 msgstr "No storyboard sections found. Run Storyboard to generate sections you can match videos to."
 
-#~ msgid "No terms match your filter."
-#~ msgstr "No terms match your filter."
-
 msgid "No terms match your search"
 msgstr "No terms match your search"
 
 msgid "No terms to show"
 msgstr "No terms to show"
-
-#~ msgid "No terms to show."
-#~ msgstr "No terms to show."
 
 msgid "No text"
 msgstr "No text"
@@ -4415,16 +4340,10 @@ msgstr "Page"
 msgid "Page {0}"
 msgstr "Page {0}"
 
-#~ msgid "Page {0} - Section {1}"
-#~ msgstr "Page {0} - Section {1}"
-
 #. placeholder {0}: page.pageNumber
 #. placeholder {1}: i + 1
 msgid "Page {0} — Section {1}"
 msgstr "Page {0} — Section {1}"
-
-#~ msgid "Page {0} · Section {1}"
-#~ msgstr "Page {0} · Section {1}"
 
 #. placeholder {0}: String(pageNumber)
 msgid "Page {0} captions"
@@ -4464,9 +4383,6 @@ msgstr "Page Mode"
 
 msgid "Page preview"
 msgstr "Page preview"
-
-#~ msgid "Page preview {pageId}"
-#~ msgstr "Page preview {pageId}"
 
 msgid "Page Range"
 msgstr "Page Range"
@@ -4678,9 +4594,6 @@ msgstr "Preset"
 msgid "Presets add recommendations and specific settings for your use case. You still choose each option step by step, and you can go back to select a different preset at any time."
 msgstr "Presets add recommendations and specific settings for your use case. You still choose each option step by step, and you can go back to select a different preset at any time."
 
-#~ msgid "Press Enter to add"
-#~ msgstr "Press Enter to add"
-
 msgid "Prev"
 msgstr "Prev"
 
@@ -4761,9 +4674,6 @@ msgstr "pruned"
 
 msgid "Pruned"
 msgstr "Pruned"
-
-#~ msgid "Pruned ({0})"
-#~ msgstr "Pruned ({0})"
 
 msgid "Pruned Images"
 msgstr "Pruned Images"
@@ -5072,9 +4982,6 @@ msgstr "Render Reasoning"
 msgid "Render Strategy"
 msgstr "Render Strategy"
 
-#~ msgid "rendering"
-#~ msgstr "rendering"
-
 msgid "Rendering Prompt"
 msgstr "Rendering Prompt"
 
@@ -5134,9 +5041,6 @@ msgstr "Reset zoom"
 
 msgid "Resolving source language..."
 msgstr "Resolving source language..."
-
-#~ msgid "Responsive / State variants"
-#~ msgstr "Responsive / State variants"
 
 msgid "Restart and install"
 msgstr "Restart and install"
@@ -5257,9 +5161,6 @@ msgstr "Run Easy Read"
 msgid "Run Extract"
 msgstr "Run Extract"
 
-#~ msgid "Run Extract first — sectioning needs extracted page text and images."
-#~ msgstr "Run Extract first — sectioning needs extracted page text and images."
-
 msgid "Run Glossary"
 msgstr "Run Glossary"
 
@@ -5274,9 +5175,6 @@ msgstr "Run Quizzes"
 
 msgid "Run Sectioning"
 msgstr "Run Sectioning"
-
-#~ msgid "Run Sectioning first — storyboard needs typed sections to render."
-#~ msgstr "Run Sectioning first — storyboard needs typed sections to render."
 
 msgid "Run Speech"
 msgstr "Run Speech"
@@ -5415,9 +5313,6 @@ msgstr "Save checklist"
 
 msgid "Save failed"
 msgstr "Save failed"
-
-#~ msgid "Save or discard edits before regenerating"
-#~ msgstr "Save or discard edits before regenerating"
 
 msgid "Save page review"
 msgstr "Save page review"
@@ -5566,9 +5461,6 @@ msgstr "Sectioning mode"
 
 msgid "Sectioning Mode"
 msgstr "Sectioning Mode"
-
-#~ msgid "Sectioning needs the page text and images that Extract produces. Finish Extract before running this stage."
-#~ msgstr "Sectioning needs the page text and images that Extract produces. Finish Extract before running this stage."
 
 msgid "Sectioning Pages..."
 msgstr "Sectioning Pages..."
@@ -5769,9 +5661,6 @@ msgstr "Show fewer"
 msgid "Show only the terms you added manually"
 msgstr "Show only the terms you added manually"
 
-#~ msgid "Show pruned terms"
-#~ msgstr "Show pruned terms"
-
 msgid "Show reviewer validation"
 msgstr "Show reviewer validation"
 
@@ -5917,12 +5806,6 @@ msgstr "Speech"
 msgid "Speech Generation"
 msgstr "Speech Generation"
 
-#~ msgid "Speech generation includes Easy Read audio. The ADT uses it while Easy Read mode is active."
-#~ msgstr "Speech generation includes Easy Read audio. The ADT uses it while Easy Read mode is active."
-
-#~ msgid "Speech generation uses original text only. Easy Read mode will fall back to original audio."
-#~ msgstr "Speech generation uses original text only. Easy Read mode will fall back to original audio."
-
 msgid "Speech narrates the translated text Language produces. Finish Language before running this stage."
 msgstr "Speech narrates the translated text Language produces. Finish Language before running this stage."
 
@@ -6014,9 +5897,6 @@ msgstr "Storyboard Overview"
 msgid "Storyboard Preview"
 msgstr "Storyboard Preview"
 
-#~ msgid "Storyboard renders the typed sections produced by Sectioning. Finish Sectioning before running this stage."
-#~ msgstr "Storyboard renders the typed sections produced by Sectioning. Finish Sectioning before running this stage."
-
 msgid "Storybook"
 msgstr "Storybook"
 
@@ -6025,9 +5905,6 @@ msgstr "Stretch"
 
 msgid "Strict"
 msgstr "Strict"
-
-#~ msgid "Strict grid template that repeats across pages."
-#~ msgstr "Strict grid template that repeats across pages."
 
 msgid "Strikethrough"
 msgstr "Strikethrough"
@@ -6649,9 +6526,6 @@ msgstr "Two-column template for story content"
 msgid "Type"
 msgstr "Type"
 
-#~ msgid "Type class name or search..."
-#~ msgstr "Type class name or search..."
-
 msgid "Typed Sections"
 msgstr "Typed Sections"
 
@@ -6711,9 +6585,6 @@ msgstr "Unprune image"
 
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
-
-#~ msgid "Unsaved:"
-#~ msgstr "Unsaved:"
 
 msgid "Untangling nested divs with care..."
 msgstr "Untangling nested divs with care..."
@@ -6851,9 +6722,6 @@ msgstr "Validation Errors ({0})"
 
 msgid "Variables"
 msgstr "Variables"
-
-#~ msgid "Variant:"
-#~ msgstr "Variant:"
 
 msgid "Variations"
 msgstr "Variations"
@@ -7014,9 +6882,6 @@ msgstr "When describing images, mention any culturally specific objects, locatio
 
 msgid "When enabled, background colors from the styleguide are applied to the full page body."
 msgstr "When enabled, background colors from the styleguide are applied to the full page body."
-
-#~ msgid "When enabled, speech generation also creates audio for Easy Read texts. The ADT uses that audio while Easy Read mode is active and falls back to the original audio when it is missing."
-#~ msgstr "When enabled, speech generation also creates audio for Easy Read texts. The ADT uses that audio while Easy Read mode is active and falls back to the original audio when it is missing."
 
 msgid "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."
 msgstr "When enabled, text labels near vector images (e.g. chart dimensions, speech bubbles) are grouped together and extracted as raster crops. Disable to extract only the core vector shapes without text."
