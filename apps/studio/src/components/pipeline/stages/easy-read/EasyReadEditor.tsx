@@ -36,7 +36,6 @@ export function EasyReadEditor({
   })
   const [draftBlocks, setDraftBlocks] = useState<EasyReadSectionBlock[] | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [typeFilter, setTypeFilter] = useState<string>("all")
   const blocks = draftBlocks ?? data?.blocks ?? []
   const dirty = draftBlocks !== null
 
@@ -45,21 +44,10 @@ export function EasyReadEditor({
     [blocks, selectedPageId],
   )
 
-  const sectionTypes = useMemo(() => {
-    const counts = new Map<string, number>()
-    for (const block of pageScopedBlocks) {
-      counts.set(block.sectionType, (counts.get(block.sectionType) ?? 0) + 1)
-    }
-    return Array.from(counts, ([value, count]) => ({ value, count }))
-  }, [pageScopedBlocks])
-
-  const activeTypeFilter = sectionTypes.some((s) => s.value === typeFilter) ? typeFilter : "all"
-
   const filteredBlocks = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
+    if (!query) return pageScopedBlocks
     return pageScopedBlocks.filter((block) => {
-      if (activeTypeFilter !== "all" && block.sectionType !== activeTypeFilter) return false
-      if (!query) return true
       if (block.sectionType.toLowerCase().includes(query)) return true
       return block.entries.some(
         (entry) =>
@@ -67,13 +55,10 @@ export function EasyReadEditor({
           entry.text.toLowerCase().includes(query),
       )
     })
-  }, [pageScopedBlocks, activeTypeFilter, searchQuery])
+  }, [pageScopedBlocks, searchQuery])
 
-  const filtersActive = activeTypeFilter !== "all" || searchQuery.trim().length > 0
-  const clearFilters = () => {
-    setSearchQuery("")
-    setTypeFilter("all")
-  }
+  const filtersActive = searchQuery.trim().length > 0
+  const clearFilters = () => setSearchQuery("")
 
   const pageEntries = useMemo<PageJumperEntry[]>(() => {
     const map = new Map<string, PageJumperEntry>()
@@ -262,46 +247,11 @@ export function EasyReadEditor({
     )
   }
 
-  const chipBase =
-    "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-200 cursor-pointer"
-
   return (
     <div ref={scrollContainerRef} className="flex flex-1 flex-col overflow-y-auto">
       <EasyReadHintBanner />
 
       <div className="sticky top-0 z-20 flex items-center gap-3 border-b border-border/60 bg-background/95 px-4 py-2.5 backdrop-blur-md">
-        {sectionTypes.length > 1 && (
-          <div className="inline-flex items-center rounded-lg border border-border/70 bg-muted/40 p-0.5">
-            {[{ value: "all", count: pageScopedBlocks.length }, ...sectionTypes].map((opt) => {
-              const active = activeTypeFilter === opt.value
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setTypeFilter(opt.value)}
-                  aria-pressed={active}
-                  className={`${chipBase} ${
-                    active
-                      ? "bg-background text-foreground shadow-sm ring-1 ring-border/60"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <span className="capitalize">
-                    {opt.value === "all" ? t`All` : opt.value.replace(/_/g, " ")}
-                  </span>
-                  <span
-                    className={`tabular-nums text-[11px] ${
-                      active ? "text-fuchsia-700" : "text-muted-foreground/60"
-                    }`}
-                  >
-                    {opt.count}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        )}
-
         <div className="relative max-w-md flex-1">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" />
           <input
