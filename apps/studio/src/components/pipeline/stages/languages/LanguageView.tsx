@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback, useMemo, type ChangeEvent } from "react"
 import { createPortal } from "react-dom"
 import { Link } from "@tanstack/react-router"
-import { AudioLines, Check, ChevronDown, ChevronRight, ChevronUp, Languages, Loader2, Play, Pause, Plus, RotateCcw, Save, Settings, Trash2, Type, Upload, WandSparkles, X } from "lucide-react"
+import { AudioLines, ChevronDown, ChevronRight, ChevronUp, Languages, Loader2, Play, Pause, Plus, RotateCcw, Save, Settings, Trash2, Type, Upload, WandSparkles, X } from "lucide-react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { api, getAudioUrl, BASE_URL } from "@/api/client"
-import type { TextCatalogEntry, VersionEntry, WordTimestamp, WordTimestampEntry } from "@/api/client"
+import type { TextCatalogEntry, WordTimestamp, WordTimestampEntry } from "@/api/client"
+import { VersionPicker } from "@/components/pipeline/components/VersionPicker"
 import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
 import { useActiveConfig } from "@/hooks/use-debug"
 import { useBook } from "@/hooks/use-books"
@@ -35,126 +36,9 @@ import {
 import { displayLang } from "./lib/display-lang"
 import { ImageLightbox } from "./components/ImageLightbox"
 import { WordHighlightPreview } from "./components/WordHighlightPreview"
+import { usePendingChanges } from "../../components/change-summary"
 import { msg } from "@lingui/core/macro"
 import { useLingui } from "@lingui/react/macro"
-
-function VersionPicker({
-  currentVersion,
-  saving,
-  dirty,
-  bookLabel,
-  language,
-  onPreview,
-  onSave,
-  onDiscard,
-}: {
-  currentVersion: number | null
-  saving: boolean
-  dirty: boolean
-  bookLabel: string
-  language: string
-  onPreview: (data: unknown) => void
-  onSave: () => void
-  onDiscard: () => void
-}) {
-  const { t } = useLingui()
-  const [open, setOpen] = useState(false)
-  const [versions, setVersions] = useState<VersionEntry[] | null>(null)
-  const [loading, setLoading] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [open])
-
-  const handleOpen = async () => {
-    if (saving || currentVersion == null) return
-    setOpen(true)
-    setLoading(true)
-    const res = await api.getVersionHistory(bookLabel, "text-catalog-translation", language, true)
-    setVersions(res.versions)
-    setLoading(false)
-  }
-
-  const handlePick = (v: VersionEntry) => {
-    if (v.version === currentVersion && !dirty) {
-      setOpen(false)
-      return
-    }
-    setOpen(false)
-    onPreview(v.data)
-  }
-
-  if (saving) {
-    return <Loader2 className="h-3 w-3 animate-spin" />
-  }
-
-  if (currentVersion == null) return null
-
-  if (dirty) {
-    return (
-      <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          onClick={onDiscard}
-          className="text-[10px] font-medium rounded px-2 py-0.5 bg-black/15 text-black hover:bg-black/25 cursor-pointer transition-colors"
-        >
-          {t`Discard`}
-        </button>
-        <button
-          type="button"
-          onClick={onSave}
-          className="flex items-center gap-1 text-[10px] font-medium rounded px-2 py-0.5 bg-white text-green-800 hover:bg-white/80 cursor-pointer transition-colors"
-        >
-          <Check className="h-3 w-3" />
-          {t`Save`}
-        </button>
-      </div>
-    )
-  }
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={handleOpen}
-        className="flex items-center gap-0.5 text-[10px] font-normal normal-case tracking-normal bg-white/20 text-white hover:bg-white/30 rounded px-1.5 py-0.5 transition-colors"
-      >
-        v{currentVersion}
-        <ChevronDown className="h-2.5 w-2.5" />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full mt-1 z-20 bg-popover border rounded shadow-md min-w-[80px] py-1">
-          {loading ? (
-            <div className="flex items-center justify-center py-2 px-3">
-              <Loader2 className="h-3 w-3 animate-spin" />
-            </div>
-          ) : versions && versions.length > 0 ? (
-            versions.map((v) => (
-              <button
-                key={v.version}
-                type="button"
-                onClick={() => handlePick(v)}
-                className={`w-full text-left px-3 py-1 text-xs hover:bg-accent transition-colors ${
-                  v.version === currentVersion ? "font-semibold text-foreground" : "text-muted-foreground"
-                }`}
-              >
-                v{v.version}
-              </button>
-            ))
-          ) : (
-            <div className="px-3 py-1 text-xs text-muted-foreground">{t`No versions`}</div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
 
 export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageId, onSelectPage }: { bookLabel: string; stageSlug?: string; selectedPageId?: string; onSelectPage?: (pageId: string | null) => void }) {
   const isSpeechStage = stageSlug === "speech"
@@ -347,7 +231,18 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
   // Effective translated entries (pending overrides fetched data)
   const effectiveEntries = pendingEntries ?? translatedEntries
   const translatedMap = new Map(effectiveEntries.map((e) => [e.id, e.text]))
-  const dirty = pendingEntries != null
+
+  const {
+    label: pendingLabel,
+    labelKey: pendingLabelKey,
+    hasChanges: dirty,
+  } = usePendingChanges({
+    prev: translatedEntries,
+    next: pendingEntries,
+    keyOf: (e) => e.id,
+    isEqual: (a, b) => a.text === b.text,
+    noun: { one: t`translation`, other: t`translations` },
+  })
 
   const saveTranslation = useCallback(async () => {
     if (!pendingEntries || !selectedLang) return
@@ -577,11 +472,14 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
       )}
       {selectedLang && translationVersion != null && !isSourceLang && !isSpeechStage && (
         <VersionPicker
+          step="text-catalog-translation"
+          itemId={selectedLang}
           currentVersion={translationVersion}
           saving={saving}
           dirty={dirty}
           bookLabel={bookLabel}
-          language={selectedLang}
+          pendingLabel={pendingLabel}
+          pendingLabelKey={pendingLabelKey}
           onPreview={(d) => {
             const data = d as { entries?: TextCatalogEntry[] }
             setPendingEntries(data?.entries ?? [])

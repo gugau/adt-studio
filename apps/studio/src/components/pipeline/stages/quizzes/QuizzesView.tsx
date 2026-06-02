@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
-  Check,
   CheckCircle2,
-  ChevronDown,
   HelpCircle,
   Loader2,
   ImageOff,
@@ -13,7 +11,7 @@ import {
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/client";
-import type { QuizGenerationOutput, VersionEntry } from "@/api/client";
+import type { QuizGenerationOutput } from "@/api/client";
 import { useQuizzes } from "@/hooks/use-quizzes";
 import { usePageImage, usePages } from "@/hooks/use-pages";
 import { formatPageNumbers } from "./lib/format-page-numbers";
@@ -29,6 +27,8 @@ import { Button } from "@/components/ui/button";
 import { useStepHeader } from "../../components/StepViewRouter";
 import { StageContentGuard } from "../../components/StageContentGuard";
 import { StageEmptyState } from "../../components/StageEmptyState";
+import { VersionPicker } from "../../components/VersionPicker";
+import { usePendingChanges } from "../../components/change-summary";
 import {
   getRequestedPageId,
   getQuizImageRenderState,
@@ -42,130 +42,6 @@ import { useStageStatus } from "@/hooks/use-stage-status";
 import { useLingui } from "@lingui/react/macro";
 
 type QuizData = QuizGenerationOutput;
-
-function VersionPicker({
-  currentVersion,
-  saving,
-  dirty,
-  bookLabel,
-  onPreview,
-  onSave,
-  onDiscard,
-}: {
-  currentVersion: number | null;
-  saving: boolean;
-  dirty: boolean;
-  bookLabel: string;
-  onPreview: (data: unknown) => void;
-  onSave: () => void;
-  onDiscard: () => void;
-}) {
-  const { t } = useLingui();
-  const [open, setOpen] = useState(false);
-  const [versions, setVersions] = useState<VersionEntry[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node))
-        setOpen(false);
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
-  const handleOpen = async () => {
-    if (saving || currentVersion == null) return;
-    setOpen(true);
-    setLoading(true);
-    const res = await api.getVersionHistory(
-      bookLabel,
-      "quiz-generation",
-      "book",
-      true,
-    );
-    setVersions(res.versions);
-    setLoading(false);
-  };
-
-  const handlePick = (v: VersionEntry) => {
-    if (v.version === currentVersion && !dirty) {
-      setOpen(false);
-      return;
-    }
-    setOpen(false);
-    onPreview(v.data);
-  };
-
-  if (saving) {
-    return <Loader2 className="h-3 w-3 animate-spin" />;
-  }
-
-  if (currentVersion == null) return null;
-
-  if (dirty) {
-    return (
-      <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          onClick={onDiscard}
-          className="text-[10px] font-medium rounded px-2 py-0.5 bg-black/15 text-black hover:bg-black/25 cursor-pointer transition-colors"
-        >
-          {t`Discard`}
-        </button>
-        <button
-          type="button"
-          onClick={onSave}
-          className="flex items-center gap-1 text-[10px] font-medium rounded px-2 py-0.5 bg-white text-orange-800 hover:bg-white/80 cursor-pointer transition-colors"
-        >
-          <Check className="h-3 w-3" />
-          {t`Save`}
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={handleOpen}
-        className="flex items-center gap-0.5 text-[10px] font-normal normal-case tracking-normal bg-white/20 text-white hover:bg-white/30 rounded px-1.5 py-0.5 transition-colors"
-      >
-        v{currentVersion}
-        <ChevronDown className="h-2.5 w-2.5" />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full mt-1 z-20 bg-popover border rounded shadow-md min-w-[80px] py-1">
-          {loading ? (
-            <div className="flex items-center justify-center py-2 px-3">
-              <Loader2 className="h-3 w-3 animate-spin" />
-            </div>
-          ) : versions && versions.length > 0 ? (
-            versions.map((v) => (
-              <button
-                key={v.version}
-                type="button"
-                onClick={() => handlePick(v)}
-                className={`w-full text-left px-3 py-1 text-xs hover:bg-accent transition-colors ${
-                  v.version === currentVersion
-                    ? "font-semibold text-foreground"
-                    : "text-muted-foreground"
-                }`}
-              >
-                v{v.version}
-              </button>
-            ))
-          ) : (
-            <div className="px-3 py-1 text-xs text-muted-foreground">{t`No versions`}</div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function PageThumb({
   bookLabel,
@@ -282,7 +158,21 @@ export function QuizzesView({
 
   const effective = pending ?? data?.quizzes;
   const quizzes = effective?.quizzes ?? [];
-  const dirty = pending != null;
+
+  const {
+    label: pendingLabel,
+    labelKey: pendingLabelKey,
+    hasChanges: dirty,
+  } = usePendingChanges({
+    prev: data?.quizzes?.quizzes ?? [],
+    next: pending?.quizzes,
+    keyOf: (q) => String(q.quizIndex),
+    isEqual: (a, b) =>
+      a.question === b.question &&
+      a.answerIndex === b.answerIndex &&
+      JSON.stringify(a.options) === JSON.stringify(b.options),
+    noun: { one: t`quiz`, other: t`quizzes` },
+  });
 
   const displayQuizzes = selectedPageId
     ? quizzes.filter((q) => q.pageIds.includes(selectedPageId))
@@ -410,10 +300,14 @@ export function QuizzesView({
     setExtra(
       <div className="flex items-center gap-1.5 ml-auto">
         <VersionPicker
+          step="quiz-generation"
+          itemId="book"
           currentVersion={data.version}
           saving={saving}
           dirty={dirty}
           bookLabel={bookLabel}
+          pendingLabel={pendingLabel}
+          pendingLabelKey={pendingLabelKey}
           onPreview={(d) => setPending(d as QuizData)}
           onSave={() => saveRef.current()}
           onDiscard={() => setPending(null)}
@@ -428,6 +322,9 @@ export function QuizzesView({
     dirty,
     bookLabel,
     selectedPageId,
+    pendingLabel,
+    pendingLabelKey,
+    setExtra,
   ]);
 
   const updateQuestion = (idx: number, question: string) => {
