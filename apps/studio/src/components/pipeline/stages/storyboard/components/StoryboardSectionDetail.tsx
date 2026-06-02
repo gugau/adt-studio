@@ -56,6 +56,8 @@ import {
   type ComputedTypographyStyles,
 } from "./BookPreviewFrame"
 import { SectionEditPanel } from "./SectionEditPanel"
+import { StorySectionBanner } from "./StorySectionBanner"
+import { Puzzle } from "lucide-react"
 import { StyleEditorPanel } from "./style-editor"
 import { ViewportToggle } from "./style-editor/ViewportToggle"
 import {
@@ -72,6 +74,7 @@ import { Input } from "@/components/ui/input"
 import { useLingui } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
 import { i18n } from "@lingui/core"
+import { getSectionTypeLabel } from "@/lib/section-constants"
 import {
   Dialog,
   DialogContent,
@@ -681,6 +684,7 @@ export function StoryboardSectionDetail({
       setPendingCategories(new Set())
       needsRerenderRef.current = false
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
+      await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages"] })
       invalidateStoryboardDependents(queryClient, bookLabel)
       await minDelay
 
@@ -743,6 +747,7 @@ export function StoryboardSectionDetail({
       setPendingSectioning(null)
       setPendingCategories(new Set())
       await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages", pageId] })
+      await queryClient.invalidateQueries({ queryKey: ["books", bookLabel, "pages"] })
       invalidateStoryboardDependents(queryClient, bookLabel)
       await minDelay
     } catch (err) {
@@ -1842,6 +1847,19 @@ export function StoryboardSectionDetail({
   const hasTextParts = leafNodes.some((l) => l.role && l.role !== "image")
   const hasImageParts = leafNodes.some((l) => l.role === "image")
 
+  // Activity sections get a banner above the rendered preview so the user can
+  // tell at a glance that they're editing an interactive question/exercise
+  // rather than narrative content. Detect primarily by section type (covers
+  // activities with no fixed answers, e.g. open-ended) and fall back to the
+  // rendered activity metadata.
+  const isActivitySection = Boolean(
+    section?.sectionType?.startsWith("activity_") ||
+      renderedSection?.activityReasoning ||
+      (renderedSection?.activityAnswers &&
+        Object.keys(renderedSection.activityAnswers).length > 0)
+  )
+  const activityTypeLabel = section?.sectionType ? getSectionTypeLabel(section.sectionType) : ""
+
   // Header controls rendered via portal into the purple step header
   const headerControls = (
     <>
@@ -1987,6 +2005,14 @@ export function StoryboardSectionDetail({
           />
         ) : renderedSection?.html ? (
           <>
+            {isActivitySection && (
+              <StorySectionBanner
+                tone="violet"
+                icon={<Puzzle className="w-4 h-4" />}
+                title={activityTypeLabel || t`Activity`}
+                subtitle={t`Interactive page: AI conversion from the original PDF.`}
+              />
+            )}
             {activityPreviewMode ? (
               <iframe
                 src={`${BASE_URL}/books/${bookLabel}/adt-preview/${pageId}_sec${String(sectionIndex + 1).padStart(3, "0")}.html?embed=1&v=${page.versions.rendering ?? 0}`}

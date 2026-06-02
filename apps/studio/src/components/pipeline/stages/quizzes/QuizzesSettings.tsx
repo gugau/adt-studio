@@ -1,8 +1,13 @@
 import { useState, useEffect } from "react"
+import { Plus } from "lucide-react"
+import { AddQuizDialog } from "./AddQuizDialog"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useBookConfig } from "@/hooks/use-book-config"
 import { useActiveConfig } from "@/hooks/use-debug"
+import { useApiKey } from "@/hooks/use-api-key"
+import { useStageStatus } from "@/hooks/use-stage-status"
 import { api } from "@/api/client"
 import { PromptViewer } from "@/components/pipeline/components/PromptViewer"
 import { useStepConfig } from "@/hooks/use-step-config"
@@ -26,6 +31,9 @@ export function QuizzesSettings({ bookLabel, tab = "general" }: { bookLabel: str
   const { t } = useLingui()
   const { data: bookConfigData } = useBookConfig(bookLabel)
   const { data: activeConfigData } = useActiveConfig(bookLabel)
+  const { hasApiKey } = useApiKey()
+  const quizzesStatus = useStageStatus("quizzes")
+  const [showAddQuiz, setShowAddQuiz] = useState(false)
 
   const [pagesPerQuiz, setPagesPerQuiz] = useState("")
   const [promptDraft, setPromptDraft] = useState<string | null>(null)
@@ -125,6 +133,36 @@ export function QuizzesSettings({ bookLabel, tab = "general" }: { bookLabel: str
             </p>
           </div>
 
+          <div className="space-y-2 rounded-md border p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <Label className="text-xs">{t`Add a quiz`}</Label>
+                <p className="text-xs text-muted-foreground">
+                  {t`Generate a single quiz from specific pages and place it at a chosen location.`}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 shrink-0 gap-1.5"
+                disabled={!hasApiKey || quizzesStatus.isRunning}
+                onClick={() => setShowAddQuiz(true)}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                {t`Add quiz`}
+              </Button>
+            </div>
+            {!hasApiKey ? (
+              <p className="text-xs text-muted-foreground">
+                {t`Add an API key in Book settings to generate a quiz.`}
+              </p>
+            ) : quizzesStatus.isRunning ? (
+              <p className="text-xs text-muted-foreground">
+                {t`Quizzes are generating. Wait for the run to finish before adding a quiz.`}
+              </p>
+            ) : null}
+          </div>
+
           {sectionTypeKeys.length > 0 && (
             <div className="space-y-2">
               <Label className="text-xs">{t`Quiz Section Types`}</Label>
@@ -173,6 +211,11 @@ export function QuizzesSettings({ bookLabel, tab = "general" }: { bookLabel: str
         />
       )}
 
+      <AddQuizDialog
+        open={showAddQuiz}
+        onOpenChange={setShowAddQuiz}
+        bookLabel={bookLabel}
+      />
       </div>
     </>
   )
