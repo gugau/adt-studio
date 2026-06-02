@@ -48,6 +48,20 @@ export function getSignLanguageVideoUrl(label: string, videoId: string): string 
   return `${BASE_URL}/books/${label}/sign-language-videos/${videoId}`
 }
 
+export function getSectionScreenshotUrl(
+  label: string,
+  pageId: string,
+  sectionIndex: number,
+  options?: { viewport?: "desktop" | "tablet" | "mobile"; cacheKey?: string | number | null },
+): string {
+  const base = `${BASE_URL}/books/${label}/pages/${pageId}/sections/${sectionIndex}/screenshot`
+  const params = new URLSearchParams()
+  if (options?.viewport) params.set("viewport", options.viewport)
+  if (options?.cacheKey != null) params.set("v", String(options.cacheKey))
+  const qs = params.toString()
+  return qs ? `${base}?${qs}` : base
+}
+
 export function getSourcePdfUrl(label: string): string {
   return `${BASE_URL}/books/${label}/source-pdf`
 }
@@ -161,6 +175,15 @@ export interface StageRunStatus {
   queue?: Array<{ id: string; fromStage: string; toStage: string }>
 }
 
+export interface PageSummarySection {
+  sectionId: string
+  sectionIndex: number
+  sectionType: string
+  isActivity: boolean
+  isPruned: boolean
+  textPreview: string
+}
+
 export interface PageSummaryItem {
   pageId: string
   pageNumber: number
@@ -171,7 +194,9 @@ export interface PageSummaryItem {
   wordCount: number
   sectionCount: number
   prunedSections: number[]
-  sections: Array<{ sectionId: string; sectionIndex: number }>
+  renderingVersion: number | null
+  sectioningVersion: number | null
+  sections: PageSummarySection[]
 }
 
 export interface SectionRendering {
@@ -942,6 +967,26 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(data),
     }),
+
+  generateQuiz: (
+    label: string,
+    apiKey: string,
+    body: {
+      pageIds: string[]
+      afterPageId: string
+      placement?: "replace" | "after"
+    },
+    providerCredentials?: StageRunProviderCredentials
+  ) =>
+    request<{ quiz: QuizItem; version: number }>(
+      `/books/${label}/quizzes/generate-one`,
+      {
+        method: "POST",
+        headers: buildApiHeaders(apiKey, providerCredentials),
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(120_000),
+      }
+    ),
 
   getGlossary: (label: string) =>
     request<GlossaryOutput | null>(`/books/${label}/glossary`),

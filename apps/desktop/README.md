@@ -67,17 +67,21 @@ apps/desktop/release/
 
 ## Signing And Notarization
 
-`electron-builder` runs `scripts/notarize.js` in `afterSign`.
+- **Windows** signing is handled by `scripts/sign-windows.js`, wired through
+  `electron-builder`'s `win.sign` callback. It is invoked once per `.exe`
+  (both the inner app and the NSIS installer) and signs via `jsign` + Azure
+  Trusted Signing. Requires:
+  - `AZ_TOKEN` — short-lived access token (CI obtains it via OAuth)
+  - `jsign.jar` next to this directory (CI downloads it; locally, download
+    from Maven Central into `apps/desktop/jsign.jar`)
+  - `java` on PATH
 
-- Windows signing requires:
-  - `AZ_TOKEN`
-  - `jsign.jar` available in the Electron app directory
-- macOS notarization requires:
-  - `APPLEID`
-  - `APPLEIDPASS`
-  - `APPLEIDTEAM`
+- **macOS** signing + notarization is handled by `electron-builder`'s
+  built-in support — no custom script. Requires:
+  - `CSC_LINK` and `CSC_KEY_PASSWORD` for the Developer ID certificate
+  - `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID` for notarytool
 
-To skip signing/notarization in CI or local tests:
+To skip signing in CI or local tests:
 
 ```bash
 SKIP_NOTARIZE=true pnpm --filter @adt/desktop build:win

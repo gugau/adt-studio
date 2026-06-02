@@ -85,11 +85,11 @@ describe("initializeQuizActivity — standalone activity_quiz", () => {
 
     store.get(validateHandlerAtom)?.()
     expect(store.get(submitStateAtom)).toBe("next")
-    expect(store.get(submitEnabledAtom)).toBe(true) // next qz exists
+    expect(store.get(submitEnabledAtom)).toBe(true) // next page exists
   })
 
-  it("disables next when there is no further quiz to jump to", () => {
-    store.set(currentSectionIdAtom, "qz002") // last qz
+  it("disables next when this is the last page", () => {
+    store.set(currentSectionIdAtom, "qz002") // last page
     setupStandaloneQuiz()
     document.querySelector("section")!.setAttribute("data-section-id", "qz002")
     initializeQuizActivity()

@@ -15,6 +15,7 @@ export function useSaveImageClassification(label: string, pageId: string) {
     mutationFn: (data: unknown) => api.updateImageClassification(label, pageId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["books", label, "pages", pageId] })
+      queryClient.invalidateQueries({ queryKey: ["books", label, "pages"] })
     },
   })
 }
@@ -25,6 +26,7 @@ export function useSaveSectioning(label: string, pageId: string) {
     mutationFn: (data: unknown) => api.updateSectioning(label, pageId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["books", label, "pages", pageId] })
+      queryClient.invalidateQueries({ queryKey: ["books", label, "pages"] })
       invalidateStoryboardDependents(queryClient, label)
     },
   })
