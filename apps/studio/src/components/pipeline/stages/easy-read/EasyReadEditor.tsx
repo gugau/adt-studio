@@ -333,10 +333,14 @@ export function EasyReadEditor({
           />
         </div>
       ) : (
-        <div className="flex flex-col gap-7 px-4 pb-12 pt-4">
+        <div className="flex flex-col gap-5 px-4 pb-12 pt-4">
           {pageGroups.map((group) => (
-            <section key={group.pageId} data-page-id={group.pageId} className="scroll-mt-20">
-              <div className="mb-2.5 flex items-center gap-3 border-b border-border/60 pb-2.5">
+            <section
+              key={group.pageId}
+              data-page-id={group.pageId}
+              className="scroll-mt-20 overflow-hidden rounded-xl border border-border/70 bg-card"
+            >
+              <div className="flex items-center gap-3 border-b border-border/60 bg-muted/20 px-3.5 py-2.5">
                 <PageCover bookLabel={bookLabel} pageId={group.pageId} />
                 <div className="flex min-w-0 flex-col">
                   <span className="text-[15px] font-semibold leading-tight text-foreground">
@@ -350,11 +354,11 @@ export function EasyReadEditor({
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2.5">
+              <div className="divide-y divide-border/60">
                 {group.blocks.map((block) => (
                   <div
                     key={`${block.sectionId}:${block.sectionIndex}`}
-                    className="rounded-xl border border-border/70 bg-card p-3.5"
+                    className="p-3.5"
                   >
                     <div className="mb-3 flex items-center gap-2">
                       <Tooltip>
