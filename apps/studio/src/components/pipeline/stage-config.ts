@@ -77,7 +77,6 @@ export const STAGES_WITH_PAGES = new Set<StageSlug>([
   "sectioning",
   "storyboard",
   "quizzes",
-  "easy-read",
   "translate",
   "speech",
 ])
