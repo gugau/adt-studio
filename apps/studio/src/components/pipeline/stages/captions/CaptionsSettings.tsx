@@ -11,7 +11,7 @@ import {
 } from "@/components/pipeline/components/stage-rerun"
 import { useLingui } from "@lingui/react/macro"
 
-export function CaptionsSettings({ bookLabel }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string }) {
+export function CaptionsSettings({ bookLabel }: { bookLabel: string; tab?: string }) {
   const { t } = useLingui()
   const { data: bookConfigData } = useBookConfig(bookLabel)
   const { data: activeConfigData } = useActiveConfig(bookLabel)

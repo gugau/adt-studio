@@ -22,7 +22,7 @@ function getSectionTypeDisplayDescription(value: string, configDesc: string): st
   return getSectionTypeDescription(value) ?? configDesc
 }
 
-export function QuizzesSettings({ bookLabel, tab = "general" }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string }) {
+export function QuizzesSettings({ bookLabel, tab = "general" }: { bookLabel: string; tab?: string }) {
   const { t } = useLingui()
   const { data: bookConfigData } = useBookConfig(bookLabel)
   const { data: activeConfigData } = useActiveConfig(bookLabel)

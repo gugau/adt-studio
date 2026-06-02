@@ -72,7 +72,7 @@ function getSectionTypeDisplayLabel(value: string): string {
   return label || value.replace(/_/g, " ")
 }
 
-export function SectioningSettings({ bookLabel, headerTarget, tab = "section-types" }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string }) {
+export function SectioningSettings({ bookLabel, tab = "section-types" }: { bookLabel: string; tab?: string }) {
   const { t } = useLingui()
   const { data: bookConfigData } = useBookConfig(bookLabel)
   const { data: activeConfigData } = useActiveConfig(bookLabel)

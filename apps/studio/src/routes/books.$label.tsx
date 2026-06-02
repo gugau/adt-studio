@@ -140,7 +140,7 @@ function BookLayoutInner({ label, isRunning }: { label: string; isRunning: boole
         <UnsavedChangesGuard />
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex min-h-0 flex-1">
-            <div className="relative w-[220px] shrink-0">
+            <div className="relative w-[var(--stage-rail-w)] shrink-0">
               <div className="absolute inset-y-0 left-0 z-30 flex w-full flex-col overflow-hidden bg-background">
                 <div
                   className="flex h-10 shrink-0 items-center border-r border-gray-700 bg-gray-700 text-white drag-region"

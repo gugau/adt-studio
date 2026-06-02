@@ -157,42 +157,42 @@ export function VersionPicker({
   }
 
   return (
-      <Popover open={open} onOpenChange={handleOpenChange}>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            className={`flex items-center gap-0.5 text-[10px] font-normal normal-case tracking-normal rounded px-1.5 py-0.5 transition-colors ${styling.triggerClass}`}
-          >
-            v{currentVersion}
-            <ChevronDown className="h-2.5 w-2.5" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent align="end" className="w-auto min-w-[80px] p-1">
-          {loadingVersions ? (
-            <div className="flex items-center justify-center py-2 px-3">
-              <Loader2 className="h-3 w-3 animate-spin" />
-            </div>
-          ) : versions && versions.length > 0 ? (
-            versions.map((v) => (
-              <button
-                key={v.version}
-                type="button"
-                onClick={() => handlePick(v)}
-                className={`block w-full text-left px-3 py-1 text-xs rounded hover:bg-accent transition-colors ${
-                  v.version === currentVersion
-                    ? "font-semibold text-foreground"
-                    : "text-muted-foreground"
-                }`}
-              >
-                v{v.version}
-              </button>
-            ))
-          ) : (
-            <div className="px-3 py-1 text-xs text-muted-foreground">
-              {t`No versions`}
-            </div>
-          )}
-        </PopoverContent>
-      </Popover>
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={`flex items-center gap-0.5 text-[10px] font-normal normal-case tracking-normal rounded px-1.5 py-0.5 transition-colors ${styling.triggerClass}`}
+        >
+          v{currentVersion}
+          <ChevronDown className="h-2.5 w-2.5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-auto min-w-[80px] p-1">
+        {loadingVersions ? (
+          <div className="flex items-center justify-center py-2 px-3">
+            <Loader2 className="h-3 w-3 animate-spin" />
+          </div>
+        ) : versions && versions.length > 0 ? (
+          versions.map((v) => (
+            <button
+              key={v.version}
+              type="button"
+              onClick={() => handlePick(v)}
+              className={`block w-full text-left px-3 py-1 text-xs rounded hover:bg-accent transition-colors ${
+                v.version === currentVersion
+                  ? "font-semibold text-foreground"
+                  : "text-muted-foreground"
+              }`}
+            >
+              v{v.version}
+            </button>
+          ))
+        ) : (
+          <div className="px-3 py-1 text-xs text-muted-foreground">
+            {t`No versions`}
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
   )
 }

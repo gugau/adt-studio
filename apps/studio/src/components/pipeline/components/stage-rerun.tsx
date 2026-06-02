@@ -155,9 +155,9 @@ export function StageRerunBar({ controller }: { controller: SaveAndRerunControll
     <>
       {c.hasPendingChanges &&
         createPortal(
-          // left-[220px] clears the book layout's fixed-width stage sidebar so
-          // the bar spans only the content column, not the whole viewport.
-          <div className="fixed bottom-0 left-[220px] right-0 z-50 animate-in slide-in-from-bottom-2 fade-in duration-300 ease-out">
+          // Offset by the stage rail width so the bar spans only the content
+          // column, not the whole viewport (var defined in globals.css).
+          <div className="fixed bottom-0 left-[var(--stage-rail-w)] right-0 z-50 animate-in slide-in-from-bottom-2 fade-in duration-300 ease-out">
             <div className="flex items-center gap-3 border-t bg-background/95 px-4 py-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur">
               <span className="relative inline-flex h-2 w-2 shrink-0" aria-hidden>
                 <span className="absolute inset-0 rounded-full bg-amber-500/40 animate-ping" />
