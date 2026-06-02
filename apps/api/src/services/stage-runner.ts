@@ -124,6 +124,24 @@ function toErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err)
 }
 
+/**
+ * Compare two text catalogs by content (entry id + text, in order). Used to
+ * skip writing a new node version when a rebuild produced identical output.
+ */
+function textCatalogsEqual(
+  a: TextCatalogOutput | undefined,
+  b: TextCatalogOutput
+): boolean {
+  if (!a) return false
+  if (a.entries.length !== b.entries.length) return false
+  for (let i = 0; i < a.entries.length; i++) {
+    if (a.entries[i].id !== b.entries[i].id || a.entries[i].text !== b.entries[i].text) {
+      return false
+    }
+  }
+  return true
+}
+
 function isGeminiTtsRateLimitMessage(message: string): boolean {
   return /\(429\)|quota exceeded|rate limit|too many requests/i.test(message)
 }
@@ -1736,24 +1754,33 @@ async function runTranslateStep(
       )
     )
 
-    const catalogRow = storage.getLatestNodeData("text-catalog", "book")
-    let catalog = catalogRow?.data as TextCatalogOutput | undefined
-    // The text-catalog is normally produced by the easy-read stage. A translate
-    // run can start here without it — a standalone translate run (fromStage
-    // "translate") never runs easy-read, and caption/page edits clear the
-    // catalog. Rebuild it so translation isn't silently skipped.
-    if (!catalog) {
-      const pages = storage.getPages()
-      catalog = await buildTextCatalog(storage, pages)
+    // The text-catalog is a derived artifact (a pure read of storyboard +
+    // captions + glossary + quizzes, no LLM). It's normally produced by the
+    // easy-read stage, but Translate must guarantee a *fresh* catalog rather
+    // than trust whatever node happens to exist:
+    //   - a standalone translate run (fromStage "translate") never runs
+    //     easy-read, and
+    //   - GET /text-catalog lazily persists a catalog the moment the book is
+    //     viewed; opened before Storyboard renders, that persisted catalog is
+    //     empty and previously stuck here (we only rebuilt when the node was
+    //     entirely absent), silently skipping all translation.
+    // Always rebuild from current data; persist a new version only when the
+    // content changed, to avoid version churn on repeated re-runs.
+    const pages = storage.getPages()
+    const catalog = await buildTextCatalog(storage, pages)
+    const existingCatalog = storage.getLatestNodeData("text-catalog", "book")?.data as
+      | TextCatalogOutput
+      | undefined
+    if (!textCatalogsEqual(existingCatalog, catalog)) {
       storage.putNodeData("text-catalog", "book", catalog)
       console.log(
-        `[stage-run] ${label}: rebuilt missing text catalog (${catalog.entries.length} entries)`
+        `[stage-run] ${label}: rebuilt text catalog (${catalog.entries.length} entries)`
       )
     }
     const easyReadRow = storage.getLatestNodeData("easy-read", "book")
     const easyRead = easyReadRow?.data as EasyReadOutput | undefined
     const easyReadEntries = easyRead ? flattenEasyReadEntries(easyRead) : []
-    const translationEntries = [...(catalog?.entries ?? []), ...easyReadEntries]
+    const translationEntries = [...catalog.entries, ...easyReadEntries]
 
     // ── Step 2: Translate catalog to target languages ────────────────
     const targetLanguages = getTargetLanguages(outputLanguages, language)
