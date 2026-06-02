@@ -264,7 +264,7 @@ jobs:
             apps/desktop/release/beta*.yml
 
   docker:
-    needs: prepare
+    needs: [prepare, desktop]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
