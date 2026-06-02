@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Check, FileText, Loader2, RotateCcw, Search, Sparkles, X } from "lucide-react"
+import { Check, ChevronDown, FileText, Loader2, RotateCcw, Search, Sparkles, X } from "lucide-react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Trans, useLingui } from "@lingui/react/macro"
+import { useLingui } from "@lingui/react/macro"
 import { api } from "@/api/client"
-import type { EasyReadSectionBlock } from "@/api/client"
+import type { EasyReadSectionBlock, VersionEntry } from "@/api/client"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { StageEmptyState } from "../../components/StageEmptyState"
 
@@ -124,17 +125,26 @@ export function EasyReadEditor({
     }))
   }
 
-  // Header controls live in the colored step header (same pattern as Quizzes /
-  // Captions). Refs keep the handlers fresh without re-running the effect on
+  // Header controls live in the colored step header (same pattern as Glossary /
+  // Quizzes). Refs keep the handlers fresh without re-running the effect on
   // every render.
-  const actions = useRef({ save: () => {}, discard: () => {}, regenerate: () => {} })
+  const actions = useRef({
+    save: () => {},
+    discard: () => {},
+    preview: (_data: unknown) => {},
+    regenerate: () => {},
+  })
   actions.current = {
     save: () => saveMutation.mutate(blocks),
     discard: () => setDraftBlocks(null),
+    preview: (versionData: unknown) => {
+      const next = (versionData as { blocks?: EasyReadSectionBlock[] })?.blocks
+      if (next) setDraftBlocks(next)
+    },
     regenerate: onRegenerate,
   }
 
-  const version = data?.version
+  const currentVersion = data?.version ?? null
   const saving = saveMutation.isPending
   const blockCount = filteredBlocks.length
   const regenerateDisabled = !hasApiKey || isRunning || dirty
@@ -147,49 +157,31 @@ export function EasyReadEditor({
             ? t`${String(blockCount)} on page`
             : t`${String(blockCount)} blocks`}
         </span>
-        {saving ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
-        ) : dirty ? (
-          <>
-            <button
-              type="button"
-              onClick={() => actions.current.discard()}
-              className="rounded bg-black/15 px-2 py-0.5 text-[10px] font-medium text-white transition-colors hover:bg-black/25 cursor-pointer"
-            >
-              {t`Discard`}
-            </button>
-            <button
-              type="button"
-              onClick={() => actions.current.save()}
-              className="flex items-center gap-1 rounded bg-white px-2 py-0.5 text-[10px] font-medium text-fuchsia-800 transition-colors hover:bg-white/80 cursor-pointer"
-            >
-              <Check className="h-3 w-3" />
-              {t`Save`}
-            </button>
-          </>
-        ) : (
-          <>
-            {version != null && (
-              <span className="rounded bg-white/20 px-1.5 py-0.5 text-[10px] tabular-nums text-white">
-                v{version}
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={() => actions.current.regenerate()}
-              disabled={regenerateDisabled}
-              title={dirty ? t`Save or discard edits before regenerating` : t`Regenerate Easy Read`}
-              className="flex items-center gap-1 rounded bg-white/20 px-2 py-0.5 text-[10px] font-medium text-white transition-colors hover:bg-white/30 disabled:cursor-default disabled:opacity-50 cursor-pointer"
-            >
-              <RotateCcw className="h-3 w-3" />
-              {t`Regenerate`}
-            </button>
-          </>
+        {!dirty && !saving && (
+          <button
+            type="button"
+            onClick={() => actions.current.regenerate()}
+            disabled={regenerateDisabled}
+            title={t`Regenerate Easy Read`}
+            className="flex items-center gap-1 rounded bg-white/20 px-2 py-0.5 text-[10px] font-medium text-white transition-colors hover:bg-white/30 disabled:cursor-default disabled:opacity-50 cursor-pointer"
+          >
+            <RotateCcw className="h-3 w-3" />
+            {t`Regenerate`}
+          </button>
         )}
+        <VersionPicker
+          currentVersion={currentVersion}
+          saving={saving}
+          dirty={dirty}
+          bookLabel={bookLabel}
+          onPreview={(d) => actions.current.preview(d)}
+          onSave={() => actions.current.save()}
+          onDiscard={() => actions.current.discard()}
+        />
       </div>,
     )
     return () => setExtra(null)
-  }, [setExtra, t, selectedPageId, blockCount, saving, dirty, version, regenerateDisabled])
+  }, [setExtra, t, selectedPageId, blockCount, saving, dirty, currentVersion, regenerateDisabled, bookLabel])
 
   if (selectedPageId && pageScopedBlocks.length === 0) {
     return (
@@ -312,41 +304,52 @@ export function EasyReadEditor({
           />
         </div>
       ) : (
-        <div className="flex flex-col gap-3 px-4 pb-12 pt-3">
+        <div className="flex flex-col gap-2.5 px-4 pb-12 pt-4">
           {filteredBlocks.map((block) => (
             <div
               key={`${block.pageId}:${block.sectionId}:${block.sectionIndex}`}
-              className="overflow-hidden rounded-md border bg-card transition-shadow duration-200 hover:shadow-sm"
+              className="rounded-xl border border-border/70 bg-card p-3.5"
             >
-              <div className="flex items-center justify-between gap-2 border-b bg-muted/20 px-4 py-2">
+              <div className="mb-3 flex items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      className="inline-flex h-5 w-5 shrink-0 items-center justify-center"
+                      aria-label={t`Generated by AI`}
+                    >
+                      <Sparkles className="h-3.5 w-3.5 text-fuchsia-600" aria-hidden />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{t`Generated by AI`}</TooltipContent>
+                </Tooltip>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                   {t`Page ${String(block.pageNumber)} · Section ${String(block.sectionIndex + 1)}`}
                 </span>
-                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] capitalize text-muted-foreground">
+                <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[10px] capitalize text-muted-foreground">
                   {block.sectionType.replace(/_/g, " ")}
                 </span>
               </div>
-              <div className="divide-y">
+
+              <div className="flex flex-col gap-3">
                 {block.entries.map((entry) => (
-                  <div key={entry.easyReadId} className="grid gap-3 px-4 py-3 md:grid-cols-2">
-                    <div>
-                      <p className="mb-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">
-                        <Trans>Original</Trans>
+                  <div key={entry.easyReadId} className="grid gap-3 md:grid-cols-2">
+                    <div className="flex flex-col gap-1">
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">
+                        {t`Original`}
                       </p>
-                      <p className="text-[13px] leading-relaxed text-muted-foreground">
+                      <div className="rounded-md border border-border/50 bg-muted/30 p-2.5 text-[13px] leading-relaxed text-muted-foreground">
                         {entry.originalText}
-                      </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="mb-1 text-[10px] font-medium uppercase tracking-wider text-fuchsia-600">
-                        <Trans>Easy Read</Trans>
+                    <div className="flex flex-col gap-1">
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-fuchsia-600">
+                        {t`Easy Read`}
                       </p>
-                      <textarea
+                      <AutoTextarea
                         value={entry.text}
-                        onChange={(event) => updateEntry(block, entry.easyReadId, event.target.value)}
+                        onChange={(value) => updateEntry(block, entry.easyReadId, value)}
                         disabled={isRunning}
-                        rows={Math.max(2, Math.min(6, Math.ceil((entry.text.length || 1) / 60)))}
-                        className="w-full resize-y rounded-md border border-transparent bg-transparent p-1.5 text-[13px] leading-relaxed transition-colors hover:border-border hover:bg-muted/30 focus:border-fuchsia-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-fuchsia-200 disabled:opacity-60"
+                        ariaLabel={t`Easy Read text`}
                       />
                     </div>
                   </div>
@@ -360,7 +363,161 @@ export function EasyReadEditor({
   )
 }
 
+/** Version dropdown that doubles as a Save/Discard control while editing —
+ * mirrors the Glossary / Quizzes header affordance, themed for Easy Read. */
+function VersionPicker({
+  currentVersion,
+  saving,
+  dirty,
+  bookLabel,
+  onPreview,
+  onSave,
+  onDiscard,
+}: {
+  currentVersion: number | null
+  saving: boolean
+  dirty: boolean
+  bookLabel: string
+  onPreview: (data: unknown) => void
+  onSave: () => void
+  onDiscard: () => void
+}) {
+  const { t } = useLingui()
+  const [open, setOpen] = useState(false)
+  const [versions, setVersions] = useState<VersionEntry[] | null>(null)
+  const [loading, setLoading] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [open])
+
+  const handleOpen = async () => {
+    if (saving || currentVersion == null) return
+    setOpen(true)
+    setLoading(true)
+    const res = await api.getVersionHistory(bookLabel, "easy-read", "book", true)
+    setVersions(res.versions)
+    setLoading(false)
+  }
+
+  const handlePick = (v: VersionEntry) => {
+    if (v.version === currentVersion && !dirty) {
+      setOpen(false)
+      return
+    }
+    setOpen(false)
+    onPreview(v.data)
+  }
+
+  if (saving) {
+    return <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
+  }
+
+  if (dirty) {
+    return (
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={onDiscard}
+          className="rounded bg-black/15 px-2 py-0.5 text-[10px] font-medium text-white transition-colors hover:bg-black/25 cursor-pointer"
+        >
+          {t`Discard`}
+        </button>
+        <button
+          type="button"
+          onClick={onSave}
+          className="flex items-center gap-1 rounded bg-white px-2 py-0.5 text-[10px] font-medium text-fuchsia-800 transition-colors hover:bg-white/80 cursor-pointer"
+        >
+          <Check className="h-3 w-3" />
+          {t`Save`}
+        </button>
+      </div>
+    )
+  }
+
+  if (currentVersion == null) return null
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={handleOpen}
+        className="flex items-center gap-0.5 rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-normal tabular-nums normal-case tracking-normal text-white transition-colors hover:bg-white/30 cursor-pointer"
+      >
+        v{currentVersion}
+        <ChevronDown className="h-2.5 w-2.5" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full z-30 mt-1 min-w-[80px] rounded border bg-popover py-1 shadow-md animate-in fade-in zoom-in-95 duration-150">
+          {loading ? (
+            <div className="flex items-center justify-center px-3 py-2">
+              <Loader2 className="h-3 w-3 animate-spin" />
+            </div>
+          ) : versions && versions.length > 0 ? (
+            versions.map((v) => (
+              <button
+                key={v.version}
+                type="button"
+                onClick={() => handlePick(v)}
+                className={`w-full px-3 py-1 text-left text-xs transition-colors hover:bg-accent cursor-pointer ${
+                  v.version === currentVersion ? "font-semibold text-foreground" : "text-muted-foreground"
+                }`}
+              >
+                v{v.version}
+              </button>
+            ))
+          ) : (
+            <div className="px-3 py-1 text-xs text-muted-foreground">{t`No versions`}</div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Textarea that grows to fit its content, with the inline-edit affordance used
+ * across the gallery: dashed resting border, fuchsia focus ring. */
+function AutoTextarea({
+  value,
+  onChange,
+  disabled,
+  ariaLabel,
+}: {
+  value: string
+  onChange: (value: string) => void
+  disabled?: boolean
+  ariaLabel?: string
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    el.style.height = "auto"
+    el.style.height = `${el.scrollHeight + 2}px`
+  }, [value])
+
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      rows={1}
+      className="w-full resize-none overflow-hidden rounded-md border border-dashed border-border/60 bg-background/40 p-2.5 text-[13px] leading-relaxed text-foreground transition-colors duration-150 hover:border-fuchsia-300 hover:bg-fuchsia-50/40 focus:border-solid focus:border-fuchsia-400 focus:bg-background focus:outline-none focus:ring-2 focus:ring-fuchsia-200 disabled:opacity-60 disabled:hover:border-border/60 disabled:hover:bg-background/40"
+    />
+  )
+}
+
 function EasyReadHintBanner() {
+  const { t } = useLingui()
   return (
     <div className="mx-4 mt-3 flex items-start gap-3 rounded-lg border border-fuchsia-200/70 bg-fuchsia-50/60 px-4 py-3">
       <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-fuchsia-100 text-fuchsia-700">
@@ -368,14 +525,10 @@ function EasyReadHintBanner() {
       </span>
       <div className="flex min-w-0 flex-col gap-0.5">
         <span className="text-[13px] font-semibold text-fuchsia-900">
-          <Trans>How Easy Read works</Trans>
+          {t`How Easy Read works`}
         </span>
         <p className="text-[12px] leading-relaxed text-fuchsia-800/80">
-          <Trans>
-            Each block was simplified by AI. Edit any Easy Read text to refine it
-            against the original, then Save. Changes are stored as a new version,
-            so you can always roll back or regenerate.
-          </Trans>
+          {t`Each block was simplified by AI. Edit any Easy Read text to refine it against the original, then Save. Changes are stored as a new version, so you can always roll back or regenerate.`}
         </p>
       </div>
     </div>
