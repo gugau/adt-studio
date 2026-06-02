@@ -76,6 +76,7 @@ function configure(): void {
   autoUpdater.autoInstallOnAppQuit = false;
   autoUpdater.allowPrerelease = isBeta;
   autoUpdater.channel = isBeta ? "beta" : "latest";
+  autoUpdater.allowDowngrade = false;
   autoUpdater.logger = console;
 
   autoUpdater.on("checking-for-update", () => {
