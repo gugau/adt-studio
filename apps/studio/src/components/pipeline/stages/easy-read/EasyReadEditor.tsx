@@ -9,6 +9,7 @@ import { useStepHeader } from "../../components/StepViewRouter"
 import { StageEmptyState } from "../../components/StageEmptyState"
 import { PageJumper, type PageJumperEntry } from "./components/PageJumper"
 import { PageCover } from "./components/PageCover"
+import { PageLightbox } from "./components/PageLightbox"
 
 const TOOLBAR_OFFSET = 80
 
@@ -90,6 +91,7 @@ export function EasyReadEditor({
   // highlight the active page (same approach as Captions).
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [activePageId, setActivePageId] = useState<string | null>(null)
+  const [lightboxPageId, setLightboxPageId] = useState<string | null>(null)
 
   useEffect(() => {
     const root = scrollContainerRef.current
@@ -341,7 +343,11 @@ export function EasyReadEditor({
               className="scroll-mt-20 overflow-hidden rounded-xl border border-border/70 bg-card"
             >
               <div className="flex items-center gap-3 border-b border-border/60 bg-muted/20 px-3.5 py-2.5">
-                <PageCover bookLabel={bookLabel} pageId={group.pageId} />
+                <PageCover
+                  bookLabel={bookLabel}
+                  pageId={group.pageId}
+                  onClick={() => setLightboxPageId(group.pageId)}
+                />
                 <div className="flex min-w-0 flex-col">
                   <span className="text-[15px] font-semibold leading-tight text-foreground">
                     {t`Page ${String(group.pageNumber)}`}
@@ -425,6 +431,15 @@ export function EasyReadEditor({
           ))}
         </div>
       )}
+
+      <PageLightbox
+        bookLabel={bookLabel}
+        pageId={lightboxPageId}
+        open={lightboxPageId != null}
+        onOpenChange={(open) => {
+          if (!open) setLightboxPageId(null)
+        }}
+      />
     </div>
   )
 }
