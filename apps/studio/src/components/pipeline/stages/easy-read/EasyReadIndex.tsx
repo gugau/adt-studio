@@ -5,6 +5,7 @@ import { EasyReadView } from "./EasyReadView"
 export function EasyReadIndex({
   bookLabel,
   selectedPageId,
+  onSelectPage,
 }: {
   bookLabel: string
   stageSlug?: string
@@ -14,7 +15,13 @@ export function EasyReadIndex({
   const status = useStageStatus("easy-read")
 
   if (status.isCompleted || status.isRunning) {
-    return <EasyReadView bookLabel={bookLabel} selectedPageId={selectedPageId} />
+    return (
+      <EasyReadView
+        bookLabel={bookLabel}
+        selectedPageId={selectedPageId}
+        onSelectPage={onSelectPage}
+      />
+    )
   }
 
   return <EasyReadLandingPage bookLabel={bookLabel} />
