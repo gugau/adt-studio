@@ -62,6 +62,16 @@ export function EasyReadEditor({
   const filtersActive = searchQuery.trim().length > 0
   const clearFilters = () => setSearchQuery("")
 
+  const unchangedCount = useMemo(() => {
+    let count = 0
+    for (const block of filteredBlocks) {
+      for (const entry of block.entries) {
+        if (entry.text.trim() === entry.originalText.trim()) count += 1
+      }
+    }
+    return count
+  }, [filteredBlocks])
+
   const pageGroups = useMemo(() => {
     const groups: { pageId: string; pageNumber: number; blocks: EasyReadSectionBlock[] }[] = []
     const indexByPage = new Map<string, number>()
@@ -283,7 +293,19 @@ export function EasyReadEditor({
           )}
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2.5">
+          {unchangedCount > 0 && (
+            <span
+              className="flex items-center gap-1.5 text-[11px] text-muted-foreground"
+              title={t`Dimmed blocks match the original — they weren't simplified.`}
+            >
+              <span
+                className="h-2.5 w-4 shrink-0 rounded-sm border border-dashed border-border/60 bg-background/40 opacity-55"
+                aria-hidden
+              />
+              <span className="tabular-nums">{t`${String(unchangedCount)} unchanged`}</span>
+            </span>
+          )}
           <span className="text-[11px] font-medium tabular-nums text-muted-foreground">
             {filtersActive
               ? t`${String(filteredBlocks.length)} of ${String(pageScopedBlocks.length)}`
