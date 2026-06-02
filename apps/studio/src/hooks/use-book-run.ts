@@ -419,17 +419,21 @@ export function useBookRunStatus(label: string): BookRunContextValue {
       })
 
       // Optimistically clear the page data this run will regenerate, so the
-      // storyboard view immediately drops the stale preview and shows each
-      // section's "Rendering this section…" loading state — mirroring a
-      // first-time run. Without this, a fast/cached re-run (switching render
-      // strategy, fixed-layout) finishes before the async refetch ever observes
-      // the cleared backend state, so the loading state never appears. Storyboard
+      // step view immediately mirrors a first-time run instead of leaving stale
+      // content up. Without this, a fast/cached re-run finishes before the async
+      // refetch ever observes the cleared backend state. Extract re-extracts the
+      // PDF (the pages themselves are dropped → empty the list); storyboard
       // clears web-rendering (page.rendering / hasRendering); sectioning/extract
       // also clear page-sectioning (sectioningTree / sectionCount).
+      const clearsPages = stagesToClear.has("extract" as StageName)
       const clearsRendering = stagesToClear.has("storyboard" as StageName)
       const clearsSectioning =
         stagesToClear.has("sectioning" as StageName) || stagesToClear.has("extract" as StageName)
-      if (clearsRendering || clearsSectioning) {
+      if (clearsPages) {
+        // Extract drops and rebuilds every page — empty the list so the extract
+        // view shows its from-scratch run card while pages re-extract.
+        queryClient.setQueryData<PageSummaryItem[]>(["books", label, "pages"], [])
+      } else if (clearsRendering || clearsSectioning) {
         // Page list summaries (sidebar + run-card gating).
         queryClient.setQueryData<PageSummaryItem[]>(["books", label, "pages"], (old) =>
           old?.map((p) => ({
