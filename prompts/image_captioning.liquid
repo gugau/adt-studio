@@ -7,6 +7,21 @@ IMPORTANT NOTES:
   * DO NOT SAY "It is an illustration of..." or "This is a picture of...", just provide the caption.
   * Provide your reasoning before each caption.
   * The image_id in the response must match the Image ID provided for each image.
+
+## DECORATIVE IMAGES
+Some images carry no pedagogic or informational meaning — they exist only for visual interest. These should be marked as decorative so a screen reader skips them. For each image, set `decorative` to `true` or `false`.
+
+Set `decorative: true` (and leave `caption` as an empty string "") when the image is, for example:
+  * a small symbol or icon at the start of a line that merely prompts the reader to act (e.g. a pencil/write icon next to a blank line, a "speak" or "listen" glyph) and is not itself the lesson content;
+  * a repeated decorative character, ornament, flourish, or border running along the top, bottom, or side of the page;
+  * a horizontal rule, divider, dot leader, or separator line;
+  * a bullet, star, or dingbat used purely for visual styling;
+  * a background texture, watermark, or page-edge decoration;
+  * a logo or emblem whose meaning is already conveyed by adjacent text.
+
+Set `decorative: false` and write a normal caption when the image conveys information a learner needs: diagrams, photographs, charts, maps, worked examples, characters or scenes tied to the text, or any illustration a sighted reader would interpret for meaning.
+
+Be conservative: when in doubt, treat the image as meaningful and caption it. A missing caption on a meaningful image is worse than an unnecessary one. Use the pixel dimensions provided with each image as a hint — very small images, or very thin/elongated low-detail strips, are frequently decorative — but judge by the image content and page context, not size alone.
 {% if grade_level != "" %}
 
 ## READING LEVEL
@@ -42,7 +57,7 @@ Please caption the following images in this language: {{ language }} (language c
 Provide your reasoning first for each image.
 
 {% for image in images %}
-Image ID: {{ image.imageId }}
+Image ID: {{ image.imageId }}{% if image.width and image.height %} (dimensions: {{ image.width }}×{{ image.height }} px){% endif %}
 {% image image.imageBase64 %}
 {% endfor %}
 {% endchat %}

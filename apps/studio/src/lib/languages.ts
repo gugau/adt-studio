@@ -243,7 +243,9 @@ export const SUPPORTED_LANGUAGES: Language[] = [
   ]},
   { code: "sr", name: "Serbian", countries: [
     { code: "rs", name: "Serbia" },
+    { code: "xk", name: "Kosovo" },
     { code: "ba", name: "Bosnia and Herzegovina" },
+    { code: "me", name: "Montenegro" },
   ]},
   { code: "si", name: "Sinhala", countries: [
     { code: "lk", name: "Sri Lanka" },

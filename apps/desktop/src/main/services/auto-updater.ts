@@ -25,6 +25,11 @@ export type UpdateStatus =
 
 type StatusListener = (status: UpdateStatus) => void;
 
+
+function isPrereleaseVersion(version: string): boolean {
+  return version.includes("-beta");
+}
+
 const listeners = new Set<StatusListener>();
 let lastStatus: UpdateStatus = { phase: "idle" };
 let lastInfo: UpdateInfo | null = null;
@@ -63,11 +68,15 @@ let configured = false;
 
 function configure(): void {
   if (configured) return;
+  const isBeta = isPrereleaseVersion(app.getVersion());
+
   configured = true;
 
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = false;
-  autoUpdater.allowPrerelease = true;
+  autoUpdater.allowPrerelease = isBeta;
+  autoUpdater.channel = isBeta ? "beta" : "latest";
+  autoUpdater.allowDowngrade = false;
   autoUpdater.logger = console;
 
   autoUpdater.on("checking-for-update", () => {
@@ -75,6 +84,14 @@ function configure(): void {
   });
 
   autoUpdater.on("update-available", (info: UpdateInfo) => {
+    // A beta build must stay on the beta track. If a stable release ever shows
+    // up on the channel feed, ignore it — installing it would silently turn a
+    // beta install into a stable one. Stable installs already ignore betas via
+    // `allowPrerelease = false`, so this guard only matters for beta builds.
+    if (isBeta && !isPrereleaseVersion(info.version)) {
+      emit({ phase: "not-available" });
+      return;
+    }
     lastInfo = info;
     const totalBytes = info.files?.[0]?.size;
     emit({

@@ -20,6 +20,8 @@ import { useStageMissingCounts } from "@/hooks/use-stage-missing-counts"
 import { usePackageAdtStatus } from "@/hooks/use-books"
 import { useSignLanguageVideos } from "@/hooks/use-sign-language-videos"
 import { StepProgressRing } from "./StepProgressRing"
+import { StoryboardIndex } from "./StoryboardIndex"
+import { useSectionNav } from "@/routes/books.$label"
 import { usePages, usePageImage } from "@/hooks/use-pages"
 import {
   STAGES,
@@ -30,7 +32,7 @@ import {
 import { useSettingsDialog } from "@/routes/__root"
 import type { TaskInfoResponse } from "@/api/client"
 import { getStageLabelI18n, getStepLabelI18n } from "../pipeline-i18n"
-import { ALL_STEP_NAMES, PAGE_PROGRESS_STEPS } from "@adt/types"
+import { ALL_STEP_NAMES } from "@adt/types"
 
 const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   general: msg`General`,
@@ -62,6 +64,7 @@ const SETTINGS_TAB_MESSAGE: Record<string, MessageDescriptor> = {
   "speech-prompts": msg`Speech Prompts`,
   voices: msg`Voices`,
   "toc-prompt": msg`Generation Prompt`,
+  "easy-read-prompt": msg`Easy Read Prompt`,
 }
 
 const STAGE_GROUP_LABELS: Record<StageGroup, MessageDescriptor> = {
@@ -117,6 +120,9 @@ function getSettingsTabs(
     ],
     toc: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE["toc-prompt"]) },
+    ],
+    "easy-read": [
+      { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE["easy-read-prompt"]) },
     ],
     captions: [
       { key: "general", label: i18n._(SETTINGS_TAB_MESSAGE["caption-prompt"]) },
@@ -174,9 +180,13 @@ export function StageSidebar({
   const speechNeedsRerun = stageMissing.speech > 0
 
   const currentState = stageState(activeStep)
+  const stageHasContent =
+    currentState === "done" ||
+    currentState === "running" ||
+    currentState === "error"
+  // Quizzes never open a side panel — selection lives in the content header.
   const effectivePagesOpen =
-    hasStagePages(activeStep) &&
-    (currentState === "done" || currentState === "running" || currentState === "error")
+    hasStagePages(activeStep) && stageHasContent && activeStep !== "quizzes"
 
   const isSettings = !!matchRoute({
     to: "/books/$label/$step/settings",
@@ -413,18 +423,29 @@ export function StageSidebar({
           </div>
         </div>
 
-        {/* Pages panel — only when pages are open and not in settings */}
+        {/* Pages panel — only when pages are open and not in settings. */}
         {effectivePagesOpen && !isSettings && (
           <div className="flex-1 min-w-0 flex flex-col overflow-hidden border-l">
-            <PageIndex
-              bookLabel={bookLabel}
-              activeStep={activeStep}
-              selectedPageId={selectedPageId}
-              onSelectPage={onSelectPage}
-              sectionIndex={sectionIndex}
-              onSelectSection={onSelectSection}
-              stageRunning={currentState === "running"}
-            />
+            {activeStep === "storyboard" ? (
+              <StoryboardSidebarBridge
+                bookLabel={bookLabel}
+                selectedPageId={selectedPageId}
+                onSelectPage={onSelectPage}
+                sectionIndex={sectionIndex}
+                onSelectSection={onSelectSection}
+                stageRunning={currentState === "running"}
+              />
+            ) : (
+              <PageIndex
+                bookLabel={bookLabel}
+                activeStep={activeStep}
+                selectedPageId={selectedPageId}
+                onSelectPage={onSelectPage}
+                sectionIndex={sectionIndex}
+                onSelectSection={onSelectSection}
+                stageRunning={currentState === "running"}
+              />
+            )}
           </div>
         )}
       </div>
@@ -440,26 +461,23 @@ function TaskIndicator({ bookLabel }: { bookLabel: string }) {
   const { runningTasks, runningCount } = useBookTasks(bookLabel)
   const { stepState, stepProgress } = useBookRun()
 
-  // Build step-progress rows for running pipeline steps that have page-level progress
-  const stageProgressRows: { step: string; label: string; page: number; totalPages: number }[] = []
-  for (const step of PAGE_PROGRESS_STEPS) {
+  // Running steps with visible progress (pages, entries, batches, etc.)
+  const stageProgressRows: { step: string; label: string; progressLabel: string }[] = []
+  const activeSteps: { step: string; label: string }[] = []
+  for (const step of ALL_STEP_NAMES) {
     if (stepState(step) === "running") {
       const prog = stepProgress(step)
-      if (prog?.totalPages) {
+      const hasPages = prog?.page != null && prog?.totalPages != null && prog.totalPages > 0
+      const numericProgressLabel = hasPages ? `${prog.page}/${prog.totalPages}` : null
+      const progressLabel = prog?.message?.trim() || numericProgressLabel
+      if (progressLabel) {
         stageProgressRows.push({
           step,
           label: getStepLabelI18n(step),
-          page: prog.page ?? 0,
-          totalPages: prog.totalPages,
+          progressLabel,
         })
+        continue
       }
-    }
-  }
-
-  // Non-page-progress steps that are currently running (e.g. metadata, book-summary)
-  const activeSteps: { step: string; label: string }[] = []
-  for (const step of ALL_STEP_NAMES) {
-    if (!PAGE_PROGRESS_STEPS.has(step) && stepState(step) === "running") {
       activeSteps.push({ step, label: getStepLabelI18n(step) })
     }
   }
@@ -479,7 +497,7 @@ function TaskIndicator({ bookLabel }: { bookLabel: string }) {
               {row.label}
             </p>
             <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
-              {row.page}/{row.totalPages}
+              {row.progressLabel}
             </span>
           </div>
         ))}
@@ -552,6 +570,53 @@ function TaskRow({ task }: { task: TaskInfoResponse }) {
     <div className="flex items-center gap-2 px-1 py-1">
       {content}
     </div>
+  )
+}
+
+/* ---------- StoryboardSidebarBridge ----------
+ *
+ * Adapts StoryboardIndex (which selects by pageId + sectionIndex) to the
+ * StageSidebar's onSelectPage / onSelectSection callbacks. When the user
+ * picks a section on a different page, we also flip `skipNextResetRef` so
+ * the layout-level effect that resets sectionIndex on page change leaves
+ * our chosen index alone.
+ */
+function StoryboardSidebarBridge({
+  bookLabel,
+  selectedPageId,
+  onSelectPage,
+  sectionIndex,
+  onSelectSection,
+  stageRunning,
+}: {
+  bookLabel: string
+  selectedPageId?: string
+  onSelectPage?: (pageId: string | null) => void
+  sectionIndex?: number
+  onSelectSection?: (index: number) => void
+  stageRunning?: boolean
+}) {
+  const { skipNextResetRef } = useSectionNav()
+  const handleSelectSection = useCallback(
+    (pageId: string, idx: number) => {
+      if (pageId !== selectedPageId) {
+        skipNextResetRef.current = true
+        onSelectSection?.(idx)
+        onSelectPage?.(pageId)
+      } else {
+        onSelectSection?.(idx)
+      }
+    },
+    [selectedPageId, onSelectPage, onSelectSection, skipNextResetRef],
+  )
+  return (
+    <StoryboardIndex
+      bookLabel={bookLabel}
+      selectedPageId={selectedPageId}
+      sectionIndex={sectionIndex}
+      onSelectSection={handleSelectSection}
+      stageRunning={stageRunning}
+    />
   )
 }
 

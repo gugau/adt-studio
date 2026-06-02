@@ -53,6 +53,12 @@ export default defineConfig({
           include: ["assets/adt/modules/**/*.test.js"],
         },
       },
+      {
+        test: {
+          name: "main-scripts",
+          include: ["scripts/**/*.test.mjs"],
+        },
+      }
     ],
   },
 })

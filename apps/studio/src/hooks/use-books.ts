@@ -64,10 +64,14 @@ export function usePackageAdt() {
   })
 }
 
-export function usePackageAdtStatus(label: string) {
+export function usePackageAdtStatus(
+  label: string,
+  options?: { refetchInterval?: number | false },
+) {
   return useQuery({
     queryKey: ["package-adt-status", label],
     queryFn: () => api.getPackageAdtStatus(label),
     enabled: !!label,
+    refetchInterval: options?.refetchInterval,
   })
 }
