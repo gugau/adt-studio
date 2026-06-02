@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
   Check,
   CheckCircle2,
-  XCircle,
   ChevronDown,
   HelpCircle,
   Loader2,
@@ -11,6 +10,9 @@ import {
   ZoomOut,
   RotateCcw,
   Trash2,
+  Search,
+  X,
+  Plus,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/client";
@@ -35,6 +37,10 @@ import {
   getQuizImageRenderState,
 } from "./lib/quizzes-image-state";
 import { QuizzesOverviewToggle } from "./components/QuizzesOverviewToggle";
+import { QuizzesHintBanner } from "./components/QuizzesHintBanner";
+import { QuizJumper, type QuizJumperEntry } from "./components/QuizJumper";
+import { AddQuizDialog } from "./AddQuizDialog";
+import { useApiKey } from "@/hooks/use-api-key";
 import { useLingui } from "@lingui/react/macro";
 
 type QuizData = QuizGenerationOutput;
@@ -428,6 +434,10 @@ export function QuizzesView({
   const { data, isLoading } = useQuizzes(bookLabel);
   const { data: pages } = usePages(bookLabel);
   const { setExtra } = useStepHeader();
+  const { hasApiKey } = useApiKey();
+  const [activeQuizId, setActiveQuizId] = useState<string | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const pageNumberById = useMemo(() => {
     const m = new Map<string, number>();
@@ -437,6 +447,7 @@ export function QuizzesView({
 
   const [pending, setPending] = useState<QuizData | null>(null);
   const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [lightboxPageId, setLightboxPageId] = useState<string | null>(null);
   const [confirmDeleteIdx, setConfirmDeleteIdx] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -453,6 +464,82 @@ export function QuizzesView({
   const displayQuizzes = selectedPageId
     ? quizzes.filter((q) => q.pageIds.includes(selectedPageId))
     : quizzes;
+
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredQuizzes = normalizedQuery
+    ? displayQuizzes.filter((q) => {
+        const haystack = [
+          q.question,
+          ...q.options.flatMap((o) => [o.text, o.explanation]),
+        ]
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(normalizedQuery);
+      })
+    : displayQuizzes;
+
+  const visibleQuizKey = filteredQuizzes
+    .map((q) => quizzes.indexOf(q))
+    .join(",");
+
+  useEffect(() => {
+    const container = listRef.current;
+    if (!container) return;
+    const cards = Array.from(
+      container.querySelectorAll<HTMLElement>("[data-quiz-id]"),
+    );
+    if (cards.length === 0) return;
+    const tops = new Map<string, number>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const id = (entry.target as HTMLElement).dataset.quizId;
+          if (!id) continue;
+          if (entry.isIntersecting) tops.set(id, entry.boundingClientRect.top);
+          else tops.delete(id);
+        }
+        let bestId: string | null = null;
+        let bestTop = Infinity;
+        for (const [id, top] of tops) {
+          if (top < bestTop) {
+            bestTop = top;
+            bestId = id;
+          }
+        }
+        if (bestId) setActiveQuizId(bestId);
+      },
+      { rootMargin: "-50% 0px -50% 0px", threshold: 0 },
+    );
+    cards.forEach((card) => observer.observe(card));
+    return () => observer.disconnect();
+  }, [visibleQuizKey, setActiveQuizId]);
+
+  const scrollToQuiz = useCallback((id: string) => {
+    setSearchQuery("");
+    setActiveQuizId(id);
+    requestAnimationFrame(() => {
+      listRef.current
+        ?.querySelector<HTMLElement>(`[data-quiz-id="${id}"]`)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, []);
+
+  const jumperEntries: QuizJumperEntry[] = useMemo(
+    () =>
+      displayQuizzes.map((quiz) => {
+        const originalIndex = quizzes.indexOf(quiz);
+        const pageNumbers = quiz.pageIds
+          .map((id) => pageNumberById.get(id))
+          .filter((n): n is number => n != null);
+        return {
+          id: String(originalIndex),
+          index: originalIndex,
+          question: quiz.question,
+          pagesLabel: formatPageNumbers(pageNumbers),
+        };
+      }),
+    [displayQuizzes, quizzes, pageNumberById],
+  );
 
   const saveQuizzes = useCallback(async () => {
     if (!pending) return;
@@ -499,7 +586,6 @@ export function QuizzesView({
     if (!data?.quizzes) return;
     setExtra(
       <div className="flex items-center gap-1.5 ml-auto">
-        <span className="text-[10px] bg-white/20 rounded-full px-2 py-0.5">{t`${String(displayQuizzes.length)} questions`}</span>
         <VersionPicker
           currentVersion={data.version}
           saving={saving}
@@ -593,8 +679,64 @@ export function QuizzesView({
           subtitle={t`Quizzes are linked to other pages in this book`}
         />
       ) : (
-        <div className="space-y-2 p-4">
-          {displayQuizzes.map((quiz) => {
+        <div className="flex flex-1 flex-col">
+          <QuizzesHintBanner />
+          <div className="sticky top-0 z-20 flex items-center gap-3 border-b border-border/60 bg-background/95 px-4 py-3 backdrop-blur-md">
+            <div className="relative max-w-md flex-1">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t`Search questions or options…`}
+                className="h-8 w-full rounded-md border border-border/70 bg-background pl-8 pr-8 text-[12px] placeholder:text-muted-foreground/60 transition-colors focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  aria-label={t`Clear search`}
+                  className="absolute right-1 top-1/2 flex h-6 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              <span className="text-[11px] font-medium tabular-nums text-muted-foreground">
+                {normalizedQuery
+                  ? t`${String(filteredQuizzes.length)} of ${String(displayQuizzes.length)}`
+                  : t`${String(displayQuizzes.length)} questions`}
+              </span>
+              <QuizJumper
+                quizzes={jumperEntries}
+                activeId={activeQuizId}
+                onJump={scrollToQuiz}
+              />
+              <Button
+                size="sm"
+                className="h-8 gap-1.5 bg-orange-600 text-xs text-white hover:bg-orange-700"
+                disabled={!hasApiKey}
+                title={
+                  hasApiKey
+                    ? undefined
+                    : t`Add an API key in Book settings to add a quiz.`
+                }
+                onClick={() => setShowAdd(true)}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                {t`Add quiz`}
+              </Button>
+            </div>
+          </div>
+          <div ref={listRef} className="space-y-2 p-4">
+            {filteredQuizzes.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
+                <Search className="mb-2 h-5 w-5 opacity-40" />
+                <p className="text-sm font-medium">{t`No quizzes match your search`}</p>
+              </div>
+            ) : (
+              filteredQuizzes.map((quiz) => {
             const idx = quizzes.indexOf(quiz);
             const fromLabel = formatPageNumbers(
               quiz.pageIds
@@ -605,7 +747,8 @@ export function QuizzesView({
             return (
               <div
                 key={idx}
-                className="relative rounded-md border bg-card overflow-hidden"
+                data-quiz-id={String(idx)}
+                className="relative scroll-mt-24 rounded-md border bg-card overflow-hidden"
               >
                 <button
                   type="button"
@@ -655,7 +798,7 @@ export function QuizzesView({
                   <textarea
                     value={quiz.question}
                     onChange={(e) => updateQuestion(idx, e.target.value)}
-                    className="w-full text-sm font-medium resize-none rounded border border-transparent bg-transparent p-1 -m-1 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+                    className="w-full text-sm font-medium leading-relaxed resize-none rounded border border-transparent bg-transparent p-1.5 -ml-1.5 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
                     rows={1}
                   />
                   <span className="text-[10px] text-muted-foreground mt-1 inline-block">
@@ -663,40 +806,44 @@ export function QuizzesView({
                   </span>
                 </div>
                 <div className="px-4 pb-3 space-y-1.5">
-                  {quiz.options.map((option, i) => (
-                    <div
-                      key={i}
-                      className={`flex items-start gap-2.5 px-3 py-2 rounded-md ${
-                        i === quiz.answerIndex
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : "bg-muted/50 text-muted-foreground"
-                      }`}
-                    >
-                      {i === quiz.answerIndex ? (
-                        <CheckCircle2 className="w-4 h-4 shrink-0 mt-1.5" />
-                      ) : (
-                        <XCircle className="w-4 h-4 shrink-0 opacity-30 mt-1.5" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <textarea
-                          value={option.text}
-                          onChange={(e) =>
-                            updateOptionText(idx, i, e.target.value)
-                          }
-                          className="w-full text-sm resize-none rounded border border-transparent bg-transparent p-1 -m-1 hover:border-border hover:bg-white/50 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-                          rows={1}
+                  {quiz.options.map((option, i) => {
+                    const isCorrect = i === quiz.answerIndex;
+                    return (
+                      <div
+                        key={i}
+                        className={`flex items-start gap-3 rounded-md border bg-card px-3 py-2.5 transition-colors ${
+                          isCorrect ? "border-l-2 border-l-emerald-500" : ""
+                        }`}
+                      >
+                        <CheckCircle2
+                          className={`w-4 h-4 shrink-0 mt-1.5 ${
+                            isCorrect
+                              ? "text-emerald-600"
+                              : "text-muted-foreground/25"
+                          }`}
+                          aria-label={isCorrect ? t`Correct answer` : undefined}
                         />
-                        <textarea
-                          value={option.explanation}
-                          onChange={(e) =>
-                            updateOptionExplanation(idx, i, e.target.value)
-                          }
-                          className="w-full text-xs opacity-70 resize-none rounded border border-transparent bg-transparent p-1 -m-1 mt-0.5 hover:border-border hover:bg-white/50 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring focus:opacity-100 transition-colors"
-                          rows={1}
-                        />
+                        <div className="flex-1 min-w-0">
+                          <textarea
+                            value={option.text}
+                            onChange={(e) =>
+                              updateOptionText(idx, i, e.target.value)
+                            }
+                            className="w-full text-sm leading-relaxed resize-none rounded border border-transparent bg-transparent p-1.5 -ml-1.5 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+                            rows={1}
+                          />
+                          <textarea
+                            value={option.explanation}
+                            onChange={(e) =>
+                              updateOptionExplanation(idx, i, e.target.value)
+                            }
+                            className="w-full text-xs leading-relaxed text-muted-foreground resize-none rounded border border-transparent bg-transparent p-1.5 -ml-1.5 mt-0.5 hover:border-border hover:bg-muted/30 focus:border-ring focus:bg-white focus:text-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+                            rows={1}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {quiz.reasoning && (
                     <p className="text-xs italic text-muted-foreground px-1 pt-1">
                       {quiz.reasoning}
@@ -705,7 +852,13 @@ export function QuizzesView({
                 </div>
               </div>
             );
-          })}
+              })
+            )}
+          <AddQuizDialog
+            open={showAdd}
+            onOpenChange={setShowAdd}
+            bookLabel={bookLabel}
+          />
           <PageLightbox
             bookLabel={bookLabel}
             pageId={lightboxPageId}
@@ -754,6 +907,7 @@ export function QuizzesView({
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
       )}
     </StageContentGuard>
