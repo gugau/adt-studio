@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Plus } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { Button } from "@/components/ui/button"
@@ -40,23 +40,34 @@ export function QuizzesLandingPage({ bookLabel }: { bookLabel: string }) {
   const [mode, setMode] = useState<QuizMode>("frequency")
   const [showAddQuiz, setShowAddQuiz] = useState(false)
   const [pagesPerQuiz, setPagesPerQuiz] = useState(String(DEFAULT_PAGES_PER_QUIZ))
+  const lastValidPagesPerQuiz = useRef(String(DEFAULT_PAGES_PER_QUIZ))
 
   useEffect(() => {
     if (!activeConfigData) return
     const m = activeConfigData.merged as Record<string, unknown>
     const qg = m.quiz_generation as Record<string, unknown> | undefined
     if (qg?.pages_per_quiz != null) {
-      setPagesPerQuiz(String(qg.pages_per_quiz))
+      const value = String(qg.pages_per_quiz)
+      setPagesPerQuiz(value)
+      lastValidPagesPerQuiz.current = value
     }
   }, [activeConfigData])
 
   const handleFrequencyChange = (value: string) => {
-    setPagesPerQuiz(value)
-    const n = Number(value)
+    const sanitized = value.replace(/\D/g, "").replace(/^0+(?=\d)/, "")
+    setPagesPerQuiz(sanitized)
+    const n = Number(sanitized)
     if (!Number.isInteger(n) || n < 1) return
+    lastValidPagesPerQuiz.current = sanitized
     const existing =
       (bookConfigData?.config?.quiz_generation as Record<string, unknown>) ?? {}
     persist({ quiz_generation: { ...existing, pages_per_quiz: n } })
+  }
+
+  const handleFrequencyBlur = () => {
+    const n = Number(pagesPerQuiz)
+    if (Number.isInteger(n) && n >= 1) return
+    setPagesPerQuiz(lastValidPagesPerQuiz.current)
   }
 
   const handleRun = () => {
@@ -161,10 +172,12 @@ export function QuizzesLandingPage({ bookLabel }: { bookLabel: string }) {
           >
             <div className="flex items-center gap-2">
               <Input
-                type="number"
-                min={1}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={pagesPerQuiz}
                 onChange={(e) => handleFrequencyChange(e.target.value)}
+                onBlur={handleFrequencyBlur}
                 className="w-24 h-9"
               />
               <span className="text-[13px] text-[#737373]">
