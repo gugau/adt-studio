@@ -2187,6 +2187,9 @@ msgstr "Çdo iteracion është një thirrje LLM. Vlerat e ulëta janë më të s
 msgid "Each polyp secretes a hard calcium carbonate skeleton. Over hundreds of years, millions of these skeletons build up into the massive reef structures we see today."
 msgstr "Çdo polip sekreton një skelet të fortë karbonati kalciumi. Gjatë qindra viteve, miliona prej këtyre skeletve grumbullohen duke formuar strukturat masive të rifeve që shohim sot."
 
+msgid "Each prompt is applied to whichever provider its language is routed to — for example, Albanian (sq) routed to Gemini receives this as its accent steering."
+msgstr "Çdo udhëzim zbatohet te ofruesi te i cili drejtohet gjuha e tij — për shembull, shqipja (sq) e drejtuar te Gemini e merr këtë si drejtimin e theksit."
+
 msgid "Each section introduces a new theme with worked examples, followed by short practice activities at the end of the page."
 msgstr "Çdo seksion prezanton një temë të re me shembuj të zgjidhur, të ndjekur nga aktivitete të shkurtra praktike në fund të faqes."
 
@@ -6112,8 +6115,11 @@ msgstr "Faqja e krediteve."
 msgid "The data sent within the body of a request or response message."
 msgstr "Të dhënat e dërguara brenda trupit të një mesazhi kërkese ose përgjigjeje."
 
-msgid "The default TTS instruction sent to OpenAI for all languages unless overridden below."
-msgstr "Udhëzimi TTS i parazgjedhur i dërguar te OpenAI për të gjitha gjuhët, nëse nuk anashkalohet më poshtë."
+msgid "The default TTS instruction applied to every language unless overridden below. OpenAI uses it as a voice instruction and Gemini as in-prompt accent steering; Azure ignores it."
+msgstr "Udhëzimi i parazgjedhur i TTS që zbatohet për çdo gjuhë, përveçse kur anashkalohet më poshtë. OpenAI e përdor si udhëzim zëri dhe Gemini si drejtim theksi brenda kërkesës; Azure e shpërfill."
+
+#~ msgid "The default TTS instruction sent to OpenAI for all languages unless overridden below."
+#~ msgstr "Udhëzimi TTS i parazgjedhur i dërguar te OpenAI për të gjitha gjuhët, nëse nuk anashkalohet më poshtë."
 
 msgid "The entire page is treated as a single section - all text and images stay together as one unit. Best for storybooks, reference books, and any content where each page is self-contained."
 msgstr "I gjithë faqja trajtohet si një seksion i vetëm — i gjithë teksti dhe imazhet qëndrojnë bashkë si një njësi. Më e mirë për libra me tregime, libra referencë dhe çdo përmbajtje ku çdo faqe është e vetëmjaftueshme."
