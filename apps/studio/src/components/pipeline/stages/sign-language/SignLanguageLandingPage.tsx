@@ -68,7 +68,7 @@ export function SignLanguageLandingPage({ bookLabel }: { bookLabel: string }) {
   const sectionEntries = useMemo<SectionEntry[]>(() => {
     if (!pages) return []
     return pages.flatMap((page) => {
-      const sections = page.sections ?? []
+      const sections = (page.sections ?? []).filter((s) => !s.isPruned)
       if (sections.length === 0) return []
       if (sections.length === 1) {
         const s = sections[0]

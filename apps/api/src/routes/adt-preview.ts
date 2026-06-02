@@ -31,9 +31,11 @@ import {
   pad3,
   loadBookConfig,
   buildPreferredImageAltMap,
+  buildDecorativeImageIdSet,
   rewriteImageUrls,
   convertLatexToMathml,
   isFixedLayoutBook,
+  resolveReflowableFontChain,
 } from "@adt/pipeline"
 
 // ---------------------------------------------------------------------------
@@ -865,6 +867,12 @@ export function createAdtPreviewRoutes(
     return await withStorage(label, async (storage) => {
       const title = getBookTitle(storage)
       const language = getBookLanguage(storage)
+      // Reflowable base font (serif/sans default or override) — matches the
+      // packaged output so the preview shows the same typography.
+      const bodyFontFamily = resolveReflowableFontChain(storage, {
+        fixedLayout: isFixedLayoutBook(config),
+        reflowableFont: config.reflowable_font,
+      })
 
       // Check if this is a quiz page (qzNNN)
       const quizMatch = pageId.match(/^qz(\d{3})$/)
@@ -895,6 +903,7 @@ export function createAdtPreviewRoutes(
         skipContentWrapper: true,
         applyBodyBackground,
         embed,
+        bodyFontFamily,
       })
 
         c.header("Content-Type", "text/html; charset=utf-8")
@@ -944,11 +953,13 @@ export function createAdtPreviewRoutes(
         ? sectioningParsed.data.sections[targetSectionIndex]
         : undefined
       const preferredImageAltMap = buildPreferredImageAltMap(storage, ownerPageId, sectionMeta)
+      const decorativeImageIds = buildDecorativeImageIdSet(storage, ownerPageId)
       const { html: previewSectionHtml } = rewriteImageUrls(
         renderedSection.html,
         label,
         new Map<string, string>(),
         preferredImageAltMap,
+        decorativeImageIds,
       )
 
       const previewHasMath = /(?:\\\(|\\\)|\\\[|\\\]|\$[^$]+\$|\\frac|\\sqrt|\\sum|\\int|\\text\{|\\hat\{|\\circ)/.test(previewSectionHtml)
@@ -964,6 +975,7 @@ export function createAdtPreviewRoutes(
         bundleVersion: previewBundleVersion,
         applyBodyBackground,
         embed,
+        bodyFontFamily,
       })
 
       c.header("Content-Type", "text/html; charset=utf-8")

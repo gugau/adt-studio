@@ -201,6 +201,7 @@ async function runPackaging(
       applyBodyBackground: config.apply_body_background,
       speechConfig: config.speech,
       fixedLayout: isFixedLayoutBook(config),
+      reflowableFont: config.reflowable_font,
     })
 
     const baseAccessibility = await runAccessibilityAssessment({

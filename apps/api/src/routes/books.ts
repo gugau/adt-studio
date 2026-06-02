@@ -98,6 +98,36 @@ export function createBookRoutes(
     }
   })
 
+  // GET /books/:label/source-pdf — Stream the original source PDF inline so it
+  // can be opened/viewed directly in the browser.
+  app.get("/books/:label/source-pdf", (c) => {
+    const { label } = c.req.param()
+    let safeLabel: string
+    try {
+      safeLabel = parseBookLabel(label)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      throw new HTTPException(400, { message })
+    }
+    const pdfPath = path.join(booksDir, safeLabel, `${safeLabel}.pdf`)
+    if (!fs.existsSync(pdfPath)) {
+      throw new HTTPException(404, { message: "Source PDF not found" })
+    }
+    try {
+      const buffer = fs.readFileSync(pdfPath)
+      c.header("Content-Type", "application/pdf")
+      c.header(
+        "Content-Disposition",
+        `inline; filename="${safeLabel}.pdf"`,
+      )
+      c.header("Cache-Control", "private, max-age=3600")
+      return c.body(buffer)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      throw new HTTPException(500, { message: `Failed to read source PDF: ${message}` })
+    }
+  })
+
   app.post("/books", async (c) => {
     const formData = await c.req.formData()
     const label = formData.get("label")
@@ -374,9 +404,11 @@ export function createBookRoutes(
       for (const row of captionRows) {
         try {
           const parsed = JSON.parse(row.data) as {
-            captions?: Array<{ imageId?: string; caption?: string }>
+            captions?: Array<{ imageId?: string; caption?: string; decorative?: boolean }>
           }
           for (const cap of parsed.captions ?? []) {
+            // Decorative images have no caption to translate — skip them.
+            if (cap.decorative) continue
             if (cap.imageId && !captionedIds.has(cap.imageId)) {
               captionedIds.set(cap.imageId, cap.caption ?? "")
             }

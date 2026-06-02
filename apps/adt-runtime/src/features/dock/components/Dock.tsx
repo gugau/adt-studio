@@ -21,7 +21,6 @@ import { AudioPlayerProvider } from "@/features/audio/hooks/AudioPlayerContext";
 import { useAutoHideDock } from "@/features/dock/hooks/useAutoHideDock";
 import { useDockShortcuts } from "@/features/dock/hooks/useDockShortcuts";
 import { useKeyboardPageNav } from "@/features/navigation/hooks/useKeyboardPageNav";
-import { useToolbarKeyboardNav } from "@/features/dock/hooks/useToolbarKeyboardNav";
 
 interface DockProps {
   children: ReactNode;
@@ -39,7 +38,6 @@ export function Dock({ children }: DockProps) {
 
   useAutoHideDock(dockRef);
   useKeyboardPageNav();
-  useToolbarKeyboardNav(dockRef);
   useDockShortcuts();
 
   const isTop = position === "top";

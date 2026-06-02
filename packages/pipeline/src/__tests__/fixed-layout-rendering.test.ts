@@ -367,6 +367,23 @@ describe("renderFixedLayoutPage", () => {
     expect(html).toContain("height:300px")
   })
 
+  it("omits data-fl-reference-width when no reference width is given", () => {
+    const html = renderFixedLayoutPage(makeSection(), "/images").sections[0].html
+
+    expect(html).not.toContain("data-fl-reference-width")
+  })
+
+  it("stamps data-fl-reference-width on #content when given, before the style", () => {
+    // A single page (width 400) in a book whose widest spread is 800. Viewers
+    // scale by availableWidth/800 so this page renders centered at half-width.
+    const html = renderFixedLayoutPage(makeSection(), "/images", 800).sections[0].html
+
+    expect(html).toContain('data-fl-reference-width="800"')
+    // Attribute precedes `style` so package-web's per-page viewport regex
+    // still reads this page's own dimensions, not the reference width.
+    expect(html).toMatch(/data-fl-reference-width="800"\s+style="[^"]*width:400px;height:300px/)
+  })
+
   it("includes illustration image reference", () => {
     const html = renderFixedLayoutPage(makeSection(), "/images").sections[0].html
 
@@ -523,6 +540,51 @@ describe("renderFixedLayoutPage", () => {
     // Merriweather inserted before the generic `serif` terminator.
     expect(html).toContain("font-family:MuseoSans,Merriweather,serif")
     expect(html).toContain("font-family:Chokle,Merriweather,serif")
+  })
+
+  it("keeps a quoted Google family safe inside the inline style attribute", () => {
+    // Regression: a double-quoted family ("Mouse Memoirs") inside style="..."
+    // terminates the attribute early and drops the whole style (font-size,
+    // color too). The extractor emits single-quoted families so the span
+    // survives intact.
+    const drawItems: DrawItem[] = [
+      {
+        kind: "paragraph",
+        textId: "pg001_p000",
+        top: 38,
+        left: 172,
+        lineHeight: 30.24,
+        segments: [
+          {
+            text: "Ishte garë",
+            style: {
+              "font-family": "'Mouse Memoirs',serif",
+              "font-size": "30.24px",
+              color: "#a9414b",
+            },
+          },
+        ],
+        text: "Ishte garë",
+        blockBounds: { x: 172, y: 38, width: 385, height: 36 },
+      },
+    ]
+    const section = sectionFixedLayoutPage({
+      pageId: "pg001",
+      pageNumber: 1,
+      viewport: { width: 800, height: 600 },
+      drawItems,
+      availableImageIds: new Set(),
+    }).sections[0]
+
+    const html = renderFixedLayoutPage(section, "/images").sections[0].html
+
+    // Single-quoted family with Merriweather fallback, and the size/color
+    // survive in the same attribute (i.e. it wasn't truncated).
+    expect(html).toContain("font-family:'Mouse Memoirs',Merriweather,serif")
+    expect(html).toContain("font-size:30.24px")
+    expect(html).toContain("color:#a9414b")
+    // The broken form (double quote ending the attribute) must NOT appear.
+    expect(html).not.toContain('style="font-family:"')
   })
 
   it("leaves font-family untouched when Merriweather is already present", () => {
@@ -958,6 +1020,84 @@ describe("processFixedLayoutPages", () => {
 
       expect(html).toContain('data-id="pg001_im001"')
       expect(html).not.toContain('data-id="pg001_im002"')
+    } finally {
+      storage.close()
+    }
+  })
+
+  it("stamps the book-wide widest page as data-fl-reference-width on every page", () => {
+    const booksRoot = fs.mkdtempSync(path.join(os.tmpdir(), "adt-fixlayout-test-"))
+    tmpDirs.push(booksRoot)
+
+    const storage = createBookStorage("test-book", booksRoot)
+    try {
+      // A spread-mode book: a narrow standalone cover (width 400) followed by
+      // a double-width spread (width 800). Both pages must carry the same
+      // reference width (800) so viewers scale them identically — the cover
+      // renders centered at half-width instead of being upscaled to fill.
+      const coverText: PositionedTextOutput = {
+        drawItems: [{ kind: "image", imageId: "pg001_im001", bounds: { x: 0, y: 0, width: 400, height: 600 } }],
+        pageWidth: 400,
+        pageHeight: 600,
+        renderWidth: 400,
+        renderHeight: 600,
+      }
+      const spreadText: PositionedTextOutput = {
+        drawItems: [{ kind: "image", imageId: "pg002_im001", bounds: { x: 0, y: 0, width: 800, height: 600 } }],
+        pageWidth: 800,
+        pageHeight: 600,
+        renderWidth: 800,
+        renderHeight: 600,
+      }
+
+      storage.putExtractedPage({
+        pageId: "pg001",
+        pageNumber: 1,
+        text: "",
+        pageImage: makeImage("pg001_page", "pg001", 400, 600),
+        images: [makeImage("pg001_im001", "pg001", 400, 600, { x: 0, y: 0, width: 400, height: 600 })],
+        positionedText: coverText,
+      })
+      storage.putExtractedPage({
+        pageId: "pg002",
+        pageNumber: 2,
+        text: "",
+        pageImage: makeImage("pg002_page", "pg002", 800, 600),
+        images: [makeImage("pg002_im001", "pg002", 800, 600, { x: 0, y: 0, width: 800, height: 600 })],
+        positionedText: spreadText,
+      })
+
+      storage.putNodeData("positioned-text", "pg001", coverText)
+      storage.putNodeData("positioned-text", "pg002", spreadText)
+      storage.putNodeData("image-filtering", "pg001", {
+        images: [
+          { imageId: "pg001_page", isPruned: true, reason: "full-page render" },
+          { imageId: "pg001_im001", isPruned: false },
+        ],
+      })
+      storage.putNodeData("image-filtering", "pg002", {
+        images: [
+          { imageId: "pg002_page", isPruned: true, reason: "full-page render" },
+          { imageId: "pg002_im001", isPruned: false },
+        ],
+      })
+
+      processFixedLayoutPages(storage, "/images")
+
+      const getHtml = (pageId: string) =>
+        (storage.getLatestNodeData("web-rendering", pageId)!.data as {
+          sections: Array<{ html: string }>
+        }).sections[0].html
+
+      const coverHtml = getHtml("pg001")
+      const spreadHtml = getHtml("pg002")
+
+      // Both pages reference the widest page (800), not their own width.
+      expect(coverHtml).toContain('data-fl-reference-width="800"')
+      expect(spreadHtml).toContain('data-fl-reference-width="800"')
+      // The cover still carries its own viewport (400) in the style rule.
+      expect(coverHtml).toContain("width:400px;height:600px")
+      expect(spreadHtml).toContain("width:800px;height:600px")
     } finally {
       storage.close()
     }

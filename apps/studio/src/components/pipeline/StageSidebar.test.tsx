@@ -111,6 +111,10 @@ vi.mock("@/routes/__root", () => ({
   useSettingsDialog: () => ({ openSettings: vi.fn() }),
 }))
 
+vi.mock("@/routes/books.$label", () => ({
+  useSectionNav: () => ({ skipNextResetRef: { current: false } }),
+}))
+
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
