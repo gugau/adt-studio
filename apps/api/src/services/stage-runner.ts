@@ -1737,7 +1737,19 @@ async function runTranslateStep(
     )
 
     const catalogRow = storage.getLatestNodeData("text-catalog", "book")
-    const catalog = catalogRow?.data as TextCatalogOutput | undefined
+    let catalog = catalogRow?.data as TextCatalogOutput | undefined
+    // The text-catalog is normally produced by the easy-read stage. A translate
+    // run can start here without it — a standalone translate run (fromStage
+    // "translate") never runs easy-read, and caption/page edits clear the
+    // catalog. Rebuild it so translation isn't silently skipped.
+    if (!catalog) {
+      const pages = storage.getPages()
+      catalog = await buildTextCatalog(storage, pages)
+      storage.putNodeData("text-catalog", "book", catalog)
+      console.log(
+        `[stage-run] ${label}: rebuilt missing text catalog (${catalog.entries.length} entries)`
+      )
+    }
     const easyReadRow = storage.getLatestNodeData("easy-read", "book")
     const easyRead = easyReadRow?.data as EasyReadOutput | undefined
     const easyReadEntries = easyRead ? flattenEasyReadEntries(easyRead) : []
