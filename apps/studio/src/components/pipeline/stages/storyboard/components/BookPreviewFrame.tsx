@@ -12,6 +12,7 @@ import {
   demoteFirstHeadingIfPromoted,
   promoteFirstHeadingToH1,
   reconstructHtmlWithEdit,
+  serializeContentWrapper,
 } from "./iframe-html"
 import {
   type ComputedTypographyStyles,
@@ -190,13 +191,7 @@ export const BookPreviewFrame = forwardRef<BookPreviewFrameHandle, BookPreviewFr
         te.removeAttribute("data-adt-editing")
       })
       const wrapper = doc.getElementById("content")
-      let html: string
-      if (wrapper) {
-        const cls = (wrapper.getAttribute("class") || "").trim()
-        html = cls ? wrapper.outerHTML : wrapper.innerHTML
-      } else {
-        html = doc.body.innerHTML
-      }
+      const html = wrapper ? serializeContentWrapper(wrapper) : doc.body.innerHTML
       el.setAttribute("data-adt-selected", "true")
       return demoteFirstHeadingIfPromoted(html, sanitizedHtmlRef.current)
     },
