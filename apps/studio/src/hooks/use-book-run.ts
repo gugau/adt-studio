@@ -334,6 +334,9 @@ export function useBookRunStatus(label: string): BookRunContextValue {
           if (completedTask?.kind === "transcribe-timestamps") {
             queryClient.invalidateQueries({ queryKey: ["books", label, "tts-timestamps"] })
           }
+          if (completedTask?.kind === "translation-evaluation") {
+            queryClient.invalidateQueries({ queryKey: ["evaluations", "translations", label] })
+          }
           // Always refetch tasks so we pick up the final state even if we missed start
           queryClient.invalidateQueries({ queryKey: bookTasksKey(label) })
         } else if (d.type === "task-error") {
