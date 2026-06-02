@@ -55,6 +55,13 @@ const config = {
   extraResources,
   files: ["out/**/*", "!out/renderer/placeholder-*"],
 
+  // Write update metadata for every channel on each build, so a stable release
+  // also emits beta.yml (not just latest.yml). Beta clients track beta.yml, and
+  // without this they'd only graduate to a stable build via electron-updater's
+  // fragile 404-fallback-to-latest.yml path. This makes beta→stable graduation
+  // deterministic — see RELEASING.md.
+  generateUpdatesFilesForAllChannels: true,
+
   win: {
     target: ["nsis"],
     icon: "build/icon.ico",
