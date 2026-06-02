@@ -6118,9 +6118,6 @@ msgstr "Të dhënat e dërguara brenda trupit të një mesazhi kërkese ose për
 msgid "The default TTS instruction applied to every language unless overridden below. OpenAI uses it as a voice instruction and Gemini as in-prompt accent steering; Azure ignores it."
 msgstr "Udhëzimi i parazgjedhur i TTS që zbatohet për çdo gjuhë, përveçse kur anashkalohet më poshtë. OpenAI e përdor si udhëzim zëri dhe Gemini si drejtim theksi brenda kërkesës; Azure e shpërfill."
 
-#~ msgid "The default TTS instruction sent to OpenAI for all languages unless overridden below."
-#~ msgstr "Udhëzimi TTS i parazgjedhur i dërguar te OpenAI për të gjitha gjuhët, nëse nuk anashkalohet më poshtë."
-
 msgid "The entire page is treated as a single section - all text and images stay together as one unit. Best for storybooks, reference books, and any content where each page is self-contained."
 msgstr "I gjithë faqja trajtohet si një seksion i vetëm — i gjithë teksti dhe imazhet qëndrojnë bashkë si një njësi. Më e mirë për libra me tregime, libra referencë dhe çdo përmbajtje ku çdo faqe është e vetëmjaftueshme."
 
