@@ -45,12 +45,18 @@ export function PageJumper({
     return () => document.removeEventListener("mousedown", handleClick)
   }, [open])
 
+  // Clear the filter only when the dropdown opens — not on every keystroke
+  // (which would happen if `filtered` were a dependency here).
   useEffect(() => {
-    if (open) {
-      const idx = filtered.findIndex((p) => p.pageId === activePageId)
-      setHighlightIndex(Math.max(0, idx))
-      setQuery("")
-    }
+    if (open) setQuery("")
+  }, [open])
+
+  // Keep the keyboard highlight on the active page (or the first match while
+  // filtering).
+  useEffect(() => {
+    if (!open) return
+    const idx = filtered.findIndex((p) => p.pageId === activePageId)
+    setHighlightIndex(Math.max(0, idx))
   }, [open, activePageId, filtered])
 
   useEffect(() => {
