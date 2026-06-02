@@ -90,9 +90,8 @@ msgstr "{0} × {1}px · {2} points"
 msgid "{0} audio"
 msgstr "{0} audio"
 
-#. placeholder {0}: String(blockCount)
-msgid "{0} blocks"
-msgstr "{0} blocks"
+#~ msgid "{0} blocks"
+#~ msgstr "{0} blocks"
 
 #. placeholder {0}: activeProgress.criteriaPerPage
 msgid "{0} checks per page"
@@ -167,9 +166,8 @@ msgstr "{0} of {1} images"
 msgid "{0} of {1} items"
 msgstr "{0} of {1} items"
 
-#. placeholder {0}: String(blockCount)
-msgid "{0} on page"
-msgstr "{0} on page"
+#~ msgid "{0} on page"
+#~ msgstr "{0} on page"
 
 #. placeholder {0}: String(displayPages.length)
 msgid "{0} pages"
@@ -188,6 +186,10 @@ msgstr "{0} questions"
 
 #~ msgid "{0} section block(s) on this page"
 #~ msgstr "{0} section block(s) on this page"
+
+#. placeholder {0}: String(group.blocks.length)
+msgid "{0} sections"
+msgstr "{0} sections"
 
 #. placeholder {0}: String(stale.length)
 msgid "{0} selected images are no longer in the storyboard."
@@ -383,6 +385,9 @@ msgstr "1 item needs changes on this page"
 
 msgid "1 quiz / {frequency} pages"
 msgstr "1 quiz / {frequency} pages"
+
+msgid "1 section"
+msgstr "1 section"
 
 msgid "1 selected image is no longer in the storyboard."
 msgstr "1 selected image is no longer in the storyboard."
@@ -2222,6 +2227,9 @@ msgstr "Easy Read Preview"
 msgid "Easy Read Prompt"
 msgstr "Easy Read Prompt"
 
+msgid "Easy Read text"
+msgstr "Easy Read text"
+
 msgid "Ecosystem"
 msgstr "Ecosystem"
 
@@ -2687,8 +2695,11 @@ msgstr "Full control over render strategies, pruning, and filters."
 msgid "Full project backup & transfer"
 msgstr "Full project backup & transfer"
 
-msgid "Full-size source page preview for the selected quiz."
-msgstr "Full-size source page preview for the selected quiz."
+#~ msgid "Full-size source page preview for the selected quiz."
+#~ msgstr "Full-size source page preview for the selected quiz."
+
+msgid "Full-size source page preview."
+msgstr "Full-size source page preview."
 
 msgid "Full-width single column layout. Ideal for reference material, documentation, and dense technical content."
 msgstr "Full-width single column layout. Ideal for reference material, documentation, and dense technical content."
@@ -3221,6 +3232,9 @@ msgstr "its original language"
 
 msgid "Jane Reviewer"
 msgstr "Jane Reviewer"
+
+msgid "Jump to page"
+msgstr "Jump to page"
 
 msgid "Jump to quiz"
 msgstr "Jump to quiz"
@@ -4047,6 +4061,9 @@ msgstr "No terms to show"
 #~ msgid "No terms to show."
 #~ msgstr "No terms to show."
 
+msgid "No text"
+msgstr "No text"
+
 msgid "No text extracted"
 msgstr "No text extracted"
 
@@ -4364,9 +4381,9 @@ msgstr "page"
 msgid "Page"
 msgstr "Page"
 
-#. placeholder {0}: String(p.pageNumber)
-#. placeholder {0}: String(page.pageNumber)
-#. placeholder {0}: String(pageNumber)
+#. placeholder {0}: String(activePage.pageNumber)
+#. placeholder {0}: String(group.pageNumber)
+#. placeholder {0}: String(item.pageNumber)
 msgid "Page {0}"
 msgstr "Page {0}"
 
@@ -4378,10 +4395,8 @@ msgstr "Page {0}"
 msgid "Page {0} — Section {1}"
 msgstr "Page {0} — Section {1}"
 
-#. placeholder {0}: String(block.pageNumber)
-#. placeholder {1}: String(block.sectionIndex + 1)
-msgid "Page {0} · Section {1}"
-msgstr "Page {0} · Section {1}"
+#~ msgid "Page {0} · Section {1}"
+#~ msgstr "Page {0} · Section {1}"
 
 #. placeholder {0}: current.pageNumber
 #. placeholder {1}: renderedPages.length
@@ -5357,8 +5372,8 @@ msgstr "Save checklist"
 msgid "Save failed"
 msgstr "Save failed"
 
-msgid "Save or discard edits before regenerating"
-msgstr "Save or discard edits before regenerating"
+#~ msgid "Save or discard edits before regenerating"
+#~ msgstr "Save or discard edits before regenerating"
 
 msgid "Save page review"
 msgstr "Save page review"
@@ -5453,9 +5468,9 @@ msgstr "section › group"
 msgid "section › list"
 msgstr "section › list"
 
+#. placeholder {0}: String(block.sectionIndex + 1)
 #. placeholder {0}: String(group.sectionIndex + 1)
 #. placeholder {0}: String(i + 1)
-#. placeholder {0}: String(sectionIndex + 1)
 msgid "Section {0}"
 msgstr "Section {0}"
 
@@ -6814,6 +6829,9 @@ msgstr "View HTML source"
 
 msgid "View image"
 msgstr "View image"
+
+msgid "View page"
+msgstr "View page"
 
 msgid "Visual & sensory cues"
 msgstr "Visual & sensory cues"

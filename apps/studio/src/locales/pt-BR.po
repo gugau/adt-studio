@@ -90,9 +90,8 @@ msgstr "{0} × {1}px · {2} pontos"
 msgid "{0} audio"
 msgstr "{0} áudios"
 
-#. placeholder {0}: String(blockCount)
-msgid "{0} blocks"
-msgstr ""
+#~ msgid "{0} blocks"
+#~ msgstr "{0} blocos"
 
 #. placeholder {0}: activeProgress.criteriaPerPage
 msgid "{0} checks per page"
@@ -167,9 +166,8 @@ msgstr "{0} de {1} imagens"
 msgid "{0} of {1} items"
 msgstr "{0} de {1} itens"
 
-#. placeholder {0}: String(blockCount)
-msgid "{0} on page"
-msgstr ""
+#~ msgid "{0} on page"
+#~ msgstr "{0} na página"
 
 #. placeholder {0}: String(displayPages.length)
 msgid "{0} pages"
@@ -188,6 +186,10 @@ msgstr "{0} questões"
 
 #~ msgid "{0} section block(s) on this page"
 #~ msgstr "{0} bloco(s) de seção nesta página"
+
+#. placeholder {0}: String(group.blocks.length)
+msgid "{0} sections"
+msgstr "{0} seções"
 
 #. placeholder {0}: String(stale.length)
 msgid "{0} selected images are no longer in the storyboard."
@@ -383,6 +385,9 @@ msgstr "1 item needs changes on this page"
 
 msgid "1 quiz / {frequency} pages"
 msgstr "1 questionário / {frequency} páginas"
+
+msgid "1 section"
+msgstr "1 seção"
 
 msgid "1 selected image is no longer in the storyboard."
 msgstr "1 imagem selecionada não está mais no storyboard."
@@ -1528,7 +1533,7 @@ msgid "Clear all"
 msgstr "Clear all"
 
 msgid "Clear filters"
-msgstr ""
+msgstr "Limpar filtros"
 
 msgid "Clear language"
 msgstr "Limpar idioma"
@@ -2190,7 +2195,7 @@ msgid "e.g., Make the background brighter, add more trees..."
 msgstr "ex.: Deixe o fundo mais claro, adicione mais árvores..."
 
 msgid "Each block was simplified by AI. Edit any Easy Read text to refine it against the original, then Save. Changes are stored as a new version, so you can always roll back or regenerate."
-msgstr ""
+msgstr "Cada bloco foi simplificado por IA. Edite qualquer texto de Leitura Fácil para refiná-lo em relação ao original e depois Salve. As alterações são armazenadas como uma nova versão, para que você sempre possa reverter ou regenerar."
 
 msgid "Each iteration is one LLM call. Lower values are faster and cheaper; higher values give the reviewer more chances to fix problems."
 msgstr "Cada iteração é uma chamada LLM. Valores menores são mais rápidos e baratos; valores maiores dão ao revisor mais chances de corrigir problemas."
@@ -2221,6 +2226,9 @@ msgstr "Pré-visualização de Leitura Fácil"
 
 msgid "Easy Read Prompt"
 msgstr "Prompt de Leitura Fácil"
+
+msgid "Easy Read text"
+msgstr "Texto de Leitura Fácil"
 
 msgid "Ecosystem"
 msgstr "Ecossistema"
@@ -2253,7 +2261,7 @@ msgid "Edit this section"
 msgstr "Editar esta seção"
 
 msgid "Editable per block"
-msgstr ""
+msgstr "Editável por bloco"
 
 msgid "edited"
 msgstr "editado"
@@ -2396,7 +2404,7 @@ msgid "Evaporation"
 msgstr "Evaporação"
 
 msgid "Every edit and re-run is saved as a new version, so you can always roll back."
-msgstr ""
+msgstr "Cada edição e reexecução é salva como uma nova versão, para que você sempre possa reverter."
 
 msgid "Every few pages"
 msgstr "A cada poucas páginas"
@@ -2687,8 +2695,11 @@ msgstr "Controle total sobre estratégias de renderização, poda e filtros."
 msgid "Full project backup & transfer"
 msgstr "Backup completo do projeto e transferência"
 
-msgid "Full-size source page preview for the selected quiz."
-msgstr "Pré-visualização em tamanho real da página de origem do quiz selecionado."
+#~ msgid "Full-size source page preview for the selected quiz."
+#~ msgstr "Pré-visualização em tamanho real da página de origem do quiz selecionado."
+
+msgid "Full-size source page preview."
+msgstr "Pré-visualização da página de origem em tamanho real."
 
 msgid "Full-width single column layout. Ideal for reference material, documentation, and dense technical content."
 msgstr "Layout de coluna única em largura total. Ideal para material de referência, documentação e conteúdo técnico denso."
@@ -2961,7 +2972,7 @@ msgid "How closely should the visual review match the original page? The reviewe
 msgstr "Quão próximo a revisão visual deve corresponder à página original? O revisor rejeita renderizações que não passam — configurações mais rigorosas causam mais rejeições e rerenderizações."
 
 msgid "How Easy Read works"
-msgstr ""
+msgstr "Como funciona a Leitura Fácil"
 
 msgid "How it works"
 msgstr "Como funciona"
@@ -3221,6 +3232,9 @@ msgstr "sua língua original"
 
 msgid "Jane Reviewer"
 msgstr "Jane Reviewer"
+
+msgid "Jump to page"
+msgstr "Ir para a página"
 
 msgid "Jump to quiz"
 msgstr "Ir para o questionário"
@@ -3862,7 +3876,7 @@ msgstr "No disabled rules"
 #~ msgstr "Nenhum bloco de Leitura Fácil está disponível para esta página."
 
 msgid "No Easy Read for this page"
-msgstr ""
+msgstr "Sem Leitura Fácil para esta página"
 
 msgid "No entries match your search"
 msgstr "Nenhuma entrada corresponde à sua pesquisa"
@@ -3940,7 +3954,7 @@ msgid "No matches for \"{search}\""
 msgstr "Nenhum resultado para \"{0}\""
 
 msgid "No matching blocks"
-msgstr ""
+msgstr "Nenhum bloco correspondente"
 
 msgid "No matching pages"
 msgstr "Nenhuma página correspondente"
@@ -4046,6 +4060,9 @@ msgstr "Nenhum termo para mostrar"
 
 #~ msgid "No terms to show."
 #~ msgstr "Nenhum termo para mostrar."
+
+msgid "No text"
+msgstr "Sem texto"
 
 msgid "No text extracted"
 msgstr "Nenhum texto extraído"
@@ -4364,9 +4381,9 @@ msgstr "página"
 msgid "Page"
 msgstr "Página"
 
-#. placeholder {0}: String(p.pageNumber)
-#. placeholder {0}: String(page.pageNumber)
-#. placeholder {0}: String(pageNumber)
+#. placeholder {0}: String(activePage.pageNumber)
+#. placeholder {0}: String(group.pageNumber)
+#. placeholder {0}: String(item.pageNumber)
 msgid "Page {0}"
 msgstr "Página {0}"
 
@@ -4378,10 +4395,8 @@ msgstr "Página {0}"
 msgid "Page {0} — Section {1}"
 msgstr "Página {0} — Seção {1}"
 
-#. placeholder {0}: String(block.pageNumber)
-#. placeholder {1}: String(block.sectionIndex + 1)
-msgid "Page {0} · Section {1}"
-msgstr ""
+#~ msgid "Page {0} · Section {1}"
+#~ msgstr "Página {0} · Seção {1}"
 
 #. placeholder {0}: current.pageNumber
 #. placeholder {1}: renderedPages.length
@@ -4863,13 +4878,13 @@ msgid "Reader will play the video matched to each section."
 msgstr "O leitor reproduzirá o vídeo correspondente a cada seção."
 
 msgid "Reader-controlled"
-msgstr ""
+msgstr "Controlado pelo leitor"
 
 msgid "Readers see"
 msgstr "Leitores veem"
 
 msgid "Readers switch between the original and simplified text with the Easy Read toggle."
-msgstr ""
+msgstr "Os leitores alternam entre o texto original e o simplificado com a alternância de Leitura Fácil."
 
 msgid "Reading archive..."
 msgstr "Lendo arquivo..."
@@ -5114,7 +5129,7 @@ msgid "Retry Export"
 msgstr "Tentar exportar novamente"
 
 msgid "Review and refine each simplified block side-by-side with the original before packaging."
-msgstr ""
+msgstr "Revise e refine cada bloco simplificado lado a lado com o original antes de empacotar."
 
 msgid "Review areas with the most items marked as needing changes in this session."
 msgstr "Review areas with the most items marked as needing changes in this session."
@@ -5357,8 +5372,8 @@ msgstr "Save checklist"
 msgid "Save failed"
 msgstr "Save failed"
 
-msgid "Save or discard edits before regenerating"
-msgstr "Salve ou descarte as edições antes de regenerar"
+#~ msgid "Save or discard edits before regenerating"
+#~ msgstr "Salve ou descarte as edições antes de regenerar"
 
 msgid "Save page review"
 msgstr "Save page review"
@@ -5421,7 +5436,7 @@ msgid "Search languages..."
 msgstr "Buscar idiomas..."
 
 msgid "Search original or Easy Read text…"
-msgstr ""
+msgstr "Pesquisar texto original ou de Leitura Fácil..."
 
 msgid "Search questions or options…"
 msgstr "Pesquisar perguntas ou opções…"
@@ -5453,9 +5468,9 @@ msgstr "seção › grupo"
 msgid "section › list"
 msgstr "seção › lista"
 
+#. placeholder {0}: String(block.sectionIndex + 1)
 #. placeholder {0}: String(group.sectionIndex + 1)
 #. placeholder {0}: String(i + 1)
-#. placeholder {0}: String(sectionIndex + 1)
 msgid "Section {0}"
 msgstr "Seção {0}"
 
@@ -6327,7 +6342,7 @@ msgid "This page has no sectioning output"
 msgstr "Esta página não tem saída de seccionamento"
 
 msgid "This page has no simplified text blocks"
-msgstr ""
+msgstr "Esta página não tem blocos de texto simplificados"
 
 msgid "This page has no storyboard sections"
 msgstr "Esta página não tem seções de storyboard"
@@ -6525,7 +6540,7 @@ msgid "Tries hard to match the original book design."
 msgstr "Esforça-se para corresponder ao design original do livro."
 
 msgid "Try a different search or filter"
-msgstr ""
+msgstr "Tente uma pesquisa ou filtro diferente"
 
 msgid "Try Activity"
 msgstr "Testar atividade"
@@ -6795,7 +6810,7 @@ msgid "Version {targetVersion}"
 msgstr "Versão {targetVersion}"
 
 msgid "Versioned"
-msgstr ""
+msgstr "Versionado"
 
 msgid "Versions"
 msgstr "Versões"
@@ -6814,6 +6829,9 @@ msgstr "Ver código HTML"
 
 msgid "View image"
 msgstr "Ver imagem"
+
+msgid "View page"
+msgstr "Ver página"
 
 msgid "Visual & sensory cues"
 msgstr "Visual & sensory cues"
