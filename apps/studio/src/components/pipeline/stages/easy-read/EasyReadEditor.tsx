@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Check, ChevronDown, Equal, FileText, Loader2, RotateCcw, Search, Sparkles, X } from "lucide-react"
+import { Check, ChevronDown, FileText, Loader2, RotateCcw, Search, Sparkles, X } from "lucide-react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useLingui } from "@lingui/react/macro"
 import { api } from "@/api/client"
@@ -400,30 +400,18 @@ export function EasyReadEditor({
                               </div>
                             </div>
                             <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-1.5">
-                                <p className="text-[10px] font-medium uppercase tracking-wider text-fuchsia-600">
-                                  {t`Easy Read`}
-                                </p>
-                                {unchanged && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <span
-                                        className="inline-flex items-center text-muted-foreground/40"
-                                        aria-label={t`Same as original`}
-                                      >
-                                        <Equal className="h-3 w-3" aria-hidden />
-                                      </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      {t`Matches the original — not simplified.`}
-                                    </TooltipContent>
-                                  </Tooltip>
-                                )}
-                              </div>
+                              <p
+                                className={`text-[10px] font-medium uppercase tracking-wider transition-colors duration-150 ${
+                                  unchanged ? "text-muted-foreground/50" : "text-fuchsia-600"
+                                }`}
+                              >
+                                {t`Easy Read`}
+                              </p>
                               <AutoTextarea
                                 value={entry.text}
                                 onChange={(value) => updateEntry(block, entry.easyReadId, value)}
                                 disabled={isRunning}
+                                muted={unchanged}
                                 ariaLabel={t`Easy Read text`}
                               />
                             </div>
@@ -575,11 +563,13 @@ function AutoTextarea({
   value,
   onChange,
   disabled,
+  muted,
   ariaLabel,
 }: {
   value: string
   onChange: (value: string) => void
   disabled?: boolean
+  muted?: boolean
   ariaLabel?: string
 }) {
   const ref = useRef<HTMLTextAreaElement>(null)
@@ -599,7 +589,9 @@ function AutoTextarea({
       disabled={disabled}
       aria-label={ariaLabel}
       rows={1}
-      className="w-full resize-none overflow-hidden rounded-md border border-dashed border-border/60 bg-background/40 p-2.5 text-[13px] leading-relaxed text-foreground transition-colors duration-150 hover:border-fuchsia-300 hover:bg-fuchsia-50/40 focus:border-solid focus:border-fuchsia-400 focus:bg-background focus:outline-none focus:ring-2 focus:ring-fuchsia-200 disabled:opacity-60 disabled:hover:border-border/60 disabled:hover:bg-background/40"
+      className={`w-full resize-none overflow-hidden rounded-md border border-dashed border-border/60 bg-background/40 p-2.5 text-[13px] leading-relaxed text-foreground transition-all duration-150 hover:border-fuchsia-300 hover:bg-fuchsia-50/40 focus:border-solid focus:border-fuchsia-400 focus:bg-background focus:outline-none focus:ring-2 focus:ring-fuchsia-200 disabled:opacity-60 ${
+        muted ? "opacity-55 hover:opacity-100 focus:opacity-100" : ""
+      }`}
     />
   )
 }
