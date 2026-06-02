@@ -124,6 +124,10 @@ msgstr "{0} items"
 msgid "{0} items need changes on this page"
 msgstr "{0} items need changes on this page"
 
+#. placeholder {0}: entries.length
+msgid "{0} items with unsaved changes"
+msgstr "{0} items with unsaved changes"
+
 #. placeholder {0}: String(outputLanguages.length)
 msgid "{0} languages"
 msgstr "{0} languages"
@@ -770,6 +774,9 @@ msgstr "Add your first book"
 
 msgid "Add your first term"
 msgstr "Add your first term"
+
+msgid "added"
+msgstr "added"
 
 msgid "Additional Languages"
 msgstr "Additional Languages"
@@ -2028,6 +2035,9 @@ msgstr "Disabled rules"
 msgid "Discard"
 msgstr "Discard"
 
+msgid "Discard unsaved changes?"
+msgstr "Discard unsaved changes?"
+
 #~ msgid "Dismiss"
 #~ msgstr "Dismiss"
 
@@ -2283,6 +2293,12 @@ msgstr "Enter a valid minimum dimension (whole number ≥ 0)"
 
 msgid "Enter a valid project name"
 msgstr "Enter a valid project name"
+
+msgid "entries"
+msgstr "entries"
+
+msgid "entry"
+msgstr "entry"
 
 msgid "EPUB"
 msgstr "EPUB"
@@ -2966,6 +2982,9 @@ msgstr "Image Segmentation"
 msgid "Image Segmentation Prompt"
 msgstr "Image Segmentation Prompt"
 
+msgid "Image selection"
+msgstr "Image selection"
+
 msgid "Image Translation"
 msgstr "Image Translation"
 
@@ -3193,6 +3212,9 @@ msgstr "Layout"
 
 msgid "Leading"
 msgstr "Leading"
+
+msgid "Leave"
+msgstr "Leave"
 
 msgid "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 msgstr "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
@@ -4230,6 +4252,10 @@ msgstr "Page {0}"
 msgid "Page {0} — Section {1}"
 msgstr "Page {0} — Section {1}"
 
+#. placeholder {0}: String(pageNumber)
+msgid "Page {0} captions"
+msgstr "Page {0} captions"
+
 #. placeholder {0}: current.pageNumber
 #. placeholder {1}: renderedPages.length
 msgid "Page {0} of {1}"
@@ -4596,6 +4622,9 @@ msgstr "question"
 msgid "Queued"
 msgstr "Queued"
 
+msgid "quiz"
+msgstr "quiz"
+
 msgid "Quiz"
 msgstr "Quiz"
 
@@ -4631,6 +4660,9 @@ msgstr "Quiz Prompt"
 
 msgid "Quiz Section Types"
 msgstr "Quiz Section Types"
+
+msgid "quizzes"
+msgstr "quizzes"
 
 msgid "Quizzes"
 msgstr "Quizzes"
@@ -4843,6 +4875,9 @@ msgstr "Remove this block"
 msgid "Remove type"
 msgstr "Remove type"
 
+msgid "removed"
+msgstr "removed"
+
 msgid "Render each typed section into an interactive HTML page. Pick a layout strategy that matches the book and let storyboard handle the rest."
 msgstr "Render each typed section into an interactive HTML page. Pick a layout strategy that matches the book and let storyboard handle the rest."
 
@@ -4926,6 +4961,9 @@ msgstr "Restore section to flow"
 
 msgid "Restore this term — it will be eligible again on the next regeneration."
 msgstr "Restore this term — it will be eligible again on the next regeneration."
+
+msgid "restored"
+msgstr "restored"
 
 msgid "Resume target"
 msgstr "Resume target"
@@ -5727,6 +5765,9 @@ msgstr "Start with a PDF"
 msgid "Stats"
 msgstr "Stats"
 
+msgid "Stay"
+msgstr "Stay"
+
 msgid "Step"
 msgstr "Step"
 
@@ -5848,6 +5889,9 @@ msgstr "Synthesizes narration audio for each page."
 msgid "System Prompt"
 msgstr "System Prompt"
 
+msgid "Table of contents"
+msgstr "Table of contents"
+
 msgid "Table of Contents"
 msgstr "Table of Contents"
 
@@ -5898,6 +5942,12 @@ msgstr "Template Rendering"
 
 msgid "Template-based"
 msgstr "Template-based"
+
+msgid "term"
+msgstr "term"
+
+msgid "terms"
+msgstr "terms"
 
 msgid "Terms marked with an asterisk (*) are defined by the ISO standard and may differ from colloquial usage in other fields."
 msgstr "Terms marked with an asterisk (*) are defined by the ISO standard and may differ from colloquial usage in other fields."
@@ -6282,6 +6332,9 @@ msgstr "Translates the catalog into each target language."
 msgid "Translating languages..."
 msgstr "Translating languages..."
 
+msgid "translation"
+msgstr "translation"
+
 msgid "Translation"
 msgstr "Translation"
 
@@ -6296,6 +6349,9 @@ msgstr "Translation Prompt"
 
 msgid "Translation runs on the typed sections placed by Storyboard. Finish Storyboard before running this stage."
 msgstr "Translation runs on the typed sections placed by Storyboard. Finish Storyboard before running this stage."
+
+msgid "translations"
+msgstr "translations"
 
 msgid "Translations"
 msgstr "Translations"
@@ -6764,6 +6820,9 @@ msgstr "Wraps 'Generate new' requests. Supports user_prompt, style, and image_ty
 
 msgid "You can export at this stage"
 msgstr "You can export at this stage"
+
+msgid "You have unsaved changes. If you leave, they'll be lost."
+msgstr "You have unsaved changes. If you leave, they'll be lost."
 
 msgid "Young adult fiction"
 msgstr "Young adult fiction"

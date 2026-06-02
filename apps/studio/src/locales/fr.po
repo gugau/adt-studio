@@ -126,6 +126,10 @@ msgstr "{0} éléments"
 msgid "{0} items need changes on this page"
 msgstr "{0} éléments nécessitent des modifications sur cette page"
 
+#. placeholder {0}: entries.length
+msgid "{0} items with unsaved changes"
+msgstr "{0} éléments avec des modifications non enregistrées"
+
 #. placeholder {0}: String(outputLanguages.length)
 msgid "{0} languages"
 msgstr "{0} langues"
@@ -772,6 +776,9 @@ msgstr "Ajoutez votre premier livre"
 
 msgid "Add your first term"
 msgstr "Ajoutez votre premier terme"
+
+msgid "added"
+msgstr "ajouté"
 
 msgid "Additional Languages"
 msgstr "Langues supplémentaires"
@@ -2030,6 +2037,9 @@ msgstr "Règles désactivées"
 msgid "Discard"
 msgstr "Abandonner"
 
+msgid "Discard unsaved changes?"
+msgstr "Ignorer les modifications non enregistrées ?"
+
 #~ msgid "Dismiss"
 #~ msgstr "Fermer"
 
@@ -2285,6 +2295,12 @@ msgstr "Saisissez une dimension minimale valide (nombre entier ≥ 0)"
 
 msgid "Enter a valid project name"
 msgstr "Saisissez un nom de projet valide"
+
+msgid "entries"
+msgstr "entrées"
+
+msgid "entry"
+msgstr "entrée"
 
 msgid "EPUB"
 msgstr "EPUB"
@@ -2968,6 +2984,9 @@ msgstr "Segmentation d'images"
 msgid "Image Segmentation Prompt"
 msgstr "Image Segmentation Invite"
 
+msgid "Image selection"
+msgstr "Sélection d'image"
+
 msgid "Image Translation"
 msgstr "Traduction d'images"
 
@@ -3195,6 +3214,9 @@ msgstr "Disposition"
 
 msgid "Leading"
 msgstr "Interligne"
+
+msgid "Leave"
+msgstr "Quitter"
 
 msgid "Leave at None to run segmentation on all qualifying images (subject to pipeline rules)."
 msgstr "Laissez sur Aucun pour exécuter la segmentation sur toutes les images éligibles (selon les règles du pipeline)."
@@ -4232,6 +4254,10 @@ msgstr "Page {0}"
 msgid "Page {0} — Section {1}"
 msgstr "Page {0} — Section {1}"
 
+#. placeholder {0}: String(pageNumber)
+msgid "Page {0} captions"
+msgstr "Légendes de la page {0}"
+
 #. placeholder {0}: current.pageNumber
 #. placeholder {1}: renderedPages.length
 msgid "Page {0} of {1}"
@@ -4598,6 +4624,9 @@ msgstr "question"
 msgid "Queued"
 msgstr "En file d'attente"
 
+msgid "quiz"
+msgstr "quiz"
+
 msgid "Quiz"
 msgstr "Quiz"
 
@@ -4633,6 +4662,9 @@ msgstr "Quiz Invite"
 
 msgid "Quiz Section Types"
 msgstr "Types de section de quiz"
+
+msgid "quizzes"
+msgstr "quiz"
 
 msgid "Quizzes"
 msgstr "Quiz"
@@ -4845,6 +4877,9 @@ msgstr "Retirer ce bloc"
 msgid "Remove type"
 msgstr "Retirer le type"
 
+msgid "removed"
+msgstr "supprimé"
+
 msgid "Render each typed section into an interactive HTML page. Pick a layout strategy that matches the book and let storyboard handle the rest."
 msgstr "Rendez chaque section tapée en une page HTML interactive. Choisissez une stratégie de mise en page qui correspond au livre et laissez le storyboard gérer le reste."
 
@@ -4928,6 +4963,9 @@ msgstr "Restaurer la section dans le flux"
 
 msgid "Restore this term — it will be eligible again on the next regeneration."
 msgstr "Restaurer ce terme — il sera à nouveau éligible lors de la prochaine régénération."
+
+msgid "restored"
+msgstr "restauré"
 
 msgid "Resume target"
 msgstr "Cible de reprise"
@@ -5729,6 +5767,9 @@ msgstr "Commencer avec un PDF"
 msgid "Stats"
 msgstr "Statistiques"
 
+msgid "Stay"
+msgstr "Rester"
+
 msgid "Step"
 msgstr "Étape"
 
@@ -5850,6 +5891,9 @@ msgstr "Synthétise l'audio de narration pour chaque page."
 msgid "System Prompt"
 msgstr "System Invite"
 
+msgid "Table of contents"
+msgstr "Table des matières"
+
 msgid "Table of Contents"
 msgstr "tableau des matières"
 
@@ -5900,6 +5944,12 @@ msgstr "Rendu par modèle"
 
 msgid "Template-based"
 msgstr "Basé sur un modèle"
+
+msgid "term"
+msgstr "terme"
+
+msgid "terms"
+msgstr "termes"
 
 msgid "Terms marked with an asterisk (*) are defined by the ISO standard and may differ from colloquial usage in other fields."
 msgstr "Les termes marqués d'un astérisque (*) sont définis par la norme ISO et peuvent différer de l'usage courant dans d'autres domaines."
@@ -6284,6 +6334,9 @@ msgstr "Traduit le catalogue dans chaque langue cible."
 msgid "Translating languages..."
 msgstr "Traduction des langues..."
 
+msgid "translation"
+msgstr "traduction"
+
 msgid "Translation"
 msgstr "Traduction"
 
@@ -6298,6 +6351,9 @@ msgstr "Traduction Invite"
 
 msgid "Translation runs on the typed sections placed by Storyboard. Finish Storyboard before running this stage."
 msgstr "La traduction s'exécute sur les sections tapées placées par le Storyboard. Terminez le Storyboard avant d'exécuter cette étape."
+
+msgid "translations"
+msgstr "traductions"
 
 msgid "Translations"
 msgstr "Traductions"
@@ -6766,6 +6822,9 @@ msgstr "Encapsule les requêtes « Générer nouveau ». Prend en charge les var
 
 msgid "You can export at this stage"
 msgstr "Vous pouvez exporter à cette étape"
+
+msgid "You have unsaved changes. If you leave, they'll be lost."
+msgstr "Vous avez des modifications non enregistrées. Si vous quittez, elles seront perdues."
 
 msgid "Young adult fiction"
 msgstr "fiction jeune adulte"
