@@ -14,7 +14,6 @@ import {
 import { useUpdateBookConfig } from "@/hooks/use-book-config"
 import { useApiKey } from "@/hooks/use-api-key"
 import { useBookRun } from "@/hooks/use-book-run"
-import { useFloatingSave } from "./floating-save"
 import { useLingui } from "@lingui/react/macro"
 
 export interface DirtyConfig {
@@ -108,16 +107,6 @@ export function useSaveAndRerun(opts: SaveAndRerunOptions): SaveAndRerunControll
   const navigate = useNavigate()
   const [showDialog, setShowDialog] = useState(false)
 
-  // Surface unsaved settings to the navigation guard (warn before leaving /
-  // reloading), without rendering an entity bar — StageRerunBar owns the UI.
-  useFloatingSave({
-    id: `settings:${stage}`,
-    dirty: hasPendingChanges,
-    saving: updateConfig.isPending,
-    onDiscard: () => {},
-    silent: true,
-  })
-
   const confirm = async () => {
     if (savePrompts) await savePrompts()
     updateConfig.mutate(
@@ -150,12 +139,13 @@ export function useSaveAndRerun(opts: SaveAndRerunOptions): SaveAndRerunControll
 }
 
 /**
- * Bottom-centered floating pill that appears on a stage's Settings page when
- * there are unsaved config/prompt changes, carrying the Save & Rerun action.
- * Portaled and fixed, so it never shifts or overlays the form being edited.
- * Distinct from the entity FloatingSaveBar — re-running overwrites generated
- * output, so it routes through a confirmation dialog. The two never co-occur
- * (this lives on settings pages, the save bar on stage views).
+ * Full-width bar docked to the bottom of the viewport when a stage's Settings
+ * page has unsaved config/prompt changes, carrying the Save & Rerun action.
+ * Deliberately a different shape from the entity FloatingSaveBar (a small
+ * centered pill) so users read them as different things: this saves settings
+ * AND re-runs the stage (overwriting output), so it also routes through a
+ * confirmation dialog. The two never co-occur — this lives on settings pages,
+ * the save bar on stage views.
  */
 export function StageRerunBar({ controller }: { controller: SaveAndRerunController }) {
   const { t } = useLingui()
@@ -165,21 +155,20 @@ export function StageRerunBar({ controller }: { controller: SaveAndRerunControll
     <>
       {c.hasPendingChanges &&
         createPortal(
-          <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 animate-in slide-in-from-bottom-4 fade-in zoom-in-95 duration-300 ease-out">
-            <div className="flex items-center gap-3 rounded-md border border-border/60 bg-background/95 px-2 py-1.5 shadow-xl shadow-black/5 backdrop-blur">
-              <div className="flex items-center gap-2 pl-2">
-                <span className="relative inline-flex h-2 w-2 shrink-0" aria-hidden>
-                  <span className="absolute inset-0 rounded-full bg-amber-500/40 animate-ping" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
-                </span>
-                <span className="text-[11px] font-medium text-foreground">
-                  {t`Unsaved settings`}
-                </span>
-              </div>
-              <div className="h-5 w-px bg-border/80" aria-hidden />
+          // left-[220px] clears the book layout's fixed-width stage sidebar so
+          // the bar spans only the content column, not the whole viewport.
+          <div className="fixed bottom-0 left-[220px] right-0 z-50 animate-in slide-in-from-bottom-2 fade-in duration-300 ease-out">
+            <div className="flex items-center gap-3 border-t bg-background/95 px-4 py-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur">
+              <span className="relative inline-flex h-2 w-2 shrink-0" aria-hidden>
+                <span className="absolute inset-0 rounded-full bg-amber-500/40 animate-ping" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+              </span>
+              <span className="text-[13px] font-medium text-foreground">
+                {t`Unsaved settings`}
+              </span>
               <Button
                 size="sm"
-                className="h-7 px-2.5 text-xs"
+                className="ml-auto h-8 px-3 text-xs"
                 onClick={c.openDialog}
                 disabled={!c.canRun || c.isSaving}
                 title={!c.canRun ? t`Add an API key to re-run` : undefined}

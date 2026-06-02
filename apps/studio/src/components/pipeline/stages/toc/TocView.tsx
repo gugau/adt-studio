@@ -153,9 +153,14 @@ export function TocView({ bookLabel }: { bookLabel: string }) {
 
   const effective = pending ?? data
   const entries = effective?.entries ?? []
-  const dirty = pending != null
 
-  const { label: pendingLabel, labelKey: pendingLabelKey } = usePendingChanges({
+  // `dirty` is driven by the actual diff, so reverting edits back to the
+  // saved values auto-dismisses the save bar.
+  const {
+    label: pendingLabel,
+    labelKey: pendingLabelKey,
+    hasChanges: dirty,
+  } = usePendingChanges({
     prev: data?.entries ?? [],
     next: pending?.entries,
     keyOf: (e) => e.id,

@@ -66,6 +66,9 @@ export interface PendingChangesOptions<T> {
 export function usePendingChanges<T>(opts: PendingChangesOptions<T>): {
   label: ReactNode
   labelKey: string
+  /** True only when the diff is non-empty — i.e. pending actually differs from
+   * the server. Lets callers auto-dismiss the save bar when edits are reverted. */
+  hasChanges: boolean
 } {
   const { t } = useLingui()
   const {
@@ -120,5 +123,5 @@ export function usePendingChanges<T>(opts: PendingChangesOptions<T>): {
       </div>
     )
 
-  return { label, labelKey }
+  return { label, labelKey, hasChanges: active.length > 0 }
 }

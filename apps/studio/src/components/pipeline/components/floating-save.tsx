@@ -3,6 +3,7 @@ import {
   useContext,
   useEffect,
   useRef,
+  useState,
   useSyncExternalStore,
   type ReactNode,
 } from "react"
@@ -52,12 +53,6 @@ export interface FloatingSaveEntry {
    * re-renders; entries with a static label can omit it.
    */
   labelKey?: string
-  /**
-   * When true, the entry counts as unsaved work (so useHasUnsavedChanges and
-   * the navigation guard fire) but never renders the floating bar — for
-   * surfaces that own their own save UI (e.g. the settings Save & Rerun bar).
-   */
-  silent?: boolean
 }
 
 /** Fields whose change must re-render the host (label content excluded — see labelKey). */
@@ -128,54 +123,67 @@ export function FloatingSaveProvider({ children }: { children: ReactNode }) {
   )
 }
 
+interface BarProps {
+  label?: ReactNode
+  saving: boolean
+  onSave?: () => void
+  onDiscard: () => void
+  saveDisabledReason?: string
+}
+
+const EXIT_MS = 200
+
 function FloatingSaveHost({ store }: { store: FloatingSaveStore }) {
   const { t } = useLingui()
   useSyncExternalStore(store.subscribe, store.getVersion, store.getVersion)
 
-  // Silent entries still count as unsaved work (for the nav guard) but render
-  // no bar — they own their own save UI.
-  const entries = store.active().filter((e) => !e.silent)
-  if (entries.length === 0) return null
+  const entries = store.active()
+  const present = entries.length > 0
 
-  // Callbacks indirect through the store so they're never stale, even when the
-  // host hasn't re-rendered since a consumer swapped its handler closure.
+  // Build the bar props while present. Callbacks indirect through the store so
+  // they're never stale, even when the host hasn't re-rendered since a consumer
+  // swapped its handler closure.
+  let barProps: BarProps | null = null
   if (entries.length === 1) {
     const e = entries[0]
-    return (
-      <FloatingSaveBar
-        label={e.label}
-        saving={e.saving}
-        onSave={e.onSave ? () => store.get(e.id)?.onSave?.() : undefined}
-        onDiscard={() => store.get(e.id)?.onDiscard()}
-        saveDisabledReason={e.saveDisabledReason}
-      />
-    )
-  }
-
-  const anySaving = entries.some((e) => e.saving)
-  const hasSavable = entries.some((e) => e.onSave)
-  const blockedReason = entries.find((e) => e.saveDisabledReason)?.saveDisabledReason
-
-  const saveAll = () => {
-    for (const e of store.active()) e.onSave?.()
-  }
-  const discardAll = () => {
-    for (const e of store.active()) e.onDiscard()
-  }
-
-  return (
-    <FloatingSaveBar
-      label={
+    barProps = {
+      label: e.label,
+      saving: e.saving,
+      onSave: e.onSave ? () => store.get(e.id)?.onSave?.() : undefined,
+      onDiscard: () => store.get(e.id)?.onDiscard(),
+      saveDisabledReason: e.saveDisabledReason,
+    }
+  } else if (entries.length > 1) {
+    barProps = {
+      label: (
         <span className="text-[11px] font-medium text-foreground">
           {t`${entries.length} items with unsaved changes`}
         </span>
-      }
-      saving={anySaving}
-      onSave={hasSavable ? saveAll : undefined}
-      onDiscard={discardAll}
-      saveDisabledReason={blockedReason}
-    />
-  )
+      ),
+      saving: entries.some((e) => e.saving),
+      onSave: entries.some((e) => e.onSave)
+        ? () => store.active().forEach((e) => e.onSave?.())
+        : undefined,
+      onDiscard: () => store.active().forEach((e) => e.onDiscard()),
+      saveDisabledReason: entries.find((e) => e.saveDisabledReason)?.saveDisabledReason,
+    }
+  }
+
+  // Presence: keep the bar mounted through its exit animation after it clears.
+  const lastProps = useRef<BarProps | null>(null)
+  if (barProps) lastProps.current = barProps
+  const [mounted, setMounted] = useState(present)
+  useEffect(() => {
+    if (present) {
+      setMounted(true)
+      return
+    }
+    const id = window.setTimeout(() => setMounted(false), EXIT_MS)
+    return () => window.clearTimeout(id)
+  }, [present])
+
+  if (!mounted || !lastProps.current) return null
+  return <FloatingSaveBar {...lastProps.current} closing={!present} />
 }
 
 const noopSubscribe = () => () => {}

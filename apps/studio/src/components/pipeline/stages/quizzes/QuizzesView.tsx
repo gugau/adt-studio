@@ -186,13 +186,16 @@ export function QuizzesView({ bookLabel, selectedPageId }: { bookLabel: string; 
 
   const effective = pending ?? data?.quizzes
   const quizzes = effective?.quizzes ?? []
-  const dirty = pending != null
 
   const displayQuizzes = selectedPageId
     ? quizzes.filter((q) => q.pageIds.includes(selectedPageId))
     : quizzes
 
-  const { label: pendingLabel, labelKey: pendingLabelKey } = usePendingChanges({
+  const {
+    label: pendingLabel,
+    labelKey: pendingLabelKey,
+    hasChanges: dirty,
+  } = usePendingChanges({
     prev: data?.quizzes?.quizzes ?? [],
     next: pending?.quizzes,
     keyOf: (q) => String(q.quizIndex),

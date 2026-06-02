@@ -57,12 +57,15 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
 
   const effective = pending ?? data ?? null
   const items = effective?.items ?? []
-  const dirty = pending != null
   const currentVersion = data?.version ?? null
   const prunedCount = useMemo(() => items.filter((item) => item.pruned).length, [items])
   const visibleCount = items.length - prunedCount
 
-  const { label: pendingLabel, labelKey: pendingLabelKey } = usePendingChanges({
+  const {
+    label: pendingLabel,
+    labelKey: pendingLabelKey,
+    hasChanges: dirty,
+  } = usePendingChanges({
     prev: data?.items ?? [],
     next: pending?.items,
     keyOf: (i) => i.id ?? i.word,

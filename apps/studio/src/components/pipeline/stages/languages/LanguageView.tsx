@@ -211,9 +211,12 @@ export function LanguageView({ bookLabel, stageSlug = "translate", selectedPageI
   // Effective translated entries (pending overrides fetched data)
   const effectiveEntries = pendingEntries ?? translatedEntries
   const translatedMap = new Map(effectiveEntries.map((e) => [e.id, e.text]))
-  const dirty = pendingEntries != null
 
-  const { label: pendingLabel, labelKey: pendingLabelKey } = usePendingChanges({
+  const {
+    label: pendingLabel,
+    labelKey: pendingLabelKey,
+    hasChanges: dirty,
+  } = usePendingChanges({
     prev: translatedEntries,
     next: pendingEntries,
     keyOf: (e) => e.id,

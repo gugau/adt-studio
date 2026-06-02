@@ -157,9 +157,12 @@ export function ExtractPageDetail({
 
   // Effective data: pending if dirty, otherwise server
   const imageClassData = pendingImageData ?? page?.imageClassification ?? null
-  const imageDirty = pendingImageData != null
 
-  const { label: pendingLabel, labelKey: pendingLabelKey } = usePendingChanges({
+  const {
+    label: pendingLabel,
+    labelKey: pendingLabelKey,
+    hasChanges: imageDirty,
+  } = usePendingChanges({
     prev: page?.imageClassification?.images ?? [],
     next: pendingImageData?.images,
     keyOf: (i) => i.imageId,

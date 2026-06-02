@@ -2,6 +2,7 @@ import { createPortal } from "react-dom"
 import type { ReactNode } from "react"
 import { Loader2, Save, X } from "lucide-react"
 import { useLingui } from "@lingui/react/macro"
+import { cn } from "@/lib/utils"
 import {
   Tooltip,
   TooltipContent,
@@ -16,6 +17,8 @@ interface FloatingSaveBarProps {
   saveDisabledReason?: string
   /** Status content next to the pulse dot. Defaults to "Unsaved changes". */
   label?: ReactNode
+  /** Play the exit animation (the host keeps it mounted until it finishes). */
+  closing?: boolean
 }
 
 export function FloatingSaveBar({
@@ -24,6 +27,7 @@ export function FloatingSaveBar({
   saving = false,
   saveDisabledReason,
   label,
+  closing = false,
 }: FloatingSaveBarProps) {
   const { t } = useLingui()
   const saveDisabled = !!saveDisabledReason || saving
@@ -45,7 +49,14 @@ export function FloatingSaveBar({
   )
 
   return createPortal(
-    <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 animate-in slide-in-from-bottom-4 fade-in zoom-in-95 duration-300 ease-out">
+    <div
+      className={cn(
+        "fixed bottom-4 left-1/2 z-50 -translate-x-1/2",
+        closing
+          ? "animate-out fill-mode-forwards slide-out-to-bottom-4 fade-out-0 zoom-out-95 duration-200 ease-in"
+          : "animate-in slide-in-from-bottom-4 fade-in zoom-in-95 duration-300 ease-out",
+      )}
+    >
       <div className="flex items-center gap-3 rounded-md border border-border/60 bg-background/95 backdrop-blur px-2 py-1.5 shadow-xl shadow-black/5">
         {/* Status indicator */}
         <div className="flex items-center gap-2 pl-2">
