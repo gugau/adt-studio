@@ -36,7 +36,6 @@ import {
   getRequestedPageId,
   getQuizImageRenderState,
 } from "./lib/quizzes-image-state";
-import { QuizzesOverviewToggle } from "./components/QuizzesOverviewToggle";
 import { QuizzesHintBanner } from "./components/QuizzesHintBanner";
 import { QuizJumper, type QuizJumperEntry } from "./components/QuizJumper";
 import { AddQuizDialog } from "./AddQuizDialog";
@@ -423,11 +422,9 @@ function PageLightbox({
 export function QuizzesView({
   bookLabel,
   selectedPageId,
-  onShowOverview,
 }: {
   bookLabel: string;
   selectedPageId?: string;
-  onShowOverview?: () => void;
 }) {
   const { t } = useLingui();
   const queryClient = useQueryClient();
@@ -595,9 +592,6 @@ export function QuizzesView({
           onSave={() => saveRef.current()}
           onDiscard={() => setPending(null)}
         />
-        {onShowOverview && (
-          <QuizzesOverviewToggle active={false} onToggle={onShowOverview} />
-        )}
       </div>,
     );
     return () => setExtra(null);
@@ -608,7 +602,6 @@ export function QuizzesView({
     dirty,
     bookLabel,
     selectedPageId,
-    onShowOverview,
   ]);
 
   const updateQuestion = (idx: number, question: string) => {
