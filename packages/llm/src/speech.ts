@@ -240,6 +240,23 @@ function buildGeminiShortTextRetryInput(input: string): string | null {
 }
 
 /**
+ * Wrap transcript text in the structured "performance + transcript" layout the
+ * native Gemini TTS models use for accent/style steering.
+ *
+ * The newer native speech models (e.g. gemini-*-tts-preview) reject the
+ * `systemInstruction` field at the API schema level ("Developer instruction is
+ * not enabled for this model"), so steering must live inside the prompt text.
+ * The `#### TRANSCRIPT` delimiter keeps the performance notes from being spoken
+ * aloud — only the text below it is read. Returns the transcript unchanged when
+ * there are no instructions, preserving the bare-text behaviour.
+ */
+function buildGeminiSpeechPrompt(transcript: string, instructions?: string): string {
+  const performance = instructions?.trim()
+  if (!performance) return transcript
+  return `### PERFORMANCE\n${performance}\n\n#### TRANSCRIPT\n${transcript}`
+}
+
+/**
  * Create a TTS client using Azure Speech Services REST API.
  */
 export function createAzureTTSSynthesizer(
@@ -342,7 +359,7 @@ export function createGeminiTTSSynthesizer(
       }
 
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(options.model)}:generateContent`
-      const synthesizeInput = async (inputText: string): Promise<GeminiGenerateContentPayload> => {
+      const synthesizeInput = async (transcript: string): Promise<GeminiGenerateContentPayload> => {
         const response = await fetch(url, {
           method: "POST",
           headers: {
@@ -354,7 +371,7 @@ export function createGeminiTTSSynthesizer(
               {
                 parts: [
                   {
-                    text: inputText,
+                    text: buildGeminiSpeechPrompt(transcript, options.instructions),
                   },
                 ],
               },
