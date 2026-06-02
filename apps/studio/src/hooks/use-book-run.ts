@@ -7,6 +7,8 @@ import {
   BASE_URL,
   type TaskInfoResponse,
   type StageRunProviderCredentials,
+  type PageSummaryItem,
+  type PageDetail,
 } from "@/api/client"
 import { STEP_TO_STAGE, PIPELINE, getStageClearOrder, PAGE_PROGRESS_STEPS } from "@adt/types"
 import type { StageName } from "@adt/types"
@@ -160,6 +162,16 @@ export function useBookRunStatus(label: string): BookRunContextValue {
         })
         // Clear progress for this step
         progressRef.current.delete(pipelineStep)
+        // For page-processing steps, the runner has just cleared this step's
+        // page data (e.g. web-rendering on a re-run). Refetch the page list now
+        // so views reflect the empty state immediately — that's what flips the
+        // storyboard step to its "loading pages" panel at the start of a re-run
+        // instead of leaving the stale preview on screen. Page data then streams
+        // back via the throttled step-progress invalidations below.
+        if ((PAGE_PROGRESS_STEPS as ReadonlySet<string>).has(pipelineStep)) {
+          lastPageInvalidateRef.current = Date.now()
+          queryClient.invalidateQueries({ queryKey: ["books", label, "pages"] })
+        }
       } else if (d.type === "step-progress") {
         const message = typeof d.message === "string" && d.message.trim().length > 0
           ? d.message
@@ -405,6 +417,47 @@ export function useBookRunStatus(label: string): BookRunContextValue {
           error: null,
         }
       })
+
+      // Optimistically clear the page data this run will regenerate, so the
+      // storyboard view immediately drops the stale preview and shows each
+      // section's "Rendering this section…" loading state — mirroring a
+      // first-time run. Without this, a fast/cached re-run (switching render
+      // strategy, fixed-layout) finishes before the async refetch ever observes
+      // the cleared backend state, so the loading state never appears. Storyboard
+      // clears web-rendering (page.rendering / hasRendering); sectioning/extract
+      // also clear page-sectioning (sectioningTree / sectionCount).
+      const clearsRendering = stagesToClear.has("storyboard" as StageName)
+      const clearsSectioning =
+        stagesToClear.has("sectioning" as StageName) || stagesToClear.has("extract" as StageName)
+      if (clearsRendering || clearsSectioning) {
+        // Page list summaries (sidebar + run-card gating).
+        queryClient.setQueryData<PageSummaryItem[]>(["books", label, "pages"], (old) =>
+          old?.map((p) => ({
+            ...p,
+            ...(clearsRendering ? { hasRendering: false, renderingVersion: null } : {}),
+            ...(clearsSectioning
+              ? { sectionCount: 0, sections: [], prunedSections: [], sectioningVersion: null }
+              : {}),
+          }))
+        )
+        // Page detail caches (the storyboard preview reads page.rendering).
+        // Match only the per-page detail queries (key length 4), not the list
+        // (length 3) or the image queries (length 5).
+        queryClient.setQueriesData<PageDetail>(
+          {
+            queryKey: ["books", label, "pages"],
+            predicate: (q) => q.queryKey.length === 4 && q.queryKey[2] === "pages",
+          },
+          (old) =>
+            old
+              ? {
+                  ...old,
+                  ...(clearsRendering ? { rendering: null } : {}),
+                  ...(clearsSectioning ? { sectioningTree: null } : {}),
+                }
+              : old,
+        )
+      }
 
       // Clear cosmetic progress only for downstream steps being reset
       for (const stage of stagesToClear) {

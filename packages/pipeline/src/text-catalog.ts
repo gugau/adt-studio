@@ -15,6 +15,7 @@ import {
 } from "@adt/types"
 import type { Storage, PageData } from "@adt/storage"
 import { getGlossaryItemTextId } from "./glossary.js"
+import { getRenderSectioningRow } from "./render-sectioning.js"
 
 /** Zero-padded 3-digit number */
 function pad3(n: number): string {
@@ -189,8 +190,10 @@ export async function buildTextCatalog(
     const parsed = WebRenderingOutputSchema.safeParse(renderingRow.data)
     if (!parsed.success) continue
 
-    // Determine which sections are pruned
-    const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+    // Determine which sections are pruned. Use the render-sectioning resolver
+    // so fixed-layout books read the positioned tree whose ids/section count
+    // match the rendered HTML (1 section/page), not the semantic tree.
+    const structuringRow = getRenderSectioningRow(storage, page.pageId)
     const structuringParsed = structuringRow
       ? PageSectioningOutput.safeParse(structuringRow.data)
       : null

@@ -5,6 +5,7 @@ import { DEFAULT_LLM_MAX_RETRIES, EasyReadOutput as EasyReadOutputSchema, WebRen
 import type { LLMModel, ValidationResult } from "@adt/llm"
 import type { Storage, PageData } from "@adt/storage"
 import { buildLanguageContext, normalizeLocale } from "./language-context.js"
+import { getRenderSectioningRow } from "./render-sectioning.js"
 
 export const DEFAULT_EASY_READ_MODEL_ID = "openai:gpt-4.1"
 
@@ -128,7 +129,9 @@ export function buildEasyReadSourceBlocks(
 
   for (const page of pages) {
     const renderingRow = storage.getLatestNodeData("web-rendering", page.pageId)
-    const sectioningRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+    // Resolver: fixed-layout books pair against the positioned tree (its ids
+    // match the rendered HTML data-ids the runtime swaps Easy Read text into).
+    const sectioningRow = getRenderSectioningRow(storage, page.pageId)
     if (!renderingRow || !sectioningRow) continue
 
     const rendering = WebRenderingOutputSchema.safeParse(renderingRow.data)

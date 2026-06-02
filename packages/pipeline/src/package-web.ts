@@ -42,6 +42,7 @@ import { getGlossaryItemTextId } from "./glossary.js"
 import { getBaseLanguage, normalizeLocale } from "./language-context.js"
 import { buildTextCatalog } from "./text-catalog.js"
 import { flattenEasyReadEntries } from "./easy-read.js"
+import { getRenderSectioningRow } from "./render-sectioning.js"
 import { normalizeHtmlSectionSemantics } from "./html-semantics.js"
 
 export interface PackageAdtWebOptions {
@@ -316,7 +317,9 @@ export async function packageAdtWeb(
   for (const page of pages) {
     const quizzes = quizzesByAfterPageId.get(page.pageId) ?? []
 
-    const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+    // Resolver: fixed-layout books package from the positioned tree (its ids +
+    // 1-section/page shape match the rendered HTML the runtime hydrates).
+    const structuringRow = getRenderSectioningRow(storage, page.pageId)
     const sectioning = structuringRow?.data as PageSectioningOutput | undefined
     const imageCaptionMap = loadImageCaptionMap(storage, page.pageId)
     const decorativeImageIds = buildDecorativeImageIdSet(storage, page.pageId)

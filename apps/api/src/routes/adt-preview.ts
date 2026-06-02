@@ -39,6 +39,7 @@ import {
   convertLatexToMathml,
   isFixedLayoutBook,
   resolveReflowableFontChain,
+  getRenderSectioningRow,
 } from "@adt/pipeline"
 
 // ---------------------------------------------------------------------------
@@ -274,7 +275,7 @@ function buildSectionIdToPageIndex(storage: Storage): Map<string, number> {
     if (renderRow) {
       const parsed = WebRenderingOutput.safeParse(renderRow.data)
       if (parsed.success && parsed.data.sections.length > 0) {
-        const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+        const structuringRow = getRenderSectioningRow(storage, page.pageId)
         const structuringParsed = structuringRow ? PageSectioningOutput.safeParse(structuringRow.data) : null
         const sectioning = structuringParsed?.success ? structuringParsed.data : undefined
         const sections = [...parsed.data.sections].sort((a, b) => a.sectionIndex - b.sectionIndex)
@@ -318,7 +319,7 @@ function buildPagesManifest(storage: Storage): Array<{ section_id: string; href:
       const parsed = WebRenderingOutput.safeParse(renderRow.data)
       if (parsed.success && parsed.data.sections.length > 0) {
         // Get sectioning data for sectionIds and page numbers
-        const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+        const structuringRow = getRenderSectioningRow(storage, page.pageId)
         const structuringParsed = structuringRow
           ? PageSectioningOutput.safeParse(structuringRow.data)
           : null
@@ -408,7 +409,7 @@ function buildHeadingBasedToc(storage: Storage): Array<{ section_id: string; hre
     const parsed = WebRenderingOutput.safeParse(renderRow.data)
     if (!parsed.success || parsed.data.sections.length === 0) continue
 
-    const sectioningRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+    const sectioningRow = getRenderSectioningRow(storage, page.pageId)
     const sectioningParsed = sectioningRow ? PageSectioningOutput.safeParse(sectioningRow.data) : null
     const sectioning = sectioningParsed?.success ? sectioningParsed.data : undefined
 
@@ -980,7 +981,7 @@ export function createAdtPreviewRoutes(
       }
 
       // Get sectioning to look up sectionId → sectionIndex mapping
-      const sectioningRow = storage.getLatestNodeData("page-sectioning", ownerPageId)
+      const sectioningRow = getRenderSectioningRow(storage, ownerPageId)
       const sectioningParsed = sectioningRow
         ? PageSectioningOutput.safeParse(sectioningRow.data)
         : null

@@ -9,6 +9,7 @@ import {
 import type { LLMModel } from "@adt/llm"
 import type { Storage, PageData } from "@adt/storage"
 import { processWithConcurrency } from "./concurrency.js"
+import { getRenderSectioningRow } from "./render-sectioning.js"
 import { buildLanguageContext } from "./language-context.js"
 
 export interface GlossaryConfig {
@@ -147,8 +148,8 @@ export function collectPageTexts(
       )
     }
     const rendering = parsed.data
-    // Filter out pruned sections
-    const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+    // Filter out pruned sections (resolver: positioned tree for fixed-layout)
+    const structuringRow = getRenderSectioningRow(storage, page.pageId)
     const sectioning = structuringRow
       ? PageSectioningOutput.safeParse(structuringRow.data)
       : null
