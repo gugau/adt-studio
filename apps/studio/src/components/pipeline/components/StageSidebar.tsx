@@ -176,9 +176,13 @@ export function StageSidebar({
   const speechNeedsRerun = stageMissing.speech > 0
 
   const currentState = stageState(activeStep)
+  const stageHasContent =
+    currentState === "done" ||
+    currentState === "running" ||
+    currentState === "error"
+  // Quizzes never open a side panel — selection lives in the content header.
   const effectivePagesOpen =
-    hasStagePages(activeStep) &&
-    (currentState === "done" || currentState === "running" || currentState === "error")
+    hasStagePages(activeStep) && stageHasContent && activeStep !== "quizzes"
 
   const isSettings = !!matchRoute({
     to: "/books/$label/$step/settings",
@@ -415,7 +419,7 @@ export function StageSidebar({
           </div>
         </div>
 
-        {/* Pages panel — only when pages are open and not in settings */}
+        {/* Pages panel — only when pages are open and not in settings. */}
         {effectivePagesOpen && !isSettings && (
           <div className="flex-1 min-w-0 flex flex-col overflow-hidden border-l">
             {activeStep === "storyboard" ? (

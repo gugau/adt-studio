@@ -968,6 +968,26 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  generateQuiz: (
+    label: string,
+    apiKey: string,
+    body: {
+      pageIds: string[]
+      afterPageId: string
+      placement?: "replace" | "after"
+    },
+    providerCredentials?: StageRunProviderCredentials
+  ) =>
+    request<{ quiz: QuizItem; version: number }>(
+      `/books/${label}/quizzes/generate-one`,
+      {
+        method: "POST",
+        headers: buildApiHeaders(apiKey, providerCredentials),
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(120_000),
+      }
+    ),
+
   getGlossary: (label: string) =>
     request<GlossaryOutput | null>(`/books/${label}/glossary`),
 

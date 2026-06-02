@@ -128,6 +128,11 @@ msgstr "{0} items need changes on this page"
 msgid "{0} languages"
 msgstr "{0} languages"
 
+#. placeholder {0}: String(filteredQuizzes.length)
+#. placeholder {1}: String(displayQuizzes.length)
+msgid "{0} of {1}"
+msgstr "{0} of {1}"
+
 #. placeholder {0}: activeMetrics.pagesReviewed
 #. placeholder {1}: activeProgress.assignedPageCount
 msgid "{0} of {1} assigned pages reviewed"
@@ -184,6 +189,10 @@ msgstr "{0}/{1} audio"
 #. placeholder {0}: counts.reviewed
 msgid "{0}/{criteriaCount} checked"
 msgstr "{0}/{criteriaCount} checked"
+
+#. placeholder {0}: selected.length
+msgid "{0}/{MAX_SOURCE_PAGES} selected"
+msgstr "{0}/{MAX_SOURCE_PAGES} selected"
 
 #. placeholder {0}: String(selectedPageIds.size)
 msgid "{0}/5 pages selected"
@@ -344,6 +353,9 @@ msgstr "1 image selected"
 msgid "1 item needs changes on this page"
 msgstr "1 item needs changes on this page"
 
+msgid "1 quiz / {frequency} pages"
+msgstr "1 quiz / {frequency} pages"
+
 msgid "1 selected image is no longer in the storyboard."
 msgstr "1 selected image is no longer in the storyboard."
 
@@ -427,6 +439,15 @@ msgstr "A new version is available for download."
 
 msgid "A question worth asking"
 msgstr "A question worth asking"
+
+#~ msgid "A quiz already exists at this position. Generating will replace the current quiz here."
+#~ msgstr "A quiz already exists at this position. Generating will replace the current quiz here."
+
+msgid "A quiz already sits here — add another after it or replace it"
+msgstr "A quiz already sits here — add another after it or replace it"
+
+#~ msgid "A quiz already sits here — generating will replace it"
+#~ msgstr "A quiz already sits here — generating will replace it"
 
 msgid "A scenic view at dusk."
 msgstr "A scenic view at dusk."
@@ -624,6 +645,21 @@ msgstr "Add {0} Images"
 msgid "Add a language to see translations appear here."
 msgstr "Add a language to see translations appear here."
 
+msgid "Add a quiz"
+msgstr "Add a quiz"
+
+msgid "Add after"
+msgstr "Add after"
+
+msgid "Add an API key in Book settings to add a quiz."
+msgstr "Add an API key in Book settings to add a quiz."
+
+msgid "Add an API key in Book settings to generate a quiz."
+msgstr "Add an API key in Book settings to generate a quiz."
+
+msgid "Add an API key in Book settings to generate quizzes."
+msgstr "Add an API key in Book settings to generate quizzes."
+
 msgid "Add an API key in Book settings to run captions."
 msgstr "Add an API key in Book settings to run captions."
 
@@ -689,6 +725,12 @@ msgstr "Add Language"
 
 msgid "Add languages to translate the book content into."
 msgstr "Add languages to translate the book content into."
+
+msgid "Add quiz"
+msgstr "Add quiz"
+
+msgid "Add quiz here"
+msgstr "Add quiz here"
 
 msgid "Add reviewer guidance."
 msgstr "Add reviewer guidance."
@@ -777,6 +819,9 @@ msgstr "After {0}"
 #. placeholder {0}: afterPage.pageNumber
 msgid "after page {0}"
 msgstr "after page {0}"
+
+msgid "After page {afterNumber}"
+msgstr "After page {afterNumber}"
 
 #. placeholder {0}: String(page.pageNumber)
 msgid "after pg {0}"
@@ -1064,6 +1109,9 @@ msgstr "Automatic"
 
 msgid "Automatically adapts the layout based on each page's content using AI."
 msgstr "Automatically adapts the layout based on each page's content using AI."
+
+msgid "Automatically create quizzes across the whole book at a set frequency."
+msgstr "Automatically create quizzes across the whole book at a set frequency."
 
 msgid "Avg Duration"
 msgstr "Avg Duration"
@@ -1402,6 +1450,12 @@ msgstr "Choose images..."
 msgid "Choose Provider"
 msgstr "Choose Provider"
 
+msgid "Choose the source pages and where the quiz lands in the page editor."
+msgstr "Choose the source pages and where the quiz lands in the page editor."
+
+#~ msgid "Choose up to {MAX_SOURCE_PAGES} pages whose content the quiz question is based on."
+#~ msgstr "Choose up to {MAX_SOURCE_PAGES} pages whose content the quiz question is based on."
+
 msgid "Choose which per-page validation items reviewers must check, customize the wording and guidance, and add your own checklist items for this document."
 msgstr "Choose which per-page validation items reviewers must check, customize the wording and guidance, and add your own checklist items for this document."
 
@@ -1461,6 +1515,9 @@ msgstr "Click to pick a style reference image"
 
 msgid "Click to select an image"
 msgstr "Click to select an image"
+
+msgid "Click to use this page"
+msgstr "Click to use this page"
 
 msgid "Clone failed"
 msgstr "Clone failed"
@@ -1648,6 +1705,9 @@ msgstr "Coral reefs cover less than 1% of the ocean floor, yet they support roug
 msgid "Core Pipeline"
 msgstr "Core Pipeline"
 
+msgid "Correct answer"
+msgstr "Correct answer"
+
 #~ msgid "Correct!"
 #~ msgstr "Correct!"
 
@@ -1692,6 +1752,9 @@ msgstr "Create descriptive captions for images to improve accessibility."
 
 msgid "Create from scratch using your description"
 msgstr "Create from scratch using your description"
+
+msgid "Create one quiz from specific pages and place it exactly where you want it in the book."
+msgstr "Create one quiz from specific pages and place it exactly where you want it in the book."
 
 msgid "Create session"
 msgstr "Create session"
@@ -1866,14 +1929,26 @@ msgstr "Delete element"
 msgid "Delete failed"
 msgstr "Delete failed"
 
+msgid "Delete quiz"
+msgstr "Delete quiz"
+
 msgid "Delete section"
 msgstr "Delete section"
+
+msgid "Delete this quiz"
+msgstr "Delete this quiz"
+
+msgid "Delete this quiz?"
+msgstr "Delete this quiz?"
 
 msgid "Delete video"
 msgstr "Delete video"
 
 msgid "Deleting..."
 msgstr "Deleting..."
+
+msgid "Deleting…"
+msgstr "Deleting…"
 
 msgid "Delivered"
 msgstr "Delivered"
@@ -2239,6 +2314,9 @@ msgstr "Est. Cost"
 msgid "Evaporation"
 msgstr "Evaporation"
 
+msgid "Every few pages"
+msgstr "Every few pages"
+
 msgid "Every notable concept and named entity."
 msgstr "Every notable concept and named entity."
 
@@ -2358,6 +2436,9 @@ msgstr "Failed to create reviewer session"
 msgid "Failed to generate glossary entry."
 msgstr "Failed to generate glossary entry."
 
+msgid "Failed to generate the quiz."
+msgstr "Failed to generate the quiz."
+
 #. placeholder {0}: error.message
 msgid "Failed to load accessibility results: {0}"
 msgstr "Failed to load accessibility results: {0}"
@@ -2428,6 +2509,9 @@ msgstr "Filter by item ID..."
 
 msgid "Filter pages…"
 msgstr "Filter pages…"
+
+msgid "Filter quizzes…"
+msgstr "Filter quizzes…"
 
 msgid "Filter terms…"
 msgstr "Filter terms…"
@@ -2549,6 +2633,9 @@ msgstr "General"
 msgid "Generate"
 msgstr "Generate"
 
+msgid "Generate a single quiz from specific pages and place it at a chosen location."
+msgstr "Generate a single quiz from specific pages and place it at a chosen location."
+
 msgid "Generate and customize the table of contents for the book navigation."
 msgstr "Generate and customize the table of contents for the book navigation."
 
@@ -2570,11 +2657,20 @@ msgstr "Generate from pages"
 msgid "Generate missing Gemini audio"
 msgstr "Generate missing Gemini audio"
 
+msgid "Generate multiple-choice comprehension quizzes from the book's content. Create them automatically across the whole book, or add a single quiz from specific pages."
+msgstr "Generate multiple-choice comprehension quizzes from the book's content. Create them automatically across the whole book, or add a single quiz from specific pages."
+
+#~ msgid "Generate multiple-choice comprehension quizzes from the book's content. Set how often a quiz appears, then run the stage to create them across the whole book."
+#~ msgstr "Generate multiple-choice comprehension quizzes from the book's content. Set how often a quiz appears, then run the stage to create them across the whole book."
+
 msgid "Generate new"
 msgstr "Generate new"
 
 msgid "Generate Prompt"
 msgstr "Generate Prompt"
+
+msgid "Generate quiz"
+msgstr "Generate quiz"
 
 msgid "Generate Styleguide from Pages"
 msgstr "Generate Styleguide from Pages"
@@ -2587,6 +2683,12 @@ msgstr "Generate word timestamps"
 
 msgid "Generated by AI"
 msgstr "Generated by AI"
+
+msgid "Generated from pages {fromLabel}"
+msgstr "Generated from pages {fromLabel}"
+
+msgid "Generated from these pages"
+msgstr "Generated from these pages"
 
 #~ msgid "Generated page"
 #~ msgstr "Generated page"
@@ -2764,6 +2866,15 @@ msgstr "How closely should the visual review match the original page? The review
 
 msgid "How it works"
 msgstr "How it works"
+
+msgid "How many pages of content go into each quiz. A lower number means more quizzes across the book."
+msgstr "How many pages of content go into each quiz. A lower number means more quizzes across the book."
+
+msgid "How quizzes work"
+msgstr "How quizzes work"
+
+msgid "How to add quizzes"
+msgstr "How to add quizzes"
 
 msgid "HTML"
 msgstr "HTML"
@@ -2945,6 +3056,9 @@ msgstr "Input"
 msgid "Input Tokens"
 msgstr "Input Tokens"
 
+msgid "Insert the quiz here"
+msgstr "Insert the quiz here"
+
 msgid "Inside Cover"
 msgstr "Inside Cover"
 
@@ -2999,6 +3113,9 @@ msgstr "its original language"
 
 msgid "Jane Reviewer"
 msgstr "Jane Reviewer"
+
+msgid "Jump to quiz"
+msgstr "Jump to quiz"
 
 msgid "Justify"
 msgstr "Justify"
@@ -3569,6 +3686,9 @@ msgstr "Next image"
 msgid "Next missing section"
 msgstr "Next missing section"
 
+msgid "Next page"
+msgstr "Next page"
+
 msgid "Next slide"
 msgstr "Next slide"
 
@@ -3687,6 +3807,9 @@ msgstr "No matches for \"{search}\""
 msgid "No matching pages"
 msgstr "No matching pages"
 
+msgid "No matching quizzes"
+msgstr "No matching quizzes"
+
 msgid "No matching sections"
 msgstr "No matching sections"
 
@@ -3726,8 +3849,17 @@ msgstr "No preview available."
 msgid "No quizzes for this page"
 msgstr "No quizzes for this page"
 
+msgid "No quizzes match your search"
+msgstr "No quizzes match your search"
+
+#~ msgid "No quizzes yet"
+#~ msgstr "No quizzes yet"
+
 msgid "No rendered content for this section"
 msgstr "No rendered content for this section"
+
+msgid "No rendered pages yet. Run Storyboard first."
+msgstr "No rendered pages yet. Run Storyboard first."
 
 msgid "No review areas are currently flagged in this reviewer session."
 msgstr "No review areas are currently flagged in this reviewer session."
@@ -4098,6 +4230,11 @@ msgstr "Page {0}"
 msgid "Page {0} — Section {1}"
 msgstr "Page {0} — Section {1}"
 
+#. placeholder {0}: current.pageNumber
+#. placeholder {1}: renderedPages.length
+msgid "Page {0} of {1}"
+msgstr "Page {0} of {1}"
+
 msgid "Page {n}"
 msgstr "Page {n}"
 
@@ -4122,8 +4259,11 @@ msgstr "Page image as background with positioned text overlay. Preserves the ori
 msgid "Page Mode"
 msgstr "Page Mode"
 
-msgid "Page preview {pageId}"
-msgstr "Page preview {pageId}"
+msgid "Page preview"
+msgstr "Page preview"
+
+#~ msgid "Page preview {pageId}"
+#~ msgstr "Page preview {pageId}"
 
 msgid "Page Range"
 msgstr "Page Range"
@@ -4143,10 +4283,16 @@ msgstr "Page Sectioning Refinement Prompt"
 msgid "pages"
 msgstr "pages"
 
+msgid "Pages"
+msgstr "Pages"
+
 #. placeholder {0}: activeSession.session.start_page ?? "?"
 #. placeholder {1}: activeSession.session.end_page ?? "?"
 msgid "Pages {0}–{1}"
 msgstr "Pages {0}–{1}"
+
+msgid "pages per quiz"
+msgstr "pages per quiz"
 
 msgid "Pages per Quiz"
 msgstr "Pages per Quiz"
@@ -4259,6 +4405,9 @@ msgstr "Pick one layout approach."
 msgid "Pick the languages you want to translate to. The book's original language stays as-is."
 msgstr "Pick the languages you want to translate to. The book's original language stays as-is."
 
+#~ msgid "Pick the pages the quiz is written from and choose where it appears in the book."
+#~ msgstr "Pick the pages the quiz is written from and choose where it appears in the book."
+
 msgid "Pick which voice each language uses for narration, including regional accents."
 msgstr "Pick which voice each language uses for narration, including regional accents."
 
@@ -4356,6 +4505,9 @@ msgstr "Preview: word-by-word"
 msgid "Previous image"
 msgstr "Previous image"
 
+msgid "Previous page"
+msgstr "Previous page"
+
 msgid "Previous slide"
 msgstr "Previous slide"
 
@@ -4447,9 +4599,17 @@ msgstr "Queued"
 msgid "Quiz"
 msgstr "Quiz"
 
+#. placeholder {0}: String(activeQuiz.index + 1)
+#. placeholder {0}: String(item.index + 1)
+msgid "Quiz {0}"
+msgstr "Quiz {0}"
+
 #. placeholder {0}: page.pageNumber
 msgid "Quiz after page {0}"
 msgstr "Quiz after page {0}"
+
+msgid "Quiz frequency"
+msgstr "Quiz frequency"
 
 msgid "Quiz Generation"
 msgstr "Quiz Generation"
@@ -4463,6 +4623,9 @@ msgstr "Quiz not found. It may have been removed since you opened the storyboard
 msgid "Quiz preview"
 msgstr "Quiz preview"
 
+msgid "Quiz Preview"
+msgstr "Quiz Preview"
+
 msgid "Quiz Prompt"
 msgstr "Quiz Prompt"
 
@@ -4472,8 +4635,20 @@ msgstr "Quiz Section Types"
 msgid "Quizzes"
 msgstr "Quizzes"
 
+msgid "Quizzes are generating. Wait for the run to finish before adding a quiz."
+msgstr "Quizzes are generating. Wait for the run to finish before adding a quiz."
+
 msgid "Quizzes are linked to other pages in this book"
 msgstr "Quizzes are linked to other pages in this book"
+
+msgid "Quizzes are written from the content that Storyboard places into pages. Finish Storyboard before running this stage."
+msgstr "Quizzes are written from the content that Storyboard places into pages. Finish Storyboard before running this stage."
+
+msgid "Quizzes were generated by AI from your book's pages. Click any question, option, or explanation to edit it, and delete any quiz you don't need. Click a source page to zoom. Changes are saved as a new version, so you can always roll back."
+msgstr "Quizzes were generated by AI from your book's pages. Click any question, option, or explanation to edit it, and delete any quiz you don't need. Click a source page to zoom. Changes are saved as a new version, so you can always roll back."
+
+#~ msgid "Quizzes you generate will show up here."
+#~ msgstr "Quizzes you generate will show up here."
 
 msgid "Quote"
 msgstr "Quote"
@@ -4649,6 +4824,10 @@ msgstr "Remove from group"
 msgid "Remove manual glossary term"
 msgstr "Remove manual glossary term"
 
+#. placeholder {0}: page.pageNumber
+msgid "Remove page {0} from the quiz"
+msgstr "Remove page {0} from the quiz"
+
 msgid "Remove PDF"
 msgstr "Remove PDF"
 
@@ -4697,6 +4876,12 @@ msgstr "Replace from Book"
 msgid "Replace PDF"
 msgstr "Replace PDF"
 
+msgid "Replace quiz"
+msgstr "Replace quiz"
+
+msgid "Replace quizzes"
+msgstr "Replace quizzes"
+
 msgid "Replace this audio file"
 msgstr "Replace this audio file"
 
@@ -4720,6 +4905,9 @@ msgstr "Reset to inherited"
 
 msgid "Reset to inherited defaults"
 msgstr "Reset to inherited defaults"
+
+msgid "Reset zoom"
+msgstr "Reset zoom"
 
 msgid "Resolving source language..."
 msgstr "Resolving source language..."
@@ -4846,6 +5034,9 @@ msgstr "Run Image Captions first — only captioned images appear in this list."
 msgid "Run Language first — speech narrates the translated text."
 msgstr "Run Language first — speech narrates the translated text."
 
+msgid "Run Quizzes"
+msgstr "Run Quizzes"
+
 msgid "Run Sectioning"
 msgstr "Run Sectioning"
 
@@ -4860,6 +5051,9 @@ msgstr "Run Storyboard"
 
 msgid "Run Storyboard first — captions describe the images placed by Storyboard."
 msgstr "Run Storyboard first — captions describe the images placed by Storyboard."
+
+msgid "Run Storyboard first — quizzes are written from the content placed into pages by Storyboard."
+msgstr "Run Storyboard first — quizzes are written from the content placed into pages by Storyboard."
 
 msgid "Run Storyboard first — the glossary is built from the typed sections placed by Storyboard."
 msgstr "Run Storyboard first — the glossary is built from the typed sections placed by Storyboard."
@@ -5038,6 +5232,9 @@ msgstr "Search colors"
 msgid "Search languages..."
 msgstr "Search languages..."
 
+msgid "Search questions or options…"
+msgstr "Search questions or options…"
+
 msgid "Search sections..."
 msgstr "Search sections..."
 
@@ -5180,6 +5377,9 @@ msgstr "Select a node type and enter an item ID to view versions."
 msgid "Select a page grouping to continue"
 msgstr "Select a page grouping to continue"
 
+#~ msgid "Select a page…"
+#~ msgstr "Select a page…"
+
 msgid "Select a render strategy to continue"
 msgstr "Select a render strategy to continue"
 
@@ -5224,6 +5424,9 @@ msgstr "Select styleguide..."
 
 msgid "Select template..."
 msgstr "Select template..."
+
+msgid "Select the pages the quiz is written from, then choose where it appears using the buttons between pages."
+msgstr "Select the pages the quiz is written from, then choose where it appears using the buttons between pages."
 
 msgid "Select up to 5 pages to use as visual references. The LLM will analyze them and generate a styleguide."
 msgstr "Select up to 5 pages to use as visual references. The LLM will analyze them and generate a styleguide."
@@ -5319,11 +5522,17 @@ msgstr "Show fewer"
 msgid "Show pruned terms"
 msgstr "Show pruned terms"
 
+#~ msgid "Show quiz after"
+#~ msgstr "Show quiz after"
+
 msgid "Show reviewer validation"
 msgstr "Show reviewer validation"
 
 msgid "Show:"
 msgstr "Show:"
+
+msgid "Shown after page {afterNumber}"
+msgstr "Shown after page {afterNumber}"
 
 msgid "Side-by-side image and narrative."
 msgstr "Side-by-side image and narrative."
@@ -5363,6 +5572,9 @@ msgstr "Single Mode"
 
 msgid "Single Page"
 msgstr "Single Page"
+
+msgid "Single quiz"
+msgstr "Single quiz"
 
 msgid "Single value"
 msgstr "Single value"
@@ -5422,6 +5634,9 @@ msgstr "Sort books"
 msgid "Source"
 msgstr "Source"
 
+#~ msgid "Source pages"
+#~ msgstr "Source pages"
+
 msgid "Source PDF"
 msgstr "Source PDF"
 
@@ -5442,6 +5657,9 @@ msgstr "Spanish"
 
 msgid "Specialized workflows"
 msgstr "Specialized workflows"
+
+msgid "Specific pages"
+msgstr "Specific pages"
 
 msgid "Speech"
 msgstr "Speech"
@@ -5596,6 +5814,9 @@ msgstr "Styleguide Preview"
 
 msgid "Styleguide Preview — {styleguide}"
 msgstr "Styleguide Preview — {styleguide}"
+
+msgid "Submit"
+msgstr "Submit"
 
 msgid "Success"
 msgstr "Success"
@@ -5811,6 +6032,9 @@ msgstr "The prompt used by the reviewer pass to inspect and correct a candidate 
 msgid "The quick brown fox jumps over the lazy dog."
 msgstr "The quick brown fox jumps over the lazy dog."
 
+#~ msgid "The quiz is inserted into the book right after this page."
+#~ msgstr "The quiz is inserted into the book right after this page."
+
 msgid "The rendering strategy used for sections without an explicit mapping."
 msgstr "The rendering strategy used for sections without an explicit mapping."
 
@@ -5849,6 +6073,15 @@ msgstr "These stages are optional. They don't depend on each other — run any o
 
 msgid "These values reflect either the saved book override or the latest packaged defaults."
 msgstr "These values reflect either the saved book override or the latest packaged defaults."
+
+msgid "They absorb water and nutrients from the soil."
+msgstr "They absorb water and nutrients from the soil."
+
+msgid "They produce flowers to attract pollinators."
+msgstr "They produce flowers to attract pollinators."
+
+msgid "They release oxygen directly into the air."
+msgstr "They release oxygen directly into the air."
 
 msgid "This book has no images to caption"
 msgstr "This book has no images to caption"
@@ -5902,8 +6135,17 @@ msgstr "This page has not been reviewed yet"
 msgid "This permanently deletes every uploaded video and clears all section assignments. This can't be undone."
 msgstr "This permanently deletes every uploaded video and clears all section assignments. This can't be undone."
 
+msgid "This position already has {occupiedCount} quizzes. Add another after them, or replace them."
+msgstr "This position already has {occupiedCount} quizzes. Add another after them, or replace them."
+
+msgid "This position already has a quiz. Add another right after it, or replace it."
+msgstr "This position already has a quiz. Add another right after it, or replace it."
+
 msgid "This prompt instructs the LLM how to evaluate the rendered HTML against the original page. Selection above controls which template is used."
 msgstr "This prompt instructs the LLM how to evaluate the rendered HTML against the original page. Selection above controls which template is used."
+
+msgid "This quiz will be removed from the book. You can still restore it from the version history."
+msgstr "This quiz will be removed from the book. You can still restore it from the version history."
 
 msgid "This screen couldn’t load"
 msgstr "This screen couldn’t load"
@@ -6181,6 +6423,9 @@ msgstr "Untangling nested divs with care..."
 msgid "Untitled"
 msgstr "Untitled"
 
+msgid "Untitled quiz"
+msgstr "Untitled quiz"
+
 msgid "Update available"
 msgstr "Update available"
 
@@ -6262,11 +6507,18 @@ msgstr "Use an LLM to detect and split composited images (e.g., multiple photos 
 msgid "Use an LLM to filter out decorative or non-educational images."
 msgstr "Use an LLM to filter out decorative or non-educational images."
 
+#. placeholder {0}: page.pageNumber
+msgid "Use page {0} for the quiz"
+msgstr "Use page {0} for the quiz"
+
 msgid "Use section headings verbatim. Fast, deterministic, and preserves the original wording from the book."
 msgstr "Use section headings verbatim. Fast, deterministic, and preserves the original wording from the book."
 
 msgid "Use Spread for printed books with facing-page layouts (covers stay solo, then 2+3, 4+5, …). Use Single when each PDF page should be processed on its own."
 msgstr "Use Spread for printed books with facing-page layouts (covers stay solo, then 2+3, 4+5, …). Use Single when each PDF page should be processed on its own."
+
+msgid "Use the + between pages to place the quiz"
+msgstr "Use the + between pages to place the quiz"
 
 msgid "Use the sidebar on the left to open any stage of the pipeline. Each stage has its own page where you can review its content, configure its settings, and start a run. The cards below mirror that navigation — click a card to jump straight to that stage's page."
 msgstr "Use the sidebar on the left to open any stage of the pipeline. Each stage has its own page where you can review its content, configure its settings, and start a run. The cards below mirror that navigation — click a card to jump straight to that stage's page."
@@ -6285,6 +6537,9 @@ msgstr "Used for Claude models (claude-opus-4-6, claude-sonnet-4-6, etc.)"
 
 msgid "Used for Gemini models — both LLM (gemini-2.5-pro, etc.) and TTS (gemini-2.5-pro-preview-tts, etc.)"
 msgstr "Used for Gemini models — both LLM (gemini-2.5-pro, etc.) and TTS (gemini-2.5-pro-preview-tts, etc.)"
+
+msgid "Used for this quiz"
+msgstr "Used for this quiz"
 
 msgid "Validation"
 msgstr "Validation"
@@ -6426,6 +6681,9 @@ msgstr "Weight"
 msgid "Welcome to ADT Studio"
 msgstr "Welcome to ADT Studio"
 
+msgid "What is the main role of a plant's roots?"
+msgstr "What is the main role of a plant's roots?"
+
 msgid "What it does"
 msgstr "What it does"
 
@@ -6521,3 +6779,9 @@ msgstr "Your Books"
 
 msgid "Your first ADT <0>starts here.</0>"
 msgstr "Your first ADT <0>starts here.</0>"
+
+msgid "Zoom in"
+msgstr "Zoom in"
+
+msgid "Zoom out"
+msgstr "Zoom out"
