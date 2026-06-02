@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Check, ChevronDown, FileText, Loader2, RotateCcw, Search, Sparkles, X } from "lucide-react"
+import { Check, ChevronDown, Equal, FileText, Loader2, RotateCcw, Search, Sparkles, X } from "lucide-react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useLingui } from "@lingui/react/macro"
 import { api } from "@/api/client"
@@ -405,12 +405,19 @@ export function EasyReadEditor({
                                   {t`Easy Read`}
                                 </p>
                                 {unchanged && (
-                                  <span
-                                    className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700"
-                                    title={t`This block was not simplified — it matches the original text.`}
-                                  >
-                                    {t`Same as original`}
-                                  </span>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span
+                                        className="inline-flex items-center text-muted-foreground/40"
+                                        aria-label={t`Same as original`}
+                                      >
+                                        <Equal className="h-3 w-3" aria-hidden />
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      {t`Matches the original — not simplified.`}
+                                    </TooltipContent>
+                                  </Tooltip>
                                 )}
                               </div>
                               <AutoTextarea
