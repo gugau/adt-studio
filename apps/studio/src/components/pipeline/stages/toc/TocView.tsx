@@ -340,6 +340,8 @@ export function TocView({ bookLabel }: { bookLabel: string }) {
   const insertEntry = (afterId: string | null, level: number) => {
     const base = pending ?? data
     if (!base) return
+    // Clear any active search so the new entry isn't immediately filtered out.
+    setSearchQuery("")
     const newEntry: TocEntry = {
       id: `toc_new_${Date.now()}`,
       title: t`New Entry`,
@@ -450,7 +452,9 @@ export function TocView({ bookLabel }: { bookLabel: string }) {
                   type="text"
                   value={entry.title}
                   onChange={(e) => updateEntry(entry.id, { title: e.target.value })}
-                  className="flex-1 min-w-0 rounded-md border border-transparent bg-transparent px-2 py-1 text-[13px] text-foreground transition-colors hover:border-border/70 hover:bg-muted/30 focus:border-amber-400 focus:bg-background focus:outline-none focus:ring-2 focus:ring-amber-200"
+                  aria-label={t`Entry title`}
+                  placeholder={t`Untitled entry`}
+                  className="flex-1 min-w-0 rounded-md border border-transparent bg-transparent px-2 py-1 text-[13px] text-foreground placeholder:text-muted-foreground/50 placeholder:italic transition-colors hover:border-border/70 hover:bg-muted/30 focus:border-amber-400 focus:bg-background focus:outline-none focus:ring-2 focus:ring-amber-200"
                 />
 
                 {sections && (
@@ -462,11 +466,12 @@ export function TocView({ bookLabel }: { bookLabel: string }) {
                   />
                 )}
 
-                <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-200 group-hover/row:opacity-100 focus-within:opacity-100">
+                <div className="flex shrink-0 items-center gap-0.5">
                   <button
                     type="button"
                     onClick={() => changeLevel(entry.id, -1)}
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/70 transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+                    disabled={entry.level <= 1}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-muted-foreground/60 cursor-pointer"
                     title={t`Decrease indent`}
                   >
                     <ChevronLeft className="h-3.5 w-3.5" />
@@ -474,15 +479,17 @@ export function TocView({ bookLabel }: { bookLabel: string }) {
                   <button
                     type="button"
                     onClick={() => changeLevel(entry.id, 1)}
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/70 transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+                    disabled={entry.level >= 3}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-muted-foreground/60 cursor-pointer"
                     title={t`Increase indent`}
                   >
                     <ChevronRight className="h-3.5 w-3.5" />
                   </button>
+                  <span className="mx-0.5 h-4 w-px bg-border/70" aria-hidden />
                   <button
                     type="button"
                     onClick={() => insertEntry(entry.id, entry.level)}
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/70 transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
                     title={t`Add entry below`}
                   >
                     <Plus className="h-3.5 w-3.5" />
@@ -490,7 +497,7 @@ export function TocView({ bookLabel }: { bookLabel: string }) {
                   <button
                     type="button"
                     onClick={() => removeEntry(entry.id)}
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/70 transition-colors hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive cursor-pointer"
                     title={t`Remove entry`}
                   >
                     <Trash2 className="h-3.5 w-3.5" />

@@ -20,6 +20,7 @@ import {
   Sparkles,
   Trash2,
   X,
+  type LucideIcon,
 } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { api } from "@/api/client"
@@ -212,6 +213,12 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
     bookLabel,
     items,
   )
+
+  // Don't strand the "Manual only" filter active-but-disabled when the last
+  // manual term is removed — turn it off so the list isn't stuck empty.
+  useEffect(() => {
+    if (manualCount === 0) setManualOnly(false)
+  }, [manualCount])
 
   const displayItems = useMemo(() => {
     const q = searchQuery.trim().toLocaleLowerCase()
@@ -414,17 +421,40 @@ export function GlossaryView({ bookLabel }: { bookLabel: string }) {
           <button
             type="button"
             onClick={() => setManualOnly((v) => !v)}
-            aria-pressed={manualOnly}
-            title={t`Show only terms you added manually`}
-            className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-[12px] font-medium transition-colors cursor-pointer ${
+            role="switch"
+            aria-checked={manualOnly}
+            disabled={manualCount === 0}
+            title={
+              manualCount === 0
+                ? t`You haven't added any terms manually yet`
+                : manualOnly
+                  ? t`Showing only terms you added — click to show all`
+                  : t`Show only the terms you added manually`
+            }
+            className={`group/manual inline-flex h-8 shrink-0 items-center gap-2 rounded-md border pl-1.5 pr-2.5 text-[12px] font-medium transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${
               manualOnly
-                ? "border-lime-300 bg-lime-50 text-lime-700"
+                ? "border-lime-300 bg-lime-50 text-lime-800"
                 : "border-border/70 bg-background text-muted-foreground hover:text-foreground hover:bg-muted/60"
             }`}
           >
-            <PencilLine className="h-3.5 w-3.5" />
-            {t`Manual`}
-            <span className="tabular-nums text-[11px] text-muted-foreground/70">{manualCount}</span>
+            <span
+              aria-hidden
+              className={`flex h-4 w-4 items-center justify-center rounded transition-colors ${
+                manualOnly
+                  ? "bg-lime-600 text-white"
+                  : "border border-muted-foreground/40 group-hover/manual:border-muted-foreground/70"
+              }`}
+            >
+              {manualOnly ? (
+                <Check className="h-3 w-3" strokeWidth={3} />
+              ) : (
+                <PencilLine className="h-2.5 w-2.5 text-muted-foreground/70" />
+              )}
+            </span>
+            {t`Manual only`}
+            <span className={`tabular-nums text-[11px] ${manualOnly ? "text-lime-700/70" : "text-muted-foreground/60"}`}>
+              {manualCount}
+            </span>
           </button>
 
           <div className="relative flex-1 max-w-md">
@@ -526,14 +556,29 @@ function SortMenu({
     return () => document.removeEventListener("mousedown", handleClick)
   }, [open])
 
-  const options = [
-    { value: "default" as const, label: t`Book order`, icon: ListOrdered },
-    { value: "az" as const, label: t`A → Z`, icon: ArrowDownAZ },
-    { value: "za" as const, label: t`Z → A`, icon: ArrowDownZA },
-    { value: "usage-desc" as const, label: t`Most used`, icon: ArrowDownWideNarrow },
-    { value: "usage-asc" as const, label: t`Least used`, icon: ArrowUpNarrowWide },
+  const groups: {
+    label?: string
+    options: { value: SortMode; label: string; icon: LucideIcon }[]
+  }[] = [
+    { options: [{ value: "default", label: t`Book order`, icon: ListOrdered }] },
+    {
+      label: t`Alphabetical`,
+      options: [
+        { value: "az", label: t`A → Z`, icon: ArrowDownAZ },
+        { value: "za", label: t`Z → A`, icon: ArrowDownZA },
+      ],
+    },
+    {
+      label: t`By usage`,
+      options: [
+        { value: "usage-desc", label: t`Most used`, icon: ArrowDownWideNarrow },
+        { value: "usage-asc", label: t`Least used`, icon: ArrowUpNarrowWide },
+      ],
+    },
   ]
-  const current = options.find((o) => o.value === value) ?? options[0]
+  const allOptions = groups.flatMap((g) => g.options)
+  const current = allOptions.find((o) => o.value === value) ?? allOptions[0]
+  const isSorted = value !== "default"
 
   return (
     <div ref={ref} className="relative">
@@ -542,40 +587,59 @@ function SortMenu({
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border/70 bg-background pl-2.5 pr-2 text-[12px] font-medium text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+        className={`inline-flex h-8 items-center gap-1.5 rounded-md border pl-2.5 pr-2 text-[12px] font-medium transition-colors cursor-pointer ${
+          isSorted
+            ? "border-lime-300 bg-lime-50 text-lime-800"
+            : "border-border/70 bg-background text-foreground hover:bg-muted/60"
+        }`}
       >
-        <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="text-muted-foreground">{t`Sort`}</span>
+        <ArrowUpDown className={`h-3.5 w-3.5 ${isSorted ? "text-lime-600" : "text-muted-foreground"}`} />
+        <span className={isSorted ? "text-lime-700/70" : "text-muted-foreground"}>{t`Sort`}</span>
         <span>{current.label}</span>
         <ChevronDown
-          className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          className={`h-3.5 w-3.5 transition-transform duration-200 ${isSorted ? "text-lime-600" : "text-muted-foreground"} ${open ? "rotate-180" : ""}`}
         />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1.5 z-30 w-48 rounded-lg border border-border bg-popover shadow-xl py-1 animate-in fade-in zoom-in-95 duration-150">
-          {options.map((o) => {
-            const Icon = o.icon
-            const active = o.value === value
-            return (
-              <button
-                key={o.value}
-                type="button"
-                onClick={() => {
-                  onChange(o.value)
-                  setOpen(false)
-                }}
-                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] transition-colors cursor-pointer ${
-                  active
-                    ? "bg-lime-50 font-medium text-lime-800"
-                    : "text-foreground hover:bg-muted/60"
-                }`}
-              >
-                <Icon className={`h-3.5 w-3.5 shrink-0 ${active ? "text-lime-600" : "text-muted-foreground"}`} />
-                <span className="flex-1">{o.label}</span>
-                {active && <Check className="h-3.5 w-3.5 text-lime-600" />}
-              </button>
-            )
-          })}
+        <div
+          role="listbox"
+          className="absolute right-0 top-full mt-1.5 z-30 w-56 rounded-lg border border-border bg-popover shadow-xl p-1 animate-in fade-in zoom-in-95 duration-150"
+        >
+          {groups.map((group, gi) => (
+            <div key={group.label ?? "default"}>
+              {gi > 0 && <div className="my-1 border-t border-border/50" />}
+              {group.label && (
+                <div className="px-2.5 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                  {group.label}
+                </div>
+              )}
+              {group.options.map((o) => {
+                const Icon = o.icon
+                const active = o.value === value
+                return (
+                  <button
+                    key={o.value}
+                    type="button"
+                    role="option"
+                    aria-selected={active}
+                    onClick={() => {
+                      onChange(o.value)
+                      setOpen(false)
+                    }}
+                    className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[12px] transition-colors cursor-pointer ${
+                      active
+                        ? "bg-lime-50 font-medium text-lime-800"
+                        : "text-foreground hover:bg-muted/60"
+                    }`}
+                  >
+                    <Icon className={`h-3.5 w-3.5 shrink-0 ${active ? "text-lime-600" : "text-muted-foreground"}`} />
+                    <span className="flex-1">{o.label}</span>
+                    {active && <Check className="h-3.5 w-3.5 text-lime-600" />}
+                  </button>
+                )
+              })}
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -626,7 +690,7 @@ function GlossaryItemCard({
                   {isManual ? (
                     <PencilLine className="h-3.5 w-3.5 text-emerald-600" aria-hidden />
                   ) : (
-                    <Sparkles className="h-3.5 w-3.5 text-violet-500" aria-hidden />
+                    <Sparkles className="h-3.5 w-3.5 text-lime-600" aria-hidden />
                   )}
                 </span>
               </TooltipTrigger>
@@ -714,7 +778,7 @@ function TermOccurrenceMeta({
 }) {
   const { t } = useLingui()
 
-  if (!occurrence && loading) {
+  if (loading) {
     return (
       <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/60">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground/40" />
