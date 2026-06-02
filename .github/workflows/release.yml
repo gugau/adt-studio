@@ -2,7 +2,7 @@ name: Release
 
 on:
   push:
-    branches: [main, develop, feature/desktop-ci]
+    branches: [main, develop]
   workflow_dispatch:
     inputs:
       tag:
@@ -26,7 +26,7 @@ jobs:
   prepare:
     if: >-
       ${{
-        contains(fromJSON('["main", "develop", "feature/desktop-ci"]'), github.ref_name)
+        contains(fromJSON('["main", "develop"]'), github.ref_name)
         && (github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'RELEASE:'))
       }}
     runs-on: ubuntu-latest
