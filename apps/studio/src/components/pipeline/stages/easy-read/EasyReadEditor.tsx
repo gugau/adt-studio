@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Check, ChevronDown, FileText, Loader2, RotateCcw, Search, Sparkles, X } from "lucide-react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useLingui } from "@lingui/react/macro"
@@ -7,6 +7,9 @@ import type { EasyReadSectionBlock, VersionEntry } from "@/api/client"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { StageEmptyState } from "../../components/StageEmptyState"
+import { PageJumper, type PageJumperEntry } from "./components/PageJumper"
+
+const TOOLBAR_OFFSET = 80
 
 export function EasyReadEditor({
   bookLabel,
@@ -71,6 +74,66 @@ export function EasyReadEditor({
     setSearchQuery("")
     setTypeFilter("all")
   }
+
+  const pageEntries = useMemo<PageJumperEntry[]>(() => {
+    const map = new Map<string, PageJumperEntry>()
+    for (const block of filteredBlocks) {
+      const existing = map.get(block.pageId)
+      if (existing) {
+        existing.blockCount += 1
+      } else {
+        map.set(block.pageId, {
+          pageId: block.pageId,
+          pageNumber: block.pageNumber,
+          blockCount: 1,
+          preview: block.entries[0]?.text || block.entries[0]?.originalText || "",
+        })
+      }
+    }
+    return Array.from(map.values())
+  }, [filteredBlocks])
+
+  // Scroll-spy: track which page's blocks are at the top so the jumper can
+  // highlight the active page (same approach as Captions).
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const [activePageId, setActivePageId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const root = scrollContainerRef.current
+    if (!root || filteredBlocks.length === 0) return
+    let frame = 0
+    const computeActive = () => {
+      frame = 0
+      const cards = root.querySelectorAll<HTMLElement>("[data-page-id]")
+      if (cards.length === 0) return
+      const rootTop = root.getBoundingClientRect().top
+      let current = cards[0].dataset.pageId ?? null
+      for (const card of cards) {
+        if (card.getBoundingClientRect().top - rootTop <= TOOLBAR_OFFSET) {
+          current = card.dataset.pageId ?? current
+        } else {
+          break
+        }
+      }
+      if (current) setActivePageId(current)
+    }
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(computeActive)
+    }
+    root.addEventListener("scroll", onScroll, { passive: true })
+    computeActive()
+    return () => {
+      root.removeEventListener("scroll", onScroll)
+      if (frame) cancelAnimationFrame(frame)
+    }
+  }, [filteredBlocks])
+
+  const handleJumpToPage = useCallback((pageId: string) => {
+    const root = scrollContainerRef.current
+    if (!root) return
+    const card = root.querySelector<HTMLElement>(`[data-page-id="${CSS.escape(pageId)}"]`)
+    if (card) card.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [])
 
   useEffect(() => {
     setDraftBlocks(null)
@@ -146,17 +209,11 @@ export function EasyReadEditor({
 
   const currentVersion = data?.version ?? null
   const saving = saveMutation.isPending
-  const blockCount = filteredBlocks.length
   const regenerateDisabled = !hasApiKey || isRunning || dirty
 
   useEffect(() => {
     setExtra(
       <div className="ml-auto flex items-center gap-1.5">
-        <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] tabular-nums">
-          {selectedPageId
-            ? t`${String(blockCount)} on page`
-            : t`${String(blockCount)} blocks`}
-        </span>
         {!dirty && !saving && (
           <button
             type="button"
@@ -181,7 +238,7 @@ export function EasyReadEditor({
       </div>,
     )
     return () => setExtra(null)
-  }, [setExtra, t, selectedPageId, blockCount, saving, dirty, currentVersion, regenerateDisabled, bookLabel])
+  }, [setExtra, t, saving, dirty, currentVersion, regenerateDisabled, bookLabel])
 
   if (selectedPageId && pageScopedBlocks.length === 0) {
     return (
@@ -209,7 +266,7 @@ export function EasyReadEditor({
     "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-200 cursor-pointer"
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div ref={scrollContainerRef} className="flex flex-1 flex-col overflow-y-auto">
       <EasyReadHintBanner />
 
       <div className="sticky top-0 z-20 flex items-center gap-3 border-b border-border/60 bg-background/95 px-4 py-2.5 backdrop-blur-md">
@@ -266,15 +323,29 @@ export function EasyReadEditor({
           )}
         </div>
 
-        {selectedPageId && onSelectPage && (
-          <button
-            type="button"
-            onClick={() => onSelectPage(null)}
-            className="ml-auto text-[12px] font-medium text-fuchsia-600 transition-colors hover:text-fuchsia-700 hover:underline cursor-pointer"
-          >
-            {t`Show all pages`}
-          </button>
-        )}
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-[11px] font-medium tabular-nums text-muted-foreground">
+            {filtersActive
+              ? t`${String(filteredBlocks.length)} of ${String(pageScopedBlocks.length)}`
+              : t`${String(filteredBlocks.length)} blocks`}
+          </span>
+          {!selectedPageId && pageEntries.length > 1 && (
+            <PageJumper
+              pages={pageEntries}
+              activePageId={activePageId}
+              onJump={handleJumpToPage}
+            />
+          )}
+          {selectedPageId && onSelectPage && (
+            <button
+              type="button"
+              onClick={() => onSelectPage(null)}
+              className="text-[12px] font-medium text-fuchsia-600 transition-colors hover:text-fuchsia-700 hover:underline cursor-pointer"
+            >
+              {t`Show all pages`}
+            </button>
+          )}
+        </div>
       </div>
 
       {mutationError && (
@@ -308,7 +379,8 @@ export function EasyReadEditor({
           {filteredBlocks.map((block) => (
             <div
               key={`${block.pageId}:${block.sectionId}:${block.sectionIndex}`}
-              className="rounded-xl border border-border/70 bg-card p-3.5"
+              data-page-id={block.pageId}
+              className="scroll-mt-20 rounded-xl border border-border/70 bg-card p-3.5"
             >
               <div className="mb-3 flex items-center gap-2">
                 <Tooltip>
