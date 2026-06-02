@@ -364,9 +364,6 @@
 }
 
 :root {
-  /* Width of the book layout's pipeline stage rail. Shared so the settings
-     Save & Rerun bar can align to the content column without hardcoding. */
-  --stage-rail-w: 280px;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);

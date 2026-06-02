@@ -1,10 +1,20 @@
 import { useState, useEffect, useMemo } from "react"
-import { Plus, X } from "lucide-react"
+import { createPortal } from "react-dom"
+import { useNavigate } from "@tanstack/react-router"
+import { Play, Plus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { PruneToggle } from "@/components/pipeline/components/PruneToggle"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   Select,
   SelectContent,
@@ -12,15 +22,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useBookConfig } from "@/hooks/use-book-config"
+import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
 import { useActiveConfig } from "@/hooks/use-debug"
+import { useApiKey } from "@/hooks/use-api-key"
 import { api } from "@/api/client"
 import { PromptViewer } from "@/components/pipeline/components/PromptViewer"
-import {
-  useSaveAndRerun,
-  useDirtyConfig,
-  StageRerunBar,
-} from "@/components/pipeline/components/stage-rerun"
+import { useBookRun } from "@/hooks/use-book-run"
 import { useStepConfig } from "@/hooks/use-step-config"
 import { Trans } from "@lingui/react/macro"
 import { msg } from "@lingui/core/macro"
@@ -72,10 +79,15 @@ function getSectionTypeDisplayLabel(value: string): string {
   return label || value.replace(/_/g, " ")
 }
 
-export function SectioningSettings({ bookLabel, tab = "section-types" }: { bookLabel: string; tab?: string }) {
+export function SectioningSettings({ bookLabel, headerTarget, tab = "section-types" }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string }) {
   const { t } = useLingui()
   const { data: bookConfigData } = useBookConfig(bookLabel)
   const { data: activeConfigData } = useActiveConfig(bookLabel)
+  const updateConfig = useUpdateBookConfig()
+  const { apiKey, hasApiKey } = useApiKey()
+  const { queueRun } = useBookRun()
+  const navigate = useNavigate()
+  const [showRerunDialog, setShowRerunDialog] = useState(false)
 
   // Section Types state
   const [sectionTypes, setSectionTypes] = useState<Record<string, string>>({})
@@ -97,7 +109,8 @@ export function SectioningSettings({ bookLabel, tab = "section-types" }: { bookL
   const [refinementPromptDraft, setRefinementPromptDraft] = useState<string | null>(null)
 
   // Track dirty state
-  const { markDirty, isDirty, shouldWrite, reset } = useDirtyConfig(bookConfigData?.config)
+  const [dirty, setDirty] = useState<Record<string, boolean>>({})
+  const markDirty = (field: string) => setDirty((prev) => ({ ...prev, [field]: true }))
 
   const merged = activeConfigData?.merged as Record<string, unknown> | undefined
   const sectioning = useStepConfig(merged, "page_sectioning", markDirty)
@@ -253,6 +266,9 @@ export function SectioningSettings({ bookLabel, tab = "section-types" }: { bookL
     setNewRoleDesc("")
   }
 
+  const shouldWrite = (field: string) =>
+    dirty[field] || (bookConfigData?.config && field in bookConfigData.config)
+
   const buildOverrides = () => {
     const overrides: Record<string, unknown> = {}
     const m = (activeConfigData?.merged as Record<string, unknown> | undefined)
@@ -316,28 +332,29 @@ export function SectioningSettings({ bookLabel, tab = "section-types" }: { bookL
     return overrides
   }
 
-  const rerun = useSaveAndRerun({
-    bookLabel,
-    stage: "sectioning",
-    hasPendingChanges:
-      isDirty || sectioningPromptDraft != null || refinementPromptDraft != null,
-    buildOverrides,
-    savePrompts: async () => {
-      if (sectioningPromptDraft != null) {
-        await api.updatePrompt("page_sectioning", sectioningPromptDraft, bookLabel)
+  const confirmSaveAndRerun = async () => {
+    if (sectioningPromptDraft != null) {
+      await api.updatePrompt("page_sectioning", sectioningPromptDraft, bookLabel)
+    }
+    if (refinementPromptDraft != null) {
+      await api.updatePrompt("page_sectioning_refinement", refinementPromptDraft, bookLabel)
+    }
+
+    const overrides = buildOverrides()
+    updateConfig.mutate(
+      { label: bookLabel, config: overrides },
+      {
+        onSuccess: () => {
+          setDirty({})
+          setSectioningPromptDraft(null)
+          setRefinementPromptDraft(null)
+          setShowRerunDialog(false)
+          queueRun({ fromStage: "sectioning", toStage: "sectioning", apiKey })
+          navigate({ to: "/books/$label/$step", params: { label: bookLabel, step: "sectioning" } })
+        },
       }
-      if (refinementPromptDraft != null) {
-        await api.updatePrompt("page_sectioning_refinement", refinementPromptDraft, bookLabel)
-      }
-    },
-    onSaved: () => {
-      reset()
-      setSectioningPromptDraft(null)
-      setRefinementPromptDraft(null)
-    },
-    dialogTitle: t`Save & Rerun Sectioning`,
-    dialogDescription: t`This will save your settings and re-run sectioning for all pages.`,
-  })
+    )
+  }
 
   const activityNames = useMemo(() => {
     const strategies = (merged?.render_strategies ?? {}) as Record<string, { render_type?: string }>
@@ -377,9 +394,7 @@ export function SectioningSettings({ bookLabel, tab = "section-types" }: { bookL
   )
 
   return (
-    <>
-      <StageRerunBar controller={rerun} />
-      <div className={tab === "sectioning-prompt" || tab === "refinement-prompt" ? "h-full" : "p-4 space-y-6"}>
+    <div className={tab === "sectioning-prompt" || tab === "refinement-prompt" ? "h-full" : "p-4 space-y-6"}>
       {tab === "section-types" && (
         <div className="space-y-6">
           <div>
@@ -750,7 +765,37 @@ export function SectioningSettings({ bookLabel, tab = "section-types" }: { bookL
         </div>
       )}
 
-      </div>
-    </>
+      {headerTarget && createPortal(
+        <Button
+          size="sm"
+          className="h-7 px-2.5 text-xs bg-black/15 text-white hover:bg-black/25"
+          onClick={() => setShowRerunDialog(true)}
+          disabled={updateConfig.isPending || !hasApiKey}
+        >
+          <Play className="mr-1.5 h-3.5 w-3.5" />
+          {<Trans>Save & Rerun</Trans>}
+        </Button>,
+        headerTarget
+      )}
+
+      <Dialog open={showRerunDialog} onOpenChange={setShowRerunDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{<Trans>Save & Rerun Sectioning</Trans>}</DialogTitle>
+            <DialogDescription>
+              {<Trans>This will save your settings and re-run sectioning for all pages.</Trans>}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRerunDialog(false)}>
+              {<Trans>Cancel</Trans>}
+            </Button>
+            <Button onClick={confirmSaveAndRerun} disabled={updateConfig.isPending}>
+              {updateConfig.isPending ? t`Saving...` : t`Confirm Rerun`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   )
 }

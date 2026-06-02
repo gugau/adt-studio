@@ -1,26 +1,39 @@
 import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
+import { useNavigate } from "@tanstack/react-router"
+import { Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { LanguagePicker } from "@/components/LanguagePicker"
-import { useBookConfig } from "@/hooks/use-book-config"
+import { useBookConfig, useUpdateBookConfig } from "@/hooks/use-book-config"
 import { useActiveConfig } from "@/hooks/use-debug"
+import { useApiKey } from "@/hooks/use-api-key"
 import { api } from "@/api/client"
 import { PromptViewer } from "@/components/pipeline/components/PromptViewer"
-import {
-  useSaveAndRerun,
-  useDirtyConfig,
-  StageRerunBar,
-} from "@/components/pipeline/components/stage-rerun"
+import { useBookRun } from "@/hooks/use-book-run"
 import { useStepConfig } from "@/hooks/use-step-config"
 import { normalizeLocale } from "@/lib/languages"
 import { useLingui } from "@lingui/react/macro"
 
-export function ExtractSettings({ bookLabel, tab = "general" }: { bookLabel: string; tab?: string }) {
+export function ExtractSettings({ bookLabel, headerTarget, tab = "general" }: { bookLabel: string; headerTarget?: HTMLDivElement | null; tab?: string }) {
   const { t } = useLingui()
   const { data: bookConfigData } = useBookConfig(bookLabel)
   const { data: activeConfigData } = useActiveConfig(bookLabel)
+  const updateConfig = useUpdateBookConfig()
+  const { apiKey, hasApiKey } = useApiKey()
+  const { queueRun } = useBookRun()
+  const navigate = useNavigate()
+  const [showRerunDialog, setShowRerunDialog] = useState(false)
 
   // Form state
   const [startPage, setStartPage] = useState("")
@@ -41,7 +54,8 @@ export function ExtractSettings({ bookLabel, tab = "general" }: { bookLabel: str
   const [segmentationPromptDraft, setSegmentationPromptDraft] = useState<string | null>(null)
 
   // Track which field groups the user has actually touched
-  const { markDirty, isDirty, shouldWrite, reset } = useDirtyConfig(bookConfigData?.config)
+  const [dirty, setDirty] = useState<Record<string, boolean>>({})
+  const markDirty = (field: string) => setDirty((prev) => ({ ...prev, [field]: true }))
 
   const merged = activeConfigData?.merged as Record<string, unknown> | undefined
   const metadata = useStepConfig(merged, "metadata", markDirty)
@@ -78,6 +92,10 @@ export function ExtractSettings({ bookLabel, tab = "general" }: { bookLabel: str
       if (is.min_side != null) setSegmentationMinSide(String(is.min_side))
     }
   }, [activeConfigData])
+
+  // Helper: only write a field if the user changed it or the book config already had it
+  const shouldWrite = (field: string) =>
+    dirty[field] || (bookConfigData?.config && field in bookConfigData.config)
 
   const buildOverrides = () => {
     const overrides: Record<string, unknown> = {}
@@ -138,39 +156,35 @@ export function ExtractSettings({ bookLabel, tab = "general" }: { bookLabel: str
     return overrides
   }
 
-  const rerun = useSaveAndRerun({
-    bookLabel,
-    stage: "extract",
-    hasPendingChanges:
-      isDirty ||
-      metadataPromptDraft != null ||
-      meaningfulnessPromptDraft != null ||
-      croppingPromptDraft != null ||
-      segmentationPromptDraft != null,
-    buildOverrides,
-    savePrompts: async () => {
-      const saves: Promise<unknown>[] = []
-      if (metadataPromptDraft != null) saves.push(api.updatePrompt("metadata_extraction", metadataPromptDraft, bookLabel))
-      if (meaningfulnessPromptDraft != null) saves.push(api.updatePrompt("image_meaningfulness", meaningfulnessPromptDraft, bookLabel))
-      if (croppingPromptDraft != null) saves.push(api.updatePrompt("image_cropping", croppingPromptDraft, bookLabel))
-      if (segmentationPromptDraft != null) saves.push(api.updatePrompt("image_segmentation", segmentationPromptDraft, bookLabel))
-      if (saves.length > 0) await Promise.all(saves)
-    },
-    onSaved: () => {
-      reset()
-      setMetadataPromptDraft(null)
-      setMeaningfulnessPromptDraft(null)
-      setCroppingPromptDraft(null)
-      setSegmentationPromptDraft(null)
-    },
-    dialogTitle: t`Save & Rerun Extraction`,
-    dialogDescription: t`This will save your settings and re-run the extraction pipeline. Any manual edits to extracted text will be overwritten for affected pages.`,
-  })
+  const confirmSaveAndRerun = async () => {
+    // Save any edited prompts first
+    const promptSaves: Promise<unknown>[] = []
+    if (metadataPromptDraft != null) promptSaves.push(api.updatePrompt("metadata_extraction", metadataPromptDraft, bookLabel))
+    if (meaningfulnessPromptDraft != null) promptSaves.push(api.updatePrompt("image_meaningfulness", meaningfulnessPromptDraft, bookLabel))
+    if (croppingPromptDraft != null) promptSaves.push(api.updatePrompt("image_cropping", croppingPromptDraft, bookLabel))
+    if (segmentationPromptDraft != null) promptSaves.push(api.updatePrompt("image_segmentation", segmentationPromptDraft, bookLabel))
+    if (promptSaves.length > 0) await Promise.all(promptSaves)
+
+    const overrides = buildOverrides()
+    updateConfig.mutate(
+      { label: bookLabel, config: overrides },
+      {
+        onSuccess: async () => {
+          setDirty({})
+          setMetadataPromptDraft(null)
+          setMeaningfulnessPromptDraft(null)
+          setCroppingPromptDraft(null)
+          setSegmentationPromptDraft(null)
+          setShowRerunDialog(false)
+          queueRun({ fromStage: "extract", toStage: "extract", apiKey })
+          navigate({ to: "/books/$label/$step", params: { label: bookLabel, step: "extract" } })
+        },
+      }
+    )
+  }
 
   return (
-    <>
-      <StageRerunBar controller={rerun} />
-      <div className={tab === "metadata-prompt" || tab === "meaningfulness-prompt" || tab === "cropping-prompt" || tab === "segmentation-prompt" ? "h-full max-w-4xl" : "p-4 space-y-6"}>
+    <div className={tab === "metadata-prompt" || tab === "meaningfulness-prompt" || tab === "cropping-prompt" || tab === "segmentation-prompt" ? "h-full max-w-4xl" : "p-4 space-y-6"}>
       {tab === "general" && (
         <>
           {/* Page Range */}
@@ -428,7 +442,38 @@ export function ExtractSettings({ bookLabel, tab = "general" }: { bookLabel: str
           </div>
         </div>
       )}
-      </div>
-    </>
+
+      {headerTarget && createPortal(
+        <Button
+          size="sm"
+          className="h-7 px-2.5 text-xs bg-black/15 text-white hover:bg-black/25"
+          onClick={() => setShowRerunDialog(true)}
+          disabled={updateConfig.isPending || !hasApiKey}
+        >
+          <Play className="mr-1.5 h-3.5 w-3.5" />
+          {t`Save & Rerun`}
+        </Button>,
+        headerTarget
+      )}
+
+      <Dialog open={showRerunDialog} onOpenChange={setShowRerunDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t`Save & Rerun Extraction`}</DialogTitle>
+            <DialogDescription>
+              {t`This will save your settings and re-run the extraction pipeline. Any manual edits to extracted text will be overwritten for affected pages.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRerunDialog(false)}>
+              {t`Cancel`}
+            </Button>
+            <Button onClick={confirmSaveAndRerun} disabled={updateConfig.isPending}>
+              {updateConfig.isPending ? t`Saving...` : t`Confirm Rerun`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   )
 }

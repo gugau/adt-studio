@@ -120,19 +120,19 @@ export function StepSettingsPage() {
 
           switch (settingsStage) {
             case "extract":
-              return <ExtractSettings bookLabel={label} tab={tab} />
+              return <ExtractSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             case "sectioning":
-              return <SectioningSettings bookLabel={label} tab={tab} />
+              return <SectioningSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             case "storyboard":
               return <StoryboardSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             case "quizzes":
-              return <QuizzesSettings bookLabel={label} tab={tab} />
+              return <QuizzesSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             case "glossary":
-              return <GlossarySettings bookLabel={label} tab={tab} />
+              return <GlossarySettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             case "toc":
-              return <TocSettings bookLabel={label} />
+              return <TocSettings bookLabel={label} headerTarget={headerTarget} />
             case "captions":
-              return <CaptionsSettings bookLabel={label} tab={tab} />
+              return <CaptionsSettings bookLabel={label} headerTarget={headerTarget} tab={tab} />
             case "translate":
               return <LanguageSettings bookLabel={label} headerTarget={headerTarget} tab={tab} stageSlug="translate" />
             case "speech":
