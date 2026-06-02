@@ -5,7 +5,6 @@ import { Trans, useLingui } from "@lingui/react/macro"
 export interface PageJumperEntry {
   pageId: string
   pageNumber: number
-  blockCount: number
   preview: string
 }
 
@@ -160,9 +159,6 @@ export function PageJumper({
                     </span>
                     <span className="line-clamp-2 flex-1 text-[12px] leading-snug">
                       {item.preview || t`No text`}
-                    </span>
-                    <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground/70">
-                      {item.blockCount}
                     </span>
                   </button>
                 )

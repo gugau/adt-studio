@@ -63,17 +63,12 @@ export function EasyReadEditor({
   const pageEntries = useMemo<PageJumperEntry[]>(() => {
     const map = new Map<string, PageJumperEntry>()
     for (const block of filteredBlocks) {
-      const existing = map.get(block.pageId)
-      if (existing) {
-        existing.blockCount += 1
-      } else {
-        map.set(block.pageId, {
-          pageId: block.pageId,
-          pageNumber: block.pageNumber,
-          blockCount: 1,
-          preview: block.entries[0]?.text || block.entries[0]?.originalText || "",
-        })
-      }
+      if (map.has(block.pageId)) continue
+      map.set(block.pageId, {
+        pageId: block.pageId,
+        pageNumber: block.pageNumber,
+        preview: block.entries[0]?.text || block.entries[0]?.originalText || "",
+      })
     }
     return Array.from(map.values())
   }, [filteredBlocks])
