@@ -9,7 +9,7 @@ import { useStepHeader } from "../../components/StepViewRouter"
 import { StageEmptyState } from "../../components/StageEmptyState"
 import { PageJumper, type PageJumperEntry } from "./components/PageJumper"
 import { PageCover } from "./components/PageCover"
-import { PageLightbox } from "./components/PageLightbox"
+import { PageLightbox } from "../../components/PageLightbox"
 
 const TOOLBAR_OFFSET = 80
 
