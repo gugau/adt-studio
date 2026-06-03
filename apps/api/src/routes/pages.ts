@@ -952,7 +952,7 @@ export function createPageRoutes(
       }
 
       const buffer = fs.readFileSync(cachePath)
-      c.header("Cache-Control", "private, max-age=300")
+      c.header("Cache-Control", "private, max-age=31536000, immutable")
       c.header("Content-Type", "image/png")
       return c.body(buffer)
     }
