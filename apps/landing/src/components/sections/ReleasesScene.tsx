@@ -1,42 +1,34 @@
-import { ArrowRight, ArrowUpRight, Download, Tag } from "lucide-react";
-import { useEffect, useState } from "react";
-import {
-  detectUserPlatform,
-  groupAssets,
-  pickPreferred,
-  type DetectedPlatform,
-} from "@/components/pages/download/shared";
+import { ArrowRight, ArrowUpRight, Sparkles, Tag } from "lucide-react";
 import { SectionEyebrow } from "@/components/SectionEyebrow";
 import { cn } from "@/lib/cn";
 import {
-  formatDownloads,
+  firstImageFromBody,
+  firstParagraphFromBody,
+  sectionTone,
+  summarizeSections,
+  type SectionTone,
+} from "@/lib/releaseSummary";
+import {
+  formatAbsoluteDate,
   formatRelativeDate,
-  stripMarkdown,
-  sumReleaseDownloads,
-  useGithubReleases,
+  useStableReleases,
   type GithubRelease,
 } from "@/lib/useGithubReleases";
 import { useInView } from "@/lib/useScrollProgress";
 
 export function ReleasesScene() {
-  const { releases, loading, error } = useGithubReleases();
+  const { releases, loading } = useStableReleases();
   const { ref, inView: mounted } = useInView<HTMLDivElement>({ threshold: 0.2 });
-  const [userPlatform, setUserPlatform] = useState<DetectedPlatform | null>(
-    null,
-  );
-  useEffect(() => {
-    setUserPlatform(detectUserPlatform());
-  }, []);
-  const items = releases ?? [];
+  const latest = releases?.[0];
 
   return (
     <section
       id="releases"
-      className="snap-section relative flex min-h-screen items-center border-y border-[color:var(--color-border)] bg-[color:var(--color-muted)]/30 py-24 lg:py-32"
+      className="snap-section relative flex min-h-screen items-center border-y border-[color:var(--color-border)] bg-[color:var(--color-muted)]/30 py-20 lg:py-24"
     >
-      <div ref={ref} className="mx-auto w-full max-w-6xl px-6 md:px-10">
+      <div ref={ref} className="mx-auto w-full max-w-5xl px-6 md:px-10">
         <div className="mx-auto max-w-2xl text-center">
-          <SectionEyebrow label="Releases" />
+          <SectionEyebrow label="Changelog" />
           <h2
             className={cn(
               "mt-5 text-balance text-4xl font-semibold leading-[1.08] tracking-tight md:text-5xl",
@@ -45,9 +37,8 @@ export function ReleasesScene() {
             )}
             style={{ transitionDelay: "80ms" }}
           >
-            Shipped, open,{" "}
-            <span className="text-[color:var(--color-primary)]">documented</span>
-            .
+            Fresh off the{" "}
+            <span className="text-[color:var(--color-primary)]">press</span>.
           </h2>
           <p
             className={cn(
@@ -57,55 +48,42 @@ export function ReleasesScene() {
             )}
             style={{ transitionDelay: "220ms" }}
           >
-            Every version ships with full release notes on GitHub — nothing
-            hidden, always current.
+            Here's what shipped in the latest version — and there are plenty
+            more where this came from.
           </p>
-        </div>
-
-        <div className="mt-14 grid grid-cols-1 gap-4 md:grid-cols-3">
-          {loading || items.length === 0
-            ? Array.from({ length: 3 }).map((_, i) => (
-                <SkeletonCard
-                  key={i}
-                  index={i}
-                  mounted={mounted}
-                  failed={error}
-                />
-              ))
-            : items.slice(0, 3).map((r, i) => (
-                <ReleaseCard
-                  key={r.tag_name}
-                  release={r}
-                  index={i}
-                  mounted={mounted}
-                  isLatest={i === 0}
-                  userPlatform={userPlatform}
-                />
-              ))}
         </div>
 
         <div
           className={cn(
-            "mt-10 flex flex-wrap items-center justify-center gap-2 transition-opacity duration-500",
+            "mt-12 transition-all duration-[800ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+            mounted ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0",
+          )}
+          style={{ transitionDelay: "320ms" }}
+        >
+          {loading && !latest ? (
+            <HeroSkeleton />
+          ) : latest ? (
+            <HeroSpotlight release={latest} />
+          ) : (
+            <EmptyHero />
+          )}
+        </div>
+
+        <div
+          className={cn(
+            "mt-8 flex flex-col items-center gap-3 transition-opacity duration-500",
             mounted ? "opacity-100" : "opacity-0",
           )}
           style={{ transitionDelay: "640ms" }}
         >
           <a
-            href="#/releases"
-            className="group inline-flex items-center gap-1.5 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-card)] px-4 py-2 text-sm font-semibold text-[color:var(--color-foreground)] shadow-sm transition-all hover:-translate-y-0.5 hover:border-[color:var(--color-primary)]/30 hover:shadow-md"
-          >
-            See every release
-            <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
-          </a>
-          <a
             href="https://github.com/unicef/adt-studio/releases"
             target="_blank"
             rel="noreferrer noopener"
-            className="group inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-[color:var(--color-muted-foreground)] transition-colors hover:text-[color:var(--color-foreground)]"
+            className="group/gh inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-[color:var(--color-muted-foreground)] transition-colors hover:text-[color:var(--color-foreground)]"
           >
-            On GitHub
-            <ArrowUpRight className="h-3 w-3" />
+            Raw notes on GitHub
+            <ArrowUpRight className="h-3 w-3 transition-transform duration-200 group-hover/gh:translate-x-0.5 group-hover/gh:-translate-y-0.5" />
           </a>
         </div>
       </div>
@@ -113,155 +91,203 @@ export function ReleasesScene() {
   );
 }
 
-function ReleaseCard({
-  release,
-  index,
-  mounted,
-  isLatest,
-  userPlatform,
-}: {
-  release: GithubRelease;
-  index: number;
-  mounted: boolean;
-  isLatest: boolean;
-  userPlatform: DetectedPlatform | null;
-}) {
+function HeroSpotlight({ release }: { release: GithubRelease }) {
   const title = release.name?.trim() || release.tag_name;
-  const body = stripMarkdown(release.body).split("\n").slice(0, 3).join(" · ");
-  const isUnsupported = userPlatform === "mobile";
-  const primaryAsset = isUnsupported
-    ? null
-    : pickPrimaryAsset(release.assets, userPlatform);
+  const cover = firstImageFromBody(release.body);
+  const excerpt = firstParagraphFromBody(release.body, 240);
+  const sections = summarizeSections(release.body).slice(0, 4);
   const detailHref = `#/releases/${encodeURIComponent(release.tag_name)}`;
 
   return (
     <article
       className={cn(
-        "group relative flex flex-col rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-6 transition-all duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:border-[color:var(--color-primary)]/30 hover:shadow-[0_12px_32px_-14px_rgba(0,0,0,0.14)]",
-        mounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0",
+        "group/hero relative grid grid-cols-1 gap-5 overflow-hidden rounded-3xl border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-5 shadow-[0_24px_64px_-28px_rgba(0,0,0,0.22)] transition-all duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:border-[color:var(--color-primary)]/40 hover:shadow-[0_34px_80px_-30px_rgba(0,0,0,0.28)] md:p-6 lg:grid-cols-[1.15fr_1fr] lg:items-center lg:gap-8",
       )}
-      style={{ transitionDelay: `${320 + index * 120}ms` }}
     >
+      {/* Whole-card link — sits beneath the content, above the background. */}
       <a
         href={detailHref}
-        aria-label={`Open release ${release.tag_name} details`}
-        className="absolute inset-0 z-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)]"
+        aria-label={`Read release ${release.tag_name}`}
+        className="absolute inset-0 z-0 rounded-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)]"
       />
 
-      <div className="pointer-events-none relative z-[1] flex items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 rounded-md bg-[color:var(--color-primary)]/10 px-2 py-0.5 font-mono text-[11px] font-bold text-[color:var(--color-primary)]">
-          <Tag className="h-3 w-3" />
-          {release.tag_name}
-        </span>
-        {isLatest && (
+      <HeroCover image={cover} tag={release.tag_name} />
+
+      <div className="pointer-events-none relative z-[1] flex flex-col gap-3.5">
+        <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] text-[color:var(--color-muted-foreground)]">
+          <span className="inline-flex items-center gap-1.5 rounded-md bg-[color:var(--color-primary)]/10 px-2 py-0.5 font-mono text-[11px] font-bold text-[color:var(--color-primary)]">
+            <Tag className="h-3 w-3" />
+            {release.tag_name}
+          </span>
           <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
             Latest
           </span>
-        )}
-        {release.prerelease && (
-          <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700">
-            Beta
+          <span aria-hidden className="opacity-50">·</span>
+          <span>{formatAbsoluteDate(release.published_at)}</span>
+          <span className="opacity-60">
+            {" · "}
+            {formatRelativeDate(release.published_at)}
           </span>
+        </div>
+
+        <h3 className="text-balance text-[26px] font-bold leading-tight tracking-tight text-[color:var(--color-foreground)] md:text-[32px]">
+          {title}
+        </h3>
+
+        {excerpt && (
+          <p className="line-clamp-4 text-[15px] leading-relaxed text-[color:var(--color-muted-foreground)] md:text-base">
+            {excerpt}
+          </p>
         )}
-      </div>
 
-      <h3 className="pointer-events-none relative z-[1] mt-4 line-clamp-2 text-base font-semibold tracking-tight text-[color:var(--color-foreground)]">
-        {title}
-      </h3>
-      <div className="pointer-events-none relative z-[1] mt-1 flex items-center gap-1.5 font-mono text-[11px] text-[color:var(--color-muted-foreground)]">
-        <span>{formatRelativeDate(release.published_at)}</span>
-        {sumReleaseDownloads(release) > 0 && (
-          <>
-            <span aria-hidden className="opacity-50">
-              ·
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Download className="h-3 w-3" />
-              {formatDownloads(sumReleaseDownloads(release))}
-            </span>
-          </>
+        {sections.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {sections.map((s) => (
+              <HeroChip
+                key={s.title}
+                label={s.title}
+                count={s.count}
+                tone={sectionTone(s.title)}
+              />
+            ))}
+          </div>
         )}
-      </div>
 
-      <p className="pointer-events-none relative z-[1] mt-3 line-clamp-3 text-sm leading-relaxed text-[color:var(--color-muted-foreground)]">
-        {body || "No release notes provided."}
-      </p>
-
-      <div className="relative z-[2] mt-5 flex flex-1 items-end justify-between gap-3">
-        <span className="inline-flex items-center gap-1 text-xs font-semibold text-[color:var(--color-foreground)] transition-colors group-hover:text-[color:var(--color-primary)]">
-          View details
-          <ArrowRight className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5" />
-        </span>
-        {primaryAsset ? (
+        <div className="mt-auto flex flex-wrap items-center gap-3 pt-2">
+          <span className="group/cta relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-[color:var(--color-primary)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_24px_-10px_color-mix(in_oklch,var(--color-primary)_60%,transparent)] transition-all duration-300 group-hover/hero:shadow-[0_18px_36px_-14px_color-mix(in_oklch,var(--color-primary)_70%,transparent)]">
+            <Sparkles className="h-4 w-4" />
+            Read this release
+            <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover/hero:translate-x-0.5" />
+          </span>
           <a
-            href={primaryAsset.browser_download_url}
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-[color:var(--color-muted-foreground)] transition-colors hover:text-[color:var(--color-foreground)]"
+            href={release.html_url}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="group/raw pointer-events-auto relative z-[2] inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold text-[color:var(--color-muted-foreground)] transition-colors hover:text-[color:var(--color-foreground)]"
           >
-            <Download className="h-3 w-3" />
-            Download
+            On GitHub
+            <ArrowUpRight className="h-3 w-3 transition-transform duration-200 group-hover/raw:translate-x-0.5 group-hover/raw:-translate-y-0.5" />
           </a>
-        ) : isUnsupported ? (
-          <span
-            aria-disabled="true"
-            title="ADT Studio is desktop only"
-            onClick={(e) => e.stopPropagation()}
-            className="pointer-events-none relative z-[2] inline-flex cursor-not-allowed items-center gap-1 text-xs font-semibold text-[color:var(--color-muted-foreground)]/50"
-          >
-            <Download className="h-3 w-3" />
-            Download
-          </span>
-        ) : null}
+        </div>
       </div>
     </article>
   );
 }
 
-function SkeletonCard({
-  index,
-  mounted,
-  failed,
+function HeroCover({
+  image,
+  tag,
 }: {
-  index: number;
-  mounted: boolean;
-  failed?: boolean;
+  image: string | null;
+  tag: string;
 }) {
+  if (image) {
+    return (
+      <div className="pointer-events-none relative z-[1] aspect-[16/9] w-full overflow-hidden rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-muted)]/40">
+        <img
+          src={image}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/hero:scale-[1.02]"
+        />
+      </div>
+    );
+  }
   return (
     <div
-      className={cn(
-        "flex flex-col gap-3 rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-6 transition-all duration-[700ms]",
-        mounted ? "opacity-100" : "opacity-0",
-      )}
-      style={{ transitionDelay: `${320 + index * 120}ms` }}
-      aria-busy={!failed}
+      aria-hidden
+      className="pointer-events-none relative z-[1] aspect-[16/9] w-full overflow-hidden rounded-2xl border border-[color:var(--color-border)]"
     >
-      <div className="flex items-center gap-2">
-        <span className="h-5 w-16 rounded-md bg-[color:var(--color-muted)]" />
+      <div className="absolute inset-0 [background:radial-gradient(120%_120%_at_25%_15%,color-mix(in_oklch,var(--color-primary)_30%,transparent),transparent_60%),radial-gradient(120%_120%_at_80%_80%,color-mix(in_oklch,#a855f7_22%,transparent),transparent_65%),linear-gradient(180deg,color-mix(in_oklch,var(--color-muted)_70%,transparent),color-mix(in_oklch,var(--color-card)_100%,transparent))]" />
+      <div
+        aria-hidden
+        className="absolute inset-0 text-[color:var(--color-foreground)] opacity-[0.06] [background-image:radial-gradient(currentColor_1px,transparent_1px)] [background-size:16px_16px]"
+      />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="font-mono text-3xl font-bold tracking-tight text-[color:var(--color-foreground)]/35 md:text-4xl">
+          {tag}
+        </span>
       </div>
-      <div className="mt-3 h-4 w-4/5 rounded bg-[color:var(--color-muted)]" />
-      <div className="h-3 w-1/3 rounded bg-[color:var(--color-muted)]" />
-      <div className="mt-2 flex flex-col gap-1.5">
-        <span className="h-2 w-[96%] rounded bg-[color:var(--color-muted)]" />
-        <span className="h-2 w-[92%] rounded bg-[color:var(--color-muted)]" />
-        <span className="h-2 w-[72%] rounded bg-[color:var(--color-muted)]" />
-      </div>
-      {failed && (
-        <div className="mt-2 text-xs text-[color:var(--color-muted-foreground)]">
-          Couldn't reach GitHub — see all releases on the repo.
-        </div>
-      )}
     </div>
   );
 }
 
-function pickPrimaryAsset(
-  assets: GithubRelease["assets"],
-  platform: DetectedPlatform | null,
-) {
-  if (!assets || assets.length === 0) return null;
-  if (platform && platform !== "mobile") {
-    const match = pickPreferred(groupAssets(assets)[platform]);
-    if (match) return match;
-  }
-  return pickPreferred(assets);
+function HeroChip({
+  label,
+  count,
+  tone,
+}: {
+  label: string;
+  count: number;
+  tone: SectionTone;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
+        chipStyles[tone],
+      )}
+    >
+      <span className="truncate">{label}</span>
+      {count > 0 && (
+        <span className="rounded-full bg-white/60 px-1 font-mono text-[10px] font-bold tabular-nums">
+          {count}
+        </span>
+      )}
+    </span>
+  );
+}
+
+const chipStyles: Record<SectionTone, string> = {
+  added: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  fixed: "border-blue-200 bg-blue-50 text-blue-800",
+  perf: "border-violet-200 bg-violet-50 text-violet-800",
+  changed: "border-amber-200 bg-amber-50 text-amber-800",
+  breaking: "border-rose-200 bg-rose-50 text-rose-800",
+  security: "border-red-200 bg-red-50 text-red-800",
+  docs: "border-slate-200 bg-slate-50 text-slate-700",
+  neutral:
+    "border-[color:var(--color-border)] bg-[color:var(--color-muted)]/60 text-[color:var(--color-muted-foreground)]",
+};
+
+function HeroSkeleton() {
+  return (
+    <div
+      aria-busy
+      className="grid grid-cols-1 gap-5 overflow-hidden rounded-3xl border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-5 md:p-6 lg:grid-cols-[1.15fr_1fr] lg:items-center lg:gap-8"
+    >
+      <div className="aspect-[16/9] w-full rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-muted)]/60" />
+      <div className="flex flex-col gap-3.5">
+        <div className="flex gap-2">
+          <span className="h-5 w-16 rounded-md bg-[color:var(--color-muted)]" />
+          <span className="h-5 w-14 rounded-md bg-[color:var(--color-muted)]" />
+          <span className="h-5 w-28 rounded-md bg-[color:var(--color-muted)]" />
+        </div>
+        <span className="h-8 w-3/4 rounded bg-[color:var(--color-muted)]" />
+        <div className="flex flex-col gap-2">
+          <span className="h-3 w-[96%] rounded bg-[color:var(--color-muted)]" />
+          <span className="h-3 w-[88%] rounded bg-[color:var(--color-muted)]" />
+          <span className="h-3 w-[72%] rounded bg-[color:var(--color-muted)]" />
+        </div>
+        <div className="flex gap-2">
+          <span className="h-5 w-16 rounded-full bg-[color:var(--color-muted)]" />
+          <span className="h-5 w-16 rounded-full bg-[color:var(--color-muted)]" />
+          <span className="h-5 w-20 rounded-full bg-[color:var(--color-muted)]" />
+        </div>
+        <div className="mt-1 flex gap-3">
+          <span className="h-10 w-44 rounded-full bg-[color:var(--color-muted)]" />
+          <span className="h-10 w-24 rounded-full bg-[color:var(--color-muted)]" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EmptyHero() {
+  return (
+    <div className="rounded-3xl border border-dashed border-[color:var(--color-border)] bg-[color:var(--color-card)]/60 p-10 text-center text-sm text-[color:var(--color-muted-foreground)]">
+      No releases yet — once the first build ships, it'll show up here.
+    </div>
+  );
 }

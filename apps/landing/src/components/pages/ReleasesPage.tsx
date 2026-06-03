@@ -1,24 +1,26 @@
-import {
-  ArrowLeft,
-  ArrowUpRight,
-  Download,
-  Tag,
-} from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, ArrowUpRight, Github } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Button";
+import { ReleaseMarkdown } from "@/components/ReleaseMarkdown";
 import { cn } from "@/lib/cn";
 import {
+  sectionTone,
+  summarizeSections,
+  type SectionTone,
+} from "@/lib/releaseSummary";
+import {
   formatAbsoluteDate,
-  formatDownloads,
   formatRelativeDate,
-  stripMarkdown,
-  sumReleaseDownloads,
-  useGithubReleases,
+  useStableReleases,
   type GithubRelease,
 } from "@/lib/useGithubReleases";
 
-export function ReleasesPage() {
-  const { releases, loading, error } = useGithubReleases();
+function anchorIdForTag(tag: string): string {
+  return `release-${tag.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+}
+
+export function ReleasesPage({ focusTag }: { focusTag?: string }) {
+  const { releases, loading, error } = useStableReleases();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -26,16 +28,26 @@ export function ReleasesPage() {
     return () => cancelAnimationFrame(id);
   }, []);
 
-  const items = releases ?? [];
+  const items = useMemo(() => releases ?? [], [releases]);
+
+  /** After items render, scroll the focused tag into view. */
+  useEffect(() => {
+    if (!focusTag || items.length === 0) return;
+    const el = document.getElementById(anchorIdForTag(focusTag));
+    if (!el) return;
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: "auto", block: "start" });
+    });
+  }, [focusTag, items]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[color:var(--color-background)] pb-24 pt-32 lg:pb-32">
+    <div className="relative min-h-screen overflow-x-clip bg-[color:var(--color-background)] pb-24 pt-28 lg:pb-32">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-[420px] [background:radial-gradient(ellipse_55%_55%_at_50%_0%,color-mix(in_oklch,var(--color-primary)_14%,transparent),transparent_70%)]"
       />
 
-      <div className="relative mx-auto w-full max-w-3xl px-4">
+      <div className="relative mx-auto w-full max-w-5xl px-4 md:px-8">
         <div
           className={cn(
             "flex items-center gap-2 transition-all duration-500",
@@ -59,7 +71,7 @@ export function ReleasesPage() {
             )}
             style={{ transitionDelay: "80ms" }}
           >
-            Releases
+            Changelog
           </div>
           <h1
             className={cn(
@@ -68,7 +80,7 @@ export function ReleasesPage() {
             )}
             style={{ transitionDelay: "140ms" }}
           >
-            Every release of ADT Studio.
+            Every ship of ADT Studio.
           </h1>
           <p
             className={cn(
@@ -77,163 +89,224 @@ export function ReleasesPage() {
             )}
             style={{ transitionDelay: "240ms" }}
           >
-            Full changelog, sorted newest first. Click any release for the
-            complete notes and per-asset downloads.
+            Newest first, with the full notes inline — what changed, why it
+            matters, and the screenshots to back it up.
           </p>
         </header>
 
         <div className="mt-12">
           {loading && items.length === 0 ? (
-            <ReleaseListSkeleton mounted={mounted} />
+            <ChangelogSkeleton mounted={mounted} />
           ) : error && items.length === 0 ? (
             <ErrorCard />
           ) : items.length === 0 ? (
             <EmptyCard />
           ) : (
-            <ol className="flex flex-col gap-3">
+            <ol className="relative flex flex-col gap-20">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-y-2 left-[170px] hidden w-px bg-[color:var(--color-border)] md:block"
+              />
               {items.map((release, i) => (
-                <ReleaseRow
+                <ReleaseEntry
                   key={release.tag_name}
                   release={release}
-                  index={i}
                   isLatest={i === 0}
                   mounted={mounted}
+                  delayMs={Math.min(i, 6) * 80}
                 />
               ))}
             </ol>
           )}
-        </div>
 
-        <div
-          className={cn(
-            "mt-10 flex flex-wrap items-center justify-center gap-2 transition-opacity duration-500",
-            mounted ? "opacity-100" : "opacity-0",
-          )}
-          style={{ transitionDelay: "560ms" }}
-        >
-          <Button
-            href="https://github.com/unicef/adt-studio/releases"
-            target="_blank"
-            rel="noreferrer noopener"
-            variant="secondary"
-            size="md"
+          <div
+            className={cn(
+              "mt-20 flex flex-wrap items-center justify-center gap-2 border-t border-[color:var(--color-border)] pt-8 transition-opacity duration-500",
+              mounted ? "opacity-100" : "opacity-0",
+            )}
+            style={{ transitionDelay: "560ms" }}
           >
-            See all releases on GitHub
-            <ArrowUpRight className="h-4 w-4" />
-          </Button>
+            <Button
+              href="https://github.com/unicef/adt-studio/releases"
+              target="_blank"
+              rel="noreferrer noopener"
+              variant="secondary"
+              size="md"
+            >
+              See all releases on GitHub
+              <ArrowUpRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-function ReleaseRow({
+function ReleaseEntry({
   release,
-  index,
   isLatest,
   mounted,
+  delayMs,
 }: {
   release: GithubRelease;
-  index: number;
   isLatest: boolean;
   mounted: boolean;
+  delayMs: number;
 }) {
   const title = release.name?.trim() || release.tag_name;
-  const summary = stripMarkdown(release.body)
-    .split("\n")
-    .filter(Boolean)
-    .slice(0, 2)
-    .join(" · ");
-  const detailHref = `#/releases/${encodeURIComponent(release.tag_name)}`;
-  const totalDownloads = sumReleaseDownloads(release);
-
+  const sections = summarizeSections(release.body).slice(0, 5);
   return (
     <li
+      id={anchorIdForTag(release.tag_name)}
+      data-tag={release.tag_name}
       className={cn(
-        "group transition-all duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
-        mounted ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0",
+        "scroll-mt-28 transition-all duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] md:grid md:grid-cols-[150px_minmax(0,1fr)] md:gap-x-12",
+        mounted ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
       )}
-      style={{ transitionDelay: `${300 + Math.min(index, 8) * 60}ms` }}
+      style={{ transitionDelay: `${300 + delayMs}ms` }}
     >
-      <a
-        href={detailHref}
-        className="relative flex flex-col gap-3 rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[color:var(--color-primary)]/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)] sm:flex-row sm:items-center sm:gap-5"
-      >
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-md bg-[color:var(--color-primary)]/10 px-2 py-0.5 font-mono text-[11px] font-bold text-[color:var(--color-primary)]">
-              <Tag className="h-3 w-3" />
-              {release.tag_name}
-            </span>
-            {isLatest && (
-              <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
-                Latest
-              </span>
-            )}
-            {release.prerelease && (
-              <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700">
-                Beta
-              </span>
-            )}
-            <span className="font-mono text-[11px] text-[color:var(--color-muted-foreground)]">
-              {formatAbsoluteDate(release.published_at)}
-              <span className="opacity-60">
-                {" · "}
-                {formatRelativeDate(release.published_at)}
-              </span>
-            </span>
-            {totalDownloads > 0 && (
-              <span className="inline-flex items-center gap-1 font-mono text-[11px] text-[color:var(--color-muted-foreground)]">
-                <Download className="h-3 w-3" />
-                {formatDownloads(totalDownloads)}
-              </span>
-            )}
-          </div>
+      <aside className="relative md:py-1 md:text-right">
+        {/* Dot sits on the timeline at this entry's start. */}
+        <span
+          aria-hidden
+          className={cn(
+            "absolute left-[170px] top-[5px] hidden h-3 w-3 -translate-x-1/2 rounded-full ring-4 ring-[color:var(--color-background)] md:block",
+            isLatest
+              ? "bg-[color:var(--color-primary)]"
+              : "bg-[color:var(--color-foreground)]",
+          )}
+        />
+        <div className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-muted-foreground)]">
+          {formatAbsoluteDate(release.published_at)}
+        </div>
+        <div className="mt-2 inline-flex items-center gap-1 rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-card)] px-2 py-0.5 font-mono text-[12px] font-bold text-[color:var(--color-foreground)] shadow-sm">
+          {release.tag_name}
+        </div>
+      </aside>
 
-          <div className="line-clamp-1 text-base font-semibold tracking-tight text-[color:var(--color-foreground)]">
-            {title}
-          </div>
+      <div className="mt-5 min-w-0 md:mt-0">
+        <h2 className="text-balance text-[22px] font-semibold leading-tight tracking-tight text-[color:var(--color-foreground)] md:text-[26px]">
+          {title}
+        </h2>
 
-          {summary && (
-            <p className="line-clamp-2 text-sm leading-relaxed text-[color:var(--color-muted-foreground)]">
-              {summary}
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          {isLatest && (
+            <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+              Latest
+            </span>
+          )}
+          <span className="font-mono text-[10px] text-[color:var(--color-muted-foreground)]/80">
+            {formatRelativeDate(release.published_at)}
+          </span>
+        </div>
+
+        {sections.length > 0 && (
+          <div className="mt-5 flex flex-wrap items-center gap-1.5">
+            {sections.map((s) => (
+              <CategoryChip
+                key={s.title}
+                label={s.title}
+                count={s.count}
+                tone={sectionTone(s.title)}
+              />
+            ))}
+          </div>
+        )}
+
+        <div className={cn(sections.length > 0 ? "mt-5" : "mt-3")}>
+          {release.body && release.body.trim() ? (
+            <ReleaseMarkdown
+              source={release.body}
+              channel={release.prerelease ? "beta" : "stable"}
+            />
+          ) : (
+            <p className="text-sm text-[color:var(--color-muted-foreground)]">
+              No release notes were provided for this version.
             </p>
           )}
         </div>
-
-        <span className="hidden shrink-0 items-center gap-1 text-xs font-semibold text-[color:var(--color-muted-foreground)] transition-colors group-hover:text-[color:var(--color-primary)] sm:inline-flex">
-          View details
-          <ArrowUpRight className="h-3.5 w-3.5" />
-        </span>
-      </a>
+      </div>
     </li>
   );
 }
 
-function ReleaseListSkeleton({ mounted }: { mounted: boolean }) {
+function CategoryChip({
+  label,
+  count,
+  tone,
+}: {
+  label: string;
+  count: number;
+  tone: SectionTone;
+}) {
   return (
-    <ol className="flex flex-col gap-3" aria-busy>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <li
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
+        chipStyles[tone],
+      )}
+    >
+      <span className="truncate">{label}</span>
+      {count > 0 && (
+        <span className="rounded-full bg-white/60 px-1 font-mono text-[10px] font-bold tabular-nums">
+          {count}
+        </span>
+      )}
+    </span>
+  );
+}
+
+const chipStyles: Record<SectionTone, string> = {
+  added: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  fixed: "border-blue-200 bg-blue-50 text-blue-800",
+  perf: "border-violet-200 bg-violet-50 text-violet-800",
+  changed: "border-amber-200 bg-amber-50 text-amber-800",
+  breaking: "border-rose-200 bg-rose-50 text-rose-800",
+  security: "border-red-200 bg-red-50 text-red-800",
+  docs: "border-slate-200 bg-slate-50 text-slate-700",
+  neutral:
+    "border-[color:var(--color-border)] bg-[color:var(--color-muted)]/60 text-[color:var(--color-muted-foreground)]",
+};
+
+function ChangelogSkeleton({ mounted }: { mounted: boolean }) {
+  return (
+    <div aria-busy className="relative flex flex-col gap-20">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-2 left-[170px] hidden w-px bg-[color:var(--color-border)] md:block"
+      />
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
           key={i}
           className={cn(
-            "rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-5 transition-opacity duration-500",
+            "transition-opacity duration-500 md:grid md:grid-cols-[150px_minmax(0,1fr)] md:gap-x-12",
             mounted ? "opacity-100" : "opacity-0",
           )}
-          style={{ transitionDelay: `${300 + i * 60}ms` }}
+          style={{ transitionDelay: `${300 + i * 80}ms` }}
         >
-          <div className="flex items-center gap-2">
-            <span className="h-4 w-16 rounded bg-[color:var(--color-muted)]" />
-            <span className="h-3 w-24 rounded bg-[color:var(--color-muted)]" />
+          <div className="relative flex flex-col items-end gap-2">
+            <span className="absolute left-[170px] top-[5px] hidden h-3 w-3 -translate-x-1/2 rounded-full bg-[color:var(--color-muted)] ring-4 ring-[color:var(--color-background)] md:block" />
+            <span className="h-3 w-28 rounded bg-[color:var(--color-muted)]" />
+            <span className="h-5 w-16 rounded-md bg-[color:var(--color-muted)]" />
           </div>
-          <div className="mt-3 h-4 w-2/3 rounded bg-[color:var(--color-muted)]" />
-          <div className="mt-2 flex flex-col gap-1.5">
-            <span className="block h-2 w-[92%] rounded bg-[color:var(--color-muted)]" />
-            <span className="block h-2 w-[80%] rounded bg-[color:var(--color-muted)]" />
+          <div className="mt-5 md:mt-0">
+            <span className="block h-5 w-3/4 rounded bg-[color:var(--color-muted)]" />
+            <div className="mt-5 flex gap-2">
+              <span className="h-5 w-16 rounded-full bg-[color:var(--color-muted)]" />
+              <span className="h-5 w-16 rounded-full bg-[color:var(--color-muted)]" />
+              <span className="h-5 w-20 rounded-full bg-[color:var(--color-muted)]" />
+            </div>
+            <div className="mt-5 flex flex-col gap-2">
+              <span className="h-3 w-[96%] rounded bg-[color:var(--color-muted)]" />
+              <span className="h-3 w-[92%] rounded bg-[color:var(--color-muted)]" />
+              <span className="h-3 w-[80%] rounded bg-[color:var(--color-muted)]" />
+              <span className="h-3 w-[72%] rounded bg-[color:var(--color-muted)]" />
+            </div>
           </div>
-        </li>
+        </div>
       ))}
-    </ol>
+    </div>
   );
 }
 
@@ -241,7 +314,7 @@ function ErrorCard() {
   return (
     <div className="rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-6">
       <div className="text-base font-semibold text-[color:var(--color-foreground)]">
-        Couldn&rsquo;t load the release list
+        Couldn&rsquo;t load the changelog
       </div>
       <p className="mt-1 text-sm text-[color:var(--color-muted-foreground)]">
         We couldn&rsquo;t reach GitHub. The full list is always available on
@@ -255,6 +328,7 @@ function ErrorCard() {
           variant="secondary"
           size="md"
         >
+          <Github className="h-4 w-4" />
           Open on GitHub
           <ArrowUpRight className="h-4 w-4" />
         </Button>

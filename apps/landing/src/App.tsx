@@ -1,8 +1,8 @@
 import { useEffect, useMemo } from "react";
 import { DownloadPage } from "@/components/pages/DownloadPage";
-import { ReleasePage } from "@/components/pages/ReleasePage";
 import { ReleasesPage } from "@/components/pages/ReleasesPage";
 import { CarouselScene } from "@/components/sections/CarouselScene";
+import { ChangelogDeckScene } from "@/components/sections/ChangelogDeckScene";
 import { FeaturesScene } from "@/components/sections/FeaturesScene";
 import { FinaleScene } from "@/components/sections/FinaleScene";
 import { Footer } from "@/components/sections/Footer";
@@ -18,17 +18,16 @@ import { trackPageView } from "@/lib/matomo";
 type Route =
   | { kind: "home" }
   | { kind: "download" }
-  | { kind: "releases" }
-  | { kind: "release"; tag: string };
+  | { kind: "releases"; focusTag?: string };
 
 function resolveRoute(hashRoute: string): Route {
   if (hashRoute.startsWith("/download")) return { kind: "download" };
   const m = /^\/releases\/([^/?#]+)/.exec(hashRoute);
   if (m) {
     try {
-      return { kind: "release", tag: decodeURIComponent(m[1]) };
+      return { kind: "releases", focusTag: decodeURIComponent(m[1]) };
     } catch {
-      return { kind: "release", tag: m[1] };
+      return { kind: "releases", focusTag: m[1] };
     }
   }
   if (hashRoute === "/releases" || hashRoute === "/releases/") {
@@ -44,9 +43,9 @@ function getRouteTitle(route: Route): string {
     case "download":
       return "Download — ADT Studio";
     case "releases":
-      return "Releases — ADT Studio";
-    case "release":
-      return `Release ${route.tag} — ADT Studio`;
+      return route.focusTag
+        ? `Release ${route.focusTag} — ADT Studio`
+        : "Changelog — ADT Studio";
   }
 }
 
@@ -82,9 +81,7 @@ export function App() {
         {route.kind === "download" ? (
           <DownloadPage />
         ) : route.kind === "releases" ? (
-          <ReleasesPage />
-        ) : route.kind === "release" ? (
-          <ReleasePage tag={route.tag} />
+          <ReleasesPage focusTag={route.focusTag} />
         ) : (
           <>
             <WelcomeScene />
@@ -94,6 +91,7 @@ export function App() {
             <PrinciplesScene />
             <ShowcaseScene />
             <ReleasesScene />
+            <ChangelogDeckScene />
             <FinaleScene />
           </>
         )}

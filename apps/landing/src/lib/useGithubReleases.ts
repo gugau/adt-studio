@@ -89,6 +89,16 @@ export function useGithubReleases(): {
   return { releases, loading, error };
 }
 
+export function useStableReleases(): {
+  releases: GithubRelease[] | null;
+  loading: boolean;
+  error: boolean;
+} {
+  const { releases, loading, error } = useGithubReleases();
+  const stable = releases ? releases.filter((r) => !r.prerelease) : null;
+  return { releases: stable, loading, error };
+}
+
 export function useGithubRelease(tag: string | null): {
   release: GithubRelease | null;
   loading: boolean;
