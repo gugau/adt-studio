@@ -451,14 +451,8 @@ msgstr "Una nueva versión está disponible para descargar."
 msgid "A question worth asking"
 msgstr "Una pregunta que vale la pena hacer"
 
-#~ msgid "A quiz already exists at this position. Generating will replace the current quiz here."
-#~ msgstr "Ya existe un cuestionario en esta posición. Al generarlo se reemplazará el cuestionario actual."
-
 msgid "A quiz already sits here — add another after it or replace it"
 msgstr "Aquí ya hay un cuestionario; añade otro después o reemplázalo"
-
-#~ msgid "A quiz already sits here — generating will replace it"
-#~ msgstr "Aquí ya hay un cuestionario; al generarlo se reemplazará"
 
 msgid "A scenic view at dusk."
 msgstr "Una vista panorámica al anochecer."
@@ -616,9 +610,6 @@ msgstr "Los tipos de sección de actividad están ocultos del clasificador y se 
 msgid "Activity Types"
 msgstr "Tipos de Actividad"
 
-#~ msgid "Activity: {activityTypeLabel}"
-#~ msgstr "Actividad: {activityTypeLabel}"
-
 msgid "Activity: Fill in a Table"
 msgstr "Actividad: Completar una tabla"
 
@@ -715,9 +706,6 @@ msgstr "Añadir elemento de la lista a esta sección"
 
 msgid "Add custom instructions"
 msgstr "Añadir instrucciones personalizadas"
-
-#~ msgid "Add emojis"
-#~ msgstr "Añadir emojis"
 
 msgid "Add entry"
 msgstr "Agregar entrada"
@@ -973,9 +961,6 @@ msgstr "y más secciones a lo largo de la página"
 msgid "Answer"
 msgstr "Respuesta"
 
-#~ msgid "Answer options"
-#~ msgstr "Opciones de respuesta"
-
 msgid "Answer Prompt"
 msgstr "Prompt de respuesta"
 
@@ -1115,9 +1100,6 @@ msgstr "Reproductor de Audio"
 
 msgid "Author"
 msgstr "Autor"
-
-#~ msgid "Author's reasoning"
-#~ msgstr "Razonamiento del autor"
 
 msgid "Authored by {authorsList}."
 msgstr "Escrito por {authorsList}."
@@ -1414,9 +1396,6 @@ msgstr "Cambiar idioma"
 msgid "Change Preset"
 msgstr "Cambiar Preajuste"
 
-#~ msgid "Changes save automatically when you save on the page card."
-#~ msgstr "Los cambios se guardan automáticamente cuando guardas en la tarjeta de la página."
-
 msgid "Chapter 1: Introduction"
 msgstr "Capítulo 1: Introducción"
 
@@ -1443,9 +1422,6 @@ msgstr "Capítulo Uno"
 
 msgid "Chart / Graph"
 msgstr "Gráfico / Tabla"
-
-#~ msgid "Check answer"
-#~ msgstr "Comprobar respuesta"
 
 msgid "Check for updates"
 msgstr "Buscar actualizaciones"
@@ -1489,9 +1465,6 @@ msgstr "Elegir proveedor"
 msgid "Choose the source pages and where the quiz lands in the page editor."
 msgstr "Elige las páginas de origen y dónde se ubica el cuestionario en el editor de páginas."
 
-#~ msgid "Choose up to {MAX_SOURCE_PAGES} pages whose content the quiz question is based on."
-#~ msgstr "Elige hasta {MAX_SOURCE_PAGES} páginas en cuyo contenido se basará la pregunta del cuestionario."
-
 msgid "Choose which per-page validation items reviewers must check, customize the wording and guidance, and add your own checklist items for this document."
 msgstr "Elige qué elementos de validación por página deben verificar los revisores, personaliza la redacción y la orientación, y añade tus propios elementos de la lista para este documento."
 
@@ -1527,12 +1500,6 @@ msgstr "Subtítulos claros y descriptivos para lectores de secundaria y preparat
 
 msgid "Click an image to select"
 msgstr "Haz clic en una imagen para seleccionar"
-
-#~ msgid "Click any caption to edit it, or mark an image as decorative to hide it from screen readers when it doesn't need a caption. Changes are saved as a new version, so you can always roll back."
-#~ msgstr "Haz clic en cualquier subtítulo para editarlo, o marca una imagen como decorativa para ocultarla de los lectores de pantalla cuando no necesite subtítulo. Los cambios se guardan como una nueva versión, por lo que siempre puedes volver atrás."
-
-#~ msgid "Click any caption to edit it. Your changes are saved as a new version, so you can always roll back to an earlier one."
-#~ msgstr "Haz clic en cualquier subtítulo para editarlo. Tus cambios se guardan como una nueva versión, por lo que siempre puedes volver a una anterior."
 
 msgid "Click images to select"
 msgstr "Haz clic en las imágenes para seleccionar"
@@ -1744,9 +1711,6 @@ msgstr "Tubería Principal"
 msgid "Correct answer"
 msgstr "Respuesta correcta"
 
-#~ msgid "Correct!"
-#~ msgstr "¡Correcto!"
-
 msgid "Could not read this PDF. The file may be corrupted or password-protected."
 msgstr "No se pudo leer este PDF. El archivo puede estar dañado o protegido con contraseña."
 
@@ -1866,9 +1830,6 @@ msgstr "El modo de depuración no está habilitado."
 
 msgid "Decorative"
 msgstr "Decorativa"
-
-#~ msgid "Decorative images are hidden from screen readers and don't need a caption"
-#~ msgstr "Las imágenes decorativas se ocultan de los lectores de pantalla y no necesitan subtítulo"
 
 msgid "Decrease indent"
 msgstr "Disminuir sangría"
@@ -2071,9 +2032,6 @@ msgstr "Reglas desactivadas"
 msgid "Discard"
 msgstr "Descartar"
 
-#~ msgid "Dismiss"
-#~ msgstr "Cerrar"
-
 msgid "Display"
 msgstr "Visualización"
 
@@ -2225,9 +2183,6 @@ msgstr "Editar esta imagen"
 
 msgid "Edit this section"
 msgstr "Editar esta sección"
-
-#~ msgid "Editable"
-#~ msgstr "Editable"
 
 msgid "edited"
 msgstr "editado"
@@ -2565,9 +2520,6 @@ msgstr "Filtrar páginas…"
 msgid "Filter quizzes…"
 msgstr "Filtrar cuestionarios…"
 
-#~ msgid "Filter terms…"
-#~ msgstr "Filtrar términos…"
-
 msgid "Filtered by:"
 msgstr "Filtrado por:"
 
@@ -2712,9 +2664,6 @@ msgstr "Generar audio de Gemini faltante"
 msgid "Generate multiple-choice comprehension quizzes from the book's content. Create them automatically across the whole book, or add a single quiz from specific pages."
 msgstr "Genera cuestionarios de comprensión de opción múltiple a partir del contenido del libro. Créalos automáticamente en todo el libro o añade un único cuestionario a partir de páginas específicas."
 
-#~ msgid "Generate multiple-choice comprehension quizzes from the book's content. Set how often a quiz appears, then run the stage to create them across the whole book."
-#~ msgstr "Genera cuestionarios de comprensión de opción múltiple a partir del contenido del libro. Define con qué frecuencia aparece un cuestionario y luego ejecuta la etapa para crearlos en todo el libro."
-
 msgid "Generate new"
 msgstr "Generar nueva"
 
@@ -2741,9 +2690,6 @@ msgstr "Generado a partir de las páginas {fromLabel}"
 
 msgid "Generated from these pages"
 msgstr "Generado a partir de estas páginas"
-
-#~ msgid "Generated page"
-#~ msgstr "Página generada"
 
 msgid "Generated section"
 msgstr "Sección generada"
@@ -2870,9 +2816,6 @@ msgstr "Ocultar historial de edición con IA"
 
 msgid "Hide error details"
 msgstr "Ocultar detalles del error"
-
-#~ msgid "Hide pruned terms"
-#~ msgstr "Ocultar términos podados"
 
 msgid "High"
 msgstr "Alto"
@@ -3086,6 +3029,9 @@ msgstr "En el libro:"
 
 msgid "In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
 msgstr "En caso de que no quieras convertir todo el libro, ajusta los controles deslizantes para definir qué páginas se digitalizarán."
+
+msgid "In development"
+msgstr "En desarrollo"
 
 msgid "in the book"
 msgstr "en el libro"
@@ -3471,9 +3417,6 @@ msgstr "Gestionar todas las secciones"
 msgid "Manage sign-language videos"
 msgstr "Gestionar videos de lenguaje de señas"
 
-#~ msgid "manual"
-#~ msgstr "manual"
-
 msgid "Manual only"
 msgstr "Solo manual"
 
@@ -3500,12 +3443,6 @@ msgstr "Marcar como decorativo"
 
 msgid "Mark as decorative (hidden from screen readers)"
 msgstr "Marcar como decorativo (oculto para lectores de pantalla)"
-
-#~ msgid "Marked as decorative — hidden from screen readers, no caption needed."
-#~ msgstr "Marcada como decorativa: oculta para los lectores de pantalla, no necesita subtítulo."
-
-#~ msgid "Marked decorative"
-#~ msgstr "Marcado como decorativo"
 
 msgid "Match Design"
 msgstr "Coincidir con el diseño"
@@ -3874,9 +3811,6 @@ msgstr "No hay prompts por idioma configurados."
 msgid "No languages configured. Add languages in the Language settings."
 msgstr "No hay idiomas configurados. Agrega idiomas en la configuración de Idioma."
 
-#~ msgid "No link"
-#~ msgstr "Sin enlace"
-
 msgid "No log entries found yet."
 msgstr "Aún no hay entradas de registro."
 
@@ -3937,9 +3871,6 @@ msgstr "No hay quizzes para esta página"
 msgid "No quizzes match your search"
 msgstr "Ningún cuestionario coincide con tu búsqueda"
 
-#~ msgid "No quizzes yet"
-#~ msgstr "Aún no hay cuestionarios"
-
 msgid "No rendered content for this section"
 msgstr "Sin contenido renderizado para esta sección"
 
@@ -3982,17 +3913,11 @@ msgstr "No hay imagen de origen"
 msgid "No storyboard sections found. Run Storyboard to generate sections you can match videos to."
 msgstr "No se encontraron secciones de storyboard. Ejecuta Storyboard para generar secciones a las que puedas asignar videos."
 
-#~ msgid "No terms match your filter."
-#~ msgstr "Ningún término coincide con tu filtro."
-
 msgid "No terms match your search"
 msgstr "No hay términos que coincidan con tu búsqueda"
 
 msgid "No terms to show"
 msgstr "No hay términos para mostrar"
-
-#~ msgid "No terms to show."
-#~ msgstr "No hay términos para mostrar."
 
 msgid "No text extracted"
 msgstr "No se extrajo texto"
@@ -4030,9 +3955,6 @@ msgstr "No encontrado en el texto del libro"
 msgid "Not generated"
 msgstr "No generado"
 
-#~ msgid "Not quite"
-#~ msgstr "Casi"
-
 msgid "Not rendered yet"
 msgstr "Aún no renderizado"
 
@@ -4068,9 +3990,6 @@ msgstr "OCR y limpieza"
 
 msgid "of"
 msgstr "de"
-
-#~ msgid "of {0}"
-#~ msgstr "de {0}"
 
 msgid "Off"
 msgstr "Apagado"
@@ -4200,9 +4119,6 @@ msgstr "Opcional. Los términos añadidos aquí se fijan al glosario para que si
 
 msgid "Optionally translate burned-in text inside images (signs, labels, callouts). Select the images to localize — leaving the list empty keeps images in the source language."
 msgstr "Opcionalmente traduce texto incrustado dentro de imágenes (señales, etiquetas, llamadas). Selecciona las imágenes para localizar — dejar la lista vacía mantiene las imágenes en el idioma original."
-
-#~ msgid "Options"
-#~ msgstr "Opciones"
 
 msgid "options are deterministic;"
 msgstr "las opciones son deterministas;"
@@ -4363,9 +4279,6 @@ msgstr "Modo de Página"
 msgid "Page preview"
 msgstr "Vista previa de la página"
 
-#~ msgid "Page preview {pageId}"
-#~ msgstr "Vista previa de la página {pageId}"
-
 msgid "Page Range"
 msgstr "Rango de páginas"
 
@@ -4476,9 +4389,6 @@ msgstr "Por-Palabra"
 msgid "Perfect for children's books, pairing large images with minimal text."
 msgstr "Perfecto para libros infantiles, combinando imágenes grandes con texto mínimo."
 
-#~ msgid "pg {0} · s{1}"
-#~ msgstr "pág. {0} · s{1}"
-
 msgid "Phase {phaseNumber}"
 msgstr "Fase {phaseNumber}"
 
@@ -4508,9 +4418,6 @@ msgstr "Elige un enfoque de diseño."
 
 msgid "Pick the languages you want to translate to. The book's original language stays as-is."
 msgstr "Elige los idiomas a los que deseas traducir. El idioma original del libro permanece igual."
-
-#~ msgid "Pick the pages the quiz is written from and choose where it appears in the book."
-#~ msgstr "Elige las páginas en las que se basa el cuestionario y dónde aparece en el libro."
 
 msgid "Pick which voice each language uses for narration, including regional accents."
 msgstr "Elige qué voz usa cada idioma para la narración, incluidos los acentos regionales."
@@ -4660,9 +4567,6 @@ msgstr "eliminado"
 msgid "Pruned"
 msgstr "Eliminado"
 
-#~ msgid "Pruned ({0})"
-#~ msgstr "Podado ({0})"
-
 msgid "Pruned Images"
 msgstr "Imágenes eliminadas"
 
@@ -4692,9 +4596,6 @@ msgstr "Parámetro de consulta"
 
 msgid "question"
 msgstr "pregunta"
-
-#~ msgid "Question"
-#~ msgstr "Pregunta"
 
 msgid "Queued"
 msgstr "En cola"
@@ -4749,9 +4650,6 @@ msgstr "Los cuestionarios se redactan a partir del contenido que Storyboard colo
 
 msgid "Quizzes were generated by AI from your book's pages. Click any question, option, or explanation to edit it, and delete any quiz you don't need. Click a source page to zoom. Changes are saved as a new version, so you can always roll back."
 msgstr "Los cuestionarios fueron generados por IA a partir de las páginas de tu libro. Haz clic en cualquier pregunta, opción o explicación para editarla, y elimina cualquier cuestionario que no necesites. Haz clic en una página fuente para ampliar. Los cambios se guardan como una nueva versión, por lo que siempre puedes revertir."
-
-#~ msgid "Quizzes you generate will show up here."
-#~ msgstr "Los cuestionarios que generes aparecerán aquí."
 
 msgid "Quote"
 msgstr "Cita"
@@ -5125,9 +5023,6 @@ msgstr "Ejecutar Subtítulos"
 msgid "Run Extract"
 msgstr "Ejecutar Extracción"
 
-#~ msgid "Run Extract first — sectioning needs extracted page text and images."
-#~ msgstr "Ejecuta Extracción primero — el seccionamiento necesita texto e imágenes extraídas de la página."
-
 msgid "Run Glossary"
 msgstr "Ejecutar Glosario"
 
@@ -5142,9 +5037,6 @@ msgstr "Ejecutar Cuestionarios"
 
 msgid "Run Sectioning"
 msgstr "Ejecutar Seccionamiento"
-
-#~ msgid "Run Sectioning first — storyboard needs typed sections to render."
-#~ msgstr "Ejecuta Seccionamiento primero — el storyboard necesita secciones escritas para renderizar."
 
 msgid "Run Speech"
 msgstr "Ejecutar Voz"
@@ -5423,9 +5315,6 @@ msgstr "Modo de sección"
 msgid "Sectioning Mode"
 msgstr "Modo de sección"
 
-#~ msgid "Sectioning needs the page text and images that Extract produces. Finish Extract before running this stage."
-#~ msgstr "El seccionamiento necesita el texto e imágenes de la página que produce Extracción. Termina Extracción antes de ejecutar esta etapa."
-
 msgid "Sectioning Pages..."
 msgstr "Seccionando páginas..."
 
@@ -5485,9 +5374,6 @@ msgstr "Selecciona un tipo de nodo e ingresa un ID de elemento para ver las vers
 
 msgid "Select a page grouping to continue"
 msgstr "Selecciona un grupo de páginas para continuar"
-
-#~ msgid "Select a page…"
-#~ msgstr "Selecciona una página…"
 
 msgid "Select a render strategy to continue"
 msgstr "Selecciona una estrategia de renderizado para continuar"
@@ -5600,9 +5486,6 @@ msgstr "Enviar"
 msgid "Short, simple sentences for kindergarten through 5th grade."
 msgstr "Oraciones cortas y simples para jardín de infancia hasta 5º grado."
 
-#~ msgid "Show"
-#~ msgstr "Mostrar"
-
 msgid "Show accessibility summary"
 msgstr "Mostrar resumen de accesibilidad"
 
@@ -5630,12 +5513,6 @@ msgstr "Mostrar menos"
 
 msgid "Show only the terms you added manually"
 msgstr "Mostrar solo los términos que agregaste manualmente"
-
-#~ msgid "Show pruned terms"
-#~ msgstr "Mostrar términos podados"
-
-#~ msgid "Show quiz after"
-#~ msgstr "Mostrar cuestionario después de"
 
 msgid "Show reviewer validation"
 msgstr "Mostrar validación del revisor"
@@ -5751,9 +5628,6 @@ msgstr "Ordenar libros"
 
 msgid "Source"
 msgstr "Fuente"
-
-#~ msgid "Source pages"
-#~ msgstr "Páginas de origen"
 
 msgid "Source PDF"
 msgstr "PDF Fuente"
@@ -5873,9 +5747,6 @@ msgstr "Vista general del Storyboard"
 msgid "Storyboard Preview"
 msgstr "Vista previa del Storyboard"
 
-#~ msgid "Storyboard renders the typed sections produced by Sectioning. Finish Sectioning before running this stage."
-#~ msgstr "El Storyboard renderiza las secciones escritas producidas por el Seccionamiento. Termina el Seccionamiento antes de ejecutar esta etapa."
-
 msgid "Storybook"
 msgstr "Libro de cuentos"
 
@@ -5884,9 +5755,6 @@ msgstr "Estirar"
 
 msgid "Strict"
 msgstr "Estricto"
-
-#~ msgid "Strict grid template that repeats across pages."
-#~ msgstr "Plantilla de cuadrícula estricta que se repite a través de las páginas."
 
 msgid "Strikethrough"
 msgstr "Tachado"
@@ -5911,6 +5779,9 @@ msgstr "Estructura cada página en un árbol de secciones y nodos."
 
 msgid "Style"
 msgstr "Estilo"
+
+msgid "Style editing coming soon"
+msgstr "Edición de estilos próximamente"
 
 msgid "Style guide"
 msgstr "Guía de estilo"
@@ -6153,9 +6024,6 @@ msgstr "El prompt utilizado por la pasada de revisión para inspeccionar y corre
 msgid "The quick brown fox jumps over the lazy dog."
 msgstr "El veloz zorro marrón salta sobre el perro perezoso."
 
-#~ msgid "The quiz is inserted into the book right after this page."
-#~ msgstr "El cuestionario se inserta en el libro justo después de esta página."
-
 msgid "The rendering strategy used for sections without an explicit mapping."
 msgstr "La estrategia de renderización usada para secciones sin un mapeo explícito."
 
@@ -6182,9 +6050,6 @@ msgstr "El mundo ante nosotros"
 
 msgid "Theme"
 msgstr "Tema"
-
-#~ msgid "These captions were generated automatically"
-#~ msgstr "Estos subtítulos se generaron automáticamente"
 
 msgid "These features improve access for people with disabilities. Running them before exporting helps your book meet ADT accessibility standards."
 msgstr "Estas funciones mejoran el acceso para personas con discapacidades. Ejecutarlas antes de exportar ayuda a que su libro cumpla con los estándares de accesibilidad ADT."
@@ -6720,6 +6585,9 @@ msgstr "Revisión Visual"
 
 msgid "Visual Review Prompt (read-only)"
 msgstr "Aviso de Revisión Visual (solo lectura)"
+
+msgid "Visual style editing isn't available for fixed-layout pages yet. You can still edit text inline, swap or crop images, and prune elements."
+msgstr "La edición visual de estilos aún no está disponible para páginas de maquetación fija. Aún puedes editar texto en línea, reemplazar o recortar imágenes y eliminar elementos."
 
 msgid "Voice"
 msgstr "Voz"
