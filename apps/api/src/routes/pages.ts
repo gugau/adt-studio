@@ -18,12 +18,12 @@ import {
   applyCrop,
   generateStyleguide,
   buildStyleguideGenerationConfig,
-  buildScreenshotHtml,
   createScreenshotRenderer,
   SCREENSHOT_VIEWPORTS,
   isFixedLayoutBook,
   type ScreenshotRenderer,
 } from "@adt/pipeline"
+import { prepareSectionScreenshot, writeSectionScreenshot } from "../services/section-screenshot.js"
 import { createLLMModel, createPromptEngine, renderLiquidTemplate, generateImageWithCache } from "@adt/llm"
 
 /**
@@ -903,55 +903,32 @@ export function createPageRoutes(
         db.close()
       }
 
-      // Resolve images referenced by the section HTML so screenshots show real pixels.
-      const referencedImageIds = new Set<string>()
-      const imgDataIdRegex = /<img\s[^>]*data-id="([^"]+)"/g
-      let m: RegExpExecArray | null
-      while ((m = imgDataIdRegex.exec(sectionHtml)) !== null) {
-        referencedImageIds.add(m[1])
-      }
       const storage = createBookStorage(safeLabel, booksDir)
-      const images = new Map<string, { base64: string }>()
+      let prepared: { screenshotHtml: string; cachePath: string }
       try {
-        for (const id of referencedImageIds) {
-          try {
-            images.set(id, { base64: storage.getImageBase64(id) })
-          } catch {
-            // Image missing — screenshot will show a broken image.
-          }
-        }
+        prepared = await prepareSectionScreenshot({
+          bookDir,
+          label: safeLabel,
+          sectionHtml,
+          viewport,
+          images: storage,
+          webAssetsDir,
+        })
       } finally {
         storage.close()
       }
 
-      const screenshotHtml = await buildScreenshotHtml({
-        sectionHtml,
-        label: safeLabel,
-        images,
-        webAssetsDir,
-      })
-
-      // Cache key incorporates HTML + viewport so cache invalidates whenever
-      // either changes. Stored under .section-renders/ inside the book dir.
-      const cacheDir = path.join(bookDir, ".section-renders")
-      fs.mkdirSync(cacheDir, { recursive: true })
-      const hash = crypto
-        .createHash("sha256")
-        .update(`${viewport.label}:${viewport.width}x${viewport.height}\n${screenshotHtml}`)
-        .digest("hex")
-        .slice(0, 16)
-      const cachePath = path.join(cacheDir, `${hash}.png`)
-
-      if (!fs.existsSync(cachePath)) {
+      if (!fs.existsSync(prepared.cachePath)) {
         const renderer = await getSharedScreenshotRenderer()
-        const base64 = await renderer.screenshot(screenshotHtml, {
-          width: viewport.width,
-          height: viewport.height,
+        await writeSectionScreenshot({
+          renderer,
+          screenshotHtml: prepared.screenshotHtml,
+          viewport,
+          cachePath: prepared.cachePath,
         })
-        fs.writeFileSync(cachePath, Buffer.from(base64, "base64"))
       }
 
-      const buffer = fs.readFileSync(cachePath)
+      const buffer = fs.readFileSync(prepared.cachePath)
       c.header("Cache-Control", "private, max-age=31536000, immutable")
       c.header("Content-Type", "image/png")
       return c.body(buffer)
