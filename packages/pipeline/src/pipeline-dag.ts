@@ -729,12 +729,24 @@ export async function runFullPipeline(
         return
       }
       const model = getModel(easyReadConfig.modelId)
-      const output = await generateEasyRead(blocks, easyReadConfig, model)
+      const totalEntries = blocks.reduce((sum, block) => sum + block.entries.length, 0)
+      const output = await generateEasyRead(blocks, easyReadConfig, model, {
+        concurrency: effectiveConcurrency,
+        onProgress: (completed, total) => {
+          p.emit({
+            type: "step-progress",
+            step: "easy-read",
+            message: `${completed}/${total}`,
+            page: completed,
+            totalPages: total,
+          })
+        },
+      })
       storage.putNodeData("easy-read", "book", output)
       p.emit({
         type: "step-progress",
         step: "easy-read",
-        message: `${output.blocks.reduce((sum, block) => sum + block.entries.length, 0)} entries`,
+        message: `${totalEntries} entries`,
       })
     })
 
