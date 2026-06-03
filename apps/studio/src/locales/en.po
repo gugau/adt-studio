@@ -3116,6 +3116,9 @@ msgstr "In book:"
 msgid "In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
 msgstr "In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
 
+msgid "In development"
+msgstr "In development"
+
 msgid "in the book"
 msgstr "in the book"
 
@@ -5939,6 +5942,9 @@ msgstr "Structures each page into a tree of sections and nodes."
 msgid "Style"
 msgstr "Style"
 
+msgid "Style editing coming soon"
+msgstr "Style editing coming soon"
+
 msgid "Style guide"
 msgstr "Style guide"
 
@@ -6783,6 +6789,9 @@ msgstr "Visual Review"
 
 msgid "Visual Review Prompt (read-only)"
 msgstr "Visual Review Prompt (read-only)"
+
+msgid "Visual style editing isn't available for fixed-layout pages yet. You can still edit text inline, swap or crop images, and prune elements."
+msgstr "Visual style editing isn't available for fixed-layout pages yet. You can still edit text inline, swap or crop images, and prune elements."
 
 msgid "Voice"
 msgstr "Voice"
