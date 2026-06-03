@@ -2188,6 +2188,9 @@ msgstr "Chaque itération est un appel LLM. Des valeurs plus basses sont plus ra
 msgid "Each polyp secretes a hard calcium carbonate skeleton. Over hundreds of years, millions of these skeletons build up into the massive reef structures we see today."
 msgstr "Chaque polype sécrète un squelette rigide de carbonate de calcium. Au fil de centaines d'années, des millions de ces squelettes s'accumulent pour former les immenses structures récifales que nous voyons aujourd'hui."
 
+msgid "Each prompt is applied to whichever provider its language is routed to — for example, Albanian (sq) routed to Gemini receives this as its accent steering."
+msgstr "Chaque instruction est appliquée au fournisseur vers lequel sa langue est dirigée — par exemple, l'albanais (sq) dirigé vers Gemini la reçoit comme orientation d'accent."
+
 msgid "Each section introduces a new theme with worked examples, followed by short practice activities at the end of the page."
 msgstr "Chaque section introduit un nouveau thème avec des exemples travaillés, suivis de courtes activités pratiques à la fin de la page."
 
@@ -3115,6 +3118,9 @@ msgstr "Dans le livre :"
 msgid "In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
 msgstr "Si vous ne souhaitez pas convertir le livre entier, ajustez les curseurs pour définir quelles pages seront numérisées."
 
+msgid "In development"
+msgstr "En développement"
+
 msgid "in the book"
 msgstr "dans le livre"
 
@@ -3823,6 +3829,12 @@ msgstr "Aucune image légendée pour le moment. Exécutez d'abord l'étape de l�
 
 msgid "No captions for this page"
 msgstr "Aucune légende pour cette page"
+
+msgid "No captions match these filters"
+msgstr "Aucune légende ne correspond à ces filtres"
+
+msgid "No captions match your search"
+msgstr "Aucune légende ne correspond à votre recherche"
 
 msgid "No changes flagged on this page"
 msgstr "Aucune modification signalée sur cette page"
@@ -5932,6 +5944,9 @@ msgstr "Structure chaque page en un arbre de sections et de nœuds."
 msgid "Style"
 msgstr "Style"
 
+msgid "Style editing coming soon"
+msgstr "Édition de style bientôt disponible"
+
 msgid "Style guide"
 msgstr "Guide de style"
 
@@ -6113,8 +6128,8 @@ msgstr "La page de crédits."
 msgid "The data sent within the body of a request or response message."
 msgstr "Les données envoyées dans le corps d'un message de requête ou de réponse."
 
-msgid "The default TTS instruction sent to OpenAI for all languages unless overridden below."
-msgstr "L'instruction TTS par défaut envoyée à OpenAI pour toutes les langues, sauf remplacement ci-dessous."
+msgid "The default TTS instruction applied to every language unless overridden below. OpenAI uses it as a voice instruction and Gemini as in-prompt accent steering; Azure ignores it."
+msgstr "L'instruction TTS par défaut appliquée à toutes les langues, sauf si elle est remplacée ci-dessous. OpenAI l'utilise comme instruction de voix et Gemini comme orientation d'accent intégrée à l'invite ; Azure l'ignore."
 
 msgid "The entire page is treated as a single section - all text and images stay together as one unit. Best for storybooks, reference books, and any content where each page is self-contained."
 msgstr "La page entière est traitée comme une seule section — tout le texte et les images restent ensemble en une seule unité. Idéal pour les livres d'histoires, les ouvrages de référence et tout contenu où chaque page est autonome."
@@ -6776,6 +6791,9 @@ msgstr "Révision visuelle"
 
 msgid "Visual Review Prompt (read-only)"
 msgstr "Invite de révision visuelle (lecture seule)"
+
+msgid "Visual style editing isn't available for fixed-layout pages yet. You can still edit text inline, swap or crop images, and prune elements."
+msgstr "L'édition visuelle des styles n'est pas encore disponible pour les pages à mise en page fixe. Vous pouvez toujours modifier le texte en ligne, remplacer ou recadrer des images et élaguer des éléments."
 
 msgid "Voice"
 msgstr "Voix"

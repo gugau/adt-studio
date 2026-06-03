@@ -2187,6 +2187,9 @@ msgstr "Çdo iteracion është një thirrje LLM. Vlerat e ulëta janë më të s
 msgid "Each polyp secretes a hard calcium carbonate skeleton. Over hundreds of years, millions of these skeletons build up into the massive reef structures we see today."
 msgstr "Çdo polip sekreton një skelet të fortë karbonati kalciumi. Gjatë qindra viteve, miliona prej këtyre skeletve grumbullohen duke formuar strukturat masive të rifeve që shohim sot."
 
+msgid "Each prompt is applied to whichever provider its language is routed to — for example, Albanian (sq) routed to Gemini receives this as its accent steering."
+msgstr "Çdo udhëzim zbatohet te ofruesi te i cili drejtohet gjuha e tij — për shembull, shqipja (sq) e drejtuar te Gemini e merr këtë si drejtimin e theksit."
+
 msgid "Each section introduces a new theme with worked examples, followed by short practice activities at the end of the page."
 msgstr "Çdo seksion prezanton një temë të re me shembuj të zgjidhur, të ndjekur nga aktivitete të shkurtra praktike në fund të faqes."
 
@@ -3114,6 +3117,9 @@ msgstr "Në libër:"
 msgid "In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
 msgstr "Nëse nuk doni të konvertoni të gjithë librin, rregulloni rrëshqitësit për të përcaktuar cilat faqe do të digjitalizohen."
 
+msgid "In development"
+msgstr "Në zhvillim"
+
 msgid "in the book"
 msgstr "në libër"
 
@@ -3822,6 +3828,12 @@ msgstr "Nuk ka ende imazhe me tituj. Ekzekuto fillimisht hapin e titullimit të 
 
 msgid "No captions for this page"
 msgstr "Nuk ka tituj për këtë faqe"
+
+msgid "No captions match these filters"
+msgstr "Asnjë titull nuk përputhet me këta filtra"
+
+msgid "No captions match your search"
+msgstr "Asnjë titull nuk përputhet me kërkimin tuaj"
 
 msgid "No changes flagged on this page"
 msgstr "Nuk janë sinjalizuar ndryshime në këtë faqe"
@@ -5931,6 +5943,9 @@ msgstr "Strukturon çdo faqe në një pemë seksionesh dhe nyjesh."
 msgid "Style"
 msgstr "Stili"
 
+msgid "Style editing coming soon"
+msgstr "Redaktimi i stilit së shpejti"
+
 msgid "Style guide"
 msgstr "Udhëzues stili"
 
@@ -6112,8 +6127,8 @@ msgstr "Faqja e krediteve."
 msgid "The data sent within the body of a request or response message."
 msgstr "Të dhënat e dërguara brenda trupit të një mesazhi kërkese ose përgjigjeje."
 
-msgid "The default TTS instruction sent to OpenAI for all languages unless overridden below."
-msgstr "Udhëzimi TTS i parazgjedhur i dërguar te OpenAI për të gjitha gjuhët, nëse nuk anashkalohet më poshtë."
+msgid "The default TTS instruction applied to every language unless overridden below. OpenAI uses it as a voice instruction and Gemini as in-prompt accent steering; Azure ignores it."
+msgstr "Udhëzimi i parazgjedhur i TTS që zbatohet për çdo gjuhë, përveçse kur anashkalohet më poshtë. OpenAI e përdor si udhëzim zëri dhe Gemini si drejtim theksi brenda kërkesës; Azure e shpërfill."
 
 msgid "The entire page is treated as a single section - all text and images stay together as one unit. Best for storybooks, reference books, and any content where each page is self-contained."
 msgstr "I gjithë faqja trajtohet si një seksion i vetëm — i gjithë teksti dhe imazhet qëndrojnë bashkë si një njësi. Më e mirë për libra me tregime, libra referencë dhe çdo përmbajtje ku çdo faqe është e vetëmjaftueshme."
@@ -6775,6 +6790,9 @@ msgstr "Rishikim vizual"
 
 msgid "Visual Review Prompt (read-only)"
 msgstr "Prompt i rishikimit vizual (vetëm lexim)"
+
+msgid "Visual style editing isn't available for fixed-layout pages yet. You can still edit text inline, swap or crop images, and prune elements."
+msgstr "Redaktimi vizual i stileve nuk është ende i disponueshëm për faqet me strukturë fikse. Ende mund të redaktoni tekstin në linjë, të zëvendësoni ose prisni imazhe dhe të shkurtoni elemente."
 
 msgid "Voice"
 msgstr "Zë"

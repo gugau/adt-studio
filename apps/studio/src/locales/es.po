@@ -2186,6 +2186,9 @@ msgstr "Cada iteración es una llamada LLM. Valores más bajos son más rápidos
 msgid "Each polyp secretes a hard calcium carbonate skeleton. Over hundreds of years, millions of these skeletons build up into the massive reef structures we see today."
 msgstr "Cada pólipo secreta un esqueleto duro de carbonato de calcio. Durante cientos de años, millones de estos esqueletos se acumulan en las estructuras masivas de arrecifes que vemos hoy."
 
+msgid "Each prompt is applied to whichever provider its language is routed to — for example, Albanian (sq) routed to Gemini receives this as its accent steering."
+msgstr "Cada instrucción se aplica al proveedor al que se enruta su idioma; por ejemplo, el albanés (sq) enrutado a Gemini recibe esto como su guía de acento."
+
 msgid "Each section introduces a new theme with worked examples, followed by short practice activities at the end of the page."
 msgstr "Cada sección introduce un nuevo tema con ejemplos trabajados, seguido de actividades prácticas cortas al final de la página."
 
@@ -3113,6 +3116,9 @@ msgstr "En el libro:"
 msgid "In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
 msgstr "En caso de que no quieras convertir todo el libro, ajusta los controles deslizantes para definir qué páginas se digitalizarán."
 
+msgid "In development"
+msgstr "En desarrollo"
+
 msgid "in the book"
 msgstr "en el libro"
 
@@ -3821,6 +3827,12 @@ msgstr "Aún no hay imágenes con subtítulo. Ejecuta primero el paso de generac
 
 msgid "No captions for this page"
 msgstr "Sin leyendas para esta página"
+
+msgid "No captions match these filters"
+msgstr "No hay leyendas que coincidan con estos filtros"
+
+msgid "No captions match your search"
+msgstr "No hay leyendas que coincidan con tu búsqueda"
 
 msgid "No changes flagged on this page"
 msgstr "No changes flagged on this page"
@@ -5930,6 +5942,9 @@ msgstr "Estructura cada página en un árbol de secciones y nodos."
 msgid "Style"
 msgstr "Estilo"
 
+msgid "Style editing coming soon"
+msgstr "Edición de estilos próximamente"
+
 msgid "Style guide"
 msgstr "Guía de estilo"
 
@@ -6111,8 +6126,8 @@ msgstr "La página de créditos."
 msgid "The data sent within the body of a request or response message."
 msgstr "Los datos enviados en el cuerpo de un mensaje de solicitud o respuesta."
 
-msgid "The default TTS instruction sent to OpenAI for all languages unless overridden below."
-msgstr "La instrucción predeterminada de TTS enviada a OpenAI para todos los idiomas, a menos que se anule a continuación."
+msgid "The default TTS instruction applied to every language unless overridden below. OpenAI uses it as a voice instruction and Gemini as in-prompt accent steering; Azure ignores it."
+msgstr "La instrucción de TTS predeterminada que se aplica a todos los idiomas, salvo que se anule a continuación. OpenAI la usa como instrucción de voz y Gemini como guía de acento dentro del mensaje; Azure la ignora."
 
 msgid "The entire page is treated as a single section - all text and images stay together as one unit. Best for storybooks, reference books, and any content where each page is self-contained."
 msgstr "Toda la página se trata como una sola sección - todo el texto e imágenes permanecen juntos como una unidad. Mejor para libros de cuentos, libros de referencia y cualquier contenido donde cada página sea autónoma."
@@ -6774,6 +6789,9 @@ msgstr "Revisión Visual"
 
 msgid "Visual Review Prompt (read-only)"
 msgstr "Aviso de Revisión Visual (solo lectura)"
+
+msgid "Visual style editing isn't available for fixed-layout pages yet. You can still edit text inline, swap or crop images, and prune elements."
+msgstr "La edición visual de estilos aún no está disponible para páginas de maquetación fija. Aún puedes editar texto en línea, reemplazar o recortar imágenes y eliminar elementos."
 
 msgid "Voice"
 msgstr "Voz"

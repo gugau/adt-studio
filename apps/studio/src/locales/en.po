@@ -2186,6 +2186,9 @@ msgstr "Each iteration is one LLM call. Lower values are faster and cheaper; hig
 msgid "Each polyp secretes a hard calcium carbonate skeleton. Over hundreds of years, millions of these skeletons build up into the massive reef structures we see today."
 msgstr "Each polyp secretes a hard calcium carbonate skeleton. Over hundreds of years, millions of these skeletons build up into the massive reef structures we see today."
 
+msgid "Each prompt is applied to whichever provider its language is routed to — for example, Albanian (sq) routed to Gemini receives this as its accent steering."
+msgstr "Each prompt is applied to whichever provider its language is routed to — for example, Albanian (sq) routed to Gemini receives this as its accent steering."
+
 msgid "Each section introduces a new theme with worked examples, followed by short practice activities at the end of the page."
 msgstr "Each section introduces a new theme with worked examples, followed by short practice activities at the end of the page."
 
@@ -3113,6 +3116,9 @@ msgstr "In book:"
 msgid "In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
 msgstr "In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
 
+msgid "In development"
+msgstr "In development"
+
 msgid "in the book"
 msgstr "in the book"
 
@@ -3821,6 +3827,12 @@ msgstr "No captioned images yet. Run the image-captioning step first."
 
 msgid "No captions for this page"
 msgstr "No captions for this page"
+
+msgid "No captions match these filters"
+msgstr "No captions match these filters"
+
+msgid "No captions match your search"
+msgstr "No captions match your search"
 
 msgid "No changes flagged on this page"
 msgstr "No changes flagged on this page"
@@ -5930,6 +5942,9 @@ msgstr "Structures each page into a tree of sections and nodes."
 msgid "Style"
 msgstr "Style"
 
+msgid "Style editing coming soon"
+msgstr "Style editing coming soon"
+
 msgid "Style guide"
 msgstr "Style guide"
 
@@ -6111,8 +6126,8 @@ msgstr "The credits page."
 msgid "The data sent within the body of a request or response message."
 msgstr "The data sent within the body of a request or response message."
 
-msgid "The default TTS instruction sent to OpenAI for all languages unless overridden below."
-msgstr "The default TTS instruction sent to OpenAI for all languages unless overridden below."
+msgid "The default TTS instruction applied to every language unless overridden below. OpenAI uses it as a voice instruction and Gemini as in-prompt accent steering; Azure ignores it."
+msgstr "The default TTS instruction applied to every language unless overridden below. OpenAI uses it as a voice instruction and Gemini as in-prompt accent steering; Azure ignores it."
 
 msgid "The entire page is treated as a single section - all text and images stay together as one unit. Best for storybooks, reference books, and any content where each page is self-contained."
 msgstr "The entire page is treated as a single section - all text and images stay together as one unit. Best for storybooks, reference books, and any content where each page is self-contained."
@@ -6774,6 +6789,9 @@ msgstr "Visual Review"
 
 msgid "Visual Review Prompt (read-only)"
 msgstr "Visual Review Prompt (read-only)"
+
+msgid "Visual style editing isn't available for fixed-layout pages yet. You can still edit text inline, swap or crop images, and prune elements."
+msgstr "Visual style editing isn't available for fixed-layout pages yet. You can still edit text inline, swap or crop images, and prune elements."
 
 msgid "Voice"
 msgstr "Voice"
