@@ -35,6 +35,7 @@ import { useActiveConfig } from "@/hooks/use-debug"
 import { useStageStatus } from "@/hooks/use-stage-status"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
+import { useNavigate } from "@tanstack/react-router"
 import {
   listDefaultRenderStrategies,
   normalizeDefaultRenderStrategy,
@@ -140,6 +141,7 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
   const persist = usePersistConfig(bookLabel)
   const { apiKey, hasApiKey } = useApiKey()
   const { queueRun } = useBookRun()
+  const navigate = useNavigate()
   const status = useStageStatus("storyboard")
   const sectioningStatus = useStageStatus("sectioning")
   const extractStatus = useStageStatus("extract")
@@ -241,6 +243,12 @@ export function StoryboardLandingPage({ bookLabel }: { bookLabel: string }) {
         ? "sectioning"
         : "storyboard"
     queueRun({ fromStage, toStage: "storyboard", apiKey })
+    // Leave the landing/overview page for the storyboard step view so the run
+    // progression (per-section "Rendering this section…") is visible, matching
+    // the Save & Rerun flow. From the step index this is a no-op (StoryboardIndex
+    // swaps to the view once running); from the settings/overview route it
+    // switches away from the landing page.
+    navigate({ to: "/books/$label/$step", params: { label: bookLabel, step: "storyboard" } })
   }
 
   const isAi = AI_STRATEGIES.has(defaultRenderStrategy)

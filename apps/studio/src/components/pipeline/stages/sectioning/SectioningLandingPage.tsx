@@ -13,6 +13,7 @@ import { useStageStatus } from "@/hooks/use-stage-status"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { usePersistConfig } from "@/hooks/use-persist-config"
+import { useNavigate } from "@tanstack/react-router"
 import { SectioningModeVisual } from "./components/SectioningModeVisual"
 import { SectioningPreview } from "./components/SectioningPreview"
 
@@ -25,6 +26,7 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
   const persist = usePersistConfig(bookLabel)
   const { apiKey, hasApiKey } = useApiKey()
   const { queueRun } = useBookRun()
+  const navigate = useNavigate()
   const status = useStageStatus("sectioning")
   const extractStatus = useStageStatus("extract")
   const extractReady = extractStatus.isCompleted
@@ -90,6 +92,12 @@ export function SectioningLandingPage({ bookLabel }: { bookLabel: string }) {
     // behind it; only pull Extract into the run when it isn't covered.
     const fromStage = extractCovered ? "sectioning" : "extract"
     queueRun({ fromStage, toStage: "sectioning", apiKey })
+    // Leave the landing/overview page for the sectioning step view so the run
+    // progression (pages loading) is visible, matching a from-scratch run. From
+    // the step index this is a no-op (SectioningIndex swaps to the view once
+    // running); from the settings/overview route it switches away from the
+    // landing page.
+    navigate({ to: "/books/$label/$step", params: { label: bookLabel, step: "sectioning" } })
   }
 
   const modeOptions = useMemo(

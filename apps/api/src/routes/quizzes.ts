@@ -16,6 +16,7 @@ import {
   generateQuiz,
   loadBookConfig,
   normalizeLocale,
+  getRenderSectioningRow,
   type QuizPageInput,
 } from "@adt/pipeline"
 import { createLLMModel, createPromptEngine } from "@adt/llm"
@@ -196,7 +197,7 @@ export function createQuizRoutes(
       const batch: QuizPageInput[] = []
       for (const pageId of orderedPageIds) {
         const renderingRow = storage.getLatestNodeData("web-rendering", pageId)
-        const sectioningRow = storage.getLatestNodeData("page-sectioning", pageId)
+        const sectioningRow = getRenderSectioningRow(storage, pageId)
         if (!renderingRow || !sectioningRow) continue
         batch.push({
           pageId,

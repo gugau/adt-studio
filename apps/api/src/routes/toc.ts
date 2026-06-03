@@ -5,6 +5,7 @@ import { HTTPException } from "hono/http-exception"
 import { TocGenerationOutput, PageSectioningOutput, WebRenderingOutput, parseBookLabel } from "@adt/types"
 import type { ContentNodeData } from "@adt/types"
 import { openBookDb, createBookStorage } from "@adt/storage"
+import { getRenderSectioningRow } from "@adt/pipeline"
 
 function safeParseLabel(label: string): string {
   try {
@@ -111,7 +112,7 @@ export function createTocRoutes(booksDir: string): Hono {
         const renderParsed = WebRenderingOutput.safeParse(renderRow.data)
         if (!renderParsed.success) continue
 
-        const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+        const structuringRow = getRenderSectioningRow(storage, page.pageId)
         const structuringParsed = structuringRow ? PageSectioningOutput.safeParse(structuringRow.data) : null
         const sectioning = structuringParsed?.success ? structuringParsed.data : undefined
 

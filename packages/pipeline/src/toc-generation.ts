@@ -15,6 +15,7 @@ import type { LLMModel } from "@adt/llm"
 import type { Storage, PageData } from "@adt/storage"
 import { buildLanguageContext } from "./language-context.js"
 import { stripHtml } from "./glossary.js"
+import { getRenderSectioningRow } from "./render-sectioning.js"
 
 /** Role values (leaves) whose text acts as a section heading for TOC. */
 const HEADING_ROLE_TYPES = new Set(["heading"])
@@ -74,7 +75,7 @@ function collectHeadingsAndToc(
   let originalTocText: string | null = null
 
   for (const page of pages) {
-    const structuringRow = storage.getLatestNodeData("page-sectioning", page.pageId)
+    const structuringRow = getRenderSectioningRow(storage, page.pageId)
     if (!structuringRow) continue
     const parsed = PageSectioningOutput.safeParse(structuringRow.data)
     if (!parsed.success) continue

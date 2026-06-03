@@ -16,6 +16,7 @@ import { useActiveConfig } from "@/hooks/use-debug"
 import { useStageStatus } from "@/hooks/use-stage-status"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
+import { useNavigate } from "@tanstack/react-router"
 import { usePersistConfig } from "@/hooks/use-persist-config"
 import { useComposeBookContext } from "@/hooks/use-compose-book-context"
 import {
@@ -35,6 +36,7 @@ export function CaptionsLandingPage({ bookLabel }: { bookLabel: string }) {
   const persist = usePersistConfig(bookLabel)
   const { apiKey, hasApiKey } = useApiKey()
   const { queueRun } = useBookRun()
+  const navigate = useNavigate()
   const status = useStageStatus("captions")
   const storyboardStatus = useStageStatus("storyboard")
   const storyboardReady = storyboardStatus.isCompleted
@@ -74,6 +76,10 @@ export function CaptionsLandingPage({ bookLabel }: { bookLabel: string }) {
   const handleRun = () => {
     if (!hasApiKey || !storyboardReady || status.isRunning) return
     queueRun({ fromStage: "captions", toStage: "captions", apiKey })
+    // Navigate to the step view so the run progression is visible, matching a
+    // from-scratch run (no-op from the step index; switches away from the
+    // settings/overview route).
+    navigate({ to: "/books/$label/$step", params: { label: bookLabel, step: "captions" } })
   }
 
   const gradeOptions = useMemo(
