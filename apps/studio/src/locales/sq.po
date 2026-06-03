@@ -3117,6 +3117,9 @@ msgstr "Në libër:"
 msgid "In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
 msgstr "Nëse nuk doni të konvertoni të gjithë librin, rregulloni rrëshqitësit për të përcaktuar cilat faqe do të digjitalizohen."
 
+msgid "In development"
+msgstr "Në zhvillim"
+
 msgid "in the book"
 msgstr "në libër"
 
@@ -5940,6 +5943,9 @@ msgstr "Strukturon çdo faqe në një pemë seksionesh dhe nyjesh."
 msgid "Style"
 msgstr "Stili"
 
+msgid "Style editing coming soon"
+msgstr "Redaktimi i stilit së shpejti"
+
 msgid "Style guide"
 msgstr "Udhëzues stili"
 
@@ -6784,6 +6790,9 @@ msgstr "Rishikim vizual"
 
 msgid "Visual Review Prompt (read-only)"
 msgstr "Prompt i rishikimit vizual (vetëm lexim)"
+
+msgid "Visual style editing isn't available for fixed-layout pages yet. You can still edit text inline, swap or crop images, and prune elements."
+msgstr "Redaktimi vizual i stileve nuk është ende i disponueshëm për faqet me strukturë fikse. Ende mund të redaktoni tekstin në linjë, të zëvendësoni ose prisni imazhe dhe të shkurtoni elemente."
 
 msgid "Voice"
 msgstr "Zë"

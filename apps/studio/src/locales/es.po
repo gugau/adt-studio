@@ -3116,6 +3116,9 @@ msgstr "En el libro:"
 msgid "In case you don't want to convert the whole book, adjust the sliders to define which pages will be digitized."
 msgstr "En caso de que no quieras convertir todo el libro, ajusta los controles deslizantes para definir qué páginas se digitalizarán."
 
+msgid "In development"
+msgstr "En desarrollo"
+
 msgid "in the book"
 msgstr "en el libro"
 
@@ -5939,6 +5942,9 @@ msgstr "Estructura cada página en un árbol de secciones y nodos."
 msgid "Style"
 msgstr "Estilo"
 
+msgid "Style editing coming soon"
+msgstr "Edición de estilos próximamente"
+
 msgid "Style guide"
 msgstr "Guía de estilo"
 
@@ -6783,6 +6789,9 @@ msgstr "Revisión Visual"
 
 msgid "Visual Review Prompt (read-only)"
 msgstr "Aviso de Revisión Visual (solo lectura)"
+
+msgid "Visual style editing isn't available for fixed-layout pages yet. You can still edit text inline, swap or crop images, and prune elements."
+msgstr "La edición visual de estilos aún no está disponible para páginas de maquetación fija. Aún puedes editar texto en línea, reemplazar o recortar imágenes y eliminar elementos."
 
 msgid "Voice"
 msgstr "Voz"
