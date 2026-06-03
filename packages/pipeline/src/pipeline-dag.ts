@@ -869,7 +869,13 @@ export async function runFullPipeline(
         const providerModel = resolveSpeechModel(provider, providerConfigs, speechModel)
         const outputFormat = resolveSpeechFormat(provider, config.speech?.format)
         const voice = resolveVoice(provider, item.language, voiceMaps, config.speech?.voice)
-        const instructions = provider === "openai" ? resolveInstructions(item.language, instructionsMap) : ""
+        // OpenAI + Gemini both receive resolved instructions (Gemini embeds them in
+        // the prompt text); Azure has no instruction channel. Must match stage-runner.ts
+        // and tts.ts so the shared TTS cache key (computeSpeechCacheKey) stays consistent.
+        const instructions =
+          provider === "openai" || provider === "gemini"
+            ? resolveInstructions(item.language, instructionsMap)
+            : ""
         const ttsSynthesizer = getSynthesizer(provider)
         const entry = await generateSpeechFile({
           textId: item.textId,

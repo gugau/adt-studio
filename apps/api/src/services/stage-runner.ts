@@ -2151,9 +2151,14 @@ async function runSpeechStep(
         const providerModel = resolveSpeechModel(provider, providerConfigs, speechModel)
         const outputFormat = resolveSpeechFormat(provider, config.speech?.format)
         const voice = resolveVoice(provider, lang, voiceMaps, config.speech?.voice)
-        const instructions = provider === "openai"
-          ? resolveInstructions(lang, instructionsMap)
-          : ""
+        // OpenAI consumes instructions via its `instructions` field; Gemini embeds
+        // them in the prompt text (it rejects systemInstruction). Both paths must
+        // resolve identically here and in the generation loop below so the cache key
+        // (computeSpeechCacheKey) stays in sync with canReuseSpeechEntry.
+        const instructions =
+          provider === "openai" || provider === "gemini"
+            ? resolveInstructions(lang, instructionsMap)
+            : ""
         const existingEntry = existingSpeechEntries.get(entry.id)
 
         if (
@@ -2216,9 +2221,12 @@ async function runSpeechStep(
         const providerModel = resolveSpeechModel(provider, providerConfigs, speechModel)
         const outputFormat = resolveSpeechFormat(provider, config.speech?.format)
         const voice = resolveVoice(provider, item.language, voiceMaps, config.speech?.voice)
-        const instructions = provider === "openai"
-          ? resolveInstructions(item.language, instructionsMap)
-          : ""
+        // Must mirror the reuse-check above: OpenAI + Gemini both receive resolved
+        // instructions (Gemini embeds them in the prompt text), Azure does not.
+        const instructions =
+          provider === "openai" || provider === "gemini"
+            ? resolveInstructions(item.language, instructionsMap)
+            : ""
         let attemptCount = 0
 
         console.log(`[stage-run] ${label}: TTS ${item.textId} → provider=${provider} voice=${voice} model=${providerModel} format=${outputFormat}`)

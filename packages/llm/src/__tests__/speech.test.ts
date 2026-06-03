@@ -228,4 +228,113 @@ describe("createGeminiTTSSynthesizer", () => {
       /response did not include audio data\. Response summary: text="The selected voice is unavailable for this request\."/
     )
   })
+
+  it("embeds instructions as a Director's Chair prompt when provided", async () => {
+    const pcmBytes = new Uint8Array([1, 2, 3, 4])
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    inlineData: {
+                      data: Buffer.from(pcmBytes).toString("base64"),
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    )
+
+    const synth = createGeminiTTSSynthesizer({ apiKey: "gm-test" })
+    await synth.synthesize({
+      model: "gemini-3.1-flash-tts-preview",
+      voice: "Kore",
+      input: "Përshëndetje!",
+      responseFormat: "wav",
+      instructions: "Speak with a Pristina, Kosovo accent.",
+    })
+
+    const sentText = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))
+      .contents[0].parts[0].text as string
+    // Instructions go above the transcript delimiter, transcript below it.
+    expect(sentText).toBe(
+      "### PERFORMANCE\nSpeak with a Pristina, Kosovo accent.\n\n#### TRANSCRIPT\nPërshëndetje!"
+    )
+    // The model must never receive a systemInstruction (rejected by the TTS models).
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).not.toHaveProperty(
+      "systemInstruction"
+    )
+  })
+
+  it("sends the bare transcript when instructions are empty or absent", async () => {
+    const pcmBytes = new Uint8Array([1, 2, 3, 4])
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          candidates: [
+            { content: { parts: [{ inlineData: { data: Buffer.from(pcmBytes).toString("base64") } } ] } },
+          ],
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    )
+
+    const synth = createGeminiTTSSynthesizer({ apiKey: "gm-test" })
+    await synth.synthesize({
+      model: "gemini-3.1-flash-tts-preview",
+      voice: "Kore",
+      input: "Hello world",
+      responseFormat: "wav",
+      instructions: "   ",
+    })
+
+    expect(
+      JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)).contents[0].parts[0].text
+    ).toBe("Hello world")
+  })
+
+  it("re-wraps the short-text punctuation retry with instructions", async () => {
+    const pcmBytes = new Uint8Array([9, 10, 11, 12])
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            candidates: [{ content: { parts: [{ text: "No audio returned." }] } }],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            candidates: [
+              { content: { parts: [{ inlineData: { data: Buffer.from(pcmBytes).toString("base64") } } ] } },
+            ],
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        )
+      )
+
+    const synth = createGeminiTTSSynthesizer({ apiKey: "gm-test" })
+    await synth.synthesize({
+      model: "gemini-3.1-flash-tts-preview",
+      voice: "Kore",
+      input: "Po",
+      responseFormat: "wav",
+      instructions: "Kosovo accent.",
+    })
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    // Retry appends terminal punctuation to the transcript, still inside the wrapper.
+    expect(
+      JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body)).contents[0].parts[0].text
+    ).toBe("### PERFORMANCE\nKosovo accent.\n\n#### TRANSCRIPT\nPo.")
+  })
 })
