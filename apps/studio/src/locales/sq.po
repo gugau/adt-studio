@@ -3823,6 +3823,12 @@ msgstr "Nuk ka ende imazhe me tituj. Ekzekuto fillimisht hapin e titullimit të 
 msgid "No captions for this page"
 msgstr "Nuk ka tituj për këtë faqe"
 
+msgid "No captions match these filters"
+msgstr "Asnjë titull nuk përputhet me këta filtra"
+
+msgid "No captions match your search"
+msgstr "Asnjë titull nuk përputhet me kërkimin tuaj"
+
 msgid "No changes flagged on this page"
 msgstr "Nuk janë sinjalizuar ndryshime në këtë faqe"
 

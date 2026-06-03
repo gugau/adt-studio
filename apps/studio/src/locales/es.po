@@ -3822,6 +3822,12 @@ msgstr "Aún no hay imágenes con subtítulo. Ejecuta primero el paso de generac
 msgid "No captions for this page"
 msgstr "Sin leyendas para esta página"
 
+msgid "No captions match these filters"
+msgstr "No hay leyendas que coincidan con estos filtros"
+
+msgid "No captions match your search"
+msgstr "No hay leyendas que coincidan con tu búsqueda"
+
 msgid "No changes flagged on this page"
 msgstr "No changes flagged on this page"
 
