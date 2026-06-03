@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { createGeminiTTSSynthesizer } from "../speech.js"
+import { createGeminiTTSSynthesizer, transcribeWithWhisper } from "../speech.js"
 
 describe("createGeminiTTSSynthesizer", () => {
   const fetchMock = vi.fn<typeof fetch>()
@@ -336,5 +336,82 @@ describe("createGeminiTTSSynthesizer", () => {
     expect(
       JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body)).contents[0].parts[0].text
     ).toBe("### PERFORMANCE\nKosovo accent.\n\n#### TRANSCRIPT\nPo.")
+  })
+})
+
+describe("transcribeWithWhisper", () => {
+  const fetchMock = vi.fn<typeof fetch>()
+
+  beforeEach(() => {
+    fetchMock.mockReset()
+    vi.stubGlobal("fetch", fetchMock)
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  const transcriptionResponse = () =>
+    new Response(
+      JSON.stringify({
+        text: "vera",
+        duration: 0.9,
+        words: [{ word: "vera", start: 0, end: 0.9 }],
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    )
+
+  it("retries without the language hint when the API rejects it with a 400", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response("Invalid language 'sq'. Supported languages are: ...", {
+          status: 400,
+        }),
+      )
+      .mockResolvedValueOnce(transcriptionResponse())
+
+    const result = await transcribeWithWhisper(
+      Buffer.from([1, 2, 3, 4]),
+      "pg016017_p007.mp3",
+      "sk-test",
+      "sq",
+      "VERA",
+    )
+
+    expect(result.words).toEqual([{ word: "vera", start: 0, end: 0.9 }])
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+
+    // First attempt carries the language hint; the retry drops it.
+    const firstBody = fetchMock.mock.calls[0]?.[1]?.body as FormData
+    const retryBody = fetchMock.mock.calls[1]?.[1]?.body as FormData
+    expect(firstBody.get("language")).toBe("sq")
+    expect(retryBody.has("language")).toBe(false)
+    // The prompt is preserved across the retry.
+    expect(retryBody.get("prompt")).toBe("VERA")
+  })
+
+  it("does not retry (and surfaces the error) on a non-language failure", async () => {
+    fetchMock.mockResolvedValue(
+      new Response("incorrect api key provided", { status: 401 }),
+    )
+
+    await expect(
+      transcribeWithWhisper(Buffer.from([1]), "x.mp3", "sk-bad", "sq"),
+    ).rejects.toThrow(/Whisper transcription failed \(401\)/)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it("succeeds on the first call without retrying when the language is accepted", async () => {
+    fetchMock.mockResolvedValue(transcriptionResponse())
+
+    const result = await transcribeWithWhisper(
+      Buffer.from([1, 2]),
+      "y.mp3",
+      "sk-test",
+      "en",
+    )
+
+    expect(result.duration).toBe(0.9)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 })
