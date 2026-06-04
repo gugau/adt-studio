@@ -17,6 +17,7 @@ import { useApiKey } from "@/hooks/use-api-key"
 import { useBookConfig } from "@/hooks/use-book-config"
 import { usePersistConfig } from "@/hooks/use-persist-config"
 import { useBook } from "@/hooks/use-books"
+import { getBaseLanguage, normalizeLocale } from "@/lib/languages"
 import { displayLang } from "./lib/display-lang"
 import { SelectImagesDialog } from "./components/SelectImagesDialog"
 import { ImageTranslationVisual } from "./components/ImageTranslationVisual"
@@ -43,26 +44,41 @@ export function LanguageLandingPage({ bookLabel }: { bookLabel: string }) {
   const [imageDialogOpen, setImageDialogOpen] = useState(false)
   const seededRef = useRef(false)
 
-  const baseLanguage =
+  // The book's original language drives the implicit base output. Resolve it the
+  // same way as LanguageView/LanguageSettings: prefer an explicit editing-language
+  // override, otherwise the Extract metadata language, normalized to a BCP-47
+  // locale so a localized code (e.g. "es-UY") is preserved.
+  const configuredEditingLanguage =
     typeof activeConfigData?.merged?.editing_language === "string"
       ? (activeConfigData.merged.editing_language as string)
-      : book?.languageCode ?? "en"
+      : null
+  const bookLanguage = book?.languageCode ?? book?.metadata?.language_code ?? null
+  const baseLanguage = normalizeLocale(
+    configuredEditingLanguage ?? bookLanguage ?? "en",
+  )
 
   useEffect(() => {
     if (!activeConfigData || !book) return
     const m = activeConfigData.merged as Record<string, unknown>
     const existing = Array.isArray(m.output_languages)
-      ? (m.output_languages as string[])
+      ? (m.output_languages as string[]).map((code) => normalizeLocale(code))
       : []
 
-    if (!seededRef.current && existing.length === 0 && baseLanguage) {
+    if (!seededRef.current) {
       seededRef.current = true
-      const seeded = [baseLanguage]
-      setOutputLanguages(new Set(seeded))
-      persist({ output_languages: seeded })
-    } else {
-      seededRef.current = true
-      setOutputLanguages(new Set(existing))
+      // The book's original language is always an output. Reconcile its entry
+      // with the current Extract metadata language: replace any stale same-base
+      // entry (e.g. a previously-seeded "es") with the live, possibly localized
+      // code ("es-UY"), keeping foreign output languages untouched. This is how
+      // the source language is "received and updated" from the metadata step.
+      const baseCode = getBaseLanguage(baseLanguage)
+      const foreign = existing.filter((code) => getBaseLanguage(code) !== baseCode)
+      const reconciled = [baseLanguage, ...foreign]
+      setOutputLanguages(new Set(reconciled))
+      const changed =
+        reconciled.length !== existing.length ||
+        reconciled.some((code, i) => code !== existing[i])
+      if (changed) persist({ output_languages: reconciled })
     }
 
     if (m.image_translation && typeof m.image_translation === "object") {
