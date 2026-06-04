@@ -164,6 +164,7 @@ msgid "{0} of {1} items"
 msgstr "{0} sur {1} éléments"
 
 #. placeholder {0}: String(displayPages.length)
+#. placeholder {0}: book.pageCount
 msgid "{0} pages"
 msgstr "{0} pages"
 
@@ -714,6 +715,9 @@ msgstr "Ajoutez une clé API dans les paramètres du livre pour exécuter la tra
 msgid "Add at least one output language to run translation."
 msgstr "Ajoutez au moins une langue de sortie pour exécuter la traduction."
 
+msgid "Add author"
+msgstr "Ajouter un auteur"
+
 msgid "Add Book"
 msgstr "Ajouter un livre"
 
@@ -776,6 +780,9 @@ msgstr "Ajouter un terme"
 
 msgid "Add text"
 msgstr "Ajouter du texte"
+
+msgid "Add the region (e.g. Spanish — Uruguay) so downstream stages use the right localization."
+msgstr "Ajoutez la région (p. ex. Espagnol — Uruguay) pour que les étapes suivantes utilisent la bonne localisation."
 
 msgid "Add the selected provider's API key in Book settings to run speech."
 msgstr "Ajoutez la clé API du fournisseur sélectionné dans les paramètres du livre pour exécuter la parole."
@@ -1126,6 +1133,9 @@ msgstr "Lecteur audio"
 msgid "Author"
 msgstr "Auteur"
 
+msgid "Author name"
+msgstr "Nom de l'auteur"
+
 msgid "Authored by {authorsList}."
 msgstr "Écrit par {authorsList}."
 
@@ -1266,6 +1276,9 @@ msgstr "Infos du livre"
 msgid "Book Language"
 msgstr "Livre Langue"
 
+msgid "Book metadata"
+msgstr "Métadonnées du livre"
+
 msgid "Book order"
 msgstr "Ordre du livre"
 
@@ -1277,6 +1290,9 @@ msgstr "Livre Aperçu"
 
 msgid "Book Summary"
 msgstr "Livre Résumé"
+
+msgid "Book title"
+msgstr "Titre du livre"
 
 msgid "Borders"
 msgstr "Bordures"
@@ -1426,6 +1442,12 @@ msgstr "Changer de langue"
 
 msgid "Change Preset"
 msgstr "Changer de préréglage"
+
+msgid "Change the book language?"
+msgstr "Changer la langue du livre ?"
+
+#~ msgid "Changing the language resets the stages that depend on it."
+#~ msgstr "Changer la langue réinitialise les étapes qui en dépendent."
 
 msgid "Chapter 1: Introduction"
 msgstr "Chapitre 1 : Introduction"
@@ -1762,6 +1784,10 @@ msgstr "Couverture"
 
 msgid "Cover of {title}"
 msgstr "Couverture de {title}"
+
+#. placeholder {0}: String(metadata.cover_page_number)
+msgid "Cover: page {0}"
+msgstr "Couverture : page {0}"
 
 msgid "Coverage"
 msgstr "Couverture"
@@ -2495,6 +2521,9 @@ msgstr "Extrait Texte"
 msgid "Extracting..."
 msgstr "Extraction..."
 
+msgid "Extraction notes"
+msgstr "Notes d'extraction"
+
 msgid "Extraction Prompt"
 msgstr "Extraction Invite"
 
@@ -2553,6 +2582,9 @@ msgstr "Échec du chargement de la liste de contrôle de validation :"
 
 msgid "Failed to read archive"
 msgstr "Échec de la lecture de l'archive"
+
+msgid "Failed to save metadata. Please try again."
+msgstr "Échec de l'enregistrement des métadonnées. Veuillez réessayer."
 
 msgid "Failed:"
 msgstr "Échoué :"
@@ -4950,6 +4982,9 @@ msgstr "Tout supprimer"
 msgid "Remove all sign-language videos?"
 msgstr "Supprimer toutes les vidéos en langue des signes ?"
 
+msgid "Remove author"
+msgstr "Supprimer l'auteur"
+
 msgid "Remove checklist item"
 msgstr "Retirer l'élément de liste de contrôle"
 
@@ -6122,6 +6157,9 @@ msgstr "La communauté des organismes vivants dans un lieu et la façon dont ils
 msgid "The completed stages below will be reset and need to run again before final outputs are available."
 msgstr "Les étapes complétées ci-dessous seront réinitialisées et devront être exécutées à nouveau avant que les résultats finaux ne soient disponibles."
 
+msgid "The completed stages below will be reset and need to run again so they use the new language. Your page sections are kept."
+msgstr "Les étapes terminées ci-dessous seront réinitialisées et devront être réexécutées pour utiliser la nouvelle langue. Vos sections de page sont conservées."
+
 msgid "The credits page."
 msgstr "La page de crédits."
 
@@ -6378,6 +6416,9 @@ msgstr "Horodatages"
 msgid "Tip: {MODIFIER_LABEL}+Click the label to reset."
 msgstr "Astuce : {MODIFIER_LABEL}+Cliquez sur l'étiquette pour réinitialiser."
 
+msgid "Title"
+msgstr "Titre"
+
 msgid "Title and image with text overlaid as a caption — AI matches the source book's visual style."
 msgstr "Titre et image avec texte superposé en tant que sous-titre — l'IA correspond au style visuel du livre source."
 
@@ -6473,6 +6514,9 @@ msgstr "Traduction Invite"
 
 msgid "Translation runs on the typed sections placed by Storyboard. Finish Storyboard before running this stage."
 msgstr "La traduction s'exécute sur les sections tapées placées par le Storyboard. Terminez le Storyboard avant d'exécuter cette étape."
+
+#~ msgid "Translation, captions, glossary, quizzes, table of contents, easy read, speech, and packaging will be reset and need to run again so they use the new language. Your manual page sections are kept."
+#~ msgstr "La traduction, les légendes, le glossaire, les quiz, la table des matières, la lecture facile, la synthèse vocale et l'empaquetage seront réinitialisés et devront être réexécutés pour utiliser la nouvelle langue. Vos sections de page manuelles sont conservées."
 
 msgid "translations"
 msgstr "traductions"
@@ -6599,6 +6643,9 @@ msgstr "Étape inconnue : {step}"
 
 msgid "Unprune image"
 msgstr "Restaurer l'image"
+
+msgid "Unsaved"
+msgstr "Non enregistré"
 
 msgid "Unsaved changes"
 msgstr "Modifications non enregistrées"

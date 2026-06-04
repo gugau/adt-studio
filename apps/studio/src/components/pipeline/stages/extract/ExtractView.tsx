@@ -7,6 +7,7 @@ import { usePages, usePageImage } from "@/hooks/use-pages"
 import { useBookRun } from "@/hooks/use-book-run"
 import { useApiKey } from "@/hooks/use-api-key"
 import { ExtractPageDetail } from "./components/ExtractPageDetail"
+import { BookMetadataPanel } from "./BookMetadataPanel"
 import { LoadingState } from "../../components/LoadingState"
 import { useStepHeader } from "../../components/StepViewRouter"
 import { StageRunCard } from "../../components/StageRunCard"
@@ -302,7 +303,12 @@ export function ExtractView({ bookLabel, selectedPageId: selectedPageIdProp, onS
   // Page grid view
   return (
     <div>
-      {!showRunCard && pageList.length > 0 && <BookBanner bookLabel={bookLabel} pages={pages} metadataRunning={metadataRunning} />}
+      {!showRunCard && pageList.length > 0 && (
+        <>
+          <BookBanner bookLabel={bookLabel} pages={pages} metadataRunning={metadataRunning} />
+          <BookMetadataPanel bookLabel={bookLabel} />
+        </>
+      )}
       <div className="p-4">
       {showRunCard ? (
         <StageRunCard

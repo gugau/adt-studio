@@ -163,6 +163,7 @@ msgid "{0} of {1} items"
 msgstr "{0} nga {1} elemente"
 
 #. placeholder {0}: String(displayPages.length)
+#. placeholder {0}: book.pageCount
 msgid "{0} pages"
 msgstr "{0} faqe"
 
@@ -713,6 +714,9 @@ msgstr "Shto një çelës API në cilësimet e Librit për të ekzekutuar përkt
 msgid "Add at least one output language to run translation."
 msgstr "Shto të paktën një gjuhë dalëse për të ekzekutuar përkthimin."
 
+msgid "Add author"
+msgstr "Shto autor"
+
 msgid "Add Book"
 msgstr "Shto Libër"
 
@@ -775,6 +779,9 @@ msgstr "Shto Term"
 
 msgid "Add text"
 msgstr "Shto tekst"
+
+msgid "Add the region (e.g. Spanish — Uruguay) so downstream stages use the right localization."
+msgstr "Shto rajonin (p.sh. Spanjisht — Uruguai) që fazat pasuese të përdorin lokalizimin e duhur."
 
 msgid "Add the selected provider's API key in Book settings to run speech."
 msgstr "Shto çelësin API të ofruesit të zgjedhur në cilësimet e Librit për të ekzekutuar të folurit."
@@ -1125,6 +1132,9 @@ msgstr "Luajtës audio"
 msgid "Author"
 msgstr "Autor"
 
+msgid "Author name"
+msgstr "Emri i autorit"
+
 msgid "Authored by {authorsList}."
 msgstr "Autorë: {authorsList}."
 
@@ -1265,6 +1275,9 @@ msgstr "Info libri"
 msgid "Book Language"
 msgstr "Gjuha e librit"
 
+msgid "Book metadata"
+msgstr "Të dhënat e librit"
+
 msgid "Book order"
 msgstr "Rendi i librit"
 
@@ -1276,6 +1289,9 @@ msgstr "Pamje paraprake e librit"
 
 msgid "Book Summary"
 msgstr "Përmbledhje e librit"
+
+msgid "Book title"
+msgstr "Titulli i librit"
 
 msgid "Borders"
 msgstr "Kufij"
@@ -1425,6 +1441,12 @@ msgstr "Ndrysho gjuhën"
 
 msgid "Change Preset"
 msgstr "Ndrysho Presetin"
+
+msgid "Change the book language?"
+msgstr "Të ndryshohet gjuha e librit?"
+
+#~ msgid "Changing the language resets the stages that depend on it."
+#~ msgstr "Ndryshimi i gjuhës rivendos fazat që varen prej saj."
 
 msgid "Chapter 1: Introduction"
 msgstr "Kapitulli 1: Hyrje"
@@ -1761,6 +1783,10 @@ msgstr "Kopertinë"
 
 msgid "Cover of {title}"
 msgstr "Kopertina e {title}"
+
+#. placeholder {0}: String(metadata.cover_page_number)
+msgid "Cover: page {0}"
+msgstr "Kapaku: faqja {0}"
 
 msgid "Coverage"
 msgstr "Mbulim"
@@ -2494,6 +2520,9 @@ msgstr "Tekst i nxjerrë"
 msgid "Extracting..."
 msgstr "Duke nxjerrë..."
 
+msgid "Extraction notes"
+msgstr "Shënime nxjerrjeje"
+
 msgid "Extraction Prompt"
 msgstr "Prompt-i i nxjerrjes"
 
@@ -2552,6 +2581,9 @@ msgstr "Dështoi ngarkimi i listës së kontrollit të validimit:"
 
 msgid "Failed to read archive"
 msgstr "Dështoi leximi i arkivit"
+
+msgid "Failed to save metadata. Please try again."
+msgstr "Ruajtja e të dhënave dështoi. Ju lutemi provoni përsëri."
 
 msgid "Failed:"
 msgstr "Dështoi:"
@@ -4949,6 +4981,9 @@ msgstr "Hiq të gjitha"
 msgid "Remove all sign-language videos?"
 msgstr "Hiqni të gjitha videot e gjuhës së shenjave?"
 
+msgid "Remove author"
+msgstr "Hiq autorin"
+
 msgid "Remove checklist item"
 msgstr "Hiq artikullin e listës kontrolluese"
 
@@ -6121,6 +6156,9 @@ msgstr "Bashkësia e organizmave të gjallë në një vend dhe mënyra si ndërv
 msgid "The completed stages below will be reset and need to run again before final outputs are available."
 msgstr "Fazat e përfunduara më poshtë do të resetohen dhe duhet të ekzekutohen sërish para se rezultatet përfundimtare të jenë të disponueshme."
 
+msgid "The completed stages below will be reset and need to run again so they use the new language. Your page sections are kept."
+msgstr "Fazat e përfunduara më poshtë do të rivendosen dhe duhet të ekzekutohen përsëri që të përdorin gjuhën e re. Seksionet e faqes suaj ruhen."
+
 msgid "The credits page."
 msgstr "Faqja e krediteve."
 
@@ -6377,6 +6415,9 @@ msgstr "Vula kohore"
 msgid "Tip: {MODIFIER_LABEL}+Click the label to reset."
 msgstr "Këshillë: {MODIFIER_LABEL}+Kliko etiketën për ta rivendosur."
 
+msgid "Title"
+msgstr "Titulli"
+
 msgid "Title and image with text overlaid as a caption — AI matches the source book's visual style."
 msgstr "Titulli dhe imazhi me tekst të mbivendosur si titull — AI përputhet me stilin vizual të librit burim."
 
@@ -6472,6 +6513,9 @@ msgstr "Udhëzimi i Përkthimit"
 
 msgid "Translation runs on the typed sections placed by Storyboard. Finish Storyboard before running this stage."
 msgstr "Përkthimi ekzekutohet mbi seksionet e shtypura të vendosura nga Storyboard. Përfundo Storyboard para se të ekzekutosh këtë fazë."
+
+#~ msgid "Translation, captions, glossary, quizzes, table of contents, easy read, speech, and packaging will be reset and need to run again so they use the new language. Your manual page sections are kept."
+#~ msgstr "Përkthimi, titrat, fjalori, kuizet, tabela e përmbajtjes, leximi i lehtë, zëri dhe paketimi do të rivendosen dhe duhet të ekzekutohen përsëri që të përdorin gjuhën e re. Seksionet e faqes që keni redaktuar manualisht ruhen."
 
 msgid "translations"
 msgstr "përkthime"
@@ -6598,6 +6642,9 @@ msgstr "Hap i panjohur: {step}"
 
 msgid "Unprune image"
 msgstr "Rikthe imazhin"
+
+msgid "Unsaved"
+msgstr "E paruajtur"
 
 msgid "Unsaved changes"
 msgstr "Ndryshime të paruajtura"

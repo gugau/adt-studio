@@ -2,6 +2,7 @@ import { isElectron } from "@/lib/utils"
 import type {
   AccessibilityAssessmentOutput,
   BookDetail,
+  BookMetadata,
   BookSummary,
   ReviewerPageValidationRecord,
   ReviewerValidationIdentificationField,
@@ -598,6 +599,12 @@ export const api = {
   getBooks: () => request<BookSummary[]>("/books"),
 
   getBook: (label: string) => request<BookDetail>(`/books/${label}`),
+
+  updateMetadata: (label: string, data: BookMetadata) =>
+    request<{ version: number; languageChanged: boolean }>(`/books/${label}/metadata`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
 
   getSourcePdfInfo: (label: string) =>
     request<{ pageCount: number }>(`/books/${label}/source-pdf/info`),
