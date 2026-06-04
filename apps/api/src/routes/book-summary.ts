@@ -11,28 +11,18 @@ import {
   normalizeLocale,
 } from "@adt/pipeline"
 import { createLLMModel, createPromptEngine, createRateLimiter } from "@adt/llm"
+import type { TaskService } from "../services/task-service.js"
 
 export function createBookSummaryRoutes(
   booksDir: string,
   promptsDir: string,
   configPath?: string,
+  taskService?: TaskService,
 ): Hono {
   const app = new Hono()
 
-  // POST /books/:label/book-summary/regenerate — Re-run only the book summary
-  // in the current book language, without touching PDF extraction or metadata.
-  // Used after the Extract metadata language is corrected so the summary tracks
-  // the new language without a full Extract re-run.
-  app.post("/books/:label/book-summary/regenerate", async (c) => {
-    const { label } = c.req.param()
-    const safeLabel = parseBookLabel(label)
-    const apiKey = c.req.header("X-OpenAI-Key")
-    if (!apiKey) {
-      throw new HTTPException(400, {
-        message: "API key required. Set X-OpenAI-Key header.",
-      })
-    }
-
+  /** Regenerate only the book summary in the current book language. */
+  async function regenerate(safeLabel: string, apiKey: string): Promise<{ version: number }> {
     const storage = createBookStorage(safeLabel, booksDir)
     try {
       const config = loadBookConfig(safeLabel, booksDir, configPath)
@@ -47,9 +37,7 @@ export function createBookSummaryRoutes(
         .getPages()
         .map((page) => ({ pageNumber: page.pageNumber, text: page.text }))
       if (summaryPages.length === 0) {
-        throw new HTTPException(400, {
-          message: "No extracted pages to summarize.",
-        })
+        throw new HTTPException(400, { message: "No extracted pages to summarize." })
       }
 
       const cacheDir = path.join(path.resolve(booksDir), safeLabel, ".cache")
@@ -73,7 +61,7 @@ export function createBookSummaryRoutes(
         const version = storage.putNodeData("book-summary", "book", result)
         // Keep the Extract stage complete — this is a targeted refresh.
         storage.markStepCompleted("book-summary")
-        return c.json({ ...result, version })
+        return { version }
       } finally {
         if (previousKey !== undefined) {
           process.env.OPENAI_API_KEY = previousKey
@@ -84,6 +72,35 @@ export function createBookSummaryRoutes(
     } finally {
       storage.close()
     }
+  }
+
+  // POST /books/:label/book-summary/regenerate — Re-run only the book summary in
+  // the current book language, without touching PDF extraction or metadata. Runs
+  // as a background task so it shows in the global task indicator like other
+  // queued work. Used after the Extract metadata language is corrected.
+  app.post("/books/:label/book-summary/regenerate", async (c) => {
+    const { label } = c.req.param()
+    const safeLabel = parseBookLabel(label)
+    const apiKey = c.req.header("X-OpenAI-Key")
+    if (!apiKey) {
+      throw new HTTPException(400, {
+        message: "API key required. Set X-OpenAI-Key header.",
+      })
+    }
+
+    if (taskService) {
+      const { taskId } = taskService.submitTask(
+        safeLabel,
+        "book-summary",
+        "Regenerating book summary",
+        async () => regenerate(safeLabel, apiKey),
+      )
+      return c.json({ taskId, status: "submitted" })
+    }
+
+    // Fallback: run synchronously when no task service is wired.
+    const result = await regenerate(safeLabel, apiKey)
+    return c.json(result)
   })
 
   return app

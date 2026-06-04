@@ -610,7 +610,7 @@ export const api = {
     ),
 
   regenerateBookSummary: (label: string, apiKey: string) =>
-    request<{ summary: string; version: number }>(
+    request<{ taskId?: string; status?: string; version?: number }>(
       `/books/${label}/book-summary/regenerate`,
       {
         method: "POST",

@@ -1772,8 +1772,8 @@ msgstr "Nuk u mund të lexohet ky PDF. Skedari mund të jetë i dëmtuar ose i m
 msgid "Couldn't read this PDF"
 msgstr "Nuk mund të lexohej ky PDF"
 
-msgid "Couldn't regenerate the book summary. Re-run Extract to update it."
-msgstr "Përmbledhja e librit nuk u rigjenerua dot. Ekzekutoni përsëri Nxjerrjen për ta përditësuar."
+#~ msgid "Couldn't regenerate the book summary. Re-run Extract to update it."
+#~ msgstr "Përmbledhja e librit nuk u rigjenerua dot. Ekzekutoni përsëri Nxjerrjen për ta përditësuar."
 
 msgid "Counting occurrences…"
 msgstr "Po numërohen ndodhitë…"
@@ -4955,8 +4955,8 @@ msgstr "Rigenero Easy Read"
 msgid "Regenerate selected images for each output language so that any text burned into them is shown in the target language."
 msgstr "Rigenero imazhet e zgjedhura për çdo gjuhë dalëse, në mënyrë që çdo tekst i djegur mbi to të shfaqet në gjuhën e synuar."
 
-msgid "Regenerating the book summary in the new language…"
-msgstr "Po rigjenerohet përmbledhja e librit në gjuhën e re…"
+#~ msgid "Regenerating the book summary in the new language…"
+#~ msgstr "Po rigjenerohet përmbledhja e librit në gjuhën e re…"
 
 msgid "Region"
 msgstr "Rajon"

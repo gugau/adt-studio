@@ -4,7 +4,6 @@ import {
   ChevronDown,
   FileText,
   Image as ImageIcon,
-  Loader2,
   Pencil,
   Plus,
   Sparkles,
@@ -259,18 +258,6 @@ export function BookMetadataPanel({ bookLabel }: { bookLabel: string }) {
           {updateMetadata.isError && (
             <p className="text-xs text-destructive">
               <Trans>Failed to save metadata. Please try again.</Trans>
-            </p>
-          )}
-
-          {regenerateSummary.isPending && (
-            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Loader2 className="h-3 w-3 animate-spin shrink-0" />
-              <Trans>Regenerating the book summary in the new language…</Trans>
-            </p>
-          )}
-          {regenerateSummary.isError && (
-            <p className="text-xs text-destructive">
-              <Trans>Couldn't regenerate the book summary. Re-run Extract to update it.</Trans>
             </p>
           )}
 

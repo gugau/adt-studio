@@ -35,13 +35,12 @@ export function useUpdateBookMetadata() {
 }
 
 export function useRegenerateBookSummary() {
-  const queryClient = useQueryClient()
+  // Submits a background regeneration task. The book detail is refreshed when
+  // the task completes (handled by the task-event listener in use-book-run),
+  // so there's nothing to invalidate on submit.
   return useMutation({
     mutationFn: ({ label, apiKey }: { label: string; apiKey: string }) =>
       api.regenerateBookSummary(label, apiKey),
-    onSuccess: (_data, { label }) => {
-      queryClient.invalidateQueries({ queryKey: ["books", label] })
-    },
   })
 }
 

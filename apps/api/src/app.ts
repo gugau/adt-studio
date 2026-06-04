@@ -98,7 +98,7 @@ app.route("/api", createPackageRoutes(booksDir, webAssetsDir, configPath, taskSe
 app.route("/api", createPromptRoutes(promptsDir, booksDir))
 app.route("/api", createTextCatalogRoutes(booksDir))
 app.route("/api", createEasyReadRoutes(booksDir, promptsDir, configPath))
-app.route("/api", createBookSummaryRoutes(booksDir, promptsDir, configPath))
+app.route("/api", createBookSummaryRoutes(booksDir, promptsDir, configPath, taskService))
 app.route("/api", createTTSRoutes(booksDir, configPath, taskService))
 app.route(
   "/api",
