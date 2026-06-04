@@ -199,13 +199,10 @@ export function ExtractView({ bookLabel, selectedPageId: selectedPageIdProp, onS
   const metadataRunning = stepState("metadata") === "running"
   // Show pages progressively: once pages appear in the DB (during or after
   // the PDF extraction step), display the grid. Only show the run card when
-  // no pages exist yet — remaining steps run in the background TaskIndicator.
+  // no pages exist yet — remaining steps (and re-queued derived steps like
+  // book-summary) run in the background TaskIndicator without hiding the grid.
   const hasPages = (pages ?? []).length > 0
-  const showRunCard = extractError
-    ? true
-    : extractRunning
-      ? !hasPages
-      : !extractDone
+  const showRunCard = extractError ? true : !hasPages
 
   const handleRetryExtract = useCallback(() => {
     if (!hasApiKey || extractRunning) return
