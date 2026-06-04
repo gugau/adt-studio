@@ -17,7 +17,8 @@ import { useApiKey } from "@/hooks/use-api-key"
 import { useBookConfig } from "@/hooks/use-book-config"
 import { usePersistConfig } from "@/hooks/use-persist-config"
 import { useBook } from "@/hooks/use-books"
-import { getBaseLanguage, normalizeLocale } from "@/lib/languages"
+import { normalizeLocale } from "@/lib/languages"
+import { reconcileSourceOutputLanguage } from "./lib/translations-view-state"
 import { displayLang } from "./lib/display-lang"
 import { SelectImagesDialog } from "./components/SelectImagesDialog"
 import { ImageTranslationVisual } from "./components/ImageTranslationVisual"
@@ -67,17 +68,18 @@ export function LanguageLandingPage({ bookLabel }: { bookLabel: string }) {
     if (!seededRef.current) {
       seededRef.current = true
       // The book's original language is always an output. Reconcile its entry
-      // with the current Extract metadata language: replace any stale same-base
-      // entry (e.g. a previously-seeded "es") with the live, possibly localized
-      // code ("es-UY"), keeping foreign output languages untouched. This is how
-      // the source language is "received and updated" from the metadata step.
-      const baseCode = getBaseLanguage(baseLanguage)
-      const foreign = existing.filter((code) => getBaseLanguage(code) !== baseCode)
-      const reconciled = [baseLanguage, ...foreign]
+      // with the current Extract metadata language so a previously-seeded bare
+      // code is updated to the live, localized one ("es" -> "es-UY"). Only the
+      // stale bare-base seed is replaced — deliberately-added regional variants
+      // (e.g. "en-GB" while the source is "en", or "es-MX" while the source is
+      // "es-UY") are preserved.
+      const reconciled = reconcileSourceOutputLanguage(existing, baseLanguage)
       setOutputLanguages(new Set(reconciled))
+      // Persist only when the set of languages actually changed (ignore reorder).
       const changed =
         reconciled.length !== existing.length ||
-        reconciled.some((code, i) => code !== existing[i])
+        reconciled.some((code) => !existing.includes(code)) ||
+        existing.some((code) => !reconciled.includes(code))
       if (changed) persist({ output_languages: reconciled })
     }
 
