@@ -601,10 +601,22 @@ export const api = {
   getBook: (label: string) => request<BookDetail>(`/books/${label}`),
 
   updateMetadata: (label: string, data: BookMetadata) =>
-    request<{ version: number; languageChanged: boolean }>(`/books/${label}/metadata`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    }),
+    request<{ version: number; languageChanged: boolean; baseLanguageChanged: boolean }>(
+      `/books/${label}/metadata`,
+      {
+        method: "PUT",
+        body: JSON.stringify(data),
+      },
+    ),
+
+  regenerateBookSummary: (label: string, apiKey: string) =>
+    request<{ summary: string; version: number }>(
+      `/books/${label}/book-summary/regenerate`,
+      {
+        method: "POST",
+        headers: { "X-OpenAI-Key": apiKey },
+      },
+    ),
 
   getSourcePdfInfo: (label: string) =>
     request<{ pageCount: number }>(`/books/${label}/source-pdf/info`),

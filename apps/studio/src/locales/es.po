@@ -1771,6 +1771,9 @@ msgstr "No se pudo leer este PDF. El archivo puede estar dañado o protegido con
 msgid "Couldn't read this PDF"
 msgstr "No se pudo leer este PDF"
 
+msgid "Couldn't regenerate the book summary. Re-run Extract to update it."
+msgstr "No se pudo regenerar el resumen del libro. Vuelve a ejecutar Extracción para actualizarlo."
+
 msgid "Counting occurrences…"
 msgstr "Contando ocurrencias…"
 
@@ -4950,6 +4953,9 @@ msgstr "Regenerar Lectura Fácil"
 
 msgid "Regenerate selected images for each output language so that any text burned into them is shown in the target language."
 msgstr "Regenera las imágenes seleccionadas para cada idioma de salida de modo que el texto incrustado en ellas aparezca en el idioma de destino."
+
+msgid "Regenerating the book summary in the new language…"
+msgstr "Regenerando el resumen del libro en el nuevo idioma…"
 
 msgid "Region"
 msgstr "Región"

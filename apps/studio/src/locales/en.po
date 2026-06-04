@@ -1771,6 +1771,9 @@ msgstr "Could not read this PDF. The file may be corrupted or password-protected
 msgid "Couldn't read this PDF"
 msgstr "Couldn't read this PDF"
 
+msgid "Couldn't regenerate the book summary. Re-run Extract to update it."
+msgstr "Couldn't regenerate the book summary. Re-run Extract to update it."
+
 msgid "Counting occurrences…"
 msgstr "Counting occurrences…"
 
@@ -4950,6 +4953,9 @@ msgstr "Regenerate Easy Read"
 
 msgid "Regenerate selected images for each output language so that any text burned into them is shown in the target language."
 msgstr "Regenerate selected images for each output language so that any text burned into them is shown in the target language."
+
+msgid "Regenerating the book summary in the new language…"
+msgstr "Regenerating the book summary in the new language…"
 
 msgid "Region"
 msgstr "Region"

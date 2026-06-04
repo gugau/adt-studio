@@ -289,9 +289,10 @@ export function createBookRoutes(
       const prevLanguage = normalizeLocale(previous.language_code ?? "")
       const nextLanguage = normalizeLocale(parsed.data.language_code ?? "")
       const languageChanged = prevLanguage !== nextLanguage
-      // A locale refinement (es -> es-UY) keeps the same base language, so the
-      // book summary's language is unchanged. Only a true base-language change
-      // (es -> fr) requires regenerating it.
+      // A base-language change (es -> fr) also needs the book summary
+      // regenerated; the client triggers that via the book-summary regenerate
+      // endpoint (which keeps the existing summary visible until it lands)
+      // rather than clearing it here, so the Extract stage isn't reset.
       const baseLanguageChanged =
         getBaseLanguage(prevLanguage) !== getBaseLanguage(nextLanguage)
 
@@ -304,7 +305,7 @@ export function createBookRoutes(
         // these mirrors a "re-run from Storyboard" cascade. Sectioning and
         // Storyboard themselves (page structure, rendering) are language-agnostic
         // and intentionally preserved, along with manual section edits.
-        const nodes = [
+        storage.clearNodesByType([
           "quiz-generation",
           "image-captioning",
           "glossary",
@@ -315,8 +316,8 @@ export function createBookRoutes(
           "tts",
           "tts-timestamps",
           "accessibility-assessment",
-        ]
-        const steps = [
+        ])
+        storage.clearStepRuns([
           "quiz-generation",
           "image-captioning",
           "glossary",
@@ -329,16 +330,7 @@ export function createBookRoutes(
           "word-timestamps",
           "package-web",
           "accessibility-assessment",
-        ]
-        if (baseLanguageChanged) {
-          // The book summary (Extract stage) is written in the book's language
-          // and feeds image captioning, so regenerate it when the base language
-          // actually changes.
-          nodes.push("book-summary")
-          steps.push("book-summary")
-        }
-        storage.clearNodesByType(nodes)
-        storage.clearStepRuns(steps)
+        ])
         // Language-specific translated image variants live in the images table.
         storage.clearTranslatedImages()
       } else {
@@ -346,7 +338,7 @@ export function createBookRoutes(
         storage.clearStepRuns(["package-web"])
       }
 
-      return c.json({ version, languageChanged })
+      return c.json({ version, languageChanged, baseLanguageChanged })
     } finally {
       storage.close()
     }

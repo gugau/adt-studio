@@ -470,7 +470,7 @@ describe("PUT /books/:label/metadata", () => {
     expect(state.quiz).not.toBeNull()
   })
 
-  it("cascades downstream LLM stages on a base-language change, regenerating the summary but keeping page sections", async () => {
+  it("cascades downstream LLM stages on a base-language change, signaling summary regen without clearing it", async () => {
     createTestBook("meta-lang") // seeded language "en"
     seedDownstream("meta-lang")
     const app = createBookRoutes(tmpDir)
@@ -487,6 +487,8 @@ describe("PUT /books/:label/metadata", () => {
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.languageChanged).toBe(true)
+    // Signals the client to regenerate the summary via the dedicated endpoint.
+    expect(body.baseLanguageChanged).toBe(true)
 
     const stored = readMetadata("meta-lang")
     expect((stored?.data as { language_code: string }).language_code).toBe("fr")
@@ -497,10 +499,11 @@ describe("PUT /books/:label/metadata", () => {
     expect(state.quiz).toBeNull()
     expect(state.steps.has("easy-read")).toBe(false)
     expect(state.steps.has("quiz-generation")).toBe(false)
-    // ...the book summary regenerates because the base language changed...
-    expect(state.bookSummary).toBeNull()
-    expect(state.steps.has("book-summary")).toBe(false)
-    // ...but Sectioning (page structure + in-place translation) survives.
+    // ...but the book summary is NOT cleared here — it stays visible and is
+    // refreshed via the book-summary regenerate endpoint, so Extract isn't reset.
+    expect(state.bookSummary).not.toBeNull()
+    expect(state.steps.get("book-summary")).toBe("done")
+    // ...and Sectioning (page structure + in-place translation) survives.
     expect(state.sectioning).not.toBeNull()
     expect(state.steps.get("page-sectioning")).toBe("done")
     expect(state.steps.get("translation")).toBe("done")
@@ -523,6 +526,8 @@ describe("PUT /books/:label/metadata", () => {
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.languageChanged).toBe(true)
+    // Same base language → no summary regeneration signal.
+    expect(body.baseLanguageChanged).toBe(false)
 
     const stored = readMetadata("meta-locale")
     // Normalized to BCP-47 dash form with uppercase region.

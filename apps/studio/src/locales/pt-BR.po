@@ -1771,6 +1771,9 @@ msgstr "Não foi possível ler este PDF. O arquivo pode estar corrompido ou prot
 msgid "Couldn't read this PDF"
 msgstr "Não foi possível ler este PDF"
 
+msgid "Couldn't regenerate the book summary. Re-run Extract to update it."
+msgstr "Não foi possível regenerar o resumo do livro. Execute a Extração novamente para atualizá-lo."
+
 msgid "Counting occurrences…"
 msgstr "Contando ocorrências…"
 
@@ -4950,6 +4953,9 @@ msgstr "Regenerar Leitura Fácil"
 
 msgid "Regenerate selected images for each output language so that any text burned into them is shown in the target language."
 msgstr "Regenera as imagens selecionadas para cada idioma de saída para que qualquer texto fixo nelas seja exibido no idioma de destino."
+
+msgid "Regenerating the book summary in the new language…"
+msgstr "Regenerando o resumo do livro no novo idioma…"
 
 msgid "Region"
 msgstr "Região"

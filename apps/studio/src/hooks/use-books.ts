@@ -34,6 +34,17 @@ export function useUpdateBookMetadata() {
   })
 }
 
+export function useRegenerateBookSummary() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ label, apiKey }: { label: string; apiKey: string }) =>
+      api.regenerateBookSummary(label, apiKey),
+    onSuccess: (_data, { label }) => {
+      queryClient.invalidateQueries({ queryKey: ["books", label] })
+    },
+  })
+}
+
 export function useCreateBook() {
   const queryClient = useQueryClient()
   return useMutation({

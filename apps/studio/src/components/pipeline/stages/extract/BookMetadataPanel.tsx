@@ -4,6 +4,7 @@ import {
   ChevronDown,
   FileText,
   Image as ImageIcon,
+  Loader2,
   Pencil,
   Plus,
   Sparkles,
@@ -12,9 +13,10 @@ import {
 } from "lucide-react"
 import { Trans, useLingui } from "@lingui/react/macro"
 import type { BookMetadata } from "@adt/types"
-import { useBook, useUpdateBookMetadata } from "@/hooks/use-books"
+import { useBook, useUpdateBookMetadata, useRegenerateBookSummary } from "@/hooks/use-books"
+import { useApiKey } from "@/hooks/use-api-key"
 import { LanguagePicker } from "@/components/LanguagePicker"
-import { normalizeLocale } from "@/lib/languages"
+import { getBaseLanguage, normalizeLocale } from "@/lib/languages"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -57,7 +59,9 @@ function draftsEqual(a: MetadataDraft, b: MetadataDraft): boolean {
 export function BookMetadataPanel({ bookLabel }: { bookLabel: string }) {
   const { t } = useLingui()
   const { data: book } = useBook(bookLabel)
+  const { apiKey } = useApiKey()
   const updateMetadata = useUpdateBookMetadata()
+  const regenerateSummary = useRegenerateBookSummary()
 
   const [expanded, setExpanded] = useState(false)
   const [draft, setDraft] = useState<MetadataDraft | null>(null)
@@ -98,9 +102,22 @@ export function BookMetadataPanel({ bookLabel }: { bookLabel: string }) {
         ? normalizeLocale(current.language_code)
         : null,
     }
+    // A base-language change (es -> fr) makes the book summary stale; regenerate
+    // just that step in the new language (keeping the old summary visible until
+    // it lands) instead of re-running the whole Extract stage.
+    const baseChanged =
+      getBaseLanguage(payload.language_code ?? "") !==
+      getBaseLanguage(original.language_code)
     updateMetadata.mutate(
       { label: bookLabel, metadata: payload },
-      { onSuccess: () => setDraft(null) },
+      {
+        onSuccess: () => {
+          setDraft(null)
+          if (baseChanged && apiKey) {
+            regenerateSummary.mutate({ label: bookLabel, apiKey })
+          }
+        },
+      },
     )
   }
 
@@ -242,6 +259,18 @@ export function BookMetadataPanel({ bookLabel }: { bookLabel: string }) {
           {updateMetadata.isError && (
             <p className="text-xs text-destructive">
               <Trans>Failed to save metadata. Please try again.</Trans>
+            </p>
+          )}
+
+          {regenerateSummary.isPending && (
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin shrink-0" />
+              <Trans>Regenerating the book summary in the new language…</Trans>
+            </p>
+          )}
+          {regenerateSummary.isError && (
+            <p className="text-xs text-destructive">
+              <Trans>Couldn't regenerate the book summary. Re-run Extract to update it.</Trans>
             </p>
           )}
 
