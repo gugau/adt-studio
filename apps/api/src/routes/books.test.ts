@@ -379,17 +379,31 @@ describe("PUT /books/:label/config", () => {
 })
 
 describe("PUT /books/:label/metadata", () => {
-  function seedDownstream(label: string): void {
+  function seedDownstream(label: string, languageCode?: string): void {
     const storage = createBookStorage(label, tmpDir)
     try {
+      if (languageCode) {
+        storage.putNodeData("metadata", "book", {
+          title: "Test Book",
+          authors: ["Author"],
+          publisher: null,
+          language_code: languageCode,
+          cover_page_number: 1,
+          reasoning: "test",
+        })
+      }
       // page-sectioning must survive a language change; the rest must be cleared.
       storage.putNodeData("page-sectioning", "pg001", { sections: [] })
       storage.putNodeData("easy-read", "book", { blocks: [] })
       storage.putNodeData("quiz-generation", "book", { quizzes: [] })
+      // book-summary (Extract stage) is written in the book's language and only
+      // regenerates on a true base-language change.
+      storage.putNodeData("book-summary", "book", { summary: "x" })
       storage.markStepCompleted("page-sectioning")
       storage.markStepCompleted("translation")
       storage.markStepCompleted("easy-read")
       storage.markStepCompleted("quiz-generation")
+      storage.markStepCompleted("book-summary")
       storage.markStepCompleted("package-web")
     } finally {
       storage.close()
@@ -414,6 +428,7 @@ describe("PUT /books/:label/metadata", () => {
         easyRead: storage.getLatestNodeData("easy-read", "book"),
         quiz: storage.getLatestNodeData("quiz-generation", "book"),
         sectioning: storage.getLatestNodeData("page-sectioning", "pg001"),
+        bookSummary: storage.getLatestNodeData("book-summary", "book"),
       }
     } finally {
       storage.close()
@@ -455,11 +470,47 @@ describe("PUT /books/:label/metadata", () => {
     expect(state.quiz).not.toBeNull()
   })
 
-  it("cascades downstream LLM stages when language changes, keeping page sections", async () => {
-    createTestBook("meta-lang")
+  it("cascades downstream LLM stages on a base-language change, regenerating the summary but keeping page sections", async () => {
+    createTestBook("meta-lang") // seeded language "en"
     seedDownstream("meta-lang")
     const app = createBookRoutes(tmpDir)
     const res = await app.request("/books/meta-lang/metadata", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "Test Book",
+        authors: ["Author"],
+        publisher: null,
+        language_code: "fr",
+      }),
+    })
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.languageChanged).toBe(true)
+
+    const stored = readMetadata("meta-lang")
+    expect((stored?.data as { language_code: string }).language_code).toBe("fr")
+
+    const state = readState("meta-lang")
+    // Language-dependent outputs cleared...
+    expect(state.easyRead).toBeNull()
+    expect(state.quiz).toBeNull()
+    expect(state.steps.has("easy-read")).toBe(false)
+    expect(state.steps.has("quiz-generation")).toBe(false)
+    // ...the book summary regenerates because the base language changed...
+    expect(state.bookSummary).toBeNull()
+    expect(state.steps.has("book-summary")).toBe(false)
+    // ...but Sectioning (page structure + in-place translation) survives.
+    expect(state.sectioning).not.toBeNull()
+    expect(state.steps.get("page-sectioning")).toBe("done")
+    expect(state.steps.get("translation")).toBe("done")
+  })
+
+  it("keeps the book summary on a locale-only refinement (es -> es-UY)", async () => {
+    createTestBook("meta-locale")
+    seedDownstream("meta-locale", "es") // start from base Spanish
+    const app = createBookRoutes(tmpDir)
+    const res = await app.request("/books/meta-locale/metadata", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -473,20 +524,18 @@ describe("PUT /books/:label/metadata", () => {
     const body = await res.json()
     expect(body.languageChanged).toBe(true)
 
-    const stored = readMetadata("meta-lang")
+    const stored = readMetadata("meta-locale")
     // Normalized to BCP-47 dash form with uppercase region.
     expect((stored?.data as { language_code: string }).language_code).toBe("es-UY")
 
-    const state = readState("meta-lang")
-    // Language-dependent outputs cleared...
+    const state = readState("meta-locale")
+    // Language-dependent LLM outputs still re-run (the locale feeds prompts)...
     expect(state.easyRead).toBeNull()
-    expect(state.quiz).toBeNull()
     expect(state.steps.has("easy-read")).toBe(false)
-    expect(state.steps.has("quiz-generation")).toBe(false)
-    // ...but Sectioning (page structure + in-place translation) survives.
+    // ...but the book summary stays — same base language (Spanish).
+    expect(state.bookSummary).not.toBeNull()
+    expect(state.steps.get("book-summary")).toBe("done")
     expect(state.sectioning).not.toBeNull()
-    expect(state.steps.get("page-sectioning")).toBe("done")
-    expect(state.steps.get("translation")).toBe("done")
   })
 
   it("preserves cover_page_number and reasoning when the client omits them", async () => {

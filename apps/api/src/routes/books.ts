@@ -5,7 +5,7 @@ import { HTTPException } from "hono/http-exception"
 import { parseBookLabel, PIPELINE, BookMetadata } from "@adt/types"
 import { openBookDb, createBookStorage } from "@adt/storage"
 import { countPdfPages } from "@adt/pdf"
-import { normalizeLocale } from "@adt/pipeline"
+import { normalizeLocale, getBaseLanguage } from "@adt/pipeline"
 import {
   listBooks,
   getBook,
@@ -286,9 +286,14 @@ export function createBookRoutes(
         })
       }
 
-      const languageChanged =
-        normalizeLocale(previous.language_code ?? "") !==
-        normalizeLocale(parsed.data.language_code ?? "")
+      const prevLanguage = normalizeLocale(previous.language_code ?? "")
+      const nextLanguage = normalizeLocale(parsed.data.language_code ?? "")
+      const languageChanged = prevLanguage !== nextLanguage
+      // A locale refinement (es -> es-UY) keeps the same base language, so the
+      // book summary's language is unchanged. Only a true base-language change
+      // (es -> fr) requires regenerating it.
+      const baseLanguageChanged =
+        getBaseLanguage(prevLanguage) !== getBaseLanguage(nextLanguage)
 
       const version = storage.putNodeData("metadata", "book", parsed.data)
 
@@ -299,7 +304,7 @@ export function createBookRoutes(
         // these mirrors a "re-run from Storyboard" cascade. Sectioning and
         // Storyboard themselves (page structure, rendering) are language-agnostic
         // and intentionally preserved, along with manual section edits.
-        storage.clearNodesByType([
+        const nodes = [
           "quiz-generation",
           "image-captioning",
           "glossary",
@@ -310,8 +315,8 @@ export function createBookRoutes(
           "tts",
           "tts-timestamps",
           "accessibility-assessment",
-        ])
-        storage.clearStepRuns([
+        ]
+        const steps = [
           "quiz-generation",
           "image-captioning",
           "glossary",
@@ -324,7 +329,16 @@ export function createBookRoutes(
           "word-timestamps",
           "package-web",
           "accessibility-assessment",
-        ])
+        ]
+        if (baseLanguageChanged) {
+          // The book summary (Extract stage) is written in the book's language
+          // and feeds image captioning, so regenerate it when the base language
+          // actually changes.
+          nodes.push("book-summary")
+          steps.push("book-summary")
+        }
+        storage.clearNodesByType(nodes)
+        storage.clearStepRuns(steps)
         // Language-specific translated image variants live in the images table.
         storage.clearTranslatedImages()
       } else {
