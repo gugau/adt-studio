@@ -2,7 +2,6 @@ import { useEffect, useMemo } from "react";
 import { DownloadPage } from "@/components/pages/DownloadPage";
 import { ReleasesPage } from "@/components/pages/ReleasesPage";
 import { CarouselScene } from "@/components/sections/CarouselScene";
-import { ChangelogDeckScene } from "@/components/sections/ChangelogDeckScene";
 import { FeaturesScene } from "@/components/sections/FeaturesScene";
 import { FinaleScene } from "@/components/sections/FinaleScene";
 import { Footer } from "@/components/sections/Footer";
@@ -91,7 +90,6 @@ export function App() {
             <PrinciplesScene />
             <ShowcaseScene />
             <ReleasesScene />
-            <ChangelogDeckScene />
             <FinaleScene />
           </>
         )}
