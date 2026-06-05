@@ -10,6 +10,7 @@ import {
   Loader2,
   Pencil,
   Plus,
+  RotateCcw,
   Sparkles,
   User,
   X,
@@ -21,7 +22,7 @@ import { useBook, useUpdateBookMetadata, useRegenerateBookSummary } from "@/hook
 import { usePageImage } from "@/hooks/use-pages"
 import { useApiKey } from "@/hooks/use-api-key"
 import { LanguagePicker } from "@/components/LanguagePicker"
-import { getBaseLanguage, normalizeLocale } from "@/lib/languages"
+import { getBaseLanguage, getDisplayName, normalizeLocale } from "@/lib/languages"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -114,6 +115,7 @@ export function BookHeader({
       ? normalizeLocale(current.language_code) !== normalizeLocale(original.language_code)
       : false
   const needsConfirmation = languageChanged && affectedStages.length > 0
+  const originalLanguageName = getDisplayName(original?.language_code ?? "")
 
   const update = (patch: Partial<MetadataDraft>) => {
     if (current) setDraft({ ...current, ...patch })
@@ -121,10 +123,11 @@ export function BookHeader({
 
   const persist = () => {
     if (!metadata || !current || !original) return
+    const trimmedAuthors = current.authors.map((a) => a.trim()).filter(Boolean)
     const payload: BookMetadata = {
       ...metadata,
       title: current.title.trim() || null,
-      authors: current.authors.map((a) => a.trim()).filter(Boolean),
+      authors: trimmedAuthors.filter((a, i) => trimmedAuthors.indexOf(a) === i),
       publisher: current.publisher.trim() || null,
       language_code: current.language_code
         ? normalizeLocale(current.language_code)
@@ -333,6 +336,10 @@ export function BookHeader({
                   variant="ghost"
                   size="sm"
                   className="gap-1.5 text-muted-foreground hover:text-foreground"
+                  disabled={
+                    current.authors.length > 0 &&
+                    current.authors[current.authors.length - 1].trim() === ""
+                  }
                   onClick={() => update({ authors: [...current.authors, ""] })}
                 >
                   <Plus className="h-3.5 w-3.5" />
@@ -363,14 +370,36 @@ export function BookHeader({
                 hint={t`Add the region (e.g. Spanish — Uruguay) so downstream stages use the right localization.`}
                 size="default"
               />
+              {languageChanged && (
+                <button
+                  type="button"
+                  onClick={() => update({ language_code: original?.language_code ?? "" })}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  {originalLanguageName ? (
+                    <Trans>Revert to {originalLanguageName}</Trans>
+                  ) : (
+                    <Trans>Revert language change</Trans>
+                  )}
+                </button>
+              )}
               {needsConfirmation && (
-                <p className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900 animate-in fade-in slide-in-from-top-1 duration-200 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200">
-                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  <Trans>
-                    Changing the language resets the completed downstream stages
-                    that depend on it. You'll confirm before it happens.
-                  </Trans>
-                </p>
+                <div className="flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                  <p className="text-xs leading-relaxed text-foreground">
+                    <span className="font-semibold">
+                      <Trans>Changing the language resets downstream work.</Trans>
+                    </span>{" "}
+                    <span className="text-muted-foreground">
+                      <Trans>
+                        Completed language-based stages (quizzes, glossary,
+                        captions, audio) will be cleared and need to run again.
+                        You'll confirm first.
+                      </Trans>
+                    </span>
+                  </p>
+                </div>
               )}
             </div>
 

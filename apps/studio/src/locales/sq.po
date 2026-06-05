@@ -1445,8 +1445,11 @@ msgstr "Ndrysho Presetin"
 msgid "Change the book language?"
 msgstr "Të ndryshohet gjuha e librit?"
 
-msgid "Changing the language resets the completed downstream stages that depend on it. You'll confirm before it happens."
-msgstr "Ndryshimi i gjuhës rivendos fazat e mëvonshme të përfunduara që varen prej saj. Do ta konfirmoni para se të ndodhë."
+msgid "Changing the language resets downstream work."
+msgstr "Ndryshimi i gjuhës rivendos punën e mëvonshme."
+
+#~ msgid "Changing the language resets the completed downstream stages that depend on it. You'll confirm before it happens."
+#~ msgstr "Ndryshimi i gjuhës rivendos fazat e mëvonshme të përfunduara që varen prej saj. Do ta konfirmoni para se të ndodhë."
 
 #~ msgid "Changing the language resets the stages that depend on it."
 #~ msgstr "Ndryshimi i gjuhës rivendos fazat që varen prej saj."
@@ -1636,6 +1639,9 @@ msgstr "Komente"
 
 msgid "Completed"
 msgstr "Përfunduar"
+
+msgid "Completed language-based stages (quizzes, glossary, captions, audio) will be cleared and need to run again. You'll confirm first."
+msgstr "Fazat e përfunduara të bazuara në gjuhë (kuize, glosar, titra, audio) do të fshihen dhe duhet të ekzekutohen sërish. Do ta konfirmoni më parë."
 
 msgid "Completion"
 msgstr "Përfundim"
@@ -5150,6 +5156,12 @@ msgstr "Riprovo"
 
 msgid "Retry Export"
 msgstr "Riprovo Eksportimin"
+
+msgid "Revert language change"
+msgstr "Kthe ndryshimin e gjuhës"
+
+msgid "Revert to {originalLanguageName}"
+msgstr "Kthehu te {originalLanguageName}"
 
 msgid "Review and refine each simplified block side-by-side with the original before packaging."
 msgstr "Rishikoni dhe rafinoni çdo bllok të thjeshtëzuar krahas origjinalit përpara paketimit."

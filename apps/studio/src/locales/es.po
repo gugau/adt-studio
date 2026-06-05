@@ -1444,8 +1444,11 @@ msgstr "Cambiar Preajuste"
 msgid "Change the book language?"
 msgstr "¿Cambiar el idioma del libro?"
 
-msgid "Changing the language resets the completed downstream stages that depend on it. You'll confirm before it happens."
-msgstr "Cambiar el idioma restablece las etapas posteriores completadas que dependen de él. Lo confirmarás antes de que suceda."
+msgid "Changing the language resets downstream work."
+msgstr "Cambiar el idioma restablece el trabajo posterior."
+
+#~ msgid "Changing the language resets the completed downstream stages that depend on it. You'll confirm before it happens."
+#~ msgstr "Cambiar el idioma restablece las etapas posteriores completadas que dependen de él. Lo confirmarás antes de que suceda."
 
 #~ msgid "Changing the language resets the stages that depend on it."
 #~ msgstr "Cambiar el idioma restablece las etapas que dependen de él."
@@ -1635,6 +1638,9 @@ msgstr "Comments"
 
 msgid "Completed"
 msgstr "Completado"
+
+msgid "Completed language-based stages (quizzes, glossary, captions, audio) will be cleared and need to run again. You'll confirm first."
+msgstr "Las etapas completadas basadas en el idioma (cuestionarios, glosario, leyendas, audio) se borrarán y deberán ejecutarse de nuevo. Lo confirmarás primero."
 
 msgid "Completion"
 msgstr "Finalización"
@@ -5149,6 +5155,12 @@ msgstr "Reintentar"
 
 msgid "Retry Export"
 msgstr "Reintentar exportación"
+
+msgid "Revert language change"
+msgstr "Revertir cambio de idioma"
+
+msgid "Revert to {originalLanguageName}"
+msgstr "Revertir a {originalLanguageName}"
 
 msgid "Review and refine each simplified block side-by-side with the original before packaging."
 msgstr "Revisa y refina cada bloque simplificado junto al original antes de empaquetar."
