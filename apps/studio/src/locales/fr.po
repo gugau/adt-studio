@@ -450,6 +450,9 @@ msgstr "Une activité à compléter."
 msgid "A glossary term with this word already exists."
 msgstr "Un terme du glossaire avec ce mot existe déjà."
 
+msgid "A language is required so downstream stages can localize the book."
+msgstr "Une langue est requise pour que les étapes en aval puissent localiser le livre."
+
 msgid "A long row of shelves filled with food in a big store."
 msgstr "Une longue rangée d'étagères remplies de nourriture dans un grand magasin."
 

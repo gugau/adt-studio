@@ -449,6 +449,9 @@ msgstr "Një aktivitet me plotësim boshllëqesh."
 msgid "A glossary term with this word already exists."
 msgstr "Një term glosari me këtë fjalë ekziston tashmë."
 
+msgid "A language is required so downstream stages can localize the book."
+msgstr "Kërkohet një gjuhë që fazat e mëvonshme të mund ta lokalizojnë librin."
+
 msgid "A long row of shelves filled with food in a big store."
 msgstr "Një rresht i gjatë rafte të mbushur me ushqim në një dyqan të madh."
 

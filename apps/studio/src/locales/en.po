@@ -448,6 +448,9 @@ msgstr "A fill-in-the-blank activity."
 msgid "A glossary term with this word already exists."
 msgstr "A glossary term with this word already exists."
 
+msgid "A language is required so downstream stages can localize the book."
+msgstr "A language is required so downstream stages can localize the book."
+
 msgid "A long row of shelves filled with food in a big store."
 msgstr "A long row of shelves filled with food in a big store."
 

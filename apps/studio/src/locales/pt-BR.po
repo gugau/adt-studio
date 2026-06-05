@@ -448,6 +448,9 @@ msgstr "Uma atividade de preencher lacunas."
 msgid "A glossary term with this word already exists."
 msgstr "Já existe um termo de glossário com esta palavra."
 
+msgid "A language is required so downstream stages can localize the book."
+msgstr "Um idioma é obrigatório para que as etapas posteriores possam localizar o livro."
+
 msgid "A long row of shelves filled with food in a big store."
 msgstr "Uma longa fileira de prateleiras cheias de alimentos em uma grande loja."
 

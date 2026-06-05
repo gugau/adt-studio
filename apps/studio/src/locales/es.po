@@ -448,6 +448,9 @@ msgstr "Una actividad de completar espacios en blanco."
 msgid "A glossary term with this word already exists."
 msgstr "Ya existe un término del glosario con esta palabra."
 
+msgid "A language is required so downstream stages can localize the book."
+msgstr "Se requiere un idioma para que las etapas posteriores puedan localizar el libro."
+
 msgid "A long row of shelves filled with food in a big store."
 msgstr "Una larga fila de estantes llenos de comida en una gran tienda."
 
