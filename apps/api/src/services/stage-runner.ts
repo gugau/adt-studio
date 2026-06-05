@@ -1684,7 +1684,26 @@ async function runEasyReadStep(
           onLog: onLlmLog,
           credentials: llmCredentials,
         })
-        const easyRead = await generateEasyRead(blocks, easyReadConfig, easyReadModel)
+        const totalEntries = blocks.reduce((sum, block) => sum + block.entries.length, 0)
+        progress.emit({
+          type: "step-progress",
+          step: "easy-read",
+          message: `0/${totalEntries}`,
+          page: 0,
+          totalPages: totalEntries,
+        })
+        const easyRead = await generateEasyRead(blocks, easyReadConfig, easyReadModel, {
+          concurrency: effectiveConcurrency,
+          onProgress: (completed, total) => {
+            progress.emit({
+              type: "step-progress",
+              step: "easy-read",
+              message: `${completed}/${total}`,
+              page: completed,
+              totalPages: total,
+            })
+          },
+        })
         storage.putNodeData("easy-read", "book", easyRead)
         easyReadEntries = flattenEasyReadEntries(easyRead)
         progress.emit({
