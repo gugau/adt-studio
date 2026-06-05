@@ -1274,8 +1274,8 @@ msgstr "Book info"
 msgid "Book Language"
 msgstr "Book Language"
 
-msgid "Book metadata"
-msgstr "Book metadata"
+#~ msgid "Book metadata"
+#~ msgstr "Book metadata"
 
 msgid "Book order"
 msgstr "Book order"
@@ -1443,6 +1443,9 @@ msgstr "Change Preset"
 
 msgid "Change the book language?"
 msgstr "Change the book language?"
+
+msgid "Changing the language resets the completed downstream stages that depend on it. You'll confirm before it happens."
+msgstr "Changing the language resets the completed downstream stages that depend on it. You'll confirm before it happens."
 
 #~ msgid "Changing the language resets the stages that depend on it."
 #~ msgstr "Changing the language resets the stages that depend on it."
@@ -1765,6 +1768,9 @@ msgstr "Core Pipeline"
 msgid "Correct answer"
 msgstr "Correct answer"
 
+msgid "Correct the metadata extracted from the document."
+msgstr "Correct the metadata extracted from the document."
+
 msgid "Could not read this PDF. The file may be corrupted or password-protected."
 msgstr "Could not read this PDF. The file may be corrupted or password-protected."
 
@@ -1782,6 +1788,9 @@ msgstr "Course"
 
 msgid "Cover"
 msgstr "Cover"
+
+msgid "Cover of {displayTitle}"
+msgstr "Cover of {displayTitle}"
 
 msgid "Cover of {title}"
 msgstr "Cover of {title}"
@@ -2251,6 +2260,12 @@ msgstr "Edit"
 msgid "Edit & enrich"
 msgstr "Edit & enrich"
 
+msgid "Edit book details"
+msgstr "Edit book details"
+
+msgid "Edit book metadata"
+msgstr "Edit book metadata"
+
 msgid "Edit caption"
 msgstr "Edit caption"
 
@@ -2511,6 +2526,9 @@ msgstr "Extracted"
 
 msgid "Extracted Blocks"
 msgstr "Extracted Blocks"
+
+msgid "Extracted from the document"
+msgstr "Extracted from the document"
 
 #. placeholder {0}: String(count)
 msgid "Extracted Images ({0})"
@@ -4863,6 +4881,9 @@ msgstr "Re-running clears later stages"
 msgid "Read the prompt aloud"
 msgstr "Read the prompt aloud"
 
+msgid "Read-only"
+msgstr "Read-only"
+
 msgid "Reader Highlighting"
 msgstr "Reader Highlighting"
 
@@ -6022,6 +6043,9 @@ msgstr "Suggested modification"
 msgid "Suggested modification:"
 msgstr "Suggested modification:"
 
+msgid "Summary"
+msgstr "Summary"
+
 msgid "Summary Prompt"
 msgstr "Summary Prompt"
 
@@ -6648,8 +6672,8 @@ msgstr "Unknown step: {step}"
 msgid "Unprune image"
 msgstr "Unprune image"
 
-msgid "Unsaved"
-msgstr "Unsaved"
+#~ msgid "Unsaved"
+#~ msgstr "Unsaved"
 
 msgid "Unsaved changes"
 msgstr "Unsaved changes"

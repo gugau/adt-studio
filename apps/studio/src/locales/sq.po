@@ -1275,8 +1275,8 @@ msgstr "Info libri"
 msgid "Book Language"
 msgstr "Gjuha e librit"
 
-msgid "Book metadata"
-msgstr "Të dhënat e librit"
+#~ msgid "Book metadata"
+#~ msgstr "Të dhënat e librit"
 
 msgid "Book order"
 msgstr "Rendi i librit"
@@ -1444,6 +1444,9 @@ msgstr "Ndrysho Presetin"
 
 msgid "Change the book language?"
 msgstr "Të ndryshohet gjuha e librit?"
+
+msgid "Changing the language resets the completed downstream stages that depend on it. You'll confirm before it happens."
+msgstr "Ndryshimi i gjuhës rivendos fazat e mëvonshme të përfunduara që varen prej saj. Do ta konfirmoni para se të ndodhë."
 
 #~ msgid "Changing the language resets the stages that depend on it."
 #~ msgstr "Ndryshimi i gjuhës rivendos fazat që varen prej saj."
@@ -1766,6 +1769,9 @@ msgstr "Zinxhiri Kryesor"
 msgid "Correct answer"
 msgstr "Përgjigje e saktë"
 
+msgid "Correct the metadata extracted from the document."
+msgstr "Korrigjoni meta të dhënat e nxjerra nga dokumenti."
+
 msgid "Could not read this PDF. The file may be corrupted or password-protected."
 msgstr "Nuk u mund të lexohet ky PDF. Skedari mund të jetë i dëmtuar ose i mbrojtur me fjalëkalim."
 
@@ -1783,6 +1789,9 @@ msgstr "Kurs"
 
 msgid "Cover"
 msgstr "Kopertinë"
+
+msgid "Cover of {displayTitle}"
+msgstr "Kopertina e {displayTitle}"
 
 msgid "Cover of {title}"
 msgstr "Kopertina e {title}"
@@ -2252,6 +2261,12 @@ msgstr "Redakto"
 msgid "Edit & enrich"
 msgstr "Redakto dhe pasuro"
 
+msgid "Edit book details"
+msgstr "Modifiko detajet e librit"
+
+msgid "Edit book metadata"
+msgstr "Modifiko meta të dhënat e librit"
+
 msgid "Edit caption"
 msgstr "Redakto titullin"
 
@@ -2512,6 +2527,9 @@ msgstr "Nxjerrë"
 
 msgid "Extracted Blocks"
 msgstr "Blloqe të nxjerra"
+
+msgid "Extracted from the document"
+msgstr "Nxjerrë nga dokumenti"
 
 #. placeholder {0}: String(count)
 msgid "Extracted Images ({0})"
@@ -4864,6 +4882,9 @@ msgstr "Ri-ekzekutimi fshin fazat e mëvonshme"
 msgid "Read the prompt aloud"
 msgstr "Lexo kërkesën me zë"
 
+msgid "Read-only"
+msgstr "Vetëm për lexim"
+
 msgid "Reader Highlighting"
 msgstr "Theksimi i Lexuesit"
 
@@ -6023,6 +6044,9 @@ msgstr "Modifikim i sugjeruar"
 msgid "Suggested modification:"
 msgstr "Modifikim i sugjeruar:"
 
+msgid "Summary"
+msgstr "Përmbledhje"
+
 msgid "Summary Prompt"
 msgstr "Prompt Përmbledhjeje"
 
@@ -6649,8 +6673,8 @@ msgstr "Hap i panjohur: {step}"
 msgid "Unprune image"
 msgstr "Rikthe imazhin"
 
-msgid "Unsaved"
-msgstr "E paruajtur"
+#~ msgid "Unsaved"
+#~ msgstr "E paruajtur"
 
 msgid "Unsaved changes"
 msgstr "Ndryshime të paruajtura"

@@ -1276,8 +1276,8 @@ msgstr "Infos du livre"
 msgid "Book Language"
 msgstr "Livre Langue"
 
-msgid "Book metadata"
-msgstr "Métadonnées du livre"
+#~ msgid "Book metadata"
+#~ msgstr "Métadonnées du livre"
 
 msgid "Book order"
 msgstr "Ordre du livre"
@@ -1445,6 +1445,9 @@ msgstr "Changer de préréglage"
 
 msgid "Change the book language?"
 msgstr "Changer la langue du livre ?"
+
+msgid "Changing the language resets the completed downstream stages that depend on it. You'll confirm before it happens."
+msgstr "Changer la langue réinitialise les étapes terminées en aval qui en dépendent. Vous confirmerez avant que cela ne se produise."
 
 #~ msgid "Changing the language resets the stages that depend on it."
 #~ msgstr "Changer la langue réinitialise les étapes qui en dépendent."
@@ -1767,6 +1770,9 @@ msgstr "Pipeline principal"
 msgid "Correct answer"
 msgstr "Bonne réponse"
 
+msgid "Correct the metadata extracted from the document."
+msgstr "Corrigez les métadonnées extraites du document."
+
 msgid "Could not read this PDF. The file may be corrupted or password-protected."
 msgstr "Impossible de lire ce PDF. Le fichier est peut-être corrompu ou protégé par un mot de passe."
 
@@ -1784,6 +1790,9 @@ msgstr "Cours"
 
 msgid "Cover"
 msgstr "Couverture"
+
+msgid "Cover of {displayTitle}"
+msgstr "Couverture de {displayTitle}"
 
 msgid "Cover of {title}"
 msgstr "Couverture de {title}"
@@ -2253,6 +2262,12 @@ msgstr "Modifier"
 msgid "Edit & enrich"
 msgstr "Éditer et enrichir"
 
+msgid "Edit book details"
+msgstr "Modifier les détails du livre"
+
+msgid "Edit book metadata"
+msgstr "Modifier les métadonnées du livre"
+
 msgid "Edit caption"
 msgstr "Modifier la légende"
 
@@ -2513,6 +2528,9 @@ msgstr "Extrait"
 
 msgid "Extracted Blocks"
 msgstr "Blocs extraits"
+
+msgid "Extracted from the document"
+msgstr "Extrait du document"
 
 #. placeholder {0}: String(count)
 msgid "Extracted Images ({0})"
@@ -4865,6 +4883,9 @@ msgstr "Relancer efface les étapes ultérieures"
 msgid "Read the prompt aloud"
 msgstr "Lire l'invite à haute voix"
 
+msgid "Read-only"
+msgstr "Lecture seule"
+
 msgid "Reader Highlighting"
 msgstr "Surlignage du lecteur"
 
@@ -6024,6 +6045,9 @@ msgstr "Modification suggérée"
 msgid "Suggested modification:"
 msgstr "Modification suggérée :"
 
+msgid "Summary"
+msgstr "Résumé"
+
 msgid "Summary Prompt"
 msgstr "Résumé Invite"
 
@@ -6650,8 +6674,8 @@ msgstr "Étape inconnue : {step}"
 msgid "Unprune image"
 msgstr "Restaurer l'image"
 
-msgid "Unsaved"
-msgstr "Non enregistré"
+#~ msgid "Unsaved"
+#~ msgstr "Non enregistré"
 
 msgid "Unsaved changes"
 msgstr "Modifications non enregistrées"
