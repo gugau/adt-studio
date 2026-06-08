@@ -99,3 +99,53 @@ jobs:
         run: pnpm --filter @adt/studio compile --strict
       - name: Check for hardcoded strings
         run: pnpm --filter @adt/studio lint
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # Electron requires additional system libraries on headless Linux
+      - name: Install Electron system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            xvfb \
+            libgtk-3-0 \
+            libgbm-dev \
+            libasound2 \
+            libnss3 \
+            libxss1 \
+            libxtst6
+
+      # Build the desktop app (electron-vite + Studio SPA)
+      - name: Build desktop app
+        run: pnpm build:desktop
+        env:
+          # Disable code signing in CI
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      # Install Playwright browsers (Chromium only; Electron uses bundled Chromium)
+      - name: Install Playwright browser binaries
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run desktop e2e tests
+        run: xvfb-run --auto-servernum -- pnpm test:e2e
+        env:
+          ELECTRON_DISABLE_SANDBOX: '1'
+          CI: 'true'
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

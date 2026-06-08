@@ -72,7 +72,11 @@ export function ToggleCard({
           {description}
         </p>
       </div>
-      <BrandedSwitch checked={checked} decorative disabled={disabled} />
+      {/* inert removes the decorative button from the AT tree entirely;
+          aria-hidden alone is insufficient when a <button> is inside */}
+      <span aria-hidden="true" inert>
+        <BrandedSwitch checked={checked} decorative disabled={disabled} />
+      </span>
     </div>
   )
 }
