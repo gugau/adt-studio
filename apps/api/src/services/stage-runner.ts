@@ -631,10 +631,14 @@ async function runExtractStep(
     progress.emit({ type: "step-complete", step: "metadata" })
     console.log(`[stage-run] ${label}: metadata complete (lang=${metadataResult.language_code})`)
 
-    // Step 3: Book summary from raw page text (no sectioning required).
+    // Step 3: Book summary from raw page text (no sectioning required). Written
+    // in the book's detected language (just extracted above), not English.
     progress.emit({ type: "step-start", step: "book-summary" })
     try {
-      const bookSummaryConfig = buildBookSummaryConfig(config)
+      const summaryLanguage = normalizeLocale(
+        config.editing_language ?? metadataResult.language_code ?? "en"
+      )
+      const bookSummaryConfig = buildBookSummaryConfig(config, summaryLanguage)
       const summaryModel = createLLMModel({
         modelId: bookSummaryConfig.modelId,
         cacheDir,

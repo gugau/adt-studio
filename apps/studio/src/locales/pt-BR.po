@@ -162,6 +162,7 @@ msgid "{0} of {1} items"
 msgstr "{0} de {1} itens"
 
 #. placeholder {0}: String(displayPages.length)
+#. placeholder {0}: book.pageCount
 msgid "{0} pages"
 msgstr "{0} páginas"
 
@@ -447,6 +448,9 @@ msgstr "Uma atividade de preencher lacunas."
 msgid "A glossary term with this word already exists."
 msgstr "Já existe um termo de glossário com esta palavra."
 
+msgid "A language is required so downstream stages can localize the book."
+msgstr "Um idioma é obrigatório para que as etapas posteriores possam localizar o livro."
+
 msgid "A long row of shelves filled with food in a big store."
 msgstr "Uma longa fileira de prateleiras cheias de alimentos em uma grande loja."
 
@@ -712,6 +716,9 @@ msgstr "Adicione uma chave de API nas configurações do Livro para executar tra
 msgid "Add at least one output language to run translation."
 msgstr "Adicione pelo menos um idioma de saída para executar tradução."
 
+msgid "Add author"
+msgstr "Adicionar autor"
+
 msgid "Add Book"
 msgstr "Adicionar livro"
 
@@ -774,6 +781,9 @@ msgstr "Adicionar termo"
 
 msgid "Add text"
 msgstr "Adicionar texto"
+
+msgid "Add the region (e.g. Spanish — Uruguay) so downstream stages use the right localization."
+msgstr "Adicione a região (ex.: Espanhol — Uruguai) para que as etapas seguintes usem a localização correta."
 
 msgid "Add the selected provider's API key in Book settings to run speech."
 msgstr "Adicione a chave de API do provedor selecionado nas configurações do Livro para executar fala."
@@ -1124,6 +1134,9 @@ msgstr "Reprodutor de Áudio"
 msgid "Author"
 msgstr "Autor"
 
+msgid "Author name"
+msgstr "Nome do autor"
+
 msgid "Authored by {authorsList}."
 msgstr "Autoria de {authorsList}."
 
@@ -1264,6 +1277,9 @@ msgstr "Informações do livro"
 msgid "Book Language"
 msgstr "Idioma do livro"
 
+#~ msgid "Book metadata"
+#~ msgstr "Metadados do livro"
+
 msgid "Book order"
 msgstr "Ordem do livro"
 
@@ -1275,6 +1291,9 @@ msgstr "Pré-visualização do Livro"
 
 msgid "Book Summary"
 msgstr "Resumo do livro"
+
+msgid "Book title"
+msgstr "Título do livro"
 
 msgid "Borders"
 msgstr "Bordas"
@@ -1424,6 +1443,18 @@ msgstr "Mudar idioma"
 
 msgid "Change Preset"
 msgstr "Alterar Predefinição"
+
+msgid "Change the book language?"
+msgstr "Alterar o idioma do livro?"
+
+msgid "Changing the language resets downstream work."
+msgstr "Alterar o idioma redefine o trabalho posterior."
+
+#~ msgid "Changing the language resets the completed downstream stages that depend on it. You'll confirm before it happens."
+#~ msgstr "Alterar o idioma redefine as etapas posteriores concluídas que dependem dele. Você confirmará antes que isso aconteça."
+
+#~ msgid "Changing the language resets the stages that depend on it."
+#~ msgstr "Alterar o idioma redefine as etapas que dependem dele."
 
 msgid "Chapter 1: Introduction"
 msgstr "Capítulo 1: Introdução"
@@ -1611,6 +1642,9 @@ msgstr "Comments"
 msgid "Completed"
 msgstr "Concluído"
 
+msgid "Completed language-based stages (quizzes, glossary, captions, audio) will be cleared and need to run again. You'll confirm first."
+msgstr "As etapas concluídas baseadas no idioma (questionários, glossário, legendas, áudio) serão apagadas e precisarão ser executadas novamente. Você confirmará primeiro."
+
 msgid "Completion"
 msgstr "Conclusão"
 
@@ -1743,11 +1777,17 @@ msgstr "Pipeline Principal"
 msgid "Correct answer"
 msgstr "Resposta correta"
 
+msgid "Correct the metadata extracted from the document."
+msgstr "Corrija os metadados extraídos do documento."
+
 msgid "Could not read this PDF. The file may be corrupted or password-protected."
 msgstr "Não foi possível ler este PDF. O arquivo pode estar corrompido ou protegido por senha."
 
 msgid "Couldn't read this PDF"
 msgstr "Não foi possível ler este PDF"
+
+#~ msgid "Couldn't regenerate the book summary. Re-run Extract to update it."
+#~ msgstr "Não foi possível regenerar o resumo do livro. Execute a Extração novamente para atualizá-lo."
 
 msgid "Counting occurrences…"
 msgstr "Contando ocorrências…"
@@ -1758,8 +1798,15 @@ msgstr "Curso"
 msgid "Cover"
 msgstr "Capa"
 
+msgid "Cover of {displayTitle}"
+msgstr "Capa de {displayTitle}"
+
 msgid "Cover of {title}"
 msgstr "Capa de {0}"
+
+#. placeholder {0}: String(metadata.cover_page_number)
+msgid "Cover: page {0}"
+msgstr "Capa: página {0}"
 
 msgid "Coverage"
 msgstr "Cobertura"
@@ -2222,6 +2269,12 @@ msgstr "Editar"
 msgid "Edit & enrich"
 msgstr "Editar e aprimorar"
 
+msgid "Edit book details"
+msgstr "Editar detalhes do livro"
+
+msgid "Edit book metadata"
+msgstr "Editar metadados do livro"
+
 msgid "Edit caption"
 msgstr "Editar legenda"
 
@@ -2483,6 +2536,9 @@ msgstr "Extraído"
 msgid "Extracted Blocks"
 msgstr "Blocos Extraídos"
 
+msgid "Extracted from the document"
+msgstr "Extraído do documento"
+
 #. placeholder {0}: String(count)
 msgid "Extracted Images ({0})"
 msgstr "Imagens extraídas ({0})"
@@ -2492,6 +2548,9 @@ msgstr "Texto extraído"
 
 msgid "Extracting..."
 msgstr "Extraindo..."
+
+msgid "Extraction notes"
+msgstr "Notas de extração"
 
 msgid "Extraction Prompt"
 msgstr "Prompt de extração"
@@ -2551,6 +2610,9 @@ msgstr "Failed to load validation checklist:"
 
 msgid "Failed to read archive"
 msgstr "Falha ao ler o arquivo"
+
+msgid "Failed to save metadata. Please try again."
+msgstr "Não foi possível salvar os metadados. Tente novamente."
 
 msgid "Failed:"
 msgstr "Falhou:"
@@ -4828,6 +4890,9 @@ msgstr "Reexecutar limpa etapas posteriores"
 msgid "Read the prompt aloud"
 msgstr "Leia o prompt em voz alta"
 
+msgid "Read-only"
+msgstr "Somente leitura"
+
 msgid "Reader Highlighting"
 msgstr "Destaque do Leitor"
 
@@ -4919,6 +4984,9 @@ msgstr "Regenerar Leitura Fácil"
 msgid "Regenerate selected images for each output language so that any text burned into them is shown in the target language."
 msgstr "Regenera as imagens selecionadas para cada idioma de saída para que qualquer texto fixo nelas seja exibido no idioma de destino."
 
+#~ msgid "Regenerating the book summary in the new language…"
+#~ msgstr "Regenerando o resumo do livro no novo idioma…"
+
 msgid "Region"
 msgstr "Região"
 
@@ -4947,6 +5015,9 @@ msgstr "Remover tudo"
 
 msgid "Remove all sign-language videos?"
 msgstr "Remover todos os vídeos em linguagem de sinais?"
+
+msgid "Remove author"
+msgstr "Remover autor"
 
 msgid "Remove checklist item"
 msgstr "Remove checklist item"
@@ -5087,6 +5158,12 @@ msgstr "Tentar novamente"
 
 msgid "Retry Export"
 msgstr "Tentar exportar novamente"
+
+msgid "Revert language change"
+msgstr "Reverter alteração de idioma"
+
+msgid "Revert to {originalLanguageName}"
+msgstr "Reverter para {originalLanguageName}"
 
 msgid "Review and refine each simplified block side-by-side with the original before packaging."
 msgstr "Revise e refine cada bloco simplificado lado a lado com o original antes de empacotar."
@@ -5981,6 +6058,9 @@ msgstr "Suggested modification"
 msgid "Suggested modification:"
 msgstr "Suggested modification:"
 
+msgid "Summary"
+msgstr "Resumo"
+
 msgid "Summary Prompt"
 msgstr "Prompt de resumo"
 
@@ -6119,6 +6199,9 @@ msgstr "A comunidade de organismos vivos em um lugar e a forma como interagem en
 
 msgid "The completed stages below will be reset and need to run again before final outputs are available."
 msgstr "As etapas concluídas abaixo serão redefinidas e precisarão ser executadas novamente antes que os resultados finais estejam disponíveis."
+
+msgid "The completed stages below will be reset and need to run again so they use the new language. Your page sections are kept."
+msgstr "As etapas concluídas abaixo serão redefinidas e precisarão ser executadas novamente para usar o novo idioma. Suas seções de página são mantidas."
 
 msgid "The credits page."
 msgstr "A página de créditos."
@@ -6376,6 +6459,9 @@ msgstr "Marcações de tempo"
 msgid "Tip: {MODIFIER_LABEL}+Click the label to reset."
 msgstr "Dica: {MODIFIER_LABEL}+Clique no rótulo para redefinir."
 
+msgid "Title"
+msgstr "Título"
+
 msgid "Title and image with text overlaid as a caption — AI matches the source book's visual style."
 msgstr "Título e imagem com texto sobreposto como legenda — IA corresponde ao estilo visual do livro fonte."
 
@@ -6471,6 +6557,9 @@ msgstr "Prompt de tradução"
 
 msgid "Translation runs on the typed sections placed by Storyboard. Finish Storyboard before running this stage."
 msgstr "A tradução é executada nas seções classificadas colocadas pelo Storyboard. Termine o Storyboard antes de executar esta etapa."
+
+#~ msgid "Translation, captions, glossary, quizzes, table of contents, easy read, speech, and packaging will be reset and need to run again so they use the new language. Your manual page sections are kept."
+#~ msgstr "Tradução, legendas, glossário, questionários, sumário, leitura fácil, voz e empacotamento serão redefinidos e precisarão ser executados novamente para usar o novo idioma. Suas seções de página manuais são mantidas."
 
 msgid "translations"
 msgstr "traduções"
@@ -6597,6 +6686,9 @@ msgstr "Etapa desconhecida: {0}"
 
 msgid "Unprune image"
 msgstr "Restaurar imagem"
+
+#~ msgid "Unsaved"
+#~ msgstr "Não salvo"
 
 msgid "Unsaved changes"
 msgstr "Alterações não salvas"
