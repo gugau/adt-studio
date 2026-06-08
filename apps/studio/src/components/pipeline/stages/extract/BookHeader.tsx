@@ -125,7 +125,10 @@ export function BookHeader({
   })
 
   const values = useStore(form.store, (s) => s.values)
-  const isDirty = useStore(form.store, (s) => s.isDirty)
+  // Use isDefaultValue (value-based) rather than isDirty: TanStack's isDirty is a
+  // sticky "has been touched" flag that stays true after a field is reverted to
+  // its original value, which would keep Save enabled for a no-op metadata write.
+  const isModified = useStore(form.store, (s) => !s.isDefaultValue)
   const canSubmit = useStore(form.store, (s) => s.canSubmit)
 
   if (!book) return null
@@ -150,7 +153,7 @@ export function BookHeader({
   // A language change resets language-dependent downstream stages, so route
   // through the confirmation dialog first; otherwise submit straight away.
   const handleSave = () => {
-    if (!isDirty || !canSubmit || updateMetadata.isPending) return
+    if (!isModified || !canSubmit || updateMetadata.isPending) return
     if (needsConfirmation) {
       setConfirmOpen(true)
     } else {
@@ -275,7 +278,7 @@ export function BookHeader({
                 <Trans>Correct the metadata extracted from the document.</Trans>
               </p>
             </div>
-            {isDirty && unsavedBadge}
+            {isModified && unsavedBadge}
           </div>
 
           {/* Body */}
@@ -512,7 +515,7 @@ export function BookHeader({
               type="submit"
               size="sm"
               className="gap-1.5"
-              disabled={!isDirty || !canSubmit || updateMetadata.isPending}
+              disabled={!isModified || !canSubmit || updateMetadata.isPending}
             >
               {updateMetadata.isPending ? (
                 <>
