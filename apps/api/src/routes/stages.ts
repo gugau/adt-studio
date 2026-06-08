@@ -69,6 +69,20 @@ export function createStageRoutes(
   // POST /books/:label/stages/run — Start or queue a stage-scoped run
   app.post("/books/:label/stages/run", async (c) => {
     const { label } = c.req.param()
+
+    // Validate book label and existence before accepting the run
+    let safeLabel: string
+    try {
+      safeLabel = parseBookLabel(label)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      throw new HTTPException(400, { message })
+    }
+    const bookDir = path.join(path.resolve(booksDir), safeLabel)
+    if (!fs.existsSync(bookDir)) {
+      throw new HTTPException(404, { message: `Book not found: ${safeLabel}` })
+    }
+
     const apiKey = c.req.header("X-OpenAI-Key")
 
     if (!apiKey) {

@@ -60,5 +60,25 @@ export default defineConfig({
         },
       }
     ],
+    testTimeout: 60_000,
+    coverage: {
+      provider: "v8",
+      reportOnFailure: true,
+      reporter: ["text", "html", "json-summary"],
+      reportsDirectory: "./coverage",
+      include: [
+        "packages/*/src/**/*.ts",
+        "apps/api/src/**/*.ts",
+        "apps/studio/src/**/*.ts",
+        "apps/studio/src/**/*.tsx",
+      ],
+      exclude: [
+        "**/__tests__/**",
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/index.ts",
+        "**/*.d.ts",
+      ],
+    },
   },
 })

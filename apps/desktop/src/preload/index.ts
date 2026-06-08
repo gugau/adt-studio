@@ -75,16 +75,22 @@ const api = {
   updates,
 }
 
+// Extend electronAPI with process.type which @electron-toolkit/preload omits.
+const electronAPIExtended = {
+  ...electronAPI,
+  process: { ...electronAPI.process, type: process.type },
+}
+
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
+    contextBridge.exposeInMainWorld('electron', electronAPIExtended)
     contextBridge.exposeInMainWorld('api', api)
   } catch (error) {
     console.error(error)
   }
 } else {
   // @ts-ignore (define in dts)
-  window.electron = electronAPI
+  window.electron = electronAPIExtended
   // @ts-ignore (define in dts)
   window.api = api
 }

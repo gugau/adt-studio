@@ -214,3 +214,67 @@ See [`docs/I18N_ADD_LANGUAGE.md`](docs/I18N_ADD_LANGUAGE.md).
 For complete coding standards, security requirements, patterns, and anti-patterns, see [`docs/GUIDELINES.md`](docs/GUIDELINES.md).
 For technology decisions and reasoning, see [`docs/DECISIONS.md`](docs/DECISIONS.md).
 For per-role responsibilities when assigning focused agent tasks (Code Reviewer, Pipeline Developer, Frontend Developer), see [`docs/AGENT_ROLES.md`](docs/AGENT_ROLES.md).
+
+---
+
+## QA Agent — Desktop E2E Testing
+
+**Role**: Automated QA for the Electron desktop application.  
+**Tools**: Playwright `_electron` API, Playwright HTTP assertions, Node.js `fs`.
+
+### Scope
+
+Tests live in `tests/desktop/` and run via `pnpm test:e2e` (calls `playwright test`).  
+They target the **built** desktop app — run `pnpm build:desktop` before the first run.
+
+### Test files
+
+| File | What it covers |
+|------|---------------|
+| `tests/desktop/setup.ts` | Shared fixtures: Electron launcher, `booksDir`, `apiUrl` |
+| `tests/desktop/electron-bridge.spec.ts` | IPC context bridge — `window.api` channels and types |
+| `tests/desktop/pipeline.spec.ts` | API health, CRUD books, step-status structure |
+| `tests/desktop/stage-queue.spec.ts` | Stage run request validation, queue ordering, SSE stream |
+| `tests/desktop/versioning.spec.ts` | Entity versioning invariant, delete lifecycle |
+
+### LLM mocking
+
+`tests/fixtures/llm-fixtures.ts` provides two strategies:
+
+1. **Cache seed** (`seedLlmCache`) — write pre-computed `{hash}.json` files into the book's  
+   `llm-cache/` dir before launching Electron; the LLM client returns them as hits.
+2. **Mock server** (`startMockLlmServer`) — launches an OpenAI-compatible HTTP server;  
+   set `CUSTOM_OPENAI_BASE_URL` in the Electron env and configure the test book to use  
+   the `custom:` provider prefix.
+
+To generate real cache fixture files: run the pipeline once against `tests/fixtures/raven.pdf`  
+with real credentials, then copy `{booksDir}/{label}/llm-cache/*.json` into  
+`tests/fixtures/llm-cache/` and commit them.
+
+### Isolation
+
+Each test gets its own `--user-data-dir` (a `tmp` directory), which makes  
+`app.getPath('userData')` return an isolated path. The API server's `BOOKS_DIR`  
+is therefore `{tmpDir}/books/` — completely separate from the user's real books.
+
+### Running locally
+
+```bash
+# 1. Build the desktop app (required once)
+pnpm build:desktop
+
+# 2. Run all e2e tests
+pnpm test:e2e
+
+# 3. Run a specific spec
+pnpm test:e2e tests/desktop/electron-bridge.spec.ts
+
+# 4. Enable level-2 versioning tests (requires pre-extracted fixture)
+RAVEN_EXTRACTED_BOOK_DIR=./tests/fixtures/raven-extracted pnpm test:e2e
+```
+
+### CI
+
+The `e2e` job in `.github/workflows/ci.yml` builds the desktop app and runs the suite  
+using `xvfb-run` on Linux. It uploads the Playwright HTML report as a build artifact  
+on failure.

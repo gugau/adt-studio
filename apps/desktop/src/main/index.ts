@@ -34,6 +34,12 @@ import {
 import { checkForUpdates } from "./services/auto-updater";
 import { setStartupError } from "./services/debug-info";
 
+// Enable CDP remote debugging for Playwright E2E tests.
+// Must be called before app.ready so Chromium picks it up at init time.
+if (process.env.PLAYWRIGHT_TEST === '1') {
+  app.commandLine.appendSwitch('remote-debugging-port', '0')
+}
+
 protocol.registerSchemesAsPrivileged([
   STUDIO_APP_SCHEME_PRIVILEGES,
   HTML_RENDER_SCHEME_PRIVILEGES,
