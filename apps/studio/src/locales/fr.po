@@ -450,6 +450,9 @@ msgstr "Une activité à compléter."
 msgid "A glossary term with this word already exists."
 msgstr "Un terme du glossaire avec ce mot existe déjà."
 
+msgid "A language is required so downstream stages can localize the book."
+msgstr "Une langue est requise pour que les étapes en aval puissent localiser le livre."
+
 msgid "A long row of shelves filled with food in a big store."
 msgstr "Une longue rangée d'étagères remplies de nourriture dans un grand magasin."
 
@@ -1446,8 +1449,11 @@ msgstr "Changer de préréglage"
 msgid "Change the book language?"
 msgstr "Changer la langue du livre ?"
 
-msgid "Changing the language resets the completed downstream stages that depend on it. You'll confirm before it happens."
-msgstr "Changer la langue réinitialise les étapes terminées en aval qui en dépendent. Vous confirmerez avant que cela ne se produise."
+msgid "Changing the language resets downstream work."
+msgstr "Changer la langue réinitialise le travail en aval."
+
+#~ msgid "Changing the language resets the completed downstream stages that depend on it. You'll confirm before it happens."
+#~ msgstr "Changer la langue réinitialise les étapes terminées en aval qui en dépendent. Vous confirmerez avant que cela ne se produise."
 
 #~ msgid "Changing the language resets the stages that depend on it."
 #~ msgstr "Changer la langue réinitialise les étapes qui en dépendent."
@@ -1637,6 +1643,9 @@ msgstr "Commentaires"
 
 msgid "Completed"
 msgstr "Terminé"
+
+msgid "Completed language-based stages (quizzes, glossary, captions, audio) will be cleared and need to run again. You'll confirm first."
+msgstr "Les étapes terminées liées à la langue (quiz, glossaire, légendes, audio) seront effacées et devront être réexécutées. Vous confirmerez d'abord."
 
 msgid "Completion"
 msgstr "Achèvement"
@@ -5151,6 +5160,12 @@ msgstr "Réessayer"
 
 msgid "Retry Export"
 msgstr "Réessayer Exporter"
+
+msgid "Revert language change"
+msgstr "Annuler le changement de langue"
+
+msgid "Revert to {originalLanguageName}"
+msgstr "Revenir à {originalLanguageName}"
 
 msgid "Review and refine each simplified block side-by-side with the original before packaging."
 msgstr "Examinez et peaufinez chaque bloc simplifié côte à côte avec l'original avant l'emballage."

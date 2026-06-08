@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import {
   AlertTriangle,
   BookOpen,
@@ -10,10 +10,12 @@ import {
   Loader2,
   Pencil,
   Plus,
+  RotateCcw,
   Sparkles,
   User,
   X,
 } from "lucide-react"
+import { useForm, useStore } from "@tanstack/react-form"
 import { Trans, useLingui } from "@lingui/react/macro"
 import type { BookMetadata } from "@adt/types"
 import type { PageSummaryItem } from "@/api/client"
@@ -21,7 +23,7 @@ import { useBook, useUpdateBookMetadata, useRegenerateBookSummary } from "@/hook
 import { usePageImage } from "@/hooks/use-pages"
 import { useApiKey } from "@/hooks/use-api-key"
 import { LanguagePicker } from "@/components/LanguagePicker"
-import { getBaseLanguage, normalizeLocale } from "@/lib/languages"
+import { getBaseLanguage, getDisplayName, normalizeLocale } from "@/lib/languages"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -36,6 +38,13 @@ interface MetadataDraft {
   language_code: string
 }
 
+const EMPTY_DRAFT: MetadataDraft = {
+  title: "",
+  authors: [],
+  publisher: "",
+  language_code: "",
+}
+
 function toDraft(metadata: BookMetadata): MetadataDraft {
   return {
     title: metadata.title ?? "",
@@ -45,21 +54,11 @@ function toDraft(metadata: BookMetadata): MetadataDraft {
   }
 }
 
-function draftsEqual(a: MetadataDraft, b: MetadataDraft): boolean {
-  return (
-    a.title === b.title &&
-    a.publisher === b.publisher &&
-    normalizeLocale(a.language_code) === normalizeLocale(b.language_code) &&
-    a.authors.length === b.authors.length &&
-    a.authors.every((author, i) => author === b.authors[i])
-  )
-}
-
 /**
  * Book header for the Extract stage. Reads as a banner (cover + title +
- * metadata + summary) and flips in place into an editable form via the Edit
- * button, so users discover that title/authors/publisher/language are
- * correctable right where they read them. Cover, page count, and extraction
+ * metadata + summary) and flips in place into an editable form (TanStack Form)
+ * via the Edit button, so users discover that title/authors/publisher/language
+ * are correctable right where they read them. Cover, page count, and extraction
  * rationale stay read-only. Changing the language warns before saving because
  * it resets the language-dependent downstream stages.
  */
@@ -79,7 +78,6 @@ export function BookHeader({
   const regenerateSummary = useRegenerateBookSummary()
 
   const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState<MetadataDraft | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   const metadata = book?.metadata ?? null
@@ -93,12 +91,42 @@ export function BookHeader({
   const coverPage = pages?.find((p) => p.pageNumber === coverPageNumber)
   const { data: coverImage } = usePageImage(bookLabel, coverPage?.pageId ?? "")
 
-  const current = draft ?? original
+  const form = useForm({
+    defaultValues: original ?? EMPTY_DRAFT,
+    onSubmit: ({ value }) => {
+      if (!metadata || !original) return
+      const trimmedAuthors = value.authors.map((a) => a.trim()).filter(Boolean)
+      const payload: BookMetadata = {
+        ...metadata,
+        title: value.title.trim() || null,
+        authors: trimmedAuthors.filter((a, i) => trimmedAuthors.indexOf(a) === i),
+        publisher: value.publisher.trim() || null,
+        language_code: value.language_code
+          ? normalizeLocale(value.language_code)
+          : null,
+      }
+      // A base-language change (es -> fr) makes the book summary stale; regenerate
+      // just that step in the new language instead of re-running the whole stage.
+      const baseChanged =
+        getBaseLanguage(payload.language_code ?? "") !==
+        getBaseLanguage(original.language_code)
+      updateMetadata.mutate(
+        { label: bookLabel, metadata: payload },
+        {
+          onSuccess: () => {
+            setEditing(false)
+            if (baseChanged && apiKey) {
+              regenerateSummary.mutate({ label: bookLabel, apiKey })
+            }
+          },
+        },
+      )
+    },
+  })
 
-  // Leaving edit mode resets the draft so a reopen starts from the saved values.
-  useEffect(() => {
-    if (!editing) setDraft(null)
-  }, [editing])
+  const values = useStore(form.store, (s) => s.values)
+  const isDirty = useStore(form.store, (s) => s.isDirty)
+  const canSubmit = useStore(form.store, (s) => s.canSubmit)
 
   if (!book) return null
 
@@ -108,51 +136,25 @@ export function BookHeader({
   const displayLanguage = book.languageCode ?? metadata?.language_code
   const summary = book.bookSummary?.summary
 
-  const dirty = current && original ? !draftsEqual(current, original) : false
-  const languageChanged =
-    current && original
-      ? normalizeLocale(current.language_code) !== normalizeLocale(original.language_code)
-      : false
+  const languageChanged = original
+    ? normalizeLocale(values.language_code) !== normalizeLocale(original.language_code)
+    : false
   const needsConfirmation = languageChanged && affectedStages.length > 0
+  const originalLanguageName = getDisplayName(original?.language_code ?? "")
 
-  const update = (patch: Partial<MetadataDraft>) => {
-    if (current) setDraft({ ...current, ...patch })
+  const openEditor = () => {
+    form.reset(metadata ? toDraft(metadata) : EMPTY_DRAFT)
+    setEditing(true)
   }
 
-  const persist = () => {
-    if (!metadata || !current || !original) return
-    const payload: BookMetadata = {
-      ...metadata,
-      title: current.title.trim() || null,
-      authors: current.authors.map((a) => a.trim()).filter(Boolean),
-      publisher: current.publisher.trim() || null,
-      language_code: current.language_code
-        ? normalizeLocale(current.language_code)
-        : null,
-    }
-    // A base-language change (es -> fr) makes the book summary stale; regenerate
-    // just that step in the new language instead of re-running the whole stage.
-    const baseChanged =
-      getBaseLanguage(payload.language_code ?? "") !==
-      getBaseLanguage(original.language_code)
-    updateMetadata.mutate(
-      { label: bookLabel, metadata: payload },
-      {
-        onSuccess: () => {
-          setEditing(false)
-          if (baseChanged && apiKey) {
-            regenerateSummary.mutate({ label: bookLabel, apiKey })
-          }
-        },
-      },
-    )
-  }
-
+  // A language change resets language-dependent downstream stages, so route
+  // through the confirmation dialog first; otherwise submit straight away.
   const handleSave = () => {
+    if (!isDirty || !canSubmit || updateMetadata.isPending) return
     if (needsConfirmation) {
       setConfirmOpen(true)
     } else {
-      persist()
+      form.handleSubmit()
     }
   }
 
@@ -203,7 +205,7 @@ export function BookHeader({
                   variant="outline"
                   size="sm"
                   className="shrink-0 gap-1.5"
-                  onClick={() => setEditing(true)}
+                  onClick={openEditor}
                 >
                   <Pencil className="h-3.5 w-3.5" />
                   <Trans>Edit book metadata</Trans>
@@ -252,12 +254,12 @@ export function BookHeader({
       )}
 
       {/* Edit mode */}
-      {editing && current && metadata && (
+      {editing && metadata && (
         <form
           className="animate-in fade-in duration-200"
           onSubmit={(e) => {
             e.preventDefault()
-            if (dirty && !updateMetadata.isPending) handleSave()
+            handleSave()
           }}
         >
           {/* Header strip */}
@@ -273,106 +275,172 @@ export function BookHeader({
                 <Trans>Correct the metadata extracted from the document.</Trans>
               </p>
             </div>
-            {dirty && unsavedBadge}
+            {isDirty && unsavedBadge}
           </div>
 
           {/* Body */}
           <div className="space-y-5 p-4">
             {/* Title */}
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">
-                <Trans>Title</Trans>
-              </Label>
-              <Input
-                autoFocus
-                value={current.title}
-                onChange={(e) => update({ title: e.target.value })}
-                placeholder={t`Book title`}
-                className="font-medium"
-              />
-            </div>
+            <form.Field name="title">
+              {(field) => (
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">
+                    <Trans>Title</Trans>
+                  </Label>
+                  <Input
+                    autoFocus
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                    placeholder={t`Book title`}
+                    className="font-medium"
+                  />
+                </div>
+              )}
+            </form.Field>
 
             {/* Authors */}
-            <div className="space-y-1.5">
-              <Label className="flex items-center gap-1.5 text-sm font-medium">
-                <User className="h-3.5 w-3.5 text-muted-foreground" />
-                <Trans>Authors</Trans>
-              </Label>
-              <div className="space-y-2">
-                {current.authors.length > 0 && (
-                  <div className="space-y-2">
-                    {current.authors.map((author, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <Input
-                          value={author}
-                          onChange={(e) => {
-                            const authors = [...current.authors]
-                            authors[i] = e.target.value
-                            update({ authors })
-                          }}
-                          placeholder={t`Author name`}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label={t`Remove author`}
-                          className="shrink-0 text-muted-foreground hover:text-destructive"
-                          onClick={() =>
-                            update({ authors: current.authors.filter((_, j) => j !== i) })
-                          }
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
+            <form.Field name="authors" mode="array">
+              {(arrayField) => {
+                const authors = arrayField.state.value
+                const lastEmpty =
+                  authors.length > 0 && authors[authors.length - 1].trim() === ""
+                return (
+                  <div className="space-y-1.5">
+                    <Label className="flex items-center gap-1.5 text-sm font-medium">
+                      <User className="h-3.5 w-3.5 text-muted-foreground" />
+                      <Trans>Authors</Trans>
+                    </Label>
+                    <div className="space-y-2">
+                      {authors.length > 0 && (
+                        <div className="space-y-2">
+                          {authors.map((_, i) => (
+                            <form.Field key={i} name={`authors[${i}]`}>
+                              {(subField) => (
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    value={subField.state.value}
+                                    onChange={(e) => subField.handleChange(e.target.value)}
+                                    onBlur={subField.handleBlur}
+                                    placeholder={t`Author name`}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    aria-label={t`Remove author`}
+                                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                                    onClick={() => arrayField.removeValue(i)}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              )}
+                            </form.Field>
+                          ))}
+                        </div>
+                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="gap-1.5 text-muted-foreground hover:text-foreground"
+                        disabled={lastEmpty}
+                        onClick={() => arrayField.pushValue("")}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        <Trans>Add author</Trans>
+                      </Button>
+                    </div>
                   </div>
-                )}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="gap-1.5 text-muted-foreground hover:text-foreground"
-                  onClick={() => update({ authors: [...current.authors, ""] })}
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <Trans>Add author</Trans>
-                </Button>
-              </div>
-            </div>
+                )
+              }}
+            </form.Field>
 
             {/* Publisher */}
-            <div className="space-y-1.5">
-              <Label className="flex items-center gap-1.5 text-sm font-medium">
-                <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                <Trans>Publisher</Trans>
-              </Label>
-              <Input
-                value={current.publisher}
-                onChange={(e) => update({ publisher: e.target.value })}
-                placeholder={t`Publisher`}
-              />
-            </div>
+            <form.Field name="publisher">
+              {(field) => (
+                <div className="space-y-1.5">
+                  <Label className="flex items-center gap-1.5 text-sm font-medium">
+                    <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                    <Trans>Publisher</Trans>
+                  </Label>
+                  <Input
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                    placeholder={t`Publisher`}
+                  />
+                </div>
+              )}
+            </form.Field>
 
             {/* Language */}
-            <div className="space-y-1.5">
-              <LanguagePicker
-                selected={current.language_code}
-                onSelect={(v) => update({ language_code: v })}
-                label={t`Original language`}
-                hint={t`Add the region (e.g. Spanish — Uruguay) so downstream stages use the right localization.`}
-                size="default"
-              />
-              {needsConfirmation && (
-                <p className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900 animate-in fade-in slide-in-from-top-1 duration-200 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200">
-                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  <Trans>
-                    Changing the language resets the completed downstream stages
-                    that depend on it. You'll confirm before it happens.
-                  </Trans>
-                </p>
-              )}
-            </div>
+            <form.Field
+              name="language_code"
+              validators={{
+                onChange: ({ value }) =>
+                  value.trim()
+                    ? undefined
+                    : t`A language is required so downstream stages can localize the book.`,
+                onMount: ({ value }) =>
+                  value.trim()
+                    ? undefined
+                    : t`A language is required so downstream stages can localize the book.`,
+              }}
+            >
+              {(field) => {
+                const error = field.state.meta.errors[0]
+                return (
+                  <div className="space-y-1.5">
+                    <LanguagePicker
+                      selected={field.state.value}
+                      onSelect={(v) => field.handleChange(v)}
+                      label={t`Original language`}
+                      hint={t`Add the region (e.g. Spanish — Uruguay) so downstream stages use the right localization.`}
+                      size="default"
+                    />
+                    {error && (
+                      <p className="flex items-center gap-1.5 text-xs font-medium text-destructive">
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                        {error}
+                      </p>
+                    )}
+                    {languageChanged && (
+                      <button
+                        type="button"
+                        onClick={() => field.handleChange(original?.language_code ?? "")}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        <RotateCcw className="h-3 w-3" />
+                        {originalLanguageName ? (
+                          <Trans>Revert to {originalLanguageName}</Trans>
+                        ) : (
+                          <Trans>Revert language change</Trans>
+                        )}
+                      </button>
+                    )}
+                    {needsConfirmation && (
+                      <div className="flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                        <p className="text-xs leading-relaxed text-foreground">
+                          <span className="font-semibold">
+                            <Trans>Changing the language resets downstream work.</Trans>
+                          </span>{" "}
+                          <span className="text-muted-foreground">
+                            <Trans>
+                              Completed language-based stages (quizzes, glossary,
+                              captions, audio) will be cleared and need to run again.
+                              You'll confirm first.
+                            </Trans>
+                          </span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )
+              }}
+            </form.Field>
 
             {/* Extracted info (read-only) */}
             <div className="space-y-3 rounded-lg border border-dashed bg-muted/30 p-3">
@@ -444,7 +512,7 @@ export function BookHeader({
               type="submit"
               size="sm"
               className="gap-1.5"
-              disabled={!dirty || updateMetadata.isPending}
+              disabled={!isDirty || !canSubmit || updateMetadata.isPending}
             >
               {updateMetadata.isPending ? (
                 <>
@@ -475,7 +543,7 @@ export function BookHeader({
         confirmColorClass="bg-blue-600 hover:bg-blue-700"
         onConfirm={() => {
           setConfirmOpen(false)
-          persist()
+          form.handleSubmit()
         }}
       />
     </div>

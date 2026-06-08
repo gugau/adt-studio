@@ -448,6 +448,9 @@ msgstr "Uma atividade de preencher lacunas."
 msgid "A glossary term with this word already exists."
 msgstr "Já existe um termo de glossário com esta palavra."
 
+msgid "A language is required so downstream stages can localize the book."
+msgstr "Um idioma é obrigatório para que as etapas posteriores possam localizar o livro."
+
 msgid "A long row of shelves filled with food in a big store."
 msgstr "Uma longa fileira de prateleiras cheias de alimentos em uma grande loja."
 
@@ -1444,8 +1447,11 @@ msgstr "Alterar Predefinição"
 msgid "Change the book language?"
 msgstr "Alterar o idioma do livro?"
 
-msgid "Changing the language resets the completed downstream stages that depend on it. You'll confirm before it happens."
-msgstr "Alterar o idioma redefine as etapas posteriores concluídas que dependem dele. Você confirmará antes que isso aconteça."
+msgid "Changing the language resets downstream work."
+msgstr "Alterar o idioma redefine o trabalho posterior."
+
+#~ msgid "Changing the language resets the completed downstream stages that depend on it. You'll confirm before it happens."
+#~ msgstr "Alterar o idioma redefine as etapas posteriores concluídas que dependem dele. Você confirmará antes que isso aconteça."
 
 #~ msgid "Changing the language resets the stages that depend on it."
 #~ msgstr "Alterar o idioma redefine as etapas que dependem dele."
@@ -1635,6 +1641,9 @@ msgstr "Comments"
 
 msgid "Completed"
 msgstr "Concluído"
+
+msgid "Completed language-based stages (quizzes, glossary, captions, audio) will be cleared and need to run again. You'll confirm first."
+msgstr "As etapas concluídas baseadas no idioma (questionários, glossário, legendas, áudio) serão apagadas e precisarão ser executadas novamente. Você confirmará primeiro."
 
 msgid "Completion"
 msgstr "Conclusão"
@@ -5149,6 +5158,12 @@ msgstr "Tentar novamente"
 
 msgid "Retry Export"
 msgstr "Tentar exportar novamente"
+
+msgid "Revert language change"
+msgstr "Reverter alteração de idioma"
+
+msgid "Revert to {originalLanguageName}"
+msgstr "Reverter para {originalLanguageName}"
 
 msgid "Review and refine each simplified block side-by-side with the original before packaging."
 msgstr "Revise e refine cada bloco simplificado lado a lado com o original antes de empacotar."
