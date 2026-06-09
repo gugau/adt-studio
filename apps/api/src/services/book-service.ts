@@ -50,13 +50,32 @@ function resolveTimestamps(
   pdfPath: string
 ): { createdAt: string; modifiedAt: string } {
   const dirStat = fs.statSync(bookDir)
-  const createdMs = dirStat.birthtimeMs || dirStat.ctimeMs
 
-  const candidates: number[] = [dirStat.mtimeMs]
-  if (fs.existsSync(dbPath)) candidates.push(fs.statSync(dbPath).mtimeMs)
-  if (fs.existsSync(pdfPath)) candidates.push(fs.statSync(pdfPath).mtimeMs)
+  // Base both timestamps on the real content/config files, never on the directory's
+  // mtime/ctime. node-sqlite3-wasm creates and removes a `<label>.db.lock` directory
+  // (plus -journal/-wal/-shm files) inside the book folder on every DB open/close,
+  // which bumps the folder's mtime AND ctime to "now" on every launch (POSIX). Since
+  // both startup cleanup and listBooks open every DB, trusting the directory's
+  // mtime/ctime would collapse these timestamps to the last-launch time for all
+  // books, breaking the "Last modified" / "Created" sorts. The .db/.pdf/config.yaml
+  // mtimes only advance on real edits.
+  const configPath = path.join(bookDir, "config.yaml")
+  const mtimes: number[] = []
+  if (fs.existsSync(dbPath)) mtimes.push(fs.statSync(dbPath).mtimeMs)
+  if (fs.existsSync(pdfPath)) mtimes.push(fs.statSync(pdfPath).mtimeMs)
+  if (fs.existsSync(configPath)) mtimes.push(fs.statSync(configPath).mtimeMs)
 
-  const modifiedMs = Math.max(...candidates)
+  // modifiedAt: most recent edit to any content file (fall back to the dir mtime
+  // only for an empty/new book dir with no content files yet).
+  const modifiedMs = mtimes.length > 0 ? Math.max(...mtimes) : dirStat.mtimeMs
+
+  // createdAt: the directory's true birth time when the filesystem reports it;
+  // otherwise the earliest content mtime — NOT ctime, which is bumped on every
+  // launch by the .lock churn described above (some filesystems report birthtimeMs
+  // as 0, e.g. certain Docker volume drivers / network mounts).
+  const createdMs =
+    dirStat.birthtimeMs || (mtimes.length > 0 ? Math.min(...mtimes) : dirStat.mtimeMs)
+
   return { createdAt: toIsoDate(createdMs), modifiedAt: toIsoDate(modifiedMs) }
 }
 
