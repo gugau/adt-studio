@@ -7,6 +7,7 @@ import { msg } from "@lingui/core/macro"
 import { AlertTriangle, ArrowLeftRight, CheckCircle2, EyeOff, FileText, HelpCircle, Loader2, Monitor, Puzzle } from "lucide-react"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import { cn } from "@/lib/utils"
+import { Skeleton } from "@/components/ui/skeleton"
 import { usePages, usePageImage } from "@/hooks/use-pages"
 import { useQuizzes } from "@/hooks/use-quizzes"
 import { getSectionScreenshotUrl, type PageSummaryItem, type PageSummarySection } from "@/api/client"
@@ -19,6 +20,23 @@ import type { Quiz } from "@adt/types"
  * section of their `afterPageId`. Hovering a row shows a side-by-side
  * comparison of the original PDF page and the rendered section screenshot.
  */
+function StoryboardIndexSkeleton() {
+  return (
+    <div className="flex-1 overflow-y-auto" aria-hidden>
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="flex items-start gap-2 px-2 py-1.5">
+          <Skeleton className="shrink-0 w-24 aspect-[4/3] ring-1 ring-border" />
+          <div className="flex flex-col gap-1.5 min-w-0 flex-1 pt-1">
+            <Skeleton className="h-2.5 w-full" />
+            <Skeleton className="h-2.5 w-2/3" />
+            <Skeleton className="mt-1 h-2 w-1/3" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function StoryboardIndex({
   bookLabel,
   selectedPageId,
@@ -32,7 +50,7 @@ export function StoryboardIndex({
   onSelectSection?: (pageId: string, sectionIndex: number) => void
   stageRunning?: boolean
 }) {
-  const { data: pages } = usePages(bookLabel)
+  const { data: pages, isLoading } = usePages(bookLabel)
   const { data: quizzesData } = useQuizzes(bookLabel)
   const navigate = useNavigate()
   const parentRef = useRef<HTMLDivElement>(null)
@@ -108,6 +126,10 @@ export function StoryboardIndex({
     },
     [navigate, bookLabel],
   )
+
+  if (isLoading) {
+    return <StoryboardIndexSkeleton />
+  }
 
   if (!pages?.length) {
     return (
@@ -194,6 +216,32 @@ type StoryboardListItem =
 
 /* ---------- SectionRow ---------- */
 
+function RenderedThumb({ src, grayscale }: { src: string; grayscale?: boolean }) {
+  const imgRef = useRef<HTMLImageElement>(null)
+  const [loaded, setLoaded] = useState(false)
+  useEffect(() => {
+    const img = imgRef.current
+    setLoaded(!!img?.complete && img.naturalWidth > 0)
+  }, [src])
+  return (
+    <>
+      {!loaded && <Skeleton className="absolute inset-0 ring-1 ring-border" />}
+      <img
+        ref={imgRef}
+        src={src}
+        alt=""
+        loading="lazy"
+        onLoad={() => setLoaded(true)}
+        className={cn(
+          "w-full h-full rounded-md object-cover object-top ring-1 ring-border bg-white shadow-sm transition-opacity duration-300",
+          loaded ? "opacity-100" : "opacity-0",
+          grayscale && "grayscale",
+        )}
+      />
+    </>
+  )
+}
+
 function SectionRow({
   bookLabel,
   page,
@@ -262,14 +310,7 @@ function SectionRow({
     >
       <div className="relative shrink-0 w-24 aspect-[4/3]">
         {renderedThumb ? (
-          <img
-            src={renderedThumb}
-            alt=""
-            className={cn(
-              "w-full h-full rounded-md object-cover object-top ring-1 ring-border bg-white shadow-sm transition-opacity",
-              section.isPruned && "grayscale",
-            )}
-          />
+          <RenderedThumb src={renderedThumb} grayscale={section.isPruned} />
         ) : pageImageLoading || !pdfThumb ? (
           <div className="w-full h-full bg-muted rounded-md ring-1 ring-border" />
         ) : (
@@ -599,14 +640,20 @@ function ComparisonPreview({
             </div>
           </div>
           <PreviewPanel
-            src={renderedThumb}
+            src={isPruned ? null : renderedThumb}
             icon={<Monitor className="w-3 h-3" />}
             label={<Trans>Generated section</Trans>}
             fallback={
               isPruned ? (
-                <Trans>This section is pruned and isn't rendered.</Trans>
+                <>
+                  <EyeOff className="w-6 h-6 text-muted-foreground/40" />
+                  <Trans>This section is pruned and isn't rendered.</Trans>
+                </>
               ) : (
-                <Trans>Not rendered yet</Trans>
+                <>
+                  <Monitor className="w-6 h-6 text-muted-foreground/40" />
+                  <Trans>Not rendered yet</Trans>
+                </>
               )
             }
             tint={isStale ? "amber" : isPruned ? "zinc" : undefined}
@@ -643,12 +690,12 @@ function PreviewPanel({
           tint === "zinc" && "ring-zinc-200 bg-zinc-100/60",
         )}
       >
-        {src ? (
+        {src != null ? (
           <img src={src} alt="" className="max-h-full max-w-full object-contain" />
         ) : (
-          <span className="text-xs text-muted-foreground px-3 text-center">
+          <div className="flex flex-col items-center gap-2 px-3 text-center text-xs text-muted-foreground">
             {fallback ?? <Trans>No preview available</Trans>}
-          </span>
+          </div>
         )}
       </div>
     </div>

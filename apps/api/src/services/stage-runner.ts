@@ -72,9 +72,11 @@ import {
   createScreenshotRenderer,
   DEFAULT_VISUAL_REVIEW_MODEL_ID,
   isFixedLayoutBook,
+  SCREENSHOT_VIEWPORTS,
 } from "@adt/pipeline"
 import type { PageSectioningConfig, TranslationConfig, QuizPageInput, ProviderRouting, MeaningfulnessConfig, CroppingConfig, SegmentationConfig, VisualRefinementDeps } from "@adt/pipeline"
 import { loadStyleguideContent } from "./styleguide.js"
+import { prepareSectionScreenshot, writeSectionScreenshot } from "./section-screenshot.js"
 import { createTTSSynthesizer, createAzureTTSSynthesizer, createGeminiTTSSynthesizer } from "@adt/llm"
 import type { TTSSynthesizer } from "@adt/llm"
 import { STAGE_ORDER } from "@adt/types"
@@ -1103,6 +1105,62 @@ async function runStoryboardStep(
 
     progress.emit({ type: "step-complete", step: "web-rendering" })
     console.log(`[stage-run] ${label}: storyboard complete`)
+
+    if (webAssetsDir) {
+      const desktopViewport = SCREENSHOT_VIEWPORTS.find((v) => v.label === "desktop")
+      if (desktopViewport) {
+        const bookDir = path.join(path.resolve(booksDir), label)
+        const warmRenderer =
+          visualRefinement?.screenshotRenderer ?? (await createScreenshotRenderer())
+        const ownsWarmRenderer = !visualRefinement
+        let warmed = 0
+        try {
+          await processWithConcurrency(
+            pages,
+            Math.min(4, effectiveConcurrency),
+            async (page: PageData) => {
+              const row = storage.getLatestNodeData("web-rendering", page.pageId)
+              if (!row) return
+              const rendering = row.data as WebRenderingOutput
+              for (const section of rendering.sections) {
+                try {
+                  const prepared = await prepareSectionScreenshot({
+                    bookDir,
+                    label,
+                    sectionHtml: section.html,
+                    viewport: desktopViewport,
+                    images: storage,
+                    webAssetsDir,
+                  })
+                  if (!fs.existsSync(prepared.cachePath)) {
+                    await writeSectionScreenshot({
+                      renderer: warmRenderer,
+                      screenshotHtml: prepared.screenshotHtml,
+                      viewport: desktopViewport,
+                      cachePath: prepared.cachePath,
+                    })
+                    warmed++
+                  }
+                } catch (err) {
+                  console.warn(
+                    `[stage-run] ${label}: warm ${page.pageId}#${section.sectionIndex} failed: ${toErrorMessage(err)}`
+                  )
+                }
+              }
+            }
+          )
+          console.log(`[stage-run] ${label}: warmed ${warmed} section screenshot(s)`)
+        } catch (err) {
+          console.warn(
+            `[stage-run] ${label}: thumbnail warming skipped: ${toErrorMessage(err)}`
+          )
+        } finally {
+          if (ownsWarmRenderer) {
+            await warmRenderer.close()
+          }
+        }
+      }
+    }
   } finally {
     if (visualRefinement) {
       await visualRefinement.screenshotRenderer.close()
