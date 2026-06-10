@@ -1,0 +1,45 @@
+name: LAB - PR Automation
+
+on:
+workflow_dispatch:
+
+permissions:
+contents: write
+pull-requests: write
+
+jobs:
+test:
+runs-on: ubuntu-latest
+
+steps:
+  - uses: actions/checkout@v4
+
+  - name: Configure git
+    run: |
+      git config user.name "github-actions[bot]"
+      git config user.email "github-actions[bot]@users.noreply.github.com"
+
+  - name: Create branch
+    run: |
+      BRANCH="lab/pr-test-$(date +%s)"
+
+      git checkout -b "$BRANCH"
+
+      echo "Test $(date)" >> lab-test.txt
+
+      git add lab-test.txt
+      git commit -m "lab: testing automatic pr"
+
+      git push origin "$BRANCH"
+
+      echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+
+  - name: Create Pull Request
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    run: |
+      gh pr create \
+        --base main \
+        --head "$BRANCH" \
+        --title "LAB - Automated PR" \
+        --body "Automated PR created by workflow"
