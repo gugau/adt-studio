@@ -7,7 +7,7 @@ import {
   formatDownloads,
   formatRelativeDate,
   sumAllDownloads,
-  useGithubReleases,
+  useStableReleases,
   type GithubRelease,
 } from "@/lib/useGithubReleases";
 import {
@@ -22,7 +22,7 @@ import {
 } from "./download/shared";
 
 export function DownloadPage() {
-  const { releases, loading, error } = useGithubReleases();
+  const { releases, loading, error } = useStableReleases();
   const latest: GithubRelease | undefined = releases?.[0];
   const [userPlatform, setUserPlatform] = useState<DetectedPlatform | null>(
     null,

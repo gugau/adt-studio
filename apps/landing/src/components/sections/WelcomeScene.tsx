@@ -5,13 +5,13 @@ import { PdfToBookDiagram } from "@/components/PdfToBookDiagram";
 import { cn } from "@/lib/cn";
 import {
   formatRelativeDate,
-  useGithubReleases,
+  useStableReleases,
 } from "@/lib/useGithubReleases";
 import { trackEvent } from "@/lib/matomo";
 
 export function WelcomeScene() {
   const [mounted, setMounted] = useState(false);
-  const { releases } = useGithubReleases();
+  const { releases } = useStableReleases();
   const latest = releases?.[0];
 
   useEffect(() => {
@@ -40,11 +40,10 @@ export function WelcomeScene() {
         <div className="flex flex-col items-center gap-6 text-center lg:items-start lg:text-left">
           <a
             href={
-              latest?.html_url ??
-              "https://github.com/unicef/adt-studio/releases/latest"
+              latest
+                ? `#/releases/${encodeURIComponent(latest.tag_name)}`
+                : "#/releases"
             }
-            target="_blank"
-            rel="noreferrer noopener"
             className={cn(
               "group relative inline-flex max-w-full items-center gap-2 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-card)]/70 px-3 py-1 text-xs font-semibold text-[color:var(--color-muted-foreground)] shadow-sm backdrop-blur-sm transition-all duration-500 hover:border-[color:var(--color-primary)]/30 hover:text-[color:var(--color-foreground)]",
               mounted ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
@@ -52,7 +51,7 @@ export function WelcomeScene() {
           >
             <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[color:var(--color-primary)]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--color-primary)]">
               <Sparkles className="h-3 w-3" />
-              {latest?.prerelease ? "Beta" : "New"}
+              New
             </span>
             {latest ? (
               <span className="min-w-0 truncate">
