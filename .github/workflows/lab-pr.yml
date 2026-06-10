@@ -43,3 +43,10 @@ jobs:
                   --head "$BRANCH" \
                   --title "LAB - Automated PR" \
                   --body "Automated PR created by workflow"
+            - name: Enable Auto Merge
+              env:
+                GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                gh pr merge "$BRANCH" \
+                --auto \
+                --squash
